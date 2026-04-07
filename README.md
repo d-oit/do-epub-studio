@@ -1,6 +1,19 @@
-# do EPUB Studio
+# DO EPUB Studio
 
-A web-based EPUB reader and editorial workspace with gated access, offline reading, and collaborative annotations.
+A powerful, open-source tool for creating, editing, and managing EPUB files with ease.
+
+## Description
+DO EPUB Studio is designed to simplify the process of EPUB creation and editing. Whether you're a publisher, author, or developer, this tool provides a user-friendly interface and robust features to streamline your workflow.
+
+## Website
+🌐 [Visit our website](https://d-oit.github.io/do-epub-studio/)
+
+## Topics
+- `epub`
+- `ebook`
+- `publishing`
+- `open-source`
+- `digital-content`
 
 ## Features
 
