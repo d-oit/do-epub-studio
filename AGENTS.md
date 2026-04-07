@@ -93,3 +93,27 @@ A task is complete only when:
 - tests pass
 - build passes
 - docs updated if behavior changed
+
+## Available Skills
+
+Skills live in `.agents/skills/`. Run structure check with:
+```bash
+python3 .agents/skills/skill-evaluator/scripts/check_structure.py
+```
+
+| Skill | Purpose |
+|-------|---------|
+| `triz-analysis` | Identify contradictions before design |
+| `triz-solver` | Resolve contradictions after analysis |
+| `skill-creator` | Create new skills with evals |
+| `skill-evaluator` | Evaluate skill quality |
+| `learn` | Capture non-obvious session learnings |
+| `memory-context` | Semantic retrieval of past work (requires csm CLI) |
+| `cloudflare-worker-api` | Cloudflare Worker patterns |
+| `turso-schema-migrations` | Turso DB migration patterns |
+
+## Recent Project-Wide Learnings
+
+- **Skills**: Imported skill-creator/evaluator from d-o-hub/github-template-ai-agents, added evals and references. All 8 skills now pass structure validation.
+- **Skill Format**: Reference files use backticks, no @ prefix (`reference/filename.md`), no markdown links.
+- **Template PR #133**: memory-context skill requires `cargo install chaotic_semantic_memory --features cli`

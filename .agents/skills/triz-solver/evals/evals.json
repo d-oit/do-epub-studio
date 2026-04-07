@@ -1,0 +1,70 @@
+{
+  "skill_name": "triz-solver",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "We identified a contradiction: offline availability vs access control. We need to resolve it using TRIZ principles.",
+      "expected_output": "The agent reads the triz-analysis output, defines IFR for each contradiction, chooses appropriate separation principle (likely Time or Condition), applies TRIZ principles, and documents resolution in plans/ directory.",
+      "files": [
+        {
+          "path": "analysis/triz-core-2024-01-15.md",
+          "content": "### Contradiction 1\n\n**Improving:** Offline availability\n**Worsens:** Access control\n**Why:** Cached books can be accessed without authentication\n**Reality:** Verified - cached EPUB files bypass the auth layer\n\n**TRIZ Principles Available:**\n- Segmentation (cache with permissions)\n- Condition Separation (online vs offline auth)\n- Dynamicity (context-aware access)"
+        }
+      ],
+      "assertions": [
+        "The agent reads the analysis file",
+        "The agent defines IFR (Ideal Final Result)",
+        "The agent chooses appropriate separation principle",
+        "The agent documents resolution in plans/ directory"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Apply IFR framework to resolve the performance vs security contradiction in EPUB parsing",
+      "expected_output": "The agent defines the IFR: 'System parses EPUB quickly WITHOUT introducing security complexity', selects resolution strategy (likely Dynamicity or Local Quality), and documents how to implement without new contradictions.",
+      "files": [],
+      "assertions": [
+        "The agent defines IFR clearly",
+        "The agent selects appropriate TRIZ principle",
+        "The agent documents implementation approach",
+        "The agent checks for new contradictions"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "We have a physical contradiction where our sync state must be both local-first (autonomous) and globally consistent. How do we resolve this?",
+      "expected_output": "The agent applies separation principles (likely Time Separation for eventual consistency, or System-level to delegate conflict resolution), defines IFR, and proposes solution architecture.",
+      "files": [],
+      "assertions": [
+        "The agent identifies appropriate separation principle",
+        "The agent defines IFR for the physical contradiction",
+        "The agent proposes concrete solution",
+        "The agent checks for secondary contradictions"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Before designing the system, I need to resolve the contradictions identified in the analysis. Run triz-solver.",
+      "expected_output": "The agent reads analysis files, applies IFR framework to all contradictions, uses separation principles appropriately, documents resolutions, and updates plans/ with system design.",
+      "files": [],
+      "assertions": [
+        "The agent reads existing analysis",
+        "The agent resolves all identified contradictions",
+        "The agent documents resolutions",
+        "The agent updates plans/ with system design"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "For the annotation sync contradiction, should we use time separation or condition separation? Walk me through the decision.",
+      "expected_output": "The agent analyzes both options: Time Separation (sync happens at intervals) vs Condition Separation (sync based on network state), explains trade-offs, and recommends the better approach for the specific use case.",
+      "files": [],
+      "assertions": [
+        "The agent explains Time Separation approach and trade-offs",
+        "The agent explains Condition Separation approach and trade-offs",
+        "The agent makes a recommendation based on use case",
+        "The agent justifies the recommendation"
+      ]
+    }
+  ]
+}

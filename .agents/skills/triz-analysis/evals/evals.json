@@ -1,0 +1,63 @@
+{
+  "skill_name": "triz-analysis",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Analyze the contradiction between offline availability and access control for EPUB books in our system",
+      "expected_output": "The agent identifies the technical contradiction, classifies it, maps it to TRIZ principles, and outputs analysis to analysis/triz-core-YYYY-MM-DD.md. The contradiction should be documented with Improving, Worsens, Why, and TRIZ Principles sections.",
+      "files": [],
+      "assertions": [
+        "The agent identifies offline availability vs access control as a contradiction",
+        "The agent classifies it as a technical contradiction",
+        "The agent maps it to relevant TRIZ principles (e.g., Segmentation, Condition Separation)",
+        "The output is written to analysis/ directory with date format"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "We have a contradiction: improving EPUB parsing performance makes the security model more complex. Analyze this.",
+      "expected_output": "The agent identifies the technical contradiction (performance vs security/complexity), explains why this happens, verifies the reality of the assumption, and maps to applicable TRIZ principles.",
+      "files": [],
+      "assertions": [
+        "The agent identifies the performance vs complexity/security contradiction",
+        "The agent explains causality (why improving performance worsens security)",
+        "The agent verifies the assumption is realistic",
+        "The agent lists relevant TRIZ principles"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "What are the physical contradictions in our offline sync system where the sync state must be both consistent and available?",
+      "expected_output": "The agent identifies physical contradictions where the system must be in two opposite states simultaneously, classifies them appropriately, and maps to separation principles.",
+      "files": [],
+      "assertions": [
+        "The agent identifies the consistency vs availability physical contradiction",
+        "The agent classifies it as a physical contradiction",
+        "The agent maps to separation principles (Time/Space/Condition)"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Before I start coding the permission system, run the TRIZ analysis skill",
+      "expected_output": "The agent runs the full TRIZ analysis workflow: defines system parameters, identifies contradictions, classifies them, maps to principles, and documents to analysis/ directory.",
+      "files": [],
+      "assertions": [
+        "The agent runs the full analysis workflow",
+        "The agent identifies all system contradictions",
+        "The agent maps each to TRIZ principles",
+        "The agent outputs to analysis/ file"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "I need to understand the contradictions in our annotation sync system where we want local-first but also real-time consistency",
+      "expected_output": "The agent identifies the core contradiction between local-first (autonomy/speed) and real-time consistency (coordination/sync), explains the trade-offs, and maps to TRIZ principles.",
+      "files": [],
+      "assertions": [
+        "The agent identifies local-first vs real-time consistency contradiction",
+        "The agent explains the trade-off clearly",
+        "The agent maps to relevant TRIZ principles"
+      ]
+    }
+  ]
+}
