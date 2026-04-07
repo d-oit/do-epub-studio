@@ -23,8 +23,24 @@ export interface GrantBuilder {
   withRevoked(): GrantBuilder;
 }
 
+interface GrantState {
+  id: string;
+  bookId: string;
+  email: string;
+  passwordHash: string | null;
+  mode: string;
+  allowed: boolean;
+  commentsAllowed: boolean;
+  offlineAllowed: boolean;
+  expiresAt: string | null;
+  invitedByUserId: string | null;
+  createdAt: string;
+  updatedAt: string;
+  revokedAt: string | null;
+}
+
 export function createGrantBuilder(): GrantBuilder {
-  const state = {
+  let state: GrantState = {
     id: crypto.randomUUID(),
     bookId: crypto.randomUUID(),
     email: 'reader@example.com',
@@ -43,32 +59,32 @@ export function createGrantBuilder(): GrantBuilder {
   return {
     build: () => ({ ...state }),
     withEmail: (email: string) => {
-      state.email = email;
-      return createGrantBuilder().withEmail(email);
+      state = { ...state, email };
+      return createGrantBuilder();
     },
     withMode: (mode: string) => {
-      state.mode = mode;
-      return createGrantBuilder().withMode(mode);
+      state = { ...state, mode };
+      return createGrantBuilder();
     },
     withPassword: (passwordHash: string) => {
-      state.passwordHash = passwordHash;
-      return createGrantBuilder().withPassword(passwordHash);
+      state = { ...state, passwordHash };
+      return createGrantBuilder();
     },
     withCommentsAllowed: (allowed: boolean) => {
-      state.commentsAllowed = allowed;
-      return createGrantBuilder().withCommentsAllowed(allowed);
+      state = { ...state, commentsAllowed: allowed };
+      return createGrantBuilder();
     },
     withOfflineAllowed: (allowed: boolean) => {
-      state.offlineAllowed = allowed;
-      return createGrantBuilder().withOfflineAllowed(allowed);
+      state = { ...state, offlineAllowed: allowed };
+      return createGrantBuilder();
     },
     withExpiry: (expiry: string) => {
-      state.expiresAt = expiry;
-      return createGrantBuilder().withExpiry(expiry);
+      state = { ...state, expiresAt: expiry };
+      return createGrantBuilder();
     },
     withRevoked: () => {
-      state.revokedAt = new Date().toISOString();
-      return createGrantBuilder().withRevoked();
+      state = { ...state, revokedAt: new Date().toISOString() };
+      return createGrantBuilder();
     },
   };
 }

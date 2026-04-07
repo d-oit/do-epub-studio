@@ -13,8 +13,18 @@ export interface SessionBuilder {
   withRevoked(): SessionBuilder;
 }
 
+interface SessionState {
+  id: string;
+  bookId: string;
+  email: string;
+  sessionTokenHash: string;
+  expiresAt: string;
+  createdAt: string;
+  revokedAt: string | null;
+}
+
 export function createSessionBuilder(): SessionBuilder {
-  const state = {
+  let state: SessionState = {
     id: crypto.randomUUID(),
     bookId: crypto.randomUUID(),
     email: 'reader@example.com',
@@ -27,16 +37,16 @@ export function createSessionBuilder(): SessionBuilder {
   return {
     build: () => ({ ...state }),
     withEmail: (email: string) => {
-      state.email = email;
-      return createSessionBuilder().withEmail(email);
+      state = { ...state, email };
+      return createSessionBuilder();
     },
     withExpiry: (minutesFromNow: number) => {
-      state.expiresAt = new Date(Date.now() + minutesFromNow * 60 * 1000).toISOString();
-      return createSessionBuilder().withExpiry(minutesFromNow);
+      state = { ...state, expiresAt: new Date(Date.now() + minutesFromNow * 60 * 1000).toISOString() };
+      return createSessionBuilder();
     },
     withRevoked: () => {
-      state.revokedAt = new Date().toISOString();
-      return createSessionBuilder().withRevoked();
+      state = { ...state, revokedAt: new Date().toISOString() };
+      return createSessionBuilder();
     },
   };
 }

@@ -21,49 +21,6 @@ export interface CommentBuilder {
   withResolved(): CommentBuilder;
 }
 
-export function createCommentBuilder(): CommentBuilder {
-  const state = {
-    id: crypto.randomUUID(),
-    bookId: crypto.randomUUID(),
-    userEmail: 'reviewer@example.com',
-    chapterRef: null,
-    cfiRange: null,
-    selectedText: null,
-    body: 'Test comment',
-    status: 'open',
-    visibility: 'shared',
-    parentCommentId: null,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    resolvedAt: null,
-  };
-
-  return {
-    build: () => ({ ...state }),
-    withBody: (body: string) => {
-      state.body = body;
-      return createCommentBuilder().withBody(body);
-    },
-    withStatus: (status: string) => {
-      state.status = status;
-      return createCommentBuilder().withStatus(status);
-    },
-    withCfi: (cfi: string) => {
-      state.cfiRange = cfi;
-      return createCommentBuilder().withCfi(cfi);
-    },
-    withParent: (parentId: string) => {
-      state.parentCommentId = parentId;
-      return createCommentBuilder().withParent(parentId);
-    },
-    withResolved: () => {
-      state.status = 'resolved';
-      state.resolvedAt = new Date().toISOString();
-      return createCommentBuilder().withResolved();
-    },
-  };
-}
-
 export interface HighlightBuilder {
   build(): {
     id: string;
@@ -83,8 +40,92 @@ export interface HighlightBuilder {
   withNote(note: string): HighlightBuilder;
 }
 
+export interface BookmarkBuilder {
+  build(): {
+    id: string;
+    bookId: string;
+    userEmail: string;
+    locatorJson: string;
+    label: string | null;
+    createdAt: string;
+  };
+  withLabel(label: string): BookmarkBuilder;
+  withLocator(locator: object): BookmarkBuilder;
+}
+
+interface CommentState {
+  id: string;
+  bookId: string;
+  userEmail: string;
+  chapterRef: string | null;
+  cfiRange: string | null;
+  selectedText: string | null;
+  body: string;
+  status: string;
+  visibility: string;
+  parentCommentId: string | null;
+  createdAt: string;
+  updatedAt: string;
+  resolvedAt: string | null;
+}
+
+export function createCommentBuilder(): CommentBuilder {
+  let state: CommentState = {
+    id: crypto.randomUUID(),
+    bookId: crypto.randomUUID(),
+    userEmail: 'reviewer@example.com',
+    chapterRef: null,
+    cfiRange: null,
+    selectedText: null,
+    body: 'Test comment',
+    status: 'open',
+    visibility: 'shared',
+    parentCommentId: null,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    resolvedAt: null,
+  };
+
+  return {
+    build: () => ({ ...state }),
+    withBody: (body: string) => {
+      state = { ...state, body };
+      return createCommentBuilder();
+    },
+    withStatus: (status: string) => {
+      state = { ...state, status };
+      return createCommentBuilder();
+    },
+    withCfi: (cfi: string) => {
+      state = { ...state, cfiRange: cfi };
+      return createCommentBuilder();
+    },
+    withParent: (parentId: string) => {
+      state = { ...state, parentCommentId: parentId };
+      return createCommentBuilder();
+    },
+    withResolved: () => {
+      state = { ...state, status: 'resolved', resolvedAt: new Date().toISOString() };
+      return createCommentBuilder();
+    },
+  };
+}
+
+interface HighlightState {
+  id: string;
+  bookId: string;
+  userEmail: string;
+  chapterRef: string | null;
+  cfiRange: string | null;
+  selectedText: string;
+  note: string | null;
+  color: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export function createHighlightBuilder(): HighlightBuilder {
-  const state = {
+  let state: HighlightState = {
     id: crypto.randomUUID(),
     bookId: crypto.randomUUID(),
     userEmail: 'reader@example.com',
@@ -100,39 +141,35 @@ export function createHighlightBuilder(): HighlightBuilder {
   return {
     build: () => ({ ...state }),
     withText: (text: string) => {
-      state.selectedText = text;
-      return createHighlightBuilder().withText(text);
+      state = { ...state, selectedText: text };
+      return createHighlightBuilder();
     },
     withCfi: (cfi: string) => {
-      state.cfiRange = cfi;
-      return createHighlightBuilder().withCfi(cfi);
+      state = { ...state, cfiRange: cfi };
+      return createHighlightBuilder();
     },
     withColor: (color: string) => {
-      state.color = color;
-      return createHighlightBuilder().withColor(color);
+      state = { ...state, color };
+      return createHighlightBuilder();
     },
     withNote: (note: string) => {
-      state.note = note;
-      return createHighlightBuilder().withNote(note);
+      state = { ...state, note };
+      return createHighlightBuilder();
     },
   };
 }
 
-export interface BookmarkBuilder {
-  build(): {
-    id: string;
-    bookId: string;
-    userEmail: string;
-    locatorJson: string;
-    label: string | null;
-    createdAt: string;
-  };
-  withLabel(label: string): BookmarkBuilder;
-  withLocator(locator: object): BookmarkBuilder;
+interface BookmarkState {
+  id: string;
+  bookId: string;
+  userEmail: string;
+  locatorJson: string;
+  label: string | null;
+  createdAt: string;
 }
 
 export function createBookmarkBuilder(): BookmarkBuilder {
-  const state = {
+  let state: BookmarkState = {
     id: crypto.randomUUID(),
     bookId: crypto.randomUUID(),
     userEmail: 'reader@example.com',
@@ -144,12 +181,12 @@ export function createBookmarkBuilder(): BookmarkBuilder {
   return {
     build: () => ({ ...state }),
     withLabel: (label: string) => {
-      state.label = label;
-      return createBookmarkBuilder().withLabel(label);
+      state = { ...state, label };
+      return createBookmarkBuilder();
     },
     withLocator: (locator: object) => {
-      state.locatorJson = JSON.stringify(locator);
-      return createBookmarkBuilder().withLocator(locator);
+      state = { ...state, locatorJson: JSON.stringify(locator) };
+      return createBookmarkBuilder();
     },
   };
 }
