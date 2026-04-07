@@ -94,12 +94,36 @@ A task is complete only when:
 - build passes
 - docs updated if behavior changed
 
+## Quality Gate
+
+Run before every commit. Fix all errors.
+
+```bash
+./scripts/quality_gate.sh
+```
+
+Skip tests with `SKIP_TESTS=true ./scripts/quality_gate.sh`.
+
+## Pre-Existing Issues Rule
+
+**Always fix pre-existing warnings and issues discovered during any task**, not just the specific task you were asked to do. This applies to:
+
+- Skill reference link errors
+- Missing skill symlinks
+- Lint/type errors
+- Broken references in SKILL.md files
+- Configuration warnings
+
+When analyzing issues, research deeply to understand root causes and interdependencies before applying fixes.
+
 ## Available Skills
 
 Skills live in `.agents/skills/`. Run structure check with:
 ```bash
 python3 .agents/skills/skill-evaluator/scripts/check_structure.py
 ```
+
+Run `./scripts/setup-skills.sh` after cloning to create symlinks for Claude Code, Gemini CLI, and Qwen Code.
 
 | Skill | Purpose |
 |-------|---------|
@@ -111,9 +135,32 @@ python3 .agents/skills/skill-evaluator/scripts/check_structure.py
 | `memory-context` | Semantic retrieval of past work (requires csm CLI) |
 | `cloudflare-worker-api` | Cloudflare Worker patterns |
 | `turso-schema-migrations` | Turso DB migration patterns |
+| `code-review-assistant` | Automated code review with PR analysis |
+| `testing-strategy` | Test planning, Vitest, Playwright, coverage |
+| `security-code-auditor` | Security audits on EPUB Studio code |
+| `shell-script-quality` | Lint and test shell scripts (ShellCheck, BATS) |
+| `code-quality` | Code review, refactoring, smell detection |
+| `anti-ai-slop` | Audit UI/UX/copy to avoid generic AI aesthetic |
+| `parallel-execution` | Parallel agent coordination for throughput |
+| `task-decomposition` | Break down complex tasks into atomic goals |
+
+## Reference Docs
+
+See `agents-docs/` for detailed reference documentation:
+- `agents-docs/WORKFLOW.md` - Atomic commit, pre-existing issue resolution, post-task learning
+- `agents-docs/SKILLS.md` - Skill authoring guide
+- `agents-docs/CONTEXT.md` - Context engineering and back-pressure
+- `agents-docs/HOOKS.md` - Pre/post tool hooks
+- `agents-docs/SUB-AGENTS.md` - Sub-agent patterns
+
+## Post-Task Learning
+
+After non-trivial work: run the `learn` skill or append non-obvious discoveries to the nearest relevant `AGENTS.md`. Capture only: hidden file relationships, surprising execution behavior, undocumented commands, fragile config, files that must change together. Never write: obvious facts, duplicates, verbose explanations.
 
 ## Recent Project-Wide Learnings
 
 - **Skills**: Imported skill-creator/evaluator from d-o-hub/github-template-ai-agents, added evals and references. All 8 skills now pass structure validation.
 - **Skill Format**: Reference files use backticks, no @ prefix (`reference/filename.md`), no markdown links.
 - **Template PR #133**: memory-context skill requires `cargo install chaotic_semantic_memory --features cli`
+- **Template Import**: Imported quality gate scripts, skill validation, dependabot, PR template, pre-commit hooks, and agents-docs from d-o-hub/github-template-ai-agents. Added shell-script-quality, code-quality, anti-ai-slop, parallel-execution skills.
+- **Template Sync**: Imported .gitattributes (line endings, linguist), markdownlint.toml, .pre-commit-config.yaml (markdownlint hook), .ignore, and updated quality_gate.sh with git hooks and GitHub Actions SHA validation.
