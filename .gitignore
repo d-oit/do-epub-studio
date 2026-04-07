@@ -1,0 +1,11 @@
+# local config
+**/.env.local
+**/.dev.vars
+
+# node
+node_modules
+**/dist
+**/coverage
+.playwright
+**/.turbo
+**/.next

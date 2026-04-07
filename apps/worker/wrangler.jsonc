@@ -1,0 +1,15 @@
+{
+  "name": "do-epub-studio-worker",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-04-07",
+  "vars": {
+    "APP_BASE_URL": "https://do-epub-studio.example.com",
+    "TURSO_DATABASE_URL": "libsql://do-epub-studio-your-org.turso.io"
+  },
+  "r2_buckets": [
+    {
+      "binding": "BOOKS_BUCKET",
+      "bucket_name": "do-epub-studio-books"
+    }
+  ]
+}

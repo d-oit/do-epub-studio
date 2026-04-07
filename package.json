@@ -1,0 +1,22 @@
+{
+  "name": "do-epub-studio",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "turbo run dev --parallel",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "test:e2e": "playwright test",
+    "verify": "pnpm lint && pnpm typecheck && pnpm test && pnpm build",
+    "db:migrate:local": "node scripts/db-migrate-local.mjs",
+    "db:migrate:prod": "node scripts/db-migrate-prod.mjs",
+    "db:check": "node scripts/db-check.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "turbo": "^1.13.0",
+    "typescript": "^5.4"
+  }
+}
