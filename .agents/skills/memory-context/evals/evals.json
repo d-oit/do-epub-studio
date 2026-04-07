@@ -1,0 +1,60 @@
+{
+  "skill_name": "memory-context",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Find any previous analysis about offline sync architecture in the project",
+      "expected_output": "The agent runs csm query with appropriate flags to find offline sync related analysis, or falls back to grep if csm unavailable.",
+      "files": [],
+      "assertions": [
+        "The agent runs csm query or fallback",
+        "The agent uses appropriate --top-k value",
+        "The agent retrieves relevant results"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "At session start, recall previous work on EPUB rendering",
+      "expected_output": "The agent uses memory-context skill to query past learnings about EPUB rendering, providing relevant context for current session.",
+      "files": [],
+      "assertions": [
+        "The agent runs csm query for EPUB rendering",
+        "The agent provides retrieved context",
+        "The agent respects token budget"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "How do I index the plans directory for semantic search?",
+      "expected_output": "The agent provides the csm index-dir command with appropriate --glob patterns for plans/**/*.md files.",
+      "files": [],
+      "assertions": [
+        "The agent provides csm index-dir command",
+        "The agent uses correct --glob pattern for plans",
+        "The agent mentions heading-level option"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "I don't have csm installed. How do I search for previous work?",
+      "expected_output": "The agent provides fallback grep/find commands to search plans/ and analysis/ directories without csm.",
+      "files": [],
+      "assertions": [
+        "The agent provides grep/find fallback",
+        "The agent searches appropriate directories",
+        "The agent explains alternative approach"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "What's the csm command to find code-aware results about Turso schema?",
+      "expected_output": "The agent provides csm query command with --code-aware flag and appropriate query string for Turso schema.",
+      "files": [],
+      "assertions": [
+        "The agent provides csm query with --code-aware",
+        "The agent uses relevant query string",
+        "The agent mentions --output-format option"
+      ]
+    }
+  ]
+}

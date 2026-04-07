@@ -1,0 +1,60 @@
+{
+  "skill_name": "security-code-auditor",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Audit the EPUB parsing code for security issues",
+      "expected_output": "The agent identifies XSS risks in EPUB HTML rendering, suggests DOMPurify sanitization, checks for script injection, and reviews content extraction.",
+      "files": [],
+      "assertions": [
+        "The agent identifies XSS risk in HTML rendering",
+        "The agent suggests DOMPurify or similar",
+        "The agent checks for script injection vectors"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Review the authentication implementation for vulnerabilities",
+      "expected_output": "The agent checks password hashing (Argon2/bcrypt), session token security, session revocation, and auth bypass possibilities.",
+      "files": [],
+      "assertions": [
+        "The agent checks password hashing strength",
+        "The agent validates session security",
+        "The agent tests for auth bypass"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "What's the secure way to generate signed URLs for EPUB access?",
+      "expected_output": "The agent explains signed URL pattern: time-limited expiration, HMAC signing, scope validation, and server-side verification.",
+      "files": [],
+      "assertions": [
+        "The agent mentions expiration/time limit",
+        "The agent mentions cryptographic signing",
+        "The agent emphasizes server-side verification"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Audit the offline sync implementation for security",
+      "expected_output": "The agent checks encrypted storage, conflict resolution security, cache invalidation, and data integrity validation.",
+      "files": [],
+      "assertions": [
+        "The agent checks encryption at rest",
+        "The agent reviews conflict resolution",
+        "The agent validates cache security"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Classify this vulnerability: exposing Turso auth token in frontend code",
+      "expected_output": "The agent classifies as CRITICAL severity, explains the impact (full DB access), and provides immediate remediation steps.",
+      "files": [],
+      "assertions": [
+        "The agent classifies as CRITICAL",
+        "The agent explains impact",
+        "The agent provides remediation"
+      ]
+    }
+  ]
+}

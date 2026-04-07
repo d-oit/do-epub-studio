@@ -1,0 +1,60 @@
+{
+  "skill_name": "turso-schema-migrations",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Design the initial schema for EPUB Studio permissions",
+      "expected_output": "The agent designs tables for books, users, grants with proper foreign keys, indexes, and migration file naming convention.",
+      "files": [],
+      "assertions": [
+        "The agent creates migration file with timestamp",
+        "The agent designs proper table structure",
+        "The agent includes indexes for performance"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "How should we add a new column to the books table safely?",
+      "expected_output": "The agent creates an idempotent migration that adds column with proper IF NOT EXISTS check, and provides rollback approach.",
+      "files": [],
+      "assertions": [
+        "The agent makes migration idempotent",
+        "The agent includes proper column definition",
+        "The agent considers rollback strategy"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "What's the constraint for Turso SQLite migrations?",
+      "expected_output": "The agent explains SQLite limitations (no ALTER TABLE DROP COLUMN in older versions), idempotent requirement, and index considerations.",
+      "files": [],
+      "assertions": [
+        "The agent mentions idempotent requirement",
+        "The agent mentions SQLite limitations",
+        "The agent mentions index best practices"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Create a migration for adding audit log table",
+      "expected_output": "The agent creates timestamped migration file with audit_logs table including user_id, action, resource, timestamp, and metadata.",
+      "files": [],
+      "assertions": [
+        "The agent creates migration with proper naming",
+        "The agent includes required audit fields",
+        "The agent follows schema conventions"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "How do we ensure migrations are rollback-safe?",
+      "expected_output": "The agent explains pattern: separate UP and DOWN migrations, or idempotent migrations with checks, and testing approach.",
+      "files": [],
+      "assertions": [
+        "The agent explains rollback strategy",
+        "The agent mentions idempotent approach",
+        "The agent suggests testing method"
+      ]
+    }
+  ]
+}

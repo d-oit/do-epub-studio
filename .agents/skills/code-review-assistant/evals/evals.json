@@ -1,0 +1,60 @@
+{
+  "skill_name": "code-review-assistant",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Review this PR that adds EPUB annotation feature - what are the risks?",
+      "expected_output": "The agent analyzes files, identifies risk level, checks test coverage, and provides review summary with issues found.",
+      "files": [],
+      "assertions": [
+        "The agent assesses risk level",
+        "The agent checks test coverage",
+        "The agent provides review summary"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Check for security issues in this code that generates signed URLs",
+      "expected_output": "The agent identifies hardcoded secrets, weak signing, missing expiration, and suggests secure implementation.",
+      "files": [],
+      "assertions": [
+        "The agent checks for hardcoded secrets",
+        "The agent validates signing strength",
+        "The agent checks expiration handling"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "What's the risk level for changes in the auth module?",
+      "expected_output": "The agent classifies as CRITICAL risk, explains why, and requires extra scrutiny.",
+      "files": [],
+      "assertions": [
+        "The agent classifies as CRITICAL",
+        "The agent explains reasoning",
+        "The agent suggests extra review"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Should this PR be auto-approved? (5 files, 80 lines, all tests pass)",
+      "expected_output": "The agent checks against auto-approve criteria: within file/line thresholds, tests pass, no critical files.",
+      "files": [],
+      "assertions": [
+        "The agent checks file count threshold",
+        "The agent checks line count threshold",
+        "The agent checks test coverage"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Review the TypeScript code for style guide compliance",
+      "expected_output": "The agent checks naming conventions, type usage (no any), error handling, and project-specific patterns.",
+      "files": [],
+      "assertions": [
+        "The agent checks naming conventions",
+        "The agent validates type safety",
+        "The agent checks error handling"
+      ]
+    }
+  ]
+}

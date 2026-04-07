@@ -1,0 +1,62 @@
+{
+  "skill_name": "testing-strategy",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Design a testing strategy for the permission system",
+      "expected_output": "The agent designs unit tests for permission logic, integration tests for DB operations, and E2E tests for access flows. Includes test data builders.",
+      "files": [],
+      "assertions": [
+        "The agent includes unit tests for logic",
+        "The agent includes integration tests for DB",
+        "The agent includes E2E tests",
+        "The agent suggests test data builders"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Write a unit test for the signed URL generation function",
+      "expected_output": "The agent writes Vitest test covering: valid URL generation, expiration handling, invalid signature rejection.",
+      "files": [],
+      "assertions": [
+        "The agent uses Vitest format",
+        "The agent tests valid case",
+        "The agent tests expiration",
+        "The agent tests invalid signature"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Create a test data builder for Book entities",
+      "expected_output": "The agent creates BookBuilder class with fluent API for setting title, author, owner, and build() method.",
+      "files": [],
+      "assertions": [
+        "The agent creates builder class",
+        "The agent provides fluent API",
+        "The agent has build() method"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "What's the recommended test pyramid distribution?",
+      "expected_output": "The agent explains: 70% unit, 20% integration, 10% E2E tests. Rationale: fast feedback, comprehensive coverage, critical path validation.",
+      "files": [],
+      "assertions": [
+        "The agent provides distribution percentages",
+        "The agent explains rationale",
+        "The agent mentions execution speed"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Write an E2E test for the book reading flow",
+      "expected_output": "The agent writes Playwright test: login, navigate to book, verify reader renders, navigate pages.",
+      "files": [],
+      "assertions": [
+        "The agent uses Playwright format",
+        "The agent tests login flow",
+        "The agent tests reader functionality"
+      ]
+    }
+  ]
+}

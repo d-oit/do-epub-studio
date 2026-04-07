@@ -1,0 +1,59 @@
+{
+  "skill_name": "learn",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "After fixing the Turso sync issue, what should I capture as a learning?",
+      "expected_output": "The agent identifies non-obvious insight (e.g., database must be open in read mode during sync), formats it correctly for AGENTS.md, and provides concise 1-3 line entry.",
+      "files": [],
+      "assertions": [
+        "The agent identifies non-obvious insight only",
+        "The agent uses correct AGENTS.md format",
+        "The agent keeps entry to 1-3 lines"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Should I capture 'we used Vitest for testing' as a learning?",
+      "expected_output": "The agent identifies this as obvious documentation (already in AGENTS.md), NOT a learning worth capturing.",
+      "files": [],
+      "assertions": [
+        "The agent identifies this as obvious",
+        "The agent explains why it's not worth capturing",
+        "The agent clarifies what qualifies as a learning"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "I discovered that wrangler.jsonc must be used instead of .env for Worker config. How do I capture this?",
+      "expected_output": "The agent creates a learning entry noting wrangler.jsonc requirement, formatted for AGENTS.md with concise bullet point.",
+      "files": [],
+      "assertions": [
+        "The agent creates appropriate format for AGENTS.md",
+        "The agent notes the non-obvious config requirement",
+        "The agent keeps entry concise"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Where should I place the learning about Cloudflare R2 signed URLs?",
+      "expected_output": "The agent identifies skill-specific location (.agents/skills/cloudflare-worker-api/AGENTS.md) or scripts-specific (scripts/AGENTS.md) depending on scope.",
+      "files": [],
+      "assertions": [
+        "The agent explains scoping rules",
+        "The agent provides correct file path based on scope"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "I fixed a bug where the EPUB parser was silently failing. What do I capture?",
+      "expected_output": "The agent captures: silent failure pattern (hidden issue), the root cause, and the fix approach - as non-obvious debugging insight.",
+      "files": [],
+      "assertions": [
+        "The agent identifies silent failure as non-obvious",
+        "The agent captures root cause",
+        "The agent keeps it concise"
+      ]
+    }
+  ]
+}

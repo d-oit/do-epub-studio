@@ -1,0 +1,50 @@
+{
+  "skill_name": "cloudflare-worker-api",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Design the API routes for the book access endpoint in the Cloudflare Worker",
+      "expected_output": "The agent designs typed route handlers with auth middleware, signed URL generation, and Zod validation. Includes proper TypeScript types for request/response.",
+      "files": [],
+      "assertions": [
+        "The agent creates typed route handlers",
+        "The agent includes auth middleware",
+        "The agent uses Zod for input validation",
+        "The agent generates signed URLs with expiration"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "How should we implement session validation middleware in the Worker?",
+      "expected_output": "The agent explains the middleware pattern for session validation, including token extraction, DB lookup, and context injection.",
+      "files": [],
+      "assertions": [
+        "The agent describes middleware pattern",
+        "The agent mentions token validation flow",
+        "The agent explains context/state injection"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Create a signed URL generator for accessing EPUB files in R2 storage",
+      "expected_output": "The agent creates a function that generates time-limited signed URLs with proper expiration, scope validation, and secure signing.",
+      "files": [],
+      "assertions": [
+        "The agent includes expiration parameter",
+        "The agent uses secure signing (HMAC or similar)",
+        "The agent validates the scope/resource"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "What are the constraints for Cloudflare Worker API development?",
+      "expected_output": "The agent lists key constraints: no hardcoded secrets, all routes must be typed and validated, use wrangler.jsonc, no blocking I/O.",
+      "files": [],
+      "assertions": [
+        "The agent mentions no hardcoded secrets",
+        "The agent mentions typed routes",
+        "The agent mentions wrangler.jsonc configuration"
+      ]
+    }
+  ]
+}
