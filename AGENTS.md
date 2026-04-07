@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This repository builds `do EPUB Studio`, a production-grade EPUB reading and editorial workspace with gated access, offline reading, comments, highlights, and secure distribution.
+This repository builds `d.o. EPUB Studio`, a production-grade EPUB reading and editorial workspace with gated access, offline reading, comments, highlights, and secure distribution.
 
 ## Mandatory working style
 
