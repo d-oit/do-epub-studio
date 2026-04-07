@@ -8,7 +8,8 @@ This repository builds `d.o. EPUB Studio`, a production-grade EPUB reading and e
 
 - Read before write.
 - Plan first, then execute.
-- Use GOAP thinking for every non-trivial task.
+- Use TRIZ-first for all non-trivial tasks.
+- Identify contradictions → resolve with TRIZ principles → then design.
 - Keep ADRs and phase plans in `plans/`.
 - Verify every important architectural decision before implementation.
 - Use analysis swarm mindset when reviewing key changes:
@@ -16,6 +17,16 @@ This repository builds `d.o. EPUB Studio`, a production-grade EPUB reading and e
   - rapid challenger
   - skeptical reviewer
 - Do not update source-of-truth documentation until implementation is verified.
+
+## Hard Rule
+
+If a task involves architecture, permissions, offline sync, or EPUB rendering:
+- STOP
+- Run `triz-analysis` first
+- Then run `triz-solver`
+- Update `plans/` before any code
+
+No exceptions.
 
 ## Constraints
 
@@ -27,6 +38,7 @@ This repository builds `d.o. EPUB Studio`, a production-grade EPUB reading and e
 - No skipping tests for core permission, sync, or auth flows.
 - No direct public file URLs for private books.
 - No unsafe EPUB HTML rendering.
+- Use atomic git commit after every todo / task
 
 ## Architecture rules
 
