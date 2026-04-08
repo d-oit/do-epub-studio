@@ -1,0 +1,25 @@
+{
+  "name": "@do-epub-studio/worker",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --ext .ts"
+  },
+  "dependencies": {
+    "@libsql/client": "^0.14.0",
+    "@do-epub-studio/shared": "workspace:*",
+    "@do-epub-studio/schema": "workspace:*"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250415.0",
+    "@types/node": "^20",
+    "typescript": "^5.4",
+    "wrangler": "^3.100.0",
+    "eslint": "^9.0.0"
+  }
+}
