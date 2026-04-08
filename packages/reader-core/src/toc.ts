@@ -44,7 +44,9 @@ export function getTocPath(toc: TocItem[], targetHref: string): TocItem[] {
   return path;
 }
 
-export function buildTocHierarchy(flatItems: { label: string; href: string; level?: number }[]): TocItem[] {
+export function buildTocHierarchy(
+  flatItems: { label: string; href: string; level?: number }[],
+): TocItem[] {
   const root: TocItem[] = [];
   const stack: TocItem[] = [];
 
@@ -60,7 +62,7 @@ export function buildTocHierarchy(flatItems: { label: string; href: string; leve
       root.push(tocItem);
     } else {
       const parent = stack[stack.length - 1];
-      parent.subitems = parent.subitems || [];
+      parent.subitems ??= [];
       parent.subitems.push(tocItem);
     }
 

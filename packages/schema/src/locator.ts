@@ -30,7 +30,7 @@ export function isValidLocator(locator: AnnotationLocator): boolean {
   return hasCfi(locator) || hasSelectedText(locator);
 }
 
-export function extractTextExcerpt(text: string, maxLength: number = 100): string {
+export function extractTextExcerpt(text: string, maxLength = 100): string {
   const cleaned = text.trim().replace(/\s+/g, ' ');
   if (cleaned.length <= maxLength) {
     return cleaned;
@@ -38,8 +38,10 @@ export function extractTextExcerpt(text: string, maxLength: number = 100): strin
   return cleaned.substring(0, maxLength - 3) + '...';
 }
 
-export function cfiToRange(cfi: string): { spineIndex: number; path: string; charOffset: number } | null {
-  const match = cfi.match(/epubcfi\(\/(\d+)(?:\[\S+\])?(!.*)?(?::(\d+))?\)/);
+export function cfiToRange(
+  cfi: string,
+): { spineIndex: number; path: string; charOffset: number } | null {
+  const match = /epubcfi\(\/(\d+)(?:\[\S+\])?(!.*)?(?::(\d+))?\)/.exec(cfi);
   if (!match) return null;
 
   return {
@@ -49,8 +51,8 @@ export function cfiToRange(cfi: string): { spineIndex: number; path: string; cha
   };
 }
 
-export function rangeToCfi(spineIndex: number, path: string, charOffset: number = 0): string {
+export function rangeToCfi(spineIndex: number, path: string, charOffset = 0): string {
   const pathPart = path || '';
-  const offsetPart = charOffset > 0 ? `:${charOffset}` : '';
-  return `epubcfi(/${spineIndex}${pathPart}${offsetPart})`;
+  const offsetPart = charOffset > 0 ? `:${charOffset.toString()}` : '';
+  return `epubcfi(/${spineIndex.toString()}${pathPart}${offsetPart})`;
 }

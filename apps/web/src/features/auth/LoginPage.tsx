@@ -1,35 +1,34 @@
 import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
+
+import { LocaleSwitcher } from '../../components/LocaleSwitcher';
+import { useTranslation } from '../../hooks/useTranslation';
+import { apiRequest } from '../../lib/api';
 import { useAuthStore } from '../../stores/auth';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8787';
-
-interface LoginResponse {
-  ok: boolean;
-  data?: {
-    sessionToken: string;
-    book: {
-      id: string;
-      slug: string;
-      title: string;
-      authorName: string | null;
-    };
-    capabilities: {
-      canRead: boolean;
-      canComment: boolean;
-      canHighlight: boolean;
-      canBookmark: boolean;
-      canDownloadOffline: boolean;
-      canExportNotes: boolean;
-      canManageAccess: boolean;
-    };
+interface LoginSuccess {
+  sessionToken: string;
+  book: {
+    id: string;
+    slug: string;
+    title: string;
+    authorName: string | null;
   };
-  error?: { code: string; message: string };
+  capabilities: {
+    canRead: boolean;
+    canComment: boolean;
+    canHighlight: boolean;
+    canBookmark: boolean;
+    canDownloadOffline: boolean;
+    canExportNotes: boolean;
+    canManageAccess: boolean;
+  };
 }
 
 export function LoginPage() {
   const navigate = useNavigate();
   const setAuth = useAuthStore((state) => state.setAuth);
+  const { t } = useTranslation();
   const [bookSlug, setBookSlug] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -42,9 +41,8 @@ export function LoginPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/access/request`, {
+      const data = await apiRequest<LoginSuccess>('/api/access/request', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           bookSlug: bookSlug.trim(),
           email: email.trim().toLowerCase(),
@@ -52,25 +50,18 @@ export function LoginPage() {
         }),
       });
 
-      const data: LoginResponse = await response.json();
-
-      if (!data.ok || !data.data) {
-        setError(data.error?.message || 'Access denied');
-        return;
-      }
-
       setAuth({
-        sessionToken: data.data.sessionToken,
-        bookId: data.data.book.id,
-        bookSlug: data.data.book.slug,
-        bookTitle: data.data.book.title,
+        sessionToken: data.sessionToken,
+        bookId: data.book.id,
+        bookSlug: data.book.slug,
+        bookTitle: data.book.title,
         email: email.trim().toLowerCase(),
-        capabilities: data.data.capabilities,
+        capabilities: data.capabilities,
       });
 
-      navigate(`/read/${data.data.book.slug}`);
-    } catch (_err) {
-      setError('Network error. Please try again.');
+      navigate(`/read/${data.book.slug}`);
+    } catch (err) {
+      setError((err as Error).message || t('login.error.network'));
     } finally {
       setIsLoading(false);
     }
@@ -79,17 +70,18 @@ export function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
       <div className="max-w-md w-full">
+        <div className="flex justify-end mb-4">
+          <LocaleSwitcher />
+        </div>
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            do EPUB Studio
-          </h1>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">
-            Sign in to access your books
-          </p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{t('app.title')}</h1>
+          <p className="mt-2 text-gray-600 dark:text-gray-400">{t('login.subtitle')}</p>
         </div>
 
         <form
-          onSubmit={handleSubmit}
+          onSubmit={(event) => {
+            void handleSubmit(event);
+          }}
           className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 space-y-4"
         >
           {error && (
@@ -103,14 +95,14 @@ export function LoginPage() {
               htmlFor="bookSlug"
               className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
             >
-              Book URL Slug
+              {t('login.bookSlugLabel')}
             </label>
             <input
               id="bookSlug"
               type="text"
               value={bookSlug}
               onChange={(e) => setBookSlug(e.target.value)}
-              placeholder="my-book-slug"
+              placeholder={t('login.bookSlugPlaceholder')}
               required
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
             />
@@ -121,14 +113,14 @@ export function LoginPage() {
               htmlFor="email"
               className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
             >
-              Email Address
+              {t('login.emailLabel')}
             </label>
             <input
               id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="reader@example.com"
+              placeholder={t('login.emailPlaceholder')}
               required
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
             />
@@ -139,14 +131,14 @@ export function LoginPage() {
               htmlFor="password"
               className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
             >
-              Password (if required)
+              {t('login.passwordLabel')}
             </label>
             <input
               id="password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter password"
+              placeholder={t('login.passwordPlaceholder')}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
             />
           </div>
@@ -156,7 +148,7 @@ export function LoginPage() {
             disabled={isLoading}
             className="w-full py-2 px-4 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-md shadow focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isLoading ? 'Signing in...' : 'Sign In'}
+            {isLoading ? t('login.signingIn') : t('login.submit')}
           </button>
         </form>
       </div>

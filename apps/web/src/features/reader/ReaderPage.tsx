@@ -1,15 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAuthStore, useReaderStore, usePreferencesStore } from '../../stores';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8787';
+import { LocaleSwitcher } from '../../components/LocaleSwitcher';
+import { useTranslation } from '../../hooks/useTranslation';
+import { apiRequest } from '../../lib/api';
+import { useAuthStore, useReaderStore, usePreferencesStore } from '../../stores';
 
 export function ReaderPage() {
   const { bookSlug } = useParams<{ bookSlug: string }>();
   const navigate = useNavigate();
   const { sessionToken, bookTitle, capabilities: _capabilities, logout } = useAuthStore();
-  const { progress: _progress, setProgress: _setProgress, setError } = useReaderStore();
+  const { progress: _progress, setProgress: _setProgress, setError, error } = useReaderStore();
   const { reader: _reader } = usePreferencesStore();
+  const { t } = useTranslation();
 
   const viewerRef = useRef<HTMLDivElement>(null);
   const [epubUrl, setEpubUrl] = useState<string | null>(null);
@@ -28,43 +31,39 @@ export function ReaderPage() {
       return;
     }
 
+    const controller = new AbortController();
+
     const fetchBookUrl = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/books/${bookSlug}/file-url`, {
+        const data = await apiRequest<{ url: string }>(`/api/books/${bookSlug}/file-url`, {
           method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${sessionToken}`,
-            'Content-Type': 'application/json',
-          },
+          token: sessionToken,
+          body: JSON.stringify({}),
+          signal: controller.signal,
         });
-
-        if (!response.ok) {
-          setError('Failed to load book');
+        setEpubUrl(data.url);
+      } catch (err) {
+        if (controller.signal.aborted) {
           return;
         }
-
-        const data = await response.json();
-        if (data.ok && data.data?.url) {
-          setEpubUrl(data.data.url);
-        }
-      } catch (_err) {
-        setError('Network error loading book');
+        setError((err as Error).message || t('reader.notAvailable'));
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchBookUrl();
-  }, [sessionToken, bookSlug, navigate, setError]);
+    void fetchBookUrl();
+    return () => controller.abort();
+  }, [sessionToken, bookSlug, navigate, setError, t]);
 
   const handleLogout = async () => {
     try {
-      await fetch(`${API_BASE_URL}/api/access/logout`, {
+      await apiRequest('/api/access/logout', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${sessionToken}`,
-        },
+        token: sessionToken ?? undefined,
       });
+    } catch (error) {
+      console.error('Logout failed', error);
     } finally {
       logout();
       navigate('/login');
@@ -86,27 +85,42 @@ export function ReaderPage() {
             <button
               onClick={() => setShowToc(!showToc)}
               className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
-              aria-label="Table of Contents"
+              aria-label={t('reader.tableOfContents')}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
               </svg>
             </button>
             <h1 className="font-medium truncate max-w-xs">{bookTitle || bookSlug}</h1>
           </div>
 
           <div className="flex items-center space-x-2">
+            <LocaleSwitcher />
             <button
-              onClick={handleLogout}
+              onClick={() => {
+                void handleLogout();
+              }}
               className="px-3 py-1 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
             >
-              Sign Out
+              {t('reader.signOut')}
             </button>
           </div>
         </div>
       </header>
 
       <main className="pt-14 pb-20">
+        {error && (
+          <div className="max-w-3xl mx-auto px-4 mt-4">
+            <div className="p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded text-sm text-red-700 dark:text-red-300">
+              {error}
+            </div>
+          </div>
+        )}
         {isLoading ? (
           <div className="flex items-center justify-center h-96">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
@@ -115,13 +129,13 @@ export function ReaderPage() {
           <div ref={viewerRef} className="max-w-3xl mx-auto px-4 py-8">
             <div className="aspect-[3/4] bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center">
               <p className="text-gray-500 dark:text-gray-400">
-                EPUB reader loading... ({epubUrl ? 'URL ready' : 'No URL'})
+                {t('reader.loading')} ({epubUrl ? 'URL ready' : 'No URL'})
               </p>
             </div>
           </div>
         ) : (
           <div className="flex items-center justify-center h-96">
-            <p className="text-gray-500 dark:text-gray-400">Book not available</p>
+            <p className="text-gray-500 dark:text-gray-400">{t('reader.notAvailable')}</p>
           </div>
         )}
       </main>
@@ -129,13 +143,18 @@ export function ReaderPage() {
       {showToc && (
         <aside className="fixed inset-y-0 left-0 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 z-40 overflow-y-auto">
           <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-            <h2 className="font-semibold">Contents</h2>
+            <h2 className="font-semibold">{t('reader.tableOfContents')}</h2>
             <button
               onClick={() => setShowToc(false)}
               className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
           </div>
@@ -150,7 +169,7 @@ export function ReaderPage() {
                 </button>
               ))
             ) : (
-              <p className="px-3 py-2 text-sm text-gray-500">No chapters available</p>
+              <p className="px-3 py-2 text-sm text-gray-500">{t('reader.noChapters')}</p>
             )}
           </nav>
         </aside>

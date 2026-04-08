@@ -1,6 +1,7 @@
 import type { Env } from '../lib/env';
 import { execute, queryAll } from '../db/client';
 import { createGrant } from '../auth/password';
+import { jsonResponse } from '../lib/responses';
 
 interface _BookRow {
   id: string;
@@ -36,7 +37,7 @@ export async function handleCreateBook(
     language?: string;
     visibility?: string;
   },
-  actorEmail?: string
+  actorEmail?: string,
 ): Promise<Response> {
   const id = crypto.randomUUID();
   const now = new Date().toISOString();
@@ -55,7 +56,7 @@ export async function handleCreateBook(
       body.visibility ?? 'private',
       now,
       now,
-    ]
+    ],
   );
 
   await logAudit(env, {
@@ -66,10 +67,13 @@ export async function handleCreateBook(
     payload: { slug: body.slug, title: body.title },
   });
 
-  return jsonResponse({
-    ok: true,
-    data: { id, slug: body.slug, title: body.title },
-  }, 201);
+  return jsonResponse(
+    {
+      ok: true,
+      data: { id, slug: body.slug, title: body.title },
+    },
+    201,
+  );
 }
 
 export async function handleUploadComplete(
@@ -82,7 +86,7 @@ export async function handleUploadComplete(
     fileSizeBytes?: number;
     sha256?: string;
     epubVersion?: string;
-  }
+  },
 ): Promise<Response> {
   const fileId = crypto.randomUUID();
   const now = new Date().toISOString();
@@ -101,7 +105,7 @@ export async function handleUploadComplete(
       body.sha256 ?? null,
       body.epubVersion ?? null,
       now,
-    ]
+    ],
   );
 
   await logAudit(env, {
@@ -111,10 +115,13 @@ export async function handleUploadComplete(
     payload: { fileId, storageKey: body.storageKey },
   });
 
-  return jsonResponse({
-    ok: true,
-    data: { id: fileId, storageKey: body.storageKey },
-  }, 201);
+  return jsonResponse(
+    {
+      ok: true,
+      data: { id: fileId, storageKey: body.storageKey },
+    },
+    201,
+  );
 }
 
 export async function handleCreateAdminGrant(
@@ -128,7 +135,7 @@ export async function handleCreateAdminGrant(
     offlineAllowed?: boolean;
     expiresAt?: string;
   },
-  actorEmail?: string
+  actorEmail?: string,
 ): Promise<Response> {
   const grantId = await createGrant(env, bookId, body.email, {
     password: body.password,
@@ -146,10 +153,13 @@ export async function handleCreateAdminGrant(
     payload: { bookId, email: body.email, mode: body.mode },
   });
 
-  return jsonResponse({
-    ok: true,
-    data: { id: grantId, email: body.email },
-  }, 201);
+  return jsonResponse(
+    {
+      ok: true,
+      data: { id: grantId, email: body.email },
+    },
+    201,
+  );
 }
 
 export async function handleUpdateGrant(
@@ -161,7 +171,7 @@ export async function handleUpdateGrant(
     offlineAllowed?: boolean;
     expiresAt?: string | null;
   },
-  actorEmail?: string
+  actorEmail?: string,
 ): Promise<Response> {
   const updates: string[] = ['updated_at = ?'];
   const args: (string | number | null)[] = [new Date().toISOString()];
@@ -185,11 +195,7 @@ export async function handleUpdateGrant(
 
   args.push(grantId);
 
-  await execute(
-    env,
-    `UPDATE book_access_grants SET ${updates.join(', ')} WHERE id = ?`,
-    args
-  );
+  await execute(env, `UPDATE book_access_grants SET ${updates.join(', ')} WHERE id = ?`, args);
 
   await logAudit(env, {
     entityType: 'grant',
@@ -205,20 +211,18 @@ export async function handleUpdateGrant(
 export async function handleRevokeGrant(
   env: Env,
   grantId: string,
-  actorEmail?: string
+  actorEmail?: string,
 ): Promise<Response> {
-  await execute(
-    env,
-    `UPDATE book_access_grants SET revoked_at = datetime('now') WHERE id = ?`,
-    [grantId]
-  );
+  await execute(env, `UPDATE book_access_grants SET revoked_at = datetime('now') WHERE id = ?`, [
+    grantId,
+  ]);
 
   await execute(
     env,
     `UPDATE reader_sessions SET revoked_at = datetime('now') 
      WHERE book_id = (SELECT book_id FROM book_access_grants WHERE id = ?)
      AND email = (SELECT email FROM book_access_grants WHERE id = ?)`,
-    [grantId, grantId]
+    [grantId, grantId],
   );
 
   await logAudit(env, {
@@ -231,19 +235,16 @@ export async function handleRevokeGrant(
   return jsonResponse({ ok: true });
 }
 
-export async function handleGetBookGrants(
-  env: Env,
-  bookId: string
-): Promise<Response> {
-  const grants = await queryAll(
+export async function handleGetBookGrants(env: Env, bookId: string): Promise<Response> {
+  const grants = (await queryAll(
     env,
     `SELECT * FROM book_access_grants WHERE book_id = ? ORDER BY created_at DESC`,
-    [bookId]
-  ) as unknown as _GrantRow[];
+    [bookId],
+  )) as unknown as _GrantRow[];
 
   return jsonResponse({
     ok: true,
-    data: grants.map(g => ({
+    data: grants.map((g) => ({
       id: g.id,
       email: g.email,
       mode: g.mode,
@@ -260,10 +261,17 @@ export async function handleGetAuditLog(
   env: Env,
   entityType?: string,
   entityId?: string,
-  limit = 100
+  limit = 100,
 ): Promise<Response> {
   await logAudit(env, {
-    entityType: entityType as 'book' | 'grant' | 'session' | 'comment' | 'user' | 'bookmark' | 'highlight',
+    entityType: entityType as
+      | 'book'
+      | 'grant'
+      | 'session'
+      | 'comment'
+      | 'user'
+      | 'bookmark'
+      | 'highlight',
     entityId: entityId ?? '',
     action: 'query',
   });
@@ -271,12 +279,12 @@ export async function handleGetAuditLog(
   const rows = await queryAll(
     env,
     `SELECT * FROM audit_log WHERE (? IS NULL OR entity_type = ?) AND (? IS NULL OR entity_id = ?) ORDER BY created_at DESC LIMIT ?`,
-    [entityType ?? null, entityType ?? null, entityId ?? null, entityId ?? null, limit]
+    [entityType ?? null, entityType ?? null, entityId ?? null, entityId ?? null, limit],
   );
 
   return jsonResponse({
     ok: true,
-    data: rows.map(row => ({
+    data: rows.map((row) => ({
       id: row.id,
       actorEmail: row.actor_email,
       entityType: row.entity_type,
@@ -296,7 +304,7 @@ async function logAudit(
     action: string;
     actorEmail?: string;
     payload?: Record<string, unknown>;
-  }
+  },
 ): Promise<void> {
   const id = crypto.randomUUID();
   const payloadJson = entry.payload ? JSON.stringify(entry.payload) : null;
@@ -305,16 +313,6 @@ async function logAudit(
     env,
     `INSERT INTO audit_log (id, actor_email, entity_type, entity_id, action, payload_json)
      VALUES (?, ?, ?, ?, ?, ?)`,
-    [id, entry.actorEmail ?? null, entry.entityType, entry.entityId, entry.action, payloadJson]
+    [id, entry.actorEmail ?? null, entry.entityType, entry.entityId, entry.action, payloadJson],
   );
-}
-
-function jsonResponse(data: unknown, status = 200): Response {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: {
-      'Content-Type': 'application/json',
-      'Cache-Control': 'no-store',
-    },
-  });
 }

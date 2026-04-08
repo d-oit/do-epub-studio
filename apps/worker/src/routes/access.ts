@@ -2,6 +2,7 @@ import type { Env } from '../lib/env';
 import { validateGrant, computeCapabilities } from '../auth/password';
 import { createSession } from '../auth/session';
 import { logAudit } from '../audit';
+import { jsonResponse } from '../lib/responses';
 
 interface AccessRequestBody {
   bookSlug: string;
@@ -9,14 +10,14 @@ interface AccessRequestBody {
   password?: string;
 }
 
-export async function handleAccessRequest(
-  env: Env,
-  body: AccessRequestBody
-): Promise<Response> {
+export async function handleAccessRequest(env: Env, body: AccessRequestBody): Promise<Response> {
   const { bookSlug, email, password } = body;
 
   if (!bookSlug || !email) {
-    return jsonResponse({ ok: false, error: { code: 'INVALID_REQUEST', message: 'Missing required fields' } }, 400);
+    return jsonResponse(
+      { ok: false, error: { code: 'INVALID_REQUEST', message: 'Missing required fields' } },
+      400,
+    );
   }
 
   const result = await validateGrant(env, bookSlug, email.toLowerCase(), password);
@@ -30,10 +31,13 @@ export async function handleAccessRequest(
       payload: { reason: result.error },
     });
 
-    return jsonResponse({ 
-      ok: false, 
-      error: { code: 'ACCESS_DENIED', message: 'Access denied' } 
-    }, 401);
+    return jsonResponse(
+      {
+        ok: false,
+        error: { code: 'ACCESS_DENIED', message: 'Access denied' },
+      },
+      401,
+    );
   }
 
   const sessionToken = await createSession(env, result.book.id, email);
@@ -63,28 +67,25 @@ export async function handleAccessRequest(
   });
 }
 
-export async function handleLogout(
-  env: Env,
-  token: string
-): Promise<Response> {
+export async function handleLogout(env: Env, token: string): Promise<Response> {
   const { revokeSession } = await import('../auth/session');
   await revokeSession(env, token);
 
   return jsonResponse({ ok: true });
 }
 
-export async function handleRefresh(
-  env: Env,
-  token: string
-): Promise<Response> {
+export async function handleRefresh(env: Env, token: string): Promise<Response> {
   const { validateSession, createSession } = await import('../auth/session');
   const result = await validateSession(env, token);
 
   if (!result.valid || !result.session) {
-    return jsonResponse({ 
-      ok: false, 
-      error: { code: 'SESSION_INVALID', message: 'Invalid session' } 
-    }, 401);
+    return jsonResponse(
+      {
+        ok: false,
+        error: { code: 'SESSION_INVALID', message: 'Invalid session' },
+      },
+      401,
+    );
   }
 
   const newToken = await createSession(env, result.bookId!, result.session.email);
@@ -92,15 +93,5 @@ export async function handleRefresh(
   return jsonResponse({
     ok: true,
     data: { sessionToken: newToken },
-  });
-}
-
-function jsonResponse(data: unknown, status = 200): Response {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: {
-      'Content-Type': 'application/json',
-      'Cache-Control': 'no-store',
-    },
   });
 }

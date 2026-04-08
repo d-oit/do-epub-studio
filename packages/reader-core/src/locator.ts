@@ -10,8 +10,12 @@ export function createLocator(cfi: string, text: string, chapterHref: string): L
 
 export function parseLocator(locatorString: string): LocatorResult | null {
   try {
-    const parsed = JSON.parse(locatorString);
-    if (parsed.cfi && parsed.textExcerpt && parsed.chapterHref) {
+    const parsed = JSON.parse(locatorString) as Partial<LocatorResult>;
+    if (
+      typeof parsed.cfi === 'string' &&
+      typeof parsed.textExcerpt === 'string' &&
+      typeof parsed.chapterHref === 'string'
+    ) {
       return parsed as LocatorResult;
     }
     return null;
@@ -24,7 +28,7 @@ export function locatorToString(locator: LocatorResult): string {
   return JSON.stringify(locator);
 }
 
-export function extractTextFromRange(range: Range, maxLength: number = 150): string {
+export function extractTextFromRange(range: Range, maxLength = 150): string {
   const text = range.toString().trim().replace(/\s+/g, ' ');
   if (text.length <= maxLength) {
     return text;

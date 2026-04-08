@@ -36,16 +36,17 @@ export const EntityTypeSchema = z.enum([
   'highlight',
 ]);
 
-export const AnnotationLocatorSchema = z.object({
-  cfi: z.string().optional(),
-  selectedText: z.string().optional(),
-  chapterRef: z.string().optional(),
-  elementIndex: z.number().optional(),
-  charOffset: z.number().optional(),
-}).refine(
-  (loc: { cfi?: string; selectedText?: string }) => loc.cfi || loc.selectedText,
-  { message: 'Locator must have at least cfi or selectedText' }
-);
+export const AnnotationLocatorSchema = z
+  .object({
+    cfi: z.string().optional(),
+    selectedText: z.string().optional(),
+    chapterRef: z.string().optional(),
+    elementIndex: z.number().optional(),
+    charOffset: z.number().optional(),
+  })
+  .refine((loc: { cfi?: string; selectedText?: string }) => Boolean(loc.cfi ?? loc.selectedText), {
+    message: 'Locator must have at least cfi or selectedText',
+  });
 
 export const AccessRequestSchema = z.object({
   bookSlug: z.string().min(1).max(255),
@@ -55,7 +56,11 @@ export const AccessRequestSchema = z.object({
 
 export const CreateBookSchema = z.object({
   title: z.string().min(1).max(500),
-  slug: z.string().min(1).max(255).regex(/^[a-z0-9-]+$/),
+  slug: z
+    .string()
+    .min(1)
+    .max(255)
+    .regex(/^[a-z0-9-]+$/),
   authorName: z.string().max(255).optional(),
   description: z.string().max(5000).optional(),
   language: z.string().length(2).default('en'),
@@ -94,7 +99,10 @@ export const HighlightCreateSchema = z.object({
   cfiRange: z.string().optional(),
   selectedText: z.string().min(1).max(10000),
   note: z.string().max(5000).optional(),
-  color: z.string().regex(/^#[0-9a-f]{6}$/i).default('#ffff00'),
+  color: z
+    .string()
+    .regex(/^#[0-9a-f]{6}$/i)
+    .default('#ffff00'),
 });
 
 export const CommentCreateSchema = z.object({

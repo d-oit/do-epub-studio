@@ -23,7 +23,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const addToast = useCallback((type: ToastType, message: string, duration = 5000) => {
     const id = crypto.randomUUID();
     setToasts((prev) => [...prev, { id, type, message, duration }]);
-    
+
     if (duration > 0) {
       setTimeout(() => {
         setToasts((prev) => prev.filter((t) => t.id !== id));
@@ -47,13 +47,25 @@ export function toast(_type: ToastType, _message: string, _duration?: number) {
   console.warn('Toast not initialized - wrap app in ToastProvider');
 }
 
-function ToastContainer({ toasts, onDismiss }: { toasts: Toast[]; onDismiss: (id: string) => void }) {
+function ToastContainer({
+  toasts,
+  onDismiss,
+}: {
+  toasts: Toast[];
+  onDismiss: (id: string) => void;
+}) {
   if (toasts.length === 0) return null;
 
   return (
     <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2">
       {toasts.map((t) => (
-        <ToastItem key={t.id} toast={t} onDismiss={() => onDismiss(t.id)} />
+        <ToastItem
+          key={t.id}
+          toast={t}
+          onDismiss={() => {
+            onDismiss(t.id);
+          }}
+        />
       ))}
     </div>
   );
@@ -73,11 +85,7 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: () => void }
       role="alert"
     >
       <span className="flex-1">{toast.message}</span>
-      <button
-        onClick={onDismiss}
-        className="text-white/80 hover:text-white"
-        aria-label="Dismiss"
-      >
+      <button onClick={onDismiss} className="text-white/80 hover:text-white" aria-label="Dismiss">
         ×
       </button>
     </div>

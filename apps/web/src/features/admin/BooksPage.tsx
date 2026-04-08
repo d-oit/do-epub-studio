@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuthStore } from '../../stores/auth';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8787';
+import { LocaleSwitcher } from '../../components/LocaleSwitcher';
+import { useTranslation } from '../../hooks/useTranslation';
+import { apiRequest } from '../../lib/api';
+import { useAuthStore } from '../../stores/auth';
 
 interface Book {
   id: string;
@@ -19,6 +21,7 @@ export function AdminBooksPage() {
   const [books, setBooks] = useState<Book[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (!sessionToken) {
@@ -26,31 +29,28 @@ export function AdminBooksPage() {
       return;
     }
 
+    const controller = new AbortController();
+
     const fetchBooks = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/books`, {
-          headers: {
-            'Authorization': `Bearer ${sessionToken}`,
-          },
+        const data = await apiRequest<Book[]>('/api/books', {
+          token: sessionToken,
+          signal: controller.signal,
         });
-
-        if (!response.ok) {
-          throw new Error('Failed to load books');
+        setBooks(data || []);
+      } catch (err) {
+        if (controller.signal.aborted) {
+          return;
         }
-
-        const data = await response.json();
-        if (data.ok) {
-          setBooks(data.data || []);
-        }
-      } catch (_err) {
-        setError('Failed to load books');
+        setError((err as Error).message || t('admin.error.loadBooks'));
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchBooks();
-  }, [sessionToken, navigate]);
+    void fetchBooks();
+    return () => controller.abort();
+  }, [sessionToken, navigate, t]);
 
   const handleLogout = () => {
     logout();
@@ -65,14 +65,17 @@ export function AdminBooksPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white">Admin Dashboard</h1>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+            {t('admin.dashboardTitle')}
+          </h1>
           <div className="flex items-center space-x-4">
             <span className="text-sm text-gray-600 dark:text-gray-400">{email}</span>
+            <LocaleSwitcher />
             <button
               onClick={handleLogout}
               className="px-3 py-1 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
             >
-              Sign Out
+              {t('admin.userMenu.signOut')}
             </button>
           </div>
         </div>
@@ -80,9 +83,11 @@ export function AdminBooksPage() {
 
       <main className="max-w-7xl mx-auto px-4 py-8">
         <div className="mb-6 flex justify-between items-center">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Your Books</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            {t('admin.yourBooks')}
+          </h2>
           <button className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-md">
-            Create New Book
+            {t('admin.createBook')}
           </button>
         </div>
 
@@ -98,7 +103,7 @@ export function AdminBooksPage() {
           </div>
         ) : books.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-gray-500 dark:text-gray-400">No books available</p>
+            <p className="text-gray-500 dark:text-gray-400">{t('admin.noBooks')}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -116,14 +121,26 @@ export function AdminBooksPage() {
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-gray-400">
-                      <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                      <svg
+                        className="w-12 h-12"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={1.5}
+                          d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                        />
                       </svg>
                     </div>
                   )}
                 </div>
                 <div className="p-4">
-                  <h3 className="font-semibold text-gray-900 dark:text-white truncate">{book.title}</h3>
+                  <h3 className="font-semibold text-gray-900 dark:text-white truncate">
+                    {book.title}
+                  </h3>
                   {book.authorName && (
                     <p className="text-sm text-gray-500 dark:text-gray-400">{book.authorName}</p>
                   )}
@@ -135,7 +152,7 @@ export function AdminBooksPage() {
                       onClick={() => handleReadBook(book)}
                       className="text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400"
                     >
-                      Read
+                      {t('admin.read')}
                     </button>
                   </div>
                 </div>

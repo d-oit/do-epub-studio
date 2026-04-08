@@ -2,6 +2,7 @@ import type { Env } from '../lib/env';
 import { requireAuth } from '../auth/middleware';
 import { generateSignedUrl } from '../storage/signed-url';
 import { queryFirst, queryAll } from '../db/client';
+import { jsonResponse } from '../lib/responses';
 
 interface BookRow {
   id: string;
@@ -24,25 +25,27 @@ interface BookFileRow {
   file_size_bytes: number;
 }
 
-export async function handleGetBook(
-  env: Env,
-  request: Request,
-  slug: string
-): Promise<Response> {
+export async function handleGetBook(env: Env, request: Request, slug: string): Promise<Response> {
   const auth = await requireAuth(env, request);
 
   if (!auth) {
-    return jsonResponse({ ok: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } }, 401);
+    return jsonResponse(
+      { ok: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } },
+      401,
+    );
   }
 
-  const book = await queryFirst(
+  const book = (await queryFirst(
     env,
     `SELECT * FROM books WHERE slug = ? AND archived_at IS NULL`,
-    [slug]
-  ) as BookRow | null;
+    [slug],
+  )) as BookRow | null;
 
   if (!book) {
-    return jsonResponse({ ok: false, error: { code: 'NOT_FOUND', message: 'Book not found' } }, 404);
+    return jsonResponse(
+      { ok: false, error: { code: 'NOT_FOUND', message: 'Book not found' } },
+      404,
+    );
   }
 
   if (book.id !== auth.bookId) {
@@ -68,26 +71,32 @@ export async function handleGetBook(
 export async function handleGetFileUrl(
   env: Env,
   request: Request,
-  bookId: string
+  bookId: string,
 ): Promise<Response> {
   const auth = await requireAuth(env, request);
 
   if (!auth) {
-    return jsonResponse({ ok: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } }, 401);
+    return jsonResponse(
+      { ok: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } },
+      401,
+    );
   }
 
   if (!auth.capabilities.canRead) {
     return jsonResponse({ ok: false, error: { code: 'FORBIDDEN', message: 'Access denied' } }, 403);
   }
 
-  const bookFile = await queryFirst(
+  const bookFile = (await queryFirst(
     env,
     `SELECT * FROM book_files WHERE book_id = ? ORDER BY created_at DESC LIMIT 1`,
-    [bookId]
-  ) as BookFileRow | null;
+    [bookId],
+  )) as BookFileRow | null;
 
   if (!bookFile) {
-    return jsonResponse({ ok: false, error: { code: 'NOT_FOUND', message: 'File not found' } }, 404);
+    return jsonResponse(
+      { ok: false, error: { code: 'NOT_FOUND', message: 'File not found' } },
+      404,
+    );
   }
 
   const signedUrl = await generateSignedUrl(env, bookId, bookFile.storage_key);
@@ -98,28 +107,28 @@ export async function handleGetFileUrl(
   });
 }
 
-export async function handleListBooks(
-  env: Env,
-  request: Request
-): Promise<Response> {
+export async function handleListBooks(env: Env, request: Request): Promise<Response> {
   const auth = await requireAuth(env, request);
 
   if (!auth) {
-    return jsonResponse({ ok: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } }, 401);
+    return jsonResponse(
+      { ok: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } },
+      401,
+    );
   }
 
-  const books = await queryAll(
+  const books = (await queryAll(
     env,
     `SELECT b.* FROM books b
      INNER JOIN book_access_grants g ON b.id = g.book_id
      WHERE g.email = ? AND g.revoked_at IS NULL AND b.archived_at IS NULL
      ORDER BY b.updated_at DESC`,
-    [auth.email]
-  ) as unknown as BookRow[];
+    [auth.email],
+  )) as unknown as BookRow[];
 
   return jsonResponse({
     ok: true,
-    data: books.map(book => ({
+    data: books.map((book) => ({
       id: book.id,
       slug: book.slug,
       title: book.title,
@@ -127,15 +136,5 @@ export async function handleListBooks(
       visibility: book.visibility,
       coverImageUrl: book.cover_image_url,
     })),
-  });
-}
-
-function jsonResponse(data: unknown, status = 200): Response {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: {
-      'Content-Type': 'application/json',
-      'Cache-Control': 'no-store',
-    },
   });
 }

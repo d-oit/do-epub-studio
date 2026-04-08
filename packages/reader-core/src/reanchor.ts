@@ -1,5 +1,5 @@
-import type { LocatorResult } from './locator';
 import type { TocItem } from './epub-types';
+import type { LocatorResult } from './locator';
 
 export interface ReanchorResult {
   success: boolean;
@@ -12,7 +12,7 @@ export interface ReanchorResult {
 export async function reanchorByText(
   targetText: string,
   toc: TocItem[],
-  loadChapterContent: (href: string) => Promise<string>
+  loadChapterContent: (href: string) => Promise<string>,
 ): Promise<ReanchorResult> {
   if (targetText.length < 10) {
     return { success: false, fallback: true, message: 'Text too short for reanchoring' };

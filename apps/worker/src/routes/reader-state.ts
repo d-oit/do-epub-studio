@@ -1,6 +1,7 @@
 import type { Env } from '../lib/env';
 import { requireAuth } from '../auth/middleware';
 import { queryFirst, queryAll, execute } from '../db/client';
+import { jsonResponse } from '../lib/responses';
 
 interface ProgressRow {
   id: string;
@@ -36,19 +37,22 @@ interface HighlightRow {
 export async function handleGetProgress(
   env: Env,
   request: Request,
-  bookId: string
+  bookId: string,
 ): Promise<Response> {
   const auth = await requireAuth(env, request);
 
   if (!auth) {
-    return jsonResponse({ ok: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } }, 401);
+    return jsonResponse(
+      { ok: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } },
+      401,
+    );
   }
 
-  const progress = await queryFirst(
+  const progress = (await queryFirst(
     env,
     `SELECT * FROM reading_progress WHERE book_id = ? AND user_email = ?`,
-    [bookId, auth.email]
-  ) as ProgressRow | null;
+    [bookId, auth.email],
+  )) as ProgressRow | null;
 
   if (!progress) {
     return jsonResponse({
@@ -71,12 +75,15 @@ export async function handleUpdateProgress(
   env: Env,
   request: Request,
   bookId: string,
-  body: { locator: unknown; progressPercent: number }
+  body: { locator: unknown; progressPercent: number },
 ): Promise<Response> {
   const auth = await requireAuth(env, request);
 
   if (!auth) {
-    return jsonResponse({ ok: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } }, 401);
+    return jsonResponse(
+      { ok: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } },
+      401,
+    );
   }
 
   if (!auth.capabilities.canRead) {
@@ -95,7 +102,7 @@ export async function handleUpdateProgress(
        locator_json = excluded.locator_json,
        progress_percent = excluded.progress_percent,
        updated_at = excluded.updated_at`,
-    [id, bookId, auth.email, locatorJson, body.progressPercent, now]
+    [id, bookId, auth.email, locatorJson, body.progressPercent, now],
   );
 
   return jsonResponse({
@@ -107,23 +114,26 @@ export async function handleUpdateProgress(
 export async function handleListBookmarks(
   env: Env,
   request: Request,
-  bookId: string
+  bookId: string,
 ): Promise<Response> {
   const auth = await requireAuth(env, request);
 
   if (!auth) {
-    return jsonResponse({ ok: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } }, 401);
+    return jsonResponse(
+      { ok: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } },
+      401,
+    );
   }
 
-  const bookmarks = await queryAll(
+  const bookmarks = (await queryAll(
     env,
     `SELECT * FROM bookmarks WHERE book_id = ? AND user_email = ? ORDER BY created_at DESC`,
-    [bookId, auth.email]
-  ) as unknown as BookmarkRow[];
+    [bookId, auth.email],
+  )) as unknown as BookmarkRow[];
 
   return jsonResponse({
     ok: true,
-    data: bookmarks.map(bm => ({
+    data: bookmarks.map((bm) => ({
       id: bm.id,
       locator: JSON.parse(bm.locator_json),
       label: bm.label,
@@ -136,12 +146,15 @@ export async function handleCreateBookmark(
   env: Env,
   request: Request,
   bookId: string,
-  body: { locator: unknown; label?: string }
+  body: { locator: unknown; label?: string },
 ): Promise<Response> {
   const auth = await requireAuth(env, request);
 
   if (!auth) {
-    return jsonResponse({ ok: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } }, 401);
+    return jsonResponse(
+      { ok: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } },
+      401,
+    );
   }
 
   if (!auth.capabilities.canBookmark) {
@@ -156,32 +169,38 @@ export async function handleCreateBookmark(
     env,
     `INSERT INTO bookmarks (id, book_id, user_email, locator_json, label, created_at)
      VALUES (?, ?, ?, ?, ?, ?)`,
-    [id, bookId, auth.email, locatorJson, body.label ?? null, now]
+    [id, bookId, auth.email, locatorJson, body.label ?? null, now],
   );
 
-  return jsonResponse({
-    ok: true,
-    data: { id, locator: body.locator, label: body.label, createdAt: now },
-  }, 201);
+  return jsonResponse(
+    {
+      ok: true,
+      data: { id, locator: body.locator, label: body.label, createdAt: now },
+    },
+    201,
+  );
 }
 
 export async function handleDeleteBookmark(
   env: Env,
   request: Request,
   bookId: string,
-  bookmarkId: string
+  bookmarkId: string,
 ): Promise<Response> {
   const auth = await requireAuth(env, request);
 
   if (!auth) {
-    return jsonResponse({ ok: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } }, 401);
+    return jsonResponse(
+      { ok: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } },
+      401,
+    );
   }
 
-  await execute(
-    env,
-    `DELETE FROM bookmarks WHERE id = ? AND book_id = ? AND user_email = ?`,
-    [bookmarkId, bookId, auth.email]
-  );
+  await execute(env, `DELETE FROM bookmarks WHERE id = ? AND book_id = ? AND user_email = ?`, [
+    bookmarkId,
+    bookId,
+    auth.email,
+  ]);
 
   return jsonResponse({ ok: true });
 }
@@ -189,23 +208,26 @@ export async function handleDeleteBookmark(
 export async function handleListHighlights(
   env: Env,
   request: Request,
-  bookId: string
+  bookId: string,
 ): Promise<Response> {
   const auth = await requireAuth(env, request);
 
   if (!auth) {
-    return jsonResponse({ ok: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } }, 401);
+    return jsonResponse(
+      { ok: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } },
+      401,
+    );
   }
 
-  const highlights = await queryAll(
+  const highlights = (await queryAll(
     env,
     `SELECT * FROM highlights WHERE book_id = ? AND user_email = ? ORDER BY created_at DESC`,
-    [bookId, auth.email]
-  ) as unknown as HighlightRow[];
+    [bookId, auth.email],
+  )) as unknown as HighlightRow[];
 
   return jsonResponse({
     ok: true,
-    data: highlights.map(hl => ({
+    data: highlights.map((hl) => ({
       id: hl.id,
       chapterRef: hl.chapter_ref,
       cfiRange: hl.cfi_range,
@@ -222,12 +244,21 @@ export async function handleCreateHighlight(
   env: Env,
   request: Request,
   bookId: string,
-  body: { chapterRef?: string; cfiRange?: string; selectedText: string; note?: string; color?: string }
+  body: {
+    chapterRef?: string;
+    cfiRange?: string;
+    selectedText: string;
+    note?: string;
+    color?: string;
+  },
 ): Promise<Response> {
   const auth = await requireAuth(env, request);
 
   if (!auth) {
-    return jsonResponse({ ok: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } }, 401);
+    return jsonResponse(
+      { ok: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } },
+      401,
+    );
   }
 
   if (!auth.capabilities.canHighlight) {
@@ -241,30 +272,34 @@ export async function handleCreateHighlight(
     env,
     `INSERT INTO highlights (id, book_id, user_email, chapter_ref, cfi_range, selected_text, note, color, created_at, updated_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [id, bookId, auth.email, body.chapterRef ?? null, body.cfiRange ?? null, body.selectedText, body.note ?? null, body.color ?? '#ffff00', now, now]
+    [
+      id,
+      bookId,
+      auth.email,
+      body.chapterRef ?? null,
+      body.cfiRange ?? null,
+      body.selectedText,
+      body.note ?? null,
+      body.color ?? '#ffff00',
+      now,
+      now,
+    ],
   );
 
-  return jsonResponse({
-    ok: true,
-    data: {
-      id,
-      chapterRef: body.chapterRef,
-      cfiRange: body.cfiRange,
-      selectedText: body.selectedText,
-      note: body.note,
-      color: body.color ?? '#ffff00',
-      createdAt: now,
-      updatedAt: now,
+  return jsonResponse(
+    {
+      ok: true,
+      data: {
+        id,
+        chapterRef: body.chapterRef,
+        cfiRange: body.cfiRange,
+        selectedText: body.selectedText,
+        note: body.note,
+        color: body.color ?? '#ffff00',
+        createdAt: now,
+        updatedAt: now,
+      },
     },
-  }, 201);
-}
-
-function jsonResponse(data: unknown, status = 200): Response {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: {
-      'Content-Type': 'application/json',
-      'Cache-Control': 'no-store',
-    },
-  });
+    201,
+  );
 }

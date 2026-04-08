@@ -21,23 +21,29 @@ export interface EpubLoader {
 
 export function createEpubLoader(): EpubLoader {
   return {
-    load: async () => {
-      throw new Error('EpubLoader not implemented - requires epubjs runtime');
+    load: () => Promise.reject(new Error('EpubLoader not implemented - requires epubjs runtime')),
+    destroy: () => {
+      /* no-op until EPUB runtime is wired */
     },
-    destroy: () => {},
     getMetadata: () => ({ title: '' }),
     getToc: () => [],
     getSpineItems: () => [],
     getProgress: () => null,
-    setProgress: () => {},
-    on: () => {},
-    off: () => {},
+    setProgress: () => {
+      /* intentionally blank */
+    },
+    on: () => {
+      /* event bridge injected by runtime */
+    },
+    off: () => {
+      /* event bridge injected by runtime */
+    },
   };
 }
 
 export function extractCfi(text: string): string | null {
-  const match = text.match(/epubcfi\(\/[^)]+\)/);
-  return match ? match[0] : null;
+  const match = /epubcfi\(\/[^)]+\)/.exec(text);
+  return match?.[0] ?? null;
 }
 
 export function isValidCfi(cfi: string): boolean {

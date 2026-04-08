@@ -1,6 +1,7 @@
 import type { Env } from '../lib/env';
 import { requireAuth } from '../auth/middleware';
 import { queryFirst, queryAll, execute } from '../db/client';
+import { jsonResponse } from '../lib/responses';
 
 interface CommentRow {
   id: string;
@@ -21,19 +22,22 @@ interface CommentRow {
 export async function handleListComments(
   env: Env,
   request: Request,
-  bookId: string
+  bookId: string,
 ): Promise<Response> {
   const auth = await requireAuth(env, request);
 
   if (!auth) {
-    return jsonResponse({ ok: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } }, 401);
+    return jsonResponse(
+      { ok: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } },
+      401,
+    );
   }
 
-  const comments = await queryAll(
+  const comments = (await queryAll(
     env,
     `SELECT * FROM comments WHERE book_id = ? AND status != 'deleted' ORDER BY created_at ASC`,
-    [bookId]
-  ) as unknown as CommentRow[];
+    [bookId],
+  )) as unknown as CommentRow[];
 
   const threaded = buildCommentTree(comments);
 
@@ -54,12 +58,15 @@ export async function handleCreateComment(
     body: string;
     visibility?: string;
     parentCommentId?: string;
-  }
+  },
 ): Promise<Response> {
   const auth = await requireAuth(env, request);
 
   if (!auth) {
-    return jsonResponse({ ok: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } }, 401);
+    return jsonResponse(
+      { ok: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } },
+      401,
+    );
   }
 
   if (!auth.capabilities.canComment) {
@@ -85,53 +92,63 @@ export async function handleCreateComment(
       body.parentCommentId ?? null,
       now,
       now,
-    ]
+    ],
   );
 
-  return jsonResponse({
-    ok: true,
-    data: {
-      id,
-      userEmail: auth.email,
-      chapterRef: body.chapterRef,
-      cfiRange: body.cfiRange,
-      selectedText: body.selectedText,
-      body: body.body,
-      status: 'open',
-      visibility: body.visibility ?? 'shared',
-      parentCommentId: body.parentCommentId,
-      createdAt: now,
-      updatedAt: now,
-      resolvedAt: null,
-      replies: [],
+  return jsonResponse(
+    {
+      ok: true,
+      data: {
+        id,
+        userEmail: auth.email,
+        chapterRef: body.chapterRef,
+        cfiRange: body.cfiRange,
+        selectedText: body.selectedText,
+        body: body.body,
+        status: 'open',
+        visibility: body.visibility ?? 'shared',
+        parentCommentId: body.parentCommentId,
+        createdAt: now,
+        updatedAt: now,
+        resolvedAt: null,
+        replies: [],
+      },
     },
-  }, 201);
+    201,
+  );
 }
 
 export async function handleUpdateComment(
   env: Env,
   request: Request,
   commentId: string,
-  body: { body?: string; status?: string; visibility?: string }
+  body: { body?: string; status?: string; visibility?: string },
 ): Promise<Response> {
   const auth = await requireAuth(env, request);
 
   if (!auth) {
-    return jsonResponse({ ok: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } }, 401);
+    return jsonResponse(
+      { ok: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } },
+      401,
+    );
   }
 
-  const comment = await queryFirst(
-    env,
-    `SELECT * FROM comments WHERE id = ?`,
-    [commentId]
-  ) as CommentRow | null;
+  const comment = (await queryFirst(env, `SELECT * FROM comments WHERE id = ?`, [
+    commentId,
+  ])) as CommentRow | null;
 
   if (!comment) {
-    return jsonResponse({ ok: false, error: { code: 'NOT_FOUND', message: 'Comment not found' } }, 404);
+    return jsonResponse(
+      { ok: false, error: { code: 'NOT_FOUND', message: 'Comment not found' } },
+      404,
+    );
   }
 
   if (comment.user_email !== auth.email) {
-    return jsonResponse({ ok: false, error: { code: 'FORBIDDEN', message: 'Cannot edit others comments' } }, 403);
+    return jsonResponse(
+      { ok: false, error: { code: 'FORBIDDEN', message: 'Cannot edit others comments' } },
+      403,
+    );
   }
 
   const now = new Date().toISOString();
@@ -157,11 +174,7 @@ export async function handleUpdateComment(
 
   args.push(commentId);
 
-  await execute(
-    env,
-    `UPDATE comments SET ${updates.join(', ')} WHERE id = ?`,
-    args
-  );
+  await execute(env, `UPDATE comments SET ${updates.join(', ')} WHERE id = ?`, args);
 
   return jsonResponse({
     ok: true,
@@ -223,14 +236,4 @@ interface CommentResponse {
   updatedAt: string;
   resolvedAt: string | null;
   replies?: CommentResponse[];
-}
-
-function jsonResponse(data: unknown, status = 200): Response {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: {
-      'Content-Type': 'application/json',
-      'Cache-Control': 'no-store',
-    },
-  });
 }
