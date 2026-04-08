@@ -105,3 +105,4 @@ Set `SKIP_TESTS=true` only if explicitly approved.
 ## Recent Project-Wide Learnings
 
 - **Vitest**: `turbo run test` hangs if any package uses bare `vitest`; always pass `--run` so CI exits cleanly.
+- **Swarm Deliverables**: `plans/analysis-*.md` assumes `analysis/SWARM_ANALYSIS.md` exists; keep that file updated after every multi-agent audit so downstream tasks find the aggregated report.

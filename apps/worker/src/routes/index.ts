@@ -1,15 +1,16 @@
 export { handleAccessRequest, handleLogout, handleRefresh } from './access';
 export { handleGetBook, handleGetFileUrl, handleListBooks } from './books';
-export { 
-  handleGetProgress, 
-  handleUpdateProgress, 
-  handleListBookmarks, 
+export {
+  handleGetProgress,
+  handleUpdateProgress,
+  handleListBookmarks,
   handleCreateBookmark,
   handleDeleteBookmark,
   handleListHighlights,
-  handleCreateHighlight 
+  handleCreateHighlight,
 } from './reader-state';
 export { handleListComments, handleCreateComment, handleUpdateComment } from './comments';
+export { handleDownloadBookFile } from './files';
 export {
   handleCreateBook,
   handleUploadComplete,
