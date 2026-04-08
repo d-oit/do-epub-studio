@@ -1,4 +1,5 @@
 ---
+version: "1.0.0"
 name: skill-evaluator
 description: Evaluate skill output quality and measure skill performance. Use when users want to assess skill quality, run benchmarks, compare skill versions, or validate skill behavior against expected outcomes.
 license: MIT

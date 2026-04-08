@@ -1,4 +1,5 @@
 ---
+version: "1.0.0"
 name: task-decomposition
 description: Break down complex tasks into atomic, actionable goals with clear dependencies and success criteria. Use when planning multi-step EPUB Studio features, coordinating agents, or decomposing complex requests.
 license: MIT

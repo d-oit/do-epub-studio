@@ -1,4 +1,5 @@
 ---
+version: "1.0.0"
 name: memory-context
 description: Retrieve semantically relevant past learnings and analysis outputs. Use when you need to recall previous work, face a problem that might have been solved before, or retrieve specific findings from analysis/ or plans/.
 license: MIT

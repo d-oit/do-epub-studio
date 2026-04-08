@@ -1,4 +1,5 @@
 ---
+version: "1.0.0"
 name: skill-creator
 description: Create new skills, modify and improve existing skills, and measure skill performance. Use when users want to create a skill from scratch, edit existing skills, or optimize skill descriptions for better triggering accuracy.
 license: MIT

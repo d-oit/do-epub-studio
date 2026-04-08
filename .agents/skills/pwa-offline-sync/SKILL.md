@@ -1,4 +1,5 @@
 ---
+version: "1.0.0"
 name: pwa-offline-sync
 description: Design Cache Storage + IndexedDB strategy, sync queue, and zombie detection per ADR-005 before touching offline code.
 ---

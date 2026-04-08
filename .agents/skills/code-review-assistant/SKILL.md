@@ -1,4 +1,5 @@
 ---
+version: "1.0.0"
 name: code-review-assistant
 description: Automated code review with PR analysis, change summaries, and quality checks. Use for reviewing pull requests, generating review comments, checking against best practices, and identifying potential issues in EPUB Studio code.
 license: MIT
