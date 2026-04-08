@@ -105,6 +105,23 @@ A task is complete only when:
 - docs updated if behavior changed
 - learnings captured (if non-trivial)
 
+## Atomic Commit
+
+Use the atomic-commit workflow for all commits:
+
+```bash
+./scripts/atomic-commit/run.sh --message "type(scope): description"
+```
+
+This workflow:
+1. Runs quality gate validation
+2. Creates commit with conventional format
+3. Pushes to remote
+4. Creates PR
+5. Verifies CI passes
+
+See `.opencode/commands/atomic-commit.md` for details.
+
 ## Quality Gate
 
 Run before every commit. Fix all errors.
