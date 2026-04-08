@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 export type Theme = 'light' | 'dark' | 'sepia' | 'system';
 export type FontFamily = 'serif' | 'sans-serif' | 'monospace';
@@ -35,25 +36,23 @@ const LINE_HEIGHTS: Record<number, string> = {
 };
 
 export const usePreferencesStore = create<PreferencesState>()(
-  (set) => ({
-    reader: {
-      theme: 'system',
-      fontFamily: 'serif',
-      fontSize: 'medium',
-      lineHeight: 1.6,
-      pageWidth: 'normal',
-    },
-    setTheme: (theme) =>
-      set((state) => ({ reader: { ...state.reader, theme } })),
-    setFontFamily: (fontFamily) =>
-      set((state) => ({ reader: { ...state.reader, fontFamily } })),
-    setFontSize: (fontSize) =>
-      set((state) => ({ reader: { ...state.reader, fontSize } })),
-    setLineHeight: (lineHeight) =>
-      set((state) => ({ reader: { ...state.reader, lineHeight } })),
-    setPageWidth: (pageWidth) =>
-      set((state) => ({ reader: { ...state.reader, pageWidth } })),
-  })
+  persist(
+    (set) => ({
+      reader: {
+        theme: 'system',
+        fontFamily: 'serif',
+        fontSize: 'medium',
+        lineHeight: 2,
+        pageWidth: 'normal',
+      },
+      setTheme: (theme) => set((state) => ({ reader: { ...state.reader, theme } })),
+      setFontFamily: (fontFamily) => set((state) => ({ reader: { ...state.reader, fontFamily } })),
+      setFontSize: (fontSize) => set((state) => ({ reader: { ...state.reader, fontSize } })),
+      setLineHeight: (lineHeight) => set((state) => ({ reader: { ...state.reader, lineHeight } })),
+      setPageWidth: (pageWidth) => set((state) => ({ reader: { ...state.reader, pageWidth } })),
+    }),
+    { name: 'do-epub-preferences' },
+  ),
 );
 
 export { FONT_SIZES, LINE_HEIGHTS };
