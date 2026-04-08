@@ -1,4 +1,5 @@
 ---
+version: "1.0.0"
 name: learn
 description: Extract non-obvious session learnings into scoped AGENTS.md files. Use after completing non-trivial tasks to capture insights that would otherwise be lost.
 license: MIT

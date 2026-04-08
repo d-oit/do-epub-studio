@@ -1,4 +1,5 @@
 ---
+version: "1.0.0"
 name: secure-invite-and-access
 description: Implement grant validation, Argon2id passwords, sessions, signed URLs, and audit logging per ADR-004 for any auth change.
 ---

@@ -1,4 +1,5 @@
 ---
+version: "1.0.0"
 name: epub-rendering-and-cfi
 description: Ensure EPUB.js integration, locator extraction, and annotation anchoring follow ADR-006 with resilient fallbacks.
 ---

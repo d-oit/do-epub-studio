@@ -1,4 +1,5 @@
 ---
+version: "1.0.0"
 name: testing-strategy
 description: Design comprehensive testing strategies for EPUB Studio. Use for test planning, Vitest unit tests, Playwright E2E tests, property-based testing, and coverage analysis.
 license: MIT

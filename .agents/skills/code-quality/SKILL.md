@@ -1,4 +1,5 @@
 ---
+version: "1.0.0"
 name: code-quality
 description: Review and improve code quality across any programming language. Use when conducting code reviews, refactoring for best practices, identifying code smells, or improving maintainability.
 version: "1.0"

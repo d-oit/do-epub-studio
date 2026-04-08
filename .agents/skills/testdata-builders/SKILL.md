@@ -1,4 +1,5 @@
 ---
+version: "1.0.0"
 name: testdata-builders
 description: Maintain deterministic builders for schema entities so tests stay concise and aligned with migrations.
 ---

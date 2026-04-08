@@ -1,4 +1,5 @@
 ---
+version: "1.0.0"
 name: anti-ai-slop
 description: Apply this skill to audit, fix, redesign, or review UI, UX, copy, or text to avoid generic "AI slop" aesthetic. Triggers: "make this feel less AI", "this looks too generic", "avoid AI cliches", "humanize this", "too corporate", "fix the UX writing". Also trigger when producing new UI, copy, or UX flows.
 version: "1.0"

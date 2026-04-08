@@ -1,4 +1,5 @@
 ---
+version: "1.0.0"
 name: shell-script-quality
 description: Lint and test shell scripts using ShellCheck and BATS. Use when checking bash/sh scripts for errors, writing shell script tests, fixing ShellCheck warnings, or improving bash code quality.
 version: "1.0"

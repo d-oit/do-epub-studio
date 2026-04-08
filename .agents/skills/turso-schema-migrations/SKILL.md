@@ -1,4 +1,5 @@
 ---
+version: "1.0.0"
 name: turso-schema-migrations
 description: Manage Turso database schema design, migrations, and SQLite operations. Use when designing database tables, writing migration scripts, or handling schema changes.
 license: MIT

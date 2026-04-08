@@ -1,4 +1,5 @@
 ---
+version: "1.0.0"
 name: parallel-execution
 description: Execute multiple independent tasks simultaneously using parallel agent coordination to maximize throughput and minimize execution time. Use when tasks have no dependencies and results can be aggregated.
 version: "1.0"

@@ -1,4 +1,5 @@
 ---
+version: "1.0.0"
 name: security-code-auditor
 description: Perform security audits on EPUB Studio code to identify vulnerabilities. Use when auditing authentication, authorization, EPUB parsing, signed URLs, or offline sync security.
 license: MIT

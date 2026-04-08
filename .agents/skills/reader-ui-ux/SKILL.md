@@ -1,4 +1,5 @@
 ---
+version: "1.0.0"
 name: reader-ui-ux
 description: Build localized, accessible reader/admin experiences with responsive layouts, telemetry, and Zustand integration.
 ---

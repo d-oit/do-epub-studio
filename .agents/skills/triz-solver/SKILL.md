@@ -1,4 +1,5 @@
 ---
+version: "1.0.0"
 name: triz-solver
 description: Resolve contradictions identified by triz-analysis. Use when applying TRIZ principles to solve technical contradictions, implementing separation principles, or deriving system design from resolved contradictions. Must be run AFTER triz-analysis.
 license: MIT

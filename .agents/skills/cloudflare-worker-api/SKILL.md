@@ -1,4 +1,5 @@
 ---
+version: "1.0.0"
 name: cloudflare-worker-api
 description: Design Cloudflare Worker API routes with typed handlers, auth middleware, and signed URL generation. Use when creating Worker endpoints, implementing session validation, or designing secure file access patterns.
 license: MIT

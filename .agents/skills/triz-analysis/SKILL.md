@@ -1,4 +1,5 @@
 ---
+version: "1.0.0"
 name: triz-analysis
 description: Identify and analyze contradictions in system design. Use when analyzing architecture decisions, identifying trade-offs between competing requirements, or discovering hidden conflicts in system properties. Must be run BEFORE triz-solver.
 license: MIT
