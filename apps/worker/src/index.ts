@@ -24,6 +24,7 @@ import {
   handleListComments,
   handleCreateComment,
   handleUpdateComment,
+  handleDownloadBookFile,
   handleCreateBook,
   handleUploadComplete,
   handleCreateAdminGrant,
@@ -78,6 +79,16 @@ async function handleRequest(env: Env, request: Request): Promise<Response> {
   const fileUrlMatch = /\/api\/books\/([^/]+)\/file-url$/.exec(path);
   if (fileUrlMatch && method === 'POST') {
     return handleGetFileUrl(env, request, fileUrlMatch[1]);
+  }
+
+  if (path.startsWith('/api/files/') && method === 'GET') {
+    const remainder = path.slice('/api/files/'.length);
+    const [rawBookId, ...fileKeyParts] = remainder.split('/');
+    if (rawBookId && fileKeyParts.length > 0) {
+      const bookId = decodeURIComponent(rawBookId);
+      const fileKey = fileKeyParts.map((part) => decodeURIComponent(part)).join('/');
+      return handleDownloadBookFile(env, request, bookId, fileKey);
+    }
   }
 
   const progressMatch = /\/api\/books\/([^/]+)\/progress$/.exec(path);
