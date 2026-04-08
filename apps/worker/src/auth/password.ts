@@ -54,7 +54,7 @@ export async function verifyPassword(
   const hashHex = Array.from(hashArray).map(b => b.toString(16).padStart(2, '0')).join('');
 
   const parts = storedHash.split('$');
-  const storedParams = parts[2];
+  const _storedParams = parts[2];
   const storedSalt = parts[3];
   const storedDigest = parts[4];
 

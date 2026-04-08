@@ -7,15 +7,20 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8787
 export function ReaderPage() {
   const { bookSlug } = useParams<{ bookSlug: string }>();
   const navigate = useNavigate();
-  const { sessionToken, bookTitle, capabilities, logout } = useAuthStore();
-  const { progress, setProgress, setError } = useReaderStore();
-  const { reader } = usePreferencesStore();
-  
+  const { sessionToken, bookTitle, capabilities: _capabilities, logout } = useAuthStore();
+  const { progress: _progress, setProgress: _setProgress, setError } = useReaderStore();
+  const { reader: _reader } = usePreferencesStore();
+
   const viewerRef = useRef<HTMLDivElement>(null);
   const [epubUrl, setEpubUrl] = useState<string | null>(null);
-  const [toc, setToc] = useState<Array<{ label: string; href: string }>>([]);
+  const [toc] = useState<Array<{ label: string; href: string }>>([]);
   const [showToc, setShowToc] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+
+  void _capabilities;
+  void _progress;
+  void _setProgress;
+  void _reader;
 
   useEffect(() => {
     if (!sessionToken || !bookSlug) {
@@ -42,7 +47,7 @@ export function ReaderPage() {
         if (data.ok && data.data?.url) {
           setEpubUrl(data.data.url);
         }
-      } catch (err) {
+      } catch (_err) {
         setError('Network error loading book');
       } finally {
         setIsLoading(false);
@@ -71,7 +76,7 @@ export function ReaderPage() {
     dark: 'bg-gray-900 text-gray-100',
     sepia: 'bg-amber-50 text-gray-800',
     system: '',
-  }[reader.theme];
+  }[_reader.theme];
 
   return (
     <div className={`min-h-screen ${themeClass}`}>

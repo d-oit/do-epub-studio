@@ -42,7 +42,7 @@ export function AdminBooksPage() {
         if (data.ok) {
           setBooks(data.data || []);
         }
-      } catch (err) {
+      } catch (_err) {
         setError('Failed to load books');
       } finally {
         setIsLoading(false);

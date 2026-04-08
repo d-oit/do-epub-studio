@@ -73,21 +73,6 @@ export async function handleLogout(
   return jsonResponse({ ok: true });
 }
 
-async function revokeSession(env: Env, token: string): Promise<void> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(token);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  const tokenHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-
-  const { execute } = await import('../db/client');
-  await execute(
-    env,
-    `UPDATE reader_sessions SET revoked_at = datetime('now') WHERE session_token_hash = ?`,
-    [tokenHash]
-  );
-}
-
 export async function handleRefresh(
   env: Env,
   token: string

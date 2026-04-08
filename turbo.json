@@ -16,7 +16,8 @@
     },
     "test": {
       "dependsOn": ["^build"],
-      "outputs": []
+      "outputs": [],
+      "inputs": ["src/**", "tests/**", "*.config.*"]
     }
   }
 }

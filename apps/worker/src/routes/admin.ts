@@ -1,8 +1,8 @@
 import type { Env } from '../lib/env';
-import { execute, queryFirst, queryAll } from '../db/client';
-import { createGrant, hashPassword } from '../auth/password';
+import { execute, queryAll } from '../db/client';
+import { createGrant } from '../auth/password';
 
-interface BookRow {
+interface _BookRow {
   id: string;
   slug: string;
   title: string;
@@ -13,7 +13,7 @@ interface BookRow {
   cover_image_url: string | null;
 }
 
-interface GrantRow {
+interface _GrantRow {
   id: string;
   book_id: string;
   email: string;
@@ -239,7 +239,7 @@ export async function handleGetBookGrants(
     env,
     `SELECT * FROM book_access_grants WHERE book_id = ? ORDER BY created_at DESC`,
     [bookId]
-  ) as unknown as GrantRow[];
+  ) as unknown as _GrantRow[];
 
   return jsonResponse({
     ok: true,
@@ -262,13 +262,13 @@ export async function handleGetAuditLog(
   entityId?: string,
   limit = 100
 ): Promise<Response> {
-  const entries = await logAudit(env, {
+  await logAudit(env, {
     entityType: entityType as 'book' | 'grant' | 'session' | 'comment' | 'user' | 'bookmark' | 'highlight',
     entityId: entityId ?? '',
     action: 'query',
   });
 
-  const entries2 = await queryAll(
+  const rows = await queryAll(
     env,
     `SELECT * FROM audit_log WHERE (? IS NULL OR entity_type = ?) AND (? IS NULL OR entity_id = ?) ORDER BY created_at DESC LIMIT ?`,
     [entityType ?? null, entityType ?? null, entityId ?? null, entityId ?? null, limit]
@@ -276,7 +276,7 @@ export async function handleGetAuditLog(
 
   return jsonResponse({
     ok: true,
-    data: entries2.map(row => ({
+    data: rows.map(row => ({
       id: row.id,
       actorEmail: row.actor_email,
       entityType: row.entity_type,

@@ -3,43 +3,14 @@ description: Execute atomic commit workflow - validate, commit, push, create PR,
 subtask: false
 ---
 
-Execute the atomic commit workflow.
+Execute the atomic commit workflow script.
 
-## Workflow Steps
+Run: `./scripts/atomic-commit/run.sh $ARGUMENTS`
 
-1. **Validate** - Run quality gate (`./scripts/quality_gate.sh`)
-2. **Branch** - Create feature branch if on main
-3. **Commit** - Stage and commit all changes
-4. **Push** - Push to remote
-5. **PR** - Create a PR (if applicable)
-6. **Verify** - Monitor CI until all checks pass
-
-## Key Principles
-
-- **Atomic commits** - One logical change per commit
-- **Verify before push** - Quality gate must pass
-- **Push immediately** - After successful commit
-- **PR creation** - For non-main branches
-
-## Usage
-
-Run directly without arguments - the workflow handles staging and commit message:
-
-```bash
-# This will prompt for commit message
-./scripts/atomic-commit/run.sh
-```
-
-## Prerequisites
-
-- Ensure all tests pass
-- No lint or type errors
-- Build succeeds
-- All skills validated
-
-## CI Verification
-
-After push, monitor GitHub Actions:
-- CI workflow must pass
-- All jobs must succeed
-- Report any failures immediately
+This script will:
+1. Run quality gate validation
+2. Create a feature branch if on main
+3. Stage and commit all changes
+4. Push to remote
+5. Create a PR
+6. Monitor GitHub Actions until all checks pass

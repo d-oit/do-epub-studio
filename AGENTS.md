@@ -1,8 +1,53 @@
 # AGENTS.md
 
+> Single source of truth for all AI coding agents in this repository.
+> Supported by: Claude Code, Windsurf, Gemini CLI, Codex, Copilot, OpenCode, Devin, Amp, Zed, Warp, RooCode, Jules
+> See: https://agents.md
+
+## Named Constants
+
+```bash
+# File size limits (lines)
+readonly MAX_LINES_PER_SOURCE_FILE=500
+readonly MAX_LINES_PER_SKILL_MD=250
+readonly MAX_LINES_AGENTS_MD=150
+
+# Retry and polling configuration
+readonly DEFAULT_MAX_RETRIES=3
+readonly DEFAULT_RETRY_DELAY_SECONDS=5
+readonly DEFAULT_POLL_INTERVAL_SECONDS=5
+readonly DEFAULT_MAX_POLL_ATTEMPTS=12
+readonly DEFAULT_TIMEOUT_SECONDS=1800
+
+# Git/PR configuration
+readonly MAX_COMMIT_SUBJECT_LENGTH=72
+readonly MAX_PR_TITLE_LENGTH=72
+```
+
 ## Purpose
 
 This repository builds `do EPUB Studio`, a production-grade EPUB reading and editorial workspace with gated access, offline reading, comments, highlights, and secure distribution.
+
+## Setup
+
+```bash
+# Create skill symlinks (run after clone)
+./scripts/setup-skills.sh
+
+# Install git pre-commit hook
+cp scripts/pre-commit-hook.sh .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
+```
+
+## Version Management
+
+**Single source of truth**: `VERSION` file at project root. Never manually edit version strings in other files.
+
+```bash
+# Bump version - edit VERSION only
+echo "0.3.0" > VERSION
+git add VERSION
+git commit -m "chore: bump version to 0.3.0"
+```
 
 ## Standard Workflow
 

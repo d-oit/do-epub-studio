@@ -69,7 +69,7 @@ export function LoginPage() {
       });
 
       navigate(`/read/${data.data.book.slug}`);
-    } catch (err) {
+    } catch (_err) {
       setError('Network error. Please try again.');
     } finally {
       setIsLoading(false);

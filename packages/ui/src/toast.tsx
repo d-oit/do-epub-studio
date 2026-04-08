@@ -1,4 +1,4 @@
-import { type ReactNode, createContext, useContext, useState, useCallback } from 'react';
+import { type ReactNode, createContext, useState, useCallback } from 'react';
 
 export type ToastType = 'success' | 'error' | 'info' | 'warning';
 
@@ -43,7 +43,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function toast(type: ToastType, message: string, duration?: number) {
+export function toast(_type: ToastType, _message: string, _duration?: number) {
   console.warn('Toast not initialized - wrap app in ToastProvider');
 }
 
