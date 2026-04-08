@@ -71,7 +71,7 @@ export async function handleGetBook(env: Env, request: Request, slug: string): P
 export async function handleGetFileUrl(
   env: Env,
   request: Request,
-  bookId: string,
+  bookIdentifier: string,
 ): Promise<Response> {
   const auth = await requireAuth(env, request);
 
@@ -86,10 +86,27 @@ export async function handleGetFileUrl(
     return jsonResponse({ ok: false, error: { code: 'FORBIDDEN', message: 'Access denied' } }, 403);
   }
 
+  const book = await queryFirst<Pick<BookRow, 'id' | 'slug'>>(
+    env,
+    `SELECT id, slug FROM books WHERE (id = ? OR slug = ?) AND archived_at IS NULL LIMIT 1`,
+    [bookIdentifier, bookIdentifier],
+  );
+
+  if (!book) {
+    return jsonResponse(
+      { ok: false, error: { code: 'NOT_FOUND', message: 'Book not found' } },
+      404,
+    );
+  }
+
+  if (book.id !== auth.bookId) {
+    return jsonResponse({ ok: false, error: { code: 'FORBIDDEN', message: 'Access denied' } }, 403);
+  }
+
   const bookFile = (await queryFirst(
     env,
     `SELECT * FROM book_files WHERE book_id = ? ORDER BY created_at DESC LIMIT 1`,
-    [bookId],
+    [book.id],
   )) as BookFileRow | null;
 
   if (!bookFile) {
@@ -99,7 +116,7 @@ export async function handleGetFileUrl(
     );
   }
 
-  const signedUrl = await generateSignedUrl(env, bookId, bookFile.storage_key);
+  const signedUrl = await generateSignedUrl(env, book.id, bookFile.storage_key);
 
   return jsonResponse({
     ok: true,

@@ -2,6 +2,7 @@
   "name": "do-epub-studio",
   "version": "0.0.1",
   "private": true,
+  "packageManager": "pnpm@9.15.9",
   "type": "module",
   "scripts": {
     "dev": "turbo run dev --parallel",
