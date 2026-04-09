@@ -1,13 +1,13 @@
 ---
-version: "1.0.0"
+version: '1.0.0'
 name: learn
-description: Extract non-obvious session learnings into scoped AGENTS.md files. Use after completing non-trivial tasks to capture insights that would otherwise be lost.
+description: Extract non-obvious session learnings into scoped files. Use after completing non-trivial tasks to capture insights that would otherwise be lost.
 license: MIT
 ---
 
 # Learn
 
-Extract non-obvious session learnings into scoped `AGENTS.md` files to preserve knowledge across sessions.
+Extract non-obvious session learnings into scoped files to preserve knowledge across sessions.
 
 ## When to Use
 
@@ -33,28 +33,30 @@ Activate after completing a non-trivial task to capture insights that would othe
 
 ### Scoping Rules
 
-Place learnings in the most specific `AGENTS.md` file:
-- **Project-wide**: Root `AGENTS.md`.
+Place learnings in the most specific location:
+
+- **Project-wide**: `agents-docs/LEARNINGS.md`.
 - **Script-specific**: `scripts/AGENTS.md`.
 - **Skill-specific**: `.agents/skills/<name>/AGENTS.md`.
 
 ### Format
 
-- 1–3 lines per insight in `AGENTS.md`.
-- Max 150 lines total in root AGENTS.md.
-- Bulleted list under a "Recent Project-Wide Learnings" or "Context" section.
+- 1–3 lines per insight.
+- Bulleted list in the appropriate scoped file.
+- No duplicates of existing entries.
 
 ## Example
 
 After debugging a Turso sync issue:
 
 ```markdown
-## Recent Project-Wide Learnings
+## Learnings (Project-Wide)
 
-- **Turso Sync**: Database must be open in read mode during sync operations; write locks cause intermittent failures (LESSON-001)
+- **Turso Sync**: Database must be open in read mode during sync operations; write locks cause intermittent failures
 ```
 
 ## Reference Files
 
 - `AGENTS.md` - Root agent guidance and constraints.
+- `agents-docs/LEARNINGS.md` - Project-wide learnings.
 - `plans/` - ADRs and phase plans.

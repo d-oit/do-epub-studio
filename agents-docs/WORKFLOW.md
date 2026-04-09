@@ -35,10 +35,10 @@ git push -u origin HEAD
 
 After non-trivial work, capture non-obvious discoveries:
 
-1. **Run the `learn` skill** if available, or manually append to the nearest relevant `AGENTS.md`
+1. **Run the `learn` skill** if available, or manually append to the nearest relevant file
 2. **Capture only**: hidden file relationships, surprising execution behavior, undocumented commands, fragile config, files that must change together
 3. **Never write**: obvious facts, duplicates, verbose explanations, session-specific notes
-4. **Scoping**: project-wide → root `AGENTS.md`; script-specific → `scripts/AGENTS.md`; skill-specific → `.agents/skills/<name>/AGENTS.md`
+4. **Scoping**: project-wide → `agents-docs/LEARNINGS.md`; script-specific → `scripts/AGENTS.md`; skill-specific → `.agents/skills/<name>/AGENTS.md`
 
 ## Quality Gate Usage
 

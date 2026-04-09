@@ -9,7 +9,7 @@
 - `plans/002-006` – ADRs for stack, storage, auth, offline, annotations
 - `plans/007-implementation-phases.md` – current execution phase
 - `docs/coding-guide.md` – consolidated architecture + process decisions
-- `agents-docs/*.md` – workflow, skills, hooks, context
+- `agents-docs/*.md` – workflow, skills, hooks, context, learnings
 
 ## Workflow (MANDATORY)
 
@@ -101,9 +101,4 @@ Set `SKIP_TESTS=true` only if explicitly approved.
 
 - Capture non-obvious discoveries (fragile config, tool quirks, performance findings) via `learn` skill per task.
 - No trivial or duplicate learnings; focus on actionable insights.
-
-## Recent Project-Wide Learnings
-
-- **Vitest**: `turbo run test` hangs if any package uses bare `vitest`; always pass `--run` so CI exits cleanly.
-- **Swarm Deliverables**: `plans/analysis-*.md` assumes `analysis/SWARM_ANALYSIS.md` exists; keep that file updated after every multi-agent audit so downstream tasks find the aggregated report.
-- **EPUB.js + TypeScript**: epubjs types expect non-null refs; capture in local variable before passing to `renderTo()` to avoid TS2769 errors.
+- Project-wide learnings are stored in `agents-docs/LEARNINGS.md` (not in this file).
