@@ -489,6 +489,7 @@ export function ReaderPage() {
       renditionRef.current?.destroy();
       bookRef.current?.destroy();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [epubUrl, sessionToken, bookId, applyTheme, applyTypography, setError, setProgress, t]);
 
   useEffect(() => {
@@ -731,7 +732,7 @@ export function ReaderPage() {
       {selection && capabilities?.canHighlight && (
         <AnnotationToolbar
           selection={selection}
-          onHighlight={handleCreateHighlight}
+          onHighlight={(color) => void handleCreateHighlight(color)}
           onComment={() => {
             setIsCommentMode(true);
             setShowComments(true);
@@ -748,12 +749,12 @@ export function ReaderPage() {
         onClose={() => setShowComments(false)}
         comments={comments}
         highlights={highlights}
-        onResolveComment={handleResolveComment}
-        onReplyToComment={handleReplyToComment}
-        onEditComment={handleEditComment}
-        onDeleteComment={handleDeleteComment}
-        onEditHighlight={handleEditHighlight}
-        onDeleteHighlight={handleDeleteHighlight}
+        onResolveComment={(id) => void handleResolveComment(id)}
+        onReplyToComment={(id, text) => void handleReplyToComment(id, text)}
+        onEditComment={(id, text) => void handleEditComment(id, text)}
+        onDeleteComment={(id) => void handleDeleteComment(id)}
+        onEditHighlight={(id, note) => void handleEditHighlight(id, note)}
+        onDeleteHighlight={(id) => void handleDeleteHighlight(id)}
         onNavigateToAnnotation={handleNavigateToAnnotation}
         currentChapter={useReaderStore.getState().currentChapter}
         locale="en"
