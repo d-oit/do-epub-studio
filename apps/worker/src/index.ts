@@ -11,6 +11,8 @@ import {
   handleAccessRequest,
   handleLogout,
   handleRefresh,
+  handleValidatePermission,
+  handleValidateAllPermissions,
   handleGetBook,
   handleGetFileUrl,
   handleListBooks,
@@ -21,6 +23,8 @@ import {
   handleDeleteBookmark,
   handleListHighlights,
   handleCreateHighlight,
+  handleDeleteHighlight,
+  handleUpdateHighlight,
   handleListComments,
   handleCreateComment,
   handleUpdateComment,
@@ -132,6 +136,23 @@ async function handleRequest(env: Env, request: Request): Promise<Response> {
     }
   }
 
+  const highlightDeleteMatch = /\/api\/books\/([^/]+)\/highlights\/([^/]+)$/.exec(path);
+  if (highlightDeleteMatch && method === 'DELETE') {
+    return handleDeleteHighlight(env, request, highlightDeleteMatch[1], highlightDeleteMatch[2]);
+  }
+
+  const highlightPatchMatch = /\/api\/books\/([^/]+)\/highlights\/([^/]+)$/.exec(path);
+  if (highlightPatchMatch && method === 'PATCH') {
+    const body = await request.json();
+    return handleUpdateHighlight(
+      env,
+      request,
+      highlightPatchMatch[1],
+      highlightPatchMatch[2],
+      body,
+    );
+  }
+
   const commentsMatch = /\/api\/books\/([^/]+)\/comments$/.exec(path);
   if (commentsMatch) {
     const bookId = commentsMatch[1];
@@ -187,6 +208,20 @@ async function handleRequest(env: Env, request: Request): Promise<Response> {
     const entityId = url.searchParams.get('entityId') ?? undefined;
     const limit = parseInt(url.searchParams.get('limit') ?? '100', 10);
     return handleGetAuditLog(env, entityType, entityId, limit);
+  }
+
+  const validatePermissionMatch = /\/api\/access\/validate\?bookId=(.+)$/.exec(path);
+  if (validatePermissionMatch && method === 'GET') {
+    const bookId = decodeURIComponent(validatePermissionMatch[1]);
+    const authHeader = request.headers.get('Authorization');
+    const token = authHeader?.replace('Bearer ', '') ?? '';
+    return handleValidatePermission(env, bookId, token);
+  }
+
+  if (path === '/api/access/validate-all' && method === 'GET') {
+    const authHeader = request.headers.get('Authorization');
+    const token = authHeader?.replace('Bearer ', '') ?? '';
+    return handleValidateAllPermissions(env, token);
   }
 
   return jsonResponse({ ok: false, error: { code: 'NOT_FOUND', message: 'Not found' } }, 404);

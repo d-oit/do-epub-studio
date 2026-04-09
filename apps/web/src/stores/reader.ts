@@ -56,6 +56,9 @@ interface ReaderState {
   currentChapter: string | null;
   isLoading: boolean;
   error: string | null;
+  isOffline: boolean;
+  pendingSyncCount: number;
+  permissionStatus: 'valid' | 'invalid' | 'checking';
   setProgress: (progress: ReadingProgress) => void;
   addBookmark: (bookmark: Bookmark) => void;
   removeBookmark: (id: string) => void;
@@ -63,12 +66,16 @@ interface ReaderState {
   addHighlight: (highlight: Highlight) => void;
   removeHighlight: (id: string) => void;
   setHighlights: (highlights: Highlight[]) => void;
+  updateHighlight: (id: string, updates: Partial<Highlight>) => void;
   addComment: (comment: Comment) => void;
   updateComment: (id: string, updates: Partial<Comment>) => void;
   setComments: (comments: Comment[]) => void;
   setCurrentChapter: (chapter: string | null) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
+  setOffline: (offline: boolean) => void;
+  setPendingSyncCount: (count: number) => void;
+  setPermissionStatus: (status: 'valid' | 'invalid' | 'checking') => void;
 }
 
 export const useReaderStore = create<ReaderState>((set) => ({
@@ -79,17 +86,22 @@ export const useReaderStore = create<ReaderState>((set) => ({
   currentChapter: null,
   isLoading: false,
   error: null,
+  isOffline: !navigator.onLine,
+  pendingSyncCount: 0,
+  permissionStatus: 'checking',
   setProgress: (progress) => set({ progress }),
-  addBookmark: (bookmark) =>
-    set((state) => ({ bookmarks: [bookmark, ...state.bookmarks] })),
+  addBookmark: (bookmark) => set((state) => ({ bookmarks: [bookmark, ...state.bookmarks] })),
   removeBookmark: (id) =>
     set((state) => ({ bookmarks: state.bookmarks.filter((b) => b.id !== id) })),
   setBookmarks: (bookmarks) => set({ bookmarks }),
-  addHighlight: (highlight) =>
-    set((state) => ({ highlights: [highlight, ...state.highlights] })),
+  addHighlight: (highlight) => set((state) => ({ highlights: [highlight, ...state.highlights] })),
   removeHighlight: (id) =>
     set((state) => ({ highlights: state.highlights.filter((h) => h.id !== id) })),
   setHighlights: (highlights) => set({ highlights }),
+  updateHighlight: (id, updates) =>
+    set((state) => ({
+      highlights: state.highlights.map((h) => (h.id === id ? { ...h, ...updates } : h)),
+    })),
   addComment: (comment) =>
     set((state) => {
       if (comment.parentCommentId) {
@@ -97,7 +109,7 @@ export const useReaderStore = create<ReaderState>((set) => ({
           comments.map((c) =>
             c.id === comment.parentCommentId
               ? { ...c, replies: [...(c.replies || []), comment] }
-              : { ...c, replies: addReply(c.replies || []) }
+              : { ...c, replies: addReply(c.replies || []) },
           );
         return { comments: addReply(state.comments) };
       }
@@ -107,7 +119,7 @@ export const useReaderStore = create<ReaderState>((set) => ({
     set((state) => {
       const update = (comments: Comment[]): Comment[] =>
         comments.map((c) =>
-          c.id === id ? { ...c, ...updates } : { ...c, replies: update(c.replies || []) }
+          c.id === id ? { ...c, ...updates } : { ...c, replies: update(c.replies || []) },
         );
       return { comments: update(state.comments) };
     }),
@@ -115,4 +127,7 @@ export const useReaderStore = create<ReaderState>((set) => ({
   setCurrentChapter: (chapter) => set({ currentChapter: chapter }),
   setLoading: (loading) => set({ isLoading: loading }),
   setError: (error) => set({ error }),
+  setOffline: (offline) => set({ isOffline: offline }),
+  setPendingSyncCount: (count) => set({ pendingSyncCount: count }),
+  setPermissionStatus: (status) => set({ permissionStatus: status }),
 }));

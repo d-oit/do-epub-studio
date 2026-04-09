@@ -95,3 +95,77 @@ export async function handleRefresh(env: Env, token: string): Promise<Response> 
     data: { sessionToken: newToken },
   });
 }
+
+export async function handleValidatePermission(
+  env: Env,
+  bookId: string,
+  token: string,
+): Promise<Response> {
+  const { validateSession } = await import('../auth/session');
+  const { getGrantByBookAndSession } = await import('../auth/password');
+
+  const sessionResult = await validateSession(env, token);
+
+  if (!sessionResult.valid || !sessionResult.session) {
+    return jsonResponse(
+      {
+        ok: false,
+        error: { code: 'SESSION_INVALID', message: 'Invalid session' },
+      },
+      401,
+    );
+  }
+
+  const grant = await getGrantByBookAndSession(env, bookId, sessionResult.session.email);
+
+  if (!grant || grant.revoked_at) {
+    return jsonResponse({
+      ok: true,
+      data: {
+        valid: false,
+        grantId: '',
+        canComment: false,
+        canDownloadOffline: false,
+      },
+    });
+  }
+
+  return jsonResponse({
+    ok: true,
+    data: {
+      valid: true,
+      grantId: grant.id,
+      canComment: grant.comments_allowed === 1,
+      canDownloadOffline: grant.offline_allowed === 1,
+    },
+  });
+}
+
+export async function handleValidateAllPermissions(env: Env, token: string): Promise<Response> {
+  const { validateSession } = await import('../auth/session');
+  const { getGrantsBySession } = await import('../auth/password');
+
+  const sessionResult = await validateSession(env, token);
+
+  if (!sessionResult.valid || !sessionResult.session) {
+    return jsonResponse(
+      {
+        ok: false,
+        error: { code: 'SESSION_INVALID', message: 'Invalid session' },
+      },
+      401,
+    );
+  }
+
+  const grants = await getGrantsBySession(env, sessionResult.session.email);
+
+  const validGrantIds = grants.filter((g) => !g.revoked_at).map((g) => g.id);
+
+  return jsonResponse({
+    ok: true,
+    data: {
+      grantIds: validGrantIds,
+      revokedBookIds: grants.filter((g) => g.revoked_at).map((g) => g.book_id),
+    },
+  });
+}

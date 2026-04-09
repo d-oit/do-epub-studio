@@ -127,6 +127,55 @@ export async function apiRequest<T>(endpoint: string, options: ApiRequestOptions
   }
 }
 
+export const api = {
+  async get(endpoint: string, options?: ApiRequestOptions): Promise<Response> {
+    return fetch(`${API_BASE_URL}${endpoint}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept-Language': getCurrentLocale(),
+        ...options?.headers,
+      },
+      ...options,
+    });
+  },
+  async post(endpoint: string, data?: unknown, options?: ApiRequestOptions): Promise<Response> {
+    return fetch(`${API_BASE_URL}${endpoint}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept-Language': getCurrentLocale(),
+        ...options?.headers,
+      },
+      body: data ? JSON.stringify(data) : undefined,
+      ...options,
+    });
+  },
+  async put(endpoint: string, data?: unknown, options?: ApiRequestOptions): Promise<Response> {
+    return fetch(`${API_BASE_URL}${endpoint}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept-Language': getCurrentLocale(),
+        ...options?.headers,
+      },
+      body: data ? JSON.stringify(data) : undefined,
+      ...options,
+    });
+  },
+  async delete(endpoint: string, options?: ApiRequestOptions): Promise<Response> {
+    return fetch(`${API_BASE_URL}${endpoint}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept-Language': getCurrentLocale(),
+        ...options?.headers,
+      },
+      ...options,
+    });
+  },
+};
+
 export function getApiUrl(path: string): string {
   return `${API_BASE_URL}${path}`;
 }

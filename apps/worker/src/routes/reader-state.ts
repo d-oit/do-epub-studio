@@ -2,6 +2,7 @@ import type { Env } from '../lib/env';
 import { requireAuth } from '../auth/middleware';
 import { queryFirst, queryAll, execute } from '../db/client';
 import { jsonResponse } from '../lib/responses';
+import { logAudit } from '../audit';
 
 interface ProgressRow {
   id: string;
@@ -286,6 +287,14 @@ export async function handleCreateHighlight(
     ],
   );
 
+  await logAudit(env, {
+    entityType: 'highlight',
+    entityId: id,
+    action: 'create',
+    actorEmail: auth.email,
+    payload: { bookId, chapterRef: body.chapterRef, color: body.color },
+  });
+
   return jsonResponse(
     {
       ok: true,
@@ -302,4 +311,101 @@ export async function handleCreateHighlight(
     },
     201,
   );
+}
+
+export async function handleDeleteHighlight(
+  env: Env,
+  request: Request,
+  bookId: string,
+  highlightId: string,
+): Promise<Response> {
+  const auth = await requireAuth(env, request);
+
+  if (!auth) {
+    return jsonResponse(
+      { ok: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } },
+      401,
+    );
+  }
+
+  await execute(env, `DELETE FROM highlights WHERE id = ? AND book_id = ? AND user_email = ?`, [
+    highlightId,
+    bookId,
+    auth.email,
+  ]);
+
+  await logAudit(env, {
+    entityType: 'highlight',
+    entityId: highlightId,
+    action: 'delete',
+    actorEmail: auth.email,
+    payload: { bookId },
+  });
+
+  return jsonResponse({ ok: true });
+}
+
+export async function handleUpdateHighlight(
+  env: Env,
+  request: Request,
+  bookId: string,
+  highlightId: string,
+  body: { note?: string; color?: string },
+): Promise<Response> {
+  const auth = await requireAuth(env, request);
+
+  if (!auth) {
+    return jsonResponse(
+      { ok: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } },
+      401,
+    );
+  }
+
+  const highlight = (await queryFirst(env, `SELECT * FROM highlights WHERE id = ?`, [
+    highlightId,
+  ])) as HighlightRow | null;
+
+  if (!highlight) {
+    return jsonResponse(
+      { ok: false, error: { code: 'NOT_FOUND', message: 'Highlight not found' } },
+      404,
+    );
+  }
+
+  if (highlight.user_email !== auth.email) {
+    return jsonResponse(
+      { ok: false, error: { code: 'FORBIDDEN', message: 'Cannot edit others highlights' } },
+      403,
+    );
+  }
+
+  const now = new Date().toISOString();
+  const updates: string[] = ['updated_at = ?'];
+  const args: (string | number | null)[] = [now];
+
+  if (body.note !== undefined) {
+    updates.push('note = ?');
+    args.push(body.note);
+  }
+  if (body.color !== undefined) {
+    updates.push('color = ?');
+    args.push(body.color);
+  }
+
+  args.push(highlightId);
+
+  await execute(env, `UPDATE highlights SET ${updates.join(', ')} WHERE id = ?`, args);
+
+  await logAudit(env, {
+    entityType: 'highlight',
+    entityId: highlightId,
+    action: 'update',
+    actorEmail: auth.email,
+    payload: body,
+  });
+
+  return jsonResponse({
+    ok: true,
+    data: { id: highlightId, ...body },
+  });
 }

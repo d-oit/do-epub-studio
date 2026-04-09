@@ -2,6 +2,7 @@ import type { Env } from '../lib/env';
 import { requireAuth } from '../auth/middleware';
 import { queryFirst, queryAll, execute } from '../db/client';
 import { jsonResponse } from '../lib/responses';
+import { logAudit } from '../audit';
 
 interface CommentRow {
   id: string;
@@ -95,6 +96,14 @@ export async function handleCreateComment(
     ],
   );
 
+  await logAudit(env, {
+    entityType: 'comment',
+    entityId: id,
+    action: 'create',
+    actorEmail: auth.email,
+    payload: { bookId, chapterRef: body.chapterRef, hasParent: !!body.parentCommentId },
+  });
+
   return jsonResponse(
     {
       ok: true,
@@ -175,6 +184,15 @@ export async function handleUpdateComment(
   args.push(commentId);
 
   await execute(env, `UPDATE comments SET ${updates.join(', ')} WHERE id = ?`, args);
+
+  await logAudit(env, {
+    entityType: 'comment',
+    entityId: commentId,
+    action:
+      body.status === 'resolved' ? 'resolve' : body.status === 'deleted' ? 'delete' : 'update',
+    actorEmail: auth.email,
+    payload: body,
+  });
 
   return jsonResponse({
     ok: true,

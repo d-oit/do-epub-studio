@@ -6,12 +6,34 @@ import { LocaleSwitcher } from '../../components/LocaleSwitcher';
 import { useTranslation } from '../../hooks/useTranslation';
 import { apiRequest } from '../../lib/api';
 import {
+  fetchHighlights,
+  fetchComments,
+  createHighlight,
+  updateHighlight,
+  deleteHighlight,
+  updateComment,
+} from '../../lib/api/annotations';
+import {
   useAuthStore,
   useReaderStore,
   usePreferencesStore,
   FONT_SIZES,
   LINE_HEIGHTS,
 } from '../../stores';
+import {
+  saveProgress,
+  queueSync,
+  setupOnlineListener,
+  generateMutationId,
+  saveAnnotation,
+} from '../../lib/offline';
+import { setupZombieDetection } from '../../lib/offline/permissions';
+import {
+  AnnotationToolbar,
+  extractSelectionData,
+  CommentsPanel,
+  type SelectionData,
+} from './components/annotations';
 
 interface TocItem {
   label: string;
@@ -22,8 +44,25 @@ interface TocItem {
 export function ReaderPage() {
   const { bookSlug } = useParams<{ bookSlug: string }>();
   const navigate = useNavigate();
-  const { sessionToken, bookId, bookTitle, capabilities: _capabilities, logout } = useAuthStore();
-  const { progress: _progress, setProgress, setError, error } = useReaderStore();
+  const { sessionToken, bookId, bookTitle, capabilities, logout } = useAuthStore();
+  const {
+    progress: _progress,
+    setProgress,
+    setError,
+    error,
+    setOffline,
+    setPermissionStatus,
+    highlights,
+    setHighlights,
+    addHighlight,
+    updateHighlight: updateHighlightInStore,
+    removeHighlight,
+    comments,
+    setComments,
+    addComment,
+    updateComment: updateCommentInStore,
+    setCurrentChapter,
+  } = useReaderStore();
   const {
     reader,
     setTheme,
@@ -36,14 +75,233 @@ export function ReaderPage() {
   const viewerRef = useRef<HTMLDivElement>(null);
   const bookRef = useRef<Book | null>(null);
   const renditionRef = useRef<Rendition | null>(null);
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const [epubUrl, setEpubUrl] = useState<string | null>(null);
   const [toc, setToc] = useState<TocItem[]>([]);
   const [showToc, setShowToc] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
+  const [revokedBooks, setRevokedBooks] = useState<Set<string>>(new Set());
+  const [selection, setSelection] = useState<SelectionData | null>(null);
+  const [showComments, setShowComments] = useState(false);
+  const [isCommentMode, setIsCommentMode] = useState(false);
 
   void _progress;
   void _setPageWidth;
+
+  useEffect(() => {
+    if (!sessionToken || !bookId) return;
+
+    const fetchAnnotations = async () => {
+      try {
+        const [fetchedHighlights, fetchedComments] = await Promise.all([
+          fetchHighlights(bookId, sessionToken),
+          fetchComments(bookId, sessionToken),
+        ]);
+        setHighlights(fetchedHighlights);
+        setComments(fetchedComments);
+      } catch (err) {
+        console.warn('Failed to fetch annotations', err);
+      }
+    };
+
+    void fetchAnnotations();
+  }, [sessionToken, bookId, setHighlights, setComments]);
+
+  useEffect(() => {
+    const handleSelectionChange = () => {
+      if (iframeRef.current && !isCommentMode) {
+        const sel = extractSelectionData(iframeRef.current);
+        if (sel && sel.text.length >= 3) {
+          setSelection(sel);
+        } else {
+          setSelection(null);
+        }
+      }
+    };
+
+    document.addEventListener('mouseup', handleSelectionChange);
+    return () => {
+      document.removeEventListener('mouseup', handleSelectionChange);
+    };
+  }, [isCommentMode]);
+
+  useEffect(() => {
+    const handleOnline = () => setOffline(false);
+    const handleOffline = () => setOffline(true);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    setOffline(!navigator.onLine);
+
+    const cleanupOnline = setupOnlineListener();
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+      cleanupOnline();
+    };
+  }, [setOffline]);
+
+  useEffect(() => {
+    if (!bookId) return;
+
+    const cleanup = setupZombieDetection((revokedBookId) => {
+      setRevokedBooks((prev) => new Set(prev).add(revokedBookId));
+    });
+    return cleanup;
+  }, [bookId]);
+
+  useEffect(() => {
+    if (revokedBooks.has(bookId || '')) {
+      setError(t('reader.accessRevoked'));
+      setPermissionStatus('invalid');
+    }
+  }, [revokedBooks, bookId, setError, setPermissionStatus, t]);
+
+  const handleCreateHighlight = useCallback(
+    async (color: string) => {
+      if (!selection || !sessionToken || !bookId) return;
+
+      try {
+        const mutationId = generateMutationId();
+        const highlight = await createHighlight(
+          bookId,
+          {
+            chapterRef: selection.chapterRef,
+            cfiRange: selection.cfiRange,
+            selectedText: selection.text,
+            color,
+          },
+          sessionToken,
+        );
+        addHighlight(highlight);
+        setSelection(null);
+
+        if (!navigator.onLine) {
+          await saveAnnotation({
+            id: highlight.id,
+            bookId,
+            type: 'highlight',
+            cfi: selection.cfiRange,
+            text: selection.text,
+            color,
+            createdAt: Date.now(),
+            synced: false,
+            mutationId,
+          });
+          await queueSync('annotation', { bookId, annotation: highlight }, mutationId);
+        }
+      } catch (err) {
+        console.error('Failed to create highlight', err);
+      }
+    },
+    [selection, sessionToken, bookId, addHighlight],
+  );
+
+  const handleResolveComment = useCallback(
+    async (commentId: string) => {
+      if (!sessionToken || !bookId) return;
+
+      const comment = comments.find((c) => c.id === commentId);
+      if (!comment) return;
+
+      const newStatus = comment.status === 'resolved' ? 'open' : 'resolved';
+
+      try {
+        await updateComment(commentId, { status: newStatus }, sessionToken);
+        updateCommentInStore(commentId, {
+          status: newStatus,
+          resolvedAt: newStatus === 'resolved' ? new Date().toISOString() : null,
+        });
+      } catch (err) {
+        console.error('Failed to update comment', err);
+      }
+    },
+    [sessionToken, bookId, comments, updateCommentInStore],
+  );
+
+  const handleReplyToComment = useCallback(
+    async (parentId: string, text: string) => {
+      if (!sessionToken || !bookId) return;
+
+      try {
+        const comment = await createComment(
+          bookId,
+          { body: text, parentCommentId: parentId },
+          sessionToken,
+        );
+        addComment(comment);
+      } catch (err) {
+        console.error('Failed to reply to comment', err);
+      }
+    },
+    [sessionToken, bookId, addComment],
+  );
+
+  const handleEditComment = useCallback(
+    async (commentId: string, text: string) => {
+      if (!sessionToken) return;
+
+      try {
+        await updateComment(commentId, { body: text }, sessionToken);
+        updateCommentInStore(commentId, { body: text, updatedAt: new Date().toISOString() });
+      } catch (err) {
+        console.error('Failed to edit comment', err);
+      }
+    },
+    [sessionToken, updateCommentInStore],
+  );
+
+  const handleDeleteComment = useCallback(
+    async (commentId: string) => {
+      if (!sessionToken) return;
+
+      try {
+        await updateComment(commentId, { status: 'deleted' }, sessionToken);
+        updateCommentInStore(commentId, { status: 'deleted' });
+      } catch (err) {
+        console.error('Failed to delete comment', err);
+      }
+    },
+    [sessionToken, updateCommentInStore],
+  );
+
+  const handleEditHighlight = useCallback(
+    async (highlightId: string, note: string) => {
+      if (!sessionToken || !bookId) return;
+
+      try {
+        await updateHighlight(bookId, highlightId, { note }, sessionToken);
+        updateHighlightInStore(highlightId, { note, updatedAt: new Date().toISOString() });
+      } catch (err) {
+        console.error('Failed to update highlight', err);
+      }
+    },
+    [sessionToken, bookId, updateHighlightInStore],
+  );
+
+  const handleDeleteHighlight = useCallback(
+    async (highlightId: string) => {
+      if (!sessionToken || !bookId) return;
+
+      try {
+        await deleteHighlight(bookId, highlightId, sessionToken);
+        removeHighlight(highlightId);
+      } catch (err) {
+        console.error('Failed to delete highlight', err);
+      }
+    },
+    [sessionToken, bookId, removeHighlight],
+  );
+
+  const handleNavigateToAnnotation = useCallback(async (chapterRef: string, cfiRange?: string) => {
+    if (renditionRef.current) {
+      if (cfiRange) {
+        await renditionRef.current.display(cfiRange);
+      } else if (chapterRef) {
+        await renditionRef.current.display(chapterRef);
+      }
+    }
+  }, []);
 
   const applyTheme = useCallback(
     (rendition: Rendition) => {
@@ -159,24 +417,62 @@ export function ReaderPage() {
 
         rendition.on(
           'relocated',
-          async (location: { start: { cfi: string; progress: number } }) => {
+          async (location: { start: { cfi: string; progress: number; href: string } }) => {
             const cfi = location.start.cfi;
             const progressPercent = location.start.progress;
+            const href = location.start.href;
             setProgress({
               locator: { cfi },
               progressPercent,
               updatedAt: new Date().toISOString(),
             });
 
+            const currentTocItem = toc.find((item) => item.href === href);
+            if (currentTocItem) {
+              setCurrentChapter(currentTocItem.href);
+            }
+
             if (sessionToken && bookId) {
-              try {
-                await apiRequest(`/api/books/${bookId}/progress`, {
-                  method: 'PUT',
-                  token: sessionToken,
-                  body: JSON.stringify({ locator: { cfi }, progressPercent }),
+              const mutationId = generateMutationId();
+              if (navigator.onLine) {
+                try {
+                  await apiRequest(`/api/books/${bookId}/progress`, {
+                    method: 'PUT',
+                    token: sessionToken,
+                    body: JSON.stringify({ locator: { cfi }, progressPercent, mutationId }),
+                  });
+                } catch (e) {
+                  console.warn('Failed to save progress online, queuing offline', e);
+                  await saveProgress({
+                    id: `${bookId}-progress`,
+                    bookId,
+                    cfi,
+                    percentage: progressPercent,
+                    lastRead: Date.now(),
+                    synced: false,
+                    mutationId,
+                  });
+                  await queueSync(
+                    'progress',
+                    { bookId, cfi, percentage: progressPercent, mutationId },
+                    mutationId,
+                  );
+                }
+              } else {
+                await saveProgress({
+                  id: `${bookId}-progress`,
+                  bookId,
+                  cfi,
+                  percentage: progressPercent,
+                  lastRead: Date.now(),
+                  synced: false,
+                  mutationId,
                 });
-              } catch (e) {
-                console.warn('Failed to save progress', e);
+                await queueSync(
+                  'progress',
+                  { bookId, cfi, percentage: progressPercent, mutationId },
+                  mutationId,
+                );
               }
             }
           },
@@ -265,6 +561,27 @@ export function ReaderPage() {
           </div>
 
           <div className="flex items-center space-x-2">
+            {capabilities?.canComment && (
+              <button
+                onClick={() => setShowComments(!showComments)}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded relative"
+                aria-label="Comments"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                  />
+                </svg>
+                {comments.filter((c) => c.status === 'open').length > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary-600 text-white text-xs rounded-full flex items-center justify-center">
+                    {comments.filter((c) => c.status === 'open').length}
+                  </span>
+                )}
+              </button>
+            )}
             <button
               onClick={() => setShowSettings(!showSettings)}
               className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
@@ -410,6 +727,37 @@ export function ReaderPage() {
           </nav>
         </aside>
       )}
+
+      {selection && capabilities?.canHighlight && (
+        <AnnotationToolbar
+          selection={selection}
+          onHighlight={handleCreateHighlight}
+          onComment={() => {
+            setIsCommentMode(true);
+            setShowComments(true);
+          }}
+          onClose={() => setSelection(null)}
+          locale="en"
+          canHighlight={capabilities?.canHighlight ?? false}
+          canComment={capabilities?.canComment ?? false}
+        />
+      )}
+
+      <CommentsPanel
+        isOpen={showComments}
+        onClose={() => setShowComments(false)}
+        comments={comments}
+        highlights={highlights}
+        onResolveComment={handleResolveComment}
+        onReplyToComment={handleReplyToComment}
+        onEditComment={handleEditComment}
+        onDeleteComment={handleDeleteComment}
+        onEditHighlight={handleEditHighlight}
+        onDeleteHighlight={handleDeleteHighlight}
+        onNavigateToAnnotation={handleNavigateToAnnotation}
+        currentChapter={useReaderStore.getState().currentChapter}
+        locale="en"
+      />
     </div>
   );
 }

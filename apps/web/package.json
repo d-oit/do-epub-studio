@@ -13,21 +13,24 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@do-epub-studio/reader-core": "workspace:*",
     "@do-epub-studio/shared": "workspace:*",
     "@do-epub-studio/ui": "workspace:*",
-    "@do-epub-studio/reader-core": "workspace:*",
     "epubjs": "^0.3.93",
+    "idb": "^8.0.3",
     "react": "^18",
     "react-dom": "^18",
     "react-router-dom": "^6",
-    "zustand": "^4",
-    "zod": "^3.25.76"
+    "uuid": "^13.0.0",
+    "zod": "^3.25.76",
+    "zustand": "^4"
   },
   "devDependencies": {
     "@playwright/test": "^1.40.0",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "@types/uuid": "^11.0.0",
     "@vitejs/plugin-react": "^4",
     "autoprefixer": "^10",
     "eslint": "^9.0.0",
@@ -35,6 +38,7 @@
     "tailwindcss": "^3",
     "typescript": "^5.4",
     "vite": "^5",
+    "vite-plugin-pwa": "^0.21.0",
     "vitest": "^1"
   }
 }

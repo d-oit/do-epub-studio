@@ -31,18 +31,15 @@ const PARALLELISM = 4;
 export async function hashPassword(password: string): Promise<string> {
   const encoder = new TextEncoder();
   const passwordBuffer = encoder.encode(password);
-  
+
   const hashBuffer = await crypto.subtle.digest('SHA-256', passwordBuffer);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
-  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-  
+  const hashHex = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+
   return `$argon2id$v=19$m=${MEMORY_KIB},t=${ITERATIONS},p=${PARALLELISM}$${hashHex.substring(0, 22)}$${hashHex.substring(22)}`;
 }
 
-export async function verifyPassword(
-  password: string,
-  storedHash: string
-): Promise<boolean> {
+export async function verifyPassword(password: string, storedHash: string): Promise<boolean> {
   if (!storedHash.startsWith(`$${ALGORITHM}$`)) {
     return false;
   }
@@ -51,7 +48,9 @@ export async function verifyPassword(
   const passwordBuffer = encoder.encode(password);
   const hashBuffer = await crypto.subtle.digest('SHA-256', passwordBuffer);
   const hashArray = new Uint8Array(hashBuffer);
-  const hashHex = Array.from(hashArray).map(b => b.toString(16).padStart(2, '0')).join('');
+  const hashHex = Array.from(hashArray)
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
 
   const parts = storedHash.split('$');
   const _storedParams = parts[2];
@@ -59,7 +58,7 @@ export async function verifyPassword(
   const storedDigest = parts[4];
 
   const computedDigest = hashHex.substring(22);
-  
+
   return storedSalt + storedDigest === hashHex.substring(0, 22) + computedDigest;
 }
 
@@ -67,27 +66,27 @@ export async function validateGrant(
   env: Env,
   bookSlug: string,
   email: string,
-  password?: string
+  password?: string,
 ): Promise<{ valid: boolean; grant?: GrantRow; book?: BookRow; error?: string }> {
-  const book = await queryFirst(
+  const book = (await queryFirst(
     env,
     `SELECT id, slug, title, author_name, visibility, cover_image_url 
      FROM books WHERE slug = ?`,
-    [bookSlug]
-  ) as BookRow | null;
+    [bookSlug],
+  )) as BookRow | null;
 
   if (!book) {
     return { valid: false, error: 'Book not found' };
   }
 
-  const grant = await queryFirst(
+  const grant = (await queryFirst(
     env,
     `SELECT id, book_id, email, password_hash, mode, allowed, comments_allowed, 
             offline_allowed, expires_at, revoked_at
      FROM book_access_grants 
      WHERE book_id = ? AND email = ? AND revoked_at IS NULL`,
-    [book.id, email.toLowerCase()]
-  ) as GrantRow | null;
+    [book.id, email.toLowerCase()],
+  )) as GrantRow | null;
 
   if (!grant) {
     return { valid: false, error: 'Access denied' };
@@ -125,7 +124,7 @@ export async function createGrant(
     offlineAllowed?: boolean;
     expiresAt?: string;
     invitedByUserId?: string;
-  }
+  },
 ): Promise<string> {
   const id = crypto.randomUUID();
   const passwordHash = options?.password ? await hashPassword(options.password) : null;
@@ -146,18 +145,16 @@ export async function createGrant(
       options?.offlineAllowed ? 1 : 0,
       options?.expiresAt ?? null,
       options?.invitedByUserId ?? null,
-    ]
+    ],
   );
 
   return id;
 }
 
 export async function revokeGrant(env: Env, grantId: string): Promise<void> {
-  await execute(
-    env,
-    `UPDATE book_access_grants SET revoked_at = datetime('now') WHERE id = ?`,
-    [grantId]
-  );
+  await execute(env, `UPDATE book_access_grants SET revoked_at = datetime('now') WHERE id = ?`, [
+    grantId,
+  ]);
 }
 
 export function computeCapabilities(grant: GrantRow) {
@@ -170,4 +167,31 @@ export function computeCapabilities(grant: GrantRow) {
     canExportNotes: grant.comments_allowed === 1,
     canManageAccess: false,
   };
+}
+
+export async function getGrantByBookAndSession(
+  env: Env,
+  bookId: string,
+  email: string,
+): Promise<GrantRow | null> {
+  return queryFirst(
+    env,
+    `SELECT id, book_id, email, password_hash, mode, allowed, comments_allowed, 
+            offline_allowed, expires_at, revoked_at
+     FROM book_access_grants 
+     WHERE book_id = ? AND email = ? AND allowed = 1`,
+    [bookId, email.toLowerCase()],
+  ) as Promise<GrantRow | null>;
+}
+
+export async function getGrantsBySession(env: Env, email: string): Promise<GrantRow[]> {
+  const { queryAll } = await import('../db/client');
+  return queryAll(
+    env,
+    `SELECT id, book_id, email, password_hash, mode, allowed, comments_allowed, 
+            offline_allowed, expires_at, revoked_at
+     FROM book_access_grants 
+     WHERE email = ?`,
+    [email.toLowerCase()],
+  ) as unknown as Promise<GrantRow[]>;
 }

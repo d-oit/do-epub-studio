@@ -32,11 +32,14 @@
 
 **PR:** #11 - merged to main
 
-## Phase 3 – Offline & Sync
+## Phase 3 – Offline & Sync (COMPLETE)
 
-- Service worker caching policy (app shell, assets, EPUB, covers).
-- IndexedDB schema for progress/annotations/queue.
-- Permission cache TTL + zombie detection.
+- Service worker (vite-plugin-pwa) with cache-first for shell/assets, stale-while-revalidate for fonts, cache-first for images.
+- IndexedDB schema for progress, annotations, sync queue, permission cache.
+- Permission cache TTL (24h) + zombie detection with periodic validation.
+- Reader progress locally first, queued sync on reconnect.
+
+**PR:** TODO
 
 ## Phase 4 – Editorial Toolkit
 
