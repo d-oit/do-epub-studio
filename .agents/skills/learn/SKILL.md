@@ -1,7 +1,11 @@
 ---
-version: '1.0.0'
+version: "1.0.0"
 name: learn
-description: Extract non-obvious session learnings into scoped files. Use after completing non-trivial tasks to capture insights that would otherwise be lost.
+description: >
+  Extract non-obvious session learnings into scoped files. Activate after
+  non-trivial tasks to capture fragile config, quirks, or breakthroughs.
+category: knowledge-management
+allowed-tools: Read Write Edit Grep Glob
 license: MIT
 ---
 

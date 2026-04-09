@@ -1,21 +1,26 @@
 ---
 version: "1.0.0"
 name: code-review-assistant
-description: Automated code review with PR analysis, change summaries, and quality checks. Use for reviewing pull requests, generating review comments, checking against best practices, and identifying potential issues in EPUB Studio code.
+description: >
+  Review pull requests holistically. Activate for PR analysis, risk assessment,
+  cross-file consistency, and change-impact review.
+category: quality
+allowed-tools: Read Grep Glob
 license: MIT
 ---
 
 # Code Review Assistant
 
-Automated code review with intelligent analysis of changes, quality checks, and actionable feedback.
+Review pull requests holistically — analyzing diffs, risk, and cross-file impact.
+**Not** for inline code smells (use `code-quality` for that).
 
 ## When to Use
 
-- Reviewing pull requests
-- Change summarization
-- Style guide compliance
-- Security issue detection
-- Auto-approving simple changes
+- Reviewing completed pull requests
+- Summarizing change impact across files
+- Assessing risk level (auth, security, data)
+- Checking cross-file consistency
+- Verifying Delivery Definition from AGENTS.md
 
 ## Workflow
 

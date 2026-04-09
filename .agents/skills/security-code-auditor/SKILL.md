@@ -1,7 +1,11 @@
 ---
 version: "1.0.0"
 name: security-code-auditor
-description: Perform security audits on EPUB Studio code to identify vulnerabilities. Use when auditing authentication, authorization, EPUB parsing, signed URLs, or offline sync security.
+description: >
+  Audit EPUB Studio code for vulnerabilities. Activate for auth, EPUB parsing,
+  signed URL, or offline sync security reviews. Read-only analysis.
+category: quality
+allowed-tools: Read Grep Glob
 license: MIT
 ---
 

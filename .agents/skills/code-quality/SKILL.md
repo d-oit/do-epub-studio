@@ -1,13 +1,18 @@
 ---
 version: "1.0.0"
 name: code-quality
-description: Review and improve code quality across any programming language. Use when conducting code reviews, refactoring for best practices, identifying code smells, or improving maintainability.
-version: "1.0"
+description: >
+  Review and improve inline code quality. Activate for code smells,
+  refactoring, DRY violations, and best-practice fixes in active files.
+category: quality
+allowed-tools: Read Grep Glob
+license: MIT
 ---
 
 # Code Quality Reviewer
 
-Expert skill for code quality assessment and improvement.
+Review and improve inline code patterns. Operates at the file/function level
+—not at the PR or diff level (use `code-review-assistant` for that).
 
 ## Quick Check
 
@@ -20,11 +25,11 @@ Expert skill for code quality assessment and improvement.
 
 ## When to Use
 
-- Code reviews
-- Refactoring
-- Identifying code smells
-- Pre-commit quality checks
-- Legacy modernization
+- Refactoring a function you're actively editing
+- Fixing code smells in the current file
+- Identifying DRY violations in new code
+- Pre-write quality check before committing a file
+- Legacy code modernization at the function level
 
 ## Core Principles
 

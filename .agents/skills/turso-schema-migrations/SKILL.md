@@ -1,7 +1,11 @@
 ---
 version: "1.0.0"
 name: turso-schema-migrations
-description: Manage Turso database schema design, migrations, and SQLite operations. Use when designing database tables, writing migration scripts, or handling schema changes.
+description: >
+  Design Turso schema and write migrations. Activate for table design,
+  migration scripts, or SQLite-compatible schema changes.
+category: workflow
+allowed-tools: Read Write Edit Grep Glob
 license: MIT
 ---
 

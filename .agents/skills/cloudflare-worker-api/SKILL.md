@@ -1,7 +1,11 @@
 ---
 version: "1.0.0"
 name: cloudflare-worker-api
-description: Design Cloudflare Worker API routes with typed handlers, auth middleware, and signed URL generation. Use when creating Worker endpoints, implementing session validation, or designing secure file access patterns.
+description: >
+  Structure Worker API routes and handlers. Activate for route definition,
+  response helpers, and typed handler patterns. Auth belongs to secure-invite-and-access.
+category: workflow
+allowed-tools: Read Write Edit Grep Glob
 license: MIT
 ---
 

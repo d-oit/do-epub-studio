@@ -1,7 +1,12 @@
 ---
 version: "1.0.0"
 name: pwa-offline-sync
-description: Design Cache Storage + IndexedDB strategy, sync queue, and zombie detection per ADR-005 before touching offline code.
+description: >
+  Design Cache Storage + IndexedDB strategy and sync queue per ADR-005.
+  Activate for service worker, cache, or offline bug investigation.
+category: workflow
+allowed-tools: Read Write Edit Grep Glob
+license: MIT
 ---
 
 # Skill: `pwa-offline-sync`

@@ -1,7 +1,12 @@
 ---
 version: "1.0.0"
 name: secure-invite-and-access
-description: Implement grant validation, Argon2id passwords, sessions, signed URLs, and audit logging per ADR-004 for any auth change.
+description: >
+  Implement grants, Argon2id passwords, sessions, and signed URLs per ADR-004.
+  Activate for auth changes, access endpoints, or permission revocation.
+category: workflow
+allowed-tools: Read Write Edit Grep Glob
+license: MIT
 ---
 
 # Skill: `secure-invite-and-access`

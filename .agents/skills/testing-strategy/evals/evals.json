@@ -4,7 +4,7 @@
     {
       "id": 1,
       "prompt": "Design a testing strategy for the permission system",
-      "expected_output": "The agent designs unit tests for permission logic, integration tests for DB operations, and E2E tests for access flows. Includes test data builders.",
+      "expected_output": "The agent designs unit tests for permission logic, integration tests for DB operations, and E2E tests for access flows. Suggests testdata-builders for fixture data.",
       "files": [],
       "assertions": [
         "The agent includes unit tests for logic",
@@ -28,12 +28,12 @@
     {
       "id": 3,
       "prompt": "Create a test data builder for Book entities",
-      "expected_output": "The agent creates BookBuilder class with fluent API for setting title, author, owner, and build() method.",
+      "expected_output": "The agent delegates to the testdata-builders skill. If implementing directly, it creates a builder with fluent API, realistic defaults, and deterministic output.",
       "files": [],
       "assertions": [
-        "The agent creates builder class",
-        "The agent provides fluent API",
-        "The agent has build() method"
+        "The agent references testdata-builders skill or creates a builder",
+        "The agent provides fluent API or withOverrides pattern",
+        "The output is deterministic (no randomness)"
       ]
     },
     {

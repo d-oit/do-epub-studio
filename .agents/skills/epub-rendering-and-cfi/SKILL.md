@@ -1,7 +1,12 @@
 ---
 version: "1.0.0"
 name: epub-rendering-and-cfi
-description: Ensure EPUB.js integration, locator extraction, and annotation anchoring follow ADR-006 with resilient fallbacks.
+description: >
+  Implement resilient EPUB rendering and annotation anchoring per ADR-006.
+  Activate for reader-core, TOC, locator, or highlight anchoring changes.
+category: workflow
+allowed-tools: Read Write Edit Grep Glob
+license: MIT
 ---
 
 # Skill: `epub-rendering-and-cfi`

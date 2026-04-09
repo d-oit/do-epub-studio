@@ -1,7 +1,11 @@
 ---
 version: "1.0.0"
 name: triz-solver
-description: Resolve contradictions identified by triz-analysis. Use when applying TRIZ principles to solve technical contradictions, implementing separation principles, or deriving system design from resolved contradictions. Must be run AFTER triz-analysis.
+description: >
+  Resolve contradictions found by triz-analysis. Activate after triz-analysis
+  completes. Applies TRIZ principles to derive system design.
+category: coordination
+allowed-tools: Read Write Edit Grep Glob
 license: MIT
 ---
 

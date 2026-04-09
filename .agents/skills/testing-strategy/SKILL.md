@@ -1,21 +1,27 @@
 ---
 version: "1.0.0"
 name: testing-strategy
-description: Design comprehensive testing strategies for EPUB Studio. Use for test planning, Vitest unit tests, Playwright E2E tests, property-based testing, and coverage analysis.
+description: >
+  Plan test coverage for features. Activate for test pyramid design,
+  Vitest/Playwright strategy, and coverage goal setting.
+category: quality
+allowed-tools: Read Grep Glob
 license: MIT
 ---
 
 # Testing Strategy
 
 Design and implement comprehensive testing strategies for EPUB Studio.
+Focus on **planning** what to test and **when**.
+For test data builders, use the `testdata-builders` skill.
 
 ## When to Use
 
 - Test planning for new features
-- Writing unit tests (Vitest)
-- Writing E2E tests (Playwright)
-- Coverage analysis
-- Test data builders
+- Deciding test pyramid ratios
+- Vitest unit test strategy
+- Playwright E2E coverage planning
+- Coverage gap analysis
 
 ## Test Pyramid
 
@@ -73,37 +79,6 @@ test('user can read a book', async ({ page }) => {
 });
 ```
 
-## Test Data Builders
-
-Create builders for:
-- Books
-- Users
-- Permissions (grants)
-- Sessions
-- Comments
-- Highlights
-
-```typescript
-// Example: BookBuilder
-class BookBuilder {
-  private data = { title: 'Test', author: 'Author' };
-  
-  withTitle(title: string) {
-    this.data.title = title;
-    return this;
-  }
-  
-  build() {
-    return createBook(this.data);
-  }
-}
-
-// Usage
-const book = await new BookBuilder()
-  .withTitle('My EPUB')
-  .build();
-```
-
 ## Coverage Goals
 
 | Type | Target |
@@ -118,9 +93,12 @@ const book = await new BookBuilder()
 - [ ] Unit tests for business logic
 - [ ] Integration tests for DB/API
 - [ ] E2E tests for critical paths
-- [ ] Test data builders
 - [ ] Coverage tracking
 - [ ] No skipped tests for core flows
+
+## Related Skills
+
+- **testdata-builders** — For deterministic test data builders.
 
 ## References
 

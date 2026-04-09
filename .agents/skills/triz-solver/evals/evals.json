@@ -5,12 +5,7 @@
       "id": 1,
       "prompt": "We identified a contradiction: offline availability vs access control. We need to resolve it using TRIZ principles.",
       "expected_output": "The agent reads the triz-analysis output, defines IFR for each contradiction, chooses appropriate separation principle (likely Time or Condition), applies TRIZ principles, and documents resolution in plans/ directory.",
-      "files": [
-        {
-          "path": "analysis/triz-core-2024-01-15.md",
-          "content": "### Contradiction 1\n\n**Improving:** Offline availability\n**Worsens:** Access control\n**Why:** Cached books can be accessed without authentication\n**Reality:** Verified - cached EPUB files bypass the auth layer\n\n**TRIZ Principles Available:**\n- Segmentation (cache with permissions)\n- Condition Separation (online vs offline auth)\n- Dynamicity (context-aware access)"
-        }
-      ],
+      "files": ["evals/triz-analysis-sample.md"],
       "assertions": [
         "The agent reads the analysis file",
         "The agent defines IFR (Ideal Final Result)",

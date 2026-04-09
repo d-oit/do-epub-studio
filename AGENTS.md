@@ -80,12 +80,33 @@
 
 ## Skills
 
-- Mandatory orchestration: `triz-analysis`, `triz-solver`, `task-decomposition`, `parallel-execution`, `learn`.
-- Backend/domain: `cloudflare-worker-api`, `turso-schema-migrations`, `secure-invite-and-access`, `pwa-offline-sync`.
-- Reader/UI: `epub-rendering-and-cfi`, `reader-ui-ux`.
-- Testing/data: `testing-strategy`, `testdata-builders`.
-- Quality/security: `code-quality`, `security-code-auditor`, `shell-script-quality`, `code-review-assistant`, `anti-ai-slop`.
-- Utility: `skill-creator`, `skill-evaluator`, `memory-context`.
+- **Coordination** (mandatory orchestration):
+  - `triz-analysis` — Identify contradictions before architecture/permissions/offline/EPUB decisions
+  - `triz-solver` — Resolve contradictions after triz-analysis completes
+  - `task-decomposition` — Break complex requests into atomic, testable sub-tasks
+  - `parallel-execution` — Run independent tasks simultaneously via agent coordination
+  - `learn` — Extract non-obvious discoveries after non-trivial work
+- **Backend/domain**:
+  - `cloudflare-worker-api` — Structure Worker routes and typed handlers (not auth)
+  - `secure-invite-and-access` — Grants, Argon2id, sessions, signed URLs per ADR-004
+  - `turso-schema-migrations` — Schema design and migration scripts for Turso
+  - `pwa-offline-sync` — Cache Storage + IndexedDB strategy per ADR-005
+- **Reader/UI**:
+  - `epub-rendering-and-cfi` — EPUB.js rendering and annotation anchoring per ADR-006
+  - `reader-ui-ux` — Localized, accessible reader/admin UI with Zustand
+- **Testing/data**:
+  - `testing-strategy` — Plan test coverage, pyramid ratios, Vitest/Playwright strategy
+  - `testdata-builders` — Deterministic builders for schema entities
+- **Quality/security**:
+  - `code-quality` — Inline code smells, refactoring, DRY violations (file-level)
+  - `code-review-assistant` — PR-level diff analysis, risk, cross-file impact
+  - `security-code-auditor` — Read-only vulnerability audits (auth, EPUB, signed URLs)
+  - `shell-script-quality` — Safe, portable shell authoring patterns
+  - `anti-ai-slop` — Audit/fix generic AI aesthetic in UI, copy, and UX
+- **Utility**:
+  - `skill-creator` — Create and edit skills per agentskills.io spec
+  - `skill-evaluator` — Evaluate skill output quality with `expected_output` evals
+  - `memory-context` — Retrieve past learnings via csm CLI (falls back to grep)
 
 ## Quality Gate
 

@@ -1,13 +1,18 @@
 ---
 version: "1.0.0"
 name: shell-script-quality
-description: Lint and test shell scripts using ShellCheck and BATS. Use when checking bash/sh scripts for errors, writing shell script tests, fixing ShellCheck warnings, or improving bash code quality.
-version: "1.0"
+description: >
+  Write safe, portable shell scripts. Activate for bash/sh authoring,
+  ShellCheck fixes, BATS test writing, and shell security patterns.
+category: quality
+allowed-tools: Read Write Edit Grep Glob
+license: MIT
 ---
 
 # Shell Script Quality
 
-Comprehensive shell script linting and testing using ShellCheck and BATS.
+Write safe, portable shell scripts. Focus on patterns, pitfalls, and security
+—not on running checks (the quality gate already handles that).
 
 ## Quick Start
 

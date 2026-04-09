@@ -1,7 +1,12 @@
 ---
 version: "1.0.0"
 name: reader-ui-ux
-description: Build localized, accessible reader/admin experiences with responsive layouts, telemetry, and Zustand integration.
+description: >
+  Build localized, accessible reader/admin UI with responsive layouts,
+  telemetry, and Zustand integration. Activate for React screens or UX polish.
+category: workflow
+allowed-tools: Read Write Edit Grep Glob
+license: MIT
 ---
 
 # Skill: `reader-ui-ux`

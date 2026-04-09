@@ -1,7 +1,11 @@
 ---
 version: "1.0.0"
 name: triz-analysis
-description: Identify and analyze contradictions in system design. Use when analyzing architecture decisions, identifying trade-offs between competing requirements, or discovering hidden conflicts in system properties. Must be run BEFORE triz-solver.
+description: >
+  Identify contradictions in system design. Activate for architecture decisions,
+  permissions, offline sync, or EPUB rendering trade-offs. Must run BEFORE triz-solver.
+category: coordination
+allowed-tools: Read Write Edit Grep Glob
 license: MIT
 ---
 

@@ -1,9 +1,13 @@
 ---
 version: "1.0.0"
 name: memory-context
-description: Retrieve semantically relevant past learnings and analysis outputs. Use when you need to recall previous work, face a problem that might have been solved before, or retrieve specific findings from analysis/ or plans/.
+description: >
+  Retrieve past learnings and analysis via csm CLI. Activate at session start
+  or when facing a problem that might have been solved before.
+category: knowledge-management
+compatibility: Requires csm CLI (cargo install chaotic_semantic_memory --features cli). Falls back to grep if unavailable.
+allowed-tools: Read Grep Glob
 license: MIT
-compatibility: Requires csm CLI (cargo install chaotic_semantic_memory --features cli)
 ---
 
 # Memory Context
@@ -15,6 +19,11 @@ Retrieve semantically relevant past learnings, analysis outputs, and project kno
 ```bash
 cargo install chaotic_semantic_memory --features cli
 ```
+
+### Health Check
+
+Run `scripts/check_csm.sh` to verify csm is installed and the memory index
+is accessible. Falls back to `grep` if unavailable.
 
 ## When to Use
 
