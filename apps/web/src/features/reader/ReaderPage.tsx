@@ -755,7 +755,9 @@ export function ReaderPage() {
         onDeleteComment={(id) => void handleDeleteComment(id)}
         onEditHighlight={(id, note) => void handleEditHighlight(id, note)}
         onDeleteHighlight={(id) => void handleDeleteHighlight(id)}
-        onNavigateToAnnotation={handleNavigateToAnnotation}
+        onNavigateToAnnotation={(chapterRef, cfiRange) =>
+          void handleNavigateToAnnotation(chapterRef, cfiRange)
+        }
         currentChapter={useReaderStore.getState().currentChapter}
         locale="en"
       />
