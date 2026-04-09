@@ -3,22 +3,27 @@ import { validateGrant, computeCapabilities } from '../auth/password';
 import { createSession } from '../auth/session';
 import { logAudit } from '../audit';
 import { jsonResponse } from '../lib/responses';
+import { validateRequestBody, formatValidationErrors } from '../lib/validation';
+import { AccessRequestSchema } from '@do-epub-studio/shared';
 
-interface AccessRequestBody {
-  bookSlug: string;
-  email: string;
-  password?: string;
-}
-
-export async function handleAccessRequest(env: Env, body: AccessRequestBody): Promise<Response> {
-  const { bookSlug, email, password } = body;
-
-  if (!bookSlug || !email) {
+export async function handleAccessRequest(env: Env, raw: unknown): Promise<Response> {
+  const validation = validateRequestBody(AccessRequestSchema, raw);
+  
+  if (!validation.ok) {
     return jsonResponse(
-      { ok: false, error: { code: 'INVALID_REQUEST', message: 'Missing required fields' } },
-      400,
+      { 
+        ok: false, 
+        error: { 
+          code: 'VALIDATION_ERROR', 
+          message: validation.error,
+          details: validation.details 
+        } 
+      },
+      validation.status,
     );
   }
+
+  const { bookSlug, email, password } = validation.data;
 
   const result = await validateGrant(env, bookSlug, email.toLowerCase(), password);
 

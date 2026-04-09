@@ -5,7 +5,10 @@
       "Bash(done)",
       "Bash(bash *)",
       "Bash(pnpm *)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(node *)",
+      "Bash(xargs *)",
+      "Bash(find *)"
     ]
   },
   "$version": 3

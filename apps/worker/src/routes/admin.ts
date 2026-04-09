@@ -2,6 +2,12 @@ import type { Env } from '../lib/env';
 import { execute, queryAll } from '../db/client';
 import { createGrant } from '../auth/password';
 import { jsonResponse } from '../lib/responses';
+import { validateRequestBody } from '../lib/validation';
+import {
+  CreateBookSchema,
+  CreateGrantSchema,
+  UpdateGrantSchema,
+} from '@do-epub-studio/shared';
 
 interface _BookRow {
   id: string;
@@ -29,16 +35,26 @@ interface _GrantRow {
 
 export async function handleCreateBook(
   env: Env,
-  body: {
-    title: string;
-    slug: string;
-    authorName?: string;
-    description?: string;
-    language?: string;
-    visibility?: string;
-  },
+  rawBody: unknown,
   actorEmail?: string,
 ): Promise<Response> {
+  const validation = validateRequestBody(CreateBookSchema, rawBody);
+
+  if (!validation.ok) {
+    return jsonResponse(
+      {
+        ok: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: validation.error,
+          details: validation.details,
+        },
+      },
+      validation.status,
+    );
+  }
+
+  const body = validation.data;
   const id = crypto.randomUUID();
   const now = new Date().toISOString();
 
@@ -127,16 +143,26 @@ export async function handleUploadComplete(
 export async function handleCreateAdminGrant(
   env: Env,
   bookId: string,
-  body: {
-    email: string;
-    password?: string;
-    mode?: string;
-    commentsAllowed?: boolean;
-    offlineAllowed?: boolean;
-    expiresAt?: string;
-  },
+  rawBody: unknown,
   actorEmail?: string,
 ): Promise<Response> {
+  const validation = validateRequestBody(CreateGrantSchema, rawBody);
+
+  if (!validation.ok) {
+    return jsonResponse(
+      {
+        ok: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: validation.error,
+          details: validation.details,
+        },
+      },
+      validation.status,
+    );
+  }
+
+  const body = validation.data;
   const grantId = await createGrant(env, bookId, body.email, {
     password: body.password,
     mode: body.mode,
@@ -165,14 +191,26 @@ export async function handleCreateAdminGrant(
 export async function handleUpdateGrant(
   env: Env,
   grantId: string,
-  body: {
-    mode?: string;
-    commentsAllowed?: boolean;
-    offlineAllowed?: boolean;
-    expiresAt?: string | null;
-  },
+  rawBody: unknown,
   actorEmail?: string,
 ): Promise<Response> {
+  const validation = validateRequestBody(UpdateGrantSchema, rawBody);
+
+  if (!validation.ok) {
+    return jsonResponse(
+      {
+        ok: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: validation.error,
+          details: validation.details,
+        },
+      },
+      validation.status,
+    );
+  }
+
+  const body = validation.data;
   const updates: string[] = ['updated_at = ?'];
   const args: (string | number | null)[] = [new Date().toISOString()];
 

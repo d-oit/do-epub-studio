@@ -3,6 +3,8 @@ import { requireAuth } from '../auth/middleware';
 import { queryFirst, queryAll, execute } from '../db/client';
 import { jsonResponse } from '../lib/responses';
 import { logAudit } from '../audit';
+import { validateRequestBody } from '../lib/validation';
+import { CommentCreateSchema, CommentUpdateSchema } from '@do-epub-studio/shared';
 
 interface CommentRow {
   id: string;
@@ -52,14 +54,7 @@ export async function handleCreateComment(
   env: Env,
   request: Request,
   bookId: string,
-  body: {
-    chapterRef?: string;
-    cfiRange?: string;
-    selectedText?: string;
-    body: string;
-    visibility?: string;
-    parentCommentId?: string;
-  },
+  rawBody: unknown,
 ): Promise<Response> {
   const auth = await requireAuth(env, request);
 
@@ -74,6 +69,23 @@ export async function handleCreateComment(
     return jsonResponse({ ok: false, error: { code: 'FORBIDDEN', message: 'Access denied' } }, 403);
   }
 
+  const validation = validateRequestBody(CommentCreateSchema, rawBody);
+
+  if (!validation.ok) {
+    return jsonResponse(
+      {
+        ok: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: validation.error,
+          details: validation.details,
+        },
+      },
+      validation.status,
+    );
+  }
+
+  const body = validation.data;
   const id = crypto.randomUUID();
   const now = new Date().toISOString();
 
@@ -131,7 +143,7 @@ export async function handleUpdateComment(
   env: Env,
   request: Request,
   commentId: string,
-  body: { body?: string; status?: string; visibility?: string },
+  rawBody: unknown,
 ): Promise<Response> {
   const auth = await requireAuth(env, request);
 
@@ -141,6 +153,24 @@ export async function handleUpdateComment(
       401,
     );
   }
+
+  const validation = validateRequestBody(CommentUpdateSchema, rawBody);
+
+  if (!validation.ok) {
+    return jsonResponse(
+      {
+        ok: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: validation.error,
+          details: validation.details,
+        },
+      },
+      validation.status,
+    );
+  }
+
+  const body = validation.data;
 
   const comment = (await queryFirst(env, `SELECT * FROM comments WHERE id = ?`, [
     commentId,

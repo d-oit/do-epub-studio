@@ -1,5 +1,6 @@
 import type { Env } from '../lib/env';
 import { queryFirst, execute } from '../db/client';
+import { argon2id, argon2Verify } from 'argon2-wasm-edge';
 
 interface GrantRow {
   id: string;
@@ -23,43 +24,36 @@ interface BookRow {
   cover_image_url: string | null;
 }
 
-const ALGORITHM = 'argon2id';
-const MEMORY_KIB = 65536;
+const MEMORY_COST_KIB = 65536; // 64 MiB
 const ITERATIONS = 3;
 const PARALLELISM = 4;
+const HASH_LENGTH = 32;
 
 export async function hashPassword(password: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const passwordBuffer = encoder.encode(password);
+  const salt = crypto.getRandomValues(new Uint8Array(16));
 
-  const hashBuffer = await crypto.subtle.digest('SHA-256', passwordBuffer);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  const hashHex = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+  const hash = await argon2id({
+    password,
+    salt,
+    iterations: ITERATIONS,
+    parallelism: PARALLELISM,
+    memorySize: MEMORY_COST_KIB,
+    hashLength: HASH_LENGTH,
+    outputType: 'encoded',
+  });
 
-  return `$argon2id$v=19$m=${MEMORY_KIB},t=${ITERATIONS},p=${PARALLELISM}$${hashHex.substring(0, 22)}$${hashHex.substring(22)}`;
+  return hash;
 }
 
 export async function verifyPassword(password: string, storedHash: string): Promise<boolean> {
-  if (!storedHash.startsWith(`$${ALGORITHM}$`)) {
+  try {
+    return await argon2Verify({
+      password,
+      hash: storedHash,
+    });
+  } catch {
     return false;
   }
-
-  const encoder = new TextEncoder();
-  const passwordBuffer = encoder.encode(password);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', passwordBuffer);
-  const hashArray = new Uint8Array(hashBuffer);
-  const hashHex = Array.from(hashArray)
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
-
-  const parts = storedHash.split('$');
-  const _storedParams = parts[2];
-  const storedSalt = parts[3];
-  const storedDigest = parts[4];
-
-  const computedDigest = hashHex.substring(22);
-
-  return storedSalt + storedDigest === hashHex.substring(0, 22) + computedDigest;
 }
 
 export async function validateGrant(

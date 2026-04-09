@@ -3,6 +3,12 @@ import { requireAuth } from '../auth/middleware';
 import { generateSignedUrl } from '../storage/signed-url';
 import { queryFirst, queryAll } from '../db/client';
 import { jsonResponse } from '../lib/responses';
+import { validateRequestBody } from '../lib/validation';
+import { z } from 'zod';
+
+const BookIdentifierSchema = z.object({
+  bookIdentifier: z.string().min(1).max(255),
+});
 
 interface BookRow {
   id: string;
@@ -73,6 +79,22 @@ export async function handleGetFileUrl(
   request: Request,
   bookIdentifier: string,
 ): Promise<Response> {
+  const validation = validateRequestBody(BookIdentifierSchema, { bookIdentifier });
+
+  if (!validation.ok) {
+    return jsonResponse(
+      {
+        ok: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: validation.error,
+          details: validation.details,
+        },
+      },
+      validation.status,
+    );
+  }
+
   const auth = await requireAuth(env, request);
 
   if (!auth) {

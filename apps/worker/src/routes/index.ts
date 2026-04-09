@@ -28,3 +28,4 @@ export {
   handleGetBookGrants,
   handleGetAuditLog,
 } from './admin';
+export { handleAdminLogin, handleAdminLogout } from './admin-auth';

@@ -3,6 +3,12 @@ import { requireAuth } from '../auth/middleware';
 import { queryFirst, queryAll, execute } from '../db/client';
 import { jsonResponse } from '../lib/responses';
 import { logAudit } from '../audit';
+import { validateRequestBody } from '../lib/validation';
+import {
+  ProgressUpdateSchema,
+  BookmarkCreateSchema,
+  HighlightCreateSchema,
+} from '@do-epub-studio/shared';
 
 interface ProgressRow {
   id: string;
@@ -76,7 +82,7 @@ export async function handleUpdateProgress(
   env: Env,
   request: Request,
   bookId: string,
-  body: { locator: unknown; progressPercent: number },
+  rawBody: unknown,
 ): Promise<Response> {
   const auth = await requireAuth(env, request);
 
@@ -91,6 +97,23 @@ export async function handleUpdateProgress(
     return jsonResponse({ ok: false, error: { code: 'FORBIDDEN', message: 'Access denied' } }, 403);
   }
 
+  const validation = validateRequestBody(ProgressUpdateSchema, rawBody);
+
+  if (!validation.ok) {
+    return jsonResponse(
+      {
+        ok: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: validation.error,
+          details: validation.details,
+        },
+      },
+      validation.status,
+    );
+  }
+
+  const body = validation.data;
   const locatorJson = JSON.stringify(body.locator);
   const id = crypto.randomUUID();
   const now = new Date().toISOString();
@@ -147,7 +170,7 @@ export async function handleCreateBookmark(
   env: Env,
   request: Request,
   bookId: string,
-  body: { locator: unknown; label?: string },
+  rawBody: unknown,
 ): Promise<Response> {
   const auth = await requireAuth(env, request);
 
@@ -162,6 +185,23 @@ export async function handleCreateBookmark(
     return jsonResponse({ ok: false, error: { code: 'FORBIDDEN', message: 'Access denied' } }, 403);
   }
 
+  const validation = validateRequestBody(BookmarkCreateSchema, rawBody);
+
+  if (!validation.ok) {
+    return jsonResponse(
+      {
+        ok: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: validation.error,
+          details: validation.details,
+        },
+      },
+      validation.status,
+    );
+  }
+
+  const body = validation.data;
   const id = crypto.randomUUID();
   const locatorJson = JSON.stringify(body.locator);
   const now = new Date().toISOString();
@@ -245,13 +285,7 @@ export async function handleCreateHighlight(
   env: Env,
   request: Request,
   bookId: string,
-  body: {
-    chapterRef?: string;
-    cfiRange?: string;
-    selectedText: string;
-    note?: string;
-    color?: string;
-  },
+  rawBody: unknown,
 ): Promise<Response> {
   const auth = await requireAuth(env, request);
 
@@ -266,6 +300,23 @@ export async function handleCreateHighlight(
     return jsonResponse({ ok: false, error: { code: 'FORBIDDEN', message: 'Access denied' } }, 403);
   }
 
+  const validation = validateRequestBody(HighlightCreateSchema, rawBody);
+
+  if (!validation.ok) {
+    return jsonResponse(
+      {
+        ok: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: validation.error,
+          details: validation.details,
+        },
+      },
+      validation.status,
+    );
+  }
+
+  const body = validation.data;
   const id = crypto.randomUUID();
   const now = new Date().toISOString();
 
@@ -345,12 +396,14 @@ export async function handleDeleteHighlight(
   return jsonResponse({ ok: true });
 }
 
+const HighlightUpdateSchema = HighlightCreateSchema.pick({ note: true, color: true }).partial();
+
 export async function handleUpdateHighlight(
   env: Env,
   request: Request,
   bookId: string,
   highlightId: string,
-  body: { note?: string; color?: string },
+  rawBody: unknown,
 ): Promise<Response> {
   const auth = await requireAuth(env, request);
 
@@ -360,6 +413,24 @@ export async function handleUpdateHighlight(
       401,
     );
   }
+
+  const validation = validateRequestBody(HighlightUpdateSchema, rawBody);
+
+  if (!validation.ok) {
+    return jsonResponse(
+      {
+        ok: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: validation.error,
+          details: validation.details,
+        },
+      },
+      validation.status,
+    );
+  }
+
+  const body = validation.data;
 
   const highlight = (await queryFirst(env, `SELECT * FROM highlights WHERE id = ?`, [
     highlightId,

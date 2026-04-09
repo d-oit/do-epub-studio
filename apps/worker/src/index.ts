@@ -36,7 +36,10 @@ import {
   handleRevokeGrant,
   handleGetBookGrants,
   handleGetAuditLog,
+  handleAdminLogin,
+  handleAdminLogout,
 } from './routes';
+import { requireAdminAuth } from './auth/admin-middleware';
 
 const corsHeaders: Record<string, string> = {
   'Access-Control-Allow-Origin': '*',
@@ -63,6 +66,14 @@ async function handleRequest(env: Env, request: Request): Promise<Response> {
     const authHeader = request.headers.get('Authorization');
     const token = authHeader?.replace('Bearer ', '') ?? '';
     return handleLogout(env, token);
+  }
+
+  if (path === '/api/admin/login' && method === 'POST') {
+    return handleAdminLogin(env, request);
+  }
+
+  if (path === '/api/admin/logout' && method === 'POST') {
+    return handleAdminLogout(env, request);
   }
 
   if (path === '/api/access/refresh' && method === 'POST') {
@@ -172,38 +183,66 @@ async function handleRequest(env: Env, request: Request): Promise<Response> {
   }
 
   if (path === '/api/admin/books' && method === 'POST') {
+    const authResult = await requireAdminAuth(env, request);
+    if (!authResult.ok) {
+      return jsonResponse({ ok: false, error: { code: 'UNAUTHORIZED', message: authResult.error } }, authResult.status);
+    }
     const body = await request.json();
-    return handleCreateBook(env, body);
+    return handleCreateBook(env, body, authResult.context.email);
   }
 
   const uploadCompleteMatch = /\/api\/admin\/books\/([^/]+)\/upload-complete$/.exec(path);
   if (uploadCompleteMatch && method === 'POST') {
+    const authResult = await requireAdminAuth(env, request);
+    if (!authResult.ok) {
+      return jsonResponse({ ok: false, error: { code: 'UNAUTHORIZED', message: authResult.error } }, authResult.status);
+    }
     const body = await request.json();
     return handleUploadComplete(env, uploadCompleteMatch[1], body);
   }
 
   const grantsMatch = /\/api\/admin\/books\/([^/]+)\/grants$/.exec(path);
   if (grantsMatch && method === 'POST') {
+    const authResult = await requireAdminAuth(env, request);
+    if (!authResult.ok) {
+      return jsonResponse({ ok: false, error: { code: 'UNAUTHORIZED', message: authResult.error } }, authResult.status);
+    }
     const body = await request.json();
-    return handleCreateAdminGrant(env, grantsMatch[1], body);
+    return handleCreateAdminGrant(env, grantsMatch[1], body, authResult.context.email);
   }
 
   if (grantsMatch && method === 'GET') {
+    const authResult = await requireAdminAuth(env, request);
+    if (!authResult.ok) {
+      return jsonResponse({ ok: false, error: { code: 'UNAUTHORIZED', message: authResult.error } }, authResult.status);
+    }
     return handleGetBookGrants(env, grantsMatch[1]);
   }
 
   const grantUpdateMatch = /\/api\/admin\/grants\/([^/]+)$/.exec(path);
   if (grantUpdateMatch && method === 'PATCH') {
+    const authResult = await requireAdminAuth(env, request);
+    if (!authResult.ok) {
+      return jsonResponse({ ok: false, error: { code: 'UNAUTHORIZED', message: authResult.error } }, authResult.status);
+    }
     const body = await request.json();
-    return handleUpdateGrant(env, grantUpdateMatch[1], body);
+    return handleUpdateGrant(env, grantUpdateMatch[1], body, authResult.context.email);
   }
 
   const grantRevokeMatch = /\/api\/admin\/grants\/([^/]+)\/revoke$/.exec(path);
   if (grantRevokeMatch && method === 'POST') {
-    return handleRevokeGrant(env, grantRevokeMatch[1]);
+    const authResult = await requireAdminAuth(env, request);
+    if (!authResult.ok) {
+      return jsonResponse({ ok: false, error: { code: 'UNAUTHORIZED', message: authResult.error } }, authResult.status);
+    }
+    return handleRevokeGrant(env, grantRevokeMatch[1], authResult.context.email);
   }
 
   if (path === '/api/admin/audit' && method === 'GET') {
+    const authResult = await requireAdminAuth(env, request);
+    if (!authResult.ok) {
+      return jsonResponse({ ok: false, error: { code: 'UNAUTHORIZED', message: authResult.error } }, authResult.status);
+    }
     const entityType = url.searchParams.get('entityType') ?? undefined;
     const entityId = url.searchParams.get('entityId') ?? undefined;
     const limit = parseInt(url.searchParams.get('limit') ?? '100', 10);
