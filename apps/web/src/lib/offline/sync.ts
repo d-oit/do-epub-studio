@@ -10,6 +10,7 @@ import {
 } from './db';
 import { api } from '../api';
 import type { AnnotationEntry } from './db';
+import { clearAllPermissions } from './permissions';
 
 const MAX_RETRY_ATTEMPTS = 5;
 const BASE_DELAY_MS = 1000;
@@ -18,6 +19,13 @@ const MAX_DELAY_MS = 30000;
 interface SyncResult {
   success: boolean;
   error?: string;
+}
+
+// Callback for permission revocation
+let onPermissionRevoked: ((bookId: string) => void) | null = null;
+
+export function setPermissionRevokedCallback(callback: (bookId: string) => void): void {
+  onPermissionRevoked = callback;
 }
 
 export function generateMutationId(): string {
@@ -50,12 +58,13 @@ async function attemptSync(): Promise<void> {
   if (!navigator.onLine) return;
 
   const queue = await getSyncQueue();
-  if (queue.length === 0) return;
+  if (!queue || queue.length === 0) return;
 
   const item = queue.sort((a, b) => a.createdAt - b.createdAt)[0];
 
   if (item.attempts >= MAX_RETRY_ATTEMPTS) {
     await removeSyncQueueItem(item.id);
+    console.warn(`[Sync] Item ${item.id} exceeded max retries, removing from queue`);
     return;
   }
 
@@ -64,6 +73,21 @@ async function attemptSync(): Promise<void> {
   if (result.success) {
     await removeSyncQueueItem(item.id);
     await markAsSynced(item.type, item.mutationId);
+  } else if (result.error === 'permission_revoked') {
+    // Permission was revoked - clear all cached permissions and stop syncing
+    console.error('[Sync] Permission revoked detected, clearing cache');
+    await clearAllPermissions();
+    
+    // Notify UI about permission revocation
+    if (onPermissionRevoked) {
+      const payload = item.payload as { bookId?: string };
+      if (payload?.bookId) {
+        onPermissionRevoked(payload.bookId);
+      }
+    }
+    
+    // Remove all items from queue for this book
+    await removeSyncQueueItem(item.id);
   } else {
     item.attempts++;
     item.lastAttempt = Date.now();
@@ -84,10 +108,13 @@ async function syncItem(item: SyncQueueItem): Promise<SyncResult> {
         percentage: number;
         mutationId: string;
       };
-      await api.post('/api/reader-state/progress', {
+      await api.post('/api/books/:bookId/progress', {
         bookId: payload.bookId,
-        cfi: payload.cfi,
-        percentage: payload.percentage,
+        locator: {
+          cfi: payload.cfi,
+          selectedText: '',
+        },
+        progressPercent: payload.percentage,
         mutationId: payload.mutationId,
       });
     } else if (item.type === 'annotation') {
@@ -95,22 +122,30 @@ async function syncItem(item: SyncQueueItem): Promise<SyncResult> {
         bookId: string;
         annotation: Omit<AnnotationEntry, 'synced' | 'mutationId'>;
       };
-      await api.post('/api/comments', {
-        bookId: payload.bookId,
-        cfi: payload.annotation.cfi,
-        endCfi: payload.annotation.endCfi,
-        text: payload.annotation.text,
-        comment: payload.annotation.comment,
-        color: payload.annotation.color,
+      await api.post(`/api/books/${payload.bookId}/comments`, {
+        chapterRef: payload.annotation.chapter,
+        cfiRange: payload.annotation.cfi,
+        selectedText: payload.annotation.text ?? '',
+        body: payload.annotation.comment ?? '',
+        visibility: 'shared' as const,
         mutationId: item.mutationId,
       });
     }
     return { success: true };
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown sync error';
-    if (message.includes('revoked') || message.includes('401') || message.includes('403')) {
+    const status = (error as { status?: number }).status;
+    
+    // Check for permission revocation (401/403)
+    if (status === 401 || status === 403) {
       return { success: false, error: 'permission_revoked' };
     }
+    
+    // Check for specific error messages
+    if (message.includes('revoked') || message.includes('permission')) {
+      return { success: false, error: 'permission_revoked' };
+    }
+    
     return { success: false, error: message };
   }
 }

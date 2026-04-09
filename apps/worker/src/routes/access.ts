@@ -3,7 +3,7 @@ import { validateGrant, computeCapabilities } from '../auth/password';
 import { createSession } from '../auth/session';
 import { logAudit } from '../audit';
 import { jsonResponse } from '../lib/responses';
-import { validateRequestBody, formatValidationErrors } from '../lib/validation';
+import { validateRequestBody } from '../lib/validation';
 import { AccessRequestSchema } from '@do-epub-studio/shared';
 
 export async function handleAccessRequest(env: Env, raw: unknown): Promise<Response> {

@@ -249,9 +249,12 @@ async function handleRequest(env: Env, request: Request): Promise<Response> {
     return handleGetAuditLog(env, entityType, entityId, limit);
   }
 
-  const validatePermissionMatch = /\/api\/access\/validate\?bookId=(.+)$/.exec(path);
+  const validatePermissionMatch = /\/api\/access\/validate$/.exec(path);
   if (validatePermissionMatch && method === 'GET') {
-    const bookId = decodeURIComponent(validatePermissionMatch[1]);
+    const bookId = url.searchParams.get('bookId');
+    if (!bookId) {
+      return jsonResponse({ ok: false, error: { code: 'VALIDATION_ERROR', message: 'bookId parameter is required' } }, 400);
+    }
     const authHeader = request.headers.get('Authorization');
     const token = authHeader?.replace('Bearer ', '') ?? '';
     return handleValidatePermission(env, bookId, token);

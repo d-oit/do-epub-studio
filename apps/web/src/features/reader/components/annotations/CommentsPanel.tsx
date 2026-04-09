@@ -287,6 +287,7 @@ function CommentItem({
             onChange={(e) => setEditText(e.target.value)}
             className="w-full p-2 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700"
             rows={2}
+            // eslint-disable-next-line jsx-a11y/no-autofocus -- Intentional: textarea appears conditionally on user action, auto-focusing improves editing workflow
             autoFocus
           />
           <div className="flex gap-2">
@@ -339,6 +340,7 @@ function CommentItem({
             className="w-full p-2 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700"
             rows={2}
             placeholder="Write a reply..."
+            // eslint-disable-next-line jsx-a11y/no-autofocus -- Intentional: textarea appears conditionally on user action, auto-focusing improves reply workflow
             autoFocus
           />
           <div className="flex gap-2">
@@ -453,6 +455,7 @@ function HighlightItem({
             className="w-full p-2 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700"
             rows={2}
             placeholder="Add a note..."
+            // eslint-disable-next-line jsx-a11y/no-autofocus -- Intentional: textarea appears conditionally on user action, auto-focusing improves note-adding workflow
             autoFocus
           />
           <div className="flex gap-2">

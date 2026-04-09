@@ -42,6 +42,15 @@
 - No direct public file URLs for private books.
 - No unsafe EPUB HTML rendering.
 
+## Pre-existing Issues Policy (MANDATORY)
+
+- **Never ignore warnings or errors.** Every lint warning, typecheck warning, and test failure must be fixed.
+- **Never skip or disable rules without justification.** If a lint rule is disabled (via `eslint-disable`), add an inline comment explaining why it's intentional.
+- **Fix pre-existing issues when encountered.** When working in a file with pre-existing lint/type/test issues, fix them as part of the same change. Do not leave them for "later."
+- **Document unfixable issues.** If a warning cannot be fixed due to tool/library limitations, document it in `agents-docs/KNOWN-ISSUES.md` with: the warning message, why it can't be fixed, and any mitigation strategy.
+- **Skills must pass validation.** Every SKILL.md must have `version`, `category`, be under 250 lines, and have all symlinks in place. Move detailed content to `references/`.
+- **Quality gate must pass.** No commit without passing `pnpm lint`, `pnpm typecheck`, `pnpm test`. Skill validation failures must also be resolved.
+
 ## Architecture + Storage
 
 - EPUB binaries/covers → Cloudflare R2 via signed URLs.

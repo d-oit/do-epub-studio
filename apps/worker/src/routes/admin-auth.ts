@@ -1,7 +1,6 @@
 import type { Env } from '../lib/env';
 import { createAdminSession, revokeAdminSession } from '../auth/admin-middleware';
 import { jsonResponse } from '../lib/responses';
-import { createRequestContext } from '../lib/observability';
 import { execute } from '../db/client';
 
 async function logAudit(
@@ -67,7 +66,7 @@ export async function handleAdminLogin(
         },
       },
     });
-  } catch (error) {
+  } catch {
     return jsonResponse(
       { ok: false, error: { code: 'INTERNAL_ERROR', message: 'Login failed' } },
       500,
@@ -79,7 +78,6 @@ export async function handleAdminLogout(
   env: Env,
   request: Request,
 ): Promise<Response> {
-  const context = createRequestContext(request);
   const authHeader = request.headers.get('Authorization');
   const token = authHeader?.replace('Bearer ', '') ?? '';
 

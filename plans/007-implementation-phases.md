@@ -34,12 +34,16 @@
 
 ## Phase 3 – Offline & Sync (COMPLETE)
 
-- Service worker (vite-plugin-pwa) with cache-first for shell/assets, stale-while-revalidate for fonts, cache-first for images.
-- IndexedDB schema for progress, annotations, sync queue, permission cache.
-- Permission cache TTL (24h) + zombie detection with periodic validation.
-- Reader progress locally first, queued sync on reconnect.
+- Service worker (src/sw.ts) with injectManifest strategy: cache-first for shell/assets/fonts/images, network-first for API, cache-first for EPUB files.
+- IndexedDB schema (lib/offline/db.ts) for progress, annotations, sync queue, permission cache.
+- Permission cache TTL (24h) + zombie detection with periodic validation (lib/offline/permissions.ts).
+- Sync queue with exponential backoff, max 5 retries, permission revocation detection (lib/offline/sync.ts).
+- Reader progress locally first, queued sync on reconnect with online/offline listeners.
+- PWA manifest icons generated (192x192, 512x512).
+- Comprehensive test coverage: offline-db.test.ts, offline-sync.test.ts, offline-permissions.test.ts.
+- Permission revocation callback integration for UI notifications.
 
-**PR:** TODO
+**PR:** Ready for review
 
 ## Phase 4 – Editorial Toolkit
 

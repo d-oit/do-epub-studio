@@ -1,7 +1,7 @@
 import type { Env } from '../lib/env';
 import { queryFirst, execute } from '../db/client';
 import { hashPassword, verifyPassword } from './password';
-import { createRequestContext } from '../lib/observability';
+import { createRequestContext as _createRequestContext } from '../lib/observability';
 
 export interface AdminAuthContext {
   userId: string;
@@ -74,13 +74,13 @@ export async function requireAdminAuth(
     return { ok: false, status: 401, error: 'Token expired' };
   }
 
-  const user = (await queryFirst(
+  const user = await queryFirst<{ id: string; email: string; global_role: 'admin' | 'editor' | 'reader' }>(
     env,
     `SELECT id, email, global_role
      FROM users
      WHERE id = ?`,
     [session.user_id],
-  )) as { id: string; email: string; global_role: 'admin' | 'editor' | 'reader' } | null;
+  );
 
   if (!user) {
     return { ok: false, status: 401, error: 'User not found' };
@@ -191,11 +191,11 @@ export async function initializeAdminUser(
   password: string,
   displayName?: string,
 ): Promise<string> {
-  const existing = (await queryFirst(
+  const existing = await queryFirst<{ id: string }>(
     env,
     `SELECT id FROM users WHERE email = ?`,
     [email.toLowerCase()],
-  )) as { id: string } | null;
+  );
 
   if (existing) {
     return existing.id;
