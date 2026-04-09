@@ -9,6 +9,7 @@ import {
   fetchHighlights,
   fetchComments,
   createHighlight,
+  createComment,
   updateHighlight,
   deleteHighlight,
   updateComment,
