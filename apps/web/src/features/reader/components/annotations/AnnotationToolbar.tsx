@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { useTranslation } from '../../../../hooks/useTranslation';
 
 type SupportedLocale = 'en' | 'de' | 'fr';
 
@@ -34,6 +35,7 @@ export function AnnotationToolbar({
   canHighlight,
   canComment,
 }: AnnotationToolbarProps) {
+  const { t } = useTranslation();
   const toolbarRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState({ top: 0, left: 0 });
   const [showColorPicker, setShowColorPicker] = useState(false);
@@ -91,10 +93,10 @@ export function AnnotationToolbar({
           <button
             onClick={() => setShowColorPicker(!showColorPicker)}
             className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-sm font-medium transition-colors"
-            title="Highlight"
+            title={t('annotation.highlight')}
           >
             <span className="inline-block w-4 h-4 rounded bg-yellow-400 mr-1" />
-            Highlight
+            {t('annotation.highlight')}
           </button>
           {showColorPicker && (
             <div className="absolute top-full left-0 mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-2 flex gap-1">
@@ -115,7 +117,7 @@ export function AnnotationToolbar({
         <button
           onClick={onComment}
           className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-sm font-medium transition-colors"
-          title="Comment"
+          title={t('annotation.comment')}
         >
           <svg
             className="w-4 h-4 inline mr-1"
@@ -130,7 +132,7 @@ export function AnnotationToolbar({
               d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
             />
           </svg>
-          Comment
+          {t('annotation.comment')}
         </button>
       )}
       <div className="h-6 w-px bg-gray-200 dark:bg-gray-700 mx-1" />

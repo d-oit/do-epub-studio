@@ -8,7 +8,8 @@
       "Bash(git add *)",
       "Bash(node *)",
       "Bash(xargs *)",
-      "Bash(find *)"
+      "Bash(find *)",
+      "Bash(./scripts/quality_gate.sh)"
     ]
   },
   "$version": 3

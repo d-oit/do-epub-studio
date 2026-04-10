@@ -1,5 +1,7 @@
 import { useState, useCallback } from 'react';
 import type { Comment, Highlight } from '../../../../stores';
+import { useTranslation } from '../../../../hooks/useTranslation';
+import type { TranslationKeys } from '../../../../i18n';
 
 type SupportedLocale = 'en' | 'de' | 'fr';
 
@@ -33,6 +35,7 @@ export function CommentsPanel({
   onNavigateToAnnotation,
   currentChapter,
 }: CommentsPanelProps) {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<'comments' | 'highlights'>('comments');
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyText, setReplyText] = useState('');
@@ -80,7 +83,7 @@ export function CommentsPanel({
   return (
     <aside className="fixed inset-y-0 right-0 w-80 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 z-40 flex flex-col shadow-xl">
       <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-        <h2 className="font-semibold">Annotations</h2>
+        <h2 className="font-semibold">{t('annotation.comment')}s</h2>
         <button onClick={onClose} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
@@ -102,7 +105,7 @@ export function CommentsPanel({
               : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
           }`}
         >
-          Comments ({openComments.length})
+          {t('annotation.comment')} ({openComments.length})
         </button>
         <button
           onClick={() => setActiveTab('highlights')}
@@ -112,7 +115,7 @@ export function CommentsPanel({
               : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
           }`}
         >
-          Highlights ({highlights.length})
+          {t('annotation.highlight')} ({highlights.length})
         </button>
       </div>
 
@@ -121,7 +124,7 @@ export function CommentsPanel({
           <div className="space-y-4">
             {openComments.length === 0 && resolvedComments.length === 0 && (
               <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-8">
-                No comments yet
+                {t('comment.noComments')}
               </p>
             )}
             {openComments.length > 0 && (
@@ -150,6 +153,7 @@ export function CommentsPanel({
                         comment.cfiRange || undefined,
                       )
                     }
+                    t={t}
                   />
                 ))}
               </div>
@@ -180,6 +184,7 @@ export function CommentsPanel({
                         comment.cfiRange || undefined,
                       )
                     }
+                    t={t}
                   />
                 ))}
               </div>
@@ -191,7 +196,7 @@ export function CommentsPanel({
           <div className="space-y-3">
             {highlights.length === 0 && (
               <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-8">
-                No highlights yet
+                {t('highlight.noHighlights')}
               </p>
             )}
             {highlights.map((highlight) => (
@@ -236,6 +241,7 @@ interface CommentItemProps {
   onResolve: (id: string) => void;
   onDelete: (id: string) => void;
   onNavigate: () => void;
+  t: (key: TranslationKeys) => string;
 }
 
 function CommentItem({
@@ -254,6 +260,7 @@ function CommentItem({
   onResolve,
   onDelete,
   onNavigate,
+  t,
 }: CommentItemProps) {
   const [showActions, setShowActions] = useState(false);
 
@@ -313,7 +320,7 @@ function CommentItem({
               {comment.userEmail} · {formatDate(comment.createdAt)}
             </span>
             {comment.status === 'resolved' && (
-              <span className="text-xs text-green-600 dark:text-green-400">Resolved</span>
+              <span className="text-xs text-green-600 dark:text-green-400">{t('comment.resolved')}</span>
             )}
           </div>
         </>
@@ -339,7 +346,7 @@ function CommentItem({
             onChange={(e) => setReplyText(e.target.value)}
             className="w-full p-2 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700"
             rows={2}
-            placeholder="Write a reply..."
+            placeholder={t('comment.reply')}
             // eslint-disable-next-line jsx-a11y/no-autofocus -- Intentional: textarea appears conditionally on user action, auto-focusing improves reply workflow
             autoFocus
           />
@@ -348,13 +355,13 @@ function CommentItem({
               onClick={() => handleReply(comment.id)}
               className="px-2 py-1 text-xs bg-primary-600 text-white rounded hover:bg-primary-700"
             >
-              Reply
+              {t('comment.reply')}
             </button>
             <button
               onClick={() => setReplyingTo(null)}
               className="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
             >
-              Cancel
+              {t('annotation.cancel')}
             </button>
           </div>
         </div>
@@ -369,7 +376,7 @@ function CommentItem({
             }}
             className="text-xs text-primary-600 hover:text-primary-700"
           >
-            Reply
+            {t('comment.reply')}
           </button>
           <button
             onClick={() => {
@@ -378,19 +385,19 @@ function CommentItem({
             }}
             className="text-xs text-gray-600 hover:text-gray-700 dark:text-gray-400"
           >
-            Edit
+            {t('comment.edit')}
           </button>
           <button
             onClick={() => onResolve(comment.id)}
             className="text-xs text-green-600 hover:text-green-700"
           >
-            {comment.status === 'resolved' ? 'Reopen' : 'Resolve'}
+            {comment.status === 'resolved' ? t('comment.unresolve') : t('comment.resolve')}
           </button>
           <button
             onClick={() => onDelete(comment.id)}
             className="text-xs text-red-600 hover:text-red-700"
           >
-            Delete
+            {t('comment.delete')}
           </button>
         </div>
       )}
