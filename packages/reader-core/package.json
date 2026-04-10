@@ -13,7 +13,7 @@
     "epubjs": "^0.3.93"
   },
   "devDependencies": {
-    "@types/node": "^20",
+    "@types/node": "^25",
     "typescript": "^5.4"
   }
 }
