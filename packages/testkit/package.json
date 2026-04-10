@@ -10,7 +10,7 @@
     "lint": "eslint src --ext .ts"
   },
   "devDependencies": {
-    "@types/node": "^20",
+    "@types/node": "^25",
     "typescript": "^5.4"
   }
 }
