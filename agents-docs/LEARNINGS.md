@@ -38,3 +38,4 @@
 - **EPUB.js + TypeScript**: epubjs types expect non-null refs; capture in local variable before passing to `renderTo()` to avoid TS2769 errors.
 - **IndexedDB getAllFromIndex**: idb's `getAllFromIndex` with boolean `false` as value fails - use `.getAll().then(filter())` instead.
 - **Duplicate exports**: Don't export same function from multiple modules in a package; TS reports "has already exported a member" error.
+- **Dependabot PRs + TypeScript major bumps**: TypeScript 5.9→6.0 is a major version with breaking changes. When dependabot bumps TS to a new major, PRs will fail lint until code is updated to be TS6-compatible. Merge non-TS PRs first, then manually fix TS6 issues before re-running CI.
