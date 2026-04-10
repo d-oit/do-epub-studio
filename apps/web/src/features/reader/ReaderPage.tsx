@@ -35,6 +35,7 @@ import {
   CommentsPanel,
   type SelectionData,
 } from './components/annotations';
+import { CommentInput } from './components/annotations/CommentInput';
 
 interface TocItem {
   label: string;
@@ -71,7 +72,7 @@ export function ReaderPage() {
     setFontSize,
     setPageWidth: _setPageWidth,
   } = usePreferencesStore();
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
 
   const viewerRef = useRef<HTMLDivElement>(null);
   const bookRef = useRef<Book | null>(null);
@@ -86,6 +87,7 @@ export function ReaderPage() {
   const [selection, setSelection] = useState<SelectionData | null>(null);
   const [showComments, setShowComments] = useState(false);
   const [isCommentMode, setIsCommentMode] = useState(false);
+  const [showCommentInput, setShowCommentInput] = useState(false);
 
   void _progress;
   void _setPageWidth;
@@ -196,6 +198,49 @@ export function ReaderPage() {
       }
     },
     [selection, sessionToken, bookId, addHighlight],
+  );
+
+  const handleCreateComment = useCallback(
+    async (text: string) => {
+      if (!selection || !sessionToken || !bookId) return;
+
+      try {
+        const comment = await createComment(
+          bookId,
+          {
+            chapterRef: selection.chapterRef,
+            cfiRange: selection.cfiRange,
+            selectedText: selection.text,
+            body: text,
+          },
+          sessionToken,
+        );
+        addComment(comment);
+        setSelection(null);
+        setShowCommentInput(false);
+        setIsCommentMode(false);
+
+        if (!navigator.onLine) {
+          const mutationId = generateMutationId();
+          await saveAnnotation({
+            id: comment.id,
+            bookId,
+            type: 'comment',
+            cfi: selection.cfiRange,
+            text: selection.text,
+            comment: text,
+            chapter: selection.chapterRef,
+            createdAt: Date.now(),
+            synced: false,
+            mutationId,
+          });
+          await queueSync('annotation', { bookId, annotation: comment }, mutationId);
+        }
+      } catch (err) {
+        console.error('Failed to create comment', err);
+      }
+    },
+    [selection, sessionToken, bookId, addComment],
   );
 
   const handleResolveComment = useCallback(
@@ -567,7 +612,7 @@ export function ReaderPage() {
               <button
                 onClick={() => setShowComments(!showComments)}
                 className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded relative"
-                aria-label="Comments"
+                aria-label={t('annotation.comment')}
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
@@ -735,14 +780,42 @@ export function ReaderPage() {
           selection={selection}
           onHighlight={(color) => void handleCreateHighlight(color)}
           onComment={() => {
+            setShowCommentInput(true);
             setIsCommentMode(true);
-            setShowComments(true);
           }}
-          onClose={() => setSelection(null)}
-          locale="en"
+          onClose={() => {
+            setSelection(null);
+            setShowCommentInput(false);
+            setIsCommentMode(false);
+          }}
+          locale={locale}
           canHighlight={capabilities?.canHighlight ?? false}
           canComment={capabilities?.canComment ?? false}
         />
+      )}
+
+      {showCommentInput && selection && (
+        <div
+          className="fixed z-50 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-4 max-w-md mx-auto"
+          style={{
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+          }}
+        >
+          <h3 className="text-sm font-medium mb-3">{t('annotation.comment')}</h3>
+          <CommentInput
+            onSubmit={(text) => void handleCreateComment(text)}
+            onCancel={() => {
+              setShowCommentInput(false);
+              setIsCommentMode(false);
+              setSelection(null);
+            }}
+            placeholder={t('comment.placeholder')}
+            submitLabel={t('annotation.comment')}
+            autoFocus
+          />
+        </div>
       )}
 
       <CommentsPanel
@@ -760,7 +833,7 @@ export function ReaderPage() {
           void handleNavigateToAnnotation(chapterRef, cfiRange)
         }
         currentChapter={useReaderStore.getState().currentChapter}
-        locale="en"
+        locale={locale}
       />
     </div>
   );
