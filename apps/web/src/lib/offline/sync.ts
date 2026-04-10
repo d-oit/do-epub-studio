@@ -122,14 +122,26 @@ async function syncItem(item: SyncQueueItem): Promise<SyncResult> {
         bookId: string;
         annotation: Omit<AnnotationEntry, 'synced' | 'mutationId'>;
       };
-      await api.post(`/api/books/${payload.bookId}/comments`, {
-        chapterRef: payload.annotation.chapter,
-        cfiRange: payload.annotation.cfi,
-        selectedText: payload.annotation.text ?? '',
-        body: payload.annotation.comment ?? '',
-        visibility: 'shared' as const,
-        mutationId: item.mutationId,
-      });
+
+      if (payload.annotation.type === 'highlight') {
+        await api.post(`/api/books/${payload.bookId}/highlights`, {
+          chapterRef: payload.annotation.chapter,
+          cfiRange: payload.annotation.cfi,
+          selectedText: payload.annotation.text ?? '',
+          color: payload.annotation.color ?? 'yellow',
+          note: payload.annotation.comment ?? '',
+          mutationId: item.mutationId,
+        });
+      } else {
+        await api.post(`/api/books/${payload.bookId}/comments`, {
+          chapterRef: payload.annotation.chapter,
+          cfiRange: payload.annotation.cfi,
+          selectedText: payload.annotation.text ?? '',
+          body: payload.annotation.comment ?? '',
+          visibility: 'shared' as const,
+          mutationId: item.mutationId,
+        });
+      }
     }
     return { success: true };
   } catch (error) {

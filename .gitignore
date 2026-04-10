@@ -50,6 +50,7 @@ dist/
 
 # Playwright
 .playwright/
+playwright-reports/
 
 # Coverage
 coverage/

@@ -17,6 +17,7 @@ interface AuthState {
     canManageAccess: boolean;
   } | null;
   isAuthenticated: boolean;
+  isAdmin: boolean;
   setAuth: (data: {
     sessionToken: string;
     bookId: string;
@@ -25,6 +26,7 @@ interface AuthState {
     email: string;
     capabilities: AuthState['capabilities'];
   }) => void;
+  setAdminAuth: (data: { sessionToken: string; email: string }) => void;
   logout: () => void;
 }
 
@@ -38,6 +40,7 @@ export const useAuthStore = create<AuthState>()(
       email: null,
       capabilities: null,
       isAuthenticated: false,
+      isAdmin: false,
       setAuth: (data) =>
         set({
           sessionToken: data.sessionToken,
@@ -47,6 +50,14 @@ export const useAuthStore = create<AuthState>()(
           email: data.email,
           capabilities: data.capabilities,
           isAuthenticated: true,
+          isAdmin: false,
+        }),
+      setAdminAuth: (data) =>
+        set({
+          sessionToken: data.sessionToken,
+          email: data.email,
+          isAuthenticated: true,
+          isAdmin: true,
         }),
       logout: () =>
         set({
@@ -57,6 +68,7 @@ export const useAuthStore = create<AuthState>()(
           email: null,
           capabilities: null,
           isAuthenticated: false,
+          isAdmin: false,
         }),
     }),
     {
@@ -69,6 +81,7 @@ export const useAuthStore = create<AuthState>()(
         email: state.email,
         capabilities: state.capabilities,
         isAuthenticated: state.isAuthenticated,
+        isAdmin: state.isAdmin,
       }),
     }
   )

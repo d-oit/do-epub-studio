@@ -64,6 +64,9 @@ export function ReaderPage() {
     addComment,
     updateComment: updateCommentInStore,
     setCurrentChapter,
+    bookmarks,
+    addBookmark,
+    removeBookmark,
   } = useReaderStore();
   const {
     reader,
@@ -78,6 +81,7 @@ export function ReaderPage() {
   const bookRef = useRef<Book | null>(null);
   const renditionRef = useRef<Rendition | null>(null);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
+  const currentChapterRef = useRef<string | null>(null);
   const [epubUrl, setEpubUrl] = useState<string | null>(null);
   const [toc, setToc] = useState<TocItem[]>([]);
   const [showToc, setShowToc] = useState(false);
@@ -86,6 +90,7 @@ export function ReaderPage() {
   const [revokedBooks, setRevokedBooks] = useState<Set<string>>(new Set());
   const [selection, setSelection] = useState<SelectionData | null>(null);
   const [showComments, setShowComments] = useState(false);
+  const [showBookmarks, setShowBookmarks] = useState(false);
   const [isCommentMode, setIsCommentMode] = useState(false);
   const [showCommentInput, setShowCommentInput] = useState(false);
 
@@ -383,6 +388,143 @@ export function ReaderPage() {
     [reader.fontSize, reader.fontFamily, reader.lineHeight],
   );
 
+  const renderHighlights = useCallback(
+    (rendition: Rendition, chapterHref: string | null) => {
+      // Remove all existing highlights first
+      const existing = rendition.annotations.each();
+      for (const annotation of existing) {
+        if ('cfiRange' in annotation) {
+          rendition.annotations.remove(annotation.cfiRange as string, 'highlight');
+        }
+      }
+
+      // Render highlights for the current chapter only
+      if (!chapterHref) return;
+
+      const chapterHighlights = highlights.filter(
+        (h) => h.chapterRef === chapterHref && h.cfiRange,
+      );
+
+      for (const highlight of chapterHighlights) {
+        rendition.annotations.highlight(
+          highlight.cfiRange as string,
+          { id: highlight.id, data: highlight },
+          undefined,
+          undefined,
+          { fill: highlight.color, 'fill-opacity': '0.3' },
+        );
+      }
+    },
+    [highlights],
+  );
+
+  const renderCommentMarkers = useCallback(
+    (rendition: Rendition, chapterHref: string | null) => {
+      // Remove all existing comment markers
+      const existing = rendition.annotations.each();
+      for (const annotation of existing) {
+        if ('cfiRange' in annotation) {
+          rendition.annotations.remove(annotation.cfiRange as string, 'underline');
+        }
+      }
+
+      if (!chapterHref) return;
+
+      const chapterComments = comments.filter(
+        (c) => c.chapterRef === chapterHref && c.cfiRange && c.status !== 'deleted',
+      );
+
+      for (const comment of chapterComments) {
+        const isResolved = comment.status === 'resolved';
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (rendition.annotations as any).add(
+          'underline',
+          comment.cfiRange,
+          comment.id,
+          { data: comment },
+          () => {
+            // Click handler: navigate to annotation
+            void handleNavigateToAnnotation(comment.chapterRef || '', comment.cfiRange || undefined);
+          },
+          {
+            stroke: isResolved ? '#9ca3af' : '#3b82f6',
+            'stroke-width': isResolved ? '1px' : '2px',
+            'stroke-opacity': isResolved ? '0.4' : '0.7',
+          },
+        );
+      }
+    },
+    [comments, handleNavigateToAnnotation],
+  );
+
+  const handleCreateBookmark = useCallback(async () => {
+    if (!sessionToken || !bookId) return;
+
+    const currentProgress = useReaderStore.getState().progress;
+    if (!currentProgress?.locator?.cfi) return;
+
+    const chapterName = currentChapterRef.current
+      ? toc.find((item) => item.href === currentChapterRef.current)?.label || 'Unknown Chapter'
+      : 'Unknown Chapter';
+
+    const bookmark = {
+      id: `bookmark-${Date.now()}`,
+      locator: currentProgress.locator,
+      label: chapterName,
+      createdAt: new Date().toISOString(),
+    };
+
+    addBookmark(bookmark);
+
+    if (!navigator.onLine) {
+      const mutationId = generateMutationId();
+      await saveAnnotation({
+        id: bookmark.id,
+        bookId,
+        type: 'bookmark',
+        cfi: currentProgress.locator.cfi,
+        text: chapterName,
+        chapter: currentChapterRef.current ?? undefined,
+        createdAt: Date.now(),
+        synced: false,
+        mutationId,
+      });
+      await queueSync('annotation', { bookId, annotation: bookmark }, mutationId);
+    }
+  }, [sessionToken, bookId, addBookmark, toc]);
+
+  const handleDeleteBookmark = useCallback(
+    async (bookmarkId: string) => {
+      removeBookmark(bookmarkId);
+    },
+    [removeBookmark],
+  );
+
+  const handleExportNotes = useCallback(() => {
+    const notesContent = [
+      `# ${bookTitle || 'Book'} - Exported Notes`,
+      ``,
+      `## Highlights`,
+      ``,
+      ...highlights.map((h) => `- ${h.selectedText} (${h.color})${h.note ? ` — ${h.note}` : ''}`),
+      ``,
+      `## Comments`,
+      ``,
+      ...comments
+        .filter((c) => c.status !== 'deleted')
+        .map((c) => `- ${c.body}${c.selectedText ? ` — "${c.selectedText.slice(0, 80)}..."` : ''}`),
+      ``,
+    ].join('\n');
+
+    const blob = new Blob([notesContent], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${bookTitle || 'notes'}-notes.md`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [bookTitle, highlights, comments]);
+
   useEffect(() => {
     if (!sessionToken || !bookSlug) {
       navigate('/login');
@@ -444,6 +586,16 @@ export function ReaderPage() {
 
         await rendition.display();
 
+        // Capture initial chapter and render highlights + comment markers
+        const initialLocation = rendition.location;
+        if (initialLocation?.start) {
+          const startHref = initialLocation.start.href ?? null;
+          currentChapterRef.current = startHref;
+          setCurrentChapter(startHref);
+        }
+        renderHighlights(rendition, currentChapterRef.current);
+        renderCommentMarkers(rendition, currentChapterRef.current);
+
         if (sessionToken && bookId) {
           try {
             const progressData = await apiRequest<{ locator: unknown; progressPercent: number }>(
@@ -475,8 +627,12 @@ export function ReaderPage() {
 
             const currentTocItem = toc.find((item) => item.href === href);
             if (currentTocItem) {
+              currentChapterRef.current = currentTocItem.href;
               setCurrentChapter(currentTocItem.href);
             }
+
+            renderHighlights(rendition, currentChapterRef.current);
+            renderCommentMarkers(rendition, currentChapterRef.current);
 
             if (sessionToken && bookId) {
               const mutationId = generateMutationId();
@@ -532,6 +688,17 @@ export function ReaderPage() {
     void initEpub();
 
     return () => {
+      const rendition = renditionRef.current;
+      if (rendition) {
+        // Remove all highlight and comment annotations before destroying
+        const existing = rendition.annotations.each();
+        for (const annotation of existing) {
+          if ('cfiRange' in annotation) {
+            rendition.annotations.remove(annotation.cfiRange as string, 'highlight');
+            rendition.annotations.remove(annotation.cfiRange as string, 'underline');
+          }
+        }
+      }
       renditionRef.current?.destroy();
       bookRef.current?.destroy();
     };
@@ -549,6 +716,18 @@ export function ReaderPage() {
       applyTypography(renditionRef.current);
     }
   }, [reader.fontSize, reader.fontFamily, reader.lineHeight, applyTypography]);
+
+  useEffect(() => {
+    const rendition = renditionRef.current;
+    if (!rendition || !currentChapterRef.current) return;
+    renderHighlights(rendition, currentChapterRef.current);
+  }, [highlights, renderHighlights]);
+
+  useEffect(() => {
+    const rendition = renditionRef.current;
+    if (!rendition || !currentChapterRef.current) return;
+    renderCommentMarkers(rendition, currentChapterRef.current);
+  }, [comments, renderCommentMarkers]);
 
   const handleLogout = async () => {
     try {
@@ -629,6 +808,41 @@ export function ReaderPage() {
                 )}
               </button>
             )}
+            <button
+              onClick={() => setShowBookmarks(!showBookmarks)}
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded relative"
+              aria-label="Bookmarks"
+              title="View bookmarks"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
+                />
+              </svg>
+              {bookmarks.length > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary-600 text-white text-xs rounded-full flex items-center justify-center">
+                  {bookmarks.length}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => void handleExportNotes()}
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+              aria-label="Export notes"
+              title="Export highlights and comments as Markdown"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
+              </svg>
+            </button>
             <button
               onClick={() => setShowSettings(!showSettings)}
               className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
@@ -813,9 +1027,101 @@ export function ReaderPage() {
             }}
             placeholder={t('comment.placeholder')}
             submitLabel={t('annotation.comment')}
+            // eslint-disable-next-line jsx-a11y/no-autofocus -- Intentional: comment input should auto-focus for UX
             autoFocus
           />
         </div>
+      )}
+
+      {showBookmarks && (
+        <aside className="fixed inset-y-0 right-0 w-80 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 z-40 flex flex-col shadow-xl">
+          <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+            <h2 className="font-semibold">Bookmarks</h2>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => void handleCreateBookmark()}
+                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                title="Add bookmark at current position"
+                aria-label="Add bookmark"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 4v16m8-8H4"
+                  />
+                </svg>
+              </button>
+              <button
+                onClick={() => setShowBookmarks(false)}
+                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div className="flex-1 overflow-y-auto p-4">
+            {bookmarks.length === 0 ? (
+              <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-8">
+                No bookmarks yet. Click the bookmark icon to save your place.
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {bookmarks.map((bookmark) => (
+                  <div
+                    key={bookmark.id}
+                    className="p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-700 transition-colors"
+                  >
+                    <div className="flex items-start justify-between">
+                      <button
+                        onClick={() => {
+                          if (bookmark.locator.cfi && renditionRef.current) {
+                            void renditionRef.current.display(bookmark.locator.cfi);
+                          }
+                        }}
+                        className="flex-1 text-left"
+                      >
+                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                          {bookmark.label || 'Untitled'}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          {new Date(bookmark.createdAt).toLocaleDateString()}
+                        </p>
+                      </button>
+                      <button
+                        onClick={() => void handleDeleteBookmark(bookmark.id)}
+                        className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+                        aria-label="Delete bookmark"
+                      >
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </aside>
       )}
 
       <CommentsPanel

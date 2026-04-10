@@ -21,9 +21,16 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch((error) => {
-      console.log('Service worker registration failed:', error);
-    });
+    void (async () => {
+      try {
+        const reg = await navigator.serviceWorker.register('/sw.js');
+        if (reg.sync) {
+          await reg.sync.register('sync-reader-state');
+        }
+      } catch (error) {
+        console.log('Service worker registration failed:', error);
+      }
+    })();
   });
 }
 

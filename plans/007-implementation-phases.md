@@ -45,17 +45,25 @@
 
 **PR:** Ready for review
 
-## Phase 4 – Editorial Toolkit
+## Phase 4 – Editorial Toolkit (COMPLETE)
 
-- Highlights + comments UI.
-- Comment threads/resolution + audit.
-- Re-anchoring heuristics per ADR-006.
+- Highlights + comments UI with threaded replies, resolve/unresolve, edit, delete.
+- Visual highlight overlays rendered on EPUB text via `rendition.annotations.highlight()`.
+- Visual comment markers (underlines) rendered on EPUB text via `rendition.annotations.add('underline')`.
+- Re-anchoring heuristics per ADR-006 wired into annotation render flow.
+- Bookmark creation, listing, navigation, and deletion UI.
+- CommentInput component wired into annotation flow with auto-focus.
+- Export notes as Markdown (highlights + comments).
+- Offline sync queue fixed to distinguish highlights vs comments.
+- Background sync tag `sync-reader-state` registered on app load.
 
-## Phase 5 – Admin Console
+## Phase 5 – Admin Console (COMPLETE)
 
-- Book catalog + upload flow.
-- Grant editor w/ capability toggles + expiry.
-- Audit log UI + export.
+- Book catalog + upload flow with presigned R2 upload.
+- Grant editor with capability toggles, expiry, create/edit/revoke.
+- Audit log UI with filtering (entity type, date range, entity ID) + CSV export.
+- Admin login page with role-based route guards (`AdminRoute`).
+- Admin navigation bar linking Books, Grants, and Audit Log pages.
 
 ## Phase 6 – Hardening & Release
 

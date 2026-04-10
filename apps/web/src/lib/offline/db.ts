@@ -13,7 +13,7 @@ export interface ProgressEntry {
 export interface AnnotationEntry {
   id: string;
   bookId: string;
-  type: 'highlight' | 'comment';
+  type: 'highlight' | 'comment' | 'bookmark';
   cfi: string;
   endCfi?: string;
   text?: string;
