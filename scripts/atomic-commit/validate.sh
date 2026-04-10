@@ -40,13 +40,14 @@ log "Running pre-commit validation..."
 echo ""
 
 CURRENT_BRANCH=$(git branch --show-current)
-PROTECTED_BRANCHES="main master"
 
-if [[ " $PROTECTED_BRANCHES " =~ " $CURRENT_BRANCH " ]]; then
-    error "Cannot commit directly to $CURRENT_BRANCH branch"
-    error "Create a feature branch first: git checkout -b feat/your-feature"
-    exit 1
-fi
+case "$CURRENT_BRANCH" in
+    main|master)
+        error "Cannot commit directly to $CURRENT_BRANCH branch"
+        error "Create a feature branch first: git checkout -b feat/your-feature"
+        exit 1
+        ;;
+esac
 
 success "On feature branch: $CURRENT_BRANCH"
 
