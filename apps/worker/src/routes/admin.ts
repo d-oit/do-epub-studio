@@ -1,5 +1,5 @@
 import type { Env } from '../lib/env';
-import { execute, queryAll } from '../db/client';
+import { execute, queryAll, queryFirst } from '../db/client';
 import { createGrant } from '../auth/password';
 import { jsonResponse } from '../lib/responses';
 import { validateRequestBody } from '../lib/validation';
@@ -8,6 +8,16 @@ import {
   CreateGrantSchema,
   UpdateGrantSchema,
 } from '@do-epub-studio/shared';
+import { z } from 'zod';
+
+const UploadCompleteSchema = z.object({
+  storageKey: z.string().min(1),
+  originalFilename: z.string().min(1).max(500),
+  mimeType: z.string().max(200).optional(),
+  fileSizeBytes: z.number().int().nonnegative().optional(),
+  sha256: z.string().max(64).optional(),
+  epubVersion: z.string().max(10).optional(),
+});
 
 interface _BookRow {
   id: string;
@@ -75,6 +85,10 @@ export async function handleCreateBook(
     ],
   );
 
+  // Generate the upload URL pointing to the Worker upload endpoint
+  const baseUrl = env.APP_BASE_URL.replace(/\/+$/, '');
+  const uploadUrl = `${baseUrl}/api/admin/books/${id}/upload`;
+
   await logAudit(env, {
     entityType: 'book',
     entityId: id,
@@ -86,24 +100,119 @@ export async function handleCreateBook(
   return jsonResponse(
     {
       ok: true,
-      data: { id, slug: body.slug, title: body.title },
+      data: { id, slug: body.slug, title: body.title, uploadUrl },
     },
     201,
+  );
+}
+
+/**
+ * Receives the raw EPUB file body and streams it to R2.
+ * Returns the storageKey and upload metadata for the caller to submit via upload-complete.
+ */
+export async function handleBookUpload(
+  env: Env,
+  bookId: string,
+  request: Request,
+): Promise<Response> {
+  // Verify the book exists
+  const book = await queryFirst<{ id: string; slug: string }>(
+    env,
+    `SELECT id, slug FROM books WHERE id = ? AND archived_at IS NULL LIMIT 1`,
+    [bookId],
+  );
+
+  if (!book) {
+    return jsonResponse(
+      { ok: false, error: { code: 'NOT_FOUND', message: 'Book not found' } },
+      404,
+    );
+  }
+
+  const contentType = request.headers.get('Content-Type') ?? 'application/epub+zip';
+  const contentLength = parseInt(request.headers.get('Content-Length') ?? '0', 10);
+
+  if (contentLength <= 0) {
+    return jsonResponse(
+      { ok: false, error: { code: 'VALIDATION_ERROR', message: 'Missing Content-Length header' } },
+      400,
+    );
+  }
+
+  // Max 200 MB
+  const maxFileSize = 200 * 1024 * 1024;
+  if (contentLength > maxFileSize) {
+    return jsonResponse(
+      {
+        ok: false,
+        error: { code: 'VALIDATION_ERROR', message: `File too large. Max: ${maxFileSize} bytes` },
+      },
+      413,
+    );
+  }
+
+  const storageKey = `books/${book.id}/${crypto.randomUUID()}.epub`;
+
+  try {
+    const body = request.body;
+    if (!body) {
+      return jsonResponse(
+        { ok: false, error: { code: 'VALIDATION_ERROR', message: 'Request body is empty' } },
+        400,
+      );
+    }
+
+    await env.BOOKS_BUCKET.put(storageKey, body, {
+      httpMetadata: {
+        contentType,
+        contentDisposition: `attachment; filename="${book.slug}.epub"`,
+      },
+      customMetadata: {
+        bookId: book.id,
+        uploadedAt: new Date().toISOString(),
+      },
+    });
+  } catch {
+    return jsonResponse(
+      {
+        ok: false,
+        error: { code: 'UPLOAD_FAILED', message: 'Failed to upload file to storage' },
+      },
+      500,
+    );
+  }
+
+  return jsonResponse(
+    {
+      ok: true,
+      data: { storageKey, bookId: book.id, slug: book.slug },
+    },
+    200,
   );
 }
 
 export async function handleUploadComplete(
   env: Env,
   bookId: string,
-  body: {
-    storageKey: string;
-    originalFilename: string;
-    mimeType?: string;
-    fileSizeBytes?: number;
-    sha256?: string;
-    epubVersion?: string;
-  },
+  rawBody: unknown,
 ): Promise<Response> {
+  const validation = validateRequestBody(UploadCompleteSchema, rawBody);
+
+  if (!validation.ok) {
+    return jsonResponse(
+      {
+        ok: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: validation.error,
+          details: validation.details,
+        },
+      },
+      validation.status,
+    );
+  }
+
+  const body = validation.data;
   const fileId = crypto.randomUUID();
   const now = new Date().toISOString();
 

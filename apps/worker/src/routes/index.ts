@@ -17,10 +17,11 @@ export {
   handleDeleteHighlight,
   handleUpdateHighlight,
 } from './reader-state';
-export { handleListComments, handleCreateComment, handleUpdateComment } from './comments';
+export { handleListComments, handleCreateComment, handleUpdateComment, handleDeleteComment } from './comments';
 export { handleDownloadBookFile } from './files';
 export {
   handleCreateBook,
+  handleBookUpload,
   handleUploadComplete,
   handleCreateAdminGrant,
   handleUpdateGrant,

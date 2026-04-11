@@ -108,7 +108,7 @@ async function syncItem(item: SyncQueueItem): Promise<SyncResult> {
         percentage: number;
         mutationId: string;
       };
-      await api.post('/api/books/:bookId/progress', {
+      await api.post(`/api/books/${payload.bookId}/progress`, {
         bookId: payload.bookId,
         locator: {
           cfi: payload.cfi,

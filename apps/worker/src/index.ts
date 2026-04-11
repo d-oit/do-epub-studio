@@ -30,6 +30,7 @@ import {
   handleUpdateComment,
   handleDownloadBookFile,
   handleCreateBook,
+  handleBookUpload,
   handleUploadComplete,
   handleCreateAdminGrant,
   handleUpdateGrant,
@@ -189,6 +190,15 @@ async function handleRequest(env: Env, request: Request): Promise<Response> {
     }
     const body = await request.json();
     return handleCreateBook(env, body, authResult.context.email);
+  }
+
+  const bookUploadMatch = /\/api\/admin\/books\/([^/]+)\/upload$/.exec(path);
+  if (bookUploadMatch && method === 'PUT') {
+    const authResult = await requireAdminAuth(env, request);
+    if (!authResult.ok) {
+      return jsonResponse({ ok: false, error: { code: 'UNAUTHORIZED', message: authResult.error } }, authResult.status);
+    }
+    return handleBookUpload(env, bookUploadMatch[1], request);
   }
 
   const uploadCompleteMatch = /\/api\/admin\/books\/([^/]+)\/upload-complete$/.exec(path);

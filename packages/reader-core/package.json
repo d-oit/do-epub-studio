@@ -7,13 +7,15 @@
   "types": "./src/index.ts",
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "lint": "eslint src --ext .ts"
+    "lint": "eslint src --ext .ts",
+    "test": "vitest --run"
   },
   "dependencies": {
     "epubjs": "^0.3.93"
   },
   "devDependencies": {
     "@types/node": "^25",
-    "typescript": "^5.4"
+    "typescript": "^5.4",
+    "vitest": "^1"
   }
 }

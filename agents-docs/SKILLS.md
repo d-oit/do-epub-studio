@@ -2,6 +2,14 @@
 
 > Reference doc - not loaded by default. Follows the [agentskills.io specification](https://agentskills.io/specification).
 
+## External Reference
+
+For UI/UX design tokens and optimization patterns, see [do-gemini-ui-ux-skill](https://github.com/d-oit/do-gemini-ui-ux-skill/tree/main/):
+
+- `docs/design/` - design system (4 modes, typography, colors, layout)
+- `.agents/skills/ui-ux-optimize/SKILL.md` - tokenize workflow
+- `src/index.css` - base styles with overflow handling
+
 ## Canonical Location
 
 All skills live in `.agents/skills/` (the canonical source).
@@ -64,29 +72,32 @@ license: MIT
 One-sentence summary. Clarify scope vs related skills if overlap exists.
 
 ## When to Use
+
 - Activate when: [specific triggers]
 - NOT for: [out-of-scope scenarios handled by other skills]
 
 ## Instructions
+
 [Concise, step-by-step procedural instructions]
 
 ## Reference Files
+
 - `references/guide.md` - [when to read]
 - `scripts/run.sh` - [what it does]
 ```
 
 ## Frontmatter Fields
 
-| Field | Required | Constraints |
-|-------|----------|-------------|
-| `name` | Yes | 1-64 chars. Lowercase + hyphens only. Must match directory name. |
-| `description` | Yes | 1-1024 chars. Front-load trigger use case. Aim for ≤200 chars for reliable L1 routing. |
-| `category` | Yes | One of: coordination, quality, documentation, workflow, research, knowledge-management |
-| `allowed-tools` | Yes | Space-delimited list of pre-approved tools. Restrict to minimum required. |
-| `version` | Recommended | Semantic version (e.g., "1.0.0"). Only one version field allowed. |
-| `license` | No | License name or reference to bundled license file. |
-| `compatibility` | No | Max 500 chars. Environment requirements (e.g., "Requires csm CLI"). |
-| `metadata` | No | Arbitrary key-value map. Use unique keys to prevent conflicts. |
+| Field           | Required    | Constraints                                                                            |
+| --------------- | ----------- | -------------------------------------------------------------------------------------- |
+| `name`          | Yes         | 1-64 chars. Lowercase + hyphens only. Must match directory name.                       |
+| `description`   | Yes         | 1-1024 chars. Front-load trigger use case. Aim for ≤200 chars for reliable L1 routing. |
+| `category`      | Yes         | One of: coordination, quality, documentation, workflow, research, knowledge-management |
+| `allowed-tools` | Yes         | Space-delimited list of pre-approved tools. Restrict to minimum required.              |
+| `version`       | Recommended | Semantic version (e.g., "1.0.0"). Only one version field allowed.                      |
+| `license`       | No          | License name or reference to bundled license file.                                     |
+| `compatibility` | No          | Max 500 chars. Environment requirements (e.g., "Requires csm CLI").                    |
+| `metadata`      | No          | Arbitrary key-value map. Use unique keys to prevent conflicts.                         |
 
 ## Description Optimization
 
@@ -116,7 +127,7 @@ Per the agentskills.io specification — uses `expected_output`, not trigger mat
 ```
 
 - **`expected_output`** (required): Describe the end goal/state.
-- **`assertions`**: Add *after* the first run. Must be objective and verifiable.
+- **`assertions`**: Add _after_ the first run. Must be objective and verifiable.
 - **`files`**: String array of file paths under `evals/`. Create actual files; do NOT embed content inline.
 - Start with 2-3 evals; grow to 6-10 for critical skills.
 - Run `./scripts/eval-skills.sh` to validate eval format.
@@ -143,11 +154,11 @@ Per the agentskills.io specification — uses `expected_output`, not trigger mat
 
 ## Agent vs Skill
 
-| Use a Skill | Use a Sub-Agent |
-|---|---|
-| Reusable reference knowledge | Complex multi-step execution |
-| Main agent executes with guidance | Needs isolated context window |
-| No context isolation needed | Different tool access than parent |
+| Use a Skill                       | Use a Sub-Agent                   |
+| --------------------------------- | --------------------------------- |
+| Reusable reference knowledge      | Complex multi-step execution      |
+| Main agent executes with guidance | Needs isolated context window     |
+| No context isolation needed       | Different tool access than parent |
 
 ## Anti-Patterns
 

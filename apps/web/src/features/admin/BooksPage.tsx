@@ -233,7 +233,7 @@ function CreateBookModal({ sessionToken, onClose, onCreated }: CreateBookModalPr
     setError(null);
 
     try {
-      // Step 1: Create book record
+      // Step 1: Create book record and get upload URL
       const bookData = await apiRequest<{ id: string; slug: string; uploadUrl: string }>(
         '/api/admin/books',
         {
@@ -243,21 +243,33 @@ function CreateBookModal({ sessionToken, onClose, onCreated }: CreateBookModalPr
         },
       );
 
-      // Step 2: Upload EPUB file to presigned URL
+      // Step 2: Upload EPUB file to the Worker upload endpoint
       const uploadResponse = await fetch(bookData.uploadUrl, {
         method: 'PUT',
         body: epubFile,
-        headers: { 'Content-Type': 'application/epub+zip' },
+        headers: {
+          'Content-Type': 'application/epub+zip',
+          Authorization: `Bearer ${sessionToken}`,
+        },
       });
       if (!uploadResponse.ok) {
-        throw new Error(`Upload failed: ${uploadResponse.status} ${uploadResponse.statusText}`);
+        const errorBody = await uploadResponse.json().catch(() => null);
+        throw new Error(
+          errorBody?.error?.message ?? `Upload failed: ${uploadResponse.status} ${uploadResponse.statusText}`,
+        );
       }
+      const uploadResult = (await uploadResponse.json()) as { data: { storageKey: string } };
 
-      // Step 3: Mark upload complete
+      // Step 3: Mark upload complete with storage metadata
       await apiRequest(`/api/admin/books/${bookData.id}/upload-complete`, {
         method: 'POST',
         token: sessionToken,
-        body: JSON.stringify({}),
+        body: JSON.stringify({
+          storageKey: uploadResult.data.storageKey,
+          originalFilename: epubFile.name,
+          fileSizeBytes: epubFile.size,
+          mimeType: epubFile.type || 'application/epub+zip',
+        }),
       });
 
       onCreated();

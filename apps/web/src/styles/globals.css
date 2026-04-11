@@ -3,7 +3,13 @@
 @tailwind utilities;
 
 :root {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
   line-height: 1.5;
   font-weight: 400;
   color-scheme: light dark;
@@ -13,11 +19,46 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-body {
-  margin: 0;
-  min-height: 100vh;
+html {
+  @apply m-0 p-0 overflow-x-hidden;
+  height: 100%;
 }
 
+body {
+  @apply m-0 p-0 overflow-x-hidden bg-slate-950;
+  min-height: 100vh;
+  height: 100%;
+}
+
+#root {
+  height: 100%;
+}
+
+/* Dark mode per design-system.md */
 .dark {
   color-scheme: dark;
+}
+
+/* Anti-flicker per docs/design/design-system.md */
+.anti-flicker {
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Glass refractive effect */
+.glass-refractive {
+  backdrop-filter: blur(80px);
+  @apply bg-white/[0.01] border border-white/[0.1] shadow-[0_0_50px_rgba(0,0,0,0.5)];
+}
+
+@layer utilities {
+  /* No-scrollbar utility from external skill */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 }

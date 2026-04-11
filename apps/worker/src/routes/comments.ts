@@ -230,6 +230,51 @@ export async function handleUpdateComment(
   });
 }
 
+export async function handleDeleteComment(
+  env: Env,
+  request: Request,
+  commentId: string,
+): Promise<Response> {
+  const auth = await requireAuth(env, request);
+
+  if (!auth) {
+    return jsonResponse(
+      { ok: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } },
+      401,
+    );
+  }
+
+  const comment = (await queryFirst(env, `SELECT * FROM comments WHERE id = ?`, [
+    commentId,
+  ])) as CommentRow | null;
+
+  if (!comment) {
+    return jsonResponse(
+      { ok: false, error: { code: 'NOT_FOUND', message: 'Comment not found' } },
+      404,
+    );
+  }
+
+  if (comment.user_email !== auth.email) {
+    return jsonResponse(
+      { ok: false, error: { code: 'FORBIDDEN', message: 'Cannot delete others comments' } },
+      403,
+    );
+  }
+
+  await execute(env, `DELETE FROM comments WHERE id = ?`, [commentId]);
+
+  await logAudit(env, {
+    entityType: 'comment',
+    entityId: commentId,
+    action: 'delete',
+    actorEmail: auth.email,
+    payload: { bookId: comment.book_id },
+  });
+
+  return jsonResponse({ ok: true });
+}
+
 function buildCommentTree(comments: CommentRow[]): CommentResponse[] {
   const commentMap = new Map<string, CommentResponse>();
   const roots: CommentResponse[] = [];
