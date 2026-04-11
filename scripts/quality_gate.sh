@@ -95,25 +95,25 @@ echo -e "${BLUE}Detecting project languages...${NC}"
 
 # TypeScript/JavaScript detection via package.json
 if [ -f "package.json" ]; then
-    echo "  ${GREEN}✓${NC} TypeScript/JavaScript (package.json)"
+    echo -e "  ${GREEN}✓${NC} TypeScript/JavaScript (package.json)"
     DETECTED_LANGUAGES+=("typescript")
 fi
 
 # Python detection - multiple valid project files
 if [ -f "requirements.txt" ] || [ -f "pyproject.toml" ] || [ -f "setup.py" ]; then
-    echo "  ${GREEN}✓${NC} Python (requirements.txt/pyproject.toml)"
+    echo -e "  ${GREEN}✓${NC} Python (requirements.txt/pyproject.toml)"
     DETECTED_LANGUAGES+=("python")
 fi
 
 # Shell script detection via file existence
 if find . -name "*.sh" -not -path "./.git/*" | grep -q .; then
-    echo "  ${GREEN}✓${NC} Shell scripts detected"
+    echo -e "  ${GREEN}✓${NC} Shell scripts detected"
     DETECTED_LANGUAGES+=("shell")
 fi
 
 # Markdown detection via file existence
 if find . -name "*.md" -not -path "./.git/*" | grep -q .; then
-    echo "  ${GREEN}✓${NC} Markdown files detected"
+    echo -e "  ${GREEN}✓${NC} Markdown files detected"
     DETECTED_LANGUAGES+=("markdown")
 fi
 
