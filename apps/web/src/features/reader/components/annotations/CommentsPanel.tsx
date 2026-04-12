@@ -276,11 +276,17 @@ function CommentItem({
       }`}
       onMouseEnter={() => setShowActions(true)}
       onMouseLeave={() => setShowActions(false)}
+      onFocus={() => setShowActions(true)}
+      onBlur={() => setShowActions(false)}
+      tabIndex={0}
     >
       {comment.selectedText && (
         <blockquote
           className="text-xs text-gray-600 dark:text-gray-400 italic mb-2 cursor-pointer hover:text-primary-600"
           onClick={onNavigate}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onNavigate(); } }}
+          tabIndex={0}
+          role="button"
         >
           "{comment.selectedText.slice(0, 100)}
           {comment.selectedText.length > 100 ? '...' : ''}"
@@ -440,10 +446,16 @@ function HighlightItem({
       }`}
       onMouseEnter={() => setShowActions(true)}
       onMouseLeave={() => setShowActions(false)}
+      onFocus={() => setShowActions(true)}
+      onBlur={() => setShowActions(false)}
+      tabIndex={0}
     >
       <div
         className="text-sm text-gray-900 dark:text-gray-100 cursor-pointer hover:text-primary-600"
         onClick={onNavigate}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onNavigate(); } }}
+        tabIndex={0}
+        role="button"
         style={{ backgroundColor: highlight.color + '60', padding: '2px 4px', borderRadius: '2px' }}
       >
         {highlight.selectedText.slice(0, 150)}

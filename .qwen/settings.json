@@ -26,7 +26,8 @@
       "Bash(which *)",
       "Bash(npm *)",
       "Bash(ls *)",
-      "Bash(ssh *)"
+      "Bash(ssh *)",
+      "Bash(corepack *)"
     ]
   },
   "$version": 3

@@ -1,0 +1,49 @@
+# CODEOWNERS — do EPUB Studio
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+#
+# Format: <path-pattern> <owner-github-handle-or-team>
+#
+# Keep this file in sync with team responsibilities and skill ownership.
+# Update when new maintainers are added or responsibilities shift.
+
+# Core platform (infrastructure, CI/CD, quality gates)
+/scripts/              @d-oit
+/turbo.json            @d-oit
+/package.json          @d-oit
+/pnpm-workspace.yaml   @d-oit
+
+# Shared packages
+/packages/shared/      @d-oit
+/packages/ui/          @d-oit
+/packages/reader-core/ @d-oit
+/packages/schema/      @d-oit
+/packages/testkit/     @d-oit
+
+# Web application (reader UI, admin console, PWA)
+/apps/web/             @d-oit
+
+# Cloudflare Worker API (auth, grants, storage, audit)
+/apps/worker/          @d-oit
+
+# E2E tests
+/apps/tests/           @d-oit
+
+# Playwright config
+/playwright.config.ts  @d-oit
+
+# Security & auth
+/apps/worker/src/auth/          @d-oit
+/apps/worker/src/lib/security-  @d-oit
+
+# Database & migrations
+/packages/schema/      @d-oit
+
+# Skills & agent tooling
+/.agents/              @d-oit
+/agents-docs/          @d-oit
+
+# Plans & architecture docs
+/plans/                @d-oit
+
+# GitHub workflows
+/.github/workflows/    @d-oit

@@ -1,7 +1,10 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
+import { visualizer } from 'rollup-plugin-visualizer';
 import path from 'path';
+
+const isAnalyze = process.env.ANALYZE === 'true';
 
 export default defineConfig({
   plugins: [
@@ -33,6 +36,16 @@ export default defineConfig({
       srcDir: 'src',
       filename: 'sw.ts',
     }),
+    ...(isAnalyze
+      ? [
+          visualizer({
+            open: false,
+            filename: 'dist/stats.html',
+            gzipSize: true,
+            brotliSize: true,
+          }),
+        ]
+      : []),
   ],
   resolve: {
     alias: {
@@ -42,6 +55,22 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'epubjs': ['epubjs'],
+          'zustand': ['zustand'],
+          'workbox': [
+            'workbox-cacheable-response',
+            'workbox-expiration',
+            'workbox-precaching',
+            'workbox-routing',
+            'workbox-strategies',
+          ],
+        },
+      },
+    },
   },
   server: {
     port: 5173,

@@ -7,6 +7,7 @@ import {
   logRequestStart,
   withTraceHeaders,
 } from './lib/observability';
+import { applySecurityHeaders, applyMinimalSecurityHeaders } from './lib/security-headers';
 import {
   handleAccessRequest,
   handleLogout,
@@ -55,7 +56,8 @@ async function handleRequest(env: Env, request: Request): Promise<Response> {
   const method = request.method;
 
   if (method === 'OPTIONS') {
-    return new Response(null, { status: 204, headers: corsHeaders });
+    const response = new Response(null, { status: 204, headers: corsHeaders });
+    return applyMinimalSecurityHeaders(response);
   }
 
   if (path === '/api/access/request' && method === 'POST') {
@@ -287,7 +289,7 @@ export default {
     try {
       const response = await handleRequest(env, request);
       logRequestEnd(context, response.status);
-      return applyCorsHeaders(withTraceHeaders(response, context));
+      return applySecurityHeaders(applyCorsHeaders(withTraceHeaders(response, context)));
     } catch (error) {
       logRequestError(context, error);
       logRequestEnd(context, 500);
@@ -302,7 +304,7 @@ export default {
         },
         500,
       );
-      return applyCorsHeaders(withTraceHeaders(failure, context));
+      return applySecurityHeaders(applyCorsHeaders(withTraceHeaders(failure, context)));
     }
   },
 };
