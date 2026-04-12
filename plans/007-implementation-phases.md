@@ -124,3 +124,31 @@
 - Update this file at the end of each phase with actual outcomes + links to PRs.
 - Link back to GOAP roadmap (`plans/001-goap-roadmap.md`).
 - Include traceability to TRIZ contradictions when defining new workstreams.
+
+## Phase 7 – Test Coverage & CI Improvements (PARTIAL COMPLETE)
+
+**Scope:** Increase test coverage, cross-browser E2E, CI/CD enhancements.
+
+| Task | Status | Coverage |
+|------|--------|----------|
+| reader-core unit tests (locator, reanchor, toc) | ✅ complete | 83% (target 60%) |
+| API client tests | ✅ complete | 100% on api.ts |
+| Cross-browser Playwright (Firefox/WebKit) | ✅ config added | Chromium/Firefox pass, WebKit needs system deps |
+| annotation component tests | pending | 0% |
+| admin page UI tests | pending | 0% |
+
+**Achievements:**
+- reader-core coverage: 33% → 83% (locator.ts, toc.ts: 100%, reanchor.ts: 83%)
+- API client coverage: 0% → 100% on api.ts
+- Added Firefox/WebKit to Playwright config with webServer auto-start
+- Added 19 API client tests (error handling, trace headers, locale, abort)
+- Added 78 reader-core tests (locator, toc, reanchor)
+
+**Remaining gaps:**
+- Annotation component tests (AnnotationToolbar, CommentInput, CommentsPanel)
+- Admin page UI tests (AdminLoginPage, AuditLogPage, BooksPage, GrantsPage)
+
+**Quality gate status:**
+- `pnpm lint`: ✅ 0 errors
+- `pnpm typecheck`: ✅ All packages pass
+- `pnpm test`: ✅ 145 tests passed (4 test files in reader-core, 6 in web)
