@@ -16,6 +16,7 @@ Perform security audits on EPUB Studio code, focusing on the project's specific 
 ## EPUB Studio Security Scope
 
 ### Critical Areas to Audit
+
 - **Authentication**: Password hashing, session management, token generation
 - **Authorization**: Permission grants, access validation, session revocation
 - **EPUB Handling**: HTML sanitization, content extraction, file validation
@@ -23,6 +24,7 @@ Perform security audits on EPUB Studio code, focusing on the project's specific 
 - **Offline Sync**: Conflict resolution, data integrity, cache security
 
 ### Excluded from Scope
+
 - Network penetration testing
 - Social engineering
 - Physical security
@@ -30,6 +32,7 @@ Perform security audits on EPUB Studio code, focusing on the project's specific 
 ## Audit Workflow
 
 ### 1. Identify Attack Surface
+
 ```
 1. Authentication endpoints (/api/auth/*)
 2. Book access endpoints (/api/books/*)
@@ -38,6 +41,7 @@ Perform security audits on EPUB Studio code, focusing on the project's specific 
 ```
 
 ### 2. Static Analysis Checklist
+
 - [ ] SQL/NoSQL injection in database queries
 - [ ] Command injection in file processing
 - [ ] Insecure deserialization
@@ -46,6 +50,7 @@ Perform security audits on EPUB Studio code, focusing on the project's specific 
 - [ ] Missing authorization checks
 
 ### 3. EPUB Security
+
 ```typescript
 // BAD: Unsafe innerHTML
 element.innerHTML = epubContent;
@@ -59,6 +64,7 @@ const clean = DOMPurify.sanitize(epubContent, {
 ```
 
 ### 4. Configuration Review
+
 - [ ] CORS policies for API endpoints
 - [ ] Security headers (CSP, HSTS)
 - [ ] Turso auth token exposure
@@ -68,6 +74,7 @@ const clean = DOMPurify.sanitize(epubContent, {
 ## EPUB Studio Anti-Patterns
 
 ### Hardcoded Secrets
+
 ```typescript
 // BAD
 const API_KEY = 'sk-live-abc123';
@@ -77,6 +84,7 @@ const API_KEY = process.env.EPUB_API_KEY;
 ```
 
 ### Unsafe EPUB HTML
+
 ```typescript
 // BAD - XSS vulnerability
 document.write(epubHtmlContent);
@@ -87,6 +95,7 @@ const safe = sanitize(rawContent, { RETURN_TRUSTED_TYPE: false });
 ```
 
 ### Public File URLs
+
 ```typescript
 // BAD - Direct public URL
 return `https://bucket.r2.dev/${bookId}`;

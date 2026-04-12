@@ -9,6 +9,7 @@
 ## Scope
 
 System:
+
 - EPUB reader
 - offline sync
 - permissions

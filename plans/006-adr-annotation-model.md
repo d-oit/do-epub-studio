@@ -6,6 +6,7 @@
 ## Context
 
 We need robust annotation anchoring that:
+
 - Survives EPUB content changes
 - Works with offline rendering
 - Maps to visible positions accurately
@@ -44,6 +45,7 @@ epubcfi(/6/4[chap01]!/4/2/1:0)
 ```
 
 Components:
+
 - Spine item path: `/6/4[chap01]`
 - Content path: `!/4/2/1:0`
 - Character offset: `:0`
@@ -80,12 +82,14 @@ interface AnnotationLocator {
 ## Consequences
 
 **Positive:**
+
 - Multiple fallback signals ensure longevity
 - CFI is EPUB-standard
 - Text snapshots provide human verification
 - Clear re-anchoring path
 
 **Negative:**
+
 - More storage per annotation
 - Complex re-anchoring logic
 - CFI parsing overhead

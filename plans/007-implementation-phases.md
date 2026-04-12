@@ -105,12 +105,14 @@
 - **CODEOWNERS**: Created `.github/CODEOWNERS` with path-based ownership for all code areas
 
 **Quality gate status:**
+
 - `pnpm lint`: ✅ 0 errors
 - `pnpm typecheck`: ✅ All 7 packages pass
 - `pnpm test`: ✅ 46 passed + 2 skipped (5 test files)
 - `pnpm build`: ✅ Production build succeeds
 
 **Remaining gaps (future iterations):**
+
 - More unit tests for UI components (currently at 10% statement coverage in web app)
 - E2E tests running on Firefox/WebKit (currently Chromium only)
 - Automated changelog generation and semantic versioning

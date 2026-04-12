@@ -9,6 +9,7 @@ in the parent's context window (context rot).
 ## When to Use
 
 Good candidates (clear question, many intermediate steps):
+
 - Finding specific implementations in a large codebase
 - Tracing data flow across service boundaries
 - Codebase pattern analysis
@@ -18,6 +19,7 @@ Good candidates (clear question, many intermediate steps):
 ## Sub-Agent System Prompt Rules
 
 Always specify:
+
 1. **Role** - what it does AND does not do
 2. **Return format** - condensed answer with `filepath:line` citations
 3. **Tool access** - only what is needed for the discrete task

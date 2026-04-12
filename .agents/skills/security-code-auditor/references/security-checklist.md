@@ -37,6 +37,7 @@
 ## Reference: Common Vulnerabilities
 
 ### A1: Injection
+
 ```typescript
 // BAD
 db.query(`SELECT * FROM books WHERE id = ${userId}`);
@@ -46,6 +47,7 @@ db.query('SELECT * FROM books WHERE id = ?', [userId]);
 ```
 
 ### A2: Broken Auth
+
 ```typescript
 // BAD - no session check
 async function getBook(id: string) {
@@ -60,6 +62,7 @@ async function getBook(id: string, session: Session) {
 ```
 
 ### A3: XSS in EPUB
+
 ```typescript
 // BAD
 container.innerHTML = epubContent;

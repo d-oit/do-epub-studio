@@ -13,12 +13,14 @@ Comprehensive guide for breaking down complex tasks into atomic, actionable goal
 ### 1. Requirements Analysis
 
 **Extract Information**:
+
 - Primary objective (what user wants to achieve)
 - Implicit requirements (quality, performance, documentation)
 - Constraints (time, resources, compatibility)
 - Success criteria (how to measure completion)
 
 **Analysis Template**:
+
 ```markdown
 ## Requirements Analysis
 
@@ -45,6 +47,7 @@ Comprehensive guide for breaking down complex tasks into atomic, actionable goal
 ### 2. Goal Hierarchy
 
 **Top-Down Decomposition**:
+
 ```
 Main Goal: [High-level objective]
 ├─ Sub-goal 1: [Component 1]
@@ -58,6 +61,7 @@ Main Goal: [High-level objective]
 ```
 
 **Atomic Task Criteria**:
+
 - Single, clear action
 - Well-defined inputs and outputs
 - Can be completed by one agent
@@ -69,25 +73,31 @@ Main Goal: [High-level objective]
 **Dependency Types**:
 
 #### Sequential Dependencies
+
 ```
 Task A → Task B → Task C
 ```
+
 **Example**: Design schema → Create migration → Insert data
 
 #### Parallel Independent
+
 ```
 Task A ─┐
 Task B ─┼─ [All can run simultaneously]
 Task C ─┘
 ```
+
 **Example**: Test module A, Test module B, Test module C
 
 #### Converging Dependencies
+
 ```
 Task A ─┐
 Task B ─┼─> Task D
 Task C ─┘
 ```
+
 **Example**: Implement features A, B, C → Integration testing
 
 ### 4. Success Criteria Definition
@@ -97,6 +107,7 @@ For each task, define inputs, outputs, and quality standards.
 ## Decomposition Process - Step by Step
 
 ### Step 1: Understand Goal
+
 ```markdown
 User Request: [Original request]
 - Primary Goal: [Main objective]
@@ -106,6 +117,7 @@ User Request: [Original request]
 ```
 
 ### Step 2: Identify Major Components (3-7)
+
 ```markdown
 Main Goal: Implement book permission system
 
@@ -119,6 +131,7 @@ Major Components:
 ```
 
 ### Step 3: Decompose Each Component
+
 ```markdown
 Component: Database layer
 Tasks:
@@ -128,17 +141,20 @@ Tasks:
 ```
 
 ### Step 4: Map Dependencies
+
 ```markdown
 [Design schema] → [Create migration] → [Add API route]
                                       ↘ [Add frontend]
 ```
 
 ### Step 5: Assign Priorities
+
 - **P0 (Critical)**: Must complete for goal
 - **P1 (Important)**: Improves quality/functionality
 - **P2 (Nice-to-have)**: Enhancement only
 
 ### Step 6: Estimate Complexity
+
 - **Low**: <30 min, well-understood
 - **Medium**: 30 min - 2 hours
 - **High**: >2 hours, significant unknowns
@@ -256,14 +272,16 @@ Time: 1-2 days
 
 ## EPUB Studio Integration
 
-### Must Run TRIZ Analysis For:
+### Must Run TRIZ Analysis For
+
 - Architecture changes
 - Permission system changes
 - Offline sync implementation
 - EPUB rendering changes
 - API design
 
-### Include in Plans:
+### Include in Plans
+
 - ADR in `plans/`
 - Phase plans in `plans/`
 - Schema migrations in `migrations/`

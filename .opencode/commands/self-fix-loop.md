@@ -3,6 +3,8 @@ description: Self-fix loop for fixing errors
 subtask: false
 ---
 
+# Self-fix loop
+
 Handle self-fix loops when encountering errors.
 
 ## Error Handling Pattern
@@ -18,18 +20,22 @@ When an error occurs:
 ## Common Error Patterns
 
 ### Type Errors
+
 - Check TypeScript strict mode
 - Run `pnpm typecheck`
 
 ### Lint Errors
+
 - Run `pnpm lint`
 - Check eslint configuration
 
 ### Test Failures
+
 - Run tests with verbose output
 - Check test assertions
 
 ### Build Errors
+
 - Check for type errors
 - Verify dependencies
 

@@ -129,7 +129,7 @@ These require user interaction to reproduce -- use full repro with video and ste
 agent-browser --session {SESSION} record start {OUTPUT_DIR}/videos/issue-{NNN}-repro.webm
 ```
 
-2. **Walk through the steps at human pace.** Pause 1-2 seconds between actions so the video is watchable. Take a screenshot at each step:
+1. **Walk through the steps at human pace.** Pause 1-2 seconds between actions so the video is watchable. Take a screenshot at each step:
 
 ```bash
 agent-browser --session {SESSION} screenshot {OUTPUT_DIR}/screenshots/issue-{NNN}-step-1.png
@@ -141,20 +141,20 @@ sleep 1
 # ...continue until the issue manifests
 ```
 
-3. **Capture the broken state.** Pause so the viewer can see it, then take an annotated screenshot:
+1. **Capture the broken state.** Pause so the viewer can see it, then take an annotated screenshot:
 
 ```bash
 sleep 2
 agent-browser --session {SESSION} screenshot --annotate {OUTPUT_DIR}/screenshots/issue-{NNN}-result.png
 ```
 
-4. **Stop the video:**
+1. **Stop the video:**
 
 ```bash
 agent-browser --session {SESSION} record stop
 ```
 
-5. Write numbered repro steps in the report, each referencing its screenshot.
+1. Write numbered repro steps in the report, each referencing its screenshot.
 
 #### Static / visible-on-load issues (typos, placeholder text, clipped text, misalignment, console errors on load)
 
@@ -187,7 +187,7 @@ After exploring:
 agent-browser --session {SESSION} close
 ```
 
-3. Tell the user the report is ready and summarize findings: total issues, breakdown by severity, and the most critical items.
+1. Tell the user the report is ready and summarize findings: total issues, breakdown by severity, and the most critical items.
 
 ## Guidance
 

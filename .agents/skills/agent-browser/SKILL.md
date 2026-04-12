@@ -32,24 +32,28 @@ agent-browser snapshot -i  # Check result
 ## Essential Patterns
 
 **Command chaining** (use `&&` for efficiency):
+
 ```bash
 agent-browser batch "open https://example.com" "snapshot -i"
 agent-browser batch "click @e1" "wait 1000" "screenshot"
 ```
 
 **Data extraction**:
+
 ```bash
 agent-browser get text @e5
 agent-browser snapshot -i --json  # For parsing
 ```
 
 **Screenshots**:
+
 ```bash
 agent-browser screenshot              # Basic screenshot
 agent-browser screenshot --annotate   # With numbered element labels
 ```
 
 **Session management** (always close when done):
+
 ```bash
 agent-browser --session my-session open https://example.com
 agent-browser --session my-session close

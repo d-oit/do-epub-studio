@@ -27,6 +27,7 @@ This guide covers how to evaluate skill output quality and measure skill perform
 Confirm the skill directory is sane before judging outputs.
 
 Expected layout:
+
 ```
 skill-name/
   SKILL.md
@@ -40,6 +41,7 @@ skill-name/
 Read `evals/evals.json` if present and assess whether each case is realistic.
 
 Good evals include:
+
 - a real user prompt
 - a short success definition
 - optional input files
@@ -50,6 +52,7 @@ Good evals include:
 Run at least one representative prompt from the eval set.
 
 For each live run:
+
 - load the target skill
 - read only the files the skill itself points to
 - produce the answer or output
@@ -60,6 +63,7 @@ For each live run:
 When useful, rerun the same prompt without the skill.
 
 Compare:
+
 - pass rate
 - missing details
 - format compliance
@@ -68,6 +72,7 @@ Compare:
 ### 5. Verdict
 
 End with one of:
+
 - `PASS` — structure is sound and live output meets assertions
 - `NEEDS_WORK` — usable, but structure gaps or output gaps remain
 - `FAIL` — skill is broken, misleading, or missing core pieces
@@ -77,11 +82,13 @@ End with one of:
 Prefer assertions that can be checked directly.
 
 Good:
+
 - `The answer cites the exact minimum cover dimensions`
 - `The output includes all 7 scoring dimensions`
 - `evals.json contains at least 2 cases`
 
 Bad:
+
 - `The output is good`
 - `The skill feels smart`
 - `The answer is polished`

@@ -9,11 +9,13 @@ license: MIT
 ## Setup
 
 ### Installation
+
 ```bash
 npm init playwright@latest -- --lang=typescript
 ```
 
 ### Configuration
+
 ```typescript
 // playwright.config.ts
 import { defineConfig, devices } from '@playwright/test';
@@ -43,6 +45,7 @@ export default defineConfig({
 ## Writing Tests
 
 ### Basic Test
+
 ```typescript
 import { test, expect } from '@playwright/test';
 
@@ -53,6 +56,7 @@ test('homepage loads', async ({ page }) => {
 ```
 
 ### Form Submission
+
 ```typescript
 test('can create new book', async ({ page }) => {
   await page.goto('/books/new');
@@ -66,6 +70,7 @@ test('can create new book', async ({ page }) => {
 ```
 
 ### Authentication
+
 ```typescript
 test('can login', async ({ page }) => {
   await page.goto('/login');
@@ -81,6 +86,7 @@ test('can login', async ({ page }) => {
 ## Page Objects
 
 ### Example
+
 ```typescript
 // pages/BookPage.ts
 export class BookPage {
@@ -114,6 +120,7 @@ test('can highlight text', async ({ page }) => {
 ## Fixtures
 
 ### Custom Fixture
+
 ```typescript
 import { test as base } from '@playwright/test';
 
@@ -139,6 +146,7 @@ test('can view books', async ({ authenticatedPage }) => {
 ## Running Tests
 
 ### CLI Options
+
 ```bash
 # Run all tests
 pnpm playwright test
@@ -157,6 +165,7 @@ pnpm playwright test --debug
 ```
 
 ### CI Configuration
+
 ```yaml
 # .github/workflows/test.yml
 name: E2E Tests
@@ -179,6 +188,7 @@ jobs:
 ## Best Practices
 
 1. **Use semantically meaningful selectors**
+
    ```typescript
    // Good
    page.locator('button:has-text("Save")')
@@ -190,6 +200,7 @@ jobs:
    ```
 
 2. **Clean up test data**
+
    ```typescript
    afterEach(async ({ page }) => {
      await cleanTestBooks(page);
@@ -197,6 +208,7 @@ jobs:
    ```
 
 3. **Handle async operations**
+
    ```typescript
    // Wait for network idle
    await page.waitForLoadState('networkidle');
@@ -206,6 +218,7 @@ jobs:
    ```
 
 4. **Screenshot on failure**
+
    ```typescript
    test.afterEach(async ({ page }, testInfo) => {
      if (testInfo.status === 'failed') {

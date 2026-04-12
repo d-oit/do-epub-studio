@@ -7,6 +7,7 @@ Adapted from OWASP Top 10 2021 for EPUB reading application context.
 **EPUB Context**: Users accessing books they don't have permissions for.
 
 ### Prevention
+
 - Deny by default
 - Implement access control once, reuse throughout
 - Model accesses and record sharing in DB
@@ -26,6 +27,7 @@ async function getBookContent(bookId: string, userId: string) {
 **EPUB Context**: Storing book content insecurely, exposing signing secrets.
 
 ### Prevention
+
 - Encrypt offline data at rest
 - Use secure random for tokens
 - Don't hardcode encryption keys
@@ -36,6 +38,7 @@ async function getBookContent(bookId: string, userId: string) {
 **EPUB Context**: Malicious EPUB files with embedded scripts.
 
 ### Prevention
+
 - Sanitize all HTML from EPUB before rendering
 - Block external resource loading
 - Validate EPUB structure
@@ -55,6 +58,7 @@ const safeHtml = DOMPurify.sanitize(rawEpubHtml, {
 **EPUB Context**: Weak offline sync leading to conflicts.
 
 ### Prevention
+
 - Use threat modeling
 - Separate read/write permissions
 - Implement conflict resolution strategy
@@ -65,6 +69,7 @@ const safeHtml = DOMPurify.sanitize(rawEpubHtml, {
 **EPUB Context**: Exposing Turso credentials, weak CORS.
 
 ### Prevention
+
 - Hardened runtime configuration
 - CORS restricted to known origins
 - Security headers on all responses
@@ -75,6 +80,7 @@ const safeHtml = DOMPurify.sanitize(rawEpubHtml, {
 **EPUB Context**: Outdated EPUB parsing libraries.
 
 ### Prevention
+
 - Remove unused dependencies
 - Monitor for CVEs in dependencies
 - Use only official EPUB parsing libraries
@@ -84,6 +90,7 @@ const safeHtml = DOMPurify.sanitize(rawEpubHtml, {
 **EPUB Context**: Session hijacking, weak session tokens.
 
 ### Prevention
+
 - Short session timeouts
 - Rotate session tokens on privilege change
 - Implement proper logout
@@ -93,6 +100,7 @@ const safeHtml = DOMPurify.sanitize(rawEpubHtml, {
 **EPUB Context**: Malicious EPUB files, tampered offline cache.
 
 ### Prevention
+
 - Verify EPUB integrity on download
 - Use content-addressable storage
 - Validate checksums
@@ -102,6 +110,7 @@ const safeHtml = DOMPurify.sanitize(rawEpubHtml, {
 **EPUB Context**: Missing audit trail for permission changes.
 
 ### Prevention
+
 - Log all access attempts
 - Include user ID, timestamp, resource
 - Alert on suspicious patterns
@@ -111,6 +120,7 @@ const safeHtml = DOMPurify.sanitize(rawEpubHtml, {
 **EPUB Context**: EPUB links to external URLs.
 
 ### Prevention
+
 - Block external URLs in EPUB
 - Use allowlists for resources
 - Disable redirect following

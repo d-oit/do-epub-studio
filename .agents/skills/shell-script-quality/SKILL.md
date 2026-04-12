@@ -89,6 +89,7 @@ fi
 ## Configuration
 
 **.shellcheckrc** in project root:
+
 ```
 shell=bash
 disable=SC1090
