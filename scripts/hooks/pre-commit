@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# Git pre-commit hook
+# Installed by: scripts/install-hooks.sh
+# Runs the quality gate on staged changes only.
+set -euo pipefail
+
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+
+# Source shared libs
+# shellcheck source=scripts/lib/colors.sh
+source "$REPO_ROOT/scripts/lib/colors.sh"
+
+echo -e "${BLUE}Running pre-commit checks...${NC}"
+
+# Validate git hooks configuration (prevent global hooks from overriding local)
+if [ "${SKIP_GLOBAL_HOOKS_CHECK:-false}" != "true" ]; then
+    if ! "$REPO_ROOT/scripts/validate-git-hooks.sh" 2>&1; then
+        echo -e "${YELLOW}⚠ Git hooks configuration warning (non-blocking)${NC}"
+    fi
+fi
+
+# Run the full quality gate
+# Uses SKIP_TESTS env var if set, otherwise runs tests
+if ! "$REPO_ROOT/scripts/quality_gate.sh"; then
+    echo ""
+    echo -e "${RED}✗ Pre-commit checks FAILED${NC}"
+    echo "Fix the errors above before committing."
+    exit 1
+fi
+
+echo -e "${GREEN}✓ Pre-commit checks passed${NC}"

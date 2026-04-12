@@ -13,36 +13,27 @@ if [[ "${1:-}" == "--check-only" ]]; then
     CHECK_ONLY=true
 fi
 
-if [[ -t 1 ]]; then
-    RED='\033[0;31m'
-    GREEN='\033[0;32m'
-    YELLOW='\033[1;33m'
-    BLUE='\033[0;34m'
-    NC='\033[0m'
-else
-    RED='' GREEN='' YELLOW='' BLUE='' NC=''
-fi
-
-log() {
-    echo -e "${BLUE}[push]${NC} $*"
-}
-
-error() {
-    echo -e "${RED}[push]${NC} $*" >&2
-}
-
-success() {
-    echo -e "${GREEN}[push]${NC} $*"
-}
-
-warn() {
-    echo -e "${YELLOW}[push]${NC} $*"
-}
+# Source shared libs
+# shellcheck source=scripts/lib/colors.sh
+source "$REPO_ROOT/scripts/lib/colors.sh"
+# shellcheck source=scripts/lib/logging.sh
+source "$REPO_ROOT/scripts/lib/logging.sh" push
 
 cd "$REPO_ROOT"
 
 CURRENT_BRANCH=$(git branch --show-current)
 BASE_BRANCH="${ATOMIC_COMMIT_BASE_BRANCH:-main}"
+
+# Track temp branches for cleanup on exit/interrupt
+TEMP_BRANCHES=()
+
+cleanup_temp_branches() {
+    for tb in "${TEMP_BRANCHES[@]}"; do
+        git branch -D "$tb" 2>/dev/null || true
+    done
+}
+
+trap cleanup_temp_branches EXIT INT TERM
 
 log "Branch: $CURRENT_BRANCH"
 log "Base branch: $BASE_BRANCH"
@@ -54,6 +45,7 @@ if ! git fetch origin "$BASE_BRANCH" 2>/dev/null && ! git fetch origin 2>/dev/nu
     exit 1
 fi
 
+# Determine actual base branch
 if ! git show-ref --verify --quiet "refs/remotes/origin/$BASE_BRANCH" 2>/dev/null; then
     if git show-ref --verify --quiet refs/remotes/origin/main 2>/dev/null; then
         BASE_BRANCH="main"
@@ -85,18 +77,19 @@ if [[ "$MERGE_BASE" != "$ORIGIN_BASE_SHA" ]]; then
     log "Checking for potential conflicts..."
 
     TEMP_BRANCH="temp-rebase-check-$$"
+    TEMP_BRANCHES+=("$TEMP_BRANCH")
     git branch "$TEMP_BRANCH" HEAD
 
     if ! git rebase "origin/$BASE_BRANCH" "$TEMP_BRANCH" >/dev/null 2>&1; then
         error "Rebase would have conflicts"
         error "Resolve manually: git pull --rebase origin $BASE_BRANCH"
         git rebase --abort 2>/dev/null || true
-        git branch -D "$TEMP_BRANCH" 2>/dev/null || true
         exit 1
     fi
 
-    git checkout "$CURRENT_BRANCH" 2>/dev/null || true
+    # Cleanup temp branch (also handled by trap)
     git branch -D "$TEMP_BRANCH" 2>/dev/null || true
+    TEMP_BRANCHES=("${TEMP_BRANCHES[@]/$TEMP_BRANCH}")
 
     log "Rebasing onto origin/$BASE_BRANCH..."
     if ! git rebase "origin/$BASE_BRANCH"; then

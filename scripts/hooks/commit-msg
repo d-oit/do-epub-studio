@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+# Git commit-msg hook
+# Installed by: scripts/install-hooks.sh
+# Validates conventional commit format.
+# Exit 0 = valid, Exit 1 = invalid format.
+set -euo pipefail
+
+# Source shared libs
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+# shellcheck source=scripts/lib/colors.sh
+source "$REPO_ROOT/scripts/lib/colors.sh"
+
+COMMIT_MSG_FILE="$1"
+COMMIT_MSG="$(head -1 "$COMMIT_MSG_FILE")"
+
+# Skip merge commits and revert commits
+if [[ "$COMMIT_MSG" =~ ^Merge ]] || [[ "$COMMIT_MSG" =~ ^Revert ]]; then
+    exit 0
+fi
+
+# Skip auto-generated commits (e.g., from tools)
+if [[ "$COMMIT_MSG" =~ ^WIP ]] || [[ "$COMMIT_MSG" =~ ^fixup! ]] || [[ "$COMMIT_MSG" =~ ^squash! ]]; then
+    exit 0
+fi
+
+# Conventional commit regex: type(scope): description
+# Types: feat, fix, docs, style, refactor, perf, test, ci, chore, build
+CONVENTIONAL_REGEX='^(feat|fix|docs|style|refactor|perf|test|ci|chore|build)(\([a-z0-9_-]+\))?!?: .+'
+
+if ! echo "$COMMIT_MSG" | grep -qE "$CONVENTIONAL_REGEX"; then
+    echo -e "${RED}✗ Invalid commit message format${NC}" >&2
+    echo "" >&2
+    echo "Expected: type(scope): description" >&2
+    echo "" >&2
+    echo "Types: feat, fix, docs, style, refactor, perf, test, ci, chore, build" >&2
+    echo "Scope: optional, lowercase alphanumeric + hyphens" >&2
+    echo "Breaking: add ! before : (e.g., feat(api)!: remove endpoint)" >&2
+    echo "" >&2
+    echo "Examples:" >&2
+    echo "  feat(reader): add annotation highlighting" >&2
+    echo "  fix(worker): handle missing trace ID header" >&2
+    echo "  docs: update AGENTS.md with new workflow" >&2
+    echo "  refactor(auth)!: migrate to Argon2id" >&2
+    echo "" >&2
+    echo "Current message: $COMMIT_MSG" >&2
+    echo "" >&2
+    echo "To amend: git commit --amend -m \"type(scope): description\"" >&2
+    exit 1
+fi
+
+# Check subject line length (max 72 chars)
+SUBJECT_LEN=${#COMMIT_MSG}
+if [[ $SUBJECT_LEN -gt 72 ]]; then
+    echo -e "${RED}✗ Commit subject too long${NC}" >&2
+    echo "  Length: $SUBJECT_LEN chars (max 72)" >&2
+    echo "  Subject: $COMMIT_MSG" >&2
+    echo "" >&2
+    echo "Move details to the commit body instead." >&2
+    exit 1
+fi
+
+# Warn if body is empty (encourages better commit messages)
+LINE_COUNT=$(wc -l < "$COMMIT_MSG_FILE" | tr -d ' ')
+if [[ $LINE_COUNT -lt 3 ]]; then
+    echo -e "${YELLOW}⚠ Commit has no body${NC}" >&2
+    echo "  Consider adding a body explaining WHY, not WHAT." >&2
+    echo "  (This is a warning, not a blocker)" >&2
+fi
+
+exit 0

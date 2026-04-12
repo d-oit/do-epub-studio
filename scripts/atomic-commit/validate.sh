@@ -8,31 +8,11 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
-if [[ -t 1 ]]; then
-    RED='\033[0;31m'
-    GREEN='\033[0;32m'
-    YELLOW='\033[1;33m'
-    BLUE='\033[0;34m'
-    NC='\033[0m'
-else
-    RED='' GREEN='' YELLOW='' BLUE='' NC=''
-fi
-
-log() {
-    echo -e "${BLUE}[validate]${NC} $*"
-}
-
-error() {
-    echo -e "${RED}[validate]${NC} $*" >&2
-}
-
-success() {
-    echo -e "${GREEN}[validate]${NC} $*"
-}
-
-warn() {
-    echo -e "${YELLOW}[validate]${NC} $*"
-}
+# Source shared libs
+# shellcheck source=scripts/lib/colors.sh
+source "$REPO_ROOT/scripts/lib/colors.sh"
+# shellcheck source=scripts/lib/logging.sh
+source "$REPO_ROOT/scripts/lib/logging.sh" validate
 
 cd "$REPO_ROOT"
 
@@ -51,7 +31,7 @@ esac
 
 success "On feature branch: $CURRENT_BRANCH"
 
-log "Running quality gate (zero warnings policy)..."
+log "Running quality gate..."
 echo ""
 
 SKIP_QUALITY_GATE="${ATOMIC_COMMIT_SKIP_QUALITY_GATE:-false}"
@@ -60,7 +40,8 @@ if [[ "$SKIP_QUALITY_GATE" == "true" ]]; then
     warn "Quality gate skipped (ATOMIC_COMMIT_SKIP_QUALITY_GATE=true)"
     success "Quality gate bypassed"
 elif [[ -x "$REPO_ROOT/scripts/quality_gate.sh" ]]; then
-    if ! SKIP_TESTS=true "$REPO_ROOT/scripts/quality_gate.sh"; then
+    # Run quality gate without SKIP_TESTS override — tests must pass
+    if ! "$REPO_ROOT/scripts/quality_gate.sh"; then
         error "Quality gate failed - fix all warnings before committing"
         exit 1
     fi
@@ -74,25 +55,39 @@ success "Quality gate passed"
 
 log "Scanning for secrets..."
 
+# Enhanced secret detection patterns — covers dotenv, JSON, YAML, JS/TS, and common formats
 SECRET_PATTERNS=(
+    # API keys with various delimiters and quote styles
     "api[_-]?key\s*[:=]\s*['\"][a-zA-Z0-9]{16,}['\"]"
-    "password\s*[:=]\s*['\"][^'\"]+['\"]"
+    "api[_-]?key\s*[:=]\s*[a-zA-Z0-9]{16,}"
+    # Passwords
+    "password\s*[:=]\s*['\"][^'\"]{4,}['\"]"
+    # Generic secrets
     "secret\s*[:=]\s*['\"][a-zA-Z0-9]{16,}['\"]"
+    # Private keys
     "private[_-]?key\s*[:=]\s*['\"][a-zA-Z0-9+/=]{20,}['\"]"
+    # AWS access keys
     "AKIA[0-9A-Z]{16}"
+    # GitHub tokens
     "gh[pousr]_[A-Za-z0-9_]{36,}"
+    # Generic long hex strings that look like tokens
+    "(token|auth_token|access_token)\s*[:=]\s*['\"][a-f0-9]{32,}['\"]"
 )
 
 SECRET_FOUND=false
 STAGED_FILES=$(git diff --cached --name-only 2>/dev/null || true)
 
 if [[ -n "$STAGED_FILES" ]]; then
-    for pattern in "${SECRET_PATTERNS[@]}"; do
-        if git diff --cached 2>/dev/null | grep -iE "$pattern" > /dev/null 2>&1; then
-            error "Potential secret detected matching pattern: ${pattern:0:30}..."
-            SECRET_FOUND=true
-        fi
-    done
+    # Scan staged content, not working tree
+    STAGED_DIFF=$(git diff --cached 2>/dev/null || true)
+    if [[ -n "$STAGED_DIFF" ]]; then
+        for pattern in "${SECRET_PATTERNS[@]}"; do
+            if echo "$STAGED_DIFF" | grep -iE "$pattern" > /dev/null 2>&1; then
+                error "Potential secret detected matching pattern: ${pattern:0:40}..."
+                SECRET_FOUND=true
+            fi
+        done
+    fi
 fi
 
 if [[ "$SECRET_FOUND" == true ]]; then
@@ -103,14 +98,15 @@ fi
 
 success "No secrets detected"
 
+# Warn about unstaged/untracked files (will NOT be included in atomic commit)
 UNSTAGED_FILES=$(git diff --name-only 2>/dev/null || true)
 UNTRACKED_FILES=$(git ls-files --others --exclude-standard 2>/dev/null || true)
 
 if [[ -n "$UNSTAGED_FILES" ]] || [[ -n "$UNTRACKED_FILES" ]]; then
-    warn "Unstaged/untracked files exist:"
+    warn "Unstaged/untracked files exist (will NOT be committed):"
     [[ -n "$UNSTAGED_FILES" ]] && printf '%s\n' "$UNSTAGED_FILES" | sed 's/^/  unstaged: /'
     [[ -n "$UNTRACKED_FILES" ]] && printf '%s\n' "$UNTRACKED_FILES" | sed 's/^/  untracked: /'
-    log "Continuing - these will be included in the atomic commit"
+    log "Stage these files to include them in the atomic commit"
 fi
 
 if ! command -v gh &> /dev/null; then

@@ -14,16 +14,13 @@ MESSAGE=""
 TIMEOUT="${ATOMIC_COMMIT_TIMEOUT:-1800}"
 BASE_BRANCH="${ATOMIC_COMMIT_BASE_BRANCH:-main}"
 NO_ROLLBACK="${ATOMIC_COMMIT_NO_ROLLBACK:-0}"
+NO_FORCE_ROLLBACK="${ATOMIC_COMMIT_NO_FORCE_ROLLBACK:-1}"  # Safe by default
 
-if [[ -t 1 ]]; then
-    RED='\033[0;31m'
-    GREEN='\033[0;32m'
-    YELLOW='\033[1;33m'
-    BLUE='\033[0;34m'
-    NC='\033[0m'
-else
-    RED='' GREEN='' YELLOW='' BLUE='' NC=''
-fi
+# Source shared libs
+# shellcheck source=scripts/lib/colors.sh
+source "$REPO_ROOT/scripts/lib/colors.sh"
+# shellcheck source=scripts/lib/logging.sh
+source "$REPO_ROOT/scripts/lib/logging.sh" "atomic-commit"
 
 readonly E_SUCCESS=0
 readonly E_QUALITY_GATE=2
@@ -55,6 +52,10 @@ parse_args() {
                 BASE_BRANCH="$2"
                 shift 2
                 ;;
+            --force-rollback)
+                NO_FORCE_ROLLBACK=0
+                shift
+                ;;
             --help|-h)
                 show_help
                 exit 0
@@ -80,12 +81,14 @@ Options:
     --skip-ci               Skip CI verification (emergency only)
     --timeout SECONDS       Timeout for CI checks (default: 1800)
     --base-branch BRANCH    Target branch for PR (default: main)
+    --force-rollback        Allow force-push rollback on failure (unsafe)
     -h, --help              Show this help
 
 Environment:
-    ATOMIC_COMMIT_TIMEOUT       CI wait timeout in seconds
-    ATOMIC_COMMIT_BASE_BRANCH   Target branch for PR
-    ATOMIC_COMMIT_NO_ROLLBACK   Set 1 to disable rollback on failure
+    ATOMIC_COMMIT_TIMEOUT           CI wait timeout in seconds
+    ATOMIC_COMMIT_BASE_BRANCH       Target branch for PR
+    ATOMIC_COMMIT_NO_ROLLBACK       Set 1 to disable rollback on failure
+    ATOMIC_COMMIT_NO_FORCE_ROLLBACK Set 0 to allow force-push rollback (default: 1)
 
 Error Codes:
     0   Success
@@ -97,27 +100,13 @@ Error Codes:
 EOF
 }
 
-log() {
-    echo -e "${BLUE}[$(date +%H:%M:%S)]${NC} $*"
-}
-
-error() {
-    echo -e "${RED}[$(date +%H:%M:%S)] ERROR:${NC} $*" >&2
-}
-
-success() {
-    echo -e "${GREEN}[$(date +%H:%M:%S)]${NC} $*"
-}
-
-warn() {
-    echo -e "${YELLOW}[$(date +%H:%M:%S)] WARNING:${NC} $*"
-}
-
 CURRENT_PHASE=""
 COMMIT_SHA=""
 PR_NUMBER=""
 PR_URL=""
 START_TIME=""
+ORIGINAL_BRANCH=""
+ORIGINAL_SHA=""
 
 set_phase() {
     CURRENT_PHASE="$1"
@@ -143,10 +132,21 @@ rollback_push() {
         return 0
     fi
 
-    log "Attempting to rollback push..."
     local branch
     branch=$(git branch --show-current)
-    git push origin "+HEAD~1:$branch" 2>/dev/null || warn "Push rollback failed (may already be merged)"
+
+    if [[ "$NO_FORCE_ROLLBACK" == "1" ]]; then
+        warn "Force-push rollback disabled (safe mode)"
+        warn "To enable: set ATOMIC_COMMIT_NO_FORCE_ROLLBACK=0 or use --force-rollback"
+        return 0
+    fi
+
+    log "Attempting to rollback push via force-push..."
+    if git push origin "+HEAD~1:$branch" 2>/dev/null; then
+        log "Push rollback completed"
+    else
+        warn "Push rollback failed (may already be merged or protected)"
+    fi
 }
 
 rollback_pr() {
@@ -181,13 +181,28 @@ main() {
 
     cd "$REPO_ROOT"
 
+    ORIGINAL_BRANCH=$(git branch --show-current)
+    ORIGINAL_SHA=$(git rev-parse HEAD 2>/dev/null || echo "")
     START_TIME=$(date +%s)
 
     log "Starting atomic commit workflow"
+    log "Branch: $ORIGINAL_BRANCH"
     log "Base branch: $BASE_BRANCH"
     log "Dry run: $DRY_RUN"
     log "Skip CI: $SKIP_CI"
+    log "Force rollback: $([[ $NO_FORCE_ROLLBACK == 0 ]] && echo "enabled (unsafe)" || echo "disabled (safe)")"
     echo ""
+
+    # Idempotency: check if we already have an open PR for this branch
+    if [[ "$DRY_RUN" != true ]]; then
+        EXISTING_PR=$(gh pr list --head "$ORIGINAL_BRANCH" --json number,url --jq '.[0]' 2>/dev/null || echo "")
+        if [[ -n "$EXISTING_PR" ]]; then
+            EXISTING_PR_URL=$(echo "$EXISTING_PR" | jq -r '.url' 2>/dev/null || echo "unknown")
+            EXISTING_PR_NUM=$(echo "$EXISTING_PR" | jq -r '.number' 2>/dev/null || echo "unknown")
+            warn "Existing PR detected: #$EXISTING_PR_NUM ($EXISTING_PR_URL)"
+            warn "Re-run will use existing PR. Clean up manually if this is unexpected."
+        fi
+    fi
 
     if ! run_phase "PRE_COMMIT" "$SCRIPT_DIR/validate.sh"; then
         exit $E_QUALITY_GATE
@@ -233,6 +248,7 @@ main() {
         exit $E_PR_CREATE
     fi
 
+    # Get PR info — may already exist from idempotency check
     PR_URL=$(gh pr view --json url -q '.url' 2>/dev/null || echo "")
     PR_NUMBER=$(gh pr view --json number -q '.number' 2>/dev/null || echo "")
 
