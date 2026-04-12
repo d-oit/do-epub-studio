@@ -20,7 +20,6 @@ Operational scripts for `do EPUB Studio`. All scripts assume execution from the 
 | Script | Purpose | Dependencies |
 |--------|---------|-------------|
 | `quality_gate.sh` | Runs all checks: lint, typecheck, test, validate skills/links/format | pnpm, shellcheck (optional), markdownlint (optional) |
-| `pre-commit-hook.sh` | Standalone pre-commit wrapper around quality gate | quality_gate.sh |
 | `validate-skills.sh` | Checks skill symlinks and SKILL.md existence | none |
 | `validate-skill-format.sh` | Validates SKILL.md frontmatter per agentskills.io spec | none |
 | `validate-links.sh` | Validates reference links in SKILL.md files | perl (macOS fallback for realpath) |
