@@ -1,35 +1,37 @@
 # ADR-004: Auth and Access
 
-**Status:** Accepted  
+**Status:** Accepted
 **Date:** 2026-04-07
 
 ## Context
 
 We need secure access control that:
+
 - Allows authors to share books with specific readers
 - Supports optional password protection
 - Works offline with cached permissions
 - Prevents unauthorized access to private books
 
-**Contradiction:** Security vs Usability - strong access control WITHOUT authentication friction.
+**Contradiction:** Security vs Usability - strong access
+control WITHOUT authentication friction.
 
 ## Decision
 
 ### Access Model
 
-```
+```text
 Email + Optional Password → Grant → Session → Signed URL
 ```
 
 ### Grant Types
 
-| Mode | Description | Password | Comments |
-|------|-------------|----------|----------|
-| `private` | Admin-approved access | Optional | Optional |
-| `password_protected` | Password-gated | Required | Optional |
-| `reader_only` | Read-only, no interaction | Optional | No |
-| `editorial_review` | Full commenting | Optional | Yes |
-| `public` | Anyone with link | No | Optional |
+| Mode                 | Description              | Password | Comments |
+| -------------------- | ------------------------ | -------- | -------- |
+| `private`            | Admin-approved access    | Optional | Optional |
+| `password_protected` | Password-gated           | Required | Optional |
+| `reader_only`        | Read-only, no interaction| Optional | No       |
+| `editorial_review`   | Full commenting          | Optional | Yes      |
+| `public`             | Anyone with link         | No       | Optional |
 
 ### Session Tokens
 
@@ -55,6 +57,7 @@ Email + Optional Password → Grant → Session → Signed URL
 ### Audit Logging
 
 All sensitive actions logged:
+
 - `grant_created`, `grant_revoked`, `grant_updated`
 - `access_granted`, `access_denied`
 - `session_created`, `session_revoked`
@@ -62,12 +65,14 @@ All sensitive actions logged:
 ## Consequences
 
 **Positive:**
+
 - Generic error messages prevent enumeration
 - Short-lived tokens limit exposure
 - Audit trail for compliance
 - Optional password adds security layer
 
 **Negative:**
+
 - Session management adds complexity
 - Token refresh requires client cooperation
 
@@ -82,4 +87,5 @@ All sensitive actions logged:
 ## References
 
 - TRIZ Analysis: Contradiction #1 - Security vs Usability
-- Resolution: Token refresh, Equipotentiality, Anti-Weight principles
+- Resolution: Token refresh, Equipotentiality, Anti-Weight
+  principles

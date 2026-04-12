@@ -115,6 +115,7 @@ Write analysis to: `analysis/triz-core-YYYY-MM-DD.md`
 ## Rule
 
 **No coding before:**
+
 - All contradictions identified
 - Each mapped to TRIZ principles
 - Analysis written to file

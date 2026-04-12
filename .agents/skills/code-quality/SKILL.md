@@ -34,27 +34,33 @@ Review and improve inline code patterns. Operates at the file/function level
 ## Core Principles
 
 ### DRY
+
 Extract duplicated logic into shared functions or constants.
 
 ### Single Responsibility
+
 Each function should do one thing well. Split functions that validate, save, and notify.
 
 ### No Magic Numbers
+
 Use named constants instead of bare numbers like `30000`.
 
 ## Code Smells
 
 ### Bloaters
+
 - Long Method (>50 lines)
 - Large Class (>300 lines)
 - Long Parameter List (>4 params)
 
 ### Dispensables
+
 - Duplicate Code
 - Dead Code
 - Speculative Generality
 
 ### Couplers
+
 - Feature Envy
 - Message Chains (obj.getX().getY())
 
@@ -69,14 +75,16 @@ Use named constants instead of bare numbers like `30000`.
 
 ## Best Practices
 
-### DO:
+### DO
+
 - Use named constants
 - Write small functions
 - Handle errors explicitly
 - Write edge case tests
 - Follow language idioms
 
-### DON'T:
+### DON'T
+
 - Copy-paste code
 - Ignore compiler warnings
 - Skip error handling

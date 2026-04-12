@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Atomic Commit Orchestrator - Main entry point
 # Validates, commits, pushes, creates PR, and verifies CI
-# Usage: ./run.sh [--message "type(scope): desc"] [--dry-run] [--skip-ci]
+# Usage: ./run.sh [--message "type(scope): desc"] [--dry-run]
 
 set -euo pipefail
 
@@ -9,12 +9,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 DRY_RUN=false
-SKIP_CI=false
 MESSAGE=""
 TIMEOUT="${ATOMIC_COMMIT_TIMEOUT:-1800}"
 BASE_BRANCH="${ATOMIC_COMMIT_BASE_BRANCH:-main}"
-NO_ROLLBACK="${ATOMIC_COMMIT_NO_ROLLBACK:-0}"
-NO_FORCE_ROLLBACK="${ATOMIC_COMMIT_NO_FORCE_ROLLBACK:-1}"  # Safe by default
 
 # Source shared libs
 # shellcheck source=scripts/lib/colors.sh
@@ -40,10 +37,6 @@ parse_args() {
                 DRY_RUN=true
                 shift
                 ;;
-            --skip-ci)
-                SKIP_CI=true
-                shift
-                ;;
             --timeout)
                 TIMEOUT="$2"
                 shift 2
@@ -51,10 +44,6 @@ parse_args() {
             --base-branch)
                 BASE_BRANCH="$2"
                 shift 2
-                ;;
-            --force-rollback)
-                NO_FORCE_ROLLBACK=0
-                shift
                 ;;
             --help|-h)
                 show_help
@@ -78,17 +67,13 @@ Atomic workflow: validate → commit → push → PR → verify
 Options:
     -m, --message "MSG"     Commit message (auto-detect type if omitted)
     --dry-run               Validate only, no commits or pushes
-    --skip-ci               Skip CI verification (emergency only)
     --timeout SECONDS       Timeout for CI checks (default: 1800)
     --base-branch BRANCH    Target branch for PR (default: main)
-    --force-rollback        Allow force-push rollback on failure (unsafe)
     -h, --help              Show this help
 
 Environment:
     ATOMIC_COMMIT_TIMEOUT           CI wait timeout in seconds
     ATOMIC_COMMIT_BASE_BRANCH       Target branch for PR
-    ATOMIC_COMMIT_NO_ROLLBACK       Set 1 to disable rollback on failure
-    ATOMIC_COMMIT_NO_FORCE_ROLLBACK Set 0 to allow force-push rollback (default: 1)
 
 Error Codes:
     0   Success
@@ -114,11 +99,6 @@ set_phase() {
 }
 
 rollback_commit() {
-    if [[ "$NO_ROLLBACK" == "1" ]]; then
-        warn "Rollback disabled, leaving commit in place"
-        return 0
-    fi
-
     log "Rolling back commit..."
     if git rev-parse --verify HEAD~1 &>/dev/null; then
         git reset --soft HEAD~1 || true
@@ -127,21 +107,10 @@ rollback_commit() {
 }
 
 rollback_push() {
-    if [[ "$NO_ROLLBACK" == "1" ]]; then
-        warn "Rollback disabled, leaving remote commit in place"
-        return 0
-    fi
-
     local branch
     branch=$(git branch --show-current)
 
-    if [[ "$NO_FORCE_ROLLBACK" == "1" ]]; then
-        warn "Force-push rollback disabled (safe mode)"
-        warn "To enable: set ATOMIC_COMMIT_NO_FORCE_ROLLBACK=0 or use --force-rollback"
-        return 0
-    fi
-
-    log "Attempting to rollback push via force-push..."
+    log "Rolling back push on $branch..."
     if git push origin "+HEAD~1:$branch" 2>/dev/null; then
         log "Push rollback completed"
     else
@@ -150,7 +119,7 @@ rollback_push() {
 }
 
 rollback_pr() {
-    if [[ "$NO_ROLLBACK" == "1" ]] || [[ -z "$PR_NUMBER" ]]; then
+    if [[ -z "$PR_NUMBER" ]]; then
         return 0
     fi
 
@@ -189,8 +158,6 @@ main() {
     log "Branch: $ORIGINAL_BRANCH"
     log "Base branch: $BASE_BRANCH"
     log "Dry run: $DRY_RUN"
-    log "Skip CI: $SKIP_CI"
-    log "Force rollback: $([[ $NO_FORCE_ROLLBACK == 0 ]] && echo "enabled (unsafe)" || echo "disabled (safe)")"
     echo ""
 
     # Idempotency: check if we already have an open PR for this branch
@@ -261,15 +228,11 @@ main() {
 
     success "Created PR: $PR_URL"
 
-    if [[ "$SKIP_CI" == false ]]; then
-        if ! run_phase "VERIFY" "$SCRIPT_DIR/verify.sh" "$PR_NUMBER" "$TIMEOUT"; then
-            rollback_pr
-            rollback_push
-            rollback_commit
-            exit $E_CHECKS
-        fi
-    else
-        warn "CI verification skipped"
+    if ! run_phase "VERIFY" "$SCRIPT_DIR/verify.sh" "$PR_NUMBER" "$TIMEOUT"; then
+        rollback_pr
+        rollback_push
+        rollback_commit
+        exit $E_CHECKS
     fi
 
     set_phase "REPORT"

@@ -24,7 +24,7 @@ Purpose: deliver intentional, localized, accessible reader/admin UX for `do EPUB
 - `docs/coding-guide.md` §20 (Frontend design rules)
 - Tailwind config + design tokens
 - Localization catalogs (`apps/web/src/i18n`)
-- Reference: https://github.com/d-oit/do-gemini-ui-ux-skill/tree/main/
+- Reference: <https://github.com/d-oit/do-gemini-ui-ux-skill/tree/main/>
 
 ## Design Tokens Reference
 

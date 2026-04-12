@@ -881,7 +881,7 @@ Use the `skill(name="skill-name")` tool to load full SKILL.md content when neede
 At startup, only skill names/descriptions are loaded (~50 tokens each). Full SKILL.md content
 (~500-2000 tokens) loads only when the agent determines the skill is relevant.
 
-## Core skills (see AGENTS.md for full list):
+## Core skills (see AGENTS.md for full list)
 
 - `triz-analysis`, `triz-solver` — TRIZ contradiction resolution
 - `cloudflare-worker-api` — Worker route structure

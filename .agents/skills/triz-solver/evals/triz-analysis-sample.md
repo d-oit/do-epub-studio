@@ -6,6 +6,7 @@
 **Reality:** Verified - cached EPUB files bypass the auth layer
 
 **TRIZ Principles Available:**
+
 - Segmentation (cache with permissions)
 - Condition Separation (online vs offline auth)
 - Dynamicity (context-aware access)

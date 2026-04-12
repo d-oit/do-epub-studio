@@ -34,13 +34,8 @@ success "On feature branch: $CURRENT_BRANCH"
 log "Running quality gate..."
 echo ""
 
-SKIP_QUALITY_GATE="${ATOMIC_COMMIT_SKIP_QUALITY_GATE:-false}"
-
-if [[ "$SKIP_QUALITY_GATE" == "true" ]]; then
-    warn "Quality gate skipped (ATOMIC_COMMIT_SKIP_QUALITY_GATE=true)"
-    success "Quality gate bypassed"
-elif [[ -x "$REPO_ROOT/scripts/quality_gate.sh" ]]; then
-    # Run quality gate without SKIP_TESTS override — tests must pass
+# Quality gate always runs — no escape hatches
+if [[ -x "$REPO_ROOT/scripts/quality_gate.sh" ]]; then
     if ! "$REPO_ROOT/scripts/quality_gate.sh"; then
         error "Quality gate failed - fix all warnings before committing"
         exit 1

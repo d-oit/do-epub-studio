@@ -3,7 +3,7 @@ description: Execute atomic commit workflow - validate, commit, push, create PR,
 subtask: false
 ---
 
-Execute the atomic commit workflow.
+# Execute atomic commit workflow
 
 ## Workflow Steps
 
@@ -40,6 +40,7 @@ Run directly without arguments - the workflow handles staging and commit message
 ## CI Verification
 
 After push, monitor GitHub Actions:
+
 - CI workflow must pass
 - All jobs must succeed
 - Report any failures immediately

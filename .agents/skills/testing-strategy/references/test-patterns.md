@@ -9,6 +9,7 @@ license: MIT
 ## Unit Test Patterns
 
 ### describe/it structure
+
 ```typescript
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
@@ -33,6 +34,7 @@ describe('ModuleName', () => {
 ```
 
 ### Mocking
+
 ```typescript
 // Module mock
 vi.mock('../services/bookService', () => ({
@@ -49,6 +51,7 @@ mockApi.get('/books').mockResolvedValue({ data: [] });
 ```
 
 ### Async Tests
+
 ```typescript
 it('should create book', async () => {
   const book = await service.createBook({ title: 'Test' });
@@ -63,6 +66,7 @@ it('should handle error', async () => {
 ## Integration Test Patterns
 
 ### Database Setup
+
 ```typescript
 import { beforeAll, afterAll } from 'vitest';
 
@@ -87,6 +91,7 @@ describe('Database', () => {
 ```
 
 ### API Testing
+
 ```typescript
 import request from 'supertest';
 
@@ -102,6 +107,7 @@ describe('API', () => {
 ## Test Data Builders
 
 ### Book Builder
+
 ```typescript
 class BookBuilder {
   private book = {
@@ -133,6 +139,7 @@ const book = new BookBuilder()
 ```
 
 ### Grant Builder
+
 ```typescript
 class GrantBuilder {
   private grant = {
@@ -161,6 +168,7 @@ class GrantBuilder {
 ## Coverage Patterns
 
 ### Ignoring Non-Critical Code
+
 ```typescript
 /* istanbul ignore next */
 if (process.env.NODE_ENV === 'test') {
@@ -174,6 +182,7 @@ if (unreachable) {
 ```
 
 ### Coverage Configuration
+
 ```typescript
 // vitest.config.ts
 export default defineConfig({
