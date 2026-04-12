@@ -81,9 +81,9 @@ while true; do
 
     # Show progress
     if [[ $TOTAL_COUNT -gt 0 ]]; then
-        log "Checks: $SUCCESS_COUNT passed, $FAILED_COUNT failed, $PENDING_COUNT pending ($ELAPSEDs elapsed)"
+        log "Checks: $SUCCESS_COUNT passed, $FAILED_COUNT failed, $PENDING_COUNT pending (${ELAPSED}s elapsed)"
     else
-        log "No checks found... ($ELAPSEDs elapsed)"
+        log "No checks found... (${ELAPSED}s elapsed)"
     fi
 
     # Determine outcome
