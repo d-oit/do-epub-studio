@@ -48,7 +48,7 @@
 - **Never skip or disable rules without justification.** If a lint rule is disabled (via `eslint-disable`), add an inline comment explaining why it's intentional.
 - **Fix pre-existing issues when encountered.** When working in a file with pre-existing lint/type/test issues, fix them as part of the same change. Do not leave them for "later."
 - **Document unfixable issues.** If a warning cannot be fixed due to tool/library limitations, document it in `agents-docs/KNOWN-ISSUES.md` with: the warning message, why it can't be fixed, and any mitigation strategy.
-- **Skills must pass validation.** Every SKILL.md must have `version`, `category`, be under 250 lines, and have all symlinks in place. Move detailed content to `references/`.
+- **Skills must pass validation.** Every SKILL.md must have `version`, `category`, be under 250 lines, and have all symlinks in place.
 - **Quality gate must pass.** No commit without passing `pnpm lint`, `pnpm typecheck`, `pnpm test`. Skill validation failures must also be resolved.
 
 ## Architecture + Storage
@@ -87,35 +87,54 @@
 - User-facing docs/README updated when behavior changes.
 - `learn` skill entry committed with key takeaways.
 
-## Skills
+## Skills (On-Demand Loading)
 
-- **Coordination** (mandatory orchestration):
-  - `triz-analysis` — Identify contradictions before architecture/permissions/offline/EPUB decisions
-  - `triz-solver` — Resolve contradictions after triz-analysis completes
-  - `task-decomposition` — Break complex requests into atomic, testable sub-tasks
-  - `parallel-execution` — Run independent tasks simultaneously via agent coordination
-  - `learn` — Extract non-obvious discoveries after non-trivial work
-- **Backend/domain**:
-  - `cloudflare-worker-api` — Structure Worker routes and typed handlers (not auth)
-  - `secure-invite-and-access` — Grants, Argon2id, sessions, signed URLs per ADR-004
-  - `turso-schema-migrations` — Schema design and migration scripts for Turso
-  - `pwa-offline-sync` — Cache Storage + IndexedDB strategy per ADR-005
-- **Reader/UI**:
-  - `epub-rendering-and-cfi` — EPUB.js rendering and annotation anchoring per ADR-006
-  - `reader-ui-ux` — Localized, accessible reader/admin UI with Zustand
-- **Testing/data**:
-  - `testing-strategy` — Plan test coverage, pyramid ratios, Vitest/Playwright strategy
-  - `testdata-builders` — Deterministic builders for schema entities
-- **Quality/security**:
-  - `code-quality` — Inline code smells, refactoring, DRY violations (file-level)
-  - `code-review-assistant` — PR-level diff analysis, risk, cross-file impact
-  - `security-code-auditor` — Read-only vulnerability audits (auth, EPUB, signed URLs)
-  - `shell-script-quality` — Safe, portable shell authoring patterns
-  - `anti-ai-slop` — Audit/fix generic AI aesthetic in UI, copy, and UX
-- **Utility**:
-  - `skill-creator` — Create and edit skills per agentskills.io spec
-  - `skill-evaluator` — Evaluate skill output quality with `expected_output` evals
-  - `memory-context` — Retrieve past learnings via csm CLI (falls back to grep)
+Use the `skill` tool to load skills on-demand. At startup, only skill names/descriptions are loaded (~50 tokens each). Full SKILL.md content (~500-2000 tokens) loads only when needed.
+
+**Available skills** (discovery catalog):
+
+### Coordination (mandatory orchestration)
+
+- `triz-analysis` — Identify contradictions before architecture/permissions/offline/EPUB decisions
+- `triz-solver` — Resolve contradictions after triz-analysis completes
+- `task-decomposition` — Break complex requests into atomic, testable sub-tasks
+- `parallel-execution` — Run independent tasks simultaneously via agent coordination
+- `learn` — Extract non-obvious discoveries after non-trivial work
+
+### Backend/domain
+
+- `cloudflare-worker-api` — Structure Worker routes and typed handlers (not auth)
+- `secure-invite-and-access` — Grants, Argon2id, sessions, signed URLs per ADR-004
+- `turso-schema-migrations` — Schema design and migration scripts for Turso
+- `pwa-offline-sync` — Cache Storage + IndexedDB strategy per ADR-005
+
+### Reader/UI
+
+- `epub-rendering-and-cfi` — EPUB.js rendering and annotation anchoring per ADR-006
+- `reader-ui-ux` — Localized, accessible reader/admin UI with Zustand
+
+### Testing/data
+
+- `testing-strategy` — Plan test coverage, pyramid ratios, Vitest/Playwright strategy
+- `testdata-builders` — Deterministic builders for schema entities
+- `dogfood` — Systematically explore and test a web application to find bugs, UX issues
+
+### Quality/security
+
+- `code-quality` — Inline code smells, refactoring, DRY violations (file-level)
+- `code-review-assistant` — PR-level diff analysis, risk, cross-file impact
+- `security-code-auditor` — Read-only vulnerability audits (auth, EPUB, signed URLs)
+- `shell-script-quality` — Safe, portable shell authoring patterns
+- `anti-ai-slop` — Audit/fix generic AI aesthetic in UI, copy, and UX
+- `agent-browser` — Browser automation for web interaction, scraping, testing
+
+### Utility
+
+- `skill-creator` — Create and edit skills per agentskills.io spec
+- `skill-evaluator` — Evaluate skill output quality with `expected_output` evals
+- `memory-context` — Retrieve past learnings via csm CLI (falls back to grep)
+
+**Loading a skill**: Use `skill(name="skill-name")` tool to load full SKILL.md content into context. The model decides when to load based on task relevance.
 
 ## Quality Gate
 
