@@ -3,11 +3,12 @@ description: Execute atomic commit workflow - validate, commit, push, create PR,
 subtask: false
 ---
 
-Execute the atomic commit workflow script.
+# Execute atomic commit workflow
 
 Run: `./scripts/atomic-commit/run.sh $ARGUMENTS`
 
 This script will:
+
 1. Run quality gate validation
 2. Create a feature branch if on main
 3. Stage and commit all changes

@@ -3,12 +3,15 @@
 A powerful, open-source tool for creating, editing, and managing EPUB files with ease.
 
 ## Description
+
 d.o. EPUB Studio is designed to simplify the process of EPUB creation and editing. Whether you're a publisher, author, or developer, this tool provides a user-friendly interface and robust features to streamline your workflow.
 
 ## Website
+
 🌐 [Visit our website](https://d-oit.github.io/do-epub-studio/)
 
 ## Topics
+
 - `epub`
 - `ebook`
 - `publishing`

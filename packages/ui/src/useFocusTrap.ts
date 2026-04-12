@@ -51,12 +51,6 @@ export function useFocusTrap(
   );
 
   useEffect(() => {
-    // Capture restore target at effect execution time — intentional exclusion
-    // from deps because we want restore behavior tied to the active state at
-    // the time the effect ran, not subsequent ref changes.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    const savedRestore = restoreRef?.current;
-
     if (active) {
       previousFocus.current = document.activeElement as HTMLElement | null;
 
@@ -73,10 +67,11 @@ export function useFocusTrap(
 
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
-      const restoreTarget = savedRestore ?? previousFocus.current;
+      // Use current value at cleanup time for accurate restore target
+      const restoreTarget = restoreRef?.current ?? previousFocus.current;
       if (restoreTarget) {
         restoreTarget.focus();
       }
     };
-  }, [active, containerRef, handleKeyDown]);
+  }, [active, containerRef, handleKeyDown, restoreRef]);
 }

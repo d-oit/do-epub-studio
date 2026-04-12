@@ -6,12 +6,14 @@
 ## Context
 
 Readers need to:
+
 - Read books offline after initial authentication
 - Create annotations offline
 - Sync when back online
 - Handle conflicts gracefully
 
 **Contradictions:**
+
 - #2: Offline capability vs Access Control
 - #5: Local-first editing vs Consistency
 
@@ -56,12 +58,14 @@ Readers need to:
 ### Sync Rules
 
 **Client-side:**
+
 1. Write locally first (optimistic)
 2. Enqueue sync job
 3. Attempt sync when online
 4. Retry with exponential backoff
 
 **Server-side:**
+
 - Idempotent mutation IDs (UUID v7)
 - Last-write-wins for progress/preferences
 - Append-only for comments
@@ -87,11 +91,13 @@ Readers need to:
 ## Consequences
 
 **Positive:**
+
 - Works fully offline after initial auth
 - Fast reads via cache
 - Resilient to network issues
 
 **Negative:**
+
 - Sync complexity
 - Potential for conflicts
 - Permission cache staleness

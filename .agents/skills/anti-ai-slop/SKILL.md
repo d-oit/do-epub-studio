@@ -63,22 +63,27 @@ Always **name the sin** before fixing it.
 ## Copy Anti-Patterns
 
 ### Hollow Affirmations
+
 "Absolutely!", "Certainly!", "Great question!", "I'd be happy to help"
 **Fix:** Delete them. Start with the actual content.
 
 ### AI Corporate Superlatives
+
 "Powerful", "seamless", "intuitive", "robust", "next-generation", "supercharge"
 **Fix:** Replace with specific claims. What does it actually do?
 
 ### The Listicle Reflex
+
 AI defaults to bullet points for everything.
 **Fix:** Write prose. Use lists only when scanning adds value.
 
 ### Transition Theater
+
 "In conclusion...", "It's worth noting that...", "At the end of the day..."
 **Fix:** Just say the thing.
 
 ### Emoji Inflation
+
 Using emojis as substitutes for meaning.
 **Fix:** Zero emojis unless genuinely casual/social context.
 

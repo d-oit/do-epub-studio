@@ -20,15 +20,13 @@ DETECTED_LANGUAGES=()
 echo "Running quality gate..."
 echo ""
 
-# --- Validate git hooks configuration ---
-if [ "${SKIP_GLOBAL_HOOKS_CHECK:-false}" != "true" ]; then
-    printf '%sValidating git hooks configuration...%s\n' "${BLUE}" "${NC}"
-    if ! "$REPO_ROOT/scripts/validate-git-hooks.sh" 2>&1; then
-        printf '%s⚠ Git hooks config warning (non-blocking)%s\n' "${YELLOW}" "${NC}"
-        FAILED=1
-    fi
-    echo ""
+# --- Validate git hooks configuration (always run) ---
+printf '%sValidating git hooks configuration...%s\n' "${BLUE}" "${NC}"
+if ! "$REPO_ROOT/scripts/validate-git-hooks.sh" 2>&1; then
+    printf '%s⚠ Git hooks config warning (non-blocking)%s\n' "${YELLOW}" "${NC}"
+    FAILED=1
 fi
+echo ""
 
 # --- Validate GitHub Actions SHAs ---
 printf '%sValidating GitHub Actions SHAs...%s\n' "${BLUE}" "${NC}"
@@ -135,15 +133,13 @@ if [[ " ${DETECTED_LANGUAGES[*]} " =~ " typescript " ]]; then
             printf '%s  ✓ %s typecheck passed%s\n' "${GREEN}" "$PM" "${NC}"
         fi
 
-        # Tests
-        if [ "${SKIP_TESTS:-false}" != "true" ]; then
-            if ! OUTPUT=$($PM test 2>&1); then
-                printf '%s  ✗ %s test failed%s\n' "${RED}" "$PM" "${NC}"
-                echo "$OUTPUT" >&2
-                FAILED=1
-            else
-                printf '%s  ✓ %s test passed%s\n' "${GREEN}" "$PM" "${NC}"
-            fi
+        # Tests (always run — no escape hatch)
+        if ! OUTPUT=$($PM test 2>&1); then
+            printf '%s  ✗ %s test failed%s\n' "${RED}" "$PM" "${NC}"
+            echo "$OUTPUT" >&2
+            FAILED=1
+        else
+            printf '%s  ✓ %s test passed%s\n' "${GREEN}" "$PM" "${NC}"
         fi
     fi
     echo ""
@@ -177,8 +173,8 @@ if [[ " ${DETECTED_LANGUAGES[*]} " =~ " python " ]]; then
         printf '%s  ⚠ black not installed - skipping Python format%s\n' "${YELLOW}" "${NC}"
     fi
 
-    # pytest — only if tests/ directory exists
-    if [ "${SKIP_TESTS:-false}" != "true" ] && [ -d "tests" ]; then
+    # pytest — always run if tests/ directory exists
+    if [ -d "tests" ]; then
         if command -v pytest &> /dev/null; then
             if ! OUTPUT=$(pytest tests/ -q 2>&1); then
                 printf '%s  ✗ pytest failed%s\n' "${RED}" "${NC}"
@@ -220,8 +216,8 @@ if [[ " ${DETECTED_LANGUAGES[*]} " =~ " shell " ]]; then
         printf '%s  ⚠ shellcheck not installed - skipping shell checks%s\n' "${YELLOW}" "${NC}"
     fi
 
-    # BATS tests — only if tests/ directory exists and not already in BATS
-    if [ -d "tests" ] && [ "${SKIP_TESTS:-false}" != "true" ] && [ -z "${BATS_TEST_FILENAME:-}" ]; then
+    # BATS tests — always run if tests/ directory exists
+    if [ -d "tests" ] && [ -z "${BATS_TEST_FILENAME:-}" ]; then
         if command -v bats &> /dev/null; then
             if ! OUTPUT=$(bats tests/ 2>&1); then
                 printf '%s  ✗ bats tests failed%s\n' "${RED}" "${NC}"
@@ -242,7 +238,12 @@ if [[ " ${DETECTED_LANGUAGES[*]} " =~ " markdown " ]]; then
     printf '%sRunning Markdown checks...%s\n' "${BLUE}" "${NC}"
 
     if command -v markdownlint &> /dev/null; then
-        MD_FILES=$(find . -path "./node_modules" -prune -o -path "./target" -prune -o -path "./.git" -prune -o -name "*.md" -print 2>/dev/null || true)
+        MD_FILES=$(find . \
+            -path "./node_modules" -prune -o \
+            -path "./.opencode/node_modules" -prune -o \
+            -path "./target" -prune -o \
+            -path "./.git" -prune -o \
+            -name "*.md" -print 2>/dev/null || true)
         if [ -n "$MD_FILES" ]; then
             md_failed=0
             while IFS= read -r md_file; do
@@ -272,7 +273,6 @@ if [ $FAILED -ne 0 ]; then
     printf '%s─────────────────────────────────────────────────────────────────%s\n' "${RED}" "${NC}"
     echo ""
     echo "Fix the errors above and re-run quality gate."
-    echo "Use SKIP_TESTS=true to skip test checks."
     exit 2
 fi
 

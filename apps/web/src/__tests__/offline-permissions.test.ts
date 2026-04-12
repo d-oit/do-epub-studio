@@ -171,14 +171,12 @@ describe('Offline Permissions', () => {
       cleanup();
     });
 
-    it.skip('should call onRevoked when grant is revoked', async () => {
-      // This test requires complex mocking of setInterval and navigator.onLine
-      // Skip for now - tested manually and in e2e tests
+    it('should call onRevoked when grant is revoked', async () => {
       const mockOnRevoked = vi.fn();
-      
+
       const mockResponse = new Response(
         JSON.stringify({
-          grantIds: ['grant-2'], // grant-1 is missing (revoked)
+          grantIds: ['grant-2'],
           revokedBookIds: ['book-1'],
         }),
         { status: 200, headers: { 'Content-Type': 'application/json' } }
@@ -193,20 +191,39 @@ describe('Offline Permissions', () => {
         expiresAt: Date.now() + 86400000,
       });
 
-      const cleanup = setupZombieDetection(mockOnRevoked);
+      setupZombieDetection(mockOnRevoked);
 
-      // Advance timer to trigger interval
+      // Advance timer past the 60s interval used by setupZombieDetection
       await vi.advanceTimersByTimeAsync(60000);
+      // Allow the async interval callback to resolve
+      await vi.advanceTimersByTimeAsync(0);
 
       expect(mockOnRevoked).toHaveBeenCalledWith('book-1');
       expect(db.clearPermissionCache).toHaveBeenCalledWith('book-1');
-
-      cleanup();
     });
 
-    it.skip('should not check when offline', () => {
-      // This test requires mocking navigator.onLine which is read-only
-      // Skip for now - tested in e2e tests
+    it('should not check when offline', async () => {
+      // Mock navigator.onLine using Object.defineProperty
+      const originalDescriptor = Object.getOwnPropertyDescriptor(navigator, 'onLine');
+      Object.defineProperty(navigator, 'onLine', {
+        configurable: true,
+        get: () => false,
+      });
+
+      const mockOnRevoked = vi.fn();
+      setupZombieDetection(mockOnRevoked);
+
+      await vi.advanceTimersByTimeAsync(60000);
+      await vi.advanceTimersByTimeAsync(0);
+
+      // API should not have been called when offline
+      expect(api.get).not.toHaveBeenCalled();
+      expect(mockOnRevoked).not.toHaveBeenCalled();
+
+      // Restore original
+      if (originalDescriptor) {
+        Object.defineProperty(navigator, 'onLine', originalDescriptor);
+      }
     });
   });
 });

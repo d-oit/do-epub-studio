@@ -1,0 +1,8 @@
+# Ignore third-party markdown files
+node_modules/
+.opencode/node_modules/
+.git/
+target/
+dist/
+build/
+*.min.js

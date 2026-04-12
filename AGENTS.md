@@ -1,7 +1,5 @@
 # AGENTS.md
 
-> Single source of truth for every AI agent and workflow in `do EPUB Studio`.
-
 ## Core References
 
 - `plans/000-product-overview.md` – product charter and capability map
@@ -13,12 +11,112 @@
 
 ## Workflow (MANDATORY)
 
-1. **Read** – review AGENTS + relevant plans/ADRs/skills before touching code.
-2. **Plan** – update `plans/` (and `plans/007` tracker) prior to implementation.
-3. **Execute** – keep changes atomic, <500 LOC per source file, zero silent failures.
-4. **Verify** – run `./scripts/quality_gate.sh` (lint + typecheck + test + build) and fix everything.
-5. **Commit** – use `./scripts/atomic-commit/run.sh --message "type(scope): description"`.
-6. **Learn** – always run the `learn` skill for non-trivial work.
+1. **Learn** – load memory context first: run `learn` skill or check `agents-docs/LEARNINGS.md` for prior discoveries.
+2. **Read** – review AGENTS + relevant plans/ADRs/skills before touching code.
+3. **Plan** – update `plans/` (and `plans/007` tracker) prior to implementation; use `task-decomposition` for complex work.
+4. **Execute** – keep changes atomic, <500 LOC per source file, zero silent failures.
+5. **Verify** – run full verification workflow (see **Verify Workflow** section below).
+6. **Commit** – use `./scripts/atomic-commit/run.sh --message "type(scope): description"`.
+7. **Learn** – always run the `learn` skill after non-trivial work to capture discoveries.
+
+---
+
+## Verify Workflow (MANDATORY)
+
+**Before every commit, run the complete verification sequence:**
+
+### Step 1: Pre-Verification Context Load
+
+```bash
+# Load prior learnings (choose one)
+# Option A: Use learn skill (recommended)
+skill learn
+
+# Option B: Manual check
+cat agents-docs/LEARNINGS.md
+```
+
+### Step 2: Run Quality Gate
+
+```bash
+./scripts/quality_gate.sh
+```
+
+The quality gate runs **all** checks in sequence:
+
+1. Git hooks configuration validation
+2. GitHub Actions SHA validation
+3. Skill symlink validation (`validate-skills.sh`)
+4. SKILL.md format validation (`validate-skill-format.sh`)
+5. Reference link validation (`validate-links.sh`)
+6. Language detection (TypeScript, Python, Shell, Markdown)
+7. Language-specific checks (lint, typecheck, test)
+
+**Exit codes:**
+
+- `0` = all checks passed (silent success)
+- `2` = errors surfaced to agent for remediation
+
+### Step 3: Fix ALL Issues (No Exceptions)
+
+When the quality gate fails:
+
+1. **Read the error output** – each failure is printed with file path and details
+2. **Fix every error and warning** – including pre-existing issues in files you touched
+3. **Re-run quality gate** – repeat until all checks pass
+4. **Document unfixable issues** – if an issue cannot be fixed, add to `agents-docs/KNOWN-ISSUES.md`
+
+### Step 4: Use Correct Skills for Verification
+
+| Issue Type | Skill to Use | Purpose |
+|------------|--------------|---------|
+| Code smells/DRY violations | `code-quality` | Inline refactoring at file level |
+| PR-level diff analysis | `code-review-assistant` | Cross-file impact assessment |
+| Shell script issues | `shell-script-quality` | ShellCheck fixes, BATS tests |
+| Security vulnerabilities | `security-code-auditor` | Auth, EPUB, signed URL audits |
+| Architecture contradictions | `triz-analysis` → `triz-solver` | Design trade-off resolution |
+| UI/copy generic patterns | `anti-ai-slop` | Humanize UI text |
+
+### Step 5: Document Unfixable Issues
+
+If a warning cannot be fixed due to tool/library limitations:
+
+1. Create entry in `agents-docs/KNOWN-ISSUES.md` with:
+   - Exact error message
+   - Affected file(s)
+   - Reason why it cannot be fixed
+   - Mitigation strategy
+2. Verify the issue is truly unfixable (not just difficult)
+3. Re-run quality gate to confirm no new failures
+
+### Step 6: Final Verification Before Commit
+
+```bash
+# Full atomic commit workflow (includes verification)
+./scripts/atomic-commit/run.sh --message "type(scope): description"
+
+# Or dry-run to verify without committing
+./scripts/atomic-commit/run.sh --dry-run
+```
+
+---
+
+## Quality Gate Reference
+
+| Check | Script | Dependencies | Exit on Fail |
+|-------|--------|--------------|--------------|
+| Git hooks config | `validate-git-hooks.sh` | git | Non-blocking warning |
+| GitHub Actions SHAs | `validate-github-actions-shas.sh` | none | Exit 2 |
+| Skill symlinks | `validate-skills.sh` | none | Exit 2 |
+| SKILL.md format | `validate-skill-format.sh` | none | Exit 1 |
+| Reference links | `validate-links.sh` | perl | Exit 2 |
+| TypeScript lint | `pnpm lint` | pnpm | Exit 2 |
+| TypeScript check | `pnpm typecheck` | pnpm | Exit 2 |
+| Tests | `pnpm test` | pnpm | Exit 2 |
+| Shell scripts | shellcheck | shellcheck | Exit 2 |
+| Markdown | markdownlint | markdownlint | Exit 2 |
+
+**No escape hatches exist.** If a check fails, fix the root cause.
 
 ## Hard Rules
 
@@ -134,20 +232,10 @@ Use the `skill` tool to load skills on-demand. At startup, only skill names/desc
 - `skill-evaluator` — Evaluate skill output quality with `expected_output` evals
 - `memory-context` — Retrieve past learnings via csm CLI (falls back to grep)
 
-**Loading a skill**: Use `skill(name="skill-name")` tool to load full SKILL.md content into context. The model decides when to load based on task relevance.
-
-## Quality Gate
-
-Run before every commit (no exceptions):
-
-```bash
-./scripts/quality_gate.sh
-```
-
-Set `SKIP_TESTS=true` only if explicitly approved.
-
 ## Learnings Mandate
 
-- Capture non-obvious discoveries (fragile config, tool quirks, performance findings) via `learn` skill per task.
+- Capture non-obvious discoveries (fragile config, tool quirks, performance
+  findings) via `learn` skill per task.
 - No trivial or duplicate learnings; focus on actionable insights.
-- Project-wide learnings are stored in `agents-docs/LEARNINGS.md` (not in this file).
+- Project-wide learnings are stored in `agents-docs/LEARNINGS.md` (not in
+  this file).

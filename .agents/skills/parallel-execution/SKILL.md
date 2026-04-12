@@ -24,6 +24,7 @@ Execute multiple independent tasks simultaneously to maximize throughput and min
 ### Independence
 
 Tasks are independent when:
+
 - No data dependencies
 - No resource conflicts
 - No ordering requirements
@@ -60,7 +61,9 @@ All start simultaneously.
 ## Execution Patterns
 
 ### Homogeneous Parallel
+
 Same agent type, different inputs:
+
 ```
 - test-runner: Test module A
 - test-runner: Test module B
@@ -68,7 +71,9 @@ Same agent type, different inputs:
 ```
 
 ### Heterogeneous Parallel
+
 Different agent types:
+
 ```
 - code-reviewer: Quality analysis
 - test-runner: Test execution

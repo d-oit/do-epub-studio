@@ -3,7 +3,7 @@ description: GitHub Actions workflow commands
 subtask: true
 ---
 
-GitHub Actions workflow commands.
+# GitHub Actions workflow commands
 
 ## CI Workflow
 
@@ -12,6 +12,7 @@ The project uses GitHub Actions for CI/CD.
 ### Running CI Locally
 
 Before pushing, run quality gate locally:
+
 ```bash
 ./scripts/quality_gate.sh
 ```

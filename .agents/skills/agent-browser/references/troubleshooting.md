@@ -24,6 +24,7 @@ agent-browser wait --fn "document.querySelectorAll('.item').length > 0"
 ```
 
 **AVOID `wait --load networkidle`** on sites with:
+
 - Ad networks
 - Analytics/tracking
 - Websockets
@@ -46,6 +47,7 @@ When a dialog is pending, all command responses include a `warning` field.
 ## Ref Lifecycle
 
 **Refs (`@e1`, `@e2`, etc.) are invalidated when the page changes.** Always re-snapshot after:
+
 - Clicking links or buttons that navigate
 - Form submissions
 - Dynamic content loading (dropdowns, modals)
@@ -59,6 +61,7 @@ agent-browser click @e1              # Use new refs
 ## Annotated Screenshots
 
 Use `--annotate` for screenshots with numbered labels mapped to refs:
+
 ```bash
 agent-browser screenshot --annotate
 # [1] @e1 button "Submit"
@@ -67,6 +70,7 @@ agent-browser click @e2              # Use ref from annotated screenshot
 ```
 
 Use when:
+
 - Page has unlabeled icon buttons
 - Need visual layout verification
 - Canvas or chart elements (invisible to text snapshots)
@@ -75,6 +79,7 @@ Use when:
 ## Semantic Locators (Fallback)
 
 When refs are unavailable or unreliable:
+
 ```bash
 agent-browser find text "Sign In" click
 agent-browser find label "Email" fill "user@test.com"
@@ -84,6 +89,7 @@ agent-browser find role button click --name "Submit"
 ## JavaScript Eval Quoting
 
 **Shell quoting can corrupt complex expressions.** Rules:
+
 - Simple expressions: `eval 'document.title'` (single quotes)
 - Nested quotes/arrows/templates: `eval --stdin <<'EVALEOF' ... EVALEOF`
 - Programmatic scripts: `eval -b "$(echo -n '...' | base64)"`
@@ -93,6 +99,7 @@ Problematic characters in shell: `"`, `!`, backticks, `$()`
 ## Session Cleanup
 
 Always close sessions to prevent leaked processes:
+
 ```bash
 agent-browser close                    # Close default session
 agent-browser --session my-session close   # Close specific session

@@ -51,6 +51,7 @@ Define: Inputs, outputs, quality standards.
 ## Process
 
 ### Step 1: Understand Goal
+
 ```
 Request: [Original]
 Goal: [Main objective]
@@ -59,7 +60,9 @@ Complexity: [Simple/Medium/Complex]
 ```
 
 ### Step 2: Identify Components (3-7)
+
 For EPUB Studio:
+
 - Database/Storage
 - API/Worker
 - Frontend/UI
@@ -68,25 +71,30 @@ For EPUB Studio:
 - Documentation
 
 ### Step 3: Decompose Components
+
 ```
 Component: Database
 Tasks: 1. Design schema, 2. Implement operations
 ```
 
 ### Step 4: Map Dependencies
+
 ```
 [Design] → [Implement] → [Test]
 ```
 
 ### Step 5: Assign Priorities
+
 - P0 (Critical), P1 (Important), P2 (Nice-to-have)
 
 ### Step 6: Estimate Complexity
+
 - Low (<30min), Medium (30min-2hr), High (>2hr)
 
 ## Patterns
 
 ### EPUB Studio Layer-Based
+
 1. Database/Storage (Turso/R2)
 2. Business Logic (Services)
 3. API (Cloudflare Worker)
@@ -95,6 +103,7 @@ Tasks: 1. Design schema, 2. Implement operations
 6. Documentation
 
 ### Feature-Based
+
 1. Core (MVP)
 2. Error handling
 3. Performance
@@ -103,6 +112,7 @@ Tasks: 1. Design schema, 2. Implement operations
 6. Documentation
 
 ### Phase-Based
+
 1. Research
 2. Foundation (schema/architecture)
 3. Implementation
@@ -111,6 +121,7 @@ Tasks: 1. Design schema, 2. Implement operations
 6. Release
 
 ### Problem-Solution
+
 1. Reproduce
 2. Diagnose
 3. Design
@@ -121,6 +132,7 @@ Tasks: 1. Design schema, 2. Implement operations
 ## Examples
 
 ### Simple
+
 ```
 Request: "Fix failing test"
 Tasks: 1. Run test  2. Identify cause  3. Apply fix  4. Verify
@@ -128,6 +140,7 @@ Sequential, Low complexity
 ```
 
 ### Medium - Add Book Permission
+
 ```
 Request: "Add book permission system"
 Tasks: 1. Design schema, 2. Add migration, 3. Implement service, 4. Add API route, 5. Add frontend, 6. Test, 7. Docs
@@ -135,6 +148,7 @@ Dependencies: 1→2→3→4, 5→4, 6→4
 ```
 
 ### Complex - Offline Sync
+
 ```
 Request: "Add offline sync"
 Components: Storage, Sync Logic, Conflict Resolution, UI, Testing, Migration
@@ -153,14 +167,16 @@ Strategy: Multi-phase hybrid
 
 ## EPUB Studio Specific
 
-### Must Run TRIZ Analysis For:
+### Must Run TRIZ Analysis For
+
 - Architecture changes
 - Permission system changes
 - Offline sync implementation
 - EPUB rendering changes
 - API design
 
-### Include in Plans:
+### Include in Plans
+
 - ADR (Architecture Decision Record)
 - Phase plans in `plans/`
 - Schema migrations in `migrations/`

@@ -85,12 +85,21 @@ Located in `scripts/lib/`:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `SKIP_TESTS` | `false` | Skip test checks in quality gate |
 | `FORCE_COLOR` | auto (TTY) | Force color output (`0` to disable) |
 | `ATOMIC_COMMIT_TIMEOUT` | `1800` | CI check timeout in seconds |
 | `ATOMIC_COMMIT_BASE_BRANCH` | `main` | Target branch for PRs |
-| `ATOMIC_COMMIT_NO_ROLLBACK` | `0` | Disable rollback on failure |
-| `ATOMIC_COMMIT_NO_FORCE_ROLLBACK` | `1` | Disable force-push rollback (safe default) |
 | `TURSO_DB_NAME` | `do-epub-studio-local` | Local Turso DB name |
 | `TURSO_MIGRATIONS_DIR` | `packages/schema/migrations` | SQL migrations path |
 | `MAX_SKILL_LINES` | `250` | Max lines per SKILL.md |
+
+## No Escape Hatches
+
+This project enforces **zero bypass** of quality gates:
+
+- **No `SKIP_TESTS`** — tests always run in quality gate and pre-commit
+- **No `--skip-ci`** — CI verification always enforced
+- **No `ATOMIC_COMMIT_SKIP_QUALITY_GATE`** — quality gate cannot be skipped
+- **No `--no-rollback`** — rollback always executes on failure
+- **No `SKIP_GLOBAL_HOOKS_CHECK`** — git hooks config always validated
+
+If a check fails, fix the root cause. Do not silence it.

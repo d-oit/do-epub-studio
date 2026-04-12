@@ -61,6 +61,7 @@ Enable in Repository Settings → Code security and analysis:
 ### CODEOWNERS
 
 Maintain `.github/CODEOWNERS`:
+
 ```
 # Default reviewers
 * @default-reviewer
@@ -146,6 +147,7 @@ resource "github_branch_protection" "main" {
 ## Monitoring
 
 Set up alerts for:
+
 - Branch protection changes
 - New secrets detected
 - Dependabot vulnerabilities
