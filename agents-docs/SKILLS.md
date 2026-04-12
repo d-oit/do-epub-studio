@@ -26,6 +26,17 @@ Run `./scripts/setup-skills.sh` after cloning to create symlinks.
 Run `./scripts/validate-skills.sh` to verify integrity.
 Run `./scripts/eval-skills.sh` to evaluate skill quality.
 
+## On-Demand Loading Pattern (2026 Best Practice)
+
+Skills use progressive disclosure per the agentskills.io specification:
+
+1. **Discovery (L1)** — At startup, only `name` + `description` from frontmatter (~50 tokens/skill)
+2. **Activation (L2)** — Full SKILL.md body loads only when the agent activates the skill
+3. **Resources (L3)** — Files in `references/`, `scripts/` load on-demand when L2 references them
+
+The model decides when to load full content via the `skill(name="skill-name")` tool.
+Do NOT pre-load all skills at session start — this causes context bloat and token waste.
+
 ## Why .agents/ as Canonical?
 
 `.claude/` is Claude Code-specific. `.agents/` is tool-agnostic - it works when you

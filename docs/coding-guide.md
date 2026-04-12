@@ -875,78 +875,30 @@ A task is complete only when:
 
 # 17. Reusable agent skills
 
-Create these under `.agents/skills/`.
+Create skills under `.agents/skills/` following the on-demand loading pattern (per AGENTS.md).
+Use the `skill(name="skill-name")` tool to load full SKILL.md content when needed.
 
-## `cloudflare-worker-api`
+At startup, only skill names/descriptions are loaded (~50 tokens each). Full SKILL.md content
+(~500-2000 tokens) loads only when the agent determines the skill is relevant.
 
-For:
+## Core skills (see AGENTS.md for full list):
 
-- route structure
-- auth middleware
-- response helpers
-- signed URL endpoint design
+- `triz-analysis`, `triz-solver` — TRIZ contradiction resolution
+- `cloudflare-worker-api` — Worker route structure
+- `turso-schema-migrations` — Schema design
+- `pwa-offline-sync` — Offline sync strategy
+- `secure-invite-and-access` — Auth flows
+- `epub-rendering-and-cfi` — EPUB.js + CFI anchoring
+- `reader-ui-ux` — Reader/admin UI patterns
+- `testdata-builders` — Test fixtures
+- `code-quality`, `code-review-assistant`, `security-code-auditor` — Quality checks
+- `task-decomposition`, `parallel-execution` — Coordination
+- `learn`, `memory-context` — Knowledge capture
+- `anti-ai-slop`, `agent-browser`, `dogfood` — UX + testing
+- `skill-creator`, `skill-evaluator` — Skill development
+- `shell-script-quality` — Shell best practices
 
-## `turso-schema-migrations`
-
-For:
-
-- schema design
-- migration discipline
-- indexes
-- rollback-safe changes
-- SQLite compatibility
-
-## `epub-rendering-and-cfi`
-
-For:
-
-- EPUB loading
-- TOC extraction
-- location tracking
-- CFI anchors
-- selection mapping
-- annotation resilience
-
-## `pwa-offline-sync`
-
-For:
-
-- service worker
-- cache strategy
-- sync queue
-- reconnect behavior
-- conflict rules
-
-## `secure-invite-and-access`
-
-For:
-
-- grant flow
-- password hash logic
-- session tokens
-- revocation behavior
-- anti-enumeration responses
-
-## `reader-ui-ux`
-
-For:
-
-- responsive reading layout
-- TOC drawer
-- comment panels
-- accessibility
-- distraction-free mode
-
-## `testdata-builders`
-
-For:
-
-- book builders
-- grant builders
-- session builders
-- comment builders
-- highlight builders
-- progress builders
+Run `./scripts/validate-skills.sh` to verify skill integrity.
 
 ---
 
