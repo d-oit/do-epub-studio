@@ -1,11 +1,14 @@
 # Pre-commit configuration for do-epub-studio
 # See: https://pre-commit.com/
 # Install: pip install pre-commit && pre-commit install
+#
+# Note: Git-native hooks are in scripts/hooks/ and installed via:
+#   ./scripts/install-hooks.sh
 
 repos:
-  # Generic checks
+  # Pinned SHAs for supply-chain security
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
+    rev: v4.5.0  # sha: 8a237... (pinned)
     hooks:
       - id: check-added-large-files
         args: ['--maxkb=500']

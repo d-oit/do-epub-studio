@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# Git pre-push hook
+# Installed by: scripts/install-hooks.sh
+# Protects main/master branches and validates push target.
+# Exit 0 = allowed, Exit 1 = blocked.
+set -euo pipefail
+
+# Source shared libs
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+# shellcheck source=scripts/lib/colors.sh
+source "$REPO_ROOT/scripts/lib/colors.sh"
+
+# Protected branches — direct pushes to these are blocked
+PROTECTED_BRANCHES="^(main|master)$"
+
+# Read stdin from git (format: <local-ref> <local-sha> <remote-ref> <remote-sha>)
+while read -r local_ref local_sha remote_ref remote_sha; do
+    # Extract branch name from remote ref
+    remote_branch="${remote_ref#refs/heads/}"
+
+    # Block direct pushes to protected branches
+    if echo "$remote_branch" | grep -qE "$PROTECTED_BRANCHES"; then
+        echo -e "${RED}✗ Direct push to '$remote_branch' is blocked${NC}" >&2
+        echo "" >&2
+        echo "Use a pull request or feature branch instead:" >&2
+        echo "  git checkout -b feat/your-feature" >&2
+        echo "  git push origin feat/your-feature" >&2
+        exit 1
+    fi
+done
+
+exit 0

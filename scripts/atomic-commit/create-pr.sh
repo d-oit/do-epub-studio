@@ -10,26 +10,11 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 BASE_BRANCH="${1:-main}"
 
-if [[ -t 1 ]]; then
-    RED='\033[0;31m'
-    GREEN='\033[0;32m'
-    BLUE='\033[0;34m'
-    NC='\033[0m'
-else
-    RED='' GREEN='' BLUE='' NC=''
-fi
-
-log() {
-    echo -e "${BLUE}[pr-create]${NC} $*"
-}
-
-error() {
-    echo -e "${RED}[pr-create]${NC} $*" >&2
-}
-
-success() {
-    echo -e "${GREEN}[pr-create]${NC} $*"
-}
+# Source shared libs
+# shellcheck source=scripts/lib/colors.sh
+source "$REPO_ROOT/scripts/lib/colors.sh"
+# shellcheck source=scripts/lib/logging.sh
+source "$REPO_ROOT/scripts/lib/logging.sh" pr-create
 
 cd "$REPO_ROOT"
 
@@ -40,6 +25,12 @@ log "Creating PR for branch: $CURRENT_BRANCH"
 log "Base branch: $BASE_BRANCH"
 
 generate_pr_body() {
+    local file_list
+    file_list=$(git diff --name-only "origin/$BASE_BRANCH..HEAD" 2>/dev/null | head -20 | sed 's/^/- /' || echo "- (no changes detected)")
+
+    local commit_type
+    commit_type=$(echo "$COMMIT_SUBJECT" | grep -oE '^(feat|fix|docs|style|refactor|perf|test|ci|chore|build)' || echo "other")
+
     cat << EOF
 ## Summary
 
@@ -47,11 +38,15 @@ $COMMIT_SUBJECT
 
 ## Changes
 
-$(git log --oneline "origin/$BASE_BRANCH..HEAD" | sed 's/^/- /')
+$(git log --oneline "origin/$BASE_BRANCH..HEAD" 2>/dev/null | sed 's/^/- /' || echo "- Initial commit")
+
+## Files Changed
+
+$file_list
 
 ## Type
 
-$(echo "$COMMIT_SUBJECT" | grep -oE '^(feat|fix|docs|style|refactor|perf|test|ci|chore)' || echo "other")
+$commit_type
 
 ## Checklist
 
@@ -97,8 +92,5 @@ fi
 
 success "Created PR #$PR_NUMBER"
 success "URL: $PR_URL"
-
-export ATOMIC_COMMIT_PR_URL="$PR_URL"
-export ATOMIC_COMMIT_PR_NUMBER="$PR_NUMBER"
 
 exit 0
