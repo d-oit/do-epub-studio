@@ -80,14 +80,17 @@ if [[ "$MERGE_BASE" != "$ORIGIN_BASE_SHA" ]]; then
     TEMP_BRANCHES+=("$TEMP_BRANCH")
     git branch "$TEMP_BRANCH" HEAD
 
+    # Test rebase on temp branch (this switches to temp branch)
     if ! git rebase "origin/$BASE_BRANCH" "$TEMP_BRANCH" >/dev/null 2>&1; then
         error "Rebase would have conflicts"
         error "Resolve manually: git pull --rebase origin $BASE_BRANCH"
         git rebase --abort 2>/dev/null || true
+        git checkout "$CURRENT_BRANCH" 2>/dev/null || true
         exit 1
     fi
 
-    # Cleanup temp branch (also handled by trap)
+    # Switch back to original branch and cleanup temp branch
+    git checkout "$CURRENT_BRANCH" 2>/dev/null || true
     git branch -D "$TEMP_BRANCH" 2>/dev/null || true
     TEMP_BRANCHES=("${TEMP_BRANCHES[@]/$TEMP_BRANCH}")
 
