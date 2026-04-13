@@ -46,7 +46,7 @@ jobs:
           workingDirectory: ./apps/worker
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v3
         with:
           files: apps/web/dist/**
         env:
