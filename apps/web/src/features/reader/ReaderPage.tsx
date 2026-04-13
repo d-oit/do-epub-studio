@@ -36,6 +36,10 @@ import {
   type SelectionData,
 } from './components/annotations';
 import { CommentInput } from './components/annotations/CommentInput';
+import {
+  renderHighlightsOnRendition,
+  renderCommentMarkersOnRendition,
+} from './annotationRendering';
 
 interface TocItem {
   label: string;
@@ -82,6 +86,14 @@ export function ReaderPage() {
   const renditionRef = useRef<Rendition | null>(null);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const currentChapterRef = useRef<string | null>(null);
+  // Stable refs so the EPUB init effect can call the latest render functions
+  // without listing them as deps (which would re-initialize the entire EPUB
+  // on every annotation change).
+  const renderHighlightsRef = useRef<((r: Rendition, ch: string | null) => void) | null>(null);
+  const renderCommentMarkersRef = useRef<((r: Rendition, ch: string | null) => void) | null>(null);
+  // Stable ref for toc so the relocated handler always sees the latest TOC
+  // without the EPUB init effect depending on toc state.
+  const tocRef = useRef<TocItem[]>([]);
   const [epubUrl, setEpubUrl] = useState<string | null>(null);
   const [toc, setToc] = useState<TocItem[]>([]);
   const [showToc, setShowToc] = useState(false);
@@ -390,72 +402,23 @@ export function ReaderPage() {
 
   const renderHighlights = useCallback(
     (rendition: Rendition, chapterHref: string | null) => {
-      // Remove all existing highlights first
-      const existing = rendition.annotations.each();
-      for (const annotation of existing) {
-        if ('cfiRange' in annotation) {
-          rendition.annotations.remove(annotation.cfiRange as string, 'highlight');
-        }
-      }
-
-      // Render highlights for the current chapter only
-      if (!chapterHref) return;
-
-      const chapterHighlights = highlights.filter(
-        (h) => h.chapterRef === chapterHref && h.cfiRange,
-      );
-
-      for (const highlight of chapterHighlights) {
-        rendition.annotations.highlight(
-          highlight.cfiRange as string,
-          { id: highlight.id, data: highlight },
-          undefined,
-          undefined,
-          { fill: highlight.color, 'fill-opacity': '0.3' },
-        );
-      }
+      renderHighlightsOnRendition(rendition, chapterHref, highlights);
     },
     [highlights],
   );
+  // Keep the ref current so the EPUB init effect always calls the latest version
+  renderHighlightsRef.current = renderHighlights;
 
   const renderCommentMarkers = useCallback(
     (rendition: Rendition, chapterHref: string | null) => {
-      // Remove all existing comment markers
-      const existing = rendition.annotations.each();
-      for (const annotation of existing) {
-        if ('cfiRange' in annotation) {
-          rendition.annotations.remove(annotation.cfiRange as string, 'underline');
-        }
-      }
-
-      if (!chapterHref) return;
-
-      const chapterComments = comments.filter(
-        (c) => c.chapterRef === chapterHref && c.cfiRange && c.status !== 'deleted',
-      );
-
-      for (const comment of chapterComments) {
-        const isResolved = comment.status === 'resolved';
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (rendition.annotations as any).add(
-          'underline',
-          comment.cfiRange,
-          comment.id,
-          { data: comment },
-          () => {
-            // Click handler: navigate to annotation
-            void handleNavigateToAnnotation(comment.chapterRef || '', comment.cfiRange || undefined);
-          },
-          {
-            stroke: isResolved ? '#9ca3af' : '#3b82f6',
-            'stroke-width': isResolved ? '1px' : '2px',
-            'stroke-opacity': isResolved ? '0.4' : '0.7',
-          },
-        );
-      }
+      renderCommentMarkersOnRendition(rendition, chapterHref, comments, (chapterRef, cfiRange) => {
+        void handleNavigateToAnnotation(chapterRef, cfiRange);
+      });
     },
     [comments, handleNavigateToAnnotation],
   );
+  // Keep the ref current so the EPUB init effect always calls the latest version
+  renderCommentMarkersRef.current = renderCommentMarkers;
 
   const handleCreateBookmark = useCallback(async () => {
     if (!sessionToken || !bookId) return;
@@ -573,6 +536,7 @@ export function ReaderPage() {
           }
         }
         setToc(tocItems);
+        tocRef.current = tocItems;
 
         const rendition = book.renderTo(viewer, {
           width: '100%',
@@ -593,8 +557,8 @@ export function ReaderPage() {
           currentChapterRef.current = startHref;
           setCurrentChapter(startHref);
         }
-        renderHighlights(rendition, currentChapterRef.current);
-        renderCommentMarkers(rendition, currentChapterRef.current);
+        renderHighlightsRef.current?.(rendition, currentChapterRef.current);
+        renderCommentMarkersRef.current?.(rendition, currentChapterRef.current);
 
         if (sessionToken && bookId) {
           try {
@@ -625,14 +589,14 @@ export function ReaderPage() {
               updatedAt: new Date().toISOString(),
             });
 
-            const currentTocItem = toc.find((item) => item.href === href);
+            const currentTocItem = tocRef.current.find((item) => item.href === href);
             if (currentTocItem) {
               currentChapterRef.current = currentTocItem.href;
               setCurrentChapter(currentTocItem.href);
             }
 
-            renderHighlights(rendition, currentChapterRef.current);
-            renderCommentMarkers(rendition, currentChapterRef.current);
+            renderHighlightsRef.current?.(rendition, currentChapterRef.current);
+            renderCommentMarkersRef.current?.(rendition, currentChapterRef.current);
 
             if (sessionToken && bookId) {
               const mutationId = generateMutationId();
@@ -702,8 +666,7 @@ export function ReaderPage() {
       renditionRef.current?.destroy();
       bookRef.current?.destroy();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [epubUrl, sessionToken, bookId, applyTheme, applyTypography, setError, setProgress, t]);
+  }, [epubUrl, sessionToken, bookId, applyTheme, applyTypography, setCurrentChapter, setError, setProgress, t]);
 
   useEffect(() => {
     if (renditionRef.current) {
