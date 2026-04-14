@@ -58,6 +58,9 @@ jobs:
 
       - name: Run tests
         run: pnpm test
+        env:
+          # Increase Node memory limit to prevent Vitest worker OOM in CI
+          NODE_OPTIONS: --max-old-space-size=4096
 
   build:
     name: Build
