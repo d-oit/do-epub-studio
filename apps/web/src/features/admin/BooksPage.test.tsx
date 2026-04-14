@@ -147,11 +147,18 @@ describe('AdminBooksPage', () => {
 
     it('shows empty state when no books', async () => {
       // Override the mock to return empty array for this test
+      // Set mock BEFORE render to avoid race condition
+      vi.mocked(apiRequest).mockReset();
       vi.mocked(apiRequest).mockResolvedValue([]);
 
       renderBooksPage();
 
-      // Wait for empty state message to appear (this means loading finished)
+      // First wait for loading skeleton to disappear (loading finished)
+      await waitFor(() => {
+        expect(screen.queryByText('Book One')).not.toBeInTheDocument();
+      });
+
+      // Now empty state should be visible
       await screen.findByText('admin.noBooks');
     });
   });

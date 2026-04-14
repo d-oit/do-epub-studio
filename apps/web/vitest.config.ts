@@ -8,6 +8,14 @@ export default defineConfig({
     setupFiles: ['src/test-setup.ts'],
     // Use forks for process isolation to prevent DOM pollution
     pool: 'forks',
+    poolOptions: {
+      forks: {
+        // Limit memory to prevent OOM in CI
+        memoryLimit: 512,
+        // Reduce parallelism to avoid memory pressure
+        maxParallelTests: 4,
+      },
+    },
     testTimeout: 30000,
     hookTimeout: 30000,
     coverage: {
