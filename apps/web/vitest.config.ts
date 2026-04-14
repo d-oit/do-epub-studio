@@ -6,14 +6,16 @@ export default defineConfig({
     environment: 'jsdom',
     include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
     setupFiles: ['src/test-setup.ts'],
-    // Use forks for process isolation to prevent DOM pollution
-    pool: 'forks',
+    // Use threads with singleThread to minimize memory usage in CI
+    // This is more memory-efficient than forks for large test suites
+    pool: 'threads',
     poolOptions: {
-      forks: {
-        // Increase memory limit to prevent OOM in CI (was 512MB)
-        memoryLimit: 2048,
-        // Reduce parallelism to avoid memory pressure
-        maxParallelTests: 2,
+      threads: {
+        // Run in single thread to prevent OOM
+        singleThread: true,
+        // Limit threads
+        minThreads: 1,
+        maxThreads: 1,
       },
     },
     testTimeout: 30000,
