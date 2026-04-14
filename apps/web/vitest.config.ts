@@ -10,10 +10,10 @@ export default defineConfig({
     pool: 'forks',
     poolOptions: {
       forks: {
-        // Limit memory to prevent OOM in CI
-        memoryLimit: 512,
+        // Increase memory limit to prevent OOM in CI (was 512MB)
+        memoryLimit: 2048,
         // Reduce parallelism to avoid memory pressure
-        maxParallelTests: 4,
+        maxParallelTests: 2,
       },
     },
     testTimeout: 30000,
