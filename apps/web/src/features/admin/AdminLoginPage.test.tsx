@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AdminLoginPage } from './AdminLoginPage';
@@ -22,9 +22,9 @@ vi.mock('../../hooks/useTranslation', () => ({
   }),
 }));
 
-// Mock apiRequest
+// Mock apiRequest - default returns empty to avoid undefined errors
 vi.mock('../../lib/api', () => ({
-  apiRequest: vi.fn(),
+  apiRequest: vi.fn().mockResolvedValue(null),
 }));
 
 // Mock useAuthStore
@@ -40,6 +40,10 @@ import { apiRequest } from '../../lib/api';
 describe('AdminLoginPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   const renderLoginPage = () => {

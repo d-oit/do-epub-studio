@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AdminBooksPage } from './BooksPage';
 import { BrowserRouter } from 'react-router-dom';
@@ -21,9 +21,9 @@ vi.mock('../../hooks/useTranslation', () => ({
   }),
 }));
 
-// Mock apiRequest
+// Mock apiRequest - default returns empty array to avoid undefined errors
 vi.mock('../../lib/api', () => ({
-  apiRequest: vi.fn(),
+  apiRequest: vi.fn().mockResolvedValue([]),
 }));
 
 // Mock useAuthStore
@@ -58,7 +58,9 @@ const mockBooks = [
 
 describe('AdminBooksPage', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    // Clear mock call history but keep the implementation
+    vi.mocked(apiRequest).mockClear();
+    // Ensure mock returns books (overrides default empty array)
     vi.mocked(apiRequest).mockResolvedValue(mockBooks);
   });
 
@@ -74,11 +76,17 @@ describe('AdminBooksPage', () => {
     it('renders page title', async () => {
       renderBooksPage();
 
-      expect(screen.getByText('admin.dashboardTitle')).toBeInTheDocument();
+      // Wait for loading to complete by finding book content
+      await screen.findByText('Book One');
+
+      // Page uses admin.yourBooks, not admin.dashboardTitle
+      expect(screen.getByText('admin.yourBooks')).toBeInTheDocument();
     });
 
     it('renders navigation links', async () => {
       renderBooksPage();
+
+      await screen.findByText('Book One');
 
       expect(screen.getByText('Books')).toBeInTheDocument();
       expect(screen.getByText('Access Grants')).toBeInTheDocument();
@@ -88,17 +96,24 @@ describe('AdminBooksPage', () => {
     it('renders create book button', async () => {
       renderBooksPage();
 
+      await screen.findByText('Book One');
+
       expect(screen.getByText('admin.createBook')).toBeInTheDocument();
     });
 
     it('renders sign out button', async () => {
       renderBooksPage();
 
-      expect(screen.getByText('admin.userMenu.signOut')).toBeInTheDocument();
+      await screen.findByText('Book One');
+
+      // The sign out button has aria-label="Sign out"
+      expect(screen.getByRole('button', { name: 'Sign out' })).toBeInTheDocument();
     });
 
     it('shows admin email in header', async () => {
       renderBooksPage();
+
+      await screen.findByText('Book One');
 
       expect(screen.getByText('admin@example.com')).toBeInTheDocument();
     });
@@ -108,89 +123,82 @@ describe('AdminBooksPage', () => {
     it('renders books after loading', async () => {
       renderBooksPage();
 
-      await waitFor(() => {
-        expect(screen.getByText('Book One')).toBeInTheDocument();
-        expect(screen.getByText('Book Two')).toBeInTheDocument();
-      });
+      await screen.findByText('Book One');
+      await screen.findByText('Book Two');
     });
 
     it('shows author name', async () => {
       renderBooksPage();
 
-      await waitFor(() => {
-        expect(screen.getByText('Author One')).toBeInTheDocument();
-        expect(screen.getByText('Author Two')).toBeInTheDocument();
-      });
+      await screen.findByText('Author One');
+      await screen.findByText('Author Two');
     });
 
     it('shows visibility badge', async () => {
       renderBooksPage();
 
-      await waitFor(() => {
-        expect(screen.getByText('private')).toBeInTheDocument();
-        expect(screen.getByText('public')).toBeInTheDocument();
-      });
+      // Wait for books to load first
+      await screen.findByText('Book One');
+
+      // Now check for visibility badges - they should be visible after books load
+      await screen.findByText('private');
+      await screen.findByText('public');
     });
 
     it('shows empty state when no books', async () => {
-      // Clear any previous mock and set empty array response
-      vi.mocked(apiRequest).mockReset();
-      vi.mocked(apiRequest).mockResolvedValueOnce([]);
+      // Override the mock to return empty array for this test
+      vi.mocked(apiRequest).mockResolvedValue([]);
 
       renderBooksPage();
 
-      // Wait for loading to complete and empty state to appear
-      await waitFor(
-        () => {
-          expect(screen.getByText('admin.noBooks')).toBeInTheDocument();
-        },
-        { timeout: 3000 },
-      );
+      // Wait for empty state message to appear (this means loading finished)
+      await screen.findByText('admin.noBooks');
     });
   });
 
   describe('navigation', () => {
     it('navigates to grants when clicking Access Grants', async () => {
-      const user = userEvent.setup();
       renderBooksPage();
 
+      // Wait for books to load before interacting
+      await screen.findByText('Book One');
+
+      const user = userEvent.setup();
       await user.click(screen.getByText('Access Grants'));
 
       expect(mockNavigate).toHaveBeenCalledWith('/admin/grants');
     });
 
     it('navigates to audit when clicking Audit Log', async () => {
-      const user = userEvent.setup();
       renderBooksPage();
 
+      await screen.findByText('Book One');
+
+      const user = userEvent.setup();
       await user.click(screen.getByText('Audit Log'));
 
       expect(mockNavigate).toHaveBeenCalledWith('/admin/audit');
     });
 
     it('navigates to read page when clicking read button', async () => {
-      const user = userEvent.setup();
       renderBooksPage();
 
-      await waitFor(() => {
-        expect(screen.getAllByText('admin.read').length).toBeGreaterThan(0);
-      });
+      await screen.findByText('Book One');
+      const readButtons = await screen.findAllByText('admin.read');
 
-      const readButtons = screen.getAllByText('admin.read');
+      const user = userEvent.setup();
       await user.click(readButtons[0]);
 
       expect(mockNavigate).toHaveBeenCalled();
     });
 
     it('navigates to grants for book when clicking manage grants', async () => {
-      const user = userEvent.setup();
       renderBooksPage();
 
-      await waitFor(() => {
-        expect(screen.getAllByText('admin.manageGrants').length).toBeGreaterThan(0);
-      });
+      await screen.findByText('Book One');
+      const grantsButtons = await screen.findAllByText('admin.manageGrants');
 
-      const grantsButtons = screen.getAllByText('admin.manageGrants');
+      const user = userEvent.setup();
       await user.click(grantsButtons[0]);
 
       expect(mockNavigate).toHaveBeenCalled();
@@ -202,70 +210,62 @@ describe('AdminBooksPage', () => {
       const user = userEvent.setup();
       renderBooksPage();
 
+      await screen.findByText('Book One');
       await user.click(screen.getByText('admin.createBook'));
 
-      // Modal opens - look for the modal content
-      await waitFor(() => {
-        expect(screen.getByText('Title *')).toBeInTheDocument();
-      });
+      await screen.findByText('Title *');
     });
 
     it('modal has title input', async () => {
       const user = userEvent.setup();
       renderBooksPage();
 
+      await screen.findByText('Book One');
       await user.click(screen.getByText('admin.createBook'));
 
-      await waitFor(() => {
-        // Find the input by its placeholder or by finding inputs near the label
-        const inputs = screen.getAllByRole('textbox');
-        expect(inputs.length).toBeGreaterThan(0);
-      });
+      await screen.findByText('Title *');
+      const inputs = screen.getAllByRole('textbox');
+      expect(inputs.length).toBeGreaterThan(0);
     });
 
     it('modal has author input', async () => {
       const user = userEvent.setup();
       renderBooksPage();
 
+      await screen.findByText('Book One');
       await user.click(screen.getByText('admin.createBook'));
 
-      await waitFor(() => {
-        expect(screen.getByText('Author')).toBeInTheDocument();
-      });
+      await screen.findByText('Author');
     });
 
     it('modal has visibility dropdown', async () => {
       const user = userEvent.setup();
       renderBooksPage();
 
+      await screen.findByText('Book One');
       await user.click(screen.getByText('admin.createBook'));
 
-      await waitFor(() => {
-        expect(screen.getByText('Visibility')).toBeInTheDocument();
-      });
+      await screen.findByText('Visibility');
     });
 
     it('modal has file input', async () => {
       const user = userEvent.setup();
       renderBooksPage();
 
+      await screen.findByText('Book One');
       await user.click(screen.getByText('admin.createBook'));
 
-      await waitFor(() => {
-        expect(screen.getByText('EPUB File *')).toBeInTheDocument();
-      });
+      await screen.findByText('EPUB File *');
     });
 
     it('closes modal when clicking cancel', async () => {
       const user = userEvent.setup();
       renderBooksPage();
 
+      await screen.findByText('Book One');
       await user.click(screen.getByText('admin.createBook'));
 
-      await waitFor(() => {
-        expect(screen.getByText('Cancel')).toBeInTheDocument();
-      });
-
+      await screen.findByText('Cancel');
       await user.click(screen.getByText('Cancel'));
 
       await waitFor(() => {
@@ -280,9 +280,7 @@ describe('AdminBooksPage', () => {
 
       renderBooksPage();
 
-      await waitFor(() => {
-        expect(screen.getByText('Failed to load books')).toBeInTheDocument();
-      });
+      await screen.findByText('Failed to load books');
     });
   });
 });

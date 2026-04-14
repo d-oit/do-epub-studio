@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, within, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { GrantsPage } from './GrantsPage';
 import { BrowserRouter } from 'react-router-dom';
@@ -22,9 +22,9 @@ vi.mock('../../hooks/useTranslation', () => ({
   }),
 }));
 
-// Mock apiRequest
+// Mock apiRequest - default returns empty to avoid undefined errors
 vi.mock('../../lib/api', () => ({
-  apiRequest: vi.fn(),
+  apiRequest: vi.fn().mockResolvedValue([]),
 }));
 
 // Mock useAuthStore
@@ -70,6 +70,7 @@ const mockGrants = [
 describe('GrantsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.useFakeTimers();
     vi.mocked(apiRequest).mockImplementation(async (url: string) => {
       if (url.includes('/books') && !url.includes('grants')) {
         return mockBooks;
@@ -81,127 +82,116 @@ describe('GrantsPage', () => {
     });
   });
 
-  const renderGrantsPage = () => {
-    return render(
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  const renderGrantsPage = async () => {
+    const result = render(
       <BrowserRouter>
         <GrantsPage />
       </BrowserRouter>,
     );
+    // Flush all pending async effects to avoid act() warnings
+    await act(async () => {
+      await vi.runAllTimersAsync();
+    });
+    return result;
   };
 
   describe('rendering', () => {
     it('renders page title', async () => {
-      renderGrantsPage();
+      await renderGrantsPage();
 
       expect(screen.getByText('grants.title')).toBeInTheDocument();
     });
 
     it('renders sign out button', async () => {
-      renderGrantsPage();
+      await renderGrantsPage();
 
       expect(screen.getByText('admin.userMenu.signOut')).toBeInTheDocument();
     });
 
     it('renders book selector', async () => {
-      renderGrantsPage();
+      await renderGrantsPage();
 
       expect(screen.getByLabelText('grants.selectBook')).toBeInTheDocument();
     });
 
     it('shows prompt when no book selected', async () => {
-      renderGrantsPage();
+      await renderGrantsPage();
 
-      await waitFor(() => {
-        expect(screen.getByText('grants.selectBookPrompt')).toBeInTheDocument();
-      });
+      expect(screen.getByText('grants.selectBookPrompt')).toBeInTheDocument();
     });
   });
 
   describe('book selector', () => {
     it('populates book options from API', async () => {
-      renderGrantsPage();
+      await renderGrantsPage();
 
-      await waitFor(() => {
-        const select = screen.getByLabelText('grants.selectBook');
-        expect(within(select). getByText('Book One')).toBeInTheDocument();
-        expect(within(select).getByText('Book Two')).toBeInTheDocument();
-      });
+      const select = screen.getByLabelText('grants.selectBook');
+      expect(within(select).getByText('Book One')).toBeInTheDocument();
+      expect(within(select).getByText('Book Two')).toBeInTheDocument();
     });
 
     it('has "All Books" option', async () => {
-      renderGrantsPage();
+      await renderGrantsPage();
 
-      await waitFor(() => {
-        const select = screen.getByLabelText('grants.selectBook');
-        expect(within(select).getByText('grants.allBooks')).toBeInTheDocument();
-      });
+      const select = screen.getByLabelText('grants.selectBook');
+      expect(within(select).getByText('grants.allBooks')).toBeInTheDocument();
     });
   });
 
   describe('grants table', () => {
     it('shows grants when book is selected', async () => {
-      const user = userEvent.setup();
-      renderGrantsPage();
+      const user = userEvent.setup({ delay: null });
+      await renderGrantsPage();
 
-      // Wait for books to load
-      await waitFor(() => {
-        expect(screen.getByText('Book One')).toBeInTheDocument();
+      await act(async () => {
+        await user.selectOptions(screen.getByLabelText('grants.selectBook'), 'book-1');
+        await vi.runAllTimersAsync();
       });
 
-      // Select a book
-      await user.selectOptions(screen.getByLabelText('grants.selectBook'), 'book-1');
-
-      await waitFor(() => {
-        expect(screen.getByText('reader@example.com')).toBeInTheDocument();
-      });
+      expect(screen.getByText('reader@example.com')).toBeInTheDocument();
     });
 
     it('displays grant email', async () => {
-      const user = userEvent.setup();
-      renderGrantsPage();
+      const user = userEvent.setup({ delay: null });
+      await renderGrantsPage();
 
-      await waitFor(() => {
-        expect(screen.getByText('Book One')).toBeInTheDocument();
+      await act(async () => {
+        await user.selectOptions(screen.getByLabelText('grants.selectBook'), 'book-1');
+        await vi.runAllTimersAsync();
       });
 
-      await user.selectOptions(screen.getByLabelText('grants.selectBook'), 'book-1');
-
-      await waitFor(() => {
-        expect(screen.getByText('reader@example.com')).toBeInTheDocument();
-        expect(screen.getByText('editor@example.com')).toBeInTheDocument();
-      });
+      expect(screen.getByText('reader@example.com')).toBeInTheDocument();
+      expect(screen.getByText('editor@example.com')).toBeInTheDocument();
     });
 
     it('displays grant mode badge', async () => {
-      const user = userEvent.setup();
-      renderGrantsPage();
+      const user = userEvent.setup({ delay: null });
+      await renderGrantsPage();
 
-      await waitFor(() => {
-        expect(screen.getByText('Book One')).toBeInTheDocument();
+      await act(async () => {
+        await user.selectOptions(screen.getByLabelText('grants.selectBook'), 'book-1');
+        await vi.runAllTimersAsync();
       });
 
-      await user.selectOptions(screen.getByLabelText('grants.selectBook'), 'book-1');
-
-      await waitFor(() => {
-        expect(screen.getByText('Private')).toBeInTheDocument();
-        expect(screen.getByText('Editorial Review')).toBeInTheDocument();
-      });
+      expect(screen.getByText('Private')).toBeInTheDocument();
+      expect(screen.getByText('Editorial Review')).toBeInTheDocument();
     });
 
     it('displays capability badges', async () => {
-      const user = userEvent.setup();
-      renderGrantsPage();
+      const user = userEvent.setup({ delay: null });
+      await renderGrantsPage();
 
-      await waitFor(() => {
-        expect(screen.getByText('Book One')).toBeInTheDocument();
+      await act(async () => {
+        await user.selectOptions(screen.getByLabelText('grants.selectBook'), 'book-1');
+        await vi.runAllTimersAsync();
       });
 
-      await user.selectOptions(screen.getByLabelText('grants.selectBook'), 'book-1');
-
-      await waitFor(() => {
-        expect(screen.getByText('grants.capabilities.comments')).toBeInTheDocument();
-        expect(screen.getByText('grants.capabilities.offline')).toBeInTheDocument();
-      });
+      expect(screen.getByText('grants.capabilities.comments')).toBeInTheDocument();
+      expect(screen.getByText('grants.capabilities.offline')).toBeInTheDocument();
     });
 
     it('shows empty state when no grants', async () => {
@@ -211,35 +201,29 @@ describe('GrantsPage', () => {
         return {};
       });
 
-      const user = userEvent.setup();
-      renderGrantsPage();
+      const user = userEvent.setup({ delay: null });
+      await renderGrantsPage();
 
-      await waitFor(() => {
-        expect(screen.getByText('Book One')).toBeInTheDocument();
+      await act(async () => {
+        await user.selectOptions(screen.getByLabelText('grants.selectBook'), 'book-1');
+        await vi.runAllTimersAsync();
       });
 
-      await user.selectOptions(screen.getByLabelText('grants.selectBook'), 'book-1');
-
-      await waitFor(() => {
-        expect(screen.getByText('grants.noGrants')).toBeInTheDocument();
-      });
+      expect(screen.getByText('grants.noGrants')).toBeInTheDocument();
     });
   });
 
   describe('create grant', () => {
     it('shows create button when book selected', async () => {
-      const user = userEvent.setup();
-      renderGrantsPage();
+      const user = userEvent.setup({ delay: null });
+      await renderGrantsPage();
 
-      await waitFor(() => {
-        expect(screen.getByText('Book One')).toBeInTheDocument();
+      await act(async () => {
+        await user.selectOptions(screen.getByLabelText('grants.selectBook'), 'book-1');
+        await vi.runAllTimersAsync();
       });
 
-      await user.selectOptions(screen.getByLabelText('grants.selectBook'), 'book-1');
-
-      await waitFor(() => {
-        expect(screen.getByText('grants.createGrant')).toBeInTheDocument();
-      });
+      expect(screen.getByText('grants.createGrant')).toBeInTheDocument();
     });
   });
 
@@ -247,11 +231,9 @@ describe('GrantsPage', () => {
     it('shows error when fetch fails', async () => {
       vi.mocked(apiRequest).mockRejectedValueOnce(new Error('Failed to load'));
 
-      renderGrantsPage();
+      await renderGrantsPage();
 
-      await waitFor(() => {
-        expect(screen.getByText('Failed to load')).toBeInTheDocument();
-      });
+      expect(screen.getByText('Failed to load')).toBeInTheDocument();
     });
   });
 });

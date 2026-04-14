@@ -71,6 +71,7 @@ describe('CommentInput', () => {
 
   describe('auto focus', () => {
     it('focuses textarea when autoFocus is true', async () => {
+      // eslint-disable-next-line jsx-a11y/no-autofocus -- Testing autoFocus prop behavior
       render(<CommentInput onSubmit={mockOnSubmit} autoFocus={true} />);
 
       await vi.waitFor(() => {

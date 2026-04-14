@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, within } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { CommentsPanel } from './CommentsPanel';
 import type { Comment, Highlight } from '../../../../stores';
@@ -17,7 +17,11 @@ const mockComments: Comment[] = [
     body: 'First comment',
     userEmail: 'user@example.com',
     createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
     status: 'open',
+    visibility: 'shared',
+    parentCommentId: null,
+    resolvedAt: null,
     chapterRef: 'chapter-1',
     cfiRange: 'epubcfi(/6/4!/2/2)',
     selectedText: 'Selected text for comment',
@@ -28,7 +32,11 @@ const mockComments: Comment[] = [
     body: 'Resolved comment',
     userEmail: 'user@example.com',
     createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
     status: 'resolved',
+    visibility: 'shared',
+    parentCommentId: null,
+    resolvedAt: new Date().toISOString(),
     chapterRef: 'chapter-2',
     cfiRange: 'epubcfi(/6/4!/2/4)',
     selectedText: 'Resolved text',
@@ -44,6 +52,7 @@ const mockHighlights: Highlight[] = [
     cfiRange: 'epubcfi(/6/4!/2/2)',
     selectedText: 'Highlighted text',
     createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
     note: 'A note',
   },
   {
@@ -53,6 +62,7 @@ const mockHighlights: Highlight[] = [
     cfiRange: 'epubcfi(/6/4!/2/4)',
     selectedText: 'Another highlight',
     createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
     note: null,
   },
 ];
