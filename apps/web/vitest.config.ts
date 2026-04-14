@@ -16,6 +16,9 @@ export default defineConfig({
         maxParallelTests: 1,
       },
     },
+    // Run tests sequentially in main process to avoid worker memory accumulation
+    // This prevents OOM during cleanup when running large test suites in CI
+    fileParallelism: false,
     testTimeout: 30000,
     hookTimeout: 30000,
     coverage: {
