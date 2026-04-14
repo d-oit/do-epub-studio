@@ -7,17 +7,9 @@ export default defineConfig({
     include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
     setupFiles: ['src/test-setup.ts'],
     // Use forks for process isolation to prevent DOM pollution
+    // Run one test file at a time to reduce worker memory accumulation in CI
     pool: 'forks',
-    poolOptions: {
-      forks: {
-        // Higher memory limit (2048MB) to prevent OOM
-        memoryLimit: 2048,
-        // Single fork to minimize memory pressure
-        maxParallelTests: 1,
-      },
-    },
-    // Run tests sequentially in main process to avoid worker memory accumulation
-    // This prevents OOM during cleanup when running large test suites in CI
+    // This forces file-level execution to a single worker.
     fileParallelism: false,
     testTimeout: 30000,
     hookTimeout: 30000,
