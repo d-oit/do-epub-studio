@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { Fragment, useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LocaleSwitcher } from '../../components/LocaleSwitcher';
 import { apiRequest } from '../../lib/api';
@@ -62,10 +62,9 @@ export function AdminAuditPage() {
       if (dateFrom) params.set('from', dateFrom);
       if (dateTo) params.set('to', dateTo);
 
-      const data = await apiRequest<AuditResponse>(
-        `/api/admin/audit-log?${params.toString()}`,
-        { token: sessionToken },
-      );
+      const data = await apiRequest<AuditResponse>(`/api/admin/audit-log?${params.toString()}`, {
+        token: sessionToken,
+      });
       setEntries(data.entries || []);
       setTotal(data.total || 0);
     } catch (err) {
@@ -96,12 +95,19 @@ export function AdminAuditPage() {
       if (dateFrom) params.set('from', dateFrom);
       if (dateTo) params.set('to', dateTo);
 
-      const data = await apiRequest<AuditResponse>(
-        `/api/admin/audit-log?${params.toString()}`,
-        { token: sessionToken },
-      );
+      const data = await apiRequest<AuditResponse>(`/api/admin/audit-log?${params.toString()}`, {
+        token: sessionToken,
+      });
 
-      const headers = ['ID', 'Actor', 'Entity Type', 'Entity ID', 'Action', 'Created At', 'Payload'];
+      const headers = [
+        'ID',
+        'Actor',
+        'Entity Type',
+        'Entity ID',
+        'Action',
+        'Created At',
+        'Payload',
+      ];
       const rows = (data.entries || []).map((e) => [
         e.id,
         e.actorEmail,
@@ -269,13 +275,10 @@ export function AdminAuditPage() {
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                   {entries.map((entry) => (
-                    <>
+                    <Fragment key={entry.id}>
                       <tr
-                        key={entry.id}
                         className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
-                        onClick={() =>
-                          setExpandedId(expandedId === entry.id ? null : entry.id)
-                        }
+                        onClick={() => setExpandedId(expandedId === entry.id ? null : entry.id)}
                       >
                         <td className="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap">
                           {new Date(entry.createdAt).toLocaleString()}
@@ -304,7 +307,7 @@ export function AdminAuditPage() {
                           </td>
                         </tr>
                       )}
-                    </>
+                    </Fragment>
                   ))}
                 </tbody>
               </table>
