@@ -134,8 +134,8 @@
 | reader-core unit tests (locator, reanchor, toc) | ✅ complete     | 83% (target 60%)                                |
 | API client tests                                | ✅ complete     | 100% on api.ts                                  |
 | Cross-browser Playwright (Firefox/WebKit)       | ✅ config added | Chromium/Firefox pass, WebKit needs system deps |
-| annotation component tests                      | pending         | 0%                                              |
-| admin page UI tests                             | pending         | 0%                                              |
+| annotation component tests                      | ⚠ blocked       | CommentInput suite still skipped due React 18 + Vitest concurrency issue (`Should not already be working`) |
+| admin page UI tests                             | ⚠ blocked       | Books/Grants/Audit suites still skipped due React 18 + Vitest concurrency issue |
 
 **Achievements:**
 
@@ -165,7 +165,7 @@
 | --------------------------------------------------------------------------------- | -------------- | -------------------------------------------------------------------------- |
 | Playwright reliability baseline (`baseURL`, artifacts, deterministic `webServer`) | ✅ complete    | Updated `playwright.config.ts` with CI/local tuned defaults                |
 | Optional WebKit execution gate for Linux/WSL runners                              | ✅ complete    | `PLAYWRIGHT_INCLUDE_WEBKIT=1` opt-in to avoid false negatives              |
-| Coverage gap backlog triage (annotations + admin pages)                           | 🚧 in progress | Backlog captured in `plans/010-optimization-quality-backlog.md`            |
+| Coverage gap backlog triage (annotations + admin pages)                           | 🚧 in progress | Backlog retained pending Vitest isolation fix for skipped suites             |
 | Benchmark harness for reader-core hot paths                                       | 🚧 in progress | Documented as priority task in `plans/010-optimization-quality-backlog.md` |
 | Agent workflow refresh (review cadence + done criteria)                           | ✅ complete    | Added 2026 checklist updates in `docs/coding-guide.md` and plan backlog    |
 
@@ -174,3 +174,7 @@
 - E2E defaults are deterministic in local + CI runs.
 - Remaining missing tasks are documented with priorities and measurable acceptance criteria.
 - Quality gate remains green after config/doc updates.
+
+
+**Last reviewed:** 2026-04-15  
+**Next review target:** 2026-05-15

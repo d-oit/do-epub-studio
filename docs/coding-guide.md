@@ -1301,6 +1301,8 @@ Example root `package.json` script section:
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "test:e2e": "playwright test",
+    "test:e2e:smoke": "playwright test --grep @smoke",
+    "verify:fast": "pnpm lint && pnpm typecheck && pnpm --filter @do-epub-studio/web test -- src/features/reader/components/annotations src/features/admin",
     "verify": "pnpm lint && pnpm typecheck && pnpm test && pnpm build",
     "db:migrate:local": "node scripts/db-migrate-local.mjs",
     "db:migrate:prod": "node scripts/db-migrate-prod.mjs",

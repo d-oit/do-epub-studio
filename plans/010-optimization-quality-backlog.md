@@ -12,8 +12,8 @@ Track high-impact missing work discovered during the cross-cutting review of opt
 
 | Priority | Track          | Missing task                                                                                        | Acceptance criteria                                                                                              |
 | -------- | -------------- | --------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| P0       | Testing        | Add focused component tests for `AnnotationToolbar`, `CommentInput`, `CommentsPanel`                | Coverage for these components reaches >=70% statements and core annotation create/delete/edit flows are asserted |
-| P0       | Testing        | Add admin page unit/integration tests (`AdminLoginPage`, `BooksPage`, `GrantsPage`, `AuditLogPage`) | Each page has a happy path + one failure path test; regression suite passes in CI                                |
+| P0       | Testing        | 🚧 Add focused component tests for `AnnotationToolbar`, `CommentInput`, `CommentsPanel`               | `CommentInput.test.tsx` remains skipped due React 18/Vitest concurrency error; requires isolated runner or config split |
+| P0       | Testing        | 🚧 Add admin page unit/integration tests (`AdminLoginPage`, `BooksPage`, `GrantsPage`, `AuditLogPage`) | `AdminLoginPage` active; `BooksPage`/`GrantsPage`/`AuditLogPage` suites are currently skipped pending Vitest isolation fix |
 | P0       | E2E            | Implement smoke-tagged Playwright suite for PR validation                                           | `pnpm test:e2e --grep @smoke` completes in <=6 minutes on CI                                                     |
 | P1       | Benchmarking   | Add Vitest benchmark suite for locator/re-anchor and annotation serialization                       | Benchmark command records baseline ops/sec and fails on >20% regression                                          |
 | P1       | Performance    | Add Lighthouse CI budgets for reader first render and admin shell                                   | LCP, TTI, and JS payload budget checks run on main branch                                                        |
@@ -44,3 +44,7 @@ Track high-impact missing work discovered during the cross-cutting review of opt
 - At least one benchmark baseline committed and tracked.
 - E2E plan references executable tests rather than aspirational-only cases.
 - Review date is updated in `plans/007-implementation-phases.md`.
+
+
+**Last reviewed:** 2026-04-15  
+**Next review target:** 2026-05-15

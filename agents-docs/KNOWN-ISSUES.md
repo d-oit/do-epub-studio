@@ -55,3 +55,15 @@ Before adding an entry:
 - Review quarterly to remove resolved entries
 - Update mitigations that have changed
 - Archive resolved to `agents-docs/KNOWN-ISSUES-RESOLVED.md` (create when needed)
+
+### [Testing Infrastructure]
+
+**Issue:** `Error: Should not already be working.` (React 18 concurrent rendering failure during RTL cleanup)
+
+**Location:** `apps/web/src/features/admin/BooksPage.test.tsx`, `apps/web/src/features/admin/GrantsPage.test.tsx`, `apps/web/src/features/admin/AuditLogPage.test.tsx`, `apps/web/src/features/reader/components/annotations/CommentInput.test.tsx`
+
+**Reason:** Running these suites unskipped in the current Vitest/jsdom configuration triggers a React 18 scheduler conflict and root cleanup race (`performConcurrentWorkOnRoot`) that cascades into unrelated test files.
+
+**Mitigation:** Keep affected suites skipped until isolated test configuration is introduced (separate Vitest project or per-file isolation mode). Track completion in `plans/010-optimization-quality-backlog.md`.
+
+**Date:** 2026-04-15
