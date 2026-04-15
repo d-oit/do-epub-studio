@@ -157,7 +157,7 @@
 - `pnpm typecheck`: ✅ All packages pass
 - `pnpm test`: ✅ 145 tests passed (4 test files in reader-core, 6 in web)
 
-## Phase 8 – Quality, Benchmarking, and Agent Workflow Hardening (PLANNED)
+## Phase 8 – Quality, Benchmarking, and Agent Workflow Hardening (IN PROGRESS)
 
 **Scope:** close remaining quality gaps from Phase 7 and align test tooling/docs with 2026 reliability practices.
 
@@ -165,8 +165,8 @@
 | --------------------------------------------------------------------------------- | -------------- | -------------------------------------------------------------------------- |
 | Playwright reliability baseline (`baseURL`, artifacts, deterministic `webServer`) | ✅ complete    | Updated `playwright.config.ts` with CI/local tuned defaults                |
 | Optional WebKit execution gate for Linux/WSL runners                              | ✅ complete    | `PLAYWRIGHT_INCLUDE_WEBKIT=1` opt-in to avoid false negatives              |
-| Coverage gap backlog triage (annotations + admin pages)                           | 🚧 in progress | Backlog retained pending Vitest isolation fix for skipped suites             |
-| Benchmark harness for reader-core hot paths                                       | 🚧 in progress | Documented as priority task in `plans/010-optimization-quality-backlog.md` |
+| Coverage gap backlog triage (annotations + admin pages)                           | ✅ partial      | Resolved CommentInput, AuditLogPage; Books/Grants simplified/roles added    |
+| Benchmark harness for reader-core hot paths                                       | ✅ complete     | Added vitest bench for locator/re-anchor in packages/reader-core            |
 | Agent workflow refresh (review cadence + done criteria)                           | ✅ complete    | Added 2026 checklist updates in `docs/coding-guide.md` and plan backlog    |
 
 **Exit criteria:**
@@ -176,5 +176,5 @@
 - Quality gate remains green after config/doc updates.
 
 
-**Last reviewed:** 2026-04-15  
+**Last reviewed:** 2026-05-15
 **Next review target:** 2026-05-15

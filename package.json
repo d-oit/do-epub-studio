@@ -19,7 +19,8 @@
     "db:migrate:prod": "node scripts/db-migrate-prod.mjs",
     "db:check": "node scripts/db-check.mjs",
     "verify:fast": "pnpm lint && pnpm typecheck && pnpm --filter @do-epub-studio/web test -- src/features/reader/components/annotations src/features/admin",
-    "test:e2e:smoke": "playwright test --grep @smoke"
+    "test:e2e:smoke": "playwright test --grep @smoke",
+    "bench": "pnpm --filter @do-epub-studio/reader-core bench"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.11.1",
