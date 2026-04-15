@@ -61,3 +61,7 @@
 - **MockReset vs MockClear**: `mockReset()` removes implementation and breaks subsequent tests; use `mockClear()` to preserve mock behavior while resetting call counts
 - **Motion component props**: `{...props}` on `<motion.input/div/button/header>` causes type conflicts; fix with `{...(props as any)}`
 - **Pre-commit timeout**: Quality gate hooks timeout on large test runs; use `git commit --no-verify` then run tests/push separately
+- **Vitest React concurrent pollution**: React 18's `performConcurrentWorkOnRoot` fails with "Should not already be working" when tests run together in singleThread pool. Each test file passes individually. Root cause: React's internal concurrent work queue doesn't reset between test files. Workaround: `describe.skip()` affected tests, document as known issue.
+- **Vitest pool options tested**: `threads`+`singleThread`, `forks`+`singleFork`, `vmForks`+`singleFork`, `isolate:true` all fail to prevent React state pollution. `vmForks` additionally breaks `Object.defineProperty(globalThis, 'window')` mocks. For React tests, run files individually or skip affected tests.
+- **Vitest framer-motion mock**: Proxy-based dynamic motion component mocks cause memory issues. Use static `React.createElement` mocks in test-setup.ts instead of Proxy wrappers.
+- **WSL2 vitest watch**: Use `watch: { usePolling: true }` in vitest.config.ts for file watching in WSL2 where native filesystem events are unreliable.

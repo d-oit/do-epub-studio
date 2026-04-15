@@ -6,13 +6,25 @@ export default defineConfig({
     environment: 'jsdom',
     include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
     setupFiles: ['src/test-setup.ts'],
-    // Use forks for process isolation to prevent DOM pollution
-    // Run one test file at a time to reduce worker memory accumulation in CI
-    pool: 'forks',
-    // This forces file-level execution to a single worker.
+    // Threads pool provides good balance of isolation and speed
+    // singleThread prevents race conditions in React concurrent rendering tests
+    pool: 'threads',
+    poolOptions: {
+      threads: {
+        singleThread: true,
+        minThreads: 1,
+        maxThreads: 1,
+      },
+    },
+    // Run test files sequentially with isolate for better React test isolation
     fileParallelism: false,
+    isolate: true,
     testTimeout: 30000,
     hookTimeout: 30000,
+    // Use polling for file watching - required for WSL2 where native file system events are unreliable
+    watch: {
+      usePolling: true,
+    },
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov', 'clover'],

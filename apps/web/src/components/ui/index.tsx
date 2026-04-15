@@ -178,10 +178,12 @@ Card.displayName = 'Card';
 // Input Component
 // ============================================
 
-interface InputProps extends Omit<
-  ComponentPropsWithoutRef<'input'>,
+type MotionInputBaseProps = Omit<
+  ComponentPropsWithoutRef<typeof motion.input>,
   'onDrag' | 'onDragEnd' | 'onDragStart'
-> {
+>;
+
+interface InputProps extends MotionInputBaseProps {
   label?: string;
   error?: string;
   helperText?: string;
@@ -207,7 +209,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             ${error ? 'border-accent-error focus:border-accent-error focus:ring-accent-error/20' : 'border-border'}
             ${className}
           `}
-          {...(props as any)}
+          {...props}
         />
         {error ? (
           <p className="mt-1.5 text-sm text-accent-error">{error}</p>
@@ -363,11 +365,12 @@ export function Tooltip({ content, children }: TooltipProps) {
 // Page Container
 // ============================================
 
-interface PageContainerProps extends Omit<
-  ComponentPropsWithoutRef<'div'>,
-  'onDrag' | 'onDragEnd' | 'onDragStart'
-> {
+type MotionDivProps = ComponentPropsWithoutRef<typeof motion.div>;
+
+interface PageContainerProps extends Omit<MotionDivProps, 'animate' | 'children' | 'style'> {
   animate?: boolean;
+  children?: React.ReactNode;
+  style?: React.CSSProperties;
 }
 
 export function PageContainer({
@@ -384,15 +387,39 @@ export function PageContainer({
         exit="exit"
         variants={fadeVariants}
         className={`min-h-screen ${className}`}
-        {...(props as any)}
+        {...props}
       >
         {children}
       </motion.div>
     );
   }
 
+  // Filter out motion-specific props for non-animate case
+  const {
+    initial: _initial,
+    variants: _variants,
+    exit: _exit,
+    transition: _transition,
+    whileHover: _whileHover,
+    whileTap: _whileTap,
+    whileFocus: _whileFocus,
+    whileDrag: _whileDrag,
+    whileInView: _whileInView,
+    onHoverStart: _onHoverStart,
+    onHoverEnd: _onHoverEnd,
+    onTapStart: _onTapStart,
+    onTap: _onTap,
+    onTapCancel: _onTapCancel,
+    onDragStart: _onDragStart,
+    onDrag: _onDrag,
+    onDragEnd: _onDragEnd,
+    layout: _layout,
+    layoutId: _layoutId,
+    ...divProps
+  } = props as Record<string, unknown>;
+
   return (
-    <div className={`min-h-screen ${className}`} {...props}>
+    <div className={`min-h-screen ${className}`} {...divProps}>
       {children}
     </div>
   );
@@ -402,10 +429,9 @@ export function PageContainer({
 // Header Component
 // ============================================
 
-interface HeaderProps extends Omit<
-  ComponentPropsWithoutRef<'header'>,
-  'onDrag' | 'onDragEnd' | 'onDragStart'
-> {
+type MotionHeaderProps = ComponentPropsWithoutRef<typeof motion.header>;
+
+interface HeaderProps extends Omit<MotionHeaderProps, 'onDrag' | 'onDragEnd' | 'onDragStart'> {
   sticky?: boolean;
   glass?: boolean;
 }
@@ -424,7 +450,7 @@ export const Header = forwardRef<HTMLElement, HeaderProps>(
           ${glass ? 'glass-panel' : 'bg-background'}
           ${className}
         `}
-        {...(props as any)}
+        {...props}
       >
         {children}
       </motion.header>
@@ -438,10 +464,9 @@ Header.displayName = 'Header';
 // Icon Button
 // ============================================
 
-interface IconButtonProps extends Omit<
-  ComponentPropsWithoutRef<'button'>,
-  'onDrag' | 'onDragEnd' | 'onDragStart'
-> {
+type MotionButtonProps = ComponentPropsWithoutRef<typeof motion.button>;
+
+interface IconButtonProps extends Omit<MotionButtonProps, 'onDrag' | 'onDragEnd' | 'onDragStart'> {
   size?: 'sm' | 'md' | 'lg';
   variant?: 'default' | 'ghost' | 'primary';
 }
@@ -473,7 +498,7 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
           ${variantClasses[variant]}
           ${className}
         `}
-        {...(props as any)}
+        {...props}
       >
         {children}
       </motion.button>

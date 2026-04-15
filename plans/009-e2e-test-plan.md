@@ -292,4 +292,3 @@ const TEST_ADMIN = {
 - No accessibility violations
 - Performance metrics within targets
 - Zero security vulnerabilities
-
