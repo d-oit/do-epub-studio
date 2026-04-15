@@ -314,3 +314,17 @@ const TEST_ADMIN = {
 - No accessibility violations
 - Performance metrics within targets
 - Zero security vulnerabilities
+
+## Executable Matrix (Current Implementation)
+
+| Scenario bucket | Spec file | Marker | Owner |
+| --- | --- | --- | --- |
+| Login + reader boot | `apps/tests/login-and-book-load.spec.ts` | `@smoke` subset candidate | Web Platform |
+| Reader annotations + admin nav | `apps/tests/reader-annotations-and-admin.spec.ts` | regression | Reader UX |
+| Axe accessibility scan | `apps/tests/accessibility-audit.spec.ts` | nightly | Accessibility |
+
+### PR Smoke Policy (2026-04-15)
+
+- PR validation should execute a smoke subset from the matrix above.
+- Nightly CI should run the full Playwright matrix (Chromium + Firefox by default, optional WebKit).
+- Smoke cases should prioritize auth, reader load, and admin-route protection.
