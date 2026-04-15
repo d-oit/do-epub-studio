@@ -65,3 +65,4 @@
 - **Vitest pool options tested**: `threads`+`singleThread`, `forks`+`singleFork`, `vmForks`+`singleFork`, `isolate:true` all fail to prevent React state pollution. `vmForks` additionally breaks `Object.defineProperty(globalThis, 'window')` mocks. For React tests, run files individually or skip affected tests.
 - **Vitest framer-motion mock**: Proxy-based dynamic motion component mocks cause memory issues. Use static `React.createElement` mocks in test-setup.ts instead of Proxy wrappers.
 - **WSL2 vitest watch**: Use `watch: { usePolling: true }` in vitest.config.ts for file watching in WSL2 where native filesystem events are unreliable.
+- **GitHub Actions Node.js 24**: Node.js 20 actions are deprecated and will be forced to Node.js 24 starting June 2nd, 2026. Opt in now with `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true` env at workflow level and update `node-version: '24'` in actions/setup-node@v4.
