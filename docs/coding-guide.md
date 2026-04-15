@@ -1557,3 +1557,26 @@ Start `do-epub-studio` as:
 One private EPUB, one approved reader grant, one successful authenticated reading session, and one offline-capable resume flow.
 
 If you want the next step, turn this guide into repo files (`README.md`, `AGENTS.md`, `wrangler.jsonc`, example config files, plans, ADRs, CI, schema/API skeleton). This guide is now the canonical reference.
+
+---
+
+# 13. Agent coding workflow (2026 operational checklist)
+
+Use this checklist when handling cross-cutting requests (optimization + new features + docs + test strategy):
+
+1. **Load prior context first**
+   - Read `agents-docs/LEARNINGS.md` before implementation.
+2. **Update plan artifacts before code changes**
+   - Add/adjust entries in `plans/007-implementation-phases.md` and relevant backlog plan.
+3. **Prefer deterministic test defaults**
+   - Vitest should run in non-watch mode for CI (`vitest --run`).
+   - Playwright should keep trace/video/screenshot artifacts on failure.
+4. **Separate PR checks from nightly depth**
+   - PR: lint + typecheck + unit tests + smoke E2E.
+   - Nightly: full cross-browser E2E + benchmarks + budget/perf checks.
+5. **Track missing tasks explicitly**
+   - Do not leave “known gaps” only in PR text; store them in `plans/` with owner/acceptance criteria.
+6. **Close verification loop**
+   - Run `./scripts/quality_gate.sh` and keep the output green before commit.
+7. **Capture non-obvious learnings**
+   - Append durable discoveries (not session noise) to `agents-docs/LEARNINGS.md`.

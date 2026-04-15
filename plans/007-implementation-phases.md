@@ -156,3 +156,21 @@
 - `pnpm lint`: ✅ 0 errors
 - `pnpm typecheck`: ✅ All packages pass
 - `pnpm test`: ✅ 145 tests passed (4 test files in reader-core, 6 in web)
+
+## Phase 8 – Quality, Benchmarking, and Agent Workflow Hardening (PLANNED)
+
+**Scope:** close remaining quality gaps from Phase 7 and align test tooling/docs with 2026 reliability practices.
+
+| Task                                                                              | Status         | Deliverable                                                                |
+| --------------------------------------------------------------------------------- | -------------- | -------------------------------------------------------------------------- |
+| Playwright reliability baseline (`baseURL`, artifacts, deterministic `webServer`) | ✅ complete    | Updated `playwright.config.ts` with CI/local tuned defaults                |
+| Optional WebKit execution gate for Linux/WSL runners                              | ✅ complete    | `PLAYWRIGHT_INCLUDE_WEBKIT=1` opt-in to avoid false negatives              |
+| Coverage gap backlog triage (annotations + admin pages)                           | 🚧 in progress | Backlog captured in `plans/010-optimization-quality-backlog.md`            |
+| Benchmark harness for reader-core hot paths                                       | 🚧 in progress | Documented as priority task in `plans/010-optimization-quality-backlog.md` |
+| Agent workflow refresh (review cadence + done criteria)                           | ✅ complete    | Added 2026 checklist updates in `docs/coding-guide.md` and plan backlog    |
+
+**Exit criteria:**
+
+- E2E defaults are deterministic in local + CI runs.
+- Remaining missing tasks are documented with priorities and measurable acceptance criteria.
+- Quality gate remains green after config/doc updates.
