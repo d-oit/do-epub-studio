@@ -190,7 +190,7 @@ test.describe('Admin console', () => {
     await mockAdminApi(page);
   });
 
-  test('renders admin login page', async ({ page }) => {
+  test('@smoke renders admin login page', async ({ page }) => {
     await page.goto(`${APP_URL}/admin/login`);
     await expect(page.getByRole('heading', { name: /Admin/i })).toBeVisible();
     await expect(page.getByLabel('Email Address')).toBeVisible();

@@ -12,7 +12,7 @@ import { CommentInput } from './CommentInput';
 // between sequential test runs in singleThread mode.
 // TODO: Investigate running these tests in isolation with vitest --isolate or separate config.
 
-describe.skip('CommentInput', () => {
+describe('CommentInput', () => {
   const mockOnSubmit = vi.fn();
   const mockOnCancel = vi.fn();
 
