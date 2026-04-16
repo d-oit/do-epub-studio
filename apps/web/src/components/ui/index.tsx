@@ -4,7 +4,7 @@
  */
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { forwardRef, type ComponentPropsWithoutRef } from 'react';
+import { forwardRef, type ComponentPropsWithoutRef, useId } from 'react';
 
 // ============================================
 // Animation Variants
@@ -82,13 +82,13 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
     const variantClasses = {
       primary:
-        'bg-accent text-white hover:bg-accent/90 active:scale-[0.98] focus-visible:ring-accent disabled:bg-accent/50',
+        'bg-accent text-white hover:brightness-95 active:scale-[0.98] focus-visible:ring-accent disabled:bg-accent/50',
       secondary:
         'bg-background-secondary text-foreground border border-border hover:bg-background-tertiary active:scale-[0.98] focus-visible:ring-accent',
       ghost:
         'text-foreground/70 hover:text-foreground hover:bg-background-secondary active:scale-[0.98] focus-visible:ring-accent',
       danger:
-        'bg-accent-error text-white hover:bg-accent-error/90 active:scale-[0.98] focus-visible:ring-accent-error disabled:bg-accent-error/50',
+        'bg-accent-error text-white hover:brightness-95 active:scale-[0.98] focus-visible:ring-accent-error disabled:bg-accent-error/50',
     };
 
     const sizeClasses = {
@@ -102,6 +102,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         type={type}
         onClick={onClick}
+        aria-busy={isLoading}
         whileTap={{ scale: disabled || isLoading ? 1 : 0.97 }}
         whileHover={{ scale: disabled || isLoading ? 1 : 1.02 }}
         transition={{ duration: 0.15 }}
@@ -190,14 +191,27 @@ interface InputProps extends MotionInputBaseProps {
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, helperText, className = '', ...props }, ref) => {
+  ({ label, error, helperText, className = '', id, ...props }, ref) => {
+    const generatedId = useId();
+    const inputId = id || generatedId;
+    const errorId = `${inputId}-error`;
+    const helperId = `${inputId}-helper`;
+
+    const describedBy =
+      [error ? errorId : null, helperText ? helperId : null].filter(Boolean).join(' ') || undefined;
+
     return (
       <div className="w-full">
         {label && (
-          <label className="block text-sm font-medium text-foreground mb-1.5">{label}</label>
+          <label htmlFor={inputId} className="block text-sm font-medium text-foreground mb-1.5">
+            {label}
+          </label>
         )}
         <motion.input
           ref={ref}
+          id={inputId}
+          aria-invalid={error ? 'true' : undefined}
+          aria-describedby={describedBy}
           whileFocus={{ scale: 1.01 }}
           transition={{ duration: 0.1 }}
           className={`
@@ -212,9 +226,13 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           {...props}
         />
         {error ? (
-          <p className="mt-1.5 text-sm text-accent-error">{error}</p>
+          <p id={errorId} className="mt-1.5 text-sm text-accent-error">
+            {error}
+          </p>
         ) : helperText ? (
-          <p className="mt-1.5 text-sm text-foreground-muted">{helperText}</p>
+          <p id={helperId} className="mt-1.5 text-sm text-foreground-muted">
+            {helperText}
+          </p>
         ) : null}
       </div>
     );
