@@ -1,0 +1,176 @@
+
+> do-epub-studio@0.0.1 verify:fast /app
+> pnpm lint && pnpm typecheck && pnpm --filter @do-epub-studio/web test -- src/features/reader/components/annotations src/features/admin
+
+
+> do-epub-studio@0.0.1 lint /app
+> turbo run lint
+
+• turbo 2.9.5
+
+   • Packages in scope: @do-epub-studio/reader-core, @do-epub-studio/schema, @do-epub-studio/shared, @do-epub-studio/testkit, @do-epub-studio/ui, @do-epub-studio/web, @do-epub-studio/worker
+   • Running lint in 7 packages
+   • Remote caching disabled
+
+@do-epub-studio/ui:lint: cache hit, replaying logs ac6eeeee6dbe998b
+@do-epub-studio/ui:lint:
+@do-epub-studio/ui:lint: > @do-epub-studio/ui@0.0.1 lint /app/packages/ui
+@do-epub-studio/ui:lint: > eslint src --ext .ts,.tsx
+@do-epub-studio/ui:lint:
+@do-epub-studio/testkit:lint: cache hit, replaying logs 5b4271401c3caf6a
+@do-epub-studio/testkit:lint:
+@do-epub-studio/testkit:lint: > @do-epub-studio/testkit@0.0.1 lint /app/packages/testkit
+@do-epub-studio/testkit:lint: > eslint src --ext .ts
+@do-epub-studio/testkit:lint:
+@do-epub-studio/reader-core:lint: cache hit, replaying logs 6644cef66708fbc4
+@do-epub-studio/reader-core:lint:
+@do-epub-studio/reader-core:lint: > @do-epub-studio/reader-core@0.0.1 lint /app/packages/reader-core
+@do-epub-studio/reader-core:lint: > eslint src --ext .ts
+@do-epub-studio/reader-core:lint:
+@do-epub-studio/web:lint: cache hit, replaying logs 0b1b398a3df46dd4
+@do-epub-studio/web:lint:
+@do-epub-studio/web:lint: > @do-epub-studio/web@0.0.1 lint /app/apps/web
+@do-epub-studio/web:lint: > eslint src --ext .ts,.tsx
+@do-epub-studio/web:lint:
+@do-epub-studio/worker:lint: cache hit, replaying logs 28adcc90747ca757
+@do-epub-studio/worker:lint:
+@do-epub-studio/worker:lint: > @do-epub-studio/worker@0.0.1 lint /app/apps/worker
+@do-epub-studio/worker:lint: > eslint src --ext .ts
+@do-epub-studio/worker:lint:
+@do-epub-studio/shared:lint: cache hit, replaying logs 6aa7f19db401b5b8
+@do-epub-studio/shared:lint:
+@do-epub-studio/shared:lint: > @do-epub-studio/shared@0.0.1 lint /app/packages/shared
+@do-epub-studio/shared:lint: > eslint src --ext .ts
+@do-epub-studio/shared:lint:
+@do-epub-studio/schema:lint: cache hit, replaying logs adcf74d2b5330dd2
+@do-epub-studio/schema:lint:
+@do-epub-studio/schema:lint: > @do-epub-studio/schema@0.0.1 lint /app/packages/schema
+@do-epub-studio/schema:lint: > eslint src --ext .ts
+@do-epub-studio/schema:lint:
+
+ Tasks:    7 successful, 7 total
+Cached:    7 cached, 7 total
+  Time:    258ms >>> FULL TURBO
+
+
+> do-epub-studio@0.0.1 typecheck /app
+> turbo run typecheck
+
+• turbo 2.9.5
+
+   • Packages in scope: @do-epub-studio/reader-core, @do-epub-studio/schema, @do-epub-studio/shared, @do-epub-studio/testkit, @do-epub-studio/ui, @do-epub-studio/web, @do-epub-studio/worker
+   • Running typecheck in 7 packages
+   • Remote caching disabled
+
+@do-epub-studio/ui:typecheck: cache hit, replaying logs 38ca9a80ed8c2122
+@do-epub-studio/ui:typecheck:
+@do-epub-studio/ui:typecheck: > @do-epub-studio/ui@0.0.1 typecheck /app/packages/ui
+@do-epub-studio/ui:typecheck: > tsc --noEmit
+@do-epub-studio/ui:typecheck:
+@do-epub-studio/web:typecheck: cache hit, replaying logs 796cd0151c88b579
+@do-epub-studio/web:typecheck:
+@do-epub-studio/web:typecheck: > @do-epub-studio/web@0.0.1 typecheck /app/apps/web
+@do-epub-studio/web:typecheck: > tsc --noEmit
+@do-epub-studio/web:typecheck:
+@do-epub-studio/worker:typecheck: cache hit, replaying logs 2291d16ea5294601
+@do-epub-studio/worker:typecheck:
+@do-epub-studio/worker:typecheck: > @do-epub-studio/worker@0.0.1 typecheck /app/apps/worker
+@do-epub-studio/worker:typecheck: > tsc --noEmit
+@do-epub-studio/worker:typecheck:
+@do-epub-studio/schema:typecheck: cache hit, replaying logs e0c430eec0f23229
+@do-epub-studio/schema:typecheck:
+@do-epub-studio/schema:typecheck: > @do-epub-studio/schema@0.0.1 typecheck /app/packages/schema
+@do-epub-studio/schema:typecheck: > tsc --noEmit
+@do-epub-studio/schema:typecheck:
+@do-epub-studio/testkit:typecheck: cache hit, replaying logs 3f6228ffa1226d13
+@do-epub-studio/testkit:typecheck:
+@do-epub-studio/testkit:typecheck: > @do-epub-studio/testkit@0.0.1 typecheck /app/packages/testkit
+@do-epub-studio/testkit:typecheck: > tsc --noEmit
+@do-epub-studio/testkit:typecheck:
+@do-epub-studio/shared:typecheck: cache hit, replaying logs b4d88260ded88f0f
+@do-epub-studio/shared:typecheck:
+@do-epub-studio/shared:typecheck: > @do-epub-studio/shared@0.0.1 typecheck /app/packages/shared
+@do-epub-studio/shared:typecheck: > tsc --noEmit
+@do-epub-studio/shared:typecheck:
+@do-epub-studio/reader-core:typecheck: cache hit, replaying logs deddd80fdec41496
+@do-epub-studio/reader-core:typecheck:
+@do-epub-studio/reader-core:typecheck: > @do-epub-studio/reader-core@0.0.1 typecheck /app/packages/reader-core
+@do-epub-studio/reader-core:typecheck: > tsc --noEmit
+@do-epub-studio/reader-core:typecheck:
+
+ Tasks:    7 successful, 7 total
+Cached:    7 cached, 7 total
+  Time:    136ms >>> FULL TURBO
+
+
+> @do-epub-studio/web@0.0.1 test /app/apps/web
+> cross-env NODE_OPTIONS=--max-old-space-size=4096 vitest run -- src/features/reader/components/annotations src/features/admin
+
+
+ RUN  v1.6.1 /app/apps/web
+
+ ✓ src/__tests__/api.test.ts  (19 tests) 40ms
+ ✓ src/features/reader/components/annotations/CommentsPanel.test.tsx  (20 tests) 823ms
+ ✓ src/__tests__/offline-db.test.ts  (11 tests) 29ms
+ ✓ src/__tests__/annotation-rendering.test.ts  (12 tests) 15ms
+ ✓ src/features/reader/components/annotations/CommentInput.test.tsx  (19 tests) 777ms
+ ✓ src/features/reader/components/annotations/AnnotationToolbar.test.tsx  (12 tests) 385ms
+ ✓ src/features/admin/AdminLoginPage.test.tsx  (16 tests) 1450ms
+stderr | src/__tests__/offline-sync.test.ts > Offline Sync > Permission Revocation Callback > should call the callback when permission is revoked
+[Sync] Permission revoked detected, clearing cache
+
+stderr | src/__tests__/offline-sync.test.ts > Offline Sync > Error Handling > should stop retrying after max attempts
+[Sync] Item max-retry-item exceeded max retries, removing from queue
+
+ ✓ src/__tests__/offline-sync.test.ts  (10 tests) 23ms
+ ✓ src/__tests__/offline-permissions.test.ts  (11 tests) 23ms
+ ✓ src/__tests__/stores.test.ts  (12 tests) 9ms
+stderr | src/features/admin/GrantsPage.test.tsx > GrantsPage > renders grants table
+⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
+
+ ✓ src/features/admin/GrantsPage.test.tsx  (2 tests) 172ms
+ ✓ src/__tests__/i18n-parity.test.ts  (4 tests) 7ms
+stderr | src/features/admin/BooksPage.test.tsx > AdminBooksPage > renders books after loading
+Warning: React does not recognize the `whileTap` prop on a DOM element. If you intentionally want it to appear in the DOM as a custom attribute, spell it as lowercase `whiletap` instead. If you accidentally passed it from a parent component, remove it from the DOM element.
+    at button
+    at button (/app/apps/web/src/test-setup.ts:6:16)
+    at /app/apps/web/src/components/ui/index.tsx:494:6
+    at div
+    at div
+    at div
+    at header
+    at header (/app/apps/web/src/test-setup.ts:8:16)
+    at /app/apps/web/src/components/ui/index.tsx:463:6
+    at div
+    at AdminBooksPage (/app/apps/web/src/features/admin/BooksPage.tsx:33:42)
+    at Router (/app/node_modules/.pnpm/react-router@6.30.3_react@18.3.1/node_modules/react-router/dist/umd/react-router.development.js:1207:17)
+    at MemoryRouter (/app/node_modules/.pnpm/react-router@6.30.3_react@18.3.1/node_modules/react-router/dist/umd/react-router.development.js:1101:7)
+Warning: React does not recognize the `whileHover` prop on a DOM element. If you intentionally want it to appear in the DOM as a custom attribute, spell it as lowercase `whilehover` instead. If you accidentally passed it from a parent component, remove it from the DOM element.
+    at button
+    at button (/app/apps/web/src/test-setup.ts:6:16)
+    at /app/apps/web/src/components/ui/index.tsx:494:6
+    at div
+    at div
+    at div
+    at header
+    at header (/app/apps/web/src/test-setup.ts:8:16)
+    at /app/apps/web/src/components/ui/index.tsx:463:6
+    at div
+    at AdminBooksPage (/app/apps/web/src/features/admin/BooksPage.tsx:33:42)
+    at Router (/app/node_modules/.pnpm/react-router@6.30.3_react@18.3.1/node_modules/react-router/dist/umd/react-router.development.js:1207:17)
+    at MemoryRouter (/app/node_modules/.pnpm/react-router@6.30.3_react@18.3.1/node_modules/react-router/dist/umd/react-router.development.js:1101:7)
+⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
+
+ ✓ src/features/admin/BooksPage.test.tsx  (2 tests) 131ms
+stderr | src/features/admin/AuditLogPage.test.tsx > AdminAuditPage > renders audit entries
+⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
+
+ ✓ src/features/admin/AuditLogPage.test.tsx  (1 test) 123ms
+
+ Test Files  14 passed (14)
+      Tests  151 passed (151)
+   Start at  17:50:30
+   Duration  29.60s (transform 983ms, setup 3.50s, collect 1.59s, tests 4.01s, environment 14.97s, prepare 1.64s)
