@@ -61,3 +61,11 @@ Deliver a production-grade EPUB reading + editorial workspace with secure grants
 - Observability + i18n shipped.
 - Lint/type/test/build pipelines enforced in CI.
 - Documentation + skills reflect the delivered system.
+
+## April 2026 PR Audit & Quality Check (COMPLETE)
+
+- [x] Audit all open GitHub PRs for validity and impact.
+- [x] Document destructive/corrupted Dependabot branches.
+- [x] Consolidate major dependency update blockers (TS6, Vite8, Tailwind4).
+- [x] Resolve major dependency blockers and refactor for 2026 stack.
+- [x] Cherry-pick and improve accessibility fixes from the audited branches.
