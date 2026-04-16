@@ -25,6 +25,10 @@ async function handleUnauthorized() {
   }
 }
 
+/**
+ * Core API request function with observability, timeout, and error handling.
+ * Throws an error on non-ok responses or network failures.
+ */
 export async function apiRequest<T>(endpoint: string, options: ApiRequestOptions = {}): Promise<T> {
   const { token, timeoutMs, ...requestInit } = options;
   const controller = new AbortController();
@@ -32,13 +36,12 @@ export async function apiRequest<T>(endpoint: string, options: ApiRequestOptions
     () => controller.abort(new DOMException('Request timeout')),
     timeoutMs ?? DEFAULT_TIMEOUT_MS,
   );
+
   if (requestInit.signal) {
     requestInit.signal.addEventListener(
       'abort',
       () => controller.abort(requestInit.signal!.reason),
-      {
-        once: true,
-      },
+      { once: true },
     );
   }
 
@@ -62,6 +65,7 @@ export async function apiRequest<T>(endpoint: string, options: ApiRequestOptions
     });
     clearTimeout(timeout);
 
+    // Global 401 handling for session expiry
     if (response.status === 401 && !endpoint.includes('/api/access/request') && !endpoint.includes('/api/admin/login')) {
       await handleUnauthorized();
       throw new Error('Session expired');
@@ -91,6 +95,7 @@ export async function apiRequest<T>(endpoint: string, options: ApiRequestOptions
       const apiError = new Error(errorMessage);
       (apiError as Error & { traceId?: string }).traceId =
         data.error?.traceId ?? response.headers.get('x-trace-id') ?? traceId;
+
       logClientEvent({
         level: 'error',
         event: 'api.error',
@@ -141,69 +146,42 @@ export async function apiRequest<T>(endpoint: string, options: ApiRequestOptions
   }
 }
 
+/**
+ * Shared logic for non-throwing API helper methods.
+ */
+async function apiRaw(endpoint: string, method: string, data?: unknown, options?: ApiRequestOptions): Promise<Response> {
+  const traceId = createTraceId();
+  const spanId = createSpanId();
+
+  const res = await fetch(`${API_BASE_URL}${endpoint}`, {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Trace-Id': traceId,
+      'X-Span-Id': spanId,
+      'Accept-Language': getCurrentLocale(),
+      ...options?.headers,
+    },
+    body: data ? JSON.stringify(data) : undefined,
+    ...options,
+  });
+
+  if (res.status === 401 && !endpoint.includes('/api/access/request') && !endpoint.includes('/api/admin/login')) {
+     await handleUnauthorized();
+  }
+
+  return res;
+}
+
+/**
+ * Convenience API helper methods for direct Response access.
+ * Still includes observability and global 401 handling.
+ */
 export const api = {
-  async get(endpoint: string, options?: ApiRequestOptions): Promise<Response> {
-    const res = await fetch(`${API_BASE_URL}${endpoint}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept-Language': getCurrentLocale(),
-        ...options?.headers,
-      },
-      ...options,
-    });
-    if (res.status === 401 && !endpoint.includes('/api/access/request')) {
-       await handleUnauthorized();
-    }
-    return res;
-  },
-  async post(endpoint: string, data?: unknown, options?: ApiRequestOptions): Promise<Response> {
-    const res = await fetch(`${API_BASE_URL}${endpoint}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept-Language': getCurrentLocale(),
-        ...options?.headers,
-      },
-      body: data ? JSON.stringify(data) : undefined,
-      ...options,
-    });
-    if (res.status === 401 && !endpoint.includes('/api/access/request')) {
-       await handleUnauthorized();
-    }
-    return res;
-  },
-  async put(endpoint: string, data?: unknown, options?: ApiRequestOptions): Promise<Response> {
-    const res = await fetch(`${API_BASE_URL}${endpoint}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept-Language': getCurrentLocale(),
-        ...options?.headers,
-      },
-      body: data ? JSON.stringify(data) : undefined,
-      ...options,
-    });
-    if (res.status === 401) {
-       await handleUnauthorized();
-    }
-    return res;
-  },
-  async delete(endpoint: string, options?: ApiRequestOptions): Promise<Response> {
-    const res = await fetch(`${API_BASE_URL}${endpoint}`, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept-Language': getCurrentLocale(),
-        ...options?.headers,
-      },
-      ...options,
-    });
-    if (res.status === 401) {
-       await handleUnauthorized();
-    }
-    return res;
-  },
+  get: (endpoint: string, options?: ApiRequestOptions) => apiRaw(endpoint, 'GET', undefined, options),
+  post: (endpoint: string, data?: unknown, options?: ApiRequestOptions) => apiRaw(endpoint, 'POST', data, options),
+  put: (endpoint: string, data?: unknown, options?: ApiRequestOptions) => apiRaw(endpoint, 'PUT', data, options),
+  delete: (endpoint: string, options?: ApiRequestOptions) => apiRaw(endpoint, 'DELETE', undefined, options),
 };
 
 export function getApiUrl(path: string): string {
