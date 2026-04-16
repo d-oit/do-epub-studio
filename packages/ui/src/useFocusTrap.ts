@@ -51,6 +51,9 @@ export function useFocusTrap(
   );
 
   useEffect(() => {
+    // Capture restoreRef.current at effect start to use in cleanup
+    const capturedRestoreRef = restoreRef?.current;
+
     if (active) {
       previousFocus.current = document.activeElement as HTMLElement | null;
 
@@ -67,8 +70,8 @@ export function useFocusTrap(
 
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
-      // Use current value at cleanup time for accurate restore target
-      const restoreTarget = restoreRef?.current ?? previousFocus.current;
+      // Use captured value for accurate restore target
+      const restoreTarget = capturedRestoreRef ?? previousFocus.current;
       if (restoreTarget) {
         restoreTarget.focus();
       }

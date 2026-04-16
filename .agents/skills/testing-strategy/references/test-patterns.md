@@ -6,6 +6,32 @@ license: MIT
 
 # Common Test Patterns
 
+## Test Isolation Guardrails (CRITICAL)
+
+### Vitest Configuration Rules
+
+```typescript
+// vitest.config.ts - CORRECT configuration
+export default defineConfig({
+  test: {
+    pool: 'forks',  // Each test file in separate fork
+    // NEVER use singleFork: true - causes DOM pollution between tests
+    environment: 'jsdom',
+    setupFiles: ['src/test-setup.ts'],
+  },
+});
+```
+
+**DO NOT**:
+- Use `singleFork: true` - causes cross-test interference
+- Skip `beforeEach` cleanup - leaves stale mocks
+- Assume immediate render - use `waitFor` for async
+
+**DO**:
+- Set mocks BEFORE component render
+- Clear all mocks in `beforeEach`
+- Use `waitFor(() => expect(...))` for async renders
+
 ## Unit Test Patterns
 
 ### describe/it structure
@@ -49,6 +75,26 @@ const saveSpy = vi.spyOn(storage, 'save');
 // Mock return value
 mockApi.get('/books').mockResolvedValue({ data: [] });
 ```
+
+### Mock Timing (CRITICAL)
+
+**Problem**: Component mounts and fetches data before mock is set.
+
+```typescript
+// BAD - mock set after render
+render(<BooksPage />);
+vi.mocked(apiRequest).mockResolvedValue([]); // Too late!
+
+// GOOD - mock set before render
+vi.mocked(apiRequest).mockResolvedValueOnce([]);
+render(<BooksPage />);
+await waitFor(() => expect(screen.getByText('Empty')).toBeInTheDocument());
+```
+
+**Pattern**: For components with `useEffect` fetch:
+1. Set mock FIRST with `mockResolvedValueOnce()`
+2. Render component
+3. Wait with `waitFor` for expected state
 
 ### Async Tests
 

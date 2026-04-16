@@ -1,0 +1,41 @@
+{
+  "skill_name": "reader-ui-ux",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Create a login form component with email and password fields using the 2026 design system standards",
+      "expected_output": "The agent creates a login form component using design tokens (bg-background, text-foreground, border-border), glassmorphism effects on the container, Framer Motion for animations, proper accessibility attributes (aria-labels, focus rings), and responsive design that works on mobile and desktop",
+      "assertions": [
+        "Uses semantic color tokens instead of hardcoded values",
+        "Includes glassmorphism effect on the form container",
+        "Implements Framer Motion animations",
+        "Has proper accessibility attributes",
+        "Is responsive for mobile and desktop"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Build a card component for displaying books with cover image, title, author, and action buttons",
+      "expected_output": "The agent creates a card component using the Card primitive from ui/components, glass-card styling, hover animations with Framer Motion, proper image handling with aspect ratio, semantic HTML structure, and responsive grid layout support",
+      "assertions": [
+        "Uses Card primitive or glass-card class",
+        "Includes hover animation effects",
+        "Has proper aspect ratio for images",
+        "Uses semantic HTML (article, header, etc.)",
+        "Supports responsive grid layouts"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Create a settings panel with theme selector (light/dark/sepia), font size controls, and line height options",
+      "expected_output": "The agent creates a settings panel with glass-panel styling, segmented controls using design tokens, smooth transitions between states, keyboard navigation support, and reduced motion support for accessibility",
+      "assertions": [
+        "Uses glass-panel for the container",
+        "Implements segmented controls with tokens",
+        "Has smooth state transitions",
+        "Supports keyboard navigation",
+        "Respects prefers-reduced-motion"
+      ]
+    }
+  ]
+}
