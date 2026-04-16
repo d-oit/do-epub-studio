@@ -1,5 +1,6 @@
 import { createSpanId, createTraceId, logClientEvent } from './telemetry';
 import { getCurrentLocale } from '../stores/locale';
+import { useAuthStore } from '../stores/auth';
 
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8787';
 
@@ -15,6 +16,14 @@ interface ApiRequestOptions extends RequestInit {
 }
 
 const DEFAULT_TIMEOUT_MS = 15000;
+
+async function handleUnauthorized() {
+  const state = useAuthStore.getState();
+  state.logout();
+  if (typeof window !== 'undefined') {
+    window.location.href = '/login?error=session_expired';
+  }
+}
 
 export async function apiRequest<T>(endpoint: string, options: ApiRequestOptions = {}): Promise<T> {
   const { token, timeoutMs, ...requestInit } = options;
@@ -52,6 +61,11 @@ export async function apiRequest<T>(endpoint: string, options: ApiRequestOptions
       signal: controller.signal,
     });
     clearTimeout(timeout);
+
+    if (response.status === 401 && !endpoint.includes('/api/access/request') && !endpoint.includes('/api/admin/login')) {
+      await handleUnauthorized();
+      throw new Error('Session expired');
+    }
 
     let data: ApiResponse<T> | undefined;
     try {
@@ -129,7 +143,7 @@ export async function apiRequest<T>(endpoint: string, options: ApiRequestOptions
 
 export const api = {
   async get(endpoint: string, options?: ApiRequestOptions): Promise<Response> {
-    return fetch(`${API_BASE_URL}${endpoint}`, {
+    const res = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -138,9 +152,13 @@ export const api = {
       },
       ...options,
     });
+    if (res.status === 401 && !endpoint.includes('/api/access/request')) {
+       await handleUnauthorized();
+    }
+    return res;
   },
   async post(endpoint: string, data?: unknown, options?: ApiRequestOptions): Promise<Response> {
-    return fetch(`${API_BASE_URL}${endpoint}`, {
+    const res = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -150,9 +168,13 @@ export const api = {
       body: data ? JSON.stringify(data) : undefined,
       ...options,
     });
+    if (res.status === 401 && !endpoint.includes('/api/access/request')) {
+       await handleUnauthorized();
+    }
+    return res;
   },
   async put(endpoint: string, data?: unknown, options?: ApiRequestOptions): Promise<Response> {
-    return fetch(`${API_BASE_URL}${endpoint}`, {
+    const res = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -162,9 +184,13 @@ export const api = {
       body: data ? JSON.stringify(data) : undefined,
       ...options,
     });
+    if (res.status === 401) {
+       await handleUnauthorized();
+    }
+    return res;
   },
   async delete(endpoint: string, options?: ApiRequestOptions): Promise<Response> {
-    return fetch(`${API_BASE_URL}${endpoint}`, {
+    const res = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
@@ -173,6 +199,10 @@ export const api = {
       },
       ...options,
     });
+    if (res.status === 401) {
+       await handleUnauthorized();
+    }
+    return res;
   },
 };
 

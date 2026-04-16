@@ -67,3 +67,8 @@ Before adding an entry:
 **Mitigation:** Keep affected suites skipped until isolated test configuration is introduced (separate Vitest project or per-file isolation mode). Track completion in `plans/010-optimization-quality-backlog.md`.
 
 **Date:** 2026-04-15
+
+## Technical Debt: File Size
+- **File**: `apps/web/src/features/reader/ReaderPage.tsx`
+- **Issue**: File size (1100+ LOC) exceeds the 500 LOC limit defined in `AGENTS.md`.
+- **Mitigation**: Critical rendering logic has been moved to `annotationRendering.ts`. Further extraction of handlers and effects into custom hooks (e.g., `useReaderAnnotations`, `useReaderSettings`) is recommended for the next phase.
