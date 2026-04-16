@@ -10,7 +10,6 @@ import { CommentInput } from './CommentInput';
 // Other tests (api.test.ts, offline-db.test.ts, CommentsPanel.test.tsx) work fine.
 // Root cause: React's performConcurrentWorkOnRoot checks fail due to state pollution
 // between sequential test runs in singleThread mode.
-// TODO: Investigate running these tests in isolation with vitest --isolate or separate config.
 
 describe('CommentInput', () => {
   const mockOnSubmit = vi.fn();

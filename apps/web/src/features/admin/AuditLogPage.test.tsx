@@ -21,7 +21,7 @@ vi.mock('../../stores/auth', () => ({
 
 import { apiRequest } from '../../lib/api';
 
-describe.skip('AdminAuditPage', () => {
+describe('AdminAuditPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
