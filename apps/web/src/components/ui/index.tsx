@@ -197,8 +197,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     const errorId = `${inputId}-error`;
     const helperId = `${inputId}-helper`;
 
-    const describedBy =
-      [error ? errorId : null, helperText ? helperId : null].filter(Boolean).join(' ') || undefined;
+    const describedBy = error ? errorId : helperText ? helperId : undefined;
 
     return (
       <div className="w-full">
