@@ -4,7 +4,7 @@
  */
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { forwardRef, type ComponentPropsWithoutRef } from 'react';
+import { forwardRef, type ComponentPropsWithoutRef, useId } from 'react';
 
 // ============================================
 // Animation Variants
@@ -190,14 +190,26 @@ interface InputProps extends MotionInputBaseProps {
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, helperText, className = '', ...props }, ref) => {
+  ({ label, error, helperText, id, className = '', ...props }, ref) => {
+    const reactId = useId();
+    const inputId = id ?? reactId;
+    const errorId = `${inputId}-error`;
+    const helperId = `${inputId}-helper`;
+
+    const describedBy = [error ? errorId : null, helperText ? helperId : null]
+      .filter(Boolean)
+      .join(' ');
+
     return (
       <div className="w-full">
         {label && (
-          <label className="block text-sm font-medium text-foreground mb-1.5">{label}</label>
+          <label htmlFor={inputId} className="block text-sm font-medium text-foreground mb-1.5">
+            {label}
+          </label>
         )}
         <motion.input
           ref={ref}
+          id={inputId}
           whileFocus={{ scale: 1.01 }}
           transition={{ duration: 0.1 }}
           className={`
@@ -209,12 +221,18 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             ${error ? 'border-accent-error focus:border-accent-error focus:ring-accent-error/20' : 'border-border'}
             ${className}
           `}
+          aria-invalid={!!error}
+          aria-describedby={describedBy || undefined}
           {...props}
         />
         {error ? (
-          <p className="mt-1.5 text-sm text-accent-error">{error}</p>
+          <p id={errorId} className="mt-1.5 text-sm text-accent-error">
+            {error}
+          </p>
         ) : helperText ? (
-          <p className="mt-1.5 text-sm text-foreground-muted">{helperText}</p>
+          <p id={helperId} className="mt-1.5 text-sm text-foreground-muted">
+            {helperText}
+          </p>
         ) : null}
       </div>
     );
