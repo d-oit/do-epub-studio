@@ -51,27 +51,28 @@ export function ReaderPage() {
   const { bookSlug } = useParams<{ bookSlug: string }>();
   const navigate = useNavigate();
   const { sessionToken, bookId, bookTitle, capabilities, logout } = useAuthStore();
-  const {
-    progress: _progress,
-    setProgress,
-    setError,
-    error,
-    setOffline,
-    setPermissionStatus,
-    highlights,
-    setHighlights,
-    addHighlight,
-    updateHighlight: updateHighlightInStore,
-    removeHighlight,
-    comments,
-    setComments,
-    addComment,
-    updateComment: updateCommentInStore,
-    setCurrentChapter,
-    bookmarks,
-    addBookmark,
-    removeBookmark,
-  } = useReaderStore();
+
+  // Atomic selectors to avoid unnecessary re-renders (especially excluding 'progress')
+  const setProgress = useReaderStore((state) => state.setProgress);
+  const setError = useReaderStore((state) => state.setError);
+  const error = useReaderStore((state) => state.error);
+  const setOffline = useReaderStore((state) => state.setOffline);
+  const setPermissionStatus = useReaderStore((state) => state.setPermissionStatus);
+  const highlights = useReaderStore((state) => state.highlights);
+  const setHighlights = useReaderStore((state) => state.setHighlights);
+  const addHighlight = useReaderStore((state) => state.addHighlight);
+  const updateHighlightInStore = useReaderStore((state) => state.updateHighlight);
+  const removeHighlight = useReaderStore((state) => state.removeHighlight);
+  const comments = useReaderStore((state) => state.comments);
+  const setComments = useReaderStore((state) => state.setComments);
+  const addComment = useReaderStore((state) => state.addComment);
+  const updateCommentInStore = useReaderStore((state) => state.updateComment);
+  const setCurrentChapter = useReaderStore((state) => state.setCurrentChapter);
+  const currentChapter = useReaderStore((state) => state.currentChapter);
+  const bookmarks = useReaderStore((state) => state.bookmarks);
+  const addBookmark = useReaderStore((state) => state.addBookmark);
+  const removeBookmark = useReaderStore((state) => state.removeBookmark);
+
   const {
     reader,
     setTheme,
@@ -106,7 +107,6 @@ export function ReaderPage() {
   const [isCommentMode, setIsCommentMode] = useState(false);
   const [showCommentInput, setShowCommentInput] = useState(false);
 
-  void _progress;
   void _setPageWidth;
 
   useEffect(() => {
@@ -1101,7 +1101,7 @@ export function ReaderPage() {
         onNavigateToAnnotation={(chapterRef, cfiRange) =>
           void handleNavigateToAnnotation(chapterRef, cfiRange)
         }
-        currentChapter={useReaderStore.getState().currentChapter}
+        currentChapter={currentChapter}
         locale={locale}
       />
     </div>
