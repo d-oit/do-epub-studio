@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import type { Env, R2Bucket } from '../lib/env';
 
 // Mock responses.ts to simplify testing
