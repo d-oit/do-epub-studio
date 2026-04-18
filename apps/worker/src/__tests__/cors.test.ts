@@ -1,11 +1,12 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import type { Env } from '../lib/env';
+import { describe, it, expect } from 'vitest';
+import type { Env, R2Bucket } from '../lib/env';
 
 // Mock responses.ts to simplify testing
 vi.mock('../lib/responses', () => ({
-  jsonResponse: (data: any, options: any) => {
-    const status = typeof options === 'number' ? options : (options?.status || 200);
-    const headers = new Headers(options?.headers);
+  jsonResponse: (data: unknown, options: unknown) => {
+    const resolvedOptions = typeof options === 'number' ? { status: options } : ((options as Record<string, unknown>) ?? {});
+    const status = resolvedOptions.status as number || 200;
+    const headers = new Headers(resolvedOptions.headers as HeadersInit);
     return new Response(JSON.stringify(data), { status, headers });
   }
 }));
@@ -28,7 +29,7 @@ import worker from '../index';
 describe('CORS', () => {
   const env: Env = {
     APP_BASE_URL: 'https://app.example.com',
-    BOOKS_BUCKET: {} as any,
+    BOOKS_BUCKET: {} as unknown as R2Bucket,
     TURSO_DATABASE_URL: 'http://localhost:8080',
     TURSO_AUTH_TOKEN: 'test',
     SESSION_SIGNING_SECRET: 'test',
