@@ -28,10 +28,3 @@ This document summarizes the audit of open pull requests (remote branches) again
 
 1. Close the destructive/corrupted PRs listed above.
 2. Proceed with the April 2026 roadmap now that infrastructure is stabilized on 2026 stack.
-
-## PR Resolution Summary (2026-04-17)
-
-- **feat/ux-input-accessibility-13775862975011334587**: FIXED and MERGED into main. Resolved typecheck and vitest issues.
-- **dependabot/github_actions/actions/checkout-6**: APPLIED manually by updating workflows.
-- **dependabot/npm_and_yarn/dev-dependencies-0720507bc4**: APPLIED manually by updating package.json.
-- **destructive/corrupted PRs**: RECOMMENDED CLOSURE (zod-4.3.6, setup-node-6, pnpm/action-setup-6, vite-plugin-pwa-1.2.0, feat/add-opencode-atomic-commit).

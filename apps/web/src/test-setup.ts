@@ -1,10 +1,8 @@
 import 'fake-indexeddb/auto';
-import * as matchers from '@testing-library/jest-dom/matchers';
-import { expect, vi, afterEach, afterAll } from 'vitest';
+import '@testing-library/jest-dom/vitest';
+import { vi, afterEach, afterAll } from 'vitest';
 import React from 'react';
 import { cleanup } from '@testing-library/react';
-
-expect.extend(matchers);
 
 // Clean up DOM after each test to prevent memory leaks
 // Note: React concurrent state pollution between test files is a known vitest issue
