@@ -18,10 +18,10 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20250415.0",
+    "@cloudflare/workers-types": "^4.20260421.1",
     "@types/node": "^25",
     "eslint": "^9.0.0",
-    "typescript": "^6.0.2",
+    "typescript": "^6.0.3",
     "vitest": "^1.6.1",
     "wrangler": "^3.100.0"
   }
