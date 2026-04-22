@@ -66,3 +66,9 @@
 - **Vitest framer-motion mock**: Proxy-based dynamic motion component mocks cause memory issues. Use static `React.createElement` mocks in test-setup.ts instead of Proxy wrappers.
 - **WSL2 vitest watch**: Use `watch: { usePolling: true }` in vitest.config.ts for file watching in WSL2 where native filesystem events are unreliable.
 - **GitHub Actions Node.js 24**: Node.js 20 actions are deprecated and will be forced to Node.js 24 starting June 2nd, 2026. Opt in now with `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true` env at workflow level and update `node-version: '24'` in actions/setup-node@v4.
+- **Playwright WebKit opt-in strategy**: Keep WebKit project behind `PLAYWRIGHT_INCLUDE_WEBKIT=1` in shared config so Linux/WSL contributors can run stable Chromium/Firefox E2E by default while still enabling Safari coverage in dedicated environments.
+
+- **Dependabot Corruption Risk**: In some repository configurations, Dependabot PRs can become "corrupted" and include massive deletions of unrelated files (like `plans/` or `AGENTS.md`). Always perform a full file-level diff before merging automated dependency updates.
+- **TypeScript 6.0 Deprecations**: TypeScript 6.0 introduces deprecation warnings for `baseUrl` that will become errors in 7.0. Use `"ignoreDeprecations": "6.0"` in `tsconfig.json` as a temporary bridge or migrate to path mapping without `baseUrl`.
+- **Vite 8 Rolldown Migration**: Vite 8's switch to Rolldown breaks existing `manualChunks` configurations that rely on specific Rollup function signatures. Custom chunking logic must be refactored for the Rolldown engine.
+- **Accessibility - useId Pattern**: For forms, use React's `useId` to generate unique IDs for `htmlFor` and `aria-describedby` links. This ensures accessibility even when multiple instances of the same component (like `Input`) are rendered on one page.

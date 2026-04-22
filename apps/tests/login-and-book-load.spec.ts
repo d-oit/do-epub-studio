@@ -130,7 +130,7 @@ test.describe('Login and book load (desktop)', () => {
     await mockApiRoutes(page);
   });
 
-  test('renders the login page with all form fields', async ({ page }) => {
+  test('@smoke renders the login page with all form fields', async ({ page }) => {
     await page.goto(APP_URL);
 
     // Root redirects to /login
@@ -147,7 +147,7 @@ test.describe('Login and book load (desktop)', () => {
     await expect(page.getByRole('button', { name: 'Sign In' })).toBeVisible();
   });
 
-  test('logs in and navigates to the reader', async ({ page }) => {
+  test('@smoke logs in and navigates to the reader', async ({ page }) => {
     await page.goto(`${APP_URL}/login`);
     await login(page);
 

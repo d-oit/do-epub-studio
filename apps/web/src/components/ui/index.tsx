@@ -4,6 +4,7 @@
  */
 
 import { motion, AnimatePresence } from 'framer-motion';
+import { useId } from 'react';
 import { forwardRef, type ComponentPropsWithoutRef } from 'react';
 
 // ============================================
@@ -107,6 +108,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         transition={{ duration: 0.15 }}
         className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
         disabled={disabled || isLoading}
+        aria-busy={isLoading}
       >
         {isLoading ? (
           <>
@@ -189,15 +191,25 @@ interface InputProps extends MotionInputBaseProps {
   helperText?: string;
 }
 
-export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, helperText, className = '', ...props }, ref) => {
+export const Input = forwardRef<HTMLInputElement, InputProps>(  ({ label, error, helperText, className = '', id, ...props }, ref) => {
+    const generatedId = useId();
+    const inputId = id || generatedId;
+    const errorId = `${inputId}-error`;
+    const helperId = `${inputId}-helper`;
+    const describedBy = error ? errorId : helperText ? helperId : undefined;
+
     return (
       <div className="w-full">
         {label && (
-          <label className="block text-sm font-medium text-foreground mb-1.5">{label}</label>
+          <label htmlFor={inputId} className="block text-sm font-medium text-foreground mb-1.5">
+            {label}
+          </label>
         )}
         <motion.input
           ref={ref}
+          id={inputId}
+          aria-invalid={error ? 'true' : undefined}
+          aria-describedby={describedBy}
           whileFocus={{ scale: 1.01 }}
           transition={{ duration: 0.1 }}
           className={`
@@ -209,12 +221,16 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             ${error ? 'border-accent-error focus:border-accent-error focus:ring-accent-error/20' : 'border-border'}
             ${className}
           `}
-          {...props}
+          {...(props as any)}
         />
         {error ? (
-          <p className="mt-1.5 text-sm text-accent-error">{error}</p>
+          <p id={errorId} className="mt-1.5 text-sm text-accent-error">
+            {error}
+          </p>
         ) : helperText ? (
-          <p className="mt-1.5 text-sm text-foreground-muted">{helperText}</p>
+          <p id={helperId} className="mt-1.5 text-sm text-foreground-muted">
+            {helperText}
+          </p>
         ) : null}
       </div>
     );
