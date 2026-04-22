@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/unbound-method */
+ 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   validatePermission,

@@ -253,7 +253,7 @@ describe('GET /api/books/{slug} (handleGetBook)', () => {
 
   it('returns 404 when book not found', async () => {
     mockRequireAuth.mockResolvedValue(makeAuthContext());
-    mockQueryFirst.mockResolvedValue(null as never);
+    mockQueryFirst.mockResolvedValue(null);
 
     const res = await handleGetBook(makeEnv(), makeRequest(), 'nonexistent');
     expect(res.status).toBe(404);
@@ -263,7 +263,7 @@ describe('GET /api/books/{slug} (handleGetBook)', () => {
 
   it('returns 403 when book id does not match session bookId', async () => {
     mockRequireAuth.mockResolvedValue(makeAuthContext({ bookId: 'other-book' }));
-    mockQueryFirst.mockResolvedValue(makeBookRow({ id: 'book-1' }) as never);
+    mockQueryFirst.mockResolvedValue(makeBookRow({ id: 'book-1' }));
 
     const res = await handleGetBook(makeEnv(), makeRequest(), 'test-book');
     expect(res.status).toBe(403);
@@ -273,7 +273,7 @@ describe('GET /api/books/{slug} (handleGetBook)', () => {
 
   it('returns book data when authenticated and book matches', async () => {
     mockRequireAuth.mockResolvedValue(makeAuthContext({ bookId: 'book-1' }));
-    mockQueryFirst.mockResolvedValue(makeBookRow() as never);
+    mockQueryFirst.mockResolvedValue(makeBookRow());
 
     const res = await handleGetBook(makeEnv(), makeRequest(), 'test-book');
     expect(res.status).toBe(200);
@@ -303,8 +303,8 @@ describe('POST /api/books/{slug}/file-url (handleGetFileUrl)', () => {
   it('returns 404 when book not found', async () => {
     mockRequireAuth.mockResolvedValue(makeAuthContext());
     mockQueryFirst
-      .mockResolvedValueOnce(null as never) // book lookup
-      .mockResolvedValueOnce(null as never); // file lookup
+      .mockResolvedValueOnce(null) // book lookup
+      .mockResolvedValueOnce(null); // file lookup
 
     const res = await handleGetFileUrl(makeEnv(), makeRequest(), 'nonexistent');
     expect(res.status).toBe(404);
@@ -313,8 +313,8 @@ describe('POST /api/books/{slug}/file-url (handleGetFileUrl)', () => {
   it('returns 404 when no file found for book', async () => {
     mockRequireAuth.mockResolvedValue(makeAuthContext({ bookId: 'book-1' }));
     mockQueryFirst
-      .mockResolvedValueOnce({ id: 'book-1', slug: 'test-book' } as never)
-      .mockResolvedValueOnce(null as never);
+      .mockResolvedValueOnce({ id: 'book-1', slug: 'test-book' })
+      .mockResolvedValueOnce(null);
 
     const res = await handleGetFileUrl(makeEnv(), makeRequest(), 'test-book');
     expect(res.status).toBe(404);
@@ -336,9 +336,9 @@ describe('POST /api/books/{slug}/file-url (handleGetFileUrl)', () => {
     };
     
     mockQueryFirst.mockImplementation(async (_env: unknown, _sql: string) => {
-      if (_sql.includes('FROM books WHERE')) return bookRow as never;
-      if (_sql.includes('FROM book_files')) return fileRow as never;
-      return null as never;
+      if (_sql.includes('FROM books WHERE')) return bookRow;
+      if (_sql.includes('FROM book_files')) return fileRow;
+      return null;
     });
 
     mockGenerateSignedUrl.mockResolvedValue({
@@ -372,7 +372,7 @@ describe('POST /api/access/request (handleAccessRequest)', () => {
   });
 
   it('returns 401 when grant validation fails', async () => {
-    mockValidateGrant.mockResolvedValue({ valid: false, error: 'invalid_password' } as never);
+    mockValidateGrant.mockResolvedValue({ valid: false, error: 'invalid_password' });
 
     const res = await handleAccessRequest(makeEnv(), validPayload);
     expect(res.status).toBe(401);
@@ -384,7 +384,7 @@ describe('POST /api/access/request (handleAccessRequest)', () => {
     const grant = makeGrantRow();
     const book = makeBookRow();
     mockValidateGrant.mockResolvedValue({ valid: true, grant, book } as never);
-    mockCreateSession.mockResolvedValue('session-token-abc' as never);
+    mockCreateSession.mockResolvedValue('session-token-abc');
     mockComputeCapabilities.mockReturnValue({
       canRead: true,
       canComment: false,
@@ -409,7 +409,7 @@ describe('POST /api/access/request (handleAccessRequest)', () => {
     const grant = makeGrantRow();
     const book = makeBookRow();
     mockValidateGrant.mockResolvedValue({ valid: true, grant, book } as never);
-    mockCreateSession.mockResolvedValue('token' as never);
+    mockCreateSession.mockResolvedValue('token');
     mockComputeCapabilities.mockReturnValue({ canRead: true, canComment: false, canHighlight: false, canBookmark: true, canDownloadOffline: false, canExportNotes: false, canManageAccess: false });
 
     await handleAccessRequest(makeEnv(), { bookSlug: 'test-book', email: 'READER@EXAMPLE.COM' });
@@ -424,7 +424,7 @@ describe('POST /api/access/request (handleAccessRequest)', () => {
 
 describe('POST /api/access/logout (handleLogout)', () => {
   it('revokes session and returns ok', async () => {
-    mockRevokeSession.mockResolvedValue(undefined as never);
+    mockRevokeSession.mockResolvedValue(undefined);
     const res = await handleLogout(makeEnv(), 'session-token');
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -434,7 +434,7 @@ describe('POST /api/access/logout (handleLogout)', () => {
 
 describe('POST /api/access/refresh (handleRefresh)', () => {
   it('returns 401 for invalid session', async () => {
-    mockValidateSessionMod.mockResolvedValue({ valid: false } as never);
+    mockValidateSessionMod.mockResolvedValue({ valid: false });
     const res = await handleRefresh(makeEnv(), 'bad-token');
     expect(res.status).toBe(401);
     const body = await res.json();
@@ -446,8 +446,8 @@ describe('POST /api/access/refresh (handleRefresh)', () => {
       valid: true,
       session: makeSessionRow(),
       bookId: 'book-1',
-    } as never);
-    mockCreateSession.mockResolvedValue('new-token' as never);
+    });
+    mockCreateSession.mockResolvedValue('new-token');
 
     const res = await handleRefresh(makeEnv(), 'valid-token');
     expect(res.status).toBe(200);
@@ -458,13 +458,13 @@ describe('POST /api/access/refresh (handleRefresh)', () => {
 
 describe('GET /api/access/validate-permission (handleValidatePermission)', () => {
   it('returns 401 for invalid session', async () => {
-    mockValidateSessionMod.mockResolvedValue({ valid: false } as never);
+    mockValidateSessionMod.mockResolvedValue({ valid: false });
     const res = await handleValidatePermission(makeEnv(), 'book-1', 'bad-token');
     expect(res.status).toBe(401);
   });
 
   it('returns invalid grant when grant is revoked', async () => {
-    mockValidateSessionMod.mockResolvedValue({ valid: true, session: makeSessionRow(), bookId: 'book-1' } as never);
+    mockValidateSessionMod.mockResolvedValue({ valid: true, session: makeSessionRow(), bookId: 'book-1' });
     const { getGrantByBookAndSession } = await import('../auth/password');
     vi.mocked(getGrantByBookAndSession).mockResolvedValue({ revoked_at: new Date().toISOString() } as never);
 
@@ -475,7 +475,7 @@ describe('GET /api/access/validate-permission (handleValidatePermission)', () =>
   });
 
   it('returns grant capabilities when valid', async () => {
-    mockValidateSessionMod.mockResolvedValue({ valid: true, session: makeSessionRow(), bookId: 'book-1' } as never);
+    mockValidateSessionMod.mockResolvedValue({ valid: true, session: makeSessionRow(), bookId: 'book-1' });
     const { getGrantByBookAndSession } = await import('../auth/password');
     vi.mocked(getGrantByBookAndSession).mockResolvedValue(makeGrantRow({ comments_allowed: 1, offline_allowed: 1 }) as never);
 
@@ -490,13 +490,13 @@ describe('GET /api/access/validate-permission (handleValidatePermission)', () =>
 
 describe('GET /api/access/validate-all-permissions (handleValidateAllPermissions)', () => {
   it('returns 401 for invalid session', async () => {
-    mockValidateSessionMod.mockResolvedValue({ valid: false } as never);
+    mockValidateSessionMod.mockResolvedValue({ valid: false });
     const res = await handleValidateAllPermissions(makeEnv(), 'bad-token');
     expect(res.status).toBe(401);
   });
 
   it('returns valid grant IDs and revoked book IDs', async () => {
-    mockValidateSessionMod.mockResolvedValue({ valid: true, session: makeSessionRow(), bookId: 'book-1' } as never);
+    mockValidateSessionMod.mockResolvedValue({ valid: true, session: makeSessionRow(), bookId: 'book-1' });
     const { getGrantsBySession } = await import('../auth/password');
     vi.mocked(getGrantsBySession).mockResolvedValue([
       makeGrantRow({ id: 'grant-1', revoked_at: null }),
@@ -524,7 +524,7 @@ describe('GET /api/reader-state/{bookId}/progress (handleGetProgress)', () => {
 
   it('returns null progress when no record exists', async () => {
     mockRequireAuth.mockResolvedValue(makeAuthContext());
-    mockQueryFirst.mockReturnValue(Promise.resolve(null) as never);
+    mockQueryFirst.mockReturnValue(Promise.resolve(null));
 
     const res = await handleGetProgress(makeEnv(), makeRequest(), 'book-1');
     expect(res.status).toBe(200);
@@ -543,7 +543,7 @@ describe('GET /api/reader-state/{bookId}/progress (handleGetProgress)', () => {
       progress_percent: 45.5,
       updated_at: new Date().toISOString(),
     };
-    mockQueryFirst.mockReturnValue(Promise.resolve(progressRow) as never);
+    mockQueryFirst.mockReturnValue(Promise.resolve(progressRow));
 
     const res = await handleGetProgress(makeEnv(), makeRequest(), 'book-1');
     expect(res.status).toBe(200);
@@ -808,7 +808,7 @@ describe('PATCH /api/reader-state/{bookId}/highlights/{highlightId} (handleUpdat
 
   it('returns 404 when highlight not found', async () => {
     mockRequireAuth.mockResolvedValue(makeAuthContext());
-    mockQueryFirst.mockResolvedValue(null as never);
+    mockQueryFirst.mockResolvedValue(null);
 
     const res = await handleUpdateHighlight(makeEnv(), makeRequest(), 'book-1', 'hl-1', { note: 'updated' });
     expect(res.status).toBe(404);
@@ -827,7 +827,7 @@ describe('PATCH /api/reader-state/{bookId}/highlights/{highlightId} (handleUpdat
       cfi_range: null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-    } as never);
+    });
 
     const res = await handleUpdateHighlight(makeEnv(), makeRequest(), 'book-1', 'hl-1', { note: 'updated' });
     expect(res.status).toBe(403);
@@ -848,7 +848,7 @@ describe('PATCH /api/reader-state/{bookId}/highlights/{highlightId} (handleUpdat
       cfi_range: null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-    } as never);
+    });
 
     const res = await handleUpdateHighlight(makeEnv(), makeRequest(), 'book-1', 'hl-1', { note: 'updated note', color: '#ff0000' });
     expect(res.status).toBe(200);
@@ -975,7 +975,7 @@ describe('PATCH /api/comments/{commentId} (handleUpdateComment)', () => {
 
   it('returns 404 when comment not found', async () => {
     mockRequireAuth.mockResolvedValue(makeAuthContext());
-    mockQueryFirst.mockResolvedValue(null as never);
+    mockQueryFirst.mockResolvedValue(null);
 
     const res = await handleUpdateComment(makeEnv(), makeRequest(), 'comment-1', { body: 'updated' });
     expect(res.status).toBe(404);
@@ -997,7 +997,7 @@ describe('PATCH /api/comments/{commentId} (handleUpdateComment)', () => {
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       resolved_at: null,
-    } as never);
+    });
 
     const res = await handleUpdateComment(makeEnv(), makeRequest(), 'comment-1', { body: 'updated' });
     expect(res.status).toBe(403);
@@ -1019,7 +1019,7 @@ describe('PATCH /api/comments/{commentId} (handleUpdateComment)', () => {
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       resolved_at: null,
-    } as never);
+    });
 
     const res = await handleUpdateComment(makeEnv(), makeRequest(), 'comment-1', { body: 'updated body' });
     expect(res.status).toBe(200);
@@ -1044,7 +1044,7 @@ describe('PATCH /api/comments/{commentId} (handleUpdateComment)', () => {
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       resolved_at: null,
-    } as never);
+    });
 
     const res = await handleUpdateComment(makeEnv(), makeRequest(), 'comment-1', { status: 'resolved' });
     expect(res.status).toBe(200);
@@ -1203,7 +1203,7 @@ describe('POST /api/admin/grants (handleCreateAdminGrant)', () => {
   });
 
   it('creates grant and returns 201', async () => {
-    mockCreateGrant.mockResolvedValue('grant-1' as never);
+    mockCreateGrant.mockResolvedValue('grant-1');
 
     const res = await handleCreateAdminGrant(makeEnv(), 'book-1', validBody, 'admin@example.com');
     expect(res.status).toBe(201);
