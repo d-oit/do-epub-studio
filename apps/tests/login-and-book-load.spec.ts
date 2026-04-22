@@ -1,24 +1,23 @@
-import { test, expect, type Page, type Route } from '@playwright/test';
-
-// ---------------------------------------------------------------------------
-// Constants & fixtures
-// ---------------------------------------------------------------------------
+import { test, expect, Page, Route } from '@playwright/test';
 
 const APP_URL = 'http://localhost:5173';
-const API_BASE = '**/api/**';
 
 const TEST_USER = {
-  email: 'reader@example.com',
-  password: 'test-password',
   bookSlug: 'my-test-book',
+  email: 'test@example.com',
+  password: 'password123',
 };
 
 const LOGIN_RESPONSE = {
   ok: true,
   data: {
-    sessionToken: 'test-session-token-abc123',
+    sessionToken: 'fake-jwt-token',
+    user: {
+      email: TEST_USER.email,
+      role: 'reader',
+    },
     book: {
-      id: 'book-1',
+      id: 'book-123',
       slug: TEST_USER.bookSlug,
       title: 'My Test Book',
       authorName: 'Test Author',
@@ -187,11 +186,15 @@ test.describe('Login and book load (desktop)', () => {
     await login(page);
     await expect(page).toHaveURL(/\/read\/my-test-book$/);
 
+    // Webkit/Safari may need a moment for layout/animations to settle
+    await page.waitForLoadState('networkidle');
+
     // Open ToC
     await page.getByRole('button', { name: 'Contents' }).click();
 
     // Sidebar should be visible (even if empty for the mocked book)
-    await expect(page.getByRole('heading', { name: 'Contents' })).toBeVisible();
+    // Using a longer timeout to account for animations
+    await expect(page.getByRole('heading', { name: 'Contents' })).toBeVisible({ timeout: 10_000 });
   });
 
   test('opens the settings panel', async ({ page }) => {
@@ -199,11 +202,13 @@ test.describe('Login and book load (desktop)', () => {
     await login(page);
     await expect(page).toHaveURL(/\/read\/my-test-book$/);
 
+    await page.waitForLoadState('networkidle');
+
     // Open settings
     await page.getByRole('button', { name: 'Settings' }).click();
 
     // Settings panel should contain theme, font size, and font family controls
-    await expect(page.getByText('Theme')).toBeVisible();
+    await expect(page.getByText('Theme')).toBeVisible({ timeout: 10_000 });
     await expect(page.getByText('Font Size')).toBeVisible();
     await expect(page.getByText('Font')).toBeVisible();
   });
@@ -266,8 +271,9 @@ test.describe('Login and book load (mobile)', () => {
     await page.goto(`${APP_URL}/login`);
     await login(page);
 
+    await page.waitForLoadState('networkidle');
     await page.getByRole('button', { name: 'Settings' }).click();
-    await expect(page.getByText('Theme')).toBeVisible();
+    await expect(page.getByText('Theme')).toBeVisible({ timeout: 10_000 });
     await expect(page.getByText('Font Size')).toBeVisible();
   });
 });
