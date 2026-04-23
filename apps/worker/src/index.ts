@@ -44,6 +44,7 @@ import {
 import { requireAdminAuth } from './auth/admin-middleware';
 
 const corsHeaders: Record<string, string> = {
+  'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   Vary: 'Origin, Access-Control-Request-Headers',
@@ -55,8 +56,8 @@ async function handleRequest(env: Env, request: Request): Promise<Response> {
   const method = request.method;
 
   if (method === 'OPTIONS') {
-    const response = new Response(null, { status: 204 });
-    return applyMinimalSecurityHeaders(applyCorsHeaders(response, request, env));
+    const response = new Response(null, { status: 204, headers: corsHeaders });
+    return applyMinimalSecurityHeaders(response);
   }
 
   if (path === '/api/access/request' && method === 'POST') {
@@ -288,7 +289,7 @@ export default {
     try {
       const response = await handleRequest(env, request);
       logRequestEnd(context, response.status);
-      return applySecurityHeaders(applyCorsHeaders(withTraceHeaders(response, context), request, env));
+      return applySecurityHeaders(applyCorsHeaders(withTraceHeaders(response, context)));
     } catch (error) {
       logRequestError(context, error);
       logRequestEnd(context, 500);
@@ -303,18 +304,14 @@ export default {
         },
         500,
       );
-      return applySecurityHeaders(applyCorsHeaders(withTraceHeaders(failure, context), request, env));
+      return applySecurityHeaders(applyCorsHeaders(withTraceHeaders(failure, context)));
     }
   },
 };
 
-function applyCorsHeaders(response: Response, request: Request, env: Env): Response {
-  const origin = request.headers.get('Origin');
-  const allowedOrigin = origin === env.APP_BASE_URL ? origin : env.APP_BASE_URL;
-
+function applyCorsHeaders(response: Response): Response {
   Object.entries(corsHeaders).forEach(([key, value]) => {
     response.headers.set(key, value);
   });
-  response.headers.set('Access-Control-Allow-Origin', allowedOrigin);
   return response;
 }
