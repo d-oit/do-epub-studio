@@ -147,11 +147,10 @@ test.describe('Reader annotations', () => {
 
   test('can open and close the highlights panel', async ({ page }) => {
     await loginAsReader(page);
-    await page.waitForLoadState("networkidle");
 
     // Open highlights panel via button
     await page.getByRole('button', { name: /Highlights|Notes/i }).click();
-    await expect(page.getByRole('heading', { name: /Highlights|Notes/i })).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole('heading', { name: /Highlights|Notes/i })).toBeVisible();
 
     // Close via close button
     await page.getByRole('button', { name: /Close/i }).first().click();
@@ -159,29 +158,26 @@ test.describe('Reader annotations', () => {
 
   test('can open and close the comments panel', async ({ page }) => {
     await loginAsReader(page);
-    await page.waitForLoadState("networkidle");
 
     await page.getByRole('button', { name: /Comments/i }).click();
-    await expect(page.getByRole('heading', { name: /Comments/i })).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole('heading', { name: /Comments/i })).toBeVisible();
   });
 
   test('can open bookmarks panel and sees empty state', async ({ page }) => {
     await loginAsReader(page);
-    await page.waitForLoadState("networkidle");
 
     await page.getByRole('button', { name: /Bookmarks/i }).click();
-    await expect(page.getByRole('heading', { name: /Bookmarks/i })).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole('heading', { name: /Bookmarks/i })).toBeVisible();
     // Empty state should be visible when no bookmarks exist
-    await expect(page.getByText(/No bookmarks yet/i)).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(/No bookmarks yet/i)).toBeVisible();
   });
 
   test('can export notes when panel is available', async ({ page }) => {
     await loginAsReader(page);
-    await page.waitForLoadState("networkidle");
 
     // Export button should be visible in the reader toolbar
     const exportButton = page.getByRole('button', { name: /Export notes/i });
-    await expect(exportButton).toBeVisible({ timeout: 10_000 });
+    await expect(exportButton).toBeVisible();
   });
 });
 
@@ -196,37 +192,34 @@ test.describe('Admin console', () => {
 
   test('@smoke renders admin login page', async ({ page }) => {
     await page.goto(`${APP_URL}/admin/login`);
-    await expect(page.getByRole('heading', { name: /Admin/i })).toBeVisible({ timeout: 10_000 });
-    await expect(page.getByLabel('Email Address')).toBeVisible({ timeout: 10_000 });
-    await expect(page.getByLabel('Password')).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole('heading', { name: /Admin/i })).toBeVisible();
+    await expect(page.getByLabel('Email Address')).toBeVisible();
+    await expect(page.getByLabel('Password')).toBeVisible();
   });
 
   test('navigates to books page after admin login', async ({ page }) => {
     await loginAsAdmin(page);
-    await page.waitForLoadState("networkidle");
 
     // Should navigate to admin books page
     await expect(page).toHaveURL(/\/admin\/books/);
-    await expect(page.getByRole('heading', { name: /Books/i })).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole('heading', { name: /Books/i })).toBeVisible();
   });
 
   test('can view grants for a book', async ({ page }) => {
     await loginAsAdmin(page);
-    await page.waitForLoadState("networkidle");
 
     // Navigate to grants page
     await page.getByRole('link', { name: /Grants/i }).click();
     await expect(page).toHaveURL(/\/admin\/grants/);
-    await expect(page.getByRole('heading', { name: /Grants/i })).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole('heading', { name: /Grants/i })).toBeVisible();
   });
 
   test('can view audit log', async ({ page }) => {
     await loginAsAdmin(page);
-    await page.waitForLoadState("networkidle");
 
     await page.getByRole('link', { name: /Audit/i }).click();
     await expect(page).toHaveURL(/\/admin\/audit/);
-    await expect(page.getByRole('heading', { name: /Audit/i })).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole('heading', { name: /Audit/i })).toBeVisible();
   });
 
   test('admin pages are protected — redirect to login when unauthenticated', async ({ page }) => {
@@ -255,27 +248,26 @@ test.describe('Accessibility', () => {
 
     // All form inputs should have visible, associated labels
     const slugInput = page.getByLabel('Book URL Slug');
-    await expect(slugInput).toBeVisible({ timeout: 10_000 });
+    await expect(slugInput).toBeVisible();
     await expect(slugInput).toHaveAttribute('type', 'text');
 
     const emailInput = page.getByLabel('Email Address');
-    await expect(emailInput).toBeVisible({ timeout: 10_000 });
+    await expect(emailInput).toBeVisible();
     await expect(emailInput).toHaveAttribute('type', 'email');
 
     const passwordInput = page.getByLabel('Password (if required)');
-    await expect(passwordInput).toBeVisible({ timeout: 10_000 });
+    await expect(passwordInput).toBeVisible();
     await expect(passwordInput).toHaveAttribute('type', 'password');
   });
 
   test('reader buttons have accessible names', async ({ page }) => {
     await loginAsReader(page);
-    await page.waitForLoadState("networkidle");
 
     // Key reader buttons should have aria-label or text content
-    await expect(page.getByRole('button', { name: 'Contents' })).toBeVisible({ timeout: 10_000 });
-    await expect(page.getByRole('button', { name: 'Settings' })).toBeVisible({ timeout: 10_000 });
-    await expect(page.getByRole('button', { name: 'Bookmarks' })).toBeVisible({ timeout: 10_000 });
-    await expect(page.getByRole('button', { name: 'Sign Out' })).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole('button', { name: 'Contents' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Settings' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Bookmarks' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Sign Out' })).toBeVisible();
   });
 
   test('locale switcher is accessible', async ({ page }) => {
@@ -283,7 +275,7 @@ test.describe('Accessibility', () => {
 
     // Locale switcher should have an aria-label
     const localeSelect = page.getByRole('combobox', { name: /locale|language/i });
-    await expect(localeSelect).toBeVisible({ timeout: 10_000 });
+    await expect(localeSelect).toBeVisible();
 
     // Should contain expected options
     await expect(localeSelect.locator('option[value="en"]')).toBeAttached();
@@ -302,11 +294,10 @@ test.describe('Accessibility', () => {
 
     await page.goto(`${APP_URL}/login`);
     await loginAsReader(page);
-    await page.waitForLoadState("networkidle");
 
     // Error should be in a role="alert" or similar accessible element
     const errorElement = page.getByText('Access denied');
-    await expect(errorElement).toBeVisible({ timeout: 10_000 });
+    await expect(errorElement).toBeVisible();
 
     // Check for alert role or aria-live region
     const alertParent = errorElement.locator('..');
@@ -330,11 +321,11 @@ test.describe('Internationalization', () => {
     await page.getByRole('combobox', { name: /locale|language/i }).selectOption('de');
 
     // UI should update (check a known translated string)
-    await expect(page.getByText('Melde dich an')).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText('Melde dich an')).toBeVisible();
 
     // Switch to French
     await page.getByRole('combobox', { name: /locale|language/i }).selectOption('fr');
-    await expect(page.getByText('Connectez-vous')).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText('Connectez-vous')).toBeVisible();
   });
 
   test('locale persists after page reload', async ({ page }) => {
@@ -345,7 +336,7 @@ test.describe('Internationalization', () => {
     await page.reload();
 
     // German text should still be visible
-    await expect(page.getByText('Melde dich an')).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText('Melde dich an')).toBeVisible();
   });
 });
 
@@ -357,7 +348,6 @@ test.describe('Offline behavior', () => {
   test('shows offline indicator when network is disabled', async ({ page, context }) => {
     await mockReaderApi(page);
     await loginAsReader(page);
-    await page.waitForLoadState("networkidle");
 
     // Go offline
     await context.setOffline(true);
