@@ -30,7 +30,7 @@
     "workbox-routing": "^7.4.0",
     "workbox-strategies": "^7.4.0",
     "zod": "^3.25.76",
-    "zustand": "^4"
+    "zustand": "^5"
   },
   "devDependencies": {
     "@playwright/test": "^1.40.0",
