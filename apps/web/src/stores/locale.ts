@@ -9,7 +9,7 @@ interface LocaleState {
 }
 
 function detectLocale(): SupportedLocale {
-  if (typeof navigator === 'undefined') {
+  if (typeof navigator === 'undefined' || !navigator.language) {
     return 'en';
   }
   const [preferred] = navigator.language.split('-');

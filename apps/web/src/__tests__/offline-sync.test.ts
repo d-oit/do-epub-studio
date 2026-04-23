@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/unbound-method, @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   generateMutationId,
@@ -132,10 +132,6 @@ describe('Offline Sync', () => {
       expect(addEventListenerSpy).toHaveBeenCalledWith('offline', expect.any(Function));
       
       cleanup();
-      
-      const removeEventListenerSpy = vi.spyOn(window, 'removeEventListener');
-      // The cleanup should have been called
-      expect(removeEventListenerSpy).not.toHaveBeenCalled(); // Not called yet
     });
 
     it('should cleanup event listeners', () => {

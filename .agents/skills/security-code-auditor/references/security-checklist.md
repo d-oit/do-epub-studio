@@ -1,5 +1,17 @@
 # EPUB Studio Security Audit Checklist
 
+## Version Security Requirements (2026)
+
+| Package | Min Version | Reason |
+|---------|-------------|--------|
+| DOMPurify | 3.2+ | XSS prevention (MANDATORY) |
+| React | 18.3+ | Security patches |
+| TypeScript | 5.8+ | Type safety |
+| Vite | 6.2+ | Build security |
+| Vitest | 2.x | Test isolation |
+
+**Before adding dependencies**: Run `pnpm outdated` and check for CVEs.
+
 ## Authentication & Authorization
 
 - [ ] Password hashing uses strong KDF (Argon2, bcrypt)

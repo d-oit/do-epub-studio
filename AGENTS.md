@@ -126,7 +126,7 @@ If a warning cannot be fixed due to tool/library limitations:
 - No secrets, env URLs, or storage credentials in source; only `.dev.vars`/`.env.local` examples are committed.
 - No direct R2 file URLs to clients; all access goes through Workers with short-lived signed URLs.
 - Annotation anchors must use multi-signal locators (CFI + text + chapter) per ADR-006.
-- Use Zod for boundary validation, Zustand for state, Tailwind for styling, Vitest + Playwright for tests.
+- Use Zod for boundary validation, Zustand for state, Tailwind for styling, Vitest + Playwright (with pool: "forks" for isolation) for tests.
 - Never skip documenting coding workflow changes or new learnings.
 
 ## Constraints
@@ -239,3 +239,7 @@ Use the `skill` tool to load skills on-demand. At startup, only skill names/desc
 - No trivial or duplicate learnings; focus on actionable insights.
 - Project-wide learnings are stored in `agents-docs/LEARNINGS.md` (not in
   this file).
+
+## Testing Insights (2026)
+- **Vitest Isolation:** When testing React 18 components with complex state or third-party libraries (like EPUB.js), always use `pool: 'forks'` in Vitest configuration to prevent cross-test state pollution.
+- **Async Mocks:** Ensure API mocks return stable values and are awaited properly to avoid "Should not already be working" errors during concurrent rendering.
