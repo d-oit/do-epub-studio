@@ -1,12 +1,13 @@
 import 'fake-indexeddb/auto';
-import '@testing-library/jest-dom/vitest';
-import { vi, afterEach, afterAll } from 'vitest';
+import { expect, vi, afterEach, afterAll } from 'vitest';
+import * as matchers from '@testing-library/jest-dom/matchers';
 import React from 'react';
 import { cleanup } from '@testing-library/react';
 
+// Extend Vitest's expect with jest-dom matchers
+expect.extend(matchers);
+
 // Clean up DOM after each test to prevent memory leaks
-// Note: React concurrent state pollution between test files is a known vitest issue
-// that cannot be fixed via cleanup - skip affected tests instead
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
@@ -17,8 +18,7 @@ afterAll(() => {
   vi.resetModules();
 });
 
-// Simple framer-motion mock - just render as regular elements without Proxy
-// This avoids memory issues from Proxy-based dynamic component generation
+// Simple framer-motion mock
 vi.mock('framer-motion', () => ({
   motion: {
     div: ({ children, ...props }: { children?: React.ReactNode }) =>
