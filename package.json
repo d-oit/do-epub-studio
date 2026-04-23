@@ -13,6 +13,7 @@
     "test:coverage": "turbo run test -- --coverage",
     "test:e2e": "playwright test",
     "verify": "pnpm lint && pnpm typecheck && pnpm test && pnpm build",
+    "lighthouse": "lhci autorun",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "db:migrate:local": "node scripts/db-migrate-local.mjs",
@@ -25,6 +26,7 @@
   "devDependencies": {
     "@axe-core/playwright": "^4.11.1",
     "@eslint/js": "^9.0.0",
+    "@lhci/cli": "^0.15.1",
     "@playwright/test": "^1.59.1",
     "@types/node": "^25",
     "@vitest/coverage-v8": "^1.6.1",
@@ -37,13 +39,13 @@
     "eslint-plugin-react": "^7.34.1",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-security": "^3.0.1",
-    "eslint-plugin-unicorn": "^56.0.0",
+    "eslint-plugin-unicorn": "^64.0.0",
     "globals": "^15.0.0",
     "jsdom": "^29.0.2",
     "prettier": "^3.2.5",
     "rollup-plugin-visualizer": "^7.0.1",
     "turbo": "^2.9.5",
-    "typescript": "^5.4",
+    "typescript": "^6.0.2",
     "typescript-eslint": "^8.0.0"
   }
 }

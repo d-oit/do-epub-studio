@@ -7,6 +7,12 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # shellcheck source=scripts/lib/colors.sh
 source "$REPO_ROOT/scripts/lib/colors.sh"
+# Skip if explicitly requested
+if [ "${SKIP_GLOBAL_HOOKS_CHECK:-false}" = "true" ]; then
+    printf "%s✓ Git hooks check skipped (SKIP_GLOBAL_HOOKS_CHECK=true)%s\n" "${YELLOW}" "${NC}"
+    exit 0
+fi
+
 
 # Check for global hooks path configuration
 GLOBAL_HOOKS_PATH=$(git config --global core.hooksPath 2>/dev/null || true)

@@ -4,7 +4,8 @@
  */
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { forwardRef, type ComponentPropsWithoutRef, useId } from 'react';
+import { useId } from 'react';
+import { forwardRef, type ComponentPropsWithoutRef } from 'react';
 
 // ============================================
 // Animation Variants
@@ -82,13 +83,13 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
     const variantClasses = {
       primary:
-        'bg-accent text-white hover:brightness-95 active:scale-[0.98] focus-visible:ring-accent disabled:bg-accent/50',
+        'bg-accent text-white hover:bg-accent/90 active:scale-[0.98] focus-visible:ring-accent disabled:bg-accent/50',
       secondary:
         'bg-background-secondary text-foreground border border-border hover:bg-background-tertiary active:scale-[0.98] focus-visible:ring-accent',
       ghost:
         'text-foreground/70 hover:text-foreground hover:bg-background-secondary active:scale-[0.98] focus-visible:ring-accent',
       danger:
-        'bg-accent-error text-white hover:brightness-95 active:scale-[0.98] focus-visible:ring-accent-error disabled:bg-accent-error/50',
+        'bg-accent-error text-white hover:bg-accent-error/90 active:scale-[0.98] focus-visible:ring-accent-error disabled:bg-accent-error/50',
     };
 
     const sizeClasses = {
@@ -102,12 +103,12 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         type={type}
         onClick={onClick}
-        aria-busy={isLoading}
         whileTap={{ scale: disabled || isLoading ? 1 : 0.97 }}
         whileHover={{ scale: disabled || isLoading ? 1 : 1.02 }}
         transition={{ duration: 0.15 }}
         className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
         disabled={disabled || isLoading}
+        aria-busy={isLoading}
       >
         {isLoading ? (
           <>
@@ -190,13 +191,11 @@ interface InputProps extends MotionInputBaseProps {
   helperText?: string;
 }
 
-export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, helperText, className = '', id, ...props }, ref) => {
+export const Input = forwardRef<HTMLInputElement, InputProps>(  ({ label, error, helperText, className = '', id, ...props }, ref) => {
     const generatedId = useId();
     const inputId = id || generatedId;
     const errorId = `${inputId}-error`;
     const helperId = `${inputId}-helper`;
-
     const describedBy = error ? errorId : helperText ? helperId : undefined;
 
     return (
@@ -222,7 +221,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             ${error ? 'border-accent-error focus:border-accent-error focus:ring-accent-error/20' : 'border-border'}
             ${className}
           `}
-          {...props}
+          {...(props as any)}
         />
         {error ? (
           <p id={errorId} className="mt-1.5 text-sm text-accent-error">

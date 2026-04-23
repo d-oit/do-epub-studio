@@ -1,67 +1,81 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { GrantsPage } from './GrantsPage';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import * as api from '../../lib/api';
 
-vi.mock('@do-epub-studio/ui', () => ({
-  Button: ({ children, onClick }: { children?: React.ReactNode, onClick?: () => void }) => <button onClick={onClick}>{children}</button>,
-  Input: ({ label }: { label?: string }) => <div>{label}</div>,
-  Modal: ({ children, isOpen, title }: { children?: React.ReactNode, isOpen?: boolean, title?: string }) => isOpen ? (
-    <div role="dialog"><h2>{title}</h2>{children}</div>
-  ) : null,
-}));
+// Stable mock values
+const mockT = (k: string) => k;
+const mockAuth = {
+  sessionToken: 'token',
+  email: 'admin@ex.com',
+  isAdmin: true,
+  capabilities: { canManageAccess: true },
+  logout: vi.fn(),
+};
 
 vi.mock('../../hooks/useTranslation', () => ({
-  useTranslation: () => ({ t: (k: string) => k }),
+  useTranslation: () => ({ t: mockT }),
+}));
+
+vi.mock('../../stores/auth', () => ({
+  useAuthStore: () => mockAuth,
 }));
 
 vi.mock('../../lib/api', () => ({
   apiRequest: vi.fn(),
 }));
 
-vi.mock('../../stores/auth', () => ({
-  useAuthStore: () => ({
-    sessionToken: 'token',
-    email: 'admin@ex.com',
-    capabilities: { canManageAccess: true },
-    logout: vi.fn(),
-  }),
-}));
+const mockBooks = [{ id: 'b1', title: 'Book 1', slug: 'b1' }];
+const mockGrants = [{
+  id: 'g1',
+  email: 'u1@ex.com',
+  mode: 'read',
+  offlineAllowed: true,
+  commentsAllowed: true,
+  createdAt: new Date().toISOString(),
+  expiresAt: new Date(Date.now() + 86400000).toISOString()
+}];
 
-// We need to mock the full react-router-dom to control useParams
-vi.mock('react-router-dom', async () => {
-  const actual = await vi.importActual('react-router-dom');
-  return {
-    ...actual,
-    useParams: () => ({ bookId: 'b1' }),
-    useNavigate: () => vi.fn(),
-  };
-});
-
-import { apiRequest } from '../../lib/api';
-
-describe.skip('GrantsPage', () => {
+describe('GrantsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(apiRequest).mockImplementation(async (url) => {
-      if (url === '/api/books') return [{ id: 'b1', title: 'Book 1' }];
-      if (url.includes('/grants')) return [{ id: 'g1', email: 'u1@ex.com', mode: 'read' }];
-      return [];
-    });
   });
 
   it('renders grants table', async () => {
-    render(<MemoryRouter initialEntries={['/admin/books/b1/grants']}><GrantsPage /></MemoryRouter>);
+    vi.mocked(api.apiRequest).mockImplementation(async (url: string) => {
+      if (url === '/api/books') return mockBooks;
+      if (url.includes('/grants')) return mockGrants;
+      return [];
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/admin/books/b1/grants']}>
+        <Routes>
+          <Route path="/admin/books/:bookId/grants" element={<GrantsPage />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
     expect(await screen.findByText('u1@ex.com')).toBeInTheDocument();
+    expect(screen.getByText('Book 1')).toBeInTheDocument();
   });
 
   it('shows empty state when no grants', async () => {
-    vi.mocked(apiRequest).mockImplementation(async (url) => {
-      if (url === '/api/books') return [{ id: 'b1', title: 'Book 1' }];
+    vi.mocked(api.apiRequest).mockImplementation(async (url: string) => {
+      if (url === '/api/books') return mockBooks;
       if (url.includes('/grants')) return [];
       return [];
     });
-    render(<MemoryRouter initialEntries={['/admin/books/b1/grants']}><GrantsPage /></MemoryRouter>);
+
+    render(
+      <MemoryRouter initialEntries={['/admin/books/b1/grants']}>
+        <Routes>
+          <Route path="/admin/books/:bookId/grants" element={<GrantsPage />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
     expect(await screen.findByText('grants.noGrants')).toBeInTheDocument();
   });
 });

@@ -129,7 +129,6 @@ export function LoginPage() {
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              role="alert"
               className="mb-6 p-4 bg-accent-error/10 border border-accent-error/20 rounded-lg text-accent-error text-sm"
             >
               {error}

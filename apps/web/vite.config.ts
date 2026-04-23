@@ -2,6 +2,7 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import { visualizer } from 'rollup-plugin-visualizer';
+import tailwindcss from '@tailwindcss/vite';
 import path from 'path';
 
 const isAnalyze = process.env.ANALYZE === 'true';
@@ -9,6 +10,7 @@ const isAnalyze = process.env.ANALYZE === 'true';
 export default defineConfig({
   plugins: [
     react(),
+    tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'robots.txt', 'apple-touch-icon.png'],
@@ -43,7 +45,7 @@ export default defineConfig({
             filename: 'dist/stats.html',
             gzipSize: true,
             brotliSize: true,
-          }),
+          }) as any,
         ]
       : []),
   ],
@@ -55,19 +57,24 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: true,
-    rollupOptions: {
+    rolldownOptions: {
       output: {
-        manualChunks: {
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'epubjs': ['epubjs'],
-          'zustand': ['zustand'],
-          'workbox': [
-            'workbox-cacheable-response',
-            'workbox-expiration',
-            'workbox-precaching',
-            'workbox-routing',
-            'workbox-strategies',
-          ],
+        // Vite 8 Rolldown uses codeSplitting or function manualChunks
+        manualChunks: (id) => {
+          if (id.includes('node_modules')) {
+            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
+              return 'react-vendor';
+            }
+            if (id.includes('epubjs')) {
+              return 'epubjs';
+            }
+            if (id.includes('zustand')) {
+              return 'zustand';
+            }
+            if (id.includes('workbox')) {
+              return 'workbox';
+            }
+          }
         },
       },
     },
