@@ -13,25 +13,25 @@ import { forwardRef, type ComponentPropsWithoutRef } from 'react';
 
 export const fadeVariants = {
   initial: { opacity: 0 },
-  animate: { opacity: 1, transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] } },
+  animate: { opacity: 1, transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] as const } },
   exit: { opacity: 0, transition: { duration: 0.2 } },
 };
 
 export const slideUpVariants = {
   initial: { opacity: 0, y: 20 },
-  animate: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.4, 0, 0.2, 1] } },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.4, 0, 0.2, 1] as const } },
   exit: { opacity: 0, y: -20, transition: { duration: 0.2 } },
 };
 
 export const slideDownVariants = {
   initial: { opacity: 0, y: -20 },
-  animate: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] } },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] as const } },
   exit: { opacity: 0, y: 20, transition: { duration: 0.2 } },
 };
 
 export const scaleVariants = {
   initial: { opacity: 0, scale: 0.95 },
-  animate: { opacity: 1, scale: 1, transition: { duration: 0.2, ease: [0.4, 0, 0.2, 1] } },
+  animate: { opacity: 1, scale: 1, transition: { duration: 0.2, ease: [0.4, 0, 0.2, 1] as const } },
   exit: { opacity: 0, scale: 0.95, transition: { duration: 0.15 } },
 };
 

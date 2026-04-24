@@ -16,33 +16,6 @@ export interface AnnotationAnchor {
   chapterRef?: string;
 }
 
-function _levenshteinDistance(a: string, b: string): number {
-  const matrix: number[][] = [];
-
-  for (let i = 0; i <= b.length; i++) {
-    matrix[i] = [i];
-  }
-  for (let j = 0; j <= a.length; j++) {
-    matrix[0][j] = j;
-  }
-
-  for (let i = 1; i <= b.length; i++) {
-    for (let j = 1; j <= a.length; j++) {
-      if (b.charAt(i - 1) === a.charAt(j - 1)) {
-        matrix[i][j] = matrix[i - 1][j - 1];
-      } else {
-        matrix[i][j] = Math.min(
-          matrix[i - 1][j - 1] + 1,
-          matrix[i][j - 1] + 1,
-          matrix[i - 1][j] + 1,
-        );
-      }
-    }
-  }
-
-  return matrix[b.length][a.length];
-}
-
 function normalizeText(text: string): string {
   return text
     .toLowerCase()
@@ -52,18 +25,17 @@ function normalizeText(text: string): string {
 }
 
 function findPartialMatches(
-  text: string,
+  normalizedTarget: string,
   content: string,
   minLength = 20,
 ): { match: string; position: number } | null {
-  const normalizedText = normalizeText(text);
   const normalizedContent = normalizeText(content);
 
-  if (normalizedText.length < minLength) return null;
+  if (normalizedTarget.length < minLength) return null;
 
-  for (let len = normalizedText.length; len >= minLength; len -= 5) {
-    for (let i = 0; i <= normalizedText.length - len; i += Math.max(1, Math.floor(len / 4))) {
-      const segment = normalizedText.slice(i, i + len);
+  for (let len = normalizedTarget.length; len >= minLength; len -= 5) {
+    for (let i = 0; i <= normalizedTarget.length - len; i += Math.max(1, Math.floor(len / 4))) {
+      const segment = normalizedTarget.slice(i, i + len);
       const pos = normalizedContent.indexOf(segment);
       if (pos !== -1) {
         return { match: segment, position: pos };
@@ -86,6 +58,10 @@ export async function reanchorByText(
     return { success: false, fallback: true, message: 'Text too short for reanchoring' };
   }
 
+  const normalizedTargetLower = targetText.toLowerCase();
+  const normalizedTargetGeneral = normalizeText(targetText);
+  const words = normalizedTargetGeneral.split(/\s+/).filter((w) => w.length > 3);
+
   const prioritizedToc = preferChapter
     ? [
         ...toc.filter((item) => item.href === preferChapter || item.href.includes(preferChapter)),
@@ -93,13 +69,13 @@ export async function reanchorByText(
       ]
     : toc;
 
+  // Pass 1: Exact and Partial matches
   for (const item of prioritizedToc) {
     try {
       const content = await loadChapterContent(item.href);
       const normalizedContent = content.toLowerCase();
-      const normalizedTarget = targetText.toLowerCase();
 
-      const exactIndex = normalizedContent.indexOf(normalizedTarget);
+      const exactIndex = normalizedContent.indexOf(normalizedTargetLower);
       if (exactIndex !== -1) {
         return {
           success: true,
@@ -109,7 +85,7 @@ export async function reanchorByText(
         };
       }
 
-      const partial = findPartialMatches(targetText, content);
+      const partial = findPartialMatches(normalizedTargetGeneral, content);
       if (partial) {
         return {
           success: true,
@@ -126,7 +102,7 @@ export async function reanchorByText(
             const subContent = await loadChapterContent(subitem.href);
             const subNormalized = subContent.toLowerCase();
 
-            const subExact = subNormalized.indexOf(normalizedTarget);
+            const subExact = subNormalized.indexOf(normalizedTargetLower);
             if (subExact !== -1) {
               return {
                 success: true,
@@ -136,7 +112,7 @@ export async function reanchorByText(
               };
             }
 
-            const subPartial = findPartialMatches(targetText, subContent);
+            const subPartial = findPartialMatches(normalizedTargetGeneral, subContent);
             if (subPartial) {
               return {
                 success: true,
@@ -156,13 +132,12 @@ export async function reanchorByText(
     }
   }
 
+  // Pass 2: Fuzzy word overlap
   for (const item of prioritizedToc) {
     try {
       const content = await loadChapterContent(item.href);
-      const normalizedTarget = normalizeText(targetText);
       const normalizedContent = normalizeText(content);
 
-      const words = normalizedTarget.split(/\s+/).filter((w) => w.length > 3);
       let matchCount = 0;
 
       for (const word of words) {

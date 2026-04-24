@@ -43,7 +43,7 @@ const itemVariants = {
   animate: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.4, ease: [0.4, 0, 0.2, 1] },
+    transition: { duration: 0.4, ease: [0.4, 0, 0.2, 1] as const },
   },
 };
 
@@ -96,13 +96,13 @@ export function LoginPage() {
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 0.4, scale: 1 }}
-          transition={{ duration: 1.5, ease: 'easeOut' }}
+          transition={{ duration: 1.5, ease: 'easeOut' as const }}
           className="absolute -top-1/2 -right-1/4 w-[800px] h-[800px] bg-accent/10 rounded-full blur-3xl"
         />
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 0.3, scale: 1 }}
-          transition={{ duration: 1.5, delay: 0.2, ease: 'easeOut' }}
+          transition={{ duration: 1.5, delay: 0.2, ease: 'easeOut' as const }}
           className="absolute -bottom-1/2 -left-1/4 w-[600px] h-[600px] bg-accent-secondary/10 rounded-full blur-3xl"
         />
       </div>
