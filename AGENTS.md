@@ -6,6 +6,7 @@
 - `plans/001-goap-roadmap.md` – GOAP phases + TRIZ links
 - `plans/002-006` – ADRs for stack, storage, auth, offline, annotations
 - `plans/007-implementation-phases.md` – current execution phase
+- `plans/011-dependency-migration-2026.md` – managed dependency upgrade strategy
 - `docs/coding-guide.md` – consolidated architecture + process decisions
 - `agents-docs/*.md` – workflow, skills, hooks, context, learnings
 
