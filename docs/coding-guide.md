@@ -1004,7 +1004,6 @@ Create these first:
 - `005-adr-offline-sync.md`
 - `006-adr-annotation-model.md`
 - `007-implementation-phases.md`
-- `011-dependency-migration-2026.md`
 
 ## ADR topics
 
