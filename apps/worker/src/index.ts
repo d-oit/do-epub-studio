@@ -1,3 +1,4 @@
+import { TRACE_HEADER, SPAN_HEADER } from '@do-epub-studio/shared';
 import type { Env } from './lib/env';
 import { jsonResponse } from './lib/responses';
 import {
@@ -43,21 +44,14 @@ import {
 } from './routes';
 import { requireAdminAuth } from './auth/admin-middleware';
 
-const corsHeaders: Record<string, string> = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-  Vary: 'Origin, Access-Control-Request-Headers',
-};
-
 async function handleRequest(env: Env, request: Request): Promise<Response> {
   const url = new URL(request.url);
   const path = url.pathname;
   const method = request.method;
 
   if (method === 'OPTIONS') {
-    const response = new Response(null, { status: 204, headers: corsHeaders });
-    return applyMinimalSecurityHeaders(response);
+    const response = new Response(null, { status: 204 });
+    return applyMinimalSecurityHeaders(applyCorsHeaders(response, request, env));
   }
 
   if (path === '/api/access/request' && method === 'POST') {
@@ -289,7 +283,7 @@ export default {
     try {
       const response = await handleRequest(env, request);
       logRequestEnd(context, response.status);
-      return applySecurityHeaders(applyCorsHeaders(withTraceHeaders(response, context)));
+      return applySecurityHeaders(applyCorsHeaders(withTraceHeaders(response, context), request, env));
     } catch (error) {
       logRequestError(context, error);
       logRequestEnd(context, 500);
@@ -304,14 +298,26 @@ export default {
         },
         500,
       );
-      return applySecurityHeaders(applyCorsHeaders(withTraceHeaders(failure, context)));
+      return applySecurityHeaders(applyCorsHeaders(withTraceHeaders(failure, context), request, env));
     }
   },
 };
 
-function applyCorsHeaders(response: Response): Response {
-  Object.entries(corsHeaders).forEach(([key, value]) => {
-    response.headers.set(key, value);
-  });
+/**
+ * Apply restricted CORS headers based on the environment configuration.
+ * Hardens the API by restricting allowed origins to the application's base URL.
+ */
+function applyCorsHeaders(response: Response, request: Request, env: Env): Response {
+  const origin = request.headers.get('Origin');
+  const allowedOrigin = origin === env.APP_BASE_URL ? origin : env.APP_BASE_URL;
+
+  response.headers.set('Access-Control-Allow-Origin', allowedOrigin);
+  response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+  response.headers.set(
+    'Access-Control-Allow-Headers',
+    `Content-Type, Authorization, ${TRACE_HEADER}, ${SPAN_HEADER}`,
+  );
+  response.headers.set('Vary', 'Origin, Access-Control-Request-Headers');
+
   return response;
 }
