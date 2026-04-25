@@ -1532,6 +1532,7 @@ A change is done only if:
 - typecheck passes
 - tests pass
 - build passes
+- generated artifacts (e.g., `playwright-report/`, `test-results/`, `verification_output.txt`) are NOT committed
 - security implications reviewed
 - docs updated if behavior changed
 
