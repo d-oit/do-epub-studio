@@ -108,9 +108,17 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Run tests
-        run: pnpm test
+        run: pnpm test > verification_output.txt 2>&1 || (cat verification_output.txt && exit 1)
         env:
           NODE_OPTIONS: --max-old-space-size=4096
+
+      - name: Upload verification output
+        uses: actions/upload-artifact@4ced583cc82f56b106093f1ef103859663784180 # v4.6.1
+        if: always()
+        with:
+          name: verification-output
+          path: verification_output.txt
+          retention-days: 7
 
   build:
     name: Build

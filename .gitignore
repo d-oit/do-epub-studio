@@ -50,7 +50,11 @@ dist/
 
 # Playwright
 .playwright/
-playwright-reports/
+playwright-report/
+test-results/
+
+# Verification
+verification_output.txt
 
 # Coverage
 coverage/
