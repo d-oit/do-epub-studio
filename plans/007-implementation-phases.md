@@ -1,4 +1,8 @@
 # Phase 1: Core Infrastructure & P0 Features
+
+## See Also
+- **Plan 011**: Coding Workflow Improvements — AGENTS.md compliance, security scripts, quality gate enhancements
+
 - [x] Initial monorepo setup (Vite, PWA, Worker)
 - [x] Turso / libSQL schema & migrations
 - [x] EPUB.js basic integration
