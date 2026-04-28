@@ -197,8 +197,7 @@ process_skill_file() {
     fi
 }
 
-echo "Validating reference links in SKILL.md files..."
-echo ""
+
 
 if [[ ! -d "$SKILLS_DIR" ]]; then
     echo -e "${YELLOW}⚠${NC} Skills directory not found: $SKILLS_DIR"
