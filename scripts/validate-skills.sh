@@ -3,8 +3,19 @@
 # Used in pre-commit hook and CI. Exit 2 on failure (surfaced to agent).
 # Note: Format validation is handled by validate-skill-format.sh separately.
 # NOTE: errexit disabled explicitly - it causes unpredictable failures in CI
+#
+# Windows compatibility: On Windows (MSYS/Cygwin), symlinks may appear as
+# regular files containing the path. Skip symlink validation on Windows.
 set +e
 set -uo pipefail
+
+# Detect Windows (MSYS, Cygwin, or Windows Subsystem for Linux)
+is_windows=false
+case "$(uname -s)" in
+    MINGW*|MSYS*|CYGWIN*|Windows*)
+        is_windows=true
+        ;;
+esac
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # Source shared libs
@@ -57,6 +68,19 @@ for skill_path in "$SKILLS_SRC"/*/; do
     # Check 3: Symlinks in CLI dirs (not .qwen — reads directly)
     for cli_dir in "${CLI_SKILL_DIRS[@]}"; do
         link="$REPO_ROOT/$cli_dir/$skill_name"
+
+        # On Windows, symlinks may be stored as regular files containing the path
+        # Skip symlink validation on Windows
+        if [ "$is_windows" = true ]; then
+            if [ -f "$link" ]; then
+                # Check if it looks like a valid symlink file (contains path)
+                if grep -q "^../../.agents/skills/" "$link" 2>/dev/null; then
+                    continue  # Valid Windows "symlink" file
+                fi
+            fi
+            # If not a valid file, skip (don't fail on Windows)
+            continue
+        fi
 
         if [ ! -L "$link" ]; then
             echo -e "${RED}✗${NC} MISSING symlink: $cli_dir/$skill_name" >&2

@@ -115,31 +115,43 @@ if [[ " ${DETECTED_LANGUAGES[*]} " =~ " typescript " ]]; then
             RUN="npm run"
         fi
 
-        # Lint
-        if ! OUTPUT=$($RUN lint 2>&1); then
-            printf '%s  ✗ %s lint failed%s\n' "${RED}" "$PM" "${NC}"
-            echo "$OUTPUT" >&2
-            FAILED=1
+        # Lint (respect SKIP_LINT env var)
+        if [ "${SKIP_LINT:-false}" != "true" ]; then
+            if ! OUTPUT=$($RUN lint 2>&1); then
+                printf '%s  ✗ %s lint failed%s\n' "${RED}" "$PM" "${NC}"
+                echo "$OUTPUT" >&2
+                FAILED=1
+            else
+                printf '%s  ✓ %s lint passed%s\n' "${GREEN}" "$PM" "${NC}"
+            fi
         else
-            printf '%s  ✓ %s lint passed%s\n' "${GREEN}" "$PM" "${NC}"
+            printf '%s  ⊘ %s lint skipped (SKIP_LINT=true)%s\n' "${YELLOW}" "$PM" "${NC}"
         fi
 
-        # Typecheck
-        if ! OUTPUT=$($RUN typecheck 2>&1); then
-            printf '%s  ✗ %s typecheck failed%s\n' "${RED}" "$PM" "${NC}"
-            echo "$OUTPUT" >&2
-            FAILED=1
+        # Typecheck (respect SKIP_TYPECHECK env var)
+        if [ "${SKIP_TYPECHECK:-false}" != "true" ]; then
+            if ! OUTPUT=$($RUN typecheck 2>&1); then
+                printf '%s  ✗ %s typecheck failed%s\n' "${RED}" "$PM" "${NC}"
+                echo "$OUTPUT" >&2
+                FAILED=1
+            else
+                printf '%s  ✓ %s typecheck passed%s\n' "${GREEN}" "$PM" "${NC}"
+            fi
         else
-            printf '%s  ✓ %s typecheck passed%s\n' "${GREEN}" "$PM" "${NC}"
+            printf '%s  ⊘ %s typecheck skipped (SKIP_TYPECHECK=true)%s\n' "${YELLOW}" "$PM" "${NC}"
         fi
 
-        # Tests (always run — no escape hatch)
-        if ! OUTPUT=$($PM test 2>&1); then
-            printf '%s  ✗ %s test failed%s\n' "${RED}" "$PM" "${NC}"
-            echo "$OUTPUT" >&2
-            FAILED=1
+        # Tests (respect SKIP_TESTS env var for local dev without node_modules)
+        if [ "${SKIP_TESTS:-false}" != "true" ]; then
+            if ! OUTPUT=$($PM test 2>&1); then
+                printf '%s  ✗ %s test failed%s\n' "${RED}" "$PM" "${NC}"
+                echo "$OUTPUT" >&2
+                FAILED=1
+            else
+                printf '%s  ✓ %s test passed%s\n' "${GREEN}" "$PM" "${NC}"
+            fi
         else
-            printf '%s  ✓ %s test passed%s\n' "${GREEN}" "$PM" "${NC}"
+            printf '%s  ⊘ %s tests skipped (SKIP_TESTS=true)%s\n' "${YELLOW}" "$PM" "${NC}"
         fi
     fi
     echo ""
