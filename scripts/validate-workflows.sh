@@ -37,7 +37,7 @@ for file in "${WORKFLOW_FILES[@]}"; do
 
     # Check YAML syntax
     if [ -n "$YAML_CHECK" ]; then
-        if ! $YAML_CHECK -c "import yaml; yaml.safe_load(open('$file'))" 2>/dev/null; then
+        if ! $YAML_CHECK -c "import yaml; yaml.safe_load(open(\"$file\"))" 2>/dev/null; then
             printf '%s✗ Invalid YAML syntax: %s%s\n' "${RED}" "$file" "${NC}"
             FAILED=1
             continue
