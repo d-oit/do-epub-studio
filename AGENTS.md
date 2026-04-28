@@ -93,6 +93,7 @@ Run this before finalizing ANY response:
 | **Reader/UI** | `epub-rendering-and-cfi`, `reader-ui-ux`, `accessibility-auditor` |
 | **Testing** | `testing-strategy`, `testdata-builders`, `test-runner`, `dogfood` |
 | **DevOps** | `github-workflow`, `cicd-pipeline`, `migration-refactoring` |
+| **Workflow** | `github-actions-version-fix` |
 | **Security** | `security-code-auditor`, `privacy-first` |
 | **Quality** | `code-quality`, `code-review-assistant`, `shell-script-quality`, `anti-ai-slop`, `agents-md` |
 
