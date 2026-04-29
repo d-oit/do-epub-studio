@@ -44,7 +44,7 @@ gh api repos/{owner}/{repo}/releases --jq '.[].tag_name' | head -20
 gh api repos/{owner}/{repo}/releases/latest --jq '.tag_name'
 
 # Get commit SHA for a specific tag
-gh api repos/{owner}/{repo}/commits/v4 --jq '.sha'
+gh api repos/{owner}/{repo}/git/ref/tags/v4 --jq '.object.sha'
 ```
 
 ### Step 3: Verify SHA Exists
@@ -97,9 +97,9 @@ for ACTION in $ACTIONS; do
   VERSION=$(echo $ACTION | cut -d'@' -f2)
   OWNER=$(echo $REPO | cut -d'/' -f1)
   NAME=$(echo $REPO | cut -d'/' -f2)
-
+  
   if [[ $VERSION == v* ]]; then
-    SHA=$(gh api repos/$OWNER/$NAME/commits/$VERSION --jq '.sha' 2>/dev/null)
+    SHA=$(gh api repos/$OWNER/$NAME/git/ref/tags/$VERSION --jq '.object.sha' 2>/dev/null)
     [ -n "$SHA" ] && echo "OK: $REPO@$VERSION" || echo "FAIL: $REPO@$VERSION"
   fi
 done
