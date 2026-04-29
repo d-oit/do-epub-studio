@@ -1,0 +1,35 @@
+{
+  "skill_name": "github-actions-version-fix",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "The CI pipeline is failing with error 'Unable to resolve action actions/upload-artifact, exact version v4.6.1 not found'. Find the correct commit SHA for actions/upload-artifact@v4 and update the workflow file at .github/workflows/ci.yml.",
+      "expected_output": "The output should include the correct commit SHA for actions/upload-artifact@v4 (retrieved via gh api), verification that the SHA exists, and the updated workflow file with the correct version or SHA.",
+      "assertions": [
+        "Output includes a valid commit SHA for actions/upload-artifact",
+        "Output verifies the SHA exists using gh api",
+        "Output shows the workflow file was updated with the correct version"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "A workflow uses azure/login@v1.2.3 which doesn't exist. Find the latest available version of azure/login and provide the correct version tag or SHA to use.",
+      "expected_output": "Should identify that v1.2.3 is invalid, find available versions/tags for azure/login, and provide the correct version to use.",
+      "assertions": [
+        "Output identifies the version v1.2.3 as invalid",
+        "Output lists available versions for azure/login",
+        "Output provides a valid version tag or SHA to use"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Create a bash script that checks all GitHub Actions used in .github/workflows/ci.yml and verifies each action's version tag exists. The script should output which actions have valid versions and which have invalid versions.",
+      "expected_output": "A bash script that extracts uses: statements from the workflow, queries each action's tags via gh api, and reports validity status.",
+      "assertions": [
+        "Script extracts action references from workflow file",
+        "Script uses gh api to query action repositories",
+        "Script reports valid vs invalid action versions"
+      ]
+    }
+  ]
+}
