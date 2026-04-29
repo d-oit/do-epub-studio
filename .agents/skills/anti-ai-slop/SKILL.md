@@ -1,11 +1,8 @@
-do-epub-studio/.agents/skills/anti-ai-slop/SKILL.md
-```
-
 ---
 version: "1.0.0"
 name: anti-ai-slop
 description: >
-  Apply this skill whenever the user wants to audit, fix, redesign, write, or review UI, UX, copy, or text to avoid the generic "AI slop" aesthetic of 2025–2026. Triggers include: "make this feel less AI", "this looks too generic", "avoid AI clichés", "audit my copy", "anti-pattern review", "humanize this", "this feels soulless", "too corporate", "fix the UX writing", "why does this feel like ChatGPT made it", "anti-design", "brutalist", "raw", "intentional", "authentic", "distinctive", "not like every other AI app". Also trigger when producing new UI, copy, or UX flows and the user cares about quality and distinctiveness.
+  Apply this skill whenever the user wants to audit, fix, redesign, write, or review UI, UX, copy, or text to avoid the generic "AI slop" aesthetic of 2025–2026.
 category: quality
 allowed-tools: Read Write Edit Glob Grep
 license: MIT
@@ -13,252 +10,146 @@ license: MIT
 
 # Anti-AI-Slop Skill — 2026 Edition
 
-AI tools flooded the design and copy space. The result: a recognizable monoculture. This skill is a systematic antidote. Use it to audit existing work OR to guide new creation from scratch.
+AI tools flooded the design and copy space. The result: a recognizable monoculture. This skill is a systematic antidote.
 
 ## How to Use This Skill
 
-- **Audit mode** — User shares existing UI/copy/UX flow. Run through the diagnostic checklists below. Call out every pattern by name. Suggest replacements.
-- **Creation mode** — User wants new UI/copy/flow. Read the "What to do instead" sections first, then produce work that avoids all listed patterns.
-- **Spot-fix mode** — User points to one specific element. Diagnose it, explain why it's sloppy, rewrite/redesign it.
+- **Audit mode** — Run through the diagnostic checklists. Name the sin before fixing it.
+- **Creation mode** — edit_file work that avoids all listed patterns.
+- **Spot-fix mode** — Diagnose specific element, explain why it's sloppy, rewrite/redesign it.
 
-Always **name the sin** before fixing it. Specificity builds trust.
-
-## Part 1 — AI-Slop UI Patterns (Visual Design)
+## Part 1 — AI-Slop UI Patterns
 
 ### The Canon of Slop
 
-These visual patterns define the 2024–2026 AI aesthetic monoculture. Flag every one you see:
-
 | Pattern | What it looks like | Why it's slop |
 |---------|-------------------|---------------|
-| **Purple gradient hero** | `#7c3aed → #2563eb` on white bg | Default Tailwind AI app palette. Seen on 40,000+ products |
-| **Glassmorphism cards** | Frosted glass, `backdrop-blur`, `bg-white/10` | Overused since iOS 15, now shorthand for "I followed a tutorial" |
-| **Rounded everything** | `border-radius: 24px+` on every element | Removes personality, softens until nothing has weight |
-| **Inter / DM Sans / Space Grotesk** | Default "modern" sans | These three fonts now signal "AI-generated UI" more than any other single cue |
-| **Emojis as icons in headers** | ✨ Supercharge your workflow 🚀 | Startup theater. Hollow optimism. |
-| **Hero headline formula** | `[Verb] your [noun] with [product]` | "Supercharge your workflow with Aria" — indistinguishable from 10,000 others |
-| **Three-column feature grid** | Icon + bold label + 1 sentence | Every SaaS landing page since 2019 |
-| **Testimonial carousel with headshots** | Circular avatar, name, company, 1 sentence | Invisible. Nobody reads it. |
-| **CTA: "Get started for free"** | Large button, primary color | Meaningless. Says nothing specific. |
-| **Empty states with illustration + button** | Lottie animation or SVG blob person | Cute once. Now patronizing. |
-| **Skeleton loaders for everything** | Gray pulse bars | Often used to mask poor performance instead of fix it |
-| **Dark mode = black bg + purple accent** | `#0f0f0f` + `#8b5cf6` | The "hacker aesthetic" as sold by Vercel clones |
-| **Animated gradient text** | Moving rainbow or purple-blue sweep on headline text | Peak 2023 AI startup energy. Looks desperate |
-| **"Powered by AI" badge** | Small badge or chip somewhere on the UI | Adds nothing. Trust signal that signals nothing |
-| **Dashboard with 6+ metric cards** | Big number, small label, trend arrow | Data theater. Usually none of it is actionable |
+| **Purple gradient hero** | `#7c3aed → #2563eb` on white bg | Default Tailwind AI app palette |
+| **Glassmorphism cards** | Frosted glass, `backdrop-blur` | Overused since iOS 15 |
+| **Rounded everything** | `border-radius: 24px+` | Removes personality |
+| **Inter / DM Sans** | Default "modern" sans | Signals AI-generated UI |
+| **Hero headline formula** | `[Verb] your [noun] with [product]` | Indistinguishable from 10,000 others |
+| **Three-column feature grid** | Icon + bold label + 1 sentence | Every SaaS landing page |
+| **CTA: "Get started for free"** | Large button, primary color | Meaningless |
+| **Empty states with illustration** | Lottie animation or SVG blob | Cute once, now patronizing |
+| **Dark mode = black + purple** | `#0f0f0f` + `#8b5cf6` | Hacker aesthetic |
+| **Animated gradient text** | Moving rainbow on headline | Peak 2023 startup energy |
 
 ### What to Do Instead
 
-- **Typography first.** Choose a font combination that is specific to the context. Research type history. Use a serif with character for body, a grotesque with optical quirks for display — or invert. Never use the font "because it's clean."
+- **Typography first.** Choose fonts specific to the context. Use serif with character for body.
 - **Commit to one extreme.** Brutally minimal OR maximally dense. The middle is where slop lives.
-- **Use real color theory.** Complementary pairs, analogous schemes, split-complementary. Not "purple because AI."
-- **Space is a design element.** Generous negative space with one dense anchor beats uniform padding everywhere.
-- **Let the content shape the layout.** Don't force content into a 3-column grid because that's the template.
-- **Reference actual design movements.** Swiss grid. Bauhaus. Emigre magazine. Brutalist web. Dutch constructivism. Tschichold. Pick one and execute it with intent.
+- **Use real color theory.** Complementary pairs, analogous schemes. Not "purple because AI."
+- **Reference actual design movements.** Swiss grid. Bauhaus. Brutalist web.
 
-## Part 2 — AI-Slop UX Patterns (Interaction & Flow)
+## Part 2 — AI-Slop UX Patterns
 
 ### The Canon of Slop
-
-| Pattern | What it looks like | Why it's slop |
-|---------|-------------------|---------------|
-| **Onboarding modal on first load** | "Welcome to [Product]! Let's get you set up 🎉" | Interrupts before the user has context. Nobody reads it. |
-| **5-step onboarding wizard** | Progress bar, next/back, confetti at end | Treats users as suspects who need to be processed |
-| **Tooltip tours** | Floating box pointing at UI elements in sequence | Teaches the wrong interface instead of fix the interface |
-| **"Are you sure?" confirm dialogs** | Modal for every delete action | Trust issues. Use undo instead. |
-| **Generic empty states** | "No data yet! Click + to add your first item" | Zero help. Doesn't explain what the item IS or why I'd want one |
-| **Toast notifications for everything** | "Saved!", "Deleted!", "Updated!" | Noise. Users learn to ignore them in 2 sessions |
-| **Infinite scroll + load more button** | Both at the same time | Design indecision shipped as a feature |
-| **Search that requires exact match** | Typo → no results → dead end | Punishes the user for trusting the product |
-| **Form with 8+ fields to get started** | Sign up → giant form → submit → maybe enter | Commitment before value. Backwards. |
-| **"Loading..." with no progress cue** | Spinner, no ETA, no context | I don't know if this is taking 1 second or 1 minute |
-| **Every action requires a reload** | Click save → full page refresh → scroll lost | 2012 called |
-| **Hamburger menu on desktop** | Hidden navigation because mobile-first was misread | Discovery failure. Punishes exploration. |
-| **Hover states only** | Functionality only revealed on hover | Mobile users, keyboard users, discoverers all fail |
-
-### Responsive Anti-Patterns
 
 | Pattern | Why it's slop |
 |---------|---------------|
-| Hamburger menu on desktop | Discovery failure. Users can't explore. |
-| Tiny touch targets on mobile | Frustrating, accessibility fail |
-| Desktop-only layout | Unusable, forces pinch-zoom |
-| Hidden primary actions | Mobile users can't complete tasks |
-| Intrusive popups on mobile | Blocks content, frustrating |
-| Inconsistent navigation | Users get lost when resizing |
-
-### Responsive Best Practices
-
-| Viewport | Navigation | Layout |
-|----------|------------|--------|
-| **Mobile (< 640px)** | Bottom tab bar OR slide-out drawer | Stacked, full-width |
-| **Tablet (640-1024px)** | Horizontal nav, collapsible sidebar | Hybrid, 2-column max |
-| **Desktop (> 1024px)** | Persistent sidebar OR top nav | Full sidebar (280px) |
-
-**Always verify:**
-- Touch targets ≥ 44px on mobile
-- Primary actions visible without scrolling
-- Navigation accessible at all sizes
-- Content readable without horizontal scroll
+| Onboarding modal on first load | Interrupts before context |
+| 5-step onboarding wizard | Treats users as suspects |
+| Tooltip tours | Teaches wrong interface |
+| "Are you sure?" confirm dialogs | Trust issues. Use undo instead. |
+| Generic empty states | Zero help |
+| Toast notifications for everything | Noise. Users ignore them. |
+| Search that requires exact match | Punishes user for trusting product |
+| Form with 8+ fields to get started | Commitment before value |
+| Hamburger menu on desktop | Discovery failure |
 
 ### What to Do Instead
 
-- **Don't teach the UI — fix the UI.** If users need a tour, the interface is unclear. Redesign instead.
-- **Undo over confirm.** Give users a 5–10 second undo window on destructive actions. Way less friction.
-- **Empty states with one specific next action.** Tell users what they'll get, why it matters, exactly what to do.
-- **Progressive disclosure.** Start with the minimum viable form. Add fields only when the user needs them.
-- **Optimistic UI.** Show the outcome immediately, reconcile in the background. Feels instant.
-- **Contextual notifications.** Surface feedback inline, near the action. Not a toast that floats in a corner.
+- **Don't teach the UI — fix the UI.** If users need a tour, redesign.
+- **Undo over confirm.** 5-10 second undo window on destructive actions.
+- **Progressive disclosure.** Start with minimum viable form.
+- **Optimistic UI.** Show outcome immediately, reconcile in background.
 
-## Part 3 — AI-Slop Copy & Text Patterns
+## Part 3 — AI-Slop Copy Patterns
 
-### The Canon of Slop
+### Hollow Affirmations
 
-#### Hollow Affirmations
-
-Words that exist only to fill space and seem warm:
-- "Absolutely!", "Certainly!", "Great question!", "I'd be happy to help with that"
+Words that exist only to fill space:
+- "Absolutely!", "Certainly!", "Great question!"
 - "Sounds great!", "That makes sense!"
 
-**Fix:** Delete them. Start with the actual content.
+**Fix:** Delete them. Start with actual content.
 
-#### AI Corporate Superlatives
+### AI Corporate Superlatives
 
-- "Powerful", "seamless", "intuitive", "robust", "next-generation"
-- "Cutting-edge", "state-of-the-art", "best-in-class"
-- "Unlock the full potential of..."
-- "Transform the way you..."
+- "Powerful", "seamless", "intuitive", "robust"
+- "Cutting-edge", "state-of-the-art"
 - "Supercharge your..."
 
-**Fix:** Replace with specific claims. What does it actually do? By how much? For whom?
+**Fix:** Replace with specific claims. What does it actually do? By how much?
 
-#### The Listicle Reflex
-
-AI defaults to bullet points for everything. Three bullets where one sentence works. Numbered lists for concepts with no actual sequence. Fake hierarchy with `**Bold:** then explanation` for everything.
-
-**Fix:** Write prose. Use a list only when there is a genuine enumerable set AND scanning adds value.
-
-#### Transition Theater
+### Transition Theater
 
 - "In conclusion...", "To summarize...", "In essence..."
-- "It's worth noting that...", "It's important to remember..."
-- "With that said...", "Having said that..."
-- "At the end of the day..."
+- "It's worth noting that..."
 
-**Fix:** Just say the thing. These phrases delay the idea without adding to it.
+**Fix:** Just say the thing. These delay the idea without adding.
 
-#### Emoji Inflation
+### Emoji Inflation
 
-Using 🚀 💡 ✨ ⚡ 🔥 as substitutes for meaning. One emoji in a headline was interesting in 2020. Now it's punctuation-as-performance.
+Using 🚀 💡 ✨ ⚡ 🔥 as substitutes for meaning.
 
-**Fix:** Use zero emojis unless the context is genuinely casual/social. If you use one, mean it.
-
-#### The Feature Announcement Formula
-
-"We're excited to announce [Feature]! This powerful new capability lets you [vague verb] your [noun] like never before. Stay tuned for more updates!"
-
-**Fix:** What does it do, concretely? What problem did it solve? Who asked for it? Write a changelog, not a press release for your own team.
-
-#### Hedging Chains
-
-- "This may potentially be a possible consideration for..."
-- "Generally speaking, in most cases, it tends to..."
-- "You might want to consider potentially looking into..."
-
-**Fix:** Own your statements or explicitly flag uncertainty once, clearly.
-
-#### The Empathy Performance
-
-"I understand how frustrating it can be when things don't work as expected. I want to assure you that we take your concerns very seriously."
-
-This is error message theater. It performs care without providing help.
-
-**Fix:** Explain what happened, why, and exactly what to do next.
-
-### Product Copy Sins (Landing Pages)
-
-| Sin | Example | Fix |
-|-----|---------|-----|
-| Features listed as verbs | "Collaborate, Create, Ship" | What does it actually DO? |
-| Social proof without specifics | "Trusted by 10,000+ teams" | 10,000 teams doing what? What outcome? |
-| Vague problem statement | "Work is broken" | Whose work? Broken how? |
-| The "journey" metaphor | "Begin your journey today" | It's software, not Tolkien |
-| Future-tense promises | "Will change the way you think about X" | Show it changing it. Now. |
+**Fix:** Use zero unless context is genuinely casual. If you use one, mean it.
 
 ### UX Writing Sins
 
 | Sin | Example | Fix |
 |-----|---------|-----|
-| Error: blame the user | "Invalid input" | "Email addresses need an @ sign" |
-| CTA: describe the UI action | "Click here" | "Download the report" |
-| Label: use noun for verb slot | "Settings" button that saves | "Save settings" |
-| Success: announce the action | "Saved!" | "Changes saved — live in 30 seconds" |
-| Placeholder as label | Input with placeholder "Email" and no label | Use a real label. Always. |
-| Confirmation copy that restates the question | "Are you sure you want to delete? This will delete the item." | "Delete [Item Name]? This can't be undone." |
+| Error: blame user | "Invalid input" | "Email addresses need an @ sign" |
+| CTA: describe UI action | "Click here" | "Download the report" |
+| Success: announce action | "Saved!" | "Changes saved — live in 30 seconds" |
+| Placeholder as label | Input with placeholder "Email" | Use a real label |
 
 ## Part 4 — Audit Workflow
 
-When given something to review:
-- **Scan for patterns.** Check all three canons (UI, UX, Copy). List every match by name.
-- **Score severity.** Not all slop is equal:
-  - 🔴 **Structural** — Requires redesign or rewrite. Fundamental problem.
-  - 🟡 **Surface** — Easy fix. Wrong word, wrong color, wrong font.
-  - 🟢 **Cosmetic** — Minor. Polish pass.
+- **Scan for patterns.** Check all canons. List every match by name.
+- **Score severity:**
+  - 🔴 **Structural** — Requires redesign. Fundamental problem.
+  - 🟡 **Surface** — Easy fix. Wrong word or color.
+  - 🟢 **Cosmetic** — Minor polish.
 
-- **Prioritize.** Fix structural first. Don't polish a broken foundation.
-- **Rewrite/redesign.** For each flagged item, provide the specific replacement — not generic advice.
-- **Explain the why.** Name the design principle behind each fix.
+- **Prioritize.** Fix structural first.
+- **Rewrite/redesign.** Specific replacement, not generic advice.
 
 ## Part 5 — The Positive Doctrine
 
-Anti-slop isn't just negation. These are the affirmative principles:
-
 ### Design
 
-- **Specificity > universality.** Design for this user, this task, this moment.
-- **Tension is interest.** Contrast, asymmetry, and friction (used deliberately) are memorable. Harmony can be invisible.
-- **Constraints create identity.** Impose a real restriction and design within it. The best brands have rules.
-- **Reference the real world.** Materials, textures, physical objects, historical artifacts. Not just other apps.
+- **Specificity > universality.** Design for this user, this task.
+- **Tension is interest.** Contrast, asymmetry are memorable.
+- **Constraints create identity.** Impose real restrictions.
 
 ### UX
 
-- **Respect the user's time.** Every click, form field, and modal is a tax. Minimize it.
-- **Be opinionated.** Show users the best path. Don't present 6 equal options when one is clearly right.
-- **Context over consistency.** The right interaction for this moment > the component library default.
+- **Respect user's time.** Every click is a tax. Minimize it.
+- **Be opinionated.** Show best path. Don't present 6 equal options.
 
 ### Copy
 
-- **Specific > general.** "Saves 3 hours per week" > "Saves time"
+- **Specific > general.** "Saves 3 hours" > "Saves time"
 - **Active > passive.** "We deleted it" > "It was deleted"
-- **Short > long.** Read the sentence aloud. Cut every word that doesn't earn its place.
-- **Voice = point of view.** Have one. Don't round off all the edges trying to please everyone.
-- **Write for one person.** Not "users". Not "teams". The specific human who will read this specific sentence.
+- **Short > long.** Cut every word that doesn't earn its place.
+- **Write for one person.** Not "users". The specific human who will read this.
 
-## EPUB Studio Specific
+## EPUB Reader Specific
 
 ### Reader UI Anti-Patterns
 
 | Pattern | Why it's slop |
 |---------|---------------|
-| Generic "Welcome" modal on first EPUB open | Interrupts reading flow |
-| Progress bar with percentage only | Should show chapter location too |
-| Font picker with 50+ options | Choice paralysis. Pick 4-6 good ones. |
+| Generic "Welcome" modal on first EPUB | Interrupts reading flow |
+| Progress bar with percentage only | Should show chapter location |
 | Settings hidden in hamburger menu | Accessibility fail on desktop |
-| Annotation tools floating toolbar | Obscures content |
-
-### Reader Copy Anti-Patterns
-
-| Sin | Fix |
-|-----|-----|
-| "Loading your book..." | Just show the book. Loading states for slow connections only. |
-| "Great choice!" on chapter select | Don't anthropomorphize. Just navigate. |
-| "You have 3 highlights" toast | Show in margin, not popup. |
 
 ## Integration
 
 - **code-review-assistant**: Use in PR reviews
-- **reader-ui-ux**: Apply to EPUB reader specifically
-- **github-readme**: Apply to documentation
+- **reader-ui-ux**: Apply to EPUB reader
 
 ## Quality Checklist
 
@@ -266,8 +157,7 @@ Anti-slop isn't just negation. These are the affirmative principles:
 - [ ] All identified patterns named and explained
 - [ ] Specific replacements provided for each
 - [ ] Design principles cited for changes
-- [ ] Mobile/tablet/desktop verified if UI changed
 
 ## Summary
 
-Anti-slop is a discipline, not a style. It means choosing specificity over templates, tension over harmony, and respect for users over pleasing everyone. The result: work that feels considered, human, and real.
+Anti-slop is a discipline, not a style. Choose specificity over templates, tension over harmony, and respect for users over pleasing everyone.
