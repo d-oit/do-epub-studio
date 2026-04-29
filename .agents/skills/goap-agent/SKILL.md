@@ -1,6 +1,3 @@
-do-epub-studio/.agents/skills/goap-agent/SKILL.md
-```
-
 ---
 version: "1.0.0"
 name: goap-agent
@@ -21,7 +18,6 @@ Always use the `plans/` folder for all planning files.
 
 ## When to Use This Skill
 
-Use this skill when facing:
 - **Complex Multi-Step Tasks**: Tasks requiring 5+ distinct steps
 - **Cross-Domain Problems**: Issues spanning multiple areas (DB, API, UI, tests)
 - **Optimization Opportunities**: Tasks benefiting from parallel execution
@@ -46,14 +42,9 @@ Use this skill when facing:
 
 ## Phase 1: Task Analysis
 
-```markdown
-## Task Analysis
-
-**Primary Goal**: [Clear statement of what success looks like]
-**Constraints**: [Time, Resources, Dependencies]
+**Primary Goal**: Clear statement of what success looks like
+**Constraints**: Time, Resources, Dependencies
 **Complexity**: Simple/Medium/Complex
-**Deadline**: [If applicable]
-```
 
 Context: Use Explore agent, check past patterns, identify available agents/skills.
 
@@ -61,24 +52,20 @@ Context: Use Explore agent, check past patterns, identify available agents/skill
 
 Use **task-decomposition** skill to break down:
 
-```markdown
-### Sub-Goals
 1. [Component 1] - Priority: P0, Deps: none
 2. [Component 2] - Priority: P1, Deps: Component 1
 3. [Component 3] - Priority: P1, Deps: Component 1
-4. [Component 4] - Priority: P2, Deps: Component 2, 3
-```
 
 **Principles**: Atomic, Testable, Independent, Assigned
 
 ## Phase 3: Strategy Selection
 
-| Strategy | When to Use | Example |
-|----------|-------------|---------|
-| **Parallel** | Tasks have no dependencies | Multiple UI components, independent API endpoints |
-| **Sequential** | Tasks depend on each other | Schema → Migration → API → UI |
-| **Swarm** | Many similar small tasks | Fix all occurrences of a pattern |
-| **Hybrid** | Mixed dependencies | Parallel for research, sequential for implementation |
+| Strategy | When to Use |
+|----------|-------------|
+| **Parallel** | Tasks have no dependencies |
+| **Sequential** | Tasks depend on each other |
+| **Swarm** | Many similar small tasks |
+| **Hybrid** | Mixed dependencies |
 
 ### Decision Tree
 
@@ -102,9 +89,6 @@ Are tasks independent?
 
 ## Phase 5: Execution Planning
 
-```markdown
-## Execution Plan
-
 - **Strategy**: [Parallel/Sequential/Swarm/Hybrid]
 - **Quality Gates**: [N checkpoints]
 
@@ -115,7 +99,6 @@ Are tasks independent?
 ### Phase 2: Implementation
 - Tasks: [List]
 - Quality Gate: [Criteria]
-```
 
 ## Phase 6: Coordinated Execution
 
@@ -133,51 +116,38 @@ Are tasks independent?
 
 ## Phase 7: Result Synthesis
 
-```markdown
-## Summary
-
+```
 ✓ Completed: [Task list]
 📦 Deliverables: [Files created/modified]
 ⚠️ Blocked: [Any issues]
 ✅ Quality: [Gate results]
-
-## Next Steps
-- [Recommended follow-up tasks]
 ```
 
 ## EPUB Studio Specific Patterns
 
 ### Feature Implementation Pattern
 
-```
 1. TRIZ Analysis → Identify contradictions
 2. Database (turso-db) → Schema + migrations
 3. API (cloudflare-worker-api) → Routes + handlers
 4. Frontend (reader-ui-ux) → Components + state
 5. Testing (testing-strategy) → Unit + E2E
-6. Documentation → Update docs
-```
 
 ### Bug Fix Pattern
 
-```
 1. Reproduce → Dogfood/testing-strategy
 2. Diagnose → Root cause analysis
 3. Design → Solution with TRIZ if architectural
 4. Fix → Appropriate skill by area
 5. Verify → Tests pass
-6. Prevent → Add test coverage, update docs
-```
+6. Prevent → Add test coverage
 
 ### Refactoring Pattern
 
-```
 1. Analyze → Current state, dependencies
 2. Plan → Migration path with TRIZ if trade-offs
 3. Execute → Incremental changes
 4. Validate → Tests, typecheck, lint
-5. Document → Update architecture docs
-```
 
 ## Error Handling
 
@@ -186,7 +156,6 @@ Are tasks independent?
 | Agent fails | Retry → Reassign → Modify → Escalate |
 | Quality gate fails | Fix → Re-run gate |
 | Dependency blocked | Re-order → Parallel work-around |
-| New information | Re-analyze → Update plan |
 
 ## Quality Checklist
 
@@ -195,7 +164,6 @@ Are tasks independent?
 - [ ] Dependencies mapped correctly
 - [ ] Strategy matches task characteristics
 - [ ] Quality gates defined between phases
-- [ ] Agent assignments match task requirements
 - [ ] Plan written to `plans/` directory
 - [ ] Results synthesized after completion
 
@@ -221,4 +189,3 @@ GOAP enables systematic planning through:
 4. **Coordination** - Assign to specialized agents
 5. **Execution** - Run with quality gates
 6. **Synthesis** - Document results and next steps
-

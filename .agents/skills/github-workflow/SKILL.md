@@ -1,14 +1,9 @@
-do-epub-studio/.agents/skills/github-workflow/SKILL.md
-```
-
-```markdown
 ---
 version: "1.0.0"
 name: github-workflow
 description: >
   Complete GitHub workflow automation - push, create branch/PR, monitor Actions
-  with pre-existing issue detection, auto-merge/rebase when checks pass. Handles
-  the full git→GitHub→merge lifecycle.
+  with pre-existing issue detection, auto-merge/rebase when checks pass.
 category: workflow
 allowed-tools: Read Write Edit Glob Grep Bash
 license: MIT
@@ -34,7 +29,7 @@ Complete GitHub workflow automation for the full development lifecycle.
 
 ## Core Workflows
 
-### 1. Quick Push
+### Quick Push
 
 ```bash
 # Stage, commit, and push in one command
@@ -44,7 +39,7 @@ git commit -m "type(scope): description"
 git push -u origin HEAD
 ```
 
-### 2. Branch + PR Creation
+### Branch + PR Creation
 
 ```bash
 # Create branch from current state
@@ -54,7 +49,7 @@ gh branch create feature/my-feature
 gh pr create --title "feat(scope): description" --body "Description"
 ```
 
-### 3. Monitor Actions
+### Monitor Actions
 
 ```bash
 # List recent workflow runs
@@ -67,21 +62,16 @@ gh run watch <run-id>
 gh run view <run-id> --log
 ```
 
-### 4. Auto-Merge Workflow
+### Auto-Merge Workflow
 
 ```bash
 # Enable auto-merge
 gh pr merge <pr-number> --admin --auto
-
-# Or use PR dashboard
-gh pr view <pr-number> --json state,mergeable,reviews
 ```
 
 ## Pre-Existing Issue Detection
 
 ### Detect Before Push
-
-Always check for known issues in the repository:
 
 ```bash
 # Check for pre-existing failures in main
@@ -129,7 +119,6 @@ git pull origin main
 git checkout -b feature/my-feature
 
 # 3. Work and commit
-# ... make changes ...
 git add -A
 git commit -m "feat(scope): add new feature"
 
@@ -177,9 +166,6 @@ git rebase origin/main
 
 # Force push (only for your own branch)
 git push --force-with-lease
-
-# Verify PR updated
-gh pr view <pr-number> --json commits
 ```
 
 ## GitHub CLI Tips
@@ -192,9 +178,6 @@ gh auth status
 
 # Login
 gh auth login
-
-# Switch accounts
-gh auth refresh
 ```
 
 ### PR Management
@@ -208,22 +191,6 @@ gh pr view <number>
 
 # Review PR
 gh pr review <number> --approve --body "LGTM"
-
-# Comment on PR
-gh pr comment <number> --body "Comment"
-```
-
-### Issue Management
-
-```bash
-# Create issue
-gh issue create --title "Bug" --body "Description"
-
-# List issues
-gh issue list
-
-# Close issue
-gh issue close <number>
 ```
 
 ## Error Handling
@@ -244,7 +211,6 @@ gh issue close <number>
 - [ ] TypeScript types valid
 - [ ] E2E tests pass
 - [ ] No security vulnerabilities
-- [ ] Documentation updated if needed
 
 ### Protected Branches
 
@@ -254,10 +220,8 @@ gh issue close <number>
 
 ## Integration
 
-- **atomic-commit**: For commit workflow
 - **cicd-pipeline**: For CI/CD configuration
 - **code-review-assistant**: For PR reviews
-- **github-readme**: For documentation
 
 ## Quality Checklist
 
@@ -271,4 +235,4 @@ gh issue close <number>
 
 ## Summary
 
-GitHub workflow automation streamlines the entire development process from local changes to merged code. Always verify quality gates pass before push and monitor CI status after.
+GitHub workflow automation streamlines the entire development process from local changes to merged code.

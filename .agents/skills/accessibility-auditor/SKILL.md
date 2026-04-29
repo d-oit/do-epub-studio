@@ -1,6 +1,3 @@
-do-epub-studio/.agents/skills/accessibility-auditor/SKILL.md
-```
-
 ---
 version: "1.0.0"
 name: accessibility-auditor
@@ -81,26 +78,7 @@ Audit web applications for WCAG 2.2 compliance, screen reader compatibility, key
 - [ ] Heading hierarchy logical
 - [ ] Error messages clear and helpful
 
-### Screen Reader Testing
-
-- [ ] NVDA (Windows)
-- [ ] VoiceOver (macOS/iOS)
-- [ ] ChromeVox (Chrome)
-- [ ] Content reads logically
-- [ ] Images have appropriate alt text
-- [ ] Form errors announced
-
 ## Testing Tools
-
-### Browser DevTools
-
-```bash
-# Lighthouse accessibility audit
-# Open DevTools → Lighthouse → Run accessibility audit
-
-# Accessibility pane
-# DevTools → Elements → Accessibility pane
-```
 
 ### CLI Tools
 
@@ -110,16 +88,7 @@ npx @axe-core/cli https://example.com
 
 # pa11y
 npx pa11y https://example.com
-
-# WAVE
-npx wave-web-api https://example.com
 ```
-
-### VS Code Extensions
-
-- ESLint JSX a11y plugins
-- HTML CSS support
-- Access Lens
 
 ## Common Issues & Fixes
 
@@ -145,12 +114,6 @@ npx wave-web-api https://example.com
 <!-- Good -->
 <label for="email">Email</label>
 <input type="email" id="email" placeholder="Email">
-
-<!-- Or -->
-<label>
-  Email
-  <input type="email">
-</label>
 ```
 
 ### Poor Color Contrast
@@ -163,43 +126,28 @@ background: #ffffff;
 /* Good - passes WCAG AA */
 color: #595959;
 background: #ffffff;
-
-/* For large text (18pt+ or 14pt bold) */
-color: #767676;
-background: #ffffff;
 ```
 
-### Keyboard Traps
+## Focus Indicators
 
-```javascript
-// Bad - trap without way out
-element.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') {
-    e.preventDefault(); // Traps keyboard
-  }
-});
-
-// Good - allow escape
-element.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') {
-    closeModal();
-  }
-});
+```css
+/* Good focus indicators */
+:focus-visible {
+  outline: 3px solid #2563eb;
+  outline-offset: 2px;
+}
 ```
 
-### Focus Order
+## ARIA Quick Reference
 
-```html
-<!-- Bad - tab order confusing -->
-<button>Save</button>
-<input type="text">
-<button>Cancel</button>
-
-<!-- Good - logical order -->
-<input type="text">
-<button>Save</button>
-<button>Cancel</button>
-```
+| Pattern | ARIA | Usage |
+|---------|------|-------|
+| Button | role="button" | Custom clickable elements |
+| Modal | role="dialog" | Dialogs |
+| Navigation | role="navigation" | Nav regions |
+| Main content | role="main" | Primary content |
+| Live region | aria-live="polite" | Dynamic updates |
+| Expandable | aria-expanded | Collapsible sections |
 
 ## EPUB Reader Specific
 
@@ -217,56 +165,12 @@ element.addEventListener('keydown', (e) => {
 - [ ] All buttons keyboard accessible
 - [ ] Focus visible on all interactive elements
 
-### Annotations
-
-- [ ] Highlights keyboard accessible
-- [ ] Notes can be created via keyboard
-- [ ] Annotation list navigable
-
 ### Screen Reader Considerations
 
 - CFI locators should be readable
 - Book title and author announced
 - Chapter changes announced
 - Page numbers accessible
-
-## Color Contrast Reference
-
-| Text Size | AA (Normal) | AA (Large) | AAA (Normal) | AAA (Large) |
-|-----------|-------------|------------|--------------|-------------|
-| Normal    | 4.5:1       | 3:1        | 7:1          | 4.5:1       |
-| Large     | 3:1         | 3:1        | 4.5:1        | 3:1         |
-
-*Large text: 18pt+ regular or 14pt+ bold*
-
-## Focus Indicators
-
-```css
-/* Good focus indicators */
-:focus {
-  outline: 2px solid #2563eb;
-  outline-offset: 2px;
-}
-
-/* Better - visible on all backgrounds */
-:focus-visible {
-  outline: 3px solid #2563eb;
-  outline-offset: 2px;
-}
-```
-
-## ARIA Quick Reference
-
-| Pattern | ARIA | Usage |
-|---------|------|-------|
-| Button (not native) | role="button" | Custom clickable elements |
-| Modal | role="dialog", aria-modal="true" | Dialogs |
-| Navigation | role="navigation" | Nav regions |
-| Main content | role="main" | Primary content |
-| Complementary | role="complementary" | Sidebar content |
-| Live region | aria-live="polite" | Dynamic updates |
-| Expandable | aria-expanded | Collapsible sections |
-| Required | aria-required="true" | Required fields |
 
 ## Integration
 
@@ -285,4 +189,4 @@ element.addEventListener('keydown', (e) => {
 
 ## Summary
 
-Accessibility is essential for inclusive design. Audit early, test with real assistive technology, and fix issues proactively. WCAG 2.2 provides clear success criteria to follow.
+Accessibility is essential for inclusive design. Audit early, test with real assistive technology, and fix issues proactively.

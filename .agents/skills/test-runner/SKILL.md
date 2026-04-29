@@ -56,11 +56,6 @@ npm test -- --coverage
 
 # Run with JSON output for CI
 npm test -- --json > test-results.json
-
-# Run specific suites
-npm run test:unit
-npm run test:integration
-npm run test:e2e
 ```
 
 ### Debugging Failing Tests
@@ -71,9 +66,6 @@ npm test -- --verbose
 
 # Run single test
 npm test -- --testNamePattern="exact test name"
-
-# Show local variables on failure
-npm test -- --expand
 
 # Debug with Node inspector
 node --inspect-brk node_modules/.bin/vitest run
@@ -92,7 +84,6 @@ PASS  src/api/auth.test.ts (5.2 s)
 FAIL src/api/payment.test.ts (3.1 s)
   ✕ should process payment (20 ms)
     expect(received).toBe(expected)
-    
     Expected: "completed"
     Received: "pending"
 ```
@@ -105,31 +96,8 @@ FAIL src/api/payment.test.ts (3.1 s)
 | Null reference | Mock not provided | Add mock to test setup |
 | Snapshot mismatch | UI changed | Update snapshot or fix implementation |
 | Flaky test | Race condition | Add wait or fix timing issue |
-| Permission denied | Missing env vars | Add test env configuration |
 
 ## Test Organization
-
-### By Scope
-
-```
-tests/
-├── unit/           # Fast, isolated tests
-├── integration/    # Test component interactions
-├── e2e/           # Full user flows
-└── performance/   # Load and stress tests
-```
-
-### Test Naming
-
-```
-# Good
-should_return_401_for_unauthenticated_request
-when_user_is_admin_can_delete_other_users
-
-# Bad
-test1
-test_auth
-```
 
 ### AAA Pattern
 
@@ -138,10 +106,10 @@ describe('Authentication', () => {
   it('should authenticate valid user', () => {
     // Arrange
     const credentials = { email: 'test@example.com', password: 'password123' };
-    
+
     // Act
     const result = authService.login(credentials);
-    
+
     // Assert
     expect(result).toBeTruthy();
     expect(result.token).toBeDefined();
@@ -169,18 +137,6 @@ jest.mock('fs', () => ({
 jest.useFakeTimers();
 ```
 
-### Mocking Database
-
-```typescript
-// Use test database
-const testDb = createTestDatabase();
-
-// Clean state between tests
-beforeEach(async () => {
-  await testDb.clear();
-});
-```
-
 ## Coverage Analysis
 
 ### Interpreting Coverage Reports
@@ -190,14 +146,12 @@ beforeEach(async () => {
 | Line | 80%+ | Code lines executed |
 | Branch | 75%+ | Conditional paths taken |
 | Function | 80%+ | Functions called |
-| Statement | 80%+ | Statements executed |
 
 ### Improving Coverage
 
 1. **Identify gaps** - Review uncovered lines
 2. **Add edge cases** - Test error paths
 3. **Mock wisely** - Don't over-mock real logic
-4. **Integration tests** - Cover component interaction
 
 ## CI/CD Integration
 
@@ -222,9 +176,6 @@ npm test -- --coverage --coverageThreshold='{"global":{"branches":80}}'
 
 # Fail on first error
 npm test -- --bail
-
-# Run typecheck first
-npm run typecheck && npm test
 ```
 
 ## EPUB Studio Specific
@@ -236,7 +187,6 @@ npm run typecheck && npm test
 | Unit | `npm run test:unit` | Component logic |
 | Integration | `npm run test:integration` | API/DB integration |
 | E2E | `npm run test:e2e` | Full user flows |
-| Performance | `npm run test:perf` | Load testing |
 
 ### Required Test Coverage
 
@@ -245,21 +195,6 @@ npm run typecheck && npm test
 - [ ] EPUB parsing
 - [ ] CFI navigation
 - [ ] Offline sync
-- [ ] API endpoints
-- [ ] Error handling
-
-### Running Specific Test Categories
-
-```bash
-# Test auth only
-npm test -- --grep "auth"
-
-# Test EPUB parsing only
-npm test -- --grep "epub"
-
-# Test sync only
-npm test -- --grep "sync"
-```
 
 ## Debugging Tips
 
@@ -278,13 +213,11 @@ npm test -- --grep "sync"
 | "Cannot find module" | Check path, install dependencies |
 | "Async callback not called" | Add done() or return promise |
 | "Expected X, got Y" | Check mock implementation |
-| "act() timeout" | Fix async timing issues |
 
 ## Integration
 
 - **testing-strategy**: Design test approach
 - **testdata-builders**: Create test fixtures
-- **dogfood**: Exploratory testing
 - **cicd-pipeline**: CI/CD test configuration
 
 ## Quality Checklist
@@ -294,9 +227,7 @@ npm test -- --grep "sync"
 - [ ] Clear test names describe behavior
 - [ ] Proper AAA structure
 - [ ] Good coverage of edge cases
-- [ ] Mocks are accurate
-- [ ] No test interdependence
 
 ## Summary
 
-Effective test execution requires understanding frameworks, analyzing failures, and integrating with CI/CD. Always run full suite before merge and investigate flakiness immediately.
+Effective test execution requires understanding frameworks, analyzing failures, and integrating with CI/CD.
