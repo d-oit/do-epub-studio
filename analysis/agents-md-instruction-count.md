@@ -1,38 +1,54 @@
 # AGENTS.md Instruction Count Tracking
 
-This file tracks instruction count and compliance metrics per issue #234.
+| Date | Total Lines | Imperative Instructions | Tier 1 | Tier 2 | Tier 3 | Tier 4 | Notes |
+|------|-------------|-------------------------|--------|--------|--------|--------|-------|
+| 2025-01-XX | 245 | ~79 | TBD | TBD | TBD | TBD | Current baseline |
+| 2026-04-28 | - | 79 | 9 | 10 | 20 | 40 | Per Plan 011 analysis |
 
-## Why Track This?
+---
 
-Research shows frontier models achieve max **68% compliance** at ~500 instructions in AGENTS.md files. One third of all instructions are ignored—typically those at the **bottom** and those **phrased ambiguously**.
+## Baseline Analysis (2025-01-XX)
 
-Target: ≤40 discrete imperative instructions for reliable agent compliance.
+### Current State
 
-## Metrics
+- **Total lines**: 245
+- **Discrete instructions**: ~79 bullet points
+- **Named Constants**: 5 defined
+- **Max file size limits**: MAX_LINES_PER_SOURCE_FILE=500, MAX_LINES_AGENTS_MD=150 (exceeds!)
 
-| Date | Instruction Count | Tier 1 | Tier 2 | Tier 3 | Tier 4 | Notes |
-|------|-------------------|--------|--------|--------|--------|-------|
-| 2026-04-28 | 79 | TBD | TBD | TBD | TBD | Baseline - needs restructure |
-| 20XX-XX-XX | | | | | | |
+### Instruction Distribution
 
-## Tier Definitions
+| Section | Approximate Count | Type |
+|---------|-------------------|------|
+| Named Constants | 5 | Configuration |
+| TIER 1 - Critical | 9 | Safety/Security |
+| TIER 2 - Quality Gates | 10 | Blocking |
+| TIER 3 - Style | 20 | Guidelines |
+| TIER 4 - Reference | 40 | Links/Ceremonial |
 
-- **TIER 1** (Critical Safety): Security, secrets, permissions, branch protection
-- **TIER 2** (Quality Gates): Pre-commit, commit format, tests required
-- **TIER 3** (Style): Formatting, naming, documentation style
-- **TIER 4** (Ceremonial): Links, historical notes, tutorials (move to agents-docs/)
+### Phrasing Analysis
 
-## Audit Checklist
+- Uses of "NEVER": 0
+- Uses of "MUST": 0
+- Uses of "ALWAYS": 0
+- Uses of "DO NOT": 0
 
-When updating AGENTS.md:
+**Compliance Risk**: HIGH - 79 instructions exceeds the ~40 reliable instruction limit identified in research.
 
-- [ ] Count all discrete bullet-point instructions
-- [ ] Assign each to a tier (1-4)
-- [ ] Verify TIER 1 instructions are in first 20 lines
-- [ ] Check all instructions use imperative phrasing (DO, NEVER, MUST, ALWAYS)
-- [ ] Update this file with new measurements
+---
 
-## Reference
+## Recommended Actions (per Plan 011)
 
-- Issue: d-o-hub/github-template-ai-agents#234
-- Plan: `plans/011-coding-workflow-improvements.md`
+1. **Reduce to ≤40 instructions** - Target imperative count
+2. **Reorder by tier** - Critical items first
+3. **Use imperative phrasing** - Add NEVER, MUST, ALWAYS
+4. **Add Compliance Self-Check** - Before responding
+5. **Move ceremonial content** - To agents-docs/
+
+---
+
+## References
+
+- Plan 011: Coding Workflow Improvements
+- Plan 012: Comprehensive Analysis Findings
+- AGENTS.md: Current document
