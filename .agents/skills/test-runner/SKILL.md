@@ -4,7 +4,7 @@ name: test-runner
 description: >
   Execute tests, analyze results, and diagnose failures across any testing framework.
   Use when running test suites, debugging failing tests, or configuring CI/CD testing pipelines.
-category: testing
+category: coordination
 allowed-tools: Read Write Edit Glob Grep Bash
 license: MIT
 ---
