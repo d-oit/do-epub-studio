@@ -40,7 +40,7 @@ readonly MAX_PR_TITLE_LENGTH=72
 
 1. **Run `./scripts/quality_gate.sh` before commit.** No exceptions.
 2. **Use `./scripts/atomic-commit/run.sh --message "type(scope): description"`.**
-3. **Commit messages MUST follow:** `type(scope): description` (max 72 chars).
+3. **Validate commit message:** Run `./scripts/validate-commit-message.sh` or ensure format matches `type(scope): description` (max 72 chars).
 4. **NEVER ignore lint warnings, typecheck errors, or test failures.**
 5. **If a lint rule is disabled, add inline comment explaining why.**
 6. **Fix pre-existing issues in files you touch.** Don't leave them for later.
@@ -88,11 +88,14 @@ Run this before finalizing ANY response:
 
 | Category | Skills |
 |----------|--------|
-| **Coordination** | `triz-analysis`, `triz-solver`, `task-decomposition`, `learn` |
-| **Backend** | `cloudflare-worker-api`, `secure-invite-and-access`, `turso-schema-migrations`, `pwa-offline-sync` |
-| **Reader/UI** | `epub-rendering-and-cfi`, `reader-ui-ux` |
-| **Testing** | `testing-strategy`, `testdata-builders`, `dogfood` |
-| **Quality** | `code-quality`, `code-review-assistant`, `security-code-auditor`, `shell-script-quality`, `anti-ai-slop` |
+| **Coordination** | `goap-agent`, `triz-analysis`, `triz-solver`, `task-decomposition`, `agent-coordination`, `learn`, `do-web-doc-resolver` |
+| **Backend** | `cloudflare-worker-api`, `secure-invite-and-access`, `turso-schema-migrations`, `pwa-offline-sync`, `cicd-pipeline` |
+| **Reader/UI** | `epub-rendering-and-cfi`, `reader-ui-ux`, `accessibility-auditor` |
+| **Testing** | `testing-strategy`, `testdata-builders`, `test-runner`, `dogfood` |
+| **DevOps** | `github-workflow`, `cicd-pipeline`, `migration-refactoring` |
+| **Workflow** | `github-actions-version-fix` |
+| **Security** | `security-code-auditor`, `privacy-first` |
+| **Quality** | `code-quality`, `code-review-assistant`, `shell-script-quality`, `anti-ai-slop`, `agents-md` |
 
 ---
 
@@ -107,6 +110,7 @@ Run this before finalizing ANY response:
 # Commit workflow
 ./scripts/atomic-commit/run.sh --message "type(scope): description"
 ./scripts/atomic-commit/run.sh --dry-run
+./scripts/validate-commit-message.sh <file>  # Validate commit message
 
 # Skills
 skill learn                         # Capture discoveries
