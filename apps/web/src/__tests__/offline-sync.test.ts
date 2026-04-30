@@ -172,7 +172,7 @@ describe('Offline Sync', () => {
       await vi.advanceTimersByTimeAsync(1000);
 
       // The callback should be registered (actual invocation depends on async timing)
-      expect(mockCallback).toBeDefined();
+       expect(mockCallback).toHaveBeenCalled();
     });
   });
 
