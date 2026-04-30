@@ -23,6 +23,7 @@ readonly MAX_PR_TITLE_LENGTH=72
 
 **NEVER ignore these rules. Violations cause security incidents or data loss.**
 
+- **MUST fetch and integrate latest `main` branch before starting any changes.** Run `git fetch origin main && git merge origin/main` (or rebase) to stay up-to-date.
 - **NEVER commit to `main` directly.** Always use feature branches + PRs.
 - **NEVER leak secrets, tokens, or credentials in code.** Use `.dev.vars` for local only.
 - **NEVER expose R2 file URLs to clients.** Use signed URLs via Workers.
@@ -43,8 +44,9 @@ readonly MAX_PR_TITLE_LENGTH=72
 3. **Validate commit message:** Run `./scripts/validate-commit-message.sh` or ensure format matches `type(scope): description` (max 72 chars).
 4. **NEVER ignore lint warnings, typecheck errors, or test failures.**
 5. **If a lint rule is disabled, add inline comment explaining why.**
-6. **Fix pre-existing issues in files you touch.** Don't leave them for later.
-7. **Document unfixable issues in `agents-docs/KNOWN-ISSUES.md`.**
+6. **Run diagnostics and document all warnings.** After any change, run `diagnostics` tool and document any new warnings in `plans/015-warnings-and-issues.md` or `agents-docs/KNOWN-ISSUES.md` if unfixable.
+7. **Fix pre-existing issues in files you touch.** Don't leave them for later.
+8. **Document unfixable issues in `agents-docs/KNOWN-ISSUES.md`.** If a warning/error cannot be fixed in the current run (e.g., pre-existing, tool limitations), document it with the exact message, location, reason, and mitigation.
 
 ---
 
@@ -54,6 +56,7 @@ readonly MAX_PR_TITLE_LENGTH=72
 
 - **Max 500 LOC per source file.**
 - **No hardcoded environment-specific URLs.**
+- **No hardcoded dates.** Use current date from environment: `date +"%Y-%m-%d"` or `new Date().toISOString()`. Never write literal dates like "September 2025" in plans/documentation.
 - **No `any` unless justified and isolated.**
 - **Use Zod for boundary validation, Zustand for state, Tailwind for styling.**
 - **Use Vitest + Playwright with `pool: 'forks'` for test isolation.**
@@ -76,6 +79,7 @@ readonly MAX_PR_TITLE_LENGTH=72
 Run this before finalizing ANY response:
 
 - [ ] Did I read ALL of AGENTS.md (not just first half)?
+- [ ] Did I fetch and merge latest main branch before starting work?
 - [ ] Did I check Named Constants for any values I used?
 - [ ] Did I verify no secrets/tokens in my output?
 - [ ] Did I run quality gate before commit?

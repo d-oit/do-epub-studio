@@ -191,7 +191,8 @@ interface InputProps extends MotionInputBaseProps {
   helperText?: string;
 }
 
-export const Input = forwardRef<HTMLInputElement, InputProps>(  ({ label, error, helperText, className = '', id, ...props }, ref) => {
+export const Input = forwardRef<HTMLInputElement, InputProps>(
+  ({ label, error, helperText, className = '', id, ...props }, ref) => {
     const generatedId = useId();
     const inputId = id || generatedId;
     const errorId = `${inputId}-error`;
@@ -221,7 +222,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(  ({ label, error,
             ${error ? 'border-accent-error focus:border-accent-error focus:ring-accent-error/20' : 'border-border'}
             ${className}
           `}
-          {...(props as any)}
+          {...props}
         />
         {error ? (
           <p id={errorId} className="mt-1.5 text-sm text-accent-error">

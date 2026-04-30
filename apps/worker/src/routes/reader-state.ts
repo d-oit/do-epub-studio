@@ -320,6 +320,9 @@ export async function handleCreateHighlight(
   const id = crypto.randomUUID();
   const now = new Date().toISOString();
 
+  // Extract multi-signal locator fields
+  const { locator } = body;
+
   await execute(
     env,
     `INSERT INTO highlights (id, book_id, user_email, chapter_ref, cfi_range, selected_text, note, color, created_at, updated_at)
@@ -328,9 +331,9 @@ export async function handleCreateHighlight(
       id,
       bookId,
       auth.email,
-      body.chapterRef ?? null,
-      body.cfiRange ?? null,
-      body.selectedText,
+      locator.chapterRef,
+      locator.cfi,
+      locator.selectedText,
       body.note ?? null,
       body.color ?? '#ffff00',
       now,
@@ -343,7 +346,7 @@ export async function handleCreateHighlight(
     entityId: id,
     action: 'create',
     actorEmail: auth.email,
-    payload: { bookId, chapterRef: body.chapterRef, color: body.color },
+    payload: { bookId, chapterRef: locator.chapterRef, color: body.color },
   });
 
   return jsonResponse(
@@ -351,9 +354,9 @@ export async function handleCreateHighlight(
       ok: true,
       data: {
         id,
-        chapterRef: body.chapterRef,
-        cfiRange: body.cfiRange,
-        selectedText: body.selectedText,
+        chapterRef: locator.chapterRef,
+        cfiRange: locator.cfi,
+        selectedText: locator.selectedText,
         note: body.note,
         color: body.color ?? '#ffff00',
         createdAt: now,

@@ -241,9 +241,11 @@ describe('GET /api/reader-state/{bookId}/highlights (handleListHighlights)', () 
 
 describe('POST /api/reader-state/{bookId}/highlights (handleCreateHighlight)', () => {
   const validBody = {
-    selectedText: 'Important passage',
-    cfiRange: 'epubcfi(/6/4)',
-    chapterRef: 'Chapter 1',
+    locator: {
+      selectedText: 'Important passage',
+      cfi: 'epubcfi(/6/4)',
+      chapterRef: 'Chapter 1',
+    },
     color: '#00ff00',
     note: 'My note',
   };
@@ -316,7 +318,9 @@ describe('PATCH /api/reader-state/{bookId}/highlights/{highlightId} (handleUpdat
 
   it('returns 401 when unauthenticated', async () => {
     mockRequireAuth.mockResolvedValue(null);
-    const res = await handleUpdateHighlight(makeEnv(), makeRequest(), 'book-1', 'hl-1', { note: 'updated' });
+    const res = await handleUpdateHighlight(makeEnv(), makeRequest(), 'book-1', 'hl-1', {
+      note: 'updated',
+    });
     expect(res.status).toBe(401);
   });
 
@@ -324,7 +328,9 @@ describe('PATCH /api/reader-state/{bookId}/highlights/{highlightId} (handleUpdat
     mockRequireAuth.mockResolvedValue(makeAuthContext());
     mockQueryFirst.mockResolvedValue(null as never);
 
-    const res = await handleUpdateHighlight(makeEnv(), makeRequest(), 'book-1', 'hl-1', { note: 'updated' });
+    const res = await handleUpdateHighlight(makeEnv(), makeRequest(), 'book-1', 'hl-1', {
+      note: 'updated',
+    });
     expect(res.status).toBe(404);
   });
 
@@ -333,7 +339,9 @@ describe('PATCH /api/reader-state/{bookId}/highlights/{highlightId} (handleUpdat
     mockQueryFirst.mockResolvedValue(makeHighlightRow() as never);
     mockExecute.mockResolvedValue({} as never);
 
-    const res = await handleUpdateHighlight(makeEnv(), makeRequest(), 'book-1', 'hl-1', { note: 'updated' });
+    const res = await handleUpdateHighlight(makeEnv(), makeRequest(), 'book-1', 'hl-1', {
+      note: 'updated',
+    });
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.ok).toBe(true);

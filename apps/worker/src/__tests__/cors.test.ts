@@ -1,11 +1,29 @@
 import { describe, it, expect } from 'vitest';
 import worker from '../index';
 import { TRACE_HEADER, SPAN_HEADER } from '@do-epub-studio/shared';
+import type { Env } from '../lib/env';
 
 describe('CORS', () => {
-  const env = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const mockBucket: any = {
+    get: async () => null,
+    put: async () => ({
+      key: '',
+      httpEtag: '',
+      writeHttpMetadata: () => {},
+      body: null,
+      bodyUsed: false,
+      arrayBuffer: async () => new ArrayBuffer(0),
+      text: async () => '',
+      json: async () => ({}),
+    }),
+    delete: async () => {},
+    list: async () => ({ objects: [], truncated: false }),
+  };
+
+  const env: Env = {
     APP_BASE_URL: 'https://app.example.com',
-    BOOKS_BUCKET: {} as Record<string, unknown> as any,
+    BOOKS_BUCKET: mockBucket,
     TURSO_DATABASE_URL: '',
     TURSO_AUTH_TOKEN: '',
     SESSION_SIGNING_SECRET: '',
@@ -16,7 +34,7 @@ describe('CORS', () => {
     const request = new Request('https://api.example.com/api/books', {
       method: 'OPTIONS',
       headers: {
-        'Origin': 'https://malicious.com',
+        Origin: 'https://malicious.com',
       },
     });
 
@@ -28,7 +46,7 @@ describe('CORS', () => {
     const request = new Request('https://api.example.com/api/books', {
       method: 'OPTIONS',
       headers: {
-        'Origin': 'https://app.example.com',
+        Origin: 'https://app.example.com',
       },
     });
 
