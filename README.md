@@ -37,8 +37,3 @@ See [docs/setup-local.md](docs/setup-local.md) for local development setup.
 ## License
 
 [MIT](LICENCE)
-
-## Recent Updates (March 2026)
-- **Quality Gate Hardened:** Switched to process-level isolation for unit tests to resolve React 18 concurrency issues.
-- **Global Auth Interceptor:** Implemented automatic logout and session expiry redirection in the core API client.
-- **Accessibility Integration:** Automated WCAG 2.1 AA audits integrated into the E2E test suite using Playwright and Axe.

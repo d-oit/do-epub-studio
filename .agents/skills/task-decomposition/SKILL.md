@@ -185,6 +185,23 @@ Strategy: Multi-phase hybrid
 
 GOAP Phase 1: Decomposition → Execution Plan → Monitor → Report
 
+### Use with GOAP Agent
+
+For complex multi-step tasks requiring coordinated execution, use the **goap-agent** skill after decomposition:
+
+1. Use **task-decomposition** to break down the goal
+2. Use **goap-agent** to plan execution strategy (parallel/sequential/swarm)
+3. Use **triz-analysis** for architectural tasks with trade-offs
+
+The decomposition phase feeds directly into GOAP's planning cycle for optimal execution.
+
+### Integration with Other Skills
+
+- **goap-agent**: Execution planning and multi-agent coordination
+- **triz-analysis**: Run before decomposition for architectural tasks
+- **triz-solver**: Use when decomposition reveals contradictions
+- **parallel-execution**: Execute independent tasks simultaneously
+
 ## Tips
 
 1. **Start with Why**: Understand true goal
