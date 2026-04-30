@@ -29,8 +29,12 @@ jobs:
           steps.metadata.outputs.update-type == 'version-update:semver-minor' ||
           steps.metadata.outputs.update-type == 'version-update:semver-patch'
         run: |
+          MERGEABLE=$(gh pr view "$PR_URL" --json mergeable --jq '.mergeable')
+          if [ "$MERGEABLE" != "MERGEABLE" ]; then echo "PR not mergeable"; exit 0; fi
+          CI_STATUS=$(gh pr view "$PR_URL" --json statusCheckRollup --jq '.statusCheckRollup[].conclusion' | uniq)
+          if [ "$CI_STATUS" != "SUCCESS" ]; then echo "CI failing"; exit 0; fi
           gh pr review --approve "$PR_URL"
           gh pr merge --auto --squash "$PR_URL"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.DEPENDABOT_PAT }}
