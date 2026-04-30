@@ -1,6 +1,6 @@
 # Plan 015: Warnings and Known Issues
 
-**Last Updated:** 2026-04-30
+**Last Updated:** see git log
 
 This document tracks all warnings and known issues in the codebase as of the current date.
 
@@ -40,7 +40,7 @@ This document tracks all warnings and known issues in the codebase as of the cur
 
 ---
 
-## Code Quality Issues
+### Code Quality Issues
 
 ### Files Exceeding LOC Limits
 
@@ -48,8 +48,8 @@ Per `AGENTS.md` (`MAX_LINES_PER_SOURCE_FILE=500`):
 
 | File | Current LOC | Status |
 |------|-------------|--------|
-| `apps/web/src/features/reader/ReaderPage.tsx` | 1123 | 🔴 Over limit |
-| `apps/web/src/features/admin/GrantsPage.tsx` | 740 | 🔴 Over limit |
+| `apps/web/src/features/reader/ReaderPage.tsx` | 492 | ✅ Resolved |
+| `apps/web/src/features/admin/GrantsPage.tsx` | 311 | ✅ Resolved |
 | `apps/web/src/features/reader/components/annotations/CommentsPanel.tsx` | 544 | ⚠️ Near limit |
 | `apps/web/src/components/ui/index.tsx` | 525 | ⚠️ Near limit |
 
@@ -70,14 +70,19 @@ Per `AGENTS.md` (`MAX_LINES_PER_SOURCE_FILE=500`):
 
 ### Immediate (This Sprint)
 
-- [ ] Fix Tailwind warnings in `ReaderPage.tsx` and `toast.tsx`
-- [ ] Update skill categories to fix validation (or document as known issue)
+- [x] Fix Tailwind warnings in `ReaderPage.tsx` (`max-w-50` used in ReaderToolbar)
+- [x] Fix toast memory leak timeout tracking
+- [ ] Update skill categories to fix validation (pre-existing known issue)
 
 ### Short Term
 
-- [ ] Refactor `ReaderPage.tsx` to split into components (< 500 LOC)
-- [ ] Refactor `GrantsPage.tsx` to split into components (< 500 LOC)
-- [ ] Add missing tests (CFI, password hashing, bookmarks)
+- [x] Refactor `ReaderPage.tsx` to split into components (492 LOC) — DONE
+- [x] Refactor `GrantsPage.tsx` to split into components (311 LOC) — DONE
+- [x] Add missing tests (password hashing, bookmarks) — DONE
+- [x] Fix memory leaks in sync.ts and db.ts — DONE
+- [x] Add traceId telemetry to sync.ts and sw.ts — DONE
+- [ ] Add CFI navigation tests (T-1) — partial
+- [ ] `CommentsPanel.tsx` still at 544 LOC — monitor
 
 ---
 
