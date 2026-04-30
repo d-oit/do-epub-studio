@@ -50,6 +50,17 @@ const DB_VERSION = 1;
 
 let dbInstance: IDBPDatabase | null = null;
 
+/**
+ * Explicitly close the cached IndexedDB connection and reset the singleton.
+ * Call this on application teardown or during tests to prevent connection leaks.
+ */
+export function closeDb(): void {
+  if (dbInstance) {
+    dbInstance.close();
+    dbInstance = null;
+  }
+}
+
 export async function getDB(): Promise<IDBPDatabase> {
   if (dbInstance) return dbInstance;
 

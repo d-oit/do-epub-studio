@@ -6,6 +6,7 @@ import { registerRoute } from 'workbox-routing';
 import { CacheFirst, NetworkFirst } from 'workbox-strategies';
 import { ExpirationPlugin } from 'workbox-expiration';
 import { CacheableResponsePlugin } from 'workbox-cacheable-response';
+import { createTraceId } from './lib/telemetry';
 
 declare let self: ServiceWorkerGlobalScope;
 
@@ -51,9 +52,7 @@ registerRoute(
   /\.(?:png|jpg|jpeg|svg|gif|webp)$/,
   new CacheFirst({
     cacheName: 'images',
-    plugins: [
-      new ExpirationPlugin({ maxEntries: 100, maxAgeSeconds: 60 * 60 * 24 * 30 }),
-    ],
+    plugins: [new ExpirationPlugin({ maxEntries: 100, maxAgeSeconds: 60 * 60 * 24 * 30 })],
   }),
 );
 
@@ -88,11 +87,32 @@ self.addEventListener('sync', (event: Event) => {
   if (syncEvent.tag === 'sync-reader-state') {
     syncEvent.waitUntil(
       (async () => {
+        const traceId = createTraceId();
+        console.log(
+          JSON.stringify({ level: 'info', traceId, event: 'sw.sync.start', tag: syncEvent.tag }),
+        );
         try {
           const { syncAll } = await import('./lib/offline/sync');
           await syncAll();
+          console.log(
+            JSON.stringify({
+              level: 'info',
+              traceId,
+              event: 'sw.sync.complete',
+              tag: syncEvent.tag,
+            }),
+          );
         } catch (error) {
-          console.error('[SW] Sync failed:', error);
+          const message = error instanceof Error ? error.message : String(error);
+          console.error(
+            JSON.stringify({
+              level: 'error',
+              traceId,
+              event: 'sw.sync.failed',
+              tag: syncEvent.tag,
+              error: { message },
+            }),
+          );
         }
       })(),
     );
@@ -102,9 +122,13 @@ self.addEventListener('sync', (event: Event) => {
 // Message handler for cache invalidation
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'CLEAR_CACHE') {
+    const traceId = createTraceId();
+    const cacheName = event.data.cacheName as string;
     event.waitUntil(
-      caches.delete(event.data.cacheName).then(() => {
-        console.log(`[SW] Cache deleted: ${event.data.cacheName}`);
+      caches.delete(cacheName).then((deleted) => {
+        console.log(
+          JSON.stringify({ level: 'info', traceId, event: 'sw.cache.cleared', cacheName, deleted }),
+        );
       }),
     );
   }
