@@ -136,6 +136,22 @@ describe('GET /api/reader-state/{bookId}/bookmarks (handleListBookmarks)', () =>
     expect(body.ok).toBe(true);
     expect(body.data).toHaveLength(1);
   });
+
+  it('maps bookmark row data to correct response shape (id, locator, label, createdAt)', async () => {
+    mockRequireAuth.mockResolvedValue(makeAuthContext());
+    mockQueryAll.mockResolvedValue([makeBookmarkRow()] as never);
+
+    const res = await handleListBookmarks(makeEnv(), makeRequest(), 'book-1');
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    const bm = body.data[0];
+    // id and label pass through unchanged
+    expect(bm.id).toBe('bookmark-1');
+    expect(bm.label).toBe('My Bookmark');
+    expect(bm.createdAt).toBeDefined();
+    // locator_json must be JSON-parsed back into an object
+    expect(bm.locator).toEqual({ cfi: 'epubcfi(/6/4)', selectedText: 'test' });
+  });
 });
 
 describe('POST /api/reader-state/{bookId}/bookmarks (handleCreateBookmark)', () => {
@@ -181,6 +197,48 @@ describe('POST /api/reader-state/{bookId}/bookmarks (handleCreateBookmark)', () 
     const body = await res.json();
     expect(body.ok).toBe(true);
   });
+
+  it('returns 400 validation error when required locator field is missing', async () => {
+    mockRequireAuth.mockResolvedValue(makeAuthContext());
+
+    const res = await handleCreateBookmark(makeEnv(), makeRequest(), 'book-1', {});
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.ok).toBe(false);
+    expect(body.error.code).toBe('VALIDATION_ERROR');
+  });
+
+  it('response body includes generated id, locator, label, and createdAt', async () => {
+    mockRequireAuth.mockResolvedValue(makeAuthContext());
+    mockExecute.mockResolvedValue({} as never);
+
+    const bodyWithLabel = {
+      locator: { cfi: 'epubcfi(/6/4)', selectedText: 'text' },
+      label: 'Chapter marker',
+    };
+    const res = await handleCreateBookmark(makeEnv(), makeRequest(), 'book-1', bodyWithLabel);
+    expect(res.status).toBe(201);
+    const body = await res.json();
+    expect(body.ok).toBe(true);
+    expect(typeof body.data.id).toBe('string');
+    expect(body.data.locator).toEqual(bodyWithLabel.locator);
+    expect(body.data.label).toBe('Chapter marker');
+    expect(body.data.createdAt).toBeDefined();
+  });
+
+  it('creates bookmark successfully when optional label is omitted', async () => {
+    mockRequireAuth.mockResolvedValue(makeAuthContext());
+    mockExecute.mockResolvedValue({} as never);
+
+    const res = await handleCreateBookmark(makeEnv(), makeRequest(), 'book-1', {
+      locator: { cfi: 'epubcfi(/6/4)', selectedText: 'text' },
+    });
+    expect(res.status).toBe(201);
+    const body = await res.json();
+    expect(body.ok).toBe(true);
+    // label is optional per BookmarkCreateSchema — absent means undefined in JSON
+    expect(body.data.label).toBeUndefined();
+  });
 });
 
 describe('DELETE /api/reader-state/{bookId}/bookmarks/{bookmarkId} (handleDeleteBookmark)', () => {
@@ -199,6 +257,23 @@ describe('DELETE /api/reader-state/{bookId}/bookmarks/{bookmarkId} (handleDelete
     mockExecute.mockResolvedValue({} as never);
 
     const res = await handleDeleteBookmark(makeEnv(), makeRequest(), 'book-1', 'bm-1');
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.ok).toBe(true);
+  });
+
+  it('returns 200 even when the bookmark does not exist (idempotent DELETE)', async () => {
+    mockRequireAuth.mockResolvedValue(makeAuthContext());
+    // execute resolves with zero rows affected — route does not check the
+    // affected row count, so the response must still be 200 ok.
+    mockExecute.mockResolvedValue({} as never);
+
+    const res = await handleDeleteBookmark(
+      makeEnv(),
+      makeRequest(),
+      'book-1',
+      'non-existent-bm-id',
+    );
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.ok).toBe(true);
