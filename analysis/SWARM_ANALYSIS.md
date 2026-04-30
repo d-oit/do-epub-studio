@@ -329,3 +329,81 @@ writes; extend tests to cover enforcement.
    (G9-G11) once critical flows exist.
 5. Harden schemas and annotation locators (G12-G13) to meet
    ADR requirements and prepare for offline sync work.
+
+---
+
+## Additional Findings (2025-01-XX)
+
+### Security Audit (security-code-auditor skill)
+
+The security audit confirmed:
+- ✅ **G5 RESOLVED**: Password hashing properly uses Argon2id
+- ✅ **SQL Injection**: All queries use parameterized queries - secure
+- ✅ **No Hardcoded Secrets**: All credentials via Env interface
+- ✅ **Signed URLs**: Proper HMAC-SHA256 implementation
+- ❌ **G4 CRITICAL**: Admin APIs still lack authorization - confirmed by code inspection
+
+### Code Quality Analysis (code-quality skill)
+
+**New issues identified (CQ-1, CQ-2):**
+
+| ID | File | Lines | Issue | Recommendation |
+|----|------|-------|-------|----------------|
+| CQ-1 | `apps/web/src/features/reader/ReaderPage.tsx` | 1123 | Exceeds 500 LOC limit | Split into TocSidebar, AnnotationToolbar, ProgressIndicator |
+| CQ-2 | `apps/web/src/features/admin/GrantsPage.tsx` | 740 | Exceeds 500 LOC limit | Split into GrantForm, BookSelector, GrantList |
+
+**Positive findings:**
+- ✅ No `any` type in production code (only in test mocks - justified)
+- ✅ Excellent error handling in api.ts and validation.ts
+- ✅ Well-implemented Zod schema validation in worker routes
+
+### Testing Strategy Assessment (testing-strategy skill)
+
+**Test coverage metrics:**
+
+| Type | Target | Current | Gap |
+|------|--------|---------|-----|
+| Business Logic | > 90% | ~70% | 20% |
+| API Routes | > 80% | ~75% | 5% |
+| UI Components | > 70% | ~60% | 10% |
+| Overall | > 80% | ~65% | 15% |
+
+**Critical test gaps identified:**
+- T-1: CFI Navigation tests (High priority)
+- T-2: EPUB Parsing integration tests (High priority)
+- T-3: Password Hashing security test (High priority)
+- T-4: Bookmark CRUD tests (Medium priority)
+
+### Updated Gap Inventory
+
+| ID | Category | Issue | Severity | Status | Notes |
+|----|----------|-------|----------|--------|-------|
+| G1 | Feature | Reader UI not wired | High | Open | |
+| G2 | Feature | slug/id mismatch | Critical | Open | |
+| G3 | Feature | Signed download route | High | Open | |
+| G4 | Security | Admin APIs no auth | Critical | Open | Confirmed by code inspection |
+| G5 | Security | Argon2id | - | ✅ Fixed | Confirmed secure |
+| G6 | Feature | Admin UI incomplete | Medium | Open | |
+| G7 | Docs | Setup docs missing | Medium | Open | |
+| G9 | Testing | Placeholder tests | High | ✅ Fixed | |
+| G10 | Testing | Worker route tests | High | Partial | |
+| G11 | Testing | Playwright E2E | High | Partial | |
+| G12 | Architecture | Schema validation | Medium | ✅ Good | |
+| G13 | Security | Multi-signal locators | High | Open | |
+| CQ-1 | Quality | ReaderPage.tsx 1123 LOC | High | Open | NEW - Exceeds 500 LOC |
+| CQ-2 | Quality | GrantsPage.tsx 740 LOC | Medium | Open | NEW - Exceeds 500 LOC |
+| T-1 | Testing | CFI Navigation | High | Open | NEW |
+| T-2 | Testing | EPUB Parsing | High | Open | NEW |
+| T-3 | Testing | Password Hashing | High | Open | NEW |
+| T-4 | Testing | Bookmark CRUD | Medium | Open | NEW |
+
+### Skills Used in Extended Analysis
+
+- `security-code-auditor` - Full security vulnerability assessment
+- `code-quality` - Code quality and linting analysis
+- `testing-strategy` - Test coverage evaluation
+- `epub-rendering-and-cfi` - EPUB rendering context
+
+### References
+
+- Full analysis details: `plans/012-comprehensive-analysis-findings.md`
