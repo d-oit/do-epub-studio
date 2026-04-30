@@ -122,11 +122,7 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
       const nav = await book.loaded.navigation;
       if (nav?.toc) {
         toc = parseToc(
-          nav.toc as Array<{
-            label: string;
-            href: string;
-            subitems?: Array<{ label: string; href: string }>;
-          }>,
+          nav.toc,
         );
       }
 

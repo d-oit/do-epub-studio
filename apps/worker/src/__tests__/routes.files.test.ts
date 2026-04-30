@@ -65,15 +65,16 @@ describe('GET /api/files/{bookId}/{fileKey} (handleDownloadBookFile)', () => {
     mockVerifyExpiry.mockReturnValue(true);
     mockVerifySignature.mockResolvedValue(true);
 
-    const mockObject = {
-      body: new ReadableStream({
-        start(controller) {
-          controller.enqueue(new TextEncoder().encode('file content'));
-          controller.close();
-        },
-      }),
-      httpMetadata: { contentType: 'application/epub+zip' },
-    } as never;
+     const mockObject = {
+       body: new ReadableStream({
+         start(controller) {
+           controller.enqueue(new TextEncoder().encode('file content'));
+           controller.close();
+         },
+       }),
+       httpMetadata: { contentType: 'application/epub+zip' },
+       writeHttpMetadata: vi.fn(),
+     } as never;
 
     const env = { BOOKS_BUCKET: { get: async () => mockObject } } as never;
 
@@ -117,15 +118,16 @@ describe('Signed URL expiry validation', () => {
     mockVerifyExpiry.mockReturnValue(true);
     mockVerifySignature.mockResolvedValue(true);
 
-    const mockObject = {
-      body: new ReadableStream({
-        start(controller) {
-          controller.enqueue(new TextEncoder().encode('file'));
-          controller.close();
-        },
-      }),
-      httpMetadata: { contentType: 'application/octet-stream' },
-    } as never;
+     const mockObject = {
+       body: new ReadableStream({
+         start(controller) {
+           controller.enqueue(new TextEncoder().encode('file'));
+           controller.close();
+         },
+       }),
+       httpMetadata: { contentType: 'application/octet-stream' },
+       writeHttpMetadata: vi.fn(),
+     } as never;
 
     const env = { BOOKS_BUCKET: { get: async () => mockObject } } as never;
 
