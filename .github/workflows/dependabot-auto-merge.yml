@@ -24,6 +24,23 @@ jobs:
         with:
           github-token: "${{ secrets.GITHUB_TOKEN }}"
 
+      - name: Check PR mergeability and CI status
+        id: check
+        run: |
+          MERGEABLE=$(gh pr view "$PR_URL" --json mergeable --jq '.mergeable')
+          if [ "$MERGEABLE" != "MERGEABLE" ]; then
+            echo "PR not mergeable (state: $MERGEABLE)"
+            exit 0
+          fi
+          CI_STATUS=$(gh pr view "$PR_URL" --json statusCheckRollup --jq '[.statusCheckRollup[].conclusion] | unique | .[]' 2>/dev/null | head -1)
+          if [ "$CI_STATUS" != "SUCCESS" ] && [ -n "$CI_STATUS" ]; then
+            echo "CI not passing (status: $CI_STATUS)"
+            exit 0
+          fi
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Approve and enable auto-merge for safe updates
         if: |
           steps.metadata.outputs.update-type == 'version-update:semver-minor' ||
