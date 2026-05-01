@@ -1,16 +1,35 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+/* ============================================
+   2026 Modern Design System - Global Styles
+   ============================================ */
 
 :root {
-  font-family:
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    Roboto,
-    sans-serif;
-  line-height: 1.5;
+  /* CSS Custom Properties for theming */
+  --color-background: #ffffff;
+  --color-background-secondary: #f5f5f5;
+  --color-background-tertiary: #e5e5e5;
+  --color-foreground: #171717;
+  --color-foreground-muted: #737373;
+  --color-accent: #2563eb;
+  --color-accent-success: #10b981;
+  --color-accent-warning: #f59e0b;
+  --color-accent-error: #ef4444;
+  --color-border: #e5e5e5;
+  
+  /* Animation timing */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out-expo: cubic-bezier(0.87, 0, 0.13, 1);
+  --ease-out-back: cubic-bezier(0.34, 1.56, 0.64, 1);
+  
+  /* Spacing */
+  --header-height: 3.5rem;
+  --sidebar-width: 16rem;
+  --content-max-width: 48rem;
+  
+  /* Typography */
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.6;
   font-weight: 400;
   color-scheme: light dark;
   font-synthesis: none;
@@ -19,46 +38,323 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+.dark {
+  --color-background: #0a0a0a;
+  --color-background-secondary: #141414;
+  --color-background-tertiary: #1f1f1f;
+  --color-foreground: #fafafa;
+  --color-foreground-muted: #a3a3a3;
+  --color-accent: #3b82f6;
+  --color-accent-success: #34d399;
+  --color-accent-warning: #fbbf24;
+  --color-accent-error: #f87171;
+  --color-border: #262626;
+}
+
+/* ============================================
+   Base Styles
+   ============================================ */
+
 html {
-  @apply m-0 p-0 overflow-x-hidden;
   height: 100%;
+  scroll-behavior: smooth;
+  margin: 0;
+  padding: 0;
+  overflow-x: clip;
 }
 
 body {
-  @apply m-0 p-0 overflow-x-hidden bg-slate-950;
   min-height: 100vh;
   height: 100%;
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  transition: background-color 0.3s ease, color 0.3s ease;
+  margin: 0;
+  padding: 0;
+  overflow-x: clip;
 }
 
 #root {
   height: 100%;
+  isolation: isolate;
 }
 
-/* Dark mode per design-system.md */
-.dark {
-  color-scheme: dark;
+/* ============================================
+   Typography Utilities
+   ============================================ */
+
+.text-balance {
+  text-wrap: balance;
 }
 
-/* Anti-flicker per docs/design/design-system.md */
+.text-pretty {
+  text-wrap: pretty;
+}
+
+/* ============================================
+   Glassmorphism Effects
+   ============================================ */
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.dark .glass-panel {
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 1rem;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s var(--ease-out-expo);
+}
+
+.glass-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+}
+
+.dark .glass-card {
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+}
+
+.dark .glass-card:hover {
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+}
+
+/* ============================================
+   Anti-flicker & Performance
+   ============================================ */
+
 .anti-flicker {
   will-change: transform;
   transform: translateZ(0);
   backface-visibility: hidden;
+  perspective: 1000px;
 }
 
-/* Glass refractive effect */
-.glass-refractive {
-  backdrop-filter: blur(80px);
-  @apply bg-white/[0.01] border border-white/[0.1] shadow-[0_0_50px_rgba(0,0,0,0.5)];
+.gpu-accelerated {
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
-@layer utilities {
-  /* No-scrollbar utility from external skill */
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
+/* ============================================
+   Scrollbar Styles
+   ============================================ */
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+.dark .scrollbar-thin {
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.dark .scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* ============================================
+   Focus Ring System
+   ============================================ */
+
+.focus-ring {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-background), 0 0 0 4px var(--color-accent);
+}
+
+*:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* ============================================
+   Reduced Motion
+   ============================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
-  .no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
+}
+
+/* ============================================
+   Touch Targets (Mobile Accessibility)
+   ============================================ */
+
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* ============================================
+   Loading Skeleton
+   ============================================ */
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-background-secondary) 25%,
+    var(--color-background-tertiary) 50%,
+    var(--color-background-secondary) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
   }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* ============================================
+   Custom Selection
+   ============================================ */
+
+::selection {
+  background-color: var(--color-accent);
+  color: white;
+}
+
+/* ============================================
+   Button Reset
+   ============================================ */
+
+button {
+  cursor: pointer;
+  font: inherit;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* ============================================
+   Input Reset
+   ============================================ */
+
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+/* ============================================
+   Image Reset
+   ============================================ */
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* ============================================
+   Utility Classes
+   ============================================ */
+
+@theme {
+  --color-background: var(--color-background);
+  --color-background-secondary: var(--color-background-secondary);
+  --color-background-tertiary: var(--color-background-tertiary);
+  --color-foreground: var(--color-foreground);
+  --color-foreground-muted: var(--color-foreground-muted);
+  --color-accent: var(--color-accent);
+  --color-accent-success: var(--color-accent-success);
+  --color-accent-warning: var(--color-accent-warning);
+  --color-accent-error: var(--color-accent-error);
+  --color-border: var(--color-border);
+}
+
+@utility text-gradient {
+  background: linear-gradient(135deg, var(--color-accent), #7c3aed);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+@utility bg-gradient-subtle {
+  background: linear-gradient(
+    180deg,
+    var(--color-background) 0%,
+    var(--color-background-secondary) 100%
+  );
+}
+
+@utility animate-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@utility animate-slide-up {
+  animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }

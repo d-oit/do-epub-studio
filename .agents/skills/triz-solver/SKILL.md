@@ -33,18 +33,22 @@ Resolve contradictions using TRIZ methodology. This skill MUST be run AFTER triz
 ## Separation Principles
 
 ### Time Separation
+
 - Opposite states at different times
 - Buffer solutions for timing conflicts
 
 ### Space Separation
+
 - Opposite states in different locations
 - Split systems spatially
 
 ### Condition Separation
+
 - Opposite states under different conditions
 - Conditional logic solutions
 
 ### System-Level Separation
+
 - Move contradiction to higher/lower system level
 - Delegate to subsystem
 
@@ -110,6 +114,7 @@ After resolving contradictions:
 ## Rule
 
 **No system design before:**
+
 - All contradictions resolved
 - Solutions mapped to components
 - New contradictions checked (must be NONE)

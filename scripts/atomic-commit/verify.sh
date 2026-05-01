@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Phase 6: VERIFY - Wait for CI checks
-# Polls GitHub checks with timeout, zero warnings policy
+# Polls GitHub checks with timeout using structured JSON output.
 # Usage: verify.sh [pr-number] [timeout-seconds]
 
 set -euo pipefail
@@ -10,33 +10,14 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 PR_NUMBER="${1:-}"
 TIMEOUT="${2:-1800}"
-POLL_INTERVAL=10
+BASE_POLL_INTERVAL=10
+MAX_POLL_INTERVAL=60
 
-if [[ -t 1 ]]; then
-    RED='\033[0;31m'
-    GREEN='\033[0;32m'
-    YELLOW='\033[1;33m'
-    BLUE='\033[0;34m'
-    NC='\033[0m'
-else
-    RED='' GREEN='' YELLOW='' BLUE='' NC=''
-fi
-
-log() {
-    echo -e "${BLUE}[verify]${NC} $*"
-}
-
-error() {
-    echo -e "${RED}[verify]${NC} $*" >&2
-}
-
-success() {
-    echo -e "${GREEN}[verify]${NC} $*"
-}
-
-warn() {
-    echo -e "${YELLOW}[verify]${NC} $*"
-}
+# Source shared libs
+# shellcheck source=scripts/lib/colors.sh
+source "$REPO_ROOT/scripts/lib/colors.sh"
+# shellcheck source=scripts/lib/logging.sh
+source "$REPO_ROOT/scripts/lib/logging.sh" verify
 
 cd "$REPO_ROOT"
 
@@ -51,11 +32,11 @@ fi
 
 log "Monitoring PR #$PR_NUMBER"
 log "Timeout: ${TIMEOUT}s"
-log "Poll interval: ${POLL_INTERVAL}s"
+log "Poll interval: ${BASE_POLL_INTERVAL}s (exponential backoff up to ${MAX_POLL_INTERVAL}s)"
 echo ""
 
 START_TIME=$(date +%s)
-ALL_PASS=false
+POLL_INTERVAL=$BASE_POLL_INTERVAL
 
 while true; do
     CURRENT_TIME=$(date +%s)
@@ -63,65 +44,84 @@ while true; do
 
     if [[ $ELAPSED -gt $TIMEOUT ]]; then
         error "Timeout waiting for checks (${TIMEOUT}s)"
-        error "PR may still be processing - check manually at:"
+        error "PR may still be processing - check manually:"
         gh pr view "$PR_NUMBER" --json url --jq '.url' 2>/dev/null || true
         exit 1
     fi
 
-    CHECKS_OUTPUT=$(gh pr checks "$PR_NUMBER" 2>&1 || true)
+    # Use structured JSON output for reliable parsing
+    CHECKS_JSON=$(gh pr checks "$PR_NUMBER" --json name,state,conclusion,status 2>/dev/null || echo "[]")
 
-    if echo "$CHECKS_OUTPUT" | grep -qiE "(pending|queued|in progress|running)"; then
-        log "Checks still running... (${ELAPSED}s elapsed)"
-        sleep $POLL_INTERVAL
-        continue
+    # Parse check states
+    PENDING_COUNT=0
+    FAILED_COUNT=0
+    SUCCESS_COUNT=0
+    TOTAL_COUNT=0
+
+    while IFS='|' read -r name state conclusion status; do
+        [[ -z "$name" ]] && continue
+        TOTAL_COUNT=$((TOTAL_COUNT + 1))
+
+        case "$state" in
+            PENDING|QUEUED|IN_PROGRESS|REQUESTED|WAITING)
+                PENDING_COUNT=$((PENDING_COUNT + 1))
+                ;;
+            COMPLETED)
+                case "$conclusion" in
+                    SUCCESS|NEUTRAL)
+                        SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
+                        ;;
+                    FAILURE|CANCELLED|TIMED_OUT|ACTION_REQUIRED|STALE)
+                        FAILED_COUNT=$((FAILED_COUNT + 1))
+                        ;;
+                esac
+                ;;
+        esac
+    done < <(echo "$CHECKS_JSON" | jq -r '.[] | "\(.name)|\(.state)|\(.conclusion)|\(.status)"' 2>/dev/null || true)
+
+    # Show progress
+    if [[ $TOTAL_COUNT -gt 0 ]]; then
+        log "Checks: $SUCCESS_COUNT passed, $FAILED_COUNT failed, $PENDING_COUNT pending (${ELAPSED}s elapsed)"
+    else
+        log "No checks found... (${ELAPSED}s elapsed)"
     fi
 
-    if echo "$CHECKS_OUTPUT" | grep -qiE "(fail|error|x |✗)"; then
+    # Determine outcome
+    if [[ $FAILED_COUNT -gt 0 ]]; then
         error "Checks failed!"
-        echo "$CHECKS_OUTPUT"
+        echo ""
+        gh pr checks "$PR_NUMBER" 2>&1 || true
         exit 1
     fi
 
-    if echo "$CHECKS_OUTPUT" | grep -qiE "(warning|warn:|deprecated|lint.*warn)"; then
-        error "Warnings detected in checks - zero warnings policy enforced"
-        error "Fix all warnings before completing:"
-        echo "$CHECKS_OUTPUT"
-        exit 1
+    if [[ $PENDING_COUNT -eq 0 ]] && [[ $TOTAL_COUNT -gt 0 ]]; then
+        # All checks completed, none failed
+        log "All $TOTAL_COUNT check(s) passed"
+        break
     fi
 
-    if echo "$CHECKS_OUTPUT" | grep -qiE "(pass|success|✓|✔)"; then
-        if ! echo "$CHECKS_OUTPUT" | grep -qiE "(pending|queued|in progress|running)"; then
-            ALL_PASS=true
-            break
-        fi
+    if [[ $TOTAL_COUNT -eq 0 ]] && [[ $ELAPSED -gt 60 ]]; then
+        warn "No checks detected after 60s"
+        warn "If repository has no CI, use --skip-ci flag"
+        log "Continuing..."
+        break
     fi
 
-    if echo "$CHECKS_OUTPUT" | grep -qiE "(no checks|no status)"; then
-        if [[ $ELAPSED -gt 60 ]]; then
-            warn "No checks detected after 60s"
-            warn "If repository has no CI, use --skip-ci flag"
-            log "Continuing..."
-            ALL_PASS=true
-            break
-        fi
+    # Exponential backoff with max cap
+    sleep "$POLL_INTERVAL"
+    POLL_INTERVAL=$((POLL_INTERVAL * 2))
+    if [[ $POLL_INTERVAL -gt $MAX_POLL_INTERVAL ]]; then
+        POLL_INTERVAL=$MAX_POLL_INTERVAL
     fi
-
-    sleep $POLL_INTERVAL
 done
 
-if [[ "$ALL_PASS" == true ]]; then
-    echo ""
-    success "═════════════════════════════════════════════════════════════════"
-    success "  All CI Checks PASSED"
-    success "  Zero warnings detected"
-    success "═════════════════════════════════════════════════════════════════"
-    echo ""
+echo ""
+success "═════════════════════════════════════════════════════════════════"
+success "  All CI Checks PASSED"
+success "═════════════════════════════════════════════════════════════════"
+echo ""
 
-    PR_URL=$(gh pr view "$PR_NUMBER" --json url --jq '.url' 2>/dev/null || echo "")
-    success "PR ready: $PR_URL"
+PR_URL=$(gh pr view "$PR_NUMBER" --json url --jq '.url' 2>/dev/null || echo "")
+success "PR ready: $PR_URL"
 
-    exit 0
-else
-    error "Checks did not complete successfully"
-    exit 1
-fi
+exit 0

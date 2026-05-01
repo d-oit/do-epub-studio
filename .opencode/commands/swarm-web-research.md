@@ -3,11 +3,15 @@ description: Execute swarm analysis with optimized web research in a git worktre
 subtask: false
 ---
 
-Execute multi-agent swarm analysis using git worktrees with optimized web research.
+# Swarm web research
+
+Execute multi-agent swarm analysis using git worktrees with optimized web
+research.
 
 Topic: $ARGUMENTS
 
 Steps:
+
 1. Load skills: `do-web-doc-resolver`, `agent-coordination`, `github-workflow`
 2. Create git worktree for isolated analysis
 3. Execute web research using the resolver skill with optimized cascade

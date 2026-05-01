@@ -10,6 +10,7 @@ This file MUST be derived from TRIZ resolution.
 ## Required mapping
 
 Each system decision must reference:
+
 - contradiction resolved
 - TRIZ principle used
 

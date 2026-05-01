@@ -1,10 +1,12 @@
 import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 
 import { LocaleSwitcher } from '../../components/LocaleSwitcher';
 import { useTranslation } from '../../hooks/useTranslation';
 import { apiRequest } from '../../lib/api';
 import { useAuthStore } from '../../stores/auth';
+import { Button, Input } from '../../components/ui';
 
 interface LoginSuccess {
   sessionToken: string;
@@ -24,6 +26,26 @@ interface LoginSuccess {
     canManageAccess: boolean;
   };
 }
+
+const containerVariants = {
+  initial: { opacity: 0 },
+  animate: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.2,
+    },
+  },
+};
+
+const itemVariants = {
+  initial: { opacity: 0, y: 20 },
+  animate: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.4, ease: [0.4, 0, 0.2, 1] as const },
+  },
+};
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -68,90 +90,102 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
-      <div className="max-w-md w-full">
-        <div className="flex justify-end mb-4">
-          <LocaleSwitcher />
-        </div>
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{t('app.title')}</h1>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">{t('login.subtitle')}</p>
-        </div>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background-secondary to-background px-4 relative overflow-hidden">
+      {/* Background decorations */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 0.4, scale: 1 }}
+          transition={{ duration: 1.5, ease: 'easeOut' as const }}
+          className="absolute -top-1/2 -right-1/4 w-[800px] h-[800px] bg-accent/10 rounded-full blur-3xl"
+        />
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 0.3, scale: 1 }}
+          transition={{ duration: 1.5, delay: 0.2, ease: 'easeOut' as const }}
+          className="absolute -bottom-1/2 -left-1/4 w-[600px] h-[600px] bg-accent-secondary/10 rounded-full blur-3xl"
+        />
+      </div>
 
-        <form
-          onSubmit={(event) => {
-            void handleSubmit(event);
-          }}
-          className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 space-y-4"
-        >
+      <motion.div
+        variants={containerVariants}
+        initial="initial"
+        animate="animate"
+        className="relative z-10 max-w-md w-full"
+      >
+        <motion.div variants={itemVariants} className="flex justify-end mb-6">
+          <LocaleSwitcher />
+        </motion.div>
+
+        <motion.div variants={itemVariants} className="text-center mb-8">
+          <h1 className="text-hero font-bold text-foreground mb-3 tracking-tight">
+            {t('app.title')}
+          </h1>
+          <p className="text-foreground-muted text-lg">{t('login.subtitle')}</p>
+        </motion.div>
+
+        <motion.div variants={itemVariants} className="glass-card p-8">
           {error && (
-            <div className="p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded text-red-700 dark:text-red-400 text-sm">
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-6 p-4 bg-accent-error/10 border border-accent-error/20 rounded-lg text-accent-error text-sm"
+            >
               {error}
-            </div>
+            </motion.div>
           )}
 
-          <div>
-            <label
-              htmlFor="bookSlug"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-            >
-              {t('login.bookSlugLabel')}
-            </label>
-            <input
-              id="bookSlug"
+          <form
+            onSubmit={(event) => {
+              void handleSubmit(event);
+            }}
+            className="space-y-5"
+          >
+            <Input
+              label={t('login.bookSlugLabel')}
               type="text"
               value={bookSlug}
               onChange={(e) => setBookSlug(e.target.value)}
               placeholder={t('login.bookSlugPlaceholder')}
               required
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
             />
-          </div>
 
-          <div>
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-            >
-              {t('login.emailLabel')}
-            </label>
-            <input
-              id="email"
+            <Input
+              label={t('login.emailLabel')}
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder={t('login.emailPlaceholder')}
               required
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
             />
-          </div>
 
-          <div>
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-            >
-              {t('login.passwordLabel')}
-            </label>
-            <input
-              id="password"
+            <Input
+              label={t('login.passwordLabel')}
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder={t('login.passwordPlaceholder')}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
             />
-          </div>
 
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full py-2 px-4 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-md shadow focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isLoading ? t('login.signingIn') : t('login.submit')}
-          </button>
-        </form>
-      </div>
+            <Button
+              type="submit"
+              variant="primary"
+              size="lg"
+              isLoading={isLoading}
+              className="w-full mt-2"
+            >
+              {isLoading ? t('login.signingIn') : t('login.submit')}
+            </Button>
+          </form>
+        </motion.div>
+
+        <motion.p
+          variants={itemVariants}
+          className="mt-8 text-center text-sm text-foreground-muted"
+        >
+          Secure EPUB reader with offline support
+        </motion.p>
+      </motion.div>
     </div>
   );
 }

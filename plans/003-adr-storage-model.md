@@ -6,6 +6,7 @@
 ## Context
 
 We need to decide where to store:
+
 1. EPUB file bytes (large binary files)
 2. App metadata (books, users, grants)
 3. Reading state (progress, annotations)
@@ -47,12 +48,14 @@ We need to decide where to store:
 ## Consequences
 
 **Positive:**
+
 - R2 is cheaper and faster for large files than Turso blobs
 - Clear separation of concerns
 - Turso schema provides type safety
 - Offline-first works with local-first writes
 
 **Negative:**
+
 - Two storage systems to manage
 - Sync logic must handle both R2 and Turso
 

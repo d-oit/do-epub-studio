@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo, memo } from 'react';
 import type { Comment, Highlight } from '../../../../stores';
 import { useTranslation } from '../../../../hooks/useTranslation';
 import type { TranslationKeys } from '../../../../i18n';
@@ -75,8 +75,11 @@ export function CommentsPanel({
     [highlightNote, onEditHighlight],
   );
 
-  const openComments = comments.filter((c) => c.status === 'open');
-  const resolvedComments = comments.filter((c) => c.status === 'resolved');
+  const openComments = useMemo(() => comments.filter((c) => c.status === 'open'), [comments]);
+  const resolvedComments = useMemo(
+    () => comments.filter((c) => c.status === 'resolved'),
+    [comments],
+  );
 
   if (!isOpen) return null;
 
@@ -244,7 +247,7 @@ interface CommentItemProps {
   t: (key: TranslationKeys) => string;
 }
 
-function CommentItem({
+const CommentItem = memo(function CommentItem({
   comment,
   isCurrentChapter,
   replyingTo,
@@ -276,11 +279,17 @@ function CommentItem({
       }`}
       onMouseEnter={() => setShowActions(true)}
       onMouseLeave={() => setShowActions(false)}
+      onFocus={() => setShowActions(true)}
+      onBlur={() => setShowActions(false)}
+      tabIndex={0}
     >
       {comment.selectedText && (
         <blockquote
           className="text-xs text-gray-600 dark:text-gray-400 italic mb-2 cursor-pointer hover:text-primary-600"
           onClick={onNavigate}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onNavigate(); } }}
+          tabIndex={0}
+          role="button"
         >
           "{comment.selectedText.slice(0, 100)}
           {comment.selectedText.length > 100 ? '...' : ''}"
@@ -403,7 +412,7 @@ function CommentItem({
       )}
     </div>
   );
-}
+});
 
 interface HighlightItemProps {
   highlight: Highlight;
@@ -417,7 +426,7 @@ interface HighlightItemProps {
   onNavigate: () => void;
 }
 
-function HighlightItem({
+const HighlightItem = memo(function HighlightItem({
   highlight,
   isCurrentChapter,
   editingHighlight,
@@ -440,10 +449,16 @@ function HighlightItem({
       }`}
       onMouseEnter={() => setShowActions(true)}
       onMouseLeave={() => setShowActions(false)}
+      onFocus={() => setShowActions(true)}
+      onBlur={() => setShowActions(false)}
+      tabIndex={0}
     >
       <div
         className="text-sm text-gray-900 dark:text-gray-100 cursor-pointer hover:text-primary-600"
         onClick={onNavigate}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onNavigate(); } }}
+        tabIndex={0}
+        role="button"
         style={{ backgroundColor: highlight.color + '60', padding: '2px 4px', borderRadius: '2px' }}
       >
         {highlight.selectedText.slice(0, 150)}
@@ -510,7 +525,7 @@ function HighlightItem({
       )}
     </div>
   );
-}
+});
 
 function formatDate(dateString: string): string {
   const date = new Date(dateString);

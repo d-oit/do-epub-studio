@@ -4,6 +4,7 @@ import ePub, { Book, Rendition } from 'epubjs';
 
 import { LocaleSwitcher } from '../../components/LocaleSwitcher';
 import { useTranslation } from '../../hooks/useTranslation';
+import { Header, IconButton, Button, Tooltip } from '../../components/ui';
 import { apiRequest } from '../../lib/api';
 import {
   fetchHighlights,
@@ -36,6 +37,10 @@ import {
   type SelectionData,
 } from './components/annotations';
 import { CommentInput } from './components/annotations/CommentInput';
+import {
+  renderHighlightsOnRendition,
+  renderCommentMarkersOnRendition,
+} from './annotationRendering';
 
 interface TocItem {
   label: string;
@@ -47,27 +52,28 @@ export function ReaderPage() {
   const { bookSlug } = useParams<{ bookSlug: string }>();
   const navigate = useNavigate();
   const { sessionToken, bookId, bookTitle, capabilities, logout } = useAuthStore();
-  const {
-    progress: _progress,
-    setProgress,
-    setError,
-    error,
-    setOffline,
-    setPermissionStatus,
-    highlights,
-    setHighlights,
-    addHighlight,
-    updateHighlight: updateHighlightInStore,
-    removeHighlight,
-    comments,
-    setComments,
-    addComment,
-    updateComment: updateCommentInStore,
-    setCurrentChapter,
-    bookmarks,
-    addBookmark,
-    removeBookmark,
-  } = useReaderStore();
+
+  // Atomic selectors to avoid unnecessary re-renders (especially excluding 'progress')
+  const setProgress = useReaderStore((state) => state.setProgress);
+  const setError = useReaderStore((state) => state.setError);
+  const error = useReaderStore((state) => state.error);
+  const setOffline = useReaderStore((state) => state.setOffline);
+  const setPermissionStatus = useReaderStore((state) => state.setPermissionStatus);
+  const highlights = useReaderStore((state) => state.highlights);
+  const setHighlights = useReaderStore((state) => state.setHighlights);
+  const addHighlight = useReaderStore((state) => state.addHighlight);
+  const updateHighlightInStore = useReaderStore((state) => state.updateHighlight);
+  const removeHighlight = useReaderStore((state) => state.removeHighlight);
+  const comments = useReaderStore((state) => state.comments);
+  const setComments = useReaderStore((state) => state.setComments);
+  const addComment = useReaderStore((state) => state.addComment);
+  const updateCommentInStore = useReaderStore((state) => state.updateComment);
+  const setCurrentChapter = useReaderStore((state) => state.setCurrentChapter);
+  const currentChapter = useReaderStore((state) => state.currentChapter);
+  const bookmarks = useReaderStore((state) => state.bookmarks);
+  const addBookmark = useReaderStore((state) => state.addBookmark);
+  const removeBookmark = useReaderStore((state) => state.removeBookmark);
+
   const {
     reader,
     setTheme,
@@ -82,6 +88,14 @@ export function ReaderPage() {
   const renditionRef = useRef<Rendition | null>(null);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const currentChapterRef = useRef<string | null>(null);
+  // Stable refs so the EPUB init effect can call the latest render functions
+  // without listing them as deps (which would re-initialize the entire EPUB
+  // on every annotation change).
+  const renderHighlightsRef = useRef<((r: Rendition, ch: string | null) => void) | null>(null);
+  const renderCommentMarkersRef = useRef<((r: Rendition, ch: string | null) => void) | null>(null);
+  // Stable ref for toc so the relocated handler always sees the latest TOC
+  // without the EPUB init effect depending on toc state.
+  const tocRef = useRef<TocItem[]>([]);
   const [epubUrl, setEpubUrl] = useState<string | null>(null);
   const [toc, setToc] = useState<TocItem[]>([]);
   const [showToc, setShowToc] = useState(false);
@@ -94,7 +108,6 @@ export function ReaderPage() {
   const [isCommentMode, setIsCommentMode] = useState(false);
   const [showCommentInput, setShowCommentInput] = useState(false);
 
-  void _progress;
   void _setPageWidth;
 
   useEffect(() => {
@@ -390,72 +403,23 @@ export function ReaderPage() {
 
   const renderHighlights = useCallback(
     (rendition: Rendition, chapterHref: string | null) => {
-      // Remove all existing highlights first
-      const existing = rendition.annotations.each();
-      for (const annotation of existing) {
-        if ('cfiRange' in annotation) {
-          rendition.annotations.remove(annotation.cfiRange as string, 'highlight');
-        }
-      }
-
-      // Render highlights for the current chapter only
-      if (!chapterHref) return;
-
-      const chapterHighlights = highlights.filter(
-        (h) => h.chapterRef === chapterHref && h.cfiRange,
-      );
-
-      for (const highlight of chapterHighlights) {
-        rendition.annotations.highlight(
-          highlight.cfiRange as string,
-          { id: highlight.id, data: highlight },
-          undefined,
-          undefined,
-          { fill: highlight.color, 'fill-opacity': '0.3' },
-        );
-      }
+      renderHighlightsOnRendition(rendition, chapterHref, highlights);
     },
     [highlights],
   );
+  // Keep the ref current so the EPUB init effect always calls the latest version
+  renderHighlightsRef.current = renderHighlights;
 
   const renderCommentMarkers = useCallback(
     (rendition: Rendition, chapterHref: string | null) => {
-      // Remove all existing comment markers
-      const existing = rendition.annotations.each();
-      for (const annotation of existing) {
-        if ('cfiRange' in annotation) {
-          rendition.annotations.remove(annotation.cfiRange as string, 'underline');
-        }
-      }
-
-      if (!chapterHref) return;
-
-      const chapterComments = comments.filter(
-        (c) => c.chapterRef === chapterHref && c.cfiRange && c.status !== 'deleted',
-      );
-
-      for (const comment of chapterComments) {
-        const isResolved = comment.status === 'resolved';
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (rendition.annotations as any).add(
-          'underline',
-          comment.cfiRange,
-          comment.id,
-          { data: comment },
-          () => {
-            // Click handler: navigate to annotation
-            void handleNavigateToAnnotation(comment.chapterRef || '', comment.cfiRange || undefined);
-          },
-          {
-            stroke: isResolved ? '#9ca3af' : '#3b82f6',
-            'stroke-width': isResolved ? '1px' : '2px',
-            'stroke-opacity': isResolved ? '0.4' : '0.7',
-          },
-        );
-      }
+      renderCommentMarkersOnRendition(rendition, chapterHref, comments, (chapterRef, cfiRange) => {
+        void handleNavigateToAnnotation(chapterRef, cfiRange);
+      });
     },
     [comments, handleNavigateToAnnotation],
   );
+  // Keep the ref current so the EPUB init effect always calls the latest version
+  renderCommentMarkersRef.current = renderCommentMarkers;
 
   const handleCreateBookmark = useCallback(async () => {
     if (!sessionToken || !bookId) return;
@@ -573,6 +537,7 @@ export function ReaderPage() {
           }
         }
         setToc(tocItems);
+        tocRef.current = tocItems;
 
         const rendition = book.renderTo(viewer, {
           width: '100%',
@@ -593,8 +558,8 @@ export function ReaderPage() {
           currentChapterRef.current = startHref;
           setCurrentChapter(startHref);
         }
-        renderHighlights(rendition, currentChapterRef.current);
-        renderCommentMarkers(rendition, currentChapterRef.current);
+        renderHighlightsRef.current?.(rendition, currentChapterRef.current);
+        renderCommentMarkersRef.current?.(rendition, currentChapterRef.current);
 
         if (sessionToken && bookId) {
           try {
@@ -625,14 +590,14 @@ export function ReaderPage() {
               updatedAt: new Date().toISOString(),
             });
 
-            const currentTocItem = toc.find((item) => item.href === href);
+            const currentTocItem = tocRef.current.find((item) => item.href === href);
             if (currentTocItem) {
               currentChapterRef.current = currentTocItem.href;
               setCurrentChapter(currentTocItem.href);
             }
 
-            renderHighlights(rendition, currentChapterRef.current);
-            renderCommentMarkers(rendition, currentChapterRef.current);
+            renderHighlightsRef.current?.(rendition, currentChapterRef.current);
+            renderCommentMarkersRef.current?.(rendition, currentChapterRef.current);
 
             if (sessionToken && bookId) {
               const mutationId = generateMutationId();
@@ -702,8 +667,7 @@ export function ReaderPage() {
       renditionRef.current?.destroy();
       bookRef.current?.destroy();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [epubUrl, sessionToken, bookId, applyTheme, applyTypography, setError, setProgress, t]);
+  }, [epubUrl, sessionToken, bookId, applyTheme, applyTypography, setCurrentChapter, setError, setProgress, t]);
 
   useEffect(() => {
     if (renditionRef.current) {
@@ -766,115 +730,128 @@ export function ReaderPage() {
 
   return (
     <div className={`min-h-screen ${themeClass}`}>
-      <header className="fixed top-0 left-0 right-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 z-50">
-        <div className="flex items-center justify-between px-4 py-2">
-          <div className="flex items-center space-x-4">
-            <button
-              onClick={() => setShowToc(!showToc)}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
-              aria-label={t('reader.tableOfContents')}
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 6h16M4 12h16M4 18h16"
-                />
-              </svg>
-            </button>
-            <h1 className="font-medium truncate max-w-xs">{bookTitle || bookSlug}</h1>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            {capabilities?.canComment && (
-              <button
-                onClick={() => setShowComments(!showComments)}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded relative"
-                aria-label={t('annotation.comment')}
+      <Header sticky glass className="border-b border-border">
+        <div className="flex items-center justify-between px-4 h-14">
+          <div className="flex items-center gap-2">
+            <Tooltip content={t('reader.tableOfContents')}>
+              <IconButton
+                onClick={() => setShowToc(!showToc)}
+                variant="ghost"
+                aria-label={t('reader.tableOfContents')}
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth={2}
-                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                    d="M4 6h16M4 12h16M4 18h16"
                   />
                 </svg>
-                {comments.filter((c) => c.status === 'open').length > 0 && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary-600 text-white text-xs rounded-full flex items-center justify-center">
-                    {comments.filter((c) => c.status === 'open').length}
+              </IconButton>
+            </Tooltip>
+            <h1 className="font-medium truncate max-w-[200px] md:max-w-xs text-foreground">
+              {bookTitle || bookSlug}
+            </h1>
+          </div>
+
+          <div className="flex items-center gap-1 md:gap-2">
+            {capabilities?.canComment && (
+              <Tooltip content={t('annotation.comment')}>
+                <IconButton
+                  onClick={() => setShowComments(!showComments)}
+                  variant="ghost"
+                  className="relative"
+                  aria-label={t('annotation.comment')}
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                    />
+                  </svg>
+                  {comments.filter((c) => c.status === 'open').length > 0 && (
+                    <span className="absolute top-1 right-1 w-4 h-4 bg-accent text-white text-[10px] rounded-full flex items-center justify-center font-bold">
+                      {comments.filter((c) => c.status === 'open').length}
+                    </span>
+                  )}
+                </IconButton>
+              </Tooltip>
+            )}
+            <Tooltip content="View bookmarks">
+              <IconButton
+                onClick={() => setShowBookmarks(!showBookmarks)}
+                variant="ghost"
+                className="relative"
+                aria-label="Bookmarks"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
+                  />
+                </svg>
+                {bookmarks.length > 0 && (
+                  <span className="absolute top-1 right-1 w-4 h-4 bg-accent text-white text-[10px] rounded-full flex items-center justify-center font-bold">
+                    {bookmarks.length}
                   </span>
                 )}
-              </button>
-            )}
-            <button
-              onClick={() => setShowBookmarks(!showBookmarks)}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded relative"
-              aria-label="Bookmarks"
-              title="View bookmarks"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
-                />
-              </svg>
-              {bookmarks.length > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary-600 text-white text-xs rounded-full flex items-center justify-center">
-                  {bookmarks.length}
-                </span>
-              )}
-            </button>
-            <button
-              onClick={() => void handleExportNotes()}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
-              aria-label="Export notes"
-              title="Export highlights and comments as Markdown"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                />
-              </svg>
-            </button>
-            <button
-              onClick={() => setShowSettings(!showSettings)}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
-              aria-label={t('reader.settings')}
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                />
-              </svg>
-            </button>
+              </IconButton>
+            </Tooltip>
+            <Tooltip content="Export highlights and comments as Markdown">
+              <IconButton
+                onClick={() => void handleExportNotes()}
+                variant="ghost"
+                aria-label="Export notes"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  />
+                </svg>
+              </IconButton>
+            </Tooltip>
+            <Tooltip content={t('reader.settings')}>
+              <IconButton
+                onClick={() => setShowSettings(!showSettings)}
+                variant="ghost"
+                aria-label={t('reader.settings')}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                </svg>
+              </IconButton>
+            </Tooltip>
+            <div className="mx-1 h-6 w-px bg-border hidden md:block" />
             <LocaleSwitcher />
-            <button
-              onClick={() => {
-                void handleLogout();
-              }}
-              className="px-3 py-1 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+            <Button
+              onClick={() => void handleLogout()}
+              variant="ghost"
+              size="sm"
+              className="hidden sm:inline-flex"
             >
               {t('reader.signOut')}
-            </button>
+            </Button>
           </div>
         </div>
-      </header>
+      </Header>
 
       {showSettings && (
         <div className="fixed top-14 right-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-4 z-50 w-64">
@@ -1138,7 +1115,7 @@ export function ReaderPage() {
         onNavigateToAnnotation={(chapterRef, cfiRange) =>
           void handleNavigateToAnnotation(chapterRef, cfiRange)
         }
-        currentChapter={useReaderStore.getState().currentChapter}
+        currentChapter={currentChapter}
         locale={locale}
       />
     </div>

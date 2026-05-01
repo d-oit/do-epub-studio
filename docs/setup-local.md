@@ -184,13 +184,13 @@ This is equivalent to:
 pnpm lint && pnpm typecheck && pnpm test && pnpm build
 ```
 
-To skip tests (e.g. in CI when test environment is not available):
+Or use the quality gate script (which runs all checks plus skill/link validation):
 
 ```bash
-SKIP_TESTS=true ./scripts/quality_gate.sh
+./scripts/quality_gate.sh
 ```
 
-Per `AGENTS.md`, the quality gate **must** pass before every commit.
+Per `AGENTS.md`, the quality gate **must** pass before every commit. There are no escape hatches.
 
 ## 9. Troubleshooting
 

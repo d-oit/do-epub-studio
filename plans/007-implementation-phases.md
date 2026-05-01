@@ -1,79 +1,56 @@
-# 007 – Implementation Phases
+# Phase 1: Core Infrastructure & P0 Features
 
-## Phase 0 – Foundation (COMPLETE)
+## See Also
+- **Plan 011**: Coding Workflow Improvements — AGENTS.md compliance, security scripts, quality gate enhancements
+- **Plan 012**: Comprehensive Analysis Findings — Security audit, code quality, testing gaps
 
-- Repo + pnpm/turbo workspace bootstrapped.
-- Skills installed; TRIZ analysis/resolution recorded.
-- ADRs 002–006 accepted.
+### Completed
+- [x] Initial monorepo setup (Vite, PWA, Worker)
+- [x] Turso / libSQL schema & migrations
+- [x] EPUB.js basic integration
+- [x] Global error interceptors for 401/403 responses
+- [x] Unskip and fix Admin/Reader unit tests
+- [x] Argon2id password hashing (G5 - RESOLVED)
 
-## Phase 1 – Schema + Access Spine (COMPLETE)
+### In Progress
+- [ ] Reader annotation anchor engine (ADR-006)
 
-**Scope:** finalize migrations, DTOs, access endpoints, audit logging.
+### Blockers (G2, G3, G4)
+- [ ] Fix slug/id mismatch in frontend/worker (G2) - CRITICAL
+- [ ] Implement signed download route (G3) - HIGH
+- [ ] Add admin auth middleware to admin routes (G4) - CRITICAL
 
-| Task                             | Output                                             | Owner Notes           |
-| -------------------------------- | -------------------------------------------------- | --------------------- | ------------------------------------- | ---------------- |
-| `packages/schema` migration pass | `0001-initial-schema.sql` mirrored to Turso        | Align with ADR-003    |
-| DTOs + validation                | `packages/shared` exports for grants/sessions      | Reuse in worker + web |
-| Access APIs                      | `/api/access/request                               | refresh               | logout` hardened with logging + trace | enforce Argon2id |
-| Signed URLs                      | `storage/signed-url.ts` w/ TTL + checksum          | Adds trace logs       |
-| Audit trail                      | `apps/worker/src/audit` invoked on grants/sessions | include traceId       |
+### Code Quality Issues
+- [ ] Refactor ReaderPage.tsx (1123 LOC, exceeds 500 limit) - CQ-1
+- [ ] Refactor GrantsPage.tsx (740 LOC, exceeds 500 limit) - CQ-2
 
-**Exit criteria:**
+### Testing Gaps
+- [ ] Add CFI navigation tests (T-1)
+- [ ] Add EPUB parsing tests (T-2)
+- [ ] Add password hashing tests (T-3)
+- [ ] Add bookmark CRUD tests (T-4)
 
-- Reader authenticates via UI + Worker.
-- Short-lived session + signed EPUB URL returned.
-- Audit log entry stored for grant usage.
+---
 
-## Phase 2 – Reader MVP (COMPLETE)
+## Phase 2: Reader Enablement (Priority)
 
-- EPUB.js integration + TOC.
-- Theme/typography controls persisted.
-- Progress roundtrip via Worker.
+See Plan 012 for detailed gap analysis:
+- G1: Wire Reader UI to EPUB.js backend
+- G2: Fix slug/id mismatch
+- G3: Implement signed download route
+- G13: Enforce multi-signal annotation locators
 
-**PR:** #11 - merged to main
+---
 
-## Phase 3 – Offline & Sync (COMPLETE)
+## Phase 3: Admin Security (Priority)
 
-- Service worker (src/sw.ts) with injectManifest strategy: cache-first for shell/assets/fonts/images, network-first for API, cache-first for EPUB files.
-- IndexedDB schema (lib/offline/db.ts) for progress, annotations, sync queue, permission cache.
-- Permission cache TTL (24h) + zombie detection with periodic validation (lib/offline/permissions.ts).
-- Sync queue with exponential backoff, max 5 retries, permission revocation detection (lib/offline/sync.ts).
-- Reader progress locally first, queued sync on reconnect with online/offline listeners.
-- PWA manifest icons generated (192x192, 512x512).
-- Comprehensive test coverage: offline-db.test.ts, offline-sync.test.ts, offline-permissions.test.ts.
-- Permission revocation callback integration for UI notifications.
+- G4: Add admin authentication to all admin routes
+- G6: Complete Admin UI workflow
 
-**PR:** Ready for review
+---
 
-## Phase 4 – Editorial Toolkit (COMPLETE)
+## Phase 4: Testing & Quality
 
-- Highlights + comments UI with threaded replies, resolve/unresolve, edit, delete.
-- Visual highlight overlays rendered on EPUB text via `rendition.annotations.highlight()`.
-- Visual comment markers (underlines) rendered on EPUB text via `rendition.annotations.add('underline')`.
-- Re-anchoring heuristics per ADR-006 wired into annotation render flow.
-- Bookmark creation, listing, navigation, and deletion UI.
-- CommentInput component wired into annotation flow with auto-focus.
-- Export notes as Markdown (highlights + comments).
-- Offline sync queue fixed to distinguish highlights vs comments.
-- Background sync tag `sync-reader-state` registered on app load.
-
-## Phase 5 – Admin Console (COMPLETE)
-
-- Book catalog + upload flow with presigned R2 upload.
-- Grant editor with capability toggles, expiry, create/edit/revoke.
-- Audit log UI with filtering (entity type, date range, entity ID) + CSV export.
-- Admin login page with role-based route guards (`AdminRoute`).
-- Admin navigation bar linking Books, Grants, and Audit Log pages.
-
-## Phase 6 – Hardening & Release
-
-- Accessibility + localization QA (en/de/fr parity).
-- Performance + security audits.
-- Regression suites (Vitest/Playwright) expanded.
-- Release automation + documentation polish.
-
-## Tracking Rules
-
-- Update this file at the end of each phase with actual outcomes + links to PRs.
-- Link back to GOAP roadmap (`plans/001-goap-roadmap.md`).
-- Include traceability to TRIZ contradictions when defining new workstreams.
+- T-1 through T-4: Expand test coverage
+- CQ-1, CQ-2: Refactor oversized files
+- G7: Add missing documentation

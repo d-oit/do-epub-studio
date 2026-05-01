@@ -5,6 +5,7 @@
 A common pitfall is asking an LLM to generate a skill without domain-specific context. The result is vague, generic procedures rather than specific API patterns, edge cases, and project conventions.
 
 **Extract from a Hands-On Task:**
+
 - Complete a real task with an agent, providing context, corrections, and preferences
 - Extract the reusable pattern, paying attention to:
   - Steps that worked
@@ -13,6 +14,7 @@ A common pitfall is asking an LLM to generate a skill without domain-specific co
   - Context you provided
 
 **Synthesize from Existing Project Artifacts:**
+
 - Internal documentation, runbooks, and style guides
 - API specifications, schemas, and configuration files
 - Code review comments and issue trackers
@@ -29,6 +31,7 @@ Run the skill against real tasks, then feed results back:
 ## Spend Context Wisely
 
 Focus on what the agent *wouldn't* know without your skill:
+
 - Project-specific conventions
 - Domain-specific procedures
 - Non-obvious edge cases
@@ -39,10 +42,12 @@ Focus on what the agent *wouldn't* know without your skill:
 ## Calibrating Control
 
 **Give freedom** when:
+
 - Multiple approaches are valid
 - Task tolerates variation
 
 **Be prescriptive** when:
+
 - Operations are fragile
 - Consistency matters
 - Specific sequence must be followed
@@ -84,6 +89,7 @@ Provide a template rather than describing format in prose.
 ### For do-epub-studio Project
 
 **Domain-Specific Skills**:
+
 - EPUB parsing and validation
 - Cloudflare Worker API integration
 - Turso database schema migrations
@@ -92,11 +98,13 @@ Provide a template rather than describing format in prose.
 - TRIZ-based architecture analysis
 
 **Skill Naming Convention**:
+
 - Use lowercase letters, numbers, and hyphens only
 - Max 64 characters
 - Descriptive names that indicate trigger scenarios
 
 **Integration Requirements**:
+
 - Reference AGENTS.md standards
 - Include examples using project structure
 - Consider EPUB-specific workflows

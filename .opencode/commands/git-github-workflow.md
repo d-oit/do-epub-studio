@@ -3,14 +3,16 @@ description: Git and GitHub workflow commands
 subtask: true
 ---
 
-Git and GitHub workflow commands.
+# Git and GitHub workflow commands
 
 ## Available Commands
 
 ### commit
+
 Use `./scripts/atomic-commit/run.sh` for atomic commits with CI verification.
 
 ### git-github-workflow
+
 Standard git workflow with GitHub integration.
 
 ## Branch Strategy

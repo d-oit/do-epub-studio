@@ -5,6 +5,9 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# shellcheck source=scripts/lib/colors.sh
+source "$REPO_ROOT/scripts/lib/colors.sh"
+
 SKILLS_DIR="$REPO_ROOT/.agents/skills"
 EVAL_SCRIPT="$SKILLS_DIR/skill-evaluator/scripts/check_structure.py"
 
@@ -37,26 +40,26 @@ for eval_file in "$SKILLS_DIR"/*/evals/evals.json; do
     skill_name=$(basename "$(dirname "$eval_file")")
 
     if grep -q '"should_trigger"' "$eval_file"; then
-        echo "  [FAIL] $skill_name: evals use 'expected_output' not 'should_trigger'"
+        printf '%s[FAIL]%s %s: evals use expected_output not should_trigger\n' "${RED}" "${NC}" "$skill_name"
         FAILED=1
     fi
 
     if ! grep -q '"expected_output"' "$eval_file"; then
-        echo "  [FAIL] $skill_name: evals missing 'expected_output' field"
+        printf '%s[FAIL]%s %s: evals missing expected_output field\n' "${RED}" "${NC}" "$skill_name"
         FAILED=1
     fi
 
     # Verify required eval fields
     for field in id prompt expected_output assertions; do
         if ! grep -q "\"$field\"" "$eval_file"; then
-            echo "  [FAIL] $skill_name: evals missing '$field' field"
+            printf '%s[FAIL]%s %s: evals missing %s field\n' "${RED}" "${NC}" "$skill_name" "'$field'"
             FAILED=1
         fi
     done
 
     # Verify files is a string array, not object array
     if grep -q '"path"' "$eval_file" 2>/dev/null; then
-        echo "  [FAIL] $skill_name: evals 'files' must be string array of paths, not objects with 'path'/'content'"
+        printf '%s[FAIL]%s %s: evals files must be string array of paths\n' "${RED}" "${NC}" "$skill_name"
         FAILED=1
     fi
 done
@@ -67,7 +70,7 @@ for skill_md in "$SKILLS_DIR"/*/SKILL.md; do
     skill_name=$(basename "$(dirname "$skill_md")")
 
     if grep -q 'should_trigger' "$skill_md"; then
-        echo "  [FAIL] $skill_name: SKILL.md references non-existent 'should_trigger'"
+        printf '%s[FAIL]%s %s: SKILL.md references non-existent should_trigger\n' "${RED}" "${NC}" "$skill_name"
         FAILED=1
     fi
 done

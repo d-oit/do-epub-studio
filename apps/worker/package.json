@@ -8,12 +8,14 @@
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint src --ext .ts"
+    "lint": "eslint src --ext .ts",
+    "test": "vitest --run",
+    "test:coverage": "vitest --run --coverage"
   },
   "dependencies": {
     "@do-epub-studio/schema": "workspace:*",
     "@do-epub-studio/shared": "workspace:*",
-    "@libsql/client": "^0.14.0",
+    "@libsql/client": "^0.17.3",
     "argon2-wasm-edge": "^1.0.23",
     "zod": "^3.25.76"
   },
@@ -21,8 +23,8 @@
     "@cloudflare/workers-types": "^4.20250415.0",
     "@types/node": "^25",
     "eslint": "^9.0.0",
-    "typescript": "^5.4",
-    "vitest": "^1.6.1",
-    "wrangler": "^3.100.0"
+    "typescript": "^6.0.2",
+    "vitest": "4.1.4",
+    "wrangler": "^4.86.0"
   }
 }

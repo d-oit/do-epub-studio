@@ -39,6 +39,7 @@ For test data builders, use the `testdata-builders` skill.
 ## EPUB Studio Stack
 
 ### Unit Tests (Vitest)
+
 ```typescript
 // Test business logic
 import { describe, it, expect } from 'vitest';
@@ -52,6 +53,7 @@ describe('Permission Logic', () => {
 ```
 
 ### Integration Tests
+
 ```typescript
 // Test database operations
 import { describe, it, expect, beforeAll } from 'vitest';
@@ -69,6 +71,7 @@ describe('Turso DB', () => {
 ```
 
 ### E2E Tests (Playwright)
+
 ```typescript
 // Test user flows
 import { test, expect } from '@playwright/test';

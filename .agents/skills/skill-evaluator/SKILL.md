@@ -113,6 +113,7 @@ skill-workspace/
 ```
 
 **Rules:**
+
 - Require concrete evidence for `PASS`. Deny benefit of the doubt.
 - Use semantic grading (LLM) for qualitative assertions.
 - Use verification scripts for mechanical checks (JSON validity, counts).
@@ -149,6 +150,7 @@ Save immediately after each run:
 ```
 
 **Analysis:**
+
 - Evaluate `delta`: trade-off between cost (time/tokens) and value (pass rate).
 - High `stddev` → flaky evals or ambiguous skill instructions.
 - Investigate time/token outliers via execution transcripts.
@@ -156,6 +158,7 @@ Save immediately after each run:
 ## Human Review (`feedback.json`)
 
 Save actionable feedback per eval directory. Catches:
+
 - Unasserted issues.
 - Technically correct but unhelpful outputs.
 - Outputs that miss the user's intent.

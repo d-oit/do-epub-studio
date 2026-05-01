@@ -9,6 +9,7 @@ license: MIT
 ## TypeScript Conventions
 
 ### Zod Schemas
+
 ```typescript
 import { z } from 'zod';
 
@@ -21,6 +22,7 @@ export const BookSchema = z.object({
 ```
 
 ### Zustand Stores
+
 ```typescript
 import { create } from 'zustand';
 
@@ -40,6 +42,7 @@ export const useBookStore = create<BookState>((set) => ({
 ## EPUB Patterns
 
 ### Content Extraction
+
 ```typescript
 async function extractContent(epub: EPUB): Promise<Section[]> {
   const book = await ePub.load(epub.locations);
@@ -53,6 +56,7 @@ async function extractContent(epub: EPUB): Promise<Section[]> {
 ```
 
 ### Annotation Locators
+
 ```typescript
 interface AnnotationLocator {
   cfi: string;
@@ -68,6 +72,7 @@ function createLocator(cfi: string, type: LocatorType): AnnotationLocator {
 ## Cloudflare Worker Patterns
 
 ### R2 Signed URLs
+
 ```typescript
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 
@@ -82,6 +87,7 @@ async function getSignedUrl(bookId: string): Promise<string> {
 ```
 
 ### Turso Queries
+
 ```typescript
 import { createClient } from '@libsql/client';
 
@@ -95,6 +101,7 @@ async function getBook(bookId: string) {
 ## Error Handling
 
 ### Service Layer
+
 ```typescript
 class BookService {
   async getBook(id: string): Promise<Result<Book, Error>> {
@@ -111,6 +118,7 @@ class BookService {
 ## Validation at Boundaries
 
 ### API Request Validation
+
 ```typescript
 import { z } from 'zod';
 

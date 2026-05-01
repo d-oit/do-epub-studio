@@ -5,12 +5,11 @@
 # Exit 0 if all links valid, non-zero if broken links or format errors found.
 set -uo pipefail
 
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-NC='\033[0m'
-
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# Source shared libs
+# shellcheck source=scripts/lib/colors.sh
+source "$REPO_ROOT/scripts/lib/colors.sh"
+
 SKILLS_DIR="$REPO_ROOT/.agents/skills"
 
 BROKEN_COUNT=0
@@ -34,17 +33,26 @@ is_url() {
     [[ "$1" =~ ^https?:// ]] || [[ "$1" =~ ^ftp:// ]] || [[ "$1" =~ ^mailto: ]]
 }
 
+# Portable path resolution — handles macOS (no realpath -m) and Linux
 resolve_path() {
     local base_dir="$1"
     local link_path="$2"
+
     if [[ "$link_path" == /* ]]; then
         echo "$link_path"
         return
     fi
+
+    local combined="$base_dir/$link_path"
+
+    # Try realpath first (GNU), fall back to manual normalization
     if command -v realpath &> /dev/null; then
-        realpath -m "$base_dir/$link_path"
+        realpath -m "$combined" 2>/dev/null || echo "$combined"
+    elif command -v readlink &> /dev/null; then
+        # macOS readlink -f doesn't exist; use perl as fallback
+        perl -MCwd=abs_path -le 'print abs_path($ARGV[0])' "$combined" 2>/dev/null || echo "$combined"
     else
-        echo "$base_dir/$link_path"
+        echo "$combined"
     fi
 }
 
@@ -143,13 +151,15 @@ process_skill_file() {
             fi
         fi
 
+        # Extract markdown links one at a time
         local temp_line="$line"
         while [[ "$temp_line" =~ $LINK_REGEX ]]; do
-            local full_match="${BASH_REMATCH[0]}"
+            local link_text="${BASH_REMATCH[1]}"
             local link_path="${BASH_REMATCH[2]}"
-            temp_line="${temp_line#*"$full_match"}"
+            # Advance past this match to find next ones
+            temp_line="${temp_line#*"]($link_path)"}"
 
-            if [[ "$line" =~ example[[:space:]]*[:\(] ]] || [[ "$link_path" =~ \.(svg|png|jpg|jpeg|gif)$ ]]; then
+            if [[ "$link_text" =~ example ]] || [[ "$link_path" =~ \.(svg|png|jpg|jpeg|gif)$ ]]; then
                 continue
             fi
 
@@ -161,6 +171,7 @@ process_skill_file() {
             fi
         done
 
+        # Check for backtick references
         if [[ "$line" =~ \`(references?/[a-zA-Z0-9_-]+\.md)\` ]]; then
             local ref_path="${BASH_REMATCH[1]}"
             LINKS_CHECKED=$((LINKS_CHECKED + 1))
@@ -170,6 +181,7 @@ process_skill_file() {
             fi
         fi
 
+        # Deprecated @reference prefix
         if [[ "$line" =~ @(references?/[a-zA-Z0-9_-]+\.md) ]]; then
             local at_ref="${BASH_REMATCH[1]}"
             echo -e "  ${RED}✗${NC} Broken @reference at line $line_num: @$at_ref" >&2
@@ -185,8 +197,7 @@ process_skill_file() {
     fi
 }
 
-echo "Validating reference links in SKILL.md files..."
-echo ""
+
 
 if [[ ! -d "$SKILLS_DIR" ]]; then
     echo -e "${YELLOW}⚠${NC} Skills directory not found: $SKILLS_DIR"
@@ -211,7 +222,7 @@ echo "────────────────────────�
 TOTAL_ERRORS=$((BROKEN_COUNT + FORMAT_ERRORS))
 
 if [[ $TOTAL_ERRORS -gt 0 ]]; then
-    echo -e "│ ${RED}✗ Link Validation FAILED${NC}                                      │" >&2
+    echo "│ ${RED}✗ Link Validation FAILED${NC}                                      │" >&2
     echo "─────────────────────────────────────────────────────────────────" >&2
     echo "" >&2
     echo "  Files checked: $FILES_CHECKED" >&2

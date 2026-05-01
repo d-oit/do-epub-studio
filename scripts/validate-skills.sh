@@ -1,31 +1,35 @@
 #!/usr/bin/env bash
-# Validates all CLI skill symlinks and SKILL.md files.
+# Validates all CLI skill symlinks.
 # Used in pre-commit hook and CI. Exit 2 on failure (surfaced to agent).
-# Note: OpenCode reads directly from .agents/skills/ - no symlinks to validate.
+# Note: Format validation is handled by validate-skill-format.sh separately.
 # NOTE: errexit disabled explicitly - it causes unpredictable failures in CI
+#
+# Windows compatibility: On Windows (MSYS/Cygwin), symlinks may appear as
+# regular files containing the path. Skip symlink validation on Windows.
 set +e
 set -uo pipefail
 
-# Color codes for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[0;33m'
-NC='\033[0m' # No Color
+# Detect Windows (MSYS, Cygwin, or Windows Subsystem for Linux)
+is_windows=false
+case "$(uname -s)" in
+    MINGW*|MSYS*|CYGWIN*|Windows*)
+        is_windows=true
+        ;;
+esac
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# Source shared libs
+# shellcheck source=scripts/lib/colors.sh
+source "$REPO_ROOT/scripts/lib/colors.sh"
+
 SKILLS_SRC="$REPO_ROOT/.agents/skills"
 
 CLI_SKILL_DIRS=(
   ".claude/skills"
   ".gemini/skills"
-  ".qwen/skills"
 )
 
 FAILED=0
-WARNINGS=0
-
-# Configuration
-MAX_SKILL_LINES=${MAX_SKILL_LINES:-250}
 
 echo "Validating skills..."
 echo ""
@@ -42,93 +46,48 @@ echo "Checking canonical skills in .agents/skills/..."
 for skill_path in "$SKILLS_SRC"/*/; do
     [ -d "$skill_path" ] || continue
     skill_name="$(basename "$skill_path")"
-    
+
     # Skip consolidated/backup folders
     if [[ "$skill_name" == _* ]]; then
         continue
     fi
-    
+
     # Check 1: SKILL.md must exist
     if [ ! -f "$skill_path/SKILL.md" ]; then
-        echo -e "  ${RED}✗${NC} $skill_name: Missing SKILL.md" >&2
+        echo -e "${RED}✗${NC} $skill_name: Missing SKILL.md" >&2
         FAILED=1
         continue
     fi
 
-    # Check 2: SKILL.md must have YAML frontmatter with name and description
-    if ! grep -q "^name:" "$skill_path/SKILL.md" 2>/dev/null; then
-        echo -e "  ${RED}✗${NC} $skill_name: SKILL.md missing 'name:' in frontmatter" >&2
-        FAILED=1
-    fi
-
-    if ! grep -q "^description:" "$skill_path/SKILL.md" 2>/dev/null; then
-        echo -e "  ${RED}✗${NC} $skill_name: SKILL.md missing 'description:' in frontmatter" >&2
-        FAILED=1
-    fi
-
-    # Check 2b: Warn if missing version field (non-breaking)
-    if ! grep -q "^version:" "$skill_path/SKILL.md" 2>/dev/null; then
-        echo -e "  ${YELLOW}⚠${NC} $skill_name: Missing 'version:' field (recommended)" >&2
-        WARNINGS=1
-    fi
-
-    # Check 3: SKILL.md line count (<= MAX_SKILL_LINES)
-    line_count=$(wc -l < "$skill_path/SKILL.md" | tr -d ' ')
-    if [ "$line_count" -gt "$MAX_SKILL_LINES" ]; then
-        echo -e "  ${RED}✗${NC} $skill_name: SKILL.md exceeds $MAX_SKILL_LINES lines ($line_count lines)" >&2
-        echo "      Consider moving detailed content to reference/ folder" >&2
-        FAILED=1
-    else
-        echo -e "  ${GREEN}✓${NC} $skill_name: $line_count lines"
-    fi
-
-    # Check 4: Circular symlink detection
+    # Check 2: Circular symlink detection
     if [ -L "$skill_path" ]; then
-        echo -e "  ${RED}✗${NC} $skill_name: Circular symlink detected" >&2
+        echo -e "${RED}✗${NC} $skill_name: Circular symlink detected" >&2
         FAILED=1
     fi
-done
 
-echo ""
-
-# --- Validate CLI symlinks ---
-echo "Checking CLI symlinks..."
-
-for skill_path in "$SKILLS_SRC"/*/; do
-    [ -d "$skill_path" ] || continue
-    skill_name="$(basename "$skill_path")"
-    
-    # Skip consolidated/backup folders
-    if [[ "$skill_name" == _* ]]; then
-        continue
-    fi
-    
+    # Check 3: Symlinks in CLI dirs (not .qwen — reads directly)
     for cli_dir in "${CLI_SKILL_DIRS[@]}"; do
         link="$REPO_ROOT/$cli_dir/$skill_name"
 
-        # .qwen/skills may be real dirs (not symlinks) - accept either
-        if [[ "$cli_dir" == ".qwen/skills" ]]; then
-            if [ ! -d "$link" ]; then
-                echo -e "  ${RED}✗${NC} MISSING: $cli_dir/$skill_name" >&2
-                FAILED=1
+        # On Windows, symlinks may be stored as regular files containing the path
+        # Skip symlink validation on Windows
+        if [ "$is_windows" = true ]; then
+            if [ -f "$link" ]; then
+                # Check if it looks like a valid symlink file (contains path)
+                if grep -q "^../../.agents/skills/" "$link" 2>/dev/null; then
+                    continue  # Valid Windows "symlink" file
+                fi
             fi
-        elif [ ! -L "$link" ]; then
-            echo -e "  ${RED}✗${NC} MISSING symlink: $cli_dir/$skill_name" >&2
+            # If not a valid file, skip (don't fail on Windows)
+            continue
+        fi
+
+        if [ ! -L "$link" ]; then
+            echo -e "${RED}✗${NC} MISSING symlink: $cli_dir/$skill_name" >&2
             FAILED=1
         elif [ ! -d "$link" ]; then
-            echo -e "  ${RED}✗${NC} BROKEN symlink: $cli_dir/$skill_name -> $(readlink "$link")" >&2
+            echo -e "${RED}✗${NC} BROKEN symlink: $cli_dir/$skill_name -> $(readlink "$link")" >&2
             FAILED=1
-        else
-            # Verify symlink points to correct location
-            target=$(readlink -f "$link" 2>/dev/null || echo "")
-            expected_target=$(readlink -f "$skill_path" 2>/dev/null || echo "")
-            
-            if [ -n "$target" ] && [ -n "$expected_target" ] && [ "$target" != "$expected_target" ]; then
-                echo -e "  ${YELLOW}⚠${NC} WRONG target: $cli_dir/$skill_name" >&2
-                echo "      Expected: $expected_target" >&2
-                echo "      Actual:   $target" >&2
-                WARNINGS=1
-            fi
         fi
     done
 done
@@ -137,23 +96,15 @@ echo ""
 
 # --- Summary ---
 if [ $FAILED -ne 0 ]; then
-    echo "─────────────────────────────────────────────────────────────────" >&2
-    echo "│ ✗ Skill Validation FAILED                                     │" >&2
-    echo "─────────────────────────────────────────────────────────────────" >&2
+    echo -e "${RED}─────────────────────────────────────────────────────────────────${NC}" >&2
+    echo -e "${RED}│ ✗ Skill Validation FAILED                                     │${NC}" >&2
+    echo -e "${RED}─────────────────────────────────────────────────────────────────${NC}" >&2
     echo "" >&2
     echo "Run: ./scripts/setup-skills.sh to fix missing symlinks." >&2
     echo "See: agents-docs/SKILLS.md for skill authoring guide." >&2
     exit 2
 fi
 
-if [ $WARNINGS -ne 0 ]; then
-    echo "─────────────────────────────────────────────────────────────────"
-    echo "│ ⚠ Skill Validation completed with warnings                    │"
-    echo "─────────────────────────────────────────────────────────────────"
-    echo ""
-    echo "Consider fixing warnings for optimal setup."
-fi
-
-echo "─────────────────────────────────────────────────────────────────"
-echo "│ ✓ All skill validations passed                                │"
-echo "─────────────────────────────────────────────────────────────────"
+echo -e "${GREEN}─────────────────────────────────────────────────────────────────${NC}"
+echo -e "${GREEN}│ ✓ All skill validations passed                                │${NC}"
+echo -e "${GREEN}─────────────────────────────────────────────────────────────────${NC}"

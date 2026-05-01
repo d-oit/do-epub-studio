@@ -25,18 +25,21 @@ Review pull requests holistically — analyzing diffs, risk, and cross-file impa
 ## Workflow
 
 ### Phase 1: Change Analysis
+
 1. Identify modified files
 2. Calculate metrics (lines changed, complexity)
 3. Assess risk level
 4. Detect patterns (features, bugs, refactoring)
 
 ### Phase 2: Quality Assessment
+
 1. Style compliance with project conventions
 2. Test coverage verification
 3. Documentation updates
 4. Security scan
 
 ### Phase 3: Feedback
+
 1. Summarize changes
 2. Identify issues
 3. Suggest improvements

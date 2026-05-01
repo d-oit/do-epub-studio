@@ -16,54 +16,24 @@ export interface AnnotationAnchor {
   chapterRef?: string;
 }
 
-function _levenshteinDistance(a: string, b: string): number {
-  const matrix: number[][] = [];
-
-  for (let i = 0; i <= b.length; i++) {
-    matrix[i] = [i];
-  }
-  for (let j = 0; j <= a.length; j++) {
-    matrix[0][j] = j;
-  }
-
-  for (let i = 1; i <= b.length; i++) {
-    for (let j = 1; j <= a.length; j++) {
-      if (b.charAt(i - 1) === a.charAt(j - 1)) {
-        matrix[i][j] = matrix[i - 1][j - 1];
-      } else {
-        matrix[i][j] = Math.min(
-          matrix[i - 1][j - 1] + 1,
-          matrix[i][j - 1] + 1,
-          matrix[i - 1][j] + 1,
-        );
-      }
-    }
-  }
-
-  return matrix[b.length][a.length];
-}
-
-function normalizeText(text: string): string {
-  return text
-    .toLowerCase()
+function normalizeText(text: string, isAlreadyLower = false): string {
+  const lower = isAlreadyLower ? text : text.toLowerCase();
+  return lower
     .replace(/[\s\n\r]+/g, ' ')
     .replace(/[^\w\s]/g, '')
     .trim();
 }
 
 function findPartialMatches(
-  text: string,
-  content: string,
+  normalizedTarget: string,
+  normalizedContent: string,
   minLength = 20,
 ): { match: string; position: number } | null {
-  const normalizedText = normalizeText(text);
-  const normalizedContent = normalizeText(content);
+  if (normalizedTarget.length < minLength) return null;
 
-  if (normalizedText.length < minLength) return null;
-
-  for (let len = normalizedText.length; len >= minLength; len -= 5) {
-    for (let i = 0; i <= normalizedText.length - len; i += Math.max(1, Math.floor(len / 4))) {
-      const segment = normalizedText.slice(i, i + len);
+  for (let len = normalizedTarget.length; len >= minLength; len -= 5) {
+    for (let i = 0; i <= normalizedTarget.length - len; i += Math.max(1, Math.floor(len / 4))) {
+      const segment = normalizedTarget.slice(i, i + len);
       const pos = normalizedContent.indexOf(segment);
       if (pos !== -1) {
         return { match: segment, position: pos };
@@ -86,87 +56,93 @@ export async function reanchorByText(
     return { success: false, fallback: true, message: 'Text too short for reanchoring' };
   }
 
-  const prioritizedToc = preferChapter
+  const normalizedTargetLower = targetText.toLowerCase();
+  const normalizedTargetGeneral = normalizeText(targetText);
+  const words = normalizedTargetGeneral.split(/\s+/).filter((w) => w.length > 3);
+
+  interface CachedChapter {
+    lower: string;
+    general?: string;
+    content: string;
+  }
+  const cache = new Map<string, CachedChapter>();
+
+  async function getCachedData(href: string): Promise<CachedChapter> {
+    const cached = cache.get(href);
+    if (cached) return cached;
+
+    const content = await loadChapterContent(href);
+    const result: CachedChapter = {
+      lower: content.toLowerCase(),
+      content,
+    };
+    cache.set(href, result);
+    return result;
+  }
+
+  const flattenedToc: string[] = [];
+  const collectHrefs = (items: TocItem[]) => {
+    for (const item of items) {
+      flattenedToc.push(item.href);
+      if (item.subitems) collectHrefs(item.subitems);
+    }
+  };
+  collectHrefs(toc);
+
+  const prioritizedHrefs = preferChapter
     ? [
-        ...toc.filter((item) => item.href === preferChapter || item.href.includes(preferChapter)),
-        ...toc.filter((item) => item.href !== preferChapter && !item.href.includes(preferChapter)),
+        ...flattenedToc.filter((href) => href === preferChapter || href.includes(preferChapter)),
+        ...flattenedToc.filter((href) => href !== preferChapter && !href.includes(preferChapter)),
       ]
-    : toc;
+    : flattenedToc;
 
-  for (const item of prioritizedToc) {
+  const uniqueHrefs = [...new Set(prioritizedHrefs)];
+
+  // Pass 1: Exact and Partial matches
+  for (const href of uniqueHrefs) {
     try {
-      const content = await loadChapterContent(item.href);
-      const normalizedContent = content.toLowerCase();
-      const normalizedTarget = targetText.toLowerCase();
+      const cached = await getCachedData(href);
 
-      const exactIndex = normalizedContent.indexOf(normalizedTarget);
+      const exactIndex = cached.lower.indexOf(normalizedTargetLower);
       if (exactIndex !== -1) {
         return {
           success: true,
-          chapterHref: item.href,
+          chapterHref: href,
           fallback: false,
           matchType: 'exact',
         };
       }
 
-      const partial = findPartialMatches(targetText, content);
+      if (!cached.general) {
+        cached.general = normalizeText(cached.lower, true);
+      }
+
+      const partial = findPartialMatches(normalizedTargetGeneral, cached.general);
       if (partial) {
         return {
           success: true,
-          chapterHref: item.href,
+          chapterHref: href,
           fallback: false,
           matchType: 'partial',
           message: `Partial match found at position ${partial.position}`,
         };
-      }
-
-      if (item.subitems) {
-        for (const subitem of item.subitems) {
-          try {
-            const subContent = await loadChapterContent(subitem.href);
-            const subNormalized = subContent.toLowerCase();
-
-            const subExact = subNormalized.indexOf(normalizedTarget);
-            if (subExact !== -1) {
-              return {
-                success: true,
-                chapterHref: subitem.href,
-                fallback: false,
-                matchType: 'exact',
-              };
-            }
-
-            const subPartial = findPartialMatches(targetText, subContent);
-            if (subPartial) {
-              return {
-                success: true,
-                chapterHref: subitem.href,
-                fallback: false,
-                matchType: 'partial',
-                message: `Partial match found at position ${subPartial.position}`,
-              };
-            }
-          } catch {
-            continue;
-          }
-        }
       }
     } catch {
       continue;
     }
   }
 
-  for (const item of prioritizedToc) {
+  // Pass 2: Fuzzy word overlap
+  for (const href of uniqueHrefs) {
     try {
-      const content = await loadChapterContent(item.href);
-      const normalizedTarget = normalizeText(targetText);
-      const normalizedContent = normalizeText(content);
+      const cached = await getCachedData(href);
+      if (!cached.general) {
+        cached.general = normalizeText(cached.lower, true);
+      }
 
-      const words = normalizedTarget.split(/\s+/).filter((w) => w.length > 3);
       let matchCount = 0;
-
       for (const word of words) {
-        if (normalizedContent.includes(word)) {
+        if (cached.general.includes(word)) {
           matchCount++;
         }
       }
@@ -174,39 +150,11 @@ export async function reanchorByText(
       if (words.length > 0 && matchCount / words.length >= 0.7) {
         return {
           success: true,
-          chapterHref: item.href,
+          chapterHref: href,
           fallback: true,
           matchType: 'fuzzy',
           message: 'Fuzzy match based on word overlap',
         };
-      }
-
-      if (item.subitems) {
-        for (const subitem of item.subitems) {
-          try {
-            const subContent = await loadChapterContent(subitem.href);
-            const subNormalized = normalizeText(subContent);
-
-            let subMatchCount = 0;
-            for (const word of words) {
-              if (subNormalized.includes(word)) {
-                subMatchCount++;
-              }
-            }
-
-            if (words.length > 0 && subMatchCount / words.length >= 0.7) {
-              return {
-                success: true,
-                chapterHref: subitem.href,
-                fallback: true,
-                matchType: 'fuzzy',
-                message: 'Fuzzy match based on word overlap',
-              };
-            }
-          } catch {
-            continue;
-          }
-        }
       }
     } catch {
       continue;

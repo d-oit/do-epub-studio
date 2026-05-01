@@ -6,6 +6,7 @@
 ## Context
 
 We need to choose the development and deployment stack for `do EPUB Studio` that supports:
+
 - TypeScript everywhere
 - Fast iteration cycles
 - Offline-capable PWA
@@ -48,12 +49,14 @@ do-epub-studio/
 ## Consequences
 
 **Positive:**
+
 - Shared types between frontend/backend via `packages/shared`
 - Independent deploys for web and worker
 - Turbo caching speeds up CI
 - Clear package boundaries enforce architecture
 
 **Negative:**
+
 - More complex setup than single-package repo
 - pnpm workspace conflicts possible with some packages
 
