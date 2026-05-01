@@ -16,9 +16,9 @@ export interface AnnotationAnchor {
   chapterRef?: string;
 }
 
-function normalizeText(text: string): string {
-  return text
-    .toLowerCase()
+function normalizeText(text: string, isAlreadyLower = false): string {
+  const lower = isAlreadyLower ? text : text.toLowerCase();
+  return lower
     .replace(/[\s\n\r]+/g, ' ')
     .replace(/[^\w\s]/g, '')
     .trim();
@@ -26,11 +26,9 @@ function normalizeText(text: string): string {
 
 function findPartialMatches(
   normalizedTarget: string,
-  content: string,
+  normalizedContent: string,
   minLength = 20,
 ): { match: string; position: number } | null {
-  const normalizedContent = normalizeText(content);
-
   if (normalizedTarget.length < minLength) return null;
 
   for (let len = normalizedTarget.length; len >= minLength; len -= 5) {
@@ -62,70 +60,72 @@ export async function reanchorByText(
   const normalizedTargetGeneral = normalizeText(targetText);
   const words = normalizedTargetGeneral.split(/\s+/).filter((w) => w.length > 3);
 
-  const prioritizedToc = preferChapter
+  interface CachedChapter {
+    lower: string;
+    general?: string;
+    content: string;
+  }
+  const cache = new Map<string, CachedChapter>();
+
+  async function getCachedData(href: string): Promise<CachedChapter> {
+    const cached = cache.get(href);
+    if (cached) return cached;
+
+    const content = await loadChapterContent(href);
+    const result: CachedChapter = {
+      lower: content.toLowerCase(),
+      content,
+    };
+    cache.set(href, result);
+    return result;
+  }
+
+  const flattenedToc: string[] = [];
+  const collectHrefs = (items: TocItem[]) => {
+    for (const item of items) {
+      flattenedToc.push(item.href);
+      if (item.subitems) collectHrefs(item.subitems);
+    }
+  };
+  collectHrefs(toc);
+
+  const prioritizedHrefs = preferChapter
     ? [
-        ...toc.filter((item) => item.href === preferChapter || item.href.includes(preferChapter)),
-        ...toc.filter((item) => item.href !== preferChapter && !item.href.includes(preferChapter)),
+        ...flattenedToc.filter((href) => href === preferChapter || href.includes(preferChapter)),
+        ...flattenedToc.filter((href) => href !== preferChapter && !href.includes(preferChapter)),
       ]
-    : toc;
+    : flattenedToc;
+
+  const uniqueHrefs = [...new Set(prioritizedHrefs)];
 
   // Pass 1: Exact and Partial matches
-  for (const item of prioritizedToc) {
+  for (const href of uniqueHrefs) {
     try {
-      const content = await loadChapterContent(item.href);
-      const normalizedContent = content.toLowerCase();
+      const cached = await getCachedData(href);
 
-      const exactIndex = normalizedContent.indexOf(normalizedTargetLower);
+      const exactIndex = cached.lower.indexOf(normalizedTargetLower);
       if (exactIndex !== -1) {
         return {
           success: true,
-          chapterHref: item.href,
+          chapterHref: href,
           fallback: false,
           matchType: 'exact',
         };
       }
 
-      const partial = findPartialMatches(normalizedTargetGeneral, content);
+      if (!cached.general) {
+        cached.general = normalizeText(cached.lower, true);
+      }
+
+      const partial = findPartialMatches(normalizedTargetGeneral, cached.general);
       if (partial) {
         return {
           success: true,
-          chapterHref: item.href,
+          chapterHref: href,
           fallback: false,
           matchType: 'partial',
           message: `Partial match found at position ${partial.position}`,
         };
-      }
-
-      if (item.subitems) {
-        for (const subitem of item.subitems) {
-          try {
-            const subContent = await loadChapterContent(subitem.href);
-            const subNormalized = subContent.toLowerCase();
-
-            const subExact = subNormalized.indexOf(normalizedTargetLower);
-            if (subExact !== -1) {
-              return {
-                success: true,
-                chapterHref: subitem.href,
-                fallback: false,
-                matchType: 'exact',
-              };
-            }
-
-            const subPartial = findPartialMatches(normalizedTargetGeneral, subContent);
-            if (subPartial) {
-              return {
-                success: true,
-                chapterHref: subitem.href,
-                fallback: false,
-                matchType: 'partial',
-                message: `Partial match found at position ${subPartial.position}`,
-              };
-            }
-          } catch {
-            continue;
-          }
-        }
       }
     } catch {
       continue;
@@ -133,15 +133,16 @@ export async function reanchorByText(
   }
 
   // Pass 2: Fuzzy word overlap
-  for (const item of prioritizedToc) {
+  for (const href of uniqueHrefs) {
     try {
-      const content = await loadChapterContent(item.href);
-      const normalizedContent = normalizeText(content);
+      const cached = await getCachedData(href);
+      if (!cached.general) {
+        cached.general = normalizeText(cached.lower, true);
+      }
 
       let matchCount = 0;
-
       for (const word of words) {
-        if (normalizedContent.includes(word)) {
+        if (cached.general.includes(word)) {
           matchCount++;
         }
       }
@@ -149,39 +150,11 @@ export async function reanchorByText(
       if (words.length > 0 && matchCount / words.length >= 0.7) {
         return {
           success: true,
-          chapterHref: item.href,
+          chapterHref: href,
           fallback: true,
           matchType: 'fuzzy',
           message: 'Fuzzy match based on word overlap',
         };
-      }
-
-      if (item.subitems) {
-        for (const subitem of item.subitems) {
-          try {
-            const subContent = await loadChapterContent(subitem.href);
-            const subNormalized = normalizeText(subContent);
-
-            let subMatchCount = 0;
-            for (const word of words) {
-              if (subNormalized.includes(word)) {
-                subMatchCount++;
-              }
-            }
-
-            if (words.length > 0 && subMatchCount / words.length >= 0.7) {
-              return {
-                success: true,
-                chapterHref: subitem.href,
-                fallback: true,
-                matchType: 'fuzzy',
-                message: 'Fuzzy match based on word overlap',
-              };
-            }
-          } catch {
-            continue;
-          }
-        }
       }
     } catch {
       continue;
