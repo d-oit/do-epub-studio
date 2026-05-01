@@ -16,9 +16,9 @@ export interface AnnotationAnchor {
   chapterRef?: string;
 }
 
-function normalizeText(text: string): string {
-  return text
-    .toLowerCase()
+function normalizeText(text: string, isAlreadyLower = false): string {
+  const lower = isAlreadyLower ? text : text.toLowerCase();
+  return lower
     .replace(/[\s\n\r]+/g, ' ')
     .replace(/[^\w\s]/g, '')
     .trim();
@@ -114,7 +114,7 @@ export async function reanchorByText(
       }
 
       if (!cached.general) {
-        cached.general = normalizeText(cached.content);
+        cached.general = normalizeText(cached.lower, true);
       }
 
       const partial = findPartialMatches(normalizedTargetGeneral, cached.general);
@@ -137,7 +137,7 @@ export async function reanchorByText(
     try {
       const cached = await getCachedData(href);
       if (!cached.general) {
-        cached.general = normalizeText(cached.content);
+        cached.general = normalizeText(cached.lower, true);
       }
 
       let matchCount = 0;
