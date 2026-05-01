@@ -4,7 +4,7 @@
  */
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { useId } from 'react';
+import React, { useId, useState, isValidElement, cloneElement } from 'react';
 import { forwardRef, type ComponentPropsWithoutRef } from 'react';
 
 // ============================================
@@ -53,15 +53,10 @@ export const staggerItemVariants = {
 // Button Component
 // ============================================
 
-interface ButtonProps {
+interface ButtonProps extends ComponentPropsWithoutRef<typeof motion.button> {
   variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
   size?: 'sm' | 'md' | 'lg';
   isLoading?: boolean;
-  children?: React.ReactNode;
-  className?: string;
-  disabled?: boolean;
-  type?: 'button' | 'submit' | 'reset';
-  onClick?: () => void;
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
@@ -75,11 +70,12 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       disabled,
       type = 'button',
       onClick,
+      ...props
     },
     ref,
   ) => {
     const baseClasses =
-      'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2';
+      'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 touch-target';
 
     const variantClasses = {
       primary:
@@ -109,6 +105,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
         disabled={disabled || isLoading}
         aria-busy={isLoading}
+        {...props}
       >
         {isLoading ? (
           <>
@@ -221,7 +218,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(  ({ label, error,
             ${error ? 'border-accent-error focus:border-accent-error focus:ring-accent-error/20' : 'border-border'}
             ${className}
           `}
-          {...(props as any)}
+          {...props}
         />
         {error ? (
           <p id={errorId} className="mt-1.5 text-sm text-accent-error">
@@ -362,17 +359,42 @@ interface TooltipProps {
 }
 
 export function Tooltip({ content, children }: TooltipProps) {
+  const id = useId();
+  const [isVisible, setIsVisible] = useState(false);
+
+  // Use cloneElement to inject aria-describedby for accessibility.
+  // Visibility is handled via event capture on the wrapper div for robustness.
+  const trigger = isValidElement(children)
+    ? cloneElement(children as React.ReactElement<{ 'aria-describedby'?: string }>, {
+        'aria-describedby': id,
+      })
+    : children;
+
   return (
-    <div className="group relative inline-flex">
-      {children}
-      <motion.div
-        initial={{ opacity: 0, y: 5 }}
-        whileHover={{ opacity: 1, y: 0 }}
-        className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-foreground rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50"
-      >
-        {content}
-        <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-foreground" />
-      </motion.div>
+    <div
+      className="relative inline-flex"
+      onMouseEnter={() => setIsVisible(true)}
+      onMouseLeave={() => setIsVisible(false)}
+      onFocusCapture={() => setIsVisible(true)}
+      onBlurCapture={() => setIsVisible(false)}
+    >
+      {trigger}
+      <AnimatePresence>
+        {isVisible && (
+          <motion.div
+            id={id}
+            role="tooltip"
+            initial={{ opacity: 0, y: 5, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 2, scale: 0.95 }}
+            transition={{ duration: 0.15, ease: 'easeOut' }}
+            className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-foreground rounded shadow-lg pointer-events-none whitespace-nowrap z-50"
+          >
+            {content}
+            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-foreground" />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

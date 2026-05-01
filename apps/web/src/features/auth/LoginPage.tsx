@@ -6,7 +6,7 @@ import { LocaleSwitcher } from '../../components/LocaleSwitcher';
 import { useTranslation } from '../../hooks/useTranslation';
 import { apiRequest } from '../../lib/api';
 import { useAuthStore } from '../../stores/auth';
-import { Button, Input } from '../../components/ui';
+import { Button, Input, Tooltip } from '../../components/ui';
 
 interface LoginSuccess {
   sessionToken: string;
@@ -114,7 +114,9 @@ export function LoginPage() {
         className="relative z-10 max-w-md w-full"
       >
         <motion.div variants={itemVariants} className="flex justify-end mb-6">
-          <LocaleSwitcher />
+          <Tooltip content="Select your language">
+            <LocaleSwitcher />
+          </Tooltip>
         </motion.div>
 
         <motion.div variants={itemVariants} className="text-center mb-8">
