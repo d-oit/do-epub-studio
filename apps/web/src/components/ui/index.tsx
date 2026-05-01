@@ -191,7 +191,8 @@ interface InputProps extends MotionInputBaseProps {
   helperText?: string;
 }
 
-export const Input = forwardRef<HTMLInputElement, InputProps>(  ({ label, error, helperText, className = '', id, ...props }, ref) => {
+export const Input = forwardRef<HTMLInputElement, InputProps>(
+  ({ label, error, helperText, className = '', id, ...props }, ref) => {
     const generatedId = useId();
     const inputId = id || generatedId;
     const errorId = `${inputId}-error`;

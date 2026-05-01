@@ -94,10 +94,17 @@ export const BookmarkCreateSchema = z.object({
   label: z.string().max(255).optional(),
 });
 
+// Multi-signal locator requiring CFI + text + chapter per ADR-006
+export const MultiSignalLocatorSchema = z
+  .object({
+    cfi: z.string().min(1, 'CFI is required for multi-signal locator'),
+    selectedText: z.string().min(1, 'Selected text is required for multi-signal locator'),
+    chapterRef: z.string().min(1, 'Chapter reference is required for multi-signal locator'),
+  })
+  .strict();
+
 export const HighlightCreateSchema = z.object({
-  chapterRef: z.string().optional(),
-  cfiRange: z.string().optional(),
-  selectedText: z.string().min(1).max(10000),
+  locator: MultiSignalLocatorSchema,
   note: z.string().max(5000).optional(),
   color: z
     .string()
@@ -106,9 +113,7 @@ export const HighlightCreateSchema = z.object({
 });
 
 export const CommentCreateSchema = z.object({
-  chapterRef: z.string().optional(),
-  cfiRange: z.string().optional(),
-  selectedText: z.string().max(10000).optional(),
+  locator: MultiSignalLocatorSchema.optional(),
   body: z.string().min(1).max(10000),
   visibility: CommentVisibilitySchema.default('shared'),
   parentCommentId: z.string().uuid().optional(),

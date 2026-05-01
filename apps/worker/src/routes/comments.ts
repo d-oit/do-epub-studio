@@ -89,6 +89,9 @@ export async function handleCreateComment(
   const id = crypto.randomUUID();
   const now = new Date().toISOString();
 
+  // Extract multi-signal locator fields (optional for comments)
+  const locator = body.locator;
+
   await execute(
     env,
     `INSERT INTO comments (id, book_id, user_email, chapter_ref, cfi_range, selected_text, body, status, visibility, parent_comment_id, created_at, updated_at)
@@ -97,9 +100,9 @@ export async function handleCreateComment(
       id,
       bookId,
       auth.email,
-      body.chapterRef ?? null,
-      body.cfiRange ?? null,
-      body.selectedText ?? null,
+      locator?.chapterRef ?? null,
+      locator?.cfi ?? null,
+      locator?.selectedText ?? null,
       body.body,
       body.visibility ?? 'shared',
       body.parentCommentId ?? null,
@@ -113,7 +116,7 @@ export async function handleCreateComment(
     entityId: id,
     action: 'create',
     actorEmail: auth.email,
-    payload: { bookId, chapterRef: body.chapterRef, hasParent: !!body.parentCommentId },
+    payload: { bookId, chapterRef: locator?.chapterRef, hasParent: !!body.parentCommentId },
   });
 
   return jsonResponse(
@@ -122,9 +125,9 @@ export async function handleCreateComment(
       data: {
         id,
         userEmail: auth.email,
-        chapterRef: body.chapterRef,
-        cfiRange: body.cfiRange,
-        selectedText: body.selectedText,
+        chapterRef: locator?.chapterRef,
+        cfiRange: locator?.cfi,
+        selectedText: locator?.selectedText,
         body: body.body,
         status: 'open',
         visibility: body.visibility ?? 'shared',

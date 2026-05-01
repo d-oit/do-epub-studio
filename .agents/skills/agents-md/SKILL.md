@@ -74,6 +74,7 @@ readonly MAX_COMMIT_SUBJECT_LENGTH=72
 
 - Max 500 LOC per source file
 - No hardcoded environment URLs
+- **No hardcoded dates** - Use dynamic dates from environment (e.g., `date +"%Y-%m-%d"`)
 - Use Zod for validation, Zustand for state
 - Use Vitest + Playwright for testing
 ```

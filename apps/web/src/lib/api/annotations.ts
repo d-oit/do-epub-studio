@@ -11,9 +11,11 @@ export async function fetchHighlights(bookId: string, token: string): Promise<Hi
 export async function createHighlight(
   bookId: string,
   data: {
-    chapterRef?: string;
-    cfiRange?: string;
-    selectedText: string;
+    locator: {
+      chapterRef: string;
+      cfi: string;
+      selectedText: string;
+    };
     note?: string;
     color?: string;
   },
@@ -60,9 +62,11 @@ export async function fetchComments(bookId: string, token: string): Promise<Comm
 export async function createComment(
   bookId: string,
   data: {
-    chapterRef?: string;
-    cfiRange?: string;
-    selectedText?: string;
+    locator?: {
+      chapterRef: string;
+      cfi: string;
+      selectedText: string;
+    };
     body: string;
     visibility?: string;
     parentCommentId?: string;
