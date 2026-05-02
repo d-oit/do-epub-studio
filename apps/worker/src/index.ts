@@ -144,21 +144,21 @@ async function handleRequest(env: Env, request: Request): Promise<Response> {
     }
   }
 
-  const highlightDeleteMatch = /\/api\/books\/([^/]+)\/highlights\/([^/]+)$/.exec(path);
-  if (highlightDeleteMatch && method === 'DELETE') {
-    return handleDeleteHighlight(env, request, highlightDeleteMatch[1], highlightDeleteMatch[2]);
-  }
-
-  const highlightPatchMatch = /\/api\/books\/([^/]+)\/highlights\/([^/]+)$/.exec(path);
-  if (highlightPatchMatch && method === 'PATCH') {
-    const body = await request.json();
-    return handleUpdateHighlight(
-      env,
-      request,
-      highlightPatchMatch[1],
-      highlightPatchMatch[2],
-      body,
-    );
+  const highlightItemMatch = /\/api\/books\/([^/]+)\/highlights\/([^/]+)$/.exec(path);
+  if (highlightItemMatch) {
+    if (method === 'DELETE') {
+      return handleDeleteHighlight(env, request, highlightItemMatch[1], highlightItemMatch[2]);
+    }
+    if (method === 'PATCH') {
+      const body = await request.json();
+      return handleUpdateHighlight(
+        env,
+        request,
+        highlightItemMatch[1],
+        highlightItemMatch[2],
+        body,
+      );
+    }
   }
 
   const commentsMatch = /\/api\/books\/([^/]+)\/comments$/.exec(path);
