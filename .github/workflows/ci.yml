@@ -174,7 +174,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Download build artifacts
-        uses: actions/download-artifact@cc200d5a4355462990d0340f22bd0ff0d0f4f559 # v4.1.9
+        uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # v4.1.9
         with:
           name: build-dist
           path: apps/web/dist/
