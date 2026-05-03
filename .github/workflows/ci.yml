@@ -183,7 +183,7 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Run E2E Smoke Tests
-        run: PLAYWRIGHT_MODE=preview npx playwright test --grep @smoke
+        run: PLAYWRIGHT_MODE=preview npx playwright test --grep @smoke --project=chromium
 
       - name: Upload Playwright report
         uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
