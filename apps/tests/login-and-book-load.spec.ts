@@ -4,7 +4,6 @@ import { test, expect, type Page, type Route } from '@playwright/test';
 // Constants & fixtures
 // ---------------------------------------------------------------------------
 
-const APP_URL = 'http://localhost:5173';
 const API_BASE = '**/api/**';
 
 const TEST_USER = {
@@ -131,7 +130,7 @@ test.describe('Login and book load (desktop)', () => {
   });
 
   test('@smoke renders the login page with all form fields', async ({ page }) => {
-    await page.goto(APP_URL);
+    await page.goto("/");
 
     // Root redirects to /login
     await expect(page).toHaveURL(/\/login$/);
@@ -148,7 +147,7 @@ test.describe('Login and book load (desktop)', () => {
   });
 
   test('@smoke logs in and navigates to the reader', async ({ page }) => {
-    await page.goto(`${APP_URL}/login`);
+    await page.goto(`/login`);
     await login(page);
 
     // Should redirect to /read/:bookSlug after successful login
@@ -174,7 +173,7 @@ test.describe('Login and book load (desktop)', () => {
       });
     });
 
-    await page.goto(`${APP_URL}/login`);
+    await page.goto(`/login`);
     await login(page);
 
     // After navigation, the loading spinner should appear briefly
@@ -183,7 +182,7 @@ test.describe('Login and book load (desktop)', () => {
   });
 
   test('opens the table of contents sidebar', async ({ page }) => {
-    await page.goto(`${APP_URL}/login`);
+    await page.goto(`/login`);
     await login(page);
     await expect(page).toHaveURL(/\/read\/my-test-book$/);
 
@@ -195,7 +194,7 @@ test.describe('Login and book load (desktop)', () => {
   });
 
   test('opens the settings panel', async ({ page }) => {
-    await page.goto(`${APP_URL}/login`);
+    await page.goto(`/login`);
     await login(page);
     await expect(page).toHaveURL(/\/read\/my-test-book$/);
 
@@ -209,7 +208,7 @@ test.describe('Login and book load (desktop)', () => {
   });
 
   test('displays a locale switcher on the login page', async ({ page }) => {
-    await page.goto(`${APP_URL}/login`);
+    await page.goto(`/login`);
 
     // Locale switcher uses a button with current locale
     await expect(page.getByRole('button', { name: /EN|DE|FR/i })).toBeVisible();
@@ -217,7 +216,7 @@ test.describe('Login and book load (desktop)', () => {
 
   test('redirects unauthenticated reader access to login', async ({ page }) => {
     // Clear persisted auth state by using a fresh context
-    await page.goto(`${APP_URL}/read/my-test-book`);
+    await page.goto(`/read/my-test-book`);
 
     // Should be redirected to login
     await expect(page).toHaveURL(/\/login$/);
@@ -238,7 +237,7 @@ test.describe('Login and book load (mobile)', () => {
   });
 
   test('login form is usable on small screens', async ({ page }) => {
-    await page.goto(`${APP_URL}/login`);
+    await page.goto(`/login`);
 
     // Form fields should still be visible and fillable
     await expect(page.getByLabel('Book URL Slug')).toBeVisible();
@@ -250,7 +249,7 @@ test.describe('Login and book load (mobile)', () => {
   });
 
   test('reader header fits on mobile', async ({ page }) => {
-    await page.goto(`${APP_URL}/login`);
+    await page.goto(`/login`);
     await login(page);
     await expect(page).toHaveURL(/\/read\/my-test-book$/);
 
@@ -263,7 +262,7 @@ test.describe('Login and book load (mobile)', () => {
   });
 
   test('settings panel is accessible on mobile', async ({ page }) => {
-    await page.goto(`${APP_URL}/login`);
+    await page.goto(`/login`);
     await login(page);
 
     await page.getByRole('button', { name: 'Settings' }).click();
@@ -293,7 +292,7 @@ test.describe('Error handling', () => {
       });
     });
 
-    await page.goto(`${APP_URL}/login`);
+    await page.goto(`/login`);
     await login(page);
 
     // Error banner should appear
@@ -312,7 +311,7 @@ test.describe('Error handling', () => {
       });
     });
 
-    await page.goto(`${APP_URL}/login`);
+    await page.goto(`/login`);
     await login(page);
     await expect(page).toHaveURL(/\/read\/my-test-book$/);
 

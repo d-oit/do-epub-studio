@@ -4,7 +4,6 @@ import { test, expect, type Page, type Route } from '@playwright/test';
 // Constants & fixtures
 // ---------------------------------------------------------------------------
 
-const APP_URL = 'http://localhost:5173';
 
 const READER_USER = {
   email: 'reader@example.com',
@@ -120,7 +119,7 @@ async function mockAdminApi(page: Page) {
 }
 
 async function loginAsReader(page: Page) {
-  await page.goto(`${APP_URL}/login`);
+  await page.goto(`/login`);
   await page.getByLabel('Book URL Slug').fill(READER_USER.bookSlug);
   await page.getByLabel('Email Address').fill(READER_USER.email);
   await page.getByLabel('Password (if required)').fill(READER_USER.password);
@@ -129,7 +128,7 @@ async function loginAsReader(page: Page) {
 }
 
 async function loginAsAdmin(page: Page) {
-  await page.goto(`${APP_URL}/admin/login`);
+  await page.goto(`/admin/login`);
   await page.getByLabel('Email Address').fill(ADMIN_USER.email);
   await page.getByLabel('Password').fill(ADMIN_USER.password);
   await page.getByRole('button', { name: /Sign In|Admin Sign In/i }).click();
@@ -191,7 +190,7 @@ test.describe('Admin console', () => {
   });
 
   test('@smoke renders admin login page', async ({ page }) => {
-    await page.goto(`${APP_URL}/admin/login`);
+    await page.goto(`/admin/login`);
     await expect(page.getByRole('heading', { name: /Admin/i })).toBeVisible();
     await expect(page.getByLabel('Email Address')).toBeVisible();
     await expect(page.getByLabel('Password')).toBeVisible();
@@ -223,13 +222,13 @@ test.describe('Admin console', () => {
   });
 
   test('admin pages are protected — redirect to login when unauthenticated', async ({ page }) => {
-    await page.goto(`${APP_URL}/admin/books`);
+    await page.goto(`/admin/books`);
     await expect(page).toHaveURL(/\/admin\/login$/);
 
-    await page.goto(`${APP_URL}/admin/grants`);
+    await page.goto(`/admin/grants`);
     await expect(page).toHaveURL(/\/admin\/login$/);
 
-    await page.goto(`${APP_URL}/admin/audit`);
+    await page.goto(`/admin/audit`);
     await expect(page).toHaveURL(/\/admin\/login$/);
   });
 });
@@ -244,7 +243,7 @@ test.describe('Accessibility', () => {
   });
 
   test('login form has proper label associations', async ({ page }) => {
-    await page.goto(`${APP_URL}/login`);
+    await page.goto(`/login`);
 
     // All form inputs should have visible, associated labels
     const slugInput = page.getByLabel('Book URL Slug');
@@ -271,7 +270,7 @@ test.describe('Accessibility', () => {
   });
 
   test('locale switcher is accessible', async ({ page }) => {
-    await page.goto(`${APP_URL}/login`);
+    await page.goto(`/login`);
 
     // Locale switcher should have an aria-label
     const localeSelect = page.getByRole('combobox', { name: /locale|language/i });
@@ -292,7 +291,7 @@ test.describe('Accessibility', () => {
       });
     });
 
-    await page.goto(`${APP_URL}/login`);
+    await page.goto(`/login`);
     await loginAsReader(page);
 
     // Error should be in a role="alert" or similar accessible element
@@ -315,7 +314,7 @@ test.describe('Accessibility', () => {
 
 test.describe('Internationalization', () => {
   test('can switch locale on login page', async ({ page }) => {
-    await page.goto(`${APP_URL}/login`);
+    await page.goto(`/login`);
 
     // Switch to German
     await page.getByRole('combobox', { name: /locale|language/i }).selectOption('de');
@@ -329,7 +328,7 @@ test.describe('Internationalization', () => {
   });
 
   test('locale persists after page reload', async ({ page }) => {
-    await page.goto(`${APP_URL}/login`);
+    await page.goto(`/login`);
     await page.getByRole('combobox', { name: /locale|language/i }).selectOption('de');
 
     // Reload page

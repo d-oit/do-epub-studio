@@ -2,6 +2,9 @@ import { defineConfig, devices } from '@playwright/test';
 
 const isCI = Boolean(process.env.CI);
 const includeWebkit = process.env.PLAYWRIGHT_INCLUDE_WEBKIT === '1';
+const mode = process.env.PLAYWRIGHT_MODE || 'dev';
+const isPreview = mode === 'preview';
+const port = isPreview ? 4173 : 5173;
 
 export default defineConfig({
   testDir: './apps',
@@ -19,7 +22,7 @@ export default defineConfig({
     ? [['github'], ['html', { open: 'never' }]]
     : [['list'], ['html', { open: 'never' }]],
   use: {
-    baseURL: 'http://localhost:5173',
+    baseURL: `http://127.0.0.1:${port}`,
     trace: 'retain-on-failure',
     video: 'retain-on-failure',
     screenshot: 'only-on-failure',
@@ -28,8 +31,10 @@ export default defineConfig({
     testIdAttribute: 'data-testid',
   },
   webServer: {
-    command: 'pnpm --filter @do-epub-studio/web dev --host 127.0.0.1 --port 5173',
-    url: 'http://127.0.0.1:5173',
+    command: isPreview
+      ? `pnpm --filter @do-epub-studio/web preview --host 127.0.0.1 --port ${port}`
+      : `pnpm --filter @do-epub-studio/web dev --host 127.0.0.1 --port ${port}`,
+    url: `http://127.0.0.1:${port}`,
     reuseExistingServer: !isCI,
     timeout: 120_000,
   },

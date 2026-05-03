@@ -5,7 +5,6 @@ import AxeBuilder from '@axe-core/playwright';
 // Fixtures & mocks
 // ---------------------------------------------------------------------------
 
-const APP_URL = 'http://localhost:5173';
 
 const READER_USER = {
   email: 'reader@example.com',
@@ -55,7 +54,7 @@ async function mockReaderApi(page: Page) {
 
 test.describe('Accessibility audit (axe-core)', () => {
   test('login page has no critical accessibility violations', async ({ page }) => {
-    await page.goto(`${APP_URL}/login`);
+    await page.goto(`/login`);
 
     const accessibilityScanResults = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
@@ -81,7 +80,7 @@ test.describe('Accessibility audit (axe-core)', () => {
     await mockReaderApi(page);
 
     // Login
-    await page.goto(`${APP_URL}/login`);
+    await page.goto(`/login`);
     await page.getByLabel('Book URL Slug').fill(READER_USER.bookSlug);
     await page.getByLabel('Email Address').fill(READER_USER.email);
     await page.getByLabel('Password (if required)').fill(READER_USER.password);
@@ -104,7 +103,7 @@ test.describe('Accessibility audit (axe-core)', () => {
   });
 
   test('admin login page has no critical accessibility violations', async ({ page }) => {
-    await page.goto(`${APP_URL}/admin/login`);
+    await page.goto(`/admin/login`);
 
     const accessibilityScanResults = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
