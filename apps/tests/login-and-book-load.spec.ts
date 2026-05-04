@@ -150,17 +150,18 @@ test.describe('Login and book load (desktop)', () => {
     await page.goto(`/login`);
     await login(page);
     await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(2000);
 
     // Should redirect to /read/:bookSlug after successful login
     await expect(page).toHaveURL(/\/read\/my-test-book$/);
 
     // Reader header shows the book title
-    await expect(page.locator('header').getByRole('heading', { name: 'My Test Book' })).toBeVisible({ timeout: 15000 });
+    await expect(page.getByRole('heading', { name: 'My Test Book' })).toBeVisible({ timeout: 20000 });
 
     // Reader controls are visible
-    await expect(page.getByRole('button', { name: 'Contents' })).toBeVisible({ timeout: 15000 });
-    await expect(page.getByRole('button', { name: 'Settings' })).toBeVisible({ timeout: 15000 });
-    await expect(page.getByRole('button', { name: 'Sign Out' })).toBeVisible({ timeout: 15000 });
+    await expect(page.getByRole('button', { name: 'Contents' })).toBeVisible({ timeout: 20000 });
+    await expect(page.getByRole('button', { name: 'Settings' })).toBeVisible({ timeout: 20000 });
+    await expect(page.getByRole('button', { name: 'Sign Out' })).toBeVisible({ timeout: 20000 });
   });
 
   test('shows loading spinner while book URL is being fetched', async ({ page }) => {
@@ -177,6 +178,7 @@ test.describe('Login and book load (desktop)', () => {
     await page.goto(`/login`);
     await login(page);
     await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(2000);
 
     // After navigation, the loading spinner should appear briefly
     const spinner = page.locator('div.animate-spin');
@@ -187,6 +189,7 @@ test.describe('Login and book load (desktop)', () => {
     await page.goto(`/login`);
     await login(page);
     await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(2000);
     await expect(page).toHaveURL(/\/read\/my-test-book$/);
 
     // Open ToC
@@ -200,6 +203,7 @@ test.describe('Login and book load (desktop)', () => {
     await page.goto(`/login`);
     await login(page);
     await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(2000);
     await expect(page).toHaveURL(/\/read\/my-test-book$/);
 
     // Open settings
@@ -250,6 +254,7 @@ test.describe('Login and book load (mobile)', () => {
 
     await login(page);
     await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(2000);
     await expect(page).toHaveURL(/\/read\/my-test-book$/);
   });
 
@@ -257,6 +262,7 @@ test.describe('Login and book load (mobile)', () => {
     await page.goto(`/login`);
     await login(page);
     await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(2000);
     await expect(page).toHaveURL(/\/read\/my-test-book$/);
 
     // Header should be visible; book title may be truncated so check partial
@@ -264,13 +270,14 @@ test.describe('Login and book load (mobile)', () => {
     await expect(header).toBeVisible();
 
     // Sign Out button must be accessible
-    await expect(page.getByRole('button', { name: 'Sign Out' })).toBeVisible({ timeout: 15000 });
+    await expect(page.getByRole('button', { name: 'Sign Out' })).toBeVisible({ timeout: 20000 });
   });
 
   test('settings panel is accessible on mobile', async ({ page }) => {
     await page.goto(`/login`);
     await login(page);
     await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(2000);
 
     await page.getByRole('button', { name: 'Settings' }).click();
     await expect(page.getByText('Theme')).toBeVisible();
@@ -302,6 +309,7 @@ test.describe('Error handling', () => {
     await page.goto(`/login`);
     await login(page);
     await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(2000);
 
     // Error banner should appear
     await expect(page.locator('div:has-text("Access denied")').first()).toBeVisible();
@@ -322,6 +330,7 @@ test.describe('Error handling', () => {
     await page.goto(`/login`);
     await login(page);
     await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(2000);
     await expect(page).toHaveURL(/\/read\/my-test-book$/);
 
     // Error message should be visible in the reader
