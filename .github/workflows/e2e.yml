@@ -5,9 +5,9 @@ on:
   schedule:
     - cron: '0 2 * * *'
 
-# Opt into Node.js 22 for GitHub Actions to avoid deprecation warnings
+# Opt into Node.js 24 for GitHub Actions to avoid deprecation warnings
 env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE22: true
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 permissions:
   contents: read
@@ -18,14 +18,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
 
       - name: Setup pnpm
         uses: pnpm/action-setup@b307475762933b98ed359c036b0e51f26b63b74b # v5.0.0
       - name: Setup Node.js
-        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
+        uses: actions/setup-node@32258e81703a1134788a9122c3bfbdfa57a6e12e # v4.2.0
         with:
-          node-version: '22'
+          node-version: '24'
           cache: 'pnpm'
 
       - name: Install dependencies
@@ -38,7 +38,7 @@ jobs:
         run: pnpm test:e2e:prod
 
       - name: Upload Playwright report
-        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.6.1
         if: always()
         with:
           name: playwright-report
@@ -46,7 +46,7 @@ jobs:
           retention-days: 30
 
       - name: Upload test results
-        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.6.1
         if: failure()
         with:
           name: test-results
