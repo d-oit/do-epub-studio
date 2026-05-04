@@ -11,8 +11,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint src --ext .ts,.tsx",
     "test:unit": "cross-env NODE_OPTIONS=--max-old-space-size=4096 vitest run",
-    "test": "echo \"Use test:unit or test:e2e\"",
-    "test:e2e": "playwright test"
+    "test": "echo \"Use test:unit or pnpm test:e2e from root\"",
+    "test:e2e": "echo \"Run pnpm test:e2e from root\""
   },
   "dependencies": {
     "@do-epub-studio/reader-core": "workspace:*",

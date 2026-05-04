@@ -12,7 +12,7 @@
     "test": "turbo run test",
     "test:unit": "turbo run test:unit",
     "test:coverage": "turbo run test:unit -- --coverage",
-    "test:e2e": "turbo run test:e2e",
+    "test:e2e": "playwright test",
     "verify": "pnpm lint && pnpm typecheck && pnpm test && pnpm build",
     "lighthouse": "lhci autorun",
     "format": "prettier --write .",
