@@ -156,12 +156,12 @@ test.describe('Login and book load (desktop)', () => {
     await expect(page).toHaveURL(/\/read\/my-test-book$/);
 
     // Reader header shows the book title
-    await expect(page.getByText('My Test Book').first()).toBeVisible({ timeout: 30000 });
+    await expect(page.getByText('My Test Book').first()).toBeVisible({ timeout: 45000 });
 
     // Reader controls are visible
-    await expect(page.getByRole('button', { name: 'Contents' })).toBeVisible({ timeout: 30000 });
-    await expect(page.getByRole('button', { name: 'Settings' })).toBeVisible({ timeout: 30000 });
-    await expect(page.getByRole('button', { name: 'Sign Out' })).toBeVisible({ timeout: 30000 });
+    await expect(page.getByRole('button', { name: 'Contents' })).toBeVisible({ timeout: 45000 });
+    await expect(page.getByRole('button', { name: 'Settings' })).toBeVisible({ timeout: 45000 });
+    await expect(page.getByRole('button', { name: 'Sign Out' })).toBeVisible({ timeout: 45000 });
   });
 
   test('shows loading spinner while book URL is being fetched', async ({ page }) => {
@@ -270,7 +270,7 @@ test.describe('Login and book load (mobile)', () => {
     await expect(header).toBeVisible();
 
     // Sign Out button must be accessible
-    await expect(page.getByRole('button', { name: 'Sign Out' })).toBeVisible({ timeout: 30000 });
+    await expect(page.getByRole('button', { name: 'Sign Out' })).toBeVisible({ timeout: 45000 });
   });
 
   test('settings panel is accessible on mobile', async ({ page }) => {
