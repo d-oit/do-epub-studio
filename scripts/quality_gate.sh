@@ -143,12 +143,31 @@ if [[ " ${DETECTED_LANGUAGES[*]} " =~ " typescript " ]]; then
 
         # Tests (respect SKIP_TESTS env var for local dev without node_modules)
         if [ "${SKIP_TESTS:-false}" != "true" ]; then
-            if ! OUTPUT=$($PM test 2>&1); then
-                printf '%s  ✗ %s test failed%s\n' "${RED}" "$PM" "${NC}"
+            # Use test:coverage for stricter verification
+            if ! OUTPUT=$($PM run test:coverage 2>&1); then
+                printf '%s  ✗ %s test:coverage failed%s\n' "${RED}" "$PM" "${NC}"
                 echo "$OUTPUT" >&2
                 FAILED=1
             else
-                printf '%s  ✓ %s test passed%s\n' "${GREEN}" "$PM" "${NC}"
+                printf '%s  ✓ %s test:coverage passed%s\n' "${GREEN}" "$PM" "${NC}"
+            fi
+
+            # Build (required for smoke tests)
+            if ! OUTPUT=$($PM run build 2>&1); then
+                printf '%s  ✗ %s build failed%s\n' "${RED}" "$PM" "${NC}"
+                echo "$OUTPUT" >&2
+                FAILED=1
+            else
+                printf '%s  ✓ %s build passed%s\n' "${GREEN}" "$PM" "${NC}"
+            fi
+
+            # Smoke tests
+            if ! OUTPUT=$($PM run test:e2e:smoke 2>&1); then
+                printf '%s  ✗ %s test:e2e:smoke failed%s\n' "${RED}" "$PM" "${NC}"
+                echo "$OUTPUT" >&2
+                FAILED=1
+            else
+                printf '%s  ✓ %s test:e2e:smoke passed%s\n' "${GREEN}" "$PM" "${NC}"
             fi
         else
             printf '%s  ⊘ %s tests skipped (SKIP_TESTS=true)%s\n' "${YELLOW}" "$PM" "${NC}"

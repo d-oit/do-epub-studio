@@ -41,7 +41,12 @@ readonly MAX_PR_TITLE_LENGTH=72
 
 1. **Run `./scripts/quality_gate.sh` before commit.** No exceptions.
 2. **Use `./scripts/atomic-commit/run.sh --message "type(scope): description"`.**
-3. **Validate commit message:** Run `./scripts/validate-commit-message.sh` or ensure format matches `type(scope): description` (max 72 chars).
+3. **Coverage Thresholds:** Enforce minimum coverage via `test:coverage`.
+   - `web`: 40% Lines, 30% Functions
+   - `worker`: 55% Lines, 50% Functions
+   - `shared`: 25% Lines, 5% Functions
+   - `reader-core`: 75% Lines, 70% Functions
+4. **Validate commit message:** Run `./scripts/validate-commit-message.sh` or ensure format matches `type(scope): description` (max 72 chars).
 4. **NEVER ignore lint warnings, typecheck errors, or test failures.**
 5. **If a lint rule is disabled, add inline comment explaining why.**
 6. **Run diagnostics and document all warnings.** After any change, run `diagnostics` tool and document any new warnings in `plans/015-warnings-and-issues.md` or `agents-docs/KNOWN-ISSUES.md` if unfixable.
