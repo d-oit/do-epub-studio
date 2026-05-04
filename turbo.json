@@ -14,10 +14,18 @@
     "typecheck": {
       "outputs": []
     },
-    "test": {
-      "dependsOn": ["^build"],
+    "test:unit": {
       "outputs": [],
-      "inputs": ["src/**", "tests/**", "*.config.*"]
+      "inputs": ["src/**", "tests/**", "*.config.*", "vitest.workspace.ts", "vitest.config.ts"]
+    },
+    "test:e2e": {
+      "dependsOn": ["^build"],
+      "outputs": ["test-results/**", "playwright-report/**"],
+      "inputs": ["src/**", "tests/**", "playwright.config.ts"]
+    },
+    "test": {
+      "dependsOn": ["test:unit", "test:e2e"]
     }
-  }
+  },
+  "globalDependencies": ["vitest.workspace.ts", "tsconfig.base.json"]
 }

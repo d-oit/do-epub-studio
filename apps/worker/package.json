@@ -9,8 +9,9 @@
     "deploy": "wrangler deploy",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src --ext .ts",
-    "test": "vitest --run",
-    "test:coverage": "vitest --run --coverage"
+    "test:unit": "vitest --run",
+    "test": "echo \"Use test:unit\"",
+    "test:coverage": "pnpm test:unit --coverage"
   },
   "dependencies": {
     "@do-epub-studio/schema": "workspace:*",
