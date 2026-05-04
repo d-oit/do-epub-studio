@@ -14,10 +14,13 @@
     "typecheck": {
       "outputs": []
     },
-    "test": {
-      "dependsOn": ["^build"],
+    "test:unit": {
       "outputs": [],
-      "inputs": ["src/**", "tests/**", "*.config.*"]
+      "inputs": ["src/**", "tests/**", "*.config.*", "vitest.workspace.ts", "vitest.config.ts"]
+    },
+    "test": {
+      "dependsOn": ["test:unit"]
     }
-  }
+  },
+  "globalDependencies": ["vitest.workspace.ts", "tsconfig.base.json"]
 }
