@@ -28,19 +28,10 @@ export function useAnnotationHandlers(): AnnotationHandlersReturn {
   const addHighlight = useReaderStore((s) => s.addHighlight);
   const updateHighlightInStore = useReaderStore((s) => s.updateHighlight);
   const removeHighlight = useReaderStore((s) => s.removeHighlight);
-  const _ignore1 = (state) => ({
-    addHighlight: state.addHighlight,
-    updateHighlightInStore: state.updateHighlight,
-    removeHighlight: state.removeHighlight,
-  }));
+
   const addComment = useReaderStore((s) => s.addComment);
   const updateCommentInStore = useReaderStore((s) => s.updateComment);
   const comments = useReaderStore((s) => s.comments);
-  const _ignore2 = (state) => ({
-    addComment: state.addComment,
-    updateCommentInStore: state.updateComment,
-    comments: state.comments,
-  }));
 
   const handleCreateHighlight = useCallback(
     async (color: string, selection: SelectionData | null) => {
