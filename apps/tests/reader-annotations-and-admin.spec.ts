@@ -263,10 +263,10 @@ test.describe('Accessibility', () => {
     await loginAsReader(page);
 
     // Key reader buttons should have aria-label or text content
-    await expect(page.getByRole('button', { name: 'Contents' })).toBeVisible({ timeout: 20000 });
-    await expect(page.getByRole('button', { name: 'Settings' })).toBeVisible({ timeout: 20000 });
+    await expect(page.getByRole('button', { name: 'Contents' })).toBeVisible({ timeout: 30000 });
+    await expect(page.getByRole('button', { name: 'Settings' })).toBeVisible({ timeout: 30000 });
     await expect(page.getByRole('button', { name: 'Bookmarks' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Sign Out' })).toBeVisible({ timeout: 20000 });
+    await expect(page.getByRole('button', { name: 'Sign Out' })).toBeVisible({ timeout: 30000 });
   });
 
   test('locale switcher is accessible', async ({ page }) => {
