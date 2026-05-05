@@ -14,8 +14,7 @@ interface ReaderToolbarProps {
   onToggleSettings: () => void;
   onExportNotes: () => void;
   onLogout: () => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  t: (key: string) => any;
+  t: (key: string) => string;
 }
 
 export function ReaderToolbar({

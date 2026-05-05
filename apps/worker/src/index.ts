@@ -55,7 +55,7 @@ async function handleRequest(env: Env, request: Request): Promise<Response> {
   }
 
   if (path === '/api/access/request' && method === 'POST') {
-    const body = await request.json();
+    const body = (await request.json()) as Record<string, unknown>;
     return handleAccessRequest(env, body);
   }
 
@@ -110,7 +110,7 @@ async function handleRequest(env: Env, request: Request): Promise<Response> {
       return handleGetProgress(env, request, bookId);
     }
     if (method === 'PUT') {
-      const body = await request.json();
+      const body = (await request.json()) as Record<string, unknown>;
       return handleUpdateProgress(env, request, bookId, body);
     }
   }
@@ -122,7 +122,7 @@ async function handleRequest(env: Env, request: Request): Promise<Response> {
       return handleListBookmarks(env, request, bookId);
     }
     if (method === 'POST') {
-      const body = await request.json();
+      const body = (await request.json()) as Record<string, unknown>;
       return handleCreateBookmark(env, request, bookId, body);
     }
   }
@@ -139,7 +139,7 @@ async function handleRequest(env: Env, request: Request): Promise<Response> {
       return handleListHighlights(env, request, bookId);
     }
     if (method === 'POST') {
-      const body = await request.json();
+      const body = (await request.json()) as Record<string, unknown>;
       return handleCreateHighlight(env, request, bookId, body);
     }
   }
@@ -150,7 +150,7 @@ async function handleRequest(env: Env, request: Request): Promise<Response> {
       return handleDeleteHighlight(env, request, highlightItemMatch[1], highlightItemMatch[2]);
     }
     if (method === 'PATCH') {
-      const body = await request.json();
+      const body = (await request.json()) as Record<string, unknown>;
       return handleUpdateHighlight(
         env,
         request,
@@ -168,14 +168,14 @@ async function handleRequest(env: Env, request: Request): Promise<Response> {
       return handleListComments(env, request, bookId);
     }
     if (method === 'POST') {
-      const body = await request.json();
+      const body = (await request.json()) as Record<string, unknown>;
       return handleCreateComment(env, request, bookId, body);
     }
   }
 
   const commentPatchMatch = /\/api\/comments\/([^/]+)$/.exec(path);
   if (commentPatchMatch && method === 'PATCH') {
-    const body = await request.json();
+    const body = (await request.json()) as Record<string, unknown>;
     return handleUpdateComment(env, request, commentPatchMatch[1], body);
   }
 
@@ -184,7 +184,7 @@ async function handleRequest(env: Env, request: Request): Promise<Response> {
     if (!authResult.ok) {
       return jsonResponse({ ok: false, error: { code: 'UNAUTHORIZED', message: authResult.error } }, authResult.status);
     }
-    const body = await request.json();
+    const body = (await request.json()) as Record<string, unknown>;
     return handleCreateBook(env, body, authResult.context.email);
   }
 
@@ -203,7 +203,7 @@ async function handleRequest(env: Env, request: Request): Promise<Response> {
     if (!authResult.ok) {
       return jsonResponse({ ok: false, error: { code: 'UNAUTHORIZED', message: authResult.error } }, authResult.status);
     }
-    const body = await request.json();
+    const body = (await request.json()) as Record<string, unknown>;
     return handleUploadComplete(env, uploadCompleteMatch[1], body);
   }
 
@@ -213,7 +213,7 @@ async function handleRequest(env: Env, request: Request): Promise<Response> {
     if (!authResult.ok) {
       return jsonResponse({ ok: false, error: { code: 'UNAUTHORIZED', message: authResult.error } }, authResult.status);
     }
-    const body = await request.json();
+    const body = (await request.json()) as Record<string, unknown>;
     return handleCreateAdminGrant(env, grantsMatch[1], body, authResult.context.email);
   }
 
@@ -231,7 +231,7 @@ async function handleRequest(env: Env, request: Request): Promise<Response> {
     if (!authResult.ok) {
       return jsonResponse({ ok: false, error: { code: 'UNAUTHORIZED', message: authResult.error } }, authResult.status);
     }
-    const body = await request.json();
+    const body = (await request.json()) as Record<string, unknown>;
     return handleUpdateGrant(env, grantUpdateMatch[1], body, authResult.context.email);
   }
 
@@ -249,7 +249,15 @@ async function handleRequest(env: Env, request: Request): Promise<Response> {
     if (!authResult.ok) {
       return jsonResponse({ ok: false, error: { code: 'UNAUTHORIZED', message: authResult.error } }, authResult.status);
     }
-    const entityType = url.searchParams.get('entityType') ?? undefined;
+    const entityType = (url.searchParams.get('entityType') ?? undefined) as
+      | 'book'
+      | 'grant'
+      | 'session'
+      | 'comment'
+      | 'user'
+      | 'bookmark'
+      | 'highlight'
+      | undefined;
     const entityId = url.searchParams.get('entityId') ?? undefined;
     const limit = parseInt(url.searchParams.get('limit') ?? '100', 10);
     return handleGetAuditLog(env, entityType, entityId, limit);
