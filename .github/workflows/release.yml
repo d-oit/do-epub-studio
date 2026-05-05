@@ -5,9 +5,9 @@ on:
     tags:
       - 'v*'
 
-# Opt into Node.js 24 for GitHub Actions to avoid deprecation warnings
+# Opt into Node.js 22 for GitHub Actions
 env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  TURBO_TELEMETRY_DISABLED: 1
 
 permissions:
   contents: write
@@ -18,14 +18,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@b307475762933b98ed359c036b0e51f26b63b74b # v5.0.0
+        uses: pnpm/action-setup@a7427592b3d189ca74b68581057f690f886fa5d6 # v4.1.0
       - name: Setup Node.js
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        uses: actions/setup-node@1d11999632ad94424e65b976d3f8f98114e25379 # v4.2.0
         with:
-          node-version: '24'
+          node-version: '22'
           cache: 'pnpm'
 
       - name: Install dependencies
