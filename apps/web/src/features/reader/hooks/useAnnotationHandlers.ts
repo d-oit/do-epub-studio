@@ -25,16 +25,13 @@ export function useAnnotationHandlers(): AnnotationHandlersReturn {
   const sessionToken = useAuthStore((state) => state.sessionToken);
   const bookId = useAuthStore((state) => state.bookId);
 
-  const { addHighlight, updateHighlightInStore, removeHighlight } = useReaderStore((state) => ({
-    addHighlight: state.addHighlight,
-    updateHighlightInStore: state.updateHighlight,
-    removeHighlight: state.removeHighlight,
-  }));
-  const { addComment, updateCommentInStore, comments } = useReaderStore((state) => ({
-    addComment: state.addComment,
-    updateCommentInStore: state.updateComment,
-    comments: state.comments,
-  }));
+  const addHighlight = useReaderStore((s) => s.addHighlight);
+  const updateHighlightInStore = useReaderStore((s) => s.updateHighlight);
+  const removeHighlight = useReaderStore((s) => s.removeHighlight);
+
+  const addComment = useReaderStore((s) => s.addComment);
+  const updateCommentInStore = useReaderStore((s) => s.updateComment);
+  const comments = useReaderStore((s) => s.comments);
 
   const handleCreateHighlight = useCallback(
     async (color: string, selection: SelectionData | null) => {

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 import { useParams, useNavigate } from 'react-router-dom';
 import ePub, { Book, Rendition } from 'epubjs';
 import { useTranslation } from '../../hooks/useTranslation';
@@ -24,30 +25,57 @@ interface TocItem {
 export function ReaderPage() {
   const { bookSlug } = useParams<{ bookSlug: string }>();
   const navigate = useNavigate();
-  const { sessionToken, bookId, bookTitle, capabilities, logout } = useAuthStore();
+
+  // useAuthStore atomic selectors
+  const sessionToken = useAuthStore((s) => s.sessionToken);
+  const bookId = useAuthStore((s) => s.bookId);
+  const bookTitle = useAuthStore((s) => s.bookTitle);
+  const capabilities = useAuthStore(useShallow((s) => s.capabilities));
+  const logout = useAuthStore((s) => s.logout);
 
   const {
-    showToc, setShowToc, showSettings, setShowSettings,
-    showComments, setShowComments, showBookmarks, setShowBookmarks,
-    isCommentMode, setIsCommentMode, showCommentInput, setShowCommentInput,
-    selection, setSelection, revokedBooks, setRevokedBooks,
+    showToc,
+    setShowToc,
+    showSettings,
+    setShowSettings,
+    showComments,
+    setShowComments,
+    showBookmarks,
+    setShowBookmarks,
+    isCommentMode,
+    setIsCommentMode,
+    showCommentInput,
+    setShowCommentInput,
+    selection,
+    setSelection,
+    revokedBooks,
+    setRevokedBooks,
   } = useReaderUI();
 
-  // Atomic selectors – exclude 'progress' to avoid re-renders on every navigation
+  // useReaderStore atomic selectors
   const setProgress = useReaderStore((s) => s.setProgress);
   const setError = useReaderStore((s) => s.setError);
   const error = useReaderStore((s) => s.error);
   const setOffline = useReaderStore((s) => s.setOffline);
   const setPermissionStatus = useReaderStore((s) => s.setPermissionStatus);
-  const highlights = useReaderStore((s) => s.highlights);
+  const highlights = useReaderStore(useShallow((s) => s.highlights));
   const setHighlights = useReaderStore((s) => s.setHighlights);
-  const comments = useReaderStore((s) => s.comments);
+  const comments = useReaderStore(useShallow((s) => s.comments));
   const setComments = useReaderStore((s) => s.setComments);
-  const bookmarks = useReaderStore((s) => s.bookmarks);
+  const bookmarks = useReaderStore(useShallow((s) => s.bookmarks));
   const setCurrentChapter = useReaderStore((s) => s.setCurrentChapter);
   const currentChapter = useReaderStore((s) => s.currentChapter);
 
-  const { reader, setTheme, setFontFamily, setFontSize } = usePreferencesStore();
+  // usePreferencesStore atomic selectors
+  const readerTheme = usePreferencesStore((s) => s.reader.theme);
+  const readerFontSize = usePreferencesStore((s) => s.reader.fontSize);
+  const readerFontFamily = usePreferencesStore((s) => s.reader.fontFamily);
+  const readerLineHeight = usePreferencesStore((s) => s.reader.lineHeight);
+  const readerPageWidth = usePreferencesStore((s) => s.reader.pageWidth);
+  const setTheme = usePreferencesStore((s) => s.setTheme);
+  const setFontFamily = usePreferencesStore((s) => s.setFontFamily);
+  const setFontSize = usePreferencesStore((s) => s.setFontSize);
+
   const { t, locale } = useTranslation();
 
   const { handleCreateHighlight, handleCreateComment, handleResolveComment,
@@ -135,27 +163,29 @@ export function ReaderPage() {
         },
         sepia: { body: { background: '#f4ecd8', color: '#5b4636' }, img: { filter: 'sepia(1)' } },
       } as const;
-      const theme = themes[reader.theme === 'system' ? 'light' : reader.theme];
+      const theme = themes[readerTheme === 'system' ? 'light' : readerTheme];
       if (theme) rendition.themes.default(theme.body);
     },
-    [reader.theme],
+    [readerTheme],
   );
 
   const applyTypography = useCallback(
     (rendition: Rendition) => {
       rendition.themes.default({
         body: {
-          'font-size': FONT_SIZES[reader.fontSize],
-          'line-height': LINE_HEIGHTS[reader.lineHeight],
+          'font-size': FONT_SIZES[readerFontSize],
+          'line-height': LINE_HEIGHTS[readerLineHeight],
         },
       });
-      if (reader.fontFamily !== 'serif') {
+      if (readerFontFamily !== 'serif') {
         rendition.themes.default({
-          body: { 'font-family': reader.fontFamily === 'sans-serif' ? 'sans-serif' : 'monospace' },
+          body: {
+            'font-family': readerFontFamily === 'sans-serif' ? 'sans-serif' : 'monospace',
+          },
         });
       }
     },
-    [reader.fontSize, reader.fontFamily, reader.lineHeight],
+    [readerFontSize, readerFontFamily, readerLineHeight],
   );
 
   const handleNavigateToAnnotation = useCallback(async (chapterRef: string, cfiRange?: string) => {
@@ -335,11 +365,11 @@ export function ReaderPage() {
 
   useEffect(() => {
     if (renditionRef.current) applyTheme(renditionRef.current);
-  }, [reader.theme, applyTheme]);
+  }, [readerTheme, applyTheme]);
 
   useEffect(() => {
     if (renditionRef.current) applyTypography(renditionRef.current);
-  }, [reader.fontSize, reader.fontFamily, reader.lineHeight, applyTypography]);
+  }, [readerFontSize, readerFontFamily, readerLineHeight, applyTypography]);
 
   useEffect(() => {
     const r = renditionRef.current;
@@ -374,10 +404,10 @@ export function ReaderPage() {
     dark: 'bg-gray-900 text-gray-100',
     sepia: 'bg-amber-50 text-gray-800',
     system: 'bg-white text-gray-900',
-  }[reader.theme];
+  }[readerTheme];
   const pageWidthClass =
     { narrow: 'max-w-xl', normal: 'max-w-3xl', wide: 'max-w-5xl', full: 'max-w-full' }[
-      reader.pageWidth
+      readerPageWidth
     ] ?? 'max-w-3xl';
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const tFn = t as (key: string) => any;
@@ -400,9 +430,9 @@ export function ReaderPage() {
       />
       <ReaderSettingsPanel
         isOpen={showSettings}
-        theme={reader.theme}
-        fontSize={reader.fontSize}
-        fontFamily={reader.fontFamily}
+        theme={readerTheme}
+        fontSize={readerFontSize}
+        fontFamily={readerFontFamily}
         onSetTheme={setTheme}
         onSetFontSize={setFontSize}
         onSetFontFamily={setFontFamily}

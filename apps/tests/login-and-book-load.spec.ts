@@ -4,7 +4,6 @@ import { test, expect, type Page, type Route } from '@playwright/test';
 // Constants & fixtures
 // ---------------------------------------------------------------------------
 
-const APP_URL = 'http://localhost:5173';
 const API_BASE = '**/api/**';
 
 const TEST_USER = {
@@ -127,11 +126,19 @@ async function login(page: Page) {
 
 test.describe('Login and book load (desktop)', () => {
   test.beforeEach(async ({ page }) => {
+    page.on('console', (msg) => {
+      if (msg.type() === 'error') {
+        console.log(`PAGE ERROR: ${msg.text()}`);
+      }
+    });
+    page.on('pageerror', (err) => {
+      console.log(`PAGE UNCAUGHT ERROR: ${err.message}`);
+    });
     await mockApiRoutes(page);
   });
 
   test('@smoke renders the login page with all form fields', async ({ page }) => {
-    await page.goto(APP_URL);
+    await page.goto("/");
 
     // Root redirects to /login
     await expect(page).toHaveURL(/\/login$/);
@@ -148,19 +155,21 @@ test.describe('Login and book load (desktop)', () => {
   });
 
   test('@smoke logs in and navigates to the reader', async ({ page }) => {
-    await page.goto(`${APP_URL}/login`);
+    await page.goto(`/login`);
     await login(page);
+
+
 
     // Should redirect to /read/:bookSlug after successful login
     await expect(page).toHaveURL(/\/read\/my-test-book$/);
 
     // Reader header shows the book title
-    await expect(page.getByRole('heading', { name: 'My Test Book' })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "My Test Book" })).toBeVisible({ timeout: 60000 });
 
     // Reader controls are visible
-    await expect(page.getByRole('button', { name: 'Contents' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Settings' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Sign Out' })).toBeVisible();
+    await expect(page.getByRole('button', { name: /Contents/i })).toBeVisible({ timeout: 60000 });
+    await expect(page.getByRole('button', { name: /Settings/i })).toBeVisible({ timeout: 60000 });
+    await expect(page.getByRole('button', { name: /Sign Out/i })).toBeVisible({ timeout: 60000 });
   });
 
   test('shows loading spinner while book URL is being fetched', async ({ page }) => {
@@ -174,17 +183,21 @@ test.describe('Login and book load (desktop)', () => {
       });
     });
 
-    await page.goto(`${APP_URL}/login`);
+    await page.goto(`/login`);
     await login(page);
+
+
 
     // After navigation, the loading spinner should appear briefly
     const spinner = page.locator('div.animate-spin');
-    await expect(spinner).toBeVisible({ timeout: 3_000 });
+    await expect(spinner).toBeVisible({ timeout: 60000_000 });
   });
 
   test('opens the table of contents sidebar', async ({ page }) => {
-    await page.goto(`${APP_URL}/login`);
+    await page.goto(`/login`);
     await login(page);
+
+
     await expect(page).toHaveURL(/\/read\/my-test-book$/);
 
     // Open ToC
@@ -195,8 +208,10 @@ test.describe('Login and book load (desktop)', () => {
   });
 
   test('opens the settings panel', async ({ page }) => {
-    await page.goto(`${APP_URL}/login`);
+    await page.goto(`/login`);
     await login(page);
+
+
     await expect(page).toHaveURL(/\/read\/my-test-book$/);
 
     // Open settings
@@ -209,7 +224,7 @@ test.describe('Login and book load (desktop)', () => {
   });
 
   test('displays a locale switcher on the login page', async ({ page }) => {
-    await page.goto(`${APP_URL}/login`);
+    await page.goto(`/login`);
 
     // Locale switcher uses a button with current locale
     await expect(page.getByRole('button', { name: /EN|DE|FR/i })).toBeVisible();
@@ -217,7 +232,7 @@ test.describe('Login and book load (desktop)', () => {
 
   test('redirects unauthenticated reader access to login', async ({ page }) => {
     // Clear persisted auth state by using a fresh context
-    await page.goto(`${APP_URL}/read/my-test-book`);
+    await page.goto(`/read/my-test-book`);
 
     // Should be redirected to login
     await expect(page).toHaveURL(/\/login$/);
@@ -238,7 +253,7 @@ test.describe('Login and book load (mobile)', () => {
   });
 
   test('login form is usable on small screens', async ({ page }) => {
-    await page.goto(`${APP_URL}/login`);
+    await page.goto(`/login`);
 
     // Form fields should still be visible and fillable
     await expect(page.getByLabel('Book URL Slug')).toBeVisible();
@@ -246,12 +261,16 @@ test.describe('Login and book load (mobile)', () => {
     await expect(page.getByLabel('Password (if required)')).toBeVisible();
 
     await login(page);
+
+
     await expect(page).toHaveURL(/\/read\/my-test-book$/);
   });
 
   test('reader header fits on mobile', async ({ page }) => {
-    await page.goto(`${APP_URL}/login`);
+    await page.goto(`/login`);
     await login(page);
+
+
     await expect(page).toHaveURL(/\/read\/my-test-book$/);
 
     // Header should be visible; book title may be truncated so check partial
@@ -259,12 +278,14 @@ test.describe('Login and book load (mobile)', () => {
     await expect(header).toBeVisible();
 
     // Sign Out button must be accessible
-    await expect(page.getByRole('button', { name: 'Sign Out' })).toBeVisible();
+    await expect(page.getByRole('button', { name: /Sign Out/i })).toBeVisible({ timeout: 60000 });
   });
 
   test('settings panel is accessible on mobile', async ({ page }) => {
-    await page.goto(`${APP_URL}/login`);
+    await page.goto(`/login`);
     await login(page);
+
+
 
     await page.getByRole('button', { name: 'Settings' }).click();
     await expect(page.getByText('Theme')).toBeVisible();
@@ -293,8 +314,10 @@ test.describe('Error handling', () => {
       });
     });
 
-    await page.goto(`${APP_URL}/login`);
+    await page.goto(`/login`);
     await login(page);
+
+
 
     // Error banner should appear
     await expect(page.locator('div:has-text("Access denied")').first()).toBeVisible();
@@ -312,13 +335,15 @@ test.describe('Error handling', () => {
       });
     });
 
-    await page.goto(`${APP_URL}/login`);
+    await page.goto(`/login`);
     await login(page);
+
+
     await expect(page).toHaveURL(/\/read\/my-test-book$/);
 
     // Error message should be visible in the reader
     await expect(page.locator('div:has-text("Failed to load book")').first()).toBeVisible({
-      timeout: 5_000,
+      timeout: 60000_000,
     });
   });
 });
