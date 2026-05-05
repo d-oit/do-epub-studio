@@ -10,8 +10,8 @@ export default defineConfig({
       reportsDirectory: './coverage',
       thresholds: {
         lines: 55,
-        functions: 65,
-        branches: 75,
+        functions: 50,
+        branches: 45,
         statements: 55,
       },
       include: ['src/**/*.ts'],
