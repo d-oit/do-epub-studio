@@ -100,13 +100,13 @@ export async function saveProgress(entry: ProgressEntry): Promise<void> {
 export async function getProgress(bookId: string): Promise<ProgressEntry | undefined> {
   const db = await getDB();
   const entries = await db.getAllFromIndex('progress', 'bookId', bookId);
-  return entries.sort((a, b) => b.lastRead - a.lastRead)[0];
+  return (entries as ProgressEntry[]).sort((a, b) => b.lastRead - a.lastRead)[0];
 }
 
 export async function getUnsyncedProgress(): Promise<ProgressEntry[]> {
   const db = await getDB();
   const all = await db.getAll('progress');
-  return all.filter((entry) => entry.synced === false);
+  return (all as ProgressEntry[]).filter((entry) => entry.synced === false);
 }
 
 export async function saveAnnotation(entry: AnnotationEntry): Promise<void> {
@@ -116,13 +116,14 @@ export async function saveAnnotation(entry: AnnotationEntry): Promise<void> {
 
 export async function getAnnotations(bookId: string): Promise<AnnotationEntry[]> {
   const db = await getDB();
-  return db.getAllFromIndex('annotations', 'bookId', bookId);
+  const all = await db.getAllFromIndex('annotations', 'bookId', bookId);
+  return all as AnnotationEntry[];
 }
 
 export async function getUnsyncedAnnotations(): Promise<AnnotationEntry[]> {
   const db = await getDB();
   const all = await db.getAll('annotations');
-  return all.filter((entry) => entry.synced === false);
+  return (all as AnnotationEntry[]).filter((entry) => entry.synced === false);
 }
 
 export async function addToSyncQueue(item: SyncQueueItem): Promise<void> {
@@ -132,7 +133,8 @@ export async function addToSyncQueue(item: SyncQueueItem): Promise<void> {
 
 export async function getSyncQueue(): Promise<SyncQueueItem[]> {
   const db = await getDB();
-  return db.getAll('syncQueue');
+  const all = await db.getAll('syncQueue');
+  return all as SyncQueueItem[];
 }
 
 export async function removeSyncQueueItem(id: string): Promise<void> {
@@ -152,7 +154,8 @@ export async function cachePermission(permission: PermissionCache): Promise<void
 
 export async function getCachedPermission(bookId: string): Promise<PermissionCache | undefined> {
   const db = await getDB();
-  return db.get('permissions', bookId);
+  const permission = (await db.get('permissions', bookId)) as PermissionCache | undefined;
+  return permission;
 }
 
 export async function clearPermissionCache(bookId: string): Promise<void> {

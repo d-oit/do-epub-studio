@@ -121,15 +121,18 @@ self.addEventListener('sync', (event: Event) => {
 
 // Message handler for cache invalidation
 self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'CLEAR_CACHE') {
+  const data = event.data as { type?: string; cacheName?: string } | undefined;
+  if (data && data.type === 'CLEAR_CACHE') {
     const traceId = createTraceId();
-    const cacheName = event.data.cacheName as string;
-    event.waitUntil(
-      caches.delete(cacheName).then((deleted) => {
-        console.log(
-          JSON.stringify({ level: 'info', traceId, event: 'sw.cache.cleared', cacheName, deleted }),
-        );
-      }),
-    );
+    const cacheName = data.cacheName;
+    if (cacheName) {
+      event.waitUntil(
+        caches.delete(cacheName).then((deleted) => {
+          console.log(
+            JSON.stringify({ level: 'info', traceId, event: 'sw.cache.cleared', cacheName, deleted }),
+          );
+        }),
+      );
+    }
   }
 });

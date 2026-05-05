@@ -25,8 +25,9 @@ if ('serviceWorker' in navigator) {
     void (async () => {
       try {
         const reg = await navigator.serviceWorker.register('/sw.js');
-        if (reg.sync) {
-          await reg.sync.register('sync-reader-state');
+        const sync = (reg as unknown as { sync?: { register: (tag: string) => Promise<void> } }).sync;
+        if (sync) {
+          await sync.register('sync-reader-state');
         }
       } catch (error) {
         console.log('Service worker registration failed:', error);
@@ -42,15 +43,16 @@ function setupGlobalErrorHandlers(): void {
 
   window.addEventListener('error', (event) => {
     const traceId = createTraceId();
+    const error = event.error as Error | undefined;
     logClientEvent({
       level: 'error',
       event: 'window.error',
       traceId,
       spanId: createSpanId(),
       error: {
-        name: event.error?.name ?? 'Error',
-        message: event.error?.message ?? String(event.message),
-        stack: event.error?.stack,
+        name: error?.name ?? 'Error',
+        message: error?.message ?? String(event.message),
+        stack: error?.stack,
       },
       metadata: { filename: event.filename, lineno: event.lineno, colno: event.colno },
     });
