@@ -11,6 +11,7 @@ import {
 } from '@do-epub-studio/shared';
 
 interface ProgressRow {
+  [key: string]: string | number | null | undefined;
   id: string;
   book_id: string;
   user_email: string;
@@ -20,6 +21,7 @@ interface ProgressRow {
 }
 
 interface BookmarkRow {
+  [key: string]: string | number | null | undefined;
   id: string;
   book_id: string;
   user_email: string;
@@ -29,6 +31,7 @@ interface BookmarkRow {
 }
 
 interface HighlightRow {
+  [key: string]: string | number | null | undefined;
   id: string;
   book_id: string;
   user_email: string;
@@ -55,11 +58,11 @@ export async function handleGetProgress(
     );
   }
 
-  const progress = (await queryFirst(
+  const progress = await queryFirst<ProgressRow>(
     env,
     `SELECT * FROM reading_progress WHERE book_id = ? AND user_email = ?`,
     [bookId, auth.email],
-  )) as ProgressRow | null;
+  );
 
   if (!progress) {
     return jsonResponse({
@@ -71,7 +74,7 @@ export async function handleGetProgress(
   return jsonResponse({
     ok: true,
     data: {
-      locator: JSON.parse(progress.locator_json),
+      locator: JSON.parse(progress.locator_json) as Record<string, unknown>,
       progressPercent: progress.progress_percent,
       updatedAt: progress.updated_at,
     },
@@ -149,17 +152,17 @@ export async function handleListBookmarks(
     );
   }
 
-  const bookmarks = (await queryAll(
+  const bookmarks = await queryAll<BookmarkRow>(
     env,
     `SELECT * FROM bookmarks WHERE book_id = ? AND user_email = ? ORDER BY created_at DESC`,
     [bookId, auth.email],
-  )) as unknown as BookmarkRow[];
+  );
 
   return jsonResponse({
     ok: true,
     data: bookmarks.map((bm) => ({
       id: bm.id,
-      locator: JSON.parse(bm.locator_json),
+      locator: JSON.parse(bm.locator_json) as Record<string, unknown>,
       label: bm.label,
       createdAt: bm.created_at,
     })),
@@ -260,11 +263,11 @@ export async function handleListHighlights(
     );
   }
 
-  const highlights = (await queryAll(
+  const highlights = await queryAll<HighlightRow>(
     env,
     `SELECT * FROM highlights WHERE book_id = ? AND user_email = ? ORDER BY created_at DESC`,
     [bookId, auth.email],
-  )) as unknown as HighlightRow[];
+  );
 
   return jsonResponse({
     ok: true,
@@ -435,9 +438,9 @@ export async function handleUpdateHighlight(
 
   const body = validation.data;
 
-  const highlight = (await queryFirst(env, `SELECT * FROM highlights WHERE id = ?`, [
+  const highlight = await queryFirst<HighlightRow>(env, `SELECT * FROM highlights WHERE id = ?`, [
     highlightId,
-  ])) as HighlightRow | null;
+  ]);
 
   if (!highlight) {
     return jsonResponse(
