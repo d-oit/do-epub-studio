@@ -34,7 +34,11 @@ export async function validatePermission(bookId: string): Promise<CachedPermissi
   try {
     const response = await api.get(`/api/access/validate?bookId=${bookId}`);
     if (response.ok) {
-      const data = await response.json();
+      const data = (await response.json()) as {
+        grantId: string;
+        canComment: boolean;
+        canDownloadOffline: boolean;
+      };
       const permission: PermissionCache = {
         bookId,
         grantId: data.grantId,
@@ -97,8 +101,8 @@ export function setupZombieDetection(onRevoked: (bookId: string) => void): () =>
     try {
       const response = await api.get('/api/access/validate-all');
       if (response.ok) {
-        const data = await response.json();
-        const validGrantIds = new Set(data.grantIds as string[]);
+        const data = (await response.json()) as { grantIds: string[]; revokedBookIds: string[] };
+        const validGrantIds = new Set(data.grantIds);
 
         const cached = await getCachedPermission('');
         if (cached && !validGrantIds.has(cached.grantId)) {
