@@ -320,7 +320,7 @@ function CreateBookModal({ isOpen, onClose, sessionToken, onCreated }: CreateBoo
         },
       });
       if (!uploadResponse.ok) {
-        const errorBody = await uploadResponse.json().catch(() => null);
+        const errorBody = (await uploadResponse.json().catch(() => null)) as { error?: { message?: string } } | null;
         throw new Error(
           errorBody?.error?.message ??
             `Upload failed: ${uploadResponse.status} ${uploadResponse.statusText}`,

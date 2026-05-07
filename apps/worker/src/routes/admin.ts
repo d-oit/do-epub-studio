@@ -437,7 +437,7 @@ export async function handleGetAuditLog(
       entityType: row.entity_type,
       entityId: row.entity_id,
       action: row.action,
-      payload: row.payload_json ? JSON.parse(row.payload_json as string) : null,
+      payload: row.payload_json ? (JSON.parse(row.payload_json as string) as Record<string, unknown>) : null,
       createdAt: row.created_at,
     })),
   });

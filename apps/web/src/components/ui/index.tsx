@@ -222,7 +222,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             ${error ? 'border-accent-error focus:border-accent-error focus:ring-accent-error/20' : 'border-border'}
             ${className}
           `}
-          {...(props as any)}
+          {...(props as ComponentPropsWithoutRef<typeof motion.input>)}
         />
         {error ? (
           <p id={errorId} className="mt-1.5 text-sm text-accent-error">
