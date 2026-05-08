@@ -211,7 +211,7 @@ export function ReaderPage() {
 
   useEffect(() => {
     if (!sessionToken || !bookSlug) {
-      navigate('/login');
+      void navigate('/login');
       return;
     }
     const controller = new AbortController();
@@ -388,14 +388,14 @@ export function ReaderPage() {
       console.error('Logout failed', err);
     } finally {
       logout();
-      navigate('/login');
+      void navigate('/login');
     }
   };
 
   const navigateToChapter = async (href: string) => {
     if (renditionRef.current) {
       await renditionRef.current.display(href);
-      setShowToc(false);
+      void setShowToc(false);
     }
   };
 
@@ -449,7 +449,7 @@ export function ReaderPage() {
       <TableOfContents
         isOpen={showToc}
         toc={toc}
-        onClose={() => setShowToc(false)}
+        onClose={() => void setShowToc(false)}
         onNavigate={(href) => void navigateToChapter(href)}
         t={tFn}
       />

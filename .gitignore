@@ -58,3 +58,4 @@ verification_output.txt
 
 # Coverage
 coverage/
+.wrangler/

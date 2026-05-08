@@ -8,7 +8,7 @@ on:
 
 # Opt into Node.js 22 for GitHub Actions to avoid deprecation warnings
 env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE22: true
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   TURBO_TELEMETRY_DISABLED: 1
 
 permissions:

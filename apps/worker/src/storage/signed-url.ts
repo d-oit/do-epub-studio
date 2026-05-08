@@ -94,7 +94,7 @@ export async function verifySignedUrlSignature(
   const sigBytes = hexToUint8Array(providedSignature);
 
   try {
-    return await crypto.subtle.verify('HMAC', key, sigBytes.buffer as ArrayBuffer, data);
+    return await crypto.subtle.verify('HMAC', key, sigBytes.buffer, data);
   } catch {
     return false;
   }

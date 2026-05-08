@@ -1,191 +1,124 @@
-import { useState, type FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-
-import { LocaleSwitcher } from '../../components/LocaleSwitcher';
+import React, { useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from '../../hooks/useTranslation';
 import { apiRequest } from '../../lib/api';
 import { useAuthStore } from '../../stores/auth';
-import { Button, Input } from '../../components/ui';
-
-interface LoginSuccess {
-  sessionToken: string;
-  book: {
-    id: string;
-    slug: string;
-    title: string;
-    authorName: string | null;
-  };
-  capabilities: {
-    canRead: boolean;
-    canComment: boolean;
-    canHighlight: boolean;
-    canBookmark: boolean;
-    canDownloadOffline: boolean;
-    canExportNotes: boolean;
-    canManageAccess: boolean;
-  };
-}
-
-const containerVariants = {
-  initial: { opacity: 0 },
-  animate: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-      delayChildren: 0.2,
-    },
-  },
-};
-
-const itemVariants = {
-  initial: { opacity: 0, y: 20 },
-  animate: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.4, ease: [0.4, 0, 0.2, 1] as const },
-  },
-};
+import { LocaleSwitcher } from '../../components/LocaleSwitcher';
 
 export function LoginPage() {
-  const navigate = useNavigate();
-  const setAuth = useAuthStore((state) => state.setAuth);
   const { t } = useTranslation();
-  const [bookSlug, setBookSlug] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const setReaderAuth = useAuthStore((state) => state.setReaderAuth);
 
-  const handleSubmit = async (e: FormEvent) => {
+  const [email, setEmail] = useState<string>('');
+  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const bookSlug = searchParams.get('book') || '';
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
     setIsLoading(true);
+    setError(null);
 
     try {
-      const data = await apiRequest<LoginSuccess>('/api/access/request', {
-        method: 'POST',
-        body: JSON.stringify({
-          bookSlug: bookSlug.trim(),
-          email: email.trim().toLowerCase(),
-          password: password || undefined,
-        }),
-      });
+      const data = await apiRequest<{ sessionToken: string }>(
+        '/api/access/request',
+        {
+          method: 'POST',
+          body: JSON.stringify({ email, password, bookSlug }),
+        },
+      );
 
-      setAuth({
-        sessionToken: data.sessionToken,
-        bookId: data.book.id,
-        bookSlug: data.book.slug,
-        bookTitle: data.book.title,
-        email: email.trim().toLowerCase(),
-        capabilities: data.capabilities,
-      });
-
-      navigate(`/read/${data.book.slug}`);
+      setReaderAuth({ sessionToken: data.sessionToken, email });
+      void void navigate('/');
     } catch (err) {
-      setError((err as Error).message || t('login.error.network'));
+      setError((err as Error).message);
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background-secondary to-background px-4 relative overflow-hidden">
-      {/* Background decorations */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 0.4, scale: 1 }}
-          transition={{ duration: 1.5, ease: 'easeOut' as const }}
-          className="absolute -top-1/2 -right-1/4 w-[800px] h-[800px] bg-accent/10 rounded-full blur-3xl"
-        />
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 0.3, scale: 1 }}
-          transition={{ duration: 1.5, delay: 0.2, ease: 'easeOut' as const }}
-          className="absolute -bottom-1/2 -left-1/4 w-[600px] h-[600px] bg-accent-secondary/10 rounded-full blur-3xl"
-        />
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col items-center justify-center px-4">
+      <div className="absolute top-4 right-4">
+        <LocaleSwitcher />
       </div>
 
-      <motion.div
-        variants={containerVariants}
-        initial="initial"
-        animate="animate"
-        className="relative z-10 max-w-md w-full"
-      >
-        <motion.div variants={itemVariants} className="flex justify-end mb-6">
-          <LocaleSwitcher />
-        </motion.div>
-
-        <motion.div variants={itemVariants} className="text-center mb-8">
-          <h1 className="text-hero font-bold text-foreground mb-3 tracking-tight">
-            {t('app.title')}
+      <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 border border-gray-100 dark:border-gray-700">
+        <div className="text-center mb-8">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            {t('auth.login.title')}
           </h1>
-          <p className="text-foreground-muted text-lg">{t('login.subtitle')}</p>
-        </motion.div>
-
-        <motion.div variants={itemVariants} className="glass-card p-8">
-          {error && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mb-6 p-4 bg-accent-error/10 border border-accent-error/20 rounded-lg text-accent-error text-sm"
-            >
-              {error}
-            </motion.div>
+          {bookSlug && (
+            <p className="text-gray-500 dark:text-gray-400 mt-2 text-sm">
+              {t('auth.login.accessing')} <span className="font-semibold">{bookSlug}</span>
+            </p>
           )}
+        </div>
 
-          <form
-            onSubmit={(event) => {
-              void handleSubmit(event);
-            }}
-            className="space-y-5"
-          >
-            <Input
-              label={t('login.bookSlugLabel')}
-              type="text"
-              value={bookSlug}
-              onChange={(e) => setBookSlug(e.target.value)}
-              placeholder={t('login.bookSlugPlaceholder')}
-              required
-            />
+        {error && (
+          <div className="mb-6 p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded text-sm text-red-700 dark:text-red-300">
+            {error}
+          </div>
+        )}
 
-            <Input
-              label={t('login.emailLabel')}
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder={t('login.emailPlaceholder')}
-              required
-            />
+        <form onSubmit={(e) => { void handleSubmit(e); }}>
+          <div className="space-y-4">
+            <div>
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              >
+                {t('auth.login.email')}
+              </label>
+              <input
+                id="email"
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 text-gray-900 dark:text-white"
+              />
+            </div>
 
-            <Input
-              label={t('login.passwordLabel')}
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder={t('login.passwordPlaceholder')}
-            />
+            <div>
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              >
+                {t('auth.login.password')}
+              </label>
+              <input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 text-gray-900 dark:text-white"
+              />
+            </div>
 
-            <Button
+            <button
               type="submit"
-              variant="primary"
-              size="lg"
-              isLoading={isLoading}
-              className="w-full mt-2"
+              disabled={isLoading}
+              className="w-full px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {isLoading ? t('login.signingIn') : t('login.submit')}
-            </Button>
-          </form>
-        </motion.div>
+              {isLoading ? t('auth.login.signingIn') : t('auth.login.signIn')}
+            </button>
+          </div>
+        </form>
 
-        <motion.p
-          variants={itemVariants}
-          className="mt-8 text-center text-sm text-foreground-muted"
-        >
-          Secure EPUB reader with offline support
-        </motion.p>
-      </motion.div>
+        <div className="mt-6 text-center">
+          <button
+            onClick={() => void void navigate('/admin/login')}
+            className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+          >
+            {t('auth.login.adminLink')}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

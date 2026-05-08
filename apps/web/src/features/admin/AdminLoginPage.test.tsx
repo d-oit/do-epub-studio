@@ -48,7 +48,7 @@ describe('AdminLoginPage', () => {
 
   const renderLoginPage = () => {
     return render(
-      <BrowserRouter >
+      <BrowserRouter>
         <AdminLoginPage />
       </BrowserRouter>,
     );
