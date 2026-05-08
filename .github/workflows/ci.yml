@@ -8,7 +8,7 @@ on:
 
 # Opt into Node.js 22 for GitHub Actions to avoid deprecation warnings
 env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE22: true
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   TURBO_TELEMETRY_DISABLED: 1
 
 permissions:
@@ -28,7 +28,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
         with:
-          node-version: '22'
+          node-version: "22"
           cache: 'pnpm'
 
       - name: Toolchain Diagnostics
@@ -58,7 +58,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
         with:
-          node-version: '22'
+          node-version: "22"
           cache: 'pnpm'
 
       - name: Install dependencies
@@ -81,7 +81,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
         with:
-          node-version: '22'
+          node-version: "22"
           cache: 'pnpm'
 
       - name: Install dependencies
@@ -104,7 +104,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
         with:
-          node-version: '22'
+          node-version: "22"
           cache: 'pnpm'
 
       - name: Install dependencies
@@ -137,7 +137,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
         with:
-          node-version: '22'
+          node-version: "22"
           cache: 'pnpm'
 
       - name: Install dependencies
@@ -171,7 +171,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
         with:
-          node-version: '22'
+          node-version: "22"
           cache: 'pnpm'
 
       - name: Install dependencies
@@ -201,7 +201,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
         with:
-          node-version: '22'
+          node-version: "22"
           cache: 'pnpm'
 
       - name: Install dependencies

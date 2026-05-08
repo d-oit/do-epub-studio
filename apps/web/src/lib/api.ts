@@ -87,7 +87,7 @@ export async function apiRequest<T>(endpoint: string, options: ApiRequestOptions
           stack: (error as Error).stack,
         },
       });
-      throw new Error('Invalid server response');
+      throw new Error('Invalid server response', { cause: error });
     }
 
     if (!data.ok) {

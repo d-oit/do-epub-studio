@@ -16359,7 +16359,7 @@ init_modules_watch_stub();
 function validateRequestBody(schema, raw) {
   const result = schema.safeParse(raw);
   if (!result.success) {
-    const details = result.error.errors.map(
+    const details = result.error.issues.map(
       (err) => `${err.path.join(".")}: ${err.message}`
     );
     return { ok: false, status: 400, error: "Validation failed", details };
