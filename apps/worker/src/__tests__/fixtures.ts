@@ -12,11 +12,15 @@ vi.mock('../db/client', () => ({
   execute: vi.fn(),
 }));
 
-vi.mock('../auth/middleware', () => ({
-  requireAuth: vi.fn(),
-  validateSession: vi.fn(),
-  generateToken: vi.fn(),
-}));
+vi.mock('../auth/middleware', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../auth/middleware')>();
+  return {
+    ...actual,
+    requireAuth: vi.fn(actual.requireAuth),
+    validateSession: vi.fn(actual.validateSession),
+    generateToken: vi.fn(actual.generateToken),
+  };
+});
 
 vi.mock('../auth/password', () => ({
   validateGrant: vi.fn(),
