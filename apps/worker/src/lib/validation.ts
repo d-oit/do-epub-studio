@@ -4,7 +4,7 @@ export function validateRequestBody<T>(schema: ZodSchema<T>, raw: unknown): { ok
   const result = schema.safeParse(raw);
   
   if (!result.success) {
-    const details = result.error.errors.map((err) => 
+    const details = result.error.issues.map((err) =>
       `${err.path.join('.')}: ${err.message}`
     );
     return { ok: false, status: 400, error: 'Validation failed', details };
