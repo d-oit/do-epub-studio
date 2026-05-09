@@ -105,19 +105,39 @@ describe('POST /api/access/refresh (handleRefresh)', () => {
     expect(body.error.code).toBe('SESSION_INVALID');
   });
 
-  it('returns new session token for valid session', async () => {
+  it('returns new session token for valid session and rotates token', async () => {
     mockValidateSessionMod.mockResolvedValue({
       valid: true,
       session: makeSessionRow(),
       bookId: 'book-1',
     } as never);
+    mockGetGrantByBookAndSession.mockResolvedValue({ revoked_at: null, expires_at: null } as never);
     mockCreateSession.mockResolvedValue('new-token');
+    mockRevokeSession.mockResolvedValue(undefined as never);
 
     const res = await handleRefresh(makeEnv(), 'good-token');
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.ok).toBe(true);
     expect(body.data.sessionToken).toBe('new-token');
+    expect(mockRevokeSession).toHaveBeenCalledWith(expect.anything(), 'good-token');
+  });
+
+  it('returns 403 when associated grant is expired', async () => {
+    mockValidateSessionMod.mockResolvedValue({
+      valid: true,
+      session: makeSessionRow(),
+      bookId: 'book-1',
+    } as never);
+    mockGetGrantByBookAndSession.mockResolvedValue({
+      revoked_at: null,
+      expires_at: new Date(Date.now() - 3600000).toISOString(),
+    } as never);
+
+    const res = await handleRefresh(makeEnv(), 'good-token');
+    expect(res.status).toBe(403);
+    const body = await res.json();
+    expect(body.error.code).toBe('ACCESS_DENIED');
   });
 });
 
