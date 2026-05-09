@@ -173,7 +173,7 @@ export async function getGrantByBookAndSession(
     `SELECT id, book_id, email, password_hash, mode, allowed, comments_allowed, 
             offline_allowed, expires_at, revoked_at
      FROM book_access_grants 
-     WHERE book_id = ? AND email = ? AND allowed = 1`,
+     WHERE book_id = ? AND email = ? AND allowed = 1 AND revoked_at IS NULL`,
     [bookId, email.toLowerCase()],
   ) as Promise<GrantRow | null>;
 }
@@ -185,7 +185,7 @@ export async function getGrantsBySession(env: Env, email: string): Promise<Grant
     `SELECT id, book_id, email, password_hash, mode, allowed, comments_allowed, 
             offline_allowed, expires_at, revoked_at
      FROM book_access_grants 
-     WHERE email = ?`,
+     WHERE email = ? AND revoked_at IS NULL`,
     [email.toLowerCase()],
   ) as unknown as Promise<GrantRow[]>;
 }

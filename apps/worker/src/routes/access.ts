@@ -80,7 +80,9 @@ export async function handleLogout(env: Env, token: string): Promise<Response> {
 }
 
 export async function handleRefresh(env: Env, token: string): Promise<Response> {
-  const { validateSession, createSession } = await import('../auth/session');
+  const { validateSession, createSession, revokeSession } = await import('../auth/session');
+  const { getGrantByBookAndSession } = await import('../auth/password');
+
   const result = await validateSession(env, token);
 
   if (!result.valid || !result.session) {
@@ -93,7 +95,22 @@ export async function handleRefresh(env: Env, token: string): Promise<Response> 
     );
   }
 
+  // Security: Verify the grant is still valid before refreshing
+  const grant = await getGrantByBookAndSession(env, result.bookId!, result.session.email);
+  if (!grant || grant.revoked_at || (grant.expires_at && new Date(grant.expires_at) < new Date())) {
+    return jsonResponse(
+      {
+        ok: false,
+        error: { code: 'ACCESS_DENIED', message: 'Access has been revoked or expired' },
+      },
+      403,
+    );
+  }
+
   const newToken = await createSession(env, result.bookId!, result.session.email);
+
+  // Security: Implement token rotation by revoking the old session token
+  await revokeSession(env, token);
 
   return jsonResponse({
     ok: true,
@@ -123,7 +140,7 @@ export async function handleValidatePermission(
 
   const grant = await getGrantByBookAndSession(env, bookId, sessionResult.session.email);
 
-  if (!grant || grant.revoked_at) {
+  if (!grant || grant.revoked_at || (grant.expires_at && new Date(grant.expires_at) < new Date())) {
     return jsonResponse({
       ok: true,
       data: {
@@ -164,13 +181,18 @@ export async function handleValidateAllPermissions(env: Env, token: string): Pro
 
   const grants = await getGrantsBySession(env, sessionResult.session.email);
 
-  const validGrantIds = grants.filter((g) => !g.revoked_at).map((g) => g.id);
+  const now = new Date();
+  const validGrantIds = grants
+    .filter((g) => !g.revoked_at && (!g.expires_at || new Date(g.expires_at) > now))
+    .map((g) => g.id);
 
   return jsonResponse({
     ok: true,
     data: {
       grantIds: validGrantIds,
-      revokedBookIds: grants.filter((g) => g.revoked_at).map((g) => g.book_id),
+      revokedBookIds: grants
+        .filter((g) => g.revoked_at || (g.expires_at && new Date(g.expires_at) <= now))
+        .map((g) => g.book_id),
     },
   });
 }
