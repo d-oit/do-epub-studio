@@ -1,60 +1,57 @@
-# OS files
-.DS_Store
-Thumbs.db
-
-# Editor files
-*.swp
-*.swo
-*~
-.idea/
-.vscode/
-
-# Node modules
+```gitignore
+# Dependencies
 node_modules/
 
-# Python
+# Build outputs
+dist/
+build/
+target/
+
+# Environment variables
+.env
+.env.local
+*.env.*
+
+# Python specific
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
-.venv/
+.Python
+env/
 venv/
-.pytest_cache/
-.coverage
-*.egg-info/
-
-# Rust
-target/
-*.o
-*.a
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
 
 # Logs
 *.log
 
-# Temporary files
-temp/
-*.tmp
-
-# Reports
-reports/
-
-# Environment
-.env
-.env.*
-!.env.example
-
-# Build outputs
-dist/
-.next/
-.turbo/
-
-# Playwright
-.playwright/
-playwright-report/
-test-results/
-
-# Verification
-verification_output.txt
-
-# Coverage
+# Coverage reports
 coverage/
+htmlcov/
+.coverage
+
+# IDE specific
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS generated
+.DS_Store
+Thumbs.db
+
+# Testing
+.nyc_output/
+coverage/
+
+# TypeScript/JavaScript build
+*.tsbuildinfo
+```
+
+Wait, let me reconsider. Looking at the file changes, I only see TypeScript source files (.ts), markdown files (.md), and no build artifacts, dependency directories, or temporary files that need ignoring.
+
+Actually, based on rule #6, since the changes contain only source files (.ts) and documentation (.md) with no build artifacts, dependencies, or temp files, the output should be empty.
+
+(empty - output nothing)

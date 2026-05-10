@@ -4,9 +4,25 @@ import { createSession } from '../auth/session';
 import { logAudit } from '../audit';
 import { jsonResponse } from '../lib/responses';
 import { validateRequestBody } from '../lib/validation';
+import { withRateLimit, RATE_LIMIT_CONFIGS } from '../lib/rate-limiter';
 import { AccessRequestSchema } from '@do-epub-studio/shared';
 
-export async function handleAccessRequest(env: Env, raw: unknown): Promise<Response> {
+export async function handleAccessRequest(env: Env, raw: unknown, request?: Request): Promise<Response> {
+  // Security: Apply rate limiting to prevent brute force attacks (5 requests/minute)
+  if (request) {
+    const rateLimitResponse = await withRateLimit(env, request, '/api/access/request', RATE_LIMIT_CONFIGS.AUTH);
+    if (rateLimitResponse) {
+      // Log rate limit violation
+      await logAudit(env, {
+        entityType: 'session',
+        entityId: 'rate_limit',
+        action: 'rate_limit_exceeded',
+        payload: { endpoint: '/api/access/request' },
+      });
+      return rateLimitResponse;
+    }
+  }
+
   const validation = validateRequestBody(AccessRequestSchema, raw);
   
   if (!validation.ok) {

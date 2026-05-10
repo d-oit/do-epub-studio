@@ -2,6 +2,7 @@ import type { Env } from '../lib/env';
 import { createAdminSession, revokeAdminSession } from '../auth/admin-middleware';
 import { jsonResponse } from '../lib/responses';
 import { execute } from '../db/client';
+import { withRateLimit, RATE_LIMIT_CONFIGS } from '../lib/rate-limiter';
 
 async function logAudit(
   env: Env,
@@ -29,6 +30,19 @@ export async function handleAdminLogin(
   request: Request,
 ): Promise<Response> {
   try {
+    // Security: Apply strict rate limiting to prevent brute force attacks (5 requests/minute)
+    const rateLimitResponse = await withRateLimit(env, request, '/api/admin/login', RATE_LIMIT_CONFIGS.AUTH);
+    if (rateLimitResponse) {
+      // Log rate limit violation for admin login attempts
+      await logAudit(env, {
+        entityType: 'user',
+        entityId: 'rate_limit',
+        action: 'rate_limit_exceeded',
+        payload: { endpoint: '/api/admin/login' },
+      });
+      return rateLimitResponse;
+    }
+
     const body = (await request.json()) as { email?: string; password?: string };
     
     if (!body.email || !body.password) {

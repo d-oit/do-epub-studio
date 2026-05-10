@@ -1,6 +1,7 @@
 import type { Env } from '../lib/env';
 import { jsonResponse } from '../lib/responses';
 import { verifySignedUrlExpiry, verifySignedUrlSignature } from '../storage/signed-url';
+import { isValidFileKey, isValidBookId } from '../lib/validation-security';
 
 export async function handleDownloadBookFile(
   env: Env,
@@ -8,6 +9,21 @@ export async function handleDownloadBookFile(
   bookId: string,
   fileKey: string,
 ): Promise<Response> {
+  // Security: Validate bookId and fileKey to prevent path traversal attacks
+  if (!isValidBookId(bookId)) {
+    return jsonResponse(
+      { ok: false, error: { code: 'BAD_REQUEST', message: 'Invalid book ID format' } },
+      400,
+    );
+  }
+
+  if (!isValidFileKey(fileKey)) {
+    return jsonResponse(
+      { ok: false, error: { code: 'BAD_REQUEST', message: 'Invalid file key format' } },
+      400,
+    );
+  }
+
   const url = new URL(request.url);
   const expires = url.searchParams.get('expires');
   const signature = url.searchParams.get('signature');

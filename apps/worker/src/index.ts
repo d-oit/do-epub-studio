@@ -56,7 +56,7 @@ async function handleRequest(env: Env, request: Request): Promise<Response> {
 
   if (path === '/api/access/request' && method === 'POST') {
     const body = (await request.json()) as Record<string, unknown>;
-    return handleAccessRequest(env, body);
+    return handleAccessRequest(env, body, request);
   }
 
   if (path === '/api/access/logout' && method === 'POST') {
@@ -313,19 +313,44 @@ export default {
 
 /**
  * Apply restricted CORS headers based on the environment configuration.
- * Hardens the API by restricting allowed origins to the application's base URL.
+ * Hardens the API by validating origins against an explicit allowlist.
+ * 
+ * Security Rules:
+ * - Origins must match exactly (no wildcards, no partial matches)
+ * - Supports multiple allowed origins via CORS_ALLOW_ORIGINS env var (comma-separated)
+ * - Falls back to APP_BASE_URL if CORS_ALLOW_ORIGINS not set
+ * - Invalid origins are rejected (not reflected)
  */
 function applyCorsHeaders(response: Response, request: Request, env: Env): Response {
   const origin = request.headers.get('Origin');
-  const allowedOrigin = origin === env.APP_BASE_URL ? origin : env.APP_BASE_URL;
+  
+  // Parse allowed origins from environment variable (comma-separated list)
+  const allowedOrigins = env.CORS_ALLOW_ORIGINS
+    ? env.CORS_ALLOW_ORIGINS.split(',').map((o) => o.trim()).filter(Boolean)
+    : [env.APP_BASE_URL];
 
-  response.headers.set('Access-Control-Allow-Origin', allowedOrigin);
-  response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-  response.headers.set(
-    'Access-Control-Allow-Headers',
-    `Content-Type, Authorization, ${TRACE_HEADER}, ${SPAN_HEADER}`,
-  );
-  response.headers.set('Vary', 'Origin, Access-Control-Request-Headers');
+  // Validate origin against allowlist - must match exactly
+  let allowedOrigin: string | null = null;
+  if (origin && allowedOrigins.includes(origin)) {
+    allowedOrigin = origin;
+  } else {
+    // No match - use default deny (first allowed origin for preflight responses)
+    allowedOrigin = allowedOrigins[0] ?? null;
+  }
+
+  // Only set CORS headers if we have a valid origin
+  if (allowedOrigin) {
+    response.headers.set('Access-Control-Allow-Origin', allowedOrigin);
+    response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+    response.headers.set(
+      'Access-Control-Allow-Headers',
+      `Content-Type, Authorization, ${TRACE_HEADER}, ${SPAN_HEADER}`,
+    );
+    response.headers.set('Vary', 'Origin, Access-Control-Request-Headers');
+    
+    // Security: Prevent caching of CORS responses with varying origins
+    response.headers.set('Cache-Control', 'private, no-store');
+  }
 
   return response;
 }

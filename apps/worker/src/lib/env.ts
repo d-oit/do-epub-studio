@@ -5,9 +5,24 @@ export interface Env {
   SESSION_SIGNING_SECRET: string;
   INVITE_TOKEN_SECRET: string;
   APP_BASE_URL: string;
+  RATE_LIMIT_KV?: KVNamespace;
+  CORS_ALLOW_ORIGINS?: string;
 }
 
 export type JsonRow = Record<string, string | number | null | undefined>;
+
+export interface KVNamespace {
+  get(key: string): Promise<string | null>;
+  put(key: string, value: string, options?: { expirationTtl?: number }): Promise<void>;
+  delete(key: string): Promise<void>;
+  list(options?: { prefix?: string; limit?: number; cursor?: string }): Promise<KVNamespaceListResult>;
+}
+
+export interface KVNamespaceListResult {
+  keys: { name: string; expiration?: number }[];
+  list_complete: boolean;
+  cursor?: string;
+}
 
 export interface R2Bucket {
   get(key: string, options?: { range?: { offset?: number; length?: number } }): Promise<R2Object | null>;
