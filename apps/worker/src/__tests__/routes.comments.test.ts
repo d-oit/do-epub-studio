@@ -105,7 +105,7 @@ describe('PATCH /api/comments/{commentId} (handleUpdateComment)', () => {
 
   it('returns 404 when comment not found', async () => {
     mockRequireAuth.mockResolvedValue(makeAuthContext());
-    mockQueryFirst.mockResolvedValue(null as never);
+    mockQueryFirst.mockResolvedValue(null);
 
     const res = await handleUpdateComment(makeEnv(), makeRequest(), 'comment-1', { body: 'updated' });
     expect(res.status).toBe(404);

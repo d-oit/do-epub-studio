@@ -4,7 +4,7 @@ This guide walks you through setting up EPUB Studio for local development.
 
 ## 1. Prerequisites
 
-- **Node.js** >= 20 (LTS recommended)
+- **Node.js** v22.x (LTS)
 - **pnpm** >= 10 (the project uses `pnpm@10.33.0` -- configured in `package.json`)
 - **Git**
 - **Wrangler CLI** (Cloudflare Workers dev tool)
@@ -198,19 +198,13 @@ This is equivalent to:
 pnpm lint && pnpm typecheck && pnpm test && pnpm build
 ```
 
-Or use the quality gate script (which runs all checks plus skill/link validation):
-
-```bash
-./scripts/quality_gate.sh
-```
-
 Per `AGENTS.md`, the quality gate **must** pass before every commit. There are no escape hatches.
 
 ## 9. Troubleshooting
 
 ### `pnpm install` fails
 
-- Ensure you are using Node.js >= 20. Check with `node --version`.
+- Ensure you are using Node.js v22.x. Check with `node --version`.
 - Clear the pnpm store cache: `pnpm store prune`
 - Remove `node_modules` and reinstall:
 
