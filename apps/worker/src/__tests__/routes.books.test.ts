@@ -54,7 +54,7 @@ describe('GET /api/books/{slug} (handleGetBook)', () => {
 
   it('returns 404 when book not found', async () => {
     mockRequireAuth.mockResolvedValue(makeAuthContext());
-    mockQueryFirst.mockResolvedValue(null as never);
+    mockQueryFirst.mockResolvedValue(null);
 
     const res = await handleGetBook(makeEnv(), makeRequest(), 'nonexistent');
     expect(res.status).toBe(404);
@@ -112,7 +112,7 @@ describe('POST /api/books/{slug}/file-url (handleGetFileUrl)', () => {
 
   it('returns 404 when book not found', async () => {
     mockRequireAuth.mockResolvedValue(makeAuthContext());
-    mockQueryFirst.mockResolvedValue(null as never);
+    mockQueryFirst.mockResolvedValue(null);
 
     const res = await handleGetFileUrl(makeEnv(), makeRequest(), 'nonexistent');
     expect(res.status).toBe(404);
@@ -120,8 +120,8 @@ describe('POST /api/books/{slug}/file-url (handleGetFileUrl)', () => {
 
   it('returns 404 when book file not found', async () => {
     mockRequireAuth.mockResolvedValue(makeAuthContext({ bookId: 'book-1' }));
-    mockQueryFirst.mockResolvedValueOnce({ id: 'book-1', slug: 'test-book' } as never);
-    mockQueryFirst.mockResolvedValueOnce(null as never);
+    mockQueryFirst.mockResolvedValueOnce({ id: 'book-1', slug: 'test-book' });
+    mockQueryFirst.mockResolvedValueOnce(null);
 
     const res = await handleGetFileUrl(makeEnv(), makeRequest(), 'test-book');
     expect(res.status).toBe(404);
@@ -129,12 +129,12 @@ describe('POST /api/books/{slug}/file-url (handleGetFileUrl)', () => {
 
   it('returns signed URL when book and file exist', async () => {
     mockRequireAuth.mockResolvedValue(makeAuthContext({ bookId: 'book-1' }));
-    mockQueryFirst.mockResolvedValueOnce({ id: 'book-1', slug: 'test-book' } as never);
+    mockQueryFirst.mockResolvedValueOnce({ id: 'book-1', slug: 'test-book' });
     mockQueryFirst.mockResolvedValueOnce({
       id: 'file-1',
       book_id: 'book-1',
       storage_key: 'books/book-1/file.epub',
-    } as never);
+    });
 
     const { mockGenerateSignedUrl } = await import('./fixtures');
     mockGenerateSignedUrl.mockResolvedValue({

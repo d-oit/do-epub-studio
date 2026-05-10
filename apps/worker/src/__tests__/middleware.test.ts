@@ -45,7 +45,7 @@ describe('requireAuth middleware', () => {
       comments_allowed: 0,
       offline_allowed: 0,
       expires_at: new Date(Date.now() - 3600000).toISOString()
-    } as any);
+    });
 
     const result = await requireAuth(makeEnv(), req);
     expect(result).toBeNull();
@@ -68,7 +68,7 @@ describe('requireAuth middleware', () => {
       comments_allowed: 0,
       offline_allowed: 0,
       expires_at: new Date(Date.now() + 3600000).toISOString()
-    } as any);
+    });
 
     const result = await requireAuth(makeEnv(), req);
     expect(result).not.toBeNull();
@@ -93,7 +93,7 @@ describe('requireAuth middleware', () => {
       comments_allowed: 0,
       offline_allowed: 0,
       // Missing expires_at should be treated as null
-    } as any);
+    });
 
     const result = await requireAuth(makeEnv(), req);
     expect(result).not.toBeNull();

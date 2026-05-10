@@ -36,7 +36,7 @@ describe('GET /api/reader-state/{bookId}/progress (handleGetProgress)', () => {
 
   it('returns null progress when no record exists', async () => {
     mockRequireAuth.mockResolvedValue(makeAuthContext());
-    mockQueryFirst.mockReturnValue(Promise.resolve(null) as never);
+    mockQueryFirst.mockReturnValue(Promise.resolve(null));
 
     const res = await handleGetProgress(makeEnv(), makeRequest(), 'book-1');
     expect(res.status).toBe(200);
@@ -401,7 +401,7 @@ describe('PATCH /api/reader-state/{bookId}/highlights/{highlightId} (handleUpdat
 
   it('returns 404 when highlight not found', async () => {
     mockRequireAuth.mockResolvedValue(makeAuthContext());
-    mockQueryFirst.mockResolvedValue(null as never);
+    mockQueryFirst.mockResolvedValue(null);
 
     const res = await handleUpdateHighlight(makeEnv(), makeRequest(), 'book-1', 'hl-1', {
       note: 'updated',

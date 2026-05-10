@@ -84,7 +84,7 @@ describe('POST /api/access/logout (handleLogout)', () => {
   });
 
   it('revokes session and returns ok', async () => {
-    mockRevokeSession.mockResolvedValue(undefined as never);
+    mockRevokeSession.mockResolvedValue(undefined);
     const res = await handleLogout(makeEnv(), 'session-token');
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -98,7 +98,7 @@ describe('POST /api/access/refresh (handleRefresh)', () => {
   });
 
   it('returns 401 for invalid session', async () => {
-    mockValidateSessionMod.mockResolvedValue({ valid: false } as never);
+    mockValidateSessionMod.mockResolvedValue({ valid: false });
     const res = await handleRefresh(makeEnv(), 'bad-token');
     expect(res.status).toBe(401);
     const body = await res.json();
@@ -113,7 +113,7 @@ describe('POST /api/access/refresh (handleRefresh)', () => {
     } as never);
     mockGetGrantByBookAndSession.mockResolvedValue({ revoked_at: null, expires_at: null } as never);
     mockCreateSession.mockResolvedValue('new-token');
-    mockRevokeSession.mockResolvedValue(undefined as never);
+    mockRevokeSession.mockResolvedValue(undefined);
 
     const res = await handleRefresh(makeEnv(), 'good-token');
     expect(res.status).toBe(200);
@@ -147,7 +147,7 @@ describe('GET /api/access/validate-permission (handleValidatePermission)', () =>
   });
 
   it('returns 401 for invalid session', async () => {
-    mockValidateSessionMod.mockResolvedValue({ valid: false } as never);
+    mockValidateSessionMod.mockResolvedValue({ valid: false });
     const res = await handleValidatePermission(makeEnv(), 'book-1', 'bad-token');
     expect(res.status).toBe(401);
   });
@@ -189,7 +189,7 @@ describe('GET /api/access/validate-all-permissions (handleValidateAllPermissions
   });
 
   it('returns 401 for invalid session', async () => {
-    mockValidateSessionMod.mockResolvedValue({ valid: false } as never);
+    mockValidateSessionMod.mockResolvedValue({ valid: false });
     const res = await handleValidateAllPermissions(makeEnv(), 'bad-token');
     expect(res.status).toBe(401);
   });
