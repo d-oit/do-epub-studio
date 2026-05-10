@@ -57,26 +57,32 @@
 
 html {
   height: 100%;
-  scroll-behavior: smooth;
-  margin: 0;
-  padding: 0;
+  overflow: hidden;
   overflow-x: clip;
+  /* WARNING: Do not apply transform-gpu or will-change here - breaks scroll in iframes */
 }
 
 body {
-  min-height: 100vh;
-  height: 100%;
+  min-height: 100%;
+  overflow-y: auto;
+  overflow-x: clip;
   background-color: var(--color-background);
   color: var(--color-foreground);
   transition: background-color 0.3s ease, color 0.3s ease;
   margin: 0;
   padding: 0;
-  overflow-x: clip;
 }
 
 #root {
-  height: 100%;
+  min-height: 100%;
   isolation: isolate;
+}
+
+/* Default dark background to prevent white flash on load */
+@media (prefers-color-scheme: dark) {
+  body {
+    background-color: #0a0a0a;
+  }
 }
 
 /* ============================================
