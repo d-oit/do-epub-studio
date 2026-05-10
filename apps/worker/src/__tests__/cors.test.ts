@@ -4,7 +4,7 @@ import { TRACE_HEADER, SPAN_HEADER } from '@do-epub-studio/shared';
 import type { Env } from '../lib/env';
 
 describe('CORS', () => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const mockBucket: any = {
     get: async () => null,
     put: async () => ({
