@@ -33,7 +33,7 @@ export function AdminGrantResponsesPage() {
   const handleRevoke = async (grantId: string) => {
     if (!confirm(t('admin.grants.confirmRevoke'))) return;
     try {
-      await void apiRequest(`/api/admin/grants/${grantId}`, { method: 'DELETE' });
+      await apiRequest(`/api/admin/grants/${grantId}`, { method: 'DELETE' });
       void fetchGrantResponses();
     } catch (err) {
       alert((err as Error).message);
@@ -48,7 +48,7 @@ export function AdminGrantResponsesPage() {
             {t('admin.grants.title')}
           </h1>
           <button
-            onClick={() => void void navigate('/admin/books')}
+            onClick={() => void navigate('/admin/books')}
             className="text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 mt-1"
           >
             &larr; {t('admin.grants.backToBooks')}
