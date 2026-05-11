@@ -131,31 +131,8 @@ export function sanitizeEmail(email: string): string | null {
  * @param maxSize - Maximum size in bytes (default: 1024)
  * @returns Sanitized payload object
  */
-export function sanitizeAuditPayload(payload: Record<string, unknown>, maxSize = 1024): Record<string, unknown> {
-  if (!payload || typeof payload !== 'object') {
-    return {};
-  }
-
-  // Sensitive field patterns to remove
-  const sensitivePatterns = [
-    /password/i,
-    /secret/i,
-    /token/i,
-    /key(?!word)/i, // Exclude 'keyword' but catch 'apikey', 'access_key', etc.
-    /auth/i,
-    /credential/i,
-  ];
-
-  const sanitized: Record<string, unknown> = {};
-
-  for (const [key, value] of Object.entries(payload)) {
-    // Skip sensitive fields
-    if (sensitivePatterns.some((pattern) => pattern.test(key))) {
-      sanitized[key] = '[REDACTED]';
-      continue;
-    }
-
-    // Handle nested objects recursively (with depth limit)
+// Inside sanitizeAuditPayload
+if (depth > 5) return '[MAX_DEPTH_REACHED]';
     if (typeof value === 'object' && value !== null) {
       sanitized[key] = sanitizeAuditPayload(value as Record<string, unknown>, maxSize);
       continue;
