@@ -62,5 +62,5 @@ export async function waitForAnimations(page: Page, ms: number = 500): Promise<v
  * await expect(heading).toBeVisible();
  */
 export function strictLocator(page: Page, selector: string, text: string) {
-  return page.locator(selector, { hasText: new RegExp(`^${text}$`), exact: true });
+return page.locator(selector, { hasText: text, exact: true });
 }
