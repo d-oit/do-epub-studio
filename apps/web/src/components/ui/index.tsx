@@ -4,7 +4,7 @@
  */
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { useId } from 'react';
+import { useId, useEffect, useRef, useCallback } from 'react';
 import { forwardRef, type ComponentPropsWithoutRef } from 'react';
 
 // ============================================
@@ -211,8 +211,6 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           id={inputId}
           aria-invalid={error ? 'true' : undefined}
           aria-describedby={describedBy}
-          whileFocus={{ scale: 1.01 }}
-          transition={{ duration: 0.1 }}
           className={`
             w-full px-4 py-3 bg-background border rounded-lg
             text-foreground placeholder:text-foreground-muted
@@ -258,6 +256,23 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
     md: 'max-w-md',
     lg: 'max-w-lg',
   };
+  const titleId = useId();
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (isOpen && modalRef.current) {
+      modalRef.current.focus();
+    }
+  }, [isOpen]);
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    },
+    [onClose],
+  );
 
   return (
     <AnimatePresence>
@@ -271,6 +286,12 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
             onClick={onClose}
           />
           <motion.div
+            ref={modalRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={title ? titleId : undefined}
+            tabIndex={-1}
+            onKeyDown={handleKeyDown}
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -280,7 +301,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
             <div className="glass-panel rounded-2xl p-6 m-4">
               {title && (
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-semibold text-foreground">{title}</h2>
+                  <h2 id={titleId} className="text-lg font-semibold text-foreground">{title}</h2>
                   <button
                     onClick={onClose}
                     className="p-1 rounded-lg hover:bg-background-secondary transition-colors"

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '../../hooks/useTranslation';
 import { apiRequest } from '../../lib/api';
@@ -30,7 +30,7 @@ export function AdminLoginPage() {
       );
 
       setAdminAuth({ sessionToken: data.sessionToken, email: data.email });
-      void void navigate('/admin/books');
+      void navigate('/admin/books');
     } catch (err) {
       setError((err as Error).message || t('admin.login.invalidCredentials'));
     } finally {

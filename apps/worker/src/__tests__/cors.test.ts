@@ -73,4 +73,23 @@ describe('CORS', () => {
     const response = await worker.fetch(request, env);
     expect(response.headers.get('Vary')).toBe('Origin, Access-Control-Request-Headers');
   });
+
+  it('fallbacks to APP_BASE_URL when no Origin header is present', async () => {
+    const request = new Request('https://api.example.com/api/books', {
+      method: 'OPTIONS',
+    });
+
+    const response = await (worker).fetch(request, env);
+    expect(response.headers.get('Access-Control-Allow-Origin')).toBe(env.APP_BASE_URL);
+  });
+
+  it('sets Access-Control-Allow-Methods for OPTIONS preflight', async () => {
+    const request = new Request('https://api.example.com/api/books', {
+      method: 'OPTIONS',
+      headers: { Origin: 'https://app.example.com' },
+    });
+
+    const response = await (worker).fetch(request, env);
+    expect(response.headers.get('Access-Control-Allow-Methods')).toBe('GET, POST, PUT, PATCH, DELETE, OPTIONS');
+  });
 });

@@ -60,7 +60,7 @@ export const CreateBookSchema = z.object({
     .string()
     .min(1)
     .max(255)
-    .regex(/^[a-z0-9-]+$/),
+    .regex(/^[a-z0-9_-]+$/),
   authorName: z.string().max(255).optional(),
   description: z.string().max(5000).optional(),
   language: z.string().length(2).default('en'),

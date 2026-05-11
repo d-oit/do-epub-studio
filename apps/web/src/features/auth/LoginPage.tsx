@@ -9,7 +9,7 @@ export function LoginPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const setReaderAuth = useAuthStore((state) => state.setReaderAuth);
+  const setAuth = useAuthStore((state) => state.setAuth);
 
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState('');
@@ -24,7 +24,19 @@ export function LoginPage() {
     setError(null);
 
     try {
-      const data = await apiRequest<{ sessionToken: string }>(
+      const data = await apiRequest<{
+        sessionToken: string;
+        book: { id: string; slug: string; title: string; authorName: string };
+        capabilities: {
+          canRead: boolean;
+          canComment: boolean;
+          canHighlight: boolean;
+          canBookmark: boolean;
+          canDownloadOffline: boolean;
+          canExportNotes: boolean;
+          canManageAccess: boolean;
+        } | null;
+      }>(
         '/api/access/request',
         {
           method: 'POST',
@@ -32,8 +44,15 @@ export function LoginPage() {
         },
       );
 
-      setReaderAuth({ sessionToken: data.sessionToken, email });
-      void void navigate('/');
+      setAuth({
+        sessionToken: data.sessionToken,
+        bookId: data.book.id,
+        bookSlug: data.book.slug,
+        bookTitle: data.book.title,
+        email,
+        capabilities: data.capabilities,
+      });
+      void navigate(`/read/${data.book.slug}`);
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -50,11 +69,11 @@ export function LoginPage() {
       <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 border border-gray-100 dark:border-gray-700">
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            {t('auth.login.title')}
+            {t('login.subtitle')}
           </h1>
           {bookSlug && (
             <p className="text-gray-500 dark:text-gray-400 mt-2 text-sm">
-              {t('auth.login.accessing')} <span className="font-semibold">{bookSlug}</span>
+              {t('login.bookSlugLabel')}: <span className="font-semibold">{bookSlug}</span>
             </p>
           )}
         </div>
@@ -72,7 +91,7 @@ export function LoginPage() {
                 htmlFor="email"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
               >
-                {t('auth.login.email')}
+                {t('login.emailLabel')}
               </label>
               <input
                 id="email"
@@ -89,7 +108,7 @@ export function LoginPage() {
                 htmlFor="password"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
               >
-                {t('auth.login.password')}
+                {t('login.passwordLabel')}
               </label>
               <input
                 id="password"
@@ -105,7 +124,7 @@ export function LoginPage() {
               disabled={isLoading}
               className="w-full px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {isLoading ? t('auth.login.signingIn') : t('auth.login.signIn')}
+              {isLoading ? t('login.signingIn') : t('login.submit')}
             </button>
           </div>
         </form>
@@ -115,7 +134,7 @@ export function LoginPage() {
             onClick={() => void void navigate('/admin/login')}
             className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
           >
-            {t('auth.login.adminLink')}
+            {t('admin.login.backToReader')}
           </button>
         </div>
       </div>

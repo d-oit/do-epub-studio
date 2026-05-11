@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
+import { MotionConfig } from 'framer-motion';
 
 import App from './App';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -15,14 +16,16 @@ if (rootElement) {
     <React.StrictMode>
       <ErrorBoundary>
         <BrowserRouter>
-          <App />
+          <MotionConfig reducedMotion="user">
+            <App />
+          </MotionConfig>
         </BrowserRouter>
       </ErrorBoundary>
     </React.StrictMode>,
   );
 }
 
-if ('serviceWorker' in navigator) {
+if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     void (async () => {
       try {

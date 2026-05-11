@@ -19,7 +19,7 @@ interface ReaderToolbarProps {
 
 export function ReaderToolbar({
   bookTitle,
-  bookSlug,
+  bookSlug: _bookSlug,
   comments,
   bookmarks,
   capabilities,
@@ -56,7 +56,7 @@ export function ReaderToolbar({
             </IconButton>
           </Tooltip>
           <h1 className="font-medium truncate max-w-50 md:max-w-xs text-foreground">
-            {bookTitle || bookSlug}
+            {bookTitle || t('reader.untitledBook')}
           </h1>
         </div>
 
@@ -143,7 +143,7 @@ export function ReaderToolbar({
           </Tooltip>
           <div className="mx-1 h-6 w-px bg-border hidden md:block" />
           <LocaleSwitcher />
-          <Button onClick={onLogout} variant="ghost" size="sm" className="hidden sm:inline-flex">
+          <Button onClick={onLogout} variant="ghost" size="sm" className="inline-flex">
             {t('reader.signOut')}
           </Button>
         </div>

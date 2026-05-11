@@ -104,6 +104,11 @@ describe('CreateBookSchema', () => {
     }
   });
 
+  it('accepts slug with underscores', () => {
+    const result = CreateBookSchema.safeParse({ title: 'Book', slug: 'my_book' });
+    expect(result.success).toBe(true);
+  });
+
   it('rejects invalid slug with uppercase', () => {
     const result = CreateBookSchema.safeParse({ title: 'Book', slug: 'My-Book' });
     expect(result.success).toBe(false);

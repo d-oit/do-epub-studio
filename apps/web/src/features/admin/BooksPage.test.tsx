@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { AdminBooksPage } from './BooksPage';
+import { AdminBookResponsesPage } from './BooksPage';
 import { MemoryRouter } from 'react-router-dom';
 import * as api from '../../lib/api';
 
@@ -29,7 +29,7 @@ const mockBooks = [
   { id: '1', slug: 'b1', title: 'Book 1', authorName: 'A1', visibility: 'public', coverImageUrl: null }
 ];
 
-describe('AdminBooksPage', () => {
+describe('AdminBookResponsesPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -39,7 +39,7 @@ describe('AdminBooksPage', () => {
 
     render(
       <MemoryRouter>
-        <AdminBooksPage />
+        <AdminBookResponsesPage />
       </MemoryRouter>
     );
 
@@ -51,10 +51,10 @@ describe('AdminBooksPage', () => {
 
     render(
       <MemoryRouter>
-        <AdminBooksPage />
+        <AdminBookResponsesPage />
       </MemoryRouter>
     );
 
-    expect(await screen.findByText('admin.noBooks')).toBeInTheDocument();
+    expect(await screen.findByText('admin.books.noBookResponses')).toBeInTheDocument();
   });
 });

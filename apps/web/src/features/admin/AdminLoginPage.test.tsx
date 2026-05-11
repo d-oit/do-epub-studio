@@ -28,11 +28,12 @@ vi.mock('../../lib/api', () => ({
 }));
 
 // Mock useAuthStore
+const mockSetAdminAuth = vi.fn();
 vi.mock('../../stores/auth', () => ({
-  useAuthStore: () => ({
-    sessionToken: null,
-    setAdminAuth: vi.fn(),
-  }),
+  useAuthStore: (selector?: (state: Record<string, unknown>) => unknown) => {
+    const state = { sessionToken: null, setAdminAuth: mockSetAdminAuth };
+    return selector ? selector(state) : state;
+  },
 }));
 
 import { apiRequest } from '../../lib/api';

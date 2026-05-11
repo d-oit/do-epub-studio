@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from '../../hooks/useTranslation';
 import { apiRequest } from '../../lib/api';
@@ -28,7 +28,7 @@ export function AdminGrantResponsesPage() {
 
   useEffect(() => {
     void fetchGrantResponses();
-  }, [bookId]);
+  }, [bookId, fetchGrantResponses]);
 
   const handleRevoke = async (grantId: string) => {
     if (!confirm(t('admin.grants.confirmRevoke'))) return;
