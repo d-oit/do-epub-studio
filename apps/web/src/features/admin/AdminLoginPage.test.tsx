@@ -3,7 +3,6 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AdminLoginPage } from './AdminLoginPage';
 import { BrowserRouter } from 'react-router-dom';
-import { browserRouterFuture } from '../../lib/routerFuture';
 
 // Mock react-router-dom
 const mockNavigate = vi.fn();
@@ -49,7 +48,7 @@ describe('AdminLoginPage', () => {
 
   const renderLoginPage = () => {
     return render(
-      <BrowserRouter future={browserRouterFuture}>
+      <BrowserRouter>
         <AdminLoginPage />
       </BrowserRouter>,
     );

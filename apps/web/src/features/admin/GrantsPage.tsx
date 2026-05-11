@@ -39,11 +39,11 @@ export function GrantsPage() {
   // -------------------------------------------------------------------------
   useEffect(() => {
     if (!sessionToken) {
-      navigate('/login');
+      void navigate('/login');
       return;
     }
     if (!capabilities?.canManageAccess) {
-      navigate('/admin/books');
+      void navigate('/admin/books');
     }
   }, [sessionToken, capabilities, navigate]);
 
@@ -120,12 +120,12 @@ export function GrantsPage() {
   // -------------------------------------------------------------------------
   const handleLogout = () => {
     logout();
-    navigate('/login');
+    void navigate('/login');
   };
 
   const handleSelectBook = (bookId: string) => {
     setSelectedBookId(bookId);
-    navigate(bookId ? `/admin/books/${bookId}/grants` : '/admin/grants');
+    void navigate(bookId ? `/admin/books/${bookId}/grants` : '/admin/grants');
   };
 
   const openCreateModal = () => {

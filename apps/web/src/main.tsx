@@ -5,7 +5,6 @@ import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { createSpanId, createTraceId, logClientEvent } from './lib/telemetry';
-import { browserRouterFuture } from './lib/routerFuture';
 import './styles/globals.css';
 
 setupGlobalErrorHandlers();
@@ -13,7 +12,7 @@ setupGlobalErrorHandlers();
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <ErrorBoundary>
-      <BrowserRouter future={browserRouterFuture}>
+      <BrowserRouter>
         <App />
       </BrowserRouter>
     </ErrorBoundary>

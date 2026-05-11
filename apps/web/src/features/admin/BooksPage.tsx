@@ -43,7 +43,7 @@ export function AdminBooksPage() {
 
   useEffect(() => {
     if (!sessionToken) {
-      navigate('/login');
+      void navigate('/login');
       return;
     }
   }, [sessionToken, navigate]);
@@ -70,11 +70,11 @@ export function AdminBooksPage() {
 
   const handleLogout = () => {
     logout();
-    navigate('/login');
+    void navigate('/login');
   };
 
   const handleReadBook = (book: Book) => {
-    navigate(`/read/${book.slug}`);
+    void navigate(`/read/${book.slug}`);
   };
 
   const navItems = [
@@ -94,7 +94,7 @@ export function AdminBooksPage() {
                 {navItems.map((item) => (
                   <button
                     key={item.path}
-                    onClick={() => navigate(item.path)}
+                    onClick={() => void navigate(item.path)}
                     className={`
                       px-3 py-2 rounded-lg text-sm font-medium transition-colors
                       ${
@@ -246,7 +246,7 @@ export function AdminBooksPage() {
                       <Button
                         variant="secondary"
                         size="sm"
-                        onClick={() => navigate(`/admin/books/${book.id}/grants`)}
+                        onClick={() => void navigate(`/admin/books/${book.id}/grants`)}
                         className="flex-1"
                       >
                         {t('admin.manageGrants')}

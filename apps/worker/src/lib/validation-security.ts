@@ -47,7 +47,7 @@ export function isValidFileKey(fileKey: string): boolean {
 
   // Whitelist: only allow safe characters
   // Alphanumeric, hyphens, underscores, dots, forward slashes
-  const safePattern = /^[a-zA-Z0-9._/\-]+$/;
+  const safePattern = /^[a-zA-Z0-9._/-]+$/;
   if (!safePattern.test(fileKey)) {
     return false;
   }

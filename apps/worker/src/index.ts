@@ -330,17 +330,10 @@ function applyCorsHeaders(response: Response, request: Request, env: Env): Respo
     : [env.APP_BASE_URL];
 
   // Validate origin against allowlist - must match exactly
-  let allowedOrigin: string | null = null;
-  if (origin && allowedOrigins.includes(origin)) {
-    allowedOrigin = origin;
-  } else {
-    // No match - use default deny (first allowed origin for preflight responses)
-    allowedOrigin = allowedOrigins[0] ?? null;
-  }
+  const matchedOrigin = origin && allowedOrigins.includes(origin) ? origin : (allowedOrigins[0] ?? null);
 
-  // Only set CORS headers if we have a valid origin
-  if (allowedOrigin) {
-    response.headers.set('Access-Control-Allow-Origin', allowedOrigin);
+  if (matchedOrigin) {
+    response.headers.set('Access-Control-Allow-Origin', matchedOrigin);
     response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
     response.headers.set(
       'Access-Control-Allow-Headers',

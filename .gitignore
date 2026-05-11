@@ -48,10 +48,6 @@ coverage/
 
 # TypeScript/JavaScript build
 *.tsbuildinfo
-```
-
-Wait, let me reconsider. Looking at the file changes, I only see TypeScript source files (.ts), markdown files (.md), and no build artifacts, dependency directories, or temporary files that need ignoring.
-
-Actually, based on rule #6, since the changes contain only source files (.ts) and documentation (.md) with no build artifacts, dependencies, or temp files, the output should be empty.
-
-(empty - output nothing)
+.turbo/
+playwright-report/
+test-results/

@@ -33,7 +33,7 @@ export function AdminLoginPage() {
       );
 
       setAdminAuth({ sessionToken: data.sessionToken, email: data.email });
-      navigate('/admin/books');
+      void navigate('/admin/books');
     } catch (err) {
       setError((err as Error).message || t('admin.login.invalidCredentials'));
     } finally {
@@ -106,7 +106,7 @@ export function AdminLoginPage() {
 
           <div className="mt-6 text-center">
             <button
-              onClick={() => navigate('/login')}
+              onClick={() => void navigate('/login')}
               className="text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400"
             >
               {t('admin.login.backToReader')}

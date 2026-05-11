@@ -38,11 +38,11 @@ export function AdminAuditPage() {
 
   useEffect(() => {
     if (!sessionToken) {
-      navigate('/admin/login');
+      void navigate('/admin/login');
       return;
     }
     if (!isAdmin) {
-      navigate('/admin/login');
+      void navigate('/admin/login');
       return;
     }
   }, [sessionToken, isAdmin, navigate]);
@@ -133,7 +133,7 @@ export function AdminAuditPage() {
 
   const handleLogout = () => {
     logout();
-    navigate('/admin/login');
+    void navigate('/admin/login');
   };
 
   if (!sessionToken || !isAdmin) return null;
@@ -342,7 +342,7 @@ export function AdminAuditPage() {
 
         <div className="mt-6">
           <button
-            onClick={() => navigate('/admin/books')}
+            onClick={() => void navigate('/admin/books')}
             className="text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400"
           >
             ← Back to Books

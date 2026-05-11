@@ -143,7 +143,7 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
       console.error(
         `[epub-loader][trace:${traceId}][span:${spanId}] Failed to load EPUB: ${formatted.message}`,
       );
-      throw new Error(`Failed to load EPUB: ${formatted.message}`);
+      throw new Error(`Failed to load EPUB: ${formatted.message}`, { cause: error });
     }
   }
 

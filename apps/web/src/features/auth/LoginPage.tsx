@@ -81,7 +81,7 @@ export function LoginPage() {
         capabilities: data.capabilities,
       });
 
-      navigate(`/read/${data.book.slug}`);
+      void navigate(`/read/${data.book.slug}`);
     } catch (err) {
       setError((err as Error).message || t('login.error.network'));
     } finally {

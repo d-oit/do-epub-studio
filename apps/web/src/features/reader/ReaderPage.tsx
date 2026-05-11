@@ -211,7 +211,7 @@ export function ReaderPage() {
 
   useEffect(() => {
     if (!sessionToken || !bookSlug) {
-      navigate('/login');
+      void navigate('/login');
       return;
     }
     const controller = new AbortController();
@@ -388,7 +388,7 @@ export function ReaderPage() {
       console.error('Logout failed', err);
     } finally {
       logout();
-      navigate('/login');
+      void navigate('/login');
     }
   };
 

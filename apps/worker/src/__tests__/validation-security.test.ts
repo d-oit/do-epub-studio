@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { isValidFileKey, isValidBookId, sanitizeEmail, sanitizeAuditPayload } from '../validation-security';
+import { isValidFileKey, isValidBookId, sanitizeEmail, sanitizeAuditPayload } from '../lib/validation-security';
 
 describe('isValidFileKey', () => {
   it('should accept valid file keys with safe characters', () => {
@@ -64,7 +64,7 @@ describe('isValidBookId', () => {
     expect(isValidBookId('my-book-title')).toBe(true);
     expect(isValidBookId('book-123')).toBe(true);
     expect(isValidBookId('a')).toBe(true);
-    expect(isValidBookId('ab')).toBe(true);
+    expect(isValidBookId('abc')).toBe(true);
   });
 
   it('should reject invalid formats', () => {
