@@ -65,25 +65,25 @@ printf '%sDetecting project languages...%s\n' "${BLUE}" "${NC}"
 
 # TypeScript/JavaScript detection via package.json
 if [ -f "package.json" ]; then
-    printf '  %s✓%s TypeScript/JavaScript (package.json)\n' "${GREEN}" "${NC}"
+    echo -e "  ${GREEN}✓${NC} TypeScript/JavaScript (package.json)"
     DETECTED_LANGUAGES+=("typescript")
 fi
 
 # Python detection
 if [ -f "requirements.txt" ] || [ -f "pyproject.toml" ] || [ -f "setup.py" ]; then
-    printf '  %s✓%s Python (requirements.txt/pyproject.toml)\n' "${GREEN}" "${NC}"
+    echo -e "  ${GREEN}✓${NC} Python (requirements.txt/pyproject.toml)"
     DETECTED_LANGUAGES+=("python")
 fi
 
-# Shell script detection — exclude non-source directories
-if find . -path "./.git" -prune -o -path "./node_modules" -prune -o -path "./target" -prune -o -name "*.sh" -print | grep -q .; then
-    printf '  %s✓%s Shell scripts detected\n' "${GREEN}" "${NC}"
+# Shell script detection via file existence
+if find . -name "*.sh" -not -path "./.git/*" | grep -q .; then
+    echo -e "  ${GREEN}✓${NC} Shell scripts detected"
     DETECTED_LANGUAGES+=("shell")
 fi
 
-# Markdown detection — exclude non-source directories
-if find . -path "./.git" -prune -o -path "./node_modules" -prune -o -path "./target" -prune -o -name "*.md" -print | grep -q .; then
-    printf '  %s✓%s Markdown files detected\n' "${GREEN}" "${NC}"
+# Markdown detection via file existence
+if find . -name "*.md" -not -path "./.git/*" | grep -q .; then
+    echo -e "  ${GREEN}✓${NC} Markdown files detected"
     DETECTED_LANGUAGES+=("markdown")
 fi
 
