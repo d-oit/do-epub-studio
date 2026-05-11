@@ -86,7 +86,7 @@ export function isValidBookId(bookId: string): boolean {
   }
 
   // Slug pattern (lowercase alphanumeric with hyphens, 3-50 chars)
-  const slugPattern = /^[a-z0-9][a-z0-9-]{1,48}[a-z0-9]$/;
+const slugPattern = /^[a-z0-9][a-z0-9-]{0,48}[a-z0-9]$/;
   if (slugPattern.test(bookId)) {
     return true;
   }
