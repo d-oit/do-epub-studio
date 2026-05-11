@@ -44,7 +44,7 @@ describe('isValidFileKey', () => {
 
   it('should reject empty or invalid inputs', () => {
     expect(isValidFileKey('')).toBe(false);
-    expect(isValidFileKey(null as any)).toBe(false);
+expect(isValidFileKey(null as unknown)).toBe(false);
     expect(isValidFileKey(undefined as any)).toBe(false);
   });
 
