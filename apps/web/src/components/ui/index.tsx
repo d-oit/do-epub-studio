@@ -4,7 +4,7 @@
  */
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { useId } from 'react';
+import { useId, useState, cloneElement, isValidElement } from 'react';
 import { forwardRef, type ComponentPropsWithoutRef } from 'react';
 
 // ============================================
@@ -191,7 +191,8 @@ interface InputProps extends MotionInputBaseProps {
   helperText?: string;
 }
 
-export const Input = forwardRef<HTMLInputElement, InputProps>(  ({ label, error, helperText, className = '', id, ...props }, ref) => {
+export const Input = forwardRef<HTMLInputElement, InputProps>(
+  ({ label, error, helperText, className = '', id, ...props }, ref) => {
     const generatedId = useId();
     const inputId = id || generatedId;
     const errorId = `${inputId}-error`;
@@ -221,7 +222,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(  ({ label, error,
             ${error ? 'border-accent-error focus:border-accent-error focus:ring-accent-error/20' : 'border-border'}
             ${className}
           `}
-          {...(props as any)}
+          {...(props)}
         />
         {error ? (
           <p id={errorId} className="mt-1.5 text-sm text-accent-error">
@@ -362,17 +363,44 @@ interface TooltipProps {
 }
 
 export function Tooltip({ content, children }: TooltipProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const id = useId();
+  const tooltipId = `tooltip-${id}`;
+
+  const handleOpen = () => setIsOpen(true);
+  const handleClose = () => setIsOpen(false);
+
+  // If children is a valid React element, we can inject the necessary accessibility
+  // and event handler props directly into it.
+  const trigger = isValidElement(children)
+    ? cloneElement(children as React.ReactElement<Record<string, unknown>>, {
+        'aria-describedby': tooltipId,
+        onMouseEnter: handleOpen,
+        onMouseLeave: handleClose,
+        onFocus: handleOpen,
+        onBlur: handleClose,
+      })
+    : children;
+
   return (
-    <div className="group relative inline-flex">
-      {children}
-      <motion.div
-        initial={{ opacity: 0, y: 5 }}
-        whileHover={{ opacity: 1, y: 0 }}
-        className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-foreground rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50"
-      >
-        {content}
-        <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-foreground" />
-      </motion.div>
+    <div className="relative inline-flex">
+      {trigger}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            id={tooltipId}
+            role="tooltip"
+            initial={{ opacity: 0, y: 5, x: '-50%' }}
+            animate={{ opacity: 1, y: 0, x: '-50%' }}
+            exit={{ opacity: 0, y: 5, x: '-50%' }}
+            transition={{ duration: 0.15, ease: [0.4, 0, 0.2, 1] }}
+            className="absolute bottom-full left-1/2 mb-2 px-2 py-1 text-xs text-white bg-foreground rounded shadow-lg whitespace-nowrap z-50 pointer-events-none"
+          >
+            {content}
+            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-foreground" />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

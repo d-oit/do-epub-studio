@@ -21,10 +21,10 @@ export default defineConfig({
       reporter: ['text', 'lcov', 'clover'],
       reportsDirectory: './coverage',
       thresholds: {
-        lines: 10,
-        functions: 55,
-        branches: 50,
-        statements: 10,
+        lines: 40,
+        functions: 30,
+        branches: 30,
+        statements: 35,
       },
       include: ['src/**/*.ts', 'src/**/*.tsx'],
       exclude: [

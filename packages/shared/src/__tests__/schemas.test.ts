@@ -162,17 +162,27 @@ describe('CreateGrantSchema', () => {
 });
 
 describe('HighlightCreateSchema', () => {
-  it('accepts minimal valid highlight', () => {
-    const result = HighlightCreateSchema.safeParse({ selectedText: 'important passage' });
+  it('accepts valid highlight with multi-signal locator', () => {
+    const result = HighlightCreateSchema.safeParse({
+      locator: {
+        chapterRef: 'chapter1',
+        cfi: 'epubcfi(/6/4[chapter1]!/4/2/1:0)',
+        selectedText: 'important passage',
+      },
+    });
     expect(result.success).toBe(true);
     if (result.success) {
       expect(result.data.color).toBe('#ffff00');
     }
   });
 
-  it('accepts valid hex color', () => {
+  it('accepts valid highlight with color', () => {
     const result = HighlightCreateSchema.safeParse({
-      selectedText: 'text',
+      locator: {
+        chapterRef: 'chapter1',
+        cfi: 'epubcfi(/6/4[chapter1]!/4/2/1:0)',
+        selectedText: 'text',
+      },
       color: '#ff0000',
     });
     expect(result.success).toBe(true);
@@ -181,14 +191,38 @@ describe('HighlightCreateSchema', () => {
     }
   });
 
-  it('rejects empty selectedText', () => {
-    const result = HighlightCreateSchema.safeParse({ selectedText: '' });
+  it('rejects highlight without locator', () => {
+    const result = HighlightCreateSchema.safeParse({ selectedText: 'text' });
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects highlight without chapterRef', () => {
+    const result = HighlightCreateSchema.safeParse({
+      locator: {
+        cfi: 'epubcfi(/6/4[chapter1]!/4/2/1:0)',
+        selectedText: 'text',
+      },
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects highlight without cfi', () => {
+    const result = HighlightCreateSchema.safeParse({
+      locator: {
+        chapterRef: 'chapter1',
+        selectedText: 'text',
+      },
+    });
     expect(result.success).toBe(false);
   });
 
   it('rejects invalid color format', () => {
     const result = HighlightCreateSchema.safeParse({
-      selectedText: 'text',
+      locator: {
+        chapterRef: 'chapter1',
+        cfi: 'epubcfi(/6/4[chapter1]!/4/2/1:0)',
+        selectedText: 'text',
+      },
       color: 'red',
     });
     expect(result.success).toBe(false);

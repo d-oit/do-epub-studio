@@ -5,7 +5,7 @@ description: >
   Prevent email addresses and personal data from entering the codebase. Activate when
   user asks to "prevent emails", "remove personal data", "privacy check", "no email",
   or when writing/editing any code, config, or documentation files.
-category: security
+category: quality
 allowed-tools: Read Write Edit Grep Glob
 license: MIT
 ---

@@ -11,46 +11,50 @@
 - [x] Global error interceptors for 401/403 responses
 - [x] Unskip and fix Admin/Reader unit tests
 - [x] Argon2id password hashing (G5 - RESOLVED)
+- [x] Fix slug/id mismatch in frontend/worker (G2) - books.ts resolves both id and slug
+- [x] Implement signed download route (G3) - files.ts verifies expiry + HMAC signature
+- [x] Add admin auth middleware to all admin routes (G4) - requireAdminAuth in index.ts
+- [x] Refactor ReaderPage.tsx (492 LOC — CQ-1 RESOLVED)
+- [x] Refactor GrantsPage.tsx (311 LOC — CQ-2 RESOLVED)
+- [x] Add password hashing tests (T-3 RESOLVED)
+- [x] Add bookmark CRUD tests (T-4 RESOLVED)
+- [x] Fix memory leaks in sync.ts and db.ts
+- [x] Add traceId telemetry to sync.ts and sw.ts
+- [x] Consolidate telemetry.ts to use @do-epub-studio/shared
 
 ### In Progress
-- [ ] Reader annotation anchor engine (ADR-006)
+- [ ] Reader annotation anchor engine (ADR-006) / multi-signal locators (G13)
+- [ ] G1: Wire Reader UI fully to EPUB.js backend (progress sync wired, full CFI navigation)
 
-### Blockers (G2, G3, G4)
-- [ ] Fix slug/id mismatch in frontend/worker (G2) - CRITICAL
-- [ ] Implement signed download route (G3) - HIGH
-- [ ] Add admin auth middleware to admin routes (G4) - CRITICAL
-
-### Code Quality Issues
-- [ ] Refactor ReaderPage.tsx (1123 LOC, exceeds 500 limit) - CQ-1
-- [ ] Refactor GrantsPage.tsx (740 LOC, exceeds 500 limit) - CQ-2
-
-### Testing Gaps
-- [ ] Add CFI navigation tests (T-1)
-- [ ] Add EPUB parsing tests (T-2)
-- [ ] Add password hashing tests (T-3)
-- [ ] Add bookmark CRUD tests (T-4)
+### Remaining Testing Gaps
+- [ ] Add CFI navigation tests (T-1) — reader-core locator.test.ts partially covers this
+- [ ] Add EPUB parsing tests (T-2) — needs epub fixture files
 
 ---
 
-## Phase 2: Reader Enablement (Priority)
+## Phase 2: Reader Enablement
 
 See Plan 012 for detailed gap analysis:
-- G1: Wire Reader UI to EPUB.js backend
-- G2: Fix slug/id mismatch
-- G3: Implement signed download route
-- G13: Enforce multi-signal annotation locators
+- [x] G2: Fix slug/id mismatch — RESOLVED
+- [x] G3: Implement signed download route — RESOLVED
+- [ ] G1: Wire Reader UI fully to EPUB.js backend
+- [ ] G13: Enforce multi-signal annotation locators (AGENTS.md ADR-006)
 
 ---
 
-## Phase 3: Admin Security (Priority)
+## Phase 3: Admin Security
 
-- G4: Add admin authentication to all admin routes
-- G6: Complete Admin UI workflow
+- [x] G4: Add admin authentication to all admin routes — RESOLVED
+- [ ] G6: Complete Admin UI workflow (BooksPage create flow, grant wizard)
 
 ---
 
 ## Phase 4: Testing & Quality
 
-- T-1 through T-4: Expand test coverage
-- CQ-1, CQ-2: Refactor oversized files
-- G7: Add missing documentation
+- [x] T-3: Password hashing tests — RESOLVED
+- [x] T-4: Bookmark CRUD tests — RESOLVED
+- [x] CQ-1: Refactor ReaderPage.tsx (492 LOC) — RESOLVED
+- [x] CQ-2: Refactor GrantsPage.tsx (311 LOC) — RESOLVED
+- [ ] T-1: CFI navigation tests — partial (locator.test.ts covers createLocator/parseLocator)
+- [ ] T-2: EPUB parsing tests — open
+- [ ] G7: Add missing setup documentation

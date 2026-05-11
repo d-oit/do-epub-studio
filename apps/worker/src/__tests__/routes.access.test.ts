@@ -84,7 +84,7 @@ describe('POST /api/access/logout (handleLogout)', () => {
   });
 
   it('revokes session and returns ok', async () => {
-    mockRevokeSession.mockResolvedValue(undefined as never);
+    mockRevokeSession.mockResolvedValue(undefined);
     const res = await handleLogout(makeEnv(), 'session-token');
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -98,26 +98,46 @@ describe('POST /api/access/refresh (handleRefresh)', () => {
   });
 
   it('returns 401 for invalid session', async () => {
-    mockValidateSessionMod.mockResolvedValue({ valid: false } as never);
+    mockValidateSessionMod.mockResolvedValue({ valid: false });
     const res = await handleRefresh(makeEnv(), 'bad-token');
     expect(res.status).toBe(401);
     const body = await res.json();
     expect(body.error.code).toBe('SESSION_INVALID');
   });
 
-  it('returns new session token for valid session', async () => {
+  it('returns new session token for valid session and rotates token', async () => {
     mockValidateSessionMod.mockResolvedValue({
       valid: true,
       session: makeSessionRow(),
       bookId: 'book-1',
     } as never);
+    mockGetGrantByBookAndSession.mockResolvedValue({ revoked_at: null, expires_at: null } as never);
     mockCreateSession.mockResolvedValue('new-token');
+    mockRevokeSession.mockResolvedValue(undefined);
 
     const res = await handleRefresh(makeEnv(), 'good-token');
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.ok).toBe(true);
     expect(body.data.sessionToken).toBe('new-token');
+    expect(mockRevokeSession).toHaveBeenCalledWith(expect.anything(), 'good-token');
+  });
+
+  it('returns 403 when associated grant is expired', async () => {
+    mockValidateSessionMod.mockResolvedValue({
+      valid: true,
+      session: makeSessionRow(),
+      bookId: 'book-1',
+    } as never);
+    mockGetGrantByBookAndSession.mockResolvedValue({
+      revoked_at: null,
+      expires_at: new Date(Date.now() - 3600000).toISOString(),
+    } as never);
+
+    const res = await handleRefresh(makeEnv(), 'good-token');
+    expect(res.status).toBe(403);
+    const body = await res.json();
+    expect(body.error.code).toBe('ACCESS_DENIED');
   });
 });
 
@@ -127,7 +147,7 @@ describe('GET /api/access/validate-permission (handleValidatePermission)', () =>
   });
 
   it('returns 401 for invalid session', async () => {
-    mockValidateSessionMod.mockResolvedValue({ valid: false } as never);
+    mockValidateSessionMod.mockResolvedValue({ valid: false });
     const res = await handleValidatePermission(makeEnv(), 'book-1', 'bad-token');
     expect(res.status).toBe(401);
   });
@@ -169,7 +189,7 @@ describe('GET /api/access/validate-all-permissions (handleValidateAllPermissions
   });
 
   it('returns 401 for invalid session', async () => {
-    mockValidateSessionMod.mockResolvedValue({ valid: false } as never);
+    mockValidateSessionMod.mockResolvedValue({ valid: false });
     const res = await handleValidateAllPermissions(makeEnv(), 'bad-token');
     expect(res.status).toBe(401);
   });

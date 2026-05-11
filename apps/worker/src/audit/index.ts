@@ -1,4 +1,4 @@
-import type { Env } from '../lib/env';
+import type { Env, JsonRow } from '../lib/env';
 
 type EntityType = 'book' | 'grant' | 'session' | 'comment' | 'user' | 'bookmark' | 'highlight';
 
@@ -8,6 +8,16 @@ interface AuditEntry {
   action: string;
   actorEmail?: string;
   payload?: Record<string, unknown>;
+}
+
+interface AuditLogRow extends JsonRow {
+  id: string;
+  actor_email: string | null;
+  entity_type: string;
+  entity_id: string;
+  action: string;
+  payload_json: string | null;
+  created_at: string;
 }
 
 export async function logAudit(env: Env, entry: AuditEntry): Promise<void> {
@@ -59,15 +69,15 @@ export async function getAuditLog(
   args.push(limit);
 
   const { queryAll } = await import('../db/client');
-  const rows = await queryAll(env, sql, args);
+  const rows = await queryAll<AuditLogRow>(env, sql, args);
 
   return rows.map(row => ({
-    id: row.id as string,
-    actorEmail: row.actor_email as string | null,
-    entityType: row.entity_type as string,
-    entityId: row.entity_id as string,
-    action: row.action as string,
-    payload: row.payload_json ? JSON.parse(row.payload_json as string) : null,
-    createdAt: row.created_at as string,
+    id: row.id,
+    actorEmail: row.actor_email,
+    entityType: row.entity_type,
+    entityId: row.entity_id,
+    action: row.action,
+    payload: row.payload_json ? (JSON.parse(row.payload_json) as Record<string, unknown>) : null,
+    createdAt: row.created_at,
   }));
 }

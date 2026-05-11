@@ -11,6 +11,7 @@ import {
 } from '@do-epub-studio/shared';
 
 interface ProgressRow {
+  [key: string]: string | number | null | undefined;
   id: string;
   book_id: string;
   user_email: string;
@@ -20,6 +21,7 @@ interface ProgressRow {
 }
 
 interface BookmarkRow {
+  [key: string]: string | number | null | undefined;
   id: string;
   book_id: string;
   user_email: string;
@@ -29,6 +31,7 @@ interface BookmarkRow {
 }
 
 interface HighlightRow {
+  [key: string]: string | number | null | undefined;
   id: string;
   book_id: string;
   user_email: string;
@@ -55,11 +58,11 @@ export async function handleGetProgress(
     );
   }
 
-  const progress = (await queryFirst(
+  const progress = await queryFirst<ProgressRow>(
     env,
     `SELECT * FROM reading_progress WHERE book_id = ? AND user_email = ?`,
     [bookId, auth.email],
-  )) as ProgressRow | null;
+  );
 
   if (!progress) {
     return jsonResponse({
@@ -71,7 +74,7 @@ export async function handleGetProgress(
   return jsonResponse({
     ok: true,
     data: {
-      locator: JSON.parse(progress.locator_json),
+      locator: JSON.parse(progress.locator_json) as Record<string, unknown>,
       progressPercent: progress.progress_percent,
       updatedAt: progress.updated_at,
     },
@@ -149,17 +152,17 @@ export async function handleListBookmarks(
     );
   }
 
-  const bookmarks = (await queryAll(
+  const bookmarks = await queryAll<BookmarkRow>(
     env,
     `SELECT * FROM bookmarks WHERE book_id = ? AND user_email = ? ORDER BY created_at DESC`,
     [bookId, auth.email],
-  )) as unknown as BookmarkRow[];
+  );
 
   return jsonResponse({
     ok: true,
     data: bookmarks.map((bm) => ({
       id: bm.id,
-      locator: JSON.parse(bm.locator_json),
+      locator: JSON.parse(bm.locator_json) as Record<string, unknown>,
       label: bm.label,
       createdAt: bm.created_at,
     })),
@@ -260,11 +263,11 @@ export async function handleListHighlights(
     );
   }
 
-  const highlights = (await queryAll(
+  const highlights = await queryAll<HighlightRow>(
     env,
     `SELECT * FROM highlights WHERE book_id = ? AND user_email = ? ORDER BY created_at DESC`,
     [bookId, auth.email],
-  )) as unknown as HighlightRow[];
+  );
 
   return jsonResponse({
     ok: true,
@@ -320,6 +323,9 @@ export async function handleCreateHighlight(
   const id = crypto.randomUUID();
   const now = new Date().toISOString();
 
+  // Extract multi-signal locator fields
+  const { locator } = body;
+
   await execute(
     env,
     `INSERT INTO highlights (id, book_id, user_email, chapter_ref, cfi_range, selected_text, note, color, created_at, updated_at)
@@ -328,9 +334,9 @@ export async function handleCreateHighlight(
       id,
       bookId,
       auth.email,
-      body.chapterRef ?? null,
-      body.cfiRange ?? null,
-      body.selectedText,
+      locator.chapterRef,
+      locator.cfi,
+      locator.selectedText,
       body.note ?? null,
       body.color ?? '#ffff00',
       now,
@@ -343,7 +349,7 @@ export async function handleCreateHighlight(
     entityId: id,
     action: 'create',
     actorEmail: auth.email,
-    payload: { bookId, chapterRef: body.chapterRef, color: body.color },
+    payload: { bookId, chapterRef: locator.chapterRef, color: body.color },
   });
 
   return jsonResponse(
@@ -351,9 +357,9 @@ export async function handleCreateHighlight(
       ok: true,
       data: {
         id,
-        chapterRef: body.chapterRef,
-        cfiRange: body.cfiRange,
-        selectedText: body.selectedText,
+        chapterRef: locator.chapterRef,
+        cfiRange: locator.cfi,
+        selectedText: locator.selectedText,
         note: body.note,
         color: body.color ?? '#ffff00',
         createdAt: now,
@@ -432,9 +438,9 @@ export async function handleUpdateHighlight(
 
   const body = validation.data;
 
-  const highlight = (await queryFirst(env, `SELECT * FROM highlights WHERE id = ?`, [
+  const highlight = await queryFirst<HighlightRow>(env, `SELECT * FROM highlights WHERE id = ?`, [
     highlightId,
-  ])) as HighlightRow | null;
+  ]);
 
   if (!highlight) {
     return jsonResponse(

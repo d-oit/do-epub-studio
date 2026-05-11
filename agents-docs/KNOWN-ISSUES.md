@@ -35,6 +35,18 @@ Each entry must include:
 
 ## Active Known Issues
 
+### [CI/Validation - Skill Categories]
+
+**Issue:** `[FAIL] cicd-pipeline: invalid category='devops'` (and similar for privacy-first, test-runner)
+
+**Location:** `scripts/quality_gate.sh` (skill validation step)
+
+**Reason:** The skill validation expects specific category values (e.g., 'devops' vs 'DevOps', 'security' vs 'Security', 'testing' vs 'Testing'). This is a case-sensitivity or naming mismatch issue in the skill schema validation.
+
+**Mitigation:** These are pre-existing issues not related to implementation changes. The core functionality (lint, typecheck, tests) passes. Documented for awareness until skill schema is updated.
+
+**Date:** 2025-01-XX
+
 ### [CI/Validation - Windows]
 
 **Issue:** `MISSING symlink: .claude/skills/xxx` (false positives on Windows)

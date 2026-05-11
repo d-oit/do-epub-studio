@@ -4,7 +4,7 @@ name: cicd-pipeline
 description: >
   Design and implement CI/CD pipelines with GitHub Actions, GitLab CI, and Forgejo Actions.
   Use for automated testing, deployment strategies, security scanning, and multi-environment workflows.
-category: devops
+category: workflow
 allowed-tools: Read Write Edit Glob Grep Bash
 license: MIT
 ---

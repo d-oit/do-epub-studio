@@ -4,7 +4,7 @@ This guide walks you through setting up EPUB Studio for local development.
 
 ## 1. Prerequisites
 
-- **Node.js** >= 20 (LTS recommended)
+- **Node.js** v22.x (LTS)
 - **pnpm** >= 10 (the project uses `pnpm@10.33.0` -- configured in `package.json`)
 - **Git**
 - **Wrangler CLI** (Cloudflare Workers dev tool)
@@ -147,14 +147,28 @@ pnpm test
 
 ### End-to-end tests (Playwright)
 
+The project supports two E2E testing lanes:
+
+1.  **Dev Lane (Fast Local Feedback):** Runs against the Vite development server.
+    ```bash
+    pnpm test:e2e:dev
+    # OR (alias for dev)
+    pnpm test:e2e
+    ```
+
+2.  **Production Lane (Release Confidence):** Builds the application and runs against the Vite preview server to match the production environment.
+    ```bash
+    pnpm test:e2e:prod
+    ```
+
+You can also run only the smoke tests (tests tagged with `@smoke`) in the production lane:
 ```bash
-pnpm test:e2e
+pnpm test:e2e:smoke:prod
 ```
 
 Install Playwright browsers on first run:
-
 ```bash
-npx playwright install
+pnpm exec playwright install --with-deps
 ```
 
 ### Tests for a single package
@@ -184,19 +198,13 @@ This is equivalent to:
 pnpm lint && pnpm typecheck && pnpm test && pnpm build
 ```
 
-Or use the quality gate script (which runs all checks plus skill/link validation):
-
-```bash
-./scripts/quality_gate.sh
-```
-
 Per `AGENTS.md`, the quality gate **must** pass before every commit. There are no escape hatches.
 
 ## 9. Troubleshooting
 
 ### `pnpm install` fails
 
-- Ensure you are using Node.js >= 20. Check with `node --version`.
+- Ensure you are using Node.js v22.x. Check with `node --version`.
 - Clear the pnpm store cache: `pnpm store prune`
 - Remove `node_modules` and reinstall:
 

@@ -432,9 +432,9 @@ Key opportunity areas:
 | ID | Category | Issue | Severity | Status |
 |----|----------|-------|----------|--------|
 | G1 | Feature | Reader UI not wired to backend | High | Open |
-| G2 | Feature | slug/id mismatch for file URLs | Critical | Open |
-| G3 | Feature | Signed download route missing | High | Open |
-| G4 | Security | Admin APIs have no auth | Critical | Open |
+| G2 | Feature | slug/id mismatch for file URLs | Critical | ✅ Fixed |
+| G3 | Feature | Signed download route missing | High | ✅ Fixed |
+| G4 | Security | Admin APIs have no auth | Critical | ✅ Fixed |
 | G5 | Security | None - Argon2id properly implemented | - | ✅ Fixed |
 | G6 | Feature | Admin UI incomplete | Medium | Open |
 | G7 | Docs | Setup docs missing | Medium | Open |
@@ -443,12 +443,12 @@ Key opportunity areas:
 | G11 | Testing | Playwright E2E | High | Partial |
 | G12 | Architecture | Schema validation | Medium | ✅ Good |
 | G13 | Security | Multi-signal locators | High | Open |
-| CQ-1 | Quality | ReaderPage.tsx at 1123 LOC | High | Open |
-| CQ-2 | Quality | GrantsPage.tsx at 740 LOC | Medium | Open |
-| T-1 | Testing | CFI navigation tests | High | Open |
+| CQ-1 | Quality | ReaderPage.tsx at 1123 LOC | High | ✅ Fixed (492 LOC) |
+| CQ-2 | Quality | GrantsPage.tsx at 740 LOC | Medium | ✅ Fixed (311 LOC) |
+| T-1 | Testing | CFI navigation tests | High | Partial |
 | T-2 | Testing | EPUB parsing tests | High | Open |
-| T-3 | Testing | Password hashing test | High | Open |
-| T-4 | Testing | Bookmark CRUD tests | Medium | Open |
+| T-3 | Testing | Password hashing test | High | ✅ Fixed |
+| T-4 | Testing | Bookmark CRUD tests | Medium | ✅ Fixed |
 
 ---
 
@@ -476,23 +476,23 @@ Key opportunity areas:
 ## Acceptance Criteria
 
 ### Security (P0)
-- [ ] Admin routes require authentication (G4)
+- [x] Admin routes require authentication (G4) — requireAdminAuth in index.ts router
 - [ ] Multi-signal locators enforced (G13)
 
 ### Feature Gaps (P1)
-- [ ] slug/id alignment between frontend and worker (G2)
-- [ ] Signed download route implemented (G3)
+- [x] slug/id alignment between frontend and worker (G2) — books.ts resolves both
+- [x] Signed download route implemented (G3) — files.ts with HMAC + expiry
 - [ ] Reader UI wired to backend (G1)
 - [ ] Admin UI complete (G6)
 
 ### Code Quality (P1)
-- [ ] ReaderPage.tsx split into components (CQ-1)
-- [ ] GrantsPage.tsx split into components (CQ-2)
+- [x] ReaderPage.tsx split into components (CQ-1) — 492 LOC
+- [x] GrantsPage.tsx split into components (CQ-2) — 311 LOC
 
 ### Testing (P2)
-- [ ] CFI navigation tests added (T-1)
-- [ ] Password hashing tests added (T-3)
-- [ ] Bookmark CRUD tests added (T-4)
+- [ ] CFI navigation tests added (T-1) — partial coverage in locator.test.ts
+- [x] Password hashing tests added (T-3)
+- [x] Bookmark CRUD tests added (T-4)
 
 ### Documentation (P2)
 - [ ] Setup documentation added (G7)
