@@ -60,16 +60,19 @@ describe('Modal', () => {
   });
 
   it('focuses the modal when opened', () => {
+    vi.useFakeTimers();
     const focusSpy = vi.spyOn(HTMLElement.prototype, 'focus');
     render(
       <Modal isOpen={true} onClose={() => {}} title="Focus">
         <p>content</p>
       </Modal>,
     );
+    vi.advanceTimersByTime(0);
     const dialog = screen.getByRole('dialog');
     expect(dialog).toHaveAttribute('tabIndex', '-1');
     expect(focusSpy).toHaveBeenCalled();
     focusSpy.mockRestore();
+    vi.useRealTimers();
   });
 
   it('has proper aria attributes', () => {
@@ -84,5 +87,55 @@ describe('Modal', () => {
     expect(dialog).toHaveAttribute('aria-labelledby');
     const labelledBy = dialog.getAttribute('aria-labelledby');
     expect(document.getElementById(labelledBy!)).toBeInTheDocument();
+  });
+
+  it('restores focus to the trigger element when closed', async () => {
+    vi.useFakeTimers();
+    const trigger = document.createElement('button');
+    document.body.appendChild(trigger);
+    trigger.focus();
+    expect(document.activeElement).toBe(trigger);
+
+    const { unmount } = render(
+      <Modal isOpen={true} onClose={() => {}} title="Focus restoration">
+        <p>content</p>
+      </Modal>,
+    );
+
+    // Initial focus on modal
+    vi.advanceTimersByTime(0);
+    const dialog = screen.getByRole('dialog');
+    expect(document.activeElement).toBe(dialog);
+
+    unmount();
+    expect(document.activeElement).toBe(trigger);
+    document.body.removeChild(trigger);
+    vi.useRealTimers();
+  });
+
+  it('traps focus within the modal', () => {
+    render(
+      <Modal isOpen={true} onClose={() => {}} title="Focus Trap">
+        <button data-testid="button1">Button 1</button>
+        <button data-testid="button2">Button 2</button>
+      </Modal>,
+    );
+
+    const closeButton = screen.getByLabelText('Close');
+    const button1 = screen.getByTestId('button1');
+    const button2 = screen.getByTestId('button2');
+
+    // Start at last element
+    button2.focus();
+    expect(document.activeElement).toBe(button2);
+
+    // Tab from last element should wrap to first (Close button)
+    fireEvent.keyDown(document, { key: 'Tab' });
+    expect(document.activeElement).toBe(closeButton);
+
+    // Shift+Tab from first element (Close button) should wrap to last
+    closeButton.focus();
+    fireEvent.keyDown(document, { key: 'Tab', shiftKey: true });
+    expect(document.activeElement).toBe(button2);
   });
 });
