@@ -199,6 +199,8 @@ export function ReaderToolbar({
                   <div className="flex flex-col gap-1">
                     {capabilities?.canComment && (
                       <button
+                        type="button"
+                        onClick={() => {
                         onClick={() => {
                           onToggleComments();
                           setIsMenuOpen(false);
