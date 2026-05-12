@@ -1,14 +1,20 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from '../../hooks/useTranslation';
 import { apiRequest } from '../../lib/api';
 import { GrantResponse } from '@do-epub-studio/shared';
 import { LocaleSwitcher } from '../../components/LocaleSwitcher';
 
+interface LocationState {
+  bookTitle?: string;
+}
+
 export function AdminGrantResponsesPage() {
   const { bookId } = useParams<{ bookId: string }>();
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
+  const locationState = location.state as LocationState | null;
   const [grants, setGrantResponses] = useState<GrantResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -28,7 +34,7 @@ export function AdminGrantResponsesPage() {
 
   useEffect(() => {
     void fetchGrantResponses();
-  }, [bookId]);
+  }, [bookId, fetchGrantResponses]);
 
   const handleRevoke = async (grantId: string) => {
     if (!confirm(t('admin.grants.confirmRevoke'))) return;
@@ -47,6 +53,9 @@ export function AdminGrantResponsesPage() {
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
             {t('admin.grants.title')}
           </h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            {locationState?.bookTitle ?? `${t('admin.books.title')} ID: ${bookId}`}
+          </p>
           <button
             onClick={() => void navigate('/admin/books')}
             className="text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 mt-1"

@@ -201,7 +201,6 @@ export function ReaderToolbar({
                       <button
                         type="button"
                         onClick={() => {
-                        onClick={() => {
                           onToggleComments();
                           setIsMenuOpen(false);
                         }}

@@ -4,7 +4,7 @@ import { execute, queryAll, queryFirst } from '../db/client';
 import { createGrant } from '../auth/password';
 import { jsonResponse } from '../lib/responses';
 import { validateRequestBody } from '../lib/validation';
-import { sanitizeAuditPayload } from '../audit';
+import { logAudit } from '../audit';
 import {
   CreateBookSchema,
   CreateGrantSchema,
@@ -411,6 +411,9 @@ export async function handleGetAuditLog(
   entityType?: string,
   entityId?: string,
   limit = 100,
+  offset = 0,
+  from?: string,
+  to?: string,
 ): Promise<Response> {
   await logAudit(env, {
     entityType: entityType as
@@ -425,45 +428,58 @@ export async function handleGetAuditLog(
     action: 'query',
   });
 
+  const conditions: string[] = [];
+  const args: (string | number)[] = [];
+
+  if (entityType) {
+    conditions.push('entity_type = ?');
+    args.push(entityType);
+  }
+  if (entityId) {
+    conditions.push('entity_id = ?');
+    args.push(entityId);
+  }
+  if (from) {
+    conditions.push('created_at >= ?');
+    args.push(from);
+  }
+  if (to) {
+    conditions.push('created_at <= ?');
+    args.push(to);
+  }
+
+  const whereClause = conditions.length > 0
+    ? ` WHERE ${conditions.join(' AND ')}`
+    : '';
+
+  const countResult = await queryAll<{ cnt: number }>(
+    env,
+    `SELECT COUNT(*) as cnt FROM audit_log${whereClause}`,
+    args,
+  );
+  const total = countResult[0]?.cnt ?? 0;
+
   const rows = await queryAll(
     env,
-    `SELECT * FROM audit_log WHERE (? IS NULL OR entity_type = ?) AND (? IS NULL OR entity_id = ?) ORDER BY created_at DESC LIMIT ?`,
-    [entityType ?? null, entityType ?? null, entityId ?? null, entityId ?? null, limit],
+    `SELECT * FROM audit_log${whereClause} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
+    [...args, limit, offset],
   );
 
   return jsonResponse({
     ok: true,
-    data: rows.map((row) => ({
-      id: row.id,
-      actorEmail: row.actor_email,
-      entityType: row.entity_type,
-      entityId: row.entity_id,
-      action: row.action,
-      payload: row.payload_json ? (JSON.parse(row.payload_json as string) as Record<string, unknown>) : null,
-      createdAt: row.created_at,
-    })),
+    data: {
+      entries: rows.map((row) => ({
+        id: row.id,
+        actorEmail: row.actor_email,
+        entityType: row.entity_type,
+        entityId: row.entity_id,
+        action: row.action,
+        payload: row.payload_json ? (JSON.parse(row.payload_json as string) as Record<string, unknown>) : null,
+        createdAt: row.created_at,
+      })),
+      total,
+    },
   });
 }
 
-async function logAudit(
-  env: Env,
-  entry: {
-    entityType: 'book' | 'grant' | 'session' | 'comment' | 'user' | 'bookmark' | 'highlight';
-    entityId: string;
-    action: string;
-    actorEmail?: string;
-    payload?: Record<string, unknown>;
-  },
-): Promise<void> {
-  const id = crypto.randomUUID();
-  const payloadJson = entry.payload
-    ? JSON.stringify(sanitizeAuditPayload(entry.payload))
-    : null;
 
-  await execute(
-    env,
-    `INSERT INTO audit_log (id, actor_email, entity_type, entity_id, action, payload_json)
-     VALUES (?, ?, ?, ?, ?, ?)`,
-    [id, entry.actorEmail ?? null, entry.entityType, entry.entityId, entry.action, payloadJson],
-  );
-}

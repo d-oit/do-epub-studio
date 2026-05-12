@@ -21,6 +21,7 @@ interface AuditLogRow extends JsonRow {
 }
 
 const MAX_SANITIZE_DEPTH = 10;
+const FORBIDDEN_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
 
 export function sanitizeAuditPayload(
   payload: Record<string, unknown>,
@@ -30,8 +31,9 @@ export function sanitizeAuditPayload(
     return { sanitized: true, truncated: true };
   }
 
-  const result: Record<string, unknown> = {};
+  const result = Object.create(null) as Record<string, unknown>;
   for (const [key, value] of Object.entries(payload)) {
+    if (FORBIDDEN_KEYS.has(key)) continue;
     if (value === null || value === undefined) {
       result[key] = value;
     } else if (typeof value === 'string') {

@@ -1,37 +1,14 @@
 import type { Env } from '../lib/env';
 import { createAdminSession, revokeAdminSession } from '../auth/admin-middleware';
 import { jsonResponse } from '../lib/responses';
-import { execute } from '../db/client';
-import { sanitizeAuditPayload } from '../audit';
-
-async function logAudit(
-  env: Env,
-  entry: {
-    entityType: 'book' | 'grant' | 'session' | 'comment' | 'user' | 'bookmark' | 'highlight';
-    entityId: string;
-    action: string;
-    actorEmail?: string;
-    payload?: Record<string, unknown>;
-  },
-): Promise<void> {
-  const id = crypto.randomUUID();
-  const payloadJson = entry.payload
-    ? JSON.stringify(sanitizeAuditPayload(entry.payload))
-    : null;
-
-  await execute(
-    env,
-    `INSERT INTO audit_log (id, actor_email, entity_type, entity_id, action, payload_json)
-     VALUES (?, ?, ?, ?, ?, ?)`,
-    [id, entry.actorEmail ?? null, entry.entityType, entry.entityId, entry.action, payloadJson],
-  );
-}
+import { logAudit } from '../audit';
 
 export async function handleAdminLogin(
   env: Env,
   request: Request,
 ): Promise<Response> {
   try {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion -- CF Workers types
     const body = (await request.json()) as { email?: string; password?: string };
     
     if (!body.email || !body.password) {
