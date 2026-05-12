@@ -2,9 +2,9 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './stores/auth';
 import { LoginPage } from './features/auth/LoginPage';
 import { ReaderPage } from './features/reader/ReaderPage';
-import { AdminBooksPage } from './features/admin/BooksPage';
 import { AdminLoginPage } from './features/admin/AdminLoginPage';
-import { GrantsPage } from './features/admin/GrantsPage';
+import { AdminBookResponsesPage } from './features/admin/BooksPage';
+import { AdminGrantResponsesPage } from './features/admin/GrantsPage';
 import { AdminAuditPage } from './features/admin/AuditLogPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -39,17 +39,17 @@ function App() {
       } />
       <Route path="/admin/books" element={
         <AdminRoute>
-          <AdminBooksPage />
+          <AdminBookResponsesPage />
         </AdminRoute>
       } />
       <Route path="/admin/grants" element={
         <AdminRoute>
-          <GrantsPage />
+          <AdminGrantResponsesPage />
         </AdminRoute>
       } />
       <Route path="/admin/books/:bookId/grants" element={
         <AdminRoute>
-          <GrantsPage />
+          <AdminGrantResponsesPage />
         </AdminRoute>
       } />
       <Route path="/admin/audit" element={

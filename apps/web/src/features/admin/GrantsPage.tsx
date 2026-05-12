@@ -1,311 +1,124 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-
-import { LocaleSwitcher } from '../../components/LocaleSwitcher';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from '../../hooks/useTranslation';
 import { apiRequest } from '../../lib/api';
-import { useAuthStore } from '../../stores/auth';
-import { BookSelector, GrantForm, GrantList } from './components';
-import type { Book, Grant, GrantFormData } from './components';
-import { emptyFormData } from './components';
+import { GrantResponse } from '@do-epub-studio/shared';
+import { LocaleSwitcher } from '../../components/LocaleSwitcher';
 
-// ---------------------------------------------------------------------------
-// Component
-// ---------------------------------------------------------------------------
-
-export function GrantsPage() {
-  const navigate = useNavigate();
-  const { bookId: routeBookId } = useParams<{ bookId: string }>();
-  const { sessionToken, email, logout, capabilities } = useAuthStore();
+export function AdminGrantResponsesPage() {
+  const { bookId } = useParams<{ bookId: string }>();
   const { t } = useTranslation();
-
-  // Data state
-  const [books, setBooks] = useState<Book[]>([]);
-  const [selectedBookId, setSelectedBookId] = useState<string>(routeBookId ?? '');
-  const [grants, setGrants] = useState<Grant[]>([]);
-  const [isLoadingBooks, setIsLoadingBooks] = useState(true);
-  const [isLoadingGrants, setIsLoadingGrants] = useState(true);
+  const navigate = useNavigate();
+  const [grants, setGrantResponses] = useState<GrantResponse[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Modal / form state
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [editingGrant, setEditingGrant] = useState<Grant | null>(null);
-  const [formData, setFormData] = useState<GrantFormData>(emptyFormData);
-  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // -------------------------------------------------------------------------
-  // Guard: redirect if unauthenticated or lacking permission
-  // -------------------------------------------------------------------------
-  useEffect(() => {
-    if (!sessionToken) {
-      navigate('/login');
-      return;
-    }
-    if (!capabilities?.canManageAccess) {
-      navigate('/admin/books');
-    }
-  }, [sessionToken, capabilities, navigate]);
-
-  // -------------------------------------------------------------------------
-  // Fetch books (for the selector)
-  // -------------------------------------------------------------------------
-  useEffect(() => {
-    if (!sessionToken) return;
-
-    const controller = new AbortController();
-
-    const fetchBooks = async () => {
-      try {
-        const data = await apiRequest<Book[]>('/api/books', {
-          token: sessionToken,
-          signal: controller.signal,
-        });
-        setBooks(data || []);
-      } catch (err) {
-        if (!controller.signal.aborted) {
-          setError((err as Error).message || t('admin.error.loadBooks'));
-        }
-      } finally {
-        setIsLoadingBooks(false);
-      }
-    };
-
-    void fetchBooks();
-    return () => controller.abort();
-  }, [sessionToken, t]);
-
-  // -------------------------------------------------------------------------
-  // Fetch grants for the selected book
-  // -------------------------------------------------------------------------
-  const fetchGrants = useCallback(
-    async (bookId: string) => {
-      if (!sessionToken) return;
-
-      setIsLoadingGrants(true);
-      setError(null);
-
-      const controller = new AbortController();
-
-      try {
-        if (!bookId) {
-          setGrants([]);
-          setIsLoadingGrants(false);
-          return;
-        }
-        const data = await apiRequest<Grant[]>(`/api/admin/books/${bookId}/grants`, {
-          token: sessionToken,
-          signal: controller.signal,
-        });
-        setGrants(data || []);
-      } catch (err) {
-        if (!controller.signal.aborted) {
-          setError((err as Error).message || t('grants.error.loadGrants'));
-        }
-      } finally {
-        setIsLoadingGrants(false);
-      }
-
-      return () => controller.abort();
-    },
-    [sessionToken, t],
-  );
-
-  useEffect(() => {
-    void fetchGrants(selectedBookId);
-  }, [fetchGrants, selectedBookId]);
-
-  // -------------------------------------------------------------------------
-  // Navigation + modal handlers
-  // -------------------------------------------------------------------------
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
-
-  const handleSelectBook = (bookId: string) => {
-    setSelectedBookId(bookId);
-    navigate(bookId ? `/admin/books/${bookId}/grants` : '/admin/grants');
-  };
-
-  const openCreateModal = () => {
-    setFormData(emptyFormData());
-    setFormErrors({});
-    setShowCreateModal(true);
-  };
-
-  const openEditModal = (grant: Grant) => {
-    setEditingGrant(grant);
-    setFormErrors({});
-    setFormData({
-      email: grant.email,
-      password: '',
-      passwordConfirm: '',
-      mode: grant.mode,
-      commentsAllowed: grant.commentsAllowed,
-      offlineAllowed: grant.offlineAllowed,
-      expiresAt: grant.expiresAt ? new Date(grant.expiresAt).toISOString().split('T')[0] : '',
-    });
-  };
-
-  const closeModal = () => {
-    setShowCreateModal(false);
-    setEditingGrant(null);
-    setFormErrors({});
-  };
-
-  // -------------------------------------------------------------------------
-  // Form validation
-  // -------------------------------------------------------------------------
-  const validateForm = (): boolean => {
-    const errors: Record<string, string> = {};
-
-    if (!formData.email) {
-      errors.email = t('grants.form.error.emailRequired');
-    }
-
-    if (!editingGrant) {
-      if (!formData.password) {
-        errors.password = t('grants.form.error.passwordRequired');
-      } else if (formData.password.length < 8) {
-        errors.password = t('grants.form.error.passwordMinLength');
-      } else if (formData.password !== formData.passwordConfirm) {
-        errors.passwordConfirm = t('grants.form.error.passwordMismatch');
-      }
-    }
-
-    setFormErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
-  // -------------------------------------------------------------------------
-  // API mutations
-  // -------------------------------------------------------------------------
-  const handleSubmitCreate = async () => {
-    if (!validateForm() || !selectedBookId) return;
-
-    setIsSubmitting(true);
+  const fetchGrantResponses = useCallback(async () => {
+    if (!bookId) return;
+    setIsLoading(true);
     try {
-      await apiRequest<{ id: string }>(`/api/admin/books/${selectedBookId}/grants`, {
-        method: 'POST',
-        token: sessionToken!,
-        body: JSON.stringify({
-          bookId: selectedBookId,
-          email: formData.email,
-          password: formData.password,
-          mode: formData.mode,
-          commentsAllowed: formData.commentsAllowed,
-          offlineAllowed: formData.offlineAllowed,
-          expiresAt: formData.expiresAt ? new Date(formData.expiresAt).toISOString() : undefined,
-        }),
-      });
-      setShowCreateModal(false);
-      setFormData(emptyFormData());
-      void fetchGrants(selectedBookId);
+      const data = await apiRequest<GrantResponse[]>(`/api/admin/books/${bookId}/grants`);
+      setGrantResponses(data);
     } catch (err) {
-      setFormErrors({ submit: (err as Error).message });
+      setError((err as Error).message);
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
     }
-  };
+  }, [bookId]);
 
-  const handleSubmitEdit = async () => {
-    if (!validateForm() || !editingGrant) return;
+  useEffect(() => {
+    void fetchGrantResponses();
+  }, [fetchGrantResponses]);
 
-    setIsSubmitting(true);
+  const handleRevoke = async (grantId: string) => {
+    if (!confirm(t('admin.grants.confirmRevoke'))) return;
     try {
-      await apiRequest<{ id: string }>(`/api/admin/grants/${editingGrant.id}`, {
-        method: 'PATCH',
-        token: sessionToken!,
-        body: JSON.stringify({
-          mode: formData.mode,
-          commentsAllowed: formData.commentsAllowed,
-          offlineAllowed: formData.offlineAllowed,
-          expiresAt: formData.expiresAt ? new Date(formData.expiresAt).toISOString() : null,
-        }),
-      });
-      setEditingGrant(null);
-      setFormData(emptyFormData());
-      void fetchGrants(selectedBookId);
+      await apiRequest(`/api/admin/grants/${grantId}`, { method: 'DELETE' });
+      void fetchGrantResponses();
     } catch (err) {
-      setFormErrors({ submit: (err as Error).message });
-    } finally {
-      setIsSubmitting(false);
+      alert((err as Error).message);
     }
   };
 
-  const handleRevoke = async (grant: Grant) => {
-    try {
-      await apiRequest<unknown>(`/api/admin/grants/${grant.id}/revoke`, {
-        method: 'POST',
-        token: sessionToken!,
-      });
-      void fetchGrants(selectedBookId);
-    } catch (err) {
-      setError((err as Error).message || t('grants.error.revoke'));
-    }
-  };
-
-  const handleFormSubmit = () => {
-    if (editingGrant) void handleSubmitEdit();
-    else void handleSubmitCreate();
-  };
-
-  // -------------------------------------------------------------------------
-  // Render
-  // -------------------------------------------------------------------------
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white">{t('grants.title')}</h1>
-          <div className="flex items-center space-x-4">
-            <span className="text-sm text-gray-600 dark:text-gray-400">{email}</span>
-            <LocaleSwitcher />
-            <button
-              onClick={handleLogout}
-              className="px-3 py-1 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
-            >
-              {t('admin.userMenu.signOut')}
-            </button>
-          </div>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8">
+      <header className="flex justify-between items-center mb-8">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            {t('admin.grants.title')}
+          </h1>
+          <button
+            onClick={() => void navigate('/admin/books')}
+            className="text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 mt-1"
+          >
+            &larr; {t('admin.grants.backToBooks')}
+          </button>
         </div>
+        <LocaleSwitcher />
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 py-8">
-        <BookSelector
-          books={books}
-          selectedBookId={selectedBookId}
-          isLoadingBooks={isLoadingBooks}
-          onSelectBook={handleSelectBook}
-          onCreateGrant={openCreateModal}
-        />
+      {error && (
+        <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300">
+          {error}
+        </div>
+      )}
 
-        {error && (
-          <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded text-red-700 dark:text-red-400">
-            {error}
+      <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+        {isLoading ? (
+          <div className="p-12 flex justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
           </div>
+        ) : (
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead className="bg-gray-50 dark:bg-gray-900/50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  {t('admin.grants.email')}
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  {t('admin.grants.mode')}
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  {t('admin.grants.expires')}
+                </th>
+                <th className="relative px-6 py-3">
+                  <span className="sr-only">Actions</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+              {grants.map((grant) => (
+                <tr key={grant.id}>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                    {grant.email}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                    {grant.mode}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                    {grant.expiresAt ? new Date(grant.expiresAt).toLocaleDateString() : t('admin.grants.never')}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <button
+                      onClick={() => void handleRevoke(grant.id)}
+                      className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                    >
+                      {t('admin.grants.revoke')}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {grants.length === 0 && (
+                <tr>
+                  <td colSpan={4} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                    {t('admin.grants.noGrantResponses')}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         )}
-
-        <GrantList
-          grants={grants}
-          isLoadingGrants={isLoadingGrants}
-          selectedBookId={selectedBookId}
-          onEdit={openEditModal}
-          onRevoke={(grant) => void handleRevoke(grant)}
-        />
-      </main>
-
-      <GrantForm
-        isOpen={showCreateModal || editingGrant !== null}
-        editingGrant={editingGrant}
-        formData={formData}
-        formErrors={formErrors}
-        isSubmitting={isSubmitting}
-        onChange={setFormData}
-        onSubmit={handleFormSubmit}
-        onClose={closeModal}
-      />
+      </div>
     </div>
   );
 }

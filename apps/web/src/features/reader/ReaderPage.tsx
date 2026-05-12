@@ -155,16 +155,16 @@ export function ReaderPage() {
 
   const applyTheme = useCallback(
     (rendition: Rendition) => {
-      const themes = {
-        light: { body: { background: '#ffffff', color: '#1a1a1a' }, img: { filter: 'none' } },
-        dark: {
-          body: { background: '#1a1a1a', color: '#e5e5e5' },
-          img: { filter: 'invert(1) hue-rotate(180deg)' },
-        },
-        sepia: { body: { background: '#f4ecd8', color: '#5b4636' }, img: { filter: 'sepia(1)' } },
-      } as const;
-      const theme = themes[readerTheme === 'system' ? 'light' : readerTheme];
-      if (theme) rendition.themes.default(theme.body);
+      const root = document.documentElement;
+      const bg = getComputedStyle(root).getPropertyValue('--color-background').trim();
+      const fg = getComputedStyle(root).getPropertyValue('--color-foreground').trim();
+      const imgFilter =
+        readerTheme === 'dark'
+          ? 'invert(1) hue-rotate(180deg)'
+          : readerTheme === 'sepia'
+            ? 'sepia(1)'
+            : 'none';
+      rendition.themes.default({ body: { background: bg, color: fg }, img: { filter: imgFilter } });
     },
     [readerTheme],
   );
@@ -211,7 +211,7 @@ export function ReaderPage() {
 
   useEffect(() => {
     if (!sessionToken || !bookSlug) {
-      navigate('/login');
+      void navigate('/login');
       return;
     }
     const controller = new AbortController();
@@ -388,23 +388,17 @@ export function ReaderPage() {
       console.error('Logout failed', err);
     } finally {
       logout();
-      navigate('/login');
+      void navigate('/login');
     }
   };
 
   const navigateToChapter = async (href: string) => {
     if (renditionRef.current) {
       await renditionRef.current.display(href);
-      setShowToc(false);
+      void setShowToc(false);
     }
   };
 
-  const themeClass = {
-    light: 'bg-white text-gray-900',
-    dark: 'bg-gray-900 text-gray-100',
-    sepia: 'bg-amber-50 text-gray-800',
-    system: 'bg-white text-gray-900',
-  }[readerTheme];
   const pageWidthClass =
     { narrow: 'max-w-xl', normal: 'max-w-3xl', wide: 'max-w-5xl', full: 'max-w-full' }[
       readerPageWidth
@@ -413,7 +407,7 @@ export function ReaderPage() {
   const tFn = t as (key: string) => any;
 
   return (
-    <div className={`min-h-screen ${themeClass}`}>
+    <div className="min-h-screen bg-background text-foreground" data-theme={readerTheme}>
       <ReaderToolbar
         bookTitle={bookTitle}
         bookSlug={bookSlug ?? ''}
@@ -449,7 +443,7 @@ export function ReaderPage() {
       <TableOfContents
         isOpen={showToc}
         toc={toc}
-        onClose={() => setShowToc(false)}
+        onClose={() => void setShowToc(false)}
         onNavigate={(href) => void navigateToChapter(href)}
         t={tFn}
       />

@@ -17,7 +17,7 @@ interface ApiRequestOptions extends RequestInit {
 
 const DEFAULT_TIMEOUT_MS = 15000;
 
-async function handleUnauthorized() {
+function handleUnauthorized() {
   const state = useAuthStore.getState();
   state.logout();
   if (typeof window !== 'undefined') {
@@ -67,7 +67,7 @@ export async function apiRequest<T>(endpoint: string, options: ApiRequestOptions
 
     // Global 401 handling for session expiry
     if (response.status === 401 && !endpoint.includes('/api/access/request') && !endpoint.includes('/api/admin/login')) {
-      await handleUnauthorized();
+      handleUnauthorized();
       throw new Error('Session expired');
     }
 
@@ -87,7 +87,7 @@ export async function apiRequest<T>(endpoint: string, options: ApiRequestOptions
           stack: (error as Error).stack,
         },
       });
-      throw new Error('Invalid server response');
+      throw new Error('Invalid server response', { cause: error });
     }
 
     if (!data.ok) {
@@ -167,7 +167,7 @@ async function apiRaw(endpoint: string, method: string, data?: unknown, options?
   });
 
   if (res.status === 401 && !endpoint.includes('/api/access/request') && !endpoint.includes('/api/admin/login')) {
-     await handleUnauthorized();
+     handleUnauthorized();
   }
 
   return res;
