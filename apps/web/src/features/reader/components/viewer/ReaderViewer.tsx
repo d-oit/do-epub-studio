@@ -3,7 +3,7 @@ interface ReaderViewerProps {
   epubUrl: string | null;
   error: string | null;
   pageWidthClass: string;
-  viewerRef: React.RefObject<HTMLDivElement | null>;
+  viewerRef: React.RefObject<HTMLDivElement>;
   notAvailableText: string;
 }
 
