@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from '../../hooks/useTranslation';
 import { apiRequest } from '../../lib/api';
@@ -13,7 +13,7 @@ export function AdminGrantResponsesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchGrantResponses = async () => {
+  const fetchGrantResponses = useCallback(async () => {
     if (!bookId) return;
     setIsLoading(true);
     try {
@@ -24,7 +24,7 @@ export function AdminGrantResponsesPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [bookId]);
 
   useEffect(() => {
     void fetchGrantResponses();

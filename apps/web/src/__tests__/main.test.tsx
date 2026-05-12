@@ -44,7 +44,7 @@ describe('main.tsx', () => {
         if (event === 'error') errorListeners.push(listener);
         else if (event === 'unhandledrejection') rejectionListeners.push(listener);
         else if (event === 'load') loadListeners.push(listener);
-        return undefined as unknown as void;
+        return undefined;
       },
     );
 
