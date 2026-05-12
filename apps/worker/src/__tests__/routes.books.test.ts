@@ -21,7 +21,7 @@ describe('GET /api/books (handleListBooks)', () => {
     const req = makeRequest();
     const res = await handleListBooks(env, req);
     expect(res.status).toBe(401);
-    const body = await res.json();
+    const body = await res.json() as any;
     expect(body.error.code).toBe('UNAUTHORIZED');
   });
 
@@ -34,7 +34,7 @@ describe('GET /api/books (handleListBooks)', () => {
     const res = await handleListBooks(env, req);
 
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body = await res.json() as any;
     expect(body.ok).toBe(true);
     expect(body.data).toHaveLength(1);
     expect(body.data[0].slug).toBe('test-book');
@@ -74,7 +74,7 @@ describe('GET /api/books/{slug} (handleGetBook)', () => {
 
     const res = await handleGetBook(makeEnv(), makeRequest(), 'test-book');
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body = await res.json() as any;
     expect(body.ok).toBe(true);
     expect(body.data.title).toBe('Test Book');
   });
@@ -146,7 +146,7 @@ describe('POST /api/books/{slug}/file-url (handleGetFileUrl)', () => {
 
     const res = await handleGetFileUrl(makeEnv(), makeRequest(), 'test-book');
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body = await res.json() as any;
     expect(body.ok).toBe(true);
     expect(body.data.url).toContain('https://test.example.com/api/files/');
   });

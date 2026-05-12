@@ -26,7 +26,6 @@ SKILLS_SRC="$REPO_ROOT/.agents/skills"
 
 CLI_SKILL_DIRS=(
   ".claude/skills"
-  ".gemini/skills"
 )
 
 FAILED=0

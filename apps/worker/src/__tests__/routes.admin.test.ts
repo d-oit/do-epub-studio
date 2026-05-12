@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { makeEnv, makeGrantRow, makeAuditLogRow, mockQueryAll, mockExecute } from './fixtures';
+import { makeEnv, makeGrantRow, makeAuditLogRow, mockQueryAll, mockExecute, mockLogAudit } from './fixtures';
 import {
   handleCreateBook,
   handleUploadComplete,
@@ -26,7 +26,7 @@ describe('POST /api/admin/books (handleCreateBook)', () => {
   it('returns 400 for invalid body', async () => {
     const res = await handleCreateBook(makeEnv(), {});
     expect(res.status).toBe(400);
-    const body = await res.json();
+    const body = await res.json() as any;
     expect(body.error.code).toBe('VALIDATION_ERROR');
   });
 
@@ -35,7 +35,7 @@ describe('POST /api/admin/books (handleCreateBook)', () => {
 
     const res = await handleCreateBook(makeEnv(), validBody, 'admin@example.com');
     expect(res.status).toBe(201);
-    const body = await res.json();
+    const body = await res.json() as any;
     expect(body.ok).toBe(true);
   });
 });
@@ -57,14 +57,14 @@ describe('POST /api/admin/books/{bookId}/files (handleUploadComplete)', () => {
 
     const res = await handleUploadComplete(makeEnv(), 'book-1', body);
     expect(res.status).toBe(201);
-    const bodyRes = await res.json();
+    const bodyRes = await res.json() as any;
     expect(bodyRes.ok).toBe(true);
   });
 });
 
 describe('POST /api/admin/grants (handleCreateAdminGrant)', () => {
   const validBody = {
-    bookId: '00000000-0000-0000-0000-000000000001',
+    bookId: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
     email: 'reader@example.com',
     mode: 'private' as const,
     commentsAllowed: false,
@@ -85,7 +85,7 @@ describe('POST /api/admin/grants (handleCreateAdminGrant)', () => {
 
     const res = await handleCreateAdminGrant(makeEnv(), 'book-1', validBody, 'admin@example.com');
     expect(res.status).toBe(201);
-    const bodyRes = await res.json();
+    const bodyRes = await res.json() as any;
     expect(bodyRes.ok).toBe(true);
   });
 });
@@ -110,7 +110,7 @@ describe('PATCH /api/admin/grants/{grantId} (handleUpdateGrant)', () => {
       'admin@example.com',
     );
     expect(res.status).toBe(200);
-    const bodyRes = await res.json();
+    const bodyRes = await res.json() as any;
     expect(bodyRes.ok).toBe(true);
   });
 });
@@ -125,10 +125,12 @@ describe('DELETE /api/admin/grants/{grantId} (handleRevokeGrant)', () => {
 
     const res = await handleRevokeGrant(makeEnv(), 'grant-1', 'admin@example.com');
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body = await res.json() as any;
     expect(body.ok).toBe(true);
-    // Should execute: UPDATE grant, UPDATE sessions, INSERT audit_log
-    expect(mockExecute).toHaveBeenCalledTimes(3);
+    // Should execute: UPDATE grant, UPDATE sessions
+    expect(mockExecute).toHaveBeenCalledTimes(2);
+    // audit_log is handled via logAudit mock
+    expect(mockLogAudit).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -150,7 +152,7 @@ describe('GET /api/admin/books/{bookId}/grants (handleGetBookGrants)', () => {
 
     const res = await handleGetBookGrants(makeEnv(), 'book-1');
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body = await res.json() as any;
     expect(body.data).toHaveLength(2);
   });
 });
@@ -160,13 +162,16 @@ describe('GET /api/admin/audit (handleGetAuditLog)', () => {
     vi.clearAllMocks();
   });
 
-  it('returns audit log entries', async () => {
-    mockQueryAll.mockResolvedValue([makeAuditLogRow()] as never);
+  it('returns paginated audit log entries', async () => {
+    mockQueryAll
+      .mockResolvedValueOnce([{ cnt: 1 }] as never)
+      .mockResolvedValueOnce([makeAuditLogRow()] as never);
 
-    const res = await handleGetAuditLog(makeEnv(), 'book', 'book-1', 100);
+    const res = await handleGetAuditLog(makeEnv(), 'book', 'book-1', 50, 0);
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body = await res.json() as any;
     expect(body.ok).toBe(true);
-    expect(body.data).toHaveLength(1);
+    expect(body.data.entries).toHaveLength(1);
+    expect(body.data.total).toBe(1);
   });
 });

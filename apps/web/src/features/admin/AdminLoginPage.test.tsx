@@ -3,7 +3,6 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AdminLoginPage } from './AdminLoginPage';
 import { BrowserRouter } from 'react-router-dom';
-import { browserRouterFuture } from '../../lib/routerFuture';
 
 // Mock react-router-dom
 const mockNavigate = vi.fn();
@@ -29,11 +28,12 @@ vi.mock('../../lib/api', () => ({
 }));
 
 // Mock useAuthStore
+const mockSetAdminAuth = vi.fn();
 vi.mock('../../stores/auth', () => ({
-  useAuthStore: () => ({
-    sessionToken: null,
-    setAdminAuth: vi.fn(),
-  }),
+  useAuthStore: (selector?: (state: Record<string, unknown>) => unknown) => {
+    const state = { sessionToken: null, setAdminAuth: mockSetAdminAuth };
+    return selector ? selector(state) : state;
+  },
 }));
 
 import { apiRequest } from '../../lib/api';
@@ -49,7 +49,7 @@ describe('AdminLoginPage', () => {
 
   const renderLoginPage = () => {
     return render(
-      <BrowserRouter future={browserRouterFuture}>
+      <BrowserRouter>
         <AdminLoginPage />
       </BrowserRouter>,
     );

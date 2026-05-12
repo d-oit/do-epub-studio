@@ -59,9 +59,7 @@ interface EpubLoaderOptions {
 }
 
 export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
-  // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents -- epubjs Book type is not resolved by TS
   let book: Book | null = null;
-  // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents -- epubjs Rendition type is not resolved by TS
   let rendition: Rendition | null = null;
   let renditionHandle: EpubRenditionHandle | null = null;
   let toc: TocItem[] = [];
@@ -143,7 +141,7 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
       console.error(
         `[epub-loader][trace:${traceId}][span:${spanId}] Failed to load EPUB: ${formatted.message}`,
       );
-      throw new Error(`Failed to load EPUB: ${formatted.message}`);
+      throw new Error(`Failed to load EPUB: ${formatted.message}`, { cause: error });
     }
   }
 

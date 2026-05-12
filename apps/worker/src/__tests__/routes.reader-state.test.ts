@@ -40,7 +40,7 @@ describe('GET /api/reader-state/{bookId}/progress (handleGetProgress)', () => {
 
     const res = await handleGetProgress(makeEnv(), makeRequest(), 'book-1');
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body = await res.json() as any;
     expect(body.ok).toBe(true);
     expect(body.data.locator).toBeNull();
     expect(body.data.progressPercent).toBe(0);
@@ -52,7 +52,7 @@ describe('GET /api/reader-state/{bookId}/progress (handleGetProgress)', () => {
 
     const res = await handleGetProgress(makeEnv(), makeRequest(), 'book-1');
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body = await res.json() as any;
     expect(body.ok).toBe(true);
     expect(body.data.progressPercent).toBe(50);
   });
@@ -98,7 +98,7 @@ describe('POST /api/reader-state/{bookId}/progress (handleUpdateProgress)', () =
 
     const res = await handleUpdateProgress(makeEnv(), makeRequest(), 'book-1', validBody);
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body = await res.json() as any;
     expect(body.ok).toBe(true);
     expect(body.data.progressPercent).toBe(50);
   });
@@ -121,7 +121,7 @@ describe('GET /api/reader-state/{bookId}/bookmarks (handleListBookmarks)', () =>
 
     const res = await handleListBookmarks(makeEnv(), makeRequest(), 'book-1');
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body = await res.json() as any;
     expect(body.ok).toBe(true);
     expect(body.data).toEqual([]);
   });
@@ -132,7 +132,7 @@ describe('GET /api/reader-state/{bookId}/bookmarks (handleListBookmarks)', () =>
 
     const res = await handleListBookmarks(makeEnv(), makeRequest(), 'book-1');
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body = await res.json() as any;
     expect(body.ok).toBe(true);
     expect(body.data).toHaveLength(1);
   });
@@ -143,7 +143,7 @@ describe('GET /api/reader-state/{bookId}/bookmarks (handleListBookmarks)', () =>
 
     const res = await handleListBookmarks(makeEnv(), makeRequest(), 'book-1');
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body = await res.json() as any;
     const bm = body.data[0];
     // id and label pass through unchanged
     expect(bm.id).toBe('bookmark-1');
@@ -194,7 +194,7 @@ describe('POST /api/reader-state/{bookId}/bookmarks (handleCreateBookmark)', () 
 
     const res = await handleCreateBookmark(makeEnv(), makeRequest(), 'book-1', validBody);
     expect(res.status).toBe(201);
-    const body = await res.json();
+    const body = await res.json() as any;
     expect(body.ok).toBe(true);
   });
 
@@ -203,7 +203,7 @@ describe('POST /api/reader-state/{bookId}/bookmarks (handleCreateBookmark)', () 
 
     const res = await handleCreateBookmark(makeEnv(), makeRequest(), 'book-1', {});
     expect(res.status).toBe(400);
-    const body = await res.json();
+    const body = await res.json() as any;
     expect(body.ok).toBe(false);
     expect(body.error.code).toBe('VALIDATION_ERROR');
   });
@@ -218,7 +218,7 @@ describe('POST /api/reader-state/{bookId}/bookmarks (handleCreateBookmark)', () 
     };
     const res = await handleCreateBookmark(makeEnv(), makeRequest(), 'book-1', bodyWithLabel);
     expect(res.status).toBe(201);
-    const body = await res.json();
+    const body = await res.json() as any;
     expect(body.ok).toBe(true);
     expect(typeof body.data.id).toBe('string');
     expect(body.data.locator).toEqual(bodyWithLabel.locator);
@@ -234,7 +234,7 @@ describe('POST /api/reader-state/{bookId}/bookmarks (handleCreateBookmark)', () 
       locator: { cfi: 'epubcfi(/6/4)', selectedText: 'text' },
     });
     expect(res.status).toBe(201);
-    const body = await res.json();
+    const body = await res.json() as any;
     expect(body.ok).toBe(true);
     // label is optional per BookmarkCreateSchema — absent means undefined in JSON
     expect(body.data.label).toBeUndefined();
@@ -258,7 +258,7 @@ describe('DELETE /api/reader-state/{bookId}/bookmarks/{bookmarkId} (handleDelete
 
     const res = await handleDeleteBookmark(makeEnv(), makeRequest(), 'book-1', 'bm-1');
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body = await res.json() as any;
     expect(body.ok).toBe(true);
   });
 
@@ -275,7 +275,7 @@ describe('DELETE /api/reader-state/{bookId}/bookmarks/{bookmarkId} (handleDelete
       'non-existent-bm-id',
     );
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body = await res.json() as any;
     expect(body.ok).toBe(true);
   });
 });
@@ -297,7 +297,7 @@ describe('GET /api/reader-state/{bookId}/highlights (handleListHighlights)', () 
 
     const res = await handleListHighlights(makeEnv(), makeRequest(), 'book-1');
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body = await res.json() as any;
     expect(body.ok).toBe(true);
     expect(body.data).toEqual([]);
   });
@@ -308,7 +308,7 @@ describe('GET /api/reader-state/{bookId}/highlights (handleListHighlights)', () 
 
     const res = await handleListHighlights(makeEnv(), makeRequest(), 'book-1');
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body = await res.json() as any;
     expect(body.ok).toBe(true);
     expect(body.data).toHaveLength(1);
   });
@@ -359,7 +359,7 @@ describe('POST /api/reader-state/{bookId}/highlights (handleCreateHighlight)', (
 
     const res = await handleCreateHighlight(makeEnv(), makeRequest(), 'book-1', validBody);
     expect(res.status).toBe(201);
-    const body = await res.json();
+    const body = await res.json() as any;
     expect(body.ok).toBe(true);
   });
 });
@@ -381,7 +381,7 @@ describe('DELETE /api/reader-state/{bookId}/highlights/{highlightId} (handleDele
 
     const res = await handleDeleteHighlight(makeEnv(), makeRequest(), 'book-1', 'hl-1');
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body = await res.json() as any;
     expect(body.ok).toBe(true);
   });
 });
@@ -418,7 +418,7 @@ describe('PATCH /api/reader-state/{bookId}/highlights/{highlightId} (handleUpdat
       note: 'updated',
     });
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body = await res.json() as any;
     expect(body.ok).toBe(true);
   });
 });

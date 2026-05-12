@@ -84,8 +84,6 @@ export default tseslint.config(
       'import/order': 'off',
       '@typescript-eslint/prefer-regexp-exec': 'off',
       '@typescript-eslint/prefer-nullish-coalescing': 'off',
-      '@typescript-eslint/require-await': 'off',
-      '@typescript-eslint/no-empty-function': 'off',
       '@typescript-eslint/no-floating-promises': 'error',
       '@typescript-eslint/no-misused-promises': 'error',
       // The following unsafe rules are set to 'warn' as a strictness improvement over
@@ -119,6 +117,7 @@ export default tseslint.config(
       '@typescript-eslint/restrict-template-expressions': 'off',
       '@typescript-eslint/no-floating-promises': 'off',
       '@typescript-eslint/no-misused-promises': 'off',
+      '@typescript-eslint/require-await': 'off',
     },
   },
   prettierConfig,

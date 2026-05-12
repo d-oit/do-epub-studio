@@ -31,7 +31,7 @@ describe('POST /api/access/request (handleAccessRequest)', () => {
   it('returns validation error for missing fields', async () => {
     const res = await handleAccessRequest(makeEnv(), {});
     expect(res.status).toBe(400);
-    const body = await res.json();
+    const body = await res.json() as any;
     expect(body.error.code).toBe('VALIDATION_ERROR');
   });
 
@@ -40,7 +40,7 @@ describe('POST /api/access/request (handleAccessRequest)', () => {
 
     const res = await handleAccessRequest(makeEnv(), validPayload);
     expect(res.status).toBe(401);
-    const body = await res.json();
+    const body = await res.json() as any;
      expect(body.error.code).toBe('ACCESS_DENIED');
   });
 
@@ -72,7 +72,7 @@ describe('POST /api/access/request (handleAccessRequest)', () => {
 
     const res = await handleAccessRequest(makeEnv(), validPayload);
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body = await res.json() as any;
     expect(body.ok).toBe(true);
     expect(body.data.sessionToken).toBe('new-session-token');
   });
@@ -87,7 +87,7 @@ describe('POST /api/access/logout (handleLogout)', () => {
     mockRevokeSession.mockResolvedValue(undefined);
     const res = await handleLogout(makeEnv(), 'session-token');
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body = await res.json() as any;
     expect(body.ok).toBe(true);
   });
 });
@@ -101,7 +101,7 @@ describe('POST /api/access/refresh (handleRefresh)', () => {
     mockValidateSessionMod.mockResolvedValue({ valid: false });
     const res = await handleRefresh(makeEnv(), 'bad-token');
     expect(res.status).toBe(401);
-    const body = await res.json();
+    const body = await res.json() as any;
     expect(body.error.code).toBe('SESSION_INVALID');
   });
 
@@ -117,7 +117,7 @@ describe('POST /api/access/refresh (handleRefresh)', () => {
 
     const res = await handleRefresh(makeEnv(), 'good-token');
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body = await res.json() as any;
     expect(body.ok).toBe(true);
     expect(body.data.sessionToken).toBe('new-token');
     expect(mockRevokeSession).toHaveBeenCalledWith(expect.anything(), 'good-token');
@@ -136,7 +136,7 @@ describe('POST /api/access/refresh (handleRefresh)', () => {
 
     const res = await handleRefresh(makeEnv(), 'good-token');
     expect(res.status).toBe(403);
-    const body = await res.json();
+    const body = await res.json() as any;
     expect(body.error.code).toBe('ACCESS_DENIED');
   });
 });
@@ -162,7 +162,7 @@ describe('GET /api/access/validate-permission (handleValidatePermission)', () =>
 
     const res = await handleValidatePermission(makeEnv(), 'book-1', 'good-token');
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body = await res.json() as any;
     expect(body.ok).toBe(true);
     expect(body.data.valid).toBe(false);
   });
@@ -177,7 +177,7 @@ describe('GET /api/access/validate-permission (handleValidatePermission)', () =>
 
     const res = await handleValidatePermission(makeEnv(), 'book-1', 'good-token');
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body = await res.json() as any;
     expect(body.ok).toBe(true);
     expect(body.data.valid).toBe(true);
   });
@@ -207,7 +207,7 @@ describe('GET /api/access/validate-all-permissions (handleValidateAllPermissions
 
     const res = await handleValidateAllPermissions(makeEnv(), 'good-token');
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body = await res.json() as any;
     expect(body.ok).toBe(true);
     expect(body.data.grantIds).toContain('grant-1');
     expect(body.data.revokedBookIds).toContain('book-2');

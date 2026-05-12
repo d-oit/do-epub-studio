@@ -18,7 +18,7 @@ describe('GET /api/files/{bookId}/{fileKey} (handleDownloadBookFile)', () => {
     const req = new Request('https://test.example.com/api/files/book-1/key');
     const res = await handleDownloadBookFile({} as never, req, 'book-1', 'key');
     expect(res.status).toBe(400);
-    const body = await res.json();
+    const body = await res.json() as any;
     expect(body.error.code).toBe('BAD_REQUEST');
   });
 

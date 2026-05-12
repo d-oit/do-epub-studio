@@ -1,60 +1,41 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { AdminBooksPage } from './BooksPage';
+import { AdminBookResponsesPage } from './BooksPage';
 import { MemoryRouter } from 'react-router-dom';
-import * as api from '../../lib/api';
-
-// Stable mock values
-const mockT = (k: string) => k;
-const mockAuth = {
-  sessionToken: 'token',
-  email: 'admin@ex.com',
-  isAdmin: true,
-  logout: vi.fn(),
-};
 
 vi.mock('../../hooks/useTranslation', () => ({
-  useTranslation: () => ({ t: mockT }),
-}));
-
-vi.mock('../../stores/auth', () => ({
-  useAuthStore: () => mockAuth,
+  useTranslation: () => ({ t: (k: string) => k }),
 }));
 
 vi.mock('../../lib/api', () => ({
   apiRequest: vi.fn(),
 }));
 
-const mockBooks = [
-  { id: '1', slug: 'b1', title: 'Book 1', authorName: 'A1', visibility: 'public', coverImageUrl: null }
-];
+import { apiRequest } from '../../lib/api';
 
-describe('AdminBooksPage', () => {
+describe('AdminBookResponsesPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('renders books after loading', async () => {
-    vi.mocked(api.apiRequest).mockResolvedValue(mockBooks);
-
-    render(
-      <MemoryRouter>
-        <AdminBooksPage />
-      </MemoryRouter>
-    );
-
-    expect(await screen.findByText('Book 1')).toBeInTheDocument();
+  it('renders loading state initially', () => {
+    vi.mocked(apiRequest).mockResolvedValue([]);
+    render(<MemoryRouter><AdminBookResponsesPage /></MemoryRouter>);
+    expect(screen.getByText('admin.books.title')).toBeInTheDocument();
   });
 
-  it('shows empty state when no books', async () => {
-    vi.mocked(api.apiRequest).mockResolvedValue([]);
+  it('renders books when loaded', async () => {
+    vi.mocked(apiRequest).mockResolvedValue([
+      { id: '1', slug: 'test', title: 'Test Book', authorName: 'Author', description: 'Desc', visibility: 'public', coverImageUrl: null },
+    ]);
+    render(<MemoryRouter><AdminBookResponsesPage /></MemoryRouter>);
+    expect(await screen.findByText('Test Book')).toBeInTheDocument();
+    expect(await screen.findByText('Desc')).toBeInTheDocument();
+  });
 
-    render(
-      <MemoryRouter>
-        <AdminBooksPage />
-      </MemoryRouter>
-    );
-
-    expect(await screen.findByText('admin.noBooks')).toBeInTheDocument();
+  it('renders empty state when no books', async () => {
+    vi.mocked(apiRequest).mockResolvedValue([]);
+    render(<MemoryRouter><AdminBookResponsesPage /></MemoryRouter>);
+    expect(await screen.findByText('admin.books.noBookResponses')).toBeInTheDocument();
   });
 });

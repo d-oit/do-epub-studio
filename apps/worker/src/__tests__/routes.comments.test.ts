@@ -28,7 +28,7 @@ describe('GET /api/comments/{bookId} (handleListComments)', () => {
 
     const res = await handleListComments(makeEnv(), makeRequest(), 'book-1');
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body = await res.json() as any;
     expect(body.ok).toBe(true);
     expect(body.data).toEqual([]);
   });
@@ -39,7 +39,7 @@ describe('GET /api/comments/{bookId} (handleListComments)', () => {
 
     const res = await handleListComments(makeEnv(), makeRequest(), 'book-1');
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body = await res.json() as any;
     expect(body.ok).toBe(true);
     expect(body.data).toHaveLength(1);
   });
@@ -87,7 +87,7 @@ describe('POST /api/comments/{bookId} (handleCreateComment)', () => {
 
     const res = await handleCreateComment(makeEnv(), makeRequest(), 'book-1', validBody);
     expect(res.status).toBe(201);
-    const body = await res.json();
+    const body = await res.json() as any;
     expect(body.ok).toBe(true);
   });
 });
@@ -126,7 +126,7 @@ describe('PATCH /api/comments/{commentId} (handleUpdateComment)', () => {
 
     const res = await handleUpdateComment(makeEnv(), makeRequest(), 'comment-1', { body: 'updated' });
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body = await res.json() as any;
     expect(body.ok).toBe(true);
   });
 });

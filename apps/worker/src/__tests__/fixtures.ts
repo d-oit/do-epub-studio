@@ -44,6 +44,7 @@ vi.mock('../storage/signed-url', () => ({
 
 vi.mock('../audit', () => ({
   logAudit: vi.fn(),
+  sanitizeAuditPayload: vi.fn((payload: Record<string, unknown>) => payload),
 }));
 
 // ---------------------------------------------------------------------------
@@ -69,7 +70,7 @@ import {
   verifySignedUrlExpiry,
   verifySignedUrlSignature,
 } from '../storage/signed-url';
-import { logAudit } from '../audit';
+import { logAudit, sanitizeAuditPayload } from '../audit';
 
 // ---------------------------------------------------------------------------
 // Mocked function references
@@ -91,6 +92,7 @@ export const mockGenerateSignedUrl = vi.mocked(generateSignedUrl);
 export const mockVerifyExpiry = vi.mocked(verifySignedUrlExpiry);
 export const mockVerifySignature = vi.mocked(verifySignedUrlSignature);
 export const mockLogAudit = vi.mocked(logAudit);
+export const mockSanitizeAuditPayload = vi.mocked(sanitizeAuditPayload);
 
 // ---------------------------------------------------------------------------
 // Re-export for convenience
@@ -110,6 +112,7 @@ export function makeEnv(): Env {
     SESSION_SIGNING_SECRET: 'test-secret',
     INVITE_TOKEN_SECRET: 'test-invite-secret',
     APP_BASE_URL: 'https://test.example.com',
+    RATE_LIMITER: {} as DurableObjectNamespace,
   };
 }
 

@@ -38,7 +38,8 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-.dark {
+.dark,
+[data-theme="dark"] {
   --color-background: #0a0a0a;
   --color-background-secondary: #141414;
   --color-background-tertiary: #1f1f1f;
@@ -49,6 +50,19 @@
   --color-accent-warning: #fbbf24;
   --color-accent-error: #f87171;
   --color-border: #262626;
+}
+
+[data-theme="sepia"] {
+  --color-background: #fffbeb;
+  --color-background-secondary: #fef3c7;
+  --color-background-tertiary: #fde68a;
+  --color-foreground: #78350f;
+  --color-foreground-muted: #92400e;
+  --color-accent: #d97706;
+  --color-accent-success: #65a30d;
+  --color-accent-warning: #d97706;
+  --color-accent-error: #dc2626;
+  --color-border: #fde68a;
 }
 
 /* ============================================
@@ -71,7 +85,6 @@ body {
   transition: background-color 0.3s ease, color 0.3s ease;
   margin: 0;
   padding: 0;
-  overflow-x: clip;
 }
 
 #root {
