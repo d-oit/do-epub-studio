@@ -18,7 +18,6 @@ export const de: Record<TranslationKeys, string> = {
   'reader.tableOfContents': 'Inhalt',
   'reader.bookmarks': 'Lesezeichen',
   'reader.exportNotes': 'Notizen exportieren',
-  'reader.untitledBook': 'Unbenanntes Buch',
   'reader.noChapters': 'Keine Kapitel verfügbar',
   'reader.loading': 'EPUB-Reader lädt ...',
   'reader.notAvailable': 'Buch nicht verfügbar',

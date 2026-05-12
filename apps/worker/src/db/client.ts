@@ -50,7 +50,7 @@ async function query<T extends JsonRow = JsonRow>(
     throw new Error(`Database query failed: ${response.statusText}`);
   }
 
-  const data = (await response.json()) as { rows?: T[] };
+  const data: { rows: T[] } = await response.json();
   return { rows: data.rows ?? [] };
 }
 

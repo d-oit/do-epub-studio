@@ -26,7 +26,10 @@ describe('AdminAuditPage', () => {
   });
 
   it('renders audit entries', async () => {
-    vi.mocked(apiRequest).mockResolvedValue([{ id: '1', actorEmail: 'a@ex.com', entityType: 'book', action: 'create', createdAt: new Date().toISOString() }]);
+    vi.mocked(apiRequest).mockResolvedValue({
+      entries: [{ id: '1', actorEmail: 'a@ex.com', entityType: 'book', entityId: 'b1', action: 'create', payload: null, createdAt: new Date().toISOString() }],
+      total: 1,
+    });
 
     render(<MemoryRouter><AdminAuditPage /></MemoryRouter>);
     expect(await screen.findByText('a@ex.com')).toBeInTheDocument();

@@ -5,6 +5,7 @@ export interface Env {
   SESSION_SIGNING_SECRET: string;
   INVITE_TOKEN_SECRET: string;
   APP_BASE_URL: string;
+  RATE_LIMITER: DurableObjectNamespace;
 }
 
 export type JsonRow = Record<string, string | number | null | undefined>;

@@ -112,6 +112,7 @@ export function makeEnv(): Env {
     SESSION_SIGNING_SECRET: 'test-secret',
     INVITE_TOKEN_SECRET: 'test-invite-secret',
     APP_BASE_URL: 'https://test.example.com',
+    RATE_LIMITER: {} as DurableObjectNamespace,
   };
 }
 

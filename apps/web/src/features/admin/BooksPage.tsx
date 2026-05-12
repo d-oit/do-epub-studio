@@ -1,9 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '../../hooks/useTranslation';
 import { apiRequest } from '../../lib/api';
 import { BookResponse } from '@do-epub-studio/shared';
 import { LocaleSwitcher } from '../../components/LocaleSwitcher';
+import { Modal, Button } from '../../components/ui';
+
+interface CreateBookResponse {
+  id: string;
+  uploadUrl: string;
+}
 
 export function AdminBookResponsesPage() {
   const { t } = useTranslation();
@@ -11,6 +17,16 @@ export function AdminBookResponsesPage() {
   const [books, setBookResponses] = useState<BookResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [bookTitle, setBookTitle] = useState('');
+  const [authorName, setAuthorName] = useState('');
+  const [epubFile, setEpubFile] = useState<File | null>(null);
+  const [visibility, setVisibility] = useState('private');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchBookResponses = async () => {
     setIsLoading(true);
@@ -28,12 +44,72 @@ export function AdminBookResponsesPage() {
     void fetchBookResponses();
   }, []);
 
-  const handleViewGrants = (bookId: string) => {
-    void navigate(`/admin/books/${bookId}/grants`);
+  const handleViewGrants = (book: BookResponse) => {
+    void navigate(`/admin/books/${book.id}/grants`, { state: { bookTitle: book.title } });
   };
 
   const handleBackToReader = () => {
-    void void navigate('/login');
+    void navigate('/login');
+  };
+
+  const resetCreateForm = () => {
+    setBookTitle('');
+    setAuthorName('');
+    setEpubFile(null);
+    setVisibility('private');
+    setCreateError(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleCreateBook = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCreateError(null);
+
+    if (!bookTitle.trim()) {
+      setCreateError(t('admin.createBookModal.error.fillFields'));
+      return;
+    }
+
+    if (!epubFile) {
+      setCreateError(t('admin.createBookModal.error.selectEpub'));
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const { uploadUrl } = await apiRequest<CreateBookResponse>('/api/admin/books', {
+        method: 'POST',
+        body: JSON.stringify({
+          title: bookTitle.trim(),
+          authorName: authorName.trim() || null,
+          visibility,
+        }),
+      });
+
+      const uploadResponse = await fetch(uploadUrl, {
+        method: 'PUT',
+        body: epubFile,
+        headers: { 'Content-Type': 'application/octet-stream' },
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error(t('admin.createBookModal.error.upload'));
+      }
+
+      setIsCreateModalOpen(false);
+      resetCreateForm();
+      setSuccessMessage(t('admin.createBookModal.success'));
+      void fetchBookResponses();
+
+      setTimeout(() => setSuccessMessage(null), 5000);
+    } catch (err) {
+      setCreateError((err as Error).message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -51,8 +127,11 @@ export function AdminBookResponsesPage() {
           </button>
         </div>
         <div className="flex items-center gap-4">
+          <Button onClick={() => setIsCreateModalOpen(true)}>
+            {t('admin.createBook')}
+          </Button>
           <button
-            onClick={() => void void navigate('/admin/audit-logs')}
+            onClick={() => void navigate('/admin/audit-logs')}
             className="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
           >
             {t('admin.books.viewAuditLogs')}
@@ -64,6 +143,12 @@ export function AdminBookResponsesPage() {
       {error && (
         <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300">
           {error}
+        </div>
+      )}
+
+      {successMessage && (
+        <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg text-green-700 dark:text-green-300">
+          {successMessage}
         </div>
       )}
 
@@ -89,7 +174,7 @@ export function AdminBookResponsesPage() {
                   {book.visibility}
                 </span>
                 <button
-                  onClick={() => handleViewGrants(book.id)}
+                  onClick={() => handleViewGrants(book)}
                   className="text-sm font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400"
                 >
                   {t('admin.books.manageAccess')} &rarr;
@@ -104,6 +189,95 @@ export function AdminBookResponsesPage() {
           </div>
         )}
       </div>
+
+      <Modal
+        isOpen={isCreateModalOpen}
+        onClose={() => {
+          setIsCreateModalOpen(false);
+          resetCreateForm();
+        }}
+        title={t('admin.createBookModal.title')}
+      >
+        <form onSubmit={(e) => { void handleCreateBook(e); }} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              {t('admin.createBookModal.titleLabel')}
+            </label>
+            <input
+              type="text"
+              value={bookTitle}
+              onChange={(e) => setBookTitle(e.target.value)}
+              placeholder={t('admin.createBookModal.titlePlaceholder')}
+              className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none transition-all"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              {t('admin.createBookModal.authorLabel')}
+            </label>
+            <input
+              type="text"
+              value={authorName}
+              onChange={(e) => setAuthorName(e.target.value)}
+              placeholder={t('admin.createBookModal.authorPlaceholder')}
+              className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none transition-all"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              {t('admin.createBookModal.epubLabel')}
+            </label>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".epub"
+              onChange={(e) => setEpubFile(e.target.files?.[0] ?? null)}
+              className="w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-primary-50 dark:file:bg-primary-900/30 file:text-primary-700 dark:file:text-primary-300 hover:file:bg-primary-100 dark:hover:file:bg-primary-900/50 cursor-pointer"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              {t('admin.createBookModal.visibilityLabel')}
+            </label>
+            <select
+              value={visibility}
+              onChange={(e) => setVisibility(e.target.value)}
+              className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none transition-all"
+            >
+              <option value="private">{t('admin.createBookModal.visibilityPrivate')}</option>
+              <option value="public">{t('admin.createBookModal.visibilityPublic')}</option>
+            </select>
+          </div>
+
+          {createError && (
+            <div className="p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-300">
+              {createError}
+            </div>
+          )}
+
+          <div className="flex justify-end gap-3 pt-2">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => {
+                setIsCreateModalOpen(false);
+                resetCreateForm();
+              }}
+            >
+              {t('admin.createBookModal.close')}
+            </Button>
+            <Button
+              type="submit"
+              isLoading={isSubmitting}
+            >
+              {isSubmitting ? t('admin.createBookModal.submitting') : t('admin.createBookModal.submit')}
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }

@@ -7,10 +7,7 @@
   "types": "./src/index.ts",
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "lint": "eslint src --ext .ts",
-    "test:unit": "vitest --run",
-    "test": "echo \"Use test:unit\"",
-    "bench": "vitest bench"
+    "lint": "eslint src --ext .ts"
   },
   "dependencies": {
     "epubjs": "^0.3.93"

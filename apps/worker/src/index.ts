@@ -1,6 +1,10 @@
 import { TRACE_HEADER, SPAN_HEADER } from '@do-epub-studio/shared';
 import type { Env } from './lib/env';
 import { jsonResponse } from './lib/responses';
+import { RateLimiterDO } from './lib/rate-limiter-do';
+
+export { RateLimiterDO };
+
 import {
   createRequestContext,
   logRequestEnd,
@@ -55,7 +59,7 @@ async function handleRequest(env: Env, request: Request): Promise<Response> {
   }
 
   if (path === '/api/access/request' && method === 'POST') {
-    const body = (await request.json()) as Record<string, unknown>;
+    const body = (await request.json());
     return handleAccessRequest(env, body);
   }
 
@@ -110,7 +114,7 @@ async function handleRequest(env: Env, request: Request): Promise<Response> {
       return handleGetProgress(env, request, bookId);
     }
     if (method === 'PUT') {
-      const body = (await request.json()) as Record<string, unknown>;
+      const body = (await request.json());
       return handleUpdateProgress(env, request, bookId, body);
     }
   }
@@ -122,7 +126,7 @@ async function handleRequest(env: Env, request: Request): Promise<Response> {
       return handleListBookmarks(env, request, bookId);
     }
     if (method === 'POST') {
-      const body = (await request.json()) as Record<string, unknown>;
+      const body = (await request.json());
       return handleCreateBookmark(env, request, bookId, body);
     }
   }
@@ -139,7 +143,7 @@ async function handleRequest(env: Env, request: Request): Promise<Response> {
       return handleListHighlights(env, request, bookId);
     }
     if (method === 'POST') {
-      const body = (await request.json()) as Record<string, unknown>;
+      const body = (await request.json());
       return handleCreateHighlight(env, request, bookId, body);
     }
   }
@@ -150,7 +154,7 @@ async function handleRequest(env: Env, request: Request): Promise<Response> {
       return handleDeleteHighlight(env, request, highlightItemMatch[1], highlightItemMatch[2]);
     }
     if (method === 'PATCH') {
-      const body = (await request.json()) as Record<string, unknown>;
+      const body = (await request.json());
       return handleUpdateHighlight(
         env,
         request,
@@ -168,14 +172,14 @@ async function handleRequest(env: Env, request: Request): Promise<Response> {
       return handleListComments(env, request, bookId);
     }
     if (method === 'POST') {
-      const body = (await request.json()) as Record<string, unknown>;
+      const body = (await request.json());
       return handleCreateComment(env, request, bookId, body);
     }
   }
 
   const commentPatchMatch = /\/api\/comments\/([^/]+)$/.exec(path);
   if (commentPatchMatch && method === 'PATCH') {
-    const body = (await request.json()) as Record<string, unknown>;
+    const body = (await request.json());
     return handleUpdateComment(env, request, commentPatchMatch[1], body);
   }
 
@@ -184,7 +188,7 @@ async function handleRequest(env: Env, request: Request): Promise<Response> {
     if (!authResult.ok) {
       return jsonResponse({ ok: false, error: { code: 'UNAUTHORIZED', message: authResult.error } }, authResult.status);
     }
-    const body = (await request.json()) as Record<string, unknown>;
+    const body = (await request.json());
     return handleCreateBook(env, body, authResult.context.email);
   }
 
@@ -203,7 +207,7 @@ async function handleRequest(env: Env, request: Request): Promise<Response> {
     if (!authResult.ok) {
       return jsonResponse({ ok: false, error: { code: 'UNAUTHORIZED', message: authResult.error } }, authResult.status);
     }
-    const body = (await request.json()) as Record<string, unknown>;
+    const body = (await request.json());
     return handleUploadComplete(env, uploadCompleteMatch[1], body);
   }
 
@@ -213,7 +217,7 @@ async function handleRequest(env: Env, request: Request): Promise<Response> {
     if (!authResult.ok) {
       return jsonResponse({ ok: false, error: { code: 'UNAUTHORIZED', message: authResult.error } }, authResult.status);
     }
-    const body = (await request.json()) as Record<string, unknown>;
+    const body = (await request.json());
     return handleCreateAdminGrant(env, grantsMatch[1], body, authResult.context.email);
   }
 
@@ -231,7 +235,7 @@ async function handleRequest(env: Env, request: Request): Promise<Response> {
     if (!authResult.ok) {
       return jsonResponse({ ok: false, error: { code: 'UNAUTHORIZED', message: authResult.error } }, authResult.status);
     }
-    const body = (await request.json()) as Record<string, unknown>;
+    const body = (await request.json());
     return handleUpdateGrant(env, grantUpdateMatch[1], body, authResult.context.email);
   }
 
@@ -244,7 +248,7 @@ async function handleRequest(env: Env, request: Request): Promise<Response> {
     return handleRevokeGrant(env, grantRevokeMatch[1], authResult.context.email);
   }
 
-  if (path === '/api/admin/audit' && method === 'GET') {
+  if ((path === '/api/admin/audit' || path === '/api/admin/audit-logs') && method === 'GET') {
     const authResult = await requireAdminAuth(env, request);
     if (!authResult.ok) {
       return jsonResponse({ ok: false, error: { code: 'UNAUTHORIZED', message: authResult.error } }, authResult.status);
@@ -259,8 +263,11 @@ async function handleRequest(env: Env, request: Request): Promise<Response> {
       | 'highlight'
       | undefined;
     const entityId = url.searchParams.get('entityId') ?? undefined;
-    const limit = parseInt(url.searchParams.get('limit') ?? '100', 10);
-    return handleGetAuditLog(env, entityType, entityId, limit);
+    const limit = parseInt(url.searchParams.get('limit') ?? '50', 10);
+    const offset = parseInt(url.searchParams.get('offset') ?? '0', 10);
+    const from = url.searchParams.get('from') ?? undefined;
+    const to = url.searchParams.get('to') ?? undefined;
+    return handleGetAuditLog(env, entityType, entityId, limit, offset, from, to);
   }
 
   const validatePermissionMatch = /\/api\/access\/validate$/.exec(path);

@@ -16,7 +16,6 @@ export const en = {
   'reader.tableOfContents': 'Contents',
   'reader.bookmarks': 'Bookmarks',
   'reader.exportNotes': 'Export Notes',
-  'reader.untitledBook': 'Untitled Book',
   'reader.noChapters': 'No chapters available',
   'reader.loading': 'EPUB reader loading...',
   'reader.notAvailable': 'Book not available',

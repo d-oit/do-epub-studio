@@ -11,5 +11,13 @@
       "binding": "BOOKS_BUCKET",
       "bucket_name": "do-epub-studio-books"
     }
-  ]
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "binding": "RATE_LIMITER",
+        "class_name": "RateLimiterDO"
+      }
+    ]
+  }
 }
