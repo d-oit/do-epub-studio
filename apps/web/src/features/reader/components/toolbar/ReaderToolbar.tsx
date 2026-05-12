@@ -173,7 +173,7 @@ export function ReaderToolbar({
           {/* Mobile overflow menu */}
           <div className="sm:hidden relative" ref={menuRef}>
             <IconButton
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              onClick={() => { setIsMenuOpen(!isMenuOpen); }}
               variant="ghost"
               aria-label="More options"
             >
