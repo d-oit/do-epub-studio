@@ -68,7 +68,7 @@ export function AdminAuditPage() {
   }, [page, entityType, entityId, dateFrom, dateTo]);
 
   const handleBack = () => {
-    navigate('/admin/books');
+    void navigate('/admin/books');
   };
 
   const handleRefresh = () => {
