@@ -280,8 +280,8 @@ importers:
         specifier: ^6.0.3
         version: 6.0.3
       vitest:
-        specifier: ^3.0.5
-        version: 3.2.4(@types/node@22.19.18)(jiti@2.6.1)(jsdom@29.1.1)(lightningcss@1.32.0)(terser@5.46.2)
+        specifier: ^4.1.5
+        version: 4.1.5(@types/node@22.19.18)(@vitest/coverage-v8@4.1.5)(jsdom@29.1.1)(vite@8.0.10(@types/node@22.19.18)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.2))
 
   packages/testkit:
     devDependencies:
@@ -7446,6 +7446,14 @@ snapshots:
     optionalDependencies:
       vite: 7.3.3(@types/node@22.19.18)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.2)
 
+  '@vitest/mocker@4.1.5(vite@8.0.10(@types/node@22.19.18)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.2))':
+    dependencies:
+      '@vitest/spy': 4.1.5
+      estree-walker: 3.0.3
+      magic-string: 0.30.21
+    optionalDependencies:
+      vite: 8.0.10(@types/node@22.19.18)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.2)
+
   '@vitest/mocker@4.1.5(vite@8.0.10(@types/node@25.6.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.2))':
     dependencies:
       '@vitest/spy': 4.1.5
@@ -10768,6 +10776,20 @@ snapshots:
       lightningcss: 1.32.0
       terser: 5.46.2
 
+  vite@8.0.10(@types/node@22.19.18)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.2):
+    dependencies:
+      lightningcss: 1.32.0
+      picomatch: 4.0.4
+      postcss: 8.5.14
+      rolldown: 1.0.0-rc.17
+      tinyglobby: 0.2.16
+    optionalDependencies:
+      '@types/node': 22.19.18
+      esbuild: 0.27.3
+      fsevents: 2.3.3
+      jiti: 2.6.1
+      terser: 5.46.2
+
   vite@8.0.10(@types/node@25.6.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.2):
     dependencies:
       lightningcss: 1.32.0
@@ -10823,6 +10845,35 @@ snapshots:
       - terser
       - tsx
       - yaml
+
+  vitest@4.1.5(@types/node@22.19.18)(@vitest/coverage-v8@4.1.5)(jsdom@29.1.1)(vite@8.0.10(@types/node@22.19.18)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.2)):
+    dependencies:
+      '@vitest/expect': 4.1.5
+      '@vitest/mocker': 4.1.5(vite@8.0.10(@types/node@22.19.18)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.2))
+      '@vitest/pretty-format': 4.1.5
+      '@vitest/runner': 4.1.5
+      '@vitest/snapshot': 4.1.5
+      '@vitest/spy': 4.1.5
+      '@vitest/utils': 4.1.5
+      es-module-lexer: 2.1.0
+      expect-type: 1.3.0
+      magic-string: 0.30.21
+      obug: 2.1.1
+      pathe: 2.0.3
+      picomatch: 4.0.4
+      std-env: 4.1.0
+      tinybench: 2.9.0
+      tinyexec: 1.1.2
+      tinyglobby: 0.2.16
+      tinyrainbow: 3.1.0
+      vite: 8.0.10(@types/node@22.19.18)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.2)
+      why-is-node-running: 2.3.0
+    optionalDependencies:
+      '@types/node': 22.19.18
+      '@vitest/coverage-v8': 4.1.5(vitest@4.1.5)
+      jsdom: 29.1.1
+    transitivePeerDependencies:
+      - msw
 
   vitest@4.1.5(@types/node@25.6.0)(@vitest/coverage-v8@4.1.5)(jsdom@29.1.1)(vite@8.0.10(@types/node@25.6.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.2)):
     dependencies:
