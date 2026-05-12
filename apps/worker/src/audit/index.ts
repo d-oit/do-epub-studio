@@ -20,9 +20,55 @@ interface AuditLogRow extends JsonRow {
   created_at: string;
 }
 
+const MAX_SANITIZE_DEPTH = 10;
+
+export function sanitizeAuditPayload(
+  payload: Record<string, unknown>,
+  depth = 0,
+): Record<string, unknown> {
+  if (depth >= MAX_SANITIZE_DEPTH) {
+    return { sanitized: true, truncated: true };
+  }
+
+  const result: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(payload)) {
+    if (value === null || value === undefined) {
+      result[key] = value;
+    } else if (typeof value === 'string') {
+      if (value.length > 10000) {
+        result[key] = value.slice(0, 10000) + '...';
+      } else {
+        result[key] = value;
+      }
+    } else if (typeof value === 'number' || typeof value === 'boolean') {
+      result[key] = value;
+    } else if (Array.isArray(value)) {
+      const sanitized: unknown[] = [];
+      for (const item of value.slice(0, 100)) {
+        if (typeof item === 'object' && item !== null) {
+          sanitized.push(sanitizeAuditPayload(item as Record<string, unknown>, depth + 1));
+        } else if (typeof item === 'string' && item.length > 10000) {
+          sanitized.push(item.slice(0, 10000) + '...');
+        } else {
+          sanitized.push(item);
+        }
+      }
+      result[key] = sanitized;
+    } else if (typeof value === 'object') {
+      result[key] = sanitizeAuditPayload(value as Record<string, unknown>, depth + 1);
+    } else {
+      const str = typeof value === 'string' ? value : JSON.stringify(value);
+      result[key] = str.slice(0, 10000);
+    }
+  }
+  return result;
+}
+
 export async function logAudit(env: Env, entry: AuditEntry): Promise<void> {
   const id = crypto.randomUUID();
-  const payloadJson = entry.payload ? JSON.stringify(entry.payload) : null;
+  const payloadJson = entry.payload
+    ? JSON.stringify(sanitizeAuditPayload(entry.payload))
+    : null;
 
   const { execute } = await import('../db/client');
   await execute(

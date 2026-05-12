@@ -1,7 +1,7 @@
 import { availableLocales } from '../i18n';
 import { useTranslation } from '../hooks/useTranslation';
 
-export function LocaleSwitcher(): JSX.Element {
+export function LocaleSwitcher(): React.ReactNode {
   const { locale, setLocale } = useTranslation();
 
   return (

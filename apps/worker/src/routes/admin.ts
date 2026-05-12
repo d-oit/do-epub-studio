@@ -3,6 +3,7 @@ import { execute, queryAll, queryFirst } from '../db/client';
 import { createGrant } from '../auth/password';
 import { jsonResponse } from '../lib/responses';
 import { validateRequestBody } from '../lib/validation';
+import { sanitizeAuditPayload } from '../audit';
 import {
   CreateBookSchema,
   CreateGrantSchema,
@@ -454,7 +455,9 @@ async function logAudit(
   },
 ): Promise<void> {
   const id = crypto.randomUUID();
-  const payloadJson = entry.payload ? JSON.stringify(entry.payload) : null;
+  const payloadJson = entry.payload
+    ? JSON.stringify(sanitizeAuditPayload(entry.payload))
+    : null;
 
   await execute(
     env,

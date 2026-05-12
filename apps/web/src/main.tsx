@@ -1,26 +1,31 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
+import { MotionConfig } from 'framer-motion';
 
 import App from './App';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { createSpanId, createTraceId, logClientEvent } from './lib/telemetry';
-import { browserRouterFuture } from './lib/routerFuture';
 import './styles/globals.css';
 
 setupGlobalErrorHandlers();
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <ErrorBoundary>
-      <BrowserRouter future={browserRouterFuture}>
-        <App />
-      </BrowserRouter>
-    </ErrorBoundary>
-  </React.StrictMode>,
-);
+const rootElement = document.getElementById('root');
+if (rootElement) {
+  ReactDOM.createRoot(rootElement).render(
+    <React.StrictMode>
+      <ErrorBoundary>
+        <BrowserRouter>
+          <MotionConfig reducedMotion="user">
+            <App />
+          </MotionConfig>
+        </BrowserRouter>
+      </ErrorBoundary>
+    </React.StrictMode>,
+  );
+}
 
-if ('serviceWorker' in navigator) {
+if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     void (async () => {
       try {
@@ -43,16 +48,16 @@ function setupGlobalErrorHandlers(): void {
 
   window.addEventListener('error', (event) => {
     const traceId = createTraceId();
-    const error = event.error as Error | undefined;
+    const error = event.error instanceof Error ? event.error : new Error(String(event.error));
     logClientEvent({
       level: 'error',
       event: 'window.error',
       traceId,
       spanId: createSpanId(),
       error: {
-        name: error?.name ?? 'Error',
-        message: error?.message ?? String(event.message),
-        stack: error?.stack,
+        name: error.name,
+        message: error.message,
+        stack: error.stack,
       },
       metadata: { filename: event.filename, lineno: event.lineno, colno: event.colno },
     });

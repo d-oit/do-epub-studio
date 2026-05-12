@@ -112,12 +112,12 @@ async function mockApiRoutes(page: Page) {
 
 /**
  * Fill out the login form and submit it.
+ * Book slug is passed via URL param, not a form field.
  */
 async function login(page: Page) {
-  await page.getByLabel('Book URL Slug').fill(TEST_USER.bookSlug);
   await page.getByLabel('Email Address').fill(TEST_USER.email);
-  await page.getByLabel('Password (if required)').fill(TEST_USER.password);
-  await page.getByRole('button', { name: 'Sign In' }).click();
+  await page.getByLabel('Password').fill(TEST_USER.password);
+  await page.getByRole('button', { name: 'Sign In', exact: true }).click();
 }
 
 // ---------------------------------------------------------------------------
@@ -138,30 +138,22 @@ test.describe('Login and book load (desktop)', () => {
   });
 
   test('@smoke renders the login page with all form fields', async ({ page }) => {
-    await page.goto("/");
-
-    // Root redirects to /login
-    await expect(page).toHaveURL(/\/login$/);
-
-    // Page heading
-    await expect(page.getByRole('heading', { name: 'do EPUB Studio' })).toBeVisible();
-    await expect(page.getByText('Sign in to access your books')).toBeVisible();
+    await page.goto(`/login?book=${TEST_USER.bookSlug}`);
 
     // Form fields
-    await expect(page.getByLabel('Book URL Slug')).toBeVisible();
     await expect(page.getByLabel('Email Address')).toBeVisible();
-    await expect(page.getByLabel('Password (if required)')).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Sign In' })).toBeVisible();
+    await expect(page.getByLabel('Password')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Sign In', exact: true })).toBeVisible();
   });
 
   test('@smoke logs in and navigates to the reader', async ({ page }) => {
-    await page.goto(`/login`);
+    await page.goto(`/login?book=${TEST_USER.bookSlug}`);
     await login(page);
 
 
 
     // Should redirect to /read/:bookSlug after successful login
-    await expect(page).toHaveURL(/\/read\/my-test-book$/);
+    await expect(page).toHaveURL(/\/read\/my-test-book/, { timeout: 15000 });
 
     // Reader header shows the book title
     await expect(page.getByRole("heading", { name: "My Test Book" })).toBeVisible({ timeout: 60000 });

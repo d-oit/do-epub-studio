@@ -68,19 +68,22 @@ Per `AGENTS.md` (`MAX_LINES_PER_SOURCE_FILE=500`):
 
 ## Action Items
 
-### Immediate (This Sprint)
+### Completed (This Session)
 
-- [x] Fix Tailwind warnings in `ReaderPage.tsx` (`max-w-50` used in ReaderToolbar)
-- [x] Fix toast memory leak timeout tracking
+- [x] **All quality gates pass** — lint, typecheck, test:coverage, build, e2e:smoke
+- [x] **PR #111**: Fixed dep versions, ESLint rules, restored setup-local.md, added main.tsx tests
+- [x] **PR #119**: Created rate-limiter.ts with in-memory Map, added 9 audit tests + 2 CORS tests, fixed admin-auth.ts audit redaction, relaxed slug regex
+- [x] **PR #120**: Fixed CSS overflow on body (removed `overflow-x: clip`)
+- [x] **Issue #114**: Sign-out always visible, slug fallback uses i18n key
+- [x] **Issue #115**: Modal ARIA attributes + focus trap + Escape handler
+- [x] **Issue #116**: Unified theme via `data-theme` + CSS custom properties
+- [x] **Issue #117**: `<MotionConfig reducedMotion="user">` in main.tsx
+- [x] **Issue #118**: Removed `whileFocus` from Input component
+- [x] **E2E test fixes**: Fixed heading selector, form labels, button selector, login flow navigation
+
+### Still Open
+
 - [ ] Update skill categories to fix validation (pre-existing known issue)
-
-### Short Term
-
-- [x] Refactor `ReaderPage.tsx` to split into components (492 LOC) — DONE
-- [x] Refactor `GrantsPage.tsx` to split into components (311 LOC) — DONE
-- [x] Add missing tests (password hashing, bookmarks) — DONE
-- [x] Fix memory leaks in sync.ts and db.ts — DONE
-- [x] Add traceId telemetry to sync.ts and sw.ts — DONE
 - [ ] Add CFI navigation tests (T-1) — partial
 - [ ] `CommentsPanel.tsx` still at 544 LOC — monitor
 

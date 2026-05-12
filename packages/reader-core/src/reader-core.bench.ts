@@ -29,10 +29,10 @@ describe('reader-core performance', () => {
       { id: '2', label: 'Chapter 2', href: 'ch2.xhtml', subitems: [{ id: '2.1', label: 'Section 2.1', href: 'ch2-1.xhtml' }] },
       { id: '3', label: 'Chapter 3', href: 'ch3.xhtml' },
     ];
-    const mockLoadContent = async (href: string) => {
-      if (href === 'ch3.xhtml') return 'Some other content here.';
-      if (href === 'ch2-1.xhtml') return 'The quick brown fox jumps over the lazy dog.';
-      return 'Nothing interesting here.';
+    const mockLoadContent = (href: string): Promise<string> => {
+      if (href === 'ch3.xhtml') return Promise.resolve('Some other content here.');
+      if (href === 'ch2-1.xhtml') return Promise.resolve('The quick brown fox jumps over the lazy dog.');
+      return Promise.resolve('Nothing interesting here.');
     };
 
     bench('reanchor: Pass 1 (exact match in subitem)', async () => {

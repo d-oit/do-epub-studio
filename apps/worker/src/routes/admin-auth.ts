@@ -2,6 +2,7 @@ import type { Env } from '../lib/env';
 import { createAdminSession, revokeAdminSession } from '../auth/admin-middleware';
 import { jsonResponse } from '../lib/responses';
 import { execute } from '../db/client';
+import { sanitizeAuditPayload } from '../audit';
 
 async function logAudit(
   env: Env,
@@ -14,7 +15,9 @@ async function logAudit(
   },
 ): Promise<void> {
   const id = crypto.randomUUID();
-  const payloadJson = entry.payload ? JSON.stringify(entry.payload) : null;
+  const payloadJson = entry.payload
+    ? JSON.stringify(sanitizeAuditPayload(entry.payload))
+    : null;
 
   await execute(
     env,

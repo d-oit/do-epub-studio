@@ -4,7 +4,7 @@
  */
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { useId, useState, cloneElement, isValidElement } from 'react';
+import { useId, useEffect, useRef, useCallback } from 'react';
 import { forwardRef, type ComponentPropsWithoutRef } from 'react';
 
 // ============================================
@@ -211,8 +211,6 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           id={inputId}
           aria-invalid={error ? 'true' : undefined}
           aria-describedby={describedBy}
-          whileFocus={{ scale: 1.01 }}
-          transition={{ duration: 0.1 }}
           className={`
             w-full px-4 py-3 bg-background border rounded-lg
             text-foreground placeholder:text-foreground-muted
@@ -258,6 +256,23 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
     md: 'max-w-md',
     lg: 'max-w-lg',
   };
+  const titleId = useId();
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (isOpen && modalRef.current) {
+      modalRef.current.focus();
+    }
+  }, [isOpen]);
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    },
+    [onClose],
+  );
 
   return (
     <AnimatePresence>
@@ -271,6 +286,12 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
             onClick={onClose}
           />
           <motion.div
+            ref={modalRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={title ? titleId : undefined}
+            tabIndex={-1}
+            onKeyDown={handleKeyDown}
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -280,7 +301,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
             <div className="glass-panel rounded-2xl p-6 m-4">
               {title && (
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-semibold text-foreground">{title}</h2>
+                  <h2 id={titleId} className="text-lg font-semibold text-foreground">{title}</h2>
                   <button
                     onClick={onClose}
                     className="p-1 rounded-lg hover:bg-background-secondary transition-colors"
@@ -363,44 +384,17 @@ interface TooltipProps {
 }
 
 export function Tooltip({ content, children }: TooltipProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const id = useId();
-  const tooltipId = `tooltip-${id}`;
-
-  const handleOpen = () => setIsOpen(true);
-  const handleClose = () => setIsOpen(false);
-
-  // If children is a valid React element, we can inject the necessary accessibility
-  // and event handler props directly into it.
-  const trigger = isValidElement(children)
-    ? cloneElement(children as React.ReactElement<Record<string, unknown>>, {
-        'aria-describedby': tooltipId,
-        onMouseEnter: handleOpen,
-        onMouseLeave: handleClose,
-        onFocus: handleOpen,
-        onBlur: handleClose,
-      })
-    : children;
-
   return (
-    <div className="relative inline-flex">
-      {trigger}
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            id={tooltipId}
-            role="tooltip"
-            initial={{ opacity: 0, y: 5, x: '-50%' }}
-            animate={{ opacity: 1, y: 0, x: '-50%' }}
-            exit={{ opacity: 0, y: 5, x: '-50%' }}
-            transition={{ duration: 0.15, ease: [0.4, 0, 0.2, 1] }}
-            className="absolute bottom-full left-1/2 mb-2 px-2 py-1 text-xs text-white bg-foreground rounded shadow-lg whitespace-nowrap z-50 pointer-events-none"
-          >
-            {content}
-            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-foreground" />
-          </motion.div>
-        )}
-      </AnimatePresence>
+    <div className="group relative inline-flex">
+      {children}
+      <motion.div
+        initial={{ opacity: 0, y: 5 }}
+        whileHover={{ opacity: 1, y: 0 }}
+        className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-foreground rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50"
+      >
+        {content}
+        <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-foreground" />
+      </motion.div>
     </div>
   );
 }

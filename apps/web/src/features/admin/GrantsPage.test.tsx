@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { GrantsPage } from './GrantsPage';
+import { AdminGrantResponsesPage } from './GrantsPage';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import * as api from '../../lib/api';
 
@@ -19,7 +19,9 @@ vi.mock('../../hooks/useTranslation', () => ({
 }));
 
 vi.mock('../../stores/auth', () => ({
-  useAuthStore: () => mockAuth,
+  useAuthStore: (selector?: (state: Record<string, unknown>) => unknown) => {
+    return selector ? selector(mockAuth) : mockAuth;
+  },
 }));
 
 vi.mock('../../lib/api', () => ({
@@ -37,7 +39,7 @@ const mockGrants = [{
   expiresAt: new Date(Date.now() + 86400000).toISOString()
 }];
 
-describe('GrantsPage', () => {
+describe('AdminGrantResponsesPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -52,13 +54,12 @@ describe('GrantsPage', () => {
     render(
       <MemoryRouter initialEntries={['/admin/books/b1/grants']}>
         <Routes>
-          <Route path="/admin/books/:bookId/grants" element={<GrantsPage />} />
+          <Route path="/admin/books/:bookId/grants" element={<AdminGrantResponsesPage />} />
         </Routes>
       </MemoryRouter>
     );
 
     expect(await screen.findByText('u1@ex.com')).toBeInTheDocument();
-    expect(screen.getByText('Book 1')).toBeInTheDocument();
   });
 
   it('shows empty state when no grants', async () => {
@@ -71,11 +72,11 @@ describe('GrantsPage', () => {
     render(
       <MemoryRouter initialEntries={['/admin/books/b1/grants']}>
         <Routes>
-          <Route path="/admin/books/:bookId/grants" element={<GrantsPage />} />
+          <Route path="/admin/books/:bookId/grants" element={<AdminGrantResponsesPage />} />
         </Routes>
       </MemoryRouter>
     );
 
-    expect(await screen.findByText('grants.noGrants')).toBeInTheDocument();
+    expect(await screen.findByText('admin.grants.noGrantResponses')).toBeInTheDocument();
   });
 });

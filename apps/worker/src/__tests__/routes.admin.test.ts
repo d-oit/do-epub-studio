@@ -64,7 +64,7 @@ describe('POST /api/admin/books/{bookId}/files (handleUploadComplete)', () => {
 
 describe('POST /api/admin/grants (handleCreateAdminGrant)', () => {
   const validBody = {
-    bookId: '00000000-0000-0000-0000-000000000001',
+    bookId: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
     email: 'reader@example.com',
     mode: 'private' as const,
     commentsAllowed: false,

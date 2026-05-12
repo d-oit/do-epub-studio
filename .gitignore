@@ -58,3 +58,6 @@ verification_output.txt
 
 # Coverage
 coverage/
+.wrangler/
+.claude/
+.gemini/

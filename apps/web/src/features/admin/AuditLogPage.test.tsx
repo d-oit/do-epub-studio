@@ -11,12 +11,11 @@ vi.mock('../../lib/api', () => ({
   apiRequest: vi.fn(),
 }));
 
+const mockAuditAuth = { sessionToken: 'token', isAdmin: true, logout: vi.fn() };
 vi.mock('../../stores/auth', () => ({
-  useAuthStore: () => ({
-    sessionToken: 'token',
-    isAdmin: true,
-    logout: vi.fn(),
-  }),
+  useAuthStore: (selector?: (state: Record<string, unknown>) => unknown) => {
+    return selector ? selector(mockAuditAuth) : mockAuditAuth;
+  },
 }));
 
 import { apiRequest } from '../../lib/api';
@@ -27,10 +26,7 @@ describe('AdminAuditPage', () => {
   });
 
   it('renders audit entries', async () => {
-    vi.mocked(apiRequest).mockResolvedValue({
-      entries: [{ id: '1', actorEmail: 'a@ex.com', entityType: 'book', action: 'create', createdAt: new Date().toISOString() }],
-      total: 1
-    });
+    vi.mocked(apiRequest).mockResolvedValue([{ id: '1', actorEmail: 'a@ex.com', entityType: 'book', action: 'create', createdAt: new Date().toISOString() }]);
 
     render(<MemoryRouter><AdminAuditPage /></MemoryRouter>);
     expect(await screen.findByText('a@ex.com')).toBeInTheDocument();
