@@ -28,7 +28,7 @@ export function AdminGrantResponsesPage() {
 
   useEffect(() => {
     void fetchGrantResponses();
-  }, [bookId, fetchGrantResponses]);
+  }, [bookId]);
 
   const handleRevoke = async (grantId: string) => {
     if (!confirm(t('admin.grants.confirmRevoke'))) return;
