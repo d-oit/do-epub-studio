@@ -66,7 +66,7 @@ export function ReaderToolbar({
                   d="M4 6h16M4 12h16M4 18h16"
                 />
               </svg>
-              <span className="ml-2 text-sm">{t('reader.tableOfContents')}</span>
+              <span className="hidden md:inline ml-2 text-sm">{t('reader.tableOfContents')}</span>
             </IconButton>
           </Tooltip>
           <h1 className="font-medium truncate max-w-50 md:max-w-xs text-foreground">
