@@ -284,7 +284,9 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
       if (!modalRef.current) return;
 
       const focusableElements = modalRef.current.querySelectorAll(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+      const focusableElements = modalRef.current.querySelectorAll(
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      );
       );
 
       if (focusableElements.length === 0) return;
