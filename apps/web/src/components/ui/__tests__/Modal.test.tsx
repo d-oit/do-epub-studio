@@ -120,7 +120,7 @@ describe('Modal', () => {
     render(
       <Modal isOpen={true} onClose={() => {}} title="Focus Trap">
         <button type="button" data-testid="button1">Button 1</button>
-        <button data-testid="button2">Button 2</button>
+        <button type="button" data-testid="button2">Button 2</button>
       </Modal>,
     );
 
