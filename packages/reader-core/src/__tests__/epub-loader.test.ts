@@ -2,7 +2,7 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { createEpubLoader, extractCfi, isValidCfi } from '../epub-loader';
 
 // Mock epubjs module - vi.mock is hoisted so all definitions must be inside
-vi.mock('epubjs', () => {
+vi.mock('@intity/epub-js', () => {
   const mockRendition = {
     on: vi.fn(),
     off: vi.fn(),
@@ -26,13 +26,15 @@ vi.mock('epubjs', () => {
           { label: 'Chapter 2', href: 'chapter2.xhtml' },
         ],
       }),
-      metadata: Promise.resolve({
-        title: 'Test Book',
-        creator: 'Test Author',
-        language: 'en',
-        publisher: 'Test Publisher',
-        description: 'A test book',
-      }),
+      metadata: Promise.resolve(
+        new Map([
+          ['title', 'Test Book'],
+          ['creator', 'Test Author'],
+          ['language', 'en'],
+          ['publisher', 'Test Publisher'],
+          ['description', 'A test book'],
+        ]),
+      ),
     },
     renderTo: vi.fn().mockReturnValue(mockRendition),
     destroy: vi.fn(),
@@ -44,7 +46,7 @@ vi.mock('epubjs', () => {
 });
 
 // Get mock references after hoisting
-const epubjsMock = vi.mocked((await import('epubjs')) as unknown) as {
+const epubjsMock = vi.mocked((await import('@intity/epub-js')) as unknown) as {
   __mockRendition: {
     on: ReturnType<typeof vi.fn>;
     off: ReturnType<typeof vi.fn>;
