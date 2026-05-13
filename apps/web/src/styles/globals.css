@@ -16,6 +16,17 @@
   --color-accent-warning: #f59e0b;
   --color-accent-error: #ef4444;
   --color-border: #e5e5e5;
+
+  /* Motion control variables */
+  --motion-slide-offset: 20px;
+  --motion-item-offset: 10px;
+  --motion-hover-lift: -4px;
+  --motion-header-offset: -100px;
+  --motion-scale-enter: 0.95;
+  --motion-scale-tap: 0.97;
+  --motion-scale-hover: 1.02;
+  --motion-scale-hover-lg: 1.05;
+  --motion-scale-tap-lg: 0.9;
   
   /* Animation timing */
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
@@ -242,6 +253,17 @@ select:focus-visible {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+
+    /* Reset motion control variables to suppress motion transforms */
+    --motion-slide-offset: 0px;
+    --motion-item-offset: 0px;
+    --motion-hover-lift: 0px;
+    --motion-header-offset: 0px;
+    --motion-scale-enter: 1;
+    --motion-scale-tap: 1;
+    --motion-scale-hover: 1;
+    --motion-scale-hover-lg: 1;
+    --motion-scale-tap-lg: 1;
   }
 }
 
