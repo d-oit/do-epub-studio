@@ -84,6 +84,7 @@ export function ReaderPage() {
   const { handleCreateBookmark, handleDeleteBookmark } = useBookmarkHandlers();
   const { handleExportNotes } = useExportNotes();
 
+  const rootRef = useRef<HTMLDivElement>(null!);
   const viewerRef = useRef<HTMLDivElement>(null!);
   const bookRef = useRef<Book | null>(null);
   const renditionRef = useRef<Rendition | null>(null);
@@ -155,9 +156,11 @@ export function ReaderPage() {
 
   const applyTheme = useCallback(
     (rendition: Rendition) => {
-      const root = document.documentElement;
-      const bg = getComputedStyle(root).getPropertyValue('--color-background').trim();
-      const fg = getComputedStyle(root).getPropertyValue('--color-foreground').trim();
+      const container = rootRef.current;
+      if (!container) return;
+      const style = getComputedStyle(container);
+      const bg = style.getPropertyValue('--color-background').trim();
+      const fg = style.getPropertyValue('--color-foreground').trim();
       const imgFilter =
         readerTheme === 'dark'
           ? 'invert(1) hue-rotate(180deg)'
@@ -407,7 +410,11 @@ export function ReaderPage() {
   const tFn = t as (key: string) => any;
 
   return (
-    <div className="min-h-screen bg-background text-foreground" data-theme={readerTheme}>
+    <div
+      ref={rootRef}
+      className="min-h-screen bg-background text-foreground"
+      data-theme={readerTheme === 'system' ? undefined : readerTheme}
+    >
       <ReaderToolbar
         bookTitle={bookTitle}
         bookSlug={bookSlug ?? ''}

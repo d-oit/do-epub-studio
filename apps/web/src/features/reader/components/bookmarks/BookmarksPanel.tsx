@@ -20,13 +20,13 @@ export function BookmarksPanel({
   if (!isOpen) return null;
 
   return (
-    <aside className="fixed inset-y-0 right-0 w-80 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 z-40 flex flex-col shadow-xl">
-      <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+    <aside className="fixed inset-y-0 right-0 w-80 bg-background border-l border-border z-40 flex flex-col shadow-xl">
+      <div className="p-4 border-b border-border flex justify-between items-center">
         <h2 className="font-semibold">Bookmarks</h2>
         <div className="flex items-center gap-2">
           <button
             onClick={onAddBookmark}
-            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+            className="p-1 hover:bg-background-secondary rounded"
             title="Add bookmark at current position"
             aria-label="Add bookmark"
           >
@@ -41,7 +41,7 @@ export function BookmarksPanel({
           </button>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+            className="p-1 hover:bg-background-secondary rounded"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -56,7 +56,7 @@ export function BookmarksPanel({
       </div>
       <div className="flex-1 overflow-y-auto p-4">
         {bookmarks.length === 0 ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-8">
+          <p className="text-sm text-foreground-muted text-center py-8">
             No bookmarks yet. Click the bookmark icon to save your place.
           </p>
         ) : (
@@ -64,20 +64,20 @@ export function BookmarksPanel({
             {bookmarks.map((bookmark) => (
               <div
                 key={bookmark.id}
-                className="p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-700 transition-colors"
+                className="p-3 rounded-lg border border-border hover:border-accent transition-colors"
               >
                 <div className="flex items-start justify-between">
                   <button onClick={() => onNavigate(bookmark)} className="flex-1 text-left">
-                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                    <p className="text-sm font-medium text-foreground">
                       {bookmark.label || 'Untitled'}
                     </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    <p className="text-xs text-foreground-muted mt-1">
                       {new Date(bookmark.createdAt).toLocaleDateString()}
                     </p>
                   </button>
                   <button
                     onClick={() => onDeleteBookmark(bookmark.id)}
-                    className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+                    className="p-1 text-foreground-muted hover:text-accent-error transition-colors"
                     aria-label="Delete bookmark"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

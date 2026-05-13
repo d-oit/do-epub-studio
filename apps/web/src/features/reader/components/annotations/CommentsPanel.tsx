@@ -84,10 +84,10 @@ export function CommentsPanel({
   if (!isOpen) return null;
 
   return (
-    <aside className="fixed inset-y-0 right-0 w-80 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 z-40 flex flex-col shadow-xl">
-      <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+    <aside className="fixed inset-y-0 right-0 w-80 bg-background border-l border-border z-40 flex flex-col shadow-xl">
+      <div className="p-4 border-b border-border flex justify-between items-center">
         <h2 className="font-semibold">{t('annotation.comment')}s</h2>
-        <button onClick={onClose} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
+        <button onClick={onClose} className="p-1 hover:bg-background-secondary rounded">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
               strokeLinecap="round"
@@ -99,23 +99,23 @@ export function CommentsPanel({
         </button>
       </div>
 
-      <div className="flex border-b border-gray-200 dark:border-gray-700">
+      <div className="flex border-b border-border">
         <button
           onClick={() => setActiveTab('comments')}
-          className={`flex-1 py-2 px-4 text-sm font-medium ${
+          className={`flex-1 py-2 px-4 text-sm font-medium transition-colors ${
             activeTab === 'comments'
-              ? 'border-b-2 border-primary-600 text-primary-600'
-              : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+              ? 'border-b-2 border-accent text-accent'
+              : 'text-foreground-muted hover:text-foreground'
           }`}
         >
           {t('annotation.comment')} ({openComments.length})
         </button>
         <button
           onClick={() => setActiveTab('highlights')}
-          className={`flex-1 py-2 px-4 text-sm font-medium ${
+          className={`flex-1 py-2 px-4 text-sm font-medium transition-colors ${
             activeTab === 'highlights'
-              ? 'border-b-2 border-primary-600 text-primary-600'
-              : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+              ? 'border-b-2 border-accent text-accent'
+              : 'text-foreground-muted hover:text-foreground'
           }`}
         >
           {t('annotation.highlight')} ({highlights.length})
@@ -126,13 +126,13 @@ export function CommentsPanel({
         {activeTab === 'comments' && (
           <div className="space-y-4">
             {openComments.length === 0 && resolvedComments.length === 0 && (
-              <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-8">
+              <p className="text-sm text-foreground-muted text-center py-8">
                 {t('comment.noComments')}
               </p>
             )}
             {openComments.length > 0 && (
               <div className="space-y-3">
-                <h3 className="text-xs font-semibold text-gray-500 uppercase">Open</h3>
+                <h3 className="text-xs font-semibold text-foreground-muted uppercase">Open</h3>
                 {openComments.map((comment) => (
                   <CommentItem
                     key={comment.id}
@@ -272,10 +272,10 @@ const CommentItem = memo(function CommentItem({
 
   return (
     <div
-      className={`p-3 rounded-lg border ${
+      className={`p-3 rounded-lg border transition-colors ${
         isCurrentChapter
-          ? 'border-primary-300 dark:border-primary-700 bg-primary-50 dark:bg-primary-900/20'
-          : 'border-gray-200 dark:border-gray-700'
+          ? 'border-accent/30 bg-accent/5'
+          : 'border-border'
       }`}
       onMouseEnter={() => setShowActions(true)}
       onMouseLeave={() => setShowActions(false)}
@@ -285,7 +285,7 @@ const CommentItem = memo(function CommentItem({
     >
       {comment.selectedText && (
         <blockquote
-          className="text-xs text-gray-600 dark:text-gray-400 italic mb-2 cursor-pointer hover:text-primary-600"
+          className="text-xs text-foreground-muted italic mb-2 cursor-pointer hover:text-accent"
           onClick={onNavigate}
           onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onNavigate(); } }}
           tabIndex={0}
@@ -301,7 +301,7 @@ const CommentItem = memo(function CommentItem({
           <textarea
             value={editText}
             onChange={(e) => setEditText(e.target.value)}
-            className="w-full p-2 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700"
+            className="w-full p-2 text-sm border border-border rounded bg-background"
             rows={2}
             // eslint-disable-next-line jsx-a11y/no-autofocus -- Intentional: textarea appears conditionally on user action, auto-focusing improves editing workflow
             autoFocus
@@ -309,13 +309,13 @@ const CommentItem = memo(function CommentItem({
           <div className="flex gap-2">
             <button
               onClick={() => handleEdit(comment.id)}
-              className="px-2 py-1 text-xs bg-primary-600 text-white rounded hover:bg-primary-700"
+              className="px-2 py-1 text-xs bg-accent text-white rounded hover:opacity-90"
             >
               Save
             </button>
             <button
               onClick={() => setEditingComment(null)}
-              className="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+              className="px-2 py-1 text-xs border border-border rounded hover:bg-background-secondary"
             >
               Cancel
             </button>
@@ -323,24 +323,24 @@ const CommentItem = memo(function CommentItem({
         </div>
       ) : (
         <>
-          <p className="text-sm text-gray-900 dark:text-gray-100">{comment.body}</p>
+          <p className="text-sm text-foreground">{comment.body}</p>
           <div className="mt-2 flex items-center justify-between">
-            <span className="text-xs text-gray-500 dark:text-gray-400">
+            <span className="text-xs text-foreground-muted">
               {comment.userEmail} · {formatDate(comment.createdAt)}
             </span>
             {comment.status === 'resolved' && (
-              <span className="text-xs text-green-600 dark:text-green-400">{t('comment.resolved')}</span>
+              <span className="text-xs text-accent-success">{t('comment.resolved')}</span>
             )}
           </div>
         </>
       )}
 
       {comment.replies && comment.replies.length > 0 && (
-        <div className="mt-3 pl-3 border-l-2 border-gray-200 dark:border-gray-700 space-y-2">
+        <div className="mt-3 pl-3 border-l-2 border-border space-y-2">
           {comment.replies.map((reply) => (
             <div key={reply.id} className="text-sm">
-              <p className="text-gray-900 dark:text-gray-100">{reply.body}</p>
-              <span className="text-xs text-gray-500 dark:text-gray-400">
+              <p className="text-foreground">{reply.body}</p>
+              <span className="text-xs text-foreground-muted">
                 {reply.userEmail} · {formatDate(reply.createdAt)}
               </span>
             </div>
@@ -353,7 +353,7 @@ const CommentItem = memo(function CommentItem({
           <textarea
             value={replyText}
             onChange={(e) => setReplyText(e.target.value)}
-            className="w-full p-2 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700"
+            className="w-full p-2 text-sm border border-border rounded bg-background"
             rows={2}
             placeholder={t('comment.reply')}
             // eslint-disable-next-line jsx-a11y/no-autofocus -- Intentional: textarea appears conditionally on user action, auto-focusing improves reply workflow
@@ -362,13 +362,13 @@ const CommentItem = memo(function CommentItem({
           <div className="flex gap-2">
             <button
               onClick={() => handleReply(comment.id)}
-              className="px-2 py-1 text-xs bg-primary-600 text-white rounded hover:bg-primary-700"
+              className="px-2 py-1 text-xs bg-accent text-white rounded hover:opacity-90"
             >
               {t('comment.reply')}
             </button>
             <button
               onClick={() => setReplyingTo(null)}
-              className="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+              className="px-2 py-1 text-xs border border-border rounded hover:bg-background-secondary"
             >
               {t('annotation.cancel')}
             </button>
@@ -383,7 +383,7 @@ const CommentItem = memo(function CommentItem({
               setReplyingTo(comment.id);
               setReplyText('');
             }}
-            className="text-xs text-primary-600 hover:text-primary-700"
+            className="text-xs text-accent hover:opacity-80"
           >
             {t('comment.reply')}
           </button>
@@ -392,19 +392,19 @@ const CommentItem = memo(function CommentItem({
               setEditingComment(comment.id);
               setEditText(comment.body);
             }}
-            className="text-xs text-gray-600 hover:text-gray-700 dark:text-gray-400"
+            className="text-xs text-foreground-muted hover:text-foreground"
           >
             {t('comment.edit')}
           </button>
           <button
             onClick={() => onResolve(comment.id)}
-            className="text-xs text-green-600 hover:text-green-700"
+            className="text-xs text-accent-success hover:opacity-80"
           >
             {comment.status === 'resolved' ? t('comment.unresolve') : t('comment.resolve')}
           </button>
           <button
             onClick={() => onDelete(comment.id)}
-            className="text-xs text-red-600 hover:text-red-700"
+            className="text-xs text-accent-error hover:opacity-80"
           >
             {t('comment.delete')}
           </button>
@@ -442,10 +442,10 @@ const HighlightItem = memo(function HighlightItem({
 
   return (
     <div
-      className={`p-3 rounded-lg border ${
+      className={`p-3 rounded-lg border transition-colors ${
         isCurrentChapter
-          ? 'border-primary-300 dark:border-primary-700'
-          : 'border-gray-200 dark:border-gray-700'
+          ? 'border-accent/30 bg-accent/5'
+          : 'border-border'
       }`}
       onMouseEnter={() => setShowActions(true)}
       onMouseLeave={() => setShowActions(false)}
@@ -454,7 +454,7 @@ const HighlightItem = memo(function HighlightItem({
       tabIndex={0}
     >
       <div
-        className="text-sm text-gray-900 dark:text-gray-100 cursor-pointer hover:text-primary-600"
+        className="text-sm text-foreground cursor-pointer hover:text-accent"
         onClick={onNavigate}
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onNavigate(); } }}
         tabIndex={0}
@@ -466,7 +466,7 @@ const HighlightItem = memo(function HighlightItem({
       </div>
 
       {highlight.note && !isEditing && (
-        <p className="mt-2 text-xs text-gray-600 dark:text-gray-400">{highlight.note}</p>
+        <p className="mt-2 text-xs text-foreground-muted">{highlight.note}</p>
       )}
 
       {isEditing ? (
@@ -474,7 +474,7 @@ const HighlightItem = memo(function HighlightItem({
           <textarea
             value={highlightNote}
             onChange={(e) => setHighlightNote(e.target.value)}
-            className="w-full p-2 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700"
+            className="w-full p-2 text-sm border border-border rounded bg-background"
             rows={2}
             placeholder="Add a note..."
             // eslint-disable-next-line jsx-a11y/no-autofocus -- Intentional: textarea appears conditionally on user action, auto-focusing improves note-adding workflow
@@ -483,13 +483,13 @@ const HighlightItem = memo(function HighlightItem({
           <div className="flex gap-2">
             <button
               onClick={() => onEdit(highlight.id)}
-              className="px-2 py-1 text-xs bg-primary-600 text-white rounded hover:bg-primary-700"
+              className="px-2 py-1 text-xs bg-accent text-white rounded hover:opacity-90"
             >
               Save
             </button>
             <button
               onClick={() => setEditingHighlight(null)}
-              className="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+              className="px-2 py-1 text-xs border border-border rounded hover:bg-background-secondary"
             >
               Cancel
             </button>
@@ -498,7 +498,7 @@ const HighlightItem = memo(function HighlightItem({
       ) : (
         <>
           <div className="mt-2 flex items-center justify-between">
-            <span className="text-xs text-gray-500 dark:text-gray-400">
+            <span className="text-xs text-foreground-muted">
               {formatDate(highlight.createdAt)}
             </span>
           </div>
@@ -509,13 +509,13 @@ const HighlightItem = memo(function HighlightItem({
                   setEditingHighlight(highlight.id);
                   setHighlightNote(highlight.note || '');
                 }}
-                className="text-xs text-gray-600 hover:text-gray-700 dark:text-gray-400"
+                className="text-xs text-foreground-muted hover:text-foreground"
               >
                 Edit Note
               </button>
               <button
                 onClick={() => onDelete(highlight.id)}
-                className="text-xs text-red-600 hover:text-red-700"
+                className="text-xs text-accent-error hover:opacity-80"
               >
                 Delete
               </button>

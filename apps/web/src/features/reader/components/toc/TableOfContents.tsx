@@ -17,10 +17,10 @@ export function TableOfContents({ isOpen, toc, onClose, onNavigate, t }: TableOf
   if (!isOpen) return null;
 
   return (
-    <aside className="fixed inset-y-0 left-0 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 z-40 overflow-y-auto">
-      <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+    <aside className="fixed inset-y-0 left-0 w-64 bg-background border-r border-border z-40 overflow-y-auto">
+      <div className="p-4 border-b border-border flex justify-between items-center">
         <h2 className="font-semibold">{t('reader.tableOfContents')}</h2>
-        <button onClick={onClose} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
+        <button onClick={onClose} className="p-1 hover:bg-background-secondary rounded">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
               strokeLinecap="round"
@@ -39,13 +39,13 @@ export function TableOfContents({ isOpen, toc, onClose, onNavigate, t }: TableOf
               onClick={() => {
                 onNavigate(item.href);
               }}
-              className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+              className="w-full text-left px-3 py-2 text-sm hover:bg-background-secondary rounded"
             >
               {item.label}
             </button>
           ))
         ) : (
-          <p className="px-3 py-2 text-sm text-gray-500">{t('reader.noChapters')}</p>
+          <p className="px-3 py-2 text-sm text-foreground-muted">{t('reader.noChapters')}</p>
         )}
       </nav>
     </aside>

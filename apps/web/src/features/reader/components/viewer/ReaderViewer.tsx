@@ -19,25 +19,25 @@ export function ReaderViewer({
     <main className="pt-14 pb-20">
       {error && (
         <div className="max-w-3xl mx-auto px-4 mt-4">
-          <div className="p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded text-sm text-red-700 dark:text-red-300">
+          <div className="p-3 bg-accent-error/10 border border-accent-error rounded text-sm text-accent-error">
             {error}
           </div>
         </div>
       )}
       {isLoading ? (
         <div className="flex items-center justify-center h-96">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
         </div>
       ) : epubUrl ? (
         <div className={`mx-auto px-4 py-8 ${pageWidthClass}`}>
           <div
             ref={viewerRef}
-            className="h-[calc(100vh-8rem)] bg-gray-50 dark:bg-gray-900 rounded-lg overflow-hidden"
+            className="h-[calc(100vh-8rem)] bg-background-secondary rounded-lg overflow-hidden"
           />
         </div>
       ) : (
         <div className="flex items-center justify-center h-96">
-          <p className="text-gray-500 dark:text-gray-400">{notAvailableText}</p>
+          <p className="text-foreground-muted">{notAvailableText}</p>
         </div>
       )}
     </main>
