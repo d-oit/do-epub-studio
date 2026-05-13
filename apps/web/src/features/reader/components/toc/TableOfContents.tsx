@@ -20,7 +20,7 @@ export function TableOfContents({ isOpen, toc, onClose, onNavigate, t }: TableOf
     <aside className="fixed inset-y-0 left-0 w-64 bg-background border-r border-border z-40 overflow-y-auto">
       <div className="p-4 border-b border-border flex justify-between items-center">
         <h2 className="font-semibold">{t('reader.tableOfContents')}</h2>
-        <button onClick={onClose} className="p-1 hover:bg-background-secondary rounded">
+        <button type="button" onClick={onClose} className="p-1 hover:bg-background-secondary rounded">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
               strokeLinecap="round"
