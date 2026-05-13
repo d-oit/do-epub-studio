@@ -8,7 +8,17 @@ import { Input } from '../index';
 // By re-mocking it here, we override the global one
 vi.mock('framer-motion', () => ({
   motion: {
-    input: React.forwardRef<HTMLInputElement, any>((props, ref) => {
+    input: React.forwardRef<HTMLInputElement, React.ComponentPropsWithoutRef<'input'> & {
+      whileFocus?: unknown;
+      whileHover?: unknown;
+      whileTap?: unknown;
+      whileDrag?: unknown;
+      whileInView?: unknown;
+      initial?: unknown;
+      animate?: unknown;
+      exit?: unknown;
+      transition?: unknown;
+    }>((props, ref) => {
       const {
         whileFocus,
         whileHover: _whileHover,
@@ -23,14 +33,14 @@ vi.mock('framer-motion', () => ({
       } = props;
       return <input {...domProps} ref={ref} data-while-focus={JSON.stringify(whileFocus)} />;
     }),
-    div: React.forwardRef<HTMLDivElement, any>(({ children, ...props }, ref) => (
+    div: React.forwardRef<HTMLDivElement, React.ComponentPropsWithoutRef<'div'>>(({ children, ...props }, ref) => (
       <div {...props} ref={ref}>{children}</div>
     )),
-    p: React.forwardRef<HTMLParagraphElement, any>(({ children, ...props }, ref) => (
+    p: React.forwardRef<HTMLParagraphElement, React.ComponentPropsWithoutRef<'p'>>(({ children, ...props }, ref) => (
       <p {...props} ref={ref}>{children}</p>
     )),
-    label: React.forwardRef<HTMLLabelElement, any>(({ children, ...props }, ref) => (
-      <label {...props} ref={ref}>{children}</label>
+    label: React.forwardRef<HTMLLabelElement, React.ComponentPropsWithoutRef<'label'>>(({ children, ...props }, ref) => (
+      <label {...props} ref={ref} htmlFor={props.htmlFor}>{children}</label>
     )),
   },
   AnimatePresence: ({ children }: { children?: React.ReactNode }) => (

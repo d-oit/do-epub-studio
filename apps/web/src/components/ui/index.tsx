@@ -215,9 +215,8 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             w-full px-4 py-3 bg-background border rounded-lg
             text-foreground placeholder:text-foreground-muted
             transition-all duration-150
-            focus:border-accent focus:ring-[3px] focus:ring-accent/15
             outline-none
-            ${error ? 'border-accent-error focus:border-accent-error focus:ring-accent-error/15' : 'border-border'}
+            ${error ? 'border-accent-error focus:border-accent-error focus:ring-accent-error/15' : 'border-border focus:border-accent focus:ring-[3px] focus:ring-accent/15'}
             ${className}
           `}
           {...(props)}
