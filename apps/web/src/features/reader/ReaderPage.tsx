@@ -162,7 +162,7 @@ export function ReaderPage() {
     ? (isSystemDark() ? 'dark' : 'light')
     : readerTheme;
 
-  const applyTheme = useCallback(
+  const applyThemes = useCallback(
     (rendition: Rendition) => {
       const container = rootRef.current;
       if (!container) return;
@@ -176,19 +176,10 @@ export function ReaderPage() {
           : effectiveTheme === 'sepia'
             ? 'sepia(1)'
             : 'none';
-      rendition.themes.registerRules('default', {
-        body: { background: bg, color: fg },
-        img: { filter: imgFilter },
-      });
-      rendition.themes.select('default');
-    },
-    [readerTheme, isSystemDark],
-  );
-
-  const applyTypography = useCallback(
-    (rendition: Rendition) => {
-      rendition.themes.registerRules('typography', {
+      rendition.themes.registerRules('reader-theme', {
         body: {
+          background: bg,
+          color: fg,
           'font-size': FONT_SIZES[readerFontSize],
           'line-height': LINE_HEIGHTS[readerLineHeight],
           'font-family':
@@ -198,10 +189,11 @@ export function ReaderPage() {
                 ? 'sans-serif'
                 : 'monospace',
         },
+        img: { filter: imgFilter },
       });
-      rendition.themes.select('typography');
+      rendition.themes.select('reader-theme');
     },
-    [readerFontSize, readerFontFamily, readerLineHeight],
+    [readerTheme, readerFontSize, readerFontFamily, readerLineHeight, isSystemDark],
   );
 
   const handleNavigateToAnnotation = useCallback(async (chapterRef: string, cfiRange?: string) => {
@@ -272,11 +264,10 @@ export function ReaderPage() {
           width: '100%',
           height: '100%',
           spread: 'auto',
-          sandbox: ['allow-same-origin', 'allow-scripts'],
+          sandbox: ['allow-same-origin'],
         });
         renditionRef.current = rendition;
-        applyTheme(rendition);
-        applyTypography(rendition);
+        applyThemes(rendition);
         await rendition.display();
 
         const initialLocation = rendition.location;
@@ -360,11 +351,11 @@ export function ReaderPage() {
     void initEpub();
 
     return () => {
-      const rendition = renditionRef.current;
-      if (rendition) {
-        const existing = rendition.annotations as unknown as Map<string, { cfiRange: string; type: string }>;
+      const r = renditionRef.current;
+      if (r) {
+        const existing = r.annotations as unknown as Iterable<[string, { cfiRange: string; type: string }]>;
         for (const [, annotation] of existing) {
-          rendition.annotations.remove(annotation.cfiRange, annotation.type);
+          r.annotations.remove(annotation.cfiRange, annotation.type);
         }
       }
       renditionRef.current?.destroy();
@@ -374,8 +365,7 @@ export function ReaderPage() {
     epubUrl,
     sessionToken,
     bookId,
-    applyTheme,
-    applyTypography,
+    applyThemes,
     setCurrentChapter,
     setError,
     setProgress,
@@ -383,20 +373,20 @@ export function ReaderPage() {
   ]);
 
   useEffect(() => {
-    if (renditionRef.current) applyTheme(renditionRef.current);
-  }, [readerTheme, applyTheme]);
+    if (renditionRef.current) applyThemes(renditionRef.current);
+  }, [readerTheme, applyThemes]);
 
   useEffect(() => {
     if (readerTheme !== 'system') return;
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
-    const handler = () => { if (renditionRef.current) applyTheme(renditionRef.current); };
+    const handler = () => { if (renditionRef.current) applyThemes(renditionRef.current); };
     mq.addEventListener('change', handler);
     return () => mq.removeEventListener('change', handler);
-  }, [readerTheme, applyTheme]);
+  }, [readerTheme, applyThemes]);
 
   useEffect(() => {
-    if (renditionRef.current) applyTypography(renditionRef.current);
-  }, [readerFontSize, readerFontFamily, readerLineHeight, applyTypography]);
+    if (renditionRef.current) applyThemes(renditionRef.current);
+  }, [readerFontSize, readerFontFamily, readerLineHeight, applyThemes]);
 
   useEffect(() => {
     const r = renditionRef.current;

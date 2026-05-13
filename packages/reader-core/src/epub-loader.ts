@@ -98,11 +98,21 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
     }));
   }
 
+  function getSpineIterable(spine: unknown): EpubSpineItem[] {
+    if (!spine) return [];
+    if (Array.isArray(spine)) return spine as EpubSpineItem[];
+    if (typeof (spine as Iterable<EpubSpineItem>)[Symbol.iterator] === 'function') {
+      return Array.from(spine as Iterable<EpubSpineItem>);
+    }
+    return [];
+  }
+
   async function parseSpineFromBook(): Promise<SpineItem[]> {
-    const spine = await book!.loaded.spine;
+    if (!book) return [];
+    const spine = await book.loaded.spine;
     const spineItems: SpineItem[] = [];
     let index = 0;
-    for (const item of (spine as unknown as Iterable<EpubSpineItem>)) {
+    for (const item of getSpineIterable(spine)) {
       spineItems.push({
         index: item.index ?? index,
         href: item.href ?? '',
@@ -135,13 +145,13 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
       spineItems = await parseSpineFromBook();
 
       const meta = await book.loaded.metadata;
-      const metaMap = meta as unknown as Map<string, string>;
+      const metaMap = meta as unknown as Record<string, string | undefined>;
       metadata = {
-        title: metaMap.get('title') ?? '',
-        creator: metaMap.get('creator'),
-        language: metaMap.get('language'),
-        publisher: metaMap.get('publisher'),
-        description: metaMap.get('description'),
+        title: metaMap.title ?? '',
+        creator: metaMap.creator,
+        language: metaMap.language,
+        publisher: metaMap.publisher,
+        description: metaMap.description,
       };
     } catch (error) {
       const formatted = formatError(error);
@@ -165,7 +175,7 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
       width: '100%',
       height: '100%',
       spread: 'auto',
-      sandbox: ['allow-same-origin', 'allow-scripts'],
+      sandbox: ['allow-same-origin'],
     });
 
     // Bridge rendition events to the loader's event system

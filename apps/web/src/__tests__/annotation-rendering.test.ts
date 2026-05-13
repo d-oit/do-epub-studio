@@ -8,12 +8,27 @@ import {
 } from '../features/reader/annotationRendering';
 import type { Rendition } from '@intity/epub-js';
 
+interface AnnotationData {
+  type: string;
+  cfiRange: string;
+  data?: unknown;
+  cb?: () => void;
+  styles?: Record<string, string>;
+}
+
+interface AnnotationsMock {
+  append: ReturnType<typeof vi.fn>;
+  remove: ReturnType<typeof vi.fn>;
+  _set: (key: string, value: AnnotationData) => void;
+  [Symbol.iterator](): Iterator<[string, AnnotationData]>;
+}
+
 // Minimal mock of the epubjs Annotations API
-function makeAnnotationsMock() {
-  const annotations = new Map<string, any>();
-  const mock: any = {
-    append: vi.fn((type: string, cfi: string, { data, cb, styles }: any) => {
-      annotations.set(`${type}-${cfi}`, { type, cfiRange: cfi, data, cb, styles });
+function makeAnnotationsMock(): AnnotationsMock {
+  const annotations = new Map<string, AnnotationData>();
+  return {
+    append: vi.fn((type: string, cfi: string, { data, cb, styles }: Record<string, unknown>) => {
+      annotations.set(`${type}-${cfi}`, { type, cfiRange: cfi, data, cb: cb as (() => void) | undefined, styles: styles as Record<string, string> | undefined });
     }),
     remove: vi.fn((cfi: string, type: string) => {
       annotations.delete(`${type}-${cfi}`);
@@ -23,9 +38,8 @@ function makeAnnotationsMock() {
       yield* annotations.entries();
     },
     // Adding Map-like methods if needed for the test to set up state
-    _set: (key: string, value: any) => annotations.set(key, value),
+    _set: (key: string, value: AnnotationData) => annotations.set(key, value),
   };
-  return mock;
 }
 
 function makeRenditionMock() {
@@ -46,7 +60,7 @@ describe('renderHighlightsOnRendition', () => {
 
   it('clears existing highlight annotations before rendering', () => {
     const existingAnnotation = { type: 'highlight', cfiRange: 'epubcfi(/6/4!/4/2/1:0,/1:10)' };
-    (rendition.annotations as any)._set('highlight-epubcfi(/6/4!/4/2/1:0,/1:10)', existingAnnotation);
+    (rendition.annotations as unknown as AnnotationsMock)._set('highlight-epubcfi(/6/4!/4/2/1:0,/1:10)', existingAnnotation);
 
     renderHighlightsOnRendition(rendition, 'chapter1.html', []);
 
@@ -104,8 +118,6 @@ describe('renderHighlightsOnRendition', () => {
   });
 });
 
-// ─── renderCommentMarkersOnRendition ─────────────────────────────────────────
-
 describe('renderCommentMarkersOnRendition', () => {
   let rendition: Rendition;
   const onNavigate = vi.fn();
@@ -117,7 +129,7 @@ describe('renderCommentMarkersOnRendition', () => {
 
   it('clears existing underline annotations before rendering', () => {
     const existingAnnotation = { type: 'underline', cfiRange: 'epubcfi(/6/4!/4/2/1:0,/1:10)' };
-    (rendition.annotations as any)._set('underline-epubcfi(/6/4!/4/2/1:0,/1:10)', existingAnnotation);
+    (rendition.annotations as unknown as AnnotationsMock)._set('underline-epubcfi(/6/4!/4/2/1:0,/1:10)', existingAnnotation);
 
     renderCommentMarkersOnRendition(rendition, 'chapter1.html', [], onNavigate);
 
@@ -187,9 +199,8 @@ describe('renderCommentMarkersOnRendition', () => {
 
     renderCommentMarkersOnRendition(rendition, 'ch1.html', comments, onNavigate);
 
-    // Extract and invoke the click callback passed to append()
     const [, , options] = vi.mocked(rendition.annotations.append).mock.calls[0];
-    (options as any).cb();
+    (options as { cb?: () => void }).cb?.();
 
     expect(onNavigate).toHaveBeenCalledWith('ch1.html', 'epubcfi(/6/4!/4/2/1:0,/1:10)');
   });
