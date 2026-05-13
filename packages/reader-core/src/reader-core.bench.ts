@@ -46,7 +46,7 @@ describe('reader-core performance', () => {
     describe('stress tests', () => {
       const largeContent = 'The quick brown fox jumps over the lazy dog. '.repeat(4000);
       const stressToc = [{ id: '1', label: 'Large Chapter', href: 'large.xhtml' }];
-      const stressLoadContent = () => Promise.resolve(largeContent);
+      function stressLoadContent() { return Promise.resolve(largeContent); }
       const stressTarget = 'The fast brown fox leaps over a sleepy dog but it is quite long and has many words to check overlap with.';
 
       bench('reanchor: Pass 2 Stress (200KB, many words)', async () => {
