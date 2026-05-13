@@ -23,16 +23,16 @@ export function ReaderSettingsPanel({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed top-14 right-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-4 z-50 w-64">
+    <div className="fixed top-14 right-4 bg-background border border-border rounded-lg shadow-lg p-4 z-50 w-64">
       <div className="space-y-4">
         <div>
           <label className="block text-sm font-medium mb-1">{t('reader.theme')}</label>
           <div className="flex gap-2">
-            {(['light', 'dark', 'sepia'] as const).map((themeOption) => (
+            {(['light', 'dark', 'sepia', 'system'] as const).map((themeOption) => (
               <button
                 key={themeOption}
                 onClick={() => onSetTheme(themeOption)}
-                className={`px-3 py-1 text-sm rounded ${theme === themeOption ? 'bg-primary-600 text-white' : 'bg-gray-100 dark:bg-gray-700'}`}
+                className={`px-3 py-1 text-sm rounded ${theme === themeOption ? 'bg-accent text-white' : 'bg-background-secondary'}`}
               >
                 {themeOption}
               </button>
@@ -46,7 +46,7 @@ export function ReaderSettingsPanel({
               <button
                 key={size}
                 onClick={() => onSetFontSize(size)}
-                className={`px-2 py-1 text-xs rounded ${fontSize === size ? 'bg-primary-600 text-white' : 'bg-gray-100 dark:bg-gray-700'}`}
+                className={`px-2 py-1 text-xs rounded ${fontSize === size ? 'bg-accent text-white' : 'bg-background-secondary'}`}
               >
                 {size[0].toUpperCase()}
               </button>
@@ -60,7 +60,7 @@ export function ReaderSettingsPanel({
               <button
                 key={family}
                 onClick={() => onSetFontFamily(family)}
-                className={`px-2 py-1 text-xs rounded ${fontFamily === family ? 'bg-primary-600 text-white' : 'bg-gray-100 dark:bg-gray-700'}`}
+                className={`px-2 py-1 text-xs rounded ${fontFamily === family ? 'bg-accent text-white' : 'bg-background-secondary'}`}
               >
                 {family === 'serif' ? 'Serif' : family === 'sans-serif' ? 'Sans' : 'Mono'}
               </button>

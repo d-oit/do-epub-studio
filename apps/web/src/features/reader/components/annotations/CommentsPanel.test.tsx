@@ -253,7 +253,7 @@ describe('CommentsPanel', () => {
 
       // First comment is in current chapter
       const commentItem = screen.getByText('First comment').closest('div');
-      expect(commentItem?.className).toContain('border-primary');
+      expect(commentItem?.className).toContain('border-accent');
     });
 
     it('does not apply active styling to other chapter items', () => {
@@ -261,7 +261,7 @@ describe('CommentsPanel', () => {
 
       // Resolved comment is in different chapter
       const resolvedItem = screen.getByText('Resolved comment').closest('div');
-      expect(resolvedItem?.className).not.toContain('border-primary');
+      expect(resolvedItem?.className).not.toContain('border-accent');
     });
   });
 });
