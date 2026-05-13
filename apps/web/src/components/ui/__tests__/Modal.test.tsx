@@ -17,6 +17,13 @@ vi.mock('framer-motion', () => ({
 }));
 
 describe('Modal', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
   it('renders when isOpen is true', () => {
     render(
       <Modal isOpen={true} onClose={() => {}}>
@@ -60,7 +67,6 @@ describe('Modal', () => {
   });
 
   it('focuses the modal when opened', () => {
-    vi.useFakeTimers();
     const focusSpy = vi.spyOn(HTMLElement.prototype, 'focus');
     render(
       <Modal isOpen={true} onClose={() => {}} title="Focus">
@@ -72,7 +78,6 @@ describe('Modal', () => {
     expect(dialog).toHaveAttribute('tabIndex', '-1');
     expect(focusSpy).toHaveBeenCalled();
     focusSpy.mockRestore();
-    vi.useRealTimers();
   });
 
   it('has proper aria attributes', () => {
@@ -90,7 +95,6 @@ describe('Modal', () => {
   });
 
   it('restores focus to the trigger element when closed', async () => {
-    vi.useFakeTimers();
     const trigger = document.createElement('button');
     document.body.appendChild(trigger);
     trigger.focus();
@@ -110,7 +114,6 @@ describe('Modal', () => {
     unmount();
     expect(document.activeElement).toBe(trigger);
     document.body.removeChild(trigger);
-    vi.useRealTimers();
   });
 
   it('traps focus within the modal', () => {
