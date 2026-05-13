@@ -18,7 +18,7 @@ export interface AnnotationAnchor {
 
 function normalizeText(text: string, isAlreadyLower = false): string {
   return (isAlreadyLower ? text : text.toLowerCase())
-    .replace(/[^\w\s]/g, '')
+    .replace(/[^\p{L}\p{N}\s]/gu, '')
     .replace(/\s+/g, ' ')
     .trim();
 }
@@ -62,7 +62,6 @@ export async function reanchorByText(
   interface CachedChapter {
     lower: string;
     general?: string;
-    wordSet?: Set<string>;
   }
   const cache = new Map<string, CachedChapter>();
 
@@ -88,23 +87,30 @@ export async function reanchorByText(
   };
   collectHrefs(toc);
 
-  let uniqueHrefs: string[];
+  const baseToHref = new Map<string, string>();
+  for (const href of flattenedToc) {
+    const base = href.split('#')[0];
+    if (!baseToHref.has(base)) {
+      baseToHref.set(base, href);
+    }
+  }
+
   const basePrefer = preferChapter?.split('#')[0];
 
+  let uniqueHrefs: string[];
   if (basePrefer) {
-    const primary = new Set<string>();
-    const secondary = new Set<string>();
-    for (const href of flattenedToc) {
-      const base = href.split('#')[0];
+    const primary: string[] = [];
+    const secondary: string[] = [];
+    for (const [base, href] of baseToHref) {
       if (base === basePrefer) {
-        primary.add(base);
+        primary.push(href);
       } else {
-        secondary.add(base);
+        secondary.push(href);
       }
     }
     uniqueHrefs = [...primary, ...secondary];
   } else {
-    uniqueHrefs = [...new Set(flattenedToc.map((h) => h.split('#')[0]))];
+    uniqueHrefs = [...baseToHref.values()];
   }
 
   // Pass 1: Exact and Partial matches
@@ -148,18 +154,17 @@ export async function reanchorByText(
       if (!cached.general) {
         cached.general = normalizeText(cached.lower, true);
       }
-      if (!cached.wordSet) {
-        cached.wordSet = new Set(cached.general.split(/\s+/));
-      }
+      const wordSet = new Set(cached.general.split(/\s+/));
 
       let matchCount = 0;
       for (const word of words) {
-        if (cached.wordSet.has(word)) {
+        if (wordSet.has(word)) {
           matchCount++;
         }
       }
 
-      if (words.length > 0 && matchCount / words.length >= 0.7) {
+      const threshold = options.fuzzyThreshold ?? 0.7;
+      if (words.length > 0 && matchCount / words.length >= threshold) {
         return {
           success: true,
           chapterHref: href,
