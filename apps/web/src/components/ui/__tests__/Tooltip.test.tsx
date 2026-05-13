@@ -11,6 +11,7 @@ vi.mock('framer-motion', () => ({
   },
   AnimatePresence: ({ children }: { children?: React.ReactNode }) =>
     React.createElement(React.Fragment, null, children),
+  useReducedMotion: () => false,
 }));
 
 describe('Tooltip', () => {
