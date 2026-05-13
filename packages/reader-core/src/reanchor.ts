@@ -17,10 +17,9 @@ export interface AnnotationAnchor {
 }
 
 function normalizeText(text: string, isAlreadyLower = false): string {
-  const lower = isAlreadyLower ? text : text.toLowerCase();
-  return lower
-    .replace(/[\s\n\r]+/g, ' ')
+  return (isAlreadyLower ? text : text.toLowerCase())
     .replace(/[^\w\s]/g, '')
+    .replace(/\s+/g, ' ')
     .trim();
 }
 
@@ -63,20 +62,20 @@ export async function reanchorByText(
   interface CachedChapter {
     lower: string;
     general?: string;
-    content: string;
+    wordSet?: Set<string>;
   }
   const cache = new Map<string, CachedChapter>();
 
   async function getCachedData(href: string): Promise<CachedChapter> {
-    const cached = cache.get(href);
+    const base = href.split('#')[0];
+    const cached = cache.get(base);
     if (cached) return cached;
 
-    const content = await loadChapterContent(href);
+    const content = await loadChapterContent(base);
     const result: CachedChapter = {
       lower: content.toLowerCase(),
-      content,
     };
-    cache.set(href, result);
+    cache.set(base, result);
     return result;
   }
 
@@ -89,14 +88,24 @@ export async function reanchorByText(
   };
   collectHrefs(toc);
 
-  const prioritizedHrefs = preferChapter
-    ? [
-        ...flattenedToc.filter((href) => href === preferChapter || href.includes(preferChapter)),
-        ...flattenedToc.filter((href) => href !== preferChapter && !href.includes(preferChapter)),
-      ]
-    : flattenedToc;
+  let uniqueHrefs: string[];
+  const basePrefer = preferChapter?.split('#')[0];
 
-  const uniqueHrefs = [...new Set(prioritizedHrefs)];
+  if (basePrefer) {
+    const primary = new Set<string>();
+    const secondary = new Set<string>();
+    for (const href of flattenedToc) {
+      const base = href.split('#')[0];
+      if (base === basePrefer) {
+        primary.add(base);
+      } else {
+        secondary.add(base);
+      }
+    }
+    uniqueHrefs = [...primary, ...secondary];
+  } else {
+    uniqueHrefs = [...new Set(flattenedToc.map((h) => h.split('#')[0]))];
+  }
 
   // Pass 1: Exact and Partial matches
   for (const href of uniqueHrefs) {
@@ -139,10 +148,13 @@ export async function reanchorByText(
       if (!cached.general) {
         cached.general = normalizeText(cached.lower, true);
       }
+      if (!cached.wordSet) {
+        cached.wordSet = new Set(cached.general.split(/\s+/));
+      }
 
       let matchCount = 0;
       for (const word of words) {
-        if (cached.general.includes(word)) {
+        if (cached.wordSet.has(word)) {
           matchCount++;
         }
       }
