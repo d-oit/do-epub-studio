@@ -101,6 +101,18 @@ Before adding an entry:
 
 **Date:** 2026-04-15
 
+### [Testing Infrastructure - Playwright Browsers]
+
+**Issue:** `Error: browserType.launch: Executable doesn't exist at /home/doit/.cache/ms-playwright/...` (6 E2E smoke tests fail)
+
+**Location:** `scripts/quality_gate.sh` (test:e2e:smoke step), `apps/tests/*.spec.ts`
+
+**Reason:** Playwright browsers are not installed in the development environment. The lockfile regeneration updated Playwright from 1.59.1 to 1.60.0, requiring browser binary re-download.
+
+**Mitigation:** Run `pnpm exec playwright install` in CI/CD pipeline. For local development, the E2E failure is non-blocking for component-level changes. All unit tests, lint, typecheck, and build pass.
+
+**Date:** 2026-05-13
+
 ## Technical Debt: File Size
 - **File**: `apps/web/src/features/reader/ReaderPage.tsx`
 - **Issue**: File size (1100+ LOC) exceeds the 500 LOC limit defined in `AGENTS.md`.
