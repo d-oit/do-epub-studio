@@ -18,21 +18,21 @@ export const fadeVariants = {
 };
 
 export const slideUpVariants = {
-  initial: { opacity: 0, y: 'var(--motion-y-20)' },
+  initial: { opacity: 0, y: 'var(--motion-slide-offset)' },
   animate: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.4, 0, 0.2, 1] as const } },
-  exit: { opacity: 0, y: 'calc(-1 * var(--motion-y-20))', transition: { duration: 0.2 } },
+  exit: { opacity: 0, y: 'calc(-1 * var(--motion-slide-offset))', transition: { duration: 0.2 } },
 };
 
 export const slideDownVariants = {
-  initial: { opacity: 0, y: 'calc(-1 * var(--motion-y-20))' },
+  initial: { opacity: 0, y: 'calc(-1 * var(--motion-slide-offset))' },
   animate: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] as const } },
-  exit: { opacity: 0, y: 'var(--motion-y-20)', transition: { duration: 0.2 } },
+  exit: { opacity: 0, y: 'var(--motion-slide-offset)', transition: { duration: 0.2 } },
 };
 
 export const scaleVariants = {
-  initial: { opacity: 0, scale: 'var(--motion-scale-95)' },
+  initial: { opacity: 0, scale: 'var(--motion-scale-enter)' },
   animate: { opacity: 1, scale: 1, transition: { duration: 0.2, ease: [0.4, 0, 0.2, 1] as const } },
-  exit: { opacity: 0, scale: 'var(--motion-scale-95)', transition: { duration: 0.15 } },
+  exit: { opacity: 0, scale: 'var(--motion-scale-enter)', transition: { duration: 0.15 } },
 };
 
 export const staggerContainerVariants = {
@@ -45,7 +45,7 @@ export const staggerContainerVariants = {
 };
 
 export const staggerItemVariants = {
-  initial: { opacity: 0, y: 'var(--motion-y-10)' },
+  initial: { opacity: 0, y: 'var(--motion-item-offset)' },
   animate: { opacity: 1, y: 0, transition: { duration: 0.3 } },
 };
 
@@ -103,8 +103,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         type={type}
         onClick={onClick}
-        whileTap={{ scale: disabled || isLoading ? 1 : 'var(--motion-scale-97)' }}
-        whileHover={{ scale: disabled || isLoading ? 1 : 'var(--motion-scale-102)' }}
+        whileTap={{ scale: disabled || isLoading ? 1 : 'var(--motion-scale-tap)' }}
+        whileHover={{ scale: disabled || isLoading ? 1 : 'var(--motion-scale-hover)' }}
         transition={{ duration: 0.15 }}
         className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
         disabled={disabled || isLoading}
@@ -163,9 +163,9 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
     return (
       <motion.div
         ref={ref}
-        initial={{ opacity: 0, y: 'var(--motion-y-10)' }}
+        initial={{ opacity: 0, y: 'var(--motion-item-offset)' }}
         animate={{ opacity: 1, y: 0 }}
-        whileHover={hover ? { y: 'var(--motion-y-neg-4)', transition: { duration: 0.2 } } : undefined}
+        whileHover={hover ? { y: 'var(--motion-hover-lift)', transition: { duration: 0.2 } } : undefined}
         className={`${baseClasses} ${variantClasses[variant]} ${className}`}
       >
         {children}
@@ -336,9 +336,9 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
             aria-labelledby={title ? titleId : undefined}
             tabIndex={-1}
             onKeyDown={handleKeyDown}
-            initial={{ opacity: 0, scale: 'var(--motion-scale-95)', y: 'var(--motion-y-20)' }}
+            initial={{ opacity: 0, scale: 'var(--motion-scale-enter)', y: 'var(--motion-slide-offset)' }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 'var(--motion-scale-95)', y: 'var(--motion-y-20)' }}
+            exit={{ opacity: 0, scale: 'var(--motion-scale-enter)', y: 'var(--motion-slide-offset)' }}
             transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
             className={`fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full ${sizeClasses[size]} z-50`}
           >
@@ -454,9 +454,9 @@ export function Tooltip({ content, children }: TooltipProps) {
         <motion.div
           id={tooltipId}
           role="tooltip"
-          initial={{ opacity: 0, y: 'calc(0.5 * var(--motion-y-10))' }}
+          initial={{ opacity: 0, y: 'calc(0.5 * var(--motion-item-offset))' }}
           animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 'calc(0.5 * var(--motion-y-10))' }}
+          exit={{ opacity: 0, y: 'calc(0.5 * var(--motion-item-offset))' }}
           transition={{ duration: 0.15 }}
           className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-foreground rounded shadow-lg whitespace-nowrap z-50 pointer-events-none"
         >
@@ -548,7 +548,7 @@ export const Header = forwardRef<HTMLElement, HeaderProps>(
     return (
       <motion.header
         ref={ref}
-        initial={{ y: 'var(--motion-y-neg-100)', opacity: 0 }}
+        initial={{ y: 'var(--motion-header-offset)', opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
         className={`
@@ -595,8 +595,8 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
     return (
       <motion.button
         ref={ref}
-        whileTap={{ scale: 'var(--motion-scale-90)' }}
-        whileHover={{ scale: 'var(--motion-scale-105)' }}
+        whileTap={{ scale: 'var(--motion-scale-tap-lg)' }}
+        whileHover={{ scale: 'var(--motion-scale-hover-lg)' }}
         className={`
           rounded-lg transition-colors duration-150
           focus:outline-none focus-visible:ring-2 focus-visible:ring-accent

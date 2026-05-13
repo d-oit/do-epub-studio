@@ -18,16 +18,15 @@
   --color-border: #e5e5e5;
 
   /* Motion control variables */
-  --motion-y-20: 20px;
-  --motion-y-10: 10px;
-  --motion-y-neg-4: -4px;
-  --motion-y-neg-100: -100px;
-  --motion-scale-95: 0.95;
-  --motion-scale-97: 0.97;
-  --motion-scale-98: 0.98;
-  --motion-scale-102: 1.02;
-  --motion-scale-105: 1.05;
-  --motion-scale-90: 0.9;
+  --motion-slide-offset: 20px;
+  --motion-item-offset: 10px;
+  --motion-hover-lift: -4px;
+  --motion-header-offset: -100px;
+  --motion-scale-enter: 0.95;
+  --motion-scale-tap: 0.97;
+  --motion-scale-hover: 1.02;
+  --motion-scale-hover-lg: 1.05;
+  --motion-scale-tap-lg: 0.9;
   
   /* Animation timing */
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
@@ -256,16 +255,15 @@ select:focus-visible {
     scroll-behavior: auto !important;
 
     /* Reset motion control variables to suppress motion transforms */
-    --motion-y-20: 0px;
-    --motion-y-10: 0px;
-    --motion-y-neg-4: 0px;
-    --motion-y-neg-100: 0px;
-    --motion-scale-95: 1;
-    --motion-scale-97: 1;
-    --motion-scale-98: 1;
-    --motion-scale-102: 1;
-    --motion-scale-105: 1;
-    --motion-scale-90: 1;
+    --motion-slide-offset: 0px;
+    --motion-item-offset: 0px;
+    --motion-hover-lift: 0px;
+    --motion-header-offset: 0px;
+    --motion-scale-enter: 1;
+    --motion-scale-tap: 1;
+    --motion-scale-hover: 1;
+    --motion-scale-hover-lg: 1;
+    --motion-scale-tap-lg: 1;
   }
 }
 
