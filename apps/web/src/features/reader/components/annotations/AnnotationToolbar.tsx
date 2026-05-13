@@ -85,26 +85,26 @@ export function AnnotationToolbar({
   return (
     <div
       ref={toolbarRef}
-      className="fixed z-50 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-1 flex items-center gap-1 animate-in fade-in slide-in-from-bottom-1 duration-150"
+      className="fixed z-50 bg-background rounded-lg shadow-lg border border-border p-1 flex items-center gap-1 animate-in fade-in slide-in-from-bottom-1 duration-150"
       style={{ top: position.top, left: position.left, minWidth: '200px' }}
     >
       {canHighlight && (
         <div className="relative">
           <button
             onClick={() => setShowColorPicker(!showColorPicker)}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-sm font-medium transition-colors"
+            className="p-2 hover:bg-background-secondary rounded text-sm font-medium transition-colors"
             title={t('annotation.highlight')}
           >
             <span className="inline-block w-4 h-4 rounded bg-yellow-400 mr-1" />
             {t('annotation.highlight')}
           </button>
           {showColorPicker && (
-            <div className="absolute top-full left-0 mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-2 flex gap-1">
+            <div className="absolute top-full left-0 mt-1 bg-background rounded-lg shadow-lg border border-border p-2 flex gap-1">
               {HIGHLIGHT_COLORS.map((color) => (
                 <button
                   key={color.id}
                   onClick={() => handleColorSelect(color.hex)}
-                  className="w-8 h-8 rounded-full border-2 border-gray-300 dark:border-gray-600 hover:scale-110 transition-transform"
+                  className="w-8 h-8 rounded-full border-2 border-border hover:scale-110 transition-transform"
                   style={{ backgroundColor: color.hex }}
                   title={color.id}
                 />
@@ -116,7 +116,7 @@ export function AnnotationToolbar({
       {canComment && (
         <button
           onClick={onComment}
-          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-sm font-medium transition-colors"
+          className="p-2 hover:bg-background-secondary rounded text-sm font-medium transition-colors"
           title={t('annotation.comment')}
         >
           <svg
@@ -135,10 +135,10 @@ export function AnnotationToolbar({
           {t('annotation.comment')}
         </button>
       )}
-      <div className="h-6 w-px bg-gray-200 dark:bg-gray-700 mx-1" />
+      <div className="h-6 w-px bg-border mx-1" />
       <button
         onClick={onClose}
-        className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-500 dark:text-gray-400 transition-colors"
+        className="p-2 hover:bg-background-secondary rounded text-foreground-muted transition-colors"
         title="Close"
       >
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
