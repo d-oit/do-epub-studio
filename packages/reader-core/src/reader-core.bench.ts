@@ -17,7 +17,6 @@ describe('reader-core performance', () => {
     parseLocator(locatorStr);
   });
 
-  // Simplified benchmark to avoid DOM issues in benchmark loop if any
   bench('locator: toString', () => {
     locatorToString(locator);
   });
@@ -42,6 +41,27 @@ describe('reader-core performance', () => {
     const targetTextFuzzy = 'The fast brown fox leaps over a sleepy dog.';
     bench('reanchor: Pass 2 (fuzzy match)', async () => {
       await reanchorByText(targetTextFuzzy, toc, mockLoadContent);
+    });
+
+    describe('stress tests', () => {
+      const largeContent = 'The quick brown fox jumps over the lazy dog. '.repeat(4000);
+      const stressToc = [{ id: '1', label: 'Large Chapter', href: 'large.xhtml' }];
+      const stressLoadContent = () => Promise.resolve(largeContent);
+      const stressTarget = 'The fast brown fox leaps over a sleepy dog but it is quite long and has many words to check overlap with.';
+
+      bench('reanchor: Pass 2 Stress (200KB, many words)', async () => {
+        await reanchorByText(stressTarget, stressToc, stressLoadContent);
+      });
+
+      const tocWithAnchors = Array.from({ length: 50 }, (_, i) => ({
+        id: i.toString(),
+        label: `Section ${i}`,
+        href: `large.xhtml#sec${i}`
+      }));
+
+      bench('reanchor: 50 anchors in 1 chapter (caching test)', async () => {
+        await reanchorByText('No match', tocWithAnchors, stressLoadContent);
+      });
     });
   });
 });
