@@ -28,7 +28,7 @@ export function ReaderSettingsPanel({
         <div>
           <label className="block text-sm font-medium mb-1">{t('reader.theme')}</label>
           <div className="flex gap-2">
-            {(['light', 'dark', 'sepia'] as const).map((themeOption) => (
+            {(['light', 'dark', 'sepia', 'system'] as const).map((themeOption) => (
               <button
                 key={themeOption}
                 onClick={() => onSetTheme(themeOption)}

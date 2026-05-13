@@ -163,7 +163,7 @@ export function CommentsPanel({
             )}
             {resolvedComments.length > 0 && (
               <div className="space-y-3 mt-6">
-                <h3 className="text-xs font-semibold text-gray-500 uppercase">Resolved</h3>
+                <h3 className="text-xs font-semibold text-foreground-muted uppercase">Resolved</h3>
                 {resolvedComments.map((comment) => (
                   <CommentItem
                     key={comment.id}
@@ -198,7 +198,7 @@ export function CommentsPanel({
         {activeTab === 'highlights' && (
           <div className="space-y-3">
             {highlights.length === 0 && (
-              <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-8">
+              <p className="text-sm text-foreground-muted text-center py-8">
                 {t('highlight.noHighlights')}
               </p>
             )}

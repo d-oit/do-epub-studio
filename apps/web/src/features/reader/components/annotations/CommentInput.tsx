@@ -47,7 +47,7 @@ export function CommentInput({
 
   return (
     <div
-      className={`space-y-2 ${isReply ? 'pl-4 border-l-2 border-gray-200 dark:border-gray-700' : ''}`}
+      className={`space-y-2 ${isReply ? 'pl-4 border-l-2 border-border' : ''}`}
     >
       <textarea
         ref={textareaRef}
@@ -55,14 +55,14 @@ export function CommentInput({
         onChange={(e) => setText(e.target.value)}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
-        className="w-full p-3 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 resize-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+        className="w-full p-3 text-sm border border-border rounded-lg bg-background resize-none focus:ring-2 focus:ring-accent focus:border-transparent"
         rows={3}
       />
       <div className="flex justify-end gap-2">
         {onCancel && (
           <button
             onClick={onCancel}
-            className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            className="px-3 py-1.5 text-sm border border-border rounded-lg hover:bg-background-secondary transition-colors"
           >
             Cancel
           </button>
@@ -70,12 +70,12 @@ export function CommentInput({
         <button
           onClick={handleSubmit}
           disabled={!text.trim()}
-          className="px-3 py-1.5 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="px-3 py-1.5 text-sm bg-accent text-white rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {submitLabel}
         </button>
       </div>
-      <p className="text-xs text-gray-500 dark:text-gray-400 text-right">Ctrl+Enter to submit</p>
+      <p className="text-xs text-foreground-muted text-right">Ctrl+Enter to submit</p>
     </div>
   );
 }

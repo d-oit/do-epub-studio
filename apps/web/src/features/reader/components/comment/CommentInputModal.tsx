@@ -21,7 +21,7 @@ export function CommentInputModal({
 
   return (
     <div
-      className="fixed z-50 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-4 max-w-md mx-auto"
+      className="fixed z-50 bg-background rounded-lg shadow-lg border border-border p-4 max-w-md mx-auto"
       style={{
         top: '50%',
         left: '50%',

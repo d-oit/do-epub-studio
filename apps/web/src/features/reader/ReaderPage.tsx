@@ -154,6 +154,14 @@ export function ReaderPage() {
     }
   }, [revokedBooks, bookId, setError, setPermissionStatus, t]);
 
+  const isSystemDark = useCallback(() => {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }, []);
+
+  const resolvedTheme = readerTheme === 'system'
+    ? (isSystemDark() ? 'dark' : 'light')
+    : readerTheme;
+
   const applyTheme = useCallback(
     (rendition: Rendition) => {
       const container = rootRef.current;
@@ -161,15 +169,16 @@ export function ReaderPage() {
       const style = getComputedStyle(container);
       const bg = style.getPropertyValue('--color-background').trim();
       const fg = style.getPropertyValue('--color-foreground').trim();
+      const effectiveTheme = readerTheme === 'system' ? (isSystemDark() ? 'dark' : 'light') : readerTheme;
       const imgFilter =
-        readerTheme === 'dark'
+        effectiveTheme === 'dark'
           ? 'invert(1) hue-rotate(180deg)'
-          : readerTheme === 'sepia'
+          : effectiveTheme === 'sepia'
             ? 'sepia(1)'
             : 'none';
       rendition.themes.default({ body: { background: bg, color: fg }, img: { filter: imgFilter } });
     },
-    [readerTheme],
+    [readerTheme, isSystemDark],
   );
 
   const applyTypography = useCallback(
@@ -371,6 +380,14 @@ export function ReaderPage() {
   }, [readerTheme, applyTheme]);
 
   useEffect(() => {
+    if (readerTheme !== 'system') return;
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const handler = () => { if (renditionRef.current) applyTheme(renditionRef.current); };
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, [readerTheme, applyTheme]);
+
+  useEffect(() => {
     if (renditionRef.current) applyTypography(renditionRef.current);
   }, [readerFontSize, readerFontFamily, readerLineHeight, applyTypography]);
 
@@ -413,7 +430,7 @@ export function ReaderPage() {
     <div
       ref={rootRef}
       className="min-h-screen bg-background text-foreground"
-      data-theme={readerTheme === 'system' ? undefined : readerTheme}
+      data-theme={resolvedTheme}
     >
       <ReaderToolbar
         bookTitle={bookTitle}
