@@ -6,16 +6,26 @@ import {
   type HighlightRecord,
   type CommentRecord,
 } from '../features/reader/annotationRendering';
-import type { Rendition } from 'epubjs';
+import type { Rendition } from '@intity/epub-js';
 
 // Minimal mock of the epubjs Annotations API
 function makeAnnotationsMock() {
-  return {
-    highlight: vi.fn(),
-    underline: vi.fn(),
-    remove: vi.fn(),
-    each: vi.fn().mockReturnValue([]),
+  const annotations = new Map<string, any>();
+  const mock: any = {
+    append: vi.fn((type: string, cfi: string, { data, cb, styles }: any) => {
+      annotations.set(`${type}-${cfi}`, { type, cfiRange: cfi, data, cb, styles });
+    }),
+    remove: vi.fn((cfi: string, type: string) => {
+      annotations.delete(`${type}-${cfi}`);
+    }),
+    // Mock for iteration
+    [Symbol.iterator]: function* () {
+      yield* annotations.entries();
+    },
+    // Adding Map-like methods if needed for the test to set up state
+    _set: (key: string, value: any) => annotations.set(key, value),
   };
+  return mock;
 }
 
 function makeRenditionMock() {
@@ -35,22 +45,22 @@ describe('renderHighlightsOnRendition', () => {
   });
 
   it('clears existing highlight annotations before rendering', () => {
-    const existingAnnotation = { cfiRange: 'epubcfi(/6/4!/4/2/1:0,/1:10)' };
-    vi.mocked(rendition.annotations.each).mockReturnValue([existingAnnotation] as never);
+    const existingAnnotation = { type: 'highlight', cfiRange: 'epubcfi(/6/4!/4/2/1:0,/1:10)' };
+    (rendition.annotations as any)._set('highlight-epubcfi(/6/4!/4/2/1:0,/1:10)', existingAnnotation);
 
     renderHighlightsOnRendition(rendition, 'chapter1.html', []);
 
     expect(rendition.annotations.remove).toHaveBeenCalledWith(existingAnnotation.cfiRange, 'highlight');
   });
 
-  it('does not call highlight() when chapterHref is null', () => {
+  it('does not call append() when chapterHref is null', () => {
     const highlights: HighlightRecord[] = [
       { id: 'h1', chapterRef: 'chapter1.html', cfiRange: 'epubcfi(/6/4!/4/2/1:0,/1:10)', color: '#ffff00' },
     ];
 
     renderHighlightsOnRendition(rendition, null, highlights);
 
-    expect(rendition.annotations.highlight).not.toHaveBeenCalled();
+    expect(rendition.annotations.append).not.toHaveBeenCalled();
   });
 
   it('renders only highlights matching the current chapter', () => {
@@ -61,13 +71,14 @@ describe('renderHighlightsOnRendition', () => {
 
     renderHighlightsOnRendition(rendition, 'chapter1.html', highlights);
 
-    expect(rendition.annotations.highlight).toHaveBeenCalledTimes(1);
-    expect(rendition.annotations.highlight).toHaveBeenCalledWith(
+    expect(rendition.annotations.append).toHaveBeenCalledTimes(1);
+    expect(rendition.annotations.append).toHaveBeenCalledWith(
+      'highlight',
       'epubcfi(/6/4!/4/2/1:0,/1:10)',
-      { id: 'h1', data: highlights[0] },
-      undefined,
-      undefined,
-      { fill: '#ffff00', 'fill-opacity': '0.3' },
+      {
+        data: highlights[0],
+        styles: { fill: '#ffff00', 'fill-opacity': '0.3' },
+      },
     );
   });
 
@@ -78,7 +89,7 @@ describe('renderHighlightsOnRendition', () => {
 
     renderHighlightsOnRendition(rendition, 'chapter1.html', highlights);
 
-    expect(rendition.annotations.highlight).not.toHaveBeenCalled();
+    expect(rendition.annotations.append).not.toHaveBeenCalled();
   });
 
   it('renders multiple highlights for the same chapter', () => {
@@ -89,7 +100,7 @@ describe('renderHighlightsOnRendition', () => {
 
     renderHighlightsOnRendition(rendition, 'ch1.html', highlights);
 
-    expect(rendition.annotations.highlight).toHaveBeenCalledTimes(2);
+    expect(rendition.annotations.append).toHaveBeenCalledTimes(2);
   });
 });
 
@@ -105,22 +116,22 @@ describe('renderCommentMarkersOnRendition', () => {
   });
 
   it('clears existing underline annotations before rendering', () => {
-    const existingAnnotation = { cfiRange: 'epubcfi(/6/4!/4/2/1:0,/1:10)' };
-    vi.mocked(rendition.annotations.each).mockReturnValue([existingAnnotation] as never);
+    const existingAnnotation = { type: 'underline', cfiRange: 'epubcfi(/6/4!/4/2/1:0,/1:10)' };
+    (rendition.annotations as any)._set('underline-epubcfi(/6/4!/4/2/1:0,/1:10)', existingAnnotation);
 
     renderCommentMarkersOnRendition(rendition, 'chapter1.html', [], onNavigate);
 
     expect(rendition.annotations.remove).toHaveBeenCalledWith(existingAnnotation.cfiRange, 'underline');
   });
 
-  it('does not call underline() when chapterHref is null', () => {
+  it('does not call append() when chapterHref is null', () => {
     const comments: CommentRecord[] = [
       { id: 'c1', chapterRef: 'chapter1.html', cfiRange: 'epubcfi(/6/4!/4/2/1:0,/1:10)', status: 'open' },
     ];
 
     renderCommentMarkersOnRendition(rendition, null, comments, onNavigate);
 
-    expect(rendition.annotations.underline).not.toHaveBeenCalled();
+    expect(rendition.annotations.append).not.toHaveBeenCalled();
   });
 
   it('skips deleted comments', () => {
@@ -130,7 +141,7 @@ describe('renderCommentMarkersOnRendition', () => {
 
     renderCommentMarkersOnRendition(rendition, 'ch1.html', comments, onNavigate);
 
-    expect(rendition.annotations.underline).not.toHaveBeenCalled();
+    expect(rendition.annotations.append).not.toHaveBeenCalled();
   });
 
   it('renders only comments matching the current chapter', () => {
@@ -141,13 +152,15 @@ describe('renderCommentMarkersOnRendition', () => {
 
     renderCommentMarkersOnRendition(rendition, 'ch1.html', comments, onNavigate);
 
-    expect(rendition.annotations.underline).toHaveBeenCalledTimes(1);
-    expect(rendition.annotations.underline).toHaveBeenCalledWith(
+    expect(rendition.annotations.append).toHaveBeenCalledTimes(1);
+    expect(rendition.annotations.append).toHaveBeenCalledWith(
+      'underline',
       'epubcfi(/6/4!/4/2/1:0,/1:10)',
-      { id: 'c1', data: comments[0] },
-      expect.any(Function),
-      undefined,
-      { stroke: '#3b82f6', 'stroke-width': '2px', 'stroke-opacity': '0.7' },
+      {
+        data: comments[0],
+        cb: expect.any(Function),
+        styles: { stroke: '#3b82f6', 'stroke-width': '2px', 'stroke-opacity': '0.7' },
+      },
     );
   });
 
@@ -158,12 +171,12 @@ describe('renderCommentMarkersOnRendition', () => {
 
     renderCommentMarkersOnRendition(rendition, 'ch1.html', comments, onNavigate);
 
-    expect(rendition.annotations.underline).toHaveBeenCalledWith(
+    expect(rendition.annotations.append).toHaveBeenCalledWith(
+      'underline',
       expect.any(String),
-      expect.any(Object),
-      expect.any(Function),
-      undefined,
-      { stroke: '#9ca3af', 'stroke-width': '1px', 'stroke-opacity': '0.4' },
+      expect.objectContaining({
+        styles: { stroke: '#9ca3af', 'stroke-width': '1px', 'stroke-opacity': '0.4' },
+      }),
     );
   });
 
@@ -174,24 +187,10 @@ describe('renderCommentMarkersOnRendition', () => {
 
     renderCommentMarkersOnRendition(rendition, 'ch1.html', comments, onNavigate);
 
-    // Extract and invoke the click callback passed to underline()
-    const [, , clickCb] = vi.mocked(rendition.annotations.underline).mock.calls[0];
-    (clickCb as () => void)();
+    // Extract and invoke the click callback passed to append()
+    const [, , options] = vi.mocked(rendition.annotations.append).mock.calls[0];
+    (options as any).cb();
 
     expect(onNavigate).toHaveBeenCalledWith('ch1.html', 'epubcfi(/6/4!/4/2/1:0,/1:10)');
-  });
-
-  it('uses typed underline() — not annotations.add() — so no any cast is needed', () => {
-    // Verify the function calls the typed API, not a raw .add() workaround.
-    // If this test compiles and passes, the any-cast suppression is gone.
-    const comments: CommentRecord[] = [
-      { id: 'c1', chapterRef: 'ch1.html', cfiRange: 'epubcfi(/6/4!/4/2/1:0,/1:10)', status: 'open' },
-    ];
-
-    renderCommentMarkersOnRendition(rendition, 'ch1.html', comments, onNavigate);
-
-    expect(rendition.annotations.underline).toHaveBeenCalled();
-    // annotations.add should never be called directly
-    expect((rendition.annotations as { add?: unknown }).add).toBeUndefined();
   });
 });

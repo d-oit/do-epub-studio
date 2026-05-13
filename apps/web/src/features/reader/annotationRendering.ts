@@ -3,7 +3,7 @@
  * underlines) onto an epubjs Rendition. Extracted from ReaderPage so they can
  * be unit-tested without a React environment.
  */
-import type { Rendition } from 'epubjs';
+import type { Rendition } from '@intity/epub-js';
 
 export interface HighlightRecord {
   id: string;
@@ -23,15 +23,20 @@ export interface CommentRecord {
  * Re-render all highlight annotations for the given chapter onto `rendition`.
  * Clears existing highlights first to avoid duplicates on chapter navigation.
  */
+interface InternalAnnotation {
+  type: string;
+  cfiRange: string;
+}
+
 export function renderHighlightsOnRendition(
   rendition: Rendition,
   chapterHref: string | null,
   highlights: HighlightRecord[],
 ): void {
-  const existing = rendition.annotations.each();
-  for (const annotation of existing) {
-    if ('cfiRange' in annotation) {
-      rendition.annotations.remove(annotation.cfiRange as string, 'highlight');
+  const existing = rendition.annotations as unknown as Map<string, InternalAnnotation>;
+  for (const [, annotation] of existing) {
+    if (annotation.type === 'highlight') {
+      rendition.annotations.remove(annotation.cfiRange, 'highlight');
     }
   }
 
@@ -42,13 +47,10 @@ export function renderHighlightsOnRendition(
   );
 
   for (const highlight of chapterHighlights) {
-    rendition.annotations.highlight(
-      highlight.cfiRange as string,
-      { id: highlight.id, data: highlight },
-      undefined,
-      undefined,
-      { fill: highlight.color, 'fill-opacity': '0.3' },
-    );
+    rendition.annotations.append('highlight', highlight.cfiRange as string, {
+      data: highlight,
+      styles: { fill: highlight.color, 'fill-opacity': '0.3' },
+    });
   }
 }
 
@@ -63,10 +65,10 @@ export function renderCommentMarkersOnRendition(
   comments: CommentRecord[],
   onNavigate: (chapterRef: string, cfiRange?: string) => void,
 ): void {
-  const existing = rendition.annotations.each();
-  for (const annotation of existing) {
-    if ('cfiRange' in annotation) {
-      rendition.annotations.remove(annotation.cfiRange as string, 'underline');
+  const existing = rendition.annotations as unknown as Map<string, InternalAnnotation>;
+  for (const [, annotation] of existing) {
+    if (annotation.type === 'underline') {
+      rendition.annotations.remove(annotation.cfiRange, 'underline');
     }
   }
 
@@ -78,18 +80,16 @@ export function renderCommentMarkersOnRendition(
 
   for (const comment of chapterComments) {
     const isResolved = comment.status === 'resolved';
-    rendition.annotations.underline(
-      comment.cfiRange as string,
-      { id: comment.id, data: comment },
-      () => {
+    rendition.annotations.append('underline', comment.cfiRange as string, {
+      data: comment,
+      cb: () => {
         onNavigate(comment.chapterRef ?? '', comment.cfiRange ?? undefined);
       },
-      undefined,
-      {
+      styles: {
         stroke: isResolved ? '#9ca3af' : '#3b82f6',
         'stroke-width': isResolved ? '1px' : '2px',
         'stroke-opacity': isResolved ? '0.4' : '0.7',
       },
-    );
+    });
   }
 }

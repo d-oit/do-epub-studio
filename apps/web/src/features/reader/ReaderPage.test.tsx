@@ -25,11 +25,17 @@ vi.mock('../../lib/offline', () => ({
 vi.mock('../../lib/offline/permissions', () => ({ setupZombieDetection: vi.fn(() => vi.fn()) }));
 
 const mockRendition = {
-  themes: { default: vi.fn() },
+  themes: { registerRules: vi.fn(), select: vi.fn() },
   display: vi.fn(),
   on: vi.fn(),
   off: vi.fn(),
-  annotations: { each: vi.fn(() => []) },
+  annotations: {
+    append: vi.fn(),
+    remove: vi.fn(),
+    [Symbol.iterator]: function* () {
+      yield* [].entries();
+    },
+  },
   destroy: vi.fn(),
   location: null,
 };
@@ -39,7 +45,7 @@ const mockBook = {
   renderTo: vi.fn(() => mockRendition),
   destroy: vi.fn(),
 };
-vi.mock('epubjs', () => ({ default: vi.fn(() => mockBook) }));
+vi.mock('@intity/epub-js', () => ({ default: vi.fn(() => mockBook) }));
 
 const mockReaderStore = {
   setProgress: vi.fn(),

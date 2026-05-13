@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { useParams, useNavigate } from 'react-router-dom';
-import ePub, { Book, Rendition } from 'epubjs';
+import ePub, { Book, Rendition, NavItem } from '@intity/epub-js';
 import { useTranslation } from '../../hooks/useTranslation';
 import { apiRequest } from '../../lib/api';
 import { fetchHighlights, fetchComments } from '../../lib/api/annotations';
@@ -176,26 +176,30 @@ export function ReaderPage() {
           : effectiveTheme === 'sepia'
             ? 'sepia(1)'
             : 'none';
-      rendition.themes.default({ body: { background: bg, color: fg }, img: { filter: imgFilter } });
+      rendition.themes.registerRules('default', {
+        body: { background: bg, color: fg },
+        img: { filter: imgFilter },
+      });
+      rendition.themes.select('default');
     },
     [readerTheme, isSystemDark],
   );
 
   const applyTypography = useCallback(
     (rendition: Rendition) => {
-      rendition.themes.default({
+      rendition.themes.registerRules('typography', {
         body: {
           'font-size': FONT_SIZES[readerFontSize],
           'line-height': LINE_HEIGHTS[readerLineHeight],
+          'font-family':
+            readerFontFamily === 'serif'
+              ? 'serif'
+              : readerFontFamily === 'sans-serif'
+                ? 'sans-serif'
+                : 'monospace',
         },
       });
-      if (readerFontFamily !== 'serif') {
-        rendition.themes.default({
-          body: {
-            'font-family': readerFontFamily === 'sans-serif' ? 'sans-serif' : 'monospace',
-          },
-        });
-      }
+      rendition.themes.select('typography');
     },
     [readerFontSize, readerFontFamily, readerLineHeight],
   );
@@ -259,12 +263,17 @@ export function ReaderPage() {
 
         const navigation = await book.loaded.navigation;
         const tocItems: TocItem[] = navigation.toc
-          ? navigation.toc.map((item) => ({ label: item.label, href: item.href }))
+          ? navigation.toc.map((item: NavItem) => ({ label: item.label, href: item.href }))
           : [];
         setToc(tocItems);
         tocRef.current = tocItems;
 
-        const rendition = book.renderTo(viewer, { width: '100%', height: '100%', spread: 'auto' });
+        const rendition = book.renderTo(viewer, {
+          width: '100%',
+          height: '100%',
+          spread: 'auto',
+          sandbox: ['allow-same-origin', 'allow-scripts'],
+        });
         renditionRef.current = rendition;
         applyTheme(rendition);
         applyTypography(rendition);
@@ -353,11 +362,9 @@ export function ReaderPage() {
     return () => {
       const rendition = renditionRef.current;
       if (rendition) {
-        for (const annotation of rendition.annotations.each()) {
-          if ('cfiRange' in annotation) {
-            rendition.annotations.remove(annotation.cfiRange as string, 'highlight');
-            rendition.annotations.remove(annotation.cfiRange as string, 'underline');
-          }
+        const existing = rendition.annotations as unknown as Map<string, { cfiRange: string; type: string }>;
+        for (const [, annotation] of existing) {
+          rendition.annotations.remove(annotation.cfiRange, annotation.type);
         }
       }
       renditionRef.current?.destroy();

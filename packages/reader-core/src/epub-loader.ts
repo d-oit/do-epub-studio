@@ -1,5 +1,5 @@
-import ePub, { Book, Rendition, Location } from 'epubjs';
-import type { SpineItem as EpubSpineItem } from 'epubjs/types/section';
+import ePub, { Book, Rendition, Location } from '@intity/epub-js';
+import type { SpineItem as EpubSpineItem } from '@intity/epub-js/types/section';
 import type {
   TocItem,
   SpineItem,
@@ -99,12 +99,18 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
   }
 
   async function parseSpineFromBook(): Promise<SpineItem[]> {
-    const spineItems = await book!.loaded.spine;
-    return spineItems.map((item: EpubSpineItem, index: number) => ({
-      index: item.index ?? index,
-      href: item.href ?? '',
-      properties: item.properties?.join(' '),
-    }));
+    const spine = await book!.loaded.spine;
+    const spineItems: SpineItem[] = [];
+    let index = 0;
+    for (const item of (spine as unknown as Iterable<EpubSpineItem>)) {
+      spineItems.push({
+        index: item.index ?? index,
+        href: item.href ?? '',
+        properties: item.properties?.join(' '),
+      });
+      index++;
+    }
+    return spineItems;
   }
 
   async function load(url: string): Promise<void> {
@@ -129,12 +135,13 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
       spineItems = await parseSpineFromBook();
 
       const meta = await book.loaded.metadata;
+      const metaMap = meta as unknown as Map<string, string>;
       metadata = {
-        title: meta.title ?? '',
-        creator: meta.creator,
-        language: meta.language,
-        publisher: meta.publisher,
-        description: meta.description,
+        title: metaMap.get('title') ?? '',
+        creator: metaMap.get('creator'),
+        language: metaMap.get('language'),
+        publisher: metaMap.get('publisher'),
+        description: metaMap.get('description'),
       };
     } catch (error) {
       const formatted = formatError(error);
@@ -158,6 +165,7 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
       width: '100%',
       height: '100%',
       spread: 'auto',
+      sandbox: ['allow-same-origin', 'allow-scripts'],
     });
 
     // Bridge rendition events to the loader's event system
