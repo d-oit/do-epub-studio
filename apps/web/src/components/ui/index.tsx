@@ -308,7 +308,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
     };
 
     document.addEventListener('keydown', handleFocusTrap);
-    return () => document.removeEventListener('keydown', handleFocusTrap);
+    return () => { document.removeEventListener('keydown', handleFocusTrap); };
   }, [isOpen]);
 
   const handleKeyDown = useCallback(
