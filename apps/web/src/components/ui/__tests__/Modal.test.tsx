@@ -122,7 +122,7 @@ describe('Modal', () => {
     );
 
     const closeButton = screen.getByLabelText('Close');
-    const button1 = screen.getByTestId('button1');
+    screen.getByTestId('button1');
     const button2 = screen.getByTestId('button2');
 
     // Start at last element
