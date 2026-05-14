@@ -103,6 +103,18 @@ vi.mock('../../stores', async () => {
 
 vi.mock('./hooks', () => ({
   useReaderUI: () => mockReaderUI,
+  useReaderEpub: () => ({
+    renditionRef: { current: null },
+    currentChapterRef: { current: null },
+    toc: [],
+    get resolvedTheme() {
+      const theme = mockPreferencesState.reader.theme;
+      if (theme === 'system') {
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      }
+      return theme;
+    },
+  }),
   useAnnotationHandlers: () => ({
     handleCreateHighlight: vi.fn(), handleCreateComment: vi.fn(), handleResolveComment: vi.fn(),
     handleReplyToComment: vi.fn(), handleEditComment: vi.fn(), handleDeleteComment: vi.fn(),
