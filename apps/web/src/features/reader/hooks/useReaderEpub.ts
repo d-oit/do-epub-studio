@@ -80,6 +80,7 @@ export function useReaderEpub(
 
   useEffect(() => {
     if (!epubUrl || !viewerRef.current) return;
+    let active = true;
     const viewer = viewerRef.current;
 
     const initEpub = async () => {
@@ -87,6 +88,7 @@ export function useReaderEpub(
         const book = ePub(epubUrl);
         bookRef.current = book;
         await book.ready;
+        if (!active) return;
 
         const navigation = await book.loaded.navigation;
         const tocItems: TocItem[] = navigation.toc
@@ -104,6 +106,7 @@ export function useReaderEpub(
         renditionRef.current = rendition;
         applyThemes(rendition);
         await rendition.display();
+        if (!active) return;
 
         const initialLocation = rendition.location;
         if (initialLocation?.start) {
@@ -205,6 +208,7 @@ export function useReaderEpub(
     void initEpub();
 
     return () => {
+      active = false;
       const r = renditionRef.current;
       if (r) {
         const existing = r.annotations as unknown as Iterable<[string, { cfiRange: string; type: string }]>;
@@ -220,7 +224,6 @@ export function useReaderEpub(
     viewerRef,
     sessionToken,
     bookId,
-    applyThemes,
     setCurrentChapter,
     setError,
     setProgress,
@@ -231,7 +234,7 @@ export function useReaderEpub(
 
   useEffect(() => {
     if (renditionRef.current) applyThemes(renditionRef.current);
-  }, [readerTheme, applyThemes]);
+  }, [applyThemes]);
 
   useEffect(() => {
     if (readerTheme !== 'system') return;
@@ -239,11 +242,7 @@ export function useReaderEpub(
     const handler = () => { if (renditionRef.current) applyThemes(renditionRef.current); };
     mq.addEventListener('change', handler);
     return () => mq.removeEventListener('change', handler);
-  }, [readerTheme, applyThemes]);
-
-  useEffect(() => {
-    if (renditionRef.current) applyThemes(renditionRef.current);
-  }, [readerFontSize, readerFontFamily, readerLineHeight, applyThemes]);
+  }, [applyThemes]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -258,7 +257,7 @@ export function useReaderEpub(
       }
     };
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    return () => { window.removeEventListener('keydown', handleKeyDown); };
   }, []);
 
   return {

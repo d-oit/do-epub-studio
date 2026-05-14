@@ -48,7 +48,7 @@ Per `AGENTS.md` (`MAX_LINES_PER_SOURCE_FILE=500`):
 
 | File | Current LOC | Status |
 |------|-------------|--------|
-| `apps/web/src/features/reader/ReaderPage.tsx` | 492 | ✅ Resolved |
+| `apps/web/src/features/reader/ReaderPage.tsx` | 341 | ✅ Refactored via useReaderEpub hook |
 | `apps/web/src/features/admin/GrantsPage.tsx` | 311 | ✅ Resolved |
 | `apps/web/src/components/ui/index.tsx` | 525 | ⚠️ Near limit |
 
