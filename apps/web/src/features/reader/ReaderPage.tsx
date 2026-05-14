@@ -1,26 +1,20 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { useParams, useNavigate } from 'react-router-dom';
-import ePub, { Book, Rendition, NavItem } from '@intity/epub-js';
+import { Rendition } from '@intity/epub-js';
 import { useTranslation } from '../../hooks/useTranslation';
 import { apiRequest } from '../../lib/api';
 import { fetchHighlights, fetchComments } from '../../lib/api/annotations';
-import { useAuthStore, useReaderStore, usePreferencesStore, FONT_SIZES, LINE_HEIGHTS } from '../../stores';
-import { saveProgress, queueSync, setupOnlineListener, generateMutationId, getProgress } from '../../lib/offline';
+import { useAuthStore, useReaderStore, usePreferencesStore } from '../../stores';
+import { setupOnlineListener } from '../../lib/offline';
 import { setupZombieDetection } from '../../lib/offline/permissions';
 import { AnnotationToolbar, extractSelectionData, CommentsPanel } from './components/annotations';
 import { renderHighlightsOnRendition, renderCommentMarkersOnRendition } from './annotationRendering';
-import { useReaderUI, useAnnotationHandlers, useBookmarkHandlers, useExportNotes } from './hooks';
+import { useReaderUI, useReaderEpub, useAnnotationHandlers, useBookmarkHandlers, useExportNotes } from './hooks';
 import {
   ReaderToolbar, ReaderSettingsPanel, TableOfContents,
   BookmarksPanel, ReaderViewer, CommentInputModal,
 } from './components';
-
-interface TocItem {
-  label: string;
-  href: string;
-  subitems?: TocItem[];
-}
 
 export function ReaderPage() {
   const { bookSlug } = useParams<{ bookSlug: string }>();
@@ -53,7 +47,6 @@ export function ReaderPage() {
   } = useReaderUI();
 
   // useReaderStore atomic selectors
-  const setProgress = useReaderStore((s) => s.setProgress);
   const setError = useReaderStore((s) => s.setError);
   const error = useReaderStore((s) => s.error);
   const setOffline = useReaderStore((s) => s.setOffline);
@@ -63,14 +56,12 @@ export function ReaderPage() {
   const comments = useReaderStore(useShallow((s) => s.comments));
   const setComments = useReaderStore((s) => s.setComments);
   const bookmarks = useReaderStore(useShallow((s) => s.bookmarks));
-  const setCurrentChapter = useReaderStore((s) => s.setCurrentChapter);
   const currentChapter = useReaderStore((s) => s.currentChapter);
 
   // usePreferencesStore atomic selectors
   const readerTheme = usePreferencesStore((s) => s.reader.theme);
   const readerFontSize = usePreferencesStore((s) => s.reader.fontSize);
   const readerFontFamily = usePreferencesStore((s) => s.reader.fontFamily);
-  const readerLineHeight = usePreferencesStore((s) => s.reader.lineHeight);
   const readerPageWidth = usePreferencesStore((s) => s.reader.pageWidth);
   const setTheme = usePreferencesStore((s) => s.setTheme);
   const setFontFamily = usePreferencesStore((s) => s.setFontFamily);
@@ -86,19 +77,16 @@ export function ReaderPage() {
 
   const rootRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<HTMLDivElement>(null!);
-  const bookRef = useRef<Book | null>(null);
-  const renditionRef = useRef<Rendition | null>(null);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
-  const currentChapterRef = useRef<string | null>(null);
-  // Stable refs so the EPUB init effect calls the latest render fns without re-running on changes
   const renderHighlightsRef = useRef<((r: Rendition, ch: string | null) => void) | null>(null);
   const renderCommentMarkersRef = useRef<((r: Rendition, ch: string | null) => void) | null>(null);
-  // Stable ref for toc so relocated handler always sees latest TOC without init effect depending on it
-  const tocRef = useRef<TocItem[]>([]);
 
   const [epubUrl, setEpubUrl] = useState<string | null>(null);
-  const [toc, setToc] = useState<TocItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  const {
+    renditionRef, currentChapterRef, toc, resolvedTheme,
+  } = useReaderEpub(epubUrl, viewerRef, rootRef, renderHighlightsRef, renderCommentMarkersRef);
 
   useEffect(() => {
     if (!sessionToken || !bookId) return;
@@ -154,48 +142,6 @@ export function ReaderPage() {
     }
   }, [revokedBooks, bookId, setError, setPermissionStatus, t]);
 
-  const isSystemDark = useCallback(() => {
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
-  }, []);
-
-  const resolvedTheme = readerTheme === 'system'
-    ? (isSystemDark() ? 'dark' : 'light')
-    : readerTheme;
-
-  const applyThemes = useCallback(
-    (rendition: Rendition) => {
-      const container = rootRef.current;
-      if (!container) return;
-      const style = getComputedStyle(container);
-      const bg = style.getPropertyValue('--color-background').trim();
-      const fg = style.getPropertyValue('--color-foreground').trim();
-      const effectiveTheme = readerTheme === 'system' ? (isSystemDark() ? 'dark' : 'light') : readerTheme;
-      const imgFilter =
-        effectiveTheme === 'dark'
-          ? 'invert(1) hue-rotate(180deg)'
-          : effectiveTheme === 'sepia'
-            ? 'sepia(1)'
-            : 'none';
-      rendition.themes.registerRules('reader-theme', {
-        body: {
-          background: bg,
-          color: fg,
-          'font-size': FONT_SIZES[readerFontSize],
-          'line-height': LINE_HEIGHTS[readerLineHeight],
-          'font-family':
-            readerFontFamily === 'serif'
-              ? 'serif'
-              : readerFontFamily === 'sans-serif'
-                ? 'sans-serif'
-                : 'monospace',
-        },
-        img: { filter: imgFilter },
-      });
-      rendition.themes.select('reader-theme');
-    },
-    [readerTheme, readerFontSize, readerFontFamily, readerLineHeight, isSystemDark],
-  );
-
   const handleNavigateToAnnotation = useCallback(async (chapterRef: string, cfiRange?: string) => {
     if (!renditionRef.current) return;
     await renditionRef.current.display(cfiRange ?? chapterRef);
@@ -244,170 +190,6 @@ export function ReaderPage() {
   }, [sessionToken, bookSlug, navigate, setError, t]);
 
   useEffect(() => {
-    if (!epubUrl || !viewerRef.current) return;
-    const viewer = viewerRef.current;
-
-    const initEpub = async () => {
-      try {
-        const book = ePub(epubUrl);
-        bookRef.current = book;
-        await book.ready;
-
-        const navigation = await book.loaded.navigation;
-        const tocItems: TocItem[] = navigation.toc
-          ? navigation.toc.map((item: NavItem) => ({ label: item.label, href: item.href }))
-          : [];
-        setToc(tocItems);
-        tocRef.current = tocItems;
-
-        const rendition = book.renderTo(viewer, {
-          width: '100%',
-          height: '100%',
-          spread: 'auto',
-          sandbox: ['allow-same-origin'],
-        });
-        renditionRef.current = rendition;
-        applyThemes(rendition);
-        await rendition.display();
-
-        const initialLocation = rendition.location;
-        if (initialLocation?.start) {
-          const startHref = initialLocation.start.href ?? null;
-          currentChapterRef.current = startHref;
-          setCurrentChapter(startHref);
-        }
-        renderHighlightsRef.current?.(rendition, currentChapterRef.current);
-        renderCommentMarkersRef.current?.(rendition, currentChapterRef.current);
-
-        if (sessionToken && bookId) {
-          try {
-            let cfi: string | undefined;
-
-            if (navigator.onLine) {
-              const progressData = await apiRequest<{ locator: unknown; progressPercent: number }>(
-                `/api/books/${bookId}/progress`,
-                { method: 'GET', token: sessionToken },
-              );
-              cfi = (progressData.locator as { cfi?: string } | null)?.cfi;
-            } else {
-              const cached = await getProgress(bookId);
-              if (cached?.cfi) cfi = cached.cfi;
-            }
-
-            if (cfi) await rendition.display(cfi);
-          } catch (e) {
-            console.warn('Failed to load progress from API', e);
-            try {
-              const cached = await getProgress(bookId);
-              if (cached?.cfi) await rendition.display(cached.cfi);
-            } catch (dbErr) {
-              console.warn('Failed to load progress from cache', dbErr);
-            }
-          }
-        }
-
-        rendition.on(
-          'relocated',
-          async (location: { start: { cfi: string; progress: number; href: string } }) => {
-            const { cfi, progress: progressPercent, href } = location.start;
-            setProgress({ locator: { cfi }, progressPercent, updatedAt: new Date().toISOString() });
-
-            const tocItem = tocRef.current.find((item) => item.href === href);
-            if (tocItem) {
-              currentChapterRef.current = tocItem.href;
-              setCurrentChapter(tocItem.href);
-            }
-
-            renderHighlightsRef.current?.(rendition, currentChapterRef.current);
-            renderCommentMarkersRef.current?.(rendition, currentChapterRef.current);
-
-            if (sessionToken && bookId) {
-              const mutationId = generateMutationId();
-              const queueOffline = async () => {
-                await saveProgress({
-                  id: `${bookId}-progress`,
-                  bookId,
-                  cfi,
-                  percentage: progressPercent,
-                  lastRead: Date.now(),
-                  synced: false,
-                  mutationId,
-                });
-                await queueSync(
-                  'progress',
-                  { bookId, cfi, percentage: progressPercent, mutationId },
-                  mutationId,
-                );
-              };
-              if (navigator.onLine) {
-                try {
-                  await apiRequest(`/api/books/${bookId}/progress`, {
-                    method: 'PUT',
-                    token: sessionToken,
-                    body: JSON.stringify({ locator: { cfi }, progressPercent, mutationId }),
-                  });
-                } catch (e) {
-                  console.warn('Failed to save progress online, queuing offline', e);
-                  await queueOffline();
-                }
-              } else {
-                await queueOffline();
-              }
-            }
-          },
-        );
-
-        rendition.on('displayed', () => {
-          renderHighlightsRef.current?.(rendition, currentChapterRef.current);
-          renderCommentMarkersRef.current?.(rendition, currentChapterRef.current);
-        });
-      } catch (err) {
-        console.error('EPUB init error:', err);
-        setError(t('reader.loadError'));
-      }
-    };
-
-    void initEpub();
-
-    return () => {
-      const r = renditionRef.current;
-      if (r) {
-        const existing = r.annotations as unknown as Iterable<[string, { cfiRange: string; type: string }]>;
-        for (const [, annotation] of existing) {
-          r.annotations.remove(annotation.cfiRange, annotation.type);
-        }
-      }
-      renditionRef.current?.destroy();
-      bookRef.current?.destroy();
-    };
-  }, [
-    epubUrl,
-    sessionToken,
-    bookId,
-    applyThemes,
-    setCurrentChapter,
-    setError,
-    setProgress,
-    t,
-  ]);
-
-  useEffect(() => {
-    if (renditionRef.current) applyThemes(renditionRef.current);
-  }, [readerTheme, applyThemes]);
-
-  useEffect(() => {
-    if (readerTheme !== 'system') return;
-    const mq = window.matchMedia('(prefers-color-scheme: dark)');
-    const handler = () => { if (renditionRef.current) applyThemes(renditionRef.current); };
-    mq.addEventListener('change', handler);
-    return () => mq.removeEventListener('change', handler);
-  }, [readerTheme, applyThemes]);
-
-  useEffect(() => {
-    if (renditionRef.current) applyThemes(renditionRef.current);
-  }, [readerFontSize, readerFontFamily, readerLineHeight, applyThemes]);
-
-  useEffect(() => {
     const r = renditionRef.current;
     if (r && currentChapterRef.current) renderHighlights(r, currentChapterRef.current);
   }, [highlights, renderHighlights]);
@@ -416,22 +198,6 @@ export function ReaderPage() {
     const r = renditionRef.current;
     if (r && currentChapterRef.current) renderCommentMarkers(r, currentChapterRef.current);
   }, [comments, renderCommentMarkers]);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const rendition = renditionRef.current;
-      if (!rendition) return;
-      if (e.key === 'ArrowRight') {
-        e.preventDefault();
-        void rendition.next();
-      } else if (e.key === 'ArrowLeft') {
-        e.preventDefault();
-        void rendition.prev();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
 
   const handleLogout = async () => {
     try {

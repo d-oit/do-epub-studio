@@ -1,42 +1,15 @@
 # Lighthouse / LHCI
 
-## Configuration
+## Status: REMOVED
 
-File: `.lighthouserc.json`
+`@lhci/cli` was removed from the project dependencies because:
 
-```json
-{
-  "ci": {
-    "collect": {
-      "numberOfRuns": 3,
-      "staticDistDir": "./apps/web/dist"
-    },
-    "assert": {
-      "assertions": {
-        "first-contentful-paint": ["warn", { "maxNumericValue": 2000 }],
-        "interactive": ["warn", { "maxNumericValue": 3500 }],
-        "categories:performance": ["error", { "minScore": 0.9 }],
-        "categories:accessibility": ["error", { "minScore": 0.9 }]
-      }
-    }
-  }
-}
-```
+1. The SPA requires a running API backend — Lighthouse cannot collect meaningful data from the static dist
+2. No CI workflow was configured to use it
+3. The NO_FCP issue is architectural (SPA needs backend) and cannot be fixed with config changes alone
 
-## NO_FCP Issue
+### To re-add in the future:
 
-The current config collects from `staticDistDir` which serves the production build statically. Since the app is a dynamic SPA that requires an API backend for auth and EPUB loading, Lighthouse reports **NO_FCP** (No First Contentful Paint) — the page loads but shows a blank/loading state because:
-
-1. The app needs a running Worker backend (`VITE_API_BASE_URL`) to fetch book data
-2. The auth flow requires user interaction (login page or redirect)
-3. No static mock data is configured for Lighthouse runs
-
-**Impact**: Performance and accessibility assertions cannot pass in CI without a running backend.
-
-### Resolution Options
-
-1. **Run Lighthouse against a deployed preview URL** (not static dist): Use `--url` instead of `staticDistDir` and point to a staging environment with test data
-2. **Add a static fallback page**: Create a `lighthouse.html` that renders a simple page to get FCP
-3. **Serve with a mock API**: Start a minimal HTTP server that serves the built assets and stubs API responses for the login page
-
-Until resolved, LHCI assertions are effectively blocked in CI.
+1. Re-install `@lhci/cli` and create `.lighthouserc.json` pointing to a deployed preview URL
+2. Or serve the app with a mock API server for static Lighthouse runs
+3. Or create a static landing page that Lighthouse can measure independently

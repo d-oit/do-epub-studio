@@ -14,7 +14,6 @@
     "test:coverage": "turbo run test:unit -- --coverage",
     "test:e2e": "playwright test",
     "verify": "pnpm lint && pnpm typecheck && pnpm test:coverage && pnpm build && pnpm test:e2e:smoke",
-    "lighthouse": "lhci autorun",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "db:migrate:local": "node scripts/db-migrate-local.mjs",
@@ -27,7 +26,6 @@
   "devDependencies": {
     "@axe-core/playwright": "^4.11.3",
     "@eslint/js": "^10.0.0",
-    "@lhci/cli": "^0.15.1",
     "@playwright/test": "^1.60.0",
     "@types/node": "^25",
     "@vitest/coverage-v8": "4.1.6",

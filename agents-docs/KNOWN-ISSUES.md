@@ -101,7 +101,7 @@ Before adding an entry:
 
 **Date:** 2026-05-13
 
-## Technical Debt: File Size
+## Technical Debt: File Size (RESOLVED)
 - **File**: `apps/web/src/features/reader/ReaderPage.tsx`
-- **Issue**: File size (1100+ LOC) exceeds the 500 LOC limit defined in `AGENTS.md`.
-- **Mitigation**: Critical rendering logic has been moved to `annotationRendering.ts`. Further extraction of handlers and effects into custom hooks (e.g., `useReaderAnnotations`, `useReaderSettings`) is recommended for the next phase.
+- **Status**: ✅ **Resolved** — Refactored from 572→341 LOC by extracting EPUB init/theme/keyboard logic into `useReaderEpub` hook.
+- **Resolution**: Created `hooks/useReaderEpub.ts` (~180 LOC) that encapsulates the EPUB initialization effect, theme re-application, system dark mode listener, keyboard navigation, and applyThemes logic. The hook reads stores internally (matching existing hook patterns).
