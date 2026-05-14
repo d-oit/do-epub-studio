@@ -9,11 +9,18 @@
 - [ ] Lighthouse CI performance tuning (Fixing NO_FCP in CI) — tracked in #140 §7.3
 - [ ] Move shared UI components to @do-epub-studio/ui — tracked in #140 §7.2
 
+## Dependency Audit (2026-05-14)
+
+| Dependency | Location | Version | Status |
+|---|---|---|---|
+| vite-plugin-pwa | `apps/web/package.json` | `^1.3.0` | Current stable |
+| @lhci/cli | `package.json` (root) | `^0.15.1` | Current stable |
+
 ## epub-js Migration Follow-Up (May 2026)
 
-Issue #128 closed; all follow-up work tracked in **[issue #140](https://github.com/d-oit/do-epub-studio/issues/140)**.
+Issue #128 closed; all follow-up work tracked in **[issue #140](https://github.com/d-oit/do-epub-studio/issues/140)**, now in **sprint-140-codebase-optimization** branch.
 
-### Reader Engine Hardening
+### Reader Engine Hardening (Phase 1 of sprint)
 - [ ] Remove duplicate telemetry helpers from epub-loader.ts → import from shared (#140 §1.1)
 - [ ] Expose `flow` and `manager` options in EpubLoader API (#140 §1.2)
 - [ ] Type `getContents()` with Contents type; expose DOM access (#140 §1.3)

@@ -25,7 +25,7 @@ See [docs/setup-local.md](docs/setup-local.md) for detailed development environm
 ## Documentation
 - [Coding Guide](docs/coding-guide.md): Architectural patterns and conventions.
 - [Agent Config](AGENTS.md): Instructions and guardrails for AI agents.
-- [Security](docs/security.md): Security model and hardening (Coming Soon).
+- [Security](docs/security.md): Security model and hardening.
 
 ## License
 [MIT](LICENSE)

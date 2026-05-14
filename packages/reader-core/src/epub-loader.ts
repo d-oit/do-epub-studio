@@ -1,4 +1,4 @@
-import ePub, { Book, Rendition, Location } from '@intity/epub-js';
+import ePub, { Book, Rendition, Location, Contents } from '@intity/epub-js';
 import type { SpineItem as EpubSpineItem } from '@intity/epub-js/types/section';
 import type {
   TocItem,
@@ -6,28 +6,7 @@ import type {
   BookMetadata,
   ProgressPosition,
 } from './epub-types';
-
-// Minimal telemetry helpers (mirrors packages/shared/src/telemetry)
-function generateTraceId(): string {
-  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
-    return crypto.randomUUID();
-  }
-  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 14)}`;
-}
-
-function generateSpanId(): string {
-  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
-    return crypto.randomUUID().split('-')[0] ?? Math.random().toString(36).slice(2, 10);
-  }
-  return Math.random().toString(36).slice(2, 12);
-}
-
-function formatError(error: unknown): { message: string; name: string } {
-  if (error instanceof Error) {
-    return { name: error.name, message: error.message };
-  }
-  return { name: 'Error', message: String(error) };
-}
+import { createTraceId, createSpanId, serializeError } from '@do-epub-studio/shared';
 
 type EventCallback = (data: unknown) => void;
 
@@ -37,7 +16,9 @@ export interface EpubRenditionHandle {
   next(): Promise<void>;
   on(event: string, callback: EventCallback): void;
   off(event: string, callback: EventCallback): void;
-  getContents(): unknown[];
+  getContents(): Contents[];
+  registerContentHook(fn: (contents: Contents) => void): void;
+  registerRenderHook(fn: (contents: Contents) => void): void;
 }
 
 export interface EpubLoader {
@@ -56,6 +37,8 @@ export interface EpubLoader {
 
 interface EpubLoaderOptions {
   onEvent?: (event: string, data: unknown) => void;
+  flow?: 'paginated' | 'scrolled' | 'scrolled-doc';
+  manager?: 'default' | 'continuous';
 }
 
 export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
@@ -128,8 +111,8 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
       throw new Error('EpubLoader has been destroyed');
     }
 
-    const traceId = generateTraceId();
-    const spanId = generateSpanId();
+    const traceId = createTraceId();
+    const spanId = createSpanId();
 
     try {
       book = ePub(url);
@@ -154,7 +137,7 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
         description: metaMap.description,
       };
     } catch (error) {
-      const formatted = formatError(error);
+      const formatted = serializeError(error);
       console.error(
         `[epub-loader][trace:${traceId}][span:${spanId}] Failed to load EPUB: ${formatted.message}`,
       );
@@ -176,6 +159,8 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
       height: '100%',
       spread: 'auto',
       sandbox: ['allow-same-origin'],
+      flow: options?.flow,
+      manager: options?.manager,
     });
 
     // Bridge rendition events to the loader's event system
@@ -233,15 +218,21 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any -- epubjs event callbacks have varying signatures
         rendition.off(event, callback as any);
       },
-      getContents(): unknown[] {
+      getContents(): Contents[] {
         if (!rendition) return [];
         try {
-          const contents = rendition.getContents();
-          // getContents() returns a single Contents object or undefined
-          return contents ? [contents] : [];
+          return rendition.getContents();
         } catch {
           return [];
         }
+      },
+      registerContentHook(fn: (contents: Contents) => void): void {
+        if (!rendition) return;
+        rendition.hooks.content.register(fn);
+      },
+      registerRenderHook(fn: (contents: Contents) => void): void {
+        if (!rendition) return;
+        rendition.hooks.render.register(fn);
       },
     };
 

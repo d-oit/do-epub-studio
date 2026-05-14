@@ -23,12 +23,28 @@
 - [x] Consolidate telemetry.ts to use @do-epub-studio/shared
 
 ### In Progress
-- [ ] Reader annotation anchor engine (ADR-006) / multi-signal locators (G13)
-- [ ] G1: Wire Reader UI fully to EPUB.js backend (progress sync wired, full CFI navigation)
+(none — all sprint items complete)
 
-### Remaining Testing Gaps
-- [ ] Add CFI navigation tests (T-1) — reader-core locator.test.ts partially covers this
-- [ ] Add EPUB parsing tests (T-2) — needs epub fixture files
+### Completed Sprint #140 Items
+- [x] Multi-signal locators enforced (G13) — ProgressUpdateSchema + BookmarkCreateSchema use MultiSignalLocatorSchema
+- [x] Reader annotation anchor engine (ADR-006) — epub-loader exposes hooks + typed Contents for injection
+- [x] G1: ReaderPage progress hydration, offline fallback, annotation restore on displayed events
+- [x] Keyboard navigation in ReaderPage (arrow keys)
+- [x] epub-loader unit tests (233 lines, full coverage)
+- [x] E2E smoke test for reader migration
+- [x] Offline reader E2E test
+- [x] fast-check property tests (shared + reader-core)
+- [x] Telemetry dedup across all packages
+- [x] Memory leak fixes (toast, global handler, sync retry, db close)
+- [x] Session expiry audit + tests
+- [x] Rate limiter documentation
+- [x] Documentation (architecture.md, security.md, offline.md, reader-rendering.md runbook)
+- [x] Dependency audit + Lighthouse documentation
+
+### Completed (Sprint Completion Swarm)
+- [x] Add EPUB parsing tests (T-2) — 21 tests with in-memory EPUB fixture files
+- [x] Move shared UI components to packages/ui (#140 §7.2) — 11 components migrated, apps/web/index.tsx 615→31 LOC
+- [x] ESLint 10 migration (#140 §7.1) — eslint ^9→^10.3.0, @eslint/js ^9→^10.0.1
 
 ---
 
@@ -37,15 +53,15 @@
 See Plan 012 for detailed gap analysis:
 - [x] G2: Fix slug/id mismatch — RESOLVED
 - [x] G3: Implement signed download route — RESOLVED
-- [ ] G1: Wire Reader UI fully to EPUB.js backend
-- [ ] G13: Enforce multi-signal annotation locators (AGENTS.md ADR-006)
+- [x] G1: Wire Reader UI fully to EPUB.js backend — RESOLVED
+- [x] G13: Enforce multi-signal annotation locators (AGENTS.md ADR-006) — RESOLVED
 
 ---
 
 ## Phase 3: Admin Security
 
 - [x] G4: Add admin authentication to all admin routes — RESOLVED
-- [ ] G6: Complete Admin UI workflow (BooksPage create flow, grant wizard)
+- [x] G6: Complete Admin UI workflow (BooksPage create flow, grant wizard) — RESOLVED
 
 ---
 
@@ -55,6 +71,6 @@ See Plan 012 for detailed gap analysis:
 - [x] T-4: Bookmark CRUD tests — RESOLVED
 - [x] CQ-1: Refactor ReaderPage.tsx (492 LOC) — RESOLVED
 - [x] CQ-2: Refactor GrantsPage.tsx (311 LOC) — RESOLVED
-- [ ] T-1: CFI navigation tests — partial (locator.test.ts covers createLocator/parseLocator)
-- [ ] T-2: EPUB parsing tests — open
-- [ ] G7: Add missing setup documentation
+- [x] T-1: CFI navigation tests — 68 tests total (was 39), with fast-check property tests
+- [x] T-2: EPUB parsing tests — 21 tests with in-memory ZIP fixture builder
+- [x] G7: Add missing setup documentation — docs verified/updated (setup-local.md, README.md)

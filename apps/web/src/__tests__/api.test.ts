@@ -3,9 +3,12 @@ import { apiRequest, api, getApiUrl, API_BASE_URL } from '../lib/api';
 import { useLocaleStore } from '../stores/locale';
 
 // Mock telemetry functions
-vi.mock('../lib/telemetry', () => ({
+vi.mock('@do-epub-studio/shared', () => ({
   createTraceId: vi.fn().mockReturnValue('trace-abc123'),
   createSpanId: vi.fn().mockReturnValue('span-def456'),
+}));
+
+vi.mock('../lib/client-logger', () => ({
   logClientEvent: vi.fn(),
 }));
 

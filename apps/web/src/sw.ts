@@ -6,7 +6,7 @@ import { registerRoute } from 'workbox-routing';
 import { CacheFirst, NetworkFirst } from 'workbox-strategies';
 import { ExpirationPlugin } from 'workbox-expiration';
 import { CacheableResponsePlugin } from 'workbox-cacheable-response';
-import { createTraceId } from './lib/telemetry';
+import { createTraceId } from '@do-epub-studio/shared';
 
 declare let self: ServiceWorkerGlobalScope;
 

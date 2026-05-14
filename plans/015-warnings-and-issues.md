@@ -81,11 +81,12 @@ Per `AGENTS.md` (`MAX_LINES_PER_SOURCE_FILE=500`):
 - [x] **Issue #118**: Removed `whileFocus` from Input component
 - [x] **E2E test fixes**: Fixed heading selector, form labels, button selector, login flow navigation
 
-### Still Open
+### Resolved (Sprint Completion Swarm)
 
-- [ ] Update skill categories to fix validation (pre-existing known issue)
-- [ ] Add CFI navigation tests (T-1) — partial
-- [ ] `CommentsPanel.tsx` still at 544 LOC — monitor
+- [x] Skill categories validation — was already correct, removed stale KNOWN-ISSUES.md entry
+- [x] CFI navigation tests (T-1) — expanded to 68 tests with property-based tests
+- [x] `CommentsPanel.tsx` at 544 LOC — split into CommentsPanel (230), CommentItem (190), HighlightItem (116), formatDate (15)
+- [x] `components/ui/index.tsx` at 615 LOC — migrated to packages/ui as 11 individual files; apps/web/index.tsx is 31 LOC re-export
 
 ---
 

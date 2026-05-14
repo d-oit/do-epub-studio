@@ -1,15 +1,3 @@
-/**
- * Client-side telemetry utilities.
- *
- * `createTraceId`, `createSpanId`, and `serializeError` are canonical
- * implementations that live in @do-epub-studio/shared. They are re-exported
- * here so that all web-app code has a single import path, and so the local
- * duplicate implementations (removed in this commit) don't drift from the
- * shared ones.
- */
-export { createTraceId, createSpanId, serializeError } from '@do-epub-studio/shared';
-export type { SerializedError } from '@do-epub-studio/shared';
-
 export interface ClientLogEntry {
   level: 'info' | 'warn' | 'error';
   traceId: string;

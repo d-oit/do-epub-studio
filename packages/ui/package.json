@@ -9,6 +9,9 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint src --ext .ts,.tsx"
   },
+  "dependencies": {
+    "framer-motion": "^12"
+  },
   "peerDependencies": {
     "react": "^19",
     "react-dom": "^19"

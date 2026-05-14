@@ -148,6 +148,21 @@ export const en = {
   'admin.grants.never': 'Never',
   'admin.grants.revoke': 'Revoke',
   'admin.grants.noGrantResponses': 'No grants found',
+  'admin.grants.createGrant': 'Create Grant',
+  'admin.grants.error.emailRequired': 'Email is required',
+  'admin.grants.createGrantModal.title': 'Create Grant',
+  'admin.grants.createGrantModal.emailLabel': 'Email',
+  'admin.grants.createGrantModal.emailPlaceholder': 'user@example.com',
+  'admin.grants.createGrantModal.modeLabel': 'Access Mode',
+  'admin.grants.createGrantModal.modeRead': 'Read',
+  'admin.grants.createGrantModal.modeComment': 'Comment',
+  'admin.grants.createGrantModal.modeHighlight': 'Highlight',
+  'admin.grants.createGrantModal.commentsAllowed': 'Allow comments',
+  'admin.grants.createGrantModal.offlineAllowed': 'Allow offline access',
+  'admin.grants.createGrantModal.expiresLabel': 'Expires (optional)',
+  'admin.grants.createGrantModal.close': 'Close',
+  'admin.grants.createGrantModal.submit': 'Create Grant',
+  'admin.grants.createGrantModal.submitting': 'Creating...',
 } as const;
 
 export type TranslationKeys = keyof typeof en;

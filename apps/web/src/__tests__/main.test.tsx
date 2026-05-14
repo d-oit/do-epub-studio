@@ -12,9 +12,12 @@ vi.mock('react-dom/client', () => ({
   createRoot: mockCreateRoot,
 }));
 
-vi.mock('../lib/telemetry', () => ({
+vi.mock('@do-epub-studio/shared', () => ({
   createTraceId: () => 'test-trace',
   createSpanId: () => 'test-span',
+}));
+
+vi.mock('../lib/client-logger', () => ({
   logClientEvent: vi.fn(),
 }));
 
@@ -34,6 +37,7 @@ describe('main.tsx', () => {
     vi.clearAllMocks();
     document.body.innerHTML = '<div id="root"></div>';
     vi.resetModules();
+    delete (window as unknown as Record<string, unknown>).__errorHandlerRegistered;
 
     errorListeners = [];
     rejectionListeners = [];
@@ -79,7 +83,7 @@ describe('main.tsx', () => {
     it('error handler logs client event', async () => {
       document.body.innerHTML = '<div id="root"></div>';
       await import('../main');
-      const { logClientEvent } = await import('../lib/telemetry');
+      const { logClientEvent } = await import('../lib/client-logger');
 
       const testError = new Error('test error');
       const errorEvent = new ErrorEvent('error', {
@@ -106,7 +110,7 @@ describe('main.tsx', () => {
     it('unhandledrejection handler logs client event', async () => {
       document.body.innerHTML = '<div id="root"></div>';
       await import('../main');
-      const { logClientEvent } = await import('../lib/telemetry');
+      const { logClientEvent } = await import('../lib/client-logger');
 
       const testError = new Error('rejection error');
       const rejectedPromise = Promise.reject(testError);
@@ -132,7 +136,7 @@ describe('main.tsx', () => {
     it('handles non-Error rejection reason gracefully', async () => {
       document.body.innerHTML = '<div id="root"></div>';
       await import('../main');
-      const { logClientEvent } = await import('../lib/telemetry');
+      const { logClientEvent } = await import('../lib/client-logger');
 
       const stringReason = 'string error';
       // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors

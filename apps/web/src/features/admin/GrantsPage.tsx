@@ -4,6 +4,7 @@ import { useTranslation } from '../../hooks/useTranslation';
 import { apiRequest } from '../../lib/api';
 import { GrantResponse } from '@do-epub-studio/shared';
 import { LocaleSwitcher } from '../../components/LocaleSwitcher';
+import { Modal, Button } from '../../components/ui';
 
 interface LocationState {
   bookTitle?: string;
@@ -18,6 +19,14 @@ export function AdminGrantResponsesPage() {
   const [grants, setGrantResponses] = useState<GrantResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteMode, setInviteMode] = useState('read');
+  const [commentsAllowed, setCommentsAllowed] = useState(true);
+  const [offlineAllowed, setOfflineAllowed] = useState(false);
+  const [expiresAt, setExpiresAt] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
 
   const fetchGrantResponses = useCallback(async () => {
     if (!bookId) return;
@@ -35,6 +44,46 @@ export function AdminGrantResponsesPage() {
   useEffect(() => {
     void fetchGrantResponses();
   }, [bookId, fetchGrantResponses]);
+
+  const resetCreateForm = () => {
+    setInviteEmail('');
+    setInviteMode('read');
+    setCommentsAllowed(true);
+    setOfflineAllowed(false);
+    setExpiresAt('');
+    setCreateError(null);
+  };
+
+  const handleCreateGrant = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCreateError(null);
+
+    if (!inviteEmail.trim()) {
+      setCreateError(t('admin.grants.error.emailRequired'));
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await apiRequest(`/api/admin/books/${bookId}/grants`, {
+        method: 'POST',
+        body: JSON.stringify({
+          email: inviteEmail.trim(),
+          mode: inviteMode,
+          commentsAllowed,
+          offlineAllowed,
+          expiresAt: expiresAt || null,
+        }),
+      });
+      setIsCreateModalOpen(false);
+      resetCreateForm();
+      void fetchGrantResponses();
+    } catch (err) {
+      setCreateError((err as Error).message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const handleRevoke = async (grantId: string) => {
     if (!confirm(t('admin.grants.confirmRevoke'))) return;
@@ -63,7 +112,12 @@ export function AdminGrantResponsesPage() {
             &larr; {t('admin.grants.backToBooks')}
           </button>
         </div>
-        <LocaleSwitcher />
+        <div className="flex items-center gap-4">
+          <Button onClick={() => setIsCreateModalOpen(true)}>
+            {t('admin.grants.createGrant')}
+          </Button>
+          <LocaleSwitcher />
+        </div>
       </header>
 
       {error && (
@@ -128,6 +182,107 @@ export function AdminGrantResponsesPage() {
           </table>
         )}
       </div>
+      <Modal
+        isOpen={isCreateModalOpen}
+        onClose={() => {
+          setIsCreateModalOpen(false);
+          resetCreateForm();
+        }}
+        title={t('admin.grants.createGrantModal.title')}
+      >
+        <form onSubmit={(e) => { void handleCreateGrant(e); }} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              {t('admin.grants.createGrantModal.emailLabel')}
+            </label>
+            <input
+              type="email"
+              value={inviteEmail}
+              onChange={(e) => setInviteEmail(e.target.value)}
+              placeholder={t('admin.grants.createGrantModal.emailPlaceholder')}
+              className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none transition-all"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              {t('admin.grants.createGrantModal.modeLabel')}
+            </label>
+            <select
+              value={inviteMode}
+              onChange={(e) => setInviteMode(e.target.value)}
+              className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none transition-all"
+            >
+              <option value="read">{t('admin.grants.createGrantModal.modeRead')}</option>
+              <option value="comment">{t('admin.grants.createGrantModal.modeComment')}</option>
+              <option value="highlight">{t('admin.grants.createGrantModal.modeHighlight')}</option>
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="commentsAllowed"
+              checked={commentsAllowed}
+              onChange={(e) => setCommentsAllowed(e.target.checked)}
+              className="rounded border-gray-300 dark:border-gray-600"
+            />
+            <label htmlFor="commentsAllowed" className="text-sm text-gray-700 dark:text-gray-300">
+              {t('admin.grants.createGrantModal.commentsAllowed')}
+            </label>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="offlineAllowed"
+              checked={offlineAllowed}
+              onChange={(e) => setOfflineAllowed(e.target.checked)}
+              className="rounded border-gray-300 dark:border-gray-600"
+            />
+            <label htmlFor="offlineAllowed" className="text-sm text-gray-700 dark:text-gray-300">
+              {t('admin.grants.createGrantModal.offlineAllowed')}
+            </label>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              {t('admin.grants.createGrantModal.expiresLabel')}
+            </label>
+            <input
+              type="date"
+              value={expiresAt}
+              onChange={(e) => setExpiresAt(e.target.value)}
+              className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none transition-all"
+            />
+          </div>
+
+          {createError && (
+            <div className="p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-300">
+              {createError}
+            </div>
+          )}
+
+          <div className="flex justify-end gap-3 pt-2">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => {
+                setIsCreateModalOpen(false);
+                resetCreateForm();
+              }}
+            >
+              {t('admin.grants.createGrantModal.close')}
+            </Button>
+            <Button
+              type="submit"
+              isLoading={isSubmitting}
+            >
+              {isSubmitting ? t('admin.grants.createGrantModal.submitting') : t('admin.grants.createGrantModal.submit')}
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }

@@ -147,23 +147,14 @@ pnpm test
 
 ### End-to-end tests (Playwright)
 
-The project supports two E2E testing lanes:
-
-1.  **Dev Lane (Fast Local Feedback):** Runs against the Vite development server.
-    ```bash
-    pnpm test:e2e:dev
-    # OR (alias for dev)
-    pnpm test:e2e
-    ```
-
-2.  **Production Lane (Release Confidence):** Builds the application and runs against the Vite preview server to match the production environment.
-    ```bash
-    pnpm test:e2e:prod
-    ```
-
-You can also run only the smoke tests (tests tagged with `@smoke`) in the production lane:
+Run E2E tests against the dev server:
 ```bash
-pnpm test:e2e:smoke:prod
+pnpm test:e2e
+```
+
+Run only smoke tests (tagged `@smoke`):
+```bash
+pnpm test:e2e:smoke
 ```
 
 Install Playwright browsers on first run:

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import fc from 'fast-check';
 import {
   AnnotationLocatorSchema,
   AccessRequestSchema,
@@ -6,10 +7,11 @@ import {
   CreateGrantSchema,
   // UpdateGrantSchema,
   ProgressUpdateSchema,
-  // BookmarkCreateSchema,
+  BookmarkCreateSchema,
   HighlightCreateSchema,
   CommentCreateSchema,
   CommentUpdateSchema,
+  MultiSignalLocatorSchema,
 } from '../schemas';
 
 describe('AnnotationLocatorSchema', () => {
@@ -257,18 +259,112 @@ describe('CommentCreateSchema', () => {
   });
 });
 
+describe('MultiSignalLocatorSchema', () => {
+  it('accepts valid multi-signal locator with all fields', () => {
+    const result = MultiSignalLocatorSchema.safeParse({
+      cfi: 'epubcfi(/6/4[chapter1]!/4/2/1:0)',
+      selectedText: 'important passage',
+      chapterRef: 'chapter1',
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('rejects locator with empty cfi string', () => {
+    const result = MultiSignalLocatorSchema.safeParse({
+      cfi: '',
+      selectedText: 'text',
+      chapterRef: 'ch1',
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0]?.message).toContain('CFI is required');
+    }
+  });
+
+  it('rejects locator with empty selectedText', () => {
+    const result = MultiSignalLocatorSchema.safeParse({
+      cfi: 'epubcfi(/6/4)',
+      selectedText: '',
+      chapterRef: 'ch1',
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0]?.message).toContain('Selected text is required');
+    }
+  });
+
+  it('rejects locator with empty chapterRef', () => {
+    const result = MultiSignalLocatorSchema.safeParse({
+      cfi: 'epubcfi(/6/4)',
+      selectedText: 'text',
+      chapterRef: '',
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0]?.message).toContain('Chapter reference is required');
+    }
+  });
+
+  it('rejects locator missing cfi field entirely', () => {
+    const result = MultiSignalLocatorSchema.safeParse({
+      selectedText: 'text',
+      chapterRef: 'ch1',
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects locator missing selectedText field entirely', () => {
+    const result = MultiSignalLocatorSchema.safeParse({
+      cfi: 'epubcfi(/6/4)',
+      chapterRef: 'ch1',
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects locator missing chapterRef field entirely', () => {
+    const result = MultiSignalLocatorSchema.safeParse({
+      cfi: 'epubcfi(/6/4)',
+      selectedText: 'text',
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects empty object', () => {
+    const result = MultiSignalLocatorSchema.safeParse({});
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects extra fields via strict()', () => {
+    const result = MultiSignalLocatorSchema.safeParse({
+      cfi: 'epubcfi(/6/4)',
+      selectedText: 'text',
+      chapterRef: 'ch1',
+      extraField: 'should-not-exist',
+    });
+    expect(result.success).toBe(false);
+  });
+});
+
 describe('ProgressUpdateSchema', () => {
-  it('accepts valid progress', () => {
+  it('accepts valid progress with multi-signal locator', () => {
     const result = ProgressUpdateSchema.safeParse({
-      locator: { cfi: 'epubcfi(/6/4)' },
+      locator: { cfi: 'epubcfi(/6/4)', selectedText: 'text', chapterRef: 'ch1' },
       progressPercent: 50,
     });
     expect(result.success).toBe(true);
   });
 
-  it('rejects progressPercent below 0', () => {
+  it('rejects progress with incomplete locator', () => {
     const result = ProgressUpdateSchema.safeParse({
       locator: { cfi: 'epubcfi(/6/4)' },
+      progressPercent: 50,
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects progressPercent below 0', () => {
+    const result = ProgressUpdateSchema.safeParse({
+      locator: { cfi: 'epubcfi(/6/4)', selectedText: 'text', chapterRef: 'ch1' },
       progressPercent: -1,
     });
     expect(result.success).toBe(false);
@@ -276,9 +372,49 @@ describe('ProgressUpdateSchema', () => {
 
   it('rejects progressPercent above 100', () => {
     const result = ProgressUpdateSchema.safeParse({
-      locator: { cfi: 'epubcfi(/6/4)' },
+      locator: { cfi: 'epubcfi(/6/4)', selectedText: 'text', chapterRef: 'ch1' },
       progressPercent: 101,
     });
+    expect(result.success).toBe(false);
+  });
+});
+
+describe('BookmarkCreateSchema', () => {
+  it('accepts valid bookmark with multi-signal locator', () => {
+    const result = BookmarkCreateSchema.safeParse({
+      locator: {
+        cfi: 'epubcfi(/6/4[chapter1]!/4/2/1:0)',
+        selectedText: 'important passage',
+        chapterRef: 'chapter1',
+      },
+      label: 'My bookmark',
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('accepts bookmark without label', () => {
+    const result = BookmarkCreateSchema.safeParse({
+      locator: {
+        cfi: 'epubcfi(/6/4)',
+        selectedText: 'text',
+        chapterRef: 'ch1',
+      },
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('rejects bookmark with incomplete locator (missing chapterRef)', () => {
+    const result = BookmarkCreateSchema.safeParse({
+      locator: {
+        cfi: 'epubcfi(/6/4)',
+        selectedText: 'text',
+      },
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects bookmark without locator', () => {
+    const result = BookmarkCreateSchema.safeParse({ label: 'orphan' });
     expect(result.success).toBe(false);
   });
 });
@@ -302,5 +438,90 @@ describe('CommentUpdateSchema', () => {
   it('rejects invalid status', () => {
     const result = CommentUpdateSchema.safeParse({ status: 'unknown' });
     expect(result.success).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Property-based tests
+// ---------------------------------------------------------------------------
+
+describe('MultiSignalLocatorSchema (property)', () => {
+  it('accepts any valid combination of non-empty strings', () => {
+    fc.assert(
+      fc.property(
+        fc.string({ minLength: 1, maxLength: 200 }),
+        fc.string({ minLength: 1, maxLength: 200 }),
+        fc.string({ minLength: 1, maxLength: 200 }),
+        (cfi, selectedText, chapterRef) => {
+          const result = MultiSignalLocatorSchema.safeParse({ cfi, selectedText, chapterRef });
+          expect(result.success).toBe(true);
+          if (result.success) {
+            expect(result.data.cfi).toBe(cfi);
+            expect(result.data.selectedText).toBe(selectedText);
+            expect(result.data.chapterRef).toBe(chapterRef);
+          }
+        },
+      ),
+    );
+  });
+
+  it('rejects input missing any required field', () => {
+    fc.assert(
+      fc.property(
+        fc.option(fc.string({ minLength: 1 }), { nil: undefined }),
+        fc.option(fc.string({ minLength: 1 }), { nil: undefined }),
+        fc.option(fc.string({ minLength: 1 }), { nil: undefined }),
+        (cfi, selectedText, chapterRef) => {
+          const input: Record<string, string> = {};
+          if (cfi !== undefined) input.cfi = cfi;
+          if (selectedText !== undefined) input.selectedText = selectedText;
+          if (chapterRef !== undefined) input.chapterRef = chapterRef;
+          if (cfi === undefined || selectedText === undefined || chapterRef === undefined) {
+            const result = MultiSignalLocatorSchema.safeParse(input);
+            expect(result.success).toBe(false);
+          }
+        },
+      ),
+    );
+  });
+
+  it('rejects input with extra unknown keys', () => {
+    fc.assert(
+      fc.property(
+        fc.string({ minLength: 1 }),
+        fc.string({ minLength: 1 }),
+        fc.string({ minLength: 1 }),
+        fc.string(),
+        (cfi, selectedText, chapterRef, extraKey) => {
+          fc.pre(extraKey.length > 0 && extraKey !== 'cfi' && extraKey !== 'selectedText' && extraKey !== 'chapterRef');
+          const result = MultiSignalLocatorSchema.safeParse({
+            cfi,
+            selectedText,
+            chapterRef,
+            [extraKey]: 'some value',
+          });
+          expect(result.success).toBe(false);
+        },
+      ),
+    );
+  });
+
+  it('rejects empty string for any required field', () => {
+    fc.assert(
+      fc.property(
+        fc.constantFrom('cfi', 'selectedText', 'chapterRef'),
+        fc.string({ minLength: 1, maxLength: 100 }),
+        fc.string({ minLength: 1, maxLength: 100 }),
+        (emptyField, a, b) => {
+          const input: Record<string, string> = {};
+          input[emptyField] = '';
+          if (emptyField !== 'cfi') input.cfi = a;
+          if (emptyField !== 'selectedText') input.selectedText = a;
+          if (emptyField !== 'chapterRef') input.chapterRef = b;
+          const result = MultiSignalLocatorSchema.safeParse(input);
+          expect(result.success).toBe(false);
+        },
+      ),
+    );
   });
 });

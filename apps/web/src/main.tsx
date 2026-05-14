@@ -5,7 +5,8 @@ import { MotionConfig } from 'framer-motion';
 
 import App from './App';
 import { ErrorBoundary } from './components/ErrorBoundary';
-import { createSpanId, createTraceId, logClientEvent } from './lib/telemetry';
+import { createSpanId, createTraceId } from '@do-epub-studio/shared';
+import { logClientEvent } from './lib/client-logger';
 import './styles/globals.css';
 
 setupGlobalErrorHandlers();
@@ -42,9 +43,11 @@ if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
 }
 
 function setupGlobalErrorHandlers(): void {
-  if (typeof window === 'undefined') {
-    return;
-  }
+  if (typeof window === 'undefined') return;
+
+  const win = window as unknown as { __errorHandlerRegistered?: boolean };
+  if (win.__errorHandlerRegistered) return;
+  win.__errorHandlerRegistered = true;
 
   window.addEventListener('error', (event) => {
     const traceId = createTraceId();

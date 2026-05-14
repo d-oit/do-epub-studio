@@ -27,6 +27,13 @@ describe('requireAuth middleware', () => {
     expect(result).toBeNull();
   });
 
+  it('returns null for expired session', async () => {
+    const req = makeRequest({ Authorization: 'Bearer expired-session' });
+    mockValidateSessionMod.mockResolvedValue({ valid: false });
+    const result = await requireAuth(makeEnv(), req);
+    expect(result).toBeNull();
+  });
+
   it('returns null for expired grant', async () => {
     const req = makeRequest({ Authorization: 'Bearer valid' });
     mockValidateSessionMod.mockResolvedValue({
