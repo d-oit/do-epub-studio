@@ -1,4 +1,4 @@
-import { type ReactNode, createContext, useState, useCallback } from 'react';
+import { type ReactNode, createContext, useState, useCallback, useRef, useEffect } from 'react';
 
 export type ToastType = 'success' | 'error' | 'info' | 'warning';
 
@@ -19,15 +19,28 @@ const ToastContext = createContext<ToastContextValue | null>(null);
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const timeoutRefs = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+
+  useEffect(() => {
+    const refs = timeoutRefs.current;
+    return () => {
+      for (const timeoutId of refs.values()) {
+        clearTimeout(timeoutId);
+      }
+      refs.clear();
+    };
+  }, []);
 
   const addToast = useCallback((type: ToastType, message: string, duration = 5000) => {
     const id = crypto.randomUUID();
     setToasts((prev) => [...prev, { id, type, message, duration }]);
 
     if (duration > 0) {
-      setTimeout(() => {
+      const timeoutId = setTimeout(() => {
+        timeoutRefs.current.delete(id);
         setToasts((prev) => prev.filter((t) => t.id !== id));
       }, duration);
+      timeoutRefs.current.set(id, timeoutId);
     }
   }, []);
 

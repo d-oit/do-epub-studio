@@ -1,6 +1,7 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 
-import { createSpanId, createTraceId, logClientEvent } from '../lib/telemetry';
+import { createSpanId, createTraceId } from '@do-epub-studio/shared';
+import { logClientEvent } from '../lib/client-logger';
 
 interface ErrorBoundaryProps {
   children: ReactNode;

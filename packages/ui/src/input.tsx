@@ -1,47 +1,53 @@
-import { type InputHTMLAttributes, forwardRef, useId } from 'react';
+import { type ComponentPropsWithoutRef, forwardRef, useId } from 'react';
+import { motion } from 'framer-motion';
 
-export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+type MotionInputBaseProps = Omit<
+  ComponentPropsWithoutRef<typeof motion.input>,
+  'onDrag' | 'onDragEnd' | 'onDragStart' | 'whileFocus' | 'transition'
+>;
+
+export interface InputProps extends MotionInputBaseProps {
   label?: string;
   error?: string;
   helperText?: string;
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ className = '', label, error, helperText, id, ...props }, ref) => {
+  ({ label, error, helperText, className = '', id, ...props }, ref) => {
     const generatedId = useId();
     const inputId = id || generatedId;
     const errorId = `${inputId}-error`;
     const helperId = `${inputId}-helper`;
-
     const describedBy = error ? errorId : helperText ? helperId : undefined;
 
     return (
       <div className="w-full">
         {label && (
-          <label htmlFor={inputId} className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor={inputId} className="block text-sm font-medium text-foreground mb-1.5">
             {label}
           </label>
         )}
-        <input
+        <motion.input
           ref={ref}
           id={inputId}
           aria-invalid={error ? 'true' : undefined}
           aria-describedby={describedBy}
           className={`
-            w-full px-3 py-2 border rounded-lg shadow-sm
-            focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-            disabled:bg-gray-100 disabled:cursor-not-allowed
-            ${error ? 'border-red-500' : 'border-gray-300'}
+            w-full px-4 py-3 bg-background border rounded-lg
+            text-foreground placeholder:text-foreground-muted
+            transition-all duration-150
+            outline-none
+            ${error ? 'border-accent-error focus:border-accent-error focus:ring-accent-error/15' : 'border-border focus:border-accent focus:ring-[3px] focus:ring-accent/15'}
             ${className}
           `}
-          {...props}
+          {...(props)}
         />
         {error ? (
-          <p id={errorId} className="mt-1 text-sm text-red-600">
+          <p id={errorId} className="mt-1.5 text-sm text-accent-error">
             {error}
           </p>
         ) : helperText ? (
-          <p id={helperId} className="mt-1 text-sm text-gray-500">
+          <p id={helperId} className="mt-1.5 text-sm text-foreground-muted">
             {helperText}
           </p>
         ) : null}

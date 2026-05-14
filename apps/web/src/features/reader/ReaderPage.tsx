@@ -6,7 +6,7 @@ import { useTranslation } from '../../hooks/useTranslation';
 import { apiRequest } from '../../lib/api';
 import { fetchHighlights, fetchComments } from '../../lib/api/annotations';
 import { useAuthStore, useReaderStore, usePreferencesStore, FONT_SIZES, LINE_HEIGHTS } from '../../stores';
-import { saveProgress, queueSync, setupOnlineListener, generateMutationId } from '../../lib/offline';
+import { saveProgress, queueSync, setupOnlineListener, generateMutationId, getProgress } from '../../lib/offline';
 import { setupZombieDetection } from '../../lib/offline/permissions';
 import { AnnotationToolbar, extractSelectionData, CommentsPanel } from './components/annotations';
 import { renderHighlightsOnRendition, renderCommentMarkersOnRendition } from './annotationRendering';
@@ -281,14 +281,28 @@ export function ReaderPage() {
 
         if (sessionToken && bookId) {
           try {
-            const progressData = await apiRequest<{ locator: unknown; progressPercent: number }>(
-              `/api/books/${bookId}/progress`,
-              { method: 'GET', token: sessionToken },
-            );
-            const cfi = (progressData.locator as { cfi?: string } | null)?.cfi;
+            let cfi: string | undefined;
+
+            if (navigator.onLine) {
+              const progressData = await apiRequest<{ locator: unknown; progressPercent: number }>(
+                `/api/books/${bookId}/progress`,
+                { method: 'GET', token: sessionToken },
+              );
+              cfi = (progressData.locator as { cfi?: string } | null)?.cfi;
+            } else {
+              const cached = await getProgress(bookId);
+              if (cached?.cfi) cfi = cached.cfi;
+            }
+
             if (cfi) await rendition.display(cfi);
           } catch (e) {
-            console.warn('Failed to load progress', e);
+            console.warn('Failed to load progress from API', e);
+            try {
+              const cached = await getProgress(bookId);
+              if (cached?.cfi) await rendition.display(cached.cfi);
+            } catch (dbErr) {
+              console.warn('Failed to load progress from cache', dbErr);
+            }
           }
         }
 
@@ -342,6 +356,11 @@ export function ReaderPage() {
             }
           },
         );
+
+        rendition.on('displayed', () => {
+          renderHighlightsRef.current?.(rendition, currentChapterRef.current);
+          renderCommentMarkersRef.current?.(rendition, currentChapterRef.current);
+        });
       } catch (err) {
         console.error('EPUB init error:', err);
         setError(t('reader.loadError'));
@@ -397,6 +416,22 @@ export function ReaderPage() {
     const r = renditionRef.current;
     if (r && currentChapterRef.current) renderCommentMarkers(r, currentChapterRef.current);
   }, [comments, renderCommentMarkers]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const rendition = renditionRef.current;
+      if (!rendition) return;
+      if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        void rendition.next();
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        void rendition.prev();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const handleLogout = async () => {
     try {

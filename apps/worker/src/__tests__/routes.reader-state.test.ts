@@ -60,7 +60,7 @@ describe('GET /api/reader-state/{bookId}/progress (handleGetProgress)', () => {
 
 describe('POST /api/reader-state/{bookId}/progress (handleUpdateProgress)', () => {
   const validBody = {
-    locator: { cfi: 'epubcfi(/6/4)', selectedText: 'test' },
+    locator: { cfi: 'epubcfi(/6/4)', selectedText: 'test', chapterRef: 'ch1' },
     progressPercent: 50,
   };
 
@@ -156,7 +156,7 @@ describe('GET /api/reader-state/{bookId}/bookmarks (handleListBookmarks)', () =>
 
 describe('POST /api/reader-state/{bookId}/bookmarks (handleCreateBookmark)', () => {
   const validBody = {
-    locator: { cfi: 'epubcfi(/6/4)', selectedText: 'text' },
+    locator: { cfi: 'epubcfi(/6/4)', selectedText: 'text', chapterRef: 'ch1' },
     label: 'My Bookmark',
   };
 
@@ -213,7 +213,7 @@ describe('POST /api/reader-state/{bookId}/bookmarks (handleCreateBookmark)', () 
     mockExecute.mockResolvedValue({} as never);
 
     const bodyWithLabel = {
-      locator: { cfi: 'epubcfi(/6/4)', selectedText: 'text' },
+      locator: { cfi: 'epubcfi(/6/4)', selectedText: 'text', chapterRef: 'ch1' },
       label: 'Chapter marker',
     };
     const res = await handleCreateBookmark(makeEnv(), makeRequest(), 'book-1', bodyWithLabel);
@@ -231,7 +231,7 @@ describe('POST /api/reader-state/{bookId}/bookmarks (handleCreateBookmark)', () 
     mockExecute.mockResolvedValue({} as never);
 
     const res = await handleCreateBookmark(makeEnv(), makeRequest(), 'book-1', {
-      locator: { cfi: 'epubcfi(/6/4)', selectedText: 'text' },
+      locator: { cfi: 'epubcfi(/6/4)', selectedText: 'text', chapterRef: 'ch1' },
     });
     expect(res.status).toBe(201);
     const body = await res.json() as any;

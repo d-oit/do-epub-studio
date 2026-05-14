@@ -32,6 +32,9 @@ function now(): number {
   return Date.now();
 }
 
+// TODO(#140): Replace in-memory rate limiter with Durable Objects or KV-based
+// solution for production multi-instance deployments.
+
 export function checkRateLimit(
   namespace: string,
   key: string,

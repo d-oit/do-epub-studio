@@ -30,11 +30,15 @@ vi.mock('../auth/password', () => ({
   createGrant: vi.fn(),
 }));
 
-vi.mock('../auth/session', () => ({
-  createSession: vi.fn(),
-  validateSession: vi.fn(),
-  revokeSession: vi.fn(),
-}));
+vi.mock('../auth/session', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../auth/session')>();
+  return {
+    ...actual,
+    createSession: vi.fn(actual.createSession),
+    validateSession: vi.fn(actual.validateSession),
+    revokeSession: vi.fn(actual.revokeSession),
+  };
+});
 
 vi.mock('../storage/signed-url', () => ({
   generateSignedUrl: vi.fn(),

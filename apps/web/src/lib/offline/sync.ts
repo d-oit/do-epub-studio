@@ -11,7 +11,8 @@ import {
 import { api } from '../api';
 import type { AnnotationEntry } from './db';
 import { clearAllPermissions } from './permissions';
-import { createTraceId, createSpanId, logClientEvent } from '../telemetry';
+import { createTraceId, createSpanId } from '@do-epub-studio/shared';
+import { logClientEvent } from '../client-logger';
 
 const MAX_RETRY_ATTEMPTS = 5;
 const BASE_DELAY_MS = 1000;

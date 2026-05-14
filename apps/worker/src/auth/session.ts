@@ -71,7 +71,7 @@ export async function revokeSession(
   );
 }
 
-async function hashToken(token: string): Promise<string> {
+export async function hashToken(token: string): Promise<string> {
   const encoder = new TextEncoder();
   const data = encoder.encode(token);
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);

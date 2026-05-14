@@ -48,6 +48,15 @@ export const AnnotationLocatorSchema = z
     message: 'Locator must have at least cfi or selectedText',
   });
 
+// Multi-signal locator requiring CFI + text + chapter per ADR-006
+export const MultiSignalLocatorSchema = z
+  .object({
+    cfi: z.string().min(1, 'CFI is required for multi-signal locator'),
+    selectedText: z.string().min(1, 'Selected text is required for multi-signal locator'),
+    chapterRef: z.string().min(1, 'Chapter reference is required for multi-signal locator'),
+  })
+  .strict();
+
 export const AccessRequestSchema = z.object({
   bookSlug: z.string().min(1).max(255),
   email: z.email(),
@@ -85,23 +94,14 @@ export const UpdateGrantSchema = z.object({
 });
 
 export const ProgressUpdateSchema = z.object({
-  locator: AnnotationLocatorSchema,
+  locator: MultiSignalLocatorSchema,
   progressPercent: z.number().min(0).max(100),
 });
 
 export const BookmarkCreateSchema = z.object({
-  locator: AnnotationLocatorSchema,
+  locator: MultiSignalLocatorSchema,
   label: z.string().max(255).optional(),
 });
-
-// Multi-signal locator requiring CFI + text + chapter per ADR-006
-export const MultiSignalLocatorSchema = z
-  .object({
-    cfi: z.string().min(1, 'CFI is required for multi-signal locator'),
-    selectedText: z.string().min(1, 'Selected text is required for multi-signal locator'),
-    chapterRef: z.string().min(1, 'Chapter reference is required for multi-signal locator'),
-  })
-  .strict();
 
 export const HighlightCreateSchema = z.object({
   locator: MultiSignalLocatorSchema,
