@@ -1,4 +1,4 @@
-# d.o. EPUB Studio (2026 Edition)
+# d.o. ePUB Studio
 
 A production-grade, agent-optimized platform for creating, managing, and reading EPUB files.
 
