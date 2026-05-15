@@ -86,29 +86,31 @@ export function createCommentBuilder(): CommentBuilder {
     resolvedAt: null,
   };
 
-  return {
+  const self: CommentBuilder = {
     build: () => ({ ...state }),
     withBody: (body: string) => {
       state = { ...state, body };
-      return createCommentBuilder();
+      return self;
     },
     withStatus: (status: string) => {
       state = { ...state, status };
-      return createCommentBuilder();
+      return self;
     },
     withCfi: (cfi: string) => {
       state = { ...state, cfiRange: cfi };
-      return createCommentBuilder();
+      return self;
     },
     withParent: (parentId: string) => {
       state = { ...state, parentCommentId: parentId };
-      return createCommentBuilder();
+      return self;
     },
     withResolved: () => {
       state = { ...state, status: 'resolved', resolvedAt: new Date().toISOString() };
-      return createCommentBuilder();
+      return self;
     },
   };
+
+  return self;
 }
 
 interface HighlightState {
@@ -138,25 +140,27 @@ export function createHighlightBuilder(): HighlightBuilder {
     updatedAt: new Date().toISOString(),
   };
 
-  return {
+  const self: HighlightBuilder = {
     build: () => ({ ...state }),
     withText: (text: string) => {
       state = { ...state, selectedText: text };
-      return createHighlightBuilder();
+      return self;
     },
     withCfi: (cfi: string) => {
       state = { ...state, cfiRange: cfi };
-      return createHighlightBuilder();
+      return self;
     },
     withColor: (color: string) => {
       state = { ...state, color };
-      return createHighlightBuilder();
+      return self;
     },
     withNote: (note: string) => {
       state = { ...state, note };
-      return createHighlightBuilder();
+      return self;
     },
   };
+
+  return self;
 }
 
 interface BookmarkState {
@@ -178,15 +182,17 @@ export function createBookmarkBuilder(): BookmarkBuilder {
     createdAt: new Date().toISOString(),
   };
 
-  return {
+  const self: BookmarkBuilder = {
     build: () => ({ ...state }),
     withLabel: (label: string) => {
       state = { ...state, label };
-      return createBookmarkBuilder();
+      return self;
     },
     withLocator: (locator: object) => {
       state = { ...state, locatorJson: JSON.stringify(locator) };
-      return createBookmarkBuilder();
+      return self;
     },
   };
+
+  return self;
 }

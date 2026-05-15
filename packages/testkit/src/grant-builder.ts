@@ -56,35 +56,37 @@ export function createGrantBuilder(): GrantBuilder {
     revokedAt: null,
   };
 
-  return {
+  const self: GrantBuilder = {
     build: () => ({ ...state }),
     withEmail: (email: string) => {
       state = { ...state, email };
-      return createGrantBuilder();
+      return self;
     },
     withMode: (mode: string) => {
       state = { ...state, mode };
-      return createGrantBuilder();
+      return self;
     },
     withPassword: (passwordHash: string) => {
       state = { ...state, passwordHash };
-      return createGrantBuilder();
+      return self;
     },
     withCommentsAllowed: (allowed: boolean) => {
       state = { ...state, commentsAllowed: allowed };
-      return createGrantBuilder();
+      return self;
     },
     withOfflineAllowed: (allowed: boolean) => {
       state = { ...state, offlineAllowed: allowed };
-      return createGrantBuilder();
+      return self;
     },
     withExpiry: (expiry: string) => {
       state = { ...state, expiresAt: expiry };
-      return createGrantBuilder();
+      return self;
     },
     withRevoked: () => {
       state = { ...state, revokedAt: new Date().toISOString() };
-      return createGrantBuilder();
+      return self;
     },
   };
+
+  return self;
 }

@@ -12,7 +12,7 @@ export interface ProgressBuilder {
 }
 
 export function createProgressBuilder(): ProgressBuilder {
-  const state = {
+  let state = {
     id: crypto.randomUUID(),
     bookId: crypto.randomUUID(),
     userEmail: 'reader@example.com',
@@ -21,15 +21,17 @@ export function createProgressBuilder(): ProgressBuilder {
     updatedAt: new Date().toISOString(),
   };
 
-  return {
+  const self: ProgressBuilder = {
     build: () => ({ ...state }),
     withPercent: (percent: number) => {
-      state.progressPercent = percent;
-      return createProgressBuilder().withPercent(percent);
+      state = { ...state, progressPercent: percent };
+      return self;
     },
     withLocator: (locator: object) => {
-      state.locatorJson = JSON.stringify(locator);
-      return createProgressBuilder().withLocator(locator);
+      state = { ...state, locatorJson: JSON.stringify(locator) };
+      return self;
     },
   };
+
+  return self;
 }
