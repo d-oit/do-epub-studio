@@ -2,8 +2,9 @@
 
 **Created**: 2026-05-15
 **Goal**: Close all remaining gaps across Plans 020, 025, 026 via parallel swarm execution
+**Status**: ✅ **COMPLETED** — All groups A–F resolved
 **Strategy**: Hybrid — parallel swarm for independent groups, sequential verification
-**Branch**: sprint-completion-final-gaps (existing, will be reused/new PR)
+**Branch**: feat/ci-cd-infra-gap-closure-1778837690
 
 ## Dependency Map
 
@@ -20,56 +21,56 @@ Group F (Plans & Learnings) ──── independent ──→ after all code ch
 
 | ID  | File                                                | Fix                                                        | Status |
 | --- | --------------------------------------------------- | ---------------------------------------------------------- | ------ |
-| A1  | `packages/shared/src/__tests__/schemas.test.ts:488` | Add `__proto__` guard to skip proto key in fast-check test | 🔴     |
-| A2  | `.github/workflows/e2e.yml:38`                      | `pnpm test:e2e:prod` → `pnpm test:e2e`                     | 🔴     |
-| A3  | `scripts/quality_gate.sh:5`                         | `set -uo pipefail` → `set -euo pipefail`                   | 🔴     |
+| A1  | `packages/shared/src/__tests__/schemas.test.ts:488` | Add `__proto__` guard to skip proto key in fast-check test | ✅     |
+| A2  | `.github/workflows/e2e.yml:38`                      | `pnpm test:e2e:prod` → `pnpm test:e2e:smoke`              | ✅     |
+| A3  | `scripts/quality_gate.sh:5`                         | `set -uo pipefail` → `set -euo pipefail`                   | ✅     |
 
 ## Group B: Warning Resolution (Plan 025)
 
 | ID  | File                                                        | Fix                                | Status |
 | --- | ----------------------------------------------------------- | ---------------------------------- | ------ |
-| B1  | `apps/web/src/components/ui/index.tsx:224`                  | Replace `any` with proper type     | 🔴     |
-| B2  | `apps/worker/src/__tests__/cors.test.ts:8`                  | Replace `any` with `Response` type | 🔴     |
-| B3  | `apps/web/src/features/reader/ReaderPage.tsx:766`           | `max-w-[200px]` → `max-w-50`       | 🔴     |
-| B4  | `packages/ui/src/toast.tsx:84`                              | `min-w-[300px]` → `min-w-75`       | 🔴     |
-| B5  | `apps/web/src/features/reader/hooks/useReaderEpub.test.tsx` | Fix rendition mock (TS errors)     | 🔴     |
+| B1  | `apps/web/src/components/ui/index.tsx:224`                  | Replace `any` with proper type     | ✅     |
+| B2  | `apps/worker/src/__tests__/cors.test.ts:8`                  | Replace `any` with `Response` type | ✅     |
+| B3  | `apps/web/src/features/reader/ReaderPage.tsx:766`           | `max-w-[200px]` → `max-w-50`       | ✅     |
+| B4  | `packages/ui/src/toast.tsx:84`                              | `min-w-[300px]` → `min-w-75`       | ✅     |
+| B5  | `apps/web/src/features/reader/hooks/useReaderEpub.test.tsx` | Fix rendition mock (TS errors)     | ✅     |
 
 ## Group C: CI/CD Structure Gaps (Plan 026 Phases 2-5)
 
 | ID  | File                           | Fix                                                   | Status |
 | --- | ------------------------------ | ----------------------------------------------------- | ------ |
-| C1  | All workflows                  | Add `concurrency` groups                              | 🔴     |
-| C2  | All workflows                  | Add `run-name`                                        | 🔴     |
-| C3  | All workflows                  | Standardize `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24`      | 🔴     |
-| C4  | `dependabot-auto-merge.yml:57` | Use `GITHUB_TOKEN` instead of `DEPENDABOT_PAT`        | 🔴     |
-| C5  | `ci.yml:188`                   | Build retention-days: 1 → 3                           | 🔴     |
-| C6  | `release.yml:59`               | Remove unnecessary `gitHubToken` from wrangler deploy | 🔴     |
+| C1  | All workflows                  | Add `concurrency` groups                              | ✅     |
+| C2  | All workflows                  | Add `run-name`                                        | ✅     |
+| C3  | All workflows                  | Standardize `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24`      | ✅     |
+| C4  | `dependabot-auto-merge.yml:57` | Use `GITHUB_TOKEN` instead of `DEPENDABOT_PAT`        | ✅     |
+| C5  | `ci.yml:188`                   | Build retention-days: 1 → 3                           | ✅     |
+| C6  | `release.yml:59`               | Remove unnecessary `gitHubToken` from wrangler deploy | ✅     |
 
 ## Group D: Test Infra Configs (Plan 020 Phase 2)
 
 | ID  | File                                      | Fix                                                                 | Status |
 | --- | ----------------------------------------- | ------------------------------------------------------------------- | ------ |
-| D1  | `packages/schema/vitest.config.ts` (new)  | Create vitest config with coverage thresholds                       | 🔴     |
-| D2  | `packages/testkit/vitest.config.ts` (new) | Create vitest config                                                | 🔴     |
-| D3  | `packages/ui/vitest.config.ts` (new)      | Create vitest config                                                | 🔴     |
-| D4  | `packages/schema/package.json`            | Add `test:unit` script                                              | 🔴     |
-| D5  | `packages/testkit/package.json`           | Add `test:unit` script                                              | 🔴     |
-| D6  | `packages/ui/package.json`                | Add `test:unit` script                                              | 🔴     |
-| D7  | `apps/web/vitest.config.ts:24`            | Fix coverage thresholds (39→40 lines, 30 functions match AGENTS.md) | 🔴     |
+| D1  | `packages/schema/vitest.config.ts` (new)  | Create vitest config with coverage thresholds                       | ✅     |
+| D2  | `packages/testkit/vitest.config.ts` (new) | Create vitest config                                                | ✅     |
+| D3  | `packages/ui/vitest.config.ts` (new)      | Create vitest config                                                | ✅     |
+| D4  | `packages/schema/package.json`            | Add `test:unit` script                                              | ✅     |
+| D5  | `packages/testkit/package.json`           | Add `test:unit` script                                              | ✅     |
+| D6  | `packages/ui/package.json`                | Add `test:unit` script                                              | ✅     |
+| D7  | `apps/web/vitest.config.ts:24`            | Fix coverage thresholds (39→40 lines, 30 functions match AGENTS.md) | ✅     |
 
 ## Group E: Lint & Config (Plan 020 Phase 3)
 
 | ID  | File                 | Fix                                 | Status |
 | --- | -------------------- | ----------------------------------- | ------ |
-| E1  | `.editorconfig`      | Align `max_line_length: 80` → `100` | 🔴     |
-| E2  | `tsconfig.base.json` | Add explicit `baseUrl: "."`         | 🔴     |
+| E1  | `.editorconfig`      | Align `max_line_length: 80` → `100` | ✅     |
+| E2  | `tsconfig.base.json` | Add explicit `baseUrl: "."`         | ✅     |
 
 ## Group F: Plans & Learnings
 
 | ID  | Action                                          | Status |
 | --- | ----------------------------------------------- | ------ |
-| F1  | Update Plans 020, 025, 026 progress to ✅       | 🔴     |
-| F2  | Compact learnings into agents-docs/LEARNINGS.md | 🔴     |
+| F1  | Update Plans 020, 025, 026 progress to ✅       | ✅     |
+| F2  | Compact learnings into agents-docs/LEARNINGS.md | ✅     |
 
 ---
 
@@ -80,8 +81,25 @@ Verification: Sequential quality gate after all groups complete.
 
 ## Quality Gates
 
-- [ ] `pnpm lint` passes
-- [ ] `pnpm typecheck` passes
-- [ ] `pnpm test` passes
-- [ ] `pnpm build` passes
-- [ ] Workflow YAML validation passes
+- [x] `pnpm lint` passes
+- [x] `pnpm typecheck` passes
+- [x] `pnpm test` passes
+- [x] `pnpm build` passes
+- [x] Workflow YAML validation passes
+
+---
+
+## Completion Summary
+
+All Groups A–F have been completed. This plan is fully resolved as of 2026-05-15. See PR #146 for the final commit that updated plans/ progress and compacted learnings.
+
+### Final Status Per Group
+
+| Group | Scope                         | Items | Status |
+| ----- | ----------------------------- | ----- | ------ |
+| A     | CI/CD Critical Fixes (P0)     | 3     | ✅ ALL |
+| B     | Warning Resolution            | 5     | ✅ ALL |
+| C     | CI/CD Structure Gaps          | 6     | ✅ ALL |
+| D     | Test Infra Configs            | 7     | ✅ ALL |
+| E     | Lint & Config                 | 2     | ✅ ALL |
+| F     | Plans & Learnings             | 2     | ✅ ALL |

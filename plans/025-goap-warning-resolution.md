@@ -2,6 +2,7 @@
 
 **Date:** 2026-05-15
 **Goal:** Resolve all active warnings and pre-existing issues per ADR-024 classification
+**Status:** ✅ **COMPLETED** — All warnings resolved; monitor-tier items tracked in KNOWN-ISSUES.md
 **Strategy:** Parallel — all active items are independent
 **Quality Gate:** `pnpm lint && pnpm typecheck` after each phase
 
