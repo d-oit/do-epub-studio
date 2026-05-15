@@ -1,5 +1,7 @@
 name: E2E Tests
 
+run-name: E2E ${{ github.event_name == 'schedule' && format('Scheduled {0}', github.run_id) || github.event.head_commit.message }}
+
 on:
   workflow_dispatch:
   schedule:
@@ -8,6 +10,10 @@ on:
 # Opt into Node.js 22 for GitHub Actions to avoid deprecation warnings
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -25,7 +31,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
         with:
-          node-version: "22"
+          node-version: '22'
           cache: 'pnpm'
 
       - name: Install dependencies
@@ -35,7 +41,7 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium firefox
 
       - name: Run E2E tests
-        run: pnpm test:e2e:prod
+        run: pnpm test:e2e:smoke
 
       - name: Upload Playwright report
         uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1

@@ -1,15 +1,21 @@
 name: CI
 
+run-name: "${{ github.event_name == 'pull_request' && format('PR {0}: {1}', github.event.pull_request.number, github.event.pull_request.title) || github.event.head_commit.message }}"
+
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
 
-# Opt into Node.js 22 for GitHub Actions to avoid deprecation warnings
+# Opt into Node.js 24 for GitHub Actions to avoid deprecation warnings
 env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE22: true
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   TURBO_TELEMETRY_DISABLED: 1
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -28,7 +34,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
         with:
-          node-version: "22"
+          node-version: '22'
           cache: 'pnpm'
 
       - name: Toolchain Diagnostics
@@ -58,7 +64,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
         with:
-          node-version: "22"
+          node-version: '22'
           cache: 'pnpm'
 
       - name: Install dependencies
@@ -81,7 +87,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
         with:
-          node-version: "22"
+          node-version: '22'
           cache: 'pnpm'
 
       - name: Install dependencies
@@ -104,7 +110,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
         with:
-          node-version: "22"
+          node-version: '22'
           cache: 'pnpm'
 
       - name: Install dependencies
@@ -137,7 +143,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
         with:
-          node-version: "22"
+          node-version: '22'
           cache: 'pnpm'
 
       - name: Install dependencies
@@ -171,7 +177,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
         with:
-          node-version: "22"
+          node-version: '22'
           cache: 'pnpm'
 
       - name: Install dependencies
@@ -185,7 +191,7 @@ jobs:
         with:
           name: build-dist
           path: apps/web/dist/
-          retention-days: 1
+          retention-days: 3
 
   e2e-smoke:
     name: Production E2E Smoke
@@ -201,7 +207,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
         with:
-          node-version: "22"
+          node-version: '22'
           cache: 'pnpm'
 
       - name: Install dependencies

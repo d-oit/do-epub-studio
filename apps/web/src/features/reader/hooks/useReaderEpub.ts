@@ -1,6 +1,12 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import ePub, { Book, Rendition, NavItem } from '@intity/epub-js';
-import { useAuthStore, useReaderStore, usePreferencesStore, FONT_SIZES, LINE_HEIGHTS } from '../../../stores';
+import {
+  useAuthStore,
+  useReaderStore,
+  usePreferencesStore,
+  FONT_SIZES,
+  LINE_HEIGHTS,
+} from '../../../stores';
 import { useTranslation } from '../../../hooks/useTranslation';
 import { apiRequest } from '../../../lib/api';
 import { saveProgress, queueSync, getProgress, generateMutationId } from '../../../lib/offline';
@@ -16,7 +22,9 @@ export function useReaderEpub(
   viewerRef: React.RefObject<HTMLDivElement | null>,
   rootRef: React.RefObject<HTMLDivElement | null>,
   renderHighlightsRef: React.MutableRefObject<((r: Rendition, ch: string | null) => void) | null>,
-  renderCommentMarkersRef: React.MutableRefObject<((r: Rendition, ch: string | null) => void) | null>,
+  renderCommentMarkersRef: React.MutableRefObject<
+    ((r: Rendition, ch: string | null) => void) | null
+  >,
 ) {
   const sessionToken = useAuthStore((s) => s.sessionToken);
   const bookId = useAuthStore((s) => s.bookId);
@@ -40,9 +48,8 @@ export function useReaderEpub(
     return window.matchMedia('(prefers-color-scheme: dark)').matches;
   }, []);
 
-  const resolvedTheme = readerTheme === 'system'
-    ? (isSystemDark() ? 'dark' : 'light')
-    : readerTheme;
+  const resolvedTheme =
+    readerTheme === 'system' ? (isSystemDark() ? 'dark' : 'light') : readerTheme;
 
   const applyThemes = useCallback(
     (rendition: Rendition) => {
@@ -51,7 +58,8 @@ export function useReaderEpub(
       const style = getComputedStyle(container);
       const bg = style.getPropertyValue('--color-background').trim();
       const fg = style.getPropertyValue('--color-foreground').trim();
-      const effectiveTheme = readerTheme === 'system' ? (isSystemDark() ? 'dark' : 'light') : readerTheme;
+      const effectiveTheme =
+        readerTheme === 'system' ? (isSystemDark() ? 'dark' : 'light') : readerTheme;
       const imgFilter =
         effectiveTheme === 'dark'
           ? 'invert(1) hue-rotate(180deg)'
@@ -211,7 +219,9 @@ export function useReaderEpub(
       active = false;
       const r = renditionRef.current;
       if (r) {
-        const existing = r.annotations as unknown as Iterable<[string, { cfiRange: string; type: string }]>;
+        const existing = r.annotations as unknown as Iterable<
+          [string, { cfiRange: string; type: string }]
+        >;
         for (const [, annotation] of existing) {
           r.annotations.remove(annotation.cfiRange, annotation.type);
         }
@@ -219,6 +229,7 @@ export function useReaderEpub(
       renditionRef.current?.destroy();
       bookRef.current?.destroy();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- applyThemes only needed for initial setup; preference changes handled by dedicated effect at line 235
   }, [
     epubUrl,
     viewerRef,
@@ -239,10 +250,12 @@ export function useReaderEpub(
   useEffect(() => {
     if (readerTheme !== 'system') return;
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
-    const handler = () => { if (renditionRef.current) applyThemes(renditionRef.current); };
+    const handler = () => {
+      if (renditionRef.current) applyThemes(renditionRef.current);
+    };
     mq.addEventListener('change', handler);
     return () => mq.removeEventListener('change', handler);
-  }, [applyThemes]);
+  }, [applyThemes, readerTheme]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -257,7 +270,9 @@ export function useReaderEpub(
       }
     };
     window.addEventListener('keydown', handleKeyDown);
-    return () => { window.removeEventListener('keydown', handleKeyDown); };
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   }, []);
 
   return {

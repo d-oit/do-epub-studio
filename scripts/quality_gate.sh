@@ -2,7 +2,7 @@
 # Full quality gate with auto-detection for multiple languages.
 # Exit 0 = silent success, Exit 2 = errors surfaced to agent.
 # Used in pre-commit hook and CI.
-set -uo pipefail
+set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT" || exit 1

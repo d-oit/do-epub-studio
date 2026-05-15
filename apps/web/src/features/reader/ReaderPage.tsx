@@ -9,12 +9,25 @@ import { useAuthStore, useReaderStore, usePreferencesStore } from '../../stores'
 import { setupOnlineListener } from '../../lib/offline';
 import { setupZombieDetection } from '../../lib/offline/permissions';
 import { AnnotationToolbar, extractSelectionData, CommentsPanel } from './components/annotations';
-import { renderHighlightsOnRendition, renderCommentMarkersOnRendition } from './annotationRendering';
-import { useReaderUI, useReaderEpub, useAnnotationHandlers, useBookmarkHandlers, useExportNotes } from './hooks';
+import {
+  renderHighlightsOnRendition,
+  renderCommentMarkersOnRendition,
+} from './annotationRendering';
+import {
+  useReaderUI,
+  useReaderEpub,
+  useAnnotationHandlers,
+  useBookmarkHandlers,
+  useExportNotes,
+} from './hooks';
 import { AnimatePresence } from 'framer-motion';
 import {
-  ReaderToolbar, ReaderSettingsPanel, TableOfContents,
-  BookmarksPanel, ReaderViewer, CommentInputModal,
+  ReaderToolbar,
+  ReaderSettingsPanel,
+  TableOfContents,
+  BookmarksPanel,
+  ReaderViewer,
+  CommentInputModal,
 } from './components';
 
 export function ReaderPage() {
@@ -70,9 +83,16 @@ export function ReaderPage() {
 
   const { t, locale } = useTranslation();
 
-  const { handleCreateHighlight, handleCreateComment, handleResolveComment,
-    handleReplyToComment, handleEditComment, handleDeleteComment,
-    handleEditHighlight, handleDeleteHighlight } = useAnnotationHandlers();
+  const {
+    handleCreateHighlight,
+    handleCreateComment,
+    handleResolveComment,
+    handleReplyToComment,
+    handleEditComment,
+    handleDeleteComment,
+    handleEditHighlight,
+    handleDeleteHighlight,
+  } = useAnnotationHandlers();
   const { handleCreateBookmark, handleDeleteBookmark } = useBookmarkHandlers();
   const { handleExportNotes } = useExportNotes();
 
@@ -85,9 +105,13 @@ export function ReaderPage() {
   const [epubUrl, setEpubUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const {
-    renditionRef, currentChapterRef, toc, resolvedTheme,
-  } = useReaderEpub(epubUrl, viewerRef, rootRef, renderHighlightsRef, renderCommentMarkersRef);
+  const { renditionRef, currentChapterRef, toc, resolvedTheme } = useReaderEpub(
+    epubUrl,
+    viewerRef,
+    rootRef,
+    renderHighlightsRef,
+    renderCommentMarkersRef,
+  );
 
   useEffect(() => {
     if (!sessionToken || !bookId) return;
@@ -143,10 +167,13 @@ export function ReaderPage() {
     }
   }, [revokedBooks, bookId, setError, setPermissionStatus, t]);
 
-  const handleNavigateToAnnotation = useCallback(async (chapterRef: string, cfiRange?: string) => {
-    if (!renditionRef.current) return;
-    await renditionRef.current.display(cfiRange ?? chapterRef);
-  }, []);
+  const handleNavigateToAnnotation = useCallback(
+    async (chapterRef: string, cfiRange?: string) => {
+      if (!renditionRef.current) return;
+      await renditionRef.current.display(cfiRange ?? chapterRef);
+    },
+    [renditionRef],
+  );
 
   const renderHighlights = useCallback(
     (rendition: Rendition, chapterHref: string | null) =>
@@ -193,11 +220,13 @@ export function ReaderPage() {
   useEffect(() => {
     const r = renditionRef.current;
     if (r && currentChapterRef.current) renderHighlights(r, currentChapterRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- refs have stable identity; .current captured at execution time
   }, [highlights, renderHighlights]);
 
   useEffect(() => {
     const r = renditionRef.current;
     if (r && currentChapterRef.current) renderCommentMarkers(r, currentChapterRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- refs have stable identity; .current captured at execution time
   }, [comments, renderCommentMarkers]);
 
   const handleLogout = async () => {
