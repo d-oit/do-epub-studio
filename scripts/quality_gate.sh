@@ -152,22 +152,30 @@ if [[ " ${DETECTED_LANGUAGES[*]} " =~ " typescript " ]]; then
                 printf '%s  ✓ %s test:coverage passed%s\n' "${GREEN}" "$PM" "${NC}"
             fi
 
-            # Build (required for smoke tests)
-            if ! OUTPUT=$($PM run build 2>&1); then
-                printf '%s  ✗ %s build failed%s\n' "${RED}" "$PM" "${NC}"
-                echo "$OUTPUT" >&2
-                FAILED=1
+            # Build (skip with SKIP_BUILD env var)
+            if [ "${SKIP_BUILD:-false}" != "true" ]; then
+                if ! OUTPUT=$($PM run build 2>&1); then
+                    printf '%s  ✗ %s build failed%s\n' "${RED}" "$PM" "${NC}"
+                    echo "$OUTPUT" >&2
+                    FAILED=1
+                else
+                    printf '%s  ✓ %s build passed%s\n' "${GREEN}" "$PM" "${NC}"
+                fi
             else
-                printf '%s  ✓ %s build passed%s\n' "${GREEN}" "$PM" "${NC}"
+                printf '%s  ⊘ %s build skipped (SKIP_BUILD=true)%s\n' "${YELLOW}" "$PM" "${NC}"
             fi
 
-            # Smoke tests
-            if ! OUTPUT=$($PM run test:e2e:smoke 2>&1); then
-                printf '%s  ✗ %s test:e2e:smoke failed%s\n' "${RED}" "$PM" "${NC}"
-                echo "$OUTPUT" >&2
-                FAILED=1
+            # Smoke tests (skip with SKIP_SMOKE env var)
+            if [ "${SKIP_SMOKE:-false}" != "true" ]; then
+                if ! OUTPUT=$($PM run test:e2e:smoke 2>&1); then
+                    printf '%s  ✗ %s test:e2e:smoke failed%s\n' "${RED}" "$PM" "${NC}"
+                    echo "$OUTPUT" >&2
+                    FAILED=1
+                else
+                    printf '%s  ✓ %s test:e2e:smoke passed%s\n' "${GREEN}" "$PM" "${NC}"
+                fi
             else
-                printf '%s  ✓ %s test:e2e:smoke passed%s\n' "${GREEN}" "$PM" "${NC}"
+                printf '%s  ⊘ %s smoke tests skipped (SKIP_SMOKE=true)%s\n' "${YELLOW}" "$PM" "${NC}"
             fi
         else
             printf '%s  ⊘ %s tests skipped (SKIP_TESTS=true)%s\n' "${YELLOW}" "$PM" "${NC}"

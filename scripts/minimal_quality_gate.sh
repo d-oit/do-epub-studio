@@ -3,7 +3,7 @@
 # Runs only lint/typecheck — skips tests for rapid feedback.
 # Exit 0 = success, Exit 2 = errors found.
 
-set -uo pipefail
+set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT" || exit 1

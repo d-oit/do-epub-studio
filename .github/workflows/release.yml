@@ -20,9 +20,10 @@ permissions:
   deployments: write
 
 jobs:
-  release:
-    name: Release
+  verify:
+    name: Verify
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -50,6 +51,30 @@ jobs:
       - name: Build
         run: pnpm build
 
+  deploy:
+    name: Deploy
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@b307475762933b98ed359c036b0e51f26b63b74b # v5.0.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
       - name: Deploy Worker
         uses: cloudflare/wrangler-action@9acf94ace14e7dc412b076f2c5c20b8ce93c79cd # v3.15.0
         with:
@@ -70,3 +95,16 @@ jobs:
           files: apps/web/dist/**
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Post-deploy health check
+        run: |
+          echo "Waiting for deployment to propagate..."
+          sleep 15
+          WORKER_URL="https://do-epub-studio.d-oit.workers.dev"
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$WORKER_URL" --connect-timeout 10 --max-time 15 || echo "000")
+          echo "Worker health check: HTTP $HTTP_STATUS"
+          if [ "$HTTP_STATUS" = "000" ] || [ "$HTTP_STATUS" -ge 500 ]; then
+            echo "::warning::Worker may not be healthy (HTTP $HTTP_STATUS)"
+          else
+            echo "Worker responded with HTTP $HTTP_STATUS"
+          fi

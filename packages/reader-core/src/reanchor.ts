@@ -66,7 +66,7 @@ export async function reanchorByText(
   const cache = new Map<string, CachedChapter>();
 
   async function getCachedData(href: string): Promise<CachedChapter> {
-    const base = href.split('#')[0];
+    const base = href.split('#')[0]!;
     const cached = cache.get(base);
     if (cached) return cached;
 
@@ -89,7 +89,7 @@ export async function reanchorByText(
 
   const baseToHref = new Map<string, string>();
   for (const href of flattenedToc) {
-    const base = href.split('#')[0];
+    const base = href.split('#')[0]!;
     if (!baseToHref.has(base)) {
       baseToHref.set(base, href);
     }

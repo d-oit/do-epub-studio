@@ -20,6 +20,14 @@
     },
     "test": {
       "dependsOn": ["test:unit"]
+    },
+    "test:e2e": {
+      "dependsOn": ["^build"],
+      "outputs": []
+    },
+    "test:coverage": {
+      "dependsOn": ["test:unit"],
+      "outputs": []
     }
   },
   "globalDependencies": ["vitest.workspace.ts", "tsconfig.base.json"]
