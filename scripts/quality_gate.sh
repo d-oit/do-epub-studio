@@ -241,6 +241,12 @@ if [[ " ${DETECTED_LANGUAGES[*]} " =~ " python " ]]; then
     echo ""
 fi
 
+# Guard: prevent .gitignore deletions
+if ! "$REPO_ROOT/scripts/guard-gitignore.sh"; then
+    FAILED=1
+fi
+echo ""
+
 # Shell script checks
 if [[ " ${DETECTED_LANGUAGES[*]} " =~ " shell " ]]; then
     printf '%sRunning Shell script checks...%s\n' "${BLUE}" "${NC}"

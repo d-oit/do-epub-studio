@@ -32,6 +32,7 @@ readonly MAX_PR_TITLE_LENGTH=72
 - **MUST revoke sessions immediately on grant change.**
 - **MUST use multi-signal locators (CFI + text + chapter) for annotations per ADR-006.**
 - **MUST emit traceId on every Worker request and critical UI action.**
+- **NEVER delete .gitignore files.** Binary/test fixtures must be generated via scripts, not tracked. Deleting .gitignore surfaces binary artifacts into the repo and breaks CI reproducibility.
 
 ---
 
