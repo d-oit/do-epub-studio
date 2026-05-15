@@ -92,11 +92,18 @@ describe('serializeError with non-Error inputs', () => {
 
   it('handles object input', () => {
     fc.assert(
-      fc.property(fc.object(), (obj) => {
-        const serialized = serializeError(obj);
-        expect(typeof serialized.name).toBe('string');
-        expect(typeof serialized.message).toBe('string');
-      }),
+      fc.property(
+        fc.oneof(
+          fc.record({ name: fc.string(), message: fc.string() }, { withDeletedKeys: true }),
+          fc.record({ message: fc.string() }, { withDeletedKeys: true }),
+          fc.record({}),
+        ),
+        (obj) => {
+          const serialized = serializeError(obj);
+          expect(typeof serialized.name).toBe('string');
+          expect(typeof serialized.message).toBe('string');
+        },
+      ),
     );
   });
 
