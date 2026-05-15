@@ -112,9 +112,9 @@ export function makeEnv(): Env {
   return {
     BOOKS_BUCKET: makeMockBucket(),
     TURSO_DATABASE_URL: 'libsql://test.turso.io',
-    TURSO_AUTH_TOKEN: 'test-token',
-    SESSION_SIGNING_SECRET: 'test-secret',
-    INVITE_TOKEN_SECRET: 'test-invite-secret',
+    TURSO_AUTH_TOKEN: process.env.TEST_TURSO_AUTH_TOKEN || 'test-token',
+    SESSION_SIGNING_SECRET: process.env.TEST_SESSION_SIGNING_SECRET || 'test-secret',
+    INVITE_TOKEN_SECRET: process.env.TEST_INVITE_TOKEN_SECRET || 'test-invite-secret',
     APP_BASE_URL: 'https://test.example.com',
     RATE_LIMITER: {} as DurableObjectNamespace,
   };

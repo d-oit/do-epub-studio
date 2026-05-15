@@ -7,7 +7,7 @@ import { test, expect, type Page, type Route } from '@playwright/test';
 
 const READER_USER = {
   email: 'reader@example.com',
-  password: 'test-password',
+  password: process.env.TEST_PASSWORD || 'test-password',
   bookSlug: 'my-test-book',
 };
 
@@ -19,7 +19,7 @@ const ADMIN_USER = {
 const LOGIN_RESPONSE = {
   ok: true,
   data: {
-    sessionToken: 'test-session-token-abc123',
+    sessionToken: process.env.TEST_SESSION_TOKEN || 'test-session-token-abc123',
     book: { id: 'book-1', slug: READER_USER.bookSlug, title: 'My Test Book', authorName: 'Test Author' },
     capabilities: {
       canRead: true, canComment: true, canHighlight: true, canBookmark: true,

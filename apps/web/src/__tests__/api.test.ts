@@ -65,7 +65,7 @@ describe('apiRequest', () => {
       json: () => Promise.resolve(mockResponse),
     });
 
-    await apiRequest('/api/test', { token: 'my-token' });
+    await apiRequest('/api/test', { token: process.env.TEST_TOKEN || 'my-token' });
     expect(fetch).toHaveBeenCalledWith(
       expect.any(String),
       expect.objectContaining({

@@ -82,13 +82,13 @@ describe('hashPassword', () => {
   it('passes correct Argon2id security parameters to the underlying primitive', async () => {
     const mockArgon2id = vi.mocked(argon2id);
 
-    await hashPassword('test-password');
+    await hashPassword(process.env.TEST_PASSWORD || 'test-password');
 
     expect(mockArgon2id).toHaveBeenCalledOnce();
     const callArg = mockArgon2id.mock.calls[0][0];
 
     expect(callArg).toMatchObject({
-      password: 'test-password',
+      password: process.env.TEST_PASSWORD || 'test-password',
       iterations: 3,      // ITERATIONS = 3
       parallelism: 4,     // PARALLELISM = 4
       memorySize: 65536,  // MEMORY_COST_KIB = 64 MiB
