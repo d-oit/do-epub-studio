@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       pr:
-        description: "Pull request number"
+        description: 'Pull request number'
         required: true
         type: string
   issue_comment:

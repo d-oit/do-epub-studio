@@ -10,19 +10,20 @@
 
 The codebase audit (Plan 023) found that 3 of 7 packages have no test infrastructure whatsoever:
 
-| Package | vitest.config.ts | test script | Test files | Coverage thresholds |
-|---------|-----------------|-------------|------------|---------------------|
-| `packages/schema` | ❌ | ❌ | 0 files | — |
-| `packages/testkit` | ❌ | ❌ | 0 files | — |
-| `packages/ui` | ❌ | ❌ | 0 files | — |
-| `packages/reader-core` | ✅ | ❌ (no script) | 5 files | 75/70/70/75 |
-| `packages/shared` | ✅ | ✅ | 1 file | 25/5/5/25 |
-| `apps/web` | ✅ | ✅ | 21 files | 39/30/29/35 |
-| `apps/worker` | ✅ | ✅ | 13 files | 55/50/45/55 |
+| Package                | vitest.config.ts | test script    | Test files | Coverage thresholds |
+| ---------------------- | ---------------- | -------------- | ---------- | ------------------- |
+| `packages/schema`      | ❌               | ❌             | 0 files    | —                   |
+| `packages/testkit`     | ❌               | ❌             | 0 files    | —                   |
+| `packages/ui`          | ❌               | ❌             | 0 files    | —                   |
+| `packages/reader-core` | ✅               | ❌ (no script) | 5 files    | 75/70/70/75         |
+| `packages/shared`      | ✅               | ✅             | 1 file     | 25/5/5/25           |
+| `apps/web`             | ✅               | ✅             | 21 files   | 39/30/29/35         |
+| `apps/worker`          | ✅               | ✅             | 13 files   | 55/50/45/55         |
 
 Version inconsistency: `packages/schema` and `packages/testkit` use vitest `^3.0.5` while the rest of the monorepo uses vitest `^4.1.5`. Similarly, `@types/node` versions differ (`^22.13.1` vs `^25`).
 
 This fragmentation means:
+
 - Coverage metrics are incomplete (coverage is only measured for 4 of 7 packages)
 - CI cannot gate quality on untested packages
 - Developers have no local test feedback loop for these packages
@@ -46,12 +47,12 @@ This fragmentation means:
 
 ## Options Considered
 
-| Option | Pros | Cons |
-|--------|------|------|
-| **Unified root vitest config** | Single config to maintain | Cannot set per-package thresholds; loses workspace granularity |
-| **Per-package vitest configs (chosen)** | Granular thresholds; each package can opt into specific env (jsdom/node) | Config duplication; must enforce consistency manually |
-| **No config for untested packages** | No migration effort | Coverage blind spots; cannot enforce quality; CI gaps |
-| **Centralized vitest workspace with overrides** | Mix of unified + per-package | Override complexity; unclear in vitest docs |
+| Option                                          | Pros                                                                     | Cons                                                           |
+| ----------------------------------------------- | ------------------------------------------------------------------------ | -------------------------------------------------------------- |
+| **Unified root vitest config**                  | Single config to maintain                                                | Cannot set per-package thresholds; loses workspace granularity |
+| **Per-package vitest configs (chosen)**         | Granular thresholds; each package can opt into specific env (jsdom/node) | Config duplication; must enforce consistency manually          |
+| **No config for untested packages**             | No migration effort                                                      | Coverage blind spots; cannot enforce quality; CI gaps          |
+| **Centralized vitest workspace with overrides** | Mix of unified + per-package                                             | Override complexity; unclear in vitest docs                    |
 
 **Decision:** Per-package configs (consistent with existing pattern in `apps/web`, `apps/worker`, `packages/reader-core`, `packages/shared`).
 
@@ -59,18 +60,19 @@ This fragmentation means:
 
 ## Version Alignment
 
-| Package | Current vitest | Target vitest | Current @types/node | Target @types/node |
-|---------|---------------|---------------|---------------------|--------------------|
-| `packages/schema` | `^3.0.5` | `^4.1.5` | `^22.13.1` | `^25` |
-| `packages/testkit` | `^3.0.5` | `^4.1.5` | `^22.13.1` | `^25` |
-| `packages/shared` | `^4.1.5` | `^4.1.5` (keep) | `^22.13.1` | `^25` |
-| All others | `^4.1.5` | `^4.1.5` (keep) | `^25` | `^25` (keep) |
+| Package            | Current vitest | Target vitest   | Current @types/node | Target @types/node |
+| ------------------ | -------------- | --------------- | ------------------- | ------------------ |
+| `packages/schema`  | `^3.0.5`       | `^4.1.5`        | `^22.13.1`          | `^25`              |
+| `packages/testkit` | `^3.0.5`       | `^4.1.5`        | `^22.13.1`          | `^25`              |
+| `packages/shared`  | `^4.1.5`       | `^4.1.5` (keep) | `^22.13.1`          | `^25`              |
+| All others         | `^4.1.5`       | `^4.1.5` (keep) | `^25`               | `^25` (keep)       |
 
 ---
 
 ## Consequences
 
 ### Positive
+
 - Complete coverage picture across all packages
 - Local `pnpm test:unit` works in every package directory
 - CI can fail on regressions in previously-invisible packages
@@ -78,11 +80,13 @@ This fragmentation means:
 - `turbo.json` explicitly tracks all test tasks for caching and dependency ordering
 
 ### Negative / Risks
+
 - Adding vitest config and scripts creates an initial time cost (~30 min across all packages)
 - Low initial thresholds mean coverage regressions won't be caught until tests are written (Phase 4)
 - Alignment bumps may introduce breaking changes if APIs changed between vitest 3→4
 
 ### Mitigations
+
 - vitest 3→4 is a major version; review CHANGELOG for breaking changes before bumping
 - Low thresholds are deliberate — they will be raised iteratively per sprint
 - Bump `@types/node` separately from vitest to isolate issues

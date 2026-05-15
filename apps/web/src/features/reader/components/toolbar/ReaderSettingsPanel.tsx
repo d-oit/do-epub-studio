@@ -56,7 +56,12 @@ export function ReaderSettingsPanel({
           aria-label={t('reader.settings.close')}
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M6 18L18 6M6 6l12 12"
+            />
           </svg>
         </button>
       </div>
@@ -110,7 +115,13 @@ export function ReaderSettingsPanel({
                   }
                 `}
               >
-                {size === 'small' ? 'A' : size === 'medium' ? 'A+' : size === 'large' ? 'A++' : 'A+++'}
+                {size === 'small'
+                  ? 'A'
+                  : size === 'medium'
+                    ? 'A+'
+                    : size === 'large'
+                      ? 'A++'
+                      : 'A+++'}
               </button>
             ))}
           </div>
@@ -138,7 +149,11 @@ export function ReaderSettingsPanel({
                 `}
                 style={{
                   fontFamily:
-                    family === 'serif' ? 'serif' : family === 'sans-serif' ? 'sans-serif' : 'monospace',
+                    family === 'serif'
+                      ? 'serif'
+                      : family === 'sans-serif'
+                        ? 'sans-serif'
+                        : 'monospace',
                 }}
               >
                 {t(`reader.settings.fontFamily.${family}`)}

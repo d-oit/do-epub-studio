@@ -61,7 +61,13 @@ const mockReaderStore: Record<string, unknown> = {
 };
 
 const mockPreferencesState = {
-  reader: { theme: 'light' as Theme, fontSize: 'medium' as FontSize, fontFamily: 'serif' as const, lineHeight: 2, pageWidth: 'normal' as const },
+  reader: {
+    theme: 'light' as Theme,
+    fontSize: 'medium' as FontSize,
+    fontFamily: 'serif' as const,
+    lineHeight: 2,
+    pageWidth: 'normal' as const,
+  },
 };
 
 const mockAuthState = {
@@ -108,7 +114,13 @@ describe('useReaderEpub', () => {
     const refs = createRefs();
 
     renderHook(() =>
-      useReaderEpub('http://test.epub', refs.viewerRef, refs.rootRef, refs.renderHighlightsRef, refs.renderCommentMarkersRef),
+      useReaderEpub(
+        'http://test.epub',
+        refs.viewerRef,
+        refs.rootRef,
+        refs.renderHighlightsRef,
+        refs.renderCommentMarkersRef,
+      ),
     );
 
     await waitFor(() => {
@@ -133,7 +145,13 @@ describe('useReaderEpub', () => {
     const refs = createRefs();
 
     renderHook(() =>
-      useReaderEpub(null, refs.viewerRef, refs.rootRef, refs.renderHighlightsRef, refs.renderCommentMarkersRef),
+      useReaderEpub(
+        null,
+        refs.viewerRef,
+        refs.rootRef,
+        refs.renderHighlightsRef,
+        refs.renderCommentMarkersRef,
+      ),
     );
 
     await waitFor(() => {
@@ -145,7 +163,13 @@ describe('useReaderEpub', () => {
     const refs = createRefs();
 
     renderHook(() =>
-      useReaderEpub('http://test.epub', refs.viewerRef, refs.rootRef, refs.renderHighlightsRef, refs.renderCommentMarkersRef),
+      useReaderEpub(
+        'http://test.epub',
+        refs.viewerRef,
+        refs.rootRef,
+        refs.renderHighlightsRef,
+        refs.renderCommentMarkersRef,
+      ),
     );
 
     await waitFor(() => {
@@ -161,7 +185,13 @@ describe('useReaderEpub', () => {
     function setupAndFlush() {
       const refs = createRefs();
       const hook = renderHook(() =>
-        useReaderEpub('http://test.epub', refs.viewerRef, refs.rootRef, refs.renderHighlightsRef, refs.renderCommentMarkersRef),
+        useReaderEpub(
+          'http://test.epub',
+          refs.viewerRef,
+          refs.rootRef,
+          refs.renderHighlightsRef,
+          refs.renderCommentMarkersRef,
+        ),
       );
       return hook;
     }
@@ -223,7 +253,9 @@ describe('useReaderEpub', () => {
         expect(addSpy).toHaveBeenCalledWith('keydown', expect.any(Function));
       });
 
-      act(() => { unmount(); });
+      act(() => {
+        unmount();
+      });
 
       expect(removeSpy).toHaveBeenCalledWith('keydown', expect.any(Function));
       addSpy.mockRestore();

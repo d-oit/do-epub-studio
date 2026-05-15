@@ -493,7 +493,12 @@ describe('MultiSignalLocatorSchema (property)', () => {
         fc.string({ minLength: 1 }),
         fc.string(),
         (cfi, selectedText, chapterRef, extraKey) => {
-          fc.pre(extraKey.length > 0 && extraKey !== 'cfi' && extraKey !== 'selectedText' && extraKey !== 'chapterRef');
+          fc.pre(
+            extraKey.length > 0 &&
+              extraKey !== 'cfi' &&
+              extraKey !== 'selectedText' &&
+              extraKey !== 'chapterRef',
+          );
           fc.pre(extraKey !== '__proto__');
           const result = MultiSignalLocatorSchema.safeParse({
             cfi,

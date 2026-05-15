@@ -16,6 +16,7 @@ The codebase currently generates coverage data via `pnpm test:coverage` (vitest 
 - **AGENTS.md references coverage thresholds** (web: 40% lines, worker: 55%, shared: 25%, reader-core: 75%) but CI has no mechanism to enforce or report on them.
 
 For benchmarking:
+
 - `packages/reader-core/src/reader-core.bench.ts` exists with 7 benchmarks
 - `pnpm bench` script exists in root `package.json`
 - Benchmarks are **never run in CI** — no benchmark step, no performance regression detection, no historical tracking
@@ -45,21 +46,21 @@ For benchmarking:
 
 ### Coverage Service
 
-| Option | Pros | Cons |
-|--------|------|------|
-| **Codecov (chosen)** | De facto standard; free for open source; GitHub integration; vitest has built-in output | Requires org setup; token management |
-| Coveralls | Also well-known | Slightly less adoption; fewer GitHub integrations |
-| SonarCloud | Advanced static analysis | Heavy integration; overkill for this scope |
-| No service (status quo) | Zero setup | No trend tracking; no PR feedback; coverage data lost after 7 days |
+| Option                  | Pros                                                                                    | Cons                                                               |
+| ----------------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| **Codecov (chosen)**    | De facto standard; free for open source; GitHub integration; vitest has built-in output | Requires org setup; token management                               |
+| Coveralls               | Also well-known                                                                         | Slightly less adoption; fewer GitHub integrations                  |
+| SonarCloud              | Advanced static analysis                                                                | Heavy integration; overkill for this scope                         |
+| No service (status quo) | Zero setup                                                                              | No trend tracking; no PR feedback; coverage data lost after 7 days |
 
 ### Benchmark Tracking
 
-| Option | Pros | Cons |
-|--------|------|------|
-| **CI artifact storage (chosen)** | Zero-cost; simple; immediate | Manual review only; no trend dashboard |
-| codspeed.io | Automated regression detection; PR comments | Additional setup; potential cost |
-| GitHub Actions Benchmark Action | Community-driven; PR comments | Maintenance burden; action compatibility |
-| No benchmark in CI (status quo) | Zero effort | Benchmarks never validated; silent regressions |
+| Option                           | Pros                                        | Cons                                           |
+| -------------------------------- | ------------------------------------------- | ---------------------------------------------- |
+| **CI artifact storage (chosen)** | Zero-cost; simple; immediate                | Manual review only; no trend dashboard         |
+| codspeed.io                      | Automated regression detection; PR comments | Additional setup; potential cost               |
+| GitHub Actions Benchmark Action  | Community-driven; PR comments               | Maintenance burden; action compatibility       |
+| No benchmark in CI (status quo)  | Zero effort                                 | Benchmarks never validated; silent regressions |
 
 ---
 
@@ -75,7 +76,7 @@ For benchmarking:
     token: ${{ secrets.CODECOV_TOKEN }}
     directory: ./coverage
     flags: unittests
-    fail_ci_if_error: false  # informational initially
+    fail_ci_if_error: false # informational initially
 ```
 
 ### codecov.yml
@@ -165,6 +166,7 @@ bench:
 ## Consequences
 
 ### Positive
+
 - Coverage trends visible in PRs and dashboard
 - Quality gates become enforceable across all packages
 - Benchmark regressions visible to reviewers
@@ -172,12 +174,14 @@ bench:
 - Per-package flags enable granular threshold enforcement
 
 ### Negative / Risks
+
 - Codecov token must be stored as a GitHub secret
 - Initial coverage upload may fail if `coverage/` directory structure is inconsistent across packages
 - Benchmark data must be interpreted manually (no automated regression detection)
 - Adding CI steps increases workflow runtime (~30s for coverage upload, ~60s for bench)
 
 ### Mitigations
+
 - `fail_ci_if_error: false` until integration is validated
 - Standardize coverage output directory to `../../coverage` (relative to each package root)
 - Benchmark step is non-blocking; if it fails, the workflow continues

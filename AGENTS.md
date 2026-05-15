@@ -47,11 +47,11 @@ readonly MAX_PR_TITLE_LENGTH=72
    - `shared`: 25% Lines, 5% Functions
    - `reader-core`: 75% Lines, 70% Functions
 4. **Validate commit message:** Run `./scripts/validate-commit-message.sh` or ensure format matches `type(scope): description` (max 72 chars).
-4. **NEVER ignore lint warnings, typecheck errors, or test failures.**
-5. **If a lint rule is disabled, add inline comment explaining why.**
-6. **MUST load `goap-agent` skill for any analysis, planning, or multi-step task.** Use GOAP methodology (analyze → decompose → strategize → coordinate → execute → synthesize).
-7. **Document ALL issues as GOAP plans + ADRs in `plans/`.** Warnings, pre-existing issues, and unfixable items each get a GOAP plan with an ADR defining policy. Do NOT edit KNOWN-ISSUES.md directly — that is a reference mirror of monitor-tier items only.
-8. **Fix pre-existing issues in files you touch.** Don't leave them for later.
+5. **NEVER ignore lint warnings, typecheck errors, or test failures.**
+6. **If a lint rule is disabled, add inline comment explaining why.**
+7. **MUST load `goap-agent` skill for any analysis, planning, or multi-step task.** Use GOAP methodology (analyze → decompose → strategize → coordinate → execute → synthesize).
+8. **Document ALL issues as GOAP plans + ADRs in `plans/`.** Warnings, pre-existing issues, and unfixable items each get a GOAP plan with an ADR defining policy. Do NOT edit KNOWN-ISSUES.md directly — that is a reference mirror of monitor-tier items only.
+9. **Fix pre-existing issues in files you touch.** Don't leave them for later.
 
 ---
 
@@ -98,16 +98,16 @@ Run this before finalizing ANY response:
 
 ## Skills Reference
 
-| Category | Skills |
-|----------|--------|
+| Category         | Skills                                                                                                                   |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------ |
 | **Coordination** | `goap-agent`, `triz-analysis`, `triz-solver`, `task-decomposition`, `agent-coordination`, `learn`, `do-web-doc-resolver` |
-| **Backend** | `cloudflare-worker-api`, `secure-invite-and-access`, `turso-schema-migrations`, `pwa-offline-sync`, `cicd-pipeline` |
-| **Reader/UI** | `epub-rendering-and-cfi`, `reader-ui-ux`, `accessibility-auditor` |
-| **Testing** | `testing-strategy`, `testdata-builders`, `test-runner`, `dogfood` |
-| **DevOps** | `github-workflow`, `cicd-pipeline`, `migration-refactoring` |
-| **Workflow** | `github-actions-version-fix` |
-| **Security** | `security-code-auditor`, `privacy-first` |
-| **Quality** | `code-quality`, `code-review-assistant`, `shell-script-quality`, `anti-ai-slop`, `agents-md` |
+| **Backend**      | `cloudflare-worker-api`, `secure-invite-and-access`, `turso-schema-migrations`, `pwa-offline-sync`, `cicd-pipeline`      |
+| **Reader/UI**    | `epub-rendering-and-cfi`, `reader-ui-ux`, `accessibility-auditor`                                                        |
+| **Testing**      | `testing-strategy`, `testdata-builders`, `test-runner`, `dogfood`                                                        |
+| **DevOps**       | `github-workflow`, `cicd-pipeline`, `migration-refactoring`                                                              |
+| **Workflow**     | `github-actions-version-fix`                                                                                             |
+| **Security**     | `security-code-auditor`, `privacy-first`                                                                                 |
+| **Quality**      | `code-quality`, `code-review-assistant`, `shell-script-quality`, `anti-ai-slop`, `agents-md`                             |
 
 ---
 
@@ -131,4 +131,4 @@ skill <skill-name>                  # Load specific skill
 
 ---
 
-*See `agents-docs/` for detailed documentation on workflow, hooks, context management, and troubleshooting.*
+_See `agents-docs/` for detailed documentation on workflow, hooks, context management, and troubleshooting._

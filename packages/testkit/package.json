@@ -10,9 +10,7 @@
     "lint": "eslint src --ext .ts",
     "test:unit": "vitest run --passWithNoTests"
   },
-  "dependencies": {
-
-  },
+  "dependencies": {},
   "devDependencies": {
     "@types/node": "^25",
     "typescript": "^6.0.3",
