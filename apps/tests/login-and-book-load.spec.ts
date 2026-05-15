@@ -8,14 +8,14 @@ const API_BASE = '**/api/**';
 
 const TEST_USER = {
   email: 'reader@example.com',
-  password: 'test-password',
+  password: process.env.TEST_PASSWORD || 'test-password',
   bookSlug: 'my-test-book',
 };
 
 const LOGIN_RESPONSE = {
   ok: true,
   data: {
-    sessionToken: 'test-session-token-abc123',
+    sessionToken: process.env.TEST_SESSION_TOKEN || 'test-session-token-abc123',
     book: {
       id: 'book-1',
       slug: TEST_USER.bookSlug,

@@ -96,7 +96,7 @@ async function verifySignedUrlSignature(
 describe('signed-url utilities (HMAC verification)', () => {
   const env = {
     APP_BASE_URL: 'https://test.example.com',
-    SESSION_SIGNING_SECRET: 'test-secret'
+    SESSION_SIGNING_SECRET: process.env.TEST_SESSION_SIGNING_SECRET || 'test-secret'
   };
   const bookId = 'book-123';
   const fileKey = 'books/book-123/content.epub';

@@ -134,7 +134,7 @@ describe('AdminLoginPage', () => {
       const user = userEvent.setup();
       const mockApiRequest = vi.mocked(apiRequest);
       mockApiRequest.mockResolvedValueOnce({
-        sessionToken: 'test-token',
+        sessionToken: process.env.TEST_SESSION_TOKEN || 'test-token',
         email: 'admin@example.com',
       });
 
@@ -158,7 +158,7 @@ describe('AdminLoginPage', () => {
     it('navigates to /admin/books on successful login', async () => {
       const user = userEvent.setup();
       vi.mocked(apiRequest).mockResolvedValueOnce({
-        sessionToken: 'test-token',
+        sessionToken: process.env.TEST_SESSION_TOKEN || 'test-token',
         email: 'admin@example.com',
       });
 

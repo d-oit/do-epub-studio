@@ -130,7 +130,7 @@ function createMinimalEpub(): Buffer {
 
 const TEST_USER = {
   email: 'reader@example.com',
-  password: 'test-password',
+  password: process.env.TEST_PASSWORD || 'test-password',
   bookSlug: 'offline-test',
 };
 

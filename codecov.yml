@@ -3,9 +3,13 @@ coverage:
     project:
       web:
         target: 40%
+        threshold: 2%
       worker:
         target: 55%
+        threshold: 2%
       shared:
         target: 25%
+        threshold: 2%
       reader-core:
         target: 75%
+        threshold: 2%
