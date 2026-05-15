@@ -49,9 +49,9 @@ readonly MAX_PR_TITLE_LENGTH=72
 4. **Validate commit message:** Run `./scripts/validate-commit-message.sh` or ensure format matches `type(scope): description` (max 72 chars).
 4. **NEVER ignore lint warnings, typecheck errors, or test failures.**
 5. **If a lint rule is disabled, add inline comment explaining why.**
-6. **Run diagnostics and document all warnings.** After any change, run `diagnostics` tool and document any new warnings in `plans/015-warnings-and-issues.md` or `agents-docs/KNOWN-ISSUES.md` if unfixable.
-7. **Fix pre-existing issues in files you touch.** Don't leave them for later.
-8. **Document unfixable issues in `agents-docs/KNOWN-ISSUES.md`.** If a warning/error cannot be fixed in the current run (e.g., pre-existing, tool limitations), document it with the exact message, location, reason, and mitigation.
+6. **MUST load `goap-agent` skill for any analysis, planning, or multi-step task.** Use GOAP methodology (analyze → decompose → strategize → coordinate → execute → synthesize).
+7. **Document ALL issues as GOAP plans + ADRs in `plans/`.** Warnings, pre-existing issues, and unfixable items each get a GOAP plan with an ADR defining policy. Do NOT edit KNOWN-ISSUES.md directly — that is a reference mirror of monitor-tier items only.
+8. **Fix pre-existing issues in files you touch.** Don't leave them for later.
 
 ---
 
@@ -74,6 +74,7 @@ readonly MAX_PR_TITLE_LENGTH=72
 - **Architecture decisions:** See `docs/coding-guide.md` and `plans/002-006`
 - **TRIZ analysis:** See `plans/001-triz-analysis.md` + `plans/002-triz-resolution.md`
 - **Skills catalog:** Run `ls .agents/skills/` or see `agents-docs/AVAILABLE_SKILLS.md`
+- **GOAP + ADR pattern:** See `plans/020-goap-sprint-141.md` + `plans/024-adr-warning-management.md`
 - **Learnings:** See `agents-docs/LEARNINGS.md`
 - **Current phase:** See `plans/007-implementation-phases.md`
 
@@ -87,6 +88,8 @@ Run this before finalizing ANY response:
 - [ ] Did I fetch and merge latest main branch before starting work?
 - [ ] Did I check Named Constants for any values I used?
 - [ ] Did I verify no secrets/tokens in my output?
+- [ ] Did I load `goap-agent` skill for analysis/planning tasks?
+- [ ] Did I document all warnings/issues as GOAP plans + ADRs (not direct KNOWN-ISSUES.md edits)?
 - [ ] Did I run quality gate before commit?
 - [ ] Is my commit message under 72 chars with correct format?
 - [ ] Did I use feature branch (not main) for changes?

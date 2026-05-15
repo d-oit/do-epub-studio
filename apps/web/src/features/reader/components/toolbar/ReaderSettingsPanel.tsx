@@ -11,8 +11,7 @@ interface ReaderSettingsPanelProps {
   onSetTheme: (theme: 'light' | 'dark' | 'sepia' | 'system') => void;
   onSetFontSize: (size: 'small' | 'medium' | 'large' | 'xlarge') => void;
   onSetFontFamily: (family: 'serif' | 'sans-serif' | 'monospace') => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  t: (key: string) => any;
+  t: (key: string) => string;
 }
 
 export function ReaderSettingsPanel({

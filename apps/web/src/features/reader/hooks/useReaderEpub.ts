@@ -219,6 +219,7 @@ export function useReaderEpub(
       renditionRef.current?.destroy();
       bookRef.current?.destroy();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- applyThemes only needed for initial setup; preference changes handled by dedicated effect at line 235
   }, [
     epubUrl,
     viewerRef,
@@ -242,7 +243,7 @@ export function useReaderEpub(
     const handler = () => { if (renditionRef.current) applyThemes(renditionRef.current); };
     mq.addEventListener('change', handler);
     return () => mq.removeEventListener('change', handler);
-  }, [applyThemes]);
+  }, [applyThemes, readerTheme]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

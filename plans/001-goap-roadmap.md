@@ -45,6 +45,16 @@ Deliver a production-grade EPUB reading + editorial workspace with secure grants
 6. **Editorial + Admin depth**
    - Highlights/comments UI, audit surfacing, dashboards.
 
+7. **Infrastructure Hardening (Sprint #141)**
+   - Fix CI/CD critical bugs (missing scripts, env var typos, quality gate safety).
+   - Standardize test infrastructure across all 7 packages (vitest configs, scripts, versions).
+   - Add baseline tests to 3 untested packages (schema, testkit, ui).
+   - Fix ESLint non-existent rules and add missing inline comments.
+   - Add coverage upload and benchmarking to CI.
+   - Create READMEs for all packages/apps, add CHANGELOG + CONTRIBUTING.
+   - Implement configurable skips and workflow improvements.
+   - See plans/020-goap-sprint-141.md and plans/023-audit-gap-closure.md.
+
 ## Phase Guards
 
 - Every phase must reference which TRIZ contradiction(s) it resolves.

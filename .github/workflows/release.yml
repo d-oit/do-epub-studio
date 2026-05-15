@@ -1,5 +1,7 @@
 name: Release
 
+run-name: Release ${{ github.ref_name }}
+
 on:
   push:
     tags:
@@ -8,6 +10,10 @@ on:
 # Opt into Node.js 22 for GitHub Actions to avoid deprecation warnings
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: write
@@ -56,7 +62,6 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
           command: pages deploy apps/web/dist --project-name=do-epub-studio
 
       - name: Create GitHub Release

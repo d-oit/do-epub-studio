@@ -1,15 +1,21 @@
 name: CI
 
+run-name: ${{ github.event_name == 'pull_request' && format('PR #{0}: {1}', github.event.pull_request.number, github.event.pull_request.title) || github.event.head_commit.message }}
+
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
 
-# Opt into Node.js 22 for GitHub Actions to avoid deprecation warnings
+# Opt into Node.js 24 for GitHub Actions to avoid deprecation warnings
 env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE22: true
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   TURBO_TELEMETRY_DISABLED: 1
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -185,7 +191,7 @@ jobs:
         with:
           name: build-dist
           path: apps/web/dist/
-          retention-days: 1
+          retention-days: 3
 
   e2e-smoke:
     name: Production E2E Smoke

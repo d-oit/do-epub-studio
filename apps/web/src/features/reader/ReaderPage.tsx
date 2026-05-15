@@ -146,7 +146,7 @@ export function ReaderPage() {
   const handleNavigateToAnnotation = useCallback(async (chapterRef: string, cfiRange?: string) => {
     if (!renditionRef.current) return;
     await renditionRef.current.display(cfiRange ?? chapterRef);
-  }, []);
+  }, [renditionRef]);
 
   const renderHighlights = useCallback(
     (rendition: Rendition, chapterHref: string | null) =>
@@ -193,11 +193,13 @@ export function ReaderPage() {
   useEffect(() => {
     const r = renditionRef.current;
     if (r && currentChapterRef.current) renderHighlights(r, currentChapterRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- refs have stable identity; .current captured at execution time
   }, [highlights, renderHighlights]);
 
   useEffect(() => {
     const r = renditionRef.current;
     if (r && currentChapterRef.current) renderCommentMarkers(r, currentChapterRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- refs have stable identity; .current captured at execution time
   }, [comments, renderCommentMarkers]);
 
   const handleLogout = async () => {
