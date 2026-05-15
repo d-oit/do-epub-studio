@@ -11,6 +11,7 @@ import { setupZombieDetection } from '../../lib/offline/permissions';
 import { AnnotationToolbar, extractSelectionData, CommentsPanel } from './components/annotations';
 import { renderHighlightsOnRendition, renderCommentMarkersOnRendition } from './annotationRendering';
 import { useReaderUI, useReaderEpub, useAnnotationHandlers, useBookmarkHandlers, useExportNotes } from './hooks';
+import { AnimatePresence } from 'framer-motion';
 import {
   ReaderToolbar, ReaderSettingsPanel, TableOfContents,
   BookmarksPanel, ReaderViewer, CommentInputModal,
@@ -244,16 +245,21 @@ export function ReaderPage() {
         onLogout={() => void handleLogout()}
         t={tFn}
       />
-      <ReaderSettingsPanel
-        isOpen={showSettings}
-        theme={readerTheme}
-        fontSize={readerFontSize}
-        fontFamily={readerFontFamily}
-        onSetTheme={setTheme}
-        onSetFontSize={setFontSize}
-        onSetFontFamily={setFontFamily}
-        t={tFn}
-      />
+      <AnimatePresence>
+        {showSettings && (
+          <ReaderSettingsPanel
+            isOpen={showSettings}
+            onClose={() => setShowSettings(false)}
+            theme={readerTheme}
+            fontSize={readerFontSize}
+            fontFamily={readerFontFamily}
+            onSetTheme={setTheme}
+            onSetFontSize={setFontSize}
+            onSetFontFamily={setFontFamily}
+            t={tFn}
+          />
+        )}
+      </AnimatePresence>
       <ReaderViewer
         isLoading={isLoading}
         epubUrl={epubUrl}
