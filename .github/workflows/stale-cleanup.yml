@@ -1,0 +1,20 @@
+name: Stale Cleanup
+on:
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
+      - uses: actions/stale@v9
+        with:
+          days-before-issue-stale: 90
+          days-before-issue-close: 14
+          stale-issue-label: stale
+          days-before-pr-stale: 30
+          days-before-pr-close: 7
+          stale-pr-label: stale

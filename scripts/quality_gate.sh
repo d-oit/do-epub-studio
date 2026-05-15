@@ -75,6 +75,18 @@ if [ -f "requirements.txt" ] || [ -f "pyproject.toml" ] || [ -f "setup.py" ]; th
     DETECTED_LANGUAGES+=("python")
 fi
 
+# Rust detection (detected but not yet supported)
+if [ -f "Cargo.toml" ]; then
+    echo -e "  ${YELLOW}⊘${NC} Rust detected (Cargo.toml) — not yet supported by quality gate"
+    DETECTED_LANGUAGES+=("rust")
+fi
+
+# Go detection (detected but not yet supported)
+if [ -f "go.mod" ]; then
+    echo -e "  ${YELLOW}⊘${NC} Go detected (go.mod) — not yet supported by quality gate"
+    DETECTED_LANGUAGES+=("go")
+fi
+
 # Shell script detection via file existence
 if find . -name "*.sh" -not -path "./.git/*" | grep -q .; then
     echo -e "  ${GREEN}✓${NC} Shell scripts detected"
@@ -228,6 +240,12 @@ if [[ " ${DETECTED_LANGUAGES[*]} " =~ " python " ]]; then
     fi
     echo ""
 fi
+
+# Guard: prevent .gitignore deletions
+if ! "$REPO_ROOT/scripts/guard-gitignore.sh"; then
+    FAILED=1
+fi
+echo ""
 
 # Shell script checks
 if [[ " ${DETECTED_LANGUAGES[*]} " =~ " shell " ]]; then

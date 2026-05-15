@@ -128,13 +128,13 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
       spineItems = await parseSpineFromBook();
 
       const meta = await book.loaded.metadata;
-      const metaMap = meta as unknown as Record<string, string | undefined>;
+      const metaMap = meta as Map<string, string>;
       metadata = {
-        title: metaMap.title ?? '',
-        creator: metaMap.creator,
-        language: metaMap.language,
-        publisher: metaMap.publisher,
-        description: metaMap.description,
+        title: metaMap.get('title') ?? '',
+        creator: metaMap.get('creator'),
+        language: metaMap.get('language'),
+        publisher: metaMap.get('publisher'),
+        description: metaMap.get('description'),
       };
     } catch (error) {
       const formatted = serializeError(error);

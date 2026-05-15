@@ -51,6 +51,12 @@ else
 fi
 echo ""
 
+# Guard: prevent .gitignore deletions
+if ! "$REPO_ROOT/scripts/guard-gitignore.sh"; then
+    FAILED=1
+fi
+echo ""
+
 # Shell script checks (fast)
 if command -v shellcheck &> /dev/null; then
     printf '%sRunning shellcheck...%s\n' "${BLUE}" "${NC}"
