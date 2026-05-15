@@ -26,7 +26,7 @@ Phase 7 (Workflow) ─────┘    Quality Gate → PR
 | ID  | Task                                                                                                                         | Priority | Status | Skills Used            |
 | --- | ---------------------------------------------------------------------------------------------------------------------------- | -------- | ------ | ---------------------- |
 | 1.1 | Fix `test:e2e:prod` — add missing script to root `package.json`                                                              | P0       | ✅     | `cicd-pipeline`        |
-| 1.2 | Fix `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24` typo → `NODE22` in all 3 workflows                                                  | P0       | ✅     | `cicd-pipeline`        |
+| 1.2 | Standardize `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24` env var across all workflows (was inconsistent: ci.yml used NODE22, others NODE24) | P0       | ✅     | `cicd-pipeline`        |
 | 1.3 | Fix `quality_gate.sh` — add `-e` to `set -uo pipefail` → `set -euo pipefail`                                                 | P0       | ✅     | `shell-script-quality` |
 | 1.4 | Fix `dependabot-auto-merge.yml` — replace `uniq` with `unique` (jq function)                                                 | P0       | ✅     | `cicd-pipeline`        |
 | 1.5 | Fix `eslint.config.js` — remove non-existent rules (`no-unassigned-vars`, `preserve-caught-error`)                           | P1       | ⏳     | `code-quality`         |
