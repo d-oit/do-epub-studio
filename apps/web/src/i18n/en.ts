@@ -21,6 +21,7 @@ export const en = {
   'reader.notAvailable': 'Book not available',
   'reader.loadError': 'Failed to load book',
   'reader.settings': 'Settings',
+  'reader.settings.close': 'Close',
   'reader.theme': 'Theme',
   'reader.fontSize': 'Font Size',
   'reader.fontFamily': 'Font',

@@ -23,6 +23,7 @@ export const fr: Record<TranslationKeys, string> = {
   'reader.notAvailable': 'Livre indisponible',
   'reader.loadError': 'Impossible de charger le livre',
   'reader.settings': 'Paramètres',
+  'reader.settings.close': 'Fermer',
   'reader.theme': 'Thème',
   'reader.fontSize': 'Taille de police',
   'reader.fontFamily': 'Police',
