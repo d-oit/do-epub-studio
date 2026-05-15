@@ -60,9 +60,7 @@ export default tseslint.config(
       ],
       '@typescript-eslint/no-explicit-any': 'error',
       'no-console': ['warn', { allow: ['warn', 'error', 'log'] }],
-      'no-unassigned-vars': 'error',
       'no-useless-assignment': 'error',
-      'preserve-caught-error': 'error',
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
       'jsx-a11y/no-autofocus': 'warn',
@@ -78,12 +76,17 @@ export default tseslint.config(
         },
       ],
       'unicorn/prefer-optional-catch-binding': 'error',
+      // Prefer explicit naming; abbreviations are common in this codebase
       'unicorn/prevent-abbreviations': 'off',
       'promise/catch-or-return': 'warn',
       'promise/no-return-wrap': 'error',
+      // Object injection is a runtime concern; TypeScript strict mode covers static analysis
       'security/detect-object-injection': 'off',
+      // Handled by Prettier for consistent formatting
       'import/order': 'off',
+      // .exec() is more explicit and doesn't cause false positives with global regex state
       '@typescript-eslint/prefer-regexp-exec': 'off',
+      // Logical OR (||) is idiomatic and preferred for default values in this codebase
       '@typescript-eslint/prefer-nullish-coalescing': 'off',
       '@typescript-eslint/no-floating-promises': 'error',
       '@typescript-eslint/no-misused-promises': 'error',

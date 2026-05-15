@@ -34,21 +34,23 @@ export function createSessionBuilder(): SessionBuilder {
     revokedAt: null,
   };
 
-  return {
+  const self: SessionBuilder = {
     build: () => ({ ...state }),
     withEmail: (email: string) => {
       state = { ...state, email };
-      return createSessionBuilder();
+      return self;
     },
     withExpiry: (minutesFromNow: number) => {
       state = { ...state, expiresAt: new Date(Date.now() + minutesFromNow * 60 * 1000).toISOString() };
-      return createSessionBuilder();
+      return self;
     },
     withRevoked: () => {
       state = { ...state, revokedAt: new Date().toISOString() };
-      return createSessionBuilder();
+      return self;
     },
   };
+
+  return self;
 }
 
 export function createExpiredSession() {

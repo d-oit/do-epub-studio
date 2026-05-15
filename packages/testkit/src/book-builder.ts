@@ -19,7 +19,7 @@ export interface BookBuilder {
 }
 
 export function createBookBuilder(): BookBuilder {
-  const state = {
+  let state = {
     id: crypto.randomUUID(),
     slug: 'test-book',
     title: 'Test Book',
@@ -34,21 +34,23 @@ export function createBookBuilder(): BookBuilder {
     archivedAt: null,
   };
 
-  return {
+  const self: BookBuilder = {
     build: () => ({ ...state }),
     withTitle: (title: string) => {
-      state.title = title;
-      return createBookBuilder().withTitle(title);
+      state = { ...state, title };
+      return self;
     },
     withSlug: (slug: string) => {
-      state.slug = slug;
-      return createBookBuilder().withSlug(slug);
+      state = { ...state, slug };
+      return self;
     },
     withVisibility: (visibility: string) => {
-      state.visibility = visibility;
-      return createBookBuilder().withVisibility(visibility);
+      state = { ...state, visibility };
+      return self;
     },
   };
+
+  return self;
 }
 
 export interface BookFileBuilder {

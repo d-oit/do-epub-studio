@@ -327,7 +327,7 @@ describe('CFI navigation and comparison', () => {
   function parseCfiSteps(cfi: string): number[] {
     const match = cfi.match(/^epubcfi\((.+)\)$/);
     if (!match) return [];
-    const inner = match[1];
+    const inner = match[1]!;
     return inner
       .split('/')
       .filter(Boolean)
@@ -349,8 +349,8 @@ describe('CFI navigation and comparison', () => {
     const stepsB = parseCfiSteps(b);
     const minLen = Math.min(stepsA.length, stepsB.length);
     for (let i = 0; i < minLen; i++) {
-      if (stepsA[i] < stepsB[i]) return -1;
-      if (stepsA[i] > stepsB[i]) return 1;
+      if (stepsA[i]! < stepsB[i]!) return -1;
+      if (stepsA[i]! > stepsB[i]!) return 1;
     }
     if (stepsA.length < stepsB.length) return -1;
     if (stepsA.length > stepsB.length) return 1;

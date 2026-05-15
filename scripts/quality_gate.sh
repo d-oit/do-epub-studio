@@ -75,6 +75,18 @@ if [ -f "requirements.txt" ] || [ -f "pyproject.toml" ] || [ -f "setup.py" ]; th
     DETECTED_LANGUAGES+=("python")
 fi
 
+# Rust detection (detected but not yet supported)
+if [ -f "Cargo.toml" ]; then
+    echo -e "  ${YELLOW}⊘${NC} Rust detected (Cargo.toml) — not yet supported by quality gate"
+    DETECTED_LANGUAGES+=("rust")
+fi
+
+# Go detection (detected but not yet supported)
+if [ -f "go.mod" ]; then
+    echo -e "  ${YELLOW}⊘${NC} Go detected (go.mod) — not yet supported by quality gate"
+    DETECTED_LANGUAGES+=("go")
+fi
+
 # Shell script detection via file existence
 if find . -name "*.sh" -not -path "./.git/*" | grep -q .; then
     echo -e "  ${GREEN}✓${NC} Shell scripts detected"
@@ -152,22 +164,30 @@ if [[ " ${DETECTED_LANGUAGES[*]} " =~ " typescript " ]]; then
                 printf '%s  ✓ %s test:coverage passed%s\n' "${GREEN}" "$PM" "${NC}"
             fi
 
-            # Build (required for smoke tests)
-            if ! OUTPUT=$($PM run build 2>&1); then
-                printf '%s  ✗ %s build failed%s\n' "${RED}" "$PM" "${NC}"
-                echo "$OUTPUT" >&2
-                FAILED=1
+            # Build (skip with SKIP_BUILD env var)
+            if [ "${SKIP_BUILD:-false}" != "true" ]; then
+                if ! OUTPUT=$($PM run build 2>&1); then
+                    printf '%s  ✗ %s build failed%s\n' "${RED}" "$PM" "${NC}"
+                    echo "$OUTPUT" >&2
+                    FAILED=1
+                else
+                    printf '%s  ✓ %s build passed%s\n' "${GREEN}" "$PM" "${NC}"
+                fi
             else
-                printf '%s  ✓ %s build passed%s\n' "${GREEN}" "$PM" "${NC}"
+                printf '%s  ⊘ %s build skipped (SKIP_BUILD=true)%s\n' "${YELLOW}" "$PM" "${NC}"
             fi
 
-            # Smoke tests
-            if ! OUTPUT=$($PM run test:e2e:smoke 2>&1); then
-                printf '%s  ✗ %s test:e2e:smoke failed%s\n' "${RED}" "$PM" "${NC}"
-                echo "$OUTPUT" >&2
-                FAILED=1
+            # Smoke tests (skip with SKIP_SMOKE env var)
+            if [ "${SKIP_SMOKE:-false}" != "true" ]; then
+                if ! OUTPUT=$($PM run test:e2e:smoke 2>&1); then
+                    printf '%s  ✗ %s test:e2e:smoke failed%s\n' "${RED}" "$PM" "${NC}"
+                    echo "$OUTPUT" >&2
+                    FAILED=1
+                else
+                    printf '%s  ✓ %s test:e2e:smoke passed%s\n' "${GREEN}" "$PM" "${NC}"
+                fi
             else
-                printf '%s  ✓ %s test:e2e:smoke passed%s\n' "${GREEN}" "$PM" "${NC}"
+                printf '%s  ⊘ %s smoke tests skipped (SKIP_SMOKE=true)%s\n' "${YELLOW}" "$PM" "${NC}"
             fi
         else
             printf '%s  ⊘ %s tests skipped (SKIP_TESTS=true)%s\n' "${YELLOW}" "$PM" "${NC}"

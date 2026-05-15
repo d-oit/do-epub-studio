@@ -76,7 +76,7 @@ function extractAllTags(xml: string, tag: string): string[] {
   const regex = new RegExp(`<${tag}(?:[^>]*)>([^<]*)</${tag}>`, 'gi');
   let m: RegExpExecArray | null;
   while ((m = regex.exec(xml)) !== null) {
-    results.push(m[1].trim());
+    results.push(m[1]!.trim());
   }
   return results;
 }
@@ -87,8 +87,8 @@ function extractAttrs(xml: string, tag: string, attr: string): string[] {
   let m: RegExpExecArray | null;
   while ((m = tagRegex.exec(xml)) !== null) {
     const attrRegex = new RegExp(`${attr}\\s*=\\s*"([^"]*)"`, 'i');
-    const am = attrRegex.exec(m[1]);
-    if (am) results.push(am[1]);
+    const am = attrRegex.exec(m[1]!);
+    if (am) results.push(am[1]!);
   }
   return results;
 }
@@ -184,17 +184,17 @@ function parseTocItems(buf: Buffer): Array<{ label: string; href: string }> {
   const toc: Array<{ label: string; href: string }> = [];
 
   for (let i = 0; i < spineIdrefs.length; i++) {
-    const idref = spineIdrefs[i];
+    const idref = spineIdrefs[i]!;
     const prop = spineProps[i];
     if (prop?.includes('nav')) {
       const idx = manifestIds.indexOf(idref);
       if (idx !== -1) {
-        const href = manifestHrefs[idx];
+        const href = manifestHrefs[idx]!;
         const navXml = entries.get(opfDir + href)?.toString('utf-8') ?? '';
         const links = extractAllTags(navXml, 'a');
         const linkHrefs = extractAttrs(navXml, 'a', 'href');
         for (let j = 0; j < links.length && j < linkHrefs.length; j++) {
-          toc.push({ label: links[j], href: linkHrefs[j] });
+          toc.push({ label: links[j]!, href: linkHrefs[j]! });
         }
       }
     }

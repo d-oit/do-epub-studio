@@ -20,7 +20,7 @@ for (let i = 0; i < 256; i++) {
 function crc32(buf: Buffer): number {
   let crc = 0xffffffff;
   for (let i = 0; i < buf.length; i++) {
-    crc = CRC32_TABLE[(crc ^ buf[i]) & 0xff] ^ (crc >>> 8);
+    crc = CRC32_TABLE[(crc ^ buf[i]!) & 0xff]! ^ (crc >>> 8);
   }
   return (crc ^ 0xffffffff) >>> 0;
 }
@@ -267,9 +267,9 @@ export function extractXmlAttributes(xml: string, tag: string, attrName: string)
   let match: RegExpExecArray | null;
   while ((match = regex.exec(xml)) !== null) {
     const attrRegex = new RegExp(`${attrName}\\s*=\\s*"([^"]*)"`, 'i');
-    const attrMatch = attrRegex.exec(match[1]);
+    const attrMatch = attrRegex.exec(match[1]!);
     if (attrMatch) {
-      results.push(attrMatch[1]);
+      results.push(attrMatch[1]!);
     }
   }
   return results;

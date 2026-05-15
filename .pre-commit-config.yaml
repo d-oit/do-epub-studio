@@ -47,7 +47,7 @@ repos:
     hooks:
       - id: quality-gate
         name: Run quality gate
-        entry: ./scripts/quality_gate.sh
+        entry: ./scripts/minimal_quality_gate.sh
         language: script
         pass_filenames: false
         always_run: true

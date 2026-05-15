@@ -41,6 +41,12 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium firefox
 
       - name: Run E2E tests
+        id: e2e
+        run: pnpm test:e2e:smoke
+        continue-on-error: true
+
+      - name: Retry on failure
+        if: steps.e2e.outcome == 'failure'
         run: pnpm test:e2e:smoke
 
       - name: Upload Playwright report

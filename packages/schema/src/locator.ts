@@ -45,7 +45,7 @@ export function cfiToRange(
   if (!match) return null;
 
   return {
-    spineIndex: parseInt(match[1], 10),
+    spineIndex: parseInt(match[1]!, 10),
     path: match[2] || '',
     charOffset: match[3] ? parseInt(match[3], 10) : 0,
   };
