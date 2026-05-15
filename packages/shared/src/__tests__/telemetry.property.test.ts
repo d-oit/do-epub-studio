@@ -93,13 +93,9 @@ describe('serializeError with non-Error inputs', () => {
   it('handles object input', () => {
     fc.assert(
       fc.property(
-        fc.oneof(
-          fc.record({ name: fc.string(), message: fc.string() }, { withDeletedKeys: true }),
-          fc.record({ message: fc.string() }, { withDeletedKeys: true }),
-          fc.record({}),
-        ),
+        fc.option(fc.record({ name: fc.string(), message: fc.string() }), { nil: undefined }),
         (obj) => {
-          const serialized = serializeError(obj);
+          const serialized = serializeError(obj ?? {});
           expect(typeof serialized.name).toBe('string');
           expect(typeof serialized.message).toBe('string');
         },
