@@ -100,7 +100,7 @@ jobs:
         run: |
           echo "Waiting for deployment to propagate..."
           sleep 15
-          WORKER_URL="https://do-epub-studio.d-oit.workers.dev"
+          WORKER_URL="${WORKER_URL:-https://do-epub-studio.d-oit.workers.dev}"
           HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$WORKER_URL" --connect-timeout 10 --max-time 15 || echo "000")
           echo "Worker health check: HTTP $HTTP_STATUS"
           if [ "$HTTP_STATUS" = "000" ] || [ "$HTTP_STATUS" -ge 500 ]; then
