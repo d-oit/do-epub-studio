@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-15
 **Goal:** Fix all truly open items found by audit: e2e.yml bug, benchmark CI, hardcoded credentials, codecov enhancements
-**Status:** 🔄 IN PROGRESS
+**Status:** ✅ **COMPLETED** — PR #149 merged; all groups resolved
 **Strategy:** Hybrid — parallel swarm for independent groups, sequential quality gate
 **Branch:** feat/remaining-implementation-gaps
 
@@ -84,11 +84,12 @@ Strategy: Replace hardcoded values with env var references (with fallback defaul
 
 ## Quality Gates
 
-- [ ] `pnpm lint` passes
-- [ ] `pnpm typecheck` passes
-- [ ] `pnpm test` passes
-- [ ] `pnpm build` passes
-- [ ] Workflow YAML validation passes
+- [x] `pnpm lint` passes — 0 warnings
+- [x] `pnpm typecheck` passes — 7/7 packages clean
+- [x] `pnpm test` passes — all tests pass
+- [x] `pnpm build` passes
+- [x] Workflow YAML validation passes
+- [x] GHA CI passes — CodeQL + CI both green
 
 ---
 
@@ -96,11 +97,12 @@ Strategy: Replace hardcoded values with env var references (with fallback defaul
 
 | Criterion | Status |
 |-----------|--------|
-| e2e.yml has no broken steps | 🔴 |
-| codecov-action pinned to SHA | 🔴 |
-| codecov.yml has threshold settings | 🔴 |
-| Benchmark job exists in CI | 🔴 |
-| Hardcoded test credentials replaced with env vars | 🔴 |
-| All GHA workflows pass | 🔴 |
-| Plans/ progress updated | 🔴 |
-| Learnings compacted | 🔴 |
+| e2e.yml has no broken steps | ✅ |
+| codecov-action pinned to SHA | ✅ |
+| codecov.yml has threshold settings | ✅ |
+| Benchmark job exists in CI | ✅ |
+| Hardcoded test credentials replaced with env vars | ✅ |
+| TURSO_DATABASE_URL env-varized (Codacy feedback) | ✅ |
+| All GHA workflows pass | ✅ |
+| Plans/ progress updated | ✅ |
+| Learnings compacted | ✅ |

@@ -91,8 +91,8 @@ Phase 7 (Workflow) ─────┘    Quality Gate → PR
 
 | ID  | Task                                                                     | Priority | Status | Skills Used        |
 | --- | ------------------------------------------------------------------------ | -------- | ------ | ------------------ |
-| 6.1 | Add benchmark CI step — run `pnpm bench` and store results as artifact   | P3       | 🔴     | `cicd-pipeline`    |
-| 6.2 | Create `packages/reader-core/vitest.config.ts` bench config if separated | P3       | 🔴     | `testing-strategy` |
+| 6.1 | Add benchmark CI step — run `pnpm bench` and store results as artifact   | P3       | ✅     | `cicd-pipeline`    |
+| 6.2 | Create `packages/reader-core/vitest.config.ts` bench config if separated | P3       | ✅     | `testing-strategy` |
 | 6.3 | Add performance regression comment on PRs via benchmark comparison       | P4       | 🔴     | `cicd-pipeline`    |
 
 ## Phase 7: Coding Workflow Gaps (P2-P4)
@@ -105,7 +105,7 @@ Phase 7 (Workflow) ─────┘    Quality Gate → PR
 | 7.4 | Update pre-commit hook to use `minimal_quality_gate.sh` (lint+typecheck only) instead of full gate | P3       | ✅     | `shell-script-quality`     |
 | 7.5 | Expand language detection in `quality_gate.sh` — detect Rust (Cargo.toml), Go (go.mod)             | P4       | ✅     | `shell-script-quality`     |
 | 7.6 | Fix `skills-lock.json` — `dogfood` skill duplicates `agent-browser` source                         | P2       | ✅     | `code-quality`             |
-| 7.7 | Move test credentials to environment variables (last open item from Plan 010)                      | P2       | 🔴     | `secure-invite-and-access` |
+| 7.7 | Move test credentials to environment variables (last open item from Plan 010)                      | P2       | ✅     | `secure-invite-and-access` |
 | 7.8 | Fix `markdownlint` in `quality_gate.sh` — prune `node_modules` from `find`                         | P2       | ✅     | `shell-script-quality`     |
 | 7.9 | Add release.yml post-deploy health check — curl Worker endpoint after deploy                       | P2       | ✅     | `cicd-pipeline`            |
 
@@ -149,10 +149,10 @@ Group G (Phase 7): Workflow scripts — independent
 | All monorepo packages use consistent vitest ^4.1.5 and @types/node ^25                       | ✅     |
 | At least 1 baseline test exists in each previously-untested package                          | ✅     |
 | `turbo.json` has `test:coverage` and `test:e2e` task definitions                             | ✅     |
-| Coverage data uploaded to coverage service in CI                                             | 🔴     |
-| Every package/app has a README.md                                                            | 🔴     |
-| `CHANGELOG.md` and `CONTRIBUTING.md` exist at root                                           | 🔴     |
-| Benchmark runs in CI                                                                         | 🔴     |
+| Coverage data uploaded to coverage service in CI                                             | ✅     |
+| Every package/app has a README.md                                                            | ✅     |
+| `CHANGELOG.md` and `CONTRIBUTING.md` exist at root                                           | ✅     |
+| Benchmark runs in CI                                                                         | ✅     |
 | `quality_gate.sh` has configurable skips (`SKIP_BUILD`, `SKIP_SMOKE`)                        | ✅     |
 | `skills-lock.json` has correct `dogfood` source                                              | ✅     |
 | Post-deploy health check in release.yml                                                      | ✅     |
@@ -168,8 +168,8 @@ Group G (Phase 7): Workflow scripts — independent
 | 3   | Tailwind arbitrary value warnings (2 files)                           | Low      | Minimal severity; deferred                                 | ✅     |
 | 4   | `reader-state.ts` at 482 LOC (near 500 limit)                         | Monitor  | Near limit but not exceeded                                | 👀     |
 | 5   | `admin.ts` at 465 LOC (near 500 limit)                                | Monitor  | Near limit but not exceeded                                | 👀     |
-| 6   | Expand language detection for Rust/Go                                 | Low      | No Rust/Go code in repo currently                          | 🔴     |
-| 7   | `run_act_local.sh`                                                    | Low      | Nice-to-have; deferred                                     | 🔴     |
+| 6   | Expand language detection for Rust/Go                                 | Low      | No Rust/Go code in repo currently                          | ✅     |
+| 7   | `run_act_local.sh`                                                    | Low      | Nice-to-have; deferred                                     | ✅     |
 | 8   | Webkit in CI                                                          | Low      | Can add later; low usage share                             | ✅     |
 
 _Items 1-4 and 6-7 remain for future sprints. Items 2-3, 8 resolved via Plans 025-027._
@@ -178,12 +178,6 @@ _Items 1-4 and 6-7 remain for future sprints. Items 2-3, 8 resolved via Plans 02
 
 ## Sprint Closure
 
-Plans 025 (warning resolution), 026 (CI/CD audit & fix), 027 (swarm gap closure), 028 (remaining gap closure), and 029 (final gap closure) have been resolved. This sprint (141) is now **fully complete** — all Phases 1-7 items resolved ✅, with only Phase 6 (benchmarks, P3-P4) deferred as low priority.
+Plans 025 (warning resolution), 026 (CI/CD audit & fix), 027 (swarm gap closure), 028 (remaining gap closure), and 029 (final gap closure) have been resolved. Plan 030 (remaining implementation gaps) closed the final items: Phase 6 benchmarks (CI bench job added), Phase 7.7 (test credentials env-varized), e2e.yml broken step fix, codecov SHA pinning, and codecov.yml thresholds added.
 
-### Final completion (Plan 029, 2026-05-15):
-- **Phase 4** fully resolved: 6 UI component test files (26 tests), 4 property-based test files (36 tests), codecov.yml, coverage upload CI step
-- **Phase 5** fully resolved: 7 package READMEs + CHANGELOG.md + CONTRIBUTING.md
-- **Phase 7** items resolved: ai-commit.sh, run_act_local.sh, pre-commit minimal gate, language detection expansion
-- **CI/CD infra** resolved: composite action, paths-ignore, stale cleanup, pre-existing epub-loader.ts fix
-- **Plans 020, 029** progress updated
-- **Learnings** compacted
+This sprint (141) is now **fully complete** — all Phases 1-7 items resolved ✅, with only Phase 6.3 (PR regression comments, P4) deferred.
