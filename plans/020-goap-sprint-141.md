@@ -147,7 +147,7 @@ Group G (Phase 7): Workflow scripts — independent
 | ESLint non-existent rules removed, disabled rules documented                                 | ✅     |
 | `packages/schema/`, `packages/testkit/`, `packages/ui/` have vitest configs and test scripts | ✅     |
 | All monorepo packages use consistent vitest ^4.1.5 and @types/node ^25                       | ✅     |
-| At least 1 baseline test exists in each previously-untested package                          | ✅     |
+| At least 1 baseline test exists in each previously-untested package                          | ⏳ packages/ui still has 0 tests |
 | `turbo.json` has `test:coverage` and `test:e2e` task definitions                             | ✅     |
 | Coverage data uploaded to coverage service in CI                                             | 🔴     |
 | Every package/app has a README.md                                                            | 🔴     |
@@ -178,4 +178,4 @@ _Items 1-4 and 6-7 remain for future sprints. Items 2-3, 8 resolved via Plans 02
 
 ## Sprint Closure
 
-Plans 025 (warning resolution), 026 (CI/CD audit & fix), 027 (swarm gap closure), and 028 (remaining gap closure) have been resolved. This sprint (141) is substantially complete — Phases 1-3 core items done ✅, Phase 4 minimal coverage added ✅ (schema types, locator, testkit builders), Phase 7 workflow improvements done ✅ (quality_gate.sh SKIP_BUILD/SKIP_SMOKE, pre-commit, minimal quality gate -e flag). Phases 5 (documentation), 6 (benchmarks), and remaining Phase 4 items (property-based tests, coverage upload) deferred to future sprints.
+Plans 025 (warning resolution), 026 (CI/CD audit & fix), 027 (swarm gap closure), and 028 (remaining gap closure) have been resolved. This sprint (141) is substantially complete — Phases 1-3 core items done ✅, Phase 4 partial coverage added (schema types, locator, testkit builders — 63 new tests; packages/ui still needs coverage), Phase 7 workflow improvements done ✅ (quality_gate.sh SKIP_BUILD/SKIP_SMOKE, pre-commit, minimal quality gate -e flag). Phases 5 (documentation), 6 (benchmarks), and remaining Phase 4 items (ui tests, property-based tests, coverage upload) deferred to future sprints.
