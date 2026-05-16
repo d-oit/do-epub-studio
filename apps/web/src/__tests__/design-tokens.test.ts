@@ -1,0 +1,34 @@
+import { describe, it, expect } from 'vitest';
+import fs from 'fs';
+import path from 'path';
+
+describe('Design Tokens', () => {
+  it('uses OKLCH for color tokens in globals.css', () => {
+    const cssPath = path.resolve(__dirname, '../styles/globals.css');
+    const cssContent = fs.readFileSync(cssPath, 'utf-8');
+
+    // Check if OKLCH is present
+    expect(cssContent).toContain('oklch(');
+
+    // Check for some specific tokens
+    expect(cssContent).toContain('--color-background: oklch(100% 0 0)');
+    expect(cssContent).toContain('--color-accent: oklch(60% 0.15 250)');
+  });
+
+  it('implements wide-gamut P3 overrides', () => {
+    const cssPath = path.resolve(__dirname, '../styles/globals.css');
+    const cssContent = fs.readFileSync(cssPath, 'utf-8');
+
+    expect(cssContent).toContain('@media (color-gamut: p3)');
+    expect(cssContent).toContain('--color-accent: oklch(60% 0.2 250)');
+  });
+
+  it('follows Tailwind v4 @layer architecture', () => {
+    const cssPath = path.resolve(__dirname, '../styles/globals.css');
+    const cssContent = fs.readFileSync(cssPath, 'utf-8');
+
+    expect(cssContent).toContain('@layer base');
+    expect(cssContent).toContain('@layer components');
+    expect(cssContent).toContain('@layer utilities');
+  });
+});
