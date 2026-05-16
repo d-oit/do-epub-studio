@@ -40,7 +40,7 @@ describe('AnnotationToolbar', () => {
         />,
       );
 
-      expect(screen.getByTitle('annotation.highlight')).toBeInTheDocument();
+      expect(screen.getByLabelText('annotation.highlight')).toBeInTheDocument();
     });
 
     it('renders comment button when canComment is true', () => {
@@ -56,7 +56,7 @@ describe('AnnotationToolbar', () => {
         />,
       );
 
-      expect(screen.getByTitle('annotation.comment')).toBeInTheDocument();
+      expect(screen.getByLabelText('annotation.comment')).toBeInTheDocument();
     });
 
     it('does not render highlight button when canHighlight is false', () => {
@@ -72,7 +72,7 @@ describe('AnnotationToolbar', () => {
         />,
       );
 
-      expect(screen.queryByTitle('annotation.highlight')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('annotation.highlight')).not.toBeInTheDocument();
     });
 
     it('does not render comment button when canComment is false', () => {
@@ -88,7 +88,7 @@ describe('AnnotationToolbar', () => {
         />,
       );
 
-      expect(screen.queryByTitle('annotation.comment')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('annotation.comment')).not.toBeInTheDocument();
     });
 
     it('renders close button', () => {
@@ -104,7 +104,7 @@ describe('AnnotationToolbar', () => {
         />,
       );
 
-      expect(screen.getByTitle('Close')).toBeInTheDocument();
+      expect(screen.getByLabelText('Close')).toBeInTheDocument();
     });
   });
 
@@ -123,13 +123,13 @@ describe('AnnotationToolbar', () => {
         />,
       );
 
-      await user.click(screen.getByTitle('annotation.highlight'));
+      await user.click(screen.getByLabelText('annotation.highlight'));
 
       // Color picker should appear with color options
-      expect(screen.getByTitle('yellow')).toBeInTheDocument();
-      expect(screen.getByTitle('green')).toBeInTheDocument();
-      expect(screen.getByTitle('blue')).toBeInTheDocument();
-      expect(screen.getByTitle('pink')).toBeInTheDocument();
+      expect(screen.getByLabelText('annotation.colors.yellow')).toBeInTheDocument();
+      expect(screen.getByLabelText('annotation.colors.green')).toBeInTheDocument();
+      expect(screen.getByLabelText('annotation.colors.blue')).toBeInTheDocument();
+      expect(screen.getByLabelText('annotation.colors.pink')).toBeInTheDocument();
     });
 
     it('calls onHighlight with color hex when color is selected', async () => {
@@ -146,8 +146,8 @@ describe('AnnotationToolbar', () => {
         />,
       );
 
-      await user.click(screen.getByTitle('annotation.highlight'));
-      await user.click(screen.getByTitle('yellow'));
+      await user.click(screen.getByLabelText('annotation.highlight'));
+      await user.click(screen.getByLabelText('annotation.colors.yellow'));
 
       expect(mockOnHighlight).toHaveBeenCalledWith('#ffff00');
     });
@@ -166,7 +166,7 @@ describe('AnnotationToolbar', () => {
         />,
       );
 
-      await user.click(screen.getByTitle('annotation.comment'));
+      await user.click(screen.getByLabelText('annotation.comment'));
 
       expect(mockOnComment).toHaveBeenCalled();
     });
@@ -185,7 +185,7 @@ describe('AnnotationToolbar', () => {
         />,
       );
 
-      await user.click(screen.getByTitle('Close'));
+      await user.click(screen.getByLabelText('Close'));
 
       expect(mockOnClose).toHaveBeenCalled();
     });
@@ -253,7 +253,7 @@ describe('AnnotationToolbar', () => {
       );
 
       // Toolbar is a fixed positioned element
-      const toolbar = screen.getByTitle('annotation.highlight').closest('.fixed');
+      const toolbar = screen.getByLabelText('annotation.highlight').closest('.fixed');
       expect(toolbar).toBeInTheDocument();
       expect(toolbar).toHaveClass('fixed');
     });

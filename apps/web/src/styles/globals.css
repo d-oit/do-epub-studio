@@ -4,241 +4,227 @@
    2026 Modern Design System - Global Styles
    ============================================ */
 
-:root {
-  /* CSS Custom Properties for theming */
-  --color-background: #ffffff;
-  --color-background-secondary: #f5f5f5;
-  --color-background-tertiary: #e5e5e5;
-  --color-foreground: #171717;
-  --color-foreground-muted: #737373;
-  --color-accent: #2563eb;
-  --color-accent-success: #10b981;
-  --color-accent-warning: #f59e0b;
-  --color-accent-error: #ef4444;
-  --color-border: #e5e5e5;
+@layer base {
+  :root {
+    /* OKLCH Color Tokens (Perceptually Uniform) */
+    --color-background: oklch(100% 0 0);
+    --color-background-secondary: oklch(97% 0 0);
+    --color-background-tertiary: oklch(92% 0 0);
+    --color-foreground: oklch(15% 0 0);
+    --color-foreground-muted: oklch(55% 0 0);
+    --color-accent: oklch(60% 0.15 250);
+    --color-accent-success: oklch(70% 0.15 150);
+    --color-accent-warning: oklch(75% 0.15 80);
+    --color-accent-error: oklch(65% 0.2 25);
+    --color-border: oklch(92% 0 0);
 
-  /* Motion control variables */
-  --motion-slide-offset: 20px;
-  --motion-item-offset: 10px;
-  --motion-hover-lift: -4px;
-  --motion-header-offset: -100px;
-  --motion-scale-enter: 0.95;
-  --motion-scale-tap: 0.97;
-  --motion-scale-hover: 1.02;
-  --motion-scale-hover-lg: 1.05;
-  --motion-scale-tap-lg: 0.9;
-  
-  /* Animation timing */
-  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-in-out-expo: cubic-bezier(0.87, 0, 0.13, 1);
-  --ease-out-back: cubic-bezier(0.34, 1.56, 0.64, 1);
-  
-  /* Spacing */
-  --header-height: 3.5rem;
-  --sidebar-width: 16rem;
-  --content-max-width: 48rem;
-  
-  /* Typography */
-  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  line-height: 1.6;
-  font-weight: 400;
-  color-scheme: light dark;
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
+    /* Motion control variables */
+    --motion-slide-offset: 20px;
+    --motion-item-offset: 10px;
+    --motion-hover-lift: -4px;
+    --motion-header-offset: -100px;
+    --motion-scale-enter: 0.95;
+    --motion-scale-tap: 0.97;
+    --motion-scale-hover: 1.02;
+    --motion-scale-hover-lg: 1.05;
+    --motion-scale-tap-lg: 0.9;
 
-.dark,
-[data-theme="dark"] {
-  --color-background: #0a0a0a;
-  --color-background-secondary: #141414;
-  --color-background-tertiary: #1f1f1f;
-  --color-foreground: #fafafa;
-  --color-foreground-muted: #a3a3a3;
-  --color-accent: #3b82f6;
-  --color-accent-success: #34d399;
-  --color-accent-warning: #fbbf24;
-  --color-accent-error: #f87171;
-  --color-border: #262626;
-}
+    /* Animation timing */
+    --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-in-out-expo: cubic-bezier(0.87, 0, 0.13, 1);
+    --ease-out-back: cubic-bezier(0.34, 1.56, 0.64, 1);
 
-[data-theme="sepia"] {
-  --color-background: #fffbeb;
-  --color-background-secondary: #fef3c7;
-  --color-background-tertiary: #fde68a;
-  --color-foreground: #78350f;
-  --color-foreground-muted: #92400e;
-  --color-accent: #d97706;
-  --color-accent-success: #65a30d;
-  --color-accent-warning: #d97706;
-  --color-accent-error: #dc2626;
-  --color-border: #fde68a;
-}
+    /* Spacing */
+    --header-height: 3.5rem;
+    --sidebar-width: 16rem;
+    --content-max-width: 48rem;
 
-/* ============================================
-   Base Styles
-   ============================================ */
+    /* Typography */
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.6;
+    font-weight: 400;
+    color-scheme: light dark;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 
-html {
-  height: 100%;
-  scroll-behavior: smooth;
-  margin: 0;
-  padding: 0;
-  overflow-x: clip;
-}
+  /* Wide-gamut P3 overrides */
+  @media (color-gamut: p3) {
+    :root {
+      --color-accent: oklch(60% 0.2 250);
+      --color-accent-success: oklch(70% 0.2 150);
+      --color-accent-warning: oklch(75% 0.2 80);
+      --color-accent-error: oklch(65% 0.25 25);
+    }
+  }
 
-body {
-  min-height: 100vh;
-  height: 100%;
-  background-color: var(--color-background);
-  color: var(--color-foreground);
-  transition: background-color 0.3s ease, color 0.3s ease;
-  margin: 0;
-  padding: 0;
-}
+  .dark,
+  [data-theme="dark"] {
+    --color-background: oklch(12% 0 0);
+    --color-background-secondary: oklch(16% 0 0);
+    --color-background-tertiary: oklch(22% 0 0);
+    --color-foreground: oklch(98% 0 0);
+    --color-foreground-muted: oklch(70% 0 0);
+    --color-accent: oklch(65% 0.15 250);
+    --color-accent-success: oklch(75% 0.15 150);
+    --color-accent-warning: oklch(80% 0.15 80);
+    --color-accent-error: oklch(70% 0.2 25);
+    --color-border: oklch(25% 0 0);
+  }
 
-#root {
-  height: 100%;
-  isolation: isolate;
-}
+  [data-theme="sepia"] {
+    --color-background: oklch(98% 0.02 85);
+    --color-background-secondary: oklch(95% 0.04 85);
+    --color-background-tertiary: oklch(92% 0.06 85);
+    --color-foreground: oklch(30% 0.05 85);
+    --color-foreground-muted: oklch(45% 0.05 85);
+    --color-accent: oklch(55% 0.12 85);
+    --color-accent-success: oklch(65% 0.15 150);
+    --color-accent-warning: oklch(70% 0.15 85);
+    --color-accent-error: oklch(60% 0.2 25);
+    --color-border: oklch(90% 0.06 85);
+  }
 
-/* ============================================
-   Typography Utilities
-   ============================================ */
+  html {
+    height: 100%;
+    scroll-behavior: smooth;
+    margin: 0;
+    padding: 0;
+    overflow-x: clip;
+  }
 
-.text-balance {
-  text-wrap: balance;
-}
+  body {
+    min-height: 100vh;
+    height: 100%;
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    transition: background-color 0.3s ease, color 0.3s ease;
+    margin: 0;
+    padding: 0;
+  }
 
-.text-pretty {
-  text-wrap: pretty;
+  #root {
+    height: 100%;
+    isolation: isolate;
+  }
 }
 
 /* ============================================
-   Glassmorphism Effects
+   Component Layer
    ============================================ */
 
-.glass-panel {
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 
-    0 8px 32px rgba(0, 0, 0, 0.12),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
-}
+@layer components {
+  .glass-panel {
+    background: color-mix(in oklch, var(--color-background) 80%, transparent);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid color-mix(in oklch, var(--color-foreground) 10%, transparent);
+    box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.12),
+      inset 0 1px 0 color-mix(in oklch, var(--color-background) 20%, transparent);
+  }
 
-.dark .glass-panel {
-  background: rgba(0, 0, 0, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 
-    0 8px 32px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05);
-}
+  .glass-card {
+    background: color-mix(in oklch, var(--color-background) 70%, transparent);
+    backdrop-filter: blur(16px) saturate(150%);
+    -webkit-backdrop-filter: blur(16px) saturate(150%);
+    border: 1px solid color-mix(in oklch, var(--color-foreground) 15%, transparent);
+    border-radius: 1rem;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s var(--ease-out-expo);
+  }
 
-.glass-card {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(16px) saturate(150%);
-  -webkit-backdrop-filter: blur(16px) saturate(150%);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 1rem;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s var(--ease-out-expo);
-}
+  .glass-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+  }
 
-.glass-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
-}
-
-.dark .glass-card {
-  background: rgba(0, 0, 0, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
-}
-
-.dark .glass-card:hover {
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      var(--color-background-secondary) 25%,
+      var(--color-background-tertiary) 50%,
+      var(--color-background-secondary) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+  }
 }
 
 /* ============================================
-   Anti-flicker & Performance
+   Utility Layer
    ============================================ */
 
-.anti-flicker {
-  will-change: transform;
-  transform: translateZ(0);
-  backface-visibility: hidden;
-  perspective: 1000px;
-}
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
 
-.gpu-accelerated {
-  transform: translateZ(0);
-  backface-visibility: hidden;
+  .text-pretty {
+    text-wrap: pretty;
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in oklch, var(--color-foreground) 20%, transparent) transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: color-mix(in oklch, var(--color-foreground) 20%, transparent);
+    border-radius: 3px;
+  }
+
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .anti-flicker {
+    will-change: transform;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+  }
+
+  .focus-ring {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--color-background), 0 0 0 4px var(--color-accent);
+  }
 }
 
 /* ============================================
-   Scrollbar Styles
+   Animations & Keyframes
    ============================================ */
 
-.scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-.scrollbar-thin {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
-}
-
-.scrollbar-thin::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-.scrollbar-thin::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.scrollbar-thin::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.2);
-  border-radius: 3px;
-}
-
-.dark .scrollbar-thin {
-  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
-}
-
-.dark .scrollbar-thin::-webkit-scrollbar-thumb {
-  background-color: rgba(255, 255, 255, 0.2);
-}
-
-/* ============================================
-   Focus Ring System
-   ============================================ */
-
-.focus-ring {
-  outline: none;
-  box-shadow: 0 0 0 2px var(--color-background), 0 0 0 4px var(--color-accent);
-}
-
-*:focus-visible {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 2px;
-}
-
-button:focus-visible,
-a:focus-visible,
-input:focus-visible,
-textarea:focus-visible,
-select:focus-visible {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 2px;
+@keyframes slideUp {
+  from { transform: translateY(10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }
 
 /* ============================================
@@ -268,84 +254,7 @@ select:focus-visible {
 }
 
 /* ============================================
-   Touch Targets (Mobile Accessibility)
-   ============================================ */
-
-.touch-target {
-  min-height: 44px;
-  min-width: 44px;
-}
-
-/* ============================================
-   Loading Skeleton
-   ============================================ */
-
-.skeleton {
-  background: linear-gradient(
-    90deg,
-    var(--color-background-secondary) 25%,
-    var(--color-background-tertiary) 50%,
-    var(--color-background-secondary) 75%
-  );
-  background-size: 200% 100%;
-  animation: shimmer 2s infinite;
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
-  }
-}
-
-/* ============================================
-   Custom Selection
-   ============================================ */
-
-::selection {
-  background-color: var(--color-accent);
-  color: white;
-}
-
-/* ============================================
-   Button Reset
-   ============================================ */
-
-button {
-  cursor: pointer;
-  font: inherit;
-}
-
-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
-}
-
-/* ============================================
-   Input Reset
-   ============================================ */
-
-input,
-textarea,
-select {
-  font: inherit;
-  color: inherit;
-}
-
-/* ============================================
-   Image Reset
-   ============================================ */
-
-img {
-  max-width: 100%;
-  height: auto;
-  display: block;
-}
-
-/* ============================================
-   Utility Classes
+   Tailwind @theme
    ============================================ */
 
 @theme {
@@ -359,37 +268,4 @@ img {
   --color-accent-warning: var(--color-accent-warning);
   --color-accent-error: var(--color-accent-error);
   --color-border: var(--color-border);
-}
-
-@utility text-gradient {
-  background: linear-gradient(135deg, var(--color-accent), #7c3aed);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-@utility bg-gradient-subtle {
-  background: linear-gradient(
-    180deg,
-    var(--color-background) 0%,
-    var(--color-background-secondary) 100%
-  );
-}
-
-@utility animate-in {
-  animation: fadeIn 0.3s ease-out;
-}
-
-@utility animate-slide-up {
-  animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes slideUp {
-  from { transform: translateY(10px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
 }

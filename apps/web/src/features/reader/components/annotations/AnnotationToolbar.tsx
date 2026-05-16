@@ -1,5 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from '../../../../hooks/useTranslation';
+import type { TranslationKeys } from '../../../../i18n/en';
+import { Tooltip, IconButton, scaleVariants } from '../../../../components/ui';
 
 type SupportedLocale = 'en' | 'de' | 'fr';
 
@@ -20,11 +23,11 @@ interface AnnotationToolbarProps {
   canComment: boolean;
 }
 
-const HIGHLIGHT_COLORS = [
-  { id: 'yellow', hex: '#ffff00' },
-  { id: 'green', hex: '#90EE90' },
-  { id: 'blue', hex: '#87CEEB' },
-  { id: 'pink', hex: '#FFB6C1' },
+const HIGHLIGHT_COLORS: Array<{ id: string; hex: string; label: TranslationKeys }> = [
+  { id: 'yellow', hex: '#ffff00', label: 'annotation.colors.yellow' },
+  { id: 'green', hex: '#90EE90', label: 'annotation.colors.green' },
+  { id: 'blue', hex: '#87CEEB', label: 'annotation.colors.blue' },
+  { id: 'pink', hex: '#FFB6C1', label: 'annotation.colors.pink' },
 ];
 
 export function AnnotationToolbar({
@@ -43,10 +46,10 @@ export function AnnotationToolbar({
   useEffect(() => {
     const updatePosition = () => {
       const rect = selection.rect;
-      const toolbarWidth = 280;
+      const toolbarWidth = 240;
       let left = rect.left + rect.width / 2 - toolbarWidth / 2;
       left = Math.max(8, Math.min(left, window.innerWidth - toolbarWidth - 8));
-      const top = rect.top - 50 + window.scrollY;
+      const top = rect.top - 60 + window.scrollY;
       setPosition({ top, left });
     };
 
@@ -83,63 +86,86 @@ export function AnnotationToolbar({
   );
 
   return (
-    <div
+    <motion.div
       ref={toolbarRef}
-      className="fixed z-50 bg-background rounded-lg shadow-lg border border-border p-1 flex items-center gap-1 animate-in fade-in slide-in-from-bottom-1 duration-150"
-      style={{ top: position.top, left: position.left, minWidth: '200px' }}
+      initial={{ opacity: 0, scale: 0.8, y: 10 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.8, y: 10 }}
+      transition={{ type: 'spring', damping: 20, stiffness: 300 }}
+      className="fixed z-50 glass-panel rounded-xl shadow-glass-lg border border-border p-1.5 flex items-center gap-1.5"
+      style={{ top: position.top, left: position.left, minWidth: '180px' }}
     >
       {canHighlight && (
-        <div className="relative">
-          <button
-            onClick={() => setShowColorPicker(!showColorPicker)}
-            className="p-2 hover:bg-background-secondary rounded text-sm font-medium transition-colors"
-            title={t('annotation.highlight')}
-          >
-            <span className="inline-block w-4 h-4 rounded bg-yellow-400 mr-1" />
-            {t('annotation.highlight')}
-          </button>
-          {showColorPicker && (
-            <div className="absolute top-full left-0 mt-1 bg-background rounded-lg shadow-lg border border-border p-2 flex gap-1">
-              {HIGHLIGHT_COLORS.map((color) => (
-                <button
-                  key={color.id}
-                  onClick={() => handleColorSelect(color.hex)}
-                  className="w-8 h-8 rounded-full border-2 border-border hover:scale-110 transition-transform"
-                  style={{ backgroundColor: color.hex }}
-                  title={color.id}
-                />
-              ))}
-            </div>
-          )}
+        <div className="relative flex items-center">
+          <Tooltip content={t('annotation.highlight')}>
+            <button
+              onClick={() => setShowColorPicker(!showColorPicker)}
+              className="flex items-center gap-2 px-3 py-1.5 hover:bg-background-secondary rounded-lg text-sm font-medium transition-colors"
+              aria-label={t('annotation.highlight')}
+            >
+              <span className="w-4 h-4 rounded-full bg-yellow-400 ring-1 ring-border" />
+              <span className="hidden md:inline">{t('annotation.highlight')}</span>
+            </button>
+          </Tooltip>
+
+          <AnimatePresence>
+            {showColorPicker && (
+              <motion.div
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                variants={scaleVariants}
+                className="absolute bottom-full left-0 mb-2 glass-panel rounded-xl shadow-glass border border-border p-2 flex gap-2"
+              >
+                {HIGHLIGHT_COLORS.map((color) => (
+                  <Tooltip key={color.id} content={t(color.label)}>
+                    <button
+                      onClick={() => handleColorSelect(color.hex)}
+                      className="w-8 h-8 rounded-full border-2 border-white/50 hover:scale-110 transition-transform shadow-sm"
+                      style={{ backgroundColor: color.hex }}
+                      aria-label={t(color.label)}
+                    />
+                  </Tooltip>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       )}
+
       {canComment && (
-        <button
-          onClick={onComment}
-          className="p-2 hover:bg-background-secondary rounded text-sm font-medium transition-colors"
-          title={t('annotation.comment')}
-        >
-          <svg
-            className="w-4 h-4 inline mr-1"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+        <Tooltip content={t('annotation.comment')}>
+          <button
+            onClick={onComment}
+            className="flex items-center gap-2 px-3 py-1.5 hover:bg-background-secondary rounded-lg text-sm font-medium transition-colors"
+            aria-label={t('annotation.comment')}
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-            />
-          </svg>
-          {t('annotation.comment')}
-        </button>
+            <svg
+              className="w-4 h-4 text-accent"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+              />
+            </svg>
+            <span className="hidden md:inline">{t('annotation.comment')}</span>
+          </button>
+        </Tooltip>
       )}
+
       <div className="h-6 w-px bg-border mx-1" />
-      <button
+
+      <IconButton
         onClick={onClose}
-        className="p-2 hover:bg-background-secondary rounded text-foreground-muted transition-colors"
-        title="Close"
+        variant="ghost"
+        size="sm"
+        aria-label="Close"
+        className="text-foreground-muted hover:text-foreground"
       >
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
@@ -149,8 +175,8 @@ export function AnnotationToolbar({
             d="M6 18L18 6M6 6l12 12"
           />
         </svg>
-      </button>
-    </div>
+      </IconButton>
+    </motion.div>
   );
 }
 

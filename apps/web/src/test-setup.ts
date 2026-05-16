@@ -21,45 +21,57 @@ afterAll(() => {
 
 // Simple framer-motion mock - just render as regular elements without Proxy
 // This avoids memory issues from Proxy-based dynamic component generation
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children, ...props }: { children?: React.ReactNode }) =>
-      React.createElement('div', props, children),
-    span: ({ children, ...props }: { children?: React.ReactNode }) =>
-      React.createElement('span', props, children),
-    button: ({ children, ...props }: { children?: React.ReactNode }) =>
-      React.createElement('button', props, children),
-    input: ({ ...props }) => React.createElement('input', props),
-    header: ({ children, ...props }: { children?: React.ReactNode }) =>
-      React.createElement('header', props, children),
-    section: ({ children, ...props }: { children?: React.ReactNode }) =>
-      React.createElement('section', props, children),
-    nav: ({ children, ...props }: { children?: React.ReactNode }) =>
-      React.createElement('nav', props, children),
-    a: ({ children, ...props }: { children?: React.ReactNode }) =>
-      React.createElement('a', props, children),
-    p: ({ children, ...props }: { children?: React.ReactNode }) =>
-      React.createElement('p', props, children),
-    h1: ({ children, ...props }: { children?: React.ReactNode }) =>
-      React.createElement('h1', props, children),
-    h2: ({ children, ...props }: { children?: React.ReactNode }) =>
-      React.createElement('h2', props, children),
-    h3: ({ children, ...props }: { children?: React.ReactNode }) =>
-      React.createElement('h3', props, children),
-    ul: ({ children, ...props }: { children?: React.ReactNode }) =>
-      React.createElement('ul', props, children),
-    li: ({ children, ...props }: { children?: React.ReactNode }) =>
-      React.createElement('li', props, children),
-    form: ({ children, ...props }: { children?: React.ReactNode }) =>
-      React.createElement('form', props, children),
-    label: ({ children, ...props }: { children?: React.ReactNode }) =>
-      React.createElement('label', props, children),
-    img: ({ ...props }) => React.createElement('img', props),
-    svg: ({ children, ...props }: { children?: React.ReactNode }) =>
-      React.createElement('svg', props, children),
-    path: ({ ...props }) => React.createElement('path', props),
-  },
-  AnimatePresence: ({ children }: { children?: React.ReactNode }) =>
-    React.createElement(React.Fragment, null, children),
-  useReducedMotion: () => false,
-}));
+vi.mock('framer-motion', () => {
+  const filterProps = (props: Record<string, unknown>) => {
+    const filtered: Record<string, unknown> = {};
+    for (const key in props) {
+      if (!['whileHover', 'whileTap', 'initial', 'animate', 'exit', 'transition', 'variants'].includes(key)) {
+        filtered[key] = props[key];
+      }
+    }
+    return filtered;
+  };
+
+  return {
+    motion: {
+      div: ({ children, ...props }: { children?: React.ReactNode }) =>
+        React.createElement('div', filterProps(props as Record<string, unknown>), children),
+      span: ({ children, ...props }: { children?: React.ReactNode }) =>
+        React.createElement('span', filterProps(props as Record<string, unknown>), children),
+      button: ({ children, ...props }: { children?: React.ReactNode }) =>
+        React.createElement('button', filterProps(props as Record<string, unknown>), children),
+      input: ({ ...props }) => React.createElement('input', filterProps(props as Record<string, unknown>)),
+      header: ({ children, ...props }: { children?: React.ReactNode }) =>
+        React.createElement('header', filterProps(props as Record<string, unknown>), children),
+      section: ({ children, ...props }: { children?: React.ReactNode }) =>
+        React.createElement('section', filterProps(props as Record<string, unknown>), children),
+      nav: ({ children, ...props }: { children?: React.ReactNode }) =>
+        React.createElement('nav', filterProps(props as Record<string, unknown>), children),
+      a: ({ children, ...props }: { children?: React.ReactNode }) =>
+        React.createElement('a', filterProps(props as Record<string, unknown>), children),
+      p: ({ children, ...props }: { children?: React.ReactNode }) =>
+        React.createElement('p', filterProps(props as Record<string, unknown>), children),
+      h1: ({ children, ...props }: { children?: React.ReactNode }) =>
+        React.createElement('h1', filterProps(props as Record<string, unknown>), children),
+      h2: ({ children, ...props }: { children?: React.ReactNode }) =>
+        React.createElement('h2', filterProps(props as Record<string, unknown>), children),
+      h3: ({ children, ...props }: { children?: React.ReactNode }) =>
+        React.createElement('h3', filterProps(props as Record<string, unknown>), children),
+      ul: ({ children, ...props }: { children?: React.ReactNode }) =>
+        React.createElement('ul', filterProps(props as Record<string, unknown>), children),
+      li: ({ children, ...props }: { children?: React.ReactNode }) =>
+        React.createElement('li', filterProps(props as Record<string, unknown>), children),
+      form: ({ children, ...props }: { children?: React.ReactNode }) =>
+        React.createElement('form', filterProps(props as Record<string, unknown>), children),
+      label: ({ children, ...props }: { children?: React.ReactNode }) =>
+        React.createElement('label', filterProps(props as Record<string, unknown>), children),
+      img: ({ ...props }) => React.createElement('img', filterProps(props as Record<string, unknown>)),
+      svg: ({ children, ...props }: { children?: React.ReactNode }) =>
+        React.createElement('svg', filterProps(props as Record<string, unknown>), children),
+      path: ({ ...props }) => React.createElement('path', filterProps(props as Record<string, unknown>)),
+    },
+    AnimatePresence: ({ children }: { children?: React.ReactNode }) =>
+      React.createElement(React.Fragment, null, children),
+    useReducedMotion: () => false,
+  };
+});

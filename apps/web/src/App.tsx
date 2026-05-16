@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import { useAuthStore } from './stores/auth';
 import { LoginPage } from './features/auth/LoginPage';
 import { ReaderPage } from './features/reader/ReaderPage';
@@ -6,12 +6,14 @@ import { AdminLoginPage } from './features/admin/AdminLoginPage';
 import { AdminBookResponsesPage } from './features/admin/BooksPage';
 import { AdminGrantResponsesPage } from './features/admin/GrantsPage';
 import { AdminAuditPage } from './features/admin/AuditLogPage';
+import { AppShell } from './components/AppShell';
+import React from 'react';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <LoginPage />;
   }
 
   return <>{children}</>;
@@ -21,7 +23,7 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isAdmin } = useAuthStore();
 
   if (!isAuthenticated || !isAdmin) {
-    return <Navigate to="/admin/login" replace />;
+    return <AdminLoginPage />;
   }
 
   return <>{children}</>;
@@ -30,6 +32,7 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
 function App() {
   return (
     <Routes>
+      <Route path="/" element={<AppShell />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/admin/login" element={<AdminLoginPage />} />
       <Route path="/read/:bookSlug" element={
@@ -57,7 +60,6 @@ function App() {
           <AdminAuditPage />
         </AdminRoute>
       } />
-      <Route path="/" element={<Navigate to="/login" replace />} />
     </Routes>
   );
 }
