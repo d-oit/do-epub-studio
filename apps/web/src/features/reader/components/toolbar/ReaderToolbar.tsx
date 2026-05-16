@@ -1,27 +1,35 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Header, IconButton, Button, Tooltip, scaleVariants } from '../../../../components/ui';
+import {
+  Header,
+  IconButton,
+  Button,
+  Tooltip,
+  scaleVariants,
+} from '../../../../components/ui';
 import { LocaleSwitcher } from '../../../../components/LocaleSwitcher';
-import type { Bookmark, Comment } from '../../../../stores';
+import { useScrollDirection } from '../../../../hooks/useScrollDirection';
+import { useReaderStore } from '../../../../stores/reader';
+import type { Comment, Bookmark } from '../../../../stores/reader';
+import type { TranslationKeys } from '../../../../i18n';
 
 interface ReaderToolbarProps {
-  bookTitle: string | null | undefined;
+  bookTitle: string | null;
   bookSlug: string;
   comments: Comment[];
   bookmarks: Bookmark[];
-  capabilities: { canComment?: boolean; canHighlight?: boolean } | null;
+  capabilities: { canComment?: boolean } | null;
   onToggleToc: () => void;
   onToggleComments: () => void;
   onToggleBookmarks: () => void;
   onToggleSettings: () => void;
   onExportNotes: () => void;
   onLogout: () => void;
-  t: (key: string) => string;
+  t: (key: TranslationKeys) => string;
 }
 
 export function ReaderToolbar({
   bookTitle,
-  bookSlug: _bookSlug,
   comments,
   bookmarks,
   capabilities,
@@ -35,29 +43,32 @@ export function ReaderToolbar({
 }: ReaderToolbarProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-  const openCommentsCount = comments.filter((c) => c.status === 'open').length;
+  const scrollDirection = useScrollDirection();
+  const progressPercent = useReaderStore((s) => s.progress.progressPercent);
 
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
+    const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setIsMenuOpen(false);
       }
-    }
+    };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => { document.removeEventListener('mousedown', handleClickOutside); };
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const openCommentsCount = comments.filter((c) => c.status === 'open').length;
+  const isHeaderVisible = scrollDirection === 'up';
+
   return (
-    <Header className="fixed top-0 left-0 right-0 z-50">
-      <div className="flex items-center justify-between w-full px-2 md:px-4">
-        <div className="flex items-center gap-2 md:gap-4 min-w-0">
-          <Tooltip content={t('reader.tableOfContents')}>
-            <IconButton
-              onClick={onToggleToc}
-              variant="ghost"
-              aria-label={t('reader.tableOfContents')}
-              className="flex items-center"
-            >
+    <Header
+      sticky
+      animate={{ y: isHeaderVisible ? 0 : 'var(--motion-header-offset)' }}
+      transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+    >
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-14">
+          <div className="flex items-center gap-4">
+            <IconButton onClick={onToggleToc} variant="ghost" aria-label={t('reader.tableOfContents')}>
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
@@ -66,41 +77,49 @@ export function ReaderToolbar({
                   d="M4 6h16M4 12h16M4 18h16"
                 />
               </svg>
-              <span className="hidden md:inline ml-2 text-sm">{t('reader.tableOfContents')}</span>
             </IconButton>
-          </Tooltip>
-          <h1 className="font-medium truncate max-w-50 md:max-w-xs text-foreground">
-            {bookTitle || t('reader.untitledBook')}
-          </h1>
-        </div>
+            <div className="flex flex-col">
+              <h1 className="text-sm font-semibold text-foreground truncate max-w-[150px] sm:max-w-[300px]">
+                {bookTitle || t('reader.untitledBook')}
+              </h1>
+              <div className="flex items-center gap-2">
+                <div className="w-24 h-1 bg-border rounded-full overflow-hidden">
+                  <motion.div
+                    className="h-full bg-accent"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${progressPercent}%` }}
+                    transition={{ duration: 0.5 }}
+                  />
+                </div>
+                <span className="text-[10px] text-foreground-muted font-medium">
+                  {Math.round(progressPercent)}%
+                </span>
+              </div>
+            </div>
+          </div>
 
-        <div className="flex items-center gap-1 md:gap-2">
-          {/* Desktop-only primary actions */}
-          <div className="hidden sm:flex items-center gap-1 md:gap-2">
+          <div className="hidden sm:flex items-center gap-1">
             {capabilities?.canComment && (
               <Tooltip content={t('annotation.comment')}>
                 <IconButton
                   onClick={onToggleComments}
                   variant="ghost"
-                  className="relative flex items-center"
                   aria-label={t('annotation.comment')}
+                  className="relative"
                 >
-                  <div className="relative">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                      />
-                    </svg>
-                    {openCommentsCount > 0 && (
-                      <span className="absolute -top-1 -right-1 w-4 h-4 bg-accent text-white text-[10px] rounded-full flex items-center justify-center font-bold">
-                        {openCommentsCount}
-                      </span>
-                    )}
-                  </div>
-                  <span className="hidden md:inline ml-2 text-sm">{t('annotation.comment')}</span>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                    />
+                  </svg>
+                  {openCommentsCount > 0 && (
+                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-accent text-white text-[10px] rounded-full flex items-center justify-center font-bold">
+                      {openCommentsCount}
+                    </span>
+                  )}
                 </IconButton>
               </Tooltip>
             )}
@@ -108,25 +127,22 @@ export function ReaderToolbar({
               <IconButton
                 onClick={onToggleBookmarks}
                 variant="ghost"
-                className="relative flex items-center"
                 aria-label={t('reader.bookmarks')}
+                className="relative"
               >
-                <div className="relative">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
-                    />
-                  </svg>
-                  {bookmarks.length > 0 && (
-                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-accent text-white text-[10px] rounded-full flex items-center justify-center font-bold">
-                      {bookmarks.length}
-                    </span>
-                  )}
-                </div>
-                <span className="hidden md:inline ml-2 text-sm">{t('reader.bookmarks')}</span>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
+                  />
+                </svg>
+                {bookmarks.length > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-accent text-white text-[10px] rounded-full flex items-center justify-center font-bold">
+                    {bookmarks.length}
+                  </span>
+                )}
               </IconButton>
             </Tooltip>
             <Tooltip content={t('reader.exportNotes')}>
@@ -175,7 +191,7 @@ export function ReaderToolbar({
             <IconButton
               onClick={() => { setIsMenuOpen(!isMenuOpen); }}
               variant="ghost"
-              aria-label={t('reader.moreOptions')}
+              aria-label={t('admin.login.title')}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path

@@ -95,3 +95,10 @@
 - **codecov.yml threshold settings**: Per-package codecov targets need `threshold: 2%` to allow small coverage fluctuations. Without threshold, coverage drops of even 0.1% can fail CI.
 - **E2E smoke tests fail on dev without Firefox**: `test:e2e:smoke` runs Playwright against both Chromium and Firefox by default. On dev machines without Firefox installed, this causes pre-commit hook failures. Use `SKIP_SMOKE=true` env var or `git commit --no-verify` to bypass. CI runners install all browsers and pass normally.
 
+
+- **OKLCH Migration**: Migrating to `oklch()` provides perceptually uniform color tokens and P3 gamut support. Use `color-gamut: p3` media query for richer colors to future-proof for 2026 hardware.
+- **View Transitions API**: Enabling `viewTransition: true` in React Router v7 `navigate` options requires the `future` flag `v7_startTransition: true` on `BrowserRouter`. This provides seamless page-to-page transitions.
+- **Panel Mutual Exclusivity**: Managing side panels via a single `activePanel` state (e.g., `'toc' | 'settings' | 'comments' | null`) ensures mutual exclusivity, preventing UI overlap and Z-index conflicts in complex reader interfaces.
+- **Scroll-Aware UI**: Wiring `--motion-header-offset` via a `useScrollDirection` hook allows headers to intelligently hide on scroll-down and show on scroll-up, maximizing reading area.
+- **Motion Test Mocking**: When mocking `framer-motion` in Vitest, filtering out motion-specific props (whileHover, animate, transition, etc.) and mapping them to `data-*` attributes prevents React DOM warnings while enabling robust test assertions.
+- **Modern ErrorBoundaries**: Using glassmorphism, trace ID visibility, and dual recovery paths (local component retry vs. full page reload) provides a premium, developer-friendly error experience.

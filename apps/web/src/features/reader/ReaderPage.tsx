@@ -42,14 +42,9 @@ export function ReaderPage() {
   const logout = useAuthStore((s) => s.logout);
 
   const {
-    showToc,
-    setShowToc,
-    showSettings,
-    setShowSettings,
-    showComments,
-    setShowComments,
-    showBookmarks,
-    setShowBookmarks,
+    activePanel,
+    setActivePanel,
+    togglePanel,
     isCommentMode,
     setIsCommentMode,
     showCommentInput,
@@ -243,7 +238,7 @@ export function ReaderPage() {
   const navigateToChapter = async (href: string) => {
     if (renditionRef.current) {
       await renditionRef.current.display(href);
-      void setShowToc(false);
+      setActivePanel(null);
     }
   };
 
@@ -266,19 +261,19 @@ export function ReaderPage() {
         comments={comments}
         bookmarks={bookmarks}
         capabilities={capabilities}
-        onToggleToc={() => setShowToc(!showToc)}
-        onToggleComments={() => setShowComments(!showComments)}
-        onToggleBookmarks={() => setShowBookmarks(!showBookmarks)}
-        onToggleSettings={() => setShowSettings(!showSettings)}
+        onToggleToc={() => togglePanel('toc')}
+        onToggleComments={() => togglePanel('comments')}
+        onToggleBookmarks={() => togglePanel('bookmarks')}
+        onToggleSettings={() => togglePanel('settings')}
         onExportNotes={() => handleExportNotes(bookTitle)}
         onLogout={() => void handleLogout()}
         t={tFn}
       />
       <AnimatePresence>
-        {showSettings && (
+        {activePanel === 'settings' && (
           <ReaderSettingsPanel
-            isOpen={showSettings}
-            onClose={() => setShowSettings(false)}
+            isOpen={activePanel === 'settings'}
+            onClose={() => setActivePanel(null)}
             theme={readerTheme}
             fontSize={readerFontSize}
             fontFamily={readerFontFamily}
@@ -298,9 +293,9 @@ export function ReaderPage() {
         notAvailableText={t('reader.notAvailable')}
       />
       <TableOfContents
-        isOpen={showToc}
+        isOpen={activePanel === 'toc'}
         toc={toc}
-        onClose={() => void setShowToc(false)}
+        onClose={() => setActivePanel(null)}
         onNavigate={(href) => void navigateToChapter(href)}
         t={tFn}
       />
@@ -343,9 +338,9 @@ export function ReaderPage() {
         submitLabel={t('annotation.comment')}
       />
       <BookmarksPanel
-        isOpen={showBookmarks}
+        isOpen={activePanel === 'bookmarks'}
         bookmarks={bookmarks}
-        onClose={() => setShowBookmarks(false)}
+        onClose={() => setActivePanel(null)}
         onAddBookmark={() => void handleCreateBookmark(currentChapterRef, toc)}
         onDeleteBookmark={(id) => handleDeleteBookmark(id)}
         onNavigate={(bookmark) => {
@@ -354,8 +349,8 @@ export function ReaderPage() {
         }}
       />
       <CommentsPanel
-        isOpen={showComments}
-        onClose={() => setShowComments(false)}
+        isOpen={activePanel === 'comments'}
+        onClose={() => setActivePanel(null)}
         comments={comments}
         highlights={highlights}
         currentChapter={currentChapter}

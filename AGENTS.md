@@ -66,6 +66,9 @@ readonly MAX_PR_TITLE_LENGTH=72
 - **No `any` unless justified and isolated.**
 - **Use Zod for boundary validation, Zustand for state, Tailwind for styling.**
 - **Use Vitest + Playwright with `pool: 'forks'` for test isolation.**
+- **Use OKLCH for color tokens** to ensure perceptually uniform lightness and wide-gamut P3 support.
+- **Enable View Transitions** for all page-to-page navigations.
+- **Enforce mutual exclusivity** for reader side-panels (TOC, Settings, etc.).
 - **Document coding workflow changes via `learn` skill.**
 
 ---

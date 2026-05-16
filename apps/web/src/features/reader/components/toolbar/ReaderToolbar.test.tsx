@@ -1,0 +1,89 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen, act } from '@testing-library/react';
+import { ReaderToolbar } from './ReaderToolbar';
+import { useReaderStore } from '../../../../stores/reader';
+
+// Mock translation
+vi.mock('../../../../hooks/useTranslation', () => ({
+  useTranslation: () => ({
+    t: (key: string) => {
+      const parts = key.split('.');
+      return parts[parts.length - 1].charAt(0).toUpperCase() + parts[parts.length - 1].slice(1);
+    },
+  }),
+}));
+
+// Mock scroll direction hook
+const mockUseScrollDirection = vi.fn(() => 'up');
+vi.mock('../../../../hooks/useScrollDirection', () => ({
+  useScrollDirection: () => mockUseScrollDirection(),
+}));
+
+describe('ReaderToolbar', () => {
+  const mockProps = {
+    bookTitle: 'Test Book',
+    bookSlug: 'test-book',
+    comments: [],
+    bookmarks: [],
+    capabilities: { canComment: true },
+    onToggleToc: vi.fn(),
+    onToggleComments: vi.fn(),
+    onToggleBookmarks: vi.fn(),
+    onToggleSettings: vi.fn(),
+    onExportNotes: vi.fn(),
+    onLogout: vi.fn(),
+    t: (key: string) => {
+       if (key === 'reader.tableOfContents') return 'Contents';
+       if (key === 'reader.untitledBook') return 'Untitled Book';
+       if (key === 'annotation.comment') return 'Comment';
+       if (key === 'reader.bookmarks') return 'Bookmarks';
+       if (key === 'reader.exportNotes') return 'Export Notes';
+       if (key === 'reader.settings') return 'Settings';
+       if (key === 'reader.signOut') return 'Sign Out';
+       return key;
+    },
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    useReaderStore.setState({
+      progress: { locator: null, progressPercent: 45, updatedAt: null }
+    });
+  });
+
+  it('renders book title and progress', () => {
+    render(<ReaderToolbar {...mockProps} />);
+    expect(screen.getByText('Test Book')).toBeInTheDocument();
+    expect(screen.getByText('45%')).toBeInTheDocument();
+  });
+
+  it('calls toggle handlers when buttons are clicked', async () => {
+    render(<ReaderToolbar {...mockProps} />);
+
+    const tocButton = screen.getByLabelText('Contents');
+    tocButton.click();
+    expect(mockProps.onToggleToc).toHaveBeenCalled();
+  });
+
+  it('verifies reading progress indicator updates', async () => {
+    render(<ReaderToolbar {...mockProps} />);
+    expect(screen.getByText('45%')).toBeInTheDocument();
+
+    await act(async () => {
+      useReaderStore.setState({
+        progress: { locator: null, progressPercent: 80, updatedAt: null }
+      });
+    });
+
+    expect(screen.getByText('80%')).toBeInTheDocument();
+  });
+
+  it('hides header when scrolling down', async () => {
+    mockUseScrollDirection.mockReturnValue('down');
+    render(<ReaderToolbar {...mockProps} />);
+
+    const header = screen.getByRole('banner');
+    expect(header).toHaveAttribute('data-animate');
+    expect(header.getAttribute('data-animate')).toContain('var(--motion-header-offset)');
+  });
+});

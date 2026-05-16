@@ -1,15 +1,12 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import type { SelectionData } from '../components/annotations';
 
+export type ReaderPanel = 'toc' | 'settings' | 'comments' | 'bookmarks' | null;
+
 interface UseReaderUIReturn {
-  showToc: boolean;
-  setShowToc: (show: boolean) => void;
-  showSettings: boolean;
-  setShowSettings: (show: boolean) => void;
-  showComments: boolean;
-  setShowComments: (show: boolean) => void;
-  showBookmarks: boolean;
-  setShowBookmarks: (show: boolean) => void;
+  activePanel: ReaderPanel;
+  setActivePanel: (panel: ReaderPanel) => void;
+  togglePanel: (panel: ReaderPanel) => void;
   isCommentMode: boolean;
   setIsCommentMode: (mode: boolean) => void;
   showCommentInput: boolean;
@@ -21,24 +18,20 @@ interface UseReaderUIReturn {
 }
 
 export function useReaderUI(): UseReaderUIReturn {
-  const [showToc, setShowToc] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
-  const [showComments, setShowComments] = useState(false);
-  const [showBookmarks, setShowBookmarks] = useState(false);
+  const [activePanel, setActivePanel] = useState<ReaderPanel>(null);
   const [isCommentMode, setIsCommentMode] = useState(false);
   const [showCommentInput, setShowCommentInput] = useState(false);
   const [selection, setSelection] = useState<SelectionData | null>(null);
   const [revokedBooks, setRevokedBooks] = useState<Set<string>>(new Set());
 
+  const togglePanel = useCallback((panel: ReaderPanel) => {
+    setActivePanel((prev) => (prev === panel ? null : panel));
+  }, []);
+
   return {
-    showToc,
-    setShowToc,
-    showSettings,
-    setShowSettings,
-    showComments,
-    setShowComments,
-    showBookmarks,
-    setShowBookmarks,
+    activePanel,
+    setActivePanel,
+    togglePanel,
     isCommentMode,
     setIsCommentMode,
     showCommentInput,
