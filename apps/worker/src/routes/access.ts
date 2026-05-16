@@ -5,10 +5,11 @@ import { logAudit } from '../audit';
 import { jsonResponse } from '../lib/responses';
 import { validateRequestBody } from '../lib/validation';
 import { AccessRequestSchema } from '@do-epub-studio/shared';
+import { checkRateLimitDO } from '../lib/rate-limit-client';
 
 export async function handleAccessRequest(env: Env, raw: unknown): Promise<Response> {
   const validation = validateRequestBody(AccessRequestSchema, raw);
-  
+
   if (!validation.ok) {
     return jsonResponse(
       { 
@@ -24,6 +25,22 @@ export async function handleAccessRequest(env: Env, raw: unknown): Promise<Respo
   }
 
   const { bookSlug, email, password } = validation.data;
+
+  // Rate limit by email to prevent brute-force attacks (max 5 requests per minute)
+  const rateLimit = await checkRateLimitDO(env, 'auth_access', email.toLowerCase(), {
+    maxRequests: 5,
+    windowMs: 60_000,
+  });
+
+  if (!rateLimit.allowed) {
+    return jsonResponse(
+      {
+        ok: false,
+        error: { code: 'TOO_MANY_REQUESTS', message: 'Too many login attempts. Please try again later.' },
+      },
+      429,
+    );
+  }
 
   const result = await validateGrant(env, bookSlug, email.toLowerCase(), password);
 

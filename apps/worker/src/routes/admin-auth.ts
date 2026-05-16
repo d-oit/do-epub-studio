@@ -2,6 +2,7 @@ import type { Env } from '../lib/env';
 import { createAdminSession, revokeAdminSession } from '../auth/admin-middleware';
 import { jsonResponse } from '../lib/responses';
 import { logAudit } from '../audit';
+import { checkRateLimitDO } from '../lib/rate-limit-client';
 
 export async function handleAdminLogin(
   env: Env,
@@ -15,6 +16,22 @@ export async function handleAdminLogin(
       return jsonResponse(
         { ok: false, error: { code: 'MISSING_FIELDS', message: 'Email and password are required' } },
         400,
+      );
+    }
+
+    // Rate limit by email to prevent brute-force attacks (max 5 requests per minute)
+    const rateLimit = await checkRateLimitDO(env, 'auth_admin', body.email.toLowerCase(), {
+      maxRequests: 5,
+      windowMs: 60_000,
+    });
+
+    if (!rateLimit.allowed) {
+      return jsonResponse(
+        {
+          ok: false,
+          error: { code: 'TOO_MANY_REQUESTS', message: 'Too many login attempts. Please try again later.' },
+        },
+        429,
       );
     }
 

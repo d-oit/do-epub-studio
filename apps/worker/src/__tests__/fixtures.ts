@@ -116,7 +116,15 @@ export function makeEnv(): Env {
     SESSION_SIGNING_SECRET: process.env.TEST_SESSION_SIGNING_SECRET || 'test-secret',
     INVITE_TOKEN_SECRET: process.env.TEST_INVITE_TOKEN_SECRET || 'test-invite-secret',
     APP_BASE_URL: 'https://test.example.com',
-    RATE_LIMITER: {} as DurableObjectNamespace,
+    RATE_LIMITER: {
+      idFromName: vi.fn().mockReturnValue({ toString: () => 'mock-id' }),
+      get: vi.fn().mockReturnValue({
+        fetch: vi.fn().mockResolvedValue({
+          ok: true,
+          json: () => Promise.resolve({ allowed: true, remaining: 99, resetAt: Date.now() + 60000 }),
+        }),
+      }),
+    } as unknown as DurableObjectNamespace,
   };
 }
 
