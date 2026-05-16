@@ -16,7 +16,7 @@ export function useScrollDirection() {
     };
 
     window.addEventListener('scroll', updateScrollDirection);
-    return () => window.removeEventListener('scroll', updateScrollDirection);
+    return () => { window.removeEventListener('scroll', updateScrollDirection); };
   }, [scrollDirection]);
 
   return scrollDirection;
