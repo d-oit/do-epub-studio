@@ -191,7 +191,7 @@ export function ReaderToolbar({
             <IconButton
               onClick={() => { setIsMenuOpen(!isMenuOpen); }}
               variant="ghost"
-              aria-label={t('reader.moreOptions')}
+              aria-label={t('admin.login.title')}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path

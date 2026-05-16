@@ -6,9 +6,22 @@ import { cleanup } from '@testing-library/react';
 
 expect.extend(matchers);
 
+// Mock matchMedia
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: vi.fn().mockImplementation((query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: vi.fn(), // deprecated
+    removeListener: vi.fn(), // deprecated
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  })),
+});
+
 // Clean up DOM after each test to prevent memory leaks
-// Note: React concurrent state pollution between test files is a known vitest issue
-// that cannot be fixed via cleanup - skip affected tests instead
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
@@ -20,13 +33,15 @@ afterAll(() => {
 });
 
 // Simple framer-motion mock - just render as regular elements without Proxy
-// This avoids memory issues from Proxy-based dynamic component generation
 vi.mock('framer-motion', () => {
   const filterProps = (props: Record<string, unknown>) => {
     const filtered: Record<string, unknown> = {};
     for (const key in props) {
-      if (!['whileHover', 'whileTap', 'initial', 'animate', 'exit', 'transition', 'variants'].includes(key)) {
+      if (!['whileHover', 'whileTap', 'initial', 'animate', 'exit', 'transition', 'variants', 'layout', 'layoutId'].includes(key)) {
         filtered[key] = props[key];
+      } else {
+        // Keep animate as a searchable string for tests
+        filtered[`data-${key.toLowerCase()}`] = JSON.stringify(props[key]);
       }
     }
     return filtered;
