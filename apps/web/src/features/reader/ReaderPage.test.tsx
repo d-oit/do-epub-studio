@@ -1,208 +1,185 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, cleanup } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen, act } from '@testing-library/react';
 import { ReaderPage } from './ReaderPage';
-import type { Theme } from '../../stores';
+import { BrowserRouter } from 'react-router-dom';
+import { useAuthStore, useReaderStore, usePreferencesStore } from '../../stores';
 
-const mockNavigate = vi.fn();
-vi.mock('react-router-dom', async () => {
-  const actual = await vi.importActual('react-router-dom');
-  return { ...actual, useNavigate: () => mockNavigate, useParams: () => ({ bookSlug: 'test-book' }) };
+// Mock dependencies
+vi.mock('../../lib/api', () => ({
+  apiRequest: vi.fn(() => Promise.resolve({ url: 'mock-url' })),
+}));
+
+vi.mock('../../lib/api/annotations', () => ({
+  fetchHighlights: vi.fn(() => Promise.resolve([])),
+  fetchComments: vi.fn(() => Promise.resolve([])),
+}));
+
+// Mock epub-js
+vi.mock('@intity/epub-js', () => ({
+  Rendition: vi.fn(),
+}));
+
+describe('ReaderPage Panels', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    useAuthStore.setState({
+      sessionToken: 'test-token',
+      bookId: 'test-book-id',
+      bookSlug: 'test-book',
+      isAuthenticated: true,
+      capabilities: { canRead: true, canComment: true, canHighlight: true } as any,
+    });
+    useReaderStore.setState({
+      highlights: [],
+      comments: [],
+      bookmarks: [],
+      error: null,
+      isLoading: false,
+    });
+  });
+
+  it('enforces panel mutual exclusivity', async () => {
+    await act(async () => {
+      render(
+        <BrowserRouter>
+          <ReaderPage />
+        </BrowserRouter>,
+      );
+    });
+
+    // Use actual labels that appear in DOM
+    const tocButton = screen.getByLabelText('Contents');
+    await act(async () => {
+      tocButton.click();
+    });
+
+    expect(screen.getByText('Contents')).toBeInTheDocument();
+
+    const bookmarksButton = screen.getByLabelText('Bookmarks');
+    await act(async () => {
+      bookmarksButton.click();
+    });
+
+    // TOC text should disappear
+    expect(screen.queryByText('Contents')).not.toBeInTheDocument();
+    // Bookmarks heading should appear
+    expect(screen.getByText('Bookmarks')).toBeInTheDocument();
+  });
 });
-
-vi.mock('../../hooks/useTranslation', () => ({
-  useTranslation: () => ({ t: (key: string) => key, locale: 'en' }),
-}));
-
-vi.mock('../../lib/api', () => ({ apiRequest: vi.fn().mockRejectedValue(new Error('mock')) }));
-vi.mock('../../lib/api/annotations', () => ({ fetchHighlights: vi.fn().mockResolvedValue([]), fetchComments: vi.fn().mockResolvedValue([]) }));
-
-vi.mock('../../lib/offline', () => ({
-  saveProgress: vi.fn(),
-  queueSync: vi.fn(),
-  setupOnlineListener: vi.fn(() => vi.fn()),
-  generateMutationId: vi.fn(() => 'mock-mutation-id'),
-}));
-vi.mock('../../lib/offline/permissions', () => ({ setupZombieDetection: vi.fn(() => vi.fn()) }));
-
-const mockRendition = {
-  themes: { registerRules: vi.fn(), select: vi.fn() },
-  display: vi.fn(),
-  on: vi.fn(),
-  off: vi.fn(),
-  annotations: {
-    append: vi.fn(),
-    remove: vi.fn(),
-    [Symbol.iterator]: function* () {
-      yield* [].entries();
-    },
-  },
-  destroy: vi.fn(),
-  location: null,
-};
-const mockBook = {
-  ready: Promise.resolve(),
-  loaded: { navigation: Promise.resolve({ toc: [] }) },
-  renderTo: vi.fn(() => mockRendition),
-  destroy: vi.fn(),
-};
-vi.mock('@intity/epub-js', () => ({ default: vi.fn(() => mockBook) }));
-
-const mockReaderStore = {
-  setProgress: vi.fn(),
-  setError: vi.fn(),
-  error: null,
-  setOffline: vi.fn(),
-  setPermissionStatus: vi.fn(),
-  highlights: [],
-  setHighlights: vi.fn(),
-  comments: [],
-  setComments: vi.fn(),
-  bookmarks: [],
-  setCurrentChapter: vi.fn(),
-  currentChapter: null,
-};
-
-const mockPreferencesState = {
-  reader: { theme: 'light' as Theme, fontSize: 'medium' as const, fontFamily: 'serif' as const, lineHeight: 2, pageWidth: 'normal' as const },
-  setTheme: vi.fn(),
-  setFontFamily: vi.fn(),
-  setFontSize: vi.fn(),
-};
-
-const mockAuthState = {
-  sessionToken: 'mock-token',
-  bookId: 'mock-book-id',
-  bookTitle: 'Test Book',
-  capabilities: { canRead: true, canComment: true, canHighlight: true, canBookmark: true, canDownloadOffline: false, canExportNotes: false, canManageAccess: false },
-  logout: vi.fn(),
-};
-
-const mockReaderUI = {
-  showToc: false, setShowToc: vi.fn(),
-  showSettings: false, setShowSettings: vi.fn(),
-  showComments: false, setShowComments: vi.fn(),
-  showBookmarks: false, setShowBookmarks: vi.fn(),
-  isCommentMode: false, setIsCommentMode: vi.fn(),
-  showCommentInput: false, setShowCommentInput: vi.fn(),
-  selection: null, setSelection: vi.fn(),
-  revokedBooks: new Set(), setRevokedBooks: vi.fn(),
-};
-
-vi.mock('../../stores', async () => {
-  const actual = await vi.importActual('../../stores');
-  return {
-    ...actual,
-    useAuthStore: (selector: ((s: typeof mockAuthState) => unknown) | undefined) =>
-      selector ? selector(mockAuthState) : mockAuthState,
-    useReaderStore: (selector: ((s: typeof mockReaderStore) => unknown) | undefined) =>
-      selector ? selector(mockReaderStore) : mockReaderStore,
-    usePreferencesStore: (selector: ((s: typeof mockPreferencesState) => unknown) | undefined) =>
-      selector ? selector(mockPreferencesState) : mockPreferencesState,
-  };
-});
-
-vi.mock('./hooks', () => ({
-  useReaderUI: () => mockReaderUI,
-  useReaderEpub: () => ({
-    renditionRef: { current: null },
-    currentChapterRef: { current: null },
-    toc: [],
-    get resolvedTheme() {
-      const theme = mockPreferencesState.reader.theme;
-      if (theme === 'system') {
-        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-      }
-      return theme;
-    },
-  }),
-  useAnnotationHandlers: () => ({
-    handleCreateHighlight: vi.fn(), handleCreateComment: vi.fn(), handleResolveComment: vi.fn(),
-    handleReplyToComment: vi.fn(), handleEditComment: vi.fn(), handleDeleteComment: vi.fn(),
-    handleEditHighlight: vi.fn(), handleDeleteHighlight: vi.fn(),
-  }),
-  useBookmarkHandlers: () => ({ handleCreateBookmark: vi.fn(), handleDeleteBookmark: vi.fn() }),
-  useExportNotes: () => ({ handleExportNotes: vi.fn() }),
-}));
-
-vi.mock('./annotationRendering', () => ({
-  renderHighlightsOnRendition: vi.fn(),
-  renderCommentMarkersOnRendition: vi.fn(),
-}));
-
-vi.mock('./components', () => ({
-  ReaderToolbar: () => <div data-testid="reader-toolbar" />,
-  ReaderSettingsPanel: () => <div data-testid="reader-settings" />,
-  TableOfContents: () => <div data-testid="reader-toc" />,
-  BookmarksPanel: () => <div data-testid="reader-bookmarks" />,
-  ReaderViewer: () => <div data-testid="reader-viewer" />,
-  CommentInputModal: () => null,
-}));
-
-vi.mock('./components/annotations', () => ({
-  AnnotationToolbar: () => null,
-  CommentsPanel: () => <div data-testid="comments-panel" />,
-  extractSelectionData: vi.fn(() => null),
-}));
-
-function getRootTheme(): string | null {
-  const toolbar = screen.getByTestId('reader-toolbar');
-  const root = toolbar.closest('div[data-theme]');
-  return root?.getAttribute('data-theme') ?? null;
-}
 
 describe('ReaderPage theme', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    Object.defineProperty(window, 'matchMedia', {
-      writable: true,
-      value: vi.fn().mockImplementation((query: string) => ({
-        matches: false,
-        media: query,
-        onchange: null,
-        addEventListener: vi.fn(),
-        removeEventListener: vi.fn(),
-      })),
+    useAuthStore.setState({
+      sessionToken: 'test-token',
+      bookId: 'test-book-id',
+      bookSlug: 'test-book',
+      isAuthenticated: true,
     });
   });
 
-  afterEach(() => {
-    cleanup();
+  it('sets data-theme to light when theme is light', async () => {
+    usePreferencesStore.setState({ reader: { ...usePreferencesStore.getState().reader, theme: 'light' } });
+
+    let container: HTMLElement;
+    await act(async () => {
+      const result = render(
+        <BrowserRouter>
+          <ReaderPage />
+        </BrowserRouter>,
+      );
+      container = result.container;
+    });
+
+    const root = container!.firstChild as HTMLElement;
+    expect(root).toHaveAttribute('data-theme', 'light');
   });
 
-  it('sets data-theme to light when theme is light', () => {
-    mockPreferencesState.reader.theme = 'light';
-    render(<ReaderPage />);
-    expect(getRootTheme()).toBe('light');
+  it('sets data-theme to dark when theme is dark', async () => {
+    usePreferencesStore.setState({ reader: { ...usePreferencesStore.getState().reader, theme: 'dark' } });
+
+    let container: HTMLElement;
+    await act(async () => {
+      const result = render(
+        <BrowserRouter>
+          <ReaderPage />
+        </BrowserRouter>,
+      );
+      container = result.container;
+    });
+
+    const root = container!.firstChild as HTMLElement;
+    expect(root).toHaveAttribute('data-theme', 'dark');
   });
 
-  it('sets data-theme to dark when theme is dark', () => {
-    mockPreferencesState.reader.theme = 'dark';
-    render(<ReaderPage />);
-    expect(getRootTheme()).toBe('dark');
+  it('sets data-theme to sepia when theme is sepia', async () => {
+    usePreferencesStore.setState({ reader: { ...usePreferencesStore.getState().reader, theme: 'sepia' } });
+
+    let container: HTMLElement;
+    await act(async () => {
+      const result = render(
+        <BrowserRouter>
+          <ReaderPage />
+        </BrowserRouter>,
+      );
+      container = result.container;
+    });
+
+    const root = container!.firstChild as HTMLElement;
+    expect(root).toHaveAttribute('data-theme', 'sepia');
   });
 
-  it('sets data-theme to sepia when theme is sepia', () => {
-    mockPreferencesState.reader.theme = 'sepia';
-    render(<ReaderPage />);
-    expect(getRootTheme()).toBe('sepia');
-  });
-
-  it('resolves system theme to light when OS prefers light', () => {
-    mockPreferencesState.reader.theme = 'system';
-    render(<ReaderPage />);
-    expect(getRootTheme()).toBe('light');
-  });
-
-  it('resolves system theme to dark when OS prefers dark', () => {
-    mockPreferencesState.reader.theme = 'system';
-    window.matchMedia = vi.fn().mockImplementation((query: string) => ({
-      matches: query === '(prefers-color-scheme: dark)',
-      media: query,
+  it('resolves system theme to light when OS prefers light', async () => {
+    usePreferencesStore.setState({ reader: { ...usePreferencesStore.getState().reader, theme: 'system' } });
+    (window.matchMedia as any).mockReturnValue({
+      matches: false, // Not dark
+      media: '',
       onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
-    }));
-    render(<ReaderPage />);
-    expect(getRootTheme()).toBe('dark');
+      dispatchEvent: vi.fn(),
+    });
+
+    let container: HTMLElement;
+    await act(async () => {
+      const result = render(
+        <BrowserRouter>
+          <ReaderPage />
+        </BrowserRouter>,
+      );
+      container = result.container;
+    });
+
+    const root = container!.firstChild as HTMLElement;
+    expect(root).toHaveAttribute('data-theme', 'light');
+  });
+
+  it('resolves system theme to dark when OS prefers dark', async () => {
+    usePreferencesStore.setState({ reader: { ...usePreferencesStore.getState().reader, theme: 'system' } });
+    (window.matchMedia as any).mockReturnValue({
+      matches: true, // Is dark
+      media: '',
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    });
+
+    let container: HTMLElement;
+    await act(async () => {
+      const result = render(
+        <BrowserRouter>
+          <ReaderPage />
+        </BrowserRouter>,
+      );
+      container = result.container;
+    });
+
+    const root = container!.firstChild as HTMLElement;
+    expect(root).toHaveAttribute('data-theme', 'dark');
   });
 });
