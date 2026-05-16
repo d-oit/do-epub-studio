@@ -3,7 +3,7 @@ import { checkRateLimitDO } from '../lib/rate-limit-client';
 import type { Env } from '../lib/env';
 
 describe('checkRateLimitDO', () => {
-  const makeMockDO = (response: any) => ({
+  const makeMockDO = (response: Record<string, unknown>) => ({
     fetch: vi.fn().mockResolvedValue({
       ok: true,
       json: () => Promise.resolve(response),
