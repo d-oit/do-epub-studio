@@ -25,7 +25,7 @@ export async function checkRateLimitDO(
     const id = env.RATE_LIMITER.idFromName(namespace);
     const obj = env.RATE_LIMITER.get(id);
 
-    const url = new URL(`http://rate-limiter/check/${namespace}/${encodeURIComponent(key)}`);
+    const url = new URL(`http://rate-limiter/check/${encodeURIComponent(namespace)}/${encodeURIComponent(key)}`);
     if (config) {
       url.searchParams.set('maxRequests', String(config.maxRequests));
       url.searchParams.set('windowMs', String(config.windowMs));
