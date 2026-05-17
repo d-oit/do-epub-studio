@@ -28,9 +28,9 @@ if ! "$REPO_ROOT/scripts/validate-git-hooks.sh" 2>&1; then
 fi
 echo ""
 
-# --- Validate GitHub Actions SHAs ---
-printf '%sValidating GitHub Actions SHAs...%s\n' "${BLUE}" "${NC}"
-if ! "$REPO_ROOT/scripts/validate-github-actions-shas.sh"; then
+# --- Validate GitHub Actions workflows ---
+printf '%sValidating GitHub Actions workflows...%s\n' "${BLUE}" "${NC}"
+if ! "$REPO_ROOT/scripts/validate-workflows.sh"; then
     FAILED=1
 fi
 echo ""

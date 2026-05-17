@@ -56,6 +56,9 @@ importers:
       globals:
         specifier: ^17.6.0
         version: 17.6.0
+      js-yaml:
+        specifier: ^4.1.1
+        version: 4.1.1
       jsdom:
         specifier: ^29.1.1
         version: 29.1.1
@@ -2272,6 +2275,9 @@ packages:
   argon2-wasm-edge@1.0.23:
     resolution: {integrity: sha512-9OGfPkqC9Oe1sP50HNTemwbk/x+CJF7ci74jKsFXPIt7F0aJmSySx5JCOZ4+Zj4VmXIDaXr8y1p5FKFR633YVA==}
 
+  argparse@2.0.1:
+    resolution: {integrity: sha512-8+9WqebbFzpX9OR+Wa6O29asIogeRMzcGtAINdpMHHyAg10f05aSFVBbcEqGf/PXw1EjAZ+q2/bEBg3DvurK3Q==}
+
   aria-query@5.3.0:
     resolution: {integrity: sha512-b0P0sZPKtyu8HkeRAfCq0IfURZK+SuwMjY1UXGBU27wpAiTwQAIlq56IbIO+ytk/JjS1fMR14ee5WBBfKi5J6A==}
 
@@ -3271,6 +3277,10 @@ packages:
 
   js-tokens@4.0.0:
     resolution: {integrity: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==}
+
+  js-yaml@4.1.1:
+    resolution: {integrity: sha512-qQKT4zQxXl8lLwBtHMWwaTcGfFOZviOJet3Oy/xmGk2gZH677CJM9EvtfdSkgWcATZhj/55JZ0rmy3myCT5lsA==}
+    hasBin: true
 
   jsdom@29.1.1:
     resolution: {integrity: sha512-ECi4Fi2f7BdJtUKTflYRTiaMxIB0O6zfR1fX0GXpUrf6flp8QIYn1UT20YQqdSOfk2dfkCwS8LAFoJDEppNK5Q==}
@@ -6231,7 +6241,7 @@ snapshots:
       obug: 2.1.1
       std-env: 4.1.0
       tinyrainbow: 3.1.0
-      vitest: 4.1.5(@types/node@25.6.0)(@vitest/coverage-v8@4.1.5)(jsdom@29.1.1)(vite@8.0.12(@types/node@25.6.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.47.1))
+      vitest: 4.1.5(@types/node@22.19.18)(@vitest/coverage-v8@4.1.5)(jsdom@29.1.1)(vite@8.0.12(@types/node@22.19.18)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.47.1))
     optional: true
 
   '@vitest/coverage-v8@4.1.6(vitest@4.1.5)':
@@ -6336,6 +6346,8 @@ snapshots:
   ansi-styles@6.2.3: {}
 
   argon2-wasm-edge@1.0.23: {}
+
+  argparse@2.0.1: {}
 
   aria-query@5.3.0:
     dependencies:
@@ -7499,6 +7511,10 @@ snapshots:
   js-tokens@10.0.0: {}
 
   js-tokens@4.0.0: {}
+
+  js-yaml@4.1.1:
+    dependencies:
+      argparse: 2.0.1
 
   jsdom@29.1.1:
     dependencies:
