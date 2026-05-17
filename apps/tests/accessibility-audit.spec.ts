@@ -84,7 +84,7 @@ test.describe('Accessibility audit (axe-core)', () => {
     await page.getByLabel('Email Address').fill(READER_USER.email);
     await page.getByLabel('Password (if required)').fill(READER_USER.password);
     await page.getByRole('button', { name: 'Sign In' }).click();
-    await expect(page).toHaveURL(new RegExp(`/read/${READER_USER.bookSlug}$`));
+    await expect(page).toHaveURL(`/read/${READER_USER.bookSlug}`);
 
     const accessibilityScanResults = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
