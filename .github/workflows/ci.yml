@@ -55,10 +55,9 @@ jobs:
       - uses: ./.github/actions/setup-pnpm
       - name: Check CodeQL alerts
         run: |
-          echo "::notice::Would block if CodeQL alerts open (GH API requires permissions)"
-          # TODO: Uncomment when GITHUB_TOKEN has security-events: read
-          # count=$(gh api repos/${{ github.repository }}/code-scanning/alerts?state=open --jq 'length' 2>/dev/null || echo "0")
-          # [ "$count" = "0" ] || { echo "::error::Open CodeQL alerts: $count"; exit 1; }
+          count=$(gh api repos/${{ github.repository }}/code-scanning/alerts?state=open --jq 'length' 2>/dev/null || echo "0")
+          echo "::notice::Open CodeQL alerts: $count"
+          [ "$count" = "0" ] || { echo "::error::Open CodeQL alerts: $count"; exit 1; }
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
