@@ -41,14 +41,14 @@ export function extractTextExcerpt(text: string, maxLength = 100): string {
 export function cfiToRange(cfi: string): { spineIndex: number; path: string; charOffset: number } | null {
   if (cfi.length > 1024) return null;
   const spineMatch = cfi.match(/epubcfi\(\/(\d+)/);
-  if (!spineMatch) return null;
-  const spineIndex = parseInt(spineMatch[1]!, 10);
+  if (!spineMatch || spineMatch[1] === undefined) return null;
+  const spineIndex = parseInt(spineMatch[1], 10);
 
-  const pathPart = cfi.includes('[') ? cfi.match(/\[([^\]]{0,256})\]/)?.[1] : '';
+  const pathPart = cfi.includes('[') ? cfi.match(/\[([^\]]{0,256})\]/)?.[1] : undefined;
   const suffix = cfi.includes(':') ? cfi.match(/:(\d+)\)/) : null;
-  const charOffset = suffix ? parseInt(suffix[1]!, 10) : 0;
+  const charOffset = suffix?.[1] !== undefined ? parseInt(suffix[1], 10) : 0;
 
-  return { spineIndex, path: pathPart ? `[${pathPart}]` : '', charOffset };
+  return { spineIndex, path: pathPart !== undefined ? `[${pathPart}]` : '', charOffset };
 }
 
 export function rangeToCfi(spineIndex: number, path: string, charOffset = 0): string {
