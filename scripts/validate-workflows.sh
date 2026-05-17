@@ -47,7 +47,8 @@ for file in "${WORKFLOW_FILES[@]}"; do
             FILE_FAILED=1
         fi
     elif [ "$YAML_VALIDATOR" == "node-js-yaml" ]; then
-        if ! node -e "const yaml = require('js-yaml'); const fs = require('fs'); try { yaml.load(fs.readFileSync('$file', 'utf8')); } catch (e) { console.error(e.message); process.exit(1); }" ; then
+    elif [ "$YAML_VALIDATOR" == "node-js-yaml" ]; then
+        if ! FILE="$file" node -e "const yaml = require('js-yaml'); const fs = require('fs'); try { yaml.load(fs.readFileSync(process.env.FILE, 'utf8')); } catch (e) { console.error(e.message); process.exit(1); }" ; then
             printf '%s  ✗ Invalid YAML syntax (js-yaml): %s%s\n' "${RED}" "$file" "${NC}"
             FILE_FAILED=1
         fi
