@@ -106,8 +106,8 @@ export function CommentsPanel({
       className="fixed inset-y-0 right-0 w-80 bg-background border-l border-border z-40 flex flex-col shadow-xl"
     >
       <div className="p-4 border-b border-border flex justify-between items-center">
-        <h2 id="comments-title" className="font-semibold">{t('annotation.commentsTitle')}</h2>
-        <button type="button" onClick={onClose} className="p-1 hover:bg-background-secondary rounded">
+        <h2 id="comments-title" className="font-semibold">{t('annotation.comment')}s</h2>
+        <button type="button" onClick={onClose} className="p-1 hover:bg-background-secondary rounded" aria-label={t('reader.settings.close') as string}>
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
               strokeLinecap="round"

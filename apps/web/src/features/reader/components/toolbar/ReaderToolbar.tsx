@@ -68,7 +68,7 @@ export function ReaderToolbar({
       sticky
       animate={{ y: isHeaderVisible ? 0 : 'var(--motion-header-offset)' }}
       transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-      aria-hidden={!isHeaderVisible} inert={!isHeaderVisible ? "" : undefined}
+      aria-hidden={!isHeaderVisible ? undefined : true}
       className={isHeaderVisible ? '' : 'pointer-events-none'}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
