@@ -1,5 +1,6 @@
 import { useRef, useEffect } from 'react';
 import { useFocusTrap } from '@do-epub-studio/ui';
+import { TranslationKeys } from '../../../../i18n';
 
 interface TocItem {
   label: string;
@@ -12,8 +13,7 @@ interface TableOfContentsProps {
   toc: TocItem[];
   onClose: () => void;
   onNavigate: (href: string) => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  t: (key: string) => any;
+  t: (key: TranslationKeys) => string;
 }
 
 export function TableOfContents({ isOpen, toc, onClose, onNavigate, t }: TableOfContentsProps) {
