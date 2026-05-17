@@ -4,7 +4,7 @@
 
 ---
 
-### [Testing Infrastructure] (RESOLVED)
+## [Testing Infrastructure] (RESOLVED)
 
 **Issue:** `Error: Should not already be working.` (React 18 concurrent rendering failure during RTL cleanup)
 
