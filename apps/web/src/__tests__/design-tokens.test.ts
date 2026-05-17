@@ -12,7 +12,8 @@ describe('Design Tokens', () => {
 
     // Check for some specific tokens
     expect(cssContent).toContain('--color-background: oklch(100% 0 0)');
-    expect(cssContent).toContain('--color-accent: oklch(60% 0.15 250)');
+    // Adjusted during a11y audit
+    expect(cssContent).toContain('--color-accent: oklch(55% 0.15 250)');
   });
 
   it('implements wide-gamut P3 overrides', () => {

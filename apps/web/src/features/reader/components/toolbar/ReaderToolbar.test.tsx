@@ -82,7 +82,8 @@ describe('ReaderToolbar', () => {
     mockUseScrollDirection.mockReturnValue('down');
     render(<ReaderToolbar {...mockProps} />);
 
-    const header = screen.getByRole('banner');
+    // When hidden, aria-hidden="true" is applied, so we need to use hidden: true
+    const header = screen.getByRole('banner', { hidden: true });
     expect(header).toHaveAttribute('data-animate');
     expect(header.getAttribute('data-animate')).toContain('var(--motion-header-offset)');
   });

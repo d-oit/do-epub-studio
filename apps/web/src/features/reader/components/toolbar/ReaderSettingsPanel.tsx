@@ -1,6 +1,7 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { scaleVariants } from '../../../../components/ui';
+import { useFocusTrap } from '@do-epub-studio/ui';
 
 interface ReaderSettingsPanelProps {
   isOpen: boolean;
@@ -25,6 +26,9 @@ export function ReaderSettingsPanel({
   onSetFontFamily,
   t,
 }: ReaderSettingsPanelProps) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(isOpen, panelRef);
+
   useEffect(() => {
     if (!isOpen) return;
 
@@ -42,6 +46,10 @@ export function ReaderSettingsPanel({
 
   return (
     <motion.div
+      ref={panelRef}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="settings-title"
       initial="initial"
       animate="animate"
       exit="exit"
@@ -49,7 +57,7 @@ export function ReaderSettingsPanel({
       className="fixed top-14 right-4 glass-panel rounded-xl shadow-xl border border-border p-4 z-50 w-72"
     >
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-sm font-semibold text-foreground">{t('reader.settings')}</h2>
+        <h2 id="settings-title" className="text-sm font-semibold text-foreground">{t('reader.settings')}</h2>
         <button
           onClick={onClose}
           className="p-1 rounded-lg hover:bg-background-secondary transition-colors text-foreground-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-accent outline-none"
@@ -84,7 +92,7 @@ export function ReaderSettingsPanel({
                   ${
                     theme === themeOption
                       ? 'bg-accent text-white border-accent font-medium shadow-sm'
-                      : 'bg-background-secondary text-foreground border-border hover:border-foreground-muted'
+                      : 'bg-background-secondary text-foreground border-border hover:border-foreground-muted dark:bg-background-tertiary'
                   }
                 `}
               >
@@ -143,7 +151,7 @@ export function ReaderSettingsPanel({
                   focus-visible:ring-2 focus-visible:ring-accent
                   ${
                     fontFamily === family
-                      ? 'bg-accent/10 text-accent font-medium border border-accent/20'
+                      ? 'bg-accent text-white font-medium shadow-sm'
                       : 'text-foreground hover:bg-background-secondary border border-transparent'
                   }
                 `}

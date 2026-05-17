@@ -261,6 +261,7 @@ export function ReaderPage() {
         comments={comments}
         bookmarks={bookmarks}
         capabilities={capabilities}
+        activePanel={activePanel}
         onToggleToc={() => togglePanel('toc')}
         onToggleComments={() => togglePanel('comments')}
         onToggleBookmarks={() => togglePanel('bookmarks')}
