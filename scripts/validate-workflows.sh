@@ -52,7 +52,8 @@ for file in "${WORKFLOW_FILES[@]}"; do
             FILE_FAILED=1
         fi
     elif [ "$YAML_VALIDATOR" == "python3" ]; then
-        if ! python3 -c "import yaml; yaml.safe_load(open(\"$file\"))" 2>/dev/null; then
+    elif [ "$YAML_VALIDATOR" == "python3" ]; then
+        if ! FILE="$file" python3 -c "import yaml, os; yaml.safe_load(open(os.environ['FILE']))" 2>/dev/null; then
             printf '%s  ✗ Invalid YAML syntax (PyYAML): %s%s\n' "${RED}" "$file" "${NC}"
             FILE_FAILED=1
         fi
