@@ -38,17 +38,28 @@ export function extractTextExcerpt(text: string, maxLength = 100): string {
   return cleaned.substring(0, maxLength - 3) + '...';
 }
 
-export function cfiToRange(
-  cfi: string,
-): { spineIndex: number; path: string; charOffset: number } | null {
-  const match = /epubcfi\(\/(\d+)(?:\[\S+\])?(!.*)?(?::(\d+))?\)/.exec(cfi);
-  if (!match) return null;
+export function cfiToRange(cfi: string): { spineIndex: number; path: string; charOffset: number } | null {
+  if (cfi.length > 1024) return null;
 
-  return {
-    spineIndex: parseInt(match[1]!, 10),
-    path: match[2] || '',
-    charOffset: match[3] ? parseInt(match[3], 10) : 0,
-  };
+  const match = cfi.match(/^epubcfi\(\/(\d+)/);
+  if (!match || match[1] === undefined) return null;
+  const spineIndex = parseInt(match[1], 10);
+
+  let path = '';
+  let charOffset = 0;
+
+  const remains = cfi.slice(match[0].length);
+  const offsetMatch = remains.match(/:(\d+)\)$/);
+  if (offsetMatch && offsetMatch[1] !== undefined) {
+    charOffset = parseInt(offsetMatch[1], 10);
+  }
+
+  const cleaved = remains.slice(0, offsetMatch ? remains.length - offsetMatch[0].length : -1);
+  if (cleaved.length > 0) {
+    path = cleaved;
+  }
+
+  return { spineIndex, path, charOffset };
 }
 
 export function rangeToCfi(spineIndex: number, path: string, charOffset = 0): string {

@@ -1,6 +1,6 @@
 # ADR-035: Release Governance & Vulnerability Disclosure Policy
 
-**Status:** Proposed
+**Status:** Accepted
 **Date:** 2026-05-17
 **Supersedes:** none
 **Related:** Plan 033 (Groups B, D, F, G), `.github/workflows/release.yml`, `CHANGELOG.md`, `VERSION`
@@ -142,3 +142,15 @@ Immediately after this ADR lands, cut `v0.1.0`:
 - README renders four badges.
 - AGENTS.md compliance self-check includes the two new bullets.
 - A dry-run of the `release-management` skill on a synthetic `v0.1.1` patch succeeds end-to-end.
+
+---
+
+## Implementation
+
+The following governance files were created per ADR-035:
+
+- `SECURITY.md` — Vulnerability disclosure policy (ADR-035 §4). Includes supported versions table, GitHub Security Advisories channel, response SLA, scope/out-of-scope, and cross-links to ADR-034 and `docs/security.md`.
+- `CODE_OF_CONDUCT.md` — Contributor Covenant 2.1 at repo root. Enforcement contact via GitHub Security Advisories. No PII per `privacy-first` skill.
+- `.github/release-drafter.yml` — Release-drafter v6 config (ADR-035 §2) with categories for feat, fix, security, chore/build/ci/infra, and docs. Version resolver defaults to patch with major/minor labels.
+
+**Not yet implemented:** Items 6 (release-management skill), 7 (README badges), 8 (AGENTS.md additions), and 9 (v0.1.0 cut) are deferred to subsequent PRs.

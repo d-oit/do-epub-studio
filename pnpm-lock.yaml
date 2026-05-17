@@ -253,6 +253,10 @@ importers:
         version: 4.1.5(@types/node@25.6.0)(@vitest/coverage-v8@4.1.5)(jsdom@29.1.1)(vite@8.0.12(@types/node@25.6.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.47.1))
 
   packages/schema:
+    dependencies:
+      '@do-epub-studio/shared':
+        specifier: workspace:*
+        version: link:../shared
     devDependencies:
       '@types/node':
         specifier: ^25
@@ -6227,7 +6231,7 @@ snapshots:
       obug: 2.1.1
       std-env: 4.1.0
       tinyrainbow: 3.1.0
-      vitest: 4.1.5(@types/node@22.19.18)(@vitest/coverage-v8@4.1.5)(jsdom@29.1.1)(vite@8.0.12(@types/node@22.19.18)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.47.1))
+      vitest: 4.1.5(@types/node@25.6.0)(@vitest/coverage-v8@4.1.5)(jsdom@29.1.1)(vite@8.0.12(@types/node@25.6.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.47.1))
     optional: true
 
   '@vitest/coverage-v8@4.1.6(vitest@4.1.5)':

@@ -6,7 +6,7 @@ import type {
   BookMetadata,
   ProgressPosition,
 } from './epub-types';
-import { createTraceId, createSpanId, serializeError } from '@do-epub-studio/shared';
+import { createTraceId, createSpanId, serializeError, testBounded } from '@do-epub-studio/shared';
 
 type EventCallback = (data: unknown) => void;
 
@@ -293,10 +293,12 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
 }
 
 export function extractCfi(text: string): string | null {
-  const match = /epubcfi\(\/[^)]+\)/.exec(text);
+  if (text.length > 2048) return null;
+  const match = text.match(/epubcfi\([^)]{1,1024}\)/);
   return match?.[0] ?? null;
 }
 
 export function isValidCfi(cfi: string): boolean {
-  return /^epubcfi\(\/\d+(?:\[\S+\])?(?:\/[^)]+)*\)$/.test(cfi);
+  const SIMPLE_CFI_RE = /^epubcfi\([^()]{1,1024}\)$/;
+  return testBounded(SIMPLE_CFI_RE, cfi, 1024);
 }

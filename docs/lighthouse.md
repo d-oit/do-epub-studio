@@ -1,6 +1,8 @@
 # Lighthouse / LHCI
 
-## Status: REMOVED
+## Status: DEFERRED (Plan 033 Group E)
+
+Lighthouse measurement is deferred per plan 033 Group E. It can be re-enabled when a hosted preview URL is available or a mock API server is set up.
 
 `@lhci/cli` was removed from the project dependencies because:
 

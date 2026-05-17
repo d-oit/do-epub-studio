@@ -90,4 +90,13 @@ This prevents anchor injection: even if a CFI is malformed, the text and chapter
 - **Security headers**: Applied via `applySecurityHeaders()` (CSP, X-Frame-Options, etc.)
 - **Rate limiting**: `RateLimiterDO` durable object per IP
 - **Audit logging**: All grant/session changes logged to `audit_logs` table
-- **Trace IDs**: Every request gets a traceId for observability without leaking internal state
+## ReDoS Hardening (ADR-034)
+
+All regex patterns processing untrusted input (CFI locators, annotation text, URLs) MUST use the `matchBounded` / `testBounded` helpers from `@do-epub-studio/shared` (see `packages/shared/src/safe-regex.ts`).
+
+Three-layer defense:
+1. **Length guard** — reject input exceeding fixed cap before regex runs
+2. **Unambiguous pattern** — bounded quantifiers, no overlapping alternations
+3. **Property-based fuzz** — `fast-check` assertions for adversarial inputs
+
+CI gates enforce zero open CodeQL alerts. See `plans/034-adr-security-redos-hardening.md`.

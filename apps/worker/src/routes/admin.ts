@@ -88,7 +88,10 @@ export async function handleCreateBook(
   );
 
   // Generate the upload URL pointing to the Worker upload endpoint
-  const baseUrl = env.APP_BASE_URL.replace(/\/+$/, '');
+  let baseUrl = env.APP_BASE_URL;
+  while (baseUrl.endsWith('/')) {
+    baseUrl = baseUrl.slice(0, -1);
+  }
   const uploadUrl = `${baseUrl}/api/admin/books/${id}/upload`;
 
   await logAudit(env, {
