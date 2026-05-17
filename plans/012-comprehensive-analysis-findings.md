@@ -477,25 +477,25 @@ Key opportunity areas:
 
 ### Security (P0)
 - [x] Admin routes require authentication (G4) — requireAdminAuth in index.ts router
-- [x] Multi-signal locators enforced (G13) — Resolved in Plan 010 §2.1
+- [ ] Multi-signal locators enforced (G13)
 
 ### Feature Gaps (P1)
 - [x] slug/id alignment between frontend and worker (G2) — books.ts resolves both
 - [x] Signed download route implemented (G3) — files.ts with HMAC + expiry
-- [x] Reader UI wired to backend (G1) — Resolved in Plan 010 §3.1
-- [x] Admin UI complete (G6) — Resolved in Plan 010 §3.3
+- [ ] Reader UI wired to backend (G1)
+- [ ] Admin UI complete (G6)
 
 ### Code Quality (P1)
 - [x] ReaderPage.tsx split into components (CQ-1) — 492 LOC
 - [x] GrantsPage.tsx split into components (CQ-2) — 311 LOC
 
 ### Testing (P2)
-- [x] CFI navigation tests added (T-1) — Resolved in Plan 019 (Agent D)
+- [ ] CFI navigation tests added (T-1) — partial coverage in locator.test.ts
 - [x] Password hashing tests added (T-3)
 - [x] Bookmark CRUD tests added (T-4)
 
 ### Documentation (P2)
-- [x] Setup documentation added (G7) — Resolved in Plan 019 (Agent H)
+- [ ] Setup documentation added (G7)
 
 ---
 
