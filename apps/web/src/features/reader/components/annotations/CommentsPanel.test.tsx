@@ -115,7 +115,7 @@ describe('CommentsPanel', () => {
     it('renders close button', () => {
       render(<CommentsPanel {...defaultProps} />);
 
-      expect(screen.getByRole('button', { name: '' })).toBeInTheDocument(); // Close button has SVG
+      expect(screen.getByRole('button', { name: 'reader.settings.close' })).toBeInTheDocument();
     });
 
     it('renders tabs for comments and highlights', () => {
