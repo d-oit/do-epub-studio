@@ -3,14 +3,6 @@ import { render, screen, fireEvent, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { CommentInput } from './CommentInput';
 
-// SKIP: CommentInput tests cause vitest to fail with "Should not already be working" error.
-// Issue: React 18's concurrent rendering state gets polluted between tests when using
-// singleThread pool mode in vitest. This is a vitest/jsdom/React 18 infrastructure issue,
-// not a code bug. The production code works correctly.
-// Other tests (api.test.ts, offline-db.test.ts, CommentsPanel.test.tsx) work fine.
-// Root cause: React's performConcurrentWorkOnRoot checks fail due to state pollution
-// between sequential test runs in singleThread mode.
-
 describe('CommentInput', () => {
   const mockOnSubmit = vi.fn();
   const mockOnCancel = vi.fn();
