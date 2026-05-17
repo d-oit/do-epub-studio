@@ -113,10 +113,11 @@ Add a new bullet to AGENTS.md Tier 1:
 
 - Created `packages/shared/src/safe-regex.ts` with `matchBounded`/`testBounded` helpers
 - Fixed `extractCfi`/`isValidCfi` in `packages/reader-core/src/epub-loader.ts` with length guard + bounded regex
-- Fixed `cfiToRange` in `packages/schema/src/locator.ts` with length guard + split parsing
+- Fixed `cfiToRange` in `packages/schema/src/locator.ts` with length guard + split parsing (restored `!.*` path capture in a subsequent fix commit)
 - Fixed trailing-slash regex in `apps/worker/src/routes/admin.ts` with while-loop
 - Added AGENTS.md Tier 1 rule guarding regex via `matchBounded`/`testBounded`
 - Created `.agents/skills/safe-regex-authoring/SKILL.md`
+- Added CodeQL alert count CI gate to `.github/workflows/ci.yml`
 - Quality gate (lint + typecheck + test + build + e2e) passes
 
 ---

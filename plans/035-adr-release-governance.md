@@ -153,4 +153,12 @@ The following governance files were created per ADR-035:
 - `CODE_OF_CONDUCT.md` — Contributor Covenant 2.1 at repo root. Enforcement contact via GitHub Security Advisories. No PII per `privacy-first` skill.
 - `.github/release-drafter.yml` — Release-drafter v6 config (ADR-035 §2) with categories for feat, fix, security, chore/build/ci/infra, and docs. Version resolver defaults to patch with major/minor labels.
 
-**Not yet implemented:** Items 6 (release-management skill), 7 (README badges), 8 (AGENTS.md additions), and 9 (v0.1.0 cut) are deferred to subsequent PRs.
+**Not yet implemented:** Items 7 (README badges), 8 (AGENTS.md additions), and 9 (v0.1.0 cut) are deferred to subsequent PRs.
+
+### Update (2026-05-17 — feat/implement-gaps-a-g-033)
+
+- Items 6 (release-management skill), 7 (README badges), and 8 (AGENTS.md additions) now implemented:
+  - Created `.agents/skills/release-management/SKILL.md` with full release workflow
+  - Added CI/CodeQL/Release/License badges to `README.md`
+  - Added AGENTS.md Tier 1 (SECURITY.md disclosure) and Tier 2 (release-management skill) rules
+- Item 9 (v0.1.0 cut) still pending — requires merge to main then release-drafter promotion
