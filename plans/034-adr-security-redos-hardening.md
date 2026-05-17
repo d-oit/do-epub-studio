@@ -1,6 +1,6 @@
 # ADR-034: ReDoS Hardening Policy
 
-**Status:** Proposed
+**Status:** Accepted
 **Date:** 2026-05-17
 **Supersedes:** none
 **Related:** Plan 033 (Group A + D), AGENTS.md Tier 1 ("MUST not skip tests for core permission, sync, or auth flows"), `docs/security.md`
@@ -106,6 +106,18 @@ Add a new bullet to AGENTS.md Tier 1:
 
 - A `MAX_CFI_LENGTH` of 1024 may reject pathologically long but valid CFI; mitigated by spec analysis — EPUB 3 CFI rarely exceeds 256 bytes.
 - The CI gate could block legitimate WIP if a transient CodeQL false-positive lands; mitigated by the dismissal-via-ADR escape hatch.
+
+---
+
+## Implementation (2026-05-17)
+
+- Created `packages/shared/src/safe-regex.ts` with `matchBounded`/`testBounded` helpers
+- Fixed `extractCfi`/`isValidCfi` in `packages/reader-core/src/epub-loader.ts` with length guard + bounded regex
+- Fixed `cfiToRange` in `packages/schema/src/locator.ts` with length guard + split parsing
+- Fixed trailing-slash regex in `apps/worker/src/routes/admin.ts` with while-loop
+- Added AGENTS.md Tier 1 rule guarding regex via `matchBounded`/`testBounded`
+- Created `.agents/skills/safe-regex-authoring/SKILL.md`
+- Quality gate (lint + typecheck + test + build + e2e) passes
 
 ---
 

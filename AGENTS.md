@@ -32,7 +32,9 @@ readonly MAX_PR_TITLE_LENGTH=72
 - **MUST revoke sessions immediately on grant change.**
 - **MUST use multi-signal locators (CFI + text + chapter) for annotations per ADR-006.**
 - **MUST emit traceId on every Worker request and critical UI action.**
+- **MUST guard every regex against untrusted input** using `matchBounded` / `testBounded` from `@do-epub-studio/shared` per ADR-034.
 - **NEVER delete .gitignore files.** Binary/test fixtures must be generated via scripts, not tracked. Deleting .gitignore surfaces binary artifacts into the repo and breaks CI reproducibility.
+- **MUST follow the disclosure process in `SECURITY.md` for any vulnerability — never open a public issue first.**
 
 ---
 
@@ -53,6 +55,7 @@ readonly MAX_PR_TITLE_LENGTH=72
 7. **MUST load `goap-agent` skill for any analysis, planning, or multi-step task.** Use GOAP methodology (analyze → decompose → strategize → coordinate → execute → synthesize).
 8. **Document ALL issues as GOAP plans + ADRs in `plans/`.** Warnings, pre-existing issues, and unfixable items each get a GOAP plan with an ADR defining policy. Do NOT edit KNOWN-ISSUES.md directly — that is a reference mirror of monitor-tier items only.
 9. **Fix pre-existing issues in files you touch.** Don't leave them for later.
+10. **Releases MUST be cut via the `release-management` skill — no manual tags, no direct CHANGELOG edits.**
 
 ---
 

@@ -38,17 +38,17 @@ export function extractTextExcerpt(text: string, maxLength = 100): string {
   return cleaned.substring(0, maxLength - 3) + '...';
 }
 
-export function cfiToRange(
-  cfi: string,
-): { spineIndex: number; path: string; charOffset: number } | null {
-  const match = /epubcfi\(\/(\d+)(?:\[\S+\])?(!.*)?(?::(\d+))?\)/.exec(cfi);
-  if (!match) return null;
+export function cfiToRange(cfi: string): { spineIndex: number; path: string; charOffset: number } | null {
+  if (cfi.length > 1024) return null;
+  const spineMatch = cfi.match(/epubcfi\(\/(\d+)/);
+  if (!spineMatch) return null;
+  const spineIndex = parseInt(spineMatch[1]!, 10);
 
-  return {
-    spineIndex: parseInt(match[1]!, 10),
-    path: match[2] || '',
-    charOffset: match[3] ? parseInt(match[3], 10) : 0,
-  };
+  const pathPart = cfi.includes('[') ? cfi.match(/\[([^\]]{0,256})\]/)?.[1] : '';
+  const suffix = cfi.includes(':') ? cfi.match(/:(\d+)\)/) : null;
+  const charOffset = suffix ? parseInt(suffix[1]!, 10) : 0;
+
+  return { spineIndex, path: pathPart ? `[${pathPart}]` : '', charOffset };
 }
 
 export function rangeToCfi(spineIndex: number, path: string, charOffset = 0): string {

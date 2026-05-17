@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-05-17
+
 - feat(infra): close remaining plan gaps
 - docs(plans): sync progress and compact learnings after gap closure PRs
 - feat(infra): close CI/CD, test infra, and warning gaps
