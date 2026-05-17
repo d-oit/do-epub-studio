@@ -45,7 +45,7 @@ export function TableOfContents({ isOpen, toc, onClose, onNavigate, t }: TableOf
           type="button"
           onClick={onClose}
           className="p-1 hover:bg-background-secondary rounded"
-          aria-label={t('reader.settings.close')}
+          aria-label={t('reader.settings.close') as string}
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path

@@ -26,6 +26,7 @@ describe('ReaderToolbar', () => {
     comments: [],
     bookmarks: [],
     capabilities: { canComment: true },
+    activePanel: null,
     onToggleToc: vi.fn(),
     onToggleComments: vi.fn(),
     onToggleBookmarks: vi.fn(),

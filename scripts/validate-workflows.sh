@@ -47,12 +47,10 @@ for file in "${WORKFLOW_FILES[@]}"; do
             FILE_FAILED=1
         fi
     elif [ "$YAML_VALIDATOR" == "node-js-yaml" ]; then
-    elif [ "$YAML_VALIDATOR" == "node-js-yaml" ]; then
         if ! FILE="$file" node -e "const yaml = require('js-yaml'); const fs = require('fs'); try { yaml.load(fs.readFileSync(process.env.FILE, 'utf8')); } catch (e) { console.error(e.message); process.exit(1); }" ; then
             printf '%s  ✗ Invalid YAML syntax (js-yaml): %s%s\n' "${RED}" "$file" "${NC}"
             FILE_FAILED=1
         fi
-    elif [ "$YAML_VALIDATOR" == "python3" ]; then
     elif [ "$YAML_VALIDATOR" == "python3" ]; then
         if ! FILE="$file" python3 -c "import yaml, os; yaml.safe_load(open(os.environ['FILE']))" 2>/dev/null; then
             printf '%s  ✗ Invalid YAML syntax (PyYAML): %s%s\n' "${RED}" "$file" "${NC}"
