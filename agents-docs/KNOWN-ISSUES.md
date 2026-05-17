@@ -77,18 +77,6 @@ Before adding an entry:
 - Update mitigations that have changed
 - Archive resolved to `agents-docs/KNOWN-ISSUES-RESOLVED.md` (create when needed)
 
-### [Testing Infrastructure]
-
-**Issue:** `Error: Should not already be working.` (React 18 concurrent rendering failure during RTL cleanup)
-
-**Location:** `apps/web/src/features/admin/BooksPage.test.tsx`, `apps/web/src/features/admin/GrantsPage.test.tsx`, `apps/web/src/features/admin/AuditLogPage.test.tsx`, `apps/web/src/features/reader/components/annotations/CommentInput.test.tsx`
-
-**Reason:** Running these suites unskipped in the current Vitest/jsdom configuration triggers a React 18 scheduler conflict and root cleanup race (`performConcurrentWorkOnRoot`) that cascades into unrelated test files.
-
-**Mitigation:** Keep affected suites skipped until isolated test configuration is introduced (separate Vitest project or per-file isolation mode). Track completion in `plans/010-optimization-quality-backlog.md`.
-
-**Date:** 2026-04-15
-
 ### [Testing Infrastructure - Playwright Browsers]
 
 **Issue:** `Error: browserType.launch: Executable doesn't exist at /home/doit/.cache/ms-playwright/...` (6 E2E smoke tests fail)
@@ -101,7 +89,3 @@ Before adding an entry:
 
 **Date:** 2026-05-13
 
-## Technical Debt: File Size (RESOLVED)
-- **File**: `apps/web/src/features/reader/ReaderPage.tsx`
-- **Status**: ✅ **Resolved** — Refactored from 572→341 LOC by extracting EPUB init/theme/keyboard logic into `useReaderEpub` hook.
-- **Resolution**: Created `hooks/useReaderEpub.ts` (~180 LOC) that encapsulates the EPUB initialization effect, theme re-application, system dark mode listener, keyboard navigation, and applyThemes logic. The hook reads stores internally (matching existing hook patterns).
