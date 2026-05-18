@@ -1,3 +1,5 @@
+import { useRef, useEffect } from 'react';
+import { useFocusTrap } from '@do-epub-studio/ui';
 import type { Bookmark } from '../../../../stores';
 
 interface BookmarksPanelProps {
@@ -17,12 +19,30 @@ export function BookmarksPanel({
   onDeleteBookmark,
   onNavigate,
 }: BookmarksPanelProps) {
+  const panelRef = useRef<HTMLElement>(null);
+  useFocusTrap(isOpen, panelRef);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   return (
-    <aside className="fixed inset-y-0 right-0 w-80 bg-background border-l border-border z-40 flex flex-col shadow-xl">
+    <aside
+      ref={panelRef}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="bookmarks-title"
+      className="fixed inset-y-0 right-0 w-80 bg-background border-l border-border z-40 flex flex-col shadow-xl"
+    >
       <div className="p-4 border-b border-border flex justify-between items-center">
-        <h2 className="font-semibold">Bookmarks</h2>
+        <h2 id="bookmarks-title" className="font-semibold">Bookmarks</h2>
         <div className="flex items-center gap-2">
           <button
             onClick={onAddBookmark}

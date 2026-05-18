@@ -1,4 +1,5 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import { useFocusTrap } from '@do-epub-studio/ui';
 import type { Comment, Highlight } from '../../../../stores';
 import { useTranslation } from '../../../../hooks/useTranslation';
 import { CommentItem } from './CommentItem';
@@ -36,6 +37,18 @@ export function CommentsPanel({
   onNavigateToAnnotation,
   currentChapter,
 }: CommentsPanelProps) {
+  const panelRef = useRef<HTMLElement>(null);
+  useFocusTrap(isOpen, panelRef);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [isOpen, onClose]);
+
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<'comments' | 'highlights'>('comments');
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
@@ -85,10 +98,16 @@ export function CommentsPanel({
   if (!isOpen) return null;
 
   return (
-    <aside className="fixed inset-y-0 right-0 w-80 bg-background border-l border-border z-40 flex flex-col shadow-xl">
+    <aside
+      ref={panelRef}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="comments-title"
+      className="fixed inset-y-0 right-0 w-80 bg-background border-l border-border z-40 flex flex-col shadow-xl"
+    >
       <div className="p-4 border-b border-border flex justify-between items-center">
-        <h2 className="font-semibold">{t('annotation.comment')}s</h2>
-        <button type="button" onClick={onClose} className="p-1 hover:bg-background-secondary rounded">
+        <h2 id="comments-title" className="font-semibold">{t('annotation.comment')}s</h2>
+        <button type="button" onClick={onClose} className="p-1 hover:bg-background-secondary rounded" aria-label={t('reader.settings.close')}>
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
               strokeLinecap="round"

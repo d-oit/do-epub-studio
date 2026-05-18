@@ -13,12 +13,15 @@ import { useReaderStore } from '../../../../stores/reader';
 import type { Comment, Bookmark } from '../../../../stores/reader';
 import type { TranslationKeys } from '../../../../i18n';
 
+import { ReaderPanel } from '../../hooks/useReaderUi';
+
 interface ReaderToolbarProps {
   bookTitle: string | null;
   bookSlug: string;
   comments: Comment[];
   bookmarks: Bookmark[];
   capabilities: { canComment?: boolean } | null;
+  activePanel: ReaderPanel;
   onToggleToc: () => void;
   onToggleComments: () => void;
   onToggleBookmarks: () => void;
@@ -33,6 +36,7 @@ export function ReaderToolbar({
   comments,
   bookmarks,
   capabilities,
+  activePanel,
   onToggleToc,
   onToggleComments,
   onToggleBookmarks,
@@ -64,11 +68,18 @@ export function ReaderToolbar({
       sticky
       animate={{ y: isHeaderVisible ? 0 : 'var(--motion-header-offset)' }}
       transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+      aria-hidden={isHeaderVisible ? undefined : true}
+      className={isHeaderVisible ? '' : 'pointer-events-none'}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-14">
           <div className="flex items-center gap-4">
-            <IconButton onClick={onToggleToc} variant="ghost" aria-label={t('reader.tableOfContents')}>
+            <IconButton
+              onClick={onToggleToc}
+              variant="ghost"
+              aria-label={t('reader.tableOfContents')}
+              aria-expanded={activePanel === 'toc'}
+            >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
@@ -105,6 +116,7 @@ export function ReaderToolbar({
                   onClick={onToggleComments}
                   variant="ghost"
                   aria-label={t('annotation.comment')}
+                  aria-expanded={activePanel === 'comments'}
                   className="relative"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -128,6 +140,7 @@ export function ReaderToolbar({
                 onClick={onToggleBookmarks}
                 variant="ghost"
                 aria-label={t('reader.bookmarks')}
+                aria-expanded={activePanel === 'bookmarks'}
                 className="relative"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -162,6 +175,7 @@ export function ReaderToolbar({
                 onClick={onToggleSettings}
                 variant="ghost"
                 aria-label={t('reader.settings')}
+                aria-expanded={activePanel === 'settings'}
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path

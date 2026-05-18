@@ -80,12 +80,11 @@ test.describe('Accessibility audit (axe-core)', () => {
     await mockReaderApi(page);
 
     // Login
-    await page.goto(`/login`);
-    await page.getByLabel('Book URL Slug').fill(READER_USER.bookSlug);
+    await page.goto(`/login?book=${READER_USER.bookSlug}`);
     await page.getByLabel('Email Address').fill(READER_USER.email);
     await page.getByLabel('Password (if required)').fill(READER_USER.password);
     await page.getByRole('button', { name: 'Sign In' }).click();
-    await expect(page).toHaveURL(/\/read\/my-test-book$/);
+    await expect(page).toHaveURL(new RegExp(`/read/${READER_USER.bookSlug}$`));
 
     const accessibilityScanResults = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
@@ -100,6 +99,65 @@ test.describe('Accessibility audit (axe-core)', () => {
     );
 
     expect(criticalViolations).toHaveLength(0);
+  });
+
+  test('reader settings panel has no accessibility violations', async ({ page }) => {
+    await mockReaderApi(page);
+    await page.goto(`/login?book=${READER_USER.bookSlug}`);
+    await page.getByLabel('Email Address').fill(READER_USER.email);
+    await page.getByLabel('Password (if required)').fill(READER_USER.password);
+    await page.getByRole('button', { name: 'Sign In' }).click();
+    await expect(page).toHaveURL(new RegExp(`/read/${READER_USER.bookSlug}$`));
+
+    await page.getByLabel('Settings').first().click();
+    await expect(page.getByRole('dialog').getByText('Settings', { exact: true })).toBeVisible();
+
+    const accessibilityScanResults = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+      .analyze();
+
+    expect(accessibilityScanResults.violations).toHaveLength(0);
+  });
+
+  test('reader TOC panel has no accessibility violations', async ({ page }) => {
+    await mockReaderApi(page);
+    await page.goto(`/login?book=${READER_USER.bookSlug}`);
+    await page.getByLabel('Email Address').fill(READER_USER.email);
+    await page.getByLabel('Password (if required)').fill(READER_USER.password);
+    await page.getByRole('button', { name: 'Sign In' }).click();
+
+    await page.getByLabel('Contents').click();
+    await expect(page.getByRole('heading', { name: 'Contents' })).toBeVisible();
+
+    const accessibilityScanResults = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+      .analyze();
+
+    expect(accessibilityScanResults.violations).toHaveLength(0);
+  });
+
+  test('keyboard navigation: can close panels with Escape', async ({ page }) => {
+    await mockReaderApi(page);
+    await page.goto(`/login?book=${READER_USER.bookSlug}`);
+    await page.getByLabel('Email Address').fill(READER_USER.email);
+    await page.getByLabel('Password (if required)').fill(READER_USER.password);
+    await page.getByRole('button', { name: 'Sign In' }).click();
+
+    // Open Settings
+    await page.getByLabel('Settings').first().click();
+    await expect(page.getByRole('dialog').getByText('Settings', { exact: true })).toBeVisible();
+
+    // Close with Escape
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('dialog').getByText('Settings', { exact: true })).not.toBeVisible();
+
+    // Open TOC
+    await page.getByLabel('Contents').click();
+    await expect(page.getByRole('heading', { name: 'Contents' })).toBeVisible();
+
+    // Close with Escape
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('heading', { name: 'Contents' })).not.toBeVisible();
   });
 
   test('admin login page has no critical accessibility violations', async ({ page }) => {

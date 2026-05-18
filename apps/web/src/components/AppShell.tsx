@@ -46,9 +46,12 @@ export const AppShell: React.FC = () => {
             exit={{ opacity: 0, scale: 1.1 }}
             transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
             className="flex flex-col items-center gap-8 w-full max-w-md"
+            role="status"
+            aria-live="polite"
+            aria-label="Loading application"
           >
             {/* Branded Logo Placeholder */}
-            <div className="w-20 h-20 rounded-2xl bg-accent flex items-center justify-center shadow-glass-lg animate-pulse">
+            <div className="w-20 h-20 rounded-2xl bg-accent flex items-center justify-center shadow-glass-lg animate-pulse" aria-hidden="true">
               <svg
                 className="w-12 h-12 text-white"
                 fill="none"
@@ -69,7 +72,7 @@ export const AppShell: React.FC = () => {
               <Skeleton className="h-4 w-1/2 mx-auto rounded-md" />
             </div>
 
-            <div className="flex gap-2 mt-4">
+            <div className="flex gap-2 mt-4" aria-hidden="true">
               <motion.div
                 animate={{ scale: [1, 1.2, 1] }}
                 transition={{ repeat: Infinity, duration: 1, delay: 0 }}

@@ -11,8 +11,8 @@
     --color-background-secondary: oklch(97% 0 0);
     --color-background-tertiary: oklch(92% 0 0);
     --color-foreground: oklch(15% 0 0);
-    --color-foreground-muted: oklch(55% 0 0);
-    --color-accent: oklch(60% 0.15 250);
+    --color-foreground-muted: oklch(50% 0 0);
+    --color-accent: oklch(55% 0.15 250);
     --color-accent-success: oklch(70% 0.15 150);
     --color-accent-warning: oklch(75% 0.15 80);
     --color-accent-error: oklch(65% 0.2 25);
