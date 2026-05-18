@@ -195,12 +195,12 @@ jobs:
         run: |
           git checkout $(git merge-base origin/main HEAD)
           pnpm install --frozen-lockfile
-          pnpm bench -- --outputJson ../../baseline.json
+          pnpm bench -- --outputJson $(pwd)/baseline.json
           git checkout -
           pnpm install --frozen-lockfile
 
       - name: Run head benchmarks
-        run: pnpm bench -- --outputJson ../../head.json
+        run: pnpm bench -- --outputJson $(pwd)/head.json
 
       - name: Compare benchmarks
         if: github.event_name == 'pull_request'

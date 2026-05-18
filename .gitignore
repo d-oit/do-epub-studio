@@ -58,6 +58,11 @@ verification_output.txt
 
 # Coverage
 coverage/
+
+# Benchmark artifacts
+baseline.json
+head.json
+
 .wrangler/
 .claude/
 .gemini/
