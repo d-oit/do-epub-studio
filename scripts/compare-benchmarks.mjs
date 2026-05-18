@@ -23,6 +23,11 @@ const baseline = readJson(baselinePath);
 const current = readJson(currentPath);
 
 if (!baseline || !current) {
+  let errorMsg = '### Benchmark Comparison\n\n';
+  errorMsg += `**⚠️ Error:** Could not read benchmark results.\n`;
+  if (!baseline) errorMsg += `- Missing or invalid baseline: \`${baselinePath}\`\n`;
+  if (!current) errorMsg += `- Missing or invalid current: \`${currentPath}\`\n`;
+  console.log(errorMsg);
   process.exit(1);
 }
 
