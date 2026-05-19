@@ -218,12 +218,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          comment_id=$(gh pr view ${{ github.event.pull_request.number }} --json comments --jq '.comments[] | select(.body | contains("### Benchmark Comparison")) | .id' | head -n 1)
-          if [ -n "$comment_id" ]; then
-            gh api -X PATCH /repos/${{ github.repository }}/issues/comments/$comment_id -F body=@bench_comment.md
-          else
+          gh pr comment ${{ github.event.pull_request.number }} --body-file bench_comment.md --edit-last 2>/dev/null || \
             gh pr comment ${{ github.event.pull_request.number }} --body-file bench_comment.md
-          fi
 
       - name: Check for regression
         if: github.event_name == 'pull_request'
