@@ -1,7 +1,34 @@
 {
   "permissions": {
     "allow": [
-      "Bash(do *)"
+      "Bash(do *)",
+      "Bash(done)",
+      "Bash(bash *)",
+      "Bash(pnpm *)",
+      "Bash(git add *)",
+      "Bash(node *)",
+      "Bash(xargs *)",
+      "Bash(find *)",
+      "Bash(./scripts/quality_gate.sh)",
+      "Bash(git clone *)",
+      "Bash(git checkout *)",
+      "Bash(cp *)",
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(rm *)",
+      "Bash(git remote *)",
+      "Bash(gh *)",
+      "Bash(without *)",
+      "Bash(mkdir *)",
+      "Bash(git init)",
+      "Bash(git fetch *)",
+      "Bash(git format-patch *)",
+      "Bash(which *)",
+      "Bash(npm *)",
+      "Bash(ls *)",
+      "Bash(ssh *)",
+      "Bash(corepack *)"
     ]
-  }
+  },
+  "$version": 3
 }

@@ -74,3 +74,18 @@ See Plan 012 for detailed gap analysis:
 - [x] T-1: CFI navigation tests — 68 tests total (was 39), with fast-check property tests
 - [x] T-2: EPUB parsing tests — 21 tests with in-memory ZIP fixture builder
 - [x] G7: Add missing setup documentation — docs verified/updated (setup-local.md, README.md)
+
+---
+
+## Phase 8: Post-0.1.0 Backlog Triage (active)
+
+All open GitHub issues (17) and PRs (4) as of 2026-05-19 are coordinated through:
+
+- **Plan 038** — GOAP backlog triage (waves W1 PR reconciliation + release cut, W2 swarm across CI/UI/Docs/Testing groups, W3 cleanup)
+- **ADR 039** — Issue & PR triage policy
+
+Remaining product-code TODO inventory:
+
+- [ ] `apps/worker/src/lib/rate-limiter.ts:35` — in-memory limiter → Durable Objects cutover (tracked under #140; carry-over from Sprint 141)
+
+No other phases are in progress. New work must be filed against Plan 038's waves or spawn a fresh triage plan per ADR 039.
