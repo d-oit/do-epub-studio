@@ -1,0 +1,69 @@
+@import "tailwindcss";
+
+:root {
+  --color-background: oklch(100% 0 0);
+  --color-background-secondary: oklch(97% 0 0);
+  --color-background-tertiary: oklch(92% 0 0);
+  --color-foreground: oklch(15% 0 0);
+  --color-foreground-muted: oklch(50% 0 0);
+  --color-accent: oklch(55% 0.15 250);
+  --color-accent-success: oklch(70% 0.15 150);
+  --color-accent-warning: oklch(75% 0.15 80);
+  --color-accent-error: oklch(65% 0.2 25);
+  --color-border: oklch(92% 0 0);
+
+  --motion-slide-offset: 20px;
+  --motion-item-offset: 10px;
+  --motion-hover-lift: -4px;
+  --motion-header-offset: -100px;
+  --motion-scale-enter: 0.95;
+  --motion-scale-tap: 0.97;
+  --motion-scale-hover: 1.02;
+  --motion-scale-hover-lg: 1.05;
+  --motion-scale-tap-lg: 0.9;
+}
+
+@theme {
+  --color-background: var(--color-background);
+  --color-background-secondary: var(--color-background-secondary);
+  --color-background-tertiary: var(--color-background-tertiary);
+  --color-foreground: var(--color-foreground);
+  --color-foreground-muted: var(--color-foreground-muted);
+  --color-accent: var(--color-accent);
+  --color-accent-success: var(--color-accent-success);
+  --color-accent-warning: var(--color-accent-warning);
+  --color-accent-error: var(--color-accent-error);
+  --color-border: var(--color-border);
+}
+
+.glass-panel {
+  background: color-mix(in oklch, var(--color-background) 80%, transparent);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid color-mix(in oklch, var(--color-foreground) 10%, transparent);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+}
+
+.glass-card {
+  background: color-mix(in oklch, var(--color-background) 70%, transparent);
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  border: 1px solid color-mix(in oklch, var(--color-foreground) 15%, transparent);
+  border-radius: 1rem;
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-background-secondary) 25%,
+    var(--color-background-tertiary) 50%,
+    var(--color-background-secondary) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}

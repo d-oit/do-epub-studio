@@ -66,3 +66,6 @@ head.json
 .wrangler/
 .claude/
 .gemini/
+
+# Storybook
+storybook-static/

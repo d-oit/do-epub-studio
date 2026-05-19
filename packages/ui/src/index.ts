@@ -3,7 +3,7 @@ export { Input } from './input';
 export { Modal } from './modal';
 export { LiveRegion } from './LiveRegion';
 export { Spinner } from './spinner';
-export { ToastProvider } from './toast';
+export { ToastProvider, useToast } from './toast';
 export { useFocusTrap } from './useFocusTrap';
 export { Card } from './card';
 export { Skeleton } from './skeleton';

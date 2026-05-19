@@ -1,10 +1,16 @@
 name: Stale Cleanup
+
 on:
   schedule:
     - cron: '0 6 * * 1'
   workflow_dispatch:
+
+permissions:
+  contents: read
+
 jobs:
   stale:
+    name: Stale issue and PR cleanup
     runs-on: ubuntu-latest
     permissions:
       issues: write
@@ -15,6 +21,53 @@ jobs:
           days-before-issue-stale: 90
           days-before-issue-close: 14
           stale-issue-label: stale
+          stale-issue-message: 'This issue has been inactive for 90 days. It will be closed in 14 days if no further activity occurs.'
+          close-issue-message: 'This issue has been closed due to inactivity. Feel free to reopen if needed.'
           days-before-pr-stale: 30
           days-before-pr-close: 7
           stale-pr-label: stale
+          stale-pr-message: 'This PR has been inactive for 30 days. It will be closed in 7 days if no further activity occurs.'
+          close-pr-message: 'This PR has been closed due to inactivity. Please create a new PR if the changes are still needed.'
+
+  cleanup-branches:
+    name: Delete merged branches
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683   # v4.2.2
+        with:
+          fetch-depth: 0
+      - name: Delete branches merged into main
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Fetching merged PR branches..."
+          default_branch="main"
+          excluded_patterns="^(develop|staging|release/.*)$"
+          merged_prs=$(gh pr list \
+            --repo "${{ github.repository }}" \
+            --state merged \
+            --base "$default_branch" \
+            --json headRefName,headRepository \
+            --jq '.[] | select(.headRepository.nameWithOwner == "${{ github.repository }}") | .headRefName' \
+            --limit 100 \
+            2>/dev/null || true)
+          if [ -z "$merged_prs" ]; then
+            echo "No merged branches found."
+            exit 0
+          fi
+          echo "$merged_prs" | while read -r branch; do
+            if echo "$branch" | grep -qE "$excluded_patterns"; then
+              echo "Skipping excluded branch: $branch"
+              continue
+            fi
+            if [ "$branch" = "$default_branch" ]; then
+              continue
+            fi
+            echo "Deleting branch: $branch"
+            gh api -X DELETE "repos/${{ github.repository }}/git/refs/heads/$branch" \
+              --silent --jq '.' 2>/dev/null \
+              && echo "  ✓ Deleted $branch" \
+              || echo "  ✗ Failed to delete $branch (may already be deleted)"
+          done
