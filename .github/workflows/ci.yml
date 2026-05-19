@@ -145,7 +145,7 @@ jobs:
       - uses: ./.github/actions/setup-pnpm
 
       - name: Install Playwright browsers
-        run: pnpm exec playwright install --with-deps chromium
+        run: pnpm exec playwright install --with-deps chromium webkit
 
       - name: Run Dev Smoke E2E tests
         run: pnpm test:e2e:smoke --project=chromium
@@ -169,7 +169,7 @@ jobs:
 
       - name: Upload test results
         uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1   # v4.6.1
-        if: failure()
+        if: always()
         with:
           name: test-results-smoke
           path: test-results/
@@ -186,3 +186,47 @@ jobs:
 
       - name: Run benchmarks
         run: pnpm bench
+
+  notify-failure:
+    name: Notify on failure
+    if: failure() && github.ref == 'refs/heads/main'
+    needs: [lint, typecheck, test, build, e2e-smoke, bench]
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Notify via Slack
+        if: env.SLACK_WEBHOOK != ''
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+        uses: slackapi/slack-github-action@e28cf65c7013e725252e10f4a5568e9b81d000b8   # v2.0.0
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK }}
+          webhook-type: incoming-webhook
+          payload: |
+            {"text": "CI failed on main: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"}
+
+      - name: Create issue on failure
+        if: env.SLACK_WEBHOOK == ''
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+        uses: actions/github-script@d5562d3a18e23856600430b5b1f7944c2004a10f   # v7.0.1
+        with:
+          script: |
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: ['ci-failure']
+            });
+            const runUrl = `${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`;
+            const existing = issues.find(i => i.body && i.body.includes(runUrl));
+            if (!existing) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `CI failure on main: ${context.runId}`,
+                body: `CI failed on main branch.\n\n**Run:** ${runUrl}\n**Commit:** ${{ github.sha }}\n**Workflow:** ${{ github.workflow }}`,
+                labels: ['ci-failure']
+              });
+            }

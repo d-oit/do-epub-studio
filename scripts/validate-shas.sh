@@ -14,10 +14,14 @@ ALLOWED_SHAS=(
     "cloudflare/wrangler-action@9acf94ace14e7dc412b076f2c5c20b8ce93c79cd"
     "codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354"
     "codecov/codecov-action@75cd11691c0faa626561e295848008c8a7dddffe"
+    "codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354"
     "dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98"
     "github/codeql-action/analyze@60168efe1c415ce0f5521ea06d5c2062adbeed1b"
     "github/codeql-action/init@60168efe1c415ce0f5521ea06d5c2062adbeed1b"
     "pnpm/action-setup@b307475762933b98ed359c036b0e51f26b63b74b"
+    "nick-fields/retry@e01ad31bf9426f2cf992d05223b36eb154ba161b"
+    "slackapi/slack-github-action@e28cf65c7013e725252e10f4a5568e9b81d000b8"
+    "actions/github-script@d5562d3a18e23856600430b5b1f7944c2004a10f"
     "softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda"
 )
 
