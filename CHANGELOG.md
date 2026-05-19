@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+- feat(ci): upload Playwright reports on passing runs, add E2E retry, WebKit browsers, and failure notifications (#170, #174, #173, #164)
+- feat(lint): enable stricter ESLint rules (no-non-null-assertion, require-await, consistent-type-imports) as warnings (#163)
+- chore(test): add env var fallbacks for hardcoded test credentials (#169)
+- chore(docs): archive lighthouse.md, create AGENTS.md instruction count baseline (#172, #167)
+- fix(ci): sync allowed action SHAs with workflow files (#186)
+- docs(plans): update Plan 038 backlog triage with Wave 2 progress
+
 ## [0.1.0] - 2026-05-17
 
 - feat(infra): close remaining plan gaps
