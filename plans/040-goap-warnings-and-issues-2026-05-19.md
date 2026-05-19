@@ -81,7 +81,7 @@
 
 **Evidence:** All CI runs on `main` fail with "This run likely failed because of a workflow file issue" — no specific error message.
 **First observed on:** Commit `aaf8241` (PR #187 merge)
-**Investigation:** 
+**Investigation:**
 - Not caused by SHA allowlist (fixed in f9db3d1)
 - Not caused by workflow YAML syntax (validated locally)
 - Likely GitHub Actions runner infrastructure issue related to `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true`
