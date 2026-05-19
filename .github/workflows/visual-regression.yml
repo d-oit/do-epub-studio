@@ -1,0 +1,44 @@
+name: Visual Regression
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'packages/ui/**'
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  chromatic:
+    name: Chromatic visual regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683   # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - uses: ./.github/actions/setup-pnpm
+
+      - name: Build Storybook
+        working-directory: ./packages/ui
+        run: npx storybook build -o storybook-static
+
+      - name: Publish to Chromatic
+        uses: chromaui/action@e6129220824b44e265582e3bddc698c1128f6ede # v11.28.2
+        with:
+          projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
+          storybookBuildDir: packages/ui/storybook-static
+          workingDir: packages/ui
+          onlyChanged: true
+          exitOnceUploaded: true
