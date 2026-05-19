@@ -37,6 +37,8 @@ The overage is marginal (1 instruction) and comes from the Compliance Self-Check
 
 Accept the current 41-instruction count as-is. The 1-instruction overage is not actionable without sacrificing clarity. No immediate restructuring needed.
 
+If reduction to ≤40 is required, the Compliance Self-Check checklist items 2 and 10 ("fetch and merge main" + "use feature branch") could be merged into a single "follow branch workflow" item, reducing count by 1.
+
 ## References
 
 - Plan 011 Part A: Target ≤40 instructions

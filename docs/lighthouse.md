@@ -15,4 +15,4 @@ Lighthouse measurement has been deferred per Plan 033 Group E. The previous docu
 1. Serve the app with a mock API backend for static Lighthouse runs
 2. Or use a deployed preview URL
 3. Install `@lhci/cli`, create `.lighthouserc.json`, and add LHCI to CI
-4. Re-open issue #172 once restoration is complete
+4. Close issue #160 (Lighthouse re-measurement) once restoration is complete
