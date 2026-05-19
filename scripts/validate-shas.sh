@@ -18,6 +18,9 @@ ALLOWED_SHAS=(
     "github/codeql-action/analyze@60168efe1c415ce0f5521ea06d5c2062adbeed1b"
     "github/codeql-action/init@60168efe1c415ce0f5521ea06d5c2062adbeed1b"
     "pnpm/action-setup@b307475762933b98ed359c036b0e51f26b63b74b"
+    "nick-fields/retry@c97818ca39074beaea45180dba704f92496a0082"
+    "slackapi/slack-github-action@485a9d42d3a73031f12ec201c457e2162c45d02d"
+    "actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea"
     "softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda"
 )
 

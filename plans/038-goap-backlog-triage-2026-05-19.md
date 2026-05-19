@@ -11,7 +11,7 @@
 ## 1. Context Snapshot (2026-05-19)
 
 | Surface | State |
-|---|---|---|
+|---|---|---|---|
 | Branch baseline | `main @ aaf8241` (post-PRs #177–#187) |
 | Open PRs | **7** (#183 dependabot · #184 Jules · #186 fix · #188 CI improvements · #189 ESLint · #190 test creds · #191 docs) |
 | Open Issues | **10 remaining** of 17 (CI: 6 closed · UI/UX: 3 pending · Docs: 2 closed · Testing: 1 closed) |
@@ -47,7 +47,7 @@ Plans 036 (agent-harness GOAP) and 037 (agent-harness ADR) are currently **untra
 **Group A — CI / Release infrastructure (10 issues, P1)**
 
 | # | Title | Notes | Status |
-|---|---|---|---|
+|---|---|---|---|---|
 | 175 | feat(ci): artifact attestation + SBOM on release | release governance (plan 035) | ✅ PR #195 |
 | 174 | chore(ci): retry logic for scheduled E2E workflow | flake mitigation | ✅ PR #188 |
 | 173 | chore(ci): verify WebKit browser runs in CI E2E | covers KNOWN-ISSUES Playwright item | ✅ PR #188 |
