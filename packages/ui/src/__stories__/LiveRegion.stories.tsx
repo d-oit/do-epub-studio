@@ -18,7 +18,7 @@ function PoliteExample() {
   const [message, setMessage] = useState('');
   return (
     <div className="flex flex-col items-center gap-4">
-      <Button onClick={() => setMessage('Update complete: 3 items synced.')}>
+      <Button onClick={() => { setMessage('Update complete: 3 items synced.'); }}>
         Simulate update
       </Button>
       <LiveRegion polite>{message}</LiveRegion>
