@@ -58,18 +58,20 @@ jobs:
         run: pnpm build
 
       - name: Deploy Worker
-        uses: cloudflare/wrangler-action@9acf94ace14e7dc412b076f2c5c20b8ce93c79cd  # v3.15.0
+        uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0 # v4.0.0
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: ./apps/worker
+          wranglerVersion: '3.90.0'
 
       - name: Deploy Frontend to Cloudflare Pages
-        uses: cloudflare/wrangler-action@9acf94ace14e7dc412b076f2c5c20b8ce93c79cd  # v3.15.0
+        uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0 # v4.0.0
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy apps/web/dist --project-name=do-epub-studio
+          wranglerVersion: '3.90.0'
 
       - name: Generate SBOM
         run: npx --yes @cyclonedx/cyclonedx-npm@1.19.5 --output-format json --output-file sbom.cyclonedx.json
