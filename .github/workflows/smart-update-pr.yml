@@ -7,7 +7,7 @@ on:
     inputs:
       pr:
         description: 'Pull request number'
-        required: "true"
+        required: true
         type: string
   issue_comment:
     types: [created]
