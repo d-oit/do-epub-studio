@@ -71,10 +71,15 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy apps/web/dist --project-name=do-epub-studio
 
+      - name: Generate SBOM
+        run: npx --yes @cyclonedx/cyclonedx-npm@1.19.5 --output-format json --output-file sbom.cyclonedx.json
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda  # v3.0.0
         with:
-          files: apps/web/dist/**
+          files: |
+            apps/web/dist/**
+            sbom.cyclonedx.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
