@@ -43,7 +43,7 @@ Issue #128 closed; all follow-up work tracked in **[issue #140](https://github.c
 - [x] **Argon2id password hashing** - Already implemented per AGENTS.md
 - [x] **Zod validation** - All inputs validated
 - [x] **SQL parameterization** - No injection risks
-- [ ] **Test credentials** - Move to environment variables
+- [ ] **Test credentials** - Move to environment variables _(tracked: issue #169 · Plan 038 Group D)_
 
 ## Error Handling & Logging (April 2026)
 
