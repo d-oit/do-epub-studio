@@ -6,6 +6,7 @@
 - feat(lint): enable stricter ESLint rules (no-non-null-assertion, require-await, consistent-type-imports) as warnings (#163)
 - chore(test): add env var fallbacks for hardcoded test credentials (#169)
 - chore(docs): archive lighthouse.md, create AGENTS.md instruction count baseline (#172, #167)
+- feat(ci): add CycloneDX SBOM generation to release workflow (#175)
 - fix(ci): sync allowed action SHAs with workflow files (#186)
 - docs(plans): update Plan 038 backlog triage with Wave 2 progress
 
