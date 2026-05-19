@@ -64,7 +64,7 @@ Plans 036 (agent-harness GOAP) and 037 (agent-harness ADR) are currently **untra
 | # | Title | Notes | Status |
 |---|---|---|---|
 | 171 | feat(ui): Storybook + visual regression for OKLCH tokens | listed as G5 in Plan 033 | ❌ Not implemented (complex setup) |
-| 161 | feat(ui): localized copy review via `anti-ai-slop` skill | uses installed skill | ❌ Not implemented |
+| 161 | feat(ui): localized copy review via `anti-ai-slop` skill | uses installed skill | ✅ PR #196 — clean, no AI-slop patterns |
 | 160 | feat(ui): Lighthouse / CWV re-measurement post-2026 UI | refreshes `docs/lighthouse.md` | ❌ Depends on hosted preview URL |
 | 163 | feat(lint): stricter ESLint (no-non-null-assertion, require-await, consistent-type-imports) | quality gate | ✅ PR #189 (warn level, tracked for error promotion) |
 
@@ -145,7 +145,7 @@ No other product-code TODO/FIXME/HACK markers exist outside `node_modules/.ignor
 | Issue | Skill | Notes | Status |
 |---|---|---|---|
 | #171 Storybook + visual regression | `reader-ui-ux` | adds new dev workflow; scope to OKLCH tokens first | ❌ Deferred — complex setup |
-| #161 anti-ai-slop copy review | `anti-ai-slop` skill | scope to `apps/web/src/i18n/**` | ❌ Deferred |
+| #161 anti-ai-slop copy review | `anti-ai-slop` skill | scope to `apps/web/src/i18n/**` | ✅ PR #196 — no AI-slop found |
 | #160 Lighthouse re-measurement | `accessibility-auditor` | depends on #172 resolution | ❌ Deferred — needs hosted preview URL |
 | #163 stricter ESLint | `code-quality` | run report-only first, then make blocking | ✅ PR #189 (warn level) |
 
