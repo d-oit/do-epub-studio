@@ -180,10 +180,10 @@ jobs:
           retention-days: 7
 
   e2e-full:
-    name: Full Cross-browser E2E
+    name: Scheduled Cross-browser E2E
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683   # v4.2.2
       - uses: ./.github/actions/setup-pnpm
@@ -191,12 +191,12 @@ jobs:
       - name: Install Playwright browsers
         run: pnpm exec playwright install --with-deps chromium firefox webkit
 
-      - name: Run E2E tests
+      - name: Run full cross-browser E2E tests
         uses: nick-fields/retry@c97818ca39074beaea45180dba704f92496a0082   # v3.0.1
         with:
-          timeout_minutes: 15
-          max_attempts: 3
-          command: pnpm test:e2e:smoke --retries=2
+          timeout_minutes: 30
+          max_attempts: 2
+          command: pnpm test:e2e --retries=1
           retry_wait_seconds: 30
           warning_on_retry: true
 

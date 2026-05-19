@@ -49,8 +49,8 @@ jobs:
             --repo "${{ github.repository }}" \
             --state merged \
             --base "$default_branch" \
-            --json headRefName \
-            --jq '.[].headRefName' \
+            --json headRefName,headRepository \
+            --jq '.[] | select(.headRepository.nameWithOwner == "${{ github.repository }}") | .headRefName' \
             --limit 100 \
             2>/dev/null || true)
           if [ -z "$merged_prs" ]; then

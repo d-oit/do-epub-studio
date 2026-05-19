@@ -83,7 +83,7 @@ export function Modal({ isOpen, onClose, title, description, children, footer, s
                     className="p-1 rounded-lg hover:bg-background-secondary transition-colors"
                     aria-label="Close"
                   >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
                   </button>

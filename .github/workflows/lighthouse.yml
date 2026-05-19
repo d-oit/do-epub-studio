@@ -67,7 +67,7 @@ jobs:
             cat ./lighthouseci/assertion-results.json | jq '.'
             FAILURES=$(cat ./lighthouseci/assertion-results.json | jq '[.[] | select(.passed == false)] | length')
             if [ "$FAILURES" -gt "0" ]; then
-              echo "::warning::Lighthouse assertions failed ($FAILURES failures)"
+              echo "::error::Lighthouse assertions failed ($FAILURES failures)"
             fi
           fi
 
