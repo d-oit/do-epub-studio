@@ -18,7 +18,7 @@ function DefaultModal() {
   const [isOpen, setIsOpen] = useState(false);
   return (
     <div>
-      <Button onClick={() => setIsOpen(true)}>Open Modal</Button>
+      <Button onClick={() => { setIsOpen(true); }}>Open Modal</Button>
       <Modal
         isOpen={isOpen}
         onClose={() => setIsOpen(false)}
