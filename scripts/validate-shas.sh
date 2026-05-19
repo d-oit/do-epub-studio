@@ -14,7 +14,6 @@ ALLOWED_SHAS=(
     "cloudflare/wrangler-action@9acf94ace14e7dc412b076f2c5c20b8ce93c79cd"
     "codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354"
     "codecov/codecov-action@75cd11691c0faa626561e295848008c8a7dddffe"
-    "codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354"
     "dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98"
     "github/codeql-action/analyze@60168efe1c415ce0f5521ea06d5c2062adbeed1b"
     "github/codeql-action/init@60168efe1c415ce0f5521ea06d5c2062adbeed1b"
