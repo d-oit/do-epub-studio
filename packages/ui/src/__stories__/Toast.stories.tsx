@@ -22,7 +22,7 @@ function ToastDemo() {
         <Button onClick={() => addToast('success', 'Operation completed successfully')}>
           Success
         </Button>
-        <Button variant="danger" onClick={() => addToast('error', 'Something went wrong')}>
+        <Button variant="danger" onClick={() => { addToast('error', 'Something went wrong'); }}>
           Error
         </Button>
       </div>
