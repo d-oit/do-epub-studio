@@ -199,7 +199,7 @@ jobs:
         if: env.SLACK_WEBHOOK != ''
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-        uses: slackapi/slack-github-action@e28cf65c7013e725252e10f4a5568e9b81d000b8   # v2.0.0
+        uses: slackapi/slack-github-action@485a9d42d3a73031f12ec201c457e2162c45d02d   # v2.0.0
         with:
           webhook: ${{ secrets.SLACK_WEBHOOK }}
           webhook-type: incoming-webhook
@@ -210,7 +210,7 @@ jobs:
         if: env.SLACK_WEBHOOK == ''
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-        uses: actions/github-script@d5562d3a18e23856600430b5b1f7944c2004a10f   # v7.0.1
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea   # v7.0.1
         with:
           script: |
             const { data: issues } = await github.rest.issues.listForRepo({
