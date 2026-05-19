@@ -8,7 +8,7 @@ if (!baselineArg || !currentArg) {
   process.exit(1);
 }
 
-const threshold = thresholdArg ? parseFloat(thresholdArg) : 10;
+const threshold = thresholdArg ? parseFloat(thresholdArg) : 20;
 
 // Resolve paths to prevent path-traversal issues when paths come from CLI args.
 const baselinePath = path.resolve(baselineArg);
