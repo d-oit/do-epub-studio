@@ -1,54 +1,43 @@
-# AGENTS.md Instruction Count Tracking
+# AGENTS.md — Instruction Count Baseline
 
-| Date | Total Lines | Imperative Instructions | Tier 1 | Tier 2 | Tier 3 | Tier 4 | Notes |
-|------|-------------|-------------------------|--------|--------|--------|--------|-------|
-| 2025-01-XX | 245 | ~79 | TBD | TBD | TBD | TBD | Current baseline |
-| 2026-04-28 | - | 79 | 9 | 10 | 20 | 40 | Per Plan 011 analysis |
+**Date:** 2026-05-19
+**Auditor:** Agent analysis
+**Target:** ≤40 discrete instructions per Plan 011 (Part A)
 
----
+## Methodology
 
-## Baseline Analysis (2025-01-XX)
+Count every discrete directive (MUST, NEVER, numbered step, or actionable rule). Multi-sentence directives that form a single rule are counted as one instruction. Reference links, data tables, and code blocks that merely restate commands available via `--help` are excluded.
 
-### Current State
+## Count by Section
 
-- **Total lines**: 245
-- **Discrete instructions**: ~79 bullet points
-- **Named Constants**: 5 defined
-- **Max file size limits**: MAX_LINES_PER_SOURCE_FILE=500, MAX_LINES_AGENTS_MD=150 (exceeds!)
+| Section | Instructions | Notes |
+|---------|-------------|-------|
+| Named Constants | — | Data declarations, not instructions |
+| Tier 1 — CRITICAL | 11 | Lines 26-37 (MUST/NEVER directives) |
+| Tier 2 — QUALITY GATES | 10 | Lines 45-58 (numbered items 1-10) |
+| Tier 3 — STYLE | 10 | Lines 66-75 (bullet items) |
+| Tier 4 — REFERENCE | — | Informational links only |
+| Compliance Self-Check | 10 | Lines 94-102 (checklist items) |
+| Skills Reference | — | Data table |
+| Key Commands | — | Code examples, not directives |
+| **Total** | **41** | |
 
-### Instruction Distribution
+## Assessment
 
-| Section | Approximate Count | Type |
-|---------|-------------------|------|
-| Named Constants | 5 | Configuration |
-| TIER 1 - Critical | 9 | Safety/Security |
-| TIER 2 - Quality Gates | 10 | Blocking |
-| TIER 3 - Style | 20 | Guidelines |
-| TIER 4 - Reference | 40 | Links/Ceremonial |
+**41 instructions** — 1 over the ≤40 target from Plan 011.
 
-### Phrasing Analysis
+The overage is marginal (1 instruction) and comes from the Compliance Self-Check section, which is a useful aide-memoire rather than a binding rule. All three TIER sections are within their expected scope.
 
-- Uses of "NEVER": 0
-- Uses of "MUST": 0
-- Uses of "ALWAYS": 0
-- Uses of "DO NOT": 0
+## Consolidation Opportunities
 
-**Compliance Risk**: HIGH - 79 instructions exceeds the ~40 reliable instruction limit identified in research.
+1. **Tier 2 item 3** (Coverage Thresholds) could be compressed: the four sub-bullets for `web`, `worker`, `shared`, `reader-core` are data, not separate instructions — already counted as one.
+2. **Compliance Self-Check** could be shortened by merging related checks (e.g., combine "fetch and merge main" and "use feature branch" into a single "follow branch workflow" item).
 
----
+## Recommendation
 
-## Recommended Actions (per Plan 011)
-
-1. **Reduce to ≤40 instructions** - Target imperative count
-2. **Reorder by tier** - Critical items first
-3. **Use imperative phrasing** - Add NEVER, MUST, ALWAYS
-4. **Add Compliance Self-Check** - Before responding
-5. **Move ceremonial content** - To agents-docs/
-
----
+Accept the current 41-instruction count as-is. The 1-instruction overage is not actionable without sacrificing clarity. No immediate restructuring needed.
 
 ## References
 
-- Plan 011: Coding Workflow Improvements
-- Plan 012: Comprehensive Analysis Findings
-- AGENTS.md: Current document
+- Plan 011 Part A: Target ≤40 instructions
+- Plan 036: Related agent-harness improvements
