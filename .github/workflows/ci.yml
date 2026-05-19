@@ -193,7 +193,8 @@ jobs:
       - name: Run baseline benchmarks
         if: github.event_name == 'pull_request'
         run: |
-          git checkout $(git merge-base origin/main HEAD)
+          # Use the PR base ref so comparisons work for PRs targeting non-main branches.
+          git checkout $(git merge-base origin/${{ github.base_ref }} HEAD)
           pnpm install --frozen-lockfile
           pnpm --filter @do-epub-studio/reader-core exec vitest bench --outputJson baseline.json
           mv packages/reader-core/baseline.json ./baseline.json

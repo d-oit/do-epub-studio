@@ -1,14 +1,18 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-const [baselinePath, currentPath, thresholdArg] = process.argv.slice(2);
+const [baselineArg, currentArg, thresholdArg] = process.argv.slice(2);
 
-if (!baselinePath || !currentPath) {
+if (!baselineArg || !currentArg) {
   console.error('Usage: node compare-benchmarks.mjs <baseline.json> <current.json> [threshold]');
   process.exit(1);
 }
 
 const threshold = thresholdArg ? parseFloat(thresholdArg) : 10;
+
+// Resolve paths to prevent path-traversal issues when paths come from CLI args.
+const baselinePath = path.resolve(baselineArg);
+const currentPath = path.resolve(currentArg);
 
 function readJson(p) {
   try {
@@ -58,10 +62,17 @@ for (const [name, currentBench] of currentBenchs) {
     continue;
   }
 
-  const change = ((currentBench.hz - baselineBench.hz) / baselineBench.hz) * 100;
-  const isRegression = change < -threshold;
-  if (isRegression) {
-    hasRegression = true;
+  // Guard against division by zero when baseline benchmark reports 0 ops/s.
+  let change = null;
+  let isRegression = false;
+  if (baselineBench.hz === 0) {
+    change = currentBench.hz === 0 ? 0 : Infinity;
+  } else {
+    change = ((currentBench.hz - baselineBench.hz) / baselineBench.hz) * 100;
+    isRegression = change < -threshold;
+    if (isRegression) {
+      hasRegression = true;
+    }
   }
 
   results.push({
@@ -79,9 +90,19 @@ markdown += '| Benchmark | Baseline (ops/s) | Current (ops/s) | Change | Status 
 markdown += '| :--- | :--- | :--- | :--- | :--- |\n';
 
 for (const res of results) {
-  const baselineStr = res.baseline ? res.baseline.toLocaleString(undefined, { maximumFractionDigits: 2 }) : 'N/A';
+  // Treat 0 as a valid baseline value; only null means "no baseline available".
+  const baselineStr = res.baseline !== null && res.baseline !== undefined
+    ? res.baseline.toLocaleString(undefined, { maximumFractionDigits: 2 })
+    : 'N/A';
   const currentStr = res.current.toLocaleString(undefined, { maximumFractionDigits: 2 });
-  const changeStr = res.change !== null ? `${res.change > 0 ? '+' : ''}${res.change.toFixed(2)}%` : 'NEW';
+  let changeStr;
+  if (res.change === null) {
+    changeStr = 'NEW';
+  } else if (!Number.isFinite(res.change)) {
+    changeStr = '∞%';
+  } else {
+    changeStr = `${res.change > 0 ? '+' : ''}${res.change.toFixed(2)}%`;
+  }
 
   let status = '✅';
   if (res.change === null) status = '🆕';
