@@ -1,0 +1,109 @@
+name: Lighthouse
+
+on:
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
+      - '**.mdx'
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  TURBO_TELEMETRY_DISABLED: 1
+
+permissions:
+  contents: read
+  deployments: write
+  pull-requests: write
+  id-token: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lighthouse:
+    name: Lighthouse audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683   # v4.2.2
+
+      - name: Setup pnpm
+        uses: ./.github/actions/setup-pnpm
+
+      - name: Build
+        run: pnpm build
+
+      - name: Deploy preview to Cloudflare Pages
+        uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0 # v4.0.0
+        id: deploy
+        with:
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy apps/web/dist --project-name=do-epub-studio --branch=${{ github.head_ref || github.ref_name }}
+
+      - name: Wait for deployment
+        run: sleep 30
+
+      - name: Run Lighthouse CI
+        id: lhci
+        continue-on-error: true
+        uses: treosh/lighthouse-ci-action@3e7e23fb74242897f95c0ba9cabad3d0227b9b18 # v12.6.2
+        with:
+          urls: |
+            ${{ steps.deploy.outputs.url }}/reader
+          configPath: .lighthouserc.json
+          uploadArtifacts: true
+          temporaryPublicStorage: true
+
+      - name: Process Lighthouse results
+        if: always()
+        run: |
+          if [ -f "./lighthouseci/assertion-results.json" ]; then
+            echo "=== Lighthouse Assertion Results ==="
+            cat ./lighthouseci/assertion-results.json | jq '.'
+            FAILURES=$(cat ./lighthouseci/assertion-results.json | jq '[.[] | select(.passed == false)] | length')
+            if [ "$FAILURES" -gt "0" ]; then
+              echo "::warning::Lighthouse assertions failed ($FAILURES failures)"
+            fi
+          fi
+
+      - name: Comment PR with scores
+        if: github.event_name == 'pull_request' && steps.lhci.outcome != 'skipped'
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea   # v7.0.1
+        with:
+          script: |
+            const fs = require('fs');
+            const reportPath = './lighthouseci/assertion-results.json';
+            if (!fs.existsSync(reportPath)) {
+              console.log('No Lighthouse results found');
+              return;
+            }
+            const results = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
+            const scores = {};
+            for (const r of results) {
+              if (r.auditId && r.expected) {
+                scores[r.auditId] = { actual: r.actual, expected: r.expected, passed: r.passed };
+              }
+            }
+            const body = [
+              '## Lighthouse Results',
+              '',
+              '| Category | Score | Threshold | Status |',
+              '|---|---|---|---|',
+              ...Object.entries(scores).map(([k, v]) => {
+                const status = v.passed ? '✅' : '❌';
+                return `| ${k} | ${v.actual} | ${v.expected} | ${status} |`;
+              }),
+              '',
+              '_Run ID: ${{ github.run_id }}_',
+            ].join('\n');
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: body,
+            });
