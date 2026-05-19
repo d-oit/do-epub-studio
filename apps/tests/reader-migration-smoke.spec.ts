@@ -145,7 +145,7 @@ const TEST_USER = {
 const LOGIN_RESPONSE = {
   ok: true,
   data: {
-    sessionToken: 'smoke-session-token',
+    sessionToken: process.env.TEST_SESSION_TOKEN || 'smoke-session-token',
     book: { id: 'book-smoke', slug: TEST_USER.bookSlug, title: 'Smoke Test Book', authorName: 'Test Author' },
     capabilities: { canRead: true, canComment: true, canHighlight: true, canBookmark: true, canDownloadOffline: false, canExportNotes: false, canManageAccess: false },
   },
