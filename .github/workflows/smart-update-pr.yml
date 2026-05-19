@@ -7,7 +7,7 @@ on:
     inputs:
       pr:
         description: 'Pull request number'
-        required: true
+        required: "true"
         type: string
   issue_comment:
     types: [created]
@@ -16,7 +16,7 @@ permissions: {}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: "true"
 
 jobs:
   smart-update:
@@ -47,7 +47,7 @@ jobs:
           fi
 
       - name: Checkout default branch
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
         with:
           fetch-depth: 0
 

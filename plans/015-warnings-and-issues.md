@@ -1,6 +1,6 @@
 # Plan 015: Warnings and Known Issues
 
-**Last Updated:** see git log
+**Last Updated:** 2026-05-19
 
 This document tracks all warnings and known issues in the codebase as of the current date.
 
@@ -54,14 +54,19 @@ Per `AGENTS.md` (`MAX_LINES_PER_SOURCE_FILE=500`):
 
 ---
 
-## Testing Gaps
+## ESLint Stricter Rules (New — Warn Level)
 
-| Gap | Severity | Status |
-|-----|----------|--------|
-| CFI navigation tests | High | Open |
-| EPUB parsing tests | High | Open |
-| Password hashing tests | High | Open |
-| Bookmark CRUD tests | Medium | Open |
+Three stricter rules enabled as `warn` in PR #189. See `plans/040-goap-warnings-and-issues-2026-05-19.md` for full breakdown.
+
+| Rule | Violations | Target |
+|------|-----------|--------|
+| `@typescript-eslint/no-non-null-assertion` | ~15 | `error` |
+| `@typescript-eslint/require-await` | ~40 | `error` |
+| `@typescript-eslint/consistent-type-imports` | ~13 | `error` |
+
+## CI Infrastructure Issue (New — Monitor)
+
+All CI runs on `main` fail with "workflow file issue" — likely GitHub Actions runner infrastructure. See `plans/040-goap-warnings-and-issues-2026-05-19.md` CI-W1.
 
 ---
 

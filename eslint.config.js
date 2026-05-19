@@ -88,6 +88,10 @@ export default tseslint.config(
       '@typescript-eslint/prefer-regexp-exec': 'off',
       // Logical OR (||) is idiomatic and preferred for default values in this codebase
       '@typescript-eslint/prefer-nullish-coalescing': 'off',
+      // TODO(#163): promote to 'error' once existing violations are resolved
+      '@typescript-eslint/no-non-null-assertion': 'warn',
+      '@typescript-eslint/require-await': 'warn',
+      '@typescript-eslint/consistent-type-imports': 'warn',
       '@typescript-eslint/no-floating-promises': 'error',
       '@typescript-eslint/no-misused-promises': 'error',
       // The following unsafe rules are set to 'warn' as a strictness improvement over
@@ -117,11 +121,9 @@ export default tseslint.config(
       '@typescript-eslint/no-unsafe-argument': 'off',
       '@typescript-eslint/no-unsafe-return': 'off',
       '@typescript-eslint/no-unsafe-call': 'off',
-      '@typescript-eslint/no-non-null-assertion': 'off',
       '@typescript-eslint/restrict-template-expressions': 'off',
       '@typescript-eslint/no-floating-promises': 'off',
       '@typescript-eslint/no-misused-promises': 'off',
-      '@typescript-eslint/require-await': 'off',
     },
   },
   prettierConfig,

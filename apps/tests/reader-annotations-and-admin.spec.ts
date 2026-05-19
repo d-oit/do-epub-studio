@@ -13,7 +13,7 @@ const READER_USER = {
 
 const ADMIN_USER = {
   email: 'admin@example.com',
-  password: 'admin-password',
+  password: process.env.TEST_ADMIN_PASSWORD || 'admin-password',
 };
 
 const LOGIN_RESPONSE = {
