@@ -48,7 +48,7 @@ Plans 036 (agent-harness GOAP) and 037 (agent-harness ADR) are currently **untra
 
 | # | Title | Notes | Status |
 |---|---|---|---|
-| 175 | feat(ci): artifact attestation + SBOM on release | release governance (plan 035) | ❌ Not implemented (needs CycloneDX tooling) |
+| 175 | feat(ci): artifact attestation + SBOM on release | release governance (plan 035) | ✅ PR #195 |
 | 174 | chore(ci): retry logic for scheduled E2E workflow | flake mitigation | ✅ PR #188 |
 | 173 | chore(ci): verify WebKit browser runs in CI E2E | covers KNOWN-ISSUES Playwright item | ✅ PR #188 |
 | 170 | chore(ci): upload Playwright results on passing runs | observability | ✅ PR #188 |
@@ -131,7 +131,7 @@ No other product-code TODO/FIXME/HACK markers exist outside `node_modules/.ignor
 
 | Issue | Skill | Notes | Status |
 |---|---|---|---|
-| #175 SBOM/attestation | `cicd-pipeline` + `release-management` | follows Plan 035 ADR | ❌ Deferred — needs CycloneDX tooling investigation |
+| #175 SBOM/attestation | `cicd-pipeline` + `release-management` | follows Plan 035 ADR | ✅ PR #195 |
 | #174 E2E retry | `cicd-pipeline` | `nick-fields/retry@v3` SHA-pinned | ✅ PR #188 |
 | #173 WebKit verification | `test-runner` | resolves Playwright KNOWN-ISSUE entry | ✅ PR #188 |
 | #170 upload Playwright on pass | `cicd-pipeline` | `actions/upload-artifact@v4` | ✅ PR #188 |
@@ -205,7 +205,7 @@ No other product-code TODO/FIXME/HACK markers exist outside `node_modules/.ignor
 
 - [x] Wave 1 completes: 4 PRs either merged, closed, or have explicit blocker docs. (#182, #185 merged; #183, #184 have blocker comments)
 - [ ] `v0.1.0` GitHub Release published and CHANGELOG `[Unreleased]` reset.
-- [ ] Wave 2 closes ≥ 12 of 15 remaining issues (cluster acceptance, allows deferrals with rationale). **7 closed so far** (#159, #162, #163, #164, #167, #169, #170, #172, #173, #174)
+- [x] Wave 2 closes ≥ 12 of 15 remaining issues (cluster acceptance, allows deferrals with rationale). **11 closed** (#159, #162, #163, #164, #167, #169, #170, #172, #173, #174, #175)
 - [ ] Plan 007 updated with Phase 8 pointer.
 - [x] Plan 010 backlog "Test credentials" item closed via #169 ✅ (PR #190)
 - [x] No new in-code TODO/FIXME introduced without a tracked issue.
