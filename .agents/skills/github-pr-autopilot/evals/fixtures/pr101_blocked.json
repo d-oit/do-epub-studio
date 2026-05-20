@@ -1,0 +1,22 @@
+{
+  "number": 101,
+  "url": "https://github.com/example/repo/pull/101",
+  "title": "feat(web): add accessibility audit panel",
+  "headRefName": "feature/a11y-audit-panel",
+  "baseRefName": "main",
+  "mergeable": "MERGEABLE",
+  "reviewDecision": "APPROVED",
+  "statusCheckRollup": [
+    { "name": "lint", "status": "SUCCESS", "conclusion": "SUCCESS" },
+    { "name": "typecheck", "status": "SUCCESS", "conclusion": "SUCCESS" },
+    { "name": "test", "status": "FAILURE", "conclusion": "FAILURE" },
+    { "name": "e2e", "status": "IN_PROGRESS", "conclusion": null }
+  ],
+  "labels": [
+    { "name": "enhancement" }
+  ],
+  "files": [
+    { "path": "apps/web/src/components/A11yPanel.tsx" },
+    { "path": "apps/web/src/hooks/useA11yAudit.ts" }
+  ]
+}

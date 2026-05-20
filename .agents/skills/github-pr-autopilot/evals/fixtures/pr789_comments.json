@@ -1,0 +1,43 @@
+{
+  "number": 789,
+  "url": "https://github.com/example/repo/pull/789",
+  "title": "fix(worker): handle rate limit edge case",
+  "headRefName": "fix/rate-limit-edge-case",
+  "baseRefName": "main",
+  "mergeable": "MERGEABLE",
+  "reviewDecision": "CHANGES_REQUESTED",
+  "statusCheckRollup": [
+    { "name": "lint", "status": "SUCCESS", "conclusion": "SUCCESS" },
+    { "name": "typecheck", "status": "SUCCESS", "conclusion": "SUCCESS" },
+    { "name": "test", "status": "SUCCESS", "conclusion": "SUCCESS" }
+  ],
+  "labels": [
+    { "name": "bug" }
+  ],
+  "files": [
+    { "path": "apps/worker/src/rate-limit.ts" }
+  ],
+  "comments": [
+    {
+      "id": 1001,
+      "body": "This must handle the case where the counter overflows. Please fix before merging.",
+      "path": "apps/worker/src/rate-limit.ts",
+      "line": 42,
+      "position": 1
+    },
+    {
+      "id": 1002,
+      "body": "Consider extracting this into a helper function for readability.",
+      "path": "apps/worker/src/rate-limit.ts",
+      "line": 67,
+      "position": 2
+    },
+    {
+      "id": 1003,
+      "body": "Nice approach! I like how you handled the edge case here.",
+      "path": "apps/worker/src/rate-limit.ts",
+      "line": 89,
+      "position": 3
+    }
+  ]
+}

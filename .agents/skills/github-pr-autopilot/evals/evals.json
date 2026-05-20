@@ -1,0 +1,63 @@
+{
+  "skill_name": "github-pr-autopilot",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Merge PR #123 for me – it's already approved and green.",
+      "expected_output": "The PR should be merged via `gh pr merge` with the squash strategy, after verifying no protected labels or sensitive files.",
+      "files": ["fixtures/pr123.json"],
+      "assertions": [
+        "The agent verifies authentication",
+        "The agent checks for protected labels",
+        "The agent verifies CI is passing",
+        "The agent merges with --squash --delete-branch"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "PR #456 has a merge conflict. Can you resolve it automatically?",
+      "expected_output": "Simple conflicts (lockfiles, imports, JSON) should be auto‑resolved and pushed; complex conflicts should stop and ask the user.",
+      "files": ["fixtures/pr456_conflict.json"],
+      "assertions": [
+        "The agent runs resolve-conflicts.sh",
+        "Simple conflicts are auto‑resolved",
+        "Complex conflicts halt the automation",
+        "The user is informed of manual resolution needed"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Take a look at the comments on PR #789 and apply the must‑fix ones.",
+      "expected_output": "Must‑fix comments (containing 'must', 'fix', 'required', 'bug', 'error') halt the automation with a clear message; should‑fix comments (containing 'suggest', 'consider', 'maybe', 'nit', 'should') are acknowledged politely.",
+      "files": ["fixtures/pr789_comments.json"],
+      "assertions": [
+        "Must‑fix comments halt automation",
+        "Should‑fix comments receive acknowledgment",
+        "Discussion comments receive polite reply",
+        "User is informed which comments need manual attention"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Check what's blocking PR #101 from being merged.",
+      "expected_output": "The agent runs the autopilot loop and reports the specific blocking condition: conflicts, pending reviews, or failing CI checks.",
+      "files": ["fixtures/pr101_blocked.json"],
+      "assertions": [
+        "The agent identifies the blocking condition",
+        "The agent reports specific details (which check failed, which file conflicts)",
+        "The agent suggests next steps"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "PR #202 has the 'release:cut' label. Should I auto‑merge it?",
+      "expected_output": "The agent detects the protected label and refuses to auto‑merge, directing the user to use the release-management skill instead.",
+      "files": ["fixtures/pr202_release.json"],
+      "assertions": [
+        "The agent detects the release:cut label",
+        "The agent refuses to auto‑merge",
+        "The agent directs to release-management skill"
+      ]
+    }
+  ]
+}
