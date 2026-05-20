@@ -21,20 +21,22 @@ fi
 
 # Check PR labels for protected ones before proceeding
 echo "→ Checking PR labels..."
-LABELS=$(gh pr view "$PR_ID" --json labels --jq '.labels[].name' 2>/dev/null)
-for label in $LABELS; do
+gh pr view "$PR_ID" --json labels --jq '.labels[].name' 2>/dev/null | while IFS= read -r label; do
+    [ -z "$label" ] && continue
     case "$label" in
         release|release:cut|WIP|"DO NOT MERGE")
             echo "❌ PR has protected label '$label' – cannot auto‑merge"
-            exit 1
+            exit 2
             ;;
     esac
 done
 
+if [ $? -eq 2 ]; then exit 1; fi
+
 # Check if PR touches auth/security files
 echo "→ Checking for sensitive file changes..."
-PR_FILES=$(gh pr view "$PR_ID" --json files --jq '.files[].path' 2>/dev/null)
-for file in $PR_FILES; do
+gh pr view "$PR_ID" --json files --jq '.files[].path' 2>/dev/null | while IFS= read -r file; do
+    [ -z "$file" ] && continue
     # Skip sensitive check for the autopilot skill's own directory, CLI skill mappings, and plans
     if [[ "$file" == .agents/skills/github-pr-autopilot/* ]] || \
        [[ "$file" == .qwen/skills* ]] || \
@@ -45,9 +47,11 @@ for file in $PR_FILES; do
     fi
     if echo "$file" | grep -qiE "(auth|security|permission|argon2|session|token|secret)"; then
         echo "❌ PR touches sensitive files ($file) – requires human review"
-        exit 1
+        exit 2
     fi
 done
+
+if [ $? -eq 2 ]; then exit 1; fi
 
 while [ $ITER -lt $MAX_ITER ]; do
     ITER=$((ITER + 1))

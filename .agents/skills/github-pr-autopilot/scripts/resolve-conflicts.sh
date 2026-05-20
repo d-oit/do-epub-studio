@@ -36,32 +36,39 @@ fi
 echo "⚠️  Conflicts detected – analysing complexity..."
 
 # List conflicted files
-CONFLICTS=$(git diff --name-only --diff-filter=U 2>/dev/null)
-
-for file in $CONFLICTS; do
-    # Check if conflict is "simple" (whitespace, imports, lockfiles, etc.)
-    if grep -qE '^<<<<<<< |^=======$|^>>>>>>> ' "$file" 2>/dev/null; then
-        # Heuristics for simple conflicts – auto‑resolve
-        if [[ "$file" =~ \.(lock|toml|json)$ ]] || grep -qE '^[[:space:]]*import |^[[:space:]]*from ' "$file" 2>/dev/null; then
-            echo "   Auto‑resolving simple conflict in $file"
-            git checkout --theirs "$file" 2>/dev/null
-            git add "$file" 2>/dev/null
-        else
-            echo "❌ Complex conflict in $file – cannot auto‑resolve"
-            echo "   -> Halting automation. Delegating to goap-agent skill for parallel analysis and implementation."
-            gh pr comment "$PR_ID" --body "🤖 **Autopilot Handoff**: Complex merge conflict detected in \`$file\`. Delegating to \`goap-agent skill\` for parallel analysis and implementation." 2>/dev/null || true
-            git merge --abort 2>/dev/null || true
-            git checkout "$CURRENT_BRANCH" 2>/dev/null || true
-            exit 1
-        fi
+# Use while-read to handle spaces in filenames
+git diff --name-only --diff-filter=U 2>/dev/null | while IFS= read -r file; do
+    [ -z "$file" ] && continue
+    
+    echo "   Checking conflict in: $file"
+    
+    # Check if conflict is "simple" (lockfiles only for auto-resolve)
+    if [[ "$file" == "pnpm-lock.yaml" ]]; then
+        echo "   Auto-resolving lockfile conflict in $file (using theirs)"
+        git checkout --theirs "$file" 2>/dev/null
+        git add "$file" 2>/dev/null
+    else
+        echo "❌ Complex conflict in $file – cannot auto‑resolve"
+        echo "   -> Halting automation. Delegating to goap-agent skill for parallel analysis and implementation."
+        gh pr comment "$PR_ID" --body "🤖 **Autopilot Handoff**: Complex merge conflict detected in \`$file\`. Delegating to \`goap-agent skill\` for parallel analysis and implementation." 2>/dev/null || true
+        git merge --abort 2>/dev/null || true
+        # Note: We can't exit the parent script from inside a while loop piped from git diff.
+        # We'll use a sentinel file or check the exit status.
+        exit 2
     fi
 done
+
+# Check if the loop exited with error
+if [ $? -eq 2 ]; then
+    git checkout "$CURRENT_BRANCH" 2>/dev/null || true
+    exit 1
+fi
 
 # Commit the resolutions
 if git diff --cached --quiet; then
     echo "   No changes to commit"
 else
-    git commit -m "chore(merge): auto‑resolve simple conflicts in PR #$PR_ID" --no-verify
+    git commit -m "chore(merge): auto‑resolve lockfile conflicts in PR #$PR_ID" --no-verify
     git push origin "$PR_BRANCH"
     echo "✅ Conflicts resolved and pushed"
 fi

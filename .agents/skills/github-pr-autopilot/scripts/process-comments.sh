@@ -11,7 +11,8 @@ fi
 echo "→ Fetching unresolved review comments for PR #$PR_ID"
 
 # Fetch all comments and reviews
-COMMENTS=$(gh api 'repos/:owner/:repo/pulls/$PR_ID/comments' --jq '.[] | select(.position != null)' 2>/dev/null)
+# Corrected syntax for GH CLI 2.x interpolation
+COMMENTS=$(gh api "repos/:owner/:repo/pulls/$PR_ID/comments" --jq '.[] | select(.position != null)' 2>/dev/null)
 
 if [ -z "$COMMENTS" ]; then
     echo "✅ No unresolved comments found"
@@ -20,9 +21,10 @@ fi
 
 HAS_MUST_FIX=false
 
-# Use process substitution to avoid the subshell trap — exit codes propagate
-# from the loop body into the parent script scope.
+# Use process substitution and while-read to handle potential spaces or multi-line comments
 while IFS= read -r comment; do
+    [ -z "$comment" ] && continue
+    
     BODY=$(echo "$comment" | jq -r '.body')
     PATH_FILE=$(echo "$comment" | jq -r '.path')
     LINE=$(echo "$comment" | jq -r '.line // "unknown"')
