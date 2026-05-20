@@ -14,6 +14,11 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 echo "🚀 Starting GitHub PR Autopilot for PR #$PR_ID"
 
+# Verify auth and switch account if needed
+if [ -f "$SCRIPT_DIR/verify-auth.sh" ]; then
+    bash "$SCRIPT_DIR/verify-auth.sh"
+fi
+
 # Check PR labels for protected ones before proceeding
 echo "→ Checking PR labels..."
 LABELS=$(gh pr view "$PR_ID" --json labels --jq '.labels[].name' 2>/dev/null)
