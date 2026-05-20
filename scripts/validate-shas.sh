@@ -17,7 +17,7 @@ ALLOWED_SHAS=(
     "dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98"
     "github/codeql-action/analyze@60168efe1c415ce0f5521ea06d5c2062adbeed1b"
     "github/codeql-action/init@60168efe1c415ce0f5521ea06d5c2062adbeed1b"
-    "pnpm/action-setup@b307475762933b98ed359c036b0e51f26b63b74b"
+    "pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093"
     "nick-fields/retry@c97818ca39074beaea45180dba704f92496a0082"
     "slackapi/slack-github-action@485a9d42d3a73031f12ec201c457e2162c45d02d"
     "actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea"
