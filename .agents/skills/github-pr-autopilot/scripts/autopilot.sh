@@ -82,10 +82,10 @@ while [ $ITER -lt $MAX_ITER ]; do
     # Process comments if not approved
     if [ "$REVIEW" != "APPROVED" ] && [ "$REVIEW" != "NONE" ]; then
         echo "📝 PR has pending review – processing comments..."
+        # process-comments.sh returns 2 if it handled/acknowledged comments but didn't fix them all
+        # it returns 0 if all comments are handled/skipped
         if bash "$SCRIPT_DIR/process-comments.sh" "$PR_ID"; then
-            echo "   Comments processed. Waiting for reviewer response..."
-            sleep 30
-            continue
+            echo "   All current comments acknowledged or resolved."
         else
             echo "❌ Must‑fix comments found – delegating to goap-agent skill for parallel analysis and implementation"
             exit 1
