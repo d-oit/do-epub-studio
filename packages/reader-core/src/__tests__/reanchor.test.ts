@@ -4,6 +4,7 @@ import {
   tryReanchor,
   findBestChapterMatch,
   shouldShowDriftWarning,
+  normalizeText,
   type ReanchorResult,
 } from '../reanchor';
 import type { TocItem } from '../epub-types';
@@ -250,5 +251,53 @@ describe('shouldShowDriftWarning', () => {
       chapterHref: 'chapter1.xhtml',
     };
     expect(shouldShowDriftWarning(result, undefined)).toBe(false);
+  });
+});
+
+describe('performance-optimized logic correctness', () => {
+  it('normalizeText handles unicode and collapses whitespace', () => {
+    expect(normalizeText('Hello,   World! 123...')).toBe('hello world 123');
+    expect(normalizeText('Thé Café ☕️ 2026')).toBe('thé café 2026');
+    expect(normalizeText('   multiple    spaces   ')).toBe('multiple spaces');
+  });
+
+  it('reanchorByText handles matching after literal space splitting optimization', async () => {
+    const loadContent = vi.fn().mockResolvedValue('The quick brown fox jumps over the lazy dog.');
+    // Check exact match
+    const resultExact = await reanchorByText('quick brown fox', mockToc, loadContent);
+    expect(resultExact.success).toBe(true);
+    expect(resultExact.matchType).toBe('exact');
+
+    // Check fuzzy match (needs >70% overlap by default)
+    // Words >= 4 chars: "quick" (match), "brown" (match), "jumps" (match), "lazy" (no)
+    // 3/4 = 75% > 70%
+    const resultFuzzy = await reanchorByText('quick brown jumps lazy dog', mockToc, loadContent);
+    expect(resultFuzzy.success).toBe(true);
+    expect(resultFuzzy.matchType).toBe('fuzzy');
+  });
+
+  it('reanchorByText reuses cached state between Pass 1 and Pass 2', async () => {
+    const loadContent = vi.fn().mockResolvedValue('The quick brown fox jumps over the lazy dog.');
+
+    // Fuzzy match only (no exact/partial match)
+    // Pass 1 will check all chapters and cache them.
+    // Pass 2 will use the cache.
+    await reanchorByText('quick brown jumps lazy dog', mockToc, loadContent);
+
+    // 4 unique base HREFs in uniqueHrefs: chapter1, chapter2, chapter3, section3a
+    // Wait, getCachedData strips # fragment but section3a.xhtml and chapter3.xhtml are different files
+    // in this mockToc. So 4 calls is correct for this specific mock setup.
+    expect(loadContent).toHaveBeenCalledTimes(4);
+  });
+
+  it('reanchorByText correctly identifies words for fuzzy match', async () => {
+    const loadContent = vi.fn().mockResolvedValue('Optimization is great for performance.');
+    // words are length >= 4
+    // "optimization", "great", "performance"
+    const result = await reanchorByText('optimization performance', mockToc, loadContent, {
+      fuzzyThreshold: 0.5,
+    });
+    expect(result.success).toBe(true);
+    expect(result.matchType).toBe('fuzzy');
   });
 });

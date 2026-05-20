@@ -16,7 +16,7 @@ export interface AnnotationAnchor {
   chapterRef?: string;
 }
 
-function normalizeText(text: string, isAlreadyLower = false): string {
+export function normalizeText(text: string, isAlreadyLower = false): string {
   return (isAlreadyLower ? text : text.toLowerCase())
     .replace(/[^\p{L}\p{N}\s]+/gu, '')
     .replace(/\s+/g, ' ')
@@ -56,7 +56,7 @@ export async function reanchorByText(
   }
 
   const normalizedTargetLower = targetText.toLowerCase();
-  const normalizedTargetGeneral = normalizeText(normalizedTargetLower, true);
+  const normalizedTargetGeneral = normalizeText(targetText);
   // Optimized word extraction using regex match instead of split/filter
   const words = normalizedTargetGeneral.match(/[\p{L}\p{N}]{4,}/gu) || [];
 
