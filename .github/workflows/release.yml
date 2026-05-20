@@ -67,7 +67,6 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           packageManager: pnpm
-          wranglerVersion: '4'
           workingDirectory: ./apps/worker
 
       - name: Deploy Frontend to Cloudflare Pages
@@ -79,7 +78,6 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           packageManager: pnpm
-          wranglerVersion: '4'
           command: pages deploy apps/web/dist --project-name=do-epub-studio
 
       - name: Generate SBOM
