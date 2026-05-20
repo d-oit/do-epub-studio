@@ -9,10 +9,9 @@ SKILLS_SRC="$REPO_ROOT/.agents/skills"
 
 # CLI folders that should contain symlinks to canonical skills
 # (OpenCode reads directly from .agents/skills/ - not included here)
-# (Qwen CLI also reads directly from .agents/skills/ - directory created for consistency)
+# (Qwen CLI also reads directly from .agents/skills/ via a direct symlink - not included here)
 CLI_SKILL_DIRS=(
   ".claude/skills"
-  ".qwen/skills"
 )
 
 if [ ! -d "$SKILLS_SRC" ]; then
