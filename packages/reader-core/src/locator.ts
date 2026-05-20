@@ -25,9 +25,20 @@ export function parseLocator(locatorString: string): LocatorResult | null {
 }
 
 export function locatorToString(locator: LocatorResult): string {
-  // Use a stable, high-performance string representation that avoids the overhead
-  // of JSON.stringify for small objects during repetitive locator operations.
-  return `{"cfi":"${locator.cfi}","textExcerpt":"${locator.textExcerpt}","chapterHref":"${locator.chapterHref}"}`;
+  const { cfi, textExcerpt, chapterHref } = locator;
+  // Optimize for the common case where fields do not contain characters that need JSON escaping.
+  // This avoids JSON.stringify overhead during repetitive locator operations while maintaining correctness.
+  if (
+    cfi.indexOf('"') === -1 &&
+    cfi.indexOf('\\') === -1 &&
+    textExcerpt.indexOf('"') === -1 &&
+    textExcerpt.indexOf('\\') === -1 &&
+    chapterHref.indexOf('"') === -1 &&
+    chapterHref.indexOf('\\') === -1
+  ) {
+    return `{"cfi":"${cfi}","textExcerpt":"${textExcerpt}","chapterHref":"${chapterHref}"}`;
+  }
+  return JSON.stringify(locator);
 }
 
 export function extractTextFromRange(range: Range, maxLength = 150): string {
