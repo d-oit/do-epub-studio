@@ -32,3 +32,13 @@ Update the project's centralized `setup-pnpm` composite action to use `pnpm/acti
 - **Positive**: Resolves the CI blocker and enables successful deployments and Lighthouse audits.
 - **Positive**: Keeps the CI environment aligned with modern `pnpm` versions.
 - **Neutral**: Requires updating the allowed SHA list in the security validation script.
+
+## Update 2026-05-20 (Post-failure analysis)
+The initial fix to update `pnpm/action-setup` was correct for the first error, but a second error occurred in the `cloudflare/wrangler-action` step:
+1. `tar` failed to restore `node_modules` cache with exit code 2.
+2. `wrangler-action` v4.0.0 failed with "Not logged in" and incorrect pnpm paths (`.../.bin/bin/pnpm`).
+
+### Revised decision
+1. Remove the redundant `Cache node_modules` step from `.github/actions/setup-pnpm/action.yml`. `actions/setup-node` already handles pnpm caching correctly.
+2. Downgrade `cloudflare/wrangler-action` to v3.15.0 (SHA `9acf94ace14e7dc412b076f2c5c20b8ce93c79cd`) which is known to be more stable with our current pnpm setup.
+3. Update `scripts/validate-shas.sh` to allow v3.15.0 SHA.
