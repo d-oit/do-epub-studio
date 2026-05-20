@@ -11,7 +11,7 @@ fi
 echo "→ Fetching unresolved review comments for PR #$PR_ID"
 
 # Fetch all comments and reviews
-COMMENTS=$(gh api "repos/{owner}/{repo}/pulls/$PR_ID/comments" --jq '.[] | select(.position != null)' 2>/dev/null)
+COMMENTS=$(gh api 'repos/:owner/:repo/pulls/$PR_ID/comments' --jq '.[] | select(.position != null)' 2>/dev/null)
 
 if [ -z "$COMMENTS" ]; then
     echo "✅ No unresolved comments found"
