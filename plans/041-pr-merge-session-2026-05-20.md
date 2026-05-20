@@ -18,6 +18,7 @@
 | #212 | bump turbo 2.9.12→2.9.14 | Dependabot | Squash merged ✅ |
 | #213 | bump dev-dependencies group (10 updates) | Dependabot | Squash merged (lockfile regenerated) ✅ |
 | #203 | fix wrangler-action package manager and version mismatch | Manual fix | Closed — changes incorporated into main |
+| #215 | chore(skills): remove .gemini/skills and add github-pr-autopilot | Agent | In flight (created) 🔄 |
 
 ---
 
