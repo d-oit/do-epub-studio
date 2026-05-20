@@ -56,7 +56,7 @@ export async function reanchorByText(
   }
 
   const normalizedTargetLower = targetText.toLowerCase();
-  const normalizedTargetGeneral = normalizeText(targetText);
+  const normalizedTargetGeneral = normalizeText(normalizedTargetLower, true);
   // Optimized word extraction using regex match instead of split/filter
   const words = normalizedTargetGeneral.match(/[\p{L}\p{N}]{4,}/gu) || [];
 
