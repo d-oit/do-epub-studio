@@ -59,8 +59,12 @@ satisfied.
 bash scripts/autopilot.sh "$PR_NUMBER"
 ```
 
-The loop stops automatically when the PR is merged or when it hits a situation
-that requires human intervention (e.g., complex conflicts, ambiguous comments).
+The loop stops automatically when the PR is merged. If it hits a situation
+requiring complex resolution (e.g., must-fix comments, complex merge conflicts),
+it will halt automation. **You MUST then activate the `goap-agent` skill as an
+orchestrator to analyze and implement the fixes in parallel.** Do not wait for
+human intervention. Once the `goap-agent` has resolved the issues, re-run the
+autopilot loop.
 
 ## Design Principles
 
@@ -73,6 +77,10 @@ that requires human intervention (e.g., complex conflicts, ambiguous comments).
 - **Deterministic rules** – Hard‑coded keyword rules (`must‑fix` vs
   `should‑fix`) are faster and more deterministic than asking the LLM to
   categorise every comment. Script what you can, prompt only what you must.
+- **Autonomous Escalation** – When deterministic scripts fail to auto-resolve
+  a conflict or address a comment, the skill delegates to the `goap-agent`
+  for parallel analysis and implementation, entirely removing the human from
+  the critical path.
 - **State‑driven loop** – The main script re‑evaluates the PR after each
   action, handling real‑world delays (CI re‑runs, new comments) without
   getting stuck.
@@ -86,6 +94,7 @@ that requires human intervention (e.g., complex conflicts, ambiguous comments).
 
 - **github-workflow** – For branch creation, PR creation, and Actions monitoring
 - **code-review-assistant** – For holistic PR review before merge
+- **goap-agent** – For orchestrating parallel analysis and implementation of complex conflict resolutions and must-fix comments
 - **release-management** – For cutting releases (PRs with `release:cut` label
   should NOT be auto‑merged by this skill)
 
@@ -109,10 +118,11 @@ that requires human intervention (e.g., complex conflicts, ambiguous comments).
 | Problem | Solution |
 |----------|----------|
 | Permission denied | Run `bash scripts/verify-auth.sh` to switch accounts |
-| Complex merge conflict | Resolve manually, then re‑run the autopilot |
+| Complex merge conflict | Activate `goap-agent` to resolve, then re-run autopilot |
 | Stuck in comment loop | Check if a comment is being repeatedly applied |
 | CI never passes | Investigate the failing check — do not bypass |
-| Max iterations reached | Manual investigation required — check PR state |
+| Must-fix comments found | Activate `goap-agent` to address comments, then re-run autopilot |
+| Max iterations reached | Check PR state to see what is blocking the loop |
 
 ## Quality Checklist
 

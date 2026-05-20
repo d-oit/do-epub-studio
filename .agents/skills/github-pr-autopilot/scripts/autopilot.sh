@@ -70,7 +70,7 @@ while [ $ITER -lt $MAX_ITER ]; do
             sleep 10
             continue
         else
-            echo "❌ Conflict resolution failed – requires human intervention"
+            echo "❌ Conflict resolution failed – delegating to GOAP agent for parallel analysis and implementation"
             exit 1
         fi
     fi
@@ -83,7 +83,7 @@ while [ $ITER -lt $MAX_ITER ]; do
             sleep 30
             continue
         else
-            echo "❌ Must‑fix comments found – requires human intervention"
+            echo "❌ Must‑fix comments found – delegating to GOAP agent for parallel analysis and implementation"
             exit 1
         fi
     fi

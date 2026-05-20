@@ -48,7 +48,7 @@ for file in $CONFLICTS; do
             git add "$file" 2>/dev/null
         else
             echo "❌ Complex conflict in $file – cannot auto‑resolve"
-            echo "   Please resolve manually and re‑run the autopilot."
+            echo "   -> Halting automation. Delegating to GOAP agent for parallel analysis and implementation."
             git merge --abort 2>/dev/null || true
             git checkout "$CURRENT_BRANCH" 2>/dev/null || true
             exit 1

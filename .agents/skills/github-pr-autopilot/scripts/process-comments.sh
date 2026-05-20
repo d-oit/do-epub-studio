@@ -30,7 +30,7 @@ while IFS= read -r comment; do
     # Classify comment by keywords
     if echo "$BODY" | grep -qiE "must|fix|required|issue|bug|error"; then
         echo "⚠️  Must‑fix comment on $PATH_FILE:$LINE: $BODY"
-        echo "   -> Halting automation. Please address this manually."
+        echo "   -> Halting automation. Delegating to GOAP agent for parallel analysis and implementation."
         HAS_MUST_FIX=true
         continue
     elif echo "$BODY" | grep -qiE "suggest|consider|maybe|nit|should"; then
@@ -44,7 +44,7 @@ while IFS= read -r comment; do
 done < <(echo "$COMMENTS")
 
 if [ "$HAS_MUST_FIX" = true ]; then
-    echo "❌ Must‑fix comments found – automation halted"
+    echo "❌ Must‑fix comments found – delegating to GOAP agent"
     exit 1
 fi
 
