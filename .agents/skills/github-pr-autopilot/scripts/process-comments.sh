@@ -31,6 +31,7 @@ while IFS= read -r comment; do
     if echo "$BODY" | grep -qiE "must|fix|required|issue|bug|error"; then
         echo "⚠️  Must‑fix comment on $PATH_FILE:$LINE: $BODY"
         echo "   -> Halting automation. Delegating to goap-agent skill for parallel analysis and implementation."
+        gh pr comment "$PR_ID" --body "🤖 **Autopilot Handoff**: Must‑fix comments found. Delegating to \`goap-agent skill\` for parallel analysis and implementation." 2>/dev/null || true
         HAS_MUST_FIX=true
         continue
     elif echo "$BODY" | grep -qiE "suggest|consider|maybe|nit|should"; then

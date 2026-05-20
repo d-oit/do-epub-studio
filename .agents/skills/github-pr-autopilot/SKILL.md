@@ -61,10 +61,12 @@ bash scripts/autopilot.sh "$PR_NUMBER"
 
 The loop stops automatically when the PR is merged. If it hits a situation
 requiring complex resolution (e.g., must-fix comments, complex merge conflicts),
-it will halt automation. **You MUST then activate the `goap-agent` skill as an
-orchestrator to analyze and implement the fixes in parallel.** Do not wait for
-human intervention. Once the `goap-agent` has resolved the issues, re-run the
-autopilot loop.
+it will halt automation and **post a "Autopilot Handoff" comment on the PR.**
+
+**You MUST then:**
+1. **Report the status** to the user (e.g., "Autopilot halted due to [reason]. Delegating to goap-agent skill.")
+2. **Activate the `goap-agent` skill** as an orchestrator to analyze and implement the fixes in parallel. Do not wait for human intervention.
+3. Once the `goap-agent` has resolved the issues, re-run the autopilot loop.
 
 ## Design Principles
 
@@ -77,10 +79,11 @@ autopilot loop.
 - **Deterministic rules** – Hard‑coded keyword rules (`must‑fix` vs
   `should‑fix`) are faster and more deterministic than asking the LLM to
   categorise every comment. Script what you can, prompt only what you must.
-- **Autonomous Escalation** – When deterministic scripts fail to auto-resolve
-  a conflict or address a comment, the skill delegates to the `goap-agent`
-  for parallel analysis and implementation, entirely removing the human from
-  the critical path.
+- **Autonomous Escalation & Visibility** – When deterministic scripts fail to
+  auto-resolve a conflict or address a comment, the skill posts a visible
+  status update to the PR and delegates to the `goap-agent skill` for parallel
+  analysis and implementation, entirely removing the human from the critical
+  path.
 - **State‑driven loop** – The main script re‑evaluates the PR after each
   action, handling real‑world delays (CI re‑runs, new comments) without
   getting stuck.

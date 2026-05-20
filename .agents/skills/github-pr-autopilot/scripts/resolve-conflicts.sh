@@ -49,6 +49,7 @@ for file in $CONFLICTS; do
         else
             echo "❌ Complex conflict in $file – cannot auto‑resolve"
             echo "   -> Halting automation. Delegating to goap-agent skill for parallel analysis and implementation."
+            gh pr comment "$PR_ID" --body "🤖 **Autopilot Handoff**: Complex merge conflict detected in \`$file\`. Delegating to \`goap-agent skill\` for parallel analysis and implementation." 2>/dev/null || true
             git merge --abort 2>/dev/null || true
             git checkout "$CURRENT_BRANCH" 2>/dev/null || true
             exit 1
