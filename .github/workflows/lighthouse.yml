@@ -44,7 +44,7 @@ jobs:
         with:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          packageManager: npm
+          packageManager: pnpm
           command: pages deploy apps/web/dist --project-name=do-epub-studio --branch=${{ github.head_ref || github.ref_name }}
 
       - name: Wait for deployment
