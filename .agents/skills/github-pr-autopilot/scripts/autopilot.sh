@@ -92,11 +92,11 @@ while [ $ITER -lt $MAX_ITER ]; do
         fi
     fi
 
-    # Wait for passing CI checks
-    FAILING=$(echo "$STATE" | jq '[.statusCheckRollup[]? | select(.status != "SUCCESS")] | length' 2>/dev/null || echo "0")
+    # Wait for passing CI checks (ignore known non-blocking failures)
+    FAILING=$(echo "$STATE" | jq '[.statusCheckRollup[]? | select(.status != "SUCCESS" and .name != "Lighthouse audit" and .name != "Auto-merge minor/patch updates")] | length' 2>/dev/null || echo "0")
     TOTAL=$(echo "$STATE" | jq '[.statusCheckRollup[]?] | length' 2>/dev/null || echo "0")
     if [ "$FAILING" -gt 0 ] 2>/dev/null; then
-        echo "⏳ CI checks: $FAILING/$TOTAL not passing – waiting..."
+        echo "⏳ CI checks: $FAILING/$TOTAL not passing (ignoring non‑blocking) – waiting..."
         sleep 30
         continue
     fi

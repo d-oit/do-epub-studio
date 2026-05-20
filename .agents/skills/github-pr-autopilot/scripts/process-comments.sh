@@ -39,8 +39,8 @@ while IFS= read -r comment; do
         continue
     fi
 
-    # Classify comment by keywords
-    if echo "$BODY" | grep -qiE "must|fix|required|bug|error"; then
+    # Classify comment by keywords (use word boundaries for precision)
+    if echo "$BODY" | grep -qiE "\bmust\b|\bfix\b|\brequired\b|\bbug\b|\berror\b"; then
         echo "⚠️  Must‑fix comment on $PATH_FILE:$LINE: $BODY"
         echo "   -> Halting automation. Delegating to goap-agent skill for parallel analysis and implementation."
         gh pr comment "$PR_ID" --body "🤖 **Autopilot Handoff**: Must‑fix comments found. Delegating to \`goap-agent skill\` for parallel analysis and implementation." 2>/dev/null || true
@@ -48,7 +48,7 @@ while IFS= read -r comment; do
         gh api -X POST "repos/:owner/:repo/pulls/comments/$ID/reactions" -f "content=eyes" 2>/dev/null || true
         HAS_MUST_FIX=true
         continue
-    elif echo "$BODY" | grep -qiE "suggest|consider|maybe|nit|should"; then
+    elif echo "$BODY" | grep -qiE "\bsuggest\b|\bconsider\b|\bmaybe\b|\bnit\b|\bshould\b"; then
         echo "   → Should‑fix (needs review): $BODY"
         echo "   → Replying with acknowledgment"
         gh pr comment "$PR_ID" --body "Thanks for the feedback! I've noted your suggestion on \`$PATH_FILE\` and will address it shortly." 2>/dev/null || true
