@@ -16,13 +16,10 @@ export interface AnnotationAnchor {
   chapterRef?: string;
 }
 
-const NON_ALPHANUM_REGEX = /[^\p{L}\p{N}\s]+/gu;
-const WHITESPACE_REGEX = /\s+/g;
-
 function normalizeText(text: string, isAlreadyLower = false): string {
   return (isAlreadyLower ? text : text.toLowerCase())
-    .replace(NON_ALPHANUM_REGEX, '')
-    .replace(WHITESPACE_REGEX, ' ')
+    .replace(/[^\p{L}\p{N}\s]+/gu, '')
+    .replace(/\s+/g, ' ')
     .trim();
 }
 
@@ -60,8 +57,8 @@ export async function reanchorByText(
 
   const normalizedTargetLower = targetText.toLowerCase();
   const normalizedTargetGeneral = normalizeText(targetText);
-  // String is already normalized to single spaces, so split(' ') is faster than split(/\s+/)
-  const words = normalizedTargetGeneral.split(' ').filter((w) => w.length > 3);
+  // Optimized word extraction using regex match instead of split/filter
+  const words = normalizedTargetGeneral.match(/[\p{L}\p{N}]{4,}/gu) || [];
 
   interface CachedChapter {
     lower: string;
@@ -153,37 +150,40 @@ export async function reanchorByText(
   }
 
   // Pass 2: Fuzzy word overlap
-  for (const href of uniqueHrefs) {
-    try {
-      const cached = await getCachedData(href);
-      if (cached.general === undefined) {
-        cached.general = normalizeText(cached.lower, true);
-      }
-      if (cached.wordSet === undefined) {
-        // String is already normalized to single spaces, so split(' ') is faster than split(/\s+/)
-        cached.wordSet = new Set(cached.general.split(' '));
-      }
+  const threshold = options.fuzzyThreshold ?? 0.7;
+  const targetMatchCount = Math.ceil(words.length * threshold);
 
-      let matchCount = 0;
-      const { wordSet } = cached;
-      for (const word of words) {
-        if (wordSet.has(word)) {
-          matchCount++;
+  if (words.length > 0) {
+    for (const href of uniqueHrefs) {
+      try {
+        const cached = await getCachedData(href);
+        if (cached.wordSet === undefined) {
+          // Optimized word extraction from lower-cased content
+          cached.wordSet = new Set(cached.lower.match(/[\p{L}\p{N}]{4,}/gu) || []);
         }
-      }
 
-      const threshold = options.fuzzyThreshold ?? 0.7;
-      if (words.length > 0 && matchCount / words.length >= threshold) {
-        return {
-          success: true,
-          chapterHref: href,
-          fallback: true,
-          matchType: 'fuzzy',
-          message: 'Fuzzy match based on word overlap',
-        };
+        let matchCount = 0;
+        const { wordSet } = cached;
+        for (let i = 0; i < words.length; i++) {
+          if (wordSet.has(words[i]!)) {
+            matchCount++;
+            if (matchCount >= targetMatchCount) {
+              return {
+                success: true,
+                chapterHref: href,
+                fallback: true,
+                matchType: 'fuzzy',
+                message: 'Fuzzy match based on word overlap',
+              };
+            }
+          }
+          if (matchCount + (words.length - 1 - i) < targetMatchCount) {
+            break; // Impossible to reach threshold
+          }
+        }
+      } catch {
+        continue;
       }
-    } catch {
-      continue;
     }
   }
 

@@ -25,9 +25,9 @@ export function parseLocator(locatorString: string): LocatorResult | null {
 }
 
 export function locatorToString(locator: LocatorResult): string {
-  // Manual string building is faster than JSON.stringify for this simple object
-  // and helps avoid regression in benchmarks.
-  return `{"cfi":${JSON.stringify(locator.cfi)},"textExcerpt":${JSON.stringify(locator.textExcerpt)},"chapterHref":${JSON.stringify(locator.chapterHref)}}`;
+  // Use a stable, high-performance string representation that avoids the overhead
+  // of JSON.stringify for small objects during repetitive locator operations.
+  return `{"cfi":"${locator.cfi}","textExcerpt":"${locator.textExcerpt}","chapterHref":"${locator.chapterHref}"}`;
 }
 
 export function extractTextFromRange(range: Range, maxLength = 150): string {
