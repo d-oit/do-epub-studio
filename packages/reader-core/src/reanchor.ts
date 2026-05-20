@@ -16,10 +16,13 @@ export interface AnnotationAnchor {
   chapterRef?: string;
 }
 
+const NON_ALPHANUM_REGEX = /[^\p{L}\p{N}\s]+/gu;
+const WHITESPACE_REGEX = /\s+/g;
+
 function normalizeText(text: string, isAlreadyLower = false): string {
   return (isAlreadyLower ? text : text.toLowerCase())
-    .replace(/[^\p{L}\p{N}\s]/gu, '')
-    .replace(/\s+/g, ' ')
+    .replace(NON_ALPHANUM_REGEX, '')
+    .replace(WHITESPACE_REGEX, ' ')
     .trim();
 }
 
@@ -57,11 +60,13 @@ export async function reanchorByText(
 
   const normalizedTargetLower = targetText.toLowerCase();
   const normalizedTargetGeneral = normalizeText(targetText);
-  const words = normalizedTargetGeneral.split(/\s+/).filter((w) => w.length > 3);
+  // String is already normalized to single spaces, so split(' ') is faster than split(/\s+/)
+  const words = normalizedTargetGeneral.split(' ').filter((w) => w.length > 3);
 
   interface CachedChapter {
     lower: string;
     general?: string;
+    wordSet?: Set<string>;
   }
   const cache = new Map<string, CachedChapter>();
 
@@ -128,7 +133,7 @@ export async function reanchorByText(
         };
       }
 
-      if (!cached.general) {
+      if (cached.general === undefined) {
         cached.general = normalizeText(cached.lower, true);
       }
 
@@ -151,12 +156,16 @@ export async function reanchorByText(
   for (const href of uniqueHrefs) {
     try {
       const cached = await getCachedData(href);
-      if (!cached.general) {
+      if (cached.general === undefined) {
         cached.general = normalizeText(cached.lower, true);
       }
-      const wordSet = new Set(cached.general.split(/\s+/));
+      if (cached.wordSet === undefined) {
+        // String is already normalized to single spaces, so split(' ') is faster than split(/\s+/)
+        cached.wordSet = new Set(cached.general.split(' '));
+      }
 
       let matchCount = 0;
+      const { wordSet } = cached;
       for (const word of words) {
         if (wordSet.has(word)) {
           matchCount++;
