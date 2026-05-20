@@ -11,7 +11,7 @@ ALLOWED_SHAS=(
     "actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a"
     "actions/stale@b5d41d4e1d5dceea10e7104786b73624c18a190f"
     "actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1"
-    "cloudflare/wrangler-action@9acf94ace14e7dc412b076f2c5c20b8ce93c79cd"
+    "cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0"
     "codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354"
     "codecov/codecov-action@75cd11691c0faa626561e295848008c8a7dddffe"
     "dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98"
