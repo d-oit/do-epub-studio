@@ -95,7 +95,7 @@ registerRoute(
 );
 
 // Sensitive API requests - Never cache
-registerRoute(/^https?:.*\/api\/(?:admin|access)\/.*/i, new NetworkOnly());
+registerRoute(/^https?:.*\/api\/(?:admin|access)(?:\/.*)?$/i, new NetworkOnly());
 
 // API requests with NetworkFirst (prefer fresh data, fallback to cache)
 registerRoute(
