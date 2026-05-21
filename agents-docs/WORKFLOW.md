@@ -26,6 +26,19 @@ Why: Prior learnings may contain relevant context about fragile config, tool qui
 
 The quality gate is **non-blocking on warnings** but **blocking on errors**.
 
+### Scoped Fast Commands
+
+For faster iteration, use these scoped commands during the "Fix Loop" before running the full quality gate:
+
+- **Fast Verification:** `pnpm verify:fast` (lint + typecheck + subset of critical tests)
+- **Scoped Tests:** `pnpm test --filter <package-name>`
+- **Smoke Tests:** `pnpm test:e2e:smoke`
+- **Coverage:** `pnpm test:coverage`
+- **Workflow Lint:** `pnpm lint:workflows`
+- **Benchmarks:** `pnpm bench`
+
+> **Note:** While fast commands speed up development, `./scripts/quality_gate.sh` is still **REQUIRED** to exit 0 before any commit or PR submission.
+
 Checks executed (in order):
 
 1. `validate-git-hooks.sh` - Detects global hooks overriding local (non-blocking)

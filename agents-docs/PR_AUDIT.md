@@ -35,3 +35,29 @@ This document summarizes the audit of open pull requests (remote branches) again
 - **dependabot/github_actions/actions/checkout-6**: APPLIED manually by updating workflows.
 - **dependabot/npm_and_yarn/dev-dependencies-0720507bc4**: APPLIED manually by updating package.json.
 - **destructive/corrupted PRs**: RECOMMENDED CLOSURE (zod-4.3.6, setup-node-6, pnpm/action-setup-6, vite-plugin-pwa-1.2.0, feat/add-opencode-atomic-commit).
+
+## GH CLI PR Triage Pattern
+
+Use these commands for comprehensive PR analysis and CI management:
+
+```bash
+# 1. Metadata + status
+gh pr view "$PR" --json number,title,body,author,baseRefName,headRefName,mergeable,reviewDecision,files,statusCheckRollup
+
+# 2. Comments (general)
+gh pr view "$PR" --json comments
+
+# 3. Formal reviews
+gh pr view "$PR" --json reviews
+
+# 4. Inline review comments — REQUIRED, not included in --json comments
+gh api /repos/:owner/:repo/pulls/$PR/comments
+
+# 5. CI checks and logs
+gh pr checks "$PR"
+gh run list --branch <head-branch>
+gh run view <run-id> --log
+
+# 6. Rerun only failed jobs (preferred after targeted fix)
+gh run rerun <run-id> --failed
+```

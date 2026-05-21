@@ -32,6 +32,11 @@ setup() {
     [[ "$output" == "#!/bin/bash" ]]
 }
 
+@test "process-comments.sh fetches inline review comments endpoint" {
+    run grep -q "pulls/.*comments" "$SCRIPT"
+    [ "$status" -eq 0 ]
+}
+
 @test "process-comments.sh fetches issue comments endpoint" {
     run grep -q "issues" "$SCRIPT"
     [ "$status" -eq 0 ]
