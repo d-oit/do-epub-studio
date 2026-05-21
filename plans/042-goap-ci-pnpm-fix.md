@@ -7,18 +7,16 @@
 - **ADR**: [ADR-042](#adr-042-fix-pnpm-execution-failure-in-github-actions)
 
 ## Analysis
-The GitHub Actions workflow failed during the `cloudflare/wrangler-action` step with `pnpm` exit code 1. The root cause was a path resolution issue where the action looked for pnpm at `/home/runner/setup-pnpm/node_modules/.bin/bin/pnpm`. This was caused by an interaction between the explicit `dest` parameter in `pnpm/action-setup` and the `PNPM_HOME` environment variable.
-
-Additionally, a redundant `node_modules` cache step was failing due to `tar` errors when handling hard links.
+The GitHub Actions workflow failed during the `cloudflare/wrangler-action` step with `pnpm` exit code 1. The root cause was a corrupted pnpm path (`.../node_modules/.bin/bin/pnpm`) and a failing redundant cache step.
 
 ## Strategy
-1. Upgrade `pnpm/action-setup` to v6.0.8 to support pnpm v10.
-2. Simplify `.github/actions/setup-pnpm/action.yml` to remove redundant cache steps and explicit destination paths, allowing the actions to use stable defaults.
-3. Upgrade `cloudflare/wrangler-action` to v4.0.0 and simplify its configuration to use the `apiToken` and `accountId` inputs directly.
+1. **Stabilize pnpm installation**: Use `pnpm/action-setup@v6.0.8` with `standalone: true` and `version: 10`. This ensures pnpm is installed as a global binary rather than a `node_modules` package, avoiding the bin-within-bin path issue.
+2. **Remove conflicting cache**: Disable `cache: pnpm` in the composite action's `setup-node` step to prevent interference with `PNPM_HOME`. Rely on standard pnpm behavior.
+3. **Simplify and Secure Actions**: Use `cloudflare/wrangler-action@v4.0.0` with clean input configuration and verified SHAs.
 
 ## Execution
-1. Modified `.github/actions/setup-pnpm/action.yml` to use `pnpm/action-setup@v6.0.8` with default settings.
-2. Removed redundant `actions/cache` step from the composite action.
+1. Modified `.github/actions/setup-pnpm/action.yml` to use `pnpm/action-setup@v6.0.8` with `standalone: true`.
+2. Removed redundant `actions/cache` and `cache: pnpm` from the composite action.
 3. Updated `.github/workflows/lighthouse.yml` and `.github/workflows/release.yml` to use `cloudflare/wrangler-action@v4.0.0`.
 4. Updated `scripts/validate-shas.sh` to include the new SHAs.
 5. Verified via `scripts/validate-workflows.sh`.
@@ -31,9 +29,9 @@ Additionally, a redundant `node_modules` cache step was failing due to `tar` err
 GitHub Actions workflows utilizing `pnpm` v10 encountered execution failures (exit code 1) during the `cloudflare/wrangler-action` step. The failure occurred when the action attempted to verify or use the `pnpm` installation using a corrupted path.
 
 ### Decision
-Update the project's centralized `setup-pnpm` composite action to use `pnpm/action-setup@v6.0.8` and remove the custom `dest` and redundant `actions/cache` steps. Use `cloudflare/wrangler-action@v4.0.0` with simplified input configuration.
+Update the project's centralized `setup-pnpm` composite action to use `pnpm/action-setup@v6.0.8` with `standalone: true`. Remove the redundant and conflicting cache steps.
 
 ### Consequences
 - **Positive**: Resolves the CI blocker and enables successful deployments.
-- **Positive**: Reduces workflow maintenance by relying on action defaults and `actions/setup-node`'s built-in pnpm caching.
-- **Positive**: Improves security by ensuring all actions are pinned to verified SHAs.
+- **Positive**: Eliminates `tar` cache restoration errors.
+- **Positive**: Follows 2026 best practices for action versions and security pinning.
