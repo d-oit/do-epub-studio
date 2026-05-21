@@ -32,10 +32,10 @@ export function extractSelectionData(iframe: HTMLIFrameElement): SelectionData |
   const chapterRef = window.location.hash.slice(1) || '';
 
   let cfiRange = '';
-  // @ts-ignore - epub-js adds this
+  // @ts-expect-error - epub-js adds this property to Range
   if (range.cfiRange) {
-    // @ts-ignore
-    cfiRange = range.cfiRange;
+    // @ts-expect-error - epub-js adds this property to Range
+    cfiRange = range.cfiRange as string;
   }
 
   return {

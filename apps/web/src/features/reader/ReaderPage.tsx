@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Rendition } from '@intity/epub-js';
+import type { Rendition } from '@intity/epub-js';
 import { useTranslation } from '../../hooks/useTranslation';
 import { apiRequest } from '../../lib/api';
 import { fetchHighlights, fetchComments } from '../../lib/api/annotations';
