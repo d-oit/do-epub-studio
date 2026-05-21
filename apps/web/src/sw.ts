@@ -1,9 +1,9 @@
 /// <reference lib="WebWorker" />
 /// <reference types="vite-plugin-pwa/client" />
 
-import { cleanupOutdatedCaches, precacheAndRoute } from 'workbox-precaching';
-import { registerRoute } from 'workbox-routing';
-import { CacheFirst, NetworkFirst } from 'workbox-strategies';
+import { cleanupOutdatedCaches, precacheAndRoute, getCacheKeyForURL } from 'workbox-precaching';
+import { registerRoute, NavigationRoute } from 'workbox-routing';
+import { CacheFirst, NetworkFirst, NetworkOnly, StaleWhileRevalidate } from 'workbox-strategies';
 import { ExpirationPlugin } from 'workbox-expiration';
 import { CacheableResponsePlugin } from 'workbox-cacheable-response';
 import { createTraceId } from '@do-epub-studio/shared';
@@ -22,6 +22,32 @@ cleanupOutdatedCaches();
 
 // Precache app shell and assets
 precacheAndRoute(self.__WB_MANIFEST);
+
+// Handle navigation requests with NetworkFirst strategy, falling back to app shell
+const navigationHandler = new NetworkFirst({
+  cacheName: 'navigations',
+  plugins: [
+    new CacheableResponsePlugin({ statuses: [200] }),
+    new ExpirationPlugin({ maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 }), // 24 hours
+  ],
+});
+
+registerRoute(
+  new NavigationRoute(async (params) => {
+    try {
+      const response = await navigationHandler.handle(params);
+      if (response) return response;
+      throw new Error('No response from navigation handler');
+    } catch {
+      return (
+        (await caches.match(getCacheKeyForURL('index.html') || '/index.html')) || Response.error()
+      );
+    }
+  }, {
+    // Optionally exclude specific paths from navigation routing
+    denylist: [/^\/api\//, /^\/_worker\//],
+  }),
+);
 
 // Cache Google Fonts stylesheets
 registerRoute(
@@ -62,11 +88,14 @@ registerRoute(
   new CacheFirst({
     cacheName: 'epub-files',
     plugins: [
-      new ExpirationPlugin({ maxEntries: 20, maxAgeSeconds: 60 * 60 * 24 * 7 }),
+      new ExpirationPlugin({ maxEntries: 20, maxAgeSeconds: 60 * 60 * 24 * 30 }), // 30 days
       new CacheableResponsePlugin({ statuses: [0, 200] }),
     ],
   }),
 );
+
+// Sensitive API requests - Never cache
+registerRoute(/^https?:.*\/api\/(?:admin|access)\/.*/i, new NetworkOnly());
 
 // API requests with NetworkFirst (prefer fresh data, fallback to cache)
 registerRoute(
@@ -74,10 +103,22 @@ registerRoute(
   new NetworkFirst({
     cacheName: 'api-responses',
     plugins: [
-      new ExpirationPlugin({ maxEntries: 50, maxAgeSeconds: 60 * 15 }), // 15 minutes
+      new ExpirationPlugin({ maxEntries: 50, maxAgeSeconds: 60 * 60 }), // 1 hour
       new CacheableResponsePlugin({ statuses: [0, 200] }),
     ],
     networkTimeoutSeconds: 10,
+  }),
+);
+
+// External assets or non-precached static files
+registerRoute(
+  ({ url }) => url.origin !== self.location.origin && !url.pathname.startsWith('/api/'),
+  new StaleWhileRevalidate({
+    cacheName: 'external-assets',
+    plugins: [
+      new ExpirationPlugin({ maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 * 7 }), // 7 days
+      new CacheableResponsePlugin({ statuses: [0, 200] }),
+    ],
   }),
 );
 
