@@ -49,7 +49,25 @@ bash scripts/verify-auth.sh
 
 If no PR is found, stop and ask the user.
 
-### Step 3 – Run the Autopilot Loop
+### Step 3 – Triage & CI Management
+
+Use these commands for deep inspection and targeted reruns:
+
+- **Inline Comments:** `gh api /repos/:owner/:repo/pulls/<number>/comments`
+  *(Note: `gh pr view --json comments` only returns general comments; inline review comments REQUIRE the API endpoint).*
+- **CI Status:** `gh pr checks "$PR_NUMBER"`
+- **Targeted Rerun:** `gh run rerun <run-id> --failed`
+  *(Preferred after local fixes to save CI resources).*
+
+#### Triage Labels (TIER 2 Aligned)
+
+When analyzing PR feedback, classify findings into these buckets:
+- **must-fix**: Blocking issues that MUST be resolved before merge (e.g., bugs, security, broken tests).
+- **should-fix**: Important improvements that SHOULD be addressed (e.g., style, minor refactors).
+- **informational**: Observations, questions, or non-blocking feedback.
+- **obsolete**: Comments that are no longer relevant due to code changes.
+
+### Step 4 – Run the Autopilot Loop
 
 Launch the main orchestration script. It repeatedly checks the PR's state,
 resolves conflicts, addresses comments, and merges when all conditions are
@@ -103,7 +121,7 @@ it will halt automation and **post a "Autopilot Handoff" comment on the PR.**
 
 ### Quality Gates Before Merge
 
-- [ ] All tests pass (see quality gate: `./scripts/quality_gate.sh`)
+- [ ] Quality gate passes: `./scripts/quality_gate.sh` (MUST exit 0)
 - [ ] TypeScript types valid
 - [ ] Commit messages follow `type(scope): description` format
 - [ ] No secrets or tokens in changes
