@@ -181,7 +181,7 @@ describe('ApiResponse invariants', () => {
             expect(response.error).toBeUndefined();
           } else {
             expect(response.error).toBeDefined();
-            expect(response.error!.code).toBe('ERR');
+            expect(response.error).toHaveProperty('code', 'ERR');
             expect(response.data).toBeUndefined();
           }
         },

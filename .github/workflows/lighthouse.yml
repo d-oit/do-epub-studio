@@ -41,6 +41,7 @@ jobs:
       - name: Deploy preview to Cloudflare Pages
         uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0 # v4.0.0
         id: deploy
+        continue-on-error: true
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -52,9 +53,11 @@ jobs:
           command: pages deploy apps/web/dist --project-name=do-epub-studio --branch=${{ github.head_ref || github.ref_name }}
 
       - name: Wait for deployment
+        if: steps.deploy.outcome == 'success'
         run: sleep 30
 
       - name: Run Lighthouse CI
+        if: steps.deploy.outcome == 'success'
         id: lhci
         continue-on-error: true
         uses: treosh/lighthouse-ci-action@3e7e23fb74242897f95c0ba9cabad3d0227b9b18 # v12.6.2

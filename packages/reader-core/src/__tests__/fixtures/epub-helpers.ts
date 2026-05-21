@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion -- test fixture helpers */
 import { Buffer } from 'node:buffer';
 import { deflateRaw, inflateRawSync } from 'node:zlib';
 import { promisify } from 'node:util';

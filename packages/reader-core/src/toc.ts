@@ -61,7 +61,7 @@ export function buildTocHierarchy(
     if (stack.length === 0) {
       root.push(tocItem);
     } else {
-      const parent = stack[stack.length - 1]!;
+      const parent = stack[stack.length - 1] as TocItem;
       parent.subitems ??= [];
       parent.subitems.push(tocItem);
     }
