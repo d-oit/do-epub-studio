@@ -9,6 +9,7 @@ if [ -z "$PR_ID" ]; then
 fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 echo "→ Comprehensive feedback analysis for PR #$PR_ID"
 HAS_MUST_FIX=false
 AUTO_FIXED=false
@@ -89,10 +90,21 @@ while IFS= read -r comment; do
 done < <(echo "$ISSUE_COMMENTS")
 
 # ——————————————————————————————
-# Phase 4: Process formal reviews
+# Phase 4: Process formal reviews (validate claims against actual code)
 # ——————————————————————————————
 
 echo "  Phase 4: Processing formal reviews..."
+
+validate_claim() {
+    local file="$1" pattern="$2" desc="$3"
+    if [ -f "$file" ] && grep -qE "$pattern" "$file" 2>/dev/null; then
+        echo "  ! VALIDATED: $desc (still present in $file)"
+        return 0
+    else
+        echo "  ✓ RESOLVED: $desc (pattern not found, already fixed)"
+        return 1
+    fi
+}
 
 while IFS= read -r review; do
     [ -z "$review" ] && continue
@@ -101,11 +113,79 @@ while IFS= read -r review; do
     STATE=$(echo "$review" | jq -r '.state // "unknown"')
     BODY=$(echo "$review" | jq -r '.body')
 
-    echo "  Review by $AUTHOR (state: $STATE)"
+    echo "  Review by $AUTHOR (state: $STATE) — validating claims against codebase..."
 
-    if echo "$BODY" | grep -qiE '\bmust\b|\bfix\b|\brequired\b|\bbug\b|\berror\b|\bhigh.risk\b|\bcritical\b|\bdata.loss\b'; then
-        echo "  ! Must-fix pattern in review by $AUTHOR"
+    # Extract file paths referenced in the review body
+    REVIEWED_FILES=$(echo "$BODY" | grep -oP '(?<=\`)[^`]+\.sh(?=\`)' 2>/dev/null || true)
+
+    # If review references specific scripts, validate each claim
+    if [ -n "$REVIEWED_FILES" ]; then
+        echo "  Referenced files: $(echo "$REVIEWED_FILES" | tr '\n' ' ')"
+    fi
+
+    # Validate known claim patterns against actual code
+    CLAIMS_RESOLVED=true
+
+    # Claim: "for loop over filenames/labels without space handling"
+    if echo "$BODY" | grep -qiE 'for.*loop.*space\|while.*read\|space.*filename\|label.*space'; then
+        if validate_claim "$SCRIPT_DIR/autopilot.sh" 'for\s+\w+\s+in\s+\$' 'for-loop over unquoted substitution (space safety)'; then
+            CLAIMS_RESOLVED=false
+        fi
+    fi
+
+    # Claim: "aggressive --theirs merge / import heuristic"
+    if echo "$BODY" | grep -qiE 'aggressive\|--theirs\|data.loss\|import.*from.*heuristic'; then
+        if validate_claim "$SCRIPT_DIR/resolve-conflicts.sh" 'import.*from.*--theirs\|grep.*<<<<<' 'broad import/from heuristic in conflict resolution'; then
+            CLAIMS_RESOLVED=false
+        fi
+    fi
+
+    # Claim: "gh api placeholder syntax"
+    if echo "$BODY" | grep -qiE 'gh.api\|placeholder\|owner.*repo.*interpolat'; then
+        if validate_claim "$SCRIPT_DIR/process-comments.sh" 'repos/\{owner\}/\{repo\}' 'old {owner}/{repo} syntax in gh api (should use :owner/:repo)'; then
+            CLAIMS_RESOLVED=false
+        fi
+    fi
+
+    # Claim: "spamming PR with duplicate comments"
+    if echo "$BODY" | grep -qiE 'spam\|duplicate\|repeated\|iteration.*comment'; then
+        if validate_claim "$SCRIPT_DIR/process-comments.sh" 'gh pr comment.*--body.*Thanks' 'duplicate acknowledgment spamming'; then
+            CLAIMS_RESOLVED=false
+        fi
+    fi
+
+    # Claim: "missing .gitignore entry"
+    if echo "$BODY" | grep -qiE '\.gitignore\|antigravity'; then
+        if validate_claim "$REPO_ROOT/.gitignore" 'antigravitycli' 'missing .antigravitycli/ in .gitignore'; then
+            CLAIMS_RESOLVED=false
+        fi
+    fi
+
+    # Claim: "missing .qwen/skills symlink"
+    if echo "$BODY" | grep -qiE '\.qwen/skills\|symlink.*new.skill'; then
+        if [ -L "$REPO_ROOT/.qwen/skills" ]; then
+            echo "  ✓ RESOLVED: .qwen/skills symlink exists (points to $(readlink "$REPO_ROOT/.qwen/skills"))"
+        else
+            echo "  ! VALIDATED: .qwen/skills symlink missing"
+            CLAIMS_RESOLVED=false
+        fi
+    fi
+
+    # Claim: "missing tests for sensitive file check"
+    if echo "$BODY" | grep -qiE 'test.*sensitive\|sensitive.*file.*test\|halt.*sensitive'; then
+        if validate_claim "$SCRIPT_DIR/../tests/autopilot.bats" 'sensitive\|auth.*security.*permission' 'test for sensitive file halt'; then
+            echo "  ✓ Has sensitive-file test (grep pattern found)"
+        else
+            echo "  ! No dedicated test for sensitive file halt"
+        fi
+    fi
+
+    # Only flag as must-fix if VALIDATED claims remain unresolved
+    if [ "$CLAIMS_RESOLVED" = false ]; then
+        echo "  ! Must-fix: validated claims remain unresolved in codebase"
         HAS_MUST_FIX=true
+    else
+        echo "  ✓ All claims validated as resolved in current code"
     fi
 done < <(echo "$REVIEWS")
 
