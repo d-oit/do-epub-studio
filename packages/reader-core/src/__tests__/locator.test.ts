@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion -- test assertions */
 import { describe, expect, it } from 'vitest';
 import fc from 'fast-check';
 import {

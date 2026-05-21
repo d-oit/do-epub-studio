@@ -110,15 +110,15 @@ describe('cfiToRange', () => {
   it('parses simple cfi', () => {
     const result = cfiToRange('epubcfi(/6)');
     expect(result).not.toBeNull();
-    expect(result!.spineIndex).toBe(6);
-    expect(result!.charOffset).toBe(0);
+    expect((result as NonNullable<typeof result>).spineIndex).toBe(6);
+    expect((result as NonNullable<typeof result>).charOffset).toBe(0);
   });
 
   it('parses cfi with char offset', () => {
     const result = cfiToRange('epubcfi(/6:100)');
     expect(result).not.toBeNull();
-    expect(result!.spineIndex).toBe(6);
-    expect(result!.charOffset).toBe(100);
+    expect((result as NonNullable<typeof result>).spineIndex).toBe(6);
+    expect((result as NonNullable<typeof result>).charOffset).toBe(100);
   });
 
   it('returns null for invalid cfi', () => {

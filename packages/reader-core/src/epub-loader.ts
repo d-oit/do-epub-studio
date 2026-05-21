@@ -1,4 +1,5 @@
-import ePub, { Book, Rendition, Location, Contents } from '@intity/epub-js';
+import ePub from '@intity/epub-js';
+import type { Book, Rendition, Location, Contents } from '@intity/epub-js';
 import type { SpineItem as EpubSpineItem } from '@intity/epub-js/types/section';
 import type {
   TocItem,
@@ -150,8 +151,8 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
       throw new Error('Book not loaded. Call load() first.');
     }
     if (rendition) {
-      // Reuse existing rendition if already created
-      return renditionHandle!;
+      // renditionHandle is guaranteed set here since rendition exists
+      return renditionHandle as EpubRenditionHandle;
     }
 
     rendition = book.renderTo(container, {
@@ -281,6 +282,7 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
       if (!eventListeners.has(event)) {
         eventListeners.set(event, new Set());
       }
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- listeners was just set guard above
       eventListeners.get(event)!.add(callback);
     },
     off(event: string, callback: EventCallback): void {
