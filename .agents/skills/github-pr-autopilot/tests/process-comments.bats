@@ -1,5 +1,6 @@
 #!/usr/bin/env bats
-# BATS tests for process-comments.sh — argument validation and comment classification
+# BATS tests for process-comments.sh — argument validation and comprehensive
+# feedback processing (inline review comments, issue comments, formal reviews)
 
 setup() {
     SCRIPT="$BATS_TEST_DIRNAME/../scripts/process-comments.sh"
@@ -22,7 +23,6 @@ setup() {
 }
 
 @test "process-comments.sh uses process substitution not pipe for while loop" {
-    # The subshell bug fix: must use '< <(...)' not '| while read ...'
     run grep "done < <(" "$SCRIPT"
     [ "$status" -eq 0 ]
 }
@@ -30,4 +30,24 @@ setup() {
 @test "process-comments.sh has shebang" {
     run head -1 "$SCRIPT"
     [[ "$output" == "#!/bin/bash" ]]
+}
+
+@test "process-comments.sh fetches issue comments endpoint" {
+    run grep -q "issues" "$SCRIPT"
+    [ "$status" -eq 0 ]
+}
+
+@test "process-comments.sh fetches formal reviews" {
+    run grep -q "reviews" "$SCRIPT"
+    [ "$status" -eq 0 ]
+}
+
+@test "process-comments.sh has self-learning phase" {
+    run grep -q "Self-learning" "$SCRIPT"
+    [ "$status" -eq 0 ]
+}
+
+@test "process-comments.sh tracks all 3 feedback types in summary" {
+    run grep -q 'All feedback analyzed' "$SCRIPT"
+    [ "$status" -eq 0 ]
 }

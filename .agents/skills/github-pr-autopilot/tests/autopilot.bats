@@ -1,5 +1,6 @@
 #!/usr/bin/env bats
-# BATS tests for autopilot.sh — argument validation, label detection, sensitive file check
+# BATS tests for autopilot.sh — argument validation, label detection,
+# sensitive file check, pre-analysis phase, and review processing
 
 setup() {
     SCRIPT="$BATS_TEST_DIRNAME/../scripts/autopilot.sh"
@@ -17,13 +18,11 @@ setup() {
 }
 
 @test "autopilot.sh checks for protected labels" {
-    # Verify the label-check pattern exists in the script
     run grep -q "release:cut\|WIP\|DO NOT MERGE" "$SCRIPT"
     [ "$status" -eq 0 ]
 }
 
 @test "autopilot.sh checks for sensitive files" {
-    # Verify sensitive file pattern exists
     run grep -q "auth\|security\|permission\|argon2\|session\|token\|secret" "$SCRIPT"
     [ "$status" -eq 0 ]
 }
@@ -46,4 +45,34 @@ setup() {
 @test "autopilot.sh has shebang" {
     run head -1 "$SCRIPT"
     [[ "$output" == "#!/bin/bash" ]]
+}
+
+@test "autopilot.sh has pre-analysis phase" {
+    run grep -q "pre-analysis" "$SCRIPT"
+    [ "$status" -eq 0 ]
+}
+
+@test "autopilot.sh fetches inline review comments in pre-analysis" {
+    run grep -q "pulls" "$SCRIPT"
+    [ "$status" -eq 0 ]
+}
+
+@test "autopilot.sh fetches issue comments in pre-analysis" {
+    run grep -q "issues" "$SCRIPT"
+    [ "$status" -eq 0 ]
+}
+
+@test "autopilot.sh fetches reviews in pre-analysis" {
+    run grep -q "reviews" "$SCRIPT"
+    [ "$status" -eq 0 ]
+}
+
+@test "autopilot.sh tracks CI_FAILING variable" {
+    run grep -q "CI_FAILING" "$SCRIPT"
+    [ "$status" -eq 0 ]
+}
+
+@test "autopilot.sh tracks review count in loop" {
+    run grep -q "REVIEW_CNT" "$SCRIPT"
+    [ "$status" -eq 0 ]
 }
