@@ -3,17 +3,28 @@ import { test, expect } from '@playwright/test';
 test.describe('PWA Caching Strategies', () => {
   test.beforeEach(async ({ page }) => {
     // 1. Visit the app online to ensure service worker and assets are cached
-    await page.goto('/');
+    await page.goto('/', { waitUntil: 'networkidle' });
 
-    // Wait for service worker to be ready and activated
+    // Wait for service worker to be ready and activated with a timeout
     await page.evaluate(async () => {
-      const registration = await navigator.serviceWorker.ready;
+      console.log('Waiting for service worker ready...');
+      const registration = await Promise.race([
+        navigator.serviceWorker.ready,
+        new Promise((_, reject) => setTimeout(() => reject(new Error('SW ready timeout')), 15000))
+      ]) as ServiceWorkerRegistration;
+
+      console.log('Service worker ready, checking controller...');
       // Wait for the active controller to be available
       if (!navigator.serviceWorker.controller) {
-        await new Promise<void>((resolve) => {
-          navigator.serviceWorker.addEventListener('controllerchange', () => resolve(), { once: true });
-        });
+        console.log('No controller yet, waiting for controllerchange...');
+        await Promise.race([
+          new Promise<void>((resolve) => {
+            navigator.serviceWorker.addEventListener('controllerchange', () => resolve(), { once: true });
+          }),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Controller change timeout')), 15000))
+        ]);
       }
+      console.log('Service worker controller active:', navigator.serviceWorker.controller?.scriptURL);
       return !!registration;
     });
   });
