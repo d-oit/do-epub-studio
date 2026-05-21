@@ -1,0 +1,19 @@
+{
+  "number": 456,
+  "url": "https://github.com/example/repo/pull/456",
+  "title": "chore(deps): bump dependencies",
+  "headRefName": "dependabot/npm_and_yarn/lodash-4.17.21",
+  "baseRefName": "main",
+  "mergeable": "CONFLICTING",
+  "reviewDecision": "NONE",
+  "statusCheckRollup": [
+    { "name": "lint", "status": "SUCCESS", "conclusion": "SUCCESS" }
+  ],
+  "labels": [
+    { "name": "dependencies" }
+  ],
+  "files": [
+    { "path": "pnpm-lock.yaml" }
+  ],
+  "comments": []
+}

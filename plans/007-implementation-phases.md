@@ -87,5 +87,8 @@ All open GitHub issues (17) and PRs (4) as of 2026-05-19 are coordinated through
 Remaining product-code TODO inventory:
 
 - [ ] `apps/worker/src/lib/rate-limiter.ts:35` — in-memory limiter → Durable Objects cutover (tracked under #140; carry-over from Sprint 141)
+- [x] PR #215 — workflow cleanup: remove redundant .gemini/skills, fix .qwen/skills structure, add github-pr-autopilot skill
+- [x] Plan 042 — GOAP Learnings Lifecycle
+- [x] ADR 043 — Learnings Compaction Policy
 
 No other phases are in progress. New work must be filed against Plan 038's waves or spawn a fresh triage plan per ADR 039.

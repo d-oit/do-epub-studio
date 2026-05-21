@@ -1,0 +1,22 @@
+{
+  "number": 202,
+  "url": "https://github.com/example/repo/pull/202",
+  "title": "chore(release): v1.5.0",
+  "headRefName": "release/v1.5.0",
+  "baseRefName": "main",
+  "mergeable": "MERGEABLE",
+  "reviewDecision": "APPROVED",
+  "statusCheckRollup": [
+    { "name": "lint", "status": "SUCCESS", "conclusion": "SUCCESS" },
+    { "name": "typecheck", "status": "SUCCESS", "conclusion": "SUCCESS" },
+    { "name": "test", "status": "SUCCESS", "conclusion": "SUCCESS" }
+  ],
+  "labels": [
+    { "name": "release:cut" }
+  ],
+  "files": [
+    { "path": "VERSION" },
+    { "path": "CHANGELOG.md" },
+    { "path": "package.json" }
+  ]
+}

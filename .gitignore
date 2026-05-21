@@ -66,6 +66,7 @@ head.json
 .wrangler/
 .claude/
 .gemini/
+.antigravitycli/
 
 # Storybook
 storybook-static/

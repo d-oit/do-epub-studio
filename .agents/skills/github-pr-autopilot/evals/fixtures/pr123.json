@@ -1,0 +1,21 @@
+{
+  "number": 123,
+  "url": "https://github.com/example/repo/pull/123",
+  "title": "feat(reader): add dark mode support",
+  "headRefName": "feature/dark-mode",
+  "baseRefName": "main",
+  "mergeable": "MERGEABLE",
+  "reviewDecision": "APPROVED",
+  "statusCheckRollup": [
+    { "name": "lint", "status": "SUCCESS", "conclusion": "SUCCESS" },
+    { "name": "typecheck", "status": "SUCCESS", "conclusion": "SUCCESS" },
+    { "name": "test", "status": "SUCCESS", "conclusion": "SUCCESS" }
+  ],
+  "labels": [
+    { "name": "enhancement" }
+  ],
+  "files": [
+    { "path": "apps/web/src/components/Reader.tsx" },
+    { "path": "apps/web/src/styles/dark-mode.css" }
+  ]
+}
