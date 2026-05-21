@@ -59,7 +59,7 @@ export const MultiSignalLocatorSchema = z
 
 export const AccessRequestSchema = z.object({
   bookSlug: z.string().min(1).max(255),
-  email: z.email(),
+  email: z.string().email(),
   password: z.string().max(255).optional(),
 });
 
@@ -77,20 +77,20 @@ export const CreateBookSchema = z.object({
 });
 
 export const CreateGrantSchema = z.object({
-  bookId: z.guid(),
-  email: z.email(),
+  bookId: z.string().uuid(),
+  email: z.string().email(),
   password: z.string().min(8).max(255).optional(),
   mode: GrantModeSchema.default('private'),
   commentsAllowed: z.boolean().default(false),
   offlineAllowed: z.boolean().default(false),
-  expiresAt: z.iso.datetime().optional(),
+  expiresAt: z.string().datetime().optional(),
 });
 
 export const UpdateGrantSchema = z.object({
   mode: GrantModeSchema.optional(),
   commentsAllowed: z.boolean().optional(),
   offlineAllowed: z.boolean().optional(),
-  expiresAt: z.iso.datetime().nullable().optional(),
+  expiresAt: z.string().datetime().nullable().optional(),
 });
 
 export const ProgressUpdateSchema = z.object({
@@ -116,7 +116,7 @@ export const CommentCreateSchema = z.object({
   locator: MultiSignalLocatorSchema.optional(),
   body: z.string().min(1).max(10000),
   visibility: CommentVisibilitySchema.default('shared'),
-  parentCommentId: z.guid().optional(),
+  parentCommentId: z.string().uuid().optional(),
 });
 
 export const CommentUpdateSchema = z.object({
