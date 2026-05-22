@@ -63,12 +63,6 @@ coverage/
 baseline.json
 head.json
 
-# Metric report artifacts
-startup-metrics.json
-bundle-metrics.json
-baseline-bundle-metrics.json
-performance_report.md
-
 .wrangler/
 .claude/
 .gemini/

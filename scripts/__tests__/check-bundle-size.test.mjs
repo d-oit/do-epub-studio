@@ -50,7 +50,7 @@ describe('check-bundle-size.mjs', () => {
     expect(result.status).toBe(1);
   });
 
-  it('matches hashed Vite assets via prefix/suffix', () => {
+  it('handles regex sanitization correctly', () => {
     // Test with a base name that has regex special characters if any
     // Our budgets are index.js, react-vendor.js, epubjs.js, index.css
     // None have special regex chars except dot, which is handled

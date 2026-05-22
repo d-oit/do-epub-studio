@@ -1,6 +1,6 @@
 name: CI
 
-run-name: "${{ github.event_name == 'pull_request' && format('PR {0}', github.event.pull_request.number) || github.event.head_commit.id }}"
+run-name: "${{ github.event_name == 'pull_request' && format('PR {0}: {1}', github.event.pull_request.number, github.event.pull_request.title) || github.event.head_commit.message }}"
 
 on:
   push:
@@ -70,8 +70,7 @@ jobs:
         run: |
           ref="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
           count=$(gh api "/repos/${{ github.repository }}/code-scanning/alerts?state=open" \
-            --jq '[.[] | select(.most_recent_instance.ref == "refs/heads/\($ref)")] | length' \
-            --arg ref "$ref" \
+            --jq "[.[] | select(.most_recent_instance.ref == \"refs/heads/$ref\")] | length" \
             2>/dev/null || echo "0")
           echo "::notice::Open CodeQL alerts on $ref: $count"
           [ "$count" = "0" ] || { echo "::error::Open CodeQL alerts on $ref: $count"; exit 1; }
@@ -155,26 +154,20 @@ jobs:
           path: apps/web/bundle-metrics.json
           retention-days: 1
 
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1   # v4.6.1
-        with:
-          name: build-dist
-          path: apps/web/dist/
-          retention-days: 3
-
       - name: Baseline metrics (PR only)
         if: github.event_name == 'pull_request'
         run: |
           TMP_DIR=$(mktemp -d)
           # Clone baseline into temp dir
-          git clone --depth=1 --branch "${{ github.base_ref }}" "https://github.com/${{ github.repository }}.git" "$TMP_DIR"
-          # Copy check script and budgets from PR branch
+          git clone --depth=1 --branch "main" "https://github.com/d-oit/do-epub-studio.git" "$TMP_DIR"
+          # Copy check script and budgets from PR branch to baseline's expected locations
           mkdir -p "$TMP_DIR/scripts"
           cp scripts/check-bundle-size.mjs "$TMP_DIR/scripts/"
           cp .performance-budgets.json "$TMP_DIR/"
           cd "$TMP_DIR"
-          pnpm install --no-frozen-lockfile
+          pnpm install --frozen-lockfile
           pnpm build
+          # Run size check using the restored script
           METRICS_OUTPUT=baseline-bundle-metrics.json node scripts/check-bundle-size.mjs
           cp baseline-bundle-metrics.json "${{ github.workspace }}/baseline-bundle-metrics.json"
           rm -rf "$TMP_DIR"
@@ -186,6 +179,13 @@ jobs:
           name: baseline-metrics
           path: baseline-bundle-metrics.json
           retention-days: 1
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1   # v4.6.1
+        with:
+          name: build-dist
+          path: apps/web/dist/
+          retention-days: 3
 
   e2e-smoke:
     name: E2E Smoke Tests
@@ -284,7 +284,7 @@ jobs:
       contents: read
       pull-requests: write
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 0
 
@@ -348,8 +348,7 @@ jobs:
           mkdir -p baseline
           find metrics-artifacts/bundle-metrics -name "*.json" -exec cp {} metrics/ \; || true
           find metrics-artifacts/startup-metrics -name "*.json" -exec cp {} metrics/ \; || true
-          # Lighthouse runs in a separate workflow; metrics not available here
-          find metrics-artifacts/lighthouse-metrics -name "*.json" -exec cp {} metrics/ \; || echo "No lighthouse metrics available (generated in separate workflow)"
+          find metrics-artifacts/lighthouse-metrics -name "*.json" -exec cp {} metrics/ \; || true
           find metrics-artifacts/baseline-metrics -name "baseline-bundle-metrics.json" -exec mv {} baseline/bundle-metrics.json \; || true
 
       - name: Collect CI metrics
