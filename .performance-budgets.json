@@ -1,0 +1,13 @@
+{
+  "bundleSize": {
+    "index.js": 500000,
+    "react-vendor.js": 400000,
+    "index.css": 100000
+  },
+  "startupTime": {
+    "fcp": 1500
+  },
+  "ciDuration": {
+    "total": 900
+  }
+}
