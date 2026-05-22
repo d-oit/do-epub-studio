@@ -9,6 +9,11 @@ const [overrideDistDir] = process.argv.slice(2);
 const distDir = overrideDistDir ? path.resolve(overrideDistDir) : path.resolve(rootDir, 'apps/web/dist');
 const budgetsPath = path.resolve(rootDir, '.performance-budgets.json');
 
+if (!distDir.startsWith(rootDir)) {
+  console.error(`Error: Dist directory must be within the repository (${rootDir})`);
+  process.exit(1);
+}
+
 if (!fs.existsSync(distDir)) {
   console.error(`Error: Dist directory not found at ${distDir}. Run build first.`);
   process.exit(1);
@@ -41,13 +46,11 @@ let hasError = false;
 for (const [pattern, limit] of Object.entries(budgets)) {
   const matchingFiles = allFiles.filter(f => {
     const fileName = path.basename(f);
-    // Handle patterns like 'index.js' matching 'index-C55ObYsH.js'
+    // Handle patterns like 'index.js' matching 'index-C55ObYsH.js' (Vite hashed assets)
     if (pattern.includes('.')) {
       const [base, ext] = pattern.split('.');
-      // Sanitize base for regex
-      const safeBase = base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const regex = new RegExp(`^${safeBase}-.*\\.${ext}$|^${safeBase}\\.${ext}$`);
-      return regex.test(fileName);
+      const suffix = '.' + ext;
+      return fileName.startsWith(base) && fileName.endsWith(suffix) && fileName.length > base.length + suffix.length;
     }
     return fileName === pattern;
   });

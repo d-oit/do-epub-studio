@@ -1,6 +1,6 @@
 name: CI
 
-run-name: "${{ github.event_name == 'pull_request' && format('PR {0}: {1}', github.event.pull_request.number, github.event.pull_request.title) || github.event.head_commit.message }}"
+run-name: "${{ github.event_name == 'pull_request' && format('PR {0}', github.event.pull_request.number) || github.event.head_commit.id }}"
 
 on:
   push:
@@ -70,7 +70,8 @@ jobs:
         run: |
           ref="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
           count=$(gh api "/repos/${{ github.repository }}/code-scanning/alerts?state=open" \
-            --jq "[.[] | select(.most_recent_instance.ref == \"refs/heads/$ref\")] | length" \
+            --jq '[.[] | select(.most_recent_instance.ref == "refs/heads/\($ref)")] | length' \
+            --arg ref "$ref" \
             2>/dev/null || echo "0")
           echo "::notice::Open CodeQL alerts on $ref: $count"
           [ "$count" = "0" ] || { echo "::error::Open CodeQL alerts on $ref: $count"; exit 1; }
@@ -164,18 +165,17 @@ jobs:
       - name: Baseline metrics (PR only)
         if: github.event_name == 'pull_request'
         run: |
-          # Store PR commit SHA
-          PR_SHA=$(git rev-parse HEAD)
-          # Switch to baseline merge-base
-          git checkout $(git merge-base origin/${{ github.base_ref }} HEAD)
-          # Restore check script and budget config from PR branch
-          git checkout $PR_SHA -- scripts/check-bundle-size.mjs .performance-budgets.json
+          TMP_DIR=$(mktemp -d)
+          # Clone baseline into temp dir
+          git clone --depth=1 --branch "${{ github.base_ref }}" "https://github.com/${{ github.repository }}.git" "$TMP_DIR"
+          # Copy check script and budgets from PR branch  
+          cp scripts/check-bundle-size.mjs .performance-budgets.json "$TMP_DIR"
+          cd "$TMP_DIR"
           pnpm install --frozen-lockfile
           pnpm build
-          # Run size check using the restored script
           METRICS_OUTPUT=baseline-bundle-metrics.json node scripts/check-bundle-size.mjs
-          # Return to PR branch
-          git checkout -
+          cp baseline-bundle-metrics.json "${{ github.workspace }}/baseline-bundle-metrics.json"
+          rm -rf "$TMP_DIR"
 
       - name: Upload baseline metrics
         if: github.event_name == 'pull_request'
@@ -346,7 +346,8 @@ jobs:
           mkdir -p baseline
           find metrics-artifacts/bundle-metrics -name "*.json" -exec cp {} metrics/ \; || true
           find metrics-artifacts/startup-metrics -name "*.json" -exec cp {} metrics/ \; || true
-          find metrics-artifacts/lighthouse-metrics -name "*.json" -exec cp {} metrics/ \; || true
+          # Lighthouse runs in a separate workflow; metrics not available here
+          find metrics-artifacts/lighthouse-metrics -name "*.json" -exec cp {} metrics/ \; || echo "No lighthouse metrics available (generated in separate workflow)"
           find metrics-artifacts/baseline-metrics -name "baseline-bundle-metrics.json" -exec mv {} baseline/bundle-metrics.json \; || true
 
       - name: Collect CI metrics
