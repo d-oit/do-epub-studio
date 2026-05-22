@@ -20,6 +20,10 @@ vi.mock('@intity/epub-js', () => ({
 }));
 
 describe('ReaderPage Panels', () => {
+  // Use non-lazy imports for testing to avoid Suspense issues
+  // or wrap tests that need these in act() and wait for them.
+  // Given we are testing mutual exclusivity, we need to wait for lazy components.
+
   beforeEach(() => {
     vi.clearAllMocks();
     useAuthStore.setState({
@@ -53,7 +57,7 @@ describe('ReaderPage Panels', () => {
       tocButton.click();
     });
 
-    expect(screen.getByText('Contents')).toBeInTheDocument();
+    expect(await screen.findByText('Contents')).toBeInTheDocument();
 
     const bookmarksButton = screen.getByLabelText('Bookmarks');
     await act(async () => {
@@ -63,7 +67,7 @@ describe('ReaderPage Panels', () => {
     // TOC text should disappear
     expect(screen.queryByText('Contents')).not.toBeInTheDocument();
     // Bookmarks heading should appear
-    expect(screen.getByText('Bookmarks')).toBeInTheDocument();
+    expect(await screen.findByText('Bookmarks')).toBeInTheDocument();
   });
 });
 
