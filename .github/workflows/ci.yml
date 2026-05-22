@@ -69,9 +69,8 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           ref="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
-          count=$(gh api "/repos/${{ github.repository }}/code-scanning/alerts?state=open" \
-            --jq "[.[] | select(.most_recent_instance.ref == \"refs/heads/$ref\")] | length" \
-            2>/dev/null || echo "0")
+          count=$(gh api "/repos/${{ github.repository }}/code-scanning/alerts?state=open" 2>/dev/null | \
+            jq --arg ref "refs/heads/$ref" '[.[] | select(.most_recent_instance.ref == $ref)] | length' || echo "0")
           echo "::notice::Open CodeQL alerts on $ref: $count"
           [ "$count" = "0" ] || { echo "::error::Open CodeQL alerts on $ref: $count"; exit 1; }
 
@@ -159,7 +158,7 @@ jobs:
         run: |
           TMP_DIR=$(mktemp -d)
           # Clone baseline into temp dir
-          git clone --depth=1 --branch "main" "https://github.com/d-oit/do-epub-studio.git" "$TMP_DIR"
+          git clone --depth=1 --branch "${{ github.base_ref }}" "https://github.com/${{ github.repository }}.git" "$TMP_DIR"
           # Copy check script and budgets from PR branch to baseline's expected locations
           mkdir -p "$TMP_DIR/scripts"
           cp scripts/check-bundle-size.mjs "$TMP_DIR/scripts/"
@@ -348,7 +347,8 @@ jobs:
           mkdir -p baseline
           find metrics-artifacts/bundle-metrics -name "*.json" -exec cp {} metrics/ \; || true
           find metrics-artifacts/startup-metrics -name "*.json" -exec cp {} metrics/ \; || true
-          find metrics-artifacts/lighthouse-metrics -name "*.json" -exec cp {} metrics/ \; || true
+          # Lighthouse runs in a separate workflow; metrics not available here
+          find metrics-artifacts/lighthouse-metrics -name "*.json" -exec cp {} metrics/ \; || echo "No lighthouse metrics available (generated in separate workflow)"
           find metrics-artifacts/baseline-metrics -name "baseline-bundle-metrics.json" -exec mv {} baseline/bundle-metrics.json \; || true
 
       - name: Collect CI metrics

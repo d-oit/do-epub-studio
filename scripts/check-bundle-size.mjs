@@ -9,6 +9,11 @@ const [overrideDistDir] = process.argv.slice(2);
 const distDir = overrideDistDir ? path.resolve(overrideDistDir) : path.resolve(rootDir, 'apps/web/dist');
 const budgetsPath = path.resolve(rootDir, '.performance-budgets.json');
 
+if (!distDir.startsWith(rootDir)) {
+  console.error(`Error: Dist directory must be within the repository (${rootDir})`);
+  process.exit(1);
+}
+
 if (!fs.existsSync(distDir)) {
   console.error(`Error: Dist directory not found at ${distDir}. Run build first.`);
   process.exit(1);
