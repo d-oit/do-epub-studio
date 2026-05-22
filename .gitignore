@@ -67,6 +67,7 @@ head.json
 .claude/
 .gemini/
 .antigravitycli/
+.agents/tasks/
 
 # Storybook
 storybook-static/

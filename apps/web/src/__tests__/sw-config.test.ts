@@ -23,10 +23,10 @@ describe('Service Worker Configuration', () => {
     expect(swContent).toContain('cacheName: \'api-responses\'');
   });
 
-  it('implements CacheFirst for EPUB and book content with 30-day expiration', () => {
-    // 60 * 60 * 24 * 30 = 2592000 seconds = 30 days
+  it('implements StaleWhileRevalidate for EPUB and book content with 7-day expiration', () => {
+    // 60 * 60 * 24 * 7 = 604800 seconds = 7 days
     expect(swContent).toContain('cacheName: \'book-content\'');
-    expect(swContent).toContain('maxAgeSeconds: 60 * 60 * 24 * 30');
+    expect(swContent).toContain('maxAgeSeconds: 60 * 60 * 24 * 7');
   });
 
   it('implements CacheFirst for images with 30-day expiration', () => {
