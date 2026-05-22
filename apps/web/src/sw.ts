@@ -6,7 +6,7 @@ import { registerRoute } from 'workbox-routing';
 import { CacheFirst, NetworkFirst, NetworkOnly } from 'workbox-strategies';
 import { ExpirationPlugin } from 'workbox-expiration';
 import { CacheableResponsePlugin } from 'workbox-cacheable-response';
-import { createTraceId } from '@do-epub-studio/shared';
+import { createTraceId, testBounded } from '@do-epub-studio/shared';
 import { CACHE_NAMES, CACHE_PREFIX, FULL_PREFIX } from './sw-config';
 
 declare let self: ServiceWorkerGlobalScope;
@@ -89,11 +89,15 @@ registerRoute(
 );
 
 // Sensitive API routes - never cache
-registerRoute(/^https?:.*\/api\/(?:admin|access|auth)(?:[\/?].*)?/i, new NetworkOnly());
+registerRoute(
+  ({ url }) =>
+    testBounded(/^https?:.*\/api\/(admin|access|auth).*/i, url.href, 2048),
+  new NetworkOnly(),
+);
 
 // API requests with NetworkFirst (prefer fresh data, fallback to cache)
 registerRoute(
-  /^https?:.*\/api\/.*/i,
+  ({ url }) => testBounded(/^https?:.*\/api\/.*/i, url.href, 2048),
   new NetworkFirst({
     cacheName: CACHE_NAMES.apiResponses,
     plugins: [

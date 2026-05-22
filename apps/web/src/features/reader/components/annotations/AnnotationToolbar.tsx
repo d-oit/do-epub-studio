@@ -6,7 +6,12 @@ import { Tooltip, IconButton, scaleVariants } from '../../../../components/ui';
 
 type SupportedLocale = 'en' | 'de' | 'fr';
 
-import type { SelectionData } from './selection-utils';
+export interface SelectionData {
+  text: string;
+  cfiRange: string;
+  chapterRef: string;
+  rect: DOMRect;
+}
 
 interface AnnotationToolbarProps {
   selection: SelectionData;
@@ -175,3 +180,48 @@ export function AnnotationToolbar({
   );
 }
 
+export function extractSelectionData(iframe: HTMLIFrameElement): SelectionData | null {
+  const selection = iframe.contentWindow?.getSelection();
+  if (!selection || selection.isCollapsed || selection.rangeCount === 0) {
+    return null;
+  }
+
+  const range = selection.getRangeAt(0);
+  const text = range.toString().trim();
+
+  if (text.length < 3) {
+    return null;
+  }
+
+  const rects = range.getClientRects();
+  const rect = rects.length > 0 ? rects[0] : range.getBoundingClientRect();
+
+  const iframeRect = iframe.getBoundingClientRect();
+  const adjustedRect = new DOMRect(
+    rect.left - iframeRect.left,
+    rect.top - iframeRect.top,
+    rect.width,
+    rect.height,
+  );
+
+  const chapterRef = window.location.hash.slice(1) || '';
+
+  let cfiRange = '';
+  if (
+    'cfiRange' in range &&
+    typeof (range as unknown as { cfiRange?: string }).cfiRange === 'string'
+  ) {
+    cfiRange = (range as unknown as { cfiRange: string }).cfiRange;
+  }
+
+  return {
+    text,
+    cfiRange,
+    chapterRef,
+    rect: adjustedRect,
+  };
+}
+
+export function clearSelection(iframe: HTMLIFrameElement): void {
+  iframe.contentWindow?.getSelection()?.removeAllRanges();
+}

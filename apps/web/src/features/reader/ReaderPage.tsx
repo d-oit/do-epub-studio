@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { useParams, useNavigate } from 'react-router-dom';
-import type { Rendition } from '@intity/epub-js';
+import { Rendition } from '@intity/epub-js';
 import { useTranslation } from '../../hooks/useTranslation';
 import { apiRequest } from '../../lib/api';
 import { fetchHighlights, fetchComments } from '../../lib/api/annotations';
 import { useAuthStore, useReaderStore, usePreferencesStore } from '../../stores';
 import { setupOnlineListener } from '../../lib/offline';
 import { setupZombieDetection } from '../../lib/offline/permissions';
-import { extractSelectionData } from './components/annotations/selection-utils';
+import { AnnotationToolbar, extractSelectionData, CommentsPanel } from './components/annotations';
 import {
   renderHighlightsOnRendition,
   renderCommentMarkersOnRendition,
@@ -21,34 +21,14 @@ import {
   useExportNotes,
 } from './hooks';
 import { AnimatePresence } from 'framer-motion';
-import { ReaderToolbar } from './components/toolbar/ReaderToolbar';
-import { ReaderViewer } from './components/viewer';
-import { lazy, Suspense } from 'react';
-
-const ReaderSettingsPanel = lazy(() =>
-  import('./components/toolbar/ReaderSettingsPanel').then((m) => ({
-    default: m.ReaderSettingsPanel,
-  })),
-);
-const TableOfContents = lazy(() =>
-  import('./components/toc/TableOfContents').then((m) => ({ default: m.TableOfContents })),
-);
-const BookmarksPanel = lazy(() =>
-  import('./components/bookmarks/BookmarksPanel').then((m) => ({ default: m.BookmarksPanel })),
-);
-const CommentsPanel = lazy(() =>
-  import('./components/annotations/CommentsPanel').then((m) => ({ default: m.CommentsPanel })),
-);
-const CommentInputModal = lazy(() =>
-  import('./components/comment/CommentInputModal').then((m) => ({
-    default: m.CommentInputModal,
-  })),
-);
-const AnnotationToolbar = lazy(() =>
-  import('./components/annotations/AnnotationToolbar').then((m) => ({
-    default: m.AnnotationToolbar,
-  })),
-);
+import {
+  ReaderToolbar,
+  ReaderSettingsPanel,
+  TableOfContents,
+  BookmarksPanel,
+  ReaderViewer,
+  CommentInputModal,
+} from './components';
 
 export function ReaderPage() {
   const { bookSlug } = useParams<{ bookSlug: string }>();
@@ -292,19 +272,17 @@ export function ReaderPage() {
       />
       <AnimatePresence>
         {activePanel === 'settings' && (
-          <Suspense fallback={null}>
-            <ReaderSettingsPanel
-              isOpen={activePanel === 'settings'}
-              onClose={() => setActivePanel(null)}
-              theme={readerTheme}
-              fontSize={readerFontSize}
-              fontFamily={readerFontFamily}
-              onSetTheme={setTheme}
-              onSetFontSize={setFontSize}
-              onSetFontFamily={setFontFamily}
-              t={tFn}
-            />
-          </Suspense>
+          <ReaderSettingsPanel
+            isOpen={activePanel === 'settings'}
+            onClose={() => setActivePanel(null)}
+            theme={readerTheme}
+            fontSize={readerFontSize}
+            fontFamily={readerFontFamily}
+            onSetTheme={setTheme}
+            onSetFontSize={setFontSize}
+            onSetFontFamily={setFontFamily}
+            t={tFn}
+          />
         )}
       </AnimatePresence>
       <ReaderViewer
@@ -315,87 +293,77 @@ export function ReaderPage() {
         viewerRef={viewerRef}
         notAvailableText={t('reader.notAvailable')}
       />
-      <Suspense fallback={null}>
-        <TableOfContents
-          isOpen={activePanel === 'toc'}
-          toc={toc}
-          onClose={() => setActivePanel(null)}
-          onNavigate={(href) => void navigateToChapter(href)}
-          t={tFn}
-        />
-      </Suspense>
+      <TableOfContents
+        isOpen={activePanel === 'toc'}
+        toc={toc}
+        onClose={() => setActivePanel(null)}
+        onNavigate={(href) => void navigateToChapter(href)}
+        t={tFn}
+      />
       {selection && capabilities?.canHighlight && (
-        <Suspense fallback={null}>
-          <AnnotationToolbar
-            selection={selection}
-            onHighlight={(color) => {
-              void handleCreateHighlight(color, selection);
-              setSelection(null);
-            }}
-            onComment={() => {
-              setShowCommentInput(true);
-              setIsCommentMode(true);
-            }}
-            onClose={() => {
-              setSelection(null);
-              setShowCommentInput(false);
-              setIsCommentMode(false);
-            }}
-            locale={locale}
-            canHighlight={capabilities?.canHighlight ?? false}
-            canComment={capabilities?.canComment ?? false}
-          />
-        </Suspense>
-      )}
-      <Suspense fallback={null}>
-        <CommentInputModal
-          isOpen={showCommentInput && !!selection}
+        <AnnotationToolbar
           selection={selection}
-          onSubmit={(text) => {
-            void handleCreateComment(text, selection);
+          onHighlight={(color) => {
+            void handleCreateHighlight(color, selection);
+            setSelection(null);
+          }}
+          onComment={() => {
+            setShowCommentInput(true);
+            setIsCommentMode(true);
+          }}
+          onClose={() => {
             setSelection(null);
             setShowCommentInput(false);
             setIsCommentMode(false);
           }}
-          onCancel={() => {
-            setShowCommentInput(false);
-            setIsCommentMode(false);
-            setSelection(null);
-          }}
-          placeholder={t('comment.placeholder')}
-          submitLabel={t('annotation.comment')}
-        />
-      </Suspense>
-      <Suspense fallback={null}>
-        <BookmarksPanel
-          isOpen={activePanel === 'bookmarks'}
-          bookmarks={bookmarks}
-          onClose={() => setActivePanel(null)}
-          onAddBookmark={() => void handleCreateBookmark(currentChapterRef, toc)}
-          onDeleteBookmark={(id) => handleDeleteBookmark(id)}
-          onNavigate={(bookmark) => {
-            if (bookmark.locator.cfi && renditionRef.current)
-              void renditionRef.current.display(bookmark.locator.cfi);
-          }}
-        />
-      </Suspense>
-      <Suspense fallback={null}>
-        <CommentsPanel
-          isOpen={activePanel === 'comments'}
-          onClose={() => setActivePanel(null)}
-          comments={comments}
-          highlights={highlights}
-          currentChapter={currentChapter}
           locale={locale}
-          onResolveComment={(id) => void handleResolveComment(id)}
-          onReplyToComment={(id, text) => void handleReplyToComment(id, text)}
-          onEditComment={(id, text) => void handleEditComment(id, text)}
-          onDeleteComment={(id) => void handleDeleteComment(id)}
-          onEditHighlight={(id, note) => void handleEditHighlight(id, note)}
-          onDeleteHighlight={(id) => void handleDeleteHighlight(id)}
-          onNavigateToAnnotation={(ref, cfi) => void handleNavigateToAnnotation(ref, cfi)}
+          canHighlight={capabilities?.canHighlight ?? false}
+          canComment={capabilities?.canComment ?? false}
         />
-      </Suspense>
+      )}
+      <CommentInputModal
+        isOpen={showCommentInput && !!selection}
+        selection={selection}
+        onSubmit={(text) => {
+          void handleCreateComment(text, selection);
+          setSelection(null);
+          setShowCommentInput(false);
+          setIsCommentMode(false);
+        }}
+        onCancel={() => {
+          setShowCommentInput(false);
+          setIsCommentMode(false);
+          setSelection(null);
+        }}
+        placeholder={t('comment.placeholder')}
+        submitLabel={t('annotation.comment')}
+      />
+      <BookmarksPanel
+        isOpen={activePanel === 'bookmarks'}
+        bookmarks={bookmarks}
+        onClose={() => setActivePanel(null)}
+        onAddBookmark={() => void handleCreateBookmark(currentChapterRef, toc)}
+        onDeleteBookmark={(id) => handleDeleteBookmark(id)}
+        onNavigate={(bookmark) => {
+          if (bookmark.locator.cfi && renditionRef.current)
+            void renditionRef.current.display(bookmark.locator.cfi);
+        }}
+      />
+      <CommentsPanel
+        isOpen={activePanel === 'comments'}
+        onClose={() => setActivePanel(null)}
+        comments={comments}
+        highlights={highlights}
+        currentChapter={currentChapter}
+        locale={locale}
+        onResolveComment={(id) => void handleResolveComment(id)}
+        onReplyToComment={(id, text) => void handleReplyToComment(id, text)}
+        onEditComment={(id, text) => void handleEditComment(id, text)}
+        onDeleteComment={(id) => void handleDeleteComment(id)}
+        onEditHighlight={(id, note) => void handleEditHighlight(id, note)}
+        onDeleteHighlight={(id) => void handleDeleteHighlight(id)}
+        onNavigateToAnnotation={(ref, cfi) => void handleNavigateToAnnotation(ref, cfi)}
+      />
     </div>
   );
 }
