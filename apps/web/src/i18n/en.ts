@@ -22,6 +22,7 @@ export const en = {
   'reader.loadError': 'Failed to load book',
   'reader.settings': 'Settings',
   'reader.settings.close': 'Close',
+  'reader.moreOptions': 'More options',
   'reader.theme': 'Theme',
   'reader.fontSize': 'Font Size',
   'reader.fontFamily': 'Font',
