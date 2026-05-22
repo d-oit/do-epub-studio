@@ -1,8 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { AnnotationToolbar } from './AnnotationToolbar';
-import { type SelectionData } from './selection-utils';
+import { AnnotationToolbar, type SelectionData } from './AnnotationToolbar';
 
 // Mock useTranslation hook
 vi.mock('../../../../hooks/useTranslation', () => ({

@@ -13,7 +13,7 @@ import { useReaderStore } from '../../../../stores/reader';
 import type { Comment, Bookmark } from '../../../../stores/reader';
 import type { TranslationKeys } from '../../../../i18n';
 
-import type { ReaderPanel } from '../../hooks/useReaderUi';
+import { ReaderPanel } from '../../hooks/useReaderUi';
 
 interface ReaderToolbarProps {
   bookTitle: string | null;

@@ -65,11 +65,8 @@ export default defineConfig({
             if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
               return 'react-vendor';
             }
-            if (id.includes('framer-motion')) {
-              return 'framer-motion';
-            }
-            if (id.includes('epubjs') || id.includes('@intity/epub-js')) {
-              return 'epub-vendor';
+            if (id.includes('epubjs')) {
+              return 'epubjs';
             }
             if (id.includes('zustand')) {
               return 'zustand';

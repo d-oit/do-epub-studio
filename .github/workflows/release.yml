@@ -31,8 +31,6 @@ jobs:
 
       - name: Setup pnpm
         uses: ./.github/actions/setup-pnpm
-        with:
-          enable-turbo-cache: true
 
       - name: Lint and Typecheck
         run: |
@@ -56,8 +54,6 @@ jobs:
 
       - name: Setup pnpm
         uses: ./.github/actions/setup-pnpm
-        with:
-          enable-turbo-cache: true
 
       - name: Build
         run: pnpm build
