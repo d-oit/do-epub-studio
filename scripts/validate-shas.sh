@@ -6,7 +6,6 @@
 # List of allowed external actions in action@sha format
 ALLOWED_SHAS=(
     "actions/cache@1bd1e32a3bdc45362d1e726936510720a7c30a57"
-    "actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae"
     "actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683"
     "actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806"
     "actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a"
