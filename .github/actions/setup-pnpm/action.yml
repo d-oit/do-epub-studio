@@ -1,10 +1,7 @@
 name: Setup pnpm
 description: Checkout, setup pnpm/node with cache, and install dependencies
 
-inputs:
-  enable-turbo-cache:
-    description: 'Whether to enable Turborepo caching'
-    default: 'false'
+inputs: {}
 
 outputs:
   cache-hit:
@@ -24,39 +21,6 @@ runs:
       uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a  # v4.2.0
       with:
         node-version: '22'
-
-    - name: Get pnpm store directory
-      id: pnpm-cache
-      shell: bash
-      run: |
-        echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_OUTPUT
-
-    - name: Setup pnpm cache
-      id: pnpm-cache-step
-      uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
-      with:
-        path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
-        key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-        restore-keys: |
-          pnpm-store-${{ runner.os }}-
-
-    - name: Setup Turborepo cache
-      id: turbo-cache-step
-      if: ${{ inputs.enable-turbo-cache == 'true' }}
-      uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
-      with:
-        path: .turbo
-        key: turbo-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-        restore-keys: |
-          turbo-${{ runner.os }}-
-
-    - name: Log cache status
-      shell: bash
-      run: |
-        echo "pnpm store cache hit: ${{ steps.pnpm-cache-step.outputs.cache-hit }}"
-        if [ "${{ inputs.enable-turbo-cache }}" == "true" ]; then
-          echo "Turbo cache hit: ${{ steps.turbo-cache-step.outputs.cache-hit }}"
-        fi
 
     - name: Install dependencies
       shell: bash

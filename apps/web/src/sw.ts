@@ -6,7 +6,8 @@ import { registerRoute, NavigationRoute } from 'workbox-routing';
 import { CacheFirst, NetworkFirst, NetworkOnly, StaleWhileRevalidate } from 'workbox-strategies';
 import { ExpirationPlugin } from 'workbox-expiration';
 import { CacheableResponsePlugin } from 'workbox-cacheable-response';
-import { createTraceId } from '@do-epub-studio/shared';
+import { createTraceId, testBounded } from '@do-epub-studio/shared';
+import { CACHE_NAMES, CACHE_PREFIX, FULL_PREFIX } from './sw-config';
 
 declare let self: ServiceWorkerGlobalScope;
 
@@ -19,6 +20,25 @@ interface SyncEvent extends Event {
 
 // Clean up old caches during installation
 cleanupOutdatedCaches();
+
+// Custom cleanup for our versioned caches
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames
+          .filter((cacheName) => {
+            // Delete caches that start with our prefix but don't match the current version
+            return cacheName.startsWith(CACHE_PREFIX) && !cacheName.startsWith(FULL_PREFIX);
+          })
+          .map((cacheName) => {
+            console.log(`[SW] Deleting old cache: ${cacheName}`);
+            return caches.delete(cacheName);
+          }),
+      );
+    }),
+  );
+});
 
 // Precache app shell and assets
 precacheAndRoute(self.__WB_MANIFEST);
@@ -53,7 +73,7 @@ registerRoute(
 registerRoute(
   /^https:\/\/fonts\.googleapis\.com\/.*/i,
   new CacheFirst({
-    cacheName: 'google-fonts-stylesheets',
+    cacheName: CACHE_NAMES.googleFontsStylesheets,
     plugins: [
       new ExpirationPlugin({ maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 }),
       new CacheableResponsePlugin({ statuses: [0, 200] }),
@@ -65,7 +85,7 @@ registerRoute(
 registerRoute(
   /^https:\/\/fonts\.gstatic\.com\/.*/i,
   new CacheFirst({
-    cacheName: 'google-fonts-webfonts',
+    cacheName: CACHE_NAMES.googleFontsWebfonts,
     plugins: [
       new ExpirationPlugin({ maxEntries: 30, maxAgeSeconds: 60 * 60 * 24 * 365 }),
       new CacheableResponsePlugin({ statuses: [0, 200] }),
@@ -77,7 +97,7 @@ registerRoute(
 registerRoute(
   /\.(?:png|jpg|jpeg|svg|gif|webp)$/,
   new CacheFirst({
-    cacheName: 'images',
+    cacheName: CACHE_NAMES.images,
     plugins: [new ExpirationPlugin({ maxEntries: 100, maxAgeSeconds: 60 * 60 * 24 * 30 })],
   }),
 );
@@ -86,7 +106,7 @@ registerRoute(
 registerRoute(
   /^https?:.*\/api\/files\/.*/i,
   new CacheFirst({
-    cacheName: 'epub-files',
+    cacheName: CACHE_NAMES.epubFiles,
     plugins: [
       new ExpirationPlugin({ maxEntries: 20, maxAgeSeconds: 60 * 60 * 24 * 30 }), // 30 days
       new CacheableResponsePlugin({ statuses: [0, 200] }),
@@ -94,14 +114,18 @@ registerRoute(
   }),
 );
 
-// Sensitive API requests - Never cache
-registerRoute(/^https?:.*\/api\/(?:admin|access)\/.*/i, new NetworkOnly());
+// Sensitive API routes - never cache
+registerRoute(
+  ({ url }) =>
+    testBounded(/^https?:.*\/api\/(admin|access|auth).*/i, url.href, 2048),
+  new NetworkOnly(),
+);
 
 // API requests with NetworkFirst (prefer fresh data, fallback to cache)
 registerRoute(
-  /^https?:.*\/api\/.*/i,
+  ({ url }) => testBounded(/^https?:.*\/api\/.*/i, url.href, 2048),
   new NetworkFirst({
-    cacheName: 'api-responses',
+    cacheName: CACHE_NAMES.apiResponses,
     plugins: [
       new ExpirationPlugin({ maxEntries: 50, maxAgeSeconds: 60 * 60 }), // 1 hour
       new CacheableResponsePlugin({ statuses: [0, 200] }),
