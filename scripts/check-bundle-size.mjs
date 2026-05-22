@@ -46,13 +46,11 @@ let hasError = false;
 for (const [pattern, limit] of Object.entries(budgets)) {
   const matchingFiles = allFiles.filter(f => {
     const fileName = path.basename(f);
-    // Handle patterns like 'index.js' matching 'index-C55ObYsH.js'
+    // Handle patterns like 'index.js' matching 'index-C55ObYsH.js' (Vite hashed assets)
     if (pattern.includes('.')) {
       const [base, ext] = pattern.split('.');
-      // Sanitize base for regex
-      const safeBase = base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const regex = new RegExp(`^${safeBase}-.*\\.${ext}$|^${safeBase}\\.${ext}$`);
-      return regex.test(fileName);
+      const suffix = '.' + ext;
+      return fileName === pattern || (fileName.startsWith(base + '-') && fileName.endsWith(suffix));
     }
     return fileName === pattern;
   });
