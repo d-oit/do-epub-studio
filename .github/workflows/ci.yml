@@ -34,6 +34,8 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683   # v4.2.2
       - uses: ./.github/actions/setup-pnpm
+        with:
+          enable-turbo-cache: true
 
       - name: Toolchain Diagnostics
         run: |
@@ -56,6 +58,8 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683   # v4.2.2
       - uses: ./.github/actions/setup-pnpm
+        with:
+          enable-turbo-cache: true
       - name: Check CodeQL alerts
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -75,6 +79,8 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683   # v4.2.2
       - uses: ./.github/actions/setup-pnpm
+        with:
+          enable-turbo-cache: true
 
       - name: Lint
         run: pnpm lint
@@ -87,6 +93,8 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683   # v4.2.2
       - uses: ./.github/actions/setup-pnpm
+        with:
+          enable-turbo-cache: true
 
       - name: Typecheck
         run: pnpm typecheck
@@ -99,6 +107,8 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683   # v4.2.2
       - uses: ./.github/actions/setup-pnpm
+        with:
+          enable-turbo-cache: true
 
       - name: Run tests with coverage
         run: pnpm test:coverage > verification_output.txt 2>&1 || (cat verification_output.txt && exit 1)
@@ -127,9 +137,14 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683   # v4.2.2
       - uses: ./.github/actions/setup-pnpm
+        with:
+          enable-turbo-cache: true
 
       - name: Build
         run: pnpm build
+
+      - name: Bundle Analysis
+        run: pnpm --filter @do-epub-studio/web build:analyze
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1   # v4.6.1
@@ -147,8 +162,27 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683   # v4.2.2
       - uses: ./.github/actions/setup-pnpm
+        with:
+          enable-turbo-cache: true
+      - name: Get Playwright version
+        id: playwright-version
+        run: echo "version=$(jq -r '.devDependencies["@playwright/test"]' package.json)" >> $GITHUB_OUTPUT
+
+      - name: Playwright browser cache
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}-${{ github.job }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
+
+      - name: Log Playwright cache status
+        run: echo "Playwright cache hit ${{ steps.playwright-cache.outputs.cache-hit }}"
+
 
       - name: Install Playwright browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: pnpm exec playwright install --with-deps chromium webkit
 
       - name: Run Dev Smoke E2E tests
@@ -187,8 +221,27 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683   # v4.2.2
       - uses: ./.github/actions/setup-pnpm
+        with:
+          enable-turbo-cache: true
+      - name: Get Playwright version
+        id: playwright-version
+        run: echo "version=$(jq -r '.devDependencies["@playwright/test"]' package.json)" >> $GITHUB_OUTPUT
+
+      - name: Playwright browser cache
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
+
+      - name: Log Playwright cache status
+        run: echo "Playwright cache hit ${{ steps.playwright-cache.outputs.cache-hit }}"
+
 
       - name: Install Playwright browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: pnpm exec playwright install --with-deps chromium firefox webkit
 
       - name: Run full cross-browser E2E tests
@@ -230,6 +283,8 @@ jobs:
           fetch-depth: 0
 
       - uses: ./.github/actions/setup-pnpm
+        with:
+          enable-turbo-cache: true
 
       - name: Run baseline benchmarks
         if: github.event_name == 'pull_request'
