@@ -7,6 +7,7 @@ import {
   Tooltip,
   scaleVariants,
 } from '../../../../components/ui';
+import { useFocusTrap } from '@do-epub-studio/ui';
 import { LocaleSwitcher } from '../../../../components/LocaleSwitcher';
 import { useScrollDirection } from '../../../../hooks/useScrollDirection';
 import { useReaderStore } from '../../../../stores/reader';
@@ -47,6 +48,8 @@ export function ReaderToolbar({
 }: ReaderToolbarProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(isMenuOpen, menuRef);
+
   const scrollDirection = useScrollDirection();
   const progressPercent = useReaderStore((s) => s.progress.progressPercent);
 
@@ -59,6 +62,19 @@ export function ReaderToolbar({
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    if (!isMenuOpen) return;
+
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsMenuOpen(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [isMenuOpen]);
 
   const openCommentsCount = comments.filter((c) => c.status === 'open').length;
   const isHeaderVisible = scrollDirection === 'up';
@@ -205,7 +221,9 @@ export function ReaderToolbar({
             <IconButton
               onClick={() => { setIsMenuOpen(!isMenuOpen); }}
               variant="ghost"
-              aria-label={t('admin.login.title')}
+              aria-label={t('reader.moreOptions')}
+              aria-expanded={isMenuOpen}
+              aria-haspopup="true"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
