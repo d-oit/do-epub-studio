@@ -108,6 +108,9 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683   # v4.2.2
       - uses: ./.github/actions/setup-pnpm
 
+      - name: Run unit tests for scripts
+        run: pnpm vitest run scripts/__tests__
+
       - name: Run tests with coverage
         run: pnpm test:coverage > verification_output.txt 2>&1 || (cat verification_output.txt && exit 1)
         env:

@@ -4,7 +4,9 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, '..');
-const distDir = path.resolve(rootDir, 'apps/web/dist');
+
+const [overrideDistDir] = process.argv.slice(2);
+const distDir = overrideDistDir ? path.resolve(overrideDistDir) : path.resolve(rootDir, 'apps/web/dist');
 const budgetsPath = path.resolve(rootDir, '.performance-budgets.json');
 
 if (!fs.existsSync(distDir)) {
@@ -42,7 +44,9 @@ for (const [pattern, limit] of Object.entries(budgets)) {
     // Handle patterns like 'index.js' matching 'index-C55ObYsH.js'
     if (pattern.includes('.')) {
       const [base, ext] = pattern.split('.');
-      const regex = new RegExp(`^${base}-.*\\.${ext}$|^${base}\\.${ext}$`);
+      // Sanitize base for regex
+      const safeBase = base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(`^${safeBase}-.*\\.${ext}$|^${safeBase}\\.${ext}$`);
       return regex.test(fileName);
     }
     return fileName === pattern;
