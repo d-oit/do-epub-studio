@@ -10,6 +10,7 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src --ext .ts,.tsx",
+    "test:bundle": "node ../../scripts/check-bundle-size.mjs",
     "test:unit": "cross-env NODE_OPTIONS=--max-old-space-size=4096 vitest run",
     "test": "echo \"Use test:unit or pnpm test:e2e from root\"",
     "test:e2e": "echo \"Run pnpm test:e2e from root\""
