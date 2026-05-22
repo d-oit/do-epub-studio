@@ -161,11 +161,17 @@ jobs:
       - name: Baseline metrics (PR only)
         if: github.event_name == 'pull_request'
         run: |
+          # Store PR commit SHA
+          PR_SHA=$(git rev-parse HEAD)
+          # Switch to baseline merge-base
           git checkout $(git merge-base origin/${{ github.base_ref }} HEAD)
+          # Restore check script and budget config from PR branch
+          git checkout $PR_SHA -- scripts/check-bundle-size.mjs .performance-budgets.json
           pnpm install --frozen-lockfile
           pnpm build
-          METRICS_OUTPUT=baseline-bundle-metrics.json pnpm --filter @do-epub-studio/web test:bundle
-          mv apps/web/baseline-bundle-metrics.json ./baseline-bundle-metrics.json
+          # Run size check using the restored script
+          METRICS_OUTPUT=baseline-bundle-metrics.json node scripts/check-bundle-size.mjs
+          # Return to PR branch
           git checkout -
 
       - name: Upload baseline metrics
