@@ -169,9 +169,11 @@ jobs:
           # Clone baseline into temp dir
           git clone --depth=1 --branch "${{ github.base_ref }}" "https://github.com/${{ github.repository }}.git" "$TMP_DIR"
           # Copy check script and budgets from PR branch
-          cp scripts/check-bundle-size.mjs .performance-budgets.json "$TMP_DIR"
+          mkdir -p "$TMP_DIR/scripts"
+          cp scripts/check-bundle-size.mjs "$TMP_DIR/scripts/"
+          cp .performance-budgets.json "$TMP_DIR/"
           cd "$TMP_DIR"
-          pnpm install --frozen-lockfile
+          pnpm install --no-frozen-lockfile
           pnpm build
           METRICS_OUTPUT=baseline-bundle-metrics.json node scripts/check-bundle-size.mjs
           cp baseline-bundle-metrics.json "${{ github.workspace }}/baseline-bundle-metrics.json"
