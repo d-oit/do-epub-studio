@@ -22,7 +22,7 @@
 - **Action**: Update `manualChunks` to split `framer-motion`; environment-gate `sourcemap: process.env.NODE_ENV !== 'production'`; add `"build:analyze"` to root `package.json`.
 
 ### 3. Service Worker Issues (`sw.ts`)
-- **Issues**: 
+- **Issues**:
   - `book-content` cache uses `CacheFirst` which risks stale/deleted books; should be `StaleWhileRevalidate` with a 7-day TTL.
   - Route overlap risk for catch-all API `NetworkFirst` pattern matching.
   - No storage quota guard or `CacheableResponsePlugin` for `images` cache.

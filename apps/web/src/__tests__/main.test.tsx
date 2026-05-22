@@ -27,7 +27,7 @@ vi.mock('framer-motion', () => ({
 
 const mockRegisterSW = vi.fn();
 vi.mock('virtual:pwa-register', () => ({
-  registerSW: (options: any) => mockRegisterSW(options),
+  registerSW: (options: unknown) => mockRegisterSW(options),
 }));
 
 describe('main.tsx', () => {
