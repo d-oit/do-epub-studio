@@ -6,8 +6,7 @@ import { registerRoute, NavigationRoute } from 'workbox-routing';
 import { CacheFirst, NetworkFirst, NetworkOnly, StaleWhileRevalidate } from 'workbox-strategies';
 import { ExpirationPlugin } from 'workbox-expiration';
 import { CacheableResponsePlugin } from 'workbox-cacheable-response';
-import { createTraceId, testBounded } from '@do-epub-studio/shared';
-import { CACHE_NAMES, CACHE_PREFIX, FULL_PREFIX } from './sw-config';
+import { createTraceId } from '@do-epub-studio/shared';
 
 declare let self: ServiceWorkerGlobalScope;
 
@@ -21,59 +20,38 @@ interface SyncEvent extends Event {
 // Clean up old caches during installation
 cleanupOutdatedCaches();
 
-// Custom cleanup for our versioned caches
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames
-          .filter((cacheName) => {
-            // Delete caches that start with our prefix but don't match the current version
-            return cacheName.startsWith(CACHE_PREFIX) && !cacheName.startsWith(FULL_PREFIX);
-          })
-          .map((cacheName) => {
-            console.log(`[SW] Deleting old cache: ${cacheName}`);
-            return caches.delete(cacheName);
-          }),
-      );
-    }),
-  );
-});
-
 // Precache app shell and assets
 precacheAndRoute(self.__WB_MANIFEST);
 
-// Handle navigation requests with NetworkFirst strategy, falling back to app shell
-const navigationHandler = new NetworkFirst({
-  cacheName: 'navigations',
-  plugins: [
-    new CacheableResponsePlugin({ statuses: [200] }),
-    new ExpirationPlugin({ maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 }), // 24 hours
-  ],
-});
-
+// Handle navigation requests by falling back to precached app shell (index.html)
+// Precached assets are already handled by precacheAndRoute, this provides the SPA fallback.
 registerRoute(
-  new NavigationRoute(async (params) => {
-    try {
-      const response = await navigationHandler.handle(params);
-      if (response) return response;
-      throw new Error('No response from navigation handler');
-    } catch {
-      return (
-        (await caches.match(getCacheKeyForURL('index.html') || '/index.html')) || Response.error()
-      );
-    }
-  }, {
-    // Optionally exclude specific paths from navigation routing
-    denylist: [/^\/api\//, /^\/_worker\//],
-  }),
+  new NavigationRoute(
+    async (params) => {
+      try {
+        // Attempt to fetch from network first for freshness
+        const response = await fetch(params.request);
+        if (response.ok) return response;
+        throw new Error('Network response was not ok');
+      } catch {
+        // Fallback to precached index.html
+        return (
+          (await caches.match(getCacheKeyForURL('index.html') || '/index.html')) || Response.error()
+        );
+      }
+    },
+    {
+      // Exclude API and internal worker routes from navigation handling
+      denylist: [/^\/api\//, /^\/_worker\//],
+    },
+  ),
 );
 
 // Cache Google Fonts stylesheets
 registerRoute(
   /^https:\/\/fonts\.googleapis\.com\/.*/i,
   new CacheFirst({
-    cacheName: CACHE_NAMES.googleFontsStylesheets,
+    cacheName: 'google-fonts-stylesheets',
     plugins: [
       new ExpirationPlugin({ maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 }),
       new CacheableResponsePlugin({ statuses: [0, 200] }),
@@ -85,7 +63,7 @@ registerRoute(
 registerRoute(
   /^https:\/\/fonts\.gstatic\.com\/.*/i,
   new CacheFirst({
-    cacheName: CACHE_NAMES.googleFontsWebfonts,
+    cacheName: 'google-fonts-webfonts',
     plugins: [
       new ExpirationPlugin({ maxEntries: 30, maxAgeSeconds: 60 * 60 * 24 * 365 }),
       new CacheableResponsePlugin({ statuses: [0, 200] }),
@@ -97,35 +75,31 @@ registerRoute(
 registerRoute(
   /\.(?:png|jpg|jpeg|svg|gif|webp)$/,
   new CacheFirst({
-    cacheName: CACHE_NAMES.images,
+    cacheName: 'images',
     plugins: [new ExpirationPlugin({ maxEntries: 100, maxAgeSeconds: 60 * 60 * 24 * 30 })],
   }),
 );
 
-// Cache EPUB files with CacheFirst (large binary files)
+// Cache EPUB and other book content (covers, media) with CacheFirst
 registerRoute(
   /^https?:.*\/api\/files\/.*/i,
   new CacheFirst({
-    cacheName: CACHE_NAMES.epubFiles,
+    cacheName: 'book-content',
     plugins: [
-      new ExpirationPlugin({ maxEntries: 20, maxAgeSeconds: 60 * 60 * 24 * 30 }), // 30 days
+      new ExpirationPlugin({ maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 * 30 }), // 30 days
       new CacheableResponsePlugin({ statuses: [0, 200] }),
     ],
   }),
 );
 
-// Sensitive API routes - never cache
-registerRoute(
-  ({ url }) =>
-    testBounded(/^https?:.*\/api\/(admin|access|auth).*/i, url.href, 2048),
-  new NetworkOnly(),
-);
+// Sensitive API requests - Never cache (handles with or without trailing slash)
+registerRoute(/^https?:.*\/api\/(?:admin|access)(\/.*)?$/i, new NetworkOnly());
 
 // API requests with NetworkFirst (prefer fresh data, fallback to cache)
 registerRoute(
-  ({ url }) => testBounded(/^https?:.*\/api\/.*/i, url.href, 2048),
+  /^https?:.*\/api\/.*/i,
   new NetworkFirst({
-    cacheName: CACHE_NAMES.apiResponses,
+    cacheName: 'api-responses',
     plugins: [
       new ExpirationPlugin({ maxEntries: 50, maxAgeSeconds: 60 * 60 }), // 1 hour
       new CacheableResponsePlugin({ statuses: [0, 200] }),

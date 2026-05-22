@@ -6,17 +6,15 @@ describe('Service Worker Configuration', () => {
   const swPath = join(__dirname, '../sw.ts');
   const swContent = readFileSync(swPath, 'utf-8');
 
-  it('implements NetworkFirst strategy for navigation with index.html fallback', () => {
+  it('implements NetworkFirst-like strategy for navigation with index.html fallback', () => {
     expect(swContent).toContain('NavigationRoute');
-    expect(swContent).toContain('new NetworkFirst({');
-    expect(swContent).toContain('cacheName: \'navigations\'');
+    expect(swContent).toContain('await fetch(params.request)');
     expect(swContent).toContain('getCacheKeyForURL(\'index.html\')');
   });
 
   it('implements NetworkOnly strategy for sensitive API routes', () => {
     // The source code uses double backslashes in the regex string literal in sw.ts
-    // but when read from file it's literally /^https?:.*\/api\/(?:admin|access)\/.*/i
-    expect(swContent).toContain('registerRoute(/^https?:.*\\/api\\/(?:admin|access)\\/.*/i, new NetworkOnly());');
+    expect(swContent).toContain('registerRoute(/^https?:.*\\/api\\/(?:admin|access)(\\/.*)?$/i, new NetworkOnly());');
   });
 
   it('implements NetworkFirst for generic API requests with 1-hour expiration', () => {
@@ -25,9 +23,9 @@ describe('Service Worker Configuration', () => {
     expect(swContent).toContain('cacheName: \'api-responses\'');
   });
 
-  it('implements CacheFirst for EPUB files with 30-day expiration', () => {
+  it('implements CacheFirst for EPUB and book content with 30-day expiration', () => {
     // 60 * 60 * 24 * 30 = 2592000 seconds = 30 days
-    expect(swContent).toContain('cacheName: \'epub-files\'');
+    expect(swContent).toContain('cacheName: \'book-content\'');
     expect(swContent).toContain('maxAgeSeconds: 60 * 60 * 24 * 30');
   });
 

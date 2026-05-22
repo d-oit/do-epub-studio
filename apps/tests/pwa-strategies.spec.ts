@@ -137,9 +137,9 @@ test.describe('PWA Caching Strategies', () => {
 
     expect(content).toBe('mock-epub-content');
 
-    // 4. Verify it is in the 'epub-files' cache specifically
+    // 4. Verify it is in the 'book-content' cache specifically
     const inCorrectCache = await page.evaluate(async () => {
-      const cache = await caches.open('epub-files');
+      const cache = await caches.open('book-content');
       const match = await cache.match('/api/files/test.epub');
       return !!match;
     });
