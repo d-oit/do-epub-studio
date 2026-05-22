@@ -116,3 +116,17 @@ jobs:
               issue_number: context.issue.number,
               body: body,
             });
+
+            // Also save as artifact for unified performance report
+            const lighthouseMetrics = {};
+            for (const [k, v] of Object.entries(scores)) {
+              lighthouseMetrics[k] = v.actual;
+            }
+            fs.writeFileSync('lighthouse-metrics.json', JSON.stringify(lighthouseMetrics, null, 2));
+
+      - name: Upload Lighthouse metrics
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1   # v4.6.1
+        with:
+          name: lighthouse-metrics
+          path: lighthouse-metrics.json
+          retention-days: 1
