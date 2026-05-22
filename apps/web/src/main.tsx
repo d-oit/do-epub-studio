@@ -8,6 +8,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { createSpanId, createTraceId } from '@do-epub-studio/shared';
 import { logClientEvent } from './lib/client-logger';
 import './styles/globals.css';
+import { registerSW } from 'virtual:pwa-register';
 
 setupGlobalErrorHandlers();
 
@@ -27,18 +28,25 @@ if (rootElement) {
 }
 
 if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    void (async () => {
-      try {
-        const reg = await navigator.serviceWorker.register('/sw.js');
-        const sync = (reg as unknown as { sync?: { register: (tag: string) => Promise<void> } }).sync;
-        if (sync) {
-          await sync.register('sync-reader-state');
+  registerSW({
+    immediate: true,
+    onRegistered(registration) {
+      if (registration) {
+        const syncReg = registration as unknown as {
+          sync?: {
+            register(tag: string): Promise<void>;
+          };
+        };
+        if (syncReg.sync) {
+          void syncReg.sync.register('sync-reader-state').catch((err: unknown) => {
+            console.error('Failed to register background sync:', err);
+          });
         }
-      } catch (error) {
-        console.log('Service worker registration failed:', error);
       }
-    })();
+    },
+    onRegisterError(error) {
+      console.error('Service worker registration failed:', error);
+    },
   });
 }
 

@@ -1,13 +1,59 @@
+import React, { Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { useAuthStore } from './stores/auth';
 import { LoginPage } from './features/auth/LoginPage';
-import { ReaderPage } from './features/reader/ReaderPage';
 import { AdminLoginPage } from './features/admin/AdminLoginPage';
-import { AdminBookResponsesPage } from './features/admin/BooksPage';
-import { AdminGrantResponsesPage } from './features/admin/GrantsPage';
-import { AdminAuditPage } from './features/admin/AuditLogPage';
 import { AppShell } from './components/AppShell';
-import React from 'react';
+
+// Lazy load route components (named exports)
+const ReaderPage = React.lazy(() =>
+  import('./features/reader/ReaderPage').then((m) => ({ default: m.ReaderPage }))
+);
+const AdminBookResponsesPage = React.lazy(() =>
+  import('./features/admin/BooksPage').then((m) => ({ default: m.AdminBookResponsesPage }))
+);
+const AdminGrantResponsesPage = React.lazy(() =>
+  import('./features/admin/GrantsPage').then((m) => ({ default: m.AdminGrantResponsesPage }))
+);
+const AdminAuditPage = React.lazy(() =>
+  import('./features/admin/AuditLogPage').then((m) => ({ default: m.AdminAuditPage }))
+);
+
+// Premium glassmorphism loading fallback spinner
+const LoadingFallback: React.FC = () => (
+  <div
+    className="min-h-screen bg-background flex flex-col items-center justify-center p-6"
+    role="status"
+    aria-live="polite"
+    aria-label="Loading page"
+  >
+    <div className="flex flex-col items-center gap-6 w-full max-w-xs p-8 rounded-3xl bg-surface/40 backdrop-blur-md border border-white/5 shadow-glass">
+      <div
+        className="w-12 h-12 rounded-xl bg-accent flex items-center justify-center shadow-glass animate-pulse"
+        aria-hidden="true"
+      >
+        <svg
+          className="w-7 h-7 text-white"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+          />
+        </svg>
+      </div>
+      <div className="flex gap-2.5 mt-2" aria-hidden="true">
+        <div className="w-2.5 h-2.5 rounded-full bg-accent animate-bounce [animation-delay:-0.3s]" />
+        <div className="w-2.5 h-2.5 rounded-full bg-accent/60 animate-bounce [animation-delay:-0.15s]" />
+        <div className="w-2.5 h-2.5 rounded-full bg-accent/30 animate-bounce" />
+      </div>
+    </div>
+  </div>
+);
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
@@ -31,36 +77,38 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
 
 function App() {
   return (
-    <Routes>
-      <Route path="/" element={<AppShell />} />
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/admin/login" element={<AdminLoginPage />} />
-      <Route path="/read/:bookSlug" element={
-        <ProtectedRoute>
-          <ReaderPage />
-        </ProtectedRoute>
-      } />
-      <Route path="/admin/books" element={
-        <AdminRoute>
-          <AdminBookResponsesPage />
-        </AdminRoute>
-      } />
-      <Route path="/admin/grants" element={
-        <AdminRoute>
-          <AdminGrantResponsesPage />
-        </AdminRoute>
-      } />
-      <Route path="/admin/books/:bookId/grants" element={
-        <AdminRoute>
-          <AdminGrantResponsesPage />
-        </AdminRoute>
-      } />
-      <Route path="/admin/audit" element={
-        <AdminRoute>
-          <AdminAuditPage />
-        </AdminRoute>
-      } />
-    </Routes>
+    <Suspense fallback={<LoadingFallback />}>
+      <Routes>
+        <Route path="/" element={<AppShell />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/admin/login" element={<AdminLoginPage />} />
+        <Route path="/read/:bookSlug" element={
+          <ProtectedRoute>
+            <ReaderPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/books" element={
+          <AdminRoute>
+            <AdminBookResponsesPage />
+          </AdminRoute>
+        } />
+        <Route path="/admin/grants" element={
+          <AdminRoute>
+            <AdminGrantResponsesPage />
+          </AdminRoute>
+        } />
+        <Route path="/admin/books/:bookId/grants" element={
+          <AdminRoute>
+            <AdminGrantResponsesPage />
+          </AdminRoute>
+        } />
+        <Route path="/admin/audit" element={
+          <AdminRoute>
+            <AdminAuditPage />
+          </AdminRoute>
+        } />
+      </Routes>
+    </Suspense>
   );
 }
 

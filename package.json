@@ -20,9 +20,10 @@
     "db:migrate:local": "node scripts/db-migrate-local.mjs",
     "db:migrate:prod": "node scripts/db-migrate-prod.mjs",
     "db:check": "node scripts/db-check.mjs",
-    "verify:fast": "pnpm lint && pnpm typecheck && pnpm --filter @do-epub-studio/web test:unit -- src/features/reader/components/annotations src/features/admin",
+    "verify:fast": "pnpm lint && pnpm typecheck && vitest run --changed main",
     "test:e2e:smoke": "PLAYWRIGHT_MODE=dev playwright test --grep @smoke",
-    "bench": "pnpm --filter @do-epub-studio/reader-core bench"
+    "bench": "pnpm --filter @do-epub-studio/reader-core bench",
+    "build:analyze": "ANALYZE=true turbo run build"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.11.3",

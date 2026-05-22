@@ -86,7 +86,7 @@ export const useReaderStore = create<ReaderState>((set) => ({
   currentChapter: null,
   isLoading: false,
   error: null,
-  isOffline: !navigator.onLine,
+  isOffline: typeof navigator !== 'undefined' ? !navigator.onLine : false,
   pendingSyncCount: 0,
   permissionStatus: 'checking',
   setProgress: (progress) => set({ progress }),
@@ -104,24 +104,59 @@ export const useReaderStore = create<ReaderState>((set) => ({
     })),
   addComment: (comment) =>
     set((state) => {
-      if (comment.parentCommentId) {
-        const addReply = (comments: Comment[]): Comment[] =>
-          comments.map((c) =>
-            c.id === comment.parentCommentId
-              ? { ...c, replies: [...(c.replies || []), comment] }
-              : { ...c, replies: addReply(c.replies || []) },
-          );
-        return { comments: addReply(state.comments) };
+      if (!comment.parentCommentId) {
+        return { comments: [...state.comments, comment] };
       }
-      return { comments: [...state.comments, comment] };
+
+      const commentMap = new Map<string, Comment>();
+      const rootComments: Comment[] = [];
+
+      const processComment = (c: Comment, isRoot: boolean): Comment => {
+        const copy = { ...c, replies: c.replies ? [...c.replies] : [] };
+        commentMap.set(c.id, copy);
+        if (isRoot) {
+          rootComments.push(copy);
+        }
+        if (c.replies) {
+          copy.replies = c.replies.map((r) => processComment(r, false));
+        }
+        return copy;
+      };
+
+      state.comments.forEach((c) => processComment(c, true));
+
+      const parent = commentMap.get(comment.parentCommentId);
+      if (parent) {
+        parent.replies = [...(parent.replies || []), comment];
+      }
+
+      return { comments: rootComments };
     }),
   updateComment: (id, updates) =>
     set((state) => {
-      const update = (comments: Comment[]): Comment[] =>
-        comments.map((c) =>
-          c.id === id ? { ...c, ...updates } : { ...c, replies: update(c.replies || []) },
-        );
-      return { comments: update(state.comments) };
+      const commentMap = new Map<string, Comment>();
+      const rootComments: Comment[] = [];
+
+      const processComment = (c: Comment, isRoot: boolean): Comment => {
+        const copy = { ...c, replies: c.replies ? [...c.replies] : [] };
+        commentMap.set(c.id, copy);
+        if (isRoot) {
+          rootComments.push(copy);
+        }
+        if (c.replies) {
+          copy.replies = c.replies.map((r) => processComment(r, false));
+        }
+        return copy;
+      };
+
+      state.comments.forEach((c) => processComment(c, true));
+
+      const target = commentMap.get(id);
+      if (target) {
+        Object.assign(target, updates);
+      }
+
+      return { comments: rootComments };
     }),
   setComments: (comments) => set({ comments }),
   setCurrentChapter: (chapter) => set({ currentChapter: chapter }),

@@ -25,6 +25,11 @@ vi.mock('framer-motion', () => ({
   MotionConfig: ({ children }: { children: React.ReactNode }) => children,
 }));
 
+const mockRegisterSW = vi.fn();
+vi.mock('virtual:pwa-register', () => ({
+  registerSW: (options: unknown) => mockRegisterSW(options),
+}));
+
 describe('main.tsx', () => {
   let addEventListenerSpy: ReturnType<typeof vi.spyOn>;
   let errorListeners: Array<(...args: unknown[]) => void> = [];
@@ -162,15 +167,30 @@ describe('main.tsx', () => {
   });
 
   describe('service worker', () => {
-    it('registers service worker on load', async () => {
+    it('registers service worker with registerSW', async () => {
       document.body.innerHTML = '<div id="root"></div>';
       await import('../main');
 
-      const listener = loadListeners[0];
-      listener();
-      await vi.waitFor(() => {
-        expect(mockServiceWorker.register).toHaveBeenCalledWith('/sw.js');
-      });
+      expect(mockRegisterSW).toHaveBeenCalledWith(
+        expect.objectContaining({
+          immediate: true,
+        }),
+      );
+
+      const registeredCall = mockRegisterSW.mock.calls[0]?.[0];
+      expect(registeredCall).toBeDefined();
+
+      if (registeredCall && typeof registeredCall.onRegistered === 'function') {
+        const mockSyncRegister = vi.fn().mockResolvedValue(undefined);
+        const mockRegistration = {
+          sync: {
+            register: mockSyncRegister,
+          },
+        };
+
+        registeredCall.onRegistered(mockRegistration);
+        expect(mockSyncRegister).toHaveBeenCalledWith('sync-reader-state');
+      }
     });
 
     it('skips service worker registration when not available', async () => {
@@ -182,7 +202,7 @@ describe('main.tsx', () => {
 
       document.body.innerHTML = '<div id="root"></div>';
       await import('../main');
-      expect(mockServiceWorker.register).not.toHaveBeenCalled();
+      expect(mockRegisterSW).not.toHaveBeenCalled();
     });
   });
 

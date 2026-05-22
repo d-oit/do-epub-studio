@@ -9,9 +9,11 @@
       "cache": false
     },
     "lint": {
+      "inputs": ["src/**", "tests/**", "*.config.*", "eslint.config.js"],
       "outputs": []
     },
     "typecheck": {
+      "inputs": ["src/**", "tests/**", "tsconfig*.json"],
       "outputs": []
     },
     "test:unit": {

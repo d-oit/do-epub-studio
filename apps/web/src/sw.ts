@@ -71,23 +71,61 @@ registerRoute(
   }),
 );
 
+const DEBUG = process.env.NODE_ENV !== 'production';
+
+// Custom plugin to check storage quota and prevent silent failures
+const quotaGuardPlugin = {
+  cacheWillUpdate: async ({ response }: { response: Response }) => {
+    if (typeof navigator !== 'undefined' && navigator.storage && navigator.storage.estimate) {
+      try {
+        const { usage, quota } = await navigator.storage.estimate();
+        if (usage !== undefined && quota !== undefined) {
+          const usageRatio = usage / quota;
+          if (usageRatio > 0.85) { // 85% full
+            const traceId = createTraceId();
+            console.warn(
+              JSON.stringify({
+                level: 'warning',
+                traceId,
+                event: 'sw.storage.quota_warning',
+                usage,
+                quota,
+                usageRatio,
+              })
+            );
+            await caches.delete('external-assets');
+          }
+        }
+      } catch (err) {
+        console.error('Error estimating storage:', err);
+      }
+    }
+    return response;
+  }
+};
+
 // Cache images with CacheFirst strategy
 registerRoute(
   /\.(?:png|jpg|jpeg|svg|gif|webp)$/,
   new CacheFirst({
     cacheName: 'images',
-    plugins: [new ExpirationPlugin({ maxEntries: 100, maxAgeSeconds: 60 * 60 * 24 * 30 })],
+    plugins: [
+      new ExpirationPlugin({ maxEntries: 100, maxAgeSeconds: 60 * 60 * 24 * 30 }),
+      new CacheableResponsePlugin({ statuses: [0, 200] }),
+      quotaGuardPlugin,
+    ],
   }),
 );
 
-// Cache EPUB and other book content (covers, media) with CacheFirst
+// Cache EPUB and other book content (covers, media) with StaleWhileRevalidate
 registerRoute(
   /^https?:.*\/api\/files\/.*/i,
-  new CacheFirst({
+  new StaleWhileRevalidate({
     cacheName: 'book-content',
     plugins: [
-      new ExpirationPlugin({ maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 * 30 }), // 30 days
+      new ExpirationPlugin({ maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 * 7 }), // 7 days
       new CacheableResponsePlugin({ statuses: [0, 200] }),
+      quotaGuardPlugin,
     ],
   }),
 );
@@ -97,7 +135,7 @@ registerRoute(/^https?:.*\/api\/(?:admin|access)(\/.*)?$/i, new NetworkOnly());
 
 // API requests with NetworkFirst (prefer fresh data, fallback to cache)
 registerRoute(
-  /^https?:.*\/api\/.*/i,
+  /^https?:.*\/api\/(?!files|admin|access)(.*)/i,
   new NetworkFirst({
     cacheName: 'api-responses',
     plugins: [
@@ -127,20 +165,24 @@ self.addEventListener('sync', (event: Event) => {
     syncEvent.waitUntil(
       (async () => {
         const traceId = createTraceId();
-        console.log(
-          JSON.stringify({ level: 'info', traceId, event: 'sw.sync.start', tag: syncEvent.tag }),
-        );
+        if (DEBUG) {
+          console.log(
+            JSON.stringify({ level: 'info', traceId, event: 'sw.sync.start', tag: syncEvent.tag }),
+          );
+        }
         try {
           const { syncAll } = await import('./lib/offline/sync');
           await syncAll();
-          console.log(
-            JSON.stringify({
-              level: 'info',
-              traceId,
-              event: 'sw.sync.complete',
-              tag: syncEvent.tag,
-            }),
-          );
+          if (DEBUG) {
+            console.log(
+              JSON.stringify({
+                level: 'info',
+                traceId,
+                event: 'sw.sync.complete',
+                tag: syncEvent.tag,
+              }),
+            );
+          }
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error);
           console.error(
@@ -167,9 +209,11 @@ self.addEventListener('message', (event) => {
     if (cacheName) {
       event.waitUntil(
         caches.delete(cacheName).then((deleted) => {
-          console.log(
-            JSON.stringify({ level: 'info', traceId, event: 'sw.cache.cleared', cacheName, deleted }),
-          );
+          if (DEBUG) {
+            console.log(
+              JSON.stringify({ level: 'info', traceId, event: 'sw.cache.cleared', cacheName, deleted }),
+            );
+          }
         }),
       );
     }

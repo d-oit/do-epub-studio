@@ -56,7 +56,7 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    sourcemap: true,
+    sourcemap: process.env.NODE_ENV !== 'production',
     rolldownOptions: {
       output: {
         // Vite 8 Rolldown uses codeSplitting or function manualChunks
@@ -73,6 +73,9 @@ export default defineConfig({
             }
             if (id.includes('workbox')) {
               return 'workbox';
+            }
+            if (id.includes('framer-motion')) {
+              return 'framer-motion';
             }
           }
         },

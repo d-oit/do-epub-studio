@@ -73,6 +73,7 @@ performance_report.md
 .claude/
 .gemini/
 .antigravitycli/
+.agents/tasks/
 
 # Storybook
 storybook-static/
