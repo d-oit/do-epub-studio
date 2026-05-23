@@ -38,9 +38,9 @@ export const EntityTypeSchema = z.enum([
 
 export const AnnotationLocatorSchema = z
   .object({
-    cfi: z.string().optional(),
-    selectedText: z.string().optional(),
-    chapterRef: z.string().optional(),
+    cfi: z.string().max(2048).optional(),
+    selectedText: z.string().max(10000).optional(),
+    chapterRef: z.string().max(1024).optional(),
     elementIndex: z.number().optional(),
     charOffset: z.number().optional(),
   })
@@ -51,15 +51,21 @@ export const AnnotationLocatorSchema = z
 // Multi-signal locator requiring CFI + text + chapter per ADR-006
 export const MultiSignalLocatorSchema = z
   .object({
-    cfi: z.string().min(1, 'CFI is required for multi-signal locator'),
-    selectedText: z.string().min(1, 'Selected text is required for multi-signal locator'),
-    chapterRef: z.string().min(1, 'Chapter reference is required for multi-signal locator'),
+    cfi: z.string().min(1, 'CFI is required for multi-signal locator').max(2048),
+    selectedText: z
+      .string()
+      .min(1, 'Selected text is required for multi-signal locator')
+      .max(10000),
+    chapterRef: z
+      .string()
+      .min(1, 'Chapter reference is required for multi-signal locator')
+      .max(1024),
   })
   .strict();
 
 export const AccessRequestSchema = z.object({
   bookSlug: z.string().min(1).max(255),
-  email: z.string().email(),
+  email: z.string().email().max(255),
   password: z.string().max(255).optional(),
 });
 
@@ -78,7 +84,7 @@ export const CreateBookSchema = z.object({
 
 export const CreateGrantSchema = z.object({
   bookId: z.string().uuid(),
-  email: z.string().email(),
+  email: z.string().email().max(255),
   password: z.string().min(8).max(255).optional(),
   mode: GrantModeSchema.default('private'),
   commentsAllowed: z.boolean().default(false),
