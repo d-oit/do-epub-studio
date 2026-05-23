@@ -77,6 +77,9 @@ export default defineConfig({
             if (id.includes('framer-motion')) {
               return 'framer-motion';
             }
+            if (id.includes('i18next') || id.includes('react-i18next')) {
+              return 'i18n';
+            }
           }
         },
       },
