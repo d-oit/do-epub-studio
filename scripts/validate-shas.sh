@@ -6,11 +6,11 @@
 # List of allowed external actions in action@sha format
 ALLOWED_SHAS=(
     "actions/cache@1bd1e32a3bdc45362d1e726936510720a7c30a57"
-    "actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683"
+    "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd"
     "actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806"
-    "actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a"
+    "actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020"
     "actions/stale@b5d41d4e1d5dceea10e7104786b73624c18a190f"
-    "actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1"
+    "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02"
     "cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0"
     "codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354"
     "codecov/codecov-action@75cd11691c0faa626561e295848008c8a7dddffe"
@@ -20,7 +20,7 @@ ALLOWED_SHAS=(
     "pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093"
     "nick-fields/retry@c97818ca39074beaea45180dba704f92496a0082"
     "slackapi/slack-github-action@485a9d42d3a73031f12ec201c457e2162c45d02d"
-    "actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea"
+    "actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b"
     "softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda"
     "chromaui/action@e6129220824b44e265582e3bddc698c1128f6ede"
     "treosh/lighthouse-ci-action@3e7e23fb74242897f95c0ba9cabad3d0227b9b18"
