@@ -1,6 +1,6 @@
 # ADR-022: Coverage Reporting & Benchmark Infrastructure
 
-**Status:** Proposed
+**Status:** Accepted
 **Date:** 2026-05-15
 **Driven by:** Plan 023 audit — coverage is generated but never uploaded; benchmarks exist but never run in CI
 
