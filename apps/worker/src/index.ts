@@ -1,4 +1,4 @@
-import { TRACE_HEADER, SPAN_HEADER } from '@do-epub-studio/shared';
+import { TRACE_HEADER, SPAN_HEADER, matchBounded } from '@do-epub-studio/shared';
 import type { Env } from './lib/env';
 import { jsonResponse } from './lib/responses';
 import { RateLimiterDO } from './lib/rate-limiter-do';
@@ -53,6 +53,11 @@ async function handleRequest(env: Env, request: Request): Promise<Response> {
   const path = url.pathname;
   const method = request.method;
 
+  // Security: Guard against ReDoS by limiting path length
+  if (path.length > 2048) {
+    return jsonResponse({ ok: false, error: { code: 'URI_TOO_LONG', message: 'URI too long' } }, 414);
+  }
+
   if (method === 'OPTIONS') {
     const response = new Response(null, { status: 204 });
     return applyMinimalSecurityHeaders(applyCorsHeaders(response, request, env));
@@ -87,12 +92,12 @@ async function handleRequest(env: Env, request: Request): Promise<Response> {
     return handleListBooks(env, request);
   }
 
-  const booksMatch = /\/api\/books\/([^/]+)$/.exec(path);
+  const booksMatch = matchBounded(/\/api\/books\/([^/]+)$/, path, 2048);
   if (booksMatch && method === 'GET') {
     return handleGetBook(env, request, booksMatch[1]);
   }
 
-  const fileUrlMatch = /\/api\/books\/([^/]+)\/file-url$/.exec(path);
+  const fileUrlMatch = matchBounded(/\/api\/books\/([^/]+)\/file-url$/, path, 2048);
   if (fileUrlMatch && method === 'POST') {
     return handleGetFileUrl(env, request, fileUrlMatch[1]);
   }
@@ -107,7 +112,7 @@ async function handleRequest(env: Env, request: Request): Promise<Response> {
     }
   }
 
-  const progressMatch = /\/api\/books\/([^/]+)\/progress$/.exec(path);
+  const progressMatch = matchBounded(/\/api\/books\/([^/]+)\/progress$/, path, 2048);
   if (progressMatch) {
     const bookId = progressMatch[1];
     if (method === 'GET') {
@@ -119,7 +124,7 @@ async function handleRequest(env: Env, request: Request): Promise<Response> {
     }
   }
 
-  const bookmarksMatch = /\/api\/books\/([^/]+)\/bookmarks$/.exec(path);
+  const bookmarksMatch = matchBounded(/\/api\/books\/([^/]+)\/bookmarks$/, path, 2048);
   if (bookmarksMatch) {
     const bookId = bookmarksMatch[1];
     if (method === 'GET') {
@@ -131,12 +136,16 @@ async function handleRequest(env: Env, request: Request): Promise<Response> {
     }
   }
 
-  const bookmarkDeleteMatch = /\/api\/books\/([^/]+)\/bookmarks\/([^/]+)$/.exec(path);
+  const bookmarkDeleteMatch = matchBounded(
+    /\/api\/books\/([^/]+)\/bookmarks\/([^/]+)$/,
+    path,
+    2048,
+  );
   if (bookmarkDeleteMatch && method === 'DELETE') {
     return handleDeleteBookmark(env, request, bookmarkDeleteMatch[1], bookmarkDeleteMatch[2]);
   }
 
-  const highlightsMatch = /\/api\/books\/([^/]+)\/highlights$/.exec(path);
+  const highlightsMatch = matchBounded(/\/api\/books\/([^/]+)\/highlights$/, path, 2048);
   if (highlightsMatch) {
     const bookId = highlightsMatch[1];
     if (method === 'GET') {
@@ -148,7 +157,11 @@ async function handleRequest(env: Env, request: Request): Promise<Response> {
     }
   }
 
-  const highlightItemMatch = /\/api\/books\/([^/]+)\/highlights\/([^/]+)$/.exec(path);
+  const highlightItemMatch = matchBounded(
+    /\/api\/books\/([^/]+)\/highlights\/([^/]+)$/,
+    path,
+    2048,
+  );
   if (highlightItemMatch) {
     if (method === 'DELETE') {
       return handleDeleteHighlight(env, request, highlightItemMatch[1], highlightItemMatch[2]);
@@ -165,7 +178,7 @@ async function handleRequest(env: Env, request: Request): Promise<Response> {
     }
   }
 
-  const commentsMatch = /\/api\/books\/([^/]+)\/comments$/.exec(path);
+  const commentsMatch = matchBounded(/\/api\/books\/([^/]+)\/comments$/, path, 2048);
   if (commentsMatch) {
     const bookId = commentsMatch[1];
     if (method === 'GET') {
@@ -177,7 +190,7 @@ async function handleRequest(env: Env, request: Request): Promise<Response> {
     }
   }
 
-  const commentPatchMatch = /\/api\/comments\/([^/]+)$/.exec(path);
+  const commentPatchMatch = matchBounded(/\/api\/comments\/([^/]+)$/, path, 2048);
   if (commentPatchMatch && method === 'PATCH') {
     const body = (await request.json());
     return handleUpdateComment(env, request, commentPatchMatch[1], body);
@@ -192,7 +205,7 @@ async function handleRequest(env: Env, request: Request): Promise<Response> {
     return handleCreateBook(env, body, authResult.context.email);
   }
 
-  const bookUploadMatch = /\/api\/admin\/books\/([^/]+)\/upload$/.exec(path);
+  const bookUploadMatch = matchBounded(/\/api\/admin\/books\/([^/]+)\/upload$/, path, 2048);
   if (bookUploadMatch && method === 'PUT') {
     const authResult = await requireAdminAuth(env, request);
     if (!authResult.ok) {
@@ -201,7 +214,11 @@ async function handleRequest(env: Env, request: Request): Promise<Response> {
     return handleBookUpload(env, bookUploadMatch[1], request);
   }
 
-  const uploadCompleteMatch = /\/api\/admin\/books\/([^/]+)\/upload-complete$/.exec(path);
+  const uploadCompleteMatch = matchBounded(
+    /\/api\/admin\/books\/([^/]+)\/upload-complete$/,
+    path,
+    2048,
+  );
   if (uploadCompleteMatch && method === 'POST') {
     const authResult = await requireAdminAuth(env, request);
     if (!authResult.ok) {
@@ -211,7 +228,7 @@ async function handleRequest(env: Env, request: Request): Promise<Response> {
     return handleUploadComplete(env, uploadCompleteMatch[1], body);
   }
 
-  const grantsMatch = /\/api\/admin\/books\/([^/]+)\/grants$/.exec(path);
+  const grantsMatch = matchBounded(/\/api\/admin\/books\/([^/]+)\/grants$/, path, 2048);
   if (grantsMatch && method === 'POST') {
     const authResult = await requireAdminAuth(env, request);
     if (!authResult.ok) {
@@ -229,7 +246,7 @@ async function handleRequest(env: Env, request: Request): Promise<Response> {
     return handleGetBookGrants(env, grantsMatch[1]);
   }
 
-  const grantUpdateMatch = /\/api\/admin\/grants\/([^/]+)$/.exec(path);
+  const grantUpdateMatch = matchBounded(/\/api\/admin\/grants\/([^/]+)$/, path, 2048);
   if (grantUpdateMatch && method === 'PATCH') {
     const authResult = await requireAdminAuth(env, request);
     if (!authResult.ok) {
@@ -239,7 +256,7 @@ async function handleRequest(env: Env, request: Request): Promise<Response> {
     return handleUpdateGrant(env, grantUpdateMatch[1], body, authResult.context.email);
   }
 
-  const grantRevokeMatch = /\/api\/admin\/grants\/([^/]+)\/revoke$/.exec(path);
+  const grantRevokeMatch = matchBounded(/\/api\/admin\/grants\/([^/]+)\/revoke$/, path, 2048);
   if (grantRevokeMatch && method === 'POST') {
     const authResult = await requireAdminAuth(env, request);
     if (!authResult.ok) {
@@ -270,7 +287,7 @@ async function handleRequest(env: Env, request: Request): Promise<Response> {
     return handleGetAuditLog(env, entityType, entityId, limit, offset, from, to);
   }
 
-  const validatePermissionMatch = /\/api\/access\/validate$/.exec(path);
+  const validatePermissionMatch = matchBounded(/\/api\/access\/validate$/, path, 2048);
   if (validatePermissionMatch && method === 'GET') {
     const bookId = url.searchParams.get('bookId');
     if (!bookId) {

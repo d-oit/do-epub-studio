@@ -1,5 +1,6 @@
 /// <reference types="@cloudflare/workers-types" />
 import { DurableObject } from 'cloudflare:workers';
+import { matchBounded } from '@do-epub-studio/shared';
 
 interface RateLimitEntry {
   count: number;
@@ -41,7 +42,7 @@ export class RateLimiterDO extends DurableObject {
       return this.handleReset(path.slice('/reset/'.length));
     }
 
-    const checkMatch = /^\/check\/([^/]+)\/([^/]+)$/.exec(path);
+    const checkMatch = matchBounded(/^\/check\/([^/]+)\/([^/]+)$/, path, 1024);
     if (request.method === 'GET' && checkMatch) {
       const maxRequests = parseInt(url.searchParams.get('maxRequests') ?? String(DEFAULT_CONFIG.maxRequests), 10);
       const windowMs = parseInt(url.searchParams.get('windowMs') ?? String(DEFAULT_CONFIG.windowMs), 10);
