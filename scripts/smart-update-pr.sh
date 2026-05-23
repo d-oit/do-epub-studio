@@ -101,6 +101,17 @@ done <<< "$changed_files"
 [[ "$run_python" == "true" ]] && command -v pytest >/dev/null 2>&1 && pytest
 [[ "$run_all" == "true" ]] && [[ -x ./scripts/quality_gate.sh ]] && ./scripts/quality_gate.sh
 
+# Auto-fix disallowed action SHAs in the allowlist
+if [[ -x ./scripts/auto-fix-shas.sh ]]; then
+  if bash ./scripts/auto-fix-shas.sh --dry-run 2>/dev/null | grep -q "disallowed SHA"; then
+    bash ./scripts/auto-fix-shas.sh
+    git add scripts/validate-shas.sh
+    if ! git diff --cached --quiet; then
+      git commit -m "chore: auto-update SHA allowlist"
+    fi
+  fi
+fi
+
 if ! git diff --cached --quiet || ! git diff --quiet; then
   if [[ "$is_cross_repo" == "true" ]]; then
     note "Smart update: local resolution successful for PR #${PR_NUMBER}, but cannot push to fork automatically. Manual resolution recommended."

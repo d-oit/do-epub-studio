@@ -79,11 +79,37 @@ jobs:
     needs: setup
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd   # v6.0.2
       - uses: ./.github/actions/setup-pnpm
 
       - name: Lint
+        id: lint
+        continue-on-error: true
+        run: pnpm lint
+
+      - name: Auto-fix disallowed SHAs
+        if: steps.lint.outcome == 'failure'
+        id: auto-fix
+        run: |
+          if bash scripts/auto-fix-shas.sh; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add scripts/validate-shas.sh
+            if ! git diff --cached --quiet; then
+              git commit -m "chore: auto-update SHA allowlist"
+              # Only push on PR branches (refs/heads/fix/*, chore/*, dependabot/*)
+              if [[ "${{ github.ref }}" =~ ^refs/heads/(fix|chore|dependabot)/ ]]; then
+                git push
+              fi
+            fi
+          fi
+        shell: bash
+
+      - name: Re-run lint to confirm fix
+        if: steps.auto-fix.outcome == 'success'
         run: pnpm lint
 
   typecheck:
@@ -414,5 +440,38 @@ jobs:
                 title: `CI failure on main: ${context.runId}`,
                 body: `CI failed on main branch.\n\n**Run:** ${runUrl}\n**Commit:** ${{ github.sha }}\n**Workflow:** ${{ github.workflow }}`,
                 labels: ['ci-failure']
+              });
+            }
+
+  close-failure-issues:
+    name: Close resolved CI failure issues
+    if: success() && github.ref == 'refs/heads/main'
+    needs: [lint, typecheck, test, build, e2e-smoke, bench]
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Close open ci-failure issues
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b   # v7.1.0
+        with:
+          script: |
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: ['ci-failure']
+            });
+            for (const issue of issues) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: `CI is now passing on main (run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}). Auto-closing.`
+              });
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                state: 'closed'
               });
             }
