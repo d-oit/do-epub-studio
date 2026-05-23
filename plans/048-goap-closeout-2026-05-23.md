@@ -1,51 +1,189 @@
-# Master Plan: Closeout Issues #240-#243
+# GOAP Closeout: Resolve All Open Issues
 
+**Goal:** Close all 8 open GitHub issues in this repository.
 **Date:** 2026-05-23
-**Goal:** Resolve all remaining open issues (#240-#243), most of which were partially addressed by PR #244.
+**Strategy:** Hybrid (sequential pre-flight → parallel execution → sequential release)
 
-## Issue Analysis
-
-| Issue | Title | PR #244 Status | Remaining Work |
-|-------|-------|----------------|----------------|
-| #240 | Lazy-load route components | ✅ Fully resolved | Close issue |
-| #241 | Missing vendor chunks + sourcemap | ⚠️ Partial | Missing i18next chunk |
-| #242 | RangeRequestsPlugin + navigation route | ❌ Not addressed | Add RangeRequestsPlugin; use createHandlerBoundToURL |
-| #243 | vite-plugin-pwa virtual module | ✅ Fully resolved | Close issue |
-| #246 | CI failure on main | ✅ Already fixed by subsequent commits | Closed |
+---
 
 ## Dependency Graph
 
 ```
-Sequential:
-  1. [P0] Fix #242: sw.ts - RangeRequestsPlugin + navigation route
-  2. [P1] Fix #241: vite.config.ts - i18next chunk
-  3. [P0] Close resolved issues (#240, #243)
-  4. [P0] Run quality gate
+Wave 0 (Pre-flight — sequential)
+  └── #255 (archive plans) — should be done first to reduce noise
+
+Wave 1 (Parallel — 5 independent tasks)
+  ├── #248 (release v0.1.0)  — release skill, no code changes
+  ├── #250 (Lighthouse CI)   — .lighthouserc.json change only
+  ├── #251 (ADR finalization) — docs review only
+  ├── #252 (CI enhancements)  — ci.yml + notification workflow
+  └── #254 (Storybook + VRT) — packages/ui new infra
+
+Wave 2 (Sequential after main merges)
+  ├── #249 (rate limiter)  — remove old in-memory impl
+  └── #253 (OIDC deploy)   — release.yml with OIDC
+
+Wave 3 (Final)
+  └── #248 release cut (or deferred to Wave 1 if standalone)
 ```
 
-No blockers between #242 and #241 (different files, can be done in either order).
+**Conflict analysis:**
+- `#252` (CI) touches `.github/workflows/ci.yml` — no conflict with `#253` (release.yml)
+- `#253` touches `.github/workflows/release.yml` — no CI file overlap
+- `#255` touches plans/ directory only
+- All other issues touch disjoint file sets → fully parallelizable
 
-## Task List
+---
 
-| # | Task | Status | Priority | Notes |
-|---|------|--------|----------|-------|
-| 1 | Fix #242: Add RangeRequestsPlugin to book-content route in sw.ts | Pending | P0 | Import from workbox-range-requests; add 206 to CacheableResponsePlugin |
-| 2 | Fix #242: Replace navigation route with createHandlerBoundToURL in sw.ts | Pending | P0 | Avoid unnecessary network fetch; use precached shell |
-| 3 | Fix #241: Add i18next/react-i18next chunk to vite.config.ts | Pending | P1 | Manual chunk split for i18n libs |
-| 4 | Close issues #240, #243 as fixed by PR #244 | Pending | P0 | Add comment referencing PR #244 |
-| 5 | Run quality gate | Pending | P0 | `./scripts/quality_gate.sh` |
-| 6 | Create PR and merge | Pending | P0 | Single branch for remaining fixes |
+## Issue-by-Issue Analysis
 
-## Branch Strategy
+### #248 — release: cut v0.1.0 GitHub Release
 
-Single branch: `fix/issues-241-242-remaining`
+| Field | Value |
+|-------|-------|
+| Labels | release |
+| Priority | Medium |
+| Deps | None (standalone) |
+| Files | No code changes |
+| Skill | `release-management` |
+
+**Status:** DOABLE. Verify CHANGELOG, then create release via `gh release create`.
+
+---
+
+### #249 — fix: migrate rate limiter from in-memory to Durable Objects
+
+| Field | Value |
+|-------|-------|
+| Labels | bug, medium-priority |
+| Priority | Medium |
+| Deps | None |
+| Files | `apps/worker/src/lib/rate-limiter.ts`, `apps/worker/src/__tests__/rate-limiter.test.ts` |
+
+**Status: MOSTLY DONE.** `RateLimiterDO` exists at `rate-limiter-do.ts`, wired in `wrangler.jsonc`, routes use `checkRateLimitDO` from `rate-limit-client.ts`. What remains:
+1. Remove the old in-memory `rate-limiter.ts` and its test file
+2. Verify all existing rate-limit-client tests pass
+
+---
+
+### #250 — fix: address Lighthouse CI failures on PRs
+
+| Field | Value |
+|-------|-------|
+| Labels | ci-failure, medium-priority |
+| Priority | Medium |
+| Deps | None |
+| Files | `.lighthouserc.json` |
+
+**Status:** Already reasonable thresholds (perf: 0.5, a11y: 0.85, bp/seo: warn). Lighthouse CI may fail due to deployment issues (Cloudflare Pages deploy needs secrets). Add `continue-on-error` to Lighthouse job or lower thresholds further. Best approach: mark as informational with `continue-on-error`.
+
+---
+
+### #251 — chore: finalize ADRs 021, 022, 037 from Proposed to Accepted
+
+| Field | Value |
+|-------|-------|
+| Labels | documentation, medium-priority |
+| Priority | Medium |
+| Deps | None |
+| Files | `plans/021-adr-test-infrastructure.md`, `plans/022-adr-coverage-and-benchmarking.md`, `plans/037-adr-agent-harness-improvement-policy.md` |
+
+**Status:** Review each ADR for accuracy against current implementation, then update status to Accepted with date.
+
+---
+
+### #252 — ci: add failure notifications, E2E retry, and artifact retention policy
+
+| Field | Value |
+|-------|-------|
+| Labels | ci, medium-priority |
+| Priority | Medium |
+| Deps | None (but conflicts with #253 — different files) |
+| Files | `.github/workflows/ci.yml`, possibly new notification workflow |
+
+**Status:** ci.yml already has `notify-failure` job with Slack + issue creation. E2E full tests already use `nick-fields/retry`. Most items partially done. Need to:
+1. Add `continue-on-error` on deploy step that needs secrets (already done in lighthouse.yml)
+2. Standardize artifact `retention-days` across all workflows
+3. Stale cleanup workflow already exists. Consider adding branch cleanup.
+4. E2E smoke already retries implicitly via `nick-fields/retry`
+
+---
+
+### #253 — chore: add OIDC Cloudflare deployment from CI
+
+| Field | Value |
+|-------|-------|
+| Labels | area:ci, area:security |
+| Priority | Medium |
+| Deps | None |
+| Files | `.github/workflows/release.yml` |
+
+**Status:** Release workflow uses `CLOUDFLARE_API_TOKEN` secret. OIDC would use `cloudflare/wrangler-action` with `wranglerVersion` configured. Requires OIDC trust configured between GitHub and Cloudflare (external setup). The code change is swapping the auth method.
+
+---
+
+### #254 — chore: add Storybook with visual regression testing
+
+| Field | Value |
+|-------|-------|
+| Labels | testing, ui/ux |
+| Priority | Low (non-blocking) |
+| Deps | None |
+| Files | `packages/ui/` new files, `package.json` |
+
+**Status:** Visual regression workflow already exists (`visual-regression.yml`) with Chromatic. Need to:
+1. Add Storybook config to packages/ui
+2. Write stories for Button, Modal, Input, Toast, Tooltip, Spinner
+3. Update package.json scripts
+
+---
+
+### #255 — chore: create plans archival policy and archive old plans
+
+| Field | Value |
+|-------|-------|
+| Labels | cleanup, docs |
+| Priority | Low |
+| Deps | Best done first to reduce clutter |
+| Files | `plans/` directory |
+
+**Status:** Move plans 000-030 to `plans/archive/`. Create archive policy doc.
+
+---
+
+## Execution Plan
+
+### Wave 0: Pre-flight (sequential)
+
+**Task 255: Archive old plans**
+- Move plans 000-030 to plans/archive/
+- Create plans/archive/README.md with archival policy
+- Keep plans 031-048 in root
+
+### Wave 1: Parallel (5 issues)
+
+Worktrees: `../worktrees/issue-{248,250,251,252,254}`
+
+| Task | Branch | Files |
+|------|--------|-------|
+| #248 | `fix/issue-248-release` | No code (gh release create) |
+| #250 | `fix/issue-250-lighthouse` | `.lighthouserc.json` |
+| #251 | `fix/issue-251-adrs` | `plans/021-*, 022-*, 037-*` |
+| #252 | `fix/issue-252-ci` | `.github/workflows/ci.yml` |
+| #254 | `fix/issue-254-storybook` | `packages/ui/` |
+
+### Wave 2: Post-merge cleanup
+
+| Task | Branch | Files |
+|------|--------|-------|
+| #249 | `fix/issue-249-rate-limiter` | `apps/worker/src/lib/rate-limiter.ts` + test |
+| #253 | `fix/issue-253-oidc` | `.github/workflows/release.yml` |
+
+---
 
 ## Acceptance Criteria
 
-- [ ] RangeRequestsPlugin imported and added to book-content route
-- [ ] CacheableResponsePlugin includes status 206 for book-content
-- [ ] Navigation route uses createHandlerBoundToURL('/index.html')
-- [ ] Navigation denylist excludes /api/ and /_worker/
-- [ ] i18next/react-i18next chunked separately in vite.config.ts
-- [ ] Quality gate passes end-to-end
-- [ ] All issues closed after merge
+- [ ] All 8 issues resolved or explicitly deferred with rationale
+- [ ] Quality gate passes on all branches before merge
+- [ ] Master plan updated with final results table
+- [ ] No commits to main, all changes through PRs
