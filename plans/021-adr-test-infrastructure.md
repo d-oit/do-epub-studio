@@ -1,6 +1,6 @@
 # ADR-021: Test Infrastructure Standardization
 
-**Status:** Proposed
+**Status:** Accepted
 **Date:** 2026-05-15
 **Driven by:** Plan 023 audit — 3 of 7 packages have zero test infrastructure
 
