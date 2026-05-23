@@ -54,12 +54,12 @@ Agent H ─── Setup docs
 - eslint.config.js — ESLint 10 compat
 - apps/web/src/components/ui/index.tsx — 615→31 LOC re-export
 - packages/ui/ — 11 new component files + upgraded button/input/modal
-- packages/reader-core/src/__tests__/ — epub-parsing.test.ts + fixtures (21 tests)
-- packages/reader-core/src/__tests__/locator.test.ts — 29 new CFI tests
+- packages/reader-core/src/**tests__/ — epub-parsing.test.ts + fixtures (21 tests)
+- packages/reader-core/src/**tests__/locator.test.ts — 29 new CFI tests
 - apps/web/src/features/reader/components/annotations/ — 3 files replacing 1 (CommentsPanel split)
 - apps/worker/src/auth/ — session.ts exports hashToken, middleware.ts imports from session.ts
-- apps/worker/src/__tests__/fixtures.ts — updated session mock to use importOriginal
-- apps/web/src/components/ui/__tests__/Modal.test.tsx — updated for createPortal + framer-motion
+- apps/worker/src/**tests__/fixtures.ts — updated session mock to use importOriginal
+- apps/web/src/components/ui/**tests__/Modal.test.tsx — updated for createPortal + framer-motion
 - packages/ui/src/modal.tsx — added tabIndex={-1} to dialog
 - plans/007.md, 015.md, 019.md — updated statuses
 - agents-docs/KNOWN-ISSUES.md — removed stale skill categories entry
