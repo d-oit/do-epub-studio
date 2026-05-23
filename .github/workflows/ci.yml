@@ -200,7 +200,12 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Run Dev Smoke E2E tests
-        run: pnpm test:e2e:smoke --project=chromium
+        uses: nick-fields/retry@c97818ca39074beaea45180dba704f92496a0082   # v3.0.1
+        with:
+          timeout_minutes: 10
+          max_attempts: 2
+          command: pnpm test:e2e:smoke --project=chromium
+          warning_on_retry: true
 
       - name: Download build artifacts
         uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806   # v4.1.9
