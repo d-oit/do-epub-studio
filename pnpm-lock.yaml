@@ -125,6 +125,9 @@ importers:
       workbox-precaching:
         specifier: ^7.4.1
         version: 7.4.1
+      workbox-range-requests:
+        specifier: ^7.4.1
+        version: 7.4.1
       workbox-routing:
         specifier: ^7.4.1
         version: 7.4.1
@@ -4886,6 +4889,9 @@ packages:
 
   workbox-range-requests@7.4.0:
     resolution: {integrity: sha512-3Vq854ZNuP6Y0KZOQWLaLC9FfM7ZaE+iuQl4VhADXybwzr4z/sMmnLgTeUZLq5PaDlcJBxYXQ3U91V7dwAIfvw==}
+
+  workbox-range-requests@7.4.1:
+    resolution: {integrity: sha512-7i2oxAUE82gHdAJBCAQ04JzNOdRPqzuOzGfoUyJpFSmeqBNYGPrAH8GPoPjUQTfp+NycwrD2H68VtuF8qxv0vQ==}
 
   workbox-recipes@7.4.0:
     resolution: {integrity: sha512-kOkWvsAn4H8GvAkwfJTbwINdv4voFoiE9hbezgB1sb/0NLyTG4rE7l6LvS8lLk5QIRIto+DjXLuAuG3Vmt3cxQ==}
@@ -9715,6 +9721,10 @@ snapshots:
   workbox-range-requests@7.4.0:
     dependencies:
       workbox-core: 7.4.0
+
+  workbox-range-requests@7.4.1:
+    dependencies:
+      workbox-core: 7.4.1
 
   workbox-recipes@7.4.0:
     dependencies:

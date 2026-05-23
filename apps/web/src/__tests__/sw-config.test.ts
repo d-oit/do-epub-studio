@@ -6,10 +6,9 @@ describe('Service Worker Configuration', () => {
   const swPath = join(__dirname, '../sw.ts');
   const swContent = readFileSync(swPath, 'utf-8');
 
-  it('implements NetworkFirst-like strategy for navigation with index.html fallback', () => {
+  it('serves navigation requests from precached app shell via createHandlerBoundToURL', () => {
     expect(swContent).toContain('NavigationRoute');
-    expect(swContent).toContain('await fetch(params.request)');
-    expect(swContent).toContain('getCacheKeyForURL(\'index.html\')');
+    expect(swContent).toContain('createHandlerBoundToURL(\'/index.html\')');
   });
 
   it('implements NetworkOnly strategy for sensitive API routes', () => {

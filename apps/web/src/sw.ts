@@ -1,11 +1,13 @@
 /// <reference lib="WebWorker" />
 /// <reference types="vite-plugin-pwa/client" />
 
-import { cleanupOutdatedCaches, precacheAndRoute, getCacheKeyForURL } from 'workbox-precaching';
+import { cleanupOutdatedCaches, precacheAndRoute } from 'workbox-precaching';
 import { registerRoute, NavigationRoute } from 'workbox-routing';
 import { CacheFirst, NetworkFirst, NetworkOnly, StaleWhileRevalidate } from 'workbox-strategies';
 import { ExpirationPlugin } from 'workbox-expiration';
 import { CacheableResponsePlugin } from 'workbox-cacheable-response';
+import { RangeRequestsPlugin } from 'workbox-range-requests';
+import { createHandlerBoundToURL } from 'workbox-precaching';
 import { createTraceId } from '@do-epub-studio/shared';
 
 declare let self: ServiceWorkerGlobalScope;
@@ -23,28 +25,14 @@ cleanupOutdatedCaches();
 // Precache app shell and assets
 precacheAndRoute(self.__WB_MANIFEST);
 
-// Handle navigation requests by falling back to precached app shell (index.html)
-// Precached assets are already handled by precacheAndRoute, this provides the SPA fallback.
+// Handle navigation requests using the precached app shell (index.html)
+// Precached assets are handled by precacheAndRoute; this provides the SPA fallback
+// using createHandlerBoundToURL to avoid unnecessary network round-trips.
 registerRoute(
-  new NavigationRoute(
-    async (params) => {
-      try {
-        // Attempt to fetch from network first for freshness
-        const response = await fetch(params.request);
-        if (response.ok) return response;
-        throw new Error('Network response was not ok');
-      } catch {
-        // Fallback to precached index.html
-        return (
-          (await caches.match(getCacheKeyForURL('index.html') || '/index.html')) || Response.error()
-        );
-      }
-    },
-    {
-      // Exclude API and internal worker routes from navigation handling
-      denylist: [/^\/api\//, /^\/_worker\//],
-    },
-  ),
+  new NavigationRoute(createHandlerBoundToURL('/index.html'), {
+    // Exclude API and internal worker routes from navigation handling
+    denylist: [/^\/api\//, /^\/_worker\//],
+  }),
 );
 
 // Cache Google Fonts stylesheets
@@ -123,8 +111,9 @@ registerRoute(
   new StaleWhileRevalidate({
     cacheName: 'book-content',
     plugins: [
+      new RangeRequestsPlugin(),
       new ExpirationPlugin({ maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 * 7 }), // 7 days
-      new CacheableResponsePlugin({ statuses: [0, 200] }),
+      new CacheableResponsePlugin({ statuses: [0, 200, 206] }),
       quotaGuardPlugin,
     ],
   }),
