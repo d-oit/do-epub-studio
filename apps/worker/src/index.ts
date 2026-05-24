@@ -13,6 +13,7 @@ import {
   withTraceHeaders,
 } from './lib/observability';
 import { applySecurityHeaders, applyMinimalSecurityHeaders } from './lib/security-headers';
+import { applyRateLimit, addRateLimitHeaders } from './middleware/rate-limit';
 import {
   handleAccessRequest,
   handleLogout,
@@ -313,7 +314,18 @@ export default {
     logRequestStart(context);
 
     try {
-      const response = await handleRequest(env, request);
+      const { response: rateLimitResponse, metadata } = await applyRateLimit(request, env);
+      if (rateLimitResponse) {
+        logRequestEnd(context, rateLimitResponse.status);
+        return applySecurityHeaders(
+          applyCorsHeaders(withTraceHeaders(rateLimitResponse, context), request, env),
+        );
+      }
+
+      let response = await handleRequest(env, request);
+      if (metadata) {
+        response = addRateLimitHeaders(response, metadata);
+      }
       logRequestEnd(context, response.status);
       return applySecurityHeaders(applyCorsHeaders(withTraceHeaders(response, context), request, env));
     } catch (error) {
