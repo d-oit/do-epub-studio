@@ -24,8 +24,8 @@ export default defineConfig({
       usePolling: true,
     },
     coverage: {
-      provider: 'v8',
-      reporter: ['text', 'lcov', 'clover'],
+      provider: 'istanbul',
+      reporter: ['text', 'json', 'html', 'lcov', 'clover'],
       reportsDirectory: './coverage',
       thresholds: {
         lines: 40,

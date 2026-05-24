@@ -30,3 +30,4 @@ export {
   handleGetAuditLog,
 } from './admin';
 export { handleAdminLogin, handleAdminLogout } from './admin-auth';
+export { handleCspReport } from './security';

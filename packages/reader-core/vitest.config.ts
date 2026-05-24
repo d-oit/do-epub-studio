@@ -6,8 +6,8 @@ export default defineConfig({
     include: ['src/**/*.test.ts'],
     environment: 'jsdom',
     coverage: {
-      provider: 'v8',
-      reporter: ['text', 'lcov', 'clover'],
+      provider: 'istanbul',
+      reporter: ['text', 'json', 'html', 'lcov', 'clover'],
       reportsDirectory: './coverage',
       thresholds: {
         lines: 75,
