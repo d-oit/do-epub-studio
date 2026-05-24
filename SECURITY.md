@@ -53,3 +53,13 @@ The following are out of scope:
 
 - [ADR-034 (ReDoS)](plans/034-adr-redos.md)
 - [docs/security.md](docs/security.md)
+
+## Content Sanitization and Sandboxing
+
+To mitigate XSS risks from potentially malicious EPUB content, the following measures are implemented:
+
+- **HTML Sanitization**: All EPUB HTML content is sanitized using **DOMPurify** before being rendered. This process strips dangerous elements (like `<script>`, `<iframe>`, `<object>`) and attributes (like `onclick`, `javascript:` URIs).
+- **Iframe Sandboxing**: Content is rendered in an `<iframe>` with a strict `sandbox` attribute. Specifically, `allow-same-origin` is excluded to ensure the content runs in a unique origin, preventing it from accessing the main application's cookies, localStorage, and IndexedDB. `allow-scripts` is permitted to support legitimate interactive features within the book.
+- **Content Security Policy (CSP)**: A strict CSP is injected via a `<meta>` tag into every EPUB HTML document:
+  `default-src 'none'; script-src 'none'; style-src 'unsafe-inline' blob:; font-src blob:; img-src data: blob: http: https:;`
+  This CSP further restricts the capabilities of the rendered content, even if it manages to bypass other layers of defense.

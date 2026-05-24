@@ -8,6 +8,7 @@ import type {
   ProgressPosition,
 } from './epub-types';
 import { createTraceId, createSpanId, serializeError, testBounded } from '@do-epub-studio/shared';
+import { sanitizeEpubDocument } from './sanitizer';
 
 type EventCallback = (data: unknown) => void;
 
@@ -119,6 +120,11 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
       book = ePub(url);
       await book.opened;
 
+      // Register content sanitization hook
+      book.sections.hooks.content.register((doc: Document) => {
+        sanitizeEpubDocument(doc);
+      });
+
       const nav = await book.loaded.navigation;
       if (nav?.toc) {
         toc = parseToc(
@@ -159,7 +165,7 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
       width: '100%',
       height: '100%',
       spread: 'auto',
-      sandbox: ['allow-same-origin'],
+      sandbox: ['allow-scripts'],
       flow: options?.flow,
       manager: options?.manager,
     });
