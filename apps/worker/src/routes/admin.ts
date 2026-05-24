@@ -10,15 +10,10 @@ import {
   UpdateGrantSchema,
 } from '@do-epub-studio/shared';
 import { z } from 'zod';
-import { requireAdminAuth, createAdminSession, revokeAdminSession } from '../auth/admin-middleware';
-import { checkRateLimitDO } from '../lib/rate-limit-client';
+import { requireAdminAuth } from '../auth/admin-middleware';
+import type { ContentfulStatusCode } from 'hono/utils/http-status';
 
-export const adminRouter = new Hono<{ Bindings: Env; Variables: { adminUser?: { email: string; id: string; role: string } } }>();
-
-const LoginSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(1),
-});
+export const adminRouter = new Hono<{ Bindings: Env; Variables: { adminUser: { email: string; id: string; role: string } } }>();
 
 const UploadCompleteSchema = z.object({
   storageKey: z.string().min(1),
@@ -42,89 +37,17 @@ interface _GrantRow {
   revoked_at: string | null;
 }
 
-// Public Admin Routes
-adminRouter.post('/login', zValidator('json', LoginSchema), async (c) => {
-  const { email, password } = c.req.valid('json');
-
-  const rateLimit = await checkRateLimitDO(c.env, 'auth_admin', email.toLowerCase(), {
-    maxRequests: 5,
-    windowMs: 60_000,
-  });
-
-  if (!rateLimit.allowed) {
-    return c.json(
-      {
-        ok: false,
-        error: { code: 'TOO_MANY_REQUESTS', message: 'Too many login attempts. Please try again later.' },
-      },
-      429,
-    );
-  }
-
-  const result = await createAdminSession(c.env, email, password);
-
-  if (!result.ok) {
-    return c.json(
-      { ok: false, error: { code: 'INVALID_CREDENTIALS', message: result.error } },
-      result.status,
-    );
-  }
-
-  await logAudit(c.env, {
-    entityType: 'user',
-    entityId: result.user.id,
-    action: 'admin_login',
-    actorEmail: result.user.email,
-    payload: { role: result.user.role },
-  });
-
-  return c.json({
-    ok: true,
-    data: {
-      token: result.token,
-      user: {
-        id: result.user.id,
-        email: result.user.email,
-        role: result.user.role,
-      },
-    },
-  });
-});
-
-adminRouter.post('/logout', async (c) => {
-  const authHeader = c.req.header('Authorization');
-  const token = authHeader?.replace('Bearer ', '') ?? '';
-
-  if (!token) {
-    return c.json(
-      { ok: false, error: { code: 'MISSING_TOKEN', message: 'Authorization token required' } },
-      400,
-    );
-  }
-
-  await revokeAdminSession(c.env, token);
-
-  return c.json({ ok: true });
-});
-
-// Protected Admin Routes Middleware
+// Admin Authentication Middleware for Hono
 adminRouter.use('*', async (c, next) => {
-  // Skip auth for login/logout
-  if (c.req.path.endsWith('/login') || c.req.path.endsWith('/logout')) {
-    return next();
-  }
-
   const authResult = await requireAdminAuth(c.env, c.req.raw);
-  if (authResult && !authResult.ok) {
-    return c.json({ ok: false, error: { code: 'UNAUTHORIZED', message: authResult.error } }, authResult.status);
+  if (!authResult.ok) {
+    return c.json({ ok: false, error: { code: 'UNAUTHORIZED', message: authResult.error } }, authResult.status as ContentfulStatusCode);
   }
-  if (authResult && authResult.ok) {
-    c.set('adminUser', {
-      id: authResult.context.userId,
-      email: authResult.context.email,
-      role: authResult.context.globalRole
-    });
-  }
+  c.set('adminUser', {
+    id: authResult.context.userId,
+    email: authResult.context.email,
+    role: authResult.context.globalRole
+  });
   await next();
 });
 
@@ -161,7 +84,7 @@ adminRouter.post('/books', zValidator('json', CreateBookSchema), async (c) => {
     entityType: 'book',
     entityId: id,
     action: 'created',
-    actorEmail: adminUser?.email,
+    actorEmail: adminUser.email,
     payload: { slug: body.slug, title: body.title },
   });
 
@@ -274,7 +197,7 @@ adminRouter.post('/books/:id/grants', zValidator('json', CreateGrantSchema), asy
     entityType: 'grant',
     entityId: grantId,
     action: 'created',
-    actorEmail: adminUser?.email,
+    actorEmail: adminUser.email,
     payload: { bookId, email: body.email, mode: body.mode },
   });
 
@@ -337,7 +260,7 @@ adminRouter.patch('/grants/:id', zValidator('json', UpdateGrantSchema), async (c
     entityType: 'grant',
     entityId: grantId,
     action: 'updated',
-    actorEmail: adminUser?.email,
+    actorEmail: adminUser.email,
     payload: body,
   });
 
@@ -364,7 +287,7 @@ adminRouter.post('/grants/:id/revoke', async (c) => {
     entityType: 'grant',
     entityId: grantId,
     action: 'revoked',
-    actorEmail: adminUser?.email,
+    actorEmail: adminUser.email,
   });
 
   return c.json({ ok: true });
@@ -434,10 +357,4 @@ adminRouter.get('/audit', async (c) => {
       total,
     },
   });
-});
-
-adminRouter.get('/audit-logs', async (c) => {
-  const url = new URL(c.req.url);
-  url.pathname = url.pathname.replace('/audit-logs', '/audit');
-  return c.redirect(url.toString(), 301);
 });

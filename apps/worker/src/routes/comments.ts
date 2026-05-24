@@ -3,7 +3,6 @@ import { zValidator } from '@hono/zod-validator';
 import type { Env } from '../lib/env';
 import { requireAuth } from '../auth/middleware';
 import { queryFirst, queryAll, execute } from '../db/client';
-import { jsonResponse } from '../lib/responses';
 import { logAudit } from '../audit';
 import {
   CommentCreateSchema,
@@ -13,6 +12,7 @@ import {
 export const commentsRouter = new Hono<{ Bindings: Env }>();
 
 interface CommentRow {
+  [key: string]: string | number | null | undefined;
   id: string;
   book_id: string;
   user_email: string;
@@ -229,21 +229,3 @@ commentsRouter.delete('/comments/:commentId', async (c) => {
 
   return c.json({ ok: true });
 });
-
-// Legacy exports
-export const handleListComments = async (env: Env, request: Request, bookId: string) =>
-  commentsRouter.fetch(new Request(`http://localhost/books/${bookId}/comments`), env);
-export const handleCreateComment = async (env: Env, request: Request, bookId: string, body: unknown) =>
-  commentsRouter.fetch(new Request(`http://localhost/books/${bookId}/comments`, {
-    method: 'POST',
-    body: JSON.stringify(body),
-    headers: { 'Content-Type': 'application/json' }
-  }), env);
-export const handleUpdateComment = async (env: Env, request: Request, commentId: string, body: unknown) =>
-  commentsRouter.fetch(new Request(`http://localhost/comments/${commentId}`, {
-    method: 'PATCH',
-    body: JSON.stringify(body),
-    headers: { 'Content-Type': 'application/json' }
-  }), env);
-export const handleDeleteComment = async (env: Env, request: Request, commentId: string) =>
-  commentsRouter.fetch(new Request(`http://localhost/comments/${commentId}`, { method: 'DELETE' }), env);

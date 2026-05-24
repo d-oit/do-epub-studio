@@ -5,16 +5,13 @@ import { verifySignedUrlExpiry, verifySignedUrlSignature } from '../storage/sign
 
 export const filesRouter = new Hono<{ Bindings: Env }>();
 
-filesRouter.get('/:remainder{.+}', async (c) => {
-  const remainder = c.req.param('remainder');
-  const [rawBookId, ...fileKeyParts] = remainder.split('/');
+filesRouter.get('/:bookId/:remainder{.+}', async (c) => {
+  const bookId = c.req.param('bookId');
+  const fileKey = c.req.param('remainder');
 
-  if (!rawBookId || fileKeyParts.length === 0) {
+  if (!bookId || !fileKey) {
     return c.json({ ok: false, error: { code: 'NOT_FOUND', message: 'Not found' } }, 404);
   }
-
-  const bookId = decodeURIComponent(rawBookId);
-  const fileKey = fileKeyParts.map((part) => decodeURIComponent(part)).join('/');
 
   // Security: Verify signed URL parameters
   const url = new URL(c.req.url);
@@ -31,7 +28,8 @@ filesRouter.get('/:remainder{.+}', async (c) => {
 
   const isValid = await verifySignedUrlSignature(
     c.env,
-    `/api/files/${remainder}`,
+    bookId,
+    fileKey,
     expires,
     signature
   );

@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import type { Env } from '../lib/env';
 import { requireAuth } from '../auth/middleware';
+import type { AuthContext } from '../auth/middleware';
 import { queryFirst, queryAll, execute } from '../db/client';
 import { logAudit } from '../audit';
 import {
@@ -9,9 +10,8 @@ import {
   BookmarkCreateSchema,
   HighlightCreateSchema,
 } from '@do-epub-studio/shared';
-import { z } from 'zod';
 
-export const readerStateRouter = new Hono<{ Bindings: Env }>();
+export const readerStateRouter = new Hono<{ Bindings: Env; Variables: { auth: AuthContext } }>();
 
 interface ProgressRow {
   [key: string]: string | number | null | undefined;

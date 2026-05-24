@@ -47,7 +47,6 @@ vi.mock('../auth/session', async (importOriginal) => {
 });
 
 vi.mock('../storage/signed-url', () => ({
-  getSignedUrl: vi.fn(),
   generateSignedUrl: vi.fn(),
   verifySignedUrlExpiry: vi.fn(),
   verifySignedUrlSignature: vi.fn(),
@@ -78,7 +77,6 @@ import {
   revokeSession,
 } from '../auth/session';
 import {
-  getSignedUrl,
   generateSignedUrl,
   verifySignedUrlExpiry,
   verifySignedUrlSignature,
@@ -102,7 +100,6 @@ export const mockGetGrantsBySession = vi.mocked(getGrantsBySession);
 export const mockCreateSession = vi.mocked(createSession);
 export const mockValidateSessionMod = vi.mocked(validateSessionMod);
 export const mockRevokeSession = vi.mocked(revokeSession);
-export const mockGetSignedUrl = vi.mocked(getSignedUrl);
 export const mockGenerateSignedUrl = vi.mocked(generateSignedUrl);
 export const mockVerifyExpiry = vi.mocked(verifySignedUrlExpiry);
 export const mockVerifySignature = vi.mocked(verifySignedUrlSignature);

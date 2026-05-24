@@ -2,8 +2,9 @@ import { Hono } from 'hono';
 import type { Env } from '../lib/env';
 import { queryFirst, queryAll } from '../db/client';
 import { requireAuth } from '../auth/middleware';
+import type { AuthContext } from '../auth/middleware';
 
-export const booksRouter = new Hono<{ Bindings: Env; Variables: { auth: any } }>();
+export const booksRouter = new Hono<{ Bindings: Env; Variables: { auth: AuthContext } }>();
 
 booksRouter.use('*', async (c, next) => {
   const auth = await requireAuth(c.env, c.req.raw);
@@ -32,13 +33,13 @@ booksRouter.get('/', async (c) => {
 
   return c.json({
     ok: true,
-    data: books.map((b) => ({
-      id: b.id,
-      slug: b.slug,
-      title: b.title,
-      authorName: b.author_name,
-      visibility: b.visibility,
-      coverImageUrl: b.cover_image_url,
+    data: books.map((row) => ({
+      id: row.id as string,
+      slug: row.slug as string,
+      title: row.title as string,
+      authorName: row.author_name as string | null,
+      visibility: row.visibility as string,
+      coverImageUrl: row.cover_image_url as string | null,
     })),
   });
 });
@@ -67,14 +68,14 @@ booksRouter.get('/:id', async (c) => {
   return c.json({
     ok: true,
     data: {
-      id: book.id,
-      slug: book.slug,
-      title: book.title,
-      authorName: book.author_name,
-      description: book.description,
-      language: book.language,
-      visibility: book.visibility,
-      coverImageUrl: b.cover_image_url,
+      id: book.id as string,
+      slug: book.slug as string,
+      title: book.title as string,
+      authorName: (book.author_name as string) ?? null,
+      description: (book.description as string) ?? null,
+      language: book.language as string,
+      visibility: book.visibility as string,
+      coverImageUrl: (book.cover_image_url as string) ?? null,
     },
   });
 });
@@ -82,7 +83,7 @@ booksRouter.get('/:id', async (c) => {
 booksRouter.post('/:id/file-url', async (c) => {
   const id = c.req.param('id');
   const auth = c.get('auth');
-  const { getSignedUrl } = await import('../storage/signed-url');
+  const { generateSignedUrl } = await import('../storage/signed-url');
 
   if (!auth.capabilities.canRead) {
     return c.json({ ok: false, error: { code: 'FORBIDDEN', message: 'Read access denied' } }, 403);
@@ -107,7 +108,7 @@ booksRouter.post('/:id/file-url', async (c) => {
   const file = await queryFirst(
     c.env,
     `SELECT storage_key FROM book_files WHERE book_id = ? ORDER BY created_at DESC LIMIT 1`,
-    [book.id],
+    [book.id as string],
   );
 
   if (!file) {
@@ -117,10 +118,10 @@ booksRouter.post('/:id/file-url', async (c) => {
     );
   }
 
-  const url = await getSignedUrl(c.env, file.storage_key as string);
+  const signedResponse = await generateSignedUrl(c.env, book.id as string, file.storage_key as string);
 
   return c.json({
     ok: true,
-    data: { url },
+    data: { url: signedResponse.url },
   });
 });
