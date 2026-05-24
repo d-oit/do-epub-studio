@@ -15,6 +15,14 @@ vi.mock('@intity/epub-js', () => {
     next: vi.fn().mockResolvedValue(undefined),
     getContents: vi.fn().mockReturnValue(null),
     destroy: vi.fn(),
+    hooks: {
+      content: {
+        register: vi.fn(),
+      },
+      render: {
+        register: vi.fn(),
+      },
+    },
   };
 
   const mockBook = {

@@ -9,6 +9,7 @@ import type {
 } from './epub-types';
 import { createTraceId, createSpanId, serializeError, testBounded } from '@do-epub-studio/shared';
 import { validateArchive } from './archive-validator';
+import { sanitizeEpubDocument } from './sanitizer';
 
 type EventCallback = (data: unknown) => void;
 
@@ -223,6 +224,13 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
 
     rendition.on('started', () => {
       emit('started', null);
+    });
+
+    // Register sanitization hook to prevent XSS including SVG-based vectors
+    rendition.hooks.content.register((contents: Contents) => {
+      if (contents.document) {
+        sanitizeEpubDocument(contents.document);
+      }
     });
 
     renditionHandle = {

@@ -29,6 +29,7 @@
     "@axe-core/playwright": "^4.11.3",
     "@eslint/js": "^10.0.0",
     "@playwright/test": "^1.60.0",
+    "@types/dompurify": "^3.2.0",
     "@types/node": "^25",
     "@vitest/coverage-istanbul": "4.1.7",
     "eslint": "^10.4.0",
@@ -51,5 +52,8 @@
     "typescript-eslint": "^8.59.4",
     "vitest": "4.1.7",
     "wrangler": "^4.93.0"
+  },
+  "dependencies": {
+    "dompurify": "^3.4.5"
   }
 }

@@ -61,6 +61,17 @@ sandbox: ['allow-same-origin']
 - Prevents EPUB scripts from executing or making network requests
 - Dark mode / sepia applied via `rendition.themes.registerRules()` injecting CSS
 
+## Content Sanitization
+
+EPUB content is sanitized using `DOMPurify` before rendering (via `@do-epub-studio/reader-core/src/sanitizer.ts`).
+
+- **MANDATORY**: All content loaded via `rendition.hooks.content.register` is passed through `sanitizeEpubDocument`.
+- **SVG Security**:
+    - Strict whitelist of SVG tags (e.g., `svg`, `path`, `rect`, `circle`).
+    - Explicitly blocks dangerous elements: `script`, `foreignObject`, `animate`, `set`, `animateMotion`, `animateTransform`.
+    - All event handlers (`on*`) are stripped.
+- **HTML Security**: Removes scripts, styles (except theme injections), and dangerous attributes.
+
 ## Multi-Signal Locators (ADR-006)
 
 Annotation anchoring uses a fallback hierarchy to prevent data loss and injection:
