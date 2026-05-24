@@ -32,6 +32,14 @@ Vulnerabilities in the following locations are in scope:
 - `apps/**`
 - `packages/**`
 
+## CI/CD Supply Chain Security
+
+To mitigate supply chain risks, the following policies are enforced:
+
+- **GitHub Actions SHA Pinning**: All GitHub Actions used in workflows MUST be pinned to a full 40-character commit SHA. Mutable tags (e.g., `@v4`) are prohibited except in comments for readability.
+- **Automated Auditing**: Workflows are continuously audited using OpenSSF Scorecard and validated with `actionlint` and `zizmor` during the CI process.
+- **Dependabot**: Dependabot is configured to provide automated updates for GitHub Actions SHAs.
+
 ## Out of Scope
 
 The following are out of scope:
