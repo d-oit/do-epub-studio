@@ -13,6 +13,7 @@ import {
   withTraceHeaders,
 } from './lib/observability';
 import { applySecurityHeaders, applyMinimalSecurityHeaders } from './lib/security-headers';
+import { applyRateLimit, addRateLimitHeaders } from './middleware/rate-limit';
 import {
   handleAccessRequest,
   handleLogout,
@@ -45,6 +46,7 @@ import {
   handleGetAuditLog,
   handleAdminLogin,
   handleAdminLogout,
+  handleCspReport,
 } from './routes';
 import { requireAdminAuth } from './auth/admin-middleware';
 
@@ -80,6 +82,10 @@ async function handleRequest(env: Env, request: Request): Promise<Response> {
 
   if (path === '/api/admin/logout' && method === 'POST') {
     return handleAdminLogout(env, request);
+  }
+
+  if (path === '/api/csp-report' && method === 'POST') {
+    return handleCspReport(env, request);
   }
 
   if (path === '/api/access/refresh' && method === 'POST') {
@@ -313,7 +319,18 @@ export default {
     logRequestStart(context);
 
     try {
-      const response = await handleRequest(env, request);
+      const { response: rateLimitResponse, metadata } = await applyRateLimit(request, env);
+      if (rateLimitResponse) {
+        logRequestEnd(context, rateLimitResponse.status);
+        return applySecurityHeaders(
+          applyCorsHeaders(withTraceHeaders(rateLimitResponse, context), request, env),
+        );
+      }
+
+      let response = await handleRequest(env, request);
+      if (metadata) {
+        response = addRateLimitHeaders(response, metadata);
+      }
       logRequestEnd(context, response.status);
       return applySecurityHeaders(applyCorsHeaders(withTraceHeaders(response, context), request, env));
     } catch (error) {

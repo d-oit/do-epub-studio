@@ -25,6 +25,16 @@ Do **not** open a public issue or discussion for a vulnerability.
 | MEDIUM   | 5 business days | 90 calendar days    |
 | LOW      | 5 business days | Best effort       |
 
+## Rate Limiting Policy
+
+To protect against brute-force attacks and denial-of-service, the following rate limits are enforced:
+
+- **Auth Endpoints** (`/api/access/request`, `/api/admin/login`, etc.): 10 requests per minute.
+- **File Endpoints** (`/api/files/*`, etc.): 30 requests per minute.
+- **General API Endpoints**: 60 requests per minute.
+
+Limits are applied per IP address and, where applicable, per authentication token. Exceeding these limits will result in a `429 Too Many Requests` response with a `Retry-After` header.
+
 ## Scope
 
 Vulnerabilities in the following locations are in scope:
@@ -52,4 +62,13 @@ The following are out of scope:
 ## Related Documents
 
 - [ADR-034 (ReDoS)](plans/034-adr-redos.md)
+- [ADR-035 (Content Security Policy)](plans/035-adr-content-security-policy.md)
 - [docs/security.md](docs/security.md)
+
+## Content Security Policy (CSP)
+
+The application enforces strict CSP headers across all Worker responses and EPUB content.
+
+- **API/App Responses**: Restrict resource loading to 'self' and authorized domains. framing is disabled (`frame-ancestors 'none'`).
+- **EPUB Content**: Rendered in a sandboxed iframe with `sandbox allow-same-origin allow-scripts`. The response header further restricts script execution and network access.
+- **Reporting**: All violations are reported to `/api/csp-report`.

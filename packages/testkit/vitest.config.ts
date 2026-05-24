@@ -6,8 +6,8 @@ export default defineConfig({
     environment: 'node',
     include: ['src/**/*.test.ts'],
     coverage: {
-      provider: 'v8',
-      reporter: ['text', 'lcov'],
+      provider: 'istanbul',
+      reporter: ['text', 'json', 'html', 'lcov', 'clover'],
       include: ['src/**/*.ts'],
       exclude: ['src/**/*.test.ts'],
     },
