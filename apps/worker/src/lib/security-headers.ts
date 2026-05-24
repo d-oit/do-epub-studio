@@ -27,7 +27,8 @@ export const securityHeaders: Readonly<Record<string, string>> = Object.freeze({
 
   // Content Security Policy — restrict resource loading for API responses
   // API endpoints should not render content; this is a defense-in-depth measure
-  'Content-Security-Policy': "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'",
+  'Content-Security-Policy':
+    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-src 'self'; frame-ancestors 'none'; form-action 'self'; base-uri 'self'; report-uri /api/csp-report",
 
   // Cross-Origin isolation — prevent cross-origin data leaks
   'Cross-Origin-Opener-Policy': 'same-origin',
@@ -43,7 +44,12 @@ export const minimalSecurityHeaders: Readonly<Record<string, string>> = Object.f
   'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
   'X-Frame-Options': 'DENY',
   'Referrer-Policy': 'strict-origin-when-cross-origin',
-  'Permissions-Policy': 'camera=(), microphone=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()',
+  'Permissions-Policy':
+    'camera=(), microphone=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()',
+
+  // Minimal CSP for file responses — restrict framing and default loading
+  'Content-Security-Policy': "default-src 'none'; frame-ancestors 'none'; report-uri /api/csp-report",
+
   'Cross-Origin-Opener-Policy': 'same-origin',
   'Cross-Origin-Resource-Policy': 'same-origin',
 });
