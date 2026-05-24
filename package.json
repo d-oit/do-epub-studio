@@ -30,7 +30,7 @@
     "@eslint/js": "^10.0.0",
     "@playwright/test": "^1.60.0",
     "@types/node": "^25",
-    "@vitest/coverage-v8": "4.1.7",
+    "@vitest/coverage-istanbul": "4.1.7",
     "eslint": "^10.4.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-import-resolver-typescript": "^4.4.4",
