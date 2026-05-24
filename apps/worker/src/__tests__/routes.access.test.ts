@@ -69,7 +69,7 @@ describe('Access Routes', () => {
           visibility: 'private',
           cover_image_url: null,
         },
-      } as any);
+      });
       mockCreateSession.mockResolvedValue('new-session-token');
 
       const res = await app.fetch(new Request('http://localhost/api/access/request', {

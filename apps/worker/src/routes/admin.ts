@@ -44,6 +44,22 @@ interface _GrantRow {
   revoked_at: string | null;
 }
 
+// Admin Authentication Middleware
+const authMiddleware: MiddlewareHandler<{ Bindings: Env; Variables: { adminUser: { email: string; id: string; role: string } } }> = async (c, next) => {
+  const authResult = await requireAdminAuth(c.env, c.req.raw);
+  if (!authResult || !authResult.ok) {
+    const status = (authResult && 'status' in authResult ? authResult.status : 401) as ContentfulStatusCode;
+    const message = (authResult && 'error' in authResult ? authResult.error : 'Unauthorized');
+    return c.json({ ok: false, error: { code: 'UNAUTHORIZED', message } }, status);
+  }
+  c.set('adminUser', {
+    id: authResult.context.userId,
+    email: authResult.context.email,
+    role: authResult.context.globalRole
+  });
+  await next();
+};
+
 // Public Routes
 adminRouter.post('/login', zValidator('json', LoginSchema), async (c) => {
   const { email, password } = c.req.valid('json');
@@ -109,23 +125,8 @@ adminRouter.post('/logout', async (c) => {
   return c.json({ ok: true });
 });
 
-// Admin Authentication Middleware
-const authMiddleware: MiddlewareHandler<{ Bindings: Env; Variables: { adminUser: { email: string; id: string; role: string } } }> = async (c, next) => {
-  const authResult = await requireAdminAuth(c.env, c.req.raw);
-  if (!authResult || !authResult.ok) {
-    const status = (authResult && 'status' in authResult ? authResult.status : 401) as ContentfulStatusCode;
-    const message = (authResult && 'error' in authResult ? authResult.error : 'Unauthorized');
-    return c.json({ ok: false, error: { code: 'UNAUTHORIZED', message } }, status);
-  }
-  c.set('adminUser', {
-    id: authResult.context.userId,
-    email: authResult.context.email,
-    role: authResult.context.globalRole
-  });
-  await next();
-};
-
-adminRouter.post('/books', authMiddleware, zValidator('json', CreateBookSchema), async (c) => {
+// Protected Routes
+adminRouter.post('/books', zValidator('json', CreateBookSchema), authMiddleware, async (c) => {
   const body = c.req.valid('json');
   const adminUser = c.get('adminUser');
   const id = crypto.randomUUID();
@@ -221,7 +222,7 @@ adminRouter.put('/books/:id/upload', authMiddleware, async (c) => {
   return c.json({ ok: true, data: { storageKey, bookId: book.id, slug: book.slug } }, 200);
 });
 
-adminRouter.post('/books/:id/upload-complete', authMiddleware, zValidator('json', UploadCompleteSchema), async (c) => {
+adminRouter.post('/books/:id/upload-complete', zValidator('json', UploadCompleteSchema), authMiddleware, async (c) => {
   const bookId = c.req.param('id');
   const body = c.req.valid('json');
   const fileId = crypto.randomUUID();
@@ -254,7 +255,7 @@ adminRouter.post('/books/:id/upload-complete', authMiddleware, zValidator('json'
   return c.json({ ok: true, data: { id: fileId, storageKey: body.storageKey } }, 201);
 });
 
-adminRouter.post('/books/:id/grants', authMiddleware, zValidator('json', CreateGrantSchema), async (c) => {
+adminRouter.post('/books/:id/grants', zValidator('json', CreateGrantSchema), authMiddleware, async (c) => {
   const bookId = c.req.param('id');
   const body = c.req.valid('json');
   const adminUser = c.get('adminUser');
@@ -301,7 +302,7 @@ adminRouter.get('/books/:id/grants', authMiddleware, async (c) => {
   });
 });
 
-adminRouter.patch('/grants/:id', authMiddleware, zValidator('json', UpdateGrantSchema), async (c) => {
+adminRouter.patch('/grants/:id', zValidator('json', UpdateGrantSchema), authMiddleware, async (c) => {
   const grantId = c.req.param('id');
   const body = c.req.valid('json');
   const adminUser = c.get('adminUser');
@@ -368,7 +369,7 @@ adminRouter.post('/grants/:id/revoke', authMiddleware, async (c) => {
 });
 
 adminRouter.get('/audit', authMiddleware, async (c) => {
-  const entityType = c.req.query('entityType') as "book" | "user" | "grant" | "reader_session" | "comment" | undefined;
+  const entityType = c.req.query('entityType') as "book" | "grant" | "comment" | "user" | "session" | undefined;
   const entityId = c.req.query('entityId');
   const limit = parseInt(c.req.query('limit') ?? '50', 10);
   const offset = parseInt(c.req.query('offset') ?? '0', 10);
@@ -433,7 +434,7 @@ adminRouter.get('/audit', authMiddleware, async (c) => {
   });
 });
 
-adminRouter.get('/audit-logs', async (c) => {
+adminRouter.get('/audit-logs', (c) => {
   const url = new URL(c.req.url);
   url.pathname = url.pathname.replace('/audit-logs', '/audit');
   return c.redirect(url.toString(), 301);

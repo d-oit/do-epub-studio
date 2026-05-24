@@ -1,14 +1,20 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { app } from '../app';
 import { makeEnv } from './fixtures';
-import { requireAdminAuth } from '../auth/admin-middleware';
+import * as adminMiddleware from '../auth/admin-middleware';
+
+type AdminMiddleware = typeof import('../auth/admin-middleware');
 
 // Mock everything needed for integration tests
-vi.mock('../auth/admin-middleware', () => ({
-  requireAdminAuth: vi.fn(),
-  createAdminSession: vi.fn(),
-  revokeAdminSession: vi.fn(),
-}));
+vi.mock('../auth/admin-middleware', async (importOriginal) => {
+  const actual = await importOriginal<AdminMiddleware>();
+  return {
+    ...actual,
+    requireAdminAuth: vi.fn(),
+    createAdminSession: vi.fn(),
+    revokeAdminSession: vi.fn(),
+  };
+});
 
 vi.mock('../auth/middleware', () => ({
   requireAuth: vi.fn(),
@@ -21,7 +27,7 @@ describe('API Validation Integration', () => {
     vi.clearAllMocks();
 
     // Default mock for admin auth
-    vi.mocked(requireAdminAuth).mockResolvedValue({
+    vi.mocked(adminMiddleware.requireAdminAuth).mockResolvedValue({
       ok: true,
       context: { userId: 'admin-1', email: 'admin@example.com', globalRole: 'admin' },
     } as any);

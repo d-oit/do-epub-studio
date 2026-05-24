@@ -106,7 +106,6 @@ import {
   commentsRouter,
   filesRouter,
   adminRouter,
-  adminAuthRouter,
   securityRouter,
 } from './routes';
 
@@ -116,5 +115,4 @@ app.route('/api/books', readerStateRouter);
 app.route('/api', commentsRouter);
 app.route('/api/files', filesRouter);
 app.route('/api/admin', adminRouter);
-app.route('/api/admin', adminAuthRouter);
 app.route('/api', securityRouter);
