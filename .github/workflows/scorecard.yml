@@ -1,0 +1,33 @@
+name: OpenSSF Scorecard
+on:
+  branch_protection_rule:
+  schedule:
+    - cron: '0 0 * * 0'
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  scorecard:
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      id-token: write
+      contents: read
+
+    steps:
+      - name: "Checkout code"
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: "Run analysis"
+        uses: ossf/scorecard-action@0864820e982690294c711296f0a54717b4656407 # v2.3.1
+        with:
+          results_file: results.sarif
+          results_format: sarif
+          publish_results: true
+        env:
+          repo_token: ${{ secrets.SCORECARD_TOKEN }}

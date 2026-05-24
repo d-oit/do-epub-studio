@@ -36,6 +36,18 @@ elif command -v python3 &> /dev/null && python3 -c "import yaml" &> /dev/null; t
     YAML_VALIDATOR="python3"
 fi
 
+# Check for actionlint
+ACTIONLINT=""
+if command -v actionlint &> /dev/null; then
+    ACTIONLINT="actionlint"
+fi
+
+# Check for zizmor
+ZIZMOR=""
+if command -v zizmor &> /dev/null; then
+    ZIZMOR="zizmor"
+fi
+
 for file in "${WORKFLOW_FILES[@]}"; do
     printf '%sChecking: %s%s\n' "${BLUE}" "$file" "${NC}"
     FILE_FAILED=0
@@ -58,6 +70,26 @@ for file in "${WORKFLOW_FILES[@]}"; do
         fi
     else
         printf '%s  ⚠ No YAML validator found (skipping syntax check)%s\n' "${YELLOW}" "${NC}"
+    fi
+
+    # 1.1 Check with actionlint
+    if [ "$ACTIONLINT" == "actionlint" ]; then
+        if ! actionlint "$file"; then
+            printf '%s  ✗ actionlint failures: %s%s\n' "${RED}" "$file" "${NC}"
+            FILE_FAILED=1
+        fi
+    else
+        printf '%s  ⚠ actionlint not found (skipping)%s\n' "${YELLOW}" "${NC}"
+    fi
+
+    # 1.2 Check with zizmor
+    if [ "$ZIZMOR" == "zizmor" ]; then
+        if ! zizmor "$file"; then
+            printf '%s  ✗ zizmor failures: %s%s\n' "${RED}" "$file" "${NC}"
+            FILE_FAILED=1
+        fi
+    else
+        printf '%s  ⚠ zizmor not found (skipping)%s\n' "${YELLOW}" "${NC}"
     fi
 
     # 2. Check for required top-level keys

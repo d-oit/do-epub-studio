@@ -24,6 +24,7 @@ ALLOWED_SHAS=(
     "softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda"
     "chromaui/action@e6129220824b44e265582e3bddc698c1128f6ede"
     "treosh/lighthouse-ci-action@3e7e23fb74242897f95c0ba9cabad3d0227b9b18"
+    "ossf/scorecard-action@0864820e982690294c711296f0a54717b4656407"
 )
 
 # Function to check if an action@sha is allowed
