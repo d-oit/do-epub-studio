@@ -1,9 +1,8 @@
-
+import { Hono } from 'hono';
+import { zValidator } from '@hono/zod-validator';
 import type { Env } from '../lib/env';
 import { execute, queryAll, queryFirst } from '../db/client';
 import { createGrant } from '../auth/password';
-import { jsonResponse } from '../lib/responses';
-import { validateRequestBody } from '../lib/validation';
 import { logAudit } from '../audit';
 import {
   CreateBookSchema,
@@ -11,6 +10,15 @@ import {
   UpdateGrantSchema,
 } from '@do-epub-studio/shared';
 import { z } from 'zod';
+import { requireAdminAuth, createAdminSession, revokeAdminSession } from '../auth/admin-middleware';
+import { checkRateLimitDO } from '../lib/rate-limit-client';
+
+export const adminRouter = new Hono<{ Bindings: Env; Variables: { adminUser?: { email: string; id: string; role: string } } }>();
+
+const LoginSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(1),
+});
 
 const UploadCompleteSchema = z.object({
   storageKey: z.string().min(1),
@@ -20,17 +28,6 @@ const UploadCompleteSchema = z.object({
   sha256: z.string().max(64).optional(),
   epubVersion: z.string().max(10).optional(),
 });
-
-interface _BookRow {
-  id: string;
-  slug: string;
-  title: string;
-  author_name: string | null;
-  description: string | null;
-  language: string;
-  visibility: string;
-  cover_image_url: string | null;
-}
 
 interface _GrantRow {
   id: string;
@@ -45,33 +42,100 @@ interface _GrantRow {
   revoked_at: string | null;
 }
 
-export async function handleCreateBook(
-  env: Env,
-  rawBody: unknown,
-  actorEmail?: string,
-): Promise<Response> {
-  const validation = validateRequestBody(CreateBookSchema, rawBody);
+// Public Admin Routes
+adminRouter.post('/login', zValidator('json', LoginSchema), async (c) => {
+  const { email, password } = c.req.valid('json');
 
-  if (!validation.ok) {
-    return jsonResponse(
+  const rateLimit = await checkRateLimitDO(c.env, 'auth_admin', email.toLowerCase(), {
+    maxRequests: 5,
+    windowMs: 60_000,
+  });
+
+  if (!rateLimit.allowed) {
+    return c.json(
       {
         ok: false,
-        error: {
-          code: 'VALIDATION_ERROR',
-          message: validation.error,
-          details: validation.details,
-        },
+        error: { code: 'TOO_MANY_REQUESTS', message: 'Too many login attempts. Please try again later.' },
       },
-      validation.status,
+      429,
     );
   }
 
-  const body = validation.data;
+  const result = await createAdminSession(c.env, email, password);
+
+  if (!result.ok) {
+    return c.json(
+      { ok: false, error: { code: 'INVALID_CREDENTIALS', message: result.error } },
+      result.status,
+    );
+  }
+
+  await logAudit(c.env, {
+    entityType: 'user',
+    entityId: result.user.id,
+    action: 'admin_login',
+    actorEmail: result.user.email,
+    payload: { role: result.user.role },
+  });
+
+  return c.json({
+    ok: true,
+    data: {
+      token: result.token,
+      user: {
+        id: result.user.id,
+        email: result.user.email,
+        role: result.user.role,
+      },
+    },
+  });
+});
+
+adminRouter.post('/logout', async (c) => {
+  const authHeader = c.req.header('Authorization');
+  const token = authHeader?.replace('Bearer ', '') ?? '';
+
+  if (!token) {
+    return c.json(
+      { ok: false, error: { code: 'MISSING_TOKEN', message: 'Authorization token required' } },
+      400,
+    );
+  }
+
+  await revokeAdminSession(c.env, token);
+
+  return c.json({ ok: true });
+});
+
+// Protected Admin Routes Middleware
+adminRouter.use('*', async (c, next) => {
+  // Skip auth for login/logout
+  if (c.req.path.endsWith('/login') || c.req.path.endsWith('/logout')) {
+    return next();
+  }
+
+  const authResult = await requireAdminAuth(c.env, c.req.raw);
+  if (authResult && !authResult.ok) {
+    return c.json({ ok: false, error: { code: 'UNAUTHORIZED', message: authResult.error } }, authResult.status);
+  }
+  if (authResult && authResult.ok) {
+    c.set('adminUser', {
+      id: authResult.context.userId,
+      email: authResult.context.email,
+      role: authResult.context.globalRole
+    });
+  }
+  await next();
+});
+
+adminRouter.post('/books', zValidator('json', CreateBookSchema), async (c) => {
+  const body = c.req.valid('json');
+  const adminUser = c.get('adminUser');
   const id = crypto.randomUUID();
   const now = new Date().toISOString();
 
   await execute(
-    env,
+    c.env,
     `INSERT INTO books (id, slug, title, author_name, description, language, visibility, created_at, updated_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
@@ -87,87 +151,63 @@ export async function handleCreateBook(
     ],
   );
 
-  // Generate the upload URL pointing to the Worker upload endpoint
-  let baseUrl = env.APP_BASE_URL;
+  let baseUrl = c.env.APP_BASE_URL;
   while (baseUrl.endsWith('/')) {
     baseUrl = baseUrl.slice(0, -1);
   }
   const uploadUrl = `${baseUrl}/api/admin/books/${id}/upload`;
 
-  await logAudit(env, {
+  await logAudit(c.env, {
     entityType: 'book',
     entityId: id,
     action: 'created',
-    actorEmail,
+    actorEmail: adminUser?.email,
     payload: { slug: body.slug, title: body.title },
   });
 
-  return jsonResponse(
+  return c.json(
     {
       ok: true,
       data: { id, slug: body.slug, title: body.title, uploadUrl },
     },
     201,
   );
-}
+});
 
-/**
- * Receives the raw EPUB file body and streams it to R2.
- * Returns the storageKey and upload metadata for the caller to submit via upload-complete.
- */
-export async function handleBookUpload(
-  env: Env,
-  bookId: string,
-  request: Request,
-): Promise<Response> {
-  // Verify the book exists
+adminRouter.put('/books/:id/upload', async (c) => {
+  const bookId = c.req.param('id');
+
   const book = await queryFirst<{ id: string; slug: string }>(
-    env,
+    c.env,
     `SELECT id, slug FROM books WHERE id = ? AND archived_at IS NULL LIMIT 1`,
     [bookId],
   );
 
   if (!book) {
-    return jsonResponse(
-      { ok: false, error: { code: 'NOT_FOUND', message: 'Book not found' } },
-      404,
-    );
+    return c.json({ ok: false, error: { code: 'NOT_FOUND', message: 'Book not found' } }, 404);
   }
 
-  const contentType = request.headers.get('Content-Type') ?? 'application/epub+zip';
-  const contentLength = parseInt(request.headers.get('Content-Length') ?? '0', 10);
+  const contentType = c.req.header('Content-Type') ?? 'application/epub+zip';
+  const contentLength = parseInt(c.req.header('Content-Length') ?? '0', 10);
 
   if (contentLength <= 0) {
-    return jsonResponse(
-      { ok: false, error: { code: 'VALIDATION_ERROR', message: 'Missing Content-Length header' } },
-      400,
-    );
+    return c.json({ ok: false, error: { code: 'VALIDATION_ERROR', message: 'Missing Content-Length header' } }, 400);
   }
 
-  // Max 200 MB
   const maxFileSize = 200 * 1024 * 1024;
   if (contentLength > maxFileSize) {
-    return jsonResponse(
-      {
-        ok: false,
-        error: { code: 'VALIDATION_ERROR', message: `File too large. Max: ${maxFileSize} bytes` },
-      },
-      413,
-    );
+    return c.json({ ok: false, error: { code: 'VALIDATION_ERROR', message: `File too large. Max: ${maxFileSize} bytes` } }, 413);
   }
 
   const storageKey = `books/${book.id}/${crypto.randomUUID()}.epub`;
 
   try {
-    const body = request.body;
+    const body = c.req.raw.body;
     if (!body) {
-      return jsonResponse(
-        { ok: false, error: { code: 'VALIDATION_ERROR', message: 'Request body is empty' } },
-        400,
-      );
+      return c.json({ ok: false, error: { code: 'VALIDATION_ERROR', message: 'Request body is empty' } }, 400);
     }
 
-    await env.BOOKS_BUCKET.put(storageKey, body, {
+    await c.env.BOOKS_BUCKET.put(storageKey, body, {
       httpMetadata: {
         contentType,
         contentDisposition: `attachment; filename="${book.slug}.epub"`,
@@ -178,51 +218,20 @@ export async function handleBookUpload(
       },
     });
   } catch {
-    return jsonResponse(
-      {
-        ok: false,
-        error: { code: 'UPLOAD_FAILED', message: 'Failed to upload file to storage' },
-      },
-      500,
-    );
+    return c.json({ ok: false, error: { code: 'UPLOAD_FAILED', message: 'Failed to upload file to storage' } }, 500);
   }
 
-  return jsonResponse(
-    {
-      ok: true,
-      data: { storageKey, bookId: book.id, slug: book.slug },
-    },
-    200,
-  );
-}
+  return c.json({ ok: true, data: { storageKey, bookId: book.id, slug: book.slug } }, 200);
+});
 
-export async function handleUploadComplete(
-  env: Env,
-  bookId: string,
-  rawBody: unknown,
-): Promise<Response> {
-  const validation = validateRequestBody(UploadCompleteSchema, rawBody);
-
-  if (!validation.ok) {
-    return jsonResponse(
-      {
-        ok: false,
-        error: {
-          code: 'VALIDATION_ERROR',
-          message: validation.error,
-          details: validation.details,
-        },
-      },
-      validation.status,
-    );
-  }
-
-  const body = validation.data;
+adminRouter.post('/books/:id/upload-complete', zValidator('json', UploadCompleteSchema), async (c) => {
+  const bookId = c.req.param('id');
+  const body = c.req.valid('json');
   const fileId = crypto.randomUUID();
   const now = new Date().toISOString();
 
   await execute(
-    env,
+    c.env,
     `INSERT INTO book_files (id, book_id, storage_provider, storage_key, original_filename, mime_type, file_size_bytes, sha256, epub_version, created_at)
      VALUES (?, ?, 'r2', ?, ?, ?, ?, ?, ?, ?)`,
     [
@@ -238,46 +247,22 @@ export async function handleUploadComplete(
     ],
   );
 
-  await logAudit(env, {
+  await logAudit(c.env, {
     entityType: 'book',
     entityId: bookId,
     action: 'file_uploaded',
     payload: { fileId, storageKey: body.storageKey },
   });
 
-  return jsonResponse(
-    {
-      ok: true,
-      data: { id: fileId, storageKey: body.storageKey },
-    },
-    201,
-  );
-}
+  return c.json({ ok: true, data: { id: fileId, storageKey: body.storageKey } }, 201);
+});
 
-export async function handleCreateAdminGrant(
-  env: Env,
-  bookId: string,
-  rawBody: unknown,
-  actorEmail?: string,
-): Promise<Response> {
-  const validation = validateRequestBody(CreateGrantSchema, rawBody);
+adminRouter.post('/books/:id/grants', zValidator('json', CreateGrantSchema), async (c) => {
+  const bookId = c.req.param('id');
+  const body = c.req.valid('json');
+  const adminUser = c.get('adminUser');
 
-  if (!validation.ok) {
-    return jsonResponse(
-      {
-        ok: false,
-        error: {
-          code: 'VALIDATION_ERROR',
-          message: validation.error,
-          details: validation.details,
-        },
-      },
-      validation.status,
-    );
-  }
-
-  const body = validation.data;
-  const grantId = await createGrant(env, bookId, body.email, {
+  const grantId = await createGrant(c.env, bookId, body.email, {
     password: body.password,
     mode: body.mode,
     commentsAllowed: body.commentsAllowed,
@@ -285,46 +270,45 @@ export async function handleCreateAdminGrant(
     expiresAt: body.expiresAt,
   });
 
-  await logAudit(env, {
+  await logAudit(c.env, {
     entityType: 'grant',
     entityId: grantId,
     action: 'created',
-    actorEmail,
+    actorEmail: adminUser?.email,
     payload: { bookId, email: body.email, mode: body.mode },
   });
 
-  return jsonResponse(
-    {
-      ok: true,
-      data: { id: grantId, email: body.email },
-    },
-    201,
-  );
-}
+  return c.json({ ok: true, data: { id: grantId, email: body.email } }, 201);
+});
 
-export async function handleUpdateGrant(
-  env: Env,
-  grantId: string,
-  rawBody: unknown,
-  actorEmail?: string,
-): Promise<Response> {
-  const validation = validateRequestBody(UpdateGrantSchema, rawBody);
+adminRouter.get('/books/:id/grants', async (c) => {
+  const bookId = c.req.param('id');
+  const grants = (await queryAll(
+    c.env,
+    `SELECT * FROM book_access_grants WHERE book_id = ? ORDER BY created_at DESC`,
+    [bookId],
+  )) as unknown as _GrantRow[];
 
-  if (!validation.ok) {
-    return jsonResponse(
-      {
-        ok: false,
-        error: {
-          code: 'VALIDATION_ERROR',
-          message: validation.error,
-          details: validation.details,
-        },
-      },
-      validation.status,
-    );
-  }
+  return c.json({
+    ok: true,
+    data: grants.map((g) => ({
+      id: g.id,
+      email: g.email,
+      mode: g.mode,
+      commentsAllowed: g.comments_allowed === 1,
+      offlineAllowed: g.offline_allowed === 1,
+      expiresAt: g.expires_at,
+      createdAt: g.created_at,
+      revokedAt: g.revoked_at,
+    })),
+  });
+});
 
-  const body = validation.data;
+adminRouter.patch('/grants/:id', zValidator('json', UpdateGrantSchema), async (c) => {
+  const grantId = c.req.param('id');
+  const body = c.req.valid('json');
+  const adminUser = c.get('adminUser');
+
   const updates: string[] = ['updated_at = ?'];
   const args: (string | number | null)[] = [new Date().toISOString()];
 
@@ -347,86 +331,55 @@ export async function handleUpdateGrant(
 
   args.push(grantId);
 
-  await execute(env, `UPDATE book_access_grants SET ${updates.join(', ')} WHERE id = ?`, args);
+  await execute(c.env, `UPDATE book_access_grants SET ${updates.join(', ')} WHERE id = ?`, args);
 
-  await logAudit(env, {
+  await logAudit(c.env, {
     entityType: 'grant',
     entityId: grantId,
     action: 'updated',
-    actorEmail,
+    actorEmail: adminUser?.email,
     payload: body,
   });
 
-  return jsonResponse({ ok: true, data: { id: grantId, ...body } });
-}
+  return c.json({ ok: true, data: { id: grantId, ...body } });
+});
 
-export async function handleRevokeGrant(
-  env: Env,
-  grantId: string,
-  actorEmail?: string,
-): Promise<Response> {
-  await execute(env, `UPDATE book_access_grants SET revoked_at = datetime('now') WHERE id = ?`, [
+adminRouter.post('/grants/:id/revoke', async (c) => {
+  const grantId = c.req.param('id');
+  const adminUser = c.get('adminUser');
+
+  await execute(c.env, `UPDATE book_access_grants SET revoked_at = datetime('now') WHERE id = ?`, [
     grantId,
   ]);
 
   await execute(
-    env,
+    c.env,
     `UPDATE reader_sessions SET revoked_at = datetime('now') 
      WHERE book_id = (SELECT book_id FROM book_access_grants WHERE id = ?)
      AND email = (SELECT email FROM book_access_grants WHERE id = ?)`,
     [grantId, grantId],
   );
 
-  await logAudit(env, {
+  await logAudit(c.env, {
     entityType: 'grant',
     entityId: grantId,
     action: 'revoked',
-    actorEmail,
+    actorEmail: adminUser?.email,
   });
 
-  return jsonResponse({ ok: true });
-}
+  return c.json({ ok: true });
+});
 
-export async function handleGetBookGrants(env: Env, bookId: string): Promise<Response> {
-  const grants = (await queryAll(
-    env,
-    `SELECT * FROM book_access_grants WHERE book_id = ? ORDER BY created_at DESC`,
-    [bookId],
-  )) as unknown as _GrantRow[];
+adminRouter.get('/audit', async (c) => {
+  const entityType = c.req.query('entityType');
+  const entityId = c.req.query('entityId');
+  const limit = parseInt(c.req.query('limit') ?? '50', 10);
+  const offset = parseInt(c.req.query('offset') ?? '0', 10);
+  const from = c.req.query('from');
+  const to = c.req.query('to');
 
-  return jsonResponse({
-    ok: true,
-    data: grants.map((g) => ({
-      id: g.id,
-      email: g.email,
-      mode: g.mode,
-      commentsAllowed: g.comments_allowed === 1,
-      offlineAllowed: g.offline_allowed === 1,
-      expiresAt: g.expires_at,
-      createdAt: g.created_at,
-      revokedAt: g.revoked_at,
-    })),
-  });
-}
-
-export async function handleGetAuditLog(
-  env: Env,
-  entityType?: string,
-  entityId?: string,
-  limit = 100,
-  offset = 0,
-  from?: string,
-  to?: string,
-): Promise<Response> {
-  await logAudit(env, {
-    entityType: entityType as
-      | 'book'
-      | 'grant'
-      | 'session'
-      | 'comment'
-      | 'user'
-      | 'bookmark'
-      | 'highlight',
+  await logAudit(c.env, {
+    entityType: entityType as any,
     entityId: entityId ?? '',
     action: 'query',
   });
@@ -451,24 +404,22 @@ export async function handleGetAuditLog(
     args.push(to);
   }
 
-  const whereClause = conditions.length > 0
-    ? ` WHERE ${conditions.join(' AND ')}`
-    : '';
+  const whereClause = conditions.length > 0 ? ` WHERE ${conditions.join(' AND ')}` : '';
 
   const countResult = await queryAll<{ cnt: number }>(
-    env,
+    c.env,
     `SELECT COUNT(*) as cnt FROM audit_log${whereClause}`,
     args,
   );
   const total = countResult[0]?.cnt ?? 0;
 
   const rows = await queryAll(
-    env,
+    c.env,
     `SELECT * FROM audit_log${whereClause} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
     [...args, limit, offset],
   );
 
-  return jsonResponse({
+  return c.json({
     ok: true,
     data: {
       entries: rows.map((row) => ({
@@ -483,6 +434,10 @@ export async function handleGetAuditLog(
       total,
     },
   });
-}
+});
 
-
+adminRouter.get('/audit-logs', async (c) => {
+  const url = new URL(c.req.url);
+  url.pathname = url.pathname.replace('/audit-logs', '/audit');
+  return c.redirect(url.toString(), 301);
+});

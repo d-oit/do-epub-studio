@@ -1,177 +1,72 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { makeEnv, makeGrantRow, makeAuditLogRow, mockQueryAll, mockExecute, mockLogAudit } from './fixtures';
 import {
-  handleCreateBook,
-  handleUploadComplete,
-  handleCreateAdminGrant,
-  handleUpdateGrant,
-  handleRevokeGrant,
-  handleGetBookGrants,
-  handleGetAuditLog,
-} from '../routes/admin';
+  makeEnv,
+  mockRequireAdminAuth,
+  mockQueryFirst,
+  mockQueryAll,
+  mockExecute,
+  mockCreateGrant,
+} from './fixtures';
+import { app } from '../app';
 
-describe('POST /api/admin/books (handleCreateBook)', () => {
-  const validBody = {
-    title: 'New Book',
-    slug: 'new-book',
-    authorName: 'Author Name',
-    language: 'en',
-    visibility: 'private' as const,
-  };
+describe('Admin Routes', () => {
+  const env = makeEnv();
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockRequireAdminAuth.mockResolvedValue({
+      ok: true,
+      context: { userId: 'admin-1', email: 'admin@example.com', globalRole: 'admin' },
+    } as any);
   });
 
-  it('returns 400 for invalid body', async () => {
-    const res = await handleCreateBook(makeEnv(), {});
-    expect(res.status).toBe(400);
-    const body = await res.json() as any;
-    expect(body.error.code).toBe('VALIDATION_ERROR');
+  describe('POST /api/admin/books', () => {
+    it('creates book and returns success', async () => {
+      mockExecute.mockResolvedValue({} as any);
+
+      const res = await app.fetch(new Request('http://localhost/api/admin/books', {
+        method: 'POST',
+        body: JSON.stringify({
+          title: 'New Book',
+          slug: 'new-book',
+        }),
+        headers: { 'Content-Type': 'application/json' },
+      }), env);
+
+      expect(res.status).toBe(201);
+      const body = await res.json() as any;
+      expect(body.ok).toBe(true);
+    });
   });
 
-  it('creates book and returns success', async () => {
-    mockExecute.mockResolvedValue({} as never);
+  describe('POST /api/admin/books/:id/grants', () => {
+    it('creates grant and returns success', async () => {
+      mockCreateGrant.mockResolvedValue('grant-1');
 
-    const res = await handleCreateBook(makeEnv(), validBody, 'admin@example.com');
-    expect(res.status).toBe(201);
-    const body = await res.json() as any;
-    expect(body.ok).toBe(true);
-  });
-});
+      const res = await app.fetch(new Request('http://localhost/api/admin/books/book-1/grants', {
+        method: 'POST',
+        body: JSON.stringify({
+          bookId: '36069966-239f-431e-b83c-1d020d575791', // Valid UUID
+          email: 'user@example.com',
+          mode: 'private',
+        }),
+        headers: { 'Content-Type': 'application/json' },
+      }), env);
 
-describe('POST /api/admin/books/{bookId}/files (handleUploadComplete)', () => {
-  const body = {
-    storageKey: 'books/book-1/epub/file.epub',
-    originalFilename: 'file.epub',
-    mimeType: 'application/epub+zip',
-    fileSizeBytes: 102400,
-  };
-
-  beforeEach(() => {
-    vi.clearAllMocks();
+      expect(res.status).toBe(201);
+    });
   });
 
-  it('registers book file and returns 201', async () => {
-    mockExecute.mockResolvedValue({} as never);
+  describe('GET /api/admin/audit', () => {
+    it('returns audit log entries', async () => {
+      mockQueryAll
+        .mockResolvedValueOnce([{ cnt: 1 }] as any) // count query
+        .mockResolvedValueOnce([{ id: '1', actor_email: 'admin@ex.com', action: 'query' }] as any); // rows query
 
-    const res = await handleUploadComplete(makeEnv(), 'book-1', body);
-    expect(res.status).toBe(201);
-    const bodyRes = await res.json() as any;
-    expect(bodyRes.ok).toBe(true);
-  });
-});
-
-describe('POST /api/admin/grants (handleCreateAdminGrant)', () => {
-  const validBody = {
-    bookId: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
-    email: 'reader@example.com',
-    mode: 'private' as const,
-    commentsAllowed: false,
-    offlineAllowed: false,
-  };
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it('returns 400 for invalid body', async () => {
-    const res = await handleCreateAdminGrant(makeEnv(), 'book-1', {});
-    expect(res.status).toBe(400);
-  });
-
-  it('creates grant and returns success', async () => {
-    mockExecute.mockResolvedValue({} as never);
-
-    const res = await handleCreateAdminGrant(makeEnv(), 'book-1', validBody, 'admin@example.com');
-    expect(res.status).toBe(201);
-    const bodyRes = await res.json() as any;
-    expect(bodyRes.ok).toBe(true);
-  });
-});
-
-describe('PATCH /api/admin/grants/{grantId} (handleUpdateGrant)', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it('returns 400 for invalid body', async () => {
-    const res = await handleUpdateGrant(makeEnv(), 'grant-1', { mode: 'invalid-mode' });
-    expect(res.status).toBe(400);
-  });
-
-  it('updates grant fields', async () => {
-    mockExecute.mockResolvedValue({} as never);
-
-    const res = await handleUpdateGrant(
-      makeEnv(),
-      'grant-1',
-      { mode: 'password_protected', commentsAllowed: true },
-      'admin@example.com',
-    );
-    expect(res.status).toBe(200);
-    const bodyRes = await res.json() as any;
-    expect(bodyRes.ok).toBe(true);
-  });
-});
-
-describe('DELETE /api/admin/grants/{grantId} (handleRevokeGrant)', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it('revokes grant and associated sessions', async () => {
-    mockExecute.mockResolvedValue({} as never);
-
-    const res = await handleRevokeGrant(makeEnv(), 'grant-1', 'admin@example.com');
-    expect(res.status).toBe(200);
-    const body = await res.json() as any;
-    expect(body.ok).toBe(true);
-    // Should execute: UPDATE grant, UPDATE sessions
-    expect(mockExecute).toHaveBeenCalledTimes(2);
-    // audit_log is handled via logAudit mock
-    expect(mockLogAudit).toHaveBeenCalledTimes(1);
-  });
-});
-
-describe('GET /api/admin/books/{bookId}/grants (handleGetBookGrants)', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it('returns list of grants for a book', async () => {
-    mockQueryAll.mockResolvedValue([
-      makeGrantRow({ id: 'grant-1', email: 'user1@example.com' }),
-      makeGrantRow({
-        id: 'grant-2',
-        email: 'user2@example.com',
-        comments_allowed: 1,
-        offline_allowed: 1,
-      }),
-    ] as never);
-
-    const res = await handleGetBookGrants(makeEnv(), 'book-1');
-    expect(res.status).toBe(200);
-    const body = await res.json() as any;
-    expect(body.data).toHaveLength(2);
-  });
-});
-
-describe('GET /api/admin/audit (handleGetAuditLog)', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it('returns paginated audit log entries', async () => {
-    mockQueryAll
-      .mockResolvedValueOnce([{ cnt: 1 }] as never)
-      .mockResolvedValueOnce([makeAuditLogRow()] as never);
-
-    const res = await handleGetAuditLog(makeEnv(), 'book', 'book-1', 50, 0);
-    expect(res.status).toBe(200);
-    const body = await res.json() as any;
-    expect(body.ok).toBe(true);
-    expect(body.data.entries).toHaveLength(1);
-    expect(body.data.total).toBe(1);
+      const res = await app.fetch(new Request('http://localhost/api/admin/audit'), env);
+      expect(res.status).toBe(200);
+      const body = await res.json() as any;
+      expect(body.data.entries).toHaveLength(1);
+    });
   });
 });

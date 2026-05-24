@@ -22,6 +22,12 @@ vi.mock('../auth/middleware', async (importOriginal) => {
   };
 });
 
+vi.mock('../auth/admin-middleware', () => ({
+  requireAdminAuth: vi.fn(),
+  createAdminSession: vi.fn(),
+  revokeAdminSession: vi.fn(),
+}));
+
 vi.mock('../auth/password', () => ({
   validateGrant: vi.fn(),
   computeCapabilities: vi.fn(),
@@ -41,6 +47,7 @@ vi.mock('../auth/session', async (importOriginal) => {
 });
 
 vi.mock('../storage/signed-url', () => ({
+  getSignedUrl: vi.fn(),
   generateSignedUrl: vi.fn(),
   verifySignedUrlExpiry: vi.fn(),
   verifySignedUrlSignature: vi.fn(),
@@ -57,6 +64,7 @@ vi.mock('../audit', () => ({
 
 import { queryFirst, queryAll, execute } from '../db/client';
 import { requireAuth } from '../auth/middleware';
+import { requireAdminAuth } from '../auth/admin-middleware';
 import {
   validateGrant,
   computeCapabilities,
@@ -70,6 +78,7 @@ import {
   revokeSession,
 } from '../auth/session';
 import {
+  getSignedUrl,
   generateSignedUrl,
   verifySignedUrlExpiry,
   verifySignedUrlSignature,
@@ -84,6 +93,7 @@ export const mockQueryFirst = vi.mocked(queryFirst);
 export const mockQueryAll = vi.mocked(queryAll);
 export const mockExecute = vi.mocked(execute);
 export const mockRequireAuth = vi.mocked(requireAuth);
+export const mockRequireAdminAuth = vi.mocked(requireAdminAuth);
 export const mockValidateGrant = vi.mocked(validateGrant);
 export const mockComputeCapabilities = vi.mocked(computeCapabilities);
 export const mockCreateGrant = vi.mocked(createGrantMod);
@@ -92,6 +102,7 @@ export const mockGetGrantsBySession = vi.mocked(getGrantsBySession);
 export const mockCreateSession = vi.mocked(createSession);
 export const mockValidateSessionMod = vi.mocked(validateSessionMod);
 export const mockRevokeSession = vi.mocked(revokeSession);
+export const mockGetSignedUrl = vi.mocked(getSignedUrl);
 export const mockGenerateSignedUrl = vi.mocked(generateSignedUrl);
 export const mockVerifyExpiry = vi.mocked(verifySignedUrlExpiry);
 export const mockVerifySignature = vi.mocked(verifySignedUrlSignature);
