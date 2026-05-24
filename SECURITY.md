@@ -52,4 +52,13 @@ The following are out of scope:
 ## Related Documents
 
 - [ADR-034 (ReDoS)](plans/034-adr-redos.md)
+- [ADR-035 (Content Security Policy)](plans/035-adr-content-security-policy.md)
 - [docs/security.md](docs/security.md)
+
+## Content Security Policy (CSP)
+
+The application enforces strict CSP headers across all Worker responses and EPUB content.
+
+- **API/App Responses**: Restrict resource loading to 'self' and authorized domains. framing is disabled (`frame-ancestors 'none'`).
+- **EPUB Content**: Rendered in a sandboxed iframe with `sandbox allow-same-origin allow-scripts`. The response header further restricts script execution and network access.
+- **Reporting**: All violations are reported to `/api/csp-report`.

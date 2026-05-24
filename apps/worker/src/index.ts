@@ -45,6 +45,7 @@ import {
   handleGetAuditLog,
   handleAdminLogin,
   handleAdminLogout,
+  handleCspReport,
 } from './routes';
 import { requireAdminAuth } from './auth/admin-middleware';
 
@@ -80,6 +81,10 @@ async function handleRequest(env: Env, request: Request): Promise<Response> {
 
   if (path === '/api/admin/logout' && method === 'POST') {
     return handleAdminLogout(env, request);
+  }
+
+  if (path === '/api/csp-report' && method === 'POST') {
+    return handleCspReport(env, request);
   }
 
   if (path === '/api/access/refresh' && method === 'POST') {
