@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { Buffer } from 'node:buffer';
 import { inflateRawSync } from 'node:zlib';
-import { isValidCfi } from '../epub-loader';
+import { isValidCfi, createEpubLoader } from '../epub-loader';
 
 const FIXTURES = resolve(import.meta.dirname, 'fixtures');
 
@@ -366,6 +366,28 @@ describe('Error handling for invalid EPUBs', () => {
     const opfXml = entries.get('OEBPS/content.opf')?.toString('utf-8') ?? '';
     const spineItems = extractAttrs(opfXml, 'itemref', 'idref');
     expect(spineItems).toHaveLength(0);
+  });
+});
+
+describe('Security', () => {
+  it('rejects a ZIP bomb EPUB via epub-loader', async () => {
+    const loader = createEpubLoader();
+    const buf = readEpubFixture('zip-bomb.epub');
+    const data = new Uint8Array(buf);
+
+    await expect(loader.load(data)).rejects.toThrow('Compression ratio too high');
+  });
+
+  it('rejects path traversal EPUB via epub-loader', async () => {
+    const loader = createEpubLoader();
+    // Create a path traversal ZIP manually for this test
+    const { zipSync, strToU8 } = await import('fflate');
+    const traversalZip = zipSync({
+      'mimetype': [strToU8('application/epub+zip'), { level: 0 }],
+      '../../etc/passwd': strToU8('malicious'),
+    });
+
+    await expect(loader.load(traversalZip)).rejects.toThrow('Potential path traversal');
   });
 });
 
