@@ -2,8 +2,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   makeEnv,
   mockQueryFirst,
-  mockVerifyExpiry,
-  mockVerifySignature,
 } from './fixtures';
 import { app } from '../app';
 
@@ -14,25 +12,34 @@ describe('Files Routes', () => {
     vi.clearAllMocks();
   });
 
-  function makeFileUrlRequest(expires: string, signature: string): Request {
-    return new Request(`http://localhost/api/files/book-1/key?expires=${expires}&signature=${signature}`);
+  function makeFileUrlRequest(bookId: string, remainder: string, expires: string, signature: string): Request {
+    return new Request(`http://localhost/api/files/${bookId}/${remainder}?expires=${expires}&signature=${signature}`);
   }
 
-  describe('GET /api/files/:remainder', () => {
-    it('returns 404 when file not found in DB', async () => {
-      mockQueryFirst.mockResolvedValue(null);
-      const res = await app.fetch(makeFileUrlRequest('9999999999', 'sig'), env);
-      expect(res.status).toBe(404);
+  describe('GET /api/files/:bookId/:remainder', () => {
+    it('returns 403 when signature is invalid (mocked)', async () => {
+      const { verifySignedUrlSignature } = await import('../storage/signed-url');
+      vi.mocked(verifySignedUrlSignature).mockResolvedValue(false);
+
+      const res = await app.fetch(makeFileUrlRequest('book-1', 'key', '9999999999', 'sig'), env);
+      expect(res.status).toBe(403);
     });
 
-    it('returns 404 when file not found in bucket', async () => {
-      mockQueryFirst.mockResolvedValue({ id: '1', storage_key: 'key' } as any);
-      // makeEnv already returns a bucket that returns null for get
-      const res = await app.fetch(makeFileUrlRequest('9999999999', 'sig'), env);
+    it('returns 404 when file not found in DB', async () => {
+      const { verifySignedUrlSignature, verifySignedUrlExpiry } = await import('../storage/signed-url');
+      vi.mocked(verifySignedUrlSignature).mockResolvedValue(true);
+      vi.mocked(verifySignedUrlExpiry).mockReturnValue(true);
+
+      mockQueryFirst.mockResolvedValue(null);
+      const res = await app.fetch(makeFileUrlRequest('book-1', 'key', '9999999999', 'sig'), env);
       expect(res.status).toBe(404);
     });
 
     it('returns file body with correct headers when valid', async () => {
+      const { verifySignedUrlSignature, verifySignedUrlExpiry } = await import('../storage/signed-url');
+      vi.mocked(verifySignedUrlSignature).mockResolvedValue(true);
+      vi.mocked(verifySignedUrlExpiry).mockReturnValue(true);
+
       const mockBody = new ReadableStream();
       const mockObject = {
         body: mockBody,
@@ -40,10 +47,10 @@ describe('Files Routes', () => {
         writeHttpMetadata: (h: Headers) => h.set('Content-Type', 'application/epub+zip'),
       };
 
-      mockQueryFirst.mockResolvedValue({ id: '1', storage_key: 'key' } as any);
+      mockQueryFirst.mockResolvedValue({ id: '1', storage_key: 'key' });
       vi.spyOn(env.BOOKS_BUCKET, 'get').mockResolvedValue(mockObject as any);
 
-      const res = await app.fetch(makeFileUrlRequest('9999999999', 'sig'), env);
+      const res = await app.fetch(makeFileUrlRequest('book-1', 'key', '9999999999', 'sig'), env);
 
       expect(res.status).toBe(200);
       expect(res.headers.get('Content-Type')).toBe('application/epub+zip');

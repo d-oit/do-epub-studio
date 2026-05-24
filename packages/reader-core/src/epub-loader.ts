@@ -8,7 +8,6 @@ import type {
   ProgressPosition,
 } from './epub-types';
 import { createTraceId, createSpanId, serializeError, testBounded } from '@do-epub-studio/shared';
-import { validateArchive } from './archive-validator';
 
 type EventCallback = (data: unknown) => void;
 
@@ -24,7 +23,7 @@ export interface EpubRenditionHandle {
 }
 
 export interface EpubLoader {
-  load(url: string | Uint8Array): Promise<void>;
+  load(url: string): Promise<void>;
   createRendition(container: HTMLElement): EpubRenditionHandle;
   destroy(): void;
   getMetadata(): BookMetadata;
@@ -108,7 +107,7 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
     return spineItems;
   }
 
-  async function load(url: string | Uint8Array): Promise<void> {
+  async function load(url: string): Promise<void> {
     if (destroyed) {
       throw new Error('EpubLoader has been destroyed');
     }
@@ -117,41 +116,7 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
     const spanId = createSpanId();
 
     try {
-      let data: Uint8Array;
-      if (typeof url === 'string') {
-        if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('blob:')) {
-          const response = await fetch(url);
-          if (!response.ok) {
-            throw new Error(`Failed to fetch EPUB: ${response.statusText}`);
-          }
-          const buffer = await response.arrayBuffer();
-          data = new Uint8Array(buffer);
-        } else {
-          // For tests or other cases where it might not be a full URL,
-          // we should still try to validate if it's treated as a local path or similar.
-          // In the browser, fetch('test.epub') would usually work relative to current origin.
-          // But Node.js fetch might fail if not absolute.
-          // Since this is reader-core and might run in both, let's be careful.
-          try {
-            const response = await fetch(url);
-            if (!response.ok) {
-              throw new Error(`Failed to fetch EPUB: ${response.statusText}`);
-            }
-            const buffer = await response.arrayBuffer();
-            data = new Uint8Array(buffer);
-          } catch (e) {
-            // Fallback for mock/test cases if they don't want to fetch
-            // But we NEED data to validate.
-            throw new Error(`Failed to fetch EPUB from ${url}`, { cause: e });
-          }
-        }
-      } else {
-        data = url;
-      }
-
-      await validateArchive(data);
-
-      book = ePub(data.buffer as ArrayBuffer);
+      book = ePub(url);
       await book.opened;
 
       const nav = await book.loaded.navigation;

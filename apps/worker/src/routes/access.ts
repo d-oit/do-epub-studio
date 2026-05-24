@@ -4,7 +4,6 @@ import type { Env } from '../lib/env';
 import { validateGrant, computeCapabilities } from '../auth/password';
 import { createSession } from '../auth/session';
 import { logAudit } from '../audit';
-import { jsonResponse } from '../lib/responses';
 import { AccessRequestSchema } from '@do-epub-studio/shared';
 import { checkRateLimitDO } from '../lib/rate-limit-client';
 
@@ -222,4 +221,3 @@ export async function handleAccessRequest(env: Env, raw: unknown): Promise<Respo
     headers: { 'Content-Type': 'application/json' }
   }), env);
 }
-// ... other handle functions can be adapted similarly if needed, but we aim to replace calls to them.

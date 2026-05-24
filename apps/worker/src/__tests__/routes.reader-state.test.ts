@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   makeEnv,
-  mockRequireAuth,
-  mockQueryAll,
   mockQueryFirst,
+  mockQueryAll,
   mockExecute,
+  mockRequireAuth,
 } from './fixtures';
 import { app } from '../app';
 
@@ -24,13 +24,16 @@ describe('Reader State Routes', () => {
 
     it('returns progress when authenticated', async () => {
       mockRequireAuth.mockResolvedValue({ email: 'user@example.com' } as any);
+
       mockQueryFirst.mockResolvedValue({
         locator_json: JSON.stringify({ cfi: 'epubcfi(/6/4)' }),
         progress_percent: 50,
         updated_at: '2023-01-01T00:00:00Z',
-      } as any);
+      });
 
-      const res = await app.fetch(new Request('http://localhost/api/books/book-1/progress'), env);
+      const res = await app.fetch(new Request('http://localhost/api/books/book-1/progress', {
+        headers: { 'Authorization': 'Bearer valid' }
+      }), env);
       expect(res.status).toBe(200);
       const body = await res.json() as any;
       expect(body.data.progressPercent).toBe(50);
@@ -51,7 +54,10 @@ describe('Reader State Routes', () => {
           locator: { cfi: 'epubcfi(/6/4)', selectedText: 'text', chapterRef: 'chap1' },
           progressPercent: 60,
         }),
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer valid'
+        },
       }), env);
 
       expect(res.status).toBe(200);
@@ -65,9 +71,11 @@ describe('Reader State Routes', () => {
       mockRequireAuth.mockResolvedValue({ email: 'user@example.com' } as any);
       mockQueryAll.mockResolvedValue([
         { id: '1', locator_json: JSON.stringify({ cfi: 'cfi' }), label: 'bm1', created_at: 'now' }
-      ] as any);
+      ]);
 
-      const res = await app.fetch(new Request('http://localhost/api/books/book-1/bookmarks'), env);
+      const res = await app.fetch(new Request('http://localhost/api/books/book-1/bookmarks', {
+        headers: { 'Authorization': 'Bearer valid' }
+      }), env);
       expect(res.status).toBe(200);
       const body = await res.json() as any;
       expect(body.data).toHaveLength(1);
@@ -89,7 +97,10 @@ describe('Reader State Routes', () => {
           note: 'nice',
           color: '#ff0000',
         }),
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer valid'
+        },
       }), env);
 
       expect(res.status).toBe(201);

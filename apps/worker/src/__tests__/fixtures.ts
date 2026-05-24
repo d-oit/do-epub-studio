@@ -17,16 +17,22 @@ vi.mock('../auth/middleware', async (importOriginal) => {
   return {
     ...actual,
     requireAuth: vi.fn(actual.requireAuth),
-    validateSession: vi.fn(actual.validateSession),
+    validateSession: vi.fn(),
     generateToken: vi.fn(actual.generateToken),
   };
 });
 
-vi.mock('../auth/admin-middleware', () => ({
-  requireAdminAuth: vi.fn(),
-  createAdminSession: vi.fn(),
-  revokeAdminSession: vi.fn(),
-}));
+vi.mock('../auth/admin-middleware', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../auth/admin-middleware')>();
+  return {
+    ...actual,
+    requireAdminAuth: vi.fn(actual.requireAdminAuth),
+    createAdminSession: vi.fn(),
+    revokeAdminSession: vi.fn(),
+    generateAdminToken: vi.fn(),
+    hashToken: vi.fn(),
+  };
+});
 
 vi.mock('../auth/password', () => ({
   validateGrant: vi.fn(),
@@ -34,17 +40,16 @@ vi.mock('../auth/password', () => ({
   getGrantByBookAndSession: vi.fn(),
   getGrantsBySession: vi.fn(),
   createGrant: vi.fn(),
+  hashPassword: vi.fn(),
+  verifyPassword: vi.fn(),
 }));
 
-vi.mock('../auth/session', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../auth/session')>();
-  return {
-    ...actual,
-    createSession: vi.fn(actual.createSession),
-    validateSession: vi.fn(actual.validateSession),
-    revokeSession: vi.fn(actual.revokeSession),
-  };
-});
+vi.mock('../auth/session', () => ({
+  createSession: vi.fn(),
+  validateSession: vi.fn(),
+  revokeSession: vi.fn(),
+  parseAuthHeader: vi.fn((h) => h?.replace('Bearer ', '')),
+}));
 
 vi.mock('../storage/signed-url', () => ({
   generateSignedUrl: vi.fn(),
@@ -63,7 +68,7 @@ vi.mock('../audit', () => ({
 
 import { queryFirst, queryAll, execute } from '../db/client';
 import { requireAuth } from '../auth/middleware';
-import { requireAdminAuth } from '../auth/admin-middleware';
+import { requireAdminAuth, createAdminSession, revokeAdminSession } from '../auth/admin-middleware';
 import {
   validateGrant,
   computeCapabilities,
@@ -92,6 +97,8 @@ export const mockQueryAll = vi.mocked(queryAll);
 export const mockExecute = vi.mocked(execute);
 export const mockRequireAuth = vi.mocked(requireAuth);
 export const mockRequireAdminAuth = vi.mocked(requireAdminAuth);
+export const mockCreateAdminSession = vi.mocked(createAdminSession);
+export const mockRevokeAdminSession = vi.mocked(revokeAdminSession);
 export const mockValidateGrant = vi.mocked(validateGrant);
 export const mockComputeCapabilities = vi.mocked(computeCapabilities);
 export const mockCreateGrant = vi.mocked(createGrantMod);

@@ -330,22 +330,6 @@ async function generateMissingContainerEpub() {
   ]);
 }
 
-async function generateZipBombEpub() {
-  const bombData = Buffer.alloc(10 * 1024 * 1024, 0); // 10MB of zeros
-  return createZip([
-    { name: 'mimetype', data: Buffer.from('application/epub+zip', 'utf-8'), store: true },
-    { name: 'META-INF/container.xml', data: Buffer.from(containerXml('OEBPS/content.opf'), 'utf-8') },
-    { name: 'OEBPS/content.opf', data: Buffer.from(contentOpf({
-      title: 'Zip Bomb',
-      manifest: [
-        { id: 'bomb', href: 'bomb.xhtml', mediaType: 'application/xhtml+xml' },
-      ],
-      spine: [{ idref: 'bomb' }],
-    }), 'utf-8') },
-    { name: 'OEBPS/bomb.xhtml', data: bombData },
-  ]);
-}
-
 async function main() {
   const generators = [
     ['minimal.epub', generateMinimalEpub],
@@ -354,7 +338,6 @@ async function main() {
     ['multi-nav.epub', generateMultiNavEpub],
     ['invalid-mimetype.epub', generateInvalidMimetypeEpub],
     ['missing-container.epub', generateMissingContainerEpub],
-    ['zip-bomb.epub', generateZipBombEpub],
   ];
 
   for (const [filename, generator] of generators) {

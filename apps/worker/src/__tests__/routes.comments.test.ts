@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   makeEnv,
-  mockRequireAuth,
   mockQueryFirst,
   mockQueryAll,
   mockExecute,
+  mockRequireAuth,
 } from './fixtures';
 import { app } from '../app';
 
@@ -24,11 +24,14 @@ describe('Comments Routes', () => {
 
     it('returns list of comments when authenticated', async () => {
       mockRequireAuth.mockResolvedValue({ email: 'user@example.com' } as any);
+
       mockQueryAll.mockResolvedValue([
         { id: '1', body: 'cool', user_email: 'other@ex.com', status: 'open', visibility: 'shared', created_at: 'now', updated_at: 'now' }
-      ] as any);
+      ]);
 
-      const res = await app.fetch(new Request('http://localhost/api/books/book-1/comments'), env);
+      const res = await app.fetch(new Request('http://localhost/api/books/book-1/comments', {
+        headers: { 'Authorization': 'Bearer valid' }
+      }), env);
       expect(res.status).toBe(200);
       const body = await res.json() as any;
       expect(body.data).toHaveLength(1);
@@ -49,7 +52,10 @@ describe('Comments Routes', () => {
           body: 'new comment',
           visibility: 'shared',
         }),
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer valid'
+        },
       }), env);
 
       expect(res.status).toBe(201);
@@ -59,13 +65,17 @@ describe('Comments Routes', () => {
   describe('PATCH /api/comments/:commentId', () => {
     it('updates comment when owned by user', async () => {
       mockRequireAuth.mockResolvedValue({ email: 'user@example.com' } as any);
-      mockQueryFirst.mockResolvedValue({ user_email: 'user@example.com' } as any);
+
+      mockQueryFirst.mockResolvedValue({ user_email: 'user@example.com' });
       mockExecute.mockResolvedValue({} as any);
 
       const res = await app.fetch(new Request('http://localhost/api/comments/1', {
         method: 'PATCH',
         body: JSON.stringify({ body: 'updated body' }),
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer valid'
+        },
       }), env);
 
       expect(res.status).toBe(200);

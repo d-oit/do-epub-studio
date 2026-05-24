@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   makeEnv,
-  mockRequireAdminAuth,
   mockQueryAll,
   mockExecute,
   mockCreateGrant,
@@ -13,14 +12,16 @@ describe('Admin Routes', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockRequireAdminAuth.mockResolvedValue({
-      ok: true,
-      context: { userId: 'admin-1', email: 'admin@example.com', globalRole: 'admin' },
-    } as any);
   });
 
   describe('POST /api/admin/books', () => {
     it('creates book and returns success', async () => {
+      const { requireAdminAuth } = await import('../auth/admin-middleware');
+      vi.mocked(requireAdminAuth).mockResolvedValue({
+        ok: true,
+        context: { userId: 'admin-1', email: 'admin@example.com', globalRole: 'admin' },
+      } as any);
+
       mockExecute.mockResolvedValue({} as any);
 
       const res = await app.fetch(new Request('http://localhost/api/admin/books', {
@@ -40,6 +41,12 @@ describe('Admin Routes', () => {
 
   describe('POST /api/admin/books/:id/grants', () => {
     it('creates grant and returns success', async () => {
+      const { requireAdminAuth } = await import('../auth/admin-middleware');
+      vi.mocked(requireAdminAuth).mockResolvedValue({
+        ok: true,
+        context: { userId: 'admin-1', email: 'admin@example.com', globalRole: 'admin' },
+      } as any);
+
       mockCreateGrant.mockResolvedValue('grant-1');
 
       const res = await app.fetch(new Request('http://localhost/api/admin/books/book-1/grants', {
@@ -58,9 +65,15 @@ describe('Admin Routes', () => {
 
   describe('GET /api/admin/audit', () => {
     it('returns audit log entries', async () => {
+      const { requireAdminAuth } = await import('../auth/admin-middleware');
+      vi.mocked(requireAdminAuth).mockResolvedValue({
+        ok: true,
+        context: { userId: 'admin-1', email: 'admin@example.com', globalRole: 'admin' },
+      } as any);
+
       mockQueryAll
-        .mockResolvedValueOnce([{ cnt: 1 }] as any) // count query
-        .mockResolvedValueOnce([{ id: '1', actor_email: 'admin@ex.com', action: 'query' }] as any); // rows query
+        .mockResolvedValueOnce([{ cnt: 1 }]) // count query
+        .mockResolvedValueOnce([{ id: '1', actor_email: 'admin@ex.com', action: 'query' }]); // rows query
 
       const res = await app.fetch(new Request('http://localhost/api/admin/audit'), env);
       expect(res.status).toBe(200);

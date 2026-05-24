@@ -3,8 +3,8 @@ import {
   makeEnv,
   mockQueryFirst,
   mockQueryAll,
+  mockGenerateSignedUrl,
   mockRequireAuth,
-  mockGetSignedUrl,
 } from './fixtures';
 import { app } from '../app';
 
@@ -17,11 +17,15 @@ describe('Books Routes', () => {
 
   describe('GET /api/books', () => {
     it('returns list of books', async () => {
+      mockRequireAuth.mockResolvedValue({ email: 'user@example.com' } as any);
+
       mockQueryAll.mockResolvedValue([
         { id: '1', slug: 'book-1', title: 'Book 1', visibility: 'public' }
-      ] as any);
+      ]);
 
-      const res = await app.fetch(new Request('http://localhost/api/books'), env);
+      const res = await app.fetch(new Request('http://localhost/api/books', {
+        headers: { 'Authorization': 'Bearer valid' }
+      }), env);
       expect(res.status).toBe(200);
       const body = await res.json() as any;
       expect(body.ok).toBe(true);
@@ -31,14 +35,22 @@ describe('Books Routes', () => {
 
   describe('GET /api/books/:id', () => {
     it('returns 404 when book not found', async () => {
+      mockRequireAuth.mockResolvedValue({ email: 'user@example.com' } as any);
+
       mockQueryFirst.mockResolvedValue(null);
-      const res = await app.fetch(new Request('http://localhost/api/books/none'), env);
+      const res = await app.fetch(new Request('http://localhost/api/books/none', {
+        headers: { 'Authorization': 'Bearer valid' }
+      }), env);
       expect(res.status).toBe(404);
     });
 
     it('returns book details when found', async () => {
-      mockQueryFirst.mockResolvedValue({ id: '1', slug: 'book-1', title: 'Book 1', visibility: 'public' } as any);
-      const res = await app.fetch(new Request('http://localhost/api/books/1'), env);
+      mockRequireAuth.mockResolvedValue({ email: 'user@example.com' } as any);
+
+      mockQueryFirst.mockResolvedValue({ id: '1', slug: 'book-1', title: 'Book 1', visibility: 'public' });
+      const res = await app.fetch(new Request('http://localhost/api/books/1', {
+        headers: { 'Authorization': 'Bearer valid' }
+      }), env);
       expect(res.status).toBe(200);
       const body = await res.json() as any;
       expect(body.data.id).toBe('1');
@@ -47,14 +59,20 @@ describe('Books Routes', () => {
 
   describe('POST /api/books/:id/file-url', () => {
     it('returns signed URL when book and file exist', async () => {
-      mockQueryFirst
-        .mockResolvedValueOnce({ id: '1', slug: 'book-1' } as any) // Book check
-        .mockResolvedValueOnce({ storage_key: 'key.epub' } as any); // File check
+      mockRequireAuth.mockResolvedValue({
+        email: 'user@example.com',
+        capabilities: { canRead: true }
+      } as any);
 
-      mockGetSignedUrl.mockResolvedValue('https://signed.url');
+      mockQueryFirst
+        .mockResolvedValueOnce({ id: '1', slug: 'book-1' }) // Book check
+        .mockResolvedValueOnce({ storage_key: 'key.epub' }); // File check
+
+      mockGenerateSignedUrl.mockResolvedValue({ url: 'https://signed.url' } as any);
 
       const res = await app.fetch(new Request('http://localhost/api/books/1/file-url', {
-        method: 'POST'
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer valid' }
       }), env);
 
       expect(res.status).toBe(200);

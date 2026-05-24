@@ -10,10 +10,17 @@ import {
   UpdateGrantSchema,
 } from '@do-epub-studio/shared';
 import { z } from 'zod';
-import { requireAdminAuth } from '../auth/admin-middleware';
+import { requireAdminAuth, createAdminSession, revokeAdminSession } from '../auth/admin-middleware';
+import { checkRateLimitDO } from '../lib/rate-limit-client';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
+import type { MiddlewareHandler } from 'hono';
 
 export const adminRouter = new Hono<{ Bindings: Env; Variables: { adminUser: { email: string; id: string; role: string } } }>();
+
+const LoginSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(1),
+});
 
 const UploadCompleteSchema = z.object({
   storageKey: z.string().min(1),
@@ -37,11 +44,78 @@ interface _GrantRow {
   revoked_at: string | null;
 }
 
-// Admin Authentication Middleware for Hono
-adminRouter.use('*', async (c, next) => {
+// Public Routes
+adminRouter.post('/login', zValidator('json', LoginSchema), async (c) => {
+  const { email, password } = c.req.valid('json');
+
+  const rateLimit = await checkRateLimitDO(c.env, 'auth_admin', email.toLowerCase(), {
+    maxRequests: 5,
+    windowMs: 60_000,
+  });
+
+  if (!rateLimit.allowed) {
+    return c.json(
+      {
+        ok: false,
+        error: { code: 'TOO_MANY_REQUESTS', message: 'Too many login attempts. Please try again later.' },
+      },
+      429,
+    );
+  }
+
+  const result = await createAdminSession(c.env, email, password);
+
+  if (!result.ok) {
+    return c.json(
+      { ok: false, error: { code: 'INVALID_CREDENTIALS', message: result.error } },
+      result.status as ContentfulStatusCode,
+    );
+  }
+
+  await logAudit(c.env, {
+    entityType: 'user',
+    entityId: result.user.id,
+    action: 'admin_login',
+    actorEmail: result.user.email,
+    payload: { role: result.user.role },
+  });
+
+  return c.json({
+    ok: true,
+    data: {
+      token: result.token,
+      user: {
+        id: result.user.id,
+        email: result.user.email,
+        role: result.user.role,
+      },
+    },
+  });
+});
+
+adminRouter.post('/logout', async (c) => {
+  const authHeader = c.req.header('Authorization');
+  const token = authHeader?.replace('Bearer ', '') ?? '';
+
+  if (!token) {
+    return c.json(
+      { ok: false, error: { code: 'MISSING_TOKEN', message: 'Authorization token required' } },
+      400,
+    );
+  }
+
+  await revokeAdminSession(c.env, token);
+
+  return c.json({ ok: true });
+});
+
+// Admin Authentication Middleware
+const authMiddleware: MiddlewareHandler<{ Bindings: Env; Variables: { adminUser: { email: string; id: string; role: string } } }> = async (c, next) => {
   const authResult = await requireAdminAuth(c.env, c.req.raw);
-  if (!authResult.ok) {
-    return c.json({ ok: false, error: { code: 'UNAUTHORIZED', message: authResult.error } }, authResult.status as ContentfulStatusCode);
+  if (!authResult || !authResult.ok) {
+    const status = (authResult && 'status' in authResult ? authResult.status : 401) as ContentfulStatusCode;
+    const message = (authResult && 'error' in authResult ? authResult.error : 'Unauthorized');
+    return c.json({ ok: false, error: { code: 'UNAUTHORIZED', message } }, status);
   }
   c.set('adminUser', {
     id: authResult.context.userId,
@@ -49,9 +123,9 @@ adminRouter.use('*', async (c, next) => {
     role: authResult.context.globalRole
   });
   await next();
-});
+};
 
-adminRouter.post('/books', zValidator('json', CreateBookSchema), async (c) => {
+adminRouter.post('/books', authMiddleware, zValidator('json', CreateBookSchema), async (c) => {
   const body = c.req.valid('json');
   const adminUser = c.get('adminUser');
   const id = crypto.randomUUID();
@@ -97,7 +171,7 @@ adminRouter.post('/books', zValidator('json', CreateBookSchema), async (c) => {
   );
 });
 
-adminRouter.put('/books/:id/upload', async (c) => {
+adminRouter.put('/books/:id/upload', authMiddleware, async (c) => {
   const bookId = c.req.param('id');
 
   const book = await queryFirst<{ id: string; slug: string }>(
@@ -147,7 +221,7 @@ adminRouter.put('/books/:id/upload', async (c) => {
   return c.json({ ok: true, data: { storageKey, bookId: book.id, slug: book.slug } }, 200);
 });
 
-adminRouter.post('/books/:id/upload-complete', zValidator('json', UploadCompleteSchema), async (c) => {
+adminRouter.post('/books/:id/upload-complete', authMiddleware, zValidator('json', UploadCompleteSchema), async (c) => {
   const bookId = c.req.param('id');
   const body = c.req.valid('json');
   const fileId = crypto.randomUUID();
@@ -180,7 +254,7 @@ adminRouter.post('/books/:id/upload-complete', zValidator('json', UploadComplete
   return c.json({ ok: true, data: { id: fileId, storageKey: body.storageKey } }, 201);
 });
 
-adminRouter.post('/books/:id/grants', zValidator('json', CreateGrantSchema), async (c) => {
+adminRouter.post('/books/:id/grants', authMiddleware, zValidator('json', CreateGrantSchema), async (c) => {
   const bookId = c.req.param('id');
   const body = c.req.valid('json');
   const adminUser = c.get('adminUser');
@@ -204,7 +278,7 @@ adminRouter.post('/books/:id/grants', zValidator('json', CreateGrantSchema), asy
   return c.json({ ok: true, data: { id: grantId, email: body.email } }, 201);
 });
 
-adminRouter.get('/books/:id/grants', async (c) => {
+adminRouter.get('/books/:id/grants', authMiddleware, async (c) => {
   const bookId = c.req.param('id');
   const grants = (await queryAll(
     c.env,
@@ -227,7 +301,7 @@ adminRouter.get('/books/:id/grants', async (c) => {
   });
 });
 
-adminRouter.patch('/grants/:id', zValidator('json', UpdateGrantSchema), async (c) => {
+adminRouter.patch('/grants/:id', authMiddleware, zValidator('json', UpdateGrantSchema), async (c) => {
   const grantId = c.req.param('id');
   const body = c.req.valid('json');
   const adminUser = c.get('adminUser');
@@ -267,7 +341,7 @@ adminRouter.patch('/grants/:id', zValidator('json', UpdateGrantSchema), async (c
   return c.json({ ok: true, data: { id: grantId, ...body } });
 });
 
-adminRouter.post('/grants/:id/revoke', async (c) => {
+adminRouter.post('/grants/:id/revoke', authMiddleware, async (c) => {
   const grantId = c.req.param('id');
   const adminUser = c.get('adminUser');
 
@@ -293,8 +367,8 @@ adminRouter.post('/grants/:id/revoke', async (c) => {
   return c.json({ ok: true });
 });
 
-adminRouter.get('/audit', async (c) => {
-  const entityType = c.req.query('entityType');
+adminRouter.get('/audit', authMiddleware, async (c) => {
+  const entityType = c.req.query('entityType') as "book" | "user" | "grant" | "reader_session" | "comment" | undefined;
   const entityId = c.req.query('entityId');
   const limit = parseInt(c.req.query('limit') ?? '50', 10);
   const offset = parseInt(c.req.query('offset') ?? '0', 10);
@@ -302,7 +376,7 @@ adminRouter.get('/audit', async (c) => {
   const to = c.req.query('to');
 
   await logAudit(c.env, {
-    entityType: entityType as any,
+    entityType: entityType ?? 'user', // default to user for query logging if undefined
     entityId: entityId ?? '',
     action: 'query',
   });
@@ -357,4 +431,10 @@ adminRouter.get('/audit', async (c) => {
       total,
     },
   });
+});
+
+adminRouter.get('/audit-logs', async (c) => {
+  const url = new URL(c.req.url);
+  url.pathname = url.pathname.replace('/audit-logs', '/audit');
+  return c.redirect(url.toString(), 301);
 });

@@ -1,12 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { app } from '../app';
 import { makeEnv } from './fixtures';
+import { requireAdminAuth } from '../auth/admin-middleware';
 
-// Correct mocking strategy
+// Mock everything needed for integration tests
 vi.mock('../auth/admin-middleware', () => ({
   requireAdminAuth: vi.fn(),
   createAdminSession: vi.fn(),
   revokeAdminSession: vi.fn(),
+}));
+
+vi.mock('../auth/middleware', () => ({
+  requireAuth: vi.fn(),
 }));
 
 describe('API Validation Integration', () => {
@@ -14,6 +19,12 @@ describe('API Validation Integration', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+
+    // Default mock for admin auth
+    vi.mocked(requireAdminAuth).mockResolvedValue({
+      ok: true,
+      context: { userId: 'admin-1', email: 'admin@example.com', globalRole: 'admin' },
+    } as any);
   });
 
   it('rejects invalid JSON in /api/access/request', async () => {
@@ -46,12 +57,6 @@ describe('API Validation Integration', () => {
   });
 
   it('rejects invalid visibility in /api/admin/books', async () => {
-    const { requireAdminAuth } = await import('../auth/admin-middleware');
-    vi.mocked(requireAdminAuth).mockResolvedValue({
-      ok: true,
-      context: { userId: 'admin-1', email: 'admin@example.com', globalRole: 'admin' },
-    } as any);
-
     const res = await app.fetch(
       new Request('http://localhost/api/admin/books', {
         method: 'POST',
