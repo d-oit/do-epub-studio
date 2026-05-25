@@ -42,7 +42,7 @@ readonly MAX_PR_TITLE_LENGTH=72
 - **MUST emit traceId on every Worker request and critical UI action.**
 - **MUST guard every regex against untrusted input** using `matchBounded` / `testBounded` from `@do-epub-studio/shared` per ADR-034.
 - **NEVER delete .gitignore files.** Binary/test fixtures must be generated via scripts, not tracked. Deleting .gitignore surfaces binary artifacts into the repo and breaks CI reproducibility.
-- **MUST follow the disclosure process in `SECURITY.md` for any vulnerability — never open a public issue first.
+- **MUST follow the disclosure process in `SECURITY.md` for any vulnerability — never open a public issue first (policy now fully documented and enforced).**
 - **MUST verify git worktree branch matches PR head branch before pushing.** Use `git branch --show-current` (in worktree) + `gh pr view <N> --json headRefName` to confirm. Pushing to a wrong branch won't trigger CI for the PR. Use `git push origin <worktree-branch>:<pr-head-branch> --force` to target the correct branch.**
 
 ---
