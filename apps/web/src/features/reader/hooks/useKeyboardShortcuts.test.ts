@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, cleanup } from '@testing-library/react';
 import { useKeyboardShortcuts } from './useKeyboardShortcuts';
+import type { Rendition } from '@intity/epub-js';
 
 describe('useKeyboardShortcuts', () => {
   const onPrevPage = vi.fn();
@@ -20,7 +21,7 @@ describe('useKeyboardShortcuts', () => {
   };
 
   const defaultProps = {
-    rendition: mockRendition as any,
+    rendition: mockRendition as unknown as Rendition,
     onPrevPage,
     onNextPage,
     onAddBookmark,
@@ -42,7 +43,7 @@ describe('useKeyboardShortcuts', () => {
   });
 
   it('triggers navigation on arrow keys', () => {
-    renderHook(() => useKeyboardShortcuts(defaultProps));
+    renderHook(() => { useKeyboardShortcuts(defaultProps); });
 
     const leftEvent = new KeyboardEvent('keydown', { key: 'ArrowLeft' });
     const rightEvent = new KeyboardEvent('keydown', { key: 'ArrowRight' });
@@ -60,7 +61,7 @@ describe('useKeyboardShortcuts', () => {
   });
 
   it('triggers bookmark on Ctrl+D', () => {
-    renderHook(() => useKeyboardShortcuts(defaultProps));
+    renderHook(() => { useKeyboardShortcuts(defaultProps); });
 
     const event = new KeyboardEvent('keydown', { key: 'd', ctrlKey: true });
     const preventDefault = vi.spyOn(event, 'preventDefault');
@@ -71,21 +72,21 @@ describe('useKeyboardShortcuts', () => {
   });
 
   it('triggers highlight on H', () => {
-    renderHook(() => useKeyboardShortcuts(defaultProps));
+    renderHook(() => { useKeyboardShortcuts(defaultProps); });
 
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 'h' }));
     expect(onHighlight).toHaveBeenCalled();
   });
 
   it('triggers comment on C', () => {
-    renderHook(() => useKeyboardShortcuts(defaultProps));
+    renderHook(() => { useKeyboardShortcuts(defaultProps); });
 
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 'c' }));
     expect(onComment).toHaveBeenCalled();
   });
 
   it('triggers panel toggles on Ctrl+Alt + Key', () => {
-    renderHook(() => useKeyboardShortcuts(defaultProps));
+    renderHook(() => { useKeyboardShortcuts(defaultProps); });
 
     const tEvent = new KeyboardEvent('keydown', { key: 't', ctrlKey: true, altKey: true });
     window.dispatchEvent(tEvent);
@@ -105,14 +106,14 @@ describe('useKeyboardShortcuts', () => {
   });
 
   it('triggers help on ?', () => {
-    renderHook(() => useKeyboardShortcuts(defaultProps));
+    renderHook(() => { useKeyboardShortcuts(defaultProps); });
 
     window.dispatchEvent(new KeyboardEvent('keydown', { key: '?' }));
     expect(onShowHelp).toHaveBeenCalled();
   });
 
   it('does not trigger if target is an input', () => {
-    renderHook(() => useKeyboardShortcuts(defaultProps));
+    renderHook(() => { useKeyboardShortcuts(defaultProps); });
 
     const input = document.createElement('input');
     const event = new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true });
@@ -123,7 +124,7 @@ describe('useKeyboardShortcuts', () => {
   });
 
   it('registers/unregisters listeners on rendition', () => {
-    const { unmount } = renderHook(() => useKeyboardShortcuts(defaultProps));
+    const { unmount } = renderHook(() => { useKeyboardShortcuts(defaultProps); });
 
     expect(mockRendition.on).toHaveBeenCalledWith('keydown', expect.any(Function));
 

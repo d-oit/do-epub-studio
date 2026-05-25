@@ -207,11 +207,11 @@ export function ReaderPage() {
       setIsCommentMode(true);
     }
   }, [selection, setShowCommentInput, setIsCommentMode]);
-  const handleToggleToc = useCallback(() => togglePanel('toc'), [togglePanel]);
-  const handleToggleBookmarks = useCallback(() => togglePanel('bookmarks'), [togglePanel]);
-  const handleToggleComments = useCallback(() => togglePanel('comments'), [togglePanel]);
-  const handleToggleSettings = useCallback(() => togglePanel('settings'), [togglePanel]);
-  const handleShowHelp = useCallback(() => setShowShortcutsHelp(true), []);
+  const handleToggleToc = useCallback(() => { togglePanel('toc'); }, [togglePanel]);
+  const handleToggleBookmarks = useCallback(() => { togglePanel('bookmarks'); }, [togglePanel]);
+  const handleToggleComments = useCallback(() => { togglePanel('comments'); }, [togglePanel]);
+  const handleToggleSettings = useCallback(() => { togglePanel('settings'); }, [togglePanel]);
+  const handleShowHelp = useCallback(() => { setShowShortcutsHelp(true); }, []);
 
   useKeyboardShortcuts({
     rendition: renditionRef.current,
@@ -416,7 +416,7 @@ export function ReaderPage() {
         {showShortcutsHelp && (
           <KeyboardShortcutsModal
             isOpen={showShortcutsHelp}
-            onClose={() => setShowShortcutsHelp(false)}
+            onClose={() => { setShowShortcutsHelp(false); }}
             t={tFn}
           />
         )}
