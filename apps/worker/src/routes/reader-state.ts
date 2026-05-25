@@ -1,7 +1,6 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import type { Env } from '../lib/env';
-import { requireAuth } from '../auth/middleware';
 import type { AuthContext } from '../auth/middleware';
 import { queryFirst, queryAll, execute } from '../db/client';
 import { logAudit } from '../audit';
@@ -10,6 +9,7 @@ import {
   BookmarkCreateSchema,
   HighlightCreateSchema,
 } from '@do-epub-studio/shared';
+import { readerAuth } from '../middleware/auth';
 
 export const readerStateRouter = new Hono<{ Bindings: Env; Variables: { auth: AuthContext } }>();
 
@@ -47,16 +47,7 @@ interface HighlightRow {
   updated_at: string;
 }
 
-readerStateRouter.use('/:bookId/*', async (c, next) => {
-  const auth = await requireAuth(c.env, c.req.raw);
-  if (!auth) {
-    return c.json({ ok: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } }, 401);
-  }
-  c.set('auth', auth);
-  await next();
-});
-
-readerStateRouter.get('/:bookId/progress', async (c) => {
+readerStateRouter.get('/:bookId/progress', readerAuth, async (c) => {
   const bookId = c.req.param('bookId');
   const auth = c.get('auth');
 
@@ -83,7 +74,7 @@ readerStateRouter.get('/:bookId/progress', async (c) => {
   });
 });
 
-readerStateRouter.put('/:bookId/progress', zValidator('json', ProgressUpdateSchema), async (c) => {
+readerStateRouter.put('/:bookId/progress', zValidator('json', ProgressUpdateSchema), readerAuth, async (c) => {
   const bookId = c.req.param('bookId');
   const auth = c.get('auth');
   const body = c.req.valid('json');
@@ -113,7 +104,7 @@ readerStateRouter.put('/:bookId/progress', zValidator('json', ProgressUpdateSche
   });
 });
 
-readerStateRouter.get('/:bookId/bookmarks', async (c) => {
+readerStateRouter.get('/:bookId/bookmarks', readerAuth, async (c) => {
   const bookId = c.req.param('bookId');
   const auth = c.get('auth');
 
@@ -134,7 +125,7 @@ readerStateRouter.get('/:bookId/bookmarks', async (c) => {
   });
 });
 
-readerStateRouter.post('/:bookId/bookmarks', zValidator('json', BookmarkCreateSchema), async (c) => {
+readerStateRouter.post('/:bookId/bookmarks', zValidator('json', BookmarkCreateSchema), readerAuth, async (c) => {
   const bookId = c.req.param('bookId');
   const auth = c.get('auth');
   const body = c.req.valid('json');
@@ -163,7 +154,7 @@ readerStateRouter.post('/:bookId/bookmarks', zValidator('json', BookmarkCreateSc
   );
 });
 
-readerStateRouter.delete('/:bookId/bookmarks/:bookmarkId', async (c) => {
+readerStateRouter.delete('/:bookId/bookmarks/:bookmarkId', readerAuth, async (c) => {
   const { bookId, bookmarkId } = c.req.param();
   const auth = c.get('auth');
 
@@ -176,7 +167,7 @@ readerStateRouter.delete('/:bookId/bookmarks/:bookmarkId', async (c) => {
   return c.json({ ok: true });
 });
 
-readerStateRouter.get('/:bookId/highlights', async (c) => {
+readerStateRouter.get('/:bookId/highlights', readerAuth, async (c) => {
   const bookId = c.req.param('bookId');
   const auth = c.get('auth');
 
@@ -201,7 +192,7 @@ readerStateRouter.get('/:bookId/highlights', async (c) => {
   });
 });
 
-readerStateRouter.post('/:bookId/highlights', zValidator('json', HighlightCreateSchema), async (c) => {
+readerStateRouter.post('/:bookId/highlights', zValidator('json', HighlightCreateSchema), readerAuth, async (c) => {
   const bookId = c.req.param('bookId');
   const auth = c.get('auth');
   const body = c.req.valid('json');
@@ -258,7 +249,7 @@ readerStateRouter.post('/:bookId/highlights', zValidator('json', HighlightCreate
   );
 });
 
-readerStateRouter.delete('/:bookId/highlights/:highlightId', async (c) => {
+readerStateRouter.delete('/:bookId/highlights/:highlightId', readerAuth, async (c) => {
   const { bookId, highlightId } = c.req.param();
   const auth = c.get('auth');
 
@@ -281,7 +272,7 @@ readerStateRouter.delete('/:bookId/highlights/:highlightId', async (c) => {
 
 const HighlightUpdateSchema = HighlightCreateSchema.pick({ note: true, color: true }).partial();
 
-readerStateRouter.patch('/:bookId/highlights/:highlightId', zValidator('json', HighlightUpdateSchema), async (c) => {
+readerStateRouter.patch('/:bookId/highlights/:highlightId', zValidator('json', HighlightUpdateSchema), readerAuth, async (c) => {
   const { highlightId } = c.req.param();
   const auth = c.get('auth');
   const body = c.req.valid('json');

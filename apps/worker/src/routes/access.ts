@@ -213,11 +213,3 @@ accessRouter.get('/validate-all', async (c) => {
   });
 });
 
-// Legacy exports for compatibility during migration if needed
-export async function handleAccessRequest(env: Env, raw: unknown): Promise<Response> {
-  return accessRouter.fetch(new Request('http://localhost/request', {
-    method: 'POST',
-    body: JSON.stringify(raw),
-    headers: { 'Content-Type': 'application/json' }
-  }), env);
-}

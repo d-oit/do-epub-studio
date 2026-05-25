@@ -131,6 +131,20 @@ export const CommentUpdateSchema = z.object({
   visibility: CommentVisibilitySchema.optional(),
 });
 
+export const CspReportSchema = z.object({
+  'csp-report': z.object({
+    'document-uri': z.string().url(),
+    'referrer': z.string().optional(),
+    'blocked-uri': z.string().optional(),
+    'violated-directive': z.string(),
+    'effective-directive': z.string().optional(),
+    'original-policy': z.string().optional(),
+    'disposition': z.enum(['enforce', 'report']).optional(),
+    'status-code': z.number().optional(),
+    'script-sample': z.string().optional(),
+  }),
+});
+
 export type AccessRequest = z.infer<typeof AccessRequestSchema>;
 export type CreateBook = z.infer<typeof CreateBookSchema>;
 export type CreateGrant = z.infer<typeof CreateGrantSchema>;
@@ -140,3 +154,4 @@ export type BookmarkCreate = z.infer<typeof BookmarkCreateSchema>;
 export type HighlightCreate = z.infer<typeof HighlightCreateSchema>;
 export type CommentCreate = z.infer<typeof CommentCreateSchema>;
 export type CommentUpdate = z.infer<typeof CommentUpdateSchema>;
+export type CspReport = z.infer<typeof CspReportSchema>;
