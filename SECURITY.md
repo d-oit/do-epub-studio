@@ -2,31 +2,28 @@
 
 ## Supported Versions
 
-| Version | Supported | EOL Date |
-|---------|-----------|----------|
-| >=0.1.0 | Yes       | -        |
-| <0.1.0  | No        | -        |
+Only the latest release in the 0.1.x series is actively supported.
+
+| Version | Supported |
+|---------|-----------|
+| 0.1.x   | ✅        |
+| < 0.1   | ❌        |
 
 ## Reporting a Vulnerability
 
-**DO NOT** open a public issue for security vulnerabilities. Instead:
+To report a vulnerability, use **GitHub Security Advisories** (private disclosure):
 
-1. **Preferred:** Use GitHub's [Private Security Advisory](https://github.com/d-oit/do-epub-studio/security/advisories) feature
-2. **Alternative:** Email security@d-oit.com
+[https://github.com/d-oit/do-epub-studio/security/advisories/new](https://github.com/d-oit/do-epub-studio/security/advisories/new)
 
-Please include:
-- Steps to reproduce
-- Impact assessment
-- Suggested fix (if any)
+Do **not** open a public issue or discussion for a vulnerability.
 
 ## Response SLA
 
-| Severity | Acknowledgment | Patch |
-|----------|----------------|-------|
-| Critical | 24 hours       | 14 days |
-| High     | 48 hours       | 30 days |
-| Medium   | 72 hours       | 60 days |
-| Low      | 7 days         | 90 days |
+| Severity | Triage       | Fix / Mitigation Plan |
+|----------|--------------|-----------------------|
+| HIGH+    | 5 business days | 30 calendar days    |
+| MEDIUM   | 5 business days | 90 calendar days    |
+| LOW      | 5 business days | Best effort       |
 
 ## Rate Limiting Policy
 
@@ -51,13 +48,10 @@ Files exceeding these limits or containing path traversal patterns (e.g., `..` s
 
 ## Scope
 
-**In Scope:**
-- Authentication and session management
-- Cloudflare Worker API endpoints
-- R2 signed URL generation and validation
-- Turso database queries
-- EPUB file parsing and rendering
-- Project source code: `apps/**`, `packages/**`
+Vulnerabilities in the following locations are in scope:
+
+- `apps/**`
+- `packages/**`
 
 ## CI/CD Supply Chain Security
 
@@ -70,15 +64,11 @@ To mitigate supply chain risks, the following policies are enforced:
 ## Out of Scope
 
 The following are out of scope:
+
 - Third-party dependencies (report to upstream maintainers)
-- Self-hosted deployments
 - Social engineering attacks
 - Denial of service via legitimate API rate usage
 - Theoretical attacks without a proven exploit
-
-## CVE Policy
-
-We will request a CVE ID for all critical and high severity vulnerabilities accepted into the advisory program.
 
 ## Related Documents
 

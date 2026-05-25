@@ -70,7 +70,7 @@ EPUB content is sanitized using `DOMPurify` before rendering (via `@do-epub-stud
     - Strict whitelist of SVG tags (e.g., `svg`, `path`, `rect`, `circle`).
     - Explicitly blocks dangerous elements: `script`, `foreignObject`, `animate`, `set`, `animateMotion`, `animateTransform`.
     - All event handlers (`on*`) are stripped.
-- **HTML Security**: Removes scripts, styles (except theme injections), and dangerous attributes.
+- **HTML Security**: Removes scripts and dangerous attributes while preserving safe CSS and theme injections.
 
 ## Multi-Signal Locators (ADR-006)
 

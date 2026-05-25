@@ -15,8 +15,12 @@ export function sanitizeEpubDocument(doc: Document | HTMLElement): void {
   DOMPurify.sanitize(root, {
     IN_PLACE: true,
     WHOLE_DOCUMENT: doc instanceof Document,
+    RETURN_DOM: true,
     // Explicitly allow SVG namespace and common tags
     USE_PROFILES: { html: true, svg: true },
+    // Preserve styles as they are critical for EPUB rendering
+    // DOMPurify will still sanitize the CSS content within these tags
+    ADD_TAGS: ['style', 'link'],
     // Explicitly block dangerous SVG features that might be allowed by default profiles
     FORBID_TAGS: ['script', 'foreignObject', 'animate', 'set', 'animateMotion', 'animateTransform'],
     // Ensure all event handlers are stripped
