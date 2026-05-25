@@ -1,4 +1,4 @@
-import { vi } from 'vitest';
+import { vi, type Mock } from 'vitest';
 import type { Env, R2Bucket } from '../lib/env';
 import type { AuthContext } from '../auth/middleware';
 
@@ -16,9 +16,21 @@ vi.mock('../auth/middleware', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../auth/middleware')>();
   return {
     ...actual,
-    requireAuth: vi.fn(actual.requireAuth),
-    validateSession: vi.fn(actual.validateSession),
-    generateToken: vi.fn(actual.generateToken),
+    requireAuth: vi.fn(),
+    validateSession: vi.fn(),
+    generateToken: vi.fn(),
+  };
+});
+
+vi.mock('../auth/admin-middleware', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../auth/admin-middleware')>();
+  return {
+    ...actual,
+    requireAdminAuth: vi.fn(),
+    createAdminSession: vi.fn(),
+    revokeAdminSession: vi.fn(),
+    generateAdminToken: vi.fn(),
+    hashToken: vi.fn(),
   };
 });
 
@@ -28,17 +40,17 @@ vi.mock('../auth/password', () => ({
   getGrantByBookAndSession: vi.fn(),
   getGrantsBySession: vi.fn(),
   createGrant: vi.fn(),
+  hashPassword: vi.fn(),
+  verifyPassword: vi.fn(),
+  revokeGrant: vi.fn(),
 }));
 
-vi.mock('../auth/session', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../auth/session')>();
-  return {
-    ...actual,
-    createSession: vi.fn(actual.createSession),
-    validateSession: vi.fn(actual.validateSession),
-    revokeSession: vi.fn(actual.revokeSession),
-  };
-});
+vi.mock('../auth/session', () => ({
+  createSession: vi.fn(),
+  validateSession: vi.fn(),
+  revokeSession: vi.fn(),
+  parseAuthHeader: vi.fn((h) => h?.replace('Bearer ', '')),
+}));
 
 vi.mock('../storage/signed-url', () => ({
   generateSignedUrl: vi.fn(),
@@ -52,17 +64,19 @@ vi.mock('../audit', () => ({
 }));
 
 // ---------------------------------------------------------------------------
-// Import mocked modules
+// Import mocked modules for reference
 // ---------------------------------------------------------------------------
 
 import { queryFirst, queryAll, execute } from '../db/client';
 import { requireAuth } from '../auth/middleware';
+import { requireAdminAuth, createAdminSession, revokeAdminSession } from '../auth/admin-middleware';
 import {
   validateGrant,
   computeCapabilities,
   createGrant as createGrantMod,
   getGrantByBookAndSession,
   getGrantsBySession,
+  revokeGrant,
 } from '../auth/password';
 import {
   createSession,
@@ -77,32 +91,30 @@ import {
 import { logAudit, sanitizeAuditPayload } from '../audit';
 
 // ---------------------------------------------------------------------------
-// Mocked function references
+// Mocked function references - exported as Mocks
 // ---------------------------------------------------------------------------
 
-export const mockQueryFirst = vi.mocked(queryFirst);
-export const mockQueryAll = vi.mocked(queryAll);
-export const mockExecute = vi.mocked(execute);
-export const mockRequireAuth = vi.mocked(requireAuth);
-export const mockValidateGrant = vi.mocked(validateGrant);
-export const mockComputeCapabilities = vi.mocked(computeCapabilities);
-export const mockCreateGrant = vi.mocked(createGrantMod);
-export const mockGetGrantByBookAndSession = vi.mocked(getGrantByBookAndSession);
-export const mockGetGrantsBySession = vi.mocked(getGrantsBySession);
-export const mockCreateSession = vi.mocked(createSession);
-export const mockValidateSessionMod = vi.mocked(validateSessionMod);
-export const mockRevokeSession = vi.mocked(revokeSession);
-export const mockGenerateSignedUrl = vi.mocked(generateSignedUrl);
-export const mockVerifyExpiry = vi.mocked(verifySignedUrlExpiry);
-export const mockVerifySignature = vi.mocked(verifySignedUrlSignature);
-export const mockLogAudit = vi.mocked(logAudit);
-export const mockSanitizeAuditPayload = vi.mocked(sanitizeAuditPayload);
-
-// ---------------------------------------------------------------------------
-// Re-export for convenience
-// ---------------------------------------------------------------------------
-
-export { getGrantByBookAndSession, getGrantsBySession };
+export const mockQueryFirst = queryFirst as Mock;
+export const mockQueryAll = queryAll as Mock;
+export const mockExecute = execute as Mock;
+export const mockRequireAuth = requireAuth as Mock;
+export const mockRequireAdminAuth = requireAdminAuth as Mock;
+export const mockCreateAdminSession = createAdminSession as Mock;
+export const mockRevokeAdminSession = revokeAdminSession as Mock;
+export const mockValidateGrant = validateGrant as Mock;
+export const mockComputeCapabilities = computeCapabilities as Mock;
+export const mockCreateGrant = createGrantMod as Mock;
+export const mockGetGrantByBookAndSession = getGrantByBookAndSession as Mock;
+export const mockGetGrantsBySession = getGrantsBySession as Mock;
+export const mockRevokeGrant = revokeGrant as Mock;
+export const mockCreateSession = createSession as Mock;
+export const mockValidateSessionMod = validateSessionMod as Mock;
+export const mockRevokeSession = revokeSession as Mock;
+export const mockGenerateSignedUrl = generateSignedUrl as Mock;
+export const mockVerifyExpiry = verifySignedUrlExpiry as Mock;
+export const mockVerifySignature = verifySignedUrlSignature as Mock;
+export const mockLogAudit = logAudit as Mock;
+export const mockSanitizeAuditPayload = sanitizeAuditPayload as Mock;
 
 // ---------------------------------------------------------------------------
 // Test helper functions
@@ -128,7 +140,6 @@ export function makeEnv(): Env {
   };
 }
 
-// Use R2Bucket from env.ts - mock functions return partial data for testing
 function makeMockBucket(): R2Bucket {
   return {
     get: async () => null,

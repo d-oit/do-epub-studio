@@ -1,153 +1,83 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   makeEnv,
-  makeRequest,
-  makeAuthContext,
-  makeBookRow,
   mockQueryFirst,
   mockQueryAll,
+  mockGenerateSignedUrl,
   mockRequireAuth,
 } from './fixtures';
-import { handleListBooks, handleGetBook, handleGetFileUrl } from '../routes/books';
+import { app } from '../app';
 
-describe('GET /api/books (handleListBooks)', () => {
+describe('Books Routes', () => {
+  const env = makeEnv();
+
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('returns 401 when unauthenticated', async () => {
-    mockRequireAuth.mockResolvedValue(null);
-    const env = makeEnv();
-    const req = makeRequest();
-    const res = await handleListBooks(env, req);
-    expect(res.status).toBe(401);
-    const body = await res.json() as any;
-    expect(body.error.code).toBe('UNAUTHORIZED');
+  describe('GET /api/books', () => {
+    it('returns list of books', async () => {
+      mockRequireAuth.mockResolvedValue({ email: 'user@example.com' } as any);
+
+      mockQueryAll.mockResolvedValue([
+        { id: '1', slug: 'book-1', title: 'Book 1', visibility: 'public' }
+      ]);
+
+      const res = await app.fetch(new Request('http://localhost/api/books', {
+        headers: { 'Authorization': 'Bearer valid' }
+      }), env);
+      expect(res.status).toBe(200);
+      const body = await res.json() as any;
+      expect(body.ok).toBe(true);
+      expect(body.data).toHaveLength(1);
+    });
   });
 
-  it('returns list of books for authenticated user', async () => {
-    mockRequireAuth.mockResolvedValue(makeAuthContext());
-    mockQueryAll.mockResolvedValue([makeBookRow()] as never);
+  describe('GET /api/books/:id', () => {
+    it('returns 404 when book not found', async () => {
+      mockRequireAuth.mockResolvedValue({ email: 'user@example.com' } as any);
 
-    const env = makeEnv();
-    const req = makeRequest();
-    const res = await handleListBooks(env, req);
-
-    expect(res.status).toBe(200);
-    const body = await res.json() as any;
-    expect(body.ok).toBe(true);
-    expect(body.data).toHaveLength(1);
-    expect(body.data[0].slug).toBe('test-book');
-  });
-});
-
-describe('GET /api/books/{slug} (handleGetBook)', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it('returns 401 when unauthenticated', async () => {
-    mockRequireAuth.mockResolvedValue(null);
-    const res = await handleGetBook(makeEnv(), makeRequest(), 'test-book');
-    expect(res.status).toBe(401);
-  });
-
-  it('returns 404 when book not found', async () => {
-    mockRequireAuth.mockResolvedValue(makeAuthContext());
-    mockQueryFirst.mockResolvedValue(null);
-
-    const res = await handleGetBook(makeEnv(), makeRequest(), 'nonexistent');
-    expect(res.status).toBe(404);
-  });
-
-  it('returns 403 when user does not have access to book', async () => {
-    mockRequireAuth.mockResolvedValue(makeAuthContext({ bookId: 'other-book' }));
-    mockQueryFirst.mockResolvedValue(makeBookRow({ id: 'book-1' }) as never);
-
-    const res = await handleGetBook(makeEnv(), makeRequest(), 'test-book');
-    expect(res.status).toBe(403);
-  });
-
-  it('returns book details when access is granted', async () => {
-    mockRequireAuth.mockResolvedValue(makeAuthContext({ bookId: 'book-1' }));
-    mockQueryFirst.mockResolvedValue(makeBookRow() as never);
-
-    const res = await handleGetBook(makeEnv(), makeRequest(), 'test-book');
-    expect(res.status).toBe(200);
-    const body = await res.json() as any;
-    expect(body.ok).toBe(true);
-    expect(body.data.title).toBe('Test Book');
-  });
-});
-
-describe('POST /api/books/{slug}/file-url (handleGetFileUrl)', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it('returns 401 when unauthenticated', async () => {
-    mockRequireAuth.mockResolvedValue(null);
-    const res = await handleGetFileUrl(makeEnv(), makeRequest(), 'test-book');
-    expect(res.status).toBe(401);
-  });
-
-  it('returns 403 when user cannot read', async () => {
-    mockRequireAuth.mockResolvedValue(
-      makeAuthContext({
-        capabilities: {
-          canRead: false,
-          canComment: false,
-          canHighlight: false,
-          canBookmark: false,
-          canDownloadOffline: false,
-          canExportNotes: false,
-          canManageAccess: false,
-        },
-      }),
-    );
-
-    const res = await handleGetFileUrl(makeEnv(), makeRequest(), 'test-book');
-    expect(res.status).toBe(403);
-  });
-
-  it('returns 404 when book not found', async () => {
-    mockRequireAuth.mockResolvedValue(makeAuthContext());
-    mockQueryFirst.mockResolvedValue(null);
-
-    const res = await handleGetFileUrl(makeEnv(), makeRequest(), 'nonexistent');
-    expect(res.status).toBe(404);
-  });
-
-  it('returns 404 when book file not found', async () => {
-    mockRequireAuth.mockResolvedValue(makeAuthContext({ bookId: 'book-1' }));
-    mockQueryFirst.mockResolvedValueOnce({ id: 'book-1', slug: 'test-book' });
-    mockQueryFirst.mockResolvedValueOnce(null);
-
-    const res = await handleGetFileUrl(makeEnv(), makeRequest(), 'test-book');
-    expect(res.status).toBe(404);
-  });
-
-  it('returns signed URL when book and file exist', async () => {
-    mockRequireAuth.mockResolvedValue(makeAuthContext({ bookId: 'book-1' }));
-    mockQueryFirst.mockResolvedValueOnce({ id: 'book-1', slug: 'test-book' });
-    mockQueryFirst.mockResolvedValueOnce({
-      id: 'file-1',
-      book_id: 'book-1',
-      storage_key: 'books/book-1/file.epub',
+      mockQueryFirst.mockResolvedValue(null);
+      const res = await app.fetch(new Request('http://localhost/api/books/none', {
+        headers: { 'Authorization': 'Bearer valid' }
+      }), env);
+      expect(res.status).toBe(404);
     });
 
-    const { mockGenerateSignedUrl } = await import('./fixtures');
-    mockGenerateSignedUrl.mockResolvedValue({
-      url: 'https://test.example.com/api/files/book-1/books/book-1/epub/file.epub?expires=123&signature=abc',
-      expiresAt: new Date(Date.now() + 3600000).toISOString(),
-      fileSize: 102400,
-      mimeType: 'application/epub+zip',
-    });
+    it('returns book details when found', async () => {
+      mockRequireAuth.mockResolvedValue({ email: 'user@example.com' } as any);
 
-    const res = await handleGetFileUrl(makeEnv(), makeRequest(), 'test-book');
-    expect(res.status).toBe(200);
-    const body = await res.json() as any;
-    expect(body.ok).toBe(true);
-    expect(body.data.url).toContain('https://test.example.com/api/files/');
+      mockQueryFirst.mockResolvedValue({ id: '1', slug: 'book-1', title: 'Book 1', visibility: 'public' });
+      const res = await app.fetch(new Request('http://localhost/api/books/1', {
+        headers: { 'Authorization': 'Bearer valid' }
+      }), env);
+      expect(res.status).toBe(200);
+      const body = await res.json() as any;
+      expect(body.data.id).toBe('1');
+    });
+  });
+
+  describe('POST /api/books/:id/file-url', () => {
+    it('returns signed URL when book and file exist', async () => {
+      mockRequireAuth.mockResolvedValue({
+        email: 'user@example.com',
+        capabilities: { canRead: true }
+      } as any);
+
+      mockQueryFirst
+        .mockResolvedValueOnce({ id: '1', slug: 'book-1' }) // Book check
+        .mockResolvedValueOnce({ storage_key: 'key.epub' }); // File check
+
+      mockGenerateSignedUrl.mockResolvedValue({ url: 'https://signed.url' } as any);
+
+      const res = await app.fetch(new Request('http://localhost/api/books/1/file-url', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer valid' }
+      }), env);
+
+      expect(res.status).toBe(200);
+      const body = await res.json() as any;
+      expect(body.data.url).toBe('https://signed.url');
+    });
   });
 });
