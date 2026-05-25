@@ -94,14 +94,12 @@ export function useKeyboardShortcuts({
     window.addEventListener('keydown', handleKeyDown);
 
     if (rendition) {
-      // @ts-expect-error - epubjs events are slightly different in types sometimes but follow DOM
       rendition.on('keydown', handleKeyDown);
     }
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       if (rendition) {
-        // @ts-expect-error - epubjs event types mismatch with DOM
         rendition.off('keydown', handleKeyDown);
       }
     };
