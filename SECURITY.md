@@ -28,6 +28,27 @@ Please include:
 | Medium   | 72 hours       | 60 days |
 | Low      | 7 days         | 90 days |
 
+## Rate Limiting Policy
+
+To protect against brute-force attacks and denial-of-service, the following rate limits are enforced:
+
+- **Auth Endpoints** (`/api/access/request`, `/api/admin/login`, etc.): 10 requests per minute.
+- **File Endpoints** (`/api/files/*`, etc.): 30 requests per minute.
+- **General API Endpoints**: 60 requests per minute.
+
+Limits are applied per IP address and, where applicable, per authentication token. Exceeding these limits will result in a `429 Too Many Requests` response with a `Retry-After` header.
+
+## EPUB Parsing Protection
+
+To protect against resource exhaustion and path traversal attacks via malicious EPUB files (which are ZIP archives), the following limits are enforced during parsing:
+
+- **Max Compressed Size**: 100MB
+- **Max Uncompressed Size**: 1GB
+- **Max Entry Count**: 10,000 entries
+- **Max Compression Ratio**: 10:1 per entry
+
+Files exceeding these limits or containing path traversal patterns (e.g., `..` segments) will be rejected before full decompression.
+
 ## Scope
 
 **In Scope:**
@@ -62,4 +83,13 @@ We will request a CVE ID for all critical and high severity vulnerabilities acce
 ## Related Documents
 
 - [ADR-034 (ReDoS)](plans/034-adr-redos.md)
+- [ADR-035 (Content Security Policy)](plans/035-adr-content-security-policy.md)
 - [docs/security.md](docs/security.md)
+
+## Content Security Policy (CSP)
+
+The application enforces strict CSP headers across all Worker responses and EPUB content.
+
+- **API/App Responses**: Restrict resource loading to 'self' and authorized domains. framing is disabled (`frame-ancestors 'none'`).
+- **EPUB Content**: Rendered in a sandboxed iframe with `sandbox allow-same-origin allow-scripts`. The response header further restricts script execution and network access.
+- **Reporting**: All violations are reported to `/api/csp-report`.
