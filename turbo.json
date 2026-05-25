@@ -1,8 +1,10 @@
 {
   "$schema": "https://turbo.build/schema.json",
+  "globalPassThroughEnv": ["TURBO_TOKEN", "TURBO_TEAM"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
+      "env": ["VITE_API_BASE_URL", "VITE_APP_NAME", "ANALYZE", "NODE_ENV"],
       "outputs": ["dist/**"]
     },
     "dev": {
