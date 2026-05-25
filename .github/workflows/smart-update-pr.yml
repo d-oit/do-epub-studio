@@ -41,15 +41,18 @@ jobs:
         run: |
           set -euo pipefail
           if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
-            echo "number=${{ inputs.pr }}" >> "$GITHUB_OUTPUT"
+            echo "number=${INPUTS_PR}" >> "$GITHUB_OUTPUT"
           else
             echo "number=${{ github.event.issue.number }}" >> "$GITHUB_OUTPUT"
           fi
+        env:
+          INPUTS_PR: ${{ inputs.pr }}
 
       - name: Checkout default branch
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Run smart updater
         env:

@@ -45,6 +45,11 @@ repos:
   # Local hooks (custom quality gate)
   - repo: local
     hooks:
+      - id: validate-workflows
+        name: Validate GitHub Workflows
+        entry: scripts/validate-workflows.sh
+        language: script
+        files: ^\.github/workflows/.*\.yml$
       - id: quality-gate
         name: Run quality gate
         entry: ./scripts/minimal_quality_gate.sh

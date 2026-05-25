@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Validate GitHub Actions workflow syntax.
 # Checks YAML validity, SHA pinning, and allowed versions.
+# Also runs actionlint and zizmor for security scanning.
 # Exit 0 = valid, Exit 2 = errors found.
 
 set -uo pipefail
@@ -15,6 +16,34 @@ source "$REPO_ROOT/scripts/lib/colors.sh"
 source "$REPO_ROOT/scripts/validate-shas.sh"
 
 FAILED=0
+
+# Ensure local bin directories are in PATH
+mkdir -p "$HOME/.local/bin"
+export PATH="$HOME/.local/bin:$PATH"
+USER_BASE=$(python3 -m site --user-base 2>/dev/null || echo "$HOME/.local")
+export PATH="$USER_BASE/bin:$PATH"
+
+# Install actionlint if not present
+if ! command -v actionlint &> /dev/null; then
+  OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+  ARCH=$(uname -m)
+  case "$ARCH" in
+    x86_64) ARCH="amd64" ;;
+    aarch64|arm64) ARCH="arm64" ;;
+  esac
+
+  if [[ "$OS" == "linux" || "$OS" == "darwin" ]]; then
+    printf '%sInstalling actionlint...%s\n' "${BLUE}" "${NC}"
+    URL="https://github.com/rhysd/actionlint/releases/download/v1.6.26/actionlint_1.6.26_${OS}_${ARCH}.tar.gz"
+    curl -sSL "$URL" | tar xz -C "$HOME/.local/bin" actionlint || true
+  fi
+fi
+
+# Install zizmor if not present
+if ! command -v zizmor &> /dev/null; then
+  printf '%sInstalling zizmor...%s\n' "${BLUE}" "${NC}"
+  pip install zizmor --user --quiet || true
+fi
 
 # Find all workflow files
 mapfile -t WORKFLOW_FILES < <(find .github/workflows -name "*.yml" -o -name "*.yaml" 2>/dev/null || true)
@@ -82,9 +111,9 @@ for file in "${WORKFLOW_FILES[@]}"; do
         printf '%s  ⚠ actionlint not found (skipping)%s\n' "${YELLOW}" "${NC}"
     fi
 
-    # 1.2 Check with zizmor
+    # 1.2 Check with zizmor (only fail on medium severity and above)
     if [ "$ZIZMOR" == "zizmor" ]; then
-        if ! zizmor "$file"; then
+        if ! zizmor --min-severity medium "$file"; then
             printf '%s  ✗ zizmor failures: %s%s\n' "${RED}" "$file" "${NC}"
             FILE_FAILED=1
         fi

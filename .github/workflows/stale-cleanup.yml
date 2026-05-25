@@ -42,19 +42,21 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd   # v6.0.2
         with:
           fetch-depth: 0
+          persist-credentials: false
       - name: Delete branches merged into main
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPOSITORY: ${{ github.repository }}
         run: |
           echo "Fetching merged PR branches..."
           default_branch="main"
           excluded_patterns="^(develop|staging|release/.*)$"
           merged_prs=$(gh pr list \
-            --repo "${{ github.repository }}" \
+            --repo "$REPOSITORY" \
             --state merged \
             --base "$default_branch" \
             --json headRefName,headRepository \
-            --jq '.[] | select(.headRepository.nameWithOwner == "${{ github.repository }}") | .headRefName' \
+            --jq ".[] | select(.headRepository.nameWithOwner == \"$REPOSITORY\") | .headRefName" \
             --limit 100 \
             2>/dev/null || true)
           if [ -z "$merged_prs" ]; then
@@ -70,7 +72,7 @@ jobs:
               continue
             fi
             echo "Deleting branch: $branch"
-            gh api -X DELETE "repos/${{ github.repository }}/git/refs/heads/$branch" \
+            gh api -X DELETE "repos/$REPOSITORY/git/refs/heads/$branch" \
               --silent --jq '.' 2>/dev/null \
               && echo "  ✓ Deleted $branch" \
               || echo "  ✗ Failed to delete $branch (may already be deleted)"

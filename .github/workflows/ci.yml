@@ -42,6 +42,8 @@ jobs:
         run: echo "time=$(date +%s)" >> "$GITHUB_OUTPUT"
 
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd   # v6.0.2
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/setup-pnpm
         id: setup-pnpm
 
@@ -65,6 +67,8 @@ jobs:
       security-events: read
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd   # v6.0.2
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/setup-pnpm
       - name: Check CodeQL alerts
         env:
@@ -85,6 +89,8 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd   # v6.0.2
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/setup-pnpm
 
       - name: Lint
@@ -95,6 +101,8 @@ jobs:
       - name: Auto-fix disallowed SHAs
         if: steps.lint.outcome == 'failure'
         id: auto-fix
+        env:
+          GITHUB_REF: ${{ github.ref }}
         run: |
           if bash scripts/auto-fix-shas.sh; then
             git config user.name "github-actions[bot]"
@@ -103,7 +111,7 @@ jobs:
             if ! git diff --cached --quiet; then
               git commit -m "chore: auto-update SHA allowlist"
               # Only push on PR branches (refs/heads/fix/*, chore/*, dependabot/*)
-              if [[ "${{ github.ref }}" =~ ^refs/heads/(fix|chore|dependabot)/ ]]; then
+              if [[ "$GITHUB_REF" =~ ^refs/heads/(fix|chore|dependabot)/ ]]; then
                 git push
               fi
             fi
@@ -121,6 +129,8 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd   # v6.0.2
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/setup-pnpm
 
       - name: Typecheck
@@ -133,6 +143,8 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd   # v6.0.2
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/setup-pnpm
 
       - name: Run unit tests for scripts
@@ -165,6 +177,7 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd   # v6.0.2
         with:
+          persist-credentials: false
           fetch-depth: 0
       - uses: ./.github/actions/setup-pnpm
 
@@ -183,10 +196,14 @@ jobs:
 
       - name: Baseline metrics (PR only)
         if: github.event_name == 'pull_request'
+        env:
+          BASE_REF: ${{ github.base_ref }}
+          REPOSITORY: ${{ github.repository }}
+          WORKSPACE: ${{ github.workspace }}
         run: |
           TMP_DIR=$(mktemp -d)
           # Clone baseline into temp dir
-          git clone --depth=1 --branch "${{ github.base_ref }}" "https://github.com/${{ github.repository }}.git" "$TMP_DIR"
+          git clone --depth=1 --branch "$BASE_REF" "https://github.com/$REPOSITORY.git" "$TMP_DIR"
           # Copy check script and budgets from PR branch to baseline's expected locations
           mkdir -p "$TMP_DIR/scripts"
           cp scripts/check-bundle-size.mjs "$TMP_DIR/scripts/"
@@ -196,7 +213,7 @@ jobs:
           pnpm build
           # Run size check using the restored script
           METRICS_OUTPUT=baseline-bundle-metrics.json node scripts/check-bundle-size.mjs
-          cp baseline-bundle-metrics.json "${{ github.workspace }}/baseline-bundle-metrics.json"
+          cp baseline-bundle-metrics.json "$WORKSPACE/baseline-bundle-metrics.json"
           rm -rf "$TMP_DIR"
 
       - name: Upload baseline metrics
@@ -222,6 +239,8 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd   # v6.0.2
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/setup-pnpm
 
       - name: Install Playwright browsers
@@ -277,6 +296,8 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd   # v6.0.2
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/setup-pnpm
 
       - name: Install Playwright browsers
@@ -318,14 +339,17 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
+          persist-credentials: false
           fetch-depth: 0
 
       - uses: ./.github/actions/setup-pnpm
 
       - name: Run baseline benchmarks
         if: github.event_name == 'pull_request'
+        env:
+          BASE_REF: ${{ github.base_ref }}
         run: |
-          git checkout $(git merge-base origin/${{ github.base_ref }} HEAD)
+          git checkout $(git merge-base "origin/$BASE_REF" HEAD)
           pnpm install --frozen-lockfile
           pnpm --filter @do-epub-studio/reader-core exec vitest bench --outputJson baseline.json
           mv packages/reader-core/baseline.json ./baseline.json
@@ -368,6 +392,8 @@ jobs:
       pull-requests: write
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd   # v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Download all metrics
         uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806   # v4.1.9
@@ -385,11 +411,13 @@ jobs:
           find metrics-artifacts/baseline-metrics -name "baseline-bundle-metrics.json" -exec mv {} baseline/bundle-metrics.json \; || true
 
       - name: Collect CI metrics
+        env:
+          START_TIME: ${{ needs.setup.outputs.start-time }}
+          CACHE_HIT: ${{ needs.setup.outputs.cache-hit }}
         run: |
           END_TIME=$(date +%s)
-          START_TIME=${{ needs.setup.outputs.start-time }}
           DURATION=$((END_TIME - START_TIME))
-          echo "{\"duration\": $DURATION, \"cacheHit\": \"${{ needs.setup.outputs.cache-hit }}\"}" > metrics/ci-metrics.json
+          echo "{\"duration\": $DURATION, \"cacheHit\": \"$CACHE_HIT\"}" > metrics/ci-metrics.json
 
       - name: Generate report
         run: node scripts/report-performance.mjs metrics baseline
@@ -424,6 +452,9 @@ jobs:
         if: env.SLACK_WEBHOOK == ''
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          SHA: ${{ github.sha }}
+          WORKFLOW: ${{ github.workflow }}
         uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b   # v7.1.0
         with:
           script: |
@@ -433,14 +464,14 @@ jobs:
               state: 'open',
               labels: ['ci-failure']
             });
-            const runUrl = `${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`;
+            const runUrl = process.env.RUN_URL;
             const existing = issues.find(i => i.body && i.body.includes(runUrl));
             if (!existing) {
               await github.rest.issues.create({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 title: `CI failure on main: ${context.runId}`,
-                body: `CI failed on main branch.\n\n**Run:** ${runUrl}\n**Commit:** ${{ github.sha }}\n**Workflow:** ${{ github.workflow }}`,
+                body: `CI failed on main branch.\n\n**Run:** ${runUrl}\n**Commit:** ${process.env.SHA}\n**Workflow:** ${process.env.WORKFLOW}`,
                 labels: ['ci-failure']
               });
             }
