@@ -69,7 +69,8 @@ The following are out of scope:
 
 The application enforces strict CSP headers across all Worker responses and EPUB content.
 
-- **API/App Responses**: Restrict resource loading to 'self' and authorized domains. framing is disabled (`frame-ancestors 'none'`).
+- **Frontend Application**: Restrict resource loading to 'self' and the API domain. Framing is disabled (`frame-ancestors 'none'`). Inline styles are permitted via `'unsafe-inline'` to support dynamic styling in React/Framer Motion.
+- **API Responses**: Restrict resource loading to 'self' and authorized domains. Framing is disabled (`frame-ancestors 'none'`).
 - **EPUB Content**: Rendered in a sandboxed iframe with `sandbox allow-same-origin allow-scripts`. The response header further restricts script execution and network access.
 - **Reporting**: All violations are reported to `/api/csp-report`.
 
