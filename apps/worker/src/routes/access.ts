@@ -1,39 +1,25 @@
+import { Hono } from 'hono';
+import { zValidator } from '@hono/zod-validator';
 import type { Env } from '../lib/env';
 import { validateGrant, computeCapabilities } from '../auth/password';
 import { createSession } from '../auth/session';
 import { logAudit } from '../audit';
-import { jsonResponse } from '../lib/responses';
-import { validateRequestBody } from '../lib/validation';
 import { AccessRequestSchema } from '@do-epub-studio/shared';
 import { checkRateLimitDO } from '../lib/rate-limit-client';
 
-export async function handleAccessRequest(env: Env, raw: unknown): Promise<Response> {
-  const validation = validateRequestBody(AccessRequestSchema, raw);
+export const accessRouter = new Hono<{ Bindings: Env }>();
 
-  if (!validation.ok) {
-    return jsonResponse(
-      { 
-        ok: false, 
-        error: { 
-          code: 'VALIDATION_ERROR', 
-          message: validation.error,
-          details: validation.details 
-        } 
-      },
-      validation.status,
-    );
-  }
-
-  const { bookSlug, email, password } = validation.data;
+accessRouter.post('/request', zValidator('json', AccessRequestSchema), async (c) => {
+  const { bookSlug, email, password } = c.req.valid('json');
 
   // Rate limit by email to prevent brute-force attacks (max 5 requests per minute)
-  const rateLimit = await checkRateLimitDO(env, 'auth_access', email.toLowerCase(), {
+  const rateLimit = await checkRateLimitDO(c.env, 'auth_access', email.toLowerCase(), {
     maxRequests: 5,
     windowMs: 60_000,
   });
 
   if (!rateLimit.allowed) {
-    return jsonResponse(
+    return c.json(
       {
         ok: false,
         error: { code: 'TOO_MANY_REQUESTS', message: 'Too many login attempts. Please try again later.' },
@@ -42,10 +28,10 @@ export async function handleAccessRequest(env: Env, raw: unknown): Promise<Respo
     );
   }
 
-  const result = await validateGrant(env, bookSlug, email.toLowerCase(), password);
+  const result = await validateGrant(c.env, bookSlug, email.toLowerCase(), password);
 
   if (!result.valid || !result.grant || !result.book) {
-    await logAudit(env, {
+    await logAudit(c.env, {
       entityType: 'session',
       entityId: bookSlug,
       action: 'access_denied',
@@ -53,7 +39,7 @@ export async function handleAccessRequest(env: Env, raw: unknown): Promise<Respo
       payload: { reason: result.error },
     });
 
-    return jsonResponse(
+    return c.json(
       {
         ok: false,
         error: { code: 'ACCESS_DENIED', message: 'Access denied' },
@@ -62,9 +48,9 @@ export async function handleAccessRequest(env: Env, raw: unknown): Promise<Respo
     );
   }
 
-  const sessionToken = await createSession(env, result.book.id, email);
+  const sessionToken = await createSession(c.env, result.book.id, email);
 
-  await logAudit(env, {
+  await logAudit(c.env, {
     entityType: 'session',
     entityId: result.book.id,
     action: 'access_granted',
@@ -72,7 +58,7 @@ export async function handleAccessRequest(env: Env, raw: unknown): Promise<Respo
     payload: { grantId: result.grant.id },
   });
 
-  return jsonResponse({
+  return c.json({
     ok: true,
     data: {
       sessionToken,
@@ -87,23 +73,29 @@ export async function handleAccessRequest(env: Env, raw: unknown): Promise<Respo
       capabilities: computeCapabilities(result.grant),
     },
   });
-}
+});
 
-export async function handleLogout(env: Env, token: string): Promise<Response> {
+accessRouter.post('/logout', async (c) => {
+  const authHeader = c.req.header('Authorization');
+  const token = authHeader?.replace('Bearer ', '') ?? '';
+
   const { revokeSession } = await import('../auth/session');
-  await revokeSession(env, token);
+  await revokeSession(c.env, token);
 
-  return jsonResponse({ ok: true });
-}
+  return c.json({ ok: true });
+});
 
-export async function handleRefresh(env: Env, token: string): Promise<Response> {
+accessRouter.post('/refresh', async (c) => {
+  const authHeader = c.req.header('Authorization');
+  const token = authHeader?.replace('Bearer ', '') ?? '';
+
   const { validateSession, createSession, revokeSession } = await import('../auth/session');
   const { getGrantByBookAndSession } = await import('../auth/password');
 
-  const result = await validateSession(env, token);
+  const result = await validateSession(c.env, token);
 
   if (!result.valid || !result.session) {
-    return jsonResponse(
+    return c.json(
       {
         ok: false,
         error: { code: 'SESSION_INVALID', message: 'Invalid session' },
@@ -113,9 +105,9 @@ export async function handleRefresh(env: Env, token: string): Promise<Response> 
   }
 
   // Security: Verify the grant is still valid before refreshing
-  const grant = await getGrantByBookAndSession(env, result.bookId!, result.session.email);
+  const grant = await getGrantByBookAndSession(c.env, result.bookId!, result.session.email);
   if (!grant || grant.revoked_at || (grant.expires_at && new Date(grant.expires_at) < new Date())) {
-    return jsonResponse(
+    return c.json(
       {
         ok: false,
         error: { code: 'ACCESS_DENIED', message: 'Access has been revoked or expired' },
@@ -124,29 +116,33 @@ export async function handleRefresh(env: Env, token: string): Promise<Response> 
     );
   }
 
-  const newToken = await createSession(env, result.bookId!, result.session.email);
+  const newToken = await createSession(c.env, result.bookId!, result.session.email);
 
   // Security: Implement token rotation by revoking the old session token
-  await revokeSession(env, token);
+  await revokeSession(c.env, token);
 
-  return jsonResponse({
+  return c.json({
     ok: true,
     data: { sessionToken: newToken },
   });
-}
+});
 
-export async function handleValidatePermission(
-  env: Env,
-  bookId: string,
-  token: string,
-): Promise<Response> {
+accessRouter.get('/validate', async (c) => {
+  const bookId = c.req.query('bookId');
+  if (!bookId) {
+    return c.json({ ok: false, error: { code: 'VALIDATION_ERROR', message: 'bookId parameter is required' } }, 400);
+  }
+
+  const authHeader = c.req.header('Authorization');
+  const token = authHeader?.replace('Bearer ', '') ?? '';
+
   const { validateSession } = await import('../auth/session');
   const { getGrantByBookAndSession } = await import('../auth/password');
 
-  const sessionResult = await validateSession(env, token);
+  const sessionResult = await validateSession(c.env, token);
 
   if (!sessionResult.valid || !sessionResult.session) {
-    return jsonResponse(
+    return c.json(
       {
         ok: false,
         error: { code: 'SESSION_INVALID', message: 'Invalid session' },
@@ -155,10 +151,10 @@ export async function handleValidatePermission(
     );
   }
 
-  const grant = await getGrantByBookAndSession(env, bookId, sessionResult.session.email);
+  const grant = await getGrantByBookAndSession(c.env, bookId, sessionResult.session.email);
 
   if (!grant || grant.revoked_at || (grant.expires_at && new Date(grant.expires_at) < new Date())) {
-    return jsonResponse({
+    return c.json({
       ok: true,
       data: {
         valid: false,
@@ -169,7 +165,7 @@ export async function handleValidatePermission(
     });
   }
 
-  return jsonResponse({
+  return c.json({
     ok: true,
     data: {
       valid: true,
@@ -178,16 +174,19 @@ export async function handleValidatePermission(
       canDownloadOffline: grant.offline_allowed === 1,
     },
   });
-}
+});
 
-export async function handleValidateAllPermissions(env: Env, token: string): Promise<Response> {
+accessRouter.get('/validate-all', async (c) => {
+  const authHeader = c.req.header('Authorization');
+  const token = authHeader?.replace('Bearer ', '') ?? '';
+
   const { validateSession } = await import('../auth/session');
   const { getGrantsBySession } = await import('../auth/password');
 
-  const sessionResult = await validateSession(env, token);
+  const sessionResult = await validateSession(c.env, token);
 
   if (!sessionResult.valid || !sessionResult.session) {
-    return jsonResponse(
+    return c.json(
       {
         ok: false,
         error: { code: 'SESSION_INVALID', message: 'Invalid session' },
@@ -196,14 +195,14 @@ export async function handleValidateAllPermissions(env: Env, token: string): Pro
     );
   }
 
-  const grants = await getGrantsBySession(env, sessionResult.session.email);
+  const grants = await getGrantsBySession(c.env, sessionResult.session.email);
 
   const now = new Date();
   const validGrantIds = grants
     .filter((g) => !g.revoked_at && (!g.expires_at || new Date(g.expires_at) > now))
     .map((g) => g.id);
 
-  return jsonResponse({
+  return c.json({
     ok: true,
     data: {
       grantIds: validGrantIds,
@@ -212,4 +211,13 @@ export async function handleValidateAllPermissions(env: Env, token: string): Pro
         .map((g) => g.book_id),
     },
   });
+});
+
+// Legacy exports for compatibility during migration if needed
+export async function handleAccessRequest(env: Env, raw: unknown): Promise<Response> {
+  return accessRouter.fetch(new Request('http://localhost/request', {
+    method: 'POST',
+    body: JSON.stringify(raw),
+    headers: { 'Content-Type': 'application/json' }
+  }), env);
 }

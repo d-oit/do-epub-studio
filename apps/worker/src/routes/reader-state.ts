@@ -1,14 +1,17 @@
+import { Hono } from 'hono';
+import { zValidator } from '@hono/zod-validator';
 import type { Env } from '../lib/env';
 import { requireAuth } from '../auth/middleware';
+import type { AuthContext } from '../auth/middleware';
 import { queryFirst, queryAll, execute } from '../db/client';
-import { jsonResponse } from '../lib/responses';
 import { logAudit } from '../audit';
-import { validateRequestBody } from '../lib/validation';
 import {
   ProgressUpdateSchema,
   BookmarkCreateSchema,
   HighlightCreateSchema,
 } from '@do-epub-studio/shared';
+
+export const readerStateRouter = new Hono<{ Bindings: Env; Variables: { auth: AuthContext } }>();
 
 interface ProgressRow {
   [key: string]: string | number | null | undefined;
@@ -44,34 +47,33 @@ interface HighlightRow {
   updated_at: string;
 }
 
-export async function handleGetProgress(
-  env: Env,
-  request: Request,
-  bookId: string,
-): Promise<Response> {
-  const auth = await requireAuth(env, request);
-
+readerStateRouter.use('/:bookId/*', async (c, next) => {
+  const auth = await requireAuth(c.env, c.req.raw);
   if (!auth) {
-    return jsonResponse(
-      { ok: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } },
-      401,
-    );
+    return c.json({ ok: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } }, 401);
   }
+  c.set('auth', auth);
+  await next();
+});
+
+readerStateRouter.get('/:bookId/progress', async (c) => {
+  const bookId = c.req.param('bookId');
+  const auth = c.get('auth');
 
   const progress = await queryFirst<ProgressRow>(
-    env,
+    c.env,
     `SELECT * FROM reading_progress WHERE book_id = ? AND user_email = ?`,
     [bookId, auth.email],
   );
 
   if (!progress) {
-    return jsonResponse({
+    return c.json({
       ok: true,
       data: { locator: null, progressPercent: 0 },
     });
   }
 
-  return jsonResponse({
+  return c.json({
     ok: true,
     data: {
       locator: JSON.parse(progress.locator_json) as Record<string, unknown>,
@@ -79,50 +81,23 @@ export async function handleGetProgress(
       updatedAt: progress.updated_at,
     },
   });
-}
+});
 
-export async function handleUpdateProgress(
-  env: Env,
-  request: Request,
-  bookId: string,
-  rawBody: unknown,
-): Promise<Response> {
-  const auth = await requireAuth(env, request);
-
-  if (!auth) {
-    return jsonResponse(
-      { ok: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } },
-      401,
-    );
-  }
+readerStateRouter.put('/:bookId/progress', zValidator('json', ProgressUpdateSchema), async (c) => {
+  const bookId = c.req.param('bookId');
+  const auth = c.get('auth');
+  const body = c.req.valid('json');
 
   if (!auth.capabilities.canRead) {
-    return jsonResponse({ ok: false, error: { code: 'FORBIDDEN', message: 'Access denied' } }, 403);
+    return c.json({ ok: false, error: { code: 'FORBIDDEN', message: 'Access denied' } }, 403);
   }
 
-  const validation = validateRequestBody(ProgressUpdateSchema, rawBody);
-
-  if (!validation.ok) {
-    return jsonResponse(
-      {
-        ok: false,
-        error: {
-          code: 'VALIDATION_ERROR',
-          message: validation.error,
-          details: validation.details,
-        },
-      },
-      validation.status,
-    );
-  }
-
-  const body = validation.data;
   const locatorJson = JSON.stringify(body.locator);
   const id = crypto.randomUUID();
   const now = new Date().toISOString();
 
   await execute(
-    env,
+    c.env,
     `INSERT INTO reading_progress (id, book_id, user_email, locator_json, progress_percent, updated_at)
      VALUES (?, ?, ?, ?, ?, ?)
      ON CONFLICT(book_id, user_email) DO UPDATE SET
@@ -132,33 +107,23 @@ export async function handleUpdateProgress(
     [id, bookId, auth.email, locatorJson, body.progressPercent, now],
   );
 
-  return jsonResponse({
+  return c.json({
     ok: true,
     data: { locator: body.locator, progressPercent: body.progressPercent, updatedAt: now },
   });
-}
+});
 
-export async function handleListBookmarks(
-  env: Env,
-  request: Request,
-  bookId: string,
-): Promise<Response> {
-  const auth = await requireAuth(env, request);
-
-  if (!auth) {
-    return jsonResponse(
-      { ok: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } },
-      401,
-    );
-  }
+readerStateRouter.get('/:bookId/bookmarks', async (c) => {
+  const bookId = c.req.param('bookId');
+  const auth = c.get('auth');
 
   const bookmarks = await queryAll<BookmarkRow>(
-    env,
+    c.env,
     `SELECT * FROM bookmarks WHERE book_id = ? AND user_email = ? ORDER BY created_at DESC`,
     [bookId, auth.email],
   );
 
-  return jsonResponse({
+  return c.json({
     ok: true,
     data: bookmarks.map((bm) => ({
       id: bm.id,
@@ -167,109 +132,61 @@ export async function handleListBookmarks(
       createdAt: bm.created_at,
     })),
   });
-}
+});
 
-export async function handleCreateBookmark(
-  env: Env,
-  request: Request,
-  bookId: string,
-  rawBody: unknown,
-): Promise<Response> {
-  const auth = await requireAuth(env, request);
-
-  if (!auth) {
-    return jsonResponse(
-      { ok: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } },
-      401,
-    );
-  }
+readerStateRouter.post('/:bookId/bookmarks', zValidator('json', BookmarkCreateSchema), async (c) => {
+  const bookId = c.req.param('bookId');
+  const auth = c.get('auth');
+  const body = c.req.valid('json');
 
   if (!auth.capabilities.canBookmark) {
-    return jsonResponse({ ok: false, error: { code: 'FORBIDDEN', message: 'Access denied' } }, 403);
+    return c.json({ ok: false, error: { code: 'FORBIDDEN', message: 'Access denied' } }, 403);
   }
 
-  const validation = validateRequestBody(BookmarkCreateSchema, rawBody);
-
-  if (!validation.ok) {
-    return jsonResponse(
-      {
-        ok: false,
-        error: {
-          code: 'VALIDATION_ERROR',
-          message: validation.error,
-          details: validation.details,
-        },
-      },
-      validation.status,
-    );
-  }
-
-  const body = validation.data;
   const id = crypto.randomUUID();
   const locatorJson = JSON.stringify(body.locator);
   const now = new Date().toISOString();
 
   await execute(
-    env,
+    c.env,
     `INSERT INTO bookmarks (id, book_id, user_email, locator_json, label, created_at)
      VALUES (?, ?, ?, ?, ?, ?)`,
     [id, bookId, auth.email, locatorJson, body.label ?? null, now],
   );
 
-  return jsonResponse(
+  return c.json(
     {
       ok: true,
       data: { id, locator: body.locator, label: body.label, createdAt: now },
     },
     201,
   );
-}
+});
 
-export async function handleDeleteBookmark(
-  env: Env,
-  request: Request,
-  bookId: string,
-  bookmarkId: string,
-): Promise<Response> {
-  const auth = await requireAuth(env, request);
+readerStateRouter.delete('/:bookId/bookmarks/:bookmarkId', async (c) => {
+  const { bookId, bookmarkId } = c.req.param();
+  const auth = c.get('auth');
 
-  if (!auth) {
-    return jsonResponse(
-      { ok: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } },
-      401,
-    );
-  }
-
-  await execute(env, `DELETE FROM bookmarks WHERE id = ? AND book_id = ? AND user_email = ?`, [
+  await execute(c.env, `DELETE FROM bookmarks WHERE id = ? AND book_id = ? AND user_email = ?`, [
     bookmarkId,
     bookId,
     auth.email,
   ]);
 
-  return jsonResponse({ ok: true });
-}
+  return c.json({ ok: true });
+});
 
-export async function handleListHighlights(
-  env: Env,
-  request: Request,
-  bookId: string,
-): Promise<Response> {
-  const auth = await requireAuth(env, request);
-
-  if (!auth) {
-    return jsonResponse(
-      { ok: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } },
-      401,
-    );
-  }
+readerStateRouter.get('/:bookId/highlights', async (c) => {
+  const bookId = c.req.param('bookId');
+  const auth = c.get('auth');
 
   const highlights = await queryAll<HighlightRow>(
-    env,
+    c.env,
     `SELECT * FROM highlights WHERE book_id = ? AND user_email = ? ORDER BY created_at DESC`,
     [bookId, auth.email],
   );
 
-  return jsonResponse({
+  return c.json({
     ok: true,
     data: highlights.map((hl) => ({
       id: hl.id,
@@ -282,52 +199,23 @@ export async function handleListHighlights(
       updatedAt: hl.updated_at,
     })),
   });
-}
+});
 
-export async function handleCreateHighlight(
-  env: Env,
-  request: Request,
-  bookId: string,
-  rawBody: unknown,
-): Promise<Response> {
-  const auth = await requireAuth(env, request);
-
-  if (!auth) {
-    return jsonResponse(
-      { ok: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } },
-      401,
-    );
-  }
+readerStateRouter.post('/:bookId/highlights', zValidator('json', HighlightCreateSchema), async (c) => {
+  const bookId = c.req.param('bookId');
+  const auth = c.get('auth');
+  const body = c.req.valid('json');
 
   if (!auth.capabilities.canHighlight) {
-    return jsonResponse({ ok: false, error: { code: 'FORBIDDEN', message: 'Access denied' } }, 403);
+    return c.json({ ok: false, error: { code: 'FORBIDDEN', message: 'Access denied' } }, 403);
   }
 
-  const validation = validateRequestBody(HighlightCreateSchema, rawBody);
-
-  if (!validation.ok) {
-    return jsonResponse(
-      {
-        ok: false,
-        error: {
-          code: 'VALIDATION_ERROR',
-          message: validation.error,
-          details: validation.details,
-        },
-      },
-      validation.status,
-    );
-  }
-
-  const body = validation.data;
   const id = crypto.randomUUID();
   const now = new Date().toISOString();
-
-  // Extract multi-signal locator fields
   const { locator } = body;
 
   await execute(
-    env,
+    c.env,
     `INSERT INTO highlights (id, book_id, user_email, chapter_ref, cfi_range, selected_text, note, color, created_at, updated_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
@@ -344,7 +232,7 @@ export async function handleCreateHighlight(
     ],
   );
 
-  await logAudit(env, {
+  await logAudit(c.env, {
     entityType: 'highlight',
     entityId: id,
     action: 'create',
@@ -352,7 +240,7 @@ export async function handleCreateHighlight(
     payload: { bookId, chapterRef: locator.chapterRef, color: body.color },
   });
 
-  return jsonResponse(
+  return c.json(
     {
       ok: true,
       data: {
@@ -368,30 +256,19 @@ export async function handleCreateHighlight(
     },
     201,
   );
-}
+});
 
-export async function handleDeleteHighlight(
-  env: Env,
-  request: Request,
-  bookId: string,
-  highlightId: string,
-): Promise<Response> {
-  const auth = await requireAuth(env, request);
+readerStateRouter.delete('/:bookId/highlights/:highlightId', async (c) => {
+  const { bookId, highlightId } = c.req.param();
+  const auth = c.get('auth');
 
-  if (!auth) {
-    return jsonResponse(
-      { ok: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } },
-      401,
-    );
-  }
-
-  await execute(env, `DELETE FROM highlights WHERE id = ? AND book_id = ? AND user_email = ?`, [
+  await execute(c.env, `DELETE FROM highlights WHERE id = ? AND book_id = ? AND user_email = ?`, [
     highlightId,
     bookId,
     auth.email,
   ]);
 
-  await logAudit(env, {
+  await logAudit(c.env, {
     entityType: 'highlight',
     entityId: highlightId,
     action: 'delete',
@@ -399,58 +276,29 @@ export async function handleDeleteHighlight(
     payload: { bookId },
   });
 
-  return jsonResponse({ ok: true });
-}
+  return c.json({ ok: true });
+});
 
 const HighlightUpdateSchema = HighlightCreateSchema.pick({ note: true, color: true }).partial();
 
-export async function handleUpdateHighlight(
-  env: Env,
-  request: Request,
-  bookId: string,
-  highlightId: string,
-  rawBody: unknown,
-): Promise<Response> {
-  const auth = await requireAuth(env, request);
+readerStateRouter.patch('/:bookId/highlights/:highlightId', zValidator('json', HighlightUpdateSchema), async (c) => {
+  const { highlightId } = c.req.param();
+  const auth = c.get('auth');
+  const body = c.req.valid('json');
 
-  if (!auth) {
-    return jsonResponse(
-      { ok: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } },
-      401,
-    );
-  }
-
-  const validation = validateRequestBody(HighlightUpdateSchema, rawBody);
-
-  if (!validation.ok) {
-    return jsonResponse(
-      {
-        ok: false,
-        error: {
-          code: 'VALIDATION_ERROR',
-          message: validation.error,
-          details: validation.details,
-        },
-      },
-      validation.status,
-    );
-  }
-
-  const body = validation.data;
-
-  const highlight = await queryFirst<HighlightRow>(env, `SELECT * FROM highlights WHERE id = ?`, [
+  const highlight = await queryFirst<HighlightRow>(c.env, `SELECT * FROM highlights WHERE id = ?`, [
     highlightId,
   ]);
 
   if (!highlight) {
-    return jsonResponse(
+    return c.json(
       { ok: false, error: { code: 'NOT_FOUND', message: 'Highlight not found' } },
       404,
     );
   }
 
   if (highlight.user_email !== auth.email) {
-    return jsonResponse(
+    return c.json(
       { ok: false, error: { code: 'FORBIDDEN', message: 'Cannot edit others highlights' } },
       403,
     );
@@ -471,9 +319,9 @@ export async function handleUpdateHighlight(
 
   args.push(highlightId);
 
-  await execute(env, `UPDATE highlights SET ${updates.join(', ')} WHERE id = ?`, args);
+  await execute(c.env, `UPDATE highlights SET ${updates.join(', ')} WHERE id = ?`, args);
 
-  await logAudit(env, {
+  await logAudit(c.env, {
     entityType: 'highlight',
     entityId: highlightId,
     action: 'update',
@@ -481,8 +329,8 @@ export async function handleUpdateHighlight(
     payload: body,
   });
 
-  return jsonResponse({
+  return c.json({
     ok: true,
     data: { id: highlightId, ...body },
   });
-}
+});

@@ -13,12 +13,9 @@
   },
   "dependencies": {
     "@do-epub-studio/shared": "workspace:*",
-    "@intity/epub-js": "^0.3.96",
-    "dompurify": "^3.4.5",
-    "fflate": "^0.8.3"
+    "@intity/epub-js": "^0.3.96"
   },
   "devDependencies": {
-    "@types/dompurify": "^3.2.0",
     "@types/node": "^25",
     "fast-check": "^4.8.0",
     "typescript": "^6.0.3",
