@@ -19,6 +19,9 @@ vi.mock('@intity/epub-js', () => {
 
   const mockBook = {
     opened: Promise.resolve(),
+    packaging: {
+      direction: 'ltr',
+    },
     sections: {
       hooks: {
         content: {
@@ -273,6 +276,29 @@ describe('createEpubLoader', () => {
       expect.anything(),
       expect.objectContaining({
         sandbox: ['allow-scripts'],
+        defaultDirection: 'ltr',
+      }),
+    );
+  });
+
+  it('extracts direction from packaging and passes to rendition', async () => {
+    const mockData = zipSync({ 'mimetype': strToU8('application/epub+zip') });
+    (global.fetch as any).mockResolvedValue({
+      ok: true,
+      arrayBuffer: () => Promise.resolve(mockData.buffer),
+    });
+
+    epubjsMock.__mockBook.packaging.direction = 'rtl';
+
+    const loader = createEpubLoader();
+    await loader.load('https://example.com/rtl.epub');
+    loader.createRendition(document.createElement('div'));
+
+    expect(loader.getMetadata().direction).toBe('rtl');
+    expect(epubjsMock.__mockBook.renderTo).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        defaultDirection: 'rtl',
       }),
     );
   });

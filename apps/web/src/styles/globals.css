@@ -109,6 +109,10 @@
     height: 100%;
     isolation: isolate;
   }
+
+  [dir="rtl"] {
+    direction: rtl;
+  }
 }
 
 /* ============================================

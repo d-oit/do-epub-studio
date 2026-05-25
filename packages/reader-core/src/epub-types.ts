@@ -15,6 +15,7 @@ export interface BookMetadata {
   title: string;
   creator?: string;
   language?: string;
+  direction?: string;
   publisher?: string;
   description?: string;
   cover?: string;

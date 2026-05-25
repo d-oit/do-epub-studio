@@ -175,6 +175,7 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
         title: metaMap.get('title') ?? '',
         creator: metaMap.get('creator'),
         language: metaMap.get('language'),
+        direction: book.packaging?.direction,
         publisher: metaMap.get('publisher'),
         description: metaMap.get('description'),
       };
@@ -203,6 +204,7 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
       sandbox: ['allow-scripts'],
       flow: options?.flow,
       manager: options?.manager,
+      defaultDirection: metadata.direction,
     });
 
     // Bridge rendition events to the loader's event system

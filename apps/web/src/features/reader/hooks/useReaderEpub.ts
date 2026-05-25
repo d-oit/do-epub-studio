@@ -54,7 +54,7 @@ export function useReaderEpub(
   const applyThemes = useCallback(
     (rendition: Rendition) => {
       const container = rootRef.current;
-      if (!container) return;
+      if (!container || !bookRef.current) return;
       const style = getComputedStyle(container);
       const bg = style.getPropertyValue('--color-background').trim();
       const fg = style.getPropertyValue('--color-foreground').trim();
@@ -66,6 +66,12 @@ export function useReaderEpub(
           : effectiveTheme === 'sepia'
             ? 'sepia(1)'
             : 'none';
+
+      const direction = bookRef.current.packaging?.direction;
+      const language = bookRef.current.packaging?.metadata?.language;
+      const isCJK =
+        typeof language === 'string' && ['zh', 'ja', 'ko'].some((l) => language.startsWith(l));
+
       rendition.themes.registerRules('reader-theme', {
         body: {
           background: bg,
@@ -78,6 +84,8 @@ export function useReaderEpub(
               : readerFontFamily === 'sans-serif'
                 ? 'sans-serif'
                 : 'monospace',
+          direction: direction === 'rtl' ? 'rtl' : 'ltr',
+          'writing-mode': isCJK && direction === 'rtl' ? 'vertical-rl' : 'horizontal-tb',
         },
         img: { filter: imgFilter },
       });
@@ -110,6 +118,7 @@ export function useReaderEpub(
           height: '100%',
           spread: 'auto',
           sandbox: ['allow-same-origin'],
+          defaultDirection: book.packaging?.direction,
         });
         renditionRef.current = rendition;
         applyThemes(rendition);
