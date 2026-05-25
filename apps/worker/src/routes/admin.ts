@@ -3,6 +3,7 @@ import type { Env } from '../lib/env';
 import { execute, queryAll, queryFirst } from '../db/client';
 import { createGrant } from '../auth/password';
 import { jsonResponse } from '../lib/responses';
+import { validateEpub } from '../lib/epub-validator';
 import { validateRequestBody } from '../lib/validation';
 import { logAudit } from '../audit';
 import {
@@ -19,6 +20,7 @@ const UploadCompleteSchema = z.object({
   fileSizeBytes: z.number().int().nonnegative().optional(),
   sha256: z.string().max(64).optional(),
   epubVersion: z.string().max(10).optional(),
+  validationResults: z.any().optional(),
 });
 
 interface _BookRow {
@@ -157,17 +159,35 @@ export async function handleBookUpload(
   }
 
   const storageKey = `books/${book.id}/${crypto.randomUUID()}.epub`;
+  let validationResults;
 
   try {
-    const body = request.body;
-    if (!body) {
+    const arrayBuffer = await request.arrayBuffer();
+    if (arrayBuffer.byteLength === 0) {
       return jsonResponse(
         { ok: false, error: { code: 'VALIDATION_ERROR', message: 'Request body is empty' } },
         400,
       );
     }
 
-    await env.BOOKS_BUCKET.put(storageKey, body, {
+    const validation = await validateEpub(arrayBuffer);
+    validationResults = validation;
+
+    if (!validationResults.isValid) {
+      return jsonResponse(
+        {
+          ok: false,
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: 'EPUB validation failed',
+            details: validation.errors,
+          },
+        },
+        400,
+      );
+    }
+
+    await env.BOOKS_BUCKET.put(storageKey, arrayBuffer, {
       httpMetadata: {
         contentType,
         contentDisposition: `attachment; filename="${book.slug}.epub"`,
@@ -175,6 +195,7 @@ export async function handleBookUpload(
       customMetadata: {
         bookId: book.id,
         uploadedAt: new Date().toISOString(),
+        validationResults: JSON.stringify(validationResults),
       },
     });
   } catch {
@@ -190,7 +211,12 @@ export async function handleBookUpload(
   return jsonResponse(
     {
       ok: true,
-      data: { storageKey, bookId: book.id, slug: book.slug },
+      data: {
+        storageKey,
+        bookId: book.id,
+        slug: book.slug,
+        validation: validationResults,
+      },
     },
     200,
   );
@@ -223,8 +249,8 @@ export async function handleUploadComplete(
 
   await execute(
     env,
-    `INSERT INTO book_files (id, book_id, storage_provider, storage_key, original_filename, mime_type, file_size_bytes, sha256, epub_version, created_at)
-     VALUES (?, ?, 'r2', ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO book_files (id, book_id, storage_provider, storage_key, original_filename, mime_type, file_size_bytes, sha256, epub_version, validation_results_json, created_at)
+     VALUES (?, ?, 'r2', ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       fileId,
       bookId,
@@ -234,6 +260,7 @@ export async function handleUploadComplete(
       body.fileSizeBytes ?? 0,
       body.sha256 ?? null,
       body.epubVersion ?? null,
+      body.validationResults ? JSON.stringify(body.validationResults) : null,
       now,
     ],
   );
