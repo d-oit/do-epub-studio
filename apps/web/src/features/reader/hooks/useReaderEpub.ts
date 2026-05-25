@@ -68,7 +68,8 @@ export function useReaderEpub(
             : 'none';
 
       const direction = bookRef.current.packaging?.direction;
-      const language = bookRef.current.packaging?.metadata?.language;
+      // bookRef.current.packaging.metadata is an object that may not have 'language' typed on it
+      const language = (bookRef.current.packaging?.metadata as any)?.language;
       const isCJK =
         typeof language === 'string' && ['zh', 'ja', 'ko'].some((l) => language.startsWith(l));
 

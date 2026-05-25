@@ -73,6 +73,9 @@ const epubjsMock = vi.mocked((await import('@intity/epub-js')) as unknown) as {
   __mockBook: {
     renderTo: ReturnType<typeof vi.fn>;
     destroy: ReturnType<typeof vi.fn>;
+    packaging: {
+      direction: string;
+    };
     sections: {
       hooks: {
         content: {
