@@ -19,6 +19,7 @@ permissions:
   contents: write
   deployments: write
   id-token: write
+  attestations: write
 
 jobs:
   verify:
@@ -82,12 +83,35 @@ jobs:
       - name: Generate SBOM
         run: npx --yes @cyclonedx/cyclonedx-npm@1.19.5 --output-format json --output-file sbom.cyclonedx.json
 
+      - name: Package Web Distribution
+        run: |
+          cd apps/web/dist
+          zip -r ../../../do-epub-studio-web.zip .
+          cd ../../../
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@053f9b74638557590800a301da1ba82351507e2c # v3.8.1
+
+      - name: Sign Artifacts
+        run: |
+          cosign sign-blob --yes --output-signature do-epub-studio-web.zip.sig do-epub-studio-web.zip
+          cosign sign-blob --yes --output-signature sbom.cyclonedx.json.sig sbom.cyclonedx.json
+
+      - name: Generate SLSA Provenance
+        uses: actions/attest-build-provenance@c074443f1aee8d4aeeae555aebba3282517141b2 # v2.2.3
+        with:
+          subject-path: |
+            do-epub-studio-web.zip
+            sbom.cyclonedx.json
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda  # v3.0.0
         with:
           files: |
-            apps/web/dist/**
+            do-epub-studio-web.zip
+            do-epub-studio-web.zip.sig
             sbom.cyclonedx.json
+            sbom.cyclonedx.json.sig
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
