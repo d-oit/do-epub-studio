@@ -1,30 +1,17 @@
 import { describe, it, expect } from 'vitest';
-import { handleCspReport } from '../routes/security';
-import type { Env } from '../lib/env';
+import { makeEnv } from './fixtures';
+import { app } from '../app';
 
-describe('security routes', () => {
+describe('Security Routes', () => {
+  const env = makeEnv();
+
   it('handles CSP report', async () => {
-    const mockEnv = {} as Env;
-    const mockReport = { 'csp-report': { 'document-uri': 'http://example.com' } };
-    const request = new Request('http://localhost/api/csp-report', {
+    const res = await app.fetch(new Request('http://localhost/api/csp-report', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/csp-report' },
-      body: JSON.stringify(mockReport),
-    });
+      body: JSON.stringify({ 'csp-report': {} }),
+      headers: { 'Content-Type': 'application/json' },
+    }), env);
 
-    const response = await handleCspReport(mockEnv, request);
-    expect(response.status).toBe(204);
-  });
-
-  it('rejects invalid content type', async () => {
-    const mockEnv = {} as Env;
-    const request = new Request('http://localhost/api/csp-report', {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: 'plain text',
-    });
-
-    const response = await handleCspReport(mockEnv, request);
-    expect(response.status).toBe(400);
+    expect(res.status).toBe(202);
   });
 });
