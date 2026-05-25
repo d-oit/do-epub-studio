@@ -22,7 +22,7 @@ ALLOWED_SHAS=(
     "slackapi/slack-github-action@485a9d42d3a73031f12ec201c457e2162c45d02d"
     "actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b"
     "softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda"
-    "chromaui/action@e6129220824b44e265582e3bddc698c1128f6ede"
+    "chromaui/action@e8cc4c31775280b175a3c440076c00d19a9014d7"
     "treosh/lighthouse-ci-action@3e7e23fb74242897f95c0ba9cabad3d0227b9b18"
     "ossf/scorecard-action@ea651e62978af7915d09fe2e282747c798bf2dab"
     "actions/attest-build-provenance@c074443f1aee8d4aeeae555aebba3282517141b2"

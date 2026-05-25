@@ -68,7 +68,7 @@ jobs:
         run: pnpm build
 
       - name: Deploy Worker
-        uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0 # v4.0.0
+        uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0  # v4.0.0
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         with:
@@ -78,7 +78,7 @@ jobs:
           workingDirectory: ./apps/worker
 
       - name: Deploy Frontend to Cloudflare Pages
-        uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0 # v4.0.0
+        uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0  # v4.0.0
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         with:
@@ -97,7 +97,7 @@ jobs:
           cd ../../../
 
       - name: Install Cosign
-        uses: sigstore/cosign-installer@053f9b74638557590800a301da1ba82351507e2c # v3.8.1
+        uses: sigstore/cosign-installer@053f9b74638557590800a301da1ba82351507e2c  # v3.8.1
 
       - name: Sign Artifacts
         run: |
@@ -105,7 +105,7 @@ jobs:
           cosign sign-blob --yes --output-signature sbom.cyclonedx.json.sig sbom.cyclonedx.json
 
       - name: Generate SLSA Provenance
-        uses: actions/attest-build-provenance@c074443f1aee8d4aeeae555aebba3282517141b2 # v2.2.3
+        uses: actions/attest-build-provenance@c074443f1aee8d4aeeae555aebba3282517141b2  # v2.2.3
         with:
           subject-path: |
             do-epub-studio-web.zip

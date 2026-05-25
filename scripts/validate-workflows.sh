@@ -83,7 +83,8 @@ for file in "${WORKFLOW_FILES[@]}"; do
 
     # 1. Check YAML syntax
     if [ "$YAML_VALIDATOR" == "yamllint" ]; then
-        if ! yamllint -d "{extends: default, rules: {line-length: disable, document-start: disable}}" "$file"; then
+        # Disable 'truthy' rule because 'on:' is incorrectly flagged as a boolean
+        if ! yamllint -d "{extends: default, rules: {line-length: disable, document-start: disable, truthy: disable}}" "$file"; then
             printf '%s  ✗ YAML syntax errors (yamllint): %s%s\n' "${RED}" "$file" "${NC}"
             FILE_FAILED=1
         fi

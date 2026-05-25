@@ -30,7 +30,7 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd   # v6.0.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:
           persist-credentials: false
 
@@ -41,7 +41,7 @@ jobs:
         run: pnpm build
 
       - name: Deploy preview to Cloudflare Pages
-        uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0 # v4.0.0
+        uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0  # v4.0.0
         id: deploy
         continue-on-error: true
         env:
@@ -62,7 +62,7 @@ jobs:
         if: steps.deploy.outcome == 'success'
         id: lhci
         continue-on-error: true
-        uses: treosh/lighthouse-ci-action@3e7e23fb74242897f95c0ba9cabad3d0227b9b18 # v12.6.2
+        uses: treosh/lighthouse-ci-action@3e7e23fb74242897f95c0ba9cabad3d0227b9b18  # v12.6.2
         with:
           urls: |
             ${{ steps.deploy.outputs.url }}/reader
@@ -75,8 +75,8 @@ jobs:
         run: |
           if [ -f "./lighthouseci/assertion-results.json" ]; then
             echo "=== Lighthouse Assertion Results ==="
-            cat ./lighthouseci/assertion-results.json | jq '.'
-            FAILURES=$(cat ./lighthouseci/assertion-results.json | jq '[.[] | select(.passed == false)] | length')
+            jq '.' < ./lighthouseci/assertion-results.json
+            FAILURES=$(jq '[.[] | select(.passed == false)] | length' < ./lighthouseci/assertion-results.json)
             if [ "$FAILURES" -gt "0" ]; then
               echo "::error::Lighthouse assertions failed ($FAILURES failures)"
             fi
@@ -84,7 +84,7 @@ jobs:
 
       - name: Comment PR with scores
         if: github.event_name == 'pull_request' && steps.lhci.outcome != 'skipped'
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b   # v7.1.0
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b  # v7.1.0
         with:
           script: |
             const fs = require('fs');
@@ -101,7 +101,7 @@ jobs:
               }
             }
             const body = [
-              '## Lighthouse Results',
+              '  ## Lighthouse Results',
               '',
               '| Category | Score | Threshold | Status |',
               '|---|---|---|---|',
@@ -127,7 +127,7 @@ jobs:
             fs.writeFileSync('lighthouse-metrics.json', JSON.stringify(lighthouseMetrics, null, 2));
 
       - name: Upload Lighthouse metrics
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02   # v4.6.2
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
         with:
           name: lighthouse-metrics
           path: lighthouse-metrics.json
