@@ -16,7 +16,8 @@
     "bindings": [
       {
         "binding": "RATE_LIMITER",
-        "class_name": "RateLimiterDO"
+        "class_name": "RateLimiterDO",
+        "name": "rate-limiter"
       }
     ]
   }
