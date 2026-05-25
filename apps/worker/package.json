@@ -21,12 +21,12 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@cloudflare/vitest-pool-workers": "^0.13.0",
-    "@cloudflare/workers-types": "^4.20260520.1",
+    "@cloudflare/vitest-pool-workers": "^0.16.9",
+    "@cloudflare/workers-types": "^4.20260524.1",
     "@types/node": "^25",
     "eslint": "^10.4.0",
     "typescript": "^6.0.3",
     "vitest": "4.1.7",
-    "wrangler": "^4.93.0"
+    "wrangler": "^4.94.0"
   }
 }
