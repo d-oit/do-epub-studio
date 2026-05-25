@@ -1,16 +1,20 @@
 {
   "$schema": "https://turbo.build/schema.json",
+  "globalDependencies": ["vitest.workspace.ts", "tsconfig.base.json", "**/.env.*local"],
+  "globalPassThroughEnv": ["TURBO_TOKEN", "TURBO_TEAM"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**"]
+      "outputs": ["dist/**"],
+      "env": ["ANALYZE", "CF_PAGES_URL", "VITE_API_BASE_URL", "VITE_APP_NAME", "NODE_ENV"]
     },
     "dev": {
       "cache": false
     },
     "lint": {
       "inputs": ["src/**", "tests/**", "*.config.*", "eslint.config.js"],
-      "outputs": []
+      "outputs": [],
+      "env": ["CI"]
     },
     "typecheck": {
       "inputs": ["src/**", "tests/**", "tsconfig*.json"],
@@ -18,19 +22,21 @@
     },
     "test:unit": {
       "outputs": [],
-      "inputs": ["src/**", "tests/**", "*.config.*", "vitest.workspace.ts", "vitest.config.ts"]
+      "inputs": ["src/**", "tests/**", "*.config.*", "vitest.workspace.ts", "vitest.config.ts"],
+      "env": ["CI", "NODE_ENV"]
     },
     "test": {
       "dependsOn": ["test:unit"]
     },
     "test:e2e": {
       "dependsOn": ["^build"],
-      "outputs": []
+      "outputs": [],
+      "env": ["PLAYWRIGHT_MODE", "PLAYWRIGHT_INCLUDE_WEBKIT", "CI"]
     },
     "test:coverage": {
       "dependsOn": ["test:unit"],
-      "outputs": []
+      "outputs": [],
+      "env": ["CI", "NODE_ENV"]
     }
-  },
-  "globalDependencies": ["vitest.workspace.ts", "tsconfig.base.json"]
+  }
 }
