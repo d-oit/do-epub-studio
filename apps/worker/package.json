@@ -25,6 +25,7 @@
     "@cloudflare/workers-types": "^4.20260520.1",
     "@types/node": "^25",
     "eslint": "^10.4.0",
+    "jszip": "^3.10.1",
     "typescript": "^6.0.3",
     "vitest": "4.1.7",
     "wrangler": "^4.93.0"
