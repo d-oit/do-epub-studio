@@ -1,4 +1,5 @@
 import JSZip from 'jszip';
+import { matchBounded } from '@do-epub-studio/shared';
 
 export interface ValidationResult {
   isValid: boolean;
@@ -6,6 +7,10 @@ export interface ValidationResult {
   warnings: string[];
   epubVersion?: string;
 }
+
+const MAX_XML_LENGTH = 1_048_576;
+const FULL_PATH_RE = /full-path="([^"]{1,4096})"/;
+const VERSION_RE = /<package[^>]{0,4096}version="([^"]{1,20})"/;
 
 export async function validateEpub(data: ArrayBuffer): Promise<ValidationResult> {
   const result: ValidationResult = {
@@ -17,7 +22,6 @@ export async function validateEpub(data: ArrayBuffer): Promise<ValidationResult>
   try {
     const zip = await JSZip.loadAsync(data);
 
-    // 1. Check mimetype file
     const mimetypeFile = zip.file('mimetype');
     if (!mimetypeFile) {
       result.errors.push('Missing "mimetype" file.');
@@ -30,14 +34,13 @@ export async function validateEpub(data: ArrayBuffer): Promise<ValidationResult>
       }
     }
 
-    // 2. Check META-INF/container.xml
     const containerFile = zip.file('META-INF/container.xml');
     if (!containerFile) {
       result.errors.push('Missing "META-INF/container.xml".');
       result.isValid = false;
     } else {
       const containerXml = await containerFile.async('string');
-      const fullPathMatch = containerXml.match(/full-path="([^"]+)"/);
+      const fullPathMatch = matchBounded(FULL_PATH_RE, containerXml, MAX_XML_LENGTH);
 
       if (!fullPathMatch) {
         result.errors.push('Could not find rootfile path in "META-INF/container.xml".');
@@ -52,8 +55,7 @@ export async function validateEpub(data: ArrayBuffer): Promise<ValidationResult>
         } else {
           const opfXml = await opfFile.async('string');
 
-          // Basic version check
-          const versionMatch = opfXml.match(/<package[^>]+version="([^"]+)"/);
+          const versionMatch = matchBounded(VERSION_RE, opfXml, MAX_XML_LENGTH);
           if (versionMatch) {
             result.epubVersion = versionMatch[1];
             if (!result.epubVersion.startsWith('3.')) {
@@ -63,7 +65,6 @@ export async function validateEpub(data: ArrayBuffer): Promise<ValidationResult>
             result.warnings.push('Could not determine EPUB version from OPF file.');
           }
 
-          // Check for NAV/NCX
           if (!opfXml.includes('properties="nav"') && !opfXml.includes('id="nav"')) {
             const hasNcx = opfXml.includes('media-type="application/x-dtbncx+xml"');
             if (!hasNcx) {
@@ -75,7 +76,8 @@ export async function validateEpub(data: ArrayBuffer): Promise<ValidationResult>
     }
   } catch (err) {
     result.isValid = false;
-    result.errors.push(`Failed to parse EPUB archive: ${(err as Error).message}`);
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    result.errors.push(`Failed to parse EPUB archive: ${message}`);
   }
 
   return result;

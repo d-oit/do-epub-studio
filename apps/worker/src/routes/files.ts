@@ -43,13 +43,6 @@ export async function handleDownloadBookFile(
   headers.set('Content-Type', headers.get('Content-Type') ?? 'application/epub+zip');
   headers.set('Cache-Control', 'private, max-age=0');
 
-  // Strict CSP for EPUB content — served within a sandboxed iframe.
-  // We allow styles and images but block all scripts and framing except by the application.
-  headers.set(
-    'Content-Security-Policy',
-    "default-src 'self'; script-src 'none'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; frame-ancestors 'self'; sandbox allow-same-origin allow-scripts; report-uri /api/csp-report",
-  );
-
   return new Response(object.body, {
     status: 200,
     headers,

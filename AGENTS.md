@@ -19,6 +19,14 @@ readonly MAX_PR_TITLE_LENGTH=72
 
 ---
 
+## Infrastructure Stack (React 19 Compatibility Verified)
+
+- **Frontend**: React 19.0.0, React Router 7.0.0
+- **Linting**: ESLint 10.4.0, eslint-plugin-react 7.37.5+, eslint-plugin-react-hooks 7.1.1+
+- **Core Libs**: @intity/epub-js 0.3.96+, DOMPurify 3.4.5+, Zod 4.4.3+
+
+---
+
 ## TIER 1 — CRITICAL (Must Follow)
 
 **NEVER ignore these rules. Violations cause security incidents or data loss.**
