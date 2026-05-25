@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import JSZip from 'jszip';
 import {
   makeEnv,
   mockQueryAll,
@@ -102,12 +103,18 @@ describe('Admin Routes', () => {
 
       mockQueryFirst.mockResolvedValue({ id: 'book-1', slug: 'book-slug' });
 
+      const zip = new JSZip();
+      zip.file('mimetype', 'application/epub+zip');
+      zip.file('META-INF/container.xml', '<?xml version="1.0"?><container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container"><rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/></rootfiles></container>');
+      zip.file('OEBPS/content.opf', '<?xml version="1.0"?><package version="3.0" xmlns="http://www.idpf.org/2007/opf"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>Test</dc:title></metadata><manifest><item id="nav" href="nav.xhtml" properties="nav" media-type="application/xhtml+xml"/></manifest><spine></spine></package>');
+      const epubBuffer = await zip.generateAsync({ type: 'arraybuffer' });
+
       const res = await app.fetch(new Request('http://localhost/api/admin/books/book-1/upload', {
         method: 'PUT',
-        body: 'epub-content',
+        body: epubBuffer,
         headers: {
           'Content-Type': 'application/epub+zip',
-          'Content-Length': '12',
+          'Content-Length': String(epubBuffer.byteLength),
           'Authorization': 'Bearer admin-token'
         },
       }), env);

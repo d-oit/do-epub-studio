@@ -8,6 +8,7 @@ import {
   CreateBookSchema,
   CreateGrantSchema,
   UpdateGrantSchema,
+  validateEpub,
 } from '@do-epub-studio/shared';
 import { z } from 'zod';
 import { requireAdminAuth, createAdminSession, revokeAdminSession } from '../auth/admin-middleware';
@@ -29,6 +30,7 @@ const UploadCompleteSchema = z.object({
   fileSizeBytes: z.number().int().nonnegative().optional(),
   sha256: z.string().max(64).optional(),
   epubVersion: z.string().max(10).optional(),
+  validationResults: z.any().optional(),
 });
 
 interface _GrantRow {
@@ -198,14 +200,32 @@ adminRouter.put('/books/:id/upload', authMiddleware, async (c) => {
   }
 
   const storageKey = `books/${book.id}/${crypto.randomUUID()}.epub`;
+  let validationResults;
 
   try {
-    const body = c.req.raw.body;
-    if (!body) {
+    const arrayBuffer = await c.req.raw.arrayBuffer();
+    if (arrayBuffer.byteLength === 0) {
       return c.json({ ok: false, error: { code: 'VALIDATION_ERROR', message: 'Request body is empty' } }, 400);
     }
 
-    await c.env.BOOKS_BUCKET.put(storageKey, body, {
+    const validation = await validateEpub(arrayBuffer);
+    validationResults = validation;
+
+    if (!validationResults.isValid) {
+      return c.json(
+        {
+          ok: false,
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: 'EPUB validation failed',
+            details: validation.errors,
+          },
+        },
+        400,
+      );
+    }
+
+    await c.env.BOOKS_BUCKET.put(storageKey, arrayBuffer, {
       httpMetadata: {
         contentType,
         contentDisposition: `attachment; filename="${book.slug}.epub"`,
@@ -213,13 +233,25 @@ adminRouter.put('/books/:id/upload', authMiddleware, async (c) => {
       customMetadata: {
         bookId: book.id,
         uploadedAt: new Date().toISOString(),
+        validationResults: JSON.stringify(validationResults),
       },
     });
   } catch {
     return c.json({ ok: false, error: { code: 'UPLOAD_FAILED', message: 'Failed to upload file to storage' } }, 500);
   }
 
-  return c.json({ ok: true, data: { storageKey, bookId: book.id, slug: book.slug } }, 200);
+  return c.json(
+    {
+      ok: true,
+      data: {
+        storageKey,
+        bookId: book.id,
+        slug: book.slug,
+        validation: validationResults,
+      },
+    },
+    200,
+  );
 });
 
 adminRouter.post('/books/:id/upload-complete', zValidator('json', UploadCompleteSchema), authMiddleware, async (c) => {
@@ -230,8 +262,8 @@ adminRouter.post('/books/:id/upload-complete', zValidator('json', UploadComplete
 
   await execute(
     c.env,
-    `INSERT INTO book_files (id, book_id, storage_provider, storage_key, original_filename, mime_type, file_size_bytes, sha256, epub_version, created_at)
-     VALUES (?, ?, 'r2', ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO book_files (id, book_id, storage_provider, storage_key, original_filename, mime_type, file_size_bytes, sha256, epub_version, validation_results_json, created_at)
+     VALUES (?, ?, 'r2', ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       fileId,
       bookId,
@@ -241,6 +273,7 @@ adminRouter.post('/books/:id/upload-complete', zValidator('json', UploadComplete
       body.fileSizeBytes ?? 0,
       body.sha256 ?? null,
       body.epubVersion ?? null,
+      body.validationResults ? JSON.stringify(body.validationResults) : null,
       now,
     ],
   );
