@@ -28,8 +28,8 @@ describe('security headers', () => {
     expect(minimalSecurityHeaders).toHaveProperty('Referrer-Policy');
     expect(minimalSecurityHeaders).toHaveProperty('Permissions-Policy');
     expect(minimalSecurityHeaders).toHaveProperty('Cross-Origin-Opener-Policy', 'same-origin');
-    // Minimal should NOT include CSP
-    expect(minimalSecurityHeaders).not.toHaveProperty('Content-Security-Policy');
+    // Minimal now includes a restrictive CSP
+    expect(minimalSecurityHeaders).toHaveProperty('Content-Security-Policy');
   });
 
   it('applies full security headers to a response', () => {
