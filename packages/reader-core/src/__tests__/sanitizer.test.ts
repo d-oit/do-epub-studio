@@ -20,7 +20,8 @@ describe('sanitizeEpubDocument', () => {
     doc.body.innerHTML = '<div>Safe</div><script>alert("xss")</script>';
     sanitizeEpubDocument(doc);
     expect(doc.body.querySelectorAll('script')).toHaveLength(0);
-    expect(doc.body.innerHTML).toBe('<div>Safe</div>');
+    const sanitizedHtml = doc.body.innerHTML;
+    expect(sanitizedHtml).toBe('<div>Safe</div>');
   });
 
   it('removes event handlers', () => {
@@ -57,6 +58,6 @@ describe('sanitizeEpubDocument', () => {
     // createHTMLDocument always has a head, but let's try to simulate or at least ensure no crash
     const docNoHead = document.implementation.createDocument(null, 'html', null);
     // Note: Document created this way might not have body/head like HTMLDocument
-    expect(() => sanitizeEpubDocument(docNoHead)).not.toThrow();
+    expect(() => { sanitizeEpubDocument(docNoHead); }).not.toThrow();
   });
 });
