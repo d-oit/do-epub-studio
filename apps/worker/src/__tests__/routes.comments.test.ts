@@ -81,4 +81,20 @@ describe('Comments Routes', () => {
       expect(res.status).toBe(200);
     });
   });
+
+  describe('DELETE /api/comments/:commentId', () => {
+    it('deletes comment when owned by user', async () => {
+      mockRequireAuth.mockResolvedValue({ email: 'user@example.com' } as any);
+
+      mockQueryFirst.mockResolvedValue({ user_email: 'user@example.com' });
+      mockExecute.mockResolvedValue({} as any);
+
+      const res = await app.fetch(new Request('http://localhost/api/comments/1', {
+        method: 'DELETE',
+        headers: { 'Authorization': 'Bearer valid' },
+      }), env);
+
+      expect(res.status).toBe(200);
+    });
+  });
 });

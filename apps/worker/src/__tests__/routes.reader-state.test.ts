@@ -82,6 +82,60 @@ describe('Reader State Routes', () => {
     });
   });
 
+  describe('POST /api/books/:bookId/bookmarks', () => {
+    it('creates bookmark and returns success', async () => {
+      mockRequireAuth.mockResolvedValue({
+        email: 'user@example.com',
+        capabilities: { canBookmark: true },
+      } as any);
+      mockExecute.mockResolvedValue({} as any);
+
+      const res = await app.fetch(new Request('http://localhost/api/books/book-1/bookmarks', {
+        method: 'POST',
+        body: JSON.stringify({
+          locator: { cfi: 'cfi', selectedText: 'text', chapterRef: 'chap1' },
+          label: 'My Bookmark',
+        }),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer valid'
+        },
+      }), env);
+
+      expect(res.status).toBe(201);
+    });
+  });
+
+  describe('DELETE /api/books/:bookId/bookmarks/:bookmarkId', () => {
+    it('deletes bookmark and returns success', async () => {
+      mockRequireAuth.mockResolvedValue({ email: 'user@example.com' } as any);
+      mockExecute.mockResolvedValue({} as any);
+
+      const res = await app.fetch(new Request('http://localhost/api/books/book-1/bookmarks/bookmark-1', {
+        method: 'DELETE',
+        headers: { 'Authorization': 'Bearer valid' },
+      }), env);
+
+      expect(res.status).toBe(200);
+    });
+  });
+
+  describe('GET /api/books/:bookId/highlights', () => {
+    it('returns list of highlights', async () => {
+      mockRequireAuth.mockResolvedValue({ email: 'user@example.com' } as any);
+      mockQueryAll.mockResolvedValue([
+        { id: '1', chapter_ref: 'c1', cfi_range: 'r1', selected_text: 't', color: '#ff0', created_at: 'now' }
+      ]);
+
+      const res = await app.fetch(new Request('http://localhost/api/books/book-1/highlights', {
+        headers: { 'Authorization': 'Bearer valid' }
+      }), env);
+      expect(res.status).toBe(200);
+      const body = await res.json() as any;
+      expect(body.data).toHaveLength(1);
+    });
+  });
+
   describe('POST /api/books/:bookId/highlights', () => {
     it('creates highlight and returns success', async () => {
       mockRequireAuth.mockResolvedValue({
@@ -104,6 +158,39 @@ describe('Reader State Routes', () => {
       }), env);
 
       expect(res.status).toBe(201);
+    });
+  });
+
+  describe('PATCH /api/books/:bookId/highlights/:highlightId', () => {
+    it('updates highlight and returns success', async () => {
+      mockRequireAuth.mockResolvedValue({ email: 'user@example.com' } as any);
+      mockQueryFirst.mockResolvedValue({ user_email: 'user@example.com' });
+      mockExecute.mockResolvedValue({} as any);
+
+      const res = await app.fetch(new Request('http://localhost/api/books/book-1/highlights/highlight-1', {
+        method: 'PATCH',
+        body: JSON.stringify({ note: 'updated', color: '#00ff00' }),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer valid'
+        },
+      }), env);
+
+      expect(res.status).toBe(200);
+    });
+  });
+
+  describe('DELETE /api/books/:bookId/highlights/:highlightId', () => {
+    it('deletes highlight and returns success', async () => {
+      mockRequireAuth.mockResolvedValue({ email: 'user@example.com' } as any);
+      mockExecute.mockResolvedValue({} as any);
+
+      const res = await app.fetch(new Request('http://localhost/api/books/book-1/highlights/highlight-1', {
+        method: 'DELETE',
+        headers: { 'Authorization': 'Bearer valid' },
+      }), env);
+
+      expect(res.status).toBe(200);
     });
   });
 });

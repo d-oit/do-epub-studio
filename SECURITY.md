@@ -80,4 +80,3 @@ The Worker API implements a centralized validation layer using [Hono](https://ho
 - **Schema Enforcement**: Every API endpoint that accepts a request body or query parameters is protected by a Zod schema from `@do-epub-studio/shared`.
 - **Validation Middleware**: Request validation is performed by the `zValidator` middleware. Requests that do not conform to the schema are automatically rejected with a `400 Bad Request` status and detailed error information.
 - **No Raw Input**: Use of raw `request.json()` in route handlers is strictly prohibited. Handlers must receive validated, typed data from the Hono context.
-- **Reporting**: All violations are reported to `/api/csp-report`.
