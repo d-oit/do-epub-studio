@@ -19,6 +19,7 @@ import {
   useAnnotationHandlers,
   useBookmarkHandlers,
   useExportNotes,
+  useKeyboardShortcuts,
 } from './hooks';
 import { AnimatePresence } from 'framer-motion';
 import {
@@ -28,6 +29,7 @@ import {
   BookmarksPanel,
   ReaderViewer,
   CommentInputModal,
+  KeyboardShortcutsModal,
 } from './components';
 
 export function ReaderPage() {
@@ -99,6 +101,7 @@ export function ReaderPage() {
 
   const [epubUrl, setEpubUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showShortcutsHelp, setShowShortcutsHelp] = useState(false);
 
   const { renditionRef, currentChapterRef, toc, resolvedTheme } = useReaderEpub(
     epubUrl,
@@ -186,6 +189,44 @@ export function ReaderPage() {
   );
   renderCommentMarkersRef.current = renderCommentMarkers;
 
+  const handlePrevPage = useCallback(() => void renditionRef.current?.prev(), [renditionRef]);
+  const handleNextPage = useCallback(() => void renditionRef.current?.next(), [renditionRef]);
+  const handleAddBookmark = useCallback(
+    () => void handleCreateBookmark(currentChapterRef, toc),
+    [handleCreateBookmark, currentChapterRef, toc],
+  );
+  const handleHighlight = useCallback(() => {
+    if (selection) {
+      void handleCreateHighlight('yellow', selection);
+      setSelection(null);
+    }
+  }, [selection, handleCreateHighlight, setSelection]);
+  const handleComment = useCallback(() => {
+    if (selection) {
+      setShowCommentInput(true);
+      setIsCommentMode(true);
+    }
+  }, [selection, setShowCommentInput, setIsCommentMode]);
+  const handleToggleToc = useCallback(() => togglePanel('toc'), [togglePanel]);
+  const handleToggleBookmarks = useCallback(() => togglePanel('bookmarks'), [togglePanel]);
+  const handleToggleComments = useCallback(() => togglePanel('comments'), [togglePanel]);
+  const handleToggleSettings = useCallback(() => togglePanel('settings'), [togglePanel]);
+  const handleShowHelp = useCallback(() => setShowShortcutsHelp(true), []);
+
+  useKeyboardShortcuts({
+    rendition: renditionRef.current,
+    onPrevPage: handlePrevPage,
+    onNextPage: handleNextPage,
+    onAddBookmark: handleAddBookmark,
+    onHighlight: handleHighlight,
+    onComment: handleComment,
+    onToggleToc: handleToggleToc,
+    onToggleBookmarks: handleToggleBookmarks,
+    onToggleComments: handleToggleComments,
+    onToggleSettings: handleToggleSettings,
+    onShowHelp: handleShowHelp,
+  });
+
   useEffect(() => {
     if (!sessionToken || !bookSlug) {
       void navigate('/login');
@@ -255,6 +296,12 @@ export function ReaderPage() {
       className="min-h-screen bg-background text-foreground"
       data-theme={resolvedTheme}
     >
+      <a
+        href="#reader-main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:bg-accent focus:text-white focus:rounded-lg focus:shadow-lg"
+      >
+        {t('reader.skipToContent')}
+      </a>
       <ReaderToolbar
         bookTitle={bookTitle}
         bookSlug={bookSlug ?? ''}
@@ -292,6 +339,7 @@ export function ReaderPage() {
         pageWidthClass={pageWidthClass}
         viewerRef={viewerRef}
         notAvailableText={t('reader.notAvailable')}
+        id="reader-main-content"
       />
       <TableOfContents
         isOpen={activePanel === 'toc'}
@@ -364,6 +412,15 @@ export function ReaderPage() {
         onDeleteHighlight={(id) => void handleDeleteHighlight(id)}
         onNavigateToAnnotation={(ref, cfi) => void handleNavigateToAnnotation(ref, cfi)}
       />
+      <AnimatePresence>
+        {showShortcutsHelp && (
+          <KeyboardShortcutsModal
+            isOpen={showShortcutsHelp}
+            onClose={() => setShowShortcutsHelp(false)}
+            t={tFn}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
