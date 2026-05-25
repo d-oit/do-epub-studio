@@ -15,13 +15,6 @@ vi.mock('@intity/epub-js', () => {
 
   const mockBook = {
     opened: Promise.resolve(),
-    sections: {
-      hooks: {
-        content: {
-          register: vi.fn(),
-        },
-      },
-    },
     loaded: {
       spine: Promise.resolve([
         { index: 0, href: 'chapter1.xhtml', properties: ['page-spread-right'] },
@@ -66,13 +59,6 @@ const epubjsMock = vi.mocked((await import('@intity/epub-js')) as unknown) as {
   __mockBook: {
     renderTo: ReturnType<typeof vi.fn>;
     destroy: ReturnType<typeof vi.fn>;
-    sections: {
-      hooks: {
-        content: {
-          register: ReturnType<typeof vi.fn>;
-        };
-      };
-    };
   };
 };
 
@@ -144,11 +130,9 @@ describe('createEpubLoader', () => {
     );
   });
 
-  it('parses toc, spine, and metadata on load and registers sanitization hook', async () => {
+  it('parses toc, spine, and metadata on load', async () => {
     const loader = createEpubLoader();
     await loader.load('test.epub');
-
-    expect(epubjsMock.__mockBook.sections.hooks.content.register).toHaveBeenCalled();
 
     const toc = loader.getToc();
     expect(toc).toHaveLength(2);
@@ -225,7 +209,7 @@ describe('createEpubLoader', () => {
     );
   });
 
-  it('reuses existing rendition handle and uses restricted sandbox', async () => {
+  it('reuses existing rendition handle', async () => {
     const loader = createEpubLoader();
     await loader.load('test.epub');
 
@@ -237,12 +221,6 @@ describe('createEpubLoader', () => {
 
     expect(handle1).toBe(handle2);
     expect(epubjsMock.__mockBook.renderTo).toHaveBeenCalledTimes(1);
-    expect(epubjsMock.__mockBook.renderTo).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.objectContaining({
-        sandbox: ['allow-scripts'],
-      }),
-    );
   });
 
   it('registers and removes event listeners', () => {

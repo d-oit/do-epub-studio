@@ -3,22 +3,15 @@ import type { Env } from '../lib/env';
 import { execute, queryAll, queryFirst } from '../db/client';
 import { createGrant } from '../auth/password';
 import { jsonResponse } from '../lib/responses';
-import { validateEpub } from '../lib/epub-validator';
 import { validateRequestBody } from '../lib/validation';
 import { logAudit } from '../audit';
 import {
   CreateBookSchema,
   CreateGrantSchema,
   UpdateGrantSchema,
+  validateEpub,
 } from '@do-epub-studio/shared';
 import { z } from 'zod';
-
-const ValidationResultSchema = z.object({
-  isValid: z.boolean(),
-  errors: z.array(z.string()),
-  warnings: z.array(z.string()),
-  epubVersion: z.string().optional(),
-});
 
 const UploadCompleteSchema = z.object({
   storageKey: z.string().min(1),
@@ -27,7 +20,7 @@ const UploadCompleteSchema = z.object({
   fileSizeBytes: z.number().int().nonnegative().optional(),
   sha256: z.string().max(64).optional(),
   epubVersion: z.string().max(10).optional(),
-  validationResults: ValidationResultSchema.optional(),
+  validationResults: z.any().optional(),
 });
 
 interface _BookRow {

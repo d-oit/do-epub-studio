@@ -18,7 +18,6 @@
     "@do-epub-studio/shared": "workspace:*",
     "@libsql/client": "^0.17.3",
     "argon2-wasm-edge": "^1.0.23",
-    "jszip": "^3.10.1",
     "zod": "^4.4.3"
   },
   "devDependencies": {
@@ -26,6 +25,7 @@
     "@cloudflare/workers-types": "^4.20260520.1",
     "@types/node": "^25",
     "eslint": "^10.4.0",
+    "jszip": "^3.10.1",
     "typescript": "^6.0.3",
     "vitest": "4.1.7",
     "wrangler": "^4.93.0"

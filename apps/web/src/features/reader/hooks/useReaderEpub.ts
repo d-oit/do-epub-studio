@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import ePub, { Book, Rendition, NavItem } from '@intity/epub-js';
+import ePub from '@intity/epub-js';
+import type { Book, Rendition, NavItem } from '@intity/epub-js';
 import {
   useAuthStore,
   useReaderStore,
@@ -109,7 +110,7 @@ export function useReaderEpub(
           width: '100%',
           height: '100%',
           spread: 'auto',
-          sandbox: ['allow-same-origin'],
+          sandbox: ['allow-same-origin', 'allow-scripts'],
         });
         renditionRef.current = rendition;
         applyThemes(rendition);

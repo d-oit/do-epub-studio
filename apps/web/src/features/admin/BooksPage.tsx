@@ -1,9 +1,8 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import JSZip from 'jszip';
 import { useTranslation } from '../../hooks/useTranslation';
 import { apiRequest } from '../../lib/api';
-import { BookResponse } from '@do-epub-studio/shared';
+import { BookResponse, validateEpub } from '@do-epub-studio/shared';
 import { LocaleSwitcher } from '../../components/LocaleSwitcher';
 import { Modal, Button } from '../../components/ui';
 
@@ -73,31 +72,19 @@ export function AdminBookResponsesPage() {
   const validateEpubLocal = async (file: File) => {
     try {
       const data = await file.arrayBuffer();
-      const zip = await JSZip.loadAsync(data);
-      const errors: string[] = [];
-      const warnings: string[] = [];
+      const result = await validateEpub(data);
 
-      const mimetype = zip.file('mimetype');
-      if (!mimetype) {
-        errors.push(t('admin.createBookModal.error.missingMimetype'));
-      } else {
-        const content = (await mimetype.async('string')).trim();
-        if (content !== 'application/epub+zip') {
-          errors.push(t('admin.createBookModal.error.invalidMimetype'));
-        }
-      }
-
-      const container = zip.file('META-INF/container.xml');
-      if (!container) {
-        errors.push(t('admin.createBookModal.error.missingContainer'));
-      }
+      const localizedErrors = result.errors.map(err => {
+        if (err.includes('mimetype')) return t('admin.createBookModal.error.missingMimetype');
+        if (err.includes('META-INF/container.xml')) return t('admin.createBookModal.error.missingContainer');
+        return err;
+      });
 
       setValidationResult({
-        isValid: errors.length === 0,
-        errors,
-        warnings,
+        ...result,
+        errors: localizedErrors,
       });
-      return errors.length === 0;
+      return result.isValid;
     } catch {
       setCreateError(t('admin.createBookModal.error.corruptZip'));
       return false;
