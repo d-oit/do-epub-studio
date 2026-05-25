@@ -34,7 +34,12 @@ export default tseslint.config(
       security,
       import: importPlugin,
     },
-    extends: [js.configs.recommended, ...tseslint.configs.recommendedTypeChecked],
+    extends: [
+      js.configs.recommended,
+      ...tseslint.configs.recommendedTypeChecked,
+      reactPlugin.configs.flat.recommended,
+      reactPlugin.configs.flat['jsx-runtime'],
+    ],
     languageOptions: {
       globals: {
         ...globals.browser,
@@ -47,9 +52,11 @@ export default tseslint.config(
       },
     },
     settings: {
-      react: { version: 'detect' },
+      react: { version: '19.0.0' },
     },
     rules: {
+      'react/display-name': 'off',
+      'react/no-unescaped-entities': 'off',
       '@typescript-eslint/no-unused-vars': [
         'error',
         {
