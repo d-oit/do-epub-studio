@@ -43,7 +43,7 @@ app.use('*', async (c, next) => {
 });
 
 // OPTIONS handler for CORS
-app.options('*', (c) => {
+app.options('*', (_c) => {
   return new Response(null, { status: 204 });
 });
 

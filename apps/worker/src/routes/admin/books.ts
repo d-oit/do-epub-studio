@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import type { Env } from '../../lib/env';
-import { execute, queryFirst, queryAll } from '../../db/client';
+import { execute, queryFirst } from '../../db/client';
 import { logAudit } from '../../audit';
 import { CreateBookSchema, validateEpub } from '@do-epub-studio/shared';
 import { adminAuth } from '../../middleware/auth';
