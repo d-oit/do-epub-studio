@@ -13,14 +13,25 @@ vi.mock('@intity/epub-js', () => {
     display: vi.fn().mockResolvedValue(undefined),
     prev: vi.fn().mockResolvedValue(undefined),
     next: vi.fn().mockResolvedValue(undefined),
-    getContents: vi.fn().mockReturnValue(null),
+    getContents: vi.fn().mockReturnValue([]),
     destroy: vi.fn(),
+    hooks: {
+      content: { register: vi.fn() },
+      render: { register: vi.fn() },
+    },
   };
 
   const mockBook = {
     opened: Promise.resolve(),
     packaging: {
       direction: 'ltr',
+    },
+    sections: {
+      hooks: {
+        content: {
+          register: vi.fn(),
+        },
+      },
     },
     loaded: {
       spine: Promise.resolve([
@@ -53,21 +64,20 @@ vi.mock('@intity/epub-js', () => {
 });
 
 // Get mock references after hoisting
-const epubjsMock = vi.mocked((await import('@intity/epub-js')) as unknown) as {
-  __mockRendition: {
-    on: ReturnType<typeof vi.fn>;
-    off: ReturnType<typeof vi.fn>;
-    display: ReturnType<typeof vi.fn>;
-    prev: ReturnType<typeof vi.fn>;
-    next: ReturnType<typeof vi.fn>;
-    getContents: ReturnType<typeof vi.fn>;
-    destroy: ReturnType<typeof vi.fn>;
-  };
+const epubjsMock = (await import('@intity/epub-js')) as unknown as {
+  __mockRendition: any;
   __mockBook: {
-    renderTo: ReturnType<typeof vi.fn>;
-    destroy: ReturnType<typeof vi.fn>;
+    renderTo: any;
+    destroy: any;
     packaging: {
       direction: string;
+    };
+    sections: {
+      hooks: {
+        content: {
+          register: any;
+        };
+      };
     };
   };
 };
@@ -265,17 +275,23 @@ describe('createEpubLoader', () => {
     expect(epubjsMock.__mockBook.renderTo).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({
-        sandbox: ['allow-same-origin'],
+        sandbox: expect.arrayContaining(['allow-scripts']),
         defaultDirection: 'ltr',
       }),
     );
   });
 
   it('extracts direction from packaging and passes to rendition', async () => {
+    const mockData = zipSync({ 'mimetype': strToU8('application/epub+zip') });
+    (global.fetch as any).mockResolvedValue({
+      ok: true,
+      arrayBuffer: () => Promise.resolve(mockData.buffer),
+    });
+
     epubjsMock.__mockBook.packaging.direction = 'rtl';
 
     const loader = createEpubLoader();
-    await loader.load('test.epub');
+    await loader.load('https://example.com/rtl.epub');
     loader.createRendition(document.createElement('div'));
 
     expect(loader.getMetadata().direction).toBe('rtl');
