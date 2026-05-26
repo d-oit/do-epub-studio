@@ -28,6 +28,6 @@ jobs:
         with:
           results_file: results.sarif
           results_format: sarif
-          publish_results: true
+          publish_results: false  # Disabled until verified SHA from ossf/scorecard-action repo
         env:
           repo_token: ${{ secrets.SCORECARD_TOKEN }}

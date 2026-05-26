@@ -61,7 +61,7 @@ The following are out of scope:
 
 ## Related Documents
 
-- [ADR-034 (ReDoS)](plans/034-adr-redos.md)
+- [ADR-034 (ReDoS)](plans/034-adr-security-redos-hardening.md)
 - [ADR-035 (Content Security Policy)](plans/035-adr-content-security-policy.md)
 - [docs/security.md](docs/security.md)
 
@@ -71,7 +71,7 @@ The application enforces strict CSP headers across all Worker responses and EPUB
 
 - **Frontend Application**: Restrict resource loading to 'self' and the API domain. Framing is disabled (`frame-ancestors 'none'`). Inline styles are permitted via `'unsafe-inline'` to support dynamic styling in React/Framer Motion.
 - **API Responses**: Restrict resource loading to 'self' and authorized domains. Framing is disabled (`frame-ancestors 'none'`).
-- **EPUB Content**: Rendered in a sandboxed iframe with `sandbox allow-same-origin allow-scripts`. The response header further restricts script execution and network access.
+- **EPUB Content**: Rendered in a sandboxed iframe with restricted permissions. The response header further restricts script execution and network access.
 - **Reporting**: All violations are reported to `/api/csp-report`.
 
 ## API Request Validation

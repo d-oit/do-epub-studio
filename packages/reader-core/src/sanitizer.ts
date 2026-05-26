@@ -275,8 +275,14 @@ export function sanitizeDom(node: Document | DocumentFragment | Element): void {
     if (tag === 'use' || tag === 'image') {
       for (const hrefAttr of SVG_HREF_ATTRS) {
         const val = el.getAttribute(hrefAttr);
-        if (val && (val.startsWith('javascript:') || val.startsWith('data:'))) {
-          el.removeAttribute(hrefAttr);
+        if (val) {
+          const schemeMatch = val.match(/^([a-zA-Z][a-zA-Z0-9+.-]*):/);
+          if (schemeMatch && schemeMatch[1]) {
+            const scheme = schemeMatch[1].toLowerCase();
+            if (scheme !== 'http' && scheme !== 'https' && scheme !== 'mailto') {
+              el.removeAttribute(hrefAttr);
+            }
+          }
         }
       }
     }

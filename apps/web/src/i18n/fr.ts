@@ -216,4 +216,5 @@ export const fr: Record<TranslationKeys, string> = {
   'admin.grants.createGrantModal.close': 'Fermer',
   'admin.grants.createGrantModal.submit': 'Créer une autorisation',
   'admin.grants.createGrantModal.submitting': 'Création...',
+  'admin.grants.selectBook': 'Veuillez sélectionner un livre pour gérer les autorisations d\'accès.',
 };

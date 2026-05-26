@@ -17,11 +17,9 @@ source "$REPO_ROOT/scripts/validate-shas.sh"
 
 FAILED=0
 
-# Ensure local bin directories are in PATH
+# Ensure local bin directory is in PATH
 mkdir -p "$HOME/.local/bin"
 export PATH="$HOME/.local/bin:$PATH"
-USER_BASE=$(python3 -m site --user-base 2>/dev/null || echo "$HOME/.local")
-export PATH="$USER_BASE/bin:$PATH"
 
 # Install actionlint if not present
 if ! command -v actionlint &> /dev/null; then
@@ -42,7 +40,7 @@ fi
 # Install zizmor if not present
 if ! command -v zizmor &> /dev/null; then
   printf '%sInstalling zizmor...%s\n' "${BLUE}" "${NC}"
-  pip install zizmor --user --quiet || true
+  pip install zizmor --quiet 2>/dev/null || pip install zizmor --quiet --break-system-packages 2>/dev/null || true
 fi
 
 # Find all workflow files
