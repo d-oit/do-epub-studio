@@ -1,4 +1,4 @@
- 
+
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   validatePermission,
@@ -69,7 +69,7 @@ describe('Offline Permissions', () => {
       };
 
       vi.mocked(db.getCachedPermission).mockResolvedValue(expiredPerm);
-      
+
       const mockResponse = new Response(
         JSON.stringify({
           grantId: 'grant-2',
@@ -166,7 +166,7 @@ describe('Offline Permissions', () => {
     it('should return cleanup function', () => {
       const mockOnRevoked = vi.fn();
       const cleanup = setupZombieDetection(mockOnRevoked);
-      
+
       expect(cleanup).toBeInstanceOf(Function);
       cleanup();
     });

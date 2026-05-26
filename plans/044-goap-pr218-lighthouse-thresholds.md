@@ -1,12 +1,12 @@
 # GOAP Plan 044: PR #218/#228 — Lighthouse Thresholds, CI Resilience & Pre-existing Fixes
 
-**Status**: Completed — MERGED  
-**Date**: 2026-05-21  
-**Issue**: [#231](https://github.com/d-oit/do-epub-studio/issues/231)  
-**Original PR**: [#218](https://github.com/d-oit/do-epub-studio/pull/218) — fix(ci): lower Lighthouse thresholds to realistic levels  
-**Follow-up PR**: [#228](https://github.com/d-oit/do-epub-studio/pull/228) — fix(ci): make Lighthouse workflow resilient and fix pre-existing lint issues  
-**Branch**: `fix/lighthouse-workflow-resilience`  
-**Merged at**: 2026-05-21T18:42:13Z  
+**Status**: Completed — MERGED
+**Date**: 2026-05-21
+**Issue**: [#231](https://github.com/d-oit/do-epub-studio/issues/231)
+**Original PR**: [#218](https://github.com/d-oit/do-epub-studio/pull/218) — fix(ci): lower Lighthouse thresholds to realistic levels
+**Follow-up PR**: [#228](https://github.com/d-oit/do-epub-studio/pull/228) — fix(ci): make Lighthouse workflow resilient and fix pre-existing lint issues
+**Branch**: `fix/lighthouse-workflow-resilience`
+**Merged at**: 2026-05-21T18:42:13Z
 **Merged by**: d-oit
 
 ---
@@ -127,7 +127,7 @@ These were out of scope but would improve the project:
 
 - Issue [#231](https://github.com/d-oit/do-epub-studio/issues/231): **CLOSED** ✅
 - Original PR #218 (threshold changes): **MERGED** ✅
-- Follow-up PR #228 (resilience + fixes): **MERGED** ✅  
+- Follow-up PR #228 (resilience + fixes): **MERGED** ✅
 - 14 files changed, 125 insertions, 21 deletions
 - All 14 CI checks green
 - Zero lint errors, zero typecheck errors across all 7 workspace packages

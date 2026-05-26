@@ -38,11 +38,11 @@ export async function validateSession(
   token: string
 ): Promise<{ valid: boolean; session?: SessionRow; bookId?: string }> {
   const tokenHash = await hashToken(token);
-  
+
   const session = await queryFirst(
     env,
     `SELECT id, book_id, email, session_token_hash, expires_at, revoked_at
-     FROM reader_sessions 
+     FROM reader_sessions
      WHERE session_token_hash = ? AND revoked_at IS NULL`,
     [tokenHash]
   ) as SessionRow | null;
@@ -63,7 +63,7 @@ export async function revokeSession(
   token: string
 ): Promise<void> {
   const tokenHash = await hashToken(token);
-  
+
   await execute(
     env,
     `UPDATE reader_sessions SET revoked_at = datetime('now') WHERE session_token_hash = ?`,

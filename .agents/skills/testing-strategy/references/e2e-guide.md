@@ -60,11 +60,11 @@ test('homepage loads', async ({ page }) => {
 ```typescript
 test('can create new book', async ({ page }) => {
   await page.goto('/books/new');
-  
+
   await page.fill('[name="title"]', 'My EPUB');
   await page.fill('[name="content"]', 'Sample content');
   await page.click('button[type="submit"]');
-  
+
   await expect(page.url()).toContain('/books/');
 });
 ```
@@ -74,11 +74,11 @@ test('can create new book', async ({ page }) => {
 ```typescript
 test('can login', async ({ page }) => {
   await page.goto('/login');
-  
+
   await page.fill('[name="email"]', 'user@example.com');
   await page.fill('[name="password"]', 'password123');
   await page.click('button[type="submit"]');
-  
+
   await expect(page.locator('.user-menu')).toBeVisible();
 });
 ```
@@ -91,15 +91,15 @@ test('can login', async ({ page }) => {
 // pages/BookPage.ts
 export class BookPage {
   constructor(private page: Page) {}
-  
+
   async open(bookId: string) {
     await this.page.goto(`/books/${bookId}`);
   }
-  
+
   getReader() {
     return this.page.locator('.reader');
   }
-  
+
   async highlight(selector: string) {
     await this.page.click(selector);
     await this.page.click('button[aria-label="Highlight"]');
@@ -110,9 +110,9 @@ export class BookPage {
 test('can highlight text', async ({ page }) => {
   const bookPage = new BookPage(page);
   await bookPage.open('book-1');
-  
+
   await bookPage.highlight('.passage-1');
-  
+
   await expect(page.locator('.highlight')).toBeVisible();
 });
 ```
@@ -131,7 +131,7 @@ export const test = base.extend({
     await page.fill('[name="password"]', 'password');
     await page.click('button[type="submit"]');
     await page.waitForURL('/');
-    
+
     await use(page);
   },
 });
@@ -193,7 +193,7 @@ jobs:
    // Good
    page.locator('button:has-text("Save")')
    page.getByLabel('Title')
-   
+
    // Avoid
    page.locator('#submit-btn')
    page.locator('div:nth-child(3)')
@@ -212,7 +212,7 @@ jobs:
    ```typescript
    // Wait for network idle
    await page.waitForLoadState('networkidle');
-   
+
    // Wait for element
    await expect(page.locator('.loaded')).toBeVisible({ timeout: 5000 });
    ```

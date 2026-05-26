@@ -47,7 +47,7 @@ export const useBookStore = create<BookState>((set) => ({
 async function extractContent(epub: EPUB): Promise<Section[]> {
   const book = await ePub.load(epub.locations);
   const spine = book.spine;
-  
+
   return spine.items.map((item: SpineItem) => ({
     id: item.idref,
     content: item.href,
@@ -81,7 +81,7 @@ async function getSignedUrl(bookId: string): Promise<string> {
     Bucket: EPUB_BUCKET,
     Key: `${bookId}/epub`,
   });
-  
+
   return getSignedUrl(client, command, { expiresIn: 3600 });
 }
 ```
@@ -130,11 +130,11 @@ const CreateBookSchema = z.object({
 export async function POST(request: Request) {
   const body = await request.json();
   const result = CreateBookSchema.safeParse(body);
-  
+
   if (!result.success) {
     return Response.json({ errors: result.error }, { status: 400 });
   }
-  
+
   // Process valid request
 }
 ```

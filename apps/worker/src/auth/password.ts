@@ -64,7 +64,7 @@ export async function validateGrant(
 ): Promise<{ valid: boolean; grant?: GrantRow; book?: BookRow; error?: string }> {
   const book = (await queryFirst(
     env,
-    `SELECT id, slug, title, author_name, visibility, cover_image_url 
+    `SELECT id, slug, title, author_name, visibility, cover_image_url
      FROM books WHERE slug = ?`,
     [bookSlug],
   )) as BookRow | null;
@@ -75,9 +75,9 @@ export async function validateGrant(
 
   const grant = (await queryFirst(
     env,
-    `SELECT id, book_id, email, password_hash, mode, allowed, comments_allowed, 
+    `SELECT id, book_id, email, password_hash, mode, allowed, comments_allowed,
             offline_allowed, expires_at, revoked_at
-     FROM book_access_grants 
+     FROM book_access_grants
      WHERE book_id = ? AND email = ? AND revoked_at IS NULL`,
     [book.id, email.toLowerCase()],
   )) as GrantRow | null;
@@ -125,8 +125,8 @@ export async function createGrant(
 
   await execute(
     env,
-    `INSERT INTO book_access_grants 
-     (id, book_id, email, password_hash, mode, comments_allowed, offline_allowed, 
+    `INSERT INTO book_access_grants
+     (id, book_id, email, password_hash, mode, comments_allowed, offline_allowed,
       expires_at, invited_by_user_id, allowed)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
     [
@@ -170,9 +170,9 @@ export async function getGrantByBookAndSession(
 ): Promise<GrantRow | null> {
   return queryFirst(
     env,
-    `SELECT id, book_id, email, password_hash, mode, allowed, comments_allowed, 
+    `SELECT id, book_id, email, password_hash, mode, allowed, comments_allowed,
             offline_allowed, expires_at, revoked_at
-     FROM book_access_grants 
+     FROM book_access_grants
      WHERE book_id = ? AND email = ? AND allowed = 1 AND revoked_at IS NULL`,
     [bookId, email.toLowerCase()],
   ) as Promise<GrantRow | null>;
@@ -182,9 +182,9 @@ export async function getGrantsBySession(env: Env, email: string): Promise<Grant
   const { queryAll } = await import('../db/client');
   return queryAll(
     env,
-    `SELECT id, book_id, email, password_hash, mode, allowed, comments_allowed, 
+    `SELECT id, book_id, email, password_hash, mode, allowed, comments_allowed,
             offline_allowed, expires_at, revoked_at
-     FROM book_access_grants 
+     FROM book_access_grants
      WHERE email = ? AND revoked_at IS NULL`,
     [email.toLowerCase()],
   ) as unknown as Promise<GrantRow[]>;

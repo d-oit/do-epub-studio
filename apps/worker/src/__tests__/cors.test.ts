@@ -4,7 +4,7 @@ import { TRACE_HEADER, SPAN_HEADER } from '@do-epub-studio/shared';
 import type { Env } from '../lib/env';
 
 describe('CORS', () => {
-   
+
   const mockBucket: any = {
     get: () => Promise.resolve(null),
     put: () => Promise.resolve({

@@ -1,7 +1,7 @@
 # ADR-017: EPUB Reader Engine Migration — futurepress/epub.js → intity/epub-js
 
-**Status:** Accepted  
-**Date:** 2026-05-13  
+**Status:** Accepted
+**Date:** 2026-05-13
 **Issue:** #128 (migration), #140 (follow-up optimization)
 
 ---

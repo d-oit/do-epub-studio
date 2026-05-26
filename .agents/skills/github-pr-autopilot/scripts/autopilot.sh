@@ -78,6 +78,7 @@ echo "  Failing CI:      $PRE_CI"
 echo ""
 
 # Check all blocking conditions
+# shellcheck disable=SC2034
 BLOCKED=false
 if [ "$PRE_CONFLICT" = "CONFLICTING" ]; then
     echo "  ⚠️  Merge conflicts detected (will resolve in-loop)"

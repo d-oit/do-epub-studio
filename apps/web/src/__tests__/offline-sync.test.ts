@@ -1,4 +1,4 @@
- 
+
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   generateMutationId,
@@ -39,14 +39,14 @@ describe('Offline Sync', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.useFakeTimers();
-    
+
     // Mock navigator.onLine
     Object.defineProperty(globalThis, 'navigator', {
       value: { onLine: true },
       writable: true,
       configurable: true,
     });
-    
+
     // Mock window event listeners
     const listeners: Map<string, ((...args: any[]) => void)[]> = new Map();
     Object.defineProperty(globalThis, 'window', {
@@ -125,21 +125,21 @@ describe('Offline Sync', () => {
   describe('setupOnlineListener', () => {
     it('should add event listeners', () => {
       const addEventListenerSpy = vi.spyOn(window, 'addEventListener');
-      
+
       const cleanup = setupOnlineListener();
-      
+
       expect(addEventListenerSpy).toHaveBeenCalledWith('online', expect.any(Function));
       expect(addEventListenerSpy).toHaveBeenCalledWith('offline', expect.any(Function));
-      
+
       cleanup();
     });
 
     it('should cleanup event listeners', () => {
       const removeEventListenerSpy = vi.spyOn(window, 'removeEventListener');
-      
+
       const cleanup = setupOnlineListener();
       cleanup();
-      
+
       expect(removeEventListenerSpy).toHaveBeenCalledWith('online', expect.any(Function));
       expect(removeEventListenerSpy).toHaveBeenCalledWith('offline', expect.any(Function));
     });
@@ -179,7 +179,7 @@ describe('Offline Sync', () => {
   describe('Error Handling', () => {
     it('should handle network errors gracefully', async () => {
       vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(true);
-      
+
       const errorItem = {
         id: 'error-item',
         type: 'progress' as const,
@@ -207,7 +207,7 @@ describe('Offline Sync', () => {
 
     it('should stop retrying after max attempts', async () => {
       vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(true);
-      
+
       const maxRetryItem = {
         id: 'max-retry-item',
         type: 'progress' as const,

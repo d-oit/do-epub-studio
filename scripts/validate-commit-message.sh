@@ -15,6 +15,7 @@ set -euo pipefail
 
 # Configuration
 readonly MAX_COMMIT_SUBJECT_LENGTH=72
+# shellcheck disable=SC2034
 readonly MAX_PR_TITLE_LENGTH=72
 
 # Valid commit types

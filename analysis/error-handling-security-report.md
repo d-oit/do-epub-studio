@@ -1,7 +1,7 @@
 # Error Handling and Security Analysis Report
 
-**Project:** do-epub-studio  
-**Date:** 2025-01-16  
+**Project:** do-epub-studio
+**Date:** 2025-01-16
 **Analyzer:** Code Analysis Tool
 
 ---
@@ -32,13 +32,13 @@ This report analyzes the do-epub-studio codebase for error handling patterns and
 **Worker API Response Pattern:**
 ```do-epub-studio/apps/worker/src/routes/access.ts#L1-25
 return jsonResponse(
-  { 
-    ok: false, 
-    error: { 
-      code: 'VALIDATION_ERROR', 
+  {
+    ok: false,
+    error: {
+      code: 'VALIDATION_ERROR',
       message: validation.error,
-      details: validation.details 
-    } 
+      details: validation.details
+    }
   },
   validation.status,
 );

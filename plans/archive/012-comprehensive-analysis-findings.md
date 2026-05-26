@@ -67,7 +67,7 @@ export async function handleCreateBook(
   if (!auth.ok) {
     return jsonResponse({ ok: false, error: { code: 'FORBIDDEN', message: auth.error } }, auth.status);
   }
-  
+
   const actorEmail = auth.context.email;
   // ... rest of function
 }

@@ -1,7 +1,7 @@
 # Package Versions Analysis Report
 
-**Generated:** 2025-09-25  
-**Project:** do-epub-studio (Monorepo with pnpm workspaces)  
+**Generated:** 2025-09-25
+**Project:** do-epub-studio (Monorepo with pnpm workspaces)
 **Package Manager:** pnpm@10.33.0
 
 ---
@@ -216,7 +216,7 @@
 
 ### Immediate Actions (Critical Security)
 
-1. **Update vite-plugin-pwa** 
+1. **Update vite-plugin-pwa**
    - Current: ^1.2.0
    - Reason: Contains high-severity serialize-javascript vulnerabilities
    - Impact: Fixes 6 high/critical vulnerabilities

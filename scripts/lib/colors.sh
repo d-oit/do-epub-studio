@@ -31,6 +31,7 @@ if [[ -t 1 ]] && [[ "${FORCE_COLOR:-}" != "0" ]]; then
     fi
 else
     RED=''
+# shellcheck disable=SC2034
     GREEN=''
     YELLOW=''
     BLUE=''
