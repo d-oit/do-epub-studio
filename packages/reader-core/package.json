@@ -14,7 +14,7 @@
   "dependencies": {
     "@do-epub-studio/shared": "workspace:*",
     "@intity/epub-js": "^0.3.96",
-    "dompurify": "^3.4.5",
+    "dompurify": "^3.4.6",
     "fflate": "^0.8.3"
   },
   "devDependencies": {
