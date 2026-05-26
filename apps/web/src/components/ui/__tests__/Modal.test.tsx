@@ -99,7 +99,7 @@ describe('Modal', () => {
     expect(document.getElementById(labelledBy!)).toBeInTheDocument();
   });
 
-  it('restores focus to the trigger element when closed', async () => {
+  it('restores focus to the trigger element when closed', () => {
     const trigger = document.createElement('button');
     document.body.appendChild(trigger);
     trigger.focus();

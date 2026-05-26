@@ -45,10 +45,10 @@ describe('AdminGrantResponsesPage', () => {
   });
 
   it('renders grants table', async () => {
-    vi.mocked(api.apiRequest).mockImplementation(async (url: string) => {
-      if (url === '/api/books') return mockBooks;
-      if (url.includes('/grants')) return mockGrants;
-      return [];
+    vi.mocked(api.apiRequest).mockImplementation((url: string) => {
+      if (url === '/api/books') return Promise.resolve(mockBooks);
+      if (url.includes('/grants')) return Promise.resolve(mockGrants);
+      return Promise.resolve([]);
     });
 
     render(
@@ -63,10 +63,10 @@ describe('AdminGrantResponsesPage', () => {
   });
 
   it('shows empty state when no grants', async () => {
-    vi.mocked(api.apiRequest).mockImplementation(async (url: string) => {
-      if (url === '/api/books') return mockBooks;
-      if (url.includes('/grants')) return [];
-      return [];
+    vi.mocked(api.apiRequest).mockImplementation((url: string) => {
+      if (url === '/api/books') return Promise.resolve(mockBooks);
+      if (url.includes('/grants')) return Promise.resolve([]);
+      return Promise.resolve([]);
     });
 
     render(

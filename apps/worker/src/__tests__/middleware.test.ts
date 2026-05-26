@@ -20,10 +20,10 @@ import type { Env } from '../lib/env';
 function makeEnv(): Env {
   return {
     BOOKS_BUCKET: {
-      get: async () => null,
-      put: async () => null as any,
-      delete: async () => undefined,
-      list: async () => ({ objects: [], truncated: false }),
+      get: () => Promise.resolve(null),
+      put: () => Promise.resolve(null as any),
+      delete: () => Promise.resolve(undefined),
+      list: () => Promise.resolve({ objects: [], truncated: false }),
     },
     TURSO_DATABASE_URL: 'libsql://test.turso.io',
     TURSO_AUTH_TOKEN: 'test-token',

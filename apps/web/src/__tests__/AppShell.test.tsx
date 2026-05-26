@@ -41,21 +41,21 @@ describe('AppShell', () => {
     expect(document.querySelector('svg')).toBeInTheDocument();
   });
 
-  it('redirects to login when not authenticated after timeout', async () => {
+  it('redirects to login when not authenticated after timeout', () => {
     render(
       <BrowserRouter>
         <AppShell />
       </BrowserRouter>,
     );
 
-    await act(async () => {
+    act(() => {
       vi.advanceTimersByTime(1500);
     });
 
     expect(mockNavigate).toHaveBeenCalledWith('/login', expect.objectContaining({ replace: true, viewTransition: true }));
   });
 
-  it('redirects to reader when authenticated as user', async () => {
+  it('redirects to reader when authenticated as user', () => {
     useAuthStore.setState({ isAuthenticated: true, isAdmin: false, bookSlug: 'my-book' });
     render(
       <BrowserRouter>
@@ -63,7 +63,7 @@ describe('AppShell', () => {
       </BrowserRouter>,
     );
 
-    await act(async () => {
+    act(() => {
       vi.advanceTimersByTime(1500);
     });
 

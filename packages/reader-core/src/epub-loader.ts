@@ -8,6 +8,7 @@ import type {
   ProgressPosition,
 } from './epub-types';
 import { createTraceId, createSpanId, serializeError, testBounded } from '@do-epub-studio/shared';
+import { validateArchive } from './archive-validator';
 
 type EventCallback = (data: unknown) => void;
 
@@ -23,7 +24,7 @@ export interface EpubRenditionHandle {
 }
 
 export interface EpubLoader {
-  load(url: string): Promise<void>;
+  load(url: string | Uint8Array): Promise<void>;
   createRendition(container: HTMLElement): EpubRenditionHandle;
   destroy(): void;
   getMetadata(): BookMetadata;
@@ -107,7 +108,7 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
     return spineItems;
   }
 
-  async function load(url: string): Promise<void> {
+  async function load(url: string | Uint8Array): Promise<void> {
     if (destroyed) {
       throw new Error('EpubLoader has been destroyed');
     }
@@ -116,7 +117,26 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
     const spanId = createSpanId();
 
     try {
-      book = ePub(url);
+      let data: Uint8Array;
+      if (typeof url === 'string') {
+        if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('blob:')) {
+          const response = await fetch(url);
+          if (!response.ok) {
+            throw new Error(`Failed to fetch EPUB: ${response.statusText}`);
+          }
+          const buffer = await response.arrayBuffer();
+          data = new Uint8Array(buffer);
+        } else {
+          const response = await fetch(url);
+          const buffer = await response.arrayBuffer();
+          data = new Uint8Array(buffer);
+        }
+      } else {
+        data = url;
+      }
+
+      await validateArchive(data);
+      book = ePub(data.buffer as ArrayBuffer);
       await book.opened;
 
       const nav = await book.loaded.navigation;

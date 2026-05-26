@@ -107,7 +107,7 @@ booksRouter.put('/:id/upload', adminAuth, async (c) => {
           error: {
             code: 'VALIDATION_ERROR',
             message: 'EPUB validation failed',
-            details: validation.errors,
+            details: validationResults.errors,
           },
         },
         400,

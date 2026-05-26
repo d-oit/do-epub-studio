@@ -20,11 +20,11 @@ vi.mock('argon2-wasm-edge', () => ({
    * call (random salt) yet still verifiable by our mock `argon2Verify`.
    */
   argon2id: vi.fn(
-    async ({ password, salt }: { password: string; salt: Uint8Array }): Promise<string> => {
+    ({ password, salt }: { password: string; salt: Uint8Array }): Promise<string> => {
       const saltHex = Array.from(salt)
         .map((b: number) => b.toString(16).padStart(2, '0'))
         .join('');
-      return `$argon2id$v=19$m=65536,t=3,p=4$${saltHex}$${btoa(password)}`;
+      return Promise.resolve(`$argon2id$v=19$m=65536,t=3,p=4$${saltHex}$${btoa(password)}`);
     },
   ),
   /**
@@ -33,11 +33,11 @@ vi.mock('argon2-wasm-edge', () => ({
    * format — mirroring how a real corrupted hash would behave.
    */
   argon2Verify: vi.fn(
-    async ({ password, hash }: { password: string; hash: string }): Promise<boolean> => {
+    ({ password, hash }: { password: string; hash: string }): Promise<boolean> => {
       // Format: $argon2id$v=19$m=...$<saltHex>$<base64Password>
       const parts = hash.split('$');
-      if (parts.length < 6) return false;
-      return parts[5] === btoa(password);
+      if (parts.length < 6) return Promise.resolve(false);
+      return Promise.resolve(parts[5] === btoa(password));
     },
   ),
 }));
