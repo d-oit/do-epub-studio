@@ -27,8 +27,6 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.11.3",
-    "@cloudflare/vitest-pool-workers": "0.13.0",
-    "@cloudflare/workers-types": "4.20260520.1",
     "@eslint/js": "^10.0.0",
     "@playwright/test": "^1.60.0",
     "@types/node": "^25",

@@ -18,10 +18,7 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
-  contents: write
-  deployments: write
-  id-token: write
-  attestations: write
+  contents: read
 
 jobs:
   verify:
@@ -31,6 +28,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Setup pnpm
         uses: ./.github/actions/setup-pnpm
@@ -52,9 +51,15 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     timeout-minutes: 15
+    permissions:
+      contents: write
+      deployments: write
+      id-token: write
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Setup pnpm
         uses: ./.github/actions/setup-pnpm
@@ -63,7 +68,7 @@ jobs:
         run: pnpm build
 
       - name: Deploy Worker
-        uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0 # v4.0.0
+        uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0  # v4.0.0
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         with:
@@ -73,7 +78,7 @@ jobs:
           workingDirectory: ./apps/worker
 
       - name: Deploy Frontend to Cloudflare Pages
-        uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0 # v4.0.0
+        uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0  # v4.0.0
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         with:
@@ -92,7 +97,7 @@ jobs:
           cd ../../../
 
       - name: Install Cosign
-        uses: sigstore/cosign-installer@053f9b74638557590800a301da1ba82351507e2c # v3.8.1
+        uses: sigstore/cosign-installer@053f9b74638557590800a301da1ba82351507e2c  # v3.8.1
 
       - name: Sign Artifacts
         run: |
@@ -100,7 +105,7 @@ jobs:
           cosign sign-blob --yes --output-signature sbom.cyclonedx.json.sig sbom.cyclonedx.json
 
       - name: Generate SLSA Provenance
-        uses: actions/attest-build-provenance@c074443f1aee8d4aeeae555aebba3282517141b2 # v2.2.3
+        uses: actions/attest-build-provenance@c074443f1aee8d4aeeae555aebba3282517141b2  # v2.2.3
         with:
           subject-path: |
             do-epub-studio-web.zip
@@ -114,8 +119,6 @@ jobs:
             do-epub-studio-web.zip.sig
             sbom.cyclonedx.json
             sbom.cyclonedx.json.sig
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Post-deploy health check
         run: |
