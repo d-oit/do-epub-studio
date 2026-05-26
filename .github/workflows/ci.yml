@@ -256,7 +256,7 @@ jobs:
           retention-days: 1
 
       - name: Generate SBOM
-        run: npx --yes @cyclonedx/cyclonedx-npm@4.2.1 --output-format json --output-file sbom.cyclonedx.json
+        run: npx --yes @cyclonedx/cyclonedx-npm@4.2.1 --ignore-npm-errors --output-format json --output-file sbom.cyclonedx.json
 
       - name: Upload SBOM
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
