@@ -3,15 +3,22 @@ import { motion } from 'framer-motion';
 import { scaleVariants } from '../../../../components/ui';
 import { useFocusTrap } from '@do-epub-studio/ui';
 
+export type PageDirection = 'ltr' | 'rtl' | 'default';
+export type WritingMode = 'horizontal-tb' | 'vertical-rl' | 'vertical-lr';
+
 interface ReaderSettingsPanelProps {
   isOpen: boolean;
   onClose: () => void;
   theme: 'light' | 'dark' | 'sepia' | 'system';
   fontSize: 'small' | 'medium' | 'large' | 'xlarge';
   fontFamily: 'serif' | 'sans-serif' | 'monospace';
+  direction?: PageDirection;
+  writingMode?: WritingMode;
   onSetTheme: (theme: 'light' | 'dark' | 'sepia' | 'system') => void;
   onSetFontSize: (size: 'small' | 'medium' | 'large' | 'xlarge') => void;
   onSetFontFamily: (family: 'serif' | 'sans-serif' | 'monospace') => void;
+  onSetDirection?: (direction: PageDirection) => void;
+  onSetWritingMode?: (writingMode: WritingMode) => void;
   t: (key: string) => string;
 }
 
@@ -21,9 +28,13 @@ export function ReaderSettingsPanel({
   theme,
   fontSize,
   fontFamily,
+  direction,
+  writingMode,
   onSetTheme,
   onSetFontSize,
   onSetFontFamily,
+  onSetDirection,
+  onSetWritingMode,
   t,
 }: ReaderSettingsPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null);
@@ -169,6 +180,62 @@ export function ReaderSettingsPanel({
             ))}
           </div>
         </div>
+
+        {onSetDirection && (
+          <div>
+            <label className="block text-xs font-medium text-foreground-muted uppercase tracking-wider mb-2">
+              {t('reader.settings.direction')}
+            </label>
+            <div className="grid grid-cols-3 gap-1.5">
+              {(['default', 'ltr', 'rtl'] as const).map((d) => (
+                <button
+                  key={d}
+                  onClick={() => onSetDirection(d)}
+                  aria-pressed={direction === d}
+                  className={`
+                    px-2 py-1.5 text-xs rounded-lg border transition-all duration-150 outline-none
+                    focus-visible:ring-2 focus-visible:ring-accent
+                    ${
+                      direction === d
+                        ? 'bg-accent text-white border-accent font-medium shadow-sm'
+                        : 'bg-background-secondary text-foreground border-border hover:border-foreground-muted dark:bg-background-tertiary'
+                    }
+                  `}
+                >
+                  {t(`reader.settings.direction.${d}`)}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {onSetWritingMode && (
+          <div>
+            <label className="block text-xs font-medium text-foreground-muted uppercase tracking-wider mb-2">
+              {t('reader.settings.writingMode')}
+            </label>
+            <div className="grid grid-cols-1 gap-1">
+              {(['horizontal-tb', 'vertical-rl', 'vertical-lr'] as const).map((mode) => (
+                <button
+                  key={mode}
+                  onClick={() => onSetWritingMode(mode)}
+                  aria-pressed={writingMode === mode}
+                  className={`
+                    w-full text-left px-3 py-2 text-sm rounded-lg transition-all duration-150 outline-none
+                    focus-visible:ring-2 focus-visible:ring-accent
+                    ${
+                      writingMode === mode
+                        ? 'bg-accent text-white font-medium shadow-sm'
+                        : 'text-foreground hover:bg-background-secondary border border-transparent'
+                    }
+                  `}
+                >
+                  {t(`reader.settings.writingMode.${mode}`)}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </motion.div>
   );

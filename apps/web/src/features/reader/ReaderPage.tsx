@@ -28,6 +28,7 @@ import {
   BookmarksPanel,
   ReaderViewer,
   CommentInputModal,
+  InfoPanel,
 } from './components';
 
 export function ReaderPage() {
@@ -60,6 +61,7 @@ export function ReaderPage() {
   const error = useReaderStore((s) => s.error);
   const setOffline = useReaderStore((s) => s.setOffline);
   const setPermissionStatus = useReaderStore((s) => s.setPermissionStatus);
+  const bookDirection = useReaderStore((s) => s.bookDirection);
   const highlights = useReaderStore(useShallow((s) => s.highlights));
   const setHighlights = useReaderStore((s) => s.setHighlights);
   const comments = useReaderStore(useShallow((s) => s.comments));
@@ -72,9 +74,13 @@ export function ReaderPage() {
   const readerFontSize = usePreferencesStore((s) => s.reader.fontSize);
   const readerFontFamily = usePreferencesStore((s) => s.reader.fontFamily);
   const readerPageWidth = usePreferencesStore((s) => s.reader.pageWidth);
+  const readerDirection = usePreferencesStore((s) => s.reader.direction);
+  const readerWritingMode = usePreferencesStore((s) => s.reader.writingMode);
   const setTheme = usePreferencesStore((s) => s.setTheme);
   const setFontFamily = usePreferencesStore((s) => s.setFontFamily);
   const setFontSize = usePreferencesStore((s) => s.setFontSize);
+  const setDirection = usePreferencesStore((s) => s.setDirection);
+  const setWritingMode = usePreferencesStore((s) => s.setWritingMode);
 
   const { t, locale } = useTranslation();
 
@@ -100,7 +106,7 @@ export function ReaderPage() {
   const [epubUrl, setEpubUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const { renditionRef, currentChapterRef, toc, resolvedTheme } = useReaderEpub(
+  const { renditionRef, currentChapterRef, toc, resolvedTheme, metadata } = useReaderEpub(
     epubUrl,
     viewerRef,
     rootRef,
@@ -266,6 +272,7 @@ export function ReaderPage() {
         onToggleComments={() => togglePanel('comments')}
         onToggleBookmarks={() => togglePanel('bookmarks')}
         onToggleSettings={() => togglePanel('settings')}
+        onToggleInfo={() => togglePanel('info')}
         onExportNotes={() => handleExportNotes(bookTitle)}
         onLogout={() => void handleLogout()}
         t={tFn}
@@ -278,9 +285,21 @@ export function ReaderPage() {
             theme={readerTheme}
             fontSize={readerFontSize}
             fontFamily={readerFontFamily}
+            direction={readerDirection}
+            writingMode={readerWritingMode}
             onSetTheme={setTheme}
             onSetFontSize={setFontSize}
             onSetFontFamily={setFontFamily}
+            onSetDirection={setDirection}
+            onSetWritingMode={setWritingMode}
+            t={tFn}
+          />
+        )}
+        {activePanel === 'info' && (
+          <InfoPanel
+            isOpen={activePanel === 'info'}
+            onClose={() => setActivePanel(null)}
+            metadata={metadata}
             t={tFn}
           />
         )}
@@ -299,6 +318,7 @@ export function ReaderPage() {
         onClose={() => setActivePanel(null)}
         onNavigate={(href) => void navigateToChapter(href)}
         t={tFn}
+        direction={bookDirection === 'rtl' ? 'rtl' : undefined}
       />
       {selection && capabilities?.canHighlight && (
         <AnnotationToolbar
