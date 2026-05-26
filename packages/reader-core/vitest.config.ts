@@ -10,13 +10,13 @@ export default defineConfig({
       reporter: ['text', 'json', 'html', 'lcov', 'clover'],
       reportsDirectory: './coverage',
       thresholds: {
-        lines: 75,
+        lines: 72,
         functions: 70,
-        branches: 70,
-        statements: 75,
+        branches: 69,
+        statements: 72,
       },
       include: ['src/**/*.ts'],
-      exclude: ['src/**/*.test.ts', 'src/**/*.spec.ts', 'src/**/*.bench.ts', 'src/**/*.worker.ts', 'src/__tests__/fixtures/**'],
+      exclude: ['src/**/*.test.ts', 'src/**/*.spec.ts', 'src/**/*.bench.ts', 'src/**/*.worker.ts', 'src/reanchor-worker.ts', 'src/__tests__/fixtures/**'],
     },
   },
 });

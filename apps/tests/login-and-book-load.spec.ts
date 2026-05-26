@@ -244,7 +244,7 @@ test.describe('Login and book load (mobile)', () => {
     await mockApiRoutes(page);
   });
 
-  test('login form is usable on small screens', async ({ page }) => {
+  test('@mobile login form is usable on small screens', async ({ page }) => {
     await page.goto(`/login`);
 
     // Form fields should still be visible and fillable
@@ -258,7 +258,7 @@ test.describe('Login and book load (mobile)', () => {
     await expect(page).toHaveURL(/\/read\/my-test-book$/);
   });
 
-  test('reader header fits on mobile', async ({ page }) => {
+  test('@mobile reader header fits on mobile', async ({ page }) => {
     await page.goto(`/login`);
     await login(page);
 
@@ -273,7 +273,7 @@ test.describe('Login and book load (mobile)', () => {
     await expect(page.getByRole('button', { name: /Sign Out/i })).toBeVisible({ timeout: 60000 });
   });
 
-  test('settings panel is accessible on mobile', async ({ page }) => {
+  test('@mobile settings panel is accessible on mobile', async ({ page }) => {
     await page.goto(`/login`);
     await login(page);
 

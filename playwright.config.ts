@@ -58,10 +58,12 @@ export default defineConfig({
     {
       name: 'iphone',
       use: { ...devices['iPhone 15'] },
+      grep: /@mobile/,
     },
     {
       name: 'pixel',
       use: { ...devices['Pixel 7'] },
+      grep: /@mobile/,
     },
   ],
 });
