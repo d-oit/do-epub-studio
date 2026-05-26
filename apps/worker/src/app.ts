@@ -1,15 +1,18 @@
 import { Hono } from 'hono';
 import type { Env } from './lib/env';
-import {
-  createRequestContext,
-  logRequestEnd,
-  logRequestError,
-  logRequestStart,
-  withTraceHeaders,
-} from './lib/observability';
-import { applySecurityHeaders, applyMinimalSecurityHeaders } from './lib/security-headers';
+import { observabilityMiddleware } from './middleware/observability';
+import { securityHeadersMiddleware } from './middleware/security-headers';
+import { corsMiddleware } from './middleware/cors';
 import { applyRateLimit, addRateLimitHeaders } from './middleware/rate-limit';
-import { TRACE_HEADER, SPAN_HEADER } from '@do-epub-studio/shared';
+import {
+  accessRouter,
+  booksRouter,
+  readerStateRouter,
+  commentsRouter,
+  filesRouter,
+  adminRouter,
+  securityRouter,
+} from './routes';
 
 export const app = new Hono<{ Bindings: Env }>();
 
@@ -21,93 +24,28 @@ app.use('*', async (c, next) => {
   await next();
 });
 
-// Observability and Security Headers Middleware
+app.use('*', observabilityMiddleware);
+app.use('*', corsMiddleware);
+app.use('*', securityHeadersMiddleware);
+
+// Rate Limiting
 app.use('*', async (c, next) => {
-  const context = createRequestContext(c.req.raw);
-  logRequestStart(context);
+  const { response: rateLimitResponse, metadata } = await applyRateLimit(c.req.raw, c.env);
+  if (rateLimitResponse) {
+    return rateLimitResponse;
+  }
 
-  try {
-    const { response: rateLimitResponse, metadata } = await applyRateLimit(c.req.raw, c.env);
-    if (rateLimitResponse) {
-      logRequestEnd(context, rateLimitResponse.status);
-      let res = withTraceHeaders(rateLimitResponse, context);
-      res = applyCorsHeaders(res, c.req.raw, c.env);
-      return applySecurityHeaders(res);
-    }
+  await next();
 
-    await next();
-
-    if (metadata) {
-      addRateLimitHeaders(c.res, metadata);
-    }
-
-    logRequestEnd(context, c.res.status);
-
-    // Apply appropriate security headers IF NOT ALREADY SET by route (like files)
-    if (!c.res.headers.has('Content-Security-Policy')) {
-      if (c.req.path.startsWith('/api/files/')) {
-        applyMinimalSecurityHeaders(c.res);
-      } else {
-        applySecurityHeaders(c.res);
-      }
-    }
-
-    applyCorsHeaders(c.res, c.req.raw, c.env);
-    withTraceHeaders(c.res, context);
-
-  } catch (error) {
-    logRequestError(context, error);
-    logRequestEnd(context, 500);
-    const failure = c.json(
-      {
-        ok: false,
-        error: {
-          code: 'INTERNAL_ERROR',
-          message: 'Internal server error',
-          traceId: context.traceId,
-        },
-      },
-      500,
-    );
-    let res = withTraceHeaders(failure, context);
-    res = applyCorsHeaders(res, c.req.raw, c.env);
-    return applySecurityHeaders(res);
+  if (metadata) {
+    addRateLimitHeaders(c.res, metadata);
   }
 });
 
-/**
- * Apply restricted CORS headers based on the environment configuration.
- */
-function applyCorsHeaders(response: Response, request: Request, env: Env): Response {
-  const origin = request.headers.get('Origin');
-  const allowedOrigin = origin === env.APP_BASE_URL ? origin : env.APP_BASE_URL;
-
-  response.headers.set('Access-Control-Allow-Origin', allowedOrigin);
-  response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-  response.headers.set(
-    'Access-Control-Allow-Headers',
-    `Content-Type, Authorization, ${TRACE_HEADER}, ${SPAN_HEADER}`,
-  );
-  response.headers.set('Vary', 'Origin, Access-Control-Request-Headers');
-
-  return response;
-}
-
 // OPTIONS handler for CORS
 app.options('*', (c) => {
-  const response = new Response(null, { status: 204 });
-  return applyMinimalSecurityHeaders(applyCorsHeaders(response, c.req.raw, c.env));
+  return new Response(null, { status: 204 });
 });
-
-import {
-  accessRouter,
-  booksRouter,
-  readerStateRouter,
-  commentsRouter,
-  filesRouter,
-  adminRouter,
-  securityRouter,
-} from './routes';
 
 app.route('/api/access', accessRouter);
 app.route('/api/books', booksRouter);

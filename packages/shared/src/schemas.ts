@@ -145,6 +145,15 @@ export const CspReportSchema = z.object({
   }),
 });
 
+export const AuditQuerySchema = z.object({
+  entityType: EntityTypeSchema.optional(),
+  entityId: z.string().optional(),
+  limit: z.coerce.number().int().positive().max(100).default(50),
+  offset: z.coerce.number().int().nonnegative().default(0),
+  from: z.string().datetime().optional(),
+  to: z.string().datetime().optional(),
+});
+
 export type AccessRequest = z.infer<typeof AccessRequestSchema>;
 export type CreateBook = z.infer<typeof CreateBookSchema>;
 export type CreateGrant = z.infer<typeof CreateGrantSchema>;
@@ -155,3 +164,4 @@ export type HighlightCreate = z.infer<typeof HighlightCreateSchema>;
 export type CommentCreate = z.infer<typeof CommentCreateSchema>;
 export type CommentUpdate = z.infer<typeof CommentUpdateSchema>;
 export type CspReport = z.infer<typeof CspReportSchema>;
+export type AuditQuery = z.infer<typeof AuditQuerySchema>;

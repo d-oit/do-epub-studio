@@ -1,25 +1,24 @@
 import { Hono } from 'hono';
+import { zValidator } from '@hono/zod-validator';
+import { z } from 'zod';
 import type { Env } from '../lib/env';
 import { queryFirst } from '../db/client';
 import { verifySignedUrlExpiry, verifySignedUrlSignature } from '../storage/signed-url';
 
 export const filesRouter = new Hono<{ Bindings: Env }>();
 
-filesRouter.get('/:bookId/:remainder{.+}', async (c) => {
+const SignedUrlSchema = z.object({
+  expires: z.string().min(1),
+  signature: z.string().min(1),
+});
+
+filesRouter.get('/:bookId/:remainder{.+}', zValidator('query', SignedUrlSchema), async (c) => {
   const bookId = c.req.param('bookId');
   const fileKey = c.req.param('remainder');
+  const { expires, signature } = c.req.valid('query');
 
   if (!bookId || !fileKey) {
     return c.json({ ok: false, error: { code: 'NOT_FOUND', message: 'Not found' } }, 404);
-  }
-
-  // Security: Verify signed URL parameters
-  const url = new URL(c.req.url);
-  const expires = url.searchParams.get('expires');
-  const signature = url.searchParams.get('signature');
-
-  if (!expires || !signature) {
-    return c.json({ ok: false, error: { code: 'UNAUTHORIZED', message: 'Missing signature parameters' } }, 400);
   }
 
   if (!verifySignedUrlExpiry(expires)) {

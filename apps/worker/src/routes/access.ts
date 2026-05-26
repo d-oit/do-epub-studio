@@ -6,6 +6,7 @@ import { createSession } from '../auth/session';
 import { logAudit } from '../audit';
 import { AccessRequestSchema } from '@do-epub-studio/shared';
 import { checkRateLimitDO } from '../lib/rate-limit-client';
+import { z } from 'zod';
 
 export const accessRouter = new Hono<{ Bindings: Env }>();
 
@@ -127,11 +128,12 @@ accessRouter.post('/refresh', async (c) => {
   });
 });
 
-accessRouter.get('/validate', async (c) => {
-  const bookId = c.req.query('bookId');
-  if (!bookId) {
-    return c.json({ ok: false, error: { code: 'VALIDATION_ERROR', message: 'bookId parameter is required' } }, 400);
-  }
+const ValidateQuerySchema = z.object({
+  bookId: z.string().min(1),
+});
+
+accessRouter.get('/validate', zValidator('query', ValidateQuerySchema), async (c) => {
+  const { bookId } = c.req.valid('query');
 
   const authHeader = c.req.header('Authorization');
   const token = authHeader?.replace('Bearer ', '') ?? '';
