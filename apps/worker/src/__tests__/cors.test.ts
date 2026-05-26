@@ -6,19 +6,19 @@ import type { Env } from '../lib/env';
 describe('CORS', () => {
    
   const mockBucket: any = {
-    get: async () => null,
-    put: async () => ({
+    get: () => Promise.resolve(null),
+    put: () => Promise.resolve({
       key: '',
       httpEtag: '',
       writeHttpMetadata: () => {},
       body: null,
       bodyUsed: false,
-      arrayBuffer: async () => new ArrayBuffer(0),
-      text: async () => '',
-      json: async () => ({}),
+      arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)),
+      text: () => Promise.resolve(''),
+      json: () => Promise.resolve({}),
     }),
-    delete: async () => {},
-    list: async () => ({ objects: [], truncated: false }),
+    delete: () => Promise.resolve(),
+    list: () => Promise.resolve({ objects: [], truncated: false }),
   };
 
   const env: Env = {

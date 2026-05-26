@@ -38,8 +38,8 @@ describe('ReaderPage Panels', () => {
     });
   });
 
-  it('enforces panel mutual exclusivity', async () => {
-    await act(async () => {
+  it('enforces panel mutual exclusivity', () => {
+    act(() => {
       render(
         <BrowserRouter>
           <ReaderPage />
@@ -49,14 +49,14 @@ describe('ReaderPage Panels', () => {
 
     // Use actual labels that appear in DOM
     const tocButton = screen.getByLabelText('Contents');
-    await act(async () => {
+    act(() => {
       tocButton.click();
     });
 
     expect(screen.getByText('Contents')).toBeInTheDocument();
 
     const bookmarksButton = screen.getByLabelText('Bookmarks');
-    await act(async () => {
+    act(() => {
       bookmarksButton.click();
     });
 
@@ -78,11 +78,11 @@ describe('ReaderPage theme', () => {
     });
   });
 
-  it('sets data-theme to light when theme is light', async () => {
+  it('sets data-theme to light when theme is light', () => {
     usePreferencesStore.setState({ reader: { ...usePreferencesStore.getState().reader, theme: 'light' } });
 
     let container: HTMLElement;
-    await act(async () => {
+    act(() => {
       const result = render(
         <BrowserRouter>
           <ReaderPage />
@@ -95,11 +95,11 @@ describe('ReaderPage theme', () => {
     expect(root).toHaveAttribute('data-theme', 'light');
   });
 
-  it('sets data-theme to dark when theme is dark', async () => {
+  it('sets data-theme to dark when theme is dark', () => {
     usePreferencesStore.setState({ reader: { ...usePreferencesStore.getState().reader, theme: 'dark' } });
 
     let container: HTMLElement;
-    await act(async () => {
+    act(() => {
       const result = render(
         <BrowserRouter>
           <ReaderPage />
@@ -112,11 +112,11 @@ describe('ReaderPage theme', () => {
     expect(root).toHaveAttribute('data-theme', 'dark');
   });
 
-  it('sets data-theme to sepia when theme is sepia', async () => {
+  it('sets data-theme to sepia when theme is sepia', () => {
     usePreferencesStore.setState({ reader: { ...usePreferencesStore.getState().reader, theme: 'sepia' } });
 
     let container: HTMLElement;
-    await act(async () => {
+    act(() => {
       const result = render(
         <BrowserRouter>
           <ReaderPage />
@@ -129,7 +129,7 @@ describe('ReaderPage theme', () => {
     expect(root).toHaveAttribute('data-theme', 'sepia');
   });
 
-  it('resolves system theme to light when OS prefers light', async () => {
+  it('resolves system theme to light when OS prefers light', () => {
     usePreferencesStore.setState({ reader: { ...usePreferencesStore.getState().reader, theme: 'system' } });
     (window.matchMedia as any).mockReturnValue({
       matches: false, // Not dark
@@ -143,7 +143,7 @@ describe('ReaderPage theme', () => {
     });
 
     let container: HTMLElement;
-    await act(async () => {
+    act(() => {
       const result = render(
         <BrowserRouter>
           <ReaderPage />
@@ -156,7 +156,7 @@ describe('ReaderPage theme', () => {
     expect(root).toHaveAttribute('data-theme', 'light');
   });
 
-  it('resolves system theme to dark when OS prefers dark', async () => {
+  it('resolves system theme to dark when OS prefers dark', () => {
     usePreferencesStore.setState({ reader: { ...usePreferencesStore.getState().reader, theme: 'system' } });
     (window.matchMedia as any).mockReturnValue({
       matches: true, // Is dark
@@ -170,7 +170,7 @@ describe('ReaderPage theme', () => {
     });
 
     let container: HTMLElement;
-    await act(async () => {
+    act(() => {
       const result = render(
         <BrowserRouter>
           <ReaderPage />

@@ -89,7 +89,7 @@ describe('CommentInput', () => {
 
     it('disables submit button when text is only whitespace', async () => {
       const user = userEvent.setup();
-      await act(async () => {
+      act(() => {
         render(<CommentInput onSubmit={mockOnSubmit} />);
       });
 
@@ -101,7 +101,7 @@ describe('CommentInput', () => {
 
     it('enables submit button when text is present', async () => {
       const user = userEvent.setup();
-      await act(async () => {
+      act(() => {
         render(<CommentInput onSubmit={mockOnSubmit} />);
       });
 
@@ -115,7 +115,7 @@ describe('CommentInput', () => {
   describe('interactions', () => {
     it('calls onSubmit with trimmed text when submit button is clicked', async () => {
       const user = userEvent.setup();
-      await act(async () => {
+      act(() => {
         render(<CommentInput onSubmit={mockOnSubmit} />);
       });
 
@@ -129,7 +129,7 @@ describe('CommentInput', () => {
 
     it('clears textarea after submit', async () => {
       const user = userEvent.setup();
-      await act(async () => {
+      act(() => {
         render(<CommentInput onSubmit={mockOnSubmit} />);
       });
 
@@ -142,7 +142,7 @@ describe('CommentInput', () => {
 
     it('calls onCancel when cancel button is clicked', async () => {
       const user = userEvent.setup();
-      await act(async () => {
+      act(() => {
         render(<CommentInput onSubmit={mockOnSubmit} onCancel={mockOnCancel} />);
       });
 
@@ -155,7 +155,7 @@ describe('CommentInput', () => {
   describe('keyboard shortcuts', () => {
     it('calls onSubmit when Ctrl+Enter is pressed', async () => {
       const user = userEvent.setup();
-      await act(async () => {
+      act(() => {
         render(<CommentInput onSubmit={mockOnSubmit} />);
       });
 
@@ -168,7 +168,7 @@ describe('CommentInput', () => {
 
     it('calls onSubmit when Meta+Enter (Cmd+Enter) is pressed', async () => {
       const user = userEvent.setup();
-      await act(async () => {
+      act(() => {
         render(<CommentInput onSubmit={mockOnSubmit} />);
       });
 
@@ -181,7 +181,7 @@ describe('CommentInput', () => {
 
     it('calls onCancel when Escape is pressed', async () => {
       const user = userEvent.setup();
-      await act(async () => {
+      act(() => {
         render(<CommentInput onSubmit={mockOnSubmit} onCancel={mockOnCancel} />);
       });
 
@@ -192,8 +192,8 @@ describe('CommentInput', () => {
       expect(mockOnCancel).toHaveBeenCalled();
     });
 
-    it('does not call onCancel when Escape is pressed without onCancel prop', async () => {
-      await act(async () => {
+    it('does not call onCancel when Escape is pressed without onCancel prop', () => {
+      act(() => {
         render(<CommentInput onSubmit={mockOnSubmit} />);
       });
 

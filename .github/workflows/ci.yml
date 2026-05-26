@@ -57,6 +57,20 @@ jobs:
           echo "--- Pinned Tool Versions ---"
           pnpm list vitest vite @playwright/test -r
 
+  dep-scan:
+    name: Dependency Vulnerability Scan
+    needs: setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-pnpm
+
+      - name: pnpm audit
+        run: pnpm audit --audit-level=high
+
   codeql-alert-check:
     name: CodeQL Alert Check
     needs: setup
@@ -223,6 +237,16 @@ jobs:
           name: baseline-metrics
           path: baseline-bundle-metrics.json
           retention-days: 1
+
+      - name: Generate SBOM
+        run: npx --yes @cyclonedx/cyclonedx-npm@1.19.5 --output-format json --output-file sbom.cyclonedx.json
+
+      - name: Upload SBOM
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
+        with:
+          name: sbom
+          path: sbom.cyclonedx.json
+          retention-days: 7
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2

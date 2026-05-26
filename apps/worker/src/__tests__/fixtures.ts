@@ -142,13 +142,14 @@ export function makeEnv(): Env {
 
 function makeMockBucket(): R2Bucket {
   return {
-    get: async () => null,
-    put: async () =>
+    get: () => Promise.resolve(null),
+    put: () => Promise.resolve(
       null as unknown as R2Bucket extends { put(key: string, value: infer V): Promise<infer R> }
         ? R
         : never,
-    delete: async () => undefined,
-    list: async () => ({ objects: [], truncated: false }),
+    ),
+    delete: () => Promise.resolve(undefined),
+    list: () => Promise.resolve({ objects: [], truncated: false }),
   };
 }
 

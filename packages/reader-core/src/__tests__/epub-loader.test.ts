@@ -1,6 +1,19 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { createEpubLoader, extractCfi, isValidCfi } from '../epub-loader';
 
+const mockArrayBuffer = new ArrayBuffer(0);
+vi.stubGlobal(
+  'fetch',
+  vi.fn().mockResolvedValue({
+    ok: true,
+    arrayBuffer: vi.fn().mockResolvedValue(mockArrayBuffer),
+  }),
+);
+
+vi.mock('../archive-validator', () => ({
+  validateArchive: vi.fn().mockResolvedValue(undefined),
+}));
+
 // Mock epubjs module - vi.mock is hoisted so all definitions must be inside
 vi.mock('@intity/epub-js', () => {
   const mockRendition = {

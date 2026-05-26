@@ -90,7 +90,7 @@ export default tseslint.config(
       '@typescript-eslint/prefer-nullish-coalescing': 'off',
       // TODO(#163): promote to 'error' once existing violations are resolved
       '@typescript-eslint/no-non-null-assertion': 'warn',
-      '@typescript-eslint/require-await': 'warn',
+      '@typescript-eslint/require-await': 'error',
       '@typescript-eslint/consistent-type-imports': 'warn',
       '@typescript-eslint/no-floating-promises': 'error',
       '@typescript-eslint/no-misused-promises': 'error',

@@ -58,7 +58,7 @@ describe('ReaderToolbar', () => {
     expect(screen.getByText('45%')).toBeInTheDocument();
   });
 
-  it('calls toggle handlers when buttons are clicked', async () => {
+  it('calls toggle handlers when buttons are clicked', () => {
     render(<ReaderToolbar {...mockProps} />);
 
     const tocButton = screen.getByLabelText('Contents');
@@ -66,11 +66,11 @@ describe('ReaderToolbar', () => {
     expect(mockProps.onToggleToc).toHaveBeenCalled();
   });
 
-  it('verifies reading progress indicator updates', async () => {
+  it('verifies reading progress indicator updates', () => {
     render(<ReaderToolbar {...mockProps} />);
     expect(screen.getByText('45%')).toBeInTheDocument();
 
-    await act(async () => {
+    act(() => {
       useReaderStore.setState({
         progress: { locator: null, progressPercent: 80, updatedAt: null }
       });
@@ -79,7 +79,7 @@ describe('ReaderToolbar', () => {
     expect(screen.getByText('80%')).toBeInTheDocument();
   });
 
-  it('hides header when scrolling down', async () => {
+  it('hides header when scrolling down', () => {
     mockUseScrollDirection.mockReturnValue('down');
     render(<ReaderToolbar {...mockProps} />);
 
