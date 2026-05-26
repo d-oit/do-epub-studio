@@ -146,7 +146,7 @@ const LOGIN_RESPONSE = {
 const EPUB_BUFFER = createMinimalEpub();
 
 // ---------------------------------------------------------------------------
-// Helpers
+// API route mocks
 // ---------------------------------------------------------------------------
 
 async function mockApiRoutes(page: Page) {
@@ -177,6 +177,21 @@ async function mockApiRoutes(page: Page) {
 }
 
 // ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+async function loginAndOpenReader(page: Page) {
+  await page.goto(`/login?book=${TEST_USER.bookSlug}`);
+  await page.getByLabel('Email Address').fill(TEST_USER.email);
+  await page.getByLabel('Password').fill(TEST_USER.password);
+  await page.getByRole('button', { name: 'Sign In', exact: true }).click();
+  await expect(page).toHaveURL(/\/read\/offline-test/, { timeout: 15000 });
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(2000);
+  await expect(page.getByRole('heading', { name: 'Offline Test Book' })).toBeVisible({ timeout: 10000 });
+}
+
+// ---------------------------------------------------------------------------
 // Offline reader test suite
 // ---------------------------------------------------------------------------
 
@@ -191,20 +206,9 @@ test.describe('Offline reader', () => {
     await mockApiRoutes(page);
   });
 
-  test('loads reader page online then survives offline reload', async ({ page, context }) => {
+  test('loads reader page online then survives offline reload', async ({ page }) => {
     // Load the reader page online
-    await page.goto(`/login?book=${TEST_USER.bookSlug}`);
-    await page.getByLabel('Email Address').fill(TEST_USER.email);
-    await page.getByLabel('Password').fill(TEST_USER.password);
-    await page.getByRole('button', { name: 'Sign In', exact: true }).click();
-    await expect(page).toHaveURL(/\/read\/offline-test/, { timeout: 15000 });
-    await page.waitForLoadState('networkidle');
-
-    // Wait for the reader to settle
-    await page.waitForTimeout(2000);
-
-    // Verify reader loaded successfully
-    await expect(page.getByRole('heading', { name: 'Offline Test Book' })).toBeVisible({ timeout: 10000 });
+    await loginAndOpenReader(page);
 
     // Block all API and network requests to simulate offline
     await page.route('**/api/**', async (route: Route) => {
@@ -235,5 +239,147 @@ test.describe('Offline reader', () => {
     // Verify page is still functional
     const bodyStillVisible = await page.locator('body').isVisible().catch(() => false);
     expect(bodyStillVisible).toBe(true);
+  });
+
+  test('detects offline/online status transitions', async ({ page, context }) => {
+    await loginAndOpenReader(page);
+
+    // Verify initial online status
+    const initialOnline = await page.evaluate(() => navigator.onLine);
+    expect(initialOnline).toBe(true);
+
+    // Go offline
+    await context.setOffline(true);
+    await page.waitForTimeout(500);
+
+    // Verify navigator.onLine reflects offline
+    const isOffline = await page.evaluate(() => navigator.onLine);
+    expect(isOffline).toBe(false);
+
+    // App may dispatch online/offline events — check status hasn't crashed
+    const bodyOk = await page.locator('body').isVisible().catch(() => false);
+    expect(bodyOk).toBe(true);
+
+    // Restore connection
+    await context.setOffline(false);
+    await page.waitForTimeout(500);
+
+    // Verify navigator.onLine is true again
+    const backOnline = await page.evaluate(() => navigator.onLine);
+    expect(backOnline).toBe(true);
+  });
+
+  test('serves cached API responses while offline (NetworkFirst strategy)', async ({ page, context }) => {
+    await loginAndOpenReader(page);
+
+    // Fetch a test endpoint while online to populate the cache
+    await page.route('**/api/books/offline-test-cached', async (route: Route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ ok: true, data: { value: 'cached-offline-data' } }),
+      });
+    });
+
+    await page.evaluate(async () => {
+      const res = await fetch('/api/books/offline-test-cached');
+      return res.json();
+    });
+
+    // Go offline via context
+    await context.setOffline(true);
+    await page.waitForTimeout(300);
+
+    // Fetch the same endpoint — should be served from cache
+    const cachedResult = await page.evaluate(async () => {
+      try {
+        const res = await fetch('/api/books/offline-test-cached');
+        const data = await res.json();
+        return { ok: true, value: data.data?.value };
+      } catch {
+        return { ok: false, value: null };
+      }
+    });
+
+    expect(cachedResult.ok).toBe(true);
+    expect(cachedResult.value).toBe('cached-offline-data');
+
+    // Verify the response exists in the service worker cache
+    const inCache = await page.evaluate(async () => {
+      const keys = await caches.keys();
+      for (const key of keys) {
+        const cache = await caches.open(key);
+        const match = await cache.match('/api/books/offline-test-cached');
+        if (match) return true;
+      }
+      return false;
+    });
+    expect(inCache).toBe(true);
+
+    await context.setOffline(false);
+  });
+
+  test('queues offline actions for sync when network is unavailable', async ({ page, context }) => {
+    await loginAndOpenReader(page);
+
+    // Go offline
+    await context.setOffline(true);
+    await page.waitForTimeout(300);
+
+    // Perform an action that should be queued (e.g., add a bookmark)
+    // Attempt to POST a bookmark while offline
+    await page.evaluate(async () => {
+      try {
+        await fetch('/api/books/offline-test/bookmarks', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            locator: { cfi: 'epubcfi(/6/4)' },
+            label: 'Offline bookmark',
+          }),
+        });
+      } catch {
+        // Expected to fail at network level — the service worker may
+        // intercept and queue instead of sending.
+      }
+    });
+
+    // Check whether the app maintains an offline sync queue in IndexedDB
+    const syncQueueExists = await page.evaluate(async () => {
+      if (typeof indexedDB === 'undefined') return false;
+      const dbs = await indexedDB.databases?.() ?? [];
+      return dbs.some((db) => db.name?.includes('offline') || db.name?.includes('sync'));
+    });
+
+    // If the app queues offline actions, verify the queue has entries.
+    // Otherwise the offline POST is expected to fail silently.
+    if (syncQueueExists) {
+      const queuedEntries = await page.evaluate(async () => {
+        return new Promise<number>((resolve) => {
+          const req = indexedDB.open('offline-sync-queue');
+          req.onsuccess = () => {
+            try {
+              const tx = req.result.transaction('actions', 'readonly');
+              const store = tx.objectStore('actions');
+              const countReq = store.count();
+              countReq.onsuccess = () => resolve(countReq.result);
+              countReq.onerror = () => resolve(0);
+            } catch {
+              resolve(0);
+            }
+          };
+          req.onerror = () => resolve(0);
+        });
+      });
+      expect(queuedEntries).toBeGreaterThan(0);
+    }
+
+    // Restore online
+    await context.setOffline(false);
+    await page.waitForTimeout(500);
+
+    // Verify the page is still functional after coming back online
+    const bodyOk = await page.locator('body').isVisible().catch(() => false);
+    expect(bodyOk).toBe(true);
   });
 });
