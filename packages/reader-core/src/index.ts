@@ -8,3 +8,4 @@ export * from './toc';
 export * from './epub-types';
 export * from './sanitizer';
 export * from './epub-accessibility';
+export * from './fixed-layout';

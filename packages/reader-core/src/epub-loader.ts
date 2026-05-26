@@ -144,6 +144,17 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
           ? 'ltr'
           : 'default';
 
+      const pkgMeta = book.packaging?.metadata as Map<string, string> | undefined;
+      const layout = pkgMeta?.get('layout');
+      const fixedLayout = layout
+        ? {
+            layout: layout === 'pre-paginated' ? ('pre-paginated' as const) : ('reflowable' as const),
+            orientation: pkgMeta?.get('orientation') as 'auto' | 'landscape' | 'portrait' | undefined,
+            spread: pkgMeta?.get('spread') as 'none' | 'auto' | 'both' | 'landscape' | undefined,
+            viewport: pkgMeta?.get('viewport'),
+          }
+        : undefined;
+
       metadata = {
         title: metaMap.get('title') ?? '',
         creator: metaMap.get('creator'),
@@ -151,6 +162,7 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
         publisher: metaMap.get('publisher'),
         description: metaMap.get('description'),
         direction,
+        fixedLayout,
       };
 
     } catch (error) {

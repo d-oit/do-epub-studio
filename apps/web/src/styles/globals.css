@@ -350,6 +350,37 @@
    Tailwind @theme
    ============================================ */
 
+/* ============================================
+   View Transitions API
+   ============================================ */
+
+@layer view-transitions {
+  ::view-transition-old(root) {
+    animation: 0.25s ease-out both exit-fade;
+  }
+
+  ::view-transition-new(root) {
+    animation: 0.25s ease-out both enter-fade;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    ::view-transition-old(root),
+    ::view-transition-new(root) {
+      animation-duration: 0.01ms !important;
+    }
+  }
+}
+
+@keyframes exit-fade {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes enter-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 @theme {
   --color-background: var(--color-background);
   --color-background-secondary: var(--color-background-secondary);

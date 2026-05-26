@@ -37,4 +37,26 @@ describe('ReaderSettingsPanel', () => {
     fireEvent.click(darkButton);
     expect(mockProps.onSetTheme).toHaveBeenCalledWith('dark');
   });
+
+  it('shows font settings when not fixed-layout', () => {
+    render(<ReaderSettingsPanel {...mockProps} isFixedLayout={false} />);
+    expect(screen.getByLabelText('reader.settings.fontSize.medium')).toBeTruthy();
+    expect(screen.getByText('reader.fontFamily')).toBeTruthy();
+  });
+
+  it('hides font size controls when fixed-layout', () => {
+    render(<ReaderSettingsPanel {...mockProps} isFixedLayout={true} />);
+    expect(screen.queryByText('reader.fontSize')).toBeNull();
+    expect(screen.queryByText('reader.fontFamily')).toBeNull();
+  });
+
+  it('shows fixed layout indicator when isFixedLayout is true', () => {
+    render(<ReaderSettingsPanel {...mockProps} isFixedLayout={true} />);
+    expect(screen.getByText('reader.settings.fixedLayout')).toBeTruthy();
+  });
+
+  it('does not show fixed layout indicator when isFixedLayout is false', () => {
+    render(<ReaderSettingsPanel {...mockProps} isFixedLayout={false} />);
+    expect(screen.queryByText('reader.settings.fixedLayout')).toBeNull();
+  });
 });

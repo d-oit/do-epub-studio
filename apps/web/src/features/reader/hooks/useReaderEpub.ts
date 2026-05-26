@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import ePub from '@intity/epub-js';
 import type { Book, Rendition, NavItem, Contents } from '@intity/epub-js';
 import type { PageDirection, WritingMode } from '../../../stores';
-import { parseAccessibilityFromOpf } from '@do-epub-studio/reader-core';
+import { parseAccessibilityFromOpf, parseFixedLayoutFromOpf } from '@do-epub-studio/reader-core';
 import {
   useAuthStore,
   useReaderStore,
@@ -76,6 +76,7 @@ export function useReaderEpub(
   const setError = useReaderStore((s) => s.setError);
   const setProgress = useReaderStore((s) => s.setProgress);
   const setBookDirection = useReaderStore((s) => s.setBookDirection);
+  const setIsFixedLayout = useReaderStore((s) => s.setIsFixedLayout);
   const readerTheme = usePreferencesStore((s) => s.reader.theme);
   const readerFontSize = usePreferencesStore((s) => s.reader.fontSize);
   const readerFontFamily = usePreferencesStore((s) => s.reader.fontFamily);
@@ -92,6 +93,7 @@ export function useReaderEpub(
   const onNavigateToAnnotationRef = useRef(onNavigateToAnnotation);
   onNavigateToAnnotationRef.current = onNavigateToAnnotation;
   const directionRef = useRef<PageDirection>('default');
+  const fixedLayoutRef = useRef(false);
 
   const [toc, setToc] = useState<TocItem[]>([]);
   const [metadata, setMetadata] = useState<BookInfo | null>(null);
@@ -117,19 +119,22 @@ export function useReaderEpub(
         : effectiveTheme === 'sepia'
           ? 'sepia(1)'
           : 'none';
+    const bodyStyles: Record<string, string> = {
+      background: bg,
+      color: fg,
+    };
+    if (!fixedLayoutRef.current) {
+      bodyStyles['font-size'] = FONT_SIZES[readerFontSize];
+      bodyStyles['line-height'] = LINE_HEIGHTS[readerLineHeight];
+      bodyStyles['font-family'] =
+        readerFontFamily === 'serif'
+          ? 'serif'
+          : readerFontFamily === 'sans-serif'
+            ? 'sans-serif'
+            : 'monospace';
+    }
     rendition.themes.registerRules('reader-theme', {
-      body: {
-        background: bg,
-        color: fg,
-        'font-size': FONT_SIZES[readerFontSize],
-        'line-height': LINE_HEIGHTS[readerLineHeight],
-        'font-family':
-          readerFontFamily === 'serif'
-            ? 'serif'
-            : readerFontFamily === 'sans-serif'
-              ? 'sans-serif'
-              : 'monospace',
-      },
+      body: bodyStyles,
       img: { filter: imgFilter },
     });
     rendition.themes.select('reader-theme');
@@ -162,6 +167,10 @@ export function useReaderEpub(
         directionRef.current = bookDirection;
         setBookDirection(bookDirection);
 
+        let fixedLayout = false;
+        let fixedLayoutSpread: string | undefined;
+        let fixedLayoutViewport: string | undefined;
+
         try {
           const meta = await book.loaded.metadata;
           const metaMap = meta as Map<string, string>;
@@ -173,31 +182,89 @@ export function useReaderEpub(
             description: metaMap.get('description'),
           };
 
+          const pkgMeta = book.packaging?.metadata as Map<string, string> | undefined;
+          if (pkgMeta?.get('layout') === 'pre-paginated') {
+            fixedLayout = true;
+            fixedLayoutSpread = pkgMeta.get('spread') ?? undefined;
+            fixedLayoutViewport = pkgMeta.get('viewport') ?? undefined;
+          }
+
           try {
             const containerMeta = book.container as unknown as { fullPath: string };
             const opfPath = containerMeta.fullPath;
             if (opfPath && book.archive) {
               const opfXml = await book.archive.getText('/' + opfPath);
               if (opfXml) {
+                const fl = parseFixedLayoutFromOpf(opfXml);
+                if (fl && !fixedLayout) {
+                  fixedLayout = fl.layout === 'pre-paginated';
+                  fixedLayoutSpread = fixedLayoutSpread ?? fl.spread;
+                  fixedLayoutViewport = fixedLayoutViewport ?? fl.viewport;
+                }
                 bookInfo.accessibility = parseAccessibilityFromOpf(opfXml);
               }
             }
           } catch {
             // accessibility metadata is optional
           }
+
+          if (fixedLayout) {
+            fixedLayoutRef.current = true;
+            setIsFixedLayout(true);
+          }
+
           setMetadata(bookInfo);
         } catch {
           // book metadata is optional
         }
 
+        const effectiveSpread = fixedLayout
+          ? fixedLayoutSpread === 'none'
+            ? 'none'
+            : fixedLayoutSpread === 'both'
+              ? 'both'
+              : fixedLayoutSpread === 'landscape'
+                ? 'landscape'
+                : bookDirection === 'rtl'
+                  ? 'right'
+                  : 'auto'
+          : bookDirection === 'rtl'
+            ? 'right'
+            : 'auto';
+
         const rendition = book.renderTo(viewer, {
           width: '100%',
           height: '100%',
-          spread: bookDirection === 'rtl' ? 'right' : 'auto',
+          spread: effectiveSpread,
           sandbox: ['allow-same-origin', 'allow-scripts'],
           defaultDirection: bookDirection === 'default' ? undefined : bookDirection,
         });
         renditionRef.current = rendition;
+
+        if (fixedLayout) {
+          if (fixedLayoutViewport) {
+            const viewportValue = fixedLayoutViewport;
+            rendition.hooks.content.register((contents: Contents) => {
+              const doc = contents.document;
+              if (doc) {
+                let existing = doc.querySelector('meta[name="viewport"]');
+                if (!existing) {
+                  existing = doc.createElement('meta');
+                  existing.setAttribute('name', 'viewport');
+                  doc.head?.appendChild(existing);
+                }
+                existing.setAttribute('content', viewportValue);
+              }
+            });
+          }
+          rendition.hooks.content.register((contents: Contents) => {
+            const doc = contents.document;
+            if (doc?.documentElement) {
+              doc.documentElement.style.setProperty('overflow', 'hidden', 'important');
+            }
+          });
+        }
+
         applyThemes(rendition);
 
         const adapter = createEpubAnnotationAdapter(rendition);

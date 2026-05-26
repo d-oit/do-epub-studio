@@ -19,6 +19,7 @@ interface ReaderSettingsPanelProps {
   onSetFontFamily: (family: 'serif' | 'sans-serif' | 'monospace') => void;
   onSetDirection?: (direction: PageDirection) => void;
   onSetWritingMode?: (writingMode: WritingMode) => void;
+  isFixedLayout?: boolean;
   t: (key: string) => string;
 }
 
@@ -35,6 +36,7 @@ export function ReaderSettingsPanel({
   onSetFontFamily,
   onSetDirection,
   onSetWritingMode,
+  isFixedLayout = false,
   t,
 }: ReaderSettingsPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null);
@@ -113,73 +115,77 @@ export function ReaderSettingsPanel({
           </div>
         </div>
 
-        <div>
-          <label className="block text-xs font-medium text-foreground-muted uppercase tracking-wider mb-2">
-            {t('reader.fontSize')}
-          </label>
-          <div className="flex gap-1.5 p-1 bg-background-secondary rounded-lg">
-            {(['small', 'medium', 'large', 'xlarge'] as const).map((size) => (
-              <button
-                key={size}
-                onClick={() => onSetFontSize(size)}
-                aria-pressed={fontSize === size}
-                aria-label={t(`reader.settings.fontSize.${size}`)}
-                className={`
-                  flex-1 py-1.5 text-xs rounded-md transition-all duration-150 outline-none
-                  focus-visible:ring-2 focus-visible:ring-accent
-                  ${
-                    fontSize === size
-                      ? 'bg-background shadow-sm text-foreground font-semibold'
-                      : 'text-foreground-muted hover:text-foreground'
-                  }
-                `}
-              >
-                {size === 'small'
-                  ? 'A'
-                  : size === 'medium'
-                    ? 'A+'
-                    : size === 'large'
-                      ? 'A++'
-                      : 'A+++'}
-              </button>
-            ))}
+        {!isFixedLayout && (
+          <div>
+            <label className="block text-xs font-medium text-foreground-muted uppercase tracking-wider mb-2">
+              {t('reader.fontSize')}
+            </label>
+            <div className="flex gap-1.5 p-1 bg-background-secondary rounded-lg">
+              {(['small', 'medium', 'large', 'xlarge'] as const).map((size) => (
+                <button
+                  key={size}
+                  onClick={() => onSetFontSize(size)}
+                  aria-pressed={fontSize === size}
+                  aria-label={t(`reader.settings.fontSize.${size}`)}
+                  className={`
+                    flex-1 py-1.5 text-xs rounded-md transition-all duration-150 outline-none
+                    focus-visible:ring-2 focus-visible:ring-accent
+                    ${
+                      fontSize === size
+                        ? 'bg-background shadow-sm text-foreground font-semibold'
+                        : 'text-foreground-muted hover:text-foreground'
+                    }
+                  `}
+                >
+                  {size === 'small'
+                    ? 'A'
+                    : size === 'medium'
+                      ? 'A+'
+                      : size === 'large'
+                        ? 'A++'
+                        : 'A+++'}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
-        <div>
-          <label className="block text-xs font-medium text-foreground-muted uppercase tracking-wider mb-2">
-            {t('reader.fontFamily')}
-          </label>
-          <div className="flex flex-col gap-1">
-            {(['serif', 'sans-serif', 'monospace'] as const).map((family) => (
-              <button
-                key={family}
-                onClick={() => onSetFontFamily(family)}
-                aria-pressed={fontFamily === family}
-                aria-label={t(`reader.settings.fontFamily.${family}`)}
-                className={`
-                  w-full text-left px-3 py-2 text-sm rounded-lg transition-all duration-150 outline-none
-                  focus-visible:ring-2 focus-visible:ring-accent
-                  ${
-                    fontFamily === family
-                      ? 'bg-accent text-white font-medium shadow-sm'
-                      : 'text-foreground hover:bg-background-secondary border border-transparent'
-                  }
-                `}
-                style={{
-                  fontFamily:
-                    family === 'serif'
-                      ? 'serif'
-                      : family === 'sans-serif'
-                        ? 'sans-serif'
-                        : 'monospace',
-                }}
-              >
-                {t(`reader.settings.fontFamily.${family}`)}
-              </button>
-            ))}
+        {!isFixedLayout && (
+          <div>
+            <label className="block text-xs font-medium text-foreground-muted uppercase tracking-wider mb-2">
+              {t('reader.fontFamily')}
+            </label>
+            <div className="flex flex-col gap-1">
+              {(['serif', 'sans-serif', 'monospace'] as const).map((family) => (
+                <button
+                  key={family}
+                  onClick={() => onSetFontFamily(family)}
+                  aria-pressed={fontFamily === family}
+                  aria-label={t(`reader.settings.fontFamily.${family}`)}
+                  className={`
+                    w-full text-left px-3 py-2 text-sm rounded-lg transition-all duration-150 outline-none
+                    focus-visible:ring-2 focus-visible:ring-accent
+                    ${
+                      fontFamily === family
+                        ? 'bg-accent text-white font-medium shadow-sm'
+                        : 'text-foreground hover:bg-background-secondary border border-transparent'
+                    }
+                  `}
+                  style={{
+                    fontFamily:
+                      family === 'serif'
+                        ? 'serif'
+                        : family === 'sans-serif'
+                          ? 'sans-serif'
+                          : 'monospace',
+                  }}
+                >
+                  {t(`reader.settings.fontFamily.${family}`)}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {onSetDirection && (
           <div>
@@ -234,6 +240,12 @@ export function ReaderSettingsPanel({
                 </button>
               ))}
             </div>
+          </div>
+        )}
+
+        {isFixedLayout && (
+          <div className="text-xs text-foreground-muted text-center pt-2 border-t border-border">
+            {t('reader.settings.fixedLayout')}
           </div>
         )}
       </div>
