@@ -4,7 +4,7 @@ Auto-generated from skill definitions. Run this script to regenerate.
 
 | Skill | Description |
 |-------|-------------|
-### Coordination
+## Coordination
 
 | `parallel-execution` | No description |
 | `skill-creator` | No description |
@@ -56,7 +56,6 @@ Auto-generated from skill definitions. Run this script to regenerate.
 | `reader-ui-ux` | No description |
 | `secure-invite-and-access` | No description |
 | `turso-schema-migrations` | No description |
-
 
 ---
 

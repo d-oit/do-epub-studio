@@ -97,7 +97,7 @@ for ACTION in $ACTIONS; do
   VERSION=$(echo $ACTION | cut -d'@' -f2)
   OWNER=$(echo $REPO | cut -d'/' -f1)
   NAME=$(echo $REPO | cut -d'/' -f2)
-  
+
   if [[ $VERSION == v* ]]; then
     SHA=$(gh api repos/$OWNER/$NAME/git/ref/tags/$VERSION --jq '.object.sha' 2>/dev/null)
     [ -n "$SHA" ] && echo "OK: $REPO@$VERSION" || echo "FAIL: $REPO@$VERSION"

@@ -110,8 +110,8 @@ All Groups A–E have been completed as of 2026-05-15.
 | C2 | `scripts/minimal_quality_gate.sh` | Fix set -euo pipefail | ✅ |
 
 ### Group D: Test Coverage
-| ID | File | Status |
-|----|------|--------|
+| ID | File | Detail | Status |
+|----|------|--------|--------|
 | D1 | `packages/schema/src/__tests__/types.test.ts` | 7 tests | ✅ |
 | D2 | `packages/schema/src/__tests__/locator.test.ts` | 23 tests | ✅ |
 | D3 | `packages/testkit/src/__tests__/builders.test.ts` | 33 tests | ✅ |

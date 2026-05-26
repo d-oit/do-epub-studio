@@ -151,6 +151,7 @@ main() {
     cd "$REPO_ROOT"
 
     ORIGINAL_BRANCH=$(git branch --show-current)
+# shellcheck disable=SC2034
     ORIGINAL_SHA=$(git rev-parse HEAD 2>/dev/null || echo "")
     START_TIME=$(date +%s)
 

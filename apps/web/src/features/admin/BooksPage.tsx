@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '../../hooks/useTranslation';
 import { apiRequest } from '../../lib/api';
+import { useAuthStore } from '../../stores/auth';
 import { BookResponse, validateEpub } from '@do-epub-studio/shared';
 import { LocaleSwitcher } from '../../components/LocaleSwitcher';
 import { Modal, Button } from '../../components/ui';
@@ -14,6 +15,7 @@ interface CreateBookResponse {
 export function AdminBookResponsesPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const sessionToken = useAuthStore((state) => state.sessionToken);
   const [books, setBookResponses] = useState<BookResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -36,7 +38,7 @@ export function AdminBookResponsesPage() {
   const fetchBookResponses = async () => {
     setIsLoading(true);
     try {
-      const data = await apiRequest<BookResponse[]>('/api/admin/books');
+      const data = await apiRequest<BookResponse[]>('/api/admin/books', { token: sessionToken ?? undefined });
       setBookResponses(data);
     } catch (err) {
       setError((err as Error).message);
@@ -110,13 +112,23 @@ export function AdminBookResponsesPage() {
       return;
     }
 
+    const slug = bookTitle.trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9\s_-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .substring(0, 255) || 'untitled';
+
     setIsSubmitting(true);
 
     try {
       const createResult = await apiRequest<CreateBookResponse>('/api/admin/books', {
         method: 'POST',
+        token: sessionToken ?? undefined,
         body: JSON.stringify({
           title: bookTitle.trim(),
+          slug,
           authorName: authorName.trim() || null,
           visibility,
         }),
@@ -126,7 +138,7 @@ export function AdminBookResponsesPage() {
       const uploadResponse = await fetch(uploadUrl, {
         method: 'PUT',
         body: epubFile,
-        headers: { 'Content-Type': 'application/octet-stream' },
+        headers: { 'Authorization': `Bearer ${sessionToken ?? ''}`, 'Content-Type': 'application/octet-stream' },
       });
 
       if (!uploadResponse.ok) {
@@ -151,6 +163,7 @@ export function AdminBookResponsesPage() {
 
       await apiRequest(`/api/admin/books/${createResult.id}/upload-complete`, {
         method: 'POST',
+        token: sessionToken ?? undefined,
         body: JSON.stringify({
           storageKey: uploadResult.data.storageKey,
           originalFilename: epubFile.name,
@@ -196,7 +209,7 @@ export function AdminBookResponsesPage() {
             {t('admin.createBook')}
           </Button>
           <button
-            onClick={() => void navigate('/admin/audit-logs')}
+            onClick={() => void navigate('/admin/audit')}
             className="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
           >
             {t('admin.books.viewAuditLogs')}

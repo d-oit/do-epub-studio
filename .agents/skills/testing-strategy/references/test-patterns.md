@@ -41,17 +41,17 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 describe('ModuleName', () => {
   let module: ModuleName;
-  
+
   beforeEach(() => {
     module = new ModuleName();
   });
-  
+
   describe('methodName', () => {
     it('should do something', () => {
       const result = module.methodName(input);
       expect(result).toBe(expected);
     });
-    
+
     it('should throw on invalid input', () => {
       expect(() => module.methodName(invalid)).toThrow();
     });
@@ -118,16 +118,16 @@ import { beforeAll, afterAll } from 'vitest';
 
 describe('Database', () => {
   let db: TestDatabase;
-  
+
   beforeAll(async () => {
     db = await setupTestDatabase();
     await db.migrate();
   });
-  
+
   afterAll(async () => {
     await db.cleanup();
   });
-  
+
   it('should insert and retrieve', async () => {
     const id = await db.insert('books', testBook);
     const book = await db.query('SELECT * FROM books WHERE id = ?', [id]);
@@ -161,17 +161,17 @@ class BookBuilder {
     author: 'Test Author',
     created_at: new Date().toISOString(),
   };
-  
+
   withTitle(title: string) {
     this.book.title = title;
     return this;
   }
-  
+
   withAuthor(author: string) {
     this.book.author = author;
     return this;
   }
-  
+
   build() {
     return { ...this.book };
   }
@@ -194,17 +194,17 @@ class GrantBuilder {
     permission: 'read' as const,
     created_at: new Date().toISOString(),
   };
-  
+
   withUser(userId: string) {
     this.grant.user_id = userId;
     return this;
   }
-  
+
   withPermission(permission: 'read' | 'write' | 'admin') {
     this.grant.permission = permission;
     return this;
   }
-  
+
   build() {
     return { ...this.grant };
   }

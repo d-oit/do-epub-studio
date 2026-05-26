@@ -18,7 +18,7 @@ A production-grade, agent-optimized platform for creating, managing, and reading
 - **Agentic Native**: Repository structure and docs optimized for AI coding agents.
 - **Security First**: Mandatory Argon2id, DOMPurify sanitization, and signed URL isolation.
 - **Offline Capable**: PWA with advanced IndexedDB sync and Workbox 7.
-- **Privacy Focused**: Granular access grants and encrypted audit trails.
+- **Privacy Focused**: Granular access grants and auditable trails.
 
 ## Quick Start
 1. `pnpm install`

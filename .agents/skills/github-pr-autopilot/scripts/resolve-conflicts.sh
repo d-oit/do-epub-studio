@@ -39,9 +39,9 @@ echo "⚠️  Conflicts detected – analysing complexity..."
 # Use while-read to handle spaces in filenames
 git diff --name-only --diff-filter=U 2>/dev/null | while IFS= read -r file; do
     [ -z "$file" ] && continue
-    
+
     echo "   Checking conflict in: $file"
-    
+
     # Check if conflict is "simple" (lockfiles only for auto-resolve)
     if [[ "$file" == "pnpm-lock.yaml" ]]; then
         echo "   Auto-resolving lockfile conflict in $file (using theirs)"

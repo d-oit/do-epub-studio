@@ -39,4 +39,3 @@ These scenarios are not yet automated and require manual check before major rele
 - Large file upload (100MB+ EPUBs).
 - Full offline sync conflict resolution.
 - Complex CFI re-anchoring across major book revisions.
-

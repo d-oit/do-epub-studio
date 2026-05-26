@@ -62,7 +62,7 @@ describe('Turso DB', () => {
   beforeAll(async () => {
     await setupTestDB();
   });
-  
+
   it('creates book permission', async () => {
     const grant = await createGrant(userId, bookId, 'read');
     expect(grant.book_id).toBe(bookId);

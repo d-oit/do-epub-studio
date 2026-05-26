@@ -18,6 +18,7 @@ head_owner="$(jq -r '.headRepositoryOwner.login' <<<"$pr_json")"
 head_repo="$(jq -r '.headRepository.name' <<<"$pr_json")"
 mergeable="$(jq -r '.mergeable' <<<"$pr_json")"
 is_cross_repo="$(jq -r '.isCrossRepository' <<<"$pr_json")"
+# shellcheck disable=SC2034
 pr_url="$(jq -r '.url' <<<"$pr_json")"
 
 workdir="$tmp_root/repo"
@@ -59,7 +60,7 @@ if [[ $merge_status -ne 0 ]]; then
   while IFS= read -r f; do
     [[ -z "$f" ]] && continue
     case "$f" in
-      *.lock|package-lock.json|pnpm-lock.yaml|yarn.lock|Cargo.lock)
+      package-lock.json|pnpm-lock.yaml|yarn.lock|Cargo.lock|*.lock)
         git checkout --theirs -- "$f" || true ;;
       dist/*|build/*|coverage/*|*.snap)
         git checkout --ours -- "$f" || true ;;

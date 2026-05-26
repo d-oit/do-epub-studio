@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '../../hooks/useTranslation';
 import { apiRequest } from '../../lib/api';
+import { useAuthStore } from '../../stores/auth';
 import { AuditLogResponse } from '@do-epub-studio/shared';
 import { LocaleSwitcher } from '../../components/LocaleSwitcher';
 
@@ -25,6 +26,7 @@ const ENTITY_TYPE_OPTIONS = [
 export function AdminAuditPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const sessionToken = useAuthStore((state) => state.sessionToken);
   const [logs, setLogs] = useState<AuditLogResponse[]>([]);
   const [total, setTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -53,7 +55,7 @@ export function AdminAuditPage() {
       if (filters.dateFrom) params.set('from', filters.dateFrom);
       if (filters.dateTo) params.set('to', filters.dateTo);
 
-      const data = await apiRequest<AuditLogPageResponse>(`/api/admin/audit-logs?${params.toString()}`);
+      const data = await apiRequest<AuditLogPageResponse>(`/api/admin/audit-logs?${params.toString()}`, { token: sessionToken ?? undefined });
       setLogs(data.entries);
       setTotal(data.total);
     } catch (err) {

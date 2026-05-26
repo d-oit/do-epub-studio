@@ -1,6 +1,6 @@
 # ADR-006: Annotation Model
 
-**Status:** Accepted  
+**Status:** Accepted
 **Date:** 2026-04-07
 
 ## Context

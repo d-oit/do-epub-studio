@@ -182,7 +182,7 @@ fetch('https://api.example.com/data')
 ### Mask Sensitive Fields
 
 ```sql
-SELECT 
+SELECT
   id,
   LEFT(email, 2) || '***@***.***' AS email_masked,
   CONCAT('***-***-', RIGHT(phone, 4)) AS phone_masked

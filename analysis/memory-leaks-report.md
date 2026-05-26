@@ -1,7 +1,7 @@
 # Memory Leaks and Resource Management Analysis
 
-**Date:** 2026-01-23  
-**Project:** do-epub-studio  
+**Date:** 2026-01-23
+**Project:** do-epub-studio
 **Analyzed:** apps/web, packages/reader-core, packages/ui
 
 ---
@@ -24,7 +24,7 @@ This report analyzes the codebase for potential memory leaks and resource manage
 
 ### 1.1 Global Error Handlers Never Removed (HIGH PRIORITY)
 
-**File:** `apps/web/src/main.tsx`  
+**File:** `apps/web/src/main.tsx`
 **Lines:** 38-61
 
 ```do-epub-studio/apps/web/src/main.tsx#L38-61
@@ -73,7 +73,7 @@ function setupGlobalErrorHandlers(): void {
 
 ### 1.2 Service Worker Registration Handlers Not Removed
 
-**File:** `apps/web/src/main.tsx`  
+**File:** `apps/web/src/main.tsx`
 **Lines:** 23-33
 
 ```do-epub-studio/apps/web/src/main.tsx#L23-33
@@ -101,7 +101,7 @@ if ('serviceWorker' in navigator) {
 
 ### 1.3 Toast setTimeout Without Cleanup (MEDIUM PRIORITY)
 
-**File:** `packages/ui/src/toast.tsx`  
+**File:** `packages/ui/src/toast.tsx`
 **Lines:** 27-31
 
 ```do-epub-studio/packages/ui/src/toast.tsx#L27-31
@@ -151,7 +151,7 @@ const removeToast = useCallback((id: string) => {
 
 ### 1.4 Online/Offline Listener Setup (PROPERLY CLEANED UP)
 
-**File:** `apps/web/src/features/reader/ReaderPage.tsx`  
+**File:** `apps/web/src/features/reader/ReaderPage.tsx`
 **Lines:** 148-160
 
 ```do-epub-studio/apps/web/src/features/reader/ReaderPage.tsx#L148-160
@@ -177,7 +177,7 @@ useEffect(() => {
 
 ### 1.5 Mouse Selection Listener (PROPERLY CLEANED UP)
 
-**File:** `apps/web/src/features/reader/ReaderPage.tsx`  
+**File:** `apps/web/src/features/reader/ReaderPage.tsx`
 **Lines:** 130-142
 
 ```do-epub-studio/apps/web/src/features/reader/ReaderPage.tsx#L130-142
@@ -206,7 +206,7 @@ useEffect(() => {
 
 ### 1.6 AnnotationToolbar Event Listeners (PROPERLY CLEANED UP)
 
-**File:** `apps/web/src/features/reader/components/annotations/AnnotationToolbar.tsx`  
+**File:** `apps/web/src/features/reader/components/annotations/AnnotationToolbar.tsx`
 **Lines:** 67-72
 
 ```do-epub-studio/apps/web/src/features/reader/components/annotations/AnnotationToolbar.tsx#L67-72
@@ -226,7 +226,7 @@ return () => {
 
 ### 2.1 Zombie Detection Interval (PROPERLY CLEANED UP)
 
-**File:** `apps/web/src/lib/offline/permissions.ts`  
+**File:** `apps/web/src/lib/offline/permissions.ts`
 **Lines:** 91-118
 
 ```do-epub-studio/apps/web/src/lib/offline/permissions.ts#L91-118
@@ -254,7 +254,7 @@ export function setupZombieDetection(onRevoked: (bookId: string) => void): () =>
 
 ### 2.2 Sync Retry setTimeout (LOW PRIORITY)
 
-**File:** `apps/web/src/lib/offline/sync.ts`  
+**File:** `apps/web/src/lib/offline/sync.ts`
 **Lines:** 91-99
 
 ```do-epub-studio/apps/web/src/lib/offline/sync.ts#L91-99
@@ -279,7 +279,7 @@ export function setupZombieDetection(onRevoked: (bookId: string) => void): () =>
 
 ### 2.3 API Request Timeout (PROPERLY HANDLED)
 
-**File:** `apps/web/src/lib/api.ts`  
+**File:** `apps/web/src/lib/api.ts`
 **Lines:** 32-42
 
 ```do-epub-studio/apps/web/src/lib/api.ts#L32-42
@@ -297,7 +297,7 @@ const timeout = setTimeout(
 
 ### 3.1 Missing Cleanup in Permissions Setup Effect (LOW PRIORITY)
 
-**File:** `apps/web/src/features/reader/ReaderPage.tsx`  
+**File:** `apps/web/src/features/reader/ReaderPage.tsx`
 **Lines:** 163-167
 
 ```do-epub-studio/apps/web/src/features/reader/ReaderPage.tsx#L163-167
@@ -319,7 +319,7 @@ useEffect(() => {
 
 ### 4.1 IndexedDB Connection Not Closed
 
-**File:** `apps/web/src/lib/offline/db.ts`  
+**File:** `apps/web/src/lib/offline/db.ts`
 **Lines:** 51-75
 
 ```do-epub-studio/apps/web/src/lib/offline/db.ts#L51-75
@@ -359,7 +359,7 @@ export async function closeDB(): Promise<void> {
 
 ### 4.2 No Cache Cleanup for Service Worker
 
-**File:** `apps/web/src/sw.ts`  
+**File:** `apps/web/src/sw.ts`
 **Lines:** 103-111
 
 ```do-epub-studio/apps/web/src/sw.ts#L103-111
@@ -382,7 +382,7 @@ self.addEventListener('message', (event) => {
 
 ### 5.1 Modal Focus Trap (PROPERLY CLEANED UP)
 
-**File:** `packages/ui/src/modal.tsx`  
+**File:** `packages/ui/src/modal.tsx`
 **Lines:** 28-42
 
 ```do-epub-studio/packages/ui/src/modal.tsx#L28-42
@@ -416,7 +416,7 @@ useEffect(() => {
 
 ### 5.2 useFocusTrap Hook (PROPERLY CLEANED UP)
 
-**File:** `packages/ui/src/useFocusTrap.ts`  
+**File:** `packages/ui/src/useFocusTrap.ts`
 **Lines:** 51-74
 
 ```do-epub-studio/packages/ui/src/useFocusTrap.ts#L51-74

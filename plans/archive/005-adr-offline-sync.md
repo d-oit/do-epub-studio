@@ -1,6 +1,6 @@
 # ADR-005: Offline Sync
 
-**Status:** Accepted  
+**Status:** Accepted
 **Date:** 2026-04-07
 
 ## Context

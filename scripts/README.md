@@ -24,7 +24,7 @@ Operational scripts for `do EPUB Studio`. All scripts assume execution from the 
 | `validate-skill-format.sh` | Validates SKILL.md frontmatter per agentskills.io spec | none |
 | `validate-links.sh` | Validates reference links in SKILL.md files | perl (macOS fallback for realpath) |
 | `validate-git-hooks.sh` | Detects global git hooks overriding local hooks | git |
-| `validate-github-actions-shas.sh` | Detects placeholder SHAs in workflow files | none (gh CLI optional) |
+| `validate-shas.sh` | Detects placeholder SHAs in workflow files | none (gh CLI optional) |
 | `eval-skills.sh` | Evaluates skill quality via check_structure.py | python3 |
 | `setup-skills.sh` | Creates symlinks for CLI skill folders | none |
 
@@ -68,7 +68,7 @@ Source hooks live in `scripts/hooks/`. Install them with:
 |--------|---------|
 | `install-hooks.sh` | Copy hooks to `.git/hooks/` with dedup |
 | `validate-git-hooks.sh` | Check for global hooks overriding local |
-| `validate-github-actions-shas.sh` | Detect placeholder SHAs in workflows |
+| `validate-shas.sh` | Detect placeholder SHAs in workflows |
 
 ## Shared Libraries
 

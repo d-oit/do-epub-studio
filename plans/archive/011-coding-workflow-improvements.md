@@ -18,7 +18,6 @@
 
 ---
 
-
 ## Executive Summary
 
 This plan consolidates improvements from:

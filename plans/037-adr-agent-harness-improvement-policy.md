@@ -44,4 +44,3 @@ The first implementation should target low-risk, high-signal checks:
 2. Skill eval runner.
 3. Command verification in report-only mode.
 4. GitHub metadata automation.
-

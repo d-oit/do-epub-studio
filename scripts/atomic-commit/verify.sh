@@ -58,6 +58,7 @@ while true; do
     SUCCESS_COUNT=0
     TOTAL_COUNT=0
 
+# shellcheck disable=SC2034
     while IFS='|' read -r name state conclusion status; do
         [[ -z "$name" ]] && continue
         TOTAL_COUNT=$((TOTAL_COUNT + 1))

@@ -34,10 +34,10 @@ Must generate: `analysis/triz-core-YYYY-MM-DD.md`
 For each contradiction:
 
 ```
-Improving: X  
-Worsens: Y  
-Why: explanation  
-Reality: real vs assumed  
+Improving: X
+Worsens: Y
+Why: explanation
+Reality: real vs assumed
 ```
 
 Then map → TRIZ principles

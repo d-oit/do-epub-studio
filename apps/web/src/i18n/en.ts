@@ -214,6 +214,7 @@ export const en = {
   'admin.grants.createGrantModal.close': 'Close',
   'admin.grants.createGrantModal.submit': 'Create Grant',
   'admin.grants.createGrantModal.submitting': 'Creating...',
+'admin.grants.selectBook': 'Please select a book from the books page to manage its access grants.',
 } as const;
 
 export type TranslationKeys = keyof typeof en;

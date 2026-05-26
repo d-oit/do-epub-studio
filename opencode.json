@@ -8,5 +8,6 @@
                 "baseURL": "https://api.perplexity.ai"
             }
         }
-    }
+    },
+    "plugin": ["opencode-insights"]
 }

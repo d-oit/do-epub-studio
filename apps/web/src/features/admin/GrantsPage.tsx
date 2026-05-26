@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from '../../hooks/useTranslation';
 import { apiRequest } from '../../lib/api';
+import { useAuthStore } from '../../stores/auth';
 import { GrantResponse } from '@do-epub-studio/shared';
 import { LocaleSwitcher } from '../../components/LocaleSwitcher';
 import { Modal, Button } from '../../components/ui';
@@ -16,12 +17,14 @@ export function AdminGrantResponsesPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const locationState = location.state as LocationState | null;
+  const sessionToken = useAuthStore((state) => state.sessionToken);
+
   const [grants, setGrantResponses] = useState<GrantResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
-  const [inviteMode, setInviteMode] = useState('read');
+  const [inviteMode, setInviteMode] = useState('reader_only');
   const [commentsAllowed, setCommentsAllowed] = useState(true);
   const [offlineAllowed, setOfflineAllowed] = useState(false);
   const [expiresAt, setExpiresAt] = useState('');
@@ -32,7 +35,7 @@ export function AdminGrantResponsesPage() {
     if (!bookId) return;
     setIsLoading(true);
     try {
-      const data = await apiRequest<GrantResponse[]>(`/api/admin/books/${bookId}/grants`);
+      const data = await apiRequest<GrantResponse[]>(`/api/admin/books/${bookId}/grants`, { token: sessionToken ?? undefined });
       setGrantResponses(data);
     } catch (err) {
       setError((err as Error).message);
@@ -47,7 +50,7 @@ export function AdminGrantResponsesPage() {
 
   const resetCreateForm = () => {
     setInviteEmail('');
-    setInviteMode('read');
+    setInviteMode('reader_only');
     setCommentsAllowed(true);
     setOfflineAllowed(false);
     setExpiresAt('');
@@ -67,7 +70,9 @@ export function AdminGrantResponsesPage() {
     try {
       await apiRequest(`/api/admin/books/${bookId}/grants`, {
         method: 'POST',
+        token: sessionToken ?? undefined,
         body: JSON.stringify({
+          bookId,
           email: inviteEmail.trim(),
           mode: inviteMode,
           commentsAllowed,
@@ -88,12 +93,28 @@ export function AdminGrantResponsesPage() {
   const handleRevoke = async (grantId: string) => {
     if (!confirm(t('admin.grants.confirmRevoke'))) return;
     try {
-      await apiRequest(`/api/admin/grants/${grantId}`, { method: 'DELETE' });
+      await apiRequest(`/api/admin/grants/${grantId}/revoke`, { method: 'POST', token: sessionToken ?? undefined });
       void fetchGrantResponses();
     } catch (err) {
       alert((err as Error).message);
     }
   };
+
+  if (!bookId) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          {t('admin.grants.title')}
+        </h1>
+        <p className="mt-4 text-gray-500 dark:text-gray-400">
+          {t('admin.grants.selectBook')}
+        </p>
+        <button onClick={() => void navigate('/admin/books')} className="mt-4 text-primary-600 hover:text-primary-700">
+          &larr; {t('admin.grants.backToBooks')}
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8">
@@ -213,9 +234,9 @@ export function AdminGrantResponsesPage() {
               onChange={(e) => setInviteMode(e.target.value)}
               className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none transition-all"
             >
-              <option value="read">{t('admin.grants.createGrantModal.modeRead')}</option>
-              <option value="comment">{t('admin.grants.createGrantModal.modeComment')}</option>
-              <option value="highlight">{t('admin.grants.createGrantModal.modeHighlight')}</option>
+              <option value="reader_only">Read</option>
+              <option value="editorial_review">Comment</option>
+              <option value="private">Private</option>
             </select>
           </div>
 
