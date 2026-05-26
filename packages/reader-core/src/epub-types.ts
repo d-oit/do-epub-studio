@@ -11,6 +11,10 @@ export interface SpineItem {
   properties?: string;
 }
 
+export type PageDirection = 'ltr' | 'rtl' | 'default';
+
+export type WritingMode = 'horizontal-tb' | 'vertical-rl' | 'vertical-lr' | 'sideways-rl' | 'sideways-lr';
+
 export interface BookMetadata {
   title: string;
   creator?: string;
@@ -18,6 +22,7 @@ export interface BookMetadata {
   publisher?: string;
   description?: string;
   cover?: string;
+  direction?: PageDirection;
 }
 
 export interface ProgressPosition {

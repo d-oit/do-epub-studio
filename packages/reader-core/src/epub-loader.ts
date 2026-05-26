@@ -6,6 +6,7 @@ import type {
   SpineItem,
   BookMetadata,
   ProgressPosition,
+  PageDirection,
 } from './epub-types';
 import { createTraceId, createSpanId, serializeError, testBounded } from '@do-epub-studio/shared';
 import { validateArchive } from './archive-validator';
@@ -150,13 +151,22 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
 
       const meta = await book.loaded.metadata;
       const metaMap = meta as Map<string, string>;
+
+      const direction: PageDirection = book.packaging?.direction === 'rtl'
+        ? 'rtl'
+        : book.packaging?.direction === 'ltr'
+          ? 'ltr'
+          : 'default';
+
       metadata = {
         title: metaMap.get('title') ?? '',
         creator: metaMap.get('creator'),
         language: metaMap.get('language'),
         publisher: metaMap.get('publisher'),
         description: metaMap.get('description'),
+        direction,
       };
+
     } catch (error) {
       const formatted = serializeError(error);
       console.error(

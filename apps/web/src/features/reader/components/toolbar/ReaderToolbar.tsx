@@ -27,6 +27,7 @@ interface ReaderToolbarProps {
   onToggleComments: () => void;
   onToggleBookmarks: () => void;
   onToggleSettings: () => void;
+  onToggleInfo: () => void;
   onExportNotes: () => void;
   onLogout: () => void;
   t: (key: TranslationKeys) => string;
@@ -42,6 +43,7 @@ export function ReaderToolbar({
   onToggleComments,
   onToggleBookmarks,
   onToggleSettings,
+  onToggleInfo,
   onExportNotes,
   onLogout,
   t,
@@ -174,6 +176,18 @@ export function ReaderToolbar({
                 )}
               </IconButton>
             </Tooltip>
+            <Tooltip content={t('reader.aboutBook')}>
+              <IconButton
+                onClick={onToggleInfo}
+                variant="ghost"
+                aria-label={t('reader.aboutBook')}
+                aria-expanded={activePanel === 'info'}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </IconButton>
+            </Tooltip>
             <Tooltip content={t('reader.exportNotes')}>
               <IconButton onClick={onExportNotes} variant="ghost" aria-label={t('reader.exportNotes')}>
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -295,6 +309,18 @@ export function ReaderToolbar({
                           {bookmarks.length}
                         </span>
                       )}
+                    </button>
+                    <button
+                      onClick={() => {
+                        onToggleInfo();
+                        setIsMenuOpen(false);
+                      }}
+                      className="flex items-center gap-3 px-3 py-2 text-sm text-foreground hover:bg-background-secondary rounded-lg transition-colors text-left"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      {t('reader.aboutBook')}
                     </button>
                     <button
                       onClick={() => {

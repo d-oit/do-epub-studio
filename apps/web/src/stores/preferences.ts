@@ -4,6 +4,8 @@ import { persist } from 'zustand/middleware';
 export type Theme = 'light' | 'dark' | 'sepia' | 'system';
 export type FontFamily = 'serif' | 'sans-serif' | 'monospace';
 export type FontSize = 'small' | 'medium' | 'large' | 'xlarge';
+export type PageDirection = 'ltr' | 'rtl' | 'default';
+export type WritingMode = 'horizontal-tb' | 'vertical-rl' | 'vertical-lr';
 
 interface ReaderPreferences {
   theme: Theme;
@@ -11,6 +13,8 @@ interface ReaderPreferences {
   fontSize: FontSize;
   lineHeight: number;
   pageWidth: 'narrow' | 'normal' | 'wide' | 'full';
+  direction: PageDirection;
+  writingMode: WritingMode;
 }
 
 interface PreferencesState {
@@ -20,6 +24,8 @@ interface PreferencesState {
   setFontSize: (fontSize: FontSize) => void;
   setLineHeight: (lineHeight: number) => void;
   setPageWidth: (pageWidth: 'narrow' | 'normal' | 'wide' | 'full') => void;
+  setDirection: (direction: PageDirection) => void;
+  setWritingMode: (writingMode: WritingMode) => void;
 }
 
 const FONT_SIZES: Record<FontSize, string> = {
@@ -44,12 +50,16 @@ export const usePreferencesStore = create<PreferencesState>()(
         fontSize: 'medium',
         lineHeight: 2,
         pageWidth: 'normal',
+        direction: 'default',
+        writingMode: 'horizontal-tb',
       },
       setTheme: (theme) => set((state) => ({ reader: { ...state.reader, theme } })),
       setFontFamily: (fontFamily) => set((state) => ({ reader: { ...state.reader, fontFamily } })),
       setFontSize: (fontSize) => set((state) => ({ reader: { ...state.reader, fontSize } })),
       setLineHeight: (lineHeight) => set((state) => ({ reader: { ...state.reader, lineHeight } })),
       setPageWidth: (pageWidth) => set((state) => ({ reader: { ...state.reader, pageWidth } })),
+      setDirection: (direction) => set((state) => ({ reader: { ...state.reader, direction } })),
+      setWritingMode: (writingMode) => set((state) => ({ reader: { ...state.reader, writingMode } })),
     }),
     { name: 'do-epub-preferences' },
   ),

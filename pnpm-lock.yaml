@@ -262,6 +262,9 @@ importers:
       '@intity/epub-js':
         specifier: ^0.3.96
         version: 0.3.96
+      dompurify:
+        specifier: ^3.4.5
+        version: 3.4.5
       fflate:
         specifier: ^0.8.3
         version: 0.8.3
@@ -281,9 +284,9 @@ importers:
 
   packages/schema:
     dependencies:
-      '@do-epub-studio/shared':
-        specifier: workspace:*
-        version: link:../shared
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
     devDependencies:
       typescript:
         specifier: ^6.0.3
@@ -294,6 +297,9 @@ importers:
 
   packages/shared:
     dependencies:
+      '@do-epub-studio/schema':
+        specifier: workspace:*
+        version: link:../schema
       jszip:
         specifier: ^3.10.1
         version: 3.10.1
@@ -3040,6 +3046,9 @@ packages:
 
   dom-accessibility-api@0.6.3:
     resolution: {integrity: sha512-7ZgogeTnjuHbo+ct10G9Ffp0mif17idi0IyWNVA/wcwcm7NPOD/WEHVP3n7n3MhXqxoIYm8d6MuZohYWIZ4T3w==}
+
+  dompurify@3.4.5:
+    resolution: {integrity: sha512-OrwIBKsdNSVEeubdJ1HBv/wNENRM9ytAVCv7YXt//A3vPdVMNuACRqK9mXCGCBW2ln7BT/A4X0jXHo2Gu89miA==}
 
   dunder-proto@1.0.1:
     resolution: {integrity: sha512-KIN/nDJBQRcXw0MLVhZE9iQHmG68qAVIBg9CqmUYjmQIhgij9U5MFvrqkUL5FbtyyzZuOeOt0zdeRe4UY7ct+A==}
@@ -7586,6 +7595,10 @@ snapshots:
   dom-accessibility-api@0.5.16: {}
 
   dom-accessibility-api@0.6.3: {}
+
+  dompurify@3.4.5:
+    optionalDependencies:
+      '@types/trusted-types': 2.0.7
 
   dunder-proto@1.0.1:
     dependencies:

@@ -31,6 +31,7 @@ describe('ReaderToolbar', () => {
     onToggleComments: vi.fn(),
     onToggleBookmarks: vi.fn(),
     onToggleSettings: vi.fn(),
+    onToggleInfo: vi.fn(),
     onExportNotes: vi.fn(),
     onLogout: vi.fn(),
     t: (key: string) => {
@@ -38,6 +39,7 @@ describe('ReaderToolbar', () => {
        if (key === 'reader.untitledBook') return 'Untitled Book';
        if (key === 'annotation.comment') return 'Comment';
        if (key === 'reader.bookmarks') return 'Bookmarks';
+       if (key === 'reader.aboutBook') return 'About This Book';
        if (key === 'reader.exportNotes') return 'Export Notes';
        if (key === 'reader.settings') return 'Settings';
        if (key === 'reader.signOut') return 'Sign Out';

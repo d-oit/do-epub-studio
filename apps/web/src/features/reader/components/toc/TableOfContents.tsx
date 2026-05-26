@@ -14,9 +14,10 @@ interface TableOfContentsProps {
   onClose: () => void;
   onNavigate: (href: string) => void;
   t: (key: TranslationKeys) => string;
+  direction?: 'ltr' | 'rtl';
 }
 
-export function TableOfContents({ isOpen, toc, onClose, onNavigate, t }: TableOfContentsProps) {
+export function TableOfContents({ isOpen, toc, onClose, onNavigate, t, direction }: TableOfContentsProps) {
   const panelRef = useRef<HTMLElement>(null);
   useFocusTrap(isOpen, panelRef);
 
@@ -31,13 +32,18 @@ export function TableOfContents({ isOpen, toc, onClose, onNavigate, t }: TableOf
 
   if (!isOpen) return null;
 
+  const isRtl = direction === 'rtl';
+
   return (
     <aside
       ref={panelRef}
       role="dialog"
       aria-modal="true"
       aria-labelledby="toc-title"
-      className="fixed inset-y-0 left-0 w-64 bg-background border-r border-border z-40 overflow-y-auto"
+      dir={direction}
+      className={`fixed inset-y-0 w-64 bg-background border-border z-40 overflow-y-auto ${
+        isRtl ? 'right-0 border-l' : 'left-0 border-r'
+      }`}
     >
       <div className="p-4 border-b border-border flex justify-between items-center">
         <h2 id="toc-title" className="font-semibold">{t('reader.tableOfContents')}</h2>
@@ -65,7 +71,9 @@ export function TableOfContents({ isOpen, toc, onClose, onNavigate, t }: TableOf
               onClick={() => {
                 onNavigate(item.href);
               }}
-              className="w-full text-left px-3 py-2 text-sm hover:bg-background-secondary rounded"
+              className={`w-full px-3 py-2 text-sm hover:bg-background-secondary rounded ${
+                isRtl ? 'text-right' : 'text-left'
+              }`}
             >
               {item.label}
             </button>
