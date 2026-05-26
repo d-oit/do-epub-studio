@@ -8,7 +8,12 @@ describe('Security Routes', () => {
   it('handles CSP report', async () => {
     const res = await app.fetch(new Request('http://localhost/api/csp-report', {
       method: 'POST',
-      body: JSON.stringify({ 'csp-report': {} }),
+      body: JSON.stringify({
+        'csp-report': {
+          'document-uri': 'http://example.com',
+          'violated-directive': 'script-src'
+        }
+      }),
       headers: { 'Content-Type': 'application/json' },
     }), env);
 

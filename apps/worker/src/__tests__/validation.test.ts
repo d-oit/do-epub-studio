@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { app } from '../app';
 import { makeEnv } from './fixtures';
 import * as adminMiddleware from '../auth/admin-middleware';
+import { requireAuth } from '../auth/middleware';
 
 type AdminMiddleware = typeof import('../auth/admin-middleware');
 
@@ -79,6 +80,36 @@ describe('API Validation Integration', () => {
       env,
     );
 
+    expect(res.status).toBe(400);
+  });
+
+  it('rejects invalid CSP report', async () => {
+    const res = await app.fetch(
+      new Request('http://localhost/api/csp-report', {
+        method: 'POST',
+        body: JSON.stringify({ 'csp-report': { 'document-uri': 'not-a-url' } }),
+        headers: { 'Content-Type': 'application/json' },
+      }),
+      env,
+    );
+
+    expect(res.status).toBe(400);
+  });
+
+  it('rejects invalid input on protected route before authentication', async () => {
+    // Mock requireAuth to return null (unauthorized)
+    vi.mocked(requireAuth).mockResolvedValue(null);
+
+    const res = await app.fetch(
+      new Request('http://localhost/api/books/test-book/progress', {
+        method: 'PUT',
+        body: JSON.stringify({ progressPercent: 150 }), // Invalid percent (> 100)
+        headers: { 'Content-Type': 'application/json' },
+      }),
+      env,
+    );
+
+    // Should be 400 (validation) not 401 (unauthorized) because validation happens first
     expect(res.status).toBe(400);
   });
 });

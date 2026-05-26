@@ -1,7 +1,6 @@
 import type { Env } from '../lib/env';
 import { checkRateLimitDO, type RateLimitConfig } from '../lib/rate-limit-client';
 import { jsonResponse } from '../lib/responses';
-import { matchBounded } from '@do-epub-studio/shared';
 
 export interface RateLimitMetadata {
   limit: number;
@@ -13,20 +12,22 @@ const AUTH_LIMIT: RateLimitConfig = { maxRequests: 10, windowMs: 60_000 };
 const FILE_LIMIT: RateLimitConfig = { maxRequests: 30, windowMs: 60_000 };
 const API_LIMIT: RateLimitConfig = { maxRequests: 60, windowMs: 60_000 };
 
+const AUTH_ROUTES = new Set([
+  '/api/access/request',
+  '/api/admin/login',
+  '/api/access/refresh',
+  '/api/admin/logout',
+  '/api/access/logout',
+]);
+
 export function getRateLimitConfig(path: string): { config: RateLimitConfig; category: string } {
   // Auth endpoints
-  if (
-    path === '/api/access/request' ||
-    path === '/api/admin/login' ||
-    path === '/api/access/refresh' ||
-    path === '/api/admin/logout' ||
-    path === '/api/access/logout'
-  ) {
+  if (AUTH_ROUTES.has(path)) {
     return { config: AUTH_LIMIT, category: 'auth' };
   }
 
-  // File endpoints
-  if (path.startsWith('/api/files/') || matchBounded(/\/api\/books\/([^/]+)\/file-url$/, path, 2048)) {
+  // File endpoints: /api/files/* and /api/books/:id/file-url
+  if (path.startsWith('/api/files/') || (path.startsWith('/api/books/') && path.endsWith('/file-url'))) {
     return { config: FILE_LIMIT, category: 'files' };
   }
 

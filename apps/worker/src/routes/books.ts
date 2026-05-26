@@ -1,21 +1,12 @@
 import { Hono } from 'hono';
 import type { Env } from '../lib/env';
 import { queryFirst, queryAll } from '../db/client';
-import { requireAuth } from '../auth/middleware';
 import type { AuthContext } from '../auth/middleware';
+import { readerAuth } from '../middleware/auth';
 
 export const booksRouter = new Hono<{ Bindings: Env; Variables: { auth: AuthContext } }>();
 
-booksRouter.use('*', async (c, next) => {
-  const auth = await requireAuth(c.env, c.req.raw);
-  if (!auth) {
-    return c.json({ ok: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } }, 401);
-  }
-  c.set('auth', auth);
-  await next();
-});
-
-booksRouter.get('/', async (c) => {
+booksRouter.get('/', readerAuth, async (c) => {
   const auth = c.get('auth');
   // Only list books the user has access to via grants
   const books = await queryAll(
@@ -44,7 +35,7 @@ booksRouter.get('/', async (c) => {
   });
 });
 
-booksRouter.get('/:id', async (c) => {
+booksRouter.get('/:id', readerAuth, async (c) => {
   const id = c.req.param('id');
   const auth = c.get('auth');
 
@@ -80,7 +71,7 @@ booksRouter.get('/:id', async (c) => {
   });
 });
 
-booksRouter.post('/:id/file-url', async (c) => {
+booksRouter.post('/:id/file-url', readerAuth, async (c) => {
   const id = c.req.param('id');
   const auth = c.get('auth');
   const { generateSignedUrl } = await import('../storage/signed-url');
