@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { renderHook, cleanup, waitFor } from '@testing-library/react';
+import { renderHook, act, cleanup, waitFor } from '@testing-library/react';
 import { useReaderEpub } from './useReaderEpub';
 import type { Theme, FontSize } from '../../../stores';
 
@@ -182,4 +182,85 @@ describe('useReaderEpub', () => {
     });
   });
 
+  describe('keyboard navigation', () => {
+    function setupAndFlush() {
+      const refs = createRefs();
+      const hook = renderHook(() =>
+        useReaderEpub(
+          'http://test.epub',
+          refs.viewerRef,
+          refs.rootRef,
+          refs.renderHighlightsRef,
+          refs.renderCommentMarkersRef,
+        ),
+      );
+      return hook;
+    }
+
+    it('calls rendition.next on ArrowRight keydown', async () => {
+      setupAndFlush();
+
+      await waitFor(() => {
+        expect(mockRendition.next).not.toHaveBeenCalled();
+      });
+
+      act(() => {
+        window.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight' }));
+      });
+
+      expect(mockRendition.next).toHaveBeenCalledTimes(1);
+      expect(mockRendition.prev).not.toHaveBeenCalled();
+    });
+
+    it('calls rendition.prev on ArrowLeft keydown', async () => {
+      setupAndFlush();
+
+      await waitFor(() => {
+        expect(mockRendition.prev).not.toHaveBeenCalled();
+      });
+
+      act(() => {
+        window.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft' }));
+      });
+
+      expect(mockRendition.prev).toHaveBeenCalledTimes(1);
+      expect(mockRendition.next).not.toHaveBeenCalled();
+    });
+
+    it('does not respond to other keys', async () => {
+      setupAndFlush();
+
+      await waitFor(() => {
+        expect(mockRendition.next).not.toHaveBeenCalled();
+      });
+
+      act(() => {
+        window.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp' }));
+        window.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown' }));
+        window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+      });
+
+      expect(mockRendition.next).not.toHaveBeenCalled();
+      expect(mockRendition.prev).not.toHaveBeenCalled();
+    });
+
+    it('cleans up event listener on unmount', async () => {
+      const addSpy = vi.spyOn(window, 'addEventListener');
+      const removeSpy = vi.spyOn(window, 'removeEventListener');
+
+      const { unmount } = setupAndFlush();
+
+      await waitFor(() => {
+        expect(addSpy).toHaveBeenCalledWith('keydown', expect.any(Function));
+      });
+
+      act(() => {
+        unmount();
+      });
+
+      expect(removeSpy).toHaveBeenCalledWith('keydown', expect.any(Function));
+      addSpy.mockRestore();
+      removeSpy.mockRestore();
+    });
+  });
 });

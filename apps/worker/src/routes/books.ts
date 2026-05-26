@@ -1,127 +1,179 @@
-import { Hono } from 'hono';
 import type { Env } from '../lib/env';
-import { queryFirst, queryAll } from '../db/client';
 import { requireAuth } from '../auth/middleware';
-import type { AuthContext } from '../auth/middleware';
+import { generateSignedUrl } from '../storage/signed-url';
+import { queryFirst, queryAll } from '../db/client';
+import { jsonResponse } from '../lib/responses';
+import { validateRequestBody } from '../lib/validation';
+import { z } from 'zod';
 
-export const booksRouter = new Hono<{ Bindings: Env; Variables: { auth: AuthContext } }>();
+const BookIdentifierSchema = z.object({
+  bookIdentifier: z.string().min(1).max(255),
+});
 
-booksRouter.use('*', async (c, next) => {
-  const auth = await requireAuth(c.env, c.req.raw);
+interface BookRow {
+  id: string;
+  slug: string;
+  title: string;
+  author_name: string | null;
+  description: string | null;
+  language: string;
+  visibility: string;
+  cover_image_url: string | null;
+  published_at: string | null;
+}
+
+interface BookFileRow {
+  id: string;
+  book_id: string;
+  storage_key: string;
+  original_filename: string;
+  mime_type: string;
+  file_size_bytes: number;
+}
+
+export async function handleGetBook(env: Env, request: Request, slug: string): Promise<Response> {
+  const auth = await requireAuth(env, request);
+
   if (!auth) {
-    return c.json({ ok: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } }, 401);
+    return jsonResponse(
+      { ok: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } },
+      401,
+    );
   }
-  c.set('auth', auth);
-  await next();
-});
 
-booksRouter.get('/', async (c) => {
-  const auth = c.get('auth');
-  // Only list books the user has access to via grants
-  const books = await queryAll(
-    c.env,
-    `SELECT b.id, b.slug, b.title, b.author_name, b.visibility, b.cover_image_url
-     FROM books b
-     JOIN book_access_grants g ON b.id = g.book_id
-     WHERE b.archived_at IS NULL
-     AND g.email = ?
-     AND g.revoked_at IS NULL
-     AND (g.expires_at IS NULL OR g.expires_at > datetime('now'))
-     ORDER BY b.created_at DESC`,
-    [auth.email]
-  );
-
-  return c.json({
-    ok: true,
-    data: books.map((row) => ({
-      id: row.id as string,
-      slug: row.slug as string,
-      title: row.title as string,
-      authorName: row.author_name as string | null,
-      visibility: row.visibility as string,
-      coverImageUrl: row.cover_image_url as string | null,
-    })),
-  });
-});
-
-booksRouter.get('/:id', async (c) => {
-  const id = c.req.param('id');
-  const auth = c.get('auth');
-
-  const book = await queryFirst(
-    c.env,
-    `SELECT b.* FROM books b
-     JOIN book_access_grants g ON b.id = g.book_id
-     WHERE (b.id = ? OR b.slug = ?)
-     AND b.archived_at IS NULL
-     AND g.email = ?
-     AND g.revoked_at IS NULL
-     AND (g.expires_at IS NULL OR g.expires_at > datetime('now'))
-     LIMIT 1`,
-    [id, id, auth.email],
-  );
+  const book = (await queryFirst(
+    env,
+    `SELECT * FROM books WHERE slug = ? AND archived_at IS NULL`,
+    [slug],
+  )) as BookRow | null;
 
   if (!book) {
-    return c.json({ ok: false, error: { code: 'NOT_FOUND', message: 'Book not found or access denied' } }, 404);
-  }
-
-  return c.json({
-    ok: true,
-    data: {
-      id: book.id as string,
-      slug: book.slug as string,
-      title: book.title as string,
-      authorName: (book.author_name as string) ?? null,
-      description: (book.description as string) ?? null,
-      language: book.language as string,
-      visibility: book.visibility as string,
-      coverImageUrl: (book.cover_image_url as string) ?? null,
-    },
-  });
-});
-
-booksRouter.post('/:id/file-url', async (c) => {
-  const id = c.req.param('id');
-  const auth = c.get('auth');
-  const { generateSignedUrl } = await import('../storage/signed-url');
-
-  if (!auth.capabilities.canRead) {
-    return c.json({ ok: false, error: { code: 'FORBIDDEN', message: 'Read access denied' } }, 403);
-  }
-
-  const book = await queryFirst(
-    c.env,
-    `SELECT b.id, b.slug FROM books b
-     JOIN book_access_grants g ON b.id = g.book_id
-     WHERE (b.id = ? OR b.slug = ?)
-     AND b.archived_at IS NULL
-     AND g.email = ?
-     AND g.revoked_at IS NULL
-     LIMIT 1`,
-    [id, id, auth.email],
-  );
-
-  if (!book) {
-    return c.json({ ok: false, error: { code: 'NOT_FOUND', message: 'Book not found' } }, 404);
-  }
-
-  const file = await queryFirst(
-    c.env,
-    `SELECT storage_key FROM book_files WHERE book_id = ? ORDER BY created_at DESC LIMIT 1`,
-    [book.id as string],
-  );
-
-  if (!file) {
-    return c.json(
-      { ok: false, error: { code: 'NOT_FOUND', message: 'No file found for this book' } },
+    return jsonResponse(
+      { ok: false, error: { code: 'NOT_FOUND', message: 'Book not found' } },
       404,
     );
   }
 
-  const signedResponse = await generateSignedUrl(c.env, book.id as string, file.storage_key as string);
+  if (book.id !== auth.bookId) {
+    return jsonResponse({ ok: false, error: { code: 'FORBIDDEN', message: 'Access denied' } }, 403);
+  }
 
-  return c.json({
+  return jsonResponse({
     ok: true,
-    data: { url: signedResponse.url },
+    data: {
+      id: book.id,
+      slug: book.slug,
+      title: book.title,
+      authorName: book.author_name,
+      description: book.description,
+      language: book.language,
+      visibility: book.visibility,
+      coverImageUrl: book.cover_image_url,
+      publishedAt: book.published_at,
+    },
   });
-});
+}
+
+export async function handleGetFileUrl(
+  env: Env,
+  request: Request,
+  bookIdentifier: string,
+): Promise<Response> {
+  const validation = validateRequestBody(BookIdentifierSchema, { bookIdentifier });
+
+  if (!validation.ok) {
+    return jsonResponse(
+      {
+        ok: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: validation.error,
+          details: validation.details,
+        },
+      },
+      validation.status,
+    );
+  }
+
+  const auth = await requireAuth(env, request);
+
+  if (!auth) {
+    return jsonResponse(
+      { ok: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } },
+      401,
+    );
+  }
+
+  if (!auth.capabilities.canRead) {
+    return jsonResponse({ ok: false, error: { code: 'FORBIDDEN', message: 'Access denied' } }, 403);
+  }
+
+  const book = await queryFirst<Pick<BookRow, 'id' | 'slug'>>(
+    env,
+    `SELECT id, slug FROM books WHERE (id = ? OR slug = ?) AND archived_at IS NULL LIMIT 1`,
+    [bookIdentifier, bookIdentifier],
+  );
+
+  if (!book) {
+    return jsonResponse(
+      { ok: false, error: { code: 'NOT_FOUND', message: 'Book not found' } },
+      404,
+    );
+  }
+
+  if (book.id !== auth.bookId) {
+    return jsonResponse({ ok: false, error: { code: 'FORBIDDEN', message: 'Access denied' } }, 403);
+  }
+
+  const bookFile = (await queryFirst(
+    env,
+    `SELECT * FROM book_files WHERE book_id = ? ORDER BY created_at DESC LIMIT 1`,
+    [book.id],
+  )) as BookFileRow | null;
+
+  if (!bookFile) {
+    return jsonResponse(
+      { ok: false, error: { code: 'NOT_FOUND', message: 'File not found' } },
+      404,
+    );
+  }
+
+  const signedUrl = await generateSignedUrl(env, book.id, bookFile.storage_key);
+
+  return jsonResponse({
+    ok: true,
+    data: signedUrl,
+  });
+}
+
+export async function handleListBooks(env: Env, request: Request): Promise<Response> {
+  const auth = await requireAuth(env, request);
+
+  if (!auth) {
+    return jsonResponse(
+      { ok: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } },
+      401,
+    );
+  }
+
+  const books = (await queryAll(
+    env,
+    `SELECT b.* FROM books b
+     INNER JOIN book_access_grants g ON b.id = g.book_id
+     WHERE g.email = ? AND g.revoked_at IS NULL AND b.archived_at IS NULL
+     ORDER BY b.updated_at DESC`,
+    [auth.email],
+  )) as unknown as BookRow[];
+
+  return jsonResponse({
+    ok: true,
+    data: books.map((book) => ({
+      id: book.id,
+      slug: book.slug,
+      title: book.title,
+      authorName: book.author_name,
+      visibility: book.visibility,
+      coverImageUrl: book.cover_image_url,
+    })),
+  });
+}

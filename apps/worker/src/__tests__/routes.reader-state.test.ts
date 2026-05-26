@@ -1,196 +1,424 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   makeEnv,
+  makeRequest,
+  makeAuthContext,
+  makeProgressRow,
+  makeBookmarkRow,
+  makeHighlightRow,
   mockQueryFirst,
   mockQueryAll,
   mockExecute,
   mockRequireAuth,
 } from './fixtures';
-import { app } from '../app';
+import {
+  handleGetProgress,
+  handleUpdateProgress,
+  handleListBookmarks,
+  handleCreateBookmark,
+  handleDeleteBookmark,
+  handleListHighlights,
+  handleCreateHighlight,
+  handleDeleteHighlight,
+  handleUpdateHighlight,
+} from '../routes/reader-state';
 
-describe('Reader State Routes', () => {
-  const env = makeEnv();
+describe('GET /api/reader-state/{bookId}/progress (handleGetProgress)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('returns 401 when unauthenticated', async () => {
+    mockRequireAuth.mockResolvedValue(null);
+    const res = await handleGetProgress(makeEnv(), makeRequest(), 'book-1');
+    expect(res.status).toBe(401);
+  });
+
+  it('returns null progress when no record exists', async () => {
+    mockRequireAuth.mockResolvedValue(makeAuthContext());
+    mockQueryFirst.mockReturnValue(Promise.resolve(null));
+
+    const res = await handleGetProgress(makeEnv(), makeRequest(), 'book-1');
+    expect(res.status).toBe(200);
+    const body = await res.json() as any;
+    expect(body.ok).toBe(true);
+    expect(body.data.locator).toBeNull();
+    expect(body.data.progressPercent).toBe(0);
+  });
+
+  it('returns progress when record exists', async () => {
+    mockRequireAuth.mockResolvedValue(makeAuthContext());
+    mockQueryFirst.mockResolvedValue(makeProgressRow() as never);
+
+    const res = await handleGetProgress(makeEnv(), makeRequest(), 'book-1');
+    expect(res.status).toBe(200);
+    const body = await res.json() as any;
+    expect(body.ok).toBe(true);
+    expect(body.data.progressPercent).toBe(50);
+  });
+});
+
+describe('POST /api/reader-state/{bookId}/progress (handleUpdateProgress)', () => {
+  const validBody = {
+    locator: { cfi: 'epubcfi(/6/4)', selectedText: 'test', chapterRef: 'ch1' },
+    progressPercent: 50,
+  };
 
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  describe('GET /api/books/:bookId/progress', () => {
-    it('returns 401 when unauthenticated', async () => {
-      mockRequireAuth.mockResolvedValue(null);
-      const res = await app.fetch(new Request('http://localhost/api/books/book-1/progress'), env);
-      expect(res.status).toBe(401);
-    });
-
-    it('returns progress when authenticated', async () => {
-      mockRequireAuth.mockResolvedValue({ email: 'user@example.com' } as any);
-
-      mockQueryFirst.mockResolvedValue({
-        locator_json: JSON.stringify({ cfi: 'epubcfi(/6/4)' }),
-        progress_percent: 50,
-        updated_at: '2023-01-01T00:00:00Z',
-      });
-
-      const res = await app.fetch(new Request('http://localhost/api/books/book-1/progress', {
-        headers: { 'Authorization': 'Bearer valid' }
-      }), env);
-      expect(res.status).toBe(200);
-      const body = await res.json() as any;
-      expect(body.data.progressPercent).toBe(50);
-    });
+  it('returns 401 when unauthenticated', async () => {
+    mockRequireAuth.mockResolvedValue(null);
+    const res = await handleUpdateProgress(makeEnv(), makeRequest(), 'book-1', validBody);
+    expect(res.status).toBe(401);
   });
 
-  describe('PUT /api/books/:bookId/progress', () => {
-    it('updates progress and returns success', async () => {
-      mockRequireAuth.mockResolvedValue({
-        email: 'user@example.com',
-        capabilities: { canRead: true },
-      } as any);
-      mockExecute.mockResolvedValue({} as any);
-
-      const res = await app.fetch(new Request('http://localhost/api/books/book-1/progress', {
-        method: 'PUT',
-        body: JSON.stringify({
-          locator: { cfi: 'epubcfi(/6/4)', selectedText: 'text', chapterRef: 'chap1' },
-          progressPercent: 60,
-        }),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer valid'
+  it('returns 403 when user cannot read', async () => {
+    mockRequireAuth.mockResolvedValue(
+      makeAuthContext({
+        capabilities: {
+          canRead: false,
+          canComment: false,
+          canHighlight: false,
+          canBookmark: false,
+          canDownloadOffline: false,
+          canExportNotes: false,
+          canManageAccess: false,
         },
-      }), env);
-
-      expect(res.status).toBe(200);
-      const body = await res.json() as any;
-      expect(body.ok).toBe(true);
-    });
+      }),
+    );
+    const res = await handleUpdateProgress(makeEnv(), makeRequest(), 'book-1', validBody);
+    expect(res.status).toBe(403);
   });
 
-  describe('GET /api/books/:bookId/bookmarks', () => {
-    it('returns list of bookmarks', async () => {
-      mockRequireAuth.mockResolvedValue({ email: 'user@example.com' } as any);
-      mockQueryAll.mockResolvedValue([
-        { id: '1', locator_json: JSON.stringify({ cfi: 'cfi' }), label: 'bm1', created_at: 'now' }
-      ]);
+  it('updates progress and returns success', async () => {
+    mockRequireAuth.mockResolvedValue(makeAuthContext());
+    mockExecute.mockResolvedValue({} as never);
 
-      const res = await app.fetch(new Request('http://localhost/api/books/book-1/bookmarks', {
-        headers: { 'Authorization': 'Bearer valid' }
-      }), env);
-      expect(res.status).toBe(200);
-      const body = await res.json() as any;
-      expect(body.data).toHaveLength(1);
-    });
+    const res = await handleUpdateProgress(makeEnv(), makeRequest(), 'book-1', validBody);
+    expect(res.status).toBe(200);
+    const body = await res.json() as any;
+    expect(body.ok).toBe(true);
+    expect(body.data.progressPercent).toBe(50);
+  });
+});
+
+describe('GET /api/reader-state/{bookId}/bookmarks (handleListBookmarks)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
   });
 
-  describe('POST /api/books/:bookId/bookmarks', () => {
-    it('creates bookmark and returns success', async () => {
-      mockRequireAuth.mockResolvedValue({
-        email: 'user@example.com',
-        capabilities: { canBookmark: true },
-      } as any);
-      mockExecute.mockResolvedValue({} as any);
+  it('returns 401 when unauthenticated', async () => {
+    mockRequireAuth.mockResolvedValue(null);
+    const res = await handleListBookmarks(makeEnv(), makeRequest(), 'book-1');
+    expect(res.status).toBe(401);
+  });
 
-      const res = await app.fetch(new Request('http://localhost/api/books/book-1/bookmarks', {
-        method: 'POST',
-        body: JSON.stringify({
-          locator: { cfi: 'cfi', selectedText: 'text', chapterRef: 'chap1' },
-          label: 'My Bookmark',
-        }),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer valid'
+  it('returns empty array when no bookmarks exist', async () => {
+    mockRequireAuth.mockResolvedValue(makeAuthContext());
+    mockQueryAll.mockResolvedValue([] as never);
+
+    const res = await handleListBookmarks(makeEnv(), makeRequest(), 'book-1');
+    expect(res.status).toBe(200);
+    const body = await res.json() as any;
+    expect(body.ok).toBe(true);
+    expect(body.data).toEqual([]);
+  });
+
+  it('returns list of bookmarks', async () => {
+    mockRequireAuth.mockResolvedValue(makeAuthContext());
+    mockQueryAll.mockResolvedValue([makeBookmarkRow()] as never);
+
+    const res = await handleListBookmarks(makeEnv(), makeRequest(), 'book-1');
+    expect(res.status).toBe(200);
+    const body = await res.json() as any;
+    expect(body.ok).toBe(true);
+    expect(body.data).toHaveLength(1);
+  });
+
+  it('maps bookmark row data to correct response shape (id, locator, label, createdAt)', async () => {
+    mockRequireAuth.mockResolvedValue(makeAuthContext());
+    mockQueryAll.mockResolvedValue([makeBookmarkRow()] as never);
+
+    const res = await handleListBookmarks(makeEnv(), makeRequest(), 'book-1');
+    expect(res.status).toBe(200);
+    const body = await res.json() as any;
+    const bm = body.data[0];
+    // id and label pass through unchanged
+    expect(bm.id).toBe('bookmark-1');
+    expect(bm.label).toBe('My Bookmark');
+    expect(bm.createdAt).toBeDefined();
+    // locator_json must be JSON-parsed back into an object
+    expect(bm.locator).toEqual({ cfi: 'epubcfi(/6/4)', selectedText: 'test' });
+  });
+});
+
+describe('POST /api/reader-state/{bookId}/bookmarks (handleCreateBookmark)', () => {
+  const validBody = {
+    locator: { cfi: 'epubcfi(/6/4)', selectedText: 'text', chapterRef: 'ch1' },
+    label: 'My Bookmark',
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('returns 401 when unauthenticated', async () => {
+    mockRequireAuth.mockResolvedValue(null);
+    const res = await handleCreateBookmark(makeEnv(), makeRequest(), 'book-1', validBody);
+    expect(res.status).toBe(401);
+  });
+
+  it('returns 403 when user cannot bookmark', async () => {
+    mockRequireAuth.mockResolvedValue(
+      makeAuthContext({
+        capabilities: {
+          canRead: true,
+          canComment: false,
+          canHighlight: false,
+          canBookmark: false,
+          canDownloadOffline: false,
+          canExportNotes: false,
+          canManageAccess: false,
         },
-      }), env);
-
-      expect(res.status).toBe(201);
-    });
+      }),
+    );
+    const res = await handleCreateBookmark(makeEnv(), makeRequest(), 'book-1', validBody);
+    expect(res.status).toBe(403);
   });
 
-  describe('DELETE /api/books/:bookId/bookmarks/:bookmarkId', () => {
-    it('deletes bookmark and returns success', async () => {
-      mockRequireAuth.mockResolvedValue({ email: 'user@example.com' } as any);
-      mockExecute.mockResolvedValue({} as any);
+  it('creates bookmark and returns success', async () => {
+    mockRequireAuth.mockResolvedValue(makeAuthContext());
+    mockExecute.mockResolvedValue({} as never);
 
-      const res = await app.fetch(new Request('http://localhost/api/books/book-1/bookmarks/bookmark-1', {
-        method: 'DELETE',
-        headers: { 'Authorization': 'Bearer valid' },
-      }), env);
-
-      expect(res.status).toBe(200);
-    });
+    const res = await handleCreateBookmark(makeEnv(), makeRequest(), 'book-1', validBody);
+    expect(res.status).toBe(201);
+    const body = await res.json() as any;
+    expect(body.ok).toBe(true);
   });
 
-  describe('GET /api/books/:bookId/highlights', () => {
-    it('returns list of highlights', async () => {
-      mockRequireAuth.mockResolvedValue({ email: 'user@example.com' } as any);
-      mockQueryAll.mockResolvedValue([
-        { id: '1', chapter_ref: 'c1', cfi_range: 'r1', selected_text: 't', color: '#ff0', created_at: 'now' }
-      ]);
+  it('returns 400 validation error when required locator field is missing', async () => {
+    mockRequireAuth.mockResolvedValue(makeAuthContext());
 
-      const res = await app.fetch(new Request('http://localhost/api/books/book-1/highlights', {
-        headers: { 'Authorization': 'Bearer valid' }
-      }), env);
-      expect(res.status).toBe(200);
-      const body = await res.json() as any;
-      expect(body.data).toHaveLength(1);
-    });
+    const res = await handleCreateBookmark(makeEnv(), makeRequest(), 'book-1', {});
+    expect(res.status).toBe(400);
+    const body = await res.json() as any;
+    expect(body.ok).toBe(false);
+    expect(body.error.code).toBe('VALIDATION_ERROR');
   });
 
-  describe('POST /api/books/:bookId/highlights', () => {
-    it('creates highlight and returns success', async () => {
-      mockRequireAuth.mockResolvedValue({
-        email: 'user@example.com',
-        capabilities: { canHighlight: true },
-      } as any);
-      mockExecute.mockResolvedValue({} as any);
+  it('response body includes generated id, locator, label, and createdAt', async () => {
+    mockRequireAuth.mockResolvedValue(makeAuthContext());
+    mockExecute.mockResolvedValue({} as never);
 
-      const res = await app.fetch(new Request('http://localhost/api/books/book-1/highlights', {
-        method: 'POST',
-        body: JSON.stringify({
-          locator: { cfi: 'cfi', selectedText: 'text', chapterRef: 'chap1' },
-          note: 'nice',
-          color: '#ff0000',
-        }),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer valid'
+    const bodyWithLabel = {
+      locator: { cfi: 'epubcfi(/6/4)', selectedText: 'text', chapterRef: 'ch1' },
+      label: 'Chapter marker',
+    };
+    const res = await handleCreateBookmark(makeEnv(), makeRequest(), 'book-1', bodyWithLabel);
+    expect(res.status).toBe(201);
+    const body = await res.json() as any;
+    expect(body.ok).toBe(true);
+    expect(typeof body.data.id).toBe('string');
+    expect(body.data.locator).toEqual(bodyWithLabel.locator);
+    expect(body.data.label).toBe('Chapter marker');
+    expect(body.data.createdAt).toBeDefined();
+  });
+
+  it('creates bookmark successfully when optional label is omitted', async () => {
+    mockRequireAuth.mockResolvedValue(makeAuthContext());
+    mockExecute.mockResolvedValue({} as never);
+
+    const res = await handleCreateBookmark(makeEnv(), makeRequest(), 'book-1', {
+      locator: { cfi: 'epubcfi(/6/4)', selectedText: 'text', chapterRef: 'ch1' },
+    });
+    expect(res.status).toBe(201);
+    const body = await res.json() as any;
+    expect(body.ok).toBe(true);
+    // label is optional per BookmarkCreateSchema — absent means undefined in JSON
+    expect(body.data.label).toBeUndefined();
+  });
+});
+
+describe('DELETE /api/reader-state/{bookId}/bookmarks/{bookmarkId} (handleDeleteBookmark)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('returns 401 when unauthenticated', async () => {
+    mockRequireAuth.mockResolvedValue(null);
+    const res = await handleDeleteBookmark(makeEnv(), makeRequest(), 'book-1', 'bm-1');
+    expect(res.status).toBe(401);
+  });
+
+  it('deletes bookmark and returns ok', async () => {
+    mockRequireAuth.mockResolvedValue(makeAuthContext());
+    mockExecute.mockResolvedValue({} as never);
+
+    const res = await handleDeleteBookmark(makeEnv(), makeRequest(), 'book-1', 'bm-1');
+    expect(res.status).toBe(200);
+    const body = await res.json() as any;
+    expect(body.ok).toBe(true);
+  });
+
+  it('returns 200 even when the bookmark does not exist (idempotent DELETE)', async () => {
+    mockRequireAuth.mockResolvedValue(makeAuthContext());
+    // execute resolves with zero rows affected — route does not check the
+    // affected row count, so the response must still be 200 ok.
+    mockExecute.mockResolvedValue({} as never);
+
+    const res = await handleDeleteBookmark(
+      makeEnv(),
+      makeRequest(),
+      'book-1',
+      'non-existent-bm-id',
+    );
+    expect(res.status).toBe(200);
+    const body = await res.json() as any;
+    expect(body.ok).toBe(true);
+  });
+});
+
+describe('GET /api/reader-state/{bookId}/highlights (handleListHighlights)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('returns 401 when unauthenticated', async () => {
+    mockRequireAuth.mockResolvedValue(null);
+    const res = await handleListHighlights(makeEnv(), makeRequest(), 'book-1');
+    expect(res.status).toBe(401);
+  });
+
+  it('returns empty array when no highlights', async () => {
+    mockRequireAuth.mockResolvedValue(makeAuthContext());
+    mockQueryAll.mockResolvedValue([] as never);
+
+    const res = await handleListHighlights(makeEnv(), makeRequest(), 'book-1');
+    expect(res.status).toBe(200);
+    const body = await res.json() as any;
+    expect(body.ok).toBe(true);
+    expect(body.data).toEqual([]);
+  });
+
+  it('returns list of highlights', async () => {
+    mockRequireAuth.mockResolvedValue(makeAuthContext());
+    mockQueryAll.mockResolvedValue([makeHighlightRow()] as never);
+
+    const res = await handleListHighlights(makeEnv(), makeRequest(), 'book-1');
+    expect(res.status).toBe(200);
+    const body = await res.json() as any;
+    expect(body.ok).toBe(true);
+    expect(body.data).toHaveLength(1);
+  });
+});
+
+describe('POST /api/reader-state/{bookId}/highlights (handleCreateHighlight)', () => {
+  const validBody = {
+    locator: {
+      selectedText: 'Important passage',
+      cfi: 'epubcfi(/6/4)',
+      chapterRef: 'Chapter 1',
+    },
+    color: '#00ff00',
+    note: 'My note',
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('returns 401 when unauthenticated', async () => {
+    mockRequireAuth.mockResolvedValue(null);
+    const res = await handleCreateHighlight(makeEnv(), makeRequest(), 'book-1', validBody);
+    expect(res.status).toBe(401);
+  });
+
+  it('returns 403 when user cannot highlight', async () => {
+    mockRequireAuth.mockResolvedValue(
+      makeAuthContext({
+        capabilities: {
+          canRead: true,
+          canComment: false,
+          canHighlight: false,
+          canBookmark: false,
+          canDownloadOffline: false,
+          canExportNotes: false,
+          canManageAccess: false,
         },
-      }), env);
-
-      expect(res.status).toBe(201);
-    });
+      }),
+    );
+    const res = await handleCreateHighlight(makeEnv(), makeRequest(), 'book-1', validBody);
+    expect(res.status).toBe(403);
   });
 
-  describe('PATCH /api/books/:bookId/highlights/:highlightId', () => {
-    it('updates highlight and returns success', async () => {
-      mockRequireAuth.mockResolvedValue({ email: 'user@example.com' } as any);
-      mockQueryFirst.mockResolvedValue({ user_email: 'user@example.com' });
-      mockExecute.mockResolvedValue({} as any);
+  it('creates highlight and returns success', async () => {
+    mockRequireAuth.mockResolvedValue(makeAuthContext());
+    mockExecute.mockResolvedValue({} as never);
 
-      const res = await app.fetch(new Request('http://localhost/api/books/book-1/highlights/highlight-1', {
-        method: 'PATCH',
-        body: JSON.stringify({ note: 'updated', color: '#00ff00' }),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer valid'
-        },
-      }), env);
+    const res = await handleCreateHighlight(makeEnv(), makeRequest(), 'book-1', validBody);
+    expect(res.status).toBe(201);
+    const body = await res.json() as any;
+    expect(body.ok).toBe(true);
+  });
+});
 
-      expect(res.status).toBe(200);
-    });
+describe('DELETE /api/reader-state/{bookId}/highlights/{highlightId} (handleDeleteHighlight)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
   });
 
-  describe('DELETE /api/books/:bookId/highlights/:highlightId', () => {
-    it('deletes highlight and returns success', async () => {
-      mockRequireAuth.mockResolvedValue({ email: 'user@example.com' } as any);
-      mockExecute.mockResolvedValue({} as any);
+  it('returns 401 when unauthenticated', async () => {
+    mockRequireAuth.mockResolvedValue(null);
+    const res = await handleDeleteHighlight(makeEnv(), makeRequest(), 'book-1', 'hl-1');
+    expect(res.status).toBe(401);
+  });
 
-      const res = await app.fetch(new Request('http://localhost/api/books/book-1/highlights/highlight-1', {
-        method: 'DELETE',
-        headers: { 'Authorization': 'Bearer valid' },
-      }), env);
+  it('deletes highlight and returns ok', async () => {
+    mockRequireAuth.mockResolvedValue(makeAuthContext());
+    mockExecute.mockResolvedValue({} as never);
 
-      expect(res.status).toBe(200);
+    const res = await handleDeleteHighlight(makeEnv(), makeRequest(), 'book-1', 'hl-1');
+    expect(res.status).toBe(200);
+    const body = await res.json() as any;
+    expect(body.ok).toBe(true);
+  });
+});
+
+describe('PATCH /api/reader-state/{bookId}/highlights/{highlightId} (handleUpdateHighlight)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('returns 401 when unauthenticated', async () => {
+    mockRequireAuth.mockResolvedValue(null);
+    const res = await handleUpdateHighlight(makeEnv(), makeRequest(), 'book-1', 'hl-1', {
+      note: 'updated',
     });
+    expect(res.status).toBe(401);
+  });
+
+  it('returns 404 when highlight not found', async () => {
+    mockRequireAuth.mockResolvedValue(makeAuthContext());
+    mockQueryFirst.mockResolvedValue(null);
+
+    const res = await handleUpdateHighlight(makeEnv(), makeRequest(), 'book-1', 'hl-1', {
+      note: 'updated',
+    });
+    expect(res.status).toBe(404);
+  });
+
+  it('updates highlight and returns success', async () => {
+    mockRequireAuth.mockResolvedValue(makeAuthContext());
+    mockQueryFirst.mockResolvedValue(makeHighlightRow() as never);
+    mockExecute.mockResolvedValue({} as never);
+
+    const res = await handleUpdateHighlight(makeEnv(), makeRequest(), 'book-1', 'hl-1', {
+      note: 'updated',
+    });
+    expect(res.status).toBe(200);
+    const body = await res.json() as any;
+    expect(body.ok).toBe(true);
   });
 });
