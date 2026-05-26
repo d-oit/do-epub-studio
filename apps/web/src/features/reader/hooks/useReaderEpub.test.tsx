@@ -45,8 +45,11 @@ const { mockRendition, mockBook, mockEpubFn } = vi.hoisted(() => {
   };
   const book = {
     ready: Promise.resolve(),
-    loaded: { navigation: Promise.resolve({ toc: [] }) },
-    packaging: { direction: 'default' },
+    loaded: {
+      navigation: Promise.resolve({ toc: [] }),
+      metadata: Promise.resolve(new Map()),
+    },
+    packaging: { direction: 'default', metadata: new Map() },
     renderTo: vi.fn(() => rendition),
     destroy: vi.fn(),
   };
@@ -65,6 +68,7 @@ const mockReaderStore: Record<string, unknown> = {
   setCurrentChapter: vi.fn(),
   setBookDirection: vi.fn(),
   setBookWritingMode: vi.fn(),
+  setIsFixedLayout: vi.fn(),
 };
 
 const mockPreferencesState = {
@@ -157,6 +161,24 @@ describe('useReaderEpub', () => {
 
     await waitFor(() => {
       expect(mockEpubFn).not.toHaveBeenCalled();
+    });
+  });
+
+  it('detects fixed-layout from packaging metadata', async () => {
+    const refs = createRefs();
+    const onNavigate = vi.fn();
+
+    mockBook.packaging = {
+      direction: 'default',
+      metadata: new Map([['layout', 'pre-paginated']]),
+    };
+
+    renderHook(() =>
+      useReaderEpub('http://test.epub', refs.viewerRef, refs.rootRef, refs.highlightsRef, refs.commentsRef, onNavigate),
+    );
+
+    await waitFor(() => {
+      expect(mockReaderStore.setIsFixedLayout).toHaveBeenCalledWith(true);
     });
   });
 

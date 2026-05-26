@@ -66,6 +66,7 @@ interface ReaderState {
   permissionStatus: 'valid' | 'invalid' | 'checking';
   bookDirection: PageDirection;
   bookWritingMode: WritingMode;
+  isFixedLayout: boolean;
   setProgress: (progress: ReadingProgress) => void;
   addBookmark: (bookmark: Bookmark) => void;
   removeBookmark: (id: string) => void;
@@ -90,6 +91,7 @@ interface ReaderState {
   clearConflicts: () => void;
   setBookDirection: (direction: PageDirection) => void;
   setBookWritingMode: (writingMode: WritingMode) => void;
+  setIsFixedLayout: (isFixedLayout: boolean) => void;
 }
 
 export const useReaderStore = create<ReaderState>((set) => ({
@@ -105,6 +107,7 @@ export const useReaderStore = create<ReaderState>((set) => ({
   permissionStatus: 'checking',
   bookDirection: 'default',
   bookWritingMode: 'horizontal-tb',
+  isFixedLayout: false,
   conflicts: [],
   setConflicts: (conflicts) => set({ conflicts }),
   addConflict: (conflict) =>
@@ -214,4 +217,5 @@ export const useReaderStore = create<ReaderState>((set) => ({
   setPermissionStatus: (status) => set({ permissionStatus: status }),
   setBookDirection: (direction) => set({ bookDirection: direction }),
   setBookWritingMode: (writingMode) => set({ bookWritingMode: writingMode }),
+  setIsFixedLayout: (isFixedLayout) => set({ isFixedLayout }),
 }));

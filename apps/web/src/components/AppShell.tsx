@@ -20,7 +20,7 @@ export const AppShell: React.FC = () => {
 
   useEffect(() => {
     if (!isResolving) {
-      const options = { replace: true, viewTransition: true };
+      const options = { replace: true };
       if (isAuthenticated) {
         if (isAdmin) {
           void navigate('/admin/books', options);

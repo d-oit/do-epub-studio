@@ -55,6 +55,7 @@ export function ReaderPage() {
   const setComments = useReaderStore((s) => s.setComments);
   const bookmarks = useReaderStore(useShallow((s) => s.bookmarks));
   const currentChapter = useReaderStore((s) => s.currentChapter);
+  const isFixedLayout = useReaderStore((s) => s.isFixedLayout);
 
   const readerTheme = usePreferencesStore((s) => s.reader.theme);
   const readerFontSize = usePreferencesStore((s) => s.reader.fontSize);
@@ -252,6 +253,7 @@ export function ReaderPage() {
             onSetFontFamily={setFontFamily}
             onSetDirection={setDirection}
             onSetWritingMode={setWritingMode}
+            isFixedLayout={isFixedLayout}
             t={tFn}
           />
         )}

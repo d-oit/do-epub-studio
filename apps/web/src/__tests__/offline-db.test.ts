@@ -1,5 +1,5 @@
 import 'fake-indexeddb/auto';
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import {
   getDB,
   saveProgress,
@@ -16,15 +16,19 @@ import {
   getCachedPermission,
   clearPermissionCache,
   clearAllPermissionCache,
+  setTokenOverride,
   type ProgressEntry,
   type AnnotationEntry,
   type SyncQueueItem,
   type PermissionCache,
 } from '../lib/offline/db';
 
+const TEST_TOKEN = 'test-session-token-for-offline-db';
+const TEST_TOKEN_2 = 'different-session-token-for-offline-db';
+
 describe('Offline Database', () => {
   beforeEach(async () => {
-    // Clear all stores before each test
+    setTokenOverride(null);
     const db = await getDB();
     const tx = db.transaction(['progress', 'annotations', 'syncQueue', 'permissions'], 'readwrite');
     await tx.objectStore('progress').clear();
@@ -34,8 +38,12 @@ describe('Offline Database', () => {
     await tx.done;
   });
 
+  afterEach(() => {
+    setTokenOverride(null);
+  });
+
   describe('Progress', () => {
-    it('should save and retrieve progress', async () => {
+    it('should save and retrieve progress without encryption', async () => {
       const entry: ProgressEntry = {
         id: 'test-progress-1',
         bookId: 'book-1',
@@ -52,6 +60,34 @@ describe('Offline Database', () => {
       expect(retrieved).toBeDefined();
       expect(retrieved?.id).toBe('test-progress-1');
       expect(retrieved?.percentage).toBe(45);
+    });
+
+    it('should save and retrieve progress with encryption', async () => {
+      setTokenOverride(TEST_TOKEN);
+
+      const entry: ProgressEntry = {
+        id: 'test-progress-enc',
+        bookId: 'book-1',
+        cfi: '/6/4[chap01ref]!/4/2',
+        percentage: 45,
+        lastRead: Date.now() - 500,
+        synced: false,
+        mutationId: 'mutation-1',
+      };
+
+      await saveProgress(entry);
+      const db = await getDB();
+      const stored = await db.get('progress', 'test-progress-enc') as Record<string, unknown>;
+
+      expect(stored.encryptedPayload).toBeDefined();
+      expect(typeof stored.encryptedPayload).toBe('string');
+      expect((stored as any).cfi).toBeUndefined();
+
+      const retrieved = await getProgress('book-1');
+      expect(retrieved).toBeDefined();
+      expect(retrieved?.id).toBe('test-progress-enc');
+      expect(retrieved?.percentage).toBe(45);
+      expect(retrieved?.cfi).toBe('/6/4[chap01ref]!/4/2');
     });
 
     it('should return latest progress for a book', async () => {
@@ -110,10 +146,46 @@ describe('Offline Database', () => {
       expect(unsyncedList).toHaveLength(1);
       expect(unsyncedList[0].id).toBe('unsynced-1');
     });
+
+    it('should gracefully handle key rotation: old encrypted entry is skipped with new token', async () => {
+      setTokenOverride(TEST_TOKEN);
+      const entry: ProgressEntry = {
+        id: 'key-rotate-old',
+        bookId: 'book-1',
+        cfi: '/6/4',
+        percentage: 50,
+        lastRead: Date.now() - 2000,
+        synced: false,
+        mutationId: 'mutation-1',
+      };
+      await saveProgress(entry);
+
+      const retrieved1 = await getProgress('book-1');
+      expect(retrieved1?.percentage).toBe(50);
+
+      setTokenOverride(TEST_TOKEN_2);
+      const entry2: ProgressEntry = {
+        id: 'key-rotate-new',
+        bookId: 'book-1',
+        cfi: '/6/8',
+        percentage: 75,
+        lastRead: Date.now(),
+        synced: false,
+        mutationId: 'mutation-2',
+      };
+      await saveProgress(entry2);
+
+      const retrieved2 = await getProgress('book-1');
+      expect(retrieved2).toBeDefined();
+      expect(retrieved2?.id).toBe('key-rotate-new');
+      expect(retrieved2?.percentage).toBe(75);
+    });
   });
 
   describe('Annotations', () => {
-    it('should save and retrieve annotations', async () => {
+    it('should save and retrieve annotations with encryption', async () => {
+      setTokenOverride(TEST_TOKEN);
+
       const annotation: AnnotationEntry = {
         id: 'annotation-1',
         bookId: 'book-1',
@@ -128,10 +200,16 @@ describe('Offline Database', () => {
       };
 
       await saveAnnotation(annotation);
-      const annotations = await getAnnotations('book-1');
 
+      const db = await getDB();
+      const stored = await db.get('annotations', 'annotation-1') as Record<string, unknown>;
+      expect(stored.encryptedPayload).toBeDefined();
+      expect((stored as any).text).toBeUndefined();
+
+      const annotations = await getAnnotations('book-1');
       expect(annotations).toHaveLength(1);
       expect(annotations[0].id).toBe('annotation-1');
+      expect(annotations[0].text).toBe('Test highlight');
     });
 
     it('should return unsynced annotations', async () => {
@@ -212,19 +290,43 @@ describe('Offline Database', () => {
       };
 
       await addToSyncQueue(item);
-      
+
       const updated: SyncQueueItem = {
         ...item,
         attempts: 2,
         lastAttempt: Date.now(),
         error: 'Network error',
       };
-      
+
       await updateSyncQueueItem(updated);
 
       const queue = await getSyncQueue();
       expect(queue[0].attempts).toBe(2);
       expect(queue[0].error).toBe('Network error');
+    });
+
+    it('should encrypt queue payload when token is set', async () => {
+      setTokenOverride(TEST_TOKEN);
+
+      const item: SyncQueueItem = {
+        id: 'item-enc',
+        type: 'progress',
+        payload: { bookId: 'book-1', cfi: '/6/4', percentage: 50, sensitive: 'private-data' },
+        mutationId: 'mutation-1',
+        createdAt: Date.now(),
+        attempts: 0,
+      };
+
+      await addToSyncQueue(item);
+
+      const db = await getDB();
+      const stored = await db.get('syncQueue', 'item-enc') as Record<string, unknown>;
+      expect(stored.encryptedPayload).toBeDefined();
+      expect((stored as any).payload).toBeUndefined();
+
+      const queue = await getSyncQueue();
+      expect(queue).toHaveLength(1);
+      expect((queue[0].payload as any).sensitive).toBe('private-data');
     });
   });
 
@@ -245,6 +347,30 @@ describe('Offline Database', () => {
       expect(cached).toBeDefined();
       expect(cached?.grantId).toBe('grant-1');
       expect(cached?.canComment).toBe(true);
+    });
+
+    it('should encrypt permission cache when token is set', async () => {
+      setTokenOverride(TEST_TOKEN);
+
+      const permission: PermissionCache = {
+        bookId: 'book-enc',
+        grantId: 'grant-enc',
+        canComment: true,
+        canDownloadOffline: true,
+        cachedAt: Date.now(),
+        expiresAt: Date.now() + 86400000,
+      };
+
+      await cachePermission(permission);
+
+      const db = await getDB();
+      const stored = await db.get('permissions', 'book-enc') as Record<string, unknown>;
+      expect(stored.encryptedPayload).toBeDefined();
+      expect((stored as any).grantId).toBeUndefined();
+
+      const cached = await getCachedPermission('book-enc');
+      expect(cached).toBeDefined();
+      expect(cached?.grantId).toBe('grant-enc');
     });
 
     it('should clear individual permission cache', async () => {

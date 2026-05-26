@@ -1,5 +1,6 @@
 import React, { Suspense } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Route } from 'react-router-dom';
+import { ViewTransitionRoutes } from './components/ViewTransitionRoutes';
 import { useAuthStore } from './stores/auth';
 import { LoginPage } from './features/auth/LoginPage';
 import { AdminLoginPage } from './features/admin/AdminLoginPage';
@@ -80,7 +81,7 @@ function App() {
   return (
     <Suspense fallback={<LoadingFallback />}>
       <SwUpdateNotification />
-      <Routes>
+      <ViewTransitionRoutes>
         <Route path="/" element={<AppShell />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/admin/login" element={<AdminLoginPage />} />
@@ -109,7 +110,7 @@ function App() {
             <AdminAuditPage />
           </AdminRoute>
         } />
-      </Routes>
+      </ViewTransitionRoutes>
     </Suspense>
   );
 }

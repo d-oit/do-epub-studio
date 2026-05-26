@@ -15,6 +15,13 @@ export type PageDirection = 'ltr' | 'rtl' | 'default';
 
 export type WritingMode = 'horizontal-tb' | 'vertical-rl' | 'vertical-lr' | 'sideways-rl' | 'sideways-lr';
 
+export interface FixedLayoutInfo {
+  layout?: 'reflowable' | 'pre-paginated';
+  orientation?: 'auto' | 'landscape' | 'portrait';
+  spread?: 'none' | 'auto' | 'both' | 'landscape';
+  viewport?: string;
+}
+
 export interface BookMetadata {
   title: string;
   creator?: string;
@@ -23,6 +30,7 @@ export interface BookMetadata {
   description?: string;
   cover?: string;
   direction?: PageDirection;
+  fixedLayout?: FixedLayoutInfo;
 }
 
 export interface ProgressPosition {

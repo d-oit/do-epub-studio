@@ -94,6 +94,23 @@ jobs:
           echo "::notice::Open CodeQL alerts on $ref: $count"
           [ "$count" = "0" ] || { echo "::error::Open CodeQL alerts on $ref: $count"; exit 1; }
 
+  pre-commit:
+    name: Pre-commit Hooks
+    needs: setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-pnpm
+
+      - name: Install pre-commit
+        run: pip install pre-commit
+
+      - name: Run pre-commit hooks
+        run: pre-commit run --all-files --show-diff-on-failure
+
   lint:
     name: Lint
     needs: setup
@@ -185,7 +202,7 @@ jobs:
 
   build:
     name: Build
-    needs: [lint, typecheck, test]
+    needs: [pre-commit, lint, typecheck, test]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -333,6 +350,8 @@ jobs:
           timeout_minutes: 30
           max_attempts: 2
           command: pnpm test:e2e --retries=1
+        env:
+          PLAYWRIGHT_INCLUDE_WEBKIT: '1'
           retry_wait_seconds: 30
           warning_on_retry: true
 
@@ -458,7 +477,7 @@ jobs:
   notify-failure:
     name: Notify on failure
     if: failure() && github.ref == 'refs/heads/main'
-    needs: [lint, typecheck, test, build, e2e-smoke, e2e-full, bench]
+    needs: [pre-commit, lint, typecheck, test, build, e2e-smoke, e2e-full, bench]
     runs-on: ubuntu-latest
     permissions:
       issues: write
