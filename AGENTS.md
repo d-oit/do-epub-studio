@@ -44,7 +44,8 @@ readonly MAX_PR_TITLE_LENGTH=72
 **Run these before every commit. Failures block merge.**
 
 1. **Run `./scripts/quality_gate.sh` before commit.** No exceptions.
-2. **Use `./scripts/atomic-commit/run.sh --message "type(scope): description"`.**
+2. **Validate workflows:** All GitHub Actions workflows MUST pass validation via `./scripts/validate-workflows.sh` (includes `actionlint` and `zizmor` security scanning).
+3. **Use `./scripts/atomic-commit/run.sh --message "type(scope): description"`.**
 3. **Coverage Thresholds:** Enforce minimum coverage via `test:coverage`.
    - `web`: 40% Lines, 30% Functions
    - `worker`: 55% Lines, 50% Functions

@@ -41,7 +41,9 @@ jobs:
         id: start-time
         run: echo "time=$(date +%s)" >> "$GITHUB_OUTPUT"
 
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd   # v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/setup-pnpm
         id: setup-pnpm
 
@@ -64,7 +66,9 @@ jobs:
       contents: read
       security-events: read
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd   # v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/setup-pnpm
       - name: Check CodeQL alerts
         env:
@@ -84,7 +88,9 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd   # v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/setup-pnpm
 
       - name: Lint
@@ -95,6 +101,8 @@ jobs:
       - name: Auto-fix disallowed SHAs
         if: steps.lint.outcome == 'failure'
         id: auto-fix
+        env:
+          GITHUB_REF: ${{ github.ref }}
         run: |
           if bash scripts/auto-fix-shas.sh; then
             git config user.name "github-actions[bot]"
@@ -103,7 +111,7 @@ jobs:
             if ! git diff --cached --quiet; then
               git commit -m "chore: auto-update SHA allowlist"
               # Only push on PR branches (refs/heads/fix/*, chore/*, dependabot/*)
-              if [[ "${{ github.ref }}" =~ ^refs/heads/(fix|chore|dependabot)/ ]]; then
+              if [[ "$GITHUB_REF" =~ ^refs/heads/(fix|chore|dependabot)/ ]]; then
                 git push
               fi
             fi
@@ -120,7 +128,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd   # v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/setup-pnpm
 
       - name: Typecheck
@@ -132,7 +142,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd   # v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/setup-pnpm
 
       - name: Run unit tests for scripts
@@ -144,7 +156,7 @@ jobs:
           NODE_OPTIONS: --max-old-space-size=4096
 
       - name: Upload verification output
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02   # v4.6.2
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
         if: always()
         with:
           name: verification-output
@@ -152,7 +164,7 @@ jobs:
           retention-days: 7
 
       - name: Upload coverage reports
-        uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354   # v6.0.1
+        uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354  # v6.0.1
         with:
           directory: .
           flags: unittests
@@ -163,8 +175,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd   # v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:
+          persist-credentials: false
           fetch-depth: 0
       - uses: ./.github/actions/setup-pnpm
 
@@ -175,7 +188,7 @@ jobs:
         run: METRICS_OUTPUT=bundle-metrics.json pnpm --filter @do-epub-studio/web test:bundle
 
       - name: Upload bundle metrics
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02   # v4.6.2
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
         with:
           name: bundle-metrics
           path: apps/web/bundle-metrics.json
@@ -183,10 +196,14 @@ jobs:
 
       - name: Baseline metrics (PR only)
         if: github.event_name == 'pull_request'
+        env:
+          BASE_REF: ${{ github.base_ref }}
+          REPOSITORY: ${{ github.repository }}
+          WORKSPACE: ${{ github.workspace }}
         run: |
-          TMP_DIR=$(mktemp -d)
+          TMP_DIR="$(mktemp -d)"
           # Clone baseline into temp dir
-          git clone --depth=1 --branch "${{ github.base_ref }}" "https://github.com/${{ github.repository }}.git" "$TMP_DIR"
+          git clone --depth=1 --branch "$BASE_REF" "https://github.com/$REPOSITORY.git" "$TMP_DIR"
           # Copy check script and budgets from PR branch to baseline's expected locations
           mkdir -p "$TMP_DIR/scripts"
           cp scripts/check-bundle-size.mjs "$TMP_DIR/scripts/"
@@ -196,19 +213,19 @@ jobs:
           pnpm build
           # Run size check using the restored script
           METRICS_OUTPUT=baseline-bundle-metrics.json node scripts/check-bundle-size.mjs
-          cp baseline-bundle-metrics.json "${{ github.workspace }}/baseline-bundle-metrics.json"
+          cp baseline-bundle-metrics.json "$WORKSPACE/baseline-bundle-metrics.json"
           rm -rf "$TMP_DIR"
 
       - name: Upload baseline metrics
         if: github.event_name == 'pull_request'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02   # v4.6.2
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
         with:
           name: baseline-metrics
           path: baseline-bundle-metrics.json
           retention-days: 1
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02   # v4.6.2
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
         with:
           name: build-dist
           path: apps/web/dist/
@@ -221,14 +238,16 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd   # v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/setup-pnpm
 
       - name: Install Playwright browsers
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Run Dev Smoke E2E tests
-        uses: nick-fields/retry@c97818ca39074beaea45180dba704f92496a0082   # v3.0.1
+        uses: nick-fields/retry@c97818ca39074beaea45180dba704f92496a0082  # v3.0.1
         with:
           timeout_minutes: 10
           max_attempts: 2
@@ -236,7 +255,7 @@ jobs:
           warning_on_retry: true
 
       - name: Download build artifacts
-        uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806   # v4.1.9
+        uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806  # v4.1.9
         with:
           name: build-dist
           path: apps/web/dist/
@@ -248,14 +267,14 @@ jobs:
         run: METRICS_OUTPUT=startup-metrics.json PLAYWRIGHT_MODE=preview npx playwright test apps/web/src/__tests__/performance.spec.ts --project=chromium
 
       - name: Upload startup metrics
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02   # v4.6.2
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
         with:
           name: startup-metrics
           path: startup-metrics.json
           retention-days: 1
 
       - name: Upload Playwright report
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02   # v4.6.2
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
         if: always()
         with:
           name: playwright-report-smoke
@@ -263,7 +282,7 @@ jobs:
           retention-days: 7
 
       - name: Upload test results
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02   # v4.6.2
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
         if: always()
         with:
           name: test-results-smoke
@@ -276,14 +295,16 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd   # v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/setup-pnpm
 
       - name: Install Playwright browsers
         run: pnpm exec playwright install --with-deps chromium firefox webkit
 
       - name: Run full cross-browser E2E tests
-        uses: nick-fields/retry@c97818ca39074beaea45180dba704f92496a0082   # v3.0.1
+        uses: nick-fields/retry@c97818ca39074beaea45180dba704f92496a0082  # v3.0.1
         with:
           timeout_minutes: 30
           max_attempts: 2
@@ -292,7 +313,7 @@ jobs:
           warning_on_retry: true
 
       - name: Upload Playwright report
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02   # v4.6.2
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
         if: always()
         with:
           name: playwright-report-full
@@ -300,7 +321,7 @@ jobs:
           retention-days: 30
 
       - name: Upload test results
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02   # v4.6.2
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
         if: always()
         with:
           name: test-results-full
@@ -316,16 +337,20 @@ jobs:
       contents: read
       pull-requests: write
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:
+          persist-credentials: false
           fetch-depth: 0
 
       - uses: ./.github/actions/setup-pnpm
 
       - name: Run baseline benchmarks
         if: github.event_name == 'pull_request'
+        env:
+          BASE_REF: ${{ github.base_ref }}
         run: |
-          git checkout $(git merge-base origin/${{ github.base_ref }} HEAD)
+          MERGE_BASE="$(git merge-base "origin/$BASE_REF" HEAD)"
+          git checkout "$MERGE_BASE"
           pnpm install --frozen-lockfile
           pnpm --filter @do-epub-studio/reader-core exec vitest bench --outputJson baseline.json
           mv packages/reader-core/baseline.json ./baseline.json
@@ -367,10 +392,12 @@ jobs:
       contents: read
       pull-requests: write
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd   # v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Download all metrics
-        uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806   # v4.1.9
+        uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806  # v4.1.9
         with:
           path: metrics-artifacts
 
@@ -385,11 +412,13 @@ jobs:
           find metrics-artifacts/baseline-metrics -name "baseline-bundle-metrics.json" -exec mv {} baseline/bundle-metrics.json \; || true
 
       - name: Collect CI metrics
+        env:
+          START_TIME: ${{ needs.setup.outputs.start-time }}
+          CACHE_HIT: ${{ needs.setup.outputs.cache-hit }}
         run: |
-          END_TIME=$(date +%s)
-          START_TIME=${{ needs.setup.outputs.start-time }}
+          END_TIME="$(date +%s)"
           DURATION=$((END_TIME - START_TIME))
-          echo "{\"duration\": $DURATION, \"cacheHit\": \"${{ needs.setup.outputs.cache-hit }}\"}" > metrics/ci-metrics.json
+          echo "{\"duration\": $DURATION, \"cacheHit\": \"$CACHE_HIT\"}" > metrics/ci-metrics.json
 
       - name: Generate report
         run: node scripts/report-performance.mjs metrics baseline
@@ -397,9 +426,10 @@ jobs:
       - name: Post performance report
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          gh pr comment ${{ github.event.pull_request.number }} --body-file performance_report.md --edit-last 2>/dev/null || \
-            gh pr comment ${{ github.event.pull_request.number }} --body-file performance_report.md
+          gh pr comment "$PR_NUMBER" --body-file performance_report.md --edit-last 2>/dev/null || \
+            gh pr comment "$PR_NUMBER" --body-file performance_report.md
 
   notify-failure:
     name: Notify on failure
@@ -413,7 +443,7 @@ jobs:
         if: env.SLACK_WEBHOOK != ''
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-        uses: slackapi/slack-github-action@485a9d42d3a73031f12ec201c457e2162c45d02d   # v2.0.0
+        uses: slackapi/slack-github-action@485a9d42d3a73031f12ec201c457e2162c45d02d  # v2.0.0
         with:
           webhook: ${{ secrets.SLACK_WEBHOOK }}
           webhook-type: incoming-webhook
@@ -424,7 +454,10 @@ jobs:
         if: env.SLACK_WEBHOOK == ''
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b   # v7.1.0
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          SHA: ${{ github.sha }}
+          WORKFLOW: ${{ github.workflow }}
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b  # v7.1.0
         with:
           script: |
             const { data: issues } = await github.rest.issues.listForRepo({
@@ -433,14 +466,14 @@ jobs:
               state: 'open',
               labels: ['ci-failure']
             });
-            const runUrl = `${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`;
+            const runUrl = process.env.RUN_URL;
             const existing = issues.find(i => i.body && i.body.includes(runUrl));
             if (!existing) {
               await github.rest.issues.create({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 title: `CI failure on main: ${context.runId}`,
-                body: `CI failed on main branch.\n\n**Run:** ${runUrl}\n**Commit:** ${{ github.sha }}\n**Workflow:** ${{ github.workflow }}`,
+                body: `CI failed on main branch.\n\n**Run:** ${runUrl}\n**Commit:** ${process.env.SHA}\n**Workflow:** ${process.env.WORKFLOW}`,
                 labels: ['ci-failure']
               });
             }
@@ -454,7 +487,7 @@ jobs:
       issues: write
     steps:
       - name: Close open ci-failure issues
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b   # v7.1.0
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b  # v7.1.0
         with:
           script: |
             const { data: issues } = await github.rest.issues.listForRepo({

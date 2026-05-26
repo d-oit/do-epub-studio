@@ -24,9 +24,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd   # v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - uses: ./.github/actions/setup-pnpm
 
@@ -35,7 +36,7 @@ jobs:
         run: pnpm build:storybook --output-dir storybook-static
 
       - name: Publish to Chromatic
-        uses: chromaui/action@e8cc4c31775280b175a3c440076c00d19a9014d7   # v16.10.1
+        uses: chromaui/action@e6129220824b44e265582e3bddc698c1128f6ede  # v16.10.1
         with:
           projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
           storybookBuildDir: storybook-static
