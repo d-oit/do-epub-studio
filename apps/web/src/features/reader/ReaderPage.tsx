@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Rendition } from '@intity/epub-js';
 import { useTranslation } from '../../hooks/useTranslation';
 import { apiRequest } from '../../lib/api';
 import { fetchHighlights, fetchComments } from '../../lib/api/annotations';
@@ -9,17 +8,7 @@ import { useAuthStore, useReaderStore, usePreferencesStore } from '../../stores'
 import { setupOnlineListener } from '../../lib/offline';
 import { setupZombieDetection } from '../../lib/offline/permissions';
 import { AnnotationToolbar, extractSelectionData, CommentsPanel } from './components/annotations';
-import {
-  renderHighlightsOnRendition,
-  renderCommentMarkersOnRendition,
-} from './annotationRendering';
-import {
-  useReaderUI,
-  useReaderEpub,
-  useAnnotationHandlers,
-  useBookmarkHandlers,
-  useExportNotes,
-} from './hooks';
+import { useReaderUI, useReaderEpub, useAnnotationHandlers, useBookmarkHandlers, useExportNotes } from './hooks';
 import { AnimatePresence } from 'framer-motion';
 import {
   ReaderToolbar,
@@ -34,7 +23,6 @@ export function ReaderPage() {
   const { bookSlug } = useParams<{ bookSlug: string }>();
   const navigate = useNavigate();
 
-  // useAuthStore atomic selectors
   const sessionToken = useAuthStore((s) => s.sessionToken);
   const bookId = useAuthStore((s) => s.bookId);
   const bookTitle = useAuthStore((s) => s.bookTitle);
@@ -55,7 +43,6 @@ export function ReaderPage() {
     setRevokedBooks,
   } = useReaderUI();
 
-  // useReaderStore atomic selectors
   const setError = useReaderStore((s) => s.setError);
   const error = useReaderStore((s) => s.error);
   const setOffline = useReaderStore((s) => s.setOffline);
@@ -67,7 +54,6 @@ export function ReaderPage() {
   const bookmarks = useReaderStore(useShallow((s) => s.bookmarks));
   const currentChapter = useReaderStore((s) => s.currentChapter);
 
-  // usePreferencesStore atomic selectors
   const readerTheme = usePreferencesStore((s) => s.reader.theme);
   const readerFontSize = usePreferencesStore((s) => s.reader.fontSize);
   const readerFontFamily = usePreferencesStore((s) => s.reader.fontFamily);
@@ -94,19 +80,36 @@ export function ReaderPage() {
   const rootRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<HTMLDivElement>(null!);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
-  const renderHighlightsRef = useRef<((r: Rendition, ch: string | null) => void) | null>(null);
-  const renderCommentMarkersRef = useRef<((r: Rendition, ch: string | null) => void) | null>(null);
 
   const [epubUrl, setEpubUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const { renditionRef, currentChapterRef, toc, resolvedTheme } = useReaderEpub(
+  const highlightsRef = useRef(highlights);
+  highlightsRef.current = highlights;
+  const commentsRef = useRef(comments);
+  commentsRef.current = comments;
+
+  const navigateAnnotationRef = useRef<((chapterRef: string, cfiRange?: string) => Promise<void>) | undefined>(undefined);
+  const handleNavigateToAnnotation = useCallback(
+    (chapterRef: string, cfiRange?: string) => {
+      void navigateAnnotationRef.current?.(chapterRef, cfiRange);
+    },
+    [],
+  );
+
+  const { renditionRef, currentChapterRef, adapterRef, toc, resolvedTheme } = useReaderEpub(
     epubUrl,
     viewerRef,
     rootRef,
-    renderHighlightsRef,
-    renderCommentMarkersRef,
+    highlightsRef,
+    commentsRef,
+    handleNavigateToAnnotation,
   );
+
+  navigateAnnotationRef.current = async (chapterRef: string, cfiRange?: string) => {
+    if (!renditionRef.current) return;
+    await renditionRef.current.display(cfiRange ?? chapterRef);
+  };
 
   useEffect(() => {
     if (!sessionToken || !bookId) return;
@@ -162,30 +165,6 @@ export function ReaderPage() {
     }
   }, [revokedBooks, bookId, setError, setPermissionStatus, t]);
 
-  const handleNavigateToAnnotation = useCallback(
-    async (chapterRef: string, cfiRange?: string) => {
-      if (!renditionRef.current) return;
-      await renditionRef.current.display(cfiRange ?? chapterRef);
-    },
-    [renditionRef],
-  );
-
-  const renderHighlights = useCallback(
-    (rendition: Rendition, chapterHref: string | null) =>
-      renderHighlightsOnRendition(rendition, chapterHref, highlights),
-    [highlights],
-  );
-  renderHighlightsRef.current = renderHighlights;
-
-  const renderCommentMarkers = useCallback(
-    (rendition: Rendition, chapterHref: string | null) =>
-      renderCommentMarkersOnRendition(rendition, chapterHref, comments, (ref, cfi) => {
-        void handleNavigateToAnnotation(ref, cfi);
-      }),
-    [comments, handleNavigateToAnnotation],
-  );
-  renderCommentMarkersRef.current = renderCommentMarkers;
-
   useEffect(() => {
     if (!sessionToken || !bookSlug) {
       void navigate('/login');
@@ -213,16 +192,22 @@ export function ReaderPage() {
   }, [sessionToken, bookSlug, navigate, setError, t]);
 
   useEffect(() => {
-    const r = renditionRef.current;
-    if (r && currentChapterRef.current) renderHighlights(r, currentChapterRef.current);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- refs have stable identity; .current captured at execution time
-  }, [highlights, renderHighlights]);
+    if (adapterRef.current && currentChapterRef.current) {
+      adapterRef.current.renderHighlights(currentChapterRef.current, highlights);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- currentChapterRef is a stable ref object; its .current is read at execution time
+  }, [highlights, adapterRef]);
 
   useEffect(() => {
-    const r = renditionRef.current;
-    if (r && currentChapterRef.current) renderCommentMarkers(r, currentChapterRef.current);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- refs have stable identity; .current captured at execution time
-  }, [comments, renderCommentMarkers]);
+    if (adapterRef.current && currentChapterRef.current) {
+      adapterRef.current.renderCommentMarkers(
+        currentChapterRef.current,
+        comments,
+        handleNavigateToAnnotation,
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- currentChapterRef is a stable ref object; its .current is read at execution time
+  }, [comments, handleNavigateToAnnotation, adapterRef]);
 
   const handleLogout = async () => {
     try {
@@ -246,8 +231,7 @@ export function ReaderPage() {
     { narrow: 'max-w-xl', normal: 'max-w-3xl', wide: 'max-w-5xl', full: 'max-w-full' }[
       readerPageWidth
     ] ?? 'max-w-3xl';
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const tFn = t as (key: string) => any;
+  const tFn = t as (key: string) => string;
 
   return (
     <div

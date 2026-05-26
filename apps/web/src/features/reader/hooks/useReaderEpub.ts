@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import ePub from '@intity/epub-js';
 import type { Book, Rendition, NavItem } from '@intity/epub-js';
 import {
@@ -11,6 +11,12 @@ import {
 import { useTranslation } from '../../../hooks/useTranslation';
 import { apiRequest } from '../../../lib/api';
 import { saveProgress, queueSync, getProgress, generateMutationId } from '../../../lib/offline';
+import {
+  createEpubAnnotationAdapter,
+  type AnnotationAdapter,
+  type HighlightRecord,
+  type CommentRecord,
+} from '@do-epub-studio/reader-core';
 
 interface TocItem {
   label: string;
@@ -22,10 +28,9 @@ export function useReaderEpub(
   epubUrl: string | null,
   viewerRef: React.RefObject<HTMLDivElement | null>,
   rootRef: React.RefObject<HTMLDivElement | null>,
-  renderHighlightsRef: React.MutableRefObject<((r: Rendition, ch: string | null) => void) | null>,
-  renderCommentMarkersRef: React.MutableRefObject<
-    ((r: Rendition, ch: string | null) => void) | null
-  >,
+  highlightsRef: React.MutableRefObject<HighlightRecord[]>,
+  commentsRef: React.MutableRefObject<CommentRecord[]>,
+  onNavigateToAnnotation: (chapterRef: string, cfiRange?: string) => void,
 ) {
   const sessionToken = useAuthStore((s) => s.sessionToken);
   const bookId = useAuthStore((s) => s.bookId);
@@ -42,50 +47,50 @@ export function useReaderEpub(
   const renditionRef = useRef<Rendition | null>(null);
   const currentChapterRef = useRef<string | null>(null);
   const tocRef = useRef<TocItem[]>([]);
+  const adapterRef = useRef<AnnotationAdapter | null>(null);
+  const onNavigateToAnnotationRef = useRef(onNavigateToAnnotation);
+  onNavigateToAnnotationRef.current = onNavigateToAnnotation;
 
   const [toc, setToc] = useState<TocItem[]>([]);
 
-  const isSystemDark = useCallback(() => {
+  const isSystemDark = () => {
     return window.matchMedia('(prefers-color-scheme: dark)').matches;
-  }, []);
+  };
 
   const resolvedTheme =
     readerTheme === 'system' ? (isSystemDark() ? 'dark' : 'light') : readerTheme;
 
-  const applyThemes = useCallback(
-    (rendition: Rendition) => {
-      const container = rootRef.current;
-      if (!container) return;
-      const style = getComputedStyle(container);
-      const bg = style.getPropertyValue('--color-background').trim();
-      const fg = style.getPropertyValue('--color-foreground').trim();
-      const effectiveTheme =
-        readerTheme === 'system' ? (isSystemDark() ? 'dark' : 'light') : readerTheme;
-      const imgFilter =
-        effectiveTheme === 'dark'
-          ? 'invert(1) hue-rotate(180deg)'
-          : effectiveTheme === 'sepia'
-            ? 'sepia(1)'
-            : 'none';
-      rendition.themes.registerRules('reader-theme', {
-        body: {
-          background: bg,
-          color: fg,
-          'font-size': FONT_SIZES[readerFontSize],
-          'line-height': LINE_HEIGHTS[readerLineHeight],
-          'font-family':
-            readerFontFamily === 'serif'
-              ? 'serif'
-              : readerFontFamily === 'sans-serif'
-                ? 'sans-serif'
-                : 'monospace',
-        },
-        img: { filter: imgFilter },
-      });
-      rendition.themes.select('reader-theme');
-    },
-    [readerTheme, readerFontSize, readerFontFamily, readerLineHeight, isSystemDark, rootRef],
-  );
+  function applyThemes(rendition: Rendition) {
+    const container = rootRef.current;
+    if (!container) return;
+    const style = getComputedStyle(container);
+    const bg = style.getPropertyValue('--color-background').trim();
+    const fg = style.getPropertyValue('--color-foreground').trim();
+    const effectiveTheme =
+      readerTheme === 'system' ? (isSystemDark() ? 'dark' : 'light') : readerTheme;
+    const imgFilter =
+      effectiveTheme === 'dark'
+        ? 'invert(1) hue-rotate(180deg)'
+        : effectiveTheme === 'sepia'
+          ? 'sepia(1)'
+          : 'none';
+    rendition.themes.registerRules('reader-theme', {
+      body: {
+        background: bg,
+        color: fg,
+        'font-size': FONT_SIZES[readerFontSize],
+        'line-height': LINE_HEIGHTS[readerLineHeight],
+        'font-family':
+          readerFontFamily === 'serif'
+            ? 'serif'
+            : readerFontFamily === 'sans-serif'
+              ? 'sans-serif'
+              : 'monospace',
+      },
+      img: { filter: imgFilter },
+    });
+    rendition.themes.select('reader-theme');
+  }
 
   useEffect(() => {
     if (!epubUrl || !viewerRef.current) return;
@@ -114,6 +119,10 @@ export function useReaderEpub(
         });
         renditionRef.current = rendition;
         applyThemes(rendition);
+
+        const adapter = createEpubAnnotationAdapter(rendition);
+        adapterRef.current = adapter;
+
         await rendition.display();
         if (!active) return;
 
@@ -123,8 +132,13 @@ export function useReaderEpub(
           currentChapterRef.current = startHref;
           setCurrentChapter(startHref);
         }
-        renderHighlightsRef.current?.(rendition, currentChapterRef.current);
-        renderCommentMarkersRef.current?.(rendition, currentChapterRef.current);
+
+        adapter.renderHighlights(currentChapterRef.current, highlightsRef.current);
+        adapter.renderCommentMarkers(
+          currentChapterRef.current,
+          commentsRef.current,
+          onNavigateToAnnotationRef.current,
+        );
 
         if (sessionToken && bookId) {
           try {
@@ -165,8 +179,12 @@ export function useReaderEpub(
               setCurrentChapter(tocItem.href);
             }
 
-            renderHighlightsRef.current?.(rendition, currentChapterRef.current);
-            renderCommentMarkersRef.current?.(rendition, currentChapterRef.current);
+            adapter.renderHighlights(currentChapterRef.current, highlightsRef.current);
+            adapter.renderCommentMarkers(
+              currentChapterRef.current,
+              commentsRef.current,
+              onNavigateToAnnotationRef.current,
+            );
 
             if (sessionToken && bookId) {
               const mutationId = generateMutationId();
@@ -205,8 +223,12 @@ export function useReaderEpub(
         );
 
         rendition.on('displayed', () => {
-          renderHighlightsRef.current?.(rendition, currentChapterRef.current);
-          renderCommentMarkersRef.current?.(rendition, currentChapterRef.current);
+          adapter.renderHighlights(currentChapterRef.current, highlightsRef.current);
+          adapter.renderCommentMarkers(
+            currentChapterRef.current,
+            commentsRef.current,
+            onNavigateToAnnotationRef.current,
+          );
         });
       } catch (err) {
         console.error('EPUB init error:', err);
@@ -218,19 +240,13 @@ export function useReaderEpub(
 
     return () => {
       active = false;
-      const r = renditionRef.current;
-      if (r) {
-        const existing = r.annotations as unknown as Iterable<
-          [string, { cfiRange: string; type: string }]
-        >;
-        for (const [, annotation] of existing) {
-          r.annotations.remove(annotation.cfiRange, annotation.type);
-        }
+      if (adapterRef.current) {
+        adapterRef.current.clearAnnotations();
       }
       renditionRef.current?.destroy();
       bookRef.current?.destroy();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- applyThemes only needed for initial setup; preference changes handled by dedicated effect at line 235
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- applyThemes only needed for initial setup; preference changes handled by dedicated effect below
   }, [
     epubUrl,
     viewerRef,
@@ -239,14 +255,14 @@ export function useReaderEpub(
     setCurrentChapter,
     setError,
     setProgress,
-    renderHighlightsRef,
-    renderCommentMarkersRef,
+    highlightsRef,
+    commentsRef,
     t,
   ]);
 
   useEffect(() => {
     if (renditionRef.current) applyThemes(renditionRef.current);
-  }, [applyThemes]);
+  });
 
   useEffect(() => {
     if (readerTheme !== 'system') return;
@@ -256,7 +272,7 @@ export function useReaderEpub(
     };
     mq.addEventListener('change', handler);
     return () => mq.removeEventListener('change', handler);
-  }, [applyThemes, readerTheme]);
+  });
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -280,6 +296,7 @@ export function useReaderEpub(
     bookRef,
     renditionRef,
     currentChapterRef,
+    adapterRef,
     toc,
     resolvedTheme,
   };
