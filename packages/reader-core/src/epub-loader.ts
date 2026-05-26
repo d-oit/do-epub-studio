@@ -8,7 +8,7 @@ import type {
   ProgressPosition,
 } from './epub-types';
 import { createTraceId, createSpanId, serializeError, testBounded } from '@do-epub-studio/shared';
-import { validateArchive } from './archive-validator';
+import { parseEpubInWorker } from './epub-parser-worker';
 
 type EventCallback = (data: unknown) => void;
 
@@ -117,26 +117,12 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
     const spanId = createSpanId();
 
     try {
-      let data: Uint8Array;
-      if (typeof url === 'string') {
-        if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('blob:')) {
-          const response = await fetch(url);
-          if (!response.ok) {
-            throw new Error(`Failed to fetch EPUB: ${response.statusText}`);
-          }
-          const buffer = await response.arrayBuffer();
-          data = new Uint8Array(buffer);
-        } else {
-          const response = await fetch(url);
-          const buffer = await response.arrayBuffer();
-          data = new Uint8Array(buffer);
-        }
-      } else {
-        data = url;
+      const result = await parseEpubInWorker(url);
+      if (!result.valid || !result.data) {
+        throw new Error(result.error ?? 'Failed to parse EPUB');
       }
 
-      await validateArchive(data);
-      book = ePub(data.buffer as ArrayBuffer);
+      book = ePub(result.data);
       await book.opened;
 
       const nav = await book.loaded.navigation;
