@@ -9,6 +9,7 @@ import { createSpanId, createTraceId } from '@do-epub-studio/shared';
 import { logClientEvent } from './lib/client-logger';
 import './styles/globals.css';
 import { registerSW } from 'virtual:pwa-register';
+import { useSwUpdateStore } from './stores/sw-update';
 
 setupGlobalErrorHandlers();
 
@@ -28,8 +29,14 @@ if (rootElement) {
 }
 
 if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-  registerSW({
+  const updateSW = registerSW({
     immediate: true,
+    onNeedRefresh() {
+      useSwUpdateStore.getState().setNeedRefresh(() => updateSW);
+    },
+    onOfflineReady() {
+      useSwUpdateStore.getState().setOfflineReady(true);
+    },
     onRegistered(registration) {
       if (registration) {
         const syncReg = registration as unknown as {
