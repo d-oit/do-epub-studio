@@ -91,7 +91,6 @@ booksRouter.put('/:id/upload', adminAuth, async (c) => {
   }
 
   const storageKey = `books/${book.id}/${crypto.randomUUID()}.epub`;
-  let validationResults;
 
   try {
     const arrayBuffer = await c.req.raw.arrayBuffer();
@@ -99,8 +98,7 @@ booksRouter.put('/:id/upload', adminAuth, async (c) => {
       return c.json({ ok: false, error: { code: 'VALIDATION_ERROR', message: 'Request body is empty' } }, 400);
     }
 
-    const validation = await validateEpub(arrayBuffer);
-    validationResults = validation;
+    const validationResults = await validateEpub(arrayBuffer);
 
     if (!validationResults.isValid) {
       return c.json(
@@ -127,22 +125,22 @@ booksRouter.put('/:id/upload', adminAuth, async (c) => {
         validationResults: JSON.stringify(validationResults),
       },
     });
+
+    return c.json(
+      {
+        ok: true,
+        data: {
+          storageKey,
+          bookId: book.id,
+          slug: book.slug,
+          validation: validationResults,
+        },
+      },
+      200,
+    );
   } catch {
     return c.json({ ok: false, error: { code: 'UPLOAD_FAILED', message: 'Failed to upload file to storage' } }, 500);
   }
-
-  return c.json(
-    {
-      ok: true,
-      data: {
-        storageKey,
-        bookId: book.id,
-        slug: book.slug,
-        validation: validationResults,
-      },
-    },
-    200,
-  );
 });
 
 booksRouter.post('/:id/upload-complete', zValidator('json', UploadCompleteSchema), adminAuth, async (c) => {
