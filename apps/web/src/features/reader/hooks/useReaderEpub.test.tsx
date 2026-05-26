@@ -102,11 +102,13 @@ function createRefs() {
   const root = document.createElement('div');
   root.style.setProperty('--color-background', '#fff');
   root.style.setProperty('--color-foreground', '#000');
+  const highlightsRef = { current: [] };
+  const commentsRef = { current: [] };
   return {
     viewerRef: { current: viewer },
     rootRef: { current: root },
-    renderHighlightsRef: { current: null },
-    renderCommentMarkersRef: { current: null },
+    highlightsRef,
+    commentsRef,
   };
 }
 
@@ -121,15 +123,10 @@ describe('useReaderEpub', () => {
 
   it('initializes Rendition from epubUrl', async () => {
     const refs = createRefs();
+    const onNavigate = vi.fn();
 
     renderHook(() =>
-      useReaderEpub(
-        'http://test.epub',
-        refs.viewerRef,
-        refs.rootRef,
-        refs.renderHighlightsRef,
-        refs.renderCommentMarkersRef,
-      ),
+      useReaderEpub('http://test.epub', refs.viewerRef, refs.rootRef, refs.highlightsRef, refs.commentsRef, onNavigate),
     );
 
     await waitFor(() => {
@@ -152,15 +149,10 @@ describe('useReaderEpub', () => {
 
   it('does not initialize when epubUrl is null', async () => {
     const refs = createRefs();
+    const onNavigate = vi.fn();
 
     renderHook(() =>
-      useReaderEpub(
-        null,
-        refs.viewerRef,
-        refs.rootRef,
-        refs.renderHighlightsRef,
-        refs.renderCommentMarkersRef,
-      ),
+      useReaderEpub(null, refs.viewerRef, refs.rootRef, refs.highlightsRef, refs.commentsRef, onNavigate),
     );
 
     await waitFor(() => {
@@ -171,14 +163,9 @@ describe('useReaderEpub', () => {
   it('applies defaultDirection option based on packaging direction', async () => {
     const refs = createRefs();
 
+    const onNavigate = vi.fn();
     renderHook(() =>
-      useReaderEpub(
-        'http://test.epub',
-        refs.viewerRef,
-        refs.rootRef,
-        refs.renderHighlightsRef,
-        refs.renderCommentMarkersRef,
-      ),
+      useReaderEpub('http://test.epub', refs.viewerRef, refs.rootRef, refs.highlightsRef, refs.commentsRef, onNavigate),
     );
 
     await waitFor(() => {
@@ -191,15 +178,10 @@ describe('useReaderEpub', () => {
 
   it('registers relocated and displayed event handlers', async () => {
     const refs = createRefs();
+    const onNavigate = vi.fn();
 
     renderHook(() =>
-      useReaderEpub(
-        'http://test.epub',
-        refs.viewerRef,
-        refs.rootRef,
-        refs.renderHighlightsRef,
-        refs.renderCommentMarkersRef,
-      ),
+      useReaderEpub('http://test.epub', refs.viewerRef, refs.rootRef, refs.highlightsRef, refs.commentsRef, onNavigate),
     );
 
     await waitFor(() => {
@@ -214,14 +196,9 @@ describe('useReaderEpub', () => {
   describe('keyboard navigation', () => {
     function setupAndFlush() {
       const refs = createRefs();
+      const onNavigate = vi.fn();
       const hook = renderHook(() =>
-        useReaderEpub(
-          'http://test.epub',
-          refs.viewerRef,
-          refs.rootRef,
-          refs.renderHighlightsRef,
-          refs.renderCommentMarkersRef,
-        ),
+        useReaderEpub('http://test.epub', refs.viewerRef, refs.rootRef, refs.highlightsRef, refs.commentsRef, onNavigate),
       );
       return hook;
     }

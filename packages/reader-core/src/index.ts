@@ -1,3 +1,4 @@
+export * from './annotation-adapter';
 export * from './epub-loader';
 export * from './locator';
 export { normalizeText, findBestChapterMatch, shouldShowDriftWarning } from './reanchor';

@@ -25,6 +25,23 @@ vi.mock('framer-motion', () => ({
   MotionConfig: ({ children }: { children: React.ReactNode }) => children,
 }));
 
+vi.mock('../stores/sw-update', () => ({
+  useSwUpdateStore: Object.assign(
+    (selector: (s: Record<string, unknown>) => unknown) => {
+      const state = {
+        setNeedRefresh: vi.fn(),
+        setOfflineReady: vi.fn(),
+        dismiss: vi.fn(),
+        needRefresh: false,
+        offlineReady: false,
+        updateServiceWorker: null,
+      };
+      return selector(state);
+    },
+    { getState: () => ({ setNeedRefresh: vi.fn(), setOfflineReady: vi.fn() }) },
+  ),
+}));
+
 const mockRegisterSW = vi.fn();
 vi.mock('virtual:pwa-register', () => ({
   registerSW: (options: unknown) => mockRegisterSW(options),
@@ -167,13 +184,15 @@ describe('main.tsx', () => {
   });
 
   describe('service worker', () => {
-    it('registers service worker with registerSW', async () => {
+    it('registers service worker with registerSW and callbacks', async () => {
       document.body.innerHTML = '<div id="root"></div>';
       await import('../main');
 
       expect(mockRegisterSW).toHaveBeenCalledWith(
         expect.objectContaining({
           immediate: true,
+          onNeedRefresh: expect.any(Function),
+          onOfflineReady: expect.any(Function),
         }),
       );
 

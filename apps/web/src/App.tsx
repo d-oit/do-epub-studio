@@ -4,6 +4,7 @@ import { useAuthStore } from './stores/auth';
 import { LoginPage } from './features/auth/LoginPage';
 import { AdminLoginPage } from './features/admin/AdminLoginPage';
 import { AppShell } from './components/AppShell';
+import { SwUpdateNotification } from './components/SwUpdateNotification';
 
 // Lazy load route components (named exports)
 const ReaderPage = React.lazy(() =>
@@ -78,6 +79,7 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
 function App() {
   return (
     <Suspense fallback={<LoadingFallback />}>
+      <SwUpdateNotification />
       <Routes>
         <Route path="/" element={<AppShell />} />
         <Route path="/login" element={<LoginPage />} />
