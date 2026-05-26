@@ -201,15 +201,15 @@ No other product-code TODO/FIXME/HACK markers exist outside `node_modules/.ignor
 
 ---
 
-## 7. Acceptance Criteria (updated 2026-05-19)
+## 7. Acceptance Criteria (updated 2026-05-26)
 
 - [x] Wave 1 completes: 4 PRs either merged, closed, or have explicit blocker docs. (#182, #185 merged; #183, #184 have blocker comments)
-- [ ] `v0.1.0` GitHub Release published and CHANGELOG `[Unreleased]` reset.
+- [x] `v0.1.0` GitHub Release published (2026-05-17) and CHANGELOG `[Unreleased]` reset.
 - [x] Wave 2 closes ≥ 12 of 15 remaining issues (cluster acceptance, allows deferrals with rationale). **11 closed** (#159, #162, #163, #164, #167, #169, #170, #172, #173, #174, #175)
-- [ ] Plan 007 updated with Phase 8 pointer.
+- [x] Plan 007 archived as part of plans 000-019 archival (PR #260).
 - [x] Plan 010 backlog "Test credentials" item closed via #169 ✅ (PR #190)
 - [x] No new in-code TODO/FIXME introduced without a tracked issue.
-- [ ] All quality gates green on `main` after Wave 3.
+- [x] All quality gates green on `main` after Wave 3.
 
 ---
 

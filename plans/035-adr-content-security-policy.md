@@ -1,7 +1,7 @@
 # ADR-035: Content Security Policy (CSP) Implementation
 
 ## Status
-Proposed
+Accepted
 
 ## Context
 EPUB.js renders book content in sandboxed iframes. Without a strict Content Security Policy (CSP) on the Worker response headers, a malicious EPUB file could potentially inject scripts or exfiltrate reader data if the sandbox is bypassed or misconfigured.
