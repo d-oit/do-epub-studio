@@ -13,6 +13,7 @@ import {
   adminRouter,
   securityRouter,
 } from './routes';
+import { validationErrorFormatter } from './middleware/validation';
 
 export const app = new Hono<{ Bindings: Env }>();
 
@@ -46,6 +47,9 @@ app.use('*', async (c, next) => {
 app.options('*', (_c) => {
   return new Response(null, { status: 204 });
 });
+
+// Reformat zValidator error responses to match app standard format
+app.use('*', validationErrorFormatter);
 
 app.route('/api/access', accessRouter);
 app.route('/api/books', booksRouter);
