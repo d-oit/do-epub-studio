@@ -45,8 +45,11 @@ const { mockRendition, mockBook, mockEpubFn } = vi.hoisted(() => {
   };
   const book = {
     ready: Promise.resolve(),
-    loaded: { navigation: Promise.resolve({ toc: [] }) },
-    packaging: { direction: 'default' },
+    loaded: {
+      navigation: Promise.resolve({ toc: [] }),
+      metadata: Promise.resolve(new Map()),
+    },
+    packaging: { direction: 'default', metadata: new Map() },
     renderTo: vi.fn(() => rendition),
     destroy: vi.fn(),
   };
@@ -65,6 +68,7 @@ const mockReaderStore: Record<string, unknown> = {
   setCurrentChapter: vi.fn(),
   setBookDirection: vi.fn(),
   setBookWritingMode: vi.fn(),
+  setIsFixedLayout: vi.fn(),
 };
 
 const mockPreferencesState = {
@@ -102,11 +106,13 @@ function createRefs() {
   const root = document.createElement('div');
   root.style.setProperty('--color-background', '#fff');
   root.style.setProperty('--color-foreground', '#000');
+  const highlightsRef = { current: [] };
+  const commentsRef = { current: [] };
   return {
     viewerRef: { current: viewer },
     rootRef: { current: root },
-    renderHighlightsRef: { current: null },
-    renderCommentMarkersRef: { current: null },
+    highlightsRef,
+    commentsRef,
   };
 }
 
@@ -121,15 +127,10 @@ describe('useReaderEpub', () => {
 
   it('initializes Rendition from epubUrl', async () => {
     const refs = createRefs();
+    const onNavigate = vi.fn();
 
     renderHook(() =>
-      useReaderEpub(
-        'http://test.epub',
-        refs.viewerRef,
-        refs.rootRef,
-        refs.renderHighlightsRef,
-        refs.renderCommentMarkersRef,
-      ),
+      useReaderEpub('http://test.epub', refs.viewerRef, refs.rootRef, refs.highlightsRef, refs.commentsRef, onNavigate),
     );
 
     await waitFor(() => {
@@ -152,15 +153,10 @@ describe('useReaderEpub', () => {
 
   it('does not initialize when epubUrl is null', async () => {
     const refs = createRefs();
+    const onNavigate = vi.fn();
 
     renderHook(() =>
-      useReaderEpub(
-        null,
-        refs.viewerRef,
-        refs.rootRef,
-        refs.renderHighlightsRef,
-        refs.renderCommentMarkersRef,
-      ),
+      useReaderEpub(null, refs.viewerRef, refs.rootRef, refs.highlightsRef, refs.commentsRef, onNavigate),
     );
 
     await waitFor(() => {
@@ -168,17 +164,30 @@ describe('useReaderEpub', () => {
     });
   });
 
+  it('detects fixed-layout from packaging metadata', async () => {
+    const refs = createRefs();
+    const onNavigate = vi.fn();
+
+    mockBook.packaging = {
+      direction: 'default',
+      metadata: new Map([['layout', 'pre-paginated']]),
+    };
+
+    renderHook(() =>
+      useReaderEpub('http://test.epub', refs.viewerRef, refs.rootRef, refs.highlightsRef, refs.commentsRef, onNavigate),
+    );
+
+    await waitFor(() => {
+      expect(mockReaderStore.setIsFixedLayout).toHaveBeenCalledWith(true);
+    });
+  });
+
   it('applies defaultDirection option based on packaging direction', async () => {
     const refs = createRefs();
 
+    const onNavigate = vi.fn();
     renderHook(() =>
-      useReaderEpub(
-        'http://test.epub',
-        refs.viewerRef,
-        refs.rootRef,
-        refs.renderHighlightsRef,
-        refs.renderCommentMarkersRef,
-      ),
+      useReaderEpub('http://test.epub', refs.viewerRef, refs.rootRef, refs.highlightsRef, refs.commentsRef, onNavigate),
     );
 
     await waitFor(() => {
@@ -191,15 +200,10 @@ describe('useReaderEpub', () => {
 
   it('registers relocated and displayed event handlers', async () => {
     const refs = createRefs();
+    const onNavigate = vi.fn();
 
     renderHook(() =>
-      useReaderEpub(
-        'http://test.epub',
-        refs.viewerRef,
-        refs.rootRef,
-        refs.renderHighlightsRef,
-        refs.renderCommentMarkersRef,
-      ),
+      useReaderEpub('http://test.epub', refs.viewerRef, refs.rootRef, refs.highlightsRef, refs.commentsRef, onNavigate),
     );
 
     await waitFor(() => {
@@ -214,14 +218,9 @@ describe('useReaderEpub', () => {
   describe('keyboard navigation', () => {
     function setupAndFlush() {
       const refs = createRefs();
+      const onNavigate = vi.fn();
       const hook = renderHook(() =>
-        useReaderEpub(
-          'http://test.epub',
-          refs.viewerRef,
-          refs.rootRef,
-          refs.renderHighlightsRef,
-          refs.renderCommentMarkersRef,
-        ),
+        useReaderEpub('http://test.epub', refs.viewerRef, refs.rootRef, refs.highlightsRef, refs.commentsRef, onNavigate),
       );
       return hook;
     }

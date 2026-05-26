@@ -1,9 +1,11 @@
 import React, { Suspense } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Route } from 'react-router-dom';
+import { ViewTransitionRoutes } from './components/ViewTransitionRoutes';
 import { useAuthStore } from './stores/auth';
 import { LoginPage } from './features/auth/LoginPage';
 import { AdminLoginPage } from './features/admin/AdminLoginPage';
 import { AppShell } from './components/AppShell';
+import { SwUpdateNotification } from './components/SwUpdateNotification';
 
 // Lazy load route components (named exports)
 const ReaderPage = React.lazy(() =>
@@ -78,7 +80,8 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
 function App() {
   return (
     <Suspense fallback={<LoadingFallback />}>
-      <Routes>
+      <SwUpdateNotification />
+      <ViewTransitionRoutes>
         <Route path="/" element={<AppShell />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/admin/login" element={<AdminLoginPage />} />
@@ -107,7 +110,7 @@ function App() {
             <AdminAuditPage />
           </AdminRoute>
         } />
-      </Routes>
+      </ViewTransitionRoutes>
     </Suspense>
   );
 }

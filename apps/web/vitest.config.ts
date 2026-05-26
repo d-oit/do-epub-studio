@@ -28,8 +28,8 @@ export default defineConfig({
       reporter: ['text', 'json', 'html', 'lcov', 'clover'],
       reportsDirectory: './coverage',
       thresholds: {
-        lines: 40,
-        functions: 30,
+        lines: 50,
+        functions: 40,
         branches: 29,
         statements: 35,
       },

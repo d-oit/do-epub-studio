@@ -1,4 +1,6 @@
 import { openDB, type IDBPDatabase } from 'idb';
+import { encryptJSON, decryptJSON } from './crypto';
+import { useAuthStore } from '@/stores/auth';
 
 export interface ProgressEntry {
   id: string;
@@ -49,11 +51,70 @@ const DB_NAME = 'do-epub-studio';
 const DB_VERSION = 1;
 
 let dbInstance: IDBPDatabase | null = null;
+let cachedToken: string | null = null;
 
-/**
- * Explicitly close the cached IndexedDB connection and reset the singleton.
- * Call this on application teardown or during tests to prevent connection leaks.
- */
+function token(): string | null {
+  if (cachedToken) return cachedToken;
+  const t = useAuthStore.getState().sessionToken;
+  cachedToken = t;
+  return t;
+}
+
+export function setTokenOverride(mockToken: string | null): void {
+  cachedToken = mockToken;
+}
+
+async function encryptEntry<T extends object>(
+  entry: T,
+  plaintextKeys: readonly (keyof T)[],
+): Promise<Record<string, unknown>> {
+  const t = token();
+  if (!t) return entry as Record<string, unknown>;
+
+  const plaintext: Record<string, unknown> = {};
+  const sensitive: Record<string, unknown> = {};
+
+  for (const [key, value] of Object.entries(entry)) {
+    if ((plaintextKeys as readonly string[]).includes(key)) {
+      plaintext[key] = value;
+    } else {
+      sensitive[key] = value;
+    }
+  }
+
+  return {
+    ...plaintext,
+    encryptedPayload: await encryptJSON(sensitive, t),
+  };
+}
+
+async function decryptEntry<T>(stored: Record<string, unknown>, plaintextKeys: readonly (keyof T)[]): Promise<T | null> {
+  const t = token();
+  const payload = stored.encryptedPayload;
+
+  if (typeof payload === 'string' && t) {
+    try {
+      const decrypted = await decryptJSON<Record<string, unknown>>(payload, t);
+      const result: Record<string, unknown> = {};
+      for (const key of plaintextKeys as readonly string[]) {
+        const val = key in stored ? stored[key] : undefined;
+        if (val !== undefined) result[key] = val;
+      }
+      return { ...result, ...decrypted } as T;
+    } catch {
+      return null;
+    }
+  }
+
+  const { encryptedPayload: _, ...rest } = stored;
+  return rest as unknown as T;
+}
+
+const PROGRESS_PLAINTEXT = ['id', 'bookId', 'synced'] as const;
+const ANNOTATION_PLAINTEXT = ['id', 'bookId', 'synced'] as const;
+const SYNC_QUEUE_PLAINTEXT = ['id', 'createdAt'] as const;
+const PERMISSION_PLAINTEXT = ['bookId'] as const;
+
 export function closeDb(): void {
   if (dbInstance) {
     dbInstance.close();
@@ -94,47 +155,66 @@ export async function getDB(): Promise<IDBPDatabase> {
 
 export async function saveProgress(entry: ProgressEntry): Promise<void> {
   const db = await getDB();
-  await db.put('progress', entry);
+  const stored = await encryptEntry(entry, PROGRESS_PLAINTEXT);
+  await db.put('progress', stored);
 }
 
 export async function getProgress(bookId: string): Promise<ProgressEntry | undefined> {
   const db = await getDB();
   const entries = await db.getAllFromIndex('progress', 'bookId', bookId);
-  return (entries as ProgressEntry[]).sort((a, b) => b.lastRead - a.lastRead)[0];
+  const decrypted = await Promise.all(
+    (entries as Record<string, unknown>[]).map((e) => decryptEntry<ProgressEntry>(e, PROGRESS_PLAINTEXT)),
+  );
+  const valid = decrypted.filter((e): e is ProgressEntry => e !== null);
+  return valid.sort((a, b) => b.lastRead - a.lastRead)[0];
 }
 
 export async function getUnsyncedProgress(): Promise<ProgressEntry[]> {
   const db = await getDB();
   const all = await db.getAll('progress');
-  return (all as ProgressEntry[]).filter((entry) => entry.synced === false);
+  const decrypted = await Promise.all(
+    (all as Record<string, unknown>[]).map((e) => decryptEntry<ProgressEntry>(e, PROGRESS_PLAINTEXT)),
+  );
+  return decrypted.filter((entry): entry is ProgressEntry => entry !== null && entry.synced === false);
 }
 
 export async function saveAnnotation(entry: AnnotationEntry): Promise<void> {
   const db = await getDB();
-  await db.put('annotations', entry);
+  const stored = await encryptEntry(entry, ANNOTATION_PLAINTEXT);
+  await db.put('annotations', stored);
 }
 
 export async function getAnnotations(bookId: string): Promise<AnnotationEntry[]> {
   const db = await getDB();
   const all = await db.getAllFromIndex('annotations', 'bookId', bookId);
-  return all as AnnotationEntry[];
+  const decrypted = await Promise.all(
+    (all as Record<string, unknown>[]).map((e) => decryptEntry<AnnotationEntry>(e, ANNOTATION_PLAINTEXT)),
+  );
+  return decrypted.filter((e): e is AnnotationEntry => e !== null);
 }
 
 export async function getUnsyncedAnnotations(): Promise<AnnotationEntry[]> {
   const db = await getDB();
   const all = await db.getAll('annotations');
-  return (all as AnnotationEntry[]).filter((entry) => entry.synced === false);
+  const decrypted = await Promise.all(
+    (all as Record<string, unknown>[]).map((e) => decryptEntry<AnnotationEntry>(e, ANNOTATION_PLAINTEXT)),
+  );
+  return decrypted.filter((entry): entry is AnnotationEntry => entry !== null && entry.synced === false);
 }
 
 export async function addToSyncQueue(item: SyncQueueItem): Promise<void> {
   const db = await getDB();
-  await db.put('syncQueue', item);
+  const stored = await encryptEntry(item, SYNC_QUEUE_PLAINTEXT);
+  await db.put('syncQueue', stored);
 }
 
 export async function getSyncQueue(): Promise<SyncQueueItem[]> {
   const db = await getDB();
   const all = await db.getAll('syncQueue');
-  return all as SyncQueueItem[];
+  const decrypted = await Promise.all(
+    (all as Record<string, unknown>[]).map((e) => decryptEntry<SyncQueueItem>(e, SYNC_QUEUE_PLAINTEXT)),
+  );
+  return decrypted.filter((e): e is SyncQueueItem => e !== null);
 }
 
 export async function removeSyncQueueItem(id: string): Promise<void> {
@@ -144,18 +224,22 @@ export async function removeSyncQueueItem(id: string): Promise<void> {
 
 export async function updateSyncQueueItem(item: SyncQueueItem): Promise<void> {
   const db = await getDB();
-  await db.put('syncQueue', item);
+  const stored = await encryptEntry(item, SYNC_QUEUE_PLAINTEXT);
+  await db.put('syncQueue', stored);
 }
 
 export async function cachePermission(permission: PermissionCache): Promise<void> {
   const db = await getDB();
-  await db.put('permissions', permission);
+  const stored = await encryptEntry(permission, PERMISSION_PLAINTEXT);
+  await db.put('permissions', stored);
 }
 
 export async function getCachedPermission(bookId: string): Promise<PermissionCache | undefined> {
   const db = await getDB();
-  const permission = (await db.get('permissions', bookId)) as PermissionCache | undefined;
-  return permission;
+  const stored = (await db.get('permissions', bookId)) as Record<string, unknown> | undefined;
+  if (!stored) return undefined;
+  const entry = await decryptEntry<PermissionCache>(stored, PERMISSION_PLAINTEXT);
+  return entry ?? undefined;
 }
 
 export async function clearPermissionCache(bookId: string): Promise<void> {
@@ -167,5 +251,13 @@ export async function clearAllPermissionCache(): Promise<void> {
   const db = await getDB();
   const tx = db.transaction('permissions', 'readwrite');
   await tx.store.clear();
+  await tx.done;
+}
+
+export async function clearAllEncryptedData(): Promise<void> {
+  const db = await getDB();
+  const stores = ['progress', 'annotations', 'syncQueue', 'permissions'];
+  const tx = db.transaction(stores, 'readwrite');
+  await Promise.all(stores.map((name) => tx.objectStore(name).clear()));
   await tx.done;
 }

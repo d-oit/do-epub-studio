@@ -55,5 +55,17 @@ export default defineConfig({
           },
         ]
       : []),
+    {
+      name: 'iphone',
+      use: { ...devices['iPhone 15'] },
+      testMatch: ['**/*mobile*.spec.ts', '**/*.spec.ts'],
+      grep: /@mobile/,
+    },
+    {
+      name: 'pixel',
+      use: { ...devices['Pixel 7'] },
+      testMatch: ['**/*mobile*.spec.ts', '**/*.spec.ts'],
+      grep: /@mobile/,
+    },
   ],
 });

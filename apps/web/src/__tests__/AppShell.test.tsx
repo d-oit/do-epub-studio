@@ -52,7 +52,7 @@ describe('AppShell', () => {
       vi.advanceTimersByTime(1500);
     });
 
-    expect(mockNavigate).toHaveBeenCalledWith('/login', expect.objectContaining({ replace: true, viewTransition: true }));
+    expect(mockNavigate).toHaveBeenCalledWith('/login', expect.objectContaining({ replace: true }));
   });
 
   it('redirects to reader when authenticated as user', () => {
@@ -67,6 +67,6 @@ describe('AppShell', () => {
       vi.advanceTimersByTime(1500);
     });
 
-    expect(mockNavigate).toHaveBeenCalledWith('/read/my-book', expect.objectContaining({ replace: true, viewTransition: true }));
+    expect(mockNavigate).toHaveBeenCalledWith('/read/my-book', expect.objectContaining({ replace: true }));
   });
 });

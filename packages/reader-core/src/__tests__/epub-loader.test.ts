@@ -49,7 +49,7 @@ vi.mock('@intity/epub-js', () => {
         ]),
       ),
     },
-    packaging: { direction: 'default' },
+    packaging: { direction: 'default', metadata: new Map() },
     renderTo: vi.fn().mockReturnValue(mockRendition),
     destroy: vi.fn(),
   };
@@ -63,7 +63,7 @@ vi.mock('@intity/epub-js', () => {
 interface MockBook {
   renderTo: ReturnType<typeof vi.fn>;
   destroy: ReturnType<typeof vi.fn>;
-  packaging: { direction: string };
+  packaging: { direction: string; metadata: Map<string, string> };
 }
 
 const epubjsMock = vi.mocked((await import('@intity/epub-js')) as unknown) as {
@@ -125,7 +125,7 @@ describe('isValidCfi', () => {
 describe('createEpubLoader', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    epubjsMock.__mockBook.packaging = { direction: 'default' };
+    epubjsMock.__mockBook.packaging = { direction: 'default', metadata: new Map() };
   });
 
   it('creates a loader with null rendition initially', () => {
@@ -177,7 +177,7 @@ describe('createEpubLoader', () => {
   });
 
   it('detects rtl direction from packaging', async () => {
-    epubjsMock.__mockBook.packaging = { direction: 'rtl' };
+    epubjsMock.__mockBook.packaging = { direction: 'rtl', metadata: new Map() };
     const loader = createEpubLoader();
     await loader.load('test.epub');
 
@@ -186,12 +186,78 @@ describe('createEpubLoader', () => {
   });
 
   it('detects ltr direction from packaging', async () => {
-    epubjsMock.__mockBook.packaging = { direction: 'ltr' };
+    epubjsMock.__mockBook.packaging = { direction: 'ltr', metadata: new Map() };
     const loader = createEpubLoader();
     await loader.load('test.epub');
 
     const metadata = loader.getMetadata();
     expect(metadata.direction).toBe('ltr');
+  });
+
+  it('detects pre-paginated fixed layout from packaging metadata', async () => {
+    epubjsMock.__mockBook.packaging = {
+      direction: 'default',
+      metadata: new Map([['layout', 'pre-paginated']]),
+    };
+    const loader = createEpubLoader();
+    await loader.load('test.epub');
+
+    const metadata = loader.getMetadata();
+    expect(metadata.fixedLayout).toBeDefined();
+    expect(metadata.fixedLayout?.layout).toBe('pre-paginated');
+  });
+
+  it('detects reflowable layout from packaging metadata', async () => {
+    epubjsMock.__mockBook.packaging = {
+      direction: 'default',
+      metadata: new Map([['layout', 'reflowable']]),
+    };
+    const loader = createEpubLoader();
+    await loader.load('test.epub');
+
+    const metadata = loader.getMetadata();
+    expect(metadata.fixedLayout).toBeDefined();
+    expect(metadata.fixedLayout?.layout).toBe('reflowable');
+  });
+
+  it('sets undefined fixedLayout when no layout in metadata', async () => {
+    const loader = createEpubLoader();
+    await loader.load('test.epub');
+
+    const metadata = loader.getMetadata();
+    expect(metadata.fixedLayout).toBeUndefined();
+  });
+
+  it('parses orientation and spread from packaging metadata', async () => {
+    epubjsMock.__mockBook.packaging = {
+      direction: 'default',
+      metadata: new Map([
+        ['layout', 'pre-paginated'],
+        ['orientation', 'landscape'],
+        ['spread', 'none'],
+      ]),
+    };
+    const loader = createEpubLoader();
+    await loader.load('test.epub');
+
+    const metadata = loader.getMetadata();
+    expect(metadata.fixedLayout?.orientation).toBe('landscape');
+    expect(metadata.fixedLayout?.spread).toBe('none');
+  });
+
+  it('parses viewport from packaging metadata', async () => {
+    epubjsMock.__mockBook.packaging = {
+      direction: 'default',
+      metadata: new Map([
+        ['layout', 'pre-paginated'],
+        ['viewport', 'width=1024,height=768'],
+      ]),
+    };
+    const loader = createEpubLoader();
+    await loader.load('test.epub');
+
+    const metadata = loader.getMetadata();
+    expect(metadata.fixedLayout?.viewport).toBe('width=1024,height=768');
   });
 
   it('throws on load after destroy', async () => {

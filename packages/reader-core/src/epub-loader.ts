@@ -9,7 +9,7 @@ import type {
   PageDirection,
 } from './epub-types';
 import { createTraceId, createSpanId, serializeError, testBounded } from '@do-epub-studio/shared';
-import { validateArchive } from './archive-validator';
+import { parseEpubInWorker } from './epub-parser-worker';
 
 type EventCallback = (data: unknown) => void;
 
@@ -118,26 +118,12 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
     const spanId = createSpanId();
 
     try {
-      let data: Uint8Array;
-      if (typeof url === 'string') {
-        if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('blob:')) {
-          const response = await fetch(url);
-          if (!response.ok) {
-            throw new Error(`Failed to fetch EPUB: ${response.statusText}`);
-          }
-          const buffer = await response.arrayBuffer();
-          data = new Uint8Array(buffer);
-        } else {
-          const response = await fetch(url);
-          const buffer = await response.arrayBuffer();
-          data = new Uint8Array(buffer);
-        }
-      } else {
-        data = url;
+      const result = await parseEpubInWorker(url);
+      if (!result.valid || !result.data) {
+        throw new Error(result.error ?? 'Failed to parse EPUB');
       }
 
-      await validateArchive(data);
-      book = ePub(data.buffer as ArrayBuffer);
+      book = ePub(result.data);
       await book.opened;
 
       const nav = await book.loaded.navigation;
@@ -158,6 +144,17 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
           ? 'ltr'
           : 'default';
 
+      const pkgMeta = book.packaging?.metadata as Map<string, string> | undefined;
+      const layout = pkgMeta?.get('layout');
+      const fixedLayout = layout
+        ? {
+            layout: layout === 'pre-paginated' ? ('pre-paginated' as const) : ('reflowable' as const),
+            orientation: pkgMeta?.get('orientation') as 'auto' | 'landscape' | 'portrait' | undefined,
+            spread: pkgMeta?.get('spread') as 'none' | 'auto' | 'both' | 'landscape' | undefined,
+            viewport: pkgMeta?.get('viewport'),
+          }
+        : undefined;
+
       metadata = {
         title: metaMap.get('title') ?? '',
         creator: metaMap.get('creator'),
@@ -165,6 +162,7 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
         publisher: metaMap.get('publisher'),
         description: metaMap.get('description'),
         direction,
+        fixedLayout,
       };
 
     } catch (error) {
