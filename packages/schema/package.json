@@ -11,7 +11,7 @@
     "test:unit": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@do-epub-studio/shared": "workspace:*"
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "typescript": "^6.0.3",

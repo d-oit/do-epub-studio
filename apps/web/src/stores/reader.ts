@@ -1,4 +1,9 @@
 import { create } from 'zustand';
+import type { ConflictRecord, ConflictResolutionResult } from '../lib/offline/conflict-resolution';
+import { ConflictResolutionStrategy } from '../lib/offline/conflict-resolution';
+
+export type PageDirection = 'ltr' | 'rtl' | 'default';
+export type WritingMode = 'horizontal-tb' | 'vertical-rl' | 'vertical-lr';
 
 export interface Locator {
   cfi?: string;
@@ -59,6 +64,8 @@ interface ReaderState {
   isOffline: boolean;
   pendingSyncCount: number;
   permissionStatus: 'valid' | 'invalid' | 'checking';
+  bookDirection: PageDirection;
+  bookWritingMode: WritingMode;
   setProgress: (progress: ReadingProgress) => void;
   addBookmark: (bookmark: Bookmark) => void;
   removeBookmark: (id: string) => void;
@@ -76,6 +83,13 @@ interface ReaderState {
   setOffline: (offline: boolean) => void;
   setPendingSyncCount: (count: number) => void;
   setPermissionStatus: (status: 'valid' | 'invalid' | 'checking') => void;
+  conflicts: ConflictRecord[];
+  setConflicts: (conflicts: ConflictRecord[]) => void;
+  addConflict: (conflict: ConflictRecord) => void;
+  resolveConflict: (conflictId: string, resolution: 'local' | 'remote') => ConflictResolutionResult | null;
+  clearConflicts: () => void;
+  setBookDirection: (direction: PageDirection) => void;
+  setBookWritingMode: (writingMode: WritingMode) => void;
 }
 
 export const useReaderStore = create<ReaderState>((set) => ({
@@ -89,6 +103,39 @@ export const useReaderStore = create<ReaderState>((set) => ({
   isOffline: typeof navigator !== 'undefined' ? !navigator.onLine : false,
   pendingSyncCount: 0,
   permissionStatus: 'checking',
+  bookDirection: 'default',
+  bookWritingMode: 'horizontal-tb',
+  conflicts: [],
+  setConflicts: (conflicts) => set({ conflicts }),
+  addConflict: (conflict) =>
+    set((state) => ({
+      conflicts: state.conflicts.some((c) => c.id === conflict.id)
+        ? state.conflicts.map((c) => (c.id === conflict.id ? conflict : c))
+        : [...state.conflicts, conflict],
+    })),
+  resolveConflict: (conflictId, resolution) => {
+    const state = useReaderStore.getState();
+    const conflict = state.conflicts.find((c) => c.id === conflictId);
+    if (!conflict || conflict.resolved) return null;
+
+    const result: ConflictResolutionResult = {
+      resolved: true,
+      strategy: ConflictResolutionStrategy.Manual,
+      winner: resolution,
+      merged: resolution === 'local' ? conflict.localVersion : conflict.remoteVersion,
+    };
+
+    set((s) => ({
+      conflicts: s.conflicts.map((c) =>
+        c.id === conflictId
+          ? { ...c, resolved: true, resolution, resolvedAt: Date.now() }
+          : c,
+      ),
+    }));
+
+    return result;
+  },
+  clearConflicts: () => set({ conflicts: [] }),
   setProgress: (progress) => set({ progress }),
   addBookmark: (bookmark) => set((state) => ({ bookmarks: [bookmark, ...state.bookmarks] })),
   removeBookmark: (id) =>
@@ -165,4 +212,6 @@ export const useReaderStore = create<ReaderState>((set) => ({
   setOffline: (offline) => set({ isOffline: offline }),
   setPendingSyncCount: (count) => set({ pendingSyncCount: count }),
   setPermissionStatus: (status) => set({ permissionStatus: status }),
+  setBookDirection: (direction) => set({ bookDirection: direction }),
+  setBookWritingMode: (writingMode) => set({ bookWritingMode: writingMode }),
 }));

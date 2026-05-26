@@ -19,7 +19,7 @@ export interface AnnotationAdapter {
   renderCommentMarkers(
     chapterHref: string | null,
     comments: CommentRecord[],
-    onNavigate: (chapterRef: string, cfiRange?: string) => void,
+    onNavigate: (chapterRef: string, cfiRange?: string) => void | Promise<void>,
   ): void;
   clearAnnotations(): void;
 }
@@ -75,7 +75,7 @@ export function createEpubAnnotationAdapter(rendition: Rendition): AnnotationAda
         rendition.annotations.append('underline', comment.cfiRange as string, {
           data: comment,
           cb: () => {
-            onNavigate(comment.chapterRef ?? '', comment.cfiRange ?? undefined);
+            void onNavigate(comment.chapterRef ?? '', comment.cfiRange ?? undefined);
           },
           styles: {
             stroke: isResolved ? '#9ca3af' : '#3b82f6',

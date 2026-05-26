@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import ePub from '@intity/epub-js';
-import type { Book, Rendition, NavItem } from '@intity/epub-js';
+import type { Book, Rendition, NavItem, Contents } from '@intity/epub-js';
+import type { PageDirection, WritingMode } from '../../../stores';
+import { parseAccessibilityFromOpf } from '@do-epub-studio/reader-core';
 import {
   useAuthStore,
   useReaderStore,
@@ -24,23 +26,62 @@ interface TocItem {
   subitems?: TocItem[];
 }
 
+interface BookInfo {
+  title: string;
+  creator?: string;
+  publisher?: string;
+  language?: string;
+  description?: string;
+  accessibility?: {
+    summary?: string;
+    features: string[];
+    hazards: string[];
+    controls: string[];
+    api?: string;
+    conformsTo?: string;
+    certifiedBy?: string;
+    certifierCredential?: string;
+    certifierReport?: string;
+  };
+}
+
+function applyDirectionAndWritingMode(
+  rendition: Rendition,
+  direction: PageDirection,
+  writingMode: WritingMode,
+): void {
+  const dir = direction === 'default' ? document.documentElement.dir || 'ltr' : direction;
+  rendition.hooks.content.register((contents: Contents) => {
+    if (contents.document?.documentElement) {
+      contents.document.documentElement.setAttribute('dir', dir);
+    }
+    contents.direction(dir);
+    if (writingMode !== 'horizontal-tb') {
+      contents.css('writing-mode', writingMode, true);
+    }
+  });
+}
+
 export function useReaderEpub(
   epubUrl: string | null,
   viewerRef: React.RefObject<HTMLDivElement | null>,
   rootRef: React.RefObject<HTMLDivElement | null>,
   highlightsRef: React.MutableRefObject<HighlightRecord[]>,
   commentsRef: React.MutableRefObject<CommentRecord[]>,
-  onNavigateToAnnotation: (chapterRef: string, cfiRange?: string) => void,
+  onNavigateToAnnotation: (chapterRef: string, cfiRange?: string) => void | Promise<void>,
 ) {
   const sessionToken = useAuthStore((s) => s.sessionToken);
   const bookId = useAuthStore((s) => s.bookId);
   const setCurrentChapter = useReaderStore((s) => s.setCurrentChapter);
   const setError = useReaderStore((s) => s.setError);
   const setProgress = useReaderStore((s) => s.setProgress);
+  const setBookDirection = useReaderStore((s) => s.setBookDirection);
   const readerTheme = usePreferencesStore((s) => s.reader.theme);
   const readerFontSize = usePreferencesStore((s) => s.reader.fontSize);
   const readerFontFamily = usePreferencesStore((s) => s.reader.fontFamily);
   const readerLineHeight = usePreferencesStore((s) => s.reader.lineHeight);
+  const readerDirection = usePreferencesStore((s) => s.reader.direction);
+  const readerWritingMode = usePreferencesStore((s) => s.reader.writingMode);
   const { t } = useTranslation();
 
   const bookRef = useRef<Book | null>(null);
@@ -50,8 +91,10 @@ export function useReaderEpub(
   const adapterRef = useRef<AnnotationAdapter | null>(null);
   const onNavigateToAnnotationRef = useRef(onNavigateToAnnotation);
   onNavigateToAnnotationRef.current = onNavigateToAnnotation;
+  const directionRef = useRef<PageDirection>('default');
 
   const [toc, setToc] = useState<TocItem[]>([]);
+  const [metadata, setMetadata] = useState<BookInfo | null>(null);
 
   const isSystemDark = () => {
     return window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -111,11 +154,48 @@ export function useReaderEpub(
         setToc(tocItems);
         tocRef.current = tocItems;
 
+        const bookDirection: PageDirection = book.packaging?.direction === 'rtl'
+          ? 'rtl'
+          : book.packaging?.direction === 'ltr'
+            ? 'ltr'
+            : 'default';
+        directionRef.current = bookDirection;
+        setBookDirection(bookDirection);
+
+        try {
+          const meta = await book.loaded.metadata;
+          const metaMap = meta as Map<string, string>;
+          const bookInfo: BookInfo = {
+            title: metaMap.get('title') ?? '',
+            creator: metaMap.get('creator'),
+            publisher: metaMap.get('publisher'),
+            language: metaMap.get('language'),
+            description: metaMap.get('description'),
+          };
+
+          try {
+            const containerMeta = book.container as unknown as { fullPath: string };
+            const opfPath = containerMeta.fullPath;
+            if (opfPath && book.archive) {
+              const opfXml = await book.archive.getText('/' + opfPath);
+              if (opfXml) {
+                bookInfo.accessibility = parseAccessibilityFromOpf(opfXml);
+              }
+            }
+          } catch {
+            // accessibility metadata is optional
+          }
+          setMetadata(bookInfo);
+        } catch {
+          // book metadata is optional
+        }
+
         const rendition = book.renderTo(viewer, {
           width: '100%',
           height: '100%',
-          spread: 'auto',
+          spread: bookDirection === 'rtl' ? 'right' : 'auto',
           sandbox: ['allow-same-origin', 'allow-scripts'],
+          defaultDirection: bookDirection === 'default' ? undefined : bookDirection,
         });
         renditionRef.current = rendition;
         applyThemes(rendition);
@@ -123,6 +203,7 @@ export function useReaderEpub(
         const adapter = createEpubAnnotationAdapter(rendition);
         adapterRef.current = adapter;
 
+        applyDirectionAndWritingMode(rendition, readerDirection !== 'default' ? readerDirection : bookDirection, readerWritingMode);
         await rendition.display();
         if (!active) return;
 
@@ -246,7 +327,7 @@ export function useReaderEpub(
       renditionRef.current?.destroy();
       bookRef.current?.destroy();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- applyThemes only needed for initial setup; preference changes handled by dedicated effect below
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- applyThemes only needed for initial setup; preference changes handled by dedicated effect
   }, [
     epubUrl,
     viewerRef,
@@ -255,14 +336,24 @@ export function useReaderEpub(
     setCurrentChapter,
     setError,
     setProgress,
+    setBookDirection,
     highlightsRef,
     commentsRef,
+    onNavigateToAnnotation,
+    readerDirection,
+    readerWritingMode,
     t,
   ]);
 
   useEffect(() => {
     if (renditionRef.current) applyThemes(renditionRef.current);
   });
+
+  useEffect(() => {
+    if (!renditionRef.current) return;
+    const dir = readerDirection !== 'default' ? readerDirection : directionRef.current;
+    applyDirectionAndWritingMode(renditionRef.current, dir, readerWritingMode);
+  }, [readerDirection, readerWritingMode]);
 
   useEffect(() => {
     if (readerTheme !== 'system') return;
@@ -278,10 +369,16 @@ export function useReaderEpub(
     function handleKeyDown(e: KeyboardEvent) {
       const rendition = renditionRef.current;
       if (!rendition) return;
-      if (e.key === 'ArrowRight') {
+
+      const isRtl = directionRef.current === 'rtl'
+        || (directionRef.current === 'default' && document.documentElement.dir === 'rtl');
+      const nextPage = isRtl ? 'ArrowLeft' : 'ArrowRight';
+      const prevPage = isRtl ? 'ArrowRight' : 'ArrowLeft';
+
+      if (e.key === nextPage) {
         e.preventDefault();
         void rendition.next();
-      } else if (e.key === 'ArrowLeft') {
+      } else if (e.key === prevPage) {
         e.preventDefault();
         void rendition.prev();
       }
@@ -299,5 +396,6 @@ export function useReaderEpub(
     adapterRef,
     toc,
     resolvedTheme,
+    metadata,
   };
 }

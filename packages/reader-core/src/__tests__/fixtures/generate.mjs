@@ -330,6 +330,74 @@ async function generateMissingContainerEpub() {
   ]);
 }
 
+function accessibilityOpf() {
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="book-id">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:title>Accessible Test Book</dc:title>
+    <dc:creator>A11y Author</dc:creator>
+    <dc:language>en</dc:language>
+    <dc:identifier>urn:uuid:a11y-test-001</dc:identifier>
+    <meta property="schema:accessibilitySummary">This book is fully accessible with structural navigation and alternative text.</meta>
+    <meta property="schema:accessibilityFeature">structuralNavigation</meta>
+    <meta property="schema:accessibilityFeature">tableOfContents</meta>
+    <meta property="schema:accessibilityFeature">alternativeText</meta>
+    <meta property="schema:accessibilityHazard">none</meta>
+    <meta property="schema:accessibilityControl">fullKeyboardControl</meta>
+    <meta property="schema:accessibilityAPI">ARIA</meta>
+    <meta property="dcterms:conformsTo">EPUB Accessibility 1.1</meta>
+  </metadata>
+  <manifest>
+    <item id="nav" href="nav.xhtml" media-type="application/xhtml+xml"/>
+    <item id="section0001" href="section0001.xhtml" media-type="application/xhtml+xml"/>
+  </manifest>
+  <spine>
+    <itemref idref="nav" properties="nav"/>
+    <itemref idref="section0001"/>
+  </spine>
+</package>`;
+}
+
+function accessibilityOpfMinimal() {
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="book-id">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:title>Minimal A11y Book</dc:title>
+    <dc:creator>A11y Author</dc:creator>
+    <meta property="schema:accessibilityHazard">flashing</meta>
+    <meta property="schema:accessibilityHazard">sound</meta>
+  </metadata>
+  <manifest>
+    <item id="nav" href="nav.xhtml" media-type="application/xhtml+xml"/>
+    <item id="section0001" href="section0001.xhtml" media-type="application/xhtml+xml"/>
+  </manifest>
+  <spine>
+    <itemref idref="nav" properties="nav"/>
+    <itemref idref="section0001"/>
+  </spine>
+</package>`;
+}
+
+async function generateAccessibilityEpub() {
+  return createZip([
+    { name: 'mimetype', data: Buffer.from('application/epub+zip', 'utf-8'), store: true },
+    { name: 'META-INF/container.xml', data: Buffer.from(containerXml('OEBPS/content.opf'), 'utf-8') },
+    { name: 'OEBPS/content.opf', data: Buffer.from(accessibilityOpf(), 'utf-8') },
+    { name: 'OEBPS/nav.xhtml', data: Buffer.from(navXhtml([{ label: 'Start', href: 'section0001.xhtml' }]), 'utf-8') },
+    { name: 'OEBPS/section0001.xhtml', data: Buffer.from(sectionXhtml('section0001', '<p>Accessible content</p>'), 'utf-8') },
+  ]);
+}
+
+async function generateAccessibilityMinimalEpub() {
+  return createZip([
+    { name: 'mimetype', data: Buffer.from('application/epub+zip', 'utf-8'), store: true },
+    { name: 'META-INF/container.xml', data: Buffer.from(containerXml('OEBPS/content.opf'), 'utf-8') },
+    { name: 'OEBPS/content.opf', data: Buffer.from(accessibilityOpfMinimal(), 'utf-8') },
+    { name: 'OEBPS/nav.xhtml', data: Buffer.from(navXhtml([{ label: 'Start', href: 'section0001.xhtml' }]), 'utf-8') },
+    { name: 'OEBPS/section0001.xhtml', data: Buffer.from(sectionXhtml('section0001', '<p>Minimal a11y</p>'), 'utf-8') },
+  ]);
+}
+
 async function main() {
   const generators = [
     ['minimal.epub', generateMinimalEpub],
@@ -338,6 +406,8 @@ async function main() {
     ['multi-nav.epub', generateMultiNavEpub],
     ['invalid-mimetype.epub', generateInvalidMimetypeEpub],
     ['missing-container.epub', generateMissingContainerEpub],
+    ['accessibility.epub', generateAccessibilityEpub],
+    ['accessibility-minimal.epub', generateAccessibilityMinimalEpub],
   ];
 
   for (const [filename, generator] of generators) {

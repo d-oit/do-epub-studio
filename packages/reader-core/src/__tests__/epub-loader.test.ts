@@ -49,6 +49,7 @@ vi.mock('@intity/epub-js', () => {
         ]),
       ),
     },
+    packaging: { direction: 'default' },
     renderTo: vi.fn().mockReturnValue(mockRendition),
     destroy: vi.fn(),
   };
@@ -59,6 +60,12 @@ vi.mock('@intity/epub-js', () => {
 });
 
 // Get mock references after hoisting
+interface MockBook {
+  renderTo: ReturnType<typeof vi.fn>;
+  destroy: ReturnType<typeof vi.fn>;
+  packaging: { direction: string };
+}
+
 const epubjsMock = vi.mocked((await import('@intity/epub-js')) as unknown) as {
   __mockRendition: {
     on: ReturnType<typeof vi.fn>;
@@ -69,10 +76,7 @@ const epubjsMock = vi.mocked((await import('@intity/epub-js')) as unknown) as {
     getContents: ReturnType<typeof vi.fn>;
     destroy: ReturnType<typeof vi.fn>;
   };
-  __mockBook: {
-    renderTo: ReturnType<typeof vi.fn>;
-    destroy: ReturnType<typeof vi.fn>;
-  };
+  __mockBook: MockBook;
 };
 
 describe('extractCfi', () => {
@@ -121,6 +125,7 @@ describe('isValidCfi', () => {
 describe('createEpubLoader', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    epubjsMock.__mockBook.packaging = { direction: 'default' };
   });
 
   it('creates a loader with null rendition initially', () => {
@@ -161,6 +166,32 @@ describe('createEpubLoader', () => {
     expect(metadata.title).toBe('Test Book');
     expect(metadata.creator).toBe('Test Author');
     expect(metadata.language).toBe('en');
+  });
+
+  it('detects default direction from packaging', async () => {
+    const loader = createEpubLoader();
+    await loader.load('test.epub');
+
+    const metadata = loader.getMetadata();
+    expect(metadata.direction).toBe('default');
+  });
+
+  it('detects rtl direction from packaging', async () => {
+    epubjsMock.__mockBook.packaging = { direction: 'rtl' };
+    const loader = createEpubLoader();
+    await loader.load('test.epub');
+
+    const metadata = loader.getMetadata();
+    expect(metadata.direction).toBe('rtl');
+  });
+
+  it('detects ltr direction from packaging', async () => {
+    epubjsMock.__mockBook.packaging = { direction: 'ltr' };
+    const loader = createEpubLoader();
+    await loader.load('test.epub');
+
+    const metadata = loader.getMetadata();
+    expect(metadata.direction).toBe('ltr');
   });
 
   it('throws on load after destroy', async () => {

@@ -1,18 +1,24 @@
-export type GlobalRole = 'admin' | 'editor' | 'reader';
+import type { z } from 'zod';
+import type {
+  GlobalRoleSchema,
+  BookVisibilitySchema,
+  GrantModeSchema,
+  CommentStatusSchema,
+  CommentVisibilitySchema,
+  SyncOperationSchema,
+  SyncStatusSchema,
+  EntityTypeSchema,
+  AnnotationLocatorSchema,
+} from './schemas';
 
-export type BookVisibility = 'private' | 'password_protected' | 'reader_only' | 'editorial_review' | 'public';
-
-export type GrantMode = 'private' | 'password_protected' | 'reader_only' | 'editorial_review' | 'public';
-
-export type CommentStatus = 'open' | 'resolved' | 'deleted';
-
-export type CommentVisibility = 'shared' | 'internal' | 'resolved';
-
-export type SyncOperation = 'create' | 'update' | 'delete';
-
-export type SyncStatus = 'pending' | 'synced' | 'failed' | 'conflict';
-
-export type EntityType = 'book' | 'grant' | 'session' | 'comment' | 'user' | 'bookmark' | 'highlight';
+export type GlobalRole = z.infer<typeof GlobalRoleSchema>;
+export type BookVisibility = z.infer<typeof BookVisibilitySchema>;
+export type GrantMode = z.infer<typeof GrantModeSchema>;
+export type CommentStatus = z.infer<typeof CommentStatusSchema>;
+export type CommentVisibility = z.infer<typeof CommentVisibilitySchema>;
+export type SyncOperation = z.infer<typeof SyncOperationSchema>;
+export type SyncStatus = z.infer<typeof SyncStatusSchema>;
+export type EntityType = z.infer<typeof EntityTypeSchema>;
 
 export interface User {
   id: string;
@@ -150,10 +156,4 @@ export interface SyncState {
   updatedAt: string;
 }
 
-export interface AnnotationLocator {
-  cfi?: string;
-  selectedText?: string;
-  chapterRef?: string;
-  elementIndex?: number;
-  charOffset?: number;
-}
+export type AnnotationLocator = z.infer<typeof AnnotationLocatorSchema>;

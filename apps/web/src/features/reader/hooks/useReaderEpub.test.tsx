@@ -24,6 +24,10 @@ vi.mock('../../../lib/offline', () => ({
 const { mockRendition, mockBook, mockEpubFn } = vi.hoisted(() => {
   const rendition = {
     themes: { registerRules: vi.fn(), select: vi.fn() },
+    hooks: {
+      content: { register: vi.fn() },
+      render: { register: vi.fn() },
+    },
     display: vi.fn(),
     on: vi.fn(),
     off: vi.fn(),
@@ -42,6 +46,7 @@ const { mockRendition, mockBook, mockEpubFn } = vi.hoisted(() => {
   const book = {
     ready: Promise.resolve(),
     loaded: { navigation: Promise.resolve({ toc: [] }) },
+    packaging: { direction: 'default' },
     renderTo: vi.fn(() => rendition),
     destroy: vi.fn(),
   };
@@ -58,6 +63,8 @@ const mockReaderStore: Record<string, unknown> = {
   setProgress: vi.fn(),
   setError: vi.fn(),
   setCurrentChapter: vi.fn(),
+  setBookDirection: vi.fn(),
+  setBookWritingMode: vi.fn(),
 };
 
 const mockPreferencesState = {
@@ -67,6 +74,8 @@ const mockPreferencesState = {
     fontFamily: 'serif' as const,
     lineHeight: 2,
     pageWidth: 'normal' as const,
+    direction: 'default' as const,
+    writingMode: 'horizontal-tb' as const,
   },
 };
 
@@ -151,6 +160,22 @@ describe('useReaderEpub', () => {
     });
   });
 
+  it('applies defaultDirection option based on packaging direction', async () => {
+    const refs = createRefs();
+
+    const onNavigate = vi.fn();
+    renderHook(() =>
+      useReaderEpub('http://test.epub', refs.viewerRef, refs.rootRef, refs.highlightsRef, refs.commentsRef, onNavigate),
+    );
+
+    await waitFor(() => {
+      expect(mockBook.renderTo).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ defaultDirection: undefined }),
+      );
+    });
+  });
+
   it('registers relocated and displayed event handlers', async () => {
     const refs = createRefs();
     const onNavigate = vi.fn();
@@ -182,7 +207,7 @@ describe('useReaderEpub', () => {
       setupAndFlush();
 
       await waitFor(() => {
-        expect(mockRendition.next).not.toHaveBeenCalled();
+        expect(mockRendition.display).toHaveBeenCalled();
       });
 
       act(() => {
@@ -197,7 +222,7 @@ describe('useReaderEpub', () => {
       setupAndFlush();
 
       await waitFor(() => {
-        expect(mockRendition.prev).not.toHaveBeenCalled();
+        expect(mockRendition.display).toHaveBeenCalled();
       });
 
       act(() => {

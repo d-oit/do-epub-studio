@@ -7,3 +7,4 @@ export { reanchorByText, tryReanchor, terminateWorker } from './reanchor-worker'
 export * from './toc';
 export * from './epub-types';
 export * from './sanitizer';
+export * from './epub-accessibility';

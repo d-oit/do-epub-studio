@@ -17,6 +17,7 @@ import {
   BookmarksPanel,
   ReaderViewer,
   CommentInputModal,
+  InfoPanel,
 } from './components';
 
 export function ReaderPage() {
@@ -47,6 +48,7 @@ export function ReaderPage() {
   const error = useReaderStore((s) => s.error);
   const setOffline = useReaderStore((s) => s.setOffline);
   const setPermissionStatus = useReaderStore((s) => s.setPermissionStatus);
+  const bookDirection = useReaderStore((s) => s.bookDirection);
   const highlights = useReaderStore(useShallow((s) => s.highlights));
   const setHighlights = useReaderStore((s) => s.setHighlights);
   const comments = useReaderStore(useShallow((s) => s.comments));
@@ -58,9 +60,13 @@ export function ReaderPage() {
   const readerFontSize = usePreferencesStore((s) => s.reader.fontSize);
   const readerFontFamily = usePreferencesStore((s) => s.reader.fontFamily);
   const readerPageWidth = usePreferencesStore((s) => s.reader.pageWidth);
+  const readerDirection = usePreferencesStore((s) => s.reader.direction);
+  const readerWritingMode = usePreferencesStore((s) => s.reader.writingMode);
   const setTheme = usePreferencesStore((s) => s.setTheme);
   const setFontFamily = usePreferencesStore((s) => s.setFontFamily);
   const setFontSize = usePreferencesStore((s) => s.setFontSize);
+  const setDirection = usePreferencesStore((s) => s.setDirection);
+  const setWritingMode = usePreferencesStore((s) => s.setWritingMode);
 
   const { t, locale } = useTranslation();
 
@@ -84,20 +90,19 @@ export function ReaderPage() {
   const [epubUrl, setEpubUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const highlightsRef = useRef(highlights);
-  highlightsRef.current = highlights;
-  const commentsRef = useRef(comments);
-  commentsRef.current = comments;
-
-  const navigateAnnotationRef = useRef<((chapterRef: string, cfiRange?: string) => Promise<void>) | undefined>(undefined);
   const handleNavigateToAnnotation = useCallback(
-    (chapterRef: string, cfiRange?: string) => {
-      void navigateAnnotationRef.current?.(chapterRef, cfiRange);
+    async (chapterRef: string, cfiRange?: string) => {
+      if (!renditionRef.current) return;
+      await renditionRef.current.display(cfiRange ?? chapterRef);
     },
     [],
   );
 
-  const { renditionRef, currentChapterRef, adapterRef, toc, resolvedTheme } = useReaderEpub(
+  const highlightsRef = useRef(highlights);
+  highlightsRef.current = highlights;
+  const commentsRef = useRef(comments);
+  commentsRef.current = comments;
+  const { renditionRef, currentChapterRef, toc, resolvedTheme, metadata } = useReaderEpub(
     epubUrl,
     viewerRef,
     rootRef,
@@ -105,11 +110,6 @@ export function ReaderPage() {
     commentsRef,
     handleNavigateToAnnotation,
   );
-
-  navigateAnnotationRef.current = async (chapterRef: string, cfiRange?: string) => {
-    if (!renditionRef.current) return;
-    await renditionRef.current.display(cfiRange ?? chapterRef);
-  };
 
   useEffect(() => {
     if (!sessionToken || !bookId) return;
@@ -191,24 +191,6 @@ export function ReaderPage() {
     return () => controller.abort();
   }, [sessionToken, bookSlug, navigate, setError, t]);
 
-  useEffect(() => {
-    if (adapterRef.current && currentChapterRef.current) {
-      adapterRef.current.renderHighlights(currentChapterRef.current, highlights);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- currentChapterRef is a stable ref object; its .current is read at execution time
-  }, [highlights, adapterRef]);
-
-  useEffect(() => {
-    if (adapterRef.current && currentChapterRef.current) {
-      adapterRef.current.renderCommentMarkers(
-        currentChapterRef.current,
-        comments,
-        handleNavigateToAnnotation,
-      );
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- currentChapterRef is a stable ref object; its .current is read at execution time
-  }, [comments, handleNavigateToAnnotation, adapterRef]);
-
   const handleLogout = async () => {
     try {
       await apiRequest('/api/access/logout', { method: 'POST', token: sessionToken ?? undefined });
@@ -250,6 +232,7 @@ export function ReaderPage() {
         onToggleComments={() => togglePanel('comments')}
         onToggleBookmarks={() => togglePanel('bookmarks')}
         onToggleSettings={() => togglePanel('settings')}
+        onToggleInfo={() => togglePanel('info')}
         onExportNotes={() => handleExportNotes(bookTitle)}
         onLogout={() => void handleLogout()}
         t={tFn}
@@ -262,9 +245,21 @@ export function ReaderPage() {
             theme={readerTheme}
             fontSize={readerFontSize}
             fontFamily={readerFontFamily}
+            direction={readerDirection}
+            writingMode={readerWritingMode}
             onSetTheme={setTheme}
             onSetFontSize={setFontSize}
             onSetFontFamily={setFontFamily}
+            onSetDirection={setDirection}
+            onSetWritingMode={setWritingMode}
+            t={tFn}
+          />
+        )}
+        {activePanel === 'info' && (
+          <InfoPanel
+            isOpen={activePanel === 'info'}
+            onClose={() => setActivePanel(null)}
+            metadata={metadata}
             t={tFn}
           />
         )}
@@ -283,6 +278,7 @@ export function ReaderPage() {
         onClose={() => setActivePanel(null)}
         onNavigate={(href) => void navigateToChapter(href)}
         t={tFn}
+        direction={bookDirection === 'rtl' ? 'rtl' : undefined}
       />
       {selection && capabilities?.canHighlight && (
         <AnnotationToolbar
