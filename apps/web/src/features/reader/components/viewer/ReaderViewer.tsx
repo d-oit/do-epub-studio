@@ -5,6 +5,7 @@ interface ReaderViewerProps {
   pageWidthClass: string;
   viewerRef: React.RefObject<HTMLDivElement>;
   notAvailableText: string;
+  id?: string;
 }
 
 export function ReaderViewer({
@@ -14,9 +15,10 @@ export function ReaderViewer({
   pageWidthClass,
   viewerRef,
   notAvailableText,
+  id,
 }: ReaderViewerProps) {
   return (
-    <main className="pt-14 pb-20">
+    <main className="pt-14 pb-20" id={id}>
       {error && (
         <div className="max-w-3xl mx-auto px-4 mt-4">
           <div className="p-3 bg-accent-error/10 border border-accent-error rounded text-sm text-accent-error">
