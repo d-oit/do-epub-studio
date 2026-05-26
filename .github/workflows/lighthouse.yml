@@ -101,7 +101,7 @@ jobs:
               }
             }
             const body = [
-              '  ## Lighthouse Results',
+              '  #  # Lighthouse Results',
               '',
               '| Category | Score | Threshold | Status |',
               '|---|---|---|---|',

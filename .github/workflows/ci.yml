@@ -349,7 +349,7 @@ jobs:
         env:
           BASE_REF: ${{ github.base_ref }}
         run: |
-          git checkout $(git merge-base "origin/$BASE_REF" HEAD)
+          git checkout "$(git merge-base "origin/$BASE_REF" HEAD)"
           pnpm install --frozen-lockfile
           pnpm --filter @do-epub-studio/reader-core exec vitest bench --outputJson baseline.json
           mv packages/reader-core/baseline.json ./baseline.json

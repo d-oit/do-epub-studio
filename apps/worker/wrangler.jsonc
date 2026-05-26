@@ -15,7 +15,7 @@
   "durable_objects": {
     "bindings": [
       {
-        "name": "RATE_LIMITER",
+        "binding": "RATE_LIMITER",
         "class_name": "RateLimiterDO"
       }
     ]
