@@ -133,6 +133,7 @@ describe('useReaderEpub', () => {
         height: '100%',
         spread: 'auto',
         sandbox: ['allow-same-origin', 'allow-scripts'],
+        defaultDirection: undefined,
       });
     });
 

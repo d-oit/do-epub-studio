@@ -18,13 +18,6 @@ vi.mock('@intity/epub-js', () => {
     packaging: {
       direction: 'ltr',
     },
-    sections: {
-      hooks: {
-        content: {
-          register: vi.fn(),
-        },
-      },
-    },
     loaded: {
       spine: Promise.resolve([
         { index: 0, href: 'chapter1.xhtml', properties: ['page-spread-right'] },
@@ -71,13 +64,6 @@ const epubjsMock = vi.mocked((await import('@intity/epub-js')) as unknown) as {
     destroy: ReturnType<typeof vi.fn>;
     packaging: {
       direction: string;
-    };
-    sections: {
-      hooks: {
-        content: {
-          register: ReturnType<typeof vi.fn>;
-        };
-      };
     };
   };
 };
@@ -128,6 +114,7 @@ describe('isValidCfi', () => {
 describe('createEpubLoader', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    epubjsMock.__mockBook.packaging.direction = 'ltr';
   });
 
   it('creates a loader with null rendition initially', () => {
@@ -244,23 +231,17 @@ describe('createEpubLoader', () => {
     expect(epubjsMock.__mockBook.renderTo).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({
-        sandbox: ['allow-scripts'],
+        sandbox: ['allow-same-origin'],
         defaultDirection: 'ltr',
       }),
     );
   });
 
   it('extracts direction from packaging and passes to rendition', async () => {
-    const mockData = zipSync({ 'mimetype': strToU8('application/epub+zip') });
-    (global.fetch as any).mockResolvedValue({
-      ok: true,
-      arrayBuffer: () => Promise.resolve(mockData.buffer),
-    });
-
     epubjsMock.__mockBook.packaging.direction = 'rtl';
 
     const loader = createEpubLoader();
-    await loader.load('https://example.com/rtl.epub');
+    await loader.load('test.epub');
     loader.createRendition(document.createElement('div'));
 
     expect(loader.getMetadata().direction).toBe('rtl');

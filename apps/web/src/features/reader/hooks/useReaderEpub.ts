@@ -120,7 +120,7 @@ export function useReaderEpub(
           width: '100%',
           height: '100%',
           spread: 'auto',
-          sandbox: ['allow-same-origin'],
+          sandbox: ['allow-same-origin', 'allow-scripts'],
           defaultDirection: book.packaging?.direction,
         });
         renditionRef.current = rendition;
