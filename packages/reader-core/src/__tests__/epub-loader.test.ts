@@ -1,5 +1,9 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { createEpubLoader, extractCfi, isValidCfi } from '../epub-loader';
+import { zipSync, strToU8 } from 'fflate';
+
+// Mock fetch
+global.fetch = vi.fn();
 
 // Mock epubjs module - vi.mock is hoisted so all definitions must be inside
 vi.mock('@intity/epub-js', () => {
@@ -150,9 +154,16 @@ describe('createEpubLoader', () => {
     );
   });
 
-  it('parses toc, spine, and metadata on load', async () => {
+  it('parses toc, spine, and metadata on load and registers sanitization hook', async () => {
+    const mockData = zipSync({ 'mimetype': strToU8('application/epub+zip') });
+    (global.fetch as any).mockResolvedValue({
+      ok: true,
+      arrayBuffer: () => Promise.resolve(mockData.buffer),
+    });
     const loader = createEpubLoader();
-    await loader.load('test.epub');
+    await loader.load('https://example.com/test.epub');
+
+    expect(epubjsMock.__mockBook.sections.hooks.content.register).toHaveBeenCalled();
 
     const toc = loader.getToc();
     expect(toc).toHaveLength(2);
@@ -178,13 +189,19 @@ describe('createEpubLoader', () => {
   });
 
   it('emits events via onEvent callback', async () => {
+    const mockData = zipSync({ 'mimetype': strToU8('application/epub+zip') });
+    (global.fetch as any).mockResolvedValue({
+      ok: true,
+      arrayBuffer: () => Promise.resolve(mockData.buffer),
+    });
+
     const events: Array<{ event: string; data: unknown }> = [];
     const loader = createEpubLoader({
       onEvent: (event, data) => {
         events.push({ event, data });
       },
     });
-    await loader.load('test.epub');
+    await loader.load('https://example.com/test.epub');
     loader.createRendition(document.createElement('div'));
 
     // Simulate relocated event from the mocked rendition
@@ -208,8 +225,14 @@ describe('createEpubLoader', () => {
   });
 
   it('returns defensive copies of arrays', async () => {
+    const mockData = zipSync({ 'mimetype': strToU8('application/epub+zip') });
+    (global.fetch as any).mockResolvedValue({
+      ok: true,
+      arrayBuffer: () => Promise.resolve(mockData.buffer),
+    });
+
     const loader = createEpubLoader();
-    await loader.load('test.epub');
+    await loader.load('https://example.com/test.epub');
 
     const toc1 = loader.getToc();
     const toc2 = loader.getToc();
@@ -221,17 +244,28 @@ describe('createEpubLoader', () => {
   });
 
   it('throws on setProgress without rendition', async () => {
+    const mockData = zipSync({ 'mimetype': strToU8('application/epub+zip') });
+    (global.fetch as any).mockResolvedValue({
+      ok: true,
+      arrayBuffer: () => Promise.resolve(mockData.buffer),
+    });
+
     const loader = createEpubLoader();
-    await loader.load('test.epub');
+    await loader.load('https://example.com/test.epub');
 
     await expect(loader.setProgress('epubcfi(/6/4)')).rejects.toThrow(
       'Rendition not created. Call createRendition() first.',
     );
   });
 
-  it('reuses existing rendition handle', async () => {
+  it('reuses existing rendition handle and uses restricted sandbox', async () => {
+    const mockData = zipSync({ 'mimetype': strToU8('application/epub+zip') });
+    (global.fetch as any).mockResolvedValue({
+      ok: true,
+      arrayBuffer: () => Promise.resolve(mockData.buffer),
+    });
     const loader = createEpubLoader();
-    await loader.load('test.epub');
+    await loader.load('https://example.com/test.epub');
 
     const container1 = document.createElement('div');
     const container2 = document.createElement('div');

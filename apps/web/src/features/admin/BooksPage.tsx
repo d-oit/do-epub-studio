@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '../../hooks/useTranslation';
 import { apiRequest } from '../../lib/api';
-import { BookResponse, validateEpub } from '@do-epub-studio/shared';
+import { BookResponse } from '@do-epub-studio/shared';
 import { LocaleSwitcher } from '../../components/LocaleSwitcher';
 import { Modal, Button } from '../../components/ui';
 
@@ -26,11 +26,6 @@ export function AdminBookResponsesPage() {
   const [visibility, setVisibility] = useState('private');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
-  const [validationResult, setValidationResult] = useState<{
-    isValid: boolean;
-    errors: string[];
-    warnings: string[];
-  } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchBookResponses = async () => {
@@ -63,31 +58,8 @@ export function AdminBookResponsesPage() {
     setEpubFile(null);
     setVisibility('private');
     setCreateError(null);
-    setValidationResult(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
-    }
-  };
-
-  const validateEpubLocal = async (file: File) => {
-    try {
-      const data = await file.arrayBuffer();
-      const result = await validateEpub(data);
-
-      const localizedErrors = result.errors.map(err => {
-        if (err.includes('mimetype')) return t('admin.createBookModal.error.missingMimetype');
-        if (err.includes('META-INF/container.xml')) return t('admin.createBookModal.error.missingContainer');
-        return err;
-      });
-
-      setValidationResult({
-        ...result,
-        errors: localizedErrors,
-      });
-      return result.isValid;
-    } catch {
-      setCreateError(t('admin.createBookModal.error.corruptZip'));
-      return false;
     }
   };
 
@@ -105,15 +77,10 @@ export function AdminBookResponsesPage() {
       return;
     }
 
-    const isLocalValid = await validateEpubLocal(epubFile);
-    if (!isLocalValid) {
-      return;
-    }
-
     setIsSubmitting(true);
 
     try {
-      const createResult = await apiRequest<CreateBookResponse>('/api/admin/books', {
+      const { uploadUrl } = await apiRequest<CreateBookResponse>('/api/admin/books', {
         method: 'POST',
         body: JSON.stringify({
           title: bookTitle.trim(),
@@ -122,7 +89,6 @@ export function AdminBookResponsesPage() {
         }),
       });
 
-      const uploadUrl = createResult.uploadUrl;
       const uploadResponse = await fetch(uploadUrl, {
         method: 'PUT',
         body: epubFile,
@@ -130,38 +96,7 @@ export function AdminBookResponsesPage() {
       });
 
       if (!uploadResponse.ok) {
-        const errorData = await uploadResponse.json() as { error?: { code?: string, message: string, details?: string[] } };
-        if (errorData.error?.code === 'VALIDATION_ERROR' && errorData.error.details) {
-          setValidationResult({
-            isValid: false,
-            errors: errorData.error.details,
-            warnings: [],
-          });
-          throw new Error(errorData.error.message);
-        }
         throw new Error(t('admin.createBookModal.error.upload'));
-      }
-
-      const uploadResult = await uploadResponse.json() as {
-        data: {
-          storageKey: string,
-          validation?: { isValid: boolean, errors: string[], warnings: string[] }
-        }
-      };
-
-      await apiRequest(`/api/admin/books/${createResult.id}/upload-complete`, {
-        method: 'POST',
-        body: JSON.stringify({
-          storageKey: uploadResult.data.storageKey,
-          originalFilename: epubFile.name,
-          fileSizeBytes: epubFile.size,
-          mimeType: epubFile.type || 'application/epub+zip',
-          validationResults: uploadResult.data.validation,
-        }),
-      });
-
-      if (uploadResult.data.validation) {
-        setValidationResult(uploadResult.data.validation);
       }
 
       setIsCreateModalOpen(false);
@@ -320,28 +255,6 @@ export function AdminBookResponsesPage() {
           {createError && (
             <div className="p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-300">
               {createError}
-            </div>
-          )}
-
-          {validationResult && !validationResult.isValid && (
-            <div className="p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-300">
-              <p className="font-bold mb-1">{t('admin.createBookModal.validationErrors')}</p>
-              <ul className="list-disc list-inside">
-                {validationResult.errors.map((err, i) => (
-                  <li key={i}>{err}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {validationResult && validationResult.warnings.length > 0 && (
-            <div className="p-3 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-lg text-sm text-amber-700 dark:text-amber-300">
-              <p className="font-bold mb-1">{t('admin.createBookModal.validationWarnings')}</p>
-              <ul className="list-disc list-inside">
-                {validationResult.warnings.map((warn, i) => (
-                  <li key={i}>{warn}</li>
-                ))}
-              </ul>
             </div>
           )}
 

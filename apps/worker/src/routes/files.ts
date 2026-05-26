@@ -1,67 +1,50 @@
-import { Hono } from 'hono';
 import type { Env } from '../lib/env';
-import { queryFirst } from '../db/client';
+import { jsonResponse } from '../lib/responses';
 import { verifySignedUrlExpiry, verifySignedUrlSignature } from '../storage/signed-url';
 
-export const filesRouter = new Hono<{ Bindings: Env }>();
-
-filesRouter.get('/:bookId/:remainder{.+}', async (c) => {
-  const bookId = c.req.param('bookId');
-  const fileKey = c.req.param('remainder');
-
-  if (!bookId || !fileKey) {
-    return c.json({ ok: false, error: { code: 'NOT_FOUND', message: 'Not found' } }, 404);
-  }
-
-  // Security: Verify signed URL parameters
-  const url = new URL(c.req.url);
+export async function handleDownloadBookFile(
+  env: Env,
+  request: Request,
+  bookId: string,
+  fileKey: string,
+): Promise<Response> {
+  const url = new URL(request.url);
   const expires = url.searchParams.get('expires');
   const signature = url.searchParams.get('signature');
 
   if (!expires || !signature) {
-    return c.json({ ok: false, error: { code: 'UNAUTHORIZED', message: 'Missing signature parameters' } }, 400);
+    return jsonResponse(
+      { ok: false, error: { code: 'BAD_REQUEST', message: 'Missing signature parameters' } },
+      400,
+    );
   }
 
-  if (!verifySignedUrlExpiry(expires)) {
-    return c.json({ ok: false, error: { code: 'FORBIDDEN', message: 'URL has expired' } }, 403);
+  const expiryValid = verifySignedUrlExpiry(expires);
+  const signatureValid = await verifySignedUrlSignature(env, bookId, fileKey, expires, signature);
+
+  if (!expiryValid || !signatureValid) {
+    return jsonResponse(
+      { ok: false, error: { code: 'FORBIDDEN', message: 'Invalid signature' } },
+      403,
+    );
   }
 
-  const isValid = await verifySignedUrlSignature(
-    c.env,
-    bookId,
-    fileKey,
-    expires,
-    signature
-  );
+  const object = await env.BOOKS_BUCKET.get(fileKey);
 
-  if (!isValid) {
-    return c.json({ ok: false, error: { code: 'FORBIDDEN', message: 'Invalid signature' } }, 403);
-  }
-
-  const file = await queryFirst(
-    c.env,
-    `SELECT * FROM book_files WHERE book_id = ? AND storage_key = ? LIMIT 1`,
-    [bookId, fileKey],
-  );
-
-  if (!file) {
-    return c.json({ ok: false, error: { code: 'NOT_FOUND', message: 'File not found' } }, 404);
-  }
-
-  const object = await c.env.BOOKS_BUCKET.get(fileKey);
-
-  if (!object) {
-    return c.json({ ok: false, error: { code: 'NOT_FOUND', message: 'File not found in storage' } }, 404);
+  if (!object || !object.body) {
+    return jsonResponse(
+      { ok: false, error: { code: 'NOT_FOUND', message: 'File not found' } },
+      404,
+    );
   }
 
   const headers = new Headers();
   object.writeHttpMetadata(headers);
-  headers.set('etag', object.httpEtag);
-
-  // Security: ADR-035 restrictive CSP for framed EPUB content
-  headers.set('Content-Security-Policy', "script-src 'none'; frame-ancestors 'self'; sandbox allow-same-origin allow-scripts");
+  headers.set('Content-Type', headers.get('Content-Type') ?? 'application/epub+zip');
+  headers.set('Cache-Control', 'private, max-age=0');
 
   return new Response(object.body, {
+    status: 200,
     headers,
   });
-});
+}

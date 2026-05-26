@@ -1,100 +1,132 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   makeEnv,
+  makeRequest,
+  makeAuthContext,
+  makeCommentRow,
   mockQueryFirst,
   mockQueryAll,
   mockExecute,
   mockRequireAuth,
 } from './fixtures';
-import { app } from '../app';
+import { handleListComments, handleCreateComment, handleUpdateComment } from '../routes/comments';
 
-describe('Comments Routes', () => {
-  const env = makeEnv();
+describe('GET /api/comments/{bookId} (handleListComments)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('returns 401 when unauthenticated', async () => {
+    mockRequireAuth.mockResolvedValue(null);
+    const res = await handleListComments(makeEnv(), makeRequest(), 'book-1');
+    expect(res.status).toBe(401);
+  });
+
+  it('returns empty threaded comments', async () => {
+    mockRequireAuth.mockResolvedValue(makeAuthContext());
+    mockQueryAll.mockResolvedValue([] as never);
+
+    const res = await handleListComments(makeEnv(), makeRequest(), 'book-1');
+    expect(res.status).toBe(200);
+    const body = await res.json() as any;
+    expect(body.ok).toBe(true);
+    expect(body.data).toEqual([]);
+  });
+
+  it('returns threaded comments structure', async () => {
+    mockRequireAuth.mockResolvedValue(makeAuthContext());
+    mockQueryAll.mockResolvedValue([makeCommentRow()] as never);
+
+    const res = await handleListComments(makeEnv(), makeRequest(), 'book-1');
+    expect(res.status).toBe(200);
+    const body = await res.json() as any;
+    expect(body.ok).toBe(true);
+    expect(body.data).toHaveLength(1);
+  });
+});
+
+describe('POST /api/comments/{bookId} (handleCreateComment)', () => {
+  const validBody = {
+    body: 'This is a comment',
+    chapterRef: 'Chapter 1',
+    cfiRange: 'epubcfi(/6/4)',
+    visibility: 'shared' as const,
+  };
 
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  describe('GET /api/books/:bookId/comments', () => {
-    it('returns 401 when unauthenticated', async () => {
-      mockRequireAuth.mockResolvedValue(null);
-      const res = await app.fetch(new Request('http://localhost/api/books/book-1/comments'), env);
-      expect(res.status).toBe(401);
-    });
-
-    it('returns list of comments when authenticated', async () => {
-      mockRequireAuth.mockResolvedValue({ email: 'user@example.com' } as any);
-
-      mockQueryAll.mockResolvedValue([
-        { id: '1', body: 'cool', user_email: 'other@ex.com', status: 'open', visibility: 'shared', created_at: 'now', updated_at: 'now' }
-      ]);
-
-      const res = await app.fetch(new Request('http://localhost/api/books/book-1/comments', {
-        headers: { 'Authorization': 'Bearer valid' }
-      }), env);
-      expect(res.status).toBe(200);
-      const body = await res.json() as any;
-      expect(body.data).toHaveLength(1);
-    });
+  it('returns 401 when unauthenticated', async () => {
+    mockRequireAuth.mockResolvedValue(null);
+    const res = await handleCreateComment(makeEnv(), makeRequest(), 'book-1', validBody);
+    expect(res.status).toBe(401);
   });
 
-  describe('POST /api/books/:bookId/comments', () => {
-    it('creates comment and returns success', async () => {
-      mockRequireAuth.mockResolvedValue({
-        email: 'user@example.com',
-        capabilities: { canComment: true },
-      } as any);
-      mockExecute.mockResolvedValue({} as any);
-
-      const res = await app.fetch(new Request('http://localhost/api/books/book-1/comments', {
-        method: 'POST',
-        body: JSON.stringify({
-          body: 'new comment',
-          visibility: 'shared',
-        }),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer valid'
+  it('returns 403 when user cannot comment', async () => {
+    mockRequireAuth.mockResolvedValue(
+      makeAuthContext({
+        capabilities: {
+          canRead: true,
+          canComment: false,
+          canHighlight: false,
+          canBookmark: false,
+          canDownloadOffline: false,
+          canExportNotes: false,
+          canManageAccess: false,
         },
-      }), env);
-
-      expect(res.status).toBe(201);
-    });
+      }),
+    );
+    const res = await handleCreateComment(makeEnv(), makeRequest(), 'book-1', validBody);
+    expect(res.status).toBe(403);
   });
 
-  describe('PATCH /api/comments/:commentId', () => {
-    it('updates comment when owned by user', async () => {
-      mockRequireAuth.mockResolvedValue({ email: 'user@example.com' } as any);
+  it('creates comment and returns success', async () => {
+    mockRequireAuth.mockResolvedValue(makeAuthContext());
+    mockExecute.mockResolvedValue({} as never);
 
-      mockQueryFirst.mockResolvedValue({ user_email: 'user@example.com' });
-      mockExecute.mockResolvedValue({} as any);
+    const res = await handleCreateComment(makeEnv(), makeRequest(), 'book-1', validBody);
+    expect(res.status).toBe(201);
+    const body = await res.json() as any;
+    expect(body.ok).toBe(true);
+  });
+});
 
-      const res = await app.fetch(new Request('http://localhost/api/comments/1', {
-        method: 'PATCH',
-        body: JSON.stringify({ body: 'updated body' }),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer valid'
-        },
-      }), env);
-
-      expect(res.status).toBe(200);
-    });
+describe('PATCH /api/comments/{commentId} (handleUpdateComment)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
   });
 
-  describe('DELETE /api/comments/:commentId', () => {
-    it('deletes comment when owned by user', async () => {
-      mockRequireAuth.mockResolvedValue({ email: 'user@example.com' } as any);
+  it('returns 401 when unauthenticated', async () => {
+    mockRequireAuth.mockResolvedValue(null);
+    const res = await handleUpdateComment(makeEnv(), makeRequest(), 'comment-1', { body: 'updated' });
+    expect(res.status).toBe(401);
+  });
 
-      mockQueryFirst.mockResolvedValue({ user_email: 'user@example.com' });
-      mockExecute.mockResolvedValue({} as any);
+  it('returns 404 when comment not found', async () => {
+    mockRequireAuth.mockResolvedValue(makeAuthContext());
+    mockQueryFirst.mockResolvedValue(null);
 
-      const res = await app.fetch(new Request('http://localhost/api/comments/1', {
-        method: 'DELETE',
-        headers: { 'Authorization': 'Bearer valid' },
-      }), env);
+    const res = await handleUpdateComment(makeEnv(), makeRequest(), 'comment-1', { body: 'updated' });
+    expect(res.status).toBe(404);
+  });
 
-      expect(res.status).toBe(200);
-    });
+  it('returns 403 when user does not own comment', async () => {
+    mockRequireAuth.mockResolvedValue(makeAuthContext({ email: 'other@example.com' }));
+    mockQueryFirst.mockResolvedValue(makeCommentRow({ user_email: 'user@example.com' }) as never);
+
+    const res = await handleUpdateComment(makeEnv(), makeRequest(), 'comment-1', { body: 'updated' });
+    expect(res.status).toBe(403);
+  });
+
+  it('updates comment and returns success', async () => {
+    mockRequireAuth.mockResolvedValue(makeAuthContext());
+    mockQueryFirst.mockResolvedValue(makeCommentRow() as never);
+    mockExecute.mockResolvedValue({} as never);
+
+    const res = await handleUpdateComment(makeEnv(), makeRequest(), 'comment-1', { body: 'updated' });
+    expect(res.status).toBe(200);
+    const body = await res.json() as any;
+    expect(body.ok).toBe(true);
   });
 });

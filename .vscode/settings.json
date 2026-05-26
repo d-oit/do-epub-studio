@@ -4,6 +4,5 @@
   "extensions.ignoreRecommendations": true,
   "extensions.confirmedUriTimeout": 0,
   "workbench.extensions.autoCheck": false,
-  "workbench.extensions.autoInstall": false,
-  "markdownlint.config": ".markdownlint.json"
+  "workbench.extensions.autoInstall": false
 }

@@ -16,10 +16,8 @@
   "dependencies": {
     "@do-epub-studio/schema": "workspace:*",
     "@do-epub-studio/shared": "workspace:*",
-    "@hono/zod-validator": "^0.8.0",
     "@libsql/client": "^0.17.3",
     "argon2-wasm-edge": "^1.0.23",
-    "hono": "^4.12.22",
     "zod": "^4.4.3"
   },
   "devDependencies": {
@@ -27,7 +25,6 @@
     "@cloudflare/workers-types": "^4.20260520.1",
     "@types/node": "^25",
     "eslint": "^10.4.0",
-    "jszip": "^3.10.1",
     "typescript": "^6.0.3",
     "vitest": "4.1.7",
     "wrangler": "^4.93.0"
