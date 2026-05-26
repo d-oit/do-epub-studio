@@ -24,7 +24,7 @@ ALLOWED_SHAS=(
     "softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda"
     "chromaui/action@e6129220824b44e265582e3bddc698c1128f6ede"
     "treosh/lighthouse-ci-action@3e7e23fb74242897f95c0ba9cabad3d0227b9b18"
-    "ossf/scorecard-action@ea651e62978af7915d09fe2e282747c798bf2dab"
+    "ossf/scorecard-action@f49aabe0b5af0936a0987cfb85d86b75731b0186"
     "actions/attest-build-provenance@c074443f1aee8d4aeeae555aebba3282517141b2"
     "sigstore/cosign-installer@053f9b74638557590800a301da1ba82351507e2c"
 )
