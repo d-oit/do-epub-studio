@@ -1,5 +1,8 @@
 export * from './epub-loader';
 export * from './locator';
-export * from './reanchor';
+export { normalizeText, findBestChapterMatch, shouldShowDriftWarning } from './reanchor';
+export type { ReanchorResult, AnnotationAnchor } from './reanchor';
+export { reanchorByText, tryReanchor, terminateWorker } from './reanchor-worker';
 export * from './toc';
 export * from './epub-types';
+export * from './sanitizer';
