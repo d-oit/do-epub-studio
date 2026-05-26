@@ -201,7 +201,7 @@ jobs:
           REPOSITORY: ${{ github.repository }}
           WORKSPACE: ${{ github.workspace }}
         run: |
-          TMP_DIR=$(mktemp -d)
+          TMP_DIR="$(mktemp -d)"
           # Clone baseline into temp dir
           git clone --depth=1 --branch "$BASE_REF" "https://github.com/$REPOSITORY.git" "$TMP_DIR"
           # Copy check script and budgets from PR branch to baseline's expected locations
@@ -349,7 +349,8 @@ jobs:
         env:
           BASE_REF: ${{ github.base_ref }}
         run: |
-          git checkout "$(git merge-base "origin/$BASE_REF" HEAD)"
+          MERGE_BASE="$(git merge-base "origin/$BASE_REF" HEAD)"
+          git checkout "$MERGE_BASE"
           pnpm install --frozen-lockfile
           pnpm --filter @do-epub-studio/reader-core exec vitest bench --outputJson baseline.json
           mv packages/reader-core/baseline.json ./baseline.json
@@ -415,7 +416,7 @@ jobs:
           START_TIME: ${{ needs.setup.outputs.start-time }}
           CACHE_HIT: ${{ needs.setup.outputs.cache-hit }}
         run: |
-          END_TIME=$(date +%s)
+          END_TIME="$(date +%s)"
           DURATION=$((END_TIME - START_TIME))
           echo "{\"duration\": $DURATION, \"cacheHit\": \"$CACHE_HIT\"}" > metrics/ci-metrics.json
 

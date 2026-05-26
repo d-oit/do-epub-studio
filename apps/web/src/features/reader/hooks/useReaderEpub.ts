@@ -259,7 +259,7 @@ export function useReaderEpub(
   }, [applyThemes, readerTheme]);
 
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
+    function handleKeyDown(e: KeyboardEvent) {
       const rendition = renditionRef.current;
       if (!rendition) return;
       if (e.key === 'ArrowRight') {
@@ -269,7 +269,7 @@ export function useReaderEpub(
         e.preventDefault();
         void rendition.prev();
       }
-    };
+    }
     window.addEventListener('keydown', handleKeyDown);
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
