@@ -1,6 +1,7 @@
 # GOAP Plan 046: Codebase Performance and Caching Optimizations
 
-**Date**: 2026-05-22
+**Date**: 2026-05-22 (updated 2026-05-26)
+**Status**: ✅ Closed — All 8 tasks confirmed implemented via code inspection on 2026-05-26
 **Goal**: Address 7 codebase optimization issues across routing, bundling, service worker caching, state, and CI/CD fast checks to improve performance, security, and developer experience.
 
 ## Dependency Map
@@ -53,14 +54,14 @@
 
 | ID | Task | Priority | Status | Files Affected |
 |----|------|----------|--------|----------------|
-| 1 | Update `turbo.json` with explicit lint/typecheck inputs | P0 | ░ pending | `turbo.json` |
-| 2 | Optimize `verify:fast` and add `build:analyze` to root | P0 | ░ pending | `package.json` |
-| 3 | SSR gate & O(n) comment tree map-update | P0 | ░ pending | `apps/web/src/stores/reader.ts` |
-| 4 | Use `registerSW` for clean background sync & registration | P0 | ░ pending | `apps/web/src/main.tsx` |
-| 5 | Refactor Service Worker caching, quota guard, non-overlapping routes | P0 | ░ pending | `apps/web/src/sw.ts` |
-| 6 | Manual chunk splitting & sourcemap env-gating | P0 | ░ pending | `apps/web/vite.config.ts` |
-| 7 | Route lazy loading with Suspense | P0 | ░ pending | `apps/web/src/App.tsx` |
-| 8 | Update unit tests for sw.ts changes | P0 | ░ pending | `apps/web/src/__tests__/sw-config.test.ts` |
+| 1 | Update `turbo.json` with explicit lint/typecheck inputs | P0 | ✅ Completed | `turbo.json` |
+| 2 | Optimize `verify:fast` and add `build:analyze` to root | P0 | ✅ Completed | `package.json` |
+| 3 | SSR gate & O(n) comment tree map-update | P0 | ✅ Completed | `apps/web/src/stores/reader.ts` |
+| 4 | Use `registerSW` for clean background sync & registration | P0 | ✅ Completed | `apps/web/src/main.tsx` |
+| 5 | Refactor Service Worker caching, quota guard, non-overlapping routes | P0 | ✅ Completed | `apps/web/src/sw.ts` |
+| 6 | Manual chunk splitting & sourcemap env-gating | P0 | ✅ Completed | `apps/web/vite.config.ts` |
+| 7 | Route lazy loading with Suspense | P0 | ✅ Completed | `apps/web/src/App.tsx` |
+| 8 | Update unit tests for sw.ts changes | P0 | ✅ Completed | `apps/web/src/__tests__/sw-config.test.ts` |
 
 ## Strategy
 
