@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import ePub, { Book, Rendition, NavItem } from '@intity/epub-js';
+import ePub from '@intity/epub-js';
+import type { Book, Rendition, NavItem } from '@intity/epub-js';
 import {
   useAuthStore,
   useReaderStore,
@@ -267,24 +268,6 @@ export function useReaderEpub(
     mq.addEventListener('change', handler);
     return () => mq.removeEventListener('change', handler);
   }, [applyThemes, readerTheme]);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const rendition = renditionRef.current;
-      if (!rendition) return;
-      if (e.key === 'ArrowRight') {
-        e.preventDefault();
-        void rendition.next();
-      } else if (e.key === 'ArrowLeft') {
-        e.preventDefault();
-        void rendition.prev();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, []);
 
   return {
     bookRef,

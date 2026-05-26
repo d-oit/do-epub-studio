@@ -35,16 +35,6 @@ To protect against brute-force attacks and denial-of-service, the following rate
 
 Limits are applied per IP address and, where applicable, per authentication token. Exceeding these limits will result in a `429 Too Many Requests` response with a `Retry-After` header.
 
-## EPUB Parsing Protection
-
-To protect against resource exhaustion and path traversal attacks via malicious EPUB files (which are ZIP archives), the following limits are enforced during parsing:
-
-- **Max Compressed Size**: 100MB
-- **Max Uncompressed Size**: 1GB
-- **Max Entry Count**: 10,000 entries
-- **Max Compression Ratio**: 10:1 per entry
-
-Files exceeding these limits or containing path traversal patterns (e.g., `..` segments) will be rejected before full decompression.
 ## Scope
 
 Vulnerabilities in the following locations are in scope:
@@ -72,14 +62,22 @@ The following are out of scope:
 ## Related Documents
 
 - [ADR-034 (ReDoS)](plans/034-adr-redos.md)
+- [ADR-035 (Content Security Policy)](plans/035-adr-content-security-policy.md)
 - [docs/security.md](docs/security.md)
 
-## Content Sanitization and Sandboxing
+## Content Security Policy (CSP)
 
-To mitigate XSS risks from potentially malicious EPUB content, the following measures are implemented:
+The application enforces strict CSP headers across all Worker responses and EPUB content.
 
-- **HTML Sanitization**: All EPUB HTML content is sanitized using **DOMPurify** before being rendered. This process strips dangerous elements (like `<script>`, `<iframe>`, `<object>`) and attributes (like `onclick`, `javascript:` URIs).
-- **Iframe Sandboxing**: Content is rendered in an `<iframe>` with a strict `sandbox` attribute. Specifically, `allow-same-origin` is excluded to ensure the content runs in a unique origin, preventing it from accessing the main application's cookies, localStorage, and IndexedDB. While `allow-scripts` is present for compatibility with the reader engine, all script execution within the book content is blocked by the CSP.
-- **Content Security Policy (CSP)**: A strict CSP is injected via a `<meta>` tag into every EPUB HTML document:
-  `default-src 'none'; script-src 'none'; style-src 'unsafe-inline' blob:; font-src blob:; img-src data: blob: http: https:;`
-  This CSP further restricts the capabilities of the rendered content, even if it manages to bypass other layers of defense.
+- **Frontend Application**: Restrict resource loading to 'self' and the API domain. Framing is disabled (`frame-ancestors 'none'`). Inline styles are permitted via `'unsafe-inline'` to support dynamic styling in React/Framer Motion.
+- **API Responses**: Restrict resource loading to 'self' and authorized domains. Framing is disabled (`frame-ancestors 'none'`).
+- **EPUB Content**: Rendered in a sandboxed iframe with `sandbox allow-same-origin allow-scripts`. The response header further restricts script execution and network access.
+- **Reporting**: All violations are reported to `/api/csp-report`.
+
+## API Request Validation
+
+The Worker API implements a centralized validation layer using [Hono](https://hono.dev/) and [Zod](https://zod.dev/).
+
+- **Schema Enforcement**: Every API endpoint that accepts a request body or query parameters is protected by a Zod schema from `@do-epub-studio/shared`.
+- **Validation Middleware**: Request validation is performed by the `zValidator` middleware. Requests that do not conform to the schema are automatically rejected with a `400 Bad Request` status and detailed error information.
+- **No Raw Input**: Use of raw `request.json()` in route handlers is strictly prohibited. Handlers must receive validated, typed data from the Hono context.
