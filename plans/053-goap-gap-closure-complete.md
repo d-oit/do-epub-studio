@@ -108,7 +108,7 @@ During CI debugging, the following pre-existing issues were also fixed:
 
 ## Unresolved Items for Future PRs
 
-1. **SBOM generation** — Fix dependency tree to pass cyclonedx-npm validation
-2. **Visual Regression** — Add `--webpack-stats-json` to storybook build
-3. **Scorecard** — Verify correct SHA for `ossf/scorecard-action`
+~~1. **SBOM generation** — Fix dependency tree to pass cyclonedx-npm validation~~
+~~2. **Visual Regression** — Add `--stats-json` to storybook build (Vite-based)~~
+~~3. **Scorecard** — Verify correct SHA for `ossf/scorecard-action`~~
 4. **Coverage thresholds** — Monitor and raise thresholds for `shared` and `web` packages
