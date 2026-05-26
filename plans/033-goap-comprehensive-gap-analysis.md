@@ -194,4 +194,4 @@ Group C (test isolation) inherits ADR-021 (test infrastructure) — no new ADR.
 | **D (CI/CD)** | CodeQL CI gate | Added `code-scanning/alerts?state=open` check to `ci.yml` that fails if any open alert exists; requires `security-events: read` permission |
 | **E (UI/UX)** | A11y/Lighthouse/copy | Deferred to future sprint — no execution on this branch |
 | **F (Skills)** | Agent skills | Created `.agents/skills/safe-regex-authoring/SKILL.md` (3-layer ReDoS prevention); created `.agents/skills/release-management/SKILL.md` (version bump, changelog sync, release PR workflow) |
-| **G (Docs)** | Documentation refresh | Updated `docs/security.md` (ReDoS + CodeQL triage), `docs/lighthouse.md` (post-UI/UX 2026), created `docs/release-process.md`; added CI/CodeQL/Release/License badges to `README.md`; cut CHANGELOG transition
+| **G (Docs)** | Documentation refresh | Updated `docs/security.md` (ReDoS + CodeQL triage), `docs/lighthouse.md` (post-UI/UX 2026), created `docs/release-process.md`; added CI/CodeQL/Release/License badges to `README.md`; cut CHANGELOG transition |

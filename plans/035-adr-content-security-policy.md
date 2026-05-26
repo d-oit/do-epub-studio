@@ -9,10 +9,10 @@ EPUB.js renders book content in sandboxed iframes. Without a strict Content Secu
 ## Decision
 We will implement a defense-in-depth security model using strict CSP headers at multiple levels:
 
-1.  **Global Worker Responses**: All API and application responses will include a strict CSP that defaults to `'self'` and disables framing via `frame-ancestors 'none'`.
-2.  **EPUB Content Responses**: Files served from R2 via the `/api/files` route will have a custom CSP that prevents them from being framed by anything other than the main application (`frame-ancestors 'self'`) and restricts their internal resource loading (e.g., `script-src 'none'`).
-3.  **Frontend Sandboxing**: The EPUB rendition iframe will continue to use the `sandbox` attribute, now including `allow-scripts` to support EPUBs that require scripting. However, the CSP header on the file response (`script-src 'none'`) will act as the primary security barrier, blocking scripts by default for maximum security unless the policy is explicitly relaxed for specific trusted content.
-4.  **Violation Reporting**: A dedicated endpoint `/api/csp-report` will be implemented to collect and log CSP violations for monitoring and policy refinement.
+1. **Global Worker Responses**: All API and application responses will include a strict CSP that defaults to `'self'` and disables framing via `frame-ancestors 'none'`.
+2. **EPUB Content Responses**: Files served from R2 via the `/api/files` route will have a custom CSP that prevents them from being framed by anything other than the main application (`frame-ancestors 'self'`) and restricts their internal resource loading (e.g., `script-src 'none'`).
+3. **Frontend Sandboxing**: The EPUB rendition iframe will continue to use the `sandbox` attribute, now including `allow-scripts` to support EPUBs that require scripting. However, the CSP header on the file response (`script-src 'none'`) will act as the primary security barrier, blocking scripts by default for maximum security unless the policy is explicitly relaxed for specific trusted content.
+4. **Violation Reporting**: A dedicated endpoint `/api/csp-report` will be implemented to collect and log CSP violations for monitoring and policy refinement.
 
 ## Policy Details
 

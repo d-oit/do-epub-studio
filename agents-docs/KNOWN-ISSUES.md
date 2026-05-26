@@ -59,7 +59,6 @@ Each entry must include:
 
 **Date:** 2026-04-28
 
-
 ---
 
 ## Validation Rules

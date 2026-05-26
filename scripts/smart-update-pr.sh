@@ -60,7 +60,7 @@ if [[ $merge_status -ne 0 ]]; then
   while IFS= read -r f; do
     [[ -z "$f" ]] && continue
     case "$f" in
-      *.lock|package-lock.json|pnpm-lock.yaml|yarn.lock|Cargo.lock)
+      package-lock.json|pnpm-lock.yaml|yarn.lock|Cargo.lock|*.lock)
         git checkout --theirs -- "$f" || true ;;
       dist/*|build/*|coverage/*|*.snap)
         git checkout --ours -- "$f" || true ;;
