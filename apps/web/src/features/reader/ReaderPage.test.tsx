@@ -81,51 +81,39 @@ describe('ReaderPage theme', () => {
   it('sets data-theme to light when theme is light', () => {
     usePreferencesStore.setState({ reader: { ...usePreferencesStore.getState().reader, theme: 'light' } });
 
-    let container: HTMLElement;
-    act(() => {
-      const result = render(
-        <BrowserRouter>
-          <ReaderPage />
-        </BrowserRouter>,
-      );
-      container = result.container;
-    });
+    const { container } = render(
+      <BrowserRouter>
+        <ReaderPage />
+      </BrowserRouter>,
+    );
 
-    const root = container!.firstChild as HTMLElement;
+    const root = container.firstChild as HTMLElement;
     expect(root).toHaveAttribute('data-theme', 'light');
   });
 
   it('sets data-theme to dark when theme is dark', () => {
     usePreferencesStore.setState({ reader: { ...usePreferencesStore.getState().reader, theme: 'dark' } });
 
-    let container: HTMLElement;
-    act(() => {
-      const result = render(
-        <BrowserRouter>
-          <ReaderPage />
-        </BrowserRouter>,
-      );
-      container = result.container;
-    });
+    const { container } = render(
+      <BrowserRouter>
+        <ReaderPage />
+      </BrowserRouter>,
+    );
 
-    const root = container!.firstChild as HTMLElement;
+    const root = container.firstChild as HTMLElement;
     expect(root).toHaveAttribute('data-theme', 'dark');
   });
 
   it('sets data-theme to sepia when theme is sepia', () => {
     usePreferencesStore.setState({ reader: { ...usePreferencesStore.getState().reader, theme: 'sepia' } });
 
-    let container: HTMLElement;
-    act(() => {
-      const result = render(
-        <BrowserRouter>
-          <ReaderPage />
-        </BrowserRouter>,
-      );
-      container = result.container;
-    });
+    const { container } = render(
+      <BrowserRouter>
+        <ReaderPage />
+      </BrowserRouter>,
+    );
 
-    const root = container!.firstChild as HTMLElement;
+    const root = container.firstChild as HTMLElement;
     expect(root).toHaveAttribute('data-theme', 'sepia');
   });
 
@@ -142,17 +130,13 @@ describe('ReaderPage theme', () => {
       dispatchEvent: vi.fn(),
     });
 
-    let container: HTMLElement;
-    act(() => {
-      const result = render(
-        <BrowserRouter>
-          <ReaderPage />
-        </BrowserRouter>,
-      );
-      container = result.container;
-    });
+    const { container } = render(
+      <BrowserRouter>
+        <ReaderPage />
+      </BrowserRouter>,
+    );
 
-    const root = container!.firstChild as HTMLElement;
+    const root = container.firstChild as HTMLElement;
     expect(root).toHaveAttribute('data-theme', 'light');
   });
 
@@ -169,17 +153,13 @@ describe('ReaderPage theme', () => {
       dispatchEvent: vi.fn(),
     });
 
-    let container: HTMLElement;
-    act(() => {
-      const result = render(
-        <BrowserRouter>
-          <ReaderPage />
-        </BrowserRouter>,
-      );
-      container = result.container;
-    });
+    const { container } = render(
+      <BrowserRouter>
+        <ReaderPage />
+      </BrowserRouter>,
+    );
 
-    const root = container!.firstChild as HTMLElement;
+    const root = container.firstChild as HTMLElement;
     expect(root).toHaveAttribute('data-theme', 'dark');
   });
 });

@@ -105,8 +105,18 @@ accessRouter.post('/refresh', async (c) => {
     );
   }
 
+  if (!result.bookId) {
+    return c.json(
+      {
+        ok: false,
+        error: { code: 'SESSION_INVALID', message: 'Invalid session' },
+      },
+      401,
+    );
+  }
+
   // Security: Verify the grant is still valid before refreshing
-  const grant = await getGrantByBookAndSession(c.env, result.bookId!, result.session.email);
+  const grant = await getGrantByBookAndSession(c.env, result.bookId, result.session.email);
   if (!grant || grant.revoked_at || (grant.expires_at && new Date(grant.expires_at) < new Date())) {
     return c.json(
       {
@@ -117,7 +127,7 @@ accessRouter.post('/refresh', async (c) => {
     );
   }
 
-  const newToken = await createSession(c.env, result.bookId!, result.session.email);
+  const newToken = await createSession(c.env, result.bookId, result.session.email);
 
   // Security: Implement token rotation by revoking the old session token
   await revokeSession(c.env, token);

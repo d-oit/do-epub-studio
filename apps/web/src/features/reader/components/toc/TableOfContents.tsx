@@ -1,6 +1,6 @@
 import { useRef, useEffect } from 'react';
 import { useFocusTrap } from '@do-epub-studio/ui';
-import { TranslationKeys } from '../../../../i18n';
+import type { TranslationKeys } from '../../../../i18n';
 
 interface TocItem {
   label: string;

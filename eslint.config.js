@@ -88,7 +88,7 @@ export default tseslint.config(
       '@typescript-eslint/prefer-regexp-exec': 'off',
       // Logical OR (||) is idiomatic and preferred for default values in this codebase
       '@typescript-eslint/prefer-nullish-coalescing': 'off',
-      // TODO(#163): promote to 'error' once existing violations are resolved
+      // TODO(#163): promote to 'error' once existing violations (~60 in web package) are resolved
       '@typescript-eslint/no-non-null-assertion': 'warn',
       '@typescript-eslint/require-await': 'error',
       '@typescript-eslint/consistent-type-imports': 'warn',

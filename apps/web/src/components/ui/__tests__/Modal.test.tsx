@@ -68,7 +68,7 @@ describe('Modal', () => {
     );
     const backdrop = document.body.querySelector('[class*="bg-black/50"]');
     expect(backdrop).toBeInTheDocument();
-    fireEvent.click(backdrop!);
+    fireEvent.click(backdrop as Element);
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
@@ -96,7 +96,7 @@ describe('Modal', () => {
     expect(dialog).toHaveAttribute('aria-modal', 'true');
     expect(dialog).toHaveAttribute('aria-labelledby');
     const labelledBy = dialog.getAttribute('aria-labelledby');
-    expect(document.getElementById(labelledBy!)).toBeInTheDocument();
+    expect(document.getElementById(labelledBy as string)).toBeInTheDocument();
   });
 
   it('restores focus to the trigger element when closed', () => {

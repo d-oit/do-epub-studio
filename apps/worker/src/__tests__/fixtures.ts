@@ -13,6 +13,7 @@ vi.mock('../db/client', () => ({
 }));
 
 vi.mock('../auth/middleware', async (importOriginal) => {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-imports
   const actual = await importOriginal<typeof import('../auth/middleware')>();
   return {
     ...actual,
@@ -23,6 +24,7 @@ vi.mock('../auth/middleware', async (importOriginal) => {
 });
 
 vi.mock('../auth/admin-middleware', async (importOriginal) => {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-imports
   const actual = await importOriginal<typeof import('../auth/admin-middleware')>();
   return {
     ...actual,
