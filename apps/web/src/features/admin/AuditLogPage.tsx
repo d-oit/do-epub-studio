@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '../../hooks/useTranslation';
 import { apiRequest } from '../../lib/api';
 import { useAuthStore } from '../../stores/auth';
-import { AuditLogResponse } from '@do-epub-studio/shared';
+import type { AuditLogResponse } from '@do-epub-studio/shared';
 import { LocaleSwitcher } from '../../components/LocaleSwitcher';
 
 interface AuditLogPageResponse {

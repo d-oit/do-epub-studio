@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion -- test assertions */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
   ConflictType,

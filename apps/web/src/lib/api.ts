@@ -41,7 +41,7 @@ export async function apiRequest<T>(endpoint: string, options: ApiRequestOptions
   if (requestInit.signal) {
     requestInit.signal.addEventListener(
       'abort',
-      () => controller.abort(requestInit.signal!.reason),
+      () => requestInit.signal && controller.abort(requestInit.signal.reason),
       { once: true },
     );
   }

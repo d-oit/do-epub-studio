@@ -47,7 +47,7 @@ commentsRouter.get('/books/:bookId/comments', async (c) => {
     data: comments.map((cm) => ({
       id: cm.id,
       userEmail: cm.user_email,
-      locator: cm.locator_json ? JSON.parse(cm.locator_json) : null,
+      locator: cm.locator_json ? JSON.parse(cm.locator_json) as Record<string, unknown> : null,
       body: cm.body,
       visibility: cm.visibility,
       status: cm.status,

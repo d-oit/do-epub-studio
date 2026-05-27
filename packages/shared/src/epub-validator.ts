@@ -43,7 +43,7 @@ export async function validateEpub(data: ArrayBuffer): Promise<ValidationResult>
         result.errors.push('Could not find rootfile path in "META-INF/container.xml".');
         result.isValid = false;
       } else {
-        const opfPath = fullPathMatch[1]!;
+        const opfPath = fullPathMatch[1] as string;
         const opfFile = zip.file(opfPath);
 
         if (!opfFile) {

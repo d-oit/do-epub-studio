@@ -132,7 +132,7 @@
 
 ### 2026-05-27: CI Fix & Markdownlint 038 Resolution
 
-- **MD038 from complex backtick/backslash sequences**: Sequences like `` (`\`||\``) `` confuse the markdownlint parser (v0.39.0 pre-commit), causing it to misidentify code span boundaries. The parser treats `\`` inside a code span as an escaped backtick that doesn't close the span, causing all subsequent text (including spaces) to be flagged as MD038. Fix: rephrase to avoid nested backtick/backslash in code spans.
+- **MD038 from complex backtick sequences**: Sequences containing backtick-backslash combinations confuse the markdownlint parser (v0.39.0 pre-commit), causing it to misidentify code span boundaries. The parser treats certain backtick patterns as escaped delimiters, causing subsequent text to be flagged as MD038. Fix: rephrase to avoid nested backtick/backslash combinations in code spans.
 - **MD038 can appear at wrong column**: The markdownlint error for MD038 reports the column of the space adjacent to what it incorrectly believes is a code span delimiter, not the actual root cause (confusing backtick sequences earlier in the line).
 - **Markdown table `||` inside inline code**: Pipes inside backtick inline code are misinterpreted as table cell separators by markdownlint MD056. Either escape with `\|` outside code spans, or rephrase the cell content to avoid raw pipe characters entirely.
 - **Codacy bypass + admin merge**: Use `gh pr merge <N> --admin --merge` to bypass Codacy when all other CI passes. For .md-only PRs where CI workflow ignores `**.md` changes (via `paths-ignore`), must admin-merge since CI never triggers to satisfy required checks.

@@ -4,6 +4,7 @@ import { makeEnv } from './fixtures';
 import * as adminMiddleware from '../auth/admin-middleware';
 import { requireAuth } from '../auth/middleware';
 
+// eslint-disable-next-line @typescript-eslint/consistent-type-imports
 type AdminMiddleware = typeof import('../auth/admin-middleware');
 
 // Mock everything needed for integration tests

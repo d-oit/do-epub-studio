@@ -22,10 +22,10 @@ describe('Spinner', () => {
     const { rerender } = render(<Spinner size="sm" />);
     const svg = screen.getByRole('status').querySelector('svg');
     expect(svg).toBeInTheDocument();
-    expect(svg!.getAttribute('class')).toContain('w-4');
+    expect(svg?.getAttribute('class')).toContain('w-4');
 
     rerender(<Spinner size="lg" />);
     const svgLg = screen.getByRole('status').querySelector('svg');
-    expect(svgLg!.getAttribute('class')).toContain('w-12');
+    expect(svgLg?.getAttribute('class')).toContain('w-12');
   });
 });

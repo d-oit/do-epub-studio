@@ -85,7 +85,7 @@ export function ReaderPage() {
   const { handleExportNotes } = useExportNotes();
 
   const rootRef = useRef<HTMLDivElement>(null);
-  const viewerRef = useRef<HTMLDivElement>(null!);
+  const viewerRef = useRef<HTMLDivElement>(null as unknown as HTMLDivElement);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
 
   const [epubUrl, setEpubUrl] = useState<string | null>(null);

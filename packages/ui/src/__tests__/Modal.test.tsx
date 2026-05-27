@@ -18,7 +18,7 @@ describe('Modal', () => {
     render(<Modal isOpen={true} onClose={onClose}><p>content</p></Modal>);
     const backdrop = document.querySelector('[class*="bg-black/50"]');
     expect(backdrop).toBeInTheDocument();
-    fireEvent.click(backdrop!);
+    fireEvent.click(backdrop as Element);
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 

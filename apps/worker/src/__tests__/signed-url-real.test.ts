@@ -17,7 +17,7 @@ describe('signed-url utilities (real implementation)', () => {
       expect(result.url).toContain('expires=');
       expect(result.url).toContain('signature=');
       const urlObj = new URL(result.url);
-      const signature = urlObj.searchParams.get('signature')!;
+      const signature = urlObj.searchParams.get('signature') as string;
       expect(signature).toHaveLength(64); // SHA-256 HMAC in hex
     });
   });
@@ -42,8 +42,8 @@ describe('signed-url utilities (real implementation)', () => {
     it('returns true for valid HMAC signature', async () => {
       const { url } = await generateSignedUrl(env, bookId, fileKey);
       const urlObj = new URL(url);
-      const expires = urlObj.searchParams.get('expires')!;
-      const signature = urlObj.searchParams.get('signature')!;
+      const expires = urlObj.searchParams.get('expires') as string;
+      const signature = urlObj.searchParams.get('signature') as string;
 
       const isValid = await verifySignedUrlSignature(env, bookId, fileKey, expires, signature);
       expect(isValid).toBe(true);
@@ -52,8 +52,8 @@ describe('signed-url utilities (real implementation)', () => {
     it('returns false for tampered bookId', async () => {
         const { url } = await generateSignedUrl(env, bookId, fileKey);
         const urlObj = new URL(url);
-        const expires = urlObj.searchParams.get('expires')!;
-        const signature = urlObj.searchParams.get('signature')!;
+        const expires = urlObj.searchParams.get('expires') as string;
+        const signature = urlObj.searchParams.get('signature') as string;
 
         const isValid = await verifySignedUrlSignature(env, 'other-book', fileKey, expires, signature);
         expect(isValid).toBe(false);

@@ -104,22 +104,22 @@ describe('sanitizeDom', () => {
 
   it('removes foreignObject from SVG in DOM', () => {
     const doc = createDoc('<svg xmlns="http://www.w3.org/2000/svg"><foreignObject><div>test</div></foreignObject><rect width="100" height="100"/></svg>');
-    const svg = doc.querySelector('svg');
+    const svg = doc.querySelector('svg') as Element;
     expect(svg).not.toBeNull();
-    sanitizeDom(svg!);
-    expect(svg!.querySelector('foreignObject')).toBeNull();
-    expect(svg!.querySelector('rect')).not.toBeNull();
+    sanitizeDom(svg);
+    expect(svg.querySelector('foreignObject')).toBeNull();
+    expect(svg.querySelector('rect')).not.toBeNull();
   });
 
   it('removes event handlers from SVG elements in DOM', () => {
     const doc = createDoc('<svg xmlns="http://www.w3.org/2000/svg"><rect onclick="alert(1)" onload="evil()"/></svg>');
-    const svg = doc.querySelector('svg');
+    const svg = doc.querySelector('svg') as Element;
     expect(svg).not.toBeNull();
-    sanitizeDom(svg!);
-    const rect = svg!.querySelector('rect');
+    sanitizeDom(svg);
+    const rect = svg.querySelector('rect') as Element;
     expect(rect).not.toBeNull();
-    expect(rect!.getAttribute('onclick')).toBeNull();
-    expect(rect!.getAttribute('onload')).toBeNull();
+    expect(rect.getAttribute('onclick')).toBeNull();
+    expect(rect.getAttribute('onload')).toBeNull();
   });
 
   it('handles document with no SVGs', () => {

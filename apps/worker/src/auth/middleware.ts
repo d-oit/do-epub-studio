@@ -62,9 +62,11 @@ export async function requireAuth(env: Env, request: Request): Promise<AuthConte
     return null;
   }
 
+  if (!result.bookId) return null;
+
   return {
     sessionId: result.session.id,
-    bookId: result.bookId!,
+    bookId: result.bookId,
     email: result.session.email,
     capabilities: {
       canRead: grant.allowed === 1,
