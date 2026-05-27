@@ -175,3 +175,18 @@
 - **Workflow standardization pattern**: Missing workflow properties are easily identified by comparing against `ci.yml` (the most complete workflow). The pattern is: `run-name` after `name:`, `env` block before `permissions:`, `concurrency` before `permissions:`, `timeout-minutes` after `runs-on:`.
 - **Plan reference drift**: AGENTS.md (Tier 4) and eslint.config.js both had references to active `plans/` files that were archived in earlier sessions. After archiving plans 001-019, always grep for remaining references: `grep -r 'plans/0[0-9][0-9]' AGENTS.md eslint.config.js .github/`.
 - **Swarm parallel execution pattern**: For 10+ independent edits across 9 files, launch 4 parallel sub-agents (coverage, workflows, naming, docs). Each agent makes focused edits; results are aggregated with no merge conflicts.
+
+## 2026-05-27 Plan 062 — Final Remaining Tasks Closeout
+
+### Impact
+
+- **Node.js version mismatch resolved**: `.github/actions/setup-pnpm/action.yml` was still on Node 22 while workflows used `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true`. Changed to 24 for consistency.
+- **ESLint no-non-null-assertion promoted to 'error'**: 18 violations fixed across 2 test files using `as` casts and guard clauses. No remaining violations in the entire codebase.
+- **Lighthouse documentation synced**: `docs/lighthouse.md` now reflects actual `.lighthouserc.json` thresholds (0.5/0.85/0.8/0.8) instead of outdated 90/90/80/80.
+- **All plans now have explicit status**: Every plan in `plans/` now has a proper status line (Completed/Accepted/Superseded) — no more orphan files without status.
+
+### Technical Details
+
+- **ESLint rule promotion strategy**: Before promoting a rule from 'warn' to 'error', fix all existing violations first. Use `pnpm lint 2>&1 | grep <rule-name> | wc -l` to count remaining. The `no-non-null-assertion` rule had 18 violations — all in test files where `result!` after `expect(result).not.toBeNull()` was common. Replaced with `as` casts and guard clauses.
+- **Plan status hygiene**: Status lines without proper markdown formatting (missing `**Status:**`) cause grep-based plan scanners to miss them. Always use `**Status:** ✅ <value>` format.
+- **Codacy Generic Object Injection Sink false positive**: Codacy flags `as` type assertions on parsed JSON objects as potential injection sinks in test files. This is a known false positive — the `expect().not.toBeNull()` guard before the cast proves runtime safety. Not actionable.
