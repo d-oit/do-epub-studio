@@ -20,26 +20,26 @@
 | 298 | SVG XSS sanitization | critical | ✅ Closed | #349 |
 | 303 | Zod Worker validation | high | ✅ Closed | #350 |
 | 304 | Reanchoring Web Worker | high | ✅ Closed | #350 |
-| 306 | Sync conflict resolution | high | 🔶 PR #351 | #351 |
-| 302 | A11y metadata extraction | high | 🔶 PR #351 | #351 |
-| 301 | RTL/vertical text | high | 🔶 PR #351 | #351 |
-| 314 | Schema consolidation | medium | 🔶 PR #351 | #351 |
+| 306 | Sync conflict resolution | high | ✅ Closed | #351 |
+| 302 | A11y metadata extraction | high | ✅ Closed | #351 |
+| 301 | RTL/vertical text | high | ✅ Closed | #351 |
+| 314 | Schema consolidation | medium | ✅ Closed | #351 |
 | 312 | Dep vulnerability scanning | medium | ✅ Closed | #348 |
-| 311 | SW update notification UX | medium | 🔶 PR pending | wave4 |
-| 310 | Annotation adapter | medium | 🔶 PR pending | wave4 |
-| 307 | EPUB parsing Web Worker | medium | 🔶 PR pending | wave4 |
-| 316 | OKLCH color migration | low | 🔶 PR pending | wave4 |
-| 309 | IndexedDB encryption | medium | ⬜ Pending | - |
-| 308 | Fixed-layout EPUB | medium | ⬜ Pending | - |
-| 315 | View Transitions API | low | ⬜ Pending | - |
-| 318 | AI plugin architecture | low | ⬜ Pending | - |
+| 311 | SW update notification UX | medium | ✅ Closed | #352 |
+| 310 | Annotation adapter | medium | ✅ Closed | #352 |
+| 307 | EPUB parsing Web Worker | medium | ✅ Closed | #352 |
+| 316 | OKLCH color migration | low | ✅ Closed | #352 |
+| 309 | IndexedDB encryption | medium | ✅ Closed | #354 |
+| 308 | Fixed-layout EPUB | medium | ✅ Closed | #354 |
+| 315 | View Transitions API | low | ✅ Closed | #354 |
+| 318 | AI plugin architecture | low | ✅ Closed | #354 |
 | 283 | SBOM generation | low | ✅ Already in CI | - |
-| 281 | Pre-commit hooks in CI | low | ⬜ Pending | - |
+| 281 | Pre-commit hooks in CI | low | ✅ Closed | #354 |
 | 280 | Automated release workflow | low | ✅ Already exists | - |
-| 279 | Playwright mobile/WebKit | low | ⬜ Pending | - |
+| 279 | Playwright mobile/WebKit | low | ✅ Closed | #354 |
 | 276 | Dependabot | low | ✅ Already configured | - |
-| 275 | TraceId assertions | low | ⬜ Pending | - |
-| 274 | Raise coverage thresholds | low | ⬜ Pending | - |
+| 275 | TraceId assertions | low | ✅ Closed | #354 |
+| 274 | Raise coverage thresholds | low | ✅ Closed | #354 |
 | 269 | OIDC Cloudflare | low | ✅ Already in release workflow | - |
 
 ### PR Status
@@ -48,11 +48,9 @@
 |---|--------|--------|--------|
 | PR #349 | feat/wave1-critical-security | #298 | ✅ Merged |
 | PR #350 | feat/wave2-high-priority | #303, #304 | ✅ Merged |
-| PR #351 | feat/wave3-remaining-high-pri | #301, #302, #306, #314 | 🔶 Open |
-| PR pending | feat/wave4-mid-priority | #307, #310, #311, #316 | 🔶 Pending push |
-| - | feat/wave5-remaining | #308, #309, #315, #318 | ⬜ Planned |
-| - | feat/wave6-ci-testing | #275, #274, #281, #279, #269 | ⬜ Planned |
-| - | feat/wave7-e2e | #317 | ⬜ Planned |
+| PR #351 | feat/wave3-remaining-high-pri | #301, #302, #306, #314 | ✅ Merged |
+| PR #352 | feat/wave4-mid-priority | #307, #310, #311, #316 | ✅ Merged |
+| PR #354 | feat/wave5-final | #308, #309, #315, #317, #274, #275, #279, #281, #318 | ✅ Merged |
 
 ## Issues Already in Codebase (No Changes Needed)
 
@@ -62,32 +60,11 @@ The following issues are already implemented in the codebase:
 - **#276 Dependabot**: Already configured for GHA, npm, and Docker
 - **#269 OIDC**: Release workflow already has `id-token: write`
 
-## Remaining To-Do (Ordered by Priority)
-
-### Wave 5: Medium PWA/Features
-- #309 Encrypt IndexedDB offline data with session-derived key
-- #308 Fixed-layout EPUB support
-- #315 View Transitions API for page navigation
-- #318 AI-assisted features plugin architecture
-- Branch: `feat/wave5-remaining`
-
-### Wave 6: CI/Release/Testing Improvements
-- #275 Playwright assertions for traceId on Worker API responses
-- #274 Raise coverage thresholds for shared and web
-- #281 Run pre-commit hooks in CI
-- #279 Add mobile viewport and WebKit projects to Playwright
-- #269 OIDC short-lived tokens
-- Branch: `feat/wave6-ci-testing`
-
-### Wave 7: E2E Testing
-- #317 Offline functionality E2E tests with network simulation
-- Branch: `feat/wave7-e2e`
-
 ## Final Stats (All Issues Closed)
 
 - **Total issues**: 26
 - **Closed/Resolved**: 26 (100%)
-- **All 26 issues implemented and closed**
+- **All 26 issues implemented and closed via PRs #348-#354**
 
 ## PR Summary
 

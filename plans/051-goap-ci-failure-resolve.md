@@ -44,5 +44,5 @@ No agent assignment needed — single-thread execution.
 | Item | Status |
 |------|--------|
 | ADR-051 | ✅ Created |
-| CI verification | 🔄 In progress (run 26459436166) |
-| Issues closed | ⏳ Pending CI pass |
+| CI verification | ✅ Passed (all subsequent CI runs green) |
+| Issues closed | ✅ Closed by PR #356 merge |

@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-19 (updated 2026-05-19)
 **Branch baseline:** `main @ aaf8241` (post-PRs #182, #185, #187, #188, #189, #190, #191)
-**Status:** 🟢 Active — Wave 2 in progress, 7 of 17 issues closed via PRs #188–#191
+**Status:** ✅ Superseded — All items resolved or deferred via Plans 049-059; see Plan 060 for final closeout
 **Strategy:** Hybrid — parallel swarm for issue groups, sequential cleanup for remaining
 **Driver:** Codebase analysis for missing implementations, new features, open issues, and open PRs (this thread)
 

@@ -13,3 +13,4 @@ Archived plans for historical reference. Not actively referenced by agents.
 | Range | Description | Archived |
 |-------|-------------|----------|
 | 000-019 | Foundation, infrastructure, sprint 140-141 | 2026-05-23 |
+| 049 | Swarm all open issues (superseded by Plans 050-059) | 2026-05-27 |

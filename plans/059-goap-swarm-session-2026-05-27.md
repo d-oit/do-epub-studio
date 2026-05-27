@@ -35,12 +35,12 @@ T1 and T2 are already applied to working tree. T3 must pass before creating the 
 |----|----------|------|-------|--------|
 | T1 | P0 | Fix MD038 in LEARNINGS.md:135 (confusing backtick/backslash sequence) | `code-quality` | ✅ Done — rephrased line 135 |
 | T2 | P0 | Update ESLint TODO(#163) with count (~60 in web package) | `code-quality` | ✅ Done — `eslint.config.js:91` |
-| T3 | P0 | Verify quality gate (lint + typecheck + tests) | `code-quality` | ⏳ |
-| T4 | P0 | Create feature branch, push, PR with CI | `github-workflow` | ⏳ |
-| T5 | P0 | Address PR comments, merge to main | `github-pr-autopilot` | ⏳ |
-| T6 | P1 | Merge safe dependabot PRs | `github-workflow` | ⏳ |
-| T7 | P1 | Sync plans status across all active plans | `agents-md` | ⏳ |
-| T8 | P1 | Compact learnings with session impact | `learn` | ⏳ |
+| T3 | P0 | Verify quality gate (lint + typecheck + tests) | `code-quality` | ✅ Passed |
+| T4 | P0 | Create feature branch, push, PR with CI | `github-workflow` | ✅ Done — PR #382 |
+| T5 | P0 | Address PR comments, merge to main | `github-pr-autopilot` | ✅ Merged |
+| T6 | P1 | Merge safe dependabot PRs | `github-workflow` | ✅ Done (none open; stale refs cleaned) |
+| T7 | P1 | Sync plans status across all active plans | `agents-md` | ✅ Done |
+| T8 | P1 | Compact learnings with session impact | `learn` | ✅ Done |
 
 ## Files Changed
 

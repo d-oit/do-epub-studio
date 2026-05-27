@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-19
 **Goal:** Document all warnings, pre-existing issues, and infrastructure problems encountered during the Plan 038 backlog triage session
-**Status:** 🟢 Documented — all items classified per ADR-024
+**Status:** ✅ Completed — All items resolved or closed by Plans 049-059; remaining monitor items documented in Plan 060
 **Strategy:** Parallel — independent items
 **Driver:** AGENTS.md Tier 2 compliance + ADR-024 warning management policy
 
