@@ -132,7 +132,7 @@
 
 ### 2026-05-27: Final Closeout — CI Markdownlint Fix + PR Merge
 
-- **Markdown table `||` inside inline code**: Pipes inside backtick inline code (`\`||\``) are misinterpreted as table cell separators by markdownlint MD056. Either escape with `\|` outside code spans, or rephrase the cell content to avoid raw pipe characters entirely.
+- **Markdown table `||` inside inline code**: Pipes inside backtick inline code are misinterpreted as table cell separators by markdownlint MD056. Either escape with `\|` outside code spans, or rephrase the cell content to avoid raw pipe characters entirely.
 - **Codacy "non-null assertion" fix uses TypeScript `as Type`**: Replacing `array[i]!` with `array[i] as string` works and passes TypeScript strict mode. However, Codacy may then flag "Generic Object Injection Sink" for the index access itself. Use `String(array[i])` to satisfy both Codacy rules.
 - **Codacy + Jules bot auto-override**: The Jules/Google bot may auto-push changes to PR branches that revert Codacy fixes. After fixing Codacy issues, you may need to force-push again if the bot reverts your changes. Always verify the actual file content on the remote after push.
 - **PR merge with admin override**: If only Codacy (non-required check) blocks a merge but all other CI passes, use `gh pr merge <N> --admin --merge` to bypass the Codacy check. Codacy is a quality metric tool, not a security gate — its issues can be overridden when the change is performance-critical and validated by CodeQL/lint/typecheck/build/tests.
