@@ -28,9 +28,9 @@ function findPartialMatches(
   normalizedContent: string,
   minLength = 20,
 ): { match: string; position: number } | null {
-  if (normalizedTarget.length < minLength) return null;
+  if (normalizedTarget.length < minLength || normalizedContent.length < minLength) return null;
 
-  for (let len = normalizedTarget.length; len >= minLength; len -= 5) {
+  for (let len = Math.min(normalizedTarget.length, normalizedContent.length); len >= minLength; len -= 5) {
     for (let i = 0; i <= normalizedTarget.length - len; i += Math.max(1, Math.floor(len / 4))) {
       const segment = normalizedTarget.slice(i, i + len);
       const pos = normalizedContent.indexOf(segment);
@@ -56,9 +56,8 @@ export async function reanchorByText(
   }
 
   const normalizedTargetLower = targetText.toLowerCase();
-  const normalizedTargetGeneral = normalizeText(targetText);
-  // Optimized word extraction using regex match instead of split/filter
-  const words = normalizedTargetGeneral.match(/[\p{L}\p{N}]{4,}/gu) || [];
+  let normalizedTargetGeneral: string | undefined;
+  let words: string[] | undefined;
 
   interface CachedChapter {
     lower: string;
@@ -134,6 +133,10 @@ export async function reanchorByText(
         cached.general = normalizeText(cached.lower, true);
       }
 
+      if (normalizedTargetGeneral === undefined) {
+        normalizedTargetGeneral = normalizeText(targetText);
+      }
+
       const partial = findPartialMatches(normalizedTargetGeneral, cached.general);
       if (partial) {
         return {
@@ -150,6 +153,13 @@ export async function reanchorByText(
   }
 
   // Pass 2: Fuzzy word overlap
+  if (words === undefined) {
+    if (normalizedTargetGeneral === undefined) {
+      normalizedTargetGeneral = normalizeText(targetText);
+    }
+    words = normalizedTargetGeneral.match(/[\p{L}\p{N}]{4,}/gu) || [];
+  }
+
   const threshold = options.fuzzyThreshold ?? 0.7;
   const targetMatchCount = Math.ceil(words.length * threshold);
 
@@ -164,7 +174,8 @@ export async function reanchorByText(
 
         let matchCount = 0;
         const { wordSet } = cached;
-        for (const [i, word] of words.entries()) {
+        for (let i = 0; i < words.length; i++) {
+          const word = String(words[i]);
           if (wordSet.has(word)) {
             matchCount++;
             if (matchCount >= targetMatchCount) {
