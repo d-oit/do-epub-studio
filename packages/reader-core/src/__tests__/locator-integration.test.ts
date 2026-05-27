@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createLocator, parseLocator, locatorToString } from '../locator';
+import { createLocator, parseLocator, locatorToString, type LocatorResult } from '../locator';
 
 describe('multi-signal locator', () => {
   it('creates locator with all signals populated', () => {
@@ -62,27 +62,27 @@ describe('round-trip createLocator', () => {
     const original = createLocator('epubcfi(/6/4/2)', 'selected text', 'chapter.xhtml');
     const parsed = parseLocator(locatorToString(original));
     expect(parsed).not.toBeNull();
-    expect(parsed!.cfi).toBe('epubcfi(/6/4/2)');
-    expect(parsed!.textExcerpt).toBe('selected text');
-    expect(parsed!.chapterHref).toBe('chapter.xhtml');
+    expect((parsed as LocatorResult).cfi).toBe('epubcfi(/6/4/2)');
+    expect((parsed as LocatorResult).textExcerpt).toBe('selected text');
+    expect((parsed as LocatorResult).chapterHref).toBe('chapter.xhtml');
   });
 
   it('preserves CFI with temporal offset through round-trip', () => {
     const original = createLocator('epubcfi(/6/4/1:50)', 'text', 'ch.xhtml');
     const parsed = parseLocator(locatorToString(original));
-    expect(parsed!.cfi).toBe('epubcfi(/6/4/1:50)');
+    expect((parsed as LocatorResult).cfi).toBe('epubcfi(/6/4/1:50)');
   });
 
   it('preserves CFI with sub-path through round-trip', () => {
     const original = createLocator('epubcfi(/6/12!/4/2/1:0)', 'text', 'ch.xhtml');
     const parsed = parseLocator(locatorToString(original));
-    expect(parsed!.cfi).toBe('epubcfi(/6/12!/4/2/1:0)');
+    expect((parsed as LocatorResult).cfi).toBe('epubcfi(/6/12!/4/2/1:0)');
   });
 
   it('preserves CFI with fragment through round-trip', () => {
     const original = createLocator('epubcfi(/6/4[chap1])', 'text', 'ch.xhtml');
     const parsed = parseLocator(locatorToString(original));
-    expect(parsed!.cfi).toBe('epubcfi(/6/4[chap1])');
+    expect((parsed as LocatorResult).cfi).toBe('epubcfi(/6/4[chap1])');
   });
 
   it('handles multiple independent round-trips', () => {
@@ -92,8 +92,8 @@ describe('round-trip createLocator', () => {
       createLocator('epubcfi(/6/20/1:0)', 'text c', 'chap3.xhtml'),
     ];
     const results = locs.map((l) => parseLocator(locatorToString(l)));
-    expect(results[0]!.chapterHref).toBe('chap1.xhtml');
-    expect(results[1]!.chapterHref).toBe('chap2.xhtml');
-    expect(results[2]!.chapterHref).toBe('chap3.xhtml');
+    expect((results[0] as LocatorResult).chapterHref).toBe('chap1.xhtml');
+    expect((results[1] as LocatorResult).chapterHref).toBe('chap2.xhtml');
+    expect((results[2] as LocatorResult).chapterHref).toBe('chap3.xhtml');
   });
 });

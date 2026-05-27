@@ -1,6 +1,7 @@
 # GOAP Plan: Agent Harness Improvements
 
 Date: 2026-05-17
+Status: ✅ Superseded — All improvements adopted incrementally via ADR-037 and Plans 038-061
 
 ## Goal
 
