@@ -88,12 +88,12 @@ Wave N PR merged → Wave N+1 rebased on latest main → continue
 
 | Wave | Branch | Status | PR # |
 |------|--------|--------|------|
-| 0 | main | planning | - |
-| 1 | wave1-critical-security | pending | - |
-| 2 | wave2-high-priority | pending | - |
-| 3 | wave3-accessibility | pending | - |
-| 4 | wave4-medium-arch | pending | - |
-| 5 | wave5-medium-pwa | pending | - |
-| 6 | wave6-low-improvements | pending | - |
-| 7 | wave7-ci-release | pending | - |
-| 8 | wave8-e2e-testing | pending | - |
+| 0 | main | superseded | - |
+| 1 | wave1-critical-security | superseded | - |
+| 2 | wave2-high-priority | superseded | - |
+| 3 | wave3-accessibility | superseded | - |
+| 4 | wave4-medium-arch | superseded | - |
+| 5 | wave5-medium-pwa | superseded | - |
+| 6 | wave6-low-improvements | superseded | - |
+| 7 | wave7-ci-release | superseded | - |
+| 8 | wave8-e2e-testing | superseded | - |

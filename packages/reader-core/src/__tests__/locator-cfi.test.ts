@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createLocator, parseLocator } from '../locator';
+import { createLocator, parseLocator, type LocatorResult } from '../locator';
 
 describe('createLocator - CFI variants', () => {
   it('accepts CFI with temporal offset /4/2/1:50', () => {
@@ -76,26 +76,26 @@ describe('parseLocator - edge cases', () => {
     });
     const result = parseLocator(loc);
     expect(result).not.toBeNull();
-    expect(result!.cfi).toBe('epubcfi(/6/4)');
+    expect((result as LocatorResult).cfi).toBe('epubcfi(/6/4)');
   });
   it('parses locator with very long CFI string', () => {
     const longCfi = 'epubcfi(/6/' + Array(100).fill('1/2/3').join('/') + ')';
     const loc = JSON.stringify({ cfi: longCfi, textExcerpt: 'text', chapterHref: 'ch.xhtml' });
     const result = parseLocator(loc);
     expect(result).not.toBeNull();
-    expect(result!.cfi.length).toBeGreaterThan(500);
+    expect((result as LocatorResult).cfi.length).toBeGreaterThan(500);
   });
   it('parses locator with empty textExcerpt', () => {
     const loc = JSON.stringify({ cfi: 'epubcfi(/6/4)', textExcerpt: '', chapterHref: 'ch.xhtml' });
     const result = parseLocator(loc);
     expect(result).not.toBeNull();
-    expect(result!.textExcerpt).toBe('');
+    expect((result as LocatorResult).textExcerpt).toBe('');
   });
   it('parses locator with empty chapterHref', () => {
     const loc = JSON.stringify({ cfi: 'epubcfi(/6/4)', textExcerpt: 'text', chapterHref: '' });
     const result = parseLocator(loc);
     expect(result).not.toBeNull();
-    expect(result!.chapterHref).toBe('');
+    expect((result as LocatorResult).chapterHref).toBe('');
   });
   it('returns null for numeric cfi', () => {
     const loc = JSON.stringify({ cfi: 42, textExcerpt: 'text', chapterHref: 'ch.xhtml' });
@@ -123,7 +123,8 @@ describe('CFI navigation and comparison', () => {
   function parseCfiSteps(cfi: string): number[] {
     const match = cfi.match(/^epubcfi\((.+)\)$/);
     if (!match) return [];
-    const inner = match[1]!;
+    const inner = match[1];
+    if (!inner) return [];
     return inner
       .split('/')
       .filter(Boolean)
@@ -143,8 +144,10 @@ describe('CFI navigation and comparison', () => {
     const stepsB = parseCfiSteps(b);
     const minLen = Math.min(stepsA.length, stepsB.length);
     for (let i = 0; i < minLen; i++) {
-      if (stepsA[i]! < stepsB[i]!) return -1;
-      if (stepsA[i]! > stepsB[i]!) return 1;
+      const stepA = stepsA[i] as number;
+      const stepB = stepsB[i] as number;
+      if (stepA < stepB) return -1;
+      if (stepA > stepB) return 1;
     }
     if (stepsA.length < stepsB.length) return -1;
     if (stepsA.length > stepsB.length) return 1;

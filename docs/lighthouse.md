@@ -8,10 +8,10 @@ Lighthouse CI has been restored per Issue #160. The measurement targets the `/re
 
 - **Config file:** `.lighthouserc.json` (project root)
 - **Score thresholds:**
-  - Performance: ≥90 (warning)
-  - Accessibility: ≥90 (error — blocking)
-  - Best Practices: ≥80 (warning)
-  - SEO: ≥80 (warning)
+  - Performance: ≥0.5 (error)
+  - Accessibility: ≥0.85 (error)
+  - Best Practices: ≥0.8 (warning)
+  - SEO: ≥0.8 (warning)
 
 ## CI Workflow
 

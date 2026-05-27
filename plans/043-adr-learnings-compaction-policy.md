@@ -1,5 +1,7 @@
 # ADR-043: Learnings Lifecycle and Compaction Policy
 
+**Status:** ✅ Accepted — Policy validated by ongoing learnings compaction in Plans 042, 059-062
+
 ## Context
 As the project grows, AI coding agents document critical runtime breakthroughs, tool behaviors, and config quirks in `agents-docs/LEARNINGS.md`. However, without an active lifecycle policy:
 - The list grew chronologically, resulting in unstructured bullet points that are hard to scan.
