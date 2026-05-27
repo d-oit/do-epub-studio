@@ -153,5 +153,3 @@ describe('extractTextFromRange', () => {
     expect(result).toBe(shortText);
   });
 });
-
-
