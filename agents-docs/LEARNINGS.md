@@ -158,3 +158,20 @@
 - The `fix end of files` pre-commit hook removes trailing blank lines from modified files — always check `git diff` after pre-commit hooks and commit any auto-fixes.
 - Codacy non-null assertion warnings are pre-existing when splitting test files that contain `!` assertions — use `--admin` flag to merge when Codacy is the only blocker and issues are pre-existing.
 - E2E smoke tests fail locally (OPFS DB locking) — this is a pre-existing issue documented in Plan 059. CI E2E smoke tests pass when run in the GitHub Actions environment.
+
+## 2026-05-27 Plan 061 — CI Workflow Standardization & Doc Fixes
+
+### Impact
+
+- **Standardized 6 CI workflows** with `run-name`, `concurrency` groups, `timeout-minutes`, and `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24` across scorecard, dependabot-auto-merge, stale-cleanup, smart-update-pr, lighthouse, and visual-regression workflows.
+- **Added UI coverage config**: `packages/ui/vitest.config.ts` now has coverage thresholds (10/5/5/10) and reportsDirectory — the last package missing coverage enforcement.
+- **Synced AGENTS.md coverage thresholds** with actual vitest configs: web (40%→55%), shared (25%→40%), reader-core (75%→72%), and added entries for schema, testkit, and ui packages.
+- **Fixed 5 broken documentation references**: 4 plan references in AGENTS.md (001, 002, 007, 002-006 → archive/), 1 in eslint.config.js (010 → archive/).
+- **Updated TODO(#163) count**: ~60 violations → ~4 remaining in web package.
+
+### Technical Details
+
+- **Coverage threshold discovery**: Before adding thresholds, check the actual coverage by running `pnpm --filter @package test:unit -- --coverage` to get real numbers. Set thresholds 2-5% below actual to avoid immediate CI failures.
+- **Workflow standardization pattern**: Missing workflow properties are easily identified by comparing against `ci.yml` (the most complete workflow). The pattern is: `run-name` after `name:`, `env` block before `permissions:`, `concurrency` before `permissions:`, `timeout-minutes` after `runs-on:`.
+- **Plan reference drift**: AGENTS.md (Tier 4) and eslint.config.js both had references to active `plans/` files that were archived in earlier sessions. After archiving plans 001-019, always grep for remaining references: `grep -r 'plans/0[0-9][0-9]' AGENTS.md eslint.config.js .github/`.
+- **Swarm parallel execution pattern**: For 10+ independent edits across 9 files, launch 4 parallel sub-agents (coverage, workflows, naming, docs). Each agent makes focused edits; results are aggregated with no merge conflicts.
