@@ -1,9 +1,13 @@
 name: Stale Cleanup
+run-name: Stale Cleanup - ${{ github.event_name }}
 
 on:
   schedule:
     - cron: '0 6 * * 1'
   workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 concurrency:
   group: ${{ github.workflow }}
@@ -16,6 +20,7 @@ jobs:
   stale:
     name: Stale issue and PR cleanup
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       issues: write
       pull-requests: write
@@ -36,6 +41,7 @@ jobs:
   cleanup-branches:
     name: Delete merged branches
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: write
     steps:

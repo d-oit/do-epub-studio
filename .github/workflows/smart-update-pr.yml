@@ -12,6 +12,9 @@ on:
   issue_comment:
     types: [created]
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 permissions: {}
 
 concurrency:
@@ -29,6 +32,7 @@ jobs:
         contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association)
       )
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: write
       pull-requests: write

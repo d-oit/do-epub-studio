@@ -47,10 +47,13 @@ readonly MAX_PR_TITLE_LENGTH=72
 2. **Validate workflows:** All GitHub Actions workflows MUST pass validation via `./scripts/validate-workflows.sh` (includes `actionlint` and `zizmor` security scanning).
 3. **Use `./scripts/atomic-commit/run.sh --message "type(scope): description"`.**
 3. **Coverage Thresholds:** Enforce minimum coverage via `test:coverage`.
-   - `web`: 40% Lines, 30% Functions
+   - `web`: 55% Lines, 48% Functions
    - `worker`: 55% Lines, 50% Functions
-   - `shared`: 25% Lines, 5% Functions
-   - `reader-core`: 75% Lines, 70% Functions
+   - `shared`: 40% Lines, 50% Functions
+   - `reader-core`: 72% Lines, 70% Functions
+   - `schema`: 15% Lines, 5% Functions
+   - `testkit`: 25% Lines, 20% Functions
+   - `ui`: 10% Lines, 5% Functions
 4. **Validate commit message:** Run `./scripts/validate-commit-message.sh` or ensure format matches `type(scope): description` (max 72 chars).
 5. **NEVER ignore lint warnings, typecheck errors, or test failures.**
 6. **If a lint rule is disabled, add inline comment explaining why.**
@@ -80,12 +83,12 @@ readonly MAX_PR_TITLE_LENGTH=72
 
 ## TIER 4 — REFERENCE (See Agents-Docs)
 
-- **Architecture decisions:** See `docs/coding-guide.md` and `plans/002-006`
-- **TRIZ analysis:** See `plans/001-triz-analysis.md` + `plans/002-triz-resolution.md`
+- **Architecture decisions:** See `docs/coding-guide.md` and `plans/archive/002-006`
+- **TRIZ analysis:** See `plans/archive/001-triz-analysis.md` + `plans/archive/002-triz-resolution.md`
 - **Skills catalog:** Run `ls .agents/skills/` or see `agents-docs/AVAILABLE_SKILLS.md`
 - **GOAP + ADR pattern:** See `plans/020-goap-sprint-141.md` + `plans/024-adr-warning-management.md`
 - **Learnings:** See `agents-docs/LEARNINGS.md`
-- **Current phase:** See `plans/007-implementation-phases.md`
+- **Current phase:** See `plans/archive/007-implementation-phases.md`
 
 ---
 
