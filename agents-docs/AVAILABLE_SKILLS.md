@@ -4,7 +4,7 @@ Auto-generated from skill definitions. Run this script to regenerate.
 
 | Skill | Description |
 |-------|-------------|
-### Coordination
+## Coordination
 
 | `goap-agent` | No description |
 | `parallel-execution` | No description |
@@ -13,12 +13,12 @@ Auto-generated from skill definitions. Run this script to regenerate.
 | `triz-analysis` | No description |
 | `triz-solver` | No description |
 
-### Knowledge-Management
+## Knowledge-Management
 
 | `learn` | No description |
 | `memory-context` | No description |
 
-### Quality
+## Quality
 
 | `accessibility-auditor` | No description |
 | `agents-md` | No description |
@@ -36,11 +36,11 @@ Auto-generated from skill definitions. Run this script to regenerate.
 | `testdata-builders` | No description |
 | `testing-strategy` | No description |
 
-### Research
+## Research
 
 | `do-web-doc-resolver` | Python implementation for resolving URLs and queries into compact, LLM-ready markdown documentation. Use when you need the Python resolver with full cascade support, quality scoring, circuit breakers, and advanced routing features. |
 
-### Workflow
+## Workflow
 
 | `agent-browser` | Browser automation CLI for AI agents. Use when the user needs to interact with websites, including navigating pages, filling forms, clicking buttons, taking screenshots, extracting data, testing web apps, or automating any browser task. Triggers include requests to "open a website", "fill out a form", "click a button", "take a screenshot", "scrape data from a page", "test this web app", "login to a site", "automate browser actions", or any task requiring programmatic web interaction. |
 | `cicd-pipeline` | No description |
@@ -55,7 +55,6 @@ Auto-generated from skill definitions. Run this script to regenerate.
 | `release-management` | No description |
 | `secure-invite-and-access` | No description |
 | `turso-schema-migrations` | No description |
-
 
 ---
 
