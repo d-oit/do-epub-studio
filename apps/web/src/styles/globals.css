@@ -11,7 +11,7 @@
     --color-background-secondary: oklch(97% 0 0);
     --color-background-tertiary: oklch(92% 0 0);
     --color-foreground: oklch(15% 0 0);
-    --color-foreground-muted: oklch(50% 0 0);
+    --color-foreground-muted: oklch(40% 0 0);
     --color-accent: oklch(55% 0.15 250);
     --color-accent-success: oklch(70% 0.15 150);
     --color-accent-warning: oklch(75% 0.15 80);
@@ -144,7 +144,7 @@
     --color-background-secondary: oklch(95% 0.04 85);
     --color-background-tertiary: oklch(92% 0.06 85);
     --color-foreground: oklch(30% 0.05 85);
-    --color-foreground-muted: oklch(45% 0.05 85);
+    --color-foreground-muted: oklch(38% 0.05 85);
     --color-accent: oklch(55% 0.12 85);
     --color-accent-success: oklch(65% 0.15 150);
     --color-accent-warning: oklch(70% 0.15 85);

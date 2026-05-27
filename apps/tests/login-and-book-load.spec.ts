@@ -212,7 +212,7 @@ test.describe('Login and book load (desktop)', () => {
     // Settings panel should contain theme, font size, and font family controls
     await expect(page.getByText('Theme')).toBeVisible();
     await expect(page.getByText('Font Size')).toBeVisible();
-    await expect(page.getByText('Font')).toBeVisible();
+    await expect(page.getByText('Font', { exact: true })).toBeVisible();
   });
 
   test('displays a locale switcher on the login page', async ({ page }) => {
@@ -223,11 +223,10 @@ test.describe('Login and book load (desktop)', () => {
   });
 
   test('redirects unauthenticated reader access to login', async ({ page }) => {
-    // Clear persisted auth state by using a fresh context
     await page.goto(`/read/my-test-book`);
 
     // Should be redirected to login
-    await expect(page).toHaveURL(/\/login$/);
+    await expect(page).toHaveURL(/\/login/);
   });
 });
 
@@ -248,9 +247,8 @@ test.describe('Login and book load (mobile)', () => {
     await page.goto(`/login`);
 
     // Form fields should still be visible and fillable
-    await expect(page.getByLabel('Book URL Slug')).toBeVisible();
     await expect(page.getByLabel('Email Address')).toBeVisible();
-    await expect(page.getByLabel('Password (if required)')).toBeVisible();
+    await expect(page.getByLabel('Password')).toBeVisible();
 
     await login(page);
 

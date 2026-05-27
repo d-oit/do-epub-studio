@@ -5,35 +5,46 @@ test.describe('Edge Cases & Error Handling', () => {
     // Navigate to login
     await page.goto('/login');
 
-    // Fill in values that should fail (mocked or handled by app)
-    await page.locator('input[label="Book Slug"]').fill('invalid-book');
-    await page.locator('input[label="Email"]').fill('wrong@example.com');
-    await page.locator('input[label="Password (optional)"]').fill('wrongpassword');
-
-    // We expect the app to show an error message if the API fails
-    // We can mock the 401 response here
+    // Mock a 401 response before filling in credentials
     await page.route('**/api/access/request', route => route.fulfill({
       status: 401,
       contentType: 'application/json',
       body: JSON.stringify({ ok: false, error: { code: 'UNAUTHORIZED', message: 'Invalid credentials' } }),
     }));
 
-    await page.click('button:has-text("Sign In")');
+    // Fill in values that should fail (mocked or handled by app)
+    await page.getByLabel('Email Address').fill('wrong@example.com');
+    await page.getByLabel('Password').fill('wrongpassword');
+
+    await page.getByRole('button', { name: 'Sign In' }).click();
 
     // Assuming the app shows the error message returned by the API
     await expect(page.locator('text=Invalid credentials')).toBeVisible();
   });
 
   test('should redirect to login when session expires (401)', async ({ page }) => {
-    // Mock a 401 response for any API call
-    await page.route('**/api/**', route => route.fulfill({
+    // First, login successfully
+    await page.route('**/api/admin/login', route => route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ ok: true, data: { sessionToken: 'admin-token', email: 'admin@test.com' } }),
+    }));
+
+    await page.goto('/admin/login');
+    await page.getByLabel('Email Address').fill('admin@test.com');
+    await page.getByLabel('Password').fill('admin-password');
+    await page.getByRole('button', { name: 'Sign In' }).click();
+    await expect(page).toHaveURL(/\/admin\/books/);
+
+    // Now mock a 401 for subsequent API calls to simulate session expiry
+    await page.route('**/api/books', route => route.fulfill({
       status: 401,
       contentType: 'application/json',
       body: JSON.stringify({ ok: false, error: { code: 'UNAUTHORIZED', message: 'Session expired' } }),
     }));
 
-    // Start on a protected route
-    await page.goto('/admin/books');
+    // Reload the page — the API call should fail with 401
+    await page.reload();
 
     // Should be redirected to login with error param
     await expect(page).toHaveURL(/\/login/);
