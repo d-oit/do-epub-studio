@@ -4,24 +4,14 @@ Auto-generated from skill definitions. Run this script to regenerate.
 
 | Skill | Description |
 |-------|-------------|
-## Coordination
+### Coordination
 
+| `goap-agent` | No description |
 | `parallel-execution` | No description |
 | `skill-creator` | No description |
 | `task-decomposition` | No description |
 | `triz-analysis` | No description |
 | `triz-solver` | No description |
-
-### General
-
-| `accessibility-auditor` | Audit web applications for WCAG 2.2 compliance, screen reader compatibility, keyboard navigation, an |
-| `agents-md` | Create comprehensive AGENTS.md files that serve as the single source of truth for AI coding agents. |
-| `anti-ai-slop` | AI tools flooded the design and copy space. The result: a recognizable monoculture. This skill is a  |
-| `cicd-pipeline` | Design, implement, and maintain CI/CD pipelines for automated testing, deployment, and security scan |
-| `github-workflow` | Complete GitHub workflow automation for the full development lifecycle. |
-| `goap-agent` | Enable intelligent planning and execution of complex multi-step tasks through systematic decompositi |
-| `migration-refactoring` | No description |
-| `privacy-first` | Prevent personal data, email addresses, and sensitive information from entering the codebase. |
 
 ### Knowledge-Management
 
@@ -30,12 +20,19 @@ Auto-generated from skill definitions. Run this script to regenerate.
 
 ### Quality
 
+| `accessibility-auditor` | No description |
+| `agents-md` | No description |
+| `anti-ai-slop` | No description |
+| `codacy` | Orchestrate static analysis using Codacy. Use for querying PR analysis, triaging issues, suppressing false positives, and local analysis. |
 | `code-quality` | No description |
 | `code-review-assistant` | No description |
 | `dogfood` | Systematically explore and test a web application to find bugs, UX issues, and other problems. Use when asked to "dogfood", "QA", "exploratory test", "find issues", "bug hunt", "test this app/site/platform", or review the quality of a web application. Produces a structured report with full reproduction evidence. |
+| `privacy-first` | No description |
+| `safe-regex-authoring` | No description |
 | `security-code-auditor` | No description |
 | `shell-script-quality` | No description |
 | `skill-evaluator` | No description |
+| `test-runner` | No description |
 | `testdata-builders` | No description |
 | `testing-strategy` | No description |
 
@@ -43,19 +40,22 @@ Auto-generated from skill definitions. Run this script to regenerate.
 
 | `do-web-doc-resolver` | Python implementation for resolving URLs and queries into compact, LLM-ready markdown documentation. Use when you need the Python resolver with full cascade support, quality scoring, circuit breakers, and advanced routing features. |
 
-### Testing
-
-| `test-runner` | No description |
-
 ### Workflow
 
 | `agent-browser` | Browser automation CLI for AI agents. Use when the user needs to interact with websites, including navigating pages, filling forms, clicking buttons, taking screenshots, extracting data, testing web apps, or automating any browser task. Triggers include requests to "open a website", "fill out a form", "click a button", "take a screenshot", "scrape data from a page", "test this web app", "login to a site", "automate browser actions", or any task requiring programmatic web interaction. |
+| `cicd-pipeline` | No description |
 | `cloudflare-worker-api` | No description |
 | `epub-rendering-and-cfi` | No description |
+| `github-actions-version-fix` | Fix GitHub Actions "Unable to resolve action" errors using gh CLI to find correct version tags or commit SHAs. |
+| `github-pr-autopilot` | No description |
+| `github-workflow` | No description |
+| `migration-refactoring` | No description |
 | `pwa-offline-sync` | No description |
 | `reader-ui-ux` | No description |
+| `release-management` | No description |
 | `secure-invite-and-access` | No description |
 | `turso-schema-migrations` | No description |
+
 
 ---
 
