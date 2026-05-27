@@ -175,7 +175,7 @@ export async function reanchorByText(
         let matchCount = 0;
         const { wordSet } = cached;
         for (let i = 0; i < words.length; i++) {
-          const word = words[i]!;
+          const word = String(words[i]);
           if (wordSet.has(word)) {
             matchCount++;
             if (matchCount >= targetMatchCount) {
