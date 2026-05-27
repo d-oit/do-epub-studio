@@ -1,0 +1,39 @@
+{
+  "skill_name": "codacy",
+  "version": "1.0.0",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Codacy is blocking PR #209 on d-oit/do-epub-studio. How do I find out what issues exist?",
+      "expected_output": "Uses `codacy pull-request ... --output json` to fetch the PR data, parses the `newIssues` array to identify blockers, and checks the `qualityGateStatus` field.",
+      "assertions": [
+        "Uses `codacy pull-request ... --output json`",
+        "Mentions parsing newIssues array",
+        "Mentions checking quality gate status"
+      ],
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "I have a false positive from ESLint about a specific rule. How do I suppress it using the CLI?",
+      "expected_output": "Identifies the numeric `resultDataId` from the JSON output (not the hash), and runs `codacy pull-request gh <org> <repo> <prNumber> --ignore-issue <resultDataId> --ignore-reason FalsePositive`.",
+      "assertions": [
+        "Mentions numeric resultDataId from JSON",
+        "Uses --ignore-issue with the numeric ID",
+        "Specifies --ignore-reason FalsePositive"
+      ],
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "I want to run codacy locally. What should I be careful about?",
+      "expected_output": "Warns about the RCE risk of the `--install-dependencies` flag and mentions that local analysis is limited to a subset of tools, recommending Cloud CLI as the source of truth.",
+      "assertions": [
+        "Warns about --install-dependencies (RCE risk)",
+        "Mentions local analysis limitations",
+        "Recommends Cloud CLI as source of truth"
+      ],
+      "files": []
+    }
+  ]
+}
