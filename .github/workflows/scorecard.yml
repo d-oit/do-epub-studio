@@ -1,4 +1,5 @@
 name: OpenSSF Scorecard
+run-name: OpenSSF Scorecard
 on:
   branch_protection_rule:
   schedule:
@@ -6,12 +7,20 @@ on:
   push:
     branches: [main]
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
 jobs:
   scorecard:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       security-events: write
       id-token: write

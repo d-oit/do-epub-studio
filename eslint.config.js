@@ -88,7 +88,7 @@ export default tseslint.config(
       '@typescript-eslint/prefer-regexp-exec': 'off',
       // Logical OR (||) is idiomatic and preferred for default values in this codebase
       '@typescript-eslint/prefer-nullish-coalescing': 'off',
-      // TODO(#163): promote to 'error' once existing violations (~60 in web package) are resolved
+      // TODO(#163): promote to 'error' once existing violations (~4 remaining) are resolved
       '@typescript-eslint/no-non-null-assertion': 'warn',
       '@typescript-eslint/require-await': 'error',
       '@typescript-eslint/consistent-type-imports': 'warn',
@@ -96,7 +96,7 @@ export default tseslint.config(
       '@typescript-eslint/no-misused-promises': 'error',
       // The following unsafe rules are set to 'warn' as a strictness improvement over
       // main where they were off entirely. They will be upgraded to 'error' once the
-      // codebase violations are addressed (tracked in plans/010-optimization-quality-backlog.md).
+      // codebase violations are addressed (tracked in plans/archive/010-optimization-quality-backlog.md).
       '@typescript-eslint/no-unsafe-assignment': 'warn',
       '@typescript-eslint/no-unsafe-member-access': 'warn',
       '@typescript-eslint/no-unsafe-call': 'warn',
