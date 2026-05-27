@@ -1,5 +1,5 @@
 import React, { Suspense } from 'react';
-import { Route } from 'react-router-dom';
+import { Route, Navigate } from 'react-router-dom';
 import { ViewTransitionRoutes } from './components/ViewTransitionRoutes';
 import { useAuthStore } from './stores/auth';
 import { LoginPage } from './features/auth/LoginPage';
@@ -61,7 +61,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   if (!isAuthenticated) {
-    return <LoginPage />;
+    return <Navigate to="/login" replace />;
   }
 
   return <>{children}</>;
@@ -71,7 +71,7 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isAdmin } = useAuthStore();
 
   if (!isAuthenticated || !isAdmin) {
-    return <AdminLoginPage />;
+    return <Navigate to="/admin/login" replace />;
   }
 
   return <>{children}</>;

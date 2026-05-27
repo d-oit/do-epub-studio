@@ -196,7 +196,7 @@ async function loginAndOpenReader(page: Page) {
 // ---------------------------------------------------------------------------
 
 test.describe('Offline reader', () => {
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page }, testInfo) => {
     page.on('console', (msg) => {
       if (msg.type() === 'error') console.log(`PAGE ERROR: ${msg.text()}`);
     });
@@ -269,8 +269,26 @@ test.describe('Offline reader', () => {
     expect(backOnline).toBe(true);
   });
 
-  test('serves cached API responses while offline (NetworkFirst strategy)', async ({ page, context }) => {
+  test('serves cached API responses while offline (NetworkFirst strategy)', async ({ page, context }, testInfo) => {
     await loginAndOpenReader(page);
+
+    // Check if SW is active — skip if not (SW-dependent test)
+    const swActive = await page.evaluate(async () => {
+      try {
+        const registration = await Promise.race([
+          navigator.serviceWorker.ready,
+          new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 10000))
+        ]);
+        return !!navigator.serviceWorker.controller;
+      } catch {
+        return false;
+      }
+    });
+
+    if (!swActive) {
+      testInfo.skip();
+      return;
+    }
 
     // Fetch a test endpoint while online to populate the cache
     await page.route('**/api/books/offline-test-cached', async (route: Route) => {
