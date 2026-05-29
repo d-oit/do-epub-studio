@@ -11,14 +11,24 @@ interface TocItem {
 interface TableOfContentsProps {
   isOpen: boolean;
   toc: TocItem[];
+  currentChapter: string | null;
   onClose: () => void;
   onNavigate: (href: string) => void;
   t: (key: TranslationKeys) => string;
   direction?: 'ltr' | 'rtl';
 }
 
-export function TableOfContents({ isOpen, toc, onClose, onNavigate, t, direction }: TableOfContentsProps) {
+export function TableOfContents({
+  isOpen,
+  toc,
+  currentChapter,
+  onClose,
+  onNavigate,
+  t,
+  direction,
+}: TableOfContentsProps) {
   const panelRef = useRef<HTMLElement>(null);
+  const activeItemRef = useRef<HTMLButtonElement>(null);
   useFocusTrap(isOpen, panelRef);
 
   useEffect(() => {
@@ -29,6 +39,12 @@ export function TableOfContents({ isOpen, toc, onClose, onNavigate, t, direction
     window.addEventListener('keydown', handleEscape);
     return () => window.removeEventListener('keydown', handleEscape);
   }, [isOpen, onClose]);
+
+  useEffect(() => {
+    if (isOpen && activeItemRef.current) {
+      activeItemRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -65,19 +81,28 @@ export function TableOfContents({ isOpen, toc, onClose, onNavigate, t, direction
       </div>
       <nav className="p-2">
         {toc.length > 0 ? (
-          toc.map((item, index) => (
-            <button
-              key={index}
-              onClick={() => {
-                onNavigate(item.href);
-              }}
-              className={`w-full px-3 py-2 text-sm hover:bg-background-secondary rounded ${
-                isRtl ? 'text-right' : 'text-left'
-              }`}
-            >
-              {item.label}
-            </button>
-          ))
+          toc.map((item, index) => {
+            const isActive = currentChapter === item.href;
+            return (
+              <button
+                key={index}
+                ref={isActive ? activeItemRef : undefined}
+                onClick={() => {
+                  onNavigate(item.href);
+                }}
+                aria-current={isActive ? 'location' : undefined}
+                className={`w-full px-3 py-2 text-sm rounded transition-colors duration-150 ${
+                  isRtl ? 'text-right' : 'text-left'
+                } ${
+                  isActive
+                    ? 'bg-accent text-white font-medium shadow-sm'
+                    : 'text-foreground hover:bg-background-secondary'
+                }`}
+              >
+                {item.label}
+              </button>
+            );
+          })
         ) : (
           <p className="px-3 py-2 text-sm text-foreground-muted">{t('reader.noChapters')}</p>
         )}

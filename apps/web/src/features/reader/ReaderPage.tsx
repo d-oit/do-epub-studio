@@ -277,6 +277,7 @@ export function ReaderPage() {
       <TableOfContents
         isOpen={activePanel === 'toc'}
         toc={toc}
+        currentChapter={currentChapter}
         onClose={() => setActivePanel(null)}
         onNavigate={(href) => void navigateToChapter(href)}
         t={tFn}
