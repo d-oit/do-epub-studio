@@ -190,8 +190,9 @@ describe('parseEpubInWorker – malformed / XSS inputs', () => {
     vi.mocked(fetch as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
       new TypeError('Failed to fetch'),
     );
-    const maliciousUrl = 'https://example.com/<script>alert(1)</script>.epub';
-    const result = await parseEpubInWorker(maliciousUrl);
+    const result = await parseEpubInWorker(
+      'https://example.com/<script>alert(1)</script>.epub',
+    );
     expect(result.valid).toBe(false);
     expect(result.error).toBeDefined();
   });
