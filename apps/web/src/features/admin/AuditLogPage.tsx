@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '../../hooks/useTranslation';
 import { apiRequest } from '../../lib/api';
@@ -40,7 +40,7 @@ export function AdminAuditPage() {
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
-  const fetchAuditLogs = async (
+  const fetchAuditLogs = useCallback(async (
     currentPage: number,
     filters: { entityType: string; entityId: string; dateFrom: string; dateTo: string },
   ) => {
@@ -63,11 +63,11 @@ export function AdminAuditPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [sessionToken]);
 
   useEffect(() => {
     void fetchAuditLogs(page, { entityType, entityId, dateFrom, dateTo });
-  }, [page, entityType, entityId, dateFrom, dateTo]);
+  }, [page, entityType, entityId, dateFrom, dateTo, fetchAuditLogs]);
 
   const handleBack = () => {
     void navigate('/admin/books');

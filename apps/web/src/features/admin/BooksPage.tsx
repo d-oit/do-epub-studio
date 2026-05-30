@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '../../hooks/useTranslation';
 import { apiRequest } from '../../lib/api';
@@ -36,7 +36,7 @@ export function AdminBookResponsesPage() {
   } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const fetchBookResponses = async () => {
+  const fetchBookResponses = useCallback(async () => {
     setIsLoading(true);
     try {
       const data = await apiRequest<BookResponse[]>('/api/admin/books', { token: sessionToken ?? undefined });
@@ -46,11 +46,11 @@ export function AdminBookResponsesPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [sessionToken]);
 
   useEffect(() => {
     void fetchBookResponses();
-  }, []);
+  }, [fetchBookResponses]);
 
   const handleViewGrants = (book: BookResponse) => {
     void navigate(`/admin/books/${book.id}/grants`, { state: { bookTitle: book.title } });

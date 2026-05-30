@@ -66,7 +66,7 @@ export function LoginPage() {
         <LocaleSwitcher />
       </div>
 
-      <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 border border-gray-100 dark:border-gray-700">
+      <main id="main-content" className="max-w-md w-full bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 border border-gray-100 dark:border-gray-700">
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
             {t('login.subtitle')}
@@ -137,7 +137,7 @@ export function LoginPage() {
             {t('admin.login.backToReader')}
           </button>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

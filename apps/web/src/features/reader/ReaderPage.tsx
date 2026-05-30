@@ -96,6 +96,9 @@ export function ReaderPage() {
       if (!renditionRef.current) return;
       await renditionRef.current.display(cfiRange ?? chapterRef);
     },
+    // renditionRef is a stable MutableRefObject — its identity never changes,
+    // only .current does. Including it would cause unnecessary re-creation.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   );
 
