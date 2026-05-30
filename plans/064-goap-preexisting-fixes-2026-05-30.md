@@ -32,7 +32,7 @@ running `pnpm typecheck` and `pnpm lint` revealed:
 
 | ID | Priority | File | Issue | Fix | Status |
 |----|----------|------|-------|-----|--------|
-| W1 | P0 | `package.json` | `lint:workflows` fails on Windows — `.sh` called without `bash` | Prefix with `bash ` | ✅ Done |
+| W1 | P0 | `package.json` | `lint:workflows` fails on Windows — `.sh` called without `bash` | Prefix with `bash` | ✅ Done |
 | W2 | P1 | `packages/reader-core/src/__tests__/sanitizer.test.ts` | Unused `eslint-disable security/detect-non-literal-fs-filename` directive | Remove directive | ✅ Done |
 | W3 | P1 | `apps/web/src/features/admin/BooksPage.tsx` | `fetchBookResponses` defined inline, missing from `useEffect` deps | Wrap in `useCallback([sessionToken])`, add to `useEffect` deps | ✅ Done |
 | W4 | P1 | `apps/web/src/features/admin/AuditLogPage.tsx` | `fetchAuditLogs` defined inline, missing from `useEffect` deps | Wrap in `useCallback([sessionToken])`, add to `useEffect` deps | ✅ Done |
@@ -109,7 +109,7 @@ at the bottom of that hook).
 
 | File | Change |
 |------|--------|
-| `package.json` | `lint:workflows`: added `bash ` prefix |
+| `package.json` | `lint:workflows`: added `bash` prefix |
 | `packages/reader-core/src/__tests__/sanitizer.test.ts` | Removed unused `eslint-disable` directive |
 | `apps/web/src/features/admin/BooksPage.tsx` | Added `useCallback` import; wrapped `fetchBookResponses` in `useCallback([sessionToken])`; updated `useEffect` deps |
 | `apps/web/src/features/admin/AuditLogPage.tsx` | Added `useCallback` import; wrapped `fetchAuditLogs` in `useCallback([sessionToken])`; updated `useEffect` deps |
