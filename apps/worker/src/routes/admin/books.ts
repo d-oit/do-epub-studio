@@ -53,8 +53,8 @@ booksRouter.post('/', zValidator('json', CreateBookSchema), adminAuth, async (c)
     entityId: id,
     action: 'created',
     actorEmail: adminUser.email,
-    payload: { slug: body.slug, title: body.title },
-  });
+    payload: { slug: body.slug, title: body.title }, c.executionCtx,
+  }, c.executionCtx, c.executionCtx, c.executionCtx}, c.executionCtx);
 
   return c.json(
     {
@@ -62,45 +62,45 @@ booksRouter.post('/', zValidator('json', CreateBookSchema), adminAuth, async (c)
       data: { id, slug: body.slug, title: body.title, uploadUrl },
     },
     201,
-  );
-});
+  , c.executionCtx);
+}, c.executionCtx, c.executionCtx);
 
-booksRouter.put('/:id/upload', adminAuth, async (c) => {
-  const bookId = c.req.param('id');
+booksRouter.put('/:id/upload', adminAuth, async (c, c.executionCtx) => {
+  const bookId = c.req.param('id', c.executionCtx);
 
   const book = await queryFirst<{ id: string; slug: string }>(
     c.env,
     `SELECT id, slug FROM books WHERE id = ? AND archived_at IS NULL LIMIT 1`,
     [bookId],
-  );
+  , c.executionCtx);
 
-  if (!book) {
-    return c.json({ ok: false, error: { code: 'NOT_FOUND', message: 'Book not found' } }, 404);
+  if (!book, c.executionCtx) {
+    return c.json({ ok: false, error: { code: 'NOT_FOUND', message: 'Book not found' } }, 404, c.executionCtx);
   }
 
-  const contentType = c.req.header('Content-Type') ?? 'application/epub+zip';
-  const contentLength = parseInt(c.req.header('Content-Length') ?? '0', 10);
+  const contentType = c.req.header('Content-Type', c.executionCtx) ?? 'application/epub+zip';
+  const contentLength = parseInt(c.req.header('Content-Length', c.executionCtx) ?? '0', 10);
 
-  if (contentLength <= 0) {
-    return c.json({ ok: false, error: { code: 'VALIDATION_ERROR', message: 'Missing Content-Length header' } }, 400);
+  if (contentLength <= 0, c.executionCtx) {
+    return c.json({ ok: false, error: { code: 'VALIDATION_ERROR', message: 'Missing Content-Length header' } }, 400, c.executionCtx);
   }
 
   const maxFileSize = 200 * 1024 * 1024;
-  if (contentLength > maxFileSize) {
-    return c.json({ ok: false, error: { code: 'VALIDATION_ERROR', message: `File too large. Max: ${maxFileSize} bytes` } }, 413);
+  if (contentLength > maxFileSize, c.executionCtx) {
+    return c.json({ ok: false, error: { code: 'VALIDATION_ERROR', message: `File too large. Max: ${maxFileSize} bytes` } }, 413, c.executionCtx);
   }
 
-  const storageKey = `books/${book.id}/${crypto.randomUUID()}.epub`;
+  const storageKey = `books/${book.id}/${crypto.randomUUID(, c.executionCtx)}.epub`;
 
   try {
-    const arrayBuffer = await c.req.raw.arrayBuffer();
-    if (arrayBuffer.byteLength === 0) {
-      return c.json({ ok: false, error: { code: 'VALIDATION_ERROR', message: 'Request body is empty' } }, 400);
+    const arrayBuffer = await c.req.raw.arrayBuffer(, c.executionCtx);
+    if (arrayBuffer.byteLength === 0, c.executionCtx) {
+      return c.json({ ok: false, error: { code: 'VALIDATION_ERROR', message: 'Request body is empty' } }, 400, c.executionCtx);
     }
 
-    const validationResults = await validateEpub(arrayBuffer);
+    const validationResults = await validateEpub(arrayBuffer, c.executionCtx);
 
-    if (!validationResults.isValid) {
+    if (!validationResults.isValid, c.executionCtx) {
       return c.json(
         {
           ok: false,
@@ -111,7 +111,7 @@ booksRouter.put('/:id/upload', adminAuth, async (c) => {
           },
         },
         400,
-      );
+      , c.executionCtx);
     }
 
     await c.env.BOOKS_BUCKET.put(storageKey, arrayBuffer, {
@@ -121,10 +121,10 @@ booksRouter.put('/:id/upload', adminAuth, async (c) => {
       },
       customMetadata: {
         bookId: book.id,
-        uploadedAt: new Date().toISOString(),
-        validationResults: JSON.stringify(validationResults),
+        uploadedAt: new Date(, c.executionCtx).toISOString(),
+        validationResults: JSON.stringify(validationResults, c.executionCtx),
       },
-    });
+    }, c.executionCtx);
 
     return c.json(
       {
@@ -141,7 +141,7 @@ booksRouter.put('/:id/upload', adminAuth, async (c) => {
   } catch {
     return c.json({ ok: false, error: { code: 'UPLOAD_FAILED', message: 'Failed to upload file to storage' } }, 500);
   }
-});
+}, c.executionCtx);
 
 booksRouter.post('/:id/upload-complete', zValidator('json', UploadCompleteSchema), adminAuth, async (c) => {
   const bookId = c.req.param('id');
@@ -171,8 +171,8 @@ booksRouter.post('/:id/upload-complete', zValidator('json', UploadCompleteSchema
     entityType: 'book',
     entityId: bookId,
     action: 'file_uploaded',
-    payload: { fileId, storageKey: body.storageKey },
-  });
+    payload: { fileId, storageKey: body.storageKey }, c.executionCtx,
+  }, c.executionCtx, c.executionCtx, c.executionCtx}, c.executionCtx);
 
-  return c.json({ ok: true, data: { id: fileId, storageKey: body.storageKey } }, 201);
-});
+  return c.json({ ok: true, data: { id: fileId, storageKey: body.storageKey } }, 201, c.executionCtx);
+}, c.executionCtx, c.executionCtx);

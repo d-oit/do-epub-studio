@@ -66,19 +66,31 @@ export function sanitizeAuditPayload(
   return result;
 }
 
-export async function logAudit(env: Env, entry: AuditEntry): Promise<void> {
-  const id = crypto.randomUUID();
-  const payloadJson = entry.payload
-    ? JSON.stringify(sanitizeAuditPayload(entry.payload))
-    : null;
+export async function logAudit(
+  env: Env,
+  entry: AuditEntry,
+  ctx?: { waitUntil: (promise: Promise<any>) => void }
+): Promise<void> {
+  const promise = (async () => {
+    const id = crypto.randomUUID();
+    const payloadJson = entry.payload
+      ? JSON.stringify(sanitizeAuditPayload(entry.payload))
+      : null;
 
-  const { execute } = await import('../db/client');
-  await execute(
-    env,
-    `INSERT INTO audit_log (id, actor_email, entity_type, entity_id, action, payload_json)
-     VALUES (?, ?, ?, ?, ?, ?)`,
-    [id, entry.actorEmail ?? null, entry.entityType, entry.entityId, entry.action, payloadJson]
-  );
+    const { execute } = await import('../db/client');
+    await execute(
+      env,
+      `INSERT INTO audit_log (id, actor_email, entity_type, entity_id, action, payload_json)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [id, entry.actorEmail ?? null, entry.entityType, entry.entityId, entry.action, payloadJson]
+    );
+  })();
+
+  if (ctx) {
+    ctx.waitUntil(promise);
+  } else {
+    await promise;
+  }
 }
 
 export async function getAuditLog(

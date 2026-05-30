@@ -28,8 +28,8 @@ describe('CORS', () => {
     TURSO_AUTH_TOKEN: '',
     SESSION_SIGNING_SECRET: '',
     INVITE_TOKEN_SECRET: '',
-    RATE_LIMITER: {} as DurableObjectNamespace,
-  };
+    RATE_LIMITER: {} as any,
+  } as any;
 
   it('restricts Access-Control-Allow-Origin to APP_BASE_URL for non-matching origin', async () => {
     const request = new Request('https://api.example.com/api/books', {
