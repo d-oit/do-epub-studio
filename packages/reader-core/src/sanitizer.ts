@@ -277,12 +277,16 @@ export function sanitizeDom(node: Document | DocumentFragment | Element): void {
       for (const hrefAttr of SVG_HREF_ATTRS) {
         const val = el.getAttribute(hrefAttr);
         if (val) {
-          const schemeMatch = matchBounded(/^([a-zA-Z][a-zA-Z0-9+.-]*):/, val, 2048);
+          const trimmed = val.trim();
+          const schemeMatch = matchBounded(/^([a-zA-Z][a-zA-Z0-9+.-]*):/, trimmed, 2048);
           if (schemeMatch && schemeMatch[1]) {
             const scheme = schemeMatch[1].toLowerCase();
             if (scheme !== 'http' && scheme !== 'https' && scheme !== 'mailto') {
               el.removeAttribute(hrefAttr);
             }
+          } else if (trimmed.toLowerCase().startsWith('javascript:')) {
+            // Handle cases where the regex might not match but it's clearly javascript
+            el.removeAttribute(hrefAttr);
           }
         }
       }

@@ -50,6 +50,12 @@ describe('sanitizeSvg', () => {
     expect(result).not.toContain('javascript:');
   });
 
+  it('blocks javascript: URLs with leading spaces', () => {
+    const input = '<svg xmlns="http://www.w3.org/2000/svg"><use href="  javascript:alert(1)"/></svg>';
+    const result = sanitizeSvg(input);
+    expect(result).not.toContain('javascript:');
+  });
+
   it('allows safe href attributes', () => {
     const input = '<svg xmlns="http://www.w3.org/2000/svg"><use href="#mySymbol"/><image href="image.png"/></svg>';
     const result = sanitizeSvg(input);
