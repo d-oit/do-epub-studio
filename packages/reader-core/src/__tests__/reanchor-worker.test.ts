@@ -33,10 +33,10 @@ const TOC: TocItem[] = [
 function makeLoader(
   map: Record<string, string>,
 ): (href: string) => Promise<string> {
+  const lookup = new Map(Object.entries(map));
   return (href: string) => {
-    if (Object.prototype.hasOwnProperty.call(map, href)) {
-      return Promise.resolve(map[href] ?? '');
-    }
+    const value = lookup.get(href);
+    if (value !== undefined) return Promise.resolve(value);
     return Promise.reject(new Error(`Not found: ${href}`));
   };
 }
