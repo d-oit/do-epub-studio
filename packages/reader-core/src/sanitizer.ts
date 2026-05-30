@@ -1,5 +1,6 @@
 import DOMPurify from 'dompurify';
 import type { Config } from 'dompurify';
+import { matchBounded } from '@do-epub-studio/shared';
 
 const SAFE_SVG_TAGS = [
   'svg',
@@ -275,14 +276,24 @@ export function sanitizeDom(node: Document | DocumentFragment | Element): void {
     if (tag === 'use' || tag === 'image') {
       for (const hrefAttr of SVG_HREF_ATTRS) {
         const val = el.getAttribute(hrefAttr);
-        if (val) {
-          const schemeMatch = val.match(/^([a-zA-Z][a-zA-Z0-9+.-]*):/);
-          if (schemeMatch && schemeMatch[1]) {
-            const scheme = schemeMatch[1].toLowerCase();
-            if (scheme !== 'http' && scheme !== 'https' && scheme !== 'mailto') {
-              el.removeAttribute(hrefAttr);
-            }
+        if (!val) continue;
+
+        const trimmed = val.trim();
+        const schemeMatch = matchBounded(/^([a-zA-Z][a-zA-Z0-9+.-]*):/, trimmed, 2048);
+        if (schemeMatch && schemeMatch[1]) {
+          const scheme = schemeMatch[1].toLowerCase();
+          if (scheme !== 'http' && scheme !== 'https' && scheme !== 'mailto') {
+            el.removeAttribute(hrefAttr);
           }
+        }
+
+        const lower = trimmed.toLowerCase();
+        if (
+          lower.startsWith('javascript:') ||
+          lower.startsWith('data:') ||
+          lower.startsWith('vbscript:')
+        ) {
+          el.removeAttribute(hrefAttr);
         }
       }
     }
@@ -303,4 +314,32 @@ export function createSvgSanitizerHook(): (contents: { document?: Document }) =>
       sanitizeDom(svg);
     }
   };
+}
+
+export function sanitizeEpubDocument(doc: Document): void {
+  // We sanitize the whole document.
+  // Note: DOMPurify does not support IN_PLACE for the Document object itself.
+  // We must sanitize starting from the document element.
+  const root = doc.documentElement;
+  if (!root) return;
+
+  DOMPurify.sanitize(root, {
+    IN_PLACE: true,
+    WHOLE_DOCUMENT: true,
+    USE_PROFILES: { html: true, svg: true },
+    FORBID_TAGS: [
+      'script',
+      'iframe',
+      'object',
+      'embed',
+      'applet',
+      'animate',
+      'set',
+      'animateMotion',
+      'animateTransform',
+    ],
+    FORBID_ATTR: [...SVG_EVENT_ATTRS],
+    ALLOW_ARIA_ATTR: true,
+    ALLOW_DATA_ATTR: false,
+  });
 }
