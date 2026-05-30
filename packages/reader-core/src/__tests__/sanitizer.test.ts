@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { sanitizeSvg, sanitizeDom, createSvgSanitizerHook } from '../sanitizer';
+import {
+  sanitizeSvg,
+  sanitizeDom,
+  createSvgSanitizerHook,
+  sanitizeEpubDocument,
+} from '../sanitizer';
 
 describe('sanitizeSvg', () => {
   it('allows safe SVG tags', () => {
@@ -137,5 +142,47 @@ describe('createSvgSanitizerHook', () => {
   it('returns a function that handles null document', () => {
     const hook = createSvgSanitizerHook();
     expect(() => hook({ document: undefined })).not.toThrow();
+  });
+});
+
+describe('sanitizeEpubDocument', () => {
+  function createDoc(html: string): Document {
+    return new DOMParser().parseFromString(html, 'text/html');
+  }
+
+  it('removes script tags from document', () => {
+    const doc = createDoc('<html><body><h1>Safe</h1><script>alert("xss")</script></body></html>');
+    sanitizeEpubDocument(doc);
+    expect(doc.querySelector('script')).toBeNull();
+    expect(doc.querySelector('h1')?.textContent).toBe('Safe');
+  });
+
+  it('removes event handlers from body and elements', () => {
+    const doc = createDoc('<html onload="alert(1)"><body onclick="alert(2)"><div onmouseover="alert(3)">Test</div></body></html>');
+    sanitizeEpubDocument(doc);
+    expect(doc.documentElement.getAttribute('onload')).toBeNull();
+    expect(doc.body.getAttribute('onclick')).toBeNull();
+    expect(doc.querySelector('div')?.getAttribute('onmouseover')).toBeNull();
+  });
+
+  it('removes iframe and object tags', () => {
+    const doc = createDoc('<div><iframe src="evil.com"></iframe><object data="evil.swf"></object></div>');
+    sanitizeEpubDocument(doc);
+    expect(doc.querySelector('iframe')).toBeNull();
+    expect(doc.querySelector('object')).toBeNull();
+  });
+
+  it('removes SVG animation tags', () => {
+    const doc = createDoc('<svg><animate onbegin="alert(1)" /><rect /></svg>');
+    sanitizeEpubDocument(doc);
+    expect(doc.querySelector('animate')).toBeNull();
+    expect(doc.querySelector('rect')).not.toBeNull();
+  });
+
+  it('preserves safe HTML structure', () => {
+    const doc = createDoc('<html><head><title>Test</title></head><body><p>Hello World</p></body></html>');
+    sanitizeEpubDocument(doc);
+    expect(doc.querySelector('title')?.textContent).toBe('Test');
+    expect(doc.querySelector('p')?.textContent).toBe('Hello World');
   });
 });
