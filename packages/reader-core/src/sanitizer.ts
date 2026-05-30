@@ -276,24 +276,24 @@ export function sanitizeDom(node: Document | DocumentFragment | Element): void {
     if (tag === 'use' || tag === 'image') {
       for (const hrefAttr of SVG_HREF_ATTRS) {
         const val = el.getAttribute(hrefAttr);
-        if (val) {
-          const trimmed = val.trim();
-          const schemeMatch = matchBounded(/^([a-zA-Z][a-zA-Z0-9+.-]*):/, trimmed, 2048);
-          if (schemeMatch && schemeMatch[1]) {
-            const scheme = schemeMatch[1].toLowerCase();
-            if (scheme !== 'http' && scheme !== 'https' && scheme !== 'mailto') {
-              el.removeAttribute(hrefAttr);
-            }
-          } else {
-            const lower = trimmed.toLowerCase();
-            if (
-              lower.startsWith('javascript:') ||
-              lower.startsWith('data:') ||
-              lower.startsWith('vbscript:')
-            ) {
-              el.removeAttribute(hrefAttr);
-            }
+        if (!val) continue;
+
+        const trimmed = val.trim();
+        const schemeMatch = matchBounded(/^([a-zA-Z][a-zA-Z0-9+.-]*):/, trimmed, 2048);
+        if (schemeMatch && schemeMatch[1]) {
+          const scheme = schemeMatch[1].toLowerCase();
+          if (scheme !== 'http' && scheme !== 'https' && scheme !== 'mailto') {
+            el.removeAttribute(hrefAttr);
           }
+        }
+
+        const lower = trimmed.toLowerCase();
+        if (
+          lower.startsWith('javascript:') ||
+          lower.startsWith('data:') ||
+          lower.startsWith('vbscript:')
+        ) {
+          el.removeAttribute(hrefAttr);
         }
       }
     }
@@ -317,7 +317,12 @@ export function createSvgSanitizerHook(): (contents: { document?: Document }) =>
 }
 
 export function sanitizeEpubDocument(doc: Document): void {
-  const root = doc.documentElement || doc;
+  // We sanitize the whole document.
+  // Note: DOMPurify does not support IN_PLACE for the Document object itself.
+  // We must sanitize starting from the document element.
+  const root = doc.documentElement;
+  if (!root) return;
+
   DOMPurify.sanitize(root, {
     IN_PLACE: true,
     WHOLE_DOCUMENT: true,
