@@ -284,9 +284,15 @@ export function sanitizeDom(node: Document | DocumentFragment | Element): void {
             if (scheme !== 'http' && scheme !== 'https' && scheme !== 'mailto') {
               el.removeAttribute(hrefAttr);
             }
-          } else if (trimmed.toLowerCase().startsWith('javascript:')) {
-            // Handle cases where the regex might not match but it's clearly javascript
-            el.removeAttribute(hrefAttr);
+          } else {
+            const lower = trimmed.toLowerCase();
+            if (
+              lower.startsWith('javascript:') ||
+              lower.startsWith('data:') ||
+              lower.startsWith('vbscript:')
+            ) {
+              el.removeAttribute(hrefAttr);
+            }
           }
         }
       }

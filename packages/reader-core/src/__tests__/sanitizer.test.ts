@@ -56,6 +56,13 @@ describe('sanitizeSvg', () => {
     expect(result).not.toContain('javascript:');
   });
 
+  it('blocks data: and vbscript: URLs', () => {
+    const input = '<svg xmlns="http://www.w3.org/2000/svg"><use href="data:text/html,<script>alert(1)</script>"/><image href="vbscript:msgbox(1)"/></svg>';
+    const result = sanitizeSvg(input);
+    expect(result).not.toContain('data:');
+    expect(result).not.toContain('vbscript:');
+  });
+
   it('allows safe href attributes', () => {
     const input = '<svg xmlns="http://www.w3.org/2000/svg"><use href="#mySymbol"/><image href="image.png"/></svg>';
     const result = sanitizeSvg(input);
