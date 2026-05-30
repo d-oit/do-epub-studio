@@ -2,11 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import ePub from '@intity/epub-js';
 import type { Book, Rendition, NavItem, Contents } from '@intity/epub-js';
 import type { PageDirection, WritingMode } from '../../../stores';
-import {
-  parseAccessibilityFromOpf,
-  parseFixedLayoutFromOpf,
-  sanitizeEpubDocument,
-} from '@do-epub-studio/reader-core';
+import { parseAccessibilityFromOpf, parseFixedLayoutFromOpf } from '@do-epub-studio/reader-core';
 import {
   useAuthStore,
   useReaderStore,
@@ -244,14 +240,6 @@ export function useReaderEpub(
           defaultDirection: bookDirection === 'default' ? undefined : bookDirection,
         });
         renditionRef.current = rendition;
-
-        // Register security hooks
-        rendition.hooks.content.register((contents: Contents) => {
-          const doc = contents.document;
-          if (doc) {
-            sanitizeEpubDocument(doc);
-          }
-        });
 
         if (fixedLayout) {
           if (fixedLayoutViewport) {
