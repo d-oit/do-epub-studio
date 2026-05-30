@@ -98,7 +98,7 @@ export function ReaderPage() {
     },
     // renditionRef is a stable MutableRefObject — its identity never changes,
     // only .current does. Including it would cause unnecessary re-creation.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line
     [],
   );
 

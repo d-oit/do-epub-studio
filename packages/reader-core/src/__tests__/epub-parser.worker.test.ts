@@ -190,8 +190,8 @@ describe('parseEpubInWorker – malformed / XSS inputs', () => {
     vi.mocked(fetch as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
       new TypeError('Failed to fetch'),
     );
-    const xssUrl = 'https://example.com/<script>alert(1)</script>.epub';
-    const result = await parseEpubInWorker(xssUrl);
+    const maliciousUrl = 'https://example.com/<script>alert(1)</script>.epub';
+    const result = await parseEpubInWorker(maliciousUrl);
     expect(result.valid).toBe(false);
     expect(result.error).toBeDefined();
   });
@@ -214,7 +214,7 @@ describe('parseEpubInWorker – malformed / XSS inputs', () => {
 describe('terminateParserWorker', () => {
   it('can be called safely when no pool exists', () => {
     terminateParserWorker();
-    expect(() => terminateParserWorker()).not.toThrow();
+    expect(() => { terminateParserWorker(); }).not.toThrow();
   });
 
   it('can be called multiple times without error', () => {
