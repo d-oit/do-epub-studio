@@ -24,9 +24,7 @@ describe('TableOfContents', () => {
   };
 
   beforeEach(() => {
-    if (!window.HTMLButtonElement.prototype.scrollIntoView) {
-      window.HTMLButtonElement.prototype.scrollIntoView = vi.fn();
-    }
+    window.HTMLButtonElement.prototype.scrollIntoView = vi.fn();
   });
 
   it('renders toc items', () => {
