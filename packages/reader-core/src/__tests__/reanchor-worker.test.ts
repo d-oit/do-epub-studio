@@ -33,10 +33,12 @@ const TOC: TocItem[] = [
 function makeLoader(
   map: Record<string, string>,
 ): (href: string) => Promise<string> {
-  return (href: string) =>
-    href in map
-      ? Promise.resolve(map[href] ?? '')
-      : Promise.reject(new Error(`Not found: ${href}`));
+  return (href: string) => {
+    if (Object.prototype.hasOwnProperty.call(map, href)) {
+      return Promise.resolve(map[href] ?? '');
+    }
+    return Promise.reject(new Error(`Not found: ${href}`));
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -228,7 +230,7 @@ describe('tryReanchor (pool fallback)', () => {
 
 describe('terminateWorker', () => {
   it('can be called safely when no pool has been created', () => {
-    expect(() => terminateWorker()).not.toThrow();
+    expect(() => { terminateWorker(); }).not.toThrow();
   });
 
   it('can be called multiple times without error', () => {

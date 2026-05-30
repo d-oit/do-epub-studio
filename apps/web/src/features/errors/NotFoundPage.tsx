@@ -14,7 +14,9 @@ export function NotFoundPage() {
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
+            aria-hidden="true"
           >
+            <title>Decorative face icon</title>
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
