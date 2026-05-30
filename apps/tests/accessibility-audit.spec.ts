@@ -177,4 +177,106 @@ test.describe('Accessibility audit (axe-core)', () => {
 
     expect(criticalViolations).toHaveLength(0);
   });
+
+  // -------------------------------------------------------------------------
+  // Admin pages (C2 — axe-core audits for admin pages)
+  // -------------------------------------------------------------------------
+
+  async function mockAdminApi(page: Page) {
+    await page.route('**/api/admin/login', async (route: Route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          ok: true,
+          data: { sessionToken: 'admin-test-token', email: 'admin@example.com' },
+        }),
+      });
+    });
+    await page.route('**/api/admin/books', async (route: Route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ ok: true, data: [] }),
+      });
+    });
+    await page.route('**/api/admin/grants**', async (route: Route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ ok: true, data: [] }),
+      });
+    });
+    await page.route('**/api/admin/audit**', async (route: Route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ ok: true, data: { entries: [], total: 0 } }),
+      });
+    });
+  }
+
+  async function loginAsAdmin(page: Page) {
+    await page.goto('/admin/login');
+    await page.getByLabel('Email').fill('admin@example.com');
+    await page.getByLabel('Password').fill('admin-password');
+    await page.getByRole('button', { name: /sign in/i }).click();
+    await expect(page).toHaveURL(/\/admin\/books/);
+  }
+
+  test('admin books list page has no critical accessibility violations', async ({ page }) => {
+    await mockAdminApi(page);
+    await loginAsAdmin(page);
+
+    const accessibilityScanResults = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+      .analyze();
+
+    if (accessibilityScanResults.violations.length > 0) {
+      console.log('Axe violations (admin books):', JSON.stringify(accessibilityScanResults.violations, null, 2));
+    }
+
+    const criticalViolations = accessibilityScanResults.violations.filter(
+      (v) => v.impact === 'critical' || v.impact === 'serious',
+    );
+    expect(criticalViolations).toHaveLength(0);
+  });
+
+  test('admin grants page has no critical accessibility violations', async ({ page }) => {
+    await mockAdminApi(page);
+    await loginAsAdmin(page);
+    await page.goto('/admin/grants');
+
+    const accessibilityScanResults = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+      .analyze();
+
+    if (accessibilityScanResults.violations.length > 0) {
+      console.log('Axe violations (admin grants):', JSON.stringify(accessibilityScanResults.violations, null, 2));
+    }
+
+    const criticalViolations = accessibilityScanResults.violations.filter(
+      (v) => v.impact === 'critical' || v.impact === 'serious',
+    );
+    expect(criticalViolations).toHaveLength(0);
+  });
+
+  test('admin audit log page has no critical accessibility violations', async ({ page }) => {
+    await mockAdminApi(page);
+    await loginAsAdmin(page);
+    await page.goto('/admin/audit');
+
+    const accessibilityScanResults = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+      .analyze();
+
+    if (accessibilityScanResults.violations.length > 0) {
+      console.log('Axe violations (admin audit):', JSON.stringify(accessibilityScanResults.violations, null, 2));
+    }
+
+    const criticalViolations = accessibilityScanResults.violations.filter(
+      (v) => v.impact === 'critical' || v.impact === 'serious',
+    );
+    expect(criticalViolations).toHaveLength(0);
+  });
 });

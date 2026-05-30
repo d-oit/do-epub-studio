@@ -42,7 +42,7 @@ export function AdminGrantResponsesPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [bookId]);
+  }, [bookId, sessionToken]);
 
   useEffect(() => {
     void fetchGrantResponses();
