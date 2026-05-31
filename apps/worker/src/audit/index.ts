@@ -69,7 +69,7 @@ export function sanitizeAuditPayload(
 export async function logAudit(
   env: Env,
   entry: AuditEntry,
-  ctx?: { waitUntil: (promise: Promise<any>) => void }
+  ctx?: { waitUntil: (promise: Promise<unknown>) => void }
 ): Promise<void> {
   const promise = (async () => {
     const id = crypto.randomUUID();

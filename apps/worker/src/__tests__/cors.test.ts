@@ -18,7 +18,7 @@ describe('CORS', () => {
       json: () => Promise.resolve({}),
     }),
     delete: () => Promise.resolve(),
-    list: () => Promise.resolve({ objects: [], truncated: false }),
+    list: () => Promise.resolve({ objects: [], truncated: false, delimitedPrefixes: [] }),
   };
 
   const env: Env = {
@@ -29,7 +29,7 @@ describe('CORS', () => {
     SESSION_SIGNING_SECRET: '',
     INVITE_TOKEN_SECRET: '',
     RATE_LIMITER: {} as any,
-  } as any;
+  };
 
   it('restricts Access-Control-Allow-Origin to APP_BASE_URL for non-matching origin', async () => {
     const request = new Request('https://api.example.com/api/books', {
@@ -80,7 +80,7 @@ describe('CORS', () => {
       method: 'OPTIONS',
     });
 
-    const response = await (worker).fetch(request, env);
+    const response = await worker.fetch(request, env);
     expect(response.headers.get('Access-Control-Allow-Origin')).toBe(env.APP_BASE_URL);
   });
 
@@ -90,7 +90,7 @@ describe('CORS', () => {
       headers: { Origin: 'https://app.example.com' },
     });
 
-    const response = await (worker).fetch(request, env);
+    const response = await worker.fetch(request, env);
     expect(response.headers.get('Access-Control-Allow-Methods')).toBe('GET, POST, PUT, PATCH, DELETE, OPTIONS');
   });
 });
