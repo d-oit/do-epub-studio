@@ -18,7 +18,7 @@ describe('Comments Routes', () => {
   describe('GET /api/books/:bookId/comments', () => {
     it('returns 401 when unauthenticated', async () => {
       mockRequireAuth.mockResolvedValue(null);
-      const res = await app.fetch(new Request('http://localhost/api/books/book-1/comments'), env);
+      const res = await app.fetch(new Request('http://localhost/api/books/book-1/comments'), env, { waitUntil: () => {} } as any);
       expect(res.status).toBe(401);
     });
 
@@ -31,7 +31,7 @@ describe('Comments Routes', () => {
 
       const res = await app.fetch(new Request('http://localhost/api/books/book-1/comments', {
         headers: { 'Authorization': 'Bearer valid' }
-      }), env);
+      }), env, { waitUntil: () => {} } as any);
       expect(res.status).toBe(200);
       const body = await res.json() as any;
       expect(body.data).toHaveLength(1);
@@ -56,7 +56,7 @@ describe('Comments Routes', () => {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer valid'
         },
-      }), env);
+      }), env, { waitUntil: () => {} } as any);
 
       expect(res.status).toBe(201);
     });
@@ -76,7 +76,7 @@ describe('Comments Routes', () => {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer valid'
         },
-      }), env);
+      }), env, { waitUntil: () => {} } as any);
 
       expect(res.status).toBe(200);
     });
@@ -92,7 +92,7 @@ describe('Comments Routes', () => {
       const res = await app.fetch(new Request('http://localhost/api/comments/1', {
         method: 'DELETE',
         headers: { 'Authorization': 'Bearer valid' },
-      }), env);
+      }), env, { waitUntil: () => {} } as any);
 
       expect(res.status).toBe(200);
     });

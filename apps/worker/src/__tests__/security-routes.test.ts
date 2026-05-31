@@ -15,7 +15,7 @@ describe('Security Routes', () => {
         }
       }),
       headers: { 'Content-Type': 'application/json' },
-    }), env);
+    }), env, { waitUntil: () => {} } as any);
 
     expect(res.status).toBe(202);
   });

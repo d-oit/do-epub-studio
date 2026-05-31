@@ -48,7 +48,7 @@ describe('Rate Limiting Middleware', () => {
         resetAt: Date.now() + 60000,
       });
 
-      const { response, metadata } = await applyRateLimit(request, env);
+      const { response, metadata } = await applyRateLimit(request, env, { waitUntil: () => {} } as any);
 
       expect(response).toBeUndefined();
       expect(metadata).toBeDefined();
@@ -67,7 +67,7 @@ describe('Rate Limiting Middleware', () => {
         resetAt: Date.now() + 30000,
       });
 
-      const { response } = await applyRateLimit(request, env);
+      const { response } = await applyRateLimit(request, env, { waitUntil: () => {} } as any);
 
       expect(response).toBeDefined();
       expect(response?.status).toBe(429);
@@ -95,7 +95,7 @@ describe('Rate Limiting Middleware', () => {
           resetAt: Date.now() + 50000,
         });
 
-      const { metadata } = await applyRateLimit(request, env);
+      const { metadata } = await applyRateLimit(request, env, { waitUntil: () => {} } as any);
 
       expect(checkRateLimitDO).toHaveBeenCalledTimes(2);
       expect(checkRateLimitDO).toHaveBeenNthCalledWith(1, env, 'ip:api', '1.2.3.4', expect.any(Object));
@@ -123,7 +123,7 @@ describe('Rate Limiting Middleware', () => {
           resetAt: Date.now() + 20000,
         });
 
-      const { response } = await applyRateLimit(request, env);
+      const { response } = await applyRateLimit(request, env, { waitUntil: () => {} } as any);
 
       expect(response).toBeDefined();
       expect(response?.status).toBe(429);

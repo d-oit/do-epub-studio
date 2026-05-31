@@ -18,7 +18,7 @@ describe('Reader State Routes', () => {
   describe('GET /api/books/:bookId/progress', () => {
     it('returns 401 when unauthenticated', async () => {
       mockRequireAuth.mockResolvedValue(null);
-      const res = await app.fetch(new Request('http://localhost/api/books/book-1/progress'), env);
+      const res = await app.fetch(new Request('http://localhost/api/books/book-1/progress'), env, { waitUntil: () => {} } as any);
       expect(res.status).toBe(401);
     });
 
@@ -33,7 +33,7 @@ describe('Reader State Routes', () => {
 
       const res = await app.fetch(new Request('http://localhost/api/books/book-1/progress', {
         headers: { 'Authorization': 'Bearer valid' }
-      }), env);
+      }), env, { waitUntil: () => {} } as any);
       expect(res.status).toBe(200);
       const body = await res.json() as any;
       expect(body.data.progressPercent).toBe(50);
@@ -58,7 +58,7 @@ describe('Reader State Routes', () => {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer valid'
         },
-      }), env);
+      }), env, { waitUntil: () => {} } as any);
 
       expect(res.status).toBe(200);
       const body = await res.json() as any;
@@ -75,7 +75,7 @@ describe('Reader State Routes', () => {
 
       const res = await app.fetch(new Request('http://localhost/api/books/book-1/bookmarks', {
         headers: { 'Authorization': 'Bearer valid' }
-      }), env);
+      }), env, { waitUntil: () => {} } as any);
       expect(res.status).toBe(200);
       const body = await res.json() as any;
       expect(body.data).toHaveLength(1);
@@ -100,7 +100,7 @@ describe('Reader State Routes', () => {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer valid'
         },
-      }), env);
+      }), env, { waitUntil: () => {} } as any);
 
       expect(res.status).toBe(201);
     });
@@ -114,7 +114,7 @@ describe('Reader State Routes', () => {
       const res = await app.fetch(new Request('http://localhost/api/books/book-1/bookmarks/bookmark-1', {
         method: 'DELETE',
         headers: { 'Authorization': 'Bearer valid' },
-      }), env);
+      }), env, { waitUntil: () => {} } as any);
 
       expect(res.status).toBe(200);
     });
@@ -129,7 +129,7 @@ describe('Reader State Routes', () => {
 
       const res = await app.fetch(new Request('http://localhost/api/books/book-1/highlights', {
         headers: { 'Authorization': 'Bearer valid' }
-      }), env);
+      }), env, { waitUntil: () => {} } as any);
       expect(res.status).toBe(200);
       const body = await res.json() as any;
       expect(body.data).toHaveLength(1);
@@ -155,7 +155,7 @@ describe('Reader State Routes', () => {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer valid'
         },
-      }), env);
+      }), env, { waitUntil: () => {} } as any);
 
       expect(res.status).toBe(201);
     });
@@ -174,7 +174,7 @@ describe('Reader State Routes', () => {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer valid'
         },
-      }), env);
+      }), env, { waitUntil: () => {} } as any);
 
       expect(res.status).toBe(200);
     });
@@ -188,7 +188,7 @@ describe('Reader State Routes', () => {
       const res = await app.fetch(new Request('http://localhost/api/books/book-1/highlights/highlight-1', {
         method: 'DELETE',
         headers: { 'Authorization': 'Bearer valid' },
-      }), env);
+      }), env, { waitUntil: () => {} } as any);
 
       expect(res.status).toBe(200);
     });

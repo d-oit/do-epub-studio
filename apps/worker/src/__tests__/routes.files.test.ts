@@ -21,7 +21,7 @@ describe('Files Routes', () => {
       const { verifySignedUrlSignature } = await import('../storage/signed-url');
       vi.mocked(verifySignedUrlSignature).mockResolvedValue(false);
 
-      const res = await app.fetch(makeFileUrlRequest('book-1', 'key', '9999999999', 'sig'), env);
+      const res = await app.fetch(makeFileUrlRequest('book-1', 'key', '9999999999', 'sig'), env, { waitUntil: () => {} } as any);
       expect(res.status).toBe(403);
     });
 
@@ -31,7 +31,7 @@ describe('Files Routes', () => {
       vi.mocked(verifySignedUrlExpiry).mockReturnValue(true);
 
       mockQueryFirst.mockResolvedValue(null);
-      const res = await app.fetch(makeFileUrlRequest('book-1', 'key', '9999999999', 'sig'), env);
+      const res = await app.fetch(makeFileUrlRequest('book-1', 'key', '9999999999', 'sig'), env, { waitUntil: () => {} } as any);
       expect(res.status).toBe(404);
     });
 
@@ -50,7 +50,7 @@ describe('Files Routes', () => {
       mockQueryFirst.mockResolvedValue({ id: '1', storage_key: 'key' });
       vi.spyOn(env.BOOKS_BUCKET, 'get').mockResolvedValue(mockObject as any);
 
-      const res = await app.fetch(makeFileUrlRequest('book-1', 'key', '9999999999', 'sig'), env);
+      const res = await app.fetch(makeFileUrlRequest('book-1', 'key', '9999999999', 'sig'), env, { waitUntil: () => {} } as any);
 
       expect(res.status).toBe(200);
       expect(res.headers.get('Content-Type')).toBe('application/epub+zip');
