@@ -72,7 +72,6 @@ export async function logAudit(
   ctx?: { waitUntil: (promise: Promise<unknown>) => void }
 ): Promise<void> {
   const promise = (async () => {
-    const id = crypto.randomUUID();
     const payloadJson = entry.payload
       ? JSON.stringify(sanitizeAuditPayload(entry.payload))
       : null;
@@ -82,7 +81,7 @@ export async function logAudit(
       env,
       `INSERT INTO audit_log (id, actor_email, entity_type, entity_id, action, payload_json)
        VALUES (?, ?, ?, ?, ?, ?)`,
-      [id, entry.actorEmail ?? null, entry.entityType, entry.entityId, entry.action, payloadJson]
+      [crypto.randomUUID(), entry.actorEmail ?? null, entry.entityType, entry.entityId, entry.action, payloadJson]
     );
   })();
 

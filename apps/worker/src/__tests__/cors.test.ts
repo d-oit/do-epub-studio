@@ -18,7 +18,7 @@ describe('CORS', () => {
       json: () => Promise.resolve({}),
     }),
     delete: () => Promise.resolve(),
-    list: () => Promise.resolve({ objects: [], truncated: false, delimitedPrefixes: [] }),
+    list: () => Promise.resolve({ objects: [], truncated: false }),
   };
 
   const env: Env = {

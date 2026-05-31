@@ -1,5 +1,5 @@
 import { vi, type Mock } from 'vitest';
-import type { Env } from '../lib/env';
+import type { Env, R2Bucket } from '../lib/env';
 import type { AuthContext } from '../auth/middleware';
 
 // ---------------------------------------------------------------------------
@@ -138,16 +138,20 @@ export function makeEnv(): Env {
           json: () => Promise.resolve({ allowed: true, remaining: 99, resetAt: Date.now() + 60000 }),
         }),
       }),
-    } as any,
+    } as unknown as DurableObjectNamespace,
   };
 }
 
-function makeMockBucket(): any {
+function makeMockBucket(): R2Bucket {
   return {
     get: () => Promise.resolve(null),
-    put: () => Promise.resolve(null as any),
+    put: () => Promise.resolve(
+      null as unknown as R2Bucket extends { put(key: string, value: infer V): Promise<infer R> }
+        ? R
+        : never,
+    ),
     delete: () => Promise.resolve(undefined),
-    list: () => Promise.resolve({ objects: [], truncated: false, delimitedPrefixes: [] }),
+    list: () => Promise.resolve({ objects: [], truncated: false }),
   };
 }
 

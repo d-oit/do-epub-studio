@@ -23,7 +23,7 @@ function makeEnv(): Env {
       get: () => Promise.resolve(null),
       put: () => Promise.resolve(null as any),
       delete: () => Promise.resolve(undefined),
-      list: () => Promise.resolve({ objects: [], truncated: false, delimitedPrefixes: [] }),
+      list: () => Promise.resolve({ objects: [], truncated: false }),
     },
     TURSO_DATABASE_URL: 'libsql://test.turso.io',
     TURSO_AUTH_TOKEN: 'test-token',
@@ -38,8 +38,8 @@ function makeEnv(): Env {
           json: () => Promise.resolve({ allowed: true, remaining: 99, resetAt: Date.now() + 60000 }),
         }),
       }),
-    } as any,
-  } as any;
+    } as unknown as DurableObjectNamespace,
+  };
 }
 
 function makeRequest(headers: Record<string, string> = {}): Request {
