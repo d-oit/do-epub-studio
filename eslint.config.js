@@ -21,6 +21,8 @@ export default tseslint.config(
       'packages/*/.turbo/**',
       '*.min.js',
       '.wrangler/',
+      // Wrangler-generated runtime type definitions — content is auto-managed.
+      'apps/worker/src/worker-configuration.d.ts',
     ],
   },
   {

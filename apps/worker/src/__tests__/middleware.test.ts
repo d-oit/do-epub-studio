@@ -16,14 +16,18 @@ import { requireAuth } from '../auth/middleware';
 import { queryFirst } from '../db/client';
 import { validateSession, parseAuthHeader } from '../auth/session';
 import type { Env } from '../lib/env';
+import type { RateLimiterDO } from '../lib/rate-limiter-do';
 
 function makeEnv(): Env {
   return {
     BOOKS_BUCKET: {
       get: () => Promise.resolve(null),
-      put: () => Promise.resolve(null as any),
+      put: (() => Promise.resolve(null)) as unknown as R2Bucket['put'],
+      head: () => Promise.resolve(null),
+      createMultipartUpload: () => Promise.resolve({} as R2MultipartUpload),
+      resumeMultipartUpload: () => ({}) as R2MultipartUpload,
       delete: () => Promise.resolve(undefined),
-      list: () => Promise.resolve({ objects: [], truncated: false }),
+      list: () => Promise.resolve({ objects: [], truncated: false, delimitedPrefixes: [] }),
     },
     TURSO_DATABASE_URL: 'libsql://test.turso.io',
     TURSO_AUTH_TOKEN: 'test-token',
@@ -38,7 +42,7 @@ function makeEnv(): Env {
           json: () => Promise.resolve({ allowed: true, remaining: 99, resetAt: Date.now() + 60000 }),
         }),
       }),
-    } as unknown as DurableObjectNamespace,
+    } as unknown as DurableObjectNamespace<RateLimiterDO>,
   };
 }
 
