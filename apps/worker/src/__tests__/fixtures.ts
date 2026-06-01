@@ -295,3 +295,9 @@ export function makeAuditLogRow(overrides: Record<string, unknown> = {}): Record
     ...overrides,
   };
 }
+
+// Typed passthrough ExecutionContext for route tests — replaces `{ waitUntil: () => {} } as any`
+// patterns flagged by Codacy as ESLint8_@typescript-eslint_no-explicit-any.
+export function makePassThroughContext(): { waitUntil: () => void; passThroughOnException: () => void } {
+  return { waitUntil: () => {}, passThroughOnException: () => {} };
+}

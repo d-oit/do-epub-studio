@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import worker from '../index';
 import { TRACE_HEADER, SPAN_HEADER } from '@do-epub-studio/shared';
 import type { Env } from '../lib/env';
+import { makePassThroughContext } from './fixtures';
 
 describe('CORS', () => {
 
@@ -39,7 +40,7 @@ describe('CORS', () => {
       },
     });
 
-    const response = await worker.fetch(request, env, { waitUntil: () => {} } as any);
+    const response = await worker.fetch(request, env, makePassThroughContext() as unknown as ExecutionContext);
     expect(response.headers.get('Access-Control-Allow-Origin')).toBe(env.APP_BASE_URL);
   });
 
@@ -51,7 +52,7 @@ describe('CORS', () => {
       },
     });
 
-    const response = await worker.fetch(request, env, { waitUntil: () => {} } as any);
+    const response = await worker.fetch(request, env, makePassThroughContext() as unknown as ExecutionContext);
     expect(response.headers.get('Access-Control-Allow-Origin')).toBe('https://app.example.com');
   });
 
@@ -60,7 +61,7 @@ describe('CORS', () => {
       method: 'OPTIONS',
     });
 
-    const response = await worker.fetch(request, env, { waitUntil: () => {} } as any);
+    const response = await worker.fetch(request, env, makePassThroughContext() as unknown as ExecutionContext);
     const allowedHeaders = response.headers.get('Access-Control-Allow-Headers');
     expect(allowedHeaders).toContain(TRACE_HEADER);
     expect(allowedHeaders).toContain(SPAN_HEADER);
@@ -71,7 +72,7 @@ describe('CORS', () => {
       method: 'OPTIONS',
     });
 
-    const response = await worker.fetch(request, env, { waitUntil: () => {} } as any);
+    const response = await worker.fetch(request, env, makePassThroughContext() as unknown as ExecutionContext);
     expect(response.headers.get('Vary')).toBe('Origin, Access-Control-Request-Headers');
   });
 
@@ -80,7 +81,7 @@ describe('CORS', () => {
       method: 'OPTIONS',
     });
 
-    const response = await worker.fetch(request, env, { waitUntil: () => {} } as any);
+    const response = await worker.fetch(request, env, makePassThroughContext() as unknown as ExecutionContext);
     expect(response.headers.get('Access-Control-Allow-Origin')).toBe(env.APP_BASE_URL);
   });
 
@@ -90,7 +91,7 @@ describe('CORS', () => {
       headers: { Origin: 'https://app.example.com' },
     });
 
-    const response = await worker.fetch(request, env, { waitUntil: () => {} } as any);
+    const response = await worker.fetch(request, env, makePassThroughContext() as unknown as ExecutionContext);
     expect(response.headers.get('Access-Control-Allow-Methods')).toBe('GET, POST, PUT, PATCH, DELETE, OPTIONS');
   });
 });
