@@ -17,6 +17,10 @@ interface LogPayload {
   durationMs?: number;
   error?: ReturnType<typeof serializeError>;
   metadata?: Record<string, unknown>;
+  route?: string;
+  assetType?: string;
+  fetchSource?: string;
+  cacheStatus?: string;
 }
 
 export interface RequestContext {
@@ -60,7 +64,16 @@ export function logRequestStart(ctx: RequestContext): void {
   });
 }
 
-export function logRequestEnd(ctx: RequestContext, status: number): void {
+export function logRequestEnd(
+  ctx: RequestContext,
+  status: number,
+  options?: {
+    route?: string;
+    assetType?: string;
+    fetchSource?: string;
+    cacheStatus?: string;
+  },
+): void {
   log({
     level: 'info',
     traceId: ctx.traceId,
@@ -70,6 +83,10 @@ export function logRequestEnd(ctx: RequestContext, status: number): void {
     path: ctx.path,
     status,
     durationMs: Date.now() - ctx.startedAt,
+    route: options?.route,
+    assetType: options?.assetType,
+    fetchSource: options?.fetchSource,
+    cacheStatus: options?.cacheStatus,
   });
 }
 

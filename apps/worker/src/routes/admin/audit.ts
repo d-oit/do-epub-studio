@@ -15,7 +15,7 @@ auditRouter.get('/audit', zValidator('query', AuditQuerySchema), adminAuth, asyn
     entityType: entityType ?? 'user', // default to user for query logging if undefined
     entityId: entityId ?? '',
     action: 'query',
-  });
+  }, c.executionCtx);
 
   const conditions: string[] = [];
   const args: (string | number)[] = [];

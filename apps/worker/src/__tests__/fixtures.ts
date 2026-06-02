@@ -1,5 +1,6 @@
 import { vi, type Mock } from 'vitest';
-import type { Env, R2Bucket } from '../lib/env';
+import type { Env } from '../lib/env';
+import type { RateLimiterDO } from '../lib/rate-limiter-do';
 import type { AuthContext } from '../auth/middleware';
 
 // ---------------------------------------------------------------------------
@@ -138,20 +139,20 @@ export function makeEnv(): Env {
           json: () => Promise.resolve({ allowed: true, remaining: 99, resetAt: Date.now() + 60000 }),
         }),
       }),
-    } as unknown as DurableObjectNamespace,
+    } as unknown as DurableObjectNamespace<RateLimiterDO>,
   };
 }
 
 function makeMockBucket(): R2Bucket {
   return {
     get: () => Promise.resolve(null),
-    put: () => Promise.resolve(
-      null as unknown as R2Bucket extends { put(key: string, value: infer V): Promise<infer R> }
-        ? R
-        : never,
-    ),
+    put: (() => Promise.resolve(null)) as unknown as R2Bucket['put'],
+    head: () => Promise.resolve(null),
+    createMultipartUpload: () => Promise.resolve({} as R2MultipartUpload),
+    resumeMultipartUpload: () => ({}) as R2MultipartUpload,
     delete: () => Promise.resolve(undefined),
-    list: () => Promise.resolve({ objects: [], truncated: false }),
+    list: () =>
+      Promise.resolve({ objects: [], truncated: false, delimitedPrefixes: [] }),
   };
 }
 
@@ -293,4 +294,10 @@ export function makeAuditLogRow(overrides: Record<string, unknown> = {}): Record
     created_at: new Date().toISOString(),
     ...overrides,
   };
+}
+
+// Typed passthrough ExecutionContext for route tests — replaces `{ waitUntil: () => {} } as any`
+// patterns flagged by Codacy as ESLint8_@typescript-eslint_no-explicit-any.
+export function makePassThroughContext(): { waitUntil: () => void; passThroughOnException: () => void } {
+  return { waitUntil: () => {}, passThroughOnException: () => {} };
 }

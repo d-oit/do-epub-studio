@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   makeEnv,
+  makePassThroughContext,
   mockValidateGrant,
   mockCreateSession,
   mockRevokeSession,
@@ -29,7 +30,7 @@ describe('Access Routes', () => {
         method: 'POST',
         body: JSON.stringify({}),
         headers: { 'Content-Type': 'application/json' }
-      }), env);
+      }), env, makePassThroughContext() as unknown as ExecutionContext);
       expect(res.status).toBe(400);
     });
 
@@ -40,7 +41,7 @@ describe('Access Routes', () => {
         method: 'POST',
         body: JSON.stringify(validPayload),
         headers: { 'Content-Type': 'application/json' }
-      }), env);
+      }), env, makePassThroughContext() as unknown as ExecutionContext);
       expect(res.status).toBe(401);
       const body = await res.json() as any;
       expect(body.error.code).toBe('ACCESS_DENIED');
@@ -76,7 +77,7 @@ describe('Access Routes', () => {
         method: 'POST',
         body: JSON.stringify(validPayload),
         headers: { 'Content-Type': 'application/json' }
-      }), env);
+      }), env, makePassThroughContext() as unknown as ExecutionContext);
       expect(res.status).toBe(200);
       const body = await res.json() as any;
       expect(body.ok).toBe(true);
@@ -90,7 +91,7 @@ describe('Access Routes', () => {
       const res = await app.fetch(new Request('http://localhost/api/access/logout', {
         method: 'POST',
         headers: { 'Authorization': 'Bearer session-token' }
-      }), env);
+      }), env, makePassThroughContext() as unknown as ExecutionContext);
       expect(res.status).toBe(200);
       const body = await res.json() as any;
       expect(body.ok).toBe(true);
@@ -103,7 +104,7 @@ describe('Access Routes', () => {
       const res = await app.fetch(new Request('http://localhost/api/access/refresh', {
         method: 'POST',
         headers: { 'Authorization': 'Bearer bad-token' }
-      }), env);
+      }), env, makePassThroughContext() as unknown as ExecutionContext);
       expect(res.status).toBe(401);
     });
 
@@ -120,7 +121,7 @@ describe('Access Routes', () => {
       const res = await app.fetch(new Request('http://localhost/api/access/refresh', {
         method: 'POST',
         headers: { 'Authorization': 'Bearer good-token' }
-      }), env);
+      }), env, makePassThroughContext() as unknown as ExecutionContext);
       expect(res.status).toBe(200);
       const body = await res.json() as any;
       expect(body.ok).toBe(true);
@@ -133,7 +134,7 @@ describe('Access Routes', () => {
       mockValidateSessionMod.mockResolvedValue({ valid: false });
       const res = await app.fetch(new Request('http://localhost/api/access/validate?bookId=book-1', {
         headers: { 'Authorization': 'Bearer bad-token' }
-      }), env);
+      }), env, makePassThroughContext() as unknown as ExecutionContext);
       expect(res.status).toBe(401);
     });
 
@@ -147,7 +148,7 @@ describe('Access Routes', () => {
 
       const res = await app.fetch(new Request('http://localhost/api/access/validate?bookId=book-1', {
         headers: { 'Authorization': 'Bearer good-token' }
-      }), env);
+      }), env, makePassThroughContext() as unknown as ExecutionContext);
       expect(res.status).toBe(200);
       const body = await res.json() as any;
       expect(body.ok).toBe(true);
@@ -169,7 +170,7 @@ describe('Access Routes', () => {
 
       const res = await app.fetch(new Request('http://localhost/api/access/validate-all', {
         headers: { 'Authorization': 'Bearer good-token' }
-      }), env);
+      }), env, makePassThroughContext() as unknown as ExecutionContext);
       expect(res.status).toBe(200);
       const body = await res.json() as any;
       expect(body.ok).toBe(true);

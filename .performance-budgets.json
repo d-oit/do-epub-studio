@@ -2,10 +2,14 @@
   "bundleSize": {
     "index.js": 500000,
     "react-vendor.js": 400000,
-    "index.css": 100000
+    "index.css": 100000,
+    "reader-core.js": 300000,
+    "reader-route.js": 200000,
+    "epubjs.js": 250000
   },
   "startupTime": {
-    "fcp": 1500
+    "fcp": 1500,
+    "reader-fcp": 1200
   },
   "ciDuration": {
     "total": 900
