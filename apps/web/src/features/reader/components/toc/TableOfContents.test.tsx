@@ -75,4 +75,22 @@ describe('TableOfContents', () => {
     render(<TableOfContents {...mockProps} toc={[]} />);
     expect(screen.getByText('reader.noChapters')).toBeInTheDocument();
   });
+
+  it('uses VirtualList for long TOCs (>50 items)', () => {
+    const longToc = Array.from({ length: 60 }, (_, i) => ({
+      label: `Chapter ${i + 1}`,
+      href: `chapter${i + 1}.xhtml`,
+    }));
+    const { container } = render(
+      <TableOfContents {...mockProps} toc={longToc} />,
+    );
+    // VirtualList renders a <ul> for the scroll container (semantic list).
+    // The short-list path uses <nav> + plain <button> children.
+    const list = container.querySelector('ul');
+    expect(list).toBeInTheDocument();
+    // Should not mount all 60 buttons eagerly — only visible window
+    const buttons = container.querySelectorAll('button[data-toc-index]');
+    expect(buttons.length).toBeLessThan(longToc.length);
+    expect(buttons.length).toBeGreaterThan(0);
+  });
 });
