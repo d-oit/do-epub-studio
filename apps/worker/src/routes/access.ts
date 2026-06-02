@@ -38,7 +38,7 @@ accessRouter.post('/request', zValidator('json', AccessRequestSchema), async (c)
       action: 'access_denied',
       actorEmail: email.toLowerCase(),
       payload: { reason: result.error },
-    });
+    }, c.executionCtx);
 
     return c.json(
       {
@@ -57,7 +57,7 @@ accessRouter.post('/request', zValidator('json', AccessRequestSchema), async (c)
     action: 'access_granted',
     actorEmail: email.toLowerCase(),
     payload: { grantId: result.grant.id },
-  });
+  }, c.executionCtx);
 
   return c.json({
     ok: true,

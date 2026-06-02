@@ -85,7 +85,7 @@ highlightsRouter.post('/:bookId/highlights', zValidator('json', HighlightCreateS
     action: 'create',
     actorEmail: auth.email,
     payload: { bookId, chapterRef: locator.chapterRef, color: body.color },
-  });
+  }, c.executionCtx);
 
   return c.json(
     {
@@ -121,7 +121,7 @@ highlightsRouter.delete('/:bookId/highlights/:highlightId', readerAuth, async (c
     action: 'delete',
     actorEmail: auth.email,
     payload: { bookId },
-  });
+  }, c.executionCtx);
 
   return c.json({ ok: true });
 });
@@ -174,7 +174,7 @@ highlightsRouter.patch('/:bookId/highlights/:highlightId', zValidator('json', Hi
     action: 'update',
     actorEmail: auth.email,
     payload: body,
-  });
+  }, c.executionCtx);
 
   return c.json({
     ok: true,

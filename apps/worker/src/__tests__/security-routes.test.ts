@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { makeEnv } from './fixtures';
+import { makeEnv, makePassThroughContext } from './fixtures';
 import { app } from '../app';
 
 describe('Security Routes', () => {
@@ -15,7 +15,7 @@ describe('Security Routes', () => {
         }
       }),
       headers: { 'Content-Type': 'application/json' },
-    }), env);
+    }), env, makePassThroughContext() as unknown as ExecutionContext);
 
     expect(res.status).toBe(202);
   });

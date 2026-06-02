@@ -1,7 +1,7 @@
 {
   "name": "do-epub-studio-worker",
   "main": "src/index.ts",
-  "compatibility_date": "2026-04-07",
+  "compatibility_date": "2026-05-30",
   "vars": {
     "APP_BASE_URL": "https://do-epub-studio.example.com",
     "TURSO_DATABASE_URL": "libsql://do-epub-studio-your-org.turso.io"
@@ -15,9 +15,15 @@
   "durable_objects": {
     "bindings": [
       {
-        "binding": "RATE_LIMITER",
+        "name": "RATE_LIMITER",
         "class_name": "RateLimiterDO"
       }
     ]
-  }
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["RateLimiterDO"]
+    }
+  ]
 }
