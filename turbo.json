@@ -1,10 +1,39 @@
 {
   "$schema": "https://turbo.build/schema.json",
-  "globalPassThroughEnv": ["TURBO_TOKEN", "TURBO_TEAM"],
+  "globalPassThroughEnv": ["TURBO_TOKEN", "TURBO_TEAM", "CI"],
+  "globalDependencies": [
+    "pnpm-lock.yaml",
+    "pnpm-workspace.yaml",
+    "package.json",
+    ".npmrc",
+    "tsconfig.base.json",
+    "eslint.config.js",
+    "vitest.workspace.ts"
+  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
       "env": ["VITE_API_BASE_URL", "VITE_APP_NAME", "ANALYZE", "NODE_ENV"],
+      "inputs": [
+        "src/**",
+        "index.html",
+        "public/**",
+        "vite.config.ts",
+        "tsconfig.json",
+        "tsconfig*.json",
+        "tailwind.config.js",
+        "package.json"
+      ],
+      "outputs": ["dist/**"]
+    },
+    "build:analyze": {
+      "dependsOn": ["^build"],
+      "env": ["ANALYZE"],
+      "inputs": [
+        "src/**",
+        "vite.config.ts",
+        "package.json"
+      ],
       "outputs": ["dist/**"]
     },
     "dev": {
@@ -12,28 +41,55 @@
       "persistent": true
     },
     "lint": {
-      "inputs": ["src/**", "tests/**", "*.config.*", "eslint.config.js"],
+      "inputs": [
+        "src/**",
+        "eslint.config.js",
+        "*.config.{js,ts,mjs,cjs}",
+        "tsconfig.json",
+        "tsconfig*.json",
+        "package.json"
+      ],
       "outputs": []
     },
     "typecheck": {
-      "inputs": ["src/**", "tests/**", "tsconfig*.json"],
+      "inputs": [
+        "src/**",
+        "tsconfig.json",
+        "tsconfig*.json",
+        "package.json",
+        "src/**/*.d.ts"
+      ],
       "outputs": []
     },
     "test:unit": {
-      "outputs": [],
-      "inputs": ["src/**", "tests/**", "*.config.*", "vitest.workspace.ts", "vitest.config.ts"]
+      "inputs": [
+        "src/**",
+        "__mocks__/**",
+        "src/test-setup.ts",
+        "vitest.setup.ts",
+        "vitest.config.ts",
+        "tsconfig.json",
+        "tsconfig*.json",
+        "package.json"
+      ],
+      "outputs": ["coverage/**"]
     },
     "test": {
       "dependsOn": ["test:unit"]
     },
     "test:e2e": {
       "dependsOn": ["^build"],
-      "outputs": []
+      "env": ["PLAYWRIGHT_MODE", "BASE_URL", "PLAYWRIGHT_BASE_URL"],
+      "inputs": [
+        "tests/**",
+        "playwright.config.ts",
+        "tsconfig.json"
+      ],
+      "outputs": ["playwright-report/**", "test-results/**"]
     },
     "test:coverage": {
       "dependsOn": ["test:unit"],
-      "outputs": []
+      "outputs": ["coverage/**"]
     }
-  },
-  "globalDependencies": ["vitest.workspace.ts", "tsconfig.base.json"]
+  }
 }

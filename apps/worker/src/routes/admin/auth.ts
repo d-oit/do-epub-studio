@@ -47,7 +47,7 @@ authRouter.post('/login', zValidator('json', LoginSchema), async (c) => {
     action: 'admin_login',
     actorEmail: result.user.email,
     payload: { role: result.user.role },
-  });
+  }, c.executionCtx);
 
   return c.json({
     ok: true,

@@ -54,7 +54,7 @@ booksRouter.post('/', zValidator('json', CreateBookSchema), adminAuth, async (c)
     action: 'created',
     actorEmail: adminUser.email,
     payload: { slug: body.slug, title: body.title },
-  });
+  }, c.executionCtx);
 
   return c.json(
     {
@@ -172,7 +172,7 @@ booksRouter.post('/:id/upload-complete', zValidator('json', UploadCompleteSchema
     entityId: bookId,
     action: 'file_uploaded',
     payload: { fileId, storageKey: body.storageKey },
-  });
+  }, c.executionCtx);
 
   return c.json({ ok: true, data: { id: fileId, storageKey: body.storageKey } }, 201);
 });

@@ -100,7 +100,7 @@ commentsRouter.post('/books/:bookId/comments', zValidator('json', CommentCreateS
     action: 'create',
     actorEmail: auth.email,
     payload: { bookId, visibility: body.visibility },
-  });
+  }, c.executionCtx);
 
   return c.json(
     {
@@ -178,7 +178,7 @@ commentsRouter.patch('/comments/:commentId', zValidator('json', CommentUpdateSch
     action: 'update',
     actorEmail: auth.email,
     payload: body,
-  });
+  }, c.executionCtx);
 
   return c.json({
     ok: true,
@@ -225,7 +225,7 @@ commentsRouter.delete('/comments/:commentId', async (c) => {
     entityId: commentId,
     action: 'delete',
     actorEmail: auth.email,
-  });
+  }, c.executionCtx);
 
   return c.json({ ok: true });
 });

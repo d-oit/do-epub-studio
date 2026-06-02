@@ -41,7 +41,7 @@ grantsRouter.post('/books/:id/grants', zValidator('json', CreateGrantSchema), ad
     action: 'created',
     actorEmail: adminUser.email,
     payload: { bookId, email: body.email, mode: body.mode },
-  });
+  }, c.executionCtx);
 
   return c.json({ ok: true, data: { id: grantId, email: body.email } }, 201);
 });
@@ -104,7 +104,7 @@ grantsRouter.patch('/grants/:id', zValidator('json', UpdateGrantSchema), adminAu
     action: 'updated',
     actorEmail: adminUser.email,
     payload: body,
-  });
+  }, c.executionCtx);
 
   return c.json({ ok: true, data: { id: grantId, ...body } });
 });
@@ -130,7 +130,7 @@ grantsRouter.post('/grants/:id/revoke', adminAuth, async (c) => {
     entityId: grantId,
     action: 'revoked',
     actorEmail: adminUser.email,
-  });
+  }, c.executionCtx);
 
   return c.json({ ok: true });
 });
