@@ -126,16 +126,19 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
       book = ePub(result.data);
       await book.opened;
 
-      const nav = await book.loaded.navigation;
+      // Fetch navigation, spine, and metadata in parallel — they are
+      // independent and already-resolved by the time `opened` fires.
+      // Sequential awaits add 20-60ms each on large EPUBs (per plan 065).
+      const [nav, meta] = await Promise.all([
+        book.loaded.navigation,
+        book.loaded.metadata,
+      ]);
+
       if (nav?.toc) {
-        toc = parseToc(
-          nav.toc,
-        );
+        toc = parseToc(nav.toc);
       }
 
       spineItems = await parseSpineFromBook();
-
-      const meta = await book.loaded.metadata;
       const metaMap = meta as Map<string, string>;
 
       const direction: PageDirection = book.packaging?.direction === 'rtl'

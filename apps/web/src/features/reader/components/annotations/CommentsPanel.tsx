@@ -4,6 +4,7 @@ import type { Comment, Highlight } from '../../../../stores';
 import { useTranslation } from '../../../../hooks/useTranslation';
 import { CommentItem } from './CommentItem';
 import { HighlightItem } from './HighlightItem';
+import { VirtualList } from '../../../../components/VirtualList';
 
 type SupportedLocale = 'en' | 'de' | 'fr';
 
@@ -22,6 +23,11 @@ interface CommentsPanelProps {
   currentChapter: string | null;
   locale: SupportedLocale;
 }
+
+// Virtualize when the per-section list exceeds this. Annotations are taller
+// than TOC items (cards with comment text), so threshold is lower.
+const VIRTUALIZE_THRESHOLD = 30;
+const HIGHLIGHT_ITEM_HEIGHT = 96; // px-3 py-2 + multi-line note preview
 
 export function CommentsPanel({
   isOpen,
@@ -95,6 +101,70 @@ export function CommentsPanel({
     [comments],
   );
 
+  const renderComment = useCallback(
+    (comment: Comment) => (
+      <CommentItem
+        comment={comment}
+        isCurrentChapter={currentChapter === comment.chapterRef}
+        replyingTo={replyingTo}
+        replyText={replyText}
+        setReplyingTo={setReplyingTo}
+        setReplyText={setReplyText}
+        handleReply={handleReply}
+        editingComment={editingComment}
+        editText={editText}
+        setEditingComment={setEditingComment}
+        setEditText={setEditText}
+        handleEdit={handleEdit}
+        onResolve={onResolveComment}
+        onDelete={onDeleteComment}
+        onNavigate={() => {
+          onNavigateToAnnotation(comment.chapterRef || '', comment.cfiRange || undefined);
+        }}
+        t={t}
+      />
+    ),
+    [
+      currentChapter,
+      replyingTo,
+      replyText,
+      editingComment,
+      editText,
+      handleReply,
+      handleEdit,
+      onResolveComment,
+      onDeleteComment,
+      onNavigateToAnnotation,
+      t,
+    ],
+  );
+
+  const renderHighlight = useCallback(
+    (highlight: Highlight) => (
+      <HighlightItem
+        highlight={highlight}
+        isCurrentChapter={currentChapter === highlight.chapterRef}
+        editingHighlight={editingHighlight}
+        highlightNote={highlightNote}
+        setEditingHighlight={setEditingHighlight}
+        setHighlightNote={setHighlightNote}
+        onEdit={handleEditHighlight}
+        onDelete={onDeleteHighlight}
+        onNavigate={() => {
+          onNavigateToAnnotation(highlight.chapterRef || '', highlight.cfiRange || undefined);
+        }}
+      />
+    ),
+    [
+      currentChapter,
+      editingHighlight,
+      highlightNote,
+      handleEditHighlight,
+      onDeleteHighlight,
+      onNavigateToAnnotation,
+    ],
+  );
+
   if (!isOpen) return null;
 
   return (
@@ -151,65 +221,39 @@ export function CommentsPanel({
               </p>
             )}
             {openComments.length > 0 && (
-              <div className="space-y-3">
-                <h3 className="text-xs font-semibold text-foreground-muted uppercase">Open</h3>
-                {openComments.map((comment) => (
-                  <CommentItem
-                    key={comment.id}
-                    comment={comment}
-                    isCurrentChapter={currentChapter === comment.chapterRef}
-                    replyingTo={replyingTo}
-                    replyText={replyText}
-                    setReplyingTo={setReplyingTo}
-                    setReplyText={setReplyText}
-                    handleReply={handleReply}
-                    editingComment={editingComment}
-                    editText={editText}
-                    setEditingComment={setEditingComment}
-                    setEditText={setEditText}
-                    handleEdit={handleEdit}
-                    onResolve={onResolveComment}
-                    onDelete={onDeleteComment}
-                    onNavigate={() =>
-                      onNavigateToAnnotation(
-                        comment.chapterRef || '',
-                        comment.cfiRange || undefined,
-                      )
-                    }
-                    t={t}
+              <div>
+                <h3 className="text-xs font-semibold text-foreground-muted uppercase mb-3">Open</h3>
+                {openComments.length > VIRTUALIZE_THRESHOLD ? (
+                  <VirtualList
+                    items={openComments}
+                    itemHeight={120}
+                    className="h-[60vh]"
+                    renderItem={renderComment}
+                    ariaLabel="Open comments"
                   />
-                ))}
+                ) : (
+                  <div className="space-y-3">
+                    {openComments.map(renderComment)}
+                  </div>
+                )}
               </div>
             )}
             {resolvedComments.length > 0 && (
-              <div className="space-y-3 mt-6">
-                <h3 className="text-xs font-semibold text-foreground-muted uppercase">Resolved</h3>
-                {resolvedComments.map((comment) => (
-                  <CommentItem
-                    key={comment.id}
-                    comment={comment}
-                    isCurrentChapter={currentChapter === comment.chapterRef}
-                    replyingTo={replyingTo}
-                    replyText={replyText}
-                    setReplyingTo={setReplyingTo}
-                    setReplyText={setReplyText}
-                    handleReply={handleReply}
-                    editingComment={editingComment}
-                    editText={editText}
-                    setEditingComment={setEditingComment}
-                    setEditText={setEditText}
-                    handleEdit={handleEdit}
-                    onResolve={onResolveComment}
-                    onDelete={onDeleteComment}
-                    onNavigate={() =>
-                      onNavigateToAnnotation(
-                        comment.chapterRef || '',
-                        comment.cfiRange || undefined,
-                      )
-                    }
-                    t={t}
+              <div className="mt-6">
+                <h3 className="text-xs font-semibold text-foreground-muted uppercase mb-3">Resolved</h3>
+                {resolvedComments.length > VIRTUALIZE_THRESHOLD ? (
+                  <VirtualList
+                    items={resolvedComments}
+                    itemHeight={120}
+                    className="h-[60vh]"
+                    renderItem={renderComment}
+                    ariaLabel="Resolved comments"
                   />
-                ))}
+                ) : (
+                  <div className="space-y-3">
+                    {resolvedComments.map(renderComment)}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -222,25 +266,18 @@ export function CommentsPanel({
                 {t('highlight.noHighlights')}
               </p>
             )}
-            {highlights.map((highlight) => (
-              <HighlightItem
-                key={highlight.id}
-                highlight={highlight}
-                isCurrentChapter={currentChapter === highlight.chapterRef}
-                editingHighlight={editingHighlight}
-                highlightNote={highlightNote}
-                setEditingHighlight={setEditingHighlight}
-                setHighlightNote={setHighlightNote}
-                onEdit={handleEditHighlight}
-                onDelete={onDeleteHighlight}
-                onNavigate={() =>
-                  onNavigateToAnnotation(
-                    highlight.chapterRef || '',
-                    highlight.cfiRange || undefined,
-                  )
-                }
-              />
-            ))}
+            {highlights.length > 0 &&
+              (highlights.length > VIRTUALIZE_THRESHOLD ? (
+                <VirtualList
+                  items={highlights}
+                  itemHeight={HIGHLIGHT_ITEM_HEIGHT}
+                  className="h-full"
+                  renderItem={renderHighlight}
+                  ariaLabel="Highlights"
+                />
+              ) : (
+                highlights.map(renderHighlight)
+              ))}
           </div>
         )}
       </div>

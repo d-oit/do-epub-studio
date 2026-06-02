@@ -6,6 +6,8 @@ import {
   updateSyncQueueItem,
   getUnsyncedProgress,
   getUnsyncedAnnotations,
+  saveProgress,
+  saveAnnotation,
   type SyncQueueItem,
 } from './db';
 import { api } from '../api';
@@ -241,14 +243,12 @@ async function markAsSynced(type: 'progress' | 'annotation', mutationId: string)
     const unsynced = await getUnsyncedProgress();
     const entry = unsynced.find((e) => e.mutationId === mutationId);
     if (entry) {
-      const { saveProgress } = await import('./db');
       await saveProgress({ ...entry, synced: true });
     }
   } else {
     const unsynced = await getUnsyncedAnnotations();
     const entry = unsynced.find((e) => e.mutationId === mutationId);
     if (entry) {
-      const { saveAnnotation } = await import('./db');
       await saveAnnotation({ ...entry, synced: true });
     }
   }
