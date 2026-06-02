@@ -31,6 +31,8 @@ ALLOWED_SHAS=(
     "sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6"
     "actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10"
     "actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3"
+    "ossf/scorecard-action@4eaacf0543bb3f2c246792bd56e8cdeffafb205a"
+    "actions/stale@eb5cf3af3ac0a1aa4c9c45633dd1ae542a27a899"
 )
 
 # Function to check if an action@sha is allowed
