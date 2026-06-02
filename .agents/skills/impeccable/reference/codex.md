@@ -4,7 +4,7 @@ This file is loaded by `$impeccable craft` when the harness has native image gen
 
 Read this *before* generating any images. The order matters, and the per-step user pauses are what keep generated imagery from drifting away from the brief.
 
-### Four stop points before code
+## Four stop points before code
 
 Steps A through D each end with the user. Do not advance past any of them on your own read of the situation.
 

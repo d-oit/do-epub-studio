@@ -6,7 +6,7 @@ Before writing code, you need: PRODUCT.md loaded, register identified and the ma
 
 Treat any approved visual direction (generated mock or stated reference) as a concrete contract for composition, hierarchy, density, atmosphere, signature motifs, and distinctive visual moves. Don't let mocks replace structure, copy, accessibility, or state design. But if the live result lacks the approved direction's major ingredients, the implementation is wrong.
 
-### Gates: do not compress
+## Gates: do not compress
 
 Craft has **multiple user gates**, not one. When the harness has native image generation (Codex via `image_gen`), the gate sequence before code is:
 
