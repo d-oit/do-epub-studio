@@ -43,7 +43,7 @@ Tasks are grouped by domain to enable focused, parallel, or sequential execution
 - **Quality Gate**: Metrics are visible in CI and runtime dashboards.
 
 ## 3. Strategy
-- **Hybrid Execution**: 
+- **Hybrid Execution**:
   - Batch 1 can be executed in parallel (independent Dependabot PRs).
   - Batches 2-6 will be executed sequentially to ensure stability and allow for focused testing.
 - **Quality Gates**: Run `./scripts/quality_gate.sh` and `./scripts/validate-workflows.sh` after every batch.
