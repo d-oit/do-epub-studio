@@ -6,14 +6,23 @@
       "settings": {
         "onlyCategories": ["performance", "accessibility", "best-practices", "seo"],
         "preset": "desktop"
-      }
+      },
+      "url": [
+        "http://localhost:5173/",
+        "http://localhost:5173/read/test-book"
+      ]
     },
     "assert": {
       "assertions": {
         "categories:performance": ["error", { "minScore": 0.5 }],
         "categories:accessibility": ["error", { "minScore": 0.85 }],
         "categories:best-practices": ["warn", { "minScore": 0.8 }],
-        "categories:seo": ["warn", { "minScore": 0.8 }]
+        "categories:seo": ["warn", { "minScore": 0.8 }],
+        "resource-summary:document:size": ["error", { "maxNumericValue": 50000 }],
+        "resource-summary:script:size": ["error", { "maxNumericValue": 500000 }],
+        "resource-summary:stylesheet:size": ["error", { "maxNumericValue": 100000 }],
+        "first-contentful-paint": ["warn", { "maxNumericValue": 1500 }],
+        "interactive": ["warn", { "maxNumericValue": 3000 }]
       }
     },
     "upload": {

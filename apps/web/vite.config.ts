@@ -81,6 +81,16 @@ export default defineConfig({
               return 'i18n';
             }
           }
+          // Route-aware chunking: isolate reader-core from admin/editor
+          if (id.includes('packages/reader-core')) {
+            return 'reader-core';
+          }
+          if (id.includes('features/reader')) {
+            return 'reader-route';
+          }
+          if (id.includes('features/admin')) {
+            return 'admin-route';
+          }
         },
       },
     },

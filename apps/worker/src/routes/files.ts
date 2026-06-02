@@ -4,6 +4,7 @@ import { z } from 'zod';
 import type { Env } from '../lib/env';
 import { queryFirst } from '../db/client';
 import { verifySignedUrlExpiry, verifySignedUrlSignature } from '../storage/signed-url';
+import { createRequestContext, logRequestEnd, withTraceHeaders } from '../lib/observability';
 
 export const filesRouter = new Hono<{ Bindings: Env }>();
 
@@ -60,7 +61,15 @@ filesRouter.get('/:bookId/:remainder{.+}', zValidator('query', SignedUrlSchema),
   // Security: ADR-035 restrictive CSP for framed EPUB content
   headers.set('Content-Security-Policy', "script-src 'none'; frame-ancestors 'self'; sandbox allow-same-origin allow-scripts");
 
-  return new Response(object.body, {
-    headers,
+  const ctx = createRequestContext(c.req.raw);
+  logRequestEnd(ctx, 200, {
+    route: '/files/:bookId/:remainder',
+    assetType: object.httpMetadata?.contentType || 'unknown',
+    fetchSource: 'r2',
+    cacheStatus: 'MISS', // R2 does not expose cache status directly on the object
   });
+
+  return withTraceHeaders(new Response(object.body, {
+    headers,
+  }), ctx);
 });
