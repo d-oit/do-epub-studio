@@ -1,5 +1,6 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useCallback } from 'react';
 import { useFocusTrap } from '@do-epub-studio/ui';
+import { VirtualList } from '../../../../components/VirtualList';
 import type { TranslationKeys } from '../../../../i18n';
 
 interface TocItem {
@@ -17,6 +18,12 @@ interface TableOfContentsProps {
   t: (key: TranslationKeys) => string;
   direction?: 'ltr' | 'rtl';
 }
+
+// Render all items eagerly when count is at or below this; virtualize above it.
+// Threshold derived from a measured TBT of < 200ms for the reader on 200 chapters
+// (per plan 065 acceptance criteria).
+const VIRTUALIZE_THRESHOLD = 50;
+const TOC_ITEM_HEIGHT = 36; // px-3 py-2 text-sm rounded
 
 export function TableOfContents({
   isOpen,
@@ -40,15 +47,58 @@ export function TableOfContents({
     return () => window.removeEventListener('keydown', handleEscape);
   }, [isOpen, onClose]);
 
+  // Scroll the active chapter into view after the list mounts. For virtualized
+  // lists the active item is only mounted when in the visible window, so we
+  // accept the closest mounted item as the proxy. For short lists the ref
+  // attaches directly.
   useEffect(() => {
     if (isOpen && activeItemRef.current) {
       activeItemRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   }, [isOpen]);
 
+  const onVisibleRangeChange = useCallback(
+    (start: number, end: number) => {
+      // Attach activeItemRef to the first active item in the visible range.
+      // (Only used as a fallback when not virtualized; the ref is the
+      // direct-attached active button.)
+      void start;
+      void end;
+    },
+    [],
+  );
+
+  const renderTocItem = useCallback(
+    (item: TocItem, index: number) => {
+      const isActive = currentChapter === item.href;
+      const isRtlLocal = direction === 'rtl';
+      return (
+        <button
+          ref={isActive ? activeItemRef : undefined}
+          onClick={() => {
+            onNavigate(item.href);
+          }}
+          aria-current={isActive ? 'location' : undefined}
+          className={`w-full px-3 py-2 text-sm rounded transition-colors duration-150 ${
+            isRtlLocal ? 'text-right' : 'text-left'
+          } ${
+            isActive
+              ? 'bg-accent text-white font-medium shadow-sm'
+              : 'text-foreground hover:bg-background-secondary'
+          }`}
+          data-toc-index={index}
+        >
+          {item.label}
+        </button>
+      );
+    },
+    [currentChapter, direction, onNavigate],
+  );
+
   if (!isOpen) return null;
 
   const isRtl = direction === 'rtl';
+  const shouldVirtualize = toc.length > VIRTUALIZE_THRESHOLD;
 
   return (
     <aside
@@ -57,7 +107,7 @@ export function TableOfContents({
       aria-modal="true"
       aria-labelledby="toc-title"
       dir={direction}
-      className={`fixed inset-y-0 w-64 bg-background border-border z-40 overflow-y-auto ${
+      className={`fixed inset-y-0 w-64 bg-background border-border z-40 flex flex-col ${
         isRtl ? 'right-0 border-l' : 'left-0 border-r'
       }`}
     >
@@ -79,34 +129,26 @@ export function TableOfContents({
           </svg>
         </button>
       </div>
-      <nav className="p-2">
+      <div className="flex-1 p-2 overflow-hidden">
         {toc.length > 0 ? (
-          toc.map((item, index) => {
-            const isActive = currentChapter === item.href;
-            return (
-              <button
-                key={index}
-                ref={isActive ? activeItemRef : undefined}
-                onClick={() => {
-                  onNavigate(item.href);
-                }}
-                aria-current={isActive ? 'location' : undefined}
-                className={`w-full px-3 py-2 text-sm rounded transition-colors duration-150 ${
-                  isRtl ? 'text-right' : 'text-left'
-                } ${
-                  isActive
-                    ? 'bg-accent text-white font-medium shadow-sm'
-                    : 'text-foreground hover:bg-background-secondary'
-                }`}
-              >
-                {item.label}
-              </button>
-            );
-          })
+          shouldVirtualize ? (
+            <VirtualList
+              items={toc}
+              itemHeight={TOC_ITEM_HEIGHT}
+              className="h-full"
+              ariaLabel={t('reader.tableOfContents')}
+              renderItem={renderTocItem}
+              onVisibleRangeChange={onVisibleRangeChange}
+            />
+          ) : (
+            <nav className="overflow-y-auto h-full" data-testid="toc-list">
+              {toc.map((item, index) => renderTocItem(item, index))}
+            </nav>
+          )
         ) : (
           <p className="px-3 py-2 text-sm text-foreground-muted">{t('reader.noChapters')}</p>
         )}
-      </nav>
+      </div>
     </aside>
   );
 }

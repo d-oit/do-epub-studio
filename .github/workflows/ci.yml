@@ -289,7 +289,7 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Run Dev Smoke E2E tests
-        uses: nick-fields/retry@c97818ca39074beaea45180dba704f92496a0082  # v3.0.1
+        uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60  # v4.0.0
         with:
           timeout_minutes: 10
           max_attempts: 2
@@ -346,7 +346,7 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium firefox webkit
 
       - name: Run full cross-browser E2E tests
-        uses: nick-fields/retry@c97818ca39074beaea45180dba704f92496a0082  # v3.0.1
+        uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60  # v4.0.0
         with:
           timeout_minutes: 30
           max_attempts: 2
@@ -489,7 +489,7 @@ jobs:
         if: env.SLACK_WEBHOOK != ''
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-        uses: slackapi/slack-github-action@485a9d42d3a73031f12ec201c457e2162c45d02d  # v2.0.0
+        uses: slackapi/slack-github-action@45a88b9581bfab2566dc881e2cd66d334e621e2c  # v3.0.3
         with:
           webhook: ${{ secrets.SLACK_WEBHOOK }}
           webhook-type: incoming-webhook
@@ -503,7 +503,7 @@ jobs:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           SHA: ${{ github.sha }}
           WORKFLOW: ${{ github.workflow }}
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b  # v7.1.0
+        uses: actions/github-script@d746ffe35508b1917358783b479e04febd2b8f71  # v9.0.0
         with:
           script: |
             const { data: issues } = await github.rest.issues.listForRepo({
@@ -533,7 +533,7 @@ jobs:
       issues: write
     steps:
       - name: Close open ci-failure issues
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b  # v7.1.0
+        uses: actions/github-script@d746ffe35508b1917358783b479e04febd2b8f71  # v9.0.0
         with:
           script: |
             const { data: issues } = await github.rest.issues.listForRepo({
