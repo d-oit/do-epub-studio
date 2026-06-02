@@ -1,36 +1,16 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import worker from '../index';
 import { TRACE_HEADER, SPAN_HEADER } from '@do-epub-studio/shared';
 import type { Env } from '../lib/env';
-import { makePassThroughContext } from './fixtures';
+import { makeEnv, makePassThroughContext } from './fixtures';
 
 describe('CORS', () => {
+  let env: Env;
 
-  const mockBucket: any = {
-    get: () => Promise.resolve(null),
-    put: () => Promise.resolve({
-      key: '',
-      httpEtag: '',
-      writeHttpMetadata: () => {},
-      body: null,
-      bodyUsed: false,
-      arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)),
-      text: () => Promise.resolve(''),
-      json: () => Promise.resolve({}),
-    }),
-    delete: () => Promise.resolve(),
-    list: () => Promise.resolve({ objects: [], truncated: false }),
-  };
-
-  const env: Env = {
-    APP_BASE_URL: 'https://app.example.com',
-    BOOKS_BUCKET: mockBucket,
-    TURSO_DATABASE_URL: '',
-    TURSO_AUTH_TOKEN: '',
-    SESSION_SIGNING_SECRET: '',
-    INVITE_TOKEN_SECRET: '',
-    RATE_LIMITER: {} as any,
-  };
+  beforeEach(() => {
+    env = makeEnv();
+    env.APP_BASE_URL = 'https://app.example.com';
+  });
 
   it('restricts Access-Control-Allow-Origin to APP_BASE_URL for non-matching origin', async () => {
     const request = new Request('https://api.example.com/api/books', {
