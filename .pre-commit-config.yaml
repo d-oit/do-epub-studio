@@ -8,7 +8,7 @@
 repos:
   # Pinned SHAs for supply-chain security
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0  # sha: 8a237... (pinned)
+    rev: v6.0.0  # sha: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c
     hooks:
       - id: check-added-large-files
         args: ['--maxkb=500']
