@@ -105,7 +105,7 @@ jobs:
           cosign sign-blob --yes --output-signature sbom.cyclonedx.json.sig sbom.cyclonedx.json
 
       - name: Generate SLSA Provenance
-        uses: actions/attest-build-provenance@c074443f1aee8d4aeeae555aebba3282517141b2  # v2.2.3
+        uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32  # v4.1.0
         with:
           subject-path: |
             do-epub-studio-web.zip
