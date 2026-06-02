@@ -84,8 +84,9 @@ describe('TableOfContents', () => {
     const { container } = render(
       <TableOfContents {...mockProps} toc={longToc} />,
     );
-    // VirtualList wraps with role="list"; short-list path uses <nav>
-    const list = container.querySelector('[role="list"]');
+    // VirtualList renders a <ul> for the scroll container (semantic list).
+    // The short-list path uses <nav> + plain <button> children.
+    const list = container.querySelector('ul');
     expect(list).toBeInTheDocument();
     // Should not mount all 60 buttons eagerly — only visible window
     const buttons = container.querySelectorAll('button[data-toc-index]');

@@ -118,9 +118,9 @@ export function CommentsPanel({
         handleEdit={handleEdit}
         onResolve={onResolveComment}
         onDelete={onDeleteComment}
-        onNavigate={() =>
-          onNavigateToAnnotation(comment.chapterRef || '', comment.cfiRange || undefined)
-        }
+        onNavigate={() => {
+          onNavigateToAnnotation(comment.chapterRef || '', comment.cfiRange || undefined);
+        }}
         t={t}
       />
     ),
@@ -150,9 +150,9 @@ export function CommentsPanel({
         setHighlightNote={setHighlightNote}
         onEdit={handleEditHighlight}
         onDelete={onDeleteHighlight}
-        onNavigate={() =>
-          onNavigateToAnnotation(highlight.chapterRef || '', highlight.cfiRange || undefined)
-        }
+        onNavigate={() => {
+          onNavigateToAnnotation(highlight.chapterRef || '', highlight.cfiRange || undefined);
+        }}
       />
     ),
     [

@@ -1,8 +1,8 @@
 import { useRef, useState, useEffect, useCallback, useMemo, type ReactNode } from 'react';
 
 /**
- * VirtualList — windowed rendering for long lists in fixed-height scroll
- * containers. Only renders items within ±OVERSCAN of the visible viewport.
+ * VirtualList — windowed rendering for long lists in a scrollable container.
+ * Only mounts items within ±OVERSCAN of the visible viewport.
  *
  * Use when:
  *   - Item count exceeds ~50 (TOC, annotation lists, search results)
@@ -34,7 +34,7 @@ export function VirtualList<T>({
   renderItem,
   onVisibleRangeChange,
 }: VirtualListProps<T>) {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLUListElement>(null);
   const [scrollTop, setScrollTop] = useState(0);
   const [containerHeight, setContainerHeight] = useState(0);
 
@@ -51,12 +51,14 @@ export function VirtualList<T>({
       });
       ro.observe(el);
       setContainerHeight(el.clientHeight);
-      return () => ro.disconnect();
+      return () => {
+        ro.disconnect();
+      };
     }
     setContainerHeight(el.clientHeight);
   }, []);
 
-  const onScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+  const onScroll = useCallback((e: React.UIEvent<HTMLUListElement>) => {
     setScrollTop(e.currentTarget.scrollTop);
   }, []);
 
@@ -82,35 +84,43 @@ export function VirtualList<T>({
   const offsetY = startIndex * itemHeight;
 
   return (
-    <div
+    <ul
       ref={containerRef}
       onScroll={onScroll}
-      role="list"
       aria-label={ariaLabel}
       className={className}
-      style={{ overflowY: 'auto', contain: 'strict' }}
+      style={{ overflowY: 'auto', contain: 'strict', listStyle: 'none', margin: 0, padding: 0 }}
     >
-      <div style={{ height: totalHeight, position: 'relative' }}>
-        <div
+      <li aria-hidden="true" style={{ height: totalHeight, position: 'relative' }}>
+        <ul
           style={{
             transform: `translateY(${offsetY}px)`,
             position: 'absolute',
             top: 0,
             left: 0,
             right: 0,
+            listStyle: 'none',
+            margin: 0,
+            padding: 0,
           }}
         >
-          {visibleItems.map((item, i) => (
-            <div
-              key={startIndex + i}
-              role="listitem"
-              style={{ height: itemHeight }}
-            >
-              {renderItem(item, startIndex + i)}
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
+          {visibleItems.map((item, i) => {
+            const absoluteIndex = startIndex + i;
+            // Stable key: item identity (if it has one) + absolute index as a
+            // disambiguator for duplicate identities. Falls back to index when
+            // the item is a primitive that may repeat (e.g., string labels).
+            const itemKey =
+              typeof item === 'string' || typeof item === 'number'
+                ? `${item}-${absoluteIndex}`
+                : ((item as { id?: string | number }).id ?? absoluteIndex);
+            return (
+              <li key={itemKey} style={{ height: itemHeight }}>
+                {renderItem(item, absoluteIndex)}
+              </li>
+            );
+          })}
+        </ul>
+      </li>
+    </ul>
   );
 }

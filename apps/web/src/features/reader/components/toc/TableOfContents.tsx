@@ -75,7 +75,9 @@ export function TableOfContents({
       return (
         <button
           ref={isActive ? activeItemRef : undefined}
-          onClick={() => onNavigate(item.href)}
+          onClick={() => {
+            onNavigate(item.href);
+          }}
           aria-current={isActive ? 'location' : undefined}
           className={`w-full px-3 py-2 text-sm rounded transition-colors duration-150 ${
             isRtlLocal ? 'text-right' : 'text-left'
