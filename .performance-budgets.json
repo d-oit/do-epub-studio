@@ -7,6 +7,13 @@
     "reader-route.js": 200000,
     "epubjs.js": 250000
   },
+  "routeBudgets": {
+    "reader": {
+      "entry": "src/features/reader/ReaderPage.tsx",
+      "maxSize": 1000000,
+      "description": "Total transitive JS and CSS for the reader route"
+    }
+  },
   "startupTime": {
     "fcp": 1500,
     "reader-fcp": 1200

@@ -24,7 +24,9 @@ if (!fs.existsSync(budgetsPath)) {
   process.exit(1);
 }
 
-const budgets = JSON.parse(fs.readFileSync(budgetsPath, 'utf8')).bundleSize;
+const budgetConfig = JSON.parse(fs.readFileSync(budgetsPath, 'utf8'));
+const budgets = budgetConfig.bundleSize;
+const routeBudgets = budgetConfig.routeBudgets || {};
 
 function getFiles(dir, allFiles = []) {
   const files = fs.readdirSync(dir);
@@ -43,10 +45,10 @@ const allFiles = getFiles(distDir);
 const results = [];
 let hasError = false;
 
+// 1. Traditional individual chunk budgets
 for (const [pattern, limit] of Object.entries(budgets)) {
   const matchingFiles = allFiles.filter(f => {
     const fileName = path.basename(f);
-    // Handle patterns like 'index.js' matching 'index-C55ObYsH.js' (Vite hashed assets)
     if (pattern.includes('.')) {
       const [base, ext] = pattern.split('.');
       const suffix = '.' + ext;
@@ -70,9 +72,91 @@ for (const [pattern, limit] of Object.entries(budgets)) {
       file: path.relative(distDir, file),
       size,
       limit,
-      passed
+      passed,
+      type: 'chunk'
     });
   }
+}
+
+// 2. Route-aware budgets using Vite manifest
+const manifestPath = [
+  path.join(distDir, '.vite/manifest.json'),
+  path.join(distDir, 'manifest.json')
+].find(p => fs.existsSync(p));
+
+const routeResults = [];
+
+if (manifestPath) {
+  const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+
+  for (const [routeName, config] of Object.entries(routeBudgets)) {
+    const entrySrc = config.entry;
+    // Find the entry chunk in manifest. Vite manifest keys can be the source path.
+    // Rolldown might use internal keys like "_reader-route-xxx.js"
+    let entryChunk = manifest[entrySrc];
+    if (!entryChunk) {
+      // Try to find by name if src doesn't match
+      entryChunk = Object.values(manifest).find(chunk => chunk.src === entrySrc || chunk.name === routeName + '-route');
+    }
+
+    if (!entryChunk) {
+      console.warn(`Warning: Could not find manifest entry for route "${routeName}" (entry: ${entrySrc})`);
+      continue;
+    }
+
+    const collectedFiles = new Set();
+    const queue = [entryChunk];
+    const visited = new Set();
+
+    // The index/main entry is always loaded
+    const indexEntry = Object.values(manifest).find(c => c.isEntry);
+    if (indexEntry) {
+      queue.push(indexEntry);
+    }
+
+    while (queue.length > 0) {
+      const chunk = queue.shift();
+      const chunkId = chunk.file;
+      if (visited.has(chunkId)) continue;
+      visited.add(chunkId);
+
+      collectedFiles.add(chunk.file);
+      if (chunk.css) {
+        chunk.css.forEach(c => collectedFiles.add(c));
+      }
+
+      if (chunk.imports) {
+        chunk.imports.forEach(importId => {
+          const importedChunk = manifest[importId];
+          if (importedChunk) queue.push(importedChunk);
+        });
+      }
+    }
+
+    let totalSize = 0;
+    const details = [];
+    for (const file of collectedFiles) {
+      const fullPath = path.join(distDir, file);
+      if (fs.existsSync(fullPath)) {
+        const size = fs.statSync(fullPath).size;
+        totalSize += size;
+        details.push({ file, size });
+      }
+    }
+
+    const passed = totalSize <= config.maxSize;
+    if (!passed) hasError = true;
+
+    routeResults.push({
+      route: routeName,
+      size: totalSize,
+      limit: config.maxSize,
+      passed,
+      details
+    });
+  }
+} else {
+  console.warn('Warning: No Vite manifest found. Skipping route-aware budget checks.');
 }
 
 console.log('### Bundle Size Check Results');
@@ -84,9 +168,22 @@ for (const res of results) {
   console.log(`| ${res.file} | ${(res.size / 1024).toFixed(2)} | ${(res.limit / 1024).toFixed(2)} | ${status} |`);
 }
 
-// Write to a temporary file for the CI reporter if requested
+if (routeResults.length > 0) {
+  console.log('\n### Route-Aware Budgets');
+  console.log('| Route | Total Size (KB) | Limit (KB) | Status |');
+  console.log('| :--- | :--- | :--- | :--- |');
+  for (const res of routeResults) {
+    const status = res.passed ? '✅' : '❌';
+    console.log(`| ${res.route} | ${(res.size / 1024).toFixed(2)} | ${(res.limit / 1024).toFixed(2)} | ${status} |`);
+  }
+}
+
+// Write to a temporary file for the CI reporter
 if (process.env.METRICS_OUTPUT) {
-  const output = { bundleSize: results };
+  const output = {
+    bundleSize: results,
+    routeBudgets: routeResults
+  };
   fs.writeFileSync(process.env.METRICS_OUTPUT, JSON.stringify(output, null, 2));
 }
 
