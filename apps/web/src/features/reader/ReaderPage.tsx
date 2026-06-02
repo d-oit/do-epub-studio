@@ -96,6 +96,9 @@ export function ReaderPage() {
       if (!renditionRef.current) return;
       await renditionRef.current.display(cfiRange ?? chapterRef);
     },
+    // renditionRef is a stable MutableRefObject — its identity never changes,
+    // only .current does. Including it would cause unnecessary re-creation.
+    // eslint-disable-next-line
     [],
   );
 
@@ -277,6 +280,7 @@ export function ReaderPage() {
       <TableOfContents
         isOpen={activePanel === 'toc'}
         toc={toc}
+        currentChapter={currentChapter}
         onClose={() => setActivePanel(null)}
         onNavigate={(href) => void navigateToChapter(href)}
         t={tFn}

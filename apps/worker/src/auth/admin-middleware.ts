@@ -2,6 +2,7 @@ import type { Env } from '../lib/env';
 import { queryFirst, execute } from '../db/client';
 import { hashPassword, verifyPassword } from './password';
 import { createRequestContext as _createRequestContext } from '../lib/observability';
+import { createTraceId } from '@do-epub-studio/shared';
 
 export interface AdminAuthContext {
   userId: string;
@@ -91,11 +92,22 @@ export async function requireAdminAuth(
   }
 
   // Update last used time (non-blocking)
+  const traceId = createTraceId();
   execute(
     env,
     `UPDATE admin_sessions SET last_used_at = datetime('now') WHERE id = ?`,
     [session.id],
-  ).catch(() => {});
+  ).catch((err: unknown) => {
+    console.error(
+      JSON.stringify({
+        level: 'error',
+        traceId,
+        event: 'admin_session.last_used_update_failed',
+        sessionId: session.id,
+        error: err instanceof Error ? err.message : String(err),
+      }),
+    );
+  });
 
   return {
     ok: true,

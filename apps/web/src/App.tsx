@@ -6,6 +6,7 @@ import { LoginPage } from './features/auth/LoginPage';
 import { AdminLoginPage } from './features/admin/AdminLoginPage';
 import { AppShell } from './components/AppShell';
 import { SwUpdateNotification } from './components/SwUpdateNotification';
+import { NotFoundPage } from './features/errors/NotFoundPage';
 
 // Lazy load route components (named exports)
 const ReaderPage = React.lazy(() =>
@@ -80,6 +81,13 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
 function App() {
   return (
     <Suspense fallback={<LoadingFallback />}>
+      {/* Skip-to-content link — WCAG 2.4.1: first focusable element in the page */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-accent focus:text-white focus:font-medium focus:rounded-lg focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-white"
+      >
+        Skip to main content
+      </a>
       <SwUpdateNotification />
       <ViewTransitionRoutes>
         <Route path="/" element={<AppShell />} />
@@ -110,6 +118,7 @@ function App() {
             <AdminAuditPage />
           </AdminRoute>
         } />
+        <Route path="*" element={<NotFoundPage />} />
       </ViewTransitionRoutes>
     </Suspense>
   );

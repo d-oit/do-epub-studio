@@ -9,6 +9,7 @@ ALLOWED_SHAS=(
     "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd"
     "actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806"
     "actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020"
+    "actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903"
     "actions/stale@b5d41d4e1d5dceea10e7104786b73624c18a190f"
     "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02"
     "cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0"
