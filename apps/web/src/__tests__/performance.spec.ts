@@ -64,7 +64,7 @@ test.describe('Performance', () => {
     });
   });
 
-  test('reader startup and interaction performance', async ({ page, context }) => {
+  test('reader startup and interaction performance', async ({ page }) => {
     const metrics: any = {
       startupTime: {}
     };
