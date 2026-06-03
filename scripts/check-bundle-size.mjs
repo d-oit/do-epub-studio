@@ -5,37 +5,36 @@ import { fileURLToPath } from 'node:url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, '..');
 
+// Set process working directory to root to make paths more predictable
+process.chdir(rootDir);
+
 const [overrideDistDir] = process.argv.slice(2);
 const distDirInput = String(overrideDistDir || 'apps/web/dist');
-const distDir = path.resolve(rootDir, distDirInput);
-const budgetsPath = path.resolve(rootDir, '.performance-budgets.json');
+const distDir = path.resolve(distDirInput);
 
-// Safety: Ensure we stay within root
+// Safety: Ensure we stay within repository
 if (!distDir.startsWith(rootDir)) {
   console.error(`Error: Dist directory must be within the repository (${rootDir})`);
   process.exit(1);
 }
 
-if (!fs.existsSync(distDir)) {
-  console.error(`Error: Dist directory not found at ${distDir}. Run build first.`);
+// 1. Load Budget Config
+// Use relative path from root for literal-like access
+if (!fs.existsSync('.performance-budgets.json')) {
+  console.error('Error: Budgets file not found at root.');
   process.exit(1);
 }
-
-if (!fs.existsSync(budgetsPath)) {
-  console.error(`Error: Budgets file not found at ${budgetsPath}.`);
-  process.exit(1);
-}
-
-const budgetConfig = JSON.parse(fs.readFileSync(budgetsPath, 'utf8'));
+const budgetConfig = JSON.parse(fs.readFileSync('.performance-budgets.json', 'utf8'));
 const budgets = budgetConfig.bundleSize;
 const routeBudgets = budgetConfig.routeBudgets || {};
 
-// Pre-scan all files and sizes to avoid dynamic path construction in hot loops
+// 2. Pre-scan all files and sizes
 function getFilesRecursive(dir) {
   const fileMap = new Map();
   const entries = fs.readdirSync(dir, { withFileTypes: true });
   for (const entry of entries) {
-    const res = path.resolve(dir, entry.name);
+    const entryName = String(entry.name);
+    const res = path.resolve(dir, entryName);
     if (entry.isDirectory()) {
       const nested = getFilesRecursive(res);
       for (const [k, v] of nested.entries()) {
@@ -48,12 +47,17 @@ function getFilesRecursive(dir) {
   return fileMap;
 }
 
+if (!fs.existsSync(distDir)) {
+  console.error(`Error: Dist directory not found at ${distDir}. Run build first.`);
+  process.exit(1);
+}
 const fileMap = getFilesRecursive(distDir);
 const results = [];
 let hasError = false;
 
-// 1. Traditional individual chunk budgets
-for (const [pattern, limit] of Object.entries(budgets)) {
+// 3. Traditional individual chunk budgets
+const budgetEntries = Object.entries(budgets);
+for (const [pattern, limit] of budgetEntries) {
   const patternStr = String(pattern);
   const limitNum = Number(limit);
 
@@ -63,8 +67,8 @@ for (const [pattern, limit] of Object.entries(budgets)) {
 
     if (patternStr.includes('.')) {
       const parts = patternStr.split('.');
-      const base = parts[0];
-      const ext = parts[1];
+      const base = String(parts[0]);
+      const ext = String(parts[1]);
       const suffix = '.' + ext;
       if (fileName === patternStr || (fileName.startsWith(base + '-') && fileName.endsWith(suffix))) {
         matches = true;
@@ -88,15 +92,18 @@ for (const [pattern, limit] of Object.entries(budgets)) {
   }
 }
 
-// 2. Route-aware budgets using Vite manifest
-const manifestPathVite = path.join(distDir, '.vite', 'manifest.json');
-const manifestPathRoot = path.join(distDir, 'manifest.json');
-let manifestPath = null;
+// 4. Route-aware budgets using Vite manifest
+const manifestPaths = [
+  path.join(distDir, '.vite', 'manifest.json'),
+  path.join(distDir, 'manifest.json')
+];
 
-if (fs.existsSync(manifestPathVite)) {
-  manifestPath = manifestPathVite;
-} else if (fs.existsSync(manifestPathRoot)) {
-  manifestPath = manifestPathRoot;
+let manifestPath = null;
+for (const p of manifestPaths) {
+  if (fs.existsSync(p)) {
+    manifestPath = p;
+    break;
+  }
 }
 
 const routeResults = [];
@@ -105,7 +112,8 @@ if (manifestPath) {
   const manifestData = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
   const manifest = new Map(Object.entries(manifestData));
 
-  for (const [routeName, config] of Object.entries(routeBudgets)) {
+  const routeBudgetEntries = Object.entries(routeBudgets);
+  for (const [routeName, config] of routeBudgetEntries) {
     const entrySrc = String(config.entry);
     const maxSize = Number(config.maxSize);
 
@@ -166,10 +174,10 @@ if (manifestPath) {
     const details = [];
     for (const fileId of collectedFileIds) {
       const fileName = String(fileId);
-      const fullPath = path.join(distDir, fileName);
+      const fullPath = path.resolve(distDir, fileName);
 
-      // Use pre-scanned fileMap to avoid dynamic statSync
-      if (fileMap.has(fullPath)) {
+      // Use pre-scanned fileMap to avoid dynamic statSync and confirm it's in the distDir
+      if (fullPath.startsWith(distDir) && fileMap.has(fullPath)) {
         const size = fileMap.get(fullPath);
         totalSize += size;
         details.push({ file: fileName, size });
@@ -212,11 +220,12 @@ if (routeResults.length > 0) {
 
 // Write to a temporary file for the CI reporter
 if (process.env.METRICS_OUTPUT) {
+  const metricsOutput = String(process.env.METRICS_OUTPUT);
   const output = {
     bundleSize: results,
     routeBudgets: routeResults
   };
-  fs.writeFileSync(process.env.METRICS_OUTPUT, JSON.stringify(output, null, 2));
+  fs.writeFileSync(metricsOutput, JSON.stringify(output, null, 2));
 }
 
 if (hasError) {
