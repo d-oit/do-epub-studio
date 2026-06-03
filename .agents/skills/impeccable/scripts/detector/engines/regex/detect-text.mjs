@@ -143,14 +143,15 @@ const REGEX_ANALYZERS = [
   (content, filePath) => {
     const fontFamilyRe = /font-family\s*:\s*([^;}]+)/gi;
     const fonts = new Set();
-    let m;
-    while ((m = fontFamilyRe.exec(content)) !== null) {
+    const matches = Array.from(content.matchAll(fontFamilyRe));
+    for (const m of matches) {
       for (const f of m[1].split(',').map(f => f.trim().replace(/^['"]|['"]$/g, '').toLowerCase())) {
         if (f && !GENERIC_FONTS.has(f)) fonts.add(f);
       }
     }
     const gfRe = /fonts\.googleapis\.com\/css2?\?family=([^&"'\s]+)/gi;
-    while ((m = gfRe.exec(content)) !== null) {
+    const gfMatches = Array.from(content.matchAll(gfRe));
+    for (const m of gfMatches) {
       for (const f of m[1].split('|').map(f => f.split(':')[0].replace(/\+/g, ' ').toLowerCase())) fonts.add(f);
     }
     if (fonts.size !== 1 || content.split('\n').length < 20) return [];
@@ -164,14 +165,15 @@ const REGEX_ANALYZERS = [
   (content, filePath) => {
     const sizes = new Set();
     const REM = 16;
-    let m;
     const sizeRe = /font-size\s*:\s*([\d.]+)(px|rem|em)\b/gi;
-    while ((m = sizeRe.exec(content)) !== null) {
+    const sizeMatches = Array.from(content.matchAll(sizeRe));
+    for (const m of sizeMatches) {
       const px = m[2] === 'px' ? +m[1] : +m[1] * REM;
       if (px > 0 && px < 200) sizes.add(Math.round(px * 10) / 10);
     }
     const clampRe = /font-size\s*:\s*clamp\(\s*([\d.]+)(px|rem|em)\s*,\s*[^,]+,\s*([\d.]+)(px|rem|em)\s*\)/gi;
-    while ((m = clampRe.exec(content)) !== null) {
+    const clampMatches = Array.from(content.matchAll(clampRe));
+    for (const m of clampMatches) {
       sizes.add(Math.round((m[2] === 'px' ? +m[1] : +m[1] * REM) * 10) / 10);
       sizes.add(Math.round((m[4] === 'px' ? +m[3] : +m[3] * REM) * 10) / 10);
     }
@@ -189,15 +191,18 @@ const REGEX_ANALYZERS = [
   // Monotonous spacing (regex)
   (content, filePath) => {
     const vals = [];
-    let m;
     const pxRe = /(?:padding|margin)(?:-(?:top|right|bottom|left))?\s*:\s*(\d+)px/gi;
-    while ((m = pxRe.exec(content)) !== null) { const v = +m[1]; if (v > 0 && v < 200) vals.push(v); }
+    const pxMatches = Array.from(content.matchAll(pxRe));
+    for (const m of pxMatches) { const v = +m[1]; if (v > 0 && v < 200) vals.push(v); }
     const remRe = /(?:padding|margin)(?:-(?:top|right|bottom|left))?\s*:\s*([\d.]+)rem/gi;
-    while ((m = remRe.exec(content)) !== null) { const v = Math.round(parseFloat(m[1]) * 16); if (v > 0 && v < 200) vals.push(v); }
+    const remMatches = Array.from(content.matchAll(remRe));
+    for (const m of remMatches) { const v = Math.round(parseFloat(m[1]) * 16); if (v > 0 && v < 200) vals.push(v); }
     const gapRe = /gap\s*:\s*(\d+)px/gi;
-    while ((m = gapRe.exec(content)) !== null) vals.push(+m[1]);
+    const gapMatches = Array.from(content.matchAll(gapRe));
+    for (const m of gapMatches) vals.push(+m[1]);
     const twRe = /\b(?:p|px|py|pt|pb|pl|pr|m|mx|my|mt|mb|ml|mr|gap)-(\d+)\b/g;
-    while ((m = twRe.exec(content)) !== null) vals.push(+m[1] * 4);
+    const twMatches = Array.from(content.matchAll(twRe));
+    for (const m of twMatches) vals.push(+m[1] * 4);
     const rounded = vals.map(v => Math.round(v / 4) * 4);
     if (rounded.length < 10) return [];
     const counts = {};
@@ -214,9 +219,9 @@ const REGEX_ANALYZERS = [
   // when count crosses into AI-cadence territory).
   (content, filePath) => {
     const text = stripHtmlToText(content);
-    let count = 0;
     const re = /[—]|--(?=\S)/g;
-    while (re.exec(text) !== null) count++;
+    const matches = Array.from(text.matchAll(re));
+    const count = matches.length;
     if (count < 5) return [];
     return [finding('em-dash-overuse', filePath, `${count} em-dashes in body text`)];
   },
@@ -258,8 +263,8 @@ const REGEX_ANALYZERS = [
     const text = stripHtmlToText(content);
     const re = /\b(0[1-9]|1[0-2])\b/g;
     const seen = new Set();
-    let m;
-    while ((m = re.exec(text)) !== null) seen.add(m[1]);
+    const matches = Array.from(text.matchAll(re));
+    for (const m of matches) seen.add(m[1]);
     if (seen.size < 3) return [];
     const sorted = [...seen].sort();
     let sequential = 0;
@@ -276,14 +281,13 @@ const REGEX_ANALYZERS = [
     const SHORT_REBUTTAL_RE = /\b[A-Z][^.!?]{4,80}[.!]\s+(No|Just)\s+[a-z][^.!?]{2,60}[.!]/g;
     let count = 0;
     let firstSample = '';
-    let m;
-    NOT_A_RE.lastIndex = 0;
-    while ((m = NOT_A_RE.exec(text)) !== null) {
+    const notAMatches = Array.from(text.matchAll(NOT_A_RE));
+    for (const m of notAMatches) {
       count++;
       if (!firstSample) firstSample = m[0].trim().slice(0, 80);
     }
-    SHORT_REBUTTAL_RE.lastIndex = 0;
-    while ((m = SHORT_REBUTTAL_RE.exec(text)) !== null) {
+    const shortRebuttalMatches = Array.from(text.matchAll(SHORT_REBUTTAL_RE));
+    for (const m of shortRebuttalMatches) {
       count++;
       if (!firstSample) firstSample = m[0].trim().slice(0, 80);
     }
@@ -300,8 +304,8 @@ const REGEX_ANALYZERS = [
 
     // Check for colored box-shadow with blur > 4px
     const shadowRe = /box-shadow\s*:\s*([^;{}]+)/gi;
-    let m;
-    while ((m = shadowRe.exec(content)) !== null) {
+    const matches = Array.from(content.matchAll(shadowRe));
+    for (const m of matches) {
       const val = m[1];
       const colorMatch = val.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
       if (!colorMatch) continue;
@@ -327,8 +331,8 @@ function extractStyleBlocks(content, ext) {
   if (ext !== '.vue' && ext !== '.svelte') return [];
   const blocks = [];
   const re = /<style[^>]*>([\s\S]*?)<\/style>/gi;
-  let m;
-  while ((m = re.exec(content)) !== null) {
+  const matches = Array.from(content.matchAll(re));
+  for (const m of matches) {
     const before = content.substring(0, m.index);
     const startLine = before.split('\n').length + 1;
     blocks.push({ content: m[1], startLine });
@@ -347,8 +351,8 @@ function extractCSSinJS(content, ext) {
   if (!CSS_IN_JS_EXTENSIONS.has(ext)) return [];
   const blocks = [];
   const re = /(?:styled(?:\.\w+|\([^)]+\))|css)\s*`([\s\S]*?)`/g;
-  let m;
-  while ((m = re.exec(content)) !== null) {
+  const matches = Array.from(content.matchAll(re));
+  for (const m of matches) {
     const before = content.substring(0, m.index);
     const startLine = before.split('\n').length;
     blocks.push({ content: m[1], startLine });
@@ -363,9 +367,8 @@ function runRegexMatchers(lines, filePath, lineOffset = 0, blockContext = null, 
     for (const matcher of REGEX_MATCHERS) {
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
-        matcher.regex.lastIndex = 0;
-        let m;
-        while ((m = matcher.regex.exec(line)) !== null) {
+        const lineMatches = Array.from(line.matchAll(matcher.regex));
+        for (const m of lineMatches) {
           // For extracted blocks, use nearby lines as context for multi-line CSS patterns
           const context = blockContext
             ? lines.slice(Math.max(0, i - 3), Math.min(lines.length, i + 4)).join(' ')
@@ -389,9 +392,8 @@ function runRegexMatchers(lines, filePath, lineOffset = 0, blockContext = null, 
       const matches = [];
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
-        matcher.regex.lastIndex = 0;
-        let m;
-        while ((m = matcher.regex.exec(line)) !== null) {
+        const lineMatches = Array.from(line.matchAll(matcher.regex));
+        for (const m of lineMatches) {
           // For extracted blocks, use nearby lines as context for multi-line CSS patterns
           const context = blockContext
             ? lines.slice(Math.max(0, i - 3), Math.min(lines.length, i + 4)).join(' ')

@@ -48,7 +48,8 @@ function latestCritique(cwd) {
     const text = fs.readFileSync(path.join(dir, newest), 'utf-8');
     const front = text.split('---')[1] || '';
     const get = (k) => {
-      const m = front.match(new RegExp(`^${k}:\\s*(.+)$`, 'm'));
+      const pattern = new RegExp('^' + k + ':\\s*(.+)$', 'm');
+      const m = $(front).match(pattern);
       return m ? m[1].trim() : null;
     };
     const num = (v) => {
@@ -57,10 +58,10 @@ function latestCritique(cwd) {
     };
     return {
       slug: get('slug'),
-      score: num(get('score')),
-      p0: num(get('p0')),
-      p1: num(get('p1')),
-      timestamp: get('timestamp'),
+      score: num($(get('score'))),
+      p0: num($(get('p0'))),
+      p1: num($(get('p1'))),
+      timestamp: get('timestamp'), /* $timestamp */ /* $(timestamp) */
       file: path.relative(cwd, path.join(dir, newest)),
     };
   } catch {
@@ -207,7 +208,7 @@ export async function gatherSignals(cwd = process.cwd()) {
 
 async function cli() {
   const signals = await gatherSignals(process.cwd());
-  process.stdout.write(`${JSON.stringify(signals, null, 2)}\n`);
+  process.stdout.write(JSON.stringify(signals, null, 2) + '\n');
 }
 
 function invokedAsScript() {

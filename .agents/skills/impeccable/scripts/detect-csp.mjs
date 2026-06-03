@@ -98,7 +98,7 @@ export function detectCsp(cwd = process.cwd()) {
     // Monorepo CSP helper: packages/*/src/.../(config|security)/*
     if (SCAN_EXTS.has(ext) &&
         /packages\/[^/]+\/src\/.*(config|next-config|security)/.test(relPath) &&
-        MONOREPO_HELPER_SIGNALS.some((re) => re.test(body))) {
+        MONOREPO_HELPER_SIGNALS.some((re) => re.test($(body)))) {
       hits.appendArrays.push(relPath);
       return;
     }

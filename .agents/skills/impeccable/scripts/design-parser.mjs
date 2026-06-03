@@ -123,8 +123,6 @@ function parseScalar(raw) {
 
 const HEX_RE = /#[0-9a-fA-F]{3,8}\b/g;
 const OKLCH_RE = /oklch\([^)]+\)/gi;
-const RGBA_RE = /rgba?\([^)]+\)/gi;
-const BOX_SHADOW_RE = /(?:box-shadow:\s*)?((?:-?\d[\w\d\s\-.,/()#%]*)+)/;
 const NAMED_RULE_RE = /\*\*(The [^*]+?Rule)\.\*\*\s*(.+)/;
 
 // ---------- Section splitting ----------
@@ -263,11 +261,11 @@ function extractNamedRules(lines) {
   // Style A (Impeccable): "**The X Rule.** body body body" — can span lines.
   const joined = lines.join('\n');
   const inlineStart = /\*\*(The [^*]+?Rule)\.\*\*/g;
-  const inlineMatches = [];
-  let m;
-  while ((m = inlineStart.exec(joined)) !== null) {
-    inlineMatches.push({ name: m[1], start: m.index, end: inlineStart.lastIndex });
-  }
+  const inlineMatches = Array.from(joined.matchAll(inlineStart)).map((m) => ({
+    name: m[1],
+    start: m.index,
+    end: m.index + m[0].length,
+  }));
   for (let i = 0; i < inlineMatches.length; i++) {
     const mm = inlineMatches[i];
     const bodyEnd = i + 1 < inlineMatches.length ? inlineMatches[i + 1].start : joined.length;
@@ -478,17 +476,6 @@ function detectFormat(v) {
   return 'unknown';
 }
 
-function scanInlineColors(lines) {
-  const out = [];
-  for (const line of lines) {
-    if (!/^\s*[-*]\s/.test(line)) continue;
-    const trimmed = line.replace(/^\s*[-*]\s+/, '');
-    const color = parseColorBullet(trimmed);
-    if (color) out.push(color);
-  }
-  return out;
-}
-
 function parseStitchInlineGroups(lines) {
   // Stitch writes: `*   **Primary (`#00478d` to `#005eb8`):** Use for "..."`
   // Each bullet IS its own role. Group them under the spoken role name.
@@ -515,8 +502,8 @@ function extractTypography(section) {
   const fonts = {};
   // Pattern A: **Display Font:** Family (with fallback)
   const fontLineRe = /\*\*([\w\s/]+?)Font:\*\*\s*([^\n(]+?)(?:\s*\(with\s+([^)]+)\))?\s*$/gm;
-  let fm;
-  while ((fm = fontLineRe.exec(text)) !== null) {
+  const fontLineMatches = Array.from(text.matchAll(fontLineRe));
+  for (const fm of fontLineMatches) {
     const rawRole = fm[1].trim().toLowerCase().replace(/\s+/g, '-');
     const role = normalizeFontRole(rawRole) || 'display';
     fonts[role] = {
@@ -528,8 +515,8 @@ function extractTypography(section) {
   // Pattern B (Stitch): *   **Display & Headlines (Noto Serif):** description
   if (Object.keys(fonts).length === 0) {
     const stitchRe = /\*\*([\w\s&/]+?)\s*\(([^)]+)\):\*\*\s*(.+)/g;
-    let sm;
-    while ((sm = stitchRe.exec(text)) !== null) {
+    const stitchMatches = Array.from(text.matchAll(stitchRe));
+    for (const sm of stitchMatches) {
       const rawRole = sm[1]
         .trim()
         .toLowerCase()
@@ -637,8 +624,8 @@ function extractInlineShadows(text) {
   // raw string so it handles both backtick-fenced and unfenced variants.
   const out = [];
   const re = /box-shadow\s*:\s*([^`;\n]+)/gi;
-  let m;
-  while ((m = re.exec(text)) !== null) {
+  const matches = Array.from(text.matchAll(re));
+  for (const m of matches) {
     const value = m[1].replace(/[`.)]+$/, '').trim();
     if (!value) continue;
     // Name heuristic: the noun immediately before the shadow phrase.
