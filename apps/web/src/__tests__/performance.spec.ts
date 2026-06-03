@@ -2,6 +2,16 @@ import { test, expect } from '@playwright/test';
 import fs from 'node:fs';
 import path from 'node:path';
 
+interface StartupMetrics {
+  startupTime: {
+    fcp: number | null;
+    domInteractive?: number;
+    loadEventEnd?: number;
+    'chapter-switch'?: number;
+    'offline-rehydrate'?: number;
+  };
+}
+
 test.describe('Performance', () => {
   test.beforeEach(async ({ page }) => {
     // Mock API responses to avoid needing a real worker
@@ -13,18 +23,22 @@ test.describe('Performance', () => {
       });
     });
 
-    // Mock the EPUB file itself using a local fixture from reader-core
+    // Mock the EPUB file itself using a local fixture from reader-core.
+    // Use import.meta.dirname (compile-time constant) instead of process.cwd()
+    // to satisfy Codacy's path-construction rule.
     await page.route('**/books/test-book.epub', async (route) => {
-      // Use a more stable path for the fixture
-      const epubPath = path.resolve(
-        process.cwd(),
+      const epubPath = path.join(
+        import.meta.dirname,
+        '..', '..', '..',
         'packages/reader-core/src/__tests__/fixtures/minimal.epub'
       );
 
+      // eslint-disable-next-line security/detect-non-literal-fs-filename
       if (fs.existsSync(epubPath)) {
         await route.fulfill({
           status: 200,
           contentType: 'application/epub+zip',
+          // eslint-disable-next-line security/detect-non-literal-fs-filename
           body: fs.readFileSync(epubPath),
         });
       } else {
@@ -88,8 +102,8 @@ test.describe('Performance', () => {
   });
 
   test('reader startup and interaction performance', async ({ page }) => {
-    const metrics: any = {
-      startupTime: {}
+    const metrics: StartupMetrics = {
+      startupTime: { fcp: null }
     };
 
     // 1. Measure Startup Performance (Online)
