@@ -268,8 +268,11 @@ export function sanitizeDom(node: Document | DocumentFragment | Element): void {
       continue;
     }
 
-    for (const attr of SVG_EVENT_ATTRS) {
-      el.removeAttribute(attr);
+    const attrNames = el.getAttributeNames();
+    for (const attrName of attrNames) {
+      if (attrName.startsWith('on')) {
+        el.removeAttribute(attrName);
+      }
     }
 
     if (tag === 'use' || tag === 'image') {
