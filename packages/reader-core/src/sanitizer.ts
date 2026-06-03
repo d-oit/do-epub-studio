@@ -1,5 +1,6 @@
 import DOMPurify from 'dompurify';
 import type { Config } from 'dompurify';
+import { matchBounded } from '@do-epub-studio/shared';
 
 const SAFE_SVG_TAGS = [
   'svg',
@@ -100,8 +101,6 @@ const SVG_EVENT_ATTRS = [
   'onsuspend',
   'onprogress',
 ];
-
-const SVG_HREF_ATTRS = ['xlink:href', 'href'];
 
 const SVG_ALLOWED_ATTRS = [
   'id',
@@ -253,9 +252,7 @@ export function sanitizeSvg(svgContent: string): string {
 }
 
 export function sanitizeDom(node: Document | DocumentFragment | Element): void {
-  const root = node.nodeType === Node.DOCUMENT_NODE
-    ? (node as Document).documentElement
-    : node;
+  const root = node.nodeType === Node.DOCUMENT_NODE ? (node as Document).documentElement : node;
   if (!root) return;
 
   const allElements = root.querySelectorAll('*');
@@ -268,22 +265,35 @@ export function sanitizeDom(node: Document | DocumentFragment | Element): void {
       continue;
     }
 
+    const isLinkable = tag === 'use' || tag === 'image';
     const attrNames = el.getAttributeNames();
-    for (const attrName of attrNames) {
-      if (attrName.startsWith('on')) {
-        el.removeAttribute(attrName);
-      }
-    }
 
-    if (tag === 'use' || tag === 'image') {
-      for (const hrefAttr of SVG_HREF_ATTRS) {
-        const val = el.getAttribute(hrefAttr);
+    for (const name of attrNames) {
+      if (name.startsWith('on')) {
+        el.removeAttribute(name);
+      } else if (isLinkable && (name === 'href' || name === 'xlink:href')) {
+        const val = el.getAttribute(name);
         if (val) {
-          const schemeMatch = val.match(/^([a-zA-Z][a-zA-Z0-9+.-]*):/);
+          const trimmedVal = val.trim();
+          const lowerVal = trimmedVal.toLowerCase();
+
+          // Explicitly block dangerous schemes and non-whitelisted ones
+          if (
+            lowerVal.startsWith('javascript:') ||
+            lowerVal.startsWith('data:') ||
+            lowerVal.startsWith('vbscript:')
+          ) {
+            el.removeAttribute(name);
+            continue;
+          }
+
+          // Guard regex against untrusted input per ADR-034
+          const schemeMatch = matchBounded(/^([a-zA-Z][a-zA-Z0-9+.-]*):/, trimmedVal, 2048);
           if (schemeMatch && schemeMatch[1]) {
             const scheme = schemeMatch[1].toLowerCase();
+            // Whitelist safe schemes
             if (scheme !== 'http' && scheme !== 'https' && scheme !== 'mailto') {
-              el.removeAttribute(hrefAttr);
+              el.removeAttribute(name);
             }
           }
         }
@@ -292,7 +302,7 @@ export function sanitizeDom(node: Document | DocumentFragment | Element): void {
   }
 
   for (const el of toRemove) {
-    el.parentNode?.removeChild(el);
+    el.remove();
   }
 }
 
