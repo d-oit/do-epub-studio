@@ -1,0 +1,12 @@
+---
+version: 1
+exclude_paths:
+  # Test files commonly use patterns flagged by Codacy's security
+  # engines (e.g. reading fixture files with fs.readFileSync) that
+  # are safe in test context but would fail production-code rules.
+  - "**/__tests__/**"
+  - "**/*.test.ts"
+  - "**/*.spec.ts"
+  - "**/*.test.tsx"
+  - "**/*.spec.tsx"
+  - "**/fixtures/**"
