@@ -13,6 +13,29 @@ test.describe('Performance', () => {
       });
     });
 
+    // Mock the EPUB file itself using a local asset from node_modules
+    await page.route('**/books/test-book.epub', async (route) => {
+      const epubPath = path.resolve(
+        process.cwd(),
+        'node_modules/.pnpm/@intity+epub-js@0.3.96/node_modules/@intity/epub-js/assets/alice.epub'
+      );
+
+      if (fs.existsSync(epubPath)) {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/epub+zip',
+          body: fs.readFileSync(epubPath),
+        });
+      } else {
+        // Fallback for different environments/pnpm layouts
+        console.warn('Alice EPUB not found at primary path, attempting fallback');
+        await route.fulfill({
+          status: 404,
+          body: 'EPUB not found',
+        });
+      }
+    });
+
     await page.route('**/api/books/test-book/highlights', async (route) => {
       await route.fulfill({
         status: 200,
