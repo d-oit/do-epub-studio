@@ -2,6 +2,16 @@ import { test, expect } from '@playwright/test';
 import fs from 'node:fs';
 import path from 'node:path';
 
+interface StartupMetrics {
+  startupTime: {
+    fcp: number | null;
+    domInteractive?: number;
+    loadEventEnd?: number;
+    'chapter-switch'?: number;
+    'offline-rehydrate'?: number;
+  };
+}
+
 test.describe('Performance', () => {
   test.beforeEach(async ({ page }) => {
     // Mock API responses to avoid needing a real worker
@@ -15,8 +25,9 @@ test.describe('Performance', () => {
 
     // Mock the EPUB file itself using a local asset from node_modules
     await page.route('**/books/test-book.epub', async (route) => {
-      const epubPath = path.resolve(
-        process.cwd(),
+      const epubPath = path.join(
+        import.meta.dirname,
+        '..', '..', '..',
         'node_modules/.pnpm/@intity+epub-js@0.3.96/node_modules/@intity/epub-js/assets/alice.epub'
       );
 
@@ -88,8 +99,8 @@ test.describe('Performance', () => {
   });
 
   test('reader startup and interaction performance', async ({ page }) => {
-    const metrics: any = {
-      startupTime: {}
+    const metrics: StartupMetrics = {
+      startupTime: { fcp: null }
     };
 
     // 1. Measure Startup Performance (Online)
