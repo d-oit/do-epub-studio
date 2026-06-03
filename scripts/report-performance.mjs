@@ -24,7 +24,7 @@ function readJson(p) {
   return null;
 }
 
-const budgets = readJson(budgetsPath) || { bundleSize: {}, startupTime: { fcp: 1500 }, ciDuration: { total: 900 } };
+const budgets = readJson(budgetsPath) || { bundleSize: {}, routeBudgets: {}, startupTime: { fcp: 1500 }, ciDuration: { total: 900 } };
 const bundleMetrics = readJson(path.join(metricsPath, 'bundle-metrics.json'));
 const startupMetrics = readJson(path.join(metricsPath, 'startup-metrics.json'));
 const ciMetrics = readJson(path.join(metricsPath, 'ci-metrics.json'));
@@ -64,6 +64,29 @@ if (bundleMetrics && bundleMetrics.bundleSize) {
     markdown += `| ${res.file} | ${(res.size / 1024).toFixed(2)} | ${(limit / 1024).toFixed(2)} | ${trend} | ${status} |\n`;
   }
   markdown += '\n';
+
+  if (bundleMetrics.routeBudgets && bundleMetrics.routeBudgets.length > 0) {
+    markdown += '### 🚦 Route-Aware Budgets\n\n';
+    markdown += '| Route | Size (KB) | Limit (KB) | Trend | Status |\n';
+    markdown += '| :--- | :--- | :--- | :--- | :--- |\n';
+
+    for (const res of bundleMetrics.routeBudgets) {
+      const config = budgets.routeBudgets[res.route] || { maxSize: 0 };
+      const limit = config.maxSize;
+      const status = res.passed ? '✅' : '❌';
+
+      let trend = 'NEW';
+      if (baselineBundle && baselineBundle.routeBudgets) {
+        const baseRes = baselineBundle.routeBudgets.find(b => b.route === res.route);
+        if (baseRes) {
+          trend = getChange(res.size, baseRes.size) || '0%';
+        }
+      }
+
+      markdown += `| ${res.route} | ${(res.size / 1024).toFixed(2)} | ${(limit / 1024).toFixed(2)} | ${trend} | ${status} |\n`;
+    }
+    markdown += '\n';
+  }
 }
 
 if (startupMetrics && startupMetrics.startupTime) {

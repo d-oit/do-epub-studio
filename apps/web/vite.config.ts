@@ -56,7 +56,8 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    sourcemap: process.env.NODE_ENV !== 'production',
+    manifest: true,
+    sourcemap: false,
     rolldownOptions: {
       output: {
         // Vite 8 Rolldown uses codeSplitting or function manualChunks
@@ -67,6 +68,15 @@ export default defineConfig({
             }
             if (id.includes('epubjs')) {
               return 'epubjs';
+            }
+            if (id.includes('jszip')) {
+              return 'vendor-jszip';
+            }
+            if (id.includes('idb')) {
+              return 'vendor-idb';
+            }
+            if (id.includes('uuid')) {
+              return 'vendor-uuid';
             }
             if (id.includes('zustand')) {
               return 'zustand';
@@ -84,6 +94,12 @@ export default defineConfig({
           // Route-aware chunking: isolate reader-core from admin/editor
           if (id.includes('packages/reader-core')) {
             return 'reader-core';
+          }
+          if (id.includes('packages/shared')) {
+            return 'shared-lib';
+          }
+          if (id.includes('packages/ui')) {
+            return 'ui-lib';
           }
           if (id.includes('features/reader')) {
             return 'reader-route';

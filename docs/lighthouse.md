@@ -13,6 +13,15 @@ Lighthouse CI has been restored per Issue #160. The measurement targets the `/re
   - Best Practices: ≥0.8 (warning)
   - SEO: ≥0.8 (warning)
 
+### Route-Aware Bundle Budgets
+
+In addition to Lighthouse scores, the project enforces hard JS/CSS budget gates for critical routes.
+
+- **Config file:** `.performance-budgets.json` (`routeBudgets` section)
+- **Primary target:** Reader route (`/read/:bookSlug`)
+- **Budget:** 1MB (Total transitive JS and CSS assets)
+- **Enforcement:** PRs will fail CI if the reader route budget is exceeded.
+
 ## CI Workflow
 
 - **Workflow:** `.github/workflows/lighthouse.yml`
@@ -22,9 +31,21 @@ Lighthouse CI has been restored per Issue #160. The measurement targets the `/re
   2. Deploys a preview to Cloudflare Pages via wrangler-action (OIDC)
   3. Runs Lighthouse CI with 3 passes on the `/reader` URL
   4. Asserts score thresholds (accessibility is a hard error)
-  5. Comments PR with category scores
+  5. Comments PR with category scores and route-aware bundle sizes.
 
 ## Running Locally
+
+### Bundle Size Analysis
+
+```bash
+# Build the web app
+pnpm --filter @do-epub-studio/web build
+
+# Run size check (including route-aware budgets)
+node scripts/check-bundle-size.mjs
+```
+
+### Lighthouse Audit
 
 ```bash
 # Run Lighthouse against the production URL
