@@ -1,24 +1,6 @@
 import { test, expect } from '@playwright/test';
-import { Buffer } from 'node:buffer';
 import fs from 'node:fs';
 import path from 'node:path';
-
-interface StartupMetrics {
-  startupTime: {
-    fcp: number | null;
-    domInteractive?: number;
-    loadEventEnd?: number;
-    'chapter-switch'?: number;
-    'offline-rehydrate'?: number;
-  };
-}
-
-// Inline minimal valid EPUB as a base64-encoded constant to avoid
-// Codacy security warnings about dynamic file path construction.
-const MOCK_EPUB_BUFFER = Buffer.from(
-  'UEsDBBQAAAAAAAAAAABvYassFAAAABQAAAAIAAAAbWltZXR5cGVhcHBsaWNhdGlvbi9lcHViK3ppcFBLAwQUAAAACAAAAAAAHgvXyZkAAADdAAAAFgAAAE1FVEEtSU5GL2NvbnRhaW5lci54bWxVjcEKwjAQRH8l5Cpt9BqSFATPCn7Bmm41mOyGJJX696KHqreBmffGDEuK4oGlBiYrd/1WDs54pgaBsPw3YkmRqpVzIc1QQ9UECatuXnNGGtnPCanpz0yvEulMYW5TiFi/UUxzjF2GdrPyeNifzuoNILWe8yRFwjFA154ZrYScY/DQApNivOTaZfB3uOJmSVEqZ9SPX62/7gVQSwMEFAAAAAgAAAAAAPXxf7D4AAAAzwEAABEAAABPRUJQUy9jb250ZW50Lm9wZo2RQW6EMAxFrxJlW00M7aLSKGQu0QtExIDVJGQSM9DbV8BAZ9md7e///CXr2xK8eGAuNMZG1qqSN6OTbb9tj2IJPpZGDszpCjDPsyKXOjXmHt6r6hPG1Mk/84eqpJgi3Se8kMPI1BHmRpKTRgdk6yzbnXl17YlNU/Yb0rWAHgNGLlCrGqTRrr0ysUfzhYU1nO0qeBv7yfZoMG7K2Ws4jhkdbKQOCxtNjEGQa2S0DymGjN1WqmXg4KUI6Mhe+CdhI21KnlrLNEbY5LdlXUl5TJiZsOwQeIGW+mCW+v9IWLOeCUuiiDszYyfIHRmPSy/TUm/mpwWeDzO/UEsDBBQAAAAIAAAAAABKBnYEvAAAAAQBAAAPAAAAT0VCUFMvbmF2LnhodG1sVY+xbsMwDER/RdUHmFYzFDZoenCzphm6dFRiJTIgS4LF2M7fB4qmLsQB9+7Aw36fnVjNkqbgO6mqWvaEH98/w+/f+Sgsz44wX7HPzqdOWubYAmzbVm2HKix3UE3TwJ4ZWaDWxMflHzmN8fZmP+v6C0JMktAaPRLyxM7QSa8IRSIU4xLGJ6HXq8htLT+j6SSHa04qGoJn4zkhWEUYHKGbCLWwi7l1Mqmq/EODVQiaELINmQOvV0Io9fDe9wJQSwMEFAAAAAgAAAAAAKhlgTp9AAAAlQAAAA4AAABPRUJQUy9zMS54aHRtbCWNOw7CMBAFr2J8AC8WVdBmUyTUUKShBGLhSP4pXmFzexTcjJ40TxocqnfiY7a8xtBLrY5yIDxM13G+3y7CsneEO0X1LuReWuZ0BiilqHJScXuD7roO6v6RhNY8FkJe2RkarUZoE6GJZ1y+hIlmk1m8YmATGCERQjPwD/4AUEsBAhQAFAAAAAAAAAAAAG9hqywUAAAAFAAAAAgAAAAAAAAAAAAAAAAAAAAAAG1pbWV0eXBlUEsBAhQAFAAAAAgAAAAAAB4L18mZAAAA3QAAABYAAAAAAAAAAAAAAAAAOgAAAE1FVEEtSU5GL2NvbnRhaW5lci54bWxQSwECFAAUAAAACAAAAAAA9fF/sPgAAADPAQAAEQAAAAAAAAAAAAAAAAAHAQAAT0VCUFMvY29udGVudC5vcGZQSwECFAAUAAAACAAAAAAASgZ2BLwAAAAEAQAADwAAAAAAAAAAAAAAAAAuAgAAT0VCUFMvbmF2LnhodG1sUEsBAhQAFAAAAAgAAAAAAKhlgTp9AAAAlQAAAA4AAAAAAAAAAAAAAAAAFwMAAE9FQlBTL3MxLnhodG1sUEsFBgAAAAAFAAUAMgEAAMADAAAAAA==',
-  'base64'
-);
 
 test.describe('Performance', () => {
   test.beforeEach(async ({ page }) => {
@@ -31,13 +13,27 @@ test.describe('Performance', () => {
       });
     });
 
-    // Mock the EPUB file with an inline buffer (avoids Codacy security warnings)
+    // Mock the EPUB file itself using a local fixture from reader-core
     await page.route('**/books/test-book.epub', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/epub+zip',
-        body: MOCK_EPUB_BUFFER,
-      });
+      // Use a more stable path for the fixture
+      const epubPath = path.resolve(
+        process.cwd(),
+        'packages/reader-core/src/__tests__/fixtures/minimal.epub'
+      );
+
+      if (fs.existsSync(epubPath)) {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/epub+zip',
+          body: fs.readFileSync(epubPath),
+        });
+      } else {
+        console.warn('Minimal EPUB not found at primary path');
+        await route.fulfill({
+          status: 404,
+          body: 'EPUB not found',
+        });
+      }
     });
 
     await page.route('**/api/books/test-book/highlights', async (route) => {
@@ -92,8 +88,8 @@ test.describe('Performance', () => {
   });
 
   test('reader startup and interaction performance', async ({ page }) => {
-    const metrics: StartupMetrics = {
-      startupTime: { fcp: null }
+    const metrics: any = {
+      startupTime: {}
     };
 
     // 1. Measure Startup Performance (Online)
