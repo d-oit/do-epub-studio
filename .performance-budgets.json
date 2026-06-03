@@ -16,7 +16,9 @@
   },
   "startupTime": {
     "fcp": 1500,
-    "reader-fcp": 1200
+    "reader-fcp": 1200,
+    "chapter-switch": 300,
+    "offline-rehydrate": 800
   },
   "ciDuration": {
     "total": 900

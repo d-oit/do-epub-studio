@@ -24,7 +24,13 @@ function readJson(p) {
   return null;
 }
 
-const budgets = readJson(budgetsPath) || { bundleSize: {}, routeBudgets: {}, startupTime: { fcp: 1500 }, ciDuration: { total: 900 } };
+const budgets = readJson(budgetsPath) || {
+  bundleSize: {},
+  routeBudgets: {},
+  startupTime: { fcp: 1500, 'chapter-switch': 300, 'offline-rehydrate': 800 },
+  ciDuration: { total: 900 }
+};
+
 const bundleMetrics = readJson(path.join(metricsPath, 'bundle-metrics.json'));
 const startupMetrics = readJson(path.join(metricsPath, 'startup-metrics.json'));
 const ciMetrics = readJson(path.join(metricsPath, 'ci-metrics.json'));
@@ -90,22 +96,32 @@ if (bundleMetrics && bundleMetrics.bundleSize) {
 }
 
 if (startupMetrics && startupMetrics.startupTime) {
-  markdown += '### ⚡ Startup Performance\n\n';
+  markdown += '### ⚡ Startup & Interaction\n\n';
   markdown += '| Metric | Value (ms) | Limit (ms) | Trend | Status |\n';
   markdown += '| :--- | :--- | :--- | :--- | :--- |\n';
 
-  const fcp = startupMetrics.startupTime.fcp;
-  const fcpLimit = budgets.startupTime.fcp;
-  const status = fcp < fcpLimit ? '✅' : '⚠️';
+  const metricsToReport = [
+    { key: 'fcp', label: 'First Contentful Paint' },
+    { key: 'chapter-switch', label: 'Chapter Switch Latency' },
+    { key: 'offline-rehydrate', label: 'Offline Rehydrate Time' },
+    { key: 'domInteractive', label: 'DOM Interactive', noLimit: true },
+    { key: 'loadEventEnd', label: 'Load Event End', noLimit: true },
+  ];
 
-  let fcpTrend = '-';
-  if (baselineStartup && baselineStartup.startupTime) {
-    fcpTrend = getChange(fcp, baselineStartup.startupTime.fcp) || '0%';
+  for (const m of metricsToReport) {
+    const val = startupMetrics.startupTime[m.key];
+    if (val === undefined || val === null) continue;
+
+    const limit = budgets.startupTime[m.key];
+    const status = m.noLimit ? '-' : (val <= limit ? '✅' : '⚠️');
+
+    let trend = '-';
+    if (baselineStartup && baselineStartup.startupTime && baselineStartup.startupTime[m.key]) {
+      trend = getChange(val, baselineStartup.startupTime[m.key]) || '0%';
+    }
+
+    markdown += `| ${m.label} | ${val.toFixed(2)} | ${limit || '-'} | ${trend} | ${status} |\n`;
   }
-
-  markdown += `| First Contentful Paint | ${fcp.toFixed(2)} | ${fcpLimit} | ${fcpTrend} | ${status} |\n`;
-  markdown += `| DOM Interactive | ${startupMetrics.startupTime.domInteractive.toFixed(2)} | - | - | - |\n`;
-  markdown += `| Load Event End | ${startupMetrics.startupTime.loadEventEnd.toFixed(2)} | - | - | - |\n`;
   markdown += '\n';
 }
 
@@ -114,8 +130,13 @@ if (lighthouseMetrics) {
   markdown += '| Category | Score | Status |\n';
   markdown += '| :--- | :--- | :--- |\n';
   for (const [cat, val] of Object.entries(lighthouseMetrics)) {
-    const score = (val * 100).toFixed(0);
-    const status = val >= 0.9 ? '✅' : (val >= 0.5 ? '⚠️' : '❌');
+    // Lighthouse metrics might be coming in as 0-1 or 0-100 depending on the source
+    const numericVal = typeof val === 'number' ? val : parseFloat(val);
+    if (isNaN(numericVal)) continue;
+
+    const score = (numericVal <= 1 ? numericVal * 100 : numericVal).toFixed(0);
+    const normalizedVal = numericVal <= 1 ? numericVal : numericVal / 100;
+    const status = normalizedVal >= 0.9 ? '✅' : (normalizedVal >= 0.5 ? '⚠️' : '❌');
     markdown += `| ${cat} | ${score} | ${status} |\n`;
   }
   markdown += '\n';

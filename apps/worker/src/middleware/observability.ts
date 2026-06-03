@@ -13,11 +13,11 @@ export const observabilityMiddleware: MiddlewareHandler = async (c, next) => {
 
   try {
     await next();
-    logRequestEnd(context, c.res.status);
+    logRequestEnd(context, c.res.status, { route: c.req.routePath });
     withTraceHeaders(c.res, context);
   } catch (error) {
     logRequestError(context, error);
-    logRequestEnd(context, 500);
+    logRequestEnd(context, 500, { route: c.req.routePath });
     const failure = c.json(
       {
         ok: false,
