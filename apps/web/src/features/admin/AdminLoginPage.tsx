@@ -65,7 +65,7 @@ export function AdminLoginPage() {
             <div>
               <label
                 htmlFor="email"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                className="block text-sm font-medium text-gray-800 dark:text-gray-200 mb-1"
               >
                 {t('admin.login.email')}
               </label>
@@ -75,14 +75,14 @@ export function AdminLoginPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 text-gray-900 dark:text-white"
+                className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-500 dark:border-gray-500 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 text-gray-900 dark:text-white"
               />
             </div>
 
             <div>
               <label
                 htmlFor="password"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                className="block text-sm font-medium text-gray-800 dark:text-gray-200 mb-1"
               >
                 {t('admin.login.password')}
               </label>
@@ -92,7 +92,7 @@ export function AdminLoginPage() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 text-gray-900 dark:text-white"
+                className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-500 dark:border-gray-500 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 text-gray-900 dark:text-white"
               />
             </div>
 
@@ -108,8 +108,8 @@ export function AdminLoginPage() {
 
         <div className="mt-6 text-center">
           <button
-            onClick={() => { void void navigate('/login'); }}
-            className="text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400"
+            onClick={() => { void navigate('/login'); }}
+            className="text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
           >
             {t('admin.login.backToReader')}
           </button>
