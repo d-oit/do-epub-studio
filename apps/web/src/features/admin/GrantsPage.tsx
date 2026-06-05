@@ -102,7 +102,7 @@ export function AdminGrantResponsesPage() {
 
   if (!bookId) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8">
+      <main id="main-content" className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
           {t('admin.grants.title')}
         </h1>
@@ -112,12 +112,12 @@ export function AdminGrantResponsesPage() {
         <button onClick={() => void navigate('/admin/books')} className="mt-4 text-primary-600 hover:text-primary-700">
           &larr; {t('admin.grants.backToBooks')}
         </button>
-      </div>
+      </main>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8">
+    <main id="main-content" className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8">
       <header className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -304,6 +304,6 @@ export function AdminGrantResponsesPage() {
           </div>
         </form>
       </Modal>
-    </div>
+    </main>
   );
 }
