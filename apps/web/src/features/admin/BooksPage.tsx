@@ -192,7 +192,7 @@ export function AdminBookResponsesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8">
+    <main id="main-content" className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8">
       <header className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -379,6 +379,6 @@ export function AdminBookResponsesPage() {
           </div>
         </form>
       </Modal>
-    </div>
+    </main>
   );
 }

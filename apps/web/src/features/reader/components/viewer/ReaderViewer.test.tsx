@@ -60,4 +60,18 @@ describe('ReaderViewer', () => {
     );
     expect(screen.getByRole('main')).toBeTruthy();
   });
+
+  it('has id="main-content" on the main element', () => {
+    render(
+      <ReaderViewer
+        isLoading={false}
+        epubUrl="https://example.com/book.epub"
+        error={null}
+        pageWidthClass="max-w-3xl"
+        viewerRef={mockRef}
+        notAvailableText="No book selected"
+      />
+    );
+    expect(screen.getByRole('main')).toHaveAttribute('id', 'main-content');
+  });
 });
