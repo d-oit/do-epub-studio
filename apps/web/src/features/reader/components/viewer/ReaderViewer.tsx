@@ -16,7 +16,7 @@ export function ReaderViewer({
   notAvailableText,
 }: ReaderViewerProps) {
   return (
-    <main className="pt-14 pb-20">
+    <main id="main-content" className="pt-14 pb-20">
       {error && (
         <div className="max-w-3xl mx-auto px-4 mt-4">
           <div className="p-3 bg-accent-error/10 border border-accent-error rounded text-sm text-accent-error">
