@@ -248,13 +248,7 @@ export function useReaderEpub(
         });
         renditionRef.current = rendition;
 
-        // Security: Mandatory sanitization of all EPUB content.
-        // The web app creates its own rendition here (independent of the
-        // EpubLoader's rendition), so this hook is registered on a
-        // DIFFERENT rendition than the one in epub-loader.ts. The hook is
-        // idempotent (see packages/reader-core/src/__tests__/sanitizer.test.ts
-        // "hook is safe to invoke multiple times"), so even if a future
-        // refactor shares the rendition, double-registration is safe.
+        // Security: Mandatory sanitization of all EPUB content
         rendition.hooks.content.register(createEpubSanitizerHook());
 
         if (fixedLayout) {
