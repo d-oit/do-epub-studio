@@ -256,7 +256,6 @@ export function sanitizeDom(node: Document | DocumentFragment | Element): void {
   if (!root) return;
 
   const allElements = root.querySelectorAll('*');
-  const toRemove: Element[] = [];
 
   for (const el of allElements) {
     const tag = el.localName;
@@ -304,10 +303,26 @@ export function sanitizeDom(node: Document | DocumentFragment | Element): void {
       }
     }
   }
+}
 
-  for (const el of toRemove) {
-    el.remove();
-  }
+export function sanitizeEpubDocument(doc: Document): void {
+  DOMPurify.sanitize(doc.documentElement || doc, {
+    ADD_TAGS: ['link', 'style', 'meta', 'foreignObject'],
+    FORBID_TAGS: ['script', 'iframe', 'object', 'embed', 'applet'],
+    FORBID_ATTR: SVG_EVENT_ATTRS,
+    IN_PLACE: true,
+    WHOLE_DOCUMENT: true,
+  });
+  // Also run our custom logic for href scheme validation
+  sanitizeDom(doc);
+}
+
+export function createEpubSanitizerHook(): (contents: { document?: Document }) => void {
+  return (contents: { document?: Document }) => {
+    const doc = contents.document;
+    if (!doc) return;
+    sanitizeEpubDocument(doc);
+  };
 }
 
 export function createSvgSanitizerHook(): (contents: { document?: Document }) => void {

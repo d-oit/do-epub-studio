@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { sanitizeSvg, sanitizeDom, createSvgSanitizerHook } from '../sanitizer';
+import { sanitizeSvg, sanitizeDom, sanitizeEpubDocument, createSvgSanitizerHook, createEpubSanitizerHook } from '../sanitizer';
 
 describe('sanitizeSvg', () => {
   it('allows safe SVG tags', () => {
@@ -102,13 +102,13 @@ describe('sanitizeDom', () => {
     return new DOMParser().parseFromString(htmlContent, 'text/html');
   }
 
-  it('removes foreignObject from SVG in DOM', () => {
+  it('preserves foreignObject in SVG in DOM (handled by DOMPurify config instead)', () => {
     const html = '<svg xmlns="http://www.w3.org/2000/svg"><foreignObject><div>test</div></foreignObject><rect width="100" height="100"/></svg>';
     const doc = createDoc(html);
     const svg = doc.querySelector('svg') as Element;
     expect(svg).not.toBeNull();
     sanitizeDom(svg);
-    expect(svg.querySelector('foreignObject')).toBeNull();
+    expect(svg.querySelector('foreignObject')).not.toBeNull();
     expect(svg.querySelector('rect')).not.toBeNull();
   });
 
@@ -130,6 +130,66 @@ describe('sanitizeDom', () => {
     expect(() => {
       sanitizeDom(doc);
     }).not.toThrow();
+  });
+});
+
+describe('sanitizeEpubDocument', () => {
+  function createDoc(htmlContent: string): Document {
+    return new DOMParser().parseFromString(htmlContent, 'text/html');
+  }
+
+  it('removes scripts from the document', () => {
+    const html = '<html><body><script>alert(1)</script><p>Hello</p></body></html>';
+    const doc = createDoc(html);
+    sanitizeEpubDocument(doc);
+    expect(doc.querySelector('script')).toBeNull();
+    expect(doc.querySelector('p')).not.toBeNull();
+  });
+
+  it('preserves allowed styling tags', () => {
+    const html = '<html><head><style>body { color: red; }</style><link rel="stylesheet" href="style.css"/><meta name="viewport" content="width=device-width"/></head><body><p>Hello</p></body></html>';
+    const doc = createDoc(html);
+    sanitizeEpubDocument(doc);
+    expect(doc.querySelector('style')).not.toBeNull();
+    expect(doc.querySelector('link')).not.toBeNull();
+    expect(doc.querySelector('meta')).not.toBeNull();
+  });
+
+  it('removes dangerous tags', () => {
+    const html = '<html><body><iframe src="evil.com"></iframe><object data="flash.swf"></object><embed src="plugin.exe"/></body></html>';
+    const doc = createDoc(html);
+    sanitizeEpubDocument(doc);
+    expect(doc.querySelector('iframe')).toBeNull();
+    expect(doc.querySelector('object')).toBeNull();
+    expect(doc.querySelector('embed')).toBeNull();
+  });
+
+  it('removes event handlers', () => {
+    const html = '<html><body><button onclick="alert(1)">Click</button></body></html>';
+    const doc = createDoc(html);
+    sanitizeEpubDocument(doc);
+    expect(doc.querySelector('button')?.getAttribute('onclick')).toBeNull();
+  });
+
+  it('blocks dangerous href schemes', () => {
+    const html = '<html><body><a href="javascript:alert(1)">Link</a></body></html>';
+    const doc = createDoc(html);
+    sanitizeEpubDocument(doc);
+    expect(doc.querySelector('a')?.getAttribute('href')).toBeNull();
+  });
+});
+
+describe('createEpubSanitizerHook', () => {
+  it('returns a function that does not throw with empty contents', () => {
+    const hook = createEpubSanitizerHook();
+    expect(() => hook({})).not.toThrow();
+  });
+
+  it('sanitizes the document passed to the hook', () => {
+    const hook = createEpubSanitizerHook();
+    const doc = new DOMParser().parseFromString('<html><body><script>alert(1)</script></body></html>', 'text/html');
+    hook({ document: doc });
+    expect(doc.querySelector('script')).toBeNull();
   });
 });
 
