@@ -305,15 +305,117 @@ export function sanitizeDom(node: Document | DocumentFragment | Element): void {
   }
 }
 
-export function sanitizeEpubDocument(doc: Document): void {
-  DOMPurify.sanitize(doc.documentElement || doc, {
-    ADD_TAGS: ['link', 'style', 'meta', 'foreignObject'],
-    FORBID_TAGS: ['script', 'iframe', 'object', 'embed', 'applet'],
+// Hardened, deterministic allowlist of tags permitted in EPUB body HTML.
+// This is a denylist-based belt added on top of the DOMPurify `FORBID_TAGS`
+// check so that ANY tag outside this set is dropped, even if a future
+// DOMPurify version ships a new default-permitted tag. Keep the list in
+// sync with what the EPUB reader's CSS/JS expects (see ADR-035 + ADR-067).
+//
+// Reference: DOMPurify `ALLOWED_TAGS` is the canonical untrusted-HTML
+// allowlist, more secure than `FORBID_TAGS`-only configurations.
+const EPUB_BODY_ALLOWED_TAGS = [
+  'a', 'abbr', 'address', 'article', 'aside', 'b', 'bdi', 'bdo', 'blockquote',
+  'br', 'caption', 'cite', 'code', 'col', 'colgroup', 'data', 'datalist', 'dd',
+  'del', 'details', 'dfn', 'dialog', 'div', 'dl', 'dt', 'em', 'figcaption',
+  'figure', 'footer', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'header', 'hgroup',
+  'hr', 'i', 'ins', 'kbd', 'label', 'legend', 'li', 'main', 'mark', 'menu',
+  'menuitem', 'meter', 'nav', 'ol', 'optgroup', 'option', 'output', 'p', 'pre',
+  'progress', 'q', 'rp', 'rt', 'ruby', 's', 'samp', 'section', 'small', 'span',
+  'strong', 'sub', 'summary', 'sup', 'table', 'tbody', 'td', 'tfoot', 'th',
+  'thead', 'time', 'tr', 'u', 'ul', 'var', 'wbr',
+  // SVG namespace is allowed as a whole subtree via a second pass; we do
+  // not enumerate SVG here to keep the body allowlist tight.
+];
+
+// Tags only allowed in <head> of an EPUB document.
+const EPUB_HEAD_ALLOWED_TAGS = ['link', 'meta', 'style', 'title', 'base'];
+
+// Structural tags that EPUB documents require but DOMPurify's ALLOWED_TAGS
+// does not include by default. Without these, the <html>/<head>/<body>
+// wrapper is dropped during sanitization.
+const EPUB_STRUCTURAL_TAGS = ['html', 'head', 'body'];
+
+function buildEpubPurifyConfig(): Config {
+  return {
+    // Explicit allowlist per the untrusted-HTML hardening note above.
+    ALLOWED_TAGS: [
+      ...EPUB_STRUCTURAL_TAGS,
+      ...EPUB_BODY_ALLOWED_TAGS,
+      ...EPUB_HEAD_ALLOWED_TAGS,
+      ...SAFE_SVG_TAGS,
+    ],
+    // Keep these as defense-in-depth: ALLOWED_TAGS is authoritative, but
+    // listing them again here makes the policy obvious to reviewers and
+    // protects against accidental ALLOWED_TAGS-only regressions.
+    FORBID_TAGS: ['script', 'iframe', 'object', 'embed', 'applet', 'form', 'input', 'button', 'select', 'textarea'],
     FORBID_ATTR: SVG_EVENT_ATTRS,
-    IN_PLACE: true,
-    WHOLE_DOCUMENT: true,
-  });
-  // Also run our custom logic for href scheme validation
+    // Disallow URI schemes on href / src by stripping them in sanitizeDom;
+    // DOMPurify's ALLOWED_URI_REGEXP is a coarse second line of defense.
+    ADD_ATTR: [...SVG_ALLOWED_ATTRS],
+    ALLOW_ARIA_ATTR: true,
+    ALLOW_DATA_ATTR: false,
+    // Use deterministic in-place mutation on the Document node. We pass
+    // the document element explicitly (never the Document directly) to
+    // avoid the WHOLE_DOCUMENT=true foot-gun documented in the Codacy
+    // review: WHOLE_DOCUMENT=true mutates <html> and <head> in place and
+    // is brittle when the source document is detached or reparented.
+    // Here we sanitize document.documentElement as a node, then re-apply
+    // href-scheme + event-attribute scrubbing via sanitizeDom in a
+    // second deterministic pass.
+    IN_PLACE: false,
+    RETURN_DOM: true,
+    WHOLE_DOCUMENT: false,
+  };
+}
+
+let cachedEpubConfig: Config | null = null;
+
+function getEpubConfig(): Config {
+  if (!cachedEpubConfig) {
+    cachedEpubConfig = buildEpubPurifyConfig();
+  }
+  return cachedEpubConfig;
+}
+
+/**
+ * Sanitize an EPUB document in place, idempotently.
+ *
+ * Strategy:
+ *   1. Build a sanitized clone via DOMPurify with an explicit
+ *      `ALLOWED_TAGS` allowlist (the Codacy-recommended approach for
+ *      untrusted HTML — `FORBID_TAGS`-only is a known foot-gun).
+ *   2. Replace the live `documentElement`'s children with the sanitized
+ *      children. This is idempotent: calling sanitizeEpubDocument twice
+ *      on the same document produces the same final DOM, so the hook
+ *      is safe to register on multiple rendition hooks (e.g. both the
+ *      `useReaderEpub` and `EpubLoader` paths) without double-stripping.
+ *   3. Run `sanitizeDom` to enforce href-scheme allowlist and strip any
+ *      remaining event-handler attributes.
+ */
+export function sanitizeEpubDocument(doc: Document): void {
+  if (!doc || !doc.documentElement) return;
+  const liveRoot = doc.documentElement;
+
+  // Pass 1: DOMPurify allowlist. Use documentElement.cloneNode(true) so
+  // the sanitized result is independent of the live DOM. Without this
+  // clone, RETURN_DOM:true can hand us back the very nodes we're about
+  // to mutate, which trips a "Node cannot have two parents" error on
+  // Safari and on DOM mutation observers.
+  const clone = liveRoot.cloneNode(true);
+  // DOMPurify's TS types declare the return as `string | Node` for
+  // `RETURN_DOM: true`. We narrow to Document | Element for the
+  // subsequent use of `documentElement` / `childNodes`.
+  const sanitized = DOMPurify.sanitize(clone, getEpubConfig()) as unknown as Document | Element;
+  const sanitizedRoot = sanitized instanceof Document ? sanitized.documentElement : sanitized;
+  if (!sanitizedRoot) return;
+
+  // Pass 2: replace live children with sanitized children. Using
+  // `replaceChildren` (not innerHTML =) keeps event listeners on the
+  // document object intact and avoids the well-known CSP/DOMParser
+  // re-entrancy pitfalls.
+  liveRoot.replaceChildren(...Array.from(sanitizedRoot.childNodes).map((n) => n.cloneNode(true)));
+
+  // Pass 3: href-scheme + event-attr enforcement.
   sanitizeDom(doc);
 }
 

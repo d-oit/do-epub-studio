@@ -153,6 +153,8 @@ describe('sanitizeEpubDocument', () => {
     expect(doc.querySelector('style')).not.toBeNull();
     expect(doc.querySelector('link')).not.toBeNull();
     expect(doc.querySelector('meta')).not.toBeNull();
+    expect(doc.querySelector('head')).not.toBeNull();
+    expect(doc.querySelector('body')).not.toBeNull();
   });
 
   it('removes dangerous tags', () => {
@@ -164,11 +166,41 @@ describe('sanitizeEpubDocument', () => {
     expect(doc.querySelector('embed')).toBeNull();
   });
 
-  it('removes event handlers', () => {
-    const html = '<html><body><button onclick="alert(1)">Click</button></body></html>';
+  it('removes form/interactive tags (defense-in-depth allowlist)', () => {
+    // The ALLOWED_TAGS allowlist drops <form>, <input>, <button>, <select>,
+    // <textarea> as well, so a malicious EPUB cannot embed a phishing form.
+    const html = '<html><body><form action="https://evil.com"><input name="x"/><button>Go</button></form><p>Hello</p></body></html>';
     const doc = createDoc(html);
     sanitizeEpubDocument(doc);
-    expect(doc.querySelector('button')?.getAttribute('onclick')).toBeNull();
+    expect(doc.querySelector('form')).toBeNull();
+    expect(doc.querySelector('input')).toBeNull();
+    expect(doc.querySelector('button')).toBeNull();
+    expect(doc.querySelector('p')).not.toBeNull();
+  });
+
+  it('removes unknown tags not on the allowlist (allowlist, not denylist)', () => {
+    // <blink>, <marquee>, and <frameset> are NOT on the EPUB allowlist and
+    // must be dropped even if they are not explicitly FORBIDDEN. This
+    // proves we are using ALLOWED_TAGS (secure default) rather than
+    // FORBID_TAGS-only (Codacy-flagged).
+    const html = '<html><body><blink>hi</blink><marquee>lo</marquee><frameset><frame src="x"/></frameset><p>ok</p></body></html>';
+    const doc = createDoc(html);
+    sanitizeEpubDocument(doc);
+    expect(doc.querySelector('blink')).toBeNull();
+    expect(doc.querySelector('marquee')).toBeNull();
+    expect(doc.querySelector('frameset')).toBeNull();
+    expect(doc.querySelector('frame')).toBeNull();
+    expect(doc.querySelector('p')).not.toBeNull();
+  });
+
+  it('strips event-handler attributes on allowed tags', () => {
+    // The hardened allowlist keeps <a> but strips any onclick=.
+    const html = '<html><body><a href="https://example.com" onclick="alert(1)">Link</a></body></html>';
+    const doc = createDoc(html);
+    sanitizeEpubDocument(doc);
+    const a = doc.querySelector('a');
+    expect(a).not.toBeNull();
+    expect(a?.getAttribute('onclick')).toBeNull();
   });
 
   it('blocks dangerous href schemes', () => {
@@ -176,6 +208,31 @@ describe('sanitizeEpubDocument', () => {
     const doc = createDoc(html);
     sanitizeEpubDocument(doc);
     expect(doc.querySelector('a')?.getAttribute('href')).toBeNull();
+  });
+
+  it('is idempotent: running twice produces the same final DOM', () => {
+    // Codacy review concern: the hook is registered on TWO rendition
+    // hooks (useReaderEpub and EpubLoader). Double-invocation must be
+    // safe. This test proves the second call is a no-op on the first
+    // call's output.
+    const html = '<html><body><script>alert(1)</script><p onclick="alert(2)">Hello</p><a href="javascript:alert(3)">X</a></body></html>';
+    const doc = createDoc(html);
+    sanitizeEpubDocument(doc);
+    const after1 = doc.documentElement.outerHTML;
+    sanitizeEpubDocument(doc);
+    const after2 = doc.documentElement.outerHTML;
+    expect(after2).toBe(after1);
+  });
+
+  it('handles empty document without throwing', () => {
+    const doc = createDoc('');
+    expect(() => sanitizeEpubDocument(doc)).not.toThrow();
+  });
+
+  it('handles null document without throwing', () => {
+    // Defensive: should never crash on a missing or detached document.
+    const fakeDoc = {} as Document;
+    expect(() => sanitizeEpubDocument(fakeDoc)).not.toThrow();
   });
 });
 
@@ -190,6 +247,26 @@ describe('createEpubSanitizerHook', () => {
     const doc = new DOMParser().parseFromString('<html><body><script>alert(1)</script></body></html>', 'text/html');
     hook({ document: doc });
     expect(doc.querySelector('script')).toBeNull();
+  });
+
+  it('hook is safe to invoke multiple times (idempotent)', () => {
+    // The hook may be registered on both `useReaderEpub` and `EpubLoader`
+    // rendition paths. Both paths may fire the same hook. We assert that
+    // the resulting DOM is identical after multiple invocations.
+    const hook = createEpubSanitizerHook();
+    const doc = new DOMParser().parseFromString(
+      '<html><body><script>x</script><a href="javascript:y">L</a><blink>z</blink><p>hi</p></body></html>',
+      'text/html',
+    );
+    hook({ document: doc });
+    const snap1 = doc.documentElement.outerHTML;
+    hook({ document: doc });
+    hook({ document: doc });
+    const snap3 = doc.documentElement.outerHTML;
+    expect(snap3).toBe(snap1);
+    expect(doc.querySelector('script')).toBeNull();
+    expect(doc.querySelector('blink')).toBeNull();
+    expect(doc.querySelector('p')?.textContent).toBe('hi');
   });
 });
 
