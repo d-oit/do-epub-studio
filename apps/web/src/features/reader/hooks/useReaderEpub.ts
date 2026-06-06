@@ -3,6 +3,8 @@ import ePub from '@intity/epub-js';
 import type { Book, Rendition, NavItem, Contents } from '@intity/epub-js';
 import type { PageDirection, WritingMode } from '../../../stores';
 import { parseAccessibilityFromOpf, parseFixedLayoutFromOpf } from '@do-epub-studio/reader-core';
+import { createSpanId, createTraceId } from '@do-epub-studio/shared';
+import { logClientEvent } from '../../../lib/client-logger';
 import {
   useAuthStore,
   useReaderStore,
@@ -159,11 +161,12 @@ export function useReaderEpub(
         setToc(tocItems);
         tocRef.current = tocItems;
 
-        const bookDirection: PageDirection = book.packaging?.direction === 'rtl'
-          ? 'rtl'
-          : book.packaging?.direction === 'ltr'
-            ? 'ltr'
-            : 'default';
+        const bookDirection: PageDirection =
+          book.packaging?.direction === 'rtl'
+            ? 'rtl'
+            : book.packaging?.direction === 'ltr'
+              ? 'ltr'
+              : 'default';
         directionRef.current = bookDirection;
         setBookDirection(bookDirection);
 
@@ -270,7 +273,11 @@ export function useReaderEpub(
         const adapter = createEpubAnnotationAdapter(rendition);
         adapterRef.current = adapter;
 
-        applyDirectionAndWritingMode(rendition, readerDirection !== 'default' ? readerDirection : bookDirection, readerWritingMode);
+        applyDirectionAndWritingMode(
+          rendition,
+          readerDirection !== 'default' ? readerDirection : bookDirection,
+          readerWritingMode,
+        );
         await rendition.display();
         if (!active) return;
 
@@ -305,12 +312,32 @@ export function useReaderEpub(
 
             if (cfi) await rendition.display(cfi);
           } catch (e) {
-            console.warn('Failed to load progress from API', e);
+            const apiError = e instanceof Error ? e : new Error(String(e));
+            logClientEvent({
+              level: 'warn',
+              event: 'reader.progress_load_api_failed',
+              traceId: createTraceId(),
+              spanId: createSpanId(),
+              error: { name: apiError.name, message: apiError.message, stack: apiError.stack },
+              metadata: { bookId },
+            });
             try {
               const cached = await getProgress(bookId);
               if (cached?.cfi) await rendition.display(cached.cfi);
             } catch (dbErr) {
-              console.warn('Failed to load progress from cache', dbErr);
+              const cacheError = dbErr instanceof Error ? dbErr : new Error(String(dbErr));
+              logClientEvent({
+                level: 'warn',
+                event: 'reader.progress_load_cache_failed',
+                traceId: createTraceId(),
+                spanId: createSpanId(),
+                error: {
+                  name: cacheError.name,
+                  message: cacheError.message,
+                  stack: cacheError.stack,
+                },
+                metadata: { bookId },
+              });
             }
           }
         }
@@ -360,7 +387,19 @@ export function useReaderEpub(
                     body: JSON.stringify({ locator: { cfi }, progressPercent, mutationId }),
                   });
                 } catch (e) {
-                  console.warn('Failed to save progress online, queuing offline', e);
+                  const saveError = e instanceof Error ? e : new Error(String(e));
+                  logClientEvent({
+                    level: 'warn',
+                    event: 'reader.progress_save_online_failed',
+                    traceId: createTraceId(),
+                    spanId: createSpanId(),
+                    error: {
+                      name: saveError.name,
+                      message: saveError.message,
+                      stack: saveError.stack,
+                    },
+                    metadata: { bookId },
+                  });
                   await queueOffline();
                 }
               } else {
@@ -379,7 +418,15 @@ export function useReaderEpub(
           );
         });
       } catch (err) {
-        console.error('EPUB init error:', err);
+        const error = err instanceof Error ? err : new Error(String(err));
+        logClientEvent({
+          level: 'error',
+          event: 'reader.epub_init_failed',
+          traceId: createTraceId(),
+          spanId: createSpanId(),
+          error: { name: error.name, message: error.message, stack: error.stack },
+          metadata: { bookId },
+        });
         setError(t('reader.loadError'));
       }
     };
@@ -437,8 +484,9 @@ export function useReaderEpub(
       const rendition = renditionRef.current;
       if (!rendition) return;
 
-      const isRtl = directionRef.current === 'rtl'
-        || (directionRef.current === 'default' && document.documentElement.dir === 'rtl');
+      const isRtl =
+        directionRef.current === 'rtl' ||
+        (directionRef.current === 'default' && document.documentElement.dir === 'rtl');
       const nextPage = isRtl ? 'ArrowLeft' : 'ArrowRight';
       const prevPage = isRtl ? 'ArrowRight' : 'ArrowLeft';
 
