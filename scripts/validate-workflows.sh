@@ -67,12 +67,19 @@ fi
 ACTIONLINT=""
 if command -v actionlint &> /dev/null; then
     ACTIONLINT="actionlint"
+    # Ensure the resolved binary is executable. pip/curl installs into
+    # $HOME/.local/bin can intermittently drop the exec bit, causing
+    # "Permission denied" mid-run (see issue #439).
+    chmod u+x "$(command -v actionlint)" 2>/dev/null || true
 fi
 
 # Check for zizmor
 ZIZMOR=""
 if command -v zizmor &> /dev/null; then
     ZIZMOR="zizmor"
+    # Guard against intermittent "Permission denied" on the pip-installed
+    # zizmor launcher by guaranteeing the exec bit before use (issue #439).
+    chmod u+x "$(command -v zizmor)" 2>/dev/null || true
 fi
 
 for file in "${WORKFLOW_FILES[@]}"; do
