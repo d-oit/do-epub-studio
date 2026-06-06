@@ -1,14 +1,22 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { useParams, useNavigate } from 'react-router-dom';
+import { createSpanId, createTraceId } from '@do-epub-studio/shared';
 import { useTranslation } from '../../hooks/useTranslation';
 import { apiRequest } from '../../lib/api';
+import { logClientEvent } from '../../lib/client-logger';
 import { fetchHighlights, fetchComments } from '../../lib/api/annotations';
 import { useAuthStore, useReaderStore, usePreferencesStore } from '../../stores';
 import { setupOnlineListener } from '../../lib/offline';
 import { setupZombieDetection } from '../../lib/offline/permissions';
 import { AnnotationToolbar, extractSelectionData, CommentsPanel } from './components/annotations';
-import { useReaderUI, useReaderEpub, useAnnotationHandlers, useBookmarkHandlers, useExportNotes } from './hooks';
+import {
+  useReaderUI,
+  useReaderEpub,
+  useAnnotationHandlers,
+  useBookmarkHandlers,
+  useExportNotes,
+} from './hooks';
 import { AnimatePresence } from 'framer-motion';
 import {
   ReaderToolbar,
@@ -126,7 +134,15 @@ export function ReaderPage() {
         setHighlights(hl);
         setComments(cm);
       } catch (err) {
-        console.warn('Failed to fetch annotations', err);
+        const error = err instanceof Error ? err : new Error(String(err));
+        logClientEvent({
+          level: 'warn',
+          event: 'reader.annotations_fetch_failed',
+          traceId: createTraceId(),
+          spanId: createSpanId(),
+          error: { name: error.name, message: error.message, stack: error.stack },
+          metadata: { bookId },
+        });
       }
     };
     void load();
@@ -199,7 +215,14 @@ export function ReaderPage() {
     try {
       await apiRequest('/api/access/logout', { method: 'POST', token: sessionToken ?? undefined });
     } catch (err) {
-      console.error('Logout failed', err);
+      const error = err instanceof Error ? err : new Error(String(err));
+      logClientEvent({
+        level: 'error',
+        event: 'reader.logout_failed',
+        traceId: createTraceId(),
+        spanId: createSpanId(),
+        error: { name: error.name, message: error.message, stack: error.stack },
+      });
     } finally {
       logout();
       void navigate('/login');

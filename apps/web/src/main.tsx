@@ -46,13 +46,27 @@ if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
         };
         if (syncReg.sync) {
           void syncReg.sync.register('sync-reader-state').catch((err: unknown) => {
-            console.error('Failed to register background sync:', err);
+            const error = err instanceof Error ? err : new Error(String(err));
+            logClientEvent({
+              level: 'error',
+              event: 'sw.background_sync_register_failed',
+              traceId: createTraceId(),
+              spanId: createSpanId(),
+              error: { name: error.name, message: error.message, stack: error.stack },
+            });
           });
         }
       }
     },
     onRegisterError(error) {
-      console.error('Service worker registration failed:', error);
+      const err = error instanceof Error ? error : new Error(String(error));
+      logClientEvent({
+        level: 'error',
+        event: 'sw.registration_failed',
+        traceId: createTraceId(),
+        spanId: createSpanId(),
+        error: { name: err.name, message: err.message, stack: err.stack },
+      });
     },
   });
 }
