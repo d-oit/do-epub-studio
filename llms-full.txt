@@ -1,0 +1,155 @@
+# do-epub-studio — Full Context for LLM Agents
+
+## 1. Mission
+
+do-epub-studio is a privacy-first EPUB reader and editorial workspace. The
+goal is to let readers load, read, annotate, and export EPUB books without
+ever sending content to a third party (other than the Cloudflare Worker
+that delivers signed R2 URLs).
+
+## 2. Architecture
+
+### Monorepo layout
+
+```
+.
+├── apps/
+│   ├── web/                 # Vite + React 19 SPA
+│   │   ├── src/features/    # route-level feature modules
+│   │   ├── src/stores/      # Zustand stores (auth, reader, preferences)
+│   │   ├── src/lib/         # api, offline, client-logger, annotations
+│   │   └── public/          # static assets + service worker
+│   └── worker/              # Hono + Cloudflare Worker
+│       ├── src/routes/      # auth, files, annotations, access
+│       ├── src/lib/         # observability, security-headers, R2
+│       └── wrangler.toml    # Cloudflare bindings
+├── packages/
+│   ├── shared/              # traceId/spanId, matchBounded, regex utilities
+│   ├── schema/              # Zod schemas for API boundary validation
+│   ├── reader-core/         # EPUB loader, sanitizer, CFI, re-anchor
+│   ├── ui/                  # design tokens, primitives
+│   └── testkit/             # shared test helpers
+├── scripts/                 # quality_gate, atomic-commit, validate-workflows
+├── .github/                 # workflows, composite actions, PR template
+└── plans/                   # GOAP + ADR records (000-067+)
+```
+
+### Runtime data flow
+
+1. **Auth**: User logs in via email+password (Argon2id) or invite token.
+   Worker issues a session token stored in an HttpOnly cookie.
+2. **Library**: Worker returns a list of accessible books (D1).
+3. **Download**: Worker signs an R2 URL with a short TTL; SPA fetches the EPUB
+   via that signed URL. The CSP for EPUB assets includes
+   `sandbox allow-same-origin` (no `allow-scripts`).
+4. **Render**: Reader-core sanitizes every document via DOMPurify
+   (`sanitizeEpubDocument`) and renders it in an EPUB.js rendition iframe
+   with `sandbox: ['allow-same-origin']` (no scripts).
+5. **Annotations**: Highlights + comments are stored in D1 with
+   multi-signal locators (CFI + selectedText + chapterRef) per ADR-006.
+6. **Offline**: Service worker caches the library + most-recent EPUB; queued
+   mutations are reconciled on reconnect via the `sync-reader-state` tag.
+
+## 3. Anti-Patterns (BANNED)
+
+- **Raw `console.*` on critical paths.** Use `logClientEvent` with a
+  `traceId`. See AGENTS.md TIER 1.
+- **Direct DOM mutation outside React.** Use refs and the framework's
+  reconciler; never `document.getElementById(...).innerHTML = ...`.
+- **`dangerouslySetInnerHTML` without DOMPurify.** The reader sanitizes
+  EPUB content; user-authored UGC must go through a sanitizer hook.
+- **Hard-coded environment URLs.** Read from `import.meta.env` or worker
+  bindings; never `https://api.example.com` in source.
+- **Hard-coded dates in code or docs.** Use `new Date().toISOString()` or
+  the date from the environment. See AGENTS.md TIER 3.
+- **Bypassing the gate.** Never use `--no-verify` to skip pre-commit; fix
+  the root cause.
+- **Speculative refactors.** Audit-tier areas found clean in plan 066 are
+  not refactored preemptively. See ADR-067.
+- **Tracking the untracked.** Per AGENTS.md TIER 1, never delete
+  `.gitignore` files. Binary/test fixtures must be generated, not tracked.
+- **Pushing to the wrong branch.** Use `git push origin <worktree>:<pr-head>`
+  if the worktree branch name differs from the PR head branch.
+- **Untyped `any` in new code.** TypeScript strict mode; if a type really
+  cannot be inferred, isolate the `any` in a single variable with a
+  comment explaining the constraint.
+
+## 4. Skills Reference
+
+| Category | Skills |
+|----------|--------|
+| Coordination | goap-agent, triz-analysis, triz-solver, task-decomposition, agent-coordination, learn, do-web-doc-resolver |
+| Backend | cloudflare-worker-api, secure-invite-and-access, turso-schema-migrations, pwa-offline-sync, cicd-pipeline |
+| Reader/UI | epub-rendering-and-cfi, reader-ui-ux, accessibility-auditor |
+| Testing | testing-strategy, testdata-builders, test-runner, dogfood |
+| DevOps | github-workflow, cicd-pipeline, migration-refactoring |
+| Workflow | github-actions-version-fix, github-pr-autopilot, release-management |
+| Security | security-code-auditor, privacy-first |
+| Quality | code-quality, code-review-assistant, shell-script-quality, anti-ai-slop, agents-md |
+
+## 5. ADRs (Architecture Decision Records)
+
+- ADR-006: Multi-signal annotation locators (CFI + text + chapter)
+- ADR-034: ReDoS-safe regex via matchBounded / testBounded
+- ADR-035: Restrictive CSP for framed EPUB content
+- ADR-063: Semantic design tokens for WCAG 2.1 AA
+- ADR-067: Observability adoption and CI tooling resilience
+- ADR-068: Open-issues swarm policy (this batch)
+
+## 6. Conventions (Detailed)
+
+### Commits
+
+- Format: `type(scope): description` (max 72 chars, no trailing period)
+- Types: feat, fix, perf, ci, docs, refactor, test, build, chore, security, a11y
+- Scopes: web, worker, reader-core, shared, schema, testkit, ui, infra, ci,
+  security, ux, a11y, deps
+- Body explains WHY, not WHAT
+
+### Pull Requests
+
+- One PR per logical change
+- Reference the issue(s) it closes: `Closes #123`
+- Include an AI-agent verification section if AI-generated
+- Run the full quality gate before requesting review
+
+### File Organization
+
+- Max 500 LOC per source file
+- i18n strings in `src/i18n/`, no hardcoded user-facing text
+- Type-narrow error objects: `err instanceof Error ? err : new Error(String(err))`
+
+## 7. Quality Gates
+
+- `./scripts/quality_gate.sh` — full gate (lint + typecheck + test + build + e2e smoke)
+- `./scripts/minimal_quality_gate.sh` — fast gate (lint + typecheck only)
+- `./scripts/validate-workflows.sh` — workflow YAML + actionlint + zizmor
+- Coverage thresholds per `vitest.config.ts` (web 55%, worker 55%, reader-core 72%, etc.)
+
+## 8. Local Dev
+
+```bash
+pnpm install --frozen-lockfile
+cp .dev.vars.example .dev.vars       # if present
+pnpm dev                              # starts web (Vite) and worker (wrangler)
+# In a separate terminal:
+pnpm --filter @do-epub-studio/reader-core test:unit
+```
+
+## 9. Deployment
+
+- Cloudflare Pages for the web SPA (auto-deploy on push to main)
+- Cloudflare Workers for the API (auto-deploy on push to main)
+- Tags cut via the `release-management` skill — never manual
+
+## 10. Common Tasks
+
+- Add a new skill: run the `skill-creator` skill
+- Open a PR: use the `github-pr-autopilot` skill
+- Close an issue: link it in a PR body and merge
+- Diagnose a CI failure: read the run, find the failing step, fix root cause
+- Add a design token: update `packages/ui` and reference it in `globals.css`
+
+## 11. For More
+
+See `AGENTS.md` for the canonical rule set and `plans/` for prior decisions.

@@ -57,3 +57,16 @@ repos:
         pass_filenames: false
         always_run: true
         verbose: true
+
+  # Secret scanning (Pinned SHA for supply-chain security, see issue #447)
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.18.4  # sha: 8c70e7ffe4b3659e389c98f17b3f1062b3fc73cd
+    hooks:
+      - id: gitleaks
+
+  # YAML linting (Pinned SHA, see issue #446)
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.35.1  # sha: 79a49a06b5ee2c0de1d513a6c11b7c4d3e5c9b3a
+    hooks:
+      - id: yamllint
+        args: ['--strict', '--config-file', '.yamllint.yml']

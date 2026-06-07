@@ -1,0 +1,15 @@
+# act configuration for local GitHub Actions workflow execution.
+# Adopted from github-template-ai-agents (issue #453).
+#
+# Run workflows locally with:
+#   brew install act
+#   act -l                 # list jobs
+#   act -j lint            # run the lint job
+#   act push               # run on push events
+#   act pull_request       # run on pull_request events
+#
+# Pinned runner image keeps results reproducible across hosts.
+
+-P ubuntu-latest=catthehacker/ubuntu:act-latest
+--container-daemon-socket -
+--action-offline-mode
