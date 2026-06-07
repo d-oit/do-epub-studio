@@ -29,8 +29,60 @@ permissions:
   contents: read
 
 jobs:
+  changes:
+    name: Path-based change detection
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      src: ${{ steps.filter.outputs.src }}
+      reader-core: ${{ steps.filter.outputs.reader-core }}
+      worker: ${{ steps.filter.outputs.worker }}
+      agent-docs: ${{ steps.filter.outputs.agent-docs }}
+      any: ${{ steps.filter.outputs.any }}
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
+        with:
+          persist-credentials: false
+      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1b284cd68cea36  # v3.0.2
+        id: filter
+        with:
+          filters: |
+            src:
+              - 'apps/web/src/**'
+              - 'packages/**'
+              - 'apps/worker/src/**'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'turbo.json'
+              - 'tsconfig.base.json'
+              - 'vite.config.ts'
+            reader-core:
+              - 'packages/reader-core/src/**'
+            worker:
+              - 'apps/worker/src/**'
+              - 'wrangler.toml'
+            agent-docs:
+              - '.agents/**'
+              - 'agents-docs/**'
+              - '.claude/**'
+              - '.qwen/**'
+              - '.opencode/**'
+              - '.commandcode/**'
+              - '.gemini/**'
+              - '.jules/**'
+              - '.windsurf/**'
+              - 'plans/**'
+              - 'AGENTS.md'
+              - 'CLAUDE.md'
+              - 'GEMINI.md'
+              - 'llms.txt'
+              - 'llms-full.txt'
+            any:
+              - '**'
+
   setup:
     name: Setup & Diagnostics
+    needs: changes
     runs-on: ubuntu-latest
     timeout-minutes: 15
     outputs:
@@ -56,6 +108,18 @@ jobs:
           pnpm list -r --depth -1
           echo "--- Pinned Tool Versions ---"
           pnpm list vitest vite @playwright/test -r
+
+      - name: Turbo remote cache status
+        env:
+          TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+          TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
+        run: |
+          echo "TURBO_TOKEN set: $([ -n "$TURBO_TOKEN" ] && echo yes || echo no)"
+          echo "TURBO_TEAM set:  $([ -n "$TURBO_TEAM" ] && echo yes || echo no)"
+          # Dry-run shows whether the build task would be a cache HIT or MISS.
+          pnpm turbo run build --dry-run=json 2>/dev/null | \
+            node -e "let d=''; process.stdin.on('data',c=>d+=c); process.stdin.on('end',()=>{ try { const j=JSON.parse(d); for (const t of j.tasks||[]) { console.log(t.task + ': ' + t.cache.cacheStatus + ' (' + t.cache.local + 'L/' + t.cache.remote + 'R)'); } } catch (e) { console.log('(dry-run parse skipped: ' + e.message + ')'); } })" || \
+            echo "(turbo dry-run not available in this checkout)"
 
   dep-scan:
     name: Dependency Vulnerability Scan
@@ -94,9 +158,29 @@ jobs:
           echo "::notice::Open CodeQL alerts on $ref: $count"
           [ "$count" = "0" ] || { echo "::error::Open CodeQL alerts on $ref: $count"; exit 1; }
 
+  labeler:
+    name: PR Labeler
+    needs: setup
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
+        with:
+          persist-credentials: false
+      - name: Apply path-based labels
+        uses: actions/labeler@5f867a63be70efff62b767459b009290364495eb  # v2.2.0
+        with:
+          configuration-path: .github/labeler.yml
+          fail-any-match: false
+
   pre-commit:
     name: Pre-commit Hooks
-    needs: setup
+    needs: [changes, setup]
+    if: needs.changes.outputs.agent-docs != 'true' || github.event_name == 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -202,7 +286,8 @@ jobs:
 
   build:
     name: Build
-    needs: [pre-commit, lint, typecheck, test]
+    needs: [changes, pre-commit, lint, typecheck, test]
+    if: needs.changes.outputs.src == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -225,28 +310,30 @@ jobs:
           path: apps/web/bundle-metrics.json
           retention-days: 1
 
-      - name: Baseline metrics (PR only)
+      - name: Setup baseline (PR only)
         if: github.event_name == 'pull_request'
+        id: baseline
         continue-on-error: true
+        uses: ./.github/actions/setup-baseline
+        with:
+          base-ref: ${{ github.base_ref }}
+
+      - name: Build baseline and collect metrics
+        if: github.event_name == 'pull_request' && steps.baseline.outputs.baseline-ok == 'true'
+        continue-on-error: true
+        working-directory: ${{ steps.baseline.outputs.baseline-dir }}
         env:
-          BASE_REF: ${{ github.base_ref }}
-          REPOSITORY: ${{ github.repository }}
+          METRICS_OUTPUT: baseline-bundle-metrics.json
           WORKSPACE: ${{ github.workspace }}
         run: |
-          TMP_DIR="$(mktemp -d)"
-          # Clone baseline into temp dir
-          git clone --depth=1 --branch "$BASE_REF" "https://github.com/$REPOSITORY.git" "$TMP_DIR"
-          # Copy check script and budgets from PR branch to baseline's expected locations
-          mkdir -p "$TMP_DIR/scripts"
-          cp scripts/check-bundle-size.mjs "$TMP_DIR/scripts/"
-          cp .performance-budgets.json "$TMP_DIR/"
-          cd "$TMP_DIR"
-          pnpm install --frozen-lockfile 2>/dev/null || { echo "Baseline lockfile broken (pre-existing), skipping baseline"; rm -rf "$TMP_DIR"; exit 0; }
           pnpm build
-          # Run size check using the restored script
-          METRICS_OUTPUT=baseline-bundle-metrics.json node scripts/check-bundle-size.mjs
+          node scripts/check-bundle-size.mjs
           cp baseline-bundle-metrics.json "$WORKSPACE/baseline-bundle-metrics.json"
-          rm -rf "$TMP_DIR"
+          rm -rf "${{ steps.baseline.outputs.baseline-dir }}"
+
+      - name: Skip baseline (install failed)
+        if: github.event_name == 'pull_request' && steps.baseline.outputs.baseline-ok != 'true'
+        run: echo "Skipping baseline — lockfile broken or clone failed (pre-existing)."
 
       - name: Upload baseline metrics
         if: github.event_name == 'pull_request'
@@ -275,8 +362,8 @@ jobs:
 
   e2e-smoke:
     name: E2E Smoke Tests
-    if: github.event_name != 'schedule'
-    needs: build
+    if: github.event_name != 'schedule' && needs.changes.outputs.src == 'true'
+    needs: [changes, build]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -374,7 +461,8 @@ jobs:
 
   bench:
     name: Benchmark
-    needs: build
+    needs: [changes, build]
+    if: needs.changes.outputs.reader-core == 'true' || github.event_name == 'schedule'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -430,8 +518,8 @@ jobs:
 
   performance-report:
     name: Performance Report
-    if: github.event_name == 'pull_request'
-    needs: [setup, build, e2e-smoke, bench]
+    if: github.event_name == 'pull_request' && needs.changes.outputs.src == 'true'
+    needs: [changes, setup, build, e2e-smoke, bench]
     continue-on-error: true
     runs-on: ubuntu-latest
     permissions:

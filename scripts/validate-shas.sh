@@ -33,6 +33,8 @@ ALLOWED_SHAS=(
     "actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3"
     "ossf/scorecard-action@4eaacf0543bb3f2c246792bd56e8cdeffafb205a"
     "actions/stale@eb5cf3af3ac0a1aa4c9c45633dd1ae542a27a899"
+    "actions/labeler@5f867a63be70efff62b767459b009290364495eb"
+    "dorny/paths-filter@de90cc6fb38fc0963ad72b210f1b284cd68cea36"
 )
 
 # Function to check if an action@sha is allowed

@@ -1,0 +1,57 @@
+name: Setup baseline build
+description: Clones the merge-base commit and copies the bundle-size script so PR metrics can be compared against the baseline.
+
+inputs:
+  base-ref:
+    description: Base branch name (e.g. main)
+    required: true
+  scripts-to-copy:
+    description: Space-separated list of file paths to copy from HEAD into the baseline checkout
+    required: false
+    default: 'scripts/check-bundle-size.mjs .performance-budgets.json'
+
+outputs:
+  baseline-dir:
+    description: Path to the baseline workspace (empty if baseline install failed)
+    value: ${{ steps.clone.outputs.dir }}
+  baseline-ok:
+    description: Whether baseline was set up successfully (true/false)
+    value: ${{ steps.clone.outputs.ok }}
+
+runs:
+  using: composite
+  steps:
+    - id: clone
+      shell: bash
+      run: |
+        set -euo pipefail
+        TMP_DIR="$(mktemp -d)"
+        MERGE_BASE="$(git merge-base "origin/${{ inputs.base-ref }}" HEAD 2>/dev/null || echo '')"
+        if [ -n "$MERGE_BASE" ]; then
+          git clone --depth=1 "$MERGE_BASE" "$TMP_DIR" 2>/dev/null || \
+            git clone --depth=1 --branch "${{ inputs.base-ref }}" \
+              "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY.git" "$TMP_DIR"
+        else
+          git clone --depth=1 --branch "${{ inputs.base-ref }}" \
+            "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY.git" "$TMP_DIR"
+        fi
+        for f in ${{ inputs.scripts-to-copy }}; do
+          mkdir -p "$TMP_DIR/$(dirname "$f")"
+          cp "$f" "$TMP_DIR/$f"
+        done
+        echo "dir=$TMP_DIR" >> "$GITHUB_OUTPUT"
+        echo "ok=true" >> "$GITHUB_OUTPUT"
+
+    - id: install
+      if: steps.clone.outputs.ok == 'true'
+      shell: bash
+      working-directory: ${{ steps.clone.outputs.dir }}
+      run: |
+        # Reuse the pnpm store from the main checkout to avoid a full re-install.
+        pnpm config set store-dir ~/.local/share/pnpm/store
+        if ! pnpm install --frozen-lockfile --prefer-offline 2>/dev/null; then
+          echo "Baseline lockfile broken (pre-existing), skipping baseline."
+          rm -rf "${{ steps.clone.outputs.dir }}"
+          echo "dir=" >> "$GITHUB_OUTPUT"
+          echo "ok=false" >> "$GITHUB_OUTPUT"
+        fi
