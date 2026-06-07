@@ -142,6 +142,19 @@ skill learn                         # Capture discoveries
 skill <skill-name>                  # Load specific skill
 ```
 
+## Agent-Specific Adapters
+
+The canonical rule set is in this file. Per-model adapters MUST be thin
+delta files that point back here:
+
+- `CLAUDE.md` — Claude / Claude Code
+- `GEMINI.md` — Gemini / Jules (Google)
+- `.gemini/`, `.jules/`, `.windsurf/` — provider config dirs (intentionally
+  thin; see `GEMINI.md` for the contract)
+
+Per issue #445, these files are validated by `scripts/check-agent-sync.mjs`
+so they cannot drift into copies of `AGENTS.md`.
+
 ---
 
-_See `agents-docs/` for detailed documentation on workflow, hooks, context management, and troubleshooting._
+_See `agents-docs/` for detailed documentation on workflow, hooks, context management, and troubleshooting. See `llms.txt` and `llms-full.txt` for structured LLM context._
