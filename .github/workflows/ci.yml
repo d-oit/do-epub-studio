@@ -175,7 +175,8 @@ jobs:
         uses: actions/labeler@5f867a63be70efff62b767459b009290364495eb  # v2.2.0
         with:
           configuration-path: .github/labeler.yml
-          fail-any-match: false
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          sync-labels: false
 
   pre-commit:
     name: Pre-commit Hooks
