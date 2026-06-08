@@ -23,9 +23,6 @@ rules:
     min-spaces-from-content: 1
   comments-indentation: disable
 
-  # `.github/workflows/*.yml` often has inline comments after values
-  comments-indentation: disable
-
 ignore: |
   node_modules/
   coverage/

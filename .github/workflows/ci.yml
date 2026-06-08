@@ -180,8 +180,7 @@ jobs:
 
   pre-commit:
     name: Pre-commit Hooks
-    needs: [changes, setup]
-    if: needs.changes.outputs.agent-docs != 'true' || github.event_name == 'push'
+    needs: setup
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -287,8 +286,7 @@ jobs:
 
   build:
     name: Build
-    needs: [changes, pre-commit, lint, typecheck, test]
-    if: needs.changes.outputs.src == 'true'
+    needs: [pre-commit, lint, typecheck, test]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -363,8 +361,8 @@ jobs:
 
   e2e-smoke:
     name: E2E Smoke Tests
-    if: github.event_name != 'schedule' && needs.changes.outputs.src == 'true'
-    needs: [changes, build]
+    if: github.event_name != 'schedule'
+    needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -462,8 +460,7 @@ jobs:
 
   bench:
     name: Benchmark
-    needs: [changes, build]
-    if: needs.changes.outputs.reader-core == 'true' || github.event_name == 'schedule'
+    needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -519,8 +516,7 @@ jobs:
 
   performance-report:
     name: Performance Report
-    if: github.event_name == 'pull_request' && needs.changes.outputs.src == 'true'
-    needs: [changes, setup, build, e2e-smoke, bench]
+    needs: [setup, build, e2e-smoke, bench]
     continue-on-error: true
     runs-on: ubuntu-latest
     permissions:
