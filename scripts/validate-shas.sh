@@ -34,7 +34,7 @@ ALLOWED_SHAS=(
     "ossf/scorecard-action@4eaacf0543bb3f2c246792bd56e8cdeffafb205a"
     "actions/stale@eb5cf3af3ac0a1aa4c9c45633dd1ae542a27a899"
     "actions/labeler@5f867a63be70efff62b767459b009290364495eb"
-    "dorny/paths-filter@de90cc6fb38fc0963ad72b210f1b284cd68cea36"
+    "dorny/paths-filter@f3ceefdc7ef57bc2d8560787d4b6c33e44044cec"
 )
 
 # Function to check if an action@sha is allowed
