@@ -43,8 +43,8 @@ jobs:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
         with:
           persist-credentials: false
-      - uses: dorny/paths-filter@f3ceefdc7ef57bc2d8560787d4b6c33e44044cec  # master @ 2026-06-07 (v3.0.2 release commit is unreachable in the Actions registry; pinning to master HEAD for now)
-        id: filter
+      - id: filter
+        uses: dorny/paths-filter@f3ceefdc7ef57bc2d8560787d4b6c33e44044cec  # master @ 2026-06-07 (v3.0.2 release commit is unreachable in the Actions registry; pinning to master HEAD for now)
         with:
           filters: |
             src:
