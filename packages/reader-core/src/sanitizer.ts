@@ -102,6 +102,85 @@ const SVG_EVENT_ATTRS = [
   'onprogress',
 ];
 
+const STRUCTURAL_TAGS = ['html', 'head', 'body'];
+
+const EPUB_HEAD_TAGS = ['title', 'meta', 'link', 'style'];
+
+const EPUB_BODY_TAGS = [
+  'div',
+  'p',
+  'span',
+  'h1',
+  'h2',
+  'h3',
+  'h4',
+  'h5',
+  'h6',
+  'ul',
+  'ol',
+  'li',
+  'dl',
+  'dt',
+  'dd',
+  'a',
+  'img',
+  'br',
+  'hr',
+  'em',
+  'strong',
+  'b',
+  'i',
+  'u',
+  's',
+  'sub',
+  'sup',
+  'code',
+  'pre',
+  'blockquote',
+  'q',
+  'cite',
+  'dfn',
+  'abbr',
+  'data',
+  'time',
+  'var',
+  'samp',
+  'kbd',
+  'mark',
+  'ruby',
+  'rt',
+  'rp',
+  'bdi',
+  'bdo',
+  'table',
+  'caption',
+  'thead',
+  'tbody',
+  'tfoot',
+  'tr',
+  'th',
+  'td',
+  'col',
+  'colgroup',
+  'main',
+  'section',
+  'article',
+  'aside',
+  'header',
+  'footer',
+  'nav',
+  'figure',
+  'figcaption',
+  'details',
+  'summary',
+  'picture',
+  'source',
+  'svg',
+  'foreignObject',
+];
+
+const EPUB_ALLOWED_TAGS = [...STRUCTURAL_TAGS, ...EPUB_HEAD_TAGS, ...EPUB_BODY_TAGS, ...SAFE_SVG_TAGS];
+
 const SVG_ALLOWED_ATTRS = [
   'id',
   'class',
@@ -256,24 +335,14 @@ export function sanitizeDom(node: Document | DocumentFragment | Element): void {
   if (!root) return;
 
   const allElements = root.querySelectorAll('*');
-  const toRemove: Element[] = [];
 
   for (const el of allElements) {
-    const tag = el.localName;
-    if (tag === 'foreignobject' || tag === 'foreignObject') {
-      toRemove.push(el);
-      continue;
-    }
-
-    if (!el.hasAttributes()) {
-      continue;
-    }
-
+    const tag = el.tagName.toLowerCase();
     const isLinkable = tag === 'use' || tag === 'image';
     const attrNames = el.getAttributeNames();
 
     for (const name of attrNames) {
-      if (name.length > 2 && name[0] === 'o' && name[1] === 'n') {
+      if (name.startsWith('on')) {
         el.removeAttribute(name);
       } else if (isLinkable && (name === 'href' || name === 'xlink:href')) {
         const val = el.getAttribute(name);
@@ -304,10 +373,47 @@ export function sanitizeDom(node: Document | DocumentFragment | Element): void {
       }
     }
   }
+}
 
-  for (const el of toRemove) {
-    el.remove();
+export function sanitizeEpubDocument(doc: Document): void {
+  const root = doc.documentElement;
+  if (!root) return;
+
+  // Pass (a): DOMPurify allowlist on a clone
+  const sanitized = DOMPurify.sanitize(root, {
+    ALLOWED_TAGS: EPUB_ALLOWED_TAGS,
+    ADD_ATTR: [...SVG_ALLOWED_ATTRS, 'content', 'name', 'property', 'rel', 'href', 'src', 'type'],
+    FORBID_ATTR: SVG_EVENT_ATTRS,
+    RETURN_DOM: true,
+    WHOLE_DOCUMENT: true,
+  }) as Element;
+
+  // Pass (b): Sync sanitized state back to live document
+  // We replace children of <html> with sanitized <head> and <body>
+  if (sanitized.tagName.toLowerCase() === 'html') {
+    root.replaceChildren(...Array.from(sanitized.childNodes));
+    // Also sync attributes of <html> (like lang, dir)
+    for (const attr of Array.from(root.attributes)) {
+      root.removeAttribute(attr.name);
+    }
+    for (const attr of Array.from(sanitized.attributes)) {
+      root.setAttribute(attr.name, attr.value);
+    }
+  } else {
+    // If DOMPurify returned something else, just replace everything
+    root.replaceChildren(sanitized);
   }
+
+  // Pass (c): sanitizeDom() for href-scheme + event-attr enforcement
+  sanitizeDom(doc);
+}
+
+export function createEpubSanitizerHook(): (contents: { document?: Document }) => void {
+  return (contents: { document?: Document }) => {
+    const doc = contents.document;
+    if (!doc) return;
+    sanitizeEpubDocument(doc);
+  };
 }
 
 export function createSvgSanitizerHook(): (contents: { document?: Document }) => void {
