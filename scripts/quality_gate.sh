@@ -42,6 +42,15 @@ if ! "$REPO_ROOT/scripts/validate-skills.sh"; then
 fi
 echo ""
 
+# --- Validate per-model agent adapter drift ---
+printf '%sValidating per-model agent adapters...%s\n' "${BLUE}" "${NC}"
+if [ -f "$REPO_ROOT/scripts/check-agent-sync.mjs" ]; then
+    if ! node "$REPO_ROOT/scripts/check-agent-sync.mjs"; then
+        FAILED=1
+    fi
+fi
+echo ""
+
 # --- Validate SKILL.md format ---
 printf '%sValidating SKILL.md format...%s\n' "${BLUE}" "${NC}"
 if [ -f "$REPO_ROOT/scripts/validate-skill-format.sh" ]; then

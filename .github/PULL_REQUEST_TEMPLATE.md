@@ -140,3 +140,30 @@ pnpm test
 - [ ] I have read and followed the contributing guidelines
 - [ ] All checked items above are true and verifiable
 - [ ] I am available to address review feedback promptly
+
+---
+
+## AI-Agent Verification
+
+<!-- Required for AI-generated or AI-assisted PRs (Jules, Claude, Qwen, Windsurf, etc.). Adopted per issue #448. -->
+
+- [ ] This PR was AI-assisted (skip this section if fully human-written)
+- [ ] Agent used: <!-- Jules / Claude / Qwen / Windsurf / other -->
+- [ ] `llms.txt` and `llms-full.txt` were consulted before writing the code
+- [ ] AI output was reviewed for semantic correctness, not just CI green
+- [ ] No hallucinated dependencies, APIs, or imports
+- [ ] No `// @ts-ignore`, `as any`, or `eslint-disable` introduced without justification
+- [ ] The full [PR_VERIFICATION_CHECKLIST.md](./PR_VERIFICATION_CHECKLIST.md) was applied to this PR
+
+---
+
+## Accessibility Impact
+
+<!-- Adopted per issue #448. WCAG 2.1 AA is required by AGENTS.md. -->
+
+- [ ] No new UI components added (skip if N/A)
+- [ ] New UI uses semantic design tokens (`text-foreground`, `bg-background`, `var(--color-*)`)
+- [ ] Color contrast meets AA (≥ 4.5:1 for text, ≥ 3:1 for UI)
+- [ ] Interactive elements have visible focus rings
+- [ ] `prefers-reduced-motion` respected for animations
+- [ ] Axe / Lighthouse a11y checks pass (CI)

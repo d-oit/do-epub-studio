@@ -1,0 +1,34 @@
+# gitleaks configuration for do-epub-studio
+# Adopted from github-template-ai-agents (issue #447).
+# Secret scanning at commit-time (pre-commit) and in CI.
+
+title = "do-epub-studio gitleaks config"
+
+[extend]
+# Use the built-in baseline + the public gitleaks ruleset.
+useDefault = true
+
+# Allowlist for known false-positives in this repo.
+# Each entry must include a clear comment so future maintainers
+# understand WHY the line is allowlisted and can re-evaluate.
+[allowlist]
+description = "Allowlist for known false-positives in do-epub-studio"
+paths = [
+  '''pnpm-lock\.yaml''',
+  '''\.md$''',
+  '''plans/.*''',
+  '''agents-docs/.*''',
+  '''docs/.*''',
+  '''__tests__/fixtures/.*''',
+  '''\.dev\.vars\.example$''',
+]
+
+# Allow specific words that look like secrets but are not.
+regexes = [
+  '''example\.com''',
+  '''test-bearer-token''',
+  '''EXAMPLE_TOKEN''',
+  '''public-test-token''',
+  '''test-secret''',
+  '''aaaH4eH6aaaaaaaaaaaaaaH6aaaaaaaaaaaa''',
+]

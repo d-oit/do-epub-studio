@@ -1,0 +1,32 @@
+# yamllint configuration for do-epub-studio
+# See: https://yamllint.readthedocs.io/
+# Adopted per issue #446.
+
+extends: default
+
+rules:
+  # Allow long lines (workflow files often need them)
+  line-length:
+    max: 200
+    level: warning
+
+  # GitHub Actions uses `on:` which yamllint flags as truthy
+  truthy:
+    check-keys: false
+    level: warning
+
+  # `on:` triggers in workflows start with a list/dict
+  document-start: disable
+
+  # `**` globs in labeler.yml etc. can be long
+  comments:
+    min-spaces-from-content: 1
+  comments-indentation: disable
+
+ignore: |
+  node_modules/
+  coverage/
+  dist/
+  .pnpm-store/
+  pnpm-lock.yaml
+  .github/labeler.yml
