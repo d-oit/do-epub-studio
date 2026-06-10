@@ -259,9 +259,13 @@ export function sanitizeDom(node: Document | DocumentFragment | Element): void {
   const toRemove: Element[] = [];
 
   for (const el of allElements) {
-    const tag = el.tagName.toLowerCase();
-    if (tag === 'foreignobject') {
+    const tag = el.localName;
+    if (tag === 'foreignobject' || tag === 'foreignObject') {
       toRemove.push(el);
+      continue;
+    }
+
+    if (!el.hasAttributes()) {
       continue;
     }
 
@@ -269,7 +273,7 @@ export function sanitizeDom(node: Document | DocumentFragment | Element): void {
     const attrNames = el.getAttributeNames();
 
     for (const name of attrNames) {
-      if (name.startsWith('on')) {
+      if (name.length > 2 && name[0] === 'o' && name[1] === 'n') {
         el.removeAttribute(name);
       } else if (isLinkable && (name === 'href' || name === 'xlink:href')) {
         const val = el.getAttribute(name);
