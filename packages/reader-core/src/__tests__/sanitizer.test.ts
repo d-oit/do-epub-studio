@@ -1,10 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { sanitizeSvg, sanitizeDom, sanitizeEpubDocument, createSvgSanitizerHook, createEpubSanitizerHook } from '../sanitizer';
 
-function createDocument(htmlContent: string): Document {
-  return new DOMParser().parseFromString(htmlContent, 'text/html');
-}
-
 describe('sanitizeSvg', () => {
   it('allows safe SVG tags', () => {
     const html = '<svg xmlns="http://www.w3.org/2000/svg"><path d="M0 0h100v100H0z"/><rect x="10" y="10" width="50" height="50"/><circle cx="50" cy="50" r="40"/></svg>';
@@ -218,12 +214,12 @@ describe('sanitizeEpubDocument', () => {
     const doc = createDoc(html);
 
     sanitizeEpubDocument(doc);
-    const firstPassMarkup = doc.documentElement.innerHTML;
+    const firstPass = doc.documentElement.innerHTML;
 
     sanitizeEpubDocument(doc);
-    const secondPassMarkup = doc.documentElement.innerHTML;
+    const secondPass = doc.documentElement.innerHTML;
 
-    expect(firstPassMarkup).toBe(secondPassMarkup);
+    expect(firstPass).toBe(secondPass);
     expect(doc.querySelector('script')).toBeNull();
   });
 });
@@ -236,7 +232,7 @@ describe('createEpubSanitizerHook', () => {
 
   it('sanitizes the document passed to the hook', () => {
     const hook = createEpubSanitizerHook();
-    const doc = createDocument('<html><body><script>alert(1)</script></body></html>');
+    const doc = new DOMParser().parseFromString('<html><body><script>alert(1)</script></body></html>', 'text/html');
     hook({ document: doc });
     expect(doc.querySelector('script')).toBeNull();
   });
