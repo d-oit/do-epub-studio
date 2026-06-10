@@ -9,7 +9,7 @@ describe('sanitizer performance', () => {
 
   // Create a document with many elements, some having event attributes, some linkable, some empty
   for (let i = 0; i < 2000; i++) {
-    let el: HTMLElement;
+    let el: Element;
     if (i % 5 === 0) {
       el = doc.createElement('div');
       el.setAttribute('id', `item-${i}`);
@@ -25,7 +25,7 @@ describe('sanitizer performance', () => {
       }
     } else if (i % 5 === 3) {
       // SVG-like elements (localName will be lowercase)
-      el = doc.createElementNS('http://www.w3.org/2000/svg', 'image') as unknown as HTMLElement;
+      el = doc.createElementNS('http://www.w3.org/2000/svg', 'image');
       el.setAttribute('xlink:href', 'image.png');
     } else {
       el = doc.createElement('p');
