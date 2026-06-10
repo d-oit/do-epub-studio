@@ -33,6 +33,10 @@ ALLOWED_SHAS=(
     "actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3"
     "ossf/scorecard-action@4eaacf0543bb3f2c246792bd56e8cdeffafb205a"
     "actions/stale@eb5cf3af3ac0a1aa4c9c45633dd1ae542a27a899"
+    "codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f"
+    "github/codeql-action/init@8aad20d150bbac5944a9f9d289da16a4b0d87c1e"
+    "github/codeql-action/analyze@8aad20d150bbac5944a9f9d289da16a4b0d87c1e"
+    "chromaui/action@d92ea1ce501f70e8c34745b2c7888648150a368a"
 )
 
 # Function to check if an action@sha is allowed

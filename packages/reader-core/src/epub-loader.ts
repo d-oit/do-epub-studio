@@ -10,6 +10,7 @@ import type {
 } from './epub-types';
 import { createTraceId, createSpanId, serializeError, testBounded } from '@do-epub-studio/shared';
 import { parseEpubInWorker } from './epub-parser-worker';
+import { createEpubSanitizerHook } from './sanitizer';
 
 type EventCallback = (data: unknown) => void;
 
@@ -194,6 +195,9 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
       flow: options?.flow,
       manager: options?.manager,
     });
+
+    // Security: ADR-035 Mandatory sanitization
+    rendition.hooks.content.register(createEpubSanitizerHook());
 
     // Bridge rendition events to the loader's event system
     rendition.on('relocated', (location: Location) => {
