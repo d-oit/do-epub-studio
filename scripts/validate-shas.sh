@@ -33,6 +33,8 @@ ALLOWED_SHAS=(
     "actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3"
     "ossf/scorecard-action@4eaacf0543bb3f2c246792bd56e8cdeffafb205a"
     "actions/stale@eb5cf3af3ac0a1aa4c9c45633dd1ae542a27a899"
+    "actions/labeler@5f867a63be70efff62b767459b009290364495eb"
+    "dorny/paths-filter@f3ceefdc7ef57bc2d8560787d4b6c33e44044cec"
     "codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f"
     "github/codeql-action/init@8aad20d150bbac5944a9f9d289da16a4b0d87c1e"
     "github/codeql-action/analyze@8aad20d150bbac5944a9f9d289da16a4b0d87c1e"

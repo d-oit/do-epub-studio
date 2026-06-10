@@ -6,14 +6,12 @@
     "pnpm-workspace.yaml",
     "package.json",
     ".npmrc",
-    "tsconfig.base.json",
-    "eslint.config.js",
-    "vitest.workspace.ts"
+    "tsconfig.base.json"
   ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "env": ["VITE_API_BASE_URL", "VITE_APP_NAME", "ANALYZE", "NODE_ENV"],
+      "env": ["VITE_API_BASE_URL", "VITE_APP_NAME", "NODE_ENV"],
       "inputs": [
         "src/**",
         "index.html",
@@ -28,13 +26,13 @@
     },
     "build:analyze": {
       "dependsOn": ["^build"],
-      "env": ["ANALYZE"],
+      "env": ["ANALYZE", "VITE_API_BASE_URL", "VITE_APP_NAME", "NODE_ENV"],
       "inputs": [
         "src/**",
         "vite.config.ts",
         "package.json"
       ],
-      "outputs": ["dist/**"]
+      "outputs": ["dist/**", "stats.html"]
     },
     "dev": {
       "cache": false,
@@ -68,6 +66,7 @@
         "src/test-setup.ts",
         "vitest.setup.ts",
         "vitest.config.ts",
+        "vitest.workspace.ts",
         "tsconfig.json",
         "tsconfig*.json",
         "package.json"
@@ -88,7 +87,19 @@
       "outputs": ["playwright-report/**", "test-results/**"]
     },
     "test:coverage": {
-      "dependsOn": ["test:unit"],
+      "dependsOn": [],
+      "env": ["NODE_OPTIONS"],
+      "inputs": [
+        "src/**",
+        "__mocks__/**",
+        "src/test-setup.ts",
+        "vitest.setup.ts",
+        "vitest.config.ts",
+        "vitest.workspace.ts",
+        "tsconfig.json",
+        "tsconfig*.json",
+        "package.json"
+      ],
       "outputs": ["coverage/**"]
     }
   }

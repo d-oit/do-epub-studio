@@ -17,6 +17,8 @@
     "verify": "pnpm lint && pnpm typecheck && pnpm test:coverage && pnpm build && pnpm test:e2e:smoke",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "commitlint": "commitlint --edit",
+    "check:agent-sync": "node scripts/check-agent-sync.mjs",
     "db:migrate:local": "node scripts/db-migrate-local.mjs",
     "db:migrate:prod": "node scripts/db-migrate-prod.mjs",
     "db:check": "node scripts/db-check.mjs",
@@ -27,6 +29,8 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.11.3",
+    "@commitlint/cli": "^19.6.0",
+    "@commitlint/config-conventional": "^19.6.0",
     "@eslint/js": "^10.0.0",
     "@playwright/test": "^1.60.0",
     "@types/node": "^25",

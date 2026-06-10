@@ -1,0 +1,56 @@
+# do-epub-studio
+
+A web-based EPUB reader and editorial workspace. Cloudflare-Pages-hosted SPA
+backed by a Cloudflare Worker (Hono) with gated access, signed-URL file
+delivery, and a PWA offline reader.
+
+## Tech Stack
+
+- TypeScript 6 (strict), Vite 8, React 19, Zustand 5, Tailwind 4
+- EPUB.js (`@intity/epub-js`) for rendering, DOMPurify for sanitization
+- Hono 4 + Cloudflare Workers (R2 + D1 + KV) backend
+- Turbo monorepo (apps: web, worker; packages: shared, schema, reader-core, ui, testkit)
+- Vitest 4 + Playwright (forks pool) for testing
+- OKLCH design tokens, View Transitions, semantic-html-first UX
+
+## Key Conventions
+
+- Conventional commits (`feat:` / `fix:` / `perf:` / `ci:` / `docs:` / `a11y:` / `security:`), max 72 chars
+- WCAG 2.1 AA accessibility — semantic design tokens, skip links, color contrast
+- All user content MUST be sanitized with DOMPurify (see `sanitizeEpubDocument`)
+- No direct DOM manipulation — use React refs
+- Argon2id for password hashing; never bcrypt/scrypt
+- R2 file URLs are signed via Workers; never exposed to clients
+- traceId on every critical UI action (`logClientEvent` from `client-logger`)
+- Multi-signal locators for annotations (CFI + text + chapter) per ADR-006
+- Regex guarded against untrusted input (`matchBounded` / `testBounded` from shared) per ADR-034
+- Sandbox: EPUB iframe MUST NOT have `allow-scripts`; CSP MUST have `sandbox` without `allow-scripts`
+
+## Key Paths
+
+- `apps/web/` — reader SPA, routing, stores
+- `apps/worker/` — auth, signed-URL, R2 access, observability
+- `packages/reader-core/` — EPUB loader, sanitizer, CFI, re-anchor
+- `packages/shared/` — traceId/spanId, matchBounded, validators
+- `plans/` — GOAP + ADR records (single source for AI-agent context)
+- `.github/` — workflows, composite actions, PR template
+- `AGENTS.md` — top-level rules every AI agent must follow
+- `llms.txt` — this file
+- `llms-full.txt` — extended context (architecture, anti-patterns, skills)
+
+## Commands
+
+```bash
+pnpm install --frozen-lockfile
+pnpm lint
+pnpm typecheck
+pnpm test:coverage
+pnpm build
+./scripts/quality_gate.sh   # full gate
+```
+
+## For AI Agents
+
+Always read `AGENTS.md` and `llms-full.txt` before making changes. Use the
+`goap-agent` skill for any multi-step task. Create a `plans/<NNN>-…md` file
+before opening a PR. Never commit to `main` directly.
