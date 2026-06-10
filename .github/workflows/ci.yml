@@ -116,10 +116,8 @@ jobs:
         run: |
           echo "TURBO_TOKEN set: $([ -n "$TURBO_TOKEN" ] && echo yes || echo no)"
           echo "TURBO_TEAM set:  $([ -n "$TURBO_TEAM" ] && echo yes || echo no)"
-          # Dry-run shows whether the build task would be a cache HIT or MISS.
-          pnpm turbo run build --dry-run=json 2>/dev/null | \
-            node -e "let d=''; process.stdin.on('data',c=>d+=c); process.stdin.on('end',()=>{ try { const j=JSON.parse(d); for (const t of j.tasks||[]) { console.log(t.task + ': ' + t.cache.cacheStatus + ' (' + t.cache.local + 'L/' + t.cache.remote + 'R)'); } } catch (e) { console.log('(dry-run parse skipped: ' + e.message + ')'); } })" || \
-            echo "(turbo dry-run not available in this checkout)"
+          pnpm turbo run build --dry-run=json 2>/dev/null > turbo-dry.json || true
+          node -e "const j=JSON.parse(require('fs').readFileSync('turbo-dry.json','utf8'));for(const t of j.tasks||[]){console.log(t.task+': '+t.cache.cacheStatus)}" || echo "(dry-run unavailable)"
 
   dep-scan:
     name: Dependency Vulnerability Scan
