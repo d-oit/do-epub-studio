@@ -75,6 +75,7 @@ export default tseslint.config(
             pascalCase: true,
             kebabCase: true,
           },
+          ignore: ['__tests__', '__stories__'],
         },
       ],
       'unicorn/prefer-optional-catch-binding': 'error',

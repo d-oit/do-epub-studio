@@ -1,7 +1,7 @@
 # GOAP-046: Open Issue & PR Triage Analysis
 
-**Date:** 2026-06-10  
-**Strategy:** Sequential (analysis → fix → plan update)  
+**Date:** 2026-06-10
+**Strategy:** Sequential (analysis → fix → plan update)
 **Quality Gates:** 2 (CI status verification, plan documentation)
 
 ---

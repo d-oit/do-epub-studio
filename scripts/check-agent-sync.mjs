@@ -13,7 +13,7 @@
 // Usage:  node scripts/check-agent-sync.mjs
 // Exit:   0 = clean, 1 = drift detected, 2 = missing file
 
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 
@@ -54,14 +54,29 @@ function err(file, msg) {
   errors.push(`${file}: ${msg}`);
 }
 
-// 1. AGENTS.md must exist.
-if (!existsSync(AGENTS_MD)) {
-  err('AGENTS.md', 'canonical file missing');
-  for (const line of errors) console.error(`✗ ${line}`);
-  process.exit(2);
+function readCanonicalAgentsFile() {
+  try {
+    return readFileSync(AGENTS_MD, 'utf8');
+  } catch (error) {
+    if (!(error instanceof Error) || error.code !== 'ENOENT') {
+      throw error;
+    }
+
+    err('AGENTS.md', 'canonical file missing');
+    for (const line of errors) console.error(`✗ ${line}`);
+    process.exit(2);
+  }
 }
 
-const agentsContent = readFileSync(AGENTS_MD, 'utf8');
+function readAdapterFile(relPath, content) {
+  validateAdapterContent(relPath, content);
+}
+
+function handleMissingAdapter(relPath) {
+  err(relPath, 'adapter file missing (delete the rule, not the file)');
+}
+
+const agentsContent = readCanonicalAgentsFile();
 const agentsLines = agentsContent.split('\n').length;
 
 // 2. AGENTS.md LOC guard (enforce the AGENTS.md "max 200 LOC" rule).
@@ -69,22 +84,13 @@ if (agentsLines > 200) {
   err('AGENTS.md', `exceeds 200 LOC cap (currently ${agentsLines})`);
 }
 
-// 3. Per-adapter checks.
-for (const relPath of ADAPTERS) {
-  const fullPath = resolve(REPO_ROOT, relPath);
-  if (!existsSync(fullPath)) {
-    err(relPath, 'adapter file missing (delete the rule, not the file)');
-    continue;
-  }
-  const content = readFileSync(fullPath, 'utf8');
+function validateAdapterContent(relPath, content) {
   const lines = content.split('\n').length;
 
-  // Soft LOC cap.
   if (lines > SOFT_LOC_CAP) {
     err(relPath, `exceeds ${SOFT_LOC_CAP}-line soft cap (currently ${lines})`);
   }
 
-  // Drift detection: forbidden headings.
   for (const heading of FORBIDDEN_SECTION_HEADINGS) {
     if (content.includes(heading)) {
       err(
@@ -94,12 +100,9 @@ for (const relPath of ADAPTERS) {
     }
   }
 
-  // Drift detection: large verbatim block from AGENTS.md.
-  // Take the first 5 non-empty lines of AGENTS.md and assert they do not
-  // all appear in the adapter.
   const agentsHead = agentsContent
     .split('\n')
-    .filter((l) => l.trim().length > 0)
+    .filter((line) => line.trim().length > 0)
     .slice(0, 5)
     .join('\n');
   if (content.includes(agentsHead)) {
@@ -109,11 +112,83 @@ for (const relPath of ADAPTERS) {
     );
   }
 
-  // Adapter MUST reference AGENTS.md (proves it is a delta file).
-  if (!/AGENTS\.md/.test(content)) {
+  if (!content.includes('AGENTS.md')) {
     err(relPath, 'does not reference AGENTS.md — adapters must point to the canonical rules');
   }
 }
+
+function checkAdapterFile(relPath, content) {
+  readAdapterFile(relPath, content);
+}
+
+function checkClaudeAdapter() {
+  try {
+    checkAdapterFile('CLAUDE.md', readFileSync(resolve(REPO_ROOT, 'CLAUDE.md'), 'utf8'));
+  } catch (error) {
+    if (!(error instanceof Error) || error.code !== 'ENOENT') {
+      throw error;
+    }
+
+    handleMissingAdapter('CLAUDE.md');
+  }
+}
+
+function checkGeminiAdapter() {
+  try {
+    checkAdapterFile('GEMINI.md', readFileSync(resolve(REPO_ROOT, 'GEMINI.md'), 'utf8'));
+  } catch (error) {
+    if (!(error instanceof Error) || error.code !== 'ENOENT') {
+      throw error;
+    }
+
+    handleMissingAdapter('GEMINI.md');
+  }
+}
+
+function checkGeminiDirAdapter() {
+  try {
+    checkAdapterFile('.gemini/README.md', readFileSync(resolve(REPO_ROOT, '.gemini/README.md'), 'utf8'));
+  } catch (error) {
+    if (!(error instanceof Error) || error.code !== 'ENOENT') {
+      throw error;
+    }
+
+    handleMissingAdapter('.gemini/README.md');
+  }
+}
+
+function checkJulesAdapter() {
+  try {
+    checkAdapterFile('.jules/README.md', readFileSync(resolve(REPO_ROOT, '.jules/README.md'), 'utf8'));
+  } catch (error) {
+    if (!(error instanceof Error) || error.code !== 'ENOENT') {
+      throw error;
+    }
+
+    handleMissingAdapter('.jules/README.md');
+  }
+}
+
+function checkWindsurfAdapter() {
+  try {
+    checkAdapterFile(
+      '.windsurf/README.md',
+      readFileSync(resolve(REPO_ROOT, '.windsurf/README.md'), 'utf8'),
+    );
+  } catch (error) {
+    if (!(error instanceof Error) || error.code !== 'ENOENT') {
+      throw error;
+    }
+
+    handleMissingAdapter('.windsurf/README.md');
+  }
+}
+
+checkClaudeAdapter();
+checkGeminiAdapter();
+checkGeminiDirAdapter();
+checkJulesAdapter();
+checkWindsurfAdapter();
 
 if (failed > 0) {
   console.error('✗ Agent-adapter drift detected:');
