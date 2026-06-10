@@ -48,13 +48,17 @@ describe('Files Routes', () => {
       };
 
       mockQueryFirst.mockResolvedValue({ id: '1', storage_key: 'key' });
-      vi.spyOn(env.BOOKS_BUCKET, 'get').mockResolvedValue(mockObject as any);
+      vi.spyOn(env.BOOKS_BUCKET, 'get').mockResolvedValue(mockObject as unknown as Awaited<ReturnType<typeof env.BOOKS_BUCKET.get>>);
 
       const res = await app.fetch(makeFileUrlRequest('book-1', 'key', '9999999999', 'sig'), env);
+      const csp = res.headers.get('Content-Security-Policy') ?? '';
 
       expect(res.status).toBe(200);
       expect(res.headers.get('Content-Type')).toBe('application/epub+zip');
-      expect(res.headers.get('Content-Security-Policy')).toContain("frame-ancestors 'self'");
+      expect(csp).toContain("script-src 'none'");
+      expect(csp).toContain("frame-ancestors 'self'");
+      expect(csp).toContain('sandbox allow-same-origin');
+      expect(csp).not.toContain('allow-scripts');
     });
   });
 });
