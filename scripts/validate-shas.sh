@@ -35,6 +35,10 @@ ALLOWED_SHAS=(
     "actions/stale@eb5cf3af3ac0a1aa4c9c45633dd1ae542a27a899"
     "actions/labeler@5f867a63be70efff62b767459b009290364495eb"
     "dorny/paths-filter@f3ceefdc7ef57bc2d8560787d4b6c33e44044cec"
+    "chromaui/action@d92ea1ce501f70e8c34745b2c7888648150a368a"
+    "github/codeql-action/init@8aad20d150bbac5944a9f9d289da16a4b0d87c1e"
+    "github/codeql-action/analyze@8aad20d150bbac5944a9f9d289da16a4b0d87c1e"
+    "codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f"
 )
 
 # Function to check if an action@sha is allowed
