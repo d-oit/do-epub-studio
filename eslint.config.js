@@ -75,7 +75,8 @@ export default tseslint.config(
             pascalCase: true,
             kebabCase: true,
           },
-          ignore: ['__tests__', '__stories__'],
+          // __stories__ is a Storybook convention; __tests__ is Jest/Vitest convention
+          ignore: [/^__stories__$/, /^__tests__$/],
         },
       ],
       'unicorn/prefer-optional-catch-binding': 'error',
