@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Phase 2: COMMIT - Atomic commit creation
-# Creates commit with conventional format, auto-detects type if needed
+# Creates commit with conventional format and required body, auto-detects type if needed
 # Only commits already-staged changes (no git add -A).
-# Usage: commit.sh ["message"]
+# Usage: commit.sh --message "type(scope): description" --body "Why this change matters"
 
 set -euo pipefail
 
@@ -17,103 +17,35 @@ source "$REPO_ROOT/scripts/lib/logging.sh" commit
 
 cd "$REPO_ROOT"
 
-MESSAGE="${1:-}"
+function usage() {
+    cat <<'EOF'
+Usage: commit.sh --message "type(scope): description" --body "Why this change matters"
 
-detect_commit_type() {
-    local files
-    files=$(git diff --cached --name-only 2>/dev/null || true)
+Required:
+  --message, -m  Conventional commit subject, e.g. "fix(security): harden sanitizer"
+  --body, -b     One or more lines explaining WHY this change is needed
 
-    if [[ -z "$files" ]]; then
-        echo "chore"
-        return
-    fi
-
-    if echo "$files" | grep -qE '\.github/workflows|scripts/.*\.sh$'; then
-        echo "ci"
-        return
-    fi
-
-    if echo "$files" | grep -qE 'test|spec|__tests__|\.test\.|\.spec\.'; then
-        echo "test"
-        return
-    fi
-
-    if echo "$files" | grep -qE '\.md$|\.txt$|docs/|agents-docs/|plans/'; then
-        echo "docs"
-        return
-    fi
-
-    if echo "$files" | grep -qE 'refactor|restructure'; then
-        echo "refactor"
-        return
-    fi
-
-    if echo "$files" | grep -qE 'scripts/|\.yml$|\.yaml$'; then
-        echo "ci"
-        return
-    fi
-
-    local added modified
-    added=$(git diff --cached --name-status 2>/dev/null | grep -c '^A' || true)
-    modified=$(git diff --cached --name-status 2>/dev/null | grep -c '^M' || true)
-
-    if [[ "$added" -gt "$modified" ]]; then
-        echo "feat"
-    else
-        echo "fix"
-    fi
+Examples:
+  commit.sh --message "fix(security): harden sanitizer" --body "Codacy flags raw HTML test variables as DOM XSS sinks."
+  commit.sh --message "ci(workflows): add path filters" --body "Skip heavy jobs for docs-only PRs."
+EOF
 }
 
-detect_scope() {
-    local branch
-    branch=$(git branch --show-current)
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+    usage
+    exit 0
+fi
 
-    # Extract scope from branch name: type/scope-name → scope
-    if [[ "$branch" =~ ^(feat|fix|docs|refactor|test|ci|chore)/(.+)$ ]]; then
-        local scope_raw="${BASH_REMATCH[2]}"
-        # Use first path component as scope
-        echo "$scope_raw" | cut -d'-' -f1
-        return
-    fi
-
-    # Infer scope from changed files
-    local files
-    files=$(git diff --cached --name-only 2>/dev/null || true)
-
-    if echo "$files" | grep -qE '^scripts/'; then
-        echo "scripts"
-        return
-    fi
-
-    if echo "$files" | grep -qE '^apps/([^/]+)'; then
-        echo "${BASH_REMATCH[1]}"
-        return
-    fi
-
-    if echo "$files" | grep -qE '^packages/([^/]+)'; then
-        echo "${BASH_REMATCH[1]}"
-        return
-    fi
-
-    echo ""
-}
-
-generate_summary() {
-    local files
-    files=$(git diff --cached --name-only 2>/dev/null || true)
-    local count
-    count=$(echo "$files" | grep -c . || echo 0)
-
-    if [[ "$count" -eq 0 ]]; then
-        echo "no changes"
-        return
-    fi
-
-    # Group by top-level directory for meaningful summary
-    local dirs
-    dirs=$(echo "$files" | awk -F/ '{print $1}' | sort -u | tr '\n' ', ' | sed 's/,$//')
-    echo "$count file(s) in: $dirs"
-}
+case "${1:-}" in
+    --message|-m)
+        MESSAGE="$2"
+        BODY="${3:-}"
+        ;;
+    *)
+        MESSAGE="${1:-}"
+        BODY="${2:-}"
+        ;;
+esac
 
 # Require at least some staged changes
 if git diff --cached --quiet 2>/dev/null; then
@@ -123,17 +55,16 @@ if git diff --cached --quiet 2>/dev/null; then
 fi
 
 if [[ -z "$MESSAGE" ]]; then
-    COMMIT_TYPE=$(detect_commit_type)
-    SCOPE=$(detect_scope)
-    SUMMARY=$(generate_summary)
+    error "Commit subject is required"
+    usage
+    exit 1
+fi
 
-    if [[ -n "$SCOPE" ]]; then
-        MESSAGE="$COMMIT_TYPE($SCOPE): $SUMMARY"
-    else
-        MESSAGE="$COMMIT_TYPE: $SUMMARY"
-    fi
-
-    log "Auto-generated message: $MESSAGE"
+if [[ -z "${BODY//[[:space:]]/}" ]]; then
+    error "Commit body is required"
+    error "Use --body to explain WHY this change is needed, not just WHAT changed."
+    usage
+    exit 1
 fi
 
 # Validate conventional commit format
@@ -156,7 +87,7 @@ fi
 log "Commit message: $MESSAGE"
 
 # Only commit what's already staged — do NOT run git add -A
-if ! git commit -m "$MESSAGE"; then
+if ! git commit -m "$MESSAGE" -m "$BODY"; then
     error "Commit failed"
     exit 1
 fi
