@@ -60,12 +60,13 @@ if [[ $SUBJECT_LEN -gt 72 ]]; then
     exit 1
 fi
 
-# Warn if body is empty (encourages better commit messages)
+# Error if body is empty (required by AGENTS.md workflow)
 LINE_COUNT=$(wc -l < "$COMMIT_MSG_FILE" | tr -d ' ')
 if [[ $LINE_COUNT -lt 3 ]]; then
-    echo -e "${YELLOW}⚠ Commit has no body${NC}" >&2
-    echo "  Consider adding a body explaining WHY, not WHAT." >&2
-    echo "  (This is a warning, not a blocker)" >&2
+    echo -e "${RED}✗ Commit has no body${NC}" >&2
+    echo "  Add a body explaining WHY this change is needed." >&2
+    echo "  Usage: ./scripts/atomic-commit/run.sh --message \"type(scope): description\" --body \"Why this change matters\"" >&2
+    exit 1
 fi
 
 exit 0

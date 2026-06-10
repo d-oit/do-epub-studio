@@ -10,6 +10,7 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 DRY_RUN=false
 MESSAGE=""
+BODY=""
 TIMEOUT="${ATOMIC_COMMIT_TIMEOUT:-1800}"
 BASE_BRANCH="${ATOMIC_COMMIT_BASE_BRANCH:-main}"
 
@@ -31,6 +32,10 @@ parse_args() {
         case $1 in
             --message|-m)
                 MESSAGE="$2"
+                shift 2
+                ;;
+            --body|-b)
+                BODY="$2"
                 shift 2
                 ;;
             --dry-run)
@@ -65,7 +70,8 @@ Usage: run.sh [OPTIONS]
 Atomic workflow: validate → commit → push → PR → verify
 
 Options:
-    -m, --message "MSG"     Commit message (auto-detect type if omitted)
+    -m, --message "MSG"     Commit subject (required)
+    -b, --body "TEXT"       Commit body explaining WHY (required)
     --dry-run               Validate only, no commits or pushes
     --timeout SECONDS       Timeout for CI checks (default: 1800)
     --base-branch BRANCH    Target branch for PR (default: main)
@@ -181,7 +187,7 @@ main() {
         exit $E_SUCCESS
     fi
 
-    if ! run_phase "COMMIT" "$SCRIPT_DIR/commit.sh" "$MESSAGE"; then
+    if ! run_phase "COMMIT" "$SCRIPT_DIR/commit.sh" --message "$MESSAGE" --body "$BODY"; then
         rollback_commit
         exit $E_COMMIT
     fi
