@@ -105,7 +105,8 @@ export function useReaderEpub(
   const resolvedTheme =
     readerTheme === 'system' ? (isSystemDark() ? 'dark' : 'light') : readerTheme;
 
-  function applyThemes(rendition: Rendition) {
+  const applyThemesRef = useRef<(rendition: Rendition) => void>(() => { /* noop */ });
+  applyThemesRef.current = (rendition: Rendition) => {
     const container = rootRef.current;
     if (!container) return;
     const style = getComputedStyle(container);
@@ -138,7 +139,7 @@ export function useReaderEpub(
       img: { filter: imgFilter },
     });
     rendition.themes.select('reader-theme');
-  }
+  };
 
   useEffect(() => {
     if (!epubUrl || !viewerRef.current) return;
@@ -269,7 +270,7 @@ export function useReaderEpub(
           });
         }
 
-        applyThemes(rendition);
+        applyThemesRef.current(rendition);
 
         const adapter = createEpubAnnotationAdapter(rendition);
         adapterRef.current = adapter;
@@ -356,7 +357,6 @@ export function useReaderEpub(
       renditionRef.current?.destroy();
       bookRef.current?.destroy();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- epub lifecycle: theme deps handled by separate effect
   }, [
     epubUrl,
     viewerRef,
@@ -366,6 +366,7 @@ export function useReaderEpub(
     setError,
     setProgress,
     setBookDirection,
+    setIsFixedLayout,
     highlightsRef,
     commentsRef,
     onNavigateToAnnotation,
@@ -375,7 +376,7 @@ export function useReaderEpub(
   ]);
 
   useEffect(() => {
-    if (renditionRef.current) applyThemes(renditionRef.current);
+    if (renditionRef.current) applyThemesRef.current(renditionRef.current);
   });
 
   useEffect(() => {
@@ -388,7 +389,7 @@ export function useReaderEpub(
     if (readerTheme !== 'system') return;
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
     const handler = () => {
-      if (renditionRef.current) applyThemes(renditionRef.current);
+      if (renditionRef.current) applyThemesRef.current(renditionRef.current);
     };
     mq.addEventListener('change', handler);
     return () => mq.removeEventListener('change', handler);
