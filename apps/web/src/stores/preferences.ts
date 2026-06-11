@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist, StateStorage } from 'zustand/middleware';
+import { persist, createJSONStorage, type StateStorage } from 'zustand/middleware';
 
 export type Theme = 'light' | 'dark' | 'sepia' | 'system';
 export type FontFamily = 'serif' | 'sans-serif' | 'monospace';
@@ -106,7 +106,7 @@ export const usePreferencesStore = create<PreferencesState>()(
     }),
     {
       name: 'do-epub-preferences',
-      storage: cookieStorage,
+      storage: createJSONStorage(() => cookieStorage),
     },
   ),
 );
