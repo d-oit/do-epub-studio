@@ -1,4 +1,5 @@
 import type { Rendition } from '@intity/epub-js';
+import type { MutableRefObject } from 'react';
 import { createSpanId, createTraceId } from '@do-epub-studio/shared';
 import { logClientEvent } from '../../../lib/client-logger';
 import { apiRequest } from '../../../lib/api';
@@ -17,11 +18,11 @@ export async function loadProgress(
     let cfi: string | undefined;
 
     if (navigator.onLine) {
-      const progressData = await apiRequest<{ locator: unknown; progressPercent: number }>(
+      const progressData = await apiRequest<{ locator: { cfi?: string } | null; progressPercent: number }>(
         `/api/books/${bookId}/progress`,
         { method: 'GET', token: sessionToken },
       );
-      cfi = (progressData.locator as { cfi?: string } | null)?.cfi;
+      cfi = progressData.locator?.cfi;
     } else {
       const cached = await getProgress(bookId);
       if (cached?.cfi) cfi = cached.cfi;
@@ -64,7 +65,7 @@ export function createRelocatedHandler(
   setProgress: ReturnType<typeof useReaderStore.getState>['setProgress'],
   setCurrentChapter: ReturnType<typeof useReaderStore.getState>['setCurrentChapter'],
   tocItems: { href: string }[],
-  currentChapterRef: React.MutableRefObject<string | null>,
+  currentChapterRef: MutableRefObject<string | null>,
   onChapterChange: () => void,
 ) {
   return async (location: { start: { cfi: string; progress: number; href: string } }) => {
