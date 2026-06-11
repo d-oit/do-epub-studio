@@ -1,0 +1,28 @@
+---
+engines:
+  eslint:
+    enabled: true
+    exclude_paths:
+      - "**/*.test.ts"
+      - "**/*.test.tsx"
+      - "**/*.spec.ts"
+      - "**/*.spec.tsx"
+      - "**/__tests__/**"
+      - "**/tests/**"
+      - "scripts/**"
+  biome:
+    enabled: true
+    exclude_paths:
+      - "**/*.test.ts"
+      - "**/*.test.tsx"
+      - "**/*.spec.ts"
+      - "**/*.spec.tsx"
+      - "**/__tests__/**"
+      - "**/tests/**"
+exclude_paths:
+  - "coverage/**"
+  - "dist/**"
+  - "node_modules/**"
+  - ".turbo/**"
+  - "playwright-report/**"
+  - "test-results/**"
