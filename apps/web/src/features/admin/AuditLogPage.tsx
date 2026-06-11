@@ -159,6 +159,7 @@ export function AdminAuditPage() {
             Entity Type
           </label>
           <select
+            aria-label="Entity Type"
             value={entityType}
             onChange={(e) => { setEntityType(e.target.value); setPage(1); }}
             className="px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-gray-900 dark:text-white"
@@ -186,6 +187,7 @@ export function AdminAuditPage() {
           </label>
           <input
             type="date"
+            aria-label="Date From"
             value={dateFrom}
             onChange={(e) => { setDateFrom(e.target.value); setPage(1); }}
             className="px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-gray-900 dark:text-white"
@@ -197,6 +199,7 @@ export function AdminAuditPage() {
           </label>
           <input
             type="date"
+            aria-label="Date To"
             value={dateTo}
             onChange={(e) => { setDateTo(e.target.value); setPage(1); }}
             className="px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-gray-900 dark:text-white"
