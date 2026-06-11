@@ -7,6 +7,7 @@ import { AdminLoginPage } from './features/admin/AdminLoginPage';
 import { AppShell } from './components/AppShell';
 import { SwUpdateNotification } from './components/SwUpdateNotification';
 import { NotFoundPage } from './features/errors/NotFoundPage';
+import { ErrorPage } from './features/errors/ErrorPage';
 
 // Lazy load route components (named exports)
 const ReaderPage = React.lazy(() =>
@@ -122,6 +123,8 @@ function App() {
             <AdminAuditPage />
           </AdminRoute>
         } />
+        <Route path="/error" element={<ErrorPage />} />
+        <Route path="/404" element={<NotFoundPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </ViewTransitionRoutes>
     </Suspense>

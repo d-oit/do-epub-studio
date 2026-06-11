@@ -11,6 +11,7 @@ import './styles/globals.css';
 import { registerSW } from 'virtual:pwa-register';
 import { useSwUpdateStore } from './stores/sw-update';
 import { useTranslation } from './hooks/useTranslation';
+import type { ErrorInfo } from 'react';
 
 export const Root = () => {
   const { t } = useTranslation();
@@ -19,7 +20,7 @@ export const Root = () => {
     <React.StrictMode>
       <ToastProvider>
         <ErrorBoundary
-          onCatch={(error, errorInfo, traceId) => {
+          onCatch={(error: Error, errorInfo: ErrorInfo, traceId: string) => {
             logClientEvent({
               level: 'error',
               event: 'ui.error-boundary',
@@ -30,10 +31,10 @@ export const Root = () => {
             });
           }}
           translations={{
-            heading: t('errors.boundary.title'),
-            description: t('errors.boundary.description'),
+            heading: t('errors.boundary.title' as any),
+            description: t('errors.boundary.description' as any),
             retry: t('common.retry'),
-            home: t('errors.boundary.home'),
+            home: t('errors.boundary.home' as any),
           }}
         >
           <BrowserRouter>
@@ -74,7 +75,7 @@ export const GlobalHandlers = () => {
         event.preventDefault();
       }
 
-      addToast('error', t('errors.generic'));
+      addToast('error', t('errors.generic' as any));
     };
 
     const handleRejection = (event: PromiseRejectionEvent) => {
@@ -93,7 +94,7 @@ export const GlobalHandlers = () => {
         event.preventDefault();
       }
 
-      addToast('error', t('errors.generic'));
+      addToast('error', t('errors.generic' as any));
     };
 
     window.addEventListener('error', handleError);

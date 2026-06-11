@@ -14,6 +14,7 @@
     "chromatic": "npx chromatic"
   },
   "dependencies": {
+    "@do-epub-studio/shared": "workspace:*",
     "framer-motion": "^12"
   },
   "peerDependencies": {
