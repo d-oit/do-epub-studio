@@ -4,28 +4,113 @@ import { BrowserRouter } from 'react-router-dom';
 import { MotionConfig } from 'framer-motion';
 
 import App from './App';
-import { ErrorBoundary } from './components/ErrorBoundary';
 import { createSpanId, createTraceId } from '@do-epub-studio/shared';
+import { ErrorBoundary, ToastProvider, useToast } from '@do-epub-studio/ui';
 import { logClientEvent } from './lib/client-logger';
 import './styles/globals.css';
 import { registerSW } from 'virtual:pwa-register';
 import { useSwUpdateStore } from './stores/sw-update';
+import { useTranslation } from './hooks/useTranslation';
 
-setupGlobalErrorHandlers();
+export const Root = () => {
+  const { t } = useTranslation();
+
+  return (
+    <React.StrictMode>
+      <ToastProvider>
+        <ErrorBoundary
+          onCatch={(error, errorInfo, traceId) => {
+            logClientEvent({
+              level: 'error',
+              event: 'ui.error-boundary',
+              traceId,
+              spanId: createSpanId(),
+              error: { name: error.name, message: error.message, stack: error.stack },
+              metadata: { componentStack: errorInfo.componentStack },
+            });
+          }}
+          translations={{
+            heading: t('errors.boundary.title'),
+            description: t('errors.boundary.description'),
+            retry: t('common.retry'),
+            home: t('errors.boundary.home'),
+          }}
+        >
+          <BrowserRouter>
+            <MotionConfig reducedMotion="user">
+              <App />
+            </MotionConfig>
+          </BrowserRouter>
+          <GlobalHandlers />
+        </ErrorBoundary>
+      </ToastProvider>
+    </React.StrictMode>
+  );
+};
+
+export const GlobalHandlers = () => {
+  const { t } = useTranslation();
+  const { addToast } = useToast();
+
+  React.useEffect(() => {
+    const handleError = (event: ErrorEvent) => {
+      const traceId = createTraceId();
+      const error = event.error instanceof Error ? event.error : new Error(String(event.error));
+      logClientEvent({
+        level: 'error',
+        event: 'window.error',
+        traceId,
+        spanId: createSpanId(),
+        error: {
+          name: error.name,
+          message: error.message,
+          stack: error.stack,
+        },
+        metadata: { filename: event.filename, lineno: event.lineno, colno: event.colno },
+      });
+
+      // Suppress console noise in production
+      if (import.meta.env.PROD) {
+        event.preventDefault();
+      }
+
+      addToast('error', t('errors.generic'));
+    };
+
+    const handleRejection = (event: PromiseRejectionEvent) => {
+      const traceId = createTraceId();
+      const reason = event.reason instanceof Error ? event.reason : new Error(String(event.reason));
+      logClientEvent({
+        level: 'error',
+        event: 'window.unhandledrejection',
+        traceId,
+        spanId: createSpanId(),
+        error: { name: reason.name, message: reason.message, stack: reason.stack },
+      });
+
+      // Suppress console noise in production
+      if (import.meta.env.PROD) {
+        event.preventDefault();
+      }
+
+      addToast('error', t('errors.generic'));
+    };
+
+    window.addEventListener('error', handleError);
+    window.addEventListener('unhandledrejection', handleRejection);
+
+    return () => {
+      window.removeEventListener('error', handleError);
+      window.removeEventListener('unhandledrejection', handleRejection);
+    };
+  }, [addToast, t]);
+
+  return null;
+};
 
 const rootElement = document.getElementById('root');
 if (rootElement) {
-  ReactDOM.createRoot(rootElement).render(
-    <React.StrictMode>
-      <ErrorBoundary>
-        <BrowserRouter>
-          <MotionConfig reducedMotion="user">
-            <App />
-          </MotionConfig>
-        </BrowserRouter>
-      </ErrorBoundary>
-    </React.StrictMode>,
-  );
+  ReactDOM.createRoot(rootElement).render(<Root />);
 }
 
 if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
@@ -68,42 +153,5 @@ if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
         error: { name: err.name, message: err.message, stack: err.stack },
       });
     },
-  });
-}
-
-function setupGlobalErrorHandlers(): void {
-  if (typeof window === 'undefined') return;
-
-  const win = window as unknown as { __errorHandlerRegistered?: boolean };
-  if (win.__errorHandlerRegistered) return;
-  win.__errorHandlerRegistered = true;
-
-  window.addEventListener('error', (event) => {
-    const traceId = createTraceId();
-    const error = event.error instanceof Error ? event.error : new Error(String(event.error));
-    logClientEvent({
-      level: 'error',
-      event: 'window.error',
-      traceId,
-      spanId: createSpanId(),
-      error: {
-        name: error.name,
-        message: error.message,
-        stack: error.stack,
-      },
-      metadata: { filename: event.filename, lineno: event.lineno, colno: event.colno },
-    });
-  });
-
-  window.addEventListener('unhandledrejection', (event) => {
-    const traceId = createTraceId();
-    const reason = event.reason instanceof Error ? event.reason : new Error(String(event.reason));
-    logClientEvent({
-      level: 'error',
-      event: 'window.unhandledrejection',
-      traceId,
-      spanId: createSpanId(),
-      error: { name: reason.name, message: reason.message, stack: reason.stack },
-    });
   });
 }
