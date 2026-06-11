@@ -56,4 +56,4 @@ Their corresponding files/features are verified present in the current codebase.
 
 - [ ] Batch-close issues #442, #445–#449, #451–#452
 - [ ] Verify each closed issue references the implementing commit
-- [ ] Confirm #473 tracked by plan 074
+- [x] Confirm #473 tracked by plan 074 — fix in PR #476

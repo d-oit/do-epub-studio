@@ -86,8 +86,8 @@ to avoid Vite module-graph instability under parallel test load.
 
 ## 6. Execution Status
 
-- [ ] Fix AuditLogPage.tsx accessibility (aria-labels)
-- [ ] Fix 401 redirect E2E test mock pattern
-- [ ] Investigate/fix E2E webServer to use production build
-- [ ] Verify all E2E tests pass locally
-- [ ] Push fix branch, create PR, close #473
+- [x] Fix AuditLogPage.tsx accessibility (aria-labels) — fixed upstream
+- [x] Fix 401 redirect E2E test mock pattern — PR #476
+- [x] Investigate/fix E2E webServer to use production build — already uses PLAYWRIGHT_MODE=preview in CI
+- [x] Verify all E2E tests pass locally — quality gate passed
+- [x] Push fix branch, create PR, close #473 — PR #476 (2026-06-11)
