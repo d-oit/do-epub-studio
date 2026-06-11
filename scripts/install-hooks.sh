@@ -32,15 +32,16 @@ for hook in "${HOOKS[@]}"; do
         continue
     fi
 
-    # Check if hook already exists and is identical
-    if [[ -f "$dst" ]] && diff -q "$src" "$dst" &>/dev/null; then
+    # Always use symlink to prevent source/installed drift
+    if [[ -L "$dst" ]] && [[ "$(readlink -f "$dst")" == "$(readlink -f "$src")" ]]; then
         echo -e "${GREEN}✓${NC} $hook (up to date)"
         SKIPPED=$((SKIPPED + 1))
         continue
     fi
 
-    cp "$src" "$dst"
-    chmod +x "$dst"
+    # Remove old copy/symlink and create fresh symlink
+    rm -f "$dst"
+    ln -s "$src" "$dst"
     echo -e "${GREEN}✓${NC} $hook (installed)"
     INSTALLED=$((INSTALLED + 1))
 done
