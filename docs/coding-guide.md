@@ -512,7 +512,7 @@ do-epub-studio/
 │     ├─ ci.yml
 │     ├─ preview.yml
 │     └─ release.yml
-├─ plans/
+├─ docs/plans/
 │  ├─ 000-product-overview.md
 │  ├─ 001-goap-roadmap.md
 │  ├─ 002-adr-monorepo-stack.md
@@ -796,7 +796,7 @@ This repository builds `do EPUB Studio`, a production-grade EPUB reading and edi
 - Read before write.
 - Plan first, then execute.
 - Use GOAP thinking for every non-trivial task.
-- Keep ADRs and phase plans in `plans/`.
+- Keep ADRs and phase plans in `docs/plans/`.
 - Verify every important architectural decision before implementation.
 - Use analysis swarm mindset when reviewing key changes:
   - methodical validator
@@ -992,7 +992,7 @@ Build a secure offline-capable EPUB reading and editorial review platform.
 
 ---
 
-# 19. ADRs to create in `plans/`
+# 19. ADRs to create in `docs/plans/`
 
 Create these first:
 
@@ -1384,7 +1384,7 @@ Use a disciplined orchestrated approach.
 Responsibilities:
 
 - read AGENTS.md
-- read `plans/`
+- read `docs/plans/`
 - choose next GOAP action
 - assign subtasks
 - verify completion gates
@@ -1553,7 +1553,7 @@ Start `do-epub-studio` as:
 - Turso CLI for DB provisioning and token generation
 - EPUB.js for MVP
 - IndexedDB + Cache Storage for offline
-- AGENTS.md + plans/ for AI-agent execution
+- AGENTS.md + docs/plans/ for AI-agent execution
 
 ## Best first milestone
 
@@ -1570,7 +1570,7 @@ Use this checklist when handling cross-cutting requests (optimization + new feat
 1. **Load prior context first**
    - Read `agents-docs/LEARNINGS.md` before implementation.
 2. **Update plan artifacts before code changes**
-   - Add/adjust entries in `plans/007-implementation-phases.md` and relevant backlog plan.
+   - Add/adjust entries in `docs/plans/007-implementation-phases.md` and relevant backlog plan.
 3. **Prefer deterministic test defaults**
    - Vitest should run in non-watch mode for CI (`vitest --run`).
    - Playwright should keep trace/video/screenshot artifacts on failure.
@@ -1578,7 +1578,7 @@ Use this checklist when handling cross-cutting requests (optimization + new feat
    - PR: lint + typecheck + unit tests + smoke E2E.
    - Nightly: full cross-browser E2E + benchmarks + budget/perf checks.
 5. **Track missing tasks explicitly**
-   - Do not leave “known gaps” only in PR text; store them in `plans/` with owner/acceptance criteria.
+   - Do not leave “known gaps” only in PR text; store them in `docs/plans/` with owner/acceptance criteria.
 6. **Close verification loop**
    - Run `./scripts/quality_gate.sh` and keep the output green before commit.
 7. **Capture non-obvious learnings**

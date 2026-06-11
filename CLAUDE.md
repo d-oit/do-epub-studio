@@ -1,9 +1,17 @@
 # CLAUDE.md — Claude / Claude Code thin adapter for do-epub-studio
 
 <!--
-THIN ADAPTER on top of AGENTS.md. Must stay short. See plans/068.
-For canonical rules, read `AGENTS.md`.
-For LLM context, read `llms.txt` and `llms-full.txt`.
+This file is a THIN ADAPTER on top of AGENTS.md. It must:
+  1. Reference AGENTS.md for shared behavior.
+  2. Add ONLY Claude-specific notes.
+  3. Stay short. Do not duplicate AGENTS.md content.
+  See docs/plans/068 and AGENTS.md "perf: keep agent-specific files thin".
+
+For the full project context, see:
+  - AGENTS.md                 (canonical rules)
+  - llms.txt, llms-full.txt   (LLM context, structure, anti-patterns)
+  - docs/plans/                    (GOAP + ADR history)
+  - .agents/skills/           (curated skills)
 -->
 
 ## Project summary

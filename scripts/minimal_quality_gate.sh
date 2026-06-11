@@ -51,6 +51,15 @@ else
 fi
 echo ""
 
+# --- Validate per-model agent adapter drift ---
+printf '%sValidating per-model agent adapters...%s\n' "${BLUE}" "${NC}"
+if [ -f "$REPO_ROOT/scripts/check-agent-sync.mjs" ]; then
+    if ! node "$REPO_ROOT/scripts/check-agent-sync.mjs"; then
+        FAILED=1
+    fi
+fi
+echo ""
+
 # Guard: prevent .gitignore deletions
 if ! "$REPO_ROOT/scripts/guard-gitignore.sh"; then
     FAILED=1

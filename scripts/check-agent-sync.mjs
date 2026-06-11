@@ -32,7 +32,7 @@ const ADAPTERS = [
 ];
 
 // Per-adapter soft LOC cap.
-const SOFT_LOC_CAP = 80;
+const SOFT_LOC_CAP = 50;
 
 // Sections from AGENTS.md that must NOT appear (verbatim) in adapters.
 const FORBIDDEN_SECTION_HEADINGS = [

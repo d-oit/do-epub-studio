@@ -178,7 +178,7 @@ Strategy: Multi-phase hybrid
 ### Include in Plans
 
 - ADR (Architecture Decision Record)
-- Phase plans in `plans/`
+- Phase plans in `docs/plans/`
 - Schema migrations in `migrations/`
 
 ## Integration

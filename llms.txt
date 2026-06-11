@@ -32,7 +32,7 @@ delivery, and a PWA offline reader.
 - `apps/worker/` — auth, signed-URL, R2 access, observability
 - `packages/reader-core/` — EPUB loader, sanitizer, CFI, re-anchor
 - `packages/shared/` — traceId/spanId, matchBounded, validators
-- `plans/` — GOAP + ADR records (single source for AI-agent context)
+- `docs/plans/` — GOAP + ADR records (single source for AI-agent context)
 - `.github/` — workflows, composite actions, PR template
 - `AGENTS.md` — top-level rules every AI agent must follow
 - `llms.txt` — this file
@@ -52,5 +52,5 @@ pnpm build
 ## For AI Agents
 
 Always read `AGENTS.md` and `llms-full.txt` before making changes. Use the
-`goap-agent` skill for any multi-step task. Create a `plans/<NNN>-…md` file
+`goap-agent` skill for any multi-step task. Create a `docs/plans/<NNN>-…md` file
 before opening a PR. Never commit to `main` directly.

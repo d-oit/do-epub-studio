@@ -27,14 +27,14 @@
 | Project-wide    | `agents-docs/LEARNINGS.md`        |
 | Script-specific | `scripts/AGENTS.md`               |
 | Skill-specific  | `.agents/skills/<name>/AGENTS.md` |
-| Plan-specific   | `plans/AGENTS.md`                 |
+| Plan-specific   | `docs/plans/AGENTS.md`                 |
 
 ---
 
 ## Learnings (Project-Wide)
 
 - **Vitest**: `turbo run test` hangs if any package uses bare `vitest`; always pass `--run` so CI exits cleanly.
-- **Swarm Deliverables**: `plans/analysis-*.md` assumes `analysis/SWARM_ANALYSIS.md` exists; keep that file updated after every multi-agent audit so downstream tasks find the aggregated report.
+- **Swarm Deliverables**: `docs/plans/analysis-*.md` assumes `analysis/SWARM_ANALYSIS.md` exists; keep that file updated after every multi-agent audit so downstream tasks find the aggregated report.
 - **EPUB.js + TypeScript**: epubjs types expect non-null refs; capture in local variable before passing to `renderTo()` to avoid TS2769 errors.
 - **IndexedDB getAllFromIndex**: idb's `getAllFromIndex` with boolean `false` as value fails - use `.getAll().then(filter())` instead.
 - **Duplicate exports**: Don't export same function from multiple modules in a package; TS reports "has already exported a member" error.
@@ -69,7 +69,7 @@
 - **GitHub Actions Node.js 24**: Node.js 20 actions are deprecated and will be forced to Node.js 24 starting June 2nd, 2026. Opt in now with `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true` env at workflow level and update `node-version: '24'` in actions/setup-node@v4.
 - **Playwright WebKit opt-in strategy**: Keep WebKit project behind `PLAYWRIGHT_INCLUDE_WEBKIT=1` in shared config so Linux/WSL contributors can run stable Chromium/Firefox E2E by default while still enabling Safari coverage in dedicated environments.
 
-- **Dependabot Corruption Risk**: In some repository configurations, Dependabot PRs can become "corrupted" and include massive deletions of unrelated files (like `plans/` or `AGENTS.md`). Always perform a full file-level diff before merging automated dependency updates.
+- **Dependabot Corruption Risk**: In some repository configurations, Dependabot PRs can become "corrupted" and include massive deletions of unrelated files (like `docs/plans/` or `AGENTS.md`). Always perform a full file-level diff before merging automated dependency updates.
 - **TypeScript 6.0 Deprecations**: TypeScript 6.0 introduces deprecation warnings for `baseUrl` that will become errors in 7.0. Use `"ignoreDeprecations": "6.0"` in `tsconfig.json` as a temporary bridge or migrate to path mapping without `baseUrl`.
 - **Vite 8 Rolldown Migration**: Vite 8's switch to Rolldown breaks existing `manualChunks` configurations that rely on specific Rollup function signatures. Custom chunking logic must be refactored for the Rolldown engine.
 - **Accessibility - useId Pattern**: For forms, use React's `useId` to generate unique IDs for `htmlFor` and `aria-describedby` links. This ensures accessibility even when multiple instances of the same component (like `Input`) are rendered on one page.
@@ -81,7 +81,7 @@
 - **waitFor over raw setTimeout flushing**: For testing async React effects (especially those with multiple promise chains like EPUB init → book.ready → navigation → display → apiRequest), use `@testing-library/react`'s `waitFor` instead of `act(() => new Promise(resolve => setTimeout(resolve, 0)))`. `waitFor` polls until the assertion passes, avoiding hangs from incomplete microtask flushing.
 - **pnpm frozen-lockfile + dep changes**: After adding new dependencies to package.json, `pnpm install --frozen-lockfile` fails with `ERR_PNPM_OUTDATED_LOCKFILE`. Run `pnpm install --no-frozen-lockfile` to update lockfile, then commit the updated pnpm-lock.yaml.
 - **TypeScript 6.0 + baseUrl**: Adding `baseUrl` to `tsconfig.json` triggers TS5101 deprecation warning in TypeScript 6.0. Add `"ignoreDeprecations": "6.0"` to compilerOptions as a temporary bridge until migration to path mapping without baseUrl.
-- **Plan retroactive sync**: After merge of PRs that resolve plan items, plans/ must be manually updated to mark items ✅. Create a dedicated "plans progress sync" commit if needed — the quality gate only covers code, not plan accuracy.
+- **Plan retroactive sync**: After merge of PRs that resolve plan items, docs/plans/ must be manually updated to mark items ✅. Create a dedicated "plans progress sync" commit if needed — the quality gate only covers code, not plan accuracy.
 - **testkit builder pattern**: Builder `with*` methods must return `self` (the same builder instance), not `createXxxBuilder()` which resets state. Use `let state` + spread + `return self` pattern to avoid infinite recursion or lost mutations.
 - **noUncheckedIndexedAccess cascading fixes**: Enabling `noUncheckedIndexedAccess` in tsconfig.base.json revealed ~30 pre-existing type errors across reader-core, ui, and schema packages. All are simple `!` assertion fixes but affect many files — batch them together when enabling this flag.
 - **release.yml job splitting**: Splitting release.yml into `verify` + `deploy` jobs with a `needs:` chain requires duplicating setup steps (checkout, install, build) in both jobs since GitHub Actions doesn't share workspace between jobs. The `verify` job runs lint+typecheck+test+build, and `deploy` only runs build+deploy.
@@ -175,7 +175,7 @@
 
 - **Coverage threshold discovery**: Before adding thresholds, check the actual coverage by running `pnpm --filter @package test:unit -- --coverage` to get real numbers. Set thresholds 2-5% below actual to avoid immediate CI failures.
 - **Workflow standardization pattern**: Missing workflow properties are easily identified by comparing against `ci.yml` (the most complete workflow). The pattern is: `run-name` after `name:`, `env` block before `permissions:`, `concurrency` before `permissions:`, `timeout-minutes` after `runs-on:`.
-- **Plan reference drift**: AGENTS.md (Tier 4) and eslint.config.js both had references to active `plans/` files that were archived in earlier sessions. After archiving plans 001-019, always grep for remaining references: `grep -r 'plans/0[0-9][0-9]' AGENTS.md eslint.config.js .github/`.
+- **Plan reference drift**: AGENTS.md (Tier 4) and eslint.config.js both had references to active `docs/plans/` files that were archived in earlier sessions. After archiving plans 001-019, always grep for remaining references: `grep -r 'docs/plans/0[0-9][0-9]' AGENTS.md eslint.config.js .github/`.
 - **Swarm parallel execution pattern**: For 10+ independent edits across 9 files, launch 4 parallel sub-agents (coverage, workflows, naming, docs). Each agent makes focused edits; results are aggregated with no merge conflicts.
 
 ## 2026-05-27 Plan 062 — Final Remaining Tasks Closeout
@@ -185,7 +185,7 @@
 - **Node.js version mismatch resolved**: `.github/actions/setup-pnpm/action.yml` was still on Node 22 while workflows used `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true`. Changed to 24 for consistency.
 - **ESLint no-non-null-assertion promoted to 'error'**: 18 violations fixed across 2 test files using `as` casts and guard clauses. No remaining violations in the entire codebase.
 - **Lighthouse documentation synced**: `docs/lighthouse.md` now reflects actual `.lighthouserc.json` thresholds (0.5/0.85/0.8/0.8) instead of outdated 90/90/80/80.
-- **All plans now have explicit status**: Every plan in `plans/` now has a proper status line (Completed/Accepted/Superseded) — no more orphan files without status.
+- **All plans now have explicit status**: Every plan in `docs/plans/` now has a proper status line (Completed/Accepted/Superseded) — no more orphan files without status.
 
 ### Technical Details
 

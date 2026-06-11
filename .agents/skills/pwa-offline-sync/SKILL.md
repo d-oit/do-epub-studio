@@ -21,8 +21,8 @@ Purpose: design, implement, and validate offline/PWA behavior (service worker, c
 
 ## Inputs
 
-- `plans/005-adr-offline-sync.md`
-- `plans/007-implementation-phases.md` (Phase 3)
+- `docs/plans/005-adr-offline-sync.md`
+- `docs/plans/007-implementation-phases.md` (Phase 3)
 - `docs/offline.md` (when available)
 
 ## Workflow

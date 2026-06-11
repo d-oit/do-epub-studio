@@ -14,7 +14,7 @@ license: MIT
 
 Enable intelligent planning and execution of complex multi-step tasks through systematic decomposition, dependency mapping, and coordinated multi-agent execution.
 
-Always use the `plans/` folder for all planning files.
+Always use the `docs/plans/` folder for all planning files.
 
 ## When to Use This Skill
 
@@ -164,7 +164,7 @@ Are tasks independent?
 - [ ] Dependencies mapped correctly
 - [ ] Strategy matches task characteristics
 - [ ] Quality gates defined between phases
-- [ ] Plan written to `plans/` directory
+- [ ] Plan written to `docs/plans/` directory
 - [ ] Results synthesized after completion
 
 ## Integration
@@ -178,7 +178,7 @@ Are tasks independent?
 
 - `references/execution-strategies.md` - Detailed execution patterns
 - `references/agent-assignments.md` - Agent capability mapping
-- `plans/` - Store all planning documents here
+- `docs/plans/` - Store all planning documents here
 
 ## Summary
 

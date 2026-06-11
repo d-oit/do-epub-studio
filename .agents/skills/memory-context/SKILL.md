@@ -34,13 +34,13 @@ Run `scripts/check_csm.sh` to verify csm is installed and the memory index is ac
 
 - At session start to recall previous work
 - When facing a problem that might have been solved before
-- To retrieve specific findings from `analysis/` or `plans/`
+- To retrieve specific findings from `analysis/` or `docs/plans/`
 
 ## Indexing (Run Once)
 
 ```bash
 # Index plans and analysis (keyword-level matching)
-csm index-dir --glob "plans/**/*.md" --glob "analysis/**/*.md" --heading-level 2
+csm index-dir --glob "docs/plans/**/*.md" --glob "analysis/**/*.md" --heading-level 2
 
 # Index codebase knowledge
 csm index-dir --glob "**/*.md" --heading-level 2
@@ -89,7 +89,7 @@ Use `-k` (top-k) to control output size. Default is 5 results.
 If csm is not installed, use grep/find to search:
 
 ```bash
-grep -r "offline sync" plans/ analysis/
+grep -r "offline sync" docs/plans/ analysis/
 ```
 
 ## Reference

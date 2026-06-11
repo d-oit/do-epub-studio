@@ -26,7 +26,7 @@
     {
       "id": 3,
       "prompt": "How do I index the plans directory for semantic search?",
-      "expected_output": "The agent provides the csm index-dir command with appropriate --glob patterns for plans/**/*.md files.",
+      "expected_output": "The agent provides the csm index-dir command with appropriate --glob patterns for docs/plans/**/*.md files.",
       "files": [],
       "assertions": [
         "The agent provides csm index-dir command",
@@ -37,7 +37,7 @@
     {
       "id": 4,
       "prompt": "I don't have csm installed. How do I search for previous work?",
-      "expected_output": "The agent provides fallback grep/find commands to search plans/ and analysis/ directories without csm.",
+      "expected_output": "The agent provides fallback grep/find commands to search docs/plans/ and analysis/ directories without csm.",
       "files": [],
       "assertions": [
         "The agent provides grep/find fallback",

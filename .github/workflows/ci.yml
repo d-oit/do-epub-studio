@@ -71,7 +71,7 @@ jobs:
               - '.gemini/**'
               - '.jules/**'
               - '.windsurf/**'
-              - 'plans/**'
+              - 'docs/plans/**'
               - 'AGENTS.md'
               - 'CLAUDE.md'
               - 'GEMINI.md'

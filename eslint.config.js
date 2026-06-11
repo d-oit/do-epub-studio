@@ -99,7 +99,7 @@ export default tseslint.config(
       '@typescript-eslint/no-misused-promises': 'error',
       // The following unsafe rules are set to 'warn' as a strictness improvement over
       // main where they were off entirely. They will be upgraded to 'error' once the
-      // codebase violations are addressed (tracked in plans/archive/010-optimization-quality-backlog.md).
+      // codebase violations are addressed (tracked in docs/plans/archive/010-optimization-quality-backlog.md).
       '@typescript-eslint/no-unsafe-assignment': 'warn',
       '@typescript-eslint/no-unsafe-member-access': 'warn',
       '@typescript-eslint/no-unsafe-call': 'warn',

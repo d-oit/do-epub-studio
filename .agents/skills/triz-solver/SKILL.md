@@ -26,7 +26,7 @@ Resolve contradictions using TRIZ methodology. This skill MUST be run AFTER triz
 3. **Choose separation** - Time, space, condition, or system-level
 4. **Apply TRIZ principles** - Select and implement
 5. **Check for new contradictions** - Secondary effects
-6. **Document resolution** - Update plans/
+6. **Document resolution** - Update docs/plans/
 
 ---
 
@@ -107,7 +107,7 @@ After resolving contradictions:
 1. Map each solution to system component
 2. Define interface between components
 3. Verify no new contradictions introduced
-4. Document in plans/003-system-design.md
+4. Document in docs/plans/003-system-design.md
 
 ---
 

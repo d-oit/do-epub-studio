@@ -32,7 +32,7 @@ Purpose: Deliver premium, intentional, localized, accessible reader/admin UX for
 
 | Resource              | Location                              |
 | --------------------- | ------------------------------------- |
-| Design Tokens         | `plans/008-design-tokens-v2.md`       |
+| Design Tokens         | `docs/plans/008-design-tokens-v2.md`       |
 | Tailwind Config       | `apps/web/tailwind.config.js`         |
 | Global Styles         | `apps/web/src/styles/globals.css`     |
 | UI Components         | `apps/web/src/components/ui/`         |

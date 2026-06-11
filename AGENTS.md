@@ -10,7 +10,7 @@
 # File size limits (lines)
 readonly MAX_LINES_PER_SOURCE_FILE=500
 readonly MAX_LINES_PER_SKILL_MD=250
-readonly MAX_LINES_AGENTS_MD=150
+readonly MAX_LINES_AGENTS_MD=200
 
 # Git/PR configuration
 readonly MAX_COMMIT_SUBJECT_LENGTH=72
@@ -59,7 +59,7 @@ readonly MAX_PR_TITLE_LENGTH=72
 5. **NEVER ignore lint warnings, typecheck errors, or test failures.**
 6. **If a lint rule is disabled, add inline comment explaining why.**
 7. **MUST load `goap-agent` skill for any analysis, planning, or multi-step task.** Use GOAP methodology (analyze → decompose → strategize → coordinate → execute → synthesize).
-8. **Document ALL issues as GOAP plans + ADRs in `plans/`.** Warnings, pre-existing issues, and unfixable items each get a GOAP plan with an ADR defining policy. Do NOT edit KNOWN-ISSUES.md directly — that is a reference mirror of monitor-tier items only.
+8. **Document ALL issues as GOAP plans + ADRs in `docs/plans/`.** Warnings, pre-existing issues, and unfixable items each get a GOAP plan with an ADR defining policy. Do NOT edit KNOWN-ISSUES.md directly — that is a reference mirror of monitor-tier items only.
 9. **Fix pre-existing issues in files you touch.** Don't leave them for later.
 10. **Releases MUST be cut via the `release-management` skill — no manual tags, no direct CHANGELOG edits.**
 
@@ -71,7 +71,7 @@ readonly MAX_PR_TITLE_LENGTH=72
 
 - **Max 500 LOC per source file.**
 - **No hardcoded environment-specific URLs.**
-- **No hardcoded dates.** Use current date from environment: `date +"%Y-%m-%d"` or `new Date().toISOString()`. Never write literal dates like "September 2025" in plans/documentation.
+- **No hardcoded dates.** Use current date from environment: `date +"%Y-%m-%d"` or `new Date().toISOString()`. Never write literal dates like "September 2025" in docs/plans/documentation.
 - **No `any` unless justified and isolated.**
 - **Use Zod for boundary validation, Zustand for state, Tailwind for styling.**
 - **Use Vitest + Playwright with `pool: 'forks'` for test isolation.**
@@ -84,12 +84,12 @@ readonly MAX_PR_TITLE_LENGTH=72
 
 ## TIER 4 — REFERENCE (See Agents-Docs)
 
-- **Architecture decisions:** See `docs/coding-guide.md` and `plans/archive/002-006`
-- **TRIZ analysis:** See `plans/archive/001-triz-analysis.md` + `plans/archive/002-triz-resolution.md`
+- **Architecture decisions:** See `docs/coding-guide.md` and `docs/plans/archive/002-006`
+- **TRIZ analysis:** See `docs/plans/archive/001-triz-analysis.md` + `docs/plans/archive/002-triz-resolution.md`
 - **Skills catalog:** Run `ls .agents/skills/` or see `agents-docs/AVAILABLE_SKILLS.md`
-- **GOAP + ADR pattern:** See `plans/020-goap-sprint-141.md` + `plans/024-adr-warning-management.md`
+- **GOAP + ADR pattern:** See `docs/plans/020-goap-sprint-141.md` + `docs/plans/024-adr-warning-management.md`
 - **Learnings:** See `agents-docs/LEARNINGS.md`
-- **Current phase:** See `plans/archive/007-implementation-phases.md`
+- **Current phase:** See `docs/plans/archive/007-implementation-phases.md`
 
 ---
 

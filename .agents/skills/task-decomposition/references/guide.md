@@ -282,8 +282,8 @@ Time: 1-2 days
 
 ### Include in Plans
 
-- ADR in `plans/`
-- Phase plans in `plans/`
+- ADR in `docs/plans/`
+- Phase plans in `docs/plans/`
 - Schema migrations in `migrations/`
 
 ## GOAP Agent Integration

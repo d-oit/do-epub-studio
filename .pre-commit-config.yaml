@@ -45,6 +45,12 @@ repos:
   # Local hooks (custom quality gate)
   - repo: local
     hooks:
+      - id: agents-md-size
+        name: AGENTS.md LOC guard
+        entry: bash -c 'lines=$(wc -l < AGENTS.md); [ "$lines" -le 200 ] || { echo "AGENTS.md exceeds 200 LOC ($lines)"; exit 1; }'
+        language: system
+        files: ^AGENTS\.md$
+        pass_filenames: false
       - id: validate-workflows
         name: Validate GitHub Workflows
         entry: scripts/validate-workflows.sh

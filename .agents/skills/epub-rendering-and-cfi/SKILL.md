@@ -21,7 +21,7 @@ Purpose: implement resilient EPUB rendering, locator extraction, and annotation 
 
 ## Inputs
 
-- `plans/006-adr-annotation-model.md`
+- `docs/plans/006-adr-annotation-model.md`
 - `packages/reader-core/*`
 - EPUB sample assets (if needed)
 

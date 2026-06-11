@@ -13,7 +13,7 @@ fi
 
 # Verify csm can run a basic query
 if ! csm query "test" --top-k 1 --base-dir "$REPO_ROOT/plans" &>/dev/null; then
-    echo "WARN: csm index may be missing. Run: csm index-dir --glob 'plans/**/*.md' --heading-level 2"
+    echo "WARN: csm index may be missing. Run: csm index-dir --glob 'docs/plans/**/*.md' --heading-level 2"
     exit 1
 fi
 

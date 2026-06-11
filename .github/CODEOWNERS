@@ -43,7 +43,7 @@
 /agents-docs/          @d-oit
 
 # Plans & architecture docs
-/plans/                @d-oit
+/docs/plans/                @d-oit
 
 # GitHub workflows
 /.github/workflows/    @d-oit

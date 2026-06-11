@@ -27,7 +27,7 @@ Read the file list. Reject early if:
 - Files outside the PR's stated scope were changed
 - A `package.json` was modified without an explanation (new dep?)
 - A `.github/workflows/` file was changed (security review)
-- A `plans/` file was added (new ADR — read it)
+- A `docs/plans/` file was added (new ADR — read it)
 - A `*.lock` or `pnpm-lock.yaml` was changed (Dependabot/automated only)
 
 ### 2. Triage the PR body (1 minute)

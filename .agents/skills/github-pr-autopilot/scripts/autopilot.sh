@@ -42,7 +42,7 @@ gh pr view "$PR_ID" --json files --jq '.files[].path' 2>/dev/null | while IFS= r
        [[ "$file" == .qwen/skills* ]] || \
        [[ "$file" == .claude/skills* ]] || \
        [[ "$file" == .gemini/skills* ]] || \
-       [[ "$file" == plans/* ]]; then
+       [[ "$file" == docs/plans/* ]]; then
         continue
     fi
     if echo "$file" | grep -qiE "(auth|security|permission|argon2|session|token|secret)"; then

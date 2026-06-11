@@ -31,7 +31,7 @@ that delivers signed R2 URLs).
 │   └── testkit/             # shared test helpers
 ├── scripts/                 # quality_gate, atomic-commit, validate-workflows
 ├── .github/                 # workflows, composite actions, PR template
-└── plans/                   # GOAP + ADR records (000-067+)
+└── docs/plans/                   # GOAP + ADR records (000-067+)
 ```
 
 ### Runtime data flow
@@ -152,4 +152,4 @@ pnpm --filter @do-epub-studio/reader-core test:unit
 
 ## 11. For More
 
-See `AGENTS.md` for the canonical rule set and `plans/` for prior decisions.
+See `AGENTS.md` for the canonical rule set and `docs/plans/` for prior decisions.

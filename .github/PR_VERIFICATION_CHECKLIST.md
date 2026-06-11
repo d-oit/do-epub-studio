@@ -58,7 +58,7 @@
 ## Documentation
 
 - [ ] `AGENTS.md` updated if rules changed
-- [ ] New skill or ADR added to `plans/` if a new decision was made
+- [ ] New skill or ADR added to `docs/plans/` if a new decision was made
 - [ ] README / public docs updated for user-visible changes
 - [ ] `CHANGELOG.md` updated (only via `release-management` skill)
 

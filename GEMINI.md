@@ -5,12 +5,12 @@ This file is a THIN ADAPTER on top of AGENTS.md. It must:
   1. Reference AGENTS.md for shared behavior.
   2. Add ONLY Gemini/Jules-specific notes.
   3. Stay short. Do not duplicate AGENTS.md content.
-  See plans/068 and AGENTS.md "perf: keep agent-specific files thin".
+  See docs/plans/068 and AGENTS.md "perf: keep agent-specific files thin".
 
 For the full project context, see:
   - AGENTS.md                 (canonical rules)
   - llms.txt, llms-full.txt   (LLM context, structure, anti-patterns)
-  - plans/                    (GOAP + ADR history)
+  - docs/plans/                    (GOAP + ADR history)
   - .agents/skills/           (curated skills)
 -->
 
@@ -25,7 +25,7 @@ backend. TypeScript 6 strict, React 19, EPUB.js, DOMPurify, Zustand, Vite 8.
   bcrypt/scrypt (use Argon2id), direct DOM mutation outside React, raw
   `console.*` on critical paths (use `logClientEvent`).
 - **Always read first**: `AGENTS.md`, `llms-full.txt`, and the most recent
-  `plans/068-*.md` for current open-issue context.
+  `docs/plans/068-*.md` for current open-issue context.
 - **Default to the goap-agent skill** for any multi-step task.
 - **Prefer conventional commit messages** (the commit-msg hook enforces this).
 - **Push to the PR head branch**, not the worktree branch. The pattern

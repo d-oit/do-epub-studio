@@ -155,7 +155,7 @@ git diff
 
 ## References
 
-- ADR-035: Release Governance & Vulnerability Disclosure Policy — `plans/035-adr-release-governance.md`
+- ADR-035: Release Governance & Vulnerability Disclosure Policy — `docs/plans/035-adr-release-governance.md`
 - Release-drafter config: `.github/release-drafter.yml`
 - Workflow definition: `.github/workflows/release.yml`
 - `CHANGELOG.md` at repo root

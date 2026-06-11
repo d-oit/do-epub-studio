@@ -61,8 +61,8 @@ The following are out of scope:
 
 ## Related Documents
 
-- [ADR-034 (ReDoS)](plans/034-adr-security-redos-hardening.md)
-- [ADR-035 (Content Security Policy)](plans/035-adr-content-security-policy.md)
+- [ADR-034 (ReDoS)](docs/plans/034-adr-security-redos-hardening.md)
+- [ADR-035 (Content Security Policy)](docs/plans/035-adr-content-security-policy.md)
 - [docs/security.md](docs/security.md)
 
 ## Content Security Policy (CSP)

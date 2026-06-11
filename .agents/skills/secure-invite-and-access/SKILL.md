@@ -21,7 +21,7 @@ Purpose: enforce access-control rules (grants, passwords, sessions, signed URLs,
 
 ## Inputs
 
-- `plans/004-adr-auth-and-access.md`
+- `docs/plans/004-adr-auth-and-access.md`
 - `packages/shared/src/schemas.ts`
 - Worker auth modules (`apps/worker/src/auth/*`)
 

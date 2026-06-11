@@ -63,4 +63,4 @@ After debugging a Turso sync issue:
 
 - `AGENTS.md` - Root agent guidance and constraints.
 - `agents-docs/LEARNINGS.md` - Project-wide learnings.
-- `plans/` - ADRs and phase plans.
+- `docs/plans/` - ADRs and phase plans.

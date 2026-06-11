@@ -101,7 +101,7 @@ Every CodeQL ReDoS alert MUST be fixed at the source — never dismissed:
 
 ## References
 
-- ADR-034: ReDoS Hardening Policy — `plans/034-adr-security-redos-hardening.md`
+- ADR-034: ReDoS Hardening Policy — `docs/plans/034-adr-security-redos-hardening.md`
 - `docs/security.md` § ReDoS Hardening
 - `packages/shared/src/safe-regex.ts` — `matchBounded` / `testBounded` implementation
 - AGENTS.md Tier 1: "MUST guard every regex against untrusted input using matchBounded/testBounded from @do-epub-studio/shared per ADR-034"

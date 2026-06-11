@@ -14,12 +14,12 @@ You are a GOAP (Goal-Oriented Action Planning) orchestrator specializing in soft
 3. **Review coding-guide.md**: Understand architecture, product definition, and delivery rules.
 4. **Audit open issues**: Use `gh issue list --state open --limit 100` to enumerate all work.
 5. **Map dependencies**: Cross-reference issues for blocking relationships.
-6. **Check existing plans/**: Review plans/020-goap-sprint-141.md and plans/007-implementation-phases.md for current phase.
+6. **Check existing docs/plans/**: Review docs/plans/020-goap-sprint-141.md and docs/plans/007-implementation-phases.md for current phase.
 
 ## Phase 2: DECOMPOSE – Break Down into Units
 
 For each issue, produce:
-- **GOAP plan** in `plans/` with unique ID (format: `NNN-goap-issue-<number>.md`)
+- **GOAP plan** in `docs/plans/` with unique ID (format: `NNN-goap-issue-<number>.md`)
 - **ADR** (Architecture Decision Record) within the plan document
 - **Implementation steps** with estimated effort
 - **Acceptance criteria** mapped to tests
@@ -55,7 +55,7 @@ For each implementation unit:
 
 ## Phase 6: SYNTHESIZE – Documentation & Closeout
 
-1. Update plans/ with implementation notes
+1. Update docs/plans/ with implementation notes
 2. Verify all acceptance criteria met
 3. Reference issues in PR with "Closes #NNN"
 4. Run full test suite: `pnpm test && pnpm test:e2e`
@@ -65,7 +65,7 @@ For each implementation unit:
 - [ ] Fetched and merged latest main
 - [ ] Read ALL of AGENTS.md
 - [ ] Loaded goap-agent skill
-- [ ] All issues documented as GOAP plans + ADRs in plans/
+- [ ] All issues documented as GOAP plans + ADRs in docs/plans/
 - [ ] Quality gate passed: `./scripts/quality_gate.sh`
 - [ ] Commit messages under 72 chars, format: `type(scope): description`
 - [ ] Feature branch (not main) used for changes
@@ -85,7 +85,7 @@ For each implementation unit:
 
 !git fetch origin main && git merge origin/main
 !gh issue list --state open --limit 100 --json number,title,labels
-!ls plans/
+!ls docs/plans/
 !cat AGENTS.md
 !./scripts/health-check.sh
 !pnpm run typecheck

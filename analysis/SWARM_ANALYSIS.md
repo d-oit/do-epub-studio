@@ -9,7 +9,7 @@ multiple perspectives, underscoring systemic weaknesses
 around access control, signed downloads, and password
 storage. This report replaces the previously missing swarm
 deliverable noted in
-plans/analysis-swarm-2026-04-08.md.
+docs/plans/analysis-swarm-2026-04-08.md.
 
 ## Gap Inventory
 
@@ -146,7 +146,7 @@ Turso/Workers or follow required architecture practices.
 
 **Suggested Fix:** Author the missing setup/architecture/
 security/offline documents or update references to point at
-real instructions in `docs/` and `plans/`.
+real instructions in `docs/` and `docs/plans/`.
 
 **Evidence:** `README.md:26-29`,
 `docs/coding-guide.md:524-532`
@@ -155,7 +155,7 @@ real instructions in `docs/` and `plans/`.
 
 **What's Missing:** Swarm deliverable
 (`analysis/SWARM_ANALYSIS.md`) was absent despite being
-mandated in `plans/analysis-swarm-2026-04-08.md`.
+mandated in `docs/plans/analysis-swarm-2026-04-08.md`.
 
 **Why It Matters:** Without an aggregated findings file,
 stakeholders had no traceable output for the swarm effort.
@@ -166,7 +166,7 @@ stakeholders had no traceable output for the swarm effort.
 updated on future swarms and link from plans.
 
 **Evidence:**
-`plans/analysis-swarm-2026-04-08.md:5-23`, `analysis/`
+`docs/plans/analysis-swarm-2026-04-08.md:5-23`, `analysis/`
 directory listing prior to this run
 
 ### G9 - Testing
@@ -406,4 +406,4 @@ The security audit confirmed:
 
 ### References
 
-- Full analysis details: `plans/012-comprehensive-analysis-findings.md`
+- Full analysis details: `docs/plans/012-comprehensive-analysis-findings.md`

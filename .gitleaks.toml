@@ -16,7 +16,7 @@ description = "Allowlist for known false-positives in do-epub-studio"
 paths = [
   '''pnpm-lock\.yaml''',
   '''\.md$''',
-  '''plans/.*''',
+  '''docs/plans/.*''',
   '''agents-docs/.*''',
   '''docs/.*''',
   '''__tests__/fixtures/.*''',

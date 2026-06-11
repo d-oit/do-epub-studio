@@ -99,4 +99,4 @@ Three-layer defense:
 2. **Unambiguous pattern** — bounded quantifiers, no overlapping alternations
 3. **Property-based fuzz** — `fast-check` assertions for adversarial inputs
 
-CI gates enforce zero open CodeQL alerts. See `plans/034-adr-security-redos-hardening.md`.
+CI gates enforce zero open CodeQL alerts. See `docs/plans/034-adr-security-redos-hardening.md`.

@@ -14,7 +14,7 @@ documentation:
   - '**/*.md'
   - '**/*.mdx'
   - 'docs/**'
-  - 'plans/**'
+  - 'docs/plans/**'
   - 'AGENTS.md'
   - 'llms.txt'
   - 'llms-full.txt'

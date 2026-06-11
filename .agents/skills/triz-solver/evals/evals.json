@@ -4,13 +4,13 @@
     {
       "id": 1,
       "prompt": "We identified a contradiction: offline availability vs access control. We need to resolve it using TRIZ principles.",
-      "expected_output": "The agent reads the triz-analysis output, defines IFR for each contradiction, chooses appropriate separation principle (likely Time or Condition), applies TRIZ principles, and documents resolution in plans/ directory.",
+      "expected_output": "The agent reads the triz-analysis output, defines IFR for each contradiction, chooses appropriate separation principle (likely Time or Condition), applies TRIZ principles, and documents resolution in docs/plans/ directory.",
       "files": ["evals/triz-analysis-sample.md"],
       "assertions": [
         "The agent reads the analysis file",
         "The agent defines IFR (Ideal Final Result)",
         "The agent chooses appropriate separation principle",
-        "The agent documents resolution in plans/ directory"
+        "The agent documents resolution in docs/plans/ directory"
       ]
     },
     {
@@ -40,13 +40,13 @@
     {
       "id": 4,
       "prompt": "Before designing the system, I need to resolve the contradictions identified in the analysis. Run triz-solver.",
-      "expected_output": "The agent reads analysis files, applies IFR framework to all contradictions, uses separation principles appropriately, documents resolutions, and updates plans/ with system design.",
+      "expected_output": "The agent reads analysis files, applies IFR framework to all contradictions, uses separation principles appropriately, documents resolutions, and updates docs/plans/ with system design.",
       "files": [],
       "assertions": [
         "The agent reads existing analysis",
         "The agent resolves all identified contradictions",
         "The agent documents resolutions",
-        "The agent updates plans/ with system design"
+        "The agent updates docs/plans/ with system design"
       ]
     },
     {
