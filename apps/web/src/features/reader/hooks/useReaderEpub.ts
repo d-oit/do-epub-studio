@@ -356,7 +356,7 @@ export function useReaderEpub(
       renditionRef.current?.destroy();
       bookRef.current?.destroy();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- applyThemes only needed for initial setup; preference changes handled by dedicated effect
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- epub lifecycle: theme deps handled by separate effect
   }, [
     epubUrl,
     viewerRef,

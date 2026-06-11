@@ -3,11 +3,12 @@ import globals from 'globals';
 import tseslint from 'typescript-eslint';
 import reactPlugin from 'eslint-plugin-react';
 import reactHooks from 'eslint-plugin-react-hooks';
+import reactCompiler from 'eslint-plugin-react-compiler';
 import jsxA11y from 'eslint-plugin-jsx-a11y';
 import unicorn from 'eslint-plugin-unicorn';
 import promise from 'eslint-plugin-promise';
 import security from 'eslint-plugin-security';
-import importPlugin from 'eslint-plugin-import';
+import importPlugin from 'eslint-plugin-import-x';
 import prettierConfig from 'eslint-config-prettier';
 
 export default tseslint.config(
@@ -30,6 +31,7 @@ export default tseslint.config(
     plugins: {
       react: reactPlugin,
       'react-hooks': reactHooks,
+      'react-compiler': reactCompiler,
       'jsx-a11y': jsxA11y,
       unicorn,
       promise,
@@ -65,6 +67,10 @@ export default tseslint.config(
       'no-useless-assignment': 'error',
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
+      'react-compiler/react-compiler': 'warn',
+      // eslint-plugin-react: only keeping rules that TypeScript can't catch
+      'react/jsx-key': 'error',
+      'react/jsx-no-target-blank': 'error',
       'jsx-a11y/no-autofocus': 'warn',
       'jsx-a11y/aria-props': 'error',
       'unicorn/filename-case': [
@@ -97,15 +103,12 @@ export default tseslint.config(
       '@typescript-eslint/consistent-type-imports': 'warn',
       '@typescript-eslint/no-floating-promises': 'error',
       '@typescript-eslint/no-misused-promises': 'error',
-      // The following unsafe rules are set to 'warn' as a strictness improvement over
-      // main where they were off entirely. They will be upgraded to 'error' once the
-      // codebase violations are addressed (tracked in plans/archive/010-optimization-quality-backlog.md).
-      '@typescript-eslint/no-unsafe-assignment': 'warn',
-      '@typescript-eslint/no-unsafe-member-access': 'warn',
-      '@typescript-eslint/no-unsafe-call': 'warn',
-      '@typescript-eslint/no-unsafe-return': 'warn',
-      '@typescript-eslint/no-unsafe-argument': 'warn',
-      '@typescript-eslint/restrict-template-expressions': 'warn',
+      '@typescript-eslint/no-unsafe-assignment': 'error',
+      '@typescript-eslint/no-unsafe-member-access': 'error',
+      '@typescript-eslint/no-unsafe-call': 'error',
+      '@typescript-eslint/no-unsafe-return': 'error',
+      '@typescript-eslint/no-unsafe-argument': 'error',
+      '@typescript-eslint/restrict-template-expressions': 'error',
     },
   },
   {
