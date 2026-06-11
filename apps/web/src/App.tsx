@@ -22,6 +22,9 @@ const AdminGrantResponsesPage = React.lazy(() =>
 const AdminAuditPage = React.lazy(() =>
   import('./features/admin/AuditLogPage').then((m) => ({ default: m.AdminAuditPage }))
 );
+const CatalogPage = React.lazy(() =>
+  import('./features/catalog/CatalogPage').then((m) => ({ default: m.CatalogPage }))
+);
 
 // Premium glassmorphism loading fallback spinner
 const LoadingFallback: React.FC = () => (
@@ -94,6 +97,7 @@ export function App() {
       <SwUpdateNotification />
       <ViewTransitionRoutes>
         <Route path="/" element={<AppShell />} />
+        <Route path="/catalog" element={<CatalogPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/admin/login" element={<AdminLoginPage />} />
         <Route path="/read/:bookSlug" element={

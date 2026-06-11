@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 import { useReaderStore, useAuthStore } from '../../../stores';
 import {
   createHighlight,
@@ -18,7 +19,7 @@ export function useReaderHandlers() {
   const removeHighlight = useReaderStore((state) => state.removeHighlight);
   const addComment = useReaderStore((state) => state.addComment);
   const updateComment = useReaderStore((state) => state.updateComment);
-  const comments = useReaderStore((state) => state.comments);
+  const comments = useReaderStore(useShallow((state) => state.comments));
 
   const handleCreateHighlight = useCallback(
     async (color: string, selection: SelectionData | null, setSelection: (s: null) => void) => {
