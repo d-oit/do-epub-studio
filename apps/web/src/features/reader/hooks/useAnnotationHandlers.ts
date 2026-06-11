@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 import { useReaderStore, useAuthStore } from '../../../stores';
 import {
   createHighlight,
@@ -31,7 +32,7 @@ export function useAnnotationHandlers(): AnnotationHandlersReturn {
 
   const addComment = useReaderStore((s) => s.addComment);
   const updateCommentInStore = useReaderStore((s) => s.updateComment);
-  const comments = useReaderStore((s) => s.comments);
+  const comments = useReaderStore(useShallow((s) => s.comments));
 
   const handleCreateHighlight = useCallback(
     async (color: string, selection: SelectionData | null) => {
