@@ -56,8 +56,20 @@ Benefit: prevents unnecessary re-renders when unrelated store slices change.
 - [x] Worker typecheck passes
 - [x] Lint passes
 - [x] No source file exceeds 500 LOC
+- [x] Codacy Static Code Analysis passes (0 new issues)
+- [x] All CI checks green on PR #479
 
-## 6. References
+## 6. CI Fix: Codacy Findings (7 → 0)
+
+| Issue | Fix |
+|-------|-----|
+| Array index as key (skeleton loader) | Use stable string keys `sk-1`..`sk-6` |
+| Missing img width/height | Added `width={320} height={160}` |
+| Don't use `<img>` element | Wrapped in `<picture>` element |
+| 4× unnecessary `??` conditional | Cast to `string \| null` instead of `string` |
+| Invalid eslint-disable comment | Removed non-existent rule reference |
+
+## 7. References
 
 - Parent plan: 077-goap-comprehensive-analysis-2026-06-11.md
 - ADR: 077-adr-phased-feature-delivery.md
