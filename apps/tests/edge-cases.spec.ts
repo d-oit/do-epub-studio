@@ -37,7 +37,7 @@ test.describe('Edge Cases & Error Handling', () => {
     await expect(page).toHaveURL(/\/admin\/books/);
 
     // Now mock a 401 for subsequent API calls to simulate session expiry
-    await page.route('**/api/books', route => route.fulfill({
+    await page.route('**/api/admin/books', route => route.fulfill({
       status: 401,
       contentType: 'application/json',
       body: JSON.stringify({ ok: false, error: { code: 'UNAUTHORIZED', message: 'Session expired' } }),
