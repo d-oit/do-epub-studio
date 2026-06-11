@@ -429,14 +429,18 @@ jobs:
       - name: Install Playwright browsers
         run: pnpm exec playwright install --with-deps chromium firefox webkit
 
+      - name: Build web app for preview
+        run: pnpm --filter @do-epub-studio/web build
+
       - name: Run full cross-browser E2E tests
         uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60  # v4.0.0
         with:
           timeout_minutes: 30
           max_attempts: 2
-          command: pnpm test:e2e --retries=1
+          command: PLAYWRIGHT_MODE=preview pnpm test:e2e --retries=1
         env:
           PLAYWRIGHT_INCLUDE_WEBKIT: '1'
+          PLAYWRIGHT_MODE: preview
           retry_wait_seconds: 30
           warning_on_retry: true
 
