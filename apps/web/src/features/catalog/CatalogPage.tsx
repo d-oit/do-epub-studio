@@ -47,8 +47,8 @@ export function CatalogPage() {
 
         {isLoading && (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3" aria-busy="true">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="h-64 rounded-xl bg-background-secondary animate-pulse" />
+            {['sk-1', 'sk-2', 'sk-3', 'sk-4', 'sk-5', 'sk-6'].map((id) => (
+              <div key={id} className="h-64 rounded-xl bg-background-secondary animate-pulse" />
             ))}
           </div>
         )}
@@ -70,11 +70,17 @@ export function CatalogPage() {
                   className="block rounded-xl border border-white/10 bg-surface/40 backdrop-blur-sm p-5 shadow-glass hover:shadow-glass-lg transition-shadow focus-visible:outline-2 focus-visible:outline-accent"
                 >
                   {book.coverImageUrl && (
-                    <img
-                      src={book.coverImageUrl}
-                      alt=""
-                      className="w-full h-40 object-cover rounded-lg mb-4"
-                    />
+                    <picture>
+                      <source srcSet={book.coverImageUrl} />
+                      {/* eslint-disable-next-line jsx-a11y/img-redundant-alt -- cover thumbnail */}
+                      <img
+                        src={book.coverImageUrl}
+                        alt={`Cover of ${book.title}`}
+                        width={320}
+                        height={160}
+                        className="w-full h-40 object-cover rounded-lg mb-4"
+                      />
+                    </picture>
                   )}
                   <h2 className="text-lg font-semibold line-clamp-2">{book.title}</h2>
                   {book.authorName && (

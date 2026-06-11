@@ -22,11 +22,11 @@ catalogRouter.get('/', async (c) => {
       id: row.id as string,
       slug: row.slug as string,
       title: row.title as string,
-      authorName: (row.author_name as string) ?? null,
-      description: (row.description as string) ?? null,
+      authorName: (row.author_name as string | null) ?? null,
+      description: (row.description as string | null) ?? null,
       language: row.language as string,
-      coverImageUrl: (row.cover_image_url as string) ?? null,
-      publishedAt: (row.published_at as string) ?? null,
+      coverImageUrl: (row.cover_image_url as string | null) ?? null,
+      publishedAt: (row.published_at as string | null) ?? null,
     })),
   });
 });
