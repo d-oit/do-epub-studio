@@ -22,7 +22,7 @@
 ### Merged PRs Addressing These Issues
 
 - **PR #458** "dx: scaffold agent infrastructure, CI hardening, and Turbo tuning" — merged as commit `bf01bc0` on main. This PR explicitly addresses issues #442–#454 per its body and plan 068.
-- **PR #472** "fix(ci): add Dependabot action SHAs and ignore __stories__ dirs" — merged as commit `d5afad1`.
+- **PR #472** "fix(ci): add Dependabot action SHAs and ignore `__stories__` dirs" — merged as commit `d5afad1`.
 
 ### Issues That Can Be Closed Immediately
 
