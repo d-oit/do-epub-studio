@@ -72,7 +72,6 @@ export function CatalogPage() {
                   {book.coverImageUrl && (
                     <picture>
                       <source srcSet={book.coverImageUrl} />
-                      {/* eslint-disable-next-line jsx-a11y/img-redundant-alt -- cover thumbnail */}
                       <img
                         src={book.coverImageUrl}
                         alt={`Cover of ${book.title}`}
