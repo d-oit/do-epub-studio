@@ -2,6 +2,7 @@ import React, { Suspense } from 'react';
 import { Route, Navigate } from 'react-router-dom';
 import { ViewTransitionRoutes } from './components/ViewTransitionRoutes';
 import { useAuthStore } from './stores/auth';
+import { useThemeSync } from './hooks/useThemeSync';
 import { LoginPage } from './features/auth/LoginPage';
 import { AdminLoginPage } from './features/admin/AdminLoginPage';
 import { AppShell } from './components/AppShell';
@@ -78,7 +79,9 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-function App() {
+export function App() {
+  useThemeSync();
+
   return (
     <Suspense fallback={<LoadingFallback />}>
       {/* Skip-to-content link — WCAG 2.4.1: first focusable element in the page */}

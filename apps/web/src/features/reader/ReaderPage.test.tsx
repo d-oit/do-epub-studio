@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, act } from '@testing-library/react';
 import { ReaderPage } from './ReaderPage';
-import { BrowserRouter } from 'react-router-dom';
+import { App } from '../../App';
+import { BrowserRouter, MemoryRouter } from 'react-router-dom';
 import { useAuthStore, useReaderStore, usePreferencesStore } from '../../stores';
 
 // Mock dependencies
@@ -83,40 +84,37 @@ describe('ReaderPage theme', () => {
   it('sets data-theme to light when theme is light', () => {
     usePreferencesStore.setState({ reader: { ...usePreferencesStore.getState().reader, theme: 'light' } });
 
-    const { container } = render(
-      <BrowserRouter>
-        <ReaderPage />
-      </BrowserRouter>,
+    render(
+      <MemoryRouter initialEntries={['/read/test-book']}>
+        <App />
+      </MemoryRouter>,
     );
 
-    const root = container.firstChild as HTMLElement;
-    expect(root).toHaveAttribute('data-theme', 'light');
+    expect(document.documentElement).toHaveAttribute('data-theme', 'light');
   });
 
   it('sets data-theme to dark when theme is dark', () => {
     usePreferencesStore.setState({ reader: { ...usePreferencesStore.getState().reader, theme: 'dark' } });
 
-    const { container } = render(
-      <BrowserRouter>
-        <ReaderPage />
-      </BrowserRouter>,
+    render(
+      <MemoryRouter initialEntries={['/read/test-book']}>
+        <App />
+      </MemoryRouter>,
     );
 
-    const root = container.firstChild as HTMLElement;
-    expect(root).toHaveAttribute('data-theme', 'dark');
+    expect(document.documentElement).toHaveAttribute('data-theme', 'dark');
   });
 
   it('sets data-theme to sepia when theme is sepia', () => {
     usePreferencesStore.setState({ reader: { ...usePreferencesStore.getState().reader, theme: 'sepia' } });
 
-    const { container } = render(
-      <BrowserRouter>
-        <ReaderPage />
-      </BrowserRouter>,
+    render(
+      <MemoryRouter initialEntries={['/read/test-book']}>
+        <App />
+      </MemoryRouter>,
     );
 
-    const root = container.firstChild as HTMLElement;
-    expect(root).toHaveAttribute('data-theme', 'sepia');
+    expect(document.documentElement).toHaveAttribute('data-theme', 'sepia');
   });
 
   it('resolves system theme to light when OS prefers light', () => {
@@ -132,14 +130,13 @@ describe('ReaderPage theme', () => {
       dispatchEvent: vi.fn(),
     });
 
-    const { container } = render(
-      <BrowserRouter>
-        <ReaderPage />
-      </BrowserRouter>,
+    render(
+      <MemoryRouter initialEntries={['/read/test-book']}>
+        <App />
+      </MemoryRouter>,
     );
 
-    const root = container.firstChild as HTMLElement;
-    expect(root).toHaveAttribute('data-theme', 'light');
+    expect(document.documentElement).toHaveAttribute('data-theme', 'light');
   });
 
   it('resolves system theme to dark when OS prefers dark', () => {
@@ -155,13 +152,12 @@ describe('ReaderPage theme', () => {
       dispatchEvent: vi.fn(),
     });
 
-    const { container } = render(
-      <BrowserRouter>
-        <ReaderPage />
-      </BrowserRouter>,
+    render(
+      <MemoryRouter initialEntries={['/read/test-book']}>
+        <App />
+      </MemoryRouter>,
     );
 
-    const root = container.firstChild as HTMLElement;
-    expect(root).toHaveAttribute('data-theme', 'dark');
+    expect(document.documentElement).toHaveAttribute('data-theme', 'dark');
   });
 });
