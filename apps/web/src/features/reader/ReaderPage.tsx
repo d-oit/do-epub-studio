@@ -7,6 +7,7 @@ import { apiRequest } from '../../lib/api';
 import { logClientEvent } from '../../lib/client-logger';
 import { fetchHighlights, fetchComments } from '../../lib/api/annotations';
 import { useAuthStore, useReaderStore, usePreferencesStore } from '../../stores';
+import type { Bookmark } from '../../stores';
 import { setupOnlineListener } from '../../lib/offline';
 import { setupZombieDetection } from '../../lib/offline/permissions';
 import { AnnotationToolbar, extractSelectionData, CommentsPanel } from './components/annotations';
@@ -62,6 +63,7 @@ export function ReaderPage() {
   const comments = useReaderStore(useShallow((s) => s.comments));
   const setComments = useReaderStore((s) => s.setComments);
   const bookmarks = useReaderStore(useShallow((s) => s.bookmarks));
+  const setBookmarks = useReaderStore((s) => s.setBookmarks);
   const currentChapter = useReaderStore((s) => s.currentChapter);
   const isFixedLayout = useReaderStore((s) => s.isFixedLayout);
 
@@ -127,12 +129,14 @@ export function ReaderPage() {
     if (!sessionToken || !bookId) return;
     const load = async () => {
       try {
-        const [hl, cm] = await Promise.all([
+        const [hl, cm, bm] = await Promise.all([
           fetchHighlights(bookId, sessionToken),
           fetchComments(bookId, sessionToken),
+          apiRequest<Bookmark[]>(`/api/books/${bookId}/bookmarks`, { token: sessionToken }),
         ]);
         setHighlights(hl);
         setComments(cm);
+        setBookmarks(bm);
       } catch (err) {
         const error = err instanceof Error ? err : new Error(String(err));
         logClientEvent({
@@ -146,7 +150,7 @@ export function ReaderPage() {
       }
     };
     void load();
-  }, [sessionToken, bookId, setHighlights, setComments]);
+  }, [sessionToken, bookId, setHighlights, setComments, setBookmarks]);
 
   useEffect(() => {
     const onMouseUp = () => {
