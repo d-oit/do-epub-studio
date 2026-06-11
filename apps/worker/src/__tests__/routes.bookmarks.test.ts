@@ -7,6 +7,22 @@ import {
   mockRequireAuth,
 } from './fixtures';
 import { app } from '../app';
+import type { AuthContext } from '../auth/middleware';
+
+const authCtx: AuthContext = {
+  email: 'user@example.com',
+  sessionId: 'session-1',
+  bookId: 'book-1',
+  capabilities: {
+    canRead: true,
+    canComment: true,
+    canHighlight: true,
+    canBookmark: true,
+    canDownloadOffline: false,
+    canExportNotes: false,
+    canManageAccess: false,
+  },
+};
 
 describe('Bookmark Routes', () => {
   const env = makeEnv();
@@ -27,7 +43,7 @@ describe('Bookmark Routes', () => {
     });
 
     it('returns bookmarks when authenticated', async () => {
-      mockRequireAuth.mockResolvedValue({ email: 'user@example.com', capabilities: { canBookmark: true } } as any);
+      mockRequireAuth.mockResolvedValue(authCtx);
       mockQueryAll.mockResolvedValue([
         { id: 'bm-1', book_id: 'book-1', user_email: 'user@example.com', locator_json: '{"cfi":"epubcfi(/6/4)"}', label: 'Chapter 1', created_at: '2025-01-01T00:00:00Z' },
       ]);
@@ -38,7 +54,7 @@ describe('Bookmark Routes', () => {
         makePassThroughContext() as unknown as ExecutionContext,
       );
       expect(res.status).toBe(200);
-      const body = (await res.json()) as any;
+      const body: { data: { id: string; locator: { cfi: string }; label: string }[] } = await res.json();
       expect(body.data).toHaveLength(1);
       expect(body.data[0].id).toBe('bm-1');
       expect(body.data[0].locator.cfi).toBe('epubcfi(/6/4)');
@@ -48,8 +64,8 @@ describe('Bookmark Routes', () => {
 
   describe('POST /api/books/:bookId/bookmarks', () => {
     it('creates bookmark and returns 201', async () => {
-      mockRequireAuth.mockResolvedValue({ email: 'user@example.com', capabilities: { canBookmark: true } } as any);
-      mockExecute.mockResolvedValue({} as any);
+      mockRequireAuth.mockResolvedValue(authCtx);
+      mockExecute.mockResolvedValue({});
 
       const res = await app.fetch(
         new Request('http://localhost/api/books/book-1/bookmarks', {
@@ -61,14 +77,13 @@ describe('Bookmark Routes', () => {
         makePassThroughContext() as unknown as ExecutionContext,
       );
       expect(res.status).toBe(201);
-      const body = (await res.json()) as any;
+      const body: { data: { id: string; label: string } } = await res.json();
       expect(body.data.label).toBe('My Bookmark');
       expect(body.data.id).toBeDefined();
     });
 
     it('returns 403 when canBookmark is false', async () => {
-      mockRequireAuth.mockResolvedValue({ email: 'user@example.com', capabilities: { canBookmark: false } } as any);
-
+      mockRequireAuth.mockResolvedValue({ ...authCtx, capabilities: { ...authCtx.capabilities, canBookmark: false } });
       const res = await app.fetch(
         new Request('http://localhost/api/books/book-1/bookmarks', {
           method: 'POST',
@@ -84,8 +99,8 @@ describe('Bookmark Routes', () => {
 
   describe('DELETE /api/books/:bookId/bookmarks/:bookmarkId', () => {
     it('deletes bookmark and returns success', async () => {
-      mockRequireAuth.mockResolvedValue({ email: 'user@example.com', capabilities: { canBookmark: true } } as any);
-      mockExecute.mockResolvedValue({} as any);
+      mockRequireAuth.mockResolvedValue(authCtx);
+      mockExecute.mockResolvedValue({});
 
       const res = await app.fetch(
         new Request('http://localhost/api/books/book-1/bookmarks/bm-1', {
@@ -96,7 +111,7 @@ describe('Bookmark Routes', () => {
         makePassThroughContext() as unknown as ExecutionContext,
       );
       expect(res.status).toBe(200);
-      const body = (await res.json()) as any;
+      const body: { ok: boolean } = await res.json();
       expect(body.ok).toBe(true);
     });
   });
