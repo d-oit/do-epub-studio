@@ -49,7 +49,7 @@ accessRouter.post('/recovery-request', zValidator('json', RecoveryRequestSchema)
         bookSlug,
         exp: Math.floor(Date.now() / 1000) + 3600, // 1 hour
       };
-      const token = await sign(payload, c.env.INVITE_TOKEN_SECRET);
+      const token = await sign(payload, c.env.INVITE_TOKEN_SECRET, 'HS256');
 
       // In a real app, this would send an email. For now, we log it to audit.
       const recoveryUrl = `${c.env.APP_BASE_URL}/login?book=${bookSlug}&token=${token}`;
@@ -72,7 +72,7 @@ accessRouter.post('/verify-recovery', zValidator('json', RecoveryVerifySchema), 
   const { token } = c.req.valid('json');
 
   try {
-    const payload = await verify(token, c.env.INVITE_TOKEN_SECRET) as { email: string, bookSlug: string };
+    const payload = await verify(token, c.env.INVITE_TOKEN_SECRET, 'HS256') as { email: string, bookSlug: string };
 
     const result = await validateGrant(c.env, payload.bookSlug, payload.email);
 
