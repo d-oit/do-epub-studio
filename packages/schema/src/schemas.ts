@@ -69,6 +69,15 @@ export const AccessRequestSchema = z.object({
   password: z.string().max(255).optional(),
 });
 
+export const RecoveryRequestSchema = z.object({
+  bookSlug: z.string().min(1).max(255),
+  email: z.string().email().max(255),
+});
+
+export const RecoveryVerifySchema = z.object({
+  token: z.string().min(1),
+});
+
 export const CreateBookSchema = z.object({
   title: z.string().min(1).max(500),
   slug: z
@@ -155,6 +164,8 @@ export const AuditQuerySchema = z.object({
 });
 
 export type AccessRequest = z.infer<typeof AccessRequestSchema>;
+export type RecoveryRequest = z.infer<typeof RecoveryRequestSchema>;
+export type RecoveryVerify = z.infer<typeof RecoveryVerifySchema>;
 export type CreateBook = z.infer<typeof CreateBookSchema>;
 export type CreateGrant = z.infer<typeof CreateGrantSchema>;
 export type UpdateGrant = z.infer<typeof UpdateGrantSchema>;
