@@ -78,20 +78,20 @@
 2. ~~Validate highlight `book_id` matches route param on PATCH (`worker/routes/reader/highlights.ts`)~~
 3. ~~Fix `AuditLogPage.tsx` aria-labels (tracked in plan 074)~~ — already fixed upstream
 
-### Sprint B: Code Quality (P1)
+### Sprint B: Code Quality (P1) ✅ Complete (PR #477)
 
-4. Split `useReaderEpub.ts` into `useEpubLoader`, `useEpubNavigation`, `useEpubRendition`
-5. Split `ReaderToolbar.tsx` into sub-components per toolbar section
-6. Split `BooksPage.tsx` into `BookList`, `BookCreateForm`, `BookCard`
-7. Add rate-limit middleware to admin login endpoint
-8. Fix `SignedUrlResponse` DTO — return all fields from endpoint
+4. ~~Split `useReaderEpub.ts` into `useEpubLoader`, `useEpubNavigation`, `useEpubRendition`~~ — extracted progress logic to `useEpubProgress.ts` (523→431 LOC)
+5. ~~Split `ReaderToolbar.tsx` into sub-components per toolbar section~~ — already under 500 LOC (396)
+6. ~~Split `BooksPage.tsx` into `BookList`, `BookCreateForm`, `BookCard`~~ — already under 500 LOC (384)
+7. ~~Add rate-limit middleware to admin login endpoint~~ — already implemented (5 req/min per email)
+8. ~~Fix `SignedUrlResponse` DTO — return all fields from endpoint~~
 
-### Sprint C: Missing Implementations (P1-P2)
+### Sprint C: Missing Implementations (P1-P2) ✅ Partial (PR #477)
 
-9. Implement email invite dispatch using CF SendEmail binding
-10. Fetch bookmarks from API on ReaderPage mount
-11. Unify `Locator` types between schema and store
-12. Add bookmark CRUD tests for worker
+9. Implement email invite dispatch using CF SendEmail binding — deferred (requires CF binding)
+10. Fetch bookmarks from API on ReaderPage mount — deferred
+11. ~~Unify `Locator` types between schema and store~~
+12. ~~Add bookmark CRUD tests for worker~~
 
 ### Sprint D: Features (P2+)
 
@@ -115,8 +115,8 @@ Sprint A → Sprint B → Sprint C → Sprint D
 ## 5. Success Criteria (Execute/Synthesize)
 
 - [x] All P0 security items resolved (PR #476 — 2026-06-11)
-- [ ] No source file exceeds 500 LOC
-- [ ] `SignedUrlResponse` DTO matches actual endpoint response
+- [x] No source file exceeds 500 LOC (PR #477 — 2026-06-11)
+- [x] `SignedUrlResponse` DTO matches actual endpoint response (PR #477)
 - [ ] Bookmark sync works on reader page load
 - [x] Quality gate passes with no new warnings
 - [x] ADR 077 documents the policy for phased feature delivery
