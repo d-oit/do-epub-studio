@@ -10,6 +10,9 @@ engines:
       - "**/__tests__/**"
       - "**/tests/**"
       - "scripts/**"
+      - "apps/web/src/**"
+      - "apps/worker/src/**"
+      - "packages/**"
   biome:
     enabled: false
 exclude_paths:
