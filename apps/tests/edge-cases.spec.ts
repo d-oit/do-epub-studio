@@ -23,11 +23,18 @@ test.describe('Edge Cases & Error Handling', () => {
   });
 
   test('should redirect to login when session expires (401)', async ({ page }) => {
-    // First, login successfully
+    // Mock admin login
     await page.route('**/api/admin/login', route => route.fulfill({
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify({ ok: true, data: { sessionToken: 'admin-token', email: 'admin@test.com' } }),
+    }));
+
+    // Mock initial books load so the page renders successfully
+    await page.route('**/api/admin/books', route => route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ ok: true, data: [] }),
     }));
 
     await page.goto('/admin/login');
@@ -36,7 +43,8 @@ test.describe('Edge Cases & Error Handling', () => {
     await page.getByRole('button', { name: 'Sign In' }).click();
     await expect(page).toHaveURL(/\/admin\/books/);
 
-    // Now mock a 401 for subsequent API calls to simulate session expiry
+    // Remove existing mock, then re-mock with 401 to simulate session expiry
+    await page.unroute('**/api/admin/books');
     await page.route('**/api/admin/books', route => route.fulfill({
       status: 401,
       contentType: 'application/json',

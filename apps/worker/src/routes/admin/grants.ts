@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import type { Env } from '../../lib/env';
-import { execute, queryAll } from '../../db/client';
+import { execute, queryAll, transaction } from '../../db/client';
 import { createGrant } from '../../auth/password';
 import { logAudit } from '../../audit';
 import { CreateGrantSchema, UpdateGrantSchema } from '@do-epub-studio/shared';
@@ -113,17 +113,15 @@ grantsRouter.post('/grants/:id/revoke', adminAuth, async (c) => {
   const grantId = c.req.param('id');
   const adminUser = c.get('adminUser');
 
-  await execute(c.env, `UPDATE book_access_grants SET revoked_at = datetime('now') WHERE id = ?`, [
-    grantId,
-  ]);
-
-  await execute(
-    c.env,
-    `UPDATE reader_sessions SET revoked_at = datetime('now')
+  await transaction(c.env, [
+    { sql: `UPDATE book_access_grants SET revoked_at = datetime('now') WHERE id = ?`, args: [grantId] },
+    {
+      sql: `UPDATE reader_sessions SET revoked_at = datetime('now')
      WHERE book_id = (SELECT book_id FROM book_access_grants WHERE id = ?)
      AND email = (SELECT email FROM book_access_grants WHERE id = ?)`,
-    [grantId, grantId],
-  );
+      args: [grantId, grantId],
+    },
+  ]);
 
   await logAudit(c.env, {
     entityType: 'grant',
