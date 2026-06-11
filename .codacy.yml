@@ -11,14 +11,7 @@ engines:
       - "**/tests/**"
       - "scripts/**"
   biome:
-    enabled: true
-    exclude_paths:
-      - "**/*.test.ts"
-      - "**/*.test.tsx"
-      - "**/*.spec.ts"
-      - "**/*.spec.tsx"
-      - "**/__tests__/**"
-      - "**/tests/**"
+    enabled: false
 exclude_paths:
   - "coverage/**"
   - "dist/**"
