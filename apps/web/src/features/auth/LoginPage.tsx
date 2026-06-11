@@ -116,8 +116,12 @@ export function LoginPage() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                aria-describedby="password-helper"
                 className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-500 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 text-gray-900 dark:text-white"
               />
+              <p id="password-helper" className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                {t('login.passwordHelper')}
+              </p>
             </div>
 
             <button
