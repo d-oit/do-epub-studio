@@ -16,7 +16,12 @@ const UploadCompleteSchema = z.object({
   fileSizeBytes: z.number().int().nonnegative().optional(),
   sha256: z.string().max(64).optional(),
   epubVersion: z.string().max(10).optional(),
-  validationResults: z.any().optional(),
+  validationResults: z.object({
+    isValid: z.boolean(),
+    errors: z.array(z.string()),
+    warnings: z.array(z.string()),
+    epubVersion: z.string().optional(),
+  }).optional(),
 });
 
 booksRouter.post('/', zValidator('json', CreateBookSchema), adminAuth, async (c) => {

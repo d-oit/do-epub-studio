@@ -86,19 +86,19 @@
 7. ~~Add rate-limit middleware to admin login endpoint~~ — already implemented (5 req/min per email)
 8. ~~Fix `SignedUrlResponse` DTO — return all fields from endpoint~~
 
-### Sprint C: Missing Implementations (P1-P2) ✅ Partial (PR #477)
+### Sprint C: Missing Implementations (P1-P2) ✅ Complete (PR #477 + PR #478)
 
 9. Implement email invite dispatch using CF SendEmail binding — deferred (requires CF binding)
-10. Fetch bookmarks from API on ReaderPage mount — deferred
+10. ~~Fetch bookmarks from API on ReaderPage mount~~
 11. ~~Unify `Locator` types between schema and store~~
 12. ~~Add bookmark CRUD tests for worker~~
 
-### Sprint D: Features (P2+)
+### Sprint D: Features (P2+) — Partial
 
-13. Public catalog route + page
-14. In-book full-text search (CFI-based result navigation)
-15. Reviewer activity dashboard
-16. Reading progress bar in toolbar
+13. Public catalog route + page — deferred (new route)
+14. In-book full-text search (CFI-based result navigation) — deferred (needs search index infra)
+15. Reviewer activity dashboard — deferred (new route)
+16. ~~Reading progress bar in toolbar~~
 
 ## 4. Dependencies (Coordinate)
 
@@ -117,7 +117,7 @@ Sprint A → Sprint B → Sprint C → Sprint D
 - [x] All P0 security items resolved (PR #476 — 2026-06-11)
 - [x] No source file exceeds 500 LOC (PR #477 — 2026-06-11)
 - [x] `SignedUrlResponse` DTO matches actual endpoint response (PR #477)
-- [ ] Bookmark sync works on reader page load
+- [x] Bookmark sync works on reader page load (PR #478 — 2026-06-11)
 - [x] Quality gate passes with no new warnings
 - [x] ADR 077 documents the policy for phased feature delivery
 

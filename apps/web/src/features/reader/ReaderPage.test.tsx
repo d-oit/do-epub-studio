@@ -6,7 +6,9 @@ import { useAuthStore, useReaderStore, usePreferencesStore } from '../../stores'
 
 // Mock dependencies
 vi.mock('../../lib/api', () => ({
-  apiRequest: vi.fn(() => Promise.resolve({ url: 'mock-url' })),
+  apiRequest: vi.fn((url: string) =>
+    Promise.resolve(url.includes('bookmarks') ? [] : { url: 'mock-url' }),
+  ),
 }));
 
 vi.mock('../../lib/api/annotations', () => ({

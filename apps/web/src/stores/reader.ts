@@ -90,6 +90,59 @@ interface ReaderState {
   setIsFixedLayout: (isFixedLayout: boolean) => void;
 }
 
+/**
+ * O(n) single-pass tree rebuild using a Map. Flattens the nested tree via
+ * an iterative stack, then reconstructs parent→child relationships in one pass.
+ */
+function rebuildTree(
+  comments: Comment[],
+  newComment?: Comment,
+  updateId?: string,
+  updates?: Partial<Comment>,
+): Comment[] {
+  // Flatten nested tree iteratively
+  const flat: Comment[] = [];
+  const stack: Comment[] = [...comments];
+  while (stack.length > 0) {
+    const c = stack.pop();
+    if (!c) break;
+    flat.push(c);
+    if (c.replies) {
+      for (let i = c.replies.length - 1; i >= 0; i--) {
+        stack.push(c.replies[i]);
+      }
+    }
+  }
+
+  if (newComment) flat.push(newComment);
+
+  // Single-pass: create shallow copies and index by id
+  const map = new Map<string, Comment>();
+  const roots: Comment[] = [];
+
+  for (const c of flat) {
+    const copy: Comment = c.id === updateId ? { ...c, ...updates, replies: [] } : { ...c, replies: [] };
+    map.set(copy.id, copy);
+  }
+
+  for (const c of flat) {
+    const node = map.get(c.id);
+    if (!node) continue;
+    if (!c.parentCommentId) {
+      roots.push(node);
+    } else {
+      const parent = map.get(c.parentCommentId);
+      if (parent?.replies) {
+        parent.replies.push(node);
+      } else {
+        roots.push(node);
+      }
+    }
+  }
+
+  return roots;
+}
+
 export const useReaderStore = create<ReaderState>((set) => ({
   progress: { locator: null, progressPercent: 0, updatedAt: null },
   bookmarks: [],
@@ -154,55 +207,13 @@ export const useReaderStore = create<ReaderState>((set) => ({
         return { comments: [...state.comments, comment] };
       }
 
-      const commentMap = new Map<string, Comment>();
-      const rootComments: Comment[] = [];
-
-      const processComment = (c: Comment, isRoot: boolean): Comment => {
-        const copy = { ...c, replies: c.replies ? [...c.replies] : [] };
-        commentMap.set(c.id, copy);
-        if (isRoot) {
-          rootComments.push(copy);
-        }
-        if (c.replies) {
-          copy.replies = c.replies.map((r) => processComment(r, false));
-        }
-        return copy;
-      };
-
-      state.comments.forEach((c) => processComment(c, true));
-
-      const parent = commentMap.get(comment.parentCommentId);
-      if (parent) {
-        parent.replies = [...(parent.replies || []), comment];
-      }
-
-      return { comments: rootComments };
+      const allComments = rebuildTree(state.comments, comment);
+      return { comments: allComments };
     }),
   updateComment: (id, updates) =>
     set((state) => {
-      const commentMap = new Map<string, Comment>();
-      const rootComments: Comment[] = [];
-
-      const processComment = (c: Comment, isRoot: boolean): Comment => {
-        const copy = { ...c, replies: c.replies ? [...c.replies] : [] };
-        commentMap.set(c.id, copy);
-        if (isRoot) {
-          rootComments.push(copy);
-        }
-        if (c.replies) {
-          copy.replies = c.replies.map((r) => processComment(r, false));
-        }
-        return copy;
-      };
-
-      state.comments.forEach((c) => processComment(c, true));
-
-      const target = commentMap.get(id);
-      if (target) {
-        Object.assign(target, updates);
-      }
-
-      return { comments: rootComments };
+      const allComments = rebuildTree(state.comments, undefined, id, updates);
+      return { comments: allComments };
     }),
   setComments: (comments) => set({ comments }),
   setCurrentChapter: (chapter) => set({ currentChapter: chapter }),
