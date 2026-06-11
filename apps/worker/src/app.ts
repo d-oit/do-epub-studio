@@ -7,6 +7,7 @@ import { applyRateLimit, addRateLimitHeaders } from './middleware/rate-limit';
 import {
   accessRouter,
   booksRouter,
+  catalogRouter,
   readerStateRouter,
   commentsRouter,
   filesRouter,
@@ -53,6 +54,7 @@ app.use('*', validationErrorFormatter);
 
 app.route('/api/access', accessRouter);
 app.route('/api/books', booksRouter);
+app.route('/api/catalog', catalogRouter);
 app.route('/api/books', readerStateRouter);
 app.route('/api', commentsRouter);
 app.route('/api/files', filesRouter);

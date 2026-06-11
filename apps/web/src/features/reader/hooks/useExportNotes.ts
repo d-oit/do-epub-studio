@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 import { useReaderStore } from '../../../stores';
 
 interface UseExportNotesReturn {
@@ -6,8 +7,10 @@ interface UseExportNotesReturn {
 }
 
 export function useExportNotes(): UseExportNotesReturn {
-  const highlights = useReaderStore((state) => state.highlights);
-  const comments = useReaderStore((state) => state.comments);
+  const { highlights, comments } = useReaderStore(useShallow((s) => ({
+    highlights: s.highlights,
+    comments: s.comments,
+  })));
 
   const handleExportNotes = useCallback(
     (bookTitle: string | null | undefined) => {
