@@ -1,17 +1,13 @@
 import { create } from 'zustand';
 import type { ConflictRecord, ConflictResolutionResult } from '../lib/offline/conflict-resolution';
 import { ConflictResolutionStrategy } from '../lib/offline/conflict-resolution';
+import type { AnnotationLocator } from '@do-epub-studio/shared';
 
 export type PageDirection = 'ltr' | 'rtl' | 'default';
 export type WritingMode = 'horizontal-tb' | 'vertical-rl' | 'vertical-lr';
 
-export interface Locator {
-  cfi?: string;
-  selectedText?: string;
-  chapterRef?: string;
-  elementIndex?: number;
-  charOffset?: number;
-}
+/** @deprecated Use AnnotationLocator from @do-epub-studio/shared directly */
+export type Locator = AnnotationLocator;
 
 export interface ReadingProgress {
   locator: Locator | null;

@@ -17,14 +17,8 @@ import {
   LINE_HEIGHTS,
 } from '../../../stores';
 import { useTranslation } from '../../../hooks/useTranslation';
-import { apiRequest } from '../../../lib/api';
-import { saveProgress, queueSync, getProgress, generateMutationId } from '../../../lib/offline';
-import {
-  createEpubAnnotationAdapter,
-  type AnnotationAdapter,
-  type HighlightRecord,
-  type CommentRecord,
-} from '@do-epub-studio/reader-core';
+import { createEpubAnnotationAdapter, type AnnotationAdapter, type HighlightRecord, type CommentRecord } from '@do-epub-studio/reader-core';
+import { loadProgress, createRelocatedHandler } from './useEpubProgress';
 
 interface TocItem {
   label: string;
@@ -303,117 +297,31 @@ export function useReaderEpub(
         );
 
         if (sessionToken && bookId) {
-          try {
-            let cfi: string | undefined;
-
-            if (navigator.onLine) {
-              const progressData = await apiRequest<{ locator: unknown; progressPercent: number }>(
-                `/api/books/${bookId}/progress`,
-                { method: 'GET', token: sessionToken },
-              );
-              cfi = (progressData.locator as { cfi?: string } | null)?.cfi;
-            } else {
-              const cached = await getProgress(bookId);
-              if (cached?.cfi) cfi = cached.cfi;
-            }
-
-            if (cfi) await rendition.display(cfi);
-          } catch (e) {
-            const apiError = e instanceof Error ? e : new Error(String(e));
-            logClientEvent({
-              level: 'warn',
-              event: 'reader.progress_load_api_failed',
-              traceId: createTraceId(),
-              spanId: createSpanId(),
-              error: { name: apiError.name, message: apiError.message, stack: apiError.stack },
-              metadata: { bookId },
-            });
-            try {
-              const cached = await getProgress(bookId);
-              if (cached?.cfi) await rendition.display(cached.cfi);
-            } catch (dbErr) {
-              const cacheError = dbErr instanceof Error ? dbErr : new Error(String(dbErr));
-              logClientEvent({
-                level: 'warn',
-                event: 'reader.progress_load_cache_failed',
-                traceId: createTraceId(),
-                spanId: createSpanId(),
-                error: {
-                  name: cacheError.name,
-                  message: cacheError.message,
-                  stack: cacheError.stack,
-                },
-                metadata: { bookId },
-              });
-            }
-          }
+          await loadProgress(rendition, bookId, sessionToken);
         }
 
         rendition.on(
           'relocated',
-          async (location: { start: { cfi: string; progress: number; href: string } }) => {
-            const { cfi, progress: progressPercent, href } = location.start;
-            setProgress({ locator: { cfi }, progressPercent, updatedAt: new Date().toISOString() });
-
-            const tocItem = tocRef.current.find((item) => item.href === href);
-            if (tocItem) {
-              currentChapterRef.current = tocItem.href;
-              setCurrentChapter(tocItem.href);
-            }
-
-            adapter.renderHighlights(currentChapterRef.current, highlightsRef.current);
-            adapter.renderCommentMarkers(
-              currentChapterRef.current,
-              commentsRef.current,
-              onNavigateToAnnotationRef.current,
+          (() => {
+            if (!sessionToken || !bookId) return () => { /* noop */ };
+            const renderAnnotations = () => {
+              adapter.renderHighlights(currentChapterRef.current, highlightsRef.current);
+              adapter.renderCommentMarkers(
+                currentChapterRef.current,
+                commentsRef.current,
+                onNavigateToAnnotationRef.current,
+              );
+            };
+            return createRelocatedHandler(
+              bookId,
+              sessionToken,
+              setProgress,
+              setCurrentChapter,
+              tocRef.current,
+              currentChapterRef,
+              renderAnnotations,
             );
-
-            if (sessionToken && bookId) {
-              const mutationId = generateMutationId();
-              const queueOffline = async () => {
-                await saveProgress({
-                  id: `${bookId}-progress`,
-                  bookId,
-                  cfi,
-                  percentage: progressPercent,
-                  lastRead: Date.now(),
-                  synced: false,
-                  mutationId,
-                });
-                await queueSync(
-                  'progress',
-                  { bookId, cfi, percentage: progressPercent, mutationId },
-                  mutationId,
-                );
-              };
-              if (navigator.onLine) {
-                try {
-                  await apiRequest(`/api/books/${bookId}/progress`, {
-                    method: 'PUT',
-                    token: sessionToken,
-                    body: JSON.stringify({ locator: { cfi }, progressPercent, mutationId }),
-                  });
-                } catch (e) {
-                  const saveError = e instanceof Error ? e : new Error(String(e));
-                  logClientEvent({
-                    level: 'warn',
-                    event: 'reader.progress_save_online_failed',
-                    traceId: createTraceId(),
-                    spanId: createSpanId(),
-                    error: {
-                      name: saveError.name,
-                      message: saveError.message,
-                      stack: saveError.stack,
-                    },
-                    metadata: { bookId },
-                  });
-                  await queueOffline();
-                }
-              } else {
-                await queueOffline();
-              }
-            }
-          },
+          })(),
         );
 
         rendition.on('displayed', () => {
