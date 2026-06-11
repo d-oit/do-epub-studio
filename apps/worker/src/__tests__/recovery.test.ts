@@ -55,8 +55,8 @@ describe('Access Recovery Routes', () => {
         headers: { 'Content-Type': 'application/json' }
       }), env, makePassThroughContext() as unknown as ExecutionContext);
 
-      expect(res.status).toBe(200);
       const body = await res.json() as any;
+      expect(res.status).toBe(200);
       expect(body.ok).toBe(true);
       // Audit log check would happen here if we had a spy on logAudit
     });
@@ -82,7 +82,8 @@ describe('Access Recovery Routes', () => {
         bookSlug: 'test-book',
         exp: Math.floor(Date.now() / 1000) + 3600,
       };
-      const token = await sign(payload, env.INVITE_TOKEN_SECRET);
+      // Use the same secret that the worker will use in the test environment
+      const token = await sign(payload, env.INVITE_TOKEN_SECRET, 'HS256');
 
       mockValidateGrant.mockResolvedValue({
         valid: true,
@@ -119,9 +120,6 @@ describe('Access Recovery Routes', () => {
       }), env, makePassThroughContext() as unknown as ExecutionContext);
 
       const body = await res.json() as any;
-      if (res.status !== 200) {
-        console.log('Error body verify:', JSON.stringify(body));
-      }
       expect(res.status).toBe(200);
       expect(body.ok).toBe(true);
       expect(body.data.sessionToken).toBe('new-session-token');

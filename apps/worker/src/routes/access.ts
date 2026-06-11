@@ -1,12 +1,13 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import type { Env } from '../lib/env';
-import { validateGrant, computeCapabilities } from '../auth/password';
-import { createSession } from '../auth/session';
+import { validateGrant, computeCapabilities, getGrantByBookAndSession, getGrantsBySession } from '../auth/password';
+import { createSession, validateSession, revokeSession } from '../auth/session';
 import { logAudit } from '../audit';
 import { AccessRequestSchema, RecoveryRequestSchema, RecoveryVerifySchema } from '@do-epub-studio/shared';
 import { sign, verify } from 'hono/jwt';
 import { checkRateLimitDO } from '../lib/rate-limit-client';
+import { queryFirst } from '../db/client';
 import { z } from 'zod';
 
 export const accessRouter = new Hono<{ Bindings: Env }>();
@@ -30,9 +31,6 @@ accessRouter.post('/recovery-request', zValidator('json', RecoveryRequestSchema)
     );
   }
 
-  const { getGrantByBookAndSession } = await import('../auth/password');
-  const { queryFirst } = await import('../db/client');
-
   const book = await queryFirst<{ id: string; slug: string }>(
     c.env,
     'SELECT id, slug FROM books WHERE slug = ?',
@@ -49,7 +47,7 @@ accessRouter.post('/recovery-request', zValidator('json', RecoveryRequestSchema)
         bookSlug,
         exp: Math.floor(Date.now() / 1000) + 3600, // 1 hour
       };
-      const token = await sign(payload, c.env.INVITE_TOKEN_SECRET);
+      const token = await sign(payload, c.env.INVITE_TOKEN_SECRET, 'HS256');
 
       // In a real app, this would send an email. For now, we log it to audit.
       const recoveryUrl = `${c.env.APP_BASE_URL}/login?book=${bookSlug}&token=${token}`;
@@ -72,7 +70,7 @@ accessRouter.post('/verify-recovery', zValidator('json', RecoveryVerifySchema), 
   const { token } = c.req.valid('json');
 
   try {
-    const payload = await verify(token, c.env.INVITE_TOKEN_SECRET) as { email: string, bookSlug: string };
+    const payload = await verify(token, c.env.INVITE_TOKEN_SECRET, 'HS256') as { email: string, bookSlug: string };
 
     const result = await validateGrant(c.env, payload.bookSlug, payload.email);
 
@@ -111,8 +109,7 @@ accessRouter.post('/verify-recovery', zValidator('json', RecoveryVerifySchema), 
         capabilities: computeCapabilities(result.grant),
       },
     });
-  } catch (err) {
-    console.error('JWT Verification Error:', err);
+  } catch {
     return c.json(
       {
         ok: false,
@@ -193,7 +190,6 @@ accessRouter.post('/logout', async (c) => {
   const authHeader = c.req.header('Authorization');
   const token = authHeader?.replace('Bearer ', '') ?? '';
 
-  const { revokeSession } = await import('../auth/session');
   await revokeSession(c.env, token);
 
   return c.json({ ok: true });
@@ -202,9 +198,6 @@ accessRouter.post('/logout', async (c) => {
 accessRouter.post('/refresh', async (c) => {
   const authHeader = c.req.header('Authorization');
   const token = authHeader?.replace('Bearer ', '') ?? '';
-
-  const { validateSession, createSession, revokeSession } = await import('../auth/session');
-  const { getGrantByBookAndSession } = await import('../auth/password');
 
   const result = await validateSession(c.env, token);
 
@@ -261,9 +254,6 @@ accessRouter.get('/validate', zValidator('query', ValidateQuerySchema), async (c
   const authHeader = c.req.header('Authorization');
   const token = authHeader?.replace('Bearer ', '') ?? '';
 
-  const { validateSession } = await import('../auth/session');
-  const { getGrantByBookAndSession } = await import('../auth/password');
-
   const sessionResult = await validateSession(c.env, token);
 
   if (!sessionResult.valid || !sessionResult.session) {
@@ -304,9 +294,6 @@ accessRouter.get('/validate', zValidator('query', ValidateQuerySchema), async (c
 accessRouter.get('/validate-all', async (c) => {
   const authHeader = c.req.header('Authorization');
   const token = authHeader?.replace('Bearer ', '') ?? '';
-
-  const { validateSession } = await import('../auth/session');
-  const { getGrantsBySession } = await import('../auth/password');
 
   const sessionResult = await validateSession(c.env, token);
 

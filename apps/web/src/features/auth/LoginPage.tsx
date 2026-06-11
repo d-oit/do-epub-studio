@@ -6,6 +6,22 @@ import { useAuthStore } from '../../stores/auth';
 import { LocaleSwitcher } from '../../components/LocaleSwitcher';
 import { Button, Input } from '../../components/ui';
 
+interface SessionCapabilities {
+  canRead: boolean;
+  canComment: boolean;
+  canHighlight: boolean;
+  canBookmark: boolean;
+  canDownloadOffline: boolean;
+  canExportNotes: boolean;
+  canManageAccess: boolean;
+}
+
+interface SessionResponse {
+  sessionToken: string;
+  book: { id: string; slug: string; title: string; authorName: string };
+  capabilities: SessionCapabilities | null;
+}
+
 export function LoginPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -22,21 +38,11 @@ export function LoginPage() {
   const bookSlug = searchParams.get('book') || '';
   const recoveryToken = searchParams.get('token');
 
-  useEffect(() => {
-    if (recoveryToken) {
-      void handleVerifyRecovery(recoveryToken);
-    }
-  }, [recoveryToken]);
-
-  const handleVerifyRecovery = async (token: string) => {
+  const handleVerifyRecovery = React.useCallback(async (token: string) => {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await apiRequest<{
-        sessionToken: string;
-        book: { id: string; slug: string; title: string; authorName: string };
-        capabilities: any;
-      }>(
+      const data = await apiRequest<SessionResponse>(
         '/api/access/verify-recovery',
         {
           method: 'POST',
@@ -58,7 +64,13 @@ export function LoginPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [navigate, setAuth]);
+
+  useEffect(() => {
+    if (recoveryToken) {
+      void handleVerifyRecovery(recoveryToken);
+    }
+  }, [recoveryToken, handleVerifyRecovery]);
 
   const handleRecoveryRequest = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,19 +99,7 @@ export function LoginPage() {
     setError(null);
 
     try {
-      const data = await apiRequest<{
-        sessionToken: string;
-        book: { id: string; slug: string; title: string; authorName: string };
-        capabilities: {
-          canRead: boolean;
-          canComment: boolean;
-          canHighlight: boolean;
-          canBookmark: boolean;
-          canDownloadOffline: boolean;
-          canExportNotes: boolean;
-          canManageAccess: boolean;
-        } | null;
-      }>(
+      const data = await apiRequest<SessionResponse>(
         '/api/access/request',
         {
           method: 'POST',
