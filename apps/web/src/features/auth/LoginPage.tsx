@@ -4,6 +4,7 @@ import { useTranslation } from '../../hooks/useTranslation';
 import { apiRequest } from '../../lib/api';
 import { useAuthStore } from '../../stores/auth';
 import { LocaleSwitcher } from '../../components/LocaleSwitcher';
+import { Button } from '../../components/ui';
 
 export function LoginPage() {
   const { t } = useTranslation();
@@ -133,13 +134,18 @@ export function LoginPage() {
           </div>
         </form>
 
-        <div className="mt-6 text-center">
-          <button
+        <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-700 text-center space-y-3">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            {t('login.adminDescription')}
+          </p>
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => void navigate('/admin/login')}
-            className="text-xs text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
+            className="underline decoration-primary-500/30 hover:decoration-primary-500 focus-visible:ring-2 focus-visible:ring-primary-500"
           >
-            {t('admin.login.backToReader')}
-          </button>
+            {t('login.adminLink')}
+          </Button>
         </div>
       </main>
     </div>
