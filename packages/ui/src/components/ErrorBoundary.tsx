@@ -1,6 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { createTraceId } from '../../../shared/src';
+import { createTraceId } from '@do-epub-studio/shared';
 import { Button } from '../button';
 import { Card } from '../card';
 import { PageContainer } from '../page-container';
