@@ -54,6 +54,6 @@ Their corresponding files/features are verified present in the current codebase.
 
 ## 4. Execution Status
 
-- [ ] Batch-close issues #442, #445–#449, #451–#452
-- [ ] Verify each closed issue references the implementing commit
+- [x] Batch-close issues #442, #445–#449, #451–#452 — already closed
+- [x] Verify each closed issue references the implementing commit
 - [x] Confirm #473 tracked by plan 074 — fix in PR #476
