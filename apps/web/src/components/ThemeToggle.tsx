@@ -1,4 +1,3 @@
-import React from 'react';
 import { usePreferencesStore } from '../stores/preferences';
 import { useTranslation } from '../hooks/useTranslation';
 import { IconButton } from './ui';
