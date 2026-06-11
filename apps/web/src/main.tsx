@@ -12,8 +12,9 @@ import { registerSW } from 'virtual:pwa-register';
 import { useSwUpdateStore } from './stores/sw-update';
 import { useTranslation } from './hooks/useTranslation';
 import type { ErrorInfo } from 'react';
+import type { TranslationKeys } from './i18n';
 
-export const Root = () => {
+export const Root: React.FC = () => {
   const { t } = useTranslation();
 
   return (
@@ -31,10 +32,10 @@ export const Root = () => {
             });
           }}
           translations={{
-            heading: t('errors.boundary.title' as any),
-            description: t('errors.boundary.description' as any),
+            heading: t('errors.boundary.title' as TranslationKeys),
+            description: t('errors.boundary.description' as TranslationKeys),
             retry: t('common.retry'),
-            home: t('errors.boundary.home' as any),
+            home: t('errors.boundary.home' as TranslationKeys),
           }}
         >
           <BrowserRouter>
@@ -49,7 +50,7 @@ export const Root = () => {
   );
 };
 
-export const GlobalHandlers = () => {
+export const GlobalHandlers: React.FC = () => {
   const { t } = useTranslation();
   const { addToast } = useToast();
 
@@ -75,7 +76,7 @@ export const GlobalHandlers = () => {
         event.preventDefault();
       }
 
-      addToast('error', t('errors.generic' as any));
+      addToast('error', t('errors.generic' as TranslationKeys));
     };
 
     const handleRejection = (event: PromiseRejectionEvent) => {
@@ -94,7 +95,7 @@ export const GlobalHandlers = () => {
         event.preventDefault();
       }
 
-      addToast('error', t('errors.generic' as any));
+      addToast('error', t('errors.generic' as TranslationKeys));
     };
 
     window.addEventListener('error', handleError);

@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { PageContainer, Button } from '@do-epub-studio/ui';
 import { useTranslation } from '../../hooks/useTranslation';
+import type { TranslationKeys } from '../../i18n';
 
 export function ErrorPage() {
   const { t } = useTranslation();
@@ -31,7 +32,7 @@ export function ErrorPage() {
           {t('common.error.generic')}
         </h1>
         <p className="text-gray-500 dark:text-gray-400 mb-8">
-          {t('errors.generic_description' as any)}
+          {t('errors.generic_description' as TranslationKeys)}
         </p>
 
         <div className="flex flex-col gap-3">
@@ -45,7 +46,7 @@ export function ErrorPage() {
             to="/"
             className="inline-flex items-center justify-center gap-2 px-6 py-2.5 text-gray-600 dark:text-gray-400 font-medium hover:underline"
           >
-            {t('errors.boundary.home' as any)}
+            {t('errors.boundary.home' as TranslationKeys)}
           </Link>
         </div>
       </main>

@@ -1,41 +1,42 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { ToastProvider, toast } from '../toast';
+import { ToastProvider, useToast } from '../components/ToastStack';
+
+const ToastTrigger = ({ message = 'Test Toast', type = 'info' as any }) => {
+  const { addToast } = useToast();
+  return <button onClick={() => addToast(type, message)}>Show toast</button>;
+};
 
 describe('Toast', () => {
   it('renders toast via provider', () => {
-    function TestConsumer() {
-      return (
-        <button onClick={() => toast('success', 'Saved!')}>Show toast</button>
-      );
-    }
     render(
       <ToastProvider>
-        <TestConsumer />
+        <ToastTrigger message="Saved!" type="success" />
       </ToastProvider>,
     );
     fireEvent.click(screen.getByText('Show toast'));
-    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
-  });
-
-  it('exports toast function that warns when not initialized', () => {
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    toast('info', 'no provider');
-    expect(warn).toHaveBeenCalledWith('Toast not initialized - wrap app in ToastProvider');
-    warn.mockRestore();
+    expect(screen.getByText('Saved!')).toBeInTheDocument();
   });
 
   it('renders success toast variant', () => {
-    function TestConsumer() {
-      return (
-        <button onClick={() => toast('success', 'Done!')}>trigger</button>
-      );
-    }
     render(
       <ToastProvider>
-        <TestConsumer />
+        <ToastTrigger message="Done!" type="success" />
       </ToastProvider>,
     );
-    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByText('Show toast'));
+    const toast = screen.getByRole('status');
+    expect(toast).toHaveClass('bg-green-50');
+  });
+
+  it('renders error toast variant with alert role', () => {
+    render(
+      <ToastProvider>
+        <ToastTrigger message="Error!" type="error" />
+      </ToastProvider>,
+    );
+    fireEvent.click(screen.getByText('Show toast'));
+    const toast = screen.getByRole('alert');
+    expect(toast).toHaveClass('bg-red-50');
   });
 });

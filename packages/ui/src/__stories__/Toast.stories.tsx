@@ -1,6 +1,5 @@
 import type { Meta } from '@storybook/react';
-import { ToastProvider } from '../toast';
-import { useToast } from '../toast';
+import { ToastProvider, useToast } from '../components/ToastStack';
 import { Button } from '../button';
 
 const meta = {
