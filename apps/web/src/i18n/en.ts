@@ -21,6 +21,8 @@ export const en = {
   'reader.exportNotes': 'Export Notes',
   'reader.noChapters': 'No chapters available',
   'reader.loading': 'EPUB reader loading...',
+  'theme.toggle.dark': 'Switch to dark mode',
+  'theme.toggle.light': 'Switch to light mode',
   'reader.notAvailable': 'Book not available',
   'reader.loadError': 'Failed to load book',
   'reader.settings': 'Settings',

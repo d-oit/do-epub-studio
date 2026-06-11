@@ -250,7 +250,6 @@ export function ReaderPage() {
     <div
       ref={rootRef}
       className="min-h-screen bg-background text-foreground"
-      data-theme={resolvedTheme}
     >
       <ReaderToolbar
         bookTitle={bookTitle}
