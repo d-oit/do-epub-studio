@@ -113,6 +113,11 @@ booksRouter.post('/:id/file-url', readerAuth, async (c) => {
 
   return c.json({
     ok: true,
-    data: { url: signedResponse.url },
+    data: {
+      url: signedResponse.url,
+      expiresAt: signedResponse.expiresAt,
+      fileSize: signedResponse.fileSize,
+      mimeType: signedResponse.mimeType,
+    },
   });
 });

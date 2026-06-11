@@ -34,4 +34,5 @@ export type {
   CommentUpdate,
   CspReport,
   AuditQuery,
+  AnnotationLocator,
 } from '@do-epub-studio/schema';
