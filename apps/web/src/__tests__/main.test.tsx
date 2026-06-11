@@ -25,6 +25,31 @@ vi.mock('framer-motion', () => ({
   MotionConfig: ({ children }: { children: React.ReactNode }) => children,
 }));
 
+vi.mock('@do-epub-studio/ui', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@do-epub-studio/ui')>();
+  return {
+    ...actual,
+    ToastProvider: ({ children }: { children: React.ReactNode }) => children,
+    useToast: () => ({
+      addToast: vi.fn(),
+      removeToast: vi.fn(),
+      toasts: [],
+    }),
+  };
+});
+
+vi.mock('../hooks/useTranslation', () => ({
+  useTranslation: () => ({
+    t: (key: string) => key,
+    locale: 'en',
+    setLocale: vi.fn(),
+  }),
+}));
+
+vi.mock('../components/ErrorBoundary', () => ({
+  ErrorBoundary: ({ children }: { children: React.ReactNode }) => children,
+}));
+
 vi.mock('../stores/sw-update', () => ({
   useSwUpdateStore: Object.assign(
     (selector: (s: Record<string, unknown>) => unknown) => {

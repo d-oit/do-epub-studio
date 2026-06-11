@@ -7,6 +7,13 @@ import { Button, Card } from './ui';
 interface ErrorBoundaryProps {
   children: ReactNode;
   fallback?: ReactNode;
+  onCatch?: (error: Error, errorInfo: ErrorInfo, traceId: string) => void;
+  translations?: {
+    heading?: string;
+    description?: string;
+    retry?: string;
+    home?: string;
+  };
 }
 
 interface ErrorBoundaryState {
@@ -36,6 +43,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       error: { name: error.name, message: error.message, stack: error.stack },
       metadata: { componentStack: errorInfo.componentStack },
     });
+    this.props.onCatch?.(error, errorInfo, traceId);
   }
 
   public handleRetry = (): void => {
@@ -71,10 +79,10 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
                 <div className="space-y-2">
                   <h1 className="text-xl font-bold text-foreground">
-                    Something went wrong
+                    {this.props.translations?.heading ?? 'Something went wrong'}
                   </h1>
                   <p className="text-sm text-foreground-muted leading-relaxed">
-                    An unexpected error occurred. You can try to reload the component or contact support with the ID below.
+                    {this.props.translations?.description ?? 'An unexpected error occurred. You can try to reload the component or contact support with the ID below.'}
                   </p>
                 </div>
 
@@ -89,7 +97,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                     disabled={this.state.isRetrying}
                     className="w-full"
                   >
-                    {this.state.isRetrying ? 'Retrying...' : 'Try Again'}
+                    {this.state.isRetrying ? 'Retrying...' : (this.props.translations?.retry ?? 'Try Again')}
                   </Button>
                   <Button
                     variant="ghost"
@@ -97,7 +105,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                     onClick={() => window.location.reload()}
                     className="text-foreground-muted"
                   >
-                    Reload Page
+                    {this.props.translations?.home ?? 'Reload Page'}
                   </Button>
                 </div>
               </Card>
