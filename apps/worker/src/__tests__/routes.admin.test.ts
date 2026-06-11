@@ -6,6 +6,7 @@ import {
   mockQueryAll,
   mockQueryFirst,
   mockExecute,
+  mockTransaction,
   mockCreateGrant,
   mockCreateAdminSession,
   mockRevokeAdminSession,
@@ -229,7 +230,7 @@ describe('Admin Routes', () => {
         context: { userId: 'admin-1', email: 'admin@example.com', globalRole: 'admin' },
       } as any);
 
-      mockExecute.mockResolvedValue({} as any);
+      mockTransaction.mockResolvedValue(undefined);
 
       const res = await app.fetch(new Request('http://localhost/api/admin/grants/grant-1/revoke', {
         method: 'POST',

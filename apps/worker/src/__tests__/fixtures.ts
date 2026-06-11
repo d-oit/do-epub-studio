@@ -11,6 +11,7 @@ vi.mock('../db/client', () => ({
   queryFirst: vi.fn(),
   queryAll: vi.fn(),
   execute: vi.fn(),
+  transaction: vi.fn(),
 }));
 
 vi.mock('../auth/middleware', async (importOriginal) => {
@@ -70,7 +71,7 @@ vi.mock('../audit', () => ({
 // Import mocked modules for reference
 // ---------------------------------------------------------------------------
 
-import { queryFirst, queryAll, execute } from '../db/client';
+import { queryFirst, queryAll, execute, transaction } from '../db/client';
 import { requireAuth } from '../auth/middleware';
 import { requireAdminAuth, createAdminSession, revokeAdminSession } from '../auth/admin-middleware';
 import {
@@ -100,6 +101,7 @@ import { logAudit, sanitizeAuditPayload } from '../audit';
 export const mockQueryFirst = queryFirst as Mock;
 export const mockQueryAll = queryAll as Mock;
 export const mockExecute = execute as Mock;
+export const mockTransaction = transaction as Mock;
 export const mockRequireAuth = requireAuth as Mock;
 export const mockRequireAdminAuth = requireAdminAuth as Mock;
 export const mockCreateAdminSession = createAdminSession as Mock;

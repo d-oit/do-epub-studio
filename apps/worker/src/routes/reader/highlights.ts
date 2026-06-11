@@ -129,12 +129,13 @@ highlightsRouter.delete('/:bookId/highlights/:highlightId', readerAuth, async (c
 const HighlightUpdateSchema = HighlightCreateSchema.pick({ note: true, color: true }).partial();
 
 highlightsRouter.patch('/:bookId/highlights/:highlightId', zValidator('json', HighlightUpdateSchema), readerAuth, async (c) => {
-  const { highlightId } = c.req.param();
+  const { bookId, highlightId } = c.req.param();
   const auth = c.get('auth');
   const body = c.req.valid('json');
 
-  const highlight = await queryFirst<HighlightRow>(c.env, `SELECT * FROM highlights WHERE id = ?`, [
+  const highlight = await queryFirst<HighlightRow>(c.env, `SELECT * FROM highlights WHERE id = ? AND book_id = ?`, [
     highlightId,
+    bookId,
   ]);
 
   if (!highlight) {
