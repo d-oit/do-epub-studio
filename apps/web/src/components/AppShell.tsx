@@ -1,20 +1,22 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState, useCallback } from 'react';
+import { useNavigate, Outlet } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '../stores/auth';
-import { Skeleton } from './ui';
+import { useTranslation } from '../hooks/useTranslation';
+import { AppLogo } from './ui';
+import { BottomTabBar, Sidebar, Drawer } from './navigation';
 
-export const AppShell: React.FC = () => {
+export function AppShell() {
   const navigate = useNavigate();
   const { isAuthenticated, bookSlug, isAdmin } = useAuthStore();
   const [isResolving, setIsResolving] = useState(true);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const { t } = useTranslation();
 
   useEffect(() => {
-    // Simulate a brief moment to resolve auth state / hydrate store
     const timer = setTimeout(() => {
       setIsResolving(false);
     }, 1200);
-
     return () => clearTimeout(timer);
   }, []);
 
@@ -35,10 +37,12 @@ export const AppShell: React.FC = () => {
     }
   }, [isResolving, isAuthenticated, bookSlug, isAdmin, navigate]);
 
-  return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
-      <AnimatePresence mode="wait">
-        {isResolving && (
+  const toggleDrawer = useCallback(() => { setDrawerOpen((prev) => !prev); }, []);
+
+  if (isResolving) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
+        <AnimatePresence mode="wait">
           <motion.div
             key="app-shell-loading"
             initial={{ opacity: 0, scale: 0.9 }}
@@ -50,28 +54,11 @@ export const AppShell: React.FC = () => {
             aria-live="polite"
             aria-label="Loading application"
           >
-            {/* Branded Logo Placeholder */}
-            <div className="w-20 h-20 rounded-2xl bg-accent flex items-center justify-center shadow-glass-lg animate-pulse" aria-hidden="true">
-              <svg
-                className="w-12 h-12 text-white"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-                />
-              </svg>
-            </div>
-
+            <AppLogo size={64} className="text-accent animate-pulse" />
             <div className="space-y-4 w-full">
-              <Skeleton className="h-8 w-3/4 mx-auto rounded-lg" />
-              <Skeleton className="h-4 w-1/2 mx-auto rounded-md" />
+              <div className="h-8 w-3/4 mx-auto rounded-lg skeleton" />
+              <div className="h-4 w-1/2 mx-auto rounded-md skeleton" />
             </div>
-
             <div className="flex gap-2 mt-4" aria-hidden="true">
               <motion.div
                 animate={{ scale: [1, 1.2, 1] }}
@@ -90,8 +77,43 @@ export const AppShell: React.FC = () => {
               />
             </div>
           </motion.div>
-        )}
-      </AnimatePresence>
+        </AnimatePresence>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex h-screen overflow-hidden bg-background">
+      <Sidebar />
+      <Drawer isOpen={drawerOpen} onClose={() => { setDrawerOpen(false); }} />
+      <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+        {/* Mobile top bar */}
+        <header className="flex items-center justify-between px-4 h-14 bg-background-secondary border-b border-border lg:hidden shrink-0">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={toggleDrawer}
+              className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-foreground-muted hover:text-foreground hover:bg-background-tertiary transition-colors"
+              aria-label={t('a11y.menu_open')}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+            <AppLogo size={24} className="text-accent" />
+            <span className="font-semibold text-foreground text-sm">do EPUB Studio</span>
+          </div>
+        </header>
+        {/* Main scrollable area */}
+        <main
+          id="main-content"
+          tabIndex={-1}
+          className="flex-1 overflow-y-auto overscroll-behavior-contain p-4 pb-20 lg:p-6"
+        >
+          <Outlet />
+        </main>
+      </div>
+      <BottomTabBar />
     </div>
   );
-};
+}

@@ -9,6 +9,7 @@ export {
   PageContainer,
   Header,
   IconButton,
+  AppLogo,
   fadeVariants,
   slideUpVariants,
   slideDownVariants,
@@ -28,4 +29,5 @@ export type {
   PageContainerProps,
   HeaderProps,
   IconButtonProps,
+  AppLogoProps,
 } from '@do-epub-studio/ui';
