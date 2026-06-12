@@ -1,8 +1,8 @@
 # GOAP Plan #085: Codebase State Analysis — 2026-06-12
 
 **Date:** 2026-06-12
-**Status:** 🔍 ANALYSIS
-**Branch:** `fix/pr499-codacy` (diverged from remote; main has PR #507 merged)
+**Status:** ✅ COMPLETE
+**Branch:** `feat/resolve-open-issues-484-497` → PR #508 (CI green)
 
 ---
 
@@ -75,11 +75,11 @@
 
 ## Recommended Next Actions
 
-### Immediate (merge existing work)
-1. Create feature branch from latest `origin/main`
-2. Cherry-pick or rebase the 12-issue implementations
-3. Run full quality gate (`./scripts/quality_gate.sh`)
-4. Open PR to merge all open-issue resolutions
+### Immediate (merge existing work) — ✅ DONE
+1. ~~Create feature branch from latest `origin/main`~~
+2. ~~Cherry-pick or rebase the 12-issue implementations~~
+3. ~~Run full quality gate~~
+4. ~~Open PR to merge all open-issue resolutions~~ → PR #508
 5. Close issues #484–#497 after merge
 
 ### Short-term (P0/P1 gaps)
@@ -101,8 +101,10 @@
 ## Quality Gates Verified
 - [x] `pnpm run lint` — passes on working tree
 - [x] `pnpm run typecheck` — passes on working tree
-- [x] `pnpm run test:unit` — 265 tests pass
+- [x] `pnpm run test:unit` — 427 tests pass (web: 265, worker: 134, ui: 28)
 - [x] No failed CI on main
+- [x] PR #508 GitHub Actions: 17/17 pass (Lint, Typecheck, Unit Tests, E2E, Build, CodeQL, Lighthouse, Benchmark)
+- [x] Codacy reduced from 15 → 10 issues (remaining: intentional CSP unsafe-inline + advisory)
 
 ---
 
@@ -111,3 +113,4 @@
 - ADR-084: Resolution decisions for #484–#497
 - Plan #082: Modern UI design overhaul
 - ADR-063: Accessibility design tokens
+- PR #508: https://github.com/d-oit/do-epub-studio/pull/508
