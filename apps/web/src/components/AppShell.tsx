@@ -52,7 +52,7 @@ export function AppShell() {
             className="flex flex-col items-center gap-8 w-full max-w-md"
             role="status"
             aria-live="polite"
-            aria-label="Loading application"
+            aria-label={t('a11y.loading_app')}
           >
             <AppLogo size={64} className="text-accent animate-pulse" />
             <div className="space-y-4 w-full">

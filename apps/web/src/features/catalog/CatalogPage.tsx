@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { apiRequest } from '../../lib/api';
+import { useTranslation } from '../../hooks/useTranslation';
 
 interface CatalogBook {
   id: string;
@@ -14,6 +15,7 @@ interface CatalogBook {
 }
 
 export function CatalogPage() {
+  const { t } = useTranslation();
   const [books, setBooks] = useState<CatalogBook[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -41,8 +43,8 @@ export function CatalogPage() {
     >
       <div className="max-w-5xl mx-auto">
         <header className="mb-10 text-center">
-          <h1 className="text-3xl font-bold tracking-tight">Book Catalog</h1>
-          <p className="mt-2 text-foreground-muted">Browse publicly available books</p>
+          <h1 className="text-3xl font-bold tracking-tight">{t('catalog.title')}</h1>
+          <p className="mt-2 text-foreground-muted">{t('catalog.subtitle')}</p>
         </header>
 
         {isLoading && (
@@ -58,7 +60,7 @@ export function CatalogPage() {
         )}
 
         {!isLoading && !error && books.length === 0 && (
-          <p className="text-center text-foreground-muted">No public books available yet.</p>
+          <p className="text-center text-foreground-muted">{t('catalog.empty')}</p>
         )}
 
         {!isLoading && books.length > 0 && (
@@ -74,7 +76,7 @@ export function CatalogPage() {
                       <source srcSet={book.coverImageUrl} />
                       <img
                         src={book.coverImageUrl}
-                        alt={`Cover of ${book.title}`}
+                        alt={t('catalog.coverAlt').replace('{title}', book.title)}
                         width={320}
                         height={160}
                         className="w-full h-40 object-cover rounded-lg mb-4"

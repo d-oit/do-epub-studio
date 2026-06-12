@@ -195,6 +195,8 @@ export function ReaderPage() {
       return;
     }
     const controller = new AbortController();
+    let aborted = false;
+    setIsLoading(true);
     const fetch = async () => {
       try {
         const data = await apiRequest<{ url: string }>(`/api/books/${bookSlug}/file-url`, {
@@ -208,11 +210,16 @@ export function ReaderPage() {
         if (!controller.signal.aborted)
           setError((err as Error).message || t('reader.notAvailable'));
       } finally {
-        setIsLoading(false);
+        if (!aborted) {
+          setIsLoading(false);
+        }
       }
     };
     void fetch();
-    return () => controller.abort();
+    return () => {
+      aborted = true;
+      controller.abort();
+    };
   }, [sessionToken, bookSlug, navigate, setError, t]);
 
   const handleLogout = async () => {

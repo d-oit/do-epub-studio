@@ -35,9 +35,9 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       primary:
         'bg-accent text-white hover:bg-accent/90 active:scale-[0.98] focus-visible:ring-accent disabled:bg-accent/50',
       secondary:
-        'bg-background-secondary text-foreground border border-border hover:bg-background-tertiary active:scale-[0.98] focus-visible:ring-accent',
+        'bg-background-secondary text-primary-800 border border-border hover:bg-background-tertiary active:scale-[0.98] focus-visible:ring-accent dark:hover:bg-background-tertiary',
       ghost:
-        'text-foreground/70 hover:text-foreground hover:bg-background-secondary active:scale-[0.98] focus-visible:ring-accent',
+        'text-primary-800 hover:text-primary-800 hover:bg-background-secondary active:scale-[0.98] focus-visible:ring-accent dark:hover:bg-background-tertiary',
       danger:
         'bg-accent-error text-white hover:bg-accent-error/90 active:scale-[0.98] focus-visible:ring-accent-error disabled:bg-accent-error/50',
     };

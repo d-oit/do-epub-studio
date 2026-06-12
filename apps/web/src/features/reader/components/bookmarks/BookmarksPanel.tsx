@@ -1,5 +1,6 @@
 import { useRef, useEffect } from 'react';
 import { useFocusTrap } from '@do-epub-studio/ui';
+import { useTranslation } from '../../../../hooks/useTranslation';
 import type { Bookmark } from '../../../../stores';
 
 interface BookmarksPanelProps {
@@ -19,6 +20,7 @@ export function BookmarksPanel({
   onDeleteBookmark,
   onNavigate,
 }: BookmarksPanelProps) {
+  const { t } = useTranslation();
   const panelRef = useRef<HTMLElement>(null);
   useFocusTrap(isOpen, panelRef);
 
@@ -48,7 +50,7 @@ export function BookmarksPanel({
             onClick={onAddBookmark}
             className="p-1 hover:bg-background-secondary rounded"
             title="Add bookmark at current position"
-            aria-label="Add bookmark"
+            aria-label={t('a11y.add_bookmark')}
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -98,7 +100,7 @@ export function BookmarksPanel({
                   <button
                     onClick={() => onDeleteBookmark(bookmark.id)}
                     className="p-1 text-foreground-muted hover:text-accent-error transition-colors"
-                    aria-label="Delete bookmark"
+                    aria-label={t('a11y.delete_bookmark')}
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path

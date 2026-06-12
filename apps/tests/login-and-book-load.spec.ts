@@ -115,6 +115,7 @@ async function mockApiRoutes(page: Page) {
  * Book slug is passed via URL param, not a form field.
  */
 async function login(page: Page) {
+  await page.goto(`/login?book=${TEST_USER.bookSlug}`);
   await page.getByLabel('Email Address').fill(TEST_USER.email);
   await page.getByLabel('Password').fill(TEST_USER.password);
   await page.getByRole('button', { name: 'Sign In', exact: true }).click();
@@ -147,10 +148,7 @@ test.describe('Login and book load (desktop)', () => {
   });
 
   test('@smoke logs in and navigates to the reader', async ({ page }) => {
-    await page.goto(`/login?book=${TEST_USER.bookSlug}`);
     await login(page);
-
-
 
     // Should redirect to /read/:bookSlug after successful login
     await expect(page).toHaveURL(/\/read\/my-test-book/, { timeout: 15000 });
@@ -165,9 +163,17 @@ test.describe('Login and book load (desktop)', () => {
   });
 
   test('shows loading spinner while book URL is being fetched', async ({ page }) => {
-    // Slow down the file-url response to make loading state visible
+    let resolveFileUrlRequestStarted: () => void;
+    const fileUrlRequestStarted = new Promise<void>((resolve) => {
+      resolveFileUrlRequestStarted = resolve;
+    });
+    const fileUrlResponse = page.waitForResponse((response) =>
+      response.url().includes('/api/books/my-test-book/file-url'),
+    );
+
     await page.route('**/api/books/*/file-url', async (route: Route) => {
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      resolveFileUrlRequestStarted();
+      await new Promise((resolve) => setTimeout(resolve, 5000));
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -175,18 +181,16 @@ test.describe('Login and book load (desktop)', () => {
       });
     });
 
-    await page.goto(`/login`);
     await login(page);
 
-
-
-    // After navigation, the loading spinner should appear briefly
-    const spinner = page.locator('div.animate-spin');
-    await expect(spinner).toBeVisible({ timeout: 60000_000 });
+    await expect(page).toHaveURL(/\/read\/my-test-book$/);
+    await expect(page.getByRole('button', { name: 'Contents' })).toBeVisible({ timeout: 15000 });
+    await fileUrlRequestStarted;
+    await expect(page.locator('div.animate-spin')).toBeVisible({ timeout: 5000 });
+    await fileUrlResponse;
   });
 
   test('opens the table of contents sidebar', async ({ page }) => {
-    await page.goto(`/login`);
     await login(page);
 
 
@@ -200,7 +204,6 @@ test.describe('Login and book load (desktop)', () => {
   });
 
   test('opens the settings panel', async ({ page }) => {
-    await page.goto(`/login`);
     await login(page);
 
 
@@ -257,7 +260,6 @@ test.describe('Login and book load (mobile)', () => {
   });
 
   test('@mobile reader header fits on mobile', async ({ page }) => {
-    await page.goto(`/login`);
     await login(page);
 
 
@@ -268,15 +270,14 @@ test.describe('Login and book load (mobile)', () => {
     await expect(header).toBeVisible();
 
     // Sign Out button must be accessible
+    await page.getByRole('button', { name: 'More options' }).click();
     await expect(page.getByRole('button', { name: /Sign Out/i })).toBeVisible({ timeout: 60000 });
   });
 
   test('@mobile settings panel is accessible on mobile', async ({ page }) => {
-    await page.goto(`/login`);
     await login(page);
 
-
-
+    await page.getByRole('button', { name: 'More options' }).click();
     await page.getByRole('button', { name: 'Settings' }).click();
     await expect(page.getByText('Theme')).toBeVisible();
     await expect(page.getByText('Font Size')).toBeVisible();
@@ -304,7 +305,6 @@ test.describe('Error handling', () => {
       });
     });
 
-    await page.goto(`/login`);
     await login(page);
 
 
@@ -325,7 +325,6 @@ test.describe('Error handling', () => {
       });
     });
 
-    await page.goto(`/login`);
     await login(page);
 
 

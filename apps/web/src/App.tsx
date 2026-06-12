@@ -3,6 +3,7 @@ import { Route, Navigate } from 'react-router-dom';
 import { ViewTransitionRoutes } from './components/ViewTransitionRoutes';
 import { useAuthStore } from './stores/auth';
 import { useThemeSync } from './hooks/useThemeSync';
+import { useTranslation } from './hooks/useTranslation';
 import { LoginPage } from './features/auth/LoginPage';
 import { AdminLoginPage } from './features/admin/AdminLoginPage';
 import { AppShell } from './components/AppShell';
@@ -27,12 +28,14 @@ const CatalogPage = React.lazy(() =>
 );
 
 // Premium glassmorphism loading fallback spinner
-const LoadingFallback: React.FC = () => (
+const LoadingFallback: React.FC = () => {
+  const { t } = useTranslation();
+  return (
   <div
     className="min-h-screen bg-background flex flex-col items-center justify-center p-6"
     role="status"
     aria-live="polite"
-    aria-label="Loading page"
+    aria-label={t('a11y.loading_page')}
   >
     <div className="flex flex-col items-center gap-6 w-full max-w-xs p-8 rounded-3xl bg-surface/40 backdrop-blur-md border border-white/5 shadow-glass">
       <div
@@ -60,7 +63,8 @@ const LoadingFallback: React.FC = () => (
       </div>
     </div>
   </div>
-);
+  );
+};
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);

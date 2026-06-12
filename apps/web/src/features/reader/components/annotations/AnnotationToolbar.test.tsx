@@ -104,7 +104,7 @@ describe('AnnotationToolbar', () => {
         />,
       );
 
-      expect(screen.getByLabelText('Close')).toBeInTheDocument();
+      expect(screen.getByLabelText('a11y.close')).toBeInTheDocument();
     });
   });
 
@@ -185,7 +185,7 @@ describe('AnnotationToolbar', () => {
         />,
       );
 
-      await user.click(screen.getByLabelText('Close'));
+      await user.click(screen.getByLabelText('a11y.close'));
 
       expect(mockOnClose).toHaveBeenCalled();
     });

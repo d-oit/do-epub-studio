@@ -41,11 +41,11 @@ export function SwUpdateNotification() {
   const show = needRefresh || offlineReady;
 
   const icon = needRefresh ? (
-    <svg className="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <svg className="w-5 h-5 text-primary-700 dark:text-primary-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
     </svg>
   ) : (
-    <svg className="w-5 h-5 text-accent-success" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <svg className="w-5 h-5 text-primary-700 dark:text-primary-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
     </svg>
   );
@@ -63,14 +63,14 @@ export function SwUpdateNotification() {
           role="status"
           aria-live="polite"
         >
-          <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-background-secondary border border-border shadow-lg">
+          <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-background text-primary-800 border border-border shadow-lg">
             {icon}
-            <p className="flex-1 text-sm text-foreground">
+            <p className="flex-1 text-sm text-primary-800">
               {needRefresh ? t('sw.updateAvailable') : t('sw.offlineReady')}
             </p>
             <div className="flex items-center gap-2 shrink-0">
               {needRefresh && (
-                <Button variant="primary" size="sm" onClick={handleUpdate}>
+                <Button variant="secondary" size="sm" onClick={handleUpdate}>
                   {t('sw.updateAction')}
                 </Button>
               )}

@@ -255,7 +255,7 @@ export function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setIsRecoveryMode(true)}
-                  className="mt-1 text-xs text-accent hover:text-accent/80 underline underline-offset-2 transition-colors"
+                  className="mt-1 text-xs text-primary-800 hover:text-primary-900 underline underline-offset-2 transition-colors"
                 >
                   {t('login.forgotPassword')}
                 </button>

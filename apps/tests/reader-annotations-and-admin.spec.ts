@@ -97,7 +97,7 @@ async function mockAdminApi(page: Page) {
   await page.route('**/api/admin/login', async (route: Route) => {
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(ADMIN_LOGIN_RESPONSE) });
   });
-  await page.route('**/api/books', async (route: Route) => {
+  await page.route('**/api/admin/books', async (route: Route) => {
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(BOOKS_LIST_RESPONSE) });
   });
   await page.route('**/api/admin/books/*/grants', async (route: Route) => {
@@ -115,13 +115,11 @@ async function mockAdminApi(page: Page) {
 }
 
 async function loginAsReader(page: Page) {
-  await page.goto(`/login`);
-  await page.getByLabel('Book URL Slug').fill(READER_USER.bookSlug);
+  await page.goto(`/login?book=${READER_USER.bookSlug}`);
   await page.getByLabel('Email Address').fill(READER_USER.email);
-  await page.getByLabel('Password (if required)').fill(READER_USER.password);
+  await page.getByLabel('Password').fill(READER_USER.password);
   await page.getByRole('button', { name: 'Sign In', exact: true }).click();
   await expect(page).toHaveURL(/\/read\/my-test-book$/);
-  // Wait for animations to settle
   await page.waitForLoadState('networkidle');
   await page.waitForTimeout(1000);
 }
@@ -165,7 +163,7 @@ test.describe('Reader annotations', () => {
     await loginAsReader(page);
 
     // Export button should be visible in the reader toolbar
-    const exportButton = page.getByRole('button', { name: 'Export notes', exact: true });
+    const exportButton = page.getByRole('button', { name: 'Export Notes', exact: true });
     await expect(exportButton).toBeVisible();
   });
 });
@@ -191,19 +189,16 @@ test.describe('Admin console', () => {
 
     // Should navigate to admin books page
     await expect(page).toHaveURL(/\/admin\/books/);
-    await expect(page.getByRole('heading', { name: 'Admin Dashboard' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Your Books' })).toBeVisible();
   });
 
   test('can view grants for a book', async ({ page }) => {
     await loginAsAdmin(page);
 
-    // Click on Access Grants link/button
-    await page.getByRole('button', { name: 'Access Grants' }).click();
-    await expect(page).toHaveURL(/\/admin\/grants/);
+    // Click the first book's Manage Access link
+    await page.getByRole('button', { name: /Manage Access/i }).first().click();
+    await expect(page).toHaveURL(/\/admin\/books\/book-1\/grants/);
 
-    // Select a book from the dropdown
-    await page.getByLabel('Book', { exact: true }).selectOption('book-1');
-    // Expect redirection to book-specific grants URL
     await expect(page).toHaveURL(/\/admin\/books\/book-1\/grants/);
   });
 
@@ -236,18 +231,14 @@ test.describe('Accessibility', () => {
   });
 
   test('login form has proper label associations', async ({ page }) => {
-    await page.goto(`/login`);
+    await page.goto(`/login?book=${READER_USER.bookSlug}`);
 
     // All form inputs should have visible, associated labels
-    const slugInput = page.getByLabel('Book URL Slug');
-    await expect(slugInput).toBeVisible();
-    await expect(slugInput).toHaveAttribute('type', 'text');
-
     const emailInput = page.getByLabel('Email Address');
     await expect(emailInput).toBeVisible();
     await expect(emailInput).toHaveAttribute('type', 'email');
 
-    const passwordInput = page.getByLabel('Password (if required)');
+    const passwordInput = page.getByLabel('Password');
     await expect(passwordInput).toBeVisible();
     await expect(passwordInput).toHaveAttribute('type', 'password');
   });
@@ -284,12 +275,11 @@ test.describe('Accessibility', () => {
       });
     });
 
-    await page.goto(`/login`);
+    await page.goto(`/login?book=${READER_USER.bookSlug}`);
 
     // Manual login to avoid toHaveURL check in loginAsReader
-    await page.getByLabel('Book URL Slug').fill(READER_USER.bookSlug);
     await page.getByLabel('Email Address').fill(READER_USER.email);
-    await page.getByLabel('Password (if required)').fill(READER_USER.password);
+    await page.getByLabel('Password').fill(READER_USER.password);
     await page.getByRole('button', { name: 'Sign In', exact: true }).click();
 
     // Error should be in a role="alert" or similar accessible element
@@ -329,7 +319,7 @@ test.describe('Internationalization', () => {
 
     // Switch to French
     await page.getByLabel('Select locale').selectOption('fr');
-    await expect(page.getByText('Connectez-vous')).toBeVisible();
+    await expect(page.getByText('Connectez-vous pour accéder à vos livres')).toBeVisible();
   });
 
   test('locale persists after page reload', async ({ page }) => {
