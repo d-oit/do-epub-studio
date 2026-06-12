@@ -177,8 +177,6 @@ export function LoginPage() {
             </Button>
           </div>
         ) : isRecoveryMode ? (
-          </div>
-        ) : isRecoveryMode ? (
           <form onSubmit={(e) => { void handleRecoveryRequest(e); }}>
             <div className="space-y-4">
               <p className="text-sm text-foreground-muted mb-4">
