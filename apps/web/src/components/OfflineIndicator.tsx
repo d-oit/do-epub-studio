@@ -9,6 +9,7 @@ export function OfflineIndicator() {
   useEffect(() => {
     // biome-ignore lint/correctness/useQwikValidLexicalScope: React project, not Qwik — false positive
     const goOffline = () => { setIsOffline(true); };
+    // biome-ignore lint/correctness/useQwikValidLexicalScope: React project, not Qwik — false positive
     const goOnline = () => { setIsOffline(false); };
     window.addEventListener('offline', goOffline);
     window.addEventListener('online', goOnline);
