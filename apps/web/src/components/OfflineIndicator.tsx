@@ -7,8 +7,9 @@ export function OfflineIndicator() {
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
 
   useEffect(() => {
-    const goOffline = () => setIsOffline(true);
-    const goOnline = () => setIsOffline(false);
+    // biome-ignore lint/correctness/useQwikValidLexicalScope: React project, not Qwik — false positive
+    const goOffline = () => { setIsOffline(true); };
+    const goOnline = () => { setIsOffline(false); };
     window.addEventListener('offline', goOffline);
     window.addEventListener('online', goOnline);
     return () => {
