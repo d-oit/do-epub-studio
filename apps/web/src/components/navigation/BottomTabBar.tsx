@@ -7,10 +7,9 @@ export function BottomTabBar() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-40 bg-background-secondary border-t border-border md:hidden"
+      className="fixed bottom-0 left-0 right-0 z-40 bg-background-secondary border-t border-border pb-[env(safe-area-inset-bottom)] md:hidden"
       role="tablist"
       aria-label={t('nav.library')}
-      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
       <div className="flex items-center justify-around h-14">
         {NAV_ITEMS.map(({ key, icon, href }) => (
