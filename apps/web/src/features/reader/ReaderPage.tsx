@@ -180,6 +180,7 @@ export function ReaderPage() {
 
   useEffect(() => {
     let cancelled = false;
+    // biome-ignore lint/correctness/useQwikValidLexicalScope: React project, not Qwik — false positive
     const updateCount = async () => {
       try {
         const queue = await getSyncQueue();
