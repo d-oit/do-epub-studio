@@ -73,6 +73,8 @@ export default tseslint.config(
       'react/jsx-no-target-blank': 'error',
       'jsx-a11y/no-autofocus': 'warn',
       'jsx-a11y/aria-props': 'error',
+      'jsx-a11y/no-noninteractive-element-to-interactive-role': 'warn',
+      'jsx-a11y/no-redundant-roles': 'error',
       'unicorn/filename-case': [
         'error',
         {
@@ -90,7 +92,8 @@ export default tseslint.config(
       'unicorn/prevent-abbreviations': 'off',
       'promise/catch-or-return': 'warn',
       'promise/no-return-wrap': 'error',
-      // Object injection is a runtime concern; TypeScript strict mode covers static analysis
+      // Object injection: off for source (TypeScript provides static safety);
+      // use Object.hasOwn() guard for dynamic keys from untrusted input
       'security/detect-object-injection': 'off',
       // Handled by Prettier for consistent formatting
       'import/order': 'off',
@@ -103,6 +106,7 @@ export default tseslint.config(
       '@typescript-eslint/consistent-type-imports': 'warn',
       '@typescript-eslint/no-floating-promises': 'error',
       '@typescript-eslint/no-misused-promises': 'error',
+      '@typescript-eslint/no-confusing-void-expression': ['error', { ignoreArrowShorthand: true, ignoreVoidOperator: true }],
       '@typescript-eslint/no-unsafe-assignment': 'error',
       '@typescript-eslint/no-unsafe-member-access': 'error',
       '@typescript-eslint/no-unsafe-call': 'error',
