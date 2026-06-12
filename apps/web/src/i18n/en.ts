@@ -248,6 +248,9 @@ export const en = {
 'catalog.subtitle': 'Browse publicly available books',
 'catalog.empty': 'No public books available yet.',
 'catalog.coverAlt': 'Cover of {title}',
+'offline.banner': 'You are offline. Changes will sync when reconnected.',
+'offline.indicator': 'Offline',
+'offline.pendingSync': '{count} pending sync',
 } as const;
 
 export type TranslationKeys = keyof typeof en;

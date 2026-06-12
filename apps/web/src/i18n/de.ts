@@ -250,4 +250,7 @@ export const de: Record<TranslationKeys, string> = {
   'catalog.subtitle': 'Öffentlich verfügbare Bücher durchsuchen',
   'catalog.empty': 'Noch keine öffentlichen Bücher verfügbar.',
   'catalog.coverAlt': 'Cover von {title}',
+  'offline.banner': 'Sie sind offline. Änderungen werden bei erneuter Verbindung synchronisiert.',
+  'offline.indicator': 'Offline',
+  'offline.pendingSync': '{count} ausstehende Synchronisierung',
 };

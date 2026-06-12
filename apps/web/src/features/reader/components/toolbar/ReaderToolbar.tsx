@@ -54,6 +54,8 @@ export function ReaderToolbar({
 
   const scrollDirection = useScrollDirection();
   const progressPercent = useReaderStore((s) => s.progress.progressPercent);
+  const isOffline = useReaderStore((s) => s.isOffline);
+  const pendingSyncCount = useReaderStore((s) => s.pendingSyncCount);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -123,6 +125,14 @@ export function ReaderToolbar({
                 <span className="text-[10px] text-foreground-muted font-medium">
                   {Math.round(progressPercent)}%
                 </span>
+                {isOffline && (
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-accent-warning/15 text-accent-warning text-[10px] font-medium" role="status" aria-live="polite">
+                    {t('offline.indicator')}
+                    {pendingSyncCount > 0 && (
+                      <span className="text-[9px]">({pendingSyncCount})</span>
+                    )}
+                  </span>
+                )}
               </div>
             </div>
           </div>
