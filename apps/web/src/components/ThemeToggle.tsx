@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { usePreferencesStore } from '../stores/preferences';
 import { useTranslation } from '../hooks/useTranslation';
 import { IconButton } from './ui';
@@ -7,8 +8,11 @@ export function ThemeToggle() {
   const setTheme = usePreferencesStore((s) => s.setTheme);
   const { t } = useTranslation();
 
-  const isSystemDark = typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches;
-  const resolvedTheme = theme === 'system' ? (isSystemDark ? 'dark' : 'light') : theme;
+  const resolvedTheme = useMemo(() => {
+    if (theme !== 'system') return theme;
+    if (typeof window === 'undefined') return 'light';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }, [theme]);
 
   const toggleTheme = () => {
     setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
