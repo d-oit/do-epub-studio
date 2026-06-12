@@ -37,8 +37,8 @@ describe('AppShell', () => {
         <AppShell />
       </BrowserRouter>,
     );
-    // Looking for the branded logo svg
-    expect(document.querySelector('svg')).toBeInTheDocument();
+    // Looking for the AppLogo SVG
+    expect(document.querySelector('svg[role="img"]')).toBeInTheDocument();
   });
 
   it('redirects to login when not authenticated after timeout', () => {
@@ -68,5 +68,20 @@ describe('AppShell', () => {
     });
 
     expect(mockNavigate).toHaveBeenCalledWith('/read/my-book', expect.objectContaining({ replace: true }));
+  });
+
+  it('redirects to admin when authenticated as admin', () => {
+    useAuthStore.setState({ isAuthenticated: true, isAdmin: true, bookSlug: null });
+    render(
+      <BrowserRouter>
+        <AppShell />
+      </BrowserRouter>,
+    );
+
+    act(() => {
+      vi.advanceTimersByTime(1500);
+    });
+
+    expect(mockNavigate).toHaveBeenCalledWith('/admin/books', expect.objectContaining({ replace: true }));
   });
 });

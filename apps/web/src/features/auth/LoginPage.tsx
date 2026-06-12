@@ -4,7 +4,7 @@ import { useTranslation } from '../../hooks/useTranslation';
 import { apiRequest } from '../../lib/api';
 import { useAuthStore } from '../../stores/auth';
 import { LocaleSwitcher } from '../../components/LocaleSwitcher';
-import { Button, Input } from '../../components/ui';
+import { Button, Input, AppLogo } from '../../components/ui';
 import { ThemeToggle } from '../../components/ThemeToggle';
 
 interface SessionCapabilities {
@@ -56,7 +56,7 @@ export function LoginPage() {
         bookId: data.book.id,
         bookSlug: data.book.slug,
         bookTitle: data.book.title,
-        email: '', // Email is inside the JWT, but we can set it if needed
+        email: '',
         capabilities: data.capabilities,
       });
       void navigate(`/read/${data.book.slug}`);
@@ -135,29 +135,40 @@ export function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4">
+    <div className="min-h-dvh bg-background flex flex-col items-center justify-center px-4 py-8">
+      {/* Top utility bar */}
       <div className="absolute top-4 right-4 flex items-center gap-2">
         <ThemeToggle />
         <LocaleSwitcher />
       </div>
 
-      <main id="main-content" className="max-w-md w-full bg-background-secondary rounded-xl shadow-lg p-8 border border-border">
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-foreground">
-            {isRecoveryMode ? t('login.recoveryTitle') : t('login.subtitle')}
+      {/* Auth card */}
+      <main id="main-content" tabIndex={-1} className="max-w-sm w-full bg-background-secondary rounded-xl shadow-lg p-8 border border-border">
+        {/* Branding */}
+        <div className="flex flex-col items-center mb-6">
+          <AppLogo size={48} className="text-accent mb-3" />
+          <h1
+            className="text-2xl font-bold text-foreground text-center"
+            style={{ fontFamily: 'var(--font-display)' }}
+          >
+            do EPUB Studio
           </h1>
-          {bookSlug && (
-            <p className="text-foreground-muted mt-2 text-sm">
-              {t('login.bookSlugLabel')}: <span className="font-semibold">{bookSlug}</span>
-            </p>
-          )}
+          <p className="text-foreground-muted text-sm mt-1 text-center">
+            {isRecoveryMode ? t('login.recoveryTitle') : t('login.subtitle')}
+          </p>
         </div>
+
+        {bookSlug && (
+          <p className="text-foreground-muted text-xs text-center mb-4">
+            {t('login.bookSlugLabel')}: <span className="font-semibold text-foreground">{bookSlug}</span>
+          </p>
+        )}
 
         {error && (
           <div
             role="alert"
             aria-live="polite"
-            className="mb-6 p-3 bg-accent-error/10 border border-accent-error/20 rounded text-sm text-accent-error"
+            className="mb-6 p-3 bg-accent-error/10 border-l-3 border-accent-error rounded-r text-sm text-accent-error"
           >
             {error}
           </div>
@@ -216,43 +227,39 @@ export function LoginPage() {
             </div>
           </form>
         ) : (
-          <form onSubmit={(e) => { void handleSubmit(e); }}>
+          <form onSubmit={(e) => { void handleSubmit(e); }} noValidate>
             <div className="space-y-4">
               <Input
                 id="email"
                 label={t('login.emailLabel')}
                 type="email"
-                required
+                name="email"
                 autoComplete="email"
+                inputMode="email"
+                required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                placeholder={t('login.emailPlaceholder')}
               />
 
               <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label
-                    htmlFor="password"
-                    className="block text-sm font-medium text-foreground"
-                  >
-                    {t('login.passwordLabel')}
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => setIsRecoveryMode(true)}
-                    className="text-xs text-primary-600 hover:text-primary-700 dark:text-primary-400"
-                  >
-                    {t('login.forgotPassword')}
-                  </button>
-                </div>
                 <Input
                   id="password"
                   label={t('login.passwordLabel')}
                   type="password"
+                  name="password"
                   autoComplete="current-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  helperText={t('login.passwordHelper')}
+                  placeholder={t('login.passwordPlaceholder')}
                 />
+                <button
+                  type="button"
+                  onClick={() => setIsRecoveryMode(true)}
+                  className="mt-1 text-xs text-accent hover:text-accent/80 underline underline-offset-2 transition-colors"
+                >
+                  {t('login.forgotPassword')}
+                </button>
               </div>
 
               <Button
@@ -267,20 +274,21 @@ export function LoginPage() {
           </form>
         )}
 
-        <div className="mt-8 pt-6 border-t border-border text-center space-y-3">
-          <p className="text-sm text-foreground-muted">
-            {t('login.adminDescription')}
-          </p>
+        <div className="mt-6 pt-4 border-t border-border text-center">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => void navigate('/admin/login')}
-            className="underline decoration-primary-500/30 hover:decoration-primary-500 focus-visible:ring-2 focus-visible:ring-primary-500"
+            className="text-foreground-muted hover:text-foreground text-sm"
           >
             {t('login.adminLink')}
           </Button>
         </div>
       </main>
+
+      <p className="mt-6 text-xs text-foreground-muted text-center max-w-sm">
+        {t('login.adminDescription')}
+      </p>
     </div>
   );
 }

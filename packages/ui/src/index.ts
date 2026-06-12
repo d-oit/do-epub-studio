@@ -12,6 +12,7 @@ export { Tooltip } from './tooltip';
 export { PageContainer } from './page-container';
 export { Header } from './header';
 export { IconButton } from './icon-button';
+export { AppLogo } from './AppLogo';
 export {
   fadeVariants,
   slideUpVariants,
@@ -31,3 +32,4 @@ export type { TooltipProps } from './tooltip';
 export type { PageContainerProps } from './page-container';
 export type { HeaderProps } from './header';
 export type { IconButtonProps } from './icon-button';
+export type { AppLogoProps } from './AppLogo';

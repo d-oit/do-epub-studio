@@ -10,9 +10,9 @@ export const en = {
   'login.passwordPlaceholder': 'Enter password',
   'login.submit': 'Sign In',
   'login.signingIn': 'Signing in...',
+  'login.forgotPassword': 'Forgot password?',
   'login.adminLink': 'Go to Admin Login',
   'login.adminDescription': 'Are you an author or manager? Sign in here to upload and manage your books.',
-  'login.forgotPassword': 'Forgot password?',
   'login.recoveryTitle': 'Recover Access',
   'login.recoveryInstructions': 'Enter your email address and we will send you a secure magic link to sign in without a password.',
   'login.sendMagicLink': 'Send Magic Link',
@@ -232,6 +232,13 @@ export const en = {
   'admin.grants.createGrantModal.submit': 'Create Grant',
   'admin.grants.createGrantModal.submitting': 'Creating...',
 'admin.grants.selectBook': 'Please select a book from the books page to manage its access grants.',
+'a11y.menu_open': 'Open navigation menu',
+'a11y.menu_close': 'Close navigation menu',
+'a11y.select_locale': 'Select language',
+'a11y.close': 'Close',
+'nav.library': 'Library',
+'nav.reader': 'Reader',
+'nav.settings': 'Settings',
 } as const;
 
 export type TranslationKeys = keyof typeof en;
