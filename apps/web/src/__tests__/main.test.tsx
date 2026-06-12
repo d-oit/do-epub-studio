@@ -26,6 +26,7 @@ vi.mock('framer-motion', () => ({
 }));
 
 vi.mock('@do-epub-studio/ui', async (importOriginal) => {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-imports -- Vitest mock pattern requires runtime import()
   const actual = await importOriginal<typeof import('@do-epub-studio/ui')>();
   return {
     ...actual,

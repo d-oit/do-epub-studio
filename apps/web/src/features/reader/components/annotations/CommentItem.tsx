@@ -59,16 +59,16 @@ export const CommentItem = memo(function CommentItem({
       tabIndex={0}
     >
       {comment.selectedText && (
-        <blockquote
+        <div
           className="text-xs text-foreground-muted italic mb-2 cursor-pointer hover:text-accent"
           onClick={onNavigate}
           onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onNavigate(); } }}
           tabIndex={0}
           role="button"
         >
-          "{comment.selectedText.slice(0, 100)}
-          {comment.selectedText.length > 100 ? '...' : ''}"
-        </blockquote>
+          &ldquo;{comment.selectedText.slice(0, 100)}
+          {comment.selectedText.length > 100 ? '...' : ''}&rdquo;
+        </div>
       )}
 
       {isEditing ? (
