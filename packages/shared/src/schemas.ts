@@ -10,6 +10,8 @@ export {
   AnnotationLocatorSchema,
   MultiSignalLocatorSchema,
   AccessRequestSchema,
+  RecoveryRequestSchema,
+  RecoveryVerifySchema,
   CreateBookSchema,
   CreateGrantSchema,
   UpdateGrantSchema,
@@ -24,6 +26,8 @@ export {
 
 export type {
   AccessRequest,
+  RecoveryRequest,
+  RecoveryVerify,
   CreateBook,
   CreateGrant,
   UpdateGrant,

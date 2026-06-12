@@ -1,14 +1,124 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import type { Env } from '../lib/env';
-import { validateGrant, computeCapabilities } from '../auth/password';
-import { createSession } from '../auth/session';
+import { validateGrant, computeCapabilities, getGrantByBookAndSession, getGrantsBySession } from '../auth/password';
+import { createSession, validateSession, revokeSession } from '../auth/session';
 import { logAudit } from '../audit';
-import { AccessRequestSchema } from '@do-epub-studio/shared';
+import { AccessRequestSchema, RecoveryRequestSchema, RecoveryVerifySchema } from '@do-epub-studio/shared';
+import { sign, verify } from 'hono/jwt';
 import { checkRateLimitDO } from '../lib/rate-limit-client';
+import { queryFirst } from '../db/client';
 import { z } from 'zod';
 
 export const accessRouter = new Hono<{ Bindings: Env }>();
+
+accessRouter.post('/recovery-request', zValidator('json', RecoveryRequestSchema), async (c) => {
+  const { bookSlug, email } = c.req.valid('json');
+
+  // Rate limit by email to prevent abuse (max 3 requests per 5 minutes)
+  const rateLimit = await checkRateLimitDO(c.env, 'auth_recovery', email.toLowerCase(), {
+    maxRequests: 3,
+    windowMs: 300_000,
+  });
+
+  if (!rateLimit.allowed) {
+    return c.json(
+      {
+        ok: false,
+        error: { code: 'TOO_MANY_REQUESTS', message: 'Too many recovery attempts. Please try again later.' },
+      },
+      429,
+    );
+  }
+
+  const book = await queryFirst<{ id: string; slug: string }>(
+    c.env,
+    'SELECT id, slug FROM books WHERE slug = ?',
+    [bookSlug]
+  );
+
+  if (book) {
+    const grant = await getGrantByBookAndSession(c.env, book.id, email.toLowerCase());
+
+    if (grant && !grant.revoked_at && (!grant.expires_at || new Date(grant.expires_at) > new Date())) {
+      // Generate magic link token (JWT)
+      const payload = {
+        email: email.toLowerCase(),
+        bookSlug,
+        exp: Math.floor(Date.now() / 1000) + 3600, // 1 hour
+      };
+      const token = await sign(payload, c.env.INVITE_TOKEN_SECRET, 'HS256');
+
+      // In a real app, this would send an email. For now, we log it to audit.
+      const recoveryUrl = `${c.env.APP_BASE_URL}/login?book=${bookSlug}&token=${token}`;
+
+      await logAudit(c.env, {
+        entityType: 'session',
+        entityId: book.id,
+        action: 'recovery_requested',
+        actorEmail: email.toLowerCase(),
+        payload: { magicLink: recoveryUrl },
+      }, c.executionCtx);
+    }
+  }
+
+  // Always return success to prevent user enumeration
+  return c.json({ ok: true });
+});
+
+accessRouter.post('/verify-recovery', zValidator('json', RecoveryVerifySchema), async (c) => {
+  const { token } = c.req.valid('json');
+
+  try {
+    const payload = await verify(token, c.env.INVITE_TOKEN_SECRET, 'HS256') as { email: string, bookSlug: string };
+
+    const result = await validateGrant(c.env, payload.bookSlug, payload.email);
+
+    if (!result.valid || !result.grant || !result.book) {
+      return c.json(
+        {
+          ok: false,
+          error: { code: 'ACCESS_DENIED', message: 'Access denied' },
+        },
+        401,
+      );
+    }
+
+    const sessionToken = await createSession(c.env, result.book.id, payload.email);
+
+    await logAudit(c.env, {
+      entityType: 'session',
+      entityId: result.book.id,
+      action: 'access_granted',
+      actorEmail: payload.email,
+      payload: { grantId: result.grant.id, method: 'magic_link' },
+    }, c.executionCtx);
+
+    return c.json({
+      ok: true,
+      data: {
+        sessionToken,
+        book: {
+          id: result.book.id,
+          slug: result.book.slug,
+          title: result.book.title,
+          authorName: result.book.author_name,
+          visibility: result.book.visibility,
+          coverImageUrl: result.book.cover_image_url,
+        },
+        capabilities: computeCapabilities(result.grant),
+      },
+    });
+  } catch {
+    return c.json(
+      {
+        ok: false,
+        error: { code: 'INVALID_TOKEN', message: 'Invalid or expired recovery link' },
+      },
+      401,
+    );
+  }
+});
 
 accessRouter.post('/request', zValidator('json', AccessRequestSchema), async (c) => {
   const { bookSlug, email, password } = c.req.valid('json');
@@ -80,7 +190,6 @@ accessRouter.post('/logout', async (c) => {
   const authHeader = c.req.header('Authorization');
   const token = authHeader?.replace('Bearer ', '') ?? '';
 
-  const { revokeSession } = await import('../auth/session');
   await revokeSession(c.env, token);
 
   return c.json({ ok: true });
@@ -89,9 +198,6 @@ accessRouter.post('/logout', async (c) => {
 accessRouter.post('/refresh', async (c) => {
   const authHeader = c.req.header('Authorization');
   const token = authHeader?.replace('Bearer ', '') ?? '';
-
-  const { validateSession, createSession, revokeSession } = await import('../auth/session');
-  const { getGrantByBookAndSession } = await import('../auth/password');
 
   const result = await validateSession(c.env, token);
 
@@ -148,9 +254,6 @@ accessRouter.get('/validate', zValidator('query', ValidateQuerySchema), async (c
   const authHeader = c.req.header('Authorization');
   const token = authHeader?.replace('Bearer ', '') ?? '';
 
-  const { validateSession } = await import('../auth/session');
-  const { getGrantByBookAndSession } = await import('../auth/password');
-
   const sessionResult = await validateSession(c.env, token);
 
   if (!sessionResult.valid || !sessionResult.session) {
@@ -191,9 +294,6 @@ accessRouter.get('/validate', zValidator('query', ValidateQuerySchema), async (c
 accessRouter.get('/validate-all', async (c) => {
   const authHeader = c.req.header('Authorization');
   const token = authHeader?.replace('Bearer ', '') ?? '';
-
-  const { validateSession } = await import('../auth/session');
-  const { getGrantsBySession } = await import('../auth/password');
 
   const sessionResult = await validateSession(c.env, token);
 
