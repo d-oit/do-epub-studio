@@ -5,6 +5,7 @@ import { apiRequest } from '../../lib/api';
 import { useAuthStore } from '../../stores/auth';
 import { LocaleSwitcher } from '../../components/LocaleSwitcher';
 import { Button, Input } from '../../components/ui';
+import { ThemeToggle } from '../../components/ThemeToggle';
 
 export function AdminLoginPage() {
   const { t } = useTranslation();
@@ -41,7 +42,8 @@ export function AdminLoginPage() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4">
-      <div className="absolute top-4 right-4">
+      <div className="absolute top-4 right-4 flex items-center gap-2">
+        <ThemeToggle />
         <LocaleSwitcher />
       </div>
 

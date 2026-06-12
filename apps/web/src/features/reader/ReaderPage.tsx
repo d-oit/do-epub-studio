@@ -116,7 +116,7 @@ export function ReaderPage() {
   highlightsRef.current = highlights;
   const commentsRef = useRef(comments);
   commentsRef.current = comments;
-  const { renditionRef, currentChapterRef, toc, resolvedTheme, metadata } = useReaderEpub(
+  const { renditionRef, currentChapterRef, toc, metadata } = useReaderEpub(
     epubUrl,
     viewerRef,
     rootRef,
@@ -250,7 +250,6 @@ export function ReaderPage() {
     <div
       ref={rootRef}
       className="min-h-screen bg-background text-foreground"
-      data-theme={resolvedTheme}
     >
       <ReaderToolbar
         bookTitle={bookTitle}

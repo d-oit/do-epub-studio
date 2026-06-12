@@ -30,6 +30,8 @@ export const fr: Record<TranslationKeys, string> = {
   'reader.exportNotes': 'Exporter les notes',
   'reader.noChapters': 'Aucun chapitre disponible',
   'reader.loading': 'Chargement du lecteur EPUB...',
+  'theme.toggle.dark': 'Passer au mode sombre',
+  'theme.toggle.light': 'Passer au mode clair',
   'reader.notAvailable': 'Livre indisponible',
   'reader.loadError': 'Impossible de charger le livre',
   'reader.settings': 'Paramètres',
