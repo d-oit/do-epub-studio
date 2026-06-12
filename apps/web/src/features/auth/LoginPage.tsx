@@ -148,8 +148,7 @@ export function LoginPage() {
         <div className="flex flex-col items-center mb-6">
           <AppLogo size={48} className="text-accent mb-3" />
           <h1
-            className="text-2xl font-bold text-foreground text-center"
-            style={{ fontFamily: 'var(--font-display)' }}
+            className="text-2xl font-bold text-foreground text-center font-display"
           >
             do EPUB Studio
           </h1>

@@ -40,20 +40,15 @@ export function SwUpdateNotification() {
 
   const show = needRefresh || offlineReady;
 
-  const getIcon = () => {
-    if (needRefresh) {
-      return (
-        <svg className="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-        </svg>
-      );
-    }
-    return (
-      <svg className="w-5 h-5 text-accent-success" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-    );
-  };
+  const icon = needRefresh ? (
+    <svg className="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+    </svg>
+  ) : (
+    <svg className="w-5 h-5 text-accent-success" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  );
 
   return (
     <AnimatePresence>
@@ -69,7 +64,7 @@ export function SwUpdateNotification() {
           aria-live="polite"
         >
           <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-background-secondary border border-border shadow-lg">
-            {getIcon()}
+            {icon}
             <p className="flex-1 text-sm text-foreground">
               {needRefresh ? t('sw.updateAvailable') : t('sw.offlineReady')}
             </p>

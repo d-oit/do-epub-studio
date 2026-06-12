@@ -91,6 +91,7 @@ export function AppShell() {
         <header className="flex items-center justify-between px-4 h-14 bg-background-secondary border-b border-border lg:hidden shrink-0">
           <div className="flex items-center gap-3">
             <button
+              type="button"
               onClick={toggleDrawer}
               className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-foreground-muted hover:text-foreground hover:bg-background-tertiary transition-colors"
               aria-label={t('a11y.menu_open')}

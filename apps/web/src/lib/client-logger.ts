@@ -74,10 +74,8 @@ export function logClientEvent(entry: ClientLogEntry): void {
     console.error(payload);
   } else if (entry.level === 'warn') {
     console.warn(payload);
-  } else if (entry.level === 'info') {
-    console.log(payload);
   } else {
-    console.debug(payload);
+    console.log(payload);
   }
 
   if (entry.level === 'warn' || entry.level === 'error') {
