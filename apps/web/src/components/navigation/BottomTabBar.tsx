@@ -8,7 +8,6 @@ export function BottomTabBar() {
   return (
     <nav
       className="fixed bottom-0 left-0 right-0 z-40 bg-background-secondary border-t border-border pb-[env(safe-area-inset-bottom)] md:hidden"
-      role="tablist"
       aria-label={t('nav.library')}
     >
       <div className="flex items-center justify-around h-14">
@@ -16,7 +15,6 @@ export function BottomTabBar() {
           <NavLink
             key={key}
             to={href}
-            role="tab"
             className={({ isActive }) =>
               `flex flex-col items-center justify-center gap-0.5 min-w-[64px] min-h-[44px] transition-colors ${
                 isActive

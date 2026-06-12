@@ -12,7 +12,7 @@ export function Sidebar() {
         <AppLogo size={32} className="text-accent shrink-0" />
         <span className="font-semibold text-foreground text-sm">do EPUB Studio</span>
       </div>
-      <nav className="flex-1 py-3" role="navigation" aria-label={t('nav.library')}>
+      <nav className="flex-1 py-3" aria-label={t('nav.library')}>
         {NAV_ITEMS.map(({ key, icon, href }) => (
           <NavLink
             key={key}

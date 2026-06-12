@@ -37,7 +37,7 @@ export function AppShell() {
     }
   }, [isResolving, isAuthenticated, bookSlug, isAdmin, navigate]);
 
-  const toggleDrawer = useCallback(() => setDrawerOpen((prev) => !prev), []);
+  const toggleDrawer = useCallback(() => { setDrawerOpen((prev) => !prev); }, []);
 
   if (isResolving) {
     return (
@@ -85,7 +85,7 @@ export function AppShell() {
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       <Sidebar />
-      <Drawer isOpen={drawerOpen} onClose={() => setDrawerOpen(false)} />
+      <Drawer isOpen={drawerOpen} onClose={() => { setDrawerOpen(false); }} />
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         {/* Mobile top bar */}
         <header className="flex items-center justify-between px-4 h-14 bg-background-secondary border-b border-border lg:hidden shrink-0">

@@ -16,6 +16,7 @@ const ICON_PATHS: Record<string, string> = {
 };
 
 export function NavIcon({ icon, className = '' }: { icon: string; className?: string }) {
+  const path = Object.hasOwn(ICON_PATHS, icon) ? ICON_PATHS[icon] : ICON_PATHS.library;
   return (
     <svg
       className={className}
@@ -27,7 +28,7 @@ export function NavIcon({ icon, className = '' }: { icon: string; className?: st
       viewBox="0 0 24 24"
       aria-hidden="true"
     >
-      <path d={ICON_PATHS[icon] ?? ICON_PATHS.library} />
+      <path d={path} />
     </svg>
   );
 }

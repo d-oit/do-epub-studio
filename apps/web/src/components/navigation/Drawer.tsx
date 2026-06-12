@@ -71,7 +71,7 @@ export function Drawer({ isOpen, onClose }: DrawerProps) {
                 </svg>
               </button>
             </div>
-            <nav className="flex-1 py-3" role="navigation" aria-label={t('nav.library')}>
+            <nav className="flex-1 py-3" aria-label={t('nav.library')}>
               {NAV_ITEMS.map(({ key, icon, href }) => (
                 <NavLink
                   key={key}
