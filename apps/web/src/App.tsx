@@ -8,6 +8,7 @@ import { LoginPage } from './features/auth/LoginPage';
 import { AdminLoginPage } from './features/admin/AdminLoginPage';
 import { AppShell } from './components/AppShell';
 import { SwUpdateNotification } from './components/SwUpdateNotification';
+import { OfflineIndicator } from './components/OfflineIndicator';
 import { NotFoundPage } from './features/errors/NotFoundPage';
 
 // Lazy load route components (named exports)
@@ -100,6 +101,7 @@ export function App() {
         Skip to main content
       </a>
       <SwUpdateNotification />
+      <OfflineIndicator />
       <ViewTransitionRoutes>
         <Route path="/" element={<AppShell />} />
         <Route path="/catalog" element={<CatalogPage />} />

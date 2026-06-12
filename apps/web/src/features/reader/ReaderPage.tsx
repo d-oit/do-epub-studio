@@ -8,7 +8,7 @@ import { logClientEvent } from '../../lib/client-logger';
 import { fetchHighlights, fetchComments } from '../../lib/api/annotations';
 import { useAuthStore, useReaderStore, usePreferencesStore } from '../../stores';
 import type { Bookmark } from '../../stores';
-import { setupOnlineListener } from '../../lib/offline';
+import { setupOnlineListener, getSyncQueue } from '../../lib/offline';
 import { setupZombieDetection } from '../../lib/offline/permissions';
 import { AnnotationToolbar, extractSelectionData, CommentsPanel } from './components/annotations';
 import {
@@ -56,6 +56,7 @@ export function ReaderPage() {
   const setError = useReaderStore((s) => s.setError);
   const error = useReaderStore((s) => s.error);
   const setOffline = useReaderStore((s) => s.setOffline);
+  const setPendingSyncCount = useReaderStore((s) => s.setPendingSyncCount);
   const setPermissionStatus = useReaderStore((s) => s.setPermissionStatus);
   const bookDirection = useReaderStore((s) => s.bookDirection);
   const highlights = useReaderStore(useShallow((s) => s.highlights));
@@ -176,6 +177,19 @@ export function ReaderPage() {
       cleanup();
     };
   }, [setOffline]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const updateCount = async () => {
+      try {
+        const queue = await getSyncQueue();
+        if (!cancelled) setPendingSyncCount(queue.length);
+      } catch { /* IndexedDB may be unavailable */ }
+    };
+    void updateCount();
+    const interval = setInterval(() => void updateCount(), 5000);
+    return () => { cancelled = true; clearInterval(interval); };
+  }, [setPendingSyncCount]);
 
   useEffect(() => {
     if (!bookId) return;
