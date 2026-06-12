@@ -44,4 +44,19 @@ describe('Button', () => {
     fireEvent.click(screen.getByRole('button'));
     expect(onClick).not.toHaveBeenCalled();
   });
+
+  it('renders loadingLabel when isLoading is true', () => {
+    render(
+      <Button isLoading loadingLabel="Processing...">
+        Submit
+      </Button>,
+    );
+    expect(screen.getByText('Processing...')).toBeInTheDocument();
+    expect(screen.queryByText('Submit')).not.toBeInTheDocument();
+  });
+
+  it('renders default "Loading..." when isLoading is true and no loadingLabel is provided', () => {
+    render(<Button isLoading>Submit</Button>);
+    expect(screen.getByText('Loading...')).toBeInTheDocument();
+  });
 });

@@ -4,7 +4,7 @@ import { useTranslation } from '../../hooks/useTranslation';
 import { apiRequest } from '../../lib/api';
 import { useAuthStore } from '../../stores/auth';
 import { LocaleSwitcher } from '../../components/LocaleSwitcher';
-import { Button } from '../../components/ui';
+import { Button, Input } from '../../components/ui';
 
 export function AdminLoginPage() {
   const { t } = useTranslation();
@@ -40,75 +40,66 @@ export function AdminLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col items-center justify-center px-4">
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4">
       <div className="absolute top-4 right-4">
         <LocaleSwitcher />
       </div>
 
-      <main id="main-content" className="max-w-md w-full bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 border border-gray-100 dark:border-gray-700">
+      <main id="main-content" className="max-w-md w-full bg-background-secondary rounded-xl shadow-lg p-8 border border-border">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-2xl font-bold text-foreground">
             {t('admin.login.title')}
           </h1>
-          <p className="text-gray-500 dark:text-gray-400 mt-2 text-sm">
+          <p className="text-foreground-muted mt-2 text-sm">
             d.o. EPUB Studio Management
           </p>
         </div>
 
         {error && (
-          <div className="mb-6 p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded text-sm text-red-700 dark:text-red-300">
+          <div
+            role="alert"
+            aria-live="polite"
+            className="mb-6 p-3 bg-accent-error/10 border border-accent-error/20 rounded text-sm text-accent-error"
+          >
             {error}
           </div>
         )}
 
         <form onSubmit={(e) => { void handleSubmit(e); }}>
           <div className="space-y-4">
-            <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-              >
-                {t('admin.login.email')}
-              </label>
-              <input
-                id="email"
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-500 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 text-gray-900 dark:text-white"
-              />
-            </div>
+            <Input
+              id="email"
+              label={t('admin.login.email')}
+              type="email"
+              required
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
 
-            <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-              >
-                {t('admin.login.password')}
-              </label>
-              <input
-                id="password"
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-500 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 text-gray-900 dark:text-white"
-              />
-            </div>
+            <Input
+              id="password"
+              label={t('admin.login.password')}
+              type="password"
+              required
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
 
-            <button
+            <Button
               type="submit"
-              disabled={isLoading}
-              className="w-full px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="w-full"
+              isLoading={isLoading}
+              loadingLabel={t('admin.login.signingIn')}
             >
-              {isLoading ? t('admin.login.signingIn') : t('admin.login.signIn')}
-            </button>
+              {t('admin.login.signIn')}
+            </Button>
           </div>
         </form>
 
-        <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-700 text-center space-y-3">
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+        <div className="mt-8 pt-6 border-t border-border text-center space-y-3">
+          <p className="text-sm text-foreground-muted">
             {t('admin.login.readerDescription')}
           </p>
           <Button
