@@ -3,10 +3,17 @@ import { test, expect, type Page, type Route } from '@playwright/test';
 const API_PATTERNS = [
   '**/api/access/request',
   '**/api/books/*/file-url',
-  '**/api/books/*/progress',
   '**/api/books/*/highlights',
   '**/api/books/*/comments',
-  '**/api/access/logout',
+  '**/api/books/*/bookmarks',
+];
+
+const EXPECTED_REQUEST_PATTERNS = [
+  '**/api/access/request',
+  '**/api/books/*/file-url',
+  '**/api/books/*/highlights',
+  '**/api/books/*/comments',
+  '**/api/books/*/bookmarks',
 ];
 
 async function assertTraceIdOnRequest(page: Page) {
@@ -19,10 +26,37 @@ async function assertTraceIdOnRequest(page: Page) {
       expect(traceId, `${pattern} request should include X-Trace-Id header`).toBeTruthy();
       expect(traceId!.length).toBeGreaterThanOrEqual(8);
       seen.add(pattern);
+
+      const body = route.request().url().includes('/api/access/request')
+        ? {
+            ok: true,
+            data: {
+              sessionToken: 'test-token',
+              book: {
+                id: 'book-1',
+                slug: 'test-book',
+                title: 'Test Book',
+                authorName: 'Test Author',
+              },
+              capabilities: {
+                canRead: true,
+                canComment: true,
+                canHighlight: true,
+                canBookmark: true,
+                canDownloadOffline: true,
+                canExportNotes: true,
+                canManageAccess: false,
+              },
+            },
+          }
+        : route.request().url().includes('/file-url')
+          ? { ok: true, data: { url: 'https://example.com/test-book.epub' } }
+          : { ok: true, data: [] };
+
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ ok: true, data: {} }),
+        body: JSON.stringify(body),
       });
     });
   }
@@ -58,15 +92,21 @@ async function assertTraceIdInResponse(page: Page) {
 test.describe('traceId header assertions', () => {
   test('all API requests include X-Trace-Id header', async ({ page }) => {
     const seen = await assertTraceIdOnRequest(page);
+    const fileUrlResponse = page.waitForResponse((response) =>
+      response.url().includes('/api/books/test-book/file-url'),
+    );
 
-    await page.goto('/login');
+    await page.goto('/login?book=test-book');
 
-    await page.getByLabel('Book URL Slug').fill('test-book');
     await page.getByLabel('Email Address').fill('test@example.com');
-    await page.getByLabel('Password (if required)').fill('test-password');
+    await page.getByLabel('Password').fill('test-password');
     await page.getByRole('button', { name: 'Sign In' }).click();
+    await expect(page).toHaveURL(/\/read\/test-book$/);
+    await expect(page.getByRole('button', { name: 'Contents' })).toBeVisible({ timeout: 15000 });
+    await fileUrlResponse;
+    await page.waitForLoadState('networkidle');
 
-    for (const pattern of API_PATTERNS) {
+    for (const pattern of EXPECTED_REQUEST_PATTERNS) {
       expect(seen.has(pattern), `${pattern} should have been intercepted`).toBeTruthy();
     }
   });
@@ -97,10 +137,9 @@ test.describe('traceId header assertions', () => {
       res.url().includes('/api/access/request'),
     );
 
-    await page.goto('/login');
-    await page.getByLabel('Book URL Slug').fill('test-book');
+    await page.goto('/login?book=test-book');
     await page.getByLabel('Email Address').fill('test@example.com');
-    await page.getByLabel('Password (if required)').fill('test-password');
+    await page.getByLabel('Password').fill('test-password');
     await page.getByRole('button', { name: 'Sign In' }).click();
 
     const response = await responsePromise;
@@ -120,10 +159,9 @@ test.describe('traceId server responses', () => {
       res.url().includes('/api/access/request'),
     );
 
-    await page.goto('/login');
-    await page.getByLabel('Book URL Slug').fill('test-book');
+    await page.goto('/login?book=test-book');
     await page.getByLabel('Email Address').fill('test@example.com');
-    await page.getByLabel('Password (if required)').fill('test-password');
+    await page.getByLabel('Password').fill('test-password');
     await page.getByRole('button', { name: 'Sign In' }).click();
 
     const response = await responsePromise;

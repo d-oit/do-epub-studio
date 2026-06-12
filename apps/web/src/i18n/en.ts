@@ -236,9 +236,18 @@ export const en = {
 'a11y.menu_close': 'Close navigation menu',
 'a11y.select_locale': 'Select language',
 'a11y.close': 'Close',
+'a11y.loading_page': 'Loading page',
+'a11y.loading_app': 'Loading application',
+'a11y.add_bookmark': 'Add bookmark',
+'a11y.delete_bookmark': 'Delete bookmark',
+'a11y.reading_progress': 'Reading progress',
 'nav.library': 'Library',
 'nav.reader': 'Reader',
 'nav.settings': 'Settings',
+'catalog.title': 'Book Catalog',
+'catalog.subtitle': 'Browse publicly available books',
+'catalog.empty': 'No public books available yet.',
+'catalog.coverAlt': 'Cover of {title}',
 } as const;
 
 export type TranslationKeys = keyof typeof en;

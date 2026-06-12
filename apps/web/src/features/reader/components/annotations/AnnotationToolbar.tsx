@@ -164,7 +164,7 @@ export function AnnotationToolbar({
         onClick={onClose}
         variant="ghost"
         size="sm"
-        aria-label="Close"
+        aria-label={t('a11y.close')}
         className="text-foreground-muted hover:text-foreground"
       >
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

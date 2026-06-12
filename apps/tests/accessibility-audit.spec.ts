@@ -82,7 +82,7 @@ test.describe('Accessibility audit (axe-core)', () => {
     // Login
     await page.goto(`/login?book=${READER_USER.bookSlug}`);
     await page.getByLabel('Email Address').fill(READER_USER.email);
-    await page.getByLabel('Password (if required)').fill(READER_USER.password);
+    await page.getByLabel('Password').fill(READER_USER.password);
     await page.getByRole('button', { name: 'Sign In' }).click();
     await expect(page).toHaveURL(new RegExp(`/read/${READER_USER.bookSlug}$`));
 
@@ -105,7 +105,7 @@ test.describe('Accessibility audit (axe-core)', () => {
     await mockReaderApi(page);
     await page.goto(`/login?book=${READER_USER.bookSlug}`);
     await page.getByLabel('Email Address').fill(READER_USER.email);
-    await page.getByLabel('Password (if required)').fill(READER_USER.password);
+    await page.getByLabel('Password').fill(READER_USER.password);
     await page.getByRole('button', { name: 'Sign In' }).click();
     await expect(page).toHaveURL(new RegExp(`/read/${READER_USER.bookSlug}$`));
 
@@ -123,7 +123,7 @@ test.describe('Accessibility audit (axe-core)', () => {
     await mockReaderApi(page);
     await page.goto(`/login?book=${READER_USER.bookSlug}`);
     await page.getByLabel('Email Address').fill(READER_USER.email);
-    await page.getByLabel('Password (if required)').fill(READER_USER.password);
+    await page.getByLabel('Password').fill(READER_USER.password);
     await page.getByRole('button', { name: 'Sign In' }).click();
 
     await page.getByLabel('Contents').click();
@@ -140,7 +140,7 @@ test.describe('Accessibility audit (axe-core)', () => {
     await mockReaderApi(page);
     await page.goto(`/login?book=${READER_USER.bookSlug}`);
     await page.getByLabel('Email Address').fill(READER_USER.email);
-    await page.getByLabel('Password (if required)').fill(READER_USER.password);
+    await page.getByLabel('Password').fill(READER_USER.password);
     await page.getByRole('button', { name: 'Sign In' }).click();
 
     // Open Settings
@@ -218,7 +218,7 @@ test.describe('Accessibility audit (axe-core)', () => {
 
   async function loginAsAdmin(page: Page) {
     await page.goto('/admin/login');
-    await page.getByLabel('Email').fill('admin@example.com');
+    await page.getByLabel('Email Address').fill('admin@example.com');
     await page.getByLabel('Password').fill('admin-password');
     await page.getByRole('button', { name: /sign in/i }).click();
     await expect(page).toHaveURL(/\/admin\/books/);
