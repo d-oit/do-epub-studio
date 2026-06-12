@@ -28,6 +28,7 @@ const CatalogPage = React.lazy(() =>
 );
 
 // Premium glassmorphism loading fallback spinner
+// biome-ignore lint/correctness/useQwikValidLexicalScope: React project, not Qwik — false positive
 const LoadingFallback: React.FC = () => {
   const { t } = useTranslation();
   return (
