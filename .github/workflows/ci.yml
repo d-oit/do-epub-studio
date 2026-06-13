@@ -519,6 +519,7 @@ jobs:
   performance-report:
     name: Performance Report
     needs: [setup, build, e2e-smoke, bench]
+    if: github.event_name == 'pull_request'
     continue-on-error: true
     runs-on: ubuntu-latest
     permissions:
