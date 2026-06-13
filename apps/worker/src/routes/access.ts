@@ -57,7 +57,7 @@ accessRouter.post('/recovery-request', zValidator('json', RecoveryRequestSchema)
         entityId: book.id,
         action: 'recovery_requested',
         actorEmail: email.toLowerCase(),
-        payload: { magicLink: recoveryUrl },
+        payload: { magicLink: recoveryUrl.replace(/token=[^&]+/, 'token=[REDACTED]') },
       }, c.executionCtx);
     }
   }

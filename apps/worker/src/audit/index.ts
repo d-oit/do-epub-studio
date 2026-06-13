@@ -22,6 +22,19 @@ interface AuditLogRow extends JsonRow {
 
 const MAX_SANITIZE_DEPTH = 10;
 const FORBIDDEN_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+const SENSITIVE_KEYS = new Set([
+  'token',
+  'password',
+  'secret',
+  'magiclink',
+  'signature',
+  'sessiontoken',
+  'passwordhash',
+  'key',
+  'apikey',
+  'auth',
+  'credential',
+]);
 
 export function sanitizeAuditPayload(
   payload: Record<string, unknown>,
@@ -34,6 +47,13 @@ export function sanitizeAuditPayload(
   const result = Object.create(null) as Record<string, unknown>;
   for (const [key, value] of Object.entries(payload)) {
     if (FORBIDDEN_KEYS.has(key)) continue;
+
+    // Redact sensitive values
+    if (SENSITIVE_KEYS.has(key.toLowerCase().replace(/[^a-z]/g, ''))) {
+      result[key] = '[REDACTED]';
+      continue;
+    }
+
     if (value === null || value === undefined) {
       result[key] = value;
     } else if (typeof value === 'string') {
