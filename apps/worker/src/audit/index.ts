@@ -22,6 +22,19 @@ interface AuditLogRow extends JsonRow {
 
 const MAX_SANITIZE_DEPTH = 10;
 const FORBIDDEN_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+const SENSITIVE_KEYS = new Set([
+  'token',
+  'password',
+  'secret',
+  'magiclink',
+  'signature',
+  'sessiontoken',
+  'passwordhash',
+  'key',
+  'apikey',
+  'auth',
+  'credential',
+]);
 
 export function sanitizeAuditPayload(
   payload: Record<string, unknown>,
@@ -34,34 +47,44 @@ export function sanitizeAuditPayload(
   const result = Object.create(null) as Record<string, unknown>;
   for (const [key, value] of Object.entries(payload)) {
     if (FORBIDDEN_KEYS.has(key)) continue;
-    if (value === null || value === undefined) {
-      result[key] = value;
+
+    let sanitizedValue: unknown;
+    const normalizedKey = key.toLowerCase().replace(/[^a-z]/g, '');
+
+    // Redact sensitive values
+    if (SENSITIVE_KEYS.has(normalizedKey)) {
+      sanitizedValue = '[REDACTED]';
+    } else if (value === null || value === undefined) {
+      sanitizedValue = value;
     } else if (typeof value === 'string') {
-      if (value.length > 10000) {
-        result[key] = value.slice(0, 10000) + '...';
-      } else {
-        result[key] = value;
-      }
+      sanitizedValue = value.length > 10000 ? value.slice(0, 10000) + '...' : value;
     } else if (typeof value === 'number' || typeof value === 'boolean') {
-      result[key] = value;
+      sanitizedValue = value;
     } else if (Array.isArray(value)) {
-      const sanitized: unknown[] = [];
+      const sanitizedArray: unknown[] = [];
       for (const item of value.slice(0, 100)) {
         if (typeof item === 'object' && item !== null) {
-          sanitized.push(sanitizeAuditPayload(item as Record<string, unknown>, depth + 1));
+          sanitizedArray.push(sanitizeAuditPayload(item as Record<string, unknown>, depth + 1));
         } else if (typeof item === 'string' && item.length > 10000) {
-          sanitized.push(item.slice(0, 10000) + '...');
+          sanitizedArray.push(item.slice(0, 10000) + '...');
         } else {
-          sanitized.push(item);
+          sanitizedArray.push(item);
         }
       }
-      result[key] = sanitized;
+      sanitizedValue = sanitizedArray;
     } else if (typeof value === 'object') {
-      result[key] = sanitizeAuditPayload(value as Record<string, unknown>, depth + 1);
+      sanitizedValue = sanitizeAuditPayload(value as Record<string, unknown>, depth + 1);
     } else {
       const str = typeof value === 'string' ? value : JSON.stringify(value);
-      result[key] = str.slice(0, 10000);
+      sanitizedValue = str.slice(0, 10000);
     }
+
+    Object.defineProperty(result, key, {
+      value: sanitizedValue,
+      enumerable: true,
+      configurable: true,
+      writable: true,
+    });
   }
   return result;
 }
