@@ -49,7 +49,8 @@ export function sanitizeAuditPayload(
     if (FORBIDDEN_KEYS.has(key)) continue;
 
     // Redact sensitive values
-    if (SENSITIVE_KEYS.has(key.toLowerCase().replace(/[^a-z]/g, ''))) {
+    const normalizedKey = key.toLowerCase().replace(/[^a-z]/g, '');
+    if (SENSITIVE_KEYS.has(normalizedKey)) {
       result[key] = '[REDACTED]';
       continue;
     }

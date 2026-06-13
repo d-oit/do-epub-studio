@@ -11,13 +11,13 @@ describe('sanitizeAuditPayload Redaction', () => {
       regularKey: 'regularValue'
     };
 
-    const sanitized = sanitizeAuditPayload(payload) as any;
+    const sanitized = sanitizeAuditPayload(payload);
 
-    expect(sanitized.username).toBe('jdoe');
-    expect(sanitized.password).toBe('[REDACTED]');
-    expect(sanitized.token).toBe('[REDACTED]');
-    expect(sanitized.apiKey).toBe('[REDACTED]');
-    expect(sanitized.regularKey).toBe('regularValue');
+    expect((sanitized as any).username).toBe('jdoe');
+    expect((sanitized as any).password).toBe('[REDACTED]');
+    expect((sanitized as any).token).toBe('[REDACTED]');
+    expect((sanitized as any).apiKey).toBe('[REDACTED]');
+    expect((sanitized as any).regularKey).toBe('regularValue');
   });
 
   it('should redact sensitive keys in nested objects', () => {
@@ -33,7 +33,7 @@ describe('sanitizeAuditPayload Redaction', () => {
       }
     };
 
-    const sanitized = sanitizeAuditPayload(payload) as any;
+    const sanitized = sanitizeAuditPayload(payload) as Record<string, any>;
 
     expect(sanitized.user.id).toBe('123');
     expect(sanitized.user.auth).toBe('[REDACTED]');
@@ -48,7 +48,7 @@ describe('sanitizeAuditPayload Redaction', () => {
       ]
     };
 
-    const sanitized = sanitizeAuditPayload(payload) as any;
+    const sanitized = sanitizeAuditPayload(payload) as Record<string, any>;
 
     expect(sanitized.credentials[0].type).toBe('password');
     expect(sanitized.credentials[0].value).toBe('secret'); // 'value' is not in sensitive keys
@@ -63,10 +63,10 @@ describe('sanitizeAuditPayload Redaction', () => {
       'magic_link': '789'
     };
 
-    const sanitized = sanitizeAuditPayload(payload) as any;
+    const sanitized = sanitizeAuditPayload(payload);
 
-    expect(sanitized['PASSWORD']).toBe('[REDACTED]');
-    expect(sanitized['Session-Token']).toBe('[REDACTED]');
-    expect(sanitized['magic_link']).toBe('[REDACTED]');
+    expect((sanitized as any)['PASSWORD']).toBe('[REDACTED]');
+    expect((sanitized as any)['Session-Token']).toBe('[REDACTED]');
+    expect((sanitized as any)['magic_link']).toBe('[REDACTED]');
   });
 });
