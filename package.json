@@ -59,7 +59,8 @@
   },
   "pnpm": {
     "overrides": {
-      "serialize-javascript": "^7.0.0"
+      "serialize-javascript": "^7.0.0",
+      "esbuild": ">=0.28.1"
     }
   }
 }
