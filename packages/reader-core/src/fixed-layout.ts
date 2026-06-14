@@ -1,8 +1,7 @@
 import type { FixedLayoutInfo } from './epub-types';
+import { escapeRegex, matchBounded } from '@do-epub-studio/shared';
 
-function escapeRegex(s: string): string {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
+const OPF_RENDITION_MAX_LEN = 1048576;
 
 function extractRenditionMetaValue(opfXml: string, property: string): string | undefined {
   const escaped = escapeRegex(property);
@@ -11,7 +10,7 @@ function extractRenditionMetaValue(opfXml: string, property: string): string | u
     `<meta[^>]*?property\\s*=\\s*"${escapeRegex(fullProp)}"[^>]*?>([^<]*)<\\/meta>`,
     'gi',
   );
-  const m = re.exec(opfXml);
+  const m = matchBounded(re, opfXml, OPF_RENDITION_MAX_LEN);
   if (m) {
     const val = m[1]?.trim();
     if (val && val.length <= 256) return val;
@@ -20,7 +19,7 @@ function extractRenditionMetaValue(opfXml: string, property: string): string | u
     `<meta[^>]*?property\\s*=\\s*"${escapeRegex(fullProp)}"[^>]*?\\/>`,
     'gi',
   );
-  const sm = selfClosingRe.exec(opfXml);
+  const sm = matchBounded(selfClosingRe, opfXml, OPF_RENDITION_MAX_LEN);
   if (sm) {
     const contentMatch = sm[0].match(/content\s*=\s*"([^"]*)"/);
     if (contentMatch) {

@@ -1,3 +1,5 @@
+import { escapeRegex, matchAllBounded } from '@do-epub-studio/shared';
+
 export interface AccessibilityMetadata {
   summary?: string;
   features: string[];
@@ -10,9 +12,7 @@ export interface AccessibilityMetadata {
   certifierReport?: string;
 }
 
-function escapeRegex(s: string): string {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
+const OPF_META_MAX_LEN = 1048576;
 
 function extractMetaProperty(opfXml: string, property: string): string[] {
   const results: string[] = [];
@@ -21,8 +21,7 @@ function extractMetaProperty(opfXml: string, property: string): string[] {
     `<meta[^>]*?property\\s*=\\s*"${escaped}"[^>]*?>([^<]*)<\\/meta>`,
     'gi',
   );
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(opfXml)) !== null) {
+  for (const m of matchAllBounded(re, opfXml, OPF_META_MAX_LEN)) {
     const value = m[1]?.trim();
     if (value && value.length <= 2048) {
       results.push(value);
@@ -32,7 +31,7 @@ function extractMetaProperty(opfXml: string, property: string): string[] {
     `<meta[^>]*?property\\s*=\\s*"${escaped}"[^>]*?\\/>`,
     'gi',
   );
-  while ((m = selfClosingRe.exec(opfXml)) !== null) {
+  for (const m of matchAllBounded(selfClosingRe, opfXml, OPF_META_MAX_LEN)) {
     const contentMatch = m[0].match(/content\s*=\s*"([^"]*)"/);
     if (contentMatch) {
       const value = contentMatch[1]?.trim();
@@ -51,8 +50,7 @@ function extractMetaName(opfXml: string, name: string): string[] {
     `<meta[^>]*?name\\s*=\\s*"${escaped}"[^>]*?>([^<]*)<\\/meta>`,
     'gi',
   );
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(opfXml)) !== null) {
+  for (const m of matchAllBounded(re, opfXml, OPF_META_MAX_LEN)) {
     const value = m[1]?.trim();
     if (value && value.length <= 2048) {
       results.push(value);
@@ -62,7 +60,7 @@ function extractMetaName(opfXml: string, name: string): string[] {
     `<meta[^>]*?name\\s*=\\s*"${escaped}"[^>]*?\\/>`,
     'gi',
   );
-  while ((m = selfClosingRe.exec(opfXml)) !== null) {
+  for (const m of matchAllBounded(selfClosingRe, opfXml, OPF_META_MAX_LEN)) {
     const contentMatch = m[0].match(/content\s*=\s*"([^"]*)"/);
     if (contentMatch) {
       const value = contentMatch[1]?.trim();
