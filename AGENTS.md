@@ -113,7 +113,7 @@ Run this before finalizing ANY response:
 
 | Category         | Skills                                                                                                                   |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| **Coordination** | `goap-agent`, `triz-analysis`, `triz-solver`, `task-decomposition`, `agent-coordination`, `learn`, `do-web-doc-resolver` |
+| **Coordination** | `goap-agent`, `triz-analysis`, `triz-solver`, `task-decomposition`, `agent-coordination`, `learn`, `do-web-doc-resolver`, `jules-delegator` |
 | **Backend**      | `cloudflare-worker-api`, `secure-invite-and-access`, `turso-schema-migrations`, `pwa-offline-sync`, `cicd-pipeline`      |
 | **Reader/UI**    | `epub-rendering-and-cfi`, `reader-ui-ux`, `accessibility-auditor`                                                        |
 | **Testing**      | `testing-strategy`, `testdata-builders`, `test-runner`, `dogfood`                                                        |
