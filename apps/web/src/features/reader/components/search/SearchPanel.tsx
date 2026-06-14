@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { useFocusTrap } from '@do-epub-studio/ui';
 import { useReaderSearch, highlightRanges } from '../../hooks/useReaderSearch';
 import type { Book } from '@intity/epub-js';
-import { escapeRegex } from '@do-epub-studio/shared';
 
 interface SearchPanelProps {
   isOpen: boolean;
@@ -26,30 +25,53 @@ function buildSnippet(excerpt: string, query: string): string {
   return `${safeStart > 0 ? '\u2026' : ''}${excerpt.slice(safeStart, end)}${end < excerpt.length ? '\u2026' : ''}`;
 }
 
+interface SnippetPart extends RangePart {
+  start: number;
+  end: number;
+}
+
+type RangePart = { text: string; hit: boolean };
+
 function renderSnippet(
   excerpt: string,
   query: string,
   keyPrefix: string,
 ): React.ReactNode {
-  const safeExcerpt = excerpt ?? '';
-  const safeQuery = (query ?? '').trim();
-  if (!safeQuery || !escapeRegex(safeQuery)) {
+  const safeExcerpt = excerpt;
+  const safeQuery = query.trim();
+  if (!safeQuery) {
     return <span key={keyPrefix}>{safeExcerpt}</span>;
   }
   const trimmed = buildSnippet(safeExcerpt, safeQuery);
-  const parts = highlightRanges(trimmed, safeQuery);
-  return parts.map((p, idx) =>
+  const parts = withPositions(trimmed, highlightRanges(trimmed, safeQuery));
+  return parts.map((p) =>
     p.hit ? (
       <mark
-        key={`${keyPrefix}-${idx}`}
+        key={`${keyPrefix}-${p.start}-${p.end}`}
         className="bg-accent-warning/30 text-foreground rounded-sm px-0.5"
       >
         {p.text}
       </mark>
     ) : (
-      <span key={`${keyPrefix}-${idx}`}>{p.text}</span>
+      <span key={`${keyPrefix}-${p.start}-${p.end}`}>{p.text}</span>
     ),
   );
+}
+
+function withPositions(excerpt: string, parts: RangePart[]): SnippetPart[] {
+  const out: SnippetPart[] = [];
+  let cursor = 0;
+  for (const p of parts) {
+    const idx = excerpt.indexOf(p.text, cursor);
+    if (idx < 0) {
+      out.push({ ...p, start: cursor, end: cursor + p.text.length });
+      cursor += p.text.length;
+    } else {
+      out.push({ ...p, start: idx, end: idx + p.text.length });
+      cursor = idx + p.text.length;
+    }
+  }
+  return out;
 }
 
 export function SearchPanel({ isOpen, book, onClose, onNavigate, t }: SearchPanelProps) {
@@ -108,10 +130,9 @@ export function SearchPanel({ isOpen, book, onClose, onNavigate, t }: SearchPane
         <div className="relative mb-4">
           <input
             ref={inputRef}
-            type="text"
-            role="searchbox"
+            type="search"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => { setQuery(e.target.value); }}
             placeholder={t('reader.searchPlaceholder')}
             className="w-full bg-background border border-border rounded-lg px-4 py-2 pr-10 text-foreground focus:outline-none focus:ring-2 focus:ring-accent transition-all"
             maxLength={120}
@@ -141,11 +162,11 @@ export function SearchPanel({ isOpen, book, onClose, onNavigate, t }: SearchPane
                 <p className="text-xs font-medium text-foreground-muted mb-2 px-1">
                   {t('reader.searchMatches', { n: results.length })}
                 </p>
-                {results.map((result, idx) => (
+                {results.map((result) => (
                   <button
-                    key={`${result.cfi}-${idx}`}
+                    key={result.cfi}
                     type="button"
-                    onClick={() => onNavigate(result.cfi)}
+                    onClick={() => { onNavigate(result.cfi); }}
                     className="w-full text-left p-3 rounded-lg hover:bg-background-secondary transition-colors border border-transparent hover:border-border group"
                   >
                     {result.chapterTitle && (
@@ -154,7 +175,7 @@ export function SearchPanel({ isOpen, book, onClose, onNavigate, t }: SearchPane
                       </span>
                     )}
                     <p className="text-sm text-foreground leading-relaxed line-clamp-3">
-                      {renderSnippet(result.excerpt, query, `r-${idx}`)}
+                      {renderSnippet(result.excerpt, query, result.cfi)}
                     </p>
                   </button>
                 ))}

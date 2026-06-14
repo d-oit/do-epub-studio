@@ -282,7 +282,7 @@ export function ReaderPage() {
         capabilities={capabilities}
         activePanel={activePanel}
         onToggleToc={() => togglePanel('toc')}
-        onToggleSearch={() => togglePanel('search')}
+        onToggleSearch={() => { togglePanel('search'); }}
         onToggleComments={() => togglePanel('comments')}
         onToggleBookmarks={() => togglePanel('bookmarks')}
         onToggleSettings={() => togglePanel('settings')}
@@ -320,9 +320,9 @@ export function ReaderPage() {
         )}
         {activePanel === 'search' && (
           <SearchPanel
-            isOpen={activePanel === 'search'}
+            isOpen
             book={bookRef.current}
-            onClose={() => setActivePanel(null)}
+            onClose={() => { setActivePanel(null); }}
             onNavigate={(cfi) => {
               if (renditionRef.current) void renditionRef.current.display(cfi);
             }}

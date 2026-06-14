@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
 import type { Book, NavItem } from '@intity/epub-js';
-import { matchAllBounded, escapeRegex } from '@do-epub-studio/shared';
 import { logClientEvent } from '../../../lib/client-logger';
 
 export interface SearchResult {
@@ -64,7 +63,7 @@ export function useReaderSearch(book: Book | null, query: string) {
       const startedAt = Date.now();
       const spine = (book as unknown as { spine: SpineLike }).spine;
       const toc = (book.navigation?.toc as NavItem[] | undefined) ?? [];
-      const search = async () => {
+      const runSearch = async (): Promise<void> => {
         try {
           const searchPromises: Array<Promise<Array<{ cfi: string; excerpt: string }>>> = [];
           spine.each((item) => {
@@ -77,14 +76,12 @@ export function useReaderSearch(book: Book | null, query: string) {
                 return matches;
               })
               .catch((err: unknown) => {
+                const e = err as Error;
                 logClientEvent({
                   level: 'warn',
                   event: 'reader-search-section-error',
                   traceId: 'reader-search',
-                  error: {
-                    name: (err as Error).name ?? 'Error',
-                    message: (err as Error).message ?? String(err),
-                  },
+                  error: { name: e.name, message: e.message },
                 });
                 return [];
               });
@@ -116,22 +113,23 @@ export function useReaderSearch(book: Book | null, query: string) {
           });
         } catch (err) {
           if (cancelledRef.current || mySeq !== seqRef.current) return;
-          const message = (err as Error).message ?? 'Search failed';
+          const e = err as Error;
+          const message = e.message || 'Search failed';
           setError(message);
           logClientEvent({
             level: 'error',
             event: 'reader-search-failed',
             traceId: 'reader-search',
-            error: { name: (err as Error).name ?? 'Error', message },
+            error: { name: e.name, message },
           });
         } finally {
           if (mySeq === seqRef.current) setIsSearching(false);
         }
       };
-      void search();
+      void runSearch();
     }, DEBOUNCE_MS);
 
-    return () => clearTimeout(timeoutId);
+    return () => { clearTimeout(timeoutId); };
   }, [book, query]);
 
   return { results, isSearching, error };
@@ -143,24 +141,38 @@ export function highlightRanges(
 ): Array<{ text: string; hit: boolean }> {
   if (!excerpt) return [];
   if (!query) return [{ text: excerpt, hit: false }];
-  const escapedQuery = escapeRegex(query);
-  if (!escapedQuery) return [{ text: excerpt, hit: false }];
-  const re = new RegExp(escapedQuery, 'gi');
-  const matches = matchAllBounded(re, excerpt, SNIPPET_EXCERPT_MAX);
-  if (matches.length === 0) return [{ text: excerpt, hit: false }];
+
+  // Use a literal-substring scan (String.indexOf in a loop) rather than a
+  // RegExp constructed from the user's query. The query is untrusted input;
+  // we cap the scan to SNIPPET_EXCERPT_MAX characters as a DoS guard
+  // (per ADR-034 bounded-input policy).
+  const bounded = excerpt.length > SNIPPET_EXCERPT_MAX ? excerpt.slice(0, SNIPPET_EXCERPT_MAX) : excerpt;
+  const needle = query.length > SNIPPET_EXCERPT_MAX ? query.slice(0, SNIPPET_EXCERPT_MAX) : query;
+  const lowerHaystack = bounded.toLowerCase();
+  const lowerNeedle = needle.toLowerCase();
+
+  const ranges: Array<{ start: number; end: number }> = [];
+  let from = 0;
+  while (from < lowerHaystack.length) {
+    const idx = lowerHaystack.indexOf(lowerNeedle, from);
+    if (idx < 0) break;
+    ranges.push({ start: idx, end: idx + needle.length });
+    from = idx + needle.length;
+    if (needle.length === 0) break;
+  }
+  if (ranges.length === 0) return [{ text: bounded, hit: false }];
 
   const parts: Array<{ text: string; hit: boolean }> = [];
-  let lastIndex = 0;
-  for (const match of matches) {
-    if (match.index === undefined) continue;
-    if (match.index > lastIndex) {
-      parts.push({ text: excerpt.slice(lastIndex, match.index), hit: false });
+  let cursor = 0;
+  for (const r of ranges) {
+    if (r.start > cursor) {
+      parts.push({ text: bounded.slice(cursor, r.start), hit: false });
     }
-    parts.push({ text: match[0], hit: true });
-    lastIndex = match.index + match[0].length;
+    parts.push({ text: bounded.slice(r.start, r.end), hit: true });
+    cursor = r.end;
   }
-  if (lastIndex < excerpt.length) {
-    parts.push({ text: excerpt.slice(lastIndex), hit: false });
+  if (cursor < bounded.length) {
+    parts.push({ text: bounded.slice(cursor), hit: false });
   }
   return parts;
 }

@@ -23,7 +23,7 @@ const mockUseReaderSearch = useReaderSearchHook.useReaderSearch as unknown as Re
 describe('SearchPanel', () => {
   const mockOnClose = vi.fn();
   const mockOnNavigate = vi.fn();
-  const mockT = (key: string) => key;
+  const mockT = vi.fn((key: string) => key);
   const mockBook = {} as Book;
 
   beforeEach(() => {
