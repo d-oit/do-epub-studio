@@ -1,11 +1,7 @@
 import type { Env } from '../lib/env';
+import type { SignedUrlResponse } from '@do-epub-studio/shared';
 
-export interface SignedUrlResponse {
-  url: string;
-  expiresAt: string;
-  fileSize: number;
-  mimeType: string;
-}
+export type { SignedUrlResponse };
 
 const SIGNED_URL_EXPIRY_SECONDS = 3600;
 
