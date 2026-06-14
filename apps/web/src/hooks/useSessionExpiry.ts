@@ -45,8 +45,8 @@ export function useSessionExpiry(): UseSessionExpiryReturn {
 
   // Tick once per minute; cheap.
   useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 30_000);
-    return () => clearInterval(id);
+    const id = setInterval(() => { setNow(Date.now()); }, 30_000);
+    return () => { clearInterval(id); };
   }, []);
 
   // Reset transient flags when expiry moves (i.e. after a successful refresh).
@@ -88,7 +88,7 @@ export function useSessionExpiry(): UseSessionExpiryReturn {
           '/api/access/refresh',
           { method: 'POST', token: sessionToken ?? undefined },
         );
-        if (res?.sessionToken) {
+        if (res.sessionToken) {
           const newExpires = res.expiresAt ? new Date(res.expiresAt).getTime() : null;
           refreshSession({
             sessionToken: res.sessionToken,
@@ -138,7 +138,7 @@ export function useSessionExpiry(): UseSessionExpiryReturn {
         '/api/access/refresh',
         { method: 'POST', token: sessionToken },
       );
-      if (res?.sessionToken) {
+      if (res.sessionToken) {
         refreshSession({
           sessionToken: res.sessionToken,
           sessionExpiresAt: res.expiresAt ? new Date(res.expiresAt).getTime() : null,
