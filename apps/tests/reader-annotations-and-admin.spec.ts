@@ -256,8 +256,10 @@ test.describe('Accessibility', () => {
   test('locale switcher is accessible', async ({ page }) => {
     await page.goto(`/login`);
 
-    // Locale switcher should have an aria-label
-    const localeSelect = page.getByLabel('Select locale');
+    // Locale switcher is localized; match any of the three supported translations.
+    const localeSelect = page.getByLabel(
+      /Select language|Sprache auswählen|Sélectionner la langue/,
+    );
     await expect(localeSelect).toBeVisible();
 
     // Should contain expected options
@@ -311,20 +313,28 @@ test.describe('Internationalization', () => {
   test('can switch locale on login page', async ({ page }) => {
     await page.goto(`/login`);
 
+    // Locale switcher is localized; match any of the three supported translations.
+    const localeSelect = page.getByLabel(
+      /Select language|Sprache auswählen|Sélectionner la langue/,
+    );
+
     // Switch to German
-    await page.getByLabel('Select locale').selectOption('de');
+    await localeSelect.selectOption('de');
 
     // UI should update (check a known translated string)
     await expect(page.getByText('Melde dich an')).toBeVisible();
 
     // Switch to French
-    await page.getByLabel('Select locale').selectOption('fr');
+    await localeSelect.selectOption('fr');
     await expect(page.getByText('Connectez-vous pour accéder à vos livres')).toBeVisible();
   });
 
   test('locale persists after page reload', async ({ page }) => {
     await page.goto(`/login`);
-    await page.getByLabel('Select locale').selectOption('de');
+    const localeSelect = page.getByLabel(
+      /Select language|Sprache auswählen|Sélectionner la langue/,
+    );
+    await localeSelect.selectOption('de');
 
     // Reload page
     await page.reload();
