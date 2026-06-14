@@ -2,8 +2,9 @@
 name: jules-delegator
 version: "0.2.10"
 description: Use this skill to delegate complex coding tasks by creating Jules sessions via the Jules CLI. Jules is an AI coding agent that can autonomously implement features, fix bugs, and make code changes across repositories.
-category: agent
+category: coordination
 license: MIT
+allowed-tools: Bash(jules:*)
 ---
 
 # Jules Delegator (CLI-Based)
