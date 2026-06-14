@@ -63,7 +63,7 @@ export function useReaderSearch(book: Book | null, query: string) {
       const startedAt = Date.now();
       const spine = (book as unknown as { spine: SpineLike }).spine;
       const toc = (book.navigation?.toc as NavItem[] | undefined) ?? [];
-      const runSearch = async (): Promise<void> => {
+      void (async (): Promise<void> => {
         try {
           const searchPromises: Array<Promise<Array<{ cfi: string; excerpt: string }>>> = [];
           spine.each((item) => {
@@ -125,8 +125,7 @@ export function useReaderSearch(book: Book | null, query: string) {
         } finally {
           if (mySeq === seqRef.current) setIsSearching(false);
         }
-      };
-      void runSearch();
+      })();
     }, DEBOUNCE_MS);
 
     return () => { clearTimeout(timeoutId); };
