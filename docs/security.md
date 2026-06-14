@@ -100,3 +100,12 @@ Three-layer defense:
 3. **Property-based fuzz** — `fast-check` assertions for adversarial inputs
 
 CI gates enforce zero open CodeQL alerts. See `plans/034-adr-security-redos-hardening.md`.
+
+## Standing Security Decisions
+
+For a consolidated view of the auth transport (Bearer header, no
+CSRF), token-storage tradeoff (`localStorage` with compensating
+controls), and CSP posture, see
+[`docs/security-posture.md`](./security-posture.md). That document
+captures the decisions in ADR-092 so they do not need to be
+re-litigated on every audit.

@@ -71,7 +71,7 @@ describe('Access Routes', () => {
           cover_image_url: null,
         },
       });
-      mockCreateSession.mockResolvedValue('new-session-token');
+      mockCreateSession.mockResolvedValue({ token: 'new-session-token', expiresAt: '2030-01-01T00:00:00.000Z' });
 
       const res = await app.fetch(new Request('http://localhost/api/access/request', {
         method: 'POST',
@@ -115,7 +115,7 @@ describe('Access Routes', () => {
         bookId: 'book-1',
       } as any);
       mockGetGrantByBookAndSession.mockResolvedValue({ revoked_at: null, expires_at: null } as any);
-      mockCreateSession.mockResolvedValue('new-token');
+      mockCreateSession.mockResolvedValue({ token: 'new-token', expiresAt: '2030-01-01T00:00:00.000Z' });
       mockRevokeSession.mockResolvedValue(undefined);
 
       const res = await app.fetch(new Request('http://localhost/api/access/refresh', {

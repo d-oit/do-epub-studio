@@ -19,6 +19,7 @@ interface SessionCapabilities {
 
 interface SessionResponse {
   sessionToken: string;
+  expiresAt?: string;
   book: { id: string; slug: string; title: string; authorName: string };
   capabilities: SessionCapabilities | null;
 }
@@ -53,6 +54,7 @@ export function LoginPage() {
 
       setAuth({
         sessionToken: data.sessionToken,
+        sessionExpiresAt: data.expiresAt ? new Date(data.expiresAt).getTime() : null,
         bookId: data.book.id,
         bookSlug: data.book.slug,
         bookTitle: data.book.title,
@@ -110,6 +112,7 @@ export function LoginPage() {
 
       setAuth({
         sessionToken: data.sessionToken,
+        sessionExpiresAt: data.expiresAt ? new Date(data.expiresAt).getTime() : null,
         bookId: data.book.id,
         bookSlug: data.book.slug,
         bookTitle: data.book.title,
