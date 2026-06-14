@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import type { SelectionData } from '../components/annotations';
 
-export type ReaderPanel = 'toc' | 'settings' | 'comments' | 'bookmarks' | 'info' | null;
+export type ReaderPanel = 'toc' | 'settings' | 'comments' | 'bookmarks' | 'info' | 'search' | null;
 
 interface UseReaderUIReturn {
   activePanel: ReaderPanel;

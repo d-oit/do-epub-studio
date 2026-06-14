@@ -4,3 +4,4 @@ export { BookmarksPanel } from './bookmarks';
 export { ReaderViewer } from './viewer';
 export { CommentInputModal } from './comment';
 export { InfoPanel } from './info/InfoPanel';
+export { SearchPanel } from './search/SearchPanel';

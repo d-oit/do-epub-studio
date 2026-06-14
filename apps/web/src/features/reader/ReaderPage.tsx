@@ -22,6 +22,7 @@ import { AnimatePresence } from 'framer-motion';
 import {
   ReaderToolbar,
   ReaderSettingsPanel,
+  SearchPanel,
   TableOfContents,
   BookmarksPanel,
   ReaderViewer,
@@ -117,7 +118,7 @@ export function ReaderPage() {
   highlightsRef.current = highlights;
   const commentsRef = useRef(comments);
   commentsRef.current = comments;
-  const { renditionRef, currentChapterRef, toc, metadata } = useReaderEpub(
+  const { bookRef, renditionRef, currentChapterRef, toc, metadata } = useReaderEpub(
     epubUrl,
     viewerRef,
     rootRef,
@@ -281,6 +282,7 @@ export function ReaderPage() {
         capabilities={capabilities}
         activePanel={activePanel}
         onToggleToc={() => togglePanel('toc')}
+        onToggleSearch={() => { togglePanel('search'); }}
         onToggleComments={() => togglePanel('comments')}
         onToggleBookmarks={() => togglePanel('bookmarks')}
         onToggleSettings={() => togglePanel('settings')}
@@ -313,6 +315,17 @@ export function ReaderPage() {
             isOpen={activePanel === 'info'}
             onClose={() => setActivePanel(null)}
             metadata={metadata}
+            t={tFn}
+          />
+        )}
+        {activePanel === 'search' && (
+          <SearchPanel
+            isOpen
+            book={bookRef.current}
+            onClose={() => { setActivePanel(null); }}
+            onNavigate={(cfi) => {
+              if (renditionRef.current) void renditionRef.current.display(cfi);
+            }}
             t={tFn}
           />
         )}
