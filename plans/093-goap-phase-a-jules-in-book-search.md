@@ -99,8 +99,8 @@ skill, ship via PR, and remediate Codacy findings to a clean gate.
 ## Quality Gates
 
 - `./scripts/quality_gate.sh` — all green at every commit
-  (lint + typecheck + 279 unit tests + coverage + build + e2e smoke
-  + workflow validation + skill validation)
+  (lint, typecheck, 279 unit tests, coverage, build, e2e smoke,
+  workflow validation, and skill validation)
 - Coverage thresholds: web 55/48 ✓, worker 55/50 ✓, reader-core 72/70 ✓
   (untouched)
 - 16/16 active PR checks green, 5 expected skips (schedule,
