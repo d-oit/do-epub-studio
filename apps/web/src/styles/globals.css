@@ -18,7 +18,7 @@
     --color-background-tertiary: oklch(92% 0 0);
     --color-foreground: oklch(15% 0 0);
     --color-foreground-muted: oklch(40% 0 0);
-    --color-accent: oklch(55% 0.15 250);
+    --color-accent: oklch(48% 0.16 250);
     --color-accent-success: oklch(70% 0.15 150);
     --color-accent-warning: oklch(75% 0.15 80);
     --color-accent-error: oklch(65% 0.2 25);
@@ -123,7 +123,7 @@
   /* Wide-gamut P3 overrides */
   @media (color-gamut: p3) {
     :root {
-      --color-accent: oklch(60% 0.2 250);
+      --color-accent: oklch(52% 0.2 250);
       --color-accent-success: oklch(70% 0.2 150);
       --color-accent-warning: oklch(75% 0.2 80);
       --color-accent-error: oklch(65% 0.25 25);
@@ -146,7 +146,7 @@
     --color-background-tertiary: oklch(22% 0 0);
     --color-foreground: oklch(98% 0 0);
     --color-foreground-muted: oklch(70% 0 0);
-    --color-accent: oklch(65% 0.15 250);
+    --color-accent: oklch(55% 0.16 250);
     --color-accent-success: oklch(75% 0.15 150);
     --color-accent-warning: oklch(80% 0.15 80);
     --color-accent-error: oklch(70% 0.2 25);

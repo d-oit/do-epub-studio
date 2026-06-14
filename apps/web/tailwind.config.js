@@ -17,7 +17,7 @@ export default {
           muted: 'oklch(50% 0 0)',
         },
         accent: {
-          DEFAULT: 'oklch(55% 0.15 250)',
+          DEFAULT: 'oklch(48% 0.16 250)',
           secondary: 'oklch(54.1% 0.247 293.0)',
           success: 'oklch(70% 0.15 150)',
           warning: 'oklch(75% 0.15 80)',

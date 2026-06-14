@@ -43,13 +43,22 @@ test.describe('Edge Cases & Error Handling', () => {
     await page.getByRole('button', { name: 'Sign In' }).click();
     await expect(page).toHaveURL(/\/admin\/books/);
 
-    // Remove existing mock, then re-mock with 401 to simulate session expiry
+    // Remove existing mock, then re-mock the broader admin namespace with 401
+    // to simulate session expiry. Wildcard coverage ensures bootstrap calls
+    // (e.g., /api/admin/me if present) also trigger handleUnauthorized().
+    // The 401 handler in api.ts excludes /api/admin/login so login mocks remain intact.
     await page.unroute('**/api/admin/books');
-    await page.route('**/api/admin/books', route => route.fulfill({
-      status: 401,
-      contentType: 'application/json',
-      body: JSON.stringify({ ok: false, error: { code: 'UNAUTHORIZED', message: 'Session expired' } }),
-    }));
+    await page.unroute('**/api/admin/**');
+    await page.route('**/api/admin/**', route => {
+      if (route.request().url().includes('/api/admin/login')) {
+        return route.continue();
+      }
+      return route.fulfill({
+        status: 401,
+        contentType: 'application/json',
+        body: JSON.stringify({ ok: false, error: { code: 'UNAUTHORIZED', message: 'Session expired' } }),
+      });
+    });
 
     // Reload the page — the API call should fail with 401
     await page.reload();
