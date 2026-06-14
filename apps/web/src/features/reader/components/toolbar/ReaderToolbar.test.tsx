@@ -28,6 +28,7 @@ describe('ReaderToolbar', () => {
     capabilities: { canComment: true },
     activePanel: null,
     onToggleToc: vi.fn(),
+    onToggleSearch: vi.fn(),
     onToggleComments: vi.fn(),
     onToggleBookmarks: vi.fn(),
     onToggleSettings: vi.fn(),
@@ -36,6 +37,7 @@ describe('ReaderToolbar', () => {
     onLogout: vi.fn(),
     t: (key: string) => {
        if (key === 'reader.tableOfContents') return 'Contents';
+       if (key === 'reader.search') return 'Search';
        if (key === 'reader.untitledBook') return 'Untitled Book';
        if (key === 'annotation.comment') return 'Comment';
        if (key === 'reader.bookmarks') return 'Bookmarks';

@@ -24,6 +24,7 @@ interface ReaderToolbarProps {
   capabilities: { canComment?: boolean } | null;
   activePanel: ReaderPanel;
   onToggleToc: () => void;
+  onToggleSearch: () => void;
   onToggleComments: () => void;
   onToggleBookmarks: () => void;
   onToggleSettings: () => void;
@@ -40,6 +41,7 @@ export function ReaderToolbar({
   capabilities,
   activePanel,
   onToggleToc,
+  onToggleSearch,
   onToggleComments,
   onToggleBookmarks,
   onToggleSettings,
@@ -138,6 +140,23 @@ export function ReaderToolbar({
           </div>
 
           <div className="hidden sm:flex items-center gap-1">
+            <Tooltip content={t('reader.search')}>
+              <IconButton
+                onClick={onToggleSearch}
+                variant="ghost"
+                aria-label={t('reader.search')}
+                aria-expanded={activePanel === 'search'}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
+              </IconButton>
+            </Tooltip>
             {capabilities?.canComment && (
               <Tooltip content={t('annotation.comment')}>
                 <IconButton
@@ -269,6 +288,23 @@ export function ReaderToolbar({
                   className="absolute right-0 mt-2 w-56 glass-panel rounded-xl shadow-xl border border-border p-2 z-[60]"
                 >
                   <div className="flex flex-col gap-1">
+                    <button
+                      onClick={() => {
+                        onToggleSearch();
+                        setIsMenuOpen(false);
+                      }}
+                      className="flex items-center gap-3 px-3 py-2 text-sm text-foreground hover:bg-background-secondary rounded-lg transition-colors text-left"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                        />
+                      </svg>
+                      {t('reader.search')}
+                    </button>
                     {capabilities?.canComment && (
                       <button
                         type="button"
