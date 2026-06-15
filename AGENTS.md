@@ -90,7 +90,8 @@ readonly MAX_PR_TITLE_LENGTH=72
 - **Skills catalog:** Run `ls .agents/skills/` or see `agents-docs/AVAILABLE_SKILLS.md`
 - **GOAP + ADR pattern:** See `plans/020-goap-sprint-141.md` + `plans/024-adr-warning-management.md`
 - **Learnings:** See `agents-docs/LEARNINGS.md`
-- **Current phase:** See `plans/archive/007-implementation-phases.md`
+- **Current phase:** All 28 swarm gaps (G1–G28) closed as of 2026-06-15. See `analysis/SWARM_ANALYSIS.md` for resolution evidence. Remaining work: rate limiter DO cutover (Sprint 141 carry-over).
+- **Swarm completion:** See `plans/097-goap-swarm-close-all-gaps.md` for final execution record.
 
 ---
 
