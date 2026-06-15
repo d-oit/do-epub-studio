@@ -3,12 +3,12 @@ import { useShallow } from 'zustand/react/shallow';
 import { useParams, useNavigate } from 'react-router-dom';
 import { createSpanId, createTraceId } from '@do-epub-studio/shared';
 import { useTranslation } from '../../hooks/useTranslation';
-import { apiRequest } from '../../lib/api';
+import { apiRequest } from '../../lib/api/index';
 import { logClientEvent } from '../../lib/client-logger';
-import { fetchHighlights, fetchComments } from '../../lib/api/annotations';
+import { fetchHighlights, fetchComments, fetchProgress } from '../../lib/api/index';
 import { useAuthStore, useReaderStore, usePreferencesStore } from '../../stores';
 import type { Bookmark } from '../../stores';
-import { setupOnlineListener, getSyncQueue } from '../../lib/offline';
+import { setupOnlineListener, getSyncQueue, getProgress } from '../../lib/offline';
 import { setupZombieDetection } from '../../lib/offline/permissions';
 import { AnnotationToolbar, extractSelectionData, CommentsPanel } from './components/annotations';
 import {
@@ -59,6 +59,8 @@ export function ReaderPage() {
   const setOffline = useReaderStore((s) => s.setOffline);
   const setPendingSyncCount = useReaderStore((s) => s.setPendingSyncCount);
   const setPermissionStatus = useReaderStore((s) => s.setPermissionStatus);
+  const progress = useReaderStore((s) => s.progress);
+  const setProgress = useReaderStore((s) => s.setProgress);
   const bookDirection = useReaderStore((s) => s.bookDirection);
   const highlights = useReaderStore(useShallow((s) => s.highlights));
   const setHighlights = useReaderStore((s) => s.setHighlights);
@@ -102,6 +104,7 @@ export function ReaderPage() {
 
   const [epubUrl, setEpubUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const initialNavDone = useRef(false);
 
   const handleNavigateToAnnotation = useCallback(
     async (chapterRef: string, cfiRange?: string) => {
@@ -130,29 +133,63 @@ export function ReaderPage() {
   useEffect(() => {
     if (!sessionToken || !bookId) return;
     const load = async () => {
+      let source: 'server' | 'offline' | 'default' = 'default';
       try {
-        const [hl, cm, bm] = await Promise.all([
+        const [hl, cm, bm, pg] = await Promise.all([
           fetchHighlights(bookId, sessionToken),
           fetchComments(bookId, sessionToken),
           apiRequest<Bookmark[]>(`/api/books/${bookId}/bookmarks`, { token: sessionToken }),
+          fetchProgress(bookId, sessionToken),
         ]);
         setHighlights(hl);
         setComments(cm);
         setBookmarks(bm);
+        setProgress(pg);
+        source = 'server';
       } catch (err) {
         const error = err instanceof Error ? err : new Error(String(err));
         logClientEvent({
           level: 'warn',
-          event: 'reader.annotations_fetch_failed',
+          event: 'reader.load_failed',
           traceId: createTraceId(),
           spanId: createSpanId(),
           error: { name: error.name, message: error.message, stack: error.stack },
           metadata: { bookId },
         });
+
+        // Fallback to offline progress if server fetch fails
+        try {
+          const cached = await getProgress(bookId);
+          if (cached) {
+            setProgress({
+              locator: { cfi: cached.cfi },
+              progressPercent: cached.percentage,
+              updatedAt: new Date(cached.lastRead).toISOString(),
+            });
+            source = 'offline';
+          }
+        } catch {
+          /* ignore cache errors */
+        }
+      } finally {
+        logClientEvent({
+          level: 'info',
+          event: 'reader.progress_loaded',
+          traceId: createTraceId(),
+          spanId: createSpanId(),
+          metadata: { bookId, source },
+        });
       }
     };
     void load();
-  }, [sessionToken, bookId, setHighlights, setComments, setBookmarks]);
+  }, [sessionToken, bookId, setHighlights, setComments, setBookmarks, setProgress]);
+
+  useEffect(() => {
+    if (renditionRef.current && progress.locator?.cfi && !initialNavDone.current) {
+      initialNavDone.current = true;
+      void renditionRef.current.display(progress.locator.cfi);
+    }
+  }, [progress.locator?.cfi, renditionRef]);
 
   useEffect(() => {
     const onMouseUp = () => {
@@ -294,7 +331,7 @@ export function ReaderPage() {
       <AnimatePresence>
         {activePanel === 'settings' && (
           <ReaderSettingsPanel
-            isOpen={activePanel === 'settings'}
+            isOpen
             onClose={() => setActivePanel(null)}
             theme={readerTheme}
             fontSize={readerFontSize}
@@ -312,7 +349,7 @@ export function ReaderPage() {
         )}
         {activePanel === 'info' && (
           <InfoPanel
-            isOpen={activePanel === 'info'}
+            isOpen
             onClose={() => setActivePanel(null)}
             metadata={metadata}
             t={tFn}
@@ -338,15 +375,19 @@ export function ReaderPage() {
         viewerRef={viewerRef}
         notAvailableText={t('reader.notAvailable')}
       />
-      <TableOfContents
-        isOpen={activePanel === 'toc'}
-        toc={toc}
-        currentChapter={currentChapter}
-        onClose={() => setActivePanel(null)}
-        onNavigate={(href) => void navigateToChapter(href)}
-        t={tFn}
-        direction={bookDirection === 'rtl' ? 'rtl' : undefined}
-      />
+      <AnimatePresence>
+        {activePanel === 'toc' && (
+          <TableOfContents
+            isOpen
+            toc={toc}
+            currentChapter={currentChapter}
+            onClose={() => setActivePanel(null)}
+            onNavigate={(href) => void navigateToChapter(href)}
+            t={tFn}
+            direction={bookDirection === 'rtl' ? 'rtl' : undefined}
+          />
+        )}
+      </AnimatePresence>
       {selection && capabilities?.canHighlight && (
         <AnnotationToolbar
           selection={selection}
@@ -385,32 +426,40 @@ export function ReaderPage() {
         placeholder={t('comment.placeholder')}
         submitLabel={t('annotation.comment')}
       />
-      <BookmarksPanel
-        isOpen={activePanel === 'bookmarks'}
-        bookmarks={bookmarks}
-        onClose={() => setActivePanel(null)}
-        onAddBookmark={() => void handleCreateBookmark(currentChapterRef, toc)}
-        onDeleteBookmark={(id) => handleDeleteBookmark(id)}
-        onNavigate={(bookmark) => {
-          if (bookmark.locator.cfi && renditionRef.current)
-            void renditionRef.current.display(bookmark.locator.cfi);
-        }}
-      />
-      <CommentsPanel
-        isOpen={activePanel === 'comments'}
-        onClose={() => setActivePanel(null)}
-        comments={comments}
-        highlights={highlights}
-        currentChapter={currentChapter}
-        locale={locale}
-        onResolveComment={(id) => void handleResolveComment(id)}
-        onReplyToComment={(id, text) => void handleReplyToComment(id, text)}
-        onEditComment={(id, text) => void handleEditComment(id, text)}
-        onDeleteComment={(id) => void handleDeleteComment(id)}
-        onEditHighlight={(id, note) => void handleEditHighlight(id, note)}
-        onDeleteHighlight={(id) => void handleDeleteHighlight(id)}
-        onNavigateToAnnotation={(ref, cfi) => void handleNavigateToAnnotation(ref, cfi)}
-      />
+      <AnimatePresence>
+        {activePanel === 'bookmarks' && (
+          <BookmarksPanel
+            isOpen
+            bookmarks={bookmarks}
+            onClose={() => setActivePanel(null)}
+            onAddBookmark={() => void handleCreateBookmark(currentChapterRef, toc)}
+            onDeleteBookmark={(id) => handleDeleteBookmark(id)}
+            onNavigate={(bookmark) => {
+              if (bookmark.locator.cfi && renditionRef.current)
+                void renditionRef.current.display(bookmark.locator.cfi);
+            }}
+          />
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {activePanel === 'comments' && (
+          <CommentsPanel
+            isOpen
+            onClose={() => setActivePanel(null)}
+            comments={comments}
+            highlights={highlights}
+            currentChapter={currentChapter}
+            locale={locale}
+            onResolveComment={(id) => void handleResolveComment(id)}
+            onReplyToComment={(id, text) => void handleReplyToComment(id, text)}
+            onEditComment={(id, text) => void handleEditComment(id, text)}
+            onDeleteComment={(id) => void handleDeleteComment(id)}
+            onEditHighlight={(id, note) => void handleEditHighlight(id, note)}
+            onDeleteHighlight={(id) => void handleDeleteHighlight(id)}
+            onNavigateToAnnotation={(ref, cfi) => void handleNavigateToAnnotation(ref, cfi)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

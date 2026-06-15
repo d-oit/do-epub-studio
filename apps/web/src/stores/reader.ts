@@ -5,6 +5,7 @@ import type { AnnotationLocator } from '@do-epub-studio/shared';
 
 export type PageDirection = 'ltr' | 'rtl' | 'default';
 export type WritingMode = 'horizontal-tb' | 'vertical-rl' | 'vertical-lr';
+export type ReaderPanel = 'toc' | 'settings' | 'comments' | 'bookmarks' | 'info' | 'search' | null;
 
 /** @deprecated Use AnnotationLocator from @do-epub-studio/shared directly */
 export type Locator = AnnotationLocator;
@@ -63,6 +64,7 @@ interface ReaderState {
   bookDirection: PageDirection;
   bookWritingMode: WritingMode;
   isFixedLayout: boolean;
+  activePanel: ReaderPanel;
   setProgress: (progress: ReadingProgress) => void;
   addBookmark: (bookmark: Bookmark) => void;
   removeBookmark: (id: string) => void;
@@ -88,6 +90,8 @@ interface ReaderState {
   setBookDirection: (direction: PageDirection) => void;
   setBookWritingMode: (writingMode: WritingMode) => void;
   setIsFixedLayout: (isFixedLayout: boolean) => void;
+  setActivePanel: (panel: ReaderPanel) => void;
+  togglePanel: (panel: ReaderPanel) => void;
 }
 
 /**
@@ -157,6 +161,7 @@ export const useReaderStore = create<ReaderState>((set) => ({
   bookDirection: 'default',
   bookWritingMode: 'horizontal-tb',
   isFixedLayout: false,
+  activePanel: null,
   conflicts: [],
   setConflicts: (conflicts) => set({ conflicts }),
   addConflict: (conflict) =>
@@ -225,4 +230,6 @@ export const useReaderStore = create<ReaderState>((set) => ({
   setBookDirection: (direction) => set({ bookDirection: direction }),
   setBookWritingMode: (writingMode) => set({ bookWritingMode: writingMode }),
   setIsFixedLayout: (isFixedLayout) => set({ isFixedLayout }),
+  setActivePanel: (panel) => set({ activePanel: panel }),
+  togglePanel: (panel) => set((state) => ({ activePanel: state.activePanel === panel ? null : panel })),
 }));
