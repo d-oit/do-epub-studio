@@ -11,8 +11,8 @@ describe('Security Posture (Web)', () => {
     // We don't need to instantiate the store to check the persist options
     // but the store is already exported.
 
-    // @ts-expect-error - accessing internal persist options
-    const persistOptions = useAuthStore.persist?.getOptions();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const persistOptions = (useAuthStore as any).persist?.getOptions();
     expect(persistOptions?.name).toBe('do-epub-auth');
     expect(persistOptions?.storage?.getItem).toBeDefined();
     // Default storage is localStorage if not specified otherwise
@@ -21,8 +21,8 @@ describe('Security Posture (Web)', () => {
 
   it('asserts no other stores use localStorage for sensitive data', () => {
     // locale is fine in localStorage
-    // @ts-expect-error - internal access
-    const localePersist = useLocaleStore.persist?.getOptions();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const localePersist = (useLocaleStore as any).persist?.getOptions();
     expect(localePersist?.name).toBe('do-epub-locale');
 
     // preferences MUST use cookieStorage, not localStorage (per memory/ADR-092)
