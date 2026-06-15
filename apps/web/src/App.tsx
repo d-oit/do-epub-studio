@@ -3,6 +3,7 @@ import { Route, Navigate } from 'react-router-dom';
 import { ViewTransitionRoutes } from './components/ViewTransitionRoutes';
 import { useAuthStore } from './stores/auth';
 import { useThemeSync } from './hooks/useThemeSync';
+import { useSessionExpiry } from './hooks/useSessionExpiry';
 import { useTranslation } from './hooks/useTranslation';
 import { LoginPage } from './features/auth/LoginPage';
 import { AdminLoginPage } from './features/admin/AdminLoginPage';
@@ -90,6 +91,7 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
 
 export function App() {
   useThemeSync();
+  useSessionExpiry();
 
   return (
     <Suspense fallback={<LoadingFallback />}>

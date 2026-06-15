@@ -4,6 +4,65 @@ import type { SignedUrlResponse } from '@do-epub-studio/shared';
 export type { SignedUrlResponse };
 
 const SIGNED_URL_EXPIRY_SECONDS = 3600;
+const HEAD_METADATA_CACHE_MAX = 200;
+const HEAD_METADATA_TTL_MS = SIGNED_URL_EXPIRY_SECONDS * 1000;
+const FALLBACK_MIME_TYPE = 'application/epub+zip';
+const FALLBACK_FILE_SIZE = 0;
+
+interface HeadCacheEntry {
+  fileSize: number;
+  mimeType: string;
+  expiresAt: number;
+}
+
+const headCache = new Map<string, HeadCacheEntry>();
+
+function cacheGet(key: string): HeadCacheEntry | null {
+  const entry = headCache.get(key);
+  if (!entry) return null;
+  if (entry.expiresAt <= Date.now()) {
+    headCache.delete(key);
+    return null;
+  }
+  // LRU: refresh insertion order so a re-read keeps the entry hot.
+  headCache.delete(key);
+  headCache.set(key, entry);
+  return entry;
+}
+
+function cacheSet(key: string, value: Omit<HeadCacheEntry, 'expiresAt'>): void {
+  if (headCache.size >= HEAD_METADATA_CACHE_MAX) {
+    const oldest = headCache.keys().next().value;
+    if (oldest) headCache.delete(oldest);
+  }
+  headCache.set(key, { ...value, expiresAt: Date.now() + HEAD_METADATA_TTL_MS });
+}
+
+async function readObjectMetadata(
+  env: Env,
+  bookId: string,
+  fileKey: string,
+): Promise<{ fileSize: number; mimeType: string } | null> {
+  const cacheKey = `${bookId}:${fileKey}`;
+  const cached = cacheGet(cacheKey);
+  if (cached) {
+    return { fileSize: cached.fileSize, mimeType: cached.mimeType };
+  }
+  try {
+    const obj = await env.BOOKS_BUCKET.head(fileKey);
+    if (!obj) {
+      return null;
+    }
+    const mimeType = obj.httpMetadata?.contentType || FALLBACK_MIME_TYPE;
+    const fileSize = typeof obj.size === 'number' ? obj.size : FALLBACK_FILE_SIZE;
+    cacheSet(cacheKey, { fileSize, mimeType });
+    return { fileSize, mimeType };
+  } catch {
+    // R2 may transiently fail; fall back to the safe default rather than
+    // failing the entire signed URL request.
+    return null;
+  }
+}
 
 async function getHmacKey(secret: string): Promise<CryptoKey> {
   const encoder = new TextEncoder();
@@ -49,11 +108,13 @@ export async function generateSignedUrl(
   const baseUrl = `${env.APP_BASE_URL}/api/files/${bookId}/${fileKey}`;
   const signedUrl = `${baseUrl}?expires=${expiresEpoch}&signature=${signature}`;
 
+  const meta = await readObjectMetadata(env, bookId, fileKey);
+
   return {
     url: signedUrl,
     expiresAt: expiresAt.toISOString(),
-    fileSize: 0,
-    mimeType: 'application/epub+zip',
+    fileSize: meta?.fileSize ?? FALLBACK_FILE_SIZE,
+    mimeType: meta?.mimeType ?? FALLBACK_MIME_TYPE,
   };
 }
 
@@ -94,4 +155,8 @@ export async function verifySignedUrlSignature(
   } catch {
     return false;
   }
+}
+
+export function _resetHeadCacheForTests(): void {
+  headCache.clear();
 }

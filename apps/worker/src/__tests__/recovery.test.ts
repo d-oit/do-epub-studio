@@ -111,7 +111,7 @@ describe('Access Recovery Routes', () => {
         canExportNotes: false,
         canManageAccess: false,
       });
-      mockCreateSession.mockResolvedValue('new-session-token');
+      mockCreateSession.mockResolvedValue({ token: 'new-session-token', expiresAt: '2030-01-01T00:00:00.000Z' });
 
       const res = await app.fetch(new Request('http://localhost/api/access/verify-recovery', {
         method: 'POST',

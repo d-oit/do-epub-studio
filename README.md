@@ -31,6 +31,8 @@ See [docs/setup-local.md](docs/setup-local.md) for detailed development environm
 - [Coding Guide](docs/coding-guide.md): Architectural patterns and conventions.
 - [Agent Config](AGENTS.md): Instructions and guardrails for AI agents.
 - [Security](docs/security.md): Security model and hardening.
+- [Security Posture](docs/security-posture.md): Standing decisions (auth, CSP, token storage) so audits don't re-litigate them.
+- [Observability](docs/observability-telemetry.md): Client telemetry contract and `VITE_TELEMETRY_ENDPOINT` behavior.
 
 ## License
 [MIT](LICENSE)

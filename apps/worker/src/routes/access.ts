@@ -84,7 +84,7 @@ accessRouter.post('/verify-recovery', zValidator('json', RecoveryVerifySchema), 
       );
     }
 
-    const sessionToken = await createSession(c.env, result.book.id, payload.email);
+    const session = await createSession(c.env, result.book.id, payload.email);
 
     await logAudit(c.env, {
       entityType: 'session',
@@ -97,7 +97,8 @@ accessRouter.post('/verify-recovery', zValidator('json', RecoveryVerifySchema), 
     return c.json({
       ok: true,
       data: {
-        sessionToken,
+        sessionToken: session.token,
+        expiresAt: session.expiresAt,
         book: {
           id: result.book.id,
           slug: result.book.slug,
@@ -159,7 +160,7 @@ accessRouter.post('/request', zValidator('json', AccessRequestSchema), async (c)
     );
   }
 
-  const sessionToken = await createSession(c.env, result.book.id, email);
+  const session = await createSession(c.env, result.book.id, email);
 
   await logAudit(c.env, {
     entityType: 'session',
@@ -172,7 +173,8 @@ accessRouter.post('/request', zValidator('json', AccessRequestSchema), async (c)
   return c.json({
     ok: true,
     data: {
-      sessionToken,
+      sessionToken: session.token,
+      expiresAt: session.expiresAt,
       book: {
         id: result.book.id,
         slug: result.book.slug,
@@ -233,14 +235,14 @@ accessRouter.post('/refresh', async (c) => {
     );
   }
 
-  const newToken = await createSession(c.env, result.bookId, result.session.email);
+  const newSession = await createSession(c.env, result.bookId, result.session.email);
 
   // Security: Implement token rotation by revoking the old session token
   await revokeSession(c.env, token);
 
   return c.json({
     ok: true,
-    data: { sessionToken: newToken },
+    data: { sessionToken: newSession.token, expiresAt: newSession.expiresAt },
   });
 });
 

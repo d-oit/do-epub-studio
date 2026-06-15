@@ -13,11 +13,16 @@ interface SessionRow {
 const SESSION_DURATION_MS = 7 * 24 * 60 * 60 * 1000;
 const SESSION_TOKEN_BYTES = 32;
 
+export interface CreatedSession {
+  token: string;
+  expiresAt: string;
+}
+
 export async function createSession(
   env: Env,
   bookId: string,
   email: string
-): Promise<string> {
+): Promise<CreatedSession> {
   const token = generateToken();
   const tokenHash = await hashToken(token);
   const expiresAt = new Date(Date.now() + SESSION_DURATION_MS).toISOString();
@@ -30,7 +35,7 @@ export async function createSession(
     [id, bookId, email.toLowerCase(), tokenHash, expiresAt]
   );
 
-  return token;
+  return { token, expiresAt };
 }
 
 export async function validateSession(
