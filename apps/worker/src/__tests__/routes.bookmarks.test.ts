@@ -8,6 +8,15 @@ import {
 } from './fixtures';
 import { app } from '../app';
 import type { AuthContext } from '../auth/middleware';
+import { assertBookAccess, parseLocatorRow } from '../lib/tenant-isolation';
+
+vi.mock('../lib/tenant-isolation', () => ({
+  parseLocatorRow: vi.fn(),
+  assertBookAccess: vi.fn(),
+}));
+
+const mockAssertBookAccess = assertBookAccess as ReturnType<typeof vi.fn>;
+const mockParseLocatorRow = parseLocatorRow as ReturnType<typeof vi.fn>;
 
 const authCtx: AuthContext = {
   email: 'user@example.com',
@@ -29,6 +38,15 @@ describe('Bookmark Routes', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockAssertBookAccess.mockResolvedValue(null);
+    mockParseLocatorRow.mockImplementation((_env, locatorJson) => {
+      if (!locatorJson) return Promise.resolve(null);
+      try {
+        return Promise.resolve(JSON.parse(locatorJson));
+      } catch {
+        return Promise.resolve(null);
+      }
+    });
   });
 
   describe('GET /api/books/:bookId/bookmarks', () => {
@@ -45,7 +63,7 @@ describe('Bookmark Routes', () => {
     it('returns bookmarks when authenticated', async () => {
       mockRequireAuth.mockResolvedValue(authCtx);
       mockQueryAll.mockResolvedValue([
-        { id: 'bm-1', book_id: 'book-1', user_email: 'user@example.com', locator_json: '{"cfi":"epubcfi(/6/4)"}', label: 'Chapter 1', created_at: '2025-01-01T00:00:00Z' },
+        { id: 'bm-1', book_id: 'book-1', user_email: 'user@example.com', locator_json: '{"cfi":"epubcfi(/6/4)","selectedText":"test","chapterRef":"Ch1"}', label: 'Chapter 1', created_at: '2025-01-01T00:00:00Z' },
       ]);
 
       const res = await app.fetch(

@@ -5,6 +5,7 @@ import type { AuthContext } from '../../auth/middleware';
 import { queryFirst, execute } from '../../db/client';
 import { ProgressUpdateSchema } from '@do-epub-studio/shared';
 import { readerAuth } from '../../middleware/auth';
+import { parseLocatorRow, assertBookAccess } from '../../lib/tenant-isolation';
 
 export const progressRouter = new Hono<{ Bindings: Env; Variables: { auth: AuthContext } }>();
 
@@ -22,6 +23,9 @@ progressRouter.get('/:bookId/progress', readerAuth, async (c) => {
   const bookId = c.req.param('bookId');
   const auth = c.get('auth');
 
+  const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx);
+  if (mismatch) return mismatch.response;
+
   const progress = await queryFirst<ProgressRow>(
     c.env,
     `SELECT * FROM reading_progress WHERE book_id = ? AND user_email = ?`,
@@ -35,10 +39,17 @@ progressRouter.get('/:bookId/progress', readerAuth, async (c) => {
     });
   }
 
+  const locator = await parseLocatorRow(
+    c.env,
+    progress.locator_json,
+    { entityType: 'highlight', entityId: progress.id, bookId },
+    c.executionCtx,
+  );
+
   return c.json({
     ok: true,
     data: {
-      locator: JSON.parse(progress.locator_json) as Record<string, unknown>,
+      locator,
       progressPercent: progress.progress_percent,
       updatedAt: progress.updated_at,
     },
@@ -49,6 +60,9 @@ progressRouter.put('/:bookId/progress', zValidator('json', ProgressUpdateSchema)
   const bookId = c.req.param('bookId');
   const auth = c.get('auth');
   const body = c.req.valid('json');
+
+  const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx);
+  if (mismatch) return mismatch.response;
 
   if (!auth.capabilities.canRead) {
     return c.json({ ok: false, error: { code: 'FORBIDDEN', message: 'Access denied' } }, 403);

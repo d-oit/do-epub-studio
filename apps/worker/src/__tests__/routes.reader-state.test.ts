@@ -8,12 +8,21 @@ import {
   mockRequireAuth,
 } from './fixtures';
 import { app } from '../app';
+import { assertBookAccess } from '../lib/tenant-isolation';
+
+vi.mock('../lib/tenant-isolation', () => ({
+  parseLocatorRow: vi.fn(),
+  assertBookAccess: vi.fn(),
+}));
+
+const mockAssertBookAccess = assertBookAccess as ReturnType<typeof vi.fn>;
 
 describe('Reader State Routes', () => {
   const env = makeEnv();
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockAssertBookAccess.mockResolvedValue(null);
   });
 
   describe('GET /api/books/:bookId/progress', () => {
@@ -24,10 +33,11 @@ describe('Reader State Routes', () => {
     });
 
     it('returns progress when authenticated', async () => {
-      mockRequireAuth.mockResolvedValue({ email: 'user@example.com' } as any);
+      mockRequireAuth.mockResolvedValue({ email: 'user@example.com', bookId: 'book-1', sessionId: 'session-1' } as any);
 
       mockQueryFirst.mockResolvedValue({
-        locator_json: JSON.stringify({ cfi: 'epubcfi(/6/4)' }),
+        id: 'progress-1',
+        locator_json: JSON.stringify({ cfi: 'epubcfi(/6/4)', selectedText: 'test', chapterRef: 'Ch1' }),
         progress_percent: 50,
         updated_at: '2023-01-01T00:00:00Z',
       });

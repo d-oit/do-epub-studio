@@ -9,6 +9,7 @@ import {
   CommentCreateSchema,
   CommentUpdateSchema,
 } from '@do-epub-studio/shared';
+import { parseLocatorRow } from '../lib/tenant-isolation';
 
 export const commentsRouter = new Hono<{ Bindings: Env }>();
 
@@ -51,12 +52,16 @@ commentsRouter.get('/books/:bookId/comments', async (c) => {
     [bookId],
   );
 
-  return c.json({
-    ok: true,
-    data: comments.map((cm) => ({
+  const parsedComments = await Promise.all(
+    comments.map(async (cm) => ({
       id: cm.id,
       userEmail: cm.user_email,
-      locator: cm.locator_json ? JSON.parse(cm.locator_json) as Record<string, unknown> : null,
+      locator: await parseLocatorRow(
+        c.env,
+        cm.locator_json,
+        { entityType: 'comment', entityId: cm.id, bookId: cm.book_id },
+        c.executionCtx,
+      ),
       body: cm.body,
       visibility: cm.visibility,
       status: cm.status,
@@ -64,6 +69,11 @@ commentsRouter.get('/books/:bookId/comments', async (c) => {
       createdAt: cm.created_at,
       updatedAt: cm.updated_at,
     })),
+  );
+
+  return c.json({
+    ok: true,
+    data: parsedComments,
   });
 });
 
