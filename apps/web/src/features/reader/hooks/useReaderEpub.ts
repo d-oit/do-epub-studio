@@ -69,6 +69,7 @@ export function useReaderEpub(
   highlightsRef: React.MutableRefObject<HighlightRecord[]>,
   commentsRef: React.MutableRefObject<CommentRecord[]>,
   onNavigateToAnnotation: (chapterRef: string, cfiRange?: string) => void | Promise<void>,
+  progressCfi?: string,
 ) {
   const sessionToken = useAuthStore((s) => s.sessionToken);
   const bookId = useAuthStore((s) => s.bookId);
@@ -280,7 +281,7 @@ export function useReaderEpub(
           readerDirection !== 'default' ? readerDirection : bookDirection,
           readerWritingMode,
         );
-        await rendition.display();
+        await rendition.display(progressCfi);
         if (!active) return;
 
         const initialLocation = rendition.location;
@@ -358,6 +359,7 @@ export function useReaderEpub(
     viewerRef,
     sessionToken,
     bookId,
+    progressCfi,
     setCurrentChapter,
     setError,
     setProgress,

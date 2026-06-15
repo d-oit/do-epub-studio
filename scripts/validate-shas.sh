@@ -39,6 +39,8 @@ ALLOWED_SHAS=(
     "github/codeql-action/init@8aad20d150bbac5944a9f9d289da16a4b0d87c1e"
     "github/codeql-action/analyze@8aad20d150bbac5944a9f9d289da16a4b0d87c1e"
     "chromaui/action@d92ea1ce501f70e8c34745b2c7888648150a368a"
+    "actions/labeler@f27b608878404679385c85cfa523b85ccb86e213"
+    "chromaui/action@1db61b73b7919508ee8e62336f04bd0aed6da756"
 )
 
 # Function to check if an action@sha is allowed
