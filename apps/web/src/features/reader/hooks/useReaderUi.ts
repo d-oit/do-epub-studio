@@ -1,7 +1,9 @@
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
+import { useReaderStore } from '../../../stores/reader';
+import type { ReaderPanel } from '../../../stores/reader';
 import type { SelectionData } from '../components/annotations';
 
-export type ReaderPanel = 'toc' | 'settings' | 'comments' | 'bookmarks' | 'info' | 'search' | null;
+export type { ReaderPanel };
 
 interface UseReaderUIReturn {
   activePanel: ReaderPanel;
@@ -18,15 +20,14 @@ interface UseReaderUIReturn {
 }
 
 export function useReaderUI(): UseReaderUIReturn {
-  const [activePanel, setActivePanel] = useState<ReaderPanel>(null);
+  const activePanel = useReaderStore((s) => s.activePanel);
+  const setActivePanel = useReaderStore((s) => s.setActivePanel);
+  const togglePanel = useReaderStore((s) => s.togglePanel);
+
   const [isCommentMode, setIsCommentMode] = useState(false);
   const [showCommentInput, setShowCommentInput] = useState(false);
   const [selection, setSelection] = useState<SelectionData | null>(null);
   const [revokedBooks, setRevokedBooks] = useState<Set<string>>(new Set());
-
-  const togglePanel = useCallback((panel: ReaderPanel) => {
-    setActivePanel((prev) => (prev === panel ? null : panel));
-  }, []);
 
   return {
     activePanel,

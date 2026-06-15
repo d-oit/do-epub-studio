@@ -5,10 +5,10 @@ import { validateGrant, computeCapabilities, getGrantByBookAndSession, getGrants
 import { createSession, validateSession, revokeSession } from '../auth/session';
 import { logAudit } from '../audit';
 import { AccessRequestSchema, RecoveryRequestSchema, RecoveryVerifySchema } from '@do-epub-studio/shared';
+import { ValidateQuerySchema } from '@do-epub-studio/schema';
 import { sign, verify } from 'hono/jwt';
 import { checkRateLimitDO } from '../lib/rate-limit-client';
 import { queryFirst } from '../db/client';
-import { z } from 'zod';
 
 export const accessRouter = new Hono<{ Bindings: Env }>();
 
@@ -244,10 +244,6 @@ accessRouter.post('/refresh', async (c) => {
     ok: true,
     data: { sessionToken: newSession.token, expiresAt: newSession.expiresAt },
   });
-});
-
-const ValidateQuerySchema = z.object({
-  bookId: z.string().min(1),
 });
 
 accessRouter.get('/validate', zValidator('query', ValidateQuerySchema), async (c) => {
