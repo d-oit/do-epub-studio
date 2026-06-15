@@ -4,6 +4,7 @@ import type { Env } from '../lib/env';
 import { requireAuth } from '../auth/middleware';
 import { queryFirst, queryAll, execute } from '../db/client';
 import { logAudit } from '../audit';
+import { getGrantByBookAndSession, computeCapabilities } from '../auth/password';
 import {
   CommentCreateSchema,
   CommentUpdateSchema,
@@ -33,6 +34,14 @@ commentsRouter.get('/books/:bookId/comments', async (c) => {
     return c.json(
       { ok: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } },
       401,
+    );
+  }
+
+  const grant = await getGrantByBookAndSession(c.env, bookId, auth.email);
+  if (!grant) {
+    return c.json(
+      { ok: false, error: { code: 'FORBIDDEN', message: 'No grant for this book' } },
+      403,
     );
   }
 
@@ -69,7 +78,16 @@ commentsRouter.post('/books/:bookId/comments', zValidator('json', CommentCreateS
     );
   }
 
-  if (!auth.capabilities.canComment) {
+  const grant = await getGrantByBookAndSession(c.env, bookId, auth.email);
+  if (!grant) {
+    return c.json(
+      { ok: false, error: { code: 'FORBIDDEN', message: 'No grant for this book' } },
+      403,
+    );
+  }
+
+  const capabilities = computeCapabilities(grant);
+  if (!capabilities.canComment) {
     return c.json({ ok: false, error: { code: 'FORBIDDEN', message: 'Access denied' } }, 403);
   }
 
