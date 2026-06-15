@@ -38,8 +38,6 @@
 | 082 | Reader Side-Panel Mutual Exclusivity | `plans/082-adr-reader-side-panel-mutual-exclusivity.md` | Accepted (this PR) |
 | 083 | ADR Numbering Policy | `plans/083-adr-adr-numbering-policy.md` | Accepted (this PR) |
 | 092 | Token Storage and Feature-Gap Policy | `plans/092-adr-token-storage-and-feature-gap-policy.md` | Accepted (this PR) |
-| 095 | (GOAP) | `plans/095-goap-merge-orchestration-2026-06-15.md` | GOAP, not ADR |
-| 096 | Merge Order Policy for Multi-Issue Swarms | `plans/096-adr-merge-order-policy-2026-06-15.md` | Accepted (this PR) |
 
 ## Cross-referenced but not yet adopted
 
