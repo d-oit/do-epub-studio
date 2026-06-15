@@ -14,7 +14,7 @@ import { useReaderStore } from '../../../../stores/reader';
 import type { Comment, Bookmark } from '../../../../stores/reader';
 import type { TranslationKeys } from '../../../../i18n';
 
-import type { ReaderPanel } from '../../hooks/useReaderUi';
+import type { ReaderPanel } from '../../../../stores/reader';
 
 interface ReaderToolbarProps {
   bookTitle: string | null;

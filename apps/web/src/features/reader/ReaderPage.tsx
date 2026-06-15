@@ -320,7 +320,7 @@ export function ReaderPage() {
         )}
         {activePanel === 'search' && (
           <SearchPanel
-            isOpen
+            isOpen={activePanel === 'search'}
             book={bookRef.current}
             onClose={() => { setActivePanel(null); }}
             onNavigate={(cfi) => {
