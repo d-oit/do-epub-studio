@@ -331,7 +331,7 @@ export function ReaderPage() {
       <AnimatePresence>
         {activePanel === 'settings' && (
           <ReaderSettingsPanel
-            isOpen={activePanel === 'settings'}
+            isOpen
             onClose={() => setActivePanel(null)}
             theme={readerTheme}
             fontSize={readerFontSize}
@@ -349,7 +349,7 @@ export function ReaderPage() {
         )}
         {activePanel === 'info' && (
           <InfoPanel
-            isOpen={activePanel === 'info'}
+            isOpen
             onClose={() => setActivePanel(null)}
             metadata={metadata}
             t={tFn}
@@ -375,15 +375,19 @@ export function ReaderPage() {
         viewerRef={viewerRef}
         notAvailableText={t('reader.notAvailable')}
       />
-      <TableOfContents
-        isOpen={activePanel === 'toc'}
-        toc={toc}
-        currentChapter={currentChapter}
-        onClose={() => setActivePanel(null)}
-        onNavigate={(href) => void navigateToChapter(href)}
-        t={tFn}
-        direction={bookDirection === 'rtl' ? 'rtl' : undefined}
-      />
+      <AnimatePresence>
+        {activePanel === 'toc' && (
+          <TableOfContents
+            isOpen
+            toc={toc}
+            currentChapter={currentChapter}
+            onClose={() => setActivePanel(null)}
+            onNavigate={(href) => void navigateToChapter(href)}
+            t={tFn}
+            direction={bookDirection === 'rtl' ? 'rtl' : undefined}
+          />
+        )}
+      </AnimatePresence>
       {selection && capabilities?.canHighlight && (
         <AnnotationToolbar
           selection={selection}
@@ -422,32 +426,40 @@ export function ReaderPage() {
         placeholder={t('comment.placeholder')}
         submitLabel={t('annotation.comment')}
       />
-      <BookmarksPanel
-        isOpen={activePanel === 'bookmarks'}
-        bookmarks={bookmarks}
-        onClose={() => setActivePanel(null)}
-        onAddBookmark={() => void handleCreateBookmark(currentChapterRef, toc)}
-        onDeleteBookmark={(id) => handleDeleteBookmark(id)}
-        onNavigate={(bookmark) => {
-          if (bookmark.locator.cfi && renditionRef.current)
-            void renditionRef.current.display(bookmark.locator.cfi);
-        }}
-      />
-      <CommentsPanel
-        isOpen={activePanel === 'comments'}
-        onClose={() => setActivePanel(null)}
-        comments={comments}
-        highlights={highlights}
-        currentChapter={currentChapter}
-        locale={locale}
-        onResolveComment={(id) => void handleResolveComment(id)}
-        onReplyToComment={(id, text) => void handleReplyToComment(id, text)}
-        onEditComment={(id, text) => void handleEditComment(id, text)}
-        onDeleteComment={(id) => void handleDeleteComment(id)}
-        onEditHighlight={(id, note) => void handleEditHighlight(id, note)}
-        onDeleteHighlight={(id) => void handleDeleteHighlight(id)}
-        onNavigateToAnnotation={(ref, cfi) => void handleNavigateToAnnotation(ref, cfi)}
-      />
+      <AnimatePresence>
+        {activePanel === 'bookmarks' && (
+          <BookmarksPanel
+            isOpen
+            bookmarks={bookmarks}
+            onClose={() => setActivePanel(null)}
+            onAddBookmark={() => void handleCreateBookmark(currentChapterRef, toc)}
+            onDeleteBookmark={(id) => handleDeleteBookmark(id)}
+            onNavigate={(bookmark) => {
+              if (bookmark.locator.cfi && renditionRef.current)
+                void renditionRef.current.display(bookmark.locator.cfi);
+            }}
+          />
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {activePanel === 'comments' && (
+          <CommentsPanel
+            isOpen
+            onClose={() => setActivePanel(null)}
+            comments={comments}
+            highlights={highlights}
+            currentChapter={currentChapter}
+            locale={locale}
+            onResolveComment={(id) => void handleResolveComment(id)}
+            onReplyToComment={(id, text) => void handleReplyToComment(id, text)}
+            onEditComment={(id, text) => void handleEditComment(id, text)}
+            onDeleteComment={(id) => void handleDeleteComment(id)}
+            onEditHighlight={(id, note) => void handleEditHighlight(id, note)}
+            onDeleteHighlight={(id) => void handleDeleteHighlight(id)}
+            onNavigateToAnnotation={(ref, cfi) => void handleNavigateToAnnotation(ref, cfi)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
