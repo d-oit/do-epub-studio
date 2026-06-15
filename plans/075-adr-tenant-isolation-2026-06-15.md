@@ -41,13 +41,13 @@ per-book:
 > parameter and is authenticated by `readerAuth` MUST have
 > `auth.bookId === :bookId`. If they differ, return
 > `403 FORBIDDEN` with code `BOOK_SESSION_MISMATCH`.
-
+>
 > **Invariant 075.2** — A read that returns rows containing
 > locator JSON MUST re-validate each row's `*_locator_json` with
 > `MultiSignalLocatorSchema.parse()` inside a try/catch. On
 > failure, log a `corrupt_locator` audit event and exclude the
 > row from the response.
-
+>
 > **Invariant 075.3** — A request that mutates or reads a
 > `comments` row MUST join against `book_access_grants` filtered
 > by the session user's email and the URL `:bookId`. A row whose

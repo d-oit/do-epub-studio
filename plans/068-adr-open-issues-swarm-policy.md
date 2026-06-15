@@ -88,4 +88,4 @@ The "swarm open-issues" pattern — used by the 2026-04, 2026-05,
 ## Compliance
 
 - AGENTS.md TIER-2 rule 8 — gaps are documented as GOAP plans
-  + ADRs.
+  and ADRs.
