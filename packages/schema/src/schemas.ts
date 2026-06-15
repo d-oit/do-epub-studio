@@ -163,6 +163,48 @@ export const AuditQuerySchema = z.object({
   to: z.string().datetime().optional(),
 });
 
+export const LoginSchema = z.object({
+  email: z.string().email().max(255),
+  password: z.string().min(1).max(255),
+});
+
+export const ValidateQuerySchema = z.object({
+  bookId: z.string().min(1).max(255),
+});
+
+export const SignedUrlSchema = z.object({
+  expires: z.string().min(1).max(64),
+  signature: z.string().min(1).max(255),
+});
+
+export const UploadCompleteSchema = z.object({
+  storageKey: z.string().min(1).max(1024),
+  originalFilename: z.string().min(1).max(500),
+  mimeType: z.string().max(200).optional(),
+  fileSizeBytes: z.number().int().nonnegative().optional(),
+  sha256: z.string().max(64).optional(),
+  epubVersion: z.string().max(10).optional(),
+  validationResults: z
+    .object({
+      isValid: z.boolean(),
+      errors: z.array(z.string().max(1000)),
+      warnings: z.array(z.string().max(1000)),
+      epubVersion: z.string().max(10).optional(),
+    })
+    .optional(),
+});
+
+export function formatZodError(error: {
+  issues: Array<{ path: (string | number)[]; message: string }>;
+}): string {
+  return error.issues
+    .map((issue) => {
+      const path = issue.path.length > 0 ? issue.path.join('.') + ': ' : '';
+      return path + issue.message;
+    })
+    .join('; ');
+}
+
 export type AccessRequest = z.infer<typeof AccessRequestSchema>;
 export type RecoveryRequest = z.infer<typeof RecoveryRequestSchema>;
 export type RecoveryVerify = z.infer<typeof RecoveryVerifySchema>;
