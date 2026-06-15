@@ -38,6 +38,7 @@ readonly MAX_PR_TITLE_LENGTH=72
 - **MUST adhere to the compensating controls and security decisions in `docs/security-posture.md` when modifying auth or resource loading.**
 - **MUST verify git worktree branch matches PR head branch before pushing.** Use `git branch --show-current` (in worktree) + `gh pr view <N> --json headRefName` to confirm. Pushing to a wrong branch won't trigger CI for the PR. Use `git push origin <worktree-branch>:<pr-head-branch> --force` to target the correct branch.**
 - **MUST use semantic design tokens (\`text-foreground\`, \`bg-background\`, etc.) from \`globals.css\` for all UI components to ensure WCAG 2.1 AA accessibility compliance per ADR-063.**
+- **NEVER merge a PR with failing CI checks.** Before merging, verify ALL required checks pass via `gh pr checks <N>`. Bypassing with `--admin` is forbidden unless: (a) the failure is a known pre-existing external check (e.g., Codacy ACTION_REQUIRED on non-diff code), AND (b) all local quality gates pass, AND (c) the failure is documented in the PR body. Any other case requires fixing the failure first.
 
 ---
 
