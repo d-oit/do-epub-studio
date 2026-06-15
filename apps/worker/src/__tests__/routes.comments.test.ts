@@ -6,6 +6,8 @@ import {
   mockQueryAll,
   mockExecute,
   mockRequireAuth,
+  mockGetGrantByBookAndSession,
+  mockComputeCapabilities,
 } from './fixtures';
 import { app } from '../app';
 
@@ -25,6 +27,7 @@ describe('Comments Routes', () => {
 
     it('returns list of comments when authenticated', async () => {
       mockRequireAuth.mockResolvedValue({ email: 'user@example.com' } as any);
+      mockGetGrantByBookAndSession.mockResolvedValue({ id: 'grant-1' });
 
       mockQueryAll.mockResolvedValue([
         { id: '1', body: 'cool', user_email: 'other@ex.com', status: 'open', visibility: 'shared', created_at: 'now', updated_at: 'now' }
@@ -45,6 +48,8 @@ describe('Comments Routes', () => {
         email: 'user@example.com',
         capabilities: { canComment: true },
       } as any);
+      mockGetGrantByBookAndSession.mockResolvedValue({ id: 'grant-1' });
+      mockComputeCapabilities.mockReturnValue({ canComment: true });
       mockExecute.mockResolvedValue({} as any);
 
       const res = await app.fetch(new Request('http://localhost/api/books/book-1/comments', {
