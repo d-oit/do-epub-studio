@@ -39,11 +39,14 @@ Run the full quality gate:
 
 This runs lint, typecheck, test with coverage, build, and e2e smoke tests. Fix all failures before committing.
 
-Coverage thresholds are enforced:
-- web: 40% lines, 30% functions
+Coverage thresholds are enforced (canonical source: `AGENTS.md`):
+- web: 55% lines, 48% functions
 - worker: 55% lines, 50% functions
-- shared: 25% lines, 5% functions
-- reader-core: 75% lines, 70% functions
+- shared: 40% lines, 50% functions
+- reader-core: 72% lines, 70% functions
+- schema: 15% lines, 5% functions
+- testkit: 25% lines, 20% functions
+- ui: 10% lines, 5% functions
 
 ## Running Tests
 
