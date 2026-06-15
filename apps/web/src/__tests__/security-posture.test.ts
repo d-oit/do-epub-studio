@@ -11,8 +11,7 @@ describe('Security Posture (Web)', () => {
     // We don't need to instantiate the store to check the persist options
     // but the store is already exported.
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const persistOptions = (useAuthStore as any).persist?.getOptions();
+    const persistOptions = (useAuthStore as unknown as { persist?: { getOptions: () => { name: string, storage: any } } }).persist?.getOptions();
     expect(persistOptions?.name).toBe('do-epub-auth');
     expect(persistOptions?.storage?.getItem).toBeDefined();
     // Default storage is localStorage if not specified otherwise
@@ -21,8 +20,7 @@ describe('Security Posture (Web)', () => {
 
   it('asserts no other stores use localStorage for sensitive data', () => {
     // locale is fine in localStorage
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const localePersist = (useLocaleStore as any).persist?.getOptions();
+    const localePersist = (useLocaleStore as unknown as { persist?: { getOptions: () => { name: string } } }).persist?.getOptions();
     expect(localePersist?.name).toBe('do-epub-locale');
 
     // preferences MUST use cookieStorage, not localStorage (per memory/ADR-092)
@@ -38,15 +36,15 @@ describe('Security Posture (Web)', () => {
 
     // Match the CSP header line
     const cspMatch = content.match(/Content-Security-Policy: ([^;]+(?:; [^;]+)*);/);
-    expect(cspMatch).not.toBeNull();
+    if (!cspMatch) throw new Error('CSP header not found');
 
-    const csp = cspMatch![1];
+    const csp = cspMatch[1];
 
     // Compensating control 1: Strict script-src (no 'unsafe-inline', no 'unsafe-eval')
     // Note: 'wasm-unsafe-eval' is permitted per docs/security-posture.md
     const scriptSrcMatch = csp.match(/script-src ([^;]+)/);
     expect(scriptSrcMatch).not.toBeNull();
-    const scriptSrc = scriptSrcMatch![1];
+    const scriptSrc = scriptSrcMatch?.[1] ?? '';
 
     const tokens = scriptSrc.split(' ');
     expect(tokens).toContain("'self'");
