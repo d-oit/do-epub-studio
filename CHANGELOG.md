@@ -4,10 +4,15 @@
 
 - feat(reader): add Search side-panel to EPUB reader (PR #525, plan 093)
 - feat(security): session-expiry handling, signed-URL metadata, security posture docs (PR #527, plan 094 / plan 092 resolution)
+- feat(auth): add email transport, admin recovery, and book CRUD (#563)
+- fix(security): add tenant isolation and locator validation (#562)
+- fix(reader): wire initial progress load on reader open (#566)
+- feat(web): enforce reader side-panel mutual exclusivity (#552)
+- feat(admin): integrate orphan grant management components (#560)
+- test(security): implement G23 security posture regression tests (#559)
 - docs(security): bring `docs/security-posture.md` and `docs/security-postability-telemetry.md` current with ADR-092
-- docs(analysis): refresh SWARM_ANALYSIS.md for 2026-06-15 (this PR)
-- docs(plans): add plan 075 master GOAP, ADRs 068/075/078/080/081/082/083/092, ADR-INDEX, plans 076/077/079/084 (this PR)
-- docs(contributing): align coverage thresholds with AGENTS.md (this PR)
+- docs(analysis): refresh SWARM_ANALYSIS.md for 2026-06-15 (#530)
+- docs(plans): add plan 075 master GOAP, ADRs 068/075/078/080/081/082/083/092, ADR-INDEX, plans 076/077/079/084
 
 ## [0.1.1] - 2026-06-14
 
