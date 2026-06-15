@@ -1,16 +1,6 @@
 import type { MiddlewareHandler } from 'hono';
 import type { Env } from '../lib/env';
-
-export function formatZodError(error: {
-  issues: Array<{ path: (string | number)[]; message: string }>;
-}): string {
-  return error.issues
-    .map((issue) => {
-      const path = issue.path.length > 0 ? issue.path.join('.') + ': ' : '';
-      return path + issue.message;
-    })
-    .join('; ');
-}
+import { formatZodError } from '@do-epub-studio/shared';
 
 /**
  * Global middleware that reformats zod validation errors from zValidator

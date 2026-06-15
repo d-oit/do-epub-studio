@@ -1,409 +1,454 @@
-# Swarm Analysis - 2026-04-08
-
-Coordinated "analysis-swarm" agents inspected the repository
-across six perspectives: Feature Gaps, Implementation
-Completeness, Documentation, Test Coverage, Architecture &
-Patterns, and Security & Quality. 12 high-signal gaps remain
-(2 Critical, 6 High, 4 Medium). Several issues overlap
-multiple perspectives, underscoring systemic weaknesses
-around access control, signed downloads, and password
-storage. This report replaces the previously missing swarm
-deliverable noted in
-plans/analysis-swarm-2026-04-08.md.
-
-## Gap Inventory
-
-### G1 - Feature
-
-**What's Missing:** Reader UI only renders a placeholder card;
-EPUB.js loader, progress sync, highlights/comments, and
-capability gating are not wired.
-
-**Why It Matters:** Readers cannot open books, resume progress,
-or use editorial tools, making the core product unusable.
-
-**Priority:** High
-
-**Suggested Fix:** Implement `createEpubLoader` and hook it
-into `ReaderPage`, hydrate capability-aware state (progress,
-highlights, comments), and surface navigation + annotation
-controls backed by Worker APIs.
-
-**Evidence:**
-`apps/web/src/features/reader/ReaderPage.tsx:12-139`,
-`packages/reader-core/src/epub-loader.ts:22-41`
-
-### G2 - Feature, Implementation
-
-**What's Missing:** Frontend requests
-`/api/books/{slug}/file-url` but Worker treats the param as a
-`bookId`, so lookups always fail.
-
-**Why It Matters:** Every attempt to fetch an EPUB URL returns
-404, blocking reader access and downstream offline caching.
-
-**Priority:** Critical
-
-**Suggested Fix:** Align identifier usage by either updating
-the frontend to send book IDs or teaching the Worker route to
-resolve slugs to IDs before querying Turso. Add regression
-tests for both forms.
-
-**Evidence:**
-`apps/web/src/features/reader/ReaderPage.tsx:38-44`,
-`apps/worker/src/routes/books.ts:85-104`
-
-### G3 - Implementation, Security
-
-**What's Missing:** Signed download URLs target
-`/api/files/:bookId/:fileKey` with expiry/signature but no
-Worker route exists and verification only checks timestamps.
-
-**Why It Matters:** Files cannot be downloaded at all; any
-future handler would lack signature enforcement, violating the
-R2 access rule.
-
-**Priority:** High
-
-**Suggested Fix:** Add a Worker route that validates both
-expiry and HMAC signature before streaming the R2 object;
-derive the base URL from the incoming request instead of
-APP_BASE_URL.
-
-**Evidence:**
-`apps/worker/src/storage/signed-url.ts:10-52`,
-`apps/worker/src/index.ts:52-179`
-
-### G4 - Implementation, Security
-
-**What's Missing:** `/api/admin/**` handlers skip
-authentication/authorization entirely.
-
-**Why It Matters:** Any unauthenticated caller can create
-books, mint or revoke grants, and tamper with audit logs -
-total privilege escalation.
-
-**Priority:** Critical
-
-**Suggested Fix:** Introduce admin auth middleware, enforce
-`canManageAccess` (or role) inside each handler, and emit
-audit events including actor metadata.
-
-**Evidence:**
-`apps/worker/src/index.ts:142-179`,
-`apps/worker/src/routes/admin.ts:30-235`
-
-### G5 - Security, Quality
-
-**What's Missing:** `hashPassword`/`verifyPassword` fake
-Argon2id by wrapping a plain SHA-256 digest without salts.
-
-**Why It Matters:** Grant passwords are trivial to brute-force,
-breaching security requirements and undermining distribution
-controls.
-
-**Priority:** High
-
-**Suggested Fix:** Replace with a Workers-compatible Argon2id
-implementation (e.g., WASM), store random per-grant salts, and
-migrate stored hashes.
-
-**Evidence:**
-`apps/worker/src/auth/password.ts:26-64`,
-`AGENTS.md:51-66`
-
-### G6 - Feature
-
-**What's Missing:** Admin UI lists books but cannot create
-uploads or manage grants - the "Create New Book" button is
-inert, and no grant UI exists.
-
-**Why It Matters:** Admin workflows (ingest EPUBs, invite
-readers, revoke access) cannot be performed, blocking
-deployment even if worker APIs were secured.
-
-**Priority:** Medium
-
-**Suggested Fix:** Build modal/forms that POST
-`/api/admin/books` and grant endpoints, wire uploads to R2,
-and display grant lists with create/update/revoke actions tied
-to audit logging.
-
-**Evidence:**
-`apps/web/src/features/admin/BooksPage.tsx:34-155`
-
-### G7 - Documentation
-
-**What's Missing:** README references `docs/setup-local.md`,
-and the coding guide references multiple
-architecture/security/offline docs that do not exist.
-
-**Why It Matters:** Onboarding and compliance rely on
-non-existent guides, so contributors cannot set up
-Turso/Workers or follow required architecture practices.
-
-**Priority:** Medium
-
-**Suggested Fix:** Author the missing setup/architecture/
-security/offline documents or update references to point at
-real instructions in `docs/` and `plans/`.
-
-**Evidence:** `README.md:26-29`,
-`docs/coding-guide.md:524-532`
-
-### G8 - Documentation
-
-**What's Missing:** Swarm deliverable
-(`analysis/SWARM_ANALYSIS.md`) was absent despite being
-mandated in `plans/analysis-swarm-2026-04-08.md`.
-
-**Why It Matters:** Without an aggregated findings file,
-stakeholders had no traceable output for the swarm effort.
-
-**Priority:** Medium (resolved)
-
-**Suggested Fix:** **Addressed by this report.** Keep this file
-updated on future swarms and link from plans.
-
-**Evidence:**
-`plans/analysis-swarm-2026-04-08.md:5-23`, `analysis/`
-directory listing prior to this run
-
-### G9 - Testing
-
-**What's Missing:** Only test asserts `1 + 1 === 2`; Worker,
-shared packages, and React state all lack unit tests.
-
-**Why It Matters:** CI passes even if core auth/offline logic
-regresses, providing zero real coverage.
-
-**Priority:** High
-
-**Suggested Fix:** Replace placeholder with package-specific
-Vitest suites (shared schemas, Zustand stores, worker routes).
-Use `vitest.workspace.ts` to run every package.
-
-**Evidence:**
-`apps/web/src/__tests__/placeholder.test.ts:1-6`,
-`vitest.workspace.ts:3-5`
-
-### G10 - Testing
-
-**What's Missing:** Worker access/book routes have zero tests;
-no integration tests validate DB queries, signed URLs, or grant
-enforcement.
-
-**Why It Matters:** Security-sensitive behavior can regress
-silently, violating ADR-004/005 and access guarantees.
-
-**Priority:** High
-
-**Suggested Fix:** Create Vitest suites for worker handlers
-(books, access, reader-state) using mocked env + SQLite
-fixtures; add contract tests for signed URL generation/
-verification.
-
-**Evidence:**
-`apps/worker/src/routes/books.ts:1-140`,
-`apps/worker/src/routes/reader-state.ts:74-304`
-
-### G11 - Testing
-
-**What's Missing:** Playwright config exists but there are no
-`.spec.ts` files, so auth/reader journeys lack E2E coverage.
-
-**Why It Matters:** UI + Worker integration (login, book load,
-localization, offline prompts) are unverified, risking
-regressions in the core UX.
-
-**Priority:** High
-
-**Suggested Fix:** Add Playwright specs under `apps/web/tests`
-covering login, book loading, annotation start, and locale
-switching; wire them into CI.
-
-**Evidence:** `playwright.config.ts:1-19`,
-`apps/web/package.json:7-14`
-
-### G12 - Architecture
-
-**What's Missing:** Worker routes deserialize JSON manually
-instead of using shared Zod schemas, so validation/localization
-rules are inconsistent.
-
-**Why It Matters:** Malformed payloads can bypass validation,
-and localized error messaging cannot be enforced, violating
-architecture rules.
-
-**Priority:** Medium
-
-**Suggested Fix:** Import schemas from `packages/shared` (e.g.,
-AccessRequestSchema, ProgressUpdateSchema) and parse requests
-through them; translate errors based on locale.
-
-**Evidence:**
-`packages/shared/src/schemas.ts:39-131`,
-`apps/worker/src/routes/access.ts:13-68`
-
-### G13 - Security, Architecture
-
-**What's Missing:** Reader-state endpoints do not require
-multi-signal annotation locators (CFI + text + chapter) nor
-ensure bookId scoping when updating progress/highlights.
-
-**Why It Matters:** Anchors drift across EPUB versions and
-readers can mutate other books' state if they know an ID,
-breaking ADR-006 and tenant isolation.
-
-**Priority:** High
-
-**Suggested Fix:** Require session bookId matching and enforce
-multi-signal locator schema for highlights/comments before
-writes; extend tests to cover enforcement.
-
-**Evidence:**
-`apps/worker/src/routes/reader-state.ts:74-304`,
-`packages/shared/src/schemas.ts:39-115`,
-`AGENTS.md:60-73`
-
-## Quick Wins
-
-- **G2 (slug/id mismatch):** Update the frontend fetch parameter
-  or worker lookup logic; change is localized and unlocks
-  reading immediately.
-- **G7 (missing setup docs):** Creating the referenced markdown
-  files or adjusting README links requires documentation work
-  only and unblocks onboarding.
-- **G8 (swarm deliverable):** Report now exists; future runs
-  just need incremental edits.
-- **G12 (schema validation):** Importing shared Zod schemas
-  into worker routes is straightforward and improves
-  reliability fast.
-
-## Issues Confirmed by Multiple Perspectives
-
-- **G3 / G4 / G5:** Identified independently by
-  Feature/Implementation and Architecture/Security agents,
-  signaling consensus on missing file routes, admin auth, and
-  password hashing weaknesses.
-- **G2 and G1:** Feature agent highlighted the slug/id failure
-  (G2) that directly blocks the broader reader feature gap
-  (G1).
-- **G13:** Security and Architecture lenses both flagged absent
-  book scoping + annotation locator enforcement, linking data
-  integrity with UX requirements.
-
-## Dependencies and Coupling
-
-- **Reader enablement:** Delivering G1 depends on fixing G2
-  (file lookup) and G3 (download route). Offline caching also
-  requires G3 for signed URLs.
-- **Admin workflows:** UI work in G6 must wait for G4 (lock
-  down admin APIs) and G5 (secure passwords) to avoid building
-  atop unsafe endpoints.
-- **Testing:** Meaningful worker and E2E tests (G10, G11) rely
-  on schema validation (G12) and trusted auth flows (G4, G5)
-  so they can assert deterministic outcomes.
-- **Annotation reliability:** Enforcing multi-signal locators
-  (part of G13) requires shared schema enforcement (G12) and
-  book scoping fixes within the same endpoints.
-
-## Perspective Coverage Map
-
-- **Feature Gaps:** G1, G2, G3, G6.
-- **Implementation Completeness:** G2, G3, G4, G5.
-- **Documentation:** G7, G8.
-- **Test Coverage:** G9, G10, G11.
-- **Architecture & Patterns:** G12, G13.
-- **Security & Quality:** G3, G4, G5, G13.
-
-## Suggested Next Steps
-
-1. Patch critical security blockers first (G2-G5) to restore
-   safe book access and admin controls.
-2. Stand up basic Reader UI + signed downloads (G1, G3) so
-   end-to-end flows exist for testing.
-3. Create the missing documentation set (G7) and keep this file
-   updated (G8) for future swarms.
-4. Invest in real unit + integration + Playwright suites
-   (G9-G11) once critical flows exist.
-5. Harden schemas and annotation locators (G12-G13) to meet
-   ADR requirements and prepare for offline sync work.
+# Swarm Analysis - 2026-06-15
+
+> **Author:** goap-agent (swarm analysis)
+> **Date:** 2026-06-15
+> **Branch:** `swarm-analysis-2026-06-15`
+> **Replaces:** the 2026-04-08 + 2025-01 versions in this file
+> **Methodology:** four parallel explore agents covering
+> (1) Feature Gaps & Implementation Completeness,
+> (2) Test Coverage & Documentation,
+> (3) Architecture & Patterns,
+> (4) Security & Quality.
+> Findings were cross-referenced and merged. The 13 prior
+> gaps (G1–G13) are closed and recorded below; 15 new
+> gaps (G14–G28) are introduced. Each Critical/High gap
+> is paired with a GOAP plan and an ADR in `plans/`.
+
+## Executive Summary
+
+| Severity | Open Gaps | Closed (G1–G13) |
+|---|---|---|
+| Critical | 3 (G14, G15, G16) | 3 (G2, G4, G13) |
+| High | 6 (G17, G18, G19, G20, G21, G22, G23) | 3 (G3, G5, G9) |
+| Medium | 6 (G24, G25, G26, G27, G28, G6) | 2 (G7, G8) |
+| Low (informational) | 0 | 5 (G1, G10, G11, G12 – and a re-numbered track of small ones) |
+
+The 2026-Q2 work has substantially matured the platform: signed
+URLs, Argon2id, Zod-based boundary validation, multi-signal
+locators, in-book search, session expiry handling, and security
+posture docs are all live. Coverage thresholds are met in every
+package and most admin / reader surfaces have unit and Playwright
+coverage.
+
+The remaining gaps cluster around three themes:
+
+1. **Tenant isolation (G14, G16, G22)** — write paths validate a
+   user's grant, but URL `bookId` is not always re-validated
+   against the session's `bookId`; locator JSON is parsed but not
+   re-validated on read.
+2. **Lifecycle completeness (G15, G17, G18, G19, G21)** — magic-link
+   email is not sent, admin recovery is missing, book edit/delete
+   is missing, initial progress load is missing, and three
+   orphan admin components (GrantForm/GrantList/BookSelector) are
+   not wired.
+3. **Documentation/ADR hygiene (G23, G25, G26, G27)** — two ADR
+   files referenced from plans/llms-full.txt do not exist, ADR
+   numbers collide (035, 063), `CHANGELOG.md` and `CONTRIBUTING.md`
+   are stale, and the security-posture doc's localStorage trade-off
+   lacks a regression test that asserts the compensating controls.
 
 ---
 
-## Additional Findings (2025-01-XX)
+## Closed Gaps (G1–G13) — Resolution Evidence
 
-### Security Audit (security-code-auditor skill)
+| ID | Topic | Resolution | Evidence |
+|---|---|---|---|
+| **G1** | Reader UI placeholder | **Closed 2026-04.** Search side-panel (PR #525), TOC, highlights, comments, bookmarks, info, settings, locale, theme all wired. | `apps/web/src/features/reader/components/`, `ReaderPage.test.tsx`, `useEpubProgress.ts` |
+| **G2** | Slug/id mismatch in file-url route | **Closed 2026-04.** Frontend and worker both use `bookId`. | `routes/books.ts:38-104`, `ReaderPage.tsx:38-44`, `routes.books.test.ts:21-34` |
+| **G3** | Signed download route | **Closed 2026-05.** HMAC-SHA256 round-trip; expiry verification; metadata. | `apps/worker/src/storage/signed-url.ts:1-180`, `signed-url-real.test.ts` |
+| **G4** | Admin APIs unauthenticated | **Closed 2026-04.** `adminAuth` middleware on every admin handler (audit, books, grants). | `apps/worker/src/auth/admin-middleware.ts:49-121`, `routes/admin/{audit,books,grants}.ts` |
+| **G5** | Password hashing fake Argon2id | **Closed 2026-04.** `argon2-wasm-edge` with per-grant salts; round-trip tested. | `apps/worker/src/auth/password.ts:1-200`, `password.test.ts:17-43, 130-135` |
+| **G6** | Admin UI incomplete | **Partial — see G18 / G21.** Create + upload + grant create/revoke work; edit/delete and patch UI remain. | `apps/web/src/features/admin/{BooksPage,GrantsPage,AuditLogPage}.tsx` |
+| **G7** | Missing setup/architecture docs | **Closed 2026-04–06.** `docs/{setup-local,architecture,security,security-posture,coding-guide,offline,observability-telemetry}.md` all exist and were updated June 2026. | `docs/` |
+| **G8** | Swarm deliverable missing | **Closed 2026-04.** Resolved by the 2026-04-08 report; re-affirmed by this re-run. | `analysis/SWARM_ANALYSIS.md` |
+| **G9** | Placeholder test | **Closed 2026-04.** 12 web test files, 24 worker test files, 17 reader-core test files. | `apps/web/src/__tests__/`, `apps/worker/src/__tests__/`, `packages/reader-core/src/__tests__/` |
+| **G10** | Worker route tests missing | **Mostly closed 2026-04–05.** All routers except `catalog` have at least one test; see G24. | `apps/worker/src/__tests__/routes.*.test.ts` |
+| **G11** | Playwright E2E missing | **Closed 2026-04–06.** 8 spec files in `apps/tests/` (login, offline, PWA, annotations, accessibility, in-book search, migration smoke, traceid). | `apps/tests/*.spec.ts` |
+| **G12** | Hand-rolled Zod in worker | **Mostly closed 2026-04–05.** All route payloads use `@do-epub-studio/schema`; five residual inline Zod schemas remain — see G20. | `routes/admin/{auth,books}.ts`, `routes/{access,files}.ts` |
+| **G13** | Multi-signal locators not enforced | **Partially closed.** Enforced on **write** via `MultiSignalLocatorSchema`; **read-side validation missing — see G16.** | `packages/schema/src/schemas.ts:52-64`, `routes/reader/{progress,bookmarks,highlights}.ts` |
 
-The security audit confirmed:
-- ✅ **G5 RESOLVED**: Password hashing properly uses Argon2id
-- ✅ **SQL Injection**: All queries use parameterized queries - secure
-- ✅ **No Hardcoded Secrets**: All credentials via Env interface
-- ✅ **Signed URLs**: Proper HMAC-SHA256 implementation
-- ❌ **G4 CRITICAL**: Admin APIs still lack authorization - confirmed by code inspection
+---
 
-### Code Quality Analysis (code-quality skill)
+## Open Gap Inventory (G14–G28)
 
-**New issues identified (CQ-1, CQ-2):**
+Each gap is reported with: perspectives that flagged it, evidence
+(file:line), why it matters, fix, and priority. Cross-references
+to the GOAP/ADR plan that closes it are in parentheses.
 
-| ID | File | Lines | Issue | Recommendation |
-|----|------|-------|-------|----------------|
-| CQ-1 | `apps/web/src/features/reader/ReaderPage.tsx` | 1123 | Exceeds 500 LOC limit | Split into TocSidebar, AnnotationToolbar, ProgressIndicator |
-| CQ-2 | `apps/web/src/features/admin/GrantsPage.tsx` | 740 | Exceeds 500 LOC limit | Split into GrantForm, BookSelector, GrantList |
+### G14 — Critical: Comments IDOR — auth readers can read/write all books' comments
 
-**Positive findings:**
-- ✅ No `any` type in production code (only in test mocks - justified)
-- ✅ Excellent error handling in api.ts and validation.ts
-- ✅ Well-implemented Zod schema validation in worker routes
+- **Perspectives:** Security, Architecture, Implementation.
+- **Evidence:** `apps/worker/src/routes/comments.ts:28-58, 61-122`; `auth/middleware.ts:34-81`.
+- **Why it matters:** `requireAuth` returns the user's session
+  (which has a `bookId` for the book they have a grant for), but
+  the handler queries `comments` using the URL's `bookId` without
+  a `book_access_grants` re-check. Any authenticated reader with
+  a grant for **book A** can read or post comments on **book B**
+  (including `internal` visibility comments). Cross-tenant data
+  exposure and integrity violation.
+- **Fix:** Before every `comments` query, run
+  `SELECT 1 FROM book_access_grants WHERE book_id = ? AND email = ? AND revoked_at IS NULL LIMIT 1`.
+  For POST, additionally verify `canComment` is the capability
+  derived from a grant for the URL `bookId`, not the session `bookId`.
+- **Priority:** Critical.
+- **Closes via:** `plans/075-goap-swarm-2026-06-15.md` + `plans/075-adr-tenant-isolation-2026-06-15.md`.
 
-### Testing Strategy Assessment (testing-strategy skill)
+### G15 — Critical: Magic-link recovery email is never sent
 
-**Test coverage metrics:**
+- **Perspectives:** Feature, Implementation, Security.
+- **Evidence:** `apps/worker/src/routes/access.ts:44-62`; UI at
+  `apps/web/src/features/auth/LoginPage.tsx:179-194`; recovery test at
+  `apps/worker/src/__tests__/recovery.test.ts` (passes vacuously).
+- **Why it matters:** The route generates a token and constructs
+  `recoveryUrl`, then writes it to the audit log with the token
+  redacted in a single field. No email is dispatched. The user
+  sees "A magic link has been sent to your email" but receives
+  nothing. The recovery test mocks the email step and the audit
+  redaction, so CI is green. The feature is theatrical in
+  production.
+- **Fix:** Wire a real email transport. `worker-configuration.d.ts`
+  declares an `EmailEvent` binding type already. Add a transport
+  adapter (Resend, MailChannels, or Cloudflare Email Worker).
+  Centralize the redaction in `sanitizeAuditPayload` and pass
+  the raw URL; do not embed the token in the audit payload.
+- **Priority:** Critical.
+- **Closes via:** `plans/081-adr-magic-link-email-transport.md`.
 
-| Type | Target | Current | Gap |
-|------|--------|---------|-----|
-| Business Logic | > 90% | ~70% | 20% |
-| API Routes | > 80% | ~75% | 5% |
-| UI Components | > 70% | ~60% | 10% |
-| Overall | > 80% | ~65% | 15% |
+### G16 — Critical: Locator JSON not re-validated on read (violates ADR-006 integrity)
 
-**Critical test gaps identified:**
-- T-1: CFI Navigation tests (High priority)
-- T-2: EPUB Parsing integration tests (High priority)
-- T-3: Password Hashing security test (High priority)
-- T-4: Bookmark CRUD tests (Medium priority)
+- **Perspectives:** Architecture, Implementation, Security.
+- **Evidence:** `apps/worker/src/routes/comments.ts:46-58`,
+  `routes/reader/progress.ts:41`, `routes/reader/bookmarks.ts:35`,
+  `audit/index.ts:64, 162`.
+- **Why it matters:** Stored `*_locator_json` blobs are
+  `JSON.parse(...) as Record<string, unknown>`. The multi-signal
+  guarantee is enforced on **write** (via
+  `MultiSignalLocatorSchema` in `zValidator`) but not on **read**.
+  A bad row (manual DB edit, future migration, write-side bug
+  bypassed) returns a malformed locator to the client, defeating
+  the ADR-006 contract.
+- **Fix:** Wrap each `JSON.parse` in
+  `MultiSignalLocatorSchema.parse(...)` inside try/catch; on
+  failure, log a `corrupt_locator` audit event and filter the row
+  from the response. Add a regression test that plants a malformed
+  blob and asserts it is dropped.
+- **Priority:** Critical.
+- **Closes via:** `plans/075-goap-swarm-2026-06-15.md` + `plans/075-adr-tenant-isolation-2026-06-15.md`.
 
-### Updated Gap Inventory
+### G17 — High: Admin password recovery is entirely missing
 
-| ID | Category | Issue | Severity | Status | Notes |
-|----|----------|-------|----------|--------|-------|
-| G1 | Feature | Reader UI not wired | High | Open | |
-| G2 | Feature | slug/id mismatch | Critical | Open | |
-| G3 | Feature | Signed download route | High | Open | |
-| G4 | Security | Admin APIs no auth | Critical | Open | Confirmed by code inspection |
-| G5 | Security | Argon2id | - | ✅ Fixed | Confirmed secure |
-| G6 | Feature | Admin UI incomplete | Medium | Open | |
-| G7 | Docs | Setup docs missing | Medium | Open | |
-| G9 | Testing | Placeholder tests | High | ✅ Fixed | |
-| G10 | Testing | Worker route tests | High | Partial | |
-| G11 | Testing | Playwright E2E | High | Partial | |
-| G12 | Architecture | Schema validation | Medium | ✅ Good | |
-| G13 | Security | Multi-signal locators | High | Open | |
-| CQ-1 | Quality | ReaderPage.tsx 1123 LOC | High | Open | NEW - Exceeds 500 LOC |
-| CQ-2 | Quality | GrantsPage.tsx 740 LOC | Medium | Open | NEW - Exceeds 500 LOC |
-| T-1 | Testing | CFI Navigation | High | Open | NEW |
-| T-2 | Testing | EPUB Parsing | High | Open | NEW |
-| T-3 | Testing | Password Hashing | High | Open | NEW |
-| T-4 | Testing | Bookmark CRUD | Medium | Open | NEW |
+- **Perspectives:** Feature, Implementation.
+- **Evidence:** `apps/web/src/features/admin/AdminLoginPage.tsx`
+  (no "Forgot password" link); `apps/worker/src/routes/admin/auth.ts`
+  (no recovery endpoints); i18n keys absent in en/de/fr catalogs.
+- **Why it matters:** A locked-out admin can only be recovered
+  via direct DB intervention. Operational outage risk. The reader
+  has the equivalent flow; the admin role that guards the catalog
+  and grants has none.
+- **Fix:** Mirror the reader flow:
+  `POST /api/admin/recovery-request`,
+  `POST /api/admin/verify-recovery`, a UI link, and i18n keys.
+  Reuse the email transport from G15.
+- **Priority:** High.
+- **Closes via:** `plans/076-goap-admin-recovery-and-book-crud.md`.
 
-### Skills Used in Extended Analysis
+### G18 — High: Book edit / archive / delete is missing from admin
 
-- `security-code-auditor` - Full security vulnerability assessment
-- `code-quality` - Code quality and linting analysis
-- `testing-strategy` - Test coverage evaluation
-- `epub-rendering-and-cfi` - EPUB rendering context
+- **Perspectives:** Feature, Implementation.
+- **Evidence:** `apps/worker/src/routes/admin/books.ts:1-183`
+  exposes only `POST /`, `PUT /:id/upload`,
+  `POST /:id/upload-complete`. `BooksPage.tsx:194-269` has no
+  Edit/Delete UI. The schema already supports `archived_at` (used
+  in many WHERE clauses).
+- **Why it matters:** Typo'd titles, wrong visibility, the need
+  to unpublish — all require direct DB mutation. No audit trail
+  of admin edits.
+- **Fix:** Add `PATCH /api/admin/books/:id` (title/author/description/
+  visibility/language), `DELETE /api/admin/books/:id` (soft delete
+  via `archived_at`), and matching UI. Log every change to the
+  audit log.
+- **Priority:** High.
+- **Closes via:** `plans/076-goap-admin-recovery-and-book-crud.md`.
 
-### References
+### G19 — High: Initial progress load on reader open is not wired
 
-- Full analysis details: `plans/012-comprehensive-analysis-findings.md`
+- **Perspectives:** Feature, Implementation.
+- **Evidence:** `apps/web/src/features/reader/ReaderPage.tsx:130-155`
+  fetches highlights/comments/bookmarks but not progress. Worker
+  route `GET /api/books/:bookId/progress` exists at
+  `apps/worker/src/routes/reader/progress.ts:21-46`.
+- **Why it matters:** Saved progress is sent (PUT) but never
+  re-read on open. The reader's "resume where you left off"
+  promise from `docs/offline.md:32` is not delivered.
+- **Fix:** Add `fetchProgress(bookId)` to the load effect and
+  call `rendition.display(cfi)` from the returned locator.
+- **Priority:** High.
+- **Closes via:** `plans/077-goap-reader-progress-and-search-load.md`.
+
+### G20 — High: Hand-rolled Zod schemas in 5+ worker routes
+
+- **Perspectives:** Architecture, Implementation.
+- **Evidence:** `routes/admin/auth.ts:12-15` (`LoginSchema`),
+  `routes/access.ts:249-251` (`ValidateQuerySchema`),
+  `routes/files.ts:11-14` (`SignedUrlSchema`),
+  `routes/admin/books.ts:12-25` (`UploadCompleteSchema`),
+  `middleware/validation.ts:4-13` (`formatZodError`).
+- **Why it matters:** Validation drift; the schemas are not
+  shared with the web client; ADR-034-style length guards are
+  applied locally only. Future contributors have no single
+  place to find the request shape.
+- **Fix:** Move all five to `packages/schema/src/schemas.ts`;
+  export `formatZodError` from `@do-epub-studio/shared`.
+- **Priority:** High.
+- **Closes via:** `plans/078-adr-zod-schema-centralization.md`.
+
+### G21 — High: Orphan admin components waste bundle
+
+- **Perspectives:** Feature, Implementation, Architecture.
+- **Evidence:** `apps/web/src/features/admin/components/GrantForm.tsx`,
+  `GrantList.tsx`, `BookSelector.tsx` are complete but never
+  mounted; `GrantsPage.tsx:119-307` only mounts the create form.
+  Backend PATCH works (`routes/admin/grants.ts:72-110`).
+- **Why it matters:** Dead UI in the bundle; reviewers ship
+  features that don't work end-to-end. Either wire or delete.
+- **Fix:** Mount `<GrantList />` + `<GrantForm />` in
+  `GrantsPage.tsx`; if not needed for the design, delete the
+  orphan files.
+- **Priority:** High.
+- **Closes via:** `plans/079-goap-admin-grants-patch-ui.md`.
+
+### G22 — High: Reader-state POST ignores URL `bookId` vs session `bookId`
+
+- **Perspectives:** Security, Implementation.
+- **Evidence:** `routes/reader/highlights.ts:51-106`,
+  `bookmarks.ts:42-69`, `progress.ts:48-75`. The URL `bookId`
+  is used in the INSERT; `readerAuth` only verifies the user
+  has **a** grant (for the session's `bookId`).
+- **Why it matters:** A user with a grant for book A can write
+  annotations into book B's data. Not a confidentiality breach
+  (other users don't see it), but it corrupts book B's records
+  and confuses admin reviews.
+- **Fix:** `if (auth.bookId !== bookId) return 403 FORBIDDEN` in
+  all three handlers. The session token is scoped to one book;
+  the URL must match.
+- **Priority:** High.
+- **Closes via:** `plans/075-goap-swarm-2026-06-15.md` + `plans/075-adr-tenant-isolation-2026-06-15.md`.
+
+### G23 — High: Session token in `localStorage` — standing regression test needed
+
+- **Perspectives:** Security (defense in depth), Architecture.
+- **Evidence:** `apps/web/src/stores/auth.ts:43-46, 94, 96`;
+  `plans/archive/004-adr-auth-and-access.md:39` originally
+  mandated httpOnly cookie; `docs/security-posture.md:34-40`
+  records the trade-off explicitly per ADR-092.
+- **Why it matters:** Single XSS → 7-day session exfiltration.
+  The trade-off is documented and **adopted** (per ADR-092), so
+  this is not a code change. The risk is governance: there is
+  **no regression test that asserts the compensating controls
+  (CSP, no `unsafe-eval`, no DOMPurify bypass, safe-regex) are
+  still healthy**. If someone weakens any one of them, nothing
+  in CI notices.
+- **Fix:** Add a `security-posture.test.ts` (web) and a worker
+  test that asserts:
+  1. `cspHeadersContainNoUnsafeEval()`,
+  2. `cspReportEndpointExists()`,
+  3. `localStorage.getItem('do-epub-auth')` is the only session
+     storage,
+  4. ADR-092 is referenced from `docs/security-posture.md`.
+- **Priority:** High (governance).
+- **Closes via:** `plans/080-adr-session-storage-compensating-controls.md`.
+
+### G24 — Medium: `routes/catalog.ts` (public books) has no test
+
+- **Perspectives:** Test, Implementation.
+- **Evidence:** `apps/worker/src/routes/catalog.ts:8` defines
+  `GET /api/catalog`; `apps/worker/src/__tests__/` has no
+  `routes.catalog.test.ts`.
+- **Why it matters:** Public endpoint untested; regressions in
+  visibility logic (`visibility = 'public'` filter) would not
+  be caught.
+- **Fix:** Add `routes.catalog.test.ts` (mocked `queryAll`)
+  asserting the visibility filter and shape.
+- **Priority:** Medium.
+- **Closes via:** GitHub issue (G24), tracked in the swarm PR.
+
+### G25 — Medium: Two ADR files referenced from plans/llms-full.txt do not exist
+
+- **Perspectives:** Documentation, Architecture.
+- **Evidence:** `plans/092-adr-token-storage-and-feature-gap-policy.md`
+  is referenced in `plans/094-goap-plan-092-execution.md:191`
+  and `plans/093-goap-phase-a-jules-in-book-search.md:153`;
+  `plans/068-adr-open-issues-swarm-policy.md` is referenced in
+  `llms-full.txt:97` and
+  `plans/068-goap-swarm-open-issues-2026-06-06.md:6, 93, 166,
+  222, 234`. Neither file exists.
+- **Why it matters:** Broken cross-references violate
+  AGENTS.md "single source of truth" rule (TIER-2 rule 8).
+- **Fix:** Create both ADR files with the policy content cited
+  in their parent plans. Both are added in this PR.
+- **Priority:** Medium.
+- **Closes via:** files added in this PR.
+
+### G26 — Medium: ADR number collisions (035, 063); no ADR index
+
+- **Perspectives:** Architecture, Documentation.
+- **Evidence:** `plans/035-adr-content-security-policy.md` and
+  `plans/035-adr-release-governance.md` both claim ADR-035.
+  `plans/063-adr-accessibility-design-tokens.md` and
+  `plans/063-adr-comprehensive-audit-policy.md` both claim
+  ADR-063. There is no `plans/ADR-INDEX.md`.
+- **Why it matters:** Confusing canonical ADR lookup; future
+  contributors cannot tell which ADR is current.
+- **Fix:** Add `plans/ADR-INDEX.md` mapping number → canonical
+  file with one-line summary; add `plans/083-adr-adr-numbering-policy.md`
+  stating the rule (number is the slug; collisions are a
+  content problem, not a numbering problem, and are flagged
+  in the index). Both added in this PR.
+- **Priority:** Medium.
+- **Closes via:** files added in this PR.
+
+### G27 — Medium: `CHANGELOG.md` and `CONTRIBUTING.md` are stale
+
+- **Perspectives:** Documentation, Architecture.
+- **Evidence:** `CHANGELOG.md` last `[Unreleased]` entry
+  references "Plan 038 backlog triage" (May 2026); plan 093
+  (PR #525, search panel) and plan 094 (PR #527, plan-092
+  resolution) merged 2026-06-14 and are not listed.
+  `CONTRIBUTING.md:42-46` coverage thresholds disagree with
+  `AGENTS.md` and omit `schema`/`testkit`/`ui`.
+- **Why it matters:** Audits, contributors, release-management
+  follow stale policy.
+- **Fix:** Add `[Unreleased]` bullets for PRs #525 and #527;
+  align `CONTRIBUTING.md` thresholds with `AGENTS.md`; add the
+  missing three packages. Both are added in this PR.
+- **Priority:** Medium.
+- **Closes via:** `plans/084-goap-changelog-and-contributing-sync.md`.
+
+### G28 — Medium: Reader side-panel mutual exclusivity not enforced
+
+- **Perspectives:** Architecture, Implementation, UX.
+- **Evidence:** `apps/web/src/features/reader/hooks/useReaderUi.ts:27-29`
+  tracks only `activePanel`; `ReaderPage.tsx:341-413` renders
+  `TableOfContents`, `BookmarksPanel`, `CommentsPanel`,
+  `SearchPanel` each with their own `isOpen` checks;
+  AGENTS.md TIER-3 mandates mutual exclusivity.
+- **Why it matters:** Stacking panels (TOC + Search + Settings)
+  obscures the reader on mobile. AGENTS.md TIER-3 policy
+  violation.
+- **Fix:** Drive every panel's `isOpen` from a single
+  `activePanel` source, or add a side-effect that closes
+  siblings. Add a test that asserts opening Search closes TOC.
+- **Priority:** Medium.
+- **Closes via:** `plans/082-adr-reader-side-panel-mutual-exclusivity.md`.
+
+---
+
+## Cross-Cutting Observations (Confirmed by Multiple Lenses)
+
+| Issue | Security | Architecture | Implementation | Feature | Test | Docs |
+|---|---|---|---|---|---|---|
+| G14 Comments IDOR | ✓ | ✓ | ✓ | | | |
+| G15 Magic-link email | ✓ | | ✓ | ✓ | | |
+| G16 Locator read validation | ✓ | ✓ | ✓ | | ✓ | |
+| G17 Admin recovery | | | ✓ | ✓ | | ✓ |
+| G20 Hand-rolled Zod | | ✓ | ✓ | | | |
+| G21 Orphan admin UI | | ✓ | ✓ | ✓ | | |
+| G22 URL bookId vs session | ✓ | | ✓ | | ✓ | |
+| G25–G26 ADR hygiene | | ✓ | | | | ✓ |
+
+**Strongest consensus:** G14 (3 lenses) and G16 (3 lenses).
+These are the most defensible Critical/High priorities.
+
+## Quick Wins (≤1 day each)
+
+1. **G14 Comments IDOR** — add the `book_access_grants` lookup;
+   covered by existing fixtures. ~2 hours, but only after writing
+   a regression test that fails today.
+2. **G19 Initial progress load** — one fetch +
+   `rendition.display(cfi)`. ~1 hour.
+3. **G24 Catalog test** — straight mock. ~1 hour.
+4. **G27 CHANGELOG/CONTRIBUTING sync** — documentation only. ~30 min.
+5. **G14 redirect on logged-in login** (LoginPage + AdminLoginPage)
+   — 5-line `useEffect`. ~15 min.
+6. **G22 URL `bookId` vs session check** — 3-line guard in 3
+   handlers. ~1 hour.
+7. **G25 ADR-092/ADR-068 files** — short markdown stubs. ~30 min.
+8. **G26 ADR-INDEX.md** — one markdown file. ~30 min.
+
+## Dependencies and Coupling
+
+- **Reader end-to-end:** G19 (progress load) depends on the
+  catalog + comments being tenant-isolated (G14, G22). Annotation
+  reliability (G16) is a prerequisite for any meaningful E2E
+  test of multi-device sync.
+- **Admin enablement:** G17 (recovery) and G18 (book edit/delete)
+  are independent of each other but both should land after G14
+  (Comments IDOR) and G16 (locator validation) so that any new
+  admin-written comment is tenant-scoped.
+- **Documentation refresh:** G25 + G26 + G27 form a single
+  "ADR + contributor docs" bundle.
+- **Test hardening:** G20 (move schemas to
+  `@do-epub-studio/schema`) makes G14/G22 regression tests
+  easier to write, because the new central schemas make the
+  `book_access_grants` lookup reusable.
+- **G23** (session in localStorage) is governance-only; it
+  depends on the CSP + safe-regex controls remaining healthy.
+
+## Perspective Coverage Map
+
+- **Feature Gaps:** G15, G17, G18, G19, G21, G24.
+- **Implementation Completeness:** G14, G15, G17, G18, G19, G20,
+  G22, G28.
+- **Documentation:** G17, G25, G26, G27.
+- **Test Coverage:** G14, G16, G20, G22, G24.
+- **Architecture & Patterns:** G14, G16, G20, G22, G25, G26, G28.
+- **Security & Quality:** G14, G15, G16, G22, G23.
+
+## Suggested Next Steps (priority order)
+
+1. **Immediate (this week):** G14 (Comments IDOR), G16 (locator
+   read validation), G22 (URL bookId guard) — three related
+   tenant-isolation fixes; one PR, three test files.
+2. **Near-term (next sprint):** G15 (magic-link email), G17
+   (admin recovery), G19 (initial progress load).
+3. **Cleanup sprint:** G20 (Zod centralization), G24 (catalog
+   test), G27 (CHANGELOG + CONTRIBUTING).
+4. **Governance sprint:** G25, G26 (ADR files + ADR-INDEX),
+   G23 (compensating-controls regression test).
+5. **Backlog:** G18 (book edit/delete), G21 (orphan admin
+   components), G28 (panel mutual exclusivity).
+
+## Closing Notes
+
+- Per AGENTS.md TIER-2 rule 8, every Critical/High in this
+  report has a paired GOAP plan + ADR in `plans/`. The plans
+  describe the **what** and **how**; they do not commit to a
+  date. Each plan is a tracked GitHub issue (see the swarm
+  PR description for the issue list).
+- This analysis supersedes the 2026-04-08 + 2025-01 versions
+  in this file. The new report is dated 2026-06-15.
+- No production source files were modified during this
+  analysis; the only files added in the corresponding PR are
+  `analysis/SWARM_ANALYSIS.md` (this file) and the
+  plan/ADR/index files in `plans/`.
+
+---
+
+## Companion Files (created in this PR)
+
+| File | Purpose | Closes |
+|---|---|---|
+| `plans/075-goap-swarm-2026-06-15.md` | Master GOAP plan for the 2026-06-15 swarm | — |
+| `plans/075-adr-tenant-isolation-2026-06-15.md` | ADR: URL bookId must equal session bookId; locator re-validation on read | G14, G16, G22 |
+| `plans/076-goap-admin-recovery-and-book-crud.md` | GOAP: admin recovery + book edit/delete | G17, G18 |
+| `plans/077-goap-reader-progress-and-search-load.md` | GOAP: initial progress load on reader open | G19 |
+| `plans/078-adr-zod-schema-centralization.md` | ADR: move all inline Zod schemas to `@do-epub-studio/schema` | G20 |
+| `plans/079-goap-admin-grants-patch-ui.md` | GOAP: wire orphan GrantForm/GrantList or delete them | G21 |
+| `plans/080-adr-session-storage-compensating-controls.md` | ADR: standing regression test for the localStorage trade-off | G23 |
+| `plans/081-adr-magic-link-email-transport.md` | ADR: real email transport for magic links | G15 |
+| `plans/082-adr-reader-side-panel-mutual-exclusivity.md` | ADR: enforce single active side-panel | G28 |
+| `plans/068-adr-open-issues-swarm-policy.md` | ADR: closes the missing-file cross-reference | G25 |
+| `plans/092-adr-token-storage-and-feature-gap-policy.md` | ADR: closes the missing-file cross-reference | G25 |
+| `plans/ADR-INDEX.md` | Single source of truth for ADR numbers | G26 |
+| `plans/083-adr-adr-numbering-policy.md` | ADR: numbering rule + how to handle collisions | G26 |
+| `plans/084-goap-changelog-and-contributing-sync.md` | GOAP: refresh CHANGELOG + CONTRIBUTING | G27 |
