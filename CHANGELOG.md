@@ -10,7 +10,9 @@
 - feat(web): enforce reader side-panel mutual exclusivity (#552)
 - feat(admin): integrate orphan grant management components (#560)
 - test(security): implement G23 security posture regression tests (#559)
-- docs(security): bring `docs/security-posture.md` and `docs/security-postability-telemetry.md` current with ADR-092
+- fix(security): fix Comments IDOR vulnerability (#547)
+- refactor(worker): centralize worker Zod schemas and error formatter (#548)
+- docs(security): bring `docs/security-posture.md` and `docs/observability-telemetry.md` current with ADR-092
 - docs(analysis): refresh SWARM_ANALYSIS.md for 2026-06-15 (#530)
 - docs(plans): add plan 075 master GOAP, ADRs 068/075/078/080/081/082/083/092, ADR-INDEX, plans 076/077/079/084
 

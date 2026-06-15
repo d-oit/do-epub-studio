@@ -359,8 +359,8 @@ jobs:
 
   e2e-smoke:
     name: E2E Smoke Tests
-    if: github.event_name != 'schedule'
-    needs: build
+    if: ${{ github.event_name != 'schedule' && (needs.changes.outputs.src == 'true' || needs.changes.outputs.reader-core == 'true') }}
+    needs: [changes, build]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -462,7 +462,8 @@ jobs:
 
   bench:
     name: Benchmark
-    needs: build
+    needs: [changes, build]
+    if: ${{ needs.changes.outputs.src == 'true' || needs.changes.outputs.reader-core == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -518,8 +519,8 @@ jobs:
 
   performance-report:
     name: Performance Report
-    needs: [setup, build, e2e-smoke, bench]
-    if: github.event_name == 'pull_request'
+    needs: [changes, setup, build, e2e-smoke, bench]
+    if: ${{ always() && github.event_name == 'pull_request' && (needs.changes.outputs.src == 'true' || needs.changes.outputs.reader-core == 'true') }}
     continue-on-error: true
     runs-on: ubuntu-latest
     permissions:
@@ -614,7 +615,7 @@ jobs:
 
   close-failure-issues:
     name: Close resolved CI failure issues
-    if: success() && github.ref == 'refs/heads/main'
+    if: ${{ always() && !cancelled() && github.ref == 'refs/heads/main' && needs.lint.result == 'success' && needs.typecheck.result == 'success' && needs.test.result == 'success' && needs.build.result == 'success' }}
     needs: [lint, typecheck, test, build, e2e-smoke, bench]
     runs-on: ubuntu-latest
     permissions:

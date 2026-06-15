@@ -30,13 +30,22 @@
 | 052 | Gap Closure Policy | `plans/052-adr-gap-closure-policy.md` | Accepted |
 | 063a | Accessibility Design Tokens | `plans/063-adr-accessibility-design-tokens.md` | Accepted (canonical) |
 | 063b | Comprehensive Audit Policy | `plans/063-adr-comprehensive-audit-policy.md` | Accepted (collision — see ADR-083) |
+| 067 | Observability Adoption & CI Tooling Resilience | `plans/067-adr-observability-and-ci-resilience.md` | Accepted |
 | 068 | Open-Issues Swarm Policy | `plans/068-adr-open-issues-swarm-policy.md` | Accepted (this PR) |
+| 072 | Open PR and Issue Triage Policy | `plans/072-adr-open-pr-issue-triage.md` | Active |
+| 073 | SHA Allowlist Governance and Lint Convention Directories | `plans/073-adr-sha-governance-lint-conventions.md` | Accepted |
 | 075 | Tenant Isolation (URL bookId, locator re-validation) | `plans/075-adr-tenant-isolation-2026-06-15.md` | Accepted (this PR) |
+| 077 | Phased Feature Delivery Policy | `plans/077-adr-phased-feature-delivery.md` | Accepted |
 | 078 | Zod Schema Centralization | `plans/078-adr-zod-schema-centralization.md` | Accepted (this PR) |
+| 079 | 2026 Web Platform Standards Adoption | `plans/079-adr-2026-web-platform-standards.md` | Accepted |
 | 080 | Session Storage Compensating Controls | `plans/080-adr-session-storage-compensating-controls.md` | Accepted (this PR) |
-| 081 | Magic-Link Email Transport | `plans/081-adr-magic-link-email-transport.md` | Accepted (this PR) |
-| 082 | Reader Side-Panel Mutual Exclusivity | `plans/082-adr-reader-side-panel-mutual-exclusivity.md` | Accepted (this PR) |
+| 081a | Magic-Link Email Transport | `plans/081-adr-magic-link-email-transport.md` | Accepted (canonical) |
+| 081b | Pre-Existing Issue Integration Policy | `plans/081-adr-preexisting-issue-integration.md` | Accepted (collision — see ADR-083) |
+| 082a | Reader Side-Panel Mutual Exclusivity | `plans/082-adr-reader-side-panel-mutual-exclusivity.md` | Accepted (canonical) |
+| 082b | Editorial Minimalist UI Direction | `plans/082-adr-editorial-minimalist-ui-direction.md` | Accepted (collision — see ADR-083) |
 | 083 | ADR Numbering Policy | `plans/083-adr-adr-numbering-policy.md` | Accepted (this PR) |
+| 084 | Comprehensive Open Issues Resolution | `plans/084-adr-comprehensive-open-issues-resolution.md` | Accepted |
+| 087 | CI Failure Resolution Policy | `plans/087-adr-ci-failure-resolution-policy-2026-06-12.md` | Accepted |
 | 092 | Token Storage and Feature-Gap Policy | `plans/092-adr-token-storage-and-feature-gap-policy.md` | Accepted (this PR) |
 | 095 | (GOAP) | `plans/095-goap-merge-orchestration-2026-06-15.md` | GOAP, not ADR |
 | 096 | Merge Order Policy for Multi-Issue Swarms | `plans/096-adr-merge-order-policy-2026-06-15.md` | Accepted (this PR) |
@@ -53,6 +62,8 @@
 | 044 | PR-218 Lighthouse Thresholds (GOAP) | `plans/044-goap-pr218-lighthouse-thresholds.md` | GOAP, not ADR |
 | 045 | Batch Resolve Issues 223-225-226-236 (GOAP) | `plans/045-goap-batch-resolve-issues-223-225-226-236-and-prs-232-235-237.md` | GOAP, not ADR |
 | 046 | Codebase Optimizations (GOAP) | `plans/046-goap-codebase-optimizations.md` | GOAP, not ADR |
+| 065 | Comprehensive Resolution of Open PRs and Issues | `plans/065-adr-tackle-all-open-prs-issues.md` | Proposed |
+| 074 | E2E Testing Accessibility and Environment Resilience | `plans/074-adr-e2e-accessibility-resilience.md` | Proposed |
 
 ## Pending
 
