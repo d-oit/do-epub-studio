@@ -36,6 +36,16 @@ export function AdminBookResponsesPage() {
   } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [editingBook, setEditingBook] = useState<BookResponse | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editAuthor, setEditAuthor] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [editVisibility, setEditVisibility] = useState('private');
+  const [isEditSubmitting, setIsEditSubmitting] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
+
+  const [archivingBookId, setArchivingBookId] = useState<string | null>(null);
+
   const fetchBookResponses = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -58,6 +68,60 @@ export function AdminBookResponsesPage() {
 
   const handleBackToReader = () => {
     void navigate('/login');
+  };
+
+  const openEditModal = (book: BookResponse) => {
+    setEditingBook(book);
+    setEditTitle(book.title);
+    setEditAuthor(book.authorName ?? '');
+    setEditDescription(book.description ?? '');
+    setEditVisibility(book.visibility);
+    setEditError(null);
+  };
+
+  const handleUpdateBook = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingBook) return;
+    setEditError(null);
+    setIsEditSubmitting(true);
+
+    try {
+      await apiRequest(`/api/admin/books/${editingBook.id}`, {
+        method: 'PATCH',
+        token: sessionToken ?? undefined,
+        body: JSON.stringify({
+          title: editTitle.trim(),
+          authorName: editAuthor.trim() || null,
+          description: editDescription.trim() || null,
+          visibility: editVisibility,
+        }),
+      });
+      setEditingBook(null);
+      setSuccessMessage(t('admin.books.updateSuccess'));
+      void fetchBookResponses();
+      setTimeout(() => setSuccessMessage(null), 5000);
+    } catch (err) {
+      setEditError((err as Error).message);
+    } finally {
+      setIsEditSubmitting(false);
+    }
+  };
+
+  const handleArchiveBook = async (bookId: string) => {
+    setArchivingBookId(bookId);
+    try {
+      await apiRequest(`/api/admin/books/${bookId}`, {
+        method: 'DELETE',
+        token: sessionToken ?? undefined,
+      });
+      setSuccessMessage(t('admin.books.archiveSuccess'));
+      void fetchBookResponses();
+      setTimeout(() => setSuccessMessage(null), 5000);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setArchivingBookId(null);
+    }
   };
 
   const resetCreateForm = () => {
@@ -248,16 +312,31 @@ export function AdminBookResponsesPage() {
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-4 line-clamp-2">
                 {book.description || t('admin.books.noDescription')}
               </p>
-              <div className="flex justify-between items-center">
+              <div className="flex flex-wrap justify-between items-center gap-2">
                 <span className="text-xs font-medium px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-gray-600 dark:text-gray-300 uppercase">
                   {book.visibility}
                 </span>
-                <button
-                  onClick={() => handleViewGrants(book)}
-                  className="text-sm font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400"
-                >
-                  {t('admin.books.manageAccess')} &rarr;
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => openEditModal(book)}
+                    className="text-xs font-medium text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
+                  >
+                    {t('admin.books.edit')}
+                  </button>
+                  <button
+                    onClick={() => { if (window.confirm(t('admin.books.confirmArchive'))) void handleArchiveBook(book.id); }}
+                    disabled={archivingBookId === book.id}
+                    className="text-xs font-medium text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-200 disabled:opacity-50"
+                  >
+                    {archivingBookId === book.id ? '...' : t('admin.books.archive')}
+                  </button>
+                  <button
+                    onClick={() => handleViewGrants(book)}
+                    className="text-sm font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400"
+                  >
+                    {t('admin.books.manageAccess')} &rarr;
+                  </button>
+                </div>
               </div>
             </div>
           ))
@@ -379,6 +458,81 @@ export function AdminBookResponsesPage() {
           </div>
         </form>
       </Modal>
+
+      {editingBook && (
+        <Modal
+          isOpen={!!editingBook}
+          onClose={() => setEditingBook(null)}
+          title={t('admin.books.editTitle')}
+        >
+          <form onSubmit={(e) => { void handleUpdateBook(e); }} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                {t('admin.createBookModal.titleLabel')}
+              </label>
+              <input
+                type="text"
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none transition-all"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                {t('admin.createBookModal.authorLabel')}
+              </label>
+              <input
+                type="text"
+                value={editAuthor}
+                onChange={(e) => setEditAuthor(e.target.value)}
+                className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none transition-all"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                {t('admin.createBookModal.descriptionLabel')}
+              </label>
+              <textarea
+                value={editDescription}
+                onChange={(e) => setEditDescription(e.target.value)}
+                rows={3}
+                className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none transition-all resize-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                {t('admin.createBookModal.visibilityLabel')}
+              </label>
+              <select
+                value={editVisibility}
+                onChange={(e) => setEditVisibility(e.target.value)}
+                className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none transition-all"
+              >
+                <option value="private">{t('admin.createBookModal.visibilityPrivate')}</option>
+                <option value="public">{t('admin.createBookModal.visibilityPublic')}</option>
+              </select>
+            </div>
+
+            {editError && (
+              <div className="p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-300">
+                {editError}
+              </div>
+            )}
+
+            <div className="flex justify-end gap-3 pt-2">
+              <Button type="button" variant="secondary" onClick={() => setEditingBook(null)}>
+                {t('admin.createBookModal.close')}
+              </Button>
+              <Button type="submit" isLoading={isEditSubmitting}>
+                {isEditSubmitting ? t('admin.createBookModal.submitting') : t('admin.books.saveChanges')}
+              </Button>
+            </div>
+          </form>
+        </Modal>
+      )}
     </main>
   );
 }

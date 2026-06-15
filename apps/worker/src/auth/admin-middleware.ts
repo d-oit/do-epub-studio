@@ -174,6 +174,40 @@ export async function createAdminSession(
   };
 }
 
+export async function createAdminSessionByEmail(
+  env: Env,
+  email: string,
+): Promise<{ ok: true; token: string; user: { id: string; email: string; role: string } } | { ok: false; error: string }> {
+  const user = (await queryFirst(
+    env,
+    `SELECT id, email, global_role FROM users WHERE email = ? AND global_role = ?`,
+    [email.toLowerCase(), 'admin'],
+  )) as UserRow | null;
+
+  if (!user) {
+    return { ok: false, error: 'Admin user not found' };
+  }
+
+  const token = generateAdminToken();
+  const tokenHash = await hashToken(token);
+  const sessionId = crypto.randomUUID();
+  const now = new Date().toISOString();
+  const expiresAt = new Date(Date.now() + ADMIN_SESSION_TTL_HOURS * 60 * 60 * 1000).toISOString();
+
+  await execute(
+    env,
+    `INSERT INTO admin_sessions (id, user_id, token_hash, expires_at, created_at, last_used_at)
+     VALUES (?, ?, ?, ?, ?, ?)`,
+    [sessionId, user.id, tokenHash, expiresAt, now, now],
+  );
+
+  return {
+    ok: true,
+    token,
+    user: { id: user.id, email: user.email, role: user.global_role },
+  };
+}
+
 export async function revokeAdminSession(
   env: Env,
   token: string,
