@@ -10,11 +10,9 @@ vi.mock('../../lib/api', () => ({
   apiRequest: vi.fn((url: string) =>
     Promise.resolve(url.includes('bookmarks') ? [] : { url: 'mock-url' }),
   ),
-}));
-
-vi.mock('../../lib/api/annotations', () => ({
   fetchHighlights: vi.fn(() => Promise.resolve([])),
   fetchComments: vi.fn(() => Promise.resolve([])),
+  fetchProgress: vi.fn(() => Promise.resolve({ locator: null, progressPercent: 0, updatedAt: null })),
 }));
 
 // Mock epub-js
