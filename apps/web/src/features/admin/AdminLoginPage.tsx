@@ -100,6 +100,17 @@ export function AdminLoginPage() {
           </div>
         </form>
 
+        <div className="mt-4 text-center">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => { void navigate('/admin/recover'); }}
+            className="text-sm text-foreground-muted hover:text-foreground underline decoration-primary-500/30 hover:decoration-primary-500 focus-visible:ring-2 focus-visible:ring-primary-500"
+          >
+            {t('admin.login.forgotPassword')}
+          </Button>
+        </div>
+
         <div className="mt-8 pt-6 border-t border-border text-center space-y-3">
           <p className="text-sm text-foreground-muted">
             {t('admin.login.readerDescription')}

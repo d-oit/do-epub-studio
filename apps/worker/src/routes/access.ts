@@ -9,6 +9,7 @@ import { ValidateQuerySchema } from '@do-epub-studio/schema';
 import { sign, verify } from 'hono/jwt';
 import { checkRateLimitDO } from '../lib/rate-limit-client';
 import { queryFirst } from '../db/client';
+import { createEmailTransport } from '../lib/email-transport';
 
 export const accessRouter = new Hono<{ Bindings: Env }>();
 
@@ -41,23 +42,31 @@ accessRouter.post('/recovery-request', zValidator('json', RecoveryRequestSchema)
     const grant = await getGrantByBookAndSession(c.env, book.id, email.toLowerCase());
 
     if (grant && !grant.revoked_at && (!grant.expires_at || new Date(grant.expires_at) > new Date())) {
-      // Generate magic link token (JWT)
       const payload = {
         email: email.toLowerCase(),
         bookSlug,
-        exp: Math.floor(Date.now() / 1000) + 3600, // 1 hour
+        exp: Math.floor(Date.now() / 1000) + 3600,
       };
       const token = await sign(payload, c.env.INVITE_TOKEN_SECRET, 'HS256');
-
-      // In a real app, this would send an email. For now, we log it to audit.
       const recoveryUrl = `${c.env.APP_BASE_URL}/login?book=${bookSlug}&token=${token}`;
+
+      const transport = createEmailTransport(c.env);
+      await transport.send({
+        to: email.toLowerCase(),
+        subject: 'Recover access to your book',
+        text: `Click the link to recover access: ${recoveryUrl}`,
+        html: `<p>Click <a href="${recoveryUrl}">here</a> to recover access to your book.</p>`,
+      });
+
+      const tokenHash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(token));
+      const hashHex = [...new Uint8Array(tokenHash)].map(b => b.toString(16).padStart(2, '0')).join('');
 
       await logAudit(c.env, {
         entityType: 'session',
         entityId: book.id,
         action: 'recovery_requested',
         actorEmail: email.toLowerCase(),
-        payload: { magicLink: recoveryUrl.replace(/token=[^&]+/, 'token=[REDACTED]') },
+        payload: { tokenHash: hashHex },
       }, c.executionCtx);
     }
   }

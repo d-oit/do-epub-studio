@@ -20,6 +20,13 @@
       }
     ]
   },
+  "send_email": {
+    "allowed_receivers": ["*"],
+    "address_restriction": {
+      "description": "Allow all recipients in development",
+      "type": "none"
+    }
+  },
   "migrations": [
     {
       "tag": "v1",

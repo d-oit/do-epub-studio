@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
+import { z } from 'zod';
 import type { Env } from '../../lib/env';
 import { execute, queryFirst } from '../../db/client';
 import { logAudit } from '../../audit';
@@ -165,4 +166,87 @@ booksRouter.post('/:id/upload-complete', zValidator('json', UploadCompleteSchema
   }, c.executionCtx);
 
   return c.json({ ok: true, data: { id: fileId, storageKey: body.storageKey } }, 201);
+});
+
+const UpdateBookSchema = z.object({
+  title: z.string().min(1).max(500).optional(),
+  authorName: z.string().max(255).optional(),
+  description: z.string().max(5000).optional(),
+  visibility: z.enum(['private', 'public']).optional(),
+  language: z.string().max(10).optional(),
+});
+
+booksRouter.patch('/:id', zValidator('json', UpdateBookSchema), adminAuth, async (c) => {
+  const bookId = c.req.param('id');
+  const body = c.req.valid('json');
+  const adminUser = c.get('adminUser');
+
+  const book = await queryFirst<{ id: string }>(
+    c.env,
+    'SELECT id FROM books WHERE id = ? AND archived_at IS NULL',
+    [bookId],
+  );
+
+  if (!book) {
+    return c.json({ ok: false, error: { code: 'NOT_FOUND', message: 'Book not found' } }, 404);
+  }
+
+  const updates: string[] = [];
+  const values: unknown[] = [];
+
+  if (body.title !== undefined) { updates.push('title = ?'); values.push(body.title); }
+  if (body.authorName !== undefined) { updates.push('author_name = ?'); values.push(body.authorName); }
+  if (body.description !== undefined) { updates.push('description = ?'); values.push(body.description); }
+  if (body.visibility !== undefined) { updates.push('visibility = ?'); values.push(body.visibility); }
+  if (body.language !== undefined) { updates.push('language = ?'); values.push(body.language); }
+
+  if (updates.length === 0) {
+    return c.json({ ok: false, error: { code: 'NO_CHANGES', message: 'No fields to update' } }, 400);
+  }
+
+  updates.push('updated_at = ?');
+  values.push(new Date().toISOString());
+  values.push(bookId);
+
+  await execute(c.env, `UPDATE books SET ${updates.join(', ')} WHERE id = ?`, values as (string | number | null)[]);
+
+  await logAudit(c.env, {
+    entityType: 'book',
+    entityId: bookId,
+    action: 'updated',
+    actorEmail: adminUser.email,
+    payload: body,
+  }, c.executionCtx);
+
+  return c.json({ ok: true });
+});
+
+booksRouter.delete('/:id', adminAuth, async (c) => {
+  const bookId = c.req.param('id');
+  const adminUser = c.get('adminUser');
+
+  const book = await queryFirst<{ id: string }>(
+    c.env,
+    'SELECT id FROM books WHERE id = ? AND archived_at IS NULL',
+    [bookId],
+  );
+
+  if (!book) {
+    return c.json({ ok: false, error: { code: 'NOT_FOUND', message: 'Book not found' } }, 404);
+  }
+
+  await execute(
+    c.env,
+    "UPDATE books SET archived_at = datetime('now') WHERE id = ?",
+    [bookId],
+  );
+
+  await logAudit(c.env, {
+    entityType: 'book',
+    entityId: bookId,
+    action: 'archived',
+    actorEmail: adminUser.email,
+  }, c.executionCtx);
+
+  return c.json({ ok: true });
 });
