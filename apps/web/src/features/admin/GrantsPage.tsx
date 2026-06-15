@@ -5,7 +5,7 @@ import { apiRequest } from '../../lib/api';
 import { useAuthStore } from '../../stores/auth';
 import type { GrantResponse, BookResponse } from '@do-epub-studio/shared';
 import { LocaleSwitcher } from '../../components/LocaleSwitcher';
-import { PageContainer, Header } from '../../components/ui';
+import { PageContainer } from '../../components/ui';
 import {
   BookSelector,
   GrantForm,
@@ -183,18 +183,26 @@ export function AdminGrantResponsesPage() {
   const currentBookTitle = locationState?.bookTitle ?? (bookId ? books.find(b => b.id === bookId)?.title : undefined);
 
   return (
-    <PageContainer>
-      <Header
-        title={t('admin.grants.title')}
-        description={currentBookTitle ?? (bookId ? `${t('admin.books.title')} ID: ${bookId}` : t('admin.grants.selectBook'))}
-        backHref="/admin/books"
-        backLabel={t('admin.grants.backToBooks')}
-        actions={
-          <div className="flex items-center gap-4">
-            <LocaleSwitcher />
-          </div>
-        }
-      />
+    <PageContainer className="p-8">
+      <header className="flex justify-between items-center mb-8">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            {t('admin.grants.title')}
+          </h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            {currentBookTitle ?? (bookId ? `${t('admin.books.title')} ID: ${bookId}` : t('admin.grants.selectBook'))}
+          </p>
+          <button
+            onClick={() => void navigate('/admin/books')}
+            className="text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 mt-1"
+          >
+            &larr; {t('admin.grants.backToBooks')}
+          </button>
+        </div>
+        <div className="flex items-center gap-4">
+          <LocaleSwitcher />
+        </div>
+      </header>
 
       <div className="mt-8">
         <BookSelector
@@ -216,7 +224,7 @@ export function AdminGrantResponsesPage() {
           isLoadingGrants={isLoading}
           selectedBookId={bookId ?? ''}
           onEdit={handleEditGrant}
-          onRevoke={handleRevokeGrant}
+          onRevoke={(grant) => { void handleRevokeGrant(grant); }}
         />
       </div>
 
@@ -227,7 +235,7 @@ export function AdminGrantResponsesPage() {
         formErrors={formErrors}
         isSubmitting={isSubmitting}
         onChange={setFormData}
-        onSubmit={handleFormSubmit}
+        onSubmit={() => { void handleFormSubmit(); }}
         onClose={() => setIsModalOpen(false)}
       />
     </PageContainer>
