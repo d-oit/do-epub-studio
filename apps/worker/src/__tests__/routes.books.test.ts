@@ -8,12 +8,21 @@ import {
   mockRequireAuth,
 } from './fixtures';
 import { app } from '../app';
+import { assertBookAccess } from '../lib/tenant-isolation';
+
+vi.mock('../lib/tenant-isolation', () => ({
+  parseLocatorRow: vi.fn(),
+  assertBookAccess: vi.fn(),
+}));
+
+const mockAssertBookAccess = assertBookAccess as ReturnType<typeof vi.fn>;
 
 describe('Books Routes', () => {
   const env = makeEnv();
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockAssertBookAccess.mockResolvedValue(null);
   });
 
   describe('GET /api/books', () => {

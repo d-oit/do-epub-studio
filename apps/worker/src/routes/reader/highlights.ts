@@ -6,6 +6,7 @@ import { queryFirst, queryAll, execute } from '../../db/client';
 import { logAudit } from '../../audit';
 import { HighlightCreateSchema } from '@do-epub-studio/shared';
 import { readerAuth } from '../../middleware/auth';
+import { assertBookAccess } from '../../lib/tenant-isolation';
 
 export const highlightsRouter = new Hono<{ Bindings: Env; Variables: { auth: AuthContext } }>();
 
@@ -26,6 +27,9 @@ interface HighlightRow {
 highlightsRouter.get('/:bookId/highlights', readerAuth, async (c) => {
   const bookId = c.req.param('bookId');
   const auth = c.get('auth');
+
+  const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx);
+  if (mismatch) return mismatch.response;
 
   const highlights = await queryAll<HighlightRow>(
     c.env,
@@ -52,6 +56,9 @@ highlightsRouter.post('/:bookId/highlights', zValidator('json', HighlightCreateS
   const bookId = c.req.param('bookId');
   const auth = c.get('auth');
   const body = c.req.valid('json');
+
+  const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx);
+  if (mismatch) return mismatch.response;
 
   if (!auth.capabilities.canHighlight) {
     return c.json({ ok: false, error: { code: 'FORBIDDEN', message: 'Access denied' } }, 403);
@@ -109,6 +116,9 @@ highlightsRouter.delete('/:bookId/highlights/:highlightId', readerAuth, async (c
   const { bookId, highlightId } = c.req.param();
   const auth = c.get('auth');
 
+  const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx);
+  if (mismatch) return mismatch.response;
+
   await execute(c.env, `DELETE FROM highlights WHERE id = ? AND book_id = ? AND user_email = ?`, [
     highlightId,
     bookId,
@@ -132,6 +142,9 @@ highlightsRouter.patch('/:bookId/highlights/:highlightId', zValidator('json', Hi
   const { bookId, highlightId } = c.req.param();
   const auth = c.get('auth');
   const body = c.req.valid('json');
+
+  const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx);
+  if (mismatch) return mismatch.response;
 
   const highlight = await queryFirst<HighlightRow>(c.env, `SELECT * FROM highlights WHERE id = ? AND book_id = ?`, [
     highlightId,

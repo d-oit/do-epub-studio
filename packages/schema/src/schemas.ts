@@ -91,6 +91,14 @@ export const CreateBookSchema = z.object({
   visibility: BookVisibilitySchema.default('private'),
 });
 
+export const UpdateBookSchema = z.object({
+  title: z.string().min(1).max(500).optional(),
+  authorName: z.string().max(255).optional(),
+  description: z.string().max(5000).optional(),
+  language: z.string().length(2).optional(),
+  visibility: BookVisibilitySchema.optional(),
+});
+
 export const CreateGrantSchema = z.object({
   bookId: z.string().uuid(),
   email: z.string().email().max(255),
@@ -209,6 +217,7 @@ export type AccessRequest = z.infer<typeof AccessRequestSchema>;
 export type RecoveryRequest = z.infer<typeof RecoveryRequestSchema>;
 export type RecoveryVerify = z.infer<typeof RecoveryVerifySchema>;
 export type CreateBook = z.infer<typeof CreateBookSchema>;
+export type UpdateBook = z.infer<typeof UpdateBookSchema>;
 export type CreateGrant = z.infer<typeof CreateGrantSchema>;
 export type UpdateGrant = z.infer<typeof UpdateGrantSchema>;
 export type ProgressUpdate = z.infer<typeof ProgressUpdateSchema>;
