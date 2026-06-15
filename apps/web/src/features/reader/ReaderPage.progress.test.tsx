@@ -3,12 +3,12 @@ import { render, waitFor } from '@testing-library/react';
 import { ReaderPage } from './ReaderPage';
 import { MemoryRouter } from 'react-router-dom';
 import { useAuthStore, useReaderStore } from '../../stores';
-import { fetchProgress } from '../../lib/api';
+import { fetchProgress } from '../../lib/api/index';
 import { logClientEvent } from '../../lib/client-logger';
 import { getProgress } from '../../lib/offline';
 
 // Mock dependencies
-vi.mock('../../lib/api', () => ({
+vi.mock('../../lib/api/index', () => ({
   apiRequest: vi.fn((url: string) =>
     Promise.resolve(url.includes('bookmarks') ? [] : { url: 'mock-url' }),
   ),
@@ -17,7 +17,7 @@ vi.mock('../../lib/api', () => ({
   fetchComments: vi.fn(() => Promise.resolve([])),
 }));
 
-vi.mock('../../lib/api/annotations', () => ({
+vi.mock('../../lib/api/index/annotations', () => ({
   fetchHighlights: vi.fn(() => Promise.resolve([])),
   fetchComments: vi.fn(() => Promise.resolve([])),
 }));
