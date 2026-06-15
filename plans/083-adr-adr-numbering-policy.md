@@ -90,4 +90,4 @@ There was no written policy on how to handle a collision.
 ## Compliance
 
 - AGENTS.md TIER-2 rule 8 — gaps are documented as GOAP plans
-  + ADRs.
+  and ADRs.

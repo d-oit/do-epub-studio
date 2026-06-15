@@ -91,5 +91,5 @@ This ADR codifies the policy.
 ## Compliance
 
 - AGENTS.md TIER-2 rule 8 — gaps are documented as GOAP plans
-  + ADRs.
+  and ADRs.
 - ADR-004 — the divergence is recorded and accepted.
