@@ -1,10 +1,9 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
-import { z } from 'zod';
 import type { Env } from '../../lib/env';
 import { execute, queryFirst } from '../../db/client';
 import { logAudit } from '../../audit';
-import { CreateBookSchema, validateEpub } from '@do-epub-studio/shared';
+import { CreateBookSchema, UpdateBookSchema, validateEpub } from '@do-epub-studio/shared';
 import { UploadCompleteSchema } from '@do-epub-studio/schema';
 import { adminAuth } from '../../middleware/auth';
 
@@ -166,14 +165,6 @@ booksRouter.post('/:id/upload-complete', zValidator('json', UploadCompleteSchema
   }, c.executionCtx);
 
   return c.json({ ok: true, data: { id: fileId, storageKey: body.storageKey } }, 201);
-});
-
-const UpdateBookSchema = z.object({
-  title: z.string().min(1).max(500).optional(),
-  authorName: z.string().max(255).optional(),
-  description: z.string().max(5000).optional(),
-  visibility: z.enum(['private', 'public']).optional(),
-  language: z.string().max(10).optional(),
 });
 
 booksRouter.patch('/:id', zValidator('json', UpdateBookSchema), adminAuth, async (c) => {

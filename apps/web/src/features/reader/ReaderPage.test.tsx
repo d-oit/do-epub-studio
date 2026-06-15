@@ -17,6 +17,7 @@ vi.mock('../../lib/api', () => ({
 
 // Mock epub-js
 vi.mock('@intity/epub-js', () => ({
+  default: vi.fn(),
   Rendition: vi.fn(),
 }));
 

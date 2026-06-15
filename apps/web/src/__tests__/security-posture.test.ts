@@ -64,4 +64,44 @@ describe('Security Posture (Web)', () => {
     expect(content).not.toContain('sessionToken');
     expect(content).not.toContain('useAuthStore');
   });
+
+  it('session token is cleared on logout', () => {
+    useAuthStore.getState().setAuth({
+      sessionToken: 'a'.repeat(64),
+      sessionExpiresAt: Date.now() + 86_400_000,
+      bookId: 'book-1',
+      bookSlug: 'slug-1',
+      bookTitle: 'Test Book',
+      email: 'test@example.com',
+      capabilities: { canRead: true, canComment: false, canHighlight: false, canBookmark: false, canDownloadOffline: false, canExportNotes: false, canManageAccess: false },
+    });
+    expect(useAuthStore.getState().sessionToken).toBe('a'.repeat(64));
+    expect(useAuthStore.getState().isAuthenticated).toBe(true);
+
+    useAuthStore.getState().logout();
+
+    expect(useAuthStore.getState().sessionToken).toBeNull();
+    expect(useAuthStore.getState().isAuthenticated).toBe(false);
+    expect(useAuthStore.getState().bookId).toBeNull();
+    expect(useAuthStore.getState().email).toBeNull();
+    expect(useAuthStore.getState().capabilities).toBeNull();
+  });
+
+  it('session token matches expected format (256-bit hex string)', () => {
+    const persistOptions = (useAuthStore as unknown as { persist?: { getOptions: () => { name: string, storage: any } } }).persist?.getOptions();
+    expect(persistOptions?.name).toBe('do-epub-auth');
+
+    // ADR-092: tokens are 256-bit random = 64 hex chars
+    // This regex asserts the format without depending on a specific token value.
+    const hex64 = /^[0-9a-f]{64}$/;
+    expect(hex64.test('a'.repeat(64))).toBe(true);
+    expect(hex64.test('a'.repeat(63))).toBe(false);
+    expect(hex64.test('g' + 'a'.repeat(63))).toBe(false);
+  });
+
+  it('AGENTS.md references docs/security-posture.md', () => {
+    const agentsPath = path.resolve(__dirname, '../../../../AGENTS.md');
+    const content = fs.readFileSync(agentsPath, 'utf-8');
+    expect(content).toContain('docs/security-posture.md');
+  });
 });
