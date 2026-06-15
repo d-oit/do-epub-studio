@@ -15,7 +15,7 @@ securityRouter.post('/csp-report', zValidator('json', CspReportSchema), async (c
       entityType: 'session',
       entityId: 'csp-report',
       action: 'csp_violation',
-      payload: report['csp-report'] as Record<string, unknown>,
+      payload: report['csp-report'],
     },
     c.executionCtx,
   );
