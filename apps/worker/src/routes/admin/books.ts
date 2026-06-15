@@ -4,25 +4,10 @@ import type { Env } from '../../lib/env';
 import { execute, queryFirst } from '../../db/client';
 import { logAudit } from '../../audit';
 import { CreateBookSchema, validateEpub } from '@do-epub-studio/shared';
+import { UploadCompleteSchema } from '@do-epub-studio/schema';
 import { adminAuth } from '../../middleware/auth';
-import { z } from 'zod';
 
 export const booksRouter = new Hono<{ Bindings: Env; Variables: { adminUser: { email: string; id: string; role: string } } }>();
-
-const UploadCompleteSchema = z.object({
-  storageKey: z.string().min(1),
-  originalFilename: z.string().min(1).max(500),
-  mimeType: z.string().max(200).optional(),
-  fileSizeBytes: z.number().int().nonnegative().optional(),
-  sha256: z.string().max(64).optional(),
-  epubVersion: z.string().max(10).optional(),
-  validationResults: z.object({
-    isValid: z.boolean(),
-    errors: z.array(z.string()),
-    warnings: z.array(z.string()),
-    epubVersion: z.string().optional(),
-  }).optional(),
-});
 
 booksRouter.post('/', zValidator('json', CreateBookSchema), adminAuth, async (c) => {
   const body = c.req.valid('json');

@@ -1,18 +1,13 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import type { Env } from '../../lib/env';
-import { z } from 'zod';
+import { LoginSchema } from '@do-epub-studio/schema';
 import { checkRateLimitDO } from '../../lib/rate-limit-client';
 import { createAdminSession, revokeAdminSession } from '../../auth/admin-middleware';
 import { logAudit } from '../../audit';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
 
 export const authRouter = new Hono<{ Bindings: Env }>();
-
-const LoginSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(1),
-});
 
 authRouter.post('/login', zValidator('json', LoginSchema), async (c) => {
   const { email, password } = c.req.valid('json');

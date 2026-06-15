@@ -22,6 +22,11 @@ export {
   CommentUpdateSchema,
   CspReportSchema,
   AuditQuerySchema,
+  LoginSchema,
+  ValidateQuerySchema,
+  SignedUrlSchema,
+  UploadCompleteSchema,
+  formatZodError,
 } from '@do-epub-studio/schema';
 
 export type {
@@ -39,4 +44,8 @@ export type {
   CspReport,
   AuditQuery,
   AnnotationLocator,
+  Login,
+  ValidateQuery,
+  SignedUrl,
+  UploadComplete,
 } from '@do-epub-studio/schema';
