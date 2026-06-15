@@ -47,7 +47,8 @@ describe('Catalog Routes', () => {
       );
 
       expect(res.status).toBe(200);
-      const body = await res.json() as any;
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion -- Hono Response.json() returns unknown
+      const body = (await res.json()) as unknown as { ok: boolean; data: Array<Record<string, unknown>> };
 
       expect(body.ok).toBe(true);
       expect(body.data).toHaveLength(2);
@@ -99,7 +100,8 @@ describe('Catalog Routes', () => {
       );
 
       expect(res.status).toBe(200);
-      const body = await res.json() as any;
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion -- Hono Response.json() returns unknown
+      const body = (await res.json()) as unknown as { ok: boolean; data: unknown[] };
       expect(body.ok).toBe(true);
       expect(body.data).toEqual([]);
     });
