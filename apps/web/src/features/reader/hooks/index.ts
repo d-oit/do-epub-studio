@@ -1,6 +1,6 @@
 export { useReaderUI } from './useReaderUi';
 export { useReaderEpub } from './useReaderEpub';
-export { loadProgress, createRelocatedHandler } from './useEpubProgress';
+export { createRelocatedHandler } from './useEpubProgress';
 export { useAnnotationHandlers } from './useAnnotationHandlers';
 export { useBookmarkHandlers } from './useBookmarkHandlers';
 export { useExportNotes } from './useExportNotes';

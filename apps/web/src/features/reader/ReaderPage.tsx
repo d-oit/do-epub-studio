@@ -104,8 +104,6 @@ export function ReaderPage() {
 
   const [epubUrl, setEpubUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const initialNavDone = useRef(false);
-
   const handleNavigateToAnnotation = useCallback(
     async (chapterRef: string, cfiRange?: string) => {
       if (!renditionRef.current) return;
@@ -128,6 +126,7 @@ export function ReaderPage() {
     highlightsRef,
     commentsRef,
     handleNavigateToAnnotation,
+    progress.locator?.cfi,
   );
 
   useEffect(() => {
@@ -183,13 +182,6 @@ export function ReaderPage() {
     };
     void load();
   }, [sessionToken, bookId, setHighlights, setComments, setBookmarks, setProgress]);
-
-  useEffect(() => {
-    if (renditionRef.current && progress.locator?.cfi && !initialNavDone.current) {
-      initialNavDone.current = true;
-      void renditionRef.current.display(progress.locator.cfi);
-    }
-  }, [progress.locator?.cfi, renditionRef]);
 
   useEffect(() => {
     const onMouseUp = () => {
