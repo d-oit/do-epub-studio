@@ -9,6 +9,22 @@ import {
   mockComputeCapabilities,
 } from './fixtures';
 import { app } from '../app';
+import type { AuthContext } from '../auth/middleware';
+
+const authCtx: AuthContext = {
+  sessionId: 'session-A',
+  bookId: 'book-A',
+  email: 'user@example.com',
+  capabilities: {
+    canRead: true,
+    canComment: true,
+    canHighlight: true,
+    canBookmark: true,
+    canDownloadOffline: false,
+    canExportNotes: false,
+    canManageAccess: false,
+  },
+};
 
 describe('Tenant Isolation: Comments', () => {
   const env = makeEnv();
@@ -19,15 +35,8 @@ describe('Tenant Isolation: Comments', () => {
 
   describe('GET /api/books/:bookId/comments', () => {
     it('returns 403 when authenticated for Book A but requesting Book B', async () => {
-      // User has a valid session for book-A
-      mockRequireAuth.mockResolvedValue({
-        sessionId: 'session-A',
-        bookId: 'book-A',
-        email: 'user@example.com',
-        capabilities: { canRead: true, canComment: true },
-      } as any);
+      mockRequireAuth.mockResolvedValue(authCtx);
 
-      // In the current vulnerable state, it will just query book-B comments and return 200
       mockQueryAll.mockResolvedValue([]);
 
       const res = await app.fetch(
@@ -44,13 +53,7 @@ describe('Tenant Isolation: Comments', () => {
 
   describe('POST /api/books/:bookId/comments', () => {
     it('returns 403 when authenticated for Book A but posting to Book B', async () => {
-      // User has a valid session for book-A
-      mockRequireAuth.mockResolvedValue({
-        sessionId: 'session-A',
-        bookId: 'book-A',
-        email: 'user@example.com',
-        capabilities: { canRead: true, canComment: true },
-      } as any);
+      mockRequireAuth.mockResolvedValue(authCtx);
 
       const res = await app.fetch(
         new Request('http://localhost/api/books/book-B/comments', {
@@ -74,12 +77,7 @@ describe('Tenant Isolation: Comments', () => {
 
   describe('Legitimate Access', () => {
     it('allows GET when authenticated for the same book', async () => {
-      mockRequireAuth.mockResolvedValue({
-        sessionId: 'session-A',
-        bookId: 'book-A',
-        email: 'user@example.com',
-        capabilities: { canRead: true, canComment: true },
-      } as any);
+      mockRequireAuth.mockResolvedValue(authCtx);
 
       mockGetGrantByBookAndSession.mockResolvedValue({
         id: 'grant-A',
@@ -103,12 +101,7 @@ describe('Tenant Isolation: Comments', () => {
     });
 
     it('allows POST when authenticated for the same book', async () => {
-      mockRequireAuth.mockResolvedValue({
-        sessionId: 'session-A',
-        bookId: 'book-A',
-        email: 'user@example.com',
-        capabilities: { canRead: true, canComment: true },
-      } as any);
+      mockRequireAuth.mockResolvedValue(authCtx);
 
       mockGetGrantByBookAndSession.mockResolvedValue({
         id: 'grant-A',
@@ -122,7 +115,7 @@ describe('Tenant Isolation: Comments', () => {
         canComment: true,
       });
 
-      mockExecute.mockResolvedValue({} as any);
+      mockExecute.mockResolvedValue({});
 
       const res = await app.fetch(
         new Request('http://localhost/api/books/book-A/comments', {
