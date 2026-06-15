@@ -1,17 +1,12 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
-import { z } from 'zod';
+import { SignedUrlSchema } from '@do-epub-studio/schema';
 import type { Env } from '../lib/env';
 import { queryFirst } from '../db/client';
 import { verifySignedUrlExpiry, verifySignedUrlSignature } from '../storage/signed-url';
 import { createRequestContext, logRequestEnd, withTraceHeaders } from '../lib/observability';
 
 export const filesRouter = new Hono<{ Bindings: Env }>();
-
-const SignedUrlSchema = z.object({
-  expires: z.string().min(1),
-  signature: z.string().min(1),
-});
 
 filesRouter.get('/:bookId/:remainder{.+}', zValidator('query', SignedUrlSchema), async (c) => {
   const bookId = c.req.param('bookId');

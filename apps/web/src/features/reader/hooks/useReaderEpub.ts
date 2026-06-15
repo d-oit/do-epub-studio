@@ -18,7 +18,7 @@ import {
 } from '../../../stores';
 import { useTranslation } from '../../../hooks/useTranslation';
 import { createEpubAnnotationAdapter, type AnnotationAdapter, type HighlightRecord, type CommentRecord } from '@do-epub-studio/reader-core';
-import { loadProgress, createRelocatedHandler } from './useEpubProgress';
+import { createRelocatedHandler } from './useEpubProgress';
 
 interface TocItem {
   label: string;
@@ -296,10 +296,6 @@ export function useReaderEpub(
           commentsRef.current,
           onNavigateToAnnotationRef.current,
         );
-
-        if (sessionToken && bookId) {
-          await loadProgress(rendition, bookId, sessionToken);
-        }
 
         rendition.on(
           'relocated',
