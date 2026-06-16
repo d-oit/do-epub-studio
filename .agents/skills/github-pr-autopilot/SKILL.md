@@ -121,6 +121,7 @@ it will halt automation and **post a "Autopilot Handoff" comment on the PR.**
 
 ### Quality Gates Before Merge
 
+- [ ] **ALL CI checks pass** — never merge with a failing check. Use `gh pr checks <N>` to verify. `--admin` override is forbidden unless the failure is a documented pre-existing external check (e.g., Codacy ACTION_REQUIRED on non-diff code).
 - [ ] Quality gate passes: `./scripts/quality_gate.sh` (MUST exit 0)
 - [ ] TypeScript types valid
 - [ ] Commit messages follow `type(scope): description` format
@@ -133,6 +134,7 @@ it will halt automation and **post a "Autopilot Handoff" comment on the PR.**
 - PRs touching auth, security, or permission code (require human review)
 - PRs with `WIP` or `DO NOT MERGE` labels
 - PRs where the base branch is protected beyond standard rules
+- **PRs with ANY failing CI check** — investigate and fix first; never bypass
 
 ## Troubleshooting
 
@@ -141,7 +143,7 @@ it will halt automation and **post a "Autopilot Handoff" comment on the PR.**
 | Permission denied | Run `bash scripts/verify-auth.sh` to switch accounts |
 | Complex merge conflict | Activate `goap-agent` to resolve, then re-run autopilot |
 | Stuck in comment loop | Check if a comment is being repeatedly applied |
-| CI never passes | Investigate the failing check — do not bypass |
+| CI never passes | **STOP.** Investigate the failing check — never bypass with `--admin` |
 | Must-fix comments found | Activate `goap-agent` to address comments, then re-run autopilot |
 | Max iterations reached | Check PR state to see what is blocking the loop |
 
