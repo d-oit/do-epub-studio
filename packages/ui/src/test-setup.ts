@@ -10,6 +10,8 @@ vi.mock('framer-motion', () => ({
       React.createElement('span', props, children),
     button: ({ children, ...props }: { children?: React.ReactNode }) =>
       React.createElement('button', props, children),
+    header: ({ children, ...props }: { children?: React.ReactNode }) =>
+      React.createElement('header', props, children),
     input: ({ ...props }: Record<string, unknown>) => React.createElement('input', props),
     p: ({ children, ...props }: { children?: React.ReactNode }) =>
       React.createElement('p', props, children),
