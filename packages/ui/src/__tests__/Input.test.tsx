@@ -32,4 +32,27 @@ describe('Input', () => {
     expect(screen.getByText('Required')).toBeInTheDocument();
     expect(screen.getByLabelText('Name')).toHaveAttribute('aria-invalid', 'true');
   });
+
+  it('displays helper text when no error', () => {
+    render(<Input label="Email" helperText="We'll never share your email" />);
+    expect(screen.getByText("We'll never share your email")).toBeInTheDocument();
+  });
+
+  it('does not display helper text when error is present', () => {
+    render(<Input label="Email" error="Invalid" helperText="Help text" />);
+    expect(screen.getByText('Invalid')).toBeInTheDocument();
+    expect(screen.queryByText('Help text')).not.toBeInTheDocument();
+  });
+
+  it('sets aria-describedby to helper id when helperText provided', () => {
+    render(<Input id="test-input" helperText="Helper" />);
+    const input = screen.getByRole('textbox');
+    expect(input).toHaveAttribute('aria-describedby', 'test-input-helper');
+  });
+
+  it('sets aria-describedby to error id when error provided', () => {
+    render(<Input id="test-input" error="Error" />);
+    const input = screen.getByRole('textbox');
+    expect(input).toHaveAttribute('aria-describedby', 'test-input-error');
+  });
 });

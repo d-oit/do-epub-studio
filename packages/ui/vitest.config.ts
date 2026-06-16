@@ -10,7 +10,7 @@ export default defineConfig({
       provider: 'istanbul',
       reporter: ['text', 'json', 'html', 'lcov', 'clover'],
       include: ['src/**/*.ts', 'src/**/*.tsx'],
-      exclude: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
+      exclude: ['src/**/*.test.ts', 'src/**/*.test.tsx', 'src/**/*.stories.tsx'],
       reportsDirectory: './coverage',
       thresholds: { lines: 10, functions: 5, branches: 5, statements: 10 },
     },
