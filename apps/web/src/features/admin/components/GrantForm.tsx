@@ -99,7 +99,7 @@ export function GrantForm({
 
         {/* Grant mode */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label className="block text-sm font-medium text-foreground-muted mb-1">
             {t('grants.form.mode')}
           </label>
           <select
@@ -107,7 +107,7 @@ export function GrantForm({
             onChange={(e: ChangeEvent<HTMLSelectElement>) =>
               onChange({ ...formData, mode: e.target.value })
             }
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm focus:ring-2 focus:ring-accent focus:border-accent"
           >
             {GRANT_MODES.map((mode) => (
               <option key={mode.value} value={mode.value}>
@@ -126,9 +126,9 @@ export function GrantForm({
               onChange={(e: ChangeEvent<HTMLInputElement>) =>
                 onChange({ ...formData, commentsAllowed: e.target.checked })
               }
-              className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              className="h-4 w-4 text-accent border-border rounded focus:ring-accent"
             />
-            <span className="text-sm text-gray-700 dark:text-gray-300">
+            <span className="text-sm text-foreground-muted">
               {t('grants.capabilities.comments')}
             </span>
           </label>
@@ -139,9 +139,9 @@ export function GrantForm({
               onChange={(e: ChangeEvent<HTMLInputElement>) =>
                 onChange({ ...formData, offlineAllowed: e.target.checked })
               }
-              className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              className="h-4 w-4 text-accent border-border rounded focus:ring-accent"
             />
-            <span className="text-sm text-gray-700 dark:text-gray-300">
+            <span className="text-sm text-foreground-muted">
               {t('grants.capabilities.offline')}
             </span>
           </label>
@@ -149,23 +149,23 @@ export function GrantForm({
 
         {/* Expiry date */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label className="block text-sm font-medium text-foreground-muted mb-1">
             {t('grants.form.expiry')}
           </label>
           <input
             type="date"
             value={formData.expiresAt}
             onChange={(e) => onChange({ ...formData, expiresAt: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm focus:ring-2 focus:ring-accent focus:border-accent"
           />
-          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+          <p className="mt-1 text-xs text-foreground-muted">
             {t('grants.form.expiryHint')}
           </p>
         </div>
 
         {/* Submit-level error */}
         {formErrors.submit && (
-          <div className="p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded text-sm text-red-700 dark:text-red-400">
+          <div className="p-3 bg-semantic-error/10 border border-semantic-error/30 rounded text-sm text-semantic-error">
             {formErrors.submit}
           </div>
         )}

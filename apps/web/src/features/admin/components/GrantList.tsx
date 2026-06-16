@@ -63,7 +63,7 @@ export function GrantList({
   if (!selectedBookId && !isLoadingGrants) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-500 dark:text-gray-400">
+        <p className="text-foreground-muted">
           {t('grants.selectBookPrompt')}
         </p>
       </div>
@@ -74,7 +74,7 @@ export function GrantList({
   if (isLoadingGrants && selectedBookId) {
     return (
       <div className="flex justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent" />
       </div>
     );
   }
@@ -83,68 +83,68 @@ export function GrantList({
   if (selectedBookId && !isLoadingGrants && grants.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-500 dark:text-gray-400">{t('grants.noGrants')}</p>
+        <p className="text-foreground-muted">{t('grants.noGrants')}</p>
       </div>
     );
   }
 
   return (
     <>
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+      <div className="bg-background rounded-lg shadow overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead className="bg-gray-50 dark:bg-gray-900">
+          <table className="min-w-full divide-y divide-border">
+            <thead className="bg-background-secondary">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-foreground-muted uppercase tracking-wider">
                   {t('grants.table.email')}
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-foreground-muted uppercase tracking-wider">
                   {t('grants.table.mode')}
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-foreground-muted uppercase tracking-wider">
                   {t('grants.table.capabilities')}
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-foreground-muted uppercase tracking-wider">
                   {t('grants.table.status')}
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-foreground-muted uppercase tracking-wider">
                   {t('grants.table.expiry')}
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-foreground-muted uppercase tracking-wider">
                   {t('grants.table.created')}
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <th className="px-4 py-3 text-right text-xs font-medium text-foreground-muted uppercase tracking-wider">
                   {t('grants.table.actions')}
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+            <tbody className="divide-y divide-border">
               {grants.map((grant) => (
                 <tr
                   key={grant.id}
                   className={
                     isExpired(grant)
-                      ? 'bg-red-50 dark:bg-red-900/10'
-                      : 'hover:bg-gray-50 dark:hover:bg-gray-700'
+                      ? 'bg-semantic-error/10'
+                      : 'hover:bg-background-secondary'
                   }
                 >
-                  <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">
+                  <td className="px-4 py-3 text-sm text-foreground">
                     {grant.email}
                   </td>
                   <td className="px-4 py-3 text-sm">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-semantic-info/20 text-semantic-info">
                       {modeLabel(grant.mode)}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-sm">
                     <div className="flex flex-wrap gap-1">
                       {grant.commentsAllowed && (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-semantic-success/20 text-semantic-success">
                           {t('grants.capabilities.comments')}
                         </span>
                       )}
                       {grant.offlineAllowed && (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 dark:bg-purple-900/40 text-purple-800 dark:text-purple-300">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-accent-secondary/20 text-accent-secondary">
                           {t('grants.capabilities.offline')}
                         </span>
                       )}
@@ -152,23 +152,23 @@ export function GrantList({
                   </td>
                   <td className="px-4 py-3 text-sm">
                     {grant.revokedAt ? (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-semantic-error/20 text-semantic-error">
                         {t('grants.status.revoked')}
                       </span>
                     ) : isExpired(grant) ? (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-300">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-semantic-warning/20 text-semantic-warning">
                         {t('grants.status.expired')}
                       </span>
                     ) : (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-semantic-success/20 text-semantic-success">
                         {t('grants.status.active')}
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+                  <td className="px-4 py-3 text-sm text-foreground-muted">
                     {formatDate(grant.expiresAt, t('grants.never'))}
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+                  <td className="px-4 py-3 text-sm text-foreground-muted">
                     {formatDate(grant.createdAt, t('grants.never'))}
                   </td>
                   <td className="px-4 py-3 text-sm text-right">
@@ -177,13 +177,13 @@ export function GrantList({
                         <>
                           <button
                             onClick={() => onEdit(grant)}
-                            className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                            className="text-semantic-info hover:opacity-80"
                           >
                             {t('grants.actions.edit')}
                           </button>
                           <button
                             onClick={() => setRevokingGrant(grant)}
-                            className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                            className="text-semantic-error hover:opacity-80"
                           >
                             {t('grants.actions.revoke')}
                           </button>
@@ -214,7 +214,7 @@ export function GrantList({
           </div>
         }
       >
-        <p className="text-sm text-gray-700 dark:text-gray-300">
+        <p className="text-sm text-foreground-muted">
           {t('grants.revokeMessage').replace('{email}', revokingGrant?.email ?? '')}
         </p>
       </Modal>

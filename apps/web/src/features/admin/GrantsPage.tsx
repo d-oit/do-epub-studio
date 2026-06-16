@@ -186,15 +186,15 @@ export function AdminGrantResponsesPage() {
     <PageContainer className="p-8">
       <header className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-2xl font-bold text-foreground">
             {t('admin.grants.title')}
           </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+          <p className="text-sm text-foreground-muted mt-1">
             {currentBookTitle ?? (bookId ? `${t('admin.books.title')} ID: ${bookId}` : t('admin.grants.selectBook'))}
           </p>
           <button
             onClick={() => void navigate('/admin/books')}
-            className="text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 mt-1"
+            className="text-sm text-accent hover:opacity-80 mt-1"
           >
             &larr; {t('admin.grants.backToBooks')}
           </button>
@@ -214,7 +214,7 @@ export function AdminGrantResponsesPage() {
         />
 
         {error && (
-          <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300">
+          <div className="mb-6 p-4 bg-semantic-error/10 border border-semantic-error/30 rounded-lg text-semantic-error">
             {error}
           </div>
         )}
