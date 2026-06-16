@@ -1,99 +1,125 @@
 # Path-based PR labeler for do-epub-studio
 # Adopted from github-template-ai-agents (issue #450).
-# Used by actions/labeler (https://github.com/actions/labeler).
+# Used by actions/labeler v6 (https://github.com/actions/labeler).
 
 # CI / DevOps
 ci:
-  - .github/workflows/**
-  - .github/actions/**
-  - .actrc
-  - turbo.json
+  - changed-files:
+      - any-glob-to-any-file:
+          - '.github/workflows/**'
+          - '.github/actions/**'
+          - '.actrc'
+          - 'turbo.json'
 
 # Documentation
 documentation:
-  - '**/*.md'
-  - '**/*.mdx'
-  - 'docs/**'
-  - 'plans/**'
-  - 'AGENTS.md'
-  - 'llms.txt'
-  - 'llms-full.txt'
+  - changed-files:
+      - any-glob-to-any-file:
+          - '**/*.md'
+          - '**/*.mdx'
+          - 'docs/**'
+          - 'plans/**'
+          - 'AGENTS.md'
+          - 'llms.txt'
+          - 'llms-full.txt'
 
 # Security
 security:
-  - '**/*auth*'
-  - '**/*sanitize*'
-  - '**/*purify*'
-  - 'apps/worker/src/lib/security*'
-  - 'apps/worker/src/middleware/security*'
-  - .gitleaks.toml
-  - 'apps/worker/src/routes/files.ts'
+  - changed-files:
+      - any-glob-to-any-file:
+          - '**/*auth*'
+          - '**/*sanitize*'
+          - '**/*purify*'
+          - 'apps/worker/src/lib/security*'
+          - 'apps/worker/src/middleware/security*'
+          - '.gitleaks.toml'
+          - 'apps/worker/src/routes/files.ts'
 
 # Reader (UI/feature)
 area:reader:
-  - apps/web/src/features/reader/**
-  - apps/web/src/features/library/**
-  - apps/web/src/features/annotations/**
-  - packages/reader-core/**
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'apps/web/src/features/reader/**'
+          - 'apps/web/src/features/library/**'
+          - 'apps/web/src/features/annotations/**'
+          - 'packages/reader-core/**'
 
 # Build / tooling
 area:build:
-  - '**/vite.config.*'
-  - turbo.json
-  - package.json
-  - pnpm-workspace.yaml
-  - pnpm-lock.yaml
-  - '**/tsconfig*.json'
+  - changed-files:
+      - any-glob-to-any-file:
+          - '**/vite.config.*'
+          - 'turbo.json'
+          - 'package.json'
+          - 'pnpm-workspace.yaml'
+          - 'pnpm-lock.yaml'
+          - '**/tsconfig*.json'
 
 # Cloudflare Worker
 area:worker:
-  - apps/worker/**
-  - wrangler.toml
-  - apps/worker/wrangler.toml
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'apps/worker/**'
+          - 'wrangler.toml'
+          - 'apps/worker/wrangler.toml'
 
 # Web (React/Vite)
 area:web:
-  - apps/web/**
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'apps/web/**'
 
 # Infra
 area:infra:
-  - .devcontainer/**
-  - '**/Dockerfile*'
-  - '**/docker-compose*'
+  - changed-files:
+      - any-glob-to-any-file:
+          - '.devcontainer/**'
+          - '**/Dockerfile*'
+          - '**/docker-compose*'
 
 # Tests
 tests:
-  - '**/*.test.ts'
-  - '**/*.test.tsx'
-  - '**/*.spec.ts'
-  - '**/__tests__/**'
-  - '**/test-setup.ts'
+  - changed-files:
+      - any-glob-to-any-file:
+          - '**/*.test.ts'
+          - '**/*.test.tsx'
+          - '**/*.spec.ts'
+          - '**/__tests__/**'
+          - '**/test-setup.ts'
 
 # Shared utilities
 area:shared:
-  - packages/shared/**
-  - packages/schema/**
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'packages/shared/**'
+          - 'packages/schema/**'
 
 # UI components
 area:ui:
-  - packages/ui/**
-  - 'apps/web/src/components/**'
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'packages/ui/**'
+          - 'apps/web/src/components/**'
 
 # Agents / skills / plan
 agents:
-  - .agents/**
-  - .claude/**
-  - .qwen/**
-  - .opencode/**
-  - .gemini/**
-  - .jules/**
-  - .windsurf/**
-  - agents-docs/**
-  - skills-lock.json
-  - opencode.json
+  - changed-files:
+      - any-glob-to-any-file:
+          - '.agents/**'
+          - '.claude/**'
+          - '.qwen/**'
+          - '.opencode/**'
+          - '.gemini/**'
+          - '.jules/**'
+          - '.windsurf/**'
+          - 'agents-docs/**'
+          - 'skills-lock.json'
+          - 'opencode.json'
 
 # Dependencies
 deps:
-  - '**/package.json'
-  - pnpm-lock.yaml
-  - .github/dependabot.yml
+  - changed-files:
+      - any-glob-to-any-file:
+          - '**/package.json'
+          - 'pnpm-lock.yaml'
+          - '.github/dependabot.yml'
