@@ -33,7 +33,7 @@ export function BookSelector({
       <div className="flex items-center space-x-3">
         <label
           htmlFor="book-selector"
-          className="text-sm font-medium text-gray-700 dark:text-gray-300"
+          className="text-sm font-medium text-foreground-muted"
         >
           {t('grants.selectBook')}
         </label>
@@ -41,7 +41,7 @@ export function BookSelector({
           id="book-selector"
           value={selectedBookId}
           onChange={(e) => onSelectBook(e.target.value)}
-          className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          className="px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm focus:ring-2 focus:ring-accent focus:border-accent"
           disabled={isLoadingBooks}
         >
           <option value="">{t('grants.allBooks')}</option>
