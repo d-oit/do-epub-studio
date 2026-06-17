@@ -117,15 +117,15 @@ export function AdminAuditPage() {
   };
 
   return (
-    <main id="main-content" className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8">
+    <main id="main-content" className="min-h-screen bg-background p-8">
       <header className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-2xl font-bold text-foreground">
             {t('admin.audit.title')}
           </h1>
           <button
             onClick={handleBack}
-            className="text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 mt-1"
+            className="text-sm text-accent hover:opacity-80 mt-1"
           >
             &larr; {t('admin.audit.backToBooks')}
           </button>
@@ -133,13 +133,13 @@ export function AdminAuditPage() {
         <div className="flex items-center gap-4">
           <button
             onClick={handleExportCSV}
-            className="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
+            className="px-4 py-2 bg-background border border-border rounded-md text-sm font-medium text-foreground-muted hover:bg-background-secondary"
           >
             Export CSV
           </button>
           <button
             onClick={handleRefresh}
-            className="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
+            className="px-4 py-2 bg-background border border-border rounded-md text-sm font-medium text-foreground-muted hover:bg-background-secondary"
           >
             {t('admin.audit.refresh')}
           </button>
@@ -148,21 +148,21 @@ export function AdminAuditPage() {
       </header>
 
       {error && (
-        <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300">
+        <div className="mb-6 p-4 bg-semantic-error/10 border border-semantic-error/30 rounded-lg text-semantic-error">
           {error}
         </div>
       )}
 
       <div className="mb-6 flex flex-wrap items-end gap-4">
         <div>
-          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+          <label className="block text-xs font-medium text-foreground-muted mb-1">
             Entity Type
           </label>
           <select
             aria-label="Entity Type"
             value={entityType}
             onChange={(e) => { setEntityType(e.target.value); setPage(1); }}
-            className="px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-gray-900 dark:text-white"
+            className="px-3 py-2 bg-background border border-border rounded-md text-sm text-foreground"
           >
             {ENTITY_TYPE_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -170,7 +170,7 @@ export function AdminAuditPage() {
           </select>
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+          <label className="block text-xs font-medium text-foreground-muted mb-1">
             Entity ID
           </label>
           <input
@@ -178,11 +178,11 @@ export function AdminAuditPage() {
             value={entityId}
             onChange={(e) => { setEntityId(e.target.value); setPage(1); }}
             placeholder="Filter by entity ID"
-            className="px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-gray-900 dark:text-white placeholder-gray-400"
+            className="px-3 py-2 bg-background border border-border rounded-md text-sm text-foreground placeholder:text-foreground-muted"
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+          <label className="block text-xs font-medium text-foreground-muted mb-1">
             Date From
           </label>
           <input
@@ -190,11 +190,11 @@ export function AdminAuditPage() {
             aria-label="Date From"
             value={dateFrom}
             onChange={(e) => { setDateFrom(e.target.value); setPage(1); }}
-            className="px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-gray-900 dark:text-white"
+            className="px-3 py-2 bg-background border border-border rounded-md text-sm text-foreground"
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+          <label className="block text-xs font-medium text-foreground-muted mb-1">
             Date To
           </label>
           <input
@@ -202,63 +202,63 @@ export function AdminAuditPage() {
             aria-label="Date To"
             value={dateTo}
             onChange={(e) => { setDateTo(e.target.value); setPage(1); }}
-            className="px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-gray-900 dark:text-white"
+            className="px-3 py-2 bg-background border border-border rounded-md text-sm text-foreground"
           />
         </div>
         <button
           onClick={handleResetFilters}
-          className="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
+          className="px-4 py-2 bg-background border border-border rounded-md text-sm font-medium text-foreground-muted hover:bg-background-secondary"
         >
           Reset Filters
         </button>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <div className="bg-background-secondary shadow-sm rounded-lg border border-border overflow-hidden">
         {isLoading ? (
           <div className="p-12 flex justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
           </div>
         ) : (
           <>
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-900/50">
+            <table className="min-w-full divide-y divide-border">
+              <thead className="bg-background-secondary">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-foreground-muted uppercase tracking-wider">
                     {t('admin.audit.timestamp')}
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-foreground-muted uppercase tracking-wider">
                     {t('admin.audit.actor')}
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-foreground-muted uppercase tracking-wider">
                     {t('admin.audit.action')}
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-foreground-muted uppercase tracking-wider">
                     {t('admin.audit.entity')}
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+              <tbody className="divide-y divide-border">
                 {logs.map((log) => (
                   <tr key={log.id}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground-muted">
                       {new Date(log.createdAt).toLocaleString()}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-foreground">
                       {log.actorEmail || 'System'}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground-muted">
+                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-semantic-info/20 text-semantic-info">
                         {log.action}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground-muted">
                       {log.entityType}: {log.entityId}
                     </td>
                   </tr>
                 ))}
                 {logs.length === 0 && (
                   <tr>
-                    <td colSpan={4} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                    <td colSpan={4} className="px-6 py-12 text-center text-foreground-muted">
                       {t('admin.audit.noLogs')}
                     </td>
                   </tr>
@@ -266,25 +266,25 @@ export function AdminAuditPage() {
               </tbody>
             </table>
 
-            <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 dark:border-gray-700">
-              <span className="text-sm text-gray-500 dark:text-gray-400">
+            <div className="flex items-center justify-between px-6 py-4 border-t border-border">
+              <span className="text-sm text-foreground-muted">
                 {renderPaginationInfo()}
               </span>
               <div className="flex items-center gap-2">
                 <button
                   onClick={handlePreviousPage}
                   disabled={page <= 1}
-                  className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded disabled:opacity-50 disabled:cursor-not-allowed bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
+                  className="px-3 py-1 text-sm border border-border rounded disabled:opacity-50 disabled:cursor-not-allowed bg-background text-foreground-muted hover:bg-background-secondary"
                 >
                   Previous
                 </button>
-                <span className="text-sm text-gray-500 dark:text-gray-400">
+                <span className="text-sm text-foreground-muted">
                   Page {page} of {totalPages}
                 </span>
                 <button
                   onClick={handleNextPage}
                   disabled={page >= totalPages}
-                  className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded disabled:opacity-50 disabled:cursor-not-allowed bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
+                  className="px-3 py-1 text-sm border border-border rounded disabled:opacity-50 disabled:cursor-not-allowed bg-background text-foreground-muted hover:bg-background-secondary"
                 >
                   Next
                 </button>

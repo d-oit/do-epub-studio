@@ -105,7 +105,7 @@ export function AdminLoginPage() {
             variant="ghost"
             size="sm"
             onClick={() => { void navigate('/admin/recover'); }}
-            className="text-sm text-foreground-muted hover:text-foreground underline decoration-primary-500/30 hover:decoration-primary-500 focus-visible:ring-2 focus-visible:ring-primary-500"
+            className="text-sm text-foreground-muted hover:text-foreground underline decoration-accent/30 hover:decoration-accent focus-visible:ring-2 focus-visible:ring-accent"
           >
             {t('admin.login.forgotPassword')}
           </Button>
@@ -119,7 +119,7 @@ export function AdminLoginPage() {
             variant="ghost"
             size="sm"
             onClick={() => { void navigate('/login'); }}
-            className="underline decoration-primary-500/30 hover:decoration-primary-500 focus-visible:ring-2 focus-visible:ring-primary-500"
+            className="underline decoration-accent/30 hover:decoration-accent focus-visible:ring-2 focus-visible:ring-accent"
           >
             {t('admin.login.backToReader')}
           </Button>
