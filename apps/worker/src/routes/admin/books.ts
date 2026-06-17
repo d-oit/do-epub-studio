@@ -82,6 +82,10 @@ booksRouter.put('/:id/upload', adminAuth, async (c) => {
 
   const storageKey = `books/${book.id}/${crypto.randomUUID()}.epub`;
 
+  // Multipart upload threshold: 100 MB
+  const MULTIPART_THRESHOLD = 100 * 1024 * 1024;
+  const PART_SIZE = 10 * 1024 * 1024; // 10 MB chunks
+
   try {
     const arrayBuffer = await c.req.raw.arrayBuffer();
     if (arrayBuffer.byteLength === 0) {
@@ -104,17 +108,42 @@ booksRouter.put('/:id/upload', adminAuth, async (c) => {
       );
     }
 
-    await c.env.BOOKS_BUCKET.put(storageKey, arrayBuffer, {
-      httpMetadata: {
-        contentType,
-        contentDisposition: `attachment; filename="${book.slug}.epub"`,
-      },
-      customMetadata: {
-        bookId: book.id,
-        uploadedAt: new Date().toISOString(),
-        validationResults: JSON.stringify(validationResults),
-      },
-    });
+    const httpMetadata = {
+      contentType,
+      contentDisposition: `attachment; filename="${book.slug}.epub"`,
+    };
+    const customMetadata = {
+      bookId: book.id,
+      uploadedAt: new Date().toISOString(),
+      validationResults: JSON.stringify(validationResults),
+    };
+
+    if (arrayBuffer.byteLength > MULTIPART_THRESHOLD) {
+      // Large file: use R2 multipart upload
+      const upload = await c.env.BOOKS_BUCKET.createMultipartUpload(storageKey, {
+        httpMetadata,
+        customMetadata,
+      });
+
+      const parts: { partNumber: number; etag: string }[] = [];
+      const totalParts = Math.ceil(arrayBuffer.byteLength / PART_SIZE);
+
+      for (let i = 0; i < totalParts; i++) {
+        const start = i * PART_SIZE;
+        const end = Math.min(start + PART_SIZE, arrayBuffer.byteLength);
+        const partData = arrayBuffer.slice(start, end);
+        const part = await upload.uploadPart(i + 1, partData);
+        parts.push({ partNumber: part.partNumber, etag: part.etag });
+      }
+
+      await upload.complete(parts);
+    } else {
+      // Small file: use simple put
+      await c.env.BOOKS_BUCKET.put(storageKey, arrayBuffer, {
+        httpMetadata,
+        customMetadata,
+      });
+    }
 
     return c.json(
       {
