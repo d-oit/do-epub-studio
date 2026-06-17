@@ -45,8 +45,10 @@ describe('ReaderToolbar', () => {
        if (key === 'reader.exportNotes') return 'Export Notes';
        if (key === 'reader.settings') return 'Settings';
        if (key === 'reader.signOut') return 'Sign Out';
+       if (key === 'offline.indicator') return 'Offline';
+       if (key === 'a11y.reading_progress') return 'Reading Progress';
        return key;
-    },
+     },
   };
 
   beforeEach(() => {
@@ -91,5 +93,122 @@ describe('ReaderToolbar', () => {
     const header = screen.getByRole('banner', { hidden: true });
     expect(header).toHaveAttribute('data-animate');
     expect(header.getAttribute('data-animate')).toContain('var(--motion-header-offset)');
+  });
+
+  it('renders untitled book when bookTitle is null', () => {
+    render(<ReaderToolbar {...mockProps} bookTitle={null} />);
+    expect(screen.getByText('Untitled Book')).toBeInTheDocument();
+  });
+
+  it('shows search button', () => {
+    render(<ReaderToolbar {...mockProps} />);
+    const searchButton = screen.getByLabelText('Search');
+    searchButton.click();
+    expect(mockProps.onToggleSearch).toHaveBeenCalled();
+  });
+
+  it('shows comments button when canComment is true', () => {
+    render(<ReaderToolbar {...mockProps} />);
+    const commentsButton = screen.getByLabelText('Comment');
+    commentsButton.click();
+    expect(mockProps.onToggleComments).toHaveBeenCalled();
+  });
+
+  it('hides comments button when canComment is false', () => {
+    render(<ReaderToolbar {...mockProps} capabilities={{ canComment: false }} />);
+    expect(screen.queryByLabelText('Comment')).not.toBeInTheDocument();
+  });
+
+  it('shows bookmarks button', () => {
+    render(<ReaderToolbar {...mockProps} />);
+    const bookmarksButton = screen.getByLabelText('Bookmarks');
+    bookmarksButton.click();
+    expect(mockProps.onToggleBookmarks).toHaveBeenCalled();
+  });
+
+  it('shows info button', () => {
+    render(<ReaderToolbar {...mockProps} />);
+    const infoButton = screen.getByLabelText('About This Book');
+    infoButton.click();
+    expect(mockProps.onToggleInfo).toHaveBeenCalled();
+  });
+
+  it('shows export notes button', () => {
+    render(<ReaderToolbar {...mockProps} />);
+    const exportButton = screen.getByLabelText('Export Notes');
+    exportButton.click();
+    expect(mockProps.onExportNotes).toHaveBeenCalled();
+  });
+
+  it('shows settings button', () => {
+    render(<ReaderToolbar {...mockProps} />);
+    const settingsButton = screen.getByLabelText('Settings');
+    settingsButton.click();
+    expect(mockProps.onToggleSettings).toHaveBeenCalled();
+  });
+
+  it('shows sign out button', () => {
+    render(<ReaderToolbar {...mockProps} />);
+    const signOutButton = screen.getByText('Sign Out');
+    signOutButton.click();
+    expect(mockProps.onLogout).toHaveBeenCalled();
+  });
+
+  it('shows open comments count', () => {
+    const comments = [
+      { id: '1', status: 'open' as const, body: 'Comment 1', userEmail: 'a@b.com', chapterRef: null, cfiRange: null, selectedText: null, visibility: 'shared' as const, parentCommentId: null, createdAt: '', updatedAt: '', resolvedAt: null },
+      { id: '2', status: 'resolved' as const, body: 'Comment 2', userEmail: 'a@b.com', chapterRef: null, cfiRange: null, selectedText: null, visibility: 'shared' as const, parentCommentId: null, createdAt: '', updatedAt: '', resolvedAt: null },
+    ];
+    render(<ReaderToolbar {...mockProps} comments={comments} />);
+    expect(screen.getByText('1')).toBeInTheDocument();
+  });
+
+  it('shows bookmarks count', () => {
+    const bookmarks = [
+      { id: '1', locator: { cfi: 'cfi' }, label: null, createdAt: '' },
+      { id: '2', locator: { cfi: 'cfi2' }, label: null, createdAt: '' },
+    ];
+    render(<ReaderToolbar {...mockProps} bookmarks={bookmarks} />);
+    expect(screen.getByText('2')).toBeInTheDocument();
+  });
+
+  it('shows offline indicator when offline', () => {
+    useReaderStore.setState({ isOffline: true });
+    render(<ReaderToolbar {...mockProps} />);
+    expect(screen.getByText('Offline')).toBeInTheDocument();
+  });
+
+  it('shows pending sync count when offline', () => {
+    useReaderStore.setState({ isOffline: true, pendingSyncCount: 3 });
+    render(<ReaderToolbar {...mockProps} />);
+    expect(screen.getByText('(3)')).toBeInTheDocument();
+  });
+
+  it('calls all toggle handlers', () => {
+    render(<ReaderToolbar {...mockProps} />);
+
+    screen.getByLabelText('Contents').click();
+    expect(mockProps.onToggleToc).toHaveBeenCalled();
+
+    screen.getByLabelText('Search').click();
+    expect(mockProps.onToggleSearch).toHaveBeenCalled();
+
+    screen.getByLabelText('Comment').click();
+    expect(mockProps.onToggleComments).toHaveBeenCalled();
+
+    screen.getByLabelText('Bookmarks').click();
+    expect(mockProps.onToggleBookmarks).toHaveBeenCalled();
+
+    screen.getByLabelText('About This Book').click();
+    expect(mockProps.onToggleInfo).toHaveBeenCalled();
+
+    screen.getByLabelText('Export Notes').click();
+    expect(mockProps.onExportNotes).toHaveBeenCalled();
+
+    screen.getByLabelText('Settings').click();
+    expect(mockProps.onToggleSettings).toHaveBeenCalled();
+
+    screen.getByText('Sign Out').click();
+    expect(mockProps.onLogout).toHaveBeenCalled();
   });
 });
