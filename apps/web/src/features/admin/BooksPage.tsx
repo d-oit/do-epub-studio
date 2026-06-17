@@ -256,15 +256,15 @@ export function AdminBookResponsesPage() {
   };
 
   return (
-    <main id="main-content" className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8">
+    <main id="main-content" className="min-h-screen bg-background p-8">
       <header className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-2xl font-bold text-foreground">
             {t('admin.books.title')}
           </h1>
           <button
             onClick={handleBackToReader}
-            className="text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 mt-1"
+            className="text-sm text-accent hover:opacity-80 mt-1"
           >
             &larr; {t('admin.books.backToReader')}
           </button>
@@ -275,7 +275,7 @@ export function AdminBookResponsesPage() {
           </Button>
           <button
             onClick={() => void navigate('/admin/audit')}
-            className="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
+            className="px-4 py-2 bg-background border border-border rounded-md text-sm font-medium text-foreground-muted hover:bg-background-secondary"
           >
             {t('admin.books.viewAuditLogs')}
           </button>
@@ -284,13 +284,13 @@ export function AdminBookResponsesPage() {
       </header>
 
       {error && (
-        <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300">
+        <div className="mb-6 p-4 bg-semantic-error/10 border border-semantic-error/30 rounded-lg text-semantic-error">
           {error}
         </div>
       )}
 
       {successMessage && (
-        <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg text-green-700 dark:text-green-300">
+        <div className="mb-6 p-4 bg-semantic-success/10 border border-semantic-success/30 rounded-lg text-semantic-success">
           {successMessage}
         </div>
       )}
@@ -298,41 +298,41 @@ export function AdminBookResponsesPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {isLoading ? (
           <div className="col-span-full py-12 flex justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
           </div>
         ) : (
           books.map((book) => (
             <div
               key={book.id}
-              className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow"
+              className="bg-background-secondary p-6 rounded-xl shadow-sm border border-border hover:shadow-md transition-shadow"
             >
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+              <h3 className="text-lg font-semibold text-foreground mb-2">
                 {book.title}
               </h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4 line-clamp-2">
+              <p className="text-sm text-foreground-muted mb-4 line-clamp-2">
                 {book.description || t('admin.books.noDescription')}
               </p>
               <div className="flex flex-wrap justify-between items-center gap-2">
-                <span className="text-xs font-medium px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-gray-600 dark:text-gray-300 uppercase">
+                <span className="text-xs font-medium px-2 py-1 bg-background-tertiary rounded text-foreground-muted uppercase">
                   {book.visibility}
                 </span>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => openEditModal(book)}
-                    className="text-xs font-medium text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
+                    className="text-xs font-medium text-foreground-muted hover:text-foreground"
                   >
                     {t('admin.books.edit')}
                   </button>
                   <button
                     onClick={() => { if (window.confirm(t('admin.books.confirmArchive'))) void handleArchiveBook(book.id); }}
                     disabled={archivingBookId === book.id}
-                    className="text-xs font-medium text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-200 disabled:opacity-50"
+                    className="text-xs font-medium text-semantic-error hover:opacity-80 disabled:opacity-50"
                   >
                     {archivingBookId === book.id ? '...' : t('admin.books.archive')}
                   </button>
                   <button
                     onClick={() => handleViewGrants(book)}
-                    className="text-sm font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400"
+                    className="text-sm font-medium text-accent hover:opacity-80"
                   >
                     {t('admin.books.manageAccess')} &rarr;
                   </button>
@@ -342,7 +342,7 @@ export function AdminBookResponsesPage() {
           ))
         )}
         {!isLoading && books.length === 0 && (
-          <div className="col-span-full py-12 text-center text-gray-500 dark:text-gray-400">
+          <div className="col-span-full py-12 text-center text-foreground-muted">
             {t('admin.books.noBookResponses')}
           </div>
         )}
@@ -358,7 +358,7 @@ export function AdminBookResponsesPage() {
       >
         <form onSubmit={(e) => { void handleCreateBook(e); }} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block text-sm font-medium text-foreground-muted mb-1">
               {t('admin.createBookModal.titleLabel')}
             </label>
             <input
@@ -366,12 +366,12 @@ export function AdminBookResponsesPage() {
               value={bookTitle}
               onChange={(e) => setBookTitle(e.target.value)}
               placeholder={t('admin.createBookModal.titlePlaceholder')}
-              className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none transition-all"
+              className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder:text-foreground-muted focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none transition-all"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block text-sm font-medium text-foreground-muted mb-1">
               {t('admin.createBookModal.authorLabel')}
             </label>
             <input
@@ -379,12 +379,12 @@ export function AdminBookResponsesPage() {
               value={authorName}
               onChange={(e) => setAuthorName(e.target.value)}
               placeholder={t('admin.createBookModal.authorPlaceholder')}
-              className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none transition-all"
+              className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder:text-foreground-muted focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none transition-all"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block text-sm font-medium text-foreground-muted mb-1">
               {t('admin.createBookModal.epubLabel')}
             </label>
             <input
@@ -392,18 +392,18 @@ export function AdminBookResponsesPage() {
               type="file"
               accept=".epub"
               onChange={(e) => setEpubFile(e.target.files?.[0] ?? null)}
-              className="w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-primary-50 dark:file:bg-primary-900/30 file:text-primary-700 dark:file:text-primary-300 hover:file:bg-primary-100 dark:hover:file:bg-primary-900/50 cursor-pointer"
+              className="w-full text-sm text-foreground-muted file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-accent/10 file:text-accent hover:file:bg-accent/20 cursor-pointer"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block text-sm font-medium text-foreground-muted mb-1">
               {t('admin.createBookModal.visibilityLabel')}
             </label>
             <select
               value={visibility}
               onChange={(e) => setVisibility(e.target.value)}
-              className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none transition-all"
+              className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none transition-all"
             >
               <option value="private">{t('admin.createBookModal.visibilityPrivate')}</option>
               <option value="public">{t('admin.createBookModal.visibilityPublic')}</option>
@@ -411,13 +411,13 @@ export function AdminBookResponsesPage() {
           </div>
 
           {createError && (
-            <div className="p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-300">
+            <div className="p-3 bg-semantic-error/10 border border-semantic-error/30 rounded-lg text-sm text-semantic-error">
               {createError}
             </div>
           )}
 
           {validationResult && !validationResult.isValid && (
-            <div className="p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-300">
+            <div className="p-3 bg-semantic-error/10 border border-semantic-error/30 rounded-lg text-sm text-semantic-error">
               <p className="font-bold mb-1">{t('admin.createBookModal.validationErrors')}</p>
               <ul className="list-disc list-inside">
                 {validationResult.errors.map((err, i) => (
@@ -428,7 +428,7 @@ export function AdminBookResponsesPage() {
           )}
 
           {validationResult && validationResult.warnings.length > 0 && (
-            <div className="p-3 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-lg text-sm text-amber-700 dark:text-amber-300">
+            <div className="p-3 bg-semantic-warning/10 border border-semantic-warning/30 rounded-lg text-sm text-semantic-warning">
               <p className="font-bold mb-1">{t('admin.createBookModal.validationWarnings')}</p>
               <ul className="list-disc list-inside">
                 {validationResult.warnings.map((warn, i) => (
@@ -467,49 +467,49 @@ export function AdminBookResponsesPage() {
         >
           <form onSubmit={(e) => { void handleUpdateBook(e); }} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label className="block text-sm font-medium text-foreground-muted mb-1">
                 {t('admin.createBookModal.titleLabel')}
               </label>
               <input
                 type="text"
                 value={editTitle}
                 onChange={(e) => setEditTitle(e.target.value)}
-                className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none transition-all"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none transition-all"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label className="block text-sm font-medium text-foreground-muted mb-1">
                 {t('admin.createBookModal.authorLabel')}
               </label>
               <input
                 type="text"
                 value={editAuthor}
                 onChange={(e) => setEditAuthor(e.target.value)}
-                className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none transition-all"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none transition-all"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label className="block text-sm font-medium text-foreground-muted mb-1">
                 {t('admin.createBookModal.descriptionLabel')}
               </label>
               <textarea
                 value={editDescription}
                 onChange={(e) => setEditDescription(e.target.value)}
                 rows={3}
-                className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none transition-all resize-none"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none transition-all resize-none"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label className="block text-sm font-medium text-foreground-muted mb-1">
                 {t('admin.createBookModal.visibilityLabel')}
               </label>
               <select
                 value={editVisibility}
                 onChange={(e) => setEditVisibility(e.target.value)}
-                className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none transition-all"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none transition-all"
               >
                 <option value="private">{t('admin.createBookModal.visibilityPrivate')}</option>
                 <option value="public">{t('admin.createBookModal.visibilityPublic')}</option>
@@ -517,7 +517,7 @@ export function AdminBookResponsesPage() {
             </div>
 
             {editError && (
-              <div className="p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-300">
+              <div className="p-3 bg-semantic-error/10 border border-semantic-error/30 rounded-lg text-sm text-semantic-error">
                 {editError}
               </div>
             )}
