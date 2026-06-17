@@ -9,11 +9,11 @@ describe('useScrollDirection', () => {
     // Explicitly mock on window for jsdom
     window.requestAnimationFrame = vi.fn((cb: FrameRequestCallback) => {
       return Number(setTimeout(() => cb(Date.now()), 0));
-    }) as unknown as typeof window.requestAnimationFrame;
+    });
 
     window.cancelAnimationFrame = vi.fn((id: number) => {
       clearTimeout(id);
-    }) as unknown as typeof window.cancelAnimationFrame;
+    });
 
     vi.useFakeTimers();
   });
