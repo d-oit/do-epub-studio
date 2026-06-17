@@ -7,14 +7,13 @@ describe('useScrollDirection', () => {
     vi.stubGlobal('scrollY', 0);
 
     // Explicitly mock on window for jsdom
-    // @ts-expect-error mocking window
     window.requestAnimationFrame = vi.fn((cb: FrameRequestCallback) => {
       return Number(setTimeout(() => cb(Date.now()), 0));
-    });
-    // @ts-expect-error mocking window
+    }) as unknown as typeof window.requestAnimationFrame;
+
     window.cancelAnimationFrame = vi.fn((id: number) => {
       clearTimeout(id);
-    });
+    }) as unknown as typeof window.cancelAnimationFrame;
 
     vi.useFakeTimers();
   });
