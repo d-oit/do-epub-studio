@@ -23,7 +23,7 @@ describe('Button', () => {
   it('renders with ghost variant', () => {
     render(<Button variant="ghost">Ghost</Button>);
     const button = screen.getByRole('button');
-    expect(button.className).toContain('text-primary-800');
+    expect(button.className).toContain('text-foreground');
   });
 
   it('calls onClick when clicked', () => {

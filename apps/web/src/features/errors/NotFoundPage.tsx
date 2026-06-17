@@ -3,7 +3,7 @@ import { PageContainer } from '@do-epub-studio/ui';
 
 export function NotFoundPage() {
   return (
-    <PageContainer className="flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
+    <PageContainer className="flex flex-col items-center justify-center bg-background px-4">
       <main id="main-content" className="max-w-md w-full text-center py-16">
         <div
           className="w-20 h-20 rounded-2xl bg-accent/10 flex items-center justify-center mx-auto mb-6"
@@ -26,11 +26,11 @@ export function NotFoundPage() {
           </svg>
         </div>
 
-        <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-3">404</h1>
-        <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-4">
+        <h1 className="text-4xl font-bold text-foreground mb-3">404</h1>
+        <h2 className="text-xl font-semibold text-foreground-muted mb-4">
           Page not found
         </h2>
-        <p className="text-gray-500 dark:text-gray-400 mb-8">
+        <p className="text-foreground-muted mb-8">
           The page you&apos;re looking for doesn&apos;t exist or has been moved.
         </p>
 

@@ -129,9 +129,9 @@ export function LoginPage() {
 
   if (recoveryToken && isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col items-center justify-center px-4">
-        <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 text-center">
-          <p className="text-gray-600 dark:text-gray-300">{t('login.verifyingToken')}</p>
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4">
+        <div className="max-w-md w-full bg-background-secondary rounded-xl shadow-lg p-8 text-center">
+          <p className="text-foreground-muted">{t('login.verifyingToken')}</p>
         </div>
       </div>
     );
@@ -258,7 +258,7 @@ export function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setIsRecoveryMode(true)}
-                  className="mt-1 text-xs text-primary-800 hover:text-primary-900 underline underline-offset-2 transition-colors"
+                  className="mt-1 text-xs text-accent hover:opacity-80 underline underline-offset-2 transition-colors"
                 >
                   {t('login.forgotPassword')}
                 </button>

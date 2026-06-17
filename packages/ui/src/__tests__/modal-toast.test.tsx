@@ -260,7 +260,7 @@ describe('ToastProvider and useToast', () => {
     });
     const alerts = screen.getAllByRole('alert');
     const lastAlert = alerts[alerts.length - 1];
-    expect(lastAlert?.className).toContain('bg-green-500');
+    expect(lastAlert?.className).toContain('bg-semantic-success');
   });
 
   it('renders toast with error color', () => {
@@ -274,7 +274,7 @@ describe('ToastProvider and useToast', () => {
     });
     const alerts = screen.getAllByRole('alert');
     const lastAlert = alerts[alerts.length - 1];
-    expect(lastAlert?.className).toContain('bg-red-500');
+    expect(lastAlert?.className).toContain('bg-semantic-error');
   });
 
   it('renders toast with info color', () => {
@@ -288,7 +288,7 @@ describe('ToastProvider and useToast', () => {
     });
     const alerts = screen.getAllByRole('alert');
     const lastAlert = alerts[alerts.length - 1];
-    expect(lastAlert?.className).toContain('bg-blue-500');
+    expect(lastAlert?.className).toContain('bg-semantic-info');
   });
 
   it('renders toast with warning color', () => {
@@ -302,7 +302,7 @@ describe('ToastProvider and useToast', () => {
     });
     const alerts = screen.getAllByRole('alert');
     const lastAlert = alerts[alerts.length - 1];
-    expect(lastAlert?.className).toContain('bg-yellow-500');
+    expect(lastAlert?.className).toContain('bg-semantic-warning');
   });
 
   it('has dismiss button with aria-label', () => {
