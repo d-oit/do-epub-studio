@@ -92,10 +92,10 @@ function ToastContainer({
 
 function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: () => void }) {
   const colors = {
-    success: 'bg-green-500',
-    error: 'bg-red-500',
-    info: 'bg-blue-500',
-    warning: 'bg-yellow-500',
+    success: 'bg-semantic-success',
+    error: 'bg-semantic-error',
+    info: 'bg-semantic-info',
+    warning: 'bg-semantic-warning',
   };
 
   return (
