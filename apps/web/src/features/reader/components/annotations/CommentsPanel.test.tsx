@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { CommentsPanel } from './CommentsPanel';
 import type { Comment, Highlight } from '../../../../stores';
@@ -262,6 +262,73 @@ describe('CommentsPanel', () => {
       // Resolved comment is in different chapter
       const resolvedItem = screen.getByText('Resolved comment').closest('div');
       expect(resolvedItem?.className).not.toContain('border-accent');
+    });
+  });
+
+  describe('interactions', () => {
+    it('closes on Escape key', () => {
+      render(<CommentsPanel {...defaultProps} />);
+      fireEvent.keyDown(document, { key: 'Escape' });
+      expect(mockOnClose).toHaveBeenCalled();
+    });
+
+    it('does nothing on Escape when closed', () => {
+      render(<CommentsPanel {...defaultProps} isOpen={false} />);
+      fireEvent.keyDown(document, { key: 'Escape' });
+      expect(mockOnClose).not.toHaveBeenCalled();
+    });
+
+    it('replies to a comment', () => {
+      render(<CommentsPanel {...defaultProps} />);
+      const commentEl = screen.getByText('First comment').closest('div[class*="rounded-lg"]') as HTMLElement;
+      fireEvent.mouseEnter(commentEl);
+
+      const replyBtns = screen.getAllByText('comment.reply');
+      fireEvent.click(replyBtns[0]);
+
+      const textarea = screen.getByPlaceholderText('comment.reply');
+      fireEvent.change(textarea, { target: { value: 'My reply text' } });
+
+      const cancelBtn = screen.getByText('annotation.cancel');
+      const replyForm = cancelBtn.parentElement as HTMLElement;
+      const formSubmitBtn = replyForm.querySelector('button:first-child') as HTMLElement;
+      fireEvent.click(formSubmitBtn);
+
+      expect(mockOnReplyToComment).toHaveBeenCalledWith('comment-1', 'My reply text');
+    });
+
+    it('edits a comment', () => {
+      render(<CommentsPanel {...defaultProps} />);
+      const commentEl = screen.getByText('First comment').closest('div[class*="rounded-lg"]') as HTMLElement;
+      fireEvent.mouseEnter(commentEl);
+
+      fireEvent.click(screen.getByText('comment.edit'));
+
+      const textarea = screen.getByDisplayValue('First comment');
+      fireEvent.change(textarea, { target: { value: 'Updated comment' } });
+
+      const saveBtn = screen.getByText('Save');
+      fireEvent.click(saveBtn);
+
+      expect(mockOnEditComment).toHaveBeenCalledWith('comment-1', 'Updated comment');
+    });
+
+    it('resolves a comment', () => {
+      render(<CommentsPanel {...defaultProps} />);
+      const commentEl = screen.getByText('First comment').closest('div[class*="rounded-lg"]') as HTMLElement;
+      fireEvent.mouseEnter(commentEl);
+
+      fireEvent.click(screen.getByText('comment.resolve'));
+      expect(mockOnResolveComment).toHaveBeenCalledWith('comment-1');
+    });
+
+    it('deletes a comment', () => {
+      render(<CommentsPanel {...defaultProps} />);
+      const commentEl = screen.getByText('First comment').closest('div[class*="rounded-lg"]') as HTMLElement;
+      fireEvent.mouseEnter(commentEl);
+
+      fireEvent.click(screen.getByText('comment.delete'));
+      expect(mockOnDeleteComment).toHaveBeenCalledWith('comment-1');
     });
   });
 });
