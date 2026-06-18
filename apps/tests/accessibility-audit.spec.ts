@@ -246,6 +246,13 @@ test.describe('Accessibility audit (axe-core)', () => {
     await mockAdminApi(page);
     await loginAsAdmin(page);
     await page.goto('/admin/grants');
+    await page.waitForLoadState('networkidle');
+    // Ensure light theme is applied for consistent axe contrast checks
+    await page.evaluate(() => {
+      document.documentElement.setAttribute('data-theme', 'light');
+      document.documentElement.classList.remove('dark');
+    });
+    await page.waitForTimeout(200);
 
     const accessibilityScanResults = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
