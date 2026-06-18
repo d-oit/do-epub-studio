@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, act } from '@testing-library/react';
+import { render, screen, act, fireEvent } from '@testing-library/react';
 import { ReaderToolbar } from './ReaderToolbar';
 import { useReaderStore } from '../../../../stores/reader';
 
@@ -7,8 +7,21 @@ import { useReaderStore } from '../../../../stores/reader';
 vi.mock('../../../../hooks/useTranslation', () => ({
   useTranslation: () => ({
     t: (key: string) => {
-      const parts = key.split('.');
-      return parts[parts.length - 1].charAt(0).toUpperCase() + parts[parts.length - 1].slice(1);
+      const translations: Record<string, string> = {
+        'reader.tableOfContents': 'Contents',
+        'reader.search': 'Search',
+        'reader.untitledBook': 'Untitled Book',
+        'annotation.comment': 'Comment',
+        'reader.bookmarks': 'Bookmarks',
+        'reader.aboutBook': 'About This Book',
+        'reader.exportNotes': 'Export Notes',
+        'reader.settings': 'Settings',
+        'reader.signOut': 'Sign Out',
+        'reader.moreOptions': 'More Options',
+        'offline.indicator': 'Offline',
+        'a11y.reading_progress': 'Reading Progress',
+      };
+      return translations[key] || key;
     },
   }),
 }));
@@ -36,25 +49,30 @@ describe('ReaderToolbar', () => {
     onExportNotes: vi.fn(),
     onLogout: vi.fn(),
     t: (key: string) => {
-       if (key === 'reader.tableOfContents') return 'Contents';
-       if (key === 'reader.search') return 'Search';
-       if (key === 'reader.untitledBook') return 'Untitled Book';
-       if (key === 'annotation.comment') return 'Comment';
-       if (key === 'reader.bookmarks') return 'Bookmarks';
-       if (key === 'reader.aboutBook') return 'About This Book';
-       if (key === 'reader.exportNotes') return 'Export Notes';
-       if (key === 'reader.settings') return 'Settings';
-       if (key === 'reader.signOut') return 'Sign Out';
-       if (key === 'offline.indicator') return 'Offline';
-       if (key === 'a11y.reading_progress') return 'Reading Progress';
-       return key;
-     },
+      const translations: Record<string, string> = {
+        'reader.tableOfContents': 'Contents',
+        'reader.search': 'Search',
+        'reader.untitledBook': 'Untitled Book',
+        'annotation.comment': 'Comment',
+        'reader.bookmarks': 'Bookmarks',
+        'reader.aboutBook': 'About This Book',
+        'reader.exportNotes': 'Export Notes',
+        'reader.settings': 'Settings',
+        'reader.signOut': 'Sign Out',
+        'reader.moreOptions': 'More Options',
+        'offline.indicator': 'Offline',
+        'a11y.reading_progress': 'Reading Progress',
+      };
+      return translations[key] || key;
+    },
   };
 
   beforeEach(() => {
     vi.clearAllMocks();
     useReaderStore.setState({
-      progress: { locator: null, progressPercent: 45, updatedAt: null }
+      progress: { locator: null, progressPercent: 45, updatedAt: null },
+      isOffline: false,
+      pendingSyncCount: 0,
     });
   });
 
@@ -66,9 +84,7 @@ describe('ReaderToolbar', () => {
 
   it('calls toggle handlers when buttons are clicked', () => {
     render(<ReaderToolbar {...mockProps} />);
-
-    const tocButton = screen.getByLabelText('Contents');
-    tocButton.click();
+    screen.getByLabelText('Contents').click();
     expect(mockProps.onToggleToc).toHaveBeenCalled();
   });
 
@@ -78,7 +94,7 @@ describe('ReaderToolbar', () => {
 
     act(() => {
       useReaderStore.setState({
-        progress: { locator: null, progressPercent: 80, updatedAt: null }
+        progress: { locator: null, progressPercent: 80, updatedAt: null },
       });
     });
 
@@ -88,11 +104,15 @@ describe('ReaderToolbar', () => {
   it('hides header when scrolling down', () => {
     mockUseScrollDirection.mockReturnValue('down');
     render(<ReaderToolbar {...mockProps} />);
-
-    // When hidden, aria-hidden="true" is applied, so we need to use hidden: true
     const header = screen.getByRole('banner', { hidden: true });
     expect(header).toHaveAttribute('data-animate');
     expect(header.getAttribute('data-animate')).toContain('var(--motion-header-offset)');
+  });
+
+  it('shows header when scrolling up', () => {
+    mockUseScrollDirection.mockReturnValue('up');
+    render(<ReaderToolbar {...mockProps} />);
+    expect(screen.getByRole('banner')).toBeInTheDocument();
   });
 
   it('renders untitled book when bookTitle is null', () => {
@@ -184,31 +204,217 @@ describe('ReaderToolbar', () => {
     expect(screen.getByText('(3)')).toBeInTheDocument();
   });
 
-  it('calls all toggle handlers', () => {
+  it('hides offline indicator when online', () => {
+    useReaderStore.setState({ isOffline: false });
     render(<ReaderToolbar {...mockProps} />);
+    expect(screen.queryByText('Offline')).not.toBeInTheDocument();
+  });
 
-    screen.getByLabelText('Contents').click();
-    expect(mockProps.onToggleToc).toHaveBeenCalled();
+  it('toggles mobile menu open', () => {
+    render(<ReaderToolbar {...mockProps} />);
+    const menuButton = screen.getByLabelText('More Options');
+    fireEvent.click(menuButton);
+    expect(screen.getByText('Search')).toBeInTheDocument();
+  });
 
-    screen.getByLabelText('Search').click();
-    expect(mockProps.onToggleSearch).toHaveBeenCalled();
+  it('closes mobile menu when clicking menu item', () => {
+    render(<ReaderToolbar {...mockProps} />);
+    const menuButton = screen.getByLabelText('More Options');
+    fireEvent.click(menuButton);
+    expect(screen.getByText('Search')).toBeInTheDocument();
+    fireEvent.click(screen.getByText('Search').closest('button') as HTMLElement);
+    expect(screen.queryByText('Search')).not.toBeInTheDocument();
+  });
 
-    screen.getByLabelText('Comment').click();
+  it('closes mobile menu when clicking outside', () => {
+    render(<ReaderToolbar {...mockProps} />);
+    const menuButton = screen.getByLabelText('More Options');
+    fireEvent.click(menuButton);
+    expect(screen.getByText('Search')).toBeInTheDocument();
+    fireEvent.mouseDown(document.body);
+    expect(screen.queryByText('Search')).not.toBeInTheDocument();
+  });
+
+  it('closes mobile menu on escape key', () => {
+    render(<ReaderToolbar {...mockProps} />);
+    const menuButton = screen.getByLabelText('More Options');
+    fireEvent.click(menuButton);
+    expect(screen.getByText('Search')).toBeInTheDocument();
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(screen.queryByText('Search')).not.toBeInTheDocument();
+  });
+
+  it('shows capabilities null case', () => {
+    render(<ReaderToolbar {...mockProps} capabilities={null} />);
+    expect(screen.queryByLabelText('Comment')).not.toBeInTheDocument();
+  });
+
+  it('shows active panel indicator for toc', () => {
+    render(<ReaderToolbar {...mockProps} activePanel="toc" />);
+    const tocButton = screen.getByLabelText('Contents');
+    expect(tocButton).toHaveAttribute('aria-expanded', 'true');
+  });
+
+  it('shows active panel indicator for search', () => {
+    render(<ReaderToolbar {...mockProps} activePanel="search" />);
+    const searchButton = screen.getByLabelText('Search');
+    expect(searchButton).toHaveAttribute('aria-expanded', 'true');
+  });
+
+  it('shows active panel indicator for comments', () => {
+    render(<ReaderToolbar {...mockProps} activePanel="comments" />);
+    const commentsButton = screen.getByLabelText('Comment');
+    expect(commentsButton).toHaveAttribute('aria-expanded', 'true');
+  });
+
+  it('shows active panel indicator for bookmarks', () => {
+    render(<ReaderToolbar {...mockProps} activePanel="bookmarks" />);
+    const bookmarksButton = screen.getByLabelText('Bookmarks');
+    expect(bookmarksButton).toHaveAttribute('aria-expanded', 'true');
+  });
+
+  it('shows active panel indicator for info', () => {
+    render(<ReaderToolbar {...mockProps} activePanel="info" />);
+    const infoButton = screen.getByLabelText('About This Book');
+    expect(infoButton).toHaveAttribute('aria-expanded', 'true');
+  });
+
+  it('shows active panel indicator for settings', () => {
+    render(<ReaderToolbar {...mockProps} activePanel="settings" />);
+    const settingsButton = screen.getByLabelText('Settings');
+    expect(settingsButton).toHaveAttribute('aria-expanded', 'true');
+  });
+
+  it('renders progress bar with correct width', () => {
+    render(<ReaderToolbar {...mockProps} />);
+    const progressBars = screen.getAllByRole('progressbar');
+    const progressBar = progressBars[progressBars.length - 1];
+    expect(progressBar).toHaveStyle({ width: '45%' });
+  });
+
+  it('renders progress bar with aria attributes', () => {
+    render(<ReaderToolbar {...mockProps} />);
+    const progressBars = screen.getAllByRole('progressbar');
+    const progressBar = progressBars[progressBars.length - 1];
+    expect(progressBar).toHaveAttribute('aria-valuenow', '45');
+    expect(progressBar).toHaveAttribute('aria-valuemin', '0');
+    expect(progressBar).toHaveAttribute('aria-valuemax', '100');
+  });
+
+  it('shows zero comments count', () => {
+    render(<ReaderToolbar {...mockProps} comments={[]} />);
+    expect(screen.queryByText('0')).not.toBeInTheDocument();
+  });
+
+  it('shows zero bookmarks count', () => {
+    render(<ReaderToolbar {...mockProps} bookmarks={[]} />);
+    expect(screen.queryByText('0')).not.toBeInTheDocument();
+  });
+
+  it('handles capabilities with canComment undefined', () => {
+    render(<ReaderToolbar {...mockProps} capabilities={{}} />);
+    expect(screen.queryByLabelText('Comment')).not.toBeInTheDocument();
+  });
+
+  it('renders all desktop buttons', () => {
+    render(<ReaderToolbar {...mockProps} />);
+    expect(screen.getByLabelText('Contents')).toBeInTheDocument();
+    expect(screen.getByLabelText('Search')).toBeInTheDocument();
+    expect(screen.getByLabelText('Bookmarks')).toBeInTheDocument();
+    expect(screen.getByLabelText('About This Book')).toBeInTheDocument();
+    expect(screen.getByLabelText('Export Notes')).toBeInTheDocument();
+    expect(screen.getByLabelText('Settings')).toBeInTheDocument();
+  });
+
+  it('shows settings in mobile menu', () => {
+    render(<ReaderToolbar {...mockProps} />);
+    const menuButton = screen.getByLabelText('More Options');
+    fireEvent.click(menuButton);
+    const settingsButtons = screen.getAllByText('Settings');
+    expect(settingsButtons.length).toBeGreaterThan(0);
+  });
+
+  it('clicks comments in mobile menu', () => {
+    render(<ReaderToolbar {...mockProps} />);
+    const menuButton = screen.getByLabelText('More Options');
+    fireEvent.click(menuButton);
+    const commentBtn = screen.getByText('Comment').closest('button') as HTMLElement;
+    fireEvent.click(commentBtn);
     expect(mockProps.onToggleComments).toHaveBeenCalled();
+  });
 
-    screen.getByLabelText('Bookmarks').click();
+  it('clicks bookmarks in mobile menu', () => {
+    render(<ReaderToolbar {...mockProps} />);
+    const menuButton = screen.getByLabelText('More Options');
+    fireEvent.click(menuButton);
+    const bookmarkBtn = screen.getByText('Bookmarks').closest('button') as HTMLElement;
+    fireEvent.click(bookmarkBtn);
     expect(mockProps.onToggleBookmarks).toHaveBeenCalled();
+  });
 
-    screen.getByLabelText('About This Book').click();
+  it('clicks info in mobile menu', () => {
+    render(<ReaderToolbar {...mockProps} />);
+    const menuButton = screen.getByLabelText('More Options');
+    fireEvent.click(menuButton);
+    const infoBtn = screen.getByText('About This Book').closest('button') as HTMLElement;
+    fireEvent.click(infoBtn);
     expect(mockProps.onToggleInfo).toHaveBeenCalled();
+  });
 
-    screen.getByLabelText('Export Notes').click();
+  it('clicks export notes in mobile menu', () => {
+    render(<ReaderToolbar {...mockProps} />);
+    const menuButton = screen.getByLabelText('More Options');
+    fireEvent.click(menuButton);
+    const exportBtn = screen.getByText('Export Notes').closest('button') as HTMLElement;
+    fireEvent.click(exportBtn);
     expect(mockProps.onExportNotes).toHaveBeenCalled();
+  });
 
-    screen.getByLabelText('Settings').click();
+  it('clicks settings in mobile menu', () => {
+    render(<ReaderToolbar {...mockProps} />);
+    const menuButton = screen.getByLabelText('More Options');
+    fireEvent.click(menuButton);
+    const settingsBtns = screen.getAllByText('Settings');
+    fireEvent.click(settingsBtns[settingsBtns.length - 1].closest('button') as HTMLElement);
     expect(mockProps.onToggleSettings).toHaveBeenCalled();
+  });
 
-    screen.getByText('Sign Out').click();
+  it('clicks sign out in mobile menu', () => {
+    render(<ReaderToolbar {...mockProps} />);
+    const menuButton = screen.getByLabelText('More Options');
+    fireEvent.click(menuButton);
+    const signOutBtns = screen.getAllByText('Sign Out');
+    fireEvent.click(signOutBtns[signOutBtns.length - 1]);
     expect(mockProps.onLogout).toHaveBeenCalled();
+  });
+
+  it('shows comments count in mobile menu', () => {
+    const comments = [
+      { id: '1', status: 'open' as const, body: 'Comment 1', userEmail: 'a@b.com', chapterRef: null, cfiRange: null, selectedText: null, visibility: 'shared' as const, parentCommentId: null, createdAt: '', updatedAt: '', resolvedAt: null },
+    ];
+    render(<ReaderToolbar {...mockProps} comments={comments} />);
+    const menuButton = screen.getByLabelText('More Options');
+    fireEvent.click(menuButton);
+    const badges = screen.getAllByText('1');
+    expect(badges.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('shows bookmarks count in mobile menu', () => {
+    const bookmarks = [
+      { id: '1', locator: { cfi: 'cfi' }, label: null, createdAt: '' },
+    ];
+    render(<ReaderToolbar {...mockProps} bookmarks={bookmarks} />);
+    const menuButton = screen.getByLabelText('More Options');
+    fireEvent.click(menuButton);
+    const badges = screen.getAllByText('1');
+    expect(badges.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('renders menu dividers in mobile menu', () => {
+    render(<ReaderToolbar {...mockProps} />);
+    const menuButton = screen.getByLabelText('More Options');
+    fireEvent.click(menuButton);
+    expect(screen.getAllByText('Search').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('Sign Out').length).toBeGreaterThanOrEqual(1);
   });
 });

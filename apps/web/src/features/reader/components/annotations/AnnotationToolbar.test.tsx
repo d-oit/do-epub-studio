@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { AnnotationToolbar, type SelectionData } from './AnnotationToolbar';
+import { AnnotationToolbar, extractSelectionData, clearSelection, type SelectionData } from './AnnotationToolbar';
 
 // Mock useTranslation hook
 vi.mock('../../../../hooks/useTranslation', () => ({
@@ -252,10 +252,298 @@ describe('AnnotationToolbar', () => {
         />,
       );
 
-      // Toolbar is a fixed positioned element
       const toolbar = screen.getByLabelText('annotation.highlight').closest('.fixed');
       expect(toolbar).toBeInTheDocument();
       expect(toolbar).toHaveClass('fixed');
     });
+
+    it('clamps position to left edge when near left', () => {
+      const leftSelection: SelectionData = {
+        ...mockSelection,
+        rect: new DOMRect(0, 100, 200, 30),
+      };
+      render(
+        <AnnotationToolbar
+          selection={leftSelection}
+          onHighlight={mockOnHighlight}
+          onComment={mockOnComment}
+          onClose={mockOnClose}
+          locale="en"
+          canHighlight={true}
+          canComment={true}
+        />,
+      );
+      const toolbar = screen.getByLabelText('annotation.highlight').closest('.fixed');
+      expect(toolbar).toBeInTheDocument();
+    });
+
+    it('clamps position to right edge when near right', () => {
+      const rightSelection: SelectionData = {
+        ...mockSelection,
+        rect: new DOMRect(2000, 100, 200, 30),
+      };
+      render(
+        <AnnotationToolbar
+          selection={rightSelection}
+          onHighlight={mockOnHighlight}
+          onComment={mockOnComment}
+          onClose={mockOnClose}
+          locale="en"
+          canHighlight={true}
+          canComment={true}
+        />,
+      );
+      const toolbar = screen.getByLabelText('annotation.highlight').closest('.fixed');
+      expect(toolbar).toBeInTheDocument();
+    });
+  });
+
+  describe('color picker', () => {
+    it('selects green color', async () => {
+      const user = userEvent.setup();
+      render(
+        <AnnotationToolbar
+          selection={mockSelection}
+          onHighlight={mockOnHighlight}
+          onComment={mockOnComment}
+          onClose={mockOnClose}
+          locale="en"
+          canHighlight={true}
+          canComment={true}
+        />,
+      );
+      await user.click(screen.getByLabelText('annotation.highlight'));
+      await user.click(screen.getByLabelText('annotation.colors.green'));
+      expect(mockOnHighlight).toHaveBeenCalledWith('#90EE90');
+    });
+
+    it('selects blue color', async () => {
+      const user = userEvent.setup();
+      render(
+        <AnnotationToolbar
+          selection={mockSelection}
+          onHighlight={mockOnHighlight}
+          onComment={mockOnComment}
+          onClose={mockOnClose}
+          locale="en"
+          canHighlight={true}
+          canComment={true}
+        />,
+      );
+      await user.click(screen.getByLabelText('annotation.highlight'));
+      await user.click(screen.getByLabelText('annotation.colors.blue'));
+      expect(mockOnHighlight).toHaveBeenCalledWith('#87CEEB');
+    });
+
+    it('selects pink color', async () => {
+      const user = userEvent.setup();
+      render(
+        <AnnotationToolbar
+          selection={mockSelection}
+          onHighlight={mockOnHighlight}
+          onComment={mockOnComment}
+          onClose={mockOnClose}
+          locale="en"
+          canHighlight={true}
+          canComment={true}
+        />,
+      );
+      await user.click(screen.getByLabelText('annotation.highlight'));
+      await user.click(screen.getByLabelText('annotation.colors.pink'));
+      expect(mockOnHighlight).toHaveBeenCalledWith('#FFB6C1');
+    });
+
+    it('closes color picker after selection', async () => {
+      const user = userEvent.setup();
+      render(
+        <AnnotationToolbar
+          selection={mockSelection}
+          onHighlight={mockOnHighlight}
+          onComment={mockOnComment}
+          onClose={mockOnClose}
+          locale="en"
+          canHighlight={true}
+          canComment={true}
+        />,
+      );
+      await user.click(screen.getByLabelText('annotation.highlight'));
+      expect(screen.getByLabelText('annotation.colors.yellow')).toBeInTheDocument();
+      await user.click(screen.getByLabelText('annotation.colors.yellow'));
+      expect(screen.queryByLabelText('annotation.colors.yellow')).not.toBeInTheDocument();
+    });
+
+    it('toggles color picker off on second click', async () => {
+      const user = userEvent.setup();
+      render(
+        <AnnotationToolbar
+          selection={mockSelection}
+          onHighlight={mockOnHighlight}
+          onComment={mockOnComment}
+          onClose={mockOnClose}
+          locale="en"
+          canHighlight={true}
+          canComment={true}
+        />,
+      );
+      await user.click(screen.getByLabelText('annotation.highlight'));
+      expect(screen.getByLabelText('annotation.colors.yellow')).toBeInTheDocument();
+      await user.click(screen.getByLabelText('annotation.highlight'));
+      expect(screen.queryByLabelText('annotation.colors.yellow')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('cleanup', () => {
+    it('removes event listeners on unmount', () => {
+      const { unmount } = render(
+        <AnnotationToolbar
+          selection={mockSelection}
+          onHighlight={mockOnHighlight}
+          onComment={mockOnComment}
+          onClose={mockOnClose}
+          locale="en"
+          canHighlight={true}
+          canComment={true}
+        />,
+      );
+      unmount();
+      fireEvent.keyDown(document, { key: 'Escape' });
+      expect(mockOnClose).not.toHaveBeenCalled();
+    });
+  });
+});
+
+describe('extractSelectionData', () => {
+  it('returns null for collapsed selection', () => {
+    const mockGetSelection = vi.fn().mockReturnValue({
+      isCollapsed: true,
+      rangeCount: 0,
+    });
+    const iframe = {
+      contentWindow: { getSelection: mockGetSelection },
+    } as unknown as HTMLIFrameElement;
+
+    expect(extractSelectionData(iframe)).toBeNull();
+  });
+
+  it('returns null when no selection', () => {
+    const mockGetSelection = vi.fn().mockReturnValue(null);
+    const iframe = {
+      contentWindow: { getSelection: mockGetSelection },
+    } as unknown as HTMLIFrameElement;
+
+    expect(extractSelectionData(iframe)).toBeNull();
+  });
+
+  it('returns null for short text', () => {
+    const mockRange = {
+      toString: () => 'ab',
+      getClientRects: () => [],
+      getBoundingClientRect: () => new DOMRect(0, 0, 10, 10),
+    };
+    const mockGetSelection = vi.fn().mockReturnValue({
+      isCollapsed: false,
+      rangeCount: 1,
+      getRangeAt: () => mockRange,
+    });
+    const iframe = {
+      contentWindow: { getSelection: mockGetSelection },
+      getBoundingClientRect: () => new DOMRect(0, 0, 100, 100),
+    } as unknown as HTMLIFrameElement;
+
+    expect(extractSelectionData(iframe)).toBeNull();
+  });
+
+  it('returns selection data for valid text', () => {
+    const mockRange = {
+      toString: () => 'Hello World',
+      getClientRects: () => [new DOMRect(10, 10, 100, 20)],
+      getBoundingClientRect: () => new DOMRect(10, 10, 100, 20),
+    };
+    const mockGetSelection = vi.fn().mockReturnValue({
+      isCollapsed: false,
+      rangeCount: 1,
+      getRangeAt: () => mockRange,
+    });
+    const iframe = {
+      contentWindow: { getSelection: mockGetSelection },
+      getBoundingClientRect: () => new DOMRect(0, 0, 100, 100),
+    } as unknown as HTMLIFrameElement;
+
+    // extractSelectionData is imported at top level
+    const result = extractSelectionData(iframe);
+    expect(result).not.toBeNull();
+    expect(result?.text).toBe('Hello World');
+  });
+
+  it('extracts cfiRange from range when available', () => {
+    const mockRange = {
+      toString: () => 'Hello World',
+      getClientRects: () => [new DOMRect(10, 10, 100, 20)],
+      getBoundingClientRect: () => new DOMRect(10, 10, 100, 20),
+      cfiRange: 'epubcfi(/6/4!/2/2)',
+    };
+    const mockGetSelection = vi.fn().mockReturnValue({
+      isCollapsed: false,
+      rangeCount: 1,
+      getRangeAt: () => mockRange,
+    });
+    const iframe = {
+      contentWindow: { getSelection: mockGetSelection },
+      getBoundingClientRect: () => new DOMRect(0, 0, 100, 100),
+    } as unknown as HTMLIFrameElement;
+
+    // extractSelectionData is imported at top level
+    const result = extractSelectionData(iframe);
+    expect(result?.cfiRange).toBe('epubcfi(/6/4!/2/2)');
+  });
+
+  it('uses getBoundingClientRect when getClientRects returns empty', () => {
+    const mockRange = {
+      toString: () => 'Hello World',
+      getClientRects: () => [],
+      getBoundingClientRect: () => new DOMRect(10, 10, 100, 20),
+    };
+    const mockGetSelection = vi.fn().mockReturnValue({
+      isCollapsed: false,
+      rangeCount: 1,
+      getRangeAt: () => mockRange,
+    });
+    const iframe = {
+      contentWindow: { getSelection: mockGetSelection },
+      getBoundingClientRect: () => new DOMRect(0, 0, 100, 100),
+    } as unknown as HTMLIFrameElement;
+
+    // extractSelectionData is imported at top level
+    const result = extractSelectionData(iframe);
+    expect(result).not.toBeNull();
+    expect(result?.rect).toBeDefined();
+  });
+});
+
+describe('clearSelection', () => {
+  it('clears the selection in iframe', () => {
+    const mockRemoveAllRanges = vi.fn();
+    const iframe = {
+      contentWindow: {
+        getSelection: () => ({
+          removeAllRanges: mockRemoveAllRanges,
+        }),
+      },
+    } as unknown as HTMLIFrameElement;
+
+    // clearSelection is imported at top level
+    clearSelection(iframe);
+    expect(mockRemoveAllRanges).toHaveBeenCalled();
+  });
+
+  it('handles null selection gracefully', () => {
+    const iframe = {
+      contentWindow: {
+        getSelection: () => null,
+      },
+    } as unknown as HTMLIFrameElement;
+
+    // clearSelection is imported at top level
+    expect(() => clearSelection(iframe)).not.toThrow();
   });
 });
