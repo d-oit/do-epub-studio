@@ -325,7 +325,9 @@ export function ReaderPage() {
         onLogout={() => void handleLogout()}
         t={tFn}
         isFixedLayout={isFixedLayout}
-        onToggleFixedLayoutControls={() => togglePanel('fl-controls')}
+        onToggleFixedLayoutControls={() => {
+          togglePanel('fl-controls');
+        }}
       />
       <AnimatePresence>
         {activePanel === 'settings' && (

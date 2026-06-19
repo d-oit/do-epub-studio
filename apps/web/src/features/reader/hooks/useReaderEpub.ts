@@ -442,29 +442,33 @@ export function useReaderEpub(
     if (!fixedLayoutRef.current) return;
     const rendition = renditionRef.current;
     if (!rendition) return;
-    const applyZoomNow = () => {
-      const contentsList = (rendition as unknown as { _contents?: Contents[] })._contents;
-      if (!Array.isArray(contentsList)) return;
-      const reducedMotion =
-        typeof window !== 'undefined' &&
-        window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      const transition = reducedMotion ? 'none' : 'transform 0.18s ease-out';
-      const scale = zoomRef.current.toFixed(2);
-      contentsList.forEach((contents) => {
-        const doc = contents.document;
-        if (!doc?.documentElement) return;
-        let styleEl = doc.getElementById('__fl_zoom_style__');
-        if (!(styleEl instanceof HTMLStyleElement)) {
-          styleEl = doc.createElement('style');
-          styleEl.id = '__fl_zoom_style__';
-          doc.head?.appendChild(styleEl);
-        }
-        styleEl.textContent =
-          `html { transform: scale(${scale}); transform-origin: top center; ` +
-          `transition: ${transition}; }`;
-      });
+    // The @intity/epub-js fork keeps the list of loaded `Contents`
+    // on a private `_contents` field of the rendition. Cast through
+    // `unknown` so we can re-apply the active zoom without
+    // re-initialising the book.
+    const renditionWithContents = rendition as unknown as {
+      _contents?: Contents[];
     };
-    applyZoomNow();
+    const contentsList = renditionWithContents._contents;
+    if (!Array.isArray(contentsList)) return;
+    const reducedMotion =
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const transition = reducedMotion ? 'none' : 'transform 0.18s ease-out';
+    const scale = zoomRef.current.toFixed(2);
+    contentsList.forEach((contents) => {
+      const doc = contents.document;
+      if (!doc?.documentElement) return;
+      let styleEl = doc.getElementById('__fl_zoom_style__');
+      if (!(styleEl instanceof HTMLStyleElement)) {
+        styleEl = doc.createElement('style');
+        styleEl.id = '__fl_zoom_style__';
+        doc.head?.appendChild(styleEl);
+      }
+      styleEl.textContent =
+        `html { transform: scale(${scale}); transform-origin: top center; ` +
+        `transition: ${transition}; }`;
+    });
   }, [readerZoom]);
 
   useEffect(() => {

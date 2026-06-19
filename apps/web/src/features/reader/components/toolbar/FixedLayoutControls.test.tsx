@@ -8,7 +8,9 @@ vi.mock('@do-epub-studio/ui', () => ({
   scaleVariants: { initial: {}, animate: {}, exit: {} },
 }));
 
-const t = (key: string): string => key;
+function t(key: string): string {
+  return key;
+}
 
 describe('FixedLayoutControls', () => {
   it('renders nothing when closed', () => {

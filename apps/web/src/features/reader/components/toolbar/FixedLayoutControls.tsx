@@ -71,11 +71,18 @@ export function FixedLayoutControls({
           {t('reader.fixedLayout.title')}
         </h2>
         <button
+          type="button"
           onClick={onClose}
           className="p-1 rounded-lg hover:bg-background-secondary transition-colors text-foreground-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-accent outline-none"
           aria-label={t('reader.settings.close')}
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -88,12 +95,12 @@ export function FixedLayoutControls({
 
       <div className="space-y-4">
         <div>
-          <label
+          <span
             id="fl-zoom-label"
             className="text-xs font-medium text-foreground-muted block mb-2"
           >
             {t('reader.fixedLayout.zoom')}
-          </label>
+          </span>
           <div
             role="group"
             aria-labelledby="fl-zoom-label"
@@ -155,12 +162,12 @@ export function FixedLayoutControls({
         </div>
 
         <div>
-          <label
+          <span
             id="fl-spread-label"
             className="text-xs font-medium text-foreground-muted block mb-2"
           >
             {t('reader.fixedLayout.spread')}
-          </label>
+          </span>
           <div
             role="group"
             aria-labelledby="fl-spread-label"
@@ -170,7 +177,9 @@ export function FixedLayoutControls({
               <button
                 key={mode}
                 type="button"
-                onClick={() => onSetSpread(mode)}
+                onClick={() => {
+                  onSetSpread(mode);
+                }}
                 aria-pressed={spread === mode}
                 className={`
                   px-2 py-1.5 text-xs font-medium rounded-lg transition-all duration-150 outline-none
