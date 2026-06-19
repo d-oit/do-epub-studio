@@ -23,7 +23,7 @@ interface TableOfContentsProps {
 // Threshold derived from a measured TBT of < 200ms for the reader on 200 chapters
 // (per plan 065 acceptance criteria).
 const VIRTUALIZE_THRESHOLD = 50;
-const TOC_ITEM_HEIGHT = 36; // px-3 py-2 text-sm rounded
+const TOC_ITEM_HEIGHT = 44; // px-3 py-2 text-sm rounded + touch-target
 
 export function TableOfContents({
   isOpen,
@@ -79,8 +79,8 @@ export function TableOfContents({
             onNavigate(item.href);
           }}
           aria-current={isActive ? 'location' : undefined}
-          className={`w-full px-3 py-2 text-sm rounded transition-colors duration-150 ${
-            isRtlLocal ? 'text-right' : 'text-left'
+          className={`w-full px-3 py-2 text-sm rounded transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-accent outline-none flex items-center min-h-[44px] ${
+            isRtlLocal ? 'text-right justify-end' : 'text-left justify-start'
           } ${
             isActive
               ? 'bg-accent text-white font-medium shadow-sm'
