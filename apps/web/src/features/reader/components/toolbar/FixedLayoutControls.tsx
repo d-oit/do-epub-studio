@@ -101,10 +101,7 @@ export function FixedLayoutControls({
           >
             {t('reader.fixedLayout.zoom')}
           </legend>
-          <div
-            aria-labelledby="fl-zoom-label"
-            className="flex items-center gap-1"
-          >
+          <div className="flex items-center gap-1">
             <button
               type="button"
               onClick={handleZoomOut}
@@ -167,10 +164,7 @@ export function FixedLayoutControls({
           >
             {t('reader.fixedLayout.spread')}
           </legend>
-          <div
-            aria-labelledby="fl-spread-label"
-            className="grid grid-cols-3 gap-1"
-          >
+          <div className="grid grid-cols-3 gap-1">
             {SPREAD_OPTIONS.map((mode) => (
               <button
                 key={mode}
