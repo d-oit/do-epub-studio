@@ -54,6 +54,7 @@
     "turbo": "^2.9.14",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.60.0",
+    "undici": "7.28.0",
     "vitest": "4.1.7",
     "wrangler": "^4.95.0"
   },
@@ -61,7 +62,8 @@
     "overrides": {
       "serialize-javascript": "^7.0.0",
       "esbuild": ">=0.28.1",
-      "ws": ">=8.21.0"
+      "ws": ">=8.21.0",
+      "undici": ">=7.28.0"
     }
   }
 }
