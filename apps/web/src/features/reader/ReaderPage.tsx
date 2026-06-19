@@ -28,6 +28,7 @@ import {
   ReaderViewer,
   CommentInputModal,
   InfoPanel,
+  FixedLayoutControls,
 } from './components';
 
 export function ReaderPage() {
@@ -70,6 +71,10 @@ export function ReaderPage() {
   const setBookmarks = useReaderStore((s) => s.setBookmarks);
   const currentChapter = useReaderStore((s) => s.currentChapter);
   const isFixedLayout = useReaderStore((s) => s.isFixedLayout);
+  const readerSpread = useReaderStore((s) => s.readerSpread);
+  const readerZoom = useReaderStore((s) => s.readerZoom);
+  const setReaderSpread = useReaderStore((s) => s.setReaderSpread);
+  const setReaderZoom = useReaderStore((s) => s.setReaderZoom);
 
   const readerTheme = usePreferencesStore((s) => s.reader.theme);
   const readerFontSize = usePreferencesStore((s) => s.reader.fontSize);
@@ -319,6 +324,10 @@ export function ReaderPage() {
         onExportNotes={() => handleExportNotes(bookTitle)}
         onLogout={() => void handleLogout()}
         t={tFn}
+        isFixedLayout={isFixedLayout}
+        onToggleFixedLayoutControls={() => {
+          togglePanel('fl-controls');
+        }}
       />
       <AnimatePresence>
         {activePanel === 'settings' && (
@@ -336,6 +345,17 @@ export function ReaderPage() {
             onSetDirection={setDirection}
             onSetWritingMode={setWritingMode}
             isFixedLayout={isFixedLayout}
+            t={tFn}
+          />
+        )}
+        {activePanel === 'fl-controls' && isFixedLayout && (
+          <FixedLayoutControls
+            isOpen
+            onClose={() => setActivePanel(null)}
+            zoom={readerZoom}
+            spread={readerSpread}
+            onSetZoom={setReaderZoom}
+            onSetSpread={setReaderSpread}
             t={tFn}
           />
         )}
