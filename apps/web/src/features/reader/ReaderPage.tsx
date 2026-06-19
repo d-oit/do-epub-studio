@@ -17,6 +17,7 @@ import {
   useAnnotationHandlers,
   useBookmarkHandlers,
   useExportNotes,
+  useReadingTimer,
 } from './hooks';
 import { AnimatePresence } from 'framer-motion';
 import {
@@ -102,6 +103,7 @@ export function ReaderPage() {
   } = useAnnotationHandlers();
   const { handleCreateBookmark, handleDeleteBookmark } = useBookmarkHandlers();
   const { handleExportNotes } = useExportNotes();
+  const { markLoaded: markInsightsLoaded, flush: flushInsights, syncToServer: syncInsightsToServer } = useReadingTimer(bookId);
 
   const rootRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<HTMLDivElement>(null as unknown as HTMLDivElement);
@@ -265,6 +267,7 @@ export function ReaderPage() {
           signal: controller.signal,
         });
         setEpubUrl(data.url);
+        markInsightsLoaded();
       } catch (err) {
         if (!controller.signal.aborted)
           setError((err as Error).message || t('reader.notAvailable'));
@@ -279,7 +282,14 @@ export function ReaderPage() {
       aborted = true;
       controller.abort();
     };
-  }, [sessionToken, bookSlug, navigate, setError, t]);
+  }, [sessionToken, bookSlug, navigate, setError, t, markInsightsLoaded]);
+
+  useEffect(() => {
+    return () => {
+      void flushInsights();
+      void syncInsightsToServer();
+    };
+  }, [flushInsights, syncInsightsToServer]);
 
   const handleLogout = async () => {
     try {
@@ -373,6 +383,8 @@ export function ReaderPage() {
             isOpen
             onClose={() => setActivePanel(null)}
             metadata={metadata}
+            bookId={bookId}
+            progressPercent={progress.progressPercent}
             t={tFn}
           />
         )}
