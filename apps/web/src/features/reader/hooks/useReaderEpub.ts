@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import ePub from '@intity/epub-js';
 import type { Book, Rendition, NavItem, Contents } from '@intity/epub-js';
-import type { PageDirection, WritingMode } from '../../../stores';
+import type { PageDirection, WritingMode, ReaderZoom } from '../../../stores';
 import {
   parseAccessibilityFromOpf,
   parseFixedLayoutFromOpf,
@@ -78,6 +78,8 @@ export function useReaderEpub(
   const setProgress = useReaderStore((s) => s.setProgress);
   const setBookDirection = useReaderStore((s) => s.setBookDirection);
   const setIsFixedLayout = useReaderStore((s) => s.setIsFixedLayout);
+  const readerSpread = useReaderStore((s) => s.readerSpread);
+  const readerZoom = useReaderStore((s) => s.readerZoom);
   const readerTheme = usePreferencesStore((s) => s.reader.theme);
   const readerFontSize = usePreferencesStore((s) => s.reader.fontSize);
   const readerFontFamily = usePreferencesStore((s) => s.reader.fontFamily);
@@ -95,6 +97,8 @@ export function useReaderEpub(
   onNavigateToAnnotationRef.current = onNavigateToAnnotation;
   const directionRef = useRef<PageDirection>('default');
   const fixedLayoutRef = useRef(false);
+  const zoomRef = useRef<ReaderZoom>(readerZoom);
+  zoomRef.current = readerZoom;
 
   const [toc, setToc] = useState<TocItem[]>([]);
   const [metadata, setMetadata] = useState<BookInfo | null>(null);
@@ -269,6 +273,27 @@ export function useReaderEpub(
               doc.documentElement.style.setProperty('overflow', 'hidden', 'important');
             }
           });
+          // Apply the user-chosen zoom to every fresh content document.
+          // The current zoom is read from `zoomRef` (kept fresh by the
+          // effect above) so changes propagate via the spread re-display.
+          rendition.hooks.content.register((contents: Contents) => {
+            const doc = contents.document;
+            if (!doc?.documentElement) return;
+            const reducedMotion =
+              typeof window !== 'undefined' &&
+              window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            const transition = reducedMotion ? 'none' : 'transform 0.18s ease-out';
+            const scale = zoomRef.current.toFixed(2);
+            let styleEl = doc.getElementById('__fl_zoom_style__');
+            if (!(styleEl instanceof HTMLStyleElement)) {
+              styleEl = doc.createElement('style');
+              styleEl.id = '__fl_zoom_style__';
+              doc.head?.appendChild(styleEl);
+            }
+            styleEl.textContent =
+              `html { transform: scale(${scale}); transform-origin: top center; ` +
+              `transition: ${transition}; }`;
+          });
         }
 
         applyThemesRef.current(rendition);
@@ -382,6 +407,65 @@ export function useReaderEpub(
     const dir = readerDirection !== 'default' ? readerDirection : directionRef.current;
     applyDirectionAndWritingMode(renditionRef.current, dir, readerWritingMode);
   }, [readerDirection, readerWritingMode]);
+
+  // Apply user-chosen spread mode to the live rendition. The
+  // @intity/epub-js fork exposes `rendition.layout` (Layout) with a
+  // mutable `settings` field; we update `spread` and re-display from
+  // the current CFI. This is the lowest-risk way to change spread
+  // post-render (no full re-init).
+  useEffect(() => {
+    const rendition = renditionRef.current;
+    if (!rendition) return;
+    if (!fixedLayoutRef.current) return;
+    // The @intity/epub-js fork exposes a mutable `layout.settings`
+    // object on the rendition; cast through unknown so we can update
+    // `spread` post-render without re-initialising the book.
+    const renditionWithLayout = rendition as unknown as {
+      layout?: { settings?: { spread?: string } };
+    };
+    const layoutSettings = renditionWithLayout.layout?.settings;
+    if (layoutSettings) {
+      layoutSettings.spread = readerSpread;
+    }
+    const currentCfi = rendition.location?.start?.cfi;
+    if (currentCfi) {
+      void rendition.display(currentCfi);
+    }
+  }, [readerSpread]);
+
+  // Apply user-chosen zoom level by injecting a `transform: scale()`
+  // CSS rule on every content document. The active zoom is read from
+  // `zoomRef` (kept fresh by the previous effect), so a single hook
+  // registered at init handles both the initial render and any later
+  // re-display triggered by spread changes.
+  useEffect(() => {
+    if (!fixedLayoutRef.current) return;
+    const rendition = renditionRef.current;
+    if (!rendition) return;
+    const applyZoomNow = () => {
+      const contentsList = (rendition as unknown as { _contents?: Contents[] })._contents;
+      if (!Array.isArray(contentsList)) return;
+      const reducedMotion =
+        typeof window !== 'undefined' &&
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const transition = reducedMotion ? 'none' : 'transform 0.18s ease-out';
+      const scale = zoomRef.current.toFixed(2);
+      contentsList.forEach((contents) => {
+        const doc = contents.document;
+        if (!doc?.documentElement) return;
+        let styleEl = doc.getElementById('__fl_zoom_style__');
+        if (!(styleEl instanceof HTMLStyleElement)) {
+          styleEl = doc.createElement('style');
+          styleEl.id = '__fl_zoom_style__';
+          doc.head?.appendChild(styleEl);
+        }
+        styleEl.textContent =
+          `html { transform: scale(${scale}); transform-origin: top center; ` +
+          `transition: ${transition}; }`;
+      });
+    };
+    applyZoomNow();
+  }, [readerZoom]);
 
   useEffect(() => {
     if (readerTheme !== 'system') return;
