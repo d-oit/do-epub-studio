@@ -9,6 +9,7 @@ import {
 } from './fixtures';
 import { app } from '../app';
 import { assertBookAccess } from '../lib/tenant-isolation';
+import type { AuthContext } from '../auth/middleware';
 
 vi.mock('../lib/tenant-isolation', () => ({
   parseLocatorRow: vi.fn(),
@@ -16,6 +17,13 @@ vi.mock('../lib/tenant-isolation', () => ({
 }));
 
 const mockAssertBookAccess = assertBookAccess as ReturnType<typeof vi.fn>;
+
+const mockAuthContext: AuthContext = {
+  email: 'user@example.com',
+  bookId: '123e4567-e89b-12d3-a456-426614174000',
+  sessionId: 'session-1',
+  capabilities: { canRead: true, canComment: true, canHighlight: true, canBookmark: true, canDownloadOffline: true, canExportNotes: true, canManageAccess: false },
+};
 
 describe('insightsRouter', () => {
   const env = makeEnv();
@@ -26,12 +34,7 @@ describe('insightsRouter', () => {
   });
 
   it('GET /api/books/:bookId/insights returns empty summary', async () => {
-    mockRequireAuth.mockResolvedValue({
-      email: 'user@example.com',
-      bookId: '123e4567-e89b-12d3-a456-426614174000',
-      sessionId: 'session-1',
-      capabilities: { canRead: true, canComment: true },
-    } as any);
+    mockRequireAuth.mockResolvedValue(mockAuthContext);
     mockQueryAll.mockResolvedValue([]);
 
     const res = await app.fetch(
@@ -50,13 +53,8 @@ describe('insightsRouter', () => {
   });
 
   it('POST /api/books/:bookId/insights/sync accepts valid payload', async () => {
-    mockRequireAuth.mockResolvedValue({
-      email: 'user@example.com',
-      bookId: '123e4567-e89b-12d3-a456-426614174000',
-      sessionId: 'session-1',
-      capabilities: { canRead: true, canComment: true },
-    } as any);
-    mockExecute.mockResolvedValue({} as any);
+    mockRequireAuth.mockResolvedValue(mockAuthContext);
+    mockExecute.mockResolvedValue({});
 
     const res = await app.fetch(
       new Request('http://localhost/api/books/123e4567-e89b-12d3-a456-426614174000/insights/sync', {

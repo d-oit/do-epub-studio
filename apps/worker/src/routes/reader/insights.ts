@@ -32,16 +32,16 @@ insightsRouter.get('/:bookId/insights', readerAuth, async (c) => {
     [bookId, auth.email],
   );
 
-  const totalActiveMinutes = rows.reduce((sum, r) => sum + (r.active_minutes ?? 0), 0);
+  const totalActiveMinutes = rows.reduce((sum, r) => sum + r.active_minutes, 0);
 
-  const currentStreakDays = computeStreak(rows.map((r) => r.bucket_date ?? ''));
+  const currentStreakDays = computeStreak(rows.map((r) => r.bucket_date));
 
   const recentActivity = rows
     .slice(0, 7)
     .reverse()
     .map((r) => ({
-      date: r.bucket_date ?? '',
-      activeMinutes: r.active_minutes ?? 0,
+      date: r.bucket_date,
+      activeMinutes: r.active_minutes,
     }));
 
   return c.json({
@@ -99,15 +99,16 @@ function computeStreak(dates: string[]): number {
 
   let streak = 1;
   let current = new Date(today);
+  let hasMore = true;
 
-  while (true) {
+  while (hasMore) {
     current = new Date(current);
     current.setDate(current.getDate() - 1);
     const key = current.toISOString().slice(0, 10);
     if (dateSet.has(key)) {
       streak++;
     } else {
-      break;
+      hasMore = false;
     }
   }
 
