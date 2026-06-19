@@ -55,9 +55,9 @@ export function SwUpdateNotification() {
       {show && (
         <motion.div
           key="sw-update-banner"
-          initial={{ y: 80, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: 80, opacity: 0 }}
+          initial={{ y: 80 }}
+          animate={{ y: 0 }}
+          exit={{ y: 80 }}
           transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
           className="fixed bottom-20 left-1/2 -translate-x-1/2 z-[200] w-full max-w-[calc(100vw-2rem)] sm:max-w-md pointer-events-auto"
           role="status"
