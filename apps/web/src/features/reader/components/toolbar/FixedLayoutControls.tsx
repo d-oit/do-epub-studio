@@ -94,15 +94,14 @@ export function FixedLayoutControls({
       </div>
 
       <div className="space-y-4">
-        <div>
-          <span
+        <fieldset>
+          <legend
             id="fl-zoom-label"
             className="text-xs font-medium text-foreground-muted block mb-2"
           >
             {t('reader.fixedLayout.zoom')}
-          </span>
+          </legend>
           <div
-            role="group"
             aria-labelledby="fl-zoom-label"
             className="flex items-center gap-1"
           >
@@ -159,17 +158,16 @@ export function FixedLayoutControls({
               </svg>
             </button>
           </div>
-        </div>
+        </fieldset>
 
-        <div>
-          <span
+        <fieldset>
+          <legend
             id="fl-spread-label"
             className="text-xs font-medium text-foreground-muted block mb-2"
           >
             {t('reader.fixedLayout.spread')}
-          </span>
+          </legend>
           <div
-            role="group"
             aria-labelledby="fl-spread-label"
             className="grid grid-cols-3 gap-1"
           >
@@ -195,7 +193,7 @@ export function FixedLayoutControls({
               </button>
             ))}
           </div>
-        </div>
+        </fieldset>
       </div>
     </motion.div>
   );
