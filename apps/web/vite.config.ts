@@ -1,16 +1,19 @@
 import { readFileSync } from 'node:fs';
+import path from 'path';
 import { defineConfig, type PluginOption } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import { visualizer } from 'rollup-plugin-visualizer';
 import tailwindcss from '@tailwindcss/vite';
-import path from 'path';
+import appIdentity from './src/config/app-identity.json';
 
 const isAnalyze = process.env.ANALYZE === 'true';
-const appIdentity = JSON.parse(
-  readFileSync(new URL('./src/config/app-identity.json', import.meta.url), 'utf8'),
-) as { name: string; shortName: string; description: string };
-const appVersion = readFileSync(new URL('../../VERSION', import.meta.url), 'utf8').trim();
+// VERSION is a repo-root static file; the path is a literal relative
+// to this config file's location. The `detect-non-literal-fs-filename`
+// rule only blocks paths that could carry untrusted runtime data, which
+// is not the case here.
+// eslint-disable-next-line security/detect-non-literal-fs-filename
+const appVersion = readFileSync(path.resolve(__dirname, '../../VERSION'), 'utf8').trim();
 
 export default defineConfig({
   plugins: [
