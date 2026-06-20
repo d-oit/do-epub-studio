@@ -1,7 +1,7 @@
 # GOAP 103 — Plan Triage and Recommended Execution Order
 
 **Date:** 2026-06-20
-**Status:** Open
+**Status:** In progress — triage done; execution in flight
 **Author:** Swarm session 2026-06-20 (post plan 102)
 **Methodology:** GOAP (analyze -> synthesize)
 
@@ -31,8 +31,8 @@ already archived) and classified each as:
 
 | Status | Count |
 |--------|-------|
-| DONE | 73 |
-| IN_PROGRESS | 7 |
+| DONE | 77 |
+| IN_PROGRESS | 4 |
 | OPEN | 0 |
 | META | 32 |
 | BLOCKED | 0 |
@@ -52,9 +52,9 @@ have a plan owner).
 | 065 | Reader perf + Turborepo cache | IN_PROGRESS | Stream B PR-2/PR-3 + 4 reader hot-path wins |
 | 075 | 2026-06-15 swarm master plan | IN_PROGRESS | Waves B/C/D; 5 of 12 gaps still open |
 | 076 | Admin recovery + book CRUD | IN_PROGRESS | Blocked on G15 (magic-link email transport) |
-| 077 | Reader progress + search load (G19) | IN_PROGRESS | Single PR, dep on tenant-isolation (now merged) |
-| 079 | Admin grants PATCH UI (G21) | IN_PROGRESS | Wire or delete decision |
-| 084 | CHANGELOG + CONTRIBUTING sync (G27) | IN_PROGRESS | Doc-only, ready to ship |
+| 077 | Reader progress + search load (G19) | DONE | Shipped in PR #566 (commit `?`); progress_loaded telemetry + offline fallback present in `ReaderPage.tsx` |
+| 079 | Admin grants PATCH UI (G21) | DONE | Shipped in PR #560 (commit `74b63be`); GrantForm + GrantList wired into GrantsPage.tsx; semantic-token migration PR #603 |
+| 084 | CHANGELOG + CONTRIBUTING sync (G27) | DONE | CHANGELOG already lists PRs #525, #527, #560, #566; CONTRIBUTING already has all 7 coverage thresholds matching AGENTS.md |
 | 100 | Coverage improvement progress | IN_PROGRESS | Phase 2 in flight; web at 76.58% vs 80% target |
 
 ## Recommended Execution Order
@@ -65,11 +65,12 @@ gates must pass for every PR.
 
 ### Batch A — Quick wins (≤ 1 session each)
 
-1. **084** CHANGELOG + CONTRIBUTING sync — doc-only, prerequisite for
-   release-management skill; ships in < 30 min.
-2. **079** Admin grants PATCH UI — decision (wire or delete) and one PR.
-3. **077** Reader progress + search load (G19) — single PR; no upstream
-   blocker now that tenant isolation is merged.
+> All three Batch A items already shipped — see "Execution Progress"
+> below. Status changed to DONE; no further work.
+
+1. **084** CHANGELOG + CONTRIBUTING sync — already in sync.
+2. **079** Admin grants PATCH UI — wired in PR #560.
+3. **077** Reader progress + search load (G19) — shipped in PR #566.
 
 ### Batch B — Coverage and observability (1-2 sessions)
 
@@ -119,12 +120,105 @@ gates must pass for every PR.
 
 - This plan is the **next** plan to execute. It is itself the swarm
   plan; it does not need a separate plan-PR until Batch A ships.
-- Working tree carries uncommitted modifications on `main` that
-  pre-date this session (AGENTS.md Tier-1 mandate update, pnpm-lock,
-  jsdom dep, `apps/web/src/main.tsx` `TranslationKeys` typing,
-  `ReaderPage.tsx` refactor, `reader-store.test.ts`). These need a
-  dedicated plan + PR before they accumulate further. Recommend plan
-  104 — "Pre-existing working-tree changeset" — to capture, commit, and
-  ship them.
+- **Plan 104 status: not needed.** The "uncommitted working-tree
+  changeset" flagged earlier in this plan (AGENTS.md Tier-1 mandate,
+  pnpm-lock + jsdom dep, `apps/web/src/main.tsx` `TranslationKeys`
+  typing, `ReaderPage.tsx` refactor, `reader-store.test.ts`) was
+  already shipped in PR
+  [#617](https://github.com/d-oit/do-epub-studio/pull/617) (commit
+  `7784fab`, "fix(agents): mandate pre-existing issue fixes"). When
+  PR #618 was merged into `main` at `24b6cce`, the working tree
+  became clean — those changes are now part of `main`. Plan 104
+  is therefore not required; this finding is recorded here so
+  future triage passes do not re-flag it.
 - Codacy `ACTION_REQUIRED` is third-party, not a GitHub Actions check,
   and does not block merge (no branch protection). Not a plan item.
+
+## Execution Progress
+
+### 2026-06-20 — Plans 102 + 103 shipped in PR #618
+
+PR [#618](https://github.com/d-oit/do-epub-studio/pull/618) merged to
+main at commit `24b6cce` (squash of 4 commits: 478d0e3b, 6b96af7,
+80c573b, 3d33101). Final state: 19/19 GitHub Actions pass + Codacy
+pass + 0 new issues.
+
+Lessons learned during execution (now codified in AGENTS.md, codacy
+skill, security-code-auditor skill, and `agents-docs/LEARNINGS.md`):
+
+- **Codacy IS a required check.** Treating it as "third-party /
+  informational" was a false assumption — AGENTS.md Tier 1 already
+  forbids merging with any failing check, and Codacy rows in
+  `gh pr checks` count. Branch protection is not enabled on `main`,
+  so the merge button is not technically blocked, but the policy
+  applies regardless.
+- **Local ESLint skips root-level configs.** The `pnpm lint` scripts
+  in each workspace scope to `src/`, so `vite.config.ts`,
+  `vitest.config.ts`, `playwright.config.ts` are not linted locally.
+  Codacy lints the whole file. A green local `pnpm lint` is not
+  sufficient; always re-check `gh pr checks` after pushing.
+- **`new URL('./file', import.meta.url)` is the wrong pattern for
+  repo-static files** in Vite/webpack/rollup configs because the URL
+  is non-literal at the call site and trips the OWASP path-traversal
+  rule (`security/detect-non-literal-fs-filename`). Use a static
+  `import` (Vite/webpack/rollup config) or
+  `path.join(__dirname, 'literal')` (Node). See
+  `.agents/skills/security-code-auditor/SKILL.md` § "File-System
+  Path Patterns" for the full patterns.
+- **`?raw` import suffix does not work in `vite.config.ts`.** The
+  Vite config is loaded by Node via Rolldown bundle and `?raw` is
+  a Vite-only source-transform. Put the `?raw` import in a companion
+  TS module and import that module's exported constant into the
+  config. JSON imports work fine in the config.
+- **Markdownlint MD004 (ul-style)** and **MD058 (blanks-around-tables)**
+  are common gotchas that the quality gate and pre-commit hook both
+  enforce. Mixing `+` and `-` for bullets, or having a table header
+  followed directly by another line, both fail CI.
+- **pnpm non-TTY install:** set `CI=true` env var, or
+  `confirmModulesPurge: false` in `.npmrc`.
+- **Stale working-tree changeset captured as plan 104** (see below).
+
+### Updated status totals (post-102 merge)
+
+- DONE: 74 (was 73; +1 for plan 102)
+- IN_PROGRESS: 6 (was 7; -1 for plan 102)
+
+  Remaining: 063, 065, 075, 076, 100 (Batch A items 077/079/084
+  removed — see next section).
+
+### 2026-06-20 — Batch A already shipped in earlier PRs
+
+While preparing to execute Batch A (084/079/077) it surfaced that all
+three items were already shipped in earlier PRs:
+
+- **Plan 077 (G19 — reader progress load on open)** — shipped in PR
+  [#566](https://github.com/d-oit/do-epub-studio/pull/566). Current
+  `ReaderPage.tsx` includes the `progress_loaded` telemetry event
+  (line 190), the offline-DB fallback (line 173), and the CFI display
+  path. CHANGELOG already records `fix(reader): wire initial progress
+  load on reader open (#566)`.
+- **Plan 079 (G21 — admin grants PATCH UI)** — shipped in PR
+  [#560](https://github.com/d-oit/do-epub-studio/pull/560) (commit
+  `74b63be`). `<GrantList>` and `<GrantForm>` are wired into
+  `GrantsPage.tsx` (lines 222/231). A semantic-token migration followed
+  in PR [#603](https://github.com/d-oit/do-epub-studio/pull/603)
+  (commit `bec77ac`).
+- **Plan 084 (G27 — CHANGELOG + CONTRIBUTING sync)** — already in
+  sync. CHANGELOG lists PRs #525, #527, #560, #566, #552; CONTRIBUTING
+  has all 7 coverage thresholds (web 55/48, worker 55/50, shared
+  40/50, reader-core 72/70, schema 15/5, testkit 25/20, ui 10/5)
+  matching `AGENTS.md` Tier 2.
+
+**No new PRs needed for Batch A.** Updated totals above.
+
+### Next: Batch B/C/D
+
+- Batch B (100 coverage Phase 2, 065 perf) — both in_progress, ready
+  for execution. Plan 100 brings web to 80% coverage; plan 065
+  finishes Stream B PR-2/PR-3 and the 4 reader hot-path wins.
+- Batch C (076 admin recovery, 063 Wave 2 P1) — 076 is blocked on G15
+  (magic-link email transport) per plan 081a; 063 has 26 P1 items.
+- Batch D (075 closeout) — closes 5 of 12 gaps still open
+  (#532/#533/#534/#535/#539).
+
+Recommended next session: Batch B (100 + 065) as two PRs.
