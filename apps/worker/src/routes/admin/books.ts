@@ -9,7 +9,7 @@ import { adminAuth } from '../../middleware/auth';
 
 export const booksRouter = new Hono<{ Bindings: Env; Variables: { adminUser: { email: string; id: string; role: string } } }>();
 
-booksRouter.post('/', zValidator('json', CreateBookSchema), adminAuth, async (c) => {
+booksRouter.post('/', adminAuth, zValidator('json', CreateBookSchema), async (c) => {
   const body = c.req.valid('json');
   const adminUser = c.get('adminUser');
   const id = crypto.randomUUID();
@@ -162,7 +162,7 @@ booksRouter.put('/:id/upload', adminAuth, async (c) => {
   }
 });
 
-booksRouter.post('/:id/upload-complete', zValidator('json', UploadCompleteSchema), adminAuth, async (c) => {
+booksRouter.post('/:id/upload-complete', adminAuth, zValidator('json', UploadCompleteSchema), async (c) => {
   const bookId = c.req.param('id');
   const body = c.req.valid('json');
   const fileId = crypto.randomUUID();
@@ -196,7 +196,7 @@ booksRouter.post('/:id/upload-complete', zValidator('json', UploadCompleteSchema
   return c.json({ ok: true, data: { id: fileId, storageKey: body.storageKey } }, 201);
 });
 
-booksRouter.patch('/:id', zValidator('json', UpdateBookSchema), adminAuth, async (c) => {
+booksRouter.patch('/:id', adminAuth, zValidator('json', UpdateBookSchema), async (c) => {
   const bookId = c.req.param('id');
   const body = c.req.valid('json');
   const adminUser = c.get('adminUser');

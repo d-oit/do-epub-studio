@@ -52,7 +52,7 @@ bookmarksRouter.get('/:bookId/bookmarks', readerAuth, async (c) => {
   });
 });
 
-bookmarksRouter.post('/:bookId/bookmarks', zValidator('json', BookmarkCreateSchema), readerAuth, async (c) => {
+bookmarksRouter.post('/:bookId/bookmarks', readerAuth, zValidator('json', BookmarkCreateSchema), async (c) => {
   const bookId = c.req.param('bookId');
   const auth = c.get('auth');
   const body = c.req.valid('json');
