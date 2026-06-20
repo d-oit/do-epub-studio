@@ -28,6 +28,7 @@ import {
   ReaderViewer,
   CommentInputModal,
   InfoPanel,
+  FixedLayoutControls,
 } from './components';
 
 export function ReaderPage() {
@@ -70,6 +71,10 @@ export function ReaderPage() {
   const setBookmarks = useReaderStore((s) => s.setBookmarks);
   const currentChapter = useReaderStore((s) => s.currentChapter);
   const isFixedLayout = useReaderStore((s) => s.isFixedLayout);
+  const readerSpread = useReaderStore((s) => s.readerSpread);
+  const readerZoom = useReaderStore((s) => s.readerZoom);
+  const setReaderSpread = useReaderStore((s) => s.setReaderSpread);
+  const setReaderZoom = useReaderStore((s) => s.setReaderZoom);
 
   const readerTheme = usePreferencesStore((s) => s.reader.theme);
   const readerFontSize = usePreferencesStore((s) => s.reader.fontSize);
@@ -104,16 +109,13 @@ export function ReaderPage() {
 
   const [epubUrl, setEpubUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const handleNavigateToAnnotation = useCallback(
-    async (chapterRef: string, cfiRange?: string) => {
-      if (!renditionRef.current) return;
-      await renditionRef.current.display(cfiRange ?? chapterRef);
-    },
-    // renditionRef is a stable MutableRefObject — its identity never changes,
-    // only .current does. Including it would cause unnecessary re-creation.
-    // eslint-disable-next-line
-    [],
-  );
+
+  // Ref to the navigation callback so it can be passed to useReaderEpub
+  // (declared below) without a temporal-dead-zone error. The callback is
+  // updated on every render to read the latest renditionRef.
+  const handleNavigateToAnnotationRef = useRef<
+    (chapterRef: string, cfiRange?: string) => Promise<void>
+  >(async () => {});
 
   const highlightsRef = useRef(highlights);
   highlightsRef.current = highlights;
@@ -125,9 +127,21 @@ export function ReaderPage() {
     rootRef,
     highlightsRef,
     commentsRef,
-    handleNavigateToAnnotation,
+    handleNavigateToAnnotationRef.current,
     progress.locator?.cfi,
   );
+
+  // Navigate to an annotation by displaying the given chapter/CFI on the
+  // rendition. renditionRef is a stable useRef object, so its identity
+  // never changes and including it in the deps array is safe.
+  const handleNavigateToAnnotation = useCallback(
+    async (chapterRef: string, cfiRange?: string) => {
+      if (!renditionRef.current) return;
+      await renditionRef.current.display(cfiRange ?? chapterRef);
+    },
+    [renditionRef],
+  );
+  handleNavigateToAnnotationRef.current = handleNavigateToAnnotation;
 
   useEffect(() => {
     if (!sessionToken || !bookId) return;
@@ -319,6 +333,10 @@ export function ReaderPage() {
         onExportNotes={() => handleExportNotes(bookTitle)}
         onLogout={() => void handleLogout()}
         t={tFn}
+        isFixedLayout={isFixedLayout}
+        onToggleFixedLayoutControls={() => {
+          togglePanel('fl-controls');
+        }}
       />
       <AnimatePresence>
         {activePanel === 'settings' && (
@@ -336,6 +354,17 @@ export function ReaderPage() {
             onSetDirection={setDirection}
             onSetWritingMode={setWritingMode}
             isFixedLayout={isFixedLayout}
+            t={tFn}
+          />
+        )}
+        {activePanel === 'fl-controls' && isFixedLayout && (
+          <FixedLayoutControls
+            isOpen
+            onClose={() => setActivePanel(null)}
+            zoom={readerZoom}
+            spread={readerSpread}
+            onSetZoom={setReaderZoom}
+            onSetSpread={setReaderSpread}
             t={tFn}
           />
         )}

@@ -23,12 +23,14 @@ interface ReaderToolbarProps {
   bookmarks: Bookmark[];
   capabilities: { canComment?: boolean } | null;
   activePanel: ReaderPanel;
+  isFixedLayout?: boolean;
   onToggleToc: () => void;
   onToggleSearch: () => void;
   onToggleComments: () => void;
   onToggleBookmarks: () => void;
   onToggleSettings: () => void;
   onToggleInfo: () => void;
+  onToggleFixedLayoutControls?: () => void;
   onExportNotes: () => void;
   onLogout: () => void;
   t: (key: TranslationKeys) => string;
@@ -40,12 +42,14 @@ export function ReaderToolbar({
   bookmarks,
   capabilities,
   activePanel,
+  isFixedLayout = false,
   onToggleToc,
   onToggleSearch,
   onToggleComments,
   onToggleBookmarks,
   onToggleSettings,
   onToggleInfo,
+  onToggleFixedLayoutControls,
   onExportNotes,
   onLogout,
   t,
@@ -217,6 +221,20 @@ export function ReaderToolbar({
                 </svg>
               </IconButton>
             </Tooltip>
+            {isFixedLayout && onToggleFixedLayoutControls && (
+              <Tooltip content={t('reader.fixedLayout.title')}>
+                <IconButton
+                  onClick={onToggleFixedLayoutControls}
+                  variant="ghost"
+                  aria-label={t('reader.fixedLayout.title')}
+                  aria-expanded={activePanel === 'fl-controls'}
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                  </svg>
+                </IconButton>
+              </Tooltip>
+            )}
             <Tooltip content={t('reader.exportNotes')}>
               <IconButton onClick={onExportNotes} variant="ghost" aria-label={t('reader.exportNotes')}>
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -368,6 +386,21 @@ export function ReaderToolbar({
                       </svg>
                       {t('reader.aboutBook')}
                     </button>
+                    {isFixedLayout && onToggleFixedLayoutControls && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onToggleFixedLayoutControls();
+                          setIsMenuOpen(false);
+                        }}
+                        className="flex items-center gap-3 px-3 py-2 text-sm text-foreground hover:bg-background-secondary rounded-lg transition-colors text-left"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                        </svg>
+                        {t('reader.fixedLayout.title')}
+                      </button>
+                    )}
                     <button
                       onClick={() => {
                         onExportNotes();

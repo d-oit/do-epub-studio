@@ -1,5 +1,8 @@
+import { APP_NAME } from '../config/app-identity';
+
 export const en = {
-  'app.title': 'do EPUB Studio',
+  'app.title': APP_NAME,
+  'app.versionLabel': 'Version',
   'login.subtitle': 'Sign in to access your books',
   'login.bookSlugLabel': 'Book URL Slug',
   'login.emailLabel': 'Email Address',
@@ -64,6 +67,15 @@ export const en = {
   'reader.settings.writingMode.horizontal-tb': 'Horizontal',
   'reader.settings.writingMode.vertical-rl': 'Vertical RTL',
   'reader.settings.writingMode.vertical-lr': 'Vertical LTR',
+  'reader.fixedLayout.title': 'Layout & Zoom',
+  'reader.fixedLayout.zoom': 'Zoom',
+  'reader.fixedLayout.zoomIn': 'Zoom in',
+  'reader.fixedLayout.zoomOut': 'Zoom out',
+  'reader.fixedLayout.zoomReset': 'Reset zoom',
+  'reader.fixedLayout.spread': 'Page Spread',
+  'reader.fixedLayout.spread.auto': 'Auto',
+  'reader.fixedLayout.spread.none': 'Single',
+  'reader.fixedLayout.spread.both': 'Double',
   'reader.accessRevoked': 'Access to this book has been revoked',
   'reader.offlineMode': 'Offline - progress will sync when online',
   'reader.aboutBook': 'About This Book',

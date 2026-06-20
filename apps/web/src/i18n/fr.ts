@@ -1,7 +1,9 @@
 import type { TranslationKeys } from './en';
+import { APP_NAME } from '../config/app-identity';
 
 export const fr: Record<TranslationKeys, string> = {
-  'app.title': 'do EPUB Studio',
+  'app.title': APP_NAME,
+  'app.versionLabel': 'Version',
   'login.subtitle': 'Connectez-vous pour accéder à vos livres',
   'login.bookSlugLabel': 'Slug du livre',
   'login.emailLabel': 'Adresse e-mail',
@@ -66,6 +68,15 @@ export const fr: Record<TranslationKeys, string> = {
   'reader.settings.writingMode.horizontal-tb': 'Horizontal',
   'reader.settings.writingMode.vertical-rl': 'Vertical RTL',
   'reader.settings.writingMode.vertical-lr': 'Vertical LTR',
+  'reader.fixedLayout.title': 'Mise en page & Zoom',
+  'reader.fixedLayout.zoom': 'Zoom',
+  'reader.fixedLayout.zoomIn': 'Zoomer',
+  'reader.fixedLayout.zoomOut': 'Dézoomer',
+  'reader.fixedLayout.zoomReset': 'Réinitialiser le zoom',
+  'reader.fixedLayout.spread': 'Affichage des pages',
+  'reader.fixedLayout.spread.auto': 'Auto',
+  'reader.fixedLayout.spread.none': 'Simple',
+  'reader.fixedLayout.spread.both': 'Double',
   'reader.accessRevoked': "L'accès à ce livre a été révoqué",
   'reader.offlineMode': 'Hors ligne - la progression sera synchronisée lorsque en ligne',
   'reader.aboutBook': 'À propos de ce livre',

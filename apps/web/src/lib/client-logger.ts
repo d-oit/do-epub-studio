@@ -35,7 +35,7 @@ function flushBuffer(): void {
   if (_buffer.length === 0) return;
   const entries = _buffer.splice(0);
   const endpoint = typeof import.meta !== 'undefined' && import.meta.env
-    ? import.meta.env.VITE_TELEMETRY_ENDPOINT as string | undefined
+    ? import.meta.env.VITE_TELEMETRY_ENDPOINT
     : undefined;
   if (!endpoint) return;
   try {

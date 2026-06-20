@@ -5,7 +5,10 @@ import type { AnnotationLocator } from '@do-epub-studio/shared';
 
 export type PageDirection = 'ltr' | 'rtl' | 'default';
 export type WritingMode = 'horizontal-tb' | 'vertical-rl' | 'vertical-lr';
-export type ReaderPanel = 'toc' | 'settings' | 'comments' | 'bookmarks' | 'info' | 'search' | null;
+export type ReaderPanel = 'toc' | 'settings' | 'comments' | 'bookmarks' | 'info' | 'search' | 'fl-controls' | null;
+export type ReaderSpread = 'auto' | 'none' | 'both';
+/** Discrete zoom steps for fixed-layout EPUBs. 1.0 = 100%. */
+export type ReaderZoom = 0.5 | 0.75 | 1.0 | 1.25 | 1.5 | 2.0;
 
 /** @deprecated Use AnnotationLocator from @do-epub-studio/shared directly */
 export type Locator = AnnotationLocator;
@@ -65,6 +68,8 @@ interface ReaderState {
   bookWritingMode: WritingMode;
   isFixedLayout: boolean;
   activePanel: ReaderPanel;
+  readerSpread: ReaderSpread;
+  readerZoom: ReaderZoom;
   setProgress: (progress: ReadingProgress) => void;
   addBookmark: (bookmark: Bookmark) => void;
   removeBookmark: (id: string) => void;
@@ -90,6 +95,8 @@ interface ReaderState {
   setBookDirection: (direction: PageDirection) => void;
   setBookWritingMode: (writingMode: WritingMode) => void;
   setIsFixedLayout: (isFixedLayout: boolean) => void;
+  setReaderSpread: (spread: ReaderSpread) => void;
+  setReaderZoom: (zoom: ReaderZoom) => void;
   setActivePanel: (panel: ReaderPanel) => void;
   togglePanel: (panel: ReaderPanel) => void;
 }
@@ -162,6 +169,8 @@ export const useReaderStore = create<ReaderState>((set) => ({
   bookWritingMode: 'horizontal-tb',
   isFixedLayout: false,
   activePanel: null,
+  readerSpread: 'auto',
+  readerZoom: 1.0,
   conflicts: [],
   setConflicts: (conflicts) => set({ conflicts }),
   addConflict: (conflict) =>
@@ -230,6 +239,8 @@ export const useReaderStore = create<ReaderState>((set) => ({
   setBookDirection: (direction) => set({ bookDirection: direction }),
   setBookWritingMode: (writingMode) => set({ bookWritingMode: writingMode }),
   setIsFixedLayout: (isFixedLayout) => set({ isFixedLayout }),
+  setReaderSpread: (readerSpread) => set({ readerSpread }),
+  setReaderZoom: (readerZoom) => set({ readerZoom }),
   setActivePanel: (panel) => set({ activePanel: panel }),
   togglePanel: (panel) => set((state) => ({ activePanel: state.activePanel === panel ? null : panel })),
 }));
