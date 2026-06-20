@@ -12,15 +12,14 @@ import './styles/globals.css';
 import { registerSW } from 'virtual:pwa-register';
 import { useSwUpdateStore } from './stores/sw-update';
 import { useTranslation } from './hooks/useTranslation';
+import type { TranslationKeys } from './i18n';
 
 let _addToast: ((type: 'success' | 'error' | 'info' | 'warning', message: string) => void) | null = null;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let _t: ((key: any) => string) | null = null;
+let _t: ((key: TranslationKeys) => string) | null = null;
 
 export function setErrorToastProvider(
   addToast: (type: 'success' | 'error' | 'info' | 'warning', message: string) => void,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  t: (key: any) => string,
+  t: (key: TranslationKeys) => string,
 ) {
   _addToast = addToast;
   _t = t;

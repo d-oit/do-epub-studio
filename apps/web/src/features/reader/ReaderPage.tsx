@@ -109,16 +109,13 @@ export function ReaderPage() {
 
   const [epubUrl, setEpubUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const handleNavigateToAnnotation = useCallback(
-    async (chapterRef: string, cfiRange?: string) => {
-      if (!renditionRef.current) return;
-      await renditionRef.current.display(cfiRange ?? chapterRef);
-    },
-    // renditionRef is a stable MutableRefObject — its identity never changes,
-    // only .current does. Including it would cause unnecessary re-creation.
-    // eslint-disable-next-line
-    [],
-  );
+
+  // Ref to the navigation callback so it can be passed to useReaderEpub
+  // (declared below) without a temporal-dead-zone error. The callback is
+  // updated on every render to read the latest renditionRef.
+  const handleNavigateToAnnotationRef = useRef<
+    (chapterRef: string, cfiRange?: string) => Promise<void>
+  >(async () => {});
 
   const highlightsRef = useRef(highlights);
   highlightsRef.current = highlights;
@@ -130,9 +127,21 @@ export function ReaderPage() {
     rootRef,
     highlightsRef,
     commentsRef,
-    handleNavigateToAnnotation,
+    handleNavigateToAnnotationRef.current,
     progress.locator?.cfi,
   );
+
+  // Navigate to an annotation by displaying the given chapter/CFI on the
+  // rendition. renditionRef is a stable useRef object, so its identity
+  // never changes and including it in the deps array is safe.
+  const handleNavigateToAnnotation = useCallback(
+    async (chapterRef: string, cfiRange?: string) => {
+      if (!renditionRef.current) return;
+      await renditionRef.current.display(cfiRange ?? chapterRef);
+    },
+    [renditionRef],
+  );
+  handleNavigateToAnnotationRef.current = handleNavigateToAnnotation;
 
   useEffect(() => {
     if (!sessionToken || !bookId) return;
