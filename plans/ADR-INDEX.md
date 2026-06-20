@@ -49,6 +49,7 @@
 | 092 | Token Storage and Feature-Gap Policy | `plans/092-adr-token-storage-and-feature-gap-policy.md` | Accepted (this PR) |
 | 095 | (GOAP) | `plans/095-goap-merge-orchestration-2026-06-15.md` | GOAP, not ADR |
 | 096 | Merge Order Policy for Multi-Issue Swarms | `plans/096-adr-merge-order-policy-2026-06-15.md` | Accepted (this PR) |
+| 102 | Reading Insights Privacy Boundaries | `plans/102-adr-reading-insights-privacy-boundaries.md` | Accepted |
 
 ## Cross-referenced but not yet adopted
 

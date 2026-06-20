@@ -187,7 +187,7 @@ describe('main.tsx', () => {
       const { logClientEvent } = await import('../lib/client-logger');
 
       const stringReason = 'string error';
-      // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
+      // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors -- intentional: test the handler's tolerance for non-Error rejection reasons
       const rejectedPromise = Promise.reject(stringReason);
       rejectedPromise.catch(() => {});
       const rejectionEvent = new PromiseRejectionEvent('unhandledrejection', {

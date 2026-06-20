@@ -1,5 +1,8 @@
+import { APP_NAME } from '../config/app-identity';
+
 export const en = {
-  'app.title': 'do EPUB Studio',
+  'app.title': APP_NAME,
+  'app.versionLabel': 'Version',
   'login.subtitle': 'Sign in to access your books',
   'login.bookSlugLabel': 'Book URL Slug',
   'login.emailLabel': 'Email Address',

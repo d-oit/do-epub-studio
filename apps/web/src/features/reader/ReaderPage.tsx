@@ -17,6 +17,7 @@ import {
   useAnnotationHandlers,
   useBookmarkHandlers,
   useExportNotes,
+  useReadingTimer,
 } from './hooks';
 import { AnimatePresence } from 'framer-motion';
 import {
@@ -102,6 +103,7 @@ export function ReaderPage() {
   } = useAnnotationHandlers();
   const { handleCreateBookmark, handleDeleteBookmark } = useBookmarkHandlers();
   const { handleExportNotes } = useExportNotes();
+  const { markLoaded: markInsightsLoaded, flush: flushInsights, syncToServer: syncInsightsToServer } = useReadingTimer(bookId);
 
   const rootRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<HTMLDivElement>(null as unknown as HTMLDivElement);
@@ -109,16 +111,13 @@ export function ReaderPage() {
 
   const [epubUrl, setEpubUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const handleNavigateToAnnotation = useCallback(
-    async (chapterRef: string, cfiRange?: string) => {
-      if (!renditionRef.current) return;
-      await renditionRef.current.display(cfiRange ?? chapterRef);
-    },
-    // renditionRef is a stable MutableRefObject — its identity never changes,
-    // only .current does. Including it would cause unnecessary re-creation.
-    // eslint-disable-next-line
-    [],
-  );
+
+  // Ref to the navigation callback so it can be passed to useReaderEpub
+  // (declared below) without a temporal-dead-zone error. The callback is
+  // updated on every render to read the latest renditionRef.
+  const handleNavigateToAnnotationRef = useRef<
+    (chapterRef: string, cfiRange?: string) => Promise<void>
+  >(async () => {});
 
   const highlightsRef = useRef(highlights);
   highlightsRef.current = highlights;
@@ -130,9 +129,21 @@ export function ReaderPage() {
     rootRef,
     highlightsRef,
     commentsRef,
-    handleNavigateToAnnotation,
+    handleNavigateToAnnotationRef.current,
     progress.locator?.cfi,
   );
+
+  // Navigate to an annotation by displaying the given chapter/CFI on the
+  // rendition. renditionRef is a stable useRef object, so its identity
+  // never changes and including it in the deps array is safe.
+  const handleNavigateToAnnotation = useCallback(
+    async (chapterRef: string, cfiRange?: string) => {
+      if (!renditionRef.current) return;
+      await renditionRef.current.display(cfiRange ?? chapterRef);
+    },
+    [renditionRef],
+  );
+  handleNavigateToAnnotationRef.current = handleNavigateToAnnotation;
 
   useEffect(() => {
     if (!sessionToken || !bookId) return;
@@ -256,6 +267,7 @@ export function ReaderPage() {
           signal: controller.signal,
         });
         setEpubUrl(data.url);
+        markInsightsLoaded();
       } catch (err) {
         if (!controller.signal.aborted)
           setError((err as Error).message || t('reader.notAvailable'));
@@ -270,7 +282,14 @@ export function ReaderPage() {
       aborted = true;
       controller.abort();
     };
-  }, [sessionToken, bookSlug, navigate, setError, t]);
+  }, [sessionToken, bookSlug, navigate, setError, t, markInsightsLoaded]);
+
+  useEffect(() => {
+    return () => {
+      void flushInsights();
+      void syncInsightsToServer();
+    };
+  }, [flushInsights, syncInsightsToServer]);
 
   const handleLogout = async () => {
     try {
@@ -364,6 +383,8 @@ export function ReaderPage() {
             isOpen
             onClose={() => setActivePanel(null)}
             metadata={metadata}
+            bookId={bookId}
+            progressPercent={progress.progressPercent}
             t={tFn}
           />
         )}

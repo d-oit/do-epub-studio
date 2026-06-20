@@ -38,6 +38,13 @@ export interface SyncQueueItem {
   error?: string;
 }
 
+export interface ReadingInsightEntry {
+  bookId: string;
+  date: string;
+  activeMinutes: number;
+  lastUpdated: number;
+}
+
 export interface PermissionCache {
   bookId: string;
   grantId: string;
@@ -113,6 +120,7 @@ async function decryptEntry<T>(stored: Record<string, unknown>, plaintextKeys: r
 const PROGRESS_PLAINTEXT = ['id', 'bookId', 'synced'] as const;
 const ANNOTATION_PLAINTEXT = ['id', 'bookId', 'synced'] as const;
 const SYNC_QUEUE_PLAINTEXT = ['id', 'createdAt'] as const;
+const READING_INSIGHT_PLAINTEXT = ['bookId', 'date'] as const;
 const PERMISSION_PLAINTEXT = ['bookId'] as const;
 
 export function closeDb(): void {
@@ -146,6 +154,11 @@ export async function getDB(): Promise<IDBPDatabase> {
 
       if (!db.objectStoreNames.contains('permissions')) {
         db.createObjectStore('permissions', { keyPath: 'bookId' });
+      }
+
+      if (!db.objectStoreNames.contains('readingInsights')) {
+        const insightsStore = db.createObjectStore('readingInsights', { keyPath: ['bookId', 'date'] });
+        insightsStore.createIndex('bookId', 'bookId');
       }
     },
   });
@@ -256,8 +269,40 @@ export async function clearAllPermissionCache(): Promise<void> {
 
 export async function clearAllEncryptedData(): Promise<void> {
   const db = await getDB();
-  const stores = ['progress', 'annotations', 'syncQueue', 'permissions'];
+  const stores = ['progress', 'annotations', 'syncQueue', 'permissions', 'readingInsights'];
   const tx = db.transaction(stores, 'readwrite');
   await Promise.all(stores.map((name) => tx.objectStore(name).clear()));
   await tx.done;
+}
+
+export async function saveReadingInsight(entry: ReadingInsightEntry): Promise<void> {
+  const db = await getDB();
+  const stored = await encryptEntry(entry, READING_INSIGHT_PLAINTEXT);
+  await db.put('readingInsights', stored);
+}
+
+export async function getReadingInsight(bookId: string, date: string): Promise<ReadingInsightEntry | undefined> {
+  const db = await getDB();
+  const stored = (await db.get('readingInsights', [bookId, date])) as Record<string, unknown> | undefined;
+  if (!stored) return undefined;
+  const entry = await decryptEntry<ReadingInsightEntry>(stored, READING_INSIGHT_PLAINTEXT);
+  return entry ?? undefined;
+}
+
+export async function getReadingInsightsForBook(bookId: string): Promise<ReadingInsightEntry[]> {
+  const db = await getDB();
+  const all = await db.getAllFromIndex('readingInsights', 'bookId', bookId);
+  const decrypted = await Promise.all(
+    (all as Record<string, unknown>[]).map((e) => decryptEntry<ReadingInsightEntry>(e, READING_INSIGHT_PLAINTEXT)),
+  );
+  return decrypted.filter((e): e is ReadingInsightEntry => e !== null);
+}
+
+export async function getAllReadingInsights(): Promise<ReadingInsightEntry[]> {
+  const db = await getDB();
+  const all = await db.getAll('readingInsights');
+  const decrypted = await Promise.all(
+    (all as Record<string, unknown>[]).map((e) => decryptEntry<ReadingInsightEntry>(e, READING_INSIGHT_PLAINTEXT)),
+  );
+  return decrypted.filter((e): e is ReadingInsightEntry => e !== null);
 }
