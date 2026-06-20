@@ -1,8 +1,10 @@
 # GOAP 102 — App Identity, Responsive UI, and E2E Coverage
 
 **Date:** 2026-06-20
-**Status:** In progress
+**Status:** Complete
 **Branch:** `feat/app-identity-responsive-e2e`
+**PR:** https://github.com/d-oit/do-epub-studio/pull/618
+**Commit:** 478d0e3b
 **Methodology:** GOAP (analyze -> decompose -> strategize -> execute -> synthesize)
 
 ## Goal
@@ -66,3 +68,14 @@ same PR per AGENTS.md Tier 1:
 
 - Plan 103+ (swarm): 113 plans remain. Triage status report to be
   produced before any further batch delegation.
+- See `plans/103-goap-plan-triage-2026-06-20.md` for the status
+  classification of every other plan in `plans/` and a recommended
+  execution order for the next batch.
+- Working tree still carries uncommitted modifications on `main` that
+  pre-date this session (AGENTS.md Tier-1 mandate update, `pnpm-lock.yaml`
+  and `jsdom` dep, `apps/web/src/main.tsx` `TranslationKeys` typing,
+  `ReaderPage.tsx` refactor, `reader-store.test.ts`, etc.). These are
+  not in scope for plan 102; they need a separate plan + PR.
+- Codacy `ACTION_REQUIRED` is third-party, not a GitHub Actions check,
+  and does not block merge (no branch protection). The repo has no
+  GitHub-required status checks beyond the actions enumerated above.
