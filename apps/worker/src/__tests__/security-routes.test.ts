@@ -15,7 +15,7 @@ describe('Security Routes', () => {
         }
       }),
       headers: { 'Content-Type': 'application/json' },
-    }), env, makePassThroughContext() as unknown as ExecutionContext);
+    }), env, makePassThroughContext());
 
     expect(res.status).toBe(202);
   });

@@ -55,7 +55,7 @@ describe('Bookmark Routes', () => {
       const res = await app.fetch(
         new Request('http://localhost/api/books/book-1/bookmarks'),
         env,
-        makePassThroughContext() as unknown as ExecutionContext,
+        makePassThroughContext(),
       );
       expect(res.status).toBe(401);
     });
@@ -69,7 +69,7 @@ describe('Bookmark Routes', () => {
       const res = await app.fetch(
         new Request('http://localhost/api/books/book-1/bookmarks', { headers: { Authorization: 'Bearer valid' } }),
         env,
-        makePassThroughContext() as unknown as ExecutionContext,
+        makePassThroughContext(),
       );
       expect(res.status).toBe(200);
       const body: { data: { id: string; locator: { cfi: string }; label: string }[] } = await res.json();
@@ -92,7 +92,7 @@ describe('Bookmark Routes', () => {
           body: JSON.stringify({ locator: { cfi: 'epubcfi(/6/8)', selectedText: 'test', chapterRef: 'chapter1.xhtml' }, label: 'My Bookmark' }),
         }),
         env,
-        makePassThroughContext() as unknown as ExecutionContext,
+        makePassThroughContext(),
       );
       expect(res.status).toBe(201);
       const body: { data: { id: string; label: string } } = await res.json();
@@ -109,7 +109,7 @@ describe('Bookmark Routes', () => {
           body: JSON.stringify({ locator: { cfi: 'epubcfi(/6/8)', selectedText: 'test', chapterRef: 'chapter1.xhtml' } }),
         }),
         env,
-        makePassThroughContext() as unknown as ExecutionContext,
+        makePassThroughContext(),
       );
       expect(res.status).toBe(403);
     });
@@ -126,7 +126,7 @@ describe('Bookmark Routes', () => {
           headers: { Authorization: 'Bearer valid' },
         }),
         env,
-        makePassThroughContext() as unknown as ExecutionContext,
+        makePassThroughContext(),
       );
       expect(res.status).toBe(200);
       const body: { ok: boolean } = await res.json();

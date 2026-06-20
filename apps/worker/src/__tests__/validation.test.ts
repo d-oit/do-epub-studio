@@ -44,7 +44,7 @@ describe('API Validation Integration', () => {
         headers: { 'Content-Type': 'application/json' },
       }),
       env,
-      makePassThroughContext() as any
+      makePassThroughContext()
     );
 
     expect(res.status).toBe(400);
@@ -61,7 +61,7 @@ describe('API Validation Integration', () => {
         headers: { 'Content-Type': 'application/json' },
       }),
       env,
-      makePassThroughContext() as any
+      makePassThroughContext()
     );
 
     expect(res.status).toBe(400);
@@ -82,7 +82,7 @@ describe('API Validation Integration', () => {
         },
       }),
       env,
-      makePassThroughContext() as any
+makePassThroughContext()
     );
 
     expect(res.status).toBe(400);
@@ -96,7 +96,7 @@ describe('API Validation Integration', () => {
         headers: { 'Content-Type': 'application/json' },
       }),
       env,
-      makePassThroughContext() as any
+makePassThroughContext()
     );
 
     expect(res.status).toBe(400);
@@ -116,7 +116,7 @@ describe('API Validation Integration', () => {
         },
       }),
       env,
-      makePassThroughContext() as any
+makePassThroughContext()
     );
 
     // Should be 400 (validation) because authentication succeeded
@@ -137,7 +137,7 @@ describe('API Validation Integration', () => {
         },
       }),
       env,
-      makePassThroughContext() as any
+makePassThroughContext()
     );
 
     // Should be 401 (unauthorized) because authorization now happens first
