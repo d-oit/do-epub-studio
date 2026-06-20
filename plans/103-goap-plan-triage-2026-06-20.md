@@ -1,7 +1,7 @@
 # GOAP 103 — Plan Triage and Recommended Execution Order
 
 **Date:** 2026-06-20
-**Status:** Open
+**Status:** In progress — triage done; execution in flight
 **Author:** Swarm session 2026-06-20 (post plan 102)
 **Methodology:** GOAP (analyze -> synthesize)
 
@@ -119,12 +119,80 @@ gates must pass for every PR.
 
 - This plan is the **next** plan to execute. It is itself the swarm
   plan; it does not need a separate plan-PR until Batch A ships.
-- Working tree carries uncommitted modifications on `main` that
-  pre-date this session (AGENTS.md Tier-1 mandate update, pnpm-lock,
-  jsdom dep, `apps/web/src/main.tsx` `TranslationKeys` typing,
-  `ReaderPage.tsx` refactor, `reader-store.test.ts`). These need a
-  dedicated plan + PR before they accumulate further. Recommend plan
-  104 — "Pre-existing working-tree changeset" — to capture, commit, and
-  ship them.
+- **Plan 104 status: not needed.** The "uncommitted working-tree
+  changeset" flagged earlier in this plan (AGENTS.md Tier-1 mandate,
+  pnpm-lock + jsdom dep, `apps/web/src/main.tsx` `TranslationKeys`
+  typing, `ReaderPage.tsx` refactor, `reader-store.test.ts`) was
+  already shipped in PR
+  [#617](https://github.com/d-oit/do-epub-studio/pull/617) (commit
+  `7784fab`, "fix(agents): mandate pre-existing issue fixes"). When
+  PR #618 was merged into `main` at `24b6cce`, the working tree
+  became clean — those changes are now part of `main`. Plan 104
+  is therefore not required; this finding is recorded here so
+  future triage passes do not re-flag it.
 - Codacy `ACTION_REQUIRED` is third-party, not a GitHub Actions check,
   and does not block merge (no branch protection). Not a plan item.
+
+## Execution Progress
+
+### 2026-06-20 — Plans 102 + 103 shipped in PR #618
+
+PR [#618](https://github.com/d-oit/do-epub-studio/pull/618) merged to
+main at commit `24b6cce` (squash of 4 commits: 478d0e3b, 6b96af7,
+80c573b, 3d33101). Final state: 19/19 GitHub Actions pass + Codacy
+pass + 0 new issues.
+
+Lessons learned during execution (now codified in AGENTS.md, codacy
+skill, security-code-auditor skill, and `agents-docs/LEARNINGS.md`):
+
+- **Codacy IS a required check.** Treating it as "third-party /
+  informational" was a false assumption — AGENTS.md Tier 1 already
+  forbids merging with any failing check, and Codacy rows in
+  `gh pr checks` count. Branch protection is not enabled on `main`,
+  so the merge button is not technically blocked, but the policy
+  applies regardless.
+- **Local ESLint skips root-level configs.** The `pnpm lint` scripts
+  in each workspace scope to `src/`, so `vite.config.ts`,
+  `vitest.config.ts`, `playwright.config.ts` are not linted locally.
+  Codacy lints the whole file. A green local `pnpm lint` is not
+  sufficient; always re-check `gh pr checks` after pushing.
+- **`new URL('./file', import.meta.url)` is the wrong pattern for
+  repo-static files** in Vite/webpack/rollup configs because the URL
+  is non-literal at the call site and trips the OWASP path-traversal
+  rule (`security/detect-non-literal-fs-filename`). Use a static
+  `import` (Vite/webpack/rollup config) or
+  `path.join(__dirname, 'literal')` (Node). See
+  `.agents/skills/security-code-auditor/SKILL.md` § "File-System
+  Path Patterns" for the full patterns.
+- **`?raw` import suffix does not work in `vite.config.ts`.** The
+  Vite config is loaded by Node via Rolldown bundle and `?raw` is
+  a Vite-only source-transform. Put the `?raw` import in a companion
+  TS module and import that module's exported constant into the
+  config. JSON imports work fine in the config.
+- **Markdownlint MD004 (ul-style)** and **MD058 (blanks-around-tables)**
+  are common gotchas that the quality gate and pre-commit hook both
+  enforce. Mixing `+` and `-` for bullets, or having a table header
+  followed directly by another line, both fail CI.
+- **pnpm non-TTY install:** set `CI=true` env var, or
+  `confirmModulesPurge: false` in `.npmrc`.
+- **Stale working-tree changeset captured as plan 104** (see below).
+
+### Updated status totals (post-102 merge)
+
+- DONE: 74 (was 73; +1 for plan 102)
+- IN_PROGRESS: 6 (was 7; -1 for plan 102)
+
+  Remaining: 063, 065, 075, 076, 077, 079, 084, 100 (note: 084/077/079
+  are Batch A and have been re-prioritized here).
+
+### Next: Batch A execution (this plan continues)
+
+After plan 104 is captured (next step), execute the three Batch A items
+as separate PRs:
+
+- 084 (CHANGELOG + CONTRIBUTING sync) — doc-only.
+- 079 (admin grants PATCH wire-or-delete decision) — small code.
+- 077 (reader progress + search load, G19) — single feature PR.
+
+Then Batch B (100 coverage Phase 2, 065 perf), Batch C (076 admin
+recovery, 063 Wave 2 P1), Batch D (075 closeout, 065 hot-path wins).
