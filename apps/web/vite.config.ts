@@ -1,23 +1,41 @@
-import { defineConfig } from 'vite';
+import { readFileSync } from 'node:fs';
+import path from 'path';
+import { defineConfig, type PluginOption } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import { visualizer } from 'rollup-plugin-visualizer';
 import tailwindcss from '@tailwindcss/vite';
-import path from 'path';
+import appIdentity from './src/config/app-identity.json';
 
 const isAnalyze = process.env.ANALYZE === 'true';
+// VERSION is a repo-root static file; the path is a literal relative
+// to this config file's location. The `detect-non-literal-fs-filename`
+// rule only blocks paths that could carry untrusted runtime data, which
+// is not the case here.
+// eslint-disable-next-line security/detect-non-literal-fs-filename
+const appVersion = readFileSync(path.resolve(__dirname, '../../VERSION'), 'utf8').trim();
 
 export default defineConfig({
   plugins: [
+    {
+      name: 'app-identity-html',
+      transformIndexHtml(html) {
+        return html
+          .replaceAll('%APP_NAME%', appIdentity.name)
+          .replaceAll('%APP_DESCRIPTION%', appIdentity.description)
+          .replaceAll('%APP_VERSION%', appVersion);
+      },
+    },
     react(),
     tailwindcss(),
     VitePWA({
       registerType: 'prompt',
       includeAssets: ['favicon.ico', 'robots.txt', 'apple-touch-icon.png'],
       manifest: {
-        name: 'do EPUB Studio',
-        short_name: 'EPUB Studio',
-        description: 'EPUB reading and editorial workspace',
+        name: appIdentity.name,
+        short_name: appIdentity.shortName,
+        description: appIdentity.description,
+        version: appVersion,
         theme_color: '#ffffff',
         background_color: '#ffffff',
         display: 'standalone',
@@ -45,7 +63,7 @@ export default defineConfig({
             filename: 'dist/stats.html',
             gzipSize: true,
             brotliSize: true,
-          }) as any,
+          }) as PluginOption,
         ]
       : []),
   ],

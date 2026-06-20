@@ -4,9 +4,11 @@ Auto-generated from skill definitions. Run this script to regenerate.
 
 | Skill | Description |
 |-------|-------------|
+
 ## Coordination
 
 | `goap-agent` | No description |
+| `jules-delegator` | Use this skill to delegate complex coding tasks by creating Jules sessions via the Jules CLI. Jules is an AI coding agent that can autonomously implement features, fix bugs, and make code changes across repositories. |
 | `parallel-execution` | No description |
 | `skill-creator` | No description |
 | `task-decomposition` | No description |
@@ -23,7 +25,7 @@ Auto-generated from skill definitions. Run this script to regenerate.
 | `accessibility-auditor` | No description |
 | `agents-md` | No description |
 | `anti-ai-slop` | No description |
-| `codacy` | Orchestrate static analysis using Codacy. Use for querying PR analysis, triaging issues, suppressing false positives, and local analysis. |
+| `codacy` | Orchestrate static analysis using Codacy. Required PR check on this repo. Use for querying PR analysis, triaging issues, fixing (not suppressing) findings, and local analysis. See SKILL.md for fix patterns and the required-check policy. |
 | `code-quality` | No description |
 | `code-review-assistant` | No description |
 | `dogfood` | Systematically explore and test a web application to find bugs, UX issues, and other problems. Use when asked to "dogfood", "QA", "exploratory test", "find issues", "bug hunt", "test this app/site/platform", or review the quality of a web application. Produces a structured report with full reproduction evidence. |

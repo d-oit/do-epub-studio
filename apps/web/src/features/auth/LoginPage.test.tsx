@@ -81,8 +81,8 @@ describe('LoginPage', () => {
 
   it('renders branding', () => {
     render(<MemoryRouter><LoginPage /></MemoryRouter>);
-    expect(screen.getByText('do EPUB Studio')).toBeInTheDocument();
-    expect(screen.getByTestId('app-logo')).toBeInTheDocument();
+    expect(screen.getAllByText('d.o.EPUB Studio').length).toBeGreaterThan(0);
+    expect(screen.getAllByTestId('app-logo').length).toBeGreaterThan(0);
   });
 
   it('renders admin link', () => {

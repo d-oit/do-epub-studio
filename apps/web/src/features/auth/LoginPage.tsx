@@ -6,6 +6,7 @@ import { useAuthStore } from '../../stores/auth';
 import { LocaleSwitcher } from '../../components/LocaleSwitcher';
 import { Button, Input, AppLogo } from '../../components/ui';
 import { ThemeToggle } from '../../components/ThemeToggle';
+import { APP_NAME, APP_VERSION_LABEL, APP_DESCRIPTION } from '../../config/app-identity';
 
 interface SessionCapabilities {
   canRead: boolean;
@@ -138,23 +139,46 @@ export function LoginPage() {
   }
 
   return (
-    <div className="min-h-dvh bg-background flex flex-col items-center justify-center px-4 py-8">
+    <div className="relative min-h-dvh overflow-x-clip bg-background px-4 py-6 sm:px-6 lg:px-8">
       {/* Top utility bar */}
-      <div className="absolute top-4 right-4 flex items-center gap-2">
+      <div className="fixed right-3 top-3 z-20 flex items-center gap-2 sm:right-4 sm:top-4">
         <ThemeToggle />
         <LocaleSwitcher />
       </div>
 
-      {/* Auth card */}
-      <main id="main-content" tabIndex={-1} className="max-w-sm w-full bg-background-secondary rounded-xl shadow-lg p-8 border border-border">
+      <main
+        id="main-content"
+        tabIndex={-1}
+        className="mx-auto grid min-h-[calc(100dvh-3rem)] w-full max-w-6xl items-center gap-8 pt-16 lg:grid-cols-[minmax(0,0.9fr)_minmax(22rem,28rem)] lg:gap-12"
+      >
+        <section className="hidden min-w-0 lg:block">
+          <div className="max-w-xl">
+            <AppLogo size={72} className="mb-6 text-accent" />
+            <p className="mb-3 text-sm font-medium uppercase tracking-[0.12em] text-foreground-muted">
+              {APP_VERSION_LABEL}
+            </p>
+            <p className="text-balance font-display text-5xl font-bold leading-tight text-foreground xl:text-6xl">
+              {APP_NAME}
+            </p>
+            <p className="mt-5 max-w-lg text-lg text-foreground-muted">
+              {APP_DESCRIPTION}
+            </p>
+          </div>
+        </section>
+
+        {/* Auth card */}
+        <section className="w-full rounded-lg border border-border bg-background-secondary p-5 shadow-md sm:p-7 lg:p-8">
         {/* Branding */}
         <div className="flex flex-col items-center mb-6">
           <AppLogo size={48} className="text-accent mb-3" />
           <h1
-            className="text-2xl font-bold text-foreground text-center font-display"
+            className="text-center font-display text-3xl font-bold leading-tight text-foreground lg:hidden lg:text-2xl"
           >
-            do EPUB Studio
+            {APP_NAME}
           </h1>
+          <p className="mt-1 text-center text-xs font-medium text-foreground-muted">
+            {t('app.versionLabel')} {APP_VERSION_LABEL}
+          </p>
           <p className="text-foreground-muted text-sm mt-1 text-center">
             {isRecoveryMode ? t('login.recoveryTitle') : t('login.subtitle')}
           </p>
@@ -286,11 +310,12 @@ export function LoginPage() {
             {t('login.adminLink')}
           </Button>
         </div>
-      </main>
+        </section>
 
-      <p className="mt-6 text-xs text-foreground-muted text-center max-w-sm">
-        {t('login.adminDescription')}
-      </p>
+        <p className="text-center text-xs text-foreground-muted lg:col-start-2">
+          {t('login.adminDescription')}
+        </p>
+      </main>
     </div>
   );
 }

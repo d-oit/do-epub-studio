@@ -1,7 +1,9 @@
 import type { TranslationKeys } from './en';
+import { APP_NAME } from '../config/app-identity';
 
 export const fr: Record<TranslationKeys, string> = {
-  'app.title': 'do EPUB Studio',
+  'app.title': APP_NAME,
+  'app.versionLabel': 'Version',
   'login.subtitle': 'Connectez-vous pour accéder à vos livres',
   'login.bookSlugLabel': 'Slug du livre',
   'login.emailLabel': 'Adresse e-mail',
