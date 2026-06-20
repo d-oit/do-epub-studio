@@ -43,7 +43,7 @@ describe('Catalog Routes', () => {
       const res = await app.fetch(
         new Request('http://localhost/api/catalog'),
         env,
-        makePassThroughContext() as unknown as ExecutionContext,
+        makePassThroughContext(),
       );
 
       expect(res.status).toBe(200);
@@ -96,7 +96,7 @@ describe('Catalog Routes', () => {
       const res = await app.fetch(
         new Request('http://localhost/api/catalog'),
         env,
-        makePassThroughContext() as unknown as ExecutionContext,
+        makePassThroughContext(),
       );
 
       expect(res.status).toBe(200);

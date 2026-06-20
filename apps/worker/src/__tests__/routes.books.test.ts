@@ -35,7 +35,7 @@ describe('Books Routes', () => {
 
       const res = await app.fetch(new Request('http://localhost/api/books', {
         headers: { 'Authorization': 'Bearer valid' }
-      }), env, makePassThroughContext() as unknown as ExecutionContext);
+      }), env, makePassThroughContext());
       expect(res.status).toBe(200);
       const body = await res.json() as any;
       expect(body.ok).toBe(true);
@@ -50,7 +50,7 @@ describe('Books Routes', () => {
       mockQueryFirst.mockResolvedValue(null);
       const res = await app.fetch(new Request('http://localhost/api/books/none', {
         headers: { 'Authorization': 'Bearer valid' }
-      }), env, makePassThroughContext() as unknown as ExecutionContext);
+      }), env, makePassThroughContext());
       expect(res.status).toBe(404);
     });
 
@@ -60,7 +60,7 @@ describe('Books Routes', () => {
       mockQueryFirst.mockResolvedValue({ id: '1', slug: 'book-1', title: 'Book 1', visibility: 'public' });
       const res = await app.fetch(new Request('http://localhost/api/books/1', {
         headers: { 'Authorization': 'Bearer valid' }
-      }), env, makePassThroughContext() as unknown as ExecutionContext);
+      }), env, makePassThroughContext());
       expect(res.status).toBe(200);
       const body = await res.json() as any;
       expect(body.data.id).toBe('1');
@@ -83,7 +83,7 @@ describe('Books Routes', () => {
       const res = await app.fetch(new Request('http://localhost/api/books/1/file-url', {
         method: 'POST',
         headers: { 'Authorization': 'Bearer valid' }
-      }), env, makePassThroughContext() as unknown as ExecutionContext);
+      }), env, makePassThroughContext());
 
       expect(res.status).toBe(200);
       const body = await res.json() as any;

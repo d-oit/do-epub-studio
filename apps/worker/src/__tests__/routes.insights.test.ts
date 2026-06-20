@@ -42,7 +42,7 @@ describe('insightsRouter', () => {
         headers: { 'Authorization': 'Bearer valid' },
       }),
       env,
-      makePassThroughContext() as unknown as ExecutionContext,
+      makePassThroughContext(),
     );
 
     expect(res.status).toBe(200);
@@ -66,7 +66,7 @@ describe('insightsRouter', () => {
         }),
       }),
       env,
-      makePassThroughContext() as unknown as ExecutionContext,
+      makePassThroughContext(),
     );
 
     expect(res.status).toBe(200);

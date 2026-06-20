@@ -30,7 +30,7 @@ describe('Access Recovery Routes', () => {
         method: 'POST',
         body: JSON.stringify(validPayload),
         headers: { 'Content-Type': 'application/json' }
-      }), env, makePassThroughContext() as unknown as ExecutionContext);
+      }), env, makePassThroughContext());
       const body = await res.json() as any;
       if (res.status !== 200) {
         console.log('Error body:', JSON.stringify(body));
@@ -53,7 +53,7 @@ describe('Access Recovery Routes', () => {
         method: 'POST',
         body: JSON.stringify(validPayload),
         headers: { 'Content-Type': 'application/json' }
-      }), env, makePassThroughContext() as unknown as ExecutionContext);
+      }), env, makePassThroughContext());
 
       const body = await res.json() as any;
       expect(res.status).toBe(200);
@@ -68,7 +68,7 @@ describe('Access Recovery Routes', () => {
         method: 'POST',
         body: JSON.stringify({ token: 'invalid-token' }),
         headers: { 'Content-Type': 'application/json' }
-      }), env, makePassThroughContext() as unknown as ExecutionContext);
+      }), env, makePassThroughContext());
       expect(res.status).toBe(401);
       const body = await res.json() as any;
       expect(body.error.code).toBe('INVALID_TOKEN');
@@ -117,7 +117,7 @@ describe('Access Recovery Routes', () => {
         method: 'POST',
         body: JSON.stringify({ token }),
         headers: { 'Content-Type': 'application/json' }
-      }), env, makePassThroughContext() as unknown as ExecutionContext);
+      }), env, makePassThroughContext());
 
       const body = await res.json() as any;
       expect(res.status).toBe(200);
@@ -142,7 +142,7 @@ describe('Access Recovery Routes', () => {
         method: 'POST',
         body: JSON.stringify({ token }),
         headers: { 'Content-Type': 'application/json' }
-      }), env, makePassThroughContext() as unknown as ExecutionContext);
+      }), env, makePassThroughContext());
 
       expect(res.status).toBe(401);
     });

@@ -34,7 +34,7 @@ describe('Admin Routes', () => {
         method: 'POST',
         body: JSON.stringify({ email: 'admin@example.com', password: 'password' }),
         headers: { 'Content-Type': 'application/json' },
-      }), env, makePassThroughContext() as unknown as ExecutionContext);
+      }), env, makePassThroughContext());
 
       expect(res.status).toBe(200);
       const body = await res.json() as any;
@@ -52,7 +52,7 @@ describe('Admin Routes', () => {
         method: 'POST',
         body: JSON.stringify({ email: 'admin@example.com', password: 'wrong' }),
         headers: { 'Content-Type': 'application/json' },
-      }), env, makePassThroughContext() as unknown as ExecutionContext);
+      }), env, makePassThroughContext());
 
       expect(res.status).toBe(401);
     });
@@ -64,7 +64,7 @@ describe('Admin Routes', () => {
       const res = await app.fetch(new Request('http://localhost/api/admin/logout', {
         method: 'POST',
         headers: { 'Authorization': 'Bearer token' },
-      }), env, makePassThroughContext() as unknown as ExecutionContext);
+      }), env, makePassThroughContext());
       expect(res.status).toBe(200);
     });
   });
@@ -88,7 +88,7 @@ describe('Admin Routes', () => {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer admin-token'
         },
-      }), env, makePassThroughContext() as unknown as ExecutionContext);
+      }), env, makePassThroughContext());
 
       expect(res.status).toBe(201);
       const body = await res.json() as any;
@@ -119,7 +119,7 @@ describe('Admin Routes', () => {
           'Content-Length': String(epubBuffer.byteLength),
           'Authorization': 'Bearer admin-token'
         },
-      }), env, makePassThroughContext() as unknown as ExecutionContext);
+      }), env, makePassThroughContext());
 
       expect(res.status).toBe(200);
       const body = await res.json() as any;
@@ -146,7 +146,7 @@ describe('Admin Routes', () => {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer admin-token'
         },
-      }), env, makePassThroughContext() as unknown as ExecutionContext);
+      }), env, makePassThroughContext());
 
       expect(res.status).toBe(201);
     });
@@ -174,7 +174,7 @@ describe('Admin Routes', () => {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer admin-token'
         },
-      }), env, makePassThroughContext() as unknown as ExecutionContext);
+      }), env, makePassThroughContext());
 
       expect(res.status).toBe(201);
     });
@@ -193,7 +193,7 @@ describe('Admin Routes', () => {
 
       const res = await app.fetch(new Request('http://localhost/api/admin/books/book-1/grants', {
         headers: { 'Authorization': 'Bearer admin-token' }
-      }), env, makePassThroughContext() as unknown as ExecutionContext);
+      }), env, makePassThroughContext());
 
       expect(res.status).toBe(200);
       const body = await res.json() as any;
@@ -217,7 +217,7 @@ describe('Admin Routes', () => {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer admin-token'
         },
-      }), env, makePassThroughContext() as unknown as ExecutionContext);
+      }), env, makePassThroughContext());
 
       expect(res.status).toBe(200);
     });
@@ -235,7 +235,7 @@ describe('Admin Routes', () => {
       const res = await app.fetch(new Request('http://localhost/api/admin/grants/grant-1/revoke', {
         method: 'POST',
         headers: { 'Authorization': 'Bearer admin-token' },
-      }), env, makePassThroughContext() as unknown as ExecutionContext);
+      }), env, makePassThroughContext());
 
       expect(res.status).toBe(200);
     });
@@ -252,7 +252,7 @@ describe('Admin Routes', () => {
         .mockResolvedValueOnce([{ cnt: 1 }]) // count query
         .mockResolvedValueOnce([{ id: '1', actor_email: 'admin@ex.com', action: 'query' }]); // rows query
 
-      const res = await app.fetch(new Request('http://localhost/api/admin/audit?entityType=book&limit=10'), env, makePassThroughContext() as unknown as ExecutionContext);
+      const res = await app.fetch(new Request('http://localhost/api/admin/audit?entityType=book&limit=10'), env, makePassThroughContext());
       expect(res.status).toBe(200);
       const body = await res.json() as any;
       expect(body.data.entries).toHaveLength(1);
@@ -261,7 +261,7 @@ describe('Admin Routes', () => {
 
   describe('GET /api/admin/audit-logs', () => {
     it('redirects to /api/admin/audit', async () => {
-      const res = await app.fetch(new Request('http://localhost/api/admin/audit-logs'), env, makePassThroughContext() as unknown as ExecutionContext);
+      const res = await app.fetch(new Request('http://localhost/api/admin/audit-logs'), env, makePassThroughContext());
       expect(res.status).toBe(301);
       expect(res.headers.get('Location')).toContain('/api/admin/audit');
     });

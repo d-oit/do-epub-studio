@@ -44,7 +44,7 @@ describe('Tenant Isolation: Comments', () => {
           headers: { Authorization: 'Bearer valid-token-for-A' },
         }),
         env,
-        makePassThroughContext() as unknown as ExecutionContext,
+        makePassThroughContext(),
       );
 
       expect(res.status).toBe(403);
@@ -68,7 +68,7 @@ describe('Tenant Isolation: Comments', () => {
           }),
         }),
         env,
-        makePassThroughContext() as unknown as ExecutionContext,
+        makePassThroughContext(),
       );
 
       expect(res.status).toBe(403);
@@ -94,7 +94,7 @@ describe('Tenant Isolation: Comments', () => {
           headers: { Authorization: 'Bearer valid-token-for-A' },
         }),
         env,
-        makePassThroughContext() as unknown as ExecutionContext,
+        makePassThroughContext(),
       );
 
       expect(res.status).toBe(200);
@@ -130,7 +130,7 @@ describe('Tenant Isolation: Comments', () => {
           }),
         }),
         env,
-        makePassThroughContext() as unknown as ExecutionContext,
+        makePassThroughContext(),
       );
 
       expect(res.status).toBe(201);

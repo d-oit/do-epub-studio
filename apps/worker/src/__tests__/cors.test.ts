@@ -20,7 +20,7 @@ describe('CORS', () => {
       },
     });
 
-    const response = await worker.fetch(request, env, makePassThroughContext() as unknown as ExecutionContext);
+    const response = await worker.fetch(request, env, makePassThroughContext());
     expect(response.headers.get('Access-Control-Allow-Origin')).toBe(env.APP_BASE_URL);
   });
 
@@ -32,7 +32,7 @@ describe('CORS', () => {
       },
     });
 
-    const response = await worker.fetch(request, env, makePassThroughContext() as unknown as ExecutionContext);
+    const response = await worker.fetch(request, env, makePassThroughContext());
     expect(response.headers.get('Access-Control-Allow-Origin')).toBe('https://app.example.com');
   });
 
@@ -41,7 +41,7 @@ describe('CORS', () => {
       method: 'OPTIONS',
     });
 
-    const response = await worker.fetch(request, env, makePassThroughContext() as unknown as ExecutionContext);
+    const response = await worker.fetch(request, env, makePassThroughContext());
     const allowedHeaders = response.headers.get('Access-Control-Allow-Headers');
     expect(allowedHeaders).toContain(TRACE_HEADER);
     expect(allowedHeaders).toContain(SPAN_HEADER);
@@ -52,7 +52,7 @@ describe('CORS', () => {
       method: 'OPTIONS',
     });
 
-    const response = await worker.fetch(request, env, makePassThroughContext() as unknown as ExecutionContext);
+    const response = await worker.fetch(request, env, makePassThroughContext());
     expect(response.headers.get('Vary')).toBe('Origin, Access-Control-Request-Headers');
   });
 
@@ -61,7 +61,7 @@ describe('CORS', () => {
       method: 'OPTIONS',
     });
 
-    const response = await worker.fetch(request, env, makePassThroughContext() as unknown as ExecutionContext);
+    const response = await worker.fetch(request, env, makePassThroughContext());
     expect(response.headers.get('Access-Control-Allow-Origin')).toBe(env.APP_BASE_URL);
   });
 
@@ -71,7 +71,7 @@ describe('CORS', () => {
       headers: { Origin: 'https://app.example.com' },
     });
 
-    const response = await worker.fetch(request, env, makePassThroughContext() as unknown as ExecutionContext);
+    const response = await worker.fetch(request, env, makePassThroughContext());
     expect(response.headers.get('Access-Control-Allow-Methods')).toBe('GET, POST, PUT, PATCH, DELETE, OPTIONS');
   });
 });
