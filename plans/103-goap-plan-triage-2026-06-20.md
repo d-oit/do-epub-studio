@@ -31,8 +31,8 @@ already archived) and classified each as:
 
 | Status | Count |
 |--------|-------|
-| DONE | 73 |
-| IN_PROGRESS | 7 |
+| DONE | 77 |
+| IN_PROGRESS | 4 |
 | OPEN | 0 |
 | META | 32 |
 | BLOCKED | 0 |
@@ -52,9 +52,9 @@ have a plan owner).
 | 065 | Reader perf + Turborepo cache | IN_PROGRESS | Stream B PR-2/PR-3 + 4 reader hot-path wins |
 | 075 | 2026-06-15 swarm master plan | IN_PROGRESS | Waves B/C/D; 5 of 12 gaps still open |
 | 076 | Admin recovery + book CRUD | IN_PROGRESS | Blocked on G15 (magic-link email transport) |
-| 077 | Reader progress + search load (G19) | IN_PROGRESS | Single PR, dep on tenant-isolation (now merged) |
-| 079 | Admin grants PATCH UI (G21) | IN_PROGRESS | Wire or delete decision |
-| 084 | CHANGELOG + CONTRIBUTING sync (G27) | IN_PROGRESS | Doc-only, ready to ship |
+| 077 | Reader progress + search load (G19) | DONE | Shipped in PR #566 (commit `?`); progress_loaded telemetry + offline fallback present in `ReaderPage.tsx` |
+| 079 | Admin grants PATCH UI (G21) | DONE | Shipped in PR #560 (commit `74b63be`); GrantForm + GrantList wired into GrantsPage.tsx; semantic-token migration PR #603 |
+| 084 | CHANGELOG + CONTRIBUTING sync (G27) | DONE | CHANGELOG already lists PRs #525, #527, #560, #566; CONTRIBUTING already has all 7 coverage thresholds matching AGENTS.md |
 | 100 | Coverage improvement progress | IN_PROGRESS | Phase 2 in flight; web at 76.58% vs 80% target |
 
 ## Recommended Execution Order
@@ -65,11 +65,12 @@ gates must pass for every PR.
 
 ### Batch A — Quick wins (≤ 1 session each)
 
-1. **084** CHANGELOG + CONTRIBUTING sync — doc-only, prerequisite for
-   release-management skill; ships in < 30 min.
-2. **079** Admin grants PATCH UI — decision (wire or delete) and one PR.
-3. **077** Reader progress + search load (G19) — single PR; no upstream
-   blocker now that tenant isolation is merged.
+> All three Batch A items already shipped — see "Execution Progress"
+> below. Status changed to DONE; no further work.
+
+1. **084** CHANGELOG + CONTRIBUTING sync — already in sync.
+2. **079** Admin grants PATCH UI — wired in PR #560.
+3. **077** Reader progress + search load (G19) — shipped in PR #566.
 
 ### Batch B — Coverage and observability (1-2 sessions)
 
@@ -182,17 +183,42 @@ skill, security-code-auditor skill, and `agents-docs/LEARNINGS.md`):
 - DONE: 74 (was 73; +1 for plan 102)
 - IN_PROGRESS: 6 (was 7; -1 for plan 102)
 
-  Remaining: 063, 065, 075, 076, 077, 079, 084, 100 (note: 084/077/079
-  are Batch A and have been re-prioritized here).
+  Remaining: 063, 065, 075, 076, 100 (Batch A items 077/079/084
+  removed — see next section).
 
-### Next: Batch A execution (this plan continues)
+### 2026-06-20 — Batch A already shipped in earlier PRs
 
-After plan 104 is captured (next step), execute the three Batch A items
-as separate PRs:
+While preparing to execute Batch A (084/079/077) it surfaced that all
+three items were already shipped in earlier PRs:
 
-- 084 (CHANGELOG + CONTRIBUTING sync) — doc-only.
-- 079 (admin grants PATCH wire-or-delete decision) — small code.
-- 077 (reader progress + search load, G19) — single feature PR.
+- **Plan 077 (G19 — reader progress load on open)** — shipped in PR
+  [#566](https://github.com/d-oit/do-epub-studio/pull/566). Current
+  `ReaderPage.tsx` includes the `progress_loaded` telemetry event
+  (line 190), the offline-DB fallback (line 173), and the CFI display
+  path. CHANGELOG already records `fix(reader): wire initial progress
+  load on reader open (#566)`.
+- **Plan 079 (G21 — admin grants PATCH UI)** — shipped in PR
+  [#560](https://github.com/d-oit/do-epub-studio/pull/560) (commit
+  `74b63be`). `<GrantList>` and `<GrantForm>` are wired into
+  `GrantsPage.tsx` (lines 222/231). A semantic-token migration followed
+  in PR [#603](https://github.com/d-oit/do-epub-studio/pull/603)
+  (commit `bec77ac`).
+- **Plan 084 (G27 — CHANGELOG + CONTRIBUTING sync)** — already in
+  sync. CHANGELOG lists PRs #525, #527, #560, #566, #552; CONTRIBUTING
+  has all 7 coverage thresholds (web 55/48, worker 55/50, shared
+  40/50, reader-core 72/70, schema 15/5, testkit 25/20, ui 10/5)
+  matching `AGENTS.md` Tier 2.
 
-Then Batch B (100 coverage Phase 2, 065 perf), Batch C (076 admin
-recovery, 063 Wave 2 P1), Batch D (075 closeout, 065 hot-path wins).
+**No new PRs needed for Batch A.** Updated totals above.
+
+### Next: Batch B/C/D
+
+- Batch B (100 coverage Phase 2, 065 perf) — both in_progress, ready
+  for execution. Plan 100 brings web to 80% coverage; plan 065
+  finishes Stream B PR-2/PR-3 and the 4 reader hot-path wins.
+- Batch C (076 admin recovery, 063 Wave 2 P1) — 076 is blocked on G15
+  (magic-link email transport) per plan 081a; 063 has 26 P1 items.
+- Batch D (075 closeout) — closes 5 of 12 gaps still open
+  (#532/#533/#534/#535/#539).
+
+Recommended next session: Batch B (100 + 065) as two PRs.
