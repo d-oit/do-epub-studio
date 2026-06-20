@@ -39,6 +39,7 @@ readonly MAX_PR_TITLE_LENGTH=72
 - **MUST verify git worktree branch matches PR head branch before pushing.** Use `git branch --show-current` (in worktree) + `gh pr view <N> --json headRefName` to confirm. Pushing to a wrong branch won't trigger CI for the PR. Use `git push origin <worktree-branch>:<pr-head-branch> --force` to target the correct branch.**
 - **MUST use semantic design tokens (\`text-foreground\`, \`bg-background\`, etc.) from \`globals.css\` for all UI components to ensure WCAG 2.1 AA accessibility compliance per ADR-063.**
 - **NEVER merge a PR with failing CI checks.** Before merging, verify ALL required checks pass via `gh pr checks <N>`. NEVER use `--admin` to bypass branch protection or merge with failing checks. If a check fails, fix the failure first — no exceptions.
+- **MUST always fix pre-existing issues when encountered.** Whenever you touch a file (or surface an issue via analysis, lint, typecheck, test, security audit, or review), you MUST fix the pre-existing issue in the same change set — regardless of whether it is in the diff scope. Deferral is not allowed. If a pre-existing issue is too large for the current change, open a follow-up GOAP plan + ADR + tracking issue and link it from the current PR description; the current PR is not mergeable until the follow-up exists. Pre-existing issues in unrelated files are addressed by either: (a) fixing them in the current PR, or (b) opening a follow-up GOAP plan that is actively worked on. "Leave it for later" with no follow-up is a violation.
 
 ---
 
@@ -50,20 +51,16 @@ readonly MAX_PR_TITLE_LENGTH=72
 2. **Validate workflows:** All GitHub Actions workflows MUST pass validation via `./scripts/validate-workflows.sh` (includes `actionlint` and `zizmor` security scanning).
 3. **Use `./scripts/atomic-commit/run.sh --message "type(scope): description"`.**
 3. **Coverage Thresholds:** Enforce minimum coverage via `test:coverage`.
-   - `web`: 55% Lines, 48% Functions
-   - `worker`: 55% Lines, 50% Functions
-   - `shared`: 40% Lines, 50% Functions
-   - `reader-core`: 72% Lines, 70% Functions
-   - `schema`: 15% Lines, 5% Functions
-   - `testkit`: 25% Lines, 20% Functions
+   - `web`: 55% Lines, 48% Functions | `worker`: 55% Lines, 50% Functions
+   - `shared`: 40% Lines, 50% Functions | `reader-core`: 72% Lines, 70% Functions
+   - `schema`: 15% Lines, 5% Functions | `testkit`: 25% Lines, 20% Functions
    - `ui`: 10% Lines, 5% Functions
 4. **Validate commit message:** Run `./scripts/validate-commit-message.sh` or ensure format matches `type(scope): description` (max 72 chars).
 5. **NEVER ignore lint warnings, typecheck errors, or test failures.**
 6. **If a lint rule is disabled, add inline comment explaining why.**
 7. **MUST load `goap-agent` skill for any analysis, planning, or multi-step task.** Use GOAP methodology (analyze → decompose → strategize → coordinate → execute → synthesize).
 8. **Document ALL issues as GOAP plans + ADRs in `plans/`.** Warnings, pre-existing issues, and unfixable items each get a GOAP plan with an ADR defining policy. Do NOT edit KNOWN-ISSUES.md directly — that is a reference mirror of monitor-tier items only.
-9. **Fix pre-existing issues in files you touch.** Don't leave them for later.
-10. **Releases MUST be cut via the `release-management` skill — no manual tags, no direct CHANGELOG edits.**
+9. **Releases MUST be cut via the `release-management` skill — no manual tags, no direct CHANGELOG edits.**
 
 ---
 
@@ -106,6 +103,7 @@ Run this before finalizing ANY response:
 - [ ] Did I verify no secrets/tokens in my output?
 - [ ] Did I load `goap-agent` skill for analysis/planning tasks?
 - [ ] Did I document all warnings/issues as GOAP plans + ADRs (not direct KNOWN-ISSUES.md edits)?
+- [ ] Did I fix every pre-existing issue I touched or surfaced (or open a follow-up GOAP + ADR + tracking issue linked from this PR)?
 - [ ] Did I run quality gate before commit?
 - [ ] Is my commit message under 72 chars with correct format?
 - [ ] Did I use feature branch (not main) for changes?

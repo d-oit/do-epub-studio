@@ -199,6 +199,9 @@ importers:
       fake-indexeddb:
         specifier: ^6.2.5
         version: 6.2.5
+      jsdom:
+        specifier: ^29.1.1
+        version: 29.1.1
       rollup-plugin-visualizer:
         specifier: ^7.0.1
         version: 7.0.1(rolldown@1.0.3)(rollup@2.80.0)
