@@ -10,12 +10,21 @@ import {
   mockComputeCapabilities,
 } from './fixtures';
 import { app } from '../app';
+import { assertBookAccess } from '../lib/tenant-isolation';
+
+vi.mock('../lib/tenant-isolation', () => ({
+  parseLocatorRow: vi.fn(),
+  assertBookAccess: vi.fn(),
+}));
+
+const mockAssertBookAccess = assertBookAccess as ReturnType<typeof vi.fn>;
 
 describe('Comments Routes', () => {
   const env = makeEnv();
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockAssertBookAccess.mockResolvedValue(null);
   });
 
   describe('GET /api/books/:bookId/comments', () => {
@@ -26,7 +35,7 @@ describe('Comments Routes', () => {
     });
 
     it('returns list of comments when authenticated', async () => {
-      mockRequireAuth.mockResolvedValue({ email: 'user@example.com' } as any);
+      mockRequireAuth.mockResolvedValue({ email: 'user@example.com', bookId: 'book-1' } as any);
       mockGetGrantByBookAndSession.mockResolvedValue({ id: 'grant-1' });
 
       mockQueryAll.mockResolvedValue([
@@ -46,6 +55,7 @@ describe('Comments Routes', () => {
     it('creates comment and returns success', async () => {
       mockRequireAuth.mockResolvedValue({
         email: 'user@example.com',
+        bookId: 'book-1',
         capabilities: { canComment: true },
       } as any);
       mockGetGrantByBookAndSession.mockResolvedValue({ id: 'grant-1' });

@@ -52,7 +52,7 @@ highlightsRouter.get('/:bookId/highlights', readerAuth, async (c) => {
   });
 });
 
-highlightsRouter.post('/:bookId/highlights', zValidator('json', HighlightCreateSchema), readerAuth, async (c) => {
+highlightsRouter.post('/:bookId/highlights', readerAuth, zValidator('json', HighlightCreateSchema), async (c) => {
   const bookId = c.req.param('bookId');
   const auth = c.get('auth');
   const body = c.req.valid('json');
@@ -138,7 +138,7 @@ highlightsRouter.delete('/:bookId/highlights/:highlightId', readerAuth, async (c
 
 const HighlightUpdateSchema = HighlightCreateSchema.pick({ note: true, color: true }).partial();
 
-highlightsRouter.patch('/:bookId/highlights/:highlightId', zValidator('json', HighlightUpdateSchema), readerAuth, async (c) => {
+highlightsRouter.patch('/:bookId/highlights/:highlightId', readerAuth, zValidator('json', HighlightUpdateSchema), async (c) => {
   const { bookId, highlightId } = c.req.param();
   const auth = c.get('auth');
   const body = c.req.valid('json');
