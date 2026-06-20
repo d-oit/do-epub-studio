@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { apiRequest } from '../../lib/api';
 import { useTranslation } from '../../hooks/useTranslation';
+import { AppLogo } from '../../components/ui';
+import { APP_NAME, APP_VERSION_LABEL } from '../../config/app-identity';
 
 interface CatalogBook {
   id: string;
@@ -39,18 +41,27 @@ export function CatalogPage() {
   return (
     <main
       id="main-content"
-      className="min-h-screen bg-background text-foreground p-6 md:p-12"
+      className="min-h-dvh bg-background px-4 py-6 text-foreground sm:px-6 md:py-10 lg:px-8 2xl:px-12"
     >
-      <div className="max-w-5xl mx-auto">
-        <header className="mb-10 text-center">
-          <h1 className="text-3xl font-bold tracking-tight">{t('catalog.title')}</h1>
-          <p className="mt-2 text-foreground-muted">{t('catalog.subtitle')}</p>
+      <div className="mx-auto max-w-7xl">
+        <header className="mb-8 flex flex-col gap-6 border-b border-border pb-6 md:mb-10 md:flex-row md:items-end md:justify-between">
+          <div className="min-w-0">
+            <div className="mb-4 flex items-center gap-3">
+              <AppLogo size={32} className="text-accent" />
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-foreground">{APP_NAME}</p>
+                <p className="text-xs text-foreground-muted">{APP_VERSION_LABEL}</p>
+              </div>
+            </div>
+            <h1 className="text-balance text-3xl font-bold tracking-tight md:text-4xl">{t('catalog.title')}</h1>
+            <p className="mt-2 max-w-2xl text-foreground-muted">{t('catalog.subtitle')}</p>
+          </div>
         </header>
 
         {isLoading && (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3" aria-busy="true">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4" aria-busy="true">
             {['sk-1', 'sk-2', 'sk-3', 'sk-4', 'sk-5', 'sk-6'].map((id) => (
-              <div key={id} className="h-64 rounded-xl bg-background-secondary animate-pulse" />
+              <div key={id} className="h-72 rounded-lg bg-background-secondary animate-pulse" />
             ))}
           </div>
         )}
@@ -64,26 +75,30 @@ export function CatalogPage() {
         )}
 
         {!isLoading && books.length > 0 && (
-          <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 list-none p-0">
+          <ul className="grid list-none gap-4 p-0 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
             {books.map((book) => (
               <li key={book.id}>
                 <Link
                   to={`/login?book=${book.slug}`}
-                  className="block rounded-xl border border-white/10 bg-surface/40 backdrop-blur-sm p-5 shadow-glass hover:shadow-glass-lg transition-shadow focus-visible:outline-2 focus-visible:outline-accent"
+                  className="group block h-full rounded-lg border border-border bg-background-secondary p-4 shadow-sm transition-[box-shadow,transform] hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-2 focus-visible:outline-accent"
                 >
-                  {book.coverImageUrl && (
+                  {book.coverImageUrl ? (
                     <picture>
                       <source srcSet={book.coverImageUrl} />
                       <img
                         src={book.coverImageUrl}
                         alt={t('catalog.coverAlt').replace('{title}', book.title)}
                         width={320}
-                        height={160}
-                        className="w-full h-40 object-cover rounded-lg mb-4"
+                        height={426}
+                        className="mb-4 aspect-[3/4] w-full rounded-md object-cover"
                       />
                     </picture>
+                  ) : (
+                    <div className="mb-4 flex aspect-[3/4] w-full items-center justify-center rounded-md bg-background-tertiary text-foreground-muted">
+                      <AppLogo size={40} className="text-accent" />
+                    </div>
                   )}
-                  <h2 className="text-lg font-semibold line-clamp-2">{book.title}</h2>
+                  <h2 className="line-clamp-2 text-lg font-semibold leading-snug group-hover:text-accent">{book.title}</h2>
                   {book.authorName && (
                     <p className="text-sm text-foreground-muted mt-1">{book.authorName}</p>
                   )}

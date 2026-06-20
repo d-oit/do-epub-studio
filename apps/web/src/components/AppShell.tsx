@@ -5,6 +5,7 @@ import { useAuthStore } from '../stores/auth';
 import { useTranslation } from '../hooks/useTranslation';
 import { AppLogo } from './ui';
 import { BottomTabBar, Sidebar, Drawer } from './navigation';
+import { APP_NAME, APP_VERSION_LABEL } from '../config/app-identity';
 
 export function AppShell() {
   const navigate = useNavigate();
@@ -101,7 +102,8 @@ export function AppShell() {
               </svg>
             </button>
             <AppLogo size={24} className="text-accent" />
-            <span className="font-semibold text-foreground text-sm">do EPUB Studio</span>
+            <span className="min-w-0 truncate font-semibold text-foreground text-sm">{APP_NAME}</span>
+            <span className="hidden text-[0.68rem] text-foreground-muted sm:inline">{APP_VERSION_LABEL}</span>
           </div>
         </header>
         {/* Main scrollable area */}

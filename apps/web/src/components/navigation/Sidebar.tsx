@@ -2,6 +2,7 @@ import { NavLink } from 'react-router-dom';
 import { useTranslation } from '../../hooks/useTranslation';
 import { AppLogo } from '../../components/ui';
 import { NAV_ITEMS, NavIcon } from './shared';
+import { APP_NAME, APP_VERSION_LABEL } from '../../config/app-identity';
 
 export function Sidebar() {
   const { t } = useTranslation();
@@ -10,7 +11,10 @@ export function Sidebar() {
     <aside className="hidden lg:flex flex-col w-60 bg-background-secondary border-r border-border h-full overflow-y-auto">
       <div className="flex items-center gap-3 px-5 py-4 border-b border-border">
         <AppLogo size={32} className="text-accent shrink-0" />
-        <span className="font-semibold text-foreground text-sm">do EPUB Studio</span>
+        <div className="min-w-0">
+          <span className="block truncate font-semibold text-foreground text-sm">{APP_NAME}</span>
+          <span className="block text-xs text-foreground-muted">{APP_VERSION_LABEL}</span>
+        </div>
       </div>
       <nav className="flex-1 py-3" aria-label={t('nav.library')}>
         {NAV_ITEMS.map(({ key, icon, href }) => (
