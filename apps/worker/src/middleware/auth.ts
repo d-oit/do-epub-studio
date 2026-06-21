@@ -16,7 +16,7 @@ export const readerAuth: MiddlewareHandler<{ Bindings: Env; Variables: { auth: A
 export const adminAuth: MiddlewareHandler<{ Bindings: Env; Variables: { adminUser: { email: string; id: string; role: string } } }> = async (c, next) => {
   const authResult = await requireAdminAuth(c.env, c.req.raw);
   if (!authResult.ok) {
-    return c.json({ ok: false, error: { code: 'UNAUTHORIZED', message: authResult.error } }, authResult.status as ContentfulStatusCode);
+    const status = authResult.status as ContentfulStatusCode; return c.json({ ok: false, error: { code: status === 403 ? 'FORBIDDEN' : 'UNAUTHORIZED', message: authResult.error } }, status);
   }
   c.set('adminUser', {
     id: authResult.context.userId,

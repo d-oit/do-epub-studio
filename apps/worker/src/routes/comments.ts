@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import type { Env } from '../lib/env';
-import { requireAuth } from '../auth/middleware';
+import type { AuthContext } from '../auth/middleware';
 import { queryFirst, queryAll, execute } from '../db/client';
 import { logAudit } from '../audit';
 import { getGrantByBookAndSession, computeCapabilities } from '../auth/password';
@@ -9,9 +9,10 @@ import {
   CommentCreateSchema,
   CommentUpdateSchema,
 } from '@do-epub-studio/shared';
-import { parseLocatorRow } from '../lib/tenant-isolation';
+import { parseLocatorRow, assertBookAccess } from '../lib/tenant-isolation';
+import { readerAuth } from '../middleware/auth';
 
-export const commentsRouter = new Hono<{ Bindings: Env }>();
+export const commentsRouter = new Hono<{ Bindings: Env; Variables: { auth: AuthContext } }>();
 
 interface CommentRow {
   [key: string]: string | number | null | undefined;
@@ -27,24 +28,12 @@ interface CommentRow {
   updated_at: string;
 }
 
-commentsRouter.get('/books/:bookId/comments', async (c) => {
+commentsRouter.get('/books/:bookId/comments', readerAuth, async (c) => {
   const bookId = c.req.param('bookId');
-  const auth = await requireAuth(c.env, c.req.raw);
+  const auth = c.get('auth');
 
-  if (!auth) {
-    return c.json(
-      { ok: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } },
-      401,
-    );
-  }
-
-  const grant = await getGrantByBookAndSession(c.env, bookId, auth.email);
-  if (!grant) {
-    return c.json(
-      { ok: false, error: { code: 'FORBIDDEN', message: 'No grant for this book' } },
-      403,
-    );
-  }
+  const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx);
+  if (mismatch) return mismatch.response;
 
   const comments = await queryAll<CommentRow>(
     c.env,
@@ -77,27 +66,23 @@ commentsRouter.get('/books/:bookId/comments', async (c) => {
   });
 });
 
-commentsRouter.post('/books/:bookId/comments', zValidator('json', CommentCreateSchema), async (c) => {
+commentsRouter.post('/books/:bookId/comments', readerAuth, zValidator('json', CommentCreateSchema), async (c) => {
   const bookId = c.req.param('bookId');
-  const auth = await requireAuth(c.env, c.req.raw);
+  const auth = c.get('auth');
 
-  if (!auth) {
-    return c.json(
-      { ok: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } },
-      401,
-    );
+  const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx);
+  if (mismatch) return mismatch.response;
+
+  // Use session capabilities if bookId matches session, otherwise re-fetch
+  let canComment = auth.capabilities.canComment;
+  if (auth.bookId !== bookId) {
+    const grant = await getGrantByBookAndSession(c.env, bookId, auth.email);
+    if (grant) {
+      canComment = computeCapabilities(grant).canComment;
+    }
   }
 
-  const grant = await getGrantByBookAndSession(c.env, bookId, auth.email);
-  if (!grant) {
-    return c.json(
-      { ok: false, error: { code: 'FORBIDDEN', message: 'No grant for this book' } },
-      403,
-    );
-  }
-
-  const capabilities = computeCapabilities(grant);
-  if (!capabilities.canComment) {
+  if (!canComment) {
     return c.json({ ok: false, error: { code: 'FORBIDDEN', message: 'Access denied' } }, 403);
   }
 
@@ -149,16 +134,9 @@ commentsRouter.post('/books/:bookId/comments', zValidator('json', CommentCreateS
   );
 });
 
-commentsRouter.patch('/comments/:commentId', zValidator('json', CommentUpdateSchema), async (c) => {
+commentsRouter.patch('/comments/:commentId', readerAuth, zValidator('json', CommentUpdateSchema), async (c) => {
   const commentId = c.req.param('commentId');
-  const auth = await requireAuth(c.env, c.req.raw);
-
-  if (!auth) {
-    return c.json(
-      { ok: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } },
-      401,
-    );
-  }
+  const auth = c.get('auth');
 
   const comment = await queryFirst<CommentRow>(c.env, `SELECT * FROM comments WHERE id = ?`, [
     commentId,
@@ -214,16 +192,9 @@ commentsRouter.patch('/comments/:commentId', zValidator('json', CommentUpdateSch
   });
 });
 
-commentsRouter.delete('/comments/:commentId', async (c) => {
+commentsRouter.delete('/comments/:commentId', readerAuth, async (c) => {
   const commentId = c.req.param('commentId');
-  const auth = await requireAuth(c.env, c.req.raw);
-
-  if (!auth) {
-    return c.json(
-      { ok: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } },
-      401,
-    );
-  }
+  const auth = c.get('auth');
 
   const comment = await queryFirst<CommentRow>(c.env, `SELECT * FROM comments WHERE id = ?`, [
     commentId,

@@ -1,5 +1,5 @@
 ---
-version: "1.0.0"
+version: "1.1.0"
 name: security-code-auditor
 description: >
   Audit EPUB Studio code for vulnerabilities. Activate for auth, EPUB parsing,
@@ -123,7 +123,56 @@ return generateSignedUrl(bookId, { expiresIn: '15m' });
 6. Hash passwords with Argon2 or bcrypt
 7. Revoke sessions immediately on permission revocation
 
+## File-System Path Patterns
+
+Codacy (via `eslint-plugin-security`) flags `fs.*` calls whose first
+argument is non-literal — the OWASP path-traversal rule. Three patterns
+to apply in this repo:
+
+### Read repo-static files
+
+```typescript
+// BAD — Codacy will flag (and so should code review)
+import { readFileSync } from 'node:fs';
+readFileSync(new URL('./data.json', import.meta.url));
+
+// GOOD — Vite/webpack/rollup config: static import
+import data from './data.json';
+
+// GOOD — Node code: literal path joined with __dirname
+import { readFileSync } from 'node:fs';
+import path from 'path';
+readFileSync(path.join(__dirname, 'data.json'), 'utf8');
+```
+
+### Read user-supplied paths
+
+```typescript
+// BAD — vulnerable to path traversal
+const userPath = req.query.file;
+readFileSync(`/var/data/${userPath}`);
+
+// GOOD — resolve, normalize, then check the result is inside the
+// expected root
+import path from 'node:path';
+const root = '/var/data';
+const resolved = path.resolve(root, userPath);
+if (!resolved.startsWith(root + path.sep)) {
+  throw new Error('Path escapes data root');
+}
+readFileSync(resolved);
+```
+
+The rule's intent is to block the **first** pattern. The second
+pattern with `path.resolve` + `startsWith` guard is the 2026 best
+practice from OWASP. Always prefer it over suppressing the rule.
+
 ## References
 
 - `references/security-checklist.md` - Audit checklist
 - `references/owasp-top10.md` - OWASP guidelines adapted for EPUB
+- [OWASP Path Traversal](https://owasp.org/www-community/attacks/Path_Traversal)
+- `eslint-plugin-security` — `detect-non-literal-fs-filename` rule
+  docs: <https://github.com/eslint-community/eslint-plugin-security/blob/main/docs/rules/detect-non-literal-fs-filename.md>
+- `.agents/skills/codacy/SKILL.md` — Codacy-specific workflow and
+  required-check policy.

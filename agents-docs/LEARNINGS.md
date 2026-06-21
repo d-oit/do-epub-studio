@@ -192,3 +192,23 @@
 - **ESLint rule promotion strategy**: Before promoting a rule from 'warn' to 'error', fix all existing violations first. Use `pnpm lint 2>&1 | grep <rule-name> | wc -l` to count remaining. The `no-non-null-assertion` rule had 18 violations — all in test files where `result!` after `expect(result).not.toBeNull()` was common. Replaced with `as` casts and guard clauses.
 - **Plan status hygiene**: Status lines without proper markdown formatting (missing `**Status:**`) cause grep-based plan scanners to miss them. Always use `**Status:** ✅ <value>` format.
 - **Codacy Generic Object Injection Sink false positive**: Codacy flags `as` type assertions on parsed JSON objects as potential injection sinks in test files. This is a known false positive — the `expect().not.toBeNull()` guard before the cast proves runtime safety. Not actionable.
+
+## 2026-06-20 Plan 102 — App Identity, Codacy Required-Check Discovery
+
+### Impact
+
+- **PR #618 (`feat/app-identity-responsive-e2e`) shipped.** 20/20 GitHub Actions checks pass, including Codacy Static Code Analysis (was previously assumed informational — **it is required per AGENTS.md Tier 1**).
+- **Codacy mandates added to AGENTS.md Tier 1** alongside the existing "NEVER merge with failing CI" rule.
+- **New `?raw` / static-import pattern documented** for Vite/webpack/rollup configs and Node-bundled sources that need to read repo-static files (e.g. `VERSION`).
+
+### Technical Details
+
+- **Codacy IS a required check.** `gh pr checks <PR>` shows it as a row, and AGENTS.md Tier 1 forbids merging with any failing check. Treating it as "third-party / informational" was a false assumption. The branch has no GitHub-side branch protection, so the merge button is not technically blocked, but the policy still applies. Always poll Codacy on push.
+- **Local ESLint skips root configs.** The `pnpm lint` scripts in each workspace scope to `src/` (e.g. `apps/web/package.json` has `"lint": "eslint src --ext .ts,.tsx"`). This means `vite.config.ts`, `vitest.config.ts`, `playwright.config.ts` are not linted locally. Codacy lints the whole file. Green local lint ≠ green Codacy.
+- **Codacy uses ESLint 8.** The local install is ESLint 10. The `security/detect-non-literal-fs-filename` rule's static-set differs between versions. `__dirname` is recognized as static in v10 (no warning) but flagged in v8 (Codacy). Trust the Cloud report over local runs.
+- **`new URL('./file', import.meta.url)` trips the security rule.** The URL is not a literal to the linter. Fix: use a static `import` (Vite/webpack/rollup config) or `path.join(__dirname, 'literal')` (Node). If the rule still flags it on Codacy, add `// eslint-disable-next-line security/detect-non-literal-fs-filename` with an inline justification.
+- **`?raw` import suffix does not work in `vite.config.ts`.** The Vite config is loaded by Node (via Rolldown bundle) and `?raw` is a Vite-only source-transform. Put the `?raw` import in a companion TS module and import that module's exported constant into the config. JSON imports (`import x from './file.json'`) work fine in the config.
+- **`pnpm install` interactive prompt in non-TTY:** `pnpm install --frozen-lockfile` aborts in non-TTY environments with `ERR_PNPM_ABORTED_REMOVE_MODULES_DIR_NO_TTY`. Set `CI=true` env var, or use `confirmModulesPurge: false` in `.npmrc`.
+- **Markdownlint MD004 (ul-style):** Default config expects `-` for unordered list items. Mixing `+` and `-` in the same file fails CI pre-commit. Use `-` everywhere.
+- **Stale working-tree changeset is a known issue:** `AGENTS.md` (Tier-1 mandate update), `pnpm-lock.yaml`, `apps/web/package.json` (jsdom), `apps/web/src/main.tsx` (TranslationKeys typing), `apps/web/src/features/reader/ReaderPage.tsx`, `apps/web/src/__tests__/main.test.tsx`, and `apps/web/src/__tests__/reader-store.test.ts` all carry uncommitted modifications from prior sessions. These are out of scope for plan 102 and need a dedicated plan/PR.
+- **Plan 103 records the full triage of all 112 plans** in `plans/`: 73 DONE, 7 IN_PROGRESS, 0 OPEN, 32 META. Recommended execution order is Batch A (084/079/077) → Batch B (100/065) → Batch C (076/063) → Batch D (075/065 closeout).

@@ -56,7 +56,7 @@ progressRouter.get('/:bookId/progress', readerAuth, async (c) => {
   });
 });
 
-progressRouter.put('/:bookId/progress', zValidator('json', ProgressUpdateSchema), readerAuth, async (c) => {
+progressRouter.put('/:bookId/progress', readerAuth, zValidator('json', ProgressUpdateSchema), async (c) => {
   const bookId = c.req.param('bookId');
   const auth = c.get('auth');
   const body = c.req.valid('json');

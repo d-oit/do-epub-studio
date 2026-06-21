@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from '../../hooks/useTranslation';
 import { AppLogo } from '../../components/ui';
 import { NAV_ITEMS, NavIcon } from './shared';
+import { APP_NAME, APP_VERSION_LABEL } from '../../config/app-identity';
 
 interface DrawerProps {
   isOpen: boolean;
@@ -58,7 +59,10 @@ export function Drawer({ isOpen, onClose }: DrawerProps) {
             <div className="flex items-center justify-between px-5 py-4 border-b border-border">
               <div className="flex items-center gap-3">
                 <AppLogo size={28} className="text-accent shrink-0" />
-                <span className="font-semibold text-foreground text-sm">do EPUB Studio</span>
+                <div className="min-w-0">
+                  <span className="block truncate font-semibold text-foreground text-sm">{APP_NAME}</span>
+                  <span className="block text-xs text-foreground-muted">{APP_VERSION_LABEL}</span>
+                </div>
               </div>
               <button
                 type="button"

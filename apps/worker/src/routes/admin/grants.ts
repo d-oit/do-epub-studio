@@ -22,7 +22,7 @@ interface GrantRow {
   revoked_at: string | null;
 }
 
-grantsRouter.post('/books/:id/grants', zValidator('json', CreateGrantSchema), adminAuth, async (c) => {
+grantsRouter.post('/books/:id/grants', adminAuth, zValidator('json', CreateGrantSchema), async (c) => {
   const bookId = c.req.param('id');
   const body = c.req.valid('json');
   const adminUser = c.get('adminUser');
@@ -69,7 +69,7 @@ grantsRouter.get('/books/:id/grants', adminAuth, async (c) => {
   });
 });
 
-grantsRouter.patch('/grants/:id', zValidator('json', UpdateGrantSchema), adminAuth, async (c) => {
+grantsRouter.patch('/grants/:id', adminAuth, zValidator('json', UpdateGrantSchema), async (c) => {
   const grantId = c.req.param('id');
   const body = c.req.valid('json');
   const adminUser = c.get('adminUser');

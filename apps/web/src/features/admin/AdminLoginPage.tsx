@@ -4,8 +4,9 @@ import { useTranslation } from '../../hooks/useTranslation';
 import { apiRequest } from '../../lib/api';
 import { useAuthStore } from '../../stores/auth';
 import { LocaleSwitcher } from '../../components/LocaleSwitcher';
-import { Button, Input } from '../../components/ui';
+import { Button, Input, AppLogo } from '../../components/ui';
 import { ThemeToggle } from '../../components/ThemeToggle';
+import { APP_NAME, APP_VERSION_LABEL } from '../../config/app-identity';
 
 export function AdminLoginPage() {
   const { t } = useTranslation();
@@ -41,19 +42,24 @@ export function AdminLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4">
-      <div className="absolute top-4 right-4 flex items-center gap-2">
+    <div className="relative min-h-dvh overflow-x-clip bg-background px-4 py-6 sm:px-6 lg:px-8">
+      <div className="fixed right-3 top-3 z-20 flex items-center gap-2 sm:right-4 sm:top-4">
         <ThemeToggle />
         <LocaleSwitcher />
       </div>
 
-      <main id="main-content" className="max-w-md w-full bg-background-secondary rounded-xl shadow-lg p-8 border border-border">
+      <main
+        id="main-content"
+        className="mx-auto flex min-h-[calc(100dvh-3rem)] w-full max-w-md items-center pt-16"
+      >
+      <section className="w-full rounded-lg border border-border bg-background-secondary p-5 shadow-md sm:p-7 lg:p-8">
         <div className="text-center mb-8">
+          <AppLogo size={44} className="mx-auto mb-3 text-accent" />
           <h1 className="text-2xl font-bold text-foreground">
             {t('admin.login.title')}
           </h1>
           <p className="text-foreground-muted mt-2 text-sm">
-            d.o. EPUB Studio Management
+            {APP_NAME} Management · {APP_VERSION_LABEL}
           </p>
         </div>
 
@@ -124,6 +130,7 @@ export function AdminLoginPage() {
             {t('admin.login.backToReader')}
           </Button>
         </div>
+      </section>
       </main>
     </div>
   );

@@ -1,5 +1,6 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { AccessibilityMetadata } from '@do-epub-studio/reader-core';
+import { computeInsightSummary } from '../../../../lib/offline/reading-insights';
 
 interface BookInfo {
   title: string;
@@ -10,10 +11,19 @@ interface BookInfo {
   accessibility?: AccessibilityMetadata;
 }
 
+interface InsightSummary {
+  totalActiveMinutes: number;
+  estimatedMinutesRemaining: number | null;
+  currentStreakDays: number;
+  recentActivity: { date: string; activeMinutes: number }[];
+}
+
 interface InfoPanelProps {
   isOpen: boolean;
   onClose: () => void;
   metadata: BookInfo | null;
+  bookId: string | null;
+  progressPercent: number;
   t: (key: string) => string;
 }
 
@@ -51,18 +61,31 @@ function HazardBadge({ hazard }: { hazard: string }) {
   );
 }
 
-export function InfoPanel({ isOpen, onClose, metadata, t }: InfoPanelProps) {
+function formatMinutes(minutes: number): string {
+  if (minutes < 60) return `${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+}
+
+export function InfoPanel({ isOpen, onClose, metadata, bookId, progressPercent, t }: InfoPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null);
+  const [insights, setInsights] = useState<InsightSummary | null>(null);
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || !bookId) return;
 
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
     };
     window.addEventListener('keydown', handleEscape);
+
+    computeInsightSummary(bookId, progressPercent).then(setInsights).catch(() => {
+      setInsights(null);
+    });
+
     return () => window.removeEventListener('keydown', handleEscape);
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, bookId, progressPercent]);
 
   if (!isOpen) return null;
 
@@ -221,6 +244,46 @@ export function InfoPanel({ isOpen, onClose, metadata, t }: InfoPanelProps) {
                     </div>
                   )}
                 </div>
+              </section>
+            )}
+
+            {insights && insights.totalActiveMinutes > 0 && (
+              <section>
+                <h3 className="text-xs font-semibold text-foreground-muted uppercase tracking-wider mb-2">
+                  {t('reader.readingInsights')}
+                </h3>
+                <dl className="space-y-2">
+                  <div>
+                    <dt className="text-xs text-foreground-muted">{t('reader.totalActiveTime')}</dt>
+                    <dd className="text-sm text-foreground">
+                      {formatMinutes(insights.totalActiveMinutes)}
+                    </dd>
+                  </div>
+                  {insights.estimatedMinutesRemaining !== null && (
+                    <div>
+                      <dt className="text-xs text-foreground-muted">{t('reader.estimatedRemaining')}</dt>
+                      <dd className="text-sm text-foreground">
+                        {formatMinutes(insights.estimatedMinutesRemaining)}
+                      </dd>
+                    </div>
+                  )}
+                  {insights.currentStreakDays > 0 && (
+                    <div>
+                      <dt className="text-xs text-foreground-muted">{t('reader.readingStreak')}</dt>
+                      <dd className="text-sm text-foreground">
+                        {insights.currentStreakDays} {t('reader.days')}
+                      </dd>
+                    </div>
+                  )}
+                  {insights.recentActivity.length > 0 && (
+                    <div>
+                      <dt className="text-xs text-foreground-muted">{t('reader.recentActivity')}</dt>
+                      <dd className="text-sm text-foreground">
+                        {insights.recentActivity.map((a) => `${a.date}: ${formatMinutes(a.activeMinutes)}`).join(', ')}
+                      </dd>
+                    </div>
+                  )}
+                </dl>
               </section>
             )}
           </>
