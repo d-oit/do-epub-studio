@@ -203,7 +203,7 @@ gh pr review <number> --approve --body "LGTM"
 | Auto-merge disabled | Enable in repo settings |
 | PR not mergeable | Rebase or resolve conflicts |
 
-## EPUB Studio Specific
+## d.o.EPUB Studio Specific
 
 ### Required Checks Before Merge
 

@@ -1,6 +1,6 @@
 ---
 name: e2e-guide
-description: Playwright E2E testing guide for EPUB Studio
+description: Playwright E2E testing guide for d.o.EPUB Studio
 license: MIT
 ---
 
@@ -51,7 +51,7 @@ import { test, expect } from '@playwright/test';
 
 test('homepage loads', async ({ page }) => {
   await page.goto('/');
-  await expect(page.locator('h1')).toContainText('EPUB Studio');
+  await expect(page.locator('h1')).toContainText('d.o.EPUB Studio');
 });
 ```
 

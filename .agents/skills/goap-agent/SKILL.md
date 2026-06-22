@@ -123,7 +123,7 @@ Are tasks independent?
 ✅ Quality: [Gate results]
 ```
 
-## EPUB Studio Specific Patterns
+## d.o.EPUB Studio Specific Patterns
 
 ### Feature Implementation Pattern
 

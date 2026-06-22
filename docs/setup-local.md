@@ -1,6 +1,6 @@
 # Local Setup Guide
 
-This guide walks you through setting up EPUB Studio for local development.
+This guide walks you through setting up d.o.EPUB Studio for local development.
 
 ## 1. Prerequisites
 

@@ -11,7 +11,7 @@ license: MIT
 
 # Skill: `reader-ui-ux` v2.1.0
 
-Purpose: Deliver premium, intentional, localized, accessible reader/admin UX for `d.o. EPUB Studio` with 2026 modern standards.
+Purpose: Deliver premium, intentional, localized, accessible reader/admin UX for `d.o.EPUB Studio` with 2026 modern standards.
 
 ## When to run
 

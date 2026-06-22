@@ -1,6 +1,6 @@
 ---
 name: test-patterns
-description: Common test patterns for EPUB Studio
+description: Common test patterns for d.o.EPUB Studio
 license: MIT
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: guide
-description: Complete task decomposition guide with detailed framework, process, patterns, examples, and EPUB Studio integration
+description: Complete task decomposition guide with detailed framework, process, patterns, examples, and d.o.EPUB Studio integration
 license: MIT
 ---
 
@@ -270,7 +270,7 @@ Time: 1-2 days
 ✓ Quality tasks included
 ✓ TRIZ analysis for architecture tasks
 
-## EPUB Studio Integration
+## d.o.EPUB Studio Integration
 
 ### Must Run TRIZ Analysis For
 

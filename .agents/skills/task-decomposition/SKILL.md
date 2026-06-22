@@ -18,7 +18,7 @@ Decompose high-level objectives into manageable, testable sub-tasks.
 - Complex requests with multiple components
 - Multi-phase projects requiring coordination
 - Tasks benefiting from parallel execution
-- EPUB Studio feature implementations
+- d.o.EPUB Studio feature implementations
 - Cloudflare Worker / Turso DB changes
 
 ## Framework
@@ -61,7 +61,7 @@ Complexity: [Simple/Medium/Complex]
 
 ### Step 2: Identify Components (3-7)
 
-For EPUB Studio:
+For d.o.EPUB Studio:
 
 - Database/Storage
 - API/Worker
@@ -93,7 +93,7 @@ Tasks: 1. Design schema, 2. Implement operations
 
 ## Patterns
 
-### EPUB Studio Layer-Based
+### d.o.EPUB Studio Layer-Based
 
 1. Database/Storage (Turso/R2)
 2. Business Logic (Services)
@@ -165,7 +165,7 @@ Strategy: Multi-phase hybrid
 - [ ] Parallelization opportunities
 - [ ] TRIZ analysis for architecture tasks
 
-## EPUB Studio Specific
+## d.o.EPUB Studio Specific
 
 ### Must Run TRIZ Analysis For
 

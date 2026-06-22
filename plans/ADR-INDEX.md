@@ -49,7 +49,9 @@
 | 092 | Token Storage and Feature-Gap Policy | `plans/092-adr-token-storage-and-feature-gap-policy.md` | Accepted (this PR) |
 | 095 | (GOAP) | `plans/095-goap-merge-orchestration-2026-06-15.md` | GOAP, not ADR |
 | 096 | Merge Order Policy for Multi-Issue Swarms | `plans/096-adr-merge-order-policy-2026-06-15.md` | Accepted (this PR) |
-| 102 | Reading Insights Privacy Boundaries | `plans/102-adr-reading-insights-privacy-boundaries.md` | Accepted |
+| 102a | Application Identity and Version Source | `plans/102-adr-app-identity-version-source.md` | Accepted (collision — see ADR-083) |
+| 102b | Reading Insights Privacy Boundaries | `plans/102-adr-reading-insights-privacy-boundaries.md` | Accepted (canonical) |
+| 104 | Product Identity, Naming Convention, and Version Governance | `plans/104-adr-product-identity-and-version-governance.md` | Accepted |
 
 ## Cross-referenced but not yet adopted
 

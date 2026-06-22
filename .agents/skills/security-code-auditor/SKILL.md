@@ -2,7 +2,7 @@
 version: "1.1.0"
 name: security-code-auditor
 description: >
-  Audit EPUB Studio code for vulnerabilities. Activate for auth, EPUB parsing,
+  Audit d.o.EPUB Studio code for vulnerabilities. Activate for auth, EPUB parsing,
   signed URL, or offline sync security reviews. Read-only analysis.
 category: quality
 allowed-tools: Read Grep Glob
@@ -11,9 +11,9 @@ license: MIT
 
 # Security Code Auditor
 
-Perform security audits on EPUB Studio code, focusing on the project's specific security requirements.
+Perform security audits on d.o.EPUB Studio code, focusing on the project's specific security requirements.
 
-## EPUB Studio Security Scope
+## d.o.EPUB Studio Security Scope
 
 ### Critical Areas to Audit
 
@@ -71,7 +71,7 @@ const clean = DOMPurify.sanitize(epubContent, {
 - [ ] Cloudflare R2 credentials
 - [ ] Session timeout settings
 
-## EPUB Studio Anti-Patterns
+## d.o.EPUB Studio Anti-Patterns
 
 ### Hardcoded Secrets
 
@@ -113,7 +113,7 @@ return generateSignedUrl(bookId, { expiresIn: '15m' });
 | Medium | Information disclosure | 1 week |
 | Low | Best practice | Next sprint |
 
-## Security Rules for EPUB Studio
+## Security Rules for d.o.EPUB Studio
 
 1. Never expose Turso auth tokens to frontend
 2. Always validate signed URLs server-side

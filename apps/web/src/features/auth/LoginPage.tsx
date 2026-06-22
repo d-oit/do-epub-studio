@@ -157,9 +157,9 @@ export function LoginPage() {
             <p className="mb-3 text-sm font-medium uppercase tracking-[0.12em] text-foreground-muted">
               {APP_VERSION_LABEL}
             </p>
-            <p className="text-balance font-display text-5xl font-bold leading-tight text-foreground xl:text-6xl">
+            <h1 className="text-balance font-display text-5xl font-bold leading-tight text-foreground xl:text-6xl">
               {APP_NAME}
-            </p>
+            </h1>
             <p className="mt-5 max-w-lg text-lg text-foreground-muted">
               {APP_DESCRIPTION}
             </p>
@@ -171,9 +171,7 @@ export function LoginPage() {
         {/* Branding */}
         <div className="flex flex-col items-center mb-6">
           <AppLogo size={48} className="text-accent mb-3" />
-          <h1
-            className="text-center font-display text-3xl font-bold leading-tight text-foreground lg:hidden lg:text-2xl"
-          >
+          <h1 className="text-center font-display text-2xl font-bold leading-tight text-foreground lg:hidden">
             {APP_NAME}
           </h1>
           <p className="mt-1 text-center text-xs font-medium text-foreground-muted">

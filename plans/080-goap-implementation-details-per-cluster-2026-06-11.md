@@ -321,7 +321,7 @@ H5. Add dark mode toggle (#480)
 
 H6. Add app branding (#486)
     - Create AppLogo component (inline SVG, currentColor fill)
-    - aria-label="do EPUB Studio logo", role="img"
+    - aria-label="d.o.EPUB Studio logo", role="img"
     - Responsive: 48px on login, 24px in toolbar
     - Adapts to light/dark via currentColor
 

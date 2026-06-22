@@ -11,7 +11,7 @@ license: MIT
 
 # Skill: `epub-rendering-and-cfi`
 
-Purpose: implement resilient EPUB rendering, locator extraction, and annotation anchoring for `do EPUB Studio`.
+Purpose: implement resilient EPUB rendering, locator extraction, and annotation anchoring for `d.o.EPUB Studio`.
 
 ## When to run
 

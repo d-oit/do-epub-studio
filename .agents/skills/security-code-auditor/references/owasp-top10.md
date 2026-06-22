@@ -1,4 +1,4 @@
-# OWASP Top 10 for EPUB Studio
+# OWASP Top 10 for d.o.EPUB Studio
 
 Adapted from OWASP Top 10 2021 for EPUB reading application context.
 

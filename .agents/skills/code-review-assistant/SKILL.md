@@ -64,7 +64,7 @@ Review pull requests holistically — analyzing diffs, risk, and cross-file impa
 - [ ] No debug code left
 - [ ] Style guide compliant
 
-## EPUB Studio Focus
+## d.o.EPUB Studio Focus
 
 - TypeScript conventions (Zod schemas, Zustand stores)
 - EPUB parsing patterns

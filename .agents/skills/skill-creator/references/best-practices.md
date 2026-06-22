@@ -84,7 +84,7 @@ Provide a template rather than describing format in prose.
 3. Fix any issues
 4. Repeat until validation passes
 
-## EPUB Studio-Specific Considerations
+## d.o.EPUB Studio-Specific Considerations
 
 ### For do-epub-studio Project
 

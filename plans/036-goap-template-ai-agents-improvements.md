@@ -5,7 +5,7 @@ Status: ✅ Superseded — All improvements adopted incrementally via ADR-037 an
 
 ## Goal
 
-Use `d-o-hub/github-template-ai-agents` as a reference to improve this repository's AI-agent workflow, quality gates, and automation without replacing the existing EPUB Studio-specific rules.
+Use `d-o-hub/github-template-ai-agents` as a reference to improve this repository's AI-agent workflow, quality gates, and automation without replacing the existing d.o.EPUB Studio-specific rules.
 
 ## Current State
 
@@ -18,7 +18,7 @@ Use `d-o-hub/github-template-ai-agents` as a reference to improve this repositor
 
 1. Centralize agent harness configuration.
    - Add `.agents/config.sh` or equivalent shared config for constants currently duplicated across `AGENTS.md`, scripts, and docs.
-   - Keep EPUB Studio thresholds authoritative and do not relax security rules.
+   - Keep d.o.EPUB Studio thresholds authoritative and do not relax security rules.
 
 2. Add LOC enforcement to quality gates.
    - Adapt template `scripts/loc_gate.sh`.
@@ -40,7 +40,7 @@ Use `d-o-hub/github-template-ai-agents` as a reference to improve this repositor
 
 6. Improve multi-agent command ergonomics.
    - Review template `.claude/commands`, `.gemini/commands`, `.opencode/commands`, and permission docs.
-   - Add only commands that map to existing EPUB Studio workflows: quality gate, atomic commit, GOAP plan, CI fix, release, and dogfood.
+   - Add only commands that map to existing d.o.EPUB Studio workflows: quality gate, atomic commit, GOAP plan, CI fix, release, and dogfood.
 
 ## Strategy
 

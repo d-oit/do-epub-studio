@@ -12,7 +12,7 @@ export function AppLogo({ size = 48, className = '' }: AppLogoProps) {
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       role="img"
-      aria-label="do EPUB Studio logo"
+      aria-label="d.o.EPUB Studio logo"
       className={className}
     >
       {/* Book shape */}

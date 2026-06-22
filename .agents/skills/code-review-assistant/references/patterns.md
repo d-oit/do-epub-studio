@@ -1,6 +1,6 @@
 ---
 name: patterns
-description: Common code patterns for EPUB Studio
+description: Common code patterns for d.o.EPUB Studio
 license: MIT
 ---
 

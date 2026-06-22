@@ -17,7 +17,7 @@ export const Default: Story = {
   args: {
     children: (
       <div className="flex items-center justify-between px-6 h-14">
-        <span className="font-semibold text-foreground">EPUB Studio</span>
+        <span className="font-semibold text-foreground">d.o.EPUB Studio</span>
         <nav className="flex items-center gap-4">
           <span className="text-sm text-foreground-muted">Library</span>
           <span className="text-sm text-foreground-muted">Settings</span>
@@ -32,7 +32,7 @@ export const NonSticky: Story = {
     sticky: false,
     children: (
       <div className="flex items-center justify-between px-6 h-14">
-        <span className="font-semibold text-foreground">EPUB Studio</span>
+        <span className="font-semibold text-foreground">d.o.EPUB Studio</span>
       </div>
     ),
   },

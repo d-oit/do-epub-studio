@@ -1,6 +1,6 @@
 # @do-epub-studio/worker
 
-Cloudflare Worker API for EPUB Studio. Handles authentication, book management, reader state sync, and file serving.
+Cloudflare Worker API for d.o.EPUB Studio. Handles authentication, book management, reader state sync, and file serving.
 
 ## Route Groups
 

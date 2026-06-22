@@ -109,7 +109,7 @@ authRouter.post('/recovery-request', zValidator('json', RecoveryRequestSchema), 
     const transport = createEmailTransport(c.env);
     await transport.send({
       to: email.toLowerCase(),
-      subject: 'Recover access to EPUB Studio Admin',
+      subject: 'Recover access to d.o.EPUB Studio Admin',
       text: `Click the link to recover admin access: ${recoveryUrl}`,
       html: `<p>Click <a href="${recoveryUrl}">here</a> to recover admin access.</p>`,
     });

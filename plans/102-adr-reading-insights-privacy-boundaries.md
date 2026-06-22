@@ -10,7 +10,7 @@
 
 ## Context
 
-EPUB Studio persists reader progress and annotations, but it does not yet have
+d.o.EPUB Studio persists reader progress and annotations, but it does not yet have
 reading insights such as active reading time, estimated time remaining, or
 reading streaks.
 

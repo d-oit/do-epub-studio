@@ -28,7 +28,7 @@ Per ADR-102, reading insights are:
 - **Active time only** — hidden tabs, background windows, and idle periods do not count
 - **Coarse granularity** — any server-bound duration is rounded to whole minutes
 - **No raw reading locations** — no CFI, selected text, chapter titles, or snippets
-- **No third-party analytics** — all data stays in EPUB Studio
+- **No third-party analytics** — all data stays in d.o.EPUB Studio
 - **Admin aggregation only** — no individual reader behavior timelines
 
 ## Architecture

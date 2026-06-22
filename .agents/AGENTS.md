@@ -1,7 +1,7 @@
 ---
 version: "1.0.0"
 name: agents
-description: Agent workflows, guardrails, security patterns, and handoff coordination for EPUB Studio
+description: Agent workflows, guardrails, security patterns, and handoff coordination for d.o.EPUB Studio
 ---
 
 # Agent Workflows & Guardrails

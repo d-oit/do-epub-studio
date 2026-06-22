@@ -11,7 +11,7 @@ license: MIT
 
 # Testing Strategy
 
-Design and implement comprehensive testing strategies for EPUB Studio.
+Design and implement comprehensive testing strategies for d.o.EPUB Studio.
 Focus on **planning** what to test and **when**.
 For test data builders, use the `testdata-builders` skill.
 
@@ -36,7 +36,7 @@ For test data builders, use the `testdata-builders` skill.
 /------------------\
 ```
 
-## EPUB Studio Stack
+## d.o.EPUB Studio Stack
 
 ### Unit Tests (Vitest)
 

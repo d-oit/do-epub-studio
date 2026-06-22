@@ -1,6 +1,6 @@
 # `do-epub-studio` – Consolidated Coding Guide (2026)
 
-This document captures the authoritative product definition, architecture, and delivery rules for `do EPUB Studio`. It mirrors the final decisions from the latest planning thread and supersedes older scattered notes.
+This document captures the authoritative product definition, architecture, and delivery rules for `d.o.EPUB Studio`. It mirrors the final decisions from the latest planning thread and supersedes older scattered notes.
 
 ---
 
@@ -8,13 +8,13 @@ This document captures the authoritative product definition, architecture, and d
 
 ## Product name
 
-- **Product:** `do EPUB Studio`
+- **Product:** `d.o.EPUB Studio`
 - **Repository:** `do-epub-studio`
 - **GitHub repo target:** `d-oit/do-epub-studio`
 
 ## What the app is
 
-`do EPUB Studio` is a web-based EPUB reading and editorial workspace for self-publishing, controlled distribution, and annotated review.
+`d.o.EPUB Studio` is a web-based EPUB reading and editorial workspace for self-publishing, controlled distribution, and annotated review.
 
 It is not just a reader.
 
@@ -704,14 +704,12 @@ APP_BASE_URL=http://127.0.0.1:5173
 
 ```env
 VITE_API_BASE_URL=http://127.0.0.1:8787
-VITE_APP_NAME=do EPUB Studio
 ```
 
 ## `apps/web/.env.local`
 
 ```env
 VITE_API_BASE_URL=http://127.0.0.1:8787
-VITE_APP_NAME=do EPUB Studio
 ```
 
 ---
@@ -789,7 +787,7 @@ Use this at repo root.
 
 ## Purpose
 
-This repository builds `do EPUB Studio`, a production-grade EPUB reading and editorial workspace with gated access, offline reading, comments, highlights, and secure distribution.
+This repository builds `d.o.EPUB Studio`, a production-grade EPUB reading and editorial workspace with gated access, offline reading, comments, highlights, and secure distribution.
 
 ## Mandatory working style
 

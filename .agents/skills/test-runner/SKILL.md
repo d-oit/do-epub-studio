@@ -178,7 +178,7 @@ npm test -- --coverage --coverageThreshold='{"global":{"branches":80}}'
 npm test -- --bail
 ```
 
-## EPUB Studio Specific
+## d.o.EPUB Studio Specific
 
 ### Test Suites
 

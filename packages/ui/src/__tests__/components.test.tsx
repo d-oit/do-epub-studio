@@ -32,7 +32,7 @@ describe('AppLogo', () => {
 
   it('has correct aria-label', () => {
     render(<AppLogo />);
-    expect(screen.getByLabelText('do EPUB Studio logo')).toBeInTheDocument();
+    expect(screen.getByLabelText('d.o.EPUB Studio logo')).toBeInTheDocument();
   });
 });
 

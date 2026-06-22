@@ -1,6 +1,6 @@
 # Scripts
 
-Operational scripts for `do EPUB Studio`. All scripts assume execution from the repository root.
+Operational scripts for `d.o.EPUB Studio`. All scripts assume execution from the repository root.
 
 ## Quick Start
 

@@ -115,9 +115,9 @@ readonly MAX_COMMIT_SUBJECT_LENGTH=72
 ./scripts/atomic-commit/run.sh --message "type(scope): description"
 ```
 
-## EPUB Studio Specific Customization
+## d.o.EPUB Studio Specific Customization
 
-### TIER 1 Additions for EPUB Studio
+### TIER 1 Additions for d.o.EPUB Studio
 
 ```markdown
 - **MUST use CFI locators for EPUB annotations** per ADR-006

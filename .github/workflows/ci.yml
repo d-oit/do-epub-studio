@@ -430,7 +430,10 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium firefox webkit
 
       - name: Build web app for preview
-        run: pnpm --filter @do-epub-studio/web build
+        # VITE_LOG_LEVEL=info enables E2E tests to observe progress
+        # and lifecycle telemetry events in preview mode (production
+        # builds keep the default warn level outside of E2E).
+        run: VITE_LOG_LEVEL=info pnpm --filter @do-epub-studio/web build
 
       - name: Run full cross-browser E2E tests
         uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60  # v4.0.0
