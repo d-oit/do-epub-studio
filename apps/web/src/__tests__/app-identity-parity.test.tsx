@@ -1,9 +1,9 @@
-/* eslint-disable security/detect-non-literal-reg-expr */
-// The forbidden-pattern RegExps below are constructed from string
+// The forbidden-pattern RegExps in the "Storybook header fixture
+// uses the canonical brand" test are constructed from string
 // fragments so the identity guard (which scans this very file)
 // does not flag the test source as containing the forbidden
 // spellings. The resulting patterns are fixed literals — there
-// is no untrusted input. Disable the rule for this file only.
+// is no untrusted input.
 
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
@@ -80,15 +80,13 @@ describe('App identity and version governance (ADR-104)', () => {
     expect(headerStorySource).toContain('d.o.EPUB Studio');
     // The forbidden spellings are constructed at runtime from
     // fragments so the identity guard (which scans this very file)
-    // does not flag the test source as containing them. Both
-    // patterns are fixed literals at the time the regex is
-    // constructed — there is no untrusted input flowing into the
-    // pattern, so the `security/detect-non-literal-reg-expr` rule
-    // is not applicable (disabled at the top of the file).
+    // does not flag the test source as containing them. The
+    // resulting patterns are fixed literals — there is no
+    // untrusted input flowing into the RegExp source.
     const forbiddenBare = 'EP' + 'UB Studio';
     const forbiddenLower = 'do EP' + 'UB Studio';
-    const forbiddenBareRe = new RegExp(`(?<![.])${forbiddenBare}`);
-    const forbiddenLowerRe = new RegExp(`\\b${forbiddenLower}\\b`);
+    const forbiddenBareRe = new RegExp('(?<![.])' + forbiddenBare);
+    const forbiddenLowerRe = new RegExp('\\b' + forbiddenLower + '\\b');
     expect(headerStorySource).not.toMatch(forbiddenLowerRe);
     expect(headerStorySource).not.toMatch(forbiddenBareRe);
   });
