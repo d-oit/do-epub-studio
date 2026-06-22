@@ -109,7 +109,7 @@ it will halt automation and **post a "Autopilot Handoff" comment on the PR.**
   improvements (see `evals/evals.json`), ensuring the skill stays reliable
   across PRs.
 
-## EPUB Studio Specific
+## d.o.EPUB Studio Specific
 
 ### Integration with Existing Workflows
 

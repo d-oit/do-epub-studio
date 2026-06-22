@@ -102,4 +102,34 @@ describe('useAuthStore', () => {
     expect(state.isAuthenticated).toBe(false);
     expect(state.sessionToken).toBeNull();
   });
+
+  it('logout("expired") sets sessionExpired for redirect routing', () => {
+    useAuthStore.getState().setAdminAuth({
+      sessionToken: 'admin-token',
+      email: 'admin@test.com',
+    });
+    expect(useAuthStore.getState().sessionExpired).toBe(false);
+
+    useAuthStore.getState().logout('expired');
+
+    const state = useAuthStore.getState();
+    expect(state.isAuthenticated).toBe(false);
+    expect(state.isAdmin).toBe(false);
+    expect(state.sessionExpired).toBe(true);
+  });
+
+  it('manual logout clears sessionExpired', () => {
+    useAuthStore.getState().setAdminAuth({
+      sessionToken: 'admin-token',
+      email: 'admin@test.com',
+    });
+    useAuthStore.getState().logout('expired');
+    expect(useAuthStore.getState().sessionExpired).toBe(true);
+
+    useAuthStore.getState().setAdminAuth({
+      sessionToken: 'admin-token-2',
+      email: 'admin@test.com',
+    });
+    expect(useAuthStore.getState().sessionExpired).toBe(false);
+  });
 });

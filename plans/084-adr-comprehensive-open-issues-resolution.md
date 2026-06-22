@@ -28,7 +28,7 @@ The project had 12 open issues covering:
 ### New Implementations
 
 #### #486 — App Logo (`AppLogo.tsx`)
-- Inline SVG with `role="img"` and `aria-label="do EPUB Studio logo"`
+- Inline SVG with `role="img"` and `aria-label="d.o.EPUB Studio logo"`
 - `currentColor` fills for automatic light/dark adaptation
 - Responsive sizing via `size` prop (24px mobile toolbar → 48px login card)
 - Zero additional HTTP requests (inline SVG)
@@ -68,7 +68,7 @@ The project had 12 open issues covering:
 
 #### #496 — Login Page Redesign
 - **Layout:** Centered card (`max-w-sm`) on all breakpoints
-- **Branding:** AppLogo + "do EPUB Studio" heading in display font
+- **Branding:** AppLogo + "d.o.EPUB Studio" heading in display font
 - **Form:** Proper `<label>` elements, `autocomplete` attributes, `inputMode="email"`, `noValidate`
 - **Error handling:** Inline error with `role="alert"`, `border-l-3` accent styling
 - **Forgot password:** Link below password field

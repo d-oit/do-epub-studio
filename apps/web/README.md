@@ -1,6 +1,6 @@
 # @do-epub-studio/web
 
-React 19 + Vite 8 frontend for EPUB Studio. Serves the admin panel and embedded reader UI as a PWA with offline support via Workbox 7.
+React 19 + Vite 8 frontend for d.o.EPUB Studio. Serves the admin panel and embedded reader UI as a PWA with offline support via Workbox 7.
 
 ## Scripts
 

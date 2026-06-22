@@ -1,4 +1,4 @@
-# EPUB Studio Security Audit Checklist
+# d.o.EPUB Studio Security Audit Checklist
 
 ## Version Security Requirements (2026)
 

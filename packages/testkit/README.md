@@ -1,6 +1,6 @@
 # @do-epub-studio/testkit
 
-Deterministic test data builders for EPUB Studio entities. Uses the builder pattern with sensible defaults and fluent customization.
+Deterministic test data builders for d.o.EPUB Studio entities. Uses the builder pattern with sensible defaults and fluent customization.
 
 ## Exports
 

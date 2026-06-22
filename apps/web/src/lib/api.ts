@@ -20,10 +20,11 @@ const DEFAULT_TIMEOUT_MS = 15000;
 
 function handleUnauthorized() {
   const state = useAuthStore.getState();
-  state.logout();
-  if (typeof window !== 'undefined') {
-    window.location.href = '/login?error=session_expired';
-  }
+  state.logout('expired');
+  // Do not hard-navigate here. The AdminRoute / ProtectedRoute guards
+  // pick up the `sessionExpired` flag from the auth store and route
+  // to `/login?error=session_expired` via React Router, which keeps
+  // the SPA state coherent and avoids redirect loops.
 }
 
 /**

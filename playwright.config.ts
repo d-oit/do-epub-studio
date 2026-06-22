@@ -29,6 +29,10 @@ export default defineConfig({
     actionTimeout: 15_000,
     navigationTimeout: 20_000,
     testIdAttribute: 'data-testid',
+    // Disable the service worker so route mocks can intercept API
+    // requests consistently across browsers (Chromium, Firefox, and
+    // WebKit all handle SW interception differently; this normalizes).
+    serviceWorkers: 'block',
   },
   webServer: {
     command: isPreview
@@ -37,6 +41,12 @@ export default defineConfig({
     url: `http://127.0.0.1:${port}`,
     reuseExistingServer: !isCI,
     timeout: 120_000,
+    env: {
+      // Enable client telemetry at info level so E2E tests can wait for
+      // `reader.progress_loaded` and similar events. Production deploys
+      // keep the default warn level via VITE_LOG_LEVEL.
+      VITE_LOG_LEVEL: 'info',
+    },
   },
   projects: [
     {

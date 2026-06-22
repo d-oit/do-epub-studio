@@ -71,19 +71,30 @@ const LoadingFallback: React.FC = () => {
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const sessionExpired = useAuthStore((state) => state.sessionExpired);
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    const target = sessionExpired
+      ? '/login?error=session_expired'
+      : '/login';
+    return <Navigate to={target} replace />;
   }
 
   return <>{children}</>;
 }
 
 function AdminRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isAdmin } = useAuthStore();
+  const { isAuthenticated, isAdmin, sessionExpired } = useAuthStore();
 
   if (!isAuthenticated || !isAdmin) {
-    return <Navigate to="/admin/login" replace />;
+    // When the API client flipped the sessionExpired flag (401
+    // handling), route to the reader login with a query param so the
+    // UI can show "Session expired" copy. The admin login page would
+    // loop because AdminRoute guards it on the same predicate.
+    const target = sessionExpired
+      ? '/login?error=session_expired'
+      : '/admin/login';
+    return <Navigate to={target} replace />;
   }
 
   return <>{children}</>;

@@ -8,17 +8,17 @@ Accepted
 
 ## Context
 
-`d-o-hub/github-template-ai-agents` provides a broad template for AI-assisted repositories. EPUB Studio already has stricter domain-specific requirements for auth, EPUB anchoring, regex safety, trace IDs, release governance, and quality gates.
+`d-o-hub/github-template-ai-agents` provides a broad template for AI-assisted repositories. d.o.EPUB Studio already has stricter domain-specific requirements for auth, EPUB anchoring, regex safety, trace IDs, release governance, and quality gates.
 
 The template is valuable as a reference, but wholesale import would add duplicated scripts, overlapping skills, and generic workflows that could conflict with existing project policy.
 
 ## Decision
 
-Adopt template capabilities incrementally when they strengthen existing EPUB Studio workflows:
+Adopt template capabilities incrementally when they strengthen existing d.o.EPUB Studio workflows:
 
 - Prefer adapting scripts over copying them unchanged.
 - Preserve `AGENTS.md` as the source of policy truth.
-- Keep EPUB Studio domain skills canonical.
+- Keep d.o.EPUB Studio domain skills canonical.
 - Add new blocking checks only after a report-only phase.
 - Route all warning and gap documentation through `plans/`.
 

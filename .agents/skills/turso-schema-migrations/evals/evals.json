@@ -3,7 +3,7 @@
   "evals": [
     {
       "id": 1,
-      "prompt": "Design the initial schema for EPUB Studio permissions",
+      "prompt": "Design the initial schema for d.o.EPUB Studio permissions",
       "expected_output": "The agent designs tables for books, users, grants with proper foreign keys, indexes, and migration file naming convention.",
       "files": [],
       "assertions": [

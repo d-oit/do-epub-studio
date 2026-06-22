@@ -19,6 +19,7 @@ interface AuthState {
   } | null;
   isAuthenticated: boolean;
   isAdmin: boolean;
+  sessionExpired: boolean;
   setAuth: (data: {
     sessionToken: string;
     sessionExpiresAt?: number | null;
@@ -30,7 +31,7 @@ interface AuthState {
   }) => void;
   setAdminAuth: (data: { sessionToken: string; email: string; sessionExpiresAt?: number | null }) => void;
   refreshSession: (data: { sessionToken: string; sessionExpiresAt?: number | null }) => void;
-  logout: () => void;
+  logout: (reason?: 'manual' | 'expired') => void;
 }
 
 function parseExpiresAt(input: string | number | null | undefined): number | null {
@@ -52,6 +53,7 @@ export const useAuthStore = create<AuthState>()(
       capabilities: null,
       isAuthenticated: false,
       isAdmin: false,
+      sessionExpired: false,
       setAuth: (data) =>
         set({
           sessionToken: data.sessionToken,
@@ -63,6 +65,7 @@ export const useAuthStore = create<AuthState>()(
           capabilities: data.capabilities,
           isAuthenticated: true,
           isAdmin: false,
+          sessionExpired: false,
         }),
       setAdminAuth: (data) =>
         set({
@@ -71,13 +74,14 @@ export const useAuthStore = create<AuthState>()(
           email: data.email,
           isAuthenticated: true,
           isAdmin: true,
+          sessionExpired: false,
         }),
       refreshSession: (data) =>
         set({
           sessionToken: data.sessionToken,
           sessionExpiresAt: data.sessionExpiresAt ?? null,
         }),
-      logout: () =>
+      logout: (reason = 'manual') =>
         set({
           sessionToken: null,
           sessionExpiresAt: null,
@@ -88,6 +92,7 @@ export const useAuthStore = create<AuthState>()(
           capabilities: null,
           isAuthenticated: false,
           isAdmin: false,
+          sessionExpired: reason === 'expired',
         }),
     }),
     {
@@ -102,6 +107,10 @@ export const useAuthStore = create<AuthState>()(
         capabilities: state.capabilities,
         isAuthenticated: state.isAuthenticated,
         isAdmin: state.isAdmin,
+        // sessionExpired is intentionally NOT persisted — it is a
+        // transient signal that the API client flips when it sees a
+        // 401. On page reload the user re-authenticates and the flag
+        // resets via setAuth / setAdminAuth / logout('manual').
       }),
     }
   )

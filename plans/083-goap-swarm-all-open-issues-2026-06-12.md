@@ -38,7 +38,7 @@
 2. **#493** — Security: Full CSP enforcing mode (not report-only), `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy: camera=(), microphone=(), geolocation=()`, `Cross-Origin-Opener-Policy: same-origin`
 
 ### Phase 2: UI Components (Parallel Swarm)
-3. **#486** — App logo: `AppLogo` SVG component with `role="img"`, `aria-label="do EPUB Studio logo"`, `currentColor` fills for light/dark adaptation, responsive sizing
+3. **#486** — App logo: `AppLogo` SVG component with `role="img"`, `aria-label="d.o.EPUB Studio logo"`, `currentColor` fills for light/dark adaptation, responsive sizing
 4. **#495** — PWA banner: Repositioned from top to bottom toast, auto-dismiss after 6s (offline-ready), `aria-live="polite"`, `role="status"`, 3 variants with distinct icons, respects `prefers-reduced-motion`
 5. **#494** — Responsive nav: `BottomTabBar` (mobile `<768px`), `Sidebar` (desktop `≥1024px`), `Drawer` (tablet overlay with scrim + escape key), hamburger menu on mobile top bar, `role="tablist"` + `aria-selected` on active nav items
 6. **#496** — Login redesign: Centered card layout, AppLogo branding above heading, display font (`--font-display`) heading, "Forgot password?" link, improved error styling with `border-l-3`, proper `noValidate` on form, `inputMode="email"` on email field

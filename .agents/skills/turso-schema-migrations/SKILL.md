@@ -11,7 +11,7 @@ license: MIT
 
 # Turso Schema Migrations
 
-Manage schema design, migrations, and Turso operations for EPUB Studio.
+Manage schema design, migrations, and Turso operations for d.o.EPUB Studio.
 
 ## Key Responsibilities
 

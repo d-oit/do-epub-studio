@@ -100,7 +100,7 @@ Write analysis to: `analysis/triz-core-YYYY-MM-DD.md`
 
 ---
 
-## Common System Contradictions in EPUB Studio
+## Common System Contradictions in d.o.EPUB Studio
 
 | Improving | Worsens | Notes |
 |-----------|---------|-------|

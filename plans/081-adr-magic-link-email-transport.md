@@ -69,7 +69,7 @@ const recoveryUrl = `${c.env.APP_BASE_URL}/login?book=${bookSlug}&token=${token}
 const emailTransport = getEmailTransport(c.env);
 await emailTransport.send({
   to: email,
-  subject: 'Recover your access to d.o. ePUB Studio',
+      subject: 'Recover your access to d.o.EPUB Studio',
   text: `Use this link to recover access: ${recoveryUrl}`,
 });
 // No audit-log entry for the raw URL; the token is not in the

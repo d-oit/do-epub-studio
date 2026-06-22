@@ -11,7 +11,7 @@ license: MIT
 
 # Skill: `secure-invite-and-access`
 
-Purpose: enforce access-control rules (grants, passwords, sessions, signed URLs, audit) for `do EPUB Studio`.
+Purpose: enforce access-control rules (grants, passwords, sessions, signed URLs, audit) for `d.o.EPUB Studio`.
 
 ## When to run
 

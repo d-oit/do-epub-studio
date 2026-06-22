@@ -51,6 +51,15 @@ if [ -f "$REPO_ROOT/scripts/check-agent-sync.mjs" ]; then
 fi
 echo ""
 
+# --- Validate app identity and version governance (ADR-104) ---
+printf '%sValidating app identity and version governance...%s\n' "${BLUE}" "${NC}"
+if [ -f "$REPO_ROOT/scripts/check-app-identity.mjs" ]; then
+    if ! node "$REPO_ROOT/scripts/check-app-identity.mjs"; then
+        FAILED=1
+    fi
+fi
+echo ""
+
 # --- Validate SKILL.md format ---
 printf '%sValidating SKILL.md format...%s\n' "${BLUE}" "${NC}"
 if [ -f "$REPO_ROOT/scripts/validate-skill-format.sh" ]; then
