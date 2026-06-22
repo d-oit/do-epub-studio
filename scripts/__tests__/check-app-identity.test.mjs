@@ -8,24 +8,33 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const scriptPath = resolve(__dirname, '../check-app-identity.mjs');
 
 function runScript() {
-  return spawnSync('node', [scriptPath], { encoding: 'utf8' });
+  // The guard scans ~23k files; give it a generous timeout in CI.
+  return spawnSync('node', [scriptPath], { encoding: 'utf8', timeout: 120_000 });
 }
 
 describe('check-app-identity.mjs (ADR-104)', () => {
-  it('passes on the current working tree', () => {
-    const result = runScript();
-    if (result.status !== 0) {
-      console.error('STDOUT:', result.stdout);
-      console.error('STDERR:', result.stderr);
-    }
-    expect(result.status).toBe(0);
-  });
+  it(
+    'passes on the current working tree',
+    () => {
+      const result = runScript();
+      if (result.status !== 0) {
+        console.error('STDOUT:', result.stdout);
+        console.error('STDERR:', result.stderr);
+      }
+      expect(result.status).toBe(0);
+    },
+    120_000,
+  );
 
-  it('reports canonical name + version on success', () => {
-    const result = runScript();
-    expect(result.stdout).toMatch(/d\.o\.EPUB Studio/);
-    expect(result.stdout).toMatch(/VERSION:\s+0\.1\.1/);
-  });
+  it(
+    'reports canonical name + version on success',
+    () => {
+      const result = runScript();
+      expect(result.stdout).toMatch(/d\.o\.EPUB Studio/);
+      expect(result.stdout).toMatch(/VERSION:\s+0\.1\.1/);
+    },
+    120_000,
+  );
 });
 
 describe('VERSION ↔ package.json parity (ADR-104)', () => {

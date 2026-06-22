@@ -71,11 +71,17 @@ describe('App identity and version governance (ADR-104)', () => {
 
   it('Storybook header fixture uses the canonical brand', () => {
     expect(headerStorySource).toContain('d.o.EPUB Studio');
-    // Construct forbidden patterns at runtime so the identity guard
-    // does not flag the test source itself.
+    // The forbidden spellings are constructed at runtime from
+    // fragments so the identity guard (which scans this very file)
+    // does not flag the test source as containing them. The
+    // resulting RegExp is a fixed literal — there is no untrusted
+    // input flowing into the pattern, so the
+    // `security/detect-non-literal-reg-expr` rule is not applicable.
     const forbiddenBare = 'EP' + 'UB Studio';
     const forbiddenLower = 'do EP' + 'UB Studio';
+    // eslint-disable-next-line security/detect-non-literal-reg-expr
     const forbiddenBareRe = new RegExp(`(?<![.])${forbiddenBare}`);
+    // eslint-disable-next-line security/detect-non-literal-reg-expr
     const forbiddenLowerRe = new RegExp(`\\b${forbiddenLower}\\b`);
     expect(headerStorySource).not.toMatch(forbiddenLowerRe);
     expect(headerStorySource).not.toMatch(forbiddenBareRe);

@@ -16,6 +16,14 @@
 //
 // Usage:  node scripts/check-app-identity.mjs
 // Exit:   0 = clean, 1 = drift detected, 2 = missing required file.
+/* eslint-disable security/detect-non-literal-fs-filename, security/detect-object-injection */
+// The whole point of this script is to walk every file in the repo
+// and read its contents — every path and every array index is
+// dynamic by design. The walker is bounded by SCAN_EXCLUDE_DIR_PREFIXES
+// (skips node_modules, dist, .git, etc.) and SCAN_EXCLUDE_PATHS (the
+// canonical source + the guard itself), so untrusted input cannot
+// reach the filesystem APIs. Object-injection (lines[i]) is on a
+// string array literal that we just split; no user data flows in.
 
 import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -66,6 +74,7 @@ const SCAN_EXCLUDE_PATHS = new Set(
     // historically accurate.
     'plans/104-adr-product-identity-and-version-governance.md',
     'plans/104-goap-production-readiness-gap-closure-2026-06-21.md',
+    'plans/104-goap-execution-record-2026-06-22.md',
   ].map((p) => p.split('/').join('/')),
 );
 

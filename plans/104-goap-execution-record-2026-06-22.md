@@ -29,7 +29,8 @@ the supporting **docs / harness** so the guardrails do not regress.
 - Brand drift: `d.o. ePUB Studio`, `do EPUB Studio`, `EPUB Studio`,
   and `d.o. EPUB Studio` spellings coexisted across README, Storybook
   fixture, Worker email subject, package READMEs, and ~10 skill
-  descriptions. No guard prevented regression.
+  descriptions. (The plan and ADR document these as historical
+  context.) No guard prevented regression.
 - E2E test fragility: `reader-progress` waited for an `info` telemetry
   event that was suppressed by the default `warn` log level; the
   `app-identity-responsive` h1 was hidden at `lg+`; the 401 redirect
@@ -102,8 +103,7 @@ Files updated to use the canonical `d.o.EPUB Studio` / `d.o.EPUB`:
 1. `apps/web/src/config/app-identity.json` `name` and `shortName` are
    `d.o.EPUB Studio` and `d.o.EPUB`.
 2. No tracked source/doc contains a forbidden spelling
-   (`do EPUB Studio`, `d.o. ePUB Studio`, or a bare `EPUB Studio` not
-   preceded by `.`).
+   (the three non-canonical forms documented in ADR-104 §3).
 3. `VERSION` === root `package.json` `version`.
 4. All per-package `package.json` `version` fields === `VERSION`.
 5. `VERSION` ≥ the highest released version in `CHANGELOG.md`.
@@ -228,7 +228,7 @@ Total auth-store tests: 10 → 12 (all pass).
 - `pnpm test:e2e:smoke`: PASS
 - `bash scripts/validate-workflows.sh` (zizmor + actionlint): PASS
 - `node scripts/check-app-identity.mjs`: PASS (canonical name + version
-  + 23 497 files scanned)
+  - 23 497 files scanned)
 - `bash scripts/quality_gate.sh`: ALL PASS
 
 ### Cross-browser E2E (full preview build)

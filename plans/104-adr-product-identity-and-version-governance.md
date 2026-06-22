@@ -61,7 +61,7 @@ governance described in the doc is not the governance in practice.
    - Full brand in prose and titles: `d.o.EPUB Studio`.
    - Admin surface qualifier: `d.o.EPUB Studio Admin`.
    - Never: `d.o. ePUB Studio`, `do EPUB Studio`, bare `EPUB Studio`.
-   The lowercase-e `ePUB` and the space-separated `d.o. ` forms are
+   The lowercase-e `ePUB` and the space-separated `d.o.` forms are
    **disallowed**.
 4. **Accessibility strings** (`aria-label`, alt text) MUST use the
    canonical name: `d.o.EPUB Studio logo`.
