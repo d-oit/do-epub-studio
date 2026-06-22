@@ -78,16 +78,27 @@ describe('App identity and version governance (ADR-104)', () => {
 
   it('Storybook header fixture uses the canonical brand', () => {
     expect(headerStorySource).toContain('d.o.EPUB Studio');
-    // Forbid the two non-canonical brand spellings documented in
-    // ADR-104 §3. The patterns are split into a prefix and a suffix
-    // string so the identity guard (which scans this very file)
-    // does not see the literal `EPUB Studio` substring. The
-    // resulting RegExp sources are then pure string literals
-    // (`'<literal>'`) — no template literals, no string concat, no
-    // untrusted input — so the security plugin accepts them.
-    const bareRe = new RegExp('(?<![.])' + 'EP' + 'UB' + ' Studio');
-    const lowerRe = new RegExp('\\bdo ' + 'EP' + 'UB Studio\\b');
-    expect(headerStorySource).not.toMatch(bareRe);
-    expect(headerStorySource).not.toMatch(lowerRe);
+    // The Storybook header fixture must not contain any of the
+    // forbidden non-canonical brand spellings (ADR-104 §3). The
+    // file is parsed as plain text and checked with string
+    // operations only — no `new RegExp(...)` — so the security
+    // plugin's `detect-non-literal-reg-expr` rule does not apply.
+    const lines = headerStorySource.split('\n');
+    for (const line of lines) {
+      // Bare "EPUB Studio" not preceded by "." (the canonical
+      // form is "d.o.EPUB Studio" with the dot).
+      const dotIdx = line.lastIndexOf('EPUB Studio');
+      if (dotIdx >= 0 && line[dotIdx - 1] !== '.') {
+        throw new Error(
+          `forbidden bare "EPUB Studio" at: ${line.trim()}`,
+        );
+      }
+      // "do EPUB Studio" (lowercase, with space) is also forbidden.
+      if (line.includes('do ' + 'EPUB Studio')) {
+        throw new Error(
+          `forbidden "do EPUB Studio" at: ${line.trim()}`,
+        );
+      }
+    }
   });
 });
