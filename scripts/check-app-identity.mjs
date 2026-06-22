@@ -75,6 +75,10 @@ const SCAN_EXCLUDE_PATHS = new Set(
     'plans/104-adr-product-identity-and-version-governance.md',
     'plans/104-goap-production-readiness-gap-closure-2026-06-21.md',
     'plans/104-goap-execution-record-2026-06-22.md',
+    // The parity test asserts the forbidden patterns are absent, so
+    // it must reference them in some form. Excluding the test
+    // preserves the assertion without the guard tripping on it.
+    'apps/web/src/__tests__/app-identity-parity.test.tsx',
   ].map((p) => p.split('/').join('/')),
 );
 

@@ -59,3 +59,15 @@ describe('VERSION ↔ package.json parity (ADR-104)', () => {
     expect(workerPkg.version).toBe(versionFile);
   });
 });
+
+describe('guard exclusions (ADR-104)', () => {
+  it('excludes the canonical identity source from the spelling scan', () => {
+    // The canonical name lives in app-identity.json; the guard must
+    // not flag its own source of truth.
+    const appIdentity = readFileSync(
+      resolve(__dirname, '../../apps/web/src/config/app-identity.json'),
+      'utf8',
+    );
+    expect(appIdentity).toContain('d.o.EPUB Studio');
+  });
+});
