@@ -22,6 +22,9 @@ function base64ToUint8Array(base64: string): Uint8Array {
 }
 
 function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
+  if (typeof Buffer !== 'undefined') {
+    return Buffer.from(bytes) as unknown as ArrayBuffer;
+  }
   return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
 }
 
@@ -30,12 +33,18 @@ function textToArrayBuffer(text: string): ArrayBuffer {
   return toArrayBuffer(encoded);
 }
 
-async function getSubtle(): Promise<SubtleCrypto> {
-  if (typeof crypto !== 'undefined' && crypto.subtle) {
-    return crypto.subtle;
+async function getWebCrypto(): Promise<Crypto> {
+  try {
+    const { webcrypto } = await import('node:crypto');
+    return webcrypto as unknown as Crypto;
+  } catch {
+    return crypto;
   }
-  const { webcrypto } = await import('node:crypto');
-  return webcrypto.subtle as unknown as SubtleCrypto;
+}
+
+async function getSubtle(): Promise<SubtleCrypto> {
+  const webCrypto = await getWebCrypto();
+  return webCrypto.subtle;
 }
 
 async function deriveKey(token: string, salt: ArrayBuffer): Promise<CryptoKey> {
@@ -58,10 +67,11 @@ async function deriveKey(token: string, salt: ArrayBuffer): Promise<CryptoKey> {
 }
 
 export async function encrypt(plaintext: string, token: string): Promise<string> {
-  const subtle = await getSubtle();
-  const salt = toArrayBuffer(crypto.getRandomValues(new Uint8Array(SALT_LENGTH)));
-  const iv = toArrayBuffer(crypto.getRandomValues(new Uint8Array(IV_LENGTH)));
+  const webCrypto = await getWebCrypto();
+  const salt = toArrayBuffer(webCrypto.getRandomValues(new Uint8Array(SALT_LENGTH)));
+  const iv = toArrayBuffer(webCrypto.getRandomValues(new Uint8Array(IV_LENGTH)));
   const key = await deriveKey(token, salt);
+  const subtle = await getSubtle();
 
   const encrypted = await subtle.encrypt(
     { name: ALGORITHM, iv },

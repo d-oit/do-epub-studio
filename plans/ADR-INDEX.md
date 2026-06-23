@@ -52,6 +52,9 @@
 | 102a | Application Identity and Version Source | `plans/102-adr-app-identity-version-source.md` | Accepted (collision — see ADR-083) |
 | 102b | Reading Insights Privacy Boundaries | `plans/102-adr-reading-insights-privacy-boundaries.md` | Accepted (canonical) |
 | 104 | Product Identity, Naming Convention, and Version Governance | `plans/104-adr-product-identity-and-version-governance.md` | Accepted |
+| 105 | 2026 UI Platform Modernization Policy | `plans/105-adr-2026-ui-platform-modernization.md` | Proposed |
+| 106 | Feature Completeness and Incremental Delivery Policy | `plans/106-adr-feature-completeness-policy.md` | Proposed |
+| 107 | Quality Gate Escalation and DX Standards | `plans/107-adr-quality-dx-standards.md` | Proposed |
 
 ## Cross-referenced but not yet adopted
 
