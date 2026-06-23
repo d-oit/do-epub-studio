@@ -1,0 +1,3 @@
+rules:
+  stale-action-refs:
+    disable: true
