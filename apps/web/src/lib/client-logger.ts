@@ -34,16 +34,40 @@ let _flushTimer: ReturnType<typeof setTimeout> | null = null;
 function flushBuffer(): void {
   if (_buffer.length === 0) return;
   const entries = _buffer.splice(0);
-  const endpoint = typeof import.meta !== 'undefined' && import.meta.env
+
+  let endpoint = typeof import.meta !== 'undefined' && import.meta.env
     ? import.meta.env.VITE_TELEMETRY_ENDPOINT
     : undefined;
-  if (!endpoint) return;
+
+  // Default to internal self-hosted endpoint if not explicitly configured
+  if (!endpoint) {
+    endpoint = '/api/telemetry';
+  }
+
   try {
     const payload = JSON.stringify({ logs: entries });
-    if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
-      navigator.sendBeacon(endpoint, new Blob([payload], { type: 'application/json' }));
-    } else {
-      void fetch(endpoint, { method: 'POST', body: payload, keepalive: true });
+
+    // In tests/SSR, endpoint might be relative and fetch/sendBeacon might fail if not in a browser.
+    // We only attempt telemetry if the endpoint is absolute or if we are in a browser.
+    const isBrowser = typeof window !== 'undefined';
+    const isAbsolute = endpoint.startsWith('http');
+
+    if (isBrowser || isAbsolute) {
+      if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
+        try {
+          navigator.sendBeacon(endpoint, new Blob([payload], { type: 'application/json' }));
+        } catch {
+          // Ignore errors in beacon
+        }
+      } else if (typeof fetch !== 'undefined') {
+        try {
+          void fetch(endpoint, { method: 'POST', body: payload, keepalive: true }).catch(() => {
+            /* ignore */
+          });
+        } catch {
+          // Ignore errors in fetch
+        }
+      }
     }
   } catch {
     // Silently fail — telemetry must never break the app

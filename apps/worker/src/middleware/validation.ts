@@ -15,6 +15,30 @@ export const validationErrorFormatter: MiddlewareHandler<{ Bindings: Env }> = as
   const clone = c.res.clone();
   try {
     const body: Record<string, unknown> = await clone.json();
+
+    // Hono's zValidator returns { success: false, error: ZodError }
+    // We check this BEFORE checking content-type or other things, because zValidator
+    // might have already set the response.
+    if (body.success === false && body.error && typeof body.error === 'object' && 'issues' in (body.error as any)) {
+      const err = body.error as { issues: Array<{ path: (string | number)[]; message: string }> };
+      c.res = c.json(
+        {
+          ok: false,
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: formatZodError(err),
+          },
+        },
+        400,
+      );
+      return;
+    }
+
+    // If it's already in our standard format, or not JSON, skip
+    const contentType = c.res.headers.get('content-type');
+    if (!contentType?.includes('application/json')) return;
+    if (body.ok === false && body.error) return;
+
     const err = body.error;
     if (err && typeof err === 'object' && 'issues' in err && Array.isArray(err.issues)) {
       c.res = c.json(
