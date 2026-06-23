@@ -44,7 +44,7 @@ describe('Telemetry API', () => {
     );
 
     expect(res.status).toBe(202);
-    const body = (await res.json()) as { ok: boolean };
+    const body = (await res.json()) as any;
     expect(body.ok).toBe(true);
 
     // console.log is called by observabilityMiddleware for request start,
@@ -85,7 +85,7 @@ describe('Telemetry API', () => {
     );
 
     expect(res.status).toBe(400);
-    const body = (await res.json()) as { ok: boolean; error: { code: string } };
+    const body = (await res.json()) as any;
     expect(body.ok).toBe(false);
     expect(body.error.code).toBe('VALIDATION_ERROR');
   });

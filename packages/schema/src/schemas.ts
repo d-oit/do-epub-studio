@@ -83,7 +83,7 @@ export const TelemetryLogSchema = z.object({
   traceId: z.string().max(255),
   spanId: z.string().max(255).optional(),
   event: z.string().max(1024),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
   error: z
     .object({
       name: z.string().max(255),

@@ -19,7 +19,7 @@ export const validationErrorFormatter: MiddlewareHandler<{ Bindings: Env }> = as
     // Hono's zValidator returns { success: false, error: ZodError }
     // We check this BEFORE checking content-type or other things, because zValidator
     // might have already set the response.
-    if (body.success === false && body.error && typeof body.error === 'object' && 'issues' in (body.error as any)) {
+    if (body.success === false && body.error && typeof body.error === 'object' && 'issues' in (body.error as Record<string, unknown>)) {
       const err = body.error as { issues: Array<{ path: (string | number)[]; message: string }> };
       c.res = c.json(
         {
