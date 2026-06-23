@@ -73,6 +73,7 @@ performance_report.md
 .claude/
 .gemini/
 .antigravitycli/
+.kilo/
 .agents/tasks/
 
 # Storybook
