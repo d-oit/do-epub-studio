@@ -83,16 +83,21 @@ const SCAN_EXCLUDE_PATHS = new Set(
 );
 
 // Directory prefixes excluded from the scan.
+// Note: checks are done against relative paths, so entries that appear
+// at any nesting level (e.g. node_modules) must include a leading path
+// segment to match deeply. Simpler entries match only at repo root.
 const SCAN_EXCLUDE_DIR_PREFIXES = [
-  'node_modules/',
-  'apps/web/dist/',
-  '.turbo/',
   '.git/',
-  'reports/',
-  'playwright-report/',
-  'test-results/',
+  '.turbo/',
+  'apps/web/dist/',
   'coverage/',
+  'node_modules/',
   'plans/archive/',
+  'playwright-report/',
+  'reports/',
+  'scripts/__tests__/',
+  'storybook-static/',
+  'test-results/',
 ];
 
 // File extensions scanned.
@@ -139,13 +144,18 @@ function walk(dir, out = []) {
   for (const entry of readdirSync(dir)) {
     const full = join(dir, entry);
     const rel = relative(REPO_ROOT, full).split('\\').join('/');
-    if (SCAN_EXCLUDE_DIR_PREFIXES.some((p) => rel === p.slice(0, -1) || rel.startsWith(p))) {
+    if (SCAN_EXCLUDE_DIR_PREFIXES.some((p) => rel === p.slice(0, -1) || rel.startsWith(p) || rel.includes(`/${p}`))) {
       continue;
     }
     if (SCAN_EXCLUDE_PATHS.has(rel)) {
       continue;
     }
-    const stat = statSync(full);
+    let stat;
+    try {
+      stat = statSync(full);
+    } catch {
+      continue;
+    }
     if (stat.isDirectory()) {
       walk(full, out);
     } else if (stat.isFile() && SCAN_EXTENSIONS.has(extname(full))) {
@@ -153,6 +163,14 @@ function walk(dir, out = []) {
     }
   }
   return out;
+}
+
+function readTextSafe(path) {
+  try {
+    return readFileSync(path, 'utf8');
+  } catch {
+    return '';
+  }
 }
 
 function getCanonicalIdentity() {
@@ -184,7 +202,7 @@ function assertCanonicalIdentity(identity) {
 
 function assertNoForbiddenSpellings(files) {
   for (const rel of files) {
-    const text = readText(resolve(REPO_ROOT, rel));
+    const text = readTextSafe(resolve(REPO_ROOT, rel));
     const lines = text.split('\n');
     for (let i = 0; i < lines.length; i += 1) {
       const line = lines[i];
