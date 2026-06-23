@@ -1,7 +1,8 @@
 # GOAP 104 — Production-Readiness Gap Closure (Identity, Versioning, Features, Docs, Workflow, Harness)
 
 **Date:** 2026-06-22
-**Status:** ✅ EXECUTED — see `plans/104-goap-execution-record-2026-06-22.md`
+**Status:** ✅ MERGED (PR #624, commit `6432c3b`) — execution record at
+`plans/104-goap-execution-record-2026-06-22.md`
 **Author:** Analysis session 2026-06-21 (post plan 103 triage)
 **Branch (proposed):** `feat/production-readiness-104`
 **Related ADR:** `plans/104-adr-product-identity-and-version-governance.md`
