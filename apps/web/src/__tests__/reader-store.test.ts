@@ -19,8 +19,6 @@ describe('useReaderStore', () => {
       bookWritingMode: 'horizontal-tb',
       isFixedLayout: false,
       activePanel: null,
-      readerSpread: 'auto',
-      readerZoom: 1.0,
       conflicts: [],
     });
   });
@@ -387,20 +385,4 @@ describe('useReaderStore', () => {
     });
   });
 
-  describe('fixed-layout controls', () => {
-    it('initialises with auto spread and 1.0 zoom', () => {
-      expect(useReaderStore.getState().readerSpread).toBe('auto');
-      expect(useReaderStore.getState().readerZoom).toBe(1.0);
-    });
-
-    it('sets spread mode', () => {
-      useReaderStore.getState().setReaderSpread('both');
-      expect(useReaderStore.getState().readerSpread).toBe('both');
-    });
-
-    it('sets zoom level', () => {
-      useReaderStore.getState().setReaderZoom(1.5);
-      expect(useReaderStore.getState().readerZoom).toBe(1.5);
-    });
-  });
 });

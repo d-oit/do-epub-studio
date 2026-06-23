@@ -72,10 +72,6 @@ export function ReaderPage() {
   const setBookmarks = useReaderStore((s) => s.setBookmarks);
   const currentChapter = useReaderStore((s) => s.currentChapter);
   const isFixedLayout = useReaderStore((s) => s.isFixedLayout);
-  const readerSpread = useReaderStore((s) => s.readerSpread);
-  const readerZoom = useReaderStore((s) => s.readerZoom);
-  const setReaderSpread = useReaderStore((s) => s.setReaderSpread);
-  const setReaderZoom = useReaderStore((s) => s.setReaderZoom);
 
   const readerTheme = usePreferencesStore((s) => s.reader.theme);
   const readerFontSize = usePreferencesStore((s) => s.reader.fontSize);
@@ -83,11 +79,16 @@ export function ReaderPage() {
   const readerPageWidth = usePreferencesStore((s) => s.reader.pageWidth);
   const readerDirection = usePreferencesStore((s) => s.reader.direction);
   const readerWritingMode = usePreferencesStore((s) => s.reader.writingMode);
+  const readerZoom = usePreferencesStore((s) => s.reader.fixedLayoutZoom);
+  const readerSpread = usePreferencesStore((s) => s.reader.fixedLayoutSpread);
+
   const setTheme = usePreferencesStore((s) => s.setTheme);
   const setFontFamily = usePreferencesStore((s) => s.setFontFamily);
   const setFontSize = usePreferencesStore((s) => s.setFontSize);
   const setDirection = usePreferencesStore((s) => s.setDirection);
   const setWritingMode = usePreferencesStore((s) => s.setWritingMode);
+  const setReaderZoom = usePreferencesStore((s) => s.setFixedLayoutZoom);
+  const setReaderSpread = usePreferencesStore((s) => s.setFixedLayoutSpread);
 
   const { t, locale } = useTranslation();
 
