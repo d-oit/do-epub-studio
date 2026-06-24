@@ -3,6 +3,7 @@
 **Date:** 2026-06-24
 **PR:** [#631 — Add self-hosted telemetry endpoint /api/telemetry](https://github.com/d-oit/do-epub-studio/pull/631)
 **Branch:** `feat-worker-telemetry-endpoint-14978191706954095953`
+**Status:** MERGED (2026-06-24T07:31:52Z)
 
 ---
 
