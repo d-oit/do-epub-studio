@@ -1,0 +1,62 @@
+# Design Language: d.o.EPUB Studio
+
+## Direction
+Editorial minimalist — inspired by book design, not SaaS dashboards. Clean typography, generous whitespace, muted palette with intentional color accents.
+
+## Colors (OKLCH, per ADR-063a)
+All colors use OKLCH for perceptually uniform lightness and P3 wide-gamut support. Semantic tokens are defined in `apps/web/src/app/globals.css`:
+- `--text-foreground`, `--bg-background`, `--border-border`, etc.
+- Status: `--destructive`, `--muted`, `--accent`
+- Light/dark themes via `prefers-color-scheme`
+
+## Typography
+- **Display/Headings:** A serif or high-contrast sans for editorial feel (not Inter for everything)
+- **Body:** Clean, readable sans-serif at comfortable line-height (1.6+)
+- **Monospace:** For code/technical content only
+- Type scale: modular, not arbitrary px values
+
+## Layout
+- Generous whitespace — content breathes
+- CSS Grid / Flexbox for layout; no float hacks
+- Container queries (`@container`) for responsive components (ADR-105)
+- Logical properties where supported (`margin-inline`, `padding-block`)
+- View Transitions API for page-to-page navigation
+
+## Components (existing + planned)
+- Button, Card, Input, Modal, Toast, Tooltip, Badge, Skeleton, Spinner (existing in `packages/ui`)
+- Pagination, ConfirmDialog, SearchInput, ProgressBar, Tabs (plan 110 T5)
+
+## Motion
+- Subtle, purposeful transitions (ease-out, not bounce)
+- `prefers-reduced-motion` respected everywhere
+- View Transitions for navigation, not decorative animation
+
+## Anti-Patterns (from Impeccable + anti-ai-slop)
+- No purple-to-blue gradients
+- No nested cards
+- No gray text on colored backgrounds
+- No pure black/gray (always tint)
+- No bounce/elastic easing
+- No Inter as the only font
+- No rounded-square icon tile above every heading
+
+## Accessibility
+- WCAG 2.1 AA minimum (ADR-063a)
+- Semantic design tokens for all colors
+- axe-core assertions in component tests
+- Keyboard navigation for all interactive elements
+- Screen reader compatibility (LiveRegion component)
+
+## Platform APIs (ADR-105)
+- Native Popover API for tooltips/menus (with `@supports` fallback)
+- Container Queries for responsive panels/tables
+- `useOptimistic` / `useFormStatus` / `useActionState` for React 19 patterns
+- Service Worker for offline PWA (ADR-005)
+
+## Impeccable Integration
+This project uses Impeccable for deterministic design quality checks:
+- `npx impeccable detect --json .` runs in CI (quality gate)
+- `/impeccable audit` for technical quality (a11y, performance, responsive)
+- `/impeccable polish` for final shipping pass
+- `/impeccable critique` for UX review
+- Project tokens in `globals.css` are authoritative; Impeccable detects deviations
