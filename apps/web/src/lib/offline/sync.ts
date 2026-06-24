@@ -57,7 +57,7 @@ function calculateDelay(attempt: number): number {
 }
 
 export async function queueSync(
-  type: 'progress' | 'annotation',
+  type: 'progress' | 'annotation' | 'insight',
   payload: unknown,
   mutationId: string,
 ): Promise<void> {
@@ -191,6 +191,16 @@ async function syncItem(item: SyncQueueItem, traceId: string, spanId: string): P
           note: payload.annotation.comment ?? '',
           mutationId: item.mutationId,
         });
+      } else if (payload.annotation.type === 'bookmark') {
+        await api.post(`/api/books/${payload.bookId}/bookmarks`, {
+          locator: {
+            cfi: payload.annotation.cfi,
+            chapter: payload.annotation.chapter,
+            selectedText: payload.annotation.text ?? '',
+          },
+          label: payload.annotation.comment ?? '',
+          mutationId: item.mutationId,
+        });
       } else {
         await api.post(`/api/books/${payload.bookId}/comments`, {
           chapterRef: payload.annotation.chapter,
@@ -201,6 +211,20 @@ async function syncItem(item: SyncQueueItem, traceId: string, spanId: string): P
           mutationId: item.mutationId,
         });
       }
+    } else if (item.type === 'insight') {
+      const payload = item.payload as {
+        bookId: string;
+        bucketDate: string;
+        activeMinutes: number;
+        activePages: number;
+        mutationId: string;
+      };
+      await api.post(`/api/books/${payload.bookId}/insights/sync`, {
+        bucketDate: payload.bucketDate,
+        activeMinutes: payload.activeMinutes,
+        activePages: payload.activePages,
+        mutationId: payload.mutationId,
+      });
     }
     return { success: true };
   } catch (error) {
@@ -238,20 +262,21 @@ async function syncItem(item: SyncQueueItem, traceId: string, spanId: string): P
   }
 }
 
-async function markAsSynced(type: 'progress' | 'annotation', mutationId: string): Promise<void> {
+async function markAsSynced(type: 'progress' | 'annotation' | 'insight', mutationId: string): Promise<void> {
   if (type === 'progress') {
     const unsynced = await getUnsyncedProgress();
     const entry = unsynced.find((e) => e.mutationId === mutationId);
     if (entry) {
       await saveProgress({ ...entry, synced: true });
     }
-  } else {
+  } else if (type === 'annotation') {
     const unsynced = await getUnsyncedAnnotations();
     const entry = unsynced.find((e) => e.mutationId === mutationId);
     if (entry) {
       await saveAnnotation({ ...entry, synced: true });
     }
   }
+  // 'insight' items are server-side only; no local mark-as-synced needed.
 }
 
 export async function syncAll(): Promise<void> {
