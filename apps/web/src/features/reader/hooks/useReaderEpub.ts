@@ -70,6 +70,7 @@ export function useReaderEpub(
   commentsRef: React.MutableRefObject<CommentRecord[]>,
   onNavigateToAnnotation: (chapterRef: string, cfiRange?: string) => void | Promise<void>,
   progressCfi?: string,
+  markPageRead?: () => void,
 ) {
   const sessionToken = useAuthStore((s) => s.sessionToken);
   const bookId = useAuthStore((s) => s.bookId);
@@ -343,6 +344,7 @@ export function useReaderEpub(
               tocRef.current,
               currentChapterRef,
               renderAnnotations,
+              () => markPageRead?.(),
             );
           })(),
         );

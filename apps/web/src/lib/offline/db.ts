@@ -42,6 +42,7 @@ export interface ReadingInsightEntry {
   bookId: string;
   date: string;
   activeMinutes: number;
+  activePages: number;
   lastUpdated: number;
 }
 

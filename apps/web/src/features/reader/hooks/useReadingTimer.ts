@@ -8,9 +8,10 @@ import { logClientEvent } from '../../../lib/client-logger';
 
 interface InsightSummary {
   totalActiveMinutes: number;
+  totalActivePages: number;
   estimatedMinutesRemaining: number | null;
   currentStreakDays: number;
-  recentActivity: { date: string; activeMinutes: number }[];
+  recentActivity: { date: string; activeMinutes: number; activePages: number }[];
 }
 
 export function useReadingTimer(bookId: string | null) {
@@ -30,6 +31,10 @@ export function useReadingTimer(bookId: string | null) {
 
   const markLoaded = useCallback(() => {
     timerRef.current?.markLoaded();
+  }, []);
+
+  const markPageRead = useCallback(() => {
+    timerRef.current?.markPageRead();
   }, []);
 
   const flush = useCallback(async () => {
@@ -54,6 +59,7 @@ export function useReadingTimer(bookId: string | null) {
           buckets: bookEntries.map((e) => ({
             date: e.date,
             activeMinutes: e.activeMinutes,
+            activePages: e.activePages ?? 0,
           })),
         }),
       });
@@ -74,6 +80,7 @@ export function useReadingTimer(bookId: string | null) {
     if (!bookId) {
       return {
         totalActiveMinutes: 0,
+        totalActivePages: 0,
         estimatedMinutesRemaining: null,
         currentStreakDays: 0,
         recentActivity: [],
@@ -82,5 +89,5 @@ export function useReadingTimer(bookId: string | null) {
     return computeInsightSummary(bookId, progress.progressPercent);
   }, [bookId, progress.progressPercent]);
 
-  return { markLoaded, flush, syncToServer, getSummary };
+  return { markLoaded, markPageRead, flush, syncToServer, getSummary };
 }

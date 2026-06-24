@@ -103,7 +103,12 @@ export function ReaderPage() {
   } = useAnnotationHandlers();
   const { handleCreateBookmark, handleDeleteBookmark } = useBookmarkHandlers();
   const { handleExportNotes } = useExportNotes();
-  const { markLoaded: markInsightsLoaded, flush: flushInsights, syncToServer: syncInsightsToServer } = useReadingTimer(bookId);
+  const {
+    markLoaded: markInsightsLoaded,
+    markPageRead,
+    flush: flushInsights,
+    syncToServer: syncInsightsToServer,
+  } = useReadingTimer(bookId);
 
   const rootRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<HTMLDivElement>(null as unknown as HTMLDivElement);
@@ -131,6 +136,7 @@ export function ReaderPage() {
     commentsRef,
     handleNavigateToAnnotationRef.current,
     progress.locator?.cfi,
+    markPageRead,
   );
 
   // Navigate to an annotation by displaying the given chapter/CFI on the
