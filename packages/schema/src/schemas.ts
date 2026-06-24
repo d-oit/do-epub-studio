@@ -78,6 +78,25 @@ export const RecoveryVerifySchema = z.object({
   token: z.string().min(1),
 });
 
+export const TelemetryLogSchema = z.object({
+  level: z.enum(['debug', 'info', 'warn', 'error']),
+  traceId: z.string().max(255),
+  spanId: z.string().max(255).optional(),
+  event: z.string().max(1024),
+  metadata: z.record(z.string(), z.unknown()).optional(),
+  error: z
+    .object({
+      name: z.string().max(255),
+      message: z.string().max(5000),
+      stack: z.string().max(20000).optional(),
+    })
+    .optional(),
+});
+
+export const TelemetryPayloadSchema = z.object({
+  logs: z.array(TelemetryLogSchema).max(100),
+});
+
 export const CreateBookSchema = z.object({
   title: z.string().min(1).max(500),
   slug: z
@@ -227,6 +246,8 @@ export type CommentCreate = z.infer<typeof CommentCreateSchema>;
 export type CommentUpdate = z.infer<typeof CommentUpdateSchema>;
 export type CspReport = z.infer<typeof CspReportSchema>;
 export type AuditQuery = z.infer<typeof AuditQuerySchema>;
+export type TelemetryLog = z.infer<typeof TelemetryLogSchema>;
+export type TelemetryPayload = z.infer<typeof TelemetryPayloadSchema>;
 
 export const ReadingInsightBucketSchema = z.object({
   bookId: z.string().uuid(),

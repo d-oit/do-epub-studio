@@ -6,3 +6,4 @@ export { commentsRouter } from './comments';
 export { filesRouter } from './files';
 export { adminRouter } from './admin/index';
 export { securityRouter } from './security';
+export { telemetryRouter } from './telemetry';

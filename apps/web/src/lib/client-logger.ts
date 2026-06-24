@@ -33,20 +33,20 @@ let _flushTimer: ReturnType<typeof setTimeout> | null = null;
 
 function flushBuffer(): void {
   if (_buffer.length === 0) return;
-  const entries = _buffer.splice(0);
-  const endpoint = typeof import.meta !== 'undefined' && import.meta.env
-    ? import.meta.env.VITE_TELEMETRY_ENDPOINT
-    : undefined;
-  if (!endpoint) return;
+  const endpoint = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_TELEMETRY_ENDPOINT) || '/api/telemetry';
+
   try {
-    const payload = JSON.stringify({ logs: entries });
+    const payload = JSON.stringify({ logs: _buffer.splice(0) });
+    const isBrowser = typeof window !== 'undefined';
+    if (!isBrowser && !endpoint.startsWith('http')) return;
+
     if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
       navigator.sendBeacon(endpoint, new Blob([payload], { type: 'application/json' }));
-    } else {
-      void fetch(endpoint, { method: 'POST', body: payload, keepalive: true });
+    } else if (typeof fetch !== 'undefined') {
+      void fetch(endpoint, { method: 'POST', body: payload, keepalive: true }).catch(() => {});
     }
   } catch {
-    // Silently fail — telemetry must never break the app
+    // Silently fail
   }
 }
 

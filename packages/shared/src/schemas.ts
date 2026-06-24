@@ -27,6 +27,8 @@ export {
   ValidateQuerySchema,
   SignedUrlSchema,
   UploadCompleteSchema,
+  TelemetryLogSchema,
+  TelemetryPayloadSchema,
   formatZodError,
 } from '@do-epub-studio/schema';
 
@@ -50,4 +52,6 @@ export type {
   ValidateQuery,
   SignedUrl,
   UploadComplete,
+  TelemetryLog,
+  TelemetryPayload,
 } from '@do-epub-studio/schema';

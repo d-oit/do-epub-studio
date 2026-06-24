@@ -33,8 +33,6 @@ describe('ThemeToggle', () => {
         pageWidth: 'normal',
         direction: 'default',
         writingMode: 'horizontal-tb',
-        fixedLayoutZoom: 1.0,
-        fixedLayoutSpread: 'auto',
       },
     });
   });

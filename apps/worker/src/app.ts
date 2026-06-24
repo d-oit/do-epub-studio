@@ -13,6 +13,7 @@ import {
   filesRouter,
   adminRouter,
   securityRouter,
+  telemetryRouter,
 } from './routes';
 import { validationErrorFormatter } from './middleware/validation';
 
@@ -60,3 +61,4 @@ app.route('/api', commentsRouter);
 app.route('/api/files', filesRouter);
 app.route('/api/admin', adminRouter);
 app.route('/api', securityRouter);
+app.route('/api', telemetryRouter);
