@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import type { Env } from '../../lib/env';
-import { execute, queryAll, transaction } from '../../db/client';
+import { queryAll, transaction } from '../../db/client';
 import { createGrant } from '../../auth/password';
 import { logAudit } from '../../audit';
 import { CreateGrantSchema, UpdateGrantSchema } from '@do-epub-studio/shared';
@@ -96,17 +96,30 @@ grantsRouter.patch('/grants/:id', adminAuth, zValidator('json', UpdateGrantSchem
 
   args.push(grantId);
 
-  await execute(c.env, `UPDATE book_access_grants SET ${updates.join(', ')} WHERE id = ?`, args);
+  // AGENTS.md TIER-1: revoke sessions immediately on grant change.
+  // A downgraded grant (mode/comments/offline/expiry tightened) must not
+  // leave elevated sessions live. We revoke in the same transaction so
+  // the UPDATE and the session-revocation are atomic.
+  await transaction(c.env, [
+    { sql: `UPDATE book_access_grants SET ${updates.join(', ')} WHERE id = ?`, args },
+    {
+      sql: `UPDATE reader_sessions SET revoked_at = datetime('now')
+     WHERE book_id = (SELECT book_id FROM book_access_grants WHERE id = ?)
+     AND email = (SELECT email FROM book_access_grants WHERE id = ?)
+     AND revoked_at IS NULL`,
+      args: [grantId, grantId],
+    },
+  ]);
 
   await logAudit(c.env, {
     entityType: 'grant',
     entityId: grantId,
     action: 'updated',
     actorEmail: adminUser.email,
-    payload: body,
+    payload: { ...body, sessionsRevoked: true },
   }, c.executionCtx);
 
-  return c.json({ ok: true, data: { id: grantId, ...body } });
+  return c.json({ ok: true, data: { id: grantId, ...body, sessionsRevoked: true } });
 });
 
 grantsRouter.post('/grants/:id/revoke', adminAuth, async (c) => {
