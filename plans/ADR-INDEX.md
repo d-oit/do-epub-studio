@@ -56,6 +56,7 @@
 | 106 | Feature Completeness and Incremental Delivery Policy | `plans/106-adr-feature-completeness-policy.md` | Proposed |
 | 107 | Quality Gate Escalation and DX Standards | `plans/107-adr-quality-dx-standards.md` | Proposed |
 | 110 | Backlog Consolidation & Verified-Before-Execution Policy | `plans/110-adr-completeness-and-ui-consolidation.md` | Proposed |
+| 111 | Impeccable Design Vocabulary Adoption | `plans/111-adr-impeccable-design-vocabulary.md` | Proposed |
 
 ## Cross-referenced but not yet adopted
 
