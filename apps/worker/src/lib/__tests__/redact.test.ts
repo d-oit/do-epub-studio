@@ -59,8 +59,8 @@ describe('Log Redaction', () => {
 
     it('handles arrays', () => {
       const result = scrub([{ password: 'x' }, { username: 'y' }]) as Array<Record<string, string>>;
-      expect(result[0]!.password).toBe('[REDACTED]');
-      expect(result[1]!.username).toBe('y');
+      expect(result[0]?.password).toBe('[REDACTED]');
+      expect(result[1]?.username).toBe('y');
     });
 
     it('handles null and undefined', () => {

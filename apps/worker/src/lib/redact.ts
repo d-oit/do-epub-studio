@@ -33,14 +33,14 @@ const BEARER_PATTERN = /Bearer\s+[A-Za-z0-9\-._~+/]+=*/gi;
 const LONG_TOKEN_PATTERN = /(?:^|[^A-Za-z0-9_-])([A-Za-z0-9_-]{32,})(?:$|[^A-Za-z0-9_-])/g;
 
 function redactString(value: string): string {
-  return value
-    .replace(EMAIL_PATTERN, REDACTED)
-    .replace(BEARER_PATTERN, `Bearer ${REDACTED}`)
-    .replace(LONG_TOKEN_PATTERN, (_match, token) => {
-      const before = _match.startsWith(token) ? '' : _match[0]!;
-      const after = _match.endsWith(token) ? '' : _match[_match.length - 1]!;
-      return `${before}${REDACTED}${after}`;
-    });
+  const redacted = value.replace(EMAIL_PATTERN, REDACTED).replace(BEARER_PATTERN, `Bearer ${REDACTED}`);
+  return redacted.replace(LONG_TOKEN_PATTERN, (match, token: string) => {
+    const hasPrefix = match.startsWith(token);
+    const hasSuffix = match.endsWith(token);
+    const before = hasPrefix ? '' : (match.charAt(0) || '');
+    const after = hasSuffix ? '' : (match.charAt(match.length - 1) || '');
+    return before + REDACTED + after;
+  });
 }
 
 export function isSensitiveKey(key: string): boolean {
@@ -68,13 +68,13 @@ export function scrub(value: unknown, depth = 0): unknown {
 }
 
 export function scrubForLog(payload: unknown): string {
-  const scrubbed = scrub(payload);
+  const scrubbed: unknown = scrub(payload);
   const seen = new WeakSet<object>();
   try {
-    return JSON.stringify(scrubbed, (_key, val) => {
+    return JSON.stringify(scrubbed, (_key: string, val: unknown) => {
       if (typeof val === 'object' && val !== null) {
-        if (seen.has(val as object)) return '[Circular]';
-        seen.add(val as object);
+        if (seen.has(val)) return '[Circular]';
+        seen.add(val);
       }
       return val;
     });
