@@ -1,4 +1,4 @@
-import { useState, useId } from 'react';
+import { useState, useId, useEffect } from 'react';
 
 export interface SearchInputProps {
   value: string;
@@ -22,10 +22,13 @@ export function SearchInput({
   const id = useId();
   const [local, setLocal] = useState(value);
 
-  if (debounceMs > 0 && local !== value) {
-    const timer = setTimeout(() => { onChange(local); }, debounceMs);
-    return null;
-  }
+  useEffect(() => {
+    if (debounceMs <= 0) return;
+    const timer = setTimeout(() => {
+      if (local !== value) onChange(local);
+    }, debounceMs);
+    return () => { clearTimeout(timer); };
+  }, [local, debounceMs, onChange, value]);
 
   return (
     <div className={`relative ${className}`}>
@@ -47,7 +50,8 @@ export function SearchInput({
           type="button"
           onClick={() => {
             setLocal('');
-            onClear ? onClear() : onChange('');
+            if (onClear) onClear();
+            else onChange('');
           }}
           aria-label="Clear search"
           className="absolute right-2 top-1/2 -translate-y-1/2 rounded-sm p-1 text-foreground-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
