@@ -7,6 +7,7 @@ import { useSessionExpiry } from './hooks/useSessionExpiry';
 import { useTranslation } from './hooks/useTranslation';
 import { LoginPage } from './features/auth/LoginPage';
 import { AdminLoginPage } from './features/admin/AdminLoginPage';
+import { AdminRecoverPage } from './features/admin/AdminRecoverPage';
 import { AppShell } from './components/AppShell';
 import { SwUpdateNotification } from './components/SwUpdateNotification';
 import { OfflineIndicator } from './components/OfflineIndicator';
@@ -120,6 +121,7 @@ export function App() {
         <Route path="/catalog" element={<CatalogPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/admin/login" element={<AdminLoginPage />} />
+        <Route path="/admin/recover" element={<AdminRecoverPage />} />
         <Route path="/read/:bookSlug" element={
           <ProtectedRoute>
             <ReaderPage />
