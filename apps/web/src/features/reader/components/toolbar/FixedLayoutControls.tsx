@@ -14,7 +14,7 @@ interface FixedLayoutControlsProps {
   t: (key: string) => string;
 }
 
-const ZOOM_STEPS: readonly number[] = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0];
+const ZOOM_STEPS: readonly ReaderZoom[] = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0];
 const SPREAD_OPTIONS: readonly ReaderSpread[] = ['auto', 'none', 'both'];
 
 export function FixedLayoutControls({
@@ -30,16 +30,18 @@ export function FixedLayoutControls({
   useFocusTrap(isOpen, panelRef);
 
   const handleZoomIn = useCallback(() => {
-    const nextStep = ZOOM_STEPS.find((step) => step > zoom + 0.01);
-    if (nextStep !== undefined) {
-      onSetZoom(nextStep);
+    const idx = ZOOM_STEPS.indexOf(zoom);
+    if (idx >= 0 && idx < ZOOM_STEPS.length - 1) {
+      const next = ZOOM_STEPS[idx + 1];
+      if (typeof next === 'number') onSetZoom(next);
     }
   }, [zoom, onSetZoom]);
 
   const handleZoomOut = useCallback(() => {
-    const prevStep = [...ZOOM_STEPS].reverse().find((step) => step < zoom - 0.01);
-    if (prevStep !== undefined) {
-      onSetZoom(prevStep);
+    const idx = ZOOM_STEPS.indexOf(zoom);
+    if (idx > 0) {
+      const prev = ZOOM_STEPS[idx - 1];
+      if (typeof prev === 'number') onSetZoom(prev);
     }
   }, [zoom, onSetZoom]);
 
@@ -61,14 +63,6 @@ export function FixedLayoutControls({
       variants={scaleVariants}
       className="fixed top-14 right-4 glass-panel rounded-xl shadow-xl border border-border p-4 z-50 w-72"
     >
-      <div
-        className="sr-only"
-        role="status"
-        aria-live="polite"
-        aria-atomic="true"
-      >
-        {t('reader.fixedLayout.zoom')}: {Math.round(zoom * 100)}%
-      </div>
       <div className="flex items-center justify-between mb-4">
         <h2
           id="fl-controls-title"
@@ -111,7 +105,7 @@ export function FixedLayoutControls({
             <button
               type="button"
               onClick={handleZoomOut}
-              disabled={zoom <= ZOOM_STEPS[0]}
+              disabled={zoom === ZOOM_STEPS[0]}
               className="p-2 rounded-lg border border-border text-foreground hover:bg-background-secondary transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-accent outline-none"
               aria-label={t('reader.fixedLayout.zoomOut')}
             >
@@ -141,7 +135,7 @@ export function FixedLayoutControls({
             <button
               type="button"
               onClick={handleZoomIn}
-              disabled={zoom >= ZOOM_STEPS[ZOOM_STEPS.length - 1]}
+              disabled={zoom === ZOOM_STEPS[ZOOM_STEPS.length - 1]}
               className="p-2 rounded-lg border border-border text-foreground hover:bg-background-secondary transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-accent outline-none"
               aria-label={t('reader.fixedLayout.zoomIn')}
             >
