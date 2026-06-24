@@ -10,17 +10,17 @@ vi.mock('../lib/api', () => ({
 vi.mock('../hooks/useTranslation', () => ({
   useTranslation: () => ({
     t: (key: string, params?: Record<string, string | number>) => {
-      const translations = new Map<string, string>([
-        ['catalog.title', 'Book Catalog'],
-        ['catalog.subtitle', 'Browse our collection'],
-        ['catalog.empty', 'No books available'],
-        ['catalog.coverAlt', 'Cover of {title}'],
-        ['catalog.search.placeholder', 'Search…'],
-        ['catalog.filter.author', 'Author…'],
-        ['catalog.filter.language', 'Language…'],
-        ['catalog.pagination.info', 'Showing {from}–{to} of {total}'],
-      ]);
-      let value = translations.get(key) ?? key;
+      const translations: Record<string, string> = {
+        'catalog.title': 'Book Catalog',
+        'catalog.subtitle': 'Browse our collection',
+        'catalog.empty': 'No books available',
+        'catalog.coverAlt': 'Cover of {title}',
+        'catalog.search.placeholder': 'Search…',
+        'catalog.filter.author': 'Author…',
+        'catalog.filter.language': 'Language…',
+        'catalog.pagination.info': 'Showing {from}–{to} of {total}',
+      };
+      let value = translations[key] ?? key;
       if (params) {
         for (const [name, v] of Object.entries(params)) {
           value = value.replace(`{${name}}`, String(v));

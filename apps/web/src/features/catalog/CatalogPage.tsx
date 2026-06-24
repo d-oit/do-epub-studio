@@ -97,7 +97,7 @@ export function CatalogPage() {
               ariaLabel={t('catalog.search.placeholder')}
               placeholder={t('catalog.search.placeholder')}
               value={q}
-              onChange={(value: string) => { setParam('q', value); }}
+              onChange={(value: string) => setParam('q', value)}
               debounceMs={300}
               className="w-full"
             />
@@ -105,7 +105,7 @@ export function CatalogPage() {
               ariaLabel={t('catalog.filter.author')}
               placeholder={t('catalog.filter.author')}
               value={author}
-              onChange={(value: string) => { setParam('author', value); }}
+              onChange={(value: string) => setParam('author', value)}
               debounceMs={300}
               className="w-full"
             />
@@ -113,7 +113,7 @@ export function CatalogPage() {
               ariaLabel={t('catalog.filter.language')}
               placeholder={t('catalog.filter.language')}
               value={language}
-              onChange={(value: string) => { setParam('language', value); }}
+              onChange={(value: string) => setParam('language', value)}
               debounceMs={300}
               className="w-full"
             />
@@ -185,7 +185,7 @@ export function CatalogPage() {
                 <Pagination
                   currentPage={page}
                   totalPages={totalPages}
-                  onPageChange={(p: number) => { setParam('page', String(p)); }}
+                  onPageChange={(p: number) => setParam('page', String(p))}
                 />
               </div>
             )}
