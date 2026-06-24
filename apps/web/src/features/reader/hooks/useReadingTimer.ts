@@ -59,7 +59,7 @@ export function useReadingTimer(bookId: string | null) {
           buckets: bookEntries.map((e) => ({
             date: e.date,
             activeMinutes: e.activeMinutes,
-            activePages: e.activePages ?? 0,
+            activePages: e.activePages,
           })),
         }),
       });
