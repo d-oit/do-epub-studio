@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { useShallow } from 'zustand/react/shallow';
+import { matchBounded } from '@do-epub-studio/shared';
 import type { AnnotationLocator } from '@do-epub-studio/shared';
 import { useReaderStore } from '../../../stores';
 import type { Bookmark, Comment, Highlight } from '../../../stores/reader';
@@ -183,14 +184,30 @@ export function notesExportToMarkdown(payload: NotesExport): string {
 }
 
 function parseNotesMarkdown(markdown: string): NotesExport | null {
-  const formatMatch = markdown.match(/<!--\s*format:\s*(do-epub-studio-notes)\s+v(\d+)\s*-->/);
+  const MAX_HEADER = 512;
+  const formatMatch = matchBounded(
+    /<!--\s*format:\s*(do-epub-studio-notes)\s+v(\d+)\s*-->/,
+    markdown,
+    MAX_HEADER,
+  );
   if (!formatMatch) return null;
-  const version = formatMatch[2] === '1' ? NOTES_FORMAT_VERSION : null;
-  if (version === null) return null;
+  if (formatMatch[2] !== '1') return null;
 
-  const exportedAtMatch = markdown.match(/<!--\s*exportedAt:\s*([^>]+?)\s*-->/);
-  const bookIdMatch = markdown.match(/<!--\s*bookId:\s*([^>]+?)\s*-->/);
-  const titleMatch = markdown.match(/^#\s+(.+?)\s+- Exported Notes\s*$/m);
+  const exportedAtMatch = matchBounded(
+    /<!--\s*exportedAt:\s*([^>]+?)\s*-->/,
+    markdown,
+    MAX_HEADER,
+  );
+  const bookIdMatch = matchBounded(
+    /<!--\s*bookId:\s*([^>]+?)\s*-->/,
+    markdown,
+    MAX_HEADER,
+  );
+  const titleMatch = matchBounded(
+    /^#\s+(.+?)\s+- Exported Notes\s*$/m,
+    markdown,
+    1024,
+  );
 
   const annotations: ExportedAnnotation[] = [];
 
@@ -225,29 +242,43 @@ function parseNotesMarkdown(markdown: string): NotesExport | null {
       continue;
     }
     if (!line.startsWith('- ')) continue;
+    if (line.length > 4096) continue;
 
-    const cfiMatch = line.match(/\[(epubcfi\([^)]+\))\]/);
+    const cfiMatch = matchBounded(
+      /\[(epubcfi\([^)]{1,512}\))\]/,
+      line,
+      4096,
+    );
     const cfi = cfiMatch?.[1];
 
     if (inHighlights) {
-      const m = line.match(/^- "?(.+?)"?\s*(?:\[(epubcfi\([^)]+\))\])?\s*(?:\(([^)]+)\))?\s*\((#[0-9a-fA-F]{3,8})\)\s*(?:—\s*(.+))?$/);
+      const m = matchBounded(
+        /^- "?(.+?)"?\s*(?:\[(epubcfi\([^)]{1,512}\))\])?\s*(?:\(([^)]{1,255})\))?\s*\((#[0-9a-fA-F]{3,8})\)\s*(?:—\s*(.+))?$/,
+        line,
+        4096,
+      );
       if (m) {
         const [, selectedText, matchedCfi, chapterRef, color, note] = m;
+        const finalCfi = matchedCfi ?? cfi ?? null;
         annotations.push({
           type: 'highlight',
           id: `imported-h-${annotations.length}`,
-          selectedText: selectedText ?? '',
-          color: color ?? '#ffeb3b',
+          selectedText,
+          color,
           note: note ?? null,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
-          locator: matchedCfi ?? cfi
-            ? { cfi: matchedCfi ?? cfi, selectedText, chapterRef: chapterRef ?? undefined }
+          locator: finalCfi
+            ? { cfi: finalCfi, selectedText, chapterRef: chapterRef ?? undefined }
             : null,
         });
       }
     } else if (inBookmarks) {
-      const m = line.match(/^- "?(.+?)"?\s*(?:\[(epubcfi\([^)]+\))\])?\s*(?:\(([^)]+)\))?\s*(?:—\s*(.+))?$/);
+      const m = matchBounded(
+        /^- "?(.+?)"?\s*(?:\[(epubcfi\([^)]{1,512}\))\])?\s*(?:\(([^)]{1,255})\))?\s*(?:—\s*(.+))?$/,
+        line,
+        4096,
+      );
       if (m) {
         const [, selectedText, matchedCfi, chapterRef, label] = m;
         annotations.push({
@@ -258,27 +289,32 @@ function parseNotesMarkdown(markdown: string): NotesExport | null {
           updatedAt: new Date().toISOString(),
           locator: {
             cfi: matchedCfi ?? cfi,
-            selectedText: selectedText ?? undefined,
+            selectedText,
             chapterRef: chapterRef ?? undefined,
           },
         });
       }
     } else if (inComments) {
-      const m = line.match(/^- "?(.+?)"?\s*(?:\[(epubcfi\([^)]+\))\])?\s*(?:—\s*"?(.+?)"?\s*)?$/);
+      const m = matchBounded(
+        /^- "?(.+?)"?\s*(?:\[(epubcfi\([^)]{1,512}\))\])?\s*(?:—\s*"?(.+?)"?\s*)?$/,
+        line,
+        4096,
+      );
       if (m) {
         const [, body, matchedCfi, quote] = m;
+        const finalCfi = matchedCfi ?? cfi ?? null;
         annotations.push({
           type: 'comment',
           id: `imported-c-${annotations.length}`,
-          body: body ?? '',
+          body,
           status: 'open',
           visibility: 'shared',
           parentCommentId: null,
           selectedText: quote ?? null,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
-          locator: matchedCfi ?? cfi
-            ? { cfi: matchedCfi ?? cfi, selectedText: quote ?? undefined }
+          locator: finalCfi
+            ? { cfi: finalCfi, selectedText: quote ?? undefined }
             : null,
         });
       }
