@@ -67,7 +67,8 @@ export async function reanchorByText(
   const cache = new Map<string, CachedChapter>();
 
   async function getCachedData(href: string): Promise<CachedChapter> {
-    const base = href.split('#')[0] ?? '';
+    const hashIdx = href.indexOf('#');
+    const base = hashIdx === -1 ? href : href.substring(0, hashIdx);
     const cached = cache.get(base);
     if (cached) return cached;
 
@@ -79,24 +80,25 @@ export async function reanchorByText(
     return result;
   }
 
-  const flattenedToc: string[] = [];
-  const collectHrefs = (items: TocItem[]) => {
+  const baseToHref = new Map<string, string>();
+  const collect = (items: TocItem[]) => {
     for (const item of items) {
-      flattenedToc.push(item.href);
-      if (item.subitems) collectHrefs(item.subitems);
+      const href = item.href;
+      const hashIdx = href.indexOf('#');
+      const base = hashIdx === -1 ? href : href.substring(0, hashIdx);
+      if (!baseToHref.has(base)) {
+        baseToHref.set(base, href);
+      }
+      if (item.subitems) collect(item.subitems);
     }
   };
-  collectHrefs(toc);
+  collect(toc);
 
-  const baseToHref = new Map<string, string>();
-  for (const href of flattenedToc) {
-    const base = href.split('#')[0] ?? '';
-    if (!baseToHref.has(base)) {
-      baseToHref.set(base, href);
-    }
+  let basePrefer: string | undefined;
+  if (preferChapter) {
+    const hashIdx = preferChapter.indexOf('#');
+    basePrefer = hashIdx === -1 ? preferChapter : preferChapter.substring(0, hashIdx);
   }
-
-  const basePrefer = preferChapter?.split('#')[0];
 
   let uniqueHrefs: string[];
   if (basePrefer) {
@@ -111,7 +113,7 @@ export async function reanchorByText(
     }
     uniqueHrefs = [...primary, ...secondary];
   } else {
-    uniqueHrefs = [...baseToHref.values()];
+    uniqueHrefs = Array.from(baseToHref.values());
   }
 
   // Pass 1: Exact and Partial matches
