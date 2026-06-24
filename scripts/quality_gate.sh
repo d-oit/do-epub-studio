@@ -341,6 +341,19 @@ if [[ " ${DETECTED_LANGUAGES[*]} " =~ " markdown " ]]; then
     echo ""
 fi
 
+# --- Impeccable design detector (UI quality gate) ---
+if [ "${SKIP_DESIGN:-0}" != "1" ]; then
+    printf '%sRunning Impeccable design detector...%s\n' "${BLUE}" "${NC}"
+    if [ -f "$REPO_ROOT/scripts/run-impeccable.sh" ]; then
+        if ! "$REPO_ROOT/scripts/run-impeccable.sh" 2>&1; then
+            FAILED=1
+        fi
+    else
+        printf '%s  ⊘ scripts/run-impeccable.sh not found — skipping%s\n' "${YELLOW}" "${NC}"
+    fi
+    echo ""
+fi
+
 # --- Final result ---
 if [ $FAILED -ne 0 ]; then
     printf '%s─────────────────────────────────────────────────────────────────%s\n' "${RED}" "${NC}"

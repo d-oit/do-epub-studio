@@ -27,3 +27,7 @@ exclude_paths:
   - "playwright-report/**"
   - "test-results/**"
   - "**/*.sql"
+  - ".opencode/skills/impeccable/**"
+  - ".agents/skills/impeccable/**"
+  - ".github/skills/impeccable/**"
+  - ".impeccable/**"

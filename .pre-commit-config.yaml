@@ -5,6 +5,16 @@
 # Note: Git-native hooks are in scripts/hooks/ and installed via:
 #   ./scripts/install-hooks.sh
 
+# Exclude third-party Impeccable skill files from formatting hooks
+# (they live in the .impeccable submodule and are symlinked into provider dirs)
+exclude: |
+  (?x)^(
+    \.impeccable/.*|
+    \.opencode/skills/impeccable/.*|
+    \.agents/skills/impeccable/.*|
+    \.github/skills/impeccable/.*
+  )$
+
 repos:
   # Pinned SHAs for supply-chain security
   - repo: https://github.com/pre-commit/pre-commit-hooks
