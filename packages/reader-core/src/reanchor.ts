@@ -81,6 +81,7 @@ export async function reanchorByText(
   }
 
   const baseToHref = new Map<string, string>();
+  // biome-ignore lint/correctness/useQwikValidLexicalScope: reader-core is not a Qwik app; this is a false positive
   const collect = (items: TocItem[]) => {
     for (const item of items) {
       const href = item.href;
