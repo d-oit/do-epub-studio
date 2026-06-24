@@ -29,6 +29,8 @@ describe('usePreferencesStore', () => {
         pageWidth: 'normal',
         direction: 'default',
         writingMode: 'horizontal-tb',
+        fixedLayoutZoom: 1.0,
+        fixedLayoutSpread: 'auto',
       },
     });
   });
@@ -38,6 +40,8 @@ describe('usePreferencesStore', () => {
     expect(state.reader.theme).toBe('system');
     expect(state.reader.fontFamily).toBe('serif');
     expect(state.reader.fontSize).toBe('medium');
+    expect(state.reader.fixedLayoutZoom).toBe(1.0);
+    expect(state.reader.fixedLayoutSpread).toBe('auto');
   });
 
   it('sets theme', () => {
@@ -108,5 +112,15 @@ describe('usePreferencesStore', () => {
   it('does not set writing mode if same', () => {
     usePreferencesStore.getState().setWritingMode('horizontal-tb');
     expect(usePreferencesStore.getState().reader.writingMode).toBe('horizontal-tb');
+  });
+
+  it('sets fixedLayoutZoom', () => {
+    usePreferencesStore.getState().setFixedLayoutZoom(1.5);
+    expect(usePreferencesStore.getState().reader.fixedLayoutZoom).toBe(1.5);
+  });
+
+  it('sets fixedLayoutSpread', () => {
+    usePreferencesStore.getState().setFixedLayoutSpread('both');
+    expect(usePreferencesStore.getState().reader.fixedLayoutSpread).toBe('both');
   });
 });
