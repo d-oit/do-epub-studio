@@ -304,3 +304,21 @@
   non-interactively with a multi-line message.** The default
   `core.editor` may be `vi` or `nano`, which would block. The
   `commit-msg` hook still validates the subject line.
+
+## 2026-06-24 Plan 112 — Phase 2/3 Execution & GOAP-110 Status
+
+### Impact
+
+- **GOAP-110 Phase 1 (V1–V6) confirmed DONE** by re-verification of PRs #638–#642 on 2026-06-24. Phase 2/3 remaining work tracked under plan 112.
+- **Impeccable design vocabulary wired** (PRs #635–#637). The `.impeccable/` submodule at `cli-v3.1.0` provides 44 deterministic detector rules + 23 slash commands. `scripts/run-impeccable.sh` runs `npx impeccable detect --json .`; findings are `::warning::` by default, `IMPECCABLE_REQUIRED=1` opt-in. Provider symlinks installed in `.claude/`, `.qwen/`, `.codex/`, `.cursor/`, `.copilot/`.
+- **Annotation round-trip foundation**: `useExportNotes` now exports CFI/locator/chapter metadata per ADR-006. `useImportNotes` hook planned to consume the same schema for round-trip integrity.
+
+### Technical Details
+
+- **Catalog route is a 32-line stub** with no pagination, no search, no filter. The Phase 2 task adds `limit/offset/q/author` query params with `PaginationDto` in `packages/shared`; the UI uses the new `Pagination` + `SearchInput` primitives shipped in PR #642.
+- **Container queries / native popover / React 19 patterns are zero-match in `apps/web/src`.** Tailwind 4's `@container` variant needs explicit config; popover API needs `@supports not (selector(:popover-open))` fallback; `useOptimistic`/`useFormStatus`/`useActionState` need Suspense boundaries.
+- **Impeccable detector respects `ignoreValues`/`ignoreFiles` in `config.json`.** During Phase 4 CI hardening, start with `::warning::` and gate findings behind a per-PR label.
+- **Vite 8 + Rolldown affects manualChunks** (per learning above) — Turborepo's `build:analyze` output path mismatch (G1) is likely a Rolldown visualizer output path change. Verify with `dist/stats.html` after `ANALYZE=true turbo run build`.
+- **Coverage threshold raises (107 P1/P2)** must ship tests first, then bump thresholds 2-5% below actual — direct pattern from plan 062.
+- **Bundle-size CI budget** is a new gate; main JS 180KB / CSS 30KB / lazy chunk 80KB are starting thresholds (107 ADR).
+- **CI workflow drift**: `e2e.yml` and `ci.yml` both have `playwright.config.ts` and `vite.config.ts` references that escape the per-workspace `pnpm lint src` scope. F1 (root-config lint) is the canonical fix.
