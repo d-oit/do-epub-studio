@@ -208,7 +208,7 @@ describe('Admin Routes', () => {
         context: { userId: 'admin-1', email: 'admin@example.com', globalRole: 'admin' },
       } as any);
 
-      mockExecute.mockResolvedValue({} as any);
+      mockTransaction.mockResolvedValue(undefined);
 
       const res = await app.fetch(new Request('http://localhost/api/admin/grants/grant-1', {
         method: 'PATCH',
@@ -220,6 +220,34 @@ describe('Admin Routes', () => {
       }), env, makePassThroughContext());
 
       expect(res.status).toBe(200);
+    });
+
+    it('revokes active reader_sessions on grant update (TIER-1)', async () => {
+      mockRequireAdminAuth.mockResolvedValue({
+        ok: true,
+        context: { userId: 'admin-1', email: 'admin@example.com', globalRole: 'admin' },
+      } as any);
+
+      mockTransaction.mockResolvedValue(undefined);
+
+      const res = await app.fetch(new Request('http://localhost/api/admin/grants/grant-1', {
+        method: 'PATCH',
+        body: JSON.stringify({ mode: 'read-only', commentsAllowed: false }),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer admin-token'
+        },
+      }), env, makePassThroughContext());
+
+      expect(res.status).toBe(200);
+      // TIER-1: must use transaction so UPDATE + session-revoke are atomic
+      expect(mockTransaction).toHaveBeenCalled();
+      const txArgs = mockTransaction.mock.calls[0]?.[1] as Array<{ sql: string }> | undefined;
+      expect(txArgs).toBeDefined();
+      // Verify the transaction includes both the UPDATE and the session-revocation
+      const sqls = (txArgs ?? []).map((s) => s.sql).join('\n');
+      expect(sqls).toContain('UPDATE book_access_grants');
+      expect(sqls).toContain('UPDATE reader_sessions SET revoked_at');
     });
   });
 
