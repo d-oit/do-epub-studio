@@ -56,6 +56,11 @@ export function AdminRecoverPage() {
     }
   };
 
+  const handleNavigate = (path: string): void => {
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    navigate(path);
+  };
+
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -70,7 +75,7 @@ export function AdminRecoverPage() {
         },
       );
       setAdminAuth({ sessionToken: data.sessionToken, email: data.email });
-      void navigate('/admin/books');
+      handleNavigate('/admin/books');
     } catch (err) {
       setError((err as Error).message || t('admin.recover.verifyFailed'));
     } finally {
@@ -146,7 +151,7 @@ export function AdminRecoverPage() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => { void navigate('/admin/login'); }}
+              onClick={() => { handleNavigate('/admin/login'); }}
               className="text-sm text-foreground-muted hover:text-foreground underline decoration-accent/30 hover:decoration-accent focus-visible:ring-2 focus-visible:ring-accent"
             >
               {t('admin.recover.backToLogin')}
