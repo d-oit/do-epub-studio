@@ -232,7 +232,7 @@ describe('Admin Routes', () => {
 
       const res = await app.fetch(new Request('http://localhost/api/admin/grants/grant-1', {
         method: 'PATCH',
-        body: JSON.stringify({ mode: 'read-only', commentsAllowed: false }),
+        body: JSON.stringify({ mode: 'reader_only', commentsAllowed: false }),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer admin-token'
