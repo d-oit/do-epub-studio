@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage, type StateStorage } from 'zustand/middleware';
+import type { ReaderSpread, ReaderZoom } from './reader';
 
 export type Theme = 'light' | 'dark' | 'sepia' | 'system';
 export type FontFamily = 'serif' | 'sans-serif' | 'monospace';
@@ -15,6 +16,8 @@ interface ReaderPreferences {
   pageWidth: 'narrow' | 'normal' | 'wide' | 'full';
   direction: PageDirection;
   writingMode: WritingMode;
+  fixedLayoutZoom: ReaderZoom;
+  fixedLayoutSpread: ReaderSpread;
 }
 
 interface PreferencesState {
@@ -26,6 +29,8 @@ interface PreferencesState {
   setPageWidth: (pageWidth: 'narrow' | 'normal' | 'wide' | 'full') => void;
   setDirection: (direction: PageDirection) => void;
   setWritingMode: (writingMode: WritingMode) => void;
+  setFixedLayoutZoom: (zoom: ReaderZoom) => void;
+  setFixedLayoutSpread: (spread: ReaderSpread) => void;
 }
 
 const FONT_SIZES: Record<FontSize, string> = {
@@ -74,6 +79,8 @@ export const usePreferencesStore = create<PreferencesState>()(
         pageWidth: 'normal',
         direction: 'default',
         writingMode: 'horizontal-tb',
+        fixedLayoutZoom: 1.0,
+        fixedLayoutSpread: 'auto',
       },
       setTheme: (theme) => {
         if (get().reader.theme === theme) return;
@@ -102,6 +109,14 @@ export const usePreferencesStore = create<PreferencesState>()(
       setWritingMode: (writingMode) => set((state) => {
         if (state.reader.writingMode === writingMode) return state;
         return { reader: { ...state.reader, writingMode } };
+      }),
+      setFixedLayoutZoom: (fixedLayoutZoom) => set((state) => {
+        if (state.reader.fixedLayoutZoom === fixedLayoutZoom) return state;
+        return { reader: { ...state.reader, fixedLayoutZoom } };
+      }),
+      setFixedLayoutSpread: (fixedLayoutSpread) => set((state) => {
+        if (state.reader.fixedLayoutSpread === fixedLayoutSpread) return state;
+        return { reader: { ...state.reader, fixedLayoutSpread } };
       }),
     }),
     {

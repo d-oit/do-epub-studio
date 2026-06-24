@@ -78,14 +78,15 @@ export function useReaderEpub(
   const setProgress = useReaderStore((s) => s.setProgress);
   const setBookDirection = useReaderStore((s) => s.setBookDirection);
   const setIsFixedLayout = useReaderStore((s) => s.setIsFixedLayout);
-  const readerSpread = useReaderStore((s) => s.readerSpread);
-  const readerZoom = useReaderStore((s) => s.readerZoom);
   const readerTheme = usePreferencesStore((s) => s.reader.theme);
   const readerFontSize = usePreferencesStore((s) => s.reader.fontSize);
   const readerFontFamily = usePreferencesStore((s) => s.reader.fontFamily);
   const readerLineHeight = usePreferencesStore((s) => s.reader.lineHeight);
   const readerDirection = usePreferencesStore((s) => s.reader.direction);
   const readerWritingMode = usePreferencesStore((s) => s.reader.writingMode);
+  const readerZoom = usePreferencesStore((s) => s.reader.fixedLayoutZoom);
+  const readerSpread = usePreferencesStore((s) => s.reader.fixedLayoutSpread);
+  const setReaderZoom = usePreferencesStore((s) => s.setFixedLayoutZoom);
   const { t } = useTranslation();
 
   const bookRef = useRef<Book | null>(null);
@@ -252,6 +253,11 @@ export function useReaderEpub(
         rendition.hooks.content.register(createEpubSanitizerHook());
 
         if (fixedLayout) {
+          // Track pinch state to update zoom
+          let initialDist = 0;
+          let initialZoom = 1.0;
+          let isPinching = false;
+
           if (fixedLayoutViewport) {
             const viewportValue = fixedLayoutViewport;
             rendition.hooks.content.register((contents: Contents) => {
@@ -271,6 +277,69 @@ export function useReaderEpub(
             const doc = contents.document;
             if (doc?.documentElement) {
               doc.documentElement.style.setProperty('overflow', 'hidden', 'important');
+
+              // Pinch-to-zoom listeners: optimize for performance by updating
+              // local CSS during the gesture and committing to the store only
+              // on touchend.
+              let currentGestureZoom = zoomRef.current;
+
+              doc.documentElement.addEventListener(
+                'touchstart',
+                (e: TouchEvent) => {
+                  if (e.touches.length === 2) {
+                    isPinching = true;
+                    initialDist = Math.hypot(
+                      e.touches[0].pageX - e.touches[1].pageX,
+                      e.touches[0].pageY - e.touches[1].pageY,
+                    );
+                    initialZoom = zoomRef.current;
+                    currentGestureZoom = initialZoom;
+
+                    // Disable transition for instantaneous feedback
+                    doc.documentElement.style.setProperty('transition', 'none', 'important');
+                  }
+                },
+                { passive: true },
+              );
+
+              doc.documentElement.addEventListener(
+                'touchmove',
+                (e: TouchEvent) => {
+                  if (isPinching && e.touches.length === 2) {
+                    const dist = Math.hypot(
+                      e.touches[0].pageX - e.touches[1].pageX,
+                      e.touches[0].pageY - e.touches[1].pageY,
+                    );
+                    if (initialDist > 0) {
+                      const scale = dist / initialDist;
+                      const nextZoom = Math.min(2.0, Math.max(0.5, initialZoom * scale));
+                      currentGestureZoom = nextZoom;
+
+                      // Apply local scale immediately for 60fps performance
+                      doc.documentElement.style.setProperty(
+                        'transform',
+                        `scale(${nextZoom.toFixed(2)})`,
+                        'important',
+                      );
+                      doc.documentElement.style.setProperty('transform-origin', 'top center', 'important');
+                    }
+                  }
+                },
+                { passive: true },
+              );
+
+              doc.documentElement.addEventListener(
+                'touchend',
+                () => {
+                  if (isPinching) {
+                    isPinching = false;
+                    // Restore transition and commit final zoom to persistent store
+                    doc.documentElement.style.removeProperty('transition');
+                    setReaderZoom(currentGestureZoom);
+                  }
+                },
+                { passive: true },
+              );
             }
           });
           // Apply the user-chosen zoom to every fresh content document.
