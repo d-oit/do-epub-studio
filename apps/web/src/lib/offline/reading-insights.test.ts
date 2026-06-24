@@ -22,11 +22,54 @@ describe('ReadingTimer', () => {
     timer.destroy();
   });
 
-  it('flush saves active minutes', async () => {
+  it('flush saves active minutes and pages', async () => {
     const timer = new ReadingTimer('book-123');
     timer.markLoaded();
 
     vi.advanceTimersByTime(61000);
+    timer.markPageRead();
+
+    await timer.flush();
+    timer.destroy();
+  });
+
+  it('pauses on idle', async () => {
+    const timer = new ReadingTimer('book-123');
+    timer.markLoaded();
+
+    // Move time forward by 4 minutes
+    vi.advanceTimersByTime(4 * 60 * 1000);
+
+    // Idle after 5 minutes
+    vi.advanceTimersByTime(1.1 * 60 * 1000);
+
+    // Should have 5 minutes tracked, but then paused
+    vi.advanceTimersByTime(5 * 60 * 1000);
+
+    await timer.flush();
+    timer.destroy();
+  });
+
+  it('resumes on activity', async () => {
+    const timer = new ReadingTimer('book-123');
+    timer.markLoaded();
+
+    vi.advanceTimersByTime(6 * 60 * 1000); // Become idle
+    window.dispatchEvent(new MouseEvent('mousemove')); // Resume
+
+    vi.advanceTimersByTime(60 * 1000);
+
+    await timer.flush();
+    timer.destroy();
+  });
+
+  it('pauses on blur', async () => {
+    const timer = new ReadingTimer('book-123');
+    timer.markLoaded();
+
+    vi.advanceTimersByTime(30 * 1000);
+    window.dispatchEvent(new Event('blur'));
+    vi.advanceTimersByTime(60 * 1000);
 
     await timer.flush();
     timer.destroy();

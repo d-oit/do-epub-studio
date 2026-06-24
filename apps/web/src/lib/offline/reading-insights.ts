@@ -15,12 +15,13 @@ function todayKey(): string {
 export class ReadingTimer {
   private bookId: string;
   private activeSeconds = 0;
+  private activePages = 0;
   private lastTick: number | null = null;
   private idleTimer: ReturnType<typeof setTimeout> | null = null;
   private pollTimer: ReturnType<typeof setInterval> | null = null;
   private isIdle = false;
-  private isVisible = true;
-  private isFocused = true;
+  private isVisible = typeof document !== 'undefined' ? document.visibilityState === 'visible' : true;
+  private isFocused = typeof document !== 'undefined' ? document.hasFocus() : true;
   private isLoaded = false;
 
   constructor(bookId: string) {
@@ -34,6 +35,11 @@ export class ReadingTimer {
     document.addEventListener('visibilitychange', this.onVisibilityChange);
     window.addEventListener('focus', this.onFocus);
     window.addEventListener('blur', this.onBlur);
+
+    const activityEvents = ['mousemove', 'keydown', 'touchstart', 'scroll'];
+    for (const event of activityEvents) {
+      window.addEventListener(event, this.onActivity, { passive: true });
+    }
   }
 
   private unbindEvents(): void {
@@ -42,6 +48,11 @@ export class ReadingTimer {
     document.removeEventListener('visibilitychange', this.onVisibilityChange);
     window.removeEventListener('focus', this.onFocus);
     window.removeEventListener('blur', this.onBlur);
+
+    const activityEvents = ['mousemove', 'keydown', 'touchstart', 'scroll'];
+    for (const event of activityEvents) {
+      window.removeEventListener(event, this.onActivity);
+    }
   }
 
   private onVisibilityChange = (): void => {
@@ -59,9 +70,23 @@ export class ReadingTimer {
     this.updateActiveState();
   };
 
+  private onActivity = (): void => {
+    if (this.isIdle) {
+      this.isIdle = false;
+      this.updateActiveState();
+    }
+    this.resetIdleTimer();
+  };
+
   markLoaded(): void {
     this.isLoaded = true;
     this.updateActiveState();
+  }
+
+  markPageRead(): void {
+    if (this.isActive()) {
+      this.activePages++;
+    }
   }
 
   private updateActiveState(): void {
@@ -86,7 +111,6 @@ export class ReadingTimer {
     if (this.pollTimer) return;
     this.pollTimer = setInterval(() => {
       this.flushTick();
-      this.resetIdleTimer();
     }, POLL_INTERVAL_MS);
   }
 
@@ -97,9 +121,10 @@ export class ReadingTimer {
 
   private flushTick(): void {
     if (this.lastTick === null) return;
-    const elapsed = Math.floor((Date.now() - this.lastTick) / 1000);
-    this.activeSeconds += elapsed;
-    this.lastTick = Date.now();
+    const now = Date.now();
+    const elapsedSeconds = (now - this.lastTick) / 1000;
+    this.activeSeconds += elapsedSeconds;
+    this.lastTick = now;
   }
 
   private resetIdleTimer(): void {
@@ -128,21 +153,26 @@ export class ReadingTimer {
 
   async flush(): Promise<void> {
     this.flushTick();
-    const activeMinutes = Math.round(this.activeSeconds / 60);
-    if (activeMinutes <= 0) return;
+    const fullMinutes = Math.floor(this.activeSeconds / 60);
+    const pagesToSave = this.activePages;
+
+    if (fullMinutes <= 0 && pagesToSave <= 0) return;
 
     const date = todayKey();
     const existing = await getReadingInsight(this.bookId, date);
-    const totalMinutes = (existing?.activeMinutes ?? 0) + activeMinutes;
+    const totalMinutes = (existing?.activeMinutes ?? 0) + fullMinutes;
+    const totalPages = (existing?.activePages ?? 0) + pagesToSave;
 
     await saveReadingInsight({
       bookId: this.bookId,
       date,
       activeMinutes: totalMinutes,
+      activePages: totalPages,
       lastUpdated: Date.now(),
     });
 
-    this.activeSeconds = 0;
+    this.activeSeconds -= fullMinutes * 60;
+    this.activePages = 0;
   }
 
   destroy(): void {
@@ -156,14 +186,16 @@ export async function computeInsightSummary(
   progressPercent: number,
 ): Promise<{
   totalActiveMinutes: number;
+  totalActivePages: number;
   estimatedMinutesRemaining: number | null;
   currentStreakDays: number;
-  recentActivity: { date: string; activeMinutes: number }[];
+  recentActivity: { date: string; activeMinutes: number; activePages: number }[];
 }> {
   const entries = await getReadingInsightsForBook(bookId);
   const sorted = entries.sort((a, b) => a.date.localeCompare(b.date));
 
   const totalActiveMinutes = sorted.reduce((sum, e) => sum + e.activeMinutes, 0);
+  const totalActivePages = sorted.reduce((sum, e) => sum + (e.activePages ?? 0), 0);
 
   let estimatedMinutesRemaining: number | null = null;
   if (progressPercent > 0 && progressPercent < 100 && totalActiveMinutes > 0) {
@@ -176,10 +208,12 @@ export async function computeInsightSummary(
   const recentActivity = sorted.slice(-7).map((e) => ({
     date: e.date,
     activeMinutes: e.activeMinutes,
+    activePages: e.activePages ?? 0,
   }));
 
   return {
     totalActiveMinutes,
+    totalActivePages,
     estimatedMinutesRemaining,
     currentStreakDays,
     recentActivity,

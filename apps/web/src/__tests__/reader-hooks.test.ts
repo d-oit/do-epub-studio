@@ -48,6 +48,7 @@ describe('createRelocatedHandler', () => {
     const setProgress = vi.fn();
     const setCurrentChapter = vi.fn();
     const onChapterChange = vi.fn();
+    const markPageRead = vi.fn();
     const currentChapterRef = { current: null };
 
     const handler = createRelocatedHandler(
@@ -58,6 +59,7 @@ describe('createRelocatedHandler', () => {
       [{ href: 'ch1.xhtml' }],
       currentChapterRef,
       onChapterChange,
+      markPageRead,
     );
 
     expect(typeof handler).toBe('function');
@@ -67,6 +69,7 @@ describe('createRelocatedHandler', () => {
     const setProgress = vi.fn();
     const setCurrentChapter = vi.fn();
     const onChapterChange = vi.fn();
+    const markPageRead = vi.fn();
     const currentChapterRef = { current: null };
 
     const handler = createRelocatedHandler(
@@ -77,6 +80,7 @@ describe('createRelocatedHandler', () => {
       [{ href: 'ch1.xhtml' }],
       currentChapterRef,
       onChapterChange,
+      markPageRead,
     );
 
     Object.defineProperty(navigator, 'onLine', { value: true, writable: true });
@@ -92,6 +96,7 @@ describe('createRelocatedHandler', () => {
     const setProgress = vi.fn();
     const setCurrentChapter = vi.fn();
     const onChapterChange = vi.fn();
+    const markPageRead = vi.fn();
     const currentChapterRef = { current: null };
 
     const handler = createRelocatedHandler(
@@ -102,6 +107,7 @@ describe('createRelocatedHandler', () => {
       [{ href: 'ch1.xhtml' }],
       currentChapterRef,
       onChapterChange,
+      markPageRead,
     );
 
     Object.defineProperty(navigator, 'onLine', { value: false, writable: true });
@@ -117,6 +123,7 @@ describe('createRelocatedHandler', () => {
     const setProgress = vi.fn();
     const setCurrentChapter = vi.fn();
     const onChapterChange = vi.fn();
+    const markPageRead = vi.fn();
     const currentChapterRef = { current: null };
 
     const handler = createRelocatedHandler(
@@ -127,6 +134,7 @@ describe('createRelocatedHandler', () => {
       [{ href: 'ch1.xhtml' }],
       currentChapterRef,
       onChapterChange,
+      markPageRead,
     );
 
     Object.defineProperty(navigator, 'onLine', { value: true, writable: true });
@@ -140,6 +148,7 @@ describe('createRelocatedHandler', () => {
     const setProgress = vi.fn();
     const setCurrentChapter = vi.fn();
     const onChapterChange = vi.fn();
+    const markPageRead = vi.fn();
     const currentChapterRef = { current: null };
 
     const handler = createRelocatedHandler(
@@ -150,6 +159,7 @@ describe('createRelocatedHandler', () => {
       [{ href: 'ch1.xhtml' }, { href: 'ch2.xhtml' }],
       currentChapterRef,
       onChapterChange,
+      markPageRead,
     );
 
     Object.defineProperty(navigator, 'onLine', { value: true, writable: true });

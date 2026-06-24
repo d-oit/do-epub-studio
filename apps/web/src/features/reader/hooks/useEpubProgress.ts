@@ -16,6 +16,7 @@ export function createRelocatedHandler(
   tocItems: { href: string }[],
   currentChapterRef: MutableRefObject<string | null>,
   onChapterChange: () => void,
+  markPageRead: () => void,
 ) {
   return async (location: { start: { cfi: string; progress: number; href: string } }) => {
     const { cfi, progress: progressPercent, href } = location.start;
@@ -28,6 +29,7 @@ export function createRelocatedHandler(
     }
 
     onChapterChange();
+    markPageRead();
 
     const mutationId = generateMutationId();
     const queueOffline = async () => {

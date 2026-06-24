@@ -15,6 +15,10 @@ engines:
       - "packages/**"
   biome:
     enabled: false
+  tsqlint:
+    enabled: false
+  tsql:
+    enabled: false
 exclude_paths:
   - "coverage/**"
   - "dist/**"
@@ -22,3 +26,4 @@ exclude_paths:
   - ".turbo/**"
   - "playwright-report/**"
   - "test-results/**"
+  - "**/*.sql"

@@ -16,6 +16,7 @@ interface InsightRow {
   user_email: string;
   bucket_date: string;
   active_minutes: number;
+  active_pages: number;
   updated_at: string;
 }
 
@@ -33,6 +34,7 @@ insightsRouter.get('/:bookId/insights', readerAuth, async (c) => {
   );
 
   const totalActiveMinutes = rows.reduce((sum, r) => sum + r.active_minutes, 0);
+  const totalActivePages = rows.reduce((sum, r) => sum + r.active_pages, 0);
 
   const currentStreakDays = computeStreak(rows.map((r) => r.bucket_date));
 
@@ -42,19 +44,21 @@ insightsRouter.get('/:bookId/insights', readerAuth, async (c) => {
     .map((r) => ({
       date: r.bucket_date,
       activeMinutes: r.active_minutes,
+      activePages: r.active_pages,
     }));
 
   return c.json({
     ok: true,
     data: {
       totalActiveMinutes,
+      totalActivePages,
       currentStreakDays,
       recentActivity,
     },
   });
 });
 
-insightsRouter.post('/:bookId/insights/sync', zValidator('json', ReadingInsightSyncSchema), readerAuth, async (c) => {
+insightsRouter.post('/:bookId/insights/sync', readerAuth, zValidator('json', ReadingInsightSyncSchema), async (c) => {
   const bookId = c.req.param('bookId');
   const auth = c.get('auth');
   const body = c.req.valid('json');
@@ -73,12 +77,13 @@ insightsRouter.post('/:bookId/insights/sync', zValidator('json', ReadingInsightS
 
       await execute(
         c.env,
-        `INSERT INTO reading_insights (id, book_id, user_email, bucket_date, active_minutes, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?)
+        `INSERT INTO reading_insights (id, book_id, user_email, bucket_date, active_minutes, active_pages, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
          ON CONFLICT(book_id, user_email, bucket_date) DO UPDATE SET
            active_minutes = MAX(reading_insights.active_minutes, excluded.active_minutes),
+           active_pages = MAX(reading_insights.active_pages, excluded.active_pages),
            updated_at = excluded.updated_at`,
-        [id, bookId, auth.email, bucket.date, bucket.activeMinutes, now, now],
+        [id, bookId, auth.email, bucket.date, bucket.activeMinutes, bucket.activePages, now, now],
       );
     }
 

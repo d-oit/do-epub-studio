@@ -13,9 +13,10 @@ interface BookInfo {
 
 interface InsightSummary {
   totalActiveMinutes: number;
+  totalActivePages: number;
   estimatedMinutesRemaining: number | null;
   currentStreakDays: number;
-  recentActivity: { date: string; activeMinutes: number }[];
+  recentActivity: { date: string; activeMinutes: number; activePages: number }[];
 }
 
 interface InfoPanelProps {
@@ -247,18 +248,28 @@ export function InfoPanel({ isOpen, onClose, metadata, bookId, progressPercent, 
               </section>
             )}
 
-            {insights && insights.totalActiveMinutes > 0 && (
+            {insights && (insights.totalActiveMinutes > 0 || insights.totalActivePages > 0) && (
               <section>
                 <h3 className="text-xs font-semibold text-foreground-muted uppercase tracking-wider mb-2">
                   {t('reader.readingInsights')}
                 </h3>
                 <dl className="space-y-2">
-                  <div>
-                    <dt className="text-xs text-foreground-muted">{t('reader.totalActiveTime')}</dt>
-                    <dd className="text-sm text-foreground">
-                      {formatMinutes(insights.totalActiveMinutes)}
-                    </dd>
-                  </div>
+                  {insights.totalActiveMinutes > 0 && (
+                    <div>
+                      <dt className="text-xs text-foreground-muted">{t('reader.totalActiveTime')}</dt>
+                      <dd className="text-sm text-foreground">
+                        {formatMinutes(insights.totalActiveMinutes)}
+                      </dd>
+                    </div>
+                  )}
+                  {insights.totalActivePages > 0 && (
+                    <div>
+                      <dt className="text-xs text-foreground-muted">{t('reader.pagesRead')}</dt>
+                      <dd className="text-sm text-foreground">
+                        {insights.totalActivePages}
+                      </dd>
+                    </div>
+                  )}
                   {insights.estimatedMinutesRemaining !== null && (
                     <div>
                       <dt className="text-xs text-foreground-muted">{t('reader.estimatedRemaining')}</dt>
@@ -278,8 +289,17 @@ export function InfoPanel({ isOpen, onClose, metadata, bookId, progressPercent, 
                   {insights.recentActivity.length > 0 && (
                     <div>
                       <dt className="text-xs text-foreground-muted">{t('reader.recentActivity')}</dt>
-                      <dd className="text-sm text-foreground">
-                        {insights.recentActivity.map((a) => `${a.date}: ${formatMinutes(a.activeMinutes)}`).join(', ')}
+                      <dd className="text-foreground text-xs leading-tight">
+                        <ul className="space-y-1 mt-1">
+                          {[...insights.recentActivity].reverse().map((a) => (
+                            <li key={a.date} className="flex justify-between">
+                              <span>{a.date}</span>
+                              <span className="text-foreground-muted">
+                                {formatMinutes(a.activeMinutes)} • {a.activePages}p
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
                       </dd>
                     </div>
                   )}
