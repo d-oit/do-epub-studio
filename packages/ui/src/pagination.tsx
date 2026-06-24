@@ -38,10 +38,11 @@ export function Pagination({ currentPage, totalPages, onPageChange, className = 
       >
         ‹
       </button>
-      {pages.map((p, i) =>
-        p === 'ellipsis' ? (
-          <span key={`e-${i}`} className="px-2 text-foreground-muted" aria-hidden="true">…</span>
-        ) : (
+      {pages.map((p, idx) => {
+        if (p === 'ellipsis') {
+          return <span key={`e-${pages.length}-${idx}`} className="px-2 text-foreground-muted" aria-hidden="true">…</span>;
+        }
+        return (
           <button
             key={p}
             type="button"
@@ -52,8 +53,8 @@ export function Pagination({ currentPage, totalPages, onPageChange, className = 
           >
             {p}
           </button>
-        ),
-      )}
+        );
+      })}
       <button
         type="button"
         className={`${baseBtn} ${ghostBtn} disabled:opacity-50`}

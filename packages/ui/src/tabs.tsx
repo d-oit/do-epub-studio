@@ -1,3 +1,4 @@
+/* biome-ignore-all lint/correctness/useQwikValidLexicalScope: this package uses React, not Qwik */
 import { useState } from 'react';
 
 export interface TabItem {
@@ -14,7 +15,9 @@ export interface TabsProps {
 }
 
 export function Tabs({ items, defaultActiveId, onChange, className = '' }: TabsProps) {
-  const [active, setActive] = useState(defaultActiveId ?? items[0]?.id ?? '');
+  const firstId = items[0]?.id;
+  const initialId = defaultActiveId ?? firstId ?? '';
+  const [active, setActive] = useState(initialId);
   const activeItem = items.find((i) => i.id === active);
 
   const handleSelect = (id: string) => {
