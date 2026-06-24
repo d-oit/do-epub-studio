@@ -40,16 +40,35 @@ Purpose: Deliver premium, intentional, localized, accessible reader/admin UX for
 | Design Tokens Detail  | `references/design-tokens.md`         |
 | Regression Prevention | `references/regression-prevention.md` |
 
+## Impeccable Commands (design vocabulary)
+
+Use Impeccable for all UI work. Project tokens (`globals.css`) are authoritative.
+
+| Command | When |
+|---------|------|
+| `/impeccable craft <Comp>` | New component: shape → build → iterate |
+| `/impeccable audit <area>` | Technical quality: a11y, performance, responsive |
+| `/impeccable polish <area>` | Final pass before shipping |
+| `/impeccable critique <area>` | UX review: hierarchy, clarity, emotion |
+| `/impeccable shape <area>` | Plan UX/UI before writing code |
+| `/impeccable harden <area>` | Error handling, i18n, text overflow |
+| `/impeccable adapt <area>` | Responsive/device adaptation |
+| `/impeccable optimize <area>` | Performance improvements |
+
+CI: `npx impeccable detect --json .` runs in quality gate. See `DESIGN.md` for anti-patterns.
+
 ## Workflow
 
 1. **Define experience** – viewport-specific layout + theme rules
 2. **Tokenize** – use semantic tokens (OKLCH) from design system
-3. **Animate** – purposeful micro-interactions with Framer Motion + View Transitions
-4. **Localize** – add strings to `en/de/fr` catalogs
-5. **Accessibility** – keyboard, ARIA, reduced motion
-6. **State** – Zustand selectors, handle mutual exclusivity
-7. **Observability** – log key UI actions with trace IDs
-8. **Test** – Vitest/RTL + Playwright coverage
+3. **Shape** – `/impeccable shape` to plan UX/UI
+4. **Animate** – purposeful micro-interactions with Framer Motion + View Transitions
+5. **Localize** – add strings to `en/de/fr` catalogs
+6. **Accessibility** – keyboard, ARIA, reduced motion
+7. **State** – Zustand selectors, handle mutual exclusivity
+8. **Audit** – `/impeccable audit` before merge
+9. **Test** – Vitest/RTL + Playwright coverage
+10. **Polish** – `/impeccable polish` final pass
 
 ## Checklist
 

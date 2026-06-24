@@ -146,10 +146,22 @@ Using 🚀 💡 ✨ ⚡ 🔥 as substitutes for meaning.
 | Progress bar with percentage only | Should show chapter location |
 | Settings hidden in hamburger menu | Accessibility fail on desktop |
 
+## Backbone: Impeccable Deterministic Rules
+
+This skill provides LLM critique and project-specific anti-references. For machine-checkable detection:
+
+- **CLI:** `npx impeccable detect --json .` — 44 deterministic rules (no LLM needed)
+- **CI:** Runs in `./scripts/quality_gate.sh` (respects `SKIP_DESIGN=1`)
+- **Commands:** `/impeccable audit`, `/impeccable critique` for deeper review
+- **Config:** `.impeccable/config.json` — `ignoreValues` for project-specific overrides
+
+Impeccable catches: side-tab borders, purple gradients, bounce easing, dark glows, overused fonts, nested cards, gray-on-color, small touch targets, cramped padding, line length, skipped headings.
+
 ## Integration
 
 - **code-review-assistant**: Use in PR reviews
 - **reader-ui-ux**: Apply to EPUB reader
+- **impeccable**: Deterministic backbone (this skill = LLM judgment)
 
 ## Quality Checklist
 

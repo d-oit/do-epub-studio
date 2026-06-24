@@ -89,3 +89,7 @@ Use named constants instead of bare numbers like `30000`.
 - Ignore compiler warnings
 - Skip error handling
 - Mix abstraction levels
+
+## Impeccable (UI files only)
+
+For UI component files, `npx impeccable detect` runs deterministic design quality checks (44 rules). This is separate from code quality — it catches design anti-patterns, not code smells. See `DESIGN.md` for project design language.

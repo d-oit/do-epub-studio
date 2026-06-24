@@ -88,7 +88,21 @@ npx @axe-core/cli https://example.com
 
 # pa11y
 npx pa11y https://example.com
+
+# Impeccable design detector (44 rules, no LLM)
+npx impeccable detect --json .
 ```
+
+### Pre-Audit Pass
+
+Run `npx impeccable detect` before manual audit. It catches:
+- Small touch targets (< 44px)
+- Skipped heading levels
+- Cramped padding
+- Line length issues
+- Gray-on-color text
+
+Then proceed with axe-core + manual keyboard/screen reader testing.
 
 ## Common Issues & Fixes
 

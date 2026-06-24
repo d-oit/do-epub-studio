@@ -229,6 +229,16 @@ Always cross-reference with Cloud CLI for full PR data.
       enforces (Codacy does not read the local ESLint config — it
       runs its own).
 
+## Impeccable vs Codacy
+
+| Check | Tool | Scope |
+|-------|------|-------|
+| Code quality / security | Codacy (required) | All source files |
+| Design quality (UI) | Impeccable (warning → required) | UI components |
+| Accessibility | axe-core + Impeccable pre-audit | UI components |
+
+Codacy is the **required** static-analysis check. Impeccable is a **UI-only** deterministic check for design anti-patterns. Both run in CI; Codacy blocks merge, Impeccable warns (promoted to required after first sprint).
+
 ## References
 
 - `references/output-format.md` - JSON schema for PR analysis
@@ -237,3 +247,4 @@ Always cross-reference with Cloud CLI for full PR data.
 - `.agents/skills/security-code-auditor/SKILL.md` — broader security
   patterns and the `safe-regex` / OWASP mappings used by Codacy.
 - `AGENTS.md` Tier 1 — required checks and pre-existing-issue policy.
+- `.impeccable/config.json` — Impeccable detector config.
