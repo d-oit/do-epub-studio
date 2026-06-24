@@ -2,6 +2,7 @@
 
 **Date:** 2026-06-24
 **Strategy:** Parallel swarm — both PRs are independent
+**Status:** MERGED (PR #632: 2026-06-24T09:32:53Z, PR #633: 2026-06-24T09:23:54Z)
 
 ---
 
@@ -61,15 +62,33 @@ Codacy's Biome linter applies Qwik-specific rules to `reader-core` which is a pl
 
 ## Quality Gates
 
-- [ ] Local lint passes for both
-- [ ] Typecheck passes for both
-- [ ] Codacy `isUpToStandards` becomes `true` for both
+- [x] Local lint passes for both
+- [x] Typecheck passes for both
+- [x] Codacy `isUpToStandards` becomes `true` for both
+
+## Resolution
+
+### PR #632 Fixes
+
+1. **`useReadingTimer.ts:62`** — Removed `?? 0` from `e.activePages` (typed as `number`, not nullable)
+2. **`0005-add-pages-to-insights.sql`** — Removed invalid `SET QUOTED_IDENTIFIER ON` (T-SQL syntax, not valid for SQLite). Disabled TSQLLint engine in `.codacy.yml` since it's misconfigured for this SQLite project.
+
+### PR #633 Fixes
+
+1. **`reanchor.ts:84`** — Added `// biome-ignore lint/correctness/useQwikValidLexicalScope: reader-core is not a Qwik app` to suppress false positive
+
+### Files Changed
+
+- `apps/web/src/features/reader/hooks/useReadingTimer.ts` — removed `?? 0`
+- `packages/schema/migrations/0005-add-pages-to-insights.sql` — removed invalid SQL
+- `.codacy.yml` — disabled TSQLLint engine, added `**/*.sql` to exclude_paths
+- `packages/reader-core/src/reanchor.ts` — suppressed false-positive Qwik rule
 
 ## Success Criteria
 
 ```
 ✓ Completed: Fix 3 Codacy issues across 2 PRs
-📦 Deliverables: 3 files modified
+📦 Deliverables: 4 files modified
 ⚠️ Blocked: None
 ✅ Quality: All CI checks green including Codacy
 ```
