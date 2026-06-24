@@ -131,18 +131,18 @@ Run this before finalizing ANY response:
 
 ```bash
 # Quality gates
-./scripts/quality_gate.sh          # Full gate (lint + typecheck + test)
-./scripts/minimal_quality_gate.sh  # Fast gate (lint + typecheck only)
-./scripts/health-check.sh          # Dev environment check
+./scripts/quality_gate.sh              # Full gate (lint + typecheck + test + design)
+SKIP_DESIGN=1 ./scripts/quality_gate.sh  # Skip impeccable detector
+IMPECCABLE_REQUIRED=1 ./scripts/quality_gate.sh  # Design gate blocks on findings
+./scripts/minimal_quality_gate.sh      # Fast gate (lint + typecheck only)
+./scripts/health-check.sh              # Dev environment check
 
 # Commit workflow
 ./scripts/atomic-commit/run.sh --message "type(scope): description"
-./scripts/atomic-commit/run.sh --dry-run
 ./scripts/validate-commit-message.sh <file>  # Validate commit message
 
 # Skills
 skill learn                         # Capture discoveries
-skill <skill-name>                  # Load specific skill
 ```
 
 ---

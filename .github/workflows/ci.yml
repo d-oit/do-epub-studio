@@ -43,6 +43,7 @@ jobs:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
         with:
           persist-credentials: false
+          submodules: recursive
       - id: filter
         uses: dorny/paths-filter@f3ceefdc7ef57bc2d8560787d4b6c33e44044cec  # master @ 2026-06-07 (v3.0.2 release commit is unreachable in the Actions registry; pinning to master HEAD for now)
         with:
@@ -96,6 +97,7 @@ jobs:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
         with:
           persist-credentials: false
+          submodules: recursive
       - uses: ./.github/actions/setup-pnpm
         id: setup-pnpm
 
@@ -128,6 +130,7 @@ jobs:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
         with:
           persist-credentials: false
+          submodules: recursive
       - uses: ./.github/actions/setup-pnpm
 
       - name: pnpm audit
@@ -145,6 +148,7 @@ jobs:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
         with:
           persist-credentials: false
+          submodules: recursive
       - uses: ./.github/actions/setup-pnpm
       - name: Check CodeQL alerts
         env:
@@ -169,6 +173,7 @@ jobs:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
         with:
           persist-credentials: false
+          submodules: recursive
       - name: Apply path-based labels
         uses: actions/labeler@f27b608878404679385c85cfa523b85ccb86e213  # v6.1.0
         with:
@@ -185,6 +190,7 @@ jobs:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
         with:
           persist-credentials: false
+          submodules: recursive
       - uses: ./.github/actions/setup-pnpm
 
       - name: Install pre-commit
@@ -204,6 +210,7 @@ jobs:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
         with:
           persist-credentials: false
+          submodules: recursive
       - uses: ./.github/actions/setup-pnpm
 
       - name: Lint
@@ -244,6 +251,7 @@ jobs:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
         with:
           persist-credentials: false
+          submodules: recursive
       - uses: ./.github/actions/setup-pnpm
 
       - name: Typecheck
@@ -258,6 +266,7 @@ jobs:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
         with:
           persist-credentials: false
+          submodules: recursive
       - uses: ./.github/actions/setup-pnpm
 
       - name: Run unit tests for scripts
@@ -291,6 +300,7 @@ jobs:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
         with:
           persist-credentials: false
+          submodules: recursive
           fetch-depth: 0
       - uses: ./.github/actions/setup-pnpm
 
@@ -367,6 +377,7 @@ jobs:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
         with:
           persist-credentials: false
+          submodules: recursive
       - uses: ./.github/actions/setup-pnpm
 
       - name: Install Playwright browsers
@@ -424,6 +435,7 @@ jobs:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
         with:
           persist-credentials: false
+          submodules: recursive
       - uses: ./.github/actions/setup-pnpm
 
       - name: Install Playwright browsers
@@ -476,6 +488,7 @@ jobs:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
         with:
           persist-credentials: false
+          submodules: recursive
           fetch-depth: 0
 
       - uses: ./.github/actions/setup-pnpm
@@ -533,6 +546,7 @@ jobs:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
         with:
           persist-credentials: false
+          submodules: recursive
 
       - name: Download all metrics
         uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806  # v4.1.9
