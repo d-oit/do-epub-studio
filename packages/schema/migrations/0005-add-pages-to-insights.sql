@@ -1,5 +1,3 @@
-SET QUOTED_IDENTIFIER ON;
-
 -- Migration: 0005-add-pages-to-insights
 -- Description: Add active_pages to reading_insights
 -- Created: 2026-06-20
