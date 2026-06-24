@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { useReaderStore, useAuthStore } from '../../../stores';
+import type { Highlight, Comment } from '../../../stores';
 import {
   createHighlight,
   createComment,
@@ -10,6 +11,7 @@ import {
 } from '../../../lib/api/annotations';
 import { saveAnnotation, queueSync, generateMutationId } from '../../../lib/offline';
 import type { SelectionData } from '../components/annotations';
+import { useOptimisticAnnotationStore } from './useOptimisticAnnotations';
 
 interface AnnotationHandlersReturn {
   handleCreateHighlight: (color: string, selection: SelectionData | null) => Promise<void>;
@@ -29,15 +31,31 @@ export function useAnnotationHandlers(): AnnotationHandlersReturn {
   const addHighlight = useReaderStore((s) => s.addHighlight);
   const updateHighlightInStore = useReaderStore((s) => s.updateHighlight);
   const removeHighlight = useReaderStore((s) => s.removeHighlight);
-
   const addComment = useReaderStore((s) => s.addComment);
   const updateCommentInStore = useReaderStore((s) => s.updateComment);
   const comments = useReaderStore(useShallow((s) => s.comments));
 
+  const {
+    addOptimisticHighlight,
+    addOptimisticComment,
+    removeOptimistic,
+  } = useOptimisticAnnotationStore();
+
   const handleCreateHighlight = useCallback(
     async (color: string, selection: SelectionData | null) => {
       if (!selection || !sessionToken || !bookId) return;
-
+      const tempId = `optimistic-hl-${Date.now()}`;
+      const placeholder: Highlight = {
+        id: tempId,
+        chapterRef: selection.chapterRef,
+        cfiRange: selection.cfiRange,
+        selectedText: selection.text,
+        note: null,
+        color,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      addOptimisticHighlight(placeholder);
       try {
         const mutationId = generateMutationId();
         const highlight = await createHighlight(
@@ -52,6 +70,7 @@ export function useAnnotationHandlers(): AnnotationHandlersReturn {
           },
           sessionToken,
         );
+        // Commit real highlight; useOptimistic will re-sync base state to the store.
         addHighlight(highlight);
 
         if (!navigator.onLine) {
@@ -69,16 +88,34 @@ export function useAnnotationHandlers(): AnnotationHandlersReturn {
           await queueSync('annotation', { bookId, annotation: highlight }, mutationId);
         }
       } catch (err) {
+        // Roll back the optimistic placeholder on error.
+        removeOptimistic(tempId, 'highlight');
         console.error('Failed to create highlight', err);
+        throw err;
       }
     },
-    [sessionToken, bookId, addHighlight],
+    [sessionToken, bookId, addHighlight, addOptimisticHighlight, removeOptimistic],
   );
 
   const handleCreateComment = useCallback(
     async (text: string, selection: SelectionData | null) => {
       if (!selection || !sessionToken || !bookId) return;
-
+      const tempId = `optimistic-cm-${Date.now()}`;
+      const placeholder: Comment = {
+        id: tempId,
+        userEmail: useAuthStore.getState().email ?? 'you',
+        chapterRef: selection.chapterRef,
+        cfiRange: selection.cfiRange,
+        selectedText: selection.text,
+        body: text,
+        status: 'open',
+        visibility: 'shared',
+        parentCommentId: null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        resolvedAt: null,
+      };
+      addOptimisticComment(placeholder);
       try {
         const comment = await createComment(
           bookId,
@@ -111,21 +148,20 @@ export function useAnnotationHandlers(): AnnotationHandlersReturn {
           await queueSync('annotation', { bookId, annotation: comment }, mutationId);
         }
       } catch (err) {
+        removeOptimistic(tempId, 'comment');
         console.error('Failed to create comment', err);
+        throw err;
       }
     },
-    [sessionToken, bookId, addComment],
+    [sessionToken, bookId, addComment, addOptimisticComment, removeOptimistic],
   );
 
   const handleResolveComment = useCallback(
     async (commentId: string) => {
       if (!sessionToken || !bookId) return;
-
       const comment = comments.find((c) => c.id === commentId);
       if (!comment) return;
-
       const newStatus = comment.status === 'resolved' ? 'open' : 'resolved';
-
       try {
         await updateComment(commentId, { status: newStatus }, sessionToken);
         updateCommentInStore(commentId, {
@@ -142,7 +178,23 @@ export function useAnnotationHandlers(): AnnotationHandlersReturn {
   const handleReplyToComment = useCallback(
     async (parentId: string, text: string) => {
       if (!sessionToken || !bookId) return;
-
+      const parent = comments.find((c) => c.id === parentId);
+      const tempId = `optimistic-reply-${Date.now()}`;
+      const placeholder: Comment = {
+        id: tempId,
+        userEmail: useAuthStore.getState().email ?? 'you',
+        chapterRef: parent?.chapterRef ?? null,
+        cfiRange: parent?.cfiRange ?? null,
+        selectedText: parent?.selectedText ?? null,
+        body: text,
+        status: 'open',
+        visibility: 'shared',
+        parentCommentId: parentId,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        resolvedAt: null,
+      };
+      addOptimisticComment(placeholder);
       try {
         const comment = await createComment(
           bookId,
@@ -151,16 +203,17 @@ export function useAnnotationHandlers(): AnnotationHandlersReturn {
         );
         addComment(comment);
       } catch (err) {
+        removeOptimistic(tempId, 'comment');
         console.error('Failed to reply to comment', err);
+        throw err;
       }
     },
-    [sessionToken, bookId, addComment],
+    [sessionToken, bookId, addComment, addOptimisticComment, removeOptimistic, comments],
   );
 
   const handleEditComment = useCallback(
     async (commentId: string, text: string) => {
       if (!sessionToken) return;
-
       try {
         await updateComment(commentId, { body: text }, sessionToken);
         updateCommentInStore(commentId, { body: text, updatedAt: new Date().toISOString() });
@@ -174,7 +227,6 @@ export function useAnnotationHandlers(): AnnotationHandlersReturn {
   const handleDeleteComment = useCallback(
     async (commentId: string) => {
       if (!sessionToken) return;
-
       try {
         await updateComment(commentId, { status: 'deleted' }, sessionToken);
         updateCommentInStore(commentId, { status: 'deleted' });
@@ -188,7 +240,6 @@ export function useAnnotationHandlers(): AnnotationHandlersReturn {
   const handleEditHighlight = useCallback(
     async (highlightId: string, note: string) => {
       if (!sessionToken || !bookId) return;
-
       try {
         await updateHighlight(bookId, highlightId, { note }, sessionToken);
         updateHighlightInStore(highlightId, { note, updatedAt: new Date().toISOString() });
@@ -202,7 +253,6 @@ export function useAnnotationHandlers(): AnnotationHandlersReturn {
   const handleDeleteHighlight = useCallback(
     async (highlightId: string) => {
       if (!sessionToken || !bookId) return;
-
       try {
         await deleteHighlight(bookId, highlightId, sessionToken);
         removeHighlight(highlightId);

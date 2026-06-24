@@ -1,14 +1,11 @@
-import { type ChangeEvent } from 'react';
+import { type ChangeEvent, type ReactNode } from 'react';
+import { useFormStatus } from 'react-dom';
 
 import { Button, Input, Modal } from '@do-epub-studio/ui';
 
 import { useTranslation } from '../../../hooks/useTranslation';
 import { GRANT_MODES } from './types';
 import type { Grant, GrantFormData } from './types';
-
-// ---------------------------------------------------------------------------
-// Props
-// ---------------------------------------------------------------------------
 
 interface GrantFormProps {
   isOpen: boolean;
@@ -17,13 +14,26 @@ interface GrantFormProps {
   formErrors: Record<string, string>;
   isSubmitting: boolean;
   onChange: (data: GrantFormData) => void;
-  onSubmit: () => void;
+  onSubmit: ((formData: FormData) => void) | (() => void);
   onClose: () => void;
 }
 
-// ---------------------------------------------------------------------------
-// Component
-// ---------------------------------------------------------------------------
+interface SubmitButtonProps {
+  isEdit: boolean;
+  children: ReactNode;
+}
+
+function SubmitButton({ isEdit, children }: SubmitButtonProps) {
+  const { t } = useTranslation();
+  const { pending } = useFormStatus();
+  return (
+    <Button type="submit" variant="primary" disabled={pending}>
+      {pending
+        ? t('grants.form.submitting')
+        : children ?? (isEdit ? t('grants.actions.save') : t('grants.createGrant'))}
+    </Button>
+  );
+}
 
 export function GrantForm({
   isOpen,
@@ -36,6 +46,16 @@ export function GrantForm({
   onClose,
 }: GrantFormProps) {
   const { t } = useTranslation();
+
+  // React 19 form actions receive (formData); legacy handlers may take
+  // no arguments. Detect the signature by calling with a no-arg probe.
+  const handleFormAction = (formData: FormData) => {
+    if (onSubmit.length >= 1) {
+      onSubmit(formData);
+    } else {
+      (onSubmit as () => void)();
+    }
+  };
 
   return (
     <Modal
@@ -51,21 +71,17 @@ export function GrantForm({
           <Button variant="secondary" onClick={onClose} disabled={isSubmitting}>
             {t('annotation.cancel')}
           </Button>
-          <Button variant="primary" onClick={onSubmit} disabled={isSubmitting}>
-            {isSubmitting
-              ? t('grants.form.submitting')
-              : editingGrant
-                ? t('grants.actions.save')
-                : t('grants.createGrant')}
-          </Button>
+          <SubmitButton isEdit={editingGrant !== null}>
+            {editingGrant ? t('grants.actions.save') : t('grants.createGrant')}
+          </SubmitButton>
         </div>
       }
     >
-      <div className="space-y-4">
-        {/* Email — read-only when editing */}
+      <form action={handleFormAction} className="space-y-4">
         <Input
           label={t('grants.form.email')}
           type="email"
+          name="email"
           value={formData.email}
           onChange={(e) => onChange({ ...formData, email: e.target.value })}
           error={formErrors.email}
@@ -73,12 +89,12 @@ export function GrantForm({
           required
         />
 
-        {/* Password fields — create only */}
         {!editingGrant && (
           <>
             <Input
               label={t('grants.form.password')}
               type="password"
+              name="password"
               value={formData.password}
               onChange={(e) => onChange({ ...formData, password: e.target.value })}
               error={formErrors.password}
@@ -87,6 +103,7 @@ export function GrantForm({
             <Input
               label={t('grants.form.passwordConfirm')}
               type="password"
+              name="passwordConfirm"
               value={formData.passwordConfirm}
               onChange={(e) =>
                 onChange({ ...formData, passwordConfirm: e.target.value })
@@ -97,12 +114,13 @@ export function GrantForm({
           </>
         )}
 
-        {/* Grant mode */}
         <div>
-          <label className="block text-sm font-medium text-foreground-muted mb-1">
+          <label htmlFor="grant-mode" className="block text-sm font-medium text-foreground-muted mb-1">
             {t('grants.form.mode')}
           </label>
           <select
+            id="grant-mode"
+            name="mode"
             value={formData.mode}
             onChange={(e: ChangeEvent<HTMLSelectElement>) =>
               onChange({ ...formData, mode: e.target.value })
@@ -117,11 +135,11 @@ export function GrantForm({
           </select>
         </div>
 
-        {/* Capability toggles */}
         <div className="space-y-2">
           <label className="flex items-center space-x-2">
             <input
               type="checkbox"
+              name="commentsAllowed"
               checked={formData.commentsAllowed}
               onChange={(e: ChangeEvent<HTMLInputElement>) =>
                 onChange({ ...formData, commentsAllowed: e.target.checked })
@@ -135,6 +153,7 @@ export function GrantForm({
           <label className="flex items-center space-x-2">
             <input
               type="checkbox"
+              name="offlineAllowed"
               checked={formData.offlineAllowed}
               onChange={(e: ChangeEvent<HTMLInputElement>) =>
                 onChange({ ...formData, offlineAllowed: e.target.checked })
@@ -147,13 +166,14 @@ export function GrantForm({
           </label>
         </div>
 
-        {/* Expiry date */}
         <div>
-          <label className="block text-sm font-medium text-foreground-muted mb-1">
+          <label htmlFor="grant-expires" className="block text-sm font-medium text-foreground-muted mb-1">
             {t('grants.form.expiry')}
           </label>
           <input
+            id="grant-expires"
             type="date"
+            name="expiresAt"
             value={formData.expiresAt}
             onChange={(e) => onChange({ ...formData, expiresAt: e.target.value })}
             className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm focus:ring-2 focus:ring-accent focus:border-accent"
@@ -163,13 +183,12 @@ export function GrantForm({
           </p>
         </div>
 
-        {/* Submit-level error */}
         {formErrors.submit && (
           <div className="p-3 bg-semantic-error/10 border border-semantic-error/30 rounded text-sm text-semantic-error">
             {formErrors.submit}
           </div>
         )}
-      </div>
+      </form>
     </Modal>
   );
 }

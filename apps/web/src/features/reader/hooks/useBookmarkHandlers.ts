@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { useReaderStore, useAuthStore } from '../../../stores';
 import type { Bookmark } from '../../../stores';
 import { saveAnnotation, queueSync, generateMutationId } from '../../../lib/offline';
+import { useOptimisticAnnotationStore } from './useOptimisticAnnotations';
 
 interface TocItem {
   label: string;
@@ -21,6 +22,7 @@ export function useBookmarkHandlers(): UseBookmarkHandlersReturn {
   const bookId = useAuthStore((state) => state.bookId);
   const addBookmark = useReaderStore((state) => state.addBookmark);
   const removeBookmark = useReaderStore((state) => state.removeBookmark);
+  const { addOptimisticBookmark, removeOptimistic } = useOptimisticAnnotationStore();
 
   const handleCreateBookmark = useCallback(
     async (currentChapterRef: React.MutableRefObject<string | null>, toc: TocItem[]) => {
@@ -40,25 +42,32 @@ export function useBookmarkHandlers(): UseBookmarkHandlersReturn {
         createdAt: new Date().toISOString(),
       };
 
-      addBookmark(bookmark);
+      addOptimisticBookmark(bookmark);
 
-      if (!navigator.onLine) {
-        const mutationId = generateMutationId();
-        await saveAnnotation({
-          id: bookmark.id,
-          bookId,
-          type: 'bookmark',
-          cfi: currentProgress.locator.cfi,
-          text: chapterName,
-          chapter: currentChapterRef.current ?? undefined,
-          createdAt: Date.now(),
-          synced: false,
-          mutationId,
-        });
-        await queueSync('annotation', { bookId, annotation: bookmark }, mutationId);
+      try {
+        addBookmark(bookmark);
+
+        if (!navigator.onLine) {
+          const mutationId = generateMutationId();
+          await saveAnnotation({
+            id: bookmark.id,
+            bookId,
+            type: 'bookmark',
+            cfi: currentProgress.locator.cfi,
+            text: chapterName,
+            chapter: currentChapterRef.current ?? undefined,
+            createdAt: Date.now(),
+            synced: false,
+            mutationId,
+          });
+          await queueSync('annotation', { bookId, annotation: bookmark }, mutationId);
+        }
+      } catch (err) {
+        removeOptimistic(bookmark.id, 'bookmark');
+        throw err;
       }
     },
-    [sessionToken, bookId, addBookmark],
+    [sessionToken, bookId, addBookmark, addOptimisticBookmark, removeOptimistic],
   );
 
   const handleDeleteBookmark = useCallback(

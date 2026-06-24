@@ -1,9 +1,15 @@
-import { useCallback, useEffect, useState } from 'react';
+import { Suspense, use, useActionState, useState, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from '../../hooks/useTranslation';
 import { apiRequest } from '../../lib/api';
+import {
+  fetchAdminBooks,
+  fetchGrantsForBook,
+  invalidateGrantsCache,
+  type BookOption,
+} from '../../lib/data-cache';
 import { useAuthStore } from '../../stores/auth';
-import type { GrantResponse, BookResponse } from '@do-epub-studio/shared';
+import type { GrantResponse } from '@do-epub-studio/shared';
 import { LocaleSwitcher } from '../../components/LocaleSwitcher';
 import { PageContainer } from '../../components/ui';
 import {
@@ -12,73 +18,105 @@ import {
   GrantList,
   emptyFormData,
 } from './components';
-import type { Book, Grant, GrantFormData } from './components';
+import type { Grant, GrantFormData } from './components';
 
 interface LocationState {
   bookTitle?: string;
 }
 
-export function AdminGrantResponsesPage() {
-  const { bookId } = useParams<{ bookId: string }>();
+interface GrantsBodyProps {
+  bookId: string | undefined;
+  token: string;
+}
+
+interface GrantsBodyData {
+  books: BookOption[];
+  grants: GrantResponse[];
+}
+
+function GrantsBody({ bookId, token }: GrantsBodyProps) {
+  const books = use(fetchAdminBooks(token));
+  const grants = use(bookId ? fetchGrantsForBook(bookId, token) : Promise.resolve([]));
+  const data: GrantsBodyData = { books, grants };
+  return <GrantsView data={data} bookId={bookId} token={token} />;
+}
+
+function GrantsView({ data, bookId, token }: { data: GrantsBodyData; bookId: string | undefined; token: string }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const locationState = location.state as LocationState | null;
-  const sessionToken = useAuthStore((state) => state.sessionToken);
 
-  // State
-  const [grants, setGrants] = useState<GrantResponse[]>([]);
-  const [books, setBooks] = useState<Book[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingBooks, setIsLoadingBooks] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { books, grants } = data;
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingGrant, setEditingGrant] = useState<Grant | null>(null);
   const [formData, setFormData] = useState<GrantFormData>(emptyFormData());
-  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const fetchBooks = useCallback(async () => {
-    setIsLoadingBooks(true);
-    try {
-      const data = await apiRequest<BookResponse[]>('/api/admin/books', {
-        token: sessionToken ?? undefined,
-      });
-      setBooks(data.map(b => ({ id: b.id, title: b.title, slug: b.slug })));
-    } catch (err) {
-      console.error('Failed to fetch books:', err);
-    } finally {
-      setIsLoadingBooks(false);
-    }
-  }, [sessionToken]);
+  const [formErrors, formAction, isPending] = useActionState<Record<string, string>, FormData>(
+    async (_prevState, fd) => {
+      const errors: Record<string, string> = {};
+      const getString = (name: string, fallback = ''): string => {
+        const v = fd.get(name);
+        return typeof v === 'string' ? v : fallback;
+      };
+      const email = getString('email');
+      const mode = getString('mode', 'private');
+      const commentsAllowed = fd.get('commentsAllowed') === 'on';
+      const offlineAllowed = fd.get('offlineAllowed') === 'on';
+      const expiresAt = getString('expiresAt');
 
-  const fetchGrants = useCallback(async () => {
-    if (!bookId) {
-      setGrants([]);
-      setIsLoading(false);
-      return;
-    }
-    setIsLoading(true);
-    try {
-      const data = await apiRequest<GrantResponse[]>(`/api/admin/books/${bookId}/grants`, {
-        token: sessionToken ?? undefined,
-      });
-      setGrants(data);
-    } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [bookId, sessionToken]);
+      if (!email) errors.email = t('grants.form.error.emailRequired');
 
-  useEffect(() => {
-    void fetchBooks();
-  }, [fetchBooks]);
+      if (!editingGrant) {
+        const password = getString('password');
+        const passwordConfirm = getString('passwordConfirm');
+        if (!password) errors.password = t('grants.form.error.passwordRequired');
+        else if (password.length < 8) errors.password = t('grants.form.error.passwordMinLength');
+        if (password !== passwordConfirm) errors.passwordConfirm = t('grants.form.error.passwordMismatch');
+      }
 
-  useEffect(() => {
-    void fetchGrants();
-  }, [bookId, fetchGrants]);
+      if (Object.keys(errors).length > 0) {
+        return errors;
+      }
+
+      try {
+        if (editingGrant) {
+          await apiRequest(`/api/admin/grants/${editingGrant.id}`, {
+            method: 'PATCH',
+            token: token || undefined,
+            body: JSON.stringify({
+              mode,
+              commentsAllowed,
+              offlineAllowed,
+              expiresAt: expiresAt ? new Date(expiresAt).toISOString() : null,
+            }),
+          });
+        } else {
+          const password = getString('password');
+          await apiRequest(`/api/admin/books/${bookId}/grants`, {
+            method: 'POST',
+            token: token || undefined,
+            body: JSON.stringify({
+              bookId,
+              email,
+              password,
+              mode,
+              commentsAllowed,
+              offlineAllowed,
+              expiresAt: expiresAt ? new Date(expiresAt).toISOString() : null,
+            }),
+          });
+        }
+        if (bookId) invalidateGrantsCache(bookId);
+        setIsModalOpen(false);
+        return {};
+      } catch (err) {
+        return { submit: (err as Error).message };
+      }
+    },
+    {},
+  );
 
   const handleSelectBook = (selectedId: string) => {
     if (selectedId) {
@@ -91,7 +129,6 @@ export function AdminGrantResponsesPage() {
   const handleCreateGrant = () => {
     setEditingGrant(null);
     setFormData(emptyFormData());
-    setFormErrors({});
     setIsModalOpen(true);
   };
 
@@ -106,81 +143,25 @@ export function AdminGrantResponsesPage() {
       offlineAllowed: grant.offlineAllowed,
       expiresAt: grant.expiresAt ? grant.expiresAt.split('T')[0] : '',
     });
-    setFormErrors({});
     setIsModalOpen(true);
   };
 
-  const handleFormSubmit = async () => {
-    setFormErrors({});
-
-    // Basic validation
-    const errors: Record<string, string> = {};
-    if (!formData.email) errors.email = t('grants.form.error.emailRequired');
-    if (!editingGrant) {
-      if (!formData.password) errors.password = t('grants.form.error.passwordRequired');
-      else if (formData.password.length < 8) errors.password = t('grants.form.error.passwordMinLength');
-      if (formData.password !== formData.passwordConfirm) {
-        errors.passwordConfirm = t('grants.form.error.passwordMismatch');
-      }
-    }
-
-    if (Object.keys(errors).length > 0) {
-      setFormErrors(errors);
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      if (editingGrant) {
-        // Update existing grant
-        await apiRequest(`/api/admin/grants/${editingGrant.id}`, {
-          method: 'PATCH',
-          token: sessionToken ?? undefined,
-          body: JSON.stringify({
-            mode: formData.mode,
-            commentsAllowed: formData.commentsAllowed,
-            offlineAllowed: formData.offlineAllowed,
-            expiresAt: formData.expiresAt ? new Date(formData.expiresAt).toISOString() : null,
-          }),
-        });
-      } else {
-        // Create new grant
-        await apiRequest(`/api/admin/books/${bookId}/grants`, {
+  const handleRevokeGrant = useCallback(
+    async (grant: Grant) => {
+      try {
+        await apiRequest(`/api/admin/grants/${grant.id}/revoke`, {
           method: 'POST',
-          token: sessionToken ?? undefined,
-          body: JSON.stringify({
-            bookId,
-            email: formData.email,
-            password: formData.password,
-            mode: formData.mode,
-            commentsAllowed: formData.commentsAllowed,
-            offlineAllowed: formData.offlineAllowed,
-            expiresAt: formData.expiresAt ? new Date(formData.expiresAt).toISOString() : null,
-          }),
+          token: token || undefined,
         });
+        if (bookId) invalidateGrantsCache(bookId);
+      } catch (err) {
+        alert((err as Error).message);
       }
-      setIsModalOpen(false);
-      void fetchGrants();
-    } catch (err) {
-      setFormErrors({ submit: (err as Error).message });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+    },
+    [token, bookId],
+  );
 
-  const handleRevokeGrant = async (grant: Grant) => {
-    try {
-      await apiRequest(`/api/admin/grants/${grant.id}/revoke`, {
-        method: 'POST',
-        token: sessionToken ?? undefined,
-      });
-      void fetchGrants();
-    } catch (err) {
-      alert((err as Error).message);
-    }
-  };
-
-  const currentBookTitle = locationState?.bookTitle ?? (bookId ? books.find(b => b.id === bookId)?.title : undefined);
+  const currentBookTitle = locationState?.bookTitle ?? (bookId ? books.find((b) => b.id === bookId)?.title : undefined);
 
   return (
     <PageContainer className="p-8">
@@ -208,20 +189,14 @@ export function AdminGrantResponsesPage() {
         <BookSelector
           books={books}
           selectedBookId={bookId ?? ''}
-          isLoadingBooks={isLoadingBooks}
+          isLoadingBooks={false}
           onSelectBook={handleSelectBook}
           onCreateGrant={handleCreateGrant}
         />
 
-        {error && (
-          <div className="mb-6 p-4 bg-semantic-error/10 border border-semantic-error/30 rounded-lg text-semantic-error">
-            {error}
-          </div>
-        )}
-
         <GrantList
           grants={grants}
-          isLoadingGrants={isLoading}
+          isLoadingGrants={false}
           selectedBookId={bookId ?? ''}
           onEdit={handleEditGrant}
           onRevoke={(grant) => { void handleRevokeGrant(grant); }}
@@ -233,11 +208,37 @@ export function AdminGrantResponsesPage() {
         editingGrant={editingGrant}
         formData={formData}
         formErrors={formErrors}
-        isSubmitting={isSubmitting}
+        isSubmitting={isPending}
         onChange={setFormData}
-        onSubmit={() => { void handleFormSubmit(); }}
+        onSubmit={formAction}
         onClose={() => setIsModalOpen(false)}
       />
     </PageContainer>
+  );
+}
+
+function GrantsSkeleton() {
+  return (
+    <div
+      className="p-12 flex justify-center"
+      aria-busy="true"
+      aria-live="polite"
+    >
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent" />
+    </div>
+  );
+}
+
+export function AdminGrantResponsesPage() {
+  const { bookId } = useParams<{ bookId: string }>();
+  const sessionToken = useAuthStore((state) => state.sessionToken);
+
+  return (
+    <Suspense
+      key={bookId ?? 'all'}
+      fallback={<GrantsSkeleton />}
+    >
+      <GrantsBody bookId={bookId} token={sessionToken ?? ''} />
+    </Suspense>
   );
 }
