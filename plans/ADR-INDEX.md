@@ -55,6 +55,7 @@
 | 105 | 2026 UI Platform Modernization Policy | `plans/105-adr-2026-ui-platform-modernization.md` | Proposed |
 | 106 | Feature Completeness and Incremental Delivery Policy | `plans/106-adr-feature-completeness-policy.md` | Proposed |
 | 107 | Quality Gate Escalation and DX Standards | `plans/107-adr-quality-dx-standards.md` | Proposed |
+| 110 | Backlog Consolidation & Verified-Before-Execution Policy | `plans/110-adr-completeness-and-ui-consolidation.md` | Proposed |
 
 ## Cross-referenced but not yet adopted
 
