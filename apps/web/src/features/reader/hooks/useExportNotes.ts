@@ -253,7 +253,7 @@ function parseNotesMarkdown(markdown: string): NotesExport | null {
 
     if (inHighlights) {
       const m = matchBounded(
-        /^- "?(.+?)"?\s*(?:\[(epubcfi\([^)]{1,512}\))\])?\s*(?:\(([^)]{1,255})\))?\s*\((#[0-9a-fA-F]{3,8})\)\s*(?:—\s*(.+))?$/,
+        /^- "?([\s\S]{1,2048}?)"?\s*(?:\[(epubcfi\([^)]{1,512}\))\])?\s*(?:\(([^)]{1,255})\))?\s*\((#[0-9a-fA-F]{3,8})\)\s*(?:—\s*([\s\S]{1,2048}))?$/,
         line,
         4096,
       );
@@ -275,7 +275,7 @@ function parseNotesMarkdown(markdown: string): NotesExport | null {
       }
     } else if (inBookmarks) {
       const m = matchBounded(
-        /^- "?(.+?)"?\s*(?:\[(epubcfi\([^)]{1,512}\))\])?\s*(?:\(([^)]{1,255})\))?\s*(?:—\s*(.+))?$/,
+        /^- "?([\s\S]{1,2048}?)"?\s*(?:\[(epubcfi\([^)]{1,512}\))\])?\s*(?:\(([^)]{1,255})\))?\s*(?:—\s*([\s\S]{1,2048}))?$/,
         line,
         4096,
       );
@@ -296,7 +296,7 @@ function parseNotesMarkdown(markdown: string): NotesExport | null {
       }
     } else if (inComments) {
       const m = matchBounded(
-        /^- "?(.+?)"?\s*(?:\[(epubcfi\([^)]{1,512}\))\])?\s*(?:—\s*"?(.+?)"?\s*)?$/,
+        /^- "?([\s\S]{1,2048}?)"?\s*(?:\[(epubcfi\([^)]{1,512}\))\])?\s*(?:—\s*"?([\s\S]{1,2048}?)"?\s*)?$/,
         line,
         4096,
       );
@@ -351,44 +351,48 @@ function exportedToEntities(payload: NotesExport): {
 
   for (const ann of payload.annotations) {
     try {
-      if (ann.type === 'highlight') {
-        highlights.push({
-          id: ann.id,
-          chapterRef: ann.locator?.chapterRef ?? null,
-          cfiRange: ann.locator?.cfi ?? null,
-          selectedText: ann.selectedText,
-          note: ann.note,
-          color: ann.color,
-          createdAt: ann.createdAt || now,
-          updatedAt: ann.updatedAt || now,
-        });
-      } else if (ann.type === 'comment') {
-        comments.push({
-          id: ann.id,
-          userEmail: 'imported@local',
-          chapterRef: ann.locator?.chapterRef ?? null,
-          cfiRange: ann.locator?.cfi ?? null,
-          selectedText: ann.selectedText,
-          body: ann.body,
-          status: ann.status,
-          visibility: ann.visibility,
-          parentCommentId: ann.parentCommentId,
-          createdAt: ann.createdAt || now,
-          updatedAt: ann.updatedAt || now,
-          resolvedAt: null,
-        });
-      } else if (ann.type === 'bookmark') {
-        if (!ann.locator.cfi && !ann.locator.selectedText) {
-          skipped += 1;
-          errors.push(`bookmark ${ann.id} has no locator (cfi or text)`);
-          continue;
-        }
-        bookmarks.push({
-          id: ann.id,
-          locator: ann.locator,
-          label: ann.label,
-          createdAt: ann.createdAt || now,
-        });
+      switch (ann.type) {
+        case 'highlight':
+          highlights.push({
+            id: ann.id,
+            chapterRef: ann.locator?.chapterRef ?? null,
+            cfiRange: ann.locator?.cfi ?? null,
+            selectedText: ann.selectedText,
+            note: ann.note,
+            color: ann.color,
+            createdAt: ann.createdAt || now,
+            updatedAt: ann.updatedAt || now,
+          });
+          break;
+        case 'comment':
+          comments.push({
+            id: ann.id,
+            userEmail: 'imported@local',
+            chapterRef: ann.locator?.chapterRef ?? null,
+            cfiRange: ann.locator?.cfi ?? null,
+            selectedText: ann.selectedText,
+            body: ann.body,
+            status: ann.status,
+            visibility: ann.visibility,
+            parentCommentId: ann.parentCommentId,
+            createdAt: ann.createdAt || now,
+            updatedAt: ann.updatedAt || now,
+            resolvedAt: null,
+          });
+          break;
+        case 'bookmark':
+          if (!ann.locator.cfi && !ann.locator.selectedText) {
+            skipped += 1;
+            errors.push(`bookmark ${ann.id} has no locator (cfi or text)`);
+            break;
+          }
+          bookmarks.push({
+            id: ann.id,
+            locator: ann.locator,
+            label: ann.label,
+            createdAt: ann.createdAt || now,
+          });
+          break;
       }
     } catch (e) {
       skipped += 1;
