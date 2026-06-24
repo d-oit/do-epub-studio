@@ -1,6 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { app } from '../app';
 
+function assertOk(body: unknown): asserts body is { ok: true } {
+  expect(body).toHaveProperty('ok', true);
+}
+
+function assertError(body: unknown): asserts body is { ok: false; error: { code: string; message: string } } {
+  expect(body).toHaveProperty('ok', false);
+}
+
 describe('Telemetry API', () => {
   beforeEach(() => {
     vi.spyOn(console, 'log').mockImplementation(() => {});
@@ -44,17 +52,15 @@ describe('Telemetry API', () => {
     );
 
     expect(res.status).toBe(202);
-    const body = (await res.json()) as any;
-    expect(body.ok).toBe(true);
+    const body = await res.json();
+    assertOk(body);
 
-    // console.log is called by observabilityMiddleware for request start,
-    // and by telemetry router for each log entry.
     expect(console.log).toHaveBeenCalled();
     expect(console.error).toHaveBeenCalled();
 
-    const clientTelemetryLogs = (console.log as any).mock.calls
-      .map((call: any[]) => call[0])
-      .filter((msg: string) => msg.startsWith('[CLIENT-TELEMETRY]'));
+    const clientTelemetryLogs = vi.mocked(console.log).mock.calls
+      .map((call: unknown[]) => call[0] as string)
+      .filter((msg) => msg.startsWith('[CLIENT-TELEMETRY]'));
 
     expect(clientTelemetryLogs.length).toBe(1);
     expect(clientTelemetryLogs[0]).toContain('test_event');
@@ -85,8 +91,8 @@ describe('Telemetry API', () => {
     );
 
     expect(res.status).toBe(400);
-    const body = (await res.json()) as any;
-    expect(body.ok).toBe(false);
+    const body = await res.json();
+    assertError(body);
     expect(body.error.code).toBe('VALIDATION_ERROR');
   });
 
