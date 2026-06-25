@@ -252,4 +252,3 @@ describe('Tooltip', () => {
     expect(secondTooltip.id).not.toBe(firstId);
   });
 });
-
