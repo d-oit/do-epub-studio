@@ -12,12 +12,12 @@ import { withByteCap, MaxBodySizeError, DEFAULT_MAX_BODY_BYTES } from '../lib/st
 async function makeEpubBuffer(): Promise<ArrayBuffer> {
   const zip = new JSZip();
   zip.file('mimetype', 'application/epub+zip');
-  // Container and OPF XML are literal fixtures; "HTML in string" is a
-  // false positive for these EPUB container documents.
-  const containerXml = '<?xml version="1.0"?><container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container"><rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/></rootfiles></container>';
-  const opfXml = '<?xml version="1.0"?><package version="3.0" xmlns="http://idpf.org/2007/opf"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>Stream Test</dc:title></metadata><manifest><item id="nav" href="nav.xhtml" properties="nav" media-type="application/xhtml+xml"/></manifest><spine></spine></package>';
-  zip.file('META-INF/container.xml', containerXml);
-  zip.file('OEBPS/content.opf', opfXml);
+  // Container and OPF documents are EPUB XML literals; the "no mixed
+  // HTML" linter flag is a false positive for these fixtures.
+  const container = '<?xml version="1.0"?><container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container"><rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/></rootfiles></container>';
+  const opf = '<?xml version="1.0"?><package version="3.0" xmlns="http://idpf.org/2007/opf"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>Stream Test</dc:title></metadata><manifest><item id="nav" href="nav.xhtml" properties="nav" media-type="application/xhtml+xml"/></manifest><spine></spine></package>';
+  zip.file('META-INF/container.xml', container);
+  zip.file('OEBPS/content.opf', opf);
   return zip.generateAsync({ type: 'arraybuffer' });
 }
 
