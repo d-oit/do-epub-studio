@@ -16,7 +16,7 @@ describe('Tooltip', () => {
   it('renders children', () => {
     render(
       <Tooltip content="tooltip content">
-        <button>Hover me</button>
+        <button type="button">Hover me</button>
       </Tooltip>,
     );
     expect(screen.getByText('Hover me')).toBeInTheDocument();
@@ -25,7 +25,7 @@ describe('Tooltip', () => {
   it('uses native popover element when supported (jsdom fallback path otherwise)', () => {
     render(
       <Tooltip content="tooltip content">
-        <button>Hover me</button>
+        <button type="button">Hover me</button>
       </Tooltip>,
     );
     // In jsdom the popover attribute is omitted (fallback path).
@@ -36,7 +36,7 @@ describe('Tooltip', () => {
   it('shows tooltip content on pointer enter', () => {
     render(
       <Tooltip content="tooltip content">
-        <button>Hover me</button>
+        <button type="button">Hover me</button>
       </Tooltip>,
     );
     const wrapper = getTooltipWrapper();
@@ -47,7 +47,7 @@ describe('Tooltip', () => {
   it('hides tooltip on pointer leave (jsdom fallback)', () => {
     render(
       <Tooltip content="tooltip content">
-        <button>Hover me</button>
+        <button type="button">Hover me</button>
       </Tooltip>,
     );
     const wrapper = getTooltipWrapper();
@@ -60,7 +60,7 @@ describe('Tooltip', () => {
   it('opens popover via click on trigger (jsdom fallback uses mouse enter)', () => {
     render(
       <Tooltip content="click to open">
-        <button>Trigger</button>
+        <button type="button">Trigger</button>
       </Tooltip>,
     );
     const wrapper = getTooltipWrapper();

@@ -32,7 +32,9 @@ export function Tooltip({ content, children, side = 'top' }: TooltipProps) {
       setIsOpen((event as ToggleEvent).newState === 'open');
     };
     el.addEventListener('toggle', handleToggle);
-    return () => el.removeEventListener('toggle', handleToggle);
+    return () => {
+      el.removeEventListener('toggle', handleToggle);
+    };
   }, [supportsNative]);
 
   const show = useCallback(() => {

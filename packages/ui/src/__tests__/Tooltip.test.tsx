@@ -23,7 +23,7 @@ describe('Tooltip', () => {
   it('renders children', () => {
     render(
       <Tooltip content="Help text">
-        <button>Click me</button>
+        <button type="button">Click me</button>
       </Tooltip>,
     );
     expect(screen.getByText('Click me')).toBeInTheDocument();
@@ -32,7 +32,7 @@ describe('Tooltip', () => {
   it('does not show tooltip initially (content not in DOM)', () => {
     render(
       <Tooltip content="Help text">
-        <button>Click me</button>
+        <button type="button">Click me</button>
       </Tooltip>,
     );
     expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
@@ -60,7 +60,7 @@ describe('Tooltip', () => {
     try {
       render(
         <Tooltip content="Help text">
-          <button>Click me</button>
+          <button type="button">Click me</button>
         </Tooltip>,
       );
       // In native mode the popover element is always in the DOM (so showPopover
@@ -83,7 +83,7 @@ describe('Tooltip', () => {
   it('shows tooltip on mouse enter (content added to DOM)', () => {
     render(
       <Tooltip content="Help text">
-        <button>Click me</button>
+        <button type="button">Click me</button>
       </Tooltip>,
     );
     const wrapper = getTooltipWrapper();
@@ -95,7 +95,7 @@ describe('Tooltip', () => {
   it('hides tooltip on mouse leave (content removed from DOM)', () => {
     render(
       <Tooltip content="Help text">
-        <button>Click me</button>
+        <button type="button">Click me</button>
       </Tooltip>,
     );
     const wrapper = getTooltipWrapper();
@@ -108,7 +108,7 @@ describe('Tooltip', () => {
   it('shows tooltip on focus (content added to DOM)', () => {
     render(
       <Tooltip content="Help text">
-        <button>Click me</button>
+        <button type="button">Click me</button>
       </Tooltip>,
     );
     fireEvent.focus(screen.getByText('Click me'));
@@ -118,7 +118,7 @@ describe('Tooltip', () => {
   it('hides tooltip on blur (content removed from DOM)', () => {
     render(
       <Tooltip content="Help text">
-        <button>Click me</button>
+        <button type="button">Click me</button>
       </Tooltip>,
     );
     fireEvent.focus(screen.getByText('Click me'));
@@ -130,7 +130,7 @@ describe('Tooltip', () => {
   it('sets aria-describedby when open', () => {
     render(
       <Tooltip content="Help text">
-        <button>Click me</button>
+        <button type="button">Click me</button>
       </Tooltip>,
     );
     const wrapper = getTooltipWrapper();
@@ -143,7 +143,7 @@ describe('Tooltip', () => {
   it('removes aria-describedby when hidden', () => {
     render(
       <Tooltip content="Help text">
-        <button>Click me</button>
+        <button type="button">Click me</button>
       </Tooltip>,
     );
     const innerSpan = screen.getByText('Click me').parentElement;
@@ -165,7 +165,7 @@ describe('Tooltip', () => {
   it('shows tooltip content on focus', () => {
     render(
       <Tooltip content="Help text">
-        <button>Click me</button>
+        <button type="button">Click me</button>
       </Tooltip>,
     );
     fireEvent.focus(screen.getByText('Click me'));
@@ -176,7 +176,7 @@ describe('Tooltip', () => {
   it('toggles visibility on multiple hover cycles', () => {
     render(
       <Tooltip content="Help text">
-        <button>Click me</button>
+        <button type="button">Click me</button>
       </Tooltip>,
     );
     const wrapper = getTooltipWrapper();
@@ -191,7 +191,7 @@ describe('Tooltip', () => {
   it('respects side=bottom positioning class', () => {
     render(
       <Tooltip content="Help text" side="bottom">
-        <button>Click me</button>
+        <button type="button">Click me</button>
       </Tooltip>,
     );
     const wrapper = getTooltipWrapper();
@@ -218,7 +218,7 @@ describe('Tooltip', () => {
   it('closes popover on blur (focus management)', () => {
     render(
       <Tooltip content="blur me">
-        <button>Trigger</button>
+        <button type="button">Trigger</button>
       </Tooltip>,
     );
     const trigger = screen.getByText('Trigger');
@@ -231,7 +231,7 @@ describe('Tooltip', () => {
   it('exposes unique tooltip id used by aria-describedby', () => {
     const { unmount } = render(
       <Tooltip content="first">
-        <button>First</button>
+        <button type="button">First</button>
       </Tooltip>,
     );
     const wrapper1 = getTooltipWrapper();
@@ -243,7 +243,7 @@ describe('Tooltip', () => {
 
     render(
       <Tooltip content="second">
-        <button>Second</button>
+        <button type="button">Second</button>
       </Tooltip>,
     );
     const wrapper2 = getTooltipWrapper();

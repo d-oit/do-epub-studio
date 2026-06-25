@@ -59,7 +59,9 @@ export function AnnotationToolbar({
       setShowColorPicker((event as ToggleEvent).newState === 'open');
     };
     el.addEventListener('toggle', handleToggle);
-    return () => el.removeEventListener('toggle', handleToggle);
+    return () => {
+      el.removeEventListener('toggle', handleToggle);
+    };
   }, [useNativePopover]);
 
   useEffect(() => {
