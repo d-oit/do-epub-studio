@@ -93,4 +93,12 @@ describe('TableOfContents', () => {
     expect(buttons.length).toBeLessThan(longToc.length);
     expect(buttons.length).toBeGreaterThan(0);
   });
+
+  it('marks the panel as a named inline-size container (ADR-105)', () => {
+    const { container } = render(<TableOfContents {...mockProps} />);
+    const panel = container.querySelector('[data-container-name="toc-panel"]');
+    expect(panel).toBeInTheDocument();
+    expect(panel).toHaveClass('cq');
+    expect(panel).toHaveClass('cq--toc-panel');
+  });
 });

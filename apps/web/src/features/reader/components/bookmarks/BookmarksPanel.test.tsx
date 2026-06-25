@@ -84,4 +84,18 @@ describe('BookmarksPanel', () => {
     render(<BookmarksPanel {...defaultProps} />);
     expect(screen.getByText('1/1/2026')).toBeInTheDocument();
   });
+
+  it('marks the panel as a named inline-size container (ADR-105)', () => {
+    const { container } = render(<BookmarksPanel {...defaultProps} />);
+    const panel = container.querySelector('[data-container-name="bookmarks-panel"]');
+    expect(panel).toBeInTheDocument();
+    expect(panel).toHaveClass('cq');
+    expect(panel).toHaveClass('cq--bookmarks-panel');
+  });
+
+  it('applies cq-bookmark-row class so container queries can stack items horizontally', () => {
+    const { container } = render(<BookmarksPanel {...defaultProps} />);
+    const rows = container.querySelectorAll('.cq-bookmark-row');
+    expect(rows).toHaveLength(mockBookmarks.length);
+  });
 });

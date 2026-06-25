@@ -43,7 +43,10 @@ export function CatalogPage() {
       id="main-content"
       className="min-h-dvh bg-background px-4 py-6 text-foreground sm:px-6 md:py-10 lg:px-8 2xl:px-12"
     >
-      <div className="mx-auto max-w-7xl">
+      <div
+        data-container-name="catalog-grid"
+        className="cq cq--catalog-grid mx-auto max-w-7xl"
+      >
         <header className="mb-8 flex flex-col gap-6 border-b border-border pb-6 md:mb-10 md:flex-row md:items-end md:justify-between">
           <div className="min-w-0">
             <div className="mb-4 flex items-center gap-3">
@@ -90,11 +93,11 @@ export function CatalogPage() {
                         alt={t('catalog.coverAlt').replace('{title}', book.title)}
                         width={320}
                         height={426}
-                        className="mb-4 aspect-[3/4] w-full rounded-md object-cover"
+                        className="cq-catalog-cover mb-4 aspect-[3/4] w-full rounded-md object-cover"
                       />
                     </picture>
                   ) : (
-                    <div className="mb-4 flex aspect-[3/4] w-full items-center justify-center rounded-md bg-background-tertiary text-foreground-muted">
+                    <div className="cq-catalog-cover mb-4 flex aspect-[3/4] w-full items-center justify-center rounded-md bg-background-tertiary text-foreground-muted">
                       <AppLogo size={40} className="text-accent" />
                     </div>
                   )}

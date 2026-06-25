@@ -107,7 +107,8 @@ export function TableOfContents({
       aria-modal="true"
       aria-labelledby="toc-title"
       dir={direction}
-      className={`fixed inset-y-0 w-64 bg-background border-border z-40 flex flex-col ${
+      data-container-name="toc-panel"
+      className={`cq cq--toc-panel fixed inset-y-0 w-64 bg-background border-border z-40 flex flex-col ${
         isRtl ? 'right-0 border-l' : 'left-0 border-r'
       }`}
     >

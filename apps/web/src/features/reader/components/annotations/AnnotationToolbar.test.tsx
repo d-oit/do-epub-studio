@@ -410,6 +410,42 @@ describe('AnnotationToolbar', () => {
       expect(mockOnClose).not.toHaveBeenCalled();
     });
   });
+
+  describe('container-query-driven layout (ADR-105)', () => {
+    it('marks the toolbar as a named inline-size container', () => {
+      render(
+        <AnnotationToolbar
+          selection={mockSelection}
+          onHighlight={mockOnHighlight}
+          onComment={mockOnComment}
+          onClose={mockOnClose}
+          locale="en"
+          canHighlight={true}
+          canComment={true}
+        />,
+      );
+      const toolbar = screen.getByLabelText('annotation.highlight').closest('[data-container-name="annotation-toolbar"]');
+      expect(toolbar).toBeInTheDocument();
+      expect(toolbar).toHaveClass('cq');
+      expect(toolbar).toHaveClass('cq--annotation-toolbar');
+    });
+
+    it('applies cq-annotation-label class to label spans so the container query can reveal them', () => {
+      const { container } = render(
+        <AnnotationToolbar
+          selection={mockSelection}
+          onHighlight={mockOnHighlight}
+          onComment={mockOnComment}
+          onClose={mockOnClose}
+          locale="en"
+          canHighlight={true}
+          canComment={true}
+        />,
+      );
+      const labels = container.querySelectorAll('.cq-annotation-label');
+      expect(labels.length).toBeGreaterThanOrEqual(2);
+    });
+  });
 });
 
 describe('extractSelectionData', () => {

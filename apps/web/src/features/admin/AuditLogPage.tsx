@@ -213,7 +213,10 @@ export function AdminAuditPage() {
         </button>
       </div>
 
-      <div className="bg-background-secondary shadow-sm rounded-lg border border-border overflow-hidden">
+      <div
+        data-container-name="admin-audit-table"
+        className="cq cq--admin-audit-table bg-background-secondary shadow-sm rounded-lg border border-border overflow-hidden"
+      >
         {isLoading ? (
           <div className="p-12 flex justify-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
@@ -226,13 +229,13 @@ export function AdminAuditPage() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-foreground-muted uppercase tracking-wider">
                     {t('admin.audit.timestamp')}
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-foreground-muted uppercase tracking-wider">
+                  <th className="cq-admin-audit-actor px-6 py-3 text-left text-xs font-medium text-foreground-muted uppercase tracking-wider">
                     {t('admin.audit.actor')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-foreground-muted uppercase tracking-wider">
                     {t('admin.audit.action')}
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-foreground-muted uppercase tracking-wider">
+                  <th className="cq-admin-audit-entity px-6 py-3 text-left text-xs font-medium text-foreground-muted uppercase tracking-wider">
                     {t('admin.audit.entity')}
                   </th>
                 </tr>
@@ -243,7 +246,7 @@ export function AdminAuditPage() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground-muted">
                       {new Date(log.createdAt).toLocaleString()}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-foreground">
+                    <td className="cq-admin-audit-actor px-6 py-4 whitespace-nowrap text-sm font-medium text-foreground">
                       {log.actorEmail || 'System'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground-muted">
@@ -251,7 +254,7 @@ export function AdminAuditPage() {
                         {log.action}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground-muted">
+                    <td className="cq-admin-audit-entity px-6 py-4 whitespace-nowrap text-sm text-foreground-muted">
                       {log.entityType}: {log.entityId}
                     </td>
                   </tr>
