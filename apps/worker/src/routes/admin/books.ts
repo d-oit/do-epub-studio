@@ -6,6 +6,7 @@ import { logAudit } from '../../audit';
 import { CreateBookSchema, UpdateBookSchema, validateEpub } from '@do-epub-studio/shared';
 import { UploadCompleteSchema } from '@do-epub-studio/schema';
 import { adminAuth } from '../../middleware/auth';
+import { withByteCap, MaxBodySizeError, DEFAULT_MAX_BODY_BYTES } from '../../lib/stream-body';
 
 export const booksRouter = new Hono<{ Bindings: Env; Variables: { adminUser: { email: string; id: string; role: string } } }>();
 
@@ -69,95 +70,167 @@ booksRouter.put('/:id/upload', adminAuth, async (c) => {
   }
 
   const contentType = c.req.header('Content-Type') ?? 'application/epub+zip';
-  const contentLength = parseInt(c.req.header('Content-Length') ?? '0', 10);
+  const contentLengthHeader = c.req.header('Content-Length');
+  const contentLength = contentLengthHeader ? parseInt(contentLengthHeader, 10) : 0;
 
-  if (contentLength <= 0) {
+  // Raw streaming requires a Content-Length to fail fast on the cheap path.
+  // Multipart bodies legitimately omit Content-Length; we enforce the cap
+  // via withByteCap below.
+  const isMultipart = contentType.toLowerCase().startsWith('multipart/');
+  if (!isMultipart && contentLength <= 0) {
     return c.json({ ok: false, error: { code: 'VALIDATION_ERROR', message: 'Missing Content-Length header' } }, 400);
   }
-
-  const maxFileSize = 200 * 1024 * 1024;
-  if (contentLength > maxFileSize) {
-    return c.json({ ok: false, error: { code: 'VALIDATION_ERROR', message: `File too large. Max: ${maxFileSize} bytes` } }, 413);
+  if (!isMultipart && contentLength > DEFAULT_MAX_BODY_BYTES) {
+    return c.json(
+      { ok: false, error: { code: 'VALIDATION_ERROR', message: `File too large. Max: ${DEFAULT_MAX_BODY_BYTES} bytes` } },
+      413,
+    );
   }
 
   const storageKey = `books/${book.id}/${crypto.randomUUID()}.epub`;
 
-  // Multipart upload threshold: 100 MB
-  const MULTIPART_THRESHOLD = 100 * 1024 * 1024;
-  const PART_SIZE = 10 * 1024 * 1024; // 10 MB chunks
+  // Threshold above which we skip post-upload EPUB validation to keep
+  // memory bounded. Smaller files are still validated server-side so
+  // admins get fast feedback on the common case.
+  const VALIDATION_THRESHOLD = 25 * 1024 * 1024;
+
+  const httpMetadata = {
+    contentType: isMultipart ? 'application/epub+zip' : contentType,
+    contentDisposition: `attachment; filename="${book.slug}.epub"`,
+  };
 
   try {
-    const arrayBuffer = await c.req.raw.arrayBuffer();
-    if (arrayBuffer.byteLength === 0) {
-      return c.json({ ok: false, error: { code: 'VALIDATION_ERROR', message: 'Request body is empty' } }, 400);
+    let uploadStream: ReadableStream<Uint8Array>;
+    let validationArrayBuffer: ArrayBuffer | null = null;
+    let validationSkipped = false;
+    let declaredSize: number | null = null;
+
+    if (isMultipart) {
+      // The runtime buffers formData() in memory, so this path is not
+      // truly streaming — but it is the supported way to accept a
+      // multipart upload without adding dependencies. The raw PUT path
+      // below is the high-volume, low-memory option.
+      const form = await c.req.raw.formData();
+      const fileEntry = form.get('file');
+      if (!(fileEntry instanceof File)) {
+        return c.json({ ok: false, error: { code: 'VALIDATION_ERROR', message: 'Missing "file" part' } }, 400);
+      }
+      if (fileEntry.size > DEFAULT_MAX_BODY_BYTES) {
+        return c.json(
+          { ok: false, error: { code: 'VALIDATION_ERROR', message: `File too large. Max: ${DEFAULT_MAX_BODY_BYTES} bytes` } },
+          413,
+        );
+      }
+      declaredSize = fileEntry.size;
+      uploadStream = fileEntry.stream();
+      if (fileEntry.size <= VALIDATION_THRESHOLD && fileEntry.size > 0) {
+        validationArrayBuffer = await fileEntry.arrayBuffer();
+      } else if (fileEntry.size > VALIDATION_THRESHOLD) {
+        validationSkipped = true;
+      }
+    } else {
+      if (!c.req.raw.body) {
+        return c.json({ ok: false, error: { code: 'VALIDATION_ERROR', message: 'Request body is empty' } }, 400);
+      }
+      const { stream } = withByteCap(c.req.raw.body, DEFAULT_MAX_BODY_BYTES);
+      declaredSize = contentLength;
+      if (contentLength <= VALIDATION_THRESHOLD) {
+        // Tee the body: one branch goes to R2, the other is read by the
+        // validator. The validator must be drained in parallel with the
+        // R2 upload or R2 will block.
+        const [r2Branch, validatorBranch] = stream.tee();
+        uploadStream = r2Branch;
+        const chunks: Uint8Array[] = [];
+        const reader = validatorBranch.getReader();
+        try {
+          while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+            if (value) chunks.push(value);
+          }
+        } catch (err) {
+          // Stream errored (likely the byte cap). Surface the right code.
+          if (err instanceof MaxBodySizeError) {
+            return c.json(
+              { ok: false, error: { code: 'VALIDATION_ERROR', message: `File too large. Max: ${DEFAULT_MAX_BODY_BYTES} bytes` } },
+              413,
+            );
+          }
+          throw err;
+        }
+        const total = chunks.reduce((acc, c) => acc + c.byteLength, 0);
+        const merged = new Uint8Array(total);
+        let offset = 0;
+        for (const c of chunks) {
+          merged.set(c, offset);
+          offset += c.byteLength;
+        }
+        if (merged.byteLength === 0) {
+          return c.json({ ok: false, error: { code: 'VALIDATION_ERROR', message: 'Request body is empty' } }, 400);
+        }
+        validationArrayBuffer = merged.buffer.slice(merged.byteOffset, merged.byteOffset + merged.byteLength);
+      } else {
+        // Best-effort path for large uploads: skip validation to keep
+        // memory bounded.
+        validationSkipped = true;
+        uploadStream = stream;
+      }
     }
 
-    const validationResults = await validateEpub(arrayBuffer);
-
-    if (!validationResults.isValid) {
-      return c.json(
-        {
-          ok: false,
-          error: {
-            code: 'VALIDATION_ERROR',
-            message: 'EPUB validation failed',
-            details: validationResults.errors,
-          },
-        },
-        400,
-      );
-    }
-
-    const httpMetadata = {
-      contentType,
-      contentDisposition: `attachment; filename="${book.slug}.epub"`,
-    };
-    const customMetadata = {
+    let validationResults: Awaited<ReturnType<typeof validateEpub>> | null = null;
+    const customMetadata: Record<string, string> = {
       bookId: book.id,
       uploadedAt: new Date().toISOString(),
-      validationResults: JSON.stringify(validationResults),
     };
-
-    if (arrayBuffer.byteLength > MULTIPART_THRESHOLD) {
-      // Large file: use R2 multipart upload
-      const upload = await c.env.BOOKS_BUCKET.createMultipartUpload(storageKey, {
-        httpMetadata,
-        customMetadata,
-      });
-
-      const parts: { partNumber: number; etag: string }[] = [];
-      const totalParts = Math.ceil(arrayBuffer.byteLength / PART_SIZE);
-
-      for (let i = 0; i < totalParts; i++) {
-        const start = i * PART_SIZE;
-        const end = Math.min(start + PART_SIZE, arrayBuffer.byteLength);
-        const partData = arrayBuffer.slice(start, end);
-        const part = await upload.uploadPart(i + 1, partData);
-        parts.push({ partNumber: part.partNumber, etag: part.etag });
+    if (declaredSize != null) customMetadata.size = String(declaredSize);
+    if (validationArrayBuffer) {
+      validationResults = await validateEpub(validationArrayBuffer);
+      customMetadata.validationResults = JSON.stringify(validationResults);
+      if (!validationResults.isValid) {
+        return c.json(
+          {
+            ok: false,
+            error: {
+              code: 'VALIDATION_ERROR',
+              message: 'EPUB validation failed',
+              details: validationResults.errors,
+            },
+          },
+          400,
+        );
       }
-
-      await upload.complete(parts);
-    } else {
-      // Small file: use simple put
-      await c.env.BOOKS_BUCKET.put(storageKey, arrayBuffer, {
-        httpMetadata,
-        customMetadata,
-      });
+    }
+    if (validationSkipped) {
+      customMetadata.validationSkipped = 'true';
     }
 
-    return c.json(
-      {
-        ok: true,
-        data: {
-          storageKey,
-          bookId: book.id,
-          slug: book.slug,
-          validation: validationResults,
-        },
-      },
-      200,
-    );
-  } catch {
+    await c.env.BOOKS_BUCKET.put(storageKey, uploadStream, {
+      httpMetadata,
+      customMetadata,
+    });
+
+    const data: {
+      storageKey: string;
+      bookId: string;
+      slug: string;
+      validation?: typeof validationResults;
+      validationSkipped?: boolean;
+    } = {
+      storageKey,
+      bookId: book.id,
+      slug: book.slug,
+    };
+    if (validationResults) data.validation = validationResults;
+    if (validationSkipped) data.validationSkipped = true;
+
+    return c.json({ ok: true, data }, 200);
+  } catch (err) {
+    if (err instanceof MaxBodySizeError) {
+      return c.json(
+        { ok: false, error: { code: 'VALIDATION_ERROR', message: `File too large. Max: ${DEFAULT_MAX_BODY_BYTES} bytes` } },
+        413,
+      );
+    }
     return c.json({ ok: false, error: { code: 'UPLOAD_FAILED', message: 'Failed to upload file to storage' } }, 500);
   }
 });
