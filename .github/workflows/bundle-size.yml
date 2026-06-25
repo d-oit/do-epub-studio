@@ -1,0 +1,81 @@
+name: Bundle Size
+
+run-name: "Bundle budget — ${{ github.event_name == 'pull_request' && format('PR {0}', github.event.pull_request.number) || github.ref }}"
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'apps/web/**'
+      - 'packages/ui/**'
+      - 'packages/reader-core/**'
+      - 'packages/shared/**'
+      - 'scripts/check-bundle-budget.mjs'
+      - 'apps/web/vite.config.ts'
+      - '.github/workflows/bundle-size.yml'
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  TURBO_TELEMETRY_DISABLED: 1
+  BUNDLE_BUDGET_REPORT: bundle-budget-report.md
+
+concurrency:
+  group: bundle-size-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  budget:
+    name: Gzipped bundle budget (ADR-107 §3)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
+        with:
+          persist-credentials: false
+          submodules: recursive
+          fetch-depth: 0
+
+      - uses: ./.github/actions/setup-pnpm
+
+      - name: Build web app
+        run: pnpm --filter @do-epub-studio/web build
+
+      - name: Measure gzipped bundle budget (informational)
+        id: budget-info
+        continue-on-error: true
+        run: pnpm --filter @do-epub-studio/web bundle:budget
+
+      - name: Enforce gzipped bundle budget
+        id: budget-enforce
+        run: pnpm --filter @do-epub-studio/web bundle:budget:enforce
+
+      - name: Upload bundle budget report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
+        with:
+          name: bundle-budget-report
+          path: apps/web/bundle-budget-report.md
+          retention-days: 7
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request' && always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          if [ -f apps/web/bundle-budget-report.md ]; then
+            {
+              echo '## Bundle budget (gzipped, ADR-107 §3)'
+              echo ''
+              echo '**Budgets:** main JS 180 KB · main CSS 30 KB · any lazy chunk 80 KB'
+              echo ''
+              cat apps/web/bundle-budget-report.md
+            } > comment.md
+            gh pr comment "$PR_NUMBER" --body-file comment.md --edit-last 2>/dev/null || \
+              gh pr comment "$PR_NUMBER" --body-file comment.md
+          fi

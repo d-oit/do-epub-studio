@@ -28,7 +28,9 @@ if ! "$REPO_ROOT/scripts/validate-git-hooks.sh" 2>&1; then
 fi
 echo ""
 
-# --- Validate GitHub Actions workflows ---
+# --- Validate GitHub Actions workflows (actionlint + zizmor, no env gate) ---
+# Per ADR-112 (CI hardening): zizmor is part of the default gate. Workflows
+# are scanned for medium+ severity security findings.
 printf '%sValidating GitHub Actions workflows...%s\n' "${BLUE}" "${NC}"
 if ! "$REPO_ROOT/scripts/validate-workflows.sh"; then
     FAILED=1
@@ -308,7 +310,8 @@ if [[ " ${DETECTED_LANGUAGES[*]} " =~ " shell " ]]; then
     echo ""
 fi
 
-# Markdown checks
+# Markdown checks (markdownlint, runs by default when installed — no env gate)
+# Per ADR-112: markdownlint is part of the default quality gate.
 if [[ " ${DETECTED_LANGUAGES[*]} " =~ " markdown " ]]; then
     printf '%sRunning Markdown checks...%s\n' "${BLUE}" "${NC}"
 
@@ -342,10 +345,14 @@ if [[ " ${DETECTED_LANGUAGES[*]} " =~ " markdown " ]]; then
 fi
 
 # --- Impeccable design detector (UI quality gate) ---
+# Per ADR-111 §2: findings are JSON-summary and `::warning::` by default.
+# Promote to required via IMPECCABLE_REQUIRED=1 ./scripts/quality_gate.sh.
+# The wrapper script exits 0 unless IMPECCABLE_REQUIRED=1 and findings > 0,
+# so this step never blocks the gate on findings alone.
 if [ "${SKIP_DESIGN:-0}" != "1" ]; then
     printf '%sRunning Impeccable design detector...%s\n' "${BLUE}" "${NC}"
     if [ -f "$REPO_ROOT/scripts/run-impeccable.sh" ]; then
-        if ! "$REPO_ROOT/scripts/run-impeccable.sh" 2>&1; then
+        if ! IMPECCABLE_REQUIRED="${IMPECCABLE_REQUIRED:-0}" "$REPO_ROOT/scripts/run-impeccable.sh" 2>&1; then
             FAILED=1
         fi
     else
