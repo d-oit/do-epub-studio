@@ -165,7 +165,7 @@ export function LoginPage() {
           <p className="text-accent-error" role="alert">{verifyError}</p>
           <Button
             onClick={() => {
-              navigate('/login');
+              void navigate('/login');
             }}
           >
             {t('login.backToLogin')}
