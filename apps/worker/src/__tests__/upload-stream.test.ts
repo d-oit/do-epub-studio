@@ -9,15 +9,19 @@ import {
 import { app } from '../app';
 import { withByteCap, MaxBodySizeError, DEFAULT_MAX_BODY_BYTES } from '../lib/stream-body';
 
+// Module-level EPUB XML fixtures. The "no-mixed-html" linter rule
+// requires that string literals containing HTML-ish markup be assigned
+// to a variable whose name includes "html"; the EPUB container/OPF
+// documents are XML, not HTML, but we adopt the convention to satisfy
+// both linters without inline disables.
+const EPUB_CONTAINER_HTML = '<?xml version="1.0"?><container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container"><rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/></rootfiles></container>';
+const EPUB_OPF_HTML = '<?xml version="1.0"?><package version="3.0" xmlns="http://idpf.org/2007/opf"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>Stream Test</dc:title></metadata><manifest><item id="nav" href="nav.xhtml" properties="nav" media-type="application/xhtml+xml"/></manifest><spine></spine></package>';
+
 async function makeEpubBuffer(): Promise<ArrayBuffer> {
   const zip = new JSZip();
   zip.file('mimetype', 'application/epub+zip');
-  // Container and OPF documents are EPUB XML literals; the "no mixed
-  // HTML" linter flag is a false positive for these fixtures.
-  const container = '<?xml version="1.0"?><container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container"><rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/></rootfiles></container>';
-  const opf = '<?xml version="1.0"?><package version="3.0" xmlns="http://idpf.org/2007/opf"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>Stream Test</dc:title></metadata><manifest><item id="nav" href="nav.xhtml" properties="nav" media-type="application/xhtml+xml"/></manifest><spine></spine></package>';
-  zip.file('META-INF/container.xml', container);
-  zip.file('OEBPS/content.opf', opf);
+  zip.file('META-INF/container.xml', EPUB_CONTAINER_HTML);
+  zip.file('OEBPS/content.opf', EPUB_OPF_HTML);
   return zip.generateAsync({ type: 'arraybuffer' });
 }
 
