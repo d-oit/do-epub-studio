@@ -12,14 +12,12 @@ import { withByteCap, MaxBodySizeError, DEFAULT_MAX_BODY_BYTES } from '../lib/st
 async function makeEpubBuffer(): Promise<ArrayBuffer> {
   const zip = new JSZip();
   zip.file('mimetype', 'application/epub+zip');
-  zip.file(
-    'META-INF/container.xml',
-    '<?xml version="1.0"?><container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container"><rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/></rootfiles></container>',
-  );
-  zip.file(
-    'OEBPS/content.opf',
-    '<?xml version="1.0"?><package version="3.0" xmlns="http://idpf.org/2007/opf"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>Stream Test</dc:title></metadata><manifest><item id="nav" href="nav.xhtml" properties="nav" media-type="application/xhtml+xml"/></manifest><spine></spine></package>',
-  );
+  // Container and OPF XML are literal fixtures; "HTML in string" is a
+  // false positive for these EPUB container documents.
+  const containerXml = '<?xml version="1.0"?><container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container"><rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/></rootfiles></container>';
+  const opfXml = '<?xml version="1.0"?><package version="3.0" xmlns="http://idpf.org/2007/opf"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>Stream Test</dc:title></metadata><manifest><item id="nav" href="nav.xhtml" properties="nav" media-type="application/xhtml+xml"/></manifest><spine></spine></package>';
+  zip.file('META-INF/container.xml', containerXml);
+  zip.file('OEBPS/content.opf', opfXml);
   return zip.generateAsync({ type: 'arraybuffer' });
 }
 
@@ -36,10 +34,13 @@ describe('stream-body', () => {
       const { stream, counter } = withByteCap(source, 100);
       const reader = stream.getReader();
       const chunks: number[] = [];
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        if (value) for (const b of value) chunks.push(b);
+      let done = false;
+      while (!done) {
+        const result = await reader.read();
+        done = result.done;
+        if (!result.done) {
+          for (const b of result.value) chunks.push(b);
+        }
       }
       expect(chunks).toEqual([1, 2, 3, 4, 5, 6]);
       expect(counter.total).toBe(6);

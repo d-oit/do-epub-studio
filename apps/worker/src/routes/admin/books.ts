@@ -143,10 +143,13 @@ booksRouter.put('/:id/upload', adminAuth, async (c) => {
         const chunks: Uint8Array[] = [];
         const reader = validatorBranch.getReader();
         try {
-          while (true) {
-            const { value, done } = await reader.read();
-            if (done) break;
-            if (value) chunks.push(value);
+          let done = false;
+          while (!done) {
+            const result = await reader.read();
+            done = result.done;
+            if (!result.done) {
+              chunks.push(result.value);
+            }
           }
         } catch (err) {
           // Stream errored (likely the byte cap). Surface the right code.
@@ -181,8 +184,8 @@ booksRouter.put('/:id/upload', adminAuth, async (c) => {
     const customMetadata: Record<string, string> = {
       bookId: book.id,
       uploadedAt: new Date().toISOString(),
+      size: String(declaredSize),
     };
-    if (declaredSize != null) customMetadata.size = String(declaredSize);
     if (validationArrayBuffer) {
       validationResults = await validateEpub(validationArrayBuffer);
       customMetadata.validationResults = JSON.stringify(validationResults);
