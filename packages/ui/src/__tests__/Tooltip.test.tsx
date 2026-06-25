@@ -204,7 +204,7 @@ describe('Tooltip', () => {
   it('click on trigger is a no-op for tooltip open in jsdom (V9: hover/focus only)', () => {
     render(
       <Tooltip content="click open">
-        <button>Click trigger</button>
+        <button type="button">Click trigger</button>
       </Tooltip>,
     );
     const wrapper = getTooltipWrapper();
