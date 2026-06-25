@@ -64,10 +64,10 @@ export function LoginPage() {
 
   const [loginState, loginAction] = useActionState<AuthState, FormData>(
     async (_prev, fd) => {
-      const getString = (name: string): string => {
+      function getString(name: string): string {
         const v = fd.get(name);
         return typeof v === 'string' ? v : '';
-      };
+      }
       const email = getString('email');
       const password = getString('password');
       try {
@@ -116,7 +116,7 @@ export function LoginPage() {
 
   useEffect(() => {
     if (!recoveryToken) return;
-    let cancelled = false;
+    const cancelledRef = { value: false };
     setIsVerifying(true);
     setVerifyError(null);
     void (async () => {
@@ -125,7 +125,7 @@ export function LoginPage() {
           method: 'POST',
           body: JSON.stringify({ token: recoveryToken }),
         });
-        if (cancelled) return;
+        if (cancelledRef.value) return;
         setAuth({
           sessionToken: data.sessionToken,
           sessionExpiresAt: data.expiresAt ? new Date(data.expiresAt).getTime() : null,
@@ -137,12 +137,12 @@ export function LoginPage() {
         });
         void navigate(`/read/${data.book.slug}`);
       } catch (err) {
-        if (!cancelled) setVerifyError((err as Error).message);
+        if (!cancelledRef.value) setVerifyError((err as Error).message);
       } finally {
-        if (!cancelled) setIsVerifying(false);
+        if (!cancelledRef.value) setIsVerifying(false);
       }
     })();
-    return () => { cancelled = true; };
+    return () => { cancelledRef.value = true; };
   }, [recoveryToken, navigate, setAuth]);
 
   const formError = isRecoveryMode ? recoveryState.error : loginState.error;

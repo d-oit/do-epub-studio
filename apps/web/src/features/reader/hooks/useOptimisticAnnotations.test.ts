@@ -4,44 +4,50 @@ import { useOptimisticAnnotationStore } from './useOptimisticAnnotations';
 import { useReaderStore } from '../../../stores';
 import type { Highlight, Comment, Bookmark } from '../../../stores';
 
-const makeHighlight = (overrides: Partial<Highlight> = {}): Highlight => ({
-  id: 'h-1',
-  chapterRef: 'ch-1',
-  cfiRange: 'epubcfi(/6/2)',
-  selectedText: 'Hello world',
-  note: null,
-  color: '#ffff00',
-  createdAt: new Date().toISOString(),
-  updatedAt: new Date().toISOString(),
-  ...overrides,
-});
-
-const makeComment = (overrides: Partial<Comment> = {}): Comment => ({
-  id: 'c-1',
-  userEmail: 'a@ex.com',
-  chapterRef: 'ch-1',
-  cfiRange: 'epubcfi(/6/4)',
-  selectedText: 'Hello world',
-  body: 'Great passage',
-  status: 'open',
-  visibility: 'shared',
-  parentCommentId: null,
-  createdAt: new Date().toISOString(),
-  updatedAt: new Date().toISOString(),
-  resolvedAt: null,
-  ...overrides,
-});
-
-const makeBookmark = (overrides: Partial<Bookmark> = {}): Bookmark => ({
-  id: 'b-1',
-  locator: {
-    cfi: 'epubcfi(/6/2)',
+function makeHighlight(overrides: Partial<Highlight>): Highlight {
+  return {
+    id: 'h-1',
     chapterRef: 'ch-1',
-  },
-  label: 'Chapter 1',
-  createdAt: new Date().toISOString(),
-  ...overrides,
-});
+    cfiRange: 'epubcfi(/6/2)',
+    selectedText: 'Hello world',
+    note: null,
+    color: '#ffff00',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    ...overrides,
+  };
+}
+
+function makeComment(overrides: Partial<Comment>): Comment {
+  return {
+    id: 'c-1',
+    userEmail: 'a@ex.com',
+    chapterRef: 'ch-1',
+    cfiRange: 'epubcfi(/6/4)',
+    selectedText: 'Hello world',
+    body: 'Great passage',
+    status: 'open',
+    visibility: 'shared',
+    parentCommentId: null,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    resolvedAt: null,
+    ...overrides,
+  };
+}
+
+function makeBookmark(overrides: Partial<Bookmark>): Bookmark {
+  return {
+    id: 'b-1',
+    locator: {
+      cfi: 'epubcfi(/6/2)',
+      chapterRef: 'ch-1',
+    },
+    label: 'Chapter 1',
+    createdAt: new Date().toISOString(),
+    ...overrides,
+  };
+}
 
 describe('useOptimisticAnnotationStore', () => {
   beforeEach(() => {
@@ -53,7 +59,7 @@ describe('useOptimisticAnnotationStore', () => {
   });
 
   it('reflects committed store state initially', () => {
-    const highlight = makeHighlight();
+    const highlight = makeHighlight({});
     useReaderStore.getState().addHighlight(highlight);
 
     const { result } = renderHook(() => useOptimisticAnnotationStore());

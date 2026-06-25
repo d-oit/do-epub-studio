@@ -29,6 +29,15 @@ interface GrantsBodyProps {
   token: string;
 }
 
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i += 1) {
+    diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return diff === 0;
+}
+
 interface GrantsBodyData {
   books: BookOption[];
   grants: GrantResponse[];
@@ -62,24 +71,24 @@ function GrantsView({ data, bookId, token }: { data: GrantsBodyData; bookId: str
     async (_prevState, fd) => {
       const editing = editingGrantRef.current;
       const errors: Record<string, string> = {};
-      const getString = (name: string, fallback = ''): string => {
+      function getString(name: string, fallback: string): string {
         const v = fd.get(name);
         return typeof v === 'string' ? v : fallback;
-      };
-      const email = getString('email');
+      }
+      const email = getString('email', '');
       const mode = getString('mode', 'private');
       const commentsAllowed = fd.get('commentsAllowed') === 'on';
       const offlineAllowed = fd.get('offlineAllowed') === 'on';
-      const expiresAt = getString('expiresAt');
+      const expiresAt = getString('expiresAt', '');
 
       if (!email) errors.email = t('grants.form.error.emailRequired');
 
       if (!editing) {
-        const password = getString('password');
-        const passwordConfirm = getString('passwordConfirm');
+        const password = getString('password', '');
+        const passwordConfirm = getString('passwordConfirm', '');
         if (!password) errors.password = t('grants.form.error.passwordRequired');
         else if (password.length < 8) errors.password = t('grants.form.error.passwordMinLength');
-        if (password !== passwordConfirm) errors.passwordConfirm = t('grants.form.error.passwordMismatch');
+        if (!timingSafeEqual(password, passwordConfirm)) errors.passwordConfirm = t('grants.form.error.passwordMismatch');
       }
 
       if (Object.keys(errors).length > 0) {
@@ -99,7 +108,7 @@ function GrantsView({ data, bookId, token }: { data: GrantsBodyData; bookId: str
             }),
           });
         } else {
-          const password = getString('password');
+          const password = getString('password', '');
           await apiRequest(`/api/admin/books/${bookId}/grants`, {
             method: 'POST',
             token: token || undefined,

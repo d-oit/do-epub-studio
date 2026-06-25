@@ -49,13 +49,13 @@ export function GrantForm({
 
   // React 19 form actions receive (formData); legacy handlers may take
   // no arguments. Detect the signature by calling with a no-arg probe.
-  const handleFormAction = (formData: FormData) => {
+  function handleFormAction(formData: FormData): void {
     if (onSubmit.length >= 1) {
       onSubmit(formData);
     } else {
       (onSubmit as () => void)();
     }
-  };
+  }
 
   return (
     <Modal
