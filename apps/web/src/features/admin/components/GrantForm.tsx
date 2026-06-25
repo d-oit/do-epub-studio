@@ -85,7 +85,7 @@ export function GrantForm({
           value={formData.email}
           onChange={(e) => onChange({ ...formData, email: e.target.value })}
           error={formErrors.email}
-          disabled={editingGrant !== null}
+          readOnly={editingGrant !== null}
           required
         />
 

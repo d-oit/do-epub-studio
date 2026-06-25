@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
+import { act, render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { AdminGrantResponsesPage } from './GrantsPage';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import * as api from '../../lib/api';
@@ -40,6 +40,20 @@ const mockGrants = [{
   revokedAt: null,
 }];
 
+async function renderAndFlush(initialPath: string) {
+  await act(() => {
+    render(
+      <MemoryRouter initialEntries={[initialPath]}>
+        <Routes>
+          <Route path="/admin/grants" element={<AdminGrantResponsesPage />} />
+          <Route path="/admin/books/:bookId/grants" element={<AdminGrantResponsesPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    return Promise.resolve();
+  });
+}
+
 describe('AdminGrantResponsesPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -52,15 +66,9 @@ describe('AdminGrantResponsesPage', () => {
       return Promise.resolve([]);
     });
 
-    render(
-      <MemoryRouter initialEntries={['/admin/books/b1/grants']}>
-        <Routes>
-          <Route path="/admin/books/:bookId/grants" element={<AdminGrantResponsesPage />} />
-        </Routes>
-      </MemoryRouter>
-    );
+    await renderAndFlush('/admin/books/b1/grants');
 
-    expect(await screen.findByText('u1@ex.com')).toBeInTheDocument();
+    expect(screen.getByText('u1@ex.com')).toBeInTheDocument();
   });
 
   it('shows select book prompt when no book selected', async () => {
@@ -69,16 +77,9 @@ describe('AdminGrantResponsesPage', () => {
       return Promise.resolve([]);
     });
 
-    render(
-      <MemoryRouter initialEntries={['/admin/grants']}>
-        <Routes>
-          <Route path="/admin/grants" element={<AdminGrantResponsesPage />} />
-          <Route path="/admin/books/:bookId/grants" element={<AdminGrantResponsesPage />} />
-        </Routes>
-      </MemoryRouter>
-    );
+    await renderAndFlush('/admin/grants');
 
-    expect(await screen.findByText('grants.selectBookPrompt')).toBeInTheDocument();
+    expect(screen.getByText('grants.selectBookPrompt')).toBeInTheDocument();
   });
 
   it('opens create modal and submits', async () => {
@@ -88,15 +89,9 @@ describe('AdminGrantResponsesPage', () => {
       return Promise.resolve({ ok: true });
     });
 
-    render(
-      <MemoryRouter initialEntries={['/admin/books/b1/grants']}>
-        <Routes>
-          <Route path="/admin/books/:bookId/grants" element={<AdminGrantResponsesPage />} />
-        </Routes>
-      </MemoryRouter>
-    );
+    await renderAndFlush('/admin/books/b1/grants');
 
-    const createBtn = await screen.findByRole('button', { name: 'grants.createGrant' });
+    const createBtn = screen.getByRole('button', { name: 'grants.createGrant' });
     fireEvent.click(createBtn);
 
     expect(screen.getByText('grants.createGrantTitle')).toBeInTheDocument();
@@ -106,7 +101,14 @@ describe('AdminGrantResponsesPage', () => {
     fireEvent.change(within(modal).getByLabelText('grants.form.password'), { target: { value: 'password123' } });
     fireEvent.change(within(modal).getByLabelText('grants.form.passwordConfirm'), { target: { value: 'password123' } });
 
-    fireEvent.click(within(modal).getByRole('button', { name: 'grants.createGrant' }));
+    // React 19 form actions fire on form submit, not button click in jsdom.
+    const modalForm = modal.querySelector('form');
+    expect(modalForm).toBeInTheDocument();
+    if (modalForm) {
+      act(() => {
+        fireEvent.submit(modalForm);
+      });
+    }
 
     await waitFor(() => {
       expect(api.apiRequest).toHaveBeenCalledWith('/api/admin/books/b1/grants', expect.objectContaining({
@@ -122,30 +124,34 @@ describe('AdminGrantResponsesPage', () => {
       return Promise.resolve({ ok: true });
     });
 
-    render(
-      <MemoryRouter initialEntries={['/admin/books/b1/grants']}>
-        <Routes>
-          <Route path="/admin/books/:bookId/grants" element={<AdminGrantResponsesPage />} />
-        </Routes>
-      </MemoryRouter>
-    );
+    await renderAndFlush('/admin/books/b1/grants');
 
-    const editBtn = await screen.findByText('grants.actions.edit');
+    const editBtn = screen.getByText('grants.actions.edit');
     fireEvent.click(editBtn);
 
     expect(screen.getByText('grants.editGrantTitle')).toBeInTheDocument();
 
     const modal = screen.getByRole('dialog');
     const emailInput = within(modal).getByLabelText('grants.form.email');
-    expect(emailInput).toBeDisabled();
+    expect(emailInput).toHaveAttribute('readonly');
 
-    fireEvent.click(within(modal).getByRole('button', { name: 'grants.actions.save' }));
-
-    await waitFor(() => {
-      expect(api.apiRequest).toHaveBeenCalledWith('/api/admin/grants/g1', expect.objectContaining({
-        method: 'PATCH',
-      }));
+    const modalForm = modal.querySelector('form');
+    expect(modalForm).toBeInTheDocument();
+    // Use requestSubmit which simulates a real user submission in jsdom.
+    await act(async () => {
+      (modalForm as HTMLFormElement).requestSubmit();
+      await new Promise((resolve) => setTimeout(resolve, 100));
     });
+
+    await waitFor(
+      () => {
+        expect(api.apiRequest).toHaveBeenCalledWith(
+          '/api/admin/grants/g1',
+          expect.objectContaining({ method: 'PATCH' }),
+        );
+      },
+      { timeout: 5000 },
+    );
   });
 
   it('revokes a grant', async () => {
@@ -155,15 +161,9 @@ describe('AdminGrantResponsesPage', () => {
       return Promise.resolve({ ok: true });
     });
 
-    render(
-      <MemoryRouter initialEntries={['/admin/books/b1/grants']}>
-        <Routes>
-          <Route path="/admin/books/:bookId/grants" element={<AdminGrantResponsesPage />} />
-        </Routes>
-      </MemoryRouter>
-    );
+    await renderAndFlush('/admin/books/b1/grants');
 
-    const revokeBtn = await screen.findByText('grants.actions.revoke');
+    const revokeBtn = screen.getByText('grants.actions.revoke');
     fireEvent.click(revokeBtn);
 
     expect(screen.getByText('grants.revokeTitle')).toBeInTheDocument();

@@ -1,4 +1,4 @@
-import { Suspense, use, useActionState, useState, useCallback } from 'react';
+import { Suspense, use, useActionState, useState, useCallback, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from '../../hooks/useTranslation';
 import { apiRequest } from '../../lib/api';
@@ -53,8 +53,14 @@ function GrantsView({ data, bookId, token }: { data: GrantsBodyData; bookId: str
   const [editingGrant, setEditingGrant] = useState<Grant | null>(null);
   const [formData, setFormData] = useState<GrantFormData>(emptyFormData());
 
+  // Refs mirror current state so the form action's closure (which is
+  // captured once by useActionState) can read the latest values.
+  const editingGrantRef = useRef<Grant | null>(null);
+  editingGrantRef.current = editingGrant;
+
   const [formErrors, formAction, isPending] = useActionState<Record<string, string>, FormData>(
     async (_prevState, fd) => {
+      const editing = editingGrantRef.current;
       const errors: Record<string, string> = {};
       const getString = (name: string, fallback = ''): string => {
         const v = fd.get(name);
@@ -68,7 +74,7 @@ function GrantsView({ data, bookId, token }: { data: GrantsBodyData; bookId: str
 
       if (!email) errors.email = t('grants.form.error.emailRequired');
 
-      if (!editingGrant) {
+      if (!editing) {
         const password = getString('password');
         const passwordConfirm = getString('passwordConfirm');
         if (!password) errors.password = t('grants.form.error.passwordRequired');
@@ -81,8 +87,8 @@ function GrantsView({ data, bookId, token }: { data: GrantsBodyData; bookId: str
       }
 
       try {
-        if (editingGrant) {
-          await apiRequest(`/api/admin/grants/${editingGrant.id}`, {
+        if (editing) {
+          await apiRequest(`/api/admin/grants/${editing.id}`, {
             method: 'PATCH',
             token: token || undefined,
             body: JSON.stringify({

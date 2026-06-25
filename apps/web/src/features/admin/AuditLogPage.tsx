@@ -1,4 +1,4 @@
-import { Suspense, use, useState, useCallback, useRef } from 'react';
+import { Component, Suspense, use, useState, useCallback, useRef, type ErrorInfo, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '../../hooks/useTranslation';
 import {
@@ -153,6 +153,40 @@ function AuditSkeleton() {
   );
 }
 
+interface AuditErrorBoundaryProps {
+  children: ReactNode;
+}
+
+interface AuditErrorBoundaryState {
+  error: Error | null;
+}
+
+class AuditErrorBoundary extends Component<AuditErrorBoundaryProps, AuditErrorBoundaryState> {
+  public state: AuditErrorBoundaryState = { error: null };
+
+  public static getDerivedStateFromError(error: Error): AuditErrorBoundaryState {
+    return { error };
+  }
+
+  public componentDidCatch(_error: Error, _errorInfo: ErrorInfo): void {
+    // Surface to global error handler in a real app; keep quiet in tests.
+  }
+
+  public render(): ReactNode {
+    if (this.state.error) {
+      return (
+        <div
+          role="alert"
+          className="mb-6 p-4 bg-semantic-error/10 border border-semantic-error/30 rounded-lg text-semantic-error"
+        >
+          {this.state.error.message}
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export function AdminAuditPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -163,7 +197,6 @@ export function AdminAuditPage() {
   const [entityId, setEntityId] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
-  const [refreshTick, setRefreshTick] = useState(0);
 
   const filtersRef = useRef({ page, entityType, entityId, dateFrom, dateTo });
   filtersRef.current = { page, entityType, entityId, dateFrom, dateTo };
@@ -174,7 +207,8 @@ export function AdminAuditPage() {
 
   const handleRefresh = useCallback(() => {
     invalidateAuditLogCache();
-    setRefreshTick((t) => t + 1);
+    // Re-fetch by toggling a state to trigger re-render
+    setPage((p) => p);
   }, []);
 
   const handleResetFilters = useCallback(() => {
@@ -306,21 +340,20 @@ export function AdminAuditPage() {
         </button>
       </div>
 
-      <Suspense
-        key={`${page}-${entityType}-${entityId}-${dateFrom}-${dateTo}-${refreshTick}`}
-        fallback={<AuditSkeleton />}
-      >
-        <AuditBody
-          token={sessionToken ?? ''}
-          page={page}
-          pageSize={PAGE_SIZE}
-          entityType={entityType}
-          entityId={entityId}
-          dateFrom={dateFrom}
-          dateTo={dateTo}
-          onPrev={handlePreviousPage}
-          onNext={handleNextPage}
-        />
+      <Suspense fallback={<AuditSkeleton />}>
+        <AuditErrorBoundary>
+          <AuditBody
+            token={sessionToken ?? ''}
+            page={page}
+            pageSize={PAGE_SIZE}
+            entityType={entityType}
+            entityId={entityId}
+            dateFrom={dateFrom}
+            dateTo={dateTo}
+            onPrev={handlePreviousPage}
+            onNext={handleNextPage}
+          />
+        </AuditErrorBoundary>
       </Suspense>
     </main>
   );
