@@ -63,6 +63,14 @@ export function FixedLayoutControls({
       variants={scaleVariants}
       className="fixed top-14 right-4 glass-panel rounded-xl shadow-xl border border-border p-4 z-50 w-72"
     >
+      {/* Live region for zoom level announcements — WCAG 4.1.3 */}
+      <div
+        aria-live="polite"
+        role="status"
+        className="sr-only"
+      >
+        {t('reader.fixedLayout.zoom')}: {Math.round(zoom * 100)}%
+      </div>
       <div className="flex items-center justify-between mb-4">
         <h2
           id="fl-controls-title"
