@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { createTraceId } from '@do-epub-studio/shared';
 import { useAuthStore } from '../stores/auth';
 import { apiRequest } from '../lib/api';
 import { logClientEvent } from '../lib/client-logger';
@@ -68,7 +69,7 @@ export function useSessionExpiry(): UseSessionExpiryReturn {
       logClientEvent({
         level: 'info',
         event: 'session-expiring',
-        traceId: 'session',
+        traceId: createTraceId(),
         metadata: { expiresAt, msUntilExpiry: expiresAt - now },
       });
     }
@@ -97,7 +98,7 @@ export function useSessionExpiry(): UseSessionExpiryReturn {
           logClientEvent({
             level: 'info',
             event: 'session-refreshed',
-            traceId: 'session',
+            traceId: createTraceId(),
             metadata: { expiresAt: newExpires ?? undefined },
           });
         }
@@ -106,7 +107,7 @@ export function useSessionExpiry(): UseSessionExpiryReturn {
         logClientEvent({
           level: 'warn',
           event: 'session-refresh-failed',
-          traceId: 'session',
+          traceId: createTraceId(),
           error: { name: (err as Error).name, message: (err as Error).message },
         });
         // Allow a retry after REFRESH_RETRY_MS.
@@ -123,7 +124,7 @@ export function useSessionExpiry(): UseSessionExpiryReturn {
   // Forced logout on actual expiry.
   useEffect(() => {
     if (state === 'expired') {
-      logClientEvent({ level: 'info', event: 'session-expired', traceId: 'session' });
+      logClientEvent({ level: 'info', event: 'session-expired', traceId: createTraceId() });
       logout();
     }
   }, [state, logout]);
@@ -149,7 +150,7 @@ export function useSessionExpiry(): UseSessionExpiryReturn {
       logClientEvent({
         level: 'warn',
         event: 'session-refresh-failed-manual',
-        traceId: 'session',
+        traceId: createTraceId(),
         error: { name: (err as Error).name, message: (err as Error).message },
       });
     } finally {

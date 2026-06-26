@@ -172,6 +172,14 @@ async function apiRaw(endpoint: string, method: string, data?: unknown, options?
      handleUnauthorized();
   }
 
+  logClientEvent({
+    level: res.ok ? 'info' : 'error',
+    event: res.ok ? 'api-raw.success' : 'api-raw.error',
+    traceId,
+    spanId,
+    metadata: { endpoint, method, status: res.status },
+  });
+
   return res;
 }
 

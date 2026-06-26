@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import type { Book, NavItem } from '@intity/epub-js';
+import { createTraceId } from '@do-epub-studio/shared';
 import { logClientEvent } from '../../../lib/client-logger';
 
 export interface SearchResult {
@@ -80,7 +81,7 @@ export function useReaderSearch(book: Book | null, query: string) {
                 logClientEvent({
                   level: 'warn',
                   event: 'reader-search-section-error',
-                  traceId: 'reader-search',
+                  traceId: createTraceId(),
                   error: { name: e.name, message: e.message },
                 });
                 return [];
@@ -104,7 +105,7 @@ export function useReaderSearch(book: Book | null, query: string) {
           logClientEvent({
             level: 'info',
             event: 'reader-search-complete',
-            traceId: 'reader-search',
+            traceId: createTraceId(),
             metadata: {
               queryLength: trimmed.length,
               matches: processed.length,
@@ -119,7 +120,7 @@ export function useReaderSearch(book: Book | null, query: string) {
           logClientEvent({
             level: 'error',
             event: 'reader-search-failed',
-            traceId: 'reader-search',
+            traceId: createTraceId(),
             error: { name: e.name, message },
           });
         } finally {
