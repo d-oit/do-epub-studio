@@ -102,7 +102,8 @@ export function SearchPanel({ isOpen, book, onClose, onNavigate, t }: SearchPane
       animate={{ x: 0 }}
       exit={{ x: '100%' }}
       transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-      className="fixed inset-y-0 right-0 w-full sm:w-96 glass-panel z-50 border-l border-border shadow-2xl flex flex-col"
+      data-container-name="search-panel"
+      className="cq cq--search-panel fixed inset-y-0 right-0 w-full sm:w-96 glass-panel z-50 border-l border-border shadow-2xl flex flex-col"
       role="search"
       aria-label={t('reader.search')}
     >
@@ -159,7 +160,7 @@ export function SearchPanel({ isOpen, book, onClose, onNavigate, t }: SearchPane
           {query.trim().length >= 2 ? (
             results.length > 0 ? (
               <>
-                <p className="text-xs font-medium text-foreground-muted mb-2 px-1">
+                <p className="cq-search-result-meta text-xs font-medium text-foreground-muted mb-2 px-1">
                   {t('reader.searchMatches', { n: results.length })}
                 </p>
                 {results.map((result) => (

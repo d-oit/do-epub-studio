@@ -32,4 +32,31 @@ describe('Design Tokens', () => {
     expect(cssContent).toContain('@layer components');
     expect(cssContent).toContain('@layer utilities');
   });
+
+  it('exposes named inline-size containers for ADR-105 components', () => {
+    const cssPath = path.resolve(__dirname, '../styles/globals.css');
+    const cssContent = fs.readFileSync(cssPath, 'utf-8');
+
+    for (const name of [
+      'toc-panel',
+      'search-panel',
+      'bookmarks-panel',
+      'annotation-toolbar',
+      'reader-toolbar',
+      'catalog-grid',
+      'admin-books-grid',
+      'admin-audit-table',
+    ]) {
+      expect(cssContent).toContain(`container-name: ${name}`);
+    }
+    expect(cssContent).toMatch(/container-type:\s*inline-size/);
+  });
+
+  it('ships at least one @container rule per refactored component', () => {
+    const cssPath = path.resolve(__dirname, '../styles/globals.css');
+    const cssContent = fs.readFileSync(cssPath, 'utf-8');
+
+    const matches = cssContent.match(/@container\s+[a-z-]+\s+\(min-width:/g) ?? [];
+    expect(matches.length).toBeGreaterThanOrEqual(5);
+  });
 });

@@ -95,7 +95,8 @@ export function ReaderToolbar({
       animate={{ y: isHeaderVisible ? 0 : 'var(--motion-header-offset)' }}
       transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
       aria-hidden={isHeaderVisible ? undefined : true}
-      className={isHeaderVisible ? '' : 'pointer-events-none'}
+      data-container-name="reader-toolbar"
+      className={`cq cq--reader-toolbar ${isHeaderVisible ? '' : 'pointer-events-none'}`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-14">
@@ -143,7 +144,7 @@ export function ReaderToolbar({
             </div>
           </div>
 
-          <div className="hidden sm:flex items-center gap-1">
+          <div className="cq-reader-toolbar-actions items-center gap-1">
             <Tooltip content={t('reader.search')}>
               <IconButton
                 onClick={onToggleSearch}
@@ -270,7 +271,7 @@ export function ReaderToolbar({
                 </svg>
               </IconButton>
             </Tooltip>
-            <div className="mx-1 h-6 w-px bg-border hidden md:block" />
+            <div className="mx-1 h-6 w-px bg-border cq-reader-toolbar-divider" />
             <LocaleSwitcher />
             <Button onClick={onLogout} variant="ghost" size="sm">
               {t('reader.signOut')}
@@ -278,7 +279,7 @@ export function ReaderToolbar({
           </div>
 
           {/* Mobile overflow menu */}
-          <div className="sm:hidden relative" ref={menuRef}>
+          <div className="cq-reader-toolbar-overflow relative" ref={menuRef}>
             <IconButton
               onClick={() => { setIsMenuOpen(!isMenuOpen); }}
               variant="ghost"

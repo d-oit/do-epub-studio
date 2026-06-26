@@ -92,7 +92,8 @@ export function AnnotationToolbar({
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.8, y: 10 }}
       transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-      className="fixed z-50 glass-panel rounded-xl shadow-glass-lg border border-border p-1.5 flex items-center gap-1.5"
+      data-container-name="annotation-toolbar"
+      className="cq cq--annotation-toolbar fixed z-50 glass-panel rounded-xl shadow-glass-lg border border-border p-1.5 flex items-center gap-1.5"
       style={{ top: position.top, left: position.left, minWidth: '180px' }}
     >
       {canHighlight && (
@@ -104,7 +105,7 @@ export function AnnotationToolbar({
               aria-label={t('annotation.highlight')}
             >
               <span className="w-4 h-4 rounded-full bg-yellow-400 ring-1 ring-border" />
-              <span className="hidden md:inline">{t('annotation.highlight')}</span>
+              <span className="cq-annotation-label">{t('annotation.highlight')}</span>
             </button>
           </Tooltip>
 
@@ -153,7 +154,7 @@ export function AnnotationToolbar({
                 d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
               />
             </svg>
-            <span className="hidden md:inline">{t('annotation.comment')}</span>
+            <span className="cq-annotation-label">{t('annotation.comment')}</span>
           </button>
         </Tooltip>
       )}

@@ -41,7 +41,8 @@ export function BookmarksPanel({
       role="dialog"
       aria-modal="true"
       aria-labelledby="bookmarks-title"
-      className="fixed inset-y-0 right-0 w-80 bg-background border-l border-border z-40 flex flex-col shadow-xl"
+      data-container-name="bookmarks-panel"
+      className="cq cq--bookmarks-panel fixed inset-y-0 right-0 w-80 bg-background border-l border-border z-40 flex flex-col shadow-xl"
     >
       <div className="p-4 border-b border-border flex justify-between items-center">
         <h2 id="bookmarks-title" className="font-semibold">Bookmarks</h2>
@@ -86,7 +87,7 @@ export function BookmarksPanel({
             {bookmarks.map((bookmark) => (
               <div
                 key={bookmark.id}
-                className="p-3 rounded-lg border border-border hover:border-accent transition-colors"
+                className="cq-bookmark-row p-3 rounded-lg border border-border hover:border-accent transition-colors flex flex-col"
               >
                 <div className="flex items-start justify-between">
                   <button onClick={() => onNavigate(bookmark)} className="flex-1 text-left">

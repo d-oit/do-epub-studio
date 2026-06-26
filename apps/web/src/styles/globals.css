@@ -341,6 +341,36 @@
     outline: none;
     box-shadow: 0 0 0 2px var(--color-background), 0 0 0 4px var(--color-accent);
   }
+
+  /* Annotation toolbar container-query utilities (ADR-105)
+     Default = labels hidden (icon-only). Once the toolbar container
+     is roomy we expose the labels. */
+  .cq-annotation-label { display: none; }
+  @container annotation-toolbar (min-width: 480px) {
+    .cq-annotation-label { display: inline; }
+  }
+
+  /* Reader toolbar container-query utilities (ADR-105)
+     Default = narrow container (icons collapsed, overflow menu shown).
+     Once the toolbar container is roomy we promote the action row. */
+  .cq-reader-toolbar-actions { display: none; }
+  .cq-reader-toolbar-overflow { display: block; }
+  .cq-reader-toolbar-divider { display: none; }
+  @container reader-toolbar (min-width: 640px) {
+    .cq-reader-toolbar-actions { display: flex; }
+    .cq-reader-toolbar-overflow { display: none; }
+    .cq-reader-toolbar-divider { display: block; }
+  }
+
+  /* Admin audit-log container-query utilities (ADR-105)
+     Default = actor/entity columns hidden. Once the table container
+     is roomy we expose them. */
+  .cq-admin-audit-actor { display: none; }
+  .cq-admin-audit-entity { display: none; }
+  @container admin-audit-table (min-width: 900px) {
+    .cq-admin-audit-actor { display: table-cell; }
+    .cq-admin-audit-entity { display: table-cell; }
+  }
 }
 
 /* ============================================
@@ -385,6 +415,56 @@
     --motion-scale-hover: 1;
     --motion-scale-hover-lg: 1;
     --motion-scale-tap-lg: 1;
+  }
+}
+
+/* ============================================
+   Container query primitives (ADR-105)
+   ============================================
+   Tailwind 4 ships the `@container` / `@` variant out of the box.
+   We define stable `--container-name` custom properties plus
+   reusable named containers so components can opt-in to
+   container-driven layout without repeating `container-type:
+   inline-size` on every parent.
+
+   Usage: <div class="cq cq--toc-panel">…</div>
+          <button class="cq-label">…</button>
+   Tailwind utilities may still be combined (e.g. `@md:inline`).
+*/
+
+@layer components {
+  .cq {
+    container-type: inline-size;
+  }
+  .cq--toc-panel          { container-name: toc-panel; }
+  .cq--search-panel       { container-name: search-panel; }
+  .cq--bookmarks-panel    { container-name: bookmarks-panel; }
+  .cq--annotation-toolbar { container-name: annotation-toolbar; }
+  .cq--reader-toolbar     { container-name: reader-toolbar; }
+  .cq--catalog-grid       { container-name: catalog-grid; }
+  .cq--admin-books-grid   { container-name: admin-books-grid; }
+  .cq--admin-audit-table  { container-name: admin-audit-table; }
+
+  /* Hide the label until the toolbar container is wide enough
+     to fit icon + label side-by-side. The default for narrow
+     viewports is label-hidden. */
+  @container reader-toolbar (min-width: 640px) {
+    .cq-reader-toolbar-label { display: inline; }
+  }
+  @container toc-panel (min-width: 320px) {
+    .cq-toc-density { padding-inline: 1rem; }
+  }
+  @container bookmarks-panel (min-width: 360px) {
+    .cq-bookmark-row { flex-direction: row; align-items: center; }
+  }
+  @container search-panel (min-width: 420px) {
+    .cq-search-result-meta { display: flex; }
+  }
+  @container catalog-grid (min-width: 480px) {
+    .cq-catalog-cover { aspect-ratio: 3 / 4; }
+  }
+  @container admin-books-grid (min-width: 720px) {
+    .cq-admin-book-card { padding: 1.5rem; }
   }
 }
 

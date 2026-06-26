@@ -295,7 +295,10 @@ export function AdminBookResponsesPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div
+        data-container-name="admin-books-grid"
+        className="cq cq--admin-books-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+      >
         {isLoading ? (
           <div className="col-span-full py-12 flex justify-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
@@ -304,7 +307,7 @@ export function AdminBookResponsesPage() {
           books.map((book) => (
             <div
               key={book.id}
-              className="bg-background-secondary p-6 rounded-xl shadow-sm border border-border hover:shadow-md transition-shadow"
+              className="cq-admin-book-card bg-background-secondary p-6 rounded-xl shadow-sm border border-border hover:shadow-md transition-shadow"
             >
               <h3 className="text-lg font-semibold text-foreground mb-2">
                 {book.title}
