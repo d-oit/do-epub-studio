@@ -10,6 +10,8 @@ export {
   Header,
   IconButton,
   AppLogo,
+  Pagination,
+  SearchInput,
   fadeVariants,
   slideUpVariants,
   slideDownVariants,
@@ -30,4 +32,6 @@ export type {
   HeaderProps,
   IconButtonProps,
   AppLogoProps,
+  PaginationProps,
+  SearchInputProps,
 } from '@do-epub-studio/ui';
