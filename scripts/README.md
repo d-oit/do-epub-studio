@@ -19,12 +19,16 @@ Operational scripts for `d.o.EPUB Studio`. All scripts assume execution from the
 
 | Script | Purpose | Dependencies |
 |--------|---------|-------------|
-| `quality_gate.sh` | Runs all checks: lint, typecheck, test, validate skills/links/format | pnpm, shellcheck (optional), markdownlint (optional) |
+| `quality_gate.sh` | Runs all checks: lint, typecheck, test, validate skills/links/format, **markdownlint** (default), **`validate-workflows.sh` → actionlint + zizmor** (default), `run-impeccable.sh` (warnings only by default) | pnpm, shellcheck (optional), markdownlint (optional) |
 | `validate-skills.sh` | Checks skill symlinks and SKILL.md existence | none |
 | `validate-skill-format.sh` | Validates SKILL.md frontmatter per agentskills.io spec | none |
 | `validate-links.sh` | Validates reference links in SKILL.md files | perl (macOS fallback for realpath) |
+| `validate-workflows.sh` | Validates GitHub Actions workflows (actionlint + zizmor, SHA pinning) | actionlint, zizmor |
 | `validate-git-hooks.sh` | Detects global git hooks overriding local hooks | git |
 | `validate-shas.sh` | Detects placeholder SHAs in workflow files | none (gh CLI optional) |
+| `run-impeccable.sh` | Wraps `npx impeccable detect --json` for the quality gate (ADR-111) | npx, jq, impeccable |
+| `check-bundle-size.mjs` | Raw-byte bundle budget enforcer (pre-existing budgets in `.performance-budgets.json`) | node |
+| `check-bundle-budget.mjs` | Gzipped bundle budget enforcer per ADR-107 §3 (180 KB main JS / 30 KB main CSS / 80 KB lazy chunk) | node |
 | `eval-skills.sh` | Evaluates skill quality via check_structure.py | python3 |
 | `setup-skills.sh` | Creates symlinks for CLI skill folders | none |
 
@@ -91,6 +95,10 @@ Located in `scripts/lib/`:
 | `TURSO_DB_NAME` | `do-epub-studio-local` | Local Turso DB name |
 | `TURSO_MIGRATIONS_DIR` | `packages/schema/migrations` | SQL migrations path |
 | `MAX_SKILL_LINES` | `250` | Max lines per SKILL.md |
+| `IMPECCABLE_REQUIRED` | `0` | Promote impeccable findings to required (ADR-111) |
+| `SKIP_DESIGN` | `0` | Skip impeccable step in the quality gate |
+| `BUNDLE_BUDGET_FAIL_ON_VIOLATION` | `0` | Exit 1 when `check-bundle-budget.mjs` finds a violation |
+| `BUNDLE_BUDGET_REPORT` | unset | Path to write markdown bundle-budget report |
 
 ## No Escape Hatches
 
