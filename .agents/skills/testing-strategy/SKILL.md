@@ -98,6 +98,9 @@ test('user can read a book', async ({ page }) => {
 - [ ] E2E tests for critical paths
 - [ ] Coverage tracking
 - [ ] No skipped tests for core flows
+- [ ] CSP header tests assert no `unsafe-eval`/`unsafe-inline` in `script-src`
+- [ ] CSP header tests assert `report-uri /api/csp-report` present
+- [ ] Both full and minimal CSP variants validated
 
 ## Related Skills
 

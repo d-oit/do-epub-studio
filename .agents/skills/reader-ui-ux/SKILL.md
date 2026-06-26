@@ -81,3 +81,9 @@ CI: `npx impeccable detect --json .` runs in quality gate. See `DESIGN.md` for a
 - [ ] Reduced motion support implemented
 - [ ] No hardcoded colors - all OKLCH tokens
 - [ ] Touch targets minimum 44px on mobile
+
+## Performance Patterns
+
+- **Parser timeout:** EPUB content parsing must have a timeout/budget to prevent infinite loops on malformed input.
+- **Parallel preload:** Use `Promise.all` for spine/chapter operations to reduce load time.
+- **Search virtualization:** Lists with >50 items must use the `VirtualList` component for smooth scrolling.

@@ -212,6 +212,25 @@ jobs:
 - [ ] Security scans run automatically
 - [ ] Deployment is automated
 
+## Lighthouse Performance Budgets
+
+CI MUST enforce Lighthouse mobile preset with route-specific performance budgets. Remove `preset: "desktop"` from `.lighthouserc.json` to use the default mobile preset.
+
+Define route-specific budgets in `.performance-budgets.json` under `routeBudgets`:
+
+```json
+{
+  "routeBudgets": [
+    { "route": "/catalog", "budgets": { "performance": 0.9, "lcp": 2500, "cls": 0.1 } },
+    { "route": "/admin", "budgets": { "performance": 0.85, "lcp": 3000, "cls": 0.1 } },
+    { "route": "/auth/login", "budgets": { "performance": 0.9, "lcp": 2000, "cls": 0.05 } },
+    { "route": "/offline", "budgets": { "performance": 0.95, "lcp": 1500, "cls": 0.05 } }
+  ]
+}
+```
+
+Reference `.lighthouserc.json` for per-route URL configuration.
+
 ## Summary
 
 CI/CD pipelines automate the path from code to production.

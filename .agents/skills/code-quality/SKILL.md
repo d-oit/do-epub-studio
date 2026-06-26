@@ -89,6 +89,8 @@ Use named constants instead of bare numbers like `30000`.
 - Ignore compiler warnings
 - Skip error handling
 - Mix abstraction levels
+- Use raw regex on untrusted input — MUST use `matchBounded`/`testBounded`/`matchAllBounded` from `@do-epub-studio/shared`
+- Assume local `pnpm lint` covers all configs — Codacy covers root-level configs (`vite.config.ts`, `vitest.config.ts`, `playwright.config.ts`) that local ESLint does not
 
 ## Impeccable (UI files only)
 
