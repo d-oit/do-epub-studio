@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useFocusTrap } from '@do-epub-studio/ui';
 import { useReaderSearch, highlightRanges } from '../../hooks/useReaderSearch';
@@ -13,6 +13,7 @@ interface SearchPanelProps {
 }
 
 const SNIPPET_MAX_CHARS = 240;
+const VISIBLE_BUFFER = 10;
 
 function buildSnippet(excerpt: string, query: string): string {
   if (excerpt.length <= SNIPPET_MAX_CHARS) return excerpt;
@@ -93,6 +94,24 @@ export function SearchPanel({ isOpen, book, onClose, onNavigate, t }: SearchPane
     }
   }, [isOpen]);
 
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [visibleRange, setVisibleRange] = useState({ start: 0, end: 50 });
+
+  const handleScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const itemHeight = 80;
+    const scrollTop = el.scrollTop;
+    const viewportHeight = el.clientHeight;
+    const start = Math.max(0, Math.floor(scrollTop / itemHeight) - VISIBLE_BUFFER);
+    const end = Math.min(results.length, Math.ceil((scrollTop + viewportHeight) / itemHeight) + VISIBLE_BUFFER);
+    setVisibleRange({ start, end });
+  }, [results.length]);
+
+  useEffect(() => {
+    setVisibleRange({ start: 0, end: Math.min(results.length, 50) });
+  }, [results.length]);
+
   if (!isOpen) return null;
 
   return (
@@ -156,20 +175,22 @@ export function SearchPanel({ isOpen, book, onClose, onNavigate, t }: SearchPane
           </p>
         )}
 
-        <div className="flex-1 overflow-y-auto space-y-2 scrollbar-thin" aria-live="polite">
+        <div ref={scrollRef} onScroll={handleScroll} className="flex-1 overflow-y-auto space-y-2 scrollbar-thin" aria-live="polite">
           {query.trim().length >= 2 ? (
             results.length > 0 ? (
               <>
                 <p className="cq-search-result-meta text-xs font-medium text-foreground-muted mb-2 px-1">
                   {t('reader.searchMatches', { n: results.length })}
                 </p>
-                {results.map((result) => (
-                  <button
-                    key={result.cfi}
-                    type="button"
-                    onClick={() => { onNavigate(result.cfi); }}
-                    className="w-full text-left p-3 rounded-lg hover:bg-background-secondary transition-colors border border-transparent hover:border-border group"
-                  >
+                <div style={{ height: results.length * 80, position: 'relative' }}>
+                  {results.slice(visibleRange.start, visibleRange.end).map((result, i) => (
+                    <button
+                      key={result.cfi}
+                      type="button"
+                      onClick={() => { onNavigate(result.cfi); }}
+                      style={{ position: 'absolute', top: (visibleRange.start + i) * 80, left: 0, right: 0 }}
+                      className="w-full text-left p-3 rounded-lg hover:bg-background-secondary transition-colors border border-transparent hover:border-border group"
+                    >
                     {result.chapterTitle && (
                       <span className="block text-[10px] uppercase tracking-wider font-bold text-accent mb-1">
                         {result.chapterTitle}
@@ -178,8 +199,9 @@ export function SearchPanel({ isOpen, book, onClose, onNavigate, t }: SearchPane
                     <p className="text-sm text-foreground leading-relaxed line-clamp-3">
                       {renderSnippet(result.excerpt, query, result.cfi)}
                     </p>
-                  </button>
-                ))}
+                    </button>
+                  ))}
+                </div>
               </>
             ) : (
               !isSearching && (
