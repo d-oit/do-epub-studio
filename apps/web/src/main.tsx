@@ -85,16 +85,6 @@ export const Root = () => {
       <ToastProvider>
         <ToastBridge />
         <ErrorBoundary
-          onCatch={(error, errorInfo, traceId) => {
-            logClientEvent({
-              level: 'error',
-              event: 'ui.error-boundary',
-              traceId,
-              spanId: createSpanId(),
-              error: { name: error.name, message: error.message, stack: error.stack },
-              metadata: { componentStack: errorInfo.componentStack },
-            });
-          }}
           translations={{
             heading: t('errors.boundary.title'),
             description: t('errors.boundary.description'),
