@@ -113,6 +113,34 @@ export interface PaginatedResponse<T> {
   hasMore: boolean;
 }
 
+export interface PaginationQuery {
+  limit?: number;
+  offset?: number;
+  page?: number;
+}
+
+export function clampPageSize(value: number | undefined, fallback = 24, max = 100): number {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) return fallback;
+  return Math.min(Math.floor(value), max);
+}
+
+export function computeOffset(page: number | undefined, limit: number): number {
+  if (typeof page !== 'number' || !Number.isFinite(page) || page <= 0) return 0;
+  return Math.floor((page - 1) * limit);
+}
+
+export function paginate<T>(items: T[], total: number, query: PaginationQuery): PaginatedResponse<T> {
+  const limit = clampPageSize(query.limit);
+  const offset = query.offset ?? computeOffset(query.page, limit);
+  return {
+    items,
+    total,
+    page: query.page ?? Math.floor(offset / limit) + 1,
+    pageSize: limit,
+    hasMore: offset + items.length < total,
+  };
+}
+
 export interface SyncQueueItem {
   idempotencyKey: string;
   entityType: string;
