@@ -83,7 +83,16 @@ class EpubParserWorkerPool {
     }
 
     return new Promise<EpubParseResult>((resolve, reject) => {
-      this.pending.set(id, { resolve, reject });
+      this.pending.set(id, {
+        resolve: (result) => {
+          clearTimeout(timer);
+          resolve(result);
+        },
+        reject: (err) => {
+          clearTimeout(timer);
+          reject(err);
+        },
+      });
 
       const timer = setTimeout(() => {
         this.pending.delete(id);
