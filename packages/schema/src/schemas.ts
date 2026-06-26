@@ -190,6 +190,16 @@ export const AuditQuerySchema = z.object({
   to: z.string().datetime().optional(),
 });
 
+export const CatalogQuerySchema = z.object({
+  q: z.string().min(1).max(255).optional(),
+  author: z.string().min(1).max(255).optional(),
+  language: z.string().min(2).max(16).optional(),
+  limit: z.coerce.number().int().positive().max(100).default(24),
+  offset: z.coerce.number().int().nonnegative().default(0),
+});
+
+export type CatalogQuery = z.infer<typeof CatalogQuerySchema>;
+
 export const LoginSchema = z.object({
   email: z.string().email().max(255),
   password: z.string().min(1).max(255),

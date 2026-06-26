@@ -7,3 +7,9 @@ export { useExportNotes } from './useExportNotes';
 export { useReaderHandlers } from './useReaderHandlers';
 export { useReaderSearch } from './useReaderSearch';
 export { useReadingTimer } from './useReadingTimer';
+export {
+  useOptimisticAnnotationStore,
+  startReactTransition,
+  type OptimisticAction,
+  type OptimisticState,
+} from './useOptimisticAnnotations';

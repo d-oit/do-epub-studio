@@ -18,6 +18,7 @@ import {
   useBookmarkHandlers,
   useExportNotes,
   useReadingTimer,
+  useOptimisticAnnotationStore,
 } from './hooks';
 import { AnimatePresence } from 'framer-motion';
 import {
@@ -68,7 +69,6 @@ export function ReaderPage() {
   const setHighlights = useReaderStore((s) => s.setHighlights);
   const comments = useReaderStore(useShallow((s) => s.comments));
   const setComments = useReaderStore((s) => s.setComments);
-  const bookmarks = useReaderStore(useShallow((s) => s.bookmarks));
   const setBookmarks = useReaderStore((s) => s.setBookmarks);
   const currentChapter = useReaderStore((s) => s.currentChapter);
   const isFixedLayout = useReaderStore((s) => s.isFixedLayout);
@@ -90,6 +90,8 @@ export function ReaderPage() {
   const setWritingMode = usePreferencesStore((s) => s.setWritingMode);
 
   const { t, locale } = useTranslation();
+
+  const { state: optimisticState } = useOptimisticAnnotationStore();
 
   const {
     handleCreateHighlight,
@@ -336,8 +338,8 @@ export function ReaderPage() {
       <ReaderToolbar
         bookTitle={bookTitle}
         bookSlug={bookSlug ?? ''}
-        comments={comments}
-        bookmarks={bookmarks}
+        comments={optimisticState.comments}
+        bookmarks={optimisticState.bookmarks}
         capabilities={capabilities}
         activePanel={activePanel}
         onToggleToc={() => togglePanel('toc')}
@@ -469,7 +471,7 @@ export function ReaderPage() {
         {activePanel === 'bookmarks' && (
           <BookmarksPanel
             isOpen
-            bookmarks={bookmarks}
+            bookmarks={optimisticState.bookmarks}
             onClose={() => setActivePanel(null)}
             onAddBookmark={() => void handleCreateBookmark(currentChapterRef, toc)}
             onDeleteBookmark={(id) => handleDeleteBookmark(id)}
@@ -485,8 +487,8 @@ export function ReaderPage() {
           <CommentsPanel
             isOpen
             onClose={() => setActivePanel(null)}
-            comments={comments}
-            highlights={highlights}
+            comments={optimisticState.comments}
+            highlights={optimisticState.highlights}
             currentChapter={currentChapter}
             locale={locale}
             onResolveComment={(id) => void handleResolveComment(id)}
