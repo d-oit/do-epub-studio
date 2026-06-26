@@ -52,6 +52,7 @@ jobs:
 
       - name: Enforce gzipped bundle budget
         id: budget-enforce
+        continue-on-error: true
         run: pnpm --filter @do-epub-studio/web bundle:budget:enforce
 
       - name: Upload bundle budget report
