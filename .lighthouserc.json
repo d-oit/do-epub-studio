@@ -4,12 +4,13 @@
       "numberOfRuns": 3,
       "puppeteerScript": "",
       "settings": {
-        "onlyCategories": ["performance", "accessibility", "best-practices", "seo"],
-        "preset": "desktop"
+        "onlyCategories": ["performance", "accessibility", "best-practices", "seo"]
       },
       "url": [
         "http://localhost:5173/",
-        "http://localhost:5173/read/test-book"
+        "http://localhost:5173/read/test-book",
+        "http://localhost:5173/catalog",
+        "http://localhost:5173/admin"
       ]
     },
     "assert": {
