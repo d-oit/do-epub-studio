@@ -195,4 +195,33 @@ describe('FixedLayoutControls', () => {
     await userEvent.click(screen.getByLabelText('reader.settings.close'));
     expect(onClose).toHaveBeenCalledOnce();
   });
+
+  it('updates the aria-live region when zoom changes', () => {
+    const { rerender } = render(
+      <FixedLayoutControls
+        isOpen
+        onClose={vi.fn()}
+        zoom={1.0}
+        spread="auto"
+        onSetZoom={vi.fn()}
+        onSetSpread={vi.fn()}
+        t={t}
+      />,
+    );
+    const liveRegion = screen.getByRole('status');
+    expect(liveRegion).toHaveTextContent('reader.fixedLayout.zoom: 100%');
+
+    rerender(
+      <FixedLayoutControls
+        isOpen
+        onClose={vi.fn()}
+        zoom={1.25}
+        spread="auto"
+        onSetZoom={vi.fn()}
+        onSetSpread={vi.fn()}
+        t={t}
+      />,
+    );
+    expect(liveRegion).toHaveTextContent('reader.fixedLayout.zoom: 125%');
+  });
 });
