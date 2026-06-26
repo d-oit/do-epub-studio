@@ -1,4 +1,8 @@
 import JSZip from 'jszip';
+import { matchBounded } from './safe-regex';
+
+const CONTAINER_XML_MAX_LEN = 64 * 1024;
+const OPF_XML_MAX_LEN = 2 * 1024 * 1024;
 
 export interface ValidationResult {
   isValid: boolean;
@@ -37,7 +41,7 @@ export async function validateEpub(data: ArrayBuffer): Promise<ValidationResult>
       result.isValid = false;
     } else {
       const containerXml = await containerFile.async('string');
-      const fullPathMatch = containerXml.match(/full-path="([^"]+)"/);
+      const fullPathMatch = matchBounded(/full-path="([^"]+)"/, containerXml, CONTAINER_XML_MAX_LEN);
 
       if (!fullPathMatch) {
         result.errors.push('Could not find rootfile path in "META-INF/container.xml".');
@@ -53,7 +57,7 @@ export async function validateEpub(data: ArrayBuffer): Promise<ValidationResult>
           const opfXml = await opfFile.async('string');
 
           // Basic version check
-          const versionMatch = opfXml.match(/<package[^>]+version="([^"]+)"/);
+          const versionMatch = matchBounded(/<package[^>]+version="([^"]+)"/, opfXml, OPF_XML_MAX_LEN);
           if (versionMatch) {
             result.epubVersion = versionMatch[1];
             if (!result.epubVersion?.startsWith('3.')) {

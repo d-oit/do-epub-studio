@@ -1,5 +1,9 @@
+import { matchAllBounded } from '@do-epub-studio/shared';
 import type { TocItem } from './epub-types';
 import type { LocatorResult } from './locator';
+
+const TARGET_TEXT_MAX_LEN = 1024 * 1024;
+const CHAPTER_CONTENT_MAX_LEN = 4 * 1024 * 1024;
 
 export interface ReanchorResult {
   success: boolean;
@@ -160,7 +164,7 @@ export async function reanchorByText(
     if (normalizedTargetGeneral === undefined) {
       normalizedTargetGeneral = normalizeText(targetText);
     }
-    words = normalizedTargetGeneral.match(/[\p{L}\p{N}]{4,}/gu) || [];
+    words = matchAllBounded(/[\p{L}\p{N}]{4,}/gu, normalizedTargetGeneral, TARGET_TEXT_MAX_LEN).map((m) => m[0]);
   }
 
   const threshold = options.fuzzyThreshold ?? 0.7;
@@ -172,7 +176,7 @@ export async function reanchorByText(
         const cached = await getCachedData(href);
         if (cached.wordSet === undefined) {
           // Optimized word extraction from lower-cased content
-          cached.wordSet = new Set(cached.lower.match(/[\p{L}\p{N}]{4,}/gu) || []);
+          cached.wordSet = new Set(matchAllBounded(/[\p{L}\p{N}]{4,}/gu, cached.lower, CHAPTER_CONTENT_MAX_LEN).map((m) => m[0]));
         }
 
         let matchCount = 0;
