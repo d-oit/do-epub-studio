@@ -83,13 +83,13 @@ class ReanchorWorkerPool {
     const flattenedHrefs = collectHrefs(toc);
     const uniqueBases = [...new Set(flattenedHrefs.map((h) => h.split('#')[0]).filter((b): b is string => !!b))];
     const chapterContents: Record<string, string> = {};
-    for (const base of uniqueBases) {
+    await Promise.all(uniqueBases.map(async (base) => {
       try {
         chapterContents[base] = await loadChapterContent(base);
       } catch {
         // Skip if loading fails
       }
-    }
+    }));
 
     return new Promise<ReanchorResult>((resolve, reject) => {
       this.pending.set(id, { resolve, reject });
