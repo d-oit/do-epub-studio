@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { readFileSync } from 'node:fs';
+import appIdentityJson from '../web/src/config/app-identity.json';
 
 interface AppIdentity {
   name: string;
@@ -7,9 +7,7 @@ interface AppIdentity {
   description: string;
 }
 
-const appIdentity = JSON.parse(
-  readFileSync(new URL('../web/src/config/app-identity.json', import.meta.url), 'utf8'),
-) as AppIdentity;
+const appIdentity = appIdentityJson as AppIdentity;
 const appVersion = readFileSync(new URL('../../VERSION', import.meta.url), 'utf8').trim();
 const viewports = [
   { label: 'mobile', width: 375, height: 812 },
