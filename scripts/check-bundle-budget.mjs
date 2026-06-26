@@ -48,7 +48,9 @@ function distDirArg() {
     .slice(2)
     .filter((a) => !a.startsWith('--'));
   const distDirInput = String(positional[0] || 'apps/web/dist');
-  return path.resolve(distDirInput);
+  return path.isAbsolute(distDirInput)
+    ? distDirInput
+    : path.resolve(rootDir, distDirInput);
 }
 
 function classify(name) {
