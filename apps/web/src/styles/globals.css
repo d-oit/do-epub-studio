@@ -393,6 +393,47 @@
 }
 
 /* ============================================
+   Native Popover API (Baseline 2024)
+   V9 — plan 110
+
+   Provides:
+   - Top-layer popover styling (tools/menus/tooltips).
+   - `@supports not (selector(:popover-open))` JS-fallback overrides
+     used by the `<Tooltip>` and `<AnnotationToolbar>` color picker
+     when the browser does not implement the Popover API.
+   - `prefers-reduced-motion` honored via the global reduced-motion
+     block below (transition-duration: 0.01ms !important).
+   ============================================ */
+
+[popover] {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  overflow: visible;
+  inset: auto;
+}
+
+[popover]::backdrop {
+  background: transparent;
+}
+
+@supports not (selector(:popover-open)) {
+  [popover] {
+    display: none;
+  }
+  [data-fallback='js'] {
+    display: block;
+  }
+  [data-fallback='js'][data-popover-closed='true'] {
+    opacity: 0;
+    pointer-events: none;
+  }
+}
+
+/* ============================================
    Reduced Motion
    ============================================ */
 

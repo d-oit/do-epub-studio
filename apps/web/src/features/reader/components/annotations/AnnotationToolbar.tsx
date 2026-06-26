@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useTranslation } from '../../../../hooks/useTranslation';
 import type { TranslationKeys } from '../../../../i18n/en';
-import { Tooltip, IconButton, scaleVariants } from '../../../../components/ui';
+import { Tooltip, IconButton } from '../../../../components/ui';
 
 type SupportedLocale = 'en' | 'de' | 'fr';
 
@@ -30,6 +30,9 @@ const HIGHLIGHT_COLORS: Array<{ id: string; hex: string; label: TranslationKeys 
   { id: 'pink', hex: '#FFB6C1', label: 'annotation.colors.pink' },
 ];
 
+const supportsPopover =
+  typeof HTMLElement !== 'undefined' && 'popover' in HTMLElement.prototype;
+
 export function AnnotationToolbar({
   selection,
   onHighlight,
@@ -40,8 +43,26 @@ export function AnnotationToolbar({
 }: AnnotationToolbarProps) {
   const { t } = useTranslation();
   const toolbarRef = useRef<HTMLDivElement>(null);
+  const colorPickerRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState({ top: 0, left: 0 });
   const [showColorPicker, setShowColorPicker] = useState(false);
+  const [useNativePopover, setUseNativePopover] = useState(supportsPopover);
+
+  useEffect(() => {
+    setUseNativePopover(supportsPopover);
+  }, []);
+
+  useEffect(() => {
+    const el = colorPickerRef.current;
+    if (!el || !useNativePopover) return;
+    const handleToggle = (event: Event) => {
+      setShowColorPicker((event as ToggleEvent).newState === 'open');
+    };
+    el.addEventListener('toggle', handleToggle);
+    return () => {
+      el.removeEventListener('toggle', handleToggle);
+    };
+  }, [useNativePopover]);
 
   useEffect(() => {
     const updatePosition = () => {
@@ -57,6 +78,7 @@ export function AnnotationToolbar({
   }, [selection]);
 
   useEffect(() => {
+    if (useNativePopover) return;
     const handleClickOutside = (e: MouseEvent) => {
       if (toolbarRef.current && !toolbarRef.current.contains(e.target as Node)) {
         onClose();
@@ -65,7 +87,11 @@ export function AnnotationToolbar({
 
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        onClose();
+        if (showColorPicker) {
+          setShowColorPicker(false);
+        } else {
+          onClose();
+        }
       }
     };
 
@@ -75,14 +101,39 @@ export function AnnotationToolbar({
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('keydown', handleEscape);
     };
-  }, [onClose]);
+  }, [onClose, showColorPicker, useNativePopover]);
+
+  const toggleColorPicker = useCallback(() => {
+    if (useNativePopover) {
+      const el = colorPickerRef.current;
+      if (!el) return;
+      if (el.matches(':popover-open')) {
+        el.hidePopover();
+      } else {
+        try {
+          el.showPopover();
+        } catch {
+          setShowColorPicker(true);
+        }
+      }
+      return;
+    }
+    setShowColorPicker((prev) => !prev);
+  }, [useNativePopover]);
 
   const handleColorSelect = useCallback(
     (color: string) => {
       onHighlight(color);
+      if (useNativePopover) {
+        const el = colorPickerRef.current;
+        if (el && el.matches(':popover-open')) {
+          el.hidePopover();
+        }
+        return;
+      }
       setShowColorPicker(false);
     },
-    [onHighlight],
+    [onHighlight, useNativePopover],
   );
 
   return (
@@ -93,14 +144,17 @@ export function AnnotationToolbar({
       exit={{ opacity: 0, scale: 0.8, y: 10 }}
       transition={{ type: 'spring', damping: 20, stiffness: 300 }}
       data-container-name="annotation-toolbar"
-      className="cq cq--annotation-toolbar fixed z-50 glass-panel rounded-xl shadow-glass-lg border border-border p-1.5 flex items-center gap-1.5"
+      className="cq cq--annotation-toolbar fixed z-50 glass-panel rounded-xl shadow-glass-lg border border-border p-1.5 flex items-center gap-1.5 container-reader-toolbar"
       style={{ top: position.top, left: position.left, minWidth: '180px' }}
     >
       {canHighlight && (
         <div className="relative flex items-center">
           <Tooltip content={t('annotation.highlight')}>
             <button
-              onClick={() => setShowColorPicker(!showColorPicker)}
+              onClick={toggleColorPicker}
+              aria-haspopup="dialog"
+              aria-expanded={showColorPicker}
+              aria-controls="annotation-color-picker"
               className="flex items-center gap-2 px-3 py-1.5 hover:bg-background-secondary rounded-lg text-sm font-medium transition-colors"
               aria-label={t('annotation.highlight')}
             >
@@ -109,28 +163,41 @@ export function AnnotationToolbar({
             </button>
           </Tooltip>
 
-          <AnimatePresence>
-            {showColorPicker && (
-              <motion.div
-                initial="initial"
-                animate="animate"
-                exit="exit"
-                variants={scaleVariants}
-                className="absolute bottom-full left-0 mb-2 glass-panel rounded-xl shadow-glass border border-border p-2 flex gap-2"
-              >
-                {HIGHLIGHT_COLORS.map((color) => (
-                  <Tooltip key={color.id} content={t(color.label)}>
-                    <button
-                      onClick={() => handleColorSelect(color.hex)}
-                      className="w-8 h-8 rounded-full border-2 border-white/50 hover:scale-110 transition-transform shadow-sm"
-                      style={{ backgroundColor: color.hex }}
-                      aria-label={t(color.label)}
-                    />
-                  </Tooltip>
-                ))}
-              </motion.div>
-            )}
-          </AnimatePresence>
+          {(useNativePopover || showColorPicker) && (
+            <div
+              ref={colorPickerRef}
+              id="annotation-color-picker"
+              role="dialog"
+              aria-label={`${t('annotation.highlight')} colors`}
+              popover="auto"
+              data-fallback={useNativePopover ? undefined : 'js'}
+              className="glass-panel rounded-xl shadow-glass border border-border p-2 flex gap-2"
+              style={
+                useNativePopover
+                  ? { position: 'fixed', margin: 0, inset: 'auto', insetBlockStart: 'auto' }
+                  : {
+                      position: 'absolute',
+                      bottom: '100%',
+                      left: 0,
+                      marginBottom: '0.5rem',
+                      opacity: showColorPicker ? 1 : 0,
+                      pointerEvents: showColorPicker ? 'auto' : 'none',
+                      transition: 'opacity 150ms',
+                    }
+              }
+            >
+              {HIGHLIGHT_COLORS.map((color) => (
+                <Tooltip key={color.id} content={t(color.label)}>
+                  <button
+                    onClick={() => handleColorSelect(color.hex)}
+                    className="w-8 h-8 rounded-full border-2 border-white/50 hover:scale-110 transition-transform shadow-sm"
+                    style={{ backgroundColor: color.hex }}
+                    aria-label={t(color.label)}
+                  />
+                </Tooltip>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
