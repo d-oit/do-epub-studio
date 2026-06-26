@@ -398,6 +398,7 @@ export function useReaderEpub(
     readerDirection,
     readerWritingMode,
     t,
+    markPageRead,
   ]);
 
   useEffect(() => {
