@@ -29,7 +29,12 @@
       "env": ["ANALYZE", "VITE_API_BASE_URL", "NODE_ENV"],
       "inputs": [
         "src/**",
+        "index.html",
+        "public/**",
         "vite.config.ts",
+        "tsconfig.json",
+        "tsconfig*.json",
+        "tailwind.config.js",
         "package.json"
       ],
       "outputs": ["dist/**", "stats.html"]
