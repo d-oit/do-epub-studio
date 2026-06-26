@@ -1,3 +1,4 @@
+import { createTraceId } from '@do-epub-studio/shared';
 import type { Env } from './env';
 
 export interface RateLimitResult {
@@ -42,7 +43,7 @@ export async function checkRateLimitDO(
     return await response.json<RateLimitResult>();
   } catch (error) {
     // If anything fails (e.g. DO unreachable), fail open to maintain availability.
-    console.error('Rate limiter client error:', error);
+    console.error(JSON.stringify({ level: 'error', traceId: createTraceId(), event: 'rate_limit_client.error', error: error instanceof Error ? error.message : String(error) }));
     return { allowed: true, remaining: 0, resetAt: 0 };
   }
 }
