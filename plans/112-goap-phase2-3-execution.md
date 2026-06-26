@@ -1,7 +1,7 @@
 # GOAP 112 — Phase 2/3 Execution & CI Hardening
 
 **Date:** 2026-06-24
-**Status:** ✅ Phase 2 COMPLETE — V7–V12 + Phase 4 CI hardened all merged
+**Status:** 🚧 IN PROGRESS
 **Author:** Codebase analysis session 2026-06-24
 **Methodology:** GOAP (analyze → decompose → strategize → coordinate → execute → synthesize)
 **Related ADR:** `plans/112-adr-phase2-3-execution-policy.md`
@@ -24,8 +24,8 @@ plans stay as the detailed evidence record.
 | 1 | V11 annotation import + locator-rich export | 110 V11 | ✅ MERGED | feat/v11-annotation-import-export-roundtrip | #643 | ✅ all green |
 | 2 | Pagination DTO + CatalogQuerySchema | 110 V7-prep | ✅ MERGED | feat/v7-prep-pagination-dto | #644 | ✅ all green |
 | 3 | V7 catalog pagination/search/filter backend+UI | 110 V7 | ✅ MERGED | feat/v7-catalog-pagination | #645 | ✅ all green |
-| 4 | V9 native popover for tooltips/menus | 110 V9 | ✅ MERGED | feat/v9-native-popover | #646 | ✅ all green |
-| 5 | V8 container queries for panels/tables | 110 V8 | ✅ MERGED | feat/v8-container-queries | #648 | ✅ all green |
+| 4 | V9 native popover for tooltips/menus | 110 V9 | ✅ MERGING | feat/v9-native-popover | #646 | ✅ all green (Build pending) |
+| 5 | V8 container queries for panels/tables | 110 V8 | ✅ MERGING | feat/v8-container-queries | #648 | ✅ all green (Build pending) |
 | 6 | V10 React 19 patterns | 110 V10 | ✅ MERGED | feat/v10-react-19-patterns | #647 | ✅ all green |
 | 7 | V12 stream upload + edge cache | 110 V12 | ✅ MERGED | feat/v12-stream-upload-edge-cache | #649 | ✅ all green |
 | 8 | Logical properties + scroll-snap + view-transition + anchor | 105-ui | ⏳ queued | — | — | — |
@@ -43,9 +43,9 @@ plans stay as the detailed evidence record.
 | 20 | Storybook stories (AppLogo, PageContainer, useFocusTrap) | 107 P1 | ⏳ queued | — | — | — |
 | 21 | Coverage threshold raises (ui 40/30, worker 65/60) | 107 P1/P2 | ⏳ queued | — | — | — |
 | 22 | B7 static imports for bundled assets | 105 B7 | ⏳ queued | — | — | — |
-| 23 | Wire run-impeccable.sh into quality gate | 111 → 112 P4 | ✅ MERGED | feat/phase4-ci-hardening | #650 | ✅ all green |
-| 24 | Bundle-size CI budget enforcement | 107 P5 | ✅ MERGED | feat/phase4-ci-hardening | #650 | ✅ all green (non-blocking) |
-| 25 | Markdownlint + zizmor in default gate | 107 P5 | ✅ MERGED | feat/phase4-ci-hardening | #650 | ✅ all green |
+| 23 | Wire run-impeccable.sh into quality gate | 111 → 112 P4 | 🚧 in PR | feat/phase4-ci-hardening | #650 | Codacy reanalysis pending |
+| 24 | Bundle-size CI budget enforcement | 107 P5 | 🚧 in PR | feat/phase4-ci-hardening | #650 | Codacy reanalysis pending |
+| 25 | Markdownlint + zizmor in default gate | 107 P5 | 🚧 in PR | feat/phase4-ci-hardening | #650 | Codacy reanalysis pending |
 | 26 | Update KNOWN-ISSUES.md monitor-tier only | AGENTS.md T2.8 | ⏳ queued | — | — | — |
 
 ## Swarm coordination
