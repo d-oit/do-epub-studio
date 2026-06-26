@@ -8,11 +8,6 @@ import tailwindcss from '@tailwindcss/vite';
 import appIdentity from './src/config/app-identity.json';
 
 const isAnalyze = process.env.ANALYZE === 'true';
-// VERSION is a repo-root static file; the path is a literal relative
-// to this config file's location. The `detect-non-literal-fs-filename`
-// rule only blocks paths that could carry untrusted runtime data, which
-// is not the case here.
-// eslint-disable-next-line security/detect-non-literal-fs-filename
 const appVersion = readFileSync(path.resolve(__dirname, '../../VERSION'), 'utf8').trim();
 
 export default defineConfig({
