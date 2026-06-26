@@ -210,7 +210,7 @@ function findCfiInBrackets(text: string): string | null {
   let depth = 1;
   let i = markerIdx + '[epubcfi('.length;
   while (i < text.length && depth > 0) {
-    const ch = text[i];
+    const ch = text.charAt(i);
     if (ch === '[') depth += 1;
     else if (ch === ']') depth -= 1;
     i += 1;
