@@ -60,7 +60,13 @@ export function useBookmarkHandlers(): UseBookmarkHandlersReturn {
             synced: false,
             mutationId,
           });
-          await queueSync('annotation', { bookId, annotation: bookmark }, mutationId);
+          await queueSync('bookmark', {
+            bookId,
+            cfi: currentProgress.locator.cfi,
+            chapter: currentChapterRef.current ?? undefined,
+            label: chapterName,
+            mutationId,
+          }, mutationId);
         }
       } catch (err) {
         removeOptimistic(bookmark.id, 'bookmark');

@@ -5,6 +5,7 @@ import { useAuthStore } from '../../../stores/auth';
 import { apiRequest } from '../../../lib/api';
 import { createTraceId, createSpanId } from '@do-epub-studio/shared';
 import { logClientEvent } from '../../../lib/client-logger';
+import { queueSync, generateMutationId } from '../../../lib/offline';
 
 interface InsightSummary {
   totalActiveMinutes: number;
@@ -44,13 +45,13 @@ export function useReadingTimer(bookId: string | null) {
   const syncToServer = useCallback(async () => {
     if (!sessionToken || !bookId) return;
 
+    const { getAllReadingInsights } = await import('../../../lib/offline/db');
+    const entries = await getAllReadingInsights();
+    const bookEntries = entries.filter((e) => e.bookId === bookId);
+
+    if (bookEntries.length === 0) return;
+
     try {
-      const { getAllReadingInsights } = await import('../../../lib/offline/db');
-      const entries = await getAllReadingInsights();
-      const bookEntries = entries.filter((e) => e.bookId === bookId);
-
-      if (bookEntries.length === 0) return;
-
       await apiRequest(`/api/books/${bookId}/insights/sync`, {
         method: 'POST',
         token: sessionToken,
@@ -73,6 +74,17 @@ export function useReadingTimer(bookId: string | null) {
         error: { name: syncError.name, message: syncError.message, stack: syncError.stack },
         metadata: { bookId },
       });
+      // Enqueue retry instead of silently dropping
+      const mutationId = generateMutationId();
+      await queueSync('reading-insight', {
+        bookId,
+        buckets: bookEntries.map((e) => ({
+          date: e.date,
+          activeMinutes: e.activeMinutes,
+          activePages: e.activePages,
+        })),
+        mutationId,
+      }, mutationId);
     }
   }, [bookId, sessionToken]);
 
