@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { useTranslation } from '../../../../hooks/useTranslation';
 
 interface CommentInputProps {
   onSubmit: (text: string) => void;
@@ -19,6 +20,7 @@ export function CommentInput({
   submitLabel = 'Comment',
   isReply = false,
 }: CommentInputProps) {
+  const { t } = useTranslation();
   const [text, setText] = useState(initialText);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -64,7 +66,7 @@ export function CommentInput({
             onClick={onCancel}
             className="px-3 py-1.5 text-sm border border-border rounded-lg hover:bg-background-secondary transition-colors"
           >
-            Cancel
+            {t('comment.input.cancel')}
           </button>
         )}
         <button
@@ -75,7 +77,7 @@ export function CommentInput({
           {submitLabel}
         </button>
       </div>
-      <p className="text-xs text-foreground-muted text-right">Ctrl+Enter to submit</p>
+      <p className="text-xs text-foreground-muted text-right">{t('comment.input.hint')}</p>
     </div>
   );
 }

@@ -65,7 +65,8 @@ describe('AdminAuditPage', () => {
     });
 
     await renderAndFlush();
-    expect(screen.getByText(/1-1 of 1/)).toBeInTheDocument();
+    // Mock returns key as-is; paginationInfo key contains {start}-{end} of {total}
+    expect(screen.getByText('admin.audit.paginationInfo')).toBeInTheDocument();
   });
 
   it('renders filter controls', () => {

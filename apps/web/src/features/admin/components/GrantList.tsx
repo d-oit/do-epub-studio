@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { Button, Modal } from '@do-epub-studio/ui';
+import { Button, Modal, Spinner } from '@do-epub-studio/ui';
 
 import { useTranslation } from '../../../hooks/useTranslation';
 import { GRANT_MODES } from './types';
@@ -74,7 +74,7 @@ export function GrantList({
   if (isLoadingGrants && selectedBookId) {
     return (
       <div className="flex justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent" />
+        <Spinner />
       </div>
     );
   }

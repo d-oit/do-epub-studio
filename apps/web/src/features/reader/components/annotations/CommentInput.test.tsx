@@ -3,6 +3,10 @@ import { render, screen, fireEvent, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { CommentInput } from './CommentInput';
 
+vi.mock('../../../../hooks/useTranslation', () => ({
+  useTranslation: () => ({ t: (k: string) => k }),
+}));
+
 describe('CommentInput', () => {
   const mockOnSubmit = vi.fn();
   const mockOnCancel = vi.fn();
@@ -35,19 +39,19 @@ describe('CommentInput', () => {
     it('renders cancel button when onCancel is provided', () => {
       render(<CommentInput onSubmit={mockOnSubmit} onCancel={mockOnCancel} />);
 
-      expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'comment.input.cancel' })).toBeInTheDocument();
     });
 
     it('does not render cancel button when onCancel is not provided', () => {
       render(<CommentInput onSubmit={mockOnSubmit} />);
 
-      expect(screen.queryByRole('button', { name: 'Cancel' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'comment.input.cancel' })).not.toBeInTheDocument();
     });
 
     it('renders keyboard hint', () => {
       render(<CommentInput onSubmit={mockOnSubmit} />);
 
-      expect(screen.getByText('Ctrl+Enter to submit')).toBeInTheDocument();
+      expect(screen.getByText('comment.input.hint')).toBeInTheDocument();
     });
 
     it('applies reply styling when isReply is true', () => {
@@ -146,7 +150,7 @@ describe('CommentInput', () => {
         render(<CommentInput onSubmit={mockOnSubmit} onCancel={mockOnCancel} />);
       });
 
-      await user.click(screen.getByRole('button', { name: 'Cancel' }));
+      await user.click(screen.getByRole('button', { name: 'comment.input.cancel' }));
 
       expect(mockOnCancel).toHaveBeenCalled();
     });
