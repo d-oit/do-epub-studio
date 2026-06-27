@@ -42,7 +42,7 @@ export function AppShell() {
 
   if (isResolving) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
+      <div className="min-h-dvh bg-background flex flex-col items-center justify-center p-6">
         <AnimatePresence mode="wait">
           <motion.div
             key="app-shell-loading"
@@ -84,7 +84,7 @@ export function AppShell() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
+    <div className="flex h-dvh overflow-hidden bg-background">
       <Sidebar />
       <Drawer isOpen={drawerOpen} onClose={() => { setDrawerOpen(false); }} />
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">

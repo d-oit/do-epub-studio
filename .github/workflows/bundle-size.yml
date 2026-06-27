@@ -52,7 +52,6 @@ jobs:
 
       - name: Enforce gzipped bundle budget
         id: budget-enforce
-        continue-on-error: true
         run: pnpm --filter @do-epub-studio/web bundle:budget:enforce
 
       - name: Upload bundle budget report
@@ -73,7 +72,7 @@ jobs:
             {
               echo '## Bundle budget (gzipped, ADR-107 §3)'
               echo ''
-              echo '**Budgets:** main JS 180 KB · main CSS 30 KB · any lazy chunk 80 KB'
+              echo '**Budgets:** main JS 240 KB · main CSS 30 KB · any lazy chunk 140 KB'
               echo ''
               cat apps/web/bundle-budget-report.md
             } > comment.md

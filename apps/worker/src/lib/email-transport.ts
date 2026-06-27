@@ -50,5 +50,11 @@ export function createEmailTransport(env: Env): EmailTransport {
   if (env.EMAIL_SEND) {
     return new SendEmailTransport(env);
   }
+  console.warn(JSON.stringify({
+    level: 'warn',
+    traceId: createTraceId(),
+    event: 'email.transport.fallback',
+    message: 'EMAIL_SEND binding not configured — emails will be logged but not delivered',
+  }));
   return new LoggingEmailTransport();
 }

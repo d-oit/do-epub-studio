@@ -333,7 +333,7 @@ export function ReaderPage() {
   return (
     <div
       ref={rootRef}
-      className="min-h-screen bg-background text-foreground"
+      className="min-h-dvh bg-background text-foreground"
     >
       <ReaderToolbar
         bookTitle={bookTitle}

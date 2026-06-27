@@ -123,7 +123,7 @@ describe('ReaderPage Panels', () => {
     act(() => {
       render(<BrowserRouter><ReaderPage /></BrowserRouter>);
     });
-    const root = document.querySelector('.min-h-screen');
+    const root = document.querySelector('.min-h-dvh');
     expect(root).toBeInTheDocument();
   });
 
@@ -134,7 +134,7 @@ describe('ReaderPage Panels', () => {
     act(() => {
       render(<BrowserRouter><ReaderPage /></BrowserRouter>);
     });
-    const root = document.querySelector('.min-h-screen');
+    const root = document.querySelector('.min-h-dvh');
     expect(root).toBeInTheDocument();
   });
 });

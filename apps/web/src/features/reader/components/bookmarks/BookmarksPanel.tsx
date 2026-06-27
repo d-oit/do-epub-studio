@@ -45,12 +45,12 @@ export function BookmarksPanel({
       className="cq cq--bookmarks-panel fixed inset-y-0 right-0 w-80 bg-background border-l border-border z-40 flex flex-col shadow-xl"
     >
       <div className="p-4 border-b border-border flex justify-between items-center">
-        <h2 id="bookmarks-title" className="font-semibold">Bookmarks</h2>
+        <h2 id="bookmarks-title" className="font-semibold">{t('reader.bookmarks.title')}</h2>
         <div className="flex items-center gap-2">
           <button
             onClick={onAddBookmark}
             className="p-1 hover:bg-background-secondary rounded"
-            title="Add bookmark at current position"
+            title={t('reader.bookmarks.addTitle')}
             aria-label={t('a11y.add_bookmark')}
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -80,7 +80,7 @@ export function BookmarksPanel({
       <div className="flex-1 overflow-y-auto p-4">
         {bookmarks.length === 0 ? (
           <p className="text-sm text-foreground-muted text-center py-8">
-            No bookmarks yet. Click the bookmark icon to save your place.
+            {t('reader.bookmarks.empty')}
           </p>
         ) : (
           <div className="space-y-3">
@@ -92,7 +92,7 @@ export function BookmarksPanel({
                 <div className="flex items-start justify-between">
                   <button onClick={() => onNavigate(bookmark)} className="flex-1 text-left">
                     <p className="text-sm font-medium text-foreground">
-                      {bookmark.label || 'Untitled'}
+                      {bookmark.label || t('reader.bookmarks.untitled')}
                     </p>
                     <p className="text-xs text-foreground-muted mt-1">
                       {new Date(bookmark.createdAt).toLocaleDateString()}

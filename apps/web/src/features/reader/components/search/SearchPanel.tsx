@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { useFocusTrap } from '@do-epub-studio/ui';
+import { useFocusTrap, Spinner } from '@do-epub-studio/ui';
 import { useReaderSearch, highlightRanges } from '../../hooks/useReaderSearch';
 import type { Book } from '@intity/epub-js';
 
@@ -164,7 +164,7 @@ export function SearchPanel({ isOpen, book, onClose, onNavigate, t }: SearchPane
               role="status"
               aria-live="polite"
             >
-              <div className="w-4 h-4 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+              <Spinner size="sm" />
             </div>
           )}
         </div>

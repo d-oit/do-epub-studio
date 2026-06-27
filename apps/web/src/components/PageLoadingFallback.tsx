@@ -22,9 +22,9 @@ export function PageLoadingFallback({
           className="w-10 h-10 rounded-xl bg-accent animate-pulse"
         />
         <div className="flex gap-2">
-          <div className="w-2 h-2 rounded-full bg-accent animate-bounce [animation-delay:-0.3s]" />
-          <div className="w-2 h-2 rounded-full bg-accent/60 animate-bounce [animation-delay:-0.15s]" />
-          <div className="w-2 h-2 rounded-full bg-accent/30 animate-bounce" />
+          <div className="w-2 h-2 rounded-full bg-accent animate-pulse [animation-delay:-0.3s]" />
+          <div className="w-2 h-2 rounded-full bg-accent/60 animate-pulse [animation-delay:-0.15s]" />
+          <div className="w-2 h-2 rounded-full bg-accent/30 animate-pulse" />
         </div>
       </div>
       <span className="sr-only">{label}</span>

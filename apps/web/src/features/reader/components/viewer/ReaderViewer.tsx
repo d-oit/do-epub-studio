@@ -1,3 +1,5 @@
+import { Spinner } from '@do-epub-studio/ui';
+
 interface ReaderViewerProps {
   isLoading: boolean;
   epubUrl: string | null;
@@ -26,13 +28,13 @@ export function ReaderViewer({
       )}
       {isLoading ? (
         <div className="flex items-center justify-center h-96">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
+          <Spinner />
         </div>
       ) : epubUrl ? (
         <div className={`mx-auto px-4 py-8 ${pageWidthClass}`}>
           <div
             ref={viewerRef}
-            className="h-[calc(100vh-8rem)] bg-background-secondary rounded-lg overflow-hidden"
+            className="h-[calc(100dvh-8rem)] bg-background-secondary rounded-lg overflow-hidden"
           />
         </div>
       ) : (

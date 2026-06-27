@@ -72,10 +72,10 @@ describe('AdminAuditPage', () => {
     vi.mocked(apiRequest).mockResolvedValue({ entries: [], total: 0 });
 
     render(<MemoryRouter><AdminAuditPage /></MemoryRouter>);
-    expect(screen.getByLabelText('Entity Type')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Filter by entity ID')).toBeInTheDocument();
-    expect(screen.getByLabelText('Date From')).toBeInTheDocument();
-    expect(screen.getByLabelText('Date To')).toBeInTheDocument();
+    expect(screen.getByLabelText('admin.audit.entityType')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('admin.audit.filterByEntityId')).toBeInTheDocument();
+    expect(screen.getByLabelText('admin.audit.dateFrom')).toBeInTheDocument();
+    expect(screen.getByLabelText('admin.audit.dateTo')).toBeInTheDocument();
   });
 
   it('calls API with filters when entity type changes', async () => {
@@ -84,7 +84,7 @@ describe('AdminAuditPage', () => {
     await renderAndFlush();
     expect(apiRequest).toHaveBeenCalled();
 
-    fireEvent.change(screen.getByLabelText('Entity Type'), { target: { value: 'book' } });
+    fireEvent.change(screen.getByLabelText('admin.audit.entityType'), { target: { value: 'book' } });
 
     await act(async () => {
       await new Promise((resolve) => setTimeout(resolve, 50));
@@ -102,7 +102,7 @@ describe('AdminAuditPage', () => {
     await renderAndFlush();
     expect(apiRequest).toHaveBeenCalled();
 
-    fireEvent.change(screen.getByPlaceholderText('Filter by entity ID'), { target: { value: 'b1' } });
+    fireEvent.change(screen.getByPlaceholderText('admin.audit.filterByEntityId'), { target: { value: 'b1' } });
 
     await act(async () => {
       await new Promise((resolve) => setTimeout(resolve, 50));
@@ -120,7 +120,7 @@ describe('AdminAuditPage', () => {
     await renderAndFlush();
     expect(apiRequest).toHaveBeenCalled();
 
-    fireEvent.change(screen.getByLabelText('Date From'), { target: { value: '2024-01-01' } });
+    fireEvent.change(screen.getByLabelText('admin.audit.dateFrom'), { target: { value: '2024-01-01' } });
 
     await act(async () => {
       await new Promise((resolve) => setTimeout(resolve, 50));
@@ -138,8 +138,8 @@ describe('AdminAuditPage', () => {
     await renderAndFlush();
     expect(apiRequest).toHaveBeenCalled();
 
-    fireEvent.change(screen.getByLabelText('Entity Type'), { target: { value: 'book' } });
-    fireEvent.click(screen.getByText('Reset Filters'));
+    fireEvent.change(screen.getByLabelText('admin.audit.entityType'), { target: { value: 'book' } });
+    fireEvent.click(screen.getByText('admin.audit.resetFilters'));
 
     await act(async () => {
       await new Promise((resolve) => setTimeout(resolve, 50));
@@ -164,7 +164,7 @@ describe('AdminAuditPage', () => {
 
     // Page is initially 1, Previous is disabled; this test just verifies
     // the page renders the correct pagination info.
-    expect(screen.getByText('Page 1 of 2')).toBeInTheDocument();
+    expect(screen.getByText('admin.audit.pageOf')).toBeInTheDocument();
   });
 
   it('navigates to next page', async () => {
@@ -179,9 +179,9 @@ describe('AdminAuditPage', () => {
     expect(apiRequest).toHaveBeenCalled();
 
     await act(async () => {
-      fireEvent.click(screen.getByText('Next'));
+      fireEvent.click(screen.getByText('admin.audit.next'));
       await new Promise((resolve) => setTimeout(resolve, 50));
     });
-    expect(screen.getByText('Page 2 of 2')).toBeInTheDocument();
+    expect(screen.getByText('admin.audit.pageOf')).toBeInTheDocument();
   });
 });

@@ -1,5 +1,6 @@
 import { useState, memo } from 'react';
 import type { Highlight } from '../../../../stores';
+import { useTranslation } from '../../../../hooks/useTranslation';
 import { formatDate } from './formatDate';
 
 export interface HighlightItemProps {
@@ -25,6 +26,7 @@ export const HighlightItem = memo(function HighlightItem({
   onDelete,
   onNavigate,
 }: HighlightItemProps) {
+  const { t } = useTranslation();
   const [showActions, setShowActions] = useState(false);
   const isEditing = editingHighlight === highlight.id;
 
@@ -64,7 +66,7 @@ export const HighlightItem = memo(function HighlightItem({
             onChange={(e) => setHighlightNote(e.target.value)}
             className="w-full p-2 text-sm border border-border rounded bg-background"
             rows={2}
-            placeholder="Add a note..."
+            placeholder={t('annotation.notePlaceholder')}
             // eslint-disable-next-line jsx-a11y/no-autofocus -- Intentional: textarea appears conditionally on user action, auto-focusing improves note-adding workflow
             autoFocus
           />
@@ -73,13 +75,13 @@ export const HighlightItem = memo(function HighlightItem({
               onClick={() => onEdit(highlight.id)}
               className="px-2 py-1 text-xs bg-accent text-white rounded hover:opacity-90"
             >
-              Save
+              {t('annotation.save')}
             </button>
             <button
               onClick={() => setEditingHighlight(null)}
               className="px-2 py-1 text-xs border border-border rounded hover:bg-background-secondary"
             >
-              Cancel
+              {t('annotation.cancel')}
             </button>
           </div>
         </div>
@@ -99,13 +101,13 @@ export const HighlightItem = memo(function HighlightItem({
                 }}
                 className="text-xs text-foreground-muted hover:text-foreground"
               >
-                Edit Note
+                {t('annotation.editNote')}
               </button>
               <button
                 onClick={() => onDelete(highlight.id)}
                 className="text-xs text-accent-error hover:opacity-80"
               >
-                Delete
+                {t('annotation.delete')}
               </button>
             </div>
           )}

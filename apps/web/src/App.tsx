@@ -61,9 +61,9 @@ const LoadingFallback: React.FC = () => {
         </svg>
       </div>
       <div className="flex gap-2.5 mt-2" aria-hidden="true">
-        <div className="w-2.5 h-2.5 rounded-full bg-accent animate-bounce [animation-delay:-0.3s]" />
-        <div className="w-2.5 h-2.5 rounded-full bg-accent/60 animate-bounce [animation-delay:-0.15s]" />
-        <div className="w-2.5 h-2.5 rounded-full bg-accent/30 animate-bounce" />
+        <div className="w-2.5 h-2.5 rounded-full bg-accent animate-pulse [animation-delay:-0.3s]" />
+        <div className="w-2.5 h-2.5 rounded-full bg-accent/60 animate-pulse [animation-delay:-0.15s]" />
+        <div className="w-2.5 h-2.5 rounded-full bg-accent/30 animate-pulse" />
       </div>
     </div>
   </div>
