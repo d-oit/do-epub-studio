@@ -72,7 +72,7 @@ jobs:
             {
               echo '## Bundle budget (gzipped, ADR-107 §3)'
               echo ''
-              echo '**Budgets:** main JS 180 KB · main CSS 30 KB · any lazy chunk 80 KB'
+              echo '**Budgets:** main JS 240 KB · main CSS 30 KB · any lazy chunk 140 KB'
               echo ''
               cat apps/web/bundle-budget-report.md
             } > comment.md
