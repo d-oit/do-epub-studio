@@ -4,12 +4,12 @@ import { applySecurityHeaders, applyMinimalSecurityHeaders } from '../lib/securi
 export const securityHeadersMiddleware: MiddlewareHandler = async (c, next) => {
   await next();
 
-  // Apply appropriate security headers IF NOT ALREADY SET by route (like files)
-  if (!c.res.headers.has('Content-Security-Policy')) {
-    if (c.req.path.startsWith('/api/files/')) {
-      applyMinimalSecurityHeaders(c.res);
-    } else {
-      applySecurityHeaders(c.res);
-    }
+  // Apply appropriate security headers.
+  // We always apply non-CSP headers. We skip the default CSP only if a route
+  // (like files) already set a custom one.
+  if (c.req.path.startsWith('/api/files/')) {
+    applyMinimalSecurityHeaders(c.res, { skipCspIfPresent: true });
+  } else {
+    applySecurityHeaders(c.res, { skipCspIfPresent: true });
   }
 };

@@ -21,6 +21,8 @@ import { validationErrorFormatter } from './middleware/validation';
 export const app = new Hono<{ Bindings: Env }>();
 
 app.use('*', observabilityMiddleware);
+app.use('*', corsMiddleware);
+app.use('*', securityHeadersMiddleware);
 
 // Security: Guard against ReDoS by limiting path length.
 // Runs after observability so the 414 response carries a traceId.
@@ -31,8 +33,6 @@ app.use('*', async (c, next) => {
   }
   await next();
 });
-app.use('*', corsMiddleware);
-app.use('*', securityHeadersMiddleware);
 
 // Rate Limiting
 app.use('*', async (c, next) => {

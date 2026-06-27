@@ -1,8 +1,8 @@
 # ADR-113: Phase 3 Polish Execution & Knowledge Compaction Policy
 
-**Status:** Proposed  
-**Date:** 2026-06-26  
-**Deciders:** orchestrator (GOAP agent)  
+**Status:** Proposed
+**Date:** 2026-06-26
+**Deciders:** orchestrator (GOAP agent)
 **Supersedes:** ADR-112 (Phase 2/3 execution — remains active for its scope)
 
 ---
