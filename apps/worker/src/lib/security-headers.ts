@@ -28,7 +28,7 @@ export const securityHeaders: Readonly<Record<string, string>> = Object.freeze({
   // Content Security Policy — restrict resource loading for API responses
   // API endpoints should not render content; this is a defense-in-depth measure
   'Content-Security-Policy':
-    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-src 'self'; frame-ancestors 'none'; form-action 'self'; base-uri 'self'; report-uri /api/csp-report",
+    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-src 'self'; frame-ancestors 'none'; form-action 'self'; base-uri 'self'; upgrade-insecure-requests; report-uri /api/csp-report",
 
   // Cross-Origin isolation — prevent cross-origin data leaks
   'Cross-Origin-Opener-Policy': 'same-origin',
@@ -57,8 +57,11 @@ export const minimalSecurityHeaders: Readonly<Record<string, string>> = Object.f
 /**
  * Apply security headers to a response (mutates in place, returns for chaining).
  */
-export function applySecurityHeaders(response: Response): Response {
+export function applySecurityHeaders(response: Response, options: { skipCspIfPresent?: boolean } = {}): Response {
   Object.entries(securityHeaders).forEach(([key, value]) => {
+    if (key === 'Content-Security-Policy' && options.skipCspIfPresent && response.headers.has(key)) {
+      return;
+    }
     response.headers.set(key, value);
   });
   return response;
@@ -68,8 +71,11 @@ export function applySecurityHeaders(response: Response): Response {
  * Apply minimal security headers to a response.
  * Use for file downloads or responses that may serve non-JSON content.
  */
-export function applyMinimalSecurityHeaders(response: Response): Response {
+export function applyMinimalSecurityHeaders(response: Response, options: { skipCspIfPresent?: boolean } = {}): Response {
   Object.entries(minimalSecurityHeaders).forEach(([key, value]) => {
+    if (key === 'Content-Security-Policy' && options.skipCspIfPresent && response.headers.has(key)) {
+      return;
+    }
     response.headers.set(key, value);
   });
   return response;
