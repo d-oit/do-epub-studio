@@ -54,7 +54,7 @@ describe('Files Routes', () => {
 
       expect(res.status).toBe(200);
       expect(res.headers.get('Content-Type')).toBe('application/epub+zip');
-      expect(res.headers.get('Content-Security-Policy')).toContain("frame-ancestors 'self'");
+      expect(res.headers.get('Content-Security-Policy')).toContain("frame-ancestors 'none'");
     });
   });
 });

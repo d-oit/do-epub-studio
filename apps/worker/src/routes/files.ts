@@ -53,9 +53,6 @@ filesRouter.get('/:bookId/:remainder{.+}', zValidator('query', SignedUrlSchema),
   object.writeHttpMetadata(headers);
   headers.set('etag', object.httpEtag);
 
-  // Security: ADR-035 restrictive CSP for framed EPUB content
-  headers.set('Content-Security-Policy', "script-src 'none'; frame-ancestors 'self'; sandbox allow-same-origin");
-
   const ctx = createRequestContext(c.req.raw);
   logRequestEnd(ctx, 200, {
     route: '/files/:bookId/:remainder',
