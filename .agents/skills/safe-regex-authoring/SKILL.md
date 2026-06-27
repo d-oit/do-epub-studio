@@ -65,16 +65,19 @@ test('regex completes within time budget', () => {
 
 ## Mandatory Helpers
 
-For any regex processing untrusted input, use `matchBounded` / `testBounded` from `@do-epub-studio/shared`:
+For any regex processing untrusted input, use `matchBounded` / `testBounded` / `matchAllBounded` from `@do-epub-studio/shared`:
 
 ```ts
-import { matchBounded, testBounded } from '@do-epub-studio/shared';
+import { matchBounded, testBounded, matchAllBounded } from '@do-epub-studio/shared';
 
 // Instead of: re.exec(input)
 const result = matchBounded(re, input, MAX_CFI_LENGTH);
 
 // Instead of: re.test(input)
 const hasMatch = testBounded(re, input, MAX_CFI_LENGTH);
+
+// Instead of: [...input.matchAll(re)] for iterative matches
+const allMatches = matchAllBounded(re, input, MAX_CFI_LENGTH);
 ```
 
 These helpers reject inputs exceeding `maxLen` before the regex engine runs.
@@ -95,7 +98,7 @@ Every CodeQL ReDoS alert MUST be fixed at the source — never dismissed:
 
 - [ ] Input length guarded before regex runs
 - [ ] Pattern has no overlapping/ambiguous repetitions
-- [ ] Uses `matchBounded`/`testBounded` for untrusted input
+- [ ] Uses `matchBounded`/`testBounded`/`matchAllBounded` for untrusted input
 - [ ] Property-based fuzz test added for adversarial inputs
 - [ ] CodeQL alert confirmed fixed (not dismissed)
 

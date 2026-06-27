@@ -31,7 +31,7 @@ readonly MAX_PR_TITLE_LENGTH=72
 - **MUST use Argon2id for password hashing.** Never use bcrypt/scrypt.
 - **MUST revoke sessions immediately on grant change.**
 - **MUST use multi-signal locators (CFI + text + chapter) for annotations per ADR-006.**
-- **MUST emit traceId on every Worker request and critical UI action.**
+- **MUST emit traceId on every Worker request and critical UI action.** MUST emit traceId BEFORE the path-length guard so observability is preserved even on 414 responses.
 - **MUST guard every regex against untrusted input** using `matchBounded` / `testBounded` from `@do-epub-studio/shared` per ADR-034.
 - **NEVER delete .gitignore files.** Binary/test fixtures must be generated via scripts, not tracked. Deleting .gitignore surfaces binary artifacts into the repo and breaks CI reproducibility.
 - **MUST follow the disclosure process in `SECURITY.md` for any vulnerability — never open a public issue first.**
@@ -42,6 +42,8 @@ readonly MAX_PR_TITLE_LENGTH=72
 - **MUST always fix pre-existing issues when encountered.** Whenever you touch a file (or surface an issue via analysis, lint, typecheck, test, security audit, or review), you MUST fix the pre-existing issue in the same change set — regardless of whether it is in the diff scope. Deferral is not allowed. If a pre-existing issue is too large for the current change, open a follow-up GOAP plan + ADR + tracking issue and link it from the current PR description; the current PR is not mergeable until the follow-up exists. Pre-existing issues in unrelated files are addressed by either: (a) fixing them in the current PR, or (b) opening a follow-up GOAP plan that is actively worked on. "Leave it for later" with no follow-up is a violation.
 - **MUST pass Codacy Static Code Analysis before merge.** The `Codacy Static Code Analysis` row in `gh pr checks <PR>` is treated as a required check on this repo. New issues from `codacy pull-request gh <org> <repo> <pr>` MUST be fixed in code; suppressions are last-resort and require an inline justification. Local ESLint does NOT cover root-level configs (`vite.config.ts`, `vitest.config.ts`, `playwright.config.ts`) — Codacy does, so a green local `pnpm lint` does not guarantee Codacy green. Always re-check `gh pr checks` after pushing. See `.agents/skills/codacy/SKILL.md`.
 - **MUST use static imports over `readFileSync` for repo-bundled assets.** When a Vite/webpack/rollup config or a Node-bundled source needs a JSON file or a static text file (e.g. `VERSION`), prefer `import x from './file.json'` (Vite) or `path.join(__dirname, 'literal')` (Node) over `readFileSync(new URL(..., import.meta.url))`. The `new URL` pattern trips Codacy's `security/detect-non-literal-fs-filename` rule (OWASP path-traversal guard) because the URL is non-literal at the call site. See `.agents/skills/security-code-auditor/SKILL.md` § "File-System Path Patterns".
+- **MUST test security headers (HSTS, CSP defaults) on all responses.** CSP must not be overridden on static file responses.
+- **MUST apply parser timeouts to EPUB content parsing** to prevent infinite loops on malformed input.
 
 ---
 
@@ -52,17 +54,18 @@ readonly MAX_PR_TITLE_LENGTH=72
 1. **Run `./scripts/quality_gate.sh` before commit.** No exceptions.
 2. **Validate workflows:** All GitHub Actions workflows MUST pass validation via `./scripts/validate-workflows.sh` (includes `actionlint` and `zizmor` security scanning).
 3. **Use `./scripts/atomic-commit/run.sh --message "type(scope): description"`.**
-3. **Coverage Thresholds:** Enforce minimum coverage via `test:coverage`.
+4. **Coverage Thresholds:** Enforce minimum coverage via `test:coverage`.
    - `web`: 55% Lines, 48% Functions | `worker`: 55% Lines, 50% Functions
    - `shared`: 40% Lines, 50% Functions | `reader-core`: 72% Lines, 70% Functions
    - `schema`: 15% Lines, 5% Functions | `testkit`: 25% Lines, 20% Functions
    - `ui`: 10% Lines, 5% Functions
-4. **Validate commit message:** Run `./scripts/validate-commit-message.sh` or ensure format matches `type(scope): description` (max 72 chars).
-5. **NEVER ignore lint warnings, typecheck errors, or test failures.**
-6. **If a lint rule is disabled, add inline comment explaining why.**
-7. **MUST load `goap-agent` skill for any analysis, planning, or multi-step task.** Use GOAP methodology (analyze → decompose → strategize → coordinate → execute → synthesize).
-8. **Document ALL issues as GOAP plans + ADRs in `plans/`.** Warnings, pre-existing issues, and unfixable items each get a GOAP plan with an ADR defining policy. Do NOT edit KNOWN-ISSUES.md directly — that is a reference mirror of monitor-tier items only.
-9. **Releases MUST be cut via the `release-management` skill — no manual tags, no direct CHANGELOG edits.**
+5. **Validate commit message:** Run `./scripts/validate-commit-message.sh` or ensure format matches `type(scope): description` (max 72 chars).
+6. **NEVER ignore lint warnings, typecheck errors, or test failures.**
+7. **If a lint rule is disabled, add inline comment explaining why.**
+8. **MUST load `goap-agent` skill for any analysis, planning, or multi-step task.** Use GOAP methodology (analyze → decompose → strategize → coordinate → execute → synthesize).
+9. **Document ALL issues as GOAP plans + ADRs in `plans/`.** Warnings, pre-existing issues, and unfixable items each get a GOAP plan with an ADR defining policy. Do NOT edit KNOWN-ISSUES.md directly — that is a reference mirror of monitor-tier items only.
+10. **Releases MUST be cut via the `release-management` skill — no manual tags, no direct CHANGELOG edits.**
+11. **CI MUST enforce Lighthouse mobile preset with route-specific performance budgets** for catalog, admin, auth, and offline routes.
 
 ---
 

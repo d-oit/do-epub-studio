@@ -37,3 +37,9 @@ src/routes/
 - All routes must be typed and validated.
 - Use Zod for input validation.
 - All responses must follow consistent format.
+
+## Middleware Ordering
+
+Observability middleware MUST precede path guards, CORS, security headers, and rate limiting. This ensures traceId is captured on every request — including 414 (URI Too Long) responses where the path-length guard rejects before other middleware runs.
+
+Reference: `apps/worker/src/app.ts:23-33`

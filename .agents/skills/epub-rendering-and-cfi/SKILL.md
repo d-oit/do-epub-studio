@@ -41,3 +41,4 @@ Purpose: implement resilient EPUB rendering, locator extraction, and annotation 
 - [ ] Re-anchoring warns user when falling back.
 - [ ] EPUB.js event handlers removed on unmount.
 - [ ] Telemetry events logged for load failures with `traceId`.
+- [ ] Fuzzy re-anchoring word extraction uses `matchAllBounded` from `@do-epub-studio/shared`.
