@@ -37,15 +37,15 @@ function AuditTable({ data, page, total, onPrev, onNext }: AuditTableProps) {
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   const renderPaginationInfo = () => {
-    if (total === 0) return '0 entries';
+    if (total === 0) return t('admin.audit.paginationInfoZero');
     const start = (page - 1) * PAGE_SIZE + 1;
     const end = Math.min((page - 1) * PAGE_SIZE + data.entries.length, total);
-    return `${start}-${end} of ${total} entries`;
+    return t('admin.audit.paginationInfo').replace('{start}', String(start)).replace('{end}', String(end)).replace('{total}', String(total));
   };
 
   if (data.entries.length === 0) {
     return (
-      <section className="bg-background-secondary shadow-sm rounded-lg border border-border overflow-x-auto" aria-label="Audit log table">
+      <section className="bg-background-secondary shadow-sm rounded-lg border border-border overflow-x-auto" aria-label={t('admin.audit.tableLabel')}>
         <p className="px-6 py-12 text-center text-foreground-muted">
           {t('admin.audit.noLogs')}
         </p>
@@ -57,7 +57,7 @@ function AuditTable({ data, page, total, onPrev, onNext }: AuditTableProps) {
   }
 
   return (
-    <section className="bg-background-secondary shadow-sm rounded-lg border border-border overflow-x-auto" aria-label="Audit log table">
+    <section className="bg-background-secondary shadow-sm rounded-lg border border-border overflow-x-auto" aria-label={t('admin.audit.tableLabel')}>
       <table className="min-w-full divide-y divide-border">
         <thead className="bg-background-secondary">
           <tr>
@@ -82,7 +82,7 @@ function AuditTable({ data, page, total, onPrev, onNext }: AuditTableProps) {
                 {new Date(log.createdAt).toLocaleString()}
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-foreground">
-                {log.actorEmail || 'System'}
+                {log.actorEmail || t('admin.audit.systemActor')}
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground-muted">
                 <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-semantic-info/20 text-semantic-info">
