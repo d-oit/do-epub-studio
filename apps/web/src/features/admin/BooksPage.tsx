@@ -7,6 +7,7 @@ import type { BookResponse } from '@do-epub-studio/shared';
 import { validateEpub } from '@do-epub-studio/shared';
 import { LocaleSwitcher } from '../../components/LocaleSwitcher';
 import { Modal, Button } from '../../components/ui';
+import { Spinner } from '@do-epub-studio/ui';
 
 interface CreateBookResponse {
   id: string;
@@ -301,7 +302,7 @@ export function AdminBookResponsesPage() {
       >
         {isLoading ? (
           <div className="col-span-full py-12 flex justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
+            <Spinner />
           </div>
         ) : (
           books.map((book) => (

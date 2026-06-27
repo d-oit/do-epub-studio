@@ -64,22 +64,22 @@ describe('HighlightItem', () => {
   it('shows actions on mouse enter', () => {
     const { container } = render(<HighlightItem {...defaultProps} />);
     fireEvent.mouseEnter(container.firstElementChild as HTMLElement);
-    expect(screen.getByText('Edit Note')).toBeInTheDocument();
-    expect(screen.getByText('Delete')).toBeInTheDocument();
+    expect(screen.getByText('annotation.editNote')).toBeInTheDocument();
+    expect(screen.getByText('annotation.delete')).toBeInTheDocument();
   });
 
   it('hides actions on mouse leave', () => {
     const { container } = render(<HighlightItem {...defaultProps} />);
     fireEvent.mouseEnter(container.firstElementChild as HTMLElement);
-    expect(screen.getByText('Edit Note')).toBeInTheDocument();
+    expect(screen.getByText('annotation.editNote')).toBeInTheDocument();
     fireEvent.mouseLeave(container.firstElementChild as HTMLElement);
-    expect(screen.queryByText('Edit Note')).not.toBeInTheDocument();
+    expect(screen.queryByText('annotation.editNote')).not.toBeInTheDocument();
   });
 
   it('enters editing mode on Edit Note click', () => {
     const { container } = render(<HighlightItem {...defaultProps} />);
     fireEvent.mouseEnter(container.firstElementChild as HTMLElement);
-    fireEvent.click(screen.getByText('Edit Note'));
+    fireEvent.click(screen.getByText('annotation.editNote'));
     expect(defaultProps.setEditingHighlight).toHaveBeenCalledWith('hl-1');
     expect(defaultProps.setHighlightNote).toHaveBeenCalledWith('My note');
   });
@@ -87,7 +87,7 @@ describe('HighlightItem', () => {
   it('calls onDelete with id', () => {
     const { container } = render(<HighlightItem {...defaultProps} />);
     fireEvent.mouseEnter(container.firstElementChild as HTMLElement);
-    fireEvent.click(screen.getByText('Delete'));
+    fireEvent.click(screen.getByText('annotation.delete'));
     expect(defaultProps.onDelete).toHaveBeenCalledWith('hl-1');
   });
 
@@ -108,19 +108,19 @@ describe('HighlightItem', () => {
 
   it('shows save and cancel buttons in edit mode', () => {
     render(<HighlightItem {...defaultProps} editingHighlight="hl-1" highlightNote="Edit text" />);
-    expect(screen.getByText('Save')).toBeInTheDocument();
-    expect(screen.getByText('Cancel')).toBeInTheDocument();
+    expect(screen.getByText('annotation.save')).toBeInTheDocument();
+    expect(screen.getByText('annotation.cancel')).toBeInTheDocument();
   });
 
   it('calls onEdit with id on save', () => {
     render(<HighlightItem {...defaultProps} editingHighlight="hl-1" highlightNote="Updated note" />);
-    fireEvent.click(screen.getByText('Save'));
+    fireEvent.click(screen.getByText('annotation.save'));
     expect(defaultProps.onEdit).toHaveBeenCalledWith('hl-1');
   });
 
   it('clears editing on cancel', () => {
     render(<HighlightItem {...defaultProps} editingHighlight="hl-1" highlightNote="text" />);
-    fireEvent.click(screen.getByText('Cancel'));
+    fireEvent.click(screen.getByText('annotation.cancel'));
     expect(defaultProps.setEditingHighlight).toHaveBeenCalledWith(null);
   });
 
@@ -135,7 +135,7 @@ describe('HighlightItem', () => {
     const noNote = { ...baseHighlight, note: '' };
     const { container } = render(<HighlightItem {...defaultProps} highlight={noNote} />);
     fireEvent.mouseEnter(container.firstElementChild as HTMLElement);
-    fireEvent.click(screen.getByText('Edit Note'));
+    fireEvent.click(screen.getByText('annotation.editNote'));
     expect(defaultProps.setHighlightNote).toHaveBeenCalledWith('');
   });
 });

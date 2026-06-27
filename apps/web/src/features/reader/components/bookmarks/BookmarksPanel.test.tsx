@@ -33,13 +33,13 @@ describe('BookmarksPanel', () => {
 
   it('renders when open', () => {
     render(<BookmarksPanel {...defaultProps} />);
-    expect(screen.getByText('Bookmarks')).toBeInTheDocument();
+    expect(screen.getByText('reader.bookmarks.title')).toBeInTheDocument();
   });
 
   it('renders bookmark labels', () => {
     render(<BookmarksPanel {...defaultProps} />);
     expect(screen.getByText('Chapter 1 Start')).toBeInTheDocument();
-    expect(screen.getByText('Untitled')).toBeInTheDocument();
+    expect(screen.getByText('reader.bookmarks.untitled')).toBeInTheDocument();
   });
 
   it('calls onNavigate when bookmark clicked', () => {
@@ -71,7 +71,7 @@ describe('BookmarksPanel', () => {
 
   it('shows empty message when no bookmarks', () => {
     render(<BookmarksPanel {...defaultProps} bookmarks={[]} />);
-    expect(screen.getByText(/No bookmarks yet/)).toBeInTheDocument();
+    expect(screen.getByText('reader.bookmarks.empty')).toBeInTheDocument();
   });
 
   it('calls onClose on Escape key', () => {

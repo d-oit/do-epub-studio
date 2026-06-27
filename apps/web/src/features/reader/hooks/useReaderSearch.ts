@@ -66,15 +66,16 @@ export function useReaderSearch(book: Book | null, query: string) {
       const toc = (book.navigation?.toc as NavItem[] | undefined) ?? [];
       void (async (): Promise<void> => {
         try {
-          const searchPromises: Array<Promise<Array<{ cfi: string; excerpt: string }>>> = [];
+          const searchPromises: Array<Promise<Array<{ cfi: string; excerpt: string; href: string }>>> = [];
           spine.each((item) => {
+            const href = item.href;
             const loader = book.load.bind(book);
             const p = item
               .load(loader)
               .then(() => {
                 const matches = item.find(trimmed);
                 item.unload();
-                return matches;
+                return matches.map((m) => ({ ...m, href }));
               })
               .catch((err: unknown) => {
                 const e = err as Error;
@@ -93,12 +94,11 @@ export function useReaderSearch(book: Book | null, query: string) {
           const allResults = spineResults.flat().slice(0, MAX_RESULTS);
 
           const processed: SearchResult[] = allResults.map((result) => {
-            const item = spine.get(result.cfi);
             return {
               cfi: result.cfi,
               cfiRange: result.cfi,
               excerpt: result.excerpt,
-              chapterTitle: findChapterTitle(toc, item?.href),
+              chapterTitle: findChapterTitle(toc, result.href),
             };
           });
           setResults(processed);

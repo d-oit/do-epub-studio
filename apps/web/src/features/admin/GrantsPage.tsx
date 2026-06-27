@@ -11,6 +11,7 @@ import {
 import { useAuthStore } from '../../stores/auth';
 import type { GrantResponse } from '@do-epub-studio/shared';
 import { LocaleSwitcher } from '../../components/LocaleSwitcher';
+import { Spinner } from '@do-epub-studio/ui';
 import { PageContainer } from '../../components/ui';
 import {
   BookSelector,
@@ -239,7 +240,7 @@ function GrantsSkeleton() {
       aria-busy="true"
       aria-live="polite"
     >
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent" />
+      <Spinner />
     </div>
   );
 }

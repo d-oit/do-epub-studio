@@ -227,7 +227,7 @@ export function LoginPage() {
             <div
               role="alert"
               aria-live="polite"
-              className="mb-6 p-3 bg-accent-error/10 border-l-3 border-accent-error rounded-r text-sm text-accent-error"
+              className="mb-6 p-3 bg-accent-error/10 border border-accent-error/30 rounded-lg text-sm text-accent-error"
             >
               {formError}
             </div>

@@ -1,7 +1,9 @@
 import { Link } from 'react-router-dom';
 import { PageContainer } from '@do-epub-studio/ui';
+import { useTranslation } from '../../hooks/useTranslation';
 
 export function NotFoundPage() {
+  const { t } = useTranslation();
   return (
     <PageContainer className="flex flex-col items-center justify-center bg-background px-4">
       <main id="main-content" className="max-w-md w-full text-center py-16">
@@ -16,7 +18,6 @@ export function NotFoundPage() {
             viewBox="0 0 24 24"
             aria-hidden="true"
           >
-            <title>Decorative face icon</title>
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -28,10 +29,10 @@ export function NotFoundPage() {
 
         <h1 className="text-4xl font-bold text-foreground mb-3">404</h1>
         <h2 className="text-xl font-semibold text-foreground-muted mb-4">
-          Page not found
+          {t('errors.notFound.title')}
         </h2>
         <p className="text-foreground-muted mb-8">
-          The page you&apos;re looking for doesn&apos;t exist or has been moved.
+          {t('errors.notFound.description')}
         </p>
 
         <Link
@@ -52,7 +53,7 @@ export function NotFoundPage() {
               d="M10 19l-7-7m0 0l7-7m-7 7h18"
             />
           </svg>
-          Back to home
+          {t('errors.notFound.backToHome')}
         </Link>
       </main>
     </PageContainer>

@@ -4,7 +4,8 @@
       "numberOfRuns": 3,
       "puppeteerScript": "",
       "settings": {
-        "onlyCategories": ["performance", "accessibility", "best-practices", "seo"]
+        "onlyCategories": ["performance", "accessibility", "best-practices", "seo"],
+        "formFactor": "mobile"
       },
       "url": [
         "http://localhost:5173/",

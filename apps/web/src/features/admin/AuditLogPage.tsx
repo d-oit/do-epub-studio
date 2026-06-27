@@ -1,6 +1,7 @@
 import { Component, Suspense, use, useState, useCallback, useRef, type ErrorInfo, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '../../hooks/useTranslation';
+import type { TranslationKeys } from '../../i18n';
 import {
   fetchAuditLogs,
   invalidateAuditLogCache,
@@ -9,17 +10,18 @@ import {
 import { useAuthStore } from '../../stores/auth';
 import type { AuditLogResponse } from '@do-epub-studio/shared';
 import { LocaleSwitcher } from '../../components/LocaleSwitcher';
+import { Spinner } from '@do-epub-studio/ui';
 
 const PAGE_SIZE = 50;
-const ENTITY_TYPE_OPTIONS = [
-  { value: '', label: 'All' },
-  { value: 'book', label: 'Book' },
-  { value: 'grant', label: 'Grant' },
-  { value: 'session', label: 'Session' },
-  { value: 'comment', label: 'Comment' },
-  { value: 'user', label: 'User' },
-  { value: 'highlight', label: 'Highlight' },
-  { value: 'bookmark', label: 'Bookmark' },
+const ENTITY_TYPE_OPTIONS: Array<{ value: string; labelKey: TranslationKeys }> = [
+  { value: '', labelKey: 'admin.audit.entityType.all' },
+  { value: 'book', labelKey: 'admin.audit.entityType.book' },
+  { value: 'grant', labelKey: 'admin.audit.entityType.grant' },
+  { value: 'session', labelKey: 'admin.audit.entityType.session' },
+  { value: 'comment', labelKey: 'admin.audit.entityType.comment' },
+  { value: 'user', labelKey: 'admin.audit.entityType.user' },
+  { value: 'highlight', labelKey: 'admin.audit.entityType.highlight' },
+  { value: 'bookmark', labelKey: 'admin.audit.entityType.bookmark' },
 ];
 
 interface AuditTableProps {
@@ -104,17 +106,17 @@ function AuditTable({ data, page, total, onPrev, onNext }: AuditTableProps) {
             disabled={page <= 1}
             className="px-3 py-1 text-sm border border-border rounded disabled:opacity-50 disabled:cursor-not-allowed bg-background text-foreground-muted hover:bg-background-secondary"
           >
-            Previous
+            {t('admin.audit.previous')}
           </button>
           <span className="text-sm text-foreground-muted">
-            Page {page} of {totalPages}
+            {t('admin.audit.pageOf').replace('{page}', String(page)).replace('{total}', String(totalPages))}
           </span>
           <button
             onClick={onNext}
             disabled={page >= totalPages}
             className="px-3 py-1 text-sm border border-border rounded disabled:opacity-50 disabled:cursor-not-allowed bg-background text-foreground-muted hover:bg-background-secondary"
           >
-            Next
+            {t('admin.audit.next')}
           </button>
         </div>
       </div>
@@ -148,7 +150,7 @@ function AuditSkeleton() {
       aria-busy="true"
       aria-live="polite"
     >
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent" />
+      <Spinner />
     </div>
   );
 }
@@ -268,7 +270,7 @@ export function AdminAuditPage() {
             onClick={handleExportCSV}
             className="px-4 py-2 bg-background border border-border rounded-md text-sm font-medium text-foreground-muted hover:bg-background-secondary"
           >
-            Export CSV
+            {t('admin.audit.exportCsv')}
           </button>
           <button
             onClick={handleRefresh}
@@ -283,38 +285,38 @@ export function AdminAuditPage() {
       <div className="mb-6 flex flex-wrap items-end gap-4">
         <div>
           <label className="block text-xs font-medium text-foreground-muted mb-1">
-            Entity Type
+            {t('admin.audit.entityType')}
           </label>
           <select
-            aria-label="Entity Type"
+            aria-label={t('admin.audit.entityType')}
             value={entityType}
             onChange={(e) => { setEntityType(e.target.value); setPage(1); }}
             className="px-3 py-2 bg-background border border-border rounded-md text-sm text-foreground"
           >
             {ENTITY_TYPE_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
+              <option key={opt.value} value={opt.value}>{t(opt.labelKey)}</option>
             ))}
           </select>
         </div>
         <div>
           <label className="block text-xs font-medium text-foreground-muted mb-1">
-            Entity ID
+            {t('admin.audit.entityId')}
           </label>
           <input
             type="text"
             value={entityId}
             onChange={(e) => { setEntityId(e.target.value); setPage(1); }}
-            placeholder="Filter by entity ID"
+            placeholder={t('admin.audit.filterByEntityId')}
             className="px-3 py-2 bg-background border border-border rounded-md text-sm text-foreground placeholder:text-foreground-muted"
           />
         </div>
         <div>
           <label className="block text-xs font-medium text-foreground-muted mb-1">
-            Date From
+            {t('admin.audit.dateFrom')}
           </label>
           <input
             type="date"
-            aria-label="Date From"
+            aria-label={t('admin.audit.dateFrom')}
             value={dateFrom}
             onChange={(e) => { setDateFrom(e.target.value); setPage(1); }}
             className="px-3 py-2 bg-background border border-border rounded-md text-sm text-foreground"
@@ -322,11 +324,11 @@ export function AdminAuditPage() {
         </div>
         <div>
           <label className="block text-xs font-medium text-foreground-muted mb-1">
-            Date To
+            {t('admin.audit.dateTo')}
           </label>
           <input
             type="date"
-            aria-label="Date To"
+            aria-label={t('admin.audit.dateTo')}
             value={dateTo}
             onChange={(e) => { setDateTo(e.target.value); setPage(1); }}
             className="px-3 py-2 bg-background border border-border rounded-md text-sm text-foreground"
@@ -336,7 +338,7 @@ export function AdminAuditPage() {
           onClick={handleResetFilters}
           className="px-4 py-2 bg-background border border-border rounded-md text-sm font-medium text-foreground-muted hover:bg-background-secondary"
         >
-          Reset Filters
+          {t('admin.audit.resetFilters')}
         </button>
       </div>
 

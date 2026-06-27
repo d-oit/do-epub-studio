@@ -62,7 +62,6 @@ jobs:
       - name: Run Lighthouse CI
         if: steps.deploy.outcome == 'success'
         id: lhci
-        continue-on-error: true
         uses: treosh/lighthouse-ci-action@3e7e23fb74242897f95c0ba9cabad3d0227b9b18  # v12.6.2
         with:
           urls: |
@@ -80,6 +79,7 @@ jobs:
             FAILURES=$(jq '[.[] | select(.passed == false)] | length' < ./lighthouseci/assertion-results.json)
             if [ "$FAILURES" -gt "0" ]; then
               echo "::error::Lighthouse assertions failed ($FAILURES failures)"
+              exit 1
             fi
           fi
 
