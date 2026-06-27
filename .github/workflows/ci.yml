@@ -200,10 +200,13 @@ jobs:
         run: pre-commit run --all-files --show-diff-on-failure
 
   lint:
-    name: Lint
+    name: Lint (Node ${{ matrix.node-version }})
     needs: setup
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    strategy:
+      matrix:
+        node-version: [22, 24]
     permissions:
       contents: write
     steps:
@@ -212,6 +215,8 @@ jobs:
           persist-credentials: false
           submodules: recursive
       - uses: ./.github/actions/setup-pnpm
+        with:
+          node-version: ${{ matrix.node-version }}
 
       - name: Lint
         id: lint
@@ -243,31 +248,41 @@ jobs:
         run: pnpm lint
 
   typecheck:
-    name: Typecheck
+    name: Typecheck (Node ${{ matrix.node-version }})
     needs: setup
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    strategy:
+      matrix:
+        node-version: [22, 24]
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
         with:
           persist-credentials: false
           submodules: recursive
       - uses: ./.github/actions/setup-pnpm
+        with:
+          node-version: ${{ matrix.node-version }}
 
       - name: Typecheck
         run: pnpm typecheck
 
   test:
-    name: Unit Tests
+    name: Unit Tests (Node ${{ matrix.node-version }})
     needs: setup
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    strategy:
+      matrix:
+        node-version: [22, 24]
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
         with:
           persist-credentials: false
           submodules: recursive
       - uses: ./.github/actions/setup-pnpm
+        with:
+          node-version: ${{ matrix.node-version }}
 
       - name: Run unit tests for scripts
         run: pnpm vitest run scripts/__tests__
@@ -281,7 +296,7 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
         if: always()
         with:
-          name: verification-output
+          name: verification-output-node${{ matrix.node-version }}
           path: verification_output.txt
           retention-days: 7
 
@@ -292,10 +307,13 @@ jobs:
           flags: unittests
 
   build:
-    name: Build
+    name: Build (Node ${{ matrix.node-version }})
     needs: [pre-commit, lint, typecheck, test]
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    strategy:
+      matrix:
+        node-version: [22, 24]
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
         with:
@@ -303,6 +321,8 @@ jobs:
           submodules: recursive
           fetch-depth: 0
       - uses: ./.github/actions/setup-pnpm
+        with:
+          node-version: ${{ matrix.node-version }}
 
       - name: Build
         run: pnpm build
@@ -313,7 +333,7 @@ jobs:
       - name: Upload bundle metrics
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
         with:
-          name: bundle-metrics
+          name: bundle-metrics-node${{ matrix.node-version }}
           path: apps/web/bundle-metrics.json
           retention-days: 1
 
@@ -346,7 +366,7 @@ jobs:
         if: github.event_name == 'pull_request'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
         with:
-          name: baseline-metrics
+          name: baseline-metrics-node${{ matrix.node-version }}
           path: baseline-bundle-metrics.json
           retention-days: 1
 
@@ -356,14 +376,14 @@ jobs:
       - name: Upload SBOM
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
         with:
-          name: sbom
+          name: sbom-node${{ matrix.node-version }}
           path: sbom.cyclonedx.json
           retention-days: 7
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
         with:
-          name: build-dist
+          name: build-dist-node${{ matrix.node-version }}
           path: apps/web/dist/
           retention-days: 3
 
@@ -394,7 +414,7 @@ jobs:
       - name: Download build artifacts
         uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806  # v4.1.9
         with:
-          name: build-dist
+          name: build-dist-node24
           path: apps/web/dist/
 
       - name: Run Preview Smoke E2E tests
@@ -557,11 +577,11 @@ jobs:
         run: |
           mkdir -p metrics
           mkdir -p baseline
-          find metrics-artifacts/bundle-metrics -name "*.json" -exec cp {} metrics/ \; || true
+          find metrics-artifacts/bundle-metrics-node24 -name "*.json" -exec cp {} metrics/ \; || true
           find metrics-artifacts/startup-metrics -name "*.json" -exec cp {} metrics/ \; || true
           # Lighthouse runs in a separate workflow; metrics not available here
           find metrics-artifacts/lighthouse-metrics -name "*.json" -exec cp {} metrics/ \; || echo "No lighthouse metrics available (generated in separate workflow)"
-          find metrics-artifacts/baseline-metrics -name "baseline-bundle-metrics.json" -exec mv {} baseline/bundle-metrics.json \; || true
+          find metrics-artifacts/baseline-metrics-node24 -name "baseline-bundle-metrics.json" -exec mv {} baseline/bundle-metrics.json \; || true
 
       - name: Collect CI metrics
         env:

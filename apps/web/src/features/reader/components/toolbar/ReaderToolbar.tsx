@@ -471,7 +471,7 @@ export function ReaderToolbar({
           </div>
         </div>
       </div>
-      <div className="h-1 w-full bg-muted" role="progressbar" aria-label={t('a11y.reading_progress')}>
+      <div className="h-1 w-full bg-muted">
         <div
           className="h-full bg-accent transition-all duration-300"
           style={{ width: `${progressPercent}%` }}

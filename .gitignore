@@ -91,3 +91,18 @@ storybook-static/
 .rovodev/
 .trae/
 .trae-cn/
+
+# Cloudflare Workers local secrets
+.dev.vars
+
+# TypeScript build info
+*.tsbuildinfo
+
+# Lint caches
+.eslintcache
+.stylelintcache
+
+# Test/CI artifacts
+junit.xml
+*.lcov
+.vitest/

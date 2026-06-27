@@ -43,19 +43,19 @@ function AuditTable({ data, page, total, onPrev, onNext }: AuditTableProps) {
 
   if (data.entries.length === 0) {
     return (
-      <div className="bg-background-secondary shadow-sm rounded-lg border border-border overflow-hidden">
+      <section className="bg-background-secondary shadow-sm rounded-lg border border-border overflow-x-auto" aria-label="Audit log table">
         <p className="px-6 py-12 text-center text-foreground-muted">
           {t('admin.audit.noLogs')}
         </p>
         <div className="flex items-center justify-between px-6 py-4 border-t border-border">
           <span className="text-sm text-foreground-muted">{renderPaginationInfo()}</span>
         </div>
-      </div>
+      </section>
     );
   }
 
   return (
-    <div className="bg-background-secondary shadow-sm rounded-lg border border-border overflow-hidden">
+    <section className="bg-background-secondary shadow-sm rounded-lg border border-border overflow-x-auto" aria-label="Audit log table">
       <table className="min-w-full divide-y divide-border">
         <thead className="bg-background-secondary">
           <tr>
@@ -118,7 +118,7 @@ function AuditTable({ data, page, total, onPrev, onNext }: AuditTableProps) {
           </button>
         </div>
       </div>
-    </div>
+    </section>
   );
 }
 
@@ -250,7 +250,7 @@ export function AdminAuditPage() {
   }, [sessionToken]);
 
   return (
-    <main id="main-content" className="min-h-screen bg-background p-8">
+    <main id="main-content" className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
       <header className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-2xl font-bold text-foreground">

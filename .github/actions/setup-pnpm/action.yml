@@ -1,7 +1,11 @@
 name: Setup pnpm
 description: Checkout, setup pnpm/node with cache, and install dependencies
 
-inputs: {}
+inputs:
+  node-version:
+    description: Node.js version to install
+    required: false
+    default: '24'
 
 outputs:
   cache-hit:
@@ -20,7 +24,7 @@ runs:
       id: setup-node
       uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903  # v6.0.0
       with:
-        node-version: '24'
+        node-version: ${{ inputs.node-version }}
         cache: 'pnpm'
 
     - name: Install dependencies

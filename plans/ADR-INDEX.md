@@ -59,6 +59,7 @@
 | 111 | Impeccable Design Vocabulary Adoption | `plans/111-adr-impeccable-design-vocabulary.md` | Accepted |
 | 112 | Phase 2/3 Execution & CI Hardening Policy | `plans/112-adr-phase2-3-execution-policy.md` | Accepted |
 | 113 | Phase 3 Polish Execution & Knowledge Compaction Policy | `plans/113-adr-phase3-polish-execution-policy.md` | Accepted |
+| 114 | Comprehensive Audit Remediation Policy (2026-06-27) | `plans/114-adr-audit-remediation-policy.md` | Accepted |
 
 ## Cross-referenced but not yet adopted
 
