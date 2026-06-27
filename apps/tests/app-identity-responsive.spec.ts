@@ -1,5 +1,11 @@
 import { expect, test } from '@playwright/test';
 import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+
+const REPO_ROOT = join(import.meta.dirname, '../../');
+const appIdentityJson = JSON.parse(
+  readFileSync(join(REPO_ROOT, 'apps/web/src/config/app-identity.json'), 'utf8'),
+);
 
 interface AppIdentity {
   name: string;
@@ -7,10 +13,8 @@ interface AppIdentity {
   description: string;
 }
 
-const appIdentity = JSON.parse(
-  readFileSync(new URL('../web/src/config/app-identity.json', import.meta.url), 'utf8'),
-) as AppIdentity;
-const appVersion = readFileSync(new URL('../../VERSION', import.meta.url), 'utf8').trim();
+const appIdentity = appIdentityJson as AppIdentity;
+const appVersion = readFileSync(join(REPO_ROOT, 'VERSION'), 'utf8').trim();
 const viewports = [
   { label: 'mobile', width: 375, height: 812 },
   { label: 'tablet', width: 768, height: 1024 },

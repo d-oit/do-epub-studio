@@ -21,6 +21,8 @@ interface WorkerResultMessage {
 type MainToWorkerMessage = WorkerPoolMessage;
 type WorkerToMainMessage = WorkerResultMessage;
 
+const PARSE_TIMEOUT_MS = 30_000;
+
 class EpubParserWorkerPool {
   private worker: Worker | null = null;
   private pending = new Map<
@@ -81,7 +83,21 @@ class EpubParserWorkerPool {
     }
 
     return new Promise<EpubParseResult>((resolve, reject) => {
-      this.pending.set(id, { resolve, reject });
+      this.pending.set(id, {
+        resolve: (result) => {
+          clearTimeout(timer);
+          resolve(result);
+        },
+        reject: (err) => {
+          clearTimeout(timer);
+          reject(err);
+        },
+      });
+
+      const timer = setTimeout(() => {
+        this.pending.delete(id);
+        reject(new Error('EPUB parse timeout'));
+      }, PARSE_TIMEOUT_MS);
 
       const msg: MainToWorkerMessage = {
         type: 'parse',

@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { TRACE_HEADER, createTraceId } from '@do-epub-studio/shared';
 import type { Env } from './lib/env';
 import { observabilityMiddleware } from './middleware/observability';
 import { securityHeadersMiddleware } from './middleware/security-headers';
@@ -19,17 +20,19 @@ import { validationErrorFormatter } from './middleware/validation';
 
 export const app = new Hono<{ Bindings: Env }>();
 
-// Security: Guard against ReDoS by limiting path length
-app.use('*', async (c, next) => {
-  if (c.req.path.length > 2048) {
-    return c.json({ ok: false, error: { code: 'URI_TOO_LONG', message: 'URI too long' } }, 414);
-  }
-  await next();
-});
-
 app.use('*', observabilityMiddleware);
 app.use('*', corsMiddleware);
 app.use('*', securityHeadersMiddleware);
+
+// Security: Guard against ReDoS by limiting path length.
+// Runs after observability so the 414 response carries a traceId.
+app.use('*', async (c, next) => {
+  if (c.req.path.length > 2048) {
+    const traceId = c.req.header(TRACE_HEADER) ?? createTraceId();
+    return c.json({ ok: false, error: { code: 'URI_TOO_LONG', message: 'URI too long', traceId } }, 414);
+  }
+  await next();
+});
 
 // Rate Limiting
 app.use('*', async (c, next) => {

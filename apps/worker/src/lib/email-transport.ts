@@ -1,3 +1,4 @@
+import { createTraceId } from '@do-epub-studio/shared';
 import type { Env } from './env';
 
 export interface EmailMessage {
@@ -14,7 +15,9 @@ export interface EmailTransport {
 class LoggingEmailTransport implements EmailTransport {
   send(message: EmailMessage): Promise<void> {
     console.log(JSON.stringify({
-      type: 'email',
+      level: 'info',
+      traceId: createTraceId(),
+      event: 'email.send',
       to: message.to,
       subject: message.subject,
       textPreview: message.text.slice(0, 200),
