@@ -13,6 +13,15 @@ engines:
       - "apps/web/src/**"
       - "apps/worker/src/**"
       - "packages/**"
+  opengrep:
+    enabled: true
+    exclude_paths:
+      - "**/*.test.ts"
+      - "**/*.test.tsx"
+      - "**/*.spec.ts"
+      - "**/*.spec.tsx"
+      - "**/__tests__/**"
+      - "**/tests/**"
   biome:
     enabled: false
   tsqlint:
