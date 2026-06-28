@@ -99,6 +99,14 @@ describe('Security Posture (Web)', () => {
     expect(hex64.test('g' + 'a'.repeat(63))).toBe(false);
   });
 
+  it('preferences cookie uses Secure flag on HTTPS (B9 from Plan 118)', () => {
+    const prefPath = path.resolve(__dirname, '../stores/preferences.ts');
+    const content = fs.readFileSync(prefPath, 'utf-8');
+    // Should conditionally add Secure flag when location.protocol is 'https:'
+    expect(content).toContain("location.protocol === 'https:'");
+    expect(content).toContain('; Secure');
+  });
+
   it('AGENTS.md references docs/security-posture.md', () => {
     const agentsPath = path.resolve(__dirname, '../../../../AGENTS.md');
     const content = fs.readFileSync(agentsPath, 'utf-8');

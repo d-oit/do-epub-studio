@@ -36,7 +36,7 @@ const LoadingFallback: React.FC = () => {
   const { t } = useTranslation();
   return (
   <div
-    className="min-h-screen bg-background flex flex-col items-center justify-center p-6"
+    className="min-h-dvh bg-background flex flex-col items-center justify-center p-6"
     role="status"
     aria-live="polite"
     aria-label={t('a11y.loading_page')}

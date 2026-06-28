@@ -61,7 +61,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       }
 
       return (
-        <div className="min-h-screen flex flex-col items-center justify-center bg-background p-6 text-center">
+        <div className="min-h-dvh flex flex-col items-center justify-center bg-background p-6 text-center">
           <AnimatePresence mode="wait">
             <motion.div
               initial={{ opacity: 0, scale: 0.9, y: 20 }}

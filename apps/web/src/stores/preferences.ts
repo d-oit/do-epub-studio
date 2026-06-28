@@ -55,8 +55,10 @@ const cookieStorage: StateStorage = {
     if (typeof document === 'undefined') return;
     const current = cookieStorage.getItem(name);
     if (current === value) return;
-    // Set cookie with 1 year expiry and SameSite=Lax for SPA navigation support
-    document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=31536000; SameSite=Lax`;
+    // Set cookie with 1 year expiry, SameSite=Lax for SPA navigation support,
+    // and Secure flag when served over HTTPS (defense-in-depth, B9 from Plan 118)
+    const secure = location.protocol === 'https:' ? '; Secure' : '';
+    document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=31536000; SameSite=Lax${secure}`;
   },
   removeItem: (name: string): void => {
     document.cookie = `${name}=; path=/; max-age=0`;
