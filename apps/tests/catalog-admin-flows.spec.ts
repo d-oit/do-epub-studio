@@ -4,27 +4,9 @@ import { test, expect, type Page, type Route } from '@playwright/test';
 // Constants & fixtures
 // ---------------------------------------------------------------------------
 
-const READER_USER = {
-  email: 'reader@example.com',
-  password: process.env.TEST_PASSWORD || 'test-password',
-  bookSlug: 'my-test-book',
-};
-
 const ADMIN_USER = {
   email: 'admin@example.com',
   password: process.env.TEST_ADMIN_PASSWORD || 'admin-password',
-};
-
-const LOGIN_RESPONSE = {
-  ok: true,
-  data: {
-    sessionToken: process.env.TEST_SESSION_TOKEN || 'test-session-token-abc123',
-    book: { id: 'book-1', slug: READER_USER.bookSlug, title: 'My Test Book', authorName: 'Test Author' },
-    capabilities: {
-      canRead: true, canComment: true, canHighlight: true, canBookmark: true,
-      canDownloadOffline: false, canExportNotes: false, canManageAccess: false,
-    },
-  },
 };
 
 const ADMIN_LOGIN_RESPONSE = {
@@ -91,37 +73,9 @@ const AUDIT_LOG_FILTERED_RESPONSE = {
   },
 };
 
-const HIGHLIGHTS_RESPONSE = { ok: true, data: [] };
-const COMMENTS_RESPONSE = { ok: true, data: [] };
-const BOOKMARKS_RESPONSE = { ok: true, data: [] };
-
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-async function mockReaderApi(page: Page) {
-  await page.route('**/api/access/request', async (route: Route) => {
-    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(LOGIN_RESPONSE) });
-  });
-  await page.route('**/api/books/*/file-url', async (route: Route) => {
-    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { url: 'https://example.com/test.epub' } }) });
-  });
-  await page.route('**/api/books/*/progress', async (route: Route) => {
-    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { locator: { cfi: 'epubcfi(/6/4)' }, progressPercent: 0.1 } }) });
-  });
-  await page.route('**/api/books/*/highlights', async (route: Route) => {
-    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(HIGHLIGHTS_RESPONSE) });
-  });
-  await page.route('**/api/books/*/comments', async (route: Route) => {
-    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(COMMENTS_RESPONSE) });
-  });
-  await page.route('**/api/books/*/bookmarks', async (route: Route) => {
-    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(BOOKMARKS_RESPONSE) });
-  });
-  await page.route('**/api/access/logout', async (route: Route) => {
-    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: {} }) });
-  });
-}
 
 async function mockAdminApi(page: Page) {
   await page.route('**/api/admin/login', async (route: Route) => {
