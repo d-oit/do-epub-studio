@@ -100,10 +100,10 @@ describe('Security Posture (Web)', () => {
   });
 
   it('preferences cookie uses Secure flag on HTTPS (B9 from Plan 118)', () => {
-    // Semgrep false positive: path.resolve(__dirname, '<literal>') is a static
-    // path relative to this test file; no untrusted input reaches fs.readFileSync.
-    const prefPath = path.resolve(__dirname, '../stores/preferences.ts');
-    const content = fs.readFileSync(prefPath, 'utf-8');
+    const content = fs.readFileSync(
+      path.resolve(__dirname, '../stores/preferences.ts'),
+      'utf-8',
+    );
     // Should conditionally add Secure flag when location.protocol is 'https:'
     expect(content).toContain("location.protocol === 'https:'");
     expect(content).toContain('; Secure');
