@@ -23,7 +23,7 @@ export function PageContainer({
         animate="animate"
         exit="exit"
         variants={fadeVariants}
-        className={`min-h-screen ${className}`}
+        className={`min-h-dvh ${className}`}
         {...props}
       >
         {children}
@@ -55,7 +55,7 @@ export function PageContainer({
   } = props as Record<string, unknown>;
 
   return (
-    <div className={`min-h-screen ${className}`} {...divProps}>
+    <div className={`min-h-dvh ${className}`} {...divProps}>
       {children}
     </div>
   );

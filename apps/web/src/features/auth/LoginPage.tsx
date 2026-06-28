@@ -150,7 +150,7 @@ export function LoginPage() {
 
   if (recoveryToken && isVerifying) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4">
+      <div className="min-h-dvh bg-background flex flex-col items-center justify-center px-4">
         <div className="max-w-md w-full bg-background-secondary rounded-xl shadow-lg p-8 text-center">
           <p className="text-foreground-muted">{t('login.verifyingToken')}</p>
         </div>
@@ -160,7 +160,7 @@ export function LoginPage() {
 
   if (recoveryToken && verifyError) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4">
+      <div className="min-h-dvh bg-background flex flex-col items-center justify-center px-4">
         <div className="max-w-md w-full bg-background-secondary rounded-xl shadow-lg p-8 text-center space-y-4">
           <p className="text-accent-error" role="alert">{verifyError}</p>
           <Button

@@ -252,7 +252,7 @@ export function AdminAuditPage() {
   }, [sessionToken]);
 
   return (
-    <main id="main-content" className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
+    <main id="main-content" className="min-h-dvh bg-background p-4 sm:p-6 lg:p-8">
       <header className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-2xl font-bold text-foreground">
