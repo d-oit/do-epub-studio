@@ -14,14 +14,16 @@ interface CommentInputProps {
 export function CommentInput({
   onSubmit,
   onCancel,
-  placeholder = 'Write a comment...',
+  placeholder,
   autoFocus = false,
   initialText = '',
-  submitLabel = 'Comment',
+  submitLabel,
   isReply = false,
 }: CommentInputProps) {
   const { t } = useTranslation();
   const [text, setText] = useState(initialText);
+  const resolvedPlaceholder = placeholder ?? t('comment.input.placeholder');
+  const resolvedSubmitLabel = submitLabel ?? t('comment.input.submitLabel');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -56,7 +58,7 @@ export function CommentInput({
         value={text}
         onChange={(e) => setText(e.target.value)}
         onKeyDown={handleKeyDown}
-        placeholder={placeholder}
+        placeholder={resolvedPlaceholder}
         className="w-full p-3 text-sm border border-border rounded-lg bg-background resize-none focus:ring-2 focus:ring-accent focus:border-transparent"
         rows={3}
       />
@@ -74,7 +76,7 @@ export function CommentInput({
           disabled={!text.trim()}
           className="px-3 py-1.5 text-sm bg-accent text-white rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
-          {submitLabel}
+          {resolvedSubmitLabel}
         </button>
       </div>
       <p className="text-xs text-foreground-muted text-right">{t('comment.input.hint')}</p>

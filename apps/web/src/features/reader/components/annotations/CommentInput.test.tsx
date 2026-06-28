@@ -27,7 +27,7 @@ describe('CommentInput', () => {
     it('renders submit button with default label', () => {
       render(<CommentInput onSubmit={mockOnSubmit} />);
 
-      expect(screen.getByRole('button', { name: 'Comment' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'comment.input.submitLabel' })).toBeInTheDocument();
     });
 
     it('renders submit button with custom label', () => {
@@ -57,7 +57,7 @@ describe('CommentInput', () => {
     it('applies reply styling when isReply is true', () => {
       render(<CommentInput onSubmit={mockOnSubmit} isReply={true} />);
 
-      const container = screen.getByPlaceholderText('Write a comment...').closest('div');
+      const container = screen.getByPlaceholderText('comment.input.placeholder').closest('div');
       expect(container).toHaveClass('pl-4');
       expect(container).toHaveClass('border-l-2');
     });
@@ -88,7 +88,7 @@ describe('CommentInput', () => {
     it('disables submit button when text is empty', () => {
       render(<CommentInput onSubmit={mockOnSubmit} />);
 
-      expect(screen.getByRole('button', { name: 'Comment' })).toBeDisabled();
+      expect(screen.getByRole('button', { name: 'comment.input.submitLabel' })).toBeDisabled();
     });
 
     it('disables submit button when text is only whitespace', async () => {
@@ -100,7 +100,7 @@ describe('CommentInput', () => {
       const textarea = screen.getByRole('textbox');
       await user.type(textarea, '   ');
 
-      expect(screen.getByRole('button', { name: 'Comment' })).toBeDisabled();
+      expect(screen.getByRole('button', { name: 'comment.input.submitLabel' })).toBeDisabled();
     });
 
     it('enables submit button when text is present', async () => {
@@ -112,7 +112,7 @@ describe('CommentInput', () => {
       const textarea = screen.getByRole('textbox');
       await user.type(textarea, 'Some comment');
 
-      expect(screen.getByRole('button', { name: 'Comment' })).not.toBeDisabled();
+      expect(screen.getByRole('button', { name: 'comment.input.submitLabel' })).not.toBeDisabled();
     });
   });
 
@@ -126,7 +126,7 @@ describe('CommentInput', () => {
       const textarea = screen.getByRole('textbox');
       await user.type(textarea, '  My comment  ');
 
-      await user.click(screen.getByRole('button', { name: 'Comment' }));
+      await user.click(screen.getByRole('button', { name: 'comment.input.submitLabel' }));
 
       expect(mockOnSubmit).toHaveBeenCalledWith('My comment');
     });
@@ -139,7 +139,7 @@ describe('CommentInput', () => {
 
       const textarea = screen.getByRole('textbox');
       await user.type(textarea, 'My comment');
-      await user.click(screen.getByRole('button', { name: 'Comment' }));
+      await user.click(screen.getByRole('button', { name: 'comment.input.submitLabel' }));
 
       expect(textarea).toHaveValue('');
     });
