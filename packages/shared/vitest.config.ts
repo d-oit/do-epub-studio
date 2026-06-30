@@ -5,7 +5,7 @@ export default defineConfig({
     globals: true,
     include: ['src/**/*.test.ts'],
     coverage: {
-      provider: 'istanbul',
+      provider: 'v8',
       reporter: ['text', 'json', 'html', 'lcov', 'clover'],
       reportsDirectory: './coverage',
       thresholds: {
