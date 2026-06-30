@@ -26,6 +26,7 @@
     "@cloudflare/vitest-pool-workers": "^0.16.20",
     "@cloudflare/workers-types": "^4.20260630.1",
     "@types/node": "^25",
+    "@vitest/coverage-v8": "4.1.9",
     "eslint": "^10.6.0",
     "jszip": "^3.10.1",
     "typescript": "^6.0.3",
