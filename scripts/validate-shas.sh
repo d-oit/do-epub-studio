@@ -41,6 +41,10 @@ ALLOWED_SHAS=(
     "chromaui/action@d92ea1ce501f70e8c34745b2c7888648150a368a"
     "actions/labeler@f27b608878404679385c85cfa523b85ccb86e213"
     "chromaui/action@1db61b73b7919508ee8e62336f04bd0aed6da756"
+    "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0"
+    "actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373"
+    "softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b"
+    "chromaui/action@7ffa9343588f15ff3f4cde30e03cd23204ed6a9c"
 )
 
 # Function to check if an action@sha is allowed
