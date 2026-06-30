@@ -70,27 +70,7 @@ baseline-bundle-metrics.json
 performance_report.md
 
 .wrangler/
-.claude/
-.gemini/
-.antigravitycli/
-.kilo/
-.agents/tasks/
-
-# Storybook
-storybook-static/
-
-# Impeccable — machine-local config and last-run artifacts
-.impeccable/config.local.json
-.impeccable/last-run.json
-
-# Impeccable — provider folders (recreated by `npx impeccable link`)
-.cursor/
-.kiro/
-.pi/
-.qoder/
-.rovodev/
-.trae/
-.trae-cn/
+.impeccable/
 
 # Cloudflare Workers local secrets
 .dev.vars
