@@ -83,7 +83,7 @@ export function fetchAuditLogs(
   const cached = auditLogCache.get(key);
   if (cached) return cached;
   const promise = apiRequest<AuditLogPageResponse>(
-    `/api/admin/audit-logs?${params.toString()}`,
+    `/api/admin/audit?${params.toString()}`,
     { token: token ?? undefined },
   );
   auditLogCache.set(key, promise);

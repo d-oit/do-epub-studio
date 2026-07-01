@@ -68,9 +68,3 @@ auditRouter.get('/audit', adminAuth, zValidator('query', AuditQuerySchema), asyn
     },
   });
 });
-
-auditRouter.get('/audit-logs', (c) => {
-  const url = new URL(c.req.url);
-  url.pathname = url.pathname.replace('/audit-logs', '/audit');
-  return c.redirect(url.toString(), 301);
-});
