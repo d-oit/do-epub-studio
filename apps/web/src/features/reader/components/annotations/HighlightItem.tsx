@@ -44,12 +44,12 @@ export const HighlightItem = memo(function HighlightItem({
       tabIndex={0}
     >
       <div
-        className="text-sm text-foreground cursor-pointer hover:text-accent"
+        className="text-sm text-foreground cursor-pointer hover:text-accent p-0.5 px-1 rounded-sm"
         onClick={onNavigate}
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onNavigate(); } }}
         tabIndex={0}
         role="button"
-        style={{ backgroundColor: highlight.color + '60', padding: '2px 4px', borderRadius: '2px' }}
+        style={{ backgroundColor: highlight.color + '60' }}
       >
         {highlight.selectedText.slice(0, 150)}
         {highlight.selectedText.length > 150 ? '...' : ''}
@@ -72,12 +72,14 @@ export const HighlightItem = memo(function HighlightItem({
           />
           <div className="flex gap-2">
             <button
+              type="button"
               onClick={() => onEdit(highlight.id)}
               className="px-2 py-1 text-xs bg-accent text-white rounded hover:opacity-90"
             >
               {t('annotation.save')}
             </button>
             <button
+              type="button"
               onClick={() => setEditingHighlight(null)}
               className="px-2 py-1 text-xs border border-border rounded hover:bg-background-secondary"
             >
@@ -95,6 +97,7 @@ export const HighlightItem = memo(function HighlightItem({
           {showActions && (
             <div className="mt-2 flex gap-2">
               <button
+                type="button"
                 onClick={() => {
                   setEditingHighlight(highlight.id);
                   setHighlightNote(highlight.note || '');
@@ -104,6 +107,7 @@ export const HighlightItem = memo(function HighlightItem({
                 {t('annotation.editNote')}
               </button>
               <button
+                type="button"
                 onClick={() => onDelete(highlight.id)}
                 className="text-xs text-accent-error hover:opacity-80"
               >

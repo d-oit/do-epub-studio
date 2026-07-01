@@ -191,16 +191,6 @@ async function syncItem(item: SyncQueueItem, traceId: string, spanId: string): P
           note: payload.annotation.comment ?? '',
           mutationId: item.mutationId,
         });
-      } else if (payload.annotation.type === 'bookmark') {
-        await api.post(`/api/books/${payload.bookId}/bookmarks`, {
-          locator: {
-            cfi: payload.annotation.cfi,
-            chapter: payload.annotation.chapter,
-            selectedText: payload.annotation.text ?? '',
-          },
-          label: payload.annotation.comment ?? '',
-          mutationId: item.mutationId,
-        });
       } else {
         await api.post(`/api/books/${payload.bookId}/comments`, {
           chapterRef: payload.annotation.chapter,

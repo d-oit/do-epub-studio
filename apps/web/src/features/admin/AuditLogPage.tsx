@@ -45,7 +45,7 @@ function AuditTable({ data, page, total, onPrev, onNext }: AuditTableProps) {
 
   if (data.entries.length === 0) {
     return (
-      <section className="bg-background-secondary shadow-sm rounded-lg border border-border overflow-x-auto" aria-label={t('admin.audit.tableLabel')}>
+      <section tabIndex={0} className="bg-background-secondary shadow-sm rounded-lg border border-border overflow-x-auto" aria-label={t('admin.audit.tableLabel')}>
         <p className="px-6 py-12 text-center text-foreground-muted">
           {t('admin.audit.noLogs')}
         </p>
@@ -57,7 +57,7 @@ function AuditTable({ data, page, total, onPrev, onNext }: AuditTableProps) {
   }
 
   return (
-    <section className="bg-background-secondary shadow-sm rounded-lg border border-border overflow-x-auto" aria-label={t('admin.audit.tableLabel')}>
+    <section tabIndex={0} className="bg-background-secondary shadow-sm rounded-lg border border-border overflow-x-auto" aria-label={t('admin.audit.tableLabel')}>
       <table className="min-w-full divide-y divide-border">
         <thead className="bg-background-secondary">
           <tr>
