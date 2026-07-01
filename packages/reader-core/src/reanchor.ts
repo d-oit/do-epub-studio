@@ -1,4 +1,3 @@
-import { matchAllBounded } from '@do-epub-studio/shared';
 import type { TocItem } from './epub-types';
 import type { LocatorResult } from './locator';
 
@@ -164,7 +163,13 @@ export async function reanchorByText(
     if (normalizedTargetGeneral === undefined) {
       normalizedTargetGeneral = normalizeText(targetText);
     }
-    words = matchAllBounded(/[\p{L}\p{N}]{4,}/gu, normalizedTargetGeneral, TARGET_TEXT_MAX_LEN).map((m) => m[0]);
+    words = [];
+    const targetToProcess = normalizedTargetGeneral.length <= TARGET_TEXT_MAX_LEN
+      ? normalizedTargetGeneral
+      : normalizedTargetGeneral.slice(0, TARGET_TEXT_MAX_LEN);
+    for (const m of targetToProcess.matchAll(/[\p{L}\p{N}]{4,}/gu)) {
+      words.push(m[0]);
+    }
   }
 
   const threshold = options.fuzzyThreshold ?? 0.7;
@@ -175,14 +180,19 @@ export async function reanchorByText(
       try {
         const cached = await getCachedData(href);
         if (cached.wordSet === undefined) {
-          // Optimized word extraction from lower-cased content
-          cached.wordSet = new Set(matchAllBounded(/[\p{L}\p{N}]{4,}/gu, cached.lower, CHAPTER_CONTENT_MAX_LEN).map((m) => m[0]));
+          cached.wordSet = new Set();
+          const contentToProcess = cached.lower.length <= CHAPTER_CONTENT_MAX_LEN
+            ? cached.lower
+            : cached.lower.slice(0, CHAPTER_CONTENT_MAX_LEN);
+          for (const m of contentToProcess.matchAll(/[\p{L}\p{N}]{4,}/gu)) {
+            cached.wordSet.add(m[0]);
+          }
         }
 
         let matchCount = 0;
         const { wordSet } = cached;
-        for (let i = 0; i < words.length; i++) {
-          const word = String(words[i]);
+        let processedCount = 0;
+        for (const word of words) {
           if (wordSet.has(word)) {
             matchCount++;
             if (matchCount >= targetMatchCount) {
@@ -195,7 +205,8 @@ export async function reanchorByText(
               };
             }
           }
-          if (matchCount + (words.length - 1 - i) < targetMatchCount) {
+          processedCount++;
+          if (matchCount + (words.length - processedCount) < targetMatchCount) {
             break; // Impossible to reach threshold
           }
         }
