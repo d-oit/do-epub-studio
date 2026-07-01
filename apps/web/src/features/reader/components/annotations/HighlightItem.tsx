@@ -67,7 +67,6 @@ export const HighlightItem = memo(function HighlightItem({
             className="w-full p-2 text-sm border border-border rounded bg-background"
             rows={2}
             placeholder={t('annotation.notePlaceholder')}
-            // eslint-disable-next-line jsx-a11y/no-autofocus -- Intentional: textarea appears conditionally on user action, auto-focusing improves note-adding workflow
             autoFocus
           />
           <div className="flex gap-2">
