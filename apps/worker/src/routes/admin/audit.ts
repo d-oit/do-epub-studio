@@ -68,4 +68,3 @@ auditRouter.get('/audit', adminAuth, zValidator('query', AuditQuerySchema), asyn
     },
   });
 });
-
