@@ -50,9 +50,96 @@ jobs:
       - name: Build
         run: pnpm build
 
+  perf-gate:
+    name: Performance Budgets
+    needs: [verify]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
+        with:
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: ./.github/actions/setup-pnpm
+
+      - name: Build
+        run: pnpm build
+
+      - name: Check bundle budgets
+        run: BUNDLE_BUDGET_FAIL_ON_VIOLATION=1 node scripts/check-bundle-budget.mjs
+
+  lighthouse-gate:
+    name: Lighthouse Performance Gate
+    needs: [verify]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
+        with:
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: ./.github/actions/setup-pnpm
+
+      - name: Build
+        run: pnpm build
+
+      - name: Start preview server
+        run: |
+          pnpm --filter @do-epub-studio/web preview --port 4173 &
+          echo "Waiting for preview server..."
+          for i in $(seq 1 20); do
+            if curl -sf http://localhost:4173/ >/dev/null 2>&1; then
+              echo "Preview server ready"
+              break
+            fi
+            if [ "$i" -eq 20 ]; then
+              echo "::error::Preview server failed to start"
+              exit 1
+            fi
+            sleep 2
+          done
+
+      - name: Run Lighthouse CI
+        uses: treosh/lighthouse-ci-action@3e7e23fb74242897f95c0ba9cabad3d0227b9b18  # v12.6.2
+        with:
+          urls: |
+            http://localhost:4173/
+            http://localhost:4173/catalog
+            http://localhost:4173/admin
+          configPath: .lighthouserc.json
+          uploadArtifacts: true
+
+      - name: Enforce Lighthouse assertions
+        if: always()
+        run: |
+          if [ -f "./lighthouseci/assertion-results.json" ]; then
+            echo "=== Lighthouse Assertion Results ==="
+            jq '.' < ./lighthouseci/assertion-results.json
+            FAILURES=$(jq '[.[] | select(.passed == false)] | length' < ./lighthouseci/assertion-results.json)
+            if [ "$FAILURES" -gt "0" ]; then
+              echo "::error::Lighthouse assertions failed ($FAILURES failures) — blocking release"
+              exit 1
+            fi
+            echo "All Lighthouse assertions passed"
+          else
+            echo "::warning::No Lighthouse assertion results found"
+          fi
+
+      - name: Upload Lighthouse artifacts
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
+        with:
+          name: lighthouse-release-report
+          path: .lighthouseci/
+          retention-days: 30
+
   deploy:
     name: Deploy
-    needs: verify
+    needs: [verify, perf-gate, lighthouse-gate]
     runs-on: ubuntu-latest
     environment: production
     timeout-minutes: 15
