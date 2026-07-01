@@ -143,14 +143,14 @@ test.describe('Reader annotations', () => {
     await mockReaderApi(page);
   });
 
-  test('can open and close the comments panel', async ({ page }) => {
+  test('@mobile can open and close the comments panel', async ({ page }) => {
     await loginAsReader(page);
 
     await page.getByRole('button', { name: 'Comment', exact: true }).click();
     await expect(page.getByRole('heading', { name: /Comments/i })).toBeVisible();
   });
 
-  test('can open bookmarks panel and sees empty state', async ({ page }) => {
+  test('@mobile can open bookmarks panel and sees empty state', async ({ page }) => {
     await loginAsReader(page);
 
     await page.getByRole('button', { name: 'Bookmarks', exact: true }).click();
@@ -165,6 +165,39 @@ test.describe('Reader annotations', () => {
     // Export button should be visible in the reader toolbar
     const exportButton = page.getByRole('button', { name: 'Export Notes', exact: true });
     await expect(exportButton).toBeVisible();
+  });
+
+  test('@mobile renders reader page with mocked book and displays content', async ({ page }) => {
+    // Mock the book file URL to return a minimal EPUB-like response
+    await page.route('**/api/books/*/file-url', async (route: Route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ ok: true, data: { url: 'https://example.com/test.epub' } }),
+      });
+    });
+
+    // Mock the actual EPUB file download (minimal valid response)
+    await page.route('**/example.com/test.epub', async (route: Route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/epub+zip',
+        body: Buffer.from('PK'), // Minimal zip signature
+      });
+    });
+
+    await loginAsReader(page);
+
+    // Verify the reader page loaded
+    await expect(page).toHaveURL(/\/read\/my-test-book$/);
+
+    // Verify book title is displayed in the reader
+    await expect(page.getByText('My Test Book')).toBeVisible({ timeout: 10000 });
+
+    // Verify reader toolbar is functional
+    await expect(page.getByRole('button', { name: 'Contents' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Settings' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Bookmarks' })).toBeVisible();
   });
 });
 
@@ -184,7 +217,7 @@ test.describe('Admin console', () => {
     await expect(page.getByLabel('Password')).toBeVisible();
   });
 
-  test('navigates to books page after admin login', async ({ page }) => {
+  test('@mobile navigates to books page after admin login', async ({ page }) => {
     await loginAsAdmin(page);
 
     // Should navigate to admin books page
@@ -192,7 +225,7 @@ test.describe('Admin console', () => {
     await expect(page.getByRole('heading', { name: 'Your Books' })).toBeVisible();
   });
 
-  test('can view grants for a book', async ({ page }) => {
+  test('@mobile can view grants for a book', async ({ page }) => {
     await loginAsAdmin(page);
 
     // Click the first book's Manage Access link

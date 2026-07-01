@@ -116,7 +116,7 @@ test.describe('Reader side-panel mutual exclusivity', () => {
     await login(page);
   });
 
-  test('opening search closes table of contents', async ({ page }) => {
+  test('@mobile opening search closes table of contents', async ({ page }) => {
     // Open Table of Contents
     await page.getByRole('button', { name: 'Contents' }).click();
     await expect(page.getByRole('heading', { name: 'Contents' })).toBeVisible();
@@ -154,7 +154,7 @@ test.describe('Reader side-panel mutual exclusivity', () => {
     await expect(page.getByRole('heading', { name: 'Search', exact: true })).not.toBeVisible();
   });
 
-  test('opening comments closes bookmarks', async ({ page }) => {
+  test('@mobile opening comments closes bookmarks', async ({ page }) => {
     // Open Bookmarks
     await page.getByRole('button', { name: 'Bookmarks' }).click();
     await expect(page.getByRole('heading', { name: 'Bookmarks' })).toBeVisible();
@@ -183,5 +183,20 @@ test.describe('Reader side-panel mutual exclusivity', () => {
 
     // Comments panel should be closed
     await expect(page.getByRole('heading', { name: 'Comments' })).not.toBeVisible();
+  });
+
+  test('@mobile info panel displays reading insights', async ({ page }) => {
+    // Open Info panel
+    await page.getByRole('button', { name: 'About This Book' }).click();
+    await expect(page.getByRole('heading', { name: 'About This Book' })).toBeVisible();
+
+    // Verify reading insights section is displayed
+    // Check for common reading insight elements (time, pages read)
+    const insightsSection = page.getByText(/Reading|Insights|Time spent|Pages read/i);
+    await expect(insightsSection.first()).toBeVisible({ timeout: 5000 });
+
+    // Verify book metadata is shown (title, author)
+    await expect(page.getByText('My Test Book')).toBeVisible();
+    await expect(page.getByText('Test Author')).toBeVisible();
   });
 });

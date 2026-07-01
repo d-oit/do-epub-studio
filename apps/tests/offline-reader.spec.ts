@@ -400,4 +400,80 @@ test.describe('Offline reader', () => {
     const bodyOk = await page.locator('body').isVisible().catch(() => false);
     expect(bodyOk).toBe(true);
   });
+
+  test('flushes sync queue after reconnection', async ({ page, context }) => {
+    await loginAndOpenReader(page);
+
+    const syncBookmarks: { url: string; body: string }[] = [];
+    await page.route('**/api/books/*/bookmarks', async (route: Route) => {
+      if (route.request().method() === 'POST') {
+        syncBookmarks.push({ url: route.request().url(), body: route.request().postData() ?? '' });
+      }
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ ok: true, data: { id: 'synced-bookmark' } }),
+      });
+    });
+
+    await page.route('**/api/books/*/highlights', async (route: Route) => {
+      if (route.request().method() === 'POST') {
+        syncBookmarks.push({ url: route.request().url(), body: route.request().postData() ?? '' });
+      }
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ ok: true, data: { id: 'synced-highlight' } }),
+      });
+    });
+
+    await page.route('**/api/books/*/progress', async (route: Route) => {
+      if (route.request().method() === 'PUT') {
+        syncBookmarks.push({ url: route.request().url(), body: route.request().postData() ?? '' });
+      }
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ ok: true, data: {} }),
+      });
+    });
+
+    // Queue multiple action types while offline
+    await context.setOffline(true);
+    await page.waitForTimeout(300);
+
+    await page.evaluate(async () => {
+      const actions = [
+        fetch('/api/books/offline-test/bookmarks', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ locator: { cfi: 'epubcfi(/6/4)' }, label: 'Offline bookmark' }),
+        }),
+        fetch('/api/books/offline-test/highlights', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ locator: { cfi: 'epubcfi(/6/6)' }, color: '#ffff00', text: 'Offline highlight' }),
+        }),
+        fetch('/api/books/offline-test/progress', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ locator: { cfi: 'epubcfi(/6/8)' }, progressPercent: 0.5 }),
+        }),
+      ];
+      await Promise.allSettled(actions);
+    });
+
+    const queuedBeforeReconnect = syncBookmarks.length;
+
+    // Reconnect — app should flush the sync queue
+    await context.setOffline(false);
+    await page.waitForTimeout(3000);
+
+    // After reconnection the flush should have attempted syncs
+    expect(syncBookmarks.length).toBeGreaterThan(queuedBeforeReconnect);
+
+    // Verify the page remains functional after flush
+    const bodyOk = await page.locator('body').isVisible().catch(() => false);
+    expect(bodyOk).toBe(true);
+  });
 });

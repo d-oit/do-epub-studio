@@ -140,7 +140,7 @@ test.describe('Catalog browsing flow', () => {
     await mockAdminApi(page);
   });
 
-  test('@smoke displays books list after admin login', async ({ page }) => {
+  test('@smoke @mobile displays books list after admin login', async ({ page }) => {
     await loginAsAdmin(page);
 
     await expect(page.getByRole('heading', { name: 'Your Books' })).toBeVisible();
@@ -148,7 +148,7 @@ test.describe('Catalog browsing flow', () => {
     await expect(page.getByText('Another Book')).toBeVisible();
   });
 
-  test('can search books by title', async ({ page }) => {
+  test('@mobile can search books by title', async ({ page }) => {
     await loginAsAdmin(page);
 
     const searchInput = page.getByPlaceholder(/Search books/i);
@@ -158,7 +158,7 @@ test.describe('Catalog browsing flow', () => {
     await expect(page.getByText('My Test Book')).toBeVisible();
   });
 
-  test('can navigate to book details', async ({ page }) => {
+  test('@mobile can navigate to book details', async ({ page }) => {
     await loginAsAdmin(page);
 
     await page.getByRole('button', { name: /Manage Access/i }).first().click();
@@ -189,7 +189,7 @@ test.describe('Book upload flow', () => {
     });
   });
 
-  test('admin can access book management page', async ({ page }) => {
+  test('@mobile admin can access book management page', async ({ page }) => {
     await loginAsAdmin(page);
 
     await expect(page.getByRole('heading', { name: 'Your Books' })).toBeVisible();
@@ -211,7 +211,7 @@ test.describe('Admin grants management', () => {
     await mockAdminApi(page);
   });
 
-  test('@smoke can view grants for a book', async ({ page }) => {
+  test('@smoke @mobile can view grants for a book', async ({ page }) => {
     await loginAsAdmin(page);
 
     await page.getByRole('button', { name: /Manage Access/i }).first().click();
@@ -252,7 +252,7 @@ test.describe('Admin audit log viewing and filtering', () => {
     await mockAdminApi(page);
   });
 
-  test('@smoke can view audit log page', async ({ page }) => {
+  test('@smoke @mobile can view audit log page', async ({ page }) => {
     await loginAsAdmin(page);
 
     await page.getByRole('button', { name: 'Audit Log' }).click();
