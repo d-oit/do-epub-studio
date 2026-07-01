@@ -9,6 +9,7 @@ import unicorn from 'eslint-plugin-unicorn';
 import promise from 'eslint-plugin-promise';
 import security from 'eslint-plugin-security';
 import importPlugin from 'eslint-plugin-import-x';
+import i18next from 'eslint-plugin-i18next';
 import prettierConfig from 'eslint-config-prettier';
 
 export default tseslint.config(
@@ -37,6 +38,7 @@ export default tseslint.config(
       promise,
       security,
       import: importPlugin,
+      i18next: i18next,
     },
     extends: [js.configs.recommended, ...tseslint.configs.recommendedTypeChecked],
     languageOptions: {
@@ -101,7 +103,7 @@ export default tseslint.config(
       '@typescript-eslint/prefer-regexp-exec': 'off',
       // Logical OR (||) is idiomatic and preferred for default values in this codebase
       '@typescript-eslint/prefer-nullish-coalescing': 'off',
-    '@typescript-eslint/no-non-null-assertion': 'error',
+      '@typescript-eslint/no-non-null-assertion': 'error',
       '@typescript-eslint/require-await': 'error',
       '@typescript-eslint/consistent-type-imports': 'warn',
       '@typescript-eslint/no-floating-promises': 'error',
@@ -134,6 +136,13 @@ export default tseslint.config(
       '@typescript-eslint/restrict-template-expressions': 'off',
       '@typescript-eslint/no-floating-promises': 'off',
       '@typescript-eslint/no-misused-promises': 'off',
+    },
+  },
+  {
+    files: ['apps/web/src/features/**/*.tsx'],
+    ignores: ['**/*.test.tsx', '**/*.spec.tsx', '**/*.stories.tsx', '**/tests/**', '**/__tests__/**'],
+    rules: {
+      'i18next/no-literal-string': ['warn', { mode: 'jsx-only', ignoreAttribute: ['aria-label', 'role', 'type', 'tabIndex'] }],
     },
   },
   prettierConfig,
