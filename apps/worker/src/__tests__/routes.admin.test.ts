@@ -288,10 +288,9 @@ describe('Admin Routes', () => {
   });
 
   describe('GET /api/admin/audit-logs', () => {
-    it('redirects to /api/admin/audit', async () => {
+    it('returns 404 — redirect removed, frontend calls /audit directly', async () => {
       const res = await app.fetch(new Request('http://localhost/api/admin/audit-logs'), env, makePassThroughContext());
-      expect(res.status).toBe(301);
-      expect(res.headers.get('Location')).toContain('/api/admin/audit');
+      expect(res.status).toBe(404);
     });
   });
 });
