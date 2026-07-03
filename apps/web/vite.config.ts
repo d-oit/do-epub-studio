@@ -117,9 +117,6 @@ export default defineConfig({
           if (id.includes('features/reader')) {
             return 'reader-route';
           }
-          if (id.includes('features/admin')) {
-            return 'admin-route';
-          }
         },
       },
     },

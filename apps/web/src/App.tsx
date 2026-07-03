@@ -6,8 +6,6 @@ import { useThemeSync } from './hooks/useThemeSync';
 import { useSessionExpiry } from './hooks/useSessionExpiry';
 import { useTranslation } from './hooks/useTranslation';
 import { LoginPage } from './features/auth/LoginPage';
-import { AdminLoginPage } from './features/admin/AdminLoginPage';
-import { AdminRecoverPage } from './features/admin/AdminRecoverPage';
 import { AppShell } from './components/AppShell';
 import { SwUpdateNotification } from './components/SwUpdateNotification';
 import { OfflineIndicator } from './components/OfflineIndicator';
@@ -25,6 +23,12 @@ const AdminGrantResponsesPage = React.lazy(() =>
 );
 const AdminAuditPage = React.lazy(() =>
   import('./features/admin/AuditLogPage').then((m) => ({ default: m.AdminAuditPage }))
+);
+const AdminLoginPage = React.lazy(() =>
+  import('./features/admin/AdminLoginPage').then((m) => ({ default: m.AdminLoginPage }))
+);
+const AdminRecoverPage = React.lazy(() =>
+  import('./features/admin/AdminRecoverPage').then((m) => ({ default: m.AdminRecoverPage }))
 );
 const CatalogPage = React.lazy(() =>
   import('./features/catalog/CatalogPage').then((m) => ({ default: m.CatalogPage }))
