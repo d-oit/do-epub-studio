@@ -208,13 +208,13 @@ test.describe('Reader migration smoke', () => {
     await mockApiRoutes(page);
   });
 
-  test('opens reader and shows book title', async ({ page }) => {
+  test('@mobile opens reader and shows book title', async ({ page }) => {
     await loginAsReader(page);
 
     await expect(page.getByRole('heading', { name: 'Smoke Test Book' })).toBeVisible({ timeout: 30000 });
   });
 
-  test('navigates next chapter and asserts section changed', async ({ page }) => {
+  test('@mobile navigates next chapter and asserts section changed', async ({ page }) => {
     await loginAsReader(page);
 
     await expect(page.getByRole('heading', { name: 'Smoke Test Book' })).toBeVisible({ timeout: 30000 });

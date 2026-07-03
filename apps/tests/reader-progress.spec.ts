@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Reader Progress Persistence', () => {
-  test('should save progress and resume from the same CFI on reload', async ({ page }) => {
+  test('@mobile should save progress and resume from the same CFI on reload', async ({ page }) => {
     const bookId = 'test-book';
     const initialCfi = 'epubcfi(/6/4[chap1]!/4/2/2)';
     const updatedCfi = 'epubcfi(/6/10[chap2]!/4/2/4)';
@@ -81,7 +81,7 @@ test.describe('Reader Progress Persistence', () => {
     // Success if we reached this point with the mocked GET returning updatedCfi
   });
 
-  test('should fallback to IndexedDB if network is offline', async ({ page }) => {
+  test('@mobile should fallback to IndexedDB if network is offline', async ({ page }) => {
     // Similar to above but with route.abort() and checking source:offline telemetry
   });
 });

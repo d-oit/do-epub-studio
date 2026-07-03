@@ -57,7 +57,7 @@ function calculateDelay(attempt: number): number {
 }
 
 export async function queueSync(
-  type: 'progress' | 'annotation' | 'insight' | 'bookmark' | 'reading-insight',
+  type: 'progress' | 'annotation' | 'bookmark' | 'reading-insight',
   payload: unknown,
   mutationId: string,
 ): Promise<void> {
@@ -201,20 +201,6 @@ async function syncItem(item: SyncQueueItem, traceId: string, spanId: string): P
           mutationId: item.mutationId,
         });
       }
-    } else if (item.type === 'insight') {
-      const payload = item.payload as {
-        bookId: string;
-        bucketDate: string;
-        activeMinutes: number;
-        activePages: number;
-        mutationId: string;
-      };
-      await api.post(`/api/books/${payload.bookId}/insights/sync`, {
-        bucketDate: payload.bucketDate,
-        activeMinutes: payload.activeMinutes,
-        activePages: payload.activePages,
-        mutationId: payload.mutationId,
-      });
     } else if (item.type === 'bookmark') {
       const payload = item.payload as {
         bookId: string;
@@ -280,7 +266,7 @@ async function syncItem(item: SyncQueueItem, traceId: string, spanId: string): P
   }
 }
 
-async function markAsSynced(type: 'progress' | 'annotation' | 'insight' | 'bookmark' | 'reading-insight', mutationId: string): Promise<void> {
+async function markAsSynced(type: 'progress' | 'annotation' | 'bookmark' | 'reading-insight', mutationId: string): Promise<void> {
   if (type === 'progress') {
     const unsynced = await getUnsyncedProgress();
     const entry = unsynced.find((e) => e.mutationId === mutationId);
@@ -294,7 +280,7 @@ async function markAsSynced(type: 'progress' | 'annotation' | 'insight' | 'bookm
       await saveAnnotation({ ...entry, synced: true });
     }
   }
-  // 'insight' and 'reading-insight' items are server-side only; no local mark-as-synced needed.
+  // 'reading-insight' items are server-side only; no local mark-as-synced needed.
 }
 
 export async function syncAll(): Promise<void> {

@@ -90,7 +90,7 @@ async function assertTraceIdInResponse(page: Page) {
 }
 
 test.describe('traceId header assertions', () => {
-  test('all API requests include X-Trace-Id header', async ({ page }) => {
+  test('@mobile all API requests include X-Trace-Id header', async ({ page }) => {
     const seen = await assertTraceIdOnRequest(page);
     const fileUrlResponse = page.waitForResponse((response) =>
       response.url().includes('/api/books/test-book/file-url'),
@@ -111,7 +111,7 @@ test.describe('traceId header assertions', () => {
     }
   });
 
-  test('X-Trace-Id header is echoed in API response headers', async ({ page }) => {
+  test('@mobile X-Trace-Id header is echoed in API response headers', async ({ page }) => {
     const responseTraceIds: string[] = [];
 
     await page.route('**/api/access/request', async (route: Route) => {

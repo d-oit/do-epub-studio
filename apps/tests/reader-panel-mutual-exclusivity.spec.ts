@@ -146,7 +146,7 @@ test.describe('Reader side-panel mutual exclusivity', () => {
     await expect(page.getByRole('heading', { name: 'Contents' })).not.toBeVisible();
   });
 
-  test('opening settings closes search', async ({ page }) => {
+  test('@mobile opening settings closes search', async ({ page }) => {
     // Open Search
     await page.getByRole('button', { name: 'Search' }).click();
     await expect(page.getByRole('heading', { name: 'Search', exact: true })).toBeVisible();
@@ -185,7 +185,7 @@ test.describe('Reader side-panel mutual exclusivity', () => {
     await expect(page.getByRole('heading', { name: 'Bookmarks' })).not.toBeVisible();
   });
 
-  test('opening info panel closes comments', async ({ page }) => {
+  test('@mobile opening info panel closes comments', async ({ page }) => {
     // Open Comments
     await page.getByRole('button', { name: /Comment/i }).click();
     await expect(page.getByRole('heading', { name: 'Comments' })).toBeVisible();
