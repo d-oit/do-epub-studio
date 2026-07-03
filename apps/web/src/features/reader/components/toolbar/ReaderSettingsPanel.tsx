@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { scaleVariants } from '../../../../components/ui';
+import { scaleVariants, IconButton } from '../../../../components/ui';
 import { useFocusTrap } from '@do-epub-studio/ui';
 
 export type PageDirection = 'ltr' | 'rtl' | 'default';
@@ -71,9 +71,10 @@ export function ReaderSettingsPanel({
     >
       <div className="flex items-center justify-between mb-4">
         <h2 id="settings-title" className="text-sm font-semibold text-foreground">{t('reader.settings')}</h2>
-        <button
+        <IconButton
           onClick={onClose}
-          className="p-1 rounded-lg hover:bg-background-secondary transition-colors text-foreground-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-accent outline-none"
+          variant="ghost"
+          size="sm"
           aria-label={t('reader.settings.close')}
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -84,7 +85,7 @@ export function ReaderSettingsPanel({
               d="M6 18L18 6M6 6l12 12"
             />
           </svg>
-        </button>
+        </IconButton>
       </div>
 
       <div className="space-y-6">

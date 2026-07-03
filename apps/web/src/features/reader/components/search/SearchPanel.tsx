@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useFocusTrap, Spinner } from '@do-epub-studio/ui';
+import { IconButton } from '../../../../components/ui';
 import { useReaderSearch, highlightRanges } from '../../hooks/useReaderSearch';
 import type { Book } from '@intity/epub-js';
 
@@ -128,10 +129,10 @@ export function SearchPanel({ isOpen, book, onClose, onNavigate, t }: SearchPane
     >
       <div className="p-4 border-b border-border flex items-center justify-between">
         <h2 className="text-lg font-semibold text-foreground">{t('reader.search')}</h2>
-        <button
-          type="button"
+        <IconButton
           onClick={onClose}
-          className="p-2 hover:bg-background-secondary rounded-lg transition-colors"
+          variant="ghost"
+          size="sm"
           aria-label={t('a11y.close')}
         >
           <svg
@@ -143,7 +144,7 @@ export function SearchPanel({ isOpen, book, onClose, onNavigate, t }: SearchPane
           >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
-        </button>
+        </IconButton>
       </div>
 
       <div className="p-4 flex flex-col flex-1 overflow-hidden">

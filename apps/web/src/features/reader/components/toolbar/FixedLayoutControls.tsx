@@ -1,6 +1,6 @@
 import { useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { scaleVariants } from '../../../../components/ui';
+import { scaleVariants, IconButton } from '../../../../components/ui';
 import { useFocusTrap } from '@do-epub-studio/ui';
 import type { ReaderSpread, ReaderZoom } from '../../../../stores';
 
@@ -78,10 +78,10 @@ export function FixedLayoutControls({
         >
           {t('reader.fixedLayout.title')}
         </h2>
-        <button
-          type="button"
+        <IconButton
           onClick={onClose}
-          className="p-1 rounded-lg hover:bg-background-secondary transition-colors text-foreground-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-accent outline-none"
+          variant="ghost"
+          size="sm"
           aria-label={t('reader.settings.close')}
         >
           <svg
@@ -98,7 +98,7 @@ export function FixedLayoutControls({
               d="M6 18L18 6M6 6l12 12"
             />
           </svg>
-        </button>
+        </IconButton>
       </div>
 
       <div className="space-y-4">
