@@ -53,7 +53,7 @@ async function mockReaderApi(page: Page) {
 // ---------------------------------------------------------------------------
 
 test.describe('Accessibility audit (axe-core)', () => {
-  test('login page has no critical accessibility violations', async ({ page }) => {
+  test('@mobile login page has no critical accessibility violations', async ({ page }) => {
     await page.goto(`/login`);
 
     const accessibilityScanResults = await new AxeBuilder({ page })
@@ -76,7 +76,7 @@ test.describe('Accessibility audit (axe-core)', () => {
     expect(accessibilityScanResults.violations).toHaveLength(0);
   });
 
-  test('reader page has no critical accessibility violations', async ({ page }) => {
+  test('@mobile reader page has no critical accessibility violations', async ({ page }) => {
     await mockReaderApi(page);
 
     // Login
@@ -101,7 +101,7 @@ test.describe('Accessibility audit (axe-core)', () => {
     expect(criticalViolations).toHaveLength(0);
   });
 
-  test('reader settings panel has no accessibility violations', async ({ page }) => {
+  test('@mobile reader settings panel has no accessibility violations', async ({ page }) => {
     await mockReaderApi(page);
     await page.goto(`/login?book=${READER_USER.bookSlug}`);
     await page.getByLabel('Email Address').fill(READER_USER.email);
@@ -119,7 +119,7 @@ test.describe('Accessibility audit (axe-core)', () => {
     expect(accessibilityScanResults.violations).toHaveLength(0);
   });
 
-  test('reader TOC panel has no accessibility violations', async ({ page }) => {
+  test('@mobile reader TOC panel has no accessibility violations', async ({ page }) => {
     await mockReaderApi(page);
     await page.goto(`/login?book=${READER_USER.bookSlug}`);
     await page.getByLabel('Email Address').fill(READER_USER.email);
@@ -136,7 +136,7 @@ test.describe('Accessibility audit (axe-core)', () => {
     expect(accessibilityScanResults.violations).toHaveLength(0);
   });
 
-  test('keyboard navigation: can close panels with Escape', async ({ page }) => {
+  test('@mobile keyboard navigation: can close panels with Escape', async ({ page }) => {
     await mockReaderApi(page);
     await page.goto(`/login?book=${READER_USER.bookSlug}`);
     await page.getByLabel('Email Address').fill(READER_USER.email);
@@ -160,7 +160,7 @@ test.describe('Accessibility audit (axe-core)', () => {
     await expect(page.getByRole('heading', { name: 'Contents' })).not.toBeVisible();
   });
 
-  test('admin login page has no critical accessibility violations', async ({ page }) => {
+  test('@mobile admin login page has no critical accessibility violations', async ({ page }) => {
     await page.goto(`/admin/login`);
 
     const accessibilityScanResults = await new AxeBuilder({ page })
@@ -224,7 +224,7 @@ test.describe('Accessibility audit (axe-core)', () => {
     await expect(page).toHaveURL(/\/admin\/books/);
   }
 
-  test('admin books list page has no critical accessibility violations', async ({ page }) => {
+  test('@mobile admin books list page has no critical accessibility violations', async ({ page }) => {
     await mockAdminApi(page);
     await loginAsAdmin(page);
 
@@ -242,7 +242,7 @@ test.describe('Accessibility audit (axe-core)', () => {
     expect(criticalViolations).toHaveLength(0);
   });
 
-  test('admin grants page has no critical accessibility violations', async ({ page }) => {
+  test('@mobile admin grants page has no critical accessibility violations', async ({ page }) => {
     await mockAdminApi(page);
     await loginAsAdmin(page);
     await page.goto('/admin/grants');
@@ -268,7 +268,7 @@ test.describe('Accessibility audit (axe-core)', () => {
     expect(criticalViolations).toHaveLength(0);
   });
 
-  test('admin audit log page has no critical accessibility violations', async ({ page }) => {
+  test('@mobile admin audit log page has no critical accessibility violations', async ({ page }) => {
     await mockAdminApi(page);
     await loginAsAdmin(page);
     await page.goto('/admin/audit');

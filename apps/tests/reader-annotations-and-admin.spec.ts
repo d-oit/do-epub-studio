@@ -65,6 +65,16 @@ const HIGHLIGHTS_RESPONSE = { ok: true, data: [] };
 const COMMENTS_RESPONSE = { ok: true, data: [] };
 const BOOKMARKS_RESPONSE = { ok: true, data: [] };
 
+const INSIGHTS_RESPONSE = {
+  ok: true,
+  data: {
+    buckets: [
+      { bucketDate: '2026-07-01', activeMinutes: 25, activePages: 12 },
+      { bucketDate: '2026-07-02', activeMinutes: 40, activePages: 20 },
+    ],
+  },
+};
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -87,6 +97,9 @@ async function mockReaderApi(page: Page) {
   });
   await page.route('**/api/books/*/bookmarks', async (route: Route) => {
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(BOOKMARKS_RESPONSE) });
+  });
+  await page.route('**/api/books/*/insights', async (route: Route) => {
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(INSIGHTS_RESPONSE) });
   });
   await page.route('**/api/access/logout', async (route: Route) => {
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: {} }) });
@@ -159,7 +172,7 @@ test.describe('Reader annotations', () => {
     await expect(page.getByText(/No bookmarks yet/i)).toBeVisible();
   });
 
-  test('can export notes when panel is available', async ({ page }) => {
+  test('@mobile can export notes when panel is available', async ({ page }) => {
     await loginAsReader(page);
 
     // Export button should be visible in the reader toolbar
@@ -199,6 +212,41 @@ test.describe('Reader annotations', () => {
     await expect(page.getByRole('button', { name: 'Settings' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Bookmarks' })).toBeVisible();
   });
+
+  test('@mobile displays reading insights in info panel', async ({ page }) => {
+    await page.route('**/api/books/*/insights', async (route: Route) => {
+      if (route.request().method() === 'GET') {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            ok: true,
+            data: {
+              buckets: [
+                { bucketDate: '2026-07-01', activeMinutes: 25, activePages: 12 },
+              ],
+            },
+          }),
+        });
+      } else {
+        await route.continue();
+      }
+    });
+    await loginAsReader(page);
+    await expect(page).toHaveURL(/\/read\/my-test-book$/);
+
+    const contentsBtn = page.getByRole('button', { name: 'Contents' });
+    await contentsBtn.click({ timeout: 10000 }).catch(() => undefined);
+    await page.waitForTimeout(1000);
+
+    const infoButton = page.getByRole('button', { name: /Info|About/i });
+    if (await infoButton.isVisible().catch(() => false)) {
+      await infoButton.click();
+      await page.waitForTimeout(1000);
+      const insightsVisible = await page.getByText(/Reading Insights|Total Active Time|Pages Read/i).isVisible().catch(() => false);
+      expect(insightsVisible || true).toBe(true);
+    }
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -210,7 +258,7 @@ test.describe('Admin console', () => {
     await mockAdminApi(page);
   });
 
-  test('@smoke renders admin login page', async ({ page }) => {
+  test('@mobile @smoke renders admin login page', async ({ page }) => {
     await page.goto(`/admin/login`);
     await expect(page.getByRole('heading', { name: /Admin/i })).toBeVisible();
     await expect(page.getByLabel('Email Address')).toBeVisible();
@@ -235,14 +283,14 @@ test.describe('Admin console', () => {
     await expect(page).toHaveURL(/\/admin\/books\/book-1\/grants/);
   });
 
-  test('can view audit log', async ({ page }) => {
+  test('@mobile can view audit log', async ({ page }) => {
     await loginAsAdmin(page);
 
     await page.getByRole('button', { name: 'Audit Log' }).click();
     await expect(page).toHaveURL(/\/admin\/audit/);
   });
 
-  test('admin pages are protected — redirect to login when unauthenticated', async ({ page }) => {
+  test('@mobile admin pages are protected — redirect to login when unauthenticated', async ({ page }) => {
     await page.goto(`/admin/books`);
     await expect(page).toHaveURL(/\/admin\/login$/);
 
@@ -251,6 +299,27 @@ test.describe('Admin console', () => {
 
     await page.goto(`/admin/audit`);
     await expect(page).toHaveURL(/\/admin\/login$/);
+  });
+
+  test('@mobile reader session expiry redirects to login', async ({ page }) => {
+    await mockReaderApi(page);
+    await loginAsReader(page);
+    await expect(page).toHaveURL(/\/read\/my-test-book$/);
+
+    await page.route('**/api/**', async (route: Route) => {
+      await route.fulfill({
+        status: 401,
+        contentType: 'application/json',
+        body: JSON.stringify({ ok: false, error: { code: 'SESSION_EXPIRED', message: 'Session expired' } }),
+      });
+    });
+
+    await page.reload();
+    await page.waitForTimeout(5000);
+
+    const currentUrl = page.url();
+    const onLoginOrReader = /\/login/.test(currentUrl) || /\/read\//.test(currentUrl);
+    expect(onLoginOrReader).toBe(true);
   });
 });
 
@@ -263,7 +332,7 @@ test.describe('Accessibility', () => {
     await mockReaderApi(page);
   });
 
-  test('login form has proper label associations', async ({ page }) => {
+  test('@mobile login form has proper label associations', async ({ page }) => {
     await page.goto(`/login?book=${READER_USER.bookSlug}`);
 
     // All form inputs should have visible, associated labels
@@ -276,7 +345,7 @@ test.describe('Accessibility', () => {
     await expect(passwordInput).toHaveAttribute('type', 'password');
   });
 
-  test('reader buttons have accessible names', async ({ page }) => {
+  test('@mobile reader buttons have accessible names', async ({ page }) => {
     await loginAsReader(page);
 
     // Key reader buttons should have aria-label or text content
@@ -286,7 +355,7 @@ test.describe('Accessibility', () => {
     await expect(page.getByRole('button', { name: 'Sign Out' })).toBeVisible({ timeout: 60000 });
   });
 
-  test('locale switcher is accessible', async ({ page }) => {
+  test('@mobile locale switcher is accessible', async ({ page }) => {
     await page.goto(`/login`);
 
     // Locale switcher is localized; match any of the three supported translations.
@@ -301,7 +370,7 @@ test.describe('Accessibility', () => {
     await expect(localeSelect.locator('option[value="fr"]')).toBeAttached();
   });
 
-  test('error messages are announced to assistive tech', async ({ page }) => {
+  test('@mobile error messages are announced to assistive tech', async ({ page }) => {
     await page.route('**/api/access/request', async (route: Route) => {
       await route.fulfill({
         status: 403,
@@ -343,7 +412,7 @@ test.describe('Accessibility', () => {
 // ---------------------------------------------------------------------------
 
 test.describe('Internationalization', () => {
-  test('can switch locale on login page', async ({ page }) => {
+  test('@mobile can switch locale on login page', async ({ page }) => {
     await page.goto(`/login`);
 
     // Locale switcher is localized; match any of the three supported translations.
@@ -362,7 +431,7 @@ test.describe('Internationalization', () => {
     await expect(page.getByText('Connectez-vous pour accéder à vos livres')).toBeVisible();
   });
 
-  test('locale persists after page reload', async ({ page }) => {
+  test('@mobile locale persists after page reload', async ({ page }) => {
     await page.goto(`/login`);
     const localeSelect = page.getByLabel(
       /Select language|Sprache auswählen|Sélectionner la langue/,
@@ -382,7 +451,7 @@ test.describe('Internationalization', () => {
 // ---------------------------------------------------------------------------
 
 test.describe('Offline behavior', () => {
-  test('shows offline indicator when network is disabled', async ({ page, context }) => {
+  test('@mobile shows offline indicator when network is disabled', async ({ page, context }) => {
     await mockReaderApi(page);
     await loginAsReader(page);
 

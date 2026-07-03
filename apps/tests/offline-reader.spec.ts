@@ -206,7 +206,7 @@ test.describe('Offline reader', () => {
     await mockApiRoutes(page);
   });
 
-  test('loads reader page online then survives offline reload', async ({ page }) => {
+  test('@mobile loads reader page online then survives offline reload', async ({ page }) => {
     // Load the reader page online
     await loginAndOpenReader(page);
 
@@ -241,7 +241,7 @@ test.describe('Offline reader', () => {
     expect(bodyStillVisible).toBe(true);
   });
 
-  test('detects offline/online status transitions', async ({ page, context }) => {
+  test('@mobile detects offline/online status transitions', async ({ page, context }) => {
     await loginAndOpenReader(page);
 
     // Verify initial online status
@@ -269,7 +269,7 @@ test.describe('Offline reader', () => {
     expect(backOnline).toBe(true);
   });
 
-  test('serves cached API responses while offline (NetworkFirst strategy)', async ({ page, context }, testInfo) => {
+  test('@mobile serves cached API responses while offline (NetworkFirst strategy)', async ({ page, context }, testInfo) => {
     await loginAndOpenReader(page);
 
     // Check if SW is active — skip if not (SW-dependent test)
@@ -337,7 +337,7 @@ test.describe('Offline reader', () => {
     await context.setOffline(false);
   });
 
-  test('queues offline actions for sync when network is unavailable', async ({ page, context }) => {
+  test('@mobile queues offline actions for sync when network is unavailable', async ({ page, context }) => {
     await loginAndOpenReader(page);
 
     // Go offline

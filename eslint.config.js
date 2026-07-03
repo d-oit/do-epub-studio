@@ -139,7 +139,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ['apps/web/src/features/**/*.tsx'],
+    files: ['apps/web/src/features/**/*.tsx', 'apps/web/src/components/**/*.tsx'],
     ignores: ['**/*.test.tsx', '**/*.spec.tsx', '**/*.stories.tsx', '**/tests/**', '**/__tests__/**'],
     rules: {
       'i18next/no-literal-string': ['warn', { mode: 'jsx-only', ignoreAttribute: ['aria-label', 'role', 'type', 'tabIndex'] }],

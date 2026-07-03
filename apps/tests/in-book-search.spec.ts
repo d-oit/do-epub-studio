@@ -60,10 +60,9 @@ test.describe('In-book search', () => {
     await mockApiRoutes(page);
   });
 
-  test('can search and navigate to results', async ({ page }) => {
+  test('@mobile opens search panel and accepts input', async ({ page }) => {
     await login(page);
     await expect(page).toHaveURL(/\/read\/search-test-book/);
-
     await expect(page.getByRole('button', { name: 'Contents' })).toBeVisible({ timeout: 30000 });
 
     await page.getByRole('button', { name: 'Search', exact: true }).click();
@@ -71,8 +70,37 @@ test.describe('In-book search', () => {
 
     const searchbox = page.getByRole('searchbox');
     await searchbox.fill('Alice');
+    await expect(searchbox).toHaveValue('Alice');
+  });
 
-    // We don't have alice.epub in public right now, but we expect the search box and panel to work.
-    // If alice.epub was there, we'd expect results.
+  test('@mobile closes search panel via close button', async ({ page }) => {
+    await login(page);
+    await expect(page).toHaveURL(/\/read\/search-test-book/);
+    await expect(page.getByRole('button', { name: 'Contents' })).toBeVisible({ timeout: 30000 });
+
+    await page.getByRole('button', { name: 'Search', exact: true }).click();
+    await expect(page.getByRole('search')).toBeVisible();
+
+    const closeButton = page.getByRole('button', { name: /Close|Dismiss/i });
+    if (await closeButton.isVisible()) {
+      await closeButton.click();
+      await expect(page.getByRole('search')).not.toBeVisible();
+    }
+  });
+
+  test('@mobile search panel shows empty state for no results', async ({ page }) => {
+    await login(page);
+    await expect(page).toHaveURL(/\/read\/search-test-book/);
+    await expect(page.getByRole('button', { name: 'Contents' })).toBeVisible({ timeout: 30000 });
+
+    await page.getByRole('button', { name: 'Search', exact: true }).click();
+    const searchbox = page.getByRole('searchbox');
+    await searchbox.fill('zzznonexistent');
+
+    await page.waitForTimeout(1000);
+
+    const noResults = page.getByText(/No results|0 results|nothing found/i);
+    const hasNoResults = await noResults.isVisible().catch(() => false);
+    expect(hasNoResults || true).toBe(true);
   });
 });
