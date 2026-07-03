@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { useFocusTrap } from '@do-epub-studio/ui';
+import { IconButton } from '../../../../components/ui';
 import type { Comment, Highlight } from '../../../../stores';
 import { useTranslation } from '../../../../hooks/useTranslation';
 import { CommentItem } from './CommentItem';
@@ -177,7 +178,12 @@ export function CommentsPanel({
     >
       <div className="p-4 border-b border-border flex justify-between items-center">
         <h2 id="comments-title" className="font-semibold">{t('annotation.comment')}s</h2>
-        <button type="button" onClick={onClose} className="p-1 hover:bg-background-secondary rounded" aria-label={t('reader.settings.close')}>
+        <IconButton
+          onClick={onClose}
+          variant="ghost"
+          size="sm"
+          aria-label={t('reader.settings.close')}
+        >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
               strokeLinecap="round"
@@ -186,7 +192,7 @@ export function CommentsPanel({
               d="M6 18L18 6M6 6l12 12"
             />
           </svg>
-        </button>
+        </IconButton>
       </div>
 
       <div className="flex border-b border-border">

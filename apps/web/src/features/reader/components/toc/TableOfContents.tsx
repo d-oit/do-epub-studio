@@ -1,5 +1,6 @@
 import { useRef, useEffect, useCallback } from 'react';
 import { useFocusTrap } from '@do-epub-studio/ui';
+import { IconButton } from '../../../../components/ui';
 import { VirtualList } from '../../../../components/VirtualList';
 import type { TranslationKeys } from '../../../../i18n';
 
@@ -114,10 +115,10 @@ export function TableOfContents({
     >
       <div className="p-4 border-b border-border flex justify-between items-center">
         <h2 id="toc-title" className="font-semibold">{t('reader.tableOfContents')}</h2>
-        <button
-          type="button"
+        <IconButton
           onClick={onClose}
-          className="p-1 hover:bg-background-secondary rounded"
+          variant="ghost"
+          size="sm"
           aria-label={t('reader.settings.close')}
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -128,7 +129,7 @@ export function TableOfContents({
               d="M6 18L18 6M6 6l12 12"
             />
           </svg>
-        </button>
+        </IconButton>
       </div>
       <div className="flex-1 p-2 overflow-hidden">
         {toc.length > 0 ? (

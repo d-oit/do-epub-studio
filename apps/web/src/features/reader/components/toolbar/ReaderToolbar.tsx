@@ -101,21 +101,23 @@ export function ReaderToolbar({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-14">
           <div className="flex items-center gap-4">
-            <IconButton
-              onClick={onToggleToc}
-              variant="ghost"
-              aria-label={t('reader.tableOfContents')}
-              aria-expanded={activePanel === 'toc'}
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 6h16M4 12h16M4 18h16"
-                />
-              </svg>
-            </IconButton>
+            <Tooltip content={t('reader.tableOfContents')}>
+              <IconButton
+                onClick={onToggleToc}
+                variant="ghost"
+                aria-label={t('reader.tableOfContents')}
+                aria-expanded={activePanel === 'toc'}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 6h16M4 12h16M4 18h16"
+                  />
+                </svg>
+              </IconButton>
+            </Tooltip>
             <div className="flex flex-col">
               <h1 className="text-sm font-semibold text-foreground truncate max-w-[150px] sm:max-w-[300px]">
                 {bookTitle || t('reader.untitledBook')}
@@ -280,22 +282,24 @@ export function ReaderToolbar({
 
           {/* Mobile overflow menu */}
           <div className="cq-reader-toolbar-overflow relative" ref={menuRef}>
-            <IconButton
-              onClick={() => { setIsMenuOpen(!isMenuOpen); }}
-              variant="ghost"
-              aria-label={t('reader.moreOptions')}
-              aria-expanded={isMenuOpen}
-              aria-haspopup="true"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
-                />
-              </svg>
-            </IconButton>
+            <Tooltip content={t('reader.moreOptions')}>
+              <IconButton
+                onClick={() => { setIsMenuOpen(!isMenuOpen); }}
+                variant="ghost"
+                aria-label={t('reader.moreOptions')}
+                aria-expanded={isMenuOpen}
+                aria-haspopup="true"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
+                  />
+                </svg>
+              </IconButton>
+            </Tooltip>
 
             <AnimatePresence>
               {isMenuOpen && (

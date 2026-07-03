@@ -1,5 +1,6 @@
 import { useRef, useEffect } from 'react';
 import { useFocusTrap } from '@do-epub-studio/ui';
+import { IconButton } from '../../../../components/ui';
 import { useTranslation } from '../../../../hooks/useTranslation';
 import type { Bookmark } from '../../../../stores';
 
@@ -62,9 +63,11 @@ export function BookmarksPanel({
               />
             </svg>
           </button>
-          <button
+          <IconButton
             onClick={onClose}
-            className="p-1 hover:bg-background-secondary rounded"
+            variant="ghost"
+            size="sm"
+            aria-label={t('a11y.close')}
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -74,7 +77,7 @@ export function BookmarksPanel({
                 d="M6 18L18 6M6 6l12 12"
               />
             </svg>
-          </button>
+          </IconButton>
         </div>
       </div>
       <div className="flex-1 overflow-y-auto p-4">

@@ -3,9 +3,17 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { FixedLayoutControls } from './FixedLayoutControls';
 
+import { type ReactNode } from 'react';
+
 vi.mock('@do-epub-studio/ui', () => ({
   useFocusTrap: () => {},
   scaleVariants: { initial: {}, animate: {}, exit: {} },
+  IconButton: ({ children, onClick, 'aria-label': ariaLabel, disabled }: any) => (
+    <button onClick={onClick} aria-label={ariaLabel} disabled={disabled}>
+      {children}
+    </button>
+  ),
+  Tooltip: ({ children }: { children: ReactNode }) => <>{children}</>,
 }));
 
 function t(key: string): string {
