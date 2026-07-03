@@ -1,12 +1,13 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
+import { type ReactNode } from 'react';
 import { TableOfContents } from './TableOfContents';
 
 // Mock focus trap and components
 vi.mock('@do-epub-studio/ui', () => ({
   useFocusTrap: vi.fn(),
-  IconButton: ({ children, onClick, 'aria-label': ariaLabel }: any) => (
-    <button onClick={onClick} aria-label={ariaLabel}>
+  IconButton: ({ children, onClick, 'aria-label': ariaLabel }: { children: ReactNode; onClick: () => void; 'aria-label': string }) => (
+    <button type="button" onClick={onClick} aria-label={ariaLabel}>
       {children}
     </button>
   ),

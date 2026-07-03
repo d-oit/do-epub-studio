@@ -8,8 +8,8 @@ import { type ReactNode } from 'react';
 vi.mock('@do-epub-studio/ui', () => ({
   useFocusTrap: () => {},
   scaleVariants: { initial: {}, animate: {}, exit: {} },
-  IconButton: ({ children, onClick, 'aria-label': ariaLabel, disabled }: any) => (
-    <button onClick={onClick} aria-label={ariaLabel} disabled={disabled}>
+  IconButton: ({ children, onClick, 'aria-label': ariaLabel, disabled }: { children: ReactNode; onClick: () => void; 'aria-label': string; disabled?: boolean }) => (
+    <button type="button" onClick={onClick} aria-label={ariaLabel} disabled={disabled}>
       {children}
     </button>
   ),
