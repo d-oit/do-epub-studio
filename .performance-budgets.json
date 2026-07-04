@@ -3,7 +3,7 @@
     "index.js": 500000,
     "react-vendor.js": 400000,
     "index.css": 100000,
-    "reader-core.js": 400000,
+    "reader-core.js": 300000,
     "reader-route.js": 200000,
     "epubjs.js": 250000
   },
@@ -15,7 +15,7 @@
     },
     "catalog": {
       "entry": "src/features/catalog/CatalogPage.tsx",
-      "maxSize": 1100000,
+      "maxSize": 750000,
       "description": "Total transitive JS and CSS for the catalog route (includes shared vendors)"
     },
     "admin": {

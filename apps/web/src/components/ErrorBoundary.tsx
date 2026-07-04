@@ -1,6 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { createSpanId, createTraceId } from '@do-epub-studio/shared/src/telemetry';
+import { createSpanId, createTraceId } from '@do-epub-studio/shared';
 import { logClientEvent } from '../lib/client-logger';
 import { Button, Card } from './ui';
 

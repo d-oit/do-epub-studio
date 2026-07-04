@@ -8,7 +8,7 @@ vi.mock('../../lib/client-logger', () => ({
   logClientEvent: vi.fn(),
 }));
 
-vi.mock('@do-epub-studio/shared/src/telemetry', () => ({
+vi.mock('@do-epub-studio/shared', () => ({
   createTraceId: () => 'test-trace-id',
   createSpanId: () => 'test-span-id',
 }));

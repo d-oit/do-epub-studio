@@ -1,5 +1,5 @@
 import type { MutableRefObject } from 'react';
-import { createSpanId, createTraceId } from '@do-epub-studio/shared/src/telemetry';
+import { createSpanId, createTraceId } from '@do-epub-studio/shared';
 import { logClientEvent } from '../../../lib/client-logger';
 import { apiRequest } from '../../../lib/api';
 import { saveProgress, queueSync, generateMutationId } from '../../../lib/offline';

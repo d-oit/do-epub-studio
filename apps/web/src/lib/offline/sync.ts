@@ -13,7 +13,7 @@ import {
 import { api } from '../api';
 import type { AnnotationEntry } from './db';
 import { clearAllPermissions } from './permissions';
-import { createTraceId, createSpanId } from '@do-epub-studio/shared/src/telemetry';
+import { createTraceId, createSpanId } from '@do-epub-studio/shared';
 import { logClientEvent } from '../client-logger';
 
 const MAX_RETRY_ATTEMPTS = 5;

@@ -1,4 +1,4 @@
-import { createTraceId, createSpanId } from '@do-epub-studio/shared/src/telemetry';
+import { createTraceId, createSpanId } from '@do-epub-studio/shared';
 import { logClientEvent } from '../client-logger';
 import { v4 as uuidv4 } from 'uuid';
 
