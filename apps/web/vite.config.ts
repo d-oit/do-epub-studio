@@ -117,6 +117,9 @@ export default defineConfig({
           if (id.includes('features/reader')) {
             return 'reader-route';
           }
+          if (id.includes('lib/api')) {
+            return 'api-lib';
+          }
         },
       },
     },

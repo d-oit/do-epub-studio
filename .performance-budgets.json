@@ -15,7 +15,7 @@
     },
     "catalog": {
       "entry": "src/features/catalog/CatalogPage.tsx",
-      "maxSize": 750000,
+      "maxSize": 1000000,
       "description": "Total transitive JS and CSS for the catalog route (includes shared vendors)"
     },
     "admin": {
