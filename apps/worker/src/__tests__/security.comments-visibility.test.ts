@@ -8,6 +8,11 @@ import {
 } from './fixtures';
 import { app } from '../app';
 
+interface CommentsResponse {
+  ok: boolean;
+  data: Array<{ id: string }>;
+}
+
 describe('Security: Comments Visibility', () => {
   const env = makeEnv();
 
@@ -64,7 +69,7 @@ describe('Security: Comments Visibility', () => {
       );
 
       expect(res.status).toBe(200);
-      const body = await res.json() as any;
+      const body = (await res.json()) as CommentsResponse;
       expect(body.ok).toBe(true);
 
       // Verification: User A should only see sharedComment
@@ -109,7 +114,7 @@ describe('Security: Comments Visibility', () => {
       );
 
       expect(res.status).toBe(200);
-      const body = await res.json() as any;
+      const body = (await res.json()) as CommentsResponse;
       expect(body.data.map((c: { id: string }) => c.id)).toContain('c3');
     });
   });
