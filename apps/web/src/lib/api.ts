@@ -1,4 +1,4 @@
-import { createSpanId, createTraceId } from '@do-epub-studio/shared';
+import { createSpanId, createTraceId } from '@do-epub-studio/shared/src/telemetry';
 import { logClientEvent } from './client-logger';
 import { getCurrentLocale } from '../stores/locale';
 import { useAuthStore } from '../stores/auth';
