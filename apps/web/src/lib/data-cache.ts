@@ -1,5 +1,5 @@
 import { apiRequest } from './api';
-import type { AuditLogResponse, BookResponse, GrantResponse } from '@do-epub-studio/shared';
+import type { AuditLogResponse, BookResponse, GrantResponse } from '@do-epub-studio/shared/src/dtos';
 
 export interface CatalogBook {
   id: string;

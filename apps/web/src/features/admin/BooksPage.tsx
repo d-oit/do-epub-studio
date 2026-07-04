@@ -4,7 +4,6 @@ import { useTranslation } from '../../hooks/useTranslation';
 import { apiRequest } from '../../lib/api';
 import { useAuthStore } from '../../stores/auth';
 import type { BookResponse } from '@do-epub-studio/shared';
-import { validateEpub } from '@do-epub-studio/shared';
 import { LocaleSwitcher } from '../../components/LocaleSwitcher';
 import { Modal, Button } from '../../components/ui';
 import { Spinner } from '@do-epub-studio/ui';
@@ -139,6 +138,7 @@ export function AdminBookResponsesPage() {
 
   const validateEpubLocal = async (file: File) => {
     try {
+      const { validateEpub } = await import('@do-epub-studio/shared');
       const data = await file.arrayBuffer();
       const result = await validateEpub(data);
 

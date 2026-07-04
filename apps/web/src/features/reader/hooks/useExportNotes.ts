@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { useShallow } from 'zustand/react/shallow';
-import { matchBounded } from '@do-epub-studio/shared';
-import type { AnnotationLocator } from '@do-epub-studio/shared';
+import { matchBounded } from '@do-epub-studio/shared/src/safe-regex';
+import type { AnnotationLocator } from '@do-epub-studio/shared/src/schemas';
 import { useReaderStore } from '../../../stores';
 import type { Bookmark, Comment, Highlight } from '../../../stores/reader';
 
