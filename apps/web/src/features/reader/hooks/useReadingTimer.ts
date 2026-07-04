@@ -3,7 +3,7 @@ import { ReadingTimer, computeInsightSummary } from '../../../lib/offline/readin
 import { useReaderStore } from '../../../stores';
 import { useAuthStore } from '../../../stores/auth';
 import { apiRequest } from '../../../lib/api';
-import { createTraceId, createSpanId } from '@do-epub-studio/shared/src/telemetry';
+import { createTraceId, createSpanId } from '@do-epub-studio/shared';
 import { logClientEvent } from '../../../lib/client-logger';
 import { queueSync, generateMutationId } from '../../../lib/offline';
 

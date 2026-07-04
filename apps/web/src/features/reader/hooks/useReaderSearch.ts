@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import type { Book, NavItem } from '@intity/epub-js';
-import { createTraceId } from '@do-epub-studio/shared/src/telemetry';
+import { createTraceId } from '@do-epub-studio/shared';
 import { logClientEvent } from '../../../lib/client-logger';
 
 export interface SearchResult {

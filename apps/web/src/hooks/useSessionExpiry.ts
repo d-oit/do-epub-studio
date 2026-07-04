@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { createTraceId } from '@do-epub-studio/shared/src/telemetry';
+import { createTraceId } from '@do-epub-studio/shared';
 import { useAuthStore } from '../stores/auth';
 import { apiRequest } from '../lib/api';
 import { logClientEvent } from '../lib/client-logger';

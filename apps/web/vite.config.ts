@@ -114,8 +114,11 @@ export default defineConfig({
           if (id.includes('packages/ui')) {
             return 'ui-lib';
           }
-          if (id.includes('lib/api')) {
-            return 'api-lib';
+          if (id.includes('features/reader')) {
+            return 'reader-route';
+          }
+          if (id.includes('features/admin')) {
+            return 'admin-route';
           }
         },
       },
