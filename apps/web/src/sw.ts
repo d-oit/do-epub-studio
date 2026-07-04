@@ -8,7 +8,7 @@ import { ExpirationPlugin } from 'workbox-expiration';
 import { CacheableResponsePlugin } from 'workbox-cacheable-response';
 import { RangeRequestsPlugin } from 'workbox-range-requests';
 import { createHandlerBoundToURL } from 'workbox-precaching';
-import { createTraceId } from '@do-epub-studio/shared';
+import { createTraceId } from '@do-epub-studio/shared/src/telemetry';
 
 declare let self: ServiceWorkerGlobalScope;
 

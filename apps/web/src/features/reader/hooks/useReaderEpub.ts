@@ -7,7 +7,7 @@ import {
   parseFixedLayoutFromOpf,
   createEpubSanitizerHook,
 } from '@do-epub-studio/reader-core';
-import { createSpanId, createTraceId } from '@do-epub-studio/shared';
+import { createSpanId, createTraceId } from '@do-epub-studio/shared/src/telemetry';
 import { logClientEvent } from '../../../lib/client-logger';
 import {
   useAuthStore,

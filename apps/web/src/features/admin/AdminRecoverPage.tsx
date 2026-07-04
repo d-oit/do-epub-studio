@@ -9,7 +9,7 @@ import { Button, Input, AppLogo } from '../../components/ui';
 import { ThemeToggle } from '../../components/ThemeToggle';
 import { APP_NAME, APP_VERSION_LABEL } from '../../config/app-identity';
 import { logClientEvent } from '../../lib/client-logger';
-import { createSpanId, createTraceId } from '@do-epub-studio/shared';
+import { createSpanId, createTraceId } from '@do-epub-studio/shared/src/telemetry';
 
 type Mode = 'request' | 'verify';
 

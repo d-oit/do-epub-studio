@@ -4,7 +4,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { MotionConfig } from 'framer-motion';
 
 import App from './App';
-import { createSpanId, createTraceId } from '@do-epub-studio/shared';
+import { createSpanId, createTraceId } from '@do-epub-studio/shared/src/telemetry';
 import { ToastProvider, useToast } from '@do-epub-studio/ui';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { logClientEvent } from './lib/client-logger';

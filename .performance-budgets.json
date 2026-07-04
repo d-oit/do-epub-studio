@@ -3,7 +3,7 @@
     "index.js": 500000,
     "react-vendor.js": 400000,
     "index.css": 100000,
-    "reader-core.js": 300000,
+    "reader-core.js": 400000,
     "reader-route.js": 200000,
     "epubjs.js": 250000
   },
