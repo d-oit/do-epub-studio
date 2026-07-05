@@ -1,5 +1,4 @@
 import { forwardRef } from 'react';
-import { motion } from 'framer-motion';
 
 export interface CardProps {
   variant?: 'default' | 'glass' | 'elevated';
@@ -10,7 +9,7 @@ export interface CardProps {
 
 export const Card = forwardRef<HTMLDivElement, CardProps>(
   ({ variant = 'default', hover = true, children, className = '' }, ref) => {
-    const baseClasses = 'rounded-xl overflow-hidden';
+    const baseClasses = 'rounded-xl overflow-hidden animate-slide-up-fade';
 
     const variantClasses = {
       default: 'bg-background-secondary border border-border',
@@ -18,16 +17,15 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
       elevated: 'bg-background shadow-lg border border-border/50',
     };
 
+    const hoverClass = hover ? 'hover:-translate-y-0.5 transition-transform duration-200' : '';
+
     return (
-      <motion.div
+      <div
         ref={ref}
-        initial={{ opacity: 0, y: 'var(--motion-item-offset)' }}
-        animate={{ opacity: 1, y: 0 }}
-        whileHover={hover ? { y: 'var(--motion-hover-lift)', transition: { duration: 0.2 } } : undefined}
-        className={`${baseClasses} ${variantClasses[variant]} ${className}`}
+        className={`${baseClasses} ${variantClasses[variant]} ${hoverClass} ${className}`}
       >
         {children}
-      </motion.div>
+      </div>
     );
   },
 );

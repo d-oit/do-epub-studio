@@ -20,7 +20,6 @@ import {
   useReadingTimer,
   useOptimisticAnnotationStore,
 } from './hooks';
-import { AnimatePresence } from 'framer-motion';
 import {
   ReaderToolbar,
   ReaderSettingsPanel,
@@ -356,47 +355,46 @@ export function ReaderPage() {
           togglePanel('fl-controls');
         }}
       />
-      <AnimatePresence>
-        {activePanel === 'settings' && (
-          <ReaderSettingsPanel
-            isOpen
-            onClose={() => setActivePanel(null)}
-            theme={readerTheme}
-            fontSize={readerFontSize}
-            fontFamily={readerFontFamily}
-            direction={readerDirection}
-            writingMode={readerWritingMode}
-            onSetTheme={setTheme}
-            onSetFontSize={setFontSize}
-            onSetFontFamily={setFontFamily}
-            onSetDirection={setDirection}
-            onSetWritingMode={setWritingMode}
-            isFixedLayout={isFixedLayout}
-            t={tFn}
-          />
-        )}
-        {activePanel === 'fl-controls' && isFixedLayout && (
-          <FixedLayoutControls
-            isOpen
-            onClose={() => setActivePanel(null)}
-            zoom={readerZoom}
-            spread={readerSpread}
-            onSetZoom={setReaderZoom}
-            onSetSpread={setReaderSpread}
-            t={tFn}
-          />
-        )}
-        {activePanel === 'info' && (
-          <InfoPanel
-            isOpen
-            onClose={() => setActivePanel(null)}
-            metadata={metadata}
-            bookId={bookId}
-            progressPercent={progress.progressPercent}
-            t={tFn}
-          />
-        )}
-        {activePanel === 'search' && (
+      {activePanel === 'settings' && (
+        <ReaderSettingsPanel
+          isOpen
+          onClose={() => setActivePanel(null)}
+          theme={readerTheme}
+          fontSize={readerFontSize}
+          fontFamily={readerFontFamily}
+          direction={readerDirection}
+          writingMode={readerWritingMode}
+          onSetTheme={setTheme}
+          onSetFontSize={setFontSize}
+          onSetFontFamily={setFontFamily}
+          onSetDirection={setDirection}
+          onSetWritingMode={setWritingMode}
+          isFixedLayout={isFixedLayout}
+          t={tFn}
+        />
+      )}
+      {activePanel === 'fl-controls' && isFixedLayout && (
+        <FixedLayoutControls
+          isOpen
+          onClose={() => setActivePanel(null)}
+          zoom={readerZoom}
+          spread={readerSpread}
+          onSetZoom={setReaderZoom}
+          onSetSpread={setReaderSpread}
+          t={tFn}
+        />
+      )}
+      {activePanel === 'info' && (
+        <InfoPanel
+          isOpen
+          onClose={() => setActivePanel(null)}
+          metadata={metadata}
+          bookId={bookId}
+          progressPercent={progress.progressPercent}
+          t={tFn}
+        />
+      )}
+      {activePanel === 'search' && (
           <SearchPanel
             isOpen
             book={bookRef.current}
@@ -407,7 +405,6 @@ export function ReaderPage() {
             t={tFn}
           />
         )}
-      </AnimatePresence>
       <ReaderViewer
         isLoading={isLoading}
         epubUrl={epubUrl}
@@ -416,19 +413,17 @@ export function ReaderPage() {
         viewerRef={viewerRef}
         notAvailableText={t('reader.notAvailable')}
       />
-      <AnimatePresence>
-        {activePanel === 'toc' && (
-          <TableOfContents
-            isOpen
-            toc={toc}
-            currentChapter={currentChapter}
-            onClose={() => setActivePanel(null)}
-            onNavigate={(href) => void navigateToChapter(href)}
-            t={tFn}
-            direction={bookDirection === 'rtl' ? 'rtl' : undefined}
-          />
-        )}
-      </AnimatePresence>
+      {activePanel === 'toc' && (
+        <TableOfContents
+          isOpen
+          toc={toc}
+          currentChapter={currentChapter}
+          onClose={() => setActivePanel(null)}
+          onNavigate={(href) => void navigateToChapter(href)}
+          t={tFn}
+          direction={bookDirection === 'rtl' ? 'rtl' : undefined}
+        />
+      )}
       {selection && capabilities?.canHighlight && (
         <AnnotationToolbar
           selection={selection}
@@ -467,40 +462,36 @@ export function ReaderPage() {
         placeholder={t('comment.placeholder')}
         submitLabel={t('annotation.comment')}
       />
-      <AnimatePresence>
-        {activePanel === 'bookmarks' && (
-          <BookmarksPanel
-            isOpen
-            bookmarks={optimisticState.bookmarks}
-            onClose={() => setActivePanel(null)}
-            onAddBookmark={() => void handleCreateBookmark(currentChapterRef, toc)}
-            onDeleteBookmark={(id) => handleDeleteBookmark(id)}
-            onNavigate={(bookmark) => {
-              if (bookmark.locator.cfi && renditionRef.current)
-                void renditionRef.current.display(bookmark.locator.cfi);
-            }}
-          />
-        )}
-      </AnimatePresence>
-      <AnimatePresence>
-        {activePanel === 'comments' && (
-          <CommentsPanel
-            isOpen
-            onClose={() => setActivePanel(null)}
-            comments={optimisticState.comments}
-            highlights={optimisticState.highlights}
-            currentChapter={currentChapter}
-            locale={locale}
-            onResolveComment={(id) => void handleResolveComment(id)}
-            onReplyToComment={(id, text) => void handleReplyToComment(id, text)}
-            onEditComment={(id, text) => void handleEditComment(id, text)}
-            onDeleteComment={(id) => void handleDeleteComment(id)}
-            onEditHighlight={(id, note) => void handleEditHighlight(id, note)}
-            onDeleteHighlight={(id) => void handleDeleteHighlight(id)}
-            onNavigateToAnnotation={(ref, cfi) => void handleNavigateToAnnotation(ref, cfi)}
-          />
-        )}
-      </AnimatePresence>
+      {activePanel === 'bookmarks' && (
+        <BookmarksPanel
+          isOpen
+          bookmarks={optimisticState.bookmarks}
+          onClose={() => setActivePanel(null)}
+          onAddBookmark={() => void handleCreateBookmark(currentChapterRef, toc)}
+          onDeleteBookmark={(id) => handleDeleteBookmark(id)}
+          onNavigate={(bookmark) => {
+            if (bookmark.locator.cfi && renditionRef.current)
+              void renditionRef.current.display(bookmark.locator.cfi);
+          }}
+        />
+      )}
+      {activePanel === 'comments' && (
+        <CommentsPanel
+          isOpen
+          onClose={() => setActivePanel(null)}
+          comments={optimisticState.comments}
+          highlights={optimisticState.highlights}
+          currentChapter={currentChapter}
+          locale={locale}
+          onResolveComment={(id) => void handleResolveComment(id)}
+          onReplyToComment={(id, text) => void handleReplyToComment(id, text)}
+          onEditComment={(id, text) => void handleEditComment(id, text)}
+          onDeleteComment={(id) => void handleDeleteComment(id)}
+          onEditHighlight={(id, note) => void handleEditHighlight(id, note)}
+          onDeleteHighlight={(id) => void handleDeleteHighlight(id)}
+          onNavigateToAnnotation={(ref, cfi) => void handleNavigateToAnnotation(ref, cfi)}
+        />
+      )}
     </div>
   );
 }

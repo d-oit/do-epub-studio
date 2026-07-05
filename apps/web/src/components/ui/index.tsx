@@ -12,12 +12,6 @@ export {
   AppLogo,
   Pagination,
   SearchInput,
-  fadeVariants,
-  slideUpVariants,
-  slideDownVariants,
-  scaleVariants,
-  staggerContainerVariants,
-  staggerItemVariants,
 } from '@do-epub-studio/ui';
 
 export type {

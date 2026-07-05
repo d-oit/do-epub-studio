@@ -1,11 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import {
   Header,
   IconButton,
   Button,
   Tooltip,
-  scaleVariants,
 } from '../../../../components/ui';
 import { useFocusTrap } from '@do-epub-studio/ui';
 import { LocaleSwitcher } from '../../../../components/LocaleSwitcher';
@@ -92,11 +90,9 @@ export function ReaderToolbar({
   return (
     <Header
       sticky
-      animate={{ y: isHeaderVisible ? 0 : 'var(--motion-header-offset)' }}
-      transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
       aria-hidden={isHeaderVisible ? undefined : true}
       data-container-name="reader-toolbar"
-      className={`cq cq--reader-toolbar ${isHeaderVisible ? '' : 'pointer-events-none'}`}
+      className={`cq cq--reader-toolbar transition-transform duration-300 ${isHeaderVisible ? 'translate-y-0' : '-translate-y-full pointer-events-none'}`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-14">
@@ -124,11 +120,9 @@ export function ReaderToolbar({
               </h1>
               <div className="flex items-center gap-2">
                 <div className="w-24 h-1 bg-border rounded-full overflow-hidden">
-                  <motion.div
-                    className="h-full bg-accent"
-                    initial={{ width: 0 }}
-                    animate={{ width: `${progressPercent}%` }}
-                    transition={{ duration: 0.5 }}
+                  <div
+                    className="h-full bg-accent transition-all duration-500"
+                    style={{ width: `${progressPercent}%` }}
                   />
                 </div>
                 <span className="text-[10px] text-foreground-muted font-medium">
@@ -301,15 +295,10 @@ export function ReaderToolbar({
               </IconButton>
             </Tooltip>
 
-            <AnimatePresence>
-              {isMenuOpen && (
-                <motion.div
-                  initial="initial"
-                  animate="animate"
-                  exit="exit"
-                  variants={scaleVariants}
-                  className="absolute right-0 mt-2 w-56 glass-panel rounded-xl shadow-xl border border-border p-2 z-[60]"
-                >
+            {isMenuOpen && (
+              <div
+                className="absolute right-0 mt-2 w-56 glass-panel rounded-xl shadow-xl border border-border p-2 z-[60] animate-scale-in"
+              >
                   <div className="flex flex-col gap-1">
                     <button
                       onClick={() => {
@@ -469,9 +458,8 @@ export function ReaderToolbar({
                       {t('reader.signOut')}
                     </button>
                   </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+              </div>
+            )}
           </div>
         </div>
       </div>

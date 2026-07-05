@@ -1,6 +1,5 @@
 import { useCallback, useRef } from 'react';
-import { motion } from 'framer-motion';
-import { scaleVariants, IconButton } from '../../../../components/ui';
+import { IconButton } from '../../../../components/ui';
 import { useFocusTrap } from '@do-epub-studio/ui';
 import type { ReaderSpread, ReaderZoom } from '../../../../stores';
 
@@ -52,16 +51,12 @@ export function FixedLayoutControls({
   if (!isOpen) return null;
 
   return (
-    <motion.div
+    <div
       ref={panelRef}
       role="dialog"
       aria-modal="true"
       aria-labelledby="fl-controls-title"
-      initial="initial"
-      animate="animate"
-      exit="exit"
-      variants={scaleVariants}
-      className="fixed top-14 right-4 glass-panel rounded-xl shadow-xl border border-border p-4 z-50 w-72"
+      className="fixed top-14 right-4 glass-panel rounded-xl shadow-xl border border-border p-4 z-50 w-72 animate-scale-in"
     >
       {/* Live region for zoom level announcements — WCAG 4.1.3 */}
       <div
@@ -197,6 +192,6 @@ export function FixedLayoutControls({
           </div>
         </fieldset>
       </div>
-    </motion.div>
+    </div>
   );
 }

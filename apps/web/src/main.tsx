@@ -1,7 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
-import { MotionConfig } from 'framer-motion';
 
 import App from './App';
 import { createSpanId, createTraceId } from '@do-epub-studio/shared';
@@ -93,9 +92,7 @@ export const Root = () => {
           }}
         >
           <BrowserRouter>
-            <MotionConfig reducedMotion="user">
-              <App />
-            </MotionConfig>
+            <App />
           </BrowserRouter>
         </ErrorBoundary>
       </ToastProvider>

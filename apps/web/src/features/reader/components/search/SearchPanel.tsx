@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { motion } from 'framer-motion';
 import { useFocusTrap, Spinner } from '@do-epub-studio/ui';
 import { IconButton } from '../../../../components/ui';
 import { useReaderSearch, highlightRanges } from '../../hooks/useReaderSearch';
@@ -116,14 +115,10 @@ export function SearchPanel({ isOpen, book, onClose, onNavigate, t }: SearchPane
   if (!isOpen) return null;
 
   return (
-    <motion.div
+    <div
       ref={panelRef}
-      initial={{ x: '100%' }}
-      animate={{ x: 0 }}
-      exit={{ x: '100%' }}
-      transition={{ type: 'spring', damping: 25, stiffness: 200 }}
       data-container-name="search-panel"
-      className="cq cq--search-panel fixed inset-y-0 right-0 w-full sm:w-96 glass-panel z-50 border-l border-border shadow-2xl flex flex-col"
+      className="cq cq--search-panel fixed inset-y-0 right-0 w-full sm:w-96 glass-panel z-50 border-l border-border shadow-2xl flex flex-col animate-slide-in-right"
       role="search"
       aria-label={t('reader.search')}
     >
@@ -228,6 +223,6 @@ export function SearchPanel({ isOpen, book, onClose, onNavigate, t }: SearchPane
           ) : null}
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }

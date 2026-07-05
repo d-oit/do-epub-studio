@@ -1,5 +1,4 @@
 import { forwardRef } from 'react';
-import { motion } from 'framer-motion';
 
 export interface ButtonProps {
   variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
@@ -29,17 +28,17 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     ref,
   ) => {
     const baseClasses =
-      'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2';
+      'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 hover:scale-[1.02] active:scale-[0.98]';
 
     const variantClasses = {
       primary:
-        'bg-accent text-white hover:bg-accent/90 active:scale-[0.98] focus-visible:ring-accent disabled:bg-accent/50',
+        'bg-accent text-white hover:bg-accent/90 focus-visible:ring-accent disabled:bg-accent/50',
       secondary:
-        'bg-background-secondary text-foreground border border-border hover:bg-background-tertiary active:scale-[0.98] focus-visible:ring-accent dark:hover:bg-background-tertiary',
+        'bg-background-secondary text-foreground border border-border hover:bg-background-tertiary focus-visible:ring-accent dark:hover:bg-background-tertiary',
       ghost:
-        'text-foreground hover:text-foreground hover:bg-background-secondary active:scale-[0.98] focus-visible:ring-accent dark:hover:bg-background-tertiary',
+        'text-foreground hover:text-foreground hover:bg-background-secondary focus-visible:ring-accent dark:hover:bg-background-tertiary',
       danger:
-        'bg-accent-error text-white hover:bg-accent-error/90 active:scale-[0.98] focus-visible:ring-accent-error disabled:bg-accent-error/50',
+        'bg-accent-error text-white hover:bg-accent-error/90 focus-visible:ring-accent-error disabled:bg-accent-error/50',
     };
 
     const sizeClasses = {
@@ -49,13 +48,10 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     };
 
     return (
-      <motion.button
+      <button
         ref={ref}
         type={type}
         onClick={onClick}
-        whileTap={{ scale: disabled || isLoading ? 1 : 'var(--motion-scale-tap)' }}
-        whileHover={{ scale: disabled || isLoading ? 1 : 'var(--motion-scale-hover)' }}
-        transition={{ duration: 0.15 }}
         className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
         disabled={disabled || isLoading}
         aria-busy={isLoading}
@@ -82,7 +78,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ) : (
           children
         )}
-      </motion.button>
+      </button>
     );
   },
 );

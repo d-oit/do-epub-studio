@@ -1,6 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, Outlet } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '../stores/auth';
 import { useTranslation } from '../hooks/useTranslation';
 import { AppLogo } from './ui';
@@ -43,42 +42,23 @@ export function AppShell() {
   if (isResolving) {
     return (
       <div className="min-h-dvh bg-background flex flex-col items-center justify-center p-6">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key="app-shell-loading"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 1.1 }}
-            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-            className="flex flex-col items-center gap-8 w-full max-w-md"
-            role="status"
-            aria-live="polite"
-            aria-label={t('a11y.loading_app')}
-          >
-            <AppLogo size={64} className="text-accent animate-pulse" />
-            <div className="space-y-4 w-full">
-              <div className="h-8 w-3/4 mx-auto rounded-lg skeleton" />
-              <div className="h-4 w-1/2 mx-auto rounded-md skeleton" />
-            </div>
-            <div className="flex gap-2 mt-4" aria-hidden="true">
-              <motion.div
-                animate={{ scale: [1, 1.2, 1] }}
-                transition={{ repeat: Infinity, duration: 1, delay: 0 }}
-                className="w-2 h-2 rounded-full bg-accent"
-              />
-              <motion.div
-                animate={{ scale: [1, 1.2, 1] }}
-                transition={{ repeat: Infinity, duration: 1, delay: 0.2 }}
-                className="w-2 h-2 rounded-full bg-accent/60"
-              />
-              <motion.div
-                animate={{ scale: [1, 1.2, 1] }}
-                transition={{ repeat: Infinity, duration: 1, delay: 0.4 }}
-                className="w-2 h-2 rounded-full bg-accent/30"
-              />
-            </div>
-          </motion.div>
-        </AnimatePresence>
+        <div
+          className="flex flex-col items-center gap-8 w-full max-w-md animate-scale-in"
+          role="status"
+          aria-live="polite"
+          aria-label={t('a11y.loading_app')}
+        >
+          <AppLogo size={64} className="text-accent animate-pulse" />
+          <div className="space-y-4 w-full">
+            <div className="h-8 w-3/4 mx-auto rounded-lg skeleton" />
+            <div className="h-4 w-1/2 mx-auto rounded-md skeleton" />
+          </div>
+          <div className="flex gap-2 mt-4" aria-hidden="true">
+            <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
+            <div className="w-2 h-2 rounded-full bg-accent/60 animate-pulse" style={{ animationDelay: '0.2s' }} />
+            <div className="w-2 h-2 rounded-full bg-accent/30 animate-pulse" style={{ animationDelay: '0.4s' }} />
+          </div>
+        </div>
       </div>
     );
   }
