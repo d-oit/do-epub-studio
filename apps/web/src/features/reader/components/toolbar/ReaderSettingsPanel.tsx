@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
-import { scaleVariants, IconButton } from '../../../../components/ui';
+import { IconButton } from '../../../../components/ui';
 import { useFocusTrap } from '@do-epub-studio/ui';
 
 export type PageDirection = 'ltr' | 'rtl' | 'default';
@@ -58,16 +57,12 @@ export function ReaderSettingsPanel({
   if (!isOpen) return null;
 
   return (
-    <motion.div
+    <div
       ref={panelRef}
       role="dialog"
       aria-modal="true"
       aria-labelledby="settings-title"
-      initial="initial"
-      animate="animate"
-      exit="exit"
-      variants={scaleVariants}
-      className="fixed top-14 right-4 glass-panel rounded-xl shadow-xl border border-border p-4 z-50 w-72"
+      className="fixed top-14 right-4 glass-panel rounded-xl shadow-xl border border-border p-4 z-50 w-72 animate-scale-in"
     >
       <div className="flex items-center justify-between mb-4">
         <h2 id="settings-title" className="text-sm font-semibold text-foreground">{t('reader.settings')}</h2>
@@ -250,6 +245,6 @@ export function ReaderSettingsPanel({
           </div>
         )}
       </div>
-    </motion.div>
+    </div>
   );
 }

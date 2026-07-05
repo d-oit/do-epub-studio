@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { motion } from 'framer-motion';
 import { useTranslation } from '../../../../hooks/useTranslation';
 import type { TranslationKeys } from '../../../../i18n/en';
 import { Tooltip, IconButton } from '../../../../components/ui';
@@ -137,14 +136,10 @@ export function AnnotationToolbar({
   );
 
   return (
-    <motion.div
+    <div
       ref={toolbarRef}
-      initial={{ opacity: 0, scale: 0.8, y: 10 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.8, y: 10 }}
-      transition={{ type: 'spring', damping: 20, stiffness: 300 }}
       data-container-name="annotation-toolbar"
-      className="cq cq--annotation-toolbar fixed z-50 glass-panel rounded-xl shadow-glass-lg border border-border p-1.5 flex items-center gap-1.5 container-reader-toolbar"
+      className="cq cq--annotation-toolbar fixed z-50 glass-panel rounded-xl shadow-glass-lg border border-border p-1.5 flex items-center gap-1.5 container-reader-toolbar animate-scale-in"
       style={{ top: position.top, left: position.left, minWidth: '180px' }}
     >
       {canHighlight && (
@@ -244,7 +239,7 @@ export function AnnotationToolbar({
           />
         </svg>
       </IconButton>
-    </motion.div>
+    </div>
   );
 }
 

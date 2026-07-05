@@ -1,12 +1,6 @@
 import { type ComponentPropsWithoutRef, forwardRef, useId } from 'react';
-import { motion } from 'framer-motion';
 
-type MotionInputBaseProps = Omit<
-  ComponentPropsWithoutRef<typeof motion.input>,
-  'onDrag' | 'onDragEnd' | 'onDragStart' | 'whileFocus' | 'transition'
->;
-
-export interface InputProps extends MotionInputBaseProps {
+export interface InputProps extends ComponentPropsWithoutRef<'input'> {
   label?: string;
   error?: string;
   helperText?: string;
@@ -27,7 +21,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             {label}
           </label>
         )}
-        <motion.input
+        <input
           ref={ref}
           id={inputId}
           aria-invalid={error ? 'true' : undefined}

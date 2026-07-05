@@ -22,7 +22,6 @@
     "@do-epub-studio/shared": "workspace:*",
     "@do-epub-studio/ui": "workspace:*",
     "@intity/epub-js": "^0.3.96",
-    "framer-motion": "^12",
     "idb": "^8.0.3",
     "jszip": "^3.10.1",
     "react": "^19",

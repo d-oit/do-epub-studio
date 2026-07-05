@@ -1,5 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import { useSwUpdateStore } from '../stores/sw-update';
 import { useTranslation } from '../hooks/useTranslation';
 import { Button } from './ui';
@@ -11,6 +10,8 @@ export function SwUpdateNotification() {
   const updateServiceWorker = useSwUpdateStore((s) => s.updateServiceWorker);
   const dismiss = useSwUpdateStore((s) => s.dismiss);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [shouldRender, setShouldRender] = useState(false);
+  const [isExiting, setIsExiting] = useState(false);
 
   const handleUpdate = useCallback(() => {
     updateServiceWorker?.();
@@ -22,23 +23,43 @@ export function SwUpdateNotification() {
       clearTimeout(timerRef.current);
       timerRef.current = null;
     }
-    dismiss();
-  }, [dismiss]);
+    setIsExiting(true);
+  }, []);
 
   // Auto-dismiss offline-ready after 6 seconds
   useEffect(() => {
     if (offlineReady && !needRefresh) {
       timerRef.current = setTimeout(() => {
-        dismiss();
+        setIsExiting(true);
       }, 6000);
       return () => {
         if (timerRef.current) clearTimeout(timerRef.current);
       };
     }
     return undefined;
-  }, [offlineReady, needRefresh, dismiss]);
+  }, [offlineReady, needRefresh]);
 
   const show = needRefresh || offlineReady;
+
+  useEffect(() => {
+    if (show && !isExiting) {
+      setShouldRender(true);
+    } else if (!show || isExiting) {
+      const timer = setTimeout(() => setShouldRender(false), 200);
+      return () => clearTimeout(timer);
+    }
+  }, [show, isExiting]);
+
+  useEffect(() => {
+    if (isExiting) {
+      const timer = setTimeout(() => {
+        setShouldRender(false);
+        setIsExiting(false);
+        dismiss();
+      }, 200);
+      return () => clearTimeout(timer);
+    }
+  }, [isExiting, dismiss]);
 
   const icon = needRefresh ? (
     <svg className="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -50,43 +71,36 @@ export function SwUpdateNotification() {
     </svg>
   );
 
+  if (!shouldRender) return null;
+
   return (
-    <AnimatePresence>
-      {show && (
-        <motion.div
-          key="sw-update-banner"
-          initial={{ y: 80 }}
-          animate={{ y: 0 }}
-          exit={{ y: 80 }}
-          transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-          className="fixed bottom-20 left-1/2 -translate-x-1/2 z-[200] w-full max-w-[calc(100vw-2rem)] sm:max-w-md pointer-events-auto"
-          role="status"
-          aria-live="polite"
-        >
-          <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-background-secondary text-foreground border border-border shadow-lg">
-            {icon}
-            <p className="flex-1 text-sm text-foreground">
-              {needRefresh ? t('sw.updateAvailable') : t('sw.offlineReady')}
-            </p>
-            <div className="flex items-center gap-2 shrink-0">
-              {needRefresh && (
-                <Button variant="secondary" size="sm" onClick={handleUpdate}>
-                  {t('sw.updateAction')}
-                </Button>
-              )}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleDismiss}
-                aria-label={t('sw.dismissAction')}
-                className="min-w-[44px] min-h-[44px]"
-              >
-                {t('sw.dismissAction')}
-              </Button>
-            </div>
-          </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+    <div
+      className={`fixed bottom-20 left-1/2 -translate-x-1/2 z-[200] w-full max-w-[calc(100vw-2rem)] sm:max-w-md pointer-events-auto ${isExiting ? 'animate-slide-out-bottom' : 'animate-slide-in-bottom'}`}
+      role="status"
+      aria-live="polite"
+    >
+      <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-background-secondary text-foreground border border-border shadow-lg">
+        {icon}
+        <p className="flex-1 text-sm text-foreground">
+          {needRefresh ? t('sw.updateAvailable') : t('sw.offlineReady')}
+        </p>
+        <div className="flex items-center gap-2 shrink-0">
+          {needRefresh && (
+            <Button variant="secondary" size="sm" onClick={handleUpdate}>
+              {t('sw.updateAction')}
+            </Button>
+          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleDismiss}
+            aria-label={t('sw.dismissAction')}
+            className="min-w-[44px] min-h-[44px]"
+          >
+            {t('sw.dismissAction')}
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 }
