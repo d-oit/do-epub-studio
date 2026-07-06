@@ -127,7 +127,7 @@ Run this before finalizing ANY response:
 | **DevOps**       | `github-workflow`, `cicd-pipeline`, `migration-refactoring`                                                              |
 | **Workflow**     | `github-actions-version-fix`, `github-pr-autopilot`, `release-management`                                                |
 | **Security**     | `security-code-auditor`, `privacy-first`                                                                                 |
-| **Quality**      | `code-quality`, `code-review-assistant`, `shell-script-quality`, `anti-ai-slop`, `agents-md`                             |
+| **Quality**      | `code-quality`, `code-review-assistant`, `shell-script-quality`, `anti-ai-slop`, `impeccable`, `agents-md`              |
 
 ---
 

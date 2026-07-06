@@ -29,6 +29,7 @@ Auto-generated from skill definitions. Run this script to regenerate.
 | `code-quality` | No description |
 | `code-review-assistant` | No description |
 | `dogfood` | Systematically explore and test a web application to find bugs, UX issues, and other problems. Use when asked to "dogfood", "QA", "exploratory test", "find issues", "bug hunt", "test this app/site/platform", or review the quality of a web application. Produces a structured report with full reproduction evidence. |
+| `impeccable` | Design guidance for AI coding agents. 23 commands, 44 deterministic detector rules, and live browser iteration for AI-generated frontend design. Activate for UI/UX design work, anti-pattern detection, or design quality audits. |
 | `privacy-first` | No description |
 | `safe-regex-authoring` | No description |
 | `security-code-auditor` | No description |

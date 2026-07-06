@@ -895,6 +895,7 @@ At startup, only skill names/descriptions are loaded (~50 tokens each). Full SKI
 - `anti-ai-slop`, `agent-browser`, `dogfood` — UX + testing
 - `skill-creator`, `skill-evaluator` — Skill development
 - `shell-script-quality` — Shell best practices
+- `impeccable` — Design quality: 23 commands + 44 anti-pattern detector rules
 
 Run `./scripts/validate-skills.sh` to verify skill integrity.
 
