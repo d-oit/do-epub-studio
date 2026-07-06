@@ -153,6 +153,8 @@ export function CatalogPage() {
                           alt={t('catalog.coverAlt').replace('{title}', book.title)}
                           width={320}
                           height={426}
+                          loading="lazy"
+                          decoding="async"
                           className="mb-4 aspect-[3/4] w-full rounded-md object-cover"
                         />
                       </picture>

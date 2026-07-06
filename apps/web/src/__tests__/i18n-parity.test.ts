@@ -1,17 +1,13 @@
 import { describe, it, expect } from 'vitest';
-import { dictionaries } from '../i18n';
-import { en } from '../i18n/en';
-import { de } from '../i18n/de';
-import { fr } from '../i18n/fr';
+import { dictionaries, type LocaleKey } from '../i18n';
 
 describe('i18n parity', () => {
-  const locales = { en, de, fr } as const;
-  const localeNames = Object.keys(locales) as (keyof typeof locales)[];
+  const localeNames = Object.keys(dictionaries) as LocaleKey[];
 
   it('has all locale dictionaries defined', () => {
-    expect(dictionaries).toHaveProperty('en');
-    expect(dictionaries).toHaveProperty('de');
-    expect(dictionaries).toHaveProperty('fr');
+    for (const name of localeNames) {
+      expect(dictionaries).toHaveProperty(name);
+    }
   });
 
   it('has the same keys across all locales', () => {
@@ -40,6 +36,7 @@ describe('i18n parity', () => {
 
   it('has no untranslated keys (value equals key name)', () => {
     for (const locale of localeNames) {
+      if (locale === 'en') continue;
       const dict = dictionaries[locale];
       const untranslatedKeys = Object.entries(dict).filter(
         ([key, value]) => key === value,

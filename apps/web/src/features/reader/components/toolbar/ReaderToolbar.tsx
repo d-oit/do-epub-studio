@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import {
   Header,
   IconButton,
@@ -84,7 +84,7 @@ export function ReaderToolbar({
     return () => window.removeEventListener('keydown', handleEscape);
   }, [isMenuOpen]);
 
-  const openCommentsCount = comments.filter((c) => c.status === 'open').length;
+  const openCommentsCount = useMemo(() => comments.filter((c) => c.status === 'open').length, [comments]);
   const isHeaderVisible = scrollDirection === 'up';
 
   return (

@@ -1,4 +1,3 @@
-import { readFileSync } from 'node:fs';
 import path from 'path';
 import { defineConfig, type PluginOption } from 'vite';
 import react from '@vitejs/plugin-react';
@@ -6,9 +5,10 @@ import { VitePWA } from 'vite-plugin-pwa';
 import { visualizer } from 'rollup-plugin-visualizer';
 import tailwindcss from '@tailwindcss/vite';
 import appIdentity from './src/config/app-identity.json';
+import appVersionRaw from '../../VERSION?raw';
 
+const appVersion = appVersionRaw.trim();
 const isAnalyze = process.env.ANALYZE === 'true';
-const appVersion = readFileSync(path.resolve(__dirname, '../../VERSION'), 'utf8').trim();
 
 export default defineConfig({
   plugins: [
@@ -96,9 +96,6 @@ export default defineConfig({
             }
             if (id.includes('workbox')) {
               return 'workbox';
-            }
-            if (id.includes('framer-motion')) {
-              return 'framer-motion';
             }
             if (id.includes('i18next') || id.includes('react-i18next')) {
               return 'i18n';

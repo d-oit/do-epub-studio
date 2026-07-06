@@ -10,18 +10,15 @@ export type ReaderSpread = 'auto' | 'none' | 'both';
 /** Discrete zoom steps for fixed-layout EPUBs. 1.0 = 100%. */
 export type ReaderZoom = 0.5 | 0.75 | 1.0 | 1.25 | 1.5 | 2.0;
 
-/** @deprecated Use AnnotationLocator from @do-epub-studio/shared directly */
-export type Locator = AnnotationLocator;
-
 export interface ReadingProgress {
-  locator: Locator | null;
+  locator: AnnotationLocator | null;
   progressPercent: number;
   updatedAt: string | null;
 }
 
 export interface Bookmark {
   id: string;
-  locator: Locator;
+  locator: AnnotationLocator;
   label: string | null;
   createdAt: string;
 }
