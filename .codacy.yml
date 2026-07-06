@@ -22,6 +22,7 @@ engines:
       - "**/*.spec.tsx"
       - "**/__tests__/**"
       - "**/tests/**"
+      - "apps/web/src/lib/api/index.ts"
   biome:
     enabled: false
   tsqlint:
