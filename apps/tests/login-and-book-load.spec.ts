@@ -1,118 +1,14 @@
 import { test, expect, type Page, type Route } from '@playwright/test';
-
-// ---------------------------------------------------------------------------
-// Constants & fixtures
-// ---------------------------------------------------------------------------
-
-const API_BASE = '**/api/**';
-
-const TEST_USER = {
-  email: 'reader@example.com',
-  password: process.env.TEST_PASSWORD || 'test-password',
-  bookSlug: 'my-test-book',
-};
-
-const LOGIN_RESPONSE = {
-  ok: true,
-  data: {
-    sessionToken: process.env.TEST_SESSION_TOKEN || 'test-session-token-abc123',
-    book: {
-      id: 'book-1',
-      slug: TEST_USER.bookSlug,
-      title: 'My Test Book',
-      authorName: 'Test Author',
-    },
-    capabilities: {
-      canRead: true,
-      canComment: true,
-      canHighlight: true,
-      canBookmark: true,
-      canDownloadOffline: false,
-      canExportNotes: false,
-      canManageAccess: false,
-    },
-  },
-};
-
-const BOOK_FILE_URL_RESPONSE = {
-  ok: true,
-  data: { url: 'https://example.com/test-book.epub' },
-};
-
-const PROGRESS_RESPONSE = {
-  ok: true,
-  data: { locator: { cfi: 'epubcfi(/6/4)' }, progressPercent: 0.1 },
-};
-
-const HIGHLIGHTS_RESPONSE = { ok: true, data: [] };
-const COMMENTS_RESPONSE = { ok: true, data: [] };
+import { TEST_USER, mockReaderApi } from './fixtures';
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
 /**
- * Mock every API endpoint the login -> reader flow touches so the test runs
- * fully offline with deterministic responses.
- */
-async function mockApiRoutes(page: Page) {
-  // Login endpoint
-  await page.route('**/api/access/request', async (route: Route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify(LOGIN_RESPONSE),
-    });
-  });
-
-  // Book file URL fetch (ReaderPage fetches this after login)
-  await page.route('**/api/books/*/file-url', async (route: Route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify(BOOK_FILE_URL_RESPONSE),
-    });
-  });
-
-  // Reading progress (GET on load + PUT on relocate)
-  await page.route('**/api/books/*/progress', async (route: Route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify(PROGRESS_RESPONSE),
-    });
-  });
-
-  // Annotations
-  await page.route('**/api/books/*/highlights', async (route: Route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify(HIGHLIGHTS_RESPONSE),
-    });
-  });
-
-  await page.route('**/api/books/*/comments', async (route: Route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify(COMMENTS_RESPONSE),
-    });
-  });
-
-  // Logout (best-effort, may not be called in test)
-  await page.route('**/api/access/logout', async (route: Route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({ ok: true, data: {} }),
-    });
-  });
-}
-
-/**
  * Fill out the login form and submit it.
  * Book slug is passed via URL param, not a form field.
+ * Lightweight version — no URL assertion, no waitForLoadState.
  */
 async function login(page: Page) {
   await page.goto(`/login?book=${TEST_USER.bookSlug}`);
@@ -135,7 +31,7 @@ test.describe('Login and book load (desktop)', () => {
     page.on('pageerror', (err) => {
       console.log(`PAGE UNCAUGHT ERROR: ${err.message}`);
     });
-    await mockApiRoutes(page);
+    await mockReaderApi(page, { includeBookmarks: false });
   });
 
   test('@mobile @smoke renders the login page with all form fields', async ({ page }) => {
@@ -171,7 +67,7 @@ test.describe('Login and book load (desktop)', () => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify(BOOK_FILE_URL_RESPONSE),
+        body: JSON.stringify({ ok: true, data: { url: 'https://example.com/my-test-book.epub' } }),
       });
     });
 
@@ -242,7 +138,7 @@ test.describe('Login and book load (mobile)', () => {
   });
 
   test.beforeEach(async ({ page }) => {
-    await mockApiRoutes(page);
+    await mockReaderApi(page, { includeBookmarks: false });
   });
 
   test('@mobile login form is usable on small screens', async ({ page }) => {
@@ -289,7 +185,7 @@ test.describe('Login and book load (mobile)', () => {
 
 test.describe('Error handling', () => {
   test.beforeEach(async ({ page }) => {
-    await mockApiRoutes(page);
+    await mockReaderApi(page, { includeBookmarks: false });
   });
 
   test('@mobile shows error message when login fails', async ({ page }) => {

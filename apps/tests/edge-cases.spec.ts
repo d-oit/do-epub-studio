@@ -1,56 +1,5 @@
-import { test, expect, type Page, type Route } from '@playwright/test';
-
-const TEST_USER = {
-  email: 'reader@example.com',
-  password: process.env.TEST_PASSWORD || 'test-password',
-  bookSlug: 'my-test-book',
-};
-
-const LOGIN_RESPONSE = {
-  ok: true,
-  data: {
-    sessionToken: 'test-session-token-abc123',
-    book: { id: 'book-1', slug: TEST_USER.bookSlug, title: 'My Test Book', authorName: 'Test Author' },
-    capabilities: {
-      canRead: true, canComment: true, canHighlight: true, canBookmark: true,
-      canDownloadOffline: false, canExportNotes: false, canManageAccess: false,
-    },
-  },
-};
-
-async function mockReaderApi(page: Page) {
-  await page.route('**/api/access/request', async (route: Route) => {
-    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(LOGIN_RESPONSE) });
-  });
-  await page.route('**/api/books/*/file-url', async (route: Route) => {
-    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { url: 'https://example.com/test.epub' } }) });
-  });
-  await page.route('**/api/books/*/progress', async (route: Route) => {
-    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { locator: { cfi: 'epubcfi(/6/4)' }, progressPercent: 0.1 } }) });
-  });
-  await page.route('**/api/books/*/highlights', async (route: Route) => {
-    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: [] }) });
-  });
-  await page.route('**/api/books/*/comments', async (route: Route) => {
-    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: [] }) });
-  });
-  await page.route('**/api/books/*/bookmarks', async (route: Route) => {
-    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: [] }) });
-  });
-  await page.route('**/api/access/logout', async (route: Route) => {
-    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: {} }) });
-  });
-}
-
-async function loginAsReader(page: Page) {
-  await page.goto(`/login?book=${TEST_USER.bookSlug}`);
-  await page.getByLabel('Email Address').fill(TEST_USER.email);
-  await page.getByLabel('Password').fill(TEST_USER.password);
-  await page.getByRole('button', { name: 'Sign In', exact: true }).click();
-  await expect(page).toHaveURL(/\/read\/my-test-book$/);
-  await page.waitForLoadState('networkidle');
-  await page.waitForTimeout(1000);
-}
+import { test, expect, type Route } from '@playwright/test';
+import { ADMIN_USER, mockReaderApi, mockAdminApi, loginAsReader } from './fixtures';
 
 test.describe('Edge Cases & Error Handling', () => {
   test('@mobile should handle invalid login credentials gracefully', async ({ page }) => {
@@ -75,23 +24,11 @@ test.describe('Edge Cases & Error Handling', () => {
   });
 
   test('@mobile should redirect to login when session expires (401)', async ({ page }) => {
-    // Mock admin login
-    await page.route('**/api/admin/login', route => route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({ ok: true, data: { sessionToken: 'admin-token', email: 'admin@test.com' } }),
-    }));
-
-    // Mock initial books load so the page renders successfully
-    await page.route('**/api/admin/books', route => route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({ ok: true, data: [] }),
-    }));
+    await mockAdminApi(page);
 
     await page.goto('/admin/login');
-    await page.getByLabel('Email Address').fill('admin@test.com');
-    await page.getByLabel('Password').fill('admin-password');
+    await page.getByLabel('Email Address').fill(ADMIN_USER.email);
+    await page.getByLabel('Password').fill(ADMIN_USER.password);
     await page.getByRole('button', { name: 'Sign In' }).click();
     await expect(page).toHaveURL(/\/admin\/books/);
 
@@ -133,7 +70,7 @@ test.describe('Edge Cases & Error Handling', () => {
   });
 
   test('@mobile handles network failure during annotation save gracefully', async ({ page }) => {
-    await mockReaderApi(page);
+    await mockReaderApi(page, { epubUrl: 'https://example.com/test.epub' });
     await loginAsReader(page);
 
     // Mock highlight save to fail with network error
@@ -180,7 +117,7 @@ test.describe('Edge Cases & Error Handling', () => {
   });
 
   test('@mobile handles mid-read network failure gracefully — reader stays usable', async ({ page }) => {
-    await mockReaderApi(page);
+    await mockReaderApi(page, { epubUrl: 'https://example.com/test.epub' });
     await loginAsReader(page);
 
     // Verify reader loaded successfully
@@ -247,7 +184,7 @@ test.describe('Edge Cases & Error Handling', () => {
 
     // Remove the network failure route and verify recovery
     await page.unroute('**/api/**');
-    await mockReaderApi(page);
+    await mockReaderApi(page, { epubUrl: 'https://example.com/test.epub' });
 
     // Trigger a reload — should recover
     await page.reload();
@@ -259,7 +196,7 @@ test.describe('Edge Cases & Error Handling', () => {
   });
 
   test('@mobile shows error UI when EPUB file fails to load mid-session', async ({ page }) => {
-    await mockReaderApi(page);
+    await mockReaderApi(page, { epubUrl: 'https://example.com/test.epub' });
     await loginAsReader(page);
 
     // Verify reader loaded
