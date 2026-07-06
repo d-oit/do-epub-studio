@@ -56,6 +56,13 @@ export class RateLimitError extends AppError {
   retryAfter: number;
 }
 
+export class DatabaseError extends AppError {
+  constructor(message: string, public readonly queryContext?: string) {
+    super(message, 'DATABASE_ERROR', 500);
+    this.name = 'DatabaseError';
+  }
+}
+
 export function isAppError(error: unknown): error is AppError {
   return error instanceof AppError;
 }

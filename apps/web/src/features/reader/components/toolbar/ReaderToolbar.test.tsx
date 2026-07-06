@@ -105,8 +105,8 @@ describe('ReaderToolbar', () => {
     mockUseScrollDirection.mockReturnValue('down');
     render(<ReaderToolbar {...mockProps} />);
     const header = screen.getByRole('banner', { hidden: true });
-    expect(header).toHaveAttribute('data-animate');
-    expect(header.getAttribute('data-animate')).toContain('var(--motion-header-offset)');
+    expect(header.className).toContain('-translate-y-full');
+    expect(header.className).toContain('pointer-events-none');
   });
 
   it('shows header when scrolling up', () => {

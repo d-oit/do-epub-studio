@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { TRACE_HEADER, createTraceId } from '@do-epub-studio/shared';
+import { TRACE_HEADER, createTraceId, isAppError, toApiError } from '@do-epub-studio/shared';
 import type { Env } from './lib/env';
 import { observabilityMiddleware } from './middleware/observability';
 import { securityHeadersMiddleware } from './middleware/security-headers';
@@ -65,3 +65,10 @@ app.route('/api/files', filesRouter);
 app.route('/api/admin', adminRouter);
 app.route('/api', securityRouter);
 app.route('/api', telemetryRouter);
+
+app.onError((err, c) => {
+  const traceId = c.req.header(TRACE_HEADER) ?? createTraceId();
+  const apiError = toApiError(err);
+  const status = isAppError(err) ? err.statusCode : 500;
+  return c.json({ ok: false, error: { ...apiError, traceId } }, status as 400 | 401 | 403 | 404 | 409 | 429 | 500);
+});

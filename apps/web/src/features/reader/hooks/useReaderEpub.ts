@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import ePub from '@intity/epub-js';
 import type { Book, Rendition, NavItem, Contents } from '@intity/epub-js';
-import type { PageDirection, WritingMode, ReaderZoom } from '../../../stores';
+import type { PageDirection, ReaderZoom } from '../../../stores';
 import {
   parseAccessibilityFromOpf,
   parseFixedLayoutFromOpf,
@@ -19,48 +19,7 @@ import {
 import { useTranslation } from '../../../hooks/useTranslation';
 import { createEpubAnnotationAdapter, type AnnotationAdapter, type HighlightRecord, type CommentRecord } from '@do-epub-studio/reader-core';
 import { createRelocatedHandler } from './useEpubProgress';
-
-interface TocItem {
-  label: string;
-  href: string;
-  subitems?: TocItem[];
-}
-
-interface BookInfo {
-  title: string;
-  creator?: string;
-  publisher?: string;
-  language?: string;
-  description?: string;
-  accessibility?: {
-    summary?: string;
-    features: string[];
-    hazards: string[];
-    controls: string[];
-    api?: string;
-    conformsTo?: string;
-    certifiedBy?: string;
-    certifierCredential?: string;
-    certifierReport?: string;
-  };
-}
-
-function applyDirectionAndWritingMode(
-  rendition: Rendition,
-  direction: PageDirection,
-  writingMode: WritingMode,
-): void {
-  const dir = direction === 'default' ? document.documentElement.dir || 'ltr' : direction;
-  rendition.hooks.content.register((contents: Contents) => {
-    if (contents.document?.documentElement) {
-      contents.document.documentElement.setAttribute('dir', dir);
-    }
-    contents.direction(dir);
-    if (writingMode !== 'horizontal-tb') {
-      contents.css('writing-mode', writingMode, true);
-    }
-  });
-}
+import { applyDirectionAndWritingMode, type TocItem, type BookInfo } from '../lib/epub-init';
 
 export function useReaderEpub(
   epubUrl: string | null,

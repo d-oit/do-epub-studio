@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { useShallow } from 'zustand/react/shallow';
+import { createTraceId } from '@do-epub-studio/shared';
 import { useReaderStore, useAuthStore } from '../../../stores';
 import {
   createHighlight,
@@ -10,6 +11,7 @@ import {
 } from '../../../lib/api/annotations';
 import { saveAnnotation, queueSync, generateMutationId } from '../../../lib/offline';
 import type { SelectionData } from '../components/annotations';
+import { logClientEvent } from '../../../lib/client-logger';
 
 export function useReaderHandlers() {
   const sessionToken = useAuthStore((state) => state.sessionToken);
@@ -55,7 +57,7 @@ export function useReaderHandlers() {
           await queueSync('annotation', { bookId, annotation: highlight }, mutationId);
         }
       } catch (err) {
-        console.error('Failed to create highlight', err);
+        logClientEvent({ level: 'error', traceId: createTraceId(), event: 'reader.create-highlight.failed', error: { name: (err as Error).name, message: (err as Error).message } });
       }
     },
     [sessionToken, bookId, addHighlight],
@@ -104,7 +106,7 @@ export function useReaderHandlers() {
           await queueSync('annotation', { bookId, annotation: comment }, mutationId);
         }
       } catch (err) {
-        console.error('Failed to create comment', err);
+        logClientEvent({ level: 'error', traceId: createTraceId(), event: 'reader.create-comment.failed', error: { name: (err as Error).name, message: (err as Error).message } });
       }
     },
     [sessionToken, bookId, addComment],
@@ -123,7 +125,7 @@ export function useReaderHandlers() {
           resolvedAt: newStatus === 'resolved' ? new Date().toISOString() : null,
         });
       } catch (err) {
-        console.error('Failed to update comment', err);
+        logClientEvent({ level: 'error', traceId: createTraceId(), event: 'reader.resolve-comment.failed', error: { name: (err as Error).name, message: (err as Error).message } });
       }
     },
     [sessionToken, bookId, comments, updateComment],
@@ -140,7 +142,7 @@ export function useReaderHandlers() {
         );
         addComment(comment);
       } catch (err) {
-        console.error('Failed to reply to comment', err);
+        logClientEvent({ level: 'error', traceId: createTraceId(), event: 'reader.reply-comment.failed', error: { name: (err as Error).name, message: (err as Error).message } });
       }
     },
     [sessionToken, bookId, addComment],
@@ -153,7 +155,7 @@ export function useReaderHandlers() {
         await apiUpdateComment(commentId, { body: text }, sessionToken);
         updateComment(commentId, { body: text, updatedAt: new Date().toISOString() });
       } catch (err) {
-        console.error('Failed to edit comment', err);
+        logClientEvent({ level: 'error', traceId: createTraceId(), event: 'reader.edit-comment.failed', error: { name: (err as Error).name, message: (err as Error).message } });
       }
     },
     [sessionToken, updateComment],
@@ -166,7 +168,7 @@ export function useReaderHandlers() {
         await apiUpdateComment(commentId, { status: 'deleted' }, sessionToken);
         updateComment(commentId, { status: 'deleted' });
       } catch (err) {
-        console.error('Failed to delete comment', err);
+        logClientEvent({ level: 'error', traceId: createTraceId(), event: 'reader.delete-comment.failed', error: { name: (err as Error).name, message: (err as Error).message } });
       }
     },
     [sessionToken, updateComment],
@@ -179,7 +181,7 @@ export function useReaderHandlers() {
         await apiUpdateHighlight(bookId, highlightId, { note }, sessionToken);
         updateHighlight(highlightId, { note, updatedAt: new Date().toISOString() });
       } catch (err) {
-        console.error('Failed to update highlight', err);
+        logClientEvent({ level: 'error', traceId: createTraceId(), event: 'reader.edit-highlight.failed', error: { name: (err as Error).name, message: (err as Error).message } });
       }
     },
     [sessionToken, bookId, updateHighlight],
@@ -192,7 +194,7 @@ export function useReaderHandlers() {
         await deleteHighlight(bookId, highlightId, sessionToken);
         removeHighlight(highlightId);
       } catch (err) {
-        console.error('Failed to delete highlight', err);
+        logClientEvent({ level: 'error', traceId: createTraceId(), event: 'reader.delete-highlight.failed', error: { name: (err as Error).name, message: (err as Error).message } });
       }
     },
     [sessionToken, bookId, removeHighlight],

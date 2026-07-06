@@ -1,5 +1,6 @@
 import { Component, Suspense, use, useState, useCallback, useRef, type ErrorInfo, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { createTraceId } from '@do-epub-studio/shared';
 import { useTranslation } from '../../hooks/useTranslation';
 import type { TranslationKeys } from '../../i18n';
 import {
@@ -11,6 +12,7 @@ import { useAuthStore } from '../../stores/auth';
 import type { AuditLogResponse } from '@do-epub-studio/shared';
 import { LocaleSwitcher } from '../../components/LocaleSwitcher';
 import { Spinner } from '@do-epub-studio/ui';
+import { logClientEvent } from '../../lib/client-logger';
 
 const PAGE_SIZE = 50;
 const ENTITY_TYPE_OPTIONS: Array<{ value: string; labelKey: TranslationKeys }> = [
@@ -170,8 +172,8 @@ class AuditErrorBoundary extends Component<AuditErrorBoundaryProps, AuditErrorBo
     return { error };
   }
 
-  public componentDidCatch(_error: Error, _errorInfo: ErrorInfo): void {
-    // Surface to global error handler in a real app; keep quiet in tests.
+  public componentDidCatch(error: Error, _errorInfo: ErrorInfo): void {
+    logClientEvent({ level: 'error', traceId: createTraceId(), event: 'ui.audit-error-boundary', error: { name: error.name, message: error.message, stack: error.stack } });
   }
 
   public render(): ReactNode {

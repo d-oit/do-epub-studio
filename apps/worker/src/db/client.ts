@@ -1,3 +1,4 @@
+import { DatabaseError } from '@do-epub-studio/shared';
 import type { Env, JsonRow } from '../lib/env';
 
 export interface QueryResult<T extends JsonRow = JsonRow> {
@@ -47,7 +48,11 @@ async function query<T extends JsonRow = JsonRow>(
   });
 
   if (!response.ok) {
-    throw new Error(`Database query failed: ${response.statusText}`);
+    const sanitized = sql.replace(/\s+/g, ' ').slice(0, 120);
+    throw new DatabaseError(
+      `Database query failed: ${response.statusText}`,
+      sanitized,
+    );
   }
 
   const data: { rows: T[] } = await response.json();
@@ -70,6 +75,10 @@ export async function transaction(
   });
 
   if (!response.ok) {
-    throw new Error(`Database transaction failed: ${response.statusText}`);
+    const count = statements.length;
+    throw new DatabaseError(
+      `Database transaction failed: ${response.statusText}`,
+      `transaction(${count} statements)`,
+    );
   }
 }

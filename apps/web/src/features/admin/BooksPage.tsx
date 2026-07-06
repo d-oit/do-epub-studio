@@ -6,8 +6,10 @@ import { useAuthStore } from '../../stores/auth';
 import type { BookResponse } from '@do-epub-studio/shared';
 import { validateEpub } from '@do-epub-studio/shared';
 import { LocaleSwitcher } from '../../components/LocaleSwitcher';
-import { Modal, Button } from '../../components/ui';
+import { Button } from '../../components/ui';
 import { Spinner } from '@do-epub-studio/ui';
+import { BookCreateModal } from './components/BookCreateModal';
+import { BookEditModal } from './components/BookEditModal';
 
 interface CreateBookResponse {
   id: string;
@@ -257,7 +259,7 @@ export function AdminBookResponsesPage() {
   };
 
   return (
-    <main id="main-content" className="min-h-dvh bg-background p-4 sm:p-6 lg:p-8">
+    <main id="main-content" className="min-dvh bg-background p-4 sm:p-6 lg:p-8">
       <header className="flex justify-between flex-wrap gap-4 items-center mb-8">
         <div>
           <h1 className="text-2xl font-bold text-foreground">
@@ -352,190 +354,39 @@ export function AdminBookResponsesPage() {
         )}
       </div>
 
-      <Modal
+      <BookCreateModal
         isOpen={isCreateModalOpen}
-        onClose={() => {
-          setIsCreateModalOpen(false);
-          resetCreateForm();
-        }}
-        title={t('admin.createBookModal.title')}
-      >
-        <form onSubmit={(e) => { void handleCreateBook(e); }} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-foreground-muted mb-1">
-              {t('admin.createBookModal.titleLabel')}
-            </label>
-            <input
-              type="text"
-              value={bookTitle}
-              onChange={(e) => setBookTitle(e.target.value)}
-              placeholder={t('admin.createBookModal.titlePlaceholder')}
-              className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder:text-foreground-muted focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none transition-all"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-foreground-muted mb-1">
-              {t('admin.createBookModal.authorLabel')}
-            </label>
-            <input
-              type="text"
-              value={authorName}
-              onChange={(e) => setAuthorName(e.target.value)}
-              placeholder={t('admin.createBookModal.authorPlaceholder')}
-              className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder:text-foreground-muted focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none transition-all"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-foreground-muted mb-1">
-              {t('admin.createBookModal.epubLabel')}
-            </label>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".epub"
-              onChange={(e) => setEpubFile(e.target.files?.[0] ?? null)}
-              className="w-full text-sm text-foreground-muted file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-accent/10 file:text-accent hover:file:bg-accent/20 cursor-pointer"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-foreground-muted mb-1">
-              {t('admin.createBookModal.visibilityLabel')}
-            </label>
-            <select
-              value={visibility}
-              onChange={(e) => setVisibility(e.target.value)}
-              className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none transition-all"
-            >
-              <option value="private">{t('admin.createBookModal.visibilityPrivate')}</option>
-              <option value="public">{t('admin.createBookModal.visibilityPublic')}</option>
-            </select>
-          </div>
-
-          {createError && (
-            <div className="p-3 bg-semantic-error/10 border border-semantic-error/30 rounded-lg text-sm text-semantic-error">
-              {createError}
-            </div>
-          )}
-
-          {validationResult && !validationResult.isValid && (
-            <div className="p-3 bg-semantic-error/10 border border-semantic-error/30 rounded-lg text-sm text-semantic-error">
-              <p className="font-bold mb-1">{t('admin.createBookModal.validationErrors')}</p>
-              <ul className="list-disc list-inside">
-                {validationResult.errors.map((err, i) => (
-                  <li key={i}>{err}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {validationResult && validationResult.warnings.length > 0 && (
-            <div className="p-3 bg-semantic-warning/10 border border-semantic-warning/30 rounded-lg text-sm text-semantic-warning">
-              <p className="font-bold mb-1">{t('admin.createBookModal.validationWarnings')}</p>
-              <ul className="list-disc list-inside">
-                {validationResult.warnings.map((warn, i) => (
-                  <li key={i}>{warn}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          <div className="flex justify-end gap-3 pt-2">
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => {
-                setIsCreateModalOpen(false);
-                resetCreateForm();
-              }}
-            >
-              {t('admin.createBookModal.close')}
-            </Button>
-            <Button
-              type="submit"
-              isLoading={isSubmitting}
-            >
-              {isSubmitting ? t('admin.createBookModal.submitting') : t('admin.createBookModal.submit')}
-            </Button>
-          </div>
-        </form>
-      </Modal>
+        onClose={() => { setIsCreateModalOpen(false); resetCreateForm(); }}
+        onSubmit={handleCreateBook}
+        bookTitle={bookTitle}
+        setBookTitle={setBookTitle}
+        authorName={authorName}
+        setAuthorName={setAuthorName}
+        epubFile={epubFile}
+        setEpubFile={setEpubFile}
+        visibility={visibility}
+        setVisibility={setVisibility}
+        isSubmitting={isSubmitting}
+        createError={createError}
+        validationResult={validationResult}
+      />
 
       {editingBook && (
-        <Modal
+        <BookEditModal
           isOpen={!!editingBook}
           onClose={() => setEditingBook(null)}
-          title={t('admin.books.editTitle')}
-        >
-          <form onSubmit={(e) => { void handleUpdateBook(e); }} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-foreground-muted mb-1">
-                {t('admin.createBookModal.titleLabel')}
-              </label>
-              <input
-                type="text"
-                value={editTitle}
-                onChange={(e) => setEditTitle(e.target.value)}
-                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none transition-all"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-foreground-muted mb-1">
-                {t('admin.createBookModal.authorLabel')}
-              </label>
-              <input
-                type="text"
-                value={editAuthor}
-                onChange={(e) => setEditAuthor(e.target.value)}
-                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none transition-all"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-foreground-muted mb-1">
-                {t('admin.createBookModal.descriptionLabel')}
-              </label>
-              <textarea
-                value={editDescription}
-                onChange={(e) => setEditDescription(e.target.value)}
-                rows={3}
-                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none transition-all resize-none"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-foreground-muted mb-1">
-                {t('admin.createBookModal.visibilityLabel')}
-              </label>
-              <select
-                value={editVisibility}
-                onChange={(e) => setEditVisibility(e.target.value)}
-                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none transition-all"
-              >
-                <option value="private">{t('admin.createBookModal.visibilityPrivate')}</option>
-                <option value="public">{t('admin.createBookModal.visibilityPublic')}</option>
-              </select>
-            </div>
-
-            {editError && (
-              <div className="p-3 bg-semantic-error/10 border border-semantic-error/30 rounded-lg text-sm text-semantic-error">
-                {editError}
-              </div>
-            )}
-
-            <div className="flex justify-end gap-3 pt-2">
-              <Button type="button" variant="secondary" onClick={() => setEditingBook(null)}>
-                {t('admin.createBookModal.close')}
-              </Button>
-              <Button type="submit" isLoading={isEditSubmitting}>
-                {isEditSubmitting ? t('admin.createBookModal.submitting') : t('admin.books.saveChanges')}
-              </Button>
-            </div>
-          </form>
-        </Modal>
+          onSubmit={handleUpdateBook}
+          editTitle={editTitle}
+          setEditTitle={setEditTitle}
+          editAuthor={editAuthor}
+          setEditAuthor={setEditAuthor}
+          editDescription={editDescription}
+          setEditDescription={setEditDescription}
+          editVisibility={editVisibility}
+          setEditVisibility={setEditVisibility}
+          isEditSubmitting={isEditSubmitting}
+          editError={editError}
+        />
       )}
     </main>
   );
