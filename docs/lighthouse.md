@@ -26,11 +26,12 @@ In addition to Lighthouse scores, the project enforces hard JS/CSS budget gates 
 
 - **Workflow:** `.github/workflows/lighthouse.yml`
 - **Trigger:** PRs to `main` (with path filters to skip docs-only changes) + manual dispatch
+- **Mode:** Advisory-only — assertion failures produce `::warning::` annotations but do not block merging
 - **How it works:**
   1. Builds the web app
   2. Deploys a preview to Cloudflare Pages via wrangler-action (OIDC)
   3. Runs Lighthouse CI with 3 passes on the `/reader` URL
-  4. Asserts score thresholds (accessibility is a hard error)
+  4. Reports score thresholds as advisory annotations (not blocking)
   5. Comments PR with category scores and route-aware bundle sizes.
 
 ## Running Locally

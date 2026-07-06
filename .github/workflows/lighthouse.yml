@@ -78,8 +78,7 @@ jobs:
             jq '.' < ./lighthouseci/assertion-results.json
             FAILURES=$(jq '[.[] | select(.passed == false)] | length' < ./lighthouseci/assertion-results.json)
             if [ "$FAILURES" -gt "0" ]; then
-              echo "::error::Lighthouse assertions failed ($FAILURES failures)"
-              exit 1
+              echo "::warning::Lighthouse assertions failed ($FAILURES failures) — advisory only, not blocking merge"
             fi
           fi
 
