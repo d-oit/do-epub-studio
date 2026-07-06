@@ -199,12 +199,36 @@ if [[ " ${DETECTED_LANGUAGES[*]} " =~ " typescript " ]]; then
 
             # Smoke tests (skip with SKIP_SMOKE env var)
             if [ "${SKIP_SMOKE:-false}" != "true" ]; then
-                if ! OUTPUT=$($PM run test:e2e:smoke 2>&1); then
-                    printf '%s  ✗ %s test:e2e:smoke failed%s\n' "${RED}" "$PM" "${NC}"
-                    echo "$OUTPUT" >&2
-                    FAILED=1
-                else
-                    printf '%s  ✓ %s test:e2e:smoke passed%s\n' "${GREEN}" "$PM" "${NC}"
+                # Ensure Playwright browsers are installed (chromium + firefox + webkit required)
+                MISSING_BROWSERS=""
+                if ! ls ~/.cache/ms-playwright/chromium-*/chrome-linux/chrome >/dev/null 2>&1; then
+                    MISSING_BROWSERS="chromium $MISSING_BROWSERS"
+                fi
+                if ! ls ~/.cache/ms-playwright/firefox-*/firefox/firefox >/dev/null 2>&1; then
+                    MISSING_BROWSERS="firefox $MISSING_BROWSERS"
+                fi
+                if ! ls ~/.cache/ms-playwright/webkit-*/pw_run.sh >/dev/null 2>&1; then
+                    MISSING_BROWSERS="webkit $MISSING_BROWSERS"
+                fi
+                if [ -n "$MISSING_BROWSERS" ]; then
+                    printf '%s  ⟳ Installing Playwright browsers (%s)...%s\n' "${YELLOW}" "$MISSING_BROWSERS" "${NC}"
+                    if ! OUTPUT=$(npx playwright install $MISSING_BROWSERS 2>&1); then
+                        printf '%s  ✗ Playwright browser installation failed%s\n' "${RED}" "${NC}"
+                        echo "$OUTPUT" >&2
+                        FAILED=1
+                    else
+                        printf '%s  ✓ Playwright browsers installed%s\n' "${GREEN}" "${NC}"
+                    fi
+                fi
+
+                if [ $FAILED -eq 0 ]; then
+                    if ! OUTPUT=$($PM run test:e2e:smoke 2>&1); then
+                        printf '%s  ✗ %s test:e2e:smoke failed%s\n' "${RED}" "$PM" "${NC}"
+                        echo "$OUTPUT" >&2
+                        FAILED=1
+                    else
+                        printf '%s  ✓ %s test:e2e:smoke passed%s\n' "${GREEN}" "$PM" "${NC}"
+                    fi
                 fi
             else
                 printf '%s  ⊘ %s smoke tests skipped (SKIP_SMOKE=true)%s\n' "${YELLOW}" "$PM" "${NC}"

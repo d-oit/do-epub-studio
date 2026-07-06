@@ -87,15 +87,3 @@ Before adding an entry:
 **Mitigation:** Run `pnpm exec playwright install` in CI/CD pipeline. For local development, the E2E failure is non-blocking for component-level changes. All unit tests, lint, typecheck, and build pass.
 
 **Date:** 2026-05-13
-
-### [CI/CD - Lighthouse Audit]
-
-**Issue:** Lighthouse audit consistently fails on all PRs with assertion failures (performance/accessibility thresholds not met)
-
-**Location:** `.github/workflows/lighthouse.yml`, `.lighthouserc.json`
-
-**Reason:** The Lighthouse config sets strict thresholds (min 0.9 for performance/accessibility, 0.8 for best-practices/SEO) that the current Cloudflare Pages preview deployment does not meet. The CI step has `continue-on-error: true` but a subsequent "Process Lighthouse results" step explicitly fails the job. The `main` branch has no required status checks (branch protection is disabled), so Lighthouse failures do not block merging.
-
-**Mitigation:** Lighthouse results are informative only. PRs can be merged despite Lighthouse failures since branch protection is not enabled. To resolve the underlying issue, either: (1) lower thresholds in `.lighthouserc.json`, (2) optimize the deployed app to meet thresholds, or (3) make the Lighthouse job advisory-only by removing the explicit failure step.
-
-**Date:** 2026-05-20
