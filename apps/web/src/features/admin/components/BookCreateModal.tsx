@@ -1,4 +1,3 @@
-import { useRef } from 'react';
 import { useTranslation } from '../../../hooks/useTranslation';
 import { Modal, Button } from '../../../components/ui';
 
@@ -27,7 +26,6 @@ export function BookCreateModal({
   setBookTitle,
   authorName,
   setAuthorName,
-  epubFile: _epubFile,
   setEpubFile,
   visibility,
   setVisibility,
@@ -36,16 +34,16 @@ export function BookCreateModal({
   validationResult,
 }: BookCreateModalProps) {
   const { t } = useTranslation();
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={t('admin.createBookModal.title')}>
       <form onSubmit={(e) => { void onSubmit(e); }} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-foreground-muted mb-1">
+          <label htmlFor="book-title" className="block text-sm font-medium text-foreground-muted mb-1">
             {t('admin.createBookModal.titleLabel')}
           </label>
           <input
+            id="book-title"
             type="text"
             value={bookTitle}
             onChange={(e) => setBookTitle(e.target.value)}
@@ -55,10 +53,11 @@ export function BookCreateModal({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-foreground-muted mb-1">
+          <label htmlFor="book-author" className="block text-sm font-medium text-foreground-muted mb-1">
             {t('admin.createBookModal.authorLabel')}
           </label>
           <input
+            id="book-author"
             type="text"
             value={authorName}
             onChange={(e) => setAuthorName(e.target.value)}
@@ -68,11 +67,11 @@ export function BookCreateModal({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-foreground-muted mb-1">
+          <label htmlFor="book-epub" className="block text-sm font-medium text-foreground-muted mb-1">
             {t('admin.createBookModal.epubLabel')}
           </label>
           <input
-            ref={fileInputRef}
+            id="book-epub"
             type="file"
             accept=".epub"
             onChange={(e) => setEpubFile(e.target.files?.[0] ?? null)}
@@ -81,10 +80,11 @@ export function BookCreateModal({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-foreground-muted mb-1">
+          <label htmlFor="book-visibility" className="block text-sm font-medium text-foreground-muted mb-1">
             {t('admin.createBookModal.visibilityLabel')}
           </label>
           <select
+            id="book-visibility"
             value={visibility}
             onChange={(e) => setVisibility(e.target.value)}
             className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none transition-all"
@@ -104,8 +104,8 @@ export function BookCreateModal({
           <div className="p-3 bg-semantic-error/10 border border-semantic-error/30 rounded-lg text-sm text-semantic-error">
             <p className="font-bold mb-1">{t('admin.createBookModal.validationErrors')}</p>
             <ul className="list-disc list-inside">
-              {validationResult.errors.map((err, i) => (
-                <li key={i}>{err}</li>
+              {validationResult.errors.map((err) => (
+                <li key={err}>{err}</li>
               ))}
             </ul>
           </div>
@@ -115,8 +115,8 @@ export function BookCreateModal({
           <div className="p-3 bg-semantic-warning/10 border border-semantic-warning/30 rounded-lg text-sm text-semantic-warning">
             <p className="font-bold mb-1">{t('admin.createBookModal.validationWarnings')}</p>
             <ul className="list-disc list-inside">
-              {validationResult.warnings.map((warn, i) => (
-                <li key={i}>{warn}</li>
+              {validationResult.warnings.map((warn) => (
+                <li key={warn}>{warn}</li>
               ))}
             </ul>
           </div>
