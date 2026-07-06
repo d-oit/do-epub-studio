@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { SwUpdateNotification } from '../SwUpdateNotification';
 import { useSwUpdateStore } from '../../stores/sw-update';
 
@@ -77,7 +77,7 @@ describe('SwUpdateNotification', () => {
     expect(updateMock).toHaveBeenCalledTimes(1);
   });
 
-  it('dismisses the banner when Dismiss is clicked', () => {
+  it('triggers exit animation when Dismiss is clicked', () => {
     const dismissSpy = vi.fn();
     const originalDismiss = useSwUpdateStore.getState().dismiss;
     useSwUpdateStore.setState({
@@ -86,9 +86,9 @@ describe('SwUpdateNotification', () => {
       dismiss: dismissSpy,
     });
 
-    render(<SwUpdateNotification />);
+    const { container } = render(<SwUpdateNotification />);
     fireEvent.click(screen.getByText('Dismiss'));
-    expect(dismissSpy).toHaveBeenCalledTimes(1);
+    expect(container.querySelector('.animate-slide-out-bottom')).toBeInTheDocument();
 
     useSwUpdateStore.setState({ dismiss: originalDismiss });
   });

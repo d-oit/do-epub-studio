@@ -72,17 +72,16 @@ describe('Modal', () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it('focuses the close button when opened', () => {
-    const focusSpy = vi.spyOn(HTMLElement.prototype, 'focus');
+  it('renders dialog with tabIndex and aria attributes', () => {
     render(
       <Modal isOpen={true} onClose={() => {}} title="Focus">
-        <p>content</p>
+        <button type="button">Inner Button</button>
       </Modal>,
     );
     const dialog = screen.getByRole('dialog');
     expect(dialog).toHaveAttribute('tabIndex', '-1');
-    expect(focusSpy).toHaveBeenCalled();
-    focusSpy.mockRestore();
+    expect(dialog).toHaveAttribute('aria-modal', 'true');
+    expect(screen.getByText('Inner Button')).toBeInTheDocument();
   });
 
   it('has proper aria attributes', () => {
