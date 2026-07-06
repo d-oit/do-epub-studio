@@ -3,9 +3,8 @@ import { useShallow } from 'zustand/react/shallow';
 import { useParams, useNavigate } from 'react-router-dom';
 import { createSpanId, createTraceId } from '@do-epub-studio/shared';
 import { useTranslation } from '../../hooks/useTranslation';
-import { apiRequest } from '../../lib/api/index';
+import { apiRequest, fetchHighlights, fetchComments, fetchProgress } from '../../lib/api/index';
 import { logClientEvent } from '../../lib/client-logger';
-import { fetchHighlights, fetchComments, fetchProgress } from '../../lib/api/index';
 import { useAuthStore, useReaderStore, usePreferencesStore } from '../../stores';
 import type { Bookmark } from '../../stores';
 import { setupOnlineListener, getSyncQueue, getProgress } from '../../lib/offline';
@@ -112,7 +111,7 @@ export function ReaderPage() {
   } = useReadingTimer(bookId);
 
   const rootRef = useRef<HTMLDivElement>(null);
-  const viewerRef = useRef<HTMLDivElement>(null as unknown as HTMLDivElement);
+  const viewerRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
 
   const [epubUrl, setEpubUrl] = useState<string | null>(null);
