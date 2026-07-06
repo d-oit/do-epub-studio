@@ -15,8 +15,9 @@ mkdir -p .impeccable
 
 echo "::group::Impeccable design detector"
 
-if npx impeccable detect --json . > "$OUTPUT_FILE" 2>/dev/null; then
-  FINDINGS=$(jq '.findings | length' "$OUTPUT_FILE" 2>/dev/null || echo "0")
+npx impeccable detect --json . > "$OUTPUT_FILE" 2>/dev/null || true
+if [ -f "$OUTPUT_FILE" ] && jq empty "$OUTPUT_FILE" 2>/dev/null; then
+  FINDINGS=$(jq 'length' "$OUTPUT_FILE" 2>/dev/null || echo "0")
   echo "Impeccable: $FINDINGS finding(s) in $OUTPUT_FILE"
 else
   FINDINGS=-1
