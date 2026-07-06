@@ -45,7 +45,7 @@ export function BookEditModal({
             id="edit-title"
             type="text"
             value={editTitle}
-            onChange={(e) => setEditTitle(e.target.value)}
+            onChange={(e) => { setEditTitle(e.target.value); }}
             className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none transition-all"
           />
         </div>
@@ -58,7 +58,7 @@ export function BookEditModal({
             id="edit-author"
             type="text"
             value={editAuthor}
-            onChange={(e) => setEditAuthor(e.target.value)}
+            onChange={(e) => { setEditAuthor(e.target.value); }}
             className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none transition-all"
           />
         </div>
@@ -70,7 +70,7 @@ export function BookEditModal({
           <textarea
             id="edit-description"
             value={editDescription}
-            onChange={(e) => setEditDescription(e.target.value)}
+            onChange={(e) => { setEditDescription(e.target.value); }}
             rows={3}
             className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none transition-all resize-none"
           />
@@ -83,7 +83,7 @@ export function BookEditModal({
           <select
             id="edit-visibility"
             value={editVisibility}
-            onChange={(e) => setEditVisibility(e.target.value)}
+            onChange={(e) => { setEditVisibility(e.target.value); }}
             className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none transition-all"
           >
             <option value="private">{t('admin.createBookModal.visibilityPrivate')}</option>

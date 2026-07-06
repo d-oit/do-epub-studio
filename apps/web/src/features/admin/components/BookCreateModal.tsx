@@ -46,7 +46,7 @@ export function BookCreateModal({
             id="book-title"
             type="text"
             value={bookTitle}
-            onChange={(e) => setBookTitle(e.target.value)}
+            onChange={(e) => { setBookTitle(e.target.value); }}
             placeholder={t('admin.createBookModal.titlePlaceholder')}
             className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder:text-foreground-muted focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none transition-all"
           />
@@ -60,7 +60,7 @@ export function BookCreateModal({
             id="book-author"
             type="text"
             value={authorName}
-            onChange={(e) => setAuthorName(e.target.value)}
+            onChange={(e) => { setAuthorName(e.target.value); }}
             placeholder={t('admin.createBookModal.authorPlaceholder')}
             className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder:text-foreground-muted focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none transition-all"
           />
@@ -74,7 +74,7 @@ export function BookCreateModal({
             id="book-epub"
             type="file"
             accept=".epub"
-            onChange={(e) => setEpubFile(e.target.files?.[0] ?? null)}
+            onChange={(e) => { setEpubFile(e.target.files?.[0] ?? null); }}
             className="w-full text-sm text-foreground-muted file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-accent/10 file:text-accent hover:file:bg-accent/20 cursor-pointer"
           />
         </div>
@@ -86,7 +86,7 @@ export function BookCreateModal({
           <select
             id="book-visibility"
             value={visibility}
-            onChange={(e) => setVisibility(e.target.value)}
+            onChange={(e) => { setVisibility(e.target.value); }}
             className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none transition-all"
           >
             <option value="private">{t('admin.createBookModal.visibilityPrivate')}</option>
