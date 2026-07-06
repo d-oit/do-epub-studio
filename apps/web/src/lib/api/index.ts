@@ -60,8 +60,6 @@ export async function apiRequest<T>(endpoint: string, options: ApiRequestOptions
   };
 
   try {
-    // nosemgrep: Semgrep_rules_lgpl_javascript_ssrf_rule-node-ssrf
-    // API_BASE_URL is a trusted env constant; endpoint is always a hardcoded literal
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       ...requestInit,
       headers,
@@ -157,8 +155,6 @@ async function apiRaw(endpoint: string, method: string, data?: unknown, options?
   const traceId = createTraceId();
   const spanId = createSpanId();
 
-  // nosemgrep: Semgrep_rules_lgpl_javascript_ssrf_rule-node-ssrf
-  // API_BASE_URL is a trusted env constant; endpoint is always a hardcoded literal
   const res = await fetch(`${API_BASE_URL}${endpoint}`, {
     method,
     headers: {
