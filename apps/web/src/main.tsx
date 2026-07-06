@@ -48,8 +48,19 @@ export function handleError(event: ErrorEvent) {
 }
 
 export function handleRejection(event: PromiseRejectionEvent) {
-  const traceId = createTraceId();
   const reason = event.reason instanceof Error ? event.reason : new Error(String(event.reason));
+
+  // Suppress Workbox SW registration errors — these occur when service
+  // workers are blocked (e.g. Playwright's serviceWorkers: 'block')
+  // and cause a non-actionable "Cannot read properties of undefined
+  // (reading 'waiting')" crash inside workbox-window.
+  const stack = reason.stack ?? '';
+  if (stack.includes('workbox') || reason.message.includes('waiting')) {
+    event.preventDefault();
+    return;
+  }
+
+  const traceId = createTraceId();
   logClientEvent({
     level: 'error',
     event: 'window.unhandledrejection',
