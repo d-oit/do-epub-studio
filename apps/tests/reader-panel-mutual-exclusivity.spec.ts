@@ -1,125 +1,5 @@
-import { test, expect, type Page, type Route } from '@playwright/test';
-import { Buffer } from 'node:buffer';
-
-// Minimal valid EPUB (container.xml + content.opf + nav.xhtml + one chapter).
-const MOCK_EPUB = Buffer.from(
-  'UEsDBBQAAAAAAAAAAABvYassFAAAABQAAAAIAAAAbWltZXR5cGVhcHBsaWNhdGlvbi9lcHViK3ppcFBLAwQUAAAACAAAAAAAHgvXyZkAAADdAAAAFgAAAE1FVEEtSU5GL2NvbnRhaW5lci54bWxVjcEKwjAQRH8l5Cpt9BqSFATPCn7Bmm41mOyGJJX696KHqreBmffGDEuK4oGlBiYrd/1WDs54pgaBsPw3YkmRqpVzIc1QQ9UECatuXnNGGtnPCanpz0yvEulMYW5TiFi/UUxzjF2GdrPyeNifzuoNILWe8yRFwjFA154ZrYScY/DQApNivOTaZfB3uOJmSVEqZ9SPX62/7gVQSwMEFAAAAAgAAAAAAPXxf7D4AAAAzwEAABEAAABPRUJQUy9jb250ZW50Lm9wZo2RQW6EMAxFrxJlW00M7aLSKGQu0QtExIDVJGQSM9DbV8BAZ9md7e///CXr2xK8eGAuNMZG1qqSN6OTbb9tj2IJPpZGDszpCjDPsyKXOjXmHt6r6hPG1Mk/84eqpJgi3Se8kMPI1BHmRpKTRgdk6yzbnXl17YlNU/Yb0rWAHgNGLlCrGqTRrr0ysUfzhYU1nO0qeBv7yfZoMG7K2Ws4jhkdbKQOCxtNjEGQa2S0DymGjN1WqmXg4KUI6Mhe+CdhI21KnlrLNEbY5LdlXUl5TJiZsOwQeIGW+mCW+v9IWLOeCUuiiDszYyfIHRmPSy/TUm/mpwWeDzO/UEsDBBQAAAAIAAAAAABKBnYEvAAAAAQBAAAPAAAAT0VCUFMvbmF2LnhodG1sVY+xbsMwDER/RdUHmFYzFDZoenCzphm6dFRiJTIgS4LF2M7fB4qmLsQB9+7Aw36fnVjNkqbgO6mqWvaEH98/w+/f+Sgsz44wX7HPzqdOWubYAmzbVm2HKix3UE3TwJ4ZWaDWxMflHzmN8fZmP+v6C0JMktAaPRLyxM7QSa8IRSIU4xLGJ6HXq8htLT+j6SSHa04qGoJn4zkhWEUYHKGbCLWwi7l1Mqmq/EODVQiaELINmQOvV0Io9fDe9wJQSwMEFAAAAAgAAAAAAKhlgTp9AAAAlQAAAA4AAABPRUJQUy9zMS54aHRtbCWNOw7CMBAFr2J8AC8WVdBmUyTUUKShBGLhSP4pXmFzexTcjJ40TxocqnfiY7a8xtBLrY5yIDxM13G+3y7CsneEO0X1LuReWuZ0BiilqHJScXuD7roO6v6RhNY8FkJe2RkarUZoE6GJZ1y+hIlmk1m8YmATGCERQjPwD/4AUEsBAhQAFAAAAAAAAAAAAG9hqywUAAAAFAAAAAgAAAAAAAAAAAAAAAAAAAAAAG1pbWV0eXBlUEsBAhQAFAAAAAgAAAAAAB4L18mZAAAA3QAAABYAAAAAAAAAAAAAAAAAOgAAAE1FVEEtSU5GL2NvbnRhaW5lci54bWxQSwECFAAUAAAACAAAAAAA9fF/sPgAAADPAQAAEQAAAAAAAAAAAAAAAAAHAQAAT0VCUFMvY29udGVudC5vcGZQSwECFAAUAAAACAAAAAAASgZ2BLwAAAAEAQAADwAAAAAAAAAAAAAAAAAuAgAAT0VCUFMvbmF2LnhodG1sUEsBAhQAFAAAAAgAAAAAAKhlgTp9AAAAlQAAAA4AAAAAAAAAAAAAAAAAFwMAAE9FQlBTL3MxLnhodG1sUEsFBgAAAAAFAAUAMgEAAMADAAAAAA==',
-  'base64'
-);
-
-// ---------------------------------------------------------------------------
-// Constants & fixtures
-// ---------------------------------------------------------------------------
-
-const TEST_USER = {
-  email: 'reader@example.com',
-  password: 'test-password',
-  bookSlug: 'my-test-book',
-};
-
-const LOGIN_RESPONSE = {
-  ok: true,
-  data: {
-    sessionToken: 'test-session-token-abc123',
-    book: {
-      id: 'book-1',
-      slug: TEST_USER.bookSlug,
-      title: 'My Test Book',
-      authorName: 'Test Author',
-    },
-    capabilities: {
-      canRead: true,
-      canComment: true,
-      canHighlight: true,
-      canBookmark: true,
-      canDownloadOffline: false,
-      canExportNotes: false,
-      canManageAccess: false,
-    },
-  },
-};
-
-const BOOK_FILE_URL_RESPONSE = {
-  ok: true,
-  data: { url: '/test-book.epub' },
-};
-
-const PROGRESS_RESPONSE = {
-  ok: true,
-  data: { locator: { cfi: 'epubcfi(/6/4)' }, progressPercent: 0.1 },
-};
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-async function mockApiRoutes(page: Page) {
-  await page.route('**/api/access/request', async (route: Route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify(LOGIN_RESPONSE),
-    });
-  });
-
-  await page.route('**/api/books/*/file-url', async (route: Route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify(BOOK_FILE_URL_RESPONSE),
-    });
-  });
-
-  await page.route('**/test-book.epub', async (route: Route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/epub+zip',
-      body: MOCK_EPUB,
-    });
-  });
-
-  await page.route('**/api/books/*/progress', async (route: Route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify(PROGRESS_RESPONSE),
-    });
-  });
-
-  await page.route('**/api/books/*/highlights', async (route: Route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({ ok: true, data: [] }),
-    });
-  });
-
-  await page.route('**/api/books/*/comments', async (route: Route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({ ok: true, data: [] }),
-    });
-  });
-
-  await page.route('**/api/books/*/bookmarks', async (route: Route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({ ok: true, data: [] }),
-    });
-  });
-}
-
-async function login(page: Page) {
-  await page.goto(`/login?book=${TEST_USER.bookSlug}`);
-  await page.getByLabel('Email Address').fill(TEST_USER.email);
-  await page.getByLabel('Password').fill(TEST_USER.password);
-  await page.getByRole('button', { name: 'Sign In', exact: true }).click();
-  await expect(page).toHaveURL(/\/read\/my-test-book/);
-  // Wait for the reader to load and show the toolbar
-  await expect(page.getByRole('button', { name: /Contents/i })).toBeVisible({ timeout: 30_000 });
-}
+import { test, expect } from '@playwright/test';
+import { MOCK_EPUB, loginAsReader, mockReaderApi } from './fixtures';
 
 // ---------------------------------------------------------------------------
 // Tests
@@ -127,8 +7,8 @@ async function login(page: Page) {
 
 test.describe('Reader side-panel mutual exclusivity', () => {
   test.beforeEach(async ({ page }) => {
-    await mockApiRoutes(page);
-    await login(page);
+    await mockReaderApi(page, { epubUrl: '/test-book.epub', epubBuffer: MOCK_EPUB });
+    await loginAsReader(page);
   });
 
   test('@mobile opening search closes table of contents', async ({ page }) => {

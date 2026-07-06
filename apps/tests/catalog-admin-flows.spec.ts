@@ -1,21 +1,5 @@
 import { test, expect, type Page, type Route } from '@playwright/test';
-
-// ---------------------------------------------------------------------------
-// Constants & fixtures
-// ---------------------------------------------------------------------------
-
-const ADMIN_USER = {
-  email: 'admin@example.com',
-  password: process.env.TEST_ADMIN_PASSWORD || 'admin-password',
-};
-
-const ADMIN_LOGIN_RESPONSE = {
-  ok: true,
-  data: {
-    sessionToken: 'admin-session-token-xyz789',
-    email: ADMIN_USER.email,
-  },
-};
+import { ADMIN_LOGIN_RESPONSE, loginAsAdmin } from './fixtures';
 
 const BOOKS_LIST_RESPONSE = {
   ok: true,
@@ -119,16 +103,6 @@ async function mockAdminApi(page: Page) {
       await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(AUDIT_LOG_RESPONSE) });
     }
   });
-}
-
-async function loginAsAdmin(page: Page) {
-  await page.goto(`/admin/login`);
-  await page.getByLabel('Email Address').fill(ADMIN_USER.email);
-  await page.getByLabel('Password').fill(ADMIN_USER.password);
-  await page.getByRole('button', { name: /Sign In|Admin Sign In/i }).click();
-  await expect(page).toHaveURL(/\/admin\/books/);
-  await page.waitForLoadState('networkidle');
-  await page.waitForTimeout(1000);
 }
 
 // ---------------------------------------------------------------------------
