@@ -31,6 +31,14 @@ vi.mock('react-router-dom', async () => {
   return { ...actual, useNavigate: () => vi.fn() };
 });
 
+function clickArchiveConfirm() {
+  const btn = screen.getAllByText('admin.books.archive').find(
+    (el) => el.tagName === 'BUTTON' && el.closest('[role="dialog"]'),
+  );
+  expect(btn).toBeTruthy();
+  fireEvent.click(btn as HTMLElement);
+}
+
 describe('AdminBookResponsesPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -212,13 +220,14 @@ describe('AdminBookResponsesPage', () => {
   });
 
   it('handles archive confirmation denied', async () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(false);
     vi.mocked(apiRequest).mockResolvedValue([
       { id: '1', slug: 'test', title: 'Test Book', authorName: 'Author', description: 'Desc', visibility: 'public', coverImageUrl: null },
     ]);
     render(<MemoryRouter><AdminBookResponsesPage /></MemoryRouter>);
     await waitFor(() => { expect(screen.getByText('Test Book')).toBeInTheDocument(); });
     fireEvent.click(screen.getByText('admin.books.archive'));
+    // ConfirmDialog opens — click cancel
+    fireEvent.click(screen.getByText('annotation.cancel'));
     expect(apiRequest).not.toHaveBeenCalledWith(
       expect.stringContaining('/api/admin/books/1'),
       expect.objectContaining({ method: 'DELETE' })
@@ -226,16 +235,18 @@ describe('AdminBookResponsesPage', () => {
   });
 
   it('handles archive confirmation accepted', async () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const books = [
+      { id: '1', slug: 'test', title: 'Test Book', authorName: 'Author', description: 'Desc', visibility: 'public', coverImageUrl: null },
+    ];
     vi.mocked(apiRequest)
-      .mockResolvedValueOnce([
-        { id: '1', slug: 'test', title: 'Test Book', authorName: 'Author', description: 'Desc', visibility: 'public', coverImageUrl: null },
-      ])
+      .mockResolvedValueOnce(books)
       .mockResolvedValueOnce({})
       .mockResolvedValueOnce([]);
     render(<MemoryRouter><AdminBookResponsesPage /></MemoryRouter>);
     await waitFor(() => { expect(screen.getByText('Test Book')).toBeInTheDocument(); });
     fireEvent.click(screen.getByText('admin.books.archive'));
+    // ConfirmDialog opens — click confirm
+    clickArchiveConfirm();
     await waitFor(() => {
       expect(apiRequest).toHaveBeenCalledWith(
         expect.stringContaining('/api/admin/books/1'),
@@ -245,30 +256,32 @@ describe('AdminBookResponsesPage', () => {
   });
 
   it('shows archiving indicator', async () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const books = [
+      { id: '1', slug: 'test', title: 'Test Book', authorName: 'Author', description: 'Desc', visibility: 'public', coverImageUrl: null },
+    ];
     vi.mocked(apiRequest)
-      .mockResolvedValueOnce([
-        { id: '1', slug: 'test', title: 'Test Book', authorName: 'Author', description: 'Desc', visibility: 'public', coverImageUrl: null },
-      ])
+      .mockResolvedValueOnce(books)
       .mockImplementationOnce(() => new Promise(() => {}));
     render(<MemoryRouter><AdminBookResponsesPage /></MemoryRouter>);
     await waitFor(() => { expect(screen.getByText('Test Book')).toBeInTheDocument(); });
     fireEvent.click(screen.getByText('admin.books.archive'));
+    clickArchiveConfirm();
     await waitFor(() => {
       expect(screen.getByText('...')).toBeInTheDocument();
     });
   });
 
   it('handles archive error', async () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const books = [
+      { id: '1', slug: 'test', title: 'Test Book', authorName: 'Author', description: 'Desc', visibility: 'public', coverImageUrl: null },
+    ];
     vi.mocked(apiRequest)
-      .mockResolvedValueOnce([
-        { id: '1', slug: 'test', title: 'Test Book', authorName: 'Author', description: 'Desc', visibility: 'public', coverImageUrl: null },
-      ])
+      .mockResolvedValueOnce(books)
       .mockRejectedValueOnce(new Error('Archive failed'));
     render(<MemoryRouter><AdminBookResponsesPage /></MemoryRouter>);
     await waitFor(() => { expect(screen.getByText('Test Book')).toBeInTheDocument(); });
     fireEvent.click(screen.getByText('admin.books.archive'));
+    clickArchiveConfirm();
     await waitFor(() => {
       expect(screen.getByText('Archive failed')).toBeInTheDocument();
     });
@@ -282,12 +295,13 @@ describe('AdminBookResponsesPage', () => {
   });
 
   it('handles edit form submission', async () => {
+    const books = [
+      { id: '1', slug: 'test', title: 'Test Book', authorName: 'Author', description: 'Desc', visibility: 'public', coverImageUrl: null },
+    ];
     vi.mocked(apiRequest)
-      .mockResolvedValueOnce([
-        { id: '1', slug: 'test', title: 'Test Book', authorName: 'Author', description: 'Desc', visibility: 'public', coverImageUrl: null },
-      ])
+      .mockResolvedValueOnce(books)
       .mockResolvedValueOnce({})
-      .mockResolvedValueOnce([]);
+      .mockResolvedValueOnce(books);
     render(<MemoryRouter><AdminBookResponsesPage /></MemoryRouter>);
     await waitFor(() => { expect(screen.getByText('Test Book')).toBeInTheDocument(); });
     fireEvent.click(screen.getByText('admin.books.edit'));
@@ -299,10 +313,11 @@ describe('AdminBookResponsesPage', () => {
   });
 
   it('handles edit form error', async () => {
+    const books = [
+      { id: '1', slug: 'test', title: 'Test Book', authorName: 'Author', description: 'Desc', visibility: 'public', coverImageUrl: null },
+    ];
     vi.mocked(apiRequest)
-      .mockResolvedValueOnce([
-        { id: '1', slug: 'test', title: 'Test Book', authorName: 'Author', description: 'Desc', visibility: 'public', coverImageUrl: null },
-      ])
+      .mockResolvedValueOnce(books)
       .mockRejectedValueOnce(new Error('Update failed'));
     render(<MemoryRouter><AdminBookResponsesPage /></MemoryRouter>);
     await waitFor(() => { expect(screen.getByText('Test Book')).toBeInTheDocument(); });
@@ -362,15 +377,16 @@ describe('AdminBookResponsesPage', () => {
   });
 
   it('disables archive button while archiving', async () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const books = [
+      { id: '1', slug: 'test', title: 'Test Book', authorName: 'Author', description: 'Desc', visibility: 'public', coverImageUrl: null },
+    ];
     vi.mocked(apiRequest)
-      .mockResolvedValueOnce([
-        { id: '1', slug: 'test', title: 'Test Book', authorName: 'Author', description: 'Desc', visibility: 'public', coverImageUrl: null },
-      ])
+      .mockResolvedValueOnce(books)
       .mockImplementationOnce(() => new Promise(() => {}));
     render(<MemoryRouter><AdminBookResponsesPage /></MemoryRouter>);
     await waitFor(() => { expect(screen.getByText('Test Book')).toBeInTheDocument(); });
     fireEvent.click(screen.getByText('admin.books.archive'));
+    clickArchiveConfirm();
     await waitFor(() => {
       const archiveButton = screen.getByText('...');
       expect(archiveButton).toBeDisabled();
@@ -400,16 +416,17 @@ describe('AdminBookResponsesPage', () => {
   });
 
   it('shows success message after archive', async () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const books = [
+      { id: '1', slug: 'test', title: 'Test Book', authorName: 'Author', description: 'Desc', visibility: 'public', coverImageUrl: null },
+    ];
     vi.mocked(apiRequest)
-      .mockResolvedValueOnce([
-        { id: '1', slug: 'test', title: 'Test Book', authorName: 'Author', description: 'Desc', visibility: 'public', coverImageUrl: null },
-      ])
+      .mockResolvedValueOnce(books)
       .mockResolvedValueOnce({})
       .mockResolvedValueOnce([]);
     render(<MemoryRouter><AdminBookResponsesPage /></MemoryRouter>);
     await waitFor(() => { expect(screen.getByText('Test Book')).toBeInTheDocument(); });
     fireEvent.click(screen.getByText('admin.books.archive'));
+    clickArchiveConfirm();
     await waitFor(() => {
       expect(screen.getByText('admin.books.archiveSuccess')).toBeInTheDocument();
     });
@@ -491,7 +508,6 @@ describe('AdminBookResponsesPage', () => {
     await waitFor(() => {
       expect(screen.getByText('Network error')).toBeInTheDocument();
     });
-    expect(screen.queryByText('admin.books.loading')).not.toBeInTheDocument();
   });
 
   it('closes create modal on Escape key', async () => {

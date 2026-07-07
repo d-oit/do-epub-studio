@@ -29,6 +29,9 @@ vi.mock('../components/ui', () => ({
   Button: ({ children, onClick, ...props }: any) => (
     <button onClick={onClick} {...props}>{children}</button>
   ),
+  ConfirmDialog: ({ isOpen, onCancel, onConfirm }: any) => isOpen ? (
+    <div role="dialog"><button onClick={onCancel}>cancel</button><button onClick={onConfirm}>confirm</button></div>
+  ) : null,
 }));
 
 import { apiRequest } from '../lib/api';

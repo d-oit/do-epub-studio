@@ -82,6 +82,6 @@ describe('AppShell', () => {
       vi.advanceTimersByTime(1500);
     });
 
-    expect(mockNavigate).toHaveBeenCalledWith('/admin/books', expect.objectContaining({ replace: true }));
+    expect(mockNavigate).toHaveBeenCalledWith('/admin', expect.objectContaining({ replace: true }));
   });
 });
