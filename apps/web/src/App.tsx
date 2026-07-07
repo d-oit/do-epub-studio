@@ -35,6 +35,9 @@ const MyLibraryPage = React.lazy(() =>
 const AdminDashboard = React.lazy(() =>
   import('./features/admin/AdminDashboardPage').then((m) => ({ default: m.AdminDashboardPage }))
 );
+const SettingsPage = React.lazy(() =>
+  import('./features/settings/SettingsPage').then((m) => ({ default: m.SettingsPage }))
+);
 
 // Premium glassmorphism loading fallback spinner
 // biome-ignore lint/correctness/useQwikValidLexicalScope: React project, not Qwik — false positive
@@ -142,6 +145,11 @@ export function App() {
           <AdminRoute>
             <AdminDashboard />
           </AdminRoute>
+        } />
+        <Route path="/settings" element={
+          <ProtectedRoute>
+            <SettingsPage />
+          </ProtectedRoute>
         } />
         <Route path="/admin/books" element={
           <AdminRoute>

@@ -5,6 +5,7 @@ import { apiRequest } from '../../lib/api';
 import { useAuthStore } from '../../stores/auth';
 import { Spinner } from '@do-epub-studio/ui';
 import { LocaleSwitcher } from '../../components/LocaleSwitcher';
+import { formatBytes } from '../../lib/formatBytes';
 import type { TranslationKeys } from '../../i18n';
 
 interface AdminStats {
@@ -14,13 +15,6 @@ interface AdminStats {
   activeSessions: number;
   storageBytes: number;
   recentActivity: { action: string; count: number }[];
-}
-
-function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 B';
-  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(1024));
-  return `${(bytes / Math.pow(1024, i)).toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
 }
 
 function StatCard({ label, value, icon }: { label: string; value: string | number; icon: string }) {
