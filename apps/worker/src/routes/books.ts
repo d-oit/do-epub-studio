@@ -9,12 +9,15 @@ export const booksRouter = new Hono<{ Bindings: Env; Variables: { auth: AuthCont
 
 booksRouter.get('/', readerAuth, async (c) => {
   const auth = c.get('auth');
-  // Only list books the user has access to via grants
+  // List books the user has access to via grants, joined with reading progress
   const books = await queryAll(
     c.env,
-    `SELECT b.id, b.slug, b.title, b.author_name, b.visibility, b.cover_image_url
+    `SELECT b.id, b.slug, b.title, b.author_name, b.visibility, b.cover_image_url,
+            b.description, b.language,
+            rp.progress_percent, rp.updated_at as progress_updated_at
      FROM books b
      JOIN book_access_grants g ON b.id = g.book_id
+     LEFT JOIN reading_progress rp ON rp.book_id = b.id AND rp.user_email = g.email
      WHERE b.archived_at IS NULL
      AND g.email = ?
      AND g.revoked_at IS NULL
@@ -29,9 +32,13 @@ booksRouter.get('/', readerAuth, async (c) => {
       id: row.id as string,
       slug: row.slug as string,
       title: row.title as string,
-      authorName: row.author_name as string | null,
+      authorName: (row.author_name as string | null) ?? null,
       visibility: row.visibility as string,
-      coverImageUrl: row.cover_image_url as string | null,
+      coverImageUrl: (row.cover_image_url as string | null) ?? null,
+      description: (row.description as string | null) ?? null,
+      language: row.language as string,
+      progressPercent: row.progress_percent != null ? (row.progress_percent as number) : 0,
+      progressUpdatedAt: (row.progress_updated_at as string | null) ?? null,
     })),
   });
 });

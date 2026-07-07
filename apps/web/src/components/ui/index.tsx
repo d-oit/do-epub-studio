@@ -12,6 +12,8 @@ export {
   AppLogo,
   Pagination,
   SearchInput,
+  ConfirmDialog,
+  ProgressBar,
 } from '@do-epub-studio/ui';
 
 export type {
@@ -28,4 +30,6 @@ export type {
   AppLogoProps,
   PaginationProps,
   SearchInputProps,
+  ConfirmDialogProps,
+  ProgressBarProps,
 } from '@do-epub-studio/ui';

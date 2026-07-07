@@ -9,7 +9,22 @@
  * Reference: ADR-112 (stream upload + edge cache).
  */
 
-const CACHE_VERSION = 'v1';
+// Bumped on book content changes so stale edge-cache entries are
+// automatically missed. The upload-complete endpoint calls bumpCacheVersion().
+//
+// Limitation: this is per-isolate state. Cloudflare Workers may run multiple
+// isolates per colo, so only the isolate that processed the upload will see
+// the bumped version. Other isolates will serve stale cache until their
+// max-age/s-maxage TTL expires. This is a best-effort invalidation; the TTL
+// (60s max-age, 300s s-maxage) bounds staleness for other isolates.
+// For cross-isolate invalidation, a Durable Object or KV-backed version
+// counter would be needed (future enhancement).
+let CACHE_VERSION = 'v1';
+
+/** Increment the cache version to invalidate all edge-cached entries (best-effort, per-isolate). */
+export function bumpCacheVersion(): void {
+  CACHE_VERSION = `v${Date.now()}`;
+}
 
 const FORWARDED_HEADERS = ['Accept-Language', 'Accept'] as const;
 

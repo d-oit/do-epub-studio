@@ -29,6 +29,12 @@ const AdminAuditPage = React.lazy(() =>
 const CatalogPage = React.lazy(() =>
   import('./features/catalog/CatalogPage').then((m) => ({ default: m.CatalogPage }))
 );
+const MyLibraryPage = React.lazy(() =>
+  import('./features/library/MyLibraryPage').then((m) => ({ default: m.MyLibraryPage }))
+);
+const AdminDashboard = React.lazy(() =>
+  import('./features/admin/AdminDashboardPage').then((m) => ({ default: m.AdminDashboardPage }))
+);
 
 // Premium glassmorphism loading fallback spinner
 // biome-ignore lint/correctness/useQwikValidLexicalScope: React project, not Qwik — false positive
@@ -126,6 +132,16 @@ export function App() {
           <ProtectedRoute>
             <ReaderPage />
           </ProtectedRoute>
+        } />
+        <Route path="/library" element={
+          <ProtectedRoute>
+            <MyLibraryPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/admin" element={
+          <AdminRoute>
+            <AdminDashboard />
+          </AdminRoute>
         } />
         <Route path="/admin/books" element={
           <AdminRoute>

@@ -287,6 +287,114 @@ describe('Admin Routes', () => {
     });
   });
 
+  describe('DELETE /api/admin/books/:id — cascade delete', () => {
+    it('soft-deletes book and cascades to all child tables + R2 objects', async () => {
+      mockRequireAdminAuth.mockResolvedValue({
+        ok: true,
+        context: { userId: 'admin-1', email: 'admin@example.com', globalRole: 'admin' },
+      } as any);
+
+      // Book exists and is not archived
+      mockQueryFirst.mockResolvedValue({ id: 'book-1' });
+      // R2 file objects to delete
+      const mockBucketDelete = vi.fn().mockResolvedValue(undefined);
+      (env as Record<string, unknown>).BOOKS_BUCKET = {
+        ...env.BOOKS_BUCKET,
+        delete: mockBucketDelete,
+      };
+
+      mockQueryAll.mockResolvedValue([
+        { storage_key: 'books/book-1/file-a.epub' },
+        { storage_key: 'books/book-1/file-b.epub' },
+      ]);
+      mockTransaction.mockResolvedValue(undefined);
+
+      const res = await app.fetch(new Request('http://localhost/api/admin/books/book-1', {
+        method: 'DELETE',
+        headers: { 'Authorization': 'Bearer admin-token' },
+      }), env, makePassThroughContext());
+
+      expect(res.status).toBe(200);
+      const body = await res.json() as any;
+      expect(body.data.r2ObjectsDeleted).toBe(2);
+
+      // Verify R2 delete called for each file
+      expect(mockBucketDelete).toHaveBeenCalledTimes(2);
+      expect(mockBucketDelete).toHaveBeenCalledWith('books/book-1/file-a.epub');
+      expect(mockBucketDelete).toHaveBeenCalledWith('books/book-1/file-b.epub');
+
+      // Verify transaction contains all 9 cascade statements
+      expect(mockTransaction).toHaveBeenCalled();
+      const txArgs = mockTransaction.mock.calls[0]?.[1] as Array<{ sql: string }> | undefined;
+      expect(txArgs).toBeDefined();
+      expect(txArgs).toHaveLength(9);
+      const sqls = (txArgs ?? []).map((s) => s.sql).join('\n');
+      expect(sqls).toContain('DELETE FROM reading_insights');
+      expect(sqls).toContain('DELETE FROM reading_progress');
+      expect(sqls).toContain('DELETE FROM bookmarks');
+      expect(sqls).toContain('DELETE FROM highlights');
+      expect(sqls).toContain('DELETE FROM comments');
+      expect(sqls).toContain('DELETE FROM reader_sessions');
+      expect(sqls).toContain('DELETE FROM book_access_grants');
+      expect(sqls).toContain('DELETE FROM book_files');
+      expect(sqls).toContain('UPDATE books SET archived_at');
+    });
+
+    it('returns 404 when book not found or already archived', async () => {
+      mockRequireAdminAuth.mockResolvedValue({
+        ok: true,
+        context: { userId: 'admin-1', email: 'admin@example.com', globalRole: 'admin' },
+      } as any);
+
+      mockQueryFirst.mockResolvedValue(null);
+
+      const res = await app.fetch(new Request('http://localhost/api/admin/books/nonexistent', {
+        method: 'DELETE',
+        headers: { 'Authorization': 'Bearer admin-token' },
+      }), env, makePassThroughContext());
+
+      expect(res.status).toBe(404);
+    });
+  });
+
+  describe('GET /api/admin/stats', () => {
+    it('returns dashboard statistics', async () => {
+      mockRequireAdminAuth.mockResolvedValue({
+        ok: true,
+        context: { userId: 'admin-1', email: 'admin@example.com', globalRole: 'admin' },
+      } as any);
+
+      // The stats endpoint runs 4 parallel queryFirst calls + 1 queryFirst + 1 queryAll
+      mockQueryFirst
+        .mockResolvedValueOnce({ cnt: 5 })      // totalBooks
+        .mockResolvedValueOnce({ cnt: 12 })      // activeGrants
+        .mockResolvedValueOnce({ cnt: 3 })       // activeSessions
+        .mockResolvedValueOnce({ cnt: 2 })       // archivedBooks
+        .mockResolvedValueOnce({ total_bytes: 10485760 }); // storage (10 MB)
+
+      mockQueryAll.mockResolvedValue([
+        { action: 'created', cnt: 4 },
+        { action: 'file_uploaded', cnt: 2 },
+      ]);
+
+      const res = await app.fetch(new Request('http://localhost/api/admin/stats', {
+        headers: { 'Authorization': 'Bearer admin-token' },
+      }), env, makePassThroughContext());
+
+      expect(res.status).toBe(200);
+      const body = await res.json() as any;
+      expect(body.ok).toBe(true);
+      expect(body.data.totalBooks).toBe(5);
+      expect(body.data.activeGrants).toBe(12);
+      expect(body.data.activeSessions).toBe(3);
+      expect(body.data.archivedBooks).toBe(2);
+      expect(body.data.storageBytes).toBe(10485760);
+      expect(body.data.recentActivity).toHaveLength(2);
+      expect(body.data.recentActivity[0].action).toBe('created');
+      expect(body.data.recentActivity[0].count).toBe(4);
+    });
+  });
+
   describe('GET /api/admin/audit-logs', () => {
     it('returns 404 — redirect removed, frontend calls /audit directly', async () => {
       const res = await app.fetch(new Request('http://localhost/api/admin/audit-logs'), env, makePassThroughContext());

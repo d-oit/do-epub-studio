@@ -1,12 +1,13 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import type { Env } from '../../lib/env';
-import { execute, queryFirst } from '../../db/client';
+import { execute, queryFirst, queryAll, transaction } from '../../db/client';
 import { logAudit } from '../../audit';
 import { CreateBookSchema, UpdateBookSchema, validateEpub } from '@do-epub-studio/shared';
 import { UploadCompleteSchema } from '@do-epub-studio/schema';
 import { adminAuth } from '../../middleware/auth';
 import { withByteCap, MaxBodySizeError, DEFAULT_MAX_BODY_BYTES } from '../../lib/stream-body';
+import { bumpCacheVersion } from '../../lib/edge-cache';
 
 export const booksRouter = new Hono<{ Bindings: Env; Variables: { adminUser: { email: string; id: string; role: string } } }>();
 
@@ -262,6 +263,9 @@ booksRouter.post('/:id/upload-complete', adminAuth, zValidator('json', UploadCom
     ],
   );
 
+  // Invalidate edge cache so readers get the fresh EPUB content
+  bumpCacheVersion();
+
   await logAudit(c.env, {
     entityType: 'book',
     entityId: bookId,
@@ -306,6 +310,9 @@ booksRouter.patch('/:id', adminAuth, zValidator('json', UpdateBookSchema), async
 
   await execute(c.env, `UPDATE books SET ${updates.join(', ')} WHERE id = ?`, values as (string | number | null)[]);
 
+  // Invalidate edge cache so the catalog reflects the updated metadata
+  bumpCacheVersion();
+
   await logAudit(c.env, {
     entityType: 'book',
     entityId: bookId,
@@ -331,18 +338,40 @@ booksRouter.delete('/:id', adminAuth, async (c) => {
     return c.json({ ok: false, error: { code: 'NOT_FOUND', message: 'Book not found' } }, 404);
   }
 
-  await execute(
+  // --- Cascade cleanup: delete R2 objects and all child DB rows ---
+  // R2 objects
+  const files = await queryAll<{ storage_key: string }>(
     c.env,
-    "UPDATE books SET archived_at = datetime('now') WHERE id = ?",
+    'SELECT storage_key FROM book_files WHERE book_id = ?',
     [bookId],
   );
+  const r2DeletePromises = files.map((f) =>
+    c.env.BOOKS_BUCKET.delete(f.storage_key).catch(() => undefined),
+  );
+  // DB child rows (soft-delete the book row, hard-delete dependents)
+  const cascadeStatements = [
+    { sql: 'DELETE FROM reading_insights WHERE book_id = ?', args: [bookId] },
+    { sql: 'DELETE FROM reading_progress WHERE book_id = ?', args: [bookId] },
+    { sql: 'DELETE FROM bookmarks WHERE book_id = ?', args: [bookId] },
+    { sql: 'DELETE FROM highlights WHERE book_id = ?', args: [bookId] },
+    { sql: 'DELETE FROM comments WHERE book_id = ?', args: [bookId] },
+    { sql: 'DELETE FROM reader_sessions WHERE book_id = ?', args: [bookId] },
+    { sql: 'DELETE FROM book_access_grants WHERE book_id = ?', args: [bookId] },
+    { sql: 'DELETE FROM book_files WHERE book_id = ?', args: [bookId] },
+    { sql: "UPDATE books SET archived_at = datetime('now') WHERE id = ?", args: [bookId] },
+  ];
+
+  // R2 deletions run in parallel with the DB transaction
+  c.executionCtx.waitUntil(Promise.all(r2DeletePromises));
+  await transaction(c.env, cascadeStatements);
 
   await logAudit(c.env, {
     entityType: 'book',
     entityId: bookId,
     action: 'archived',
     actorEmail: adminUser.email,
+    payload: { cascadeDeleted: true, r2Objects: files.length },
   }, c.executionCtx);
 
-  return c.json({ ok: true });
+  return c.json({ ok: true, data: { r2ObjectsDeleted: files.length } });
 });

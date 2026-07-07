@@ -6,7 +6,7 @@ import { useAuthStore } from '../../stores/auth';
 import type { BookResponse } from '@do-epub-studio/shared';
 import { validateEpub } from '@do-epub-studio/shared';
 import { LocaleSwitcher } from '../../components/LocaleSwitcher';
-import { Button } from '../../components/ui';
+import { Button, ConfirmDialog } from '../../components/ui';
 import { Spinner } from '@do-epub-studio/ui';
 import { BookCreateModal } from './components/BookCreateModal';
 import { BookEditModal } from './components/BookEditModal';
@@ -48,6 +48,7 @@ export function AdminBookResponsesPage() {
   const [editError, setEditError] = useState<string | null>(null);
 
   const [archivingBookId, setArchivingBookId] = useState<string | null>(null);
+  const [archiveConfirmBook, setArchiveConfirmBook] = useState<BookResponse | null>(null);
 
   const fetchBookResponses = useCallback(async () => {
     setIsLoading(true);
@@ -124,6 +125,7 @@ export function AdminBookResponsesPage() {
       setError((err as Error).message);
     } finally {
       setArchivingBookId(null);
+      setArchiveConfirmBook(null);
     }
   };
 
@@ -330,7 +332,7 @@ export function AdminBookResponsesPage() {
                     {t('admin.books.edit')}
                   </button>
                   <button
-                    onClick={() => { if (window.confirm(t('admin.books.confirmArchive'))) void handleArchiveBook(book.id); }}
+                    onClick={() => setArchiveConfirmBook(book)}
                     disabled={archivingBookId === book.id}
                     className="text-xs font-medium text-semantic-error hover:opacity-80 disabled:opacity-50"
                   >
@@ -388,6 +390,18 @@ export function AdminBookResponsesPage() {
           editError={editError}
         />
       )}
+
+      <ConfirmDialog
+        isOpen={archiveConfirmBook !== null}
+        title={t('admin.books.confirmArchiveTitle')}
+        description={t('admin.books.confirmArchive')}
+        confirmLabel={t('admin.books.archive')}
+        cancelLabel={t('annotation.cancel')}
+        variant="danger"
+        isLoading={archivingBookId !== null}
+        onConfirm={() => { if (archiveConfirmBook) void handleArchiveBook(archiveConfirmBook.id); }}
+        onCancel={() => setArchiveConfirmBook(null)}
+      />
     </main>
   );
 }

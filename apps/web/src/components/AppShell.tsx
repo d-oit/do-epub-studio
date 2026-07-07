@@ -25,7 +25,7 @@ export function AppShell() {
       const options = { replace: true };
       if (isAuthenticated) {
         if (isAdmin) {
-          void navigate('/admin/books', options);
+          void navigate('/admin', options);
         } else if (bookSlug) {
           void navigate(`/read/${bookSlug}`, options);
         } else {
