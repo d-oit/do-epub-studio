@@ -298,7 +298,7 @@ describe('Admin Routes', () => {
       mockQueryFirst.mockResolvedValue({ id: 'book-1' });
       // R2 file objects to delete
       const mockBucketDelete = vi.fn().mockResolvedValue(undefined);
-      (env as Record<string, unknown>).BOOKS_BUCKET = {
+      (env as unknown as Record<string, unknown>).BOOKS_BUCKET = {
         ...env.BOOKS_BUCKET,
         delete: mockBucketDelete,
       };
