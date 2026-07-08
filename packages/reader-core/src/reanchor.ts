@@ -84,19 +84,31 @@ export async function reanchorByText(
   }
 
   const baseToHref = new Map<string, string>();
-  // biome-ignore lint/correctness/useQwikValidLexicalScope: reader-core is not a Qwik app; this is a false positive
-  const collect = (items: TocItem[]) => {
-    for (const item of items) {
-      const href = item.href;
-      const hashIdx = href.indexOf('#');
-      const base = hashIdx === -1 ? href : href.substring(0, hashIdx);
-      if (!baseToHref.has(base)) {
-        baseToHref.set(base, href);
-      }
-      if (item.subitems) collect(item.subitems);
+  // Use iterative stack-based traversal to avoid recursion overhead
+  const stack: TocItem[] = [];
+  for (let i = toc.length - 1; i >= 0; i--) {
+    const item = toc[i];
+    if (item) stack.push(item);
+  }
+
+  while (stack.length > 0) {
+    const item = stack.pop();
+    if (!item) continue;
+
+    const href = item.href;
+    const hashIdx = href.indexOf('#');
+    const base = hashIdx === -1 ? href : href.substring(0, hashIdx);
+    if (!baseToHref.has(base)) {
+      baseToHref.set(base, href);
     }
-  };
-  collect(toc);
+
+    if (item.subitems) {
+      for (let i = item.subitems.length - 1; i >= 0; i--) {
+        const sub = item.subitems[i];
+        if (sub) stack.push(sub);
+      }
+    }
+  }
 
   let basePrefer: string | undefined;
   if (preferChapter) {
@@ -163,13 +175,11 @@ export async function reanchorByText(
     if (normalizedTargetGeneral === undefined) {
       normalizedTargetGeneral = normalizeText(targetText);
     }
-    words = [];
     const targetToProcess = normalizedTargetGeneral.length <= TARGET_TEXT_MAX_LEN
       ? normalizedTargetGeneral
       : normalizedTargetGeneral.slice(0, TARGET_TEXT_MAX_LEN);
-    for (const m of targetToProcess.matchAll(/[\p{L}\p{N}]{4,}/gu)) {
-      words.push(m[0]);
-    }
+    // Use match() instead of matchAll() to reduce object allocations
+    words = targetToProcess.match(/[\p{L}\p{N}]{4,}/gu) || [];
   }
 
   const threshold = options.fuzzyThreshold ?? 0.7;
@@ -184,8 +194,12 @@ export async function reanchorByText(
           const contentToProcess = cached.lower.length <= CHAPTER_CONTENT_MAX_LEN
             ? cached.lower
             : cached.lower.slice(0, CHAPTER_CONTENT_MAX_LEN);
-          for (const m of contentToProcess.matchAll(/[\p{L}\p{N}]{4,}/gu)) {
-            cached.wordSet.add(m[0]);
+          // Use match() instead of matchAll() to reduce object allocations
+          const matches = contentToProcess.match(/[\p{L}\p{N}]{4,}/gu);
+          if (matches) {
+            for (const m of matches) {
+              cached.wordSet.add(m);
+            }
           }
         }
 
