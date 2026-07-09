@@ -52,8 +52,17 @@ test.describe('Login and book load (desktop)', () => {
     // Reader header shows the book title
     await expect(page.getByRole("heading", { name: "My Test Book" })).toBeVisible({ timeout: 60000 });
 
-    // Reader controls are visible
+    // Reader controls are visible (Contents is always visible)
     await expect(page.getByRole('button', { name: /Contents/i })).toBeVisible({ timeout: 60000 });
+
+    // On narrow viewports, Settings and Sign Out are behind a "More options"
+    // overflow menu (container-query driven). On wide viewports they are
+    // directly visible. Handle both cases for cross-engine smoke test.
+    const settingsButton = page.getByRole('button', { name: /Settings/i });
+    const isSettingsVisible = await settingsButton.isVisible().catch(() => false);
+    if (!isSettingsVisible) {
+      await page.getByRole('button', { name: 'More options' }).click();
+    }
     await expect(page.getByRole('button', { name: /Settings/i })).toBeVisible({ timeout: 60000 });
     await expect(page.getByRole('button', { name: /Sign Out/i })).toBeVisible({ timeout: 60000 });
   });

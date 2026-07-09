@@ -51,10 +51,12 @@ export default {
           900: 'oklch(37.9% 0.138 265.5)',
         },
       },
+      // NOTE: Source of truth is @theme in globals.css.
+      // Geist (body) + Instrument Serif (display) per ADR-063a / Plan 115 U4.
       fontFamily: {
-        display: ['Inter', 'system-ui', 'sans-serif'],
-        serif: ['Georgia', 'Cambria', 'serif'],
-        body: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+        display: ['Instrument Serif', 'Georgia', 'serif'],
+        serif: ['Instrument Serif', 'Georgia', 'serif'],
+        body: ['Geist', 'Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
         mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
       },
       fontSize: {
