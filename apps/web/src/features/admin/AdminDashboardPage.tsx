@@ -65,10 +65,13 @@ export function AdminDashboardPage() {
   }, [sessionToken]);
 
   // eslint-disable-next-line @typescript-eslint/no-confusing-void-expression -- Codacy rule contradicts no-floating-promises; void required locally
+  // biome-ignore lint/correctness/useQwikValidLexicalScope: React app, not Qwik
   const handleBooksNav = () => { void navigate('/admin/books'); };
   // eslint-disable-next-line @typescript-eslint/no-confusing-void-expression -- Codacy rule contradicts no-floating-promises; void required locally
+  // biome-ignore lint/correctness/useQwikValidLexicalScope: React app, not Qwik
   const handleGrantsNav = () => { void navigate('/admin/grants'); };
   // eslint-disable-next-line @typescript-eslint/no-confusing-void-expression -- Codacy rule contradicts no-floating-promises; void required locally
+  // biome-ignore lint/correctness/useQwikValidLexicalScope: React app, not Qwik
   const handleAuditNav = () => { void navigate('/admin/audit'); };
 
   return (
