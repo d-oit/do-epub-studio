@@ -19,7 +19,7 @@
   },
   "devDependencies": {
     "@types/jsdom": "^28.0.3",
-    "@types/node": "^25",
+    "@types/node": "^26",
     "fast-check": "^4.9.0",
     "typescript": "^6.0.3",
     "vitest": "4.1.10"
