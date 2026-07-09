@@ -23,14 +23,14 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@cloudflare/vitest-pool-workers": "^0.16.20",
-    "@cloudflare/workers-types": "^5.20260707.1",
+    "@cloudflare/vitest-pool-workers": "^0.18.2",
+    "@cloudflare/workers-types": "^5.20260708.1",
     "@types/node": "^26",
-    "@vitest/coverage-v8": "4.1.9",
+    "@vitest/coverage-v8": "4.1.10",
     "eslint": "^10.6.0",
     "jszip": "^3.10.1",
     "typescript": "^6.0.3",
-    "vitest": "4.1.9",
-    "wrangler": "^4.105.0"
+    "vitest": "4.1.10",
+    "wrangler": "^4.107.1"
   }
 }
