@@ -64,12 +64,18 @@ export function AdminDashboardPage() {
     return () => { cancelled = true; };
   }, [sessionToken]);
 
-  // biome-ignore lint/correctness/useQwikValidLexicalScope: React app, not Qwik
-  const handleBooksNav = () => { void navigate('/admin/books'); };
-  // biome-ignore lint/correctness/useQwikValidLexicalScope: React app, not Qwik
-  const handleGrantsNav = () => { void navigate('/admin/grants'); };
-  // biome-ignore lint/correctness/useQwikValidLexicalScope: React app, not Qwik
-  const handleAuditNav = () => { void navigate('/admin/audit'); };
+  const handleBooksNav = () => {
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises -- navigate() returns void, not Promise (react-router-dom v7)
+    navigate('/admin/books');
+  };
+  const handleGrantsNav = () => {
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises -- navigate() returns void, not Promise (react-router-dom v7)
+    navigate('/admin/grants');
+  };
+  const handleAuditNav = () => {
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises -- navigate() returns void, not Promise (react-router-dom v7)
+    navigate('/admin/audit');
+  };
 
   return (
     <main id="main-content" className="min-h-dvh bg-background p-4 sm:p-6 lg:p-8">
