@@ -81,18 +81,18 @@ describe('Security Posture (Web)', () => {
   });
 
   it('fonts are self-hosted via @fontsource imports, not loaded from external origins (SE3 — ADR-123 / Plan 122)', () => {
-    const htmlPath = path.resolve(__dirname, '../../index.html');
-    const html = fs.readFileSync(htmlPath, 'utf-8');
+    const indexPath = path.resolve(__dirname, '../../index.html');
+    const indexContent = fs.readFileSync(indexPath, 'utf-8');
 
     // No external font <link> or <script> tags from fonts.googleapis.com
-    expect(html).not.toContain('fonts.googleapis.com');
-    expect(html).not.toContain('fonts.gstatic.com');
+    expect(indexContent).not.toContain('fonts.googleapis.com');
+    expect(indexContent).not.toContain('fonts.gstatic.com');
 
     // globals.css must import the self-hosted font families
     const cssPath = path.resolve(__dirname, '../styles/globals.css');
-    const css = fs.readFileSync(cssPath, 'utf-8');
-    expect(css).toContain('@fontsource-variable/geist');
-    expect(css).toContain('@fontsource/instrument-serif');
+    const cssContent = fs.readFileSync(cssPath, 'utf-8');
+    expect(cssContent).toContain('@fontsource-variable/geist');
+    expect(cssContent).toContain('@fontsource/instrument-serif');
   });
 
   it('asserts client-logger.ts does not export sessionToken to telemetry', () => {

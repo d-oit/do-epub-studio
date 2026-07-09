@@ -41,8 +41,8 @@ Resolves Plan 116 items **SE2** (CSP `style-src 'unsafe-inline'`) and
   adding latency and complexity.
 - SHA-256 hashing of inline `<style>` blocks is fragile because
   Vite/Tailwind v4 injection points depend on build internals.
-- React 19 + libraries insert **inline style attributes**
-  (`style={{ width: `${pct}%` }}`) on 19+ sites — these are governed by
+- React 19 + libraries insert **inline style attributes** such as
+  `style={{width:'${pct}%'}}` on 19+ sites — these are governed by
   `style-src-attr`, not the legacy `style-src`.
 
 ### Why this matters
