@@ -64,14 +64,17 @@ export function AdminDashboardPage() {
     return () => { cancelled = true; };
   }, [sessionToken]);
 
+  // biome-ignore lint/correctness/useQwikValidLexicalScope: React app, not Qwik
   const handleBooksNav = () => {
     // eslint-disable-next-line @typescript-eslint/no-floating-promises -- navigate() returns void, not Promise (react-router-dom v7)
     navigate('/admin/books');
   };
+  // biome-ignore lint/correctness/useQwikValidLexicalScope: React app, not Qwik
   const handleGrantsNav = () => {
     // eslint-disable-next-line @typescript-eslint/no-floating-promises -- navigate() returns void, not Promise (react-router-dom v7)
     navigate('/admin/grants');
   };
+  // biome-ignore lint/correctness/useQwikValidLexicalScope: React app, not Qwik
   const handleAuditNav = () => {
     // eslint-disable-next-line @typescript-eslint/no-floating-promises -- navigate() returns void, not Promise (react-router-dom v7)
     navigate('/admin/audit');
