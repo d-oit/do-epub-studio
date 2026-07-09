@@ -64,8 +64,11 @@ export function AdminDashboardPage() {
     return () => { cancelled = true; };
   }, [sessionToken]);
 
+  // eslint-disable-next-line @typescript-eslint/no-confusing-void-expression -- Codacy rule contradicts no-floating-promises; void required locally
   const handleBooksNav = () => { void navigate('/admin/books'); };
+  // eslint-disable-next-line @typescript-eslint/no-confusing-void-expression -- Codacy rule contradicts no-floating-promises; void required locally
   const handleGrantsNav = () => { void navigate('/admin/grants'); };
+  // eslint-disable-next-line @typescript-eslint/no-confusing-void-expression -- Codacy rule contradicts no-floating-promises; void required locally
   const handleAuditNav = () => { void navigate('/admin/audit'); };
 
   return (
