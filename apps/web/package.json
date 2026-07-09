@@ -21,6 +21,8 @@
     "@do-epub-studio/reader-core": "workspace:*",
     "@do-epub-studio/shared": "workspace:*",
     "@do-epub-studio/ui": "workspace:*",
+    "@fontsource-variable/geist": "^5.2.9",
+    "@fontsource/instrument-serif": "^5.2.8",
     "@intity/epub-js": "^0.3.96",
     "idb": "^8.0.3",
     "jszip": "^3.10.1",

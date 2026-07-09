@@ -26,9 +26,12 @@ export const securityHeaders: Readonly<Record<string, string>> = Object.freeze({
   'Permissions-Policy': 'camera=(), microphone=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()',
 
   // Content Security Policy — restrict resource loading for API responses
-  // API endpoints should not render content; this is a defense-in-depth measure
+  // API endpoints should not render content; this is a defense-in-depth measure.
+  // Per ADR-123, 'unsafe-inline' is no longer permitted even in style-src:
+  // the Worker does not serve any style content, and React inline `style={}`
+  // is governed separately at the page layer via style-src-attr.
   'Content-Security-Policy':
-    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-src 'self'; frame-ancestors 'none'; form-action 'self'; base-uri 'self'; upgrade-insecure-requests; report-uri /api/csp-report",
+    "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; frame-src 'self'; frame-ancestors 'none'; form-action 'self'; base-uri 'self'; upgrade-insecure-requests; report-uri /api/csp-report",
 
   // Cross-Origin isolation — prevent cross-origin data leaks
   'Cross-Origin-Opener-Policy': 'same-origin',

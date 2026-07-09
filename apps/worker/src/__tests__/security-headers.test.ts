@@ -59,4 +59,22 @@ describe('security headers', () => {
     expect(Object.isFrozen(securityHeaders)).toBe(true);
     expect(Object.isFrozen(minimalSecurityHeaders)).toBe(true);
   });
+
+  // SE2 — ADR-123 / Plan 122
+  it('main CSP has no unsafe-inline anywhere (style-src or script-src)', () => {
+    const csp = securityHeaders['Content-Security-Policy'];
+    expect(csp).not.toContain("'unsafe-inline'");
+    expect(csp).not.toContain("'unsafe-eval'");
+
+    // style-src must include 'self' as the only style source
+    const styleSrc = csp.match(/style-src ([^;]+)/)?.[1] ?? '';
+    const styleTokens = styleSrc.split(' ').filter(Boolean);
+    expect(styleTokens).toContain("'self'");
+  });
+
+  it('minimal CSP is unchanged (still restrictive)', () => {
+    const csp = minimalSecurityHeaders['Content-Security-Policy'];
+    expect(csp).toContain("default-src 'none'");
+    expect(csp).toContain("frame-ancestors 'none'");
+  });
 });

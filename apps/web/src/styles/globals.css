@@ -1,3 +1,11 @@
+/* Self-hosted typography — per ADR-123 (Plan 122).
+   Replaces the previous Google Fonts <link> injection in
+   index.html, removing fonts.googleapis.com +
+   fonts.gstatic.com from the CSP allowlist.
+   font-display: swap (default in @fontsource) avoids FOIT. */
+@import "@fontsource-variable/geist";
+@import "@fontsource/instrument-serif/400.css";
+@import "@fontsource/instrument-serif/400-italic.css";
 @import "tailwindcss";
 
 /* ============================================

@@ -52,8 +52,47 @@ describe('Security Posture (Web)', () => {
     expect(tokens).not.toContain("'unsafe-inline'");
     expect(tokens).not.toContain("'unsafe-eval'");
 
+    // Compensating control 2 (SE2 — ADR-123 / Plan 122): style-src is strict.
+    // 'unsafe-inline' is permitted ONLY for style-src-attr, which governs
+    // React component inline `style={}` attributes (CSP Level 3).
+    const styleSrcMatch = csp.match(/style-src ([^;]+)/);
+    expect(styleSrcMatch).not.toBeNull();
+    const styleTokens = (styleSrcMatch?.[1] ?? '').split(' ');
+    expect(styleTokens).toContain("'self'");
+    expect(styleTokens).not.toContain("'unsafe-inline'");
+    expect(styleTokens).not.toContain('https://fonts.googleapis.com');
+
+    const styleSrcAttrMatch = csp.match(/style-src-attr ([^;]+)/);
+    expect(styleSrcAttrMatch).not.toBeNull();
+    const styleAttrTokens = (styleSrcAttrMatch?.[1] ?? '').split(' ');
+    expect(styleAttrTokens).toContain("'unsafe-inline'");
+
+    // Compensating control 3 (SE3 — ADR-123 / Plan 122): fonts are self-hosted.
+    // 'font-src' must be 'self' only — no Google or Fontshare origins.
+    const fontSrcMatch = csp.match(/font-src ([^;]+)/);
+    expect(fontSrcMatch).not.toBeNull();
+    const fontTokens = (fontSrcMatch?.[1] ?? '').split(' ');
+    expect(fontTokens).toContain("'self'");
+    expect(fontTokens).not.toContain('https://fonts.gstatic.com');
+    expect(fontTokens).not.toContain('https://api.fontshare.com');
+
     // Ensure report-uri is present and correct
     expect(csp).toContain('report-uri /api/csp-report');
+  });
+
+  it('fonts are self-hosted via @fontsource imports, not loaded from external origins (SE3 — ADR-123 / Plan 122)', () => {
+    const indexPath = path.resolve(__dirname, '../../index.html');
+    const indexContent = fs.readFileSync(indexPath, 'utf-8');
+
+    // No external font <link> or <script> tags from fonts.googleapis.com
+    expect(indexContent).not.toContain('fonts.googleapis.com');
+    expect(indexContent).not.toContain('fonts.gstatic.com');
+
+    // globals.css must import the self-hosted font families
+    const cssPath = path.resolve(__dirname, '../styles/globals.css');
+    const cssContent = fs.readFileSync(cssPath, 'utf-8');
+    expect(cssContent).toContain('@fontsource-variable/geist');
+    expect(cssContent).toContain('@fontsource/instrument-serif');
   });
 
   it('asserts client-logger.ts does not export sessionToken to telemetry', () => {
