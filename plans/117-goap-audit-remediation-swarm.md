@@ -1,11 +1,11 @@
 # GOAP 117 — Audit Remediation Swarm (2026-06-27)
 
 **Date:** 2026-06-27
-**Status:** 🔄 REMAINING — 2 gaps found post-PR#675
+**Status:** ✅ COMPLETE — all gaps closed by PRs #675, #676, #678, #679, #680, #738
 **Author:** opencode agent swarm
 **Methodology:** GOAP (analyze → decompose → strategize → coordinate → execute → synthesize)
 **Extends:** Plans 114, 115, 116 (comprehensive audits 2026-06-27)
-**PR:** #675 (commit `553a271`) — implemented 9/11 clusters; 2 gaps remain
+**PRs:** #675 (commit `553a271`) — 9/11 clusters; #676, #678 — remaining gaps; #680 — R1/B9/M4; #738 — final merge with Codacy fixes
 
 ---
 
@@ -22,22 +22,22 @@ Implement all verified missing tasks from Plans 114–116 in a single PR. Every 
 | **1 — CI Perf Gates** | CI1/CI2/PF1/CI3 | ✅ PASS | `lighthouse.yml:82` exit 1; `lighthouserc.json:8` formFactor=mobile; `bundle-size.yml:53` enforce step clean |
 | **2 — Login Error Alert** | U1 | ✅ PASS | `LoginPage.tsx:230` uses `border border-accent-error/30 bg-accent-error/10 rounded-lg` |
 | **3 — Bounce Animations** | U2/U3 | ✅ PASS | `App.tsx` + `PageLoadingFallback.tsx` use `animate-pulse`; `--ease-out-back` removed from `globals.css` |
-| **4 — Spinner Consolidation** | U5 | ⚠️ 5/6 PASS | AuditLogPage, BooksPage, GrantsPage, ReaderViewer, SearchPanel all use `<Spinner>`. **GrantList.tsx:77** still has hand-rolled spinner |
+| **4 — Spinner Consolidation** | U5 | ✅ PASS | All 6 sites use `<Spinner>`. GrantList.tsx:77 fixed in PR #676 |
 | **5 — Search Chapter Lookup** | M1 | ✅ PASS | `useReaderSearch.ts` derives href from `spine.each` iteration, no `spine.get(cfi)` |
 | **6 — Email Transport Guard** | M2 | ✅ PASS | `email-transport.ts:53-58` emits structured `console.warn` with traceId |
 | **7 — Viewport Units** | R1 | ✅ PASS | ReaderViewer, ReaderPage, AppShell all use `dvh` |
-| **8 — i18n Hardcoded Strings** | I1/I2 | ⚠️ PARTIAL | HighlightItem, BookmarksPanel, NotFoundPage PASS. **AuditLogPage.tsx** (lines 40-43, 48, 60, 85) + **CommentInput.tsx** (lines 16, 19, 67, 78) still have hardcoded English |
+| **8 — i18n Hardcoded Strings** | I1/I2 | ✅ PASS | All strings use `t()`. AuditLogPage + CommentInput fixed in PRs #676, #678 |
 | **9 — Header Parity** | SE1 | ✅ PASS | `_headers` and `security-headers.ts` have identical Permissions-Policy |
 | **10 — Lint Config** | LC1 | ✅ PASS | `tsconfig.node.json` includes `vitest.config.ts` + `playwright.config.ts` |
 | **11 — Release Node Matrix** | RW1 | ✅ PASS | `release.yml:28-30` has `node-version: [22, 24]` |
 
-### Remaining Gaps
+### Resolved Gaps (post-PR #676/#678)
 
-| Gap | File | Line(s) | Issue |
-|-----|------|---------|-------|
-| **U5-D** | `apps/web/src/features/admin/components/GrantList.tsx` | 77 | Hand-rolled `<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent" />` — needs `<Spinner>` |
-| **I1-A** | `apps/web/src/features/admin/AuditLogPage.tsx` | 40-43, 48, 60, 85 | `renderPaginationInfo()` returns raw English; `aria-label="Audit log table"` hardcoded; `'System'` fallback hardcoded |
-| **I1-B** | `apps/web/src/features/reader/components/annotations/CommentInput.tsx` | 16, 19, 67, 78 | Default props are English; `Cancel` button + `Ctrl+Enter` hint hardcoded (keys exist in i18n but unused) |
+| Gap | File | Line(s) | Resolution |
+|-----|------|---------|------------|
+| **U5-D** | `apps/web/src/features/admin/components/GrantList.tsx` | 77 | ✅ Fixed in PR #676 — uses `<Spinner>` from `@do-epub-studio/ui` |
+| **I1-A** | `apps/web/src/features/admin/AuditLogPage.tsx` | 40-43, 48, 60, 85 | ✅ Fixed in PR #676 — all strings use `t()` keys |
+| **I1-B** | `apps/web/src/features/reader/components/annotations/CommentInput.tsx` | 16, 19, 67, 78 | ✅ Fixed in PR #678 — placeholder, cancel, hint, submit all use `t()` |
 
 ---
 
@@ -123,22 +123,22 @@ Implement all verified missing tasks from Plans 114–116 in a single PR. Every 
 - [x] Bundle budget enforced (not informational)
 - [x] Login error uses full border + tint (no side-stripe)
 - [x] No `animate-bounce` in codebase; `--ease-out-back` removed
-- [ ] All spinner sites use `<Spinner>` component — **GrantList.tsx:77 remaining**
+- [x] All spinner sites use `<Spinner>` component — **GrantList.tsx:77 fixed in PR #676**
 - [x] Search results show correct chapter titles
 - [x] Missing email binding logs a warning
 - [x] App uses `dvh` viewport units consistently
-- [ ] No hardcoded user-facing JSX strings (all via `t()`) — **AuditLogPage.tsx + CommentInput.tsx remaining**
+- [x] No hardcoded user-facing JSX strings (all via `t()`) — **AuditLogPage.tsx + CommentInput.tsx fixed in PRs #676, #678**
 - [x] Worker + Pages emit identical Permissions-Policy
 - [x] tsconfig.node.json covers all root configs
 - [x] Release verify uses same Node as CI
-- [ ] Quality gate + Codacy pass — **pending fix**
+- [x] Quality gate + Codacy pass — **PR #738 all green**
 
 ---
 
 ## Synthesize
 
-PR #675 (commit `553a271`) resolved 9/11 clusters from Plans 114–116. Two gaps
-remain: (1) one hand-rolled spinner in `GrantList.tsx:77` (U5-D), and (2) residual
-hardcoded English strings in `AuditLogPage.tsx` and `CommentInput.tsx` (I1-A/I1-B)
-where i18n keys exist in all three locale files but are not consumed by the
-components. A follow-up PR will close these gaps and re-run the quality gate.
+PR #675 (commit `553a271`) resolved 9/11 clusters from Plans 114–116.
+PRs #676 and #678 closed the remaining gaps (U5-D spinner, I1-A/I1-B i18n strings).
+PR #680 closes R1 (viewport units dvh) and B9 (cookie Secure flag).
+PR #738 (squash-merge `59851cd`, 2026-07-09) finalizes with Codacy fixes and bundle budget adjustments.
+**All 11 clusters from Plans 114–116 are now COMPLETE.**

@@ -141,14 +141,15 @@ Codacy required per PR. Clusters 1/2/4/7 are config-only (low risk); Clusters
 
 ## Acceptance Criteria (when executed in follow-up plans)
 
-- [ ] Lighthouse failures `exit 1` (job blocks); mobile preset/`formFactor` set; bundle budget blocking — CI1/CI2/PF1
-- [ ] Worker + Pages emit identical Permissions-Policy / CORP / CSP from one source — SE1
-- [ ] No hardcoded user-facing JSX strings; all via `t()` in en/de/fr — I1/I2
-- [ ] `pnpm lint` covers root configs; `no-literal-string` (scoped) active — LC1/LC2
-- [ ] App-wide `dvh` viewport units; no `100vh` mobile overlap — R1
-- [ ] Core flows have mobile-viewport e2e — R2
-- [ ] Release verify uses the same Node matrix as CI — RW1
-- [ ] No new Codacy issues; coverage thresholds held
+- [x] Lighthouse failures `exit 1` (job blocks); mobile preset/`formFactor` set; bundle budget blocking — CI1/CI2/PF1 — **PR #675**
+- [x] Worker + Pages emit identical Permissions-Policy / CORP / CSP from one source — SE1 — **PR #675**
+- [x] No hardcoded user-facing JSX strings; all via `t()` in en/de/fr — I1/I2 — **PRs #676, #678**
+- [x] `pnpm lint` covers root configs — LC1 — **PR #675**
+- [ ] `no-literal-string` (scoped) active — LC2 — **P3, still open**
+- [x] App-wide `dvh` viewport units; no `100vh` mobile overlap — R1 — **PR #680**
+- [ ] Core flows have mobile-viewport e2e — R2 — **P3, not blocking**
+- [x] Release verify uses the same Node matrix as CI — RW1 — **PR #675**
+- [x] No new Codacy issues; coverage thresholds held — **PR #738 all green**
 
 ---
 

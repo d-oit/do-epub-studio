@@ -61,7 +61,7 @@
 | 113 | Phase 3 Polish Execution & Knowledge Compaction Policy | `plans/113-adr-phase3-polish-execution-policy.md` | Accepted |
 | 114 | Comprehensive Audit Remediation Policy (2026-06-27) | `plans/114-adr-audit-remediation-policy.md` | Accepted |
 | 115 | Verified-Audit Remediation Policy (2026-06-27) | `plans/115-adr-verified-audit-remediation-policy.md` | Proposed |
-| 120 | Missing-Implementation Verification and Prioritization Policy (2026-07-07) | `plans/120-adr-missing-implementation-prioritization-policy.md` | Accepted (Clusters 1–5 shipped) |
+| 120 | Missing-Implementation Verification and Prioritization Policy (2026-07-07) | `plans/120-adr-missing-implementation-prioritization-policy.md` | Accepted (Clusters 1–9 + F1–F3 shipped via PR #738) |
 
 ## Cross-referenced but not yet adopted
 

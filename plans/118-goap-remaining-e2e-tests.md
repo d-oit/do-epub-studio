@@ -47,14 +47,19 @@ Implement all remaining P1/P2 tasks from Plans 114-116 that are genuinely open. 
 
 | ID | Sev | Category | Finding |
 |----|-----|----------|---------|
-| A6 | P3 | Missing Impl | Offline reader fallback restores only progress, not annotations |
-| M3 | P3 | Tech Debt | Redundant sync queue paths |
-| M4 | P3 | Missing Test | Offline restore test |
-| B9 | P3 | Security | Cookie Secure flag |
-| F1 | P3 | Performance | framer-motion evaluation |
-| SE2/SE3 | P3 | Security | CSP improvements |
-| LC2 | P3 | Lint | No-literal-string rule |
-| R2 | P3 | Responsive | Mobile e2e coverage |
+| A6 | P3 | Missing Impl | Offline reader fallback restores only progress, not annotations — **test added PR #680, #738** |
+| M3 | P3 | Tech Debt | Redundant sync queue paths — **documented PR #738 (Cluster 6)** |
+| M4 | P3 | Missing Test | Offline restore test — **DONE in PR #680** |
+| B9 | P3 | Security | Cookie Secure flag — **DONE in PR #680** |
+| F1 | P3 | Performance | framer-motion evaluation — **still open** |
+| SE2/SE3 | P3 | Security | CSP improvements — **still open** |
+| LC2 | P3 | Lint | No-literal-string rule — **still open** |
+| R2 | P3 | Responsive | Mobile e2e coverage — **still open** |
+| N3 | P3 | Feature | Server-side full-text search — **still open (Plan 120 Cluster 10)** |
+| N6 | P3 | Feature | EPUB re-export packager — **still open (Plan 120 Cluster 11)** |
+| N7 | P3 | Feature | Comment reply notifications — **still open (Plan 120 Cluster 12)** |
+| U4 | P3 | Design | Typography decision (Geist font) — **still open (Plan 115)** |
+| F3 | P3 | Perf | Cross-isolate cache invalidation via DO/KV — **still open (Plan 120)** |
 
 ---
 

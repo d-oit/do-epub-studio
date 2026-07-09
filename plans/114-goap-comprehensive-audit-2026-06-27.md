@@ -186,13 +186,13 @@ Each cluster ships as 1-2 PRs with feature branch per AGENTS.md:
 
 ## Acceptance Criteria
 
-- [ ] B1 grant session revocation merged with unit + e2e test
-- [ ] .gitignore updated, stale tracked file removed
-- [ ] Admin pages responsive on 320px viewport (no overflow)
-- [ ] ≥5 new e2e specs covering catalog, upload, grants, audit
-- [ ] Offline sync queue handles bookmarks + insights
-- [ ] CI runs on Node 22 + 24 matrix
-- [ ] All PRs pass quality gate + Codacy
+- [x] B1 grant session revocation merged with unit + e2e test — **already shipped (verified Plan 115)**
+- [x] .gitignore updated, stale tracked file removed — **PR #675**
+- [x] Admin pages responsive on 320px viewport (no overflow) — **PR #675**
+- [x] ≥5 new e2e specs covering catalog, upload, grants, audit — **PR from Plan 118**
+- [x] Offline sync queue handles bookmarks + insights — **PR #675, documented in PR #738**
+- [x] CI runs on Node 22 + 24 matrix — **PR #675**
+- [x] All PRs pass quality gate + Codacy — **PR #738 all 22 CI checks green**
 
 ---
 

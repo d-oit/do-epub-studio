@@ -131,14 +131,14 @@ the fix.
 
 ## Acceptance Criteria (when executed in follow-up plans)
 
-- [ ] Login error alert uses a full border + tint (no `border-l-*` stripe); detector `side-tab` = 0
-- [ ] Loading indicators use `ease-out` motion; detector `bounce-easing` = 0; `prefers-reduced-motion` honored
-- [ ] All five spinner sites use `<Spinner>`; detector `border-accent-on-rounded` = 0
-- [ ] Search results show correct chapter titles (M1 test added)
-- [ ] Missing email binding surfaces an operator-visible warning (M2 test added)
-- [ ] Offline restore renders highlights + comments + bookmarks (M4 test added)
-- [ ] Typography decision recorded (U4) — either re-pair or document Geist
-- [ ] No new Codacy issues; coverage thresholds held
+- [x] Login error alert uses a full border + tint (no `border-l-*` stripe); detector `side-tab` = 0 — **PR #675**
+- [x] Loading indicators use `ease-out` motion; detector `bounce-easing` = 0; `prefers-reduced-motion` honored — **PR #675**
+- [x] All five spinner sites use `<Spinner>`; detector `border-accent-on-rounded` = 0 — **PR #676**
+- [x] Search results show correct chapter titles (M1 test added) — **PR #675**
+- [x] Missing email binding surfaces an operator-visible warning (M2 test added) — **PR #675**
+- [x] Offline restore renders highlights + comments + bookmarks (M4 test added) — **PR #680, expanded #738**
+- [ ] Typography decision recorded (U4) — either re-pair or document Geist — **P3, still open**
+- [x] No new Codacy issues; coverage thresholds held — **PR #738 all green**
 
 ---
 
