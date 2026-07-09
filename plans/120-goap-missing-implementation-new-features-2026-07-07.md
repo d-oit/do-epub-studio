@@ -1,14 +1,15 @@
 # GOAP 120 — Missing Implementation & New Feature Analysis (2026-07-07)
 
 **Date:** 2026-07-07
-**Status:** 🔄 IN PROGRESS — Clusters 1–9 + F1–F3 implemented on branch `feat/cascade-delete-cache-confirmdialog-dashboard-library`; all CI passing; Clusters 10–12 remain
+**Status:** ✅ COMPLETE — Clusters 1–9 + F1–F3 merged via PR #738 (squash-merge `59851cd`, 2026-07-09); Clusters 10–12 remain as P3 followups
 **Author:** Buffy analysis session (verified against working tree)
 **Methodology:** GOAP (analyze → decompose → strategize → coordinate → execute → synthesize)
 **Skills used:** `goap-agent`, `task-decomposition`, `code-quality`, `impeccable`
 **Related ADR:** `plans/120-adr-missing-implementation-prioritization-policy.md`
 **Extends / corrects:** Plans 106, 114, 115, 116, 117
-**Branch:** `feat/cascade-delete-cache-confirmdialog-dashboard-library`
-**Commit:** `e206e65`
+**PR:** #738 (squash-merged 2026-07-09, commit `59851cd`)
+**Rebased on:** latest main (includes PR #742 dev-dep bumps + PR #740 reader-core perf)
+**CI:** 22 checks green (Codacy ✅, Build Node 22+24 ✅, bundle budget ✅, Lighthouse ✅)
 
 ---
 
@@ -240,8 +241,10 @@ commits). Quality gate + Codacy required before each merge.
 - [x] **N4**: Storage quota panel in settings showing usage + "Clear offline cache" button with ConfirmDialog guard
 - [x] **N5**: `/settings` route with reader preferences accessible from navigation; `NAV_ITEMS` `nav.settings` routes to `/settings`
 - [x] All PRs pass quality gate (lint + typecheck + test)
-- [ ] Codacy check pending (run `gh pr checks` after PR is created)
-- [ ] No new Codacy issues; coverage thresholds held
+- [x] Codacy check passed (fixed `no-confusing-void-expression` on navigate() calls, restored `biome-ignore` for `useQwikValidLexicalScope`)
+- [x] No new Codacy issues; coverage thresholds held
+- [x] Bundle budget adjusted: reader 1.1MB→1.15MB, catalog 850KB→860KB for new features
+- [x] `void navigate()` pattern fixed in AdminDashboardPage, BooksPage, AppShell (eslint-disable with justification per AGENTS.md TIER 3)
 
 ---
 
@@ -272,9 +275,10 @@ commits). Quality gate + Codacy required before each merge.
 
 ## Synthesize — Headline
 
-**Clusters 1–9 + F1–F3 are complete** on branch `feat/cascade-delete-cache-confirmdialog-dashboard-library`
-with all CI passing (lint, typecheck, 16 admin tests, 9 offline/i18n tests, i18n
-parity across 14 locales). The P1 data-integrity issue (A1 cascade delete) is resolved.
+**Clusters 1–9 + F1–F3 are complete** and merged to main via PR #738 (squash-merge
+`59851cd`, 2026-07-09). All CI passed: 22 checks green including Codacy, Build
+(Node 22+24), bundle budget, Lighthouse, lint, typecheck, and 810 unit tests.
+The P1 data-integrity issue (A1 cascade delete) is resolved.
 Cache invalidation (A2) is wired for uploads and metadata edits. `window.confirm()`
 is replaced with `ConfirmDialog` (A3). The admin dashboard (N1) and My Library (N2)
 are new pages with full i18n. Sync queue cleanup (A5) and offline restore (A6) are
@@ -284,4 +288,4 @@ shared formatBytes utility extracted (F3). LibraryBookResponse type (F1) and aud
 action i18n (F2) are done.
 
 **Clusters 10–12 remain** as P3 followups — server-side search, EPUB re-export,
-and reply notifications.
+and reply notifications. See Plan 121 for the consolidated post-merge backlog.
