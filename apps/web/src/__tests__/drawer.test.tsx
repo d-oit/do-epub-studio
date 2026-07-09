@@ -29,20 +29,6 @@ vi.mock('../components/navigation/shared', () => ({
   NavIcon: ({ icon, ...props }: any) => <span data-testid={`nav-icon-${icon}`} {...props} />,
 }));
 
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children, ...props }: any) => {
-      const { initial: _i1, animate: _a1, exit: _e1, transition: _t1, ...domProps } = props;
-      return <div {...domProps}>{children}</div>;
-    },
-    aside: ({ children, ...props }: any) => {
-      const { initial: _i2, animate: _a2, exit: _e2, transition: _t2, ...domProps } = props;
-      return <aside {...domProps}>{children}</aside>;
-    },
-  },
-  AnimatePresence: ({ children }: any) => <>{children}</>,
-}));
-
 describe('Drawer', () => {
   const onClose = vi.fn();
 

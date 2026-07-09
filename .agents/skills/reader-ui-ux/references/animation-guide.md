@@ -1,156 +1,111 @@
 # Animation Guide
 
-Framer Motion patterns for 2026 UI standards.
+CSS-only animation patterns for 2026 UI standards. All keyframes are defined in `globals.css` — no JavaScript animation library required for standard patterns.
 
-## Page Transitions
+## Available Keyframes & Utility Classes
 
-```tsx
-const pageVariants = {
-  initial: { opacity: 0, y: 20 },
-  animate: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.4, ease: [0.4, 0, 0.2, 1] }
-  },
-  exit: {
-    opacity: 0,
-    y: -20,
-    transition: { duration: 0.2 }
-  }
-};
+All animations use `--ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1)` and respect `prefers-reduced-motion`.
 
-// Usage
-<motion.div
-  variants={pageVariants}
-  initial="initial"
-  animate="animate"
-  exit="exit"
->
-  {children}
-</motion.div>
+| Keyframe | Utility Class | Duration | Use Case |
+|----------|--------------|----------|----------|
+| `fadeIn` | `.animate-fade-in` | 0.2s | General enter |
+| `fadeOut` | `.animate-fade-out` | 0.2s | General exit |
+| `scaleIn` | `.animate-scale-in` | 0.2s | Modals, popovers |
+| `scaleOut` | `.animate-scale-out` | 0.2s | Modal dismiss |
+| `slideInFromBottom` | `.animate-slide-in-bottom` | 0.2s | Toast, SW update |
+| `slideOutToBottom` | `.animate-slide-out-bottom` | 0.2s | Toast dismiss |
+| `slideInFromRight` | `.animate-slide-in-right` | 0.3s | Side panel open |
+| `slideOutToRight` | `.animate-slide-out-right` | 0.3s | Side panel close |
+| `slideUpFadeIn` | `.animate-slide-up-fade` | 0.2s | Staggered list items |
+| `slideDownFadeIn` | `.animate-slide-down-fade` | 0.2s | Dropdown menus |
+
+## Page Transitions (View Transitions API)
+
+```css
+/* globals.css already defines: */
+::view-transition-old(root) { animation: 0.25s ease-out both exit-fade; }
+::view-transition-new(root) { animation: 0.25s ease-out both enter-fade; }
 ```
 
-## Micro-interactions
+```tsx
+// React Router v7 — just add viewTransition to navigate options
+navigate('/catalog', { viewTransition: true });
+```
 
-### Button Tap
+## Micro-interactions (CSS)
+
+### Button Tap/Hover
 
 ```tsx
-<motion.button
-  whileTap={{ scale: 0.97 }}
-  whileHover={{ scale: 1.02 }}
-  transition={{ duration: 0.15 }}
->
+// Tailwind classes — no motion library needed
+<button className="hover:scale-[1.02] active:scale-[0.98] transition-transform duration-150">
   Click me
-</motion.button>
+</button>
 ```
 
 ### Card Hover
 
 ```tsx
-<motion.div
-  whileHover={{ y: -4, transition: { duration: 0.2 } }}
-  className="glass-card"
->
+<div className="glass-card transition-transform duration-200 hover:-translate-y-1">
   Content
-</motion.div>
+</div>
 ```
 
-## Staggered Lists
+## Staggered Lists (CSS)
 
 ```tsx
-const containerVariants = {
-  animate: {
-    transition: { staggerChildren: 0.05 }
-  }
-};
-
-const itemVariants = {
-  initial: { opacity: 0, y: 10 },
-  animate: { opacity: 1, y: 0 }
-};
-
-// Usage
-<motion.div variants={containerVariants} initial="initial" animate="animate">
-  {items.map(item => (
-    <motion.div key={item.id} variants={itemVariants}>
-      {item.content}
-    </motion.div>
-  ))}
-</motion.div>
+// Use animation-delay for stagger effect
+{items.map((item, i) => (
+  <div
+    key={item.id}
+    className="animate-slide-up-fade"
+    style={{ animationDelay: `${i * 50}ms` }}
+  >
+    {item.content}
+  </div>
+))}
 ```
 
-## Modal Animations
+## Modal Animations (CSS)
 
 ```tsx
-<AnimatePresence>
-  {isOpen && (
-    <>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm"
-      />
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95, y: 20 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95, y: 20 }}
-        className="glass-panel"
-      >
-        Content
-      </motion.div>
-    </>
-  )}
-</AnimatePresence>
+// Backdrop
+<div className="fixed inset-0 bg-black/50 backdrop-blur-sm animate-fade-in" />
+
+// Modal content
+<div className="glass-panel animate-scale-in">
+  Content
+</div>
+```
+
+For exit animations, use the `isExiting` state pattern with the corresponding exit class:
+
+```tsx
+<div className={`animate-${isExiting ? 'fade-out' : 'fade-in'}`}>
+  Content
+</div>
 ```
 
 ## Reduced Motion Support
 
-```tsx
-import { useReducedMotion } from 'framer-motion';
-
-function AnimatedComponent() {
-  const shouldReduceMotion = useReducedMotion();
-
-  return (
-    <motion.div
-      animate={shouldReduceMotion ? {} : { y: 0 }}
-      transition={{ duration: shouldReduceMotion ? 0 : 0.4 }}
-    >
-      Content
-    </motion.div>
-  );
-}
-```
+All animations are automatically suppressed via the consolidated `@media (prefers-reduced-motion: reduce)` block in `globals.css`, which sets `animation-duration: 0.01ms !important` and resets all `--motion-*` variables. No JavaScript check needed.
 
 ## Common Patterns
 
 ### Fade In Up
 
 ```tsx
-const fadeInUp = {
-  initial: { opacity: 0, y: 20 },
-  animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.4, ease: [0.4, 0, 0.2, 1] }
-};
+<div className="animate-slide-up-fade">Content</div>
 ```
 
 ### Scale In
 
 ```tsx
-const scaleIn = {
-  initial: { opacity: 0, scale: 0.95 },
-  animate: { opacity: 1, scale: 1 },
-  transition: { duration: 0.2 }
-};
+<div className="animate-scale-in">Content</div>
 ```
 
 ### Slide In From Left
 
 ```tsx
-const slideInLeft = {
-  initial: { opacity: 0, x: -20 },
-  animate: { opacity: 1, x: 0 },
-  transition: { duration: 0.3 }
-};
+<div className="animate-slide-in-left">Content</div>
 ```

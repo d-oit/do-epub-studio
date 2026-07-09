@@ -65,8 +65,7 @@
 
 ### UI/UX
 
-- **Motion component props**: `{...props}` on `<motion.input/div/button/header>` causes type conflicts; fix with `{...(props as any)}`.
-- **Motion Test Mocking**: When mocking `framer-motion` in Vitest, filtering out motion-specific props (whileHover, animate, transition, etc.) and mapping them to `data-*` attributes prevents React DOM warnings while enabling robust test assertions.
+- **framer-motion removed (2026-07)**: Project migrated to CSS-only animations. `framer-motion` is no longer installed or imported in any source file. All test mocks for `framer-motion` (test-setup.ts, drawer.test.tsx, main.test.tsx, Modal.test.tsx, Input.test.tsx) have been removed as dead code. Historical note: When mocking `framer-motion` in Vitest, filtering out motion-specific props and mapping them to `data-*` attributes prevented React DOM warnings.
 - **React RefObject readonly**: `React.RefObject<T>` has a readonly `current` property. Use `useRef<T | null>(initialValue)` instead when you need to mutate `.current` inside effects or event handlers.
 - **react-hooks/exhaustive-deps with refs**: When capturing a ref's `.current` value inside `useEffect`, exclude the ref from the dependency array and capture the value at effect execution time.
 - **Tailwind sr-only class**: `sr-only` is a built-in Tailwind utility (no config needed) — hides content visually but keeps it accessible to screen readers.

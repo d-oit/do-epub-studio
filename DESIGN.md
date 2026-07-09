@@ -4,16 +4,16 @@
 Editorial minimalist — inspired by book design, not SaaS dashboards. Clean typography, generous whitespace, muted palette with intentional color accents.
 
 ## Colors (OKLCH, per ADR-063a)
-All colors use OKLCH for perceptually uniform lightness and P3 wide-gamut support. Semantic tokens are defined in `apps/web/src/app/globals.css`:
-- `--text-foreground`, `--bg-background`, `--border-border`, etc.
-- Status: `--destructive`, `--muted`, `--accent`
-- Light/dark themes via `prefers-color-scheme`
+All colors use OKLCH for perceptually uniform lightness and P3 wide-gamut support. Semantic tokens are defined in `apps/web/src/styles/globals.css`:
+- `--color-foreground`, `--color-background`, `--color-border`, etc.
+- Status: `--color-accent-error`, `--color-muted`, `--color-accent`
+- Light/dark/sepia themes via `.dark` and `[data-theme]` selectors
 
 ## Typography
-- **Display/Headings:** A serif or high-contrast sans for editorial feel (not Inter for everything)
-- **Body:** Clean, readable sans-serif at comfortable line-height (1.6+)
+- **Display/Headings:** `Instrument Serif` (via `--font-display` token) for editorial feel
+- **Body:** `Geist` with `Inter` fallback, line-height 1.6+ (documented as intentional choice per Plan 115 U4)
 - **Monospace:** For code/technical content only
-- Type scale: modular, not arbitrary px values
+- Type scale: fluid `clamp()` tokens (`--text-xs` through `--text-xl`)
 
 ## Layout
 - Generous whitespace — content breathes
@@ -22,14 +22,15 @@ All colors use OKLCH for perceptually uniform lightness and P3 wide-gamut suppor
 - Logical properties where supported (`margin-inline`, `padding-block`)
 - View Transitions API for page-to-page navigation
 
-## Components (existing + planned)
-- Button, Card, Input, Modal, Toast, Tooltip, Badge, Skeleton, Spinner (existing in `packages/ui`)
-- Pagination, ConfirmDialog, SearchInput, ProgressBar, Tabs (plan 110 T5)
+## Components (all shipped in `packages/ui`)
+- Button, Card, Input, Modal, Toast, Tooltip, Badge, Skeleton, Spinner
+- Pagination, ConfirmDialog, SearchInput, ProgressBar, Tabs
 
 ## Motion
-- Subtle, purposeful transitions (ease-out, not bounce)
-- `prefers-reduced-motion` respected everywhere
+- Subtle, purposeful transitions (`--ease-out-expo`, not bounce/elastic)
+- `prefers-reduced-motion` respected everywhere (consolidated single block in `globals.css`)
 - View Transitions for navigation, not decorative animation
+- CSS-only animation keyframes (no framer-motion dependency in `globals.css`)
 
 ## Anti-Patterns (from Impeccable + anti-ai-slop)
 - No purple-to-blue gradients
