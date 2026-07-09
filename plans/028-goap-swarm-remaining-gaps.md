@@ -89,6 +89,7 @@ Group E runs after all code changes.
 All Groups A–E have been completed as of 2026-05-15.
 
 ### Group A: Config & Lint
+
 | ID | File | Fix | Status |
 |----|------|-----|--------|
 | A1 | `plans/020-goap-sprint-141.md` | Fix NODE22→NODE24 contradiction in task description | ✅ |
@@ -97,6 +98,7 @@ All Groups A–E have been completed as of 2026-05-15.
 | A4 | `turbo.json` | Add test:e2e, test:coverage task definitions | ✅ |
 
 ### Group B: CI/CD Workflow Enhancements
+
 | ID | File | Fix | Status |
 |----|------|-----|--------|
 | B1 | `.github/workflows/codeql.yml` (new) | Add CodeQL analysis workflow | ✅ |
@@ -104,12 +106,14 @@ All Groups A–E have been completed as of 2026-05-15.
 | B3 | `.github/workflows/release.yml` | Split verify/deploy, add needs chain, post-deploy health check | ✅ |
 
 ### Group C: Scripts & Quality Gate
+
 | ID | File | Fix | Status |
 |----|------|-----|--------|
 | C1 | `scripts/quality_gate.sh` | Add SKIP_BUILD, SKIP_SMOKE env vars | ✅ |
 | C2 | `scripts/minimal_quality_gate.sh` | Fix set -euo pipefail | ✅ |
 
 ### Group D: Test Coverage
+
 | ID | File | Detail | Status |
 |----|------|--------|--------|
 | D1 | `packages/schema/src/__tests__/types.test.ts` | 7 tests | ✅ |
@@ -117,6 +121,7 @@ All Groups A–E have been completed as of 2026-05-15.
 | D3 | `packages/testkit/src/__tests__/builders.test.ts` | 33 tests | ✅ |
 
 ### Group E: Plans & Learnings
+
 | ID | Action | Status |
 |----|--------|--------|
 | E1 | Update Plans 020, 026, 027, 028 progress | ✅ |

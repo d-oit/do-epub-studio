@@ -93,6 +93,7 @@
 ## Completion Summary
 
 ### Issues Closed
+
 | Issue | Title | Status | Notes |
 |-------|-------|--------|-------|
 | #236 | CI failure on main | ✅ Closed | Transient failure — CI passes on main |
@@ -101,6 +102,7 @@
 | #223 | Path-aware CI scoping | ✅ Closed | Already fully implemented (paths-ignore/filters in place) |
 
 ### PRs Reviewed
+
 | PR | Title | Status | Notes |
 |----|-------|--------|-------|
 | #237 | Mobile Reader Toolbar Accessibility | ✅ Reviewed | LGTM — lint/typecheck/tests pass, proper aria attributes |
@@ -108,6 +110,7 @@
 | #232 | Workbox caching strategies | ✅ Reviewed | Needs rebase on merged #235; valuable NavigationRoute addition conflicts with now-canonical sw-config.ts |
 
 ### PRs Created
+
 | PR | Title | Link |
 |----|-------|------|
 | #238 | fix(ci): serialize release, add concurrency to stale-cleanup | https://github.com/d-oit/do-epub-studio/pull/238 |
