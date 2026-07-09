@@ -27,7 +27,7 @@
     "react": "^19",
     "react-dom": "^19",
     "react-router-dom": "^7",
-    "uuid": "^14.0.0",
+    "uuid": "^14.0.1",
     "workbox-cacheable-response": "^7.4.1",
     "workbox-expiration": "^7.4.1",
     "workbox-precaching": "^7.4.1",
