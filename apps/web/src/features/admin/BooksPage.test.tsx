@@ -36,7 +36,7 @@ function clickArchiveConfirm() {
     (el) => el.tagName === 'BUTTON' && el.closest('[role="dialog"]'),
   );
   expect(btn).toBeTruthy();
-  fireEvent.click(btn as HTMLElement);
+  btn?.click();
 }
 
 describe('AdminBookResponsesPage', () => {

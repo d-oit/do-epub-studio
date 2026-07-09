@@ -67,15 +67,15 @@ export function StorageQuota() {
               const dbName = db.name;
               if (!dbName) { resolve(); return; }
               const req = indexedDB.deleteDatabase(dbName);
-              req.onsuccess = () => resolve();
-              req.onerror = () => resolve();
+              req.onsuccess = () => { resolve(); };
+              req.onerror = () => { resolve(); };
             })),
         );
       }
       setCleared(true);
       // Auto-dismiss the cleared message after 3 seconds
       if (clearTimerRef.current) clearTimeout(clearTimerRef.current);
-      clearTimerRef.current = setTimeout(() => setCleared(false), 3000);
+      clearTimerRef.current = setTimeout(() => { setCleared(false); }, 3000);
       // Refresh estimate after clearing
       await refresh();
     } catch {
@@ -197,7 +197,7 @@ export function StorageQuota() {
             confirmLabel={t('storage.clearButton')}
             cancelLabel={t('annotation.cancel')}
             onConfirm={handleConfirmClear}
-            onCancel={() => setShowConfirm(false)}
+            onCancel={() => { setShowConfirm(false); }}
           />
         </>
       ) : null}

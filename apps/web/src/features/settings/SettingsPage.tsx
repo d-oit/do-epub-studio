@@ -16,9 +16,9 @@ import { useAuthStore } from '../../stores/auth';
 function SettingRow({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="py-4 border-b border-border last:border-0">
-      <label className="block text-xs font-medium text-foreground-muted uppercase tracking-wider mb-3">
+      <span className="block text-xs font-medium text-foreground-muted uppercase tracking-wider mb-3" id={`setting-${label.replace(/\s+/g, '-').toLowerCase()}`}>
         {label}
-      </label>
+      </span>
       {children}
     </div>
   );
@@ -40,7 +40,7 @@ function SegmentedButton<T extends string | number>({
       {options.map((opt) => (
         <button
           key={opt}
-          onClick={() => onChange(opt)}
+          onClick={() => { onChange(opt); }}
           aria-pressed={value === opt}
           className={`
             px-4 py-2 text-sm rounded-lg border transition-all duration-150 outline-none

@@ -332,7 +332,7 @@ export function AdminBookResponsesPage() {
                     {t('admin.books.edit')}
                   </button>
                   <button
-                    onClick={() => setArchiveConfirmBook(book)}
+                    onClick={() => { setArchiveConfirmBook(book); }}
                     disabled={archivingBookId === book.id}
                     className="text-xs font-medium text-semantic-error hover:opacity-80 disabled:opacity-50"
                   >
@@ -400,7 +400,7 @@ export function AdminBookResponsesPage() {
         variant="danger"
         isLoading={archivingBookId !== null}
         onConfirm={() => { if (archiveConfirmBook) void handleArchiveBook(archiveConfirmBook.id); }}
-        onCancel={() => setArchiveConfirmBook(null)}
+        onCancel={() => { setArchiveConfirmBook(null); }}
       />
     </main>
   );

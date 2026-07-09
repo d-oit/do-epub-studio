@@ -70,13 +70,13 @@ export function AdminDashboardPage() {
         <div>
           <h1 className="text-2xl font-bold text-foreground">{t('admin.dashboardTitle')}</h1>
           <div className="flex gap-3 mt-2 text-sm">
-            <button onClick={() => void navigate('/admin/books')} className="text-accent hover:opacity-80">
+            <button type="button" onClick={() => { void navigate('/admin/books'); }} className="text-accent hover:opacity-80">
               {t('admin.books.title')} &rarr;
             </button>
-            <button onClick={() => void navigate('/admin/grants')} className="text-accent hover:opacity-80">
+            <button type="button" onClick={() => { void navigate('/admin/grants'); }} className="text-accent hover:opacity-80">
               {t('admin.grants.title')} &rarr;
             </button>
-            <button onClick={() => void navigate('/admin/audit')} className="text-accent hover:opacity-80">
+            <button type="button" onClick={() => { void navigate('/admin/audit'); }} className="text-accent hover:opacity-80">
               {t('admin.audit.title')} &rarr;
             </button>
           </div>
