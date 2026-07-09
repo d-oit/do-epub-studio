@@ -40,6 +40,7 @@ function SegmentedButton<T extends string | number>({
       {options.map((opt) => (
         <button
           key={opt}
+          type="button"
           onClick={() => { onChange(opt); }}
           aria-pressed={value === opt}
           className={`

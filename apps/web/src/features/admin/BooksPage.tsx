@@ -279,7 +279,7 @@ export function AdminBookResponsesPage() {
             {t('admin.createBook')}
           </Button>
           <button
-            onClick={() => void navigate('/admin/audit')}
+            onClick={() => { void navigate('/admin/audit'); }}
             className="px-4 py-2 bg-background border border-border rounded-md text-sm font-medium text-foreground-muted hover:bg-background-secondary"
           >
             {t('admin.books.viewAuditLogs')}
