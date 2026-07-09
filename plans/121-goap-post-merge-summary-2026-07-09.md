@@ -134,7 +134,7 @@ None block release. Each is independently shippable.
 
 | ID | Source Plan | Description | Ships as |
 |----|------------|-------------|----------|
-| ~~P1/F1~~ | ~~115, 116~~ | ~~`framer-motion` evaluation~~ — **RESOLVED in PR #745**: framer-motion was already not installed; all dead test mocks removed, CSS-only animations are the standard |
+| ~~P1/F1~~ | ~~115, 116~~ | ~~`framer-motion` evaluation~~ — **RESOLVED in PR #745**: framer-motion was already not installed; all dead test mocks removed, CSS-only animations are the standard | ~~`perf/framer-motion-evaluation`~~ |
 | SE2 | 116 | CSP `style-src 'unsafe-inline'` — nonce/hash strategy | `security/csp-nonce-strategy` |
 | SE3 | 116 | External font origins in CSP → self-host fonts | `security/self-host-fonts` |
 
