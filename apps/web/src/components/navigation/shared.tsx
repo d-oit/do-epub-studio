@@ -1,7 +1,7 @@
 export const NAV_ITEMS = [
-  { key: 'nav.library' as const, icon: 'library', href: '/catalog' },
-  { key: 'nav.reader' as const, icon: 'book-open', href: '/read' },
-  { key: 'nav.settings' as const, icon: 'settings', href: '/admin/books' },
+  { key: 'nav.catalog' as const, icon: 'library', href: '/catalog' },
+  { key: 'nav.myLibrary' as const, icon: 'book-open', href: '/library' },
+  { key: 'nav.settings' as const, icon: 'settings', href: '/settings' },
 ] as const;
 
 export type NavItemKey = (typeof NAV_ITEMS)[number]['key'];

@@ -60,7 +60,7 @@ export function Drawer({ isOpen, onClose }: DrawerProps) {
       <aside
         className={`fixed inset-y-0 left-0 z-50 w-64 bg-background-secondary border-r border-border shadow-lg md:hidden flex flex-col ${isExiting ? 'animate-slide-out-left' : 'animate-slide-in-left'}`}
         role="dialog"
-        aria-label={t('nav.library')}
+        aria-label={t('nav.catalog')}
       >
         <div className="flex items-center justify-between px-5 py-4 border-b border-border">
           <div className="flex items-center gap-3">
@@ -81,7 +81,7 @@ export function Drawer({ isOpen, onClose }: DrawerProps) {
             </svg>
           </button>
         </div>
-        <nav className="flex-1 py-3" aria-label={t('nav.library')}>
+        <nav className="flex-1 py-3" aria-label={t('nav.catalog')}>
           {NAV_ITEMS.map(({ key, icon, href }) => (
             <NavLink
               key={key}

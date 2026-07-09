@@ -16,7 +16,7 @@ export function Sidebar() {
           <span className="block text-xs text-foreground-muted">{APP_VERSION_LABEL}</span>
         </div>
       </div>
-      <nav className="flex-1 py-3" aria-label={t('nav.library')}>
+      <nav className="flex-1 py-3" aria-label={t('nav.catalog')}>
         {NAV_ITEMS.map(({ key, icon, href }) => (
           <NavLink
             key={key}

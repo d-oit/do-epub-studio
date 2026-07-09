@@ -6,7 +6,7 @@ import { useAuthStore } from '../../stores/auth';
 import type { BookResponse } from '@do-epub-studio/shared';
 import { validateEpub } from '@do-epub-studio/shared';
 import { LocaleSwitcher } from '../../components/LocaleSwitcher';
-import { Button } from '../../components/ui';
+import { Button, ConfirmDialog } from '../../components/ui';
 import { Spinner } from '@do-epub-studio/ui';
 import { BookCreateModal } from './components/BookCreateModal';
 import { BookEditModal } from './components/BookEditModal';
@@ -48,6 +48,7 @@ export function AdminBookResponsesPage() {
   const [editError, setEditError] = useState<string | null>(null);
 
   const [archivingBookId, setArchivingBookId] = useState<string | null>(null);
+  const [archiveConfirmBook, setArchiveConfirmBook] = useState<BookResponse | null>(null);
 
   const fetchBookResponses = useCallback(async () => {
     setIsLoading(true);
@@ -66,11 +67,13 @@ export function AdminBookResponsesPage() {
   }, [fetchBookResponses]);
 
   const handleViewGrants = (book: BookResponse) => {
-    void navigate(`/admin/books/${book.id}/grants`, { state: { bookTitle: book.title } });
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises -- navigate() returns void, not Promise (react-router-dom v7)
+    navigate(`/admin/books/${book.id}/grants`, { state: { bookTitle: book.title } });
   };
 
   const handleBackToReader = () => {
-    void navigate('/login');
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises -- navigate() returns void, not Promise (react-router-dom v7)
+    navigate('/login');
   };
 
   const openEditModal = (book: BookResponse) => {
@@ -124,6 +127,7 @@ export function AdminBookResponsesPage() {
       setError((err as Error).message);
     } finally {
       setArchivingBookId(null);
+      setArchiveConfirmBook(null);
     }
   };
 
@@ -258,6 +262,12 @@ export function AdminBookResponsesPage() {
     }
   };
 
+  // biome-ignore lint/correctness/useQwikValidLexicalScope: React app, not Qwik
+  const handleAuditNav = () => {
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises -- navigate() returns void, not Promise (react-router-dom v7)
+    navigate('/admin/audit');
+  };
+
   return (
     <main id="main-content" className="min-dvh bg-background p-4 sm:p-6 lg:p-8">
       <header className="flex justify-between flex-wrap gap-4 items-center mb-8">
@@ -277,7 +287,7 @@ export function AdminBookResponsesPage() {
             {t('admin.createBook')}
           </Button>
           <button
-            onClick={() => void navigate('/admin/audit')}
+            onClick={handleAuditNav}
             className="px-4 py-2 bg-background border border-border rounded-md text-sm font-medium text-foreground-muted hover:bg-background-secondary"
           >
             {t('admin.books.viewAuditLogs')}
@@ -330,7 +340,7 @@ export function AdminBookResponsesPage() {
                     {t('admin.books.edit')}
                   </button>
                   <button
-                    onClick={() => { if (window.confirm(t('admin.books.confirmArchive'))) void handleArchiveBook(book.id); }}
+                    onClick={() => { setArchiveConfirmBook(book); }}
                     disabled={archivingBookId === book.id}
                     className="text-xs font-medium text-semantic-error hover:opacity-80 disabled:opacity-50"
                   >
@@ -388,6 +398,18 @@ export function AdminBookResponsesPage() {
           editError={editError}
         />
       )}
+
+      <ConfirmDialog
+        isOpen={archiveConfirmBook !== null}
+        title={t('admin.books.confirmArchiveTitle')}
+        description={t('admin.books.confirmArchive')}
+        confirmLabel={t('admin.books.archive')}
+        cancelLabel={t('annotation.cancel')}
+        variant="danger"
+        isLoading={archivingBookId !== null}
+        onConfirm={() => { if (archiveConfirmBook) void handleArchiveBook(archiveConfirmBook.id); }}
+        onCancel={() => { setArchiveConfirmBook(null); }}
+      />
     </main>
   );
 }

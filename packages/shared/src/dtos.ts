@@ -21,6 +21,20 @@ export interface BookResponse {
   publishedAt: string | null;
 }
 
+/** Book list item with per-reader reading progress joined in. */
+export interface LibraryBookResponse {
+  id: string;
+  slug: string;
+  title: string;
+  authorName: string | null;
+  visibility: string;
+  coverImageUrl: string | null;
+  description: string | null;
+  language: string;
+  progressPercent: number;
+  progressUpdatedAt: string | null;
+}
+
 export interface AccessResponse {
   sessionToken: string;
   book: BookResponse;

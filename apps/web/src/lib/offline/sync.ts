@@ -280,7 +280,10 @@ async function markAsSynced(type: 'progress' | 'annotation' | 'bookmark' | 'read
       await saveAnnotation({ ...entry, synced: true });
     }
   }
-  // 'reading-insight' items are server-side only; no local mark-as-synced needed.
+  // 'reading-insight' items are server-side only; the local IndexedDB
+  // store is the source of truth and the server sync is append-only (UPSERT).
+  // No local mark-as-synced is needed — the queue item itself is removed
+  // on success, and the local insight entry persists for the InfoPanel.
 }
 
 export async function syncAll(): Promise<void> {

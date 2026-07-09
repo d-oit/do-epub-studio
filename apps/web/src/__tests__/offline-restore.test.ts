@@ -144,4 +144,115 @@ describe('Offline restore — annotations (M4 from Plan 118)', () => {
     const types = queue.map((q) => q.type).sort();
     expect(types).toEqual(['annotation', 'bookmark']);
   });
+
+  it('queues and retrieves reading-insight sync items (A5)', async () => {
+    const { addToSyncQueue, getSyncQueue, removeSyncQueueItem } = await import('../lib/offline/db');
+
+    await addToSyncQueue({
+      id: 'sq-ri-1',
+      type: 'reading-insight',
+      payload: {
+        bookId: 'b-insights',
+        buckets: [{ date: '2026-07-07', activeMinutes: 15, activePages: 3 }],
+        mutationId: 'm-ri-1',
+      },
+      mutationId: 'm-ri-1',
+      createdAt: Date.now(),
+      attempts: 0,
+    });
+
+    const queue = await getSyncQueue();
+    expect(queue).toHaveLength(1);
+    expect(queue[0].type).toBe('reading-insight');
+
+    // Simulate successful sync: remove from queue
+    await removeSyncQueueItem('sq-ri-1');
+    const afterRemove = await getSyncQueue();
+    expect(afterRemove).toHaveLength(0);
+  });
+
+  it('full round-trip: all annotation types + progress + insights survive offline', async () => {
+    const {
+      saveAnnotation,
+      getAnnotations,
+      saveProgress,
+      getProgress,
+      saveReadingInsight,
+      getReadingInsightsForBook,
+      addToSyncQueue,
+      getSyncQueue,
+    } = await import('../lib/offline/db');
+
+    const bookId = 'full-roundtrip-book';
+
+    // Seed all annotation types
+    await saveAnnotation({
+      id: 'fr-h', bookId, type: 'highlight', cfi: 'epubcfi(/1)',
+      text: 'Key insight', color: 'yellow', chapter: 'Ch 1',
+      createdAt: Date.now(), synced: false, mutationId: 'fr-mh',
+    });
+    await saveAnnotation({
+      id: 'fr-c', bookId, type: 'comment', cfi: 'epubcfi(/2)',
+      comment: 'Great passage',
+      createdAt: Date.now() - 500, synced: false, mutationId: 'fr-mc',
+    });
+    await saveAnnotation({
+      id: 'fr-b', bookId, type: 'bookmark', cfi: 'epubcfi(/3)',
+      chapter: 'Ch 2',
+      createdAt: Date.now() - 1000, synced: false, mutationId: 'fr-mb',
+    });
+
+    // Seed progress
+    await saveProgress({
+      id: `fr-prog-${bookId}`, bookId, cfi: 'epubcfi(/3)',
+      percentage: 65, lastRead: Date.now(), synced: false, mutationId: 'fr-mp',
+    });
+
+    // Seed reading insights
+    await saveReadingInsight({
+      bookId, date: '2026-07-07', activeMinutes: 20, activePages: 5, lastUpdated: Date.now(),
+    });
+
+    // Seed sync queue with all types
+    await addToSyncQueue({
+      id: 'fr-sq-1', type: 'progress', payload: { bookId, cfi: 'epubcfi(/3)', percentage: 65 },
+      mutationId: 'fr-mp', createdAt: Date.now(), attempts: 0,
+    });
+    await addToSyncQueue({
+      id: 'fr-sq-2', type: 'annotation', payload: { bookId, annotation: { type: 'highlight' } },
+      mutationId: 'fr-mh', createdAt: Date.now() - 100, attempts: 0,
+    });
+    await addToSyncQueue({
+      id: 'fr-sq-3', type: 'bookmark', payload: { bookId, cfi: 'epubcfi(/3)' },
+      mutationId: 'fr-mb', createdAt: Date.now() - 200, attempts: 0,
+    });
+    await addToSyncQueue({
+      id: 'fr-sq-4', type: 'reading-insight',
+      payload: { bookId, buckets: [{ date: '2026-07-07', activeMinutes: 20, activePages: 5 }] },
+      mutationId: 'fr-mri', createdAt: Date.now() - 300, attempts: 0,
+    });
+
+    // Verify all annotations restored
+    const annotations = await getAnnotations(bookId);
+    expect(annotations).toHaveLength(3);
+    const annTypes = annotations.map((a) => a.type).sort();
+    expect(annTypes).toEqual(['bookmark', 'comment', 'highlight']);
+
+    // Verify progress restored
+    const progress = await getProgress(bookId);
+    expect(progress).toBeDefined();
+    expect(progress?.percentage).toBe(65);
+
+    // Verify reading insights restored
+    const insights = await getReadingInsightsForBook(bookId);
+    expect(insights).toHaveLength(1);
+    expect(insights[0].activeMinutes).toBe(20);
+    expect(insights[0].activePages).toBe(5);
+
+    // Verify sync queue has all 4 types
+    const queue = await getSyncQueue();
+    expect(queue).toHaveLength(4);
+    const queueTypes = queue.map((q) => q.type).sort();
+    expect(queueTypes).toEqual(['annotation', 'bookmark', 'progress', 'reading-insight']);
+  });
 });
