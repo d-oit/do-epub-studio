@@ -120,7 +120,8 @@ Run this before finalizing ANY response:
 | **Coordination** | `goap-agent`, `triz-analysis`, `triz-solver`, `task-decomposition`, `agent-coordination`, `learn`, `do-web-doc-resolver`, `jules-delegator` |
 | **Backend**      | `cloudflare-worker-api`, `secure-invite-and-access`, `turso-schema-migrations`, `pwa-offline-sync`, `cicd-pipeline`      |
 | **Reader/UI**    | `epub-rendering-and-cfi`, `reader-ui-ux`, `accessibility-auditor`                                                        |
-| **Testing**      | `testing-strategy`, `testdata-builders`, `test-runner`, `dogfood`                                                        || **DevOps & Workflow** | `github-workflow`, `cicd-pipeline`, `migration-refactoring`, `github-actions-version-fix`, `github-pr-autopilot`, `release-management` |
+| **Testing**      | `testing-strategy`, `testdata-builders`, `test-runner`, `dogfood`                                                        |
+| **DevOps & Workflow** | `github-workflow`, `cicd-pipeline`, `migration-refactoring`, `github-actions-version-fix`, `github-pr-autopilot`, `release-management` |
 | **Security**     | `security-code-auditor`, `privacy-first`                                                                                 |
 | **Quality**      | `code-quality`, `code-review-assistant`, `shell-script-quality`, `anti-ai-slop`, `impeccable`, `agents-md`              |
 
