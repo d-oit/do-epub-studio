@@ -69,17 +69,29 @@ shipped to Cloudflare Pages. Current enforced values:
 
 | Header | Value |
 |--------|-------|
-| `Content-Security-Policy` | `default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://api.fontshare.com; img-src 'self' data: blob:; connect-src 'self' https://*.cloudflare.com; frame-ancestors 'none'; upgrade-insecure-requests` |
+| `Content-Security-Policy` | `default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; style-src-attr 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob:; connect-src 'self' https://*.cloudflare.com; frame-ancestors 'none'; upgrade-insecure-requests` |
 | `X-Frame-Options` | `DENY` |
 | `X-Content-Type-Options` | `nosniff` |
 | `Referrer-Policy` | `strict-origin-when-cross-origin` |
 | `Permissions-Policy` | `camera=(), microphone=(), geolocation=()` |
 | `Cross-Origin-Opener-Policy` | `same-origin` |
 
-The only `unsafe-inline` is in `style-src`, permitted because React
-component libraries emit inline styles. The CSP for **scripts** is
-strict; any change to add `'unsafe-inline'` to `script-src` requires
-an ADR.
+The only `'unsafe-inline'` permitted is in `style-src-attr` (CSP Level 3),
+which governs React component inline `style={…}` attributes (e.g.
+progress-bar widths, virtualization offsets). `<style>` *elements* and
+external stylesheets (`style-src`) are restricted to `'self'` only,
+which is sufficient because:
+
+- Tailwind v4 + Vite compile all styles to a single bundled CSS file
+  served from the same origin in production builds.
+- Dynamic CSS variable updates (e.g. OKLCH theme tokens) flow through
+  React inline `style={…}` rather than injected `<style>` tags.
+- Self-hosted fonts (per ADR-123 / Plan 122) eliminate external
+  `style-src` and `font-src` origins.
+
+The CSP for **scripts** is strict; any change to add `'unsafe-inline'`
+or `'unsafe-eval'` to `script-src` requires an ADR — and any change to
+re-add `'unsafe-inline'` to plain `style-src` also requires one.
 
 ## ReDoS / bounded regex policy (ADR-034)
 
