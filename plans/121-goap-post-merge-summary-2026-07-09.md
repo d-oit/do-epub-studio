@@ -30,7 +30,6 @@ all remaining P3 items. This plan supersedes the "remaining" sections of Plans
 | **#744** | Plan documentation updates (plans 114–121, ADR-INDEX) | Updated 8 plans + created Plan 121 with consolidated P3 backlog | Codacy green |
 | **#745** | Design cleanup: removed dead framer-motion mocks, fixed CSS duplicates, updated stale docs/skills | 16 files, 240 insertions, 404 deletions — removed 5 dead test mocks, fixed duplicate `@keyframes shimmer`, removed redundant `dark:` utilities, updated DESIGN.md + 5 skill files + evals.json + LEARNINGS.md | 20+ checks green |
 | **#748** | CSP `style-src-attr` + self-hosted fonts (SE2 + SE3) | 2 commits: CSP Level 3 split + Geist/Instrument Serif via @fontsource; Pages `_headers`, Worker CSP, 3 test files, `docs/security-posture.md`, plans 122+123; resolved 5 Codacy findings (`xss/no-mixed-html` + MD038) | All checks green |
-| **#749** | Markdownlint MD058 + MD038 cleanup + policy (Plan 124 / ADR-125) | 14 fixes across 5 plan files via `markdownlint-cli2 --fix` + 1 manual; new GOAP + ADR; ADR-INDEX row | All checks green; squashed to `7bfc960` |
 
 ### Post-Merge Baseline
 
@@ -115,7 +114,7 @@ None block release. Each is independently shippable.
 | N6 | 120 (C11) | EPUB re-export / packager (download annotated version) | `feat/epub-re-export-packager` |
 | N7 | 120 (C12) | Comment reply notifications | `feat/comment-reply-notifications` |
 | A6 | 115 | Offline reader fallback annotation restore (beyond progress) | `fix/offline-annotation-restore` |
-| ~~M5~~ | ~~115~~ | ~~`/api/admin/audit-logs` 301 alias — document as intentional~~ | **RESOLVED** — see `docs/audit-logs-alias.md` (note: actual implementation is 404 removal, **not** 301 alias; the test `routes.admin.test.ts > GET /api/admin/audit-logs > returns 404` pins the 404 as a load-bearing invariant) |
+| M5 | 115 | `/api/admin/audit-logs` 301 alias — document as intentional | `docs/audit-logs-alias` |
 
 ### Tech Debt / Cleanup
 
@@ -129,7 +128,7 @@ None block release. Each is independently shippable.
 
 | ID | Source Plan | Description | Ships as |
 |----|------------|-------------|----------|
-| ~~U4~~ | ~~115~~ | ~~Typography decision — commit to serif/sans pairing or document Geist as intentional~~ | **RESOLVED** — see `docs/typography-decision.md` |
+| U4 | 115 | Typography decision — commit to serif/sans pairing or document Geist as intentional | `docs/typography-decision` |
 | M6 | 115 | VirtualList variable-row-height — documented non-goal, track only | — |
 
 ### Performance / Security
@@ -175,7 +174,7 @@ None block release. Each is independently shippable.
 ## Synthesize — Headline
 
 The 2026-07-09 merge session closed the entire P1/P2 backlog from Plans 114–120.
-Eight PRs were merged in dependency order (#742 → #740 → #743 → #738 → #744 → #745 → #748 → #749)
+Seven PRs were merged in dependency order (#742 → #740 → #743 → #738 → #744 → #745 → #748)
 with all CI green (Codacy, Build, Lighthouse, bundle budget, lint, typecheck, markdownlint,
 810+ tests). PR #748 closed **SE2 + SE3** (CSP hardening + self-hosted fonts) per
 ADR-123 / Plan 122, removing every Google Fonts / Fontshare origin from `style-src`
