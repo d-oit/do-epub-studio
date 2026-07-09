@@ -1,7 +1,7 @@
 # GOAP 121 — Post-Merge Summary & P3 Backlog (2026-07-09)
 
 **Date:** 2026-07-09
-**Status:** 📋 PROPOSED — analysis only; consolidates remaining P3 items from Plans 114–120
+**Status:** 🔄 ACTIVE — PR #744 (plan updates) + PR #745 (design cleanup) merged; consolidates remaining P3 items from Plans 114–120
 **Author:** Buffy analysis session
 **Methodology:** GOAP (analyze → decompose → strategize → coordinate → execute → synthesize)
 **Extends:** Plans 114–120 (comprehensive audit + feature delivery cycle)
@@ -11,7 +11,7 @@
 ## Goal
 
 Consolidate the post-merge state of the repository after the 2026-07-09 merge
-session (PRs #742, #740, #743, #738) and produce a single prioritized backlog of
+session (PRs #742, #740, #743, #738, #744, #745) and produce a single prioritized backlog of
 all remaining P3 items. This plan supersedes the "remaining" sections of Plans
 114–120 as the single source of truth for what is left to do.
 
@@ -27,19 +27,21 @@ all remaining P3 items. This plan supersedes the "remaining" sections of Plans
 | **#740** | Reader-core TOC + word extraction perf | Fixed 4 Codacy issues (spread+reverse for index loops), ~23% perf improvement | 20+ checks green |
 | **#743** | AGENTS.md trim (154→150 lines) | Merged TIER 4 ref bullets, combined DevOps+Workflow table row, fixed markdownlint table | Codacy green |
 | **#738** | Cascade delete, cache invalidation, ConfirmDialog, dashboard, My Library, sync cleanup, offline test, storage quota, settings page | 41 files, 10 commits, 14-locale i18n, 810 tests pass | 22 checks green |
+| **#744** | Plan documentation updates (plans 114–121, ADR-INDEX) | Updated 8 plans + created Plan 121 with consolidated P3 backlog | Codacy green |
+| **#745** | Design cleanup: removed dead framer-motion mocks, fixed CSS duplicates, updated stale docs/skills | 16 files, 240 insertions, 404 deletions — removed 5 dead test mocks, fixed duplicate `@keyframes shimmer`, removed redundant `dark:` utilities, updated DESIGN.md + 5 skill files + evals.json + LEARNINGS.md | 20+ checks green |
 
 ### Post-Merge Baseline
 
 | Signal | Result |
 |--------|--------|
-| Open PRs | **0** |
+| Open PRs | **0** (after #744 + #745 merged) |
 | Open GitHub Issues | **0** |
 | Quality gate | ✅ Lint, Typecheck, Shellcheck all pass |
 | AGENTS.md | 150 lines (meets `MAX_LINES_AGENTS_MD=150`) |
 | TODO/FIXME in prod source | 0 |
 | CI checks on main | All green |
-| Test count | 810 web unit tests, 288 reader-core tests |
-| Design tokens | 113 OKLCH definitions in `globals.css` |
+| Test count | 810 web unit tests, 288 reader-core tests (framer-motion mocks removed — net dead code removal) |
+| Design tokens | 113 OKLCH definitions in `globals.css` (duplicate `@keyframes shimmer` removed, `@theme` block expanded) |
 | Skills | 39 in `.agents/skills/` |
 | Scripts | 27 in `scripts/` |
 
@@ -132,7 +134,7 @@ None block release. Each is independently shippable.
 
 | ID | Source Plan | Description | Ships as |
 |----|------------|-------------|----------|
-| P1/F1 | 115, 116 | `framer-motion` (~30KB gzip) → evaluate lighter `motion` package or CSS-only | `perf/framer-motion-evaluation` |
+| ~~P1/F1~~ | ~~115, 116~~ | ~~`framer-motion` evaluation~~ — **RESOLVED in PR #745**: framer-motion was already not installed; all dead test mocks removed, CSS-only animations are the standard | ~~`perf/framer-motion-evaluation`~~ |
 | SE2 | 116 | CSP `style-src 'unsafe-inline'` — nonce/hash strategy | `security/csp-nonce-strategy` |
 | SE3 | 116 | External font origins in CSP → self-host fonts | `security/self-host-fonts` |
 
@@ -149,11 +151,12 @@ None block release. Each is independently shippable.
 1. **U4 (Typography decision)** — Zero code, unblocks potential font work
 2. **M3 (Sync queue dedup)** — Tech debt that complicates debugging
 3. **R2 (Mobile e2e)** — Coverage gap for responsive correctness
-4. **P1/F1 (framer-motion)** — Measure first, then decide
-5. **SE2/SE3 (CSP hardening)** — Defense-in-depth
-6. **LC2 (no-literal-string lint)** — Prevents future i18n regressions
-7. **N3/N6/N7 (New features)** — Enhancement, measure demand first
-8. **F3 (Cross-isolate cache)** — Architecture improvement, not urgent
+4. **SE2/SE3 (CSP hardening)** — Defense-in-depth
+5. **LC2 (no-literal-string lint)** — Prevents future i18n regressions
+6. **N3/N6/N7 (New features)** — Enhancement, measure demand first
+7. **F3 (Cross-isolate cache)** — Architecture improvement, not urgent
+
+> **P1/F1 (framer-motion) RESOLVED** — PR #745 confirmed framer-motion was already not installed; all dead test mocks removed. CSS-only animations are the project standard.
 
 ---
 
@@ -170,8 +173,10 @@ None block release. Each is independently shippable.
 ## Synthesize — Headline
 
 The 2026-07-09 merge session closed the entire P1/P2 backlog from Plans 114–120.
-Four PRs were merged in dependency order (#742 → #740 → #743 → #738) with all CI
-green (Codacy, Build, Lighthouse, bundle budget, lint, typecheck, 810+ tests).
+Six PRs were merged in dependency order (#742 → #740 → #743 → #738 → #744 → #745)
+with all CI green (Codacy, Build, Lighthouse, bundle budget, lint, typecheck, 810+ tests).
 The repository now has **zero open PRs, zero open issues, and zero P1/P2 items**.
-What remains is a well-defined set of P3 polish/tech-debt/enhancement items,
-each independently shippable. The platform is release-ready.
+PR #745 closed the framer-motion P3 item (P1/F1) — the library was already removed
+from source, and all dead test mocks were cleaned up. What remains is a well-defined
+set of P3 polish/tech-debt/enhancement items, each independently shippable.
+The platform is release-ready.
