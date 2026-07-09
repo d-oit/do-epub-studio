@@ -48,7 +48,7 @@
     "eslint-plugin-react-compiler": "19.1.0-rc.2",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-security": "^4.0.1",
-    "eslint-plugin-unicorn": "^64.0.0",
+    "eslint-plugin-unicorn": "^71.1.0",
     "globals": "^17.7.0",
     "impeccable": "^3.1.0",
     "js-yaml": "^5.2.0",
