@@ -32,8 +32,7 @@ Purpose: Deliver premium, intentional, localized, accessible reader/admin UX for
 
 | Resource              | Location                              |
 | --------------------- | ------------------------------------- |
-| Design Tokens         | `plans/008-design-tokens-v2.md`       |
-| Tailwind Config       | `apps/web/tailwind.config.js`         |
+| Design Tokens         | `plans/archive/008-design-tokens-v2.md` |
 | Global Styles         | `apps/web/src/styles/globals.css`     |
 | UI Components         | `apps/web/src/components/ui/`         |
 | Animation Guide       | `references/animation-guide.md`       |
@@ -62,7 +61,7 @@ CI: `npx impeccable detect --json .` runs in quality gate. See `DESIGN.md` for a
 1. **Define experience** – viewport-specific layout + theme rules
 2. **Tokenize** – use semantic tokens (OKLCH) from design system
 3. **Shape** – `/impeccable shape` to plan UX/UI
-4. **Animate** – purposeful micro-interactions with Framer Motion + View Transitions
+4. **Animate** – purposeful micro-interactions with CSS keyframes + View Transitions
 5. **Localize** – add strings to `en/de/fr` catalogs
 6. **Accessibility** – keyboard, ARIA, reduced motion
 7. **State** – Zustand selectors, handle mutual exclusivity
@@ -87,3 +86,4 @@ CI: `npx impeccable detect --json .` runs in quality gate. See `DESIGN.md` for a
 - **Parser timeout:** EPUB content parsing must have a timeout/budget to prevent infinite loops on malformed input.
 - **Parallel preload:** Use `Promise.all` for spine/chapter operations to reduce load time.
 - **Search virtualization:** Lists with >50 items must use the `VirtualList` component for smooth scrolling.
+- **No `dark:` utilities:** Semantic tokens already adapt to dark/sepia themes via `globals.css` CSS variables. Avoid redundant `dark:` Tailwind prefixes.

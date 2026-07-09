@@ -1,5 +1,4 @@
-import React from 'react';
-import { describe, it, expect, vi, beforeAll } from 'vitest';
+import { describe, it, expect, vi, beforeAll, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { Modal } from '../index';
 
@@ -8,19 +7,6 @@ beforeAll(() => {
     get() { return this.parentElement || document.body; },
   });
 });
-
-// Override global framer-motion mock to properly handle ref via forwardRef
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: React.forwardRef<HTMLDivElement, any>(({ children, ...props }, ref) =>
-      React.createElement('div', { ...props, ref }, children),
-    ),
-    svg: ({ children, ...props }: any) => React.createElement('svg', props, children),
-    path: (props: any) => React.createElement('path', props),
-  },
-  AnimatePresence: ({ children }: { children?: React.ReactNode }) =>
-    React.createElement(React.Fragment, null, children),
-}));
 
 describe('Modal', () => {
   beforeEach(() => {

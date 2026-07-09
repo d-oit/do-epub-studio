@@ -101,7 +101,7 @@ export function ReaderSettingsPanel({
                   ${
                     theme === themeOption
                       ? 'bg-accent text-white border-accent font-medium shadow-sm'
-                      : 'bg-background-secondary text-foreground border-border hover:border-foreground-muted dark:bg-background-tertiary'
+                      : 'bg-background-secondary text-foreground border-border hover:border-foreground-muted'
                   }
                 `}
               >
@@ -200,7 +200,7 @@ export function ReaderSettingsPanel({
                     ${
                       direction === d
                         ? 'bg-accent text-white border-accent font-medium shadow-sm'
-                        : 'bg-background-secondary text-foreground border-border hover:border-foreground-muted dark:bg-background-tertiary'
+                        : 'bg-background-secondary text-foreground border-border hover:border-foreground-muted'
                     }
                   `}
                 >

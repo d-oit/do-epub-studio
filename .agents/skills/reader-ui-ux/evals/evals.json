@@ -4,11 +4,11 @@
     {
       "id": 1,
       "prompt": "Create a login form component with email and password fields using the 2026 design system standards",
-      "expected_output": "The agent creates a login form component using design tokens (bg-background, text-foreground, border-border), glassmorphism effects on the container, Framer Motion for animations, proper accessibility attributes (aria-labels, focus rings), and responsive design that works on mobile and desktop",
+      "expected_output": "The agent creates a login form component using design tokens (bg-background, text-foreground, border-border), glassmorphism effects on the container, CSS keyframe animations from globals.css (animate-fade-in, animate-scale-in), proper accessibility attributes (aria-labels, focus rings), and responsive design that works on mobile and desktop",
       "assertions": [
         "Uses semantic color tokens instead of hardcoded values",
         "Includes glassmorphism effect on the form container",
-        "Implements Framer Motion animations",
+        "Implements CSS keyframe animations (no JS animation libraries)",
         "Has proper accessibility attributes",
         "Is responsive for mobile and desktop"
       ]
@@ -16,10 +16,10 @@
     {
       "id": 2,
       "prompt": "Build a card component for displaying books with cover image, title, author, and action buttons",
-      "expected_output": "The agent creates a card component using the Card primitive from ui/components, glass-card styling, hover animations with Framer Motion, proper image handling with aspect ratio, semantic HTML structure, and responsive grid layout support",
+      "expected_output": "The agent creates a card component using the Card primitive from ui/components, glass-card styling, hover animations using CSS transitions and --ease-out-expo, proper image handling with aspect ratio, semantic HTML structure, and responsive grid layout support",
       "assertions": [
         "Uses Card primitive or glass-card class",
-        "Includes hover animation effects",
+        "Includes hover animation effects via CSS transitions",
         "Has proper aspect ratio for images",
         "Uses semantic HTML (article, header, etc.)",
         "Supports responsive grid layouts"

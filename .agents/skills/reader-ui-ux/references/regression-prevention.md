@@ -7,9 +7,8 @@ Guidelines to prevent visual and functional regression.
 Design tokens are the single source of truth. **Never** deviate without updating the token documentation.
 
 **Reference Documents:**
-- `plans/008-design-tokens-v2.md` - Complete token specification
-- `apps/web/tailwind.config.js` - Token implementation
-- `apps/web/src/styles/globals.css` - CSS variable definitions
+- `plans/archive/008-design-tokens-v2.md` - Complete token specification
+- `apps/web/src/styles/globals.css` - CSS variable definitions (Tailwind v4 `@theme` block)
 
 ## Pre-Commit Checklist
 
@@ -65,9 +64,8 @@ test('login page visual regression', async ({ page }) => {
 
 When modifying design tokens:
 
-1. **Update Document**: Modify `plans/008-design-tokens-v2.md`
-2. **Update Config**: Modify `tailwind.config.js`
-3. **Update CSS**: Modify `globals.css` if needed
-4. **Update Snapshots**: Run visual regression tests
-5. **Migration Guide**: Document breaking changes
-6. **Announce**: Notify team of token changes
+1. **Update Document**: Modify `plans/archive/008-design-tokens-v2.md`
+2. **Update CSS**: Modify `globals.css` (`@theme` block + `:root` variables)
+3. **Update Snapshots**: Run visual regression tests
+4. **Migration Guide**: Document breaking changes
+5. **Announce**: Notify team of token changes

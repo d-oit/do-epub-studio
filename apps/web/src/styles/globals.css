@@ -381,11 +381,6 @@
   100% { background-position: -200% 0; }
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
 @keyframes slideUp {
   from { transform: translateY(10px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
@@ -429,32 +424,6 @@
   [data-fallback='js'][data-popover-closed='true'] {
     opacity: 0;
     pointer-events: none;
-  }
-}
-
-/* ============================================
-   Reduced Motion
-   ============================================ */
-
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-
-    /* Reset motion control variables to suppress motion transforms */
-    --motion-slide-offset: 0px;
-    --motion-item-offset: 0px;
-    --motion-hover-lift: 0px;
-    --motion-header-offset: 0px;
-    --motion-scale-enter: 1;
-    --motion-scale-tap: 1;
-    --motion-scale-hover: 1;
-    --motion-scale-hover-lg: 1;
-    --motion-scale-tap-lg: 1;
   }
 }
 
@@ -509,10 +478,6 @@
 }
 
 /* ============================================
-   Tailwind @theme
-   ============================================ */
-
-/* ============================================
    View Transitions API
    ============================================ */
 
@@ -530,6 +495,32 @@
     ::view-transition-new(root) {
       animation-duration: 0.01ms !important;
     }
+  }
+}
+
+/* ============================================
+   Reduced Motion (consolidated)
+   ============================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+
+    /* Reset motion control variables to suppress motion transforms */
+    --motion-slide-offset: 0px;
+    --motion-item-offset: 0px;
+    --motion-hover-lift: 0px;
+    --motion-header-offset: 0px;
+    --motion-scale-enter: 1;
+    --motion-scale-tap: 1;
+    --motion-scale-hover: 1;
+    --motion-scale-hover-lg: 1;
+    --motion-scale-tap-lg: 1;
   }
 }
 
@@ -596,11 +587,34 @@
   --shadow-sm: var(--shadow-sm);
   --shadow-md: var(--shadow-md);
   --shadow-lg: var(--shadow-lg);
+  --shadow-glass: var(--shadow-glass);
+  --ease-out-expo: var(--ease-out-expo);
+  --ease-in-out-expo: var(--ease-in-out-expo);
+  --transition: var(--transition);
+  --header-height: var(--header-height);
+  --sidebar-width: var(--sidebar-width);
+  --content-max-width: var(--content-max-width);
+  --motion-slide-offset: var(--motion-slide-offset);
+  --motion-hover-lift: var(--motion-hover-lift);
+  --motion-scale-enter: var(--motion-scale-enter);
+  --motion-scale-tap: var(--motion-scale-tap);
+  --motion-scale-hover: var(--motion-scale-hover);
 }
 
 /* ============================================
-   Animation Keyframes (framer-motion replacement)
+   Animation Keyframes (CSS-only, replaces framer-motion)
    ============================================ */
+
+/* Fade animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
 
 /* Slide animations */
 @keyframes slideInFromTop {
@@ -641,17 +655,6 @@
 @keyframes slideOutToLeft {
   from { transform: translateX(0); }
   to { transform: translateX(-100%); }
-}
-
-/* Fade animations */
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes fadeOut {
-  from { opacity: 1; }
-  to { opacity: 0; }
 }
 
 /* Scale animations */
@@ -712,11 +715,4 @@
   .animate-exit-scale { animation: scaleOut 0.2s ease-in forwards; }
 }
 
-/* Respect user motion preference */
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-}
+/* Reduced-motion is handled by the consolidated block above */
