@@ -64,19 +64,23 @@ export function AdminDashboardPage() {
     return () => { cancelled = true; };
   }, [sessionToken]);
 
+  const handleBooksNav = () => { void navigate('/admin/books'); };
+  const handleGrantsNav = () => { void navigate('/admin/grants'); };
+  const handleAuditNav = () => { void navigate('/admin/audit'); };
+
   return (
     <main id="main-content" className="min-h-dvh bg-background p-4 sm:p-6 lg:p-8">
       <header className="flex justify-between flex-wrap gap-4 items-center mb-8">
         <div>
           <h1 className="text-2xl font-bold text-foreground">{t('admin.dashboardTitle')}</h1>
           <div className="flex gap-3 mt-2 text-sm">
-            <button type="button" onClick={() => { void navigate('/admin/books'); }} className="text-accent hover:opacity-80">
+            <button type="button" onClick={handleBooksNav} className="text-accent hover:opacity-80">
               {t('admin.books.title')} &rarr;
             </button>
-            <button type="button" onClick={() => { void navigate('/admin/grants'); }} className="text-accent hover:opacity-80">
+            <button type="button" onClick={handleGrantsNav} className="text-accent hover:opacity-80">
               {t('admin.grants.title')} &rarr;
             </button>
-            <button type="button" onClick={() => { void navigate('/admin/audit'); }} className="text-accent hover:opacity-80">
+            <button type="button" onClick={handleAuditNav} className="text-accent hover:opacity-80">
               {t('admin.audit.title')} &rarr;
             </button>
           </div>
