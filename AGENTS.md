@@ -89,13 +89,10 @@ readonly MAX_PR_TITLE_LENGTH=72
 
 ## TIER 4 — REFERENCE (See Agents-Docs)
 
-- **Architecture decisions:** See `docs/coding-guide.md` and `plans/archive/002-006`
-- **TRIZ analysis:** See `plans/archive/001-triz-analysis.md` + `plans/archive/002-triz-resolution.md`
-- **Skills catalog:** Run `ls .agents/skills/` or see `agents-docs/AVAILABLE_SKILLS.md`
+- **Architecture & TRIZ:** See `docs/coding-guide.md`, `plans/archive/001-006` (TRIZ + architecture decisions)
+- **Skills & learnings:** Run `ls .agents/skills/` or see `agents-docs/AVAILABLE_SKILLS.md` + `LEARNINGS.md`
 - **GOAP + ADR pattern:** See `plans/020-goap-sprint-141.md` + `plans/024-adr-warning-management.md`
-- **Learnings:** See `agents-docs/LEARNINGS.md`
-- **Current phase:** All 28 swarm gaps (G1–G28) closed as of 2026-06-15. Rate limiter DO cutover also complete. See `analysis/SWARM_ANALYSIS.md` for resolution evidence.
-- **Swarm completion:** See `plans/097-goap-swarm-close-all-gaps.md` for final execution record.
+- **Swarm completion:** All 28 gaps (G1–G28) + rate limiter DO closed (2026-06-15). See `analysis/SWARM_ANALYSIS.md` + `plans/097-goap-swarm-close-all-gaps.md`.
 
 ---
 
@@ -124,8 +121,7 @@ Run this before finalizing ANY response:
 | **Backend**      | `cloudflare-worker-api`, `secure-invite-and-access`, `turso-schema-migrations`, `pwa-offline-sync`, `cicd-pipeline`      |
 | **Reader/UI**    | `epub-rendering-and-cfi`, `reader-ui-ux`, `accessibility-auditor`                                                        |
 | **Testing**      | `testing-strategy`, `testdata-builders`, `test-runner`, `dogfood`                                                        |
-| **DevOps**       | `github-workflow`, `cicd-pipeline`, `migration-refactoring`                                                              |
-| **Workflow**     | `github-actions-version-fix`, `github-pr-autopilot`, `release-management`                                                |
+| **DevOps & Workflow** | `github-workflow`, `cicd-pipeline`, `migration-refactoring`, `github-actions-version-fix`, `github-pr-autopilot`, `release-management` |
 | **Security**     | `security-code-auditor`, `privacy-first`                                                                                 |
 | **Quality**      | `code-quality`, `code-review-assistant`, `shell-script-quality`, `anti-ai-slop`, `impeccable`, `agents-md`              |
 
