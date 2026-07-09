@@ -11,6 +11,7 @@
 ## Issue Triage
 
 ### Already Implemented (Verified & Confirmed)
+
 | # | Title | Status | Evidence |
 |---|-------|--------|----------|
 | 484 | Login page visible labels | ✅ DONE | `Input` component renders `<label htmlFor>` with `htmlFor` association |
@@ -19,6 +20,7 @@
 | 488 | Login loading/spinner state | ✅ DONE | `Button` component `isLoading`/`loadingLabel` props, `aria-busy` attribute |
 
 ### Newly Implemented
+
 | # | Title | Priority | Files Changed |
 |---|-------|----------|---------------|
 | 493 | Security hardening | P0 | `apps/web/public/_headers` |
@@ -55,6 +57,7 @@
 ---
 
 ## Files Created
+
 | File | Purpose |
 |------|---------|
 | `packages/ui/src/AppLogo.tsx` | SVG logo component |
@@ -66,6 +69,7 @@
 | `plans/084-adr-comprehensive-open-issues-resolution.md` | ADR |
 
 ## Files Modified
+
 | File | Changes |
 |------|---------|
 | `apps/web/public/_headers` | Full CSP enforcing + 6 security headers |

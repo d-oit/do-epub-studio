@@ -24,6 +24,7 @@ related_issues: [#345, #339, #318, #317, #316, #315, #314, #312, #311, #310, #30
 - Next: Phase 6+ (AI-assisted workflows, optimization, hardening)
 
 ### Open Issues Summary
+
 | Category | Count | Priority |
 |----------|-------|----------|
 | Security/Vulnerability | 3 | CRITICAL-HIGH |

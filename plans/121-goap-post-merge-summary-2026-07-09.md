@@ -29,6 +29,7 @@ all remaining P3 items. This plan supersedes the "remaining" sections of Plans
 | **#738** | Cascade delete, cache invalidation, ConfirmDialog, dashboard, My Library, sync cleanup, offline test, storage quota, settings page | 41 files, 10 commits, 14-locale i18n, 810 tests pass | 22 checks green |
 | **#744** | Plan documentation updates (plans 114–121, ADR-INDEX) | Updated 8 plans + created Plan 121 with consolidated P3 backlog | Codacy green |
 | **#745** | Design cleanup: removed dead framer-motion mocks, fixed CSS duplicates, updated stale docs/skills | 16 files, 240 insertions, 404 deletions — removed 5 dead test mocks, fixed duplicate `@keyframes shimmer`, removed redundant `dark:` utilities, updated DESIGN.md + 5 skill files + evals.json + LEARNINGS.md | 20+ checks green |
+| **#748** | CSP `style-src-attr` + self-hosted fonts (SE2 + SE3) | 2 commits: CSP Level 3 split + Geist/Instrument Serif via @fontsource; Pages `_headers`, Worker CSP, 3 test files, `docs/security-posture.md`, plans 122+123; resolved 5 Codacy findings (`xss/no-mixed-html` + MD038) | All checks green |
 
 ### Post-Merge Baseline
 
@@ -135,8 +136,8 @@ None block release. Each is independently shippable.
 | ID | Source Plan | Description | Ships as |
 |----|------------|-------------|----------|
 | ~~P1/F1~~ | ~~115, 116~~ | ~~`framer-motion` evaluation~~ — **RESOLVED in PR #745**: framer-motion was already not installed; all dead test mocks removed, CSS-only animations are the standard | ~~`perf/framer-motion-evaluation`~~ |
-| SE2 | 116 | CSP `style-src 'unsafe-inline'` — nonce/hash strategy | `security/csp-nonce-strategy` |
-| SE3 | 116 | External font origins in CSP → self-host fonts | `security/self-host-fonts` |
+| ~~SE2~~ | ~~116~~ | ~~CSP `style-src 'unsafe-inline'` — nonce/hash strategy~~ | **RESOLVED in PR #748** (ADR-123: CSP Level 3 `style-src-attr` split) |
+| ~~SE3~~ | ~~116~~ | ~~External font origins in CSP → self-host fonts~~ | **RESOLVED in PR #748** (ADR-123: self-hosted Geist + Instrument Serif via `@fontsource-variable/geist` + `@fontsource/instrument-serif`) |
 
 ### Testing
 
@@ -173,10 +174,15 @@ None block release. Each is independently shippable.
 ## Synthesize — Headline
 
 The 2026-07-09 merge session closed the entire P1/P2 backlog from Plans 114–120.
-Six PRs were merged in dependency order (#742 → #740 → #743 → #738 → #744 → #745)
-with all CI green (Codacy, Build, Lighthouse, bundle budget, lint, typecheck, 810+ tests).
-The repository now has **zero open PRs, zero open issues, and zero P1/P2 items**.
+Seven PRs were merged in dependency order (#742 → #740 → #743 → #738 → #744 → #745 → #748)
+with all CI green (Codacy, Build, Lighthouse, bundle budget, lint, typecheck, markdownlint,
+810+ tests). PR #748 closed **SE2 + SE3** (CSP hardening + self-hosted fonts) per
+ADR-123 / Plan 122, removing every Google Fonts / Fontshare origin from `style-src`
+and `font-src`. The repository maintains **zero open PRs, zero open issues, and
+zero P1/P2 items**.
 PR #745 closed the framer-motion P3 item (P1/F1) — the library was already removed
 from source, and all dead test mocks were cleaned up. What remains is a well-defined
 set of P3 polish/tech-debt/enhancement items, each independently shippable.
-The platform is release-ready.
+The plan-document backlog now also contains **13 pre-existing MD058 (blanks around
+tables) violations** in `plans/028`, `plans/045`, `plans/083` — tracked for the next
+chore PR (Plan 124 / ADR-125 to follow). The platform is release-ready.

@@ -62,6 +62,8 @@
 | 114 | Comprehensive Audit Remediation Policy (2026-06-27) | `plans/114-adr-audit-remediation-policy.md` | Accepted |
 | 115 | Verified-Audit Remediation Policy (2026-06-27) | `plans/115-adr-verified-audit-remediation-policy.md` | Proposed |
 | 120 | Missing-Implementation Verification and Prioritization Policy (2026-07-07) | `plans/120-adr-missing-implementation-prioritization-policy.md` | Accepted (Clusters 1–9 + F1–F3 shipped via PR #738) |
+| 123 | CSP `style-src-attr` strategy + self-hosted fonts | `plans/123-adr-csp-style-src-attr-and-self-hosted-fonts.md` | Accepted (PR #748); supersedes the unsafe-inline element of ADR-035a |
+| 125 | Markdownlint Enforcement Policy for `plans/` | `plans/125-adr-markdownlint-enforcement-policy-plans.md` | Accepted (Plan 124 / `chore/markdownlint-md058-cleanup`) |
 
 ## Cross-referenced but not yet adopted
 
