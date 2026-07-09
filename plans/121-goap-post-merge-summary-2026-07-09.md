@@ -30,6 +30,10 @@ all remaining P3 items. This plan supersedes the "remaining" sections of Plans
 | **#744** | Plan documentation updates (plans 114–121, ADR-INDEX) | Updated 8 plans + created Plan 121 with consolidated P3 backlog | Codacy green |
 | **#745** | Design cleanup: removed dead framer-motion mocks, fixed CSS duplicates, updated stale docs/skills | 16 files, 240 insertions, 404 deletions — removed 5 dead test mocks, fixed duplicate `@keyframes shimmer`, removed redundant `dark:` utilities, updated DESIGN.md + 5 skill files + evals.json + LEARNINGS.md | 20+ checks green |
 | **#748** | CSP `style-src-attr` + self-hosted fonts (SE2 + SE3) | 2 commits: CSP Level 3 split + Geist/Instrument Serif via @fontsource; Pages `_headers`, Worker CSP, 3 test files, `docs/security-posture.md`, plans 122+123; resolved 5 Codacy findings (`xss/no-mixed-html` + MD038) | All checks green |
+| **#749** | Markdownlint MD058 + MD038 cleanup + policy (Plan 124 / ADR-125) | 14 fixes across 5 plan files via `markdownlint-cli2 --fix` + 1 manual; new GOAP + ADR; ADR-INDEX row | All checks green; squashed to `7bfc960` |
+| **#750** | docs(u4): typography-decision document + U4 strike-through | Adds `docs/typography-decision.md` (formalises Instrument Serif + Geist pairing + fallback chains); U4 row in Plan 121 intended to be struck through (recovered in #752) | All checks green; squashed to `c6dc5dc` |
+| **#751** | docs(m5): audit-logs endpoint doc + M5 strike-through | Adds `docs/audit-logs-alias.md` (records the 404-vs-301 implementation nuance; test `routes.admin.test.ts > GET /api/admin/audit-logs > returns 404` is load-bearing); M5 row in Plan 121 intended to be struck through (recovered in #752) | All checks green; squashed to `43c8107` |
+| **#752** | fix(plan 121): recovery — re-apply U4 + M5 strike-throughs | A botched `git checkout --theirs` conflict resolution on the #750 and #751 branches dropped the U4 and M5 strike-throughs; this recovery re-applied them. Doc files were not affected. | All checks green; squashed to `f9fe7e6` |
 
 ### Post-Merge Baseline
 
@@ -174,7 +178,7 @@ None block release. Each is independently shippable.
 ## Synthesize — Headline
 
 The 2026-07-09 merge session closed the entire P1/P2 backlog from Plans 114–120.
-Seven PRs were merged in dependency order (#742 → #740 → #743 → #738 → #744 → #745 → #748)
+Eleven PRs were merged in dependency order (#742 → #740 → #743 → #738 → #744 → #745 → #748 → #749 → #750 → #751 → #752)
 with all CI green (Codacy, Build, Lighthouse, bundle budget, lint, typecheck, markdownlint,
 810+ tests). PR #748 closed **SE2 + SE3** (CSP hardening + self-hosted fonts) per
 ADR-123 / Plan 122, removing every Google Fonts / Fontshare origin from `style-src`
