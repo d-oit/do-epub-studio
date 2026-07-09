@@ -87,9 +87,8 @@ export async function reanchorByText(
   // Use iterative stack-based traversal to avoid recursion overhead
   const stack: TocItem[] = [];
   for (let i = toc.length - 1; i >= 0; i--) {
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- defensive: array access can be undefined
     const item = toc[i];
-    if (item) stack.push(item); // eslint-disable-line security/detect-object-injection -- false positive: safe array index, not object property
+    if (item) stack.push(item);
   }
 
   while (stack.length > 0) {
@@ -105,8 +104,7 @@ export async function reanchorByText(
 
     if (item.subitems) {
       for (let i = item.subitems.length - 1; i >= 0; i--) {
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- defensive: array access can be undefined
-        const sub = item.subitems[i]; // eslint-disable-line security/detect-object-injection -- false positive: safe array index, not object property
+        const sub = item.subitems[i];
         if (sub) stack.push(sub);
       }
     }
