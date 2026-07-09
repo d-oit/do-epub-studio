@@ -114,7 +114,7 @@ None block release. Each is independently shippable.
 | N6 | 120 (C11) | EPUB re-export / packager (download annotated version) | `feat/epub-re-export-packager` |
 | N7 | 120 (C12) | Comment reply notifications | `feat/comment-reply-notifications` |
 | A6 | 115 | Offline reader fallback annotation restore (beyond progress) | `fix/offline-annotation-restore` |
-| M5 | 115 | `/api/admin/audit-logs` 301 alias — document as intentional | `docs/audit-logs-alias` |
+| ~~M5~~ | ~~115~~ | ~~`/api/admin/audit-logs` 301 alias — document as intentional~~ | **RESOLVED** — see `docs/audit-logs-alias.md` (note: actual implementation is 404 removal, **not** 301 alias; the test `routes.admin.test.ts > GET /api/admin/audit-logs > returns 404` pins the 404 as a load-bearing invariant) |
 
 ### Tech Debt / Cleanup
 
@@ -128,7 +128,7 @@ None block release. Each is independently shippable.
 
 | ID | Source Plan | Description | Ships as |
 |----|------------|-------------|----------|
-| U4 | 115 | Typography decision — commit to serif/sans pairing or document Geist as intentional | `docs/typography-decision` |
+| ~~U4~~ | ~~115~~ | ~~Typography decision — commit to serif/sans pairing or document Geist as intentional~~ | **RESOLVED** — see `docs/typography-decision.md` |
 | M6 | 115 | VirtualList variable-row-height — documented non-goal, track only | — |
 
 ### Performance / Security
