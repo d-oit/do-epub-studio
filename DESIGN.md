@@ -11,7 +11,7 @@ All colors use OKLCH for perceptually uniform lightness and P3 wide-gamut suppor
 
 ## Typography
 - **Display/Headings:** `Instrument Serif` (via `--font-display` token) for editorial feel
-- **Body:** `Geist` with `Inter` fallback, line-height 1.6+ (documented as intentional choice per Plan 115 U4)
+- **Body:** `Geist` with `Inter` fallback, line-height 1.6+ — **committed pairing per Plan 115 U4** (Geist for modern sans-serif readability, Instrument Serif for editorial display)
 - **Monospace:** For code/technical content only
 - Type scale: fluid `clamp()` tokens (`--text-xs` through `--text-xl`)
 

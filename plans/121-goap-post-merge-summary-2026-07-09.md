@@ -121,7 +121,7 @@ None block release. Each is independently shippable.
 |----|------------|-------------|----------|
 | M3 | 115 | Redundant sync queue paths (legacy `annotation` vs first-class `bookmark`/`insight`) | `refactor/sync-queue-dedup` |
 | F3 | 120 | Cross-isolate cache invalidation via Durable Object or KV (current `bumpCacheVersion` is per-isolate) | `perf/cross-isolate-cache-invalidation` |
-| LC2 | 116 | `no-literal-string` lint rule (scoped to feature components) to enforce i18n | `chore/no-literal-string-lint-rule` |
+| LC2 | 116 | `no-literal-string` lint rule — **active as `warn`** (66 violations exist, promote to `error` after fixing) | `chore/fix-no-literal-string-violations` |
 
 ### Design / UI Polish
 
