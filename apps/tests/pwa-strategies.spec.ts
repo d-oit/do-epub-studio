@@ -49,7 +49,7 @@ test.describe('PWA Caching Strategies', () => {
     await context.setOffline(false);
   });
 
-  test('Sensitive API routes use NetworkOnly and are never cached', async ({ page, context }) => {
+  test('@mobile Sensitive API routes use NetworkOnly and are never cached', async ({ page, context }) => {
     // 1. Fetch sensitive route while online (this would normally succeed or return 401/403)
     // For the test, we don't care about the result, just that it happened.
     await page.evaluate(async () => {

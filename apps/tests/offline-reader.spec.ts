@@ -209,7 +209,7 @@ test.describe('Offline reader', () => {
     expect(bodyOk).toBe(true);
   });
 
-  test('flushes sync queue after reconnection', async ({ page, context }) => {
+  test('@mobile flushes sync queue after reconnection', async ({ page, context }) => {
     await loginAsReader(page, TEST_USER.bookSlug);
 
     const syncBookmarks: { url: string; body: string }[] = [];

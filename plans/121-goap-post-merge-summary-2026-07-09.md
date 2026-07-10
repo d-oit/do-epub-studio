@@ -151,7 +151,7 @@ None block release. Each is independently shippable.
 
 | ID | Source Plan | Description | Ships as |
 |----|------------|-------------|----------|
-| R2 | 116 | Mobile-viewport e2e coverage for core flows | `test/mobile-e2e-core-flows` |
+| ~~R2~~ | ~~116~~ | ~~Mobile-viewport e2e coverage for core flows~~ | ~~`test/mobile-e2e-core-flows`~~ → PR #760 |
 
 ---
 
