@@ -96,7 +96,7 @@ export function BookmarksPanel({
               >
                 <div className="flex items-start justify-between">
                   <button
-                    onClick={() => onNavigate(bookmark)}
+                    onClick={() => { onNavigate(bookmark); }}
                     className="flex-1 text-left focus-visible:ring-2 focus-visible:ring-accent outline-none rounded-md px-1 -mx-1"
                   >
                     <p className="text-sm font-medium text-foreground">
@@ -108,7 +108,7 @@ export function BookmarksPanel({
                   </button>
                   <Tooltip content={t('a11y.delete_bookmark')}>
                     <IconButton
-                      onClick={() => onDeleteBookmark(bookmark.id)}
+                      onClick={() => { onDeleteBookmark(bookmark.id); }}
                       variant="ghost"
                       size="sm"
                       className="text-foreground-muted hover:text-accent-error transition-colors"
