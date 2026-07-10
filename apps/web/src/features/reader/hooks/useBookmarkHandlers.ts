@@ -60,12 +60,14 @@ export function useBookmarkHandlers(): UseBookmarkHandlersReturn {
             synced: false,
             mutationId,
           });
-          await queueSync('bookmark', {
+          await queueSync('annotation', {
             bookId,
-            cfi: currentProgress.locator.cfi,
-            chapter: currentChapterRef.current ?? undefined,
-            label: chapterName,
-            mutationId,
+            annotation: {
+              type: 'bookmark',
+              cfi: currentProgress.locator.cfi,
+              chapter: currentChapterRef.current ?? undefined,
+              text: chapterName,
+            },
           }, mutationId);
         }
       } catch (err) {

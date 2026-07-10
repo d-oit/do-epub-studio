@@ -191,6 +191,16 @@ async function syncItem(item: SyncQueueItem, traceId: string, spanId: string): P
           note: payload.annotation.comment ?? '',
           mutationId: item.mutationId,
         });
+      } else if (payload.annotation.type === 'bookmark') {
+        await api.post(`/api/books/${payload.bookId}/bookmarks`, {
+          locator: {
+            cfi: payload.annotation.cfi,
+            chapter: payload.annotation.chapter ?? '',
+            selectedText: '',
+          },
+          label: payload.annotation.text ?? '',
+          mutationId: item.mutationId,
+        });
       } else {
         await api.post(`/api/books/${payload.bookId}/comments`, {
           chapterRef: payload.annotation.chapter,
@@ -202,6 +212,10 @@ async function syncItem(item: SyncQueueItem, traceId: string, spanId: string): P
         });
       }
     } else if (item.type === 'bookmark') {
+      // Legacy path — bookmarks are now queued as type 'annotation' with
+      // annotation.type === 'bookmark'.  This branch exists only to drain
+      // items that were enqueued before the M3 sync-queue dedup refactor.
+      // New code MUST NOT queue as type 'bookmark'; use type 'annotation'.
       const payload = item.payload as {
         bookId: string;
         cfi: string;
@@ -274,6 +288,8 @@ async function markAsSynced(type: 'progress' | 'annotation' | 'bookmark' | 'read
       await saveProgress({ ...entry, synced: true });
     }
   } else if (type === 'annotation' || type === 'bookmark') {
+    // 'bookmark' branch is legacy (M3 dedup) — new bookmarks queue as
+    // type 'annotation' with annotation.type === 'bookmark'.
     const unsynced = await getUnsyncedAnnotations();
     const entry = unsynced.find((e) => e.mutationId === mutationId);
     if (entry) {
