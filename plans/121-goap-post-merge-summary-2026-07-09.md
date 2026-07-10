@@ -182,7 +182,7 @@ None block release. Each is independently shippable.
 ## Synthesize — Headline
 
 The 2026-07-09 merge session closed the entire P1/P2 backlog from Plans 114–120.
-Fourteen PRs were merged in dependency order (#742 → #740 → #743 → #738 → #744 → #745 → #748 → #749 → #750 → #751 → #752 → #753 → #754 → #756 → #757)
+Eighteen PRs were merged in dependency order (#742 → #740 → #743 → #738 → #744 → #745 → #748 → #749 → #750 → #751 → #752 → #753 → #754 → #756 → #757 → #758 → #759 → #760 → #761 → #762)
 with all CI green (Codacy, Build, Lighthouse, bundle budget, lint, typecheck, markdownlint,
 810+ tests). PR #748 closed **SE2 + SE3** (CSP hardening + self-hosted fonts) per
 ADR-123 / Plan 122, removing every Google Fonts / Fontshare origin from `style-src`
