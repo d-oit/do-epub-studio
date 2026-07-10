@@ -63,8 +63,8 @@ describe('TableOfContents', () => {
 
   it('calls onClose when close button is clicked', () => {
     render(<TableOfContents {...mockProps} />);
-    // The close button has aria-label="reader.settings.close" (from mock t returning the key)
-    fireEvent.click(screen.getByLabelText('reader.settings.close'));
+    // The close button has aria-label="a11y.close" (from mock t returning the key)
+    fireEvent.click(screen.getByLabelText('a11y.close'));
     expect(mockProps.onClose).toHaveBeenCalled();
   });
 

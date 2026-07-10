@@ -5,7 +5,7 @@ import { InfoPanel } from '../features/reader/components/info/InfoPanel';
 const mockT = (key: string) => {
   const translations: Record<string, string> = {
     'reader.aboutBook': 'About Book',
-    'reader.settings.close': 'Close',
+    'a11y.close': 'Close',
     'reader.metadataNotAvailable': 'No metadata available',
     'reader.details': 'Details',
     'reader.title': 'Title',

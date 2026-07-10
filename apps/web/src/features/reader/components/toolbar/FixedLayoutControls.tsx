@@ -77,7 +77,7 @@ export function FixedLayoutControls({
           onClick={onClose}
           variant="ghost"
           size="sm"
-          aria-label={t('reader.settings.close')}
+          aria-label={t('a11y.close')}
         >
           <svg
             className="w-4 h-4"

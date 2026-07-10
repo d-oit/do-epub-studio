@@ -200,7 +200,7 @@ describe('FixedLayoutControls', () => {
         t={t}
       />,
     );
-    await userEvent.click(screen.getByLabelText('reader.settings.close'));
+    await userEvent.click(screen.getByLabelText('a11y.close'));
     expect(onClose).toHaveBeenCalledOnce();
   });
 
