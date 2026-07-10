@@ -7,7 +7,7 @@ import { apiRequest, fetchHighlights, fetchComments, fetchProgress } from '../..
 import { logClientEvent } from '../../lib/client-logger';
 import { useAuthStore, useReaderStore, usePreferencesStore } from '../../stores';
 import type { Bookmark } from '../../stores';
-import { setupOnlineListener, getSyncQueue, getProgress } from '../../lib/offline';
+import { setupOnlineListener, getSyncQueue, getProgress, getAnnotations } from '../../lib/offline';
 import { setupZombieDetection } from '../../lib/offline/permissions';
 import { AnnotationToolbar, extractSelectionData, CommentsPanel } from './components/annotations';
 import {
@@ -178,16 +178,80 @@ export function ReaderPage() {
           metadata: { bookId },
         });
 
-        // Fallback to offline progress if server fetch fails
+        // Fallback to offline cache if server fetch fails (A6)
+        // Use allSettled so one IndexedDB store failure doesn't block the other.
         try {
-          const cached = await getProgress(bookId);
-          if (cached) {
+          const [progressResult, annotationsResult] = await Promise.allSettled([
+            getProgress(bookId),
+            getAnnotations(bookId),
+          ]);
+          const cachedProgress =
+            progressResult.status === 'fulfilled' ? progressResult.value : null;
+          const offlineAnnotations =
+            annotationsResult.status === 'fulfilled' ? annotationsResult.value : [];
+          if (cachedProgress) {
             setProgress({
-              locator: { cfi: cached.cfi },
-              progressPercent: cached.percentage,
-              updatedAt: new Date(cached.lastRead).toISOString(),
+              locator: { cfi: cachedProgress.cfi },
+              progressPercent: cachedProgress.percentage,
+              updatedAt: new Date(cachedProgress.lastRead).toISOString(),
             });
             source = 'offline';
+          }
+          if (offlineAnnotations.length > 0) {
+            const offlineHighlights = offlineAnnotations
+              .filter((a) => a.type === 'highlight')
+              .map((a) => ({
+                id: a.id,
+                chapterRef: a.chapter ?? null,
+                cfiRange: a.cfi,
+                selectedText: a.text ?? '',
+                note: a.comment ?? null,
+                color: a.color ?? 'yellow',
+                createdAt: new Date(a.createdAt).toISOString(),
+                updatedAt: new Date(a.createdAt).toISOString(),
+              }));
+            const offlineComments = offlineAnnotations
+              .filter((a) => a.type === 'comment')
+              .map((a) => ({
+                id: a.id,
+                userEmail: '',
+                chapterRef: a.chapter ?? null,
+                cfiRange: a.cfi,
+                selectedText: a.text ?? null,
+                body: a.comment ?? '',
+                status: 'open' as const,
+                visibility: 'shared' as const,
+                parentCommentId: null,
+                createdAt: new Date(a.createdAt).toISOString(),
+                updatedAt: new Date(a.createdAt).toISOString(),
+                resolvedAt: null,
+              }));
+            const offlineBookmarks = offlineAnnotations
+              .filter((a) => a.type === 'bookmark')
+              .map((a) => ({
+                id: a.id,
+                locator: { cfi: a.cfi },
+                label: a.text ?? '',
+                createdAt: new Date(a.createdAt).toISOString(),
+              }));
+            if (offlineHighlights.length > 0) setHighlights(offlineHighlights);
+            if (offlineComments.length > 0) setComments(offlineComments);
+            if (offlineBookmarks.length > 0) setBookmarks(offlineBookmarks);
+            if (source === 'default') {
+              source = 'offline';
+            }
+            logClientEvent({
+              level: 'info',
+              event: 'reader.offline_annotations_restored',
+              traceId: createTraceId(),
+              spanId: createSpanId(),
+              metadata: {
+                bookId,
+                highlights: offlineHighlights.length,
+                comments: offlineComments.length,
+                bookmarks: offlineBookmarks.length,
+              },
+            });
           }
         } catch {
           /* ignore cache errors */
