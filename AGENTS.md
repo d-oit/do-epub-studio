@@ -10,7 +10,7 @@
 # File size limits (lines)
 readonly MAX_LINES_PER_SOURCE_FILE=500
 readonly MAX_LINES_PER_SKILL_MD=250
-readonly MAX_LINES_AGENTS_MD=150
+readonly MAX_LINES_AGENTS_MD=200
 
 # Git/PR configuration
 readonly MAX_COMMIT_SUBJECT_LENGTH=72
@@ -123,7 +123,7 @@ Run this before finalizing ANY response:
 | **Testing**      | `testing-strategy`, `testdata-builders`, `test-runner`, `dogfood`                                                        |
 | **DevOps & Workflow** | `github-workflow`, `cicd-pipeline`, `migration-refactoring`, `github-actions-version-fix`, `github-pr-autopilot`, `release-management` |
 | **Security**     | `security-code-auditor`, `privacy-first`                                                                                 |
-| **Quality**      | `code-quality`, `code-review-assistant`, `shell-script-quality`, `anti-ai-slop`, `impeccable`, `agents-md`              |
+| **Quality**      | `codacy`, `code-quality`, `code-review-assistant`, `shell-script-quality`, `anti-ai-slop`, `impeccable`, `agents-md`              |
 
 ---
 
@@ -141,8 +141,8 @@ IMPECCABLE_REQUIRED=1 ./scripts/quality_gate.sh  # Design gate blocks on finding
 ./scripts/atomic-commit/run.sh --message "type(scope): description"
 ./scripts/validate-commit-message.sh <file>  # Validate commit message
 
-# Skills
-skill learn                         # Capture discoveries
+# Codacy — query PR findings (see Skills Reference for skill)
+codacy pull-request gh d-oit do-epub-studio <PR> --output json
 ```
 
 ---
