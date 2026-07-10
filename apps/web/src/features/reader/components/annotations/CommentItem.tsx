@@ -86,13 +86,13 @@ export const CommentItem = memo(function CommentItem({
               onClick={() => handleEdit(comment.id)}
               className="px-2 py-1 text-xs bg-accent text-white rounded hover:opacity-90"
             >
-              Save
+              {t('annotation.save')}
             </button>
             <button
               onClick={() => setEditingComment(null)}
               className="px-2 py-1 text-xs border border-border rounded hover:bg-background-secondary"
             >
-              Cancel
+              {t('annotation.cancel')}
             </button>
           </div>
         </div>

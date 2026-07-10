@@ -111,6 +111,7 @@ function AuditTable({ data, page, total, onPrev, onNext }: AuditTableProps) {
             {t('admin.audit.previous')}
           </button>
           <span className="text-sm text-foreground-muted">
+            {/* eslint-disable-next-line i18next/no-literal-string -- template placeholders in .replace() */}
             {t('admin.audit.pageOf').replace('{page}', String(page)).replace('{total}', String(totalPages))}
           </span>
           <button

@@ -122,6 +122,7 @@ export function CatalogPage() {
 
         {isLoading && (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4" aria-busy="true">
+            {/* eslint-disable-next-line i18next/no-literal-string -- skeleton loader React keys */}
             {['sk-1', 'sk-2', 'sk-3', 'sk-4', 'sk-5', 'sk-6'].map((id) => (
               <div key={id} className="h-72 rounded-lg bg-background-secondary animate-pulse" />
             ))}
@@ -150,6 +151,7 @@ export function CatalogPage() {
                         <source srcSet={book.coverImageUrl} />
                         <img
                           src={book.coverImageUrl}
+                          // eslint-disable-next-line i18next/no-literal-string -- template placeholder in .replace()
                           alt={t('catalog.coverAlt').replace('{title}', book.title)}
                           width={320}
                           height={426}
@@ -179,10 +181,12 @@ export function CatalogPage() {
             {data && data.total > 0 && (
               <div className="mt-8 flex flex-col items-center gap-3">
                 <p className="text-sm text-foreground-muted">
+                  {/* eslint-disable i18next/no-literal-string -- template placeholders in .replace() */}
                   {t('catalog.pagination.info')
                     .replace('{from}', String(offset + 1))
                     .replace('{to}', String(Math.min(offset + books.length, data.total)))
                     .replace('{total}', String(data.total))}
+                  {/* eslint-enable i18next/no-literal-string */}
                 </p>
                 <Pagination
                   currentPage={page}

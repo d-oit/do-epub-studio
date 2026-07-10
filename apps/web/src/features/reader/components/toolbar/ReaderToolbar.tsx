@@ -91,7 +91,7 @@ export function ReaderToolbar({
     <Header
       sticky
       aria-hidden={isHeaderVisible ? undefined : true}
-      data-container-name="reader-toolbar"
+      data-container-name="reader-toolbar" /* eslint-disable-line i18next/no-literal-string -- internal container identifier */
       className={`cq cq--reader-toolbar transition-transform duration-300 ${isHeaderVisible ? 'translate-y-0' : '-translate-y-full pointer-events-none'}`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

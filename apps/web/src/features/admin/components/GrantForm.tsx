@@ -81,7 +81,7 @@ export function GrantForm({
         <Input
           label={t('grants.form.email')}
           type="email"
-          name="email"
+          name="email" /* eslint-disable-line i18next/no-literal-string -- form field name */
           value={formData.email}
           onChange={(e) => onChange({ ...formData, email: e.target.value })}
           error={formErrors.email}
@@ -94,7 +94,7 @@ export function GrantForm({
             <Input
               label={t('grants.form.password')}
               type="password"
-              name="password"
+              name="password" /* eslint-disable-line i18next/no-literal-string -- form field name */
               value={formData.password}
               onChange={(e) => onChange({ ...formData, password: e.target.value })}
               error={formErrors.password}
@@ -103,7 +103,7 @@ export function GrantForm({
             <Input
               label={t('grants.form.passwordConfirm')}
               type="password"
-              name="passwordConfirm"
+              name="passwordConfirm" /* eslint-disable-line i18next/no-literal-string -- form field name */
               value={formData.passwordConfirm}
               onChange={(e) =>
                 onChange({ ...formData, passwordConfirm: e.target.value })

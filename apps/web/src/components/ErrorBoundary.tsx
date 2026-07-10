@@ -71,15 +71,17 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
               <div className="space-y-2">
                 <h1 className="text-xl font-bold text-foreground">
+                  {/* eslint-disable-next-line i18next/no-literal-string -- class component fallback; parent passes translations prop */}
                   {this.props.translations?.heading ?? 'Something went wrong'}
                 </h1>
                 <p className="text-sm text-foreground-muted leading-relaxed">
+                  {/* eslint-disable-next-line i18next/no-literal-string -- class component fallback; parent passes translations prop */}
                   {this.props.translations?.description ?? 'An unexpected error occurred. You can try to reload the component or contact support with the ID below.'}
                 </p>
               </div>
 
               <div className="bg-background-secondary rounded-lg p-3 border border-border">
-                <p className="text-[10px] font-mono text-foreground-muted uppercase tracking-wider mb-1">Trace ID</p>
+                <p className="text-[10px] font-mono text-foreground-muted uppercase tracking-wider mb-1">{/* eslint-disable-line i18next/no-literal-string -- technical label, not user-facing prose */}Trace ID</p>
                 <code className="text-xs font-mono text-accent select-all">{this.state.traceId}</code>
               </div>
 
@@ -89,6 +91,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                   disabled={this.state.isRetrying}
                   className="w-full"
                 >
+                  {/* eslint-disable-next-line i18next/no-literal-string -- class component fallback; parent passes translations prop */}
                   {this.state.isRetrying ? 'Retrying...' : (this.props.translations?.retry ?? 'Try Again')}
                 </Button>
                 <Button
@@ -97,6 +100,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                   onClick={() => window.location.reload()}
                   className="text-foreground-muted"
                 >
+                  {/* eslint-disable-next-line i18next/no-literal-string -- class component fallback; parent passes translations prop */}
                   {this.props.translations?.home ?? 'Reload Page'}
                 </Button>
               </div>

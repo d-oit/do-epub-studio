@@ -86,8 +86,8 @@ export function BookEditModal({
             onChange={(e) => { setEditVisibility(e.target.value); }}
             className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none transition-all"
           >
-            <option value="private">{t('admin.createBookModal.visibilityPrivate')}</option>
-            <option value="public">{t('admin.createBookModal.visibilityPublic')}</option>
+            <option value="private">{t('admin.createBookModal.visibilityPrivate')}</option> {/* eslint-disable-line i18next/no-literal-string -- form option value */}
+            <option value="public">{t('admin.createBookModal.visibilityPublic')}</option> {/* eslint-disable-line i18next/no-literal-string -- form option value */}
           </select>
         </div>
 

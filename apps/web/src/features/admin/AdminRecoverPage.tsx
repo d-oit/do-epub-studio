@@ -113,7 +113,7 @@ export function AdminRecoverPage() {
                 onChange={(e) => { setEmail(e.target.value); }}
                 required
                 autoComplete="email"
-                placeholder="admin@example.com"
+                placeholder="admin@example.com" /* eslint-disable-line i18next/no-literal-string -- example placeholder, not user-facing */
               />
               {error && (
                 <p role="alert" className="text-sm text-destructive">{error}</p>
@@ -152,7 +152,8 @@ export function AdminRecoverPage() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => { handleNavigate('/admin/login'); }}
+              onClick={() => {      // eslint-disable-next-line i18next/no-literal-string -- route path
+      handleNavigate('/admin/login'); }}
               className="text-sm text-foreground-muted hover:text-foreground underline decoration-accent/30 hover:decoration-accent focus-visible:ring-2 focus-visible:ring-accent"
             >
               {t('admin.recover.backToLogin')}

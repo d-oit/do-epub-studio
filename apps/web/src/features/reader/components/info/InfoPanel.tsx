@@ -295,9 +295,11 @@ export function InfoPanel({ isOpen, onClose, metadata, bookId, progressPercent, 
                           {[...insights.recentActivity].reverse().map((a) => (
                             <li key={a.date} className="flex justify-between">
                               <span>{a.date}</span>
+                              {/* eslint-disable i18next/no-literal-string -- unit suffix and separator */}
                               <span className="text-foreground-muted">
                                 {formatMinutes(a.activeMinutes)} • {a.activePages}p
                               </span>
+                              {/* eslint-enable i18next/no-literal-string */}
                             </li>
                           ))}
                         </ul>
