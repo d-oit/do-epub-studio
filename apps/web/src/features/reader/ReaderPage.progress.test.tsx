@@ -30,6 +30,7 @@ vi.mock('../../lib/offline', () => ({
   setupOnlineListener: vi.fn(() => () => {}),
   getSyncQueue: vi.fn(() => Promise.resolve([])),
   getProgress: vi.fn(),
+  getAnnotations: vi.fn(() => Promise.resolve([])),
 }));
 
 // Mock epub-js and hooks

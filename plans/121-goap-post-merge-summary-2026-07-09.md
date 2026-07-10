@@ -121,7 +121,7 @@ None block release. Each is independently shippable.
 | N3 | 120 (C10) | Server-side full-text search for large EPUBs | `feat/server-side-epub-search` |
 | N6 | 120 (C11) | EPUB re-export / packager (download annotated version) | `feat/epub-re-export-packager` |
 | N7 | 120 (C12) | Comment reply notifications | `feat/comment-reply-notifications` |
-| A6 | 115 | Offline reader fallback annotation restore (beyond progress) | `fix/offline-annotation-restore` |
+| ~~A6~~ | ~~115~~ | ~~Offline reader fallback annotation restore (beyond progress)~~ | **RESOLVED** — `ReaderPage.tsx` catch block now restores highlights, comments, and bookmarks from IndexedDB when server fetch fails; 811 tests pass |
 | ~~M5~~ | ~~115~~ | ~~`/api/admin/audit-logs` 301 alias — document as intentional~~ | **RESOLVED** — see `docs/audit-logs-alias.md` (note: actual implementation is 404 removal, **not** 301 alias; the test `routes.admin.test.ts > GET /api/admin/audit-logs > returns 404` pins the 404 as a load-bearing invariant) |
 
 ### Tech Debt / Cleanup

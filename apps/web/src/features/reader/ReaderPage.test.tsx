@@ -30,6 +30,7 @@ vi.mock('../../lib/offline', () => ({
   setupOnlineListener: vi.fn(() => vi.fn()),
   getSyncQueue: vi.fn(() => Promise.resolve([])),
   getProgress: vi.fn(() => Promise.resolve(null)),
+  getAnnotations: vi.fn(() => Promise.resolve([])),
 }));
 
 vi.mock('../../lib/offline/permissions', () => ({
@@ -136,6 +137,54 @@ describe('ReaderPage Panels', () => {
     });
     const root = document.querySelector('.min-h-dvh');
     expect(root).toBeInTheDocument();
+  });
+
+  it('restores annotations from offline cache when server fetch fails (A6)', async () => {
+    const { apiRequest, fetchHighlights, fetchComments, fetchProgress } = await import('../../lib/api');
+    const { getProgress, getAnnotations } = await import('../../lib/offline');
+
+    // Server fetches fail
+    vi.mocked(fetchHighlights).mockRejectedValueOnce(new Error('Network error'));
+    vi.mocked(fetchComments).mockRejectedValueOnce(new Error('Network error'));
+    vi.mocked(apiRequest).mockImplementation((url: string) => {
+      if (url.includes('logout')) return Promise.resolve({});
+      if (url.includes('bookmarks')) return Promise.reject(new Error('Network error'));
+      if (url.includes('file-url')) return Promise.resolve({ url: 'mock-epub-url' });
+      return Promise.resolve({ url: 'mock-url' });
+    });
+    vi.mocked(fetchProgress).mockRejectedValueOnce(new Error('Network error'));
+
+    // Offline cache returns data
+    vi.mocked(getProgress).mockResolvedValueOnce({
+      id: 'prog-1',
+      bookId: 'test-book-id',
+      cfi: 'epubcfi(/6/14)',
+      percentage: 42,
+      lastRead: Date.now(),
+      synced: true,
+      mutationId: 'm-1',
+    });
+    vi.mocked(getAnnotations).mockResolvedValueOnce([
+      { id: 'h-1', bookId: 'test-book-id', type: 'highlight', cfi: 'epubcfi(/6/14!/4/2)', text: 'saved passage', color: 'yellow', chapter: 'Ch 1', createdAt: Date.now(), synced: false, mutationId: 'm-h1' },
+      { id: 'c-1', bookId: 'test-book-id', type: 'comment', cfi: 'epubcfi(/6/14!/4/3)', text: 'selected', comment: 'offline comment', createdAt: Date.now(), synced: false, mutationId: 'm-c1' },
+      { id: 'b-1', bookId: 'test-book-id', type: 'bookmark', cfi: 'epubcfi(/6/14!/4/4)', text: 'Chapter 1', createdAt: Date.now(), synced: false, mutationId: 'm-b1' },
+    ]);
+
+    await act(async () => {
+      render(<BrowserRouter><ReaderPage /></BrowserRouter>);
+    });
+
+    // Verify offline data was restored to the store
+    const storeState = useReaderStore.getState();
+    expect(storeState.highlights).toHaveLength(1);
+    expect(storeState.highlights[0].id).toBe('h-1');
+    expect(storeState.highlights[0].selectedText).toBe('saved passage');
+    expect(storeState.comments).toHaveLength(1);
+    expect(storeState.comments[0].id).toBe('c-1');
+    expect(storeState.comments[0].body).toBe('offline comment');
+    expect(storeState.bookmarks).toHaveLength(1);
+    expect(storeState.bookmarks[0].id).toBe('b-1');
+    expect(storeState.bookmarks[0].label).toBe('Chapter 1');
   });
 });
 
