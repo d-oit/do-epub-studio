@@ -166,7 +166,7 @@ export function LoginPage() {
           <Button
             onClick={() => {
               // eslint-disable-next-line @typescript-eslint/no-floating-promises
-              navigate('/login');
+              navigate('/login'); // eslint-disable-line i18next/no-literal-string -- route path
             }}
           >
             {t('login.backToLogin')}
@@ -257,7 +257,7 @@ export function LoginPage() {
                   id="email"
                   label={t('login.emailLabel')}
                   type="email"
-                  name="email"
+                  name="email" /* eslint-disable-line i18next/no-literal-string -- form field name */
                   required
                   autoComplete="email"
                 />
@@ -285,19 +285,19 @@ export function LoginPage() {
                   id="email"
                   label={t('login.emailLabel')}
                   type="email"
-                  name="email"
-                  autoComplete="email"
-                  inputMode="email"
-                  required
-                  placeholder={t('login.emailPlaceholder')}
-                />
+              name="email" /* eslint-disable-line i18next/no-literal-string -- form field name */
+              autoComplete="email"
+              inputMode="email"
+              required
+              placeholder={t('login.emailPlaceholder')}
+            />
 
-                <div>
-                  <Input
-                    id="password"
-                    label={t('login.passwordLabel')}
-                    type="password"
-                    name="password"
+            <div>
+              <Input
+                id="password"
+                label={t('login.passwordLabel')}
+                type="password"
+                name="password" /* eslint-disable-line i18next/no-literal-string -- form field name */
                     autoComplete="current-password"
                     placeholder={t('login.passwordPlaceholder')}
                   />
@@ -321,7 +321,7 @@ export function LoginPage() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => void navigate('/admin/login')}
+              onClick={() => void navigate('/admin/login') /* eslint-disable-line i18next/no-literal-string -- route path */}
               className="text-foreground-muted hover:text-foreground text-sm"
             >
               {t('login.adminLink')}

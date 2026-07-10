@@ -131,7 +131,7 @@ describe('CommentsPanel', () => {
       render(<CommentsPanel {...defaultProps} />);
 
       // Should show open comments section
-      expect(screen.getByText('Open')).toBeInTheDocument();
+      expect(screen.getByText('comment.status.open')).toBeInTheDocument();
     });
 
     it('switches to highlights tab when clicked', async () => {
@@ -168,7 +168,7 @@ describe('CommentsPanel', () => {
     it('renders resolved comments in separate section', () => {
       render(<CommentsPanel {...defaultProps} />);
 
-      expect(screen.getByText('Resolved')).toBeInTheDocument();
+      expect(screen.getByText('comment.status.resolved')).toBeInTheDocument();
       expect(screen.getByText('Resolved comment')).toBeInTheDocument();
     });
 
@@ -307,7 +307,7 @@ describe('CommentsPanel', () => {
       const textarea = screen.getByDisplayValue('First comment');
       fireEvent.change(textarea, { target: { value: 'Updated comment' } });
 
-      const saveBtn = screen.getByText('Save');
+      const saveBtn = screen.getByText('annotation.save');
       fireEvent.click(saveBtn);
 
       expect(mockOnEditComment).toHaveBeenCalledWith('comment-1', 'Updated comment');

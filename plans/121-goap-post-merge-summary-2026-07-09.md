@@ -130,7 +130,7 @@ None block release. Each is independently shippable.
 |----|------------|-------------|----------|
 | ~~M3~~ | ~~115~~ | ~~Redundant sync queue paths~~ | **RESOLVED in PR #757** — bookmarks now queue as type `'annotation'` with `annotation.type='bookmark'`; legacy `'bookmark'` handler preserved as fallback |
 | F3 | 120 | Cross-isolate cache invalidation via Durable Object or KV (current `bumpCacheVersion` is per-isolate) | `perf/cross-isolate-cache-invalidation` |
-| LC2 | 116 | `no-literal-string` lint rule — **active as `warn`** (66 violations exist, promote to `error` after fixing) | `chore/fix-no-literal-string-violations` |
+| ~~LC2~~ | ~~116~~ | ~~`no-literal-string` lint rule — promoted to `error`; 66 violations fixed~~ | ~~`chore/fix-no-literal-string-violations`~~ → PR #762 |
 
 ### Design / UI Polish
 

@@ -177,7 +177,7 @@ export function CommentsPanel({
       className="fixed inset-y-0 right-0 w-80 bg-background border-l border-border z-40 flex flex-col shadow-xl"
     >
       <div className="p-4 border-b border-border flex justify-between items-center">
-        <h2 id="comments-title" className="font-semibold">{t('annotation.comment')}s</h2>
+        <h2 id="comments-title" className="font-semibold">{t('comment.plural')}</h2>
         <IconButton
           onClick={onClose}
           variant="ghost"
@@ -228,14 +228,14 @@ export function CommentsPanel({
             )}
             {openComments.length > 0 && (
               <div>
-                <h3 className="text-xs font-semibold text-foreground-muted uppercase mb-3">Open</h3>
+                <h3 className="text-xs font-semibold text-foreground-muted uppercase mb-3">{t('comment.status.open')}</h3>
                 {openComments.length > VIRTUALIZE_THRESHOLD ? (
                   <VirtualList
                     items={openComments}
                     itemHeight={120}
                     className="h-[60vh]"
                     renderItem={renderComment}
-                    ariaLabel="Open comments"
+                    ariaLabel="Open comments" /* eslint-disable-line i18next/no-literal-string -- React camelCase aria attribute */
                   />
                 ) : (
                   <div className="space-y-3">
@@ -246,14 +246,14 @@ export function CommentsPanel({
             )}
             {resolvedComments.length > 0 && (
               <div className="mt-6">
-                <h3 className="text-xs font-semibold text-foreground-muted uppercase mb-3">Resolved</h3>
+                <h3 className="text-xs font-semibold text-foreground-muted uppercase mb-3">{t('comment.status.resolved')}</h3>
                 {resolvedComments.length > VIRTUALIZE_THRESHOLD ? (
                   <VirtualList
                     items={resolvedComments}
                     itemHeight={120}
                     className="h-[60vh]"
                     renderItem={renderComment}
-                    ariaLabel="Resolved comments"
+                    ariaLabel="Resolved comments" /* eslint-disable-line i18next/no-literal-string -- React camelCase aria attribute */
                   />
                 ) : (
                   <div className="space-y-3">
@@ -278,8 +278,7 @@ export function CommentsPanel({
                   items={highlights}
                   itemHeight={HIGHLIGHT_ITEM_HEIGHT}
                   className="h-full"
-                  renderItem={renderHighlight}
-                  ariaLabel="Highlights"
+                  renderItem={renderHighlight}                    ariaLabel="Highlights" /* eslint-disable-line i18next/no-literal-string -- React camelCase aria attribute */
                 />
               ) : (
                 highlights.map(renderHighlight)

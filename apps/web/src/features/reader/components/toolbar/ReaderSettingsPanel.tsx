@@ -89,6 +89,7 @@ export function ReaderSettingsPanel({
             {t('reader.theme')}
           </label>
           <div className="grid grid-cols-2 gap-2">
+            {/* eslint-disable-next-line i18next/no-literal-string -- option keys passed to t() */}
             {(['light', 'dark', 'sepia', 'system'] as const).map((themeOption) => (
               <button
                 key={themeOption}
@@ -117,6 +118,7 @@ export function ReaderSettingsPanel({
               {t('reader.fontSize')}
             </label>
             <div className="flex gap-1.5 p-1 bg-background-secondary rounded-lg">
+              {/* eslint-disable-next-line i18next/no-literal-string -- option keys passed to t() */}
               {(['small', 'medium', 'large', 'xlarge'] as const).map((size) => (
                 <button
                   key={size}
@@ -133,6 +135,7 @@ export function ReaderSettingsPanel({
                     }
                   `}
                 >
+                  {/* eslint-disable i18next/no-literal-string -- font size abbreviations */}
                   {size === 'small'
                     ? 'A'
                     : size === 'medium'
@@ -140,6 +143,7 @@ export function ReaderSettingsPanel({
                       : size === 'large'
                         ? 'A++'
                         : 'A+++'}
+                  {/* eslint-enable i18next/no-literal-string */}
                 </button>
               ))}
             </div>
@@ -152,6 +156,7 @@ export function ReaderSettingsPanel({
               {t('reader.fontFamily')}
             </label>
             <div className="flex flex-col gap-1">
+              {/* eslint-disable-next-line i18next/no-literal-string -- option keys passed to t() */}
               {(['serif', 'sans-serif', 'monospace'] as const).map((family) => (
                 <button
                   key={family}
@@ -189,6 +194,7 @@ export function ReaderSettingsPanel({
               {t('reader.settings.direction')}
             </label>
             <div className="grid grid-cols-3 gap-1.5">
+              {/* eslint-disable-next-line i18next/no-literal-string -- option keys passed to t() */}
               {(['default', 'ltr', 'rtl'] as const).map((d) => (
                 <button
                   key={d}
@@ -217,6 +223,7 @@ export function ReaderSettingsPanel({
               {t('reader.settings.writingMode')}
             </label>
             <div className="grid grid-cols-1 gap-1">
+              {/* eslint-disable-next-line i18next/no-literal-string -- option keys passed to t() */}
               {(['horizontal-tb', 'vertical-rl', 'vertical-lr'] as const).map((mode) => (
                 <button
                   key={mode}

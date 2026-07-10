@@ -142,9 +142,7 @@ export default tseslint.config(
     files: ['apps/web/src/features/**/*.tsx', 'apps/web/src/components/**/*.tsx'],
     ignores: ['**/*.test.tsx', '**/*.spec.tsx', '**/*.stories.tsx', '**/tests/**', '**/__tests__/**'],
     rules: {
-      // LC2: no-literal-string active as warning (66 violations exist).
-      // Promote to 'error' once violations are fixed (Plan 121 P3 backlog).
-      'i18next/no-literal-string': ['warn', { mode: 'jsx-only', ignoreAttribute: ['aria-label', 'role', 'type', 'tabIndex'] }],
+      'i18next/no-literal-string': ['error', { mode: 'jsx-only', ignoreAttribute: ['aria-label', 'role', 'type', 'tabIndex'] }],
     },
   },
   prettierConfig,

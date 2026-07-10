@@ -4,7 +4,7 @@ import { CommentItem } from '../features/reader/components/annotations/CommentIt
 import { HighlightItem } from '../features/reader/components/annotations/HighlightItem';
 import { formatDate } from '../features/reader/components/annotations/formatDate';
 
-vi.mock('../../hooks/useTranslation', () => ({
+vi.mock('../hooks/useTranslation', () => ({
   useTranslation: () => ({
     t: (key: string) => key,
   }),
@@ -164,8 +164,8 @@ describe('CommentItem', () => {
     };
     render(<CommentItem {...props} />);
     expect(screen.getByDisplayValue('Edited text')).toBeInTheDocument();
-    expect(screen.getByText('Save')).toBeInTheDocument();
-    expect(screen.getByText('Cancel')).toBeInTheDocument();
+    expect(screen.getByText('annotation.save')).toBeInTheDocument();
+    expect(screen.getByText('annotation.cancel')).toBeInTheDocument();
   });
 
   it('calls handleEdit when clicking save in edit mode', () => {
@@ -175,7 +175,7 @@ describe('CommentItem', () => {
       editText: 'Edited text',
     };
     render(<CommentItem {...props} />);
-    fireEvent.click(screen.getByText('Save'));
+    fireEvent.click(screen.getByText('annotation.save'));
     expect(baseProps.handleEdit).toHaveBeenCalledWith('c1');
   });
 
@@ -186,7 +186,7 @@ describe('CommentItem', () => {
       editText: 'Edited text',
     };
     render(<CommentItem {...props} />);
-    fireEvent.click(screen.getByText('Cancel'));
+    fireEvent.click(screen.getByText('annotation.cancel'));
     expect(baseProps.setEditingComment).toHaveBeenCalledWith(null);
   });
 
@@ -286,8 +286,8 @@ describe('HighlightItem', () => {
     if (container) {
       fireEvent.mouseEnter(container);
     }
-    expect(screen.getByText('Edit Note')).toBeInTheDocument();
-    expect(screen.getByText('Delete')).toBeInTheDocument();
+    expect(screen.getByText('annotation.editNote')).toBeInTheDocument();
+    expect(screen.getByText('annotation.delete')).toBeInTheDocument();
   });
 
   it('calls setEditingHighlight when clicking edit', () => {
@@ -296,7 +296,7 @@ describe('HighlightItem', () => {
     if (container) {
       fireEvent.mouseEnter(container);
     }
-    fireEvent.click(screen.getByText('Edit Note'));
+    fireEvent.click(screen.getByText('annotation.editNote'));
     expect(baseProps.setEditingHighlight).toHaveBeenCalledWith('h1');
     expect(baseProps.setHighlightNote).toHaveBeenCalledWith('My note');
   });
@@ -307,7 +307,7 @@ describe('HighlightItem', () => {
     if (container) {
       fireEvent.mouseEnter(container);
     }
-    fireEvent.click(screen.getByText('Delete'));
+    fireEvent.click(screen.getByText('annotation.delete'));
     expect(baseProps.onDelete).toHaveBeenCalledWith('h1');
   });
 
@@ -319,8 +319,8 @@ describe('HighlightItem', () => {
     };
     render(<HighlightItem {...props} />);
     expect(screen.getByDisplayValue('Edited note')).toBeInTheDocument();
-    expect(screen.getByText('Save')).toBeInTheDocument();
-    expect(screen.getByText('Cancel')).toBeInTheDocument();
+    expect(screen.getByText('annotation.save')).toBeInTheDocument();
+    expect(screen.getByText('annotation.cancel')).toBeInTheDocument();
   });
 
   it('calls onEdit when clicking save in edit mode', () => {
@@ -330,7 +330,7 @@ describe('HighlightItem', () => {
       highlightNote: 'Edited note',
     };
     render(<HighlightItem {...props} />);
-    fireEvent.click(screen.getByText('Save'));
+    fireEvent.click(screen.getByText('annotation.save'));
     expect(baseProps.onEdit).toHaveBeenCalledWith('h1');
   });
 
@@ -341,7 +341,7 @@ describe('HighlightItem', () => {
       highlightNote: 'Edited note',
     };
     render(<HighlightItem {...props} />);
-    fireEvent.click(screen.getByText('Cancel'));
+    fireEvent.click(screen.getByText('annotation.cancel'));
     expect(baseProps.setEditingHighlight).toHaveBeenCalledWith(null);
   });
 

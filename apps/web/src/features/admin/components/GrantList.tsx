@@ -215,6 +215,7 @@ export function GrantList({
         }
       >
         <p className="text-sm text-foreground-muted">
+          {/* eslint-disable-next-line i18next/no-literal-string -- template placeholder in .replace() */}
           {t('grants.revokeMessage').replace('{email}', revokingGrant?.email ?? '')}
         </p>
       </Modal>
