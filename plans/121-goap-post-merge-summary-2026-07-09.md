@@ -1,7 +1,7 @@
 # GOAP 121 — Post-Merge Summary & P3 Backlog (2026-07-09)
 
 **Date:** 2026-07-09
-**Status:** 🔄 ACTIVE — PR #744 (plan updates) + PR #745 (design cleanup) merged; consolidates remaining P3 items from Plans 114–120
+**Status:** 🔄 ACTIVE — PRs #754 + #756 + #757 merged (2026-07-10); M3 resolved; consolidates remaining P3 items from Plans 114–120
 **Author:** Buffy analysis session
 **Methodology:** GOAP (analyze → decompose → strategize → coordinate → execute → synthesize)
 **Extends:** Plans 114–120 (comprehensive audit + feature delivery cycle)
@@ -34,15 +34,19 @@ all remaining P3 items. This plan supersedes the "remaining" sections of Plans
 | **#750** | docs(u4): typography-decision document + U4 strike-through | Adds `docs/typography-decision.md` (formalises Instrument Serif + Geist pairing + fallback chains); U4 row in Plan 121 intended to be struck through (recovered in #752) | All checks green; squashed to `c6dc5dc` |
 | **#751** | docs(m5): audit-logs endpoint doc + M5 strike-through | Adds `docs/audit-logs-alias.md` (records the 404-vs-301 implementation nuance; test `routes.admin.test.ts > GET /api/admin/audit-logs > returns 404` is load-bearing); M5 row in Plan 121 intended to be struck through (recovered in #752) | All checks green; squashed to `43c8107` |
 | **#752** | fix(plan 121): recovery — re-apply U4 + M5 strike-throughs | A botched `git checkout --theirs` conflict resolution on the #750 and #751 branches dropped the U4 and M5 strike-throughs; this recovery re-applied them. Doc files were not affected. | All checks green; squashed to `f9fe7e6` |
+| **#753** | chore(plan 121): final closure — add #749 + #750 + #751 + #752 rows; bump headline to Eleven PRs | Added merge records for PRs #749–#752; updated headline to “Eleven PRs” | All checks green; squashed to `90589be` |
+| **#754** | Standardize Bookmarks Panel and Panel Close Actions for Accessibility | Replaced raw buttons with `IconButton` (44px touch targets) + `Tooltip` in BookmarksPanel; centralized `a11y.close` across all reader panels; updated unit tests | All checks green; squashed to `f5ee0d9` |
+| **#756** | fix(e2e): mobile panel mutual exclusivity (#755) | Added `clickToolbarAction` helper (viewport-width detection + `dispatchEvent`); fixed 42 E2E test failures across 5 browsers; AGENTS.md updates (codacy skill, Key Commands, MAX_LINES 150→200) | All checks green; squashed to `b62d570` |
+| **#757** | refactor(sync): consolidate bookmark sync into annotation queue path (M3) | Bookmarks now queue as `type: 'annotation'` with `annotation.type: 'bookmark'`; legacy `'bookmark'` handler preserved as fallback; 2 files, 23 insertions, 5 deletions | All checks green; squashed to `b30a57d` |
 
 ### Post-Merge Baseline
 
 | Signal | Result |
 |--------|--------|
-| Open PRs | **0** (after #744 + #745 merged) |
+| Open PRs | **0** (after #754 + #756 + #757 merged; #758 pending) |
 | Open GitHub Issues | **0** |
 | Quality gate | ✅ Lint, Typecheck, Shellcheck all pass |
-| AGENTS.md | 150 lines (meets `MAX_LINES_AGENTS_MD=150`) |
+| AGENTS.md | 150 lines (meets `MAX_LINES_AGENTS_MD=200`; `codacy` skill added to Quality row + Key Commands) |
 | TODO/FIXME in prod source | 0 |
 | CI checks on main | All green |
 | Test count | 810 web unit tests, 288 reader-core tests (framer-motion mocks removed — net dead code removal) |
@@ -124,7 +128,7 @@ None block release. Each is independently shippable.
 
 | ID | Source Plan | Description | Ships as |
 |----|------------|-------------|----------|
-| M3 | 115 | Redundant sync queue paths (legacy `annotation` vs first-class `bookmark`/`insight`) | `refactor/sync-queue-dedup` |
+| ~~M3~~ | ~~115~~ | ~~Redundant sync queue paths~~ | **RESOLVED in PR #757** — bookmarks now queue as type `'annotation'` with `annotation.type='bookmark'`; legacy `'bookmark'` handler preserved as fallback |
 | F3 | 120 | Cross-isolate cache invalidation via Durable Object or KV (current `bumpCacheVersion` is per-isolate) | `perf/cross-isolate-cache-invalidation` |
 | LC2 | 116 | `no-literal-string` lint rule — **active as `warn`** (66 violations exist, promote to `error` after fixing) | `chore/fix-no-literal-string-violations` |
 
@@ -178,7 +182,7 @@ None block release. Each is independently shippable.
 ## Synthesize — Headline
 
 The 2026-07-09 merge session closed the entire P1/P2 backlog from Plans 114–120.
-Eleven PRs were merged in dependency order (#742 → #740 → #743 → #738 → #744 → #745 → #748 → #749 → #750 → #751 → #752)
+Fourteen PRs were merged in dependency order (#742 → #740 → #743 → #738 → #744 → #745 → #748 → #749 → #750 → #751 → #752 → #753 → #754 → #756 → #757)
 with all CI green (Codacy, Build, Lighthouse, bundle budget, lint, typecheck, markdownlint,
 810+ tests). PR #748 closed **SE2 + SE3** (CSP hardening + self-hosted fonts) per
 ADR-123 / Plan 122, removing every Google Fonts / Fontshare origin from `style-src`
