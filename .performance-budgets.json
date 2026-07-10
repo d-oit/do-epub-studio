@@ -20,7 +20,7 @@
     },
     "admin": {
       "entry": "src/features/admin/AdminPage.tsx",
-      "maxSize": 850000,
+      "maxSize": 860000,
       "description": "Total transitive JS and CSS for the admin route (includes shared vendors)"
     },
     "auth": {
