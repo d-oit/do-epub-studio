@@ -153,7 +153,7 @@ test.describe('traceId header assertions', () => {
 });
 
 test.describe('traceId server responses', () => {
-  test('server response includes traceId in body on error', async ({ page }) => {
+  test('@mobile server response includes traceId in body on error', async ({ page }) => {
     await assertTraceIdInResponse(page);
 
     const responsePromise = page.waitForResponse((res) =>
