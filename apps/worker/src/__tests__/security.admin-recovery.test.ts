@@ -29,7 +29,8 @@ describe('Security: Admin Recovery Flow', () => {
     );
 
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion -- needed for property access
+    const body = await res.json() as { ok: boolean; data?: { token: string; user?: { role: string } } };
     expect(body.ok).toBe(true);
     // Verify it used global_role in the check (by implication of queryFirst being called)
     expect(mockQueryFirst).toHaveBeenCalledWith(
@@ -70,9 +71,10 @@ describe('Security: Admin Recovery Flow', () => {
     );
 
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion -- needed for property access
+    const body = await res.json() as { ok: boolean; data?: { token: string; user?: { role: string } } };
     expect(body.ok).toBe(true);
-    expect(body.data.token).toBe('session-token');
-    expect(body.data.user.role).toBe('admin');
+    expect(body.data?.token).toBe('session-token');
+    expect(body.data?.user?.role).toBe('admin');
   });
 });
