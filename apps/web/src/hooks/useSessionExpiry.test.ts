@@ -266,6 +266,76 @@ describe('useSessionExpiry', () => {
     expect(newExpiry).toBeGreaterThan(futureExpiry);
   });
 
+  it('auto-refresh updates store with new token and expiry', async () => {
+    const future = Date.now() + 3 * 60 * 1000;
+    act(() => {
+      useAuthStore.setState({
+        sessionToken: 't',
+        sessionExpiresAt: future,
+        isAuthenticated: true,
+      });
+    });
+    const newExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    mockApiRequest.mockResolvedValue({
+      sessionToken: 'refreshed',
+      expiresAt: newExpiry.toISOString(),
+    });
+    renderHook(() => useSessionExpiry());
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+    });
+
+    const state = useAuthStore.getState();
+    expect(state.sessionToken).toBe('refreshed');
+    expect(state.sessionExpiresAt).toBe(newExpiry.getTime());
+  });
+
+  it('auto-refresh handles response without expiresAt', async () => {
+    const future = Date.now() + 3 * 60 * 1000;
+    act(() => {
+      useAuthStore.setState({
+        sessionToken: 't',
+        sessionExpiresAt: future,
+        isAuthenticated: true,
+      });
+    });
+    mockApiRequest.mockResolvedValue({
+      sessionToken: 'token-only',
+    });
+    renderHook(() => useSessionExpiry());
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+    });
+
+    const state = useAuthStore.getState();
+    expect(state.sessionToken).toBe('token-only');
+    expect(state.sessionExpiresAt).toBeNull();
+  });
+
+  it('manual refresh handles response without expiresAt', async () => {
+    act(() => {
+      useAuthStore.setState({
+        sessionToken: 't',
+        sessionExpiresAt: Date.now() + 6 * 24 * 60 * 60 * 1000,
+        isAuthenticated: true,
+      });
+    });
+    mockApiRequest.mockResolvedValue({
+      sessionToken: 'token-only',
+    });
+    const { result } = renderHook(() => useSessionExpiry());
+
+    await act(async () => {
+      await result.current.refresh();
+    });
+
+    const state = useAuthStore.getState();
+    expect(state.sessionToken).toBe('token-only');
+    expect(state.sessionExpiresAt).toBeNull();
+  });
+
   it('returns manual refresh via callback', async () => {
     act(() => {
       useAuthStore.setState({

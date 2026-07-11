@@ -130,6 +130,43 @@ describe('ErrorBoundary', () => {
     expect(screen.getByText('test-trace-id')).toBeInTheDocument();
   });
 
+  it('retry clears error state after 600ms delay', () => {
+    const onError = vi.fn();
+    // biome-ignore lint/correctness/useQwikValidLexicalScope: Codacy Biome false positive — this is React/Vitest, not Qwik
+    const App = ({ shouldThrow }: { shouldThrow: boolean }) => (
+      <ErrorBoundary onCatch={onError}>
+        {shouldThrow ? <ThrowError /> : <div>Recovered Content</div>}
+      </ErrorBoundary>
+    );
+
+    const { rerender } = render(<App shouldThrow={true} />);
+    expect(screen.getByText('Something went wrong')).toBeInTheDocument();
+
+    const retryBtn = screen.getByText('Try Again');
+    act(() => { fireEvent.click(retryBtn); });
+    expect(screen.getByText('Retrying...')).toBeInTheDocument();
+
+    act(() => {
+      vi.advanceTimersByTime(600);
+      rerender(<App shouldThrow={false} />);
+    });
+
+    expect(screen.getByText('Recovered Content')).toBeInTheDocument();
+    expect(screen.queryByText('Something went wrong')).not.toBeInTheDocument();
+  });
+
+  it('reload button renders and is clickable', () => {
+    render(
+      <ErrorBoundary>
+        <ThrowError />
+      </ErrorBoundary>,
+    );
+
+    const reloadBtn = screen.getByText('Reload Page');
+    expect(reloadBtn).toBeInTheDocument();
+    expect(reloadBtn.tagName).toBe('BUTTON');
+  });
+
   it('does not render error UI when no error', () => {
     render(
       <ErrorBoundary>
