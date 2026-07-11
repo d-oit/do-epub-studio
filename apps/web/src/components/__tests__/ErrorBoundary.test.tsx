@@ -132,6 +132,7 @@ describe('ErrorBoundary', () => {
 
   it('retry clears error state after 600ms delay', () => {
     const onError = vi.fn();
+    // biome-ignore lint/correctness/useQwikValidLexicalScope: Codacy Biome false positive — this is React/Vitest, not Qwik
     const App = ({ shouldThrow }: { shouldThrow: boolean }) => (
       <ErrorBoundary onCatch={onError}>
         {shouldThrow ? <ThrowError /> : <div>Recovered Content</div>}
