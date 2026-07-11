@@ -172,6 +172,7 @@ describe('ReaderPage Panels', () => {
 
     await act(async () => {
       render(<BrowserRouter><ReaderPage /></BrowserRouter>);
+      await Promise.resolve();
     });
 
     // Verify offline data was restored to the store

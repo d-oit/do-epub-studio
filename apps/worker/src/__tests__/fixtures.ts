@@ -32,6 +32,7 @@ vi.mock('../auth/admin-middleware', async (importOriginal) => {
     ...actual,
     requireAdminAuth: vi.fn(),
     createAdminSession: vi.fn(),
+    createAdminSessionByEmail: vi.fn(),
     revokeAdminSession: vi.fn(),
     generateAdminToken: vi.fn(),
     hashToken: vi.fn(),
@@ -73,7 +74,12 @@ vi.mock('../audit', () => ({
 
 import { queryFirst, queryAll, execute, transaction } from '../db/client';
 import { requireAuth } from '../auth/middleware';
-import { requireAdminAuth, createAdminSession, revokeAdminSession } from '../auth/admin-middleware';
+import {
+  requireAdminAuth,
+  createAdminSession,
+  createAdminSessionByEmail,
+  revokeAdminSession,
+} from '../auth/admin-middleware';
 import {
   validateGrant,
   computeCapabilities,
@@ -105,6 +111,7 @@ export const mockTransaction = transaction as Mock;
 export const mockRequireAuth = requireAuth as Mock;
 export const mockRequireAdminAuth = requireAdminAuth as Mock;
 export const mockCreateAdminSession = createAdminSession as Mock;
+export const mockCreateAdminSessionByEmail = createAdminSessionByEmail as Mock;
 export const mockRevokeAdminSession = revokeAdminSession as Mock;
 export const mockValidateGrant = validateGrant as Mock;
 export const mockComputeCapabilities = computeCapabilities as Mock;

@@ -11,6 +11,7 @@ export {
   MultiSignalLocatorSchema,
   AccessRequestSchema,
   RecoveryRequestSchema,
+  AdminRecoveryRequestSchema,
   RecoveryVerifySchema,
   CreateBookSchema,
   UpdateBookSchema,
@@ -35,6 +36,7 @@ export {
 export type {
   AccessRequest,
   RecoveryRequest,
+  AdminRecoveryRequest,
   RecoveryVerify,
   CreateBook,
   UpdateBook,

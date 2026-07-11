@@ -149,6 +149,9 @@ commentsRouter.patch('/comments/:commentId', readerAuth, zValidator('json', Comm
     );
   }
 
+  const mismatch = await assertBookAccess(c.env, auth, comment.book_id, c.executionCtx);
+  if (mismatch) return mismatch.response;
+
   if (comment.user_email !== auth.email) {
     return c.json(
       { ok: false, error: { code: 'FORBIDDEN', message: 'Cannot edit others comments' } },
@@ -206,6 +209,9 @@ commentsRouter.delete('/comments/:commentId', readerAuth, async (c) => {
       404,
     );
   }
+
+  const mismatch = await assertBookAccess(c.env, auth, comment.book_id, c.executionCtx);
+  if (mismatch) return mismatch.response;
 
   if (comment.user_email !== auth.email) {
     return c.json(

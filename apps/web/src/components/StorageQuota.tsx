@@ -27,7 +27,7 @@ export function StorageQuota() {
     setIsLoading(true);
     setError(null);
     try {
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- runtime feature detection for older browsers
+
       if (navigator.storage?.estimate) {
         const est = await navigator.storage.estimate();
         setEstimate({ usage: est.usage ?? 0, quota: est.quota ?? 0 });
@@ -59,7 +59,7 @@ export function StorageQuota() {
         await Promise.all(keys.map((k) => caches.delete(k)));
       }
       // Clear all IndexedDB databases (except the auth store)
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- runtime feature detection for older browsers
+
       if (indexedDB.databases) {
         const dbs = await indexedDB.databases();
         await Promise.all(
