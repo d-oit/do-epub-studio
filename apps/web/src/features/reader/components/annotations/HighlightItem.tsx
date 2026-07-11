@@ -67,6 +67,7 @@ export const HighlightItem = memo(function HighlightItem({
             className="w-full p-2 text-sm border border-border rounded bg-background"
             rows={2}
             placeholder={t('annotation.notePlaceholder')}
+            // eslint-disable-next-line jsx-a11y/no-autofocus
             autoFocus
           />
           <div className="flex gap-2">

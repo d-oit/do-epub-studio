@@ -74,6 +74,10 @@ export const RecoveryRequestSchema = z.object({
   email: z.string().email().max(255),
 });
 
+export const AdminRecoveryRequestSchema = z.object({
+  email: z.string().email().max(255),
+});
+
 export const RecoveryVerifySchema = z.object({
   token: z.string().min(1),
 });
@@ -244,6 +248,7 @@ export function formatZodError(error: {
 
 export type AccessRequest = z.infer<typeof AccessRequestSchema>;
 export type RecoveryRequest = z.infer<typeof RecoveryRequestSchema>;
+export type AdminRecoveryRequest = z.infer<typeof AdminRecoveryRequestSchema>;
 export type RecoveryVerify = z.infer<typeof RecoveryVerifySchema>;
 export type CreateBook = z.infer<typeof CreateBookSchema>;
 export type UpdateBook = z.infer<typeof UpdateBookSchema>;

@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import type { Env } from '../../lib/env';
-import { LoginSchema, RecoveryRequestSchema, RecoveryVerifySchema } from '@do-epub-studio/schema';
+import { LoginSchema, AdminRecoveryRequestSchema, RecoveryVerifySchema } from '@do-epub-studio/schema';
 import { checkRateLimitDO } from '../../lib/rate-limit-client';
 import { createAdminSession, createAdminSessionByEmail, revokeAdminSession } from '../../auth/admin-middleware';
 import { logAudit } from '../../audit';
@@ -76,7 +76,7 @@ authRouter.post('/logout', async (c) => {
   return c.json({ ok: true });
 });
 
-authRouter.post('/recovery-request', zValidator('json', RecoveryRequestSchema), async (c) => {
+authRouter.post('/recovery-request', zValidator('json', AdminRecoveryRequestSchema), async (c) => {
   const { email } = c.req.valid('json');
 
   const rateLimit = await checkRateLimitDO(c.env, 'auth_admin_recovery', email.toLowerCase(), {
@@ -93,7 +93,7 @@ authRouter.post('/recovery-request', zValidator('json', RecoveryRequestSchema), 
 
   const user = await queryFirst<{ id: string; email: string }>(
     c.env,
-    'SELECT id, email FROM users WHERE email = ? AND role = ?',
+    'SELECT id, email FROM users WHERE email = ? AND global_role = ?',
     [email.toLowerCase(), 'admin'],
   );
 
@@ -142,9 +142,9 @@ authRouter.post('/recovery-verify', zValidator('json', RecoveryVerifySchema), as
       );
     }
 
-    const user = await queryFirst<{ id: string; email: string; role: string }>(
+    const user = await queryFirst<{ id: string; email: string; global_role: string }>(
       c.env,
-      'SELECT id, email, role FROM users WHERE email = ? AND role = ?',
+      'SELECT id, email, global_role FROM users WHERE email = ? AND global_role = ?',
       [payload.email, 'admin'],
     );
 
@@ -176,7 +176,7 @@ authRouter.post('/recovery-verify', zValidator('json', RecoveryVerifySchema), as
       ok: true,
       data: {
         token: session.token,
-        user: { id: user.id, email: user.email, role: user.role },
+        user: { id: user.id, email: user.email, role: user.global_role },
       },
     });
   } catch {
