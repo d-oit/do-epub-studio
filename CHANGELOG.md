@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-07-12
+
 - feat(reader): add Search side-panel to EPUB reader (PR #525, plan 093)
 - feat(security): session-expiry handling, signed-URL metadata, security posture docs (PR #527, plan 094 / plan 092 resolution)
 - feat(auth): add email transport, admin recovery, and book CRUD (#563)
@@ -12,9 +14,15 @@
 - test(security): implement G23 security posture regression tests (#559)
 - fix(security): fix Comments IDOR vulnerability (#547)
 - refactor(worker): centralize worker Zod schemas and error formatter (#548)
+- fix(ci): resolve 34 E2E failures, add ADR-129, track pr-review-fix skill (#772)
+- fix(lint): resolve 66 no-literal-string violations, promote rule to error (LC2) (#762)
+- fix(ci): bump admin route budget to 860KB for LC2 i18n keys (#764)
+- fix(reader): restore annotations from IndexedDB when offline (#766)
+- fix(security): resolve comments IDOR and fix admin recovery flow (#769)
+- test(web): improve coverage for useSessionExpiry and ErrorBoundary (#770)
+- feat(security): CSP style-src-attr + self-hosted fonts (#748)
 - docs(security): bring `docs/security-posture.md` and `docs/observability-telemetry.md` current with ADR-092
 - docs(analysis): refresh SWARM_ANALYSIS.md for 2026-06-15 (#530)
-- docs(plans): add plan 075 master GOAP, ADRs 068/075/078/080/081/082/083/092, ADR-INDEX, plans 076/077/079/084
 
 ## [0.1.1] - 2026-06-14
 
