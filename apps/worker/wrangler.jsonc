@@ -22,6 +22,7 @@
   },
   "send_email": [
     {
+      "name": "SENDER_EMAIL",
       "allowed_receivers": ["*"],
       "address_restriction": {
         "description": "Allow all recipients in development",
