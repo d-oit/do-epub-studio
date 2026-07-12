@@ -45,9 +45,14 @@ test.describe('Reader annotations', () => {
 
     await expect(page.getByText('My Test Book')).toBeVisible({ timeout: 10000 });
 
-    await expect(page.getByRole('button', { name: 'Contents' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Settings' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Bookmarks' })).toBeVisible();
+    const isNarrow = (page.viewportSize()?.width ?? 1280) < 640;
+    if (isNarrow) {
+      await expect(page.getByRole('button', { name: 'More options' })).toBeVisible();
+    } else {
+      await expect(page.getByRole('button', { name: 'Contents' })).toBeVisible();
+      await expect(page.getByRole('button', { name: 'Settings' })).toBeVisible();
+      await expect(page.getByRole('button', { name: 'Bookmarks' })).toBeVisible();
+    }
   });
 
   test('@mobile displays reading insights in info panel', async ({ page }) => {
@@ -182,10 +187,20 @@ test.describe('Accessibility', () => {
   test('@mobile reader buttons have accessible names', async ({ page }) => {
     await loginAsReader(page);
 
-    await expect(page.getByRole('button', { name: 'Contents' })).toBeVisible({ timeout: 60000 });
-    await expect(page.getByRole('button', { name: 'Settings' })).toBeVisible({ timeout: 60000 });
-    await expect(page.getByRole('button', { name: 'Bookmarks' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Sign Out' })).toBeVisible({ timeout: 60000 });
+    const isNarrow = (page.viewportSize()?.width ?? 1280) < 640;
+    if (isNarrow) {
+      // On mobile, toolbar buttons collapse into an overflow menu
+      await expect(page.getByRole('button', { name: 'More options' })).toBeVisible({ timeout: 60000 });
+      await page.getByRole('button', { name: 'More options' }).click();
+      await expect(page.locator('.cq-reader-toolbar-overflow').getByRole('button', { name: 'Settings' })).toBeVisible();
+      await expect(page.locator('.cq-reader-toolbar-overflow').getByRole('button', { name: 'Bookmarks' })).toBeVisible();
+      await expect(page.locator('.cq-reader-toolbar-overflow').getByRole('button', { name: 'Sign Out' })).toBeVisible();
+    } else {
+      await expect(page.getByRole('button', { name: 'Contents' })).toBeVisible({ timeout: 60000 });
+      await expect(page.getByRole('button', { name: 'Settings' })).toBeVisible({ timeout: 60000 });
+      await expect(page.getByRole('button', { name: 'Bookmarks' })).toBeVisible();
+      await expect(page.getByRole('button', { name: 'Sign Out' })).toBeVisible({ timeout: 60000 });
+    }
   });
 
   test('@mobile locale switcher is accessible', async ({ page }) => {

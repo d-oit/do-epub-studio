@@ -1,7 +1,7 @@
 # ADR 065: Comprehensive Resolution of Open PRs and Issues
 
 **Date**: 2026-06-02
-**Status**: Proposed
+**Status**: Accepted (Plan 129)
 **Deciders**: Engineering Team
 **Context**: The repository has accumulated multiple open PRs and issues related to performance, CI/CD maintenance, dev environment warnings, and observability. Leaving these unresolved creates technical debt, CI instability, and degraded developer experience.
 

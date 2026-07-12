@@ -249,31 +249,68 @@ test.describe('Offline reader', () => {
     await context.setOffline(true);
     await page.waitForTimeout(300);
 
+    // Add items to the IndexedDB sync queue (not raw fetch) so attemptSync()
+    // processes them on reconnection.  Uses the same queueSync path the app uses.
     await page.evaluate(async () => {
-      const actions = [
-        fetch('/api/books/offline-test/bookmarks', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ locator: { cfi: 'epubcfi(/6/4)' }, label: 'Offline bookmark' }),
-        }),
-        fetch('/api/books/offline-test/highlights', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ locator: { cfi: 'epubcfi(/6/6)' }, color: '#ffff00', text: 'Offline highlight' }),
-        }),
-        fetch('/api/books/offline-test/progress', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ locator: { cfi: 'epubcfi(/6/8)' }, progressPercent: 0.5 }),
-        }),
+      const DB_NAME = 'do-epub-studio';
+      const STORE_NAME = 'syncQueue';
+      const items = [
+        {
+          id: crypto.randomUUID(),
+          type: 'annotation',
+          payload: {
+            bookId: 'offline-test',
+            annotation: { type: 'bookmark', cfi: 'epubcfi(/6/4)', chapter: 'ch1', text: 'Offline bookmark' },
+          },
+          mutationId: crypto.randomUUID(),
+          createdAt: Date.now(),
+          attempts: 0,
+        },
+        {
+          id: crypto.randomUUID(),
+          type: 'annotation',
+          payload: {
+            bookId: 'offline-test',
+            annotation: { type: 'highlight', cfi: 'epubcfi(/6/6)', chapter: 'ch1', text: 'Offline highlight', color: '#ffff00' },
+          },
+          mutationId: crypto.randomUUID(),
+          createdAt: Date.now() + 1,
+          attempts: 0,
+        },
+        {
+          id: crypto.randomUUID(),
+          type: 'progress',
+          payload: {
+            bookId: 'offline-test',
+            cfi: 'epubcfi(/6/8)',
+            percentage: 0.5,
+            mutationId: crypto.randomUUID(),
+          },
+          mutationId: crypto.randomUUID(),
+          createdAt: Date.now() + 2,
+          attempts: 0,
+        },
       ];
-      await Promise.allSettled(actions);
+
+      await new Promise<void>((resolve, reject) => {
+        const req = indexedDB.open(DB_NAME);
+        req.onerror = () => reject(req.error);
+        req.onsuccess = () => {
+          const db = req.result;
+          const tx = db.transaction(STORE_NAME, 'readwrite');
+          const store = tx.objectStore(STORE_NAME);
+          for (const item of items) store.put(item);
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => reject(tx.error);
+        };
+      });
     });
 
     const queuedBeforeReconnect = syncBookmarks.length;
 
     await context.setOffline(false);
-    await page.waitForTimeout(3000);
+    // Wait for the sync queue to flush all 3 items via attemptSync() loop
+    await page.waitForTimeout(5000);
 
     expect(syncBookmarks.length).toBeGreaterThan(queuedBeforeReconnect);
 

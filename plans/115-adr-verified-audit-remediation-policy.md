@@ -1,6 +1,6 @@
 # ADR-115 — Verified-Audit Remediation Policy
 
-**Status:** Proposed
+**Status:** Accepted (Plan 129)
 **Date:** 2026-06-27
 **Deciders:** Engineering
 **Related plan:** `plans/115-goap-missing-impl-ui-modernization-2026-06-27.md`
