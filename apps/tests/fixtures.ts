@@ -266,11 +266,9 @@ export async function mockAdminApi(page: Page) {
   });
 
   await page.route('**/api/admin/books**', async (route: Route) => {
-    const url = new URL(route.request().url());
-    const search = url.searchParams.get('search');
-    const books = search
-      ? [{ id: 'book-1', slug: 'my-test-book', title: 'My Test Book', authorName: 'Test Author', visibility: 'private', createdAt: '2025-01-01T00:00:00Z' }]
-      : [];
+    const books = [
+      { id: 'book-1', slug: 'my-test-book', title: 'My Test Book', authorName: 'Test Author', visibility: 'private', createdAt: '2025-01-01T00:00:00Z' },
+    ];
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: books }) });
   });
 

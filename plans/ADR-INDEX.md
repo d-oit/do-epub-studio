@@ -60,10 +60,13 @@
 | 112 | Phase 2/3 Execution & CI Hardening Policy | `plans/112-adr-phase2-3-execution-policy.md` | Accepted |
 | 113 | Phase 3 Polish Execution & Knowledge Compaction Policy | `plans/113-adr-phase3-polish-execution-policy.md` | Accepted |
 | 114 | Comprehensive Audit Remediation Policy (2026-06-27) | `plans/114-adr-audit-remediation-policy.md` | Accepted |
-| 115 | Verified-Audit Remediation Policy (2026-06-27) | `plans/115-adr-verified-audit-remediation-policy.md` | Proposed |
+| 115 | Verified-Audit Remediation Policy (2026-06-27) | `plans/115-adr-verified-audit-remediation-policy.md` | Accepted (Plan 129) |
 | 120 | Missing-Implementation Verification and Prioritization Policy (2026-07-07) | `plans/120-adr-missing-implementation-prioritization-policy.md` | Accepted (Clusters 1–9 + F1–F3 shipped via PR #738) |
 | 123 | CSP `style-src-attr` strategy + self-hosted fonts | `plans/123-adr-csp-style-src-attr-and-self-hosted-fonts.md` | Accepted (PR #748); supersedes the unsafe-inline element of ADR-035a |
 | 125 | Markdownlint Enforcement Policy for `plans/` | `plans/125-adr-markdownlint-enforcement-policy-plans.md` | Accepted (Plan 124 / `chore/markdownlint-md058-cleanup`) |
+| 065 | Comprehensive Resolution of Open PRs and Issues | `plans/065-adr-tackle-all-open-prs-issues.md` | Accepted (Plan 129) |
+| 074 | E2E Testing Accessibility and Environment Resilience | `plans/074-adr-e2e-accessibility-resilience.md` | Accepted (Plan 129) |
+| 129 | CI Release Readiness and Failure Triage Policy | `plans/129-adr-ci-release-readiness-policy.md` | Accepted (Plan 129) |
 
 ## Cross-referenced but not yet adopted
 
@@ -77,8 +80,7 @@
 | 044 | PR-218 Lighthouse Thresholds (GOAP) | `plans/044-goap-pr218-lighthouse-thresholds.md` | GOAP, not ADR |
 | 045 | Batch Resolve Issues 223-225-226-236 (GOAP) | `plans/045-goap-batch-resolve-issues-223-225-226-236-and-prs-232-235-237.md` | GOAP, not ADR |
 | 046 | Codebase Optimizations (GOAP) | `plans/046-goap-codebase-optimizations.md` | GOAP, not ADR |
-| 065 | Comprehensive Resolution of Open PRs and Issues | `plans/065-adr-tackle-all-open-prs-issues.md` | Proposed |
-| 074 | E2E Testing Accessibility and Environment Resilience | `plans/074-adr-e2e-accessibility-resilience.md` | Proposed |
+
 
 ## Pending
 

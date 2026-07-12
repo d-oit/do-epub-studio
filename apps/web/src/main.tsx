@@ -25,8 +25,19 @@ export function setErrorToastProvider(
 }
 
 export function handleError(event: ErrorEvent) {
-  const traceId = createTraceId();
   const error = event.error instanceof Error ? event.error : new Error(String(event.error));
+
+  // Suppress Workbox SW errors thrown in async callbacks (setTimeout, etc.)
+  // These are synchronous exceptions, not promise rejections, so handleRejection
+  // cannot catch them.  The crash occurs inside workbox-window's _onStateChange
+  // handler when self.registration is undefined (e.g. Playwright blocks SWs).
+  const stack = error.stack ?? '';
+  if (stack.includes('workbox') || error.message.includes('waiting')) {
+    event.preventDefault();
+    return;
+  }
+
+  const traceId = createTraceId();
   logClientEvent({
     level: 'error',
     event: 'window.error',

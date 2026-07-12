@@ -76,85 +76,94 @@ export async function queueSync(
 async function attemptSync(): Promise<void> {
   if (!navigator.onLine) return;
 
-  const queue = await getSyncQueue();
-  if (!queue || queue.length === 0) return;
+  const initialQueue = await getSyncQueue();
+  if (!initialQueue || initialQueue.length === 0) return;
 
-  const item = queue.sort((a, b) => a.createdAt - b.createdAt)[0];
+  const processed = new Set<string>();
 
-  const traceId = createTraceId();
-  const spanId = createSpanId();
+  while (true) {
+    if (!navigator.onLine) return;
 
-  if (item.attempts >= MAX_RETRY_ATTEMPTS) {
-    await removeSyncQueueItem(item.id);
-    logClientEvent({
-      level: 'warn',
-      traceId,
-      spanId,
-      event: 'sync.item.exceeded_max_retries',
-      metadata: { itemId: item.id, type: item.type, attempts: item.attempts },
-    });
-    return;
-  }
+    const queue = initialQueue.filter((i) => !processed.has(i.id));
+    if (queue.length === 0) return;
 
-  const result = await syncItem(item, traceId, spanId);
+    const item = queue.sort((a, b) => a.createdAt - b.createdAt)[0];
 
-  if (result.success) {
-    await removeSyncQueueItem(item.id);
-    await markAsSynced(item.type, item.mutationId);
-    logClientEvent({
-      level: 'info',
-      traceId,
-      spanId,
-      event: 'sync.item.success',
-      metadata: { itemId: item.id, type: item.type },
-    });
-  } else if (result.error === 'permission_revoked') {
-    logClientEvent({
-      level: 'error',
-      traceId,
-      spanId,
-      event: 'sync.permission_revoked',
-      metadata: { itemId: item.id, type: item.type },
-    });
-    await clearAllPermissions();
+    const traceId = createTraceId();
+    const spanId = createSpanId();
 
-    // Notify UI about permission revocation
-    if (onPermissionRevoked) {
-      const payload = item.payload as { bookId?: string };
-      if (payload?.bookId) {
-        onPermissionRevoked(payload.bookId);
-      }
+    if (item.attempts >= MAX_RETRY_ATTEMPTS) {
+      await removeSyncQueueItem(item.id);
+      processed.add(item.id);
+      logClientEvent({
+        level: 'warn',
+        traceId,
+        spanId,
+        event: 'sync.item.exceeded_max_retries',
+        metadata: { itemId: item.id, type: item.type, attempts: item.attempts },
+      });
+      continue;
     }
 
-    // Remove the failing item so the queue doesn't stall
-    await removeSyncQueueItem(item.id);
-  } else {
-    item.attempts++;
-    item.lastAttempt = Date.now();
-    item.error = result.error;
-    await updateSyncQueueItem(item);
+    const result = await syncItem(item, traceId, spanId);
 
-    logClientEvent({
-      level: 'warn',
-      traceId,
-      spanId,
-      event: 'sync.item.retry_scheduled',
-      metadata: {
-        itemId: item.id,
-        type: item.type,
-        attempt: item.attempts,
-        error: result.error,
-      },
-    });
+    if (result.success) {
+      await removeSyncQueueItem(item.id);
+      processed.add(item.id);
+      await markAsSynced(item.type, item.mutationId);
+      logClientEvent({
+        level: 'info',
+        traceId,
+        spanId,
+        event: 'sync.item.success',
+        metadata: { itemId: item.id, type: item.type },
+      });
+    } else if (result.error === 'permission_revoked') {
+      logClientEvent({
+        level: 'error',
+        traceId,
+        spanId,
+        event: 'sync.permission_revoked',
+        metadata: { itemId: item.id, type: item.type },
+      });
+      await clearAllPermissions();
 
-    const delay = calculateDelay(item.attempts);
-    // Clear any previously scheduled retry before scheduling a new one
-    // to prevent multiple concurrent retry chains (memory leak fix).
-    cancelPendingRetry();
-    retryTimeoutId = setTimeout(() => {
-      retryTimeoutId = null;
-      void attemptSync();
-    }, delay);
+      if (onPermissionRevoked) {
+        const payload = item.payload as { bookId?: string };
+        if (payload?.bookId) {
+          onPermissionRevoked(payload.bookId);
+        }
+      }
+
+      await removeSyncQueueItem(item.id);
+      processed.add(item.id);
+    } else {
+      item.attempts++;
+      item.lastAttempt = Date.now();
+      item.error = result.error;
+      await updateSyncQueueItem(item);
+
+      logClientEvent({
+        level: 'warn',
+        traceId,
+        spanId,
+        event: 'sync.item.retry_scheduled',
+        metadata: {
+          itemId: item.id,
+          type: item.type,
+          attempt: item.attempts,
+          error: result.error,
+        },
+      });
+
+      const delay = calculateDelay(item.attempts);
+      cancelPendingRetry();
+      retryTimeoutId = setTimeout(() => {
+        retryTimeoutId = null;
+        void attemptSync();
+      }, delay);
+      return;
+    }
   }
 }
 

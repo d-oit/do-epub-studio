@@ -1,6 +1,6 @@
 # ADR-074: E2E Testing Accessibility and Environment Resilience
 
-**Status**: Proposed
+**Status**: Accepted (Plan 129)
 **Date**: 2026-06-11
 **Context plan**: 074-goap-e2e-ci-failures-2026-06-11.md
 
