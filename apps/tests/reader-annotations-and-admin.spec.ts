@@ -1,4 +1,4 @@
-import { test, expect, type Route, type Page } from '@playwright/test';
+import { test, expect, type Route } from '@playwright/test';
 import {
   TEST_USER,
   mockReaderApi,
@@ -6,26 +6,6 @@ import {
   loginAsReader,
   loginAsAdmin,
 } from './fixtures';
-
-/**
- * Click a toolbar action button, handling the mobile overflow menu.
- * On narrow viewports (< 640px) the toolbar collapses into a vertical-dots
- * overflow menu via CSS container query (ADR-105).
- */
-async function clickToolbarAction(page: Page, name: string | RegExp) {
-  const isNarrow = (page.viewportSize()?.width ?? 1280) < 640;
-
-  if (isNarrow) {
-    await page.getByRole('button', { name: 'More options' }).dispatchEvent('click');
-    const overflowItem = page
-      .locator('.cq-reader-toolbar-overflow')
-      .getByRole('button', { name });
-    await overflowItem.waitFor({ state: 'visible', timeout: 5000 });
-    await overflowItem.dispatchEvent('click');
-  } else {
-    await page.getByRole('button', { name }).first().dispatchEvent('click');
-  }
-}
 
 // ---------------------------------------------------------------------------
 // Reader annotation flow

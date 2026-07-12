@@ -81,7 +81,6 @@
 | 045 | Batch Resolve Issues 223-225-226-236 (GOAP) | `plans/045-goap-batch-resolve-issues-223-225-226-236-and-prs-232-235-237.md` | GOAP, not ADR |
 | 046 | Codebase Optimizations (GOAP) | `plans/046-goap-codebase-optimizations.md` | GOAP, not ADR |
 
-
 ## Pending
 
 None. The next ADR number is `0NN` chosen by the next plan
