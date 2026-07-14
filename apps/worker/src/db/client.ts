@@ -1,4 +1,3 @@
-import { DatabaseError } from '@do-epub-studio/shared';
 import type { Env, JsonRow } from '../lib/env';
 
 export interface QueryResult<T extends JsonRow = JsonRow> {
@@ -36,49 +35,17 @@ async function query<T extends JsonRow = JsonRow>(
   sql: string,
   args?: (string | number | null)[]
 ): Promise<QueryResult<T>> {
-  const response = await fetch(env.TURSO_DATABASE_URL, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${env.TURSO_AUTH_TOKEN}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      statements: [{ sql, args: args ?? [] }],
-    }),
-  });
-
-  if (!response.ok) {
-    const sanitized = sql.replace(/\s+/g, ' ').slice(0, 120);
-    throw new DatabaseError(
-      `Database query failed: ${response.statusText}`,
-      sanitized,
-    );
-  }
-
-  const data: { rows: T[] } = await response.json();
-  return { rows: data.rows ?? [] };
+  const stmt = env.DB.prepare(sql).bind(...(args ?? []));
+  const result = await stmt.all<T>();
+  return { rows: result.results ?? [] };
 }
 
 export async function transaction(
   env: Env,
   statements: { sql: string; args?: (string | number | null)[] }[]
 ): Promise<void> {
-  const response = await fetch(env.TURSO_DATABASE_URL, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${env.TURSO_AUTH_TOKEN}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      statements: statements.map(s => ({ sql: s.sql, args: s.args ?? [] })),
-    }),
-  });
-
-  if (!response.ok) {
-    const count = statements.length;
-    throw new DatabaseError(
-      `Database transaction failed: ${response.statusText}`,
-      `transaction(${count} statements)`,
-    );
-  }
+  const stmts = statements.map(s =>
+    env.DB.prepare(s.sql).bind(...(s.args ?? []))
+  );
+  await env.DB.batch(stmts);
 }

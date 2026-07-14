@@ -16,8 +16,10 @@ vi.mock('argon2-wasm-edge', () => ({
 describe('auth/password.ts coverage', () => {
   const env = {
     BOOKS_BUCKET: {} as any,
-    TURSO_DATABASE_URL: 'url',
-    TURSO_AUTH_TOKEN: 'token',
+    DB: { prepare: vi.fn().mockReturnThis(), bind: vi.fn().mockReturnThis(), all: vi.fn().mockResolvedValue({ results: [] }) } as unknown as D1Database,
+    SENDER_EMAIL: {} as unknown as SendEmail,
+    TURSO_DATABASE_URL: 'file::memory:',
+    TURSO_AUTH_TOKEN: 'test-token',
     SESSION_SIGNING_SECRET: 'secret',
     INVITE_TOKEN_SECRET: 'secret',
     APP_BASE_URL: 'url',
