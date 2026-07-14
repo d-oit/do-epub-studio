@@ -220,31 +220,6 @@ jobs:
 
       - name: Lint
         id: lint
-        continue-on-error: true
-        run: pnpm lint
-
-      - name: Auto-fix disallowed SHAs
-        if: steps.lint.outcome == 'failure'
-        id: auto-fix
-        env:
-          GITHUB_REF: ${{ github.ref }}
-        run: |
-          if bash scripts/auto-fix-shas.sh; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add scripts/validate-shas.sh
-            if ! git diff --cached --quiet; then
-              git commit -m "chore: auto-update SHA allowlist"
-              # Only push on PR branches (refs/heads/fix/*, chore/*, dependabot/*)
-              if [[ "$GITHUB_REF" =~ ^refs/heads/(fix|chore|dependabot)/ ]]; then
-                git push
-              fi
-            fi
-          fi
-        shell: bash
-
-      - name: Re-run lint to confirm fix
-        if: steps.auto-fix.outcome == 'success'
         run: pnpm lint
 
   typecheck:
