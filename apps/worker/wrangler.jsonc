@@ -4,8 +4,16 @@
   "compatibility_date": "2026-05-30",
   "vars": {
     "APP_BASE_URL": "https://do-epub-studio.example.com",
-    "TURSO_DATABASE_URL": "libsql://do-epub-studio-your-org.turso.io"
+    "TURSO_DATABASE_URL": "file::memory:",
+    "TURSO_AUTH_TOKEN": ""
   },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "do-epub-studio",
+      "database_id": "placeholder-replace-with-real-id"
+    }
+  ],
   "r2_buckets": [
     {
       "binding": "BOOKS_BUCKET",
@@ -22,12 +30,7 @@
   },
   "send_email": [
     {
-      "name": "SENDER_EMAIL",
-      "allowed_receivers": ["*"],
-      "address_restriction": {
-        "description": "Allow all recipients in development",
-        "type": "none"
-      }
+      "name": "SENDER_EMAIL"
     }
   ],
   "migrations": [

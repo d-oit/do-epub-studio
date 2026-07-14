@@ -133,10 +133,21 @@ export const mockSanitizeAuditPayload = sanitizeAuditPayload as Mock;
 // ---------------------------------------------------------------------------
 
 export function makeEnv(): Env {
+  const mockDB = {
+    prepare: vi.fn().mockReturnThis(),
+    bind: vi.fn().mockReturnThis(),
+    all: vi.fn().mockResolvedValue({ results: [] }),
+    first: vi.fn().mockResolvedValue(null),
+    run: vi.fn().mockResolvedValue({}),
+    batch: vi.fn().mockResolvedValue([]),
+    exec: vi.fn().mockResolvedValue({}),
+  };
   return {
     BOOKS_BUCKET: makeMockBucket(),
-    TURSO_DATABASE_URL: process.env.TEST_TURSO_DATABASE_URL || 'libsql://test.turso.io',
-    TURSO_AUTH_TOKEN: process.env.TEST_TURSO_AUTH_TOKEN || 'test-token',
+    DB: mockDB as unknown as D1Database,
+    SENDER_EMAIL: {} as unknown as SendEmail,
+    TURSO_DATABASE_URL: 'file::memory:',
+    TURSO_AUTH_TOKEN: 'test-token',
     SESSION_SIGNING_SECRET: process.env.TEST_SESSION_SIGNING_SECRET || 'test-secret',
     INVITE_TOKEN_SECRET: process.env.TEST_INVITE_TOKEN_SECRET || 'test-invite-secret',
     APP_BASE_URL: 'https://test.example.com',
@@ -308,5 +319,5 @@ export function makeAuditLogRow(overrides: Record<string, unknown> = {}): Record
 // Typed passthrough ExecutionContext for route tests — replaces `{ waitUntil: () => {} } as any`
 // patterns flagged by Codacy as ESLint8_@typescript-eslint_no-explicit-any.
 export function makePassThroughContext(): ExecutionContext {
-  return { waitUntil: () => {}, passThroughOnException: () => {}, props: {}, exports: {} };
+  return { waitUntil: () => {}, passThroughOnException: () => {}, props: {}, exports: {}, tracing: {} as Tracing };
 }

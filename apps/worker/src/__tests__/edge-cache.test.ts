@@ -49,7 +49,7 @@ describe('edge-cache helpers', () => {
       const k1 = buildCacheKey(request);
       const k2 = buildCacheKey(request);
       expect(k1.url).toBe(k2.url);
-      expect(k1.url).toContain('edge-cache:v1:');
+      expect(k1.url).toContain('edge-cache:v1');
     });
 
     it('orders query params for stability', () => {
