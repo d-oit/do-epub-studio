@@ -54,7 +54,7 @@ readonly MAX_PR_TITLE_LENGTH=72
 
 1. **Run `./scripts/quality_gate.sh` before commit.** No exceptions.
 2. **Validate workflows:** All GitHub Actions workflows MUST pass validation via `./scripts/validate-workflows.sh` (includes `actionlint` and `zizmor` security scanning).
-3. **Use `./scripts/atomic-commit/run.sh --message "type(scope): description"`.**
+3. **Use `./scripts/atomic-commit/run.sh --message "type(scope): description" --body "WHY"`.**
 4. **Coverage Thresholds:** Enforce minimum coverage via `test:coverage`.
    - `web`: 55% Lines, 48% Functions | `worker`: 55% Lines, 50% Functions
    - `shared`: 40% Lines, 50% Functions | `reader-core`: 72% Lines, 70% Functions
@@ -138,7 +138,7 @@ IMPECCABLE_REQUIRED=1 ./scripts/quality_gate.sh  # Design gate blocks on finding
 ./scripts/health-check.sh              # Dev environment check
 
 # Commit workflow
-./scripts/atomic-commit/run.sh --message "type(scope): description"
+./scripts/atomic-commit/run.sh --message "type(scope): description" --body "WHY"
 ./scripts/validate-commit-message.sh <file>  # Validate commit message
 
 # Codacy — query PR findings (see Skills Reference for skill)

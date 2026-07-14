@@ -148,7 +148,7 @@ main() {
     printf '  git commit -m "%s"\n' "$COMMIT_MSG"
     echo ""
     printf '%sOr use the atomic commit workflow:%s\n' "${YELLOW}" "${NC}"
-    printf '  ./scripts/atomic-commit/run.sh --message "%s"\n' "$COMMIT_MSG"
+    printf '  ./scripts/atomic-commit/run.sh --message "%s" --body "WHY"\n' "$COMMIT_MSG"
     echo ""
 
     exit $E_SUCCESS
