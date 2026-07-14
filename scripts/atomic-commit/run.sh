@@ -106,7 +106,9 @@ set_phase() {
 
 rollback_commit() {
     log "Rolling back commit..."
-    if git rev-parse --verify HEAD~1 &>/dev/null; then
+    if [[ -n "$ORIGINAL_SHA" ]]; then
+        git reset --hard "$ORIGINAL_SHA" || true
+    elif git rev-parse --verify HEAD~1 &>/dev/null; then
         git reset --soft HEAD~1 || true
         git reset HEAD || true
     fi
@@ -117,7 +119,29 @@ rollback_push() {
     branch=$(git branch --show-current)
 
     log "Rolling back push on $branch..."
-    if git push origin "+HEAD~1:$branch" 2>/dev/null; then
+
+    # Safety: only force-push if remote still equals the SHA we just pushed.
+    # This prevents overwriting concurrent remote changes.
+    git fetch origin "$branch" 2>/dev/null || true
+    local remote_sha
+    remote_sha=$(git rev-parse "origin/$branch" 2>/dev/null || echo "")
+
+    if [[ -z "$COMMIT_SHA" ]]; then
+        warn "No COMMIT_SHA recorded — cannot verify remote state"
+        warn "Skipping push rollback to avoid overwriting remote history"
+        return 1
+    fi
+
+    if [[ "$remote_sha" != "$COMMIT_SHA" ]]; then
+        error "Remote has diverged from our pushed commit"
+        error "Expected remote: ${COMMIT_SHA:0:8}"
+        error "Actual remote:   ${remote_sha:0:8}"
+        error "Skipping push rollback — resolve manually"
+        return 1
+    fi
+
+    # Remote matches our commit — safe to roll back to original state
+    if git push origin "+${ORIGINAL_SHA}:$branch" --force-with-lease 2>/dev/null; then
         log "Push rollback completed"
     else
         warn "Push rollback failed (may already be merged or protected)"
