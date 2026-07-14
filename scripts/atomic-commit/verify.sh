@@ -102,10 +102,10 @@ while true; do
     fi
 
     if [[ $TOTAL_COUNT -eq 0 ]] && [[ $ELAPSED -gt 60 ]]; then
-        warn "No checks detected after 60s"
-        warn "If repository has no CI, use --skip-ci flag"
-        log "Continuing..."
-        break
+        error "No CI checks detected after 60s"
+        error "This PR has no CI status — cannot verify checks passed"
+        error "Ensure CI is configured for this repository and branch"
+        exit 1
     fi
 
     # Exponential backoff with max cap

@@ -4,7 +4,7 @@
 # Also runs actionlint and zizmor for security scanning.
 # Exit 0 = valid, Exit 2 = errors found.
 
-set -uo pipefail
+set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT" || exit 1
@@ -33,7 +33,7 @@ if ! command -v actionlint &> /dev/null; then
   if [[ "$OS" == "linux" || "$OS" == "darwin" ]]; then
     printf '%sInstalling actionlint...%s\n' "${BLUE}" "${NC}"
     URL="https://github.com/rhysd/actionlint/releases/download/v1.6.26/actionlint_1.6.26_${OS}_${ARCH}.tar.gz"
-    curl -sSL "$URL" | tar xz -C "$HOME/.local/bin" actionlint || true
+    curl -sSL "$URL" | tar xz -C "$HOME/.local/bin" actionlint 2>/dev/null || true
   fi
 fi
 
@@ -41,6 +41,17 @@ fi
 if ! command -v zizmor &> /dev/null; then
   printf '%sInstalling zizmor...%s\n' "${BLUE}" "${NC}"
   pip install zizmor --quiet 2>/dev/null || pip install zizmor --quiet --break-system-packages 2>/dev/null || true
+fi
+
+# Verify required tools are available after installation attempts
+if ! command -v actionlint &> /dev/null; then
+  printf '%s✗ actionlint is required but not available — cannot validate workflows%s\n' "${RED}" "${NC}"
+  exit 2
+fi
+
+if ! command -v zizmor &> /dev/null; then
+  printf '%s✗ zizmor is required but not available — cannot scan for security issues%s\n' "${RED}" "${NC}"
+  exit 2
 fi
 
 # Find all workflow files
@@ -104,7 +115,8 @@ for file in "${WORKFLOW_FILES[@]}"; do
             FILE_FAILED=1
         fi
     else
-        printf '%s  ⚠ No YAML validator found (skipping syntax check)%s\n' "${YELLOW}" "${NC}"
+        printf '%s  ✗ No YAML validator found — required for workflow validation%s\n' "${RED}" "${NC}"
+        FILE_FAILED=1
     fi
 
     # 1.1 Check with actionlint
@@ -114,7 +126,8 @@ for file in "${WORKFLOW_FILES[@]}"; do
             FILE_FAILED=1
         fi
     else
-        printf '%s  ⚠ actionlint not found (skipping)%s\n' "${YELLOW}" "${NC}"
+        printf '%s  ✗ actionlint not available — required for workflow validation%s\n' "${RED}" "${NC}"
+        FILE_FAILED=1
     fi
 
     # 1.2 Check with zizmor (only fail on medium severity and above)
@@ -124,7 +137,8 @@ for file in "${WORKFLOW_FILES[@]}"; do
             FILE_FAILED=1
         fi
     else
-        printf '%s  ⚠ zizmor not found (skipping)%s\n' "${YELLOW}" "${NC}"
+        printf '%s  ✗ zizmor not available — required for workflow security scanning%s\n' "${RED}" "${NC}"
+        FILE_FAILED=1
     fi
 
     # 2. Check for required top-level keys

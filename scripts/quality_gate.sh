@@ -1,7 +1,12 @@
 #!/usr/bin/env bash
 # Full quality gate with auto-detection for multiple languages.
-# Exit 0 = silent success, Exit 2 = errors surfaced to agent.
+# Exit 0 = success (all required phases ran and passed)
+# Exit 2 = errors surfaced to agent
 # Used in pre-commit hook and CI.
+#
+# SKIP_* env vars (SKIP_LINT, SKIP_TYPECHECK, etc.) are for local dev convenience
+# only. When any SKIP_* is set, the gate exits with a warning code (exit 3) to
+# indicate that not all required phases were executed. CI must NEVER set these.
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -13,6 +18,9 @@ source "$REPO_ROOT/scripts/lib/colors.sh"
 
 # FAILED acts as an error accumulator
 FAILED=0
+
+# SKIPPED tracks whether any required phase was skipped via SKIP_* env vars
+SKIPPED=0
 
 # DETECTED_LANGUAGES stores which language ecosystems are present
 DETECTED_LANGUAGES=()
@@ -158,6 +166,7 @@ if [[ " ${DETECTED_LANGUAGES[*]} " =~ " typescript " ]]; then
             fi
         else
             printf '%s  ⊘ %s lint skipped (SKIP_LINT=true)%s\n' "${YELLOW}" "$PM" "${NC}"
+            SKIPPED=1
         fi
 
         # Typecheck (respect SKIP_TYPECHECK env var)
@@ -171,6 +180,7 @@ if [[ " ${DETECTED_LANGUAGES[*]} " =~ " typescript " ]]; then
             fi
         else
             printf '%s  ⊘ %s typecheck skipped (SKIP_TYPECHECK=true)%s\n' "${YELLOW}" "$PM" "${NC}"
+            SKIPPED=1
         fi
 
         # Tests (respect SKIP_TESTS env var for local dev without node_modules)
@@ -195,6 +205,7 @@ if [[ " ${DETECTED_LANGUAGES[*]} " =~ " typescript " ]]; then
                 fi
             else
                 printf '%s  ⊘ %s build skipped (SKIP_BUILD=true)%s\n' "${YELLOW}" "$PM" "${NC}"
+                SKIPPED=1
             fi
 
             # Smoke tests (skip with SKIP_SMOKE env var)
@@ -232,9 +243,11 @@ if [[ " ${DETECTED_LANGUAGES[*]} " =~ " typescript " ]]; then
                 fi
             else
                 printf '%s  ⊘ %s smoke tests skipped (SKIP_SMOKE=true)%s\n' "${YELLOW}" "$PM" "${NC}"
+                SKIPPED=1
             fi
         else
             printf '%s  ⊘ %s tests skipped (SKIP_TESTS=true)%s\n' "${YELLOW}" "$PM" "${NC}"
+            SKIPPED=1
         fi
     fi
     echo ""
@@ -383,6 +396,8 @@ if [ "${SKIP_DESIGN:-0}" != "1" ]; then
         printf '%s  ⊘ scripts/run-impeccable.sh not found — skipping%s\n' "${YELLOW}" "${NC}"
     fi
     echo ""
+else
+    SKIPPED=1
 fi
 
 # --- Final result ---
@@ -393,6 +408,16 @@ if [ $FAILED -ne 0 ]; then
     echo ""
     echo "Fix the errors above and re-run quality gate."
     exit 2
+fi
+
+if [ $SKIPPED -ne 0 ]; then
+    printf '%s─────────────────────────────────────────────────────────────────%s\n' "${YELLOW}" "${NC}"
+    printf '%s│ ⚠ Quality Gate PASSED with skipped phases                    │%s\n' "${YELLOW}" "${NC}"
+    printf '%s─────────────────────────────────────────────────────────────────%s\n' "${YELLOW}" "${NC}"
+    echo ""
+    echo "Some phases were skipped via SKIP_* env vars."
+    echo "Run without SKIP_* for the full gate: ./scripts/quality_gate.sh"
+    exit 3
 fi
 
 printf '%s─────────────────────────────────────────────────────────────────%s\n' "${GREEN}" "${NC}"
