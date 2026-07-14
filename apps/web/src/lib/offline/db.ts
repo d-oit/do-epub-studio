@@ -261,6 +261,17 @@ export async function clearPermissionCache(bookId: string): Promise<void> {
   await db.delete('permissions', bookId);
 }
 
+export async function getAllCachedPermissions(): Promise<PermissionCache[]> {
+  const db = await getDB();
+  const all = await db.getAll('permissions');
+  const results: PermissionCache[] = [];
+  for (const stored of all) {
+    const entry = await decryptEntry<PermissionCache>(stored as Record<string, unknown>, PERMISSION_PLAINTEXT);
+    if (entry) results.push(entry);
+  }
+  return results;
+}
+
 export async function clearAllPermissionCache(): Promise<void> {
   const db = await getDB();
   const tx = db.transaction('permissions', 'readwrite');

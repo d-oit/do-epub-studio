@@ -1,6 +1,7 @@
 import {
   cachePermission,
   getCachedPermission,
+  getAllCachedPermissions,
   clearPermissionCache,
   clearAllPermissionCache,
   type PermissionCache,
@@ -103,12 +104,13 @@ export function setupZombieDetection(onRevoked: (bookId: string) => void): () =>
       if (response.ok) {
         const data = (await response.json()) as { grantIds: string[]; revokedBookIds: string[] };
         const validGrantIds = new Set(data.grantIds);
+        const revokedBookIds = new Set(data.revokedBookIds);
 
-        const cached = await getCachedPermission('');
-        if (cached && !validGrantIds.has(cached.grantId)) {
-          for (const bookId of data.revokedBookIds) {
-            await clearPermissionCache(bookId);
-            onRevoked(bookId);
+        const cachedPermissions = await getAllCachedPermissions();
+        for (const cached of cachedPermissions) {
+          if (revokedBookIds.has(cached.bookId) || !validGrantIds.has(cached.grantId)) {
+            await clearPermissionCache(cached.bookId);
+            onRevoked(cached.bookId);
           }
         }
       }
