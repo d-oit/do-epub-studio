@@ -103,8 +103,27 @@ Are tasks independent?
 ## Phase 6: Coordinated Execution
 
 ### Parallel Execution
-- Send all independent tasks in single message
-- Use Task tool with multiple calls
+- Verify tasks are truly independent (no data deps, no resource conflicts, no ordering)
+- Send all independent tasks in a single message with multiple Task/Actor calls
+- All agents start simultaneously — no sequential nesting
+- Wait for all to complete, collect and validate each result before aggregating
+- Handle failures gracefully: retry → reassign → modify → escalate
+
+**Homogeneous parallel** (same agent type, different inputs):
+```
+- test-runner: Test module A
+- test-runner: Test module B
+- test-runner: Test module C
+```
+
+**Heterogeneous parallel** (different agent types):
+```
+- code-reviewer: Quality analysis
+- test-runner: Test execution
+- security-auditor: Vulnerability scan
+```
+
+**Anti-patterns**: Parallelizing dependent tasks, sending sequential messages instead of parallel, overloading a single agent, skipping result validation.
 
 ### Sequential Execution
 - Execute phase 1, validate, then phase 2
@@ -172,7 +191,6 @@ Are tasks independent?
 - **task-decomposition**: Phase 2 - task breakdown
 - **triz-analysis**: Use before planning for architectural tasks
 - **triz-solver**: Use when stuck on contradictions
-- **parallel-execution**: Strategy implementation for parallel tasks
 
 ## Reference Files
 

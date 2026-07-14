@@ -890,7 +890,7 @@ At startup, only skill names/descriptions are loaded (~50 tokens each). Full SKI
 - `reader-ui-ux` — Reader/admin UI patterns
 - `testdata-builders` — Test fixtures
 - `code-quality`, `code-review-assistant`, `security-code-auditor` — Quality checks
-- `task-decomposition`, `parallel-execution` — Coordination
+- `task-decomposition` — Coordination (parallel patterns in `goap-agent`)
 - `learn`, `memory-context` — Knowledge capture
 - `anti-ai-slop`, `agent-browser`, `dogfood` — UX + testing
 - `skill-creator`, `skill-evaluator` — Skill development

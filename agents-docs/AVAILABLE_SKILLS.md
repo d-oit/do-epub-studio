@@ -9,7 +9,6 @@ Auto-generated from skill definitions. Run this script to regenerate.
 
 | `goap-agent` | No description |
 | `jules-delegator` | Use this skill to delegate complex coding tasks by creating Jules sessions via the Jules CLI. Jules is an AI coding agent that can autonomously implement features, fix bugs, and make code changes across repositories. |
-| `parallel-execution` | No description |
 | `skill-creator` | No description |
 | `task-decomposition` | No description |
 | `triz-analysis` | No description |
