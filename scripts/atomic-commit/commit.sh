@@ -68,10 +68,10 @@ if [[ -z "${BODY//[[:space:]]/}" ]]; then
 fi
 
 # Validate conventional commit format
-if ! echo "$MESSAGE" | grep -qE '^(feat|fix|docs|style|refactor|perf|test|ci|chore|build)(\([a-z0-9_-]+\))?!?: .+'; then
+if ! echo "$MESSAGE" | grep -qE '^(feat|fix|docs|style|refactor|perf|test|ci|chore|build|revert)(\([a-z0-9_-]+\))?!?: .+'; then
     error "Invalid commit message format"
     error "Expected: type(scope): description"
-    error "Types: feat, fix, docs, style, refactor, perf, test, ci, chore, build"
+    error "Types: feat, fix, docs, style, refactor, perf, test, ci, chore, build, revert"
     error "Got: $MESSAGE"
     exit 1
 fi

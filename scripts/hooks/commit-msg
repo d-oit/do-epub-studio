@@ -26,14 +26,14 @@ fi
 
 # Conventional commit regex: type(scope): description
 # Types: feat, fix, docs, style, refactor, perf, test, ci, chore, build
-CONVENTIONAL_REGEX='^(feat|fix|docs|style|refactor|perf|test|ci|chore|build)(\([a-z0-9_-]+\))?!?: .+'
+CONVENTIONAL_REGEX='^(feat|fix|docs|style|refactor|perf|test|ci|chore|build|revert)(\([a-z0-9_-]+\))?!?: .+'
 
 if ! echo "$COMMIT_MSG" | grep -qE "$CONVENTIONAL_REGEX"; then
     echo -e "${RED}✗ Invalid commit message format${NC}" >&2
     echo "" >&2
     echo "Expected: type(scope): description" >&2
     echo "" >&2
-    echo "Types: feat, fix, docs, style, refactor, perf, test, ci, chore, build" >&2
+    echo "Types: feat, fix, docs, style, refactor, perf, test, ci, chore, build, revert" >&2
     echo "Scope: optional, lowercase alphanumeric + hyphens" >&2
     echo "Breaking: add ! before : (e.g., feat(api)!: remove endpoint)" >&2
     echo "" >&2

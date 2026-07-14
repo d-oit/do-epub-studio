@@ -149,7 +149,7 @@ Verify after each fix:
 ```bash
 # Commit and push
 git add -A
-./scripts/atomic-commit/run.sh --message "fix(scope): address PR review findings"
+./scripts/atomic-commit/run.sh --message "fix(scope): address PR review findings" --body "Auto-fixed must-fix issues from PR review"
 git push
 
 # Monitor CI

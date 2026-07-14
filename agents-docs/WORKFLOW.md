@@ -92,7 +92,7 @@ If an issue cannot be fixed:
 
 ```bash
 # Full workflow (includes all verification)
-./scripts/atomic-commit/run.sh --message "type(scope): description"
+./scripts/atomic-commit/run.sh --message "type(scope): description" --body "WHY"
 
 # Dry-run only
 ./scripts/atomic-commit/run.sh --dry-run
@@ -129,7 +129,7 @@ git checkout -b feat/your-feature-name
 
 # Make changes, then commit
 git add .
-./scripts/atomic-commit/run.sh --message "feat(scope): description"
+./scripts/atomic-commit/run.sh --message "feat(scope): description" --body "WHY"
 
 # Or use conventional commit directly (hooks enforce format)
 git commit -m "feat(scope): description"

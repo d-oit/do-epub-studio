@@ -12,7 +12,7 @@ Operational scripts for `d.o.EPUB Studio`. All scripts assume execution from the
 ./scripts/quality_gate.sh
 
 # Atomic commit workflow
-./scripts/atomic-commit/run.sh --message "feat(reader): add annotation sync"
+./scripts/atomic-commit/run.sh --message "feat(reader): add annotation sync" --body "WHY"
 ```
 
 ## Quality Gate Scripts
