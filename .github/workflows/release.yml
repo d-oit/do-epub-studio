@@ -21,6 +21,87 @@ permissions:
   contents: read
 
 jobs:
+  release-readiness:
+    name: Release Readiness Gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      checks: read
+    env:
+      TAG_NAME: ${{ github.ref_name }}
+      TAG_SHA: ${{ github.sha }}
+      REPO: ${{ github.repository }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        with:
+          persist-credentials: false
+          fetch-depth: 0  # Full history for ancestry check
+
+      - name: Verify tag format
+        run: |
+          if [[ ! "$TAG_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Invalid tag format: $TAG_NAME — expected vX.Y.Z"
+            exit 1
+          fi
+          echo "Tag format valid: $TAG_NAME"
+
+      - name: Verify tag matches VERSION file
+        run: |
+          TAG_VERSION="${TAG_NAME#v}"
+          FILE_VERSION=$(tr -d '[:space:]' < VERSION)
+          if [[ "$TAG_VERSION" != "$FILE_VERSION" ]]; then
+            echo "::error::Tag version ($TAG_VERSION) does not match VERSION file ($FILE_VERSION)"
+            exit 1
+          fi
+          echo "Tag matches VERSION: $TAG_VERSION"
+
+      - name: Verify tag is on main branch
+        run: |
+          # Check if the tagged commit is reachable from origin/main
+          if ! git merge-base --is-ancestor "$TAG_SHA" origin/main 2>/dev/null; then
+            echo "::error::Tagged commit ${TAG_SHA:0:8} is not on the main branch"
+            echo "Only commits merged to main can be released."
+            exit 1
+          fi
+          echo "Tagged commit is on main branch"
+
+      - name: Verify CI checks passed
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "Checking CI status for commit ${TAG_SHA:0:8}..."
+
+          # Get the check runs for this commit
+          CHECKS=$(gh api "repos/${REPO}/commits/$TAG_SHA/check-runs" \
+            --jq '.check_runs[] | select(.status == "completed") | {name: .name, conclusion: .conclusion}' 2>/dev/null || echo "[]")
+
+          if [[ -z "$CHECKS" ]] || [[ "$CHECKS" == "[]" ]]; then
+            echo "::warning::No check runs found for this commit — may not have CI configured"
+            exit 0
+          fi
+
+          # Check for any failures
+          FAILURES=$(echo "$CHECKS" | jq -r 'select(.conclusion == "failure") | .name' 2>/dev/null || true)
+          if [[ -n "$FAILURES" ]]; then
+            echo "::error::The following CI checks failed for this commit:"
+            echo "$FAILURES"
+            echo ""
+            echo "Fix the failing checks before releasing."
+            exit 1
+          fi
+
+          # Check for skipped/incomplete checks
+          INCOMPLETE=$(gh api "repos/${REPO}/commits/$TAG_SHA/check-runs" \
+            --jq '.check_runs[] | select(.status != "completed") | .name' 2>/dev/null || true)
+          if [[ -n "$INCOMPLETE" ]]; then
+            echo "::warning::The following checks are not completed:"
+            echo "$INCOMPLETE"
+          fi
+
+          echo "All CI checks passed for ${TAG_SHA:0:8}"
+
   verify:
     name: Verify (Node ${{ matrix.node-version }})
     runs-on: ubuntu-latest
@@ -139,7 +220,7 @@ jobs:
 
   deploy:
     name: Deploy
-    needs: [verify, perf-gate, lighthouse-gate]
+    needs: [release-readiness, verify, perf-gate, lighthouse-gate]
     runs-on: ubuntu-latest
     environment: production
     timeout-minutes: 15
