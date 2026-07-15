@@ -61,6 +61,7 @@ jobs:
               - 'packages/reader-core/src/**'
             worker:
               - 'apps/worker/src/**'
+              - 'apps/worker/package.json'
               - 'wrangler.toml'
             agent-docs:
               - '.agents/**'
