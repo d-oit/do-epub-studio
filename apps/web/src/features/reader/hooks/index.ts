@@ -22,6 +22,7 @@ export {
 export { useReaderHandlers } from './useReaderHandlers';
 export { useReaderSearch } from './useReaderSearch';
 export { useReadingTimer } from './useReadingTimer';
+export { useReaderDataLoader } from './useReaderDataLoader';
 export {
   useOptimisticAnnotationStore,
   startReactTransition,

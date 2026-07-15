@@ -3,11 +3,10 @@ import { useShallow } from 'zustand/react/shallow';
 import { useParams, useNavigate } from 'react-router-dom';
 import { createSpanId, createTraceId } from '@do-epub-studio/shared';
 import { useTranslation } from '../../hooks/useTranslation';
-import { apiRequest, fetchHighlights, fetchComments, fetchProgress } from '../../lib/api/index';
+import { apiRequest } from '../../lib/api/index';
 import { logClientEvent } from '../../lib/client-logger';
 import { useAuthStore, useReaderStore, usePreferencesStore } from '../../stores';
-import type { Bookmark } from '../../stores';
-import { setupOnlineListener, getSyncQueue, getProgress, getAnnotations } from '../../lib/offline';
+import { setupOnlineListener, getSyncQueue } from '../../lib/offline';
 import { setupZombieDetection } from '../../lib/offline/permissions';
 import { AnnotationToolbar, extractSelectionData, CommentsPanel } from './components/annotations';
 import {
@@ -18,6 +17,7 @@ import {
   useExportNotes,
   useReadingTimer,
   useOptimisticAnnotationStore,
+  useReaderDataLoader,
 } from './hooks';
 import {
   ReaderToolbar,
@@ -151,123 +151,14 @@ export function ReaderPage() {
   );
   handleNavigateToAnnotationRef.current = handleNavigateToAnnotation;
 
-  useEffect(() => {
-    if (!sessionToken || !bookId) return;
-    const load = async () => {
-      let source: 'server' | 'offline' | 'default' = 'default';
-      try {
-        const [hl, cm, bm, pg] = await Promise.all([
-          fetchHighlights(bookId, sessionToken),
-          fetchComments(bookId, sessionToken),
-          apiRequest<Bookmark[]>(`/api/books/${bookId}/bookmarks`, { token: sessionToken }),
-          fetchProgress(bookId, sessionToken),
-        ]);
-        setHighlights(hl);
-        setComments(cm);
-        setBookmarks(bm);
-        setProgress(pg);
-        source = 'server';
-      } catch (err) {
-        const error = err instanceof Error ? err : new Error(String(err));
-        logClientEvent({
-          level: 'warn',
-          event: 'reader.load_failed',
-          traceId: createTraceId(),
-          spanId: createSpanId(),
-          error: { name: error.name, message: error.message, stack: error.stack },
-          metadata: { bookId },
-        });
-
-        // Fallback to offline cache if server fetch fails (A6)
-        // Use allSettled so one IndexedDB store failure doesn't block the other.
-        try {
-          const [progressResult, annotationsResult] = await Promise.allSettled([
-            getProgress(bookId),
-            getAnnotations(bookId),
-          ]);
-          const cachedProgress =
-            progressResult.status === 'fulfilled' ? progressResult.value : null;
-          const offlineAnnotations =
-            annotationsResult.status === 'fulfilled' ? annotationsResult.value : [];
-          if (cachedProgress) {
-            setProgress({
-              locator: { cfi: cachedProgress.cfi },
-              progressPercent: cachedProgress.percentage,
-              updatedAt: new Date(cachedProgress.lastRead).toISOString(),
-            });
-            source = 'offline';
-          }
-          if (offlineAnnotations.length > 0) {
-            const offlineHighlights = offlineAnnotations
-              .filter((a) => a.type === 'highlight')
-              .map((a) => ({
-                id: a.id,
-                chapterRef: a.chapter ?? null,
-                cfiRange: a.cfi,
-                selectedText: a.text ?? '',
-                note: a.comment ?? null,
-                color: a.color ?? 'yellow',
-                createdAt: new Date(a.createdAt).toISOString(),
-                updatedAt: new Date(a.createdAt).toISOString(),
-              }));
-            const offlineComments = offlineAnnotations
-              .filter((a) => a.type === 'comment')
-              .map((a) => ({
-                id: a.id,
-                userEmail: '',
-                chapterRef: a.chapter ?? null,
-                cfiRange: a.cfi,
-                selectedText: a.text ?? null,
-                body: a.comment ?? '',
-                status: 'open' as const,
-                visibility: 'shared' as const,
-                parentCommentId: null,
-                createdAt: new Date(a.createdAt).toISOString(),
-                updatedAt: new Date(a.createdAt).toISOString(),
-                resolvedAt: null,
-              }));
-            const offlineBookmarks = offlineAnnotations
-              .filter((a) => a.type === 'bookmark')
-              .map((a) => ({
-                id: a.id,
-                locator: { cfi: a.cfi },
-                label: a.text ?? '',
-                createdAt: new Date(a.createdAt).toISOString(),
-              }));
-            if (offlineHighlights.length > 0) setHighlights(offlineHighlights);
-            if (offlineComments.length > 0) setComments(offlineComments);
-            if (offlineBookmarks.length > 0) setBookmarks(offlineBookmarks);
-            if (source === 'default') {
-              source = 'offline';
-            }
-            logClientEvent({
-              level: 'info',
-              event: 'reader.offline_annotations_restored',
-              traceId: createTraceId(),
-              spanId: createSpanId(),
-              metadata: {
-                bookId,
-                highlights: offlineHighlights.length,
-                comments: offlineComments.length,
-                bookmarks: offlineBookmarks.length,
-              },
-            });
-          }
-        } catch {
-          /* ignore cache errors */
-        }
-      } finally {
-        logClientEvent({
-          level: 'info',
-          event: 'reader.progress_loaded',
-          traceId: createTraceId(),
-          spanId: createSpanId(),
-          metadata: { bookId, source },
-        });
-      }
-    };
-    void load();
-  }, [sessionToken, bookId, setHighlights, setComments, setBookmarks, setProgress]);
+  useReaderDataLoader({
+    sessionToken,
+    bookId,
+    setHighlights,
+    setComments,
+    setBookmarks,
+    setProgress,
+  });
 
   useEffect(() => {
     const onMouseUp = () => {
