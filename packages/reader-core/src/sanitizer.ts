@@ -334,44 +334,56 @@ export function sanitizeDom(node: Document | DocumentFragment | Element): void {
   const root = node.nodeType === Node.DOCUMENT_NODE ? (node as Document).documentElement : node;
   if (!root) return;
 
-  const allElements = root.querySelectorAll('*');
+  const ownerDoc = root.ownerDocument || (root.nodeType === Node.DOCUMENT_NODE ? root : null);
+  if (!ownerDoc) return;
 
-  for (const el of allElements) {
-    const tag = el.tagName.toLowerCase();
-    const isLinkable = tag === 'use' || tag === 'image';
-    const attrNames = el.getAttributeNames();
+  // Use TreeWalker instead of querySelectorAll('*') to avoid creating a large static NodeList
+  // and reduce memory pressure during traversal.
+  const walker = ownerDoc.createTreeWalker(root, 1 /* NodeFilter.SHOW_ELEMENT */);
 
-    for (const name of attrNames) {
-      if (name.startsWith('on')) {
-        el.removeAttribute(name);
-      } else if (isLinkable && (name === 'href' || name === 'xlink:href')) {
-        const val = el.getAttribute(name);
-        if (val) {
-          const trimmedVal = val.trim();
-          const lowerVal = trimmedVal.toLowerCase();
+  // To match querySelectorAll('*') behavior, we skip the root element itself.
+  let el = walker.nextNode() as Element | null;
 
-          // Explicitly block dangerous schemes and non-whitelisted ones
-          if (
-            lowerVal.startsWith('javascript:') ||
-            lowerVal.startsWith('data:') ||
-            lowerVal.startsWith('vbscript:')
-          ) {
-            el.removeAttribute(name);
-            continue;
-          }
+  while (el) {
+    if (el.hasAttributes()) {
+      // Use localName which is already lowercase for HTML/SVG elements to avoid .toLowerCase() overhead.
+      const tag = el.localName;
+      const isLinkable = tag === 'use' || tag === 'image';
+      const attrNames = el.getAttributeNames();
 
-          // Guard regex against untrusted input per ADR-034
-          const schemeMatch = matchBounded(/^([a-zA-Z][a-zA-Z0-9+.-]*):/, trimmedVal, 2048);
-          if (schemeMatch && schemeMatch[1]) {
-            const scheme = schemeMatch[1].toLowerCase();
-            // Whitelist safe schemes
-            if (scheme !== 'http' && scheme !== 'https' && scheme !== 'mailto') {
+      for (const name of attrNames) {
+        if (name.startsWith('on')) {
+          el.removeAttribute(name);
+        } else if (isLinkable && (name === 'href' || name === 'xlink:href')) {
+          const val = el.getAttribute(name);
+          if (val) {
+            const trimmedVal = val.trim();
+            const lowerVal = trimmedVal.toLowerCase();
+
+            // Explicitly block dangerous schemes and non-whitelisted ones
+            if (
+              lowerVal.startsWith('javascript:') ||
+              lowerVal.startsWith('data:') ||
+              lowerVal.startsWith('vbscript:')
+            ) {
               el.removeAttribute(name);
+              continue;
+            }
+
+            // Guard regex against untrusted input per ADR-034
+            const schemeMatch = matchBounded(/^([a-zA-Z][a-zA-Z0-9+.-]*):/, trimmedVal, 2048);
+            if (schemeMatch && schemeMatch[1]) {
+              const scheme = schemeMatch[1].toLowerCase();
+              // Whitelist safe schemes
+              if (scheme !== 'http' && scheme !== 'https' && scheme !== 'mailto') {
+                el.removeAttribute(name);
+              }
             }
           }
         }
       }
     }
+    el = walker.nextNode() as Element | null;
   }
 }
 
