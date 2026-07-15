@@ -14,7 +14,7 @@ Format: `type(scope): description` (max 72 chars)
 
 Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`, `ci`, `build`, `perf`, `revert`
 
-Scopes: `web`, `worker`, `reader-core`, `shared`, `schema`, `testkit`, `ui`, `infra`, `ci`, `security`, `ux`, `a11y`, `deps`
+Scopes: `web`, `worker`, `reader-core`, `shared`, `schema`, `testkit`, `ui`, `infra`, `ci`, `security`, `ux`, `a11y`, `deps`, `plans`, `reader`, `api`, `auth`, `offline`, `sync`, `admin`, `catalog`, `epub`, `hooks`, `scripts`, `release`, `quality`
 
 Examples:
 - `feat(reader-core): add fuzzy text reanchoring fallback`

@@ -10,6 +10,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 # shellcheck source=scripts/lib/colors.sh
 source "$REPO_ROOT/scripts/lib/colors.sh"
+# shellcheck source=scripts/lib/commit-types.sh
+source "$REPO_ROOT/scripts/lib/commit-types.sh"
 
 COMMIT_MSG_FILE="$1"
 COMMIT_MSG="$(head -1 "$COMMIT_MSG_FILE")"
@@ -24,16 +26,13 @@ if [[ "$COMMIT_MSG" =~ ^WIP ]] || [[ "$COMMIT_MSG" =~ ^fixup! ]] || [[ "$COMMIT_
     exit 0
 fi
 
-# Conventional commit regex: type(scope): description
-# Types: feat, fix, docs, style, refactor, perf, test, ci, chore, build
-CONVENTIONAL_REGEX='^(feat|fix|docs|style|refactor|perf|test|ci|chore|build|revert)(\([a-z0-9_-]+\))?!?: .+'
-
+# Validate conventional commit format (uses shared regex from commit-types.sh)
 if ! echo "$COMMIT_MSG" | grep -qE "$CONVENTIONAL_REGEX"; then
     echo -e "${RED}✗ Invalid commit message format${NC}" >&2
     echo "" >&2
     echo "Expected: type(scope): description" >&2
     echo "" >&2
-    echo "Types: feat, fix, docs, style, refactor, perf, test, ci, chore, build, revert" >&2
+    echo "Types: ${COMMIT_TYPES[*]}" >&2
     echo "Scope: optional, lowercase alphanumeric + hyphens" >&2
     echo "Breaking: add ! before : (e.g., feat(api)!: remove endpoint)" >&2
     echo "" >&2

@@ -14,6 +14,8 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 source "$REPO_ROOT/scripts/lib/colors.sh"
 # shellcheck source=scripts/lib/logging.sh
 source "$REPO_ROOT/scripts/lib/logging.sh" commit
+# shellcheck source=scripts/lib/commit-types.sh
+source "$REPO_ROOT/scripts/lib/commit-types.sh"
 
 cd "$REPO_ROOT"
 
@@ -36,16 +38,26 @@ if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
     exit 0
 fi
 
-case "${1:-}" in
-    --message|-m)
-        MESSAGE="$2"
-        BODY="${3:-}"
-        ;;
-    *)
-        MESSAGE="${1:-}"
-        BODY="${2:-}"
-        ;;
-esac
+# Parse arguments with proper flag handling (order-independent)
+MESSAGE=""
+BODY=""
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --message|-m)
+            MESSAGE="$2"
+            shift 2
+            ;;
+        --body|-b)
+            BODY="$2"
+            shift 2
+            ;;
+        *)
+            error "Unknown argument: $1"
+            usage
+            exit 1
+            ;;
+    esac
+done
 
 # Require at least some staged changes
 if git diff --cached --quiet 2>/dev/null; then
@@ -67,11 +79,11 @@ if [[ -z "${BODY//[[:space:]]/}" ]]; then
     exit 1
 fi
 
-# Validate conventional commit format
-if ! echo "$MESSAGE" | grep -qE '^(feat|fix|docs|style|refactor|perf|test|ci|chore|build|revert)(\([a-z0-9_-]+\))?!?: .+'; then
+# Validate conventional commit format (uses shared regex from commit-types.sh)
+if ! echo "$MESSAGE" | grep -qE "$CONVENTIONAL_REGEX"; then
     error "Invalid commit message format"
     error "Expected: type(scope): description"
-    error "Types: feat, fix, docs, style, refactor, perf, test, ci, chore, build, revert"
+    error "Types: ${COMMIT_TYPES[*]}"
     error "Got: $MESSAGE"
     exit 1
 fi

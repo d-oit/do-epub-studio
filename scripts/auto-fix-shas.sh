@@ -1,15 +1,36 @@
 #!/usr/bin/env bash
 # Auto-fix SHA allowlist when workflow validation finds disallowed SHAs.
-# Usage: bash scripts/auto-fix-shas.sh [--dry-run]
-# Designed to run after a failed workflow validation to self-heal.
+# Usage: bash scripts/auto-fix-shas.sh [--dry-run] [--check-only]
+#
+# WARNING: This is a DEVELOPER UTILITY only. It must NOT run in CI.
+# CI validation is handled by scripts/validate-workflows.sh which treats
+# unknown SHAs as failures (fail-closed per ADR-187).
+#
+# The --check-only mode reports unlisted SHAs without modifying the allowlist,
+# useful for pre-commit hooks and local validation.
+
 set -Eeuo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT"
 
 DRY_RUN=false
-if [[ "${1:-}" == "--dry-run" ]]; then
-    DRY_RUN=true
+CHECK_ONLY=false
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --dry-run) DRY_RUN=true; shift ;;
+        --check-only) CHECK_ONLY=true; shift ;;
+        *) echo "Unknown option: $1"; exit 1 ;;
+    esac
+done
+
+# Fail-closed: refuse to run in CI environments
+if [[ "${CI:-}" == "true" ]] || [[ "${GITHUB_ACTIONS:-}" == "true" ]]; then
+    echo "ERROR: auto-fix-shas.sh must not run in CI."
+    echo "  Unknown SHAs must fail validation and be added through a reviewed change."
+    echo "  Use scripts/validate-workflows.sh for CI validation."
+    exit 1
 fi
 
 ALLOWLIST_FILE="scripts/validate-shas.sh"
@@ -37,6 +58,15 @@ fi
 
 echo "Found ${#disallowed[@]} disallowed SHA(s):"
 printf '  %s\n' "${disallowed[@]}"
+
+if $CHECK_ONLY; then
+    echo ""
+    echo "CHECK-ONLY: These SHAs must be added through a reviewed allowlist change."
+    echo "  1. Verify the action repository, tag, and commit provenance"
+    echo "  2. Add to $ALLOWLIST_FILE with a comment linking the review"
+    echo "  3. Commit via: ./scripts/atomic-commit/run.sh --message \"ci(shas): ...\" --body \"...\""
+    exit 1
+fi
 
 if $DRY_RUN; then
     echo "DRY-RUN: would add to $ALLOWLIST_FILE"
