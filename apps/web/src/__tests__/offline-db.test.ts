@@ -244,6 +244,83 @@ describe('Offline Database', () => {
     });
   });
 
+  describe('Annotation status/visibility (Plan 998)', () => {
+    it('should save and retrieve annotation with status and visibility', async () => {
+      const entry: AnnotationEntry = {
+        id: 'status-ann-1',
+        bookId: 'book-1',
+        type: 'comment',
+        cfi: '/6/4',
+        comment: 'Resolved comment',
+        createdAt: Date.now(),
+        synced: false,
+        mutationId: 'mutation-status-1',
+        status: 'resolved',
+        visibility: 'shared',
+      };
+
+      await saveAnnotation(entry);
+      const annotations = await getAnnotations('book-1');
+      const found = annotations.find((a) => a.id === 'status-ann-1');
+
+      expect(found).toBeDefined();
+      expect(found?.status).toBe('resolved');
+      expect(found?.visibility).toBe('shared');
+    });
+
+    it('should handle annotations without status/visibility (legacy)', async () => {
+      const entry: AnnotationEntry = {
+        id: 'legacy-ann-1',
+        bookId: 'book-1',
+        type: 'comment',
+        cfi: '/6/4',
+        comment: 'Legacy comment',
+        createdAt: Date.now(),
+        synced: false,
+        mutationId: 'mutation-legacy-1',
+      };
+
+      await saveAnnotation(entry);
+      const annotations = await getAnnotations('book-1');
+      const found = annotations.find((a) => a.id === 'legacy-ann-1');
+
+      expect(found).toBeDefined();
+      expect(found?.status).toBeUndefined();
+      expect(found?.visibility).toBeUndefined();
+    });
+
+    it('should update annotation status from open to resolved', async () => {
+      const open: AnnotationEntry = {
+        id: 'status-update-1',
+        bookId: 'book-1',
+        type: 'comment',
+        cfi: '/6/4',
+        comment: 'Will be resolved',
+        createdAt: Date.now(),
+        synced: false,
+        mutationId: 'mutation-su-1',
+        status: 'open',
+        visibility: 'shared',
+      };
+
+      await saveAnnotation(open);
+
+      const resolved: AnnotationEntry = {
+        ...open,
+        synced: false,
+        mutationId: 'mutation-su-2',
+        status: 'resolved',
+      };
+
+      await saveAnnotation(resolved);
+      const annotations = await getAnnotations('book-1');
+      const found = annotations.find((a) => a.id === 'status-update-1');
+
+      expect(found).toBeDefined();
+      expect(found?.status).toBe('resolved');
+    });
+  });
+
   describe('Sync Queue', () => {
     it('should add and retrieve queue items', async () => {
       const item: SyncQueueItem = {

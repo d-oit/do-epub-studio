@@ -119,7 +119,30 @@ export function useReaderHandlers() {
       if (!comment) return;
       const newStatus = comment.status === 'resolved' ? 'open' : 'resolved';
       try {
-        await apiUpdateComment(commentId, { status: newStatus }, sessionToken);
+        if (!navigator.onLine) {
+          // Plan 998: persist status mutation to IndexedDB for offline restore
+          const mutationId = generateMutationId();
+          await saveAnnotation({
+            id: commentId,
+            bookId,
+            type: 'comment',
+            cfi: comment.cfiRange ?? '',
+            comment: comment.body,
+            chapter: comment.chapterRef ?? undefined,
+            createdAt: new Date(comment.createdAt).getTime(),
+            synced: false,
+            mutationId,
+            status: newStatus,
+            visibility: comment.visibility,
+          });
+          await queueSync(
+            'annotation',
+            { bookId, annotation: { id: commentId, status: newStatus }, action: 'resolve' },
+            mutationId,
+          );
+        } else {
+          await apiUpdateComment(commentId, { status: newStatus }, sessionToken);
+        }
         updateComment(commentId, {
           status: newStatus,
           resolvedAt: newStatus === 'resolved' ? new Date().toISOString() : null,

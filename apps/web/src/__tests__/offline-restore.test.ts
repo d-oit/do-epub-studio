@@ -171,6 +171,48 @@ describe('Offline restore — annotations (M4 from Plan 118)', () => {
     expect(afterRemove).toHaveLength(0);
   });
 
+  it('persists comment status mutations for offline resolve (Plan 998)', async () => {
+    const { saveAnnotation, getAnnotations } = await import('../lib/offline/db');
+
+    const bookId = 'plan998-book';
+
+    // Step 1: Create comment while offline (status: open)
+    await saveAnnotation({
+      id: 'c-998-1',
+      bookId,
+      type: 'comment',
+      cfi: 'epubcfi(/6/14!/4/2/3:0)',
+      comment: 'This will be resolved offline',
+      createdAt: Date.now(),
+      synced: false,
+      mutationId: 'm-998-1',
+      status: 'open',
+      visibility: 'shared',
+    });
+
+    // Step 2: Resolve comment while offline (update status in IndexedDB)
+    await saveAnnotation({
+      id: 'c-998-1',
+      bookId,
+      type: 'comment',
+      cfi: 'epubcfi(/6/14!/4/2/3:0)',
+      comment: 'This will be resolved offline',
+      createdAt: Date.now(),
+      synced: false,
+      mutationId: 'm-998-2',
+      status: 'resolved',
+      visibility: 'shared',
+    });
+
+    // Step 3: Simulate page refresh — read from IndexedDB
+    const retrieved = await getAnnotations(bookId);
+    const resolvedComment = retrieved.find((a) => a.id === 'c-998-1');
+
+    expect(resolvedComment).toBeDefined();
+    expect(resolvedComment?.status).toBe('resolved');
+    expect(resolvedComment?.visibility).toBe('shared');
+  });
+
   it('full round-trip: all annotation types + progress + insights survive offline', async () => {
     const {
       saveAnnotation,

@@ -72,6 +72,44 @@ describe('mapOfflineComment', () => {
     expect(result.body).toBe('');
     expect(result.chapterRef).toBeNull();
   });
+
+  it('uses stored status when present (Plan 998)', () => {
+    const entry: AnnotationEntry = {
+      ...base,
+      type: 'comment',
+      comment: 'resolved offline',
+      status: 'resolved',
+      visibility: 'shared',
+    };
+    const result = mapOfflineComment(entry);
+    expect(result.status).toBe('resolved');
+    expect(result.visibility).toBe('shared');
+    expect(result.resolvedAt).toBe(new Date(1700000000000).toISOString());
+  });
+
+  it('falls back to open/shared for legacy entries without status (Plan 998)', () => {
+    const legacy: AnnotationEntry = { ...base, type: 'comment', comment: 'legacy entry' };
+    delete legacy.status;
+    delete legacy.visibility;
+    const result = mapOfflineComment(legacy);
+    expect(result.status).toBe('open');
+    expect(result.visibility).toBe('shared');
+    expect(result.resolvedAt).toBeNull();
+  });
+
+  it('maps internal visibility when stored (Plan 998)', () => {
+    const entry: AnnotationEntry = {
+      ...base,
+      type: 'comment',
+      comment: 'internal note',
+      status: 'open',
+      visibility: 'internal',
+    };
+    const result = mapOfflineComment(entry);
+    expect(result.visibility).toBe('internal');
+    expect(result.status).toBe('open');
+    expect(result.resolvedAt).toBeNull();
+  });
 });
 
 describe('mapOfflineBookmark', () => {
