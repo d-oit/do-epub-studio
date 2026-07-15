@@ -1,7 +1,7 @@
 # ADR-187: Fail-Closed Engineering and Release Gates
 
-**Status:** Proposed  
-**Date:** 2026-07-14  
+**Status:** Proposed
+**Date:** 2026-07-14
 **Driven by:** Plan 186 repository implementation, workflow, and CI audit
 
 ## Context

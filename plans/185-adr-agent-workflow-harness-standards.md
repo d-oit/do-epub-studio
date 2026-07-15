@@ -1,6 +1,6 @@
 # ADR: Agent Workflow Harness Standards
 
-Status: Proposed  
+Status: Proposed
 Date: 2026-07-14
 
 ## Context

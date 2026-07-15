@@ -1,6 +1,6 @@
 # ADR: CI And PR Readiness Policy
 
-Status: Proposed  
+Status: Proposed
 Date: 2026-07-14
 
 ## Context

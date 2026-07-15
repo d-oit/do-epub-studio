@@ -1,6 +1,6 @@
 # GOAP: GitHub Issues, PR, And CI Remediation
 
-Status: Proposed  
+Status: Proposed
 Date: 2026-07-14
 
 ## Goal

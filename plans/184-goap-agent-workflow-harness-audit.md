@@ -1,6 +1,6 @@
 # GOAP: Agent Workflow Harness Audit
 
-Status: Proposed  
+Status: Proposed
 Date: 2026-07-14
 
 ## Goal

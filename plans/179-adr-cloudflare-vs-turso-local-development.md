@@ -1,6 +1,6 @@
 # ADR: Cloudflare Versus Turso Local Development
 
-Status: Proposed  
+Status: Proposed
 Date: 2026-07-14
 
 ## Context

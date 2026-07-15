@@ -1,8 +1,8 @@
 # Plan 186: GOAP — Codebase, Workflow, and CI Remediation
 
-**Status:** Ready for implementation  
-**Date:** 2026-07-14  
-**Decision:** [ADR-187](187-adr-fail-closed-engineering-gates.md)  
+**Status:** Ready for implementation
+**Date:** 2026-07-14
+**Decision:** [ADR-187](187-adr-fail-closed-engineering-gates.md)
 **Strategy:** Hybrid; fix safety blockers sequentially, then execute independent workstreams in parallel
 
 ## Goal
