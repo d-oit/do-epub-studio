@@ -65,6 +65,9 @@ jobs:
         uses: treosh/lighthouse-ci-action@3e7e23fb74242897f95c0ba9cabad3d0227b9b18  # v12.6.2
         with:
           urls: |
+            ${{ steps.deploy.outputs.url }}/
+            ${{ steps.deploy.outputs.url }}/catalog
+            ${{ steps.deploy.outputs.url }}/admin
             ${{ steps.deploy.outputs.url }}/reader
           configPath: .lighthouserc.json
           uploadArtifacts: true
@@ -78,8 +81,11 @@ jobs:
             jq '.' < ./lighthouseci/assertion-results.json
             FAILURES=$(jq '[.[] | select(.passed == false)] | length' < ./lighthouseci/assertion-results.json)
             if [ "$FAILURES" -gt "0" ]; then
-              echo "::warning::Lighthouse assertions failed ($FAILURES failures) — advisory only, not blocking merge"
+              echo "::error::Lighthouse assertions failed ($FAILURES failures)"
+              exit 1
             fi
+          else
+            echo "::warning::No Lighthouse results file found — deployment may have failed"
           fi
 
       - name: Comment PR with scores

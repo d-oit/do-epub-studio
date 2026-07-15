@@ -40,3 +40,8 @@ jobs:
           publish_results: false  # Disabled until verified SHA from ossf/scorecard-action repo
         env:
           repo_token: ${{ secrets.SCORECARD_TOKEN }}
+
+      - name: "Upload SARIF to GitHub Security"
+        uses: github/codeql-action/upload-sarif@60168efe1c415ce0f5521ea06d5c2062adbeed1b  # v3.28.0
+        with:
+          sarif_file: results.sarif

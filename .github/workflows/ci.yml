@@ -61,6 +61,7 @@ jobs:
               - 'packages/reader-core/src/**'
             worker:
               - 'apps/worker/src/**'
+              - 'apps/worker/package.json'
               - 'wrangler.toml'
             agent-docs:
               - '.agents/**'
@@ -85,7 +86,7 @@ jobs:
     name: Setup & Diagnostics
     needs: changes
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 5
     outputs:
       cache-hit: ${{ steps.setup-pnpm.outputs.cache-hit }}
       start-time: ${{ steps.start-time.outputs.time }}
@@ -155,8 +156,16 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           ref="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
-          count=$(gh api "/repos/${{ github.repository }}/code-scanning/alerts?state=open" 2>/dev/null | \
-            jq --arg ref "refs/heads/$ref" '[.[] | select(.most_recent_instance.ref == $ref)] | length' || echo "0")
+          API_RESPONSE=$(gh api "/repos/${{ github.repository }}/code-scanning/alerts?state=open" 2>&1) || {
+            echo "::error::CodeQL API request failed. Cannot determine alert count."
+            echo "Response: $API_RESPONSE"
+            exit 1
+          }
+          count=$(echo "$API_RESPONSE" | jq --arg ref "refs/heads/$ref" '[.[] | select(.most_recent_instance.ref == $ref)] | length' 2>/dev/null)
+          if [ -z "$count" ] || ! [[ "$count" =~ ^[0-9]+$ ]]; then
+            echo "::error::CodeQL API returned malformed response. Cannot determine alert count."
+            exit 1
+          fi
           echo "::notice::Open CodeQL alerts on $ref: $count"
           [ "$count" = "0" ] || { echo "::error::Open CodeQL alerts on $ref: $count"; exit 1; }
 
@@ -185,7 +194,7 @@ jobs:
     name: Pre-commit Hooks
     needs: setup
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 7
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
         with:
@@ -203,7 +212,7 @@ jobs:
     name: Lint (Node ${{ matrix.node-version }})
     needs: setup
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 5
     strategy:
       matrix:
         node-version: [22, 24]
@@ -226,7 +235,7 @@ jobs:
     name: Typecheck (Node ${{ matrix.node-version }})
     needs: setup
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 5
     strategy:
       matrix:
         node-version: [22, 24]
@@ -246,7 +255,7 @@ jobs:
     name: Unit Tests (Node ${{ matrix.node-version }})
     needs: setup
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
     strategy:
       matrix:
         node-version: [22, 24]
@@ -281,11 +290,27 @@ jobs:
           directory: .
           flags: unittests
 
+  worker-build:
+    name: Worker Build Validation
+    needs: [changes, setup]
+    if: ${{ needs.changes.outputs.worker == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        with:
+          persist-credentials: false
+          submodules: recursive
+      - uses: ./.github/actions/setup-pnpm
+
+      - name: Build Worker (dry-run)
+        run: pnpm --filter @do-epub-studio/worker build
+
   build:
     name: Build (Node ${{ matrix.node-version }})
     needs: [pre-commit, lint, typecheck, test]
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 15
     strategy:
       matrix:
         node-version: [22, 24]
@@ -475,7 +500,7 @@ jobs:
     needs: [changes, build]
     if: ${{ needs.changes.outputs.src == 'true' || needs.changes.outputs.reader-core == 'true' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 10
     permissions:
       contents: read
       pull-requests: write

@@ -54,6 +54,7 @@ ALLOWED_SHAS=(
     "actions/stale@1e223db275d687790206a7acac4d1a11bd6fe629"
     "github/codeql-action/init@99df26d4f13ea111d4ec1a7dddef6063f76b97e9"
     "github/codeql-action/analyze@99df26d4f13ea111d4ec1a7dddef6063f76b97e9"
+    "github/codeql-action/upload-sarif@60168efe1c415ce0f5521ea06d5c2062adbeed1b"
     "slackapi/slack-github-action@0d95c9a7becc1e6e297d76df9bc735c44f4cbcbc"
 )
 
