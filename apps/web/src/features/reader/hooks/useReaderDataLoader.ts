@@ -25,7 +25,7 @@ export function useReaderDataLoader({
   useEffect(() => {
     if (!sessionToken || !bookId) return;
 
-    const load = async () => {
+    void (async () => {
       let source: 'server' | 'offline' | 'default' = 'default';
 
       try {
@@ -150,8 +150,6 @@ export function useReaderDataLoader({
           metadata: { bookId, source },
         });
       }
-    };
-
-    void load();
+    })();
   }, [sessionToken, bookId, setHighlights, setComments, setBookmarks, setProgress]);
 }
