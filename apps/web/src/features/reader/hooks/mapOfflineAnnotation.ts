@@ -15,6 +15,10 @@ export function mapOfflineHighlight(a: AnnotationEntry): Highlight {
 }
 
 export function mapOfflineComment(a: AnnotationEntry): Comment {
+  // status/visibility default to 'open'/'shared' because the offline schema
+  // (AnnotationEntry) only caches newly-created comments, which are always
+  // open and shared. Status mutations (resolve/unresolve) while offline are
+  // not persisted to IndexedDB — see plan 998 for the tracking issue.
   return {
     id: a.id,
     userEmail: '',
