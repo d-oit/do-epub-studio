@@ -18,13 +18,13 @@ PASS=0
 FAIL=0
 DRIFT=0
 
-TMPDIR=$(mktemp -d)
-trap 'rm -rf "$TMPDIR"' EXIT
+TMPDIR_PARITY=$(mktemp -d)
+trap 'rm -rf "$TMPDIR_PARITY"' EXIT
 
 # Test a message against the commit-msg hook
 test_hook() {
     local msg="$1"
-    local msgfile="$TMPDIR/commit-msg-test"
+    local msgfile="$TMPDIR_PARITY/commit-msg-test"
     printf '%s\n\n%s\n' "$msg" "Body explaining why" > "$msgfile"
     if bash "$REPO_ROOT/scripts/hooks/commit-msg" "$msgfile" >/dev/null 2>&1; then
         echo "pass"
@@ -36,7 +36,7 @@ test_hook() {
 # Test a message against validate-commit-message.sh
 test_validate() {
     local msg="$1"
-    local msgfile="$TMPDIR/commit-msg-test"
+    local msgfile="$TMPDIR_PARITY/commit-msg-test"
     printf '%s\n\n%s\n' "$msg" "Body explaining why" > "$msgfile"
     if bash "$REPO_ROOT/scripts/validate-commit-message.sh" "$msgfile" >/dev/null 2>&1; then
         echo "pass"
@@ -115,6 +115,23 @@ assert_all_agree "uppercase type" "Feat: add feature" "fail"
 assert_all_agree "missing colon" "feat add feature" "fail"
 assert_all_agree "missing description" "feat: " "fail"
 assert_all_agree "type with uppercase in scope" "feat(MyScope): fix" "fail"
+
+# --- Special commits ---
+# Note: Revert/fixup/WIP are handled by hook and validate as skip-before-regex.
+# commit.sh's regex doesn't match them (git handles reverts natively).
+# These are NOT tested for parity because the regex validator legitimately differs.
+echo ""
+echo "=== Special commits (informational) ==="
+# Verify hook accepts Revert
+hook_revert=$(test_hook 'Revert "feat(x): something"')
+validate_revert=$(test_validate 'Revert "feat(x): something"')
+if [[ "$hook_revert" == "pass" ]] && [[ "$validate_revert" == "pass" ]]; then
+    echo "✓ Revert commits accepted by hook and validate"
+    PASS=$((PASS + 1))
+else
+    echo "✗ Revert commit handling drift: hook=$hook_revert validate=$validate_revert"
+    DRIFT=$((DRIFT + 1))
+fi
 
 # --- Summary ---
 echo ""

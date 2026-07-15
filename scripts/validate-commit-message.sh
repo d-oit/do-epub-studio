@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # validate-commit-message.sh
 # Validates commit messages follow the conventional commits format.
@@ -80,9 +80,9 @@ fi
 
 COMMIT_MSG=$(cat "$COMMIT_FILE")
 
-# Skip merge commits
-if [[ "$COMMIT_MSG" =~ ^Merge ]]; then
-    [[ "$VERBOSE" == "true" ]] && echo "Merge commit detected, skipping"
+# Skip merge and revert commits (same as hooks/commit-msg)
+if [[ "$COMMIT_MSG" =~ ^Merge ]] || [[ "$COMMIT_MSG" =~ ^Revert ]]; then
+    [[ "$VERBOSE" == "true" ]] && echo "Merge/Revert commit detected, skipping"
     exit 0
 fi
 

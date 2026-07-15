@@ -44,10 +44,20 @@ BODY=""
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --message|-m)
+            if [[ $# -lt 2 ]]; then
+                error "Missing value for $1"
+                usage
+                exit 1
+            fi
             MESSAGE="$2"
             shift 2
             ;;
         --body|-b)
+            if [[ $# -lt 2 ]]; then
+                error "Missing value for $1"
+                usage
+                exit 1
+            fi
             BODY="$2"
             shift 2
             ;;
