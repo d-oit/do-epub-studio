@@ -127,8 +127,19 @@ export function useReaderDataLoader({
               },
             });
           }
-        } catch {
-          /* ignore cache errors */
+        } catch (cacheErr) {
+          // Log cache errors at debug level — non-fatal, server data already failed
+          logClientEvent({
+            level: 'debug',
+            event: 'reader.offline_cache_error',
+            traceId: createTraceId(),
+            spanId: createSpanId(),
+            error: {
+              name: cacheErr instanceof Error ? cacheErr.name : 'UnknownError',
+              message: cacheErr instanceof Error ? cacheErr.message : String(cacheErr),
+            },
+            metadata: { bookId },
+          });
         }
       } finally {
         logClientEvent({
