@@ -1,0 +1,41 @@
+import type { AnnotationEntry } from '../../../lib/offline';
+import type { Highlight, Comment, Bookmark } from '../../../stores';
+
+export function mapOfflineHighlight(a: AnnotationEntry): Highlight {
+  return {
+    id: a.id,
+    chapterRef: a.chapter ?? null,
+    cfiRange: a.cfi,
+    selectedText: a.text ?? '',
+    note: a.comment ?? null,
+    color: a.color ?? 'yellow',
+    createdAt: new Date(a.createdAt).toISOString(),
+    updatedAt: new Date(a.createdAt).toISOString(),
+  };
+}
+
+export function mapOfflineComment(a: AnnotationEntry): Comment {
+  return {
+    id: a.id,
+    userEmail: '',
+    chapterRef: a.chapter ?? null,
+    cfiRange: a.cfi,
+    selectedText: a.text ?? null,
+    body: a.comment ?? '',
+    status: 'open',
+    visibility: 'shared',
+    parentCommentId: null,
+    createdAt: new Date(a.createdAt).toISOString(),
+    updatedAt: new Date(a.createdAt).toISOString(),
+    resolvedAt: null,
+  };
+}
+
+export function mapOfflineBookmark(a: AnnotationEntry): Bookmark {
+  return {
+    id: a.id,
+    locator: { cfi: a.cfi },
+    label: a.text ?? '',
+    createdAt: new Date(a.createdAt).toISOString(),
+  };
+}
