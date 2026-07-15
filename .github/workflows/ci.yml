@@ -155,8 +155,16 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           ref="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
-          count=$(gh api "/repos/${{ github.repository }}/code-scanning/alerts?state=open" 2>/dev/null | \
-            jq --arg ref "refs/heads/$ref" '[.[] | select(.most_recent_instance.ref == $ref)] | length' || echo "0")
+          API_RESPONSE=$(gh api "/repos/${{ github.repository }}/code-scanning/alerts?state=open" 2>&1) || {
+            echo "::error::CodeQL API request failed. Cannot determine alert count."
+            echo "Response: $API_RESPONSE"
+            exit 1
+          }
+          count=$(echo "$API_RESPONSE" | jq --arg ref "refs/heads/$ref" '[.[] | select(.most_recent_instance.ref == $ref)] | length' 2>/dev/null)
+          if [ -z "$count" ] || ! [[ "$count" =~ ^[0-9]+$ ]]; then
+            echo "::error::CodeQL API returned malformed response. Cannot determine alert count."
+            exit 1
+          fi
           echo "::notice::Open CodeQL alerts on $ref: $count"
           [ "$count" = "0" ] || { echo "::error::Open CodeQL alerts on $ref: $count"; exit 1; }
 
@@ -280,6 +288,22 @@ jobs:
         with:
           directory: .
           flags: unittests
+
+  worker-build:
+    name: Worker Build Validation
+    needs: [changes, setup]
+    if: ${{ needs.changes.outputs.worker == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        with:
+          persist-credentials: false
+          submodules: recursive
+      - uses: ./.github/actions/setup-pnpm
+
+      - name: Build Worker (dry-run)
+        run: pnpm --filter @do-epub-studio/worker build
 
   build:
     name: Build (Node ${{ matrix.node-version }})
