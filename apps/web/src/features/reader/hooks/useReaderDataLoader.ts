@@ -4,6 +4,11 @@ import { apiRequest, fetchHighlights, fetchComments, fetchProgress } from '../..
 import { logClientEvent } from '../../../lib/client-logger';
 import { getProgress, getAnnotations } from '../../../lib/offline';
 import type { Highlight, Comment, Bookmark, ReadingProgress } from '../../../stores';
+import {
+  mapOfflineHighlight,
+  mapOfflineComment,
+  mapOfflineBookmark,
+} from './mapOfflineAnnotation';
 
 interface UseReaderDataLoaderOptions {
   sessionToken: string | null;
@@ -74,40 +79,13 @@ export function useReaderDataLoader({
           if (offlineAnnotations.length > 0) {
             const offlineHighlights = offlineAnnotations
               .filter((a) => a.type === 'highlight')
-              .map((a) => ({
-                id: a.id,
-                chapterRef: a.chapter ?? null,
-                cfiRange: a.cfi,
-                selectedText: a.text ?? '',
-                note: a.comment ?? null,
-                color: a.color ?? 'yellow',
-                createdAt: new Date(a.createdAt).toISOString(),
-                updatedAt: new Date(a.createdAt).toISOString(),
-              }));
+              .map(mapOfflineHighlight);
             const offlineComments = offlineAnnotations
               .filter((a) => a.type === 'comment')
-              .map((a) => ({
-                id: a.id,
-                userEmail: '',
-                chapterRef: a.chapter ?? null,
-                cfiRange: a.cfi,
-                selectedText: a.text ?? null,
-                body: a.comment ?? '',
-                status: 'open' as const,
-                visibility: 'shared' as const,
-                parentCommentId: null,
-                createdAt: new Date(a.createdAt).toISOString(),
-                updatedAt: new Date(a.createdAt).toISOString(),
-                resolvedAt: null,
-              }));
+              .map(mapOfflineComment);
             const offlineBookmarks = offlineAnnotations
               .filter((a) => a.type === 'bookmark')
-              .map((a) => ({
-                id: a.id,
-                locator: { cfi: a.cfi },
-                label: a.text ?? '',
-                createdAt: new Date(a.createdAt).toISOString(),
-              }));
+              .map(mapOfflineBookmark);
 
             if (offlineHighlights.length > 0) setHighlights(offlineHighlights);
             if (offlineComments.length > 0) setComments(offlineComments);
