@@ -1,6 +1,6 @@
 # GOAP 998 — Offline Comment Status Mutation Persistence
 
-**Status:** OPEN
+**Status:** ✅ COMPLETED (Plan 998, PR feat/plan-998-offline-comment-status)
 **Created:** 2026-07-15
 **Priority:** P2 (Medium)
 **Category:** Offline / Reader
@@ -54,8 +54,8 @@ store, but does not write to IndexedDB.
 
 ## Acceptance Criteria
 
-- [ ] Resolving a comment while offline persists the status to IndexedDB
-- [ ] After refresh (offline), resolved comments restore with correct status
-- [ ] Sync queue processes pending resolve mutations when back online
-- [ ] All existing offline restore tests pass
-- [ ] New tests cover: create → resolve → refresh → verify status
+- [x] Resolving a comment while offline persists the status to IndexedDB
+- [x] After refresh (offline), resolved comments restore with correct status
+- [x] Sync queue processes pending resolve mutations when back online
+- [x] All existing offline restore tests pass
+- [x] New tests cover: create → resolve → refresh → verify status
