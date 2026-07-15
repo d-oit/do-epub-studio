@@ -80,9 +80,11 @@ fi
 
 COMMIT_MSG=$(cat "$COMMIT_FILE")
 
-# Skip merge and revert commits (same as hooks/commit-msg)
-if [[ "$COMMIT_MSG" =~ ^Merge ]] || [[ "$COMMIT_MSG" =~ ^Revert ]]; then
-    [[ "$VERBOSE" == "true" ]] && echo "Merge/Revert commit detected, skipping"
+# Skip merge, revert, and auto-generated commits (same as hooks/commit-msg)
+if [[ "$COMMIT_MSG" =~ ^Merge ]] || [[ "$COMMIT_MSG" =~ ^Revert ]] || \
+   [[ "$COMMIT_MSG" =~ ^WIP ]] || [[ "$COMMIT_MSG" =~ ^fixup! ]] || \
+   [[ "$COMMIT_MSG" =~ ^squash! ]]; then
+    [[ "$VERBOSE" == "true" ]] && echo "Merge/Revert/auto-generated commit detected, skipping"
     exit 0
 fi
 

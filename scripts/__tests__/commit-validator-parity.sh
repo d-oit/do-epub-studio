@@ -116,6 +116,22 @@ assert_all_agree "missing colon" "feat add feature" "fail"
 assert_all_agree "missing description" "feat: " "fail"
 assert_all_agree "type with uppercase in scope" "feat(MyScope): fix" "fail"
 
+# Note: 73+ char subjects are rejected by hook and validate (length check)
+# but accepted by regex (format only). commit.sh has its own length check.
+# This is intentional — not tested for parity.
+echo ""
+echo "=== Length checks (hook + validate only) ==="
+long_msg="feat(reader-core): add very long subject line that definitely exceeds the seventy-two character limit"
+hook_long=$(test_hook "$long_msg")
+validate_long=$(test_validate "$long_msg")
+if [[ "$hook_long" == "fail" ]] && [[ "$validate_long" == "fail" ]]; then
+    echo "✓ 73-char subject rejected by hook and validate"
+    PASS=$((PASS + 1))
+else
+    echo "✗ 73-char subject handling drift: hook=$hook_long validate=$validate_long"
+    DRIFT=$((DRIFT + 1))
+fi
+
 # --- Special commits ---
 # Note: Revert/fixup/WIP are handled by hook and validate as skip-before-regex.
 # commit.sh's regex doesn't match them (git handles reverts natively).
@@ -132,6 +148,19 @@ else
     echo "✗ Revert commit handling drift: hook=$hook_revert validate=$validate_revert"
     DRIFT=$((DRIFT + 1))
 fi
+
+# Verify hook and validate accept WIP/fixup/squash
+for special in "WIP: work in progress" "fixup! feat(x): something" "squash! feat(x): something"; do
+    hook_result=$(test_hook "$special")
+    validate_result=$(test_validate "$special")
+    if [[ "$hook_result" == "pass" ]] && [[ "$validate_result" == "pass" ]]; then
+        echo "✓ Auto-generated commit accepted: ${special:0:30}"
+        PASS=$((PASS + 1))
+    else
+        echo "✗ Auto-generated commit drift: ${special:0:30} hook=$hook_result validate=$validate_result"
+        DRIFT=$((DRIFT + 1))
+    fi
+done
 
 # --- Summary ---
 echo ""

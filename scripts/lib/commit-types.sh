@@ -76,7 +76,9 @@ is_valid_commit_type() {
     return 1
 }
 
-# Check if a scope is valid (empty scope is valid — it's optional)
+# Check if a scope is known (empty scope is valid — it's optional).
+# Returns 0 for known scopes, 1 for unknown.
+# Validators may use this to warn about unrecognized scopes without failing.
 is_valid_commit_scope() {
     local scope="$1"
     [[ -z "$scope" ]] && return 0
@@ -85,7 +87,5 @@ is_valid_commit_scope() {
     for s in "${COMMIT_SCOPES[@]}"; do
         [[ "$s" == "$scope" ]] && return 0
     done
-    # Allow unknown scopes — warn but don't fail
-    # This is intentional: new scopes can be added without updating all validators
-    return 0
+    return 1
 }
