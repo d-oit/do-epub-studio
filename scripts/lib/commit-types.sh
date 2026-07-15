@@ -62,7 +62,9 @@ _join_types() {
 
 # Conventional commit regex: type(scope): description
 # Scope is optional. Breaking change indicator (!) allowed before colon.
+# shellcheck disable=SC2034  # Used by sourcing scripts (commit.sh, hooks/commit-msg, etc.)
 COMMIT_TYPE_REGEX="$(_join_types)"
+# shellcheck disable=SC2034  # Used by sourcing scripts for grep -qE validation
 CONVENTIONAL_REGEX="^(${COMMIT_TYPE_REGEX})(\([a-z0-9_-]+\))?!?: .+"
 
 # Check if a type is valid
