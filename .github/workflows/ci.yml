@@ -134,7 +134,7 @@ jobs:
       - uses: ./.github/actions/setup-pnpm
 
       - name: pnpm audit
-        run: pnpm audit --audit-level=high
+        run: pnpm audit --audit-level=high --ignore-registry-errors
 
   codeql-alert-check:
     name: CodeQL Alert Check
