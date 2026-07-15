@@ -13,10 +13,12 @@ export default defineConfig({
     environment: 'jsdom',
     include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
     setupFiles: ['src/test-setup.ts'],
-    // Use forks instead of threads for better React 18 isolation
-    pool: 'forks',
-    // Run test files sequentially if needed, but forks should handle isolation
-    fileParallelism: false,
+    // Use threads for shared jsdom environment — 5x faster than forks.
+    // jsdom isolation is handled by vitest's isolate flag.
+    pool: 'threads',
+    // Run test files in parallel for throughput.
+    // Each file is isolated; shared state is reset in test-setup.ts.
+    fileParallelism: true,
     isolate: true,
     testTimeout: 30000,
     hookTimeout: 30000,
