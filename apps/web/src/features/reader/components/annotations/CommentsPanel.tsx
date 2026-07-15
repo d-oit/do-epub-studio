@@ -25,9 +25,11 @@ interface CommentsPanelProps {
   locale: SupportedLocale;
 }
 
-// Virtualize when the per-section list exceeds this. Annotations are taller
-// than TOC items (cards with comment text), so threshold is lower.
-const VIRTUALIZE_THRESHOLD = 30;
+// Comments are variable-height cards (short one-liners to multi-paragraph
+// replies), so we never virtualize them — non-virtual rendering avoids
+// overlap and truncation issues. Highlights are more uniform and safe to
+// virtualize above this threshold.
+const HIGHLIGHT_VIRTUALIZE_THRESHOLD = 30;
 const HIGHLIGHT_ITEM_HEIGHT = 96; // px-3 py-2 + multi-line note preview
 
 export function CommentsPanel({
@@ -229,37 +231,17 @@ export function CommentsPanel({
             {openComments.length > 0 && (
               <div>
                 <h3 className="text-xs font-semibold text-foreground-muted uppercase mb-3">{t('comment.status.open')}</h3>
-                {openComments.length > VIRTUALIZE_THRESHOLD ? (
-                  <VirtualList
-                    items={openComments}
-                    itemHeight={120}
-                    className="h-[60vh]"
-                    renderItem={renderComment}
-                    ariaLabel="Open comments" /* eslint-disable-line i18next/no-literal-string -- React camelCase aria attribute */
-                  />
-                ) : (
-                  <div className="space-y-3">
-                    {openComments.map(renderComment)}
-                  </div>
-                )}
+                <div className="space-y-3">
+                  {openComments.map(renderComment)}
+                </div>
               </div>
             )}
             {resolvedComments.length > 0 && (
               <div className="mt-6">
                 <h3 className="text-xs font-semibold text-foreground-muted uppercase mb-3">{t('comment.status.resolved')}</h3>
-                {resolvedComments.length > VIRTUALIZE_THRESHOLD ? (
-                  <VirtualList
-                    items={resolvedComments}
-                    itemHeight={120}
-                    className="h-[60vh]"
-                    renderItem={renderComment}
-                    ariaLabel="Resolved comments" /* eslint-disable-line i18next/no-literal-string -- React camelCase aria attribute */
-                  />
-                ) : (
-                  <div className="space-y-3">
-                    {resolvedComments.map(renderComment)}
-                  </div>
-                )}
+                <div className="space-y-3">
+                  {resolvedComments.map(renderComment)}
+                </div>
               </div>
             )}
           </div>
@@ -273,7 +255,7 @@ export function CommentsPanel({
               </p>
             )}
             {highlights.length > 0 &&
-              (highlights.length > VIRTUALIZE_THRESHOLD ? (
+              (highlights.length > HIGHLIGHT_VIRTUALIZE_THRESHOLD ? (
                 <VirtualList
                   items={highlights}
                   itemHeight={HIGHLIGHT_ITEM_HEIGHT}
