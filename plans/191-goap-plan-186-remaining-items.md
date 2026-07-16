@@ -1,10 +1,11 @@
 # Plan 191: GOAP — Plan 186 Remaining Items
 
-**Status:** In Progress
+**Status:** ✅ COMPLETED
 **Date:** 2026-07-16
 **Decision:** [ADR-187](187-adr-fail-closed-engineering-gates.md)
 **Extends:** Plan 186
 **Strategy:** Swarm — independent fixes executed in parallel
+**Completed:** 2026-07-16
 
 ## Goal
 
@@ -86,14 +87,24 @@ No lightweight validation catches broken links or structure.
 
 ## Acceptance Criteria
 
-- [ ] Lighthouse job fails (not silently passes) when deployment is unavailable
-- [ ] Opening TOC with a long chapter list scrolls to the active chapter
-- [ ] Visual regression triggers on web app style changes
-- [ ] Gate parity manifest exists and is validated in CI
-- [ ] Docs-only changes get lightweight CI validation
-- [ ] `pnpm lint`, `pnpm typecheck`, `pnpm build` pass
-- [ ] `pnpm test:unit` passes across all packages
-- [ ] `./scripts/validate-workflows.sh` passes
+- [x] Lighthouse job fails (not silently passes) when deployment is unavailable
+- [x] Opening TOC with a long chapter list scrolls to the active chapter
+- [x] Visual regression triggers on web app style changes
+- [x] Gate parity manifest exists and is validated in CI
+- [x] Docs-only changes get lightweight CI validation
+- [x] `pnpm lint`, `pnpm typecheck`, `pnpm build` pass
+- [x] `pnpm test:unit` passes across all packages
+- [x] `./scripts/validate-workflows.sh` passes
+
+## Task Completion Evidence
+
+| Task | Status | Evidence |
+|------|--------|----------|
+| T1 (C3) | ✅ | `lighthouse.yml:72-77` — fail-closed step on deploy.outcome != 'success' |
+| T2 (I2) | ✅ | `VirtualList.tsx:25,64-75` — scrollToIndex prop; `TableOfContents.tsx:146` — passes activeIndex |
+| T3 (C8) | ✅ | `visual-regression.yml:9-11` — apps/web/src/**/*.css and tailwind.config.* in paths |
+| T4 (W7) | ✅ | `scripts/gate-manifest.json` + `scripts/validate-gate-parity.sh` |
+| T5 (C9) | ✅ | `.github/workflows/docs-validation.yml` — validates Markdown structure and links |
 
 ## Execution Strategy
 
