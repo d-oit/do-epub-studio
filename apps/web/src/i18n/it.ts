@@ -401,4 +401,8 @@ export const it: Record<TranslationKeys, string> = {
   'storage.clearError': 'Impossibile svuotare la cache',
   'storage.unsupported': 'Informazioni sulla memoria non disponibili in questo browser',
   'storage.confirmClear': 'Questo eliminerà tutti i libri, le annotazioni e i progressi di lettura memorizzati su questo dispositivo. I dati non sincronizzati andranno persi. Sei sicuro?',
+  'relativeTime.justNow': 'adesso',
+  'relativeTime.minutesAgo': '{count}m fa',
+  'relativeTime.hoursAgo': '{count}h fa',
+  'relativeTime.daysAgo': '{count}g fa',
 };

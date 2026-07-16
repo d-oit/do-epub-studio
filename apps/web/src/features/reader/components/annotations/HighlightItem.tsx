@@ -91,7 +91,7 @@ export const HighlightItem = memo(function HighlightItem({
         <>
           <div className="mt-2 flex items-center justify-between">
             <span className="text-xs text-foreground-muted">
-              {formatDate(highlight.createdAt)}
+              {formatDate(highlight.createdAt, t)}
             </span>
           </div>
           {showActions && (

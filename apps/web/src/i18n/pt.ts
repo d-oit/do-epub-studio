@@ -401,4 +401,8 @@ export const pt: Record<TranslationKeys, string> = {
   'storage.clearError': 'Falha ao limpar o cache',
   'storage.unsupported': 'Informações de armazenamento não disponíveis neste navegador',
   'storage.confirmClear': 'Isso excluirá todos os livros, anotações e progresso de leitura armazenados neste dispositivo. Dados não sincronizados serão perdidos. Tem certeza?',
+  'relativeTime.justNow': 'agora',
+  'relativeTime.minutesAgo': 'há {count}min',
+  'relativeTime.hoursAgo': 'há {count}h',
+  'relativeTime.daysAgo': 'há {count}d',
 };

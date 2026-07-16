@@ -401,4 +401,8 @@ export const de: Record<TranslationKeys, string> = {
   'storage.clearError': 'Cache konnte nicht geleert werden',
   'storage.unsupported': 'Speicherinformationen in diesem Browser nicht verfügbar',
   'storage.confirmClear': 'Dies löscht alle zwischengespeicherten Bücher, Anmerkungen und Lesefortschritte auf diesem Gerät. Nicht synchronisierte Daten gehen verloren. Sind Sie sicher?',
+  'relativeTime.justNow': 'gerade eben',
+  'relativeTime.minutesAgo': '{count}Min. her',
+  'relativeTime.hoursAgo': '{count}Std. her',
+  'relativeTime.daysAgo': '{count}T. her',
 };

@@ -401,4 +401,8 @@ export const ru: Record<TranslationKeys, string> = {
   'storage.clearError': 'Не удалось очистить кэш',
   'storage.unsupported': 'Информация о хранилище недоступна в этом браузере',
   'storage.confirmClear': 'Это удалит все кэшированные книги, аннотации и прогресс чтения на этом устройстве. Несинхронизированные данные будут потеряны. Вы уверены?',
+  'relativeTime.justNow': 'только что',
+  'relativeTime.minutesAgo': '{count}м. назад',
+  'relativeTime.hoursAgo': '{count}ч. назад',
+  'relativeTime.daysAgo': '{count}д. назад',
 };

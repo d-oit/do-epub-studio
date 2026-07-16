@@ -401,4 +401,8 @@ export const ar: Record<TranslationKeys, string> = {
   'storage.clearError': 'فشل مسح الذاكرة المؤقتة',
   'storage.unsupported': 'معلومات التخزين غير متاحة في هذا المتصفح',
   'storage.confirmClear': 'سيؤدي هذا إلى حذف جميع الكتب والتعليقات وتقدم القراءة المخزنة على هذا الجهاز. ستفقد البيانات غير المتزامنة. هل أنت متأكد؟',
+  'relativeTime.justNow': 'الآن',
+  'relativeTime.minutesAgo': 'منذ {count}د',
+  'relativeTime.hoursAgo': 'منذ {count}س',
+  'relativeTime.daysAgo': 'منذ {count}ي',
 };

@@ -30,9 +30,15 @@ export const dictionaries = {
 
 export type LocaleKey = keyof typeof dictionaries;
 
-export function translate(key: TranslationKeys, locale: LocaleKey): string {
+export function translate(key: TranslationKeys, locale: LocaleKey, params?: Record<string, string | number>): string {
   const catalog = dictionaries[locale] ?? dictionaries.en;
-  return catalog[key] ?? dictionaries.en[key] ?? key;
+  const template = catalog[key] ?? dictionaries.en[key] ?? key;
+  if (!params) return template;
+  let result = template;
+  for (const [paramName, value] of Object.entries(params)) {
+    result = result.replace(`{${paramName}}`, String(value));
+  }
+  return result;
 }
 
 export function availableLocales(): Array<{ code: LocaleKey; label: string }> {

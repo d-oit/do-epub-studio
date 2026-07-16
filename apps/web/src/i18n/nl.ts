@@ -401,4 +401,8 @@ export const nl: Record<TranslationKeys, string> = {
   'storage.clearError': 'Kan cache niet wissen',
   'storage.unsupported': 'Opslaginformatie niet beschikbaar in deze browser',
   'storage.confirmClear': 'Dit verwijdert alle gecachte boeken, annotaties en leesvoortgang op dit apparaat. Niet-gesynchroniseerde gegevens gaan verloren. Weet u het zeker?',
+  'relativeTime.justNow': 'net',
+  'relativeTime.minutesAgo': '{count}m geleden',
+  'relativeTime.hoursAgo': '{count}u geleden',
+  'relativeTime.daysAgo': '{count}d geleden',
 };

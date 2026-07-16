@@ -401,4 +401,8 @@ export const fr: Record<TranslationKeys, string> = {
   'storage.clearError': 'Échec du vidage du cache',
   'storage.unsupported': 'Informations de stockage non disponibles dans ce navigateur',
   'storage.confirmClear': 'Cela supprimera tous les livres, annotations et progrès de lecture mis en cache sur cet appareil. Les données non synchronisées seront perdues. Êtes-vous sûr?',
+  'relativeTime.justNow': "à l'instant",
+  'relativeTime.minutesAgo': 'il y a {count}min',
+  'relativeTime.hoursAgo': 'il y a {count}h',
+  'relativeTime.daysAgo': 'il y a {count}j',
 };

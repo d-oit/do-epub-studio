@@ -401,4 +401,8 @@ export const ja: Record<TranslationKeys, string> = {
   'storage.clearError': 'キャッシュの消去に失敗しました',
   'storage.unsupported': 'このブラウザではストレージ情報を使用できません',
   'storage.confirmClear': 'これにより、このデバイスにキャッシュされたすべての本、注釈、読書進捗が削除されます。未同期のデータは失われます。よろしいですか？',
+  'relativeTime.justNow': 'たった今',
+  'relativeTime.minutesAgo': '{count}分前',
+  'relativeTime.hoursAgo': '{count}時間前',
+  'relativeTime.daysAgo': '{count}日前',
 };

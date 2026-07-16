@@ -309,10 +309,15 @@ test.describe('Offline reader', () => {
     const queuedBeforeReconnect = syncBookmarks.length;
 
     await context.setOffline(false);
-    // Wait for the sync queue to flush all 3 items via attemptSync() loop
-    await page.waitForTimeout(5000);
-
-    expect(syncBookmarks.length).toBeGreaterThan(queuedBeforeReconnect);
+    // Wait for sync queue to flush — poll the intercepted API calls
+    // instead of a hardcoded timeout.  Each queued item produces one
+    // POST/PUT to the route handlers above, which push into syncBookmarks.
+    await expect
+      .poll(() => syncBookmarks.length, {
+        timeout: 10_000,
+        message: 'Sync queue should flush offline items after reconnection',
+      })
+      .toBeGreaterThan(queuedBeforeReconnect);
 
     const bodyOk = await page.locator('body').isVisible().catch(() => false);
     expect(bodyOk).toBe(true);

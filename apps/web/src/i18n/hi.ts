@@ -401,4 +401,8 @@ export const hi: Record<TranslationKeys, string> = {
   'storage.clearError': 'कैशे साफ़ करने में विफल',
   'storage.unsupported': 'इस ब्राउज़र में स्टोरेज जानकारी उपलब्ध नहीं है',
   'storage.confirmClear': 'यह इस उपकरण पर संग्रहीत सभी पुस्तकें, टिप्पणियाँ और पठन प्रगति हटा देगा। सिंक न हुआ डेटा खो जाएगा। क्या आप सुनिश्चित हैं?',
+  'relativeTime.justNow': 'अभी',
+  'relativeTime.minutesAgo': '{count}मि. पहले',
+  'relativeTime.hoursAgo': '{count}घं. पहले',
+  'relativeTime.daysAgo': '{count}दि. पहले',
 };
