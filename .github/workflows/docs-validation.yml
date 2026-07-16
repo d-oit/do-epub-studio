@@ -1,0 +1,101 @@
+name: Docs Validation
+run-name: Docs Validation - ${{ github.event.pull_request.title || github.event_name }}
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - '**.md'
+      - '**.mdx'
+      - 'plans/**'
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  docs:
+    name: Markdown & link validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Validate Markdown structure
+        run: |
+          echo "=== Checking Markdown files for common issues ==="
+
+          # Check for broken internal links in docs/
+          while IFS= read -r file; do
+            [[ -z "$file" ]] && continue
+            # Extract markdown links [text](path)
+            while IFS= read -r link; do
+              [[ -z "$link" ]] && continue
+              # Skip external URLs and anchors
+              [[ "$link" == http* ]] && continue
+              [[ "$link" == "#"* ]] && continue
+              # Strip anchor from link
+              link_path="${link%%#*}"
+              [[ -z "$link_path" ]] && continue
+              # Resolve relative to file directory
+              dir=$(dirname "$file")
+              target="$dir/$link_path"
+              if [[ ! -e "$target" ]]; then
+                echo "::warning file=$file::Broken link: $link_path"
+              fi
+            done < <(grep -oP '\[.*?\]\(\K[^)]+' "$file" 2>/dev/null || true)
+          done < <(find docs/ -name '*.md' -o -name '*.mdx' 2>/dev/null)
+
+          # Validate plans/ ADR references
+          while IFS= read -r file; do
+            [[ -z "$file" ]] && continue
+            if grep -q 'ADR-' "$file" && ! grep -q 'plans/' "$file"; then
+              echo "::warning file=$file::GOAP plan references ADR but may be missing plans/ path"
+            fi
+          done < <(find plans/ -name '*goap*.md' 2>/dev/null)
+
+          echo "✓ Markdown validation complete"
+
+      - name: Validate plan structure
+        run: |
+          echo "=== Checking plan files for required sections ==="
+
+          while IFS= read -r file; do
+            [[ -z "$file" ]] && continue
+            if ! grep -q '^\*\*Status:\*\*' "$file"; then
+              echo "::warning file=$file::Missing Status field"
+            fi
+            if ! grep -q '^\*\*Date:\*\*' "$file"; then
+              echo "::warning file=$file::Missing Date field"
+            fi
+          done < <(find plans/ -name '*goap*.md' 2>/dev/null)
+
+          echo "✓ Plan structure validation complete"
+
+      - name: Validate canonical commands are documented
+        run: |
+          echo "=== Checking canonical commands in AGENTS.md ==="
+          CMDS=(
+            "./scripts/quality_gate.sh"
+            "./scripts/validate-workflows.sh"
+            "./scripts/atomic-commit/run.sh"
+          )
+
+          for cmd in "${CMDS[@]}"; do
+            if ! grep -q "$cmd" AGENTS.md 2>/dev/null; then
+              echo "::warning::Command $cmd not documented in AGENTS.md"
+            fi
+          done
+
+          echo "✓ Canonical command validation complete"

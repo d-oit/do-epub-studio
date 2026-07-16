@@ -39,6 +39,9 @@ export function TableOfContents({
   const activeItemRef = useRef<HTMLButtonElement>(null);
   useFocusTrap(isOpen, panelRef);
 
+  const shouldVirtualize = toc.length > VIRTUALIZE_THRESHOLD;
+  const activeIndex = toc.findIndex((item) => currentChapter === item.href);
+
   useEffect(() => {
     if (!isOpen) return;
     const handleEscape = (e: KeyboardEvent) => {
@@ -49,14 +52,14 @@ export function TableOfContents({
   }, [isOpen, onClose]);
 
   // Scroll the active chapter into view after the list mounts. For virtualized
-  // lists the active item is only mounted when in the visible window, so we
-  // accept the closest mounted item as the proxy. For short lists the ref
-  // attaches directly.
+  // lists we pass scrollToIndex to VirtualList so it can position the active
+  // item even when it's outside the initial visible window. For short lists
+  // the ref attaches directly.
   useEffect(() => {
-    if (isOpen && activeItemRef.current) {
+    if (isOpen && !shouldVirtualize && activeItemRef.current) {
       activeItemRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
-  }, [isOpen]);
+  }, [isOpen, shouldVirtualize]);
 
   const onVisibleRangeChange = useCallback(
     (start: number, end: number) => {
@@ -99,7 +102,6 @@ export function TableOfContents({
   if (!isOpen) return null;
 
   const isRtl = direction === 'rtl';
-  const shouldVirtualize = toc.length > VIRTUALIZE_THRESHOLD;
 
   return (
     <aside
@@ -141,6 +143,7 @@ export function TableOfContents({
               ariaLabel={t('reader.tableOfContents')}
               renderItem={renderTocItem}
               onVisibleRangeChange={onVisibleRangeChange}
+              scrollToIndex={activeIndex >= 0 ? activeIndex : undefined}
             />
           ) : (
             <nav className="overflow-y-auto h-full" data-testid="toc-list">
