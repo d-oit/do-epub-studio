@@ -30,18 +30,32 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
+      - name: Check secret availability
+        id: secrets
+        run: |
+          if [[ -n "${{ secrets.CLOUDFLARE_API_TOKEN }}" && -n "${{ secrets.CLOUDFLARE_ACCOUNT_ID }}" ]]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Lighthouse skipped: Cloudflare credentials not available (expected on forks)"
+          fi
+
       - name: Checkout
+        if: steps.secrets.outputs.available == 'true'
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
         with:
           persist-credentials: false
 
       - name: Setup pnpm
+        if: steps.secrets.outputs.available == 'true'
         uses: ./.github/actions/setup-pnpm
 
       - name: Build
+        if: steps.secrets.outputs.available == 'true'
         run: pnpm build
 
       - name: Deploy preview to Cloudflare Pages
+        if: steps.secrets.outputs.available == 'true'
         uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0  # v4.0.0
         id: deploy
         continue-on-error: true
@@ -55,12 +69,19 @@ jobs:
           wranglerVersion: '4'
           command: pages deploy apps/web/dist --project-name=do-epub-studio --branch=${{ github.head_ref || github.ref_name }}
 
+      - name: Fail closed on deployment failure
+        if: steps.secrets.outputs.available == 'true' && steps.deploy.outcome != 'success'
+        run: |
+          echo "::error::Lighthouse unavailable: Cloudflare Pages deployment failed"
+          echo "::error::Per ADR-187, Unavailable must block readiness — not silently pass"
+          exit 1
+
       - name: Wait for deployment
-        if: steps.deploy.outcome == 'success'
+        if: steps.secrets.outputs.available == 'true' && steps.deploy.outcome == 'success'
         run: sleep 30
 
       - name: Run Lighthouse CI
-        if: steps.deploy.outcome == 'success'
+        if: steps.secrets.outputs.available == 'true' && steps.deploy.outcome == 'success'
         id: lhci
         uses: treosh/lighthouse-ci-action@3e7e23fb74242897f95c0ba9cabad3d0227b9b18  # v12.6.2
         with:
@@ -74,7 +95,7 @@ jobs:
           temporaryPublicStorage: true
 
       - name: Process Lighthouse results
-        if: always()
+        if: steps.secrets.outputs.available == 'true' && always()
         run: |
           if [ -f "./lighthouseci/assertion-results.json" ]; then
             echo "=== Lighthouse Assertion Results ==="

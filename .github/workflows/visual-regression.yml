@@ -6,6 +6,9 @@ on:
     branches: [main]
     paths:
       - 'packages/ui/**'
+      - 'apps/web/src/**/*.css'
+      - 'apps/web/tailwind.config.*'
+      - 'apps/web/src/index.css'
   workflow_dispatch:
 
 env:
