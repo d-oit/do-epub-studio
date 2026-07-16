@@ -165,8 +165,8 @@ export function LoginPage() {
           <p className="text-accent-error" role="alert">{verifyError}</p>
           <Button
             onClick={() => {
-              // eslint-disable-next-line @typescript-eslint/no-floating-promises
-              navigate('/login'); // eslint-disable-line i18next/no-literal-string -- route path
+              // eslint-disable-next-line @typescript-eslint/no-floating-promises, i18next/no-literal-string -- React event handler; route path
+              navigate('/login');
             }}
           >
             {t('login.backToLogin')}

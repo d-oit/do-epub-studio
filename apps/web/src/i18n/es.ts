@@ -401,4 +401,8 @@ export const es: Record<TranslationKeys, string> = {
   'storage.clearError': 'Error al vaciar la caché',
   'storage.unsupported': 'La información de almacenamiento no está disponible en este navegador',
   'storage.confirmClear': 'Esto eliminará todos los libros, anotaciones y progreso de lectura almacenados en este dispositivo. Se perderán los datos no sincronizados. ¿Estás seguro?',
+  'relativeTime.justNow': 'ahora mismo',
+  'relativeTime.minutesAgo': 'hace {count}m',
+  'relativeTime.hoursAgo': 'hace {count}h',
+  'relativeTime.daysAgo': 'hace {count}d',
 };

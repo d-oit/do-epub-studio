@@ -38,6 +38,55 @@ describe('formatDate', () => {
     const result = formatDate(date);
     expect(result).toMatch(/\d{1,2}\/\d{1,2}\/\d{4}/);
   });
+
+  it('uses i18n t() when provided for just now', () => {
+    const mockT = vi.fn((key: string, _params?: Record<string, string | number>) => {
+      if (key === 'relativeTime.justNow') return 'jetzt';
+      if (key === 'relativeTime.minutesAgo') return `vor ${String(_params?.count ?? '')}Min`;
+      return key;
+    });
+    const now = new Date().toISOString();
+    expect(formatDate(now, mockT)).toBe('jetzt');
+    expect(mockT).toHaveBeenCalledWith('relativeTime.justNow');
+  });
+
+  it('uses i18n t() when provided for minutes ago', () => {
+    const mockT = vi.fn((key: string, params?: Record<string, string | number>) => {
+      if (key === 'relativeTime.minutesAgo') return `vor ${String(params?.count ?? '')}Min`;
+      return key;
+    });
+    const date = new Date(Date.now() - 5 * 60000).toISOString();
+    const result = formatDate(date, mockT);
+    expect(result).toBe('vor 5Min');
+    expect(mockT).toHaveBeenCalledWith('relativeTime.minutesAgo', { count: 5 });
+  });
+
+  it('uses i18n t() when provided for hours ago', () => {
+    const mockT = vi.fn((key: string, params?: Record<string, string | number>) => {
+      if (key === 'relativeTime.hoursAgo') return `il y a ${String(params?.count ?? '')}h`;
+      return key;
+    });
+    const date = new Date(Date.now() - 3 * 3600000).toISOString();
+    const result = formatDate(date, mockT);
+    expect(result).toBe('il y a 3h');
+    expect(mockT).toHaveBeenCalledWith('relativeTime.hoursAgo', { count: 3 });
+  });
+
+  it('uses i18n t() when provided for days ago', () => {
+    const mockT = vi.fn((key: string, params?: Record<string, string | number>) => {
+      if (key === 'relativeTime.daysAgo') return `${String(params?.count ?? '')}日前`;
+      return key;
+    });
+    const date = new Date(Date.now() - 2 * 86400000).toISOString();
+    const result = formatDate(date, mockT);
+    expect(result).toBe('2日前');
+    expect(mockT).toHaveBeenCalledWith('relativeTime.daysAgo', { count: 2 });
+  });
+
+  it('falls back to English when t is not provided', () => {
+    const date = new Date(Date.now() - 10 * 60000).toISOString();
+    expect(formatDate(date)).toBe('10m ago');
+  });
 });
 
 describe('CommentItem', () => {

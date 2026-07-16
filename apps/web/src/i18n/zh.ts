@@ -401,4 +401,8 @@ export const zh: Record<TranslationKeys, string> = {
   'storage.clearError': '清除缓存失败',
   'storage.unsupported': '此浏览器无法使用存储信息',
   'storage.confirmClear': '这将删除此设备上缓存的所有图书、标注和阅读进度。未同步的数据将丢失。确定吗？',
+  'relativeTime.justNow': '刚刚',
+  'relativeTime.minutesAgo': '{count}分钟前',
+  'relativeTime.hoursAgo': '{count}小时前',
+  'relativeTime.daysAgo': '{count}天前',
 };

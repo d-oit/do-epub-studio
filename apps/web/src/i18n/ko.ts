@@ -401,4 +401,8 @@ export const ko: Record<TranslationKeys, string> = {
   'storage.clearError': '캐시를 정리할 수 없습니다.',
   'storage.unsupported': '이 브라우저에서 저장공간 정보를 사용할 수 없습니다.',
   'storage.confirmClear': '이 조치에 캐시된 모든 책, 메모 및 읽기 진행 상황이 삭제됩니다. 동기화되지 않은 데이터는 손실됩니다. 확실하십니까?',
+  'relativeTime.justNow': '방금',
+  'relativeTime.minutesAgo': '{count}분 전',
+  'relativeTime.hoursAgo': '{count}시간 전',
+  'relativeTime.daysAgo': '{count}일 전',
 };

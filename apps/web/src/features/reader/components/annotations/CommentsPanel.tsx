@@ -260,7 +260,10 @@ export function CommentsPanel({
                   items={highlights}
                   itemHeight={HIGHLIGHT_ITEM_HEIGHT}
                   className="h-full"
-                  renderItem={renderHighlight}                    ariaLabel="Highlights" /* eslint-disable-line i18next/no-literal-string -- React camelCase aria attribute */
+                  renderItem={renderHighlight}
+                  // codacy-suppress-next-line ESLint8_eslint_i18next/no-literal-string -- rule exists in project ESLint; Codacy lacks i18next plugin
+                  // eslint-disable-next-line i18next/no-literal-string -- React camelCase aria attribute; ignoreAttribute config doesn't cover kebab-case
+                  ariaLabel="Highlights"
                 />
               ) : (
                 highlights.map(renderHighlight)

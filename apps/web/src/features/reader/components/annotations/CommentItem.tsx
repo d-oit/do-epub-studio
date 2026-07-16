@@ -1,6 +1,6 @@
 import { useState, memo } from 'react';
 import type { Comment } from '../../../../stores';
-import type { TranslationKeys } from '../../../../i18n';
+import type { TFunction } from '../../../../hooks/useTranslation';
 import { formatDate } from './formatDate';
 
 export interface CommentItemProps {
@@ -19,7 +19,7 @@ export interface CommentItemProps {
   onResolve: (id: string) => void;
   onDelete: (id: string) => void;
   onNavigate: () => void;
-  t: (key: TranslationKeys) => string;
+  t: TFunction;
 }
 
 export const CommentItem = memo(function CommentItem({
@@ -101,7 +101,7 @@ export const CommentItem = memo(function CommentItem({
           <p className="text-sm text-foreground">{comment.body}</p>
           <div className="mt-2 flex items-center justify-between">
             <span className="text-xs text-foreground-muted">
-              {comment.userEmail} · {formatDate(comment.createdAt)}
+              {comment.userEmail} · {formatDate(comment.createdAt, t)}
             </span>
             {comment.status === 'resolved' && (
               <span className="text-xs text-accent-success">{t('comment.resolved')}</span>
@@ -116,7 +116,7 @@ export const CommentItem = memo(function CommentItem({
             <div key={reply.id} className="text-sm">
               <p className="text-foreground">{reply.body}</p>
               <span className="text-xs text-foreground-muted">
-                {reply.userEmail} · {formatDate(reply.createdAt)}
+                {reply.userEmail} · {formatDate(reply.createdAt, t)}
               </span>
             </div>
           ))}

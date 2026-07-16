@@ -398,6 +398,10 @@ export const en = {
   'storage.clearError': 'Failed to clear cached data',
   'storage.unsupported': 'Storage information is not available in this browser',
   'storage.confirmClear': 'This will delete all cached books, annotations, and reading progress stored on this device. Unsynced data will be lost. Are you sure?',
+  'relativeTime.justNow': 'just now',
+  'relativeTime.minutesAgo': '{count}m ago',
+  'relativeTime.hoursAgo': '{count}h ago',
+  'relativeTime.daysAgo': '{count}d ago',
 } as const;
 
 export type TranslationKeys = keyof typeof en;
