@@ -1,10 +1,11 @@
 # Plan 188: GOAP — Commit Validator Harmonization & Quality Gate Hardening
 
-**Status:** In Progress
+**Status:** ✅ COMPLETED
 **Date:** 2026-07-15
 **Decision:** [ADR-187](187-adr-fail-closed-engineering-gates.md)
 **Extends:** Plan 186
 **Strategy:** Swarm — independent fixes executed in parallel
+**Completed:** 2026-07-15 (PR #797, commit 7e7e73c)
 
 ## Goal
 
@@ -48,10 +49,10 @@ required phases are skipped.
 
 ## Acceptance Criteria
 
-- [ ] All 3 commit validators accept the same set of types
-- [ ] All 3 commit validators accept the same set of scopes
-- [ ] Parity tests pass
-- [ ] Quality gate exit 3 is treated as failure by `validate.sh`
-- [ ] `commit.sh` handles `--body "X" --message "Y"` order correctly
-- [ ] `./scripts/quality_gate.sh` passes
-- [ ] `pnpm lint && pnpm typecheck && pnpm build` all pass
+- [x] All 3 commit validators accept the same set of types
+- [x] All 3 commit validators accept the same set of scopes
+- [x] Parity tests pass (28/28, 0 drift)
+- [x] Quality gate exit 3 is treated as failure by `validate.sh`
+- [x] `commit.sh` handles `--body "X" --message "Y"` order correctly
+- [x] `./scripts/quality_gate.sh` passes
+- [x] `pnpm lint && pnpm typecheck && pnpm build` all pass

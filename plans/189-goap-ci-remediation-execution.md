@@ -1,10 +1,11 @@
 # Plan 189: GOAP — CI Remediation Execution
 
-**Status:** In Progress
+**Status:** ✅ COMPLETED
 **Date:** 2026-07-15
 **Decision:** [ADR-187](187-adr-fail-closed-engineering-gates.md)
 **Extends:** Plan 186, Plan 188
 **Strategy:** Parallel — independent CI fixes
+**Completed:** 2026-07-15 (PR #799 commit 3a4ef97 + this PR)
 
 ## Goal
 
@@ -35,13 +36,22 @@ AdminRecoverPage 215L). C5 was already fixed (lint is a direct blocking step).
 
 ## Acceptance Criteria
 
-- [ ] Lighthouse audits cover /, /catalog, /admin, /reader routes
-- [ ] Route-specific mobile budgets are blocking (error, not warn)
-- [ ] CodeQL API errors fail the check instead of reporting zero
-- [ ] Scorecard SARIF is uploaded to GitHub Security tab
-- [ ] Worker build validation runs in CI without deploying
-- [ ] All tests pass, lint passes, typecheck passes
-- [ ] `./scripts/validate-workflows.sh` passes
+- [x] Lighthouse audits cover /, /catalog, /admin, /reader routes
+- [x] Route-specific mobile budgets are blocking (error, not warn)
+- [x] CodeQL API errors fail the check instead of reporting zero
+- [x] Scorecard SARIF is uploaded to GitHub Security tab
+- [x] Worker build validation runs in CI without deploying
+- [x] All tests pass, lint passes, typecheck passes
+- [x] `./scripts/validate-workflows.sh` passes
+
+## Task Completion Evidence
+
+| Task | Status | Evidence |
+|------|--------|----------|
+| T1 | ✅ | `.lighthouserc.json` now has `matchingUrlPattern` per-route budgets for catalog, admin, auth, reader, offline |
+| T2 | ✅ | `ci.yml:159-163` — API errors exit 1; `ci.yml:165-168` — malformed response exits 1 (PR #799) |
+| T3 | ✅ | `scorecard.yml:45` — `upload-sarif` step with `security-events: write` permission (PR #799) |
+| T4 | ✅ | `apps/worker/package.json:11` — `build:worker` script; `ci.yml:293-320` — worker-build CI job (PR #799) |
 
 ## Already Verified Resolved
 

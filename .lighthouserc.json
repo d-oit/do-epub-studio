@@ -17,17 +17,26 @@
       ]
     },
     "assert": {
-      "assertions": {
-        "categories:performance": ["error", { "minScore": 0.5 }],
-        "categories:accessibility": ["error", { "minScore": 0.85 }],
-        "categories:best-practices": ["error", { "minScore": 0.8 }],
-        "categories:seo": ["error", { "minScore": 0.8 }],
-        "resource-summary:document:size": ["error", { "maxNumericValue": 50000 }],
-        "resource-summary:script:size": ["error", { "maxNumericValue": 500000 }],
-        "resource-summary:stylesheet:size": ["error", { "maxNumericValue": 100000 }],
-        "first-contentful-paint": ["error", { "maxNumericValue": 2000 }],
-        "interactive": ["error", { "maxNumericValue": 5000 }]
-      }
+      "assertions": [
+        ["categories:performance", ["error", { "minScore": 0.5 }]],
+        ["categories:accessibility", ["error", { "minScore": 0.85 }]],
+        ["categories:best-practices", ["error", { "minScore": 0.8 }]],
+        ["categories:seo", ["error", { "minScore": 0.8 }]],
+        ["resource-summary:document:size", ["error", { "maxNumericValue": 50000 }]],
+        ["resource-summary:script:size", ["error", { "maxNumericValue": 500000 }]],
+        ["resource-summary:stylesheet:size", ["error", { "maxNumericValue": 100000 }]],
+        ["first-contentful-paint", ["error", { "maxNumericValue": 2000 }]],
+        ["interactive", ["error", { "maxNumericValue": 5000 }]],
+        ["categories:performance", ["error", { "minScore": 0.6 }], { "matchingUrlPattern": ".*\\/catalog.*" }],
+        ["categories:performance", ["error", { "minScore": 0.6 }], { "matchingUrlPattern": ".*\\/admin.*" }],
+        ["categories:performance", ["error", { "minScore": 0.6 }], { "matchingUrlPattern": ".*\\/auth.*" }],
+        ["categories:performance", ["error", { "minScore": 0.5 }], { "matchingUrlPattern": ".*\\/reader.*" }],
+        ["categories:performance", ["error", { "minScore": 0.5 }], { "matchingUrlPattern": ".*\\/offline.*" }],
+        ["first-contentful-paint", ["error", { "maxNumericValue": 1800 }], { "matchingUrlPattern": ".*\\/catalog.*" }],
+        ["first-contentful-paint", ["error", { "maxNumericValue": 1800 }], { "matchingUrlPattern": ".*\\/auth.*" }],
+        ["interactive", ["error", { "maxNumericValue": 4000 }], { "matchingUrlPattern": ".*\\/catalog.*" }],
+        ["interactive", ["error", { "maxNumericValue": 4000 }], { "matchingUrlPattern": ".*\\/admin.*" }]
+      ]
     },
     "upload": {
       "target": "temporary-public-storage"
