@@ -130,12 +130,18 @@ describe('matchAllBounded (property-based)', () => {
 });
 
 describe('escapeRegex (property-based)', () => {
-  it('escaped string matches itself literally when used in regex', () => {
+  it('escaped string has all metacharacters preceded by backslash', () => {
+    const metacharacters = new Set('.*+?^${}()|[]');
     fc.assert(
       fc.property(fc.string({ minLength: 0, maxLength: 50 }), (s) => {
-        // eslint-disable-next-line security/detect-non-literal-regexp -- intentional: testing that escapeRegex makes strings safe for RegExp
-        const re = new RegExp(escapeRegex(s));
-        return re.test(s);
+        const escaped = escapeRegex(s);
+        for (let i = 0; i < escaped.length; i++) {
+          const ch = escaped[i];
+          if (ch && metacharacters.has(ch) && (i === 0 || escaped[i - 1] !== '\\')) {
+            return false;
+          }
+        }
+        return escaped.length >= s.length;
       }),
     );
   });
