@@ -185,7 +185,7 @@ export function SearchPanel({ isOpen, book, onClose, onNavigate, t }: SearchPane
                       type="button"
                       onClick={() => { onNavigate(result.cfi); }}
                       style={{ position: 'absolute', top: (visibleRange.start + i) * 80, left: 0, right: 0 }}
-                      className="w-full text-left p-3 rounded-lg hover:bg-background-secondary transition-colors border border-transparent hover:border-border group"
+                      className="w-full text-left p-3 rounded-lg hover:bg-background-secondary transition-colors border border-transparent hover:border-border group focus-visible:ring-2 focus-visible:ring-accent outline-none"
                     >
                     {result.chapterTitle && (
                       <span className="block text-[10px] uppercase tracking-wider font-bold text-accent mb-1">
