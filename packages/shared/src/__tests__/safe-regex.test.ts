@@ -131,7 +131,20 @@ describe('matchAllBounded (property-based)', () => {
 
 describe('escapeRegex (property-based)', () => {
   it('escaped string has all metacharacters preceded by backslash', () => {
-    const metacharacters = new Set('.*+?^${}()|[]');
+    const metacharacters = new Set<string>();
+    metacharacters.add('.');
+    metacharacters.add('*');
+    metacharacters.add('+');
+    metacharacters.add('?');
+    metacharacters.add('^');
+    metacharacters.add('$');
+    metacharacters.add('{');
+    metacharacters.add('}');
+    metacharacters.add('(');
+    metacharacters.add(')');
+    metacharacters.add('|');
+    metacharacters.add('[');
+    metacharacters.add(']');
     fc.assert(
       fc.property(fc.string({ minLength: 0, maxLength: 50 }), (s) => {
         const escaped = escapeRegex(s);
