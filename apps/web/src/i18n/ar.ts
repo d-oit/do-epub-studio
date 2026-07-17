@@ -37,6 +37,7 @@ export const ar: Record<TranslationKeys, string> = {
   'reader.tableOfContents': 'المحتويات',
   'reader.bookmarks': 'الإشارات المرجعية',
   'reader.exportNotes': 'تصدير الملاحظات',
+  'reader.chapterProgress': 'الفصل {current} من {total}',
   'reader.noChapters': 'لا توجد فصول متاحة',
   'reader.loading': 'جاري تحميل قارئ EPUB...',
   'theme.toggle.dark': 'التبديل إلى الوضع الداكن',

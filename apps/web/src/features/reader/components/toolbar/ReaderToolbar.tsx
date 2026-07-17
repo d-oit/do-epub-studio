@@ -13,6 +13,7 @@ import type { Comment, Bookmark } from '../../../../stores/reader';
 import type { TranslationKeys } from '../../../../i18n';
 
 import type { ReaderPanel } from '../../hooks/useReaderUi';
+import type { TocItem } from '../../lib/epub-init';
 
 interface ReaderToolbarProps {
   bookTitle: string | null;
@@ -22,6 +23,8 @@ interface ReaderToolbarProps {
   capabilities: { canComment?: boolean } | null;
   activePanel: ReaderPanel;
   isFixedLayout?: boolean;
+  toc: TocItem[];
+  currentChapter: string | null;
   onToggleToc: () => void;
   onToggleSearch: () => void;
   onToggleComments: () => void;
@@ -31,7 +34,7 @@ interface ReaderToolbarProps {
   onToggleFixedLayoutControls?: () => void;
   onExportNotes: () => void;
   onLogout: () => void;
-  t: (key: TranslationKeys) => string;
+  t: (key: TranslationKeys, params?: Record<string, string | number>) => string;
 }
 
 export function ReaderToolbar({
@@ -41,6 +44,8 @@ export function ReaderToolbar({
   capabilities,
   activePanel,
   isFixedLayout = false,
+  toc,
+  currentChapter,
   onToggleToc,
   onToggleSearch,
   onToggleComments,
@@ -86,6 +91,13 @@ export function ReaderToolbar({
 
   const openCommentsCount = useMemo(() => comments.filter((c) => c.status === 'open').length, [comments]);
   const isHeaderVisible = scrollDirection === 'up';
+
+  const chapterProgressLabel = useMemo(() => {
+    if (!currentChapter || toc.length === 0) return null;
+    const idx = toc.findIndex((item) => item.href === currentChapter);
+    if (idx === -1) return null;
+    return t('reader.chapterProgress', { current: idx + 1, total: toc.length });
+  }, [toc, currentChapter, t]);
 
   return (
     <Header
@@ -137,6 +149,11 @@ export function ReaderToolbar({
                   </span>
                 )}
               </div>
+              {chapterProgressLabel && (
+                <span className="text-[10px] text-foreground-muted font-medium" role="status" aria-live="polite">
+                  {chapterProgressLabel}
+                </span>
+              )}
             </div>
           </div>
 

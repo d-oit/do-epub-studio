@@ -37,6 +37,7 @@ export const ko: Record<TranslationKeys, string> = {
   'reader.tableOfContents': '목차',
   'reader.bookmarks': '북마크',
   'reader.exportNotes': '노트 내보내기',
+  'reader.chapterProgress': '{total}장 중 {current}장',
   'reader.noChapters': '사용 가능한 챕터가 없습니다',
   'reader.loading': 'EPUB 리더 로딩 중...',
   'theme.toggle.dark': '다크 모드로 전환',

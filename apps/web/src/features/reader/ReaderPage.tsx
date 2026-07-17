@@ -295,6 +295,8 @@ export function ReaderPage() {
         bookmarks={optimisticState.bookmarks}
         capabilities={capabilities}
         activePanel={activePanel}
+        toc={toc}
+        currentChapter={currentChapter}
         onToggleToc={() => togglePanel('toc')}
         onToggleSearch={() => { togglePanel('search'); }}
         onToggleComments={() => togglePanel('comments')}

@@ -37,6 +37,7 @@ export const ja: Record<TranslationKeys, string> = {
   'reader.tableOfContents': '目次',
   'reader.bookmarks': 'ブックマーク',
   'reader.exportNotes': 'ノートをエクスポート',
+  'reader.chapterProgress': '{total}章中 {current}章',
   'reader.noChapters': '利用可能な章がありません',
   'reader.loading': 'EPUBリーダー読み込み中...',
   'theme.toggle.dark': 'ダークモードに切り替え',

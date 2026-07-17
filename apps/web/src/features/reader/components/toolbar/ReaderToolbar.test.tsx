@@ -40,6 +40,8 @@ describe('ReaderToolbar', () => {
     bookmarks: [],
     capabilities: { canComment: true },
     activePanel: null,
+    toc: [{ label: 'Chapter 1', href: 'ch1.xhtml' }, { label: 'Chapter 2', href: 'ch2.xhtml' }],
+    currentChapter: 'ch1.xhtml',
     onToggleToc: vi.fn(),
     onToggleSearch: vi.fn(),
     onToggleComments: vi.fn(),
@@ -48,11 +50,12 @@ describe('ReaderToolbar', () => {
     onToggleInfo: vi.fn(),
     onExportNotes: vi.fn(),
     onLogout: vi.fn(),
-    t: (key: string) => {
+    t: (key: string, params?: Record<string, string | number>) => {
       const translations: Record<string, string> = {
         'reader.tableOfContents': 'Contents',
         'reader.search': 'Search',
         'reader.untitledBook': 'Untitled Book',
+        'reader.chapterProgress': `Chapter ${params?.current} of ${params?.total}`,
         'annotation.comment': 'Comment',
         'reader.bookmarks': 'Bookmarks',
         'reader.aboutBook': 'About This Book',
@@ -80,6 +83,26 @@ describe('ReaderToolbar', () => {
     render(<ReaderToolbar {...mockProps} />);
     expect(screen.getByText('Test Book')).toBeInTheDocument();
     expect(screen.getByText('45%')).toBeInTheDocument();
+  });
+
+  it('renders chapter progress indicator', () => {
+    render(<ReaderToolbar {...mockProps} />);
+    expect(screen.getByText('Chapter 1 of 2')).toBeInTheDocument();
+  });
+
+  it('hides chapter progress when toc is empty', () => {
+    render(<ReaderToolbar {...mockProps} toc={[]} />);
+    expect(screen.queryByText(/Chapter/)).not.toBeInTheDocument();
+  });
+
+  it('hides chapter progress when currentChapter is null', () => {
+    render(<ReaderToolbar {...mockProps} currentChapter={null} />);
+    expect(screen.queryByText(/Chapter/)).not.toBeInTheDocument();
+  });
+
+  it('hides chapter progress when currentChapter not found in toc', () => {
+    render(<ReaderToolbar {...mockProps} currentChapter="unknown.xhtml" />);
+    expect(screen.queryByText(/Chapter/)).not.toBeInTheDocument();
   });
 
   it('calls toggle handlers when buttons are clicked', () => {
