@@ -161,7 +161,7 @@ jobs:
             echo "Response: $API_RESPONSE"
             exit 1
           }
-          count=$(echo "$API_RESPONSE" | jq --arg ref "refs/heads/$ref" '[.[] | select(.most_recent_instance.ref == $ref) | select(.tool.name != "Scorecard")] | length' 2>/dev/null)
+          count=$(printf '%s\n' "$API_RESPONSE" | jq --arg ref "refs/heads/$ref" '[.[] | select(.most_recent_instance.ref == $ref) | select(.tool.name != "Scorecard")] | length' 2>/dev/null)
           if [ -z "$count" ] || ! [[ "$count" =~ ^[0-9]+$ ]]; then
             echo "::error::CodeQL API returned malformed response. Cannot determine alert count."
             exit 1
