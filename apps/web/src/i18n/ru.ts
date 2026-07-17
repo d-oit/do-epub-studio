@@ -37,7 +37,7 @@ export const ru: Record<TranslationKeys, string> = {
   'reader.tableOfContents': 'Содержание',
   'reader.bookmarks': 'Закладки',
   'reader.exportNotes': 'Экспорт заметок',
-  'reader.chapterProgress': 'Глава {{current}} из {{total}}',
+  'reader.chapterProgress': 'Глава {current} из {total}',
   'reader.noChapters': 'Нет доступных глав',
   'reader.loading': 'Загрузка ридера EPUB...',
   'theme.toggle.dark': 'Переключить на тёмную тему',

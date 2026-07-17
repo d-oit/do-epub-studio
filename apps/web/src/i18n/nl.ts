@@ -37,7 +37,7 @@ export const nl: Record<TranslationKeys, string> = {
   'reader.tableOfContents': 'Inhoudsopgave',
   'reader.bookmarks': 'Bladwijzers',
   'reader.exportNotes': 'Notities exporteren',
-  'reader.chapterProgress': 'Hoofdstuk {{current}} van {{total}}',
+  'reader.chapterProgress': 'Hoofdstuk {current} van {total}',
   'reader.noChapters': 'Geen hoofdstukken beschikbaar',
   'reader.loading': 'EPUB-lezer laden...',
   'theme.toggle.dark': 'Schakel naar donkere modus',

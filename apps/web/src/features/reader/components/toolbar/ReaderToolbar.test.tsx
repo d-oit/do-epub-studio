@@ -100,6 +100,11 @@ describe('ReaderToolbar', () => {
     expect(screen.queryByText(/Chapter/)).not.toBeInTheDocument();
   });
 
+  it('hides chapter progress when currentChapter not found in toc', () => {
+    render(<ReaderToolbar {...mockProps} currentChapter="unknown.xhtml" />);
+    expect(screen.queryByText(/Chapter/)).not.toBeInTheDocument();
+  });
+
   it('calls toggle handlers when buttons are clicked', () => {
     render(<ReaderToolbar {...mockProps} />);
     screen.getByLabelText('Contents').click();

@@ -87,3 +87,4 @@ junit.xml
 *.lcov
 .vitest/
 packages/ui/storybook-static/
+.mimocode/.cron-lock

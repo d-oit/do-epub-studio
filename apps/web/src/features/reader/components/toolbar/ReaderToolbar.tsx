@@ -92,6 +92,13 @@ export function ReaderToolbar({
   const openCommentsCount = useMemo(() => comments.filter((c) => c.status === 'open').length, [comments]);
   const isHeaderVisible = scrollDirection === 'up';
 
+  const chapterProgressLabel = useMemo(() => {
+    if (!currentChapter || toc.length === 0) return null;
+    const idx = toc.findIndex((item) => item.href === currentChapter);
+    if (idx === -1) return null;
+    return t('reader.chapterProgress', { current: idx + 1, total: toc.length });
+  }, [toc, currentChapter, t]);
+
   return (
     <Header
       sticky
@@ -142,15 +149,11 @@ export function ReaderToolbar({
                   </span>
                 )}
               </div>
-              {toc.length > 0 && currentChapter && (() => {
-                const idx = toc.findIndex((item) => item.href === currentChapter);
-                if (idx === -1) return null;
-                return (
-                  <span className="text-[10px] text-foreground-muted font-medium">
-                    {t('reader.chapterProgress', { current: idx + 1, total: toc.length })}
-                  </span>
-                );
-              })()}
+              {chapterProgressLabel && (
+                <span className="text-[10px] text-foreground-muted font-medium" role="status" aria-live="polite">
+                  {chapterProgressLabel}
+                </span>
+              )}
             </div>
           </div>
 

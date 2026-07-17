@@ -36,7 +36,7 @@ export const en = {
   'reader.tableOfContents': 'Contents',
   'reader.bookmarks': 'Bookmarks',
   'reader.exportNotes': 'Export Notes',
-  'reader.chapterProgress': 'Chapter {{current}} of {{total}}',
+  'reader.chapterProgress': 'Chapter {current} of {total}',
   'reader.noChapters': 'No chapters available',
   'reader.loading': 'EPUB reader loading...',
   'theme.toggle.dark': 'Switch to dark mode',
