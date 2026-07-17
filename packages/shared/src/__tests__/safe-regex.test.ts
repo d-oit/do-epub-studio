@@ -149,8 +149,8 @@ describe('escapeRegex (property-based)', () => {
       fc.property(fc.string({ minLength: 0, maxLength: 50 }), (s) => {
         const escaped = escapeRegex(s);
         for (let i = 0; i < escaped.length; i++) {
-          const ch = escaped[i];
-          if (ch && metacharacters.has(ch) && (i === 0 || escaped[i - 1] !== '\\')) {
+          const ch = escaped.charAt(i);
+          if (ch && metacharacters.has(ch) && (i === 0 || escaped.charAt(i - 1) !== '\\')) {
             return false;
           }
         }
