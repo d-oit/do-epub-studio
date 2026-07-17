@@ -37,6 +37,7 @@ export const zh: Record<TranslationKeys, string> = {
   'reader.tableOfContents': '目录',
   'reader.bookmarks': '书签',
   'reader.exportNotes': '导出笔记',
+  'reader.chapterProgress': '第 {{current}} 章，共 {{total}} 章',
   'reader.noChapters': '没有可用章节',
   'reader.loading': 'EPUB阅读器加载中...',
   'theme.toggle.dark': '切换到深色模式',

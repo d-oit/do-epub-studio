@@ -37,6 +37,7 @@ export const hi: Record<TranslationKeys, string> = {
   'reader.tableOfContents': 'विषय सूची',
   'reader.bookmarks': 'बुकमार्क',
   'reader.exportNotes': 'नोट निर्यात करें',
+  'reader.chapterProgress': 'अध्याय {{current}} / {{total}}',
   'reader.noChapters': 'कोई अध्याय उपलब्ध नहीं',
   'reader.loading': 'EPUB रीडर लोड हो रहा है...',
   'theme.toggle.dark': 'डार्क मोड पर स्विच करें',
