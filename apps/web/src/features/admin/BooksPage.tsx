@@ -10,6 +10,7 @@ import { Button, ConfirmDialog } from '../../components/ui';
 import { Spinner } from '@do-epub-studio/ui';
 import { BookCreateModal } from './components/BookCreateModal';
 import { BookEditModal } from './components/BookEditModal';
+import { Breadcrumb } from '../../components/navigation';
 
 interface CreateBookResponse {
   id: string;
@@ -270,6 +271,12 @@ export function AdminBookResponsesPage() {
 
   return (
     <main id="main-content" className="min-dvh bg-background p-4 sm:p-6 lg:p-8">
+      {/* eslint-disable i18next/no-literal-string -- hrefs are routes, not user-visible text */}
+      <Breadcrumb items={[
+        { labelKey: 'admin.breadcrumb.home', href: '/admin' },
+        { labelKey: 'admin.breadcrumb.books' },
+      ]} />
+      {/* eslint-enable i18next/no-literal-string */}
       <header className="flex justify-between flex-wrap gap-4 items-center mb-8">
         <div>
           <h1 className="text-2xl font-bold text-foreground">
@@ -335,20 +342,20 @@ export function AdminBookResponsesPage() {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => openEditModal(book)}
-                    className="text-xs font-medium text-foreground-muted hover:text-foreground"
+                    className="touch-target inline-flex items-center text-xs font-medium text-foreground-muted hover:text-foreground"
                   >
                     {t('admin.books.edit')}
                   </button>
                   <button
                     onClick={() => { setArchiveConfirmBook(book); }}
                     disabled={archivingBookId === book.id}
-                    className="text-xs font-medium text-semantic-error hover:opacity-80 disabled:opacity-50"
+                    className="touch-target inline-flex items-center text-xs font-medium text-semantic-error hover:opacity-80 disabled:opacity-50"
                   >
                     {archivingBookId === book.id ? '...' : t('admin.books.archive')}
                   </button>
                   <button
                     onClick={() => handleViewGrants(book)}
-                    className="text-sm font-medium text-accent hover:opacity-80"
+                    className="touch-target inline-flex items-center text-sm font-medium text-accent hover:opacity-80"
                   >
                     {t('admin.books.manageAccess')} &rarr;
                   </button>

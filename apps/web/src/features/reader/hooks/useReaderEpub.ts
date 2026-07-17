@@ -9,6 +9,7 @@ import {
 } from '@do-epub-studio/reader-core';
 import { createSpanId, createTraceId } from '@do-epub-studio/shared';
 import { logClientEvent } from '../../../lib/client-logger';
+import { getPrefersReducedMotion } from '../../../lib/reduced-motion';
 import {
   useAuthStore,
   useReaderStore,
@@ -239,9 +240,7 @@ export function useReaderEpub(
           rendition.hooks.content.register((contents: Contents) => {
             const doc = contents.document;
             if (!doc?.documentElement) return;
-            const reducedMotion =
-              typeof window !== 'undefined' &&
-              window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            const reducedMotion = getPrefersReducedMotion();
             const transition = reducedMotion ? 'none' : 'transform 0.18s ease-out';
             const scale = zoomRef.current.toFixed(2);
             let styleEl = doc.getElementById('__fl_zoom_style__');
@@ -413,9 +412,7 @@ export function useReaderEpub(
     };
     const contentsList = renditionWithContents._contents;
     if (!Array.isArray(contentsList)) return;
-    const reducedMotion =
-      typeof window !== 'undefined' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const reducedMotion = getPrefersReducedMotion();
     const transition = reducedMotion ? 'none' : 'transform 0.18s ease-out';
     const scale = zoomRef.current.toFixed(2);
     contentsList.forEach((contents) => {

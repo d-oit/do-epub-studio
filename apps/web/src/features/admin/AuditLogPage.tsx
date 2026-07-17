@@ -13,6 +13,7 @@ import type { AuditLogResponse } from '@do-epub-studio/shared';
 import { LocaleSwitcher } from '../../components/LocaleSwitcher';
 import { Spinner } from '@do-epub-studio/ui';
 import { logClientEvent } from '../../lib/client-logger';
+import { Breadcrumb } from '../../components/navigation';
 
 const PAGE_SIZE = 50;
 const ENTITY_TYPE_OPTIONS: Array<{ value: string; labelKey: TranslationKeys }> = [
@@ -106,7 +107,7 @@ function AuditTable({ data, page, total, onPrev, onNext }: AuditTableProps) {
           <button
             onClick={onPrev}
             disabled={page <= 1}
-            className="px-3 py-1 text-sm border border-border rounded disabled:opacity-50 disabled:cursor-not-allowed bg-background text-foreground-muted hover:bg-background-secondary"
+            className="touch-target px-3 py-1 text-sm border border-border rounded disabled:opacity-50 disabled:cursor-not-allowed bg-background text-foreground-muted hover:bg-background-secondary"
           >
             {t('admin.audit.previous')}
           </button>
@@ -117,7 +118,7 @@ function AuditTable({ data, page, total, onPrev, onNext }: AuditTableProps) {
           <button
             onClick={onNext}
             disabled={page >= totalPages}
-            className="px-3 py-1 text-sm border border-border rounded disabled:opacity-50 disabled:cursor-not-allowed bg-background text-foreground-muted hover:bg-background-secondary"
+            className="touch-target px-3 py-1 text-sm border border-border rounded disabled:opacity-50 disabled:cursor-not-allowed bg-background text-foreground-muted hover:bg-background-secondary"
           >
             {t('admin.audit.next')}
           </button>
@@ -256,6 +257,13 @@ export function AdminAuditPage() {
 
   return (
     <main id="main-content" className="min-h-dvh bg-background p-4 sm:p-6 lg:p-8">
+      {/* eslint-disable i18next/no-literal-string -- hrefs are routes, not user-visible text */}
+      <Breadcrumb items={[
+        { labelKey: 'admin.breadcrumb.home', href: '/admin' },
+        { labelKey: 'admin.breadcrumb.books', href: '/admin/books' },
+        { labelKey: 'admin.breadcrumb.audit' },
+      ]} />
+      {/* eslint-enable i18next/no-literal-string */}
       <header className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-2xl font-bold text-foreground">

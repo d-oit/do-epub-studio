@@ -17,6 +17,27 @@ interface ApiRequestOptions extends RequestInit {
 }
 
 const DEFAULT_TIMEOUT_MS = 15000;
+const MAX_RETRIES = 3;
+const INITIAL_BACKOFF_MS = 200;
+
+/**
+ * Determines whether a failed request should be retried.
+ * Retries on network errors (TypeError) and 5xx HTTP status codes.
+ * Does NOT retry on 4xx client errors or timeouts.
+ */
+function isRetryable(error: unknown, status?: number): boolean {
+  if (status && status >= 500) return true;
+  if (error instanceof TypeError && error.message !== 'Request timeout') return true;
+  return false;
+}
+
+/**
+ * Sleep for exponential backoff: 200ms, 400ms, 800ms.
+ */
+function backoff(attempt: number): Promise<void> {
+  const delay = INITIAL_BACKOFF_MS * 2 ** attempt;
+  return new Promise((resolve) => setTimeout(resolve, delay));
+}
 
 function handleUnauthorized() {
   const state = useAuthStore.getState();
@@ -28,124 +49,167 @@ function handleUnauthorized() {
 }
 
 /**
- * Core API request function with observability, timeout, and error handling.
+ * Core API request function with observability, timeout, retry with
+ * exponential backoff, and error handling.
+ *
+ * Retries up to 3 times on network errors and 5xx responses.
+ * Does NOT retry on 4xx client errors, timeouts, or abort signals.
+ *
  * Throws an error on non-ok responses or network failures.
  */
 export async function apiRequest<T>(endpoint: string, options: ApiRequestOptions = {}): Promise<T> {
   const { token, timeoutMs, ...requestInit } = options;
-  const controller = new AbortController();
-  const timeout = setTimeout(
-    () => controller.abort(new DOMException('Request timeout')),
-    timeoutMs ?? DEFAULT_TIMEOUT_MS,
-  );
-
-  if (requestInit.signal) {
-    requestInit.signal.addEventListener(
-      'abort',
-      () => requestInit.signal && controller.abort(requestInit.signal.reason),
-      { once: true },
-    );
-  }
-
   const traceId = createTraceId();
   const spanId = createSpanId();
 
-  const headers: HeadersInit = {
-    'Content-Type': 'application/json',
-    'X-Trace-Id': traceId,
-    'X-Span-Id': spanId,
-    'Accept-Language': getCurrentLocale(),
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    ...requestInit.headers,
-  };
-
-  try {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      ...requestInit,
-      headers,
-      signal: controller.signal,
-    });
-    clearTimeout(timeout);
-
-    // Global 401 handling for session expiry
-    if (response.status === 401 && !endpoint.includes('/api/access/request') && !endpoint.includes('/api/admin/login')) {
-      handleUnauthorized();
-      throw new Error('Session expired');
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    if (attempt > 0) {
+      await backoff(attempt - 1);
     }
 
-    let data: ApiResponse<T> | undefined;
+    const controller = new AbortController();
+    const timeout = setTimeout(
+      () => controller.abort(new DOMException('Request timeout')),
+      timeoutMs ?? DEFAULT_TIMEOUT_MS,
+    );
+
+    if (requestInit.signal) {
+      requestInit.signal.addEventListener(
+        'abort',
+        () => requestInit.signal && controller.abort(requestInit.signal.reason),
+        { once: true },
+      );
+    }
+
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+      'X-Trace-Id': traceId,
+      'X-Span-Id': spanId,
+      'Accept-Language': getCurrentLocale(),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...requestInit.headers,
+    };
+
+    let responseStatus: number | undefined;
+
     try {
-      data = (await response.json()) as ApiResponse<T>;
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        ...requestInit,
+        headers,
+        signal: controller.signal,
+      });
+      clearTimeout(timeout);
+      responseStatus = response.status;
+
+      // Global 401 handling for session expiry
+      if (response.status === 401 && !endpoint.includes('/api/access/request') && !endpoint.includes('/api/admin/login')) {
+        handleUnauthorized();
+        throw new Error('Session expired');
+      }
+
+      // Retry on 5xx server errors
+      if (response.status >= 500 && attempt < MAX_RETRIES) {
+        logClientEvent({
+          level: 'warn',
+          event: 'api.retry',
+          traceId,
+          spanId,
+          metadata: { endpoint, status: response.status, attempt: attempt + 1 },
+        });
+        continue;
+      }
+
+      let data: ApiResponse<T> | undefined;
+      try {
+        data = (await response.json()) as ApiResponse<T>;
+      } catch (error) {
+        logClientEvent({
+          level: 'error',
+          event: 'api.invalid-json',
+          traceId,
+          spanId,
+          metadata: { endpoint, status: response.status },
+          error: {
+            name: (error as Error).name,
+            message: (error as Error).message,
+            stack: (error as Error).stack,
+          },
+        });
+        throw new Error('Invalid server response', { cause: error });
+      }
+
+      if (!data.ok) {
+        const errorMessage = data.error?.message ?? 'Request failed';
+        const apiError = new Error(errorMessage);
+        (apiError as Error & { traceId?: string }).traceId =
+          data.error?.traceId ?? response.headers.get('x-trace-id') ?? traceId;
+
+        logClientEvent({
+          level: 'error',
+          event: 'api.error',
+          traceId,
+          spanId,
+          metadata: { endpoint, status: response.status },
+          error: { name: apiError.name, message: apiError.message, stack: apiError.stack },
+        });
+        throw apiError;
+      }
+
+      logClientEvent({
+        level: 'info',
+        event: 'api.success',
+        traceId,
+        spanId,
+        metadata: { endpoint, status: response.status },
+      });
+
+      return data.data as T;
     } catch (error) {
+      clearTimeout(timeout);
+
+      // Never retry on abort (user-initiated or timeout)
+      if ((error as Error).name === 'AbortError') {
+        logClientEvent({
+          level: 'error',
+          event: 'api.timeout',
+          traceId,
+          spanId,
+          metadata: { endpoint },
+          error: { name: (error as Error).name, message: (error as Error).message },
+        });
+        throw error;
+      }
+
+      // Don't retry non-retryable errors (4xx, session expired, etc.)
+      if (!isRetryable(error, responseStatus) || attempt >= MAX_RETRIES) {
+        logClientEvent({
+          level: 'error',
+          event: responseStatus && responseStatus >= 500 ? 'api.server-error' : 'api.network-error',
+          traceId,
+          spanId,
+          metadata: { endpoint, attempt: attempt + 1 },
+          error: {
+            name: (error as Error).name,
+            message: (error as Error).message,
+            stack: (error as Error).stack,
+          },
+        });
+        throw error;
+      }
+
+      // Retry on network errors
       logClientEvent({
-        level: 'error',
-        event: 'api.invalid-json',
+        level: 'warn',
+        event: 'api.retry',
         traceId,
         spanId,
-        metadata: { endpoint, status: response.status },
-        error: {
-          name: (error as Error).name,
-          message: (error as Error).message,
-          stack: (error as Error).stack,
-        },
-      });
-      throw new Error('Invalid server response', { cause: error });
-    }
-
-    if (!data.ok) {
-      const errorMessage = data.error?.message ?? 'Request failed';
-      const apiError = new Error(errorMessage);
-      (apiError as Error & { traceId?: string }).traceId =
-        data.error?.traceId ?? response.headers.get('x-trace-id') ?? traceId;
-
-      logClientEvent({
-        level: 'error',
-        event: 'api.error',
-        traceId,
-        spanId,
-        metadata: { endpoint, status: response.status },
-        error: { name: apiError.name, message: apiError.message, stack: apiError.stack },
-      });
-      throw apiError;
-    }
-
-    logClientEvent({
-      level: 'info',
-      event: 'api.success',
-      traceId,
-      spanId,
-      metadata: { endpoint, status: response.status },
-    });
-
-    return data.data as T;
-  } catch (error) {
-    if ((error as Error).name === 'AbortError') {
-      logClientEvent({
-        level: 'error',
-        event: 'api.timeout',
-        traceId,
-        spanId,
-        metadata: { endpoint },
-        error: { name: (error as Error).name, message: (error as Error).message },
-      });
-    } else {
-      logClientEvent({
-        level: 'error',
-        event: 'api.network-error',
-        traceId,
-        spanId,
-        metadata: { endpoint },
-        error: {
-          name: (error as Error).name,
-          message: (error as Error).message,
-          stack: (error as Error).stack,
-        },
+        metadata: { endpoint, attempt: attempt + 1, error: (error as Error).message },
       });
     }
-    throw error;
-  } finally {
-    clearTimeout(timeout);
   }
+
+  // Unreachable, but TypeScript needs a return
+  throw new Error('Max retries exceeded');
 }
 
 /**

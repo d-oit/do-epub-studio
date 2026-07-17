@@ -13,6 +13,7 @@ import type { GrantResponse } from '@do-epub-studio/shared';
 import { LocaleSwitcher } from '../../components/LocaleSwitcher';
 import { Spinner } from '@do-epub-studio/ui';
 import { PageContainer } from '../../components/ui';
+import { Breadcrumb } from '../../components/navigation';
 import {
   BookSelector,
   GrantForm,
@@ -181,6 +182,13 @@ function GrantsView({ data, bookId, token }: { data: GrantsBodyData; bookId: str
 
   return (
     <PageContainer className="p-8">
+      {/* eslint-disable i18next/no-literal-string -- hrefs are routes, not user-visible text */}
+      <Breadcrumb items={[
+        { labelKey: 'admin.breadcrumb.home', href: '/admin' },
+        { labelKey: 'admin.breadcrumb.books', href: '/admin/books' },
+        { labelKey: 'admin.breadcrumb.grants' },
+      ]} />
+      {/* eslint-enable i18next/no-literal-string */}
       <header className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-2xl font-bold text-foreground">

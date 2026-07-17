@@ -1,14 +1,21 @@
+/** Machine-readable API error with code and message. */
 export interface ApiError {
   code: string;
   message: string;
 }
 
+/**
+ * Standard API response envelope used by all Worker endpoints.
+ *
+ * @typeParam T - The shape of the success payload
+ */
 export interface ApiResponse<T = unknown> {
   ok: boolean;
   data?: T;
   error?: ApiError;
 }
 
+/** Book metadata returned by admin and catalog endpoints. */
 export interface BookResponse {
   id: string;
   slug: string;
@@ -35,12 +42,14 @@ export interface LibraryBookResponse {
   progressUpdatedAt: string | null;
 }
 
+/** Response after successfully requesting access to a book. */
 export interface AccessResponse {
   sessionToken: string;
   book: BookResponse;
   capabilities: ReaderCapabilities;
 }
 
+/** Capabilities granted to the current reader for a specific book. */
 export interface ReaderCapabilities {
   canRead: boolean;
   canComment: boolean;
@@ -51,6 +60,7 @@ export interface ReaderCapabilities {
   canManageAccess: boolean;
 }
 
+/** Signed URL for downloading an EPUB file, with expiry metadata. */
 export interface SignedUrlResponse {
   url: string;
   expiresAt: string;
