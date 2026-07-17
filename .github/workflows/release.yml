@@ -14,7 +14,7 @@ env:
   TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
 
 concurrency:
-  group: ${{ github.workflow }}-release
+  group: ${{ github.workflow }}-${{ github.ref_name }}
   cancel-in-progress: false
 
 permissions:
@@ -218,15 +218,14 @@ jobs:
           path: .lighthouseci/
           retention-days: 30
 
-  deploy:
-    name: Deploy
+  release:
+    name: Release
     needs: [release-readiness, verify, perf-gate, lighthouse-gate]
     runs-on: ubuntu-latest
     environment: production
     timeout-minutes: 15
     permissions:
       contents: write
-      deployments: write
       id-token: write
     steps:
       - name: Checkout
@@ -240,25 +239,22 @@ jobs:
       - name: Build
         run: pnpm build
 
-      - name: Deploy Worker
-        uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0  # v4.0.0
+      - name: Validate Cloudflare secrets
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        with:
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          packageManager: pnpm
-          wranglerVersion: '4'
-          workingDirectory: ./apps/worker
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo '::error::CLOUDFLARE_API_TOKEN secret is not set. Add it in repository Settings → Secrets → Actions.'
+            exit 1
+          fi
 
-      - name: Deploy Frontend to Cloudflare Pages
-        uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0  # v4.0.0
+      - name: Validate Worker deployment configuration
+        working-directory: apps/worker
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        with:
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          packageManager: pnpm
-          wranglerVersion: '4'
-          command: pages deploy apps/web/dist --project-name=do-epub-studio
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: pnpm exec wrangler deploy --config wrangler.jsonc --dry-run
 
       - name: Generate SBOM
         run: npx --yes @cyclonedx/cyclonedx-npm@4.2.1 --ignore-npm-errors --output-format json --output-file sbom.cyclonedx.json
@@ -295,13 +291,17 @@ jobs:
 
       - name: Post-deploy health check
         run: |
-          echo "Waiting for deployment to propagate..."
-          sleep 15
+          # Deployment is now handled by Cloudflare Git integration (async).
+          # Wait longer for propagation before checking.
+          echo "Waiting for Cloudflare deployment to propagate (up to 60s)..."
           WORKER_URL="${WORKER_URL:-https://do-epub-studio.d-oit.workers.dev}"
-          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$WORKER_URL" --connect-timeout 10 --max-time 15 || echo "000")
-          echo "Worker health check: HTTP $HTTP_STATUS"
-          if [ "$HTTP_STATUS" = "000" ] || [ "$HTTP_STATUS" -ge 500 ]; then
-            echo "::warning::Worker may not be healthy (HTTP $HTTP_STATUS)"
-          else
-            echo "Worker responded with HTTP $HTTP_STATUS"
-          fi
+          for i in $(seq 1 12); do
+            HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$WORKER_URL" --connect-timeout 5 --max-time 10 || echo "000")
+            if [ "$HTTP_STATUS" != "000" ] && [ "$HTTP_STATUS" -lt 500 ]; then
+              echo "Worker health check: HTTP $HTTP_STATUS (attempt $i)"
+              exit 0
+            fi
+            echo "Attempt $i: HTTP $HTTP_STATUS — retrying in 5s..."
+            sleep 5
+          done
+          echo "::warning::Worker may not be healthy after 60s (HTTP $HTTP_STATUS) — check Cloudflare dashboard"
