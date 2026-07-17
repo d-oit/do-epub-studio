@@ -203,7 +203,7 @@ jobs:
       - uses: ./.github/actions/setup-pnpm
 
       - name: Install pre-commit
-        run: pip install pre-commit
+        run: pip install pre-commit zizmor || pip install pre-commit zizmor --break-system-packages
 
       - name: Run pre-commit hooks
         run: pre-commit run --all-files --show-diff-on-failure

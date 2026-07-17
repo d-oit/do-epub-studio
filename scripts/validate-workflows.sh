@@ -21,6 +21,12 @@ FAILED=0
 mkdir -p "$HOME/.local/bin"
 export PATH="$HOME/.local/bin:$PATH"
 
+# Get Python's user base binary directory and add to PATH
+USER_BASE=$(python3 -m site --user-base 2>/dev/null || python3 -c "import site; print(site.getuserbase())" 2>/dev/null || echo "$HOME/.local")
+if [ -n "$USER_BASE" ]; then
+  export PATH="$USER_BASE/bin:$PATH"
+fi
+
 # Install actionlint if not present
 if ! command -v actionlint &> /dev/null; then
   OS=$(uname -s | tr '[:upper:]' '[:lower:]')
@@ -40,7 +46,12 @@ fi
 # Install zizmor if not present
 if ! command -v zizmor &> /dev/null; then
   printf '%sInstalling zizmor...%s\n' "${BLUE}" "${NC}"
-  pip install zizmor --quiet 2>/dev/null || pip install zizmor --quiet --break-system-packages 2>/dev/null || true
+  python3 -m pip install --user --quiet zizmor 2>/dev/null || \
+  python3 -m pip install --user --quiet --break-system-packages zizmor 2>/dev/null || \
+  python3 -m pip install --quiet zizmor 2>/dev/null || \
+  python3 -m pip install --quiet --break-system-packages zizmor 2>/dev/null || \
+  pip install --user --quiet zizmor 2>/dev/null || \
+  pip install --quiet --break-system-packages zizmor 2>/dev/null || true
 fi
 
 # Verify required tools are available after installation attempts
