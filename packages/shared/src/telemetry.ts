@@ -21,6 +21,12 @@ function randomSegment(length: number): string {
   return result;
 }
 
+/**
+ * Generate a unique trace identifier (UUID v4 when available, fallback to timestamp-based).
+ * Used to correlate requests across client and worker.
+ *
+ * @returns A unique trace ID string.
+ */
 export function createTraceId(): string {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
     return crypto.randomUUID();
@@ -28,6 +34,12 @@ export function createTraceId(): string {
   return `${Date.now().toString(36)}-${randomSegment(12)}`;
 }
 
+/**
+ * Generate a unique span identifier (first segment of a UUID, or random fallback).
+ * Spans represent a single unit of work within a trace.
+ *
+ * @returns A unique span ID string.
+ */
 export function createSpanId(): string {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
     return crypto.randomUUID().split('-')[0] ?? randomSegment(8);
@@ -35,6 +47,13 @@ export function createSpanId(): string {
   return randomSegment(10);
 }
 
+/**
+ * Safely convert any thrown value into a JSON-serializable error object.
+ * Handles Error instances, strings, objects, and unknown primitives.
+ *
+ * @param error - The caught value to serialize.
+ * @returns A `SerializedError` with name, message, and optional stack/cause.
+ */
 export function serializeError(error: unknown): SerializedError {
   if (error instanceof Error) {
     return {

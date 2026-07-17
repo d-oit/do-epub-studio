@@ -65,6 +65,12 @@ if (typeof window !== 'undefined') {
   window.addEventListener('beforeunload', flushBuffer);
 }
 
+/**
+ * Log a structured client-side event to the console and buffer warn/error
+ * entries for batch delivery to the telemetry endpoint.
+ *
+ * @param entry - Log entry with level, traceId, event name, and optional metadata.
+ */
 export function logClientEvent(entry: ClientLogEntry): void {
   const minLevel = getMinLevel();
   if (LOG_LEVELS[entry.level] < minLevel) return;
@@ -84,12 +90,21 @@ export function logClientEvent(entry: ClientLogEntry): void {
   }
 }
 
+/** Record a named performance mark (no-op outside browser). */
 export function createPerformanceMark(name: string): void {
   if (typeof performance !== 'undefined' && performance.mark) {
     performance.mark(name);
   }
 }
 
+/**
+ * Measure duration between two performance marks.
+ *
+ * @param name - Label for the measurement entry.
+ * @param startMark - Name of the start mark.
+ * @param endMark - Name of the end mark.
+ * @returns Duration in milliseconds, or undefined if unavailable.
+ */
 export function measurePerformance(name: string, startMark: string, endMark: string): number | undefined {
   if (typeof performance === 'undefined' || !performance.measure) return undefined;
   try {

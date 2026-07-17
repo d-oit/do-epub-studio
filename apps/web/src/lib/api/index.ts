@@ -184,8 +184,14 @@ async function apiRaw(endpoint: string, method: string, data?: unknown, options?
 }
 
 /**
- * Convenience API helper methods for direct Response access.
- * Still includes observability and global 401 handling.
+ * Convenience API helper methods for direct `Response` access.
+ * Includes trace/span propagation and global 401 session handling.
+ *
+ * @example
+ * ```ts
+ * const res = await api.get('/api/books');
+ * const created = await api.post('/api/books', { title: 'New Book' });
+ * ```
  */
 export const api = {
   get: (endpoint: string, options?: ApiRequestOptions) => apiRaw(endpoint, 'GET', undefined, options),
@@ -194,6 +200,7 @@ export const api = {
   delete: (endpoint: string, options?: ApiRequestOptions) => apiRaw(endpoint, 'DELETE', undefined, options),
 };
 
+/** Build an absolute URL by prepending the configured API base URL. */
 export function getApiUrl(path: string): string {
   return `${API_BASE_URL}${path}`;
 }

@@ -1,3 +1,7 @@
+/**
+ * Base application error with an HTTP status code and machine-readable code.
+ * All domain-specific errors extend this class.
+ */
 export class AppError extends Error {
   constructor(
     message: string,
@@ -9,6 +13,7 @@ export class AppError extends Error {
   }
 }
 
+/** Input validation failed (HTTP 400). */
 export class ValidationError extends AppError {
   constructor(
     message: string,
@@ -19,6 +24,7 @@ export class ValidationError extends AppError {
   }
 }
 
+/** Requested resource does not exist (HTTP 404). */
 export class NotFoundError extends AppError {
   constructor(resource: string) {
     super(`${resource} not found`, 'NOT_FOUND', 404);
@@ -26,6 +32,7 @@ export class NotFoundError extends AppError {
   }
 }
 
+/** Authentication required or credentials invalid (HTTP 401). */
 export class UnauthorizedError extends AppError {
   constructor(message = 'Unauthorized') {
     super(message, 'UNAUTHORIZED', 401);
@@ -33,6 +40,7 @@ export class UnauthorizedError extends AppError {
   }
 }
 
+/** Authenticated but not permitted (HTTP 403). */
 export class ForbiddenError extends AppError {
   constructor(message = 'Access denied') {
     super(message, 'FORBIDDEN', 403);
@@ -40,6 +48,7 @@ export class ForbiddenError extends AppError {
   }
 }
 
+/** Resource state conflict, e.g. duplicate slug (HTTP 409). */
 export class ConflictError extends AppError {
   constructor(message: string) {
     super(message, 'CONFLICT', 409);
@@ -47,6 +56,7 @@ export class ConflictError extends AppError {
   }
 }
 
+/** Too many requests — client should retry after `retryAfter` seconds (HTTP 429). */
 export class RateLimitError extends AppError {
   constructor(retryAfter: number) {
     super('Too many requests', 'RATE_LIMIT', 429);
@@ -56,6 +66,7 @@ export class RateLimitError extends AppError {
   retryAfter: number;
 }
 
+/** Internal database or query failure (HTTP 500). */
 export class DatabaseError extends AppError {
   constructor(message: string, public readonly queryContext?: string) {
     super(message, 'DATABASE_ERROR', 500);
@@ -63,10 +74,15 @@ export class DatabaseError extends AppError {
   }
 }
 
+/** Type guard: returns true if `error` is an `AppError` instance. */
 export function isAppError(error: unknown): error is AppError {
   return error instanceof AppError;
 }
 
+/**
+ * Convert any error into a safe `{ code, message }` object for API responses.
+ * Never leaks internal details for non-AppError values.
+ */
 export function toApiError(error: unknown): { code: string; message: string } {
   if (isAppError(error)) {
     return { code: error.code, message: error.message };

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+/** Visibility levels for a book: private through fully public. */
 export const BookVisibilitySchema = z.enum([
   'private',
   'password_protected',
@@ -8,6 +9,7 @@ export const BookVisibilitySchema = z.enum([
   'public',
 ]);
 
+/** Access mode granted to a reader on a specific book. */
 export const GrantModeSchema = z.enum([
   'private',
   'password_protected',
@@ -36,6 +38,10 @@ export const EntityTypeSchema = z.enum([
   'highlight',
 ]);
 
+/**
+ * Locator for anchoring annotations in EPUB content.
+ * Requires at least a CFI or selectedText per ADR-006.
+ */
 export const AnnotationLocatorSchema = z
   .object({
     cfi: z.string().max(2048).optional(),
@@ -101,6 +107,7 @@ export const TelemetryPayloadSchema = z.object({
   logs: z.array(TelemetryLogSchema).max(100),
 });
 
+/** Schema for creating a new book. Slug must be URL-safe lowercase. */
 export const CreateBookSchema = z.object({
   title: z.string().min(1).max(500),
   slug: z
@@ -122,6 +129,7 @@ export const UpdateBookSchema = z.object({
   visibility: BookVisibilitySchema.optional(),
 });
 
+/** Schema for granting a user access to a book. */
 export const CreateGrantSchema = z.object({
   bookId: z.string().uuid(),
   email: z.string().email().max(255),
@@ -149,6 +157,7 @@ export const BookmarkCreateSchema = z.object({
   label: z.string().max(255).optional(),
 });
 
+/** Schema for creating a highlight annotation with optional note and color. */
 export const HighlightCreateSchema = z.object({
   locator: MultiSignalLocatorSchema,
   note: z.string().max(5000).optional(),
@@ -235,6 +244,7 @@ export const UploadCompleteSchema = z.object({
     .optional(),
 });
 
+/** Flatten Zod validation issues into a human-readable semicolon-separated string. */
 export function formatZodError(error: {
   issues: Array<{ path: (string | number)[]; message: string }>;
 }): string {
