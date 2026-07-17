@@ -86,3 +86,4 @@ performance_report.md
 junit.xml
 *.lcov
 .vitest/
+packages/ui/storybook-static/
