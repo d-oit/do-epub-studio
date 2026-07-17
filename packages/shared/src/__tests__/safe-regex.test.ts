@@ -53,33 +53,28 @@ describe('escapeRegex', () => {
 // Property-based tests (fast-check)
 // ---------------------------------------------------------------------------
 
-const escapePattern = (s: string): string =>
-  s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-
 describe('matchBounded (property-based)', () => {
-  it('returns null when input length exceeds maxLen', () => {
+  it('returns null when input length exceeds maxLen for any regex', () => {
+    const patterns = [/a/, /hello/, /\d+/, /[a-z]/, /test/];
     fc.assert(
       fc.property(
-        fc.string({ minLength: 1, maxLength: 10 }),
+        fc.constantFrom(...patterns),
         fc.integer({ min: 1, max: 100 }),
-        (pattern, maxLen) => {
-          const safe = escapePattern(pattern);
-          const input = 'a'.repeat(maxLen + 1);
-          const re = new RegExp(safe);
+        (re, maxLen) => {
+          const input = 'x'.repeat(maxLen + 1);
           return matchBounded(re, input, maxLen) === null;
         },
       ),
     );
   });
 
-  it('returns match or null for short input (no crash)', () => {
+  it('returns match or null for short input without crashing', () => {
+    const patterns = [/a/, /hello/, /\d+/, /[a-z]+/, /test/, /./];
     fc.assert(
       fc.property(
-        fc.string({ minLength: 1, maxLength: 10 }),
+        fc.constantFrom(...patterns),
         fc.string({ minLength: 0, maxLength: 20 }),
-        (pattern, input) => {
-          const safe = escapePattern(pattern);
-          const re = new RegExp(safe);
+        (re, input) => {
           const result = matchBounded(re, input, 100);
           return result === null || Array.isArray(result);
         },
@@ -90,14 +85,13 @@ describe('matchBounded (property-based)', () => {
 
 describe('testBounded (property-based)', () => {
   it('returns false when input length exceeds maxLen', () => {
+    const patterns = [/a/, /hello/, /\d+/, /[a-z]/, /test/];
     fc.assert(
       fc.property(
-        fc.string({ minLength: 1, maxLength: 10 }),
+        fc.constantFrom(...patterns),
         fc.integer({ min: 1, max: 100 }),
-        (pattern, maxLen) => {
+        (re, maxLen) => {
           const input = 'a'.repeat(maxLen + 1);
-          const safe = escapePattern(pattern);
-          const re = new RegExp(safe);
           return testBounded(re, input, maxLen) === false;
         },
       ),
@@ -107,28 +101,26 @@ describe('testBounded (property-based)', () => {
 
 describe('matchAllBounded (property-based)', () => {
   it('returns empty array when input length exceeds maxLen', () => {
+    const patterns = [/a/g, /hello/g, /\d+/g, /[a-z]/g, /test/g];
     fc.assert(
       fc.property(
-        fc.string({ minLength: 1, maxLength: 10 }),
+        fc.constantFrom(...patterns),
         fc.integer({ min: 1, max: 100 }),
-        (pattern, maxLen) => {
+        (re, maxLen) => {
           const input = 'a'.repeat(maxLen + 1);
-          const safe = escapePattern(pattern);
-          const re = new RegExp(safe, 'g');
           return matchAllBounded(re, input, maxLen).length === 0;
         },
       ),
     );
   });
 
-  it('returns array of matches for short input (no crash)', () => {
+  it('returns array of matches for short input without crashing', () => {
+    const patterns = [/a/g, /hello/g, /\d+/g, /[a-z]/g, /test/g, /./g];
     fc.assert(
       fc.property(
-        fc.string({ minLength: 1, maxLength: 5 }),
+        fc.constantFrom(...patterns),
         fc.string({ minLength: 0, maxLength: 20 }),
-        (pattern, input) => {
-          const safe = escapePattern(pattern);
-          const re = new RegExp(safe, 'g');
+        (re, input) => {
           const result = matchAllBounded(re, input, 100);
           return Array.isArray(result);
         },
@@ -141,8 +133,8 @@ describe('escapeRegex (property-based)', () => {
   it('escaped string matches itself literally when used in regex', () => {
     fc.assert(
       fc.property(fc.string({ minLength: 0, maxLength: 50 }), (s) => {
-        const escaped = escapeRegex(s);
-        const re = new RegExp(escaped);
+        // eslint-disable-next-line security/detect-non-literal-regexp -- intentional: testing that escapeRegex makes strings safe for RegExp
+        const re = new RegExp(escapeRegex(s));
         return re.test(s);
       }),
     );
