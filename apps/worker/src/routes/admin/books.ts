@@ -264,7 +264,7 @@ booksRouter.post('/:id/upload-complete', adminAuth, zValidator('json', UploadCom
   );
 
   // Invalidate edge cache so readers get the fresh EPUB content
-  bumpCacheVersion();
+  await bumpCacheVersion(c.env);
 
   await logAudit(c.env, {
     entityType: 'book',
@@ -311,7 +311,7 @@ booksRouter.patch('/:id', adminAuth, zValidator('json', UpdateBookSchema), async
   await execute(c.env, `UPDATE books SET ${updates.join(', ')} WHERE id = ?`, values as (string | number | null)[]);
 
   // Invalidate edge cache so the catalog reflects the updated metadata
-  bumpCacheVersion();
+  await bumpCacheVersion(c.env);
 
   await logAudit(c.env, {
     entityType: 'book',

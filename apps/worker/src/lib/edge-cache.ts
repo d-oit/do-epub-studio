@@ -6,24 +6,48 @@
  * public, read-mostly routes (catalog, public book metadata) we
  * short-circuit the request before hitting Turso.
  *
- * Reference: ADR-112 (stream upload + edge cache).
+ * Reference: ADR-112 (stream upload + edge cache), Plan 198-F3 (cross-isolate cache).
  */
 
-// Bumped on book content changes so stale edge-cache entries are
-// automatically missed. The upload-complete endpoint calls bumpCacheVersion().
-//
-// Limitation: this is per-isolate state. Cloudflare Workers may run multiple
-// isolates per colo, so only the isolate that processed the upload will see
-// the bumped version. Other isolates will serve stale cache until their
-// max-age/s-maxage TTL expires. This is a best-effort invalidation; the TTL
-// (60s max-age, 300s s-maxage) bounds staleness for other isolates.
-// For cross-isolate invalidation, a Durable Object or KV-backed version
-// counter would be needed (future enhancement).
-let CACHE_VERSION = 'v1';
+// Cache version stored in KV for cross-isolate invalidation.
+// Falls back to per-isolate module variable when KV is unavailable (local dev).
+const KV_CACHE_KEY = 'edge-cache:version';
+let LOCAL_CACHE_VERSION = 'v1';
 
-/** Increment the cache version to invalidate all edge-cached entries (best-effort, per-isolate). */
-export function bumpCacheVersion(): void {
-  CACHE_VERSION = `v${Date.now()}`;
+export interface EdgeCacheEnv {
+  CACHE_KV?: KVNamespace;
+}
+
+/**
+ * Get the current cache version. Prefers KV (cross-isolate) over local (per-isolate).
+ */
+export async function getCacheVersion(env?: EdgeCacheEnv): Promise<string> {
+  if (env?.CACHE_KV) {
+    try {
+      const kvVersion = await env.CACHE_KV.get(KV_CACHE_KEY);
+      if (kvVersion) return kvVersion;
+    } catch {
+      // KV unavailable, fall back to local
+    }
+  }
+  return LOCAL_CACHE_VERSION;
+}
+
+/**
+ * Increment the cache version to invalidate all edge-cached entries.
+ * Writes to KV when available for cross-isolate propagation.
+ */
+export async function bumpCacheVersion(env?: EdgeCacheEnv): Promise<void> {
+  const newVersion = `v${Date.now()}`;
+  LOCAL_CACHE_VERSION = newVersion;
+
+  if (env?.CACHE_KV) {
+    try {
+      await env.CACHE_KV.put(KV_CACHE_KEY, newVersion, { expirationTtl: 86400 });
+    } catch {
+      // KV write failed; local version is still bumped for this isolate
+    }
+  }
 }
 
 const FORWARDED_HEADERS = ['Accept-Language', 'Accept'] as const;
@@ -33,6 +57,8 @@ export interface EdgeCacheOptions {
   cacheControl: string;
   /** Optional override of the cache key prefix (default: edge-cache:CACHE_VERSION). */
   keyPrefix?: string;
+  /** Optional env for KV-backed cache version lookup. */
+  env?: EdgeCacheEnv;
 }
 
 export interface CacheLookup<T> {
@@ -50,21 +76,19 @@ export interface CacheLookup<T> {
  * subset of headers that affect content negotiation (Accept-Language,
  * Accept).
  */
-export function buildCacheKey(request: Request, prefix = `edge-cache:${CACHE_VERSION}`): Request {
+export async function buildCacheKey(request: Request, env?: EdgeCacheEnv, prefix?: string): Promise<Request> {
+  const version = await getCacheVersion(env);
+  const resolvedPrefix = prefix ?? `edge-cache:${version}`;
   const url = new URL(request.url);
   const keyUrl = new URL(url.toString());
-  // Sort query params for stable keys regardless of client order.
   keyUrl.searchParams.sort();
   const filtered = new Headers();
   for (const name of FORWARDED_HEADERS) {
     const value = request.headers.get(name);
     if (value) filtered.set(name, value);
   }
-  const key = `${prefix}:${keyUrl.toString()}`;
-  return new Request(key, {
-    method: 'GET',
-    headers: filtered,
-  });
+  const key = `${resolvedPrefix}:${keyUrl.toString()}`;
+  return new Request(key, { method: 'GET', headers: filtered });
 }
 
 interface EdgeCacheStorage {
@@ -88,7 +112,7 @@ export async function withEdgeCache(
   ctx: EdgeCacheContext,
 ): Promise<Response> {
   const cache = (globalThis as { caches?: EdgeCacheStorage }).caches;
-  const cacheKey = buildCacheKey(request, options.keyPrefix);
+  const cacheKey = await buildCacheKey(request, options.env, options.keyPrefix);
 
   if (cache?.default) {
     const hit = await cache.default.match(cacheKey);

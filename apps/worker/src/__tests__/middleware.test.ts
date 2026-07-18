@@ -31,6 +31,7 @@ function makeEnv(): Env {
     },
     DB: { prepare: vi.fn().mockReturnThis(), bind: vi.fn().mockReturnThis(), all: vi.fn().mockResolvedValue({ results: [] }) } as unknown as D1Database,
     SENDER_EMAIL: {} as unknown as SendEmail,
+    CACHE_KV: { get: vi.fn().mockResolvedValue(null), put: vi.fn().mockResolvedValue(undefined) } as unknown as KVNamespace,
     TURSO_DATABASE_URL: 'file::memory:',
     TURSO_AUTH_TOKEN: 'test-token',
     SESSION_SIGNING_SECRET: 'test-secret',

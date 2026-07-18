@@ -23,6 +23,8 @@ engines:
       - "**/__tests__/**"
       - "**/tests/**"
       - "apps/web/src/lib/api/index.ts"
+      - "apps/worker/src/__tests__/routes.export.test.ts"
+      - "apps/worker/src/__tests__/routes.search.test.ts"
   biome:
     enabled: false
   tsqlint:

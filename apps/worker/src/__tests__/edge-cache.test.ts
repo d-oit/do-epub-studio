@@ -42,35 +42,35 @@ describe('edge-cache helpers', () => {
   });
 
   describe('buildCacheKey', () => {
-    it('builds a stable key for the same URL', () => {
+    it('builds a stable key for the same URL', async () => {
       const request = new Request('https://example.com/api/catalog?q=a&limit=10', {
         headers: { 'Accept-Language': 'en' },
       });
-      const k1 = buildCacheKey(request);
-      const k2 = buildCacheKey(request);
+      const k1 = await buildCacheKey(request);
+      const k2 = await buildCacheKey(request);
       expect(k1.url).toBe(k2.url);
       expect(k1.url).toContain('edge-cache:v1');
     });
 
-    it('orders query params for stability', () => {
+    it('orders query params for stability', async () => {
       const r1 = new Request('https://example.com/api/catalog?a=1&b=2');
       const r2 = new Request('https://example.com/api/catalog?b=2&a=1');
-      expect(buildCacheKey(r1).url).toBe(buildCacheKey(r2).url);
+      expect((await buildCacheKey(r1)).url).toBe((await buildCacheKey(r2)).url);
     });
 
-    it('forwards Accept-Language into the key headers', () => {
+    it('forwards Accept-Language into the key headers', async () => {
       const request = new Request('https://example.com/api/catalog', {
         headers: { 'Accept-Language': 'fr-FR' },
       });
-      const key = buildCacheKey(request);
+      const key = await buildCacheKey(request);
       expect(key.headers.get('Accept-Language')).toBe('fr-FR');
     });
 
-    it('forwards Accept into the key headers', () => {
+    it('forwards Accept into the key headers', async () => {
       const request = new Request('https://example.com/api/catalog', {
         headers: { Accept: 'application/json' },
       });
-      const key = buildCacheKey(request);
+      const key = await buildCacheKey(request);
       expect(key.headers.get('Accept')).toBe('application/json');
     });
   });

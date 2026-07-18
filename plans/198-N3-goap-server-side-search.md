@@ -1,6 +1,6 @@
 # Plan 198-N3: GOAP — Server-Side Full-Text EPUB Search
 
-**Status:** 📋 PROPOSED
+**Status:** ✅ COMPLETED (Plan 199 verified 2026-07-18 — FTS5 search implemented)
 **Date:** 2026-07-18
 **Decision:** ADR-198 (Verified-Closure Methodology)
 **Priority:** P3

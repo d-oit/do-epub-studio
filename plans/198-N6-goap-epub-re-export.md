@@ -1,6 +1,6 @@
 # Plan 198-N6: GOAP — EPUB Re-Export / Packager
 
-**Status:** 📋 PROPOSED
+**Status:** ✅ COMPLETED (Plan 199 verified 2026-07-18 — Markdown/HTML export implemented)
 **Date:** 2026-07-18
 **Decision:** ADR-198 (Verified-Closure Methodology)
 **Priority:** P3

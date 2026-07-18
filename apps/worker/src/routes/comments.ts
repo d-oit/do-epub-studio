@@ -11,6 +11,7 @@ import {
 } from '@do-epub-studio/shared';
 import { parseLocatorRow, assertBookAccess } from '../lib/tenant-isolation';
 import { readerAuth } from '../middleware/auth';
+import { createReplyNotification } from './notifications';
 
 export const commentsRouter = new Hono<{ Bindings: Env; Variables: { auth: AuthContext } }>();
 
@@ -114,6 +115,18 @@ commentsRouter.post('/books/:bookId/comments', readerAuth, zValidator('json', Co
     actorEmail: auth.email,
     payload: { bookId, visibility: body.visibility },
   }, c.executionCtx);
+
+  // Trigger notification for reply comments
+  if (body.parentCommentId) {
+    c.executionCtx.waitUntil(
+      createReplyNotification(c.env, {
+        bookId,
+        commentId: id,
+        parentCommentId: body.parentCommentId,
+        replierEmail: auth.email,
+      }),
+    );
+  }
 
   return c.json(
     {

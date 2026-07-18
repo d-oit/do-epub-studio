@@ -204,6 +204,7 @@ Codacy check regardless of GitHub enforcement.
 | JS/TS/Shell   | ✅ Works | ESLint, Stylelint, ShellCheck |
 | Python/Ruby   | ❌ Fails | Missing runtimes/venv issues |
 | Java/PMD      | ❌ Fails | Missing Java runtime |
+| opengrep test exclusions | ⚠️ Partial | `.codacy.yml` `exclude_paths` works for ESLint but cloud-side opengrep may still flag HTML-like strings in test files (`<!DOCTYPE html>`, `</html>`). Remove ALL HTML literals from tests. |
 
 Always cross-reference with Cloud CLI for full PR data.
 
@@ -246,5 +247,4 @@ Codacy is the **required** static-analysis check. Impeccable is a **UI-only** de
 - `references/config-format.md` - `.codacy.yml` schema
 - `.agents/skills/security-code-auditor/SKILL.md` — broader security
   patterns and the `safe-regex` / OWASP mappings used by Codacy.
-- `AGENTS.md` Tier 1 — required checks and pre-existing-issue policy.
-- `.impeccable/config.json` — Impeccable detector config.
+- `AGENTS.md` Tier 1 — required checks, pre-existing-issue policy. `.impeccable/config.json` — detector config.

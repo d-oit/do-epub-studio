@@ -15,6 +15,9 @@ import {
   adminRouter,
   securityRouter,
   telemetryRouter,
+  notificationsRouter,
+  searchRouter,
+  exportRouter,
 } from './routes';
 import { validationErrorFormatter } from './middleware/validation';
 
@@ -65,6 +68,9 @@ app.route('/api/files', filesRouter);
 app.route('/api/admin', adminRouter);
 app.route('/api', securityRouter);
 app.route('/api', telemetryRouter);
+app.route('/api', notificationsRouter);
+app.route('/api', searchRouter);
+app.route('/api', exportRouter);
 
 app.onError((err, c) => {
   const traceId = c.req.header(TRACE_HEADER) ?? createTraceId();
