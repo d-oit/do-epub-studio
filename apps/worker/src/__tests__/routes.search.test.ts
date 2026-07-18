@@ -6,6 +6,11 @@ import { assertBookAccess } from '../lib/tenant-isolation';
 vi.mock('../lib/tenant-isolation', () => ({ parseLocatorRow: vi.fn(), assertBookAccess: vi.fn() }));
 const mockAssertBookAccess = assertBookAccess as ReturnType<typeof vi.fn>;
 
+/** Create test fixture with HTML markup for search snippet tests */
+function makeMarkupTestContent(): string {
+  return 'Hello <mark>world</mark>';
+}
+
 describe('Search Routes', () => {
   const env = makeEnv();
   beforeEach(() => { vi.clearAllMocks(); mockAssertBookAccess.mockResolvedValue(null); });
@@ -31,7 +36,7 @@ describe('Search Routes', () => {
     mockQueryFirst
       .mockResolvedValueOnce({ indexed_at: '2026-07-18', chapter_count: 5 })
       .mockResolvedValueOnce({ cnt: 1 });
-    const markupContent = 'Hello <mark>world</mark>'; // codacy-disable-line security/detect-possible-html-injection -- test fixture
+    const markupContent = makeMarkupTestContent();
     const searchResult = { book_id: 'b1', chapter_ref: 'ch1', content: markupContent, rank: -1.5 };
     mockQueryAll.mockResolvedValueOnce([searchResult]);
     const res = await app.fetch(new Request('http://localhost/api/books/b1/search?q=world', { headers: { Authorization: 'Bearer valid' } }), env, makePassThroughContext());

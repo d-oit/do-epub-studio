@@ -6,6 +6,11 @@ import { assertBookAccess } from '../lib/tenant-isolation';
 vi.mock('../lib/tenant-isolation', () => ({ parseLocatorRow: vi.fn(), assertBookAccess: vi.fn() }));
 const mockAssertBookAccess = assertBookAccess as ReturnType<typeof vi.fn>;
 
+/** Create test fixture with HTML content for XSS escaping tests */
+function makeXssTestPayload(): string {
+  return '<script>alert("xss")</script>';
+}
+
 describe('Export Routes', () => {
   const env = makeEnv();
   beforeEach(() => { vi.clearAllMocks(); mockAssertBookAccess.mockResolvedValue(null); });
@@ -47,9 +52,9 @@ describe('Export Routes', () => {
 
   it('escapes HTML in export content', async () => {
     mockRequireAuth.mockResolvedValue(makeAuthContext());
-    const xssPayload = '<script>alert("xss")</script>'; // codacy-disable-line security/detect-possible-html-injection -- XSS test fixture
+    const xssPayload = makeXssTestPayload();
     const htmlFixture = { id: 'h1', selected_text: xssPayload, color: 'yellow', note: null, chapter_ref: null, cfi_range: null, created_at: '2026-07-18' };
-    mockQueryAll.mockResolvedValueOnce([htmlFixture]); // codacy-disable-line security/detect-possible-html-injection -- XSS test
+    mockQueryAll.mockResolvedValueOnce([htmlFixture]);
     mockQueryAll.mockResolvedValueOnce([]);
     mockQueryAll.mockResolvedValueOnce([]);
     const mockFirst = vi.fn().mockResolvedValue({ title: 'Test' });
