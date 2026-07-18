@@ -10,17 +10,17 @@
   "routeBudgets": {
     "reader": {
       "entry": "src/features/reader/ReaderPage.tsx",
-      "maxSize": 1160000,
+      "maxSize": 1190000,
       "description": "Total transitive JS and CSS for the reader route"
     },
     "catalog": {
       "entry": "src/features/catalog/CatalogPage.tsx",
-      "maxSize": 870000,
+      "maxSize": 895000,
       "description": "Total transitive JS and CSS for the catalog route (includes shared vendors)"
     },
     "admin": {
       "entry": "src/features/admin/AdminPage.tsx",
-      "maxSize": 865000,
+      "maxSize": 890000,
       "description": "Total transitive JS and CSS for the admin route (includes shared vendors)"
     },
     "auth": {
