@@ -35,6 +35,7 @@ export function NotificationBadge({ t, onClick }: NotificationBadgeProps) {
 
   return (
     <button
+      type="button"
       onClick={onClick}
       className="relative touch-target"
       aria-label={t('notifications.title')}
@@ -57,6 +58,7 @@ export function NotificationBadge({ t, onClick }: NotificationBadgeProps) {
       {count > 0 && (
         <span
           className="absolute -top-1 -right-1 inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold text-primary-foreground bg-primary rounded-full"
+          role="status"
           aria-label={`${count} ${t('notifications.unread')}`}
         >
           {count > 99 ? '99+' : count}

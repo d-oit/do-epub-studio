@@ -81,6 +81,7 @@ export function NotificationPanel({ onNavigateToComment, t, onClose }: Notificat
         <div className="flex gap-2">
           {unreadCount > 0 && (
             <button
+              type="button"
               onClick={() => void markAllAsRead()}
               className="text-xs text-foreground/60 hover:text-foreground touch-target"
             >
@@ -88,6 +89,7 @@ export function NotificationPanel({ onNavigateToComment, t, onClose }: Notificat
             </button>
           )}
           <button
+            type="button"
             onClick={onClose}
             className="text-foreground/60 hover:text-foreground touch-target"
             aria-label={t('common.close')}
@@ -110,6 +112,7 @@ export function NotificationPanel({ onNavigateToComment, t, onClose }: Notificat
           notifications.map((n) => (
             <button
               key={n.id}
+              type="button"
               className={`w-full text-left p-3 border-b border-foreground/5 hover:bg-foreground/5 transition-colors ${
                 !n.readAt ? 'bg-foreground/[0.03]' : ''
               } ${prefersReduced ? '' : 'transition-all duration-150'}`}
@@ -122,6 +125,7 @@ export function NotificationPanel({ onNavigateToComment, t, onClose }: Notificat
                 {!n.readAt && (
                   <span
                     className="inline-block w-2 h-2 rounded-full bg-primary mt-1.5 flex-shrink-0"
+                    role="status"
                     aria-label={t('notifications.unread')}
                   />
                 )}
