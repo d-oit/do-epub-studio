@@ -57,6 +57,7 @@ describe('Export Routes', () => {
     // Build fixture without direct HTML literal to satisfy Codacy security rules
     const htmlFixture = { id: 'h1', selected_text: '', color: 'yellow', note: null, chapter_ref: null, cfi_range: null, created_at: '2026-07-18' };
     htmlFixture.selected_text = xssPayload;
+    // Test fixture with HTML content for XSS escaping verification (not rendered)
     const fixtureList = [htmlFixture];
     mockQueryAll.mockResolvedValueOnce(fixtureList);
     mockQueryAll.mockResolvedValueOnce([]);
