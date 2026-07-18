@@ -52,6 +52,7 @@ export function NotificationPanel({ onNavigateToComment, t, onClose }: Notificat
     void fetchNotifications();
   }, [fetchNotifications]);
 
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises -- React async handler
   const markAsRead = async (id: string) => {
     await fetch(`/api/notifications/${id}/read`, { method: 'POST' });
     setNotifications((prev) =>
@@ -59,6 +60,7 @@ export function NotificationPanel({ onNavigateToComment, t, onClose }: Notificat
     );
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises -- React async handler
   const markAllAsRead = async () => {
     await fetch('/api/notifications/read-all', { method: 'POST' });
     setNotifications((prev) =>
