@@ -52,8 +52,8 @@ export function NotificationPanel({ onNavigateToComment, t, onClose }: Notificat
     void fetchNotifications();
   }, [fetchNotifications]);
 
-  // codacy-suppress-next-line Biome_lint_suspicious_noDoubleEquals -- React async handler (Biome SolidJS rule false positive)
   // eslint-disable-next-line @typescript-eslint/no-misused-promises -- React async handler
+  // codacy-suppress-next-line Biome_lint_suspicious_noDoubleEquals -- React async handler (Biome SolidJS rule false positive)
   const markAsRead = async (id: string) => {
     await fetch(`/api/notifications/${id}/read`, { method: 'POST' });
     setNotifications((prev) =>
@@ -61,8 +61,8 @@ export function NotificationPanel({ onNavigateToComment, t, onClose }: Notificat
     );
   };
 
-  // codacy-suppress-next-line Biome_lint_suspicious_noDoubleEquals -- React async handler (Biome SolidJS rule false positive)
   // eslint-disable-next-line @typescript-eslint/no-misused-promises -- React async handler
+  // codacy-suppress-next-line Biome_lint_suspicious_noDoubleEquals -- React async handler (Biome SolidJS rule false positive)
   const markAllAsRead = async () => {
     await fetch('/api/notifications/read-all', { method: 'POST' });
     setNotifications((prev) =>
