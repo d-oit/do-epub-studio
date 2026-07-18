@@ -29,6 +29,7 @@ import {
   CommentInputModal,
   InfoPanel,
   FixedLayoutControls,
+  ScrollProgressBar,
 } from './components';
 
 export function ReaderPage() {
@@ -288,6 +289,7 @@ export function ReaderPage() {
       ref={rootRef}
       className="min-h-dvh bg-background text-foreground"
     >
+      <ScrollProgressBar />
       <ReaderToolbar
         bookTitle={bookTitle}
         bookSlug={bookSlug ?? ''}
