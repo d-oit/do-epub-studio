@@ -20,6 +20,12 @@
       "bucket_name": "do-epub-studio-books"
     }
   ],
+  "kv_namespaces": [
+    {
+      "binding": "CACHE_KV",
+      "id": "placeholder-cache-kv-id"
+    }
+  ],
   "durable_objects": {
     "bindings": [
       {

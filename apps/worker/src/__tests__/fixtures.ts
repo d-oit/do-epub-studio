@@ -146,6 +146,12 @@ export function makeEnv(): Env {
     BOOKS_BUCKET: makeMockBucket(),
     DB: mockDB as unknown as D1Database,
     SENDER_EMAIL: {} as unknown as SendEmail,
+    CACHE_KV: {
+      get: vi.fn().mockResolvedValue(null),
+      put: vi.fn().mockResolvedValue(undefined),
+      delete: vi.fn().mockResolvedValue(undefined),
+      list: vi.fn().mockResolvedValue({ keys: [], list_complete: true }),
+    } as unknown as KVNamespace,
     TURSO_DATABASE_URL: 'file::memory:',
     TURSO_AUTH_TOKEN: 'test-token',
     SESSION_SIGNING_SECRET: process.env.TEST_SESSION_SIGNING_SECRET || 'test-secret',

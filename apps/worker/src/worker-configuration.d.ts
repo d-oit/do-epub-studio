@@ -5,6 +5,7 @@ interface __BaseEnv_CloudflareEnv {
 	BOOKS_BUCKET: R2Bucket;
 	DB: D1Database;
 	SENDER_EMAIL: SendEmail;
+	CACHE_KV: KVNamespace;
 	TURSO_DATABASE_URL: string;
 	TURSO_AUTH_TOKEN: string;
 	SESSION_SIGNING_SECRET: string;

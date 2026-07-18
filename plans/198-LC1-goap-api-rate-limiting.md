@@ -1,6 +1,6 @@
 # Plan 198-LC1: GOAP — API Rate Limiting Per Tenant
 
-**Status:** 📋 PROPOSED
+**Status:** ✅ COMPLETED (Plan 199 verified 2026-07-18 — fully implemented via Durable Object rate limiter)
 **Date:** 2026-07-18
 **Decision:** ADR-198 (Verified-Closure Methodology)
 **Priority:** P3
