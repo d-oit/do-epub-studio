@@ -1,6 +1,6 @@
 # Plan 198: GOAP — Close Remaining Gaps & P3 Feature Plans
 
-**Status:** 🔄 IN PROGRESS
+**Status:** ✅ COMPLETED (merged via PR #817)
 **Date:** 2026-07-18
 **Decision:** [ADR-187](187-adr-fail-closed-engineering-gates.md)
 **Strategy:** Swarm — independent tasks executed in parallel

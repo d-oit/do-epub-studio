@@ -1,7 +1,7 @@
 # GOAP 110-V8-followup — Refactor admin BooksPage.tsx below 500 LOC
 
 **Date:** 2026-06-25
-**Status:** 📋 PROPOSED — follow-up
+**Status:** ✅ COMPLETED (BooksPage is 423 LOC — under 500 limit)
 **Parent:** plan 110-V8 (container queries)
 **Trigger:** AGENTS.md TIER-1 "fix pre-existing issues" — `BooksPage.tsx` is 541 LOC (limit 500) and was touched in the V8 PR.
 

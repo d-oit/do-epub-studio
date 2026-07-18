@@ -1,7 +1,7 @@
 # GOAP 116 — Cross-Cutting Audit: Perf / Security / Lint / Build / CI / Release / i18n / Responsive (2026-06-27)
 
 **Date:** 2026-06-27
-**Status:** 📋 PROPOSED — recommendations only; **no source code changed by this plan**
+**Status:** ✅ COMPLETED (recommendations implemented via PRs #748, #754–#762 and Plans 122, 186–198)
 **Author:** Amp analysis session (verified against working tree)
 **Methodology:** GOAP (analyze → decompose → strategize → coordinate → execute → synthesize)
 **Companion:** `plans/115-goap-missing-impl-ui-modernization-2026-06-27.md` (missing-impl + UI)

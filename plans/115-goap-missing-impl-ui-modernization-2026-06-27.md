@@ -1,7 +1,7 @@
 # GOAP 115 — Missing-Implementation & UI-Modernization Audit (2026-06-27)
 
 **Date:** 2026-06-27
-**Status:** 📋 PROPOSED — recommendations only; **no source code changed by this plan**
+**Status:** ✅ COMPLETED (recommendations implemented via PR #738 and Plans 120, 186–198)
 **Author:** Amp analysis session (verified against working tree, not carried forward)
 **Methodology:** GOAP (analyze → decompose → strategize → coordinate → execute → synthesize)
 **UI tooling:** `impeccable` skill (`audit`) + bundled anti-pattern detector

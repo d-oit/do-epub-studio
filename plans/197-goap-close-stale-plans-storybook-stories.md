@@ -1,6 +1,6 @@
 # Plan 197: GOAP — Close Stale Plans & Add Missing Storybook Stories
 
-**Status:** 🔄 IN PROGRESS
+**Status:** ✅ COMPLETED (merged via PR #816)
 **Date:** 2026-07-18
 **Decision:** [ADR-187](187-adr-fail-closed-engineering-gates.md)
 **Strategy:** Swarm — independent tasks executed in parallel
