@@ -47,9 +47,9 @@ describe('Export Routes', () => {
 
   it('escapes HTML in export content', async () => {
     mockRequireAuth.mockResolvedValue(makeAuthContext());
-    const xssPayload = '<script>alert("xss")</script>';
+    const xssPayload = '<script>alert("xss")</script>'; // codacy-disable-line security/detect-possible-html-injection -- XSS test fixture
     const htmlFixture = { id: 'h1', selected_text: xssPayload, color: 'yellow', note: null, chapter_ref: null, cfi_range: null, created_at: '2026-07-18' };
-    mockQueryAll.mockResolvedValueOnce([htmlFixture]);
+    mockQueryAll.mockResolvedValueOnce([htmlFixture]); // codacy-disable-line security/detect-possible-html-injection -- XSS test
     mockQueryAll.mockResolvedValueOnce([]);
     mockQueryAll.mockResolvedValueOnce([]);
     const mockFirst = vi.fn().mockResolvedValue({ title: 'Test' });
