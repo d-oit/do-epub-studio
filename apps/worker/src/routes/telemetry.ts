@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import type { Env } from '../lib/env';
 import { TelemetryPayloadSchema } from '@do-epub-studio/shared';
+import { scrub } from '../lib/redact';
 
 export const telemetryRouter = new Hono<{ Bindings: Env }>();
 
@@ -32,8 +33,9 @@ telemetryRouter.post(
     // For now, log to console. In a production environment, this could be
   // stored in a Durable Object, R2, or forwarded to an external observability service.
   for (const log of logs) {
+    const scrubbedLog = scrub(log) as Record<string, unknown>;
     const output = JSON.stringify({
-      ...log,
+      ...scrubbedLog,
       _receivedAt: new Date().toISOString(),
       _remoteAddr: c.req.header('cf-connecting-ip') || 'unknown',
       _userAgent: c.req.header('user-agent'),
