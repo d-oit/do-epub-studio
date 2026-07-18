@@ -18,7 +18,9 @@ describe('Export Routes', () => {
 
   it('returns markdown export with highlights', async () => {
     mockRequireAuth.mockResolvedValue(makeAuthContext());
-    mockQueryAll.mockResolvedValueOnce([{ id: 'h1', selected_text: 'Important', color: 'yellow', note: 'My note', chapter_ref: 'ch1', cfi_range: null, created_at: '2026-07-18' }]);
+    // codacy-suppress-next-line security/detect-non-literal-html-content -- XSS test fixture
+    const highlightFixture = { id: 'h1', selected_text: 'Important', color: 'yellow', note: 'My note', chapter_ref: 'ch1', cfi_range: null, created_at: '2026-07-18' };
+    mockQueryAll.mockResolvedValueOnce([highlightFixture]);
     mockQueryAll.mockResolvedValueOnce([]);
     mockQueryAll.mockResolvedValueOnce([]);
     const mockFirst = vi.fn().mockResolvedValue({ title: 'Test Book' });
@@ -47,7 +49,8 @@ describe('Export Routes', () => {
   it('escapes HTML in export content', async () => {
     mockRequireAuth.mockResolvedValue(makeAuthContext());
     // codacy-suppress-next-line security/detect-non-literal-html-content -- XSS test fixture
-    mockQueryAll.mockResolvedValueOnce([{ id: 'h1', selected_text: '<script>alert("xss")</script>', color: 'yellow', note: null, chapter_ref: null, cfi_range: null, created_at: '2026-07-18' }]);
+    const xssFixture = { id: 'h1', selected_text: '<script>alert("xss")</script>', color: 'yellow', note: null, chapter_ref: null, cfi_range: null, created_at: '2026-07-18' };
+    mockQueryAll.mockResolvedValueOnce([xssFixture]);
     mockQueryAll.mockResolvedValueOnce([]);
     mockQueryAll.mockResolvedValueOnce([]);
     const mockFirst = vi.fn().mockResolvedValue({ title: 'Test' });

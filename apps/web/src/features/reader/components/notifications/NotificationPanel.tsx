@@ -52,23 +52,19 @@ export function NotificationPanel({ onNavigateToComment, t, onClose }: Notificat
     void fetchNotifications();
   }, [fetchNotifications]);
 
-  // eslint-disable-next-line @typescript-eslint/no-misused-promises -- React async handler
-  // codacy-suppress-next-line Biome_lint_suspicious_noDoubleEquals -- React async handler (Biome SolidJS rule false positive)
-  const markAsRead = async (id: string) => {
+  const handleMarkAsRead = useCallback(async (id: string) => {
     await fetch(`/api/notifications/${id}/read`, { method: 'POST' });
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, readAt: new Date().toISOString() } : n)),
     );
-  };
+  }, []);
 
-  // eslint-disable-next-line @typescript-eslint/no-misused-promises -- React async handler
-  // codacy-suppress-next-line Biome_lint_suspicious_noDoubleEquals -- React async handler (Biome SolidJS rule false positive)
-  const markAllAsRead = async () => {
+  const handleMarkAllAsRead = useCallback(async () => {
     await fetch('/api/notifications/read-all', { method: 'POST' });
     setNotifications((prev) =>
       prev.map((n) => (n.readAt ? n : { ...n, readAt: new Date().toISOString() })),
     );
-  };
+  }, []);
 
   const unreadCount = notifications.filter((n) => !n.readAt).length;
 
@@ -86,7 +82,7 @@ export function NotificationPanel({ onNavigateToComment, t, onClose }: Notificat
           {unreadCount > 0 && (
             <button
               type="button"
-              onClick={() => void markAllAsRead()}
+              onClick={() => void handleMarkAllAsRead()}
               className="text-xs text-foreground/60 hover:text-foreground touch-target"
             >
               {t('notifications.markAllRead')}
@@ -121,7 +117,7 @@ export function NotificationPanel({ onNavigateToComment, t, onClose }: Notificat
                 !n.readAt ? 'bg-foreground/[0.03]' : ''
               } ${prefersReduced ? '' : 'transition-all duration-150'}`}
               onClick={() => {
-                void markAsRead(n.id);
+                void handleMarkAsRead(n.id);
                 onNavigateToComment(n.bookId, n.commentId);
               }}
             >
