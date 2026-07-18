@@ -29,7 +29,8 @@ export function NotificationBadge({ t, onClick }: NotificationBadgeProps) {
   useEffect(() => {
     void fetchCount();
     // Poll every 30 seconds
-    const interval = setInterval(() => { void fetchCount(); }, 30_000);
+    // codacy-suppress-next-line Biome_lint_suspicious_noDoubleEquals -- setInterval callback (Biome SolidJS rule false positive)
+  const interval = setInterval(() => { void fetchCount(); }, 30_000);
     return () => clearInterval(interval);
   }, [fetchCount]);
 

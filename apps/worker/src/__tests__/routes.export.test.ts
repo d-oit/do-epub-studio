@@ -46,6 +46,7 @@ describe('Export Routes', () => {
 
   it('escapes HTML in export content', async () => {
     mockRequireAuth.mockResolvedValue(makeAuthContext());
+    // codacy-suppress-next-line security/detect-non-literal-html-content -- XSS test fixture
     mockQueryAll.mockResolvedValueOnce([{ id: 'h1', selected_text: '<script>alert("xss")</script>', color: 'yellow', note: null, chapter_ref: null, cfi_range: null, created_at: '2026-07-18' }]);
     mockQueryAll.mockResolvedValueOnce([]);
     mockQueryAll.mockResolvedValueOnce([]);
@@ -53,6 +54,7 @@ describe('Export Routes', () => {
     (env.DB as unknown as { first: ReturnType<typeof vi.fn> }).first = mockFirst;
     const res = await app.fetch(new Request('http://localhost/api/books/b1/export?format=html', { headers: { Authorization: 'Bearer valid' } }), env, makePassThroughContext());
     const body = await res.json() as { ok: boolean; data: { content: string } };
+    // codacy-suppress-next-line security/detect-non-literal-html-content -- verifying XSS is escaped
     expect(body.data.content).not.toContain('<script>');
     expect(body.data.content).toContain('&lt;script&gt;');
   });

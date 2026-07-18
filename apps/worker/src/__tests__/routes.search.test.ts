@@ -31,6 +31,7 @@ describe('Search Routes', () => {
     mockQueryFirst
       .mockResolvedValueOnce({ indexed_at: '2026-07-18', chapter_count: 5 })
       .mockResolvedValueOnce({ cnt: 1 });
+    // codacy-suppress-next-line security/detect-non-literal-html-content -- test fixture with markup
     mockQueryAll.mockResolvedValueOnce([{ book_id: 'b1', chapter_ref: 'ch1', content: 'Hello <mark>world</mark>', rank: -1.5 }]);
     const res = await app.fetch(new Request('http://localhost/api/books/b1/search?q=world', { headers: { Authorization: 'Bearer valid' } }), env, makePassThroughContext());
     expect(res.status).toBe(200);
