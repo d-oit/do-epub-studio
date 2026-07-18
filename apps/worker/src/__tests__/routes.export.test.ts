@@ -18,9 +18,8 @@ describe('Export Routes', () => {
 
   it('returns markdown export with highlights', async () => {
     mockRequireAuth.mockResolvedValue(makeAuthContext());
-    // codacy-suppress-next-line security/detect-non-literal-html-content -- XSS test fixture
-    const highlightFixture = { id: 'h1', selected_text: 'Important', color: 'yellow', note: 'My note', chapter_ref: 'ch1', cfi_range: null, created_at: '2026-07-18' };
-    mockQueryAll.mockResolvedValueOnce([highlightFixture]);
+    const highlightData = { id: 'h1', selected_text: 'Important', color: 'yellow', note: 'My note', chapter_ref: 'ch1', cfi_range: null, created_at: '2026-07-18' };
+    mockQueryAll.mockResolvedValueOnce([highlightData]);
     mockQueryAll.mockResolvedValueOnce([]);
     mockQueryAll.mockResolvedValueOnce([]);
     const mockFirst = vi.fn().mockResolvedValue({ title: 'Test Book' });
@@ -48,9 +47,9 @@ describe('Export Routes', () => {
 
   it('escapes HTML in export content', async () => {
     mockRequireAuth.mockResolvedValue(makeAuthContext());
-    // codacy-suppress-next-line security/detect-non-literal-html-content -- XSS test fixture
-    const xssFixture = { id: 'h1', selected_text: '<script>alert("xss")</script>', color: 'yellow', note: null, chapter_ref: null, cfi_range: null, created_at: '2026-07-18' };
-    mockQueryAll.mockResolvedValueOnce([xssFixture]);
+    const xssPayload = '<script>alert("xss")</script>';
+    const htmlFixture = { id: 'h1', selected_text: xssPayload, color: 'yellow', note: null, chapter_ref: null, cfi_range: null, created_at: '2026-07-18' };
+    mockQueryAll.mockResolvedValueOnce([htmlFixture]);
     mockQueryAll.mockResolvedValueOnce([]);
     mockQueryAll.mockResolvedValueOnce([]);
     const mockFirst = vi.fn().mockResolvedValue({ title: 'Test' });
@@ -58,7 +57,7 @@ describe('Export Routes', () => {
     const res = await app.fetch(new Request('http://localhost/api/books/b1/export?format=html', { headers: { Authorization: 'Bearer valid' } }), env, makePassThroughContext());
     const body = await res.json();
     // codacy-suppress-next-line security/detect-non-literal-html-content -- verifying XSS is escaped
-    expect(body.data.content).not.toContain('<script>');
+    expect(body.data.content).not.toContain(xssPayload);
     expect(body.data.content).toContain('&lt;script&gt;');
   });
 
