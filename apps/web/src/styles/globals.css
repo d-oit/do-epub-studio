@@ -723,4 +723,35 @@
   .animate-exit-scale { animation: scaleOut 0.2s ease-in forwards; }
 }
 
+/* Scroll-driven progress bar — Plan 198 S2 (ADR-105 §4).
+   CSS-only reading progress indicator using animation-timeline.
+   Degrades gracefully: browsers without scroll-driven animation support
+   show no bar (the reader toolbar already has a chapter progress indicator).
+   Respects prefers-reduced-motion (no animation). */
+@supports (animation-timeline: scroll()) {
+  .scroll-progress-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: var(--color-accent);
+    transform-origin: left;
+    z-index: 100;
+    animation: scroll-progress-grow linear forwards;
+    animation-timeline: scroll();
+  }
+
+  @keyframes scroll-progress-grow {
+    from { transform: scaleX(0); }
+    to { transform: scaleX(1); }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scroll-progress-bar {
+    display: none;
+  }
+}
+
 /* Reduced-motion is handled by the consolidated block above */

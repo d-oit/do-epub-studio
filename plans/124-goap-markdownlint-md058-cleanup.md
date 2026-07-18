@@ -1,7 +1,7 @@
 # GOAP 124 — Markdownlint MD058 + MD038 Cleanup (2026-07-09)
 
 **Date:** 2026-07-09
-**Status:** 🔄 SHIPPING — via `chore/markdownlint-md058-cleanup` PR per AGENTS.md Tier 1 ("MUST always fix pre-existing issues when encountered")
+**Status:** ✅ COMPLETED (Plan 198 verified 2026-07-18 — merged via PR #749 `7bfc960`)
 **Author:** Buffy session
 **Methodology:** GOAP (analyze → decompose → strategize → coordinate → execute → synthesize)
 **Supersedes:** Nothing — first pass

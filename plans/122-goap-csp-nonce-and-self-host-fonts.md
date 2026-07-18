@@ -1,7 +1,7 @@
 # GOAP 122 — CSP `style-src-attr` strategy + Self-Hosted Fonts (SE2 + SE3)
 
 **Date:** 2026-07-09
-**Status:** 🔄 ACTIVE — branch `security/csp-style-src-attr-and-self-host-fonts`
+**Status:** ✅ COMPLETED (Plan 198 verified 2026-07-18 — merged via PR #748)
 **Author:** Buffy execution session
 **Methodology:** GOAP (analyze → decompose → strategize → coordinate → execute → synthesize)
 **Extends:** Plan 116 § SE2 + SE3, Plan 121 § P3 Backlog, ADR-035
