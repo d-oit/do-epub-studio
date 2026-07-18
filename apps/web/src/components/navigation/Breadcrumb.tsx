@@ -32,7 +32,7 @@ export function Breadcrumb({ items }: BreadcrumbProps) {
   const { t } = useTranslation();
 
   return (
-    // eslint-disable-next-line i18next/no-literal-string -- aria-label is a semantic landmark, not user-visible text
+    // eslint-disable-next-line i18next/no-literal-string -- aria-label is a semantic landmark attribute
     <nav aria-label="Breadcrumb" className="mb-4">
       <ol className="flex items-center gap-1.5 text-sm text-foreground-muted">
         {items.map((item, index) => {

@@ -271,7 +271,7 @@ export function AdminBookResponsesPage() {
 
   return (
     <main id="main-content" className="min-dvh bg-background p-4 sm:p-6 lg:p-8">
-      {/* eslint-disable i18next/no-literal-string -- hrefs are routes, not user-visible text */}
+      {/* eslint-disable i18next/no-literal-string -- route paths are constants */}
       <Breadcrumb items={[
         { labelKey: 'admin.breadcrumb.home', href: '/admin' },
         { labelKey: 'admin.breadcrumb.books' },

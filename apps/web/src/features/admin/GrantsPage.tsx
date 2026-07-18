@@ -182,7 +182,7 @@ function GrantsView({ data, bookId, token }: { data: GrantsBodyData; bookId: str
 
   return (
     <PageContainer className="p-8">
-      {/* eslint-disable i18next/no-literal-string -- hrefs are routes, not user-visible text */}
+      {/* eslint-disable i18next/no-literal-string -- route paths are constants */}
       <Breadcrumb items={[
         { labelKey: 'admin.breadcrumb.home', href: '/admin' },
         { labelKey: 'admin.breadcrumb.books', href: '/admin/books' },

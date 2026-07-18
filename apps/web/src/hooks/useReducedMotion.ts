@@ -37,9 +37,11 @@ export function useReducedMotion(): boolean {
     // Sync in case SSR initial value was stale
     setPrefersReduced(mql.matches);
 
-    const handler = (e: MediaQueryListEvent) => setPrefersReduced(e.matches);
+    // biome-ignore lint/correctness/useQwikValidLexicalScope: React project, not Qwik — false positive
+    const handler = (e: MediaQueryListEvent) => { setPrefersReduced(e.matches); };
     mql.addEventListener('change', handler);
-    return () => mql.removeEventListener('change', handler);
+    // biome-ignore lint/correctness/useQwikValidLexicalScope: React project, not Qwik — false positive
+    return () => { mql.removeEventListener('change', handler); };
   }, []);
 
   return prefersReduced;
