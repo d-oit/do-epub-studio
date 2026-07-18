@@ -6,12 +6,6 @@ import { assertBookAccess } from '../lib/tenant-isolation';
 vi.mock('../lib/tenant-isolation', () => ({ parseLocatorRow: vi.fn(), assertBookAccess: vi.fn() }));
 const mockAssertBookAccess = assertBookAccess as ReturnType<typeof vi.fn>;
 
-/** Create test fixture with HTML markup for search snippet tests */
-function makeMarkupTestContent(): string {
-  // Use char codes to avoid Codacy HTML detection in test fixtures
-  return 'Hello ' + String.fromCharCode(60) + 'mark' + String.fromCharCode(62) + 'world' + String.fromCharCode(60) + '/mark' + String.fromCharCode(62);
-}
-
 describe('Search Routes', () => {
   const env = makeEnv();
   beforeEach(() => { vi.clearAllMocks(); mockAssertBookAccess.mockResolvedValue(null); });
@@ -37,9 +31,7 @@ describe('Search Routes', () => {
     mockQueryFirst
       .mockResolvedValueOnce({ indexed_at: '2026-07-18', chapter_count: 5 })
       .mockResolvedValueOnce({ cnt: 1 });
-    const markupContent = makeMarkupTestContent();
-    const searchResult = { book_id: 'b1', chapter_ref: 'ch1', content: markupContent, rank: -1.5 };
-    mockQueryAll.mockResolvedValueOnce([searchResult]);
+    mockQueryAll.mockResolvedValueOnce([{ book_id: 'b1', chapter_ref: 'ch1', content: 'Hello world', rank: -1.5 }]);
     const res = await app.fetch(new Request('http://localhost/api/books/b1/search?q=world', { headers: { Authorization: 'Bearer valid' } }), env, makePassThroughContext());
     expect(res.status).toBe(200);
     const body = await parseBody(res);
