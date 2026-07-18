@@ -23,7 +23,7 @@ interface NotificationRow {
  * GET /api/notifications
  * List notifications for the authenticated user with pagination.
  */
-notificationsRouter.get('/', readerAuth, async (c) => {
+notificationsRouter.get('/notifications', readerAuth, async (c) => {
   const auth = c.get('auth');
   const limit = Math.min(parseInt(c.req.query('limit') ?? '20', 10), 100);
   const offset = parseInt(c.req.query('offset') ?? '0', 10);
@@ -75,7 +75,7 @@ notificationsRouter.get('/', readerAuth, async (c) => {
  * GET /api/notifications/unread-count
  * Get count of unread notifications for the authenticated user.
  */
-notificationsRouter.get('/unread-count', readerAuth, async (c) => {
+notificationsRouter.get('/notifications/unread-count', readerAuth, async (c) => {
   const auth = c.get('auth');
 
   const result = await queryFirst<{ cnt: number }>(
@@ -91,10 +91,27 @@ notificationsRouter.get('/unread-count', readerAuth, async (c) => {
 });
 
 /**
+ * POST /api/notifications/read-all
+ * Mark all notifications as read for the authenticated user.
+ */
+notificationsRouter.post('/notifications/read-all', readerAuth, async (c) => {
+  const auth = c.get('auth');
+  const now = new Date().toISOString();
+
+  await execute(
+    c.env,
+    `UPDATE notifications SET read_at = ? WHERE user_email = ? AND read_at IS NULL`,
+    [now, auth.email],
+  );
+
+  return c.json({ ok: true });
+});
+
+/**
  * POST /api/notifications/:id/read
  * Mark a single notification as read.
  */
-notificationsRouter.post('/:id/read', readerAuth, async (c) => {
+notificationsRouter.post('/notifications/:id/read', readerAuth, async (c) => {
   const notificationId = c.req.param('id');
   const auth = c.get('auth');
   const now = new Date().toISOString();
@@ -113,23 +130,6 @@ notificationsRouter.post('/:id/read', readerAuth, async (c) => {
     c.env,
     `UPDATE notifications SET read_at = ? WHERE id = ?`,
     [now, notificationId],
-  );
-
-  return c.json({ ok: true });
-});
-
-/**
- * POST /api/notifications/read-all
- * Mark all notifications as read for the authenticated user.
- */
-notificationsRouter.post('/read-all', readerAuth, async (c) => {
-  const auth = c.get('auth');
-  const now = new Date().toISOString();
-
-  await execute(
-    c.env,
-    `UPDATE notifications SET read_at = ? WHERE user_email = ? AND read_at IS NULL`,
-    [now, auth.email],
   );
 
   return c.json({ ok: true });
@@ -164,7 +164,9 @@ export async function createReplyNotification(
 
   const id = crypto.randomUUID();
   const now = new Date().toISOString();
-  const message = `New reply to your comment: "${parentComment.body.slice(0, 50)}${parentComment.body.length > 50 ? '...' : ''}"`;
+  // Sanitize parent comment body for notification message (strip HTML-like chars)
+  const sanitizedBody = parentComment.body.replace(/[<>&"']/g, '').slice(0, 50);
+  const message = `New reply to your comment: "${sanitizedBody}${parentComment.body.length > 50 ? '...' : ''}"`;
 
   await execute(
     env,

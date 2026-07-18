@@ -62,11 +62,22 @@ searchRouter.get(
     }
 
     // FTS5 search with BM25 ranking
-    const ftsQuery = q
+    // Sanitize: strip FTS5 special characters to prevent query injection.
+    // FTS5 special chars: " * + - ( ) : near/ AND / OR / NOT
+    const sanitized = q.replace(/["*+\-():]|(?:\b(?:NEAR|AND|OR|NOT)\b)/gi, ' ').trim();
+    const ftsQuery = sanitized
       .split(/\s+/)
       .filter(Boolean)
+      .filter((term) => term.length >= 2) // FTS5 requires min 2-char terms
       .map((term) => `"${term.replace(/"/g, '""')}"`)
       .join(' OR ');
+
+    if (!ftsQuery) {
+      return c.json({
+        ok: true,
+        data: { results: [], total: 0, indexed: true, indexedAt: indexStatus.indexed_at, chapterCount: indexStatus.chapter_count },
+      });
+    }
 
     const results = await queryAll<SearchResultRow>(
       c.env,
