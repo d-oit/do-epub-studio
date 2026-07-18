@@ -118,4 +118,61 @@ describe('Telemetry API', () => {
 
     expect(res.status).toBe(400);
   });
+
+  it('should scrub sensitive information in logs before printing', async () => {
+    const payload = {
+      logs: [
+        {
+          level: 'warn',
+          traceId: 'trace-sensitive',
+          event: 'login_error',
+          metadata: {
+            password: 'my-super-secret-password-123',
+            email: 'admin@example.com',
+            token: 'abcdef1234567890abcdef1234567890',
+            safeField: 'hello-world',
+          },
+          error: {
+            name: 'Error',
+            message: 'Failed for user user@example.com with password secretpwd_but_with_a_very_long_string_of_characters_to_trigger_long_token_pattern',
+          },
+        },
+      ],
+    };
+
+    const res = await app.fetch(
+      new Request('http://localhost/api/telemetry', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      }),
+      {}
+    );
+
+    expect(res.status).toBe(202);
+    const body = await res.json();
+    assertOk(body);
+
+    expect(console.warn).toHaveBeenCalled();
+
+    const clientTelemetryLogs = vi.mocked(console.warn).mock.calls
+      .map((call: unknown[]) => call[0] as string)
+      .filter((msg) => msg.startsWith('[CLIENT-TELEMETRY]'));
+
+    expect(clientTelemetryLogs.length).toBe(1);
+    const parsedLog = JSON.parse(clientTelemetryLogs[0].replace('[CLIENT-TELEMETRY] ', ''));
+
+    // Check metadata redaction
+    expect(parsedLog.metadata.password).toBe('[REDACTED]');
+    expect(parsedLog.metadata.email).toBe('[REDACTED]');
+    expect(parsedLog.metadata.token).toBe('[REDACTED]');
+    expect(parsedLog.metadata.safeField).toBe('hello-world');
+
+    // Check error redaction
+    expect(parsedLog.error.message).not.toContain('user@example.com');
+    expect(parsedLog.error.message).not.toContain('secretpwd_but_with_a_very_long_string_of_characters_to_trigger_long_token_pattern');
+    expect(parsedLog.error.message).toContain('[REDACTED]');
+  });
 });
