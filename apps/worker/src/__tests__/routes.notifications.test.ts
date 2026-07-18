@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { makeEnv, makeAuthContext, makePassThroughContext, mockQueryFirst, mockQueryAll, mockExecute, mockRequireAuth } from './fixtures';
+import { makeEnv, makeAuthContext, makePassThroughContext, mockQueryFirst, mockQueryAll, mockExecute, mockRequireAuth, parseBody } from './fixtures';
 import { app } from '../app';
 import { assertBookAccess } from '../lib/tenant-isolation';
 
@@ -24,7 +24,7 @@ describe('Notifications Routes', () => {
     ]);
     const res = await app.fetch(new Request('http://localhost/api/notifications', { headers: { Authorization: 'Bearer valid' } }), env, makePassThroughContext());
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body = await parseBody(res);
     expect(body.ok).toBe(true);
     expect(body.data.total).toBe(1);
   });
@@ -34,7 +34,7 @@ describe('Notifications Routes', () => {
     mockQueryFirst.mockResolvedValueOnce({ cnt: 3 });
     const res = await app.fetch(new Request('http://localhost/api/notifications/unread-count', { headers: { Authorization: 'Bearer valid' } }), env, makePassThroughContext());
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body = await parseBody(res);
     expect(body.data.count).toBe(3);
   });
 

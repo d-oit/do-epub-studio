@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { makeEnv, makeAuthContext, makePassThroughContext, mockQueryAll, mockRequireAuth } from './fixtures';
+import { makeEnv, makeAuthContext, makePassThroughContext, mockQueryAll, mockRequireAuth, parseBody } from './fixtures';
 import { app } from '../app';
 import { assertBookAccess } from '../lib/tenant-isolation';
 
@@ -32,7 +32,7 @@ describe('Export Routes', () => {
     (env.DB as unknown as { first: ReturnType<typeof vi.fn> }).first = mockFirst;
     const res = await app.fetch(new Request('http://localhost/api/books/b1/export?format=markdown', { headers: { Authorization: 'Bearer valid' } }), env, makePassThroughContext());
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body = await parseBody(res);
     expect(body.data.format).toBe('markdown');
     expect(body.data.content).toContain('Important');
   });
@@ -46,7 +46,7 @@ describe('Export Routes', () => {
     (env.DB as unknown as { first: ReturnType<typeof vi.fn> }).first = mockFirst;
     const res = await app.fetch(new Request('http://localhost/api/books/b1/export?format=html', { headers: { Authorization: 'Bearer valid' } }), env, makePassThroughContext());
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body = await parseBody(res);
     expect(body.data.format).toBe('html');
     expect(body.data.content).toContain('<!DOCTYPE html>');
   });
@@ -65,7 +65,7 @@ describe('Export Routes', () => {
     const mockFirst = vi.fn().mockResolvedValue({ title: 'Test' });
     (env.DB as unknown as { first: ReturnType<typeof vi.fn> }).first = mockFirst;
     const res = await app.fetch(new Request('http://localhost/api/books/b1/export?format=html', { headers: { Authorization: 'Bearer valid' } }), env, makePassThroughContext());
-    const body = await res.json();
+    const body = await parseBody(res);
     // codacy-suppress-next-line security/detect-non-literal-html-content -- verifying XSS is escaped
     expect(body.data.content).not.toContain(xssPayload);
     expect(body.data.content).toContain('&lt;script&gt;');

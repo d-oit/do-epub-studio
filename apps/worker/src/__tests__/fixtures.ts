@@ -327,3 +327,9 @@ export function makeAuditLogRow(overrides: Record<string, unknown> = {}): Record
 export function makePassThroughContext(): ExecutionContext {
   return { waitUntil: () => {}, passThroughOnException: () => {}, props: {}, exports: {}, tracing: {} as Tracing };
 }
+
+/** Parse a fetch Response JSON body with known API shape. Avoids `as` cast at each call site. */
+export async function parseBody(res: Response): Promise<{ ok: boolean; data: Record<string, unknown>; error?: { code: string } }> {
+  const json: unknown = await res.json();
+  return json as { ok: boolean; data: Record<string, unknown>; error?: { code: string } };
+}

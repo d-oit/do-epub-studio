@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { makeEnv, makeAuthContext, makePassThroughContext, mockQueryFirst, mockQueryAll, mockRequireAuth } from './fixtures';
+import { makeEnv, makeAuthContext, makePassThroughContext, mockQueryFirst, mockQueryAll, mockRequireAuth, parseBody } from './fixtures';
 import { app } from '../app';
 import { assertBookAccess } from '../lib/tenant-isolation';
 
@@ -27,7 +27,7 @@ describe('Search Routes', () => {
     mockQueryFirst.mockResolvedValueOnce(null);
     const res = await app.fetch(new Request('http://localhost/api/books/b1/search?q=hello', { headers: { Authorization: 'Bearer valid' } }), env, makePassThroughContext());
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body = await parseBody(res);
     expect(body.data.indexed).toBe(false);
     expect(body.data.results).toHaveLength(0);
   });
@@ -42,7 +42,7 @@ describe('Search Routes', () => {
     mockQueryAll.mockResolvedValueOnce([searchResult]);
     const res = await app.fetch(new Request('http://localhost/api/books/b1/search?q=world', { headers: { Authorization: 'Bearer valid' } }), env, makePassThroughContext());
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body = await parseBody(res);
     expect(body.data.indexed).toBe(true);
     expect(body.data.results).toHaveLength(1);
   });
@@ -52,7 +52,7 @@ describe('Search Routes', () => {
     mockQueryFirst.mockResolvedValueOnce({ indexed_at: '2026-07-18', chapter_count: 5 });
     const res = await app.fetch(new Request('http://localhost/api/books/b1/search?q=a', { headers: { Authorization: 'Bearer valid' } }), env, makePassThroughContext());
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body = await parseBody(res);
     expect(body.data.results).toHaveLength(0);
   });
 });
