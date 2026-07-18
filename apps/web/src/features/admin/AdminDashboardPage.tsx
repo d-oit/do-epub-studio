@@ -38,6 +38,8 @@ const ICONS = {
   storage: 'M4 7v10a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2zm0 0V5a2 2 0 012-2h12a2 2 0 012 2v2',
 };
 
+import { Breadcrumb } from '../../components/navigation';
+
 export function AdminDashboardPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -82,6 +84,7 @@ export function AdminDashboardPage() {
 
   return (
     <main id="main-content" className="min-h-dvh bg-background p-4 sm:p-6 lg:p-8">
+      <Breadcrumb items={[{ labelKey: 'admin.breadcrumb.home' }]} />
       <header className="flex justify-between flex-wrap gap-4 items-center mb-8">
         <div>
           <h1 className="text-2xl font-bold text-foreground">{t('admin.dashboardTitle')}</h1>

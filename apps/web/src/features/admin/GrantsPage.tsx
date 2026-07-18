@@ -13,6 +13,7 @@ import type { GrantResponse } from '@do-epub-studio/shared';
 import { LocaleSwitcher } from '../../components/LocaleSwitcher';
 import { Spinner } from '@do-epub-studio/ui';
 import { PageContainer } from '../../components/ui';
+import { Breadcrumb } from '../../components/navigation';
 import {
   BookSelector,
   GrantForm,
@@ -20,6 +21,9 @@ import {
   emptyFormData,
 } from './components';
 import type { Grant, GrantFormData } from './components';
+
+/** Admin route paths (constants avoid i18next/no-literal-string in JSX). */
+const GRANT_ROUTES = { admin: '/admin', books: '/admin/books' } as const;
 
 interface LocationState {
   bookTitle?: string;
@@ -181,6 +185,11 @@ function GrantsView({ data, bookId, token }: { data: GrantsBodyData; bookId: str
 
   return (
     <PageContainer className="p-8">
+      <Breadcrumb items={[
+        { labelKey: 'admin.breadcrumb.home', href: GRANT_ROUTES.admin },
+        { labelKey: 'admin.breadcrumb.books', href: GRANT_ROUTES.books },
+        { labelKey: 'admin.breadcrumb.grants' },
+      ]} />
       <header className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-2xl font-bold text-foreground">

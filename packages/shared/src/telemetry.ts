@@ -1,3 +1,7 @@
+/**
+ * Serialized representation of an error suitable for JSON transport
+ * across the API boundary (Worker ↔ client).
+ */
 export interface SerializedError {
   name: string;
   message: string;
@@ -21,6 +25,20 @@ function randomSegment(length: number): string {
   return result;
 }
 
+/**
+ * Generate a unique trace identifier for distributed request tracing.
+ *
+ * Uses `crypto.randomUUID()` when available, falling back to a
+ * timestamp + random string for older environments.
+ *
+ * @returns A unique trace ID string
+ *
+ * @example
+ * ```ts
+ * const traceId = createTraceId();
+ * // → "550e8400-e29b-41d4-a716-446655440000"
+ * ```
+ */
 export function createTraceId(): string {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
     return crypto.randomUUID();
@@ -28,6 +46,12 @@ export function createTraceId(): string {
   return `${Date.now().toString(36)}-${randomSegment(12)}`;
 }
 
+/**
+ * Generate a short span identifier for correlating sub-operations
+ * within a trace.
+ *
+ * @returns A unique span ID string (shorter than traceId)
+ */
 export function createSpanId(): string {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
     return crypto.randomUUID().split('-')[0] ?? randomSegment(8);
@@ -35,6 +59,16 @@ export function createSpanId(): string {
   return randomSegment(10);
 }
 
+/**
+ * Convert an unknown error value into a serializable plain object
+ * suitable for logging or API transport.
+ *
+ * Handles `Error` instances (including nested `.cause`), string
+ * causes, and non-Error throw values.
+ *
+ * @param error - The caught error value
+ * @returns A `SerializedError` plain object
+ */
 export function serializeError(error: unknown): SerializedError {
   if (error instanceof Error) {
     return {
