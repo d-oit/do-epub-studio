@@ -257,12 +257,14 @@ export function AdminAuditPage() {
 
   return (
     <main id="main-content" className="min-h-dvh bg-background p-4 sm:p-6 lg:p-8">
+      {/* codacy-suppress-next-line ESLint8_eslint_i18next/no-literal-string -- rule exists in project ESLint; Codacy lacks i18next plugin */}
       {/* eslint-disable i18next/no-literal-string -- route paths are constants */}
       <Breadcrumb items={[
         { labelKey: 'admin.breadcrumb.home', href: '/admin' },
         { labelKey: 'admin.breadcrumb.books', href: '/admin/books' },
         { labelKey: 'admin.breadcrumb.audit' },
       ]} />
+      {/* codacy-suppress-next-line ESLint8_eslint_i18next/no-literal-string -- rule exists in project ESLint; Codacy lacks i18next plugin */}
       {/* eslint-enable i18next/no-literal-string */}
       <header className="flex justify-between items-center mb-8">
         <div>

@@ -32,6 +32,7 @@ export function Breadcrumb({ items }: BreadcrumbProps) {
   const { t } = useTranslation();
 
   return (
+    // codacy-suppress-next-line ESLint8_eslint_i18next/no-literal-string -- rule exists in project ESLint; Codacy lacks i18next plugin
     // eslint-disable-next-line i18next/no-literal-string -- aria-label is a semantic landmark attribute
     <nav aria-label="Breadcrumb" className="mb-4">
       <ol className="flex items-center gap-1.5 text-sm text-foreground-muted">
