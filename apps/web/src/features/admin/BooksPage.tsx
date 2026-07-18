@@ -12,6 +12,9 @@ import { BookCreateModal } from './components/BookCreateModal';
 import { BookEditModal } from './components/BookEditModal';
 import { Breadcrumb } from '../../components/navigation';
 
+/** Admin route paths (constants avoid i18next/no-literal-string in JSX). */
+const ADMIN_ROUTES = { admin: '/admin', books: '/admin/books' } as const;
+
 interface CreateBookResponse {
   id: string;
   uploadUrl: string;
@@ -271,9 +274,8 @@ export function AdminBookResponsesPage() {
 
   return (
     <main id="main-content" className="min-dvh bg-background p-4 sm:p-6 lg:p-8">
-      {/* eslint-disable-next-line i18next/no-literal-string -- route paths are constants, not user-visible text */}
       <Breadcrumb items={[
-        { labelKey: 'admin.breadcrumb.home', href: '/admin' },
+        { labelKey: 'admin.breadcrumb.home', href: ADMIN_ROUTES.admin },
         { labelKey: 'admin.breadcrumb.books' },
       ]} />
       <header className="flex justify-between flex-wrap gap-4 items-center mb-8">

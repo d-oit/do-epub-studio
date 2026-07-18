@@ -22,6 +22,9 @@ import {
 } from './components';
 import type { Grant, GrantFormData } from './components';
 
+/** Admin route paths (constants avoid i18next/no-literal-string in JSX). */
+const GRANT_ROUTES = { admin: '/admin', books: '/admin/books' } as const;
+
 interface LocationState {
   bookTitle?: string;
 }
@@ -182,10 +185,9 @@ function GrantsView({ data, bookId, token }: { data: GrantsBodyData; bookId: str
 
   return (
     <PageContainer className="p-8">
-      {/* eslint-disable-next-line i18next/no-literal-string -- route paths are constants, not user-visible text */}
       <Breadcrumb items={[
-        { labelKey: 'admin.breadcrumb.home', href: '/admin' },
-        { labelKey: 'admin.breadcrumb.books', href: '/admin/books' },
+        { labelKey: 'admin.breadcrumb.home', href: GRANT_ROUTES.admin },
+        { labelKey: 'admin.breadcrumb.books', href: GRANT_ROUTES.books },
         { labelKey: 'admin.breadcrumb.grants' },
       ]} />
       <header className="flex justify-between items-center mb-8">

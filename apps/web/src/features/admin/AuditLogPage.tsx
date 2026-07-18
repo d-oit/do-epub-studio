@@ -15,6 +15,9 @@ import { Spinner } from '@do-epub-studio/ui';
 import { logClientEvent } from '../../lib/client-logger';
 import { Breadcrumb } from '../../components/navigation';
 
+/** Admin route paths (constants avoid i18next/no-literal-string in JSX). */
+const AUDIT_ROUTES = { admin: '/admin', books: '/admin/books' } as const;
+
 const PAGE_SIZE = 50;
 const ENTITY_TYPE_OPTIONS: Array<{ value: string; labelKey: TranslationKeys }> = [
   { value: '', labelKey: 'admin.audit.entityType.all' },
@@ -257,10 +260,9 @@ export function AdminAuditPage() {
 
   return (
     <main id="main-content" className="min-h-dvh bg-background p-4 sm:p-6 lg:p-8">
-      {/* eslint-disable-next-line i18next/no-literal-string -- route paths are constants, not user-visible text */}
       <Breadcrumb items={[
-        { labelKey: 'admin.breadcrumb.home', href: '/admin' },
-        { labelKey: 'admin.breadcrumb.books', href: '/admin/books' },
+        { labelKey: 'admin.breadcrumb.home', href: AUDIT_ROUTES.admin },
+        { labelKey: 'admin.breadcrumb.books', href: AUDIT_ROUTES.books },
         { labelKey: 'admin.breadcrumb.audit' },
       ]} />
       <header className="flex justify-between items-center mb-8">
