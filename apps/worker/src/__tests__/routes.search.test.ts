@@ -21,7 +21,7 @@ describe('Search Routes', () => {
     mockQueryFirst.mockResolvedValueOnce(null);
     const res = await app.fetch(new Request('http://localhost/api/books/b1/search?q=hello', { headers: { Authorization: 'Bearer valid' } }), env, makePassThroughContext());
     expect(res.status).toBe(200);
-    const body = await res.json() as { ok: boolean; data: { results: unknown[]; indexed: boolean } };
+    const body = await res.json();
     expect(body.data.indexed).toBe(false);
     expect(body.data.results).toHaveLength(0);
   });
@@ -36,7 +36,7 @@ describe('Search Routes', () => {
     mockQueryAll.mockResolvedValueOnce([searchResult]);
     const res = await app.fetch(new Request('http://localhost/api/books/b1/search?q=world', { headers: { Authorization: 'Bearer valid' } }), env, makePassThroughContext());
     expect(res.status).toBe(200);
-    const body = await res.json() as { ok: boolean; data: { results: unknown[]; indexed: boolean } };
+    const body = await res.json();
     expect(body.data.indexed).toBe(true);
     expect(body.data.results).toHaveLength(1);
   });
@@ -46,7 +46,7 @@ describe('Search Routes', () => {
     mockQueryFirst.mockResolvedValueOnce({ indexed_at: '2026-07-18', chapter_count: 5 });
     const res = await app.fetch(new Request('http://localhost/api/books/b1/search?q=a', { headers: { Authorization: 'Bearer valid' } }), env, makePassThroughContext());
     expect(res.status).toBe(200);
-    const body = await res.json() as { ok: boolean; data: { results: unknown[] } };
+    const body = await res.json();
     expect(body.data.results).toHaveLength(0);
   });
 });

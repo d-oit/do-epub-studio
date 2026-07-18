@@ -27,7 +27,7 @@ describe('Export Routes', () => {
     (env.DB as unknown as { first: ReturnType<typeof vi.fn> }).first = mockFirst;
     const res = await app.fetch(new Request('http://localhost/api/books/b1/export?format=markdown', { headers: { Authorization: 'Bearer valid' } }), env, makePassThroughContext());
     expect(res.status).toBe(200);
-    const body = await res.json() as { ok: boolean; data: { format: string; content: string } };
+    const body = await res.json();
     expect(body.data.format).toBe('markdown');
     expect(body.data.content).toContain('Important');
   });
@@ -41,7 +41,7 @@ describe('Export Routes', () => {
     (env.DB as unknown as { first: ReturnType<typeof vi.fn> }).first = mockFirst;
     const res = await app.fetch(new Request('http://localhost/api/books/b1/export?format=html', { headers: { Authorization: 'Bearer valid' } }), env, makePassThroughContext());
     expect(res.status).toBe(200);
-    const body = await res.json() as { ok: boolean; data: { format: string; content: string } };
+    const body = await res.json();
     expect(body.data.format).toBe('html');
     expect(body.data.content).toContain('<!DOCTYPE html>');
   });
@@ -56,7 +56,7 @@ describe('Export Routes', () => {
     const mockFirst = vi.fn().mockResolvedValue({ title: 'Test' });
     (env.DB as unknown as { first: ReturnType<typeof vi.fn> }).first = mockFirst;
     const res = await app.fetch(new Request('http://localhost/api/books/b1/export?format=html', { headers: { Authorization: 'Bearer valid' } }), env, makePassThroughContext());
-    const body = await res.json() as { ok: boolean; data: { content: string } };
+    const body = await res.json();
     // codacy-suppress-next-line security/detect-non-literal-html-content -- verifying XSS is escaped
     expect(body.data.content).not.toContain('<script>');
     expect(body.data.content).toContain('&lt;script&gt;');

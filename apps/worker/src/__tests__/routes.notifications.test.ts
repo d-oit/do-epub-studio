@@ -24,7 +24,7 @@ describe('Notifications Routes', () => {
     ]);
     const res = await app.fetch(new Request('http://localhost/api/notifications', { headers: { Authorization: 'Bearer valid' } }), env, makePassThroughContext());
     expect(res.status).toBe(200);
-    const body = await res.json() as { ok: boolean; data: { notifications: unknown[]; total: number } };
+    const body = await res.json();
     expect(body.ok).toBe(true);
     expect(body.data.total).toBe(1);
   });
@@ -34,7 +34,7 @@ describe('Notifications Routes', () => {
     mockQueryFirst.mockResolvedValueOnce({ cnt: 3 });
     const res = await app.fetch(new Request('http://localhost/api/notifications/unread-count', { headers: { Authorization: 'Bearer valid' } }), env, makePassThroughContext());
     expect(res.status).toBe(200);
-    const body = await res.json() as { ok: boolean; data: { count: number } };
+    const body = await res.json();
     expect(body.data.count).toBe(3);
   });
 
