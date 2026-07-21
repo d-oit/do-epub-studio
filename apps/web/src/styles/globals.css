@@ -498,6 +498,17 @@
     animation: 0.25s ease-out both enter-fade;
   }
 
+  /* Exclude navigation from root transition — keep them static */
+  .sidebar-nav,
+  .bottom-tab-bar {
+    view-transition-name: prevent-flicker;
+  }
+
+  ::view-transition-old(prevent-flicker),
+  ::view-transition-new(prevent-flicker) {
+    animation: none;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     ::view-transition-old(root),
     ::view-transition-new(root) {
