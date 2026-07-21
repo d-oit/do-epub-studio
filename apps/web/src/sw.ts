@@ -8,6 +8,7 @@ import { ExpirationPlugin } from 'workbox-expiration';
 import { CacheableResponsePlugin } from 'workbox-cacheable-response';
 import { RangeRequestsPlugin } from 'workbox-range-requests';
 import { createHandlerBoundToURL } from 'workbox-precaching';
+import { enable as enableNavigationPreload } from 'workbox-navigation-preload';
 import { createTraceId } from '@do-epub-studio/shared';
 
 declare let self: ServiceWorkerGlobalScope;
@@ -24,6 +25,11 @@ cleanupOutdatedCaches();
 
 // Precache app shell and assets
 precacheAndRoute(self.__WB_MANIFEST);
+
+// Enable navigation preload for faster SPA navigations when SW is active
+if (self.registration.navigationPreload) {
+  enableNavigationPreload();
+}
 
 // Handle navigation requests using the precached app shell (index.html)
 // Precached assets are handled by precacheAndRoute; this provides the SPA fallback

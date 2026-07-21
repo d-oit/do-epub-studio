@@ -54,7 +54,7 @@ export function SearchInput({
             else onChange('');
           }}
           aria-label="Clear search"
-          className="absolute right-2 top-1/2 -translate-y-1/2 rounded-sm p-1 text-foreground-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          className="absolute right-2 top-1/2 -translate-y-1/2 rounded-sm min-w-[24px] min-h-[24px] p-1 text-foreground-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         >
           ✕
         </button>

@@ -285,7 +285,7 @@ export function AdminBookResponsesPage() {
           </h1>
           <button
             onClick={handleBackToReader}
-            className="text-sm text-accent hover:opacity-80 mt-1"
+            className="text-sm text-accent hover:opacity-80 mt-1 min-h-[24px] px-2 py-0.5"
           >
             &larr; {t('admin.books.backToReader')}
           </button>

@@ -355,6 +355,100 @@ describe('Admin Routes', () => {
 
       expect(res.status).toBe(404);
     });
+
+    it('succeeds even when R2 delete fails', async () => {
+      mockRequireAdminAuth.mockResolvedValue({
+        ok: true,
+        context: { userId: 'admin-1', email: 'admin@example.com', globalRole: 'admin' },
+      } as any);
+
+      mockQueryFirst.mockResolvedValue({ id: 'book-1' });
+      const mockBucketDelete = vi.fn().mockRejectedValue(new Error('R2 unavailable'));
+      (env as unknown as Record<string, unknown>).BOOKS_BUCKET = {
+        ...env.BOOKS_BUCKET,
+        delete: mockBucketDelete,
+      };
+
+      mockQueryAll.mockResolvedValue([
+        { storage_key: 'books/book-1/file-a.epub' },
+      ]);
+      mockTransaction.mockResolvedValue(undefined);
+
+      const res = await app.fetch(new Request('http://localhost/api/admin/books/book-1', {
+        method: 'DELETE',
+        headers: { 'Authorization': 'Bearer admin-token' },
+      }), env, makePassThroughContext());
+
+      // DB cascade should still succeed even if R2 fails
+      expect(res.status).toBe(200);
+      const body = await res.json() as any;
+      // r2ObjectsDeleted reports attempted count, not success count
+      expect(body.data.r2ObjectsDeleted).toBe(1);
+      expect(mockTransaction).toHaveBeenCalled();
+    });
+
+    it('handles book with no files gracefully', async () => {
+      mockRequireAdminAuth.mockResolvedValue({
+        ok: true,
+        context: { userId: 'admin-1', email: 'admin@example.com', globalRole: 'admin' },
+      } as any);
+
+      mockQueryFirst.mockResolvedValue({ id: 'book-1' });
+      const mockBucketDelete = vi.fn();
+      (env as unknown as Record<string, unknown>).BOOKS_BUCKET = {
+        ...env.BOOKS_BUCKET,
+        delete: mockBucketDelete,
+      };
+
+      // No files for this book
+      mockQueryAll.mockResolvedValue([]);
+      mockTransaction.mockResolvedValue(undefined);
+
+      const res = await app.fetch(new Request('http://localhost/api/admin/books/book-1', {
+        method: 'DELETE',
+        headers: { 'Authorization': 'Bearer admin-token' },
+      }), env, makePassThroughContext());
+
+      expect(res.status).toBe(200);
+      const body = await res.json() as any;
+      expect(body.data.r2ObjectsDeleted).toBe(0);
+      expect(mockBucketDelete).not.toHaveBeenCalled();
+      expect(mockTransaction).toHaveBeenCalled();
+    });
+
+    it('verifies correct argument binding for cascade statements', async () => {
+      mockRequireAdminAuth.mockResolvedValue({
+        ok: true,
+        context: { userId: 'admin-1', email: 'admin@example.com', globalRole: 'admin' },
+      } as any);
+
+      mockQueryFirst.mockResolvedValue({ id: 'book-1' });
+      const mockBucketDelete = vi.fn().mockResolvedValue(undefined);
+      (env as unknown as Record<string, unknown>).BOOKS_BUCKET = {
+        ...env.BOOKS_BUCKET,
+        delete: mockBucketDelete,
+      };
+
+      mockQueryAll.mockResolvedValue([
+        { storage_key: 'books/book-1/file-a.epub' },
+      ]);
+      mockTransaction.mockResolvedValue(undefined);
+
+      await app.fetch(new Request('http://localhost/api/admin/books/book-1', {
+        method: 'DELETE',
+        headers: { 'Authorization': 'Bearer admin-token' },
+      }), env, makePassThroughContext());
+
+      const txArgs = mockTransaction.mock.calls[0]?.[1] as Array<{ sql: string; args: unknown[] }> | undefined;
+      expect(txArgs).toBeDefined();
+
+      // Each DELETE statement should bind the book ID as first argument
+      for (const stmt of txArgs ?? []) {
+        if (stmt.sql.startsWith('DELETE FROM') || stmt.sql.startsWith('UPDATE books')) {
+          expect(stmt.args?.[0]).toBe('book-1');
+        }
+      }
+    });
   });
 
   describe('GET /api/admin/stats', () => {

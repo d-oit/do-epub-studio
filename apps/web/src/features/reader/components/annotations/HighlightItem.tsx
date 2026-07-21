@@ -74,14 +74,14 @@ export const HighlightItem = memo(function HighlightItem({
             <button
               type="button"
               onClick={() => onEdit(highlight.id)}
-              className="px-2 py-1 text-xs bg-accent text-white rounded hover:opacity-90"
+              className="px-3 py-1.5 text-xs bg-accent text-white rounded hover:opacity-90 min-h-[24px]"
             >
               {t('annotation.save')}
             </button>
             <button
               type="button"
               onClick={() => setEditingHighlight(null)}
-              className="px-2 py-1 text-xs border border-border rounded hover:bg-background-secondary"
+              className="px-3 py-1.5 text-xs border border-border rounded hover:bg-background-secondary min-h-[24px]"
             >
               {t('annotation.cancel')}
             </button>
@@ -102,14 +102,14 @@ export const HighlightItem = memo(function HighlightItem({
                   setEditingHighlight(highlight.id);
                   setHighlightNote(highlight.note || '');
                 }}
-                className="text-xs text-foreground-muted hover:text-foreground"
+                className="text-xs text-foreground-muted hover:text-foreground min-h-[24px] px-2 py-0.5"
               >
                 {t('annotation.editNote')}
               </button>
               <button
                 type="button"
                 onClick={() => onDelete(highlight.id)}
-                className="text-xs text-accent-error hover:opacity-80"
+                className="text-xs text-accent-error hover:opacity-80 min-h-[24px] px-2 py-0.5"
               >
                 {t('annotation.delete')}
               </button>

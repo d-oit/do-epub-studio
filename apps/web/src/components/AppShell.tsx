@@ -94,7 +94,7 @@ export function AppShell() {
         <main
           id="main-content"
           tabIndex={-1}
-          className="flex-1 overflow-y-auto overscroll-behavior-contain p-4 pb-20 lg:p-6"
+          className="flex-1 overflow-y-auto overscroll-behavior-contain p-4 pb-20 lg:p-6 scroll-pt-14 scroll-pb-14"
         >
           <Outlet />
         </main>
