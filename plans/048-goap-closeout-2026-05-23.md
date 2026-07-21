@@ -47,7 +47,7 @@ Wave 3 (Final)
 | Files | No code changes |
 | Skill | `release-management` |
 
-**Status:** DOABLE. Verify CHANGELOG, then create release via `gh release create`.
+**Status:** CLOSED (stale since May 2026, superseded by release-management skill)
 
 ---
 

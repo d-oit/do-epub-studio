@@ -53,7 +53,7 @@
     --color-accent-secondary: oklch(54.1% 0.247 293.0);
     --color-semantic-success: oklch(69.6% 0.149 162.5);
     --color-semantic-warning: oklch(76.9% 0.165 70.1);
-    --color-semantic-error: oklch(63.7% 0.208 25.3);
+    --color-semantic-error: oklch(53% 0.208 25.3);
     --color-semantic-info: oklch(71.5% 0.126 215.2);
 
     /* Border variants */
