@@ -31,7 +31,7 @@ export const securityHeaders: Readonly<Record<string, string>> = Object.freeze({
   // the Worker does not serve any style content, and React inline `style={}`
   // is governed separately at the page layer via style-src-attr.
   'Content-Security-Policy':
-    "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; frame-src 'self'; frame-ancestors 'none'; form-action 'self'; base-uri 'self'; upgrade-insecure-requests; report-uri /api/csp-report",
+    "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests; report-uri /api/csp-report",
 
   // Cross-Origin isolation — prevent cross-origin data leaks
   'Cross-Origin-Opener-Policy': 'same-origin',

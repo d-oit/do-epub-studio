@@ -153,6 +153,9 @@ importers:
       workbox-expiration:
         specifier: ^7.4.1
         version: 7.4.1
+      workbox-navigation-preload:
+        specifier: ^7.4.1
+        version: 7.4.1
       workbox-precaching:
         specifier: ^7.4.1
         version: 7.4.1
@@ -5472,6 +5475,9 @@ packages:
 
   workbox-navigation-preload@7.4.0:
     resolution: {integrity: sha512-etzftSgdQfjMcfPgbfaZCfM2QuR1P+4o8uCA2s4rf3chtKTq/Om7g/qvEOcZkG6v7JZOSOxVYQiOu6PbAZgU6w==}
+
+  workbox-navigation-preload@7.4.1:
+    resolution: {integrity: sha512-C4KVsjPcYKJOhr631AxR9XoG2rLF3QiTk5aMv36MXOjtWvm8axwNFAtKUPGsWUwLXXAMgYM1En7fsvndaXeXRQ==}
 
   workbox-precaching@7.4.0:
     resolution: {integrity: sha512-VQs37T6jDqf1rTxUJZXRl3yjZMf5JX/vDPhmx2CPgDDKXATzEoqyRqhYnRoxl6Kr0rqaQlp32i9rtG5zTzIlNg==}
@@ -10962,6 +10968,10 @@ snapshots:
   workbox-navigation-preload@7.4.0:
     dependencies:
       workbox-core: 7.4.0
+
+  workbox-navigation-preload@7.4.1:
+    dependencies:
+      workbox-core: 7.4.1
 
   workbox-precaching@7.4.0:
     dependencies:

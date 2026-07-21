@@ -177,13 +177,13 @@ export function GrantList({
                         <>
                           <button
                             onClick={() => onEdit(grant)}
-                            className="text-semantic-info hover:opacity-80"
+                            className="text-semantic-info hover:opacity-80 min-h-[24px] px-2 py-0.5"
                           >
                             {t('grants.actions.edit')}
                           </button>
                           <button
                             onClick={() => setRevokingGrant(grant)}
-                            className="text-semantic-error hover:opacity-80"
+                            className="text-semantic-error hover:opacity-80 min-h-[24px] px-2 py-0.5"
                           >
                             {t('grants.actions.revoke')}
                           </button>
