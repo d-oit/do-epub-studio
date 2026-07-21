@@ -57,7 +57,7 @@ function calculateDelay(attempt: number): number {
 }
 
 export async function queueSync(
-  type: 'progress' | 'annotation' | 'bookmark' | 'reading-insight',
+  type: 'progress' | 'annotation' | 'reading-insight',
   payload: unknown,
   mutationId: string,
 ): Promise<void> {
@@ -220,27 +220,6 @@ async function syncItem(item: SyncQueueItem, traceId: string, spanId: string): P
           mutationId: item.mutationId,
         });
       }
-    } else if (item.type === 'bookmark') {
-      // Legacy path — bookmarks are now queued as type 'annotation' with
-      // annotation.type === 'bookmark'.  This branch exists only to drain
-      // items that were enqueued before the M3 sync-queue dedup refactor.
-      // New code MUST NOT queue as type 'bookmark'; use type 'annotation'.
-      const payload = item.payload as {
-        bookId: string;
-        cfi: string;
-        chapter?: string;
-        label?: string;
-        mutationId: string;
-      };
-      await api.post(`/api/books/${payload.bookId}/bookmarks`, {
-        locator: {
-          cfi: payload.cfi,
-          chapter: payload.chapter ?? '',
-          selectedText: '',
-        },
-        label: payload.label ?? '',
-        mutationId: payload.mutationId,
-      });
     } else if (item.type === 'reading-insight') {
       const payload = item.payload as {
         bookId: string;
@@ -289,16 +268,14 @@ async function syncItem(item: SyncQueueItem, traceId: string, spanId: string): P
   }
 }
 
-async function markAsSynced(type: 'progress' | 'annotation' | 'bookmark' | 'reading-insight', mutationId: string): Promise<void> {
+async function markAsSynced(type: 'progress' | 'annotation' | 'reading-insight', mutationId: string): Promise<void> {
   if (type === 'progress') {
     const unsynced = await getUnsyncedProgress();
     const entry = unsynced.find((e) => e.mutationId === mutationId);
     if (entry) {
       await saveProgress({ ...entry, synced: true });
     }
-  } else if (type === 'annotation' || type === 'bookmark') {
-    // 'bookmark' branch is legacy (M3 dedup) — new bookmarks queue as
-    // type 'annotation' with annotation.type === 'bookmark'.
+  } else if (type === 'annotation') {
     const unsynced = await getUnsyncedAnnotations();
     const entry = unsynced.find((e) => e.mutationId === mutationId);
     if (entry) {

@@ -27,7 +27,8 @@ cleanupOutdatedCaches();
 precacheAndRoute(self.__WB_MANIFEST);
 
 // Enable navigation preload for faster SPA navigations when SW is active
-if (self.registration.navigationPreload) {
+// NavigationPreloadManager may not exist in all browsers (e.g. Firefox)
+if ('navigationPreload' in self.registration) {
   enableNavigationPreload();
 }
 
