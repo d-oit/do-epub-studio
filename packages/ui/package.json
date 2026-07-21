@@ -18,8 +18,8 @@
     "react-dom": "^19"
   },
   "devDependencies": {
-    "@storybook/react-vite": "10.5.0",
-    "@tailwindcss/vite": "^4.3.2",
+    "@storybook/react-vite": "10.5.3",
+    "@tailwindcss/vite": "^4.3.3",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@types/node": "^26",
@@ -28,7 +28,7 @@
     "jsdom": "^29.1.1",
     "react": "^19",
     "react-dom": "^19",
-    "storybook": "10.5.0",
+    "storybook": "10.5.3",
     "typescript": "^6.0.3",
     "vitest": "^4.1.10"
   }
