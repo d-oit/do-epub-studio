@@ -47,17 +47,18 @@
 | 084 | Comprehensive Open Issues Resolution | `plans/084-adr-comprehensive-open-issues-resolution.md` | Accepted |
 | 087 | CI Failure Resolution Policy | `plans/087-adr-ci-failure-resolution-policy-2026-06-12.md` | Accepted |
 | 092 | Token Storage and Feature-Gap Policy | `plans/092-adr-token-storage-and-feature-gap-policy.md` | Accepted (this PR) |
-| 095 | (GOAP) | `plans/095-goap-merge-orchestration-2026-06-15.md` | GOAP, not ADR |
 | 096 | Merge Order Policy for Multi-Issue Swarms | `plans/096-adr-merge-order-policy-2026-06-15.md` | Accepted (this PR) |
 | 102a | Application Identity and Version Source | `plans/102-adr-app-identity-version-source.md` | Accepted (collision — see ADR-083) |
 | 102b | Reading Insights Privacy Boundaries | `plans/102-adr-reading-insights-privacy-boundaries.md` | Accepted (canonical) |
 | 104 | Product Identity, Naming Convention, and Version Governance | `plans/104-adr-product-identity-and-version-governance.md` | Accepted |
-| 105 | 2026 UI Platform Modernization Policy | `plans/105-adr-2026-ui-platform-modernization.md` | Accepted (plan 113) |
+| 105a | 2026 UI Platform Modernization Policy | `plans/105-adr-2026-ui-platform-modernization.md` | Accepted |
+| 105b | Error Handling and Observability Completeness | `plans/105-adr-error-handling-and-observability-completeness.md` | Accepted |
 | 106 | Feature Completeness and Incremental Delivery Policy | `plans/106-adr-feature-completeness-policy.md` | Accepted (plan 113) |
 | 107 | Quality Gate Escalation and DX Standards | `plans/107-adr-quality-dx-standards.md` | Accepted (plan 113) |
 | 110 | Backlog Consolidation & Verified-Before-Execution Policy | `plans/110-adr-completeness-and-ui-consolidation.md` | Accepted |
 | 111 | Impeccable Design Vocabulary Adoption | `plans/111-adr-impeccable-design-vocabulary.md` | Accepted |
-| 112 | Phase 2/3 Execution & CI Hardening Policy | `plans/112-adr-phase2-3-execution-policy.md` | Accepted |
+| 112a | Phase 2/3 Execution & CI Hardening Policy | `plans/112-adr-phase2-3-execution-policy.md` | Accepted |
+| 112b | Stream Upload & Edge Cache | `plans/112-adr-stream-upload-edge-cache.md` | Accepted |
 | 113 | Phase 3 Polish Execution & Knowledge Compaction Policy | `plans/113-adr-phase3-polish-execution-policy.md` | Accepted |
 | 114 | Comprehensive Audit Remediation Policy (2026-06-27) | `plans/114-adr-audit-remediation-policy.md` | Accepted |
 | 115 | Verified-Audit Remediation Policy (2026-06-27) | `plans/115-adr-verified-audit-remediation-policy.md` | Accepted (Plan 129) |
@@ -67,19 +68,32 @@
 | 065 | Comprehensive Resolution of Open PRs and Issues | `plans/065-adr-tackle-all-open-prs-issues.md` | Accepted (Plan 129) |
 | 074 | E2E Testing Accessibility and Environment Resilience | `plans/074-adr-e2e-accessibility-resilience.md` | Accepted (Plan 129) |
 | 129 | CI Release Readiness and Failure Triage Policy | `plans/129-adr-ci-release-readiness-policy.md` | Accepted (Plan 129) |
+| 179 | Cloudflare vs Turso Local Development | `plans/archive/179-adr-cloudflare-vs-turso-local-development.md` | Accepted |
+| 181 | Missing Implementation Triage Policy | `plans/archive/181-adr-missing-implementation-triage-policy.md` | Accepted |
+| 183 | CI and PR Readiness Policy | `plans/archive/183-adr-ci-and-pr-readiness-policy.md` | Accepted |
+| 185 | Agent Workflow Harness Standards | `plans/archive/185-adr-agent-workflow-harness-standards.md` | Accepted |
+| 187 | Fail-Closed Engineering Gates | `plans/archive/187-adr-fail-closed-engineering-gates.md` | Accepted |
+| 198 | Verified-Closure Methodology | `plans/archive/198-adr-verified-closure-methodology.md` | Accepted |
+| 998 | Offline Comment Status Preservation | `plans/archive/998-adr-offline-comment-status-preservation.md` | Accepted |
 
-## Cross-referenced but not yet adopted
+## Cross-referenced (archived GOAP execution records)
 
 | Number | Title | File | Notes |
 |---|---|---|---|
-| 036 | Template AI Agents Improvements (GOAP) | `plans/036-goap-template-ai-agents-improvements.md` | GOAP, not ADR |
-| 038 | Backlog Triage 2026-05-19 (GOAP) | `plans/038-goap-backlog-triage-2026-05-19.md` | GOAP, not ADR |
-| 040 | Warnings and Issues 2026-05-19 (GOAP) | `plans/040-goap-warnings-and-issues-2026-05-19.md` | GOAP, not ADR |
-| 041 | PR-198 Review Feedback Resolution (GOAP) | `plans/041-goap-pr198-review-feedback-resolution.md` | GOAP, not ADR |
-| 042 | CI pnpm Fix (GOAP) | `plans/042-goap-ci-pnpm-fix.md` | GOAP, not ADR |
-| 044 | PR-218 Lighthouse Thresholds (GOAP) | `plans/044-goap-pr218-lighthouse-thresholds.md` | GOAP, not ADR |
-| 045 | Batch Resolve Issues 223-225-226-236 (GOAP) | `plans/045-goap-batch-resolve-issues-223-225-226-236-and-prs-232-235-237.md` | GOAP, not ADR |
-| 046 | Codebase Optimizations (GOAP) | `plans/046-goap-codebase-optimizations.md` | GOAP, not ADR |
+| 020 | Sprint 141 (GOAP) | `plans/archive/020-goap-sprint-141.md` | GOAP, not ADR |
+| 023 | Audit Gap Closure (GOAP) | `plans/archive/023-audit-gap-closure.md` | GOAP, not ADR |
+| 025 | Warning Resolution (GOAP) | `plans/archive/025-goap-warning-resolution.md` | GOAP, not ADR |
+| 026 | CI/CD Audit and Fix (GOAP) | `plans/archive/026-goap-ci-cd-audit-and-fix.md` | GOAP, not ADR |
+| 036 | Template AI Agents Improvements (GOAP) | `plans/archive/036-goap-template-ai-agents-improvements.md` | GOAP, not ADR |
+| 038 | Backlog Triage 2026-05-19 (GOAP) | `plans/archive/038-goap-backlog-triage-2026-05-19.md` | GOAP, not ADR |
+| 040 | Warnings and Issues 2026-05-19 (GOAP) | `plans/archive/040-goap-warnings-and-issues-2026-05-19.md` | GOAP, not ADR |
+| 041 | PR-198 Review Feedback Resolution (GOAP) | `plans/archive/041-goap-pr198-review-feedback-resolution.md` | GOAP, not ADR |
+| 042 | CI pnpm Fix (GOAP) | `plans/archive/042-goap-ci-pnpm-fix.md` | GOAP, not ADR |
+| 044 | PR-218 Lighthouse Thresholds (GOAP) | `plans/archive/044-goap-pr218-lighthouse-thresholds.md` | GOAP, not ADR |
+| 045 | Batch Resolve Issues 223-225-226-236 (GOAP) | `plans/archive/045-goap-batch-resolve-issues-223-225-226-236-and-prs-232-235-237.md` | GOAP, not ADR |
+| 046 | Codebase Optimizations (GOAP) | `plans/archive/046-goap-codebase-optimizations.md` | GOAP, not ADR |
+| 048 | Closeout 2026-05-23 (GOAP) | `plans/archive/048-goap-closeout-2026-05-23.md` | GOAP, not ADR |
+| 095 | Merge Orchestration (GOAP) | `plans/archive/095-goap-merge-orchestration-2026-06-15.md` | GOAP, not ADR |
 
 ## Pending
 
