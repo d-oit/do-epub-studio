@@ -8,7 +8,7 @@ export function Sidebar() {
   const { t } = useTranslation();
 
   return (
-    <aside className="hidden lg:flex flex-col w-60 bg-background-secondary border-r border-border h-full overflow-y-auto">
+    <aside className="sidebar-nav hidden lg:flex flex-col w-60 bg-background-secondary border-r border-border h-full overflow-y-auto">
       <div className="flex items-center gap-3 px-5 py-4 border-b border-border">
         <AppLogo size={32} className="text-accent shrink-0" />
         <div className="min-w-0">
