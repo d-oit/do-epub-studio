@@ -123,7 +123,7 @@ describe('Offline restore — annotations (M4 from Plan 118)', () => {
     await addToSyncQueue({
       id: 'sq-1',
       type: 'annotation',
-      payload: { bookId: 'b', annotation: { id: 'h-2' } },
+      payload: { bookId: 'b', annotation: { id: 'h-2', type: 'highlight' } },
       mutationId: 'm-sq-1',
       createdAt: Date.now(),
       attempts: 0,
@@ -131,8 +131,8 @@ describe('Offline restore — annotations (M4 from Plan 118)', () => {
 
     await addToSyncQueue({
       id: 'sq-2',
-      type: 'bookmark',
-      payload: { bookId: 'b', bookmark: { id: 'bm-1' } },
+      type: 'annotation',
+      payload: { bookId: 'b', annotation: { id: 'bm-1', type: 'bookmark' } },
       mutationId: 'm-sq-2',
       createdAt: Date.now() - 100,
       attempts: 0,
@@ -142,7 +142,7 @@ describe('Offline restore — annotations (M4 from Plan 118)', () => {
     expect(queue).toHaveLength(2);
 
     const types = queue.map((q) => q.type).sort();
-    expect(types).toEqual(['annotation', 'bookmark']);
+    expect(types).toEqual(['annotation', 'annotation']);
   });
 
   it('queues and retrieves reading-insight sync items (A5)', async () => {
@@ -265,7 +265,8 @@ describe('Offline restore — annotations (M4 from Plan 118)', () => {
       mutationId: 'fr-mh', createdAt: Date.now() - 100, attempts: 0,
     });
     await addToSyncQueue({
-      id: 'fr-sq-3', type: 'bookmark', payload: { bookId, cfi: 'epubcfi(/3)' },
+      id: 'fr-sq-3', type: 'annotation',
+      payload: { bookId, annotation: { type: 'bookmark', cfi: 'epubcfi(/3)' } },
       mutationId: 'fr-mb', createdAt: Date.now() - 200, attempts: 0,
     });
     await addToSyncQueue({
@@ -295,6 +296,6 @@ describe('Offline restore — annotations (M4 from Plan 118)', () => {
     const queue = await getSyncQueue();
     expect(queue).toHaveLength(4);
     const queueTypes = queue.map((q) => q.type).sort();
-    expect(queueTypes).toEqual(['annotation', 'bookmark', 'progress', 'reading-insight']);
+    expect(queueTypes).toEqual(['annotation', 'annotation', 'progress', 'reading-insight']);
   });
 });

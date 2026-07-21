@@ -33,7 +33,7 @@ export interface AnnotationEntry {
 
 export interface SyncQueueItem {
   id: string;
-  type: 'progress' | 'annotation' | 'bookmark' | 'reading-insight';
+  type: 'progress' | 'annotation' | 'reading-insight';
   payload: unknown;
   mutationId: string;
   createdAt: number;

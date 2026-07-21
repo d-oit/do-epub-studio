@@ -445,7 +445,7 @@ describe('Admin Routes', () => {
       // Each DELETE statement should bind the book ID as first argument
       for (const stmt of txArgs ?? []) {
         if (stmt.sql.startsWith('DELETE FROM') || stmt.sql.startsWith('UPDATE books')) {
-          expect(stmt.args?.[0]).toBe('book-1');
+          expect(stmt.args[0]).toBe('book-1');
         }
       }
     });
