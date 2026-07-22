@@ -176,8 +176,9 @@ export async function reanchorByText(
     const targetToProcess = normalizedTargetGeneral.length <= TARGET_TEXT_MAX_LEN
       ? normalizedTargetGeneral
       : normalizedTargetGeneral.slice(0, TARGET_TEXT_MAX_LEN);
-    // Use match() instead of matchAll() to reduce object allocations
-    words = targetToProcess.match(/[\p{L}\p{N}]{4,}/gu) || [];
+    // Use match() instead of matchAll() to reduce object allocations and deduplicate
+    const matchedWords = targetToProcess.match(/[\p{L}\p{N}]{4,}/gu) || [];
+    words = [...new Set(matchedWords)];
   }
 
   const threshold = options.fuzzyThreshold ?? 0.7;
