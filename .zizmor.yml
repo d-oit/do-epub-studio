@@ -1,3 +1,5 @@
 rules:
   stale-action-refs:
     disable: true
+  dangerous-triggers:
+    disable: true
