@@ -1,8 +1,10 @@
 import type { TocItem } from './epub-types';
 import type { LocatorResult } from './locator';
+import { checkDeadline, createDeadline } from '@do-epub-studio/shared';
 
 const TARGET_TEXT_MAX_LEN = 1024 * 1024;
 const CHAPTER_CONTENT_MAX_LEN = 4 * 1024 * 1024;
+const REANCHOR_TIMEOUT_MS = 15_000;
 
 export interface ReanchorResult {
   success: boolean;
@@ -50,9 +52,12 @@ export async function reanchorByText(
   targetText: string,
   toc: TocItem[],
   loadChapterContent: (href: string) => Promise<string>,
-  options: { fuzzyThreshold?: number; preferChapter?: string } = {},
+  options: { fuzzyThreshold?: number; preferChapter?: string; timeoutMs?: number; traceId?: string } = {},
 ): Promise<ReanchorResult> {
   const { preferChapter } = options;
+  const timeoutMs = options.timeoutMs ?? REANCHOR_TIMEOUT_MS;
+  const traceId = options.traceId;
+  const deadline = createDeadline(timeoutMs);
 
   if (targetText.length < 10) {
     return { success: false, fallback: true, message: 'Text too short for reanchoring' };
@@ -132,6 +137,7 @@ export async function reanchorByText(
 
   // Pass 1: Exact and Partial matches
   for (const href of uniqueHrefs) {
+    checkDeadline(deadline, 'reanchor-by-text', timeoutMs, traceId);
     try {
       const cached = await getCachedData(href);
 
@@ -186,6 +192,7 @@ export async function reanchorByText(
 
   if (words.length > 0) {
     for (const href of uniqueHrefs) {
+      checkDeadline(deadline, 'reanchor-by-text', timeoutMs, traceId);
       try {
         const cached = await getCachedData(href);
         if (cached.wordSet === undefined) {

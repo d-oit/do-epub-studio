@@ -1,4 +1,5 @@
 import { validateArchive } from './archive-validator';
+import { createTraceId } from '@do-epub-studio/shared';
 
 export interface EpubParseResult {
   valid: boolean;
@@ -122,7 +123,7 @@ class EpubParserWorkerPool {
         data = source;
       }
 
-      await validateArchive(data);
+      await validateArchive(data, { timeoutMs: 10_000, traceId: createTraceId() });
 
       return { valid: true, data: data.buffer as ArrayBuffer };
     } catch (error) {

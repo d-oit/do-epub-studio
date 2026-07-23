@@ -96,6 +96,31 @@ export class DatabaseError extends AppError {
   }
 }
 
+/**
+ * An operation exceeded its time budget (HTTP 504).
+ *
+ * Used by the parser timeout system to abort EPUB processing
+ * that runs too long on malformed input.
+ *
+ * @param operation - Name of the timed-out operation (e.g., `'epub-sanitize'`)
+ * @param timeoutMs - The timeout budget that was exceeded
+ * @param traceId - Optional trace identifier for distributed tracing
+ */
+export class TimeoutError extends AppError {
+  constructor(
+    public readonly operation: string,
+    public readonly timeoutMs: number,
+    public readonly traceId?: string,
+  ) {
+    super(
+      `Operation "${operation}" timed out after ${timeoutMs}ms`,
+      'TIMEOUT',
+      504,
+    );
+    this.name = 'TimeoutError';
+  }
+}
+
 export function isAppError(error: unknown): error is AppError {
   return error instanceof AppError;
 }

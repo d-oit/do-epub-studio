@@ -1,6 +1,9 @@
 import DOMPurify from 'dompurify';
 import type { Config } from 'dompurify';
-import { matchBounded } from '@do-epub-studio/shared';
+import { matchBounded, checkDeadline, createDeadline } from '@do-epub-studio/shared';
+
+const SANITIZE_TIMEOUT_MS = 5_000;
+const TREEWALKER_CHECK_INTERVAL = 100;
 
 const SAFE_SVG_TAGS = [
   'svg',
@@ -330,7 +333,12 @@ export function sanitizeSvg(svgContent: string): string {
   return DOMPurify.sanitize(svgContent, getConfig());
 }
 
-export function sanitizeDom(node: Document | DocumentFragment | Element): void {
+export function sanitizeDom(
+  node: Document | DocumentFragment | Element,
+  deadline?: number,
+  timeoutMs?: number,
+  traceId?: string,
+): void {
   const root = node.nodeType === Node.DOCUMENT_NODE ? (node as Document).documentElement : node;
   if (!root) return;
 
@@ -343,8 +351,13 @@ export function sanitizeDom(node: Document | DocumentFragment | Element): void {
 
   // To match querySelectorAll('*') behavior, we skip the root element itself.
   let el = walker.nextNode() as Element | null;
+  let nodeCount = 0;
 
   while (el) {
+    if (deadline !== undefined && ++nodeCount % TREEWALKER_CHECK_INTERVAL === 0) {
+      checkDeadline(deadline, 'epub-sanitize', timeoutMs ?? SANITIZE_TIMEOUT_MS, traceId);
+    }
+
     if (el.hasAttributes()) {
       // Use localName which is already lowercase for HTML/SVG elements to avoid .toLowerCase() overhead.
       const tag = el.localName;
@@ -387,7 +400,14 @@ export function sanitizeDom(node: Document | DocumentFragment | Element): void {
   }
 }
 
-export function sanitizeEpubDocument(doc: Document): void {
+export function sanitizeEpubDocument(
+  doc: Document,
+  options?: { timeoutMs?: number; traceId?: string },
+): void {
+  const timeoutMs = options?.timeoutMs ?? SANITIZE_TIMEOUT_MS;
+  const traceId = options?.traceId;
+  const deadline = createDeadline(timeoutMs);
+
   const root = doc.documentElement;
   if (!root) return;
 
@@ -399,6 +419,8 @@ export function sanitizeEpubDocument(doc: Document): void {
     RETURN_DOM: true,
     WHOLE_DOCUMENT: true,
   }) as Element;
+
+  checkDeadline(deadline, 'epub-sanitize', timeoutMs, traceId);
 
   // Pass (b): Sync sanitized state back to live document
   // We replace children of <html> with sanitized <head> and <body>
@@ -416,26 +438,36 @@ export function sanitizeEpubDocument(doc: Document): void {
     root.replaceChildren(sanitized);
   }
 
+  checkDeadline(deadline, 'epub-sanitize', timeoutMs, traceId);
+
   // Pass (c): sanitizeDom() for href-scheme + event-attr enforcement
-  sanitizeDom(doc);
+  sanitizeDom(doc, deadline, timeoutMs, traceId);
 }
 
-export function createEpubSanitizerHook(): (contents: { document?: Document }) => void {
+export function createEpubSanitizerHook(
+  options?: { timeoutMs?: number; traceId?: string },
+): (contents: { document?: Document }) => void {
   return (contents: { document?: Document }) => {
     const doc = contents.document;
     if (!doc) return;
-    sanitizeEpubDocument(doc);
+    sanitizeEpubDocument(doc, options);
   };
 }
 
-export function createSvgSanitizerHook(): (contents: { document?: Document }) => void {
+export function createSvgSanitizerHook(
+  options?: { timeoutMs?: number; traceId?: string },
+): (contents: { document?: Document }) => void {
   return (contents: { document?: Document }) => {
     const doc = contents.document;
     if (!doc) return;
 
+    const timeoutMs = options?.timeoutMs ?? SANITIZE_TIMEOUT_MS;
+    const traceId = options?.traceId;
+    const deadline = createDeadline(timeoutMs);
+
     const svgElements = doc.querySelectorAll('svg');
     for (const svg of svgElements) {
-      sanitizeDom(svg);
+      sanitizeDom(svg, deadline, timeoutMs, traceId);
     }
   };
 }
