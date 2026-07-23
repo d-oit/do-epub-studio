@@ -8,7 +8,7 @@ import type {
   ProgressPosition,
   PageDirection,
 } from './epub-types';
-import { createTraceId, createSpanId, serializeError, testBounded } from '@do-epub-studio/shared';
+import { createTraceId, createSpanId, serializeError, testBounded, withTimeout } from '@do-epub-studio/shared';
 import { parseEpubInWorker } from './epub-parser-worker';
 import { createEpubSanitizerHook } from './sanitizer';
 
@@ -43,6 +43,8 @@ interface EpubLoaderOptions {
   onEvent?: (event: string, data: unknown) => void;
   flow?: 'paginated' | 'scrolled' | 'scrolled-doc';
   manager?: 'default' | 'continuous';
+  /** Total timeout for the entire load pipeline (default: 30s) */
+  loadTimeoutMs?: number;
 }
 
 export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
@@ -117,58 +119,13 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
 
     const traceId = createTraceId();
     const spanId = createSpanId();
+    const totalTimeout = options?.loadTimeoutMs ?? 30_000;
 
     try {
-      const result = await parseEpubInWorker(url);
-      if (!result.valid || !result.data) {
-        throw new Error(result.error ?? 'Failed to parse EPUB');
-      }
-
-      book = ePub(result.data);
-      await book.opened;
-
-      // Fetch navigation, spine, and metadata in parallel — they are
-      // independent and already-resolved by the time `opened` fires.
-      // Sequential awaits add 20-60ms each on large EPUBs (per plan 065).
-      const [nav, meta] = await Promise.all([
-        book.loaded.navigation,
-        book.loaded.metadata,
-      ]);
-
-      if (nav?.toc) {
-        toc = parseToc(nav.toc);
-      }
-
-      spineItems = await parseSpineFromBook();
-      const metaMap = meta as Map<string, string>;
-
-      const direction: PageDirection = book.packaging?.direction === 'rtl'
-        ? 'rtl'
-        : book.packaging?.direction === 'ltr'
-          ? 'ltr'
-          : 'default';
-
-      const pkgMeta = book.packaging?.metadata as Map<string, string> | undefined;
-      const layout = pkgMeta?.get('layout');
-      const fixedLayout = layout
-        ? {
-            layout: layout === 'pre-paginated' ? ('pre-paginated' as const) : ('reflowable' as const),
-            orientation: pkgMeta?.get('orientation') as 'auto' | 'landscape' | 'portrait' | undefined,
-            spread: pkgMeta?.get('spread') as 'none' | 'auto' | 'both' | 'landscape' | undefined,
-            viewport: pkgMeta?.get('viewport'),
-          }
-        : undefined;
-
-      metadata = {
-        title: metaMap.get('title') ?? '',
-        creator: metaMap.get('creator'),
-        language: metaMap.get('language'),
-        publisher: metaMap.get('publisher'),
-        description: metaMap.get('description'),
-        direction,
-        fixedLayout,
-      };
-
+      await withTimeout(
+        (signal) => loadInner(url, signal),
+        { timeoutMs: totalTimeout, operation: 'epub-load', traceId },
+      );
     } catch (error) {
       const formatted = serializeError(error);
       console.error(
@@ -176,6 +133,70 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
       );
       throw new Error(`Failed to load EPUB: ${formatted.message}`, { cause: error });
     }
+  }
+
+  async function loadInner(url: string | Uint8Array, signal?: AbortSignal): Promise<void> {
+    const result = await parseEpubInWorker(url);
+    if (!result.valid || !result.data) {
+      throw new Error(result.error ?? 'Failed to parse EPUB');
+    }
+
+    if (signal?.aborted) {
+      throw new DOMException('Aborted', 'AbortError');
+    }
+
+    book = ePub(result.data);
+    await book.opened;
+
+    // Fetch navigation, spine, and metadata in parallel — they are
+    // independent and already-resolved by the time `opened` fires.
+    // Sequential awaits add 20-60ms each on large EPUBs (per plan 065).
+    const [nav, meta] = await Promise.all([
+      book.loaded.navigation,
+      book.loaded.metadata,
+    ]);
+
+    if (nav?.toc) {
+      toc = parseToc(nav.toc);
+    }
+
+    spineItems = await parseSpineFromBook();
+    const metaMap = meta as Map<string, string>;
+
+    const direction: PageDirection = book.packaging?.direction === 'rtl'
+      ? 'rtl'
+      : book.packaging?.direction === 'ltr'
+        ? 'ltr'
+        : 'default';
+
+    const pkgMeta = book.packaging?.metadata as Map<string, string> | undefined;
+    const layout = pkgMeta?.get('layout');
+    const fixedLayout = layout
+      ? {
+          layout: layout === 'pre-paginated' ? ('pre-paginated' as const) : ('reflowable' as const),
+          orientation: pkgMeta?.get('orientation') as 'auto' | 'landscape' | 'portrait' | undefined,
+          spread: pkgMeta?.get('spread') as 'none' | 'auto' | 'both' | 'landscape' | undefined,
+          viewport: pkgMeta?.get('viewport'),
+        }
+      : undefined;
+
+    assignMetadata(metaMap, direction, fixedLayout);
+  }
+
+  function assignMetadata(
+    metaMap: Map<string, string>,
+    direction: PageDirection,
+    fixedLayout: BookMetadata['fixedLayout'],
+  ): void {
+    metadata = {
+      title: metaMap.get('title') ?? '',
+      creator: metaMap.get('creator'),
+      language: metaMap.get('language'),
+      publisher: metaMap.get('publisher'),
+      description: metaMap.get('description'),
+      direction,
+      fixedLayout,
+    };
   }
 
   function createRenditionHandle(container: HTMLElement): EpubRenditionHandle {

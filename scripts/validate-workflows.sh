@@ -143,7 +143,7 @@ for file in "${WORKFLOW_FILES[@]}"; do
 
     # 1.2 Check with zizmor (only fail on medium severity and above)
     if [ "$ZIZMOR" == "zizmor" ]; then
-        if ! zizmor --min-severity medium "$file"; then
+        if ! zizmor --config "${REPO_ROOT}/.zizmor.yml" --min-severity medium "$file"; then
             printf '%s  ✗ zizmor failures: %s%s\n' "${RED}" "$file" "${NC}"
             FILE_FAILED=1
         fi
