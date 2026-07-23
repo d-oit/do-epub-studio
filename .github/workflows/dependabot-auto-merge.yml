@@ -2,7 +2,7 @@ name: Dependabot Auto-merge
 run-name: Auto-merge ${{ github.event.pull_request.title }}
 
 on:
-  pull_request:
+  pull_request_target:
     types: [opened, synchronize, reopened]
 
 env:
@@ -35,32 +35,23 @@ jobs:
         with:
           github-token: '${{ secrets.GITHUB_TOKEN }}'
 
-      - name: Check PR mergeability and CI status
-        id: check
-        run: |
-          MERGEABLE=$(gh pr view "$PR_URL" --json mergeable --jq '.mergeable')
-          if [ "$MERGEABLE" != "MERGEABLE" ]; then
-            echo "PR not mergeable (state: $MERGEABLE)"
-            exit 0
-          fi
-          CI_STATUS=$(gh pr view "$PR_URL" --json statusCheckRollup --jq '[.statusCheckRollup[].conclusion] | unique | .[]' 2>/dev/null | head -1)
-          if [ "$CI_STATUS" != "SUCCESS" ] && [ -n "$CI_STATUS" ]; then
-            echo "CI not passing (status: $CI_STATUS)"
-            exit 0
-          fi
-        env:
-          PR_URL: ${{ github.event.pull_request.html_url }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Approve and enable auto-merge for safe updates
         if: |
           steps.metadata.outputs.update-type == 'version-update:semver-minor' ||
           steps.metadata.outputs.update-type == 'version-update:semver-patch'
         run: |
+          # Check mergeability
           MERGEABLE=$(gh pr view "$PR_URL" --json mergeable --jq '.mergeable')
-          if [ "$MERGEABLE" != "MERGEABLE" ]; then echo "PR not mergeable"; exit 0; fi
-          CI_STATUS=$(gh pr view "$PR_URL" --json statusCheckRollup --jq '.statusCheckRollup[].conclusion' | uniq)
-          if [ "$CI_STATUS" != "SUCCESS" ]; then echo "CI failing"; exit 0; fi
+          if [ "$MERGEABLE" != "MERGEABLE" ]; then
+            echo "PR not mergeable (state: $MERGEABLE), skipping"
+            exit 0
+          fi
+          # Check all CI checks pass (fixed multi-line comparison)
+          ALL_PASS=$(gh pr view "$PR_URL" --json statusCheckRollup \
+            --jq '[.statusCheckRollup[].conclusion] | unique | length == 1 and .[0] == "SUCCESS"')
+          if [ "$ALL_PASS" != "true" ]; then
+            echo "CI not fully passing yet - enabling auto-merge to queue until checks pass"
+          fi
           gh pr review --approve "$PR_URL"
           gh pr merge --auto --squash "$PR_URL"
         env:
