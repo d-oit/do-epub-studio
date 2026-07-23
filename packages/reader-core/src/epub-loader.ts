@@ -180,7 +180,6 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
         }
       : undefined;
 
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises -- Codacy false positive: sync assignment, not a promise
     metadata = {
       title: metaMap.get('title') ?? '',
       creator: metaMap.get('creator'),

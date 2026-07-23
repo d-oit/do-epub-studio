@@ -2,7 +2,6 @@ import { describe, expect, it, vi, afterEach } from 'vitest';
 import { TimeoutError } from '@do-epub-studio/shared';
 import { sanitizeEpubDocument, createEpubSanitizerHook } from '../sanitizer';
 
-// eslint-disable-next-line security/detect-non-literal-fs-filename -- Test fixture: HTML string for DOMParser, not XSS
 function createDoc(html: string): Document {
   return new DOMParser().parseFromString(html, 'text/html');
 }
