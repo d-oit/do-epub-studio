@@ -180,15 +180,15 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
         }
       : undefined;
 
-    metadata = buildMetadata(metaMap, direction, fixedLayout);
+    assignMetadata(metaMap, direction, fixedLayout);
   }
 
-  function buildMetadata(
+  function assignMetadata(
     metaMap: Map<string, string>,
     direction: PageDirection,
     fixedLayout: BookMetadata['fixedLayout'],
-  ): BookMetadata {
-    return {
+  ): void {
+    metadata = {
       title: metaMap.get('title') ?? '',
       creator: metaMap.get('creator'),
       language: metaMap.get('language'),
