@@ -68,17 +68,15 @@ export async function withTimeout<T>(
     try {
       const result = fn(signal);
       if (result instanceof Promise) {
-        // eslint-disable-next-line promise/catch-or-return -- Rejection handled in .then(onFulfilled, onRejected)
-        result.then(
-          (value) => {
+        result
+          .then((value) => {
             cleanup();
             resolve(value);
-          },
-          (err: unknown) => {
+          })
+          .catch((err: unknown) => {
             cleanup();
             reject(err instanceof Error ? err : new Error(String(err)));
-          },
-        );
+          });
       } else {
         cleanup();
         resolve(result);

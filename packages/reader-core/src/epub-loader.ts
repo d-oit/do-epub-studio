@@ -180,7 +180,15 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
         }
       : undefined;
 
-    const parsed: BookMetadata = {
+    metadata = buildMetadata(metaMap, direction, fixedLayout);
+  }
+
+  function buildMetadata(
+    metaMap: Map<string, string>,
+    direction: PageDirection,
+    fixedLayout: BookMetadata['fixedLayout'],
+  ): BookMetadata {
+    return {
       title: metaMap.get('title') ?? '',
       creator: metaMap.get('creator'),
       language: metaMap.get('language'),
@@ -189,7 +197,6 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
       direction,
       fixedLayout,
     };
-    metadata = parsed;
   }
 
   function createRenditionHandle(container: HTMLElement): EpubRenditionHandle {
