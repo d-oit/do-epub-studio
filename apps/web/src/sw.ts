@@ -92,7 +92,12 @@ const quotaGuardPlugin = {
           }
         }
       } catch (err) {
-        console.error('Error estimating storage:', err);
+        console.error(JSON.stringify({
+          level: 'error',
+          traceId: createTraceId(),
+          event: 'sw.storage.estimate_error',
+          error: err instanceof Error ? err.message : String(err),
+        }));
       }
     }
     return response;

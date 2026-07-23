@@ -115,3 +115,11 @@
 - `edge-cache.ts` `buildCacheKey` changed from sync to async (KV lookup). All callers and tests updated. `bumpCacheVersion` now accepts `EdgeCacheEnv` for KV write.
 - D1 migrations 0006 (notifications) + 0007 (FTS5) added. FTS5 query sanitization strips special chars before MATCH.
 - Notification system: `createReplyNotification` triggered via `c.executionCtx.waitUntil()` in comments route. UI: `NotificationBadge` + `NotificationPanel` with i18n in 13 locales.
+
+### Plan 200 — Final Cleanup & Compliance Swarm (2026-07-23)
+
+- **Zod v4 runtime validation for fetch responses**: Use `z.object({...}).parse(await res.json())` instead of type assertions with `as`. Both `apps/web` and `packages/shared` have `"zod": "^4.4.3"` in dependencies. Removes `eslint-disable @typescript-eslint/no-unsafe-assignment` comments.
+- **Service Worker structured logging**: Always use `console.error(JSON.stringify({ level, traceId, event, error }))` format in SW code, matching the pattern established in `observability.ts`. Raw string messages are not indexed by Workers Logs.
+- **ADR status hygiene**: When ADR-INDEX marks an ADR as "Accepted", the file header `**Status:**` field must be updated too. ADR-113 Decision #2 promoted 4 ADRs (105, 107, 110, 113) but the files were never patched — discovered in Plan 200 audit.
+- **WCAG 2.2 touch targets**: AA (SC 2.5.8) requires 24px minimum. AAA (SC 2.5.5) requires 44px. Projects targeting AA should use 24px; projects targeting AAA should use 44px. The project already uses 44px via `.touch-target` class, exceeding AA requirements.
+- **Dependabot PRs with failing CI**: Per AGENTS.md, never merge with failing checks. Pre-existing lint failures on Dependabot branches need separate resolution before merge.

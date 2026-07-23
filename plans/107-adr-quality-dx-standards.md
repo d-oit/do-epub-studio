@@ -1,7 +1,7 @@
 # ADR-107: Quality Gate Escalation and DX Standards
 
 **Date:** 2026-06-23
-**Status:** Proposed
+**Status:** Accepted
 **Deciders:** Project maintainer
 **Related:** ADR-021 (Test Infrastructure), ADR-022 (Coverage/Benchmarking)
 

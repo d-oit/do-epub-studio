@@ -1,7 +1,7 @@
 # ADR-105: 2026 UI Platform Modernization Policy
 
 **Date:** 2026-06-23
-**Status:** Proposed
+**Status:** Accepted
 **Deciders:** Project maintainer
 **Related:** ADR-079 (2026 Web Platform Standards), ADR-082b (Editorial UI), ADR-063a (Accessibility)
 

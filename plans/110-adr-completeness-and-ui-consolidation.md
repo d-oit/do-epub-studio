@@ -1,7 +1,7 @@
 # ADR-110: Backlog Consolidation & Verified-Before-Execution Policy
 
 **Date:** 2026-06-24
-**Status:** Proposed
+**Status:** Accepted
 **Deciders:** Project maintainer
 **Related:** ADR-052 (Gap Closure Policy), ADR-077 (Phased Feature Delivery), ADR-083 (ADR Numbering), ADR-105 (UI Platform Modernization), ADR-106 (Feature Completeness), ADR-092 (Feature-Gap Policy)
 

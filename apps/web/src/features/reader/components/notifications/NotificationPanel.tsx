@@ -1,16 +1,17 @@
 import { useState, useEffect, useCallback } from 'react';
+import { z } from 'zod';
 import { useReducedMotion } from '../../../../hooks/useReducedMotion';
 
-interface Notification {
-  id: string;
-  bookId: string;
-  commentId: string;
-  parentCommentId: string | null;
-  type: string;
-  message: string;
-  readAt: string | null;
-  createdAt: string;
-}
+const NotificationSchema = z.object({
+  id: z.string(),
+  bookId: z.string(),
+  commentId: z.string(),
+  parentCommentId: z.string().nullable(),
+  type: z.string(),
+  message: z.string(),
+  readAt: z.string().nullable(),
+  createdAt: z.string(),
+});
 
 interface NotificationPanelProps {
   onNavigateToComment: (bookId: string, commentId: string) => void;
@@ -18,18 +19,18 @@ interface NotificationPanelProps {
   onClose: () => void;
 }
 
-interface NotificationResponse {
-  ok: boolean;
-  data: {
-    notifications: Notification[];
-    total: number;
-    limit: number;
-    offset: number;
-  };
-}
+const NotificationResponseSchema = z.object({
+  ok: z.boolean(),
+  data: z.object({
+    notifications: z.array(NotificationSchema),
+    total: z.number(),
+    limit: z.number(),
+    offset: z.number(),
+  }),
+});
 
 export function NotificationPanel({ onNavigateToComment, t, onClose }: NotificationPanelProps) {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notifications, setNotifications] = useState<z.infer<typeof NotificationSchema>[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const prefersReduced = useReducedMotion();
@@ -38,8 +39,7 @@ export function NotificationPanel({ onNavigateToComment, t, onClose }: Notificat
     try {
       const res = await fetch('/api/notifications?limit=20');
       if (res.ok) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- fetch returns any
-        const data: NotificationResponse = await res.json();
+        const data = NotificationResponseSchema.parse(await res.json());
         setNotifications(data.data.notifications);
         setTotal(data.data.total);
       }

@@ -1,14 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
+import { z } from 'zod';
 
 interface NotificationBadgeProps {
   t: (key: string) => string;
   onClick: () => void;
 }
 
-interface UnreadCountResponse {
-  ok: boolean;
-  data: { count: number };
-}
+const UnreadCountResponseSchema = z.object({
+  ok: z.boolean(),
+  data: z.object({ count: z.number() }),
+});
 
 export function NotificationBadge({ t, onClick }: NotificationBadgeProps) {
   const [count, setCount] = useState(0);
@@ -17,8 +18,7 @@ export function NotificationBadge({ t, onClick }: NotificationBadgeProps) {
     try {
       const res = await fetch('/api/notifications/unread-count');
       if (res.ok) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- fetch returns any
-        const data: UnreadCountResponse = await res.json();
+        const data = UnreadCountResponseSchema.parse(await res.json());
         setCount(data.data.count);
       }
     } catch {
