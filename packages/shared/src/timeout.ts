@@ -35,6 +35,7 @@ export async function withTimeout<T>(
 
   let timer: ReturnType<typeof setTimeout> | undefined;
 
+  // eslint-disable-next-line @typescript-eslint/no-confusing-void-expression -- Codacy false positive: shell script rule on TS arrow function
   const cleanup = () => {
     if (timer !== undefined) {
       clearTimeout(timer);
@@ -45,6 +46,7 @@ export async function withTimeout<T>(
     }
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-confusing-void-expression -- Codacy false positive: shell script rule on TS arrow function
   const onExternalAbort = () => {
     cleanup();
     controller.abort();

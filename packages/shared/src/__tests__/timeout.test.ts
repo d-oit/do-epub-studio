@@ -22,7 +22,7 @@ describe('Timeout utilities', () => {
 
     it('rejects with TimeoutError when fn exceeds timeout', async () => {
       const promise = withTimeout(
-        () => new Promise<string>((resolve) => setTimeout(() => resolve('late'), 10_000)),
+        () => new Promise<string>((resolve) => { setTimeout(() => { resolve('late'); }, 10_000); }),
         { timeoutMs: 1, operation: 'slow-op' },
       );
       vi.advanceTimersByTime(1);
@@ -46,8 +46,8 @@ describe('Timeout utilities', () => {
       const promise = withTimeout(
         (signal) =>
           new Promise<string>((resolve, reject) => {
-            signal.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')), { once: true });
-            setTimeout(() => resolve('done'), 10_000);
+            signal.addEventListener('abort', () => { reject(new DOMException('Aborted', 'AbortError')); }, { once: true });
+            setTimeout(() => { resolve('done'); }, 10_000);
           }),
         { timeoutMs: 10_000, operation: 'test-op', signal: controller.signal },
       );
@@ -81,12 +81,12 @@ describe('Timeout utilities', () => {
   describe('checkDeadline', () => {
     it('does not throw when before deadline', () => {
       const deadline = createDeadline(10_000);
-      expect(() => checkDeadline(deadline, 'test-op', 10_000)).not.toThrow();
+      expect(() => { checkDeadline(deadline, 'test-op', 10_000); }).not.toThrow();
     });
 
     it('throws TimeoutError when past deadline', () => {
       const deadline = performance.now() - 1;
-      expect(() => checkDeadline(deadline, 'expired-op', 1000)).toThrow(TimeoutError);
+      expect(() => { checkDeadline(deadline, 'expired-op', 1000); }).toThrow(TimeoutError);
       try {
         checkDeadline(deadline, 'expired-op', 1000);
       } catch (err) {
