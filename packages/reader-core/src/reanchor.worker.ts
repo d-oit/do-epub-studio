@@ -73,7 +73,8 @@ function performReanchor(
 
   const normalizedTargetLower = targetText.toLowerCase();
   const normalizedTargetGeneral = normalizeText(targetText);
-  const words = normalizedTargetGeneral.match(/[\p{L}\p{N}]{4,}/gu) || [];
+  const matchedWords = normalizedTargetGeneral.match(/[\p{L}\p{N}]{4,}/gu) || [];
+  const words = [...new Set(matchedWords)];
 
   const cache = new Map<string, { lower: string; general: string | undefined; wordSet: Set<string> | undefined }>();
 
