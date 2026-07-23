@@ -35,7 +35,7 @@ export async function withTimeout<T>(
 
   let timer: ReturnType<typeof setTimeout> | undefined;
 
-  const cleanup = () => {
+  function cleanup(): void {
     if (timer !== undefined) {
       clearTimeout(timer);
       timer = undefined;
@@ -43,12 +43,12 @@ export async function withTimeout<T>(
     if (externalSignal) {
       externalSignal.removeEventListener('abort', onExternalAbort);
     }
-  };
+  }
 
-  const onExternalAbort = () => {
+  function onExternalAbort(): void {
     cleanup();
     controller.abort();
-  };
+  }
 
   if (externalSignal) {
     if (externalSignal.aborted) {

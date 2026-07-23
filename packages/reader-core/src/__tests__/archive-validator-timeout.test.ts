@@ -7,7 +7,7 @@ describe('ArchiveValidator timeout integration', () => {
   it('passes through with default timeout on valid archive', async () => {
     const data = zipSync({
       'mimetype': strToU8('application/epub+zip'),
-      'content.xhtml': strToU8('<html><body><p>Hello</p></body></html>'),
+      'content.txt': strToU8('Hello EPUB'),
     });
     await expect(validateArchive(data)).resolves.toBeUndefined();
   });
@@ -15,7 +15,7 @@ describe('ArchiveValidator timeout integration', () => {
   it('respects custom timeoutMs option', async () => {
     const data = zipSync({
       'mimetype': strToU8('application/epub+zip'),
-      'content.xhtml': strToU8('<html><body><p>Hello</p></body></html>'),
+      'content.txt': strToU8('Hello EPUB'),
     });
     await expect(validateArchive(data, { timeoutMs: 5000 })).resolves.toBeUndefined();
   });

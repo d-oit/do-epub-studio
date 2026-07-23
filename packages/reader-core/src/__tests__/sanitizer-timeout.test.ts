@@ -2,8 +2,8 @@ import { describe, expect, it, vi, afterEach } from 'vitest';
 import { TimeoutError } from '@do-epub-studio/shared';
 import { sanitizeEpubDocument, createEpubSanitizerHook } from '../sanitizer';
 
-function createDoc(html: string): Document {
-  return new DOMParser().parseFromString(html, 'text/html');
+function createDoc(): Document {
+  return document.implementation.createHTMLDocument('');
 }
 
 describe('Sanitizer timeout integration', () => {
@@ -12,16 +12,17 @@ describe('Sanitizer timeout integration', () => {
   });
 
   it('sanitizes a normal document within deadline', () => {
-    const doc = createDoc('<html><body><p>Hello world</p></body></html>');
+    const doc = createDoc();
+    const p = doc.createElement('p');
+    p.textContent = 'Hello world';
+    doc.body.appendChild(p);
     sanitizeEpubDocument(doc);
     expect(doc.querySelector('p')).not.toBeNull();
     expect(doc.querySelector('p')?.textContent).toBe('Hello world');
   });
 
   it('throws TimeoutError when deadline is exceeded', () => {
-    const doc = createDoc('<html><body><p>Test</p></body></html>');
-    // createDeadline calls performance.now() once, then checkDeadline calls it again.
-    // Return 0 for the first call (createDeadline), then a huge value for checkDeadline.
+    const doc = createDoc();
     vi.spyOn(performance, 'now')
       .mockReturnValueOnce(0)
       .mockReturnValue(100_000);
@@ -31,7 +32,7 @@ describe('Sanitizer timeout integration', () => {
   });
 
   it('passes traceId through to TimeoutError', () => {
-    const doc = createDoc('<html><body><p>Test</p></body></html>');
+    const doc = createDoc();
     vi.spyOn(performance, 'now')
       .mockReturnValueOnce(0)
       .mockReturnValue(100_000);
@@ -45,25 +46,32 @@ describe('Sanitizer timeout integration', () => {
   });
 
   it('existing sanitizer behavior is preserved', () => {
-    const doc = createDoc(
-      '<html><body><p onclick="alert(1)">Click me</p><a href="javascript:void(0)">Bad link</a><a href="https://example.com">Good link</a></body></html>',
-    );
+    const doc = createDoc();
+    const p = doc.createElement('p');
+    p.setAttribute('onclick', 'alert(1)');
+    p.textContent = 'Click me';
+    doc.body.appendChild(p);
+    const badLink = doc.createElement('a');
+    badLink.setAttribute('href', 'javascript:void(0)');
+    badLink.textContent = 'Bad link';
+    doc.body.appendChild(badLink);
+    const goodLink = doc.createElement('a');
+    goodLink.setAttribute('href', 'https://example.com');
+    goodLink.textContent = 'Good link';
+    doc.body.appendChild(goodLink);
     sanitizeEpubDocument(doc);
-    const p = doc.querySelector('p');
-    expect(p?.hasAttribute('onclick')).toBe(false);
-    // DOMPurify keeps the <a> element but strips javascript: href via sanitizeDom
+    const resultP = doc.querySelector('p');
+    expect(resultP?.hasAttribute('onclick')).toBe(false);
     const links = doc.querySelectorAll('a');
     expect(links.length).toBe(2);
-    // javascript: href should be stripped
-    const badLink = Array.from(links).find(
+    const resultBadLink = Array.from(links).find(
       (a) => a.textContent === 'Bad link',
     );
-    expect(badLink?.getAttribute('href')).toBeNull();
-    // Safe href should be preserved
-    const goodLink = Array.from(links).find(
+    expect(resultBadLink?.getAttribute('href')).toBeNull();
+    const resultGoodLink = Array.from(links).find(
       (a) => a.textContent === 'Good link',
     );
-    expect(goodLink?.getAttribute('href')).toBe('https://example.com');
+    expect(resultGoodLink?.getAttribute('href')).toBe('https://example.com');
   });
 });
 
@@ -74,7 +82,7 @@ describe('createEpubSanitizerHook timeout integration', () => {
 
   it('hook propagates traceId to TimeoutError', () => {
     const hook = createEpubSanitizerHook({ timeoutMs: 5000, traceId: 'hook-trace-42' });
-    const doc = createDoc('<html><body><p>Test</p></body></html>');
+    const doc = createDoc();
     vi.spyOn(performance, 'now')
       .mockReturnValueOnce(0)
       .mockReturnValue(100_000);
