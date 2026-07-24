@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
-import { mockReaderApi, mockAdminApi, loginAsReader, loginAsAdmin } from './fixtures';
+import { mockReaderApi, mockAdminApi, loginAsReader, loginAsAdmin, clickToolbarButton, suppressWorkboxErrors } from './fixtures';
 
 // ---------------------------------------------------------------------------
 // Axe-core accessibility audit tests
@@ -46,10 +46,11 @@ test.describe('Accessibility audit (axe-core)', () => {
   });
 
   test('@mobile reader settings panel has no accessibility violations', async ({ page }) => {
+    suppressWorkboxErrors(page);
     await mockReaderApi(page, { includeBookmarks: false });
     await loginAsReader(page);
 
-    await page.getByLabel('Settings').first().click();
+    await clickToolbarButton(page, /Settings/i);
     await expect(page.getByRole('dialog').getByText('Settings', { exact: true })).toBeVisible();
 
     const accessibilityScanResults = await new AxeBuilder({ page })
@@ -74,11 +75,12 @@ test.describe('Accessibility audit (axe-core)', () => {
   });
 
   test('@mobile keyboard navigation: can close panels with Escape', async ({ page }) => {
+    suppressWorkboxErrors(page);
     await mockReaderApi(page, { includeBookmarks: false });
     await loginAsReader(page);
 
     // Open Settings
-    await page.getByLabel('Settings').first().click();
+    await clickToolbarButton(page, /Settings/i);
     await expect(page.getByRole('dialog').getByText('Settings', { exact: true })).toBeVisible();
 
     // Close with Escape

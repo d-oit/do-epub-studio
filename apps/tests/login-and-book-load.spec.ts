@@ -1,5 +1,5 @@
 import { test, expect, type Page, type Route } from '@playwright/test';
-import { TEST_USER, mockReaderApi } from './fixtures';
+import { TEST_USER, mockReaderApi, clickToolbarButton, suppressWorkboxErrors } from './fixtures';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -108,13 +108,14 @@ test.describe('Login and book load (desktop)', () => {
   });
 
   test('@mobile opens the settings panel', async ({ page }) => {
+    suppressWorkboxErrors(page);
     await login(page);
 
 
     await expect(page).toHaveURL(/\/read\/my-test-book$/);
 
-    // Open settings
-    await page.getByRole('button', { name: 'Settings' }).click();
+    // Open settings (uses overflow menu on mobile)
+    await clickToolbarButton(page, /Settings/i);
 
     // Settings panel should contain theme, font size, and font family controls
     await expect(page.getByText('Theme')).toBeVisible();

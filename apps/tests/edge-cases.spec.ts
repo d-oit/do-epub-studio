@@ -1,5 +1,5 @@
 import { test, expect, type Route } from '@playwright/test';
-import { ADMIN_USER, mockReaderApi, mockAdminApi, loginAsReader } from './fixtures';
+import { ADMIN_USER, mockReaderApi, mockAdminApi, loginAsReader, clickToolbarButton, suppressWorkboxErrors } from './fixtures';
 
 test.describe('Edge Cases & Error Handling', () => {
   test('@mobile should handle invalid login credentials gracefully', async ({ page }) => {
@@ -117,12 +117,13 @@ test.describe('Edge Cases & Error Handling', () => {
   });
 
   test('@mobile handles mid-read network failure gracefully — reader stays usable', async ({ page }) => {
+    suppressWorkboxErrors(page);
     await mockReaderApi(page, { epubUrl: 'https://example.com/test.epub' });
     await loginAsReader(page);
 
     // Verify reader loaded successfully
     await expect(page.getByRole('button', { name: 'Contents' })).toBeVisible({ timeout: 15000 });
-    await expect(page.getByRole('button', { name: 'Settings' })).toBeVisible();
+    await clickToolbarButton(page, /Settings/i);
 
     // Simulate network failure mid-read by aborting all API requests
     await page.route('**/api/**', async (route: Route) => {
@@ -180,7 +181,6 @@ test.describe('Edge Cases & Error Handling', () => {
     // The reader should NOT crash — verify core UI is still present
     await expect(page.locator('body')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Contents' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Settings' })).toBeVisible();
 
     // Remove the network failure route and verify recovery
     await page.unroute('**/api/**');

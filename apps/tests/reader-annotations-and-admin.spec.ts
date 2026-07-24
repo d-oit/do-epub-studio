@@ -5,6 +5,8 @@ import {
   mockAdminApi,
   loginAsReader,
   loginAsAdmin,
+  clickToolbarButton,
+  suppressWorkboxErrors,
 } from './fixtures';
 
 // ---------------------------------------------------------------------------
@@ -17,23 +19,35 @@ test.describe('Reader annotations', () => {
   });
 
   test('@mobile can open and close the comments panel', async ({ page }) => {
+    suppressWorkboxErrors(page);
     await loginAsReader(page);
 
-    await page.getByRole('button', { name: 'Comment', exact: true }).click();
+    await clickToolbarButton(page, /Comment/i);
     await expect(page.getByRole('heading', { name: /Comments/i })).toBeVisible();
   });
 
   test('@mobile can open bookmarks panel and sees empty state', async ({ page }) => {
+    suppressWorkboxErrors(page);
     await loginAsReader(page);
 
-    await page.getByRole('button', { name: 'Bookmarks', exact: true }).click();
+    await clickToolbarButton(page, /Bookmarks/i);
     await expect(page.getByRole('heading', { name: /Bookmarks/i })).toBeVisible();
     await expect(page.getByText(/No bookmarks yet/i)).toBeVisible();
   });
 
   test('@mobile can export notes when panel is available', async ({ page }) => {
+    suppressWorkboxErrors(page);
     await loginAsReader(page);
 
+    // On mobile, Export Notes is in the overflow menu
+    const width = page.viewportSize()?.width ?? 1280;
+    if (width < 640) {
+      const moreBtn = page.getByRole('button', { name: /More [Oo]ptions/i });
+      if (await moreBtn.isVisible().catch(() => false)) {
+        await moreBtn.click();
+        await page.waitForTimeout(200);
+      }
+    }
     const exportButton = page.getByRole('button', { name: 'Export Notes', exact: true });
     await expect(exportButton).toBeVisible();
   });
