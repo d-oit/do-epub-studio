@@ -10,7 +10,7 @@ vi.mock('../hooks/useReducedMotion', () => ({
   useReducedMotion: () => false,
 }));
 
-const t = (key: string) => key;
+const t = vi.fn((key: string) => key);
 const onNavigateToComment = vi.fn();
 const onClose = vi.fn();
 

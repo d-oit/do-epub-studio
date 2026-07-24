@@ -6,7 +6,7 @@ import { NotificationBadge } from '../features/reader/components/notifications/N
 const mockFetch = vi.fn();
 vi.stubGlobal('fetch', mockFetch);
 
-const t = (key: string) => key;
+const t = vi.fn((key: string) => key);
 
 describe('NotificationBadge', () => {
   beforeEach(() => {
