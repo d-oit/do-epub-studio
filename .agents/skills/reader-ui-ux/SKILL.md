@@ -23,7 +23,7 @@ Purpose: Deliver premium, intentional, localized, accessible reader/admin UX for
 ## 2026 UI Standards
 
 1. **OKLCH Color Space**: Use `oklch()` for all color tokens to ensure perceptually uniform lightness and support for wide-gamut P3 displays.
-2. **View Transitions**: All major page navigations should use the View Transitions API (React Router v7 `viewTransition: true`).
+2. **View Transitions**: All major page navigations should use the View Transitions API (React Router v7 `viewTransition: true`). Assign `view-transition-name: prevent-flicker` to Sidebar and BottomTabBar to prevent nav flickering during page transitions — exclude them from root cross-fade with `animation: none` in `@view-transition`.
 3. **Scroll-Awareness**: Primary navigation and toolbars should respond to scroll direction (hide on scroll-down, show on scroll-up).
 4. **Panel Mutual Exclusivity**: In complex interfaces like the Reader, ensure only one side panel or overlay is open at a time.
 5. **App Shell**: Always provide a branded loading state via `AppShell` for initial auth resolution.
@@ -73,7 +73,7 @@ CI: `npx impeccable detect --json .` runs in quality gate. See `DESIGN.md` for a
 
 - [ ] Layout responsive (mobile/tablet/desktop) with fluid spacing
 - [ ] Strings localized (en/de/fr) and correctly typed
-- [ ] View Transitions enabled for navigation
+- [ ] View Transitions enabled for navigation (with `prevent-flicker` on nav containers)
 - [ ] Panels are mutually exclusive
 - [ ] Scroll-aware behaviors implemented
 - [ ] UI interactions include aria-labels + focus traps
