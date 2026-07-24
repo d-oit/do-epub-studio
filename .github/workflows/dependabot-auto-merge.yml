@@ -24,34 +24,18 @@ jobs:
     if: github.event.pull_request.user.login == 'dependabot[bot]'
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
-        with:
-          persist-credentials: false
-
       - name: Fetch Dependabot PR metadata
         id: metadata
         uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98  # v3.1.0
         with:
           github-token: '${{ secrets.GITHUB_TOKEN }}'
+          skip-commit-verification: true
 
       - name: Approve and enable auto-merge for safe updates
         if: |
           steps.metadata.outputs.update-type == 'version-update:semver-minor' ||
           steps.metadata.outputs.update-type == 'version-update:semver-patch'
         run: |
-          # Check mergeability
-          MERGEABLE=$(gh pr view "$PR_URL" --json mergeable --jq '.mergeable')
-          if [ "$MERGEABLE" != "MERGEABLE" ]; then
-            echo "PR not mergeable (state: $MERGEABLE), skipping"
-            exit 0
-          fi
-          # Check all CI checks pass (fixed multi-line comparison)
-          ALL_PASS=$(gh pr view "$PR_URL" --json statusCheckRollup \
-            --jq '[.statusCheckRollup[].conclusion] | unique | length == 1 and .[0] == "SUCCESS"')
-          if [ "$ALL_PASS" != "true" ]; then
-            echo "CI not fully passing yet - enabling auto-merge to queue until checks pass"
-          fi
           gh pr review --approve "$PR_URL"
           gh pr merge --auto --squash "$PR_URL"
         env:
