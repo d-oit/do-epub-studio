@@ -79,7 +79,9 @@
 - **axe-core playwright**: `@axe-core/playwright` analyzes the page at the moment of invocation. Mocked API responses must be set up before navigation for meaningful results on pages that load asynchronously.
 - **createPortal + test queries**: Components migrated to `createPortal` render content to `document.body`, not `render()`'s container. Change `container.querySelector()` to `document.body.querySelector()` in tests.
 - **jsdom + focus trap offsetParent**: `useFocusTrap` filters focusable elements by `el.offsetParent !== null`. In jsdom, `offsetParent` always returns `null`. Fix: mock `Object.defineProperty(HTMLElement.prototype, 'offsetParent', ...)` in test setup.
-- **Biome SolidJS rules fire on React**: Codacy's Biome engine flags `const fn = async () => { ... }` in React components with "Non-serializable expression must be wrapped with $(...)". This is a SolidJS-specific rule. Fix: use `useCallback(async () => { ... }, [])` pattern instead of bare `const fn = async () => {}`.
+- **Biome SolidJS rules fire on React**: Codacy's Biome engine flags `const fn = async () => { ... }` in React components with "Non-serializable expression must be wrapped with $(...)". This is a SolidJS-specific rule (`Biome_lint_correctness_useQwikValidLexicalScope`). Fix patterns:
+  - **In components**: use `useCallback(async () => { ... }, [])` instead of bare `const fn = async () => {}`
+  - **In test files**: use `vi.fn((key: string) => key)` instead of `const t = (key: string) => key;` — this avoids the Biome flag AND makes the function a spiable mock. Applies to any top-level arrow function assigned to a const in test files (translation helpers, mock callbacks, etc.).
 - **`aria-label` on `<span>` not supported**: Codacy Biome flags `aria-label` on `<span>` elements. Use `role="status"` (or `role="img"`) to make the span accept `aria-label`, or switch to a `<button>` element.
 - **`type="button"` required on all buttons**: Codacy flags `<button>` without explicit `type` attribute. Always add `type="button"` to non-submit buttons.
 
