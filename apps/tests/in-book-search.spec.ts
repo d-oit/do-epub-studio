@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { TEST_USER, LOGIN_RESPONSE, mockReaderApi, loginAsReader } from './fixtures';
+import { TEST_USER, LOGIN_RESPONSE, mockReaderApi, loginAsReader, clickToolbarButton, suppressWorkboxErrors } from './fixtures';
 
 const SEARCH_BOOK_USER = { ...TEST_USER, bookSlug: 'search-test-book' };
 
@@ -29,11 +29,12 @@ test.describe('In-book search', () => {
   });
 
   test('@mobile opens search panel and accepts input', async ({ page }) => {
+    suppressWorkboxErrors(page);
     await loginAsReader(page, SEARCH_BOOK_USER.bookSlug);
     await expect(page).toHaveURL(/\/read\/search-test-book/);
     await expect(page.getByRole('button', { name: 'Contents' })).toBeVisible({ timeout: 30000 });
 
-    await page.getByRole('button', { name: 'Search', exact: true }).click();
+    await clickToolbarButton(page, /Search/i);
     await expect(page.getByRole('search')).toBeVisible();
 
     const searchbox = page.getByRole('searchbox');
@@ -42,11 +43,12 @@ test.describe('In-book search', () => {
   });
 
   test('@mobile closes search panel via close button', async ({ page }) => {
+    suppressWorkboxErrors(page);
     await loginAsReader(page, SEARCH_BOOK_USER.bookSlug);
     await expect(page).toHaveURL(/\/read\/search-test-book/);
     await expect(page.getByRole('button', { name: 'Contents' })).toBeVisible({ timeout: 30000 });
 
-    await page.getByRole('button', { name: 'Search', exact: true }).click();
+    await clickToolbarButton(page, /Search/i);
     await expect(page.getByRole('search')).toBeVisible();
 
     const closeButton = page.getByRole('button', { name: /Close|Dismiss/i });
@@ -57,11 +59,12 @@ test.describe('In-book search', () => {
   });
 
   test('@mobile search panel shows empty state for no results', async ({ page }) => {
+    suppressWorkboxErrors(page);
     await loginAsReader(page, SEARCH_BOOK_USER.bookSlug);
     await expect(page).toHaveURL(/\/read\/search-test-book/);
     await expect(page.getByRole('button', { name: 'Contents' })).toBeVisible({ timeout: 30000 });
 
-    await page.getByRole('button', { name: 'Search', exact: true }).click();
+    await clickToolbarButton(page, /Search/i);
     const searchbox = page.getByRole('searchbox');
     await searchbox.fill('zzznonexistent');
 

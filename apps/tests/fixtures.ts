@@ -305,6 +305,36 @@ export async function mockAdminApi(page: Page) {
 // Login helpers
 // ---------------------------------------------------------------------------
 
+/**
+ * Click a toolbar button, handling mobile overflow menu automatically.
+ * On mobile viewports, toolbar buttons are hidden behind a "More options"
+ * overflow menu due to container query layout (ReaderToolbar.tsx).
+ */
+export async function clickToolbarButton(page: Page, buttonName: string | RegExp) {
+  const width = page.viewportSize()?.width ?? 1280;
+  if (width < 640) {
+    const moreBtn = page.getByRole('button', { name: /More [Oo]ptions/i });
+    if (await moreBtn.isVisible().catch(() => false)) {
+      await moreBtn.click();
+      await page.waitForTimeout(200);
+    }
+  }
+  await page.getByRole('button', { name: buttonName }).click();
+}
+
+/**
+ * Suppress non-fatal workbox SW registration PAGE ERRORs in preview mode.
+ * These are `Cannot read properties of undefined (reading 'waiting')` errors
+ * from the workbox bundle that appear as console errors but don't cause
+ * test failures. Call this in test.beforeEach() or at the top of a test.
+ */
+export function suppressWorkboxErrors(page: Page) {
+  page.on('pageerror', (error) => {
+    if (error.message.includes("reading 'waiting'")) return;
+    throw error;
+  });
+}
+
 export async function loginAsReader(page: Page, bookSlug?: string) {
   const slug = bookSlug ?? TEST_USER.bookSlug;
   await page.goto(`/login?book=${slug}`);
