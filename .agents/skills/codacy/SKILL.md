@@ -139,6 +139,41 @@ Same caveat as `__dirname` — Codacy's ESLint 8 may still flag it
 because `import.meta.dirname` is not in the rule's static set; add a
 targeted disable with a justification.
 
+### `Biome_lint_correctness_useQwikValidLexicalScope`
+
+Codacy's Biome engine flags top-level arrow functions in test files
+with "Non-serializable expression must be wrapped with $(...)".
+This is a SolidJS-specific rule (`useQwikValidLexicalScope`) that
+fires incorrectly on React/JS code.
+
+**Trigger pattern** — any `const fn = (...) => ...` at module scope in
+test files:
+
+```ts
+// BAD — Codacy Biome flags this (resultDataId varies)
+const t = (key: string) => key;
+const onNavigate = vi.fn();
+const mockHandler = (x: number) => x * 2;
+```
+
+**Fix: wrap in `vi.fn()`** — makes it a spiable mock AND avoids the
+Biome flag:
+
+```ts
+// GOOD — not flagged, and spiable in assertions
+const t = vi.fn((key: string) => key);
+const onNavigate = vi.fn();
+const mockHandler = vi.fn((x: number) => x * 2);
+```
+
+**Why `vi.fn()` and not `useCallback`**: Test files are not React
+components — `useCallback` doesn't apply. `vi.fn()` is the idiomatic
+Vitest pattern for standalone test helpers. If the function doesn't
+need spying, `vi.fn(impl)` still works as a passthrough.
+
+**Alternative**: Move the function inside a `describe()` block or
+`beforeEach()` — Biome only flags module-level declarations.
+
 ## Local Analysis
 
 ```bash
@@ -205,6 +240,7 @@ Codacy check regardless of GitHub enforcement.
 | Python/Ruby   | ❌ Fails | Missing runtimes/venv issues |
 | Java/PMD      | ❌ Fails | Missing Java runtime |
 | opengrep test exclusions | ⚠️ Partial | `.codacy.yml` `exclude_paths` works for ESLint but cloud-side opengrep may still flag HTML-like strings in test files (`<!DOCTYPE html>`, `</html>`). Remove ALL HTML literals from tests. |
+| Biome in test files | ⚠️ False positives | `useQwikValidLexicalScope` (SolidJS rule) flags `const fn = () => ...` at module scope in test files. Use `vi.fn()` wrapper instead. See fix patterns above. |
 
 Always cross-reference with Cloud CLI for full PR data.
 
@@ -224,6 +260,8 @@ Always cross-reference with Cloud CLI for full PR data.
 - [ ] Using issue hashes for CLI suppressions.
 - [ ] **Using `--install-dependencies` flag.**
 - [ ] Pushing a PR without `gh pr checks` showing Codacy `pass`.
+- [ ] Using bare `const fn = () => ...` at module scope in test files
+      (triggers Biome `useQwikValidLexicalScope`). Use `vi.fn()` instead.
 - [ ] Suppressing `security/*` rules without an inline justification
       comment and a follow-up plan entry.
 - [ ] Editing `.eslint.config.js` to disable a rule that Codacy
