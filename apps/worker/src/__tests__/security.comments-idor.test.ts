@@ -4,6 +4,7 @@ import {
   makePassThroughContext,
   mockRequireAuth,
   mockQueryFirst,
+  parseBody,
 } from './fixtures';
 import { app } from '../app';
 import * as tenantIsolation from '../lib/tenant-isolation';
@@ -136,8 +137,8 @@ describe('Security: Comments IDOR Reproduction', () => {
       );
 
       expect(res.status).toBe(400);
-      const data = await res.json() as any;
-      expect(data.error.code).toBe('INVALID_PARENT_COMMENT');
+      const data = await parseBody(res);
+      expect(data.error?.code).toBe('INVALID_PARENT_COMMENT');
     });
 
     it('POST should fail if parent comment belongs to a different book', async () => {
@@ -166,8 +167,8 @@ describe('Security: Comments IDOR Reproduction', () => {
       );
 
       expect(res.status).toBe(400);
-      const data = await res.json() as any;
-      expect(data.error.code).toBe('INVALID_PARENT_COMMENT');
+      const data = await parseBody(res);
+      expect(data.error?.code).toBe('INVALID_PARENT_COMMENT');
     });
 
     it('POST should fail if parent comment is deleted', async () => {
@@ -196,8 +197,8 @@ describe('Security: Comments IDOR Reproduction', () => {
       );
 
       expect(res.status).toBe(400);
-      const data = await res.json() as any;
-      expect(data.error.code).toBe('INVALID_PARENT_COMMENT');
+      const data = await parseBody(res);
+      expect(data.error?.code).toBe('INVALID_PARENT_COMMENT');
     });
 
     it('POST should fail if parent comment is internal and belongs to another user', async () => {
@@ -226,8 +227,8 @@ describe('Security: Comments IDOR Reproduction', () => {
       );
 
       expect(res.status).toBe(403);
-      const data = await res.json() as any;
-      expect(data.error.code).toBe('INVALID_PARENT_COMMENT');
+      const data = await parseBody(res);
+      expect(data.error?.code).toBe('INVALID_PARENT_COMMENT');
     });
 
     it('POST should succeed if parent comment is internal but owned by the same user', async () => {
