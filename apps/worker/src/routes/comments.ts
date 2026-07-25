@@ -88,6 +88,27 @@ commentsRouter.post('/books/:bookId/comments', readerAuth, zValidator('json', Co
   }
 
   const body = c.req.valid('json');
+
+  if (body.parentCommentId) {
+    const parent = await queryFirst<CommentRow>(
+      c.env,
+      `SELECT * FROM comments WHERE id = ?`,
+      [body.parentCommentId],
+    );
+    if (!parent || parent.status === 'deleted' || parent.book_id !== bookId) {
+      return c.json(
+        { ok: false, error: { code: 'INVALID_PARENT_COMMENT', message: 'Parent comment not found or inaccessible' } },
+        400,
+      );
+    }
+    if (parent.visibility !== 'shared' && parent.user_email !== auth.email) {
+      return c.json(
+        { ok: false, error: { code: 'INVALID_PARENT_COMMENT', message: 'Parent comment not found or inaccessible' } },
+        403,
+      );
+    }
+  }
+
   const id = crypto.randomUUID();
   const now = new Date().toISOString();
 

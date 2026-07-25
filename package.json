@@ -51,7 +51,7 @@
     "eslint-plugin-unicorn": "^72.0.0",
     "globals": "^17.7.0",
     "impeccable": "^3.2.1",
-    "js-yaml": "^5.2.1",
+    "js-yaml": "^5.2.2",
     "jsdom": "^29.1.1",
     "prettier": "^3.9.6",
     "rollup-plugin-visualizer": "^7.0.1",
