@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { AdminRecoverPage } from '../features/admin/AdminRecoverPage';
 import { apiRequest } from '../lib/api';
+import { logClientEvent } from '../lib/client-logger';
 import { useAuthStore } from '../stores/auth';
 
 const mockNavigate = vi.fn();
@@ -288,6 +289,111 @@ describe('AdminRecoverPage', () => {
       await user.click(screen.getByRole('button', { name: 'Back to Login' }));
 
       expect(mockNavigate).toHaveBeenCalledWith('/admin/login');
+    });
+  });
+
+  describe('loading state', () => {
+    it('disables button and shows loading text during request submit', async () => {
+      const user = userEvent.setup();
+      let resolveRequest: () => void;
+      vi.mocked(apiRequest).mockImplementation(
+        () => new Promise<void>((resolve) => { resolveRequest = resolve; }),
+      );
+
+      render(
+        <MemoryRouter initialEntries={['/admin/recover']}>
+          <AdminRecoverPage />
+        </MemoryRouter>,
+      );
+
+      await user.type(screen.getByLabelText('Email'), 'admin@example.com');
+      await user.click(screen.getByRole('button', { name: 'Send Recovery Link' }));
+
+      const button = screen.getByRole('button', { name: 'Sending...' });
+      expect(button).toBeDisabled();
+
+      resolveRequest!();
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: 'Send Recovery Link' })).not.toBeDisabled();
+      });
+    });
+
+    it('disables button and shows loading text during verify submit', async () => {
+      const user = userEvent.setup();
+      let resolveVerify: () => void;
+      vi.mocked(apiRequest).mockImplementation(
+        () => new Promise<never>((resolve) => { resolveVerify = resolve; }),
+      );
+
+      render(
+        <MemoryRouter initialEntries={['/admin/recover?token=abc123']}>
+          <AdminRecoverPage />
+        </MemoryRouter>,
+      );
+
+      await user.type(screen.getByLabelText('New Password'), 'supersecretpw1');
+      await user.click(screen.getByRole('button', { name: 'Reset Password' }));
+
+      const button = screen.getByRole('button', { name: 'Resetting...' });
+      expect(button).toBeDisabled();
+
+      resolveVerify!();
+    });
+  });
+
+  describe('error fallback', () => {
+    it('shows generic request failed message when error has no message', async () => {
+      const user = userEvent.setup();
+      vi.mocked(apiRequest).mockRejectedValue('string error');
+
+      render(
+        <MemoryRouter initialEntries={['/admin/recover']}>
+          <AdminRecoverPage />
+        </MemoryRouter>,
+      );
+
+      await user.type(screen.getByLabelText('Email'), 'admin@example.com');
+      await user.click(screen.getByRole('button', { name: 'Send Recovery Link' }));
+
+      await waitFor(() => {
+        expect(screen.getByRole('alert')).toHaveTextContent('Request failed.');
+      });
+    });
+
+    it('shows generic verify failed message when error has no message', async () => {
+      const user = userEvent.setup();
+      vi.mocked(apiRequest).mockRejectedValue('string error');
+
+      render(
+        <MemoryRouter initialEntries={['/admin/recover?token=abc123']}>
+          <AdminRecoverPage />
+        </MemoryRouter>,
+      );
+
+      await user.type(screen.getByLabelText('New Password'), 'supersecretpw1');
+      await user.click(screen.getByRole('button', { name: 'Reset Password' }));
+
+      await waitFor(() => {
+        expect(screen.getByRole('alert')).toHaveTextContent('Verification failed.');
+      });
+    });
+  });
+
+  describe('logging', () => {
+    it('calls logClientEvent on mount with mode metadata', () => {
+      render(
+        <MemoryRouter initialEntries={['/admin/recover']}>
+          <AdminRecoverPage />
+        </MemoryRouter>,
+      );
+
+      expect(logClientEvent).toHaveBeenCalledWith(
+        expect.objectContaining({
+          level: 'info',
+          event: 'admin.recover.view',
+          metadata: { mode: 'request' },
+        }),
+      );
     });
   });
 });
