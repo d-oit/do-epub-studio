@@ -61,7 +61,6 @@ vi.mock('../hooks/useTranslation', () => ({
         'admin.recover.resetPassword': 'Reset Password',
         'admin.recover.backToLogin': 'Back to Login',
       };
-      // eslint-disable-next-line security/detect-object-injection -- static mock lookup
       return translations[key] ?? key;
     },
   }),
@@ -295,7 +294,8 @@ describe('AdminRecoverPage', () => {
   describe('loading state', () => {
     it('disables button and shows loading text during request submit', async () => {
       const user = userEvent.setup();
-      let resolveRequest: () => void;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- deferred promise resolver
+      let resolveRequest: (value?: void | PromiseLike<void>) => void = () => {};
       vi.mocked(apiRequest).mockImplementation(
         () => new Promise<void>((resolve) => { resolveRequest = resolve; }),
       );
@@ -312,7 +312,7 @@ describe('AdminRecoverPage', () => {
       const button = screen.getByRole('button', { name: 'Sending...' });
       expect(button).toBeDisabled();
 
-      resolveRequest!();
+      resolveRequest();
       await waitFor(() => {
         expect(screen.getByRole('button', { name: 'Send Recovery Link' })).not.toBeDisabled();
       });
@@ -320,9 +320,10 @@ describe('AdminRecoverPage', () => {
 
     it('disables button and shows loading text during verify submit', async () => {
       const user = userEvent.setup();
-      let resolveVerify: () => void;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- deferred promise resolver
+      let resolveVerify: (value?: void | PromiseLike<void>) => void = () => {};
       vi.mocked(apiRequest).mockImplementation(
-        () => new Promise<never>((resolve) => { resolveVerify = resolve; }),
+        () => new Promise<void>((resolve) => { resolveVerify = resolve; }),
       );
 
       render(
@@ -337,7 +338,7 @@ describe('AdminRecoverPage', () => {
       const button = screen.getByRole('button', { name: 'Resetting...' });
       expect(button).toBeDisabled();
 
-      resolveVerify!();
+      resolveVerify();
     });
   });
 
