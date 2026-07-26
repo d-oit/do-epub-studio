@@ -33,7 +33,11 @@ let _flushTimer: ReturnType<typeof setTimeout> | null = null;
 
 function flushBuffer(): void {
   if (_buffer.length === 0) return;
-  const endpoint = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_TELEMETRY_ENDPOINT) || '/api/telemetry';
+  const endpoint = typeof import.meta !== 'undefined' && import.meta.env?.VITE_TELEMETRY_ENDPOINT;
+  if (!endpoint) {
+    _buffer.length = 0;
+    return;
+  }
 
   try {
     const payload = JSON.stringify({ logs: _buffer.splice(0) });

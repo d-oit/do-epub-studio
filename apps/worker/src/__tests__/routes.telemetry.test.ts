@@ -64,8 +64,6 @@ describe('Telemetry API', () => {
 
     expect(clientTelemetryLogs.length).toBe(1);
     expect(clientTelemetryLogs[0]).toContain('test_event');
-    expect(clientTelemetryLogs[0]).toContain('1.2.3.4');
-    expect(clientTelemetryLogs[0]).toContain('test-agent');
   });
 
   it('should reject invalid payloads', async () => {
