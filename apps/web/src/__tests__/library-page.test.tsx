@@ -13,7 +13,9 @@ vi.mock('../hooks/useTranslation', () => ({
 
 vi.mock('../components/ui', () => ({
   AppLogo: () => <div data-testid="app-logo" />,
-  ProgressBar: ({ label }: { label?: string }) => <div data-testid="progress-bar">{label}</div>,
+  ProgressBar: ({ value, label }: { value?: number; label?: string }) => (
+    <div data-testid="progress-bar" data-value={value}>{label}</div>
+  ),
 }));
 
 vi.mock('@do-epub-studio/ui', () => ({
@@ -97,6 +99,55 @@ describe('MyLibraryPage', () => {
     renderLibrary();
     await waitFor(() => {
       expect(screen.getByText('library.title')).toBeInTheDocument();
+    });
+  });
+
+  it('shows ProgressBar for in-progress books', async () => {
+    mockApiRequest.mockResolvedValue(mockBooks);
+    renderLibrary();
+    await waitFor(() => {
+      const bars = screen.getAllByTestId('progress-bar');
+      expect(bars).toHaveLength(1);
+      expect(bars[0]).toHaveAttribute('data-value', '45');
+    });
+  });
+
+  it('does not show ProgressBar for not-started or completed books', async () => {
+    mockApiRequest.mockResolvedValue(mockBooks);
+    renderLibrary();
+    await waitFor(() => {
+      const inProgressSection = screen.getByText('library.inProgress').closest('section') as HTMLElement;
+      const bars = inProgressSection.querySelectorAll('[data-testid="progress-bar"]');
+      expect(bars).toHaveLength(1);
+      expect((screen.getByText('library.notStarted').closest('section') as HTMLElement).querySelector('[data-testid="progress-bar"]')).toBeNull();
+      expect((screen.getByText('library.completed').closest('section') as HTMLElement).querySelector('[data-testid="progress-bar"]')).toBeNull();
+    });
+  });
+
+  it('calls apiRequest with the session token', async () => {
+    mockApiRequest.mockResolvedValue([]);
+    renderLibrary();
+    await waitFor(() => {
+      expect(mockApiRequest).toHaveBeenCalledWith('/api/books', { token: undefined });
+    });
+  });
+
+  it('renders author names when present', async () => {
+    mockApiRequest.mockResolvedValue(mockBooks);
+    renderLibrary();
+    await waitFor(() => {
+      expect(screen.getByText('Author A')).toBeInTheDocument();
+      expect(screen.getByText('Author B')).toBeInTheDocument();
+      expect(screen.getByText('Author C')).toBeInTheDocument();
+    });
+  });
+
+  it('renders "library.finished" badge for completed books', async () => {
+    mockApiRequest.mockResolvedValue(mockBooks);
+    renderLibrary();
+    await waitFor(() => {
+      const completedSection = screen.getByText('library.completed').closest('section') as HTMLElement;
+      expect(completedSection).toHaveTextContent('library.finished');
     });
   });
 });
