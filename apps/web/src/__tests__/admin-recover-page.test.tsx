@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { AdminRecoverPage } from '../features/admin/AdminRecoverPage';
 import { apiRequest } from '../lib/api';
+import { useAuthStore } from '../stores/auth';
 
 const mockNavigate = vi.fn();
 vi.mock('react-router-dom', async () => {
@@ -180,8 +181,28 @@ describe('AdminRecoverPage', () => {
       expect(screen.getByRole('button', { name: 'Reset Password' })).toBeInTheDocument();
     });
 
-    it('calls POST /api/admin/recovery-verify on submit', async () => {
+    it('calls POST /api/admin/recovery-verify on submit and updates auth store', async () => {
       const user = userEvent.setup();
+      const mockSetAdminAuth = vi.fn();
+      vi.mocked(useAuthStore).mockImplementation((selector) => {
+        const state = {
+          sessionToken: null,
+          sessionExpiresAt: null,
+          bookId: null,
+          bookSlug: null,
+          bookTitle: null,
+          email: null,
+          capabilities: null,
+          isAuthenticated: false,
+          isAdmin: false,
+          sessionExpired: false,
+          setAuth: vi.fn(),
+          setAdminAuth: mockSetAdminAuth,
+          refreshSession: vi.fn(),
+          logout: vi.fn(),
+        };
+        return selector(state);
+      });
       vi.mocked(apiRequest).mockResolvedValue({ sessionToken: 'tok', email: 'a@b.com' });
 
       render(
@@ -198,6 +219,10 @@ describe('AdminRecoverPage', () => {
           method: 'POST',
           body: JSON.stringify({ token: 'abc123', newPassword: 'supersecretpw1' }),
         });
+      });
+
+      await waitFor(() => {
+        expect(mockSetAdminAuth).toHaveBeenCalledWith({ sessionToken: 'tok', email: 'a@b.com' });
       });
     });
 
