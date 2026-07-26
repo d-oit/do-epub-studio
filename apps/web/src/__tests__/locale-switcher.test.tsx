@@ -10,6 +10,7 @@ vi.mock('../hooks/useTranslation', () => ({
       const translations: Record<string, string> = {
         'a11y.select_locale': 'Select locale',
       };
+      // eslint-disable-next-line security/detect-object-injection -- test translation lookup
       return Object.hasOwn(translations, key) ? translations[key] : key;
     },
     locale: 'en',
