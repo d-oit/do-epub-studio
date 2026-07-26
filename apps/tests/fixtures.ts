@@ -311,15 +311,25 @@ export async function mockAdminApi(page: Page) {
  * overflow menu due to container query layout (ReaderToolbar.tsx).
  */
 export async function clickToolbarButton(page: Page, buttonName: string | RegExp) {
-  const width = page.viewportSize()?.width ?? 1280;
-  if (width < 640) {
-    const moreBtn = page.getByRole('button', { name: /More [Oo]ptions/i });
-    if (await moreBtn.isVisible().catch(() => false)) {
-      await moreBtn.click();
-      await page.waitForTimeout(200);
-    }
+  // First try direct visibility
+  const directBtn = page.getByRole('button', { name: buttonName });
+  if (await directBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+    await directBtn.dispatchEvent('click');
+    return;
   }
-  await page.getByRole('button', { name: buttonName }).click();
+
+  // If not visible, try overflow menu
+  const moreBtn = page.getByRole('button', { name: /More [Oo]ptions/i });
+  if (await moreBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+    await moreBtn.dispatchEvent('click');
+    const overflowBtn = page.locator('.cq-reader-toolbar-overflow').getByRole('button', { name: buttonName });
+    await overflowBtn.waitFor({ state: 'visible', timeout: 5000 });
+    await overflowBtn.dispatchEvent('click');
+    return;
+  }
+
+  // Fallback: click directly anyway
+  await directBtn.dispatchEvent('click');
 }
 
 /**

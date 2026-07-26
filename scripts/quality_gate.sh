@@ -70,6 +70,16 @@ if [ -f "$REPO_ROOT/scripts/check-app-identity.mjs" ]; then
 fi
 echo ""
 
+# --- Validate ADR index (ADR-083) ---
+printf '%s  ✓ Validating ADR index (ADR-083)...%s\n' "${GREEN}" "${NC}"
+if node "$REPO_ROOT/scripts/check-adr-index.mjs" 2>&1; then
+  printf '%s  ✓ ADR index validation passed (ADR-083).%s\n' "${GREEN}" "${NC}"
+else
+  printf '%s  ✗ ADR index validation failed.%s\n' "${RED}" "${NC}"
+  FAILED=1
+fi
+echo ""
+
 # --- Validate SKILL.md format ---
 printf '%sValidating SKILL.md format...%s\n' "${BLUE}" "${NC}"
 if [ -f "$REPO_ROOT/scripts/validate-skill-format.sh" ]; then

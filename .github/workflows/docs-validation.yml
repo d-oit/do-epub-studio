@@ -99,3 +99,6 @@ jobs:
           done
 
           echo "✓ Canonical command validation complete"
+
+      - name: Validate ADR index (ADR-083)
+        run: node scripts/check-adr-index.mjs

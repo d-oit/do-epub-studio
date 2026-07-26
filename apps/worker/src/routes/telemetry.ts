@@ -37,8 +37,6 @@ telemetryRouter.post(
     const output = JSON.stringify({
       ...scrubbedLog,
       _receivedAt: new Date().toISOString(),
-      _remoteAddr: c.req.header('cf-connecting-ip') || 'unknown',
-      _userAgent: c.req.header('user-agent'),
     });
 
     if (log.level === 'error') {
