@@ -53,6 +53,7 @@ describe('observabilityMiddleware', () => {
 
   it('calls createRequestContext and logRequestStart', async () => {
     const ctx = makeContext();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Hono Context mock
     await observabilityMiddleware(ctx as any, ctx.next as any);
 
     expect(createRequestContext).toHaveBeenCalledWith(ctx.req.raw);
@@ -61,6 +62,7 @@ describe('observabilityMiddleware', () => {
 
   it('calls next() and logs request end on success', async () => {
     const ctx = makeContext();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Hono Context mock
     await observabilityMiddleware(ctx as any, ctx.next as any);
 
     expect(ctx.next).toHaveBeenCalled();
@@ -73,6 +75,7 @@ describe('observabilityMiddleware', () => {
 
   it('sets trace headers on successful response', async () => {
     const ctx = makeContext();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Hono Context mock
     await observabilityMiddleware(ctx as any, ctx.next as any);
 
     expect(withTraceHeaders).toHaveBeenCalledWith(ctx.res, expect.objectContaining({ traceId: 'trace-123' }));
@@ -83,6 +86,7 @@ describe('observabilityMiddleware', () => {
     const next = vi.fn().mockRejectedValue(error);
     const ctx = makeContext({ next });
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Hono Context mock
     const result = await observabilityMiddleware(ctx as any, next as any);
 
     expect(logRequestError).toHaveBeenCalledWith(
@@ -121,6 +125,7 @@ describe('observabilityMiddleware', () => {
     const next = vi.fn().mockRejectedValue(new Error('fail'));
     const ctx = makeContext({ next });
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Hono Context mock
     const result = await observabilityMiddleware(ctx as any, next as any);
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const body = await result!.json();
