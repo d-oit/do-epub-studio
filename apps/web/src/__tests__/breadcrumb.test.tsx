@@ -12,7 +12,7 @@ vi.mock('../hooks/useTranslation', () => ({
         'admin.breadcrumb.grants': 'Grants',
         'admin.breadcrumb.audit': 'Audit Log',
       };
-      return translations[key] ?? key;
+      return Object.hasOwn(translations, key) ? translations[key] : key;
     },
   }),
 }));

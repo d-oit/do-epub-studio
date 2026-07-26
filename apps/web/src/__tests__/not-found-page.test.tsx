@@ -11,7 +11,7 @@ vi.mock('../hooks/useTranslation', () => ({
         'errors.notFound.description': 'The page you are looking for does not exist.',
         'errors.notFound.backToHome': 'Back to Home',
       };
-      return translations[key] ?? key;
+      return Object.hasOwn(translations, key) ? translations[key] : key;
     },
     locale: 'en',
     setLocale: vi.fn(),

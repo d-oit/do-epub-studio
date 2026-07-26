@@ -10,7 +10,7 @@ vi.mock('../i18n', () => ({
       'reader.settings': 'Reader Settings',
       'reader.theme': 'Theme',
     };
-    let result = translations[key] ?? key;
+    let result = Object.hasOwn(translations, key) ? translations[key] : key;
     if (params) {
       for (const [k, v] of Object.entries(params)) {
         result = result.replace(`{${k}}`, String(v));

@@ -11,7 +11,7 @@ vi.mock('../hooks/useTranslation', () => ({
         'nav.myLibrary': 'My Library',
         'nav.settings': 'Settings',
       };
-      return translations[key] ?? key;
+      return Object.hasOwn(translations, key) ? translations[key] : key;
     },
   }),
 }));

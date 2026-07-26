@@ -8,7 +8,7 @@ vi.mock('../hooks/useTranslation', () => ({
       const translations: Record<string, string> = {
         'offline.banner': 'You are currently offline',
       };
-      return translations[key] ?? key;
+      return Object.hasOwn(translations, key) ? translations[key] : key;
     },
   }),
 }));
