@@ -1,5 +1,6 @@
 {
   "$schema": "https://mimo.xiaomi.com/mimocode/config.json",
+  "model": "standard",
   "provider": {},
   "permission": {
     "edit": {
