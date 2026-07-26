@@ -59,6 +59,7 @@ vi.mock('../hooks/useTranslation', () => ({
         'admin.recover.resetPassword': 'Reset Password',
         'admin.recover.backToLogin': 'Back to Login',
       };
+      // eslint-disable-next-line security/detect-object-injection -- static mock lookup
       return translations[key] ?? key;
     },
   }),

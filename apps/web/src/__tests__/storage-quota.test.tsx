@@ -25,13 +25,13 @@ vi.mock('../components/ui', () => ({
           type="button"
           onClick={onCancel as React.MouseEventHandler<HTMLButtonElement>}
         >
-          {(cancelLabel as string) ?? 'cancel'}
+          {(cancelLabel as string) || 'cancel'}
         </button>
         <button
           type="button"
           onClick={onConfirm as React.MouseEventHandler<HTMLButtonElement>}
         >
-          {(confirmLabel as string) ?? 'confirm'}
+          {(confirmLabel as string) || 'confirm'}
         </button>
       </div>
     ) : null,
@@ -79,6 +79,7 @@ describe('StorageQuota', () => {
     // Loading state shows skeleton animation, no title text
     expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
     expect(screen.getByText((_, element) =>
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Codacy false positive: element can be null in test matcher
       element?.className?.includes('animate-pulse') === true,
     )).toBeInTheDocument();
   });
@@ -275,6 +276,7 @@ describe('StorageQuota', () => {
     expect(timeoutCall).toBeDefined();
 
     // Execute the auto-dismiss callback to verify it clears the message
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Codacy false positive: timeoutCall may be undefined at runtime
     const dismissCallback = (timeoutCall as unknown as [() => void])?.[0];
     if (dismissCallback) dismissCallback();
 
@@ -290,7 +292,7 @@ describe('StorageQuota', () => {
     mockEstimate.mockResolvedValue({ usage: 50 * 1024 * 1024, quota: 100 * 1024 * 1024 });
     const resolver: { resolve: () => void } = { resolve: () => {} };
     mockCacheKeys.mockImplementation(
-      () => new Promise<string[]>((resolve) => { resolver.resolve = () => resolve(['cache-1']); }),
+      () => new Promise<string[]>((resolve) => { resolver.resolve = () => { resolve(['cache-1']); }; }),
     );
     mockCacheDelete.mockResolvedValue(true);
 
