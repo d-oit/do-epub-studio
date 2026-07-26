@@ -116,13 +116,12 @@ describe('MyLibraryPage', () => {
     mockApiRequest.mockResolvedValue(mockBooks);
     renderLibrary();
     await waitFor(() => {
-      const inProgressEl = screen.getByText('library.inProgress').closest('section') as HTMLElement;
-      const bars = inProgressEl.querySelectorAll('[data-testid="progress-bar"]');
-      expect(bars).toHaveLength(1);
-      const notStartedEl = screen.getByText('library.notStarted').closest('section') as HTMLElement;
-      expect(notStartedEl.querySelector('[data-testid="progress-bar"]')).toBeNull();
-      const completedEl = screen.getByText('library.completed').closest('section') as HTMLElement;
-      expect(completedEl.querySelector('[data-testid="progress-bar"]')).toBeNull();
+      const inProgressBars = screen.getByText('library.inProgress').closest('section')?.querySelectorAll('[data-testid="progress-bar"]');
+      expect(inProgressBars).toHaveLength(1);
+      const notStartedBars = screen.getByText('library.notStarted').closest('section')?.querySelectorAll('[data-testid="progress-bar"]');
+      expect(notStartedBars).toHaveLength(0);
+      const completedBars = screen.getByText('library.completed').closest('section')?.querySelectorAll('[data-testid="progress-bar"]');
+      expect(completedBars).toHaveLength(0);
     });
   });
 
@@ -148,8 +147,8 @@ describe('MyLibraryPage', () => {
     mockApiRequest.mockResolvedValue(mockBooks);
     renderLibrary();
     await waitFor(() => {
-      const completedEl = screen.getByText('library.completed').closest('section') as HTMLElement;
-      expect(completedEl).toHaveTextContent('library.finished');
+      const completedSection = screen.getByText('library.completed').closest('section');
+      expect(completedSection).toHaveTextContent('library.finished');
     });
   });
 });

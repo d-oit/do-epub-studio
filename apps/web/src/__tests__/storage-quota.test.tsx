@@ -276,9 +276,8 @@ describe('StorageQuota', () => {
     expect(timeoutCall).toBeDefined();
 
     // Execute the auto-dismiss callback to verify it clears the message
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Codacy false positive: timeoutCall may be undefined at runtime
-    const dismissCallback = (timeoutCall as unknown as [() => void])?.[0];
-    if (dismissCallback) dismissCallback();
+    const dismissCallback = (timeoutCall as unknown as [() => void])[0];
+    dismissCallback();
 
     // After executing the timeout callback, the cleared message should be gone
     await waitFor(() => {
