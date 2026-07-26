@@ -9,6 +9,7 @@
 ### Findings from Wave 3 Audit
 
 #### Missing Features (Deferred - Design Required)
+
 | ID | Gap | Priority | Status |
 |----|-----|----------|--------|
 | F1 | Chunked file upload with progress reporting | Medium | Deferred - needs design |
@@ -18,6 +19,7 @@
 | F5 | Magic-link email transport wiring | Medium | Deferred - needs Cloudflare binding decision |
 
 #### Test Coverage Gaps (Actionable)
+
 | ID | Gap | Priority | Severity |
 |----|-----|----------|----------|
 | T1 | Worker route tests: `highlights.ts`, `progress.ts`, `grants.ts`, `stats.ts`, `auth.ts` | P1 | High |
@@ -28,6 +30,7 @@
 | T6 | UI component tests: `Navigation`, `StorageQuota`, `VirtualList` | P2 | Medium |
 
 #### Plan Cleanup (Actionable)
+
 | ID | Gap | Priority |
 |----|-----|----------|
 | P1 | Update Plan 201 status to COMPLETED | P1 |

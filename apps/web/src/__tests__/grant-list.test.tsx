@@ -11,7 +11,7 @@ vi.mock('../hooks/useTranslation', () => ({
 vi.mock('@do-epub-studio/ui', () => ({
   Spinner: () => <div data-testid="spinner" />,
   Button: ({ children, onClick, variant }: Record<string, unknown>) => (
-    <button data-variant={variant} onClick={onClick as React.MouseEventHandler<HTMLButtonElement>}>
+    <button type="button" data-variant={variant} onClick={onClick as React.MouseEventHandler<HTMLButtonElement>}>
       {children as React.ReactNode}
     </button>
   ),
@@ -25,6 +25,7 @@ vi.mock('@do-epub-studio/ui', () => ({
     ) : null,
 }));
 
+// biome-ignore lint/correctness/useQwikValidLexicalScope: false positive in Vitest test
 const makeGrant = (overrides: Partial<Grant> = {}): Grant => ({
   id: 'g1',
   email: 'reader@example.com',

@@ -17,7 +17,7 @@ vi.mock('../hooks/useTranslation', () => ({
 }));
 
 vi.mock('../components/ui', () => ({
-  AppLogo: ({ size: _size, ...props }: any) => <div data-testid="app-logo" {...props} />,
+  AppLogo: ({ size: _size, ...props }: { size?: number; [key: string]: unknown }) => <div data-testid="app-logo" {...props} />,
 }));
 
 vi.mock('../components/navigation/shared', () => ({
@@ -26,7 +26,7 @@ vi.mock('../components/navigation/shared', () => ({
     { key: 'nav.myLibrary', icon: 'book-open', href: '/library' },
     { key: 'nav.settings', icon: 'settings', href: '/settings' },
   ],
-  NavIcon: ({ icon, ...props }: any) => <span data-testid={`nav-icon-${icon}`} {...props} />,
+  NavIcon: ({ icon, ...props }: { icon: string; [key: string]: unknown }) => <span data-testid={`nav-icon-${icon}`} {...props} />,
 }));
 
 vi.mock('../config/app-identity', () => ({

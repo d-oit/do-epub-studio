@@ -22,7 +22,7 @@ vi.mock('../components/navigation/shared', () => ({
     { key: 'nav.myLibrary', icon: 'book-open', href: '/library' },
     { key: 'nav.settings', icon: 'settings', href: '/settings' },
   ],
-  NavIcon: ({ icon, ...props }: any) => <span data-testid={`nav-icon-${icon}`} {...props} />,
+  NavIcon: ({ icon, ...props }: { icon: string; [key: string]: unknown }) => <span data-testid={`nav-icon-${icon}`} {...props} />,
 }));
 
 describe('BottomTabBar', () => {

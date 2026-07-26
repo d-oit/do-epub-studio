@@ -52,7 +52,7 @@ describe('useFocusTrap', () => {
     const containerRef = { current: container };
     const spy = vi.spyOn(container, 'querySelector');
 
-    renderHook(() => useFocusTrap(false, containerRef));
+    renderHook(() => { useFocusTrap(false, containerRef); });
 
     expect(spy).not.toHaveBeenCalled();
   });
@@ -61,7 +61,7 @@ describe('useFocusTrap', () => {
     const { container, btn1 } = createContainerWithFocusables();
     const containerRef = { current: container };
 
-    renderHook(() => useFocusTrap(true, containerRef));
+    renderHook(() => { useFocusTrap(true, containerRef); });
 
     expect(document.activeElement).toBe(btn1);
   });
@@ -71,7 +71,7 @@ describe('useFocusTrap', () => {
     const containerRef = { current: container };
     const addSpy = vi.spyOn(document, 'addEventListener');
 
-    renderHook(() => useFocusTrap(true, containerRef));
+    renderHook(() => { useFocusTrap(true, containerRef); });
 
     expect(addSpy).toHaveBeenCalledWith('keydown', expect.any(Function));
     addSpy.mockRestore();
@@ -82,7 +82,7 @@ describe('useFocusTrap', () => {
     const containerRef = { current: container };
     const removeSpy = vi.spyOn(document, 'removeEventListener');
 
-    const { unmount } = renderHook(() => useFocusTrap(true, containerRef));
+    const { unmount } = renderHook(() => { useFocusTrap(true, containerRef); });
     unmount();
 
     expect(removeSpy).toHaveBeenCalledWith('keydown', expect.any(Function));
@@ -93,7 +93,7 @@ describe('useFocusTrap', () => {
     const { container, btn1, btn2 } = createContainerWithTabbable();
     const containerRef = { current: container };
 
-    renderHook(() => useFocusTrap(true, containerRef));
+    renderHook(() => { useFocusTrap(true, containerRef); });
 
     setActiveElement(btn2);
     const focusSpy1 = vi.spyOn(btn1, 'focus');
@@ -110,7 +110,7 @@ describe('useFocusTrap', () => {
     const { container, btn1, btn2 } = createContainerWithTabbable();
     const containerRef = { current: container };
 
-    renderHook(() => useFocusTrap(true, containerRef));
+    renderHook(() => { useFocusTrap(true, containerRef); });
 
     setActiveElement(btn1);
     const focusSpy2 = vi.spyOn(btn2, 'focus');
@@ -127,7 +127,7 @@ describe('useFocusTrap', () => {
     const { container, btn1, btn2 } = createContainerWithTabbable();
     const containerRef = { current: container };
 
-    renderHook(() => useFocusTrap(true, containerRef));
+    renderHook(() => { useFocusTrap(true, containerRef); });
 
     setActiveElement(btn1);
     const focusSpy1 = vi.spyOn(btn1, 'focus');
@@ -152,7 +152,7 @@ describe('useFocusTrap', () => {
     const containerRef = { current: container };
     const focusSpy = vi.spyOn(outsideBtn, 'focus');
 
-    const { unmount } = renderHook(() => useFocusTrap(true, containerRef));
+    const { unmount } = renderHook(() => { useFocusTrap(true, containerRef); });
 
     unmount();
 
@@ -162,16 +162,16 @@ describe('useFocusTrap', () => {
   it('does nothing when containerRef is null', () => {
     const containerRef = { current: null };
 
-    const { unmount } = renderHook(() => useFocusTrap(true, containerRef));
+    const { unmount } = renderHook(() => { useFocusTrap(true, containerRef); });
 
-    expect(() => unmount()).not.toThrow();
+    expect(() => { unmount(); }).not.toThrow();
   });
 
   it('does not handle Tab for non-Tab keys', () => {
     const { container, btn1, btn2 } = createContainerWithTabbable();
     const containerRef = { current: container };
 
-    renderHook(() => useFocusTrap(true, containerRef));
+    renderHook(() => { useFocusTrap(true, containerRef); });
 
     setActiveElement(btn1);
     const focusSpy2 = vi.spyOn(btn2, 'focus');
