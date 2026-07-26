@@ -100,6 +100,7 @@ describe('observabilityMiddleware', () => {
     const next = vi.fn().mockRejectedValue(new Error('fail'));
     const ctx = makeContext({ next });
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Hono Context mock
     await observabilityMiddleware(ctx as any, next as any);
 
     expect(logRequestEnd).toHaveBeenCalledWith(
@@ -113,6 +114,7 @@ describe('observabilityMiddleware', () => {
     const next = vi.fn().mockRejectedValue(new Error('fail'));
     const ctx = makeContext({ next });
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Hono Context mock
     await observabilityMiddleware(ctx as any, next as any);
 
     expect(withTraceHeaders).toHaveBeenLastCalledWith(
