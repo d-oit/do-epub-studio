@@ -4,7 +4,7 @@ import { APP_NAME } from '../config/app-identity';
 export const de: Record<TranslationKeys, string> = {
   'app.title': APP_NAME,
   'app.versionLabel': 'Version',
-  'login.subtitle': 'Melde dich an, um auf deine Bücher zuzugreifen',
+  'login.subtitle': 'Melde Sie sich an, um auf Ihre Bücher zuzugreifen',
   'login.bookSlugLabel': 'Buch-Slug',
   'login.emailLabel': 'E-Mail-Adresse',
   'login.passwordLabel': 'Passwort',
@@ -23,7 +23,7 @@ export const de: Record<TranslationKeys, string> = {
   'login.recoverySuccess': 'Ein Magic Link wurde an Ihre E-Mail gesendet (falls ein Konto für dieses Buch existiert). Bitte überprüfen Sie Ihren Posteingang.',
   'login.backToLogin': 'Zurück zur Anmeldung',
   'login.verifyingToken': 'Wiederherstellungslink wird überprüft...',
-  'login.error.network': 'Netzwerkfehler. Bitte versuche es erneut.',
+  'login.error.network': 'Netzwerkfehler. Bitte versuchen Sie es erneut.',
   'login.error.accessDenied': 'Zugriff verweigert',
   'reader.untitledBook': 'Unbenanntes Buch',
   'reader.signOut': 'Abmelden',

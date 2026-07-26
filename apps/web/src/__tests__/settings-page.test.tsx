@@ -94,25 +94,10 @@ describe('SettingsPage', () => {
     expect(screen.getByText('reader.settings.theme.light')).toHaveAttribute('aria-pressed', 'false');
   });
 
-  it('renders Reader Preferences section', () => {
-    render(<SettingsPage />);
-    expect(screen.getByText('settings.readerPreferences')).toBeInTheDocument();
-    expect(screen.getByText('settings.readerPreferencesHint')).toBeInTheDocument();
-  });
-
-  it('renders Storage section', () => {
-    render(<SettingsPage />);
-    expect(screen.getByTestId('storage-quota')).toBeInTheDocument();
-  });
-
-  it('renders Account section', () => {
-    render(<SettingsPage />);
-    expect(screen.getByText('settings.account')).toBeInTheDocument();
-  });
-
   it('renders all three main sections', () => {
     render(<SettingsPage />);
     expect(screen.getByText('settings.readerPreferences')).toBeInTheDocument();
+    expect(screen.getByText('settings.readerPreferencesHint')).toBeInTheDocument();
     expect(screen.getByTestId('storage-quota')).toBeInTheDocument();
     expect(screen.getByText('settings.account')).toBeInTheDocument();
   });
