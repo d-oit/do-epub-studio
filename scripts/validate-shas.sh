@@ -62,6 +62,11 @@ ALLOWED_SHAS=(
     "github/codeql-action/upload-sarif@7188fc363630916deb702c7fdcf4e481b751f97a"
     "softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228"
     "slackapi/slack-github-action@dcb1066f776dd043e64d0e8ba94ca15cc7e1875d"
+    "github/codeql-action/init@c54b30b7df092240050e69945842bc67aee0f0f4"
+    "github/codeql-action/analyze@c54b30b7df092240050e69945842bc67aee0f0f4"
+    "github/codeql-action/upload-sarif@c54b30b7df092240050e69945842bc67aee0f0f4"
+    "chromaui/action@8d25a97d902c85f51b6885beb52f92907406772d"
+    "ossf/scorecard-action@55891bbd73f2425e97637d96e306fc9d491d0b21"
 )
 
 # Function to check if an action@sha is allowed
