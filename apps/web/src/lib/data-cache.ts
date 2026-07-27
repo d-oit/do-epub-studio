@@ -32,24 +32,11 @@ export interface AuditLogFilters {
   pageSize: number;
 }
 
-// In test environments, bypass the cache so each call creates a fresh
-// promise that respects the latest mock. This avoids cross-test pollution
-// from module-level cached promises.
-const isTest = typeof process !== 'undefined' && process.env.NODE_ENV === 'test';
-
+// Cache keyed by a single constant; mocks can use
+// invalidateCatalogCache() to refresh.
 const catalogCache = new Map<string, Promise<CatalogBook[]>>();
 
 export function fetchCatalogBooks(): Promise<CatalogBook[]> {
-  // In test mode, cache the promise too so React 19's use() sees a
-  // stable reference across re-renders. The cache is keyed by a single
-  // constant; mocks can use invalidateCatalogCache() to refresh.
-  if (isTest) {
-    const cached = catalogCache.get('default');
-    if (cached) return cached;
-    const promise = apiRequest<CatalogBook[]>('/api/catalog');
-    catalogCache.set('default', promise);
-    return promise;
-  }
   const cached = catalogCache.get('default');
   if (cached) return cached;
   const promise = apiRequest<CatalogBook[]>('/api/catalog');
@@ -77,9 +64,6 @@ export function fetchAuditLogs(
 
   const key = JSON.stringify({ ...filters, token: token ?? '' });
 
-  // In test mode, cache the promise so React 19's use() sees a stable
-  // reference across re-renders within a single test. The cache is
-  // cleared by afterEach in test-setup.
   const cached = auditLogCache.get(key);
   if (cached) return cached;
   const promise = apiRequest<AuditLogPageResponse>(
@@ -141,6 +125,6 @@ export function _resetAllCaches(): void {
   grantsCache.clear();
 }
 
-if (isTest) {
+if (typeof process !== 'undefined' && process.env.NODE_ENV === 'test') {
   (globalThis as { __resetDataCaches?: () => void }).__resetDataCaches = _resetAllCaches;
 }
