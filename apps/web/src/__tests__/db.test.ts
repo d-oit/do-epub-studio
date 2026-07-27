@@ -1,40 +1,26 @@
-import { describe, it, vi } from 'vitest';
+import { describe, it, vi, beforeEach } from 'vitest';
 import { setTokenOverride } from '../lib/offline/db';
-
-vi.mock('idb', () => ({
-  openDB: vi.fn().mockResolvedValue({
-    transaction: vi.fn().mockReturnValue({
-      objectStore: vi.fn().mockReturnValue({
-        put: vi.fn(),
-        get: vi.fn(),
-        delete: vi.fn(),
-        getAll: vi.fn().mockResolvedValue([]),
-      }),
-    }),
-    close: vi.fn(),
-  }),
-}));
-
-vi.mock('../lib/offline/crypto', () => ({
-  encryptJSON: vi.fn().mockResolvedValue('encrypted'),
-  decryptJSON: vi.fn().mockResolvedValue({}),
-}));
 
 vi.mock('@/stores/auth', () => ({
   useAuthStore: {
     getState: vi.fn().mockReturnValue({
-      sessionToken: 'test-token',
+      sessionToken: null,
     }),
   },
 }));
 
-describe('setTokenOverride', () => {
-  it('sets token override', () => {
-    setTokenOverride('mock-token');
+describe('db — token management', () => {
+  beforeEach(() => {
+    setTokenOverride(null);
+  });
+
+  it('setTokenOverride sets token', () => {
+    setTokenOverride('override-token');
     // No error means success
   });
 
-  it('clears token override', () => {
+  it('setTokenOverride clears token with null', () => {
+    setTokenOverride('some-token');
     setTokenOverride(null);
     // No error means success
   });

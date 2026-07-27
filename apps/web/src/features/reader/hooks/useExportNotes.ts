@@ -245,6 +245,11 @@ function exportedToEntities(payload: NotesExport): {
             createdAt: ann.createdAt || now,
           });
           break;
+        default: {
+          skipped += 1;
+          errors.push(`unknown annotation type: ${(ann as { type: string }).type}`);
+          break;
+        }
       }
     } catch (e) {
       skipped += 1;
