@@ -43,7 +43,7 @@ export function SearchInput({
           else onChange(v);
         }}
         placeholder={placeholder}
-        className="w-full rounded-md border border-border bg-surface px-3 py-2 pr-9 text-sm text-foreground placeholder:text-foreground-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        className="w-full rounded-md border border-border bg-surface px-3 py-2 pe-9 text-sm text-foreground placeholder:text-foreground-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
       />
       {(value || local) && (
         <button
