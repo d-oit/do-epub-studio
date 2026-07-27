@@ -6,6 +6,7 @@ import { queryAll, execute } from '../../db/client';
 import { BookmarkCreateSchema } from '@do-epub-studio/shared';
 import { readerAuth } from '../../middleware/auth';
 import { parseLocatorRow, assertBookAccess } from '../../lib/tenant-isolation';
+import { ForbiddenError } from '../../lib/http-errors';
 
 export const bookmarksRouter = new Hono<{ Bindings: Env; Variables: { auth: AuthContext } }>();
 
@@ -61,7 +62,7 @@ bookmarksRouter.post('/:bookId/bookmarks', readerAuth, zValidator('json', Bookma
   if (mismatch) return mismatch.response;
 
   if (!auth.capabilities.canBookmark) {
-    return c.json({ ok: false, error: { code: 'FORBIDDEN', message: 'Access denied' } }, 403);
+    throw new ForbiddenError('Access denied');
   }
 
   const id = crypto.randomUUID();

@@ -5,6 +5,7 @@ import type { Env } from '../lib/env';
 import { queryFirst } from '../db/client';
 import { verifySignedUrlExpiry, verifySignedUrlSignature } from '../storage/signed-url';
 import { createRequestContext, logRequestEnd, withTraceHeaders } from '../lib/observability';
+import { NotFoundError, ForbiddenError } from '../lib/http-errors';
 
 export const filesRouter = new Hono<{ Bindings: Env }>();
 
@@ -14,11 +15,11 @@ filesRouter.get('/:bookId/:remainder{.+}', zValidator('query', SignedUrlSchema),
   const { expires, signature } = c.req.valid('query');
 
   if (!bookId || !fileKey) {
-    return c.json({ ok: false, error: { code: 'NOT_FOUND', message: 'Not found' } }, 404);
+    throw new NotFoundError('File');
   }
 
   if (!verifySignedUrlExpiry(expires)) {
-    return c.json({ ok: false, error: { code: 'FORBIDDEN', message: 'URL has expired' } }, 403);
+    throw new ForbiddenError('URL has expired');
   }
 
   const isValid = await verifySignedUrlSignature(
@@ -30,7 +31,7 @@ filesRouter.get('/:bookId/:remainder{.+}', zValidator('query', SignedUrlSchema),
   );
 
   if (!isValid) {
-    return c.json({ ok: false, error: { code: 'FORBIDDEN', message: 'Invalid signature' } }, 403);
+    throw new ForbiddenError('Invalid signature');
   }
 
   const file = await queryFirst(
@@ -40,13 +41,13 @@ filesRouter.get('/:bookId/:remainder{.+}', zValidator('query', SignedUrlSchema),
   );
 
   if (!file) {
-    return c.json({ ok: false, error: { code: 'NOT_FOUND', message: 'File not found' } }, 404);
+    throw new NotFoundError('File');
   }
 
   const object = await c.env.BOOKS_BUCKET.get(fileKey);
 
   if (!object) {
-    return c.json({ ok: false, error: { code: 'NOT_FOUND', message: 'File not found in storage' } }, 404);
+    throw new NotFoundError('File');
   }
 
   const headers = new Headers();

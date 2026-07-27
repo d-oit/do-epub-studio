@@ -3,6 +3,7 @@ import type { Env } from '../lib/env';
 import type { AuthContext } from '../auth/middleware';
 import { queryFirst, queryAll, execute } from '../db/client';
 import { readerAuth } from '../middleware/auth';
+import { NotFoundError } from '../lib/http-errors';
 
 export const notificationsRouter = new Hono<{ Bindings: Env; Variables: { auth: AuthContext } }>();
 
@@ -123,7 +124,7 @@ notificationsRouter.post('/notifications/:id/read', readerAuth, async (c) => {
   );
 
   if (!notification) {
-    return c.json({ ok: false, error: { code: 'NOT_FOUND', message: 'Notification not found' } }, 404);
+    throw new NotFoundError('Notification');
   }
 
   await execute(
