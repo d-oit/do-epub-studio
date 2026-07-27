@@ -4,6 +4,7 @@ import { queryFirst, queryAll } from '../db/client';
 import type { AuthContext } from '../auth/middleware';
 import { readerAuth } from '../middleware/auth';
 import { assertBookAccess } from '../lib/tenant-isolation';
+import { NotFoundError, ForbiddenError } from '../lib/http-errors';
 
 export const booksRouter = new Hono<{ Bindings: Env; Variables: { auth: AuthContext } }>();
 
@@ -64,7 +65,7 @@ booksRouter.get('/:id', readerAuth, async (c) => {
   );
 
   if (!book) {
-    return c.json({ ok: false, error: { code: 'NOT_FOUND', message: 'Book not found or access denied' } }, 404);
+    throw new NotFoundError('Book');
   }
 
   return c.json({
@@ -91,7 +92,7 @@ booksRouter.post('/:id/file-url', readerAuth, async (c) => {
   if (mismatch) return mismatch.response;
 
   if (!auth.capabilities.canRead) {
-    return c.json({ ok: false, error: { code: 'FORBIDDEN', message: 'Read access denied' } }, 403);
+    throw new ForbiddenError('Read access denied');
   }
 
   const book = await queryFirst(
@@ -107,7 +108,7 @@ booksRouter.post('/:id/file-url', readerAuth, async (c) => {
   );
 
   if (!book) {
-    return c.json({ ok: false, error: { code: 'NOT_FOUND', message: 'Book not found' } }, 404);
+    throw new NotFoundError('Book');
   }
 
   const file = await queryFirst(
@@ -117,10 +118,7 @@ booksRouter.post('/:id/file-url', readerAuth, async (c) => {
   );
 
   if (!file) {
-    return c.json(
-      { ok: false, error: { code: 'NOT_FOUND', message: 'No file found for this book' } },
-      404,
-    );
+    throw new NotFoundError('Book file');
   }
 
   const signedResponse = await generateSignedUrl(c.env, book.id as string, file.storage_key as string);

@@ -6,6 +6,7 @@ import { queryFirst, execute } from '../../db/client';
 import { ProgressUpdateSchema } from '@do-epub-studio/shared';
 import { readerAuth } from '../../middleware/auth';
 import { parseLocatorRow, assertBookAccess } from '../../lib/tenant-isolation';
+import { ForbiddenError } from '../../lib/http-errors';
 
 export const progressRouter = new Hono<{ Bindings: Env; Variables: { auth: AuthContext } }>();
 
@@ -65,7 +66,7 @@ progressRouter.put('/:bookId/progress', readerAuth, zValidator('json', ProgressU
   if (mismatch) return mismatch.response;
 
   if (!auth.capabilities.canRead) {
-    return c.json({ ok: false, error: { code: 'FORBIDDEN', message: 'Access denied' } }, 403);
+    throw new ForbiddenError('Access denied');
   }
 
   const locatorJson = JSON.stringify(body.locator);

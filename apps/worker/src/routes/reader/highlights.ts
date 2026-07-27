@@ -7,6 +7,7 @@ import { logAudit } from '../../audit';
 import { HighlightCreateSchema } from '@do-epub-studio/shared';
 import { readerAuth } from '../../middleware/auth';
 import { assertBookAccess } from '../../lib/tenant-isolation';
+import { NotFoundError, ForbiddenError } from '../../lib/http-errors';
 
 export const highlightsRouter = new Hono<{ Bindings: Env; Variables: { auth: AuthContext } }>();
 
@@ -61,7 +62,7 @@ highlightsRouter.post('/:bookId/highlights', readerAuth, zValidator('json', High
   if (mismatch) return mismatch.response;
 
   if (!auth.capabilities.canHighlight) {
-    return c.json({ ok: false, error: { code: 'FORBIDDEN', message: 'Access denied' } }, 403);
+    throw new ForbiddenError('Access denied');
   }
 
   const id = crypto.randomUUID();
@@ -152,17 +153,11 @@ highlightsRouter.patch('/:bookId/highlights/:highlightId', readerAuth, zValidato
   ]);
 
   if (!highlight) {
-    return c.json(
-      { ok: false, error: { code: 'NOT_FOUND', message: 'Highlight not found' } },
-      404,
-    );
+    throw new NotFoundError('Highlight');
   }
 
   if (highlight.user_email !== auth.email) {
-    return c.json(
-      { ok: false, error: { code: 'FORBIDDEN', message: 'Cannot edit others highlights' } },
-      403,
-    );
+    throw new ForbiddenError('Cannot edit others highlights');
   }
 
   const now = new Date().toISOString();
