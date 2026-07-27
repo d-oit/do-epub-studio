@@ -41,7 +41,7 @@ jobs:
         run: pnpm build:storybook --stats-json --output-dir storybook-static
 
       - name: Publish to Chromatic
-        uses: chromaui/action@aeb03996bc5edda8cb56ac3cf4f5f294b4846baf  # v18
+        uses: chromaui/action@8d25a97d902c85f51b6885beb52f92907406772d  # v18.1.0
         with:
           projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
           storybookBuildDir: storybook-static
