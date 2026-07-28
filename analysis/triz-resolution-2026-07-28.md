@@ -6,7 +6,7 @@
 
 ---
 
-### Resolved: Contradiction 1 — Observability vs Reading Performance
+## Resolved: Contradiction 1 — Observability vs Reading Performance
 **Status:** ✅ ALREADY IMPLEMENTED — No code changes needed.
 
 **Problem:** Synchronous traceId emission, audit logging, and
@@ -48,7 +48,7 @@ time-to-first-byte is unchanged.
 
 ---
 
-### Resolved: Contradiction 2 — CSP Strictness vs WASM Capability
+## Resolved: Contradiction 2 — CSP Strictness vs WASM Capability
 
 **Problem:** Strict CSP (`script-src 'self' 'wasm-unsafe-eval'`)
 blocks `eval()`-based dynamic loading and creates friction for
@@ -93,7 +93,7 @@ which can be avoided through library selection.
 
 ---
 
-### Resolved: Contradiction 3 — Codebase Maturity vs Onboarding Velocity
+## Resolved: Contradiction 3 — Codebase Maturity vs Onboarding Velocity
 
 **Problem:** The wealth of documented decisions (56+ ADRs, 20+
 docs, 1584-line coding guide) creates a context wall for new
@@ -139,7 +139,7 @@ self-contained.
 
 ---
 
-### Resolved: Contradiction 4 — Deferred Infrastructure vs Deployment Readiness
+## Resolved: Contradiction 4 — Deferred Infrastructure vs Deployment Readiness
 
 **Problem:** The codebase is production-ready but 3 infrastructure
 bindings (email transport, telemetry endpoint, EPUB re-export)
@@ -189,7 +189,7 @@ the Worker architecture. No new external dependencies introduced.
 
 ---
 
-### Resolved: Contradiction 5 — Local Development vs Production Parity
+## Resolved: Contradiction 5 — Local Development vs Production Parity
 
 **Problem:** Local development uses Miniflare/mocks but production
 uses real Turso + R2 + Durable Objects, creating a gap where
