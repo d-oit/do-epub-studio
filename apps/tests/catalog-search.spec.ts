@@ -21,6 +21,7 @@ test.describe('Catalog search and filtering', () => {
     await loginAsAdmin(page);
     await expect(page.getByText('My Test Book')).toBeVisible();
     await expect(page.getByText('Test Author')).toBeVisible();
+    await expect(page.getByText('private')).toBeVisible();
   });
 
   test('@mobile can navigate to grants from book list', async ({ page }) => {
