@@ -24,29 +24,71 @@ telemetryRouter.post(
       );
     }
   }),
-  async (c) => {
+  (c) => {
     const { logs } = c.req.valid('json');
 
-    // Ensure we are using 'await' to satisfy linting, even if just for future-proofing
-    await Promise.resolve();
+    // Persist telemetry events to the database asynchronously
+    const persistPromise = persistTelemetry(c.env, logs);
+    if (c.executionCtx) {
+      c.executionCtx.waitUntil(persistPromise);
+    }
 
-    // For now, log to console. In a production environment, this could be
-  // stored in a Durable Object, R2, or forwarded to an external observability service.
+    // Also log to console for wrangler tail visibility (legacy behavior)
+    for (const log of logs) {
+      const scrubbedLog = scrub(log) as Record<string, unknown>;
+      const output = JSON.stringify({
+        ...scrubbedLog,
+        _receivedAt: new Date().toISOString(),
+      });
+
+      if (log.level === 'error') {
+        console.error(`[CLIENT-TELEMETRY] ${output}`);
+      } else if (log.level === 'warn') {
+        console.warn(`[CLIENT-TELEMETRY] ${output}`);
+      } else {
+        console.log(`[CLIENT-TELEMETRY] ${output}`);
+      }
+    }
+
+    return c.json({ ok: true }, 202);
+  },
+);
+
+interface TelemetryLogEntry {
+  level: string;
+  traceId: string;
+  spanId?: string;
+  event: string;
+  metadata?: Record<string, unknown>;
+  error?: { name: string; message: string; stack?: string };
+}
+
+async function persistTelemetry(env: Env, logs: TelemetryLogEntry[]): Promise<void> {
+  // Skip persistence if DB binding is not configured (e.g., in tests)
+  if (!env.DB) return;
+
+  const { execute } = await import('../db/client');
+  const receivedAt = new Date().toISOString();
+
   for (const log of logs) {
-    const scrubbedLog = scrub(log) as Record<string, unknown>;
-    const output = JSON.stringify({
-      ...scrubbedLog,
-      _receivedAt: new Date().toISOString(),
-    });
-
-    if (log.level === 'error') {
-      console.error(`[CLIENT-TELEMETRY] ${output}`);
-    } else if (log.level === 'warn') {
-      console.warn(`[CLIENT-TELEMETRY] ${output}`);
-    } else {
-      console.log(`[CLIENT-TELEMETRY] ${output}`);
+    try {
+      await execute(
+        env,
+        `INSERT INTO telemetry_events (id, level, trace_id, span_id, event, metadata_json, error_json, received_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          crypto.randomUUID(),
+          log.level,
+          log.traceId,
+          log.spanId ?? null,
+          log.event,
+          log.metadata ? JSON.stringify(scrub(log.metadata)) : null,
+          log.error ? JSON.stringify(scrub(log.error)) : null,
+          receivedAt,
+        ],
+      );
+    } catch {
+      // Persistence failures are non-critical — never break the response
     }
   }
-
-  return c.json({ ok: true }, 202);
-});
+}

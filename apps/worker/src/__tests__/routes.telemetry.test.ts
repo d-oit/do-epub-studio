@@ -1,6 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { app } from '../app';
 
+function createMockExecutionCtx() {
+  return { waitUntil: () => {}, passThroughOnException: () => {}, props: {} };
+}
+
 function assertOk(body: unknown): asserts body is { ok: true } {
   expect(body).toHaveProperty('ok', true);
 }
@@ -38,6 +42,7 @@ describe('Telemetry API', () => {
       ],
     };
 
+    const ctx = createMockExecutionCtx();
     const res = await app.fetch(
       new Request('http://localhost/api/telemetry', {
         method: 'POST',
@@ -48,7 +53,8 @@ describe('Telemetry API', () => {
         },
         body: JSON.stringify(payload),
       }),
-      {}
+      {},
+      ctx,
     );
 
     expect(res.status).toBe(202);
@@ -77,6 +83,7 @@ describe('Telemetry API', () => {
       ],
     };
 
+    const ctx = createMockExecutionCtx();
     const res = await app.fetch(
       new Request('http://localhost/api/telemetry', {
         method: 'POST',
@@ -85,7 +92,8 @@ describe('Telemetry API', () => {
         },
         body: JSON.stringify(payload),
       }),
-      {}
+      {},
+      ctx,
     );
 
     expect(res.status).toBe(400);
@@ -103,6 +111,7 @@ describe('Telemetry API', () => {
       }),
     };
 
+    const ctx = createMockExecutionCtx();
     const res = await app.fetch(
       new Request('http://localhost/api/telemetry', {
         method: 'POST',
@@ -111,7 +120,8 @@ describe('Telemetry API', () => {
         },
         body: JSON.stringify(payload),
       }),
-      {}
+      {},
+      ctx,
     );
 
     expect(res.status).toBe(400);
@@ -138,6 +148,7 @@ describe('Telemetry API', () => {
       ],
     };
 
+    const ctx = createMockExecutionCtx();
     const res = await app.fetch(
       new Request('http://localhost/api/telemetry', {
         method: 'POST',
@@ -146,7 +157,8 @@ describe('Telemetry API', () => {
         },
         body: JSON.stringify(payload),
       }),
-      {}
+      {},
+      ctx,
     );
 
     expect(res.status).toBe(202);
