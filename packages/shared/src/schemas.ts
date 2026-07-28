@@ -1,11 +1,8 @@
 export {
   BookVisibilitySchema,
   GrantModeSchema,
-  GlobalRoleSchema,
   CommentStatusSchema,
   CommentVisibilitySchema,
-  SyncOperationSchema,
-  SyncStatusSchema,
   EntityTypeSchema,
   AnnotationLocatorSchema,
   MultiSignalLocatorSchema,

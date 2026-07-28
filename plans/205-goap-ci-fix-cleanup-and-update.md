@@ -70,8 +70,8 @@ File last updated 2026-06-15 with 15 open gaps (G14-G28). Need to verify current
 | T1 (catalog-search fix) | ✅ | Restored authorName assertion (now rendered in BooksPage) |
 | T2 (settings panel fix) | ✅ | Added networkidle wait and extracted SETTINGS_PANEL_TIMEOUT |
 | T3 (locale persistence fix) | ✅ | Added waitForFunction for localStorage hydration |
-| T4 (schema cleanup) | ⏭️ Deferred | Public API exports, risky without external consumer analysis |
-| T5 (shared cleanup) | ⏭️ Deferred | Public API exports, risky without external consumer analysis |
+| T4 (schema cleanup) | ✅ | Removed locator.ts, types.ts, and 3 orphaned schemas (GlobalRoleSchema, SyncOperationSchema, SyncStatusSchema) + circular tests + barrel re-exports. PR #870 + follow-up. |
+| T5 (shared cleanup) | ✅ | Removed dtos.ts utilities, SyncQueueItem, LOCALE_HEADER. PR #870. |
 | T6 (SWARM update) | ✅ | All 15 gaps G14-G28 verified CLOSED; archived to plans/archive/ |
 | G1 (quality gate) | ✅ | All gates passed: lint, typecheck, test:coverage, build, e2e:smoke, shellcheck |
 | G2 (PR creation) | ✅ | PR #866 created, all 22 CI checks passing |
