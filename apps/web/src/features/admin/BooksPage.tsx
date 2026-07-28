@@ -333,6 +333,11 @@ export function AdminBookResponsesPage() {
               <h3 className="text-lg font-semibold text-foreground mb-2">
                 {book.title}
               </h3>
+              {book.authorName && (
+                <p className="text-sm text-foreground-muted mb-1">
+                  {book.authorName}
+                </p>
+              )}
               <p className="text-sm text-foreground-muted mb-4 line-clamp-2">
                 {book.description || t('admin.books.noDescription')}
               </p>

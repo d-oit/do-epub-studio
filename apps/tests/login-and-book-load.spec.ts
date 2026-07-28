@@ -2,6 +2,13 @@ import { test, expect, type Page, type Route } from '@playwright/test';
 import { TEST_USER, mockReaderApi, clickToolbarButton, suppressWorkboxErrors } from './fixtures';
 
 // ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
+
+/** Timeout for settings panel assertions in cross-browser mobile tests */
+const SETTINGS_PANEL_TIMEOUT = 15_000;
+
+// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
@@ -119,9 +126,9 @@ test.describe('Login and book load (desktop)', () => {
     await clickToolbarButton(page, /Settings/i);
 
     // Settings panel should contain theme, font size, and font family controls
-    await expect(page.getByText('Theme')).toBeVisible({ timeout: 15000 });
-    await expect(page.getByText('Font Size')).toBeVisible({ timeout: 15000 });
-    await expect(page.getByText('Font', { exact: true })).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText('Theme')).toBeVisible({ timeout: SETTINGS_PANEL_TIMEOUT });
+    await expect(page.getByText('Font Size')).toBeVisible({ timeout: SETTINGS_PANEL_TIMEOUT });
+    await expect(page.getByText('Font', { exact: true })).toBeVisible({ timeout: SETTINGS_PANEL_TIMEOUT });
   });
 
   test('@mobile displays a locale switcher on the login page', async ({ page }) => {

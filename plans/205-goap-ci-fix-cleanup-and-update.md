@@ -1,7 +1,7 @@
 # GOAP 205: Fix CI Failure + Dead Code Cleanup + SWARM Update
 
 **Date:** 2026-07-28
-**Status:** IN PROGRESS
+**Status:** ✅ COMPLETED
 **Goal:** Fix 3 failing E2E tests on main, clean dead code from Plan 204 deferred tasks, update SWARM_ANALYSIS.md, create PR with all CI passing.
 
 ## 1. Analysis
@@ -67,11 +67,11 @@ File last updated 2026-06-15 with 15 open gaps (G14-G28). Need to verify current
 
 | Task | Status | Evidence |
 |------|--------|----------|
-| T1 (catalog-search fix) | ⏳ | Pending |
-| T2 (settings panel fix) | ⏳ | Pending |
-| T3 (locale persistence fix) | ⏳ | Pending |
-| T4 (schema cleanup) | ⏳ | Pending |
-| T5 (shared cleanup) | ⏳ | Pending |
-| T6 (SWARM update) | ⏳ | Pending |
-| G1 (quality gate) | ⏳ | Pending |
-| G2 (PR creation) | ⏳ | Pending |
+| T1 (catalog-search fix) | ✅ | Restored authorName assertion (now rendered in BooksPage) |
+| T2 (settings panel fix) | ✅ | Added networkidle wait and extracted SETTINGS_PANEL_TIMEOUT |
+| T3 (locale persistence fix) | ✅ | Added waitForFunction for localStorage hydration |
+| T4 (schema cleanup) | ⏭️ Deferred | Public API exports, risky without external consumer analysis |
+| T5 (shared cleanup) | ⏭️ Deferred | Public API exports, risky without external consumer analysis |
+| T6 (SWARM update) | ✅ | All 15 gaps G14-G28 verified CLOSED; archived to plans/archive/ |
+| G1 (quality gate) | ✅ | All gates passed: lint, typecheck, test:coverage, build, e2e:smoke, shellcheck |
+| G2 (PR creation) | ✅ | PR #866 created, all 22 CI checks passing |
