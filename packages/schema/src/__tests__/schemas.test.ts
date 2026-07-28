@@ -2,11 +2,8 @@ import { describe, it, expect } from 'vitest';
 import {
   BookVisibilitySchema,
   GrantModeSchema,
-  GlobalRoleSchema,
   CommentStatusSchema,
   CommentVisibilitySchema,
-  SyncOperationSchema,
-  SyncStatusSchema,
   EntityTypeSchema,
   AnnotationLocatorSchema,
   MultiSignalLocatorSchema,
@@ -53,18 +50,6 @@ describe('Enum Schemas', () => {
     });
   });
 
-  describe('GlobalRoleSchema', () => {
-    it('accepts valid values', () => {
-      expect(GlobalRoleSchema.parse('admin')).toBe('admin');
-      expect(GlobalRoleSchema.parse('editor')).toBe('editor');
-      expect(GlobalRoleSchema.parse('reader')).toBe('reader');
-    });
-
-    it('rejects invalid values', () => {
-      expect(() => GlobalRoleSchema.parse('superadmin')).toThrow();
-    });
-  });
-
   describe('CommentStatusSchema', () => {
     it('accepts valid values', () => {
       expect(CommentStatusSchema.parse('open')).toBe('open');
@@ -78,23 +63,6 @@ describe('Enum Schemas', () => {
       expect(CommentVisibilitySchema.parse('shared')).toBe('shared');
       expect(CommentVisibilitySchema.parse('internal')).toBe('internal');
       expect(CommentVisibilitySchema.parse('resolved')).toBe('resolved');
-    });
-  });
-
-  describe('SyncOperationSchema', () => {
-    it('accepts valid values', () => {
-      expect(SyncOperationSchema.parse('create')).toBe('create');
-      expect(SyncOperationSchema.parse('update')).toBe('update');
-      expect(SyncOperationSchema.parse('delete')).toBe('delete');
-    });
-  });
-
-  describe('SyncStatusSchema', () => {
-    it('accepts valid values', () => {
-      expect(SyncStatusSchema.parse('pending')).toBe('pending');
-      expect(SyncStatusSchema.parse('synced')).toBe('synced');
-      expect(SyncStatusSchema.parse('failed')).toBe('failed');
-      expect(SyncStatusSchema.parse('conflict')).toBe('conflict');
     });
   });
 

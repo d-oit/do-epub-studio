@@ -84,8 +84,8 @@
 
 | Task | Status | Evidence |
 |------|--------|----------|
-| T1 (Schema cleanup) | ⏭️ Deferred | Dead code in schema/shared is public API — risky to remove without understanding all external consumers. Documented for future cleanup. |
-| T2 (Shared cleanup) | ⏭️ Deferred | Same as T1 — public API exports. |
+| T1 (Schema cleanup) | ✅ | Removed locator.ts (D1), types.ts (D2), and 3 orphaned schemas (D3: GlobalRoleSchema, SyncOperationSchema, SyncStatusSchema) + circular tests + barrel re-exports. PR #870 + follow-up fix. |
+| T2 (Shared cleanup) | ✅ | Removed dtos.ts pagination utilities (D4), SyncQueueItem duplicate (D5), LOCALE_HEADER (D6). PR #870. |
 | T3 (Switch default) | ✅ | Added exhaustive default case with error tracking in useExportNotes.ts |
 | T4 (Highlights tests) | ⏭️ Already covered | Highlights route already tested in routes.reader-state.test.ts |
 | T5 (Data-cache tests) | ✅ | 12 new tests covering catalog, audit logs, admin books, grants, cache invalidation |

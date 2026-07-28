@@ -290,10 +290,12 @@ test.describe('Internationalization', () => {
       /Select language|Sprache auswählen|Sélectionner la langue/,
     );
     await localeSelect.selectOption('de');
+    // Wait for Zustand persist middleware to write to localStorage
+    await page.waitForFunction(() => localStorage.getItem('do-epub-locale') !== null);
 
     await page.reload();
 
-    await expect(page.getByText('Melde dich an')).toBeVisible();
+    await expect(page.getByText('Melde dich an')).toBeVisible({ timeout: 15000 });
   });
 });
 

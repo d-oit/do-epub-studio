@@ -16,15 +16,9 @@ export const GrantModeSchema = z.enum([
   'public',
 ]);
 
-export const GlobalRoleSchema = z.enum(['admin', 'editor', 'reader']);
-
 export const CommentStatusSchema = z.enum(['open', 'resolved', 'deleted']);
 
 export const CommentVisibilitySchema = z.enum(['shared', 'internal', 'resolved']);
-
-export const SyncOperationSchema = z.enum(['create', 'update', 'delete']);
-
-export const SyncStatusSchema = z.enum(['pending', 'synced', 'failed', 'conflict']);
 
 export const EntityTypeSchema = z.enum([
   'book',
