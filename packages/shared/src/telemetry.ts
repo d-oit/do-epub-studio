@@ -100,4 +100,3 @@ export function serializeError(error: unknown): SerializedError {
 
 export const TRACE_HEADER = 'x-trace-id';
 export const SPAN_HEADER = 'x-span-id';
-export const LOCALE_HEADER = 'accept-language';

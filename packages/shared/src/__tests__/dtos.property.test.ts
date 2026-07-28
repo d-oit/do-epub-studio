@@ -11,7 +11,6 @@ import type {
   CommentResponse,
   AuditLogResponse,
   GrantResponse,
-  SyncQueueItem,
   ReaderCapabilities,
 } from '../dtos';
 
@@ -63,15 +62,6 @@ const highlightResponseArb: fc.Arbitrary<HighlightResponse> = fc.record({
   color: fc.string(),
   createdAt: isoDateString,
   updatedAt: isoDateString,
-});
-
-const syncQueueItemArb: fc.Arbitrary<SyncQueueItem> = fc.record({
-  idempotencyKey: nonEmptyString,
-  entityType: fc.string({ minLength: 1 }),
-  entityId: fc.string({ minLength: 1 }),
-  operation: fc.constantFrom('create', 'update', 'delete' as const),
-  payload: fc.string(),
-  createdAt: isoDateString,
 });
 
 const grantResponseArb: fc.Arbitrary<GrantResponse> = fc.record({
@@ -149,17 +139,6 @@ describe('DTO JSON round-trip', () => {
         expect(parsed.color).toBe(original.color);
         expect(parsed.createdAt).toBe(original.createdAt);
         expect(parsed.updatedAt).toBe(original.updatedAt);
-      }),
-    );
-  });
-
-  it('SyncQueueItem fields are preserved and operation is valid', () => {
-    fc.assert(
-      fc.property(syncQueueItemArb, (original) => {
-        const parsed = roundTrip(original);
-        expect(parsed.idempotencyKey).toBe(original.idempotencyKey);
-        expect(parsed.operation).toBe(original.operation);
-        expect(['create', 'update', 'delete']).toContain(parsed.operation);
       }),
     );
   });

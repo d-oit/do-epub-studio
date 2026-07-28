@@ -6,7 +6,6 @@ import {
   createSpanId,
   TRACE_HEADER,
   SPAN_HEADER,
-  LOCALE_HEADER,
   type SerializedError,
 } from '../telemetry';
 
@@ -209,7 +208,5 @@ describe('telemetry constants', () => {
     expect(TRACE_HEADER.length).toBeGreaterThan(0);
     expect(typeof SPAN_HEADER).toBe('string');
     expect(SPAN_HEADER.length).toBeGreaterThan(0);
-    expect(typeof LOCALE_HEADER).toBe('string');
-    expect(LOCALE_HEADER.length).toBeGreaterThan(0);
   });
 });
