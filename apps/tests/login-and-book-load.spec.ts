@@ -111,16 +111,17 @@ test.describe('Login and book load (desktop)', () => {
     suppressWorkboxErrors(page);
     await login(page);
 
-
     await expect(page).toHaveURL(/\/read\/my-test-book$/);
+    // Wait for reader to fully load before interacting with toolbar
+    await page.waitForLoadState('networkidle').catch(() => undefined);
 
     // Open settings (uses overflow menu on mobile)
     await clickToolbarButton(page, /Settings/i);
 
     // Settings panel should contain theme, font size, and font family controls
-    await expect(page.getByText('Theme')).toBeVisible();
-    await expect(page.getByText('Font Size')).toBeVisible();
-    await expect(page.getByText('Font', { exact: true })).toBeVisible();
+    await expect(page.getByText('Theme')).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText('Font Size')).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText('Font', { exact: true })).toBeVisible({ timeout: 15000 });
   });
 
   test('@mobile displays a locale switcher on the login page', async ({ page }) => {

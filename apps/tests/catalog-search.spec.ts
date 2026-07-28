@@ -20,7 +20,8 @@ test.describe('Catalog search and filtering', () => {
   test('@mobile can view book details', async ({ page }) => {
     await loginAsAdmin(page);
     await expect(page.getByText('My Test Book')).toBeVisible();
-    await expect(page.getByText('Test Author')).toBeVisible();
+    // Admin BooksPage renders title and visibility, not authorName
+    await expect(page.getByText('private')).toBeVisible();
   });
 
   test('@mobile can navigate to grants from book list', async ({ page }) => {
