@@ -54,7 +54,7 @@ readonly MAX_PR_TITLE_LENGTH=72
 
 1. **Run `./scripts/quality_gate.sh` before commit.** No exceptions.
 2. **Validate workflows:** All GitHub Actions workflows MUST pass validation via `./scripts/validate-workflows.sh` (includes `actionlint` and `zizmor` security scanning).
-3. **Use `./scripts/atomic-commit/run.sh --message "type(scope): description" --body "WHY"`.**
+3. **Use `./scripts/atomic-commit/run.sh --message "type(scope): description" --body "WHY"`.** It is safe to run with unrelated uncommitted changes in the working tree: the pre-push rebase uses `git rebase --autostash` (in-progress work is stashed and restored), and any rollback undoes only the just-made commit (`git reset --soft`) — never the working tree.
 4. **Coverage Thresholds:** Enforce minimum coverage via `test:coverage`.
    - `web`: 55% Lines, 48% Functions | `worker`: 55% Lines, 50% Functions
    - `shared`: 40% Lines, 50% Functions | `reader-core`: 72% Lines, 70% Functions

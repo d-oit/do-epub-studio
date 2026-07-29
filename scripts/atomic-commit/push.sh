@@ -24,17 +24,6 @@ cd "$REPO_ROOT"
 CURRENT_BRANCH=$(git branch --show-current)
 BASE_BRANCH="${ATOMIC_COMMIT_BASE_BRANCH:-main}"
 
-# Track temp branches for cleanup on exit/interrupt
-TEMP_BRANCHES=()
-
-cleanup_temp_branches() {
-    for tb in "${TEMP_BRANCHES[@]}"; do
-        git branch -D "$tb" 2>/dev/null || true
-    done
-}
-
-trap cleanup_temp_branches EXIT INT TERM
-
 log "Branch: $CURRENT_BRANCH"
 log "Base branch: $BASE_BRANCH"
 
@@ -74,30 +63,24 @@ if [[ "$MERGE_BASE" != "$ORIGIN_BASE_SHA" ]]; then
     warn "Local branch is behind origin/$BASE_BRANCH"
     warn "Remote has new commits that need to be incorporated"
 
-    log "Checking for potential conflicts..."
-
-    TEMP_BRANCH="temp-rebase-check-$$"
-    TEMP_BRANCHES+=("$TEMP_BRANCH")
-    git branch "$TEMP_BRANCH" HEAD
-
-    # Test rebase on temp branch (this switches to temp branch)
-    if ! git rebase "origin/$BASE_BRANCH" "$TEMP_BRANCH" >/dev/null 2>&1; then
-        error "Rebase would have conflicts"
-        error "Resolve manually: git pull --rebase origin $BASE_BRANCH"
-        git rebase --abort 2>/dev/null || true
-        git checkout "$CURRENT_BRANCH" 2>/dev/null || true
-        exit 1
+    # Warn (but do not fail) if the working tree has uncommitted changes.
+    # --autostash below safely sets them aside for the rebase and restores
+    # them afterward, so unrelated in-progress work is never lost.
+    if ! git diff --quiet || ! git diff --cached --quiet; then
+        warn "Uncommitted changes detected — they will be autostashed during the rebase"
     fi
 
-    # Switch back to original branch and cleanup temp branch
-    git checkout "$CURRENT_BRANCH" 2>/dev/null || true
-    git branch -D "$TEMP_BRANCH" 2>/dev/null || true
-    TEMP_BRANCHES=("${TEMP_BRANCHES[@]/$TEMP_BRANCH}")
-
-    log "Rebasing onto origin/$BASE_BRANCH..."
-    if ! git rebase "origin/$BASE_BRANCH"; then
-        error "Rebase failed"
-        error "Resolve conflicts and run: git rebase --continue"
+    log "Rebasing onto origin/$BASE_BRANCH (autostash)..."
+    # --autostash stashes uncommitted changes before rebasing and reapplies
+    # them after. This replaces the old temp-branch probe, which ran a real
+    # rebase against a dirty tree, swallowed stderr, and misreported a
+    # "rebase refused (dirty tree)" error as "Rebase would have conflicts".
+    # On a genuine conflict, --abort restores the branch and the stash.
+    if ! git rebase --autostash "origin/$BASE_BRANCH"; then
+        error "Rebase onto origin/$BASE_BRANCH failed (conflict)."
+        error "The branch has been restored to its pre-rebase state."
+        error "Retry manually: git pull --rebase origin $BASE_BRANCH"
+        git rebase --abort 2>/dev/null || true
         exit 1
     fi
 
