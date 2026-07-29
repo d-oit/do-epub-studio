@@ -9,6 +9,39 @@ export function createLocator(cfi: string, text: string, chapterHref: string): L
 }
 
 export function parseLocator(locatorString: string): LocatorResult | null {
+  if (
+    locatorString.startsWith('{"cfi":"') &&
+    locatorString.endsWith('"}')
+  ) {
+    const textExcerptKeyIdx = locatorString.indexOf('","textExcerpt":"', 8);
+    if (textExcerptKeyIdx !== -1) {
+      const chapterHrefKeyIdx = locatorString.indexOf('","chapterHref":"', textExcerptKeyIdx + 17);
+      if (chapterHrefKeyIdx !== -1) {
+        const cfi = locatorString.substring(8, textExcerptKeyIdx);
+        const textExcerpt = locatorString.substring(textExcerptKeyIdx + 17, chapterHrefKeyIdx);
+        const chapterHref = locatorString.substring(chapterHrefKeyIdx + 17, locatorString.length - 2);
+
+        // Verify that none of the values contain double quotes or backslashes.
+        // This ensures they don't have unescaped quotes or escapes that would
+        // make them invalid JSON or change their parsed values under JSON.parse.
+        if (
+          cfi.indexOf('"') === -1 &&
+          cfi.indexOf('\\') === -1 &&
+          textExcerpt.indexOf('"') === -1 &&
+          textExcerpt.indexOf('\\') === -1 &&
+          chapterHref.indexOf('"') === -1 &&
+          chapterHref.indexOf('\\') === -1
+        ) {
+          // Reconstruct to make absolutely sure the exact characters and structure match
+          const reconstructed = `{"cfi":"${cfi}","textExcerpt":"${textExcerpt}","chapterHref":"${chapterHref}"}`;
+          if (reconstructed === locatorString) {
+            return { cfi, textExcerpt, chapterHref };
+          }
+        }
+      }
+    }
+  }
+
   try {
     const parsed = JSON.parse(locatorString) as Partial<LocatorResult>;
     if (
