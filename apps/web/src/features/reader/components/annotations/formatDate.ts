@@ -1,4 +1,5 @@
 import type { TranslationKeys } from '../../../../i18n';
+import { formatDate as formatLocaleDate } from '../../../../lib/i18n-format';
 
 type TranslateFn = (key: TranslationKeys, params?: Record<string, string | number>) => string;
 
@@ -15,5 +16,5 @@ export function formatDate(dateString: string, t?: TranslateFn): string {
   if (diffHours < 24) return t ? t('relativeTime.hoursAgo', { count: diffHours }) : `${diffHours}h ago`;
   if (diffDays < 7) return t ? t('relativeTime.daysAgo', { count: diffDays }) : `${diffDays}d ago`;
 
-  return date.toLocaleDateString();
+  return formatLocaleDate(date);
 }

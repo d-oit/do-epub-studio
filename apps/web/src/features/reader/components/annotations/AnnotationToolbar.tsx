@@ -2,8 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useTranslation } from '../../../../hooks/useTranslation';
 import type { TranslationKeys } from '../../../../i18n/en';
 import { Tooltip, IconButton } from '../../../../components/ui';
-
-type SupportedLocale = 'en' | 'de' | 'fr';
+import type { SupportedLocale } from '../../../../stores/locale';
 
 export interface SelectionData {
   text: string;

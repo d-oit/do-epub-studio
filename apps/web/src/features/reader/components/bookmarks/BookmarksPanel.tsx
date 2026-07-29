@@ -2,6 +2,7 @@ import { useRef, useEffect } from 'react';
 import { useFocusTrap } from '@do-epub-studio/ui';
 import { IconButton, Tooltip } from '../../../../components/ui';
 import { useTranslation } from '../../../../hooks/useTranslation';
+import { formatDate } from '../../../../lib/i18n-format';
 import type { Bookmark } from '../../../../stores';
 
 interface BookmarksPanelProps {
@@ -103,7 +104,7 @@ export function BookmarksPanel({
                       {bookmark.label || t('reader.bookmarks.untitled')}
                     </p>
                     <p className="text-xs text-foreground-muted mt-1">
-                      {new Date(bookmark.createdAt).toLocaleDateString()}
+                      {formatDate(new Date(bookmark.createdAt))}
                     </p>
                   </button>
                   <Tooltip content={t('a11y.delete_bookmark')}>

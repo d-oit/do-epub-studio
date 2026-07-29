@@ -36,7 +36,9 @@ describe('formatDate', () => {
   it('returns locale date for old dates', () => {
     const date = new Date(Date.now() - 30 * 86400000).toISOString();
     const result = formatDate(date);
-    expect(result).toMatch(/\d{1,2}\/\d{1,2}\/\d{4}/);
+    // dateStyle:'medium' produces e.g. "Jun 29, 2026" — just verify it's a non-empty formatted date string
+    expect(result).toBeTruthy();
+    expect(result).not.toMatch(/ago$/);
   });
 
   it('uses i18n t() when provided for just now', () => {

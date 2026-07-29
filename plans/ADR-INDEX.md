@@ -74,6 +74,7 @@
 | 185 | Agent Workflow Harness Standards | `plans/archive/185-adr-agent-workflow-harness-standards.md` | Accepted |
 | 187 | Fail-Closed Engineering Gates | `plans/archive/187-adr-fail-closed-engineering-gates.md` | Accepted |
 | 198 | Verified-Closure Methodology | `plans/archive/198-adr-verified-closure-methodology.md` | Accepted |
+| 199 | i18n Plural Rules Deferral | `plans/199-adr-i18n-plural-rules-deferral.md` | Accepted (deferred) |
 | 998 | Offline Comment Status Preservation | `plans/archive/998-adr-offline-comment-status-preservation.md` | Accepted |
 
 ## Cross-referenced (archived GOAP execution records)
