@@ -11,6 +11,12 @@ import sys
 from pathlib import Path
 from typing import Optional
 
+try:
+    import yaml  # type: ignore[import-not-found]
+    _HAS_YAML = True
+except ImportError:  # pragma: no cover - PyYAML is available in this repo's env
+    _HAS_YAML = False
+
 # Configuration
 SKILLS_DIR = Path(".agents/skills")
 OUTPUT_FILE = Path("agents-docs/AVAILABLE_SKILLS.md")
@@ -29,6 +35,68 @@ Auto-generated from skill definitions. Run this script to regenerate.
 """
 
 
+def _extract_frontmatter(content: str) -> Optional[dict]:
+    """Parse YAML frontmatter (between leading ``---`` fences) into a dict.
+
+    Uses PyYAML when available so block scalars (``description: >`` / ``|``)
+    and quoted values parse correctly. Falls back to a small stdlib parser
+    covering the shapes used by SKILL.md files when PyYAML is absent.
+    """
+    if not content.startswith("---"):
+        return None
+    end_marker = content.find("\n---", 3)
+    if end_marker == -1:
+        return None
+    frontmatter = content[3:end_marker]
+
+    if _HAS_YAML:
+        try:
+            data = yaml.safe_load(frontmatter)
+            if isinstance(data, dict):
+                return data
+        except yaml.YAMLError:
+            pass  # fall through to stdlib parser
+
+    # Stdlib fallback.
+    result: dict = {}
+    lines = frontmatter.split("\n")
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            i += 1
+            continue
+        if ":" not in line:
+            i += 1
+            continue
+        key, _, value = line.partition(":")
+        key = key.strip()
+        value = value.strip()
+        if value in (">", "|"):
+            # Folded/literal block scalar: gather indented continuation lines.
+            body: list[str] = []
+            i += 1
+            while i < len(lines) and (lines[i].startswith((" ", "\t"))):
+                if lines[i].strip():
+                    body.append(lines[i].strip())
+                i += 1
+            result[key] = " ".join(body)
+        elif value and value[0] in ('"', "'"):
+            # Quoted scalar (single-line; good enough for fallback).
+            quote = value[0]
+            inner = value[1:]
+            if quote in inner:
+                result[key] = inner.split(quote, 1)[0].strip()
+            else:
+                result[key] = inner.strip()
+            i += 1
+        else:
+            result[key] = value
+            i += 1
+    return result
+
+
 def get_skill_description(skill_path: Path) -> Optional[str]:
     """Extract description from SKILL.md frontmatter."""
     skill_file = skill_path / "SKILL.md"
@@ -37,38 +105,27 @@ def get_skill_description(skill_path: Path) -> Optional[str]:
 
     try:
         content = skill_file.read_text(encoding="utf-8")
+        frontmatter = _extract_frontmatter(content)
+        if frontmatter is not None:
+            desc = frontmatter.get("description")
+            if isinstance(desc, str) and desc.strip():
+                return desc.strip()
 
-        # Check for YAML frontmatter
-        if content.startswith("---"):
-            end_marker = content.find("---", 3)
-            if end_marker != -1:
-                frontmatter = content[3:end_marker].strip()
-
-                # Extract description
-                for line in frontmatter.split("\n"):
-                    if line.startswith("description:"):
-                        # Handle multi-line descriptions
-                        desc = line.split(":", 1)[1].strip()
-                        # Remove > and quotes if present
-                        desc = desc.strip(">").strip('"').strip("'")
-                        return desc
-
-        # Fallback: first line after title
+        # Fallback: first non-empty prose line after the H1 title.
         lines = content.split("\n")
         in_frontmatter = False
         for i, line in enumerate(lines):
             if line.strip() == "---":
-                if not in_frontmatter:
-                    in_frontmatter = True
-                else:
-                    in_frontmatter = False
-            elif not in_frontmatter and line.startswith("# "):
-                # Skip the title, get next non-empty line
-                for next_line in lines[i+1:]:
+                in_frontmatter = not in_frontmatter
+                continue
+            if in_frontmatter:
+                continue
+            if line.startswith("# "):
+                for next_line in lines[i + 1:]:
                     if next_line.strip() and not next_line.startswith("#"):
-                        return next_line.strip()[:100]  # Limit length
-                        break
-
+                        return next_line.strip()[:100]
+                    break
+                break
     except Exception as e:
         print(f"Warning: Could not parse {skill_file}: {e}")
 
@@ -83,16 +140,11 @@ def get_skill_category(skill_path: Path) -> Optional[str]:
 
     try:
         content = skill_file.read_text(encoding="utf-8")
-
-        if content.startswith("---"):
-            end_marker = content.find("---", 3)
-            if end_marker != -1:
-                frontmatter = content[3:end_marker].strip()
-
-                for line in frontmatter.split("\n"):
-                    if line.startswith("category:"):
-                        return line.split(":", 1)[1].strip()
-
+        frontmatter = _extract_frontmatter(content)
+        if frontmatter is not None:
+            cat = frontmatter.get("category")
+            if isinstance(cat, str) and cat.strip():
+                return cat.strip()
     except Exception:
         pass
 
