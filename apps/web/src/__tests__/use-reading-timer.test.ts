@@ -68,6 +68,8 @@ vi.mock('../lib/offline', () => ({
 
 vi.mock('../lib/client-logger', () => ({
   logClientEvent: vi.fn(),
+  createPerformanceMark: vi.fn(),
+  measurePerformance: vi.fn(() => undefined),
 }));
 
 vi.mock('@do-epub-studio/shared', () => ({
