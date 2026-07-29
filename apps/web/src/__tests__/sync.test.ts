@@ -27,6 +27,8 @@ vi.mock('../lib/offline/permissions', () => ({
 
 vi.mock('../lib/client-logger', () => ({
   logClientEvent: vi.fn(),
+  createPerformanceMark: vi.fn(),
+  measurePerformance: vi.fn(() => undefined),
 }));
 
 describe('generateMutationId', () => {

@@ -42,6 +42,7 @@ export function AdminBookResponsesPage() {
     warnings: string[];
   } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [editingBook, setEditingBook] = useState<BookResponse | null>(null);
   const [editTitle, setEditTitle] = useState('');
@@ -69,6 +70,23 @@ export function AdminBookResponsesPage() {
   useEffect(() => {
     void fetchBookResponses();
   }, [fetchBookResponses]);
+
+  /** Auto-dismiss the success banner after 5s. Clears any pending timer first
+   *  so rapid successive actions don't leave a stale timeout running, and the
+   *  unmount cleanup below cancels it if the page is navigated away mid-wait. */
+  const scheduleSuccessClear = useCallback(() => {
+    if (successTimerRef.current) clearTimeout(successTimerRef.current);
+    successTimerRef.current = setTimeout(() => {
+      setSuccessMessage(null);
+      successTimerRef.current = null;
+    }, 5000);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (successTimerRef.current) clearTimeout(successTimerRef.current);
+    };
+  }, []);
 
   const handleViewGrants = (book: BookResponse) => {
     // eslint-disable-next-line @typescript-eslint/no-floating-promises -- navigate() returns void, not Promise (react-router-dom v7)
@@ -109,7 +127,7 @@ export function AdminBookResponsesPage() {
       setEditingBook(null);
       setSuccessMessage(t('admin.books.updateSuccess'));
       void fetchBookResponses();
-      setTimeout(() => setSuccessMessage(null), 5000);
+      scheduleSuccessClear();
     } catch (err) {
       setEditError((err as Error).message);
     } finally {
@@ -126,7 +144,7 @@ export function AdminBookResponsesPage() {
       });
       setSuccessMessage(t('admin.books.archiveSuccess'));
       void fetchBookResponses();
-      setTimeout(() => setSuccessMessage(null), 5000);
+      scheduleSuccessClear();
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -258,7 +276,7 @@ export function AdminBookResponsesPage() {
       setSuccessMessage(t('admin.createBookModal.success'));
       void fetchBookResponses();
 
-      setTimeout(() => setSuccessMessage(null), 5000);
+      scheduleSuccessClear();
     } catch (err) {
       setCreateError((err as Error).message);
     } finally {

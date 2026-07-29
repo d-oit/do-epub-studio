@@ -105,12 +105,15 @@ set_phase() {
 }
 
 rollback_commit() {
-    log "Rolling back commit..."
+    log "Rolling back commit (working tree preserved)..."
+    # Use --soft so we ONLY undo the commit(s) made since ORIGINAL_SHA. The
+    # index and working tree are left untouched, so unrelated uncommitted
+    # changes are never destroyed. The rolled-back commit stays recoverable
+    # via `git reflog`. (--hard here previously wiped the entire worktree.)
     if [[ -n "$ORIGINAL_SHA" ]]; then
-        git reset --hard "$ORIGINAL_SHA" || true
+        git reset --soft "$ORIGINAL_SHA" || true
     elif git rev-parse --verify HEAD~1 &>/dev/null; then
         git reset --soft HEAD~1 || true
-        git reset HEAD || true
     fi
 }
 
