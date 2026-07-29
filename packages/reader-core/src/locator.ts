@@ -25,6 +25,18 @@ const FAST_MID_HREF_LEN = FAST_MID_HREF.length;
 const FAST_SUFFIX_LEN = FAST_SUFFIX.length;
 
 /**
+ * Returns true if the string contains any ASCII control characters (code points < 32).
+ * This avoids calling regular expressions with control characters, preventing ESLint no-control-regex issues.
+ */
+function hasControlCharacter(str: string): boolean {
+  for (let i = 0; i < str.length; i++) {
+    const code = str.charCodeAt(i);
+    if (code < 32) return true;
+  }
+  return false;
+}
+
+/**
  * Parses a serialized locator string back into a LocatorResult.
  * Uses an extremely efficient string-slice fast-path for standard serializations,
  * falling back safely to standard JSON.parse for alternate formatting or keys.
@@ -52,9 +64,9 @@ export function parseLocator(locatorString: string): LocatorResult | null {
           textExcerpt.indexOf('\\') === -1 &&
           chapterHref.indexOf('"') === -1 &&
           chapterHref.indexOf('\\') === -1 &&
-          !/[\x00-\x1F]/.test(cfi) &&
-          !/[\x00-\x1F]/.test(textExcerpt) &&
-          !/[\x00-\x1F]/.test(chapterHref)
+          !hasControlCharacter(cfi) &&
+          !hasControlCharacter(textExcerpt) &&
+          !hasControlCharacter(chapterHref)
         ) {
           // Reconstruct to make absolutely sure the exact characters and structure match
           const reconstructed = `${FAST_PREFIX}${cfi}${FAST_MID_EXCERPT}${textExcerpt}${FAST_MID_HREF}${chapterHref}${FAST_SUFFIX}`;
@@ -92,9 +104,9 @@ export function locatorToString(locator: LocatorResult): string {
     textExcerpt.indexOf('\\') === -1 &&
     chapterHref.indexOf('"') === -1 &&
     chapterHref.indexOf('\\') === -1 &&
-    !/[\x00-\x1F]/.test(cfi) &&
-    !/[\x00-\x1F]/.test(textExcerpt) &&
-    !/[\x00-\x1F]/.test(chapterHref)
+    !hasControlCharacter(cfi) &&
+    !hasControlCharacter(textExcerpt) &&
+    !hasControlCharacter(chapterHref)
   ) {
     return `${FAST_PREFIX}${cfi}${FAST_MID_EXCERPT}${textExcerpt}${FAST_MID_HREF}${chapterHref}${FAST_SUFFIX}`;
   }
