@@ -13,6 +13,7 @@ import type { AuditLogResponse } from '@do-epub-studio/shared';
 import { LocaleSwitcher } from '../../components/LocaleSwitcher';
 import { Spinner } from '@do-epub-studio/ui';
 import { logClientEvent } from '../../lib/client-logger';
+import { formatDateTime } from '../../lib/i18n-format';
 import { Breadcrumb } from '../../components/navigation';
 
 /** Admin route paths (constants avoid i18next/no-literal-string in JSX). */
@@ -85,7 +86,7 @@ function AuditTable({ data, page, total, onPrev, onNext }: AuditTableProps) {
           {data.entries.map((log) => (
             <tr key={log.id}>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground-muted">
-                {new Date(log.createdAt).toLocaleString()}
+                {formatDateTime(new Date(log.createdAt))}
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-foreground">
                 {log.actorEmail || t('admin.audit.systemActor')}

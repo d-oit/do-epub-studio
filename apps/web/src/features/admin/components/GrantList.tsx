@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Button, Modal, Spinner } from '@do-epub-studio/ui';
 
 import { useTranslation } from '../../../hooks/useTranslation';
+import { formatDate as formatLocaleDate } from '../../../lib/i18n-format';
 import { GRANT_MODES } from './types';
 import type { Grant } from './types';
 
@@ -17,7 +18,7 @@ function modeLabel(mode: string): string {
 
 function formatDate(dateStr: string | null, neverLabel: string): string {
   if (!dateStr) return neverLabel;
-  return new Date(dateStr).toLocaleDateString();
+  return formatLocaleDate(new Date(dateStr));
 }
 
 function isExpired(grant: Grant): boolean {

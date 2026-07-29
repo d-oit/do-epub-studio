@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { z } from 'zod';
 import { useReducedMotion } from '../../../../hooks/useReducedMotion';
+import { formatDate } from '../../../../lib/i18n-format';
 
 const NotificationSchema = z.object({
   id: z.string(),
@@ -132,7 +133,7 @@ export function NotificationPanel({ onNavigateToComment, t, onClose }: Notificat
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-foreground line-clamp-2">{n.message}</p>
                   <time className="text-xs text-foreground/50 mt-1">
-                    {new Date(n.createdAt).toLocaleDateString()}
+                    {formatDate(new Date(n.createdAt))}
                   </time>
                 </div>
               </div>

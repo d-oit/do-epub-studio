@@ -19,6 +19,7 @@ vi.mock('../i18n', () => ({
     }
     return result;
   }),
+  dictionaries: { en: {}, de: {}, fr: {}, es: {}, pt: {}, it: {}, ja: {}, zh: {}, ko: {}, ar: {}, ru: {}, hi: {}, nl: {} },
 }));
 
 beforeEach(() => {

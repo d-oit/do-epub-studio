@@ -3,11 +3,10 @@ import { useFocusTrap } from '@do-epub-studio/ui';
 import { IconButton } from '../../../../components/ui';
 import type { Comment, Highlight } from '../../../../stores';
 import { useTranslation } from '../../../../hooks/useTranslation';
+import type { SupportedLocale } from '../../../../stores/locale';
 import { CommentItem } from './CommentItem';
 import { HighlightItem } from './HighlightItem';
 import { VirtualList } from '../../../../components/VirtualList';
-
-type SupportedLocale = 'en' | 'de' | 'fr';
 
 interface CommentsPanelProps {
   isOpen: boolean;

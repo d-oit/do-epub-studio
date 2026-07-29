@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { apiRequest } from '../../lib/api';
 import { useAuthStore } from '../../stores/auth';
 import { useTranslation } from '../../hooks/useTranslation';
+import { formatDate } from '../../lib/i18n-format';
 import { AppLogo, ProgressBar } from '../../components/ui';
 import { Spinner } from '@do-epub-studio/ui';
 import { APP_NAME, APP_VERSION_LABEL } from '../../config/app-identity';
@@ -78,7 +79,7 @@ export function MyLibraryPage() {
                         <ProgressBar value={book.progressPercent} showValue className="mb-2" label={t('library.progress')} />
                         {book.progressUpdatedAt && (
                           <p className="text-xs text-foreground-muted">
-                            {t('library.lastRead')} {new Date(book.progressUpdatedAt).toLocaleDateString()}
+                            {t('library.lastRead')} {formatDate(new Date(book.progressUpdatedAt))}
                           </p>
                         )}
                       </Link>
