@@ -8,7 +8,7 @@ import {
   createEpubSanitizerHook,
 } from '@do-epub-studio/reader-core';
 import { createSpanId, createTraceId } from '@do-epub-studio/shared';
-import { logClientEvent } from '../../../lib/client-logger';
+import { logClientEvent, createPerformanceMark, measurePerformance } from '../../../lib/client-logger';
 import { getPrefersReducedMotion } from '../../../lib/reduced-motion';
 import {
   useAuthStore,
@@ -113,6 +113,7 @@ export function useReaderEpub(
     const viewer = viewerRef.current;
 
     const initEpub = async () => {
+      createPerformanceMark('reader:load-start');
       try {
         const book = ePub(epubUrl);
         bookRef.current = book;
@@ -275,6 +276,20 @@ export function useReaderEpub(
           setCurrentChapter(startHref);
         }
 
+        // Record time-to-first-display for client telemetry. Falls back to a
+        // no-op when the Performance API is unavailable (SSR / older browsers).
+        createPerformanceMark('reader:load-end');
+        const loadMs = measurePerformance('reader:load', 'reader:load-start', 'reader:load-end');
+        if (loadMs !== undefined) {
+          logClientEvent({
+            level: 'info',
+            traceId: createTraceId(),
+            spanId: createSpanId(),
+            event: 'reader:load',
+            metadata: { durationMs: Math.round(loadMs) },
+          });
+        }
+
         adapter.renderHighlights(currentChapterRef.current, highlightsRef.current);
         adapter.renderCommentMarkers(
           currentChapterRef.current,
@@ -359,9 +374,15 @@ export function useReaderEpub(
     markPageRead,
   ]);
 
+  // Re-apply reader themes when any theme-affecting preference changes. Init
+  // applies themes once at rendition creation (see applyThemesRef call in
+  // initEpub); this effect handles subsequent setting changes. System dark-mode
+  // changes are covered by the matchMedia listener below. Previously had no
+  // dependency array, which re-applied (and re-registered CSS rules) every
+  // render.
   useEffect(() => {
     if (renditionRef.current) applyThemesRef.current(renditionRef.current);
-  });
+  }, [resolvedTheme, readerFontSize, readerLineHeight, readerFontFamily]);
 
   useEffect(() => {
     if (!renditionRef.current) return;
@@ -438,7 +459,7 @@ export function useReaderEpub(
     };
     mq.addEventListener('change', handler);
     return () => mq.removeEventListener('change', handler);
-  });
+  }, [readerTheme]);
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
