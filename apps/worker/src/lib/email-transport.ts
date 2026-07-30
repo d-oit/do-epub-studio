@@ -14,6 +14,7 @@ export interface EmailTransport {
 
 class LoggingEmailTransport implements EmailTransport {
   send(message: EmailMessage): Promise<void> {
+    // eslint-disable-next-line no-console -- worker utility; logRequestError requires a RequestContext not available here
     console.log(JSON.stringify({
       level: 'info',
       traceId: createTraceId(),
@@ -50,6 +51,7 @@ export function createEmailTransport(env: Env): EmailTransport {
   if (env.EMAIL_SEND) {
     return new SendEmailTransport(env);
   }
+  // eslint-disable-next-line no-console -- worker utility; logRequestError requires a RequestContext not available here
   console.warn(JSON.stringify({
     level: 'warn',
     traceId: createTraceId(),

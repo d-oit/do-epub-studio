@@ -1,9 +1,11 @@
 import {
   TRACE_HEADER,
   SPAN_HEADER,
+  TRACEPARENT_HEADER,
   createTraceId,
   createSpanId,
   serializeError,
+  buildTraceparent,
 } from '@do-epub-studio/shared';
 import { scrub } from './redact';
 
@@ -111,5 +113,6 @@ export function logRequestError(
 export function withTraceHeaders(response: Response, ctx: RequestContext): Response {
   response.headers.set(TRACE_HEADER, ctx.traceId);
   response.headers.set(SPAN_HEADER, ctx.spanId);
+  response.headers.set(TRACEPARENT_HEADER, buildTraceparent(ctx.traceId, ctx.spanId));
   return response;
 }

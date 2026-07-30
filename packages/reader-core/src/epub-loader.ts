@@ -128,9 +128,8 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
       );
     } catch (error) {
       const formatted = serializeError(error);
-      console.error(
-        `[epub-loader][trace:${traceId}][span:${spanId}] Failed to load EPUB: ${formatted.message}`,
-      );
+      // eslint-disable-next-line no-console -- shared package; no logger dependency available
+      console.error(JSON.stringify({ level: 'error', event: 'epub-loader.error', traceId, spanId, error: formatted }));
       throw new Error(`Failed to load EPUB: ${formatted.message}`, { cause: error });
     }
   }

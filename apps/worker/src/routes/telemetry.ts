@@ -36,17 +36,16 @@ telemetryRouter.post(
     // Also log to console for wrangler tail visibility (legacy behavior)
     for (const log of logs) {
       const scrubbedLog = scrub(log) as Record<string, unknown>;
-      const output = JSON.stringify({
-        ...scrubbedLog,
-        _receivedAt: new Date().toISOString(),
-      });
-
+      const receivedAt = new Date().toISOString();
       if (log.level === 'error') {
-        console.error(`[CLIENT-TELEMETRY] ${output}`);
+        // eslint-disable-next-line no-console -- client telemetry forwarding; structured payload; warn level not supported by observability module
+        console.error(JSON.stringify({ ...scrubbedLog, _receivedAt: receivedAt }));
       } else if (log.level === 'warn') {
-        console.warn(`[CLIENT-TELEMETRY] ${output}`);
+        // eslint-disable-next-line no-console -- client telemetry forwarding; structured payload; warn level not supported by observability module
+        console.warn(JSON.stringify({ ...scrubbedLog, _receivedAt: receivedAt }));
       } else {
-        console.log(`[CLIENT-TELEMETRY] ${output}`);
+        // eslint-disable-next-line no-console -- client telemetry forwarding; structured payload; warn level not supported by observability module
+        console.log(JSON.stringify({ ...scrubbedLog, _receivedAt: receivedAt }));
       }
     }
 
