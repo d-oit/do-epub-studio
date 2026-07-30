@@ -4,12 +4,10 @@ import { OfflineIndicator } from '../components/OfflineIndicator';
 
 vi.mock('../hooks/useTranslation', () => ({
   useTranslation: () => ({
-    t: (key: string) => {
-      const translations: Record<string, string> = {
-        'offline.banner': 'You are currently offline',
-      };
-      return Object.hasOwn(translations, key) ? translations[key] : key;
-    },
+    t: vi.fn((key: string) => {
+      const translations = new Map<string, string>([['offline.banner', 'You are currently offline']]);
+      return translations.get(key) ?? key;
+    }),
   }),
 }));
 

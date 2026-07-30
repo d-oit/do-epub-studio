@@ -5,14 +5,14 @@ import { NotFoundPage } from '../features/errors/NotFoundPage';
 
 vi.mock('../hooks/useTranslation', () => ({
   useTranslation: () => ({
-    t: (key: string) => {
-      const translations: Record<string, string> = {
-        'errors.notFound.title': 'Page Not Found',
-        'errors.notFound.description': 'The page you are looking for does not exist.',
-        'errors.notFound.backToHome': 'Back to Home',
-      };
-      return Object.hasOwn(translations, key) ? translations[key] : key;
-    },
+    t: vi.fn((key: string) => {
+      const translations = new Map<string, string>([
+        ['errors.notFound.title', 'Page Not Found'],
+        ['errors.notFound.description', 'The page you are looking for does not exist.'],
+        ['errors.notFound.backToHome', 'Back to Home'],
+      ]);
+      return translations.get(key) ?? key;
+    }),
     locale: 'en',
     setLocale: vi.fn(),
   }),
