@@ -5,6 +5,7 @@ export interface Env extends CloudflareEnv {
   EMAIL_SEND?: { send(opts: { from: string; to: string; subject: string; text?: string; html?: string }): Promise<unknown> };
   EMAIL_SENDER?: string;
   SENTRY_DSN?: string;
+  ENVIRONMENT?: string;
 }
 
 export type JsonRow = Record<string, string | number | null | undefined>;
