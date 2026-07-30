@@ -44,7 +44,7 @@ export function bodySizeLimit(maxBytes = 1_048_576): MiddlewareHandler {
         let bytesRead = 0;
         let tooLarge = false;
         try {
-          while (true) {
+          for (;;) {
             const { done, value } = await reader.read();
             if (done) break;
             bytesRead += value.byteLength;
