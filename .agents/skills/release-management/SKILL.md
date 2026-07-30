@@ -120,9 +120,10 @@ head -20 CHANGELOG.md
 
 ## Hard Rules
 
-- **NEVER tag `main` directly** — always use the release PR path
+- **NEVER push a `v*` tag manually** — always use `scripts/release/create-release-tag.sh <version>`. The pre-push hook blocks direct tag pushes; the script runs the quality gate and version checks first.
+- **NEVER tag `main` directly** — always use the release PR path, then `create-release-tag.sh`
 - **NEVER manually edit CHANGELOG for a release section** — always use `sync-changelog.sh`
-- **NEVER merge a release PR without CI passing** — the `release:cut` label triggers production publishing
+- **NEVER merge a release PR without CI passing** — the tag push triggers `release.yml` which requires all checks to pass
 - **NEVER skip the quality gate** — a failing gate blocks the entire workflow
 
 ## Dry-Run Mode
