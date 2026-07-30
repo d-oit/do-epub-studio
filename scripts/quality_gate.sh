@@ -410,6 +410,14 @@ else
     SKIPPED=1
 fi
 
+# --- Dead code and circular dependency check ---
+printf '%sChecking for dead code and circular dependencies...%s\n' "${BLUE}" "${NC}"
+if ! "$REPO_ROOT/scripts/dead-code-check.sh"; then
+    printf '%s✗ Dead code / circular deps found — run scripts/dead-code-check.sh for details%s\n' "${RED}" "${NC}"
+    FAILED=1
+fi
+echo ""
+
 # --- Final result ---
 if [ $FAILED -ne 0 ]; then
     printf '%s─────────────────────────────────────────────────────────────────%s\n' "${RED}" "${NC}"

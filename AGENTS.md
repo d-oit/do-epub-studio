@@ -58,7 +58,7 @@ readonly MAX_PR_TITLE_LENGTH=72
 4. **Coverage Thresholds:** Enforce minimum coverage via `test:coverage`.
    - `web`: 55% Lines, 48% Functions | `worker`: 55% Lines, 50% Functions
    - `shared`: 40% Lines, 50% Functions | `reader-core`: 72% Lines, 70% Functions
-   - `schema`: 15% Lines, 5% Functions | `testkit`: 25% Lines, 20% Functions
+   - `schema`: 90% Lines, 90% Functions | `testkit`: 25% Lines, 20% Functions
    - `ui`: 10% Lines, 5% Functions
 5. **Validate commit message:** Run `./scripts/validate-commit-message.sh` or ensure format matches `type(scope): description` (max 72 chars).
 6. **NEVER ignore lint warnings, typecheck errors, or test failures.**
@@ -67,7 +67,7 @@ readonly MAX_PR_TITLE_LENGTH=72
    - **Always run `pnpm lint` across ALL packages (via `turbo run lint`) before committing** — not just `pnpm --filter <app> lint`. A change to the root `eslint.config.js` affects every package; a local lint pass on one package can hide breakage in others.
 8. **MUST load `goap-agent` skill for any analysis, planning, or multi-step task.** Use GOAP methodology (analyze → decompose → strategize → coordinate → execute → synthesize).
 9. **Document ALL issues as GOAP plans + ADRs in `plans/`.** Warnings, pre-existing issues, and unfixable items each get a GOAP plan with an ADR defining policy. Do NOT edit KNOWN-ISSUES.md directly — that is a reference mirror of monitor-tier items only.
-10. **Releases MUST be cut via the `release-management` skill — no manual tags, no direct CHANGELOG edits.**
+10. **Releases MUST be cut via the `release-management` skill — no manual tags, no direct CHANGELOG edits.** Tags are pushed exclusively via `scripts/release/create-release-tag.sh <version>`; the pre-push hook blocks all other `v*` tag pushes.
 11. **CI MUST enforce Lighthouse mobile preset with route-specific performance budgets** for catalog, admin, auth, and offline routes.
 
 ---

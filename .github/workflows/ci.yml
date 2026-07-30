@@ -392,7 +392,9 @@ jobs:
     if: ${{ github.event_name != 'schedule' && (needs.changes.outputs.src == 'true' || needs.changes.outputs.reader-core == 'true') }}
     needs: [changes, build]
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
+    env:
+      PLAYWRIGHT_INCLUDE_WEBKIT: '1'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
@@ -401,14 +403,14 @@ jobs:
       - uses: ./.github/actions/setup-pnpm
 
       - name: Install Playwright browsers
-        run: pnpm exec playwright install --with-deps chromium
+        run: pnpm exec playwright install --with-deps chromium webkit
 
       - name: Run Dev Smoke E2E tests
         uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60  # v4.0.0
         with:
           timeout_minutes: 10
           max_attempts: 2
-          command: pnpm test:e2e:smoke --project=chromium
+          command: pnpm test:e2e:smoke --project=chromium --project=webkit
           warning_on_retry: true
 
       - name: Download build artifacts
@@ -418,7 +420,7 @@ jobs:
           path: apps/web/dist/
 
       - name: Run Preview Smoke E2E tests
-        run: PLAYWRIGHT_MODE=preview npx playwright test --grep @smoke --project=chromium
+        run: PLAYWRIGHT_MODE=preview npx playwright test --grep @smoke --project=chromium --project=webkit
 
       - name: Run Startup Performance Test
         run: METRICS_OUTPUT=startup-metrics.json PLAYWRIGHT_MODE=preview npx playwright test apps/web/src/__tests__/performance.spec.ts --project=chromium
