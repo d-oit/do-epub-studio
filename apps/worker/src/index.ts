@@ -23,7 +23,7 @@ export default {
       () => ({
         dsn: env.SENTRY_DSN as string,
         tracesSampleRate: 0.1,
-        environment: (env as unknown as Record<string, string>).ENVIRONMENT ?? 'production',
+        environment: env.ENVIRONMENT ?? 'production',
       }),
       makeFetchHandler(),
     ).fetch(request, env, ctx);
