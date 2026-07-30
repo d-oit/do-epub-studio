@@ -25,12 +25,12 @@ vi.mock('../../components/ThemeToggle', () => ({
 }));
 
 vi.mock('../../components/ui', () => ({
-  Button: ({ children, type, onClick, isLoading, loadingLabel, className }: any) => (
+  Button: ({ children, type, onClick, isLoading, loadingLabel, className }: React.ButtonHTMLAttributes<HTMLButtonElement> & { isLoading?: boolean; loadingLabel?: React.ReactNode; children?: React.ReactNode }) => (
     <button type={type || 'button'} onClick={onClick} disabled={isLoading} className={className}>
       {isLoading ? loadingLabel : children}
     </button>
   ),
-  Input: ({ id, label, type, value, onChange, placeholder, required, name, autoComplete, inputMode }: any) => (
+  Input: ({ id, label, type, value, onChange, placeholder, required, name, autoComplete, inputMode }: React.InputHTMLAttributes<HTMLInputElement> & { label?: React.ReactNode }) => (
     <div>
       <label htmlFor={id}>{label}</label>
       <input

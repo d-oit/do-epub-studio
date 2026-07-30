@@ -295,7 +295,6 @@ describe('AdminRecoverPage', () => {
   describe('loading state', () => {
     it('disables button and shows loading text during request submit', async () => {
       const user = userEvent.setup();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- deferred promise resolver
       let resolveRequest: (value?: void | PromiseLike<void>) => void = () => {};
       vi.mocked(apiRequest).mockImplementation(
         () => new Promise<void>((resolve) => { resolveRequest = resolve; }),
@@ -321,7 +320,6 @@ describe('AdminRecoverPage', () => {
 
     it('disables button and shows loading text during verify submit', async () => {
       const user = userEvent.setup();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- deferred promise resolver
       let resolveVerify: (value?: void | PromiseLike<void>) => void = () => {};
       vi.mocked(apiRequest).mockImplementation(
         () => new Promise<void>((resolve) => { resolveVerify = resolve; }),

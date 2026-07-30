@@ -47,7 +47,7 @@ describe('ReaderPage Panels', () => {
       bookId: 'test-book-id',
       bookSlug: 'test-book',
       isAuthenticated: true,
-      capabilities: { canRead: true, canComment: true, canHighlight: true } as any,
+      capabilities: { canRead: true, canComment: true, canHighlight: true, canBookmark: false, canDownloadOffline: false, canExportNotes: false, canManageAccess: false },
     });
     useReaderStore.setState({
       highlights: [],
@@ -234,31 +234,33 @@ describe('ReaderPage theme', () => {
 
   it('resolves system theme to light when OS prefers light', () => {
     usePreferencesStore.setState({ reader: { ...usePreferencesStore.getState().reader, theme: 'system' } });
-    (window.matchMedia as any).mockReturnValue({
+    vi.stubGlobal('matchMedia', vi.fn().mockReturnValue({
       matches: false, media: '', onchange: null,
       addListener: vi.fn(), removeListener: vi.fn(),
       addEventListener: vi.fn(), removeEventListener: vi.fn(), dispatchEvent: vi.fn(),
-    });
+    }));
     render(
       <MemoryRouter initialEntries={['/read/test-book']}>
         <App />
       </MemoryRouter>,
     );
     expect(document.documentElement).toHaveAttribute('data-theme', 'light');
+    vi.unstubAllGlobals();
   });
 
   it('resolves system theme to dark when OS prefers dark', () => {
     usePreferencesStore.setState({ reader: { ...usePreferencesStore.getState().reader, theme: 'system' } });
-    (window.matchMedia as any).mockReturnValue({
+    vi.stubGlobal('matchMedia', vi.fn().mockReturnValue({
       matches: true, media: '', onchange: null,
       addListener: vi.fn(), removeListener: vi.fn(),
       addEventListener: vi.fn(), removeEventListener: vi.fn(), dispatchEvent: vi.fn(),
-    });
+    }));
     render(
       <MemoryRouter initialEntries={['/read/test-book']}>
         <App />
       </MemoryRouter>,
     );
     expect(document.documentElement).toHaveAttribute('data-theme', 'dark');
+    vi.unstubAllGlobals();
   });
 });

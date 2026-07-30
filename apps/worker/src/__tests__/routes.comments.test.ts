@@ -47,7 +47,7 @@ describe('Comments Routes', () => {
         headers: { 'Authorization': 'Bearer valid' }
       }), env, makePassThroughContext());
       expect(res.status).toBe(200);
-      const body = await res.json() as any;
+      const body: Record<string, unknown> = await res.json();
       expect(body.data).toHaveLength(1);
     });
   });
@@ -58,10 +58,10 @@ describe('Comments Routes', () => {
         email: 'user@example.com',
         bookId: 'book-1',
         capabilities: { canComment: true },
-      } as any);
+      });
       mockGetGrantByBookAndSession.mockResolvedValue({ id: 'grant-1' });
       mockComputeCapabilities.mockReturnValue({ canComment: true });
-      mockExecute.mockResolvedValue({} as any);
+      mockExecute.mockResolvedValue({ rows: [] });
 
       const res = await app.fetch(new Request('http://localhost/api/books/book-1/comments', {
         method: 'POST',
@@ -81,10 +81,10 @@ describe('Comments Routes', () => {
 
   describe('PATCH /api/comments/:commentId', () => {
     it('updates comment when owned by user', async () => {
-      mockRequireAuth.mockResolvedValue({ email: 'user@example.com' } as any);
+      mockRequireAuth.mockResolvedValue({ email: 'user@example.com' });
 
       mockQueryFirst.mockResolvedValue({ user_email: 'user@example.com' });
-      mockExecute.mockResolvedValue({} as any);
+      mockExecute.mockResolvedValue({ rows: [] });
 
       const res = await app.fetch(new Request('http://localhost/api/comments/1', {
         method: 'PATCH',
@@ -101,10 +101,10 @@ describe('Comments Routes', () => {
 
   describe('DELETE /api/comments/:commentId', () => {
     it('deletes comment when owned by user', async () => {
-      mockRequireAuth.mockResolvedValue({ email: 'user@example.com' } as any);
+      mockRequireAuth.mockResolvedValue({ email: 'user@example.com' });
 
       mockQueryFirst.mockResolvedValue({ user_email: 'user@example.com' });
-      mockExecute.mockResolvedValue({} as any);
+      mockExecute.mockResolvedValue({ rows: [] });
 
       const res = await app.fetch(new Request('http://localhost/api/comments/1', {
         method: 'DELETE',

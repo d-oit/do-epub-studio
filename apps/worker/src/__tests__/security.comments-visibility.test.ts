@@ -64,7 +64,7 @@ describe('Security: Comments Visibility', () => {
       );
 
       expect(res.status).toBe(200);
-      const body = (await res.json()) as any;
+      const body: Record<string, unknown> = await res.json();
       expect(body.ok).toBe(true);
 
       // Verification: User A should only see sharedComment
@@ -109,7 +109,7 @@ describe('Security: Comments Visibility', () => {
       );
 
       expect(res.status).toBe(200);
-      const body = (await res.json()) as any;
+      const body: Record<string, unknown> = await res.json();
       expect((body.data as { id: string }[]).map((c) => c.id)).toContain('c3');
     });
   });

@@ -5,6 +5,7 @@ import { observabilityMiddleware } from './middleware/observability';
 import { securityHeadersMiddleware } from './middleware/security-headers';
 import { corsMiddleware } from './middleware/cors';
 import { applyRateLimit, addRateLimitHeaders } from './middleware/rate-limit';
+import { bodySizeLimit } from './middleware/body-size-limit';
 import {
   accessRouter,
   booksRouter,
@@ -36,6 +37,9 @@ app.use('*', async (c, next) => {
   }
   await next();
 });
+
+// Body size limit — rejects payloads > 1 MiB (upload route is exempt).
+app.use('*', bodySizeLimit());
 
 // Rate Limiting
 app.use('*', async (c, next) => {
@@ -77,5 +81,5 @@ app.onError((err, c) => {
   const apiError = toApiError(err);
   const status = isAppError(err) ? err.statusCode : 500;
   const details = err instanceof ValidationError && err.issues?.length ? { details: err.issues } : {};
-  return c.json({ ok: false, error: { ...apiError, ...details, traceId } }, status as 400 | 401 | 403 | 404 | 409 | 413 | 429 | 500 | 504);
+  return c.json({ ok: false, error: { ...apiError, ...details, traceId } }, status as 400 | 401 | 403 | 404 | 409 | 413 | 423 | 429 | 500 | 504);
 });

@@ -53,7 +53,7 @@ describe('sync', () => {
     vi.clearAllMocks();
     Object.defineProperty(navigator, 'onLine', { value: true, writable: true, configurable: true });
     cancelPendingRetry();
-    setPermissionRevokedCallback(null as any);
+    setPermissionRevokedCallback(null as unknown as (bookId: string) => void);
   });
 
   afterEach(() => {
@@ -97,7 +97,7 @@ describe('sync', () => {
         payload: { bookId: 'b1', cfi: 'cfi-1', percentage: 50, mutationId: 'm1' },
         mutationId: 'm1', createdAt: 100, attempts: 0,
       }]);
-      vi.mocked(api.post).mockResolvedValue({} as any);
+      vi.mocked(api.post).mockResolvedValue({} as unknown as Response);
       vi.mocked(db.getUnsyncedProgress).mockResolvedValue([{
         id: 'p1', bookId: 'b1', cfi: 'cfi-1', percentage: 50, lastRead: 100, synced: false, mutationId: 'm1',
       }]);
@@ -117,7 +117,7 @@ describe('sync', () => {
         payload: { bookId: 'b1', annotation: { type: 'highlight', chapter: 'ch1', cfi: 'cfi-2', text: 'hello', color: 'yellow', comment: '' } },
         mutationId: 'm2', createdAt: 200, attempts: 0,
       }]);
-      vi.mocked(api.post).mockResolvedValue({} as any);
+      vi.mocked(api.post).mockResolvedValue({} as unknown as Response);
       vi.mocked(db.getUnsyncedAnnotations).mockResolvedValue([{
         id: 'a1', bookId: 'b1', type: 'highlight', cfi: 'cfi-2', text: 'hello', synced: false, mutationId: 'm2', createdAt: Date.now(),
       }]);
@@ -134,7 +134,7 @@ describe('sync', () => {
         payload: { bookId: 'b1', annotation: { type: 'comment', chapter: 'ch1', cfi: 'cfi-3', text: 'hello', comment: 'my note' } },
         mutationId: 'm3', createdAt: 300, attempts: 0,
       }]);
-      vi.mocked(api.post).mockResolvedValue({} as any);
+      vi.mocked(api.post).mockResolvedValue({} as unknown as Response);
       vi.mocked(db.getUnsyncedAnnotations).mockResolvedValue([{
         id: 'a2', bookId: 'b1', type: 'comment', cfi: 'cfi-3', synced: false, mutationId: 'm3', createdAt: Date.now(),
       }]);
@@ -243,7 +243,7 @@ describe('sync', () => {
         payload: { bookId: 'b1', cfi: 'cfi', percentage: 50, mutationId: 'm11' },
         mutationId: 'm11', createdAt: 1100, attempts: 0,
       }]);
-      vi.mocked(api.post).mockResolvedValue({} as any);
+      vi.mocked(api.post).mockResolvedValue({} as unknown as Response);
       vi.mocked(db.getUnsyncedProgress).mockResolvedValue([{
         id: 'p1', bookId: 'b1', cfi: 'cfi', percentage: 50, lastRead: 100, synced: false, mutationId: 'm11',
       }]);
@@ -260,7 +260,7 @@ describe('sync', () => {
         payload: { bookId: 'b1', annotation: { type: 'highlight', chapter: 'ch1', cfi: 'cfi-12', text: 'hi', color: 'yellow', comment: '' } },
         mutationId: 'm12', createdAt: 1200, attempts: 0,
       }]);
-      vi.mocked(api.post).mockResolvedValue({} as any);
+      vi.mocked(api.post).mockResolvedValue({} as unknown as Response);
       vi.mocked(db.getUnsyncedAnnotations).mockResolvedValue([{
         id: 'a1', bookId: 'b1', type: 'highlight', cfi: 'cfi-12', synced: false, mutationId: 'm12', createdAt: Date.now(),
       }]);

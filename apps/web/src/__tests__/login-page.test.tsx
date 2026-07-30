@@ -44,14 +44,14 @@ vi.mock('../components/ThemeToggle', () => ({
 }));
 
 vi.mock('../components/ui', () => ({
-  Button: ({ children, ...props }: any) => <button {...props}>{children}</button>,
-  Input: ({ label, id, ...props }: any) => (
+  Button: ({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement> & { children?: React.ReactNode }) => <button {...props}>{children}</button>,
+  Input: ({ label, id, ...props }: React.InputHTMLAttributes<HTMLInputElement> & { label?: React.ReactNode }) => (
     <div>
       <label htmlFor={id}>{label}</label>
       <input id={id} {...props} />
     </div>
   ),
-  AppLogo: ({ size: _size, ...props }: any) => <div data-testid="app-logo" {...props} />,
+  AppLogo: ({ size: _size, ...props }: React.HTMLAttributes<HTMLDivElement> & { size?: unknown }) => <div data-testid="app-logo" {...props} />,
 }));
 
 import { apiRequest } from '../lib/api';

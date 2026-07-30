@@ -11,7 +11,6 @@ vi.mock('../hooks/useTranslation', () => ({
         'nav.myLibrary': 'My Library',
         'nav.settings': 'Settings',
       };
-      // eslint-disable-next-line security/detect-object-injection -- test translation lookup
       return Object.hasOwn(translations, key) ? translations[key] : key;
     },
   }),

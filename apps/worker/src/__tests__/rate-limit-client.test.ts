@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { checkRateLimitDO } from '../lib/rate-limit-client';
 import type { Env } from '../lib/env';
+import type { RateLimiterDO } from '../lib/rate-limiter-do';
 
 describe('checkRateLimitDO', () => {
   const makeMockDO = (response: Record<string, unknown>) => ({
@@ -10,12 +11,12 @@ describe('checkRateLimitDO', () => {
     }),
   });
 
-  const makeEnv = (mockDO: any): Env => ({
+  const makeEnv = (mockDO: Record<string, unknown>): Env => ({
     RATE_LIMITER: {
       idFromName: vi.fn().mockReturnValue({ toString: () => 'mock-id' }),
       get: vi.fn().mockReturnValue(mockDO),
-    } as any,
-    BOOKS_BUCKET: {} as any,
+    } as unknown as DurableObjectNamespace<RateLimiterDO>,
+    BOOKS_BUCKET: {} as unknown as R2Bucket,
     DB: { prepare: vi.fn().mockReturnThis(), bind: vi.fn().mockReturnThis(), all: vi.fn().mockResolvedValue({ results: [] }) } as unknown as D1Database,
     SENDER_EMAIL: {} as unknown as SendEmail,
     CACHE_KV: { get: vi.fn().mockResolvedValue(null), put: vi.fn().mockResolvedValue(undefined) } as unknown as KVNamespace,

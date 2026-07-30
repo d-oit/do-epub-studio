@@ -31,7 +31,7 @@ describe('Access Recovery Routes', () => {
         body: JSON.stringify(validPayload),
         headers: { 'Content-Type': 'application/json' }
       }), env, makePassThroughContext());
-      const body = await res.json() as any;
+      const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } = await res.json();
       if (res.status !== 200) {
         console.log('Error body:', JSON.stringify(body));
       }
@@ -47,7 +47,7 @@ describe('Access Recovery Routes', () => {
         email: 'reader@example.com',
         revoked_at: null,
         expires_at: null,
-      } as any);
+      });
 
       const res = await app.fetch(new Request('http://localhost/api/access/recovery-request', {
         method: 'POST',
@@ -55,7 +55,7 @@ describe('Access Recovery Routes', () => {
         headers: { 'Content-Type': 'application/json' }
       }), env, makePassThroughContext());
 
-      const body = await res.json() as any;
+      const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } = await res.json();
       expect(res.status).toBe(200);
       expect(body.ok).toBe(true);
       // Audit log check would happen here if we had a spy on logAudit
@@ -70,7 +70,7 @@ describe('Access Recovery Routes', () => {
         headers: { 'Content-Type': 'application/json' }
       }), env, makePassThroughContext());
       expect(res.status).toBe(401);
-      const body = await res.json() as any;
+      const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } = await res.json();
       expect(body.error.code).toBe('INVALID_TOKEN');
     });
 
@@ -119,7 +119,7 @@ describe('Access Recovery Routes', () => {
         headers: { 'Content-Type': 'application/json' }
       }), env, makePassThroughContext());
 
-      const body = await res.json() as any;
+      const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } = await res.json();
       expect(res.status).toBe(200);
       expect(body.ok).toBe(true);
       expect(body.data.sessionToken).toBe('new-session-token');
@@ -136,7 +136,7 @@ describe('Access Recovery Routes', () => {
       mockValidateGrant.mockResolvedValue({
         valid: false,
         error: 'Access denied',
-      } as any);
+      });
 
       const res = await app.fetch(new Request('http://localhost/api/access/verify-recovery', {
         method: 'POST',

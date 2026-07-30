@@ -7,6 +7,7 @@ import { useAnnotationHandlers } from '../features/reader/hooks/useAnnotationHan
 import { useReaderHandlers } from '../features/reader/hooks/useReaderHandlers';
 import { useReaderStore } from '../stores';
 import { useAuthStore } from '../stores/auth';
+import type { Comment } from '../stores/reader';
 
 vi.mock('../lib/api', () => ({
   apiRequest: vi.fn().mockResolvedValue({}),
@@ -309,7 +310,7 @@ describe('useAnnotationHandlers', () => {
 
   it('resolves comment', async () => {
     useReaderStore.setState({
-      comments: [{ id: 'c1', status: 'open' } as any],
+      comments: [{ id: 'c1', status: 'open' } as unknown as Comment],
     });
     const { result } = renderHook(() => useAnnotationHandlers());
 
@@ -437,7 +438,7 @@ describe('useReaderHandlers', () => {
 
   it('resolves comment', async () => {
     useReaderStore.setState({
-      comments: [{ id: 'c1', status: 'open' } as any],
+      comments: [{ id: 'c1', status: 'open' } as unknown as Comment],
     });
     const { result } = renderHook(() => useReaderHandlers());
 
