@@ -91,6 +91,7 @@ insightsRouter.post('/:bookId/insights/sync', readerAuth, zValidator('json', Rea
 
     return c.json({ ok: true });
   } catch (e) {
+    // eslint-disable-next-line no-console -- worker route; logRequestError requires a RequestContext; using structured JSON instead
     console.error(JSON.stringify({ level: 'error', traceId: createTraceId(), event: 'reader.insight_sync_failed', bookId, error: String(e) }));
     throw new AppError('Failed to sync insights', 'SYNC_FAILED', 500);
   }

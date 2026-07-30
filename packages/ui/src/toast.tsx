@@ -63,6 +63,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 }
 
 export function toast(_type: ToastType, _message: string, _duration?: number) {
+  // eslint-disable-next-line no-console -- UI package has no logger dependency; this is a dev-time misconfiguration warning
   console.warn('Toast not initialized - wrap app in ToastProvider');
 }
 

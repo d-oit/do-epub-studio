@@ -100,3 +100,15 @@ export function serializeError(error: unknown): SerializedError {
 
 export const TRACE_HEADER = 'x-trace-id';
 export const SPAN_HEADER = 'x-span-id';
+export const TRACEPARENT_HEADER = 'traceparent';
+
+/**
+ * Build a W3C traceparent header value from a traceId and spanId.
+ * Format: 00-<32hex traceId>-<16hex spanId>-01
+ * Pads/truncates to the required hex lengths.
+ */
+export function buildTraceparent(traceId: string, spanId: string): string {
+  const tid = traceId.replace(/-/g, '').padEnd(32, '0').slice(0, 32);
+  const sid = spanId.replace(/-/g, '').padEnd(16, '0').slice(0, 16);
+  return `00-${tid}-${sid}-01`;
+}

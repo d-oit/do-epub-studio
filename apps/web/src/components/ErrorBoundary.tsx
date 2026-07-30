@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/react';
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { createSpanId, createTraceId } from '@do-epub-studio/shared';
 import { logClientEvent } from '../lib/client-logger';
@@ -42,6 +43,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       error: { name: error.name, message: error.message, stack: error.stack },
       metadata: { componentStack: errorInfo.componentStack },
     });
+    Sentry.captureException(error, { extra: { componentStack: errorInfo.componentStack, traceId } });
     this.props.onCatch?.(error, errorInfo, traceId);
   }
 

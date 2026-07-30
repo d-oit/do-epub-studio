@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/react';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
@@ -8,6 +9,16 @@ import { ToastProvider, useToast } from '@do-epub-studio/ui';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { logClientEvent } from './lib/client-logger';
 import './styles/globals.css';
+
+// Init before anything else; no-op if DSN is absent
+if (import.meta.env.VITE_SENTRY_DSN) {
+  Sentry.init({
+    dsn: import.meta.env.VITE_SENTRY_DSN,
+    tracesSampleRate: 0.1,
+    environment: import.meta.env.MODE,
+    integrations: [Sentry.browserTracingIntegration()],
+  });
+}
 import { registerSW } from 'virtual:pwa-register';
 import { useSwUpdateStore } from './stores/sw-update';
 import { useTranslation } from './hooks/useTranslation';

@@ -5,7 +5,8 @@
   "vars": {
     "APP_BASE_URL": "https://do-epub-studio.example.com",
     "TURSO_DATABASE_URL": "file::memory:",
-    "TURSO_AUTH_TOKEN": ""
+    "TURSO_AUTH_TOKEN": "",
+    "SENTRY_DSN": ""
   },
   "d1_databases": [
     {
@@ -39,6 +40,10 @@
       "name": "EMAIL_SEND"
     }
   ],
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  },
   "migrations": [
     {
       "tag": "v1",
