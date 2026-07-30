@@ -6,12 +6,10 @@ const mockSetLocale = vi.fn();
 
 vi.mock('../hooks/useTranslation', () => ({
   useTranslation: () => ({
-    t: (key: string) => {
-      const translations: Record<string, string> = {
-        'a11y.select_locale': 'Select locale',
-      };
-      return Object.hasOwn(translations, key) ? translations[key] : key;
-    },
+    t: vi.fn((key: string) => {
+      const translations = new Map<string, string>([['a11y.select_locale', 'Select locale']]);
+      return translations.get(key) ?? key;
+    }),
     locale: 'en',
     setLocale: mockSetLocale,
   }),

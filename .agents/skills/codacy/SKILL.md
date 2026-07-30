@@ -150,6 +150,12 @@ Always cross-reference with Cloud CLI for full PR data.
       "Non-serializable expression must be wrapped with $(...)". In test
       files, replace with a plain string literal. The env var lookup adds
       no value in a mock environment and confuses static analysis.
+- [ ] `Object.hasOwn(obj, key) ? obj[key] : fallback` in test translation
+      mocks — Codacy ESLint flags `obj[key]` as `security/detect-object-injection`.
+      The key is a hardcoded literal in test mocks (no real injection), but
+      Codacy doesn't track that. Fix: use `Map<string, string>` with `.get(key)`
+      and wrap the `t` function with `vi.fn()` — avoids both `detect-object-injection`
+      and `useQwikValidLexicalScope` with zero suppressions.
 - [ ] Editing `.eslint.config.js` to disable a rule that Codacy
       enforces (Codacy does not read the local ESLint config — it
       runs its own).

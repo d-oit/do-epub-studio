@@ -11,7 +11,7 @@ describe('checkRateLimitDO', () => {
     }),
   });
 
-  const makeEnv = (mockDO: Record<string, unknown>): Env => ({
+  const makeEnv = vi.fn((mockDO: Record<string, unknown>): Env => ({
     RATE_LIMITER: {
       idFromName: vi.fn().mockReturnValue({ toString: () => 'mock-id' }),
       get: vi.fn().mockReturnValue(mockDO),
@@ -25,7 +25,7 @@ describe('checkRateLimitDO', () => {
     SESSION_SIGNING_SECRET: 'test-session-secret',
     INVITE_TOKEN_SECRET: 'test-invite-secret',
     APP_BASE_URL: 'http://localhost',
-  });
+  }));
 
   it('returns allowed: true when DO returns allowed: true', async () => {
     const mockDO = makeMockDO({ allowed: true, remaining: 4, resetAt: 123456789 });

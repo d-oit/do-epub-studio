@@ -5,15 +5,15 @@ import { Breadcrumb } from '../components/navigation/Breadcrumb';
 
 vi.mock('../hooks/useTranslation', () => ({
   useTranslation: () => ({
-    t: (key: string) => {
-      const translations: Record<string, string> = {
-        'admin.breadcrumb.home': 'Home',
-        'admin.breadcrumb.books': 'Books',
-        'admin.breadcrumb.grants': 'Grants',
-        'admin.breadcrumb.audit': 'Audit Log',
-      };
-      return Object.hasOwn(translations, key) ? translations[key] : key;
-    },
+    t: vi.fn((key: string) => {
+      const translations = new Map<string, string>([
+        ['admin.breadcrumb.home', 'Home'],
+        ['admin.breadcrumb.books', 'Books'],
+        ['admin.breadcrumb.grants', 'Grants'],
+        ['admin.breadcrumb.audit', 'Audit Log'],
+      ]);
+      return translations.get(key) ?? key;
+    }),
   }),
 }));
 

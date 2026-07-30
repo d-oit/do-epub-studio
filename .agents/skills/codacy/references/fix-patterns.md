@@ -123,3 +123,47 @@ need spying, `vi.fn(impl)` still works as a passthrough.
 
 **Alternative**: Move the function inside a `describe()` block or
 `beforeEach()` — Biome only flags module-level declarations.
+
+### `ESLint8_security_detect-object-injection` (test translation mocks)
+
+Codacy's ESLint security plugin flags `obj[key]` as a "Generic Object
+Injection Sink" even when `key` is a string literal from a hardcoded
+test mock.
+
+**Trigger pattern** — the common `useTranslation` mock in test files:
+
+```ts
+// BAD — Codacy flags translations[key]
+const translations: Record<string, string> = { 'key': 'value' };
+return Object.hasOwn(translations, key) ? translations[key] : key;
+```
+
+**Fix A (preferred): use a Map — avoids both ESLint `detect-object-injection`
+and Biome `useQwikValidLexicalScope` with no suppressions needed.**
+
+```ts
+const translations = new Map<string, string>([['key', 'value']]);
+return translations.get(key) ?? key;
+```
+
+Combine with `vi.fn()` wrapper on the `t` function to also avoid the
+Biome rule on module-scope arrow functions:
+
+```ts
+t: vi.fn((key: string) => {
+  const translations = new Map<string, string>([['key', 'value']]);
+  return translations.get(key) ?? key;
+}),
+```
+
+**Fix B: inline disable with justification (when Map is impractical).**
+
+```ts
+// eslint-disable-next-line security/detect-object-injection
+//   False positive: key is a string literal from hardcoded test mock
+return Object.hasOwn(translations, key) ? translations[key] : key;
+```
+
+Fix A is preferred because it produces zero local lint warnings and zero
+Codacy findings. Fix B silences Codacy but triggers local "unused
+disable directive" warnings (the rule only exists in Codacy's ESLint 8).

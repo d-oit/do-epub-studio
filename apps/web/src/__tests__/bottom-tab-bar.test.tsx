@@ -5,14 +5,14 @@ import { BottomTabBar } from '../components/navigation/BottomTabBar';
 
 vi.mock('../hooks/useTranslation', () => ({
   useTranslation: () => ({
-    t: (key: string) => {
-      const translations: Record<string, string> = {
-        'nav.catalog': 'Catalog',
-        'nav.myLibrary': 'My Library',
-        'nav.settings': 'Settings',
-      };
-      return Object.hasOwn(translations, key) ? translations[key] : key;
-    },
+    t: vi.fn((key: string) => {
+      const translations = new Map<string, string>([
+        ['nav.catalog', 'Catalog'],
+        ['nav.myLibrary', 'My Library'],
+        ['nav.settings', 'Settings'],
+      ]);
+      return translations.get(key) ?? key;
+    }),
   }),
 }));
 

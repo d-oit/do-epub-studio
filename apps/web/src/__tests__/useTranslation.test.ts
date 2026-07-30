@@ -5,12 +5,12 @@ import { useLocaleStore } from '../stores/locale';
 
 vi.mock('../i18n', () => ({
   translate: vi.fn((key: string, _locale: string, params?: Record<string, string | number>) => {
-    const translations: Record<string, string> = {
-      'app.title': 'd.o.EPUB Studio',
-      'reader.settings': 'Reader Settings',
-      'reader.theme': 'Theme',
-    };
-    let result = Object.hasOwn(translations, key) ? translations[key] : key;
+    const translations = new Map<string, string>([
+      ['app.title', 'd.o.EPUB Studio'],
+      ['reader.settings', 'Reader Settings'],
+      ['reader.theme', 'Theme'],
+    ]);
+    let result = translations.get(key) ?? key;
     if (params) {
       for (const [k, v] of Object.entries(params)) {
         result = result.replace(`{${k}}`, String(v));

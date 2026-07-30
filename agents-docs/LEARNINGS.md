@@ -84,6 +84,7 @@
   - **In test files**: use `vi.fn((key: string) => key)` instead of `const t = (key: string) => key;` — this avoids the Biome flag AND makes the function a spiable mock. Applies to any top-level arrow function assigned to a const in test files (translation helpers, mock callbacks, etc.).
 - **`aria-label` on `<span>` not supported**: Codacy Biome flags `aria-label` on `<span>` elements. Use `role="status"` (or `role="img"`) to make the span accept `aria-label`, or switch to a `<button>` element.
 - **`type="button"` required on all buttons**: Codacy flags `<button>` without explicit `type` attribute. Always add `type="button"` to non-submit buttons.
+- **`detect-object-injection` on test translation mocks**: Codacy ESLint flags `translations[key]` in `vi.mock()` translation helpers as `security/detect-object-injection`. The `key` parameter is always a string literal from the mock — no real injection risk. Preferred fix: use `Map<string, string>` with `.get(key)` and wrap `t` with `vi.fn()` — avoids both `detect-object-injection` (ESLint) and `useQwikValidLexicalScope` (Biome) with zero suppressions. Pattern: `t: vi.fn((key: string) => { const m = new Map([...]); return m.get(key) ?? key; })`.
 
 ---
 
