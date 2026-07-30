@@ -31,6 +31,12 @@ Review and improve inline code patterns. Operates at the file/function level
 - Pre-write quality check before committing a file
 - Legacy code modernization at the function level
 
+## When NOT to Use
+
+- Cross-file or PR-level review → use `code-review-assistant`
+- Finding comes from Codacy static analysis CI → use `codacy`
+- Coordinating multiple fix agents across a PR → use `pr-review-fix`
+
 ## Core Principles
 
 ### DRY

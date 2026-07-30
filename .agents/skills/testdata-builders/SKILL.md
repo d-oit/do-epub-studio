@@ -41,3 +41,42 @@ Purpose: provide consistent factories/builders for schema entities (books, grant
 - [ ] Builders include locale + trace metadata defaults.
 - [ ] Exported types re-used by Worker + Web tests.
 - [ ] `packages/testkit` has unit tests covering builder edge cases.
+
+## Examples
+
+### Builder Pattern
+
+Create a mock book and session in tests using `packages/testkit` factories (from `packages/testkit/src/`):
+
+```ts
+import {
+  createBookBuilder,
+  createSessionBuilder,
+  createGrantBuilder,
+  createHighlightBuilder,
+} from '@do-epub-studio/testkit';
+
+// Build a private book with a custom title
+const book = createBookBuilder()
+  .withTitle('My Test Novel')
+  .withSlug('my-test-novel')
+  .withVisibility('private')
+  .build();
+
+// Build an active session for a reader
+const session = createSessionBuilder()
+  .withEmail('reader@example.com')
+  .withExpiry(60)   // expires 60 minutes from now
+  .build();
+
+// Build an expired session (shorthand helper)
+import { createExpiredSession } from '@do-epub-studio/testkit';
+const expired = createExpiredSession().build();
+
+// Highlight annotation with custom text and CFI
+const highlight = createHighlightBuilder()
+  .withText('A meaningful passage')
+  .withCfi('epubcfi(/6/4[chap01]!/4/2/1:0)')
+  .withColor('#ffff00')
+  .build();
+```

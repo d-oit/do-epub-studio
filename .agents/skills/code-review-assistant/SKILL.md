@@ -22,6 +22,12 @@ Review pull requests holistically — analyzing diffs, risk, and cross-file impa
 - Checking cross-file consistency
 - Verifying Delivery Definition from AGENTS.md
 
+## When NOT to Use
+
+- Inline code smells in a single file during active editing → use `code-quality`
+- Finding comes from Codacy static analysis report → use `codacy`
+- Orchestrating and applying the actual fixes once issues are identified → use `pr-review-fix`
+
 ## Workflow
 
 ### Phase 1: Change Analysis

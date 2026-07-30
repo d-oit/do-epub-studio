@@ -42,3 +42,39 @@ Purpose: implement resilient EPUB rendering, locator extraction, and annotation 
 - [ ] EPUB.js event handlers removed on unmount.
 - [ ] Telemetry events logged for load failures with `traceId`.
 - [ ] Fuzzy re-anchoring word extraction uses `matchAllBounded` from `@do-epub-studio/shared`.
+
+## Examples
+
+### CFI Navigation
+
+`EpubLoader.setProgress` calls `rendition.display(cfi)` internally; navigate by calling the handle directly (from `packages/reader-core/src/epub-loader.ts`):
+
+```ts
+const loader = createEpubLoader({ flow: 'paginated' });
+await loader.load(epubUrl);
+const handle = loader.createRendition(containerEl);
+
+// Jump to a saved CFI position
+await handle.display('epubcfi(/6/4[chap01]!/4/2/1:0)');
+
+// Listen for position changes (fired after each display/page-turn)
+loader.on('relocated', (progress) => {
+  const { cfi, percentage } = progress as ProgressPosition;
+  store.setProgress(cfi, percentage);
+});
+```
+
+### Sanitization Guard
+
+Every rendition MUST register `createEpubSanitizerHook` before display (from `packages/reader-core/src/epub-loader.ts` + `sanitizer.ts`):
+
+```ts
+import { createEpubSanitizerHook } from './sanitizer';
+
+// Registered automatically inside createEpubLoader → createRenditionHandle:
+rendition.hooks.content.register(createEpubSanitizerHook());
+
+// sanitizeEpubDocument uses EPUB_ALLOWED_TAGS (allowlist, not FORBID_TAGS-only)
+// and enforces href-scheme + event-attribute rules via sanitizeDom().
+// Never bypass this hook — iframe sandbox is allow-same-origin only.
+```

@@ -93,8 +93,8 @@ readonly MAX_PR_TITLE_LENGTH=72
 
 - **Architecture & TRIZ:** See `docs/coding-guide.md`, `plans/archive/001-006` (TRIZ + architecture decisions)
 - **Skills & learnings:** Run `ls .agents/skills/` or see `agents-docs/AVAILABLE_SKILLS.md` + `LEARNINGS.md`
-- **GOAP + ADR pattern:** See `plans/020-goap-sprint-141.md` + `plans/024-adr-warning-management.md`
-- **Swarm completion:** All 28 gaps (G1–G28) + rate limiter DO closed (2026-06-15). See `analysis/SWARM_ANALYSIS.md` + `plans/097-goap-swarm-close-all-gaps.md`.
+- **GOAP + ADR pattern:** See `plans/archive/020-goap-sprint-141.md` + `plans/archive/024-adr-warning-management.md`
+- **Swarm completion:** All 28 gaps (G1–G28) closed (2026-06-15); Waves 1–4 hardening complete (2026-07-30). See `analysis/SWARM_ANALYSIS.md` + `plans/097-goap-swarm-close-all-gaps.md`.
 
 ---
 
@@ -119,7 +119,7 @@ Run this before finalizing ANY response:
 
 | Category         | Skills                                                                                                                   |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| **Coordination** | `goap-agent`, `triz-analysis`, `triz-solver`, `task-decomposition`, `agent-coordination`, `learn`, `do-web-doc-resolver`, `jules-delegator` |
+| **Coordination** | `goap-agent`, `triz-analysis`, `triz-solver`, `task-decomposition`, `learn`, `do-web-doc-resolver`, `jules-delegator` |
 | **Backend**      | `cloudflare-worker-api`, `secure-invite-and-access`, `turso-schema-migrations`, `pwa-offline-sync`, `cicd-pipeline`      |
 | **Reader/UI**    | `epub-rendering-and-cfi`, `reader-ui-ux`, `accessibility-auditor`                                                        |
 | **Testing**      | `testing-strategy`, `testdata-builders`, `test-runner`, `dogfood`                                                        |

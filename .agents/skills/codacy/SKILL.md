@@ -14,6 +14,12 @@ Cloud CLI (remote). **Codacy is a required PR check on this repo per
 AGENTS.md Tier 1 — `gh pr checks` showing `fail` on the
 `Codacy Static Code Analysis` row blocks merge.**
 
+## When NOT to Use
+
+- Non-Codacy code smells in files you're editing → use `code-quality`
+- Overall PR risk, cross-file consistency, and holistic review → use `code-review-assistant`
+- Applying the fixes that this skill identifies → use `pr-review-fix`
+
 ## Installation & Auth
 
 ```bash

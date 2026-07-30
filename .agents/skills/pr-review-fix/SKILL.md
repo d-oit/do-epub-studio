@@ -75,12 +75,7 @@ gh api /repos/:owner/:repo/pulls/$PR/reviews
 
 ### Phase 3: Code Review
 
-Delegate to **`code-review-assistant`** skill. Analyze:
-- Modified files and lines changed
-- Risk level classification
-- Cross-file consistency
-- Test coverage verification
-- Pattern detection (feature, bug, refactor)
+Delegate to **`code-review-assistant`** skill for full PR-level analysis (risk classification, cross-file consistency, test coverage, pattern detection). Use its output to populate the Phase 7 report.
 
 ### Phase 4: Static Analysis
 
@@ -106,13 +101,7 @@ Delegate to **`security-code-auditor`** skill. Scan for:
 
 ### Phase 6: Quality Check
 
-Delegate to **`code-quality`** skill. Detect:
-- DRY violations (duplicated logic across functions)
-- Magic numbers (replace with named constants)
-- Long methods (>50 lines) and large classes (>300 lines)
-- Long parameter lists (>4 params)
-- Dead code, speculative generality
-- Regex safety on untrusted input (`matchBounded`/`testBounded`)
+Delegate to **`code-quality`** skill for code-smell detection across changed files. Use its output to add `should-fix` and `nit` findings to the Phase 7 report.
 
 ### Phase 7: Compile Report
 

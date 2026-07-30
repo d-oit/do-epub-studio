@@ -30,128 +30,33 @@ python scripts/cli.py "query" --max-chars 5000
 | `--providers-order` | string | none | Comma-separated provider order |
 | `--log-level` | string | INFO | Log level (DEBUG/INFO/WARNING/ERROR) |
 
-### Execution Profiles
-
-```bash
-# Free-only (no paid APIs)
-python scripts/cli.py "query" --profile free
-
-# Fast response (max 4s, 1 paid provider)
-python scripts/cli.py "query" --profile fast
-
-# Balanced (default)
-python scripts/cli.py "query" --profile balanced
-
-# Quality (max 20s, up to 5 paid providers)
-python scripts/cli.py "query" --profile quality
-```
-
 ### Advanced Controls
 
-These flags allow fine-tuning the resolution process beyond execution profiles:
-
-- `--max-provider-attempts <N>`: Maximum number of providers to try in the cascade.
-- `--max-paid-attempts <N>`: Maximum number of paid providers to attempt.
-- `--max-total-latency-ms <MS>`: Hard timeout for the entire resolution process in milliseconds.
-- `--min-chars <N>`: Minimum content length for a result to be considered successful.
-- `--quality-threshold <F>`: Minimum quality score (0.0-1.0) for a result to be accepted.
+- `--max-provider-attempts <N>`: Max providers to try in the cascade.
+- `--max-paid-attempts <N>`: Max paid providers to attempt.
+- `--max-total-latency-ms <MS>`: Hard timeout for the entire resolution process.
+- `--min-chars <N>`: Minimum content length for a successful result.
+- `--quality-threshold <F>`: Minimum quality score (0.0–1.0).
 - `--metrics-file <PATH>`: Save resolution metrics to a JSON file.
 - `--skip-cache`: Bypass both traditional and semantic caches.
 - `--disable-routing-memory`: Do not use or update domain-level performance memory.
 
-### Skip Providers
+### Skip / Select Providers
 
 ```bash
-# Skip specific providers
 python scripts/cli.py "query" --skip exa_mcp --skip exa
-
-# Skip multiple at once
-python scripts/cli.py "query" --skip exa --skip tavily --skip serper
-```
-
-### Direct Provider Selection
-
-```bash
-# Use only DuckDuckGo
 python scripts/cli.py "query" --provider duckduckgo
-
-# Custom provider order
 python scripts/cli.py "query" --providers-order "exa,jina,duckduckgo"
 ```
 
-## Rust CLI (`do-wdr` binary)
+## Rust CLI (`do-wdr`)
 
-### Build
-
-```bash
-cd cli
-cargo build --release
-# Binary: cli/target/release/do-wdr
-```
-
-### Basic Usage
+<!-- Full Rust CLI reference: references/RUST_CLI.md -->
 
 ```bash
-# Resolve a URL
 do-wdr resolve "https://docs.rs/tokio"
-
-# Resolve a query
-do-wdr resolve "Rust async runtime comparison"
-
-# JSON output
-do-wdr resolve "query" --json
-
-# Specify max characters
-do-wdr resolve "query" --max-chars 5000
-```
-
-### Options
-
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `--max-chars` | int | 8000 | Maximum characters in output |
-| `--json` | flag | false | Output as JSON |
-| `-p, --profile` | string | balanced | Execution profile |
-| `--skip` | string | none | Skip providers (comma-separated) |
-| `--provider` | string | none | Use specific provider |
-| `-o, --output` | string | none | Output file |
-| `-v, --verbose` | flag | false | Verbose output (-v, -vv, -vvv) |
-| `-h, --help` | flag | false | Show help |
-
-### Utility Commands
-
-```bash
-# List providers
-do-wdr providers
-
-# Show config
-do-wdr config
-
-# Cache statistics
-do-wdr cache-stats
-```
-
-### Configuration File
-
-The Rust CLI supports a `config.toml` file:
-
-```toml
-# ~/.config/do-wdr/config.toml
-
-[defaults]
-max_chars = 8000
-timeout = 30
-profile = "balanced"
-
-[cache]
-enabled = true
-ttl_hours = 24
-path = "~/.cache/do-wdr"
-
-[providers]
-# API keys can be set here or via environment variables
-# exa_api_key = "your-key"
-# tavily_api_key = "your-key"
+do-wdr resolve "Rust async runtime" --profile fast --json
+do-wdr providers  # list available providers
 ```
 
 ## Python Module API
@@ -159,45 +64,29 @@ path = "~/.cache/do-wdr"
 ```python
 from scripts.resolve import resolve, resolve_url, resolve_query, resolve_direct, resolve_with_order
 
-# Auto-detect URL vs query
-result = resolve("https://example.com")
-result = resolve("Python web frameworks")
-
-# Explicit URL resolution
+result = resolve("https://example.com")          # auto-detect URL vs query
 result = resolve_url("https://docs.rs/tokio", max_chars=5000)
-
-# Explicit query resolution
 result = resolve_query("Rust web frameworks", skip_providers={"exa_mcp"})
 
-# With profile
 from scripts.models import Profile
 result = resolve("query", profile=Profile.QUALITY)
 
-# Direct provider call
 from scripts.models import ProviderType
 result = resolve_direct("query", ProviderType.DUCKDUCKGO)
-
-# Custom provider order
-result = resolve_with_order("query", [
-    ProviderType.EXA_MCP,
-    ProviderType.DUCKDUCKGO
-])
+result = resolve_with_order("query", [ProviderType.EXA_MCP, ProviderType.DUCKDUCKGO])
 ```
 
 ### Response Structure
 
 ```python
 {
-    "url": "https://example.com/docs",  # Original URL (if URL input)
-    "query": "search query",            # Original query (if query input)
+    "url": "https://example.com/docs",   # Original URL (if URL input)
+    "query": "search query",             # Original query (if query input)
     "content": "# Documentation\n\n...", # Markdown content
-    "source": "exa_mcp",                # Provider that succeeded
-    "score": 0.87,                      # Quality score (0.0-1.0)
-    "validated_links": [],              # Validated links (if any)
-    "metadata": {},                     # Additional metadata
-    "metrics": {                        # Resolution metrics
+    "source": "exa_mcp",                 # Provider that succeeded
+    "score": 0.87,                       # Quality score (0.0-1.0)
+    "metrics": {
         "total_latency_ms": 1234,
-        "provider_metrics": [...],
         "cascade_depth": 1,
         "paid_usage": False,
         "cache_hit": False

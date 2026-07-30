@@ -43,3 +43,30 @@ src/routes/
 Observability middleware MUST precede path guards, CORS, security headers, and rate limiting. This ensures traceId is captured on every request — including 414 (URI Too Long) responses where the path-length guard rejects before other middleware runs.
 
 Reference: `apps/worker/src/app.ts:23-33`
+
+## Examples
+
+### Route Definition
+
+Typed Hono route with `Env` binding, `zValidator`, and the `{ ok, data }` envelope (from `apps/worker/src/routes/access.ts`):
+
+```ts
+import { Hono } from 'hono';
+import { zValidator } from '@hono/zod-validator';
+import type { Env } from '../lib/env';
+import { AccessRequestSchema } from '@do-epub-studio/shared';
+
+export const accessRouter = new Hono<{ Bindings: Env }>();
+
+accessRouter.post('/request', zValidator('json', AccessRequestSchema), async (c) => {
+  const { bookSlug, email, password } = c.req.valid('json');
+  // ...validate, create session...
+  return c.json({
+    ok: true,
+    data: { sessionToken: session.token, expiresAt: session.expiresAt },
+  });
+});
+
+// Error responses use the same envelope with ok: false
+// return c.json({ ok: false, error: { code: 'ACCESS_DENIED', message: 'Access denied' } }, 401);
+```
