@@ -5,7 +5,7 @@ describe('signed-url utilities (real implementation)', () => {
   const env = {
     APP_BASE_URL: 'https://test.example.com',
     SESSION_SIGNING_SECRET: process.env.TEST_SESSION_SIGNING_SECRET || 'test-secret'
-  } as any;
+  } as unknown as Parameters<typeof generateSignedUrl>[0];
   const bookId = 'book-123';
   const fileKey = 'books/book-123/content.epub';
 

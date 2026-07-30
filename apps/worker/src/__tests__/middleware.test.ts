@@ -18,6 +18,9 @@ import { validateSession, parseAuthHeader } from '../auth/session';
 import type { Env } from '../lib/env';
 import type { RateLimiterDO } from '../lib/rate-limiter-do';
 
+// Mirrors the private SessionRow shape in auth/session.ts
+type SessionLike = { id: string; book_id: string; email: string; session_token_hash: string; expires_at: string; revoked_at: string | null };
+
 function makeEnv(): Env {
   return {
     BOOKS_BUCKET: {
@@ -104,7 +107,7 @@ describe('requireAuth middleware', () => {
     mockParseAuthHeader.mockReturnValue('valid');
     mockValidateSession.mockResolvedValue({
       valid: true,
-      session: makeSessionRow() as any,
+      session: makeSessionRow() as unknown as SessionLike,
       bookId: 'book-1',
     });
     mockQueryFirst.mockResolvedValue({
@@ -127,7 +130,7 @@ describe('requireAuth middleware', () => {
     mockParseAuthHeader.mockReturnValue('valid');
     mockValidateSession.mockResolvedValue({
       valid: true,
-      session: makeSessionRow() as any,
+      session: makeSessionRow() as unknown as SessionLike,
       bookId: 'book-1',
     });
     mockQueryFirst.mockResolvedValue({
@@ -151,7 +154,7 @@ describe('requireAuth middleware', () => {
     mockParseAuthHeader.mockReturnValue('valid');
     mockValidateSession.mockResolvedValue({
       valid: true,
-      session: makeSessionRow() as any,
+      session: makeSessionRow() as unknown as SessionLike,
       bookId: 'book-1',
     });
     mockQueryFirst.mockResolvedValue({

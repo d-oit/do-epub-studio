@@ -12,7 +12,6 @@ vi.mock('../hooks/useTranslation', () => ({
         'admin.breadcrumb.grants': 'Grants',
         'admin.breadcrumb.audit': 'Audit Log',
       };
-      // eslint-disable-next-line security/detect-object-injection -- test translation lookup
       return Object.hasOwn(translations, key) ? translations[key] : key;
     },
   }),

@@ -48,7 +48,7 @@ describe('Files Routes', () => {
       };
 
       mockQueryFirst.mockResolvedValue({ id: '1', storage_key: 'key' });
-      vi.spyOn(env.BOOKS_BUCKET, 'get').mockResolvedValue(mockObject as any);
+      vi.spyOn(env.BOOKS_BUCKET, 'get').mockResolvedValue(mockObject as unknown as R2ObjectBody);
 
       const res = await app.fetch(makeFileUrlRequest('book-1', 'key', '9999999999', 'sig'), env);
 
@@ -75,7 +75,7 @@ describe('Files Routes', () => {
       };
 
       mockQueryFirst.mockResolvedValue({ id: '1', storage_key: 'key' });
-      vi.spyOn(env.BOOKS_BUCKET, 'get').mockResolvedValue(mockObject as any);
+      vi.spyOn(env.BOOKS_BUCKET, 'get').mockResolvedValue(mockObject as unknown as R2ObjectBody);
 
       const res = await app.fetch(makeFileUrlRequest('book-1', 'key', '9999999999', 'sig'), env);
       const csp = res.headers.get('Content-Security-Policy') ?? '';

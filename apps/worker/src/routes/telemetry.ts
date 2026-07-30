@@ -60,9 +60,6 @@ interface TelemetryLogEntry {
 }
 
 async function persistTelemetry(env: Env, logs: TelemetryLogEntry[]): Promise<void> {
-  // Guard: env.DB is required at the type level but may be absent
-  // in test environments where the full Env bindings are not provided.
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- runtime guard for test env
   if (!env.DB) return;
 
   const { execute } = await import('../db/client');

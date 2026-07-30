@@ -8,7 +8,6 @@ vi.mock('../hooks/useTranslation', () => ({
       const translations: Record<string, string> = {
         'offline.banner': 'You are currently offline',
       };
-      // eslint-disable-next-line security/detect-object-injection -- test translation lookup
       return Object.hasOwn(translations, key) ? translations[key] : key;
     },
   }),

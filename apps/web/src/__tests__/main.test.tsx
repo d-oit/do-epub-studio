@@ -71,11 +71,11 @@ vi.mock('virtual:pwa-register', () => ({
 
 describe('main.tsx', () => {
   let addEventListenerSpy: ReturnType<typeof vi.spyOn>;
-  let errorListeners: Array<(...args: unknown[]) => void> = [];
-  let rejectionListeners: Array<(...args: unknown[]) => void> = [];
-  let loadListeners: Array<(...args: unknown[]) => void> = [];
+  let errorListeners: EventListener[] = [];
+  let rejectionListeners: EventListener[] = [];
+  let loadListeners: EventListener[] = [];
   let originalNavigator: typeof navigator;
-  let mockServiceWorker: any;
+  let mockServiceWorker: { register: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -88,10 +88,11 @@ describe('main.tsx', () => {
     loadListeners = [];
 
     addEventListenerSpy = vi.spyOn(window, 'addEventListener').mockImplementation(
-      (event: string, listener: any) => {
-        if (event === 'error') errorListeners.push(listener);
-        else if (event === 'unhandledrejection') rejectionListeners.push(listener);
-        else if (event === 'load') loadListeners.push(listener);
+      (event: string, listener: EventListenerOrEventListenerObject) => {
+        const fn = typeof listener === 'function' ? listener : listener.handleEvent.bind(listener);
+        if (event === 'error') errorListeners.push(fn);
+        else if (event === 'unhandledrejection') rejectionListeners.push(fn);
+        else if (event === 'load') loadListeners.push(fn);
         return undefined;
       },
     );

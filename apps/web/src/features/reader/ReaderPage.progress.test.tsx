@@ -6,6 +6,7 @@ import { useAuthStore, useReaderStore } from '../../stores';
 import { fetchProgress } from '../../lib/api/index';
 import { logClientEvent } from '../../lib/client-logger';
 import { getProgress } from '../../lib/offline';
+import type { ProgressEntry } from '../../lib/offline/db';
 
 // Mock dependencies
 vi.mock('../../lib/api/index', () => ({
@@ -57,7 +58,7 @@ describe('ReaderPage Progress Loading', () => {
       bookId: 'test-book-id',
       bookSlug: 'test-book',
       isAuthenticated: true,
-      capabilities: { canRead: true, canComment: true, canHighlight: true } as any,
+      capabilities: { canRead: true, canComment: true, canHighlight: true, canBookmark: false, canDownloadOffline: false, canExportNotes: false, canManageAccess: false },
     });
     useReaderStore.setState({
       highlights: [],
@@ -100,7 +101,7 @@ describe('ReaderPage Progress Loading', () => {
       percentage: 0.5,
       lastRead: Date.now(),
     };
-    vi.mocked(getProgress).mockResolvedValue(mockOfflineProgress as any);
+    vi.mocked(getProgress).mockResolvedValue(mockOfflineProgress as unknown as ProgressEntry);
 
     render(
       <MemoryRouter initialEntries={['/read/test-book']}>

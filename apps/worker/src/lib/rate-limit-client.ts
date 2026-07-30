@@ -47,3 +47,20 @@ export async function checkRateLimitDO(
     return { allowed: true, remaining: 0, resetAt: 0 };
   }
 }
+
+/**
+ * Deletes a single rate-limit key from the Durable Object storage.
+ * Used to clear per-user lockout and failure counters on successful login.
+ */
+export async function deleteRateLimitKey(env: Env, namespace: string, key: string): Promise<void> {
+  try {
+    const id = env.RATE_LIMITER.idFromName(namespace);
+    const obj = env.RATE_LIMITER.get(id);
+    await obj.fetch(
+      `http://rate-limiter/key/${encodeURIComponent(namespace)}/${encodeURIComponent(key)}`,
+      { method: 'DELETE' },
+    );
+  } catch (error) {
+    console.error(JSON.stringify({ level: 'error', traceId: createTraceId(), event: 'rate_limit_client.delete_key.error', error: error instanceof Error ? error.message : String(error) }));
+  }
+}

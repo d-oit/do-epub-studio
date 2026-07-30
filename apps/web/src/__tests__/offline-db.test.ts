@@ -81,7 +81,7 @@ describe('Offline Database', () => {
 
       expect(stored.encryptedPayload).toBeDefined();
       expect(typeof stored.encryptedPayload).toBe('string');
-      expect((stored as any).cfi).toBeUndefined();
+      expect(stored.cfi).toBeUndefined();
 
       const retrieved = await getProgress('book-1');
       expect(retrieved).toBeDefined();
@@ -204,7 +204,7 @@ describe('Offline Database', () => {
       const db = await getDB();
       const stored = await db.get('annotations', 'annotation-1') as Record<string, unknown>;
       expect(stored.encryptedPayload).toBeDefined();
-      expect((stored as any).text).toBeUndefined();
+      expect(stored.text).toBeUndefined();
 
       const annotations = await getAnnotations('book-1');
       expect(annotations).toHaveLength(1);
@@ -399,11 +399,11 @@ describe('Offline Database', () => {
       const db = await getDB();
       const stored = await db.get('syncQueue', 'item-enc') as Record<string, unknown>;
       expect(stored.encryptedPayload).toBeDefined();
-      expect((stored as any).payload).toBeUndefined();
+      expect(stored.payload).toBeUndefined();
 
       const queue = await getSyncQueue();
       expect(queue).toHaveLength(1);
-      expect((queue[0].payload as any).sensitive).toBe('private-data');
+      expect((queue[0].payload as Record<string, unknown>).sensitive).toBe('private-data');
     });
   });
 
@@ -443,7 +443,7 @@ describe('Offline Database', () => {
       const db = await getDB();
       const stored = await db.get('permissions', 'book-enc') as Record<string, unknown>;
       expect(stored.encryptedPayload).toBeDefined();
-      expect((stored as any).grantId).toBeUndefined();
+      expect(stored.grantId).toBeUndefined();
 
       const cached = await getCachedPermission('book-enc');
       expect(cached).toBeDefined();

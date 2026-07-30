@@ -10,7 +10,6 @@ vi.mock('../i18n', () => ({
       'reader.settings': 'Reader Settings',
       'reader.theme': 'Theme',
     };
-    // eslint-disable-next-line security/detect-object-injection -- test translation lookup
     let result = Object.hasOwn(translations, key) ? translations[key] : key;
     if (params) {
       for (const [k, v] of Object.entries(params)) {

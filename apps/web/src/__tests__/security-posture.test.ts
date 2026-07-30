@@ -11,7 +11,7 @@ describe('Security Posture (Web)', () => {
     // We don't need to instantiate the store to check the persist options
     // but the store is already exported.
 
-    const persistOptions = (useAuthStore as unknown as { persist?: { getOptions: () => { name: string, storage: any } } }).persist?.getOptions();
+    const persistOptions = (useAuthStore as unknown as { persist?: { getOptions: () => { name: string, storage: { getItem: () => unknown } | null } } }).persist?.getOptions();
     expect(persistOptions?.name).toBe('do-epub-auth');
     expect(persistOptions?.storage?.getItem).toBeDefined();
     // Default storage is localStorage if not specified otherwise
@@ -127,7 +127,7 @@ describe('Security Posture (Web)', () => {
   });
 
   it('session token matches expected format (256-bit hex string)', () => {
-    const persistOptions = (useAuthStore as unknown as { persist?: { getOptions: () => { name: string, storage: any } } }).persist?.getOptions();
+    const persistOptions = (useAuthStore as unknown as { persist?: { getOptions: () => { name: string, storage: { getItem: () => unknown } | null } } }).persist?.getOptions();
     expect(persistOptions?.name).toBe('do-epub-auth');
 
     // ADR-092: tokens are 256-bit random = 64 hex chars

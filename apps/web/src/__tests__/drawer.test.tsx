@@ -18,7 +18,7 @@ vi.mock('../hooks/useTranslation', () => ({
 }));
 
 vi.mock('../components/ui', () => ({
-  AppLogo: ({ size: _size, ...props }: any) => <div data-testid="app-logo" {...props} />,
+  AppLogo: ({ size: _size, ...props }: React.HTMLAttributes<HTMLDivElement> & { size?: unknown }) => <div data-testid="app-logo" {...props} />,
 }));
 
 vi.mock('../components/navigation/shared', () => ({
@@ -26,7 +26,7 @@ vi.mock('../components/navigation/shared', () => ({
     { key: 'reader.library', icon: 'library', href: '/library' },
     { key: 'reader.settings', icon: 'settings', href: '/settings' },
   ],
-  NavIcon: ({ icon, ...props }: any) => <span data-testid={`nav-icon-${icon}`} {...props} />,
+  NavIcon: ({ icon, ...props }: React.HTMLAttributes<HTMLSpanElement> & { icon?: string }) => <span data-testid={`nav-icon-${icon}`} {...props} />,
 }));
 
 describe('Drawer', () => {

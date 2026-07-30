@@ -79,7 +79,6 @@ describe('StorageQuota', () => {
     // Loading state shows skeleton animation, no title text
     expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
     expect(screen.getByText((_, element) =>
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Codacy false positive: element can be null in test matcher
       element?.className?.includes('animate-pulse') === true,
     )).toBeInTheDocument();
   });

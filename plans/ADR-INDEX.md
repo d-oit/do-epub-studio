@@ -75,6 +75,7 @@
 | 187 | Fail-Closed Engineering Gates | `plans/archive/187-adr-fail-closed-engineering-gates.md` | Accepted |
 | 198 | Verified-Closure Methodology | `plans/archive/198-adr-verified-closure-methodology.md` | Accepted |
 | 199 | i18n Plural Rules Deferral | `plans/199-adr-i18n-plural-rules-deferral.md` | Accepted (deferred) |
+| 200 | Login Lockout as Compensating Control for localStorage Token Storage | `plans/200-adr-session-lockout-compensating-control.md` | Accepted (Wave 4-C) |
 | 998 | Offline Comment Status Preservation | `plans/archive/998-adr-offline-comment-status-preservation.md` | Accepted |
 
 ## Cross-referenced (archived GOAP execution records)

@@ -47,6 +47,18 @@ vi.mock('cloudflare:workers', () => ({
         return new Response(null, { status: 204 });
       }
 
+      if (request.method === 'DELETE' && path.startsWith('/key/')) {
+        const namespaceAndKey = path.slice('/key/'.length);
+        const slashIdx = namespaceAndKey.indexOf('/');
+        if (slashIdx === -1) return new Response('Bad request', { status: 400 });
+        const ns = namespaceAndKey.slice(0, slashIdx);
+        const k = namespaceAndKey.slice(slashIdx + 1);
+        if (!ns || !k) return new Response('Bad request', { status: 400 });
+        // Use raw (un-decoded) segments so they match the keys stored by /check
+        mockStorage.delete(`${ns}:${k}`);
+        return new Response(null, { status: 204 });
+      }
+
       const checkMatch = path.match(/^\/check\/([^/]+)\/([^/]+)$/);
       if (request.method === 'GET' && checkMatch) {
         const [, namespace, key] = checkMatch;
@@ -170,6 +182,37 @@ describe('RateLimiterDO', () => {
       const resetReq = new Request('http://localhost/reset/', { method: 'POST' });
       const res = await doInstance.fetch(resetReq);
       expect(res.status).toBe(204);
+    });
+  });
+
+  describe('fetch - DELETE /key', () => {
+    it('deletes a specific key and returns 204', async () => {
+      // Write an entry via /check (consumes one slot: remaining goes to 4)
+      const checkReq = new Request('http://localhost/check/auth_failures/user%40example.com?maxRequests=5&windowMs=900000');
+      const firstRes = await doInstance.fetch(checkReq);
+      const first: { remaining: number } = await firstRes.json();
+      expect(first.remaining).toBe(4); // consumed 1 of 5
+
+      // Delete the key
+      const delReq = new Request('http://localhost/key/auth_failures/user%40example.com', { method: 'DELETE' });
+      const delRes = await doInstance.fetch(delReq);
+      expect(delRes.status).toBe(204);
+
+      // After delete the entry is gone; next check starts a fresh window (remaining = 4)
+      const afterRes = await doInstance.fetch(new Request('http://localhost/check/auth_failures/user%40example.com?maxRequests=5&windowMs=900000'));
+      const after: { remaining: number } = await afterRes.json();
+      expect(after.remaining).toBe(4); // fresh window: maxRequests - 1
+    });
+
+    it('returns 204 even when key does not exist', async () => {
+      const delReq = new Request('http://localhost/key/auth_lockout/nobody%40example.com', { method: 'DELETE' });
+      const res = await doInstance.fetch(delReq);
+      expect(res.status).toBe(204);
+    });
+
+    it('returns 400 when namespace or key is missing', async () => {
+      const res = await doInstance.fetch(new Request('http://localhost/key/only-namespace', { method: 'DELETE' }));
+      expect(res.status).toBe(400);
     });
   });
 

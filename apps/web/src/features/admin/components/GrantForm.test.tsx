@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { GrantForm } from './GrantForm';
+import type { Grant } from './types';
 
 vi.mock('../../../hooks/useTranslation', () => ({
   useTranslation: () => ({ t: (k: string) => k }),
@@ -44,7 +45,7 @@ describe('GrantForm', () => {
       offlineAllowed: false,
       expiresAt: null,
     };
-    render(<GrantForm {...defaultProps} editingGrant={editingGrant as any} />);
+    render(<GrantForm {...defaultProps} editingGrant={editingGrant as unknown as Grant} />);
     expect(screen.getByText('grants.editGrantTitle')).toBeInTheDocument();
   });
 
@@ -63,7 +64,7 @@ describe('GrantForm', () => {
       offlineAllowed: false,
       expiresAt: null,
     };
-    render(<GrantForm {...defaultProps} editingGrant={editingGrant as any} />);
+    render(<GrantForm {...defaultProps} editingGrant={editingGrant as unknown as Grant} />);
     expect(screen.queryByText('grants.form.password')).not.toBeInTheDocument();
   });
 
@@ -165,7 +166,7 @@ describe('GrantForm', () => {
       offlineAllowed: false,
       expiresAt: null,
     };
-    render(<GrantForm {...defaultProps} editingGrant={editingGrant as any} />);
+    render(<GrantForm {...defaultProps} editingGrant={editingGrant as unknown as Grant} />);
     expect(screen.getByText('grants.actions.save')).toBeInTheDocument();
   });
 });

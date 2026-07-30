@@ -2,7 +2,7 @@
 
 > **Status:** adopted (per ADR-092, GOAP plan #092)
 > **Audience:** auditors, security reviewers, future contributors
-> **Last reviewed:** 2026-06-14
+> **Last reviewed:** 2026-07-30
 
 This page records the standing security decisions for `do-epub-studio`
 so they do not need to be re-litigated on every audit. Where the
@@ -57,6 +57,14 @@ reintroduces the CSRF risk that D1 above already eliminated.
 4. **DOMPurify sanitization** of all rendered EPUB content
    (`packages/reader-core/src/sanitizer.ts`). The primary XSS vector
    for this product is hostile EPUB HTML, not app code.
+
+**Wave 4 (2026-07) additional compensating control — login lockout:**
+`RateLimiterDO` in `apps/worker/src/routes/access.ts` locks an account after
+5 failed login attempts within a 15-minute window (HTTP 423 Locked). The lock
+expires after 15 minutes. This does not prevent XSS-based token exfiltration
+(that is the CSP and sanitizer's job), but it does prevent an attacker who
+has extracted a token from using it as a pivot to brute-force other users'
+credentials. See ADR-200 for the full decision record.
 
 If the threat model changes (e.g. regulatory demand for defense
 against XSS token theft), revisit this section and adopt cookie
@@ -154,10 +162,14 @@ Never open a public GitHub issue for a suspected vulnerability
 
 ## Cross-references
 
-- ADR-092 — `plans/092-adr-token-storage-and-feature-gap-policy.md`
+- ADR-092 — `plans/archive/092-adr-token-storage-and-feature-gap-policy.md`
   (the policy decisions summarized above)
-- ADR-035 — `plans/035-adr-content-security-policy.md` (CSP detail)
-- ADR-034 — `plans/034-adr-security-redos-hardening.md` (bounded regex)
+- ADR-200 — `plans/200-adr-session-lockout-compensating-control.md`
+  (Wave 4 login lockout as additional compensating control)
+- ADR-080 — `plans/archive/080-adr-session-storage-compensating-controls.md`
+  (regression test governance for compensating controls)
+- ADR-035 — `plans/archive/035-adr-content-security-policy.md` (CSP detail)
+- ADR-034 — `plans/archive/034-adr-security-redos-hardening.md` (bounded regex)
 - ADR-006 — annotation model and rendering contract
 - `docs/security.md` — repository-root security policy
 - `SECURITY.md` — vulnerability disclosure

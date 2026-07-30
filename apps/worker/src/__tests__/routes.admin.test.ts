@@ -28,7 +28,7 @@ describe('Admin Routes', () => {
         token: 'admin-token',
         user: { id: 'admin-1', email: 'admin@example.com', role: 'admin' },
         status: 200
-      } as any);
+      });
 
       const res = await app.fetch(new Request('http://localhost/api/admin/login', {
         method: 'POST',
@@ -37,7 +37,7 @@ describe('Admin Routes', () => {
       }), env, makePassThroughContext());
 
       expect(res.status).toBe(200);
-      const body = await res.json() as any;
+      const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } = await res.json();
       expect(body.data.token).toBe('admin-token');
     });
 
@@ -46,7 +46,7 @@ describe('Admin Routes', () => {
         ok: false,
         error: 'Invalid credentials',
         status: 401
-      } as any);
+      });
 
       const res = await app.fetch(new Request('http://localhost/api/admin/login', {
         method: 'POST',
@@ -74,9 +74,9 @@ describe('Admin Routes', () => {
       mockRequireAdminAuth.mockResolvedValue({
         ok: true,
         context: { userId: 'admin-1', email: 'admin@example.com', globalRole: 'admin' },
-      } as any);
+      });
 
-      mockExecute.mockResolvedValue({} as any);
+      mockExecute.mockResolvedValue({ rows: [] });
 
       const res = await app.fetch(new Request('http://localhost/api/admin/books', {
         method: 'POST',
@@ -91,7 +91,7 @@ describe('Admin Routes', () => {
       }), env, makePassThroughContext());
 
       expect(res.status).toBe(201);
-      const body = await res.json() as any;
+      const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } = await res.json();
       expect(body.ok).toBe(true);
     });
   });
@@ -101,7 +101,7 @@ describe('Admin Routes', () => {
       mockRequireAdminAuth.mockResolvedValue({
         ok: true,
         context: { userId: 'admin-1', email: 'admin@example.com', globalRole: 'admin' },
-      } as any);
+      });
 
       mockQueryFirst.mockResolvedValue({ id: 'book-1', slug: 'book-slug' });
 
@@ -122,7 +122,7 @@ describe('Admin Routes', () => {
       }), env, makePassThroughContext());
 
       expect(res.status).toBe(200);
-      const body = await res.json() as any;
+      const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } = await res.json();
       expect(body.data.storageKey).toBeDefined();
     });
   });
@@ -132,9 +132,9 @@ describe('Admin Routes', () => {
       mockRequireAdminAuth.mockResolvedValue({
         ok: true,
         context: { userId: 'admin-1', email: 'admin@example.com', globalRole: 'admin' },
-      } as any);
+      });
 
-      mockExecute.mockResolvedValue({} as any);
+      mockExecute.mockResolvedValue({ rows: [] });
 
       const res = await app.fetch(new Request('http://localhost/api/admin/books/book-1/upload-complete', {
         method: 'POST',
@@ -157,7 +157,7 @@ describe('Admin Routes', () => {
       mockRequireAdminAuth.mockResolvedValue({
         ok: true,
         context: { userId: 'admin-1', email: 'admin@example.com', globalRole: 'admin' },
-      } as any);
+      });
 
       mockCreateGrant.mockResolvedValue('grant-1');
 
@@ -185,7 +185,7 @@ describe('Admin Routes', () => {
       mockRequireAdminAuth.mockResolvedValue({
         ok: true,
         context: { userId: 'admin-1', email: 'admin@example.com', globalRole: 'admin' },
-      } as any);
+      });
 
       mockQueryAll.mockResolvedValue([
         { id: 'grant-1', email: 'user@example.com', mode: 'private', allowed: 1 }
@@ -196,7 +196,7 @@ describe('Admin Routes', () => {
       }), env, makePassThroughContext());
 
       expect(res.status).toBe(200);
-      const body = await res.json() as any;
+      const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } = await res.json();
       expect(body.data).toHaveLength(1);
     });
   });
@@ -206,7 +206,7 @@ describe('Admin Routes', () => {
       mockRequireAdminAuth.mockResolvedValue({
         ok: true,
         context: { userId: 'admin-1', email: 'admin@example.com', globalRole: 'admin' },
-      } as any);
+      });
 
       mockTransaction.mockResolvedValue(undefined);
 
@@ -226,7 +226,7 @@ describe('Admin Routes', () => {
       mockRequireAdminAuth.mockResolvedValue({
         ok: true,
         context: { userId: 'admin-1', email: 'admin@example.com', globalRole: 'admin' },
-      } as any);
+      });
 
       mockTransaction.mockResolvedValue(undefined);
 
@@ -256,7 +256,7 @@ describe('Admin Routes', () => {
       mockRequireAdminAuth.mockResolvedValue({
         ok: true,
         context: { userId: 'admin-1', email: 'admin@example.com', globalRole: 'admin' },
-      } as any);
+      });
 
       mockTransaction.mockResolvedValue(undefined);
 
@@ -274,7 +274,7 @@ describe('Admin Routes', () => {
       mockRequireAdminAuth.mockResolvedValue({
         ok: true,
         context: { userId: 'admin-1', email: 'admin@example.com', globalRole: 'admin' },
-      } as any);
+      });
 
       mockQueryAll
         .mockResolvedValueOnce([{ cnt: 1 }]) // count query
@@ -282,7 +282,7 @@ describe('Admin Routes', () => {
 
       const res = await app.fetch(new Request('http://localhost/api/admin/audit?entityType=book&limit=10'), env, makePassThroughContext());
       expect(res.status).toBe(200);
-      const body = await res.json() as any;
+      const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } = await res.json();
       expect(body.data.entries).toHaveLength(1);
     });
   });
@@ -292,7 +292,7 @@ describe('Admin Routes', () => {
       mockRequireAdminAuth.mockResolvedValue({
         ok: true,
         context: { userId: 'admin-1', email: 'admin@example.com', globalRole: 'admin' },
-      } as any);
+      });
 
       // Book exists and is not archived
       mockQueryFirst.mockResolvedValue({ id: 'book-1' });
@@ -315,7 +315,7 @@ describe('Admin Routes', () => {
       }), env, makePassThroughContext());
 
       expect(res.status).toBe(200);
-      const body = await res.json() as any;
+      const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } = await res.json();
       expect(body.data.r2ObjectsDeleted).toBe(2);
 
       // Verify R2 delete called for each file
@@ -344,7 +344,7 @@ describe('Admin Routes', () => {
       mockRequireAdminAuth.mockResolvedValue({
         ok: true,
         context: { userId: 'admin-1', email: 'admin@example.com', globalRole: 'admin' },
-      } as any);
+      });
 
       mockQueryFirst.mockResolvedValue(null);
 
@@ -360,7 +360,7 @@ describe('Admin Routes', () => {
       mockRequireAdminAuth.mockResolvedValue({
         ok: true,
         context: { userId: 'admin-1', email: 'admin@example.com', globalRole: 'admin' },
-      } as any);
+      });
 
       mockQueryFirst.mockResolvedValue({ id: 'book-1' });
       const mockBucketDelete = vi.fn().mockRejectedValue(new Error('R2 unavailable'));
@@ -381,7 +381,7 @@ describe('Admin Routes', () => {
 
       // DB cascade should still succeed even if R2 fails
       expect(res.status).toBe(200);
-      const body = await res.json() as any;
+      const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } = await res.json();
       // r2ObjectsDeleted reports attempted count, not success count
       expect(body.data.r2ObjectsDeleted).toBe(1);
       expect(mockTransaction).toHaveBeenCalled();
@@ -391,7 +391,7 @@ describe('Admin Routes', () => {
       mockRequireAdminAuth.mockResolvedValue({
         ok: true,
         context: { userId: 'admin-1', email: 'admin@example.com', globalRole: 'admin' },
-      } as any);
+      });
 
       mockQueryFirst.mockResolvedValue({ id: 'book-1' });
       const mockBucketDelete = vi.fn();
@@ -410,7 +410,7 @@ describe('Admin Routes', () => {
       }), env, makePassThroughContext());
 
       expect(res.status).toBe(200);
-      const body = await res.json() as any;
+      const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } = await res.json();
       expect(body.data.r2ObjectsDeleted).toBe(0);
       expect(mockBucketDelete).not.toHaveBeenCalled();
       expect(mockTransaction).toHaveBeenCalled();
@@ -420,7 +420,7 @@ describe('Admin Routes', () => {
       mockRequireAdminAuth.mockResolvedValue({
         ok: true,
         context: { userId: 'admin-1', email: 'admin@example.com', globalRole: 'admin' },
-      } as any);
+      });
 
       mockQueryFirst.mockResolvedValue({ id: 'book-1' });
       const mockBucketDelete = vi.fn().mockResolvedValue(undefined);
@@ -456,7 +456,7 @@ describe('Admin Routes', () => {
       mockRequireAdminAuth.mockResolvedValue({
         ok: true,
         context: { userId: 'admin-1', email: 'admin@example.com', globalRole: 'admin' },
-      } as any);
+      });
 
       // The stats endpoint runs 4 parallel queryFirst calls + 1 queryFirst + 1 queryAll
       mockQueryFirst
@@ -476,16 +476,17 @@ describe('Admin Routes', () => {
       }), env, makePassThroughContext());
 
       expect(res.status).toBe(200);
-      const body = await res.json() as any;
+      const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } = await res.json();
       expect(body.ok).toBe(true);
       expect(body.data.totalBooks).toBe(5);
       expect(body.data.activeGrants).toBe(12);
       expect(body.data.activeSessions).toBe(3);
       expect(body.data.archivedBooks).toBe(2);
       expect(body.data.storageBytes).toBe(10485760);
-      expect(body.data.recentActivity).toHaveLength(2);
-      expect(body.data.recentActivity[0].action).toBe('created');
-      expect(body.data.recentActivity[0].count).toBe(4);
+      const recentActivity = body.data.recentActivity as Array<{ action: string; count: number }>;
+      expect(recentActivity).toHaveLength(2);
+      expect(recentActivity[0].action).toBe('created');
+      expect(recentActivity[0].count).toBe(4);
     });
   });
 

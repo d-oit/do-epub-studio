@@ -27,7 +27,7 @@ describe('Books Routes', () => {
 
   describe('GET /api/books', () => {
     it('returns list of books', async () => {
-      mockRequireAuth.mockResolvedValue({ email: 'user@example.com' } as any);
+      mockRequireAuth.mockResolvedValue({ email: 'user@example.com' });
 
       mockQueryAll.mockResolvedValue([
         { id: '1', slug: 'book-1', title: 'Book 1', visibility: 'public' }
@@ -37,7 +37,7 @@ describe('Books Routes', () => {
         headers: { 'Authorization': 'Bearer valid' }
       }), env, makePassThroughContext());
       expect(res.status).toBe(200);
-      const body = await res.json() as any;
+      const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } = await res.json();
       expect(body.ok).toBe(true);
       expect(body.data).toHaveLength(1);
     });
@@ -45,7 +45,7 @@ describe('Books Routes', () => {
 
   describe('GET /api/books/:id', () => {
     it('returns 404 when book not found', async () => {
-      mockRequireAuth.mockResolvedValue({ email: 'user@example.com' } as any);
+      mockRequireAuth.mockResolvedValue({ email: 'user@example.com' });
 
       mockQueryFirst.mockResolvedValue(null);
       const res = await app.fetch(new Request('http://localhost/api/books/none', {
@@ -55,14 +55,14 @@ describe('Books Routes', () => {
     });
 
     it('returns book details when found', async () => {
-      mockRequireAuth.mockResolvedValue({ email: 'user@example.com' } as any);
+      mockRequireAuth.mockResolvedValue({ email: 'user@example.com' });
 
       mockQueryFirst.mockResolvedValue({ id: '1', slug: 'book-1', title: 'Book 1', visibility: 'public' });
       const res = await app.fetch(new Request('http://localhost/api/books/1', {
         headers: { 'Authorization': 'Bearer valid' }
       }), env, makePassThroughContext());
       expect(res.status).toBe(200);
-      const body = await res.json() as any;
+      const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } = await res.json();
       expect(body.data.id).toBe('1');
     });
   });
@@ -72,13 +72,13 @@ describe('Books Routes', () => {
       mockRequireAuth.mockResolvedValue({
         email: 'user@example.com',
         capabilities: { canRead: true }
-      } as any);
+      });
 
       mockQueryFirst
         .mockResolvedValueOnce({ id: '1', slug: 'book-1' }) // Book check
         .mockResolvedValueOnce({ storage_key: 'key.epub' }); // File check
 
-      mockGenerateSignedUrl.mockResolvedValue({ url: 'https://signed.url' } as any);
+      mockGenerateSignedUrl.mockResolvedValue({ url: 'https://signed.url' });
 
       const res = await app.fetch(new Request('http://localhost/api/books/1/file-url', {
         method: 'POST',
@@ -86,7 +86,7 @@ describe('Books Routes', () => {
       }), env, makePassThroughContext());
 
       expect(res.status).toBe(200);
-      const body = await res.json() as any;
+      const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } = await res.json();
       expect(body.data.url).toBe('https://signed.url');
     });
   });

@@ -48,15 +48,15 @@ describe('Offline Sync', () => {
     });
 
     // Mock window event listeners
-    const listeners: Map<string, ((...args: any[]) => void)[]> = new Map();
+    const listeners: Map<string, ((...args: unknown[]) => void)[]> = new Map();
     Object.defineProperty(globalThis, 'window', {
       value: {
-        addEventListener: vi.fn((event: string, handler: (...args: any[]) => void) => {
+        addEventListener: vi.fn((event: string, handler: (...args: unknown[]) => void) => {
           const handlers = listeners.get(event) || [];
           handlers.push(handler);
           listeners.set(event, handlers);
         }),
-        removeEventListener: vi.fn((event: string, handler: (...args: any[]) => void) => {
+        removeEventListener: vi.fn((event: string, handler: (...args: unknown[]) => void) => {
           const handlers = listeners.get(event) || [];
           const index = handlers.indexOf(handler);
           if (index > -1) handlers.splice(index, 1);

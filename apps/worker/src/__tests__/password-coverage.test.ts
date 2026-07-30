@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { validateGrant, computeCapabilities, getGrantByBookAndSession, getGrantsBySession, revokeGrant, createGrant } from '../auth/password';
+import type { QueryResult } from '../db/client';
+import type { Env } from '../lib/env';
 import * as db from '../db/client';
 
 vi.mock('../db/client', () => ({
@@ -15,7 +17,7 @@ vi.mock('argon2-wasm-edge', () => ({
 
 describe('auth/password.ts coverage', () => {
   const env = {
-    BOOKS_BUCKET: {} as any,
+    BOOKS_BUCKET: {} as unknown as R2Bucket,
     DB: { prepare: vi.fn().mockReturnThis(), bind: vi.fn().mockReturnThis(), all: vi.fn().mockResolvedValue({ results: [] }) } as unknown as D1Database,
     SENDER_EMAIL: {} as unknown as SendEmail,
     CACHE_KV: { get: vi.fn().mockResolvedValue(null), put: vi.fn().mockResolvedValue(undefined) } as unknown as KVNamespace,
@@ -24,7 +26,7 @@ describe('auth/password.ts coverage', () => {
     SESSION_SIGNING_SECRET: 'secret',
     INVITE_TOKEN_SECRET: 'secret',
     APP_BASE_URL: 'url',
-    RATE_LIMITER: {} as any,
+    RATE_LIMITER: {} as unknown as Env['RATE_LIMITER'],
   };
 
   beforeEach(() => {
@@ -86,7 +88,8 @@ describe('auth/password.ts coverage', () => {
   });
 
   it('createGrant inserts into DB', async () => {
-    vi.mocked(db.execute).mockResolvedValue({} as any);
+    const emptyResult: QueryResult = { rows: [] };
+    vi.mocked(db.execute).mockResolvedValue(emptyResult);
     const id = await createGrant(env, 'b1', 'e@ex.com', { password: 'p' });
     expect(id).toBeDefined();
     expect(db.execute).toHaveBeenCalled();
@@ -100,7 +103,7 @@ describe('auth/password.ts coverage', () => {
   it('computeCapabilities maps fields', () => {
     const caps = computeCapabilities({
       allowed: 1, comments_allowed: 1, offline_allowed: 1
-    } as any);
+    } as unknown as Parameters<typeof computeCapabilities>[0]);
     expect(caps.canRead).toBe(true);
     expect(caps.canComment).toBe(true);
     expect(caps.canDownloadOffline).toBe(true);

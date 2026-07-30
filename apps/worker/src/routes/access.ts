@@ -7,7 +7,7 @@ import { logAudit } from '../audit';
 import { AccessRequestSchema, RecoveryRequestSchema, RecoveryVerifySchema } from '@do-epub-studio/shared';
 import { ValidateQuerySchema } from '@do-epub-studio/schema';
 import { sign, verify } from 'hono/jwt';
-import { checkRateLimitDO } from '../lib/rate-limit-client';
+import { checkRateLimitDO, deleteRateLimitKey } from '../lib/rate-limit-client';
 import { queryFirst } from '../db/client';
 import { createEmailTransport } from '../lib/email-transport';
 
@@ -132,9 +132,10 @@ accessRouter.post('/verify-recovery', zValidator('json', RecoveryVerifySchema), 
 
 accessRouter.post('/request', zValidator('json', AccessRequestSchema), async (c) => {
   const { bookSlug, email, password } = c.req.valid('json');
+  const emailKey = email.toLowerCase();
 
   // Rate limit by email to prevent brute-force attacks (max 5 requests per minute)
-  const rateLimit = await checkRateLimitDO(c.env, 'auth_access', email.toLowerCase(), {
+  const rateLimit = await checkRateLimitDO(c.env, 'auth_access', emailKey, {
     maxRequests: 5,
     windowMs: 60_000,
   });
@@ -149,16 +150,50 @@ accessRouter.post('/request', zValidator('json', AccessRequestSchema), async (c)
     );
   }
 
-  const result = await validateGrant(c.env, bookSlug, email.toLowerCase(), password);
+  // Check account lockout (triggered after 5 consecutive failures; lasts 15 minutes)
+  const lockoutCheck = await checkRateLimitDO(c.env, 'auth_lockout', emailKey, {
+    maxRequests: 1,
+    windowMs: 900_000,
+  });
+
+  if (!lockoutCheck.allowed) {
+    const retryAfter = Math.ceil((lockoutCheck.resetAt - Date.now()) / 1000);
+    return c.json(
+      {
+        ok: false,
+        error: {
+          code: 'ACCOUNT_LOCKED',
+          message: 'Account temporarily locked due to repeated failed login attempts. Please try again later.',
+        },
+      },
+      423,
+      { 'Retry-After': String(retryAfter) },
+    );
+  }
+
+  const result = await validateGrant(c.env, bookSlug, emailKey, password);
 
   if (!result.valid || !result.grant || !result.book) {
     await logAudit(c.env, {
       entityType: 'session',
       entityId: bookSlug,
       action: 'access_denied',
-      actorEmail: email.toLowerCase(),
+      actorEmail: emailKey,
       payload: { reason: result.error },
     }, c.executionCtx);
+
+    // Track consecutive failures; lock the account when the 5th failure occurs
+    const failureCheck = await checkRateLimitDO(c.env, 'auth_failures', emailKey, {
+      maxRequests: 5,
+      windowMs: 900_000,
+    });
+    if (!failureCheck.allowed) {
+      // 5th (or more) failure — write the lockout entry so the next attempt is blocked
+      await checkRateLimitDO(c.env, 'auth_lockout', emailKey, {
+        maxRequests: 1,
+        windowMs: 900_000,
+      });
+    }
 
     return c.json(
       {
@@ -169,13 +204,19 @@ accessRouter.post('/request', zValidator('json', AccessRequestSchema), async (c)
     );
   }
 
+  // Successful login — clear failure counter and any lingering lockout
+  await Promise.all([
+    deleteRateLimitKey(c.env, 'auth_failures', emailKey),
+    deleteRateLimitKey(c.env, 'auth_lockout', emailKey),
+  ]);
+
   const session = await createSession(c.env, result.book.id, email);
 
   await logAudit(c.env, {
     entityType: 'session',
     entityId: result.book.id,
     action: 'access_granted',
-    actorEmail: email.toLowerCase(),
+    actorEmail: emailKey,
     payload: { grantId: result.grant.id },
   }, c.executionCtx);
 
