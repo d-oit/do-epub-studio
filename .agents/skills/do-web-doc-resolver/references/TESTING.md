@@ -2,10 +2,9 @@
 
 ## Overview
 
-The project has three test suites:
-1. **Python tests** - Unit and integration tests
-2. **Rust tests** - CLI unit and integration tests
-3. **E2E tests** - Playwright tests for the web UI
+The skill ships Python unit/integration tests. Run these before committing changes to the skill.
+
+<!-- Rust CLI tests, E2E Playwright tests, and full quality-gate scripts live in the upstream repo: https://github.com/d-oit/do-web-doc-resolver -->
 
 ## Python Tests
 
@@ -95,14 +94,9 @@ def test_resolve_live_exa():
     assert len(result["content"]) > 100
 ```
 
-### Fixtures (conftest.py)
+### Key Fixtures (conftest.py)
 
 ```python
-import pytest
-import tempfile
-import os
-
-
 @pytest.fixture
 def temp_cache_dir():
     """Create a temporary cache directory."""
@@ -117,15 +111,6 @@ def temp_cache_dir():
 
 
 @pytest.fixture
-def reset_rate_limits():
-    """Reset rate limit state between tests."""
-    from scripts.providers_impl import _rate_limits
-    _rate_limits.clear()
-    yield
-    _rate_limits.clear()
-
-
-@pytest.fixture
 def reset_circuit_breakers():
     """Reset circuit breaker state between tests."""
     from scripts.resolve import _circuit_breakers
@@ -134,179 +119,11 @@ def reset_circuit_breakers():
     _circuit_breakers.breakers.clear()
 ```
 
-## Rust Tests
-
-### Running Tests
+## Quick Quality Gate
 
 ```bash
-# Run all tests
-cd cli && cargo test
-
-# Run specific test
-cargo test test_resolve_url
-
-# Run with output
-cargo test -- --nocapture
-
-# Run integration tests
-cargo test --features integration
-```
-
-### Test Structure
-
-```rust
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_is_url() {
-        assert!(is_url("https://example.com"));
-        assert!(!is_url("not a url"));
-    }
-
-    #[test]
-    fn test_quality_scoring() {
-        let content = "# Test\n\nThis is a test with some content.";
-        let score = score_content(content);
-        assert!(score.score > 0.5);
-    }
-
-    #[tokio::test]
-    async fn test_resolve_mock() {
-        // Mock provider tests
-    }
-}
-```
-
-## E2E Tests (Playwright)
-
-### Location
-
-```
-web/tests/e2e/
-├── basic.spec.ts       # Basic page loads
-├── resolve.spec.ts     # Resolution flow tests
-├── settings.spec.ts    # Settings page tests
-└── history.spec.ts     # Session history tests
-```
-
-### Running Tests
-
-```bash
-# Install Playwright
-cd web && npm install && npx playwright install chromium
-
-# Run all E2E tests
-npx playwright test
-
-# Run specific test file
-npx playwright test tests/e2e/resolve.spec.ts
-
-# Run in headed mode (visible browser)
-npx playwright test --headed
-
-# Run against deployed URL
-BASE_URL=https://your-app.vercel.app npx playwright test
-```
-
-### Example Test
-
-```typescript
-import { test, expect } from '@playwright/test';
-
-test.describe('Resolver', () => {
-  test('should resolve a URL', async ({ page }) => {
-    await page.goto('/');
-
-    // Enter URL
-    await page.fill('input[name="input"]', 'https://docs.rs/tokio');
-    await page.click('button[type="submit"]');
-
-    // Wait for result
-    await page.waitForSelector('[data-testid="result"]', { timeout: 30000 });
-
-    // Verify result
-    const result = await page.textContent('[data-testid="result"]');
-    expect(result).toContain('tokio');
-  });
-
-  test('should show error for invalid input', async ({ page }) => {
-    await page.goto('/');
-
-    await page.fill('input[name="input"]', '');
-    await page.click('button[type="submit"]');
-
-    await expect(page.locator('[data-testid="error"]')).toBeVisible();
-  });
-});
-```
-
-## Quality Gate
-
-Run all checks before committing:
-
-```bash
-# Full quality gate
-./scripts/quality_gate.sh
-
-# Individual checks
-python -m pytest tests/ -v -m "not live"  # Python tests
-cd cli && cargo test && cargo clippy -- -D warnings && cargo fmt --check  # Rust checks
-cd web && npm run lint && npm run build   # Web checks
-```
-
-### Quality Gate Script
-
-```bash
-#!/bin/bash
-# scripts/quality_gate.sh
-
-set -e
-
-echo "=== Python Tests ==="
+# Python tests + lint
 python -m pytest tests/ -v -m "not live"
-
-echo "=== Python Lint ==="
 ruff check scripts/ tests/
 black --check scripts/ tests/
-
-echo "=== Rust Tests ==="
-cd cli && cargo test
-
-echo "=== Rust Lint ==="
-cargo clippy -- -D warnings
-cargo fmt --check
-
-echo "=== Web Build ==="
-cd ../web
-npm run lint
-npm run build
-
-echo "=== All checks passed! ==="
-```
-
-## CI/CD
-
-GitHub Actions workflow runs on every push:
-
-```yaml
-# .github/workflows/ci.yml
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Python tests
-        run: python -m pytest tests/ -v -m "not live"
-
-      - name: Rust tests
-        run: cd cli && cargo test
-
-      - name: Rust lint
-        run: cd cli && cargo clippy -- -D warnings && cargo fmt --check
-
-      - name: Web build
-        run: cd web && npm run build
 ```

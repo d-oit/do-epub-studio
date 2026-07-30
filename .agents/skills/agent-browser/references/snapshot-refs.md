@@ -4,16 +4,6 @@ Compact element references that reduce context usage dramatically for AI agents.
 
 **Related**: [commands.md](commands.md) for full command reference, [SKILL.md](../SKILL.md) for quick start.
 
-## Contents
-
-- [How Refs Work](#how-refs-work)
-- [Snapshot Command](#the-snapshot-command)
-- [Using Refs](#using-refs)
-- [Ref Lifecycle](#ref-lifecycle)
-- [Best Practices](#best-practices)
-- [Ref Notation Details](#ref-notation-details)
-- [Troubleshooting](#troubleshooting)
-
 ## How Refs Work
 
 Traditional approach:
@@ -48,18 +38,13 @@ URL: https://example.com
   @e2 [nav]
     @e3 [a] "Home"
     @e4 [a] "Products"
-    @e5 [a] "About"
-  @e6 [button] "Sign In"
+  @e5 [button] "Sign In"
 
-@e7 [main]
-  @e8 [h1] "Welcome"
-  @e9 [form]
-    @e10 [input type="email"] placeholder="Email"
-    @e11 [input type="password"] placeholder="Password"
-    @e12 [button type="submit"] "Log In"
-
-@e13 [footer]
-  @e14 [a] "Privacy Policy"
+@e6 [main]
+  @e7 [form]
+    @e8 [input type="email"] placeholder="Email"
+    @e9 [input type="password"] placeholder="Password"
+    @e10 [button type="submit"] "Log In"
 ```
 
 ## Using Refs
@@ -67,17 +52,10 @@ URL: https://example.com
 Once you have refs, interact directly:
 
 ```bash
-# Click the "Sign In" button
-agent-browser click @e6
-
-# Fill email input
-agent-browser fill @e10 "user@example.com"
-
-# Fill password
-agent-browser fill @e11 "password123"
-
-# Submit the form
-agent-browser click @e12
+agent-browser click @e5          # Click "Sign In"
+agent-browser fill @e8 "user@example.com"
+agent-browser fill @e9 "password123"
+agent-browser click @e10         # Submit the form
 ```
 
 ## Ref Lifecycle
@@ -85,12 +63,10 @@ agent-browser click @e12
 **IMPORTANT**: Refs are invalidated when the page changes!
 
 ```bash
-# Get initial snapshot
 agent-browser snapshot -i
 # @e1 [button] "Next"
 
-# Click triggers page change
-agent-browser click @e1
+agent-browser click @e1   # triggers page change
 
 # MUST re-snapshot to get new refs!
 agent-browser snapshot -i
@@ -112,61 +88,28 @@ agent-browser open https://example.com
 agent-browser click @e1            # Ref doesn't exist yet!
 ```
 
-### 2. Re-Snapshot After Navigation
+### 2. Re-Snapshot After Navigation or Dynamic Changes
 
 ```bash
 agent-browser click @e5            # Navigates to new page
 agent-browser snapshot -i          # Get new refs
-agent-browser click @e1            # Use new refs
-```
 
-### 3. Re-Snapshot After Dynamic Changes
-
-```bash
 agent-browser click @e1            # Opens dropdown
 agent-browser snapshot -i          # See dropdown items
 agent-browser click @e7            # Select item
 ```
 
-### 4. Snapshot Specific Regions
+### 3. Snapshot Specific Regions
 
-For complex pages, snapshot specific areas:
+For complex pages, scope the snapshot to a container:
 
 ```bash
-# Snapshot just the form
 agent-browser snapshot @e9
-```
-
-## Ref Notation Details
-
-```
-@e1 [tag type="value"] "text content" placeholder="hint"
-│    │   │             │               │
-│    │   │             │               └─ Additional attributes
-│    │   │             └─ Visible text
-│    │   └─ Key attributes shown
-│    └─ HTML tag name
-└─ Unique ref ID
-```
-
-### Common Patterns
-
-```
-@e1 [button] "Submit"                    # Button with text
-@e2 [input type="email"]                 # Email input
-@e3 [input type="password"]              # Password input
-@e4 [a href="/page"] "Link Text"         # Anchor link
-@e5 [select]                             # Dropdown
-@e6 [textarea] placeholder="Message"     # Text area
-@e7 [div class="modal"]                  # Container (when relevant)
-@e8 [img alt="Logo"]                     # Image
-@e9 [checkbox] checked                   # Checked checkbox
-@e10 [radio] selected                    # Selected radio
 ```
 
 ## Iframes
 
-Snapshots automatically detect and inline iframe content. When the main-frame snapshot runs, each `Iframe` node is resolved and its child accessibility tree is included directly beneath it in the output. Refs assigned to elements inside iframes carry frame context, so interactions like `click`, `fill`, and `type` work without manually switching frames.
+Snapshots automatically detect and inline iframe content. Refs assigned to elements inside iframes carry frame context, so `click`, `fill`, and `type` work without manually switching frames.
 
 ```bash
 agent-browser snapshot -i
@@ -175,9 +118,7 @@ agent-browser snapshot -i
 #   @e3 [input] "Card number"
 #   @e4 [input] "Expiry"
 #   @e5 [button] "Pay"
-# @e6 [button] "Cancel"
 
-# Interact with iframe elements directly using their refs
 agent-browser fill @e3 "4111111111111111"
 agent-browser fill @e4 "12/28"
 agent-browser click @e5
@@ -185,9 +126,8 @@ agent-browser click @e5
 
 **Key details:**
 
-- Only one level of iframe nesting is expanded (iframes within iframes are not recursed)
+- Only one level of iframe nesting is expanded
 - Cross-origin iframes that block accessibility tree access are silently skipped
-- Empty iframes or iframes with no interactive content are omitted from the output
 - To scope a snapshot to a single iframe, use `frame @ref` then `snapshot -i`
 
 ## Troubleshooting
@@ -195,7 +135,7 @@ agent-browser click @e5
 ### "Ref not found" Error
 
 ```bash
-# Ref may have changed - re-snapshot
+# Ref may have changed — re-snapshot
 agent-browser snapshot -i
 ```
 

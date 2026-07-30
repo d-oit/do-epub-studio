@@ -1,252 +1,37 @@
 # Providers Reference
 
-## Overview
-
-The resolver supports multiple providers for both URL resolution and query resolution. Providers are tried in a free-first cascade.
-
-## Provider Types
-
-| Type | Description | Input |
-|------|-------------|-------|
-| **URL** | Fetches content from a URL | URL string |
-| **Query** | Searches for information | Query string |
-
 ## URL Providers
 
-### llms_txt (FREE)
-
-**Type**: URL
-**Free**: Yes
-**API Key**: Not required
-
-Fetches the standardized `/llms.txt` file from websites.
-
-```bash
-# Example
-https://example.com/llms.txt
-```
-
-**Pros**:
-- Structured, LLM-optimized content
-- No rate limits
-- High quality signal
-
-**Cons**:
-- Only available on participating sites
-- Limited coverage
-
-### Jina Reader (FREE)
-
-**Type**: URL
-**Free**: Yes
-**API Key**: Not required
-
-Uses Jina's free reader API to extract content.
+| Provider | Free | API Key | Notes |
+|----------|------|---------|-------|
+| `llms_txt` | Yes | None | Fetches `/llms.txt`; high quality but limited coverage |
+| `jina` | Yes | None | `https://r.jina.ai/{url}`; works on most static pages |
+| `direct_fetch` | Yes | None | Simple HTTP GET; no JS rendering |
+| `firecrawl` | Limited | `FIRECRAWL_API_KEY` | JS-heavy pages / SPAs; clean markdown |
+| `mistral_browser` | No | `MISTRAL_API_KEY` | AI agent; handles complex layouts, higher latency |
+| `docling` | Yes | None | Requires `docling` CLI; triggered by `.pdf`, `.docx`, `.pptx` URLs |
+| `ocr` | Yes | None | Requires `tesseract`; triggered by `.png`, `.jpg`, `.jpeg` URLs |
 
 ```bash
-# API endpoint
-https://r.jina.ai/{url}
-```
-
-**Pros**:
-- Works on most websites
-- Good for static content
-- No API key needed
-
-**Cons**:
-- May struggle with JS-heavy pages
-- Rate limited (generous limits)
-
-### Firecrawl (PAID)
-
-**Type**: URL
-**Free**: Limited tier
-**API Key**: `FIRECRAWL_API_KEY`
-
-Deep extraction with JavaScript rendering.
-
-**Pros**:
-- Handles JS-heavy pages
-- Good for SPAs
-- Clean markdown output
-
-**Cons**:
-- Paid after free tier
-- Slower than Jina
-
-### Direct Fetch (FREE)
-
-**Type**: URL
-**Free**: Yes
-**API Key**: Not required
-
-Simple HTTP GET with HTML-to-text extraction.
-
-**Pros**:
-- Always available
-- Fast
-- No rate limits
-
-**Cons**:
-- No JS rendering
-- Basic extraction only
-- May miss dynamic content
-
-### Mistral Browser (PAID)
-
-**Type**: URL
-**Free**: No
-**API Key**: `MISTRAL_API_KEY`
-
-AI-powered browser agent for complex pages.
-
-**Pros**:
-- Handles any page type
-- AI extraction
-- Good for complex layouts
-
-**Cons**:
-- Paid only
-- Higher latency
-
-### Docling (FREE)
-
-**Type**: URL
-**Free**: Yes
-**API Key**: Not required
-
-Document processing for PDFs, DOCX, PPTX.
-
-**Trigger**: URLs ending in `.pdf`, `.docx`, `.pptx`
-
-**Requirements**: `docling` CLI installed
-
-```bash
+# Install docling
 pip install docling
-```
 
-### OCR (FREE)
-
-**Type**: URL
-**Free**: Yes
-**API Key**: Not required
-
-Text extraction from images.
-
-**Trigger**: URLs ending in `.png`, `.jpg`, `.jpeg`
-
-**Requirements**: `tesseract` installed
-
-```bash
-# Ubuntu/Debian
+# Install tesseract (Ubuntu/Debian)
 sudo apt install tesseract-ocr
-
 # macOS
 brew install tesseract
 ```
 
 ## Query Providers
 
-### Exa MCP (FREE)
-
-**Type**: Query
-**Free**: Yes
-**API Key**: Not required
-
-Exa's MCP server for web search.
-
-**Pros**:
-- Free, no API key
-- Good quality results
-- Structured output
-
-**Cons**:
-- Rate limited
-- May be unavailable at times
-
-### Exa SDK (PAID)
-
-**Type**: Query
-**Free**: Limited tier
-**API Key**: `EXA_API_KEY`
-
-Official Exa API with highlights.
-
-**Pros**:
-- High quality results
-- Autoprompt feature
-- Highlights extraction
-
-**Cons**:
-- Paid after free tier
-- Requires API key
-
-### Tavily (PAID)
-
-**Type**: Query
-**Free**: Limited tier
-**API Key**: `TAVILY_API_KEY`
-
-Comprehensive search API.
-
-**Pros**:
-- Good coverage
-- Structured results
-- Search depth options
-
-**Cons**:
-- Paid after free tier
-- Requires API key
-
-### Serper (PAID)
-
-**Type**: Query
-**Free**: 2500 credits
-**API Key**: `SERPER_API_KEY`
-
-Google search via Serper API.
-
-**Pros**:
-- Google results
-- Fast
-- 2500 free credits
-
-**Cons**:
-- Paid after credits
-- Requires API key
-
-### DuckDuckGo (FREE)
-
-**Type**: Query
-**Free**: Yes
-**API Key**: Not required
-
-DuckDuckGo instant answers.
-
-**Pros**:
-- Always free
-- No API key needed
-- Good fallback
-
-**Cons**:
-- Limited result quality
-- Fewer results than paid providers
-
-### Mistral Web Search (PAID)
-
-**Type**: Query
-**Free**: No
-**API Key**: `MISTRAL_API_KEY`
-
-AI-powered web search via Mistral.
-
-**Pros**:
-- AI-synthesized results
-- Good for complex queries
-
-**Cons**:
-- Paid only
-- Higher latency
+| Provider | Free | API Key | Notes |
+|----------|------|---------|-------|
+| `exa_mcp` | Yes | None | Exa MCP server; good quality, rate limited |
+| `exa` | Limited | `EXA_API_KEY` | Exa SDK; autoprompt + highlights |
+| `tavily` | Limited | `TAVILY_API_KEY` | Comprehensive search; depth options |
+| `serper` | 2500 credits | `SERPER_API_KEY` | Google results via Serper |
+| `duckduckgo` | Yes | None | Instant answers; always available fallback |
+| `mistral_websearch` | No | `MISTRAL_API_KEY` | AI-synthesized results; higher latency |
 
 ## Rate Limits
 
@@ -277,10 +62,10 @@ AI-powered web search via Mistral.
 Providers are selected based on:
 
 1. **Input type**: URL vs Query
-2. **Budget constraints**: Profile settings
+2. **Budget constraints**: Profile settings (see SKILL.md Execution Profiles)
 3. **Skip list**: Explicitly skipped providers
-4. **Circuit breaker**: Provider health
-5. **Routing memory**: Historical performance
+4. **Circuit breaker**: Provider health (3 failures → 300s cooldown)
+5. **Routing memory**: Historical per-domain performance
 
 ### Example Selection Flow
 

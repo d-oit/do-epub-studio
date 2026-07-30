@@ -1,1584 +1,184 @@
-# `do-epub-studio` – Consolidated Coding Guide (2026)
+# `do-epub-studio` — Coding Guide
 
-This document captures the authoritative product definition, architecture, and delivery rules for `d.o.EPUB Studio`. It mirrors the final decisions from the latest planning thread and supersedes older scattered notes.
+Authoritative product definition, architecture, configuration, and delivery rules.
+Detailed topics live in focused sub-documents linked in the table below.
 
----
+> **New to the codebase?** Start at [`docs/ONBOARDING.md`](./ONBOARDING.md).
 
-# 1. Product definition
+## Document map
 
-## Product name
-
-- **Product:** `d.o.EPUB Studio`
-- **Repository:** `do-epub-studio`
-- **GitHub repo target:** `d-oit/do-epub-studio`
-
-## What the app is
-
-`d.o.EPUB Studio` is a web-based EPUB reading and editorial workspace for self-publishing, controlled distribution, and annotated review.
-
-It is not just a reader.
-
-It combines:
-
-- EPUB reading
-- gated access by email
-- optional password protection
-- public or private distribution
-- offline reading as a PWA
-- bookmarks and highlights
-- editorial comments and threaded discussion
-- audit logging and permission management
-
-## Primary use cases
-
-- author shares a manuscript EPUB with selected readers
-- editor reviews EPUB with comments and discussion
-- proofreaders access a protected draft
-- selected readers get read-only access
-- public sample books are exposed without grant approval
-- readers continue offline and sync later
+| Topic | File |
+|---|---|
+| Project overview + architecture decisions | [`docs/architecture.md`](./architecture.md) |
+| Coding conventions, naming, TypeScript patterns | [`docs/conventions.md`](./conventions.md) |
+| Banned patterns (raw regex, `any`, unsafe EPUB rendering…) | [`docs/banned-patterns.md`](./banned-patterns.md) |
+| Security model (session tokens, signed URLs, CSP) | [`docs/security.md`](./security.md) |
+| Offline architecture (IndexedDB, Cache Storage, sync queue) | [`docs/offline.md`](./offline.md) |
+| API reference (all Hono routes) | [`docs/api.md`](./api.md) |
+| Accessibility requirements | [`docs/accessibility.md`](./accessibility.md) |
+| Local dev setup | [`docs/setup-local.md`](./setup-local.md) |
+| Cloudflare setup | [`docs/setup-cloudflare.md`](./setup-cloudflare.md) |
+| Turso setup | [`docs/setup-turso.md`](./setup-turso.md) |
+| ADR index | [`plans/ADR-INDEX.md`](../plans/ADR-INDEX.md) |
+| Agent rules, quality gates, compliance self-check | [`AGENTS.md`](../AGENTS.md) |
 
 ---
 
-# 2. Final architecture decisions
-
-## Recommended stack
-
-| Layer                 | Choice                    | Why                                          |
-| --------------------- | ------------------------- | -------------------------------------------- |
-| Frontend              | TypeScript + Vite + PWA   | fast, modern, strong offline path            |
-| Reader engine         | EPUB.js first             | pragmatic browser-first MVP                  |
-| Backend/API           | Cloudflare Workers        | simple secure edge runtime                   |
-| Database              | Turso                     | good fit for syncable SQLite-style app state |
-| Object storage        | Cloudflare R2             | proper file storage for EPUB bytes           |
-| Local browser storage | IndexedDB + Cache Storage | offline reading and queued sync              |
-| State management      | Zustand                   | matches your stack preference                |
-| Validation            | Zod                       | strong boundary validation                   |
-| Testing               | Vitest + Playwright       | unit/integration/E2E                         |
-| Styling               | Tailwind CSS              | fast, responsive UI system                   |
-| CI/CD                 | GitHub Actions            | practical default                            |
-| Frontend hosting      | Cloudflare Pages          | free tier, native CDN, easy Worker rewrites  |
+## 1. Product definition
 
-## Why not store EPUB in Turso
+`d.o.EPUB Studio` — web-based EPUB reading and editorial workspace. See [`docs/architecture.md` — Product Definition](./architecture.md#product-definition) for the full feature list and use cases.
 
-Do not treat Turso as the primary EPUB file store.
+## 2. Final architecture decisions
 
-Use Turso for:
+See [`docs/architecture.md`](./architecture.md) for the technology table, data flow, auth flow, and adapter pattern.
 
-- users
-- book metadata
-- grants
-- sessions
-- reading progress
-- bookmarks
-- highlights
-- comments
-- audit logs
-- sync state
-
-Use R2 for:
-
-- EPUB file bytes
-- covers
-- derived file assets if needed
-
-That separation is simpler, cheaper, and safer.
+**Stack:** TypeScript + Vite + React 19 | Cloudflare Workers + Hono | Turso/libSQL | Cloudflare R2 | IndexedDB + Cache Storage | Zustand 5 | Zod 4 | Vitest 4 + Playwright | Tailwind CSS 4.
 
----
-
-# 3. Core capability model
-
-## MVP scope
-
-- admin creates a book record
-- admin uploads EPUB to R2
-- admin grants access by email
-- optional password on grant
-- reader authenticates by email and optional password
-- reader opens EPUB in browser
-- reader position persists
-- offline reading works after initial authenticated fetch
-- bookmarks work
-- highlights work
-- comments work for editorial mode
-
-## Later phases
-
-- threaded comments and resolution
-- expiring invites and revocation flows
-- reviewer activity dashboard
-- public catalog mode
-- versioned manuscript releases
-- export comments
-- compare editions
-- AI-assisted editorial workflows
+## 3. Core capability model
 
----
-
-# 4. Permission and access model
-
-Use explicit roles and capability flags.
-
-## Global roles
-
-- `admin`
-- `editor`
-- `reader`
-
-## Book access modes
-
-- `private`
-- `password_protected`
-- `reader_only`
-- `editorial_review`
-- `public`
-
-## Capabilities
-
-- `can_read`
-- `can_comment`
-- `can_highlight`
-- `can_download_offline`
-- `can_export_notes`
-- `can_manage_access`
-
-## Access matrix
-
-| Mode               | Read |            Comment |  Offline | Password | Public |
-| ------------------ | ---: | -----------------: | -------: | -------: | -----: |
-| private            |  yes |           optional | optional | optional |     no |
-| password_protected |  yes |           optional | optional |      yes |     no |
-| reader_only        |  yes |                 no | optional | optional |     no |
-| editorial_review   |  yes |                yes |   yes/no | optional |     no |
-| public             |  yes | optional by policy | optional |       no |    yes |
-
-## Important rule
-
-Do not rely on R2 visibility or storage permissions as the app’s main authorization system.
-
-Private and restricted books must still be gated by application-level access rules and short-lived signed URLs.
-
----
-
-# 5. End-to-end user flows
-
-## Admin flow
-
-1. admin logs in
-2. admin creates a book
-3. admin uploads EPUB
-4. system stores file in R2
-5. system extracts metadata if possible
-6. admin creates access grants
-7. admin sets:
-   - email
-   - optional password
-   - access mode
-   - comments allowed
-   - offline allowed
-   - expiry date
-
-8. system optionally sends invite email
-9. audit log records changes
-
-## Reader flow
-
-1. reader opens invite or book URL
-2. reader enters email
-3. reader enters password if required
-4. backend validates grant
-5. backend creates short-lived session
-6. backend returns capabilities
-7. reader requests signed EPUB URL
-8. reader opens EPUB
-9. app stores reading state locally first
-10. when online, local state syncs
-
-## Editorial flow
-
-1. reviewer selects passage
-2. app creates locator anchor
-3. reviewer adds comment
-4. if offline, comment enters sync queue
-5. when online, comment syncs to backend
-6. other reviewers or admin see thread
-7. comment can be resolved or moderated
-
----
-
-# 6. Data model
-
-Use a pragmatic normalized schema.
-
-## Core tables
-
-- `users`
-- `books`
-- `book_files`
-- `book_access_grants`
-- `reader_sessions`
-- `reading_progress`
-- `bookmarks`
-- `highlights`
-- `comments`
-- `audit_log`
-
-## Example schema
-
-### `users`
-
-```sql
-CREATE TABLE users (
-    id TEXT PRIMARY KEY,
-    email TEXT NOT NULL UNIQUE,
-    display_name TEXT,
-    global_role TEXT NOT NULL DEFAULT 'reader',
-    created_at TEXT NOT NULL,
-    updated_at TEXT NOT NULL
-);
-```
-
-### `books`
-
-```sql
-CREATE TABLE books (
-    id TEXT PRIMARY KEY,
-    slug TEXT NOT NULL UNIQUE,
-    title TEXT NOT NULL,
-    author_name TEXT,
-    description TEXT,
-    language TEXT,
-    visibility TEXT NOT NULL DEFAULT 'private',
-    cover_image_url TEXT,
-    published_at TEXT,
-    created_at TEXT NOT NULL,
-    updated_at TEXT NOT NULL,
-    archived_at TEXT
-);
-```
-
-### `book_files`
-
-```sql
-CREATE TABLE book_files (
-    id TEXT PRIMARY KEY,
-    book_id TEXT NOT NULL,
-    storage_provider TEXT NOT NULL,
-    storage_key TEXT NOT NULL,
-    original_filename TEXT NOT NULL,
-    mime_type TEXT NOT NULL,
-    file_size_bytes INTEGER NOT NULL,
-    sha256 TEXT,
-    epub_version TEXT,
-    manifest_json TEXT,
-    created_at TEXT NOT NULL,
-    FOREIGN KEY (book_id) REFERENCES books(id)
-);
-```
-
-### `book_access_grants`
-
-```sql
-CREATE TABLE book_access_grants (
-    id TEXT PRIMARY KEY,
-    book_id TEXT NOT NULL,
-    email TEXT NOT NULL,
-    password_hash TEXT,
-    mode TEXT NOT NULL,
-    allowed INTEGER NOT NULL DEFAULT 1,
-    comments_allowed INTEGER NOT NULL DEFAULT 0,
-    offline_allowed INTEGER NOT NULL DEFAULT 0,
-    expires_at TEXT,
-    invited_by_user_id TEXT,
-    created_at TEXT NOT NULL,
-    updated_at TEXT NOT NULL,
-    FOREIGN KEY (book_id) REFERENCES books(id),
-    FOREIGN KEY (invited_by_user_id) REFERENCES users(id)
-);
-```
-
-### `reader_sessions`
-
-```sql
-CREATE TABLE reader_sessions (
-    id TEXT PRIMARY KEY,
-    book_id TEXT NOT NULL,
-    email TEXT NOT NULL,
-    session_token_hash TEXT NOT NULL,
-    expires_at TEXT NOT NULL,
-    created_at TEXT NOT NULL,
-    revoked_at TEXT,
-    FOREIGN KEY (book_id) REFERENCES books(id)
-);
-```
-
-### `reading_progress`
-
-```sql
-CREATE TABLE reading_progress (
-    id TEXT PRIMARY KEY,
-    book_id TEXT NOT NULL,
-    user_email TEXT NOT NULL,
-    locator_json TEXT NOT NULL,
-    progress_percent REAL,
-    updated_at TEXT NOT NULL,
-    UNIQUE(book_id, user_email)
-);
-```
-
-### `bookmarks`
-
-```sql
-CREATE TABLE bookmarks (
-    id TEXT PRIMARY KEY,
-    book_id TEXT NOT NULL,
-    user_email TEXT NOT NULL,
-    locator_json TEXT NOT NULL,
-    label TEXT,
-    created_at TEXT NOT NULL
-);
-```
-
-### `highlights`
-
-```sql
-CREATE TABLE highlights (
-    id TEXT PRIMARY KEY,
-    book_id TEXT NOT NULL,
-    user_email TEXT NOT NULL,
-    chapter_ref TEXT,
-    cfi_range TEXT,
-    selected_text TEXT,
-    note TEXT,
-    created_at TEXT NOT NULL,
-    updated_at TEXT NOT NULL
-);
-```
-
-### `comments`
-
-```sql
-CREATE TABLE comments (
-    id TEXT PRIMARY KEY,
-    book_id TEXT NOT NULL,
-    user_email TEXT NOT NULL,
-    chapter_ref TEXT,
-    cfi_range TEXT,
-    selected_text TEXT,
-    body TEXT NOT NULL,
-    status TEXT NOT NULL DEFAULT 'open',
-    visibility TEXT NOT NULL DEFAULT 'shared',
-    parent_comment_id TEXT,
-    created_at TEXT NOT NULL,
-    updated_at TEXT NOT NULL,
-    resolved_at TEXT,
-    FOREIGN KEY (parent_comment_id) REFERENCES comments(id)
-);
-```
-
-### `audit_log`
-
-```sql
-CREATE TABLE audit_log (
-    id TEXT PRIMARY KEY,
-    actor_email TEXT,
-    entity_type TEXT NOT NULL,
-    entity_id TEXT NOT NULL,
-    action TEXT NOT NULL,
-    payload_json TEXT,
-    created_at TEXT NOT NULL
-);
-```
-
-## Locator strategy
-
-For annotations and progress, prefer:
-
-- EPUB CFI or equivalent robust locator
-- selected text excerpt
-- chapter reference
-
-Do not rely only on raw DOM offsets.
-
----
-
-# 7. API design
-
-Keep routes narrow and explicit.
-
-## Access routes
-
-### `POST /api/access/request`
-
-Input:
-
-```json
-{
-  "bookSlug": "my-book",
-  "email": "reader@example.com",
-  "password": "optional"
-}
-```
-
-Output:
-
-```json
-{
-  "ok": true,
-  "sessionToken": "token",
-  "book": {
-    "id": "book-id",
-    "title": "My Book"
-  },
-  "capabilities": {
-    "canRead": true,
-    "canComment": true,
-    "canDownloadOffline": true
-  }
-}
-```
-
-### `POST /api/access/logout`
-
-### `POST /api/access/refresh`
-
-## Book routes
-
-### `GET /api/books/:slug`
-
-### `POST /api/books/:bookId/file-url`
-
-Returns a short-lived signed R2 URL.
-
-## Reader state routes
-
-### `PUT /api/books/:bookId/progress`
-
-### `GET /api/books/:bookId/progress`
-
-### `POST /api/books/:bookId/bookmarks`
-
-### `GET /api/books/:bookId/bookmarks`
-
-### `POST /api/books/:bookId/highlights`
-
-### `GET /api/books/:bookId/highlights`
-
-## Comment routes
-
-### `POST /api/books/:bookId/comments`
-
-### `GET /api/books/:bookId/comments`
-
-### `PATCH /api/comments/:commentId`
-
-### `POST /api/comments/:commentId/reply`
-
-## Admin routes
-
-### `POST /api/admin/books`
-
-### `POST /api/admin/books/:bookId/upload-complete`
-
-### `POST /api/admin/books/:bookId/grants`
-
-### `PATCH /api/admin/grants/:grantId`
-
-### `POST /api/admin/grants/:grantId/revoke`
-
-### `GET /api/admin/books/:bookId/audit`
-
----
-
-# 8. Monorepo structure
+MVP scope and later phases: see [`docs/architecture.md` — Product Definition](./architecture.md#product-definition).
+
+## 4. Permission and access model
+
+Roles (`admin`, `editor`, `reader`), access modes, and capability flags: see [`docs/architecture.md` — Permission and Access Model](./architecture.md#permission-and-access-model).
+
+## 5. End-to-end user flows
+
+**Admin:** login → create book → upload EPUB to R2 → create access grant → invite email sent → audit log updated.
+
+**Reader:** open invite URL → email + optional password → session issued → signed EPUB URL → app reads EPUB → state stored locally → syncs online.
+
+**Editorial:** select passage → anchor created → add comment → queued if offline → syncs online → others see thread → resolved or moderated.
+
+## 6. Data model
+
+Core tables: `users`, `books`, `book_files`, `book_access_grants`, `reader_sessions`, `reading_progress`, `bookmarks`, `highlights`, `comments`, `audit_log`. Full SQL: [`docs/architecture.md` — Core Database Schema](./architecture.md#core-database-schema). Locator strategy: EPUB CFI + selected text + chapter reference (not raw DOM offsets).
+
+## 7. API design
+
+All Hono route definitions: [`docs/api.md`](./api.md). Route groups: `/api/access/*`, `/api/books/*`, `/api/comments/*`, `/api/admin/*`, `/api/files/*`.
+
+## 8. Monorepo structure
 
 ```text
 do-epub-studio/
-├─ AGENTS.md
-├─ README.md
-├─ LICENSE
-├─ package.json
-├─ pnpm-workspace.yaml
-├─ turbo.json
-├─ tsconfig.base.json
-├─ eslint.config.js
-├─ vitest.workspace.ts
-├─ playwright.config.ts
-├─ .editorconfig
-├─ .prettierrc.json
-├─ .gitignore
-├─ .github/
-│  └─ workflows/
-│     ├─ ci.yml
-│     ├─ preview.yml
-│     └─ release.yml
-├─ plans/
-│  ├─ 000-product-overview.md
-│  ├─ 001-goap-roadmap.md
-│  ├─ 002-adr-monorepo-stack.md
-│  ├─ 003-adr-storage-model.md
-│  ├─ 004-adr-auth-and-access.md
-│  ├─ 005-adr-offline-sync.md
-│  ├─ 006-adr-annotation-model.md
-│  └─ 007-implementation-phases.md
-├─ docs/
-│  ├─ architecture.md
-│  ├─ api.md
-│  ├─ security.md
-│  ├─ offline.md
-│  ├─ accessibility.md
-│  ├─ setup-local.md
-│  ├─ setup-cloudflare.md
-│  └─ setup-turso.md
-├─ .agents/
-│  └─ skills/
-│     ├─ cloudflare-worker-api/
-│     │  └─ SKILL.md
-│     ├─ turso-schema-migrations/
-│     │  └─ SKILL.md
-│     ├─ epub-rendering-and-cfi/
-│     │  └─ SKILL.md
-│     ├─ pwa-offline-sync/
-│     │  └─ SKILL.md
-│     ├─ secure-invite-and-access/
-│     │  └─ SKILL.md
-│     ├─ reader-ui-ux/
-│     │  └─ SKILL.md
-│     └─ testdata-builders/
-│        └─ SKILL.md
-├─ apps/
-│  ├─ web/
-│  │  ├─ .env.local.example
-│  │  ├─ public/
-│  │  ├─ src/
-│  │  │  ├─ app/
-│  │  │  ├─ components/
-│  │  │  ├─ features/
-│  │  │  ├─ lib/
-│  │  │  ├─ routes/
-│  │  │  ├─ stores/
-│  │  │  ├─ styles/
-│  │  │  └─ workers/
-│  │  ├─ tests/
-│  │  ├─ index.html
-│  │  └─ vite.config.ts
-│  └─ worker/
-│     ├─ wrangler.jsonc
-│     ├─ .dev.vars.example
-│     ├─ src/
-│     │  ├─ routes/
-│     │  ├─ services/
-│     │  ├─ db/
-│     │  ├─ auth/
-│     │  ├─ storage/
-│     │  └─ lib/
-│     └─ tests/
-├─ packages/
-│  ├─ schema/
-│  │  ├─ src/
-│  │  └─ migrations/
-│  ├─ shared/
-│  │  └─ src/
-│  ├─ ui/
-│  │  └─ src/
-│  ├─ reader-core/
-│  │  └─ src/
-│  └─ testkit/
-│     └─ src/
-└─ scripts/
-   ├─ verify.mjs
-   ├─ bootstrap.mjs
-   ├─ db-migrate-local.mjs
-   ├─ db-migrate-prod.mjs
-   └─ db-check.mjs
+├─ AGENTS.md / CLAUDE.md / plans/ / docs/ / .agents/skills/
+├─ apps/web/          # React SPA (Vite, Tailwind, PWA)
+├─ apps/worker/       # Cloudflare Workers API (Hono, Turso, R2)
+├─ apps/tests/        # Playwright E2E suite
+└─ packages/schema/ shared/ ui/ reader-core/ testkit/
 ```
 
----
-
-# 9. Configuration and secrets model
-
-## Final rule
-
-Do not use a single generic root `.env` as the main config model.
-
-Use this split:
-
-- **Worker runtime config:** `wrangler.jsonc`
-- **Worker deployed secrets:** `wrangler secret put`
-- **Worker local dev secrets/config:** `.dev.vars`
-- **Frontend public config:** `.env.local`
-- **database provisioning:** Turso CLI
-
-## Why this is the right model
-
-- matches Cloudflare-native deployment
-- keeps secrets out of frontend and repo
-- separates browser-safe and server-only config
-- keeps local development simple
-- leaves room for environment-specific deployment
+Package content rules: [`docs/architecture.md` — Package Boundaries](./architecture.md#package-boundaries).
 
 ---
 
-# 10. Wrangler configuration
+## 9. Configuration and secrets model
 
-Because Wrangler supports both TOML and JSON/JSONC, and Cloudflare recommends JSONC for new projects, use:
+Do not use a single root `.env`. Split:
 
-- **`apps/worker/wrangler.jsonc`**
+| Config kind | Location |
+|---|---|
+| Worker runtime | `apps/worker/wrangler.jsonc` |
+| Worker deployed secrets | `wrangler secret put <KEY>` |
+| Worker local dev | `apps/worker/.dev.vars` (gitignored) |
+| Frontend public config | `apps/web/.env.local` (VITE_ prefixed, gitignored) |
+| DB provisioning | Turso CLI |
 
-## Recommended `wrangler.jsonc`
+Secrets: `TURSO_AUTH_TOKEN`, `SESSION_SIGNING_SECRET`, `INVITE_TOKEN_SECRET`. Full setup: [`docs/setup-cloudflare.md`](./setup-cloudflare.md) + [`docs/setup-turso.md`](./setup-turso.md).
 
-```jsonc
-{
-  "name": "do-epub-studio-worker",
-  "main": "src/index.ts",
-  "compatibility_date": "2026-04-07",
+## 10. Wrangler configuration
 
-  "vars": {
-    "APP_BASE_URL": "https://do-epub-studio.example.com",
-    "TURSO_DATABASE_URL": "libsql://do-epub-studio-your-org.turso.io",
-  },
+Use `apps/worker/wrangler.jsonc`. Wire `APP_BASE_URL` + `TURSO_DATABASE_URL` as `vars`; use R2 binding `BOOKS_BUCKET`; never put raw storage credentials in env. See [`docs/setup-cloudflare.md`](./setup-cloudflare.md).
 
-  "r2_buckets": [
-    {
-      "binding": "BOOKS_BUCKET",
-      "bucket_name": "do-epub-studio-books",
-    },
-  ],
-}
-```
+## 11. Secrets handling
 
-## Notes
+Worker-only (`TURSO_AUTH_TOKEN`, `SESSION_SIGNING_SECRET`, `INVITE_TOKEN_SECRET`) — provision with `wrangler secret put <KEY>`. Never expose to browser.
 
-- `APP_BASE_URL` is fine in `vars`
-- `TURSO_DATABASE_URL` is typically acceptable in `vars`
-- secrets should not live in this file
-- use R2 bindings rather than raw storage credentials
+## 12. Local development config
 
----
+Copy `apps/worker/.dev.vars.example` → `.dev.vars`; `apps/web/.env.local.example` → `.env.local`. Neither is committed. Full walkthrough: [`docs/setup-local.md`](./setup-local.md).
 
-# 11. Secrets handling
+## 13. Agent coding workflow
 
-Use Cloudflare secrets for:
+Full 7-step checklist + specialist agent roles: [`docs/conventions.md` — AI-agent execution model](./conventions.md#ai-agent-execution-model). Quick: load LEARNINGS, update plans before code, `vitest --run` for CI, run `./scripts/quality_gate.sh` before commit.
 
-- `TURSO_AUTH_TOKEN`
-- `SESSION_SIGNING_SECRET`
-- `INVITE_TOKEN_SECRET`
+## 14. R2 best practice
 
-Example commands:
+Use Wrangler bindings (`env.BOOKS_BUCKET`); do not put raw object storage credentials into Worker env.
 
-```bash
-wrangler secret put TURSO_AUTH_TOKEN
-wrangler secret put SESSION_SIGNING_SECRET
-wrangler secret put INVITE_TOKEN_SECRET
-```
+## 15. `.gitignore`
 
-These are Worker-only values.
+Never commit `**/.env.local`, `**/.dev.vars`, `node_modules`, `coverage`, `.playwright`. Commit only `*.example` files.
 
-Do not expose them to the browser.
+## 16. AGENTS.md
 
----
+See [`AGENTS.md`](../AGENTS.md) — the live authoritative agent rules at repo root.
 
-# 12. Local development config
+## 17. Reusable agent skills
 
-## `apps/worker/.dev.vars.example`
+Skills under `.agents/skills/`, loaded on-demand. Run `./scripts/validate-skills.sh` to verify integrity. Full list: [`AGENTS.md` — Skills Reference](../AGENTS.md#skills-reference).
 
-```env
-TURSO_DATABASE_URL=
-TURSO_AUTH_TOKEN=
-SESSION_SIGNING_SECRET=
-INVITE_TOKEN_SECRET=
-APP_BASE_URL=http://127.0.0.1:5173
-```
+## 18. GOAP implementation plan
 
-## Local `apps/worker/.dev.vars`
+Ordered phases — Foundation → Domain & schema → Access backend → Reader MVP → Offline support → Editorial features → Admin UI → Hardening. See [`plans/ADR-INDEX.md`](../plans/ADR-INDEX.md) + `plans/archive/001-goap-roadmap.md`.
 
-```env
-TURSO_DATABASE_URL=libsql://do-epub-studio-your-org.turso.io
-TURSO_AUTH_TOKEN=local-dev-token
-SESSION_SIGNING_SECRET=local-dev-session-secret
-INVITE_TOKEN_SECRET=local-dev-invite-secret
-APP_BASE_URL=http://127.0.0.1:5173
-```
+## 19. ADRs
 
-## `apps/web/.env.local.example`
+See [`plans/ADR-INDEX.md`](../plans/ADR-INDEX.md). Key ADRs: `002` (monorepo stack), `003` (storage model), `004` (auth & access), `005` (offline sync), `006` (annotation model), `034` (ReDoS), `063` (design tokens), `092` (auth transport).
 
-```env
-VITE_API_BASE_URL=http://127.0.0.1:8787
-```
+## 20. Frontend design rules
 
-## `apps/web/.env.local`
+Layout, reader controls, accessibility, UI copy, and Tailwind/OKLCH patterns: [`docs/conventions.md` — Frontend design rules](./conventions.md#frontend-design-rules).
 
-```env
-VITE_API_BASE_URL=http://127.0.0.1:8787
-```
+## 21. Backend security rules
 
----
+No user-existence leakage; generic denied responses; rate limiting; Argon2id; short-lived sessions; signed R2 URLs; MIME validation; sanitised EPUB HTML. Full details: [`docs/security.md`](./security.md) + [`docs/banned-patterns.md`](./banned-patterns.md).
 
-# 13. Turso CLI workflow
+## 22. Offline architecture
 
-Turso CLI is for provisioning and operations.
+Dual-cache (Cache Storage + IndexedDB), sync queue, conflict rules: [`docs/offline.md`](./offline.md).
 
-It does not replace Worker runtime configuration.
+## 23. Testing strategy
 
-## Use it for
+Unit (Vitest), integration (Worker routes), E2E (Playwright), coverage thresholds: [`docs/conventions.md` — Testing strategy](./conventions.md#testing-strategy).
 
-- create database
-- inspect database
-- create auth token
-- operational management
+## 24. Package boundaries
 
-## Example flow
+[`docs/architecture.md` — Package Boundaries](./architecture.md#package-boundaries).
 
-```bash
-turso db create do-epub-studio
-```
+## 25. Recommended package scripts
 
-Take the resulting values and wire them into:
+Root `package.json` scripts (`dev`, `build`, `lint`, `typecheck`, `test`, `test:e2e`, `verify`, `db:*`): [`docs/conventions.md` — Package scripts](./conventions.md#package-scripts).
 
-- `wrangler.jsonc` for non-secret config
-- `wrangler secret put` for secrets
-- `.dev.vars` for local development
+## 26. CI requirements
 
----
+Install → lint → typecheck → tests → build; Playwright on preview/gated branch; quality gate blocking. Details: [`docs/conventions.md` — CI requirements](./conventions.md#ci-requirements) + `AGENTS.md` Tier 2.
 
-# 14. R2 best practice
+## 27. First vertical slice
 
-Use Wrangler bindings for R2.
+Scaffold + AGENTS.md + plans/ADRs + initial schema (books, book_files, book_access_grants, reader_sessions, reading_progress) + admin create/grant + EPUB upload to R2 + access request route + session + signed URL + reader shell with save/restore.
 
-Do not put raw object storage credentials into Worker env unless there is no other option.
+**Acceptance criteria:** admin creates private book; grants one email; reader authenticates, opens EPUB, progress persists; revoked grant blocks; lint + typecheck + tests + build pass.
 
-## Why
+## 28. AI-agent execution model
 
-- cleaner Cloudflare-native model
-- fewer exposed secrets
-- simpler Worker code
-- safer deployment model
+Orchestrator, specialist agents, and agent rules: [`docs/conventions.md` — AI-agent execution model](./conventions.md#ai-agent-execution-model).
 
----
+## 29. Product naming inside the UI
 
-# 15. Example `.gitignore`
+Reader modes, admin labels, editorial labels (en + de): [`docs/conventions.md` — UI copy](./conventions.md#ui-copy).
 
-```gitignore
-# local config
-**/.env.local
-**/.dev.vars
+## 30. Risks and mitigations
 
-# node
-node_modules
-coverage
-.playwright
-```
+Anchor drift, offline conflict, grant leakage, auth complexity, storage mistakes: [`docs/architecture.md` — Risks and Mitigations](./architecture.md#risks-and-mitigations).
 
-Commit only:
+## 31. Definition of done
 
-- `.env.local.example`
-- `.dev.vars.example`
+11-point checklist including plan check, 500 LOC limit, quality gate, no generated artefacts committed: [`docs/conventions.md` — Definition of done](./conventions.md#definition-of-done).
 
-Do not commit real secret files.
+## 32. Final recommendation
 
----
+Private GitHub repo, pnpm + turbo monorepo, `apps/web` + `apps/worker` + `packages/*`, Cloudflare Workers + R2 + Turso, `wrangler.jsonc`, Wrangler secrets, `.dev.vars` local dev, `.env.local` browser-safe, EPUB.js MVP, IndexedDB + Cache Storage offline, `AGENTS.md` + `plans/` for AI execution.
 
-# 16. `AGENTS.md` starter
-
-Use this at repo root.
-
-```md
-# AGENTS.md
-
-## Purpose
-
-This repository builds `d.o.EPUB Studio`, a production-grade EPUB reading and editorial workspace with gated access, offline reading, comments, highlights, and secure distribution.
-
-## Mandatory working style
-
-- Read before write.
-- Plan first, then execute.
-- Use GOAP thinking for every non-trivial task.
-- Keep ADRs and phase plans in `plans/`.
-- Verify every important architectural decision before implementation.
-- Use analysis swarm mindset when reviewing key changes:
-  - methodical validator
-  - rapid challenger
-  - skeptical reviewer
-- Do not update source-of-truth documentation until implementation is verified.
-
-## Constraints
-
-- Max 500 LOC per source file.
-- No hardcoded secrets.
-- No hardcoded environment-specific URLs.
-- No silent failures.
-- No `any` unless justified and isolated.
-- No skipping tests for core permission, sync, or auth flows.
-- No direct public file URLs for private books.
-- No unsafe EPUB HTML rendering.
-
-## Architecture rules
-
-- Store EPUB files in object storage, not as primary Turso blobs.
-- Turso stores app state, permissions, progress, comments, highlights, and audit logs.
-- Browser stores offline state first; sync is explicit and resilient.
-- Signed URLs must be short-lived.
-- Access validation must happen in the app backend.
-- Annotation anchors must use robust locators, not raw DOM offsets alone.
-
-## Configuration rules
-
-- Use `wrangler.jsonc` for new Worker projects.
-- Do not use a single generic `.env` as the main project config model.
-- For `apps/worker`, use `wrangler.jsonc`, `wrangler secret put`, and `.dev.vars` for local development.
-- For `apps/web`, use `.env.local` only for safe browser-visible values.
-- Never expose Turso auth tokens or signing secrets to the frontend.
-- Prefer Cloudflare bindings for R2 over raw object storage credentials.
-- Use Turso CLI for provisioning and admin tasks, not as a replacement for Worker runtime configuration.
-- Commit only example config files, never live secret files.
-
-## Coding rules
-
-- TypeScript everywhere by default.
-- Zod for validation at boundaries.
-- Zustand for client state.
-- Vitest for unit and integration tests.
-- Playwright for end-to-end tests.
-- Tailwind for styling.
-- Prefer pure functions for domain logic.
-- Keep service interfaces small and explicit.
-- Use dependency injection where it simplifies testing.
-- Create test data builders for grants, books, comments, and sessions.
-
-## Security rules
-
-- Hash passwords using a strong KDF.
-- Sanitize all rendered EPUB content.
-- Validate file type and size on upload.
-- Log permission grants, revocations, and access-sensitive changes.
-- Use audit logs for admin actions.
-- Avoid user enumeration in auth responses.
-- Revoke sessions on permission revocation.
-
-## Delivery rules
-
-A task is complete only when:
-
-- plan updated if needed
-- implementation done
-- lint passes
-- typecheck passes
-- tests pass
-- build passes
-- docs updated if behavior changed
-```
-
----
-
-# 17. Reusable agent skills
-
-Create skills under `.agents/skills/` following the on-demand loading pattern (per AGENTS.md).
-Use the `skill(name="skill-name")` tool to load full SKILL.md content when needed.
-
-At startup, only skill names/descriptions are loaded (~50 tokens each). Full SKILL.md content
-(~500-2000 tokens) loads only when the agent determines the skill is relevant.
-
-## Core skills (see AGENTS.md for full list)
-
-- `triz-analysis`, `triz-solver` — TRIZ contradiction resolution
-- `cloudflare-worker-api` — Worker route structure
-- `turso-schema-migrations` — Schema design
-- `pwa-offline-sync` — Offline sync strategy
-- `secure-invite-and-access` — Auth flows
-- `epub-rendering-and-cfi` — EPUB.js + CFI anchoring
-- `reader-ui-ux` — Reader/admin UI patterns
-- `testdata-builders` — Test fixtures
-- `code-quality`, `code-review-assistant`, `security-code-auditor` — Quality checks
-- `task-decomposition` — Coordination (parallel patterns in `goap-agent`)
-- `learn`, `memory-context` — Knowledge capture
-- `anti-ai-slop`, `agent-browser`, `dogfood` — UX + testing
-- `skill-creator`, `skill-evaluator` — Skill development
-- `shell-script-quality` — Shell best practices
-- `impeccable` — Design quality: 23 commands + 44 anti-pattern detector rules
-
-Run `./scripts/validate-skills.sh` to verify skill integrity.
-
----
-
-# 18. GOAP implementation plan
-
-## Goal
-
-Build a secure offline-capable EPUB reading and editorial review platform.
-
-## Initial world state
-
-- no scaffold
-- no schema
-- no access flow
-- no reader
-- no admin UI
-
-## Target world state
-
-- deployable PWA
-- secure grants and sessions
-- private/public book modes
-- offline reading
-- comments/highlights
-- tests and docs
-
-## Ordered phases
-
-### Phase 0. Foundation
-
-- create monorepo
-- add AGENTS.md
-- add plans and ADRs
-- configure pnpm/turbo
-- configure lint/typecheck/test/build
-- add CI
-
-### Phase 1. Domain and schema
-
-- define enums and DTOs
-- create migrations
-- add test fixtures/builders
-- implement repository interfaces
-
-### Phase 2. Access backend
-
-- access request endpoint
-- password validation
-- session issuance
-- signed R2 URLs
-- audit logging
-
-### Phase 3. Reader MVP
-
-- reader shell
-- EPUB.js integration
-- TOC
-- progress save/restore
-- theme and typography controls
-
-### Phase 4. Offline support
-
-- service worker
-- cache strategy
-- IndexedDB persistence
-- sync queue
-
-### Phase 5. Editorial features
-
-- highlights
-- anchors
-- comments
-- replies
-- resolve state
-
-### Phase 6. Admin UI
-
-- books list
-- upload flow
-- grant editor
-- revoke access
-- audit screen
-
-### Phase 7. Hardening
-
-- accessibility
-- security
-- performance
-- regression coverage
-- release readiness
-
----
-
-# 19. ADRs to create in `plans/`
-
-Create these first:
-
-- `000-product-overview.md`
-- `001-goap-roadmap.md`
-- `002-adr-monorepo-stack.md`
-- `003-adr-storage-model.md`
-- `004-adr-auth-and-access.md`
-- `005-adr-offline-sync.md`
-- `006-adr-annotation-model.md`
-- `007-implementation-phases.md`
-
-## ADR topics
-
-### `002-adr-monorepo-stack.md`
-
-Decide:
-
-- pnpm + turbo
-- TypeScript
-- Vite web app
-- Worker backend
-- shared packages
-
-### `003-adr-storage-model.md`
-
-Decide:
-
-- R2 for EPUB files
-- Turso for metadata/state
-- IndexedDB + Cache Storage locally
-
-### `004-adr-auth-and-access.md`
-
-Decide:
-
-- email + optional password grants
-- short-lived sessions
-- short-lived signed URLs
-- audit trail
-
-### `005-adr-offline-sync.md`
-
-Decide:
-
-- local-first writes
-- queued sync
-- idempotent mutations
-- conflict strategies by entity type
-
-### `006-adr-annotation-model.md`
-
-Decide:
-
-- CFI anchors
-- selected text snapshot
-- chapter reference
-- fallback re-anchoring strategy
-
----
-
-# 20. Frontend design rules
-
-## Layout behavior
-
-### Mobile
-
-- top bar
-- full-width reading area
-- TOC as slide-over drawer
-- comments as bottom sheet or tab
-
-### Tablet
-
-- optional split view
-- TOC on left
-- reader center
-- comments side panel on demand
-
-### Desktop
-
-- TOC left
-- reader center
-- comments/highlights right
-- collapsible sidebars
-
-## Reader controls
-
-- font size
-- font family
-- line height
-- page width
-- light/dark/sepia/system themes
-- resume position
-- chapter navigation
-- search
-- bookmark current position
-
-## Accessibility rules
-
-- keyboard navigation
-- visible focus states
-- semantic landmarks
-- reduced motion support
-- touch target minimum size
-- screen reader labels
-
----
-
-# 21. Backend security rules
-
-## Access rules
-
-- never reveal whether a specific email exists
-- return generic access-denied responses
-- rate limit access attempts
-- hash passwords with a strong KDF
-- expire sessions
-- revoke sessions on permission revocation
-
-## Storage rules
-
-- private books use signed R2 URLs only
-- signed URLs are short-lived
-- do not expose raw storage paths in UI
-- validate MIME type and extension
-- optionally store checksum
-
-## Content safety
-
-- sanitize EPUB HTML before rendering
-- strip unsafe scripts
-- block remote script execution
-- control iframe usage strictly
-
-## Auditability
-
-Log:
-
-- grant created
-- grant updated
-- grant revoked
-- access granted or denied
-- comment moderation actions
-- visibility changes
-
----
-
-# 22. Offline architecture
-
-## Cache Storage
-
-Use for:
-
-- app shell
-- static assets
-- cached EPUB assets
-- cover images
-
-## IndexedDB
-
-Use for:
-
-- progress
-- bookmarks
-- highlights
-- pending comments
-- sync queue
-- reader preferences
-
-## Sync rules
-
-### Client
-
-- write locally first
-- enqueue sync job
-- optimistic UI update
-
-### Server
-
-- idempotent mutation IDs
-- last-write-wins for progress/preferences
-- append-only semantics for comments/audit
-- explicit merge rules for editable entities
-
-## Caveat
-
-A private book should not promise full offline availability until it has been opened online once and cached successfully.
-
----
-
-# 23. Testing strategy
-
-## Unit tests
-
-Cover:
-
-- permission evaluation
-- password validation
-- session creation
-- locator serialization
-- progress merging
-- annotation reducers
-
-## Integration tests
-
-Cover:
-
-- Worker routes with test DB
-- signed URL issuance
-- grant revocation
-- sync queue replay
-
-## Playwright E2E
-
-Cover:
-
-- admin creates book
-- admin grants access
-- reader authenticates
-- reader opens book
-- reader resumes position
-- reviewer adds comment
-- offline reading works
-- reconnect sync works
-
-## Regression focus
-
-- invalid access does not leak user existence
-- revoked users lose fresh file access
-- offline queue does not duplicate comments
-- malformed EPUB content does not execute scripts
-
----
-
-# 24. Package boundaries
-
-## `packages/schema`
-
-Contains:
-
-- SQL migrations
-- DB-adjacent types
-- schema constants
-
-## `packages/shared`
-
-Contains:
-
-- shared DTOs
-- validation helpers
-- enums
-- error classes
-
-## `packages/reader-core`
-
-Contains:
-
-- EPUB abstractions
-- locator mapping
-- selection anchors
-- preference logic
-
-## `packages/ui`
-
-Contains:
-
-- reusable UI components
-- layout primitives
-- forms
-- modals
-- panels
-
-## `apps/web`
-
-Contains:
-
-- routes
-- reader UI
-- admin UI
-- local persistence
-- sync orchestration
-
-## `apps/worker`
-
-Contains:
-
-- API routes
-- session/auth logic
-- Turso access
-- R2 signing
-- audit logging
-
----
-
-# 25. Recommended package scripts
-
-Example root `package.json` script section:
-
-```json
-{
-  "scripts": {
-    "dev": "turbo run dev --parallel",
-    "build": "turbo run build",
-    "lint": "turbo run lint",
-    "typecheck": "turbo run typecheck",
-    "test": "turbo run test",
-    "test:e2e": "playwright test",
-    "test:e2e:smoke": "playwright test --grep @smoke",
-    "verify:fast": "pnpm lint && pnpm typecheck && pnpm --filter @do-epub-studio/web test:unit -- src/features/reader/components/annotations src/features/admin",
-    "verify": "pnpm lint && pnpm typecheck && pnpm test && pnpm build",
-    "db:migrate:local": "node scripts/db-migrate-local.mjs",
-    "db:migrate:prod": "node scripts/db-migrate-prod.mjs",
-    "db:check": "node scripts/db-check.mjs"
-  }
-}
-```
-
----
-
-# 26. CI requirements
-
-GitHub Actions should run:
-
-- install
-- lint
-- typecheck
-- unit/integration tests
-- build
-- optionally Playwright on preview or gated branch
-
-## Quality gate
-
-No feature is done unless:
-
-- lint passes
-- typecheck passes
-- tests pass
-- build passes
-
----
-
-# 27. First vertical slice
-
-This is the best first implementation slice.
-
-## Deliverables
-
-- monorepo scaffold
-- root AGENTS.md
-- plans + ADRs
-- initial schema:
-  - `books`
-  - `book_files`
-  - `book_access_grants`
-  - `reader_sessions`
-  - `reading_progress`
-
-- admin create-book screen
-- admin grant-access form
-- EPUB upload to R2
-- access request route
-- session issuance
-- signed file URL route
-- reader shell with EPUB load
-- save/restore progress
-
-## Acceptance criteria
-
-- admin can create one private book
-- admin can grant one email access
-- reader can authenticate
-- reader can open EPUB
-- reader progress persists
-- revoked grant blocks fresh access
-- lint passes
-- typecheck passes
-- tests pass
-- build passes
-
----
-
-# 28. AI-agent execution model
-
-Use a disciplined orchestrated approach.
-
-## Orchestrator
-
-Responsibilities:
-
-- read AGENTS.md
-- read `plans/`
-- choose next GOAP action
-- assign subtasks
-- verify completion gates
-
-## Specialist agents
-
-### Architecture agent
-
-- validates ADRs
-- checks module boundaries
-- prevents coupling drift
-
-### Backend agent
-
-- Worker routes
-- Turso repositories
-- auth/session logic
-- R2 signed URLs
-
-### Frontend agent
-
-- reader UI
-- admin UI
-- Zustand stores
-- responsive UX
-
-### EPUB agent
-
-- EPUB.js integration
-- CFI anchors
-- TOC and locator logic
-
-### Offline agent
-
-- service worker
-- IndexedDB
-- cache strategy
-- sync queue
-
-### Test agent
-
-- Vitest
-- Playwright
-- test builders
-- regression coverage
-
-### Security reviewer
-
-- auth leak checks
-- sanitization checks
-- token expiry checks
-- audit logging checks
-
-## Agent rules
-
-- no code before reading plans
-- no source file over 500 LOC
-- no merge without verify gate
-- no docs update before successful implementation verification
-
----
-
-# 29. Product naming inside the UI
-
-## Reader modes
-
-- `Read`
-- `Review`
-- `Public`
-
-## Admin labels
-
-- `Private access`
-- `Password required`
-- `Comments enabled`
-- `Offline reading allowed`
-- `Access expires`
-
-## English wording for “Lektorat”
-
-Best UI wording:
-
-- `Editorial review`
-- `Review comments`
-- `Proofing access`
-
-German locale later:
-
-- `Lektorat`
-- `Kommentare`
-- `Offline lesen`
-- `Zugriff`
-
----
-
-# 30. Risks and mitigations
-
-## EPUB anchor drift
-
-Mitigation:
-
-- CFI + selected text + chapter reference fallback
-
-## Offline conflict drift
-
-Mitigation:
-
-- entity-specific merge rules
-- append-only comments
-- idempotent sync mutations
-
-## Grant leakage
-
-Mitigation:
-
-- generic auth errors
-- short-lived sessions
-- short-lived signed URLs
-- audit logs
-
-## Overcomplicated auth too early
-
-Mitigation:
-
-- start with email + optional password
-- avoid full account system in MVP
-
-## Public/private storage mistakes
-
-Mitigation:
-
-- all file access goes through Worker gate
-- never expose raw storage paths as the source of truth
-
----
-
-# 31. Definition of done
-
-A change is done only if:
-
-- plan impact checked
-- implementation complete
-- no source file exceeds 500 LOC
-- lint passes
-- typecheck passes
-- tests pass
-- build passes
-- generated artifacts (e.g., `playwright-report/`, `test-results/`, `verification_output.txt`) are NOT committed
-- security implications reviewed
-- docs updated if behavior changed
-
----
-
-# 32. Final recommendation
-
-Start `do-epub-studio` as:
-
-- private GitHub repo
-- pnpm + turbo monorepo
-- `apps/web`, `apps/worker`, `packages/*`
-- Cloudflare Workers + R2 + Turso
-- `wrangler.jsonc` for Worker config
-- Wrangler secrets for sensitive Worker values
-- `.dev.vars` for local Worker dev
-- `.env.local` only for browser-safe frontend values
-- Turso CLI for DB provisioning and token generation
-- EPUB.js for MVP
-- IndexedDB + Cache Storage for offline
-- AGENTS.md + plans/ for AI-agent execution
-
-## Best first milestone
-
-One private EPUB, one approved reader grant, one successful authenticated reading session, and one offline-capable resume flow.
-
-If you want the next step, turn this guide into repo files (`README.md`, `AGENTS.md`, `wrangler.jsonc`, example config files, plans, ADRs, CI, schema/API skeleton). This guide is now the canonical reference.
-
----
-
-# 13. Agent coding workflow (2026 operational checklist)
-
-Use this checklist when handling cross-cutting requests (optimization + new features + docs + test strategy):
-
-1. **Load prior context first**
-   - Read `agents-docs/LEARNINGS.md` before implementation.
-2. **Update plan artifacts before code changes**
-   - Add/adjust entries in `plans/007-implementation-phases.md` and relevant backlog plan.
-3. **Prefer deterministic test defaults**
-   - Vitest should run in non-watch mode for CI (`vitest --run`).
-   - Playwright should keep trace/video/screenshot artifacts on failure.
-4. **Separate PR checks from nightly depth**
-   - PR: lint + typecheck + unit tests + smoke E2E.
-   - Nightly: full cross-browser E2E + benchmarks + budget/perf checks.
-5. **Track missing tasks explicitly**
-   - Do not leave “known gaps” only in PR text; store them in `plans/` with owner/acceptance criteria.
-6. **Close verification loop**
-   - Run `./scripts/quality_gate.sh` and keep the output green before commit.
-7. **Capture non-obvious learnings**
-   - Append durable discoveries (not session noise) to `agents-docs/LEARNINGS.md`.
+**Best first milestone:** one private EPUB, one approved reader grant, one authenticated reading session, one offline-capable resume flow.
