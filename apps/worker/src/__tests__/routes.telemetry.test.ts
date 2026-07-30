@@ -64,9 +64,15 @@ describe('Telemetry API', () => {
     expect(console.log).toHaveBeenCalled();
     expect(console.error).toHaveBeenCalled();
 
+    // Route now emits structured JSON; exclude middleware request.* events
     const clientTelemetryLogs = vi.mocked(console.log).mock.calls
       .map((call: unknown[]) => call[0] as string)
-      .filter((msg) => msg.startsWith('[CLIENT-TELEMETRY]'));
+      .filter((msg) => {
+        try {
+          const p = JSON.parse(msg) as Record<string, unknown>;
+          return typeof p.event === 'string' && !(p.event as string).startsWith('request.');
+        } catch { return false; }
+      });
 
     expect(clientTelemetryLogs.length).toBe(1);
     expect(clientTelemetryLogs[0]).toContain('test_event');
@@ -167,12 +173,15 @@ describe('Telemetry API', () => {
 
     expect(console.warn).toHaveBeenCalled();
 
+    // Route now emits structured JSON (no [CLIENT-TELEMETRY] prefix)
     const clientTelemetryLogs = vi.mocked(console.warn).mock.calls
       .map((call: unknown[]) => call[0] as string)
-      .filter((msg) => msg.startsWith('[CLIENT-TELEMETRY]'));
+      .filter((msg) => {
+        try { const p = JSON.parse(msg); return typeof p === 'object' && p !== null; } catch { return false; }
+      });
 
     expect(clientTelemetryLogs.length).toBe(1);
-    const parsedLog = JSON.parse(clientTelemetryLogs[0].replace('[CLIENT-TELEMETRY] ', ''));
+    const parsedLog = JSON.parse(clientTelemetryLogs[0]);
 
     // Check metadata redaction
     expect(parsedLog.metadata.password).toBe('[REDACTED]');
