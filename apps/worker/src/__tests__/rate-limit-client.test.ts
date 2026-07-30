@@ -22,9 +22,9 @@ describe('checkRateLimitDO', () => {
     CACHE_KV: { get: vi.fn().mockResolvedValue(null), put: vi.fn().mockResolvedValue(undefined) } as unknown as KVNamespace,
     TURSO_DATABASE_URL: 'file::memory:',
     TURSO_AUTH_TOKEN: 'test-token',
-    SESSION_SIGNING_SECRET: process.env.TEST_SESSION_SIGNING_SECRET || 'test',
-    INVITE_TOKEN_SECRET: process.env.TEST_INVITE_TOKEN_SECRET || 'test',
-    APP_BASE_URL: process.env.TEST_APP_BASE_URL || 'http://localhost',
+    SESSION_SIGNING_SECRET: 'test-session-secret',
+    INVITE_TOKEN_SECRET: 'test-invite-secret',
+    APP_BASE_URL: 'http://localhost',
   });
 
   it('returns allowed: true when DO returns allowed: true', async () => {

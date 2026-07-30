@@ -142,6 +142,14 @@ Always cross-reference with Cloud CLI for full PR data.
       (triggers Biome `useQwikValidLexicalScope`). Use `vi.fn()` instead.
 - [ ] Suppressing `security/*` rules without an inline justification
       comment and a follow-up plan entry.
+- [ ] `while (true)` in production code — Codacy flags it as "Unexpected
+      constant condition" and "Unnecessary conditional, value is always
+      truthy". Use `for (;;)` for infinite loops; it is semantically
+      identical and does not trigger constant-condition rules.
+- [ ] `process.env.X || 'fallback'` in test files — Codacy flags it as
+      "Non-serializable expression must be wrapped with $(...)". In test
+      files, replace with a plain string literal. The env var lookup adds
+      no value in a mock environment and confuses static analysis.
 - [ ] Editing `.eslint.config.js` to disable a rule that Codacy
       enforces (Codacy does not read the local ESLint config — it
       runs its own).
