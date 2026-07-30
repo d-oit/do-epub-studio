@@ -70,7 +70,7 @@ describe('Telemetry API', () => {
       .filter((msg) => {
         try {
           const p = JSON.parse(msg) as Record<string, unknown>;
-          return typeof p.event === 'string' && !(p.event as string).startsWith('request.');
+          return typeof p.event === 'string' && !p.event.startsWith('request.');
         } catch { return false; }
       });
 

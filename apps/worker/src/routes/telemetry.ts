@@ -38,13 +38,10 @@ telemetryRouter.post(
       const scrubbedLog = scrub(log) as Record<string, unknown>;
       const receivedAt = new Date().toISOString();
       if (log.level === 'error') {
-        // eslint-disable-next-line no-console -- client telemetry forwarding; structured payload; warn level not supported by observability module
         console.error(JSON.stringify({ ...scrubbedLog, _receivedAt: receivedAt }));
       } else if (log.level === 'warn') {
-        // eslint-disable-next-line no-console -- client telemetry forwarding; structured payload; warn level not supported by observability module
         console.warn(JSON.stringify({ ...scrubbedLog, _receivedAt: receivedAt }));
       } else {
-        // eslint-disable-next-line no-console -- client telemetry forwarding; structured payload; warn level not supported by observability module
         console.log(JSON.stringify({ ...scrubbedLog, _receivedAt: receivedAt }));
       }
     }

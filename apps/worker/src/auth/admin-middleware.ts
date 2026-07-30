@@ -98,7 +98,6 @@ export async function requireAdminAuth(
     `UPDATE admin_sessions SET last_used_at = datetime('now') WHERE id = ?`,
     [session.id],
   ).catch((err: unknown) => {
-    // eslint-disable-next-line no-console -- worker utility; logRequestError requires a RequestContext not available here
     console.error(
       JSON.stringify({
         level: 'error',
