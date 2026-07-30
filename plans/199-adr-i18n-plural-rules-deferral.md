@@ -1,8 +1,8 @@
 # ADR-199 — i18n Plural Rules: Deferral
 
-**Status:** Accepted (deferred)  
-**Date:** 2026-07-29  
-**Authors:** d-oit  
+**Status:** Accepted (deferred)
+**Date:** 2026-07-29
+**Authors:** d-oit
 **Related:** Wave 2 i18n hardening (`feat/wave2-i18n-hardening`)
 
 ---
