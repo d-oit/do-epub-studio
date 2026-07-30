@@ -1,6 +1,6 @@
 {
   "name": "do-epub-studio",
-  "version": "0.2.0",
+  "version": "0.1.0",
   "private": true,
   "packageManager": "pnpm@10.33.0+sha512.10568bb4a6afb58c9eb3630da90cc9516417abebd3fabbe6739f0ae795728da1491e9db5a544c76ad8eb7570f5c4bb3d6c637b2cb41bfdcdb47fa823c8649319",
   "type": "module",
@@ -27,7 +27,9 @@
     "bench": "pnpm --filter @do-epub-studio/reader-core bench",
     "build:analyze": "ANALYZE=true turbo run build",
     "bundle:budget": "pnpm --filter @do-epub-studio/web bundle:budget",
-    "bundle:budget:enforce": "BUNDLE_BUDGET_FAIL_ON_VIOLATION=1 pnpm --filter @do-epub-studio/web bundle:budget:enforce"
+    "bundle:budget:enforce": "BUNDLE_BUDGET_FAIL_ON_VIOLATION=1 pnpm --filter @do-epub-studio/web bundle:budget:enforce",
+    "knip": "knip",
+    "check:dead-code": "scripts/dead-code-check.sh"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.12.1",
@@ -53,6 +55,8 @@
     "impeccable": "^3.4.0",
     "js-yaml": "^5.2.2",
     "jsdom": "^30.0.0",
+    "knip": "^6.29.0",
+    "madge": "^8.0.0",
     "prettier": "^3.9.6",
     "rollup-plugin-visualizer": "^7.0.1",
     "turbo": "^2.10.7",
