@@ -1,4 +1,4 @@
-import type { Env, JsonRow } from '../lib/env';
+import type { Env } from '../lib/env';
 
 type EntityType = 'book' | 'grant' | 'session' | 'comment' | 'user' | 'bookmark' | 'highlight';
 
@@ -8,16 +8,6 @@ interface AuditEntry {
   action: string;
   actorEmail?: string;
   payload?: Record<string, unknown>;
-}
-
-interface AuditLogRow extends JsonRow {
-  id: string;
-  actor_email: string | null;
-  entity_type: string;
-  entity_id: string;
-  action: string;
-  payload_json: string | null;
-  created_at: string;
 }
 
 const MAX_SANITIZE_DEPTH = 10;
@@ -113,53 +103,4 @@ export async function logAudit(
   } else {
     await promise;
   }
-}
-
-export async function getAuditLog(
-  env: Env,
-  entityType?: EntityType,
-  entityId?: string,
-  limit = 100
-): Promise<Array<{
-  id: string;
-  actorEmail: string | null;
-  entityType: string;
-  entityId: string;
-  action: string;
-  payload: Record<string, unknown> | null;
-  createdAt: string;
-}>> {
-  let sql = 'SELECT * FROM audit_log';
-  const args: (string | number)[] = [];
-  const conditions: string[] = [];
-
-  if (entityType) {
-    conditions.push('entity_type = ?');
-    args.push(entityType);
-  }
-
-  if (entityId) {
-    conditions.push('entity_id = ?');
-    args.push(entityId);
-  }
-
-  if (conditions.length > 0) {
-    sql += ' WHERE ' + conditions.join(' AND ');
-  }
-
-  sql += ' ORDER BY created_at DESC LIMIT ?';
-  args.push(limit);
-
-  const { queryAll } = await import('../db/client');
-  const rows = await queryAll<AuditLogRow>(env, sql, args);
-
-  return rows.map(row => ({
-    id: row.id,
-    actorEmail: row.actor_email,
-    entityType: row.entity_type,
-    entityId: row.entity_id,
-    action: row.action,
-    payload: row.payload_json ? (JSON.parse(row.payload_json) as Record<string, unknown>) : null,
-    createdAt: row.created_at,
-  }));
 }

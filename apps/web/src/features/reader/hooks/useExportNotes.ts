@@ -1,53 +1,19 @@
 import { useCallback } from 'react';
 import { useShallow } from 'zustand/react/shallow';
-import type { AnnotationLocator } from '@do-epub-studio/shared';
 import { useReaderStore } from '../../../stores';
 import type { Bookmark, Comment, Highlight } from '../../../stores/reader';
 import { parseNotesMarkdown } from '../lib/export-notes-markdown';
+import {
+  NOTES_FORMAT_VERSION,
+  NOTES_MIME_TYPE,
+  type ExportedHighlight,
+  type ExportedComment,
+  type ExportedBookmark,
+  type NotesExport,
+} from '../lib/notes-types';
 
-export const NOTES_FORMAT_VERSION = 1 as const;
-export const NOTES_MIME_TYPE = 'text/markdown' as const;
-
-export interface ExportedAnnotationBase {
-  id: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface ExportedHighlight extends ExportedAnnotationBase {
-  type: 'highlight';
-  selectedText: string;
-  color: string;
-  note: string | null;
-  locator: AnnotationLocator | null;
-}
-
-export interface ExportedComment extends ExportedAnnotationBase {
-  type: 'comment';
-  body: string;
-  status: 'open' | 'resolved' | 'deleted';
-  visibility: 'shared' | 'internal' | 'resolved';
-  parentCommentId: string | null;
-  selectedText: string | null;
-  locator: AnnotationLocator | null;
-}
-
-export interface ExportedBookmark extends ExportedAnnotationBase {
-  type: 'bookmark';
-  label: string | null;
-  locator: AnnotationLocator;
-}
-
-export type ExportedAnnotation = ExportedHighlight | ExportedComment | ExportedBookmark;
-
-export interface NotesExport {
-  format: 'do-epub-studio-notes';
-  version: typeof NOTES_FORMAT_VERSION;
-  exportedAt: string;
-  bookTitle: string;
-  bookId: string | null;
-  annotations: ExportedAnnotation[];
-}
+// Re-export for backward compatibility (barrel + tests import from here)
+export { NOTES_FORMAT_VERSION, NOTES_MIME_TYPE, type NotesExport };
 
 export interface NotesImportResult {
   ok: boolean;

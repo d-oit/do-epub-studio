@@ -1,4 +1,4 @@
-import { useOptimistic, useTransition, useCallback, useMemo, startTransition as startReactTransition } from 'react';
+import { useOptimistic, useTransition, useCallback, useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { useReaderStore } from '../../../stores';
 import type { Highlight, Comment, Bookmark } from '../../../stores';
@@ -115,4 +115,3 @@ export function useOptimisticAnnotationStore(): UseOptimisticAnnotationStore {
   };
 }
 
-export { startReactTransition };

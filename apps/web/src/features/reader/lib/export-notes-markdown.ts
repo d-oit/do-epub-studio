@@ -1,6 +1,6 @@
 import { matchBounded } from '@do-epub-studio/shared';
-import type { NotesExport, ExportedAnnotation } from '../hooks/useExportNotes';
-import { NOTES_FORMAT_VERSION } from '../hooks/useExportNotes';
+import type { NotesExport, ExportedAnnotation } from './notes-types';
+import { NOTES_FORMAT_VERSION } from './notes-types';
 
 function findCfiInBrackets(text: string): string | null {
   const markerIdx = text.indexOf('[epubcfi(');

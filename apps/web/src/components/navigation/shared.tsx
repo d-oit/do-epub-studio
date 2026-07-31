@@ -4,7 +4,7 @@ export const NAV_ITEMS = [
   { key: 'nav.settings' as const, icon: 'settings', href: '/settings' },
 ] as const;
 
-export type NavItemKey = (typeof NAV_ITEMS)[number]['key'];
+
 
 const ICON_PATHS = new Map<string, string>([
   ['library', 'M4 19.5A2.5 2.5 0 016.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z'],

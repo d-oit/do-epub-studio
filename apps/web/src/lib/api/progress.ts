@@ -1,4 +1,4 @@
-import { apiRequest } from '.';
+import { apiRequest } from './core';
 import type { ReadingProgress } from '../../stores';
 
 export async function fetchProgress(bookId: string, token: string): Promise<ReadingProgress> {

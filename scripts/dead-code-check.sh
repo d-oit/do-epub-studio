@@ -5,15 +5,23 @@
 # Knip exit codes: 0 = no error-severity violations (warnings are allowed).
 # Madge: any circular dependency is flagged; pre-existing ones are baselined.
 #
-# Pre-existing circular deps baseline (Wave 6-A):
-#   3 circulars in apps/web (see madge-baseline.txt at repo root)
-# Fail only if the count *exceeds* the baseline.
+# The madge circular-dep baseline is read dynamically from
+# `knip-baseline.json` (`madgeCircularDeps` array length) so it stays in
+# sync when circulars are resolved. Fail only if the count *exceeds* the
+# baseline.
 set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT"
 
 FAILED=0
-MADGE_BASELINE=3  # pre-existing circular deps as of Wave 6-A
+
+# Read the baseline count from knip-baseline.json (falls back to 0 if missing)
+BASELINE_FILE="$REPO_ROOT/knip-baseline.json"
+if [ -f "$BASELINE_FILE" ]; then
+  MADGE_BASELINE=$(node -e "const b=require('./knip-baseline.json'); console.log((b.madgeCircularDeps||[]).length)" 2>/dev/null || echo 0)
+else
+  MADGE_BASELINE=0
+fi
 
 echo "=== knip: unused exports/deps/files ==="
 if ! pnpm knip --no-progress; then

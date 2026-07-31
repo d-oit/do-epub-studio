@@ -1,6 +1,6 @@
 import type { Env } from '../lib/env';
 import { queryFirst, execute } from '../db/client';
-import { hashPassword, verifyPassword } from './password';
+import { verifyPassword } from './password';
 import { createRequestContext as _createRequestContext } from '../lib/observability';
 import { createTraceId } from '@do-epub-studio/shared';
 
@@ -231,32 +231,4 @@ export function generateAdminToken(): string {
     .join('');
 }
 
-export async function initializeAdminUser(
-  env: Env,
-  email: string,
-  password: string,
-  displayName?: string,
-): Promise<string> {
-  const existing = await queryFirst<{ id: string }>(
-    env,
-    `SELECT id FROM users WHERE email = ?`,
-    [email.toLowerCase()],
-  );
 
-  if (existing) {
-    return existing.id;
-  }
-
-  const id = crypto.randomUUID();
-  const passwordHash = await hashPassword(password);
-  const now = new Date().toISOString();
-
-  await execute(
-    env,
-    `INSERT INTO users (id, email, display_name, global_role, password_hash, created_at, updated_at)
-     VALUES (?, ?, ?, 'admin', ?, ?, ?)`,
-    [id, email.toLowerCase(), displayName || 'Admin', passwordHash, now, now],
-  );
-
-  return id;
-}
