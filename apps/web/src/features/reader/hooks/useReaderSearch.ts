@@ -187,4 +187,3 @@ function findChapterTitle(toc: NavItem[], href?: string): string | undefined {
   }
   return undefined;
 }
-
