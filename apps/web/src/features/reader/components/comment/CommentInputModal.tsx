@@ -26,11 +26,11 @@ export function CommentInputModal({
   useEffect(() => {
     if (!isOpen || !selection) return;
 
-    const handleKeyDown = (e: KeyboardEvent) => {
+    function handleKeyDown(e: KeyboardEvent) {
       if (e.key === 'Escape') {
         onCancel();
       }
-    };
+    }
 
     window.addEventListener('keydown', handleKeyDown);
     return () => {
