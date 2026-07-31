@@ -14,6 +14,7 @@
 - knip config: exports/types are `warn` (non-blocking); files/deps are `error`
 
 ### Circular Dependencies (3 — all in apps/web/src) — RESOLVED
+
 | ID | Cycle | Root Cause | Fix |
 |----|-------|------------|-----|
 | C1 | `lib/api/index.ts` → `lib/api/annotations.ts` | `annotations.ts` imports `apiRequest` from `'.'` (barrel), and barrel re-exports `./annotations` | Extracted `apiRequest` impl to `core.ts`; `annotations.ts` imports from `./core` |
@@ -21,6 +22,7 @@
 | C3 | `useExportNotes.ts` → `export-notes-markdown.ts` → `useExportNotes.ts` | Types exported from hook file are imported by the lib that the hook imports | Moved shared types/constants to `lib/notes-types.ts`; both modules import from it |
 
 ### Duplicate Export (1) — RESOLVED
+
 | ID | Issue | Fix |
 |----|-------|-----|
 | D1 | `App.tsx` has both `export function App` and `export default App` | Removed `export default`; updated `main.tsx` to use named import |
