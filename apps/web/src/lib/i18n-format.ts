@@ -20,5 +20,3 @@ export function formatDateTime(date: Date, options?: Intl.DateTimeFormatOptions)
     options ?? { dateStyle: 'medium', timeStyle: 'short' },
   ).format(date);
 }
-
-

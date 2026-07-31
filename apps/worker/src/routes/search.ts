@@ -112,4 +112,3 @@ searchRouter.get(
     });
   },
 );
-
