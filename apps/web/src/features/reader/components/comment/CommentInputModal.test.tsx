@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { CommentInputModal } from './CommentInputModal';
 
 vi.mock('../../../../hooks/useTranslation', () => ({
@@ -23,13 +23,14 @@ describe('CommentInputModal', () => {
   it('renders when isOpen and selection provided', () => {
     const { container } = render(<CommentInputModal {...defaultProps} />);
     expect(container.querySelector('.fixed')).toBeInTheDocument();
-    expect(container.querySelector('.glass-panel, .rounded-lg')).toBeInTheDocument();
+    expect(container.querySelector('.rounded-lg')).toBeInTheDocument();
   });
 
-  it('renders submit label as heading', () => {
+  it('renders submit label as heading with id', () => {
     const { container } = render(<CommentInputModal {...defaultProps} submitLabel="Send" />);
     const h3 = container.querySelector('h3');
     expect(h3?.textContent).toBe('Send');
+    expect(h3?.id).toBe('comment-modal-title');
   });
 
   it('returns null when isOpen is false', () => {
@@ -57,5 +58,19 @@ describe('CommentInputModal', () => {
     render(<CommentInputModal {...defaultProps} />);
     const textarea = screen.getByPlaceholderText('Add a comment...');
     expect(textarea).toHaveFocus();
+  });
+
+  it('has correct aria role, modal and labelling attributes', () => {
+    render(<CommentInputModal {...defaultProps} />);
+    const modalDiv = screen.getByRole('dialog');
+    expect(modalDiv).toBeInTheDocument();
+    expect(modalDiv).toHaveAttribute('aria-modal', 'true');
+    expect(modalDiv).toHaveAttribute('aria-labelledby', 'comment-modal-title');
+  });
+
+  it('triggers onCancel when pressing Escape on the window', () => {
+    render(<CommentInputModal {...defaultProps} />);
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(defaultProps.onCancel).toHaveBeenCalledTimes(1);
   });
 });
