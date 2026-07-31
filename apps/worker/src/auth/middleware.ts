@@ -77,5 +77,3 @@ export async function requireAuth(env: Env, request: Request): Promise<AuthConte
     },
   };
 }
-
-

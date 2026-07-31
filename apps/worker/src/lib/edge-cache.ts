@@ -61,8 +61,6 @@ export interface EdgeCacheOptions {
   env?: EdgeCacheEnv;
 }
 
-
-
 /**
  * Look up a request in `caches.default` and return the stored response
  * when present. The cache key is derived from the original URL and the
