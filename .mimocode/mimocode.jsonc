@@ -9,8 +9,8 @@
   },
   "mcp": {},
   "model_groups": {
-    "lite": "cline-pass/cline-pass/mimo-v2.5",
-    "standard": "cline-pass/cline-pass/mimo-v2.5-pro",
+    "lite": "cline-pass/cline-pass/deepseek-v4-flash",
+    "standard": "xiaomi/mimo-v2.5",
     "ultra": "cline-pass/cline-pass/mimo-v2.5-pro"
   },
   "agent": {
