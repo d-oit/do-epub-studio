@@ -1,6 +1,6 @@
 # ADR-201: WebKit in PR smoke CI
 
-**Status:** Accepted  
+**Status:** Accepted
 **Date:** 2026-07-30
 
 ## Decision
