@@ -74,6 +74,9 @@ export async function apiRequest<T>(endpoint: string, options: ApiRequestOptions
 
     let responseStatus: number | undefined;
     try {
+      // Codacy false positive (ssrf_rule): endpoint is always an internal
+      // path literal (e.g. '/api/books/...'), never user-supplied.  Pre-existing
+      // code moved from index.ts; suppressed per Codacy inline-justification policy.
       const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         ...requestInit,
         headers,
@@ -126,6 +129,7 @@ export async function apiRequest<T>(endpoint: string, options: ApiRequestOptions
 async function apiRaw(endpoint: string, method: string, data?: unknown, options?: ApiRequestOptions): Promise<Response> {
   const traceId = createTraceId();
   const spanId = createSpanId();
+  // Codacy false positive (ssrf_rule): same reasoning as apiRequest — internal path only.
   const res = await fetch(`${API_BASE_URL}${endpoint}`, {
     method,
     headers: {
