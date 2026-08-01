@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import type { Env } from '../../lib/env';
-import { LoginSchema, AdminRecoveryRequestSchema, RecoveryVerifySchema } from '@do-epub-studio/schema';
+import { LoginSchema, AdminRecoveryRequestSchema, RecoveryVerifySchema, JWT_PURPOSE_ADMIN_RECOVER } from '@do-epub-studio/schema';
 import { checkRateLimitDO } from '../../lib/rate-limit-client';
 import { createAdminSession, createAdminSessionByEmail, revokeAdminSession } from '../../auth/admin-middleware';
 import { logAudit } from '../../audit';
@@ -100,7 +100,7 @@ authRouter.post('/recovery-request', zValidator('json', AdminRecoveryRequestSche
   if (user) {
     const payload = {
       email: email.toLowerCase(),
-      purpose: 'admin_recover',
+      purpose: JWT_PURPOSE_ADMIN_RECOVER,
       exp: Math.floor(Date.now() / 1000) + 3600,
     };
     const token = await sign(payload, c.env.INVITE_TOKEN_SECRET, 'HS256');
@@ -135,7 +135,7 @@ authRouter.post('/recovery-verify', zValidator('json', RecoveryVerifySchema), as
   try {
     const payload = await verify(token, c.env.INVITE_TOKEN_SECRET, 'HS256') as { email: string; purpose: string };
 
-    if (payload.purpose !== 'admin_recover') {
+    if (payload.purpose !== JWT_PURPOSE_ADMIN_RECOVER) {
       return c.json(
         { ok: false, error: { code: 'INVALID_TOKEN', message: 'Invalid recovery token' } },
         401,

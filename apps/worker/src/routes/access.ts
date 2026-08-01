@@ -4,7 +4,7 @@ import type { Env } from '../lib/env';
 import { validateGrant, computeCapabilities, getGrantByBookAndSession, getGrantsBySession } from '../auth/password';
 import { createSession, validateSession, revokeSession } from '../auth/session';
 import { logAudit } from '../audit';
-import { AccessRequestSchema, RecoveryRequestSchema, RecoveryVerifySchema } from '@do-epub-studio/shared';
+import { AccessRequestSchema, RecoveryRequestSchema, RecoveryVerifySchema, JWT_PURPOSE_READER_RECOVER } from '@do-epub-studio/shared';
 import { ValidateQuerySchema } from '@do-epub-studio/schema';
 import { sign, verify } from 'hono/jwt';
 import { checkRateLimitDO, deleteRateLimitKey } from '../lib/rate-limit-client';
@@ -45,7 +45,7 @@ accessRouter.post('/recovery-request', zValidator('json', RecoveryRequestSchema)
       const payload = {
         email: email.toLowerCase(),
         bookSlug,
-        purpose: 'reader_recover',
+        purpose: JWT_PURPOSE_READER_RECOVER,
         exp: Math.floor(Date.now() / 1000) + 3600,
       };
       const token = await sign(payload, c.env.INVITE_TOKEN_SECRET, 'HS256');
@@ -83,10 +83,10 @@ accessRouter.post('/verify-recovery', zValidator('json', RecoveryVerifySchema), 
     const payload = await verify(token, c.env.INVITE_TOKEN_SECRET, 'HS256') as {
       email: string;
       bookSlug: string;
-      purpose?: string;
+      purpose: string;
     };
 
-    if (payload.purpose !== 'reader_recover') {
+    if (payload.purpose !== JWT_PURPOSE_READER_RECOVER) {
       return c.json(
         {
           ok: false,

@@ -10,6 +10,7 @@ import {
 } from './fixtures';
 import { app } from '../app';
 import { sign } from 'hono/jwt';
+import { JWT_PURPOSE_READER_RECOVER } from '@do-epub-studio/shared';
 
 describe('Access Recovery Routes', () => {
   const env = makeEnv();
@@ -77,7 +78,7 @@ describe('Access Recovery Routes', () => {
       const payload = {
         email: 'reader@example.com',
         bookSlug: 'test-book',
-        purpose: 'reader_recover',
+        purpose: JWT_PURPOSE_READER_RECOVER,
         exp: Math.floor(Date.now() / 1000) + 3600,
       };
       // Use the same secret that the worker will use in the test environment
@@ -127,7 +128,7 @@ describe('Access Recovery Routes', () => {
       const payload = {
         email: 'reader@example.com',
         bookSlug: 'test-book',
-        purpose: 'reader_recover',
+        purpose: JWT_PURPOSE_READER_RECOVER,
         exp: Math.floor(Date.now() / 1000) + 3600,
       };
       const token = await sign(payload, env.INVITE_TOKEN_SECRET, 'HS256');

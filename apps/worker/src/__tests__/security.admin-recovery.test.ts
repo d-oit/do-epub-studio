@@ -7,6 +7,7 @@ import {
 } from './fixtures';
 import { app } from '../app';
 import { sign } from 'hono/jwt';
+import { JWT_PURPOSE_ADMIN_RECOVER } from '@do-epub-studio/shared';
 
 describe('Security: Admin Recovery Flow', () => {
   const env = makeEnv();
@@ -43,7 +44,7 @@ describe('Security: Admin Recovery Flow', () => {
   it('POST /api/admin/recovery-verify should succeed with valid token', async () => {
     const payload = {
       email: 'admin@example.com',
-      purpose: 'admin_recover',
+      purpose: JWT_PURPOSE_ADMIN_RECOVER,
       exp: Math.floor(Date.now() / 1000) + 3600,
     };
     const token = await sign(payload, env.INVITE_TOKEN_SECRET, 'HS256');
