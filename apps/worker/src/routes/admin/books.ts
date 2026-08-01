@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
-import { createTraceId, TRACE_HEADER, serializeError, CreateBookSchema, UpdateBookSchema, validateEpub } from '@do-epub-studio/shared';
+import { CreateBookSchema, UpdateBookSchema, validateEpub } from '@do-epub-studio/shared';
 import type { Env } from '../../lib/env';
 import { execute, queryFirst, queryAll, transaction } from '../../db/client';
 import { logAudit } from '../../audit';
@@ -9,6 +9,7 @@ import { adminAuth } from '../../middleware/auth';
 import { withByteCap, MaxBodySizeError, DEFAULT_MAX_BODY_BYTES } from '../../lib/stream-body';
 import { bumpCacheVersion } from '../../lib/edge-cache';
 import { NotFoundError, ValidationError, AppError } from '../../lib/http-errors';
+import { createRequestContext, logRequestError } from '../../lib/observability';
 
 export const booksRouter = new Hono<{ Bindings: Env; Variables: { adminUser: { email: string; id: string; role: string } } }>();
 
@@ -306,7 +307,6 @@ booksRouter.patch('/:id', adminAuth, zValidator('json', UpdateBookSchema), async
 booksRouter.delete('/:id', adminAuth, async (c) => {
   const bookId = c.req.param('id');
   const adminUser = c.get('adminUser');
-  const traceId = c.req.header(TRACE_HEADER) ?? createTraceId();
 
   const book = await queryFirst<{ id: string }>(
     c.env,
@@ -325,16 +325,11 @@ booksRouter.delete('/:id', adminAuth, async (c) => {
     'SELECT storage_key FROM book_files WHERE book_id = ?',
     [bookId],
   );
+  const r2Ctx = createRequestContext(c.req.raw);
   const r2DeletePromises = files.map((f) =>
+    // R2 deletion failure during cascade should not block book archive — log and continue
     c.env.BOOKS_BUCKET.delete(f.storage_key).catch((err: unknown) => {
-      console.error(JSON.stringify({
-        level: 'error',
-        traceId,
-        event: 'book.delete.r2_failure',
-        bookId,
-        storageKey: f.storage_key,
-        error: serializeError(err),
-      }));
+      logRequestError(r2Ctx, err, { event: 'book.delete.r2_failure', bookId, storageKey: f.storage_key });
     }),
   );
   // DB child rows (soft-delete the book row, hard-delete dependents)
