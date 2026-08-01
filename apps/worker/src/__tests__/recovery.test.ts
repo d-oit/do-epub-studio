@@ -77,6 +77,7 @@ describe('Access Recovery Routes', () => {
       const payload = {
         email: 'reader@example.com',
         bookSlug: 'test-book',
+        purpose: 'reader_recover',
         exp: Math.floor(Date.now() / 1000) + 3600,
       };
       // Use the same secret that the worker will use in the test environment
@@ -126,9 +127,10 @@ describe('Access Recovery Routes', () => {
       const payload = {
         email: 'reader@example.com',
         bookSlug: 'test-book',
+        purpose: 'reader_recover',
         exp: Math.floor(Date.now() / 1000) + 3600,
       };
-      const token = await sign(payload, env.INVITE_TOKEN_SECRET);
+      const token = await sign(payload, env.INVITE_TOKEN_SECRET, 'HS256');
 
       mockValidateGrant.mockResolvedValue({
         valid: false,
@@ -142,6 +144,45 @@ describe('Access Recovery Routes', () => {
       }), env, makePassThroughContext());
 
       expect(res.status).toBe(401);
+    });
+
+    it('returns 401 if token is valid but has incorrect purpose', async () => {
+      const payload = {
+        email: 'reader@example.com',
+        bookSlug: 'test-book',
+        purpose: 'invalid_purpose',
+        exp: Math.floor(Date.now() / 1000) + 3600,
+      };
+      const token = await sign(payload, env.INVITE_TOKEN_SECRET, 'HS256');
+
+      const res = await app.fetch(new Request('http://localhost/api/access/verify-recovery', {
+        method: 'POST',
+        body: JSON.stringify({ token }),
+        headers: { 'Content-Type': 'application/json' }
+      }), env, makePassThroughContext());
+
+      expect(res.status).toBe(401);
+      const body: { ok: boolean; error: { code: string } } = await res.json();
+      expect(body.error.code).toBe('INVALID_TOKEN');
+    });
+
+    it('returns 401 if token is valid but has no purpose', async () => {
+      const payload = {
+        email: 'reader@example.com',
+        bookSlug: 'test-book',
+        exp: Math.floor(Date.now() / 1000) + 3600,
+      };
+      const token = await sign(payload, env.INVITE_TOKEN_SECRET, 'HS256');
+
+      const res = await app.fetch(new Request('http://localhost/api/access/verify-recovery', {
+        method: 'POST',
+        body: JSON.stringify({ token }),
+        headers: { 'Content-Type': 'application/json' }
+      }), env, makePassThroughContext());
+
+      expect(res.status).toBe(401);
+      const body: { ok: boolean; error: { code: string } } = await res.json();
+      expect(body.error.code).toBe('INVALID_TOKEN');
     });
   });
 });
