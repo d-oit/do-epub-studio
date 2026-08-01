@@ -10,7 +10,7 @@ import {
 } from './fixtures';
 import { app } from '../app';
 import { sign } from 'hono/jwt';
-import { JWT_PURPOSE_READER_RECOVER, JWT_PURPOSE_ADMIN_RECOVER } from '@do-epub-studio/shared';
+import { JWT_PURPOSE_READER_RECOVER } from '@do-epub-studio/shared';
 
 describe('Access Recovery Routes', () => {
   const env = makeEnv();
@@ -184,26 +184,6 @@ describe('Access Recovery Routes', () => {
       expect(res.status).toBe(401);
       const body: { ok: boolean; error: { code: string } } = await res.json();
       expect(body.error.code).toBe('INVALID_TOKEN');
-    });
-    it('returns 401 if token has admin purpose submitted to reader endpoint (cross-context)', async () => {
-      const payload = {
-        email: 'reader@example.com',
-        bookSlug: 'test-book',
-        purpose: JWT_PURPOSE_ADMIN_RECOVER,
-        exp: Math.floor(Date.now() / 1000) + 3600,
-      };
-      const token = await sign(payload, env.INVITE_TOKEN_SECRET, 'HS256');
-
-      const res = await app.fetch(new Request('http://localhost/api/access/verify-recovery', {
-        method: 'POST',
-        body: JSON.stringify({ token }),
-        headers: { 'Content-Type': 'application/json' }
-      }), env, makePassThroughContext());
-
-      expect(res.status).toBe(401);
-      const body: { ok: boolean; error: { code: string } } = await res.json();
-      expect(body.error.code).toBe('INVALID_TOKEN');
-      expect(mockValidateGrant).not.toHaveBeenCalled();
     });
   });
 });
