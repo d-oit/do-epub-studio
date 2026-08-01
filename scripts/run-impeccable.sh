@@ -27,6 +27,8 @@ if [ ! -f "$CONFIG_FILE" ]; then
       "**/coverage/**",
       "**/node_modules/**",
       "**/storybook-static/**",
+      "**/playwright-report/**",
+      "**/test-results/**",
       "apps/worker/src/worker-configuration.d.ts"
     ],
     "ignoreValues": [
