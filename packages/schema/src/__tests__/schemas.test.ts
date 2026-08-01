@@ -577,6 +577,14 @@ describe('SearchQuerySchema', () => {
     expect(() => SearchQuerySchema.parse({ q: '' })).toThrow();
   });
 
+  it('rejects missing q field', () => {
+    expect(() => SearchQuerySchema.parse({})).toThrow();
+  });
+
+  it('rejects q longer than 500 chars', () => {
+    expect(() => SearchQuerySchema.parse({ q: 'a'.repeat(501) })).toThrow();
+  });
+
   it('rejects limit > 50', () => {
     expect(() => SearchQuerySchema.parse({ q: 'query', limit: 51 })).toThrow();
   });
