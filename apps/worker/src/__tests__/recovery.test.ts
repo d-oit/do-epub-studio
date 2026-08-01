@@ -32,9 +32,6 @@ describe('Access Recovery Routes', () => {
         headers: { 'Content-Type': 'application/json' }
       }), env, makePassThroughContext());
       const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } = await res.json();
-      if (res.status !== 200) {
-        console.log('Error body:', JSON.stringify(body));
-      }
       expect(res.status).toBe(200);
       expect(body.ok).toBe(true);
     });

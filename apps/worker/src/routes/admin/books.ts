@@ -1,9 +1,9 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
+import { createTraceId, TRACE_HEADER, serializeError, CreateBookSchema, UpdateBookSchema, validateEpub } from '@do-epub-studio/shared';
 import type { Env } from '../../lib/env';
 import { execute, queryFirst, queryAll, transaction } from '../../db/client';
 import { logAudit } from '../../audit';
-import { CreateBookSchema, UpdateBookSchema, validateEpub } from '@do-epub-studio/shared';
 import { UploadCompleteSchema } from '@do-epub-studio/schema';
 import { adminAuth } from '../../middleware/auth';
 import { withByteCap, MaxBodySizeError, DEFAULT_MAX_BODY_BYTES } from '../../lib/stream-body';
@@ -306,6 +306,7 @@ booksRouter.patch('/:id', adminAuth, zValidator('json', UpdateBookSchema), async
 booksRouter.delete('/:id', adminAuth, async (c) => {
   const bookId = c.req.param('id');
   const adminUser = c.get('adminUser');
+  const traceId = c.req.header(TRACE_HEADER) ?? createTraceId();
 
   const book = await queryFirst<{ id: string }>(
     c.env,
@@ -325,7 +326,16 @@ booksRouter.delete('/:id', adminAuth, async (c) => {
     [bookId],
   );
   const r2DeletePromises = files.map((f) =>
-    c.env.BOOKS_BUCKET.delete(f.storage_key).catch(() => undefined),
+    c.env.BOOKS_BUCKET.delete(f.storage_key).catch((err: unknown) => {
+      console.error(JSON.stringify({
+        level: 'error',
+        traceId,
+        event: 'book.delete.r2_failure',
+        bookId,
+        storageKey: f.storage_key,
+        error: serializeError(err),
+      }));
+    }),
   );
   // DB child rows (soft-delete the book row, hard-delete dependents)
   const cascadeStatements = [
