@@ -1,7 +1,8 @@
 # GOAP 208: Schema Centralization & Input Validation Gap Closure
 
 **Date:** 2026-08-01
-**Status:** 🔄 IN PROGRESS
+**Status:** ✅ COMPLETED
+**PR:** [#889](https://github.com/d-oit/do-epub-studio/pull/889)
 **Goal:** Close remaining ADR-078 schema centralization gaps and add missing Zod validation. All CI must pass.
 
 **Related:** ADR-078 (Zod Schema Centralization), ADR-106 (Feature Completeness), Plan 207 (missing impl cleanup)

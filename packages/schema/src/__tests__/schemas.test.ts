@@ -581,6 +581,11 @@ describe('SearchQuerySchema', () => {
     expect(() => SearchQuerySchema.parse({})).toThrow();
   });
 
+  it('accepts q at exactly 500 chars (boundary)', () => {
+    const result = SearchQuerySchema.parse({ q: 'a'.repeat(500) });
+    expect(result.q).toHaveLength(500);
+  });
+
   it('rejects q longer than 500 chars', () => {
     expect(() => SearchQuerySchema.parse({ q: 'a'.repeat(501) })).toThrow();
   });
@@ -607,6 +612,10 @@ describe('ExportQuerySchema', () => {
 
   it('rejects invalid format', () => {
     expect(() => ExportQuerySchema.parse({ format: 'pdf' })).toThrow();
+  });
+
+  it('rejects uppercase format (HTML)', () => {
+    expect(() => ExportQuerySchema.parse({ format: 'HTML' })).toThrow();
   });
 });
 
@@ -648,6 +657,15 @@ describe('NotificationsQuerySchema', () => {
 
   it('rejects limit > 100', () => {
     expect(() => NotificationsQuerySchema.parse({ limit: 101 })).toThrow();
+  });
+
+  it('rejects limit=0', () => {
+    expect(() => NotificationsQuerySchema.parse({ limit: 0 })).toThrow();
+  });
+
+  it('accepts explicit offset=0', () => {
+    const result = NotificationsQuerySchema.parse({ offset: '0' });
+    expect(result.offset).toBe(0);
   });
 
   it('rejects negative offset', () => {
