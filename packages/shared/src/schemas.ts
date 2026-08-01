@@ -17,6 +17,7 @@ export {
   ProgressUpdateSchema,
   BookmarkCreateSchema,
   HighlightCreateSchema,
+  HighlightUpdateSchema,
   CommentCreateSchema,
   CommentUpdateSchema,
   CspReportSchema,
@@ -27,6 +28,9 @@ export {
   UploadCompleteSchema,
   TelemetryLogSchema,
   TelemetryPayloadSchema,
+  SearchQuerySchema,
+  ExportQuerySchema,
+  NotificationsQuerySchema,
   formatZodError,
 } from '@do-epub-studio/schema';
 
@@ -42,6 +46,7 @@ export type {
   ProgressUpdate,
   BookmarkCreate,
   HighlightCreate,
+  HighlightUpdate,
   CommentCreate,
   CommentUpdate,
   CspReport,
@@ -53,4 +58,7 @@ export type {
   UploadComplete,
   TelemetryLog,
   TelemetryPayload,
+  SearchQuery,
+  ExportQuery,
+  NotificationsQuery,
 } from '@do-epub-studio/schema';

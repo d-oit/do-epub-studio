@@ -294,3 +294,29 @@ export const ReadingInsightSummarySchema = z.object({
 export type ReadingInsightBucket = z.infer<typeof ReadingInsightBucketSchema>;
 export type ReadingInsightSync = z.infer<typeof ReadingInsightSyncSchema>;
 export type ReadingInsightSummary = z.infer<typeof ReadingInsightSummarySchema>;
+
+export const SearchQuerySchema = z.object({
+  q: z.string().min(1).max(500),
+  limit: z.coerce.number().int().min(1).max(50).default(20),
+  offset: z.coerce.number().int().min(0).default(0),
+});
+
+export type SearchQuery = z.infer<typeof SearchQuerySchema>;
+
+export const ExportQuerySchema = z.object({
+  format: z.enum(['markdown', 'html']).default('markdown'),
+});
+
+export type ExportQuery = z.infer<typeof ExportQuerySchema>;
+
+export const HighlightUpdateSchema = HighlightCreateSchema.pick({ note: true, color: true }).partial();
+
+export type HighlightUpdate = z.infer<typeof HighlightUpdateSchema>;
+
+export const NotificationsQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+  offset: z.coerce.number().int().min(0).default(0),
+  unread: z.enum(['true', 'false']).default('false'),
+});
+
+export type NotificationsQuery = z.infer<typeof NotificationsQuerySchema>;

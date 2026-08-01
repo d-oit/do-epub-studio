@@ -1,9 +1,11 @@
 import { Hono } from 'hono';
+import { zValidator } from '@hono/zod-validator';
 import type { Env } from '../lib/env';
 import type { AuthContext } from '../auth/middleware';
 import { queryFirst, queryAll, execute } from '../db/client';
 import { readerAuth } from '../middleware/auth';
 import { NotFoundError } from '../lib/http-errors';
+import { NotificationsQuerySchema } from '@do-epub-studio/schema';
 
 export const notificationsRouter = new Hono<{ Bindings: Env; Variables: { auth: AuthContext } }>();
 
@@ -24,11 +26,10 @@ interface NotificationRow {
  * GET /api/notifications
  * List notifications for the authenticated user with pagination.
  */
-notificationsRouter.get('/notifications', readerAuth, async (c) => {
+notificationsRouter.get('/notifications', readerAuth, zValidator('query', NotificationsQuerySchema), async (c) => {
   const auth = c.get('auth');
-  const limit = Math.min(parseInt(c.req.query('limit') ?? '20', 10), 100);
-  const offset = parseInt(c.req.query('offset') ?? '0', 10);
-  const unreadOnly = c.req.query('unread') === 'true';
+  const { limit, offset, unread } = c.req.valid('query');
+  const unreadOnly = unread === 'true';
 
   const conditions = ['user_email = ?'];
   const args: (string | number)[] = [auth.email];

@@ -1,17 +1,13 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
-import { z } from 'zod';
 import type { Env } from '../lib/env';
 import type { AuthContext } from '../auth/middleware';
 import { queryAll } from '../db/client';
 import { readerAuth } from '../middleware/auth';
 import { assertBookAccess } from '../lib/tenant-isolation';
+import { ExportQuerySchema } from '@do-epub-studio/schema';
 
 export const exportRouter = new Hono<{ Bindings: Env; Variables: { auth: AuthContext } }>();
-
-const ExportQuerySchema = z.object({
-  format: z.enum(['markdown', 'html']).default('markdown'),
-});
 
 interface HighlightRow {
   [key: string]: string | number | null | undefined;
