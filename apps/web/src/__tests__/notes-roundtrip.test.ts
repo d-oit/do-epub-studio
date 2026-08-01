@@ -3,8 +3,8 @@ import {
   buildNotesExport,
   notesExportToMarkdown,
   importNotesFromMarkdown,
-  NOTES_FORMAT_VERSION,
 } from '../features/reader/hooks/useExportNotes';
+import { NOTES_FORMAT_VERSION } from '../features/reader/lib/notes-types';
 
 describe('notes round-trip', () => {
   it('serializes locator/cfi/chapter in markdown', () => {

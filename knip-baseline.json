@@ -26,14 +26,8 @@
     "cloudflare (apps/worker — virtual cloudflare:workers runtime module, not an npm package)",
     "@storybook/react (packages/ui — transitive peer of @storybook/react-vite, used in stories)"
   ],
-  "unusedExports_count": 46,
-  "unusedExportedTypes_count": 40,
-  "duplicateExports": [
-    "App|default (apps/web/src/App.tsx)"
-  ],
-  "madgeCircularDeps": [
-    "apps/web/src/lib/api/index.ts > apps/web/src/lib/api/annotations.ts",
-    "apps/web/src/lib/api/index.ts > apps/web/src/lib/api/progress.ts",
-    "apps/web/src/features/reader/hooks/useExportNotes.ts > apps/web/src/features/reader/lib/export-notes-markdown.ts"
-  ]
+  "unusedExports_count": 0,
+  "unusedExportedTypes_count": 0,
+  "duplicateExports": [],
+  "madgeCircularDeps": []
 }

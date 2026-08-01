@@ -111,6 +111,8 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+// App is exported as a named export (no default) to avoid a duplicate
+// export knip warning. main.tsx imports { App }.
 export function App() {
   useThemeSync();
   useSessionExpiry();
@@ -178,5 +180,3 @@ export function App() {
     </Suspense>
   );
 }
-
-export default App;

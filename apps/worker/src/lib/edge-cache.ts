@@ -61,15 +61,6 @@ export interface EdgeCacheOptions {
   env?: EdgeCacheEnv;
 }
 
-export interface CacheLookup<T> {
-  hit: boolean;
-  response: Response;
-  /** Caller-supplied handler that produces a fresh response on miss. */
-  refresh: () => Promise<T>;
-  /** When `hit` is true, this is the decoded cached payload. */
-  cached?: T;
-}
-
 /**
  * Look up a request in `caches.default` and return the stored response
  * when present. The cache key is derived from the original URL and the

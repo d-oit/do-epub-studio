@@ -22,10 +22,6 @@ interface SpineSection {
   href: string;
 }
 
-interface BookLike extends Pick<Book, 'navigation' | 'load'> {
-  spine: SpineLike;
-}
-
 const DEBOUNCE_MS = 250;
 const MAX_RESULTS = 50;
 const MAX_INPUT_LEN = 120;
@@ -191,5 +187,3 @@ function findChapterTitle(toc: NavItem[], href?: string): string | undefined {
   }
   return undefined;
 }
-
-export type { BookLike };

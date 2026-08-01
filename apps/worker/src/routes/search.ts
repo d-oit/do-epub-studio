@@ -112,32 +112,3 @@ searchRouter.get(
     });
   },
 );
-
-/**
- * Helper: Index EPUB text content into the FTS5 table.
- * Called after EPUB upload completes.
- */
-export async function indexBookContent(
-  env: Env,
-  bookId: string,
-  chapters: Array<{ ref: string; content: string }>,
-): Promise<void> {
-  const now = new Date().toISOString();
-
-  // Clear existing index for this book
-  await env.DB.prepare(
-    `DELETE FROM book_content_fts WHERE book_id = ?`,
-  ).bind(bookId).run();
-
-  // Insert chapters into FTS5
-  for (const chapter of chapters) {
-    await env.DB.prepare(
-      `INSERT INTO book_content_fts (book_id, chapter_ref, content) VALUES (?, ?, ?)`,
-    ).bind(bookId, chapter.ref, chapter.content).run();
-  }
-
-  // Update index status
-  await env.DB.prepare(
-    `INSERT OR REPLACE INTO book_search_index (book_id, indexed_at, chapter_count) VALUES (?, ?, ?)`,
-  ).bind(bookId, now, chapters.length).run();
-}

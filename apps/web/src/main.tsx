@@ -3,7 +3,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 
-import App from './App';
+import { App } from './App';
 import { createSpanId, createTraceId } from '@do-epub-studio/shared';
 import { ToastProvider, useToast } from '@do-epub-studio/ui';
 import { ErrorBoundary } from './components/ErrorBoundary';

@@ -4,21 +4,19 @@
   "provider": {},
   "permission": {
     "edit": {
-      "packages/opencode/migration/*": "deny",
-    },
+      "packages/opencode/migration/*": "deny"
+    }
   },
   "mcp": {},
   "model_groups": {
-    "lite": "cline-pass/cline-pass/mimo-v2.5",
-    "standard": "cline-pass/cline-pass/mimo-v2.5",
+    "lite": "cline-pass/cline-pass/deepseek-v4-flash",
+    "standard": "xiaomi/mimo-v2.5",
     "ultra": "cline-pass/cline-pass/mimo-v2.5-pro"
   },
   "agent": {
     "build": { "model": "standard" },
+    "general": { "model": "standard" },
     "explore": { "model": "lite" },
-    "research": { "model": "ultra" },
-    "design": { "model": "cline-pass/cline-pass/kimi-k3" },
-    "reviewer": { "model": "ultra" },
-    "vision": { "model": "lite" }
+    "plan": { "model": "standard" }
   }
 }

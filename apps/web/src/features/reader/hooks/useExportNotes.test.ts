@@ -4,10 +4,12 @@ import {
   notesExportToMarkdown,
   importNotesFromMarkdown,
   parseExportFilename,
+} from './useExportNotes';
+import {
   NOTES_FORMAT_VERSION,
   NOTES_MIME_TYPE,
   type NotesExport,
-} from './useExportNotes';
+} from '../lib/notes-types';
 
 describe('useExportNotes — constants', () => {
   it('NOTES_FORMAT_VERSION is 1', () => {
