@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { parseNotesMarkdown } from '../features/reader/lib/export-notes-markdown';
-import { NOTES_FORMAT_VERSION } from '../features/reader/hooks/useExportNotes';
+import { NOTES_FORMAT_VERSION } from '../features/reader/lib/notes-types';
 
 function header(title = 'My Book') {
   return [

@@ -12,9 +12,6 @@ import {
   type NotesExport,
 } from '../lib/notes-types';
 
-// Re-export for backward compatibility (barrel + tests import from here)
-export { NOTES_FORMAT_VERSION, NOTES_MIME_TYPE, type NotesExport };
-
 export interface NotesImportResult {
   ok: boolean;
   highlights: Highlight[];
