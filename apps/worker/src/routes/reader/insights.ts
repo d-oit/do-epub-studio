@@ -1,6 +1,5 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
-import { createTraceId } from '@do-epub-studio/shared';
 import type { Env } from '../../lib/env';
 import type { AuthContext } from '../../auth/middleware';
 import { queryAll, execute } from '../../db/client';
@@ -8,6 +7,7 @@ import { ReadingInsightSyncSchema } from '@do-epub-studio/schema';
 import { readerAuth } from '../../middleware/auth';
 import { assertBookAccess } from '../../lib/tenant-isolation';
 import { ForbiddenError, AppError } from '../../lib/http-errors';
+import { createRequestContext, logRequestError } from '../../lib/observability';
 
 export const insightsRouter = new Hono<{ Bindings: Env; Variables: { auth: AuthContext } }>();
 
@@ -91,7 +91,8 @@ insightsRouter.post('/:bookId/insights/sync', readerAuth, zValidator('json', Rea
 
     return c.json({ ok: true });
   } catch (e) {
-    console.error(JSON.stringify({ level: 'error', traceId: createTraceId(), event: 'reader.insight_sync_failed', bookId, error: String(e) }));
+    const ctx = createRequestContext(c.req.raw);
+    logRequestError(ctx, e, { bookId });
     throw new AppError('Failed to sync insights', 'SYNC_FAILED', 500);
   }
 });

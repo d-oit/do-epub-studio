@@ -130,7 +130,7 @@ function GrantsView({ data, bookId, token }: { data: GrantsBodyData; bookId: str
         }
         if (bookId) invalidateGrantsCache(bookId);
         setIsModalOpen(false);
-        return {};
+        return { success: 'true' };
       } catch (err) {
         return { submit: (err as Error).message };
       }
