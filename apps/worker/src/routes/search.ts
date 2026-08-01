@@ -1,19 +1,13 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
-import { z } from 'zod';
 import type { Env } from '../lib/env';
 import type { AuthContext } from '../auth/middleware';
 import { queryFirst, queryAll } from '../db/client';
 import { readerAuth } from '../middleware/auth';
 import { assertBookAccess } from '../lib/tenant-isolation';
+import { SearchQuerySchema } from '@do-epub-studio/schema';
 
 export const searchRouter = new Hono<{ Bindings: Env; Variables: { auth: AuthContext } }>();
-
-const SearchQuerySchema = z.object({
-  q: z.string().min(1).max(500),
-  limit: z.coerce.number().int().min(1).max(50).default(20),
-  offset: z.coerce.number().int().min(0).default(0),
-});
 
 interface SearchResultRow {
   [key: string]: string | number | null | undefined;

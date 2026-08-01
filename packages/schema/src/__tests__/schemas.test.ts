@@ -17,6 +17,7 @@ import {
   ProgressUpdateSchema,
   BookmarkCreateSchema,
   HighlightCreateSchema,
+  HighlightUpdateSchema,
   CommentCreateSchema,
   CommentUpdateSchema,
   CspReportSchema,
@@ -25,6 +26,9 @@ import {
   ValidateQuerySchema,
   SignedUrlSchema,
   UploadCompleteSchema,
+  SearchQuerySchema,
+  ExportQuerySchema,
+  NotificationsQuerySchema,
   formatZodError,
 } from '../schemas';
 
@@ -552,5 +556,123 @@ describe('formatZodError', () => {
       ],
     };
     expect(formatZodError(error)).toBe('user.email: Invalid');
+  });
+});
+
+describe('SearchQuerySchema', () => {
+  it('accepts valid query', () => {
+    const result = SearchQuerySchema.parse({ q: 'test search' });
+    expect(result.q).toBe('test search');
+    expect(result.limit).toBe(20);
+    expect(result.offset).toBe(0);
+  });
+
+  it('accepts query with custom limit and offset', () => {
+    const result = SearchQuerySchema.parse({ q: 'query', limit: '10', offset: '5' });
+    expect(result.limit).toBe(10);
+    expect(result.offset).toBe(5);
+  });
+
+  it('rejects empty query', () => {
+    expect(() => SearchQuerySchema.parse({ q: '' })).toThrow();
+  });
+
+  it('rejects missing q field', () => {
+    expect(() => SearchQuerySchema.parse({})).toThrow();
+  });
+
+  it('accepts q at exactly 500 chars (boundary)', () => {
+    const result = SearchQuerySchema.parse({ q: 'a'.repeat(500) });
+    expect(result.q).toHaveLength(500);
+  });
+
+  it('rejects q longer than 500 chars', () => {
+    expect(() => SearchQuerySchema.parse({ q: 'a'.repeat(501) })).toThrow();
+  });
+
+  it('rejects limit > 50', () => {
+    expect(() => SearchQuerySchema.parse({ q: 'query', limit: 51 })).toThrow();
+  });
+
+  it('rejects negative offset', () => {
+    expect(() => SearchQuerySchema.parse({ q: 'query', offset: -1 })).toThrow();
+  });
+});
+
+describe('ExportQuerySchema', () => {
+  it('accepts valid query with default format', () => {
+    const result = ExportQuerySchema.parse({});
+    expect(result.format).toBe('markdown');
+  });
+
+  it('accepts html format', () => {
+    const result = ExportQuerySchema.parse({ format: 'html' });
+    expect(result.format).toBe('html');
+  });
+
+  it('rejects invalid format', () => {
+    expect(() => ExportQuerySchema.parse({ format: 'pdf' })).toThrow();
+  });
+
+  it('rejects uppercase format (HTML)', () => {
+    expect(() => ExportQuerySchema.parse({ format: 'HTML' })).toThrow();
+  });
+});
+
+describe('HighlightUpdateSchema', () => {
+  it('accepts partial update with note only', () => {
+    const result = HighlightUpdateSchema.parse({ note: 'Updated note' });
+    expect(result.note).toBe('Updated note');
+  });
+
+  it('accepts partial update with color only', () => {
+    const result = HighlightUpdateSchema.parse({ color: '#ff0000' });
+    expect(result.color).toBe('#ff0000');
+  });
+
+  it('accepts empty update (color gets default from parent)', () => {
+    const result = HighlightUpdateSchema.parse({});
+    expect(result.color).toBe('#ffff00');
+  });
+
+  it('rejects invalid color format', () => {
+    expect(() => HighlightUpdateSchema.parse({ color: 'red' })).toThrow();
+  });
+});
+
+describe('NotificationsQuerySchema', () => {
+  it('accepts valid query with defaults', () => {
+    const result = NotificationsQuerySchema.parse({});
+    expect(result.limit).toBe(20);
+    expect(result.offset).toBe(0);
+    expect(result.unread).toBe('false');
+  });
+
+  it('accepts query with custom values', () => {
+    const result = NotificationsQuerySchema.parse({ limit: '50', offset: '10', unread: 'true' });
+    expect(result.limit).toBe(50);
+    expect(result.offset).toBe(10);
+    expect(result.unread).toBe('true');
+  });
+
+  it('rejects limit > 100', () => {
+    expect(() => NotificationsQuerySchema.parse({ limit: 101 })).toThrow();
+  });
+
+  it('rejects limit=0', () => {
+    expect(() => NotificationsQuerySchema.parse({ limit: 0 })).toThrow();
+  });
+
+  it('accepts explicit offset=0', () => {
+    const result = NotificationsQuerySchema.parse({ offset: '0' });
+    expect(result.offset).toBe(0);
+  });
+
+  it('rejects negative offset', () => {
+    expect(() => NotificationsQuerySchema.parse({ offset: -1 })).toThrow();
+  });
+
+  it('rejects invalid unread value', () => {
+    expect(() => NotificationsQuerySchema.parse({ unread: 'yes' })).toThrow();
   });
 });
