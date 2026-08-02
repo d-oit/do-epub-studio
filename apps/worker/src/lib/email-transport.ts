@@ -1,4 +1,4 @@
-import { logAppError, logAppInfo } from './observability';
+import { logAppInfo } from './observability';
 import type { Env } from './env';
 
 export interface EmailMessage {
