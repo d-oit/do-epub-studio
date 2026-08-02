@@ -92,6 +92,156 @@ describe('useReaderSearch', () => {
   });
 });
 
+describe('bounded concurrency', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('limits concurrent loads to MAX_CONCURRENT (4) with 10 spine items', async () => {
+    let concurrentLoads = 0;
+    let peakConcurrent = 0;
+
+    const sections: MockSection[] = Array.from({ length: 10 }, (_, i) => ({
+      load: vi.fn(() => {
+        concurrentLoads++;
+        peakConcurrent = Math.max(peakConcurrent, concurrentLoads);
+        return Promise.resolve().then(() => { concurrentLoads--; });
+      }),
+      find: vi.fn(() => []),
+      unload: vi.fn(),
+      href: `ch${i}.xhtml`,
+    }));
+
+    const book = {
+      spine: {
+        each: vi.fn((cb: (item: MockSection) => void) => { sections.forEach(cb); }),
+        get: vi.fn(),
+      },
+      load: vi.fn(),
+      navigation: { toc: [] },
+    } as unknown as Book;
+
+    vi.useFakeTimers();
+    const { result } = renderHook(() => useReaderSearch(book, 'hello'));
+    await vi.advanceTimersByTimeAsync(300);
+
+    // Workers start synchronously inside the debounce callback; 4 workers each call load()
+    expect(peakConcurrent).toBeLessThanOrEqual(4);
+    expect(peakConcurrent).toBe(4);
+
+    vi.useRealTimers();
+    await waitFor(() => expect(result.current.isSearching).toBe(false), { timeout: 5000 });
+  });
+
+  it('stops loading after MAX_RESULTS (50) are found', async () => {
+    let loadCount = 0;
+
+    const sections: MockSection[] = Array.from({ length: 100 }, (_, i) => ({
+      load: vi.fn(() => {
+        loadCount++;
+        return Promise.resolve();
+      }),
+      find: vi.fn(() => [{ cfi: `cfi${i}`, excerpt: `match ${i}` }]),
+      unload: vi.fn(),
+      href: `ch${i}.xhtml`,
+    }));
+
+    const book = {
+      spine: {
+        each: vi.fn((cb: (item: MockSection) => void) => { sections.forEach(cb); }),
+        get: vi.fn(),
+      },
+      load: vi.fn(),
+      navigation: { toc: [] },
+    } as unknown as Book;
+
+    vi.useFakeTimers();
+    const { result } = renderHook(() => useReaderSearch(book, 'match'));
+    await vi.advanceTimersByTimeAsync(300);
+
+    vi.useRealTimers();
+    await waitFor(() => expect(result.current.isSearching).toBe(false), { timeout: 5000 });
+    expect(result.current.results).toHaveLength(50);
+    // Not all 100 sections needed to be loaded
+    expect(loadCount).toBeLessThanOrEqual(54);
+  });
+
+  it('cancels previous search when a new one starts', async () => {
+    let loadCount = 0;
+    const sections: MockSection[] = Array.from({ length: 10 }, (_, i) => ({
+      load: vi.fn(() => {
+        loadCount++;
+        return Promise.resolve();
+      }),
+      find: vi.fn(() => []),
+      unload: vi.fn(),
+      href: `ch${i}.xhtml`,
+    }));
+
+    const book = {
+      spine: {
+        each: vi.fn((cb: (item: MockSection) => void) => { sections.forEach(cb); }),
+        get: vi.fn(),
+      },
+      load: vi.fn(),
+      navigation: { toc: [] },
+    } as unknown as Book;
+
+    vi.useFakeTimers();
+    const { result, rerender } = renderHook(
+      ({ q }) => useReaderSearch(book, q),
+      { initialProps: { q: 'first' } },
+    );
+
+    // Start first search — 4 workers begin loading
+    await vi.advanceTimersByTimeAsync(300);
+    const firstSearchLoads = loadCount;
+
+    // Start a new search while old one is in-flight — old search gets cancelled
+    act(() => { rerender({ q: 'second' }); });
+    await vi.advanceTimersByTimeAsync(300);
+
+    vi.useRealTimers();
+    await waitFor(() => expect(result.current.isSearching).toBe(false), { timeout: 5000 });
+    // The new search ran and loaded sections
+    expect(loadCount).toBeGreaterThan(firstSearchLoads);
+  });
+
+  it('always calls unload on every loaded section (finally block)', async () => {
+    const resolvers: Array<() => void> = [];
+    const sections: MockSection[] = Array.from({ length: 6 }, (_, i) => ({
+      // eslint-disable-next-line security/detect-object-injection -- i is loop-local, no injection risk
+      load: vi.fn(() => new Promise<void>((r) => { resolvers[i] = r; })),
+      find: vi.fn(() => []),
+      unload: vi.fn(),
+      href: `ch${i}.xhtml`,
+    }));
+
+    const book = {
+      spine: {
+        each: vi.fn((cb: (item: MockSection) => void) => { sections.forEach(cb); }),
+        get: vi.fn(),
+      },
+      load: vi.fn(),
+      navigation: { toc: [] },
+    } as unknown as Book;
+
+    vi.useFakeTimers();
+    renderHook(() => useReaderSearch(book, 'test'));
+    await vi.advanceTimersByTimeAsync(300);
+
+    // 4 of 6 sections loaded (MAX_CONCURRENT=4); release them so workers finish
+    for (let i = 0; i < 4; i++) resolvers[i](); // eslint-disable-line security/detect-object-injection
+    vi.useRealTimers();
+    await waitFor(() => {
+      // At least the 4 loaded sections should have unload called
+      for (let i = 0; i < 4; i++) {
+        expect(sections[i].unload).toHaveBeenCalled(); // eslint-disable-line security/detect-object-injection
+      }
+    }, { timeout: 5000 });
+  });
+});
+
 describe('highlightRanges', () => {
   it('returns empty array for empty excerpt', () => {
     expect(highlightRanges('', 'fox')).toEqual([]);

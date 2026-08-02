@@ -23,7 +23,7 @@ describe('NotificationPanel', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockFetch.mockImplementation((url: string) => {
-      if (url === '/api/notifications?limit=20') {
+      if (url.includes('/api/notifications?limit=20')) {
         return Promise.resolve({
           ok: true,
           json: () => Promise.resolve({ ok: true, data: { notifications: mockNotifications, total: 2, limit: 20, offset: 0 } }),
@@ -46,7 +46,7 @@ describe('NotificationPanel', () => {
 
   it('shows empty state when no notifications', async () => {
     mockFetch.mockImplementation((url: string) => {
-      if (url === '/api/notifications?limit=20') {
+      if (url.includes('/api/notifications?limit=20')) {
         return Promise.resolve({
           ok: true,
           json: () => Promise.resolve({ ok: true, data: { notifications: [], total: 0, limit: 20, offset: 0 } }),

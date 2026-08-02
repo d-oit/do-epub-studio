@@ -201,6 +201,13 @@ export const CatalogQuerySchema = z.object({
 
 export type CatalogQuery = z.infer<typeof CatalogQuerySchema>;
 
+export const LibraryQuerySchema = z.object({
+  limit: z.coerce.number().int().positive().max(100).default(50),
+  offset: z.coerce.number().int().nonnegative().default(0),
+});
+
+export type LibraryQuery = z.infer<typeof LibraryQuerySchema>;
+
 export const LoginSchema = z.object({
   email: z.string().email().max(255),
   password: z.string().min(1).max(255),

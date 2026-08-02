@@ -379,6 +379,7 @@ export const nl: Record<TranslationKeys, string> = {
   'library.progress': 'Voortgang',
   'library.lastRead': 'Laatst gelezen',
   'library.finished': 'Klaar',
+  'library.loadMore': 'Meer laden',
 
   'settings.title': 'Instellingen',
   'settings.subtitle': 'Pas uw leeservaring aan',

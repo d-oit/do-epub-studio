@@ -30,6 +30,7 @@ import {
 function makeContext(overrides: Record<string, unknown> = {}) {
   const headers = new Headers({ 'Content-Type': 'application/json' });
   const res = new Response('ok', { status: 200 });
+  const store = new Map<string, unknown>();
   return {
     req: {
       raw: new Request('https://test.example.com/api/books', { headers }),
@@ -43,6 +44,8 @@ function makeContext(overrides: Record<string, unknown> = {}) {
       });
     }),
     next: vi.fn().mockResolvedValue(undefined),
+    set: vi.fn((key: string, value: unknown) => { store.set(key, value); }),
+    get: vi.fn((key: string) => store.get(key)),
     ...overrides,
   };
 }

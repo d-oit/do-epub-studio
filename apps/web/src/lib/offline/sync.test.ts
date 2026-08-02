@@ -6,8 +6,10 @@ import {
   cancelPendingRetry,
   setPermissionRevokedCallback,
   generateMutationId,
+  resetDrainPromise,
 } from './sync';
 import * as db from './db';
+import type { SyncQueueItem } from './db';
 import { api, apiRequest } from '../api';
 import { clearAllPermissions } from './permissions';
 
@@ -54,6 +56,7 @@ describe('sync', () => {
     vi.clearAllMocks();
     Object.defineProperty(navigator, 'onLine', { value: true, writable: true, configurable: true });
     cancelPendingRetry();
+    resetDrainPromise();
     setPermissionRevokedCallback(null as unknown as (bookId: string) => void);
   });
 
@@ -353,6 +356,46 @@ describe('sync', () => {
       await new Promise(r => setTimeout(r, 100));
       cleanup();
       expect(db.getSyncQueue).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('single-flight drain', () => {
+    it('only runs one drain for rapid concurrent queueSync calls', async () => {
+      let resolveQueue!: (value: SyncQueueItem[]) => void;
+      const queueDeferred = new Promise<SyncQueueItem[]>((resolve) => {
+        resolveQueue = resolve;
+      });
+
+      vi.mocked(db.getSyncQueue).mockImplementation(() => queueDeferred);
+      vi.mocked(api.put).mockResolvedValue({} as unknown as Response);
+      vi.mocked(db.getUnsyncedProgress).mockResolvedValue([]);
+
+      // First queueSync starts the drain (getSyncQueue called once)
+      await queueSync('progress', { bookId: 'b1', cfi: 'cfi', percentage: 50, mutationId: 'm1' }, 'm1');
+
+      // Rapid subsequent calls — ensureDrain returns existing promise, no new drain
+      await queueSync('progress', { bookId: 'b1', cfi: 'cfi', percentage: 60, mutationId: 'm2' }, 'm2');
+      await queueSync('progress', { bookId: 'b1', cfi: 'cfi', percentage: 70, mutationId: 'm3' }, 'm3');
+
+      // All 3 items added to IndexedDB
+      expect(db.addToSyncQueue).toHaveBeenCalledTimes(3);
+
+      // Only 1 drain started — getSyncQueue called once (pending)
+      expect(db.getSyncQueue).toHaveBeenCalledTimes(1);
+
+      // Resolve the drain to let it process all queued items
+      resolveQueue([{
+        id: 'item-1', type: 'progress',
+        payload: { bookId: 'b1', cfi: 'cfi', percentage: 50, mutationId: 'm1' },
+        mutationId: 'm1', createdAt: 100, attempts: 0,
+      }]);
+
+      await vi.waitFor(() => {
+        expect(api.put).toHaveBeenCalled();
+      });
+
+      // Still only one drain ran
+      expect(db.getSyncQueue).toHaveBeenCalledTimes(1);
     });
   });
 });

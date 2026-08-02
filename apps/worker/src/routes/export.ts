@@ -7,6 +7,9 @@ import { readerAuth } from '../middleware/auth';
 import { assertBookAccess } from '../lib/tenant-isolation';
 import { ExportQuerySchema } from '@do-epub-studio/schema';
 
+/** Maximum rows per entity type to prevent unbounded memory usage on large exports. */
+const MAX_EXPORT_ROWS = 10_000;
+
 export const exportRouter = new Hono<{ Bindings: Env; Variables: { auth: AuthContext } }>();
 
 interface HighlightRow {
@@ -60,22 +63,22 @@ exportRouter.get(
     const highlights = await queryAll<HighlightRow>(
       c.env,
       `SELECT id, selected_text, color, note, chapter_ref, cfi_range, created_at
-       FROM highlights WHERE book_id = ? AND user_email = ? ORDER BY created_at ASC`,
-      [bookId, auth.email],
+       FROM highlights WHERE book_id = ? AND user_email = ? ORDER BY created_at ASC LIMIT ?`,
+      [bookId, auth.email, MAX_EXPORT_ROWS],
     );
 
     const comments = await queryAll<CommentRow>(
       c.env,
       `SELECT id, body, selected_text, chapter_ref, cfi_range, status, parent_comment_id, created_at
-       FROM comments WHERE book_id = ? AND user_email = ? AND status != 'deleted' ORDER BY created_at ASC`,
-      [bookId, auth.email],
+       FROM comments WHERE book_id = ? AND user_email = ? AND status != 'deleted' ORDER BY created_at ASC LIMIT ?`,
+      [bookId, auth.email, MAX_EXPORT_ROWS],
     );
 
     const bookmarks = await queryAll<BookmarkRow>(
       c.env,
       `SELECT id, label, locator_json, created_at
-       FROM bookmarks WHERE book_id = ? AND user_email = ? ORDER BY created_at ASC`,
-      [bookId, auth.email],
+       FROM bookmarks WHERE book_id = ? AND user_email = ? ORDER BY created_at ASC LIMIT ?`,
+      [bookId, auth.email, MAX_EXPORT_ROWS],
     );
 
     const book = await c.env.DB.prepare(

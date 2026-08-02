@@ -39,7 +39,7 @@ commentsRouter.get('/books/:bookId/comments', readerAuth, async (c) => {
 
   const comments = await queryAll<CommentRow>(
     c.env,
-    `SELECT * FROM comments WHERE book_id = ? AND status != 'deleted' AND (visibility = 'shared' OR user_email = ?) ORDER BY created_at ASC`,
+    `SELECT * FROM comments WHERE book_id = ? AND status != 'deleted' AND (visibility = 'shared' OR user_email = ?) ORDER BY created_at ASC LIMIT 1000`,
     [bookId, auth.email],
   );
 

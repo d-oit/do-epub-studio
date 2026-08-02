@@ -379,6 +379,7 @@ export const ar: Record<TranslationKeys, string> = {
   'library.progress': 'التقدم',
   'library.lastRead': 'آخر قراءة',
   'library.finished': 'منتهي',
+  'library.loadMore': 'تحميل المزيد',
 
   'settings.title': 'الإعدادات',
   'settings.subtitle': 'خصّص تجربة القراءة',

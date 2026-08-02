@@ -35,6 +35,9 @@ let onPermissionRevoked: ((bookId: string) => void) | null = null;
  */
 let retryTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
+/** Single-flight drain guard: only one attemptSync loop runs at a time. */
+let drainPromise: Promise<void> | null = null;
+
 export function setPermissionRevokedCallback(callback: (bookId: string) => void): void {
   onPermissionRevoked = callback;
 }
@@ -45,6 +48,11 @@ export function cancelPendingRetry(): void {
     clearTimeout(retryTimeoutId);
     retryTimeoutId = null;
   }
+}
+
+/** Reset the single-flight drain guard. Exported for test teardown only. */
+export function resetDrainPromise(): void {
+  drainPromise = null;
 }
 
 export function generateMutationId(): string {
@@ -70,24 +78,30 @@ export async function queueSync(
     attempts: 0,
   };
   await addToSyncQueue(item);
-  void attemptSync();
+  void ensureDrain();
+}
+
+function ensureDrain(): Promise<void> {
+  if (drainPromise) return drainPromise;
+  drainPromise = attemptSync().finally(() => {
+    drainPromise = null;
+  });
+  return drainPromise;
 }
 
 async function attemptSync(): Promise<void> {
   if (!navigator.onLine) return;
 
-  const initialQueue = await getSyncQueue();
-  if (!initialQueue || initialQueue.length === 0) return;
+  const snapshot = await getSyncQueue();
+  if (!snapshot || snapshot.length === 0) return;
 
+  // Sort once by creation time; drain FIFO.
+  const sorted = [...snapshot].sort((a, b) => a.createdAt - b.createdAt);
   const processed = new Set<string>();
 
-  while (true) {
+  for (const item of sorted) {
     if (!navigator.onLine) return;
-
-    const queue = initialQueue.filter((i) => !processed.has(i.id));
-    if (queue.length === 0) return;
-
-    const item = queue.sort((a, b) => a.createdAt - b.createdAt)[0];
+    if (processed.has(item.id)) continue;
 
     const traceId = createTraceId();
     const spanId = createSpanId();
@@ -160,7 +174,7 @@ async function attemptSync(): Promise<void> {
       cancelPendingRetry();
       retryTimeoutId = setTimeout(() => {
         retryTimeoutId = null;
-        void attemptSync();
+        void ensureDrain();
       }, delay);
       return;
     }
@@ -295,13 +309,13 @@ async function markAsSynced(type: 'progress' | 'annotation' | 'reading-insight',
 
 export async function syncAll(): Promise<void> {
   if (!navigator.onLine) return;
-  await attemptSync();
+  await ensureDrain();
 }
 
 export function setupOnlineListener(): () => void {
   const handler = () => {
     if (navigator.onLine) {
-      void attemptSync();
+      void ensureDrain();
     }
   };
 

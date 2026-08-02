@@ -29,7 +29,7 @@ bookmarksRouter.get('/:bookId/bookmarks', readerAuth, async (c) => {
 
   const bookmarks = await queryAll<BookmarkRow>(
     c.env,
-    `SELECT * FROM bookmarks WHERE book_id = ? AND user_email = ? ORDER BY created_at DESC`,
+    `SELECT * FROM bookmarks WHERE book_id = ? AND user_email = ? ORDER BY created_at DESC LIMIT 1000`,
     [bookId, auth.email],
   );
 

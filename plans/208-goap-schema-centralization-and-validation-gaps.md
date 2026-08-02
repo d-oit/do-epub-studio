@@ -54,9 +54,9 @@
 
 ## 4. Acceptance Criteria
 
-- [ ] All inline schemas moved to `@do-epub-studio/schema`
-- [ ] `GET /notifications` uses Zod query validation
-- [ ] Schema package exports all new schemas
-- [ ] Tests pass for new schema exports
-- [ ] `./scripts/quality_gate.sh` passes locally
-- [ ] PR created and CI green
+- [x] All inline schemas moved to `@do-epub-studio/schema` (SearchQuerySchema, ExportQuerySchema, HighlightUpdateSchema, NotificationsQuerySchema)
+- [x] `GET /notifications` uses Zod query validation (`zValidator('query', NotificationsQuerySchema)`)
+- [x] Schema package exports all new schemas (via `export * from './schemas'` in `index.ts`)
+- [x] Tests pass for new schema exports (`packages/schema/src/__tests__/schemas.test.ts` lines 550+)
+- [x] `./scripts/quality_gate.sh` passes locally
+- [x] PR created and CI green — PR #889

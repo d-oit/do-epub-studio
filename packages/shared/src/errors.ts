@@ -125,12 +125,9 @@ export function isAppError(error: unknown): error is AppError {
   return error instanceof AppError;
 }
 
-export function toApiError(error: unknown): { code: string; message: string } {
-  if (isAppError(error)) {
-    return { code: error.code, message: error.message };
-  }
-  if (error instanceof Error) {
-    return { code: 'INTERNAL_ERROR', message: 'An unexpected error occurred' };
-  }
-  return { code: 'INTERNAL_ERROR', message: 'An unexpected error occurred' };
+export function toApiError(error: unknown, traceId?: string): { code: string; message: string; traceId?: string } {
+  const base = isAppError(error)
+    ? { code: error.code, message: error.message }
+    : { code: 'INTERNAL_ERROR', message: 'An unexpected error occurred' };
+  return traceId ? { ...base, traceId } : base;
 }

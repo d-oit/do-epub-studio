@@ -379,6 +379,7 @@ export const es: Record<TranslationKeys, string> = {
   'library.progress': 'Progreso',
   'library.lastRead': 'Última lectura',
   'library.finished': 'Terminado',
+  'library.loadMore': 'Cargar más',
 
   'settings.title': 'Configuración',
   'settings.subtitle': 'Personalice su experiencia de lectura',

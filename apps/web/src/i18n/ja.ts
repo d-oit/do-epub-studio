@@ -379,6 +379,7 @@ export const ja: Record<TranslationKeys, string> = {
   'library.progress': '進捗',
   'library.lastRead': '最終閲覧',
   'library.finished': '完了',
+  'library.loadMore': 'さらに読み込む',
 
   'settings.title': '設定',
   'settings.subtitle': '読書体験をカスタマイズする',

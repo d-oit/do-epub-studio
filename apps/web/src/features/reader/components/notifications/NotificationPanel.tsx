@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { z } from 'zod';
 import { useReducedMotion } from '../../../../hooks/useReducedMotion';
 import { formatDate } from '../../../../lib/i18n-format';
+import { api } from '../../../../lib/api';
 
 const NotificationSchema = z.object({
   id: z.string(),
@@ -38,7 +39,7 @@ export function NotificationPanel({ onNavigateToComment, t, onClose }: Notificat
 
   const fetchNotifications = useCallback(async () => {
     try {
-      const res = await fetch('/api/notifications?limit=20');
+      const res = await api.get('/api/notifications?limit=20');
       if (res.ok) {
         const data = NotificationResponseSchema.parse(await res.json());
         setNotifications(data.data.notifications);
@@ -54,17 +55,21 @@ export function NotificationPanel({ onNavigateToComment, t, onClose }: Notificat
   }, [fetchNotifications]);
 
   const handleMarkAsRead = useCallback(async (id: string) => {
-    await fetch(`/api/notifications/${id}/read`, { method: 'POST' });
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, readAt: new Date().toISOString() } : n)),
-    );
+    const res = await api.post(`/api/notifications/${id}/read`);
+    if (res.ok) {
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, readAt: new Date().toISOString() } : n)),
+      );
+    }
   }, []);
 
   const handleMarkAllAsRead = useCallback(async () => {
-    await fetch('/api/notifications/read-all', { method: 'POST' });
-    setNotifications((prev) =>
-      prev.map((n) => (n.readAt ? n : { ...n, readAt: new Date().toISOString() })),
-    );
+    const res = await api.post('/api/notifications/read-all');
+    if (res.ok) {
+      setNotifications((prev) =>
+        prev.map((n) => (n.readAt ? n : { ...n, readAt: new Date().toISOString() })),
+      );
+    }
   }, []);
 
   const unreadCount = notifications.filter((n) => !n.readAt).length;

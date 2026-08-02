@@ -1,25 +1,19 @@
 import { useState, useEffect, useCallback } from 'react';
-import { z } from 'zod';
+import { apiRequest } from '../../../../lib/api';
 
 interface NotificationBadgeProps {
   t: (key: string) => string;
   onClick: () => void;
 }
 
-const UnreadCountResponseSchema = z.object({
-  ok: z.boolean(),
-  data: z.object({ count: z.number() }),
-});
-
 export function NotificationBadge({ t, onClick }: NotificationBadgeProps) {
   const [count, setCount] = useState(0);
 
   const fetchCount = useCallback(async () => {
     try {
-      const res = await fetch('/api/notifications/unread-count');
-      if (res.ok) {
-        const data = UnreadCountResponseSchema.parse(await res.json());
-        setCount(data.data.count);
+      const data = await apiRequest<{ count: number }>('/api/notifications/unread-count');
+      if (typeof data.count === 'number') {
+        setCount(data.count);
       }
     } catch {
       // Silently fail — badge stays at 0

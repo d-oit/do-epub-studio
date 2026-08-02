@@ -379,6 +379,7 @@ export const hi: Record<TranslationKeys, string> = {
   'library.progress': 'प्रगति',
   'library.lastRead': 'अंतिम पठन',
   'library.finished': 'समाप्त',
+  'library.loadMore': 'और लोड करें',
 
   'settings.title': 'सेटिंग्स',
   'settings.subtitle': 'अपने पठन अनुभव को कस्टमाइज करें',

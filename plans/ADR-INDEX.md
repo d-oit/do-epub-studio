@@ -55,6 +55,7 @@
 | 105b | Error Handling and Observability Completeness | `plans/archive/105-adr-error-handling-and-observability-completeness.md` | Accepted |
 | 106 | Feature Completeness and Incremental Delivery Policy | `plans/106-adr-feature-completeness-policy.md` | Accepted (plan 113) |
 | 107 | Quality Gate Escalation and DX Standards | `plans/archive/107-adr-quality-dx-standards.md` | Accepted (plan 113) |
+| 212 | Risk-First Audit Remediation Policy | `plans/212-adr-risk-first-audit-remediation-policy.md` | Accepted |
 | 110 | Backlog Consolidation & Verified-Before-Execution Policy | `plans/archive/110-adr-completeness-and-ui-consolidation.md` | Accepted |
 | 111 | Impeccable Design Vocabulary Adoption | `plans/archive/111-adr-impeccable-design-vocabulary.md` | Accepted |
 | 112a | Phase 2/3 Execution & CI Hardening Policy | `plans/archive/112-adr-phase2-3-execution-policy.md` | Accepted |
@@ -76,6 +77,7 @@
 | 198 | Verified-Closure Methodology | `plans/archive/198-adr-verified-closure-methodology.md` | Accepted |
 | 199 | i18n Plural Rules Deferral | `plans/199-adr-i18n-plural-rules-deferral.md` | Accepted (deferred) |
 | 200 | Login Lockout as Compensating Control for localStorage Token Storage | `plans/200-adr-session-lockout-compensating-control.md` | Accepted (Wave 4-C) |
+| 201 | WebKit in PR smoke CI | `plans/ADR-201-webkit-smoke-ci.md` | Accepted |
 | 998 | Offline Comment Status Preservation | `plans/archive/998-adr-offline-comment-status-preservation.md` | Accepted |
 
 ## Cross-referenced (archived GOAP execution records)

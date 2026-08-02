@@ -379,6 +379,7 @@ export const zh: Record<TranslationKeys, string> = {
   'library.progress': '进度',
   'library.lastRead': '上次阅读',
   'library.finished': '已读完',
+  'library.loadMore': '加载更多',
 
   'settings.title': '设置',
   'settings.subtitle': '自定义您的阅读体验',
