@@ -10,7 +10,7 @@ import {
 import { scrub } from './redact';
 
 interface LogPayload {
-  level: 'info' | 'error';
+  level: 'info' | 'warn' | 'error';
   traceId: string;
   spanId: string;
   event: string;
@@ -51,6 +51,10 @@ function log(payload: LogPayload): void {
   const entry = JSON.stringify(scrub(payload));
   if (payload.level === 'error') {
     console.error(entry);
+    return;
+  }
+  if (payload.level === 'warn') {
+    console.warn(entry);
     return;
   }
   console.log(entry);
@@ -148,6 +152,25 @@ export function logAppInfo(
 ): void {
   log({
     level: 'info',
+    traceId: createTraceId(),
+    spanId: createSpanId(),
+    event,
+    method: 'BACKGROUND',
+    path: '-',
+    metadata,
+  });
+}
+
+/**
+ * Log a warn event without requiring a Request object.
+ * Use for background operations that need warn-level visibility (wrangler tail --level warn).
+ */
+export function logAppWarn(
+  event: string,
+  metadata?: Record<string, unknown>,
+): void {
+  log({
+    level: 'warn',
     traceId: createTraceId(),
     spanId: createSpanId(),
     event,
