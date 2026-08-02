@@ -320,3 +320,11 @@ export const NotificationsQuerySchema = z.object({
 });
 
 export type NotificationsQuery = z.infer<typeof NotificationsQuerySchema>;
+
+export const RecoveryTokenPayloadSchema = z.object({
+  email: z.string().email(),
+  bookSlug: z.string().optional(),
+  purpose: z.string(),
+});
+
+export type RecoveryTokenPayload = z.infer<typeof RecoveryTokenPayloadSchema>;
