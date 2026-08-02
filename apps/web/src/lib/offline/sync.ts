@@ -10,7 +10,7 @@ import {
   saveAnnotation,
   type SyncQueueItem,
 } from './db';
-import { api } from '../api';
+import { api, apiRequest } from '../api';
 import type { AnnotationEntry } from './db';
 import { clearAllPermissions } from './permissions';
 import { createTraceId, createSpanId } from '@do-epub-studio/shared';
@@ -191,8 +191,9 @@ async function syncItem(item: SyncQueueItem, traceId: string, spanId: string): P
       };
 
       if (payload.action === 'resolve') {
-        await api.put(`/api/books/${payload.bookId}/comments/${payload.annotation.id}`, {
-          status: payload.annotation.status,
+        await apiRequest(`/api/comments/${payload.annotation.id}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ status: payload.annotation.status }),
         });
       } else if (payload.annotation.type === 'highlight') {
         await api.post(`/api/books/${payload.bookId}/highlights`, {

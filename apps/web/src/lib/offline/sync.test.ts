@@ -8,7 +8,7 @@ import {
   generateMutationId,
 } from './sync';
 import * as db from './db';
-import { api } from '../api';
+import { api, apiRequest } from '../api';
 import { clearAllPermissions } from './permissions';
 
 vi.mock('uuid', () => ({
@@ -33,6 +33,7 @@ vi.mock('../api', () => ({
     put: vi.fn(),
     delete: vi.fn(),
   },
+  apiRequest: vi.fn(),
 }));
 
 vi.mock('./permissions', () => ({
@@ -283,18 +284,19 @@ describe('sync', () => {
       });
     });
 
-    it('syncs comment resolve action via PUT', async () => {
+    it('syncs comment resolve action via PATCH', async () => {
       vi.mocked(db.getSyncQueue).mockResolvedValue([{
         id: 'item-16', type: 'annotation',
         payload: { bookId: 'b1', annotation: { id: 'comment-1', status: 'resolved' }, action: 'resolve' },
         mutationId: 'm16', createdAt: 1600, attempts: 0,
       }]);
-      vi.mocked(api.put).mockResolvedValue({} as unknown as Response);
+      vi.mocked(apiRequest).mockResolvedValue({});
 
       await queueSync('annotation', { bookId: 'b1', annotation: { id: 'comment-1', status: 'resolved' }, action: 'resolve' }, 'm16');
       await vi.waitFor(() => {
-        expect(api.put).toHaveBeenCalledWith('/api/books/b1/comments/comment-1', {
-          status: 'resolved',
+        expect(apiRequest).toHaveBeenCalledWith('/api/comments/comment-1', {
+          method: 'PATCH',
+          body: JSON.stringify({ status: 'resolved' }),
         });
       });
     });
