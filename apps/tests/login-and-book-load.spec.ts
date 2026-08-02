@@ -134,8 +134,8 @@ test.describe('Login and book load (desktop)', () => {
   test('@mobile displays a locale switcher on the login page', async ({ page }) => {
     await page.goto(`/login`);
 
-    // Locale switcher uses a button with current locale
-    await expect(page.getByRole('button', { name: /EN|DE|FR/i })).toBeVisible();
+    // Locale switcher uses a <select> (combobox role) with locale options
+    await expect(page.getByRole('combobox')).toBeVisible();
   });
 
   test('@mobile redirects unauthenticated reader access to login', async ({ page }) => {
