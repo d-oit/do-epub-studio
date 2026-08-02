@@ -30,17 +30,14 @@ export const EntityTypeSchema = z.enum([
   'highlight',
 ]);
 
-export const AnnotationLocatorSchema = z
-  .object({
-    cfi: z.string().max(2048).optional(),
-    selectedText: z.string().max(10000).optional(),
-    chapterRef: z.string().max(1024).optional(),
-    elementIndex: z.number().optional(),
-    charOffset: z.number().optional(),
-  })
-  .refine((loc: { cfi?: string; selectedText?: string }) => Boolean(loc.cfi ?? loc.selectedText), {
-    message: 'Locator must have at least cfi or selectedText',
-  });
+/** Flexible locator type for export/import (no Zod validation — use MultiSignalLocatorSchema for API boundaries) */
+export interface AnnotationLocator {
+  cfi?: string;
+  selectedText?: string;
+  chapterRef?: string;
+  elementIndex?: number;
+  charOffset?: number;
+}
 
 // Multi-signal locator requiring CFI + text + chapter per ADR-006
 export const MultiSignalLocatorSchema = z
@@ -133,8 +130,14 @@ export const UpdateGrantSchema = z.object({
   expiresAt: z.string().datetime().nullable().optional(),
 });
 
+export const ProgressLocatorSchema = z.object({
+  cfi: z.string().min(1).max(2048),
+  selectedText: z.string().max(10000).optional(),
+  chapterRef: z.string().max(1024).optional(),
+});
+
 export const ProgressUpdateSchema = z.object({
-  locator: MultiSignalLocatorSchema,
+  locator: ProgressLocatorSchema,
   progressPercent: z.number().min(0).max(100),
 });
 
@@ -248,6 +251,7 @@ export type CreateBook = z.infer<typeof CreateBookSchema>;
 export type UpdateBook = z.infer<typeof UpdateBookSchema>;
 export type CreateGrant = z.infer<typeof CreateGrantSchema>;
 export type UpdateGrant = z.infer<typeof UpdateGrantSchema>;
+export type ProgressLocator = z.infer<typeof ProgressLocatorSchema>;
 export type ProgressUpdate = z.infer<typeof ProgressUpdateSchema>;
 export type BookmarkCreate = z.infer<typeof BookmarkCreateSchema>;
 export type HighlightCreate = z.infer<typeof HighlightCreateSchema>;

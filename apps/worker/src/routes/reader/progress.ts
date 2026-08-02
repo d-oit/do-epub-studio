@@ -43,7 +43,7 @@ progressRouter.get('/:bookId/progress', readerAuth, async (c) => {
   const locator = await parseLocatorRow(
     c.env,
     progress.locator_json,
-    { entityType: 'highlight', entityId: progress.id, bookId },
+    { entityType: 'progress', entityId: progress.id, bookId },
     c.executionCtx,
   );
 
