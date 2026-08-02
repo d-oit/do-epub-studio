@@ -1,7 +1,8 @@
 # GOAP 209: Close Plan 207 Remaining Structured Logging Gaps
 
 **Date:** 2026-08-02
-**Status:** IN PROGRESS
+**Status:** ✅ COMPLETED
+**PR:** [#893](https://github.com/d-oit/do-epub-studio/pull/893)
 **Goal:** Close the 3 remaining Plan 207 items (L2, L3, L5) — replace raw console.* calls with structured logging in worker. All CI must pass.
 
 **Related:** Plan 207 (missing impl cleanup), ADR-067 (observability)
