@@ -10,7 +10,7 @@ import {
   saveAnnotation,
   type SyncQueueItem,
 } from './db';
-import { api } from '../api';
+import { api, apiRequest } from '../api';
 import type { AnnotationEntry } from './db';
 import { clearAllPermissions } from './permissions';
 import { createTraceId, createSpanId } from '@do-epub-studio/shared';
@@ -176,11 +176,9 @@ async function syncItem(item: SyncQueueItem, traceId: string, spanId: string): P
         percentage: number;
         mutationId: string;
       };
-      await api.post(`/api/books/${payload.bookId}/progress`, {
-        bookId: payload.bookId,
+      await api.put(`/api/books/${payload.bookId}/progress`, {
         locator: {
           cfi: payload.cfi,
-          selectedText: '',
         },
         progressPercent: payload.percentage,
         mutationId: payload.mutationId,
@@ -188,36 +186,43 @@ async function syncItem(item: SyncQueueItem, traceId: string, spanId: string): P
     } else if (item.type === 'annotation') {
       const payload = item.payload as {
         bookId: string;
-        annotation: Omit<AnnotationEntry, 'synced' | 'mutationId'>;
+        annotation: Omit<AnnotationEntry, 'synced' | 'mutationId'> & { id?: string; status?: string };
+        action?: string;
       };
 
-      if (payload.annotation.type === 'highlight') {
+      if (payload.action === 'resolve') {
+        await apiRequest(`/api/comments/${payload.annotation.id}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ status: payload.annotation.status }),
+        });
+      } else if (payload.annotation.type === 'highlight') {
         await api.post(`/api/books/${payload.bookId}/highlights`, {
-          chapterRef: payload.annotation.chapter,
-          cfiRange: payload.annotation.cfi,
-          selectedText: payload.annotation.text ?? '',
-          color: payload.annotation.color ?? 'yellow',
+          locator: {
+            cfi: payload.annotation.cfi,
+            selectedText: payload.annotation.text ?? '',
+            chapterRef: payload.annotation.chapter ?? '',
+          },
+          color: payload.annotation.color ?? '#ffff00',
           note: payload.annotation.comment ?? '',
-          mutationId: item.mutationId,
         });
       } else if (payload.annotation.type === 'bookmark') {
         await api.post(`/api/books/${payload.bookId}/bookmarks`, {
           locator: {
             cfi: payload.annotation.cfi,
-            chapter: payload.annotation.chapter ?? '',
-            selectedText: '',
+            selectedText: payload.annotation.text ?? payload.annotation.cfi,
+            chapterRef: payload.annotation.chapter ?? '',
           },
           label: payload.annotation.text ?? '',
-          mutationId: item.mutationId,
         });
       } else {
         await api.post(`/api/books/${payload.bookId}/comments`, {
-          chapterRef: payload.annotation.chapter,
-          cfiRange: payload.annotation.cfi,
-          selectedText: payload.annotation.text ?? '',
+          locator: {
+            cfi: payload.annotation.cfi,
+            selectedText: payload.annotation.text ?? '',
+            chapterRef: payload.annotation.chapter ?? '',
+          },
           body: payload.annotation.comment ?? '',
           visibility: 'shared' as const,
-          mutationId: item.mutationId,
         });
       }
     } else if (item.type === 'reading-insight') {

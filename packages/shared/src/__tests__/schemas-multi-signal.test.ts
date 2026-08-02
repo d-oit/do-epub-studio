@@ -99,12 +99,12 @@ describe('ProgressUpdateSchema', () => {
     expect(result.success).toBe(true);
   });
 
-  it('rejects progress with incomplete locator', () => {
+  it('accepts progress with cfi-only locator (partial fields allowed)', () => {
     const result = ProgressUpdateSchema.safeParse({
       locator: { cfi: 'epubcfi(/6/4)' },
       progressPercent: 50,
     });
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
   });
 
   it('rejects progressPercent below 0', () => {

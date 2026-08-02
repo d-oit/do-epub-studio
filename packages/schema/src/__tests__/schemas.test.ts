@@ -5,8 +5,8 @@ import {
   CommentStatusSchema,
   CommentVisibilitySchema,
   EntityTypeSchema,
-  AnnotationLocatorSchema,
   MultiSignalLocatorSchema,
+  ProgressLocatorSchema,
   AccessRequestSchema,
   RecoveryRequestSchema,
   RecoveryVerifySchema,
@@ -83,37 +83,25 @@ describe('Enum Schemas', () => {
   });
 });
 
-describe('AnnotationLocatorSchema', () => {
-  it('accepts locator with cfi', () => {
-    const result = AnnotationLocatorSchema.parse({ cfi: 'epubcfi(/6/4)' });
+describe('ProgressLocatorSchema', () => {
+  it('accepts locator with cfi only', () => {
+    const result = ProgressLocatorSchema.parse({ cfi: 'epubcfi(/6/4)' });
     expect(result.cfi).toBe('epubcfi(/6/4)');
   });
 
-  it('accepts locator with selectedText', () => {
-    const result = AnnotationLocatorSchema.parse({ selectedText: 'hello world' });
-    expect(result.selectedText).toBe('hello world');
-  });
-
-  it('accepts locator with both cfi and selectedText', () => {
-    const result = AnnotationLocatorSchema.parse({ cfi: 'cfi', selectedText: 'text' });
+  it('accepts locator with cfi and optional fields', () => {
+    const result = ProgressLocatorSchema.parse({ cfi: 'cfi', selectedText: 'text', chapterRef: 'ch1' });
     expect(result.cfi).toBe('cfi');
     expect(result.selectedText).toBe('text');
+    expect(result.chapterRef).toBe('ch1');
   });
 
-  it('rejects locator with neither cfi nor selectedText', () => {
-    expect(() => AnnotationLocatorSchema.parse({ chapterRef: 'ch1' })).toThrow('Locator must have at least cfi or selectedText');
+  it('rejects locator without cfi', () => {
+    expect(() => ProgressLocatorSchema.parse({ selectedText: 'text' })).toThrow();
   });
 
   it('enforces max length for cfi', () => {
-    expect(() => AnnotationLocatorSchema.parse({ cfi: 'x'.repeat(2049) })).toThrow();
-  });
-
-  it('enforces max length for selectedText', () => {
-    expect(() => AnnotationLocatorSchema.parse({ selectedText: 'x'.repeat(10001) })).toThrow();
-  });
-
-  it('enforces max length for chapterRef', () => {
-    expect(() => AnnotationLocatorSchema.parse({ cfi: 'cfi', chapterRef: 'x'.repeat(1025) })).toThrow();
+    expect(() => ProgressLocatorSchema.parse({ cfi: 'x'.repeat(2049) })).toThrow();
   });
 });
 
