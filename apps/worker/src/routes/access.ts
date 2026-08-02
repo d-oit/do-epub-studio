@@ -4,8 +4,8 @@ import type { Env } from '../lib/env';
 import { validateGrant, computeCapabilities, getGrantByBookAndSession, getGrantsBySession } from '../auth/password';
 import { createSession, validateSession, revokeSession } from '../auth/session';
 import { logAudit } from '../audit';
-import { AccessRequestSchema, RecoveryRequestSchema, RecoveryVerifySchema } from '@do-epub-studio/shared';
-import { ValidateQuerySchema } from '@do-epub-studio/schema';
+import { AccessRequestSchema, RecoveryRequestSchema, RecoveryVerifySchema, RecoveryTokenPayloadSchema } from '@do-epub-studio/shared';
+import { ValidateQuerySchema, JWT_PURPOSE_READER_RECOVER } from '@do-epub-studio/schema';
 import { sign, verify } from 'hono/jwt';
 import { checkRateLimitDO, deleteRateLimitKey } from '../lib/rate-limit-client';
 import { queryFirst } from '../db/client';
@@ -45,6 +45,7 @@ accessRouter.post('/recovery-request', zValidator('json', RecoveryRequestSchema)
       const payload = {
         email: email.toLowerCase(),
         bookSlug,
+        purpose: JWT_PURPOSE_READER_RECOVER,
         exp: Math.floor(Date.now() / 1000) + 3600,
       };
       const token = await sign(payload, c.env.INVITE_TOKEN_SECRET, 'HS256');
@@ -79,9 +80,20 @@ accessRouter.post('/verify-recovery', zValidator('json', RecoveryVerifySchema), 
   const { token } = c.req.valid('json');
 
   try {
-    const payload = await verify(token, c.env.INVITE_TOKEN_SECRET, 'HS256') as { email: string, bookSlug: string };
+    const raw = await verify(token, c.env.INVITE_TOKEN_SECRET, 'HS256');
+    const parsed = RecoveryTokenPayloadSchema.safeParse(raw);
 
-    const result = await validateGrant(c.env, payload.bookSlug, payload.email);
+    if (!parsed.success || parsed.data.purpose !== JWT_PURPOSE_READER_RECOVER || !parsed.data.bookSlug) {
+      return c.json(
+        {
+          ok: false,
+          error: { code: 'INVALID_TOKEN', message: 'Invalid or expired recovery link' },
+        },
+        401,
+      );
+    }
+
+    const result = await validateGrant(c.env, parsed.data.bookSlug, parsed.data.email);
 
     if (!result.valid || !result.grant || !result.book) {
       return c.json(
@@ -93,13 +105,13 @@ accessRouter.post('/verify-recovery', zValidator('json', RecoveryVerifySchema), 
       );
     }
 
-    const session = await createSession(c.env, result.book.id, payload.email);
+    const session = await createSession(c.env, result.book.id, parsed.data.email);
 
     await logAudit(c.env, {
       entityType: 'session',
       entityId: result.book.id,
       action: 'access_granted',
-      actorEmail: payload.email,
+      actorEmail: parsed.data.email,
       payload: { grantId: result.grant.id, method: 'magic_link' },
     }, c.executionCtx);
 

@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import type { Env } from '../../lib/env';
-import { LoginSchema, AdminRecoveryRequestSchema, RecoveryVerifySchema } from '@do-epub-studio/schema';
+import { LoginSchema, AdminRecoveryRequestSchema, RecoveryVerifySchema, RecoveryTokenPayloadSchema, JWT_PURPOSE_ADMIN_RECOVER } from '@do-epub-studio/schema';
 import { checkRateLimitDO } from '../../lib/rate-limit-client';
 import { createAdminSession, createAdminSessionByEmail, revokeAdminSession } from '../../auth/admin-middleware';
 import { logAudit } from '../../audit';
@@ -100,7 +100,7 @@ authRouter.post('/recovery-request', zValidator('json', AdminRecoveryRequestSche
   if (user) {
     const payload = {
       email: email.toLowerCase(),
-      purpose: 'admin_recover',
+      purpose: JWT_PURPOSE_ADMIN_RECOVER,
       exp: Math.floor(Date.now() / 1000) + 3600,
     };
     const token = await sign(payload, c.env.INVITE_TOKEN_SECRET, 'HS256');
@@ -133,9 +133,10 @@ authRouter.post('/recovery-verify', zValidator('json', RecoveryVerifySchema), as
   const { token } = c.req.valid('json');
 
   try {
-    const payload = await verify(token, c.env.INVITE_TOKEN_SECRET, 'HS256') as { email: string; purpose: string };
+    const raw = await verify(token, c.env.INVITE_TOKEN_SECRET, 'HS256');
+    const parsed = RecoveryTokenPayloadSchema.safeParse(raw);
 
-    if (payload.purpose !== 'admin_recover') {
+    if (!parsed.success || parsed.data.purpose !== JWT_PURPOSE_ADMIN_RECOVER) {
       return c.json(
         { ok: false, error: { code: 'INVALID_TOKEN', message: 'Invalid recovery token' } },
         401,
@@ -145,7 +146,7 @@ authRouter.post('/recovery-verify', zValidator('json', RecoveryVerifySchema), as
     const user = await queryFirst<{ id: string; email: string; global_role: string }>(
       c.env,
       'SELECT id, email, global_role FROM users WHERE email = ? AND global_role = ?',
-      [payload.email, 'admin'],
+      [parsed.data.email, 'admin'],
     );
 
     if (!user) {
@@ -155,7 +156,7 @@ authRouter.post('/recovery-verify', zValidator('json', RecoveryVerifySchema), as
       );
     }
 
-    const session = await createAdminSessionByEmail(c.env, payload.email);
+    const session = await createAdminSessionByEmail(c.env, parsed.data.email);
 
     if (!session.ok) {
       return c.json(
@@ -168,7 +169,7 @@ authRouter.post('/recovery-verify', zValidator('json', RecoveryVerifySchema), as
       entityType: 'user',
       entityId: user.id,
       action: 'admin_access_granted',
-      actorEmail: payload.email,
+      actorEmail: parsed.data.email,
       payload: { method: 'magic_link' },
     }, c.executionCtx);
 

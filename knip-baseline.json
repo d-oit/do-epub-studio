@@ -1,31 +1,10 @@
 {
-  "_note": "Pre-existing knip findings as of Wave 6-A (2026-07-30). These are baselined via warn-only rules in knip.config.ts and should be cleaned up incrementally. Do NOT add new suppressions here — fix the code instead.",
+  "_note": "Knip findings as of 2026-08-01. All pre-existing knip issues and configuration hints have been resolved. The remaining live suppressions in knip.config.ts are documented in-file; do NOT add new suppressions here — fix the code instead.",
   "_knipVersion": "6.29.0",
-  "unusedFiles": [
-    "apps/web/src/lib/index.ts",
-    "apps/worker/src/auth/index.ts",
-    "apps/worker/src/db/index.ts",
-    "apps/worker/src/storage/index.ts",
-    "packages/reader-core/src/__tests__/fixtures/epub-helpers.ts",
-    "scripts/__tests__/check-app-identity.test.mjs",
-    "scripts/__tests__/check-bundle-budget.test.mjs",
-    "scripts/__tests__/check-bundle-size.test.mjs",
-    "scripts/__tests__/report-performance.test.mjs"
-  ],
-  "unusedDependencies": [
-    "@fontsource-variable/geist (apps/web — imported via CSS, not JS)",
-    "@fontsource/instrument-serif (apps/web — imported via CSS, not JS)",
-    "jszip (apps/web — only used in worker __tests__)",
-    "@libsql/client (apps/worker — imported via barrel not traced from entry)",
-    "zod (packages/shared — re-exported via barrel)"
-  ],
-  "unusedDevDependencies": [
-    "@cloudflare/vitest-pool-workers (apps/worker — consumed by vitest pool config only)"
-  ],
-  "unlistedDependencies": [
-    "cloudflare (apps/worker — virtual cloudflare:workers runtime module, not an npm package)",
-    "@storybook/react (packages/ui — transitive peer of @storybook/react-vite, used in stories)"
-  ],
+  "unusedFiles": [],
+  "unusedDependencies": [],
+  "unusedDevDependencies": [],
+  "unlistedDependencies": [],
   "unusedExports_count": 0,
   "unusedExportedTypes_count": 0,
   "duplicateExports": [],
