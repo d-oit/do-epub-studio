@@ -43,7 +43,7 @@ export async function checkRateLimitDO(
     return await response.json<RateLimitResult>();
   } catch (error) {
     // If anything fails (e.g. DO unreachable), fail open to maintain availability.
-    logAppError('rate_limit_client.error', error);
+    logAppError('rate_limit_client.error', error, { namespace, key });
     return { allowed: true, remaining: 0, resetAt: 0 };
   }
 }
@@ -61,6 +61,6 @@ export async function deleteRateLimitKey(env: Env, namespace: string, key: strin
       { method: 'DELETE' },
     );
   } catch (error) {
-    logAppError('rate_limit_client.delete_key.error', error);
+    logAppError('rate_limit_client.delete_key.error', error, { namespace, key });
   }
 }
