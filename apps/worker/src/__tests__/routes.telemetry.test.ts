@@ -63,19 +63,26 @@ describe('Telemetry API', () => {
 
     expect(console.log).toHaveBeenCalled();
 
-    // Find telemetry.received log entries (all levels now route through logAppInfo)
-    const allConsoleLogs = vi.mocked(console.log).mock.calls
+    // info-level telemetry routes through logAppInfo → console.log
+    const consoleLogs = vi.mocked(console.log).mock.calls
       .map((call: unknown[]) => call[0] as string);
-    const telemetryLogs = allConsoleLogs.filter((msg) => {
-      try {
-        const p = JSON.parse(msg) as Record<string, unknown>;
-        return p.event === 'telemetry.received';
-      } catch { return false; }
+    const infoTelemetryLogs = consoleLogs.filter((msg) => {
+      try { return (JSON.parse(msg) as Record<string, unknown>).event === 'telemetry.received'; }
+      catch { return false; }
     });
+    expect(infoTelemetryLogs.length).toBe(1);
+    expect(infoTelemetryLogs[0]).toContain('test_event');
 
-    expect(telemetryLogs.length).toBe(2);
-    expect(telemetryLogs[0]).toContain('test_event');
-    expect(telemetryLogs[1]).toContain('error_event');
+    // error-level telemetry routes through logAppError → console.error
+    expect(console.error).toHaveBeenCalled();
+    const consoleErrors = vi.mocked(console.error).mock.calls
+      .map((call: unknown[]) => call[0] as string);
+    const errorTelemetryLogs = consoleErrors.filter((msg) => {
+      try { return (JSON.parse(msg) as Record<string, unknown>).event === 'telemetry.received'; }
+      catch { return false; }
+    });
+    expect(errorTelemetryLogs.length).toBe(1);
+    expect(errorTelemetryLogs[0]).toContain('error_event');
   });
 
   it('should reject invalid payloads', async () => {
@@ -171,16 +178,13 @@ describe('Telemetry API', () => {
     const body = await res.json();
     assertOk(body);
 
-    expect(console.log).toHaveBeenCalled();
-
-    // Find the telemetry.received log entry in console.log calls
-    const allConsoleLogs = vi.mocked(console.log).mock.calls
+    // warn-level telemetry routes through logAppWarn → console.warn
+    expect(console.warn).toHaveBeenCalled();
+    const warnLogs = vi.mocked(console.warn).mock.calls
       .map((call: unknown[]) => call[0] as string);
-    const telemetryLog = allConsoleLogs.find((msg) => {
-      try {
-        const p = JSON.parse(msg) as Record<string, unknown>;
-        return p.event === 'telemetry.received';
-      } catch { return false; }
+    const telemetryLog = warnLogs.find((msg) => {
+      try { return (JSON.parse(msg) as Record<string, unknown>).event === 'telemetry.received'; }
+      catch { return false; }
     });
     expect(telemetryLog).toBeDefined();
     if (!telemetryLog) return;

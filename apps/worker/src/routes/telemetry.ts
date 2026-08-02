@@ -3,7 +3,7 @@ import { zValidator } from '@hono/zod-validator';
 import type { Env } from '../lib/env';
 import { TelemetryPayloadSchema } from '@do-epub-studio/shared';
 import { scrub } from '../lib/redact';
-import { logAppInfo } from '../lib/observability';
+import { logAppError, logAppInfo, logAppWarn } from '../lib/observability';
 
 export const telemetryRouter = new Hono<{ Bindings: Env }>();
 
@@ -34,10 +34,18 @@ telemetryRouter.post(
       c.executionCtx.waitUntil(persistPromise);
     }
 
-    // Re-emit scrubbed telemetry via structured logging for wrangler tail visibility
+    // Re-emit scrubbed telemetry via structured logging for wrangler tail visibility.
+    // Preserve the client's severity so `wrangler tail --level error` still surfaces client errors.
     for (const log of logs) {
       const scrubbedLog = scrub(log) as Record<string, unknown>;
-      logAppInfo('telemetry.received', { ...scrubbedLog, _receivedAt: new Date().toISOString() });
+      const metadata = { ...scrubbedLog, _receivedAt: new Date().toISOString() };
+      if (log.level === 'error') {
+        logAppError('telemetry.received', scrubbedLog.error ?? new Error('client telemetry error'), metadata);
+      } else if (log.level === 'warn') {
+        logAppWarn('telemetry.received', metadata);
+      } else {
+        logAppInfo('telemetry.received', metadata);
+      }
     }
 
     return c.json({ ok: true }, 202);
