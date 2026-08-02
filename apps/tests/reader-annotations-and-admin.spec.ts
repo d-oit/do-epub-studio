@@ -8,6 +8,7 @@ import {
   clickToolbarButton,
   suppressWorkboxErrors,
 } from './fixtures';
+import { I18N_E2E_STRINGS } from './i18n-e2e-helpers';
 
 // ---------------------------------------------------------------------------
 // Reader annotation flow
@@ -269,7 +270,7 @@ test.describe('Accessibility', () => {
 // ---------------------------------------------------------------------------
 
 test.describe('Internationalization', () => {
-  test('@mobile can switch locale on login page', async ({ page }) => {
+  test('@smoke @mobile can switch locale on login page', async ({ page }) => {
     await page.goto(`/login`);
 
     const localeSelect = page.getByLabel(
@@ -277,11 +278,10 @@ test.describe('Internationalization', () => {
     );
 
     await localeSelect.selectOption('de');
-
-    await expect(page.getByText('Melde dich an')).toBeVisible();
+    await expect(page.getByText(I18N_E2E_STRINGS.de.loginSubtitle)).toBeVisible();
 
     await localeSelect.selectOption('fr');
-    await expect(page.getByText('Connectez-vous pour accéder à vos livres')).toBeVisible();
+    await expect(page.getByText(I18N_E2E_STRINGS.fr.loginSubtitle)).toBeVisible();
   });
 
   test('@mobile locale persists after page reload', async ({ page }) => {
@@ -291,11 +291,11 @@ test.describe('Internationalization', () => {
     );
     await localeSelect.selectOption('de');
     // Wait for Zustand persist middleware to write to localStorage
-    await page.waitForFunction(() => localStorage.getItem('do-epub-locale') !== null);
+    await page.waitForFunction(() => localStorage.getItem('do-epub-locale') === 'de');
 
     await page.reload();
 
-    await expect(page.getByText('Melde dich an')).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText(I18N_E2E_STRINGS.de.loginSubtitle)).toBeVisible({ timeout: 15000 });
   });
 });
 

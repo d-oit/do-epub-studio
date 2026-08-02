@@ -17,6 +17,6 @@
     "build": { "model": "standard" },
     "general": { "model": "standard" },
     "explore": { "model": "lite" },
-    "plan": { "model": "standard" }
+    "plan": { "model": "ultra" }
   }
 }
