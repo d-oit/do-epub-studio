@@ -14,36 +14,47 @@ import { dictionaries, type LocaleKey } from '../i18n';
  * after intentionally changing translations, then update E2E tests in the same commit.
  */
 
-const CRITICAL_KEYS = [
+type Dict = typeof dictionaries.en;
+
+const CRITICAL_KEYS: (keyof Dict)[] = [
   'login.subtitle',
   'login.submit',
   'login.emailLabel',
   'login.passwordLabel',
   'admin.createBookModal.title',
   'reader.settings.title',
-] as const;
+];
+
+const LOCALE_NAMES = Object.keys(dictionaries) as LocaleKey[];
+
+function getSnapshot(): Map<string, Map<string, string>> {
+  const snapshot = new Map<string, Map<string, string>>();
+  for (const locale of LOCALE_NAMES) {
+    const dict = new Map<string, string>();
+    for (const key of CRITICAL_KEYS) {
+      dict.set(String(key), dictionaries[locale][key]);
+    }
+    snapshot.set(locale, dict);
+  }
+  return snapshot;
+}
 
 describe('i18n rendered text snapshots', () => {
-  const localeNames = Object.keys(dictionaries) as LocaleKey[];
-
   it('login page critical text matches snapshot', () => {
-    const snapshot: Record<string, Record<string, string>> = {};
-    for (const locale of localeNames) {
-      snapshot[locale] = {};
-      for (const key of CRITICAL_KEYS) {
-        snapshot[locale][key] = dictionaries[locale][key as keyof typeof dictionaries.en];
-      }
+    const snapshot = getSnapshot();
+    const obj: Record<string, Record<string, string>> = {};
+    for (const [locale, dict] of snapshot) {
+      obj[locale] = Object.fromEntries(dict);
     }
-    expect(snapshot).toMatchSnapshot();
+    expect(obj).toMatchSnapshot();
   });
 
   it('each locale has unique login.subtitle text', () => {
-    const subtitles = localeNames.map((locale) => ({
-      locale,
-      text: dictionaries[locale]['login.subtitle'],
-    }));
-
-    const uniqueTexts = new Set(subtitles.map((s) => s.text));
-    expect(uniqueTexts.size).toBe(localeNames.length);
+    const subtitleMap = new Map<string, string>();
+    for (const locale of LOCALE_NAMES) {
+      subtitleMap.set(locale, dictionaries[locale]['login.subtitle']);
+    }
+    const uniqueTexts = new Set(subtitleMap.values());
+    expect(uniqueTexts.size).toBe(LOCALE_NAMES.length);
   });
 });
