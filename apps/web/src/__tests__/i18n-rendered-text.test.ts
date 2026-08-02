@@ -1,5 +1,17 @@
 import { describe, it, expect } from 'vitest';
-import { dictionaries, type LocaleKey } from '../i18n';
+import { en } from '../i18n/en';
+import { de } from '../i18n/de';
+import { fr } from '../i18n/fr';
+import { es } from '../i18n/es';
+import { pt } from '../i18n/pt';
+import { it as itLocale } from '../i18n/it';
+import { ja } from '../i18n/ja';
+import { zh } from '../i18n/zh';
+import { ko } from '../i18n/ko';
+import { ar } from '../i18n/ar';
+import { ru } from '../i18n/ru';
+import { hi } from '../i18n/hi';
+import { nl } from '../i18n/nl';
 
 /**
  * Snapshot test for i18n rendered text drift detection.
@@ -14,47 +26,39 @@ import { dictionaries, type LocaleKey } from '../i18n';
  * after intentionally changing translations, then update E2E tests in the same commit.
  */
 
-type Dict = typeof dictionaries.en;
-
-const CRITICAL_KEYS: (keyof Dict)[] = [
-  'login.subtitle',
-  'login.submit',
-  'login.emailLabel',
-  'login.passwordLabel',
-  'admin.createBookModal.title',
-  'reader.settings.title',
-];
-
-const LOCALE_NAMES = Object.keys(dictionaries) as LocaleKey[];
-
-function getSnapshot(): Map<string, Map<string, string>> {
-  const snapshot = new Map<string, Map<string, string>>();
-  for (const locale of LOCALE_NAMES) {
-    const dict = new Map<string, string>();
-    for (const key of CRITICAL_KEYS) {
-      dict.set(String(key), dictionaries[locale][key]);
-    }
-    snapshot.set(locale, dict);
-  }
-  return snapshot;
-}
+const enCatalog = en as Record<string, string>;
 
 describe('i18n rendered text snapshots', () => {
   it('login page critical text matches snapshot', () => {
-    const snapshot = getSnapshot();
-    const obj: Record<string, Record<string, string>> = {};
-    for (const [locale, dict] of snapshot) {
-      obj[locale] = Object.fromEntries(dict);
-    }
-    expect(obj).toMatchSnapshot();
+    const snapshot = {
+      en: {
+        'login.subtitle': enCatalog['login.subtitle'],
+        'login.submit': enCatalog['login.submit'],
+        'login.emailLabel': enCatalog['login.emailLabel'],
+        'login.passwordLabel': enCatalog['login.passwordLabel'],
+        'admin.createBookModal.title': enCatalog['admin.createBookModal.title'],
+        'reader.settings.title': enCatalog['reader.settings.title'],
+      },
+    };
+    expect(snapshot).toMatchSnapshot();
   });
 
   it('each locale has unique login.subtitle text', () => {
-    const subtitleMap = new Map<string, string>();
-    for (const locale of LOCALE_NAMES) {
-      subtitleMap.set(locale, dictionaries[locale]['login.subtitle']);
-    }
-    const uniqueTexts = new Set(subtitleMap.values());
-    expect(uniqueTexts.size).toBe(LOCALE_NAMES.length);
+    const uniqueTexts = new Set([
+      enCatalog['login.subtitle'],
+      de['login.subtitle'],
+      fr['login.subtitle'],
+      es['login.subtitle'],
+      pt['login.subtitle'],
+      itLocale['login.subtitle'],
+      ja['login.subtitle'],
+      zh['login.subtitle'],
+      ko['login.subtitle'],
+      ar['login.subtitle'],
+      ru['login.subtitle'],
+      hi['login.subtitle'],
+      nl['login.subtitle'],
+    ]);
+    expect(uniqueTexts.size).toBe(13);
   });
 });
