@@ -27,7 +27,6 @@ export function useReaderHandlers() {
     async (color: string, selection: SelectionData | null, setSelection: (s: null) => void) => {
       if (!selection || !sessionToken || !bookId) return;
       try {
-        const mutationId = generateMutationId();
         const highlight = await createHighlight(
           bookId,
           {
@@ -42,20 +41,6 @@ export function useReaderHandlers() {
         );
         addHighlight(highlight);
         setSelection(null);
-        if (!navigator.onLine) {
-          await saveAnnotation({
-            id: highlight.id,
-            bookId,
-            type: 'highlight',
-            cfi: selection.cfiRange,
-            text: selection.text,
-            color,
-            createdAt: Date.now(),
-            synced: false,
-            mutationId,
-          });
-          await queueSync('annotation', { bookId, annotation: highlight }, mutationId);
-        }
       } catch (err) {
         logClientEvent({ level: 'error', traceId: createTraceId(), event: 'reader.create-highlight.failed', error: { name: (err as Error).name, message: (err as Error).message } });
       }
@@ -89,22 +74,6 @@ export function useReaderHandlers() {
         setSelection(null);
         setShowCommentInput(false);
         setIsCommentMode(false);
-        if (!navigator.onLine) {
-          const mutationId = generateMutationId();
-          await saveAnnotation({
-            id: comment.id,
-            bookId,
-            type: 'comment',
-            cfi: selection.cfiRange,
-            text: selection.text,
-            comment: text,
-            chapter: selection.chapterRef,
-            createdAt: Date.now(),
-            synced: false,
-            mutationId,
-          });
-          await queueSync('annotation', { bookId, annotation: comment }, mutationId);
-        }
       } catch (err) {
         logClientEvent({ level: 'error', traceId: createTraceId(), event: 'reader.create-comment.failed', error: { name: (err as Error).name, message: (err as Error).message } });
       }

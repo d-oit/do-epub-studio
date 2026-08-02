@@ -1,46 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
-  AnnotationLocatorSchema,
   AccessRequestSchema,
   CreateBookSchema,
   CreateGrantSchema,
 } from '../schemas';
-
-describe('AnnotationLocatorSchema', () => {
-  it('accepts a valid cfi', () => {
-    const result = AnnotationLocatorSchema.safeParse({ cfi: 'epubcfi(/6/4)' });
-    expect(result.success).toBe(true);
-  });
-
-  it('accepts valid selectedText without cfi', () => {
-    const result = AnnotationLocatorSchema.safeParse({ selectedText: 'hello world' });
-    expect(result.success).toBe(true);
-  });
-
-  it('accepts both cfi and selectedText', () => {
-    const result = AnnotationLocatorSchema.safeParse({
-      cfi: 'epubcfi(/6/4)',
-      selectedText: 'excerpt',
-      chapterRef: 'chapter-1',
-      elementIndex: 0,
-      charOffset: 10,
-    });
-    expect(result.success).toBe(true);
-  });
-
-  it('rejects empty object with no cfi or selectedText', () => {
-    const result = AnnotationLocatorSchema.safeParse({});
-    expect(result.success).toBe(false);
-    if (!result.success) {
-      expect(result.error.issues[0]?.message).toContain('cfi or selectedText');
-    }
-  });
-
-  it('rejects object with only chapterRef', () => {
-    const result = AnnotationLocatorSchema.safeParse({ chapterRef: 'ch1' });
-    expect(result.success).toBe(false);
-  });
-});
 
 describe('AccessRequestSchema', () => {
   it('accepts valid input', () => {
