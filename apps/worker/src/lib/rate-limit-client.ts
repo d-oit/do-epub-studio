@@ -1,4 +1,4 @@
-import { createTraceId } from '@do-epub-studio/shared';
+import { logAppError } from './observability';
 import type { Env } from './env';
 
 export interface RateLimitResult {
@@ -43,7 +43,7 @@ export async function checkRateLimitDO(
     return await response.json<RateLimitResult>();
   } catch (error) {
     // If anything fails (e.g. DO unreachable), fail open to maintain availability.
-    console.error(JSON.stringify({ level: 'error', traceId: createTraceId(), event: 'rate_limit_client.error', error: error instanceof Error ? error.message : String(error) }));
+    logAppError('rate_limit_client.error', error);
     return { allowed: true, remaining: 0, resetAt: 0 };
   }
 }
@@ -61,6 +61,6 @@ export async function deleteRateLimitKey(env: Env, namespace: string, key: strin
       { method: 'DELETE' },
     );
   } catch (error) {
-    console.error(JSON.stringify({ level: 'error', traceId: createTraceId(), event: 'rate_limit_client.delete_key.error', error: error instanceof Error ? error.message : String(error) }));
+    logAppError('rate_limit_client.delete_key.error', error);
   }
 }

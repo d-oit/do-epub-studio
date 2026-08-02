@@ -116,3 +116,43 @@ export function withTraceHeaders(response: Response, ctx: RequestContext): Respo
   response.headers.set(TRACEPARENT_HEADER, buildTraceparent(ctx.traceId, ctx.spanId));
   return response;
 }
+
+/**
+ * Log an error event without requiring a Request object.
+ * Use for background operations (fire-and-forget DB updates, rate limiter errors, email transport).
+ */
+export function logAppError(
+  event: string,
+  error: unknown,
+  metadata?: Record<string, unknown>,
+): void {
+  log({
+    level: 'error',
+    traceId: createTraceId(),
+    spanId: createSpanId(),
+    event,
+    method: 'BACKGROUND',
+    path: '-',
+    error: serializeError(error),
+    metadata,
+  });
+}
+
+/**
+ * Log an info event without requiring a Request object.
+ * Use for background operations (email send logging, fallback warnings).
+ */
+export function logAppInfo(
+  event: string,
+  metadata?: Record<string, unknown>,
+): void {
+  log({
+    level: 'info',
+    traceId: createTraceId(),
+    spanId: createSpanId(),
+    event,
+    method: 'BACKGROUND',
+    path: '-',
+    metadata,
+  });
+}
