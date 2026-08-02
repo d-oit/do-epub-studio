@@ -45,6 +45,19 @@ describe('CORS', () => {
     const allowedHeaders = response.headers.get('Access-Control-Allow-Headers');
     expect(allowedHeaders).toContain(TRACE_HEADER);
     expect(allowedHeaders).toContain(SPAN_HEADER);
+    expect(allowedHeaders).toContain('traceparent');
+  });
+
+  it('exposes trace headers via Access-Control-Expose-Headers', async () => {
+    const request = new Request('https://api.example.com/api/books', {
+      method: 'OPTIONS',
+    });
+
+    const response = await worker.fetch(request, env, makePassThroughContext());
+    const exposeHeaders = response.headers.get('Access-Control-Expose-Headers');
+    expect(exposeHeaders).toContain(TRACE_HEADER);
+    expect(exposeHeaders).toContain(SPAN_HEADER);
+    expect(exposeHeaders).toContain('traceparent');
   });
 
   it('sets Vary header to include Origin and Access-Control-Request-Headers', async () => {

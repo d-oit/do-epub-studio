@@ -379,6 +379,7 @@ export const ko: Record<TranslationKeys, string> = {
   'library.progress': '진행',
   'library.lastRead': '마지막 읽기',
   'library.finished': '완료',
+  'library.loadMore': '더 보기',
 
   'settings.title': '설정',
   'settings.subtitle': '독서 경험을 사용자 정의하세요',

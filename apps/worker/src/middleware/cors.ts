@@ -15,7 +15,11 @@ export const corsMiddleware: MiddlewareHandler<{ Bindings: Env }> = async (c, ne
   c.res.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
   c.res.headers.set(
     'Access-Control-Allow-Headers',
-    `Content-Type, Authorization, ${TRACE_HEADER}, ${SPAN_HEADER}`,
+    `Content-Type, Authorization, ${TRACE_HEADER}, ${SPAN_HEADER}, traceparent`,
+  );
+  c.res.headers.set(
+    'Access-Control-Expose-Headers',
+    `${TRACE_HEADER}, ${SPAN_HEADER}, traceparent`,
   );
   c.res.headers.set('Vary', 'Origin, Access-Control-Request-Headers');
 };

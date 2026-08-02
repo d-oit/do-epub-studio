@@ -377,6 +377,7 @@ export const en = {
   'library.progress': 'Progress',
   'library.lastRead': 'Last read',
   'library.finished': 'Finished',
+  'library.loadMore': 'Load More',
   'settings.title': 'Settings',
   'settings.subtitle': 'Customize your reading experience',
   'settings.readerPreferences': 'Reader Preferences',

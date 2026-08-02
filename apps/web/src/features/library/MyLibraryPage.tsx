@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { apiRequest } from '../../lib/api';
 import { useAuthStore } from '../../stores/auth';
@@ -7,14 +7,27 @@ import { formatDate } from '../../lib/i18n-format';
 import { AppLogo, ProgressBar } from '../../components/ui';
 import { Spinner } from '@do-epub-studio/ui';
 import { APP_NAME, APP_VERSION_LABEL } from '../../config/app-identity';
-import type { LibraryBookResponse } from '@do-epub-studio/shared';
+import type { LibraryBookResponse, PaginatedResponse } from '@do-epub-studio/shared';
+
+const PAGE_SIZE = 50;
 
 export function MyLibraryPage() {
   const { t } = useTranslation();
   const sessionToken = useAuthStore((state) => state.sessionToken);
   const [books, setBooks] = useState<LibraryBookResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(false);
+  const offsetRef = useRef(0);
+
+  const fetchBooks = useCallback(async (offset: number) => {
+    const url = `/api/books?limit=${PAGE_SIZE}&offset=${offset}`;
+    const data = await apiRequest<PaginatedResponse<LibraryBookResponse>>(url, {
+      token: sessionToken ?? undefined,
+    });
+    return data;
+  }, [sessionToken]);
 
   useEffect(() => {
     let cancelled = false;
@@ -22,8 +35,13 @@ export function MyLibraryPage() {
       setIsLoading(true);
       setError(null);
       try {
-        const data = await apiRequest<LibraryBookResponse[]>('/api/books', { token: sessionToken ?? undefined });
-        if (!cancelled) setBooks(data);
+        offsetRef.current = 0;
+        const data = await fetchBooks(0);
+        if (!cancelled) {
+          setBooks(data.items);
+          setHasMore(data.hasMore);
+          offsetRef.current = data.items.length;
+        }
       } catch (err) {
         if (!cancelled) setError(err instanceof Error ? err.message : 'Failed to load library');
       } finally {
@@ -32,7 +50,22 @@ export function MyLibraryPage() {
     }
     void load();
     return () => { cancelled = true; };
-  }, [sessionToken]);
+  }, [fetchBooks]);
+
+  const loadMore = useCallback(async () => {
+    if (isLoadingMore || !hasMore) return;
+    setIsLoadingMore(true);
+    try {
+      const data = await fetchBooks(offsetRef.current);
+      setBooks((prev) => [...prev, ...data.items]);
+      setHasMore(data.hasMore);
+      offsetRef.current += data.items.length;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load more');
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [fetchBooks, isLoadingMore, hasMore]);
 
   const inProgress = books.filter((b) => b.progressPercent > 0 && b.progressPercent < 100);
   const notStarted = books.filter((b) => b.progressPercent === 0);
@@ -127,6 +160,19 @@ export function MyLibraryPage() {
                 </ul>
               </section>
             )}
+          </div>
+        )}
+
+        {hasMore && !isLoading && (
+          <div className="mt-8 flex justify-center">
+            <button
+              type="button"
+              onClick={() => { void loadMore(); }}
+              disabled={isLoadingMore}
+              className="rounded-lg border border-border bg-background-secondary px-6 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-background-secondary/80 disabled:opacity-50"
+            >
+              {isLoadingMore ? <Spinner /> : t('library.loadMore')}
+            </button>
           </div>
         )}
       </div>

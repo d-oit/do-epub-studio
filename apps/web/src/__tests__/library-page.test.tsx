@@ -30,11 +30,17 @@ vi.mock('../config/app-identity', () => ({
 import { apiRequest } from '../lib/api';
 const mockApiRequest = vi.mocked(apiRequest);
 
-const mockBooks = [
-  { id: '1', slug: 'book-1', title: 'In Progress Book', authorName: 'Author A', progressPercent: 45, progressUpdatedAt: '2026-07-20T00:00:00Z' },
-  { id: '2', slug: 'book-2', title: 'Not Started Book', authorName: 'Author B', progressPercent: 0, progressUpdatedAt: null },
-  { id: '3', slug: 'book-3', title: 'Completed Book', authorName: 'Author C', progressPercent: 100, progressUpdatedAt: '2026-07-15T00:00:00Z' },
-];
+const mockPaginatedResponse = {
+  items: [
+    { id: '1', slug: 'book-1', title: 'In Progress Book', authorName: 'Author A', progressPercent: 45, progressUpdatedAt: '2026-07-20T00:00:00Z' },
+    { id: '2', slug: 'book-2', title: 'Not Started Book', authorName: 'Author B', progressPercent: 0, progressUpdatedAt: null },
+    { id: '3', slug: 'book-3', title: 'Completed Book', authorName: 'Author C', progressPercent: 100, progressUpdatedAt: '2026-07-15T00:00:00Z' },
+  ],
+  total: 3,
+  page: 1,
+  pageSize: 50,
+  hasMore: false,
+};
 
 function renderLibrary() {
   return render(
@@ -64,7 +70,7 @@ describe('MyLibraryPage', () => {
   });
 
   it('shows empty state when no books', async () => {
-    mockApiRequest.mockResolvedValue([]);
+    mockApiRequest.mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 50, hasMore: false });
     renderLibrary();
     await waitFor(() => {
       expect(screen.getByText('library.empty')).toBeInTheDocument();
@@ -72,7 +78,7 @@ describe('MyLibraryPage', () => {
   });
 
   it('renders books grouped by progress status', async () => {
-    mockApiRequest.mockResolvedValue(mockBooks);
+    mockApiRequest.mockResolvedValue(mockPaginatedResponse);
     renderLibrary();
     await waitFor(() => {
       expect(screen.getByText('library.inProgress')).toBeInTheDocument();
@@ -82,7 +88,7 @@ describe('MyLibraryPage', () => {
   });
 
   it('renders book titles as links', async () => {
-    mockApiRequest.mockResolvedValue(mockBooks);
+    mockApiRequest.mockResolvedValue(mockPaginatedResponse);
     renderLibrary();
     await waitFor(() => {
       const link1 = screen.getByText('In Progress Book').closest('a');
@@ -95,7 +101,7 @@ describe('MyLibraryPage', () => {
   });
 
   it('renders page title', async () => {
-    mockApiRequest.mockResolvedValue([]);
+    mockApiRequest.mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 50, hasMore: false });
     renderLibrary();
     await waitFor(() => {
       expect(screen.getByText('library.title')).toBeInTheDocument();
@@ -103,7 +109,7 @@ describe('MyLibraryPage', () => {
   });
 
   it('shows ProgressBar for in-progress books', async () => {
-    mockApiRequest.mockResolvedValue(mockBooks);
+    mockApiRequest.mockResolvedValue(mockPaginatedResponse);
     renderLibrary();
     await waitFor(() => {
       const bars = screen.getAllByTestId('progress-bar');
@@ -113,7 +119,7 @@ describe('MyLibraryPage', () => {
   });
 
   it('does not show ProgressBar for not-started or completed books', async () => {
-    mockApiRequest.mockResolvedValue(mockBooks);
+    mockApiRequest.mockResolvedValue(mockPaginatedResponse);
     renderLibrary();
     await waitFor(() => {
       const inProgressBars = screen.getByText('library.inProgress').closest('section')?.querySelectorAll('[data-testid="progress-bar"]');
@@ -125,16 +131,16 @@ describe('MyLibraryPage', () => {
     });
   });
 
-  it('calls apiRequest with the session token', async () => {
-    mockApiRequest.mockResolvedValue([]);
+  it('calls apiRequest with pagination params', async () => {
+    mockApiRequest.mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 50, hasMore: false });
     renderLibrary();
     await waitFor(() => {
-      expect(mockApiRequest).toHaveBeenCalledWith('/api/books', { token: undefined });
+      expect(mockApiRequest).toHaveBeenCalledWith('/api/books?limit=50&offset=0', { token: undefined });
     });
   });
 
   it('renders author names when present', async () => {
-    mockApiRequest.mockResolvedValue(mockBooks);
+    mockApiRequest.mockResolvedValue(mockPaginatedResponse);
     renderLibrary();
     await waitFor(() => {
       expect(screen.getByText('Author A')).toBeInTheDocument();
@@ -144,11 +150,27 @@ describe('MyLibraryPage', () => {
   });
 
   it('renders "library.finished" badge for completed books', async () => {
-    mockApiRequest.mockResolvedValue(mockBooks);
+    mockApiRequest.mockResolvedValue(mockPaginatedResponse);
     renderLibrary();
     await waitFor(() => {
       const completedSection = screen.getByText('library.completed').closest('section');
       expect(completedSection).toHaveTextContent('library.finished');
+    });
+  });
+
+  it('shows Load More button when hasMore is true', async () => {
+    mockApiRequest.mockResolvedValue({ ...mockPaginatedResponse, hasMore: true });
+    renderLibrary();
+    await waitFor(() => {
+      expect(screen.getByText('library.loadMore')).toBeInTheDocument();
+    });
+  });
+
+  it('does not show Load More button when hasMore is false', async () => {
+    mockApiRequest.mockResolvedValue(mockPaginatedResponse);
+    renderLibrary();
+    await waitFor(() => {
+      expect(screen.queryByText('library.loadMore')).not.toBeInTheDocument();
     });
   });
 });

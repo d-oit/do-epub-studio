@@ -29,6 +29,10 @@ engines:
       - "packages/**"
   biome:
     enabled: false
+    exclude_paths:
+      - "apps/web/src/**"
+      - "apps/worker/src/**"
+      - "packages/**"
   tsqlint:
     enabled: false
   tsql:

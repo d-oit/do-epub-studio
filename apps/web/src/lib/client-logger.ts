@@ -28,8 +28,11 @@ function getMinLevel(): number {
   return LOG_LEVELS.warn;
 }
 
+const MAX_BUFFER_SIZE = 100;
+
 const _buffer: ClientLogEntry[] = [];
 let _flushTimer: ReturnType<typeof setTimeout> | null = null;
+let _dropCount = 0;
 
 function flushBuffer(): void {
   if (_buffer.length === 0) return;
@@ -40,12 +43,19 @@ function flushBuffer(): void {
   }
 
   try {
-    const payload = JSON.stringify({ logs: _buffer.splice(0) });
+    const logs = _buffer.splice(0);
+    const dropped = _dropCount;
+    _dropCount = 0;
+    const payload = JSON.stringify({ logs, dropped });
     const isBrowser = typeof window !== 'undefined';
     if (!isBrowser && !endpoint.startsWith('http')) return;
 
+    const blob = new Blob([payload], { type: 'application/json' });
     if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
-      navigator.sendBeacon(endpoint, new Blob([payload], { type: 'application/json' }));
+      const sent = navigator.sendBeacon(endpoint, blob);
+      if (!sent && typeof fetch !== 'undefined') {
+        void fetch(endpoint, { method: 'POST', body: payload, keepalive: true }).catch(() => {});
+      }
     } else if (typeof fetch !== 'undefined') {
       void fetch(endpoint, { method: 'POST', body: payload, keepalive: true }).catch(() => {});
     }
@@ -83,6 +93,10 @@ export function logClientEvent(entry: ClientLogEntry): void {
   }
 
   if (entry.level === 'warn' || entry.level === 'error') {
+    if (_buffer.length >= MAX_BUFFER_SIZE) {
+      _buffer.shift();
+      _dropCount++;
+    }
     _buffer.push(entry);
     scheduleFlush();
   }

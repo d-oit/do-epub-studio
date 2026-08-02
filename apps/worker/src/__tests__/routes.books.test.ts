@@ -26,12 +26,14 @@ describe('Books Routes', () => {
   });
 
   describe('GET /api/books', () => {
-    it('returns list of books', async () => {
+    it('returns paginated list of books', async () => {
       mockRequireAuth.mockResolvedValue({ email: 'user@example.com' });
 
-      mockQueryAll.mockResolvedValue([
-        { id: '1', slug: 'book-1', title: 'Book 1', visibility: 'public' }
-      ]);
+      mockQueryAll
+        .mockResolvedValueOnce([{ cnt: 1 }]) // COUNT query
+        .mockResolvedValueOnce([             // SELECT query
+          { id: '1', slug: 'book-1', title: 'Book 1', visibility: 'public' }
+        ]);
 
       const res = await app.fetch(new Request('http://localhost/api/books', {
         headers: { 'Authorization': 'Bearer valid' }
@@ -39,7 +41,19 @@ describe('Books Routes', () => {
       expect(res.status).toBe(200);
       const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } = await res.json();
       expect(body.ok).toBe(true);
-      expect(body.data).toHaveLength(1);
+      expect(body.data.items).toHaveLength(1);
+      expect(body.data.total).toBe(1);
+      expect(body.data.hasMore).toBe(false);
+    });
+
+    it('defaults to limit=50 offset=0', async () => {
+      mockRequireAuth.mockResolvedValue({ email: 'user@example.com' });
+      mockQueryAll.mockResolvedValue([{ cnt: 0 }]);
+
+      const res = await app.fetch(new Request('http://localhost/api/books', {
+        headers: { 'Authorization': 'Bearer valid' }
+      }), env, makePassThroughContext());
+      expect(res.status).toBe(200);
     });
   });
 

@@ -34,7 +34,7 @@ highlightsRouter.get('/:bookId/highlights', readerAuth, async (c) => {
 
   const highlights = await queryAll<HighlightRow>(
     c.env,
-    `SELECT * FROM highlights WHERE book_id = ? AND user_email = ? ORDER BY created_at DESC`,
+    `SELECT * FROM highlights WHERE book_id = ? AND user_email = ? ORDER BY created_at DESC LIMIT 1000`,
     [bookId, auth.email],
   );
 

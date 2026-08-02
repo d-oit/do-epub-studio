@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
-import { TRACE_HEADER, createTraceId, isAppError, toApiError, ValidationError } from '@do-epub-studio/shared';
+import { isAppError, toApiError, ValidationError } from '@do-epub-studio/shared';
 import type { Env } from './lib/env';
+import type { RequestContext } from './lib/observability';
 import { observabilityMiddleware } from './middleware/observability';
 import { securityHeadersMiddleware } from './middleware/security-headers';
 import { corsMiddleware } from './middleware/cors';
@@ -22,7 +23,7 @@ import {
 } from './routes';
 import { validationErrorFormatter } from './middleware/validation';
 
-export const app = new Hono<{ Bindings: Env }>();
+export const app = new Hono<{ Bindings: Env; Variables: { requestContext: RequestContext } }>();
 
 app.use('*', observabilityMiddleware);
 app.use('*', corsMiddleware);
@@ -32,8 +33,8 @@ app.use('*', securityHeadersMiddleware);
 // Runs after observability so the 414 response carries a traceId.
 app.use('*', async (c, next) => {
   if (c.req.path.length > 2048) {
-    const traceId = c.req.header(TRACE_HEADER) ?? createTraceId();
-    return c.json({ ok: false, error: { code: 'URI_TOO_LONG', message: 'URI too long', traceId } }, 414);
+    const ctx = c.get('requestContext');
+    return c.json({ ok: false, error: { code: 'URI_TOO_LONG', message: 'URI too long', traceId: ctx.traceId } }, 414);
   }
   await next();
 });
@@ -77,9 +78,9 @@ app.route('/api', searchRouter);
 app.route('/api', exportRouter);
 
 app.onError((err, c) => {
-  const traceId = c.req.header(TRACE_HEADER) ?? createTraceId();
-  const apiError = toApiError(err);
+  const ctx = c.get('requestContext');
+  const apiError = toApiError(err, ctx.traceId);
   const status = isAppError(err) ? err.statusCode : 500;
   const details = err instanceof ValidationError && err.issues?.length ? { details: err.issues } : {};
-  return c.json({ ok: false, error: { ...apiError, ...details, traceId } }, status as 400 | 401 | 403 | 404 | 409 | 413 | 423 | 429 | 500 | 504);
+  return c.json({ ok: false, error: { ...apiError, ...details }, status } as never, status as 400 | 401 | 403 | 404 | 409 | 413 | 423 | 429 | 500 | 504);
 });

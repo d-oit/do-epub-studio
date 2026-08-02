@@ -379,6 +379,7 @@ export const ru: Record<TranslationKeys, string> = {
   'library.progress': 'Прогресс',
   'library.lastRead': 'Последнее чтение',
   'library.finished': 'Завершено',
+  'library.loadMore': 'Загрузить ещё',
 
   'settings.title': 'Настройки',
   'settings.subtitle': 'Настройте опыт чтения',

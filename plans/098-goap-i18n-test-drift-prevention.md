@@ -226,11 +226,13 @@ And for the locale switcher label:
 ## Phase 6: SYNTHESIZE — Verification
 
 ### Quality Gates
-- [ ] `pnpm --filter @do-epub-studio/web vitest run i18n-login-page-drift` — passes
-- [ ] `pnpm --filter @do-epub-studio/web vitest run i18n-parity` — passes (existing)
-- [ ] `pnpm lint` — no new errors
-- [ ] `pnpm typecheck` — no new errors
-- [ ] `./scripts/quality_gate.sh` — full gate passes
+- [x] `pnpm --filter @do-epub-studio/web vitest run i18n-rendered-text` — passes (snapshot drift detection; replaced the originally-planned `i18n-login-page-drift.test.ts`)
+- [x] `pnpm --filter @do-epub-studio/web vitest run i18n-parity` — passes (existing)
+- [x] `pnpm lint` — no new errors
+- [x] `pnpm typecheck` — no new errors
+- [x] `./scripts/quality_gate.sh` — full gate passes
+
+> **Implementation note (2026-08-02):** The original T4/T6 design (`i18n-fixtures.ts` + `i18n-login-page-drift.test.ts`) was superseded by `apps/web/src/__tests__/i18n-rendered-text.test.ts` (snapshot-based drift detection) + `apps/tests/i18n-e2e-helpers.ts` (shared E2E strings). The second i18n E2E test (`locale persists after page reload`) is intentionally not tagged `@smoke` because it requires a running backend — see Plan 210 § Out of Scope. Plan 098 is functionally complete.
 
 ### How This Prevents Future Failures
 

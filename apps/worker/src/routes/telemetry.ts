@@ -1,11 +1,12 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import type { Env } from '../lib/env';
+import type { RequestContext } from '../lib/observability';
 import { TelemetryPayloadSchema } from '@do-epub-studio/shared';
 import { scrub } from '../lib/redact';
 import { logAppError, logAppInfo, logAppWarn } from '../lib/observability';
 
-export const telemetryRouter = new Hono<{ Bindings: Env }>();
+export const telemetryRouter = new Hono<{ Bindings: Env; Variables: { requestContext: RequestContext } }>();
 
 telemetryRouter.post(
   '/telemetry',
@@ -36,9 +37,18 @@ telemetryRouter.post(
 
     // Re-emit scrubbed telemetry via structured logging for wrangler tail visibility.
     // Preserve the client's severity so `wrangler tail --level error` still surfaces client errors.
+    // Correlate trace IDs: ingest traceId from the server request context, client traceId from the payload.
+    const ingestCtx = c.get('requestContext');
     for (const log of logs) {
       const scrubbedLog = scrub(log) as Record<string, unknown>;
-      const metadata = { ...scrubbedLog, _receivedAt: new Date().toISOString() };
+      const metadata = {
+        ...scrubbedLog,
+        _receivedAt: new Date().toISOString(),
+        ingestTraceId: ingestCtx.traceId,
+        ingestSpanId: ingestCtx.spanId,
+        clientTraceId: sanitizeTraceId(log.traceId),
+        clientSpanId: sanitizeTraceId(log.spanId ?? null),
+      };
       if (log.level === 'error') {
         logAppError('telemetry.received', scrubbedLog.error ?? new Error('client telemetry error'), metadata);
       } else if (log.level === 'warn') {
@@ -88,4 +98,11 @@ async function persistTelemetry(env: Env, logs: TelemetryLogEntry[]): Promise<vo
       // Persistence failures are non-critical — never break the response
     }
   }
+}
+
+/** Sanitize client-controlled trace IDs: truncate to 64 chars, strip non-hex. */
+function sanitizeTraceId(value: string | null): string | null {
+  if (!value) return null;
+  const cleaned = value.replace(/[^0-9a-fA-F]/g, '').slice(0, 64);
+  return cleaned.length > 0 ? cleaned : null;
 }

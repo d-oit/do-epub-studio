@@ -11,9 +11,14 @@ const t = vi.fn((key: string) => key);
 describe('NotificationBadge', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({ ok: true, data: { count: 0 } }),
+    mockFetch.mockImplementation((url: string) => {
+      if (url.includes('/api/notifications/unread-count')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ ok: true, data: { count: 0 } }),
+        });
+      }
+      return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
     });
   });
 
@@ -30,9 +35,14 @@ describe('NotificationBadge', () => {
   });
 
   it('shows count badge when unread count > 0', async () => {
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({ ok: true, data: { count: 5 } }),
+    mockFetch.mockImplementation((url: string) => {
+      if (url.includes('/api/notifications/unread-count')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ ok: true, data: { count: 5 } }),
+        });
+      }
+      return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
     });
     render(<NotificationBadge t={t} onClick={() => {}} />);
     await waitFor(() => {
@@ -41,9 +51,14 @@ describe('NotificationBadge', () => {
   });
 
   it('shows 99+ for counts above 99', async () => {
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({ ok: true, data: { count: 150 } }),
+    mockFetch.mockImplementation((url: string) => {
+      if (url.includes('/api/notifications/unread-count')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ ok: true, data: { count: 150 } }),
+        });
+      }
+      return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
     });
     render(<NotificationBadge t={t} onClick={() => {}} />);
     await waitFor(() => {
@@ -70,7 +85,10 @@ describe('NotificationBadge', () => {
   it('fetches unread count on mount', async () => {
     render(<NotificationBadge t={t} onClick={() => {}} />);
     await waitFor(() => {
-      expect(mockFetch).toHaveBeenCalledWith('/api/notifications/unread-count');
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/notifications/unread-count'),
+        expect.any(Object),
+      );
     });
   });
 });

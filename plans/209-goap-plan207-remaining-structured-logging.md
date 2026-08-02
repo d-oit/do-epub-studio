@@ -56,8 +56,8 @@ For non-error logs (email transport info/warning), use `logRequestStart` or a ne
 
 ## 4. Acceptance Criteria
 
-- [ ] No raw `console.*` calls remain in worker source (excluding service worker, reader-core lib, test files)
-- [ ] All worker logging routes through `observability.ts` helpers
-- [ ] `./scripts/quality_gate.sh` passes
-- [ ] PR created and CI green
-- [ ] PR reviewed and feedback addressed
+- [x] No raw `console.*` calls remain in worker source (excluding service worker, reader-core lib, test files) — verified via ripgrep
+- [x] All worker logging routes through `observability.ts` helpers (admin-middleware, rate-limit-client, email-transport)
+- [x] `./scripts/quality_gate.sh` passes
+- [x] PR created and CI green — PR #893
+- [x] PR reviewed and feedback addressed
