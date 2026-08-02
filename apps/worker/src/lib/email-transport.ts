@@ -1,4 +1,4 @@
-import { createTraceId } from '@do-epub-studio/shared';
+import { logAppInfo } from './observability';
 import type { Env } from './env';
 
 export interface EmailMessage {
@@ -14,14 +14,11 @@ export interface EmailTransport {
 
 class LoggingEmailTransport implements EmailTransport {
   send(message: EmailMessage): Promise<void> {
-    console.log(JSON.stringify({
-      level: 'info',
-      traceId: createTraceId(),
-      event: 'email.send',
+    logAppInfo('email.send', {
       to: message.to,
       subject: message.subject,
       textPreview: message.text.slice(0, 200),
-    }));
+    });
     return Promise.resolve();
   }
 }
@@ -50,12 +47,9 @@ export function createEmailTransport(env: Env): EmailTransport {
   if (env.EMAIL_SEND) {
     return new SendEmailTransport(env);
   }
-  console.warn(JSON.stringify({
-    level: 'warn',
-    traceId: createTraceId(),
-    event: 'email.transport.fallback',
+  logAppInfo('email.transport.fallback', {
     message: 'EMAIL_SEND binding not configured — emails will be logged but not delivered. Bind an Email Sending integration in the Cloudflare dashboard to enable delivery.',
     hint: 'Set the EMAIL_SEND binding in wrangler.toml or the Cloudflare dashboard under Settings > Bindings.',
-  }));
+  });
   return new LoggingEmailTransport();
 }
