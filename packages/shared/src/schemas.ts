@@ -31,6 +31,7 @@ export {
   SearchQuerySchema,
   ExportQuerySchema,
   NotificationsQuerySchema,
+  RecoveryTokenPayloadSchema,
   formatZodError,
 } from '@do-epub-studio/schema';
 
@@ -61,4 +62,5 @@ export type {
   SearchQuery,
   ExportQuery,
   NotificationsQuery,
+  RecoveryTokenPayload,
 } from '@do-epub-studio/schema';
