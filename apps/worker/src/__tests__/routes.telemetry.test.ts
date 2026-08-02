@@ -62,20 +62,20 @@ describe('Telemetry API', () => {
     assertOk(body);
 
     expect(console.log).toHaveBeenCalled();
-    expect(console.error).toHaveBeenCalled();
 
-    // Route now emits structured JSON; exclude middleware request.* events
-    const clientTelemetryLogs = vi.mocked(console.log).mock.calls
-      .map((call: unknown[]) => call[0] as string)
-      .filter((msg) => {
-        try {
-          const p = JSON.parse(msg) as Record<string, unknown>;
-          return typeof p.event === 'string' && !p.event.startsWith('request.');
-        } catch { return false; }
-      });
+    // Find telemetry.received log entries (all levels now route through logAppInfo)
+    const allConsoleLogs = vi.mocked(console.log).mock.calls
+      .map((call: unknown[]) => call[0] as string);
+    const telemetryLogs = allConsoleLogs.filter((msg) => {
+      try {
+        const p = JSON.parse(msg) as Record<string, unknown>;
+        return p.event === 'telemetry.received';
+      } catch { return false; }
+    });
 
-    expect(clientTelemetryLogs.length).toBe(1);
-    expect(clientTelemetryLogs[0]).toContain('test_event');
+    expect(telemetryLogs.length).toBe(2);
+    expect(telemetryLogs[0]).toContain('test_event');
+    expect(telemetryLogs[1]).toContain('error_event');
   });
 
   it('should reject invalid payloads', async () => {
@@ -171,27 +171,29 @@ describe('Telemetry API', () => {
     const body = await res.json();
     assertOk(body);
 
-    expect(console.warn).toHaveBeenCalled();
+    expect(console.log).toHaveBeenCalled();
 
-    // Route now emits structured JSON (no [CLIENT-TELEMETRY] prefix)
-    const clientTelemetryLogs = vi.mocked(console.warn).mock.calls
-      .map((call: unknown[]) => call[0] as string)
-      .filter((msg) => {
-        try { const p = JSON.parse(msg); return typeof p === 'object' && p !== null; } catch { return false; }
-      });
+    // Find the telemetry.received log entry in console.log calls
+    const allConsoleLogs = vi.mocked(console.log).mock.calls
+      .map((call: unknown[]) => call[0] as string);
+    const telemetryLog = allConsoleLogs.find((msg) => {
+      try {
+        const p = JSON.parse(msg) as Record<string, unknown>;
+        return p.event === 'telemetry.received';
+      } catch { return false; }
+    });
+    expect(telemetryLog).toBeDefined();
+    if (!telemetryLog) return;
 
-    expect(clientTelemetryLogs.length).toBe(1);
-    const parsedLog = JSON.parse(clientTelemetryLogs[0]);
+    const parsedLog = JSON.parse(telemetryLog);
+    const logString = JSON.stringify(parsedLog);
 
-    // Check metadata redaction
-    expect(parsedLog.metadata.password).toBe('[REDACTED]');
-    expect(parsedLog.metadata.email).toBe('[REDACTED]');
-    expect(parsedLog.metadata.token).toBe('[REDACTED]');
-    expect(parsedLog.metadata.safeField).toBe('hello-world');
-
-    // Check error redaction
-    expect(parsedLog.error.message).not.toContain('user@example.com');
-    expect(parsedLog.error.message).not.toContain('secretpwd_but_with_a_very_long_string_of_characters_to_trigger_long_token_pattern');
-    expect(parsedLog.error.message).toContain('[REDACTED]');
+    // Verify sensitive data is scrubbed anywhere in the log output
+    expect(logString).not.toContain('my-super-secret-password-123');
+    expect(logString).not.toContain('admin@example.com');
+    expect(logString).not.toContain('abcdef1234567890abcdef1234567890');
+    expect(logString).not.toContain('user@example.com');
+    expect(logString).not.toContain('secretpwd_but_with_a_very_long_string_of_characters_to_trigger_long_token_pattern');
+    expect(logString).toContain('[REDACTED]');
   });
 });
