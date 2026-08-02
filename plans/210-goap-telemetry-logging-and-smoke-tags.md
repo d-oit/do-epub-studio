@@ -1,7 +1,8 @@
 # GOAP 210: Close Remaining Logging Violation in Telemetry
 
 **Date:** 2026-08-02
-**Status:** IN PROGRESS
+**Status:** ✅ COMPLETED
+**PR:** [#894](https://github.com/d-oit/do-epub-studio/pull/894)
 **Goal:** Close the remaining gap found in plans/ audit: replace 3 raw console.* calls in telemetry.ts with structured observability logging. All CI must pass.
 
 **Related:** Plan 209 (structured logging — telemetry.ts missed)
@@ -34,8 +35,8 @@
 
 ## 4. Acceptance Criteria
 
-- [ ] No raw `console.*` calls remain in `apps/worker/src/routes/telemetry.ts`
-- [ ] All worker logging routes through `observability.ts` helpers
-- [ ] `./scripts/quality_gate.sh` passes
-- [ ] PR created and CI green
-- [ ] PR reviewed and feedback addressed
+- [x] No raw `console.*` calls remain in `apps/worker/src/routes/telemetry.ts`
+- [x] All worker logging routes through `observability.ts` helpers
+- [x] `./scripts/quality_gate.sh` passes
+- [x] PR created and CI green — PR #894
+- [x] PR reviewed and feedback addressed
