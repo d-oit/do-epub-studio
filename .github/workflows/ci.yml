@@ -45,7 +45,7 @@ jobs:
           persist-credentials: false
           submodules: recursive
       - id: filter
-        uses: dorny/paths-filter@b41dfa943b1939b9b646f67753bfe35cf6e4de03  # master @ 2026-06-07 (v3.0.2 release commit is unreachable in the Actions registry; pinning to master HEAD for now)
+        uses: dorny/paths-filter@4711b7a31b4aa89103d8c6ffab2e3b8e7b6381c7  # master @ 2026-06-07 (v3.0.2 release commit is unreachable in the Actions registry; pinning to master HEAD for now)
         with:
           filters: |
             src:
