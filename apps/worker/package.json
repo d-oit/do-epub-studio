@@ -22,7 +22,7 @@
     "@libsql/client": "^0.17.4",
     "@sentry/cloudflare": "^10.69.0",
     "argon2-wasm-edge": "^1.0.23",
-    "hono": "^4.12.32",
+    "hono": "^4.12.34",
     "zod": "^4.4.3"
   },
   "devDependencies": {
