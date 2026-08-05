@@ -365,7 +365,7 @@ export function sanitizeDom(
       const attrs = el.attributes;
 
       for (let i = attrs.length - 1; i >= 0; i--) {
-        const attr = attrs[i];
+        const attr = attrs.item(i);
         if (!attr) continue;
         const name = attr.name;
         if (name.startsWith('on')) {
