@@ -362,34 +362,39 @@ export function sanitizeDom(
       // Use localName which is already lowercase for HTML/SVG elements to avoid .toLowerCase() overhead.
       const tag = el.localName;
       const isLinkable = tag === 'use' || tag === 'image';
-      const attrNames = el.getAttributeNames();
+      const attrs = el.attributes;
 
-      for (const name of attrNames) {
+      for (let i = attrs.length - 1; i >= 0; i--) {
+        const attr = attrs[i];
+        if (!attr) continue;
+        const name = attr.name;
         if (name.startsWith('on')) {
           el.removeAttribute(name);
         } else if (isLinkable && (name === 'href' || name === 'xlink:href')) {
-          const val = el.getAttribute(name);
+          const val = attr.value;
           if (val) {
             const trimmedVal = val.trim();
-            const lowerVal = trimmedVal.toLowerCase();
+            if (trimmedVal.indexOf(':') !== -1) {
+              const lowerVal = trimmedVal.toLowerCase();
 
-            // Explicitly block dangerous schemes and non-whitelisted ones
-            if (
-              lowerVal.startsWith('javascript:') ||
-              lowerVal.startsWith('data:') ||
-              lowerVal.startsWith('vbscript:')
-            ) {
-              el.removeAttribute(name);
-              continue;
-            }
-
-            // Guard regex against untrusted input per ADR-034
-            const schemeMatch = matchBounded(/^([a-zA-Z][a-zA-Z0-9+.-]*):/, trimmedVal, 2048);
-            if (schemeMatch && schemeMatch[1]) {
-              const scheme = schemeMatch[1].toLowerCase();
-              // Whitelist safe schemes
-              if (scheme !== 'http' && scheme !== 'https' && scheme !== 'mailto') {
+              // Explicitly block dangerous schemes and non-whitelisted ones
+              if (
+                lowerVal.startsWith('javascript:') ||
+                lowerVal.startsWith('data:') ||
+                lowerVal.startsWith('vbscript:')
+              ) {
                 el.removeAttribute(name);
+                continue;
+              }
+
+              // Guard regex against untrusted input per ADR-034
+              const schemeMatch = matchBounded(/^([a-zA-Z][a-zA-Z0-9+.-]*):/, trimmedVal, 2048);
+              if (schemeMatch && schemeMatch[1]) {
+                const scheme = schemeMatch[1].toLowerCase();
+                // Whitelist safe schemes
+                if (scheme !== 'http' && scheme !== 'https' && scheme !== 'mailto') {
+                  el.removeAttribute(name);
+                }
               }
             }
           }
