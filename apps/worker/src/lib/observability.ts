@@ -6,6 +6,7 @@ import {
   createSpanId,
   serializeError,
   buildTraceparent,
+  testBounded,
 } from '@do-epub-studio/shared';
 import { scrub } from './redact';
 
@@ -34,13 +35,45 @@ export interface RequestContext {
   path: string;
 }
 
+// Inbound trace/span headers are client-controlled input (Plan 214 R2).
+// Bound length and charset before accepting them so an oversized or
+// non-hex value is never echoed into response headers or logs verbatim.
+const MAX_TRACE_ID_LENGTH = 64;
+const MAX_SPAN_ID_LENGTH = 32;
+const TRACE_ID_CHARSET = /^[0-9a-fA-F-]+$/;
+
+/** Bounded scrub of a client-provided trace/span id for correlation-only metadata. */
+function scrubClientId(value: string | null, maxLength: number): string | null {
+  if (!value) return null;
+  const cleaned = value.replace(/[^0-9a-fA-F-]/g, '').slice(0, maxLength);
+  return cleaned.length > 0 ? cleaned : null;
+}
+
+/**
+ * Validate a client-supplied trace/span header. Returns a valid id bound to
+ * the server charset/length rules, minting a fresh server id when the client
+ * value is missing or invalid. The scrubbed client value (if any) is returned
+ * separately so callers can keep a correlation field without trusting it.
+ */
+function resolveInboundId(
+  raw: string | null,
+  maxLength: number,
+  mint: () => string,
+): { id: string; clientValue: string | null } {
+  if (raw === null) return { id: mint(), clientValue: null };
+  if (testBounded(TRACE_ID_CHARSET, raw, maxLength)) {
+    return { id: raw, clientValue: raw };
+  }
+  return { id: mint(), clientValue: scrubClientId(raw, maxLength) };
+}
+
 export function createRequestContext(request: Request): RequestContext {
   const url = new URL(request.url);
-  const traceId = request.headers.get(TRACE_HEADER) ?? createTraceId();
-  const spanId = request.headers.get(SPAN_HEADER) ?? createSpanId();
+  const trace = resolveInboundId(request.headers.get(TRACE_HEADER), MAX_TRACE_ID_LENGTH, createTraceId);
+  const span = resolveInboundId(request.headers.get(SPAN_HEADER), MAX_SPAN_ID_LENGTH, createSpanId);
   return {
-    traceId,
-    spanId,
+    traceId: trace.id,
+    spanId: span.id,
     startedAt: Date.now(),
     method: request.method,
     path: url.pathname,
@@ -124,16 +157,19 @@ export function withTraceHeaders(response: Response, ctx: RequestContext): Respo
 /**
  * Log an error event without requiring a Request object.
  * Use for background operations (fire-and-forget DB updates, rate limiter errors, email transport).
+ * When `context` is supplied (Plan 214 R3), the background log inherits the
+ * initiating request's trace ids instead of minting a new unrelated trace.
  */
 export function logAppError(
   event: string,
   error: unknown,
   metadata?: Record<string, unknown>,
+  context?: Pick<RequestContext, 'traceId' | 'spanId'>,
 ): void {
   log({
     level: 'error',
-    traceId: createTraceId(),
-    spanId: createSpanId(),
+    traceId: context?.traceId ?? createTraceId(),
+    spanId: context?.spanId ?? createSpanId(),
     event,
     method: 'BACKGROUND',
     path: '-',
@@ -145,15 +181,18 @@ export function logAppError(
 /**
  * Log an info event without requiring a Request object.
  * Use for background operations (email send logging, fallback warnings).
+ * When `context` is supplied (Plan 214 R3), the background log inherits the
+ * initiating request's trace ids instead of minting a new unrelated trace.
  */
 export function logAppInfo(
   event: string,
   metadata?: Record<string, unknown>,
+  context?: Pick<RequestContext, 'traceId' | 'spanId'>,
 ): void {
   log({
     level: 'info',
-    traceId: createTraceId(),
-    spanId: createSpanId(),
+    traceId: context?.traceId ?? createTraceId(),
+    spanId: context?.spanId ?? createSpanId(),
     event,
     method: 'BACKGROUND',
     path: '-',
@@ -164,15 +203,18 @@ export function logAppInfo(
 /**
  * Log a warn event without requiring a Request object.
  * Use for background operations that need warn-level visibility (wrangler tail --level warn).
+ * When `context` is supplied (Plan 214 R3), the background log inherits the
+ * initiating request's trace ids instead of minting a new unrelated trace.
  */
 export function logAppWarn(
   event: string,
   metadata?: Record<string, unknown>,
+  context?: Pick<RequestContext, 'traceId' | 'spanId'>,
 ): void {
   log({
     level: 'warn',
-    traceId: createTraceId(),
-    spanId: createSpanId(),
+    traceId: context?.traceId ?? createTraceId(),
+    spanId: context?.spanId ?? createSpanId(),
     event,
     method: 'BACKGROUND',
     path: '-',

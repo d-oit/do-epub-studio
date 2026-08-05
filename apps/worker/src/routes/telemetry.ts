@@ -50,11 +50,11 @@ telemetryRouter.post(
         clientSpanId: sanitizeTraceId(log.spanId ?? null),
       };
       if (log.level === 'error') {
-        logAppError('telemetry.received', scrubbedLog.error ?? new Error('client telemetry error'), metadata);
+        logAppError('telemetry.received', scrubbedLog.error ?? new Error('client telemetry error'), metadata, ingestCtx);
       } else if (log.level === 'warn') {
-        logAppWarn('telemetry.received', metadata);
+        logAppWarn('telemetry.received', metadata, ingestCtx);
       } else {
-        logAppInfo('telemetry.received', metadata);
+        logAppInfo('telemetry.received', metadata, ingestCtx);
       }
     }
 
