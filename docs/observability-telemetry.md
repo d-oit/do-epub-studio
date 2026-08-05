@@ -55,11 +55,11 @@ each event to `console.log/warn/error` for observability in `wrangler tail`.
 - You want to query telemetry events via admin audit views.
 - You accept the telemetry retention policy (see below).
 
-**Retention:** Telemetry events in the `telemetry_events` table have
-no automated retention policy in the initial implementation.
-Operators should add a periodic cleanup job or TTL-based eviction
-if volume becomes an issue. Suggested: DELETE events older than
-90 days.
+**Retention:** Telemetry events in the `telemetry_events` table are kept
+for 90 days by default. See the
+[telemetry retention runbook](./runbooks/telemetry-retention.md) for the
+cleanup job (Worker cron), manual cleanup SQL, verification, and
+ownership.
 
 ## What NOT to send
 

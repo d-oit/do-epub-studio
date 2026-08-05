@@ -15,7 +15,7 @@ A self-hosted EPUB reading platform with admin management, offline PWA support, 
 ## Core Flows
 1. Login (magic-link email) → catalog → open book → read
 2. Annotate: highlight text, add comments, bookmark locations
-3. View reading insights (time per chapter, reading speed, streaks)
+3. View reading insights (active reading time, pages read per day, current streak, estimated time to finish)
 4. Admin: manage books, grants, audit logs
 5. Offline: queue annotations, sync when online
 
