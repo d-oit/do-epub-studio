@@ -237,9 +237,9 @@ describe('bounded concurrency', () => {
     vi.useRealTimers();
     await waitFor(() => {
       // At least the 4 loaded sections should have unload called
-      for (let i = 0; i < 4; i++) {
-        expect(sections[i].unload).toHaveBeenCalled();
-      }
+      sections.slice(0, 4).forEach((section) => {
+        expect(section.unload).toHaveBeenCalled();
+      });
     }, { timeout: 5000 });
   });
 });

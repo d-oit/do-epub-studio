@@ -133,6 +133,6 @@ describe('clearSelection', () => {
     } as unknown as HTMLIFrameElement;
 
     // clearSelection is imported at top level
-    expect(() => clearSelection(frame)).not.toThrow();
+    expect(() => { clearSelection(frame); }).not.toThrow();
   });
 });
