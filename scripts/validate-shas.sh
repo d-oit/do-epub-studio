@@ -67,6 +67,7 @@ ALLOWED_SHAS=(
     "github/codeql-action/upload-sarif@c54b30b7df092240050e69945842bc67aee0f0f4"
     "chromaui/action@8d25a97d902c85f51b6885beb52f92907406772d"
     "ossf/scorecard-action@55891bbd73f2425e97637d96e306fc9d491d0b21"
+    "ossf/scorecard-action@2d1146689b8cda280b9bc96326124645441f03bc"
 )
 
 # Function to check if an action@sha is allowed
