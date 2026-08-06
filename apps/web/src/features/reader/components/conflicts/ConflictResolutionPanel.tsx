@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import { useReaderStore } from '../../../../stores/reader';
 import { useAuthStore } from '../../../../stores';
 import { useTranslation, type TFunction } from '../../../../hooks/useTranslation';
@@ -92,8 +92,10 @@ export function ConflictResolutionPanel() {
 
   const unresolved = conflicts.filter((c) => !c.resolved);
 
+  const hasSyncedRef = useRef(false);
   useEffect(() => {
-    if (!bookId) return;
+    if (!bookId || hasSyncedRef.current) return;
+    hasSyncedRef.current = true;
     const pending = getPendingConflicts(bookId);
     const existingIds = new Set(conflicts.map((c) => c.id));
     const newConflicts = pending.filter((c) => !existingIds.has(c.id));
