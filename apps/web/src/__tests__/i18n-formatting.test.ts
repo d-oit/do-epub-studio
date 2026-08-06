@@ -18,7 +18,7 @@ describe('translate', () => {
   });
 
   it('falls back to English for missing locale keys', () => {
-    const result = translate('reader.title' as never, 'en');
+    const result = translate('reader.title', 'en');
     expect(typeof result).toBe('string');
   });
 });
