@@ -88,3 +88,5 @@ junit.xml
 .vitest/
 packages/ui/storybook-static/
 .mimocode/.cron-lock
+.mimocode/plans/
+.claude/
