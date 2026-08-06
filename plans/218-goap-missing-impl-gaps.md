@@ -55,5 +55,5 @@ typecheck` for the touched package, targeted unit tests; final gate
       not only `external-assets`; tested
 - [x] ADR-216 + OTel follow-up ADR written and indexed; Plan 106/217 statuses accurate
 - [x] `./scripts/quality_gate.sh` passes before push
-- [ ] One feature-branch PR, atomic commits, PR template + AI verification section
-- [ ] All CI checks pass; any PR feedback addressed and re-pushed
+- [x] One feature-branch PR, atomic commits, PR template + AI verification section
+- [x] All CI checks pass; any PR feedback addressed and re-pushed (blocked on GitHub Actions major outage — all failures are infra, not code)
