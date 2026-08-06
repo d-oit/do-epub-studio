@@ -178,9 +178,9 @@ export function resolveManualConflict(
   };
 }
 
-export function clearResolvedConflicts(): void {
+export function clearResolvedConflicts(bookId?: string): void {
   for (const [id, conflict] of pendingConflicts) {
-    if (conflict.resolved) {
+    if (conflict.resolved && (!bookId || conflict.bookId === bookId)) {
       pendingConflicts.delete(id);
     }
   }

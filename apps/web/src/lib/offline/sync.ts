@@ -131,7 +131,7 @@ async function attemptSync(): Promise<void> {
         const payload = item.payload as { bookId?: string };
         if (payload?.bookId) {
           const pendingBefore = getPendingConflicts(payload.bookId).length;
-          clearResolvedConflicts();
+          clearResolvedConflicts(payload.bookId);
           const pendingAfter = getPendingConflicts(payload.bookId).length;
           if (pendingBefore !== pendingAfter) {
             logClientEvent({
@@ -316,12 +316,16 @@ async function syncItem(item: SyncQueueItem, traceId: string, spanId: string): P
         percentage: number;
         mutationId: string;
       };
+
+      // We don't have the remote version from a 409. Use equal timestamps
+      // to force the manual resolution path — the user must decide which
+      // version to keep since we can't determine the remote state.
       const resolution = resolveConflict(
         ConflictType.ProgressUpdate,
         item.payload,
-        null, // remote version unknown from 409
+        item.payload,
         item.createdAt,
-        Date.now(), // use current time as proxy for remote timestamp
+        item.createdAt,
         payload.bookId,
         payload.bookId,
       );

@@ -104,14 +104,14 @@ describe('Sync Conflict Integration', () => {
       const { syncAll } = await import('../lib/offline/sync');
       await syncAll();
 
-      // Verify resolveConflict was called
+      // Verify resolveConflict was called with equal timestamps (manual resolution path)
       expect(resolveConflict).toHaveBeenCalled();
       expect(resolveConflict).toHaveBeenCalledWith(
         'progress_update',
         syncQueueItem.payload,
-        null,
+        syncQueueItem.payload,
         syncQueueItem.createdAt,
-        expect.any(Number),
+        syncQueueItem.createdAt,
         'book-1',
         'book-1',
       );

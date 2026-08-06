@@ -41,9 +41,9 @@ each logical change separately. Quality gates between waves: `pnpm lint` +
 
 ## 4. Acceptance Criteria
 
-- [ ] Telemetry persistence failures emit a structured counter/log (not silent)
-- [ ] Non-English locales load on demand; English is the synchronously loaded base
-- [ ] Sync pipeline detects conflicts when server returns stale/conflicting state
-- [ ] All existing tests pass; new tests cover each gap
-- [ ] `./scripts/quality_gate.sh` passes before push
-- [ ] One PR, atomic commits, PR template + AI verification section
+- [x] Telemetry persistence failures emit a structured counter/log (not silent)
+- [x] Non-English locales load on demand; English is the synchronously loaded base
+- [x] Sync pipeline detects conflicts when server returns stale/conflicting state
+- [x] All existing tests pass; new tests cover each gap
+- [x] `./scripts/quality_gate.sh` passes before push
+- [x] One PR, atomic commits, PR template + AI verification section
