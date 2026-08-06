@@ -1,7 +1,7 @@
 # GOAP 216: Execute Plan 215 Non-Gated Waves
 
 **Date:** 2026-08-04
-**Status:** Proposed
+**Status:** In Progress
 **Goal:** Implement every non-gated recommendation of Plans 214/215
 (Waves 1–3 minus the email gate) in one PR using a GOAP swarm.
 **Related:** Plan 214, Plan 215, ADR-212, ADR-214, ADR-215
@@ -77,8 +77,8 @@ tests; final gate `./scripts/quality_gate.sh` before push.
 
 ## 5. Acceptance Criteria
 
-- [ ] All Wave 1/2 tasks above land with tests where behavior changed.
-- [ ] No first-party test file exceeds 500 lines.
+- [x] All Wave 1/2 tasks above land with tests where behavior changed.
+- [x] No first-party test file exceeds 500 lines.
 - [ ] `node scripts/check-adr-index.mjs` and markdownlint pass.
-- [ ] `./scripts/quality_gate.sh` passes before push.
+- [x] `./scripts/quality_gate.sh` passes before push.
 - [ ] One PR, atomic commits, PR template + AI verification section.
