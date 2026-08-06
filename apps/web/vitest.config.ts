@@ -13,9 +13,16 @@ export default defineConfig({
     environment: 'jsdom',
     include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
     setupFiles: ['src/test-setup.ts'],
-    // Use threads for shared jsdom environment — 5x faster than forks.
-    // jsdom isolation is handled by vitest's isolate flag.
-    pool: 'threads',
+    // Use forks for test isolation per AGENTS.md Tier 3 / docs/conventions.md.
+    // Measured 2026-08-05 (Plan 214 R4): forks 24.7s vs threads 26.1s for the
+    // full web suite (1115 tests) — the old "5x faster" thread claim was stale
+    // and forks are not slower here, so policy-compliant forks win.
+    pool: 'forks',
+    poolOptions: {
+      forks: {
+        singleFork: false,
+      },
+    },
     // Run test files in parallel for throughput.
     // Each file is isolated; shared state is reset in test-setup.ts.
     fileParallelism: true,
