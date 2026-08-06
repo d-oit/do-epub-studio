@@ -123,9 +123,10 @@ describe('AdminBookResponsesPage — create modal', () => {
     const titleInput = screen.getByPlaceholderText('admin.createBookModal.titlePlaceholder');
     fireEvent.change(titleInput, { target: { value: 'Test Book' } });
 
-    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    const fileInputEl = document.querySelector('input[type="file"]');
+    expect(fileInputEl).not.toBeNull();
     const file = new File(['content'], 'test.epub', { type: 'application/epub+zip' });
-    fireEvent.change(fileInput, { target: { files: [file] } });
+    fireEvent.change(fileInputEl as Element, { target: { files: [file] } });
 
     fireEvent.click(screen.getByText('admin.createBookModal.submit'));
 
@@ -148,9 +149,10 @@ describe('AdminBookResponsesPage — create modal', () => {
     const titleInput = screen.getByPlaceholderText('admin.createBookModal.titlePlaceholder');
     fireEvent.change(titleInput, { target: { value: 'Test Book' } });
 
-    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    const fileInputEl = document.querySelector('input[type="file"]');
+    expect(fileInputEl).not.toBeNull();
     const file = new File(['content'], 'test.epub', { type: 'application/epub+zip' });
-    fireEvent.change(fileInput, { target: { files: [file] } });
+    fireEvent.change(fileInputEl as Element, { target: { files: [file] } });
 
     fireEvent.click(screen.getByText('admin.createBookModal.submit'));
 
@@ -351,9 +353,10 @@ describe('AdminBookResponsesPage — create modal', () => {
     const titleInput = screen.getByPlaceholderText('admin.createBookModal.titlePlaceholder');
     fireEvent.change(titleInput, { target: { value: 'Test Book' } });
 
-    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    const fileInputEl = document.querySelector('input[type="file"]');
+    expect(fileInputEl).not.toBeNull();
     const file = new File(['content'], 'test.epub', { type: 'application/epub+zip' });
-    fireEvent.change(fileInput, { target: { files: [file] } });
+    fireEvent.change(fileInputEl as Element, { target: { files: [file] } });
 
     fireEvent.click(screen.getByText('admin.createBookModal.submit'));
 
@@ -375,9 +378,10 @@ describe('AdminBookResponsesPage — create modal', () => {
     const titleInput = screen.getByPlaceholderText('admin.createBookModal.titlePlaceholder');
     fireEvent.change(titleInput, { target: { value: 'Test Book' } });
 
-    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    const fileInputEl = document.querySelector('input[type="file"]');
+    expect(fileInputEl).not.toBeNull();
     const file = new File(['content'], 'test.epub', { type: 'application/epub+zip' });
-    fireEvent.change(fileInput, { target: { files: [file] } });
+    fireEvent.change(fileInputEl as Element, { target: { files: [file] } });
 
     fireEvent.click(screen.getByText('admin.createBookModal.submit'));
 
@@ -396,9 +400,10 @@ describe('AdminBookResponsesPage — create modal', () => {
     const titleInput = screen.getByPlaceholderText('admin.createBookModal.titlePlaceholder');
     fireEvent.change(titleInput, { target: { value: 'Test Book' } });
 
-    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    const fileInputEl = document.querySelector('input[type="file"]');
+    expect(fileInputEl).not.toBeNull();
     const file = new File(['content'], 'test.epub', { type: 'application/epub+zip' });
-    fireEvent.change(fileInput, { target: { files: [file] } });
+    fireEvent.change(fileInputEl as Element, { target: { files: [file] } });
 
     fireEvent.click(screen.getByText('admin.createBookModal.submit'));
 
