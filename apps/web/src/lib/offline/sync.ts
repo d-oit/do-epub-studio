@@ -15,6 +15,7 @@ import type { AnnotationEntry } from './db';
 import { clearAllPermissions } from './permissions';
 import { createTraceId, createSpanId } from '@do-epub-studio/shared';
 import { logClientEvent } from '../client-logger';
+import { resolveConflict, ConflictType, getPendingConflicts, clearResolvedConflicts } from './conflict-resolution';
 
 const MAX_RETRY_ATTEMPTS = 5;
 const BASE_DELAY_MS = 1000;
@@ -125,6 +126,28 @@ async function attemptSync(): Promise<void> {
       await removeSyncQueueItem(item.id);
       processed.add(item.id);
       await markAsSynced(item.type, item.mutationId);
+      // Clear any pending conflicts for this entity after successful sync
+      if (item.type === 'progress') {
+        const payload = item.payload as { bookId?: string };
+        if (payload?.bookId) {
+          const pendingBefore = getPendingConflicts(payload.bookId).length;
+          clearResolvedConflicts(payload.bookId);
+          const pendingAfter = getPendingConflicts(payload.bookId).length;
+          if (pendingBefore !== pendingAfter) {
+            logClientEvent({
+              level: 'info',
+              traceId,
+              spanId,
+              event: 'sync.conflicts_cleared',
+              metadata: {
+                itemId: item.id,
+                bookId: payload.bookId,
+                cleared: pendingBefore - pendingAfter,
+              },
+            });
+          }
+        }
+      }
       logClientEvent({
         level: 'info',
         traceId,
@@ -149,6 +172,17 @@ async function attemptSync(): Promise<void> {
         }
       }
 
+      await removeSyncQueueItem(item.id);
+      processed.add(item.id);
+    } else if (result.error === 'conflict_requires_manual_resolution') {
+      // Conflict cannot be auto-resolved — remove from queue to prevent infinite retries
+      logClientEvent({
+        level: 'warn',
+        traceId,
+        spanId,
+        event: 'sync.conflict_manual_required',
+        metadata: { itemId: item.id, type: item.type },
+      });
       await removeSyncQueueItem(item.id);
       processed.add(item.id);
     } else {
@@ -272,6 +306,51 @@ async function syncItem(item: SyncQueueItem, traceId: string, spanId: string): P
     // Check for specific error messages
     if (message.includes('revoked') || message.includes('permission')) {
       return { success: false, error: 'permission_revoked' };
+    }
+
+    // Check for conflict (409) — only for progress type
+    if (status === 409 && item.type === 'progress') {
+      const payload = item.payload as {
+        bookId: string;
+        cfi: string;
+        percentage: number;
+        mutationId: string;
+      };
+
+      // We don't have the remote version from a 409. Use equal timestamps
+      // to force the manual resolution path — the user must decide which
+      // version to keep since we can't determine the remote state.
+      const resolution = resolveConflict(
+        ConflictType.ProgressUpdate,
+        item.payload,
+        item.payload,
+        item.createdAt,
+        item.createdAt,
+        payload.bookId,
+        payload.bookId,
+      );
+
+      logClientEvent({
+        level: 'warn',
+        traceId,
+        spanId,
+        event: 'sync.item.conflict',
+        metadata: {
+          itemId: item.id,
+          type: item.type,
+          resolved: resolution.resolved,
+          strategy: resolution.strategy,
+          winner: resolution.winner,
+        },
+      });
+
+      if (resolution.resolved && resolution.winner === 'local') {
+        // Local wins LWW — sync is successful, no need to re-send
+        return { success: true };
+      }
+
+      // Remote wins or manual resolution needed — cannot auto-resolve without remote version
+      return { success: false, error: 'conflict_requires_manual_resolution' };
     }
 
     logClientEvent({

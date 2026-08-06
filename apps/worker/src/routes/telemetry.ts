@@ -28,9 +28,10 @@ telemetryRouter.post(
   }),
   (c) => {
     const { logs } = c.req.valid('json');
+    const ingestCtx = c.get('requestContext');
 
     // Persist telemetry events to the database asynchronously
-    const persistPromise = persistTelemetry(c.env, logs);
+    const persistPromise = persistTelemetry(c.env, logs, ingestCtx);
     if (c.executionCtx) {
       c.executionCtx.waitUntil(persistPromise);
     }
@@ -38,7 +39,6 @@ telemetryRouter.post(
     // Re-emit scrubbed telemetry via structured logging for wrangler tail visibility.
     // Preserve the client's severity so `wrangler tail --level error` still surfaces client errors.
     // Correlate trace IDs: ingest traceId from the server request context, client traceId from the payload.
-    const ingestCtx = c.get('requestContext');
     for (const log of logs) {
       const scrubbedLog = scrub(log) as Record<string, unknown>;
       const metadata = {
@@ -71,7 +71,11 @@ interface TelemetryLogEntry {
   error?: { name: string; message: string; stack?: string };
 }
 
-async function persistTelemetry(env: Env, logs: TelemetryLogEntry[]): Promise<void> {
+async function persistTelemetry(
+  env: Env,
+  logs: TelemetryLogEntry[],
+  ctx?: Pick<RequestContext, 'traceId' | 'spanId'>,
+): Promise<void> {
   if (!env.DB) return;
 
   const { execute } = await import('../db/client');
@@ -94,8 +98,12 @@ async function persistTelemetry(env: Env, logs: TelemetryLogEntry[]): Promise<vo
           receivedAt,
         ],
       );
-    } catch {
-      // Persistence failures are non-critical — never break the response
+    } catch (err) {
+      logAppWarn(
+        'telemetry.persistence.failed',
+        { event: log.event, level: log.level, errorMessage: err instanceof Error ? err.message : String(err) },
+        ctx,
+      );
     }
   }
 }
