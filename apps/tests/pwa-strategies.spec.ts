@@ -32,7 +32,7 @@ test.describe('PWA Caching Strategies', () => {
     }
   });
 
-  test('@mobile Navigation requests return index.html from cache when offline', async ({ page, context }) => {
+  test('@mobile @pwa @pwa Navigation requests return index.html from cache when offline', async ({ page, context }) => {
     // Go offline
     await context.setOffline(true);
 
@@ -49,7 +49,7 @@ test.describe('PWA Caching Strategies', () => {
     await context.setOffline(false);
   });
 
-  test('@mobile Sensitive API routes use NetworkOnly and are never cached', async ({ page, context }) => {
+  test('@mobile @pwa @pwa Sensitive API routes use NetworkOnly and are never cached', async ({ page, context }) => {
     // 1. Fetch sensitive route while online (this would normally succeed or return 401/403)
     // For the test, we don't care about the result, just that it happened.
     await page.evaluate(async () => {
@@ -85,7 +85,7 @@ test.describe('PWA Caching Strategies', () => {
     await context.setOffline(false);
   });
 
-  test('@mobile Generic API requests use NetworkFirst (cached for offline)', async ({ page, context }) => {
+  test('@mobile @pwa Generic API requests use NetworkFirst (cached for offline)', async ({ page, context }) => {
     // 1. Mock a successful API response and fetch it while online
     await page.route('**/api/books/test-list', async (route) => {
       await route.fulfill({
@@ -115,7 +115,7 @@ test.describe('PWA Caching Strategies', () => {
     await context.setOffline(false);
   });
 
-  test('@mobile EPUB and image assets use CacheFirst', async ({ page, context }) => {
+  test('@mobile @pwa EPUB and image assets use CacheFirst', async ({ page, context }) => {
     // 1. Fetch an EPUB asset while online
     await page.route('**/api/files/test.epub', async (route) => {
       await route.fulfill({

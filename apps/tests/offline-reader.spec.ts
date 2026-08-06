@@ -41,7 +41,7 @@ test.describe('Offline reader', () => {
     await mockReaderApi(page, { bookSlug: TEST_USER.bookSlug, epubUrl: EPUB_URL, epubBuffer: EPUB_BUFFER, loginResponse: LOGIN_RESPONSE });
   });
 
-  test('@mobile loads reader page online then survives offline reload', async ({ page }) => {
+  test('@mobile @pwa loads reader page online then survives offline reload', async ({ page }) => {
     await loginAsReader(page, TEST_USER.bookSlug);
 
     await page.route('**/api/**', async (route: Route) => {
@@ -68,7 +68,7 @@ test.describe('Offline reader', () => {
     expect(bodyStillVisible).toBe(true);
   });
 
-  test('@mobile detects offline/online status transitions', async ({ page, context }) => {
+  test('@mobile @pwa detects offline/online status transitions', async ({ page, context }) => {
     await loginAsReader(page, TEST_USER.bookSlug);
 
     const initialOnline = await page.evaluate(() => navigator.onLine);
@@ -90,7 +90,7 @@ test.describe('Offline reader', () => {
     expect(backOnline).toBe(true);
   });
 
-  test('@mobile serves cached API responses while offline (NetworkFirst strategy)', async ({ page, context }, testInfo) => {
+  test('@mobile @pwa serves cached API responses while offline (NetworkFirst strategy)', async ({ page, context }, testInfo) => {
     await loginAsReader(page, TEST_USER.bookSlug);
 
     const swActive = await page.evaluate(async () => {
@@ -153,7 +153,7 @@ test.describe('Offline reader', () => {
     await context.setOffline(false);
   });
 
-  test('@mobile queues offline actions for sync when network is unavailable', async ({ page, context }) => {
+  test('@mobile @pwa queues offline actions for sync when network is unavailable', async ({ page, context }) => {
     await loginAsReader(page, TEST_USER.bookSlug);
 
     await context.setOffline(true);
@@ -209,7 +209,7 @@ test.describe('Offline reader', () => {
     expect(bodyOk).toBe(true);
   });
 
-  test('@mobile flushes sync queue after reconnection', async ({ page, context }) => {
+  test('@mobile @pwa flushes sync queue after reconnection', async ({ page, context }) => {
     await loginAsReader(page, TEST_USER.bookSlug);
 
     const syncBookmarks: { url: string; body: string }[] = [];
