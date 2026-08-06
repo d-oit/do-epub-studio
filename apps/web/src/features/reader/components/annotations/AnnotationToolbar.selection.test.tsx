@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { extractSelectionData, clearSelection } from './AnnotationToolbar';
 
-function createMockFrame(
+function buildFrameStub(
   getSelection: ReturnType<typeof vi.fn>,
   extras?: Record<string, unknown>,
 ) {
@@ -14,14 +14,14 @@ describe('extractSelectionData', () => {
       isCollapsed: true,
       rangeCount: 0,
     });
-    const frame = createMockFrame(mockGetSelection);
+    const frame = buildFrameStub(mockGetSelection);
 
     expect(extractSelectionData(frame)).toBeNull();
   });
 
   it('returns null when no selection', () => {
     const mockGetSelection = vi.fn().mockReturnValue(null);
-    const frame = createMockFrame(mockGetSelection);
+    const frame = buildFrameStub(mockGetSelection);
 
     expect(extractSelectionData(frame)).toBeNull();
   });
@@ -37,7 +37,7 @@ describe('extractSelectionData', () => {
       rangeCount: 1,
       getRangeAt: () => mockRange,
     });
-    const frame = createMockFrame(mockGetSelection, {
+    const frame = buildFrameStub(mockGetSelection, {
       getBoundingClientRect: () => new DOMRect(0, 0, 100, 100),
     });
 
@@ -55,7 +55,7 @@ describe('extractSelectionData', () => {
       rangeCount: 1,
       getRangeAt: () => mockRange,
     });
-    const frame = createMockFrame(mockGetSelection, {
+    const frame = buildFrameStub(mockGetSelection, {
       getBoundingClientRect: () => new DOMRect(0, 0, 100, 100),
     });
 
@@ -77,7 +77,7 @@ describe('extractSelectionData', () => {
       rangeCount: 1,
       getRangeAt: () => mockRange,
     });
-    const frame = createMockFrame(mockGetSelection, {
+    const frame = buildFrameStub(mockGetSelection, {
       getBoundingClientRect: () => new DOMRect(0, 0, 100, 100),
     });
 
@@ -97,7 +97,7 @@ describe('extractSelectionData', () => {
       rangeCount: 1,
       getRangeAt: () => mockRange,
     });
-    const frame = createMockFrame(mockGetSelection, {
+    const frame = buildFrameStub(mockGetSelection, {
       getBoundingClientRect: () => new DOMRect(0, 0, 100, 100),
     });
 
@@ -111,7 +111,7 @@ describe('extractSelectionData', () => {
 describe('clearSelection', () => {
   it('clears the selection in frame', () => {
     const mockRemoveAllRanges = vi.fn();
-    const frame = createMockFrame(
+    const frame = buildFrameStub(
       vi.fn(() => ({ removeAllRanges: mockRemoveAllRanges })),
     );
 
@@ -121,7 +121,7 @@ describe('clearSelection', () => {
   });
 
   it('handles null selection gracefully', () => {
-    const frame = createMockFrame(vi.fn(() => null));
+    const frame = buildFrameStub(vi.fn(() => null));
 
     // clearSelection is imported at top level
     expect(() => { clearSelection(frame); }).not.toThrow();
