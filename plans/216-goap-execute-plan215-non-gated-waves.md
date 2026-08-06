@@ -79,6 +79,6 @@ tests; final gate `./scripts/quality_gate.sh` before push.
 
 - [x] All Wave 1/2 tasks above land with tests where behavior changed.
 - [x] No first-party test file exceeds 500 lines.
-- [ ] `node scripts/check-adr-index.mjs` and markdownlint pass.
+- [x] `node scripts/check-adr-index.mjs` and markdownlint pass.
 - [x] `./scripts/quality_gate.sh` passes before push.
-- [ ] One PR, atomic commits, PR template + AI verification section.
+- [x] One PR, atomic commits, PR template + AI verification section.

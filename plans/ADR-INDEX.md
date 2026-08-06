@@ -80,6 +80,8 @@
 | 199    | i18n Plural Rules Deferral                                                 | `plans/199-adr-i18n-plural-rules-deferral.md`                            | Accepted (deferred)                                                  |
 | 200    | Login Lockout as Compensating Control for localStorage Token Storage       | `plans/200-adr-session-lockout-compensating-control.md`                  | Accepted (Wave 4-C)                                                  |
 | 201    | WebKit in PR smoke CI                                                      | `plans/ADR-201-webkit-smoke-ci.md`                                       | Accepted                                                             |
+| 216    | Vitest Pool Policy and Mobile Test Isolation                               | `plans/216-adr-vitest-pool-policy.md`                                    | Accepted                                                             |
+| 217    | OpenTelemetry Evaluation as a Follow-Up Decision                           | `plans/217-adr-opentelemetry-evaluation.md`                              | Accepted (deferred evaluation)                                       |
 | 998    | Offline Comment Status Preservation                                        | `plans/archive/998-adr-offline-comment-status-preservation.md`           | Accepted                                                             |
 
 ## Cross-referenced (archived GOAP execution records)
