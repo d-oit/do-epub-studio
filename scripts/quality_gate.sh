@@ -340,10 +340,13 @@ if [[ " ${DETECTED_LANGUAGES[*]} " =~ " shell " ]]; then
         printf '%s  ⚠ shellcheck not installed - skipping shell checks%s\n' "${YELLOW}" "${NC}"
     fi
 
-    # BATS tests — always run if tests/ directory exists
-    if [ -d "tests" ] && [ -z "${BATS_TEST_FILENAME:-}" ]; then
+    # BATS tests — always run if tests/ or scripts/tests/ directory exists
+    if { [ -d "tests" ] || [ -d "scripts/tests" ]; } && [ -z "${BATS_TEST_FILENAME:-}" ]; then
         if command -v bats &> /dev/null; then
-            if ! OUTPUT=$(bats tests/ 2>&1); then
+            BATS_DIRS=()
+            [ -d "tests" ] && BATS_DIRS+=("tests/")
+            [ -d "scripts/tests" ] && BATS_DIRS+=("scripts/tests/")
+            if ! OUTPUT=$(bats "${BATS_DIRS[@]}" 2>&1); then
                 printf '%s  ✗ bats tests failed%s\n' "${RED}" "${NC}"
                 echo "$OUTPUT" >&2
                 FAILED=1
