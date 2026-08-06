@@ -42,5 +42,4 @@ layer on config/scripts is the intended scope.
 
 Revisit this document when a findings-triage backlog exists (ADR-181)
 and the repo decides to have Codacy surface app-source findings again.
-Until then, the authoritative gate remains `pnpm lint` + `pnpm typecheck`
-+ tests.
+Until then, the authoritative gate remains `pnpm lint` + `pnpm typecheck` + tests.

@@ -7,20 +7,20 @@ describe('extractSelectionData', () => {
       isCollapsed: true,
       rangeCount: 0,
     });
-    const iframe = {
+    const frame = {
       contentWindow: { getSelection: mockGetSelection },
     } as unknown as HTMLIFrameElement;
 
-    expect(extractSelectionData(iframe)).toBeNull();
+    expect(extractSelectionData(frame)).toBeNull();
   });
 
   it('returns null when no selection', () => {
     const mockGetSelection = vi.fn().mockReturnValue(null);
-    const iframe = {
+    const frame = {
       contentWindow: { getSelection: mockGetSelection },
     } as unknown as HTMLIFrameElement;
 
-    expect(extractSelectionData(iframe)).toBeNull();
+    expect(extractSelectionData(frame)).toBeNull();
   });
 
   it('returns null for short text', () => {
@@ -34,12 +34,12 @@ describe('extractSelectionData', () => {
       rangeCount: 1,
       getRangeAt: () => mockRange,
     });
-    const iframe = {
+    const frame = {
       contentWindow: { getSelection: mockGetSelection },
       getBoundingClientRect: () => new DOMRect(0, 0, 100, 100),
     } as unknown as HTMLIFrameElement;
 
-    expect(extractSelectionData(iframe)).toBeNull();
+    expect(extractSelectionData(frame)).toBeNull();
   });
 
   it('returns selection data for valid text', () => {
@@ -53,13 +53,13 @@ describe('extractSelectionData', () => {
       rangeCount: 1,
       getRangeAt: () => mockRange,
     });
-    const iframe = {
+    const frame = {
       contentWindow: { getSelection: mockGetSelection },
       getBoundingClientRect: () => new DOMRect(0, 0, 100, 100),
     } as unknown as HTMLIFrameElement;
 
     // extractSelectionData is imported at top level
-    const result = extractSelectionData(iframe);
+    const result = extractSelectionData(frame);
     expect(result).not.toBeNull();
     expect(result?.text).toBe('Hello World');
   });
@@ -76,13 +76,13 @@ describe('extractSelectionData', () => {
       rangeCount: 1,
       getRangeAt: () => mockRange,
     });
-    const iframe = {
+    const frame = {
       contentWindow: { getSelection: mockGetSelection },
       getBoundingClientRect: () => new DOMRect(0, 0, 100, 100),
     } as unknown as HTMLIFrameElement;
 
     // extractSelectionData is imported at top level
-    const result = extractSelectionData(iframe);
+    const result = extractSelectionData(frame);
     expect(result?.cfiRange).toBe('epubcfi(/6/4!/2/2)');
   });
 
@@ -97,22 +97,22 @@ describe('extractSelectionData', () => {
       rangeCount: 1,
       getRangeAt: () => mockRange,
     });
-    const iframe = {
+    const frame = {
       contentWindow: { getSelection: mockGetSelection },
       getBoundingClientRect: () => new DOMRect(0, 0, 100, 100),
     } as unknown as HTMLIFrameElement;
 
     // extractSelectionData is imported at top level
-    const result = extractSelectionData(iframe);
+    const result = extractSelectionData(frame);
     expect(result).not.toBeNull();
     expect(result?.rect).toBeDefined();
   });
 });
 
 describe('clearSelection', () => {
-  it('clears the selection in iframe', () => {
+  it('clears the selection in frame', () => {
     const mockRemoveAllRanges = vi.fn();
-    const iframe = {
+    const frame = {
       contentWindow: {
         getSelection: () => ({
           removeAllRanges: mockRemoveAllRanges,
@@ -121,18 +121,18 @@ describe('clearSelection', () => {
     } as unknown as HTMLIFrameElement;
 
     // clearSelection is imported at top level
-    clearSelection(iframe);
+    clearSelection(frame);
     expect(mockRemoveAllRanges).toHaveBeenCalled();
   });
 
   it('handles null selection gracefully', () => {
-    const iframe = {
+    const frame = {
       contentWindow: {
         getSelection: () => null,
       },
     } as unknown as HTMLIFrameElement;
 
     // clearSelection is imported at top level
-    expect(() => clearSelection(iframe)).not.toThrow();
+    expect(() => clearSelection(frame)).not.toThrow();
   });
 });

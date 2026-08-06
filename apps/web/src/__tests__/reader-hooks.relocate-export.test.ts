@@ -182,7 +182,8 @@ describe('useExportNotes', () => {
   it('exports notes as markdown', () => {
     const { result } = renderHook(() => useExportNotes());
     const mockClick = vi.fn();
-    vi.spyOn(document, 'createElement').mockReturnValue({ click: mockClick, href: '', download: '' } as unknown as HTMLAnchorElement);
+    const mockAnchor = { click: mockClick, href: '', download: '' } as unknown as HTMLAnchorElement;
+    vi.spyOn(document, 'createElement').mockReturnValue(mockAnchor);
     vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:url');
     vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
 

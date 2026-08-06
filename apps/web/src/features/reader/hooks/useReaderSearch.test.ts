@@ -208,9 +208,9 @@ describe('bounded concurrency', () => {
   });
 
   it('always calls unload on every loaded section (finally block)', async () => {
-    const resolvers: Array<() => void> = [];
+    const resolvers = new Map<number, () => void>();
     const sections: MockSection[] = Array.from({ length: 6 }, (_, i) => ({
-      load: vi.fn(() => new Promise<void>((r) => { resolvers[i] = r; })),
+      load: vi.fn(() => new Promise<void>((r) => { resolvers.set(i, r); })),
       find: vi.fn(() => []),
       unload: vi.fn(),
       href: `ch${i}.xhtml`,
@@ -230,7 +230,7 @@ describe('bounded concurrency', () => {
     await vi.advanceTimersByTimeAsync(300);
 
     // 4 of 6 sections loaded (MAX_CONCURRENT=4); release them so workers finish
-    for (let i = 0; i < 4; i++) resolvers[i]();
+    for (let i = 0; i < 4; i++) resolvers.get(i)!();
     vi.useRealTimers();
     await waitFor(() => {
       // At least the 4 loaded sections should have unload called

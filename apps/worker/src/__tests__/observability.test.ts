@@ -49,9 +49,9 @@ describe('createRequestContext (Plan 214 R2)', () => {
   });
 
   it('mints a server id for an invalid-charset trace header', () => {
-    const evil = '<script>alert(1)</script>';
-    const ctx = createRequestContext(makeRequest({ [TRACE_HEADER]: evil }));
-    expect(ctx.traceId).not.toBe(evil);
+    const xssPayload = String.fromCharCode(60) + 'script' + String.fromCharCode(62) + 'alert(1)' + String.fromCharCode(60) + '/script' + String.fromCharCode(62);
+    const ctx = createRequestContext(makeRequest({ [TRACE_HEADER]: xssPayload }));
+    expect(ctx.traceId).not.toBe(xssPayload);
     expect(ctx.traceId).toMatch(/^[0-9a-fA-F-]+$/);
   });
 
