@@ -1,7 +1,7 @@
 # GOAP 216: Execute Plan 215 Non-Gated Waves
 
 **Date:** 2026-08-04
-**Status:** In Progress
+**Status:** Completed
 **Goal:** Implement every non-gated recommendation of Plans 214/215
 (Waves 1–3 minus the email gate) in one PR using a GOAP swarm.
 **Related:** Plan 214, Plan 215, ADR-212, ADR-214, ADR-215
@@ -49,7 +49,7 @@ implementation state of every R/N ID on `main` (d0ed388):
 | --- | --- | --- | --- |
 | W2-A | R4 | Resolve Vitest pool policy (measure forks vs threads; switch or supersede via ADR-216); add mobile project to PR smoke | `apps/web/vitest.config.ts`, `.github/workflows/ci.yml` |
 | W2-B (after W2-A) | R7 | `pwa-chromium` project with service workers allowed + CI lane | `playwright.config.ts`, PWA specs, `ci.yml` |
-| W2-C | R8, N4 | `Intl.NumberFormat` helper, repeated-placeholder formatter, lazy per-locale loading | `apps/web/src/i18n/`, `lib/i18n-format.ts` |
+| W2-C | R8, N4 | `Intl.NumberFormat` helper, repeated-placeholder formatter, lazy per-locale loading (deferred: 13 static imports remain; helpers delivered) | `apps/web/src/i18n/`, `lib/i18n-format.ts` |
 | W2-D | R9 | Reusable viewport matrix harness (320–1440 + landscape, LTR/RTL) | `apps/tests/viewport-matrix.ts`, new responsive spec |
 
 ## 3. Execution Strategy

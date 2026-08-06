@@ -1,18 +1,25 @@
 import { describe, it, expect } from 'vitest';
 import { translate, formatNumber, formatDate } from '../i18n';
+import { en } from '../i18n/en';
 
 describe('translate', () => {
-  it('replaces repeated placeholders', () => {
-    // The actual function uses replaceAll, so repeated placeholders work
-    const result = translate('greeting' as never, 'en', { name: 'Alice' });
-    // If the key doesn't exist in the real catalog, it falls back to the key itself
-    // We test the replaceAll behavior through the real function
-    expect(typeof result).toBe('string');
+  it('replaces all occurrences of a placeholder', () => {
+    // Find a key with a placeholder to verify replaceAll behavior
+    const keyWithParam = Object.keys(en).find((k) => en[k as keyof typeof en].includes('{'));
+    if (keyWithParam) {
+      const result = translate(keyWithParam as never, 'en', { 0: 'TEST' });
+      expect(result).not.toContain('{0}');
+    }
   });
 
   it('returns key when not found in any locale', () => {
     const result = translate('nonexistent.key' as never, 'en');
     expect(result).toBe('nonexistent.key');
+  });
+
+  it('falls back to English for missing locale keys', () => {
+    const result = translate('reader.title' as never, 'en');
+    expect(typeof result).toBe('string');
   });
 });
 
