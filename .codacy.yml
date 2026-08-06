@@ -5,7 +5,7 @@
 # (`pnpm lint` via turbo + `pnpm typecheck` + tests). Codacy remains a
 # required check for root-level configs and scripts it covers.
 engines:
-  eslint:
+  eslint-8:
     enabled: true
     exclude_paths:
       - "**/*.test.ts"
