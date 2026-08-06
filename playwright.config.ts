@@ -75,5 +75,13 @@ export default defineConfig({
       use: { ...devices['Pixel 7'] },
       grep: /@mobile/,
     },
+    {
+      name: 'pwa-chromium',
+      use: {
+        ...devices['Desktop Chrome'],
+        serviceWorkers: 'allow',
+      },
+      grep: /@pwa/,
+    },
   ],
 });
