@@ -183,7 +183,7 @@ describe('useExportNotes', () => {
     const { result } = renderHook(() => useExportNotes());
     const mockClick = vi.fn();
     const createElement = vi.spyOn(document, 'createElement');
-    createElement.mockReturnValue({ click: mockClick, href: '', download: '' } as ReturnType<typeof document.createElement>);
+    createElement.mockReturnValue({ click: mockClick, href: '', download: '' } as unknown as ReturnType<typeof document.createElement>);
     vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:url');
     vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
 
