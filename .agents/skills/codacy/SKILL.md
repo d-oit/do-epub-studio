@@ -98,6 +98,14 @@ Codacy is configured via `.codacy.yml` in the repository root. See
 defaults: ESLint 8 (security plugin enabled), ShellCheck, markdownlint,
 Trivy for dependency scanning, CodeQL for cross-tool coverage.
 
+**CRITICAL — Engine names must match Codacy's current tool names.**
+The `eslint` engine name is **deprecated** — use `eslint-8` instead.
+Using deprecated names causes Codacy to silently ignore engine-level
+`exclude_paths`, leading to false positives on excluded files.
+
+See `references/config-format.md` § "Engine Name Reference" for the
+full mapping.
+
 ## Required Check vs Informational
 
 `gh pr checks <PR>` shows Codacy as a row. On this repo (per AGENTS.md
@@ -123,7 +131,7 @@ Codacy check regardless of GitHub enforcement.
 | JS/TS/Shell   | ✅ Works | ESLint, Stylelint, ShellCheck |
 | Python/Ruby   | ❌ Fails | Missing runtimes/venv issues |
 | Java/PMD      | ❌ Fails | Missing Java runtime |
-| opengrep test exclusions | ⚠️ Partial | `.codacy.yml` `exclude_paths` works for ESLint but cloud-side opengrep may still flag HTML-like strings in test files (`<!DOCTYPE html>`, `</html>`). Remove ALL HTML literals from tests. |
+| opengrep test exclusions | ⚠️ Partial | `.codacy.yml` `exclude_paths` works for ESLint (when using correct engine name `eslint-8`) but cloud-side opengrep may still flag HTML-like strings in test files (`<!DOCTYPE html>`, `</html>`). Remove ALL HTML literals from tests. |
 | Biome in test files | ⚠️ False positives | `useQwikValidLexicalScope` (SolidJS rule) flags `const fn = () => ...` at module scope in test files. Use `vi.fn()` wrapper instead. See fix patterns above. |
 
 Always cross-reference with Cloud CLI for full PR data.
@@ -139,6 +147,10 @@ Always cross-reference with Cloud CLI for full PR data.
 
 ## Red Flags
 
+- [ ] Using deprecated engine names in `.codacy.yml` (e.g., `eslint`
+      instead of `eslint-8`). Deprecated names silently break
+      `exclude_paths` — files that should be excluded get analyzed,
+      producing false positives. See `references/config-format.md`.
 - [ ] Relying solely on local `codacy-analysis` for non-JS projects.
 - [ ] Attempting to suppress issues without a valid `--ignore-reason`.
 - [ ] Using issue hashes for CLI suppressions.

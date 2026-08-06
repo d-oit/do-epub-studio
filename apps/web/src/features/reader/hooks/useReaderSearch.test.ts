@@ -208,10 +208,9 @@ describe('bounded concurrency', () => {
   });
 
   it('always calls unload on every loaded section (finally block)', async () => {
-    const resolvers: Array<() => void> = [];
+    const resolvers = new Map<number, () => void>();
     const sections: MockSection[] = Array.from({ length: 6 }, (_, i) => ({
-      // eslint-disable-next-line security/detect-object-injection -- i is loop-local, no injection risk
-      load: vi.fn(() => new Promise<void>((r) => { resolvers[i] = r; })),
+      load: vi.fn(() => new Promise<void>((r) => { resolvers.set(i, r); })),
       find: vi.fn(() => []),
       unload: vi.fn(),
       href: `ch${i}.xhtml`,
@@ -231,13 +230,16 @@ describe('bounded concurrency', () => {
     await vi.advanceTimersByTimeAsync(300);
 
     // 4 of 6 sections loaded (MAX_CONCURRENT=4); release them so workers finish
-    for (let i = 0; i < 4; i++) resolvers[i](); // eslint-disable-line security/detect-object-injection
+    for (let i = 0; i < 4; i++) {
+      const resolve = resolvers.get(i);
+      if (resolve) resolve();
+    }
     vi.useRealTimers();
     await waitFor(() => {
       // At least the 4 loaded sections should have unload called
-      for (let i = 0; i < 4; i++) {
-        expect(sections[i].unload).toHaveBeenCalled(); // eslint-disable-line security/detect-object-injection
-      }
+      sections.slice(0, 4).forEach((section) => {
+        expect(section.unload).toHaveBeenCalled();
+      });
     }, { timeout: 5000 });
   });
 });

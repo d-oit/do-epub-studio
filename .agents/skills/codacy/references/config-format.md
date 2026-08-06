@@ -2,6 +2,25 @@
 
 Codacy can be configured via a `.codacy.yml` or `.codacy.yaml` file in the repository root.
 
+## Engine Name Reference
+
+**CRITICAL:** Engine names in `.codacy.yml` MUST use the current tool
+names from Codacy's documentation. Deprecated names are silently ignored,
+causing engine-level `exclude_paths` to not apply — files that should be
+excluded get analyzed, producing false positives.
+
+Source: https://docs.codacy.com/repositories-configure/codacy-configuration-file/#which-tools-can-be-configured-and-which-name-should-i-use
+
+| Tool | Correct Name | Deprecated Name(s) |
+|------|-------------|---------------------|
+| ESLint 8 | `eslint-8` | `eslint` |
+| ESLint 9 | `eslint-9` | — |
+| Pylint | `pylintpython3` | `pylint` |
+| PMD | `pmd-7` | — |
+| Trivy | `trivy` | `bundleraudit` |
+| Stylelint | `stylelint` | `csslint` |
+| Opengrep | `opengrep` | — |
+
 ## Basic Structure
 
 ```yaml

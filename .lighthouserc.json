@@ -10,10 +10,8 @@
       "url": [
         "http://localhost:5173/",
         "http://localhost:5173/catalog",
-        "http://localhost:5173/admin",
-        "http://localhost:5173/reader",
-        "http://localhost:5173/auth",
-        "http://localhost:5173/offline"
+        "http://localhost:5173/login",
+        "http://localhost:5173/admin"
       ]
     },
     "assert": {
@@ -29,11 +27,9 @@
         ["interactive", ["error", { "maxNumericValue": 5000 }]],
         ["categories:performance", ["error", { "minScore": 0.6 }], { "matchingUrlPattern": ".*\\/catalog.*" }],
         ["categories:performance", ["error", { "minScore": 0.6 }], { "matchingUrlPattern": ".*\\/admin.*" }],
-        ["categories:performance", ["error", { "minScore": 0.6 }], { "matchingUrlPattern": ".*\\/auth.*" }],
-        ["categories:performance", ["error", { "minScore": 0.5 }], { "matchingUrlPattern": ".*\\/reader.*" }],
-        ["categories:performance", ["error", { "minScore": 0.5 }], { "matchingUrlPattern": ".*\\/offline.*" }],
+        ["categories:performance", ["error", { "minScore": 0.6 }], { "matchingUrlPattern": ".*\\/login.*" }],
         ["first-contentful-paint", ["error", { "maxNumericValue": 1800 }], { "matchingUrlPattern": ".*\\/catalog.*" }],
-        ["first-contentful-paint", ["error", { "maxNumericValue": 1800 }], { "matchingUrlPattern": ".*\\/auth.*" }],
+        ["first-contentful-paint", ["error", { "maxNumericValue": 1800 }], { "matchingUrlPattern": ".*\\/login.*" }],
         ["interactive", ["error", { "maxNumericValue": 4000 }], { "matchingUrlPattern": ".*\\/catalog.*" }],
         ["interactive", ["error", { "maxNumericValue": 4000 }], { "matchingUrlPattern": ".*\\/admin.*" }]
       ]

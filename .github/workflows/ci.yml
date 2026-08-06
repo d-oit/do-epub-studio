@@ -203,7 +203,7 @@ jobs:
       - uses: ./.github/actions/setup-pnpm
 
       - name: Install pre-commit
-        run: pip install pre-commit zizmor || pip install pre-commit zizmor --break-system-packages
+        run: pip install pre-commit "zizmor==1.26.1" || pip install pre-commit "zizmor==1.26.1" --break-system-packages
 
       - name: Run pre-commit hooks
         run: pre-commit run --all-files --show-diff-on-failure
@@ -410,7 +410,7 @@ jobs:
         with:
           timeout_minutes: 10
           max_attempts: 2
-          command: pnpm test:e2e:smoke --project=chromium --project=webkit
+          command: pnpm test:e2e:smoke --project=chromium --project=webkit --project=pixel
           warning_on_retry: true
 
       - name: Download build artifacts
@@ -420,10 +420,13 @@ jobs:
           path: apps/web/dist/
 
       - name: Run Preview Smoke E2E tests
-        run: PLAYWRIGHT_MODE=preview npx playwright test --grep @smoke --project=chromium --project=webkit
+        run: PLAYWRIGHT_MODE=preview npx playwright test --grep @smoke --project=chromium --project=webkit --project=pixel
 
       - name: Run Startup Performance Test
         run: METRICS_OUTPUT=startup-metrics.json PLAYWRIGHT_MODE=preview npx playwright test apps/web/src/__tests__/performance.spec.ts --project=chromium
+
+      - name: Run PWA E2E tests (service workers enabled)
+        run: PLAYWRIGHT_MODE=preview npx playwright test --grep @pwa --project=pwa-chromium
 
       - name: Upload startup metrics
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2

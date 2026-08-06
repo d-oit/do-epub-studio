@@ -84,9 +84,13 @@ The app shell uses semantic landmarks:
 
 ## RTL Support
 
-RTL (right-to-left) layout is planned but not yet implemented. The i18n
-infrastructure supports `direction` prop on reader components. See
-Plan 063 Wave 3 (F6, I3) for tracking.
+RTL (right-to-left) layout is implemented for Arabic. The app shell keeps
+`<html dir>` and `<html lang>` in sync with the active UI locale via
+`useDocumentLocale` (`apps/web/src/hooks/useDocumentLocale.ts`); Arabic
+(`ar`) renders `dir="rtl"`, all other supported locales render `ltr`. The
+reader honors `document.documentElement.dir` as its default text direction.
+Full RTL viewport regression coverage (no horizontal overflow on mobile,
+tablet, and desktop) is tracked under GOAP-215 (R9).
 
 ## References
 

@@ -36,14 +36,27 @@ const FAIL_ON_VIOLATION =
   process.env.BUNDLE_BUDGET_FAIL_ON_VIOLATION === '1' ||
   process.argv.includes('--fail-on-violation');
 
-// ADR-107 §3 — gzipped thresholds in KB
-// Updated: main JS 180→240 KB, lazy chunk 80→142 KB to match current sizes.
-// Re-evaluate after tree-shaking / lazy-load optimization work.
-const BUDGETS = Object.freeze({
-  mainJs: 240,
-  mainCss: 30,
-  lazyChunkJs: 142,
-});
+// ADR-107 §3 — gzipped thresholds in KB, sourced from the single budget
+// file .performance-budgets.json (Plan 214 R5: one authoritative budget
+// model). Re-evaluate after tree-shaking / lazy-load optimization work.
+function loadBudgets() {
+  const budgetsPath = path.resolve(rootDir, '.performance-budgets.json');
+  if (!fs.existsSync(budgetsPath)) {
+    console.error(
+      `Error: budgets file not found at ${budgetsPath}. Run any budget check from the repo root.`,
+    );
+    process.exit(2);
+  }
+  const raw = JSON.parse(fs.readFileSync(budgetsPath, 'utf8'));
+  const gzip = raw.gzipBudgets || {};
+  return Object.freeze({
+    mainJs: gzip.mainJs,
+    mainCss: gzip.mainCss,
+    lazyChunkJs: gzip.lazyChunkJs,
+  });
+}
+
+const BUDGETS = loadBudgets();
 
 function distDirArg() {
   const positional = process.argv

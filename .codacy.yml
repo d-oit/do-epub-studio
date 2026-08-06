@@ -1,6 +1,11 @@
 ---
+# Static-analysis scope: see docs/static-analysis.md (ADR-215 Decision 2).
+# apps/** and packages/** are excluded from Codacy's engines by design; the
+# authoritative gate for that source is the repo's type-aware lint pipeline
+# (`pnpm lint` via turbo + `pnpm typecheck` + tests). Codacy remains a
+# required check for root-level configs and scripts it covers.
 engines:
-  eslint:
+  eslint-8:
     enabled: true
     exclude_paths:
       - "**/*.test.ts"

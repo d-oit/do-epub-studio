@@ -36,9 +36,27 @@ export function translate(key: TranslationKeys, locale: LocaleKey, params?: Reco
   if (!params) return template;
   let result = template;
   for (const [paramName, value] of Object.entries(params)) {
-    result = result.replace(`{${paramName}}`, String(value));
+    result = result.replaceAll(`{${paramName}}`, String(value));
   }
   return result;
+}
+
+/** Format a number using Intl.NumberFormat for the given locale. */
+export function formatNumber(
+  value: number,
+  locale: LocaleKey,
+  options?: Intl.NumberFormatOptions,
+): string {
+  return new Intl.NumberFormat(locale, options).format(value);
+}
+
+/** Format a date using Intl.DateTimeFormat for the given locale. */
+export function formatDate(
+  date: Date,
+  locale: LocaleKey,
+  options?: Intl.DateTimeFormatOptions,
+): string {
+  return new Intl.DateTimeFormat(locale, options).format(date);
 }
 
 export function availableLocales(): Array<{ code: LocaleKey; label: string }> {

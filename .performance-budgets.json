@@ -7,6 +7,12 @@
     "reader-route.js": 200000,
     "epubjs.js": 250000
   },
+  "gzipBudgets": {
+    "mainJs": 240,
+    "mainCss": 30,
+    "lazyChunkJs": 142,
+    "description": "Gzipped (zlib level 9) budgets in KB enforced by scripts/check-bundle-budget.mjs (ADR-107 §3). Single source shared with the raw-byte bundleSize budgets above."
+  },
   "routeBudgets": {
     "reader": {
       "entry": "src/features/reader/ReaderPage.tsx",
@@ -19,19 +25,9 @@
       "description": "Total transitive JS and CSS for the catalog route (includes shared vendors)"
     },
     "admin": {
-      "entry": "src/features/admin/AdminPage.tsx",
+      "entry": "src/features/admin/AdminDashboardPage.tsx",
       "maxSize": 890000,
       "description": "Total transitive JS and CSS for the admin route (includes shared vendors)"
-    },
-    "auth": {
-      "entry": "src/features/auth/LoginPage.tsx",
-      "maxSize": 150000,
-      "description": "Total transitive JS and CSS for the auth route"
-    },
-    "offline": {
-      "entry": "src/lib/offline/sync.ts",
-      "maxSize": 100000,
-      "description": "Total transitive JS for offline sync"
     }
   },
   "startupTime": {

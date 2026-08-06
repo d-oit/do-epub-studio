@@ -78,7 +78,6 @@ const quotaGuardPlugin = {
           const usageRatio = usage / quota;
           if (usageRatio > 0.85) { // 85% full
             const traceId = createTraceId();
-            // eslint-disable-next-line no-console -- service worker has no structured logger
             console.warn(
               JSON.stringify({
                 level: 'warning',
@@ -93,7 +92,6 @@ const quotaGuardPlugin = {
           }
         }
       } catch (err) {
-        // eslint-disable-next-line no-console -- service worker has no structured logger
         console.error(JSON.stringify({
           level: 'error',
           traceId: createTraceId(),
@@ -169,7 +167,6 @@ self.addEventListener('sync', (event: Event) => {
       (async () => {
         const traceId = createTraceId();
         if (DEBUG) {
-          // eslint-disable-next-line no-console -- service worker has no structured logger
           console.log(
             JSON.stringify({ level: 'info', traceId, event: 'sw.sync.start', tag: syncEvent.tag }),
           );
@@ -178,8 +175,7 @@ self.addEventListener('sync', (event: Event) => {
           const { syncAll } = await import('./lib/offline/sync');
           await syncAll();
           if (DEBUG) {
-            // eslint-disable-next-line no-console -- service worker has no structured logger
-            console.log(
+              console.log(
               JSON.stringify({
                 level: 'info',
                 traceId,
@@ -190,7 +186,6 @@ self.addEventListener('sync', (event: Event) => {
           }
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error);
-          // eslint-disable-next-line no-console -- service worker has no structured logger
           console.error(
             JSON.stringify({
               level: 'error',
@@ -216,8 +211,7 @@ self.addEventListener('message', (event) => {
       event.waitUntil(
         caches.delete(cacheName).then((deleted) => {
           if (DEBUG) {
-            // eslint-disable-next-line no-console -- service worker has no structured logger
-            console.log(
+              console.log(
               JSON.stringify({ level: 'info', traceId, event: 'sw.cache.cleared', cacheName, deleted }),
             );
           }

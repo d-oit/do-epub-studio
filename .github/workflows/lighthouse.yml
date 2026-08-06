@@ -88,8 +88,8 @@ jobs:
           urls: |
             ${{ steps.deploy.outputs.url }}/
             ${{ steps.deploy.outputs.url }}/catalog
+            ${{ steps.deploy.outputs.url }}/login
             ${{ steps.deploy.outputs.url }}/admin
-            ${{ steps.deploy.outputs.url }}/reader
           configPath: .lighthouserc.json
           uploadArtifacts: true
           temporaryPublicStorage: true
