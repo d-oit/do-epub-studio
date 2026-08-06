@@ -1,38 +1,62 @@
 import { en, type TranslationKeys } from './en';
-import { de } from './de';
-import { fr } from './fr';
-import { es } from './es';
-import { pt } from './pt';
-import { it } from './it';
-import { ja } from './ja';
-import { zh } from './zh';
-import { ko } from './ko';
-import { ar } from './ar';
-import { ru } from './ru';
-import { hi } from './hi';
-import { nl } from './nl';
 
-export const dictionaries = {
-  en,
-  de,
-  fr,
-  es,
-  pt,
-  it,
-  ja,
-  zh,
-  ko,
-  ar,
-  ru,
-  hi,
-  nl,
-};
+/** Locale key type — union of all supported locale codes. */
+export type LocaleKey =
+  | 'en'
+  | 'de'
+  | 'fr'
+  | 'es'
+  | 'pt'
+  | 'it'
+  | 'ja'
+  | 'zh'
+  | 'ko'
+  | 'ar'
+  | 'ru'
+  | 'hi'
+  | 'nl';
 
-export type LocaleKey = keyof typeof dictionaries;
+/** Lazy-loaded dictionaries. Starts with English (the synchronous fallback). */
+const loadedDictionaries: Record<string, Record<string, string>> = { en };
 
-export function translate(key: TranslationKeys, locale: LocaleKey, params?: Record<string, string | number>): string {
-  const catalog = dictionaries[locale] ?? dictionaries.en;
-  const template = catalog[key] ?? dictionaries.en[key] ?? key;
+/**
+ * Ensure the given locale dictionary is loaded into memory. Safe to call
+ * multiple times — each locale is only fetched once. English is always
+ * available synchronously and this is a no-op for `'en'`.
+ */
+export async function ensureLocale(locale: LocaleKey): Promise<void> {
+  if (locale === 'en') return;
+  if (loadedDictionaries[locale]) return;
+  const mod = await loadLocaleModule(locale);
+  if (mod) loadedDictionaries[locale] = mod;
+}
+
+async function loadLocaleModule(locale: LocaleKey): Promise<Record<string, string> | undefined> {
+  switch (locale) {
+    case 'de': return (await import('./de')).de;
+    case 'fr': return (await import('./fr')).fr;
+    case 'es': return (await import('./es')).es;
+    case 'pt': return (await import('./pt')).pt;
+    case 'it': return (await import('./it')).it;
+    case 'ja': return (await import('./ja')).ja;
+    case 'zh': return (await import('./zh')).zh;
+    case 'ko': return (await import('./ko')).ko;
+    case 'ar': return (await import('./ar')).ar;
+    case 'ru': return (await import('./ru')).ru;
+    case 'hi': return (await import('./hi')).hi;
+    case 'nl': return (await import('./nl')).nl;
+    default: return undefined;
+  }
+}
+
+/** Synchronous translate — reads from the already-loaded cache. */
+export function translate(
+  key: TranslationKeys,
+  locale: LocaleKey,
+  params?: Record<string, string | number>,
+): string {
+  const catalog = loadedDictionaries[locale] ?? loadedDictionaries.en;
+  const template = catalog[key] ?? loadedDictionaries.en[key] ?? key;
   if (!params) return template;
   let result = template;
   for (const [paramName, value] of Object.entries(params)) {

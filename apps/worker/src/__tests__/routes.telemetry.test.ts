@@ -200,4 +200,48 @@ describe('Telemetry API', () => {
     expect(logString).not.toContain('secretpwd_but_with_a_very_long_string_of_characters_to_trigger_long_token_pattern');
     expect(logString).toContain('[REDACTED]');
   });
+
+  it('should emit telemetry.persistence.failed on DB error and still return 202', async () => {
+    const mockExecute = vi.fn().mockRejectedValue(new Error('DB connection lost'));
+    vi.doMock('../db/client', () => ({ execute: mockExecute }));
+
+    const { app: freshApp } = await import('../app');
+
+    const payload = {
+      logs: [
+        { level: 'info', traceId: 'trace-db-fail', event: 'test_persist_fail', metadata: { key: 'val' } },
+      ],
+    };
+
+    const ctx = createMockExecutionCtx();
+    const res = await freshApp.fetch(
+      new Request('http://localhost/api/telemetry', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      }),
+      { DB: { prepare: vi.fn().mockReturnThis(), bind: vi.fn().mockReturnThis(), all: vi.fn() } },
+      ctx,
+    );
+
+    expect(res.status).toBe(202);
+
+    // Allow microtasks to flush for the waitUntil promise
+    await new Promise((r) => setTimeout(r, 10));
+
+    expect(console.warn).toHaveBeenCalled();
+    const warnLogs = vi.mocked(console.warn).mock.calls
+      .map((call: unknown[]) => call[0] as string);
+    const failureLog = warnLogs.find((msg) => {
+      try { return (JSON.parse(msg) as Record<string, unknown>).event === 'telemetry.persistence.failed'; }
+      catch { return false; }
+    });
+    expect(failureLog).toBeDefined();
+
+    const parsed = JSON.parse(failureLog ?? '{}');
+    expect(parsed.metadata).toMatchObject({ event: 'test_persist_fail', level: 'info' });
+    expect(parsed.metadata.errorMessage).toContain('DB connection lost');
+
+    vi.doUnmock('../db/client');
+  });
 });

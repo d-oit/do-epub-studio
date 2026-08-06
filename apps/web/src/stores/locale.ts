@@ -1,16 +1,14 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { dictionaries, type LocaleKey } from '../i18n';
+import { availableLocales, type LocaleKey } from '../i18n';
 
 /**
- * Supported UI locales. Derived from the catalog registry (`dictionaries`) so
- * this type and the `LocaleSwitcher` options can never drift apart. Previously
- * hard-coded to `'en' | 'de' | 'fr'` while 13 catalogs existed, forcing an
- * unsafe cast in the switcher.
+ * Supported UI locales. Derived from `availableLocales()` so this type and the
+ * `LocaleSwitcher` options can never drift apart.
  */
 export type SupportedLocale = LocaleKey;
 
-const SUPPORTED_LOCALES = Object.keys(dictionaries) as readonly SupportedLocale[];
+const SUPPORTED_LOCALES = availableLocales().map((l) => l.code) as readonly SupportedLocale[];
 
 function isSupportedLocale(value: string): value is SupportedLocale {
   return (SUPPORTED_LOCALES as readonly string[]).includes(value);
