@@ -5,7 +5,8 @@ function buildFrameStub(
   getSelection: ReturnType<typeof vi.fn>,
   extras?: Record<string, unknown>,
 ) {
-  return { contentWindow: { getSelection }, ...extras } as unknown as HTMLIFrameElement;
+  const win = { getSelection };
+  return { contentWindow: win, ...extras };
 }
 
 describe('extractSelectionData', () => {
@@ -14,14 +15,14 @@ describe('extractSelectionData', () => {
       isCollapsed: true,
       rangeCount: 0,
     });
-    const frame = buildFrameStub(mockGetSelection);
+    const frame = buildFrameStub(mockGetSelection) as unknown as HTMLIFrameElement;
 
     expect(extractSelectionData(frame)).toBeNull();
   });
 
   it('returns null when no selection', () => {
     const mockGetSelection = vi.fn().mockReturnValue(null);
-    const frame = buildFrameStub(mockGetSelection);
+    const frame = buildFrameStub(mockGetSelection) as unknown as HTMLIFrameElement;
 
     expect(extractSelectionData(frame)).toBeNull();
   });
@@ -39,7 +40,7 @@ describe('extractSelectionData', () => {
     });
     const frame = buildFrameStub(mockGetSelection, {
       getBoundingClientRect: () => new DOMRect(0, 0, 100, 100),
-    });
+    }) as unknown as HTMLIFrameElement;
 
     expect(extractSelectionData(frame)).toBeNull();
   });
@@ -57,7 +58,7 @@ describe('extractSelectionData', () => {
     });
     const frame = buildFrameStub(mockGetSelection, {
       getBoundingClientRect: () => new DOMRect(0, 0, 100, 100),
-    });
+    }) as unknown as HTMLIFrameElement;
 
     // extractSelectionData is imported at top level
     const result = extractSelectionData(frame);
@@ -79,7 +80,7 @@ describe('extractSelectionData', () => {
     });
     const frame = buildFrameStub(mockGetSelection, {
       getBoundingClientRect: () => new DOMRect(0, 0, 100, 100),
-    });
+    }) as unknown as HTMLIFrameElement;
 
     // extractSelectionData is imported at top level
     const result = extractSelectionData(frame);
@@ -99,7 +100,7 @@ describe('extractSelectionData', () => {
     });
     const frame = buildFrameStub(mockGetSelection, {
       getBoundingClientRect: () => new DOMRect(0, 0, 100, 100),
-    });
+    }) as unknown as HTMLIFrameElement;
 
     // extractSelectionData is imported at top level
     const result = extractSelectionData(frame);
@@ -113,7 +114,7 @@ describe('clearSelection', () => {
     const mockRemoveAllRanges = vi.fn();
     const frame = buildFrameStub(
       vi.fn(() => ({ removeAllRanges: mockRemoveAllRanges })),
-    );
+    ) as unknown as HTMLIFrameElement;
 
     // clearSelection is imported at top level
     clearSelection(frame);
@@ -121,7 +122,7 @@ describe('clearSelection', () => {
   });
 
   it('handles null selection gracefully', () => {
-    const frame = buildFrameStub(vi.fn(() => null));
+    const frame = buildFrameStub(vi.fn(() => null)) as unknown as HTMLIFrameElement;
 
     // clearSelection is imported at top level
     expect(() => { clearSelection(frame); }).not.toThrow();
