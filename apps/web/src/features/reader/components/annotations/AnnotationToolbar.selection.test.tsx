@@ -3,7 +3,7 @@ import { extractSelectionData, clearSelection } from './AnnotationToolbar';
 
 function createMockFrame(
   getSelection: ReturnType<typeof vi.fn>,
-  extras?: Partial<HTMLIFrameElement>,
+  extras?: Record<string, unknown>,
 ) {
   return { contentWindow: { getSelection }, ...extras } as unknown as HTMLIFrameElement;
 }
@@ -112,7 +112,7 @@ describe('clearSelection', () => {
   it('clears the selection in frame', () => {
     const mockRemoveAllRanges = vi.fn();
     const frame = createMockFrame(
-      () => ({ removeAllRanges: mockRemoveAllRanges }),
+      vi.fn(() => ({ removeAllRanges: mockRemoveAllRanges })),
     );
 
     // clearSelection is imported at top level
@@ -121,7 +121,7 @@ describe('clearSelection', () => {
   });
 
   it('handles null selection gracefully', () => {
-    const frame = createMockFrame(() => null);
+    const frame = createMockFrame(vi.fn(() => null));
 
     // clearSelection is imported at top level
     expect(() => { clearSelection(frame); }).not.toThrow();
