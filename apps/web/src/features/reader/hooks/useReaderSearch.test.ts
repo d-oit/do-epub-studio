@@ -230,7 +230,10 @@ describe('bounded concurrency', () => {
     await vi.advanceTimersByTimeAsync(300);
 
     // 4 of 6 sections loaded (MAX_CONCURRENT=4); release them so workers finish
-    for (let i = 0; i < 4; i++) resolvers.get(i)!();
+    for (let i = 0; i < 4; i++) {
+      const resolve = resolvers.get(i);
+      if (resolve) resolve();
+    }
     vi.useRealTimers();
     await waitFor(() => {
       // At least the 4 loaded sections should have unload called
