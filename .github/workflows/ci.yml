@@ -135,6 +135,8 @@ jobs:
           persist-credentials: false
           submodules: recursive
           fetch-depth: 0  # Need full history for --affected
+      - name: Fetch base branch for --affected
+        run: git fetch origin main:main || true
       - uses: ./.github/actions/setup-pnpm
 
       - name: Run fast checks (scoped to changed packages)
