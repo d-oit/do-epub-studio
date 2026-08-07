@@ -77,16 +77,25 @@ export function InfoPanel({ isOpen, onClose, metadata, bookId, progressPercent, 
   useEffect(() => {
     if (!isOpen || !bookId) return;
 
+    let active = true;
+
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
     };
     window.addEventListener('keydown', handleEscape);
 
-    computeInsightSummary(bookId, progressPercent).then(setInsights).catch(() => {
-      setInsights(null);
-    });
+    computeInsightSummary(bookId, progressPercent)
+      .then((res) => {
+        if (active) setInsights(res);
+      })
+      .catch(() => {
+        if (active) setInsights(null);
+      });
 
-    return () => window.removeEventListener('keydown', handleEscape);
+    return () => {
+      active = false;
+      window.removeEventListener('keydown', handleEscape);
+    };
   }, [isOpen, onClose, bookId, progressPercent]);
 
   if (!isOpen) return null;

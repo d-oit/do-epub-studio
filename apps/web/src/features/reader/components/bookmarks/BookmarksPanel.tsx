@@ -89,9 +89,9 @@ export function BookmarksPanel({
             {t('reader.bookmarks.empty')}
           </p>
         ) : (
-          <div className="space-y-3">
+          <ul className="space-y-3 list-none p-0 m-0">
             {bookmarks.map((bookmark) => (
-              <div
+              <li
                 key={bookmark.id}
                 className="cq-bookmark-row p-3 rounded-lg border border-border hover:border-accent transition-colors flex flex-col"
               >
@@ -126,9 +126,9 @@ export function BookmarksPanel({
                     </IconButton>
                   </Tooltip>
                 </div>
-              </div>
+              </li>
             ))}
-          </div>
+          </ul>
         )}
       </div>
     </aside>
