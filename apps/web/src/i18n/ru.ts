@@ -31,6 +31,7 @@ export const ru: Record<TranslationKeys, string> = {
   'reader.searchPlaceholder': 'Поиск по книге…',
   'reader.searchNoResults': 'Нет совпадений',
   'reader.searchMatches': '{n} совпадений',
+  'reader.searchResultLabel': 'Результат поиска {index}: {chapter}',
   'session.expiringWarning': 'Ваша сессия скоро истечёт. Сохранение…',
   'session.refresh': 'Оставаться в системе',
   'session.expired': 'Ваша сессия завершена. Пожалуйста, войдите снова.',

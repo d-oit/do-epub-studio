@@ -191,7 +191,7 @@ export function SearchPanel({ isOpen, book, onClose, onNavigate, t }: SearchPane
                         type="button"
                         onClick={() => { onNavigate(result.cfi); }}
                         className="w-full text-left p-3 rounded-lg hover:bg-background-secondary transition-colors border border-transparent hover:border-border group focus-visible:ring-2 focus-visible:ring-accent outline-none"
-                        aria-label={`${t('reader.searchMatches', { n: visibleRange.start + i + 1 })}: ${result.chapterTitle ? `${result.chapterTitle} - ` : ''}${result.excerpt}`}
+                        aria-label={t('reader.searchResultLabel', { index: visibleRange.start + i + 1, chapter: result.chapterTitle ?? t('reader.untitledBook') })}
                       >
                         {result.chapterTitle && (
                           <span className="block text-[10px] uppercase tracking-wider font-bold text-accent mb-1">

@@ -31,6 +31,7 @@ export const ar: Record<TranslationKeys, string> = {
   'reader.searchPlaceholder': 'البحث في الكتاب…',
   'reader.searchNoResults': 'لا نتائج',
   'reader.searchMatches': '{n} نتيجة',
+  'reader.searchResultLabel': 'نتيجة البحث {index}: {chapter}',
   'session.expiringWarning': 'ستنتهي جلستك قريباً. جاري الحفظ…',
   'session.refresh': 'البقاء مسجلاً',
   'session.expired': 'انتهت جلستك. يرجى تسجيل الدخول مرة أخرى.',

@@ -31,6 +31,7 @@ export const hi: Record<TranslationKeys, string> = {
   'reader.searchPlaceholder': 'पुस्तक में खोजें…',
   'reader.searchNoResults': 'कोई मेल नहीं',
   'reader.searchMatches': '{n} मेल',
+  'reader.searchResultLabel': 'खोज परिणाम {index}: {chapter}',
   'session.expiringWarning': 'आपका सत्र जल्द ही समाप्त हो जाएगा। सहेजा जा रहा है…',
   'session.refresh': 'लॉग इन रहें',
   'session.expired': 'आपका सत्र समाप्त हो गया है। कृपया फिर से लॉग इन करें।',
