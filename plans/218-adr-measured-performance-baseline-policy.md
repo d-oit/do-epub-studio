@@ -1,7 +1,7 @@
 # ADR-218: Measured Performance Baseline Policy
 
 **Date:** 2026-08-06
-**Status:** Proposed
+**Status:** Accepted
 **Deciders:** Project maintainer, performance reviewer
 **Related:** GOAP-218, ADR-022, ADR-107, ADR-187, Plan 065
 
