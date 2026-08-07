@@ -399,7 +399,6 @@ export function sanitizeEpubDocument(
 }
 export interface SanitizeHook {
   hook: (contents: { document?: Document; href?: string }) => void;
-  setCurrentChapter: (href: string | null) => void;
 }
 
 export function createEpubSanitizerHook(
