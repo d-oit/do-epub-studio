@@ -213,7 +213,7 @@ export function useReaderEpub(
         renditionRef.current = rendition;
 
         // Security: Mandatory sanitization of all EPUB content
-        const { hook: baseSanitizer, setCurrentChapter: setSanitizeChapter } = createEpubSanitizerHook();
+        const { hook: baseSanitizer } = createEpubSanitizerHook();
         rendition.hooks.content.register(baseSanitizer);
 
         if (fixedLayout) {
@@ -325,13 +325,7 @@ export function useReaderEpub(
           })(),
         );
 
-        rendition.on('relocated', (location: { start?: { href?: string } }) => {
-          setSanitizeChapter(location.start?.href ?? null);
-        });
-
         rendition.on('displayed', () => {
-          const href = renditionRef.current?.location?.start?.href ?? null;
-          setSanitizeChapter(href);
           adapter.renderHighlights(currentChapterRef.current, highlightsRef.current);
           adapter.renderCommentMarkers(
             currentChapterRef.current,

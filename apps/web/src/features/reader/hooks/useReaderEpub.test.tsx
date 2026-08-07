@@ -23,9 +23,9 @@ vi.mock('../../../lib/client-logger', () => ({
 }));
 
 vi.mock('@do-epub-studio/reader-core', async (importOriginal) => {
-  const actual = (await importOriginal()) as Record<string, unknown>;
+  const actual = await importOriginal();
   return {
-    ...actual,
+    ...(actual as Record<string, unknown>),
     parseEpubInWorker: vi.fn().mockResolvedValue({ valid: true, data: new Uint8Array([0, 0, 0, 4]) }),
   };
 });

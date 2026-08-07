@@ -225,10 +225,9 @@ describe('sanitizeEpubDocument', () => {
 });
 
 describe('createEpubSanitizerHook', () => {
-  it('returns an object with hook and setCurrentChapter', () => {
-    const { hook, setCurrentChapter } = createEpubSanitizerHook();
+  it('returns an object with hook', () => {
+    const { hook } = createEpubSanitizerHook();
     expect(typeof hook).toBe('function');
-    expect(typeof setCurrentChapter).toBe('function');
   });
 
   it('hook does not throw with empty contents', () => {
@@ -243,12 +242,20 @@ describe('createEpubSanitizerHook', () => {
     expect(doc.querySelector('script')).toBeNull();
   });
 
-  it('setCurrentChapter controls immediate vs deferred sanitization', () => {
-    const { hook, setCurrentChapter } = createEpubSanitizerHook();
-    setCurrentChapter('chapter1.xhtml');
+  it('sanitizes chapter with href (cache miss path)', () => {
+    const { hook } = createEpubSanitizerHook();
     const doc = new DOMParser().parseFromString('<html><body><script>alert(1)</script></body></html>', 'text/html');
     hook({ document: doc, href: 'chapter1.xhtml' });
     expect(doc.querySelector('script')).toBeNull();
+  });
+
+  it('uses cache on second call with same href', () => {
+    const { hook } = createEpubSanitizerHook();
+    const doc1 = new DOMParser().parseFromString('<html><body><p>clean</p></body></html>', 'text/html');
+    hook({ document: doc1, href: 'chapter1.xhtml' });
+    const doc2 = new DOMParser().parseFromString('<html><body><script>alert(1)</script></body></html>', 'text/html');
+    hook({ document: doc2, href: 'chapter1.xhtml' });
+    expect(doc2.querySelector('script')).toBeNull();
   });
 });
 

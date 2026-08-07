@@ -406,8 +406,6 @@ export function createEpubSanitizerHook(
   options?: { timeoutMs?: number; traceId?: string },
 ): SanitizeHook {
   const cache = new Map<string, string>();
-  let currentHref: string | null = null;
-
   function hook(contents: { document?: Document; href?: string }): void {
     const doc = contents.document;
     if (!doc) return;
@@ -426,20 +424,6 @@ export function createEpubSanitizerHook(
       }
     }
 
-    if (href !== currentHref && currentHref !== null && typeof requestIdleCallback !== 'undefined') {
-      requestIdleCallback(() => {
-        sanitizeEpubDocument(doc, options);
-        if (href) {
-          cache.set(href, doc.documentElement.outerHTML);
-          if (cache.size > SANITIZE_CACHE_MAX) {
-            const firstKey = cache.keys().next().value;
-            if (firstKey !== undefined) cache.delete(firstKey);
-          }
-        }
-      });
-      return;
-    }
-
     sanitizeEpubDocument(doc, options);
     if (href) {
       cache.set(href, doc.documentElement.outerHTML);
@@ -452,7 +436,6 @@ export function createEpubSanitizerHook(
 
   return {
     hook,
-    setCurrentChapter(href: string | null) { currentHref = href; },
   };
 }
 
