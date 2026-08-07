@@ -158,6 +158,9 @@ export function createEpubAnnotationAdapter(rendition: Rendition): AnnotationAda
         cancelAnimationFrame(pendingRafId);
         pendingRafId = null;
       }
+      pendingChapterHref = null;
+      pendingHighlights = [];
+      pendingComments = [];
     },
   };
 }
