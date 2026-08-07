@@ -31,6 +31,7 @@ export const ko: Record<TranslationKeys, string> = {
   'reader.searchPlaceholder': '도서 내 검색…',
   'reader.searchNoResults': '일치하는 결과 없음',
   'reader.searchMatches': '{n}개 일치',
+  'reader.searchResultLabel': '검색 결과 {index}: {chapter}',
   'session.expiringWarning': '세션이 곧 만료됩니다. 저장 중…',
   'session.refresh': '로그인 유지',
   'session.expired': '세션이 종료되었습니다. 다시 로그인해주세요.',

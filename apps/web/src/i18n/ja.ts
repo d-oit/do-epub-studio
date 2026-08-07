@@ -31,6 +31,7 @@ export const ja: Record<TranslationKeys, string> = {
   'reader.searchPlaceholder': '書籍内を検索…',
   'reader.searchNoResults': '一致なし',
   'reader.searchMatches': '{n}件の一致',
+  'reader.searchResultLabel': '検索結果 {index}：{chapter}',
   'session.expiringWarning': 'セッションがまもなく期限切れになります。保存中…',
   'session.refresh': 'ログイン状態を維持',
   'session.expired': 'セッションが終了しました。再度ログインしてください。',

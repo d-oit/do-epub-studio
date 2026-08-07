@@ -30,6 +30,7 @@ export const en = {
   'reader.searchPlaceholder': 'Search in book…',
   'reader.searchNoResults': 'No matches',
   'reader.searchMatches': '{n} matches',
+  'reader.searchResultLabel': 'Search result {index}: {chapter}',
   'session.expiringWarning': 'Your session is about to expire. Saving…',
   'session.refresh': 'Stay signed in',
   'session.expired': 'Your session has ended. Please sign in again.',

@@ -23,7 +23,10 @@ const mockUseReaderSearch = useReaderSearchHook.useReaderSearch as unknown as Re
 describe('SearchPanel', () => {
   const mockOnClose = vi.fn();
   const mockOnNavigate = vi.fn();
-  const mockT = vi.fn((key: string) => key);
+  const mockT = vi.fn((key: string, params?: Record<string, unknown>) => {
+      if (key === 'reader.searchResultLabel') return `Search result ${params?.index}: ${params?.chapter}`;
+      return key;
+    });
   const mockBook = {} as Book;
 
   beforeEach(() => {
@@ -90,10 +93,34 @@ describe('SearchPanel', () => {
     const input = screen.getByRole('searchbox');
     fireEvent.change(input, { target: { value: 'fox' } });
 
-    const resultButton = screen.getByRole('button', { name: /Chapter 1/ });
+    const resultButton = screen.getByRole('button', { name: /Search result 1: Chapter 1/ });
     fireEvent.click(resultButton);
 
     expect(mockOnNavigate).toHaveBeenCalledWith('epubcfi(/1/2)');
+  });
+
+  it('labels each result button with an accessible search-result label', () => {
+    const mockResults = [
+      { cfi: 'epubcfi(/1/2)', cfiRange: 'epubcfi(/1/2)', excerpt: 'the quick brown fox', chapterTitle: 'Chapter 1' },
+      { cfi: 'epubcfi(/1/3)', cfiRange: 'epubcfi(/1/3)', excerpt: 'lazy dog', chapterTitle: 'Chapter 2' },
+    ];
+    mockUseReaderSearch.mockReturnValue({ results: mockResults, isSearching: false, error: null });
+
+    render(
+      <SearchPanel
+        isOpen
+        book={mockBook}
+        onClose={mockOnClose}
+        onNavigate={mockOnNavigate}
+        t={mockT}
+      />
+    );
+
+    const input = screen.getByRole('searchbox');
+    fireEvent.change(input, { target: { value: 'fox' } });
+
+    expect(screen.getByRole('button', { name: 'Search result 1: Chapter 1' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Search result 2: Chapter 2' })).toBeInTheDocument();
   });
 
   it('shows no results message when query has no matches', () => {

@@ -178,26 +178,33 @@ export function SearchPanel({ isOpen, book, onClose, onNavigate, t }: SearchPane
                 <p className="cq-search-result-meta text-xs font-medium text-foreground-muted mb-2 px-1">
                   {t('reader.searchMatches', { n: results.length })}
                 </p>
-                <div style={{ height: results.length * 80, position: 'relative' }}>
+                <ul
+                  style={{ height: results.length * 80, position: 'relative' }}
+                  className="list-none p-0 m-0"
+                >
                   {results.slice(visibleRange.start, visibleRange.end).map((result, i) => (
-                    <button
+                    <li
                       key={result.cfi}
-                      type="button"
-                      onClick={() => { onNavigate(result.cfi); }}
                       style={{ position: 'absolute', top: (visibleRange.start + i) * 80, left: 0, right: 0 }}
-                      className="w-full text-left p-3 rounded-lg hover:bg-background-secondary transition-colors border border-transparent hover:border-border group focus-visible:ring-2 focus-visible:ring-accent outline-none"
                     >
-                    {result.chapterTitle && (
-                      <span className="block text-[10px] uppercase tracking-wider font-bold text-accent mb-1">
-                        {result.chapterTitle}
-                      </span>
-                    )}
-                    <p className="text-sm text-foreground leading-relaxed line-clamp-3">
-                      {renderSnippet(result.excerpt, query, result.cfi)}
-                    </p>
-                    </button>
+                      <button
+                        type="button"
+                        onClick={() => { onNavigate(result.cfi); }}
+                        className="w-full text-left p-3 rounded-lg hover:bg-background-secondary transition-colors border border-transparent hover:border-border group focus-visible:ring-2 focus-visible:ring-accent outline-none"
+                        aria-label={t('reader.searchResultLabel', { index: visibleRange.start + i + 1, chapter: result.chapterTitle ?? t('reader.untitledBook') })}
+                      >
+                        {result.chapterTitle && (
+                          <span className="block text-[10px] uppercase tracking-wider font-bold text-accent mb-1">
+                            {result.chapterTitle}
+                          </span>
+                        )}
+                        <p className="text-sm text-foreground leading-relaxed line-clamp-3">
+                          {renderSnippet(result.excerpt, query, result.cfi)}
+                        </p>
+                      </button>
+                    </li>
                   ))}
-                </div>
+                </ul>
               </>
             ) : (
               !isSearching && (

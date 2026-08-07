@@ -31,6 +31,7 @@ export const fr: Record<TranslationKeys, string> = {
   'reader.searchPlaceholder': 'Rechercher dans le livre…',
   'reader.searchNoResults': 'Aucun résultat',
   'reader.searchMatches': '{n} résultats',
+  'reader.searchResultLabel': 'Résultat de recherche {index} : {chapter}',
   'session.expiringWarning': 'Votre session expire bientôt. Sauvegarde…',
   'session.refresh': 'Rester connecté',
   'session.expired': 'Votre session est terminée. Veuillez vous reconnecter.',

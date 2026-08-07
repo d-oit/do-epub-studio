@@ -31,6 +31,7 @@ export const zh: Record<TranslationKeys, string> = {
   'reader.searchPlaceholder': '在书中搜索…',
   'reader.searchNoResults': '无匹配结果',
   'reader.searchMatches': '{n}个匹配',
+  'reader.searchResultLabel': '搜索结果 {index}：{chapter}',
   'session.expiringWarning': '您的会话即将过期。正在保存…',
   'session.refresh': '保持登录',
   'session.expired': '您的会话已结束。请重新登录。',

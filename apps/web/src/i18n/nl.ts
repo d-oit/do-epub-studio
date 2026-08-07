@@ -31,6 +31,7 @@ export const nl: Record<TranslationKeys, string> = {
   'reader.searchPlaceholder': 'Zoeken in boek…',
   'reader.searchNoResults': 'Geen resultaten',
   'reader.searchMatches': '{n} resultaten',
+  'reader.searchResultLabel': 'Zoekresultaat {index}: {chapter}',
   'session.expiringWarning': 'Je sessie verloopt bijna. Opslaan…',
   'session.refresh': 'Ingelogd blijven',
   'session.expired': 'Je sessie is beëindigd. Log opnieuw in.',
