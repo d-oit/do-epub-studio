@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import {
   createEpubAnnotationAdapter,
   type HighlightRecord,
@@ -235,6 +235,72 @@ describe('createEpubAnnotationAdapter', () => {
       adapter.clearAnnotations();
 
       expect(mock.remove).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe('scheduleRender', () => {
+    let rafCallback: FrameRequestCallback | null = null;
+    let rafId = 0;
+
+    beforeEach(() => {
+      vi.spyOn(globalThis, 'requestAnimationFrame').mockImplementation((cb) => {
+        rafCallback = cb;
+        return ++rafId;
+      });
+      vi.spyOn(globalThis, 'cancelAnimationFrame').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    it('batches multiple scheduleRender calls into a single rAF', () => {
+      const highlights: HighlightRecord[] = [
+        { id: 'h1', chapterRef: 'ch1.html', cfiRange: 'epubcfi(/6/4!/4/2/1:0,/1:5)', color: '#ffff00' },
+      ];
+      const comments: CommentRecord[] = [];
+      const onNavigate = vi.fn();
+
+      adapter.scheduleRender('ch1.html', highlights, comments, onNavigate);
+      adapter.scheduleRender('ch1.html', highlights, comments, onNavigate);
+
+      expect(globalThis.requestAnimationFrame).toHaveBeenCalledTimes(1);
+
+      rafCallback?.(0);
+
+      const mock = rendition.annotations as unknown as AnnotationsMock;
+      expect(mock.append).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not render when cancelScheduledRender is called', () => {
+      const highlights: HighlightRecord[] = [
+        { id: 'h1', chapterRef: 'ch1.html', cfiRange: 'epubcfi(/6/4!/4/2/1:0,/1:5)', color: '#ffff00' },
+      ];
+      const onNavigate = vi.fn();
+
+      adapter.scheduleRender('ch1.html', highlights, [], onNavigate);
+      adapter.cancelScheduledRender();
+
+      rafCallback?.(0);
+
+      const mock = rendition.annotations as unknown as AnnotationsMock;
+      expect(mock.append).not.toHaveBeenCalled();
+    });
+
+    it('renders both highlights and comments when rAF fires', () => {
+      const highlights: HighlightRecord[] = [
+        { id: 'h1', chapterRef: 'ch1.html', cfiRange: 'epubcfi(/6/4!/4/2/1:0,/1:5)', color: '#ffff00' },
+      ];
+      const comments: CommentRecord[] = [
+        { id: 'c1', chapterRef: 'ch1.html', cfiRange: 'epubcfi(/6/4!/4/2/1:6,/1:12)', status: 'open' },
+      ];
+      const onNavigate = vi.fn();
+
+      adapter.scheduleRender('ch1.html', highlights, comments, onNavigate);
+      rafCallback?.(0);
+
+      const mock = rendition.annotations as unknown as AnnotationsMock;
+      expect(mock.append).toHaveBeenCalledTimes(2);
     });
   });
 });

@@ -74,6 +74,7 @@ export default defineConfig({
     outDir: 'dist',
     manifest: true,
     sourcemap: false,
+    chunkSizeWarningLimit: 500,
     rolldownOptions: {
       output: {
         // Vite 8 Rolldown uses codeSplitting or function manualChunks

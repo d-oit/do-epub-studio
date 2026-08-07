@@ -22,6 +22,7 @@ import { useTranslation } from '../../../hooks/useTranslation';
 import { createEpubAnnotationAdapter, type AnnotationAdapter, type HighlightRecord, type CommentRecord } from '@do-epub-studio/reader-core';
 import { createRelocatedHandler } from './useEpubProgress';
 import { applyDirectionAndWritingMode, type TocItem, type BookInfo } from '../lib/epub-init';
+import { PrefetchManager, type SpineItem } from '../../../lib/prefetch-manager';
 
 export function useReaderEpub(
   epubUrl: string | null,
@@ -55,6 +56,7 @@ export function useReaderEpub(
   const currentChapterRef = useRef<string | null>(null);
   const tocRef = useRef<TocItem[]>([]);
   const adapterRef = useRef<AnnotationAdapter | null>(null);
+  const prefetchManagerRef = useRef<PrefetchManager | null>(null);
   const onNavigateToAnnotationRef = useRef(onNavigateToAnnotation);
   onNavigateToAnnotationRef.current = onNavigateToAnnotation;
   const directionRef = useRef<PageDirection>('default');
@@ -135,6 +137,21 @@ export function useReaderEpub(
           : [];
         setToc(tocItems);
         tocRef.current = tocItems;
+
+        // Initialize PrefetchManager with spine items
+        const spineLike = (book as unknown as { spine?: { each: (cb: (item: SpineItem & { href: string }) => void) => void } }).spine;
+        if (spineLike) {
+          const spineItems: SpineItem[] = [];
+          spineLike.each((item) => {
+            if (item.href) {
+              spineItems.push({ href: item.href });
+            }
+          });
+          const prefetchManager = new PrefetchManager();
+          prefetchManager.setSpine(spineItems);
+          prefetchManagerRef.current = prefetchManager;
+        }
+
         const bookDirection: PageDirection =
           book.packaging?.direction === 'rtl'
             ? 'rtl'
@@ -277,6 +294,8 @@ export function useReaderEpub(
           const startHref = initialLocation.start.href ?? null;
           currentChapterRef.current = startHref;
           setCurrentChapter(startHref);
+          // Trigger prefetch for initial chapter
+          void prefetchManagerRef.current?.onChapterChange(startHref ?? '');
         }
 
         // Record time-to-first-display for client telemetry. Falls back to a
@@ -319,7 +338,11 @@ export function useReaderEpub(
               setCurrentChapter,
               tocRef.current,
               currentChapterRef,
-              renderAnnotations,
+              () => {
+                renderAnnotations();
+                // Trigger prefetch for next chapter
+                void prefetchManagerRef.current?.onChapterChange(currentChapterRef.current ?? '');
+              },
               () => markPageRead?.(),
             );
           })(),
@@ -354,6 +377,7 @@ export function useReaderEpub(
       if (adapterRef.current) {
         adapterRef.current.clearAnnotations();
       }
+      prefetchManagerRef.current?.destroy();
       renditionRef.current?.destroy();
       bookRef.current?.destroy();
     };

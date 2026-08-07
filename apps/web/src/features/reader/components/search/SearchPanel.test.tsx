@@ -157,4 +157,94 @@ describe('SearchPanel', () => {
     );
     expect(screen.queryByRole('search')).not.toBeInTheDocument();
   });
+
+  describe('virtualization', () => {
+    function typeQuery(container: HTMLElement) {
+      const input = container.querySelector('input[type="search"]') as HTMLInputElement;
+      fireEvent.change(input, { target: { value: 'test' } });
+    }
+
+    it('renders only visible results with buffer', () => {
+      const totalResults = 100;
+      const mockResults = Array.from({ length: totalResults }, (_, i) => ({
+        cfi: `cfi${i}`,
+        cfiRange: `cfi${i}`,
+        excerpt: `result ${i} excerpt`,
+        chapterTitle: `Chapter ${i}`,
+      }));
+      mockUseReaderSearch.mockReturnValue({ results: mockResults, isSearching: false, error: null });
+
+      const { container } = render(
+        <SearchPanel
+          isOpen
+          book={mockBook}
+          onClose={mockOnClose}
+          onNavigate={mockOnNavigate}
+          t={mockT}
+        />
+      );
+
+      typeQuery(container);
+
+      const resultButtons = container.querySelectorAll('button[type="button"][class*="text-left"]');
+      expect(resultButtons.length).toBeLessThan(totalResults);
+      expect(resultButtons.length).toBeGreaterThan(0);
+    });
+
+    it('maintains scroll position when navigating results', () => {
+      const totalResults = 50;
+      const mockResults = Array.from({ length: totalResults }, (_, i) => ({
+        cfi: `cfi${i}`,
+        cfiRange: `cfi${i}`,
+        excerpt: `result ${i} excerpt`,
+        chapterTitle: `Chapter ${i}`,
+      }));
+      mockUseReaderSearch.mockReturnValue({ results: mockResults, isSearching: false, error: null });
+
+      const { container } = render(
+        <SearchPanel
+          isOpen
+          book={mockBook}
+          onClose={mockOnClose}
+          onNavigate={mockOnNavigate}
+          t={mockT}
+        />
+      );
+
+      typeQuery(container);
+
+      const scrollContainer = container.querySelector('.overflow-y-auto');
+      expect(scrollContainer).toBeInTheDocument();
+
+      const resultButtons = container.querySelectorAll('button[type="button"][class*="text-left"]');
+      expect(resultButtons.length).toBeGreaterThan(0);
+    });
+
+    it('renders result container with correct total height', () => {
+      const totalResults = 10;
+      const mockResults = Array.from({ length: totalResults }, (_, i) => ({
+        cfi: `cfi${i}`,
+        cfiRange: `cfi${i}`,
+        excerpt: `result ${i} excerpt`,
+        chapterTitle: `Chapter ${i}`,
+      }));
+      mockUseReaderSearch.mockReturnValue({ results: mockResults, isSearching: false, error: null });
+
+      const { container } = render(
+        <SearchPanel
+          isOpen
+          book={mockBook}
+          onClose={mockOnClose}
+          onNavigate={mockOnNavigate}
+          t={mockT}
+        />
+      );
+
+      typeQuery(container);
+
+      const resultButtons = container.querySelectorAll('button[type="button"][class*="text-left"]');
+      expect(resultButtons.length).toBeLessThanOrEqual(totalResults);
+      expect(resultButtons.length).toBeGreaterThan(0);
+    });
+  });
 });

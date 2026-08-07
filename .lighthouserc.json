@@ -2,7 +2,7 @@
   "ci": {
     "collect": {
       "numberOfRuns": 3,
-      "puppeteerScript": "",
+      "puppeteerScript": "lighthouse/auth-reader-fixture.mjs",
       "settings": {
         "onlyCategories": ["performance", "accessibility", "best-practices", "seo"],
         "formFactor": "mobile"
@@ -11,7 +11,8 @@
         "http://localhost:5173/",
         "http://localhost:5173/catalog",
         "http://localhost:5173/login",
-        "http://localhost:5173/admin"
+        "http://localhost:5173/admin",
+        "http://localhost:5173/read/test-book"
       ]
     },
     "assert": {
@@ -28,10 +29,13 @@
         ["categories:performance", ["error", { "minScore": 0.6 }], { "matchingUrlPattern": ".*\\/catalog.*" }],
         ["categories:performance", ["error", { "minScore": 0.6 }], { "matchingUrlPattern": ".*\\/admin.*" }],
         ["categories:performance", ["error", { "minScore": 0.6 }], { "matchingUrlPattern": ".*\\/login.*" }],
+        ["categories:performance", ["error", { "minScore": 0.6 }], { "matchingUrlPattern": ".*\\/read\\/.*" }],
         ["first-contentful-paint", ["error", { "maxNumericValue": 1800 }], { "matchingUrlPattern": ".*\\/catalog.*" }],
         ["first-contentful-paint", ["error", { "maxNumericValue": 1800 }], { "matchingUrlPattern": ".*\\/login.*" }],
+        ["first-contentful-paint", ["error", { "maxNumericValue": 1200 }], { "matchingUrlPattern": ".*\\/read\\/.*" }],
         ["interactive", ["error", { "maxNumericValue": 4000 }], { "matchingUrlPattern": ".*\\/catalog.*" }],
-        ["interactive", ["error", { "maxNumericValue": 4000 }], { "matchingUrlPattern": ".*\\/admin.*" }]
+        ["interactive", ["error", { "maxNumericValue": 4000 }], { "matchingUrlPattern": ".*\\/admin.*" }],
+        ["interactive", ["error", { "maxNumericValue": 4000 }], { "matchingUrlPattern": ".*\\/read\\/.*" }]
       ]
     },
     "upload": {

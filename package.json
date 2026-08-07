@@ -22,7 +22,7 @@
     "db:migrate:local": "node scripts/db-migrate-local.mjs",
     "db:migrate:prod": "node scripts/db-migrate-prod.mjs",
     "db:check": "node scripts/db-check.mjs",
-    "verify:fast": "pnpm lint && pnpm typecheck && vitest run --changed main",
+    "verify:fast": "pnpm turbo run lint typecheck --affected && pnpm --filter \"...[origin/main]\" run test:unit",
     "test:e2e:smoke": "PLAYWRIGHT_MODE=dev playwright test --grep @smoke",
     "bench": "pnpm --filter @do-epub-studio/reader-core bench",
     "build:analyze": "ANALYZE=true turbo run build",

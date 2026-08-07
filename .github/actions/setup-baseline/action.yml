@@ -8,7 +8,7 @@ inputs:
   scripts-to-copy:
     description: Space-separated list of file paths to copy from HEAD into the baseline checkout
     required: false
-    default: 'scripts/check-bundle-size.mjs .performance-budgets.json'
+    default: 'scripts/check-bundle-budget.mjs .performance-budgets.json'
 
 outputs:
   baseline-dir:
