@@ -1,6 +1,6 @@
 import 'fake-indexeddb/auto';
 import * as matchers from '@testing-library/jest-dom/matchers';
-import { expect, vi, afterEach, afterAll } from 'vitest';
+import { expect, vi, afterEach, afterAll, beforeEach } from 'vitest';
 import { cleanup } from '@testing-library/react';
 
 expect.extend(matchers);

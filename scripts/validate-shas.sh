@@ -65,7 +65,12 @@ ALLOWED_SHAS=(
     "github/codeql-action/init@c54b30b7df092240050e69945842bc67aee0f0f4"
     "github/codeql-action/analyze@c54b30b7df092240050e69945842bc67aee0f0f4"
     "github/codeql-action/upload-sarif@c54b30b7df092240050e69945842bc67aee0f0f4"
+    "github/codeql-action/init@e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81"
+    "github/codeql-action/analyze@e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81"
+    "github/codeql-action/upload-sarif@e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81"
     "chromaui/action@8d25a97d902c85f51b6885beb52f92907406772d"
+    "chromaui/action@14cfaef73576e69f95f47f60058063f46ca38719"
+    "actions/stale@4391f3da665fdf50b6810c1a66712fb9ba21aa93"
     "ossf/scorecard-action@55891bbd73f2425e97637d96e306fc9d491d0b21"
     "ossf/scorecard-action@2d1146689b8cda280b9bc96326124645441f03bc"
 )

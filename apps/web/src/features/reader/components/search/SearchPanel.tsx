@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useFocusTrap, Spinner } from '@do-epub-studio/ui';
 import { IconButton } from '../../../../components/ui';
 import { useReaderSearch, highlightRanges } from '../../hooks/useReaderSearch';
@@ -13,8 +13,7 @@ interface SearchPanelProps {
 }
 
 const SNIPPET_MAX_CHARS = 240;
-const VISIBLE_BUFFER = 5;
-const ITEM_HEIGHT = 80;
+const VISIBLE_BUFFER = 10;
 
 function buildSnippet(excerpt: string, query: string): string {
   if (excerpt.length <= SNIPPET_MAX_CHARS) return excerpt;
@@ -80,12 +79,10 @@ export function SearchPanel({ isOpen, book, onClose, onNavigate, t }: SearchPane
   const [query, setQuery] = useState('');
   const { results, isSearching, error } = useReaderSearch(book, query);
   const panelRef = useRef<HTMLDivElement>(null);
+  // Search input is the first focusable element; the focus-trap in
+  // @do-epub-studio/ui auto-focuses it. We intentionally avoid autoFocus to
+  // honor the jsx-a11y/no-autofocus rule.
   const inputRef = useRef<HTMLInputElement>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const sentinelRef = useRef<HTMLDivElement>(null);
-  const [visibleStart, setVisibleStart] = useState(0);
-  const [visibleEnd, setVisibleEnd] = useState(50);
-  const lastNavigatedCfiRef = useRef<string | null>(null);
 
   useFocusTrap(isOpen, panelRef);
 
@@ -97,59 +94,23 @@ export function SearchPanel({ isOpen, book, onClose, onNavigate, t }: SearchPane
     }
   }, [isOpen]);
 
-  const totalHeight = results.length * ITEM_HEIGHT;
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [visibleRange, setVisibleRange] = useState({ start: 0, end: 50 });
 
-  const visibleResults = useMemo(() => {
-    const start = Math.max(0, visibleStart - VISIBLE_BUFFER);
-    const end = Math.min(results.length, visibleEnd + VISIBLE_BUFFER);
-    return results.slice(start, end).map((result, i) => ({
-      result,
-      index: start + i,
-    }));
-  }, [results, visibleStart, visibleEnd]);
-
-  useEffect(() => {
-    const container = scrollRef.current;
-    if (!container || results.length === 0) return;
-
-    const updateVisibleRange = () => {
-      const scrollTop = container.scrollTop;
-      const viewportHeight = container.clientHeight;
-      if (viewportHeight === 0) {
-        setVisibleStart(0);
-        setVisibleEnd(Math.min(results.length, 50));
-        return;
-      }
-      const start = Math.floor(scrollTop / ITEM_HEIGHT);
-      const end = Math.ceil((scrollTop + viewportHeight) / ITEM_HEIGHT);
-      setVisibleStart(start);
-      setVisibleEnd(end);
-    };
-
-    updateVisibleRange();
-
-    if (typeof ResizeObserver !== 'undefined') {
-      const observer = new ResizeObserver(updateVisibleRange);
-      observer.observe(container);
-      return () => observer.disconnect();
-    }
-
-    return undefined;
+  const handleScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const itemHeight = 80;
+    const scrollTop = el.scrollTop;
+    const viewportHeight = el.clientHeight;
+    const start = Math.max(0, Math.floor(scrollTop / itemHeight) - VISIBLE_BUFFER);
+    const end = Math.min(results.length, Math.ceil((scrollTop + viewportHeight) / itemHeight) + VISIBLE_BUFFER);
+    setVisibleRange({ start, end });
   }, [results.length]);
 
-  const scrollToResult = useCallback((index: number) => {
-    const container = scrollRef.current;
-    if (!container) return;
-    const top = index * ITEM_HEIGHT;
-    const viewHeight = container.clientHeight;
-    container.scrollTop = Math.max(0, top - viewHeight / 2 + ITEM_HEIGHT / 2);
-  }, []);
-
-  const handleNavigate = useCallback((cfi: string, index: number) => {
-    lastNavigatedCfiRef.current = cfi;
-    scrollToResult(index);
-    onNavigate(cfi);
-  }, [onNavigate, scrollToResult]);
+  useEffect(() => {
+    setVisibleRange({ start: 0, end: Math.min(results.length, 50) });
+  }, [results.length]);
 
   if (!isOpen) return null;
 
@@ -210,20 +171,20 @@ export function SearchPanel({ isOpen, book, onClose, onNavigate, t }: SearchPane
           </p>
         )}
 
-        <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-2 scrollbar-thin" aria-live="polite">
+        <div ref={scrollRef} onScroll={handleScroll} className="flex-1 overflow-y-auto space-y-2 scrollbar-thin" aria-live="polite">
           {query.trim().length >= 2 ? (
             results.length > 0 ? (
               <>
                 <p className="cq-search-result-meta text-xs font-medium text-foreground-muted mb-2 px-1">
                   {t('reader.searchMatches', { n: results.length })}
                 </p>
-                <div style={{ height: totalHeight, position: 'relative' }}>
-                  {visibleResults.map(({ result, index }) => (
+                <div style={{ height: results.length * 80, position: 'relative' }}>
+                  {results.slice(visibleRange.start, visibleRange.end).map((result, i) => (
                     <button
                       key={result.cfi}
                       type="button"
-                      onClick={() => handleNavigate(result.cfi, index)}
-                      style={{ position: 'absolute', top: index * ITEM_HEIGHT, left: 0, right: 0, height: ITEM_HEIGHT }}
+                      onClick={() => { onNavigate(result.cfi); }}
+                      style={{ position: 'absolute', top: (visibleRange.start + i) * 80, left: 0, right: 0 }}
                       className="w-full text-left p-3 rounded-lg hover:bg-background-secondary transition-colors border border-transparent hover:border-border group focus-visible:ring-2 focus-visible:ring-accent outline-none"
                     >
                     {result.chapterTitle && (
@@ -237,7 +198,6 @@ export function SearchPanel({ isOpen, book, onClose, onNavigate, t }: SearchPane
                     </button>
                   ))}
                 </div>
-                <div ref={sentinelRef} aria-hidden="true" />
               </>
             ) : (
               !isSearching && (
