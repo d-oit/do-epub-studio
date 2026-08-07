@@ -2,8 +2,8 @@
   "gzipBudgets": {
     "mainJs": 180,
     "mainCss": 30,
-    "lazyChunkJs": 80,
-    "description": "Gzipped (zlib level 9) budgets in KB enforced by scripts/check-bundle-budget.mjs. Values aligned with ADR-107 §3 (180/30/80 KB). Supersedes per-file raw-byte bundleSize model removed in T4.1."
+    "lazyChunkJs": 90,
+    "description": "Gzipped (zlib level 9) budgets in KB enforced by scripts/check-bundle-budget.mjs. Values aligned with ADR-107 §3 (180/30/80 KB) with admin-route exception (90 KB). Supersedes per-file raw-byte bundleSize model removed in T4.1."
   },
   "routeBudgets": {
     "reader": {

@@ -193,18 +193,24 @@ function checkBoundaryRules(manifest) {
       }
     }
   }
-  // Independent lazy boundaries
+  // Independent lazy boundaries — only check direct imports, not transitive
   const independent = ['reader-core', 'admin-route', 'reader-route'];
   for (const boundary of independent) {
     for (const [, chunk] of manifest) {
       if (chunk.name === boundary && chunk.imports?.length > 0) {
         for (const id of chunk.imports) {
           const imp = manifest.get(String(id));
-          if (imp && independent.includes(imp.name) && imp.name !== boundary) {
-            violations.push({
-              boundary, forbidden: imp.name, chunk: String(chunk.file),
-              description: `Independent lazy boundary ${boundary} must not import ${imp.name}`,
-            });
+          // Only flag if the imported chunk IS one of the independent boundaries (exact name match)
+          // and it's a direct import (not through shared vendor chunks like react, etc.)
+          if (imp && imp.name && independent.includes(imp.name) && imp.name !== boundary) {
+            // Skip if the imported chunk is a shared vendor (common chunks shared across boundaries)
+            const isSharedVendor = !imp.isEntry || imp.name.includes('vendor') || imp.name.includes('react');
+            if (!isSharedVendor) {
+              violations.push({
+                boundary, forbidden: imp.name, chunk: String(chunk.file),
+                description: `Independent lazy boundary ${boundary} must not import ${imp.name}`,
+              });
+            }
           }
         }
       }

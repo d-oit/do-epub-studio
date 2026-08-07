@@ -36,7 +36,7 @@ async function collectTurboMetrics() {
     });
 
     const dryRunData = JSON.parse(dryRunOutput);
-    
+
     if (dryRunData.tasks) {
       for (const task of dryRunData.tasks) {
         const taskMetric = {
@@ -48,19 +48,19 @@ async function collectTurboMetrics() {
           local: task.cache?.local || false,
           remote: task.cache?.remote || false
         };
-        
+
         metrics.tasks.push(taskMetric);
-        
+
         if (task.cache?.status === 'HIT') {
           metrics.cacheSummary.hits++;
         } else {
           metrics.cacheSummary.misses++;
         }
       }
-      
+
       metrics.cacheSummary.total = metrics.tasks.length;
-      metrics.cacheSummary.hitRatio = metrics.cacheSummary.total > 0 
-        ? Math.round((metrics.cacheSummary.hits / metrics.cacheSummary.total) * 100) 
+      metrics.cacheSummary.hitRatio = metrics.cacheSummary.total > 0
+        ? Math.round((metrics.cacheSummary.hits / metrics.cacheSummary.total) * 100)
         : 0;
     }
   } catch (error) {
@@ -102,10 +102,10 @@ async function collectTestMetrics() {
     const playwrightResultFile = path.join(rootDir, 'test-results/playwright/.last-run.json');
     if (fs.existsSync(playwrightResultFile)) {
       const playwrightData = JSON.parse(fs.readFileSync(playwrightResultFile, 'utf8'));
-      
+
       if (playwrightData.status === 'failed' && playwrightData.failedTests) {
         metrics.failedTests += playwrightData.failedTests.length;
-        
+
         for (const failedTest of playwrightData.failedTests) {
           metrics.flakyTests.push({
             name: failedTest.title || 'Unknown test',
@@ -122,7 +122,7 @@ async function collectTestMetrics() {
         metrics.totalTests += testResult.numPassedTests + testResult.numFailedTests;
         metrics.failedTests += testResult.numFailedTests;
         metrics.passedTests += testResult.numPassedTests;
-        
+
         // Check for flaky tests (tests that failed and then passed)
         if (testResult.flaky) {
           for (const assertion of testResult.assertionResults || []) {
@@ -142,7 +142,7 @@ async function collectTestMetrics() {
     const verificationOutputFile = path.join(rootDir, 'verification_output.txt');
     if (fs.existsSync(verificationOutputFile)) {
       const verificationOutput = fs.readFileSync(verificationOutputFile, 'utf8');
-      
+
       // Parse vitest output from verification_output.txt
       const vitestMatch = verificationOutput.match(/Tests\s+(\d+)\s+failed.*?(\d+)\s+passed/s);
       if (vitestMatch) {
@@ -155,12 +155,12 @@ async function collectTestMetrics() {
       const flakyIndicators = verificationOutput.match(/flaky|retry|rerun/gi);
       if (flakyIndicators && flakyIndicators.length > 0) {
         // Extract flaky test names from output
-        const flakyLines = verificationOutput.split('\n').filter(line => 
-          line.toLowerCase().includes('flaky') || 
+        const flakyLines = verificationOutput.split('\n').filter(line =>
+          line.toLowerCase().includes('flaky') ||
           line.toLowerCase().includes('retry') ||
           line.toLowerCase().includes('rerun')
         );
-        
+
         for (const line of flakyLines.slice(0, 10)) {
           const testMatch = line.match(/['"]([^'"]+)['"]/);
           if (testMatch) {
@@ -194,7 +194,7 @@ async function main() {
 
   // Write turbo metrics to the output file
   fs.writeFileSync(outputPath, JSON.stringify(turboMetrics, null, 2));
-  
+
   // Write test metrics to a separate file
   let testOutputPath;
   if (outputPath.includes('-turbo.json')) {
@@ -204,9 +204,9 @@ async function main() {
   } else {
     testOutputPath = outputPath.replace('.json', '-test.json');
   }
-  
+
   fs.writeFileSync(testOutputPath, JSON.stringify(testMetrics, null, 2));
-  
+
   console.log(`Metrics collected and written to ${outputPath} and ${testOutputPath}`);
 }
 
