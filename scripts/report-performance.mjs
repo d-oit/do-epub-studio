@@ -35,9 +35,19 @@ const bundleMetrics = readJson(path.join(metricsPath, 'bundle-metrics.json'));
 const startupMetrics = readJson(path.join(metricsPath, 'startup-metrics.json'));
 const ciMetrics = readJson(path.join(metricsPath, 'ci-metrics.json'));
 const lighthouseMetrics = readJson(path.join(metricsPath, 'lighthouse-metrics.json'));
+const turboMetricsRaw = readJson(path.join(metricsPath, 'turbo-metrics.json'));
+const testMetricsRaw = readJson(path.join(metricsPath, 'test-metrics.json'));
 
 const baselineBundle = baselinePath ? readJson(path.join(baselinePath, 'bundle-metrics.json')) : null;
 const baselineStartup = baselinePath ? readJson(path.join(baselinePath, 'startup-metrics.json')) : null;
+const baselineTurboRaw = baselinePath ? readJson(path.join(baselinePath, 'turbo-metrics.json')) : null;
+const baselineTestRaw = baselinePath ? readJson(path.join(baselinePath, 'test-metrics.json')) : null;
+
+// Handle nested structure from collect-turbo-metrics.mjs
+const turboMetrics = turboMetricsRaw?.turbo || turboMetricsRaw;
+const testMetrics = testMetricsRaw?.test || testMetricsRaw;
+const baselineTurbo = baselineTurboRaw?.turbo || baselineTurboRaw;
+const baselineTest = baselineTestRaw?.test || baselineTestRaw;
 
 let markdown = '## 🚀 Performance Report\n\n';
 
@@ -56,7 +66,7 @@ if (bundleMetrics && bundleMetrics.bundleSize) {
   markdown += '| :--- | :--- | :--- | :--- | :--- |\n';
 
   for (const res of bundleMetrics.bundleSize) {
-    const limit = budgets.bundleSize[res.file] || budgets.bundleSize[path.basename(res.file)] || 0;
+    const limit = res.limit || budgets.bundleSize?.[res.file] || budgets.bundleSize?.[path.basename(res.file)] || 0;
     const status = res.passed ? '✅' : '❌';
 
     let trend = 'NEW';
@@ -144,18 +154,100 @@ if (lighthouseMetrics) {
 
 if (ciMetrics) {
   markdown += '### 🛠️ CI & Workflow\n\n';
-  markdown += `| Metric | Value | Limit | Status |\n`;
-  markdown += `| :--- | :--- | :--- | :--- |\n`;
+  markdown += `| Metric | Value | Limit | Trend | Status |\n`;
+  markdown += `| :--- | :--- | :--- | :--- | :--- |\n`;
 
   if (ciMetrics.duration) {
     const durationMin = (ciMetrics.duration / 60).toFixed(2);
     const limitMin = (budgets.ciDuration.total / 60).toFixed(2);
     const status = ciMetrics.duration < budgets.ciDuration.total ? '✅' : '⚠️';
-    markdown += `| Total CI Duration | ${durationMin} min | ${limitMin} min | ${status} |\n`;
+    let trend = '-';
+    if (baselineTurbo && baselineTurbo.ciDuration) {
+      trend = getChange(ciMetrics.duration, baselineTurbo.ciDuration) || '0%';
+    }
+    markdown += `| Total CI Duration | ${durationMin} min | ${limitMin} min | ${trend} | ${status} |\n`;
   }
   if (ciMetrics.cacheHit !== undefined) {
     const status = ciMetrics.cacheHit === 'true' ? '✅' : '🔄';
-    markdown += `| Pnpm Cache Hit | ${ciMetrics.cacheHit === 'true' ? 'Hit' : 'Miss'} | - | ${status} |\n`;
+    let trend = '-';
+    if (baselineTurbo && baselineTurbo.pnpmCacheHit !== undefined) {
+      const baselineHit = baselineTurbo.pnpmCacheHit === 'true';
+      const currentHit = ciMetrics.cacheHit === 'true';
+      trend = baselineHit === currentHit ? '0%' : (currentHit ? '✅ Improved' : '🔄 Regressed');
+    }
+    markdown += `| Pnpm Cache Hit | ${ciMetrics.cacheHit === 'true' ? 'Hit' : 'Miss'} | - | ${trend} | ${status} |\n`;
+  }
+  markdown += '\n';
+}
+
+if (turboMetrics) {
+  markdown += '### ⚡ Turbo Task Performance\n\n';
+  markdown += `| Task | Duration (s) | Cache Status | Trend | Status |\n`;
+  markdown += `| :--- | :--- | :--- | :--- | :--- |\n`;
+
+  const tasks = turboMetrics.tasks || [];
+  for (const task of tasks) {
+    const durationSec = (task.duration / 1000).toFixed(2);
+    const cacheStatus = task.cacheStatus || 'MISS';
+    const status = cacheStatus === 'HIT' ? '✅' : '🔄';
+
+    let trend = '-';
+    if (baselineTurbo && baselineTurbo.tasks) {
+      const baselineTask = baselineTurbo.tasks.find(t => t.taskId === task.taskId);
+      if (baselineTask) {
+        trend = getChange(task.duration, baselineTask.duration) || '0%';
+      }
+    }
+
+    markdown += `| ${task.taskId} | ${durationSec} | ${cacheStatus} | ${trend} | ${status} |\n`;
+  }
+  markdown += '\n';
+
+  if (turboMetrics.cacheSummary) {
+    markdown += `**Cache Hit Ratio:** ${turboMetrics.cacheSummary.hitRatio}% (${turboMetrics.cacheSummary.hits}/${turboMetrics.cacheSummary.total} tasks)\n\n`;
+  }
+}
+
+if (testMetrics) {
+  markdown += '### 🧪 Test Stability\n\n';
+  markdown += `| Metric | Value | Trend | Status |\n`;
+  markdown += `| :--- | :--- | :--- | :--- |\n`;
+
+  if (testMetrics.totalTests !== undefined) {
+    let trend = '-';
+    if (baselineTest && baselineTest.totalTests !== undefined) {
+      trend = getChange(testMetrics.totalTests, baselineTest.totalTests) || '0%';
+    }
+    markdown += `| Total Tests | ${testMetrics.totalTests} | ${trend} | - |\n`;
+  }
+
+  if (testMetrics.failedTests !== undefined) {
+    let trend = '-';
+    if (baselineTest && baselineTest.failedTests !== undefined) {
+      trend = getChange(testMetrics.failedTests, baselineTest.failedTests) || '0%';
+    }
+    const status = testMetrics.failedTests === 0 ? '✅' : '❌';
+    markdown += `| Failed Tests | ${testMetrics.failedTests} | ${trend} | ${status} |\n`;
+  }
+
+  if (testMetrics.flakyTests !== undefined && testMetrics.flakyTests.length > 0) {
+    markdown += `\n**Flaky Tests Detected (${testMetrics.flakyTests.length}):**\n`;
+    for (const flaky of testMetrics.flakyTests.slice(0, 10)) {
+      markdown += `- ${flaky.name} (${flaky.suite})\n`;
+    }
+    if (testMetrics.flakyTests.length > 10) {
+      markdown += `- ... and ${testMetrics.flakyTests.length - 10} more\n`;
+    }
+    markdown += '\n';
+  }
+
+  if (testMetrics.flakyRate !== undefined) {
+    let trend = '-';
+    if (baselineTest && baselineTest.flakyRate !== undefined) {
+      trend = getChange(testMetrics.flakyRate, baselineTest.flakyRate) || '0%';
+    }
+    const status = testMetrics.flakyRate <= 1 ? '✅' : (testMetrics.flakyRate <= 5 ? '⚠️' : '❌');
+    markdown += `| Flaky Rate | ${testMetrics.flakyRate.toFixed(2)}% | ${trend} | ${status} |\n`;
   }
   markdown += '\n';
 }

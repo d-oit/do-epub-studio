@@ -90,6 +90,7 @@ jobs:
             ${{ steps.deploy.outputs.url }}/catalog
             ${{ steps.deploy.outputs.url }}/login
             ${{ steps.deploy.outputs.url }}/admin
+            ${{ steps.deploy.outputs.url }}/read/test-book
           configPath: .lighthouserc.json
           uploadArtifacts: true
           temporaryPublicStorage: true

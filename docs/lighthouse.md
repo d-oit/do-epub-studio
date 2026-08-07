@@ -47,7 +47,7 @@ In addition to Lighthouse scores, the project enforces hard JS/CSS budget gates 
 pnpm --filter @do-epub-studio/web build
 
 # Run size check (including route-aware budgets)
-node scripts/check-bundle-size.mjs
+node scripts/check-bundle-budget.mjs
 ```
 
 ### Lighthouse Audit

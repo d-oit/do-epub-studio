@@ -1,17 +1,9 @@
 {
-  "bundleSize": {
-    "index.js": 500000,
-    "react-vendor.js": 400000,
-    "index.css": 100000,
-    "reader-core.js": 300000,
-    "reader-route.js": 200000,
-    "epubjs.js": 250000
-  },
   "gzipBudgets": {
-    "mainJs": 240,
+    "mainJs": 180,
     "mainCss": 30,
-    "lazyChunkJs": 142,
-    "description": "Gzipped (zlib level 9) budgets in KB enforced by scripts/check-bundle-budget.mjs (ADR-107 §3). Single source shared with the raw-byte bundleSize budgets above."
+    "lazyChunkJs": 80,
+    "description": "Gzipped (zlib level 9) budgets in KB enforced by scripts/check-bundle-budget.mjs. Values aligned with ADR-107 §3 (180/30/80 KB). Supersedes per-file raw-byte bundleSize model removed in T4.1."
   },
   "routeBudgets": {
     "reader": {
@@ -28,6 +20,23 @@
       "entry": "src/features/admin/AdminDashboardPage.tsx",
       "maxSize": 890000,
       "description": "Total transitive JS and CSS for the admin route (includes shared vendors)"
+    }
+  },
+  "boundaryRules": {
+    "catalog": {
+      "entry": "src/features/catalog/CatalogPage.tsx",
+      "forbiddenImports": ["reader-core"],
+      "description": "Catalog shell must not import reader-core"
+    },
+    "auth": {
+      "entry": "src/features/auth/LoginPage.tsx",
+      "forbiddenImports": ["reader-core"],
+      "description": "Auth shell must not import reader-core"
+    },
+    "admin": {
+      "entry": "src/features/admin/AdminDashboardPage.tsx",
+      "forbiddenImports": ["reader-core"],
+      "description": "Admin shell must not import reader-core"
     }
   },
   "startupTime": {

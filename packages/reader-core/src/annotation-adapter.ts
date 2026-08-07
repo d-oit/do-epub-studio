@@ -22,6 +22,20 @@ export interface AnnotationAdapter {
     onNavigate: (chapterRef: string, cfiRange?: string) => void | Promise<void>,
   ): void;
   clearAnnotations(): void;
+  /**
+   * Schedule a batched render of both highlights and comments.
+   * Multiple calls within the same frame are coalesced into a single render.
+   */
+  scheduleRender(
+    chapterHref: string | null,
+    highlights: HighlightRecord[],
+    comments: CommentRecord[],
+    onNavigate: (chapterRef: string, cfiRange?: string) => void | Promise<void>,
+  ): void;
+  /**
+   * Cancel any pending scheduled render and clear state.
+   */
+  cancelScheduledRender(): void;
 }
 
 interface InternalAnnotation {
@@ -43,48 +57,78 @@ export function createEpubAnnotationAdapter(rendition: Rendition): AnnotationAda
     }
   }
 
+  let pendingRafId: number | null = null;
+  let pendingChapterHref: string | null = null;
+  let pendingHighlights: HighlightRecord[] = [];
+  let pendingComments: CommentRecord[] = [];
+  let pendingOnNavigate: ((chapterRef: string, cfiRange?: string) => void | Promise<void>) | null = null;
+
+  function executePendingRender(): void {
+    pendingRafId = null;
+    if (!pendingChapterHref) return;
+    const chapterHref = pendingChapterHref;
+    const highlights = pendingHighlights;
+    const comments = pendingComments;
+    const onNavigate = pendingOnNavigate;
+    pendingChapterHref = null;
+    pendingHighlights = [];
+    pendingComments = [];
+    pendingOnNavigate = null;
+    if (onNavigate) {
+      renderHighlights(chapterHref, highlights);
+      renderCommentMarkers(chapterHref, comments, onNavigate);
+    }
+  }
+
+  function renderHighlights(chapterHref: string | null, highlights: HighlightRecord[]): void {
+    removeAnnotationsByType('highlight');
+
+    if (!chapterHref) return;
+
+    const chapterHighlights = highlights.filter(
+      (h) => h.chapterRef === chapterHref && h.cfiRange,
+    );
+
+    for (const highlight of chapterHighlights) {
+      rendition.annotations.append('highlight', highlight.cfiRange as string, {
+        data: highlight,
+        styles: { fill: highlight.color, 'fill-opacity': '0.3' },
+      });
+    }
+  }
+
+  function renderCommentMarkers(
+    chapterHref: string | null,
+    comments: CommentRecord[],
+    onNavigate: (chapterRef: string, cfiRange?: string) => void | Promise<void>,
+  ): void {
+    removeAnnotationsByType('underline');
+
+    if (!chapterHref) return;
+
+    const chapterComments = comments.filter(
+      (c) => c.chapterRef === chapterHref && c.cfiRange && c.status !== 'deleted',
+    );
+
+    for (const comment of chapterComments) {
+      const isResolved = comment.status === 'resolved';
+      rendition.annotations.append('underline', comment.cfiRange as string, {
+        data: comment,
+        cb: () => {
+          void onNavigate(comment.chapterRef ?? '', comment.cfiRange ?? undefined);
+        },
+        styles: {
+          stroke: isResolved ? '#9ca3af' : '#3b82f6',
+          'stroke-width': isResolved ? '1px' : '2px',
+          'stroke-opacity': isResolved ? '0.4' : '0.7',
+        },
+      });
+    }
+  }
+
   return {
-    renderHighlights(chapterHref, highlights) {
-      removeAnnotationsByType('highlight');
-
-      if (!chapterHref) return;
-
-      const chapterHighlights = highlights.filter(
-        (h) => h.chapterRef === chapterHref && h.cfiRange,
-      );
-
-      for (const highlight of chapterHighlights) {
-        rendition.annotations.append('highlight', highlight.cfiRange as string, {
-          data: highlight,
-          styles: { fill: highlight.color, 'fill-opacity': '0.3' },
-        });
-      }
-    },
-
-    renderCommentMarkers(chapterHref, comments, onNavigate) {
-      removeAnnotationsByType('underline');
-
-      if (!chapterHref) return;
-
-      const chapterComments = comments.filter(
-        (c) => c.chapterRef === chapterHref && c.cfiRange && c.status !== 'deleted',
-      );
-
-      for (const comment of chapterComments) {
-        const isResolved = comment.status === 'resolved';
-        rendition.annotations.append('underline', comment.cfiRange as string, {
-          data: comment,
-          cb: () => {
-            void onNavigate(comment.chapterRef ?? '', comment.cfiRange ?? undefined);
-          },
-          styles: {
-            stroke: isResolved ? '#9ca3af' : '#3b82f6',
-            'stroke-width': isResolved ? '1px' : '2px',
-            'stroke-opacity': isResolved ? '0.4' : '0.7',
-          },
-        });
-      }
-    },
+    renderHighlights,
+    renderCommentMarkers,
 
     clearAnnotations() {
       const existing = rendition.annotations as unknown as AnnotationsIterable;
@@ -95,6 +139,27 @@ export function createEpubAnnotationAdapter(rendition: Rendition): AnnotationAda
       for (const { cfiRange, type } of toRemove) {
         rendition.annotations.remove(cfiRange, type);
       }
+    },
+
+    scheduleRender(chapterHref, highlights, comments, onNavigate) {
+      pendingChapterHref = chapterHref;
+      pendingHighlights = highlights;
+      pendingComments = comments;
+      pendingOnNavigate = onNavigate;
+      if (pendingRafId === null) {
+        pendingRafId = requestAnimationFrame(executePendingRender);
+      }
+    },
+
+    cancelScheduledRender() {
+      if (pendingRafId !== null) {
+        cancelAnimationFrame(pendingRafId);
+        pendingRafId = null;
+      }
+      pendingChapterHref = null;
+      pendingHighlights = [];
+      pendingComments = [];
+      pendingOnNavigate = null;
     },
   };
 }
