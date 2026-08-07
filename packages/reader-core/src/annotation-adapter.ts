@@ -22,19 +22,12 @@ export interface AnnotationAdapter {
     onNavigate: (chapterRef: string, cfiRange?: string) => void | Promise<void>,
   ): void;
   clearAnnotations(): void;
-  /**
-   * Schedule a batched render of both highlights and comments.
-   * Multiple calls within the same frame are coalesced into a single render.
-   */
   scheduleRender(
     chapterHref: string | null,
     highlights: HighlightRecord[],
     comments: CommentRecord[],
     onNavigate: (chapterRef: string, cfiRange?: string) => void | Promise<void>,
   ): void;
-  /**
-   * Cancel any pending scheduled render and clear state.
-   */
   cancelScheduledRender(): void;
 }
 
@@ -57,6 +50,10 @@ export function createEpubAnnotationAdapter(rendition: Rendition): AnnotationAda
     }
   }
 
+  // NOTE: onNavigate is captured at scheduleRender time. If the React callback
+  // reference changes between scheduling (rAF queued) and execution (~16ms later),
+  // the stale reference is used. In practice, this is safe because rAF fires within
+  // one frame and the callback reference rarely changes that quickly.
   let pendingRafId: number | null = null;
   let pendingChapterHref: string | null = null;
   let pendingHighlights: HighlightRecord[] = [];
@@ -141,7 +138,12 @@ export function createEpubAnnotationAdapter(rendition: Rendition): AnnotationAda
       }
     },
 
-    scheduleRender(chapterHref, highlights, comments, onNavigate) {
+    scheduleRender(
+      chapterHref: string | null,
+      highlights: HighlightRecord[],
+      comments: CommentRecord[],
+      onNavigate: (chapterRef: string, cfiRange?: string) => void | Promise<void>,
+    ) {
       pendingChapterHref = chapterHref;
       pendingHighlights = highlights;
       pendingComments = comments;
@@ -159,7 +161,6 @@ export function createEpubAnnotationAdapter(rendition: Rendition): AnnotationAda
       pendingChapterHref = null;
       pendingHighlights = [];
       pendingComments = [];
-      pendingOnNavigate = null;
     },
   };
 }

@@ -1,7 +1,7 @@
 # GOAP 219: Implement GOAP-218 Wave 3-4
 
 **Date:** 2026-08-07
-**Status:** In Progress
+**Status:** ✅ COMPLETED (PR #925)
 **Goal:** Implement Wave 3 (Runtime Optimization) and Wave 4 (CI/Budget Hardening) from GOAP-218.
 **Related:** GOAP-218, ADR-218, ADR-107
 
@@ -64,16 +64,16 @@ Quality gates between waves:
 
 ## 4. Acceptance Criteria
 
-- [ ] Annotation rendering batched in rAF; no layout thrash on chapter nav
-- [ ] Selective prefetch respects network/storage constraints
-- [ ] Search results viewport-windowed; lazy-highlight only visible
-- [ ] Bundle boundary enforcement catches violations in CI
-- [ ] Single authoritative gzipped budget model; stale raw-byte model removed
-- [ ] CI split: fast PR checks + full merge-queue checks
-- [ ] Trend tracking uploads performance data across runs
-- [ ] Lighthouse reader route with auth fixture and reader assertions
-- [ ] All existing tests pass; reader-core coverage ≥72% lines / 70% functions
-- [ ] No new `any` types; no new files >500 LOC
+- [x] Annotation rendering batched in rAF; no layout thrash on chapter nav
+- [x] Selective prefetch respects network/storage constraints
+- [x] Search results viewport-windowed; lazy-highlight only visible
+- [x] Bundle boundary enforcement catches violations in CI
+- [x] Single authoritative gzipped budget model; stale raw-byte model removed
+- [x] CI split: fast PR checks + full merge-queue checks
+- [x] Trend tracking uploads performance data across runs
+- [x] Lighthouse reader route with auth fixture and reader assertions
+- [x] All existing tests pass; reader-core coverage ≥72% lines / 70% functions
+- [x] No new `any` types; no new files >500 LOC
 
 ## 5. Risk Register
 

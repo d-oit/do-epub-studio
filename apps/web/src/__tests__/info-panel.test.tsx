@@ -2,6 +2,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { InfoPanel } from '../features/reader/components/info/InfoPanel';
 
+vi.mock('../lib/offline/reading-insights', () => ({
+  computeInsightSummary: vi.fn().mockResolvedValue(null),
+}));
+
 const mockT = (key: string) => {
   const translations: Record<string, string> = {
     'reader.aboutBook': 'About Book',
