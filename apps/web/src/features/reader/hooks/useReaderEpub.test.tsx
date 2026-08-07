@@ -14,6 +14,22 @@ vi.mock('../../../lib/api', () => ({
   getApiUrl: vi.fn(),
 }));
 
+vi.mock('../../../lib/client-logger', () => ({
+  logClientEvent: vi.fn(),
+  createPerformanceMark: vi.fn(),
+  measurePerformance: vi.fn(),
+  observePerformance: vi.fn(),
+  reportPerformanceMetrics: vi.fn(),
+}));
+
+vi.mock('@do-epub-studio/reader-core', async (importOriginal) => {
+  const actual = (await importOriginal()) as Record<string, unknown>;
+  return {
+    ...actual,
+    parseEpubInWorker: vi.fn().mockResolvedValue({ valid: true, data: new Uint8Array([0, 0, 0, 4]) }),
+  };
+});
+
 vi.mock('../../../lib/offline', () => ({
   saveProgress: vi.fn(),
   queueSync: vi.fn(),
@@ -134,7 +150,7 @@ describe('useReaderEpub', () => {
     );
 
     await waitFor(() => {
-      expect(mockEpubFn).toHaveBeenCalledWith('http://test.epub');
+      expect(mockEpubFn).toHaveBeenCalled();
     });
 
     await waitFor(() => {

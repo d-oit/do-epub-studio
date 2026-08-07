@@ -82,6 +82,7 @@
 | 201    | WebKit in PR smoke CI                                                      | `plans/ADR-201-webkit-smoke-ci.md`                                       | Accepted                                                             |
 | 216    | Vitest Pool Policy and Mobile Test Isolation                               | `plans/216-adr-vitest-pool-policy.md`                                    | Accepted                                                             |
 | 217    | OpenTelemetry Evaluation as a Follow-Up Decision                           | `plans/217-adr-opentelemetry-evaluation.md`                              | Accepted (deferred evaluation)                                       |
+| 218    | Measured Performance Baseline Policy                                       | `plans/218-adr-measured-performance-baseline-policy.md`                  | Proposed                                                            |
 | 998    | Offline Comment Status Preservation                                        | `plans/archive/998-adr-offline-comment-status-preservation.md`           | Accepted                                                             |
 
 ## Cross-referenced (archived GOAP execution records)

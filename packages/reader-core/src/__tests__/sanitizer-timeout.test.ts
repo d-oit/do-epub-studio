@@ -81,7 +81,7 @@ describe('createEpubSanitizerHook timeout integration', () => {
   });
 
   it('hook propagates traceId to TimeoutError', () => {
-    const hook = createEpubSanitizerHook({ timeoutMs: 5000, traceId: 'hook-trace-42' });
+    const { hook } = createEpubSanitizerHook({ timeoutMs: 5000, traceId: 'hook-trace-42' });
     const doc = createDoc();
     vi.spyOn(performance, 'now')
       .mockReturnValueOnce(0)

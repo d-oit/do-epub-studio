@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import zlib from 'node:zlib';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -52,6 +53,15 @@ if (!fs.existsSync(distDir)) {
   process.exit(1);
 }
 const fileMap = getFilesRecursive(distDir);
+const brotliMap = new Map();
+for (const [fp, sz] of fileMap.entries()) {
+  try {
+    const buf = fs.readFileSync(fp);
+    brotliMap.set(fp, zlib.brotliCompressSync(buf).length);
+  } catch {
+    brotliMap.set(fp, 0);
+  }
+}
 const results = [];
 let hasError = false;
 
@@ -171,6 +181,7 @@ if (manifestPath) {
     }
 
     let totalSize = 0;
+    let totalBrotli = 0;
     const details = [];
     for (const fileId of collectedFileIds) {
       const fileName = String(fileId);
@@ -179,8 +190,10 @@ if (manifestPath) {
       // Use pre-scanned fileMap to avoid dynamic statSync and confirm it's in the distDir
       if (fullPath.startsWith(distDir) && fileMap.has(fullPath)) {
         const size = fileMap.get(fullPath);
+        const brSize = brotliMap.get(fullPath) || 0;
         totalSize += size;
-        details.push({ file: fileName, size });
+        totalBrotli += brSize;
+        details.push({ file: fileName, size, brotliSize: brSize });
       }
     }
 
@@ -190,6 +203,7 @@ if (manifestPath) {
     routeResults.push({
       route: routeName,
       size: totalSize,
+      brotliSize: totalBrotli,
       limit: maxSize,
       passed,
       details
@@ -210,11 +224,11 @@ for (const res of results) {
 
 if (routeResults.length > 0) {
   console.log('\n### Route-Aware Budgets');
-  console.log('| Route | Total Size (KB) | Limit (KB) | Status |');
-  console.log('| :--- | :--- | :--- | :--- |');
+  console.log('| Route | Total Gzip (KB) | Total Brotli (KB) | Limit (KB) | Status |');
+  console.log('| :--- | ---: | ---: | ---: | :--- |');
   for (const res of routeResults) {
     const status = res.passed ? '✅' : '❌';
-    console.log(`| ${res.route} | ${(res.size / 1024).toFixed(2)} | ${(res.limit / 1024).toFixed(2)} | ${status} |`);
+    console.log(`| ${res.route} | ${(res.size / 1024).toFixed(2)} | ${(res.brotliSize / 1024).toFixed(2)} | ${(res.limit / 1024).toFixed(2)} | ${status} |`);
   }
 }
 
@@ -223,7 +237,14 @@ if (process.env.METRICS_OUTPUT) {
   const metricsOutput = String(process.env.METRICS_OUTPUT);
   const output = {
     bundleSize: results,
-    routeBudgets: routeResults
+    routeBudgets: routeResults.map((r) => ({
+      route: r.route,
+      size: r.size,
+      brotliSize: r.brotliSize,
+      limit: r.limit,
+      passed: r.passed,
+      details: r.details,
+    })),
   };
   fs.writeFileSync(metricsOutput, JSON.stringify(output, null, 2));
 }

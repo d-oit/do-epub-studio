@@ -4,6 +4,7 @@ import { matchBounded, checkDeadline, createDeadline } from '@do-epub-studio/sha
 
 const SANITIZE_TIMEOUT_MS = 5_000;
 const TREEWALKER_CHECK_INTERVAL = 100;
+const SANITIZE_CACHE_MAX = 10;
 
 const SAFE_SVG_TAGS = [
   'svg',
@@ -36,73 +37,21 @@ const SAFE_SVG_TAGS = [
 ];
 
 const SVG_EVENT_ATTRS = [
-  'onload',
-  'onclick',
-  'ondblclick',
-  'onmousedown',
-  'onmouseup',
-  'onmouseover',
-  'onmousemove',
-  'onmouseout',
-  'onmouseenter',
-  'onmouseleave',
-  'onfocus',
-  'onblur',
-  'onkeydown',
-  'onkeyup',
-  'onkeypress',
-  'onsubmit',
-  'onreset',
-  'onchange',
-  'onselect',
-  'oninput',
-  'onscroll',
-  'onerror',
-  'onabort',
-  'onresize',
-  'ontouchstart',
-  'ontouchend',
-  'ontouchmove',
-  'ontouchcancel',
-  'onwheel',
-  'onpointerdown',
-  'onpointerup',
-  'onpointermove',
-  'onpointerover',
-  'onpointerout',
-  'onpointerenter',
-  'onpointerleave',
-  'onpointercancel',
-  'onanimationstart',
-  'onanimationend',
-  'onanimationiteration',
-  'ontransitionstart',
-  'ontransitionend',
-  'ontransitionrun',
-  'ontransitioncancel',
-  'oncut',
-  'oncopy',
-  'onpaste',
-  'onloadedmetadata',
-  'onloadeddata',
-  'onloadstart',
-  'ontimeupdate',
-  'onvolumechange',
-  'onplaying',
-  'onwaiting',
-  'onseeking',
-  'onseeked',
-  'oncanplay',
-  'oncanplaythrough',
-  'ondurationchange',
-  'onemptied',
-  'onended',
-  'onplay',
-  'onpause',
-  'onratechange',
-  'onstalled',
-  'onsuspend',
-  'onprogress',
+  'onload', 'onclick', 'ondblclick', 'onmousedown', 'onmouseup',
+  'onmouseover', 'onmousemove', 'onmouseout', 'onmouseenter', 'onmouseleave',
+  'onfocus', 'onblur', 'onkeydown', 'onkeyup', 'onkeypress',
+  'onsubmit', 'onreset', 'onchange', 'onselect', 'oninput',
+  'onscroll', 'onerror', 'onabort', 'onresize',
+  'ontouchstart', 'ontouchend', 'ontouchmove', 'ontouchcancel',
+  'onwheel', 'onpointerdown', 'onpointerup', 'onpointermove', 'onpointerover',
+  'onpointerout', 'onpointerenter', 'onpointerleave', 'onpointercancel',
+  'onanimationstart', 'onanimationend', 'onanimationiteration',
+  'ontransitionstart', 'ontransitionend', 'ontransitionrun', 'ontransitioncancel',
+  'oncut', 'oncopy', 'onpaste',
+  'onloadedmetadata', 'onloadeddata', 'onloadstart', 'ontimeupdate',
+  'onvolumechange', 'onplaying', 'onwaiting', 'onseeking', 'onseeked',
+  'oncanplay', 'oncanplaythrough', 'ondurationchange', 'onemptied',
+  'onended', 'onplay', 'onpause', 'onratechange', 'onstalled', 'onsuspend', 'onprogress',
 ];
 
 const STRUCTURAL_TAGS = ['html', 'head', 'body'];
@@ -448,14 +397,62 @@ export function sanitizeEpubDocument(
   // Pass (c): sanitizeDom() for href-scheme + event-attr enforcement
   sanitizeDom(doc, deadline, timeoutMs, traceId);
 }
+export interface SanitizeHook {
+  hook: (contents: { document?: Document; href?: string }) => void;
+  setCurrentChapter: (href: string | null) => void;
+}
 
 export function createEpubSanitizerHook(
   options?: { timeoutMs?: number; traceId?: string },
-): (contents: { document?: Document }) => void {
-  return (contents: { document?: Document }) => {
+): SanitizeHook {
+  const cache = new Map<string, string>();
+  let currentHref: string | null = null;
+
+  function hook(contents: { document?: Document; href?: string }): void {
     const doc = contents.document;
     if (!doc) return;
+    const href = contents.href;
+    if (href) {
+      const cached = cache.get(href);
+      if (cached !== undefined) {
+        const root = doc.documentElement;
+        const parser = new DOMParser();
+        const cachedDoc = parser.parseFromString(cached, 'text/html');
+        root.replaceChildren(...Array.from(cachedDoc.documentElement.childNodes));
+        const timeoutMs = options?.timeoutMs ?? SANITIZE_TIMEOUT_MS;
+        const deadline = createDeadline(timeoutMs);
+        sanitizeDom(doc, deadline, timeoutMs, options?.traceId);
+        return;
+      }
+    }
+
+    if (href !== currentHref && currentHref !== null && typeof requestIdleCallback !== 'undefined') {
+      requestIdleCallback(() => {
+        sanitizeEpubDocument(doc, options);
+        if (href) {
+          cache.set(href, doc.documentElement.outerHTML);
+          if (cache.size > SANITIZE_CACHE_MAX) {
+            const firstKey = cache.keys().next().value;
+            if (firstKey !== undefined) cache.delete(firstKey);
+          }
+        }
+      });
+      return;
+    }
+
     sanitizeEpubDocument(doc, options);
+    if (href) {
+      cache.set(href, doc.documentElement.outerHTML);
+      if (cache.size > SANITIZE_CACHE_MAX) {
+        const firstKey = cache.keys().next().value;
+        if (firstKey !== undefined) cache.delete(firstKey);
+      }
+    }
+  }
+
+  return {
+    hook,
+    setCurrentChapter(href: string | null) { currentHref = href; },
   };
 }
 

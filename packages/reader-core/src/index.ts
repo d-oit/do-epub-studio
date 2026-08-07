@@ -1,5 +1,6 @@
 export * from './annotation-adapter';
 export * from './epub-loader';
+export { parseEpubInWorker } from './epub-parser-worker';
 export * from './locator';
 export { normalizeText, findBestChapterMatch, shouldShowDriftWarning } from './reanchor';
 export type { ReanchorResult, AnnotationAnchor } from './reanchor';

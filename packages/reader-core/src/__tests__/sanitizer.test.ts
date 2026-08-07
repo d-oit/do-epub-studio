@@ -225,15 +225,29 @@ describe('sanitizeEpubDocument', () => {
 });
 
 describe('createEpubSanitizerHook', () => {
-  it('returns a function that does not throw with empty contents', () => {
-    const hook = createEpubSanitizerHook();
+  it('returns an object with hook and setCurrentChapter', () => {
+    const { hook, setCurrentChapter } = createEpubSanitizerHook();
+    expect(typeof hook).toBe('function');
+    expect(typeof setCurrentChapter).toBe('function');
+  });
+
+  it('hook does not throw with empty contents', () => {
+    const { hook } = createEpubSanitizerHook();
     expect(() => hook({})).not.toThrow();
   });
 
   it('sanitizes the document passed to the hook', () => {
-    const hook = createEpubSanitizerHook();
+    const { hook } = createEpubSanitizerHook();
     const doc = new DOMParser().parseFromString('<html><body><script>alert(1)</script></body></html>', 'text/html');
     hook({ document: doc });
+    expect(doc.querySelector('script')).toBeNull();
+  });
+
+  it('setCurrentChapter controls immediate vs deferred sanitization', () => {
+    const { hook, setCurrentChapter } = createEpubSanitizerHook();
+    setCurrentChapter('chapter1.xhtml');
+    const doc = new DOMParser().parseFromString('<html><body><script>alert(1)</script></body></html>', 'text/html');
+    hook({ document: doc, href: 'chapter1.xhtml' });
     expect(doc.querySelector('script')).toBeNull();
   });
 });

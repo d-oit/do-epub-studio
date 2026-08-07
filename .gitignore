@@ -90,3 +90,6 @@ packages/ui/storybook-static/
 .mimocode/.cron-lock
 .mimocode/plans/
 .claude/
+
+# Generated test corpus
+packages/reader-core/src/__fixtures__/corpus/
