@@ -423,6 +423,18 @@ export const en = {
   'relativeTime.minutesAgo': '{count}m ago',
   'relativeTime.hoursAgo': '{count}h ago',
   'relativeTime.daysAgo': '{count}d ago',
+  'reader.conflicts.title': 'Sync Conflicts',
+  'reader.conflicts.summary': '{n} conflict(s) need resolution',
+  'reader.conflicts.keepLocal': 'Keep local',
+  'reader.conflicts.keepRemote': 'Keep remote',
+  'reader.conflicts.dismiss': 'Dismiss',
+  'reader.conflicts.localLabel': 'Local:',
+  'reader.conflicts.remoteLabel': 'Remote:',
+  'reader.conflicts.type.progress_update': 'Progress Update',
+  'reader.conflicts.type.annotation_edit': 'Annotation Edit',
+  'reader.conflicts.type.bookmark_change': 'Bookmark Change',
+  'reader.conflicts.type.comment_update': 'Comment Update',
+  'reader.conflicts.noConflicts': 'No pending conflicts',
 } as const;
 
 export type TranslationKeys = keyof typeof en;

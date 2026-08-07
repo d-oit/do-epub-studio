@@ -25,6 +25,10 @@ vi.mock('../../lib/api/index/annotations', () => ({
 
 vi.mock('../../lib/client-logger', () => ({
   logClientEvent: vi.fn(),
+  createPerformanceMark: vi.fn(),
+  measurePerformance: vi.fn(),
+  observePerformance: vi.fn(),
+  reportPerformanceMetrics: vi.fn(),
 }));
 
 vi.mock('../../lib/offline', () => ({

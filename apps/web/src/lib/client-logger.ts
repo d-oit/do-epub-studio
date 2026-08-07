@@ -118,3 +118,50 @@ export function measurePerformance(name: string, startMark: string, endMark: str
     return undefined;
   }
 }
+
+export type PerformanceEntryCallback = (entry: PerformanceEntry) => void;
+
+export function observePerformance(callback: PerformanceEntryCallback): PerformanceObserver | undefined {
+  if (typeof PerformanceObserver === 'undefined') return undefined;
+  try {
+    const observer = new PerformanceObserver((list) => {
+      for (const entry of list.getEntries()) {
+        callback(entry);
+      }
+    });
+    observer.observe({ type: 'mark', buffered: false });
+    observer.observe({ type: 'measure', buffered: false });
+    return observer;
+  } catch {
+    return undefined;
+  }
+}
+
+function percentile(sorted: number[], p: number): number | undefined {
+  if (sorted.length === 0) return undefined;
+  const idx = Math.ceil((p / 100) * sorted.length) - 1;
+  return sorted[Math.max(0, idx)];
+}
+
+export interface PerformanceMetrics {
+  p50: number | undefined;
+  p95: number | undefined;
+  p99: number | undefined;
+  count: number;
+}
+
+export function reportPerformanceMetrics(
+  metricPrefix: string,
+  logFn: (metrics: PerformanceMetrics) => void,
+): void {
+  if (typeof performance === 'undefined') return;
+  const entries = performance.getEntriesByName(metricPrefix);
+  if (entries.length === 0) return;
+  const durations = entries.map((e) => e.duration).sort((a, b) => a - b);
+  logFn({
+    p50: percentile(durations, 50),
+    p95: percentile(durations, 95),
+    p99: percentile(durations, 99),
+    count: durations.length,
+  });
+}

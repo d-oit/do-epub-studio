@@ -13,6 +13,8 @@ vi.mock('../../../lib/api/index', () => ({
 
 vi.mock('../../../lib/client-logger', () => ({
   logClientEvent: vi.fn(),
+  createPerformanceMark: vi.fn(),
+  measurePerformance: vi.fn(),
 }));
 
 vi.mock('../../../lib/offline', () => ({

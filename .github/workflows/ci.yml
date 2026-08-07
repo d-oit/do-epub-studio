@@ -32,7 +32,7 @@ jobs:
   changes:
     name: Path-based change detection
     runs-on: ubuntu-latest
-    timeout-minutes: 2
+    timeout-minutes: 5
     outputs:
       src: ${{ steps.filter.outputs.src }}
       reader-core: ${{ steps.filter.outputs.reader-core }}
@@ -546,15 +546,16 @@ jobs:
 
       - name: Post benchmark comment
         if: github.event_name == 'pull_request' && hashFiles('bench_comment.md') != ''
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh pr comment ${{ github.event.pull_request.number }} --body-file bench_comment.md --edit-last 2>/dev/null || \
             gh pr comment ${{ github.event.pull_request.number }} --body-file bench_comment.md
 
+      # Blocking per ADR-218: >20% ops/s regression on any benchmark fails the CI check.
       - name: Check for regression
         if: github.event_name == 'pull_request'
-        continue-on-error: true
         run: |
           node scripts/compare-benchmarks.mjs baseline.json head.json
 

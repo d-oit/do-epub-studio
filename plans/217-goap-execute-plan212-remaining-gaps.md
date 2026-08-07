@@ -1,7 +1,7 @@
 # GOAP 217: Execute Remaining Plan 212 Gaps
 
 **Date:** 2026-08-06
-**Status:** In Progress
+**Status:** Completed (implemented and merged in PR #915)
 **Goal:** Close the three remaining P1/P2 gaps from Plans 212/214/215 that were not covered by Plan 216.
 **Related:** Plan 212, Plan 214, Plan 215, Plan 216, ADR-212
 

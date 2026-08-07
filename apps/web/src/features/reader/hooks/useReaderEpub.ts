@@ -6,9 +6,10 @@ import {
   parseAccessibilityFromOpf,
   parseFixedLayoutFromOpf,
   createEpubSanitizerHook,
+  parseEpubInWorker,
 } from '@do-epub-studio/reader-core';
 import { createSpanId, createTraceId } from '@do-epub-studio/shared';
-import { logClientEvent, createPerformanceMark, measurePerformance } from '../../../lib/client-logger';
+import { logClientEvent, createPerformanceMark, measurePerformance, observePerformance, reportPerformanceMetrics } from '../../../lib/client-logger';
 import { getPrefersReducedMotion } from '../../../lib/reduced-motion';
 import {
   useAuthStore,
@@ -111,22 +112,29 @@ export function useReaderEpub(
     if (!epubUrl || !viewerRef.current) return;
     let active = true;
     const viewer = viewerRef.current;
-
     const initEpub = async () => {
       createPerformanceMark('reader:load-start');
       try {
-        const book = ePub(epubUrl);
+        createPerformanceMark('epub-fetch-start');
+        const parseResult = await parseEpubInWorker(epubUrl);
+        createPerformanceMark('epub-fetch-end');
+        const fetchMs = measurePerformance('epub-fetch', 'epub-fetch-start', 'epub-fetch-end');
+        if (fetchMs !== undefined) logClientEvent({ level: 'info', traceId: createTraceId(), spanId: createSpanId(), event: 'epub-fetch', metadata: { durationMs: Math.round(fetchMs) } });
+        if (!parseResult.valid || !parseResult.data) throw new Error(parseResult.error ?? 'Failed to parse EPUB');
+        createPerformanceMark('epub-unzip-start');
+        const book = ePub(parseResult.data);
         bookRef.current = book;
         await book.ready;
+        createPerformanceMark('epub-unzip-end');
+        const unzipMs = measurePerformance('epub-unzip', 'epub-unzip-start', 'epub-unzip-end');
+        if (unzipMs !== undefined) logClientEvent({ level: 'info', traceId: createTraceId(), spanId: createSpanId(), event: 'epub-unzip', metadata: { durationMs: Math.round(unzipMs) } });
         if (!active) return;
-
-        const navigation = await book.loaded.navigation;
+        const [navigation, meta] = await Promise.all([book.loaded.navigation, book.loaded.metadata]);
         const tocItems: TocItem[] = navigation.toc
           ? navigation.toc.map((item: NavItem) => ({ label: item.label, href: item.href }))
           : [];
         setToc(tocItems);
         tocRef.current = tocItems;
-
         const bookDirection: PageDirection =
           book.packaging?.direction === 'rtl'
             ? 'rtl'
@@ -135,13 +143,10 @@ export function useReaderEpub(
               : 'default';
         directionRef.current = bookDirection;
         setBookDirection(bookDirection);
-
         let fixedLayout = false;
         let fixedLayoutSpread: string | undefined;
         let fixedLayoutViewport: string | undefined;
-
         try {
-          const meta = await book.loaded.metadata;
           const metaMap = meta as Map<string, string>;
           const bookInfo: BookInfo = {
             title: metaMap.get('title') ?? '',
@@ -150,14 +155,12 @@ export function useReaderEpub(
             language: metaMap.get('language'),
             description: metaMap.get('description'),
           };
-
           const pkgMeta = book.packaging?.metadata as Map<string, string> | undefined;
           if (pkgMeta?.get('layout') === 'pre-paginated') {
             fixedLayout = true;
             fixedLayoutSpread = pkgMeta.get('spread') ?? undefined;
             fixedLayoutViewport = pkgMeta.get('viewport') ?? undefined;
           }
-
           try {
             const containerMeta = book.container as unknown as { fullPath: string };
             const opfPath = containerMeta.fullPath;
@@ -176,7 +179,6 @@ export function useReaderEpub(
           } catch {
             // accessibility metadata is optional
           }
-
           if (fixedLayout) {
             fixedLayoutRef.current = true;
             setIsFixedLayout(true);
@@ -211,7 +213,8 @@ export function useReaderEpub(
         renditionRef.current = rendition;
 
         // Security: Mandatory sanitization of all EPUB content
-        rendition.hooks.content.register(createEpubSanitizerHook());
+        const { hook: baseSanitizer } = createEpubSanitizerHook();
+        rendition.hooks.content.register(baseSanitizer);
 
         if (fixedLayout) {
           if (fixedLayoutViewport) {
@@ -374,12 +377,7 @@ export function useReaderEpub(
     markPageRead,
   ]);
 
-  // Re-apply reader themes when any theme-affecting preference changes. Init
-  // applies themes once at rendition creation (see applyThemesRef call in
-  // initEpub); this effect handles subsequent setting changes. System dark-mode
-  // changes are covered by the matchMedia listener below. Previously had no
-  // dependency array, which re-applied (and re-registered CSS rules) every
-  // render.
+  // Re-apply themes on preference changes (system dark-mode handled below).
   useEffect(() => {
     if (renditionRef.current) applyThemesRef.current(renditionRef.current);
   }, [resolvedTheme, readerFontSize, readerLineHeight, readerFontFamily]);
@@ -390,18 +388,10 @@ export function useReaderEpub(
     applyDirectionAndWritingMode(renditionRef.current, dir, readerWritingMode);
   }, [readerDirection, readerWritingMode]);
 
-  // Apply user-chosen spread mode to the live rendition. The
-  // @intity/epub-js fork exposes `rendition.layout` (Layout) with a
-  // mutable `settings` field; we update `spread` and re-display from
-  // the current CFI. This is the lowest-risk way to change spread
-  // post-render (no full re-init).
+  // Apply user-chosen spread mode to the live rendition via mutable layout.settings.
   useEffect(() => {
     const rendition = renditionRef.current;
-    if (!rendition) return;
-    if (!fixedLayoutRef.current) return;
-    // The @intity/epub-js fork exposes a mutable `layout.settings`
-    // object on the rendition; cast through unknown so we can update
-    // `spread` post-render without re-initialising the book.
+    if (!rendition || !fixedLayoutRef.current) return;
     const renditionWithLayout = rendition as unknown as {
       layout?: { settings?: { spread?: string } };
     };
@@ -415,22 +405,12 @@ export function useReaderEpub(
     }
   }, [readerSpread]);
 
-  // Apply user-chosen zoom level by injecting a `transform: scale()`
-  // CSS rule on every content document. The active zoom is read from
-  // `zoomRef` (kept fresh by the previous effect), so a single hook
-  // registered at init handles both the initial render and any later
-  // re-display triggered by spread changes.
+  // Apply user-chosen zoom by injecting transform:scale() on content documents.
   useEffect(() => {
     if (!fixedLayoutRef.current) return;
     const rendition = renditionRef.current;
     if (!rendition) return;
-    // The @intity/epub-js fork keeps the list of loaded `Contents`
-    // on a private `_contents` field of the rendition. Cast through
-    // `unknown` so we can re-apply the active zoom without
-    // re-initialising the book.
-    const renditionWithContents = rendition as unknown as {
-      _contents?: Contents[];
-    };
+    const renditionWithContents = rendition as unknown as { _contents?: Contents[] };
     const contentsList = renditionWithContents._contents;
     if (!Array.isArray(contentsList)) return;
     const reducedMotion = getPrefersReducedMotion();
@@ -481,8 +461,23 @@ export function useReaderEpub(
       }
     }
     window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Observe performance marks and report p50/p95/p99 on unmount.
+  useEffect(() => {
+    const observer = observePerformance((entry) => {
+      if (entry.entryType === 'measure') {
+        logClientEvent({ level: 'info', traceId: createTraceId(), spanId: createSpanId(),
+          event: entry.name, metadata: { durationMs: Math.round(entry.duration) } });
+      }
+    });
     return () => {
-      window.removeEventListener('keydown', handleKeyDown);
+      reportPerformanceMetrics('reader:load', (m) => {
+        logClientEvent({ level: 'info', traceId: createTraceId(), spanId: createSpanId(),
+          event: 'reader:perf_summary', metadata: m as unknown as Record<string, unknown> });
+      });
+      observer?.disconnect();
     };
   }, []);
 

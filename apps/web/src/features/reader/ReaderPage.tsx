@@ -31,6 +31,7 @@ import {
   FixedLayoutControls,
   ScrollProgressBar,
 } from './components';
+import { ConflictResolutionPanel } from './components/conflicts/ConflictResolutionPanel';
 
 export function ReaderPage() {
   const { bookSlug } = useParams<{ bookSlug: string }>();
@@ -371,6 +372,7 @@ export function ReaderPage() {
         viewerRef={viewerRef}
         notAvailableText={t('reader.notAvailable')}
       />
+      <ConflictResolutionPanel />
       {activePanel === 'toc' && (
         <TableOfContents
           isOpen

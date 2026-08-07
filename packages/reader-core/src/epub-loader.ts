@@ -216,7 +216,7 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
     });
 
     // Security: ADR-035 Mandatory sanitization
-    rendition.hooks.content.register(createEpubSanitizerHook());
+    rendition.hooks.content.register(createEpubSanitizerHook().hook);
 
     // Bridge rendition events to the loader's event system
     rendition.on('relocated', (location: Location) => {

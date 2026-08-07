@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { createSpanId, createTraceId } from '@do-epub-studio/shared';
 import { apiRequest, fetchHighlights, fetchComments, fetchProgress } from '../../../lib/api/index';
-import { logClientEvent } from '../../../lib/client-logger';
+import { logClientEvent, createPerformanceMark, measurePerformance } from '../../../lib/client-logger';
 import { getProgress, getAnnotations } from '../../../lib/offline';
 import type { Highlight, Comment, Bookmark, ReadingProgress } from '../../../stores';
 import {
@@ -57,6 +57,7 @@ export function useReaderDataLoader({
         });
 
         // Fallback to offline cache if server fetch fails (A6)
+        createPerformanceMark('rehydrate-offline-start');
         try {
           const [progressResult, annotationsResult] = await Promise.allSettled([
             getProgress(bookId),
@@ -103,6 +104,17 @@ export function useReaderDataLoader({
                 comments: offlineComments.length,
                 bookmarks: offlineBookmarks.length,
               },
+            });
+          }
+          createPerformanceMark('rehydrate-offline-end');
+          const rehydrateMs = measurePerformance('rehydrate-offline', 'rehydrate-offline-start', 'rehydrate-offline-end');
+          if (rehydrateMs !== undefined) {
+            logClientEvent({
+              level: 'info',
+              traceId: createTraceId(),
+              spanId: createSpanId(),
+              event: 'rehydrate-offline',
+              metadata: { durationMs: Math.round(rehydrateMs), bookId },
             });
           }
         } catch (cacheErr) {
