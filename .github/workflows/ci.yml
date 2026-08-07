@@ -546,6 +546,7 @@ jobs:
 
       - name: Post benchmark comment
         if: github.event_name == 'pull_request' && hashFiles('bench_comment.md') != ''
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
