@@ -302,5 +302,27 @@ describe('createEpubAnnotationAdapter', () => {
       const mock = rendition.annotations as unknown as AnnotationsMock;
       expect(mock.append).toHaveBeenCalledTimes(2);
     });
+
+    it('coalesces rapid scheduleRender calls into one paint', () => {
+      const highlights: HighlightRecord[] = [
+        { id: 'h1', chapterRef: 'ch1.html', cfiRange: 'epubcfi(/6/4!/4/2/1:0,/1:5)', color: '#ffff00' },
+      ];
+      const comments: CommentRecord[] = [
+        { id: 'c1', chapterRef: 'ch1.html', cfiRange: 'epubcfi(/6/4!/4/2/1:6,/1:12)', status: 'open' },
+      ];
+      const onNavigate = vi.fn();
+
+      adapter.scheduleRender('ch1.html', highlights, comments, onNavigate);
+      adapter.scheduleRender('ch1.html', highlights, comments, onNavigate);
+      adapter.scheduleRender('ch1.html', highlights, comments, onNavigate);
+
+      const mock = rendition.annotations as unknown as AnnotationsMock;
+      expect(mock.append).not.toHaveBeenCalled();
+
+      rafCallback?.(0);
+
+      // One rAF batch = one remove 'highlight' + one append 'highlight' + one remove 'underline' + one append 'underline'
+      expect(mock.append).toHaveBeenCalledTimes(2);
+    });
   });
 });

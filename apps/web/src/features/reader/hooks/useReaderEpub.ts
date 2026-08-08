@@ -312,9 +312,9 @@ export function useReaderEpub(
           });
         }
 
-        adapter.renderHighlights(currentChapterRef.current, highlightsRef.current);
-        adapter.renderCommentMarkers(
+        adapter.scheduleRender(
           currentChapterRef.current,
+          highlightsRef.current,
           commentsRef.current,
           onNavigateToAnnotationRef.current,
         );
@@ -324,9 +324,9 @@ export function useReaderEpub(
           (() => {
             if (!sessionToken || !bookId) return () => { /* noop */ };
             const renderAnnotations = () => {
-              adapter.renderHighlights(currentChapterRef.current, highlightsRef.current);
-              adapter.renderCommentMarkers(
+              adapter.scheduleRender(
                 currentChapterRef.current,
+                highlightsRef.current,
                 commentsRef.current,
                 onNavigateToAnnotationRef.current,
               );
@@ -349,9 +349,9 @@ export function useReaderEpub(
         );
 
         rendition.on('displayed', () => {
-          adapter.renderHighlights(currentChapterRef.current, highlightsRef.current);
-          adapter.renderCommentMarkers(
+          adapter.scheduleRender(
             currentChapterRef.current,
+            highlightsRef.current,
             commentsRef.current,
             onNavigateToAnnotationRef.current,
           );
@@ -376,6 +376,7 @@ export function useReaderEpub(
       active = false;
       if (adapterRef.current) {
         adapterRef.current.clearAnnotations();
+        adapterRef.current.cancelScheduledRender();
       }
       prefetchManagerRef.current?.destroy();
       renditionRef.current?.destroy();
