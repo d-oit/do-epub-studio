@@ -138,6 +138,28 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
     return spineItems;
   }
 
+  function resolveDirection(b: Book): PageDirection {
+    switch (b.packaging?.direction) {
+      case 'rtl':
+        return 'rtl';
+      case 'ltr':
+        return 'ltr';
+      default:
+        return 'default';
+    }
+  }
+
+  function resolveFixedLayout(pkgMeta: Map<string, string> | undefined): BookMetadata['fixedLayout'] {
+    const layout = pkgMeta?.get('layout');
+    if (!layout) return undefined;
+    return {
+      layout: layout === 'pre-paginated' ? ('pre-paginated' as const) : ('reflowable' as const),
+      orientation: pkgMeta?.get('orientation') as 'auto' | 'landscape' | 'portrait' | undefined,
+      spread: pkgMeta?.get('spread') as 'none' | 'auto' | 'both' | 'landscape' | undefined,
+      viewport: pkgMeta?.get('viewport'),
+    };
+  }
+
   function ensureParsed(): void {
     if (parsed || !book) return;
     parsed = true;
@@ -148,29 +170,15 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
       spineItems = parseSpineFromRaw(rawSpine);
     }
     if (!rawMeta) return;
-    const direction: PageDirection = book.packaging?.direction === 'rtl'
-      ? 'rtl'
-      : book.packaging?.direction === 'ltr'
-        ? 'ltr'
-        : 'default';
     const pkgMeta = book.packaging?.metadata as Map<string, string> | undefined;
-    const layout = pkgMeta?.get('layout');
-    const fixedLayout = layout
-      ? {
-          layout: layout === 'pre-paginated' ? ('pre-paginated' as const) : ('reflowable' as const),
-          orientation: pkgMeta?.get('orientation') as 'auto' | 'landscape' | 'portrait' | undefined,
-          spread: pkgMeta?.get('spread') as 'none' | 'auto' | 'both' | 'landscape' | undefined,
-          viewport: pkgMeta?.get('viewport'),
-        }
-      : undefined;
     metadata = {
       title: rawMeta.get('title') ?? '',
       creator: rawMeta.get('creator'),
       language: rawMeta.get('language'),
       publisher: rawMeta.get('publisher'),
       description: rawMeta.get('description'),
-      direction,
-      fixedLayout,
+      direction: resolveDirection(book),
+      fixedLayout: resolveFixedLayout(pkgMeta),
     };
   }
 
