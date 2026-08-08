@@ -1,0 +1,32 @@
+{
+  "generated": "2026-08-08",
+  "routes": {
+    "reader": {
+      "entry": "assets/reader-route-jkd38M3p.js",
+      "gzip": 29659,
+      "brotli": 25227,
+      "totalTransitive": {
+        "gzip": 262005,
+        "brotli": 227608
+      }
+    },
+    "catalog": {
+      "entry": "assets/CatalogPage-1f03JXG6.js",
+      "gzip": 1852,
+      "brotli": 1644,
+      "totalTransitive": {
+        "gzip": 173468,
+        "brotli": 151151
+      }
+    },
+    "admin": {
+      "entry": "assets/admin-route-D0wQoQh-.js",
+      "gzip": 91004,
+      "brotli": 79426,
+      "totalTransitive": {
+        "gzip": 171616,
+        "brotli": 149507
+      }
+    }
+  }
+}

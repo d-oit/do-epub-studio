@@ -305,6 +305,35 @@ describe('createEpubLoader', () => {
     expect(events.some((e) => e.event === 'relocated')).toBe(true);
   });
 
+  it('exposes the loaded book via getBook and preserves rendition event bridging', async () => {
+    const events: Array<{ event: string; data: unknown }> = [];
+    const loader = createEpubLoader({
+      onEvent: (event, data) => {
+        events.push({ event, data });
+      },
+    });
+
+    await loader.load('test.epub');
+
+    const book = loader.getBook();
+    expect(book).not.toBeNull();
+    expect(book).toBe(epubjsMock.__mockBook);
+
+    const handle = loader.createRendition(document.createElement('div'));
+    const mockRendition = epubjsMock.__mockRendition;
+    const startedCall = mockRendition.on.mock.calls.find(
+      (call: unknown[]) => call[0] === 'started',
+    ) as [string, (data: unknown) => void] | undefined;
+
+    expect(startedCall).toBeDefined();
+    if (startedCall !== undefined) {
+      startedCall[1](null);
+    }
+
+    expect(events.some((e) => e.event === 'started')).toBe(true);
+    expect(handle).not.toBeNull();
+  });
+
   it('returns defensive copies of arrays', async () => {
     const loader = createEpubLoader();
     await loader.load('test.epub');

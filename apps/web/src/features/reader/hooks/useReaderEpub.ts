@@ -1,12 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
-import ePub from '@intity/epub-js';
 import type { Book, Rendition, NavItem, Contents } from '@intity/epub-js';
 import type { PageDirection, ReaderZoom } from '../../../stores';
 import {
+  createEpubLoader,
   parseAccessibilityFromOpf,
   parseFixedLayoutFromOpf,
   createEpubSanitizerHook,
-  parseEpubInWorker,
 } from '@do-epub-studio/reader-core';
 import { createSpanId, createTraceId } from '@do-epub-studio/shared';
 import { logClientEvent, createPerformanceMark, measurePerformance, observePerformance, reportPerformanceMetrics } from '../../../lib/client-logger';
@@ -57,6 +56,7 @@ export function useReaderEpub(
   const tocRef = useRef<TocItem[]>([]);
   const adapterRef = useRef<AnnotationAdapter | null>(null);
   const prefetchManagerRef = useRef<PrefetchManager | null>(null);
+  const loaderRef = useRef<ReturnType<typeof createEpubLoader> | null>(null);
   const onNavigateToAnnotationRef = useRef(onNavigateToAnnotation);
   onNavigateToAnnotationRef.current = onNavigateToAnnotation;
   const directionRef = useRef<PageDirection>('default');
@@ -117,19 +117,13 @@ export function useReaderEpub(
     const initEpub = async () => {
       createPerformanceMark('reader:load-start');
       try {
-        createPerformanceMark('epub-fetch-start');
-        const parseResult = await parseEpubInWorker(epubUrl);
-        createPerformanceMark('epub-fetch-end');
-        const fetchMs = measurePerformance('epub-fetch', 'epub-fetch-start', 'epub-fetch-end');
-        if (fetchMs !== undefined) logClientEvent({ level: 'info', traceId: createTraceId(), spanId: createSpanId(), event: 'epub-fetch', metadata: { durationMs: Math.round(fetchMs) } });
-        if (!parseResult.valid || !parseResult.data) throw new Error(parseResult.error ?? 'Failed to parse EPUB');
-        createPerformanceMark('epub-unzip-start');
-        const book = ePub(parseResult.data);
+        const loader = createEpubLoader();
+        loaderRef.current = loader;
+        await loader.load(epubUrl);
+        const book = loader.getBook();
+        if (!book) throw new Error('EPUB load returned no book');
         bookRef.current = book;
         await book.ready;
-        createPerformanceMark('epub-unzip-end');
-        const unzipMs = measurePerformance('epub-unzip', 'epub-unzip-start', 'epub-unzip-end');
-        if (unzipMs !== undefined) logClientEvent({ level: 'info', traceId: createTraceId(), spanId: createSpanId(), event: 'epub-unzip', metadata: { durationMs: Math.round(unzipMs) } });
         if (!active) return;
         const [navigation, meta] = await Promise.all([book.loaded.navigation, book.loaded.metadata]);
         const tocItems: TocItem[] = navigation.toc
@@ -380,7 +374,8 @@ export function useReaderEpub(
       }
       prefetchManagerRef.current?.destroy();
       renditionRef.current?.destroy();
-      bookRef.current?.destroy();
+      loaderRef.current?.destroy();
+      loaderRef.current = null;
     };
   }, [
     epubUrl,

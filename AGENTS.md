@@ -140,6 +140,9 @@ IMPECCABLE_REQUIRED=1 ./scripts/quality_gate.sh  # Design gate blocks on finding
 ./scripts/minimal_quality_gate.sh      # Fast gate (lint + typecheck only)
 ./scripts/health-check.sh              # Dev environment check
 
+# Bundle baseline regeneration (see docs/performance-budgets.md)
+./scripts/generate-bundle-baseline.sh  # Rebuild + regenerate bundle-baseline.json
+
 # Commit workflow
 ./scripts/atomic-commit/run.sh --message "type(scope): description" --body "WHY"
 ./scripts/validate-commit-message.sh <file>  # Validate commit message
