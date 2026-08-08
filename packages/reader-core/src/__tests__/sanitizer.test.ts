@@ -1,5 +1,10 @@
-import { describe, expect, it } from 'vitest';
-import { sanitizeSvg, sanitizeDom, sanitizeEpubDocument, createSvgSanitizerHook, createEpubSanitizerHook } from '../sanitizer';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import DOMPurify from 'dompurify';
+import { sanitizeSvg, sanitizeDom, sanitizeEpubDocument, createSvgSanitizerHook, createEpubSanitizerHook, SANITIZER_POLICY_VERSION } from '../sanitizer';
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 describe('sanitizeSvg', () => {
   it('allows safe SVG tags', () => {
@@ -256,6 +261,66 @@ describe('createEpubSanitizerHook', () => {
     const doc2 = new DOMParser().parseFromString('<html><body><script>alert(1)</script></body></html>', 'text/html');
     hook({ document: doc2, href: 'chapter1.xhtml' });
     expect(doc2.querySelector('script')).toBeNull();
+  });
+
+  it('serves cached output without re-running the DOMPurify 3-pass pipeline on a hit', () => {
+    const { hook } = createEpubSanitizerHook();
+    const sanitizeSpy = vi.spyOn(DOMPurify, 'sanitize');
+    const doc = new DOMParser().parseFromString('<html><body><p>clean</p></body></html>', 'text/html');
+    hook({ document: doc, href: 'chapter1.xhtml' });
+    const hitCount = sanitizeSpy.mock.calls.length;
+    expect(hitCount).toBeGreaterThan(0);
+
+    // A later document for the same href is REPLACED by the cached sanitized
+    // output and never re-sanitized by DOMPurify — but must remain script-free.
+    const doc2 = new DOMParser().parseFromString('<html><body><script>alert(1)</script></body></html>', 'text/html');
+    hook({ document: doc2, href: 'chapter1.xhtml' });
+    expect(sanitizeSpy.mock.calls.length).toBe(hitCount);
+    expect(doc2.querySelector('script')).toBeNull();
+  });
+
+  it('invalidates the cache when the sanitizer policy version changes', () => {
+    const sanitizeSpy = vi.spyOn(DOMPurify, 'sanitize');
+    const { hook: hookA } = createEpubSanitizerHook({ policyVersion: 1 });
+    const { hook: hookB } = createEpubSanitizerHook({ policyVersion: 2 });
+
+    const docA1 = new DOMParser().parseFromString('<html><body><script>alert(1)</script></body></html>', 'text/html');
+    hookA({ document: docA1, href: 'chapter1.xhtml' });
+    const countAfterA = sanitizeSpy.mock.calls.length;
+    expect(countAfterA).toBeGreaterThan(0);
+
+    // B has a different policy version and does not share A's primitive cache.
+    const docA2 = new DOMParser().parseFromString('<html><body><script>alert(2)</script></body></html>', 'text/html');
+    hookA({ document: docA2, href: 'chapter1.xhtml' });
+    expect(sanitizeSpy.mock.calls.length).toBe(countAfterA);
+
+    const docB = new DOMParser().parseFromString('<html><body><script>alert(3)</script></body></html>', 'text/html');
+    hookB({ document: docB, href: 'chapter1.xhtml' });
+    expect(sanitizeSpy.mock.calls.length).toBeGreaterThan(countAfterA);
+    expect(docB.querySelector('script')).toBeNull();
+  });
+
+  it('evicts least-recently-used entries when the cache exceeds the max size', () => {
+    const { hook } = createEpubSanitizerHook();
+    const sanitizeSpy = vi.spyOn(DOMPurify, 'sanitize');
+
+    // Fill exactly SANITIZE_CACHE_MAX distinct chapters plus one to force eviction.
+    for (let i = 0; i < 11; i++) {
+      const doc = new DOMParser().parseFromString(`<html><body><p>c${i}</p></body></html>`, 'text/html');
+      hook({ document: doc, href: `c${i}.xhtml` });
+    }
+    const countAfterFill = sanitizeSpy.mock.calls.length;
+    expect(countAfterFill).toBeGreaterThan(0);
+
+    // Re-visiting the first chapter (least recently used, evicted) re-sanitizes.
+    const rehit = new DOMParser().parseFromString('<html><body><script>alert(1)</script></body></html>', 'text/html');
+    hook({ document: rehit, href: 'c0.xhtml' });
+    expect(sanitizeSpy.mock.calls.length).toBeGreaterThan(countAfterFill);
+    expect(rehit.querySelector('script')).toBeNull();
+  });
+
+  it('exports a reference policy version that can be bumped to invalidate caches', () => {
+    expect(SANITIZER_POLICY_VERSION).toBeGreaterThanOrEqual(1);
   });
 });
 
