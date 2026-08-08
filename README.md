@@ -92,6 +92,7 @@ Every commit must pass:
 - [Security](docs/security.md): Security model, session tokens, signed URLs, CSP.
 - [Security Posture](docs/security-posture.md): Standing decisions (auth, CSP, token storage).
 - [Observability](docs/observability-telemetry.md): Client telemetry contract and tracing.
+- [Performance Budgets](docs/performance-budgets.md): Bundle budget model and baseline regeneration.
 
 ## License
 [MIT](LICENSE)

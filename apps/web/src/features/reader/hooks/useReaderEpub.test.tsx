@@ -76,6 +76,7 @@ const { mockRendition, mockBook, mockEpubFn, createEpubLoaderMock } = vi.hoisted
     createEpubLoaderMock: vi.fn(() => ({
       load: vi.fn().mockResolvedValue(undefined),
       getBook: vi.fn(() => book),
+      destroy: vi.fn(),
     })),
   };
 });

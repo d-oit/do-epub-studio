@@ -324,7 +324,9 @@ describe('createEpubLoader', () => {
     const startedCall = mockRendition.on.mock.calls.find(
       (call: unknown[]) => call[0] === 'started',
     ) as [string, (data: unknown) => void] | undefined;
-    if (startedCall) {
+
+    expect(startedCall).toBeDefined();
+    if (startedCall !== undefined) {
       startedCall[1](null);
     }
 

@@ -58,6 +58,12 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
   let currentProgress: ProgressPosition | null = null;
   const eventListeners = new Map<string, Set<EventCallback>>();
   let destroyed = false;
+  // Raw nav/meta/spine captured during load; parsed lazily on first getter use
+  // so the production path (which only calls getBook) skips the duplicate work.
+  let rawNav: { toc?: unknown } | null = null;
+  let rawMeta: Map<string, string> | null = null;
+  let rawSpine: unknown = null;
+  let parsed = false;
 
   function emit(event: string, data: unknown): void {
     options?.onEvent?.(event, data);
@@ -66,6 +72,27 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
       for (const cb of listeners) {
         cb(data);
       }
+    }
+  }
+
+  const perf =
+    typeof globalThis !== 'undefined' && typeof globalThis.performance !== 'undefined'
+      ? globalThis.performance
+      : undefined;
+
+  function safeMark(name: string): void {
+    try {
+      perf?.mark?.(name);
+    } catch {
+      // performance.mark unavailable — telemetry is best-effort
+    }
+  }
+
+  function safeMeasure(name: string, start: string, end: string): void {
+    try {
+      perf?.measure?.(name, start, end);
+    } catch {
+      // Performance measure unavailable — telemetry is best-effort
     }
   }
 
@@ -97,9 +124,7 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
     return [];
   }
 
-  async function parseSpineFromBook(): Promise<SpineItem[]> {
-    if (!book) return [];
-    const spine = await book.loaded.spine;
+  function parseSpineFromRaw(spine: unknown): SpineItem[] {
     const spineItems: SpineItem[] = [];
     let index = 0;
     for (const item of getSpineIterable(spine)) {
@@ -111,6 +136,42 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
       index++;
     }
     return spineItems;
+  }
+
+  function ensureParsed(): void {
+    if (parsed || !book) return;
+    parsed = true;
+    if (rawNav && 'toc' in rawNav && rawNav.toc) {
+      toc = parseToc(rawNav.toc as Parameters<typeof parseToc>[0]);
+    }
+    if (rawSpine !== null && rawSpine !== undefined) {
+      spineItems = parseSpineFromRaw(rawSpine);
+    }
+    if (!rawMeta) return;
+    const direction: PageDirection = book.packaging?.direction === 'rtl'
+      ? 'rtl'
+      : book.packaging?.direction === 'ltr'
+        ? 'ltr'
+        : 'default';
+    const pkgMeta = book.packaging?.metadata as Map<string, string> | undefined;
+    const layout = pkgMeta?.get('layout');
+    const fixedLayout = layout
+      ? {
+          layout: layout === 'pre-paginated' ? ('pre-paginated' as const) : ('reflowable' as const),
+          orientation: pkgMeta?.get('orientation') as 'auto' | 'landscape' | 'portrait' | undefined,
+          spread: pkgMeta?.get('spread') as 'none' | 'auto' | 'both' | 'landscape' | undefined,
+          viewport: pkgMeta?.get('viewport'),
+        }
+      : undefined;
+    metadata = {
+      title: rawMeta.get('title') ?? '',
+      creator: rawMeta.get('creator'),
+      language: rawMeta.get('language'),
+      publisher: rawMeta.get('publisher'),
+      description: rawMeta.get('description'),
+      direction,
+      fixedLayout,
+    };
   }
 
   async function load(url: string | Uint8Array): Promise<void> {
@@ -135,17 +196,23 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
   }
 
   async function loadInner(url: string | Uint8Array, signal?: AbortSignal): Promise<void> {
+    safeMark('epub-fetch-start');
     const result = await parseEpubInWorker(url);
     if (!result.valid || !result.data) {
       throw new Error(result.error ?? 'Failed to parse EPUB');
     }
+    safeMark('epub-fetch-end');
+    safeMeasure('epub-fetch', 'epub-fetch-start', 'epub-fetch-end');
 
     if (signal?.aborted) {
       throw new DOMException('Aborted', 'AbortError');
     }
 
+    safeMark('epub-unzip-start');
     book = ePub(result.data);
     await book.opened;
+    safeMark('epub-unzip-end');
+    safeMeasure('epub-unzip', 'epub-unzip-start', 'epub-unzip-end');
 
     // Fetch navigation, spine, and metadata in parallel — they are
     // independent and already-resolved by the time `opened` fires.
@@ -154,48 +221,11 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
       book.loaded.navigation,
       book.loaded.metadata,
     ]);
+    const spine = await book.loaded.spine;
 
-    if (nav?.toc) {
-      toc = parseToc(nav.toc);
-    }
-
-    spineItems = await parseSpineFromBook();
-    const metaMap = meta as Map<string, string>;
-
-    const direction: PageDirection = book.packaging?.direction === 'rtl'
-      ? 'rtl'
-      : book.packaging?.direction === 'ltr'
-        ? 'ltr'
-        : 'default';
-
-    const pkgMeta = book.packaging?.metadata as Map<string, string> | undefined;
-    const layout = pkgMeta?.get('layout');
-    const fixedLayout = layout
-      ? {
-          layout: layout === 'pre-paginated' ? ('pre-paginated' as const) : ('reflowable' as const),
-          orientation: pkgMeta?.get('orientation') as 'auto' | 'landscape' | 'portrait' | undefined,
-          spread: pkgMeta?.get('spread') as 'none' | 'auto' | 'both' | 'landscape' | undefined,
-          viewport: pkgMeta?.get('viewport'),
-        }
-      : undefined;
-
-    assignMetadata(metaMap, direction, fixedLayout);
-  }
-
-  function assignMetadata(
-    metaMap: Map<string, string>,
-    direction: PageDirection,
-    fixedLayout: BookMetadata['fixedLayout'],
-  ): void {
-    metadata = {
-      title: metaMap.get('title') ?? '',
-      creator: metaMap.get('creator'),
-      language: metaMap.get('language'),
-      publisher: metaMap.get('publisher'),
-      description: metaMap.get('description'),
-      direction,
-      fixedLayout,
-    };
+    rawNav = nav ?? null;
+    rawMeta = meta ?? null;
+    rawSpine = spine ?? null;
   }
 
   function createRenditionHandle(container: HTMLElement): EpubRenditionHandle {
@@ -316,15 +346,18 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
       eventListeners.clear();
     },
     getMetadata(): BookMetadata {
+      ensureParsed();
       return { ...metadata };
     },
     getBook(): Book | null {
       return book;
     },
     getToc(): TocItem[] {
+      ensureParsed();
       return [...toc];
     },
     getSpineItems(): SpineItem[] {
+      ensureParsed();
       return [...spineItems];
     },
     getProgress(): ProgressPosition | null {
