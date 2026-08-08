@@ -82,11 +82,19 @@ export function InfoPanel({ isOpen, onClose, metadata, bookId, progressPercent, 
     };
     window.addEventListener('keydown', handleEscape);
 
-    computeInsightSummary(bookId, progressPercent).then(setInsights).catch(() => {
-      setInsights(null);
-    });
+    let cancelled = false;
+    computeInsightSummary(bookId, progressPercent)
+      .then((summary) => {
+        if (!cancelled) setInsights(summary);
+      })
+      .catch(() => {
+        if (!cancelled) setInsights(null);
+      });
 
-    return () => window.removeEventListener('keydown', handleEscape);
+    return () => {
+      cancelled = true;
+      window.removeEventListener('keydown', handleEscape);
+    };
   }, [isOpen, onClose, bookId, progressPercent]);
 
   if (!isOpen) return null;
