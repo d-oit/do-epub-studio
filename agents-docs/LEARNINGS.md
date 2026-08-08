@@ -157,3 +157,10 @@
 - **`clearResolvedConflicts()` scope**: A global in-memory `Map` for conflict records means `clearResolvedConflicts()` wipes all resolved conflicts across all books. Pass `bookId` to scope clearing per-entity.
 - **BATS tests in quality gate**: The gate runs `bats tests/` only if root `tests/` exists. BATS tests in `scripts/tests/` were invisible to CI. Update the gate to check both `tests/` and `scripts/tests/` directories and run BATS on all found directories.
 - **atomic-commit verify false-negative**: The verify phase waits 60s for CI checks to appear. Infrastructure-only changes (scripts/workflows with no app source) may not trigger CI checks within that window, causing a false-negative rollback. For infra-only changes, commit directly with `git commit` + `git push` instead of using the atomic-commit script.
+
+### GOAP 220 — Overclaimed Plans & Annotation Batching (2026-08-08)
+
+- **Search-result virtualization lives in the consumer, not the hook**: `useReaderSearch.ts` only computes results; the viewport windowing (`visibleRange`/`handleScroll`) is in `SearchPanel.tsx`. Auditing a plan item by reading only the hook file yields a false "MISSING" verdict. Verify the rendering consumer before declaring virtualization unimplemented.
+- **`accent-error` contrast had two constraints**: `--color-accent-error` must pass AA on BOTH `text-accent-error`-on-`bg-accent-error/10` (tint) AND `white`-on-`bg-accent-error` (danger button). Darkening to `oklch(53% 0.2 25)` (:root) satisfies both (4.97:1 and 5.86:1). The `@theme` mapping is a CSS-variable alias, not a second value definition.
+- **`cancelScheduledRender` must reset ALL pending fields**: When coalescing via rAF, reset `pendingOnNavigate` too (not just href/highlights/comments) or you leave a stale callback reference alive if cancel is called outside unmount.
+- **`gh issue comment` backticks get shell-mangled**: Inline backticks in issue/PR comments are interpreted by bash. Pipe the body through `--body-file -` with a heredoc to preserve Markdown code spans.
