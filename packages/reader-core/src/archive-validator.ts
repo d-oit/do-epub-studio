@@ -1,9 +1,11 @@
 import { Unzip } from 'fflate';
+import { withTimeout, createTraceId } from '@do-epub-studio/shared';
 
 export const MAX_COMPRESSED_SIZE = 100 * 1024 * 1024;
 export const MAX_UNCOMPRESSED_SIZE = 1024 * 1024 * 1024;
 export const MAX_ENTRY_COUNT = 10000;
 export const MAX_COMPRESSION_RATIO = 10;
+const ARCHIVE_VALIDATION_TIMEOUT_MS = 10_000;
 
 export class ArchiveValidationError extends Error {
   constructor(message: string) {
@@ -12,7 +14,23 @@ export class ArchiveValidationError extends Error {
   }
 }
 
-export async function validateArchive(data: Uint8Array): Promise<void> {
+export async function validateArchive(
+  data: Uint8Array,
+  options?: { timeoutMs?: number; traceId?: string },
+): Promise<void> {
+  const timeoutMs = options?.timeoutMs ?? ARCHIVE_VALIDATION_TIMEOUT_MS;
+  const traceId = options?.traceId ?? createTraceId();
+
+  await withTimeout(
+    (signal) => validateArchiveInner(data, signal),
+    { timeoutMs, operation: 'archive-validation', traceId },
+  );
+}
+
+function validateArchiveInner(
+  data: Uint8Array,
+  signal: AbortSignal,
+): Promise<void> {
   if (data.length > MAX_COMPRESSED_SIZE) {
     throw new ArchiveValidationError(
       `Archive exceeds maximum compressed size of ${MAX_COMPRESSED_SIZE} bytes`,
@@ -28,6 +46,10 @@ export async function validateArchive(data: Uint8Array): Promise<void> {
 
     unzip.onfile = (file) => {
       if (finished) return;
+      if (signal.aborted) {
+        finished = true;
+        return;
+      }
 
       entryCount++;
       if (entryCount > MAX_ENTRY_COUNT) {

@@ -1,7 +1,8 @@
 import type { FixedLayoutInfo } from './epub-types';
-import { escapeRegex, matchBounded } from '@do-epub-studio/shared';
+import { escapeRegex, matchBounded, checkDeadline, createDeadline } from '@do-epub-studio/shared';
 
 const OPF_RENDITION_MAX_LEN = 1048576;
+const FIXED_LAYOUT_TIMEOUT_MS = 2_000;
 
 function extractRenditionMetaValue(opfXml: string, property: string): string | undefined {
   const escaped = escapeRegex(property);
@@ -34,12 +35,25 @@ const VALID_LAYOUTS = new Set(['reflowable', 'pre-paginated']);
 const VALID_ORIENTATIONS = new Set(['auto', 'landscape', 'portrait']);
 const VALID_SPREADS = new Set(['none', 'auto', 'both', 'landscape']);
 
-export function parseFixedLayoutFromOpf(opfXml: string): FixedLayoutInfo | undefined {
+export function parseFixedLayoutFromOpf(
+  opfXml: string,
+  options?: { timeoutMs?: number; traceId?: string },
+): FixedLayoutInfo | undefined {
   if (!opfXml || opfXml.length > 1048576) return undefined;
 
+  const timeoutMs = options?.timeoutMs ?? FIXED_LAYOUT_TIMEOUT_MS;
+  const traceId = options?.traceId;
+  const deadline = createDeadline(timeoutMs);
+
   const layout = extractRenditionMetaValue(opfXml, 'layout');
+  checkDeadline(deadline, 'fixed-layout-parse', timeoutMs, traceId);
+
   const orientation = extractRenditionMetaValue(opfXml, 'orientation');
+  checkDeadline(deadline, 'fixed-layout-parse', timeoutMs, traceId);
+
   const spread = extractRenditionMetaValue(opfXml, 'spread');
+  checkDeadline(deadline, 'fixed-layout-parse', timeoutMs, traceId);
+
   const viewport = extractRenditionMetaValue(opfXml, 'viewport');
 
   if (!layout && !orientation && !spread && !viewport) return undefined;

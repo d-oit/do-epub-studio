@@ -1,4 +1,4 @@
-import { apiRequest } from '../api';
+import { apiRequest } from './core';
 import type { Highlight, Comment } from '../../stores';
 
 export async function fetchHighlights(bookId: string, token: string): Promise<Highlight[]> {

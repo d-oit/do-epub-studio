@@ -1,17 +1,45 @@
 import { describe, it, expect } from 'vitest';
-import { dictionaries } from '../i18n';
+import { ensureLocale, type LocaleKey } from '../i18n';
 import { en } from '../i18n/en';
-import { de } from '../i18n/de';
-import { fr } from '../i18n/fr';
+
+const localeModules: Record<string, () => Promise<Record<string, Record<string, string>>>> = {
+  de: () => import('../i18n/de'),
+  fr: () => import('../i18n/fr'),
+  es: () => import('../i18n/es'),
+  pt: () => import('../i18n/pt'),
+  it: () => import('../i18n/it'),
+  ja: () => import('../i18n/ja'),
+  zh: () => import('../i18n/zh'),
+  ko: () => import('../i18n/ko'),
+  ar: () => import('../i18n/ar'),
+  ru: () => import('../i18n/ru'),
+  hi: () => import('../i18n/hi'),
+  nl: () => import('../i18n/nl'),
+};
+
+const localeNames = Object.keys(localeModules) as LocaleKey[];
+
+async function loadAllLocales(): Promise<Record<string, Record<string, string>>> {
+  const result: Record<string, Record<string, string>> = { en };
+  for (const name of localeNames) {
+    await ensureLocale(name);
+    const mod = await localeModules[name]();
+    result[name] = mod[name];
+  }
+  return result;
+}
 
 describe('i18n parity', () => {
-  const locales = { en, de, fr } as const;
-  const localeNames = Object.keys(locales) as (keyof typeof locales)[];
+  let dictionaries: Record<string, Record<string, string>>;
+
+  beforeAll(async () => {
+    dictionaries = await loadAllLocales();
+  });
 
   it('has all locale dictionaries defined', () => {
-    expect(dictionaries).toHaveProperty('en');
-    expect(dictionaries).toHaveProperty('de');
-    expect(dictionaries).toHaveProperty('fr');
+    for (const name of localeNames) {
+      expect(dictionaries).toHaveProperty(name);
+    }
   });
 
   it('has the same keys across all locales', () => {

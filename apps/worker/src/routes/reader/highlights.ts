@@ -4,9 +4,10 @@ import type { Env } from '../../lib/env';
 import type { AuthContext } from '../../auth/middleware';
 import { queryFirst, queryAll, execute } from '../../db/client';
 import { logAudit } from '../../audit';
-import { HighlightCreateSchema } from '@do-epub-studio/shared';
+import { HighlightCreateSchema, HighlightUpdateSchema } from '@do-epub-studio/schema';
 import { readerAuth } from '../../middleware/auth';
 import { assertBookAccess } from '../../lib/tenant-isolation';
+import { NotFoundError, ForbiddenError } from '../../lib/http-errors';
 
 export const highlightsRouter = new Hono<{ Bindings: Env; Variables: { auth: AuthContext } }>();
 
@@ -33,7 +34,7 @@ highlightsRouter.get('/:bookId/highlights', readerAuth, async (c) => {
 
   const highlights = await queryAll<HighlightRow>(
     c.env,
-    `SELECT * FROM highlights WHERE book_id = ? AND user_email = ? ORDER BY created_at DESC`,
+    `SELECT * FROM highlights WHERE book_id = ? AND user_email = ? ORDER BY created_at DESC LIMIT 1000`,
     [bookId, auth.email],
   );
 
@@ -61,7 +62,7 @@ highlightsRouter.post('/:bookId/highlights', readerAuth, zValidator('json', High
   if (mismatch) return mismatch.response;
 
   if (!auth.capabilities.canHighlight) {
-    return c.json({ ok: false, error: { code: 'FORBIDDEN', message: 'Access denied' } }, 403);
+    throw new ForbiddenError('Access denied');
   }
 
   const id = crypto.randomUUID();
@@ -136,8 +137,6 @@ highlightsRouter.delete('/:bookId/highlights/:highlightId', readerAuth, async (c
   return c.json({ ok: true });
 });
 
-const HighlightUpdateSchema = HighlightCreateSchema.pick({ note: true, color: true }).partial();
-
 highlightsRouter.patch('/:bookId/highlights/:highlightId', readerAuth, zValidator('json', HighlightUpdateSchema), async (c) => {
   const { bookId, highlightId } = c.req.param();
   const auth = c.get('auth');
@@ -152,17 +151,11 @@ highlightsRouter.patch('/:bookId/highlights/:highlightId', readerAuth, zValidato
   ]);
 
   if (!highlight) {
-    return c.json(
-      { ok: false, error: { code: 'NOT_FOUND', message: 'Highlight not found' } },
-      404,
-    );
+    throw new NotFoundError('Highlight');
   }
 
   if (highlight.user_email !== auth.email) {
-    return c.json(
-      { ok: false, error: { code: 'FORBIDDEN', message: 'Cannot edit others highlights' } },
-      403,
-    );
+    throw new ForbiddenError('Cannot edit others highlights');
   }
 
   const now = new Date().toISOString();

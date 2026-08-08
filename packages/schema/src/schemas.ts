@@ -16,15 +16,9 @@ export const GrantModeSchema = z.enum([
   'public',
 ]);
 
-export const GlobalRoleSchema = z.enum(['admin', 'editor', 'reader']);
-
 export const CommentStatusSchema = z.enum(['open', 'resolved', 'deleted']);
 
 export const CommentVisibilitySchema = z.enum(['shared', 'internal', 'resolved']);
-
-export const SyncOperationSchema = z.enum(['create', 'update', 'delete']);
-
-export const SyncStatusSchema = z.enum(['pending', 'synced', 'failed', 'conflict']);
 
 export const EntityTypeSchema = z.enum([
   'book',
@@ -36,17 +30,14 @@ export const EntityTypeSchema = z.enum([
   'highlight',
 ]);
 
-export const AnnotationLocatorSchema = z
-  .object({
-    cfi: z.string().max(2048).optional(),
-    selectedText: z.string().max(10000).optional(),
-    chapterRef: z.string().max(1024).optional(),
-    elementIndex: z.number().optional(),
-    charOffset: z.number().optional(),
-  })
-  .refine((loc: { cfi?: string; selectedText?: string }) => Boolean(loc.cfi ?? loc.selectedText), {
-    message: 'Locator must have at least cfi or selectedText',
-  });
+/** Flexible locator type for export/import (no Zod validation — use MultiSignalLocatorSchema for API boundaries) */
+export interface AnnotationLocator {
+  cfi?: string;
+  selectedText?: string;
+  chapterRef?: string;
+  elementIndex?: number;
+  charOffset?: number;
+}
 
 // Multi-signal locator requiring CFI + text + chapter per ADR-006
 export const MultiSignalLocatorSchema = z
@@ -71,6 +62,10 @@ export const AccessRequestSchema = z.object({
 
 export const RecoveryRequestSchema = z.object({
   bookSlug: z.string().min(1).max(255),
+  email: z.string().email().max(255),
+});
+
+export const AdminRecoveryRequestSchema = z.object({
   email: z.string().email().max(255),
 });
 
@@ -135,8 +130,14 @@ export const UpdateGrantSchema = z.object({
   expiresAt: z.string().datetime().nullable().optional(),
 });
 
+export const ProgressLocatorSchema = z.object({
+  cfi: z.string().min(1).max(2048),
+  selectedText: z.string().max(10000).optional(),
+  chapterRef: z.string().max(1024).optional(),
+});
+
 export const ProgressUpdateSchema = z.object({
-  locator: MultiSignalLocatorSchema,
+  locator: ProgressLocatorSchema,
   progressPercent: z.number().min(0).max(100),
 });
 
@@ -200,6 +201,13 @@ export const CatalogQuerySchema = z.object({
 
 export type CatalogQuery = z.infer<typeof CatalogQuerySchema>;
 
+export const LibraryQuerySchema = z.object({
+  limit: z.coerce.number().int().positive().max(100).default(50),
+  offset: z.coerce.number().int().nonnegative().default(0),
+});
+
+export type LibraryQuery = z.infer<typeof LibraryQuerySchema>;
+
 export const LoginSchema = z.object({
   email: z.string().email().max(255),
   password: z.string().min(1).max(255),
@@ -244,11 +252,13 @@ export function formatZodError(error: {
 
 export type AccessRequest = z.infer<typeof AccessRequestSchema>;
 export type RecoveryRequest = z.infer<typeof RecoveryRequestSchema>;
+export type AdminRecoveryRequest = z.infer<typeof AdminRecoveryRequestSchema>;
 export type RecoveryVerify = z.infer<typeof RecoveryVerifySchema>;
 export type CreateBook = z.infer<typeof CreateBookSchema>;
 export type UpdateBook = z.infer<typeof UpdateBookSchema>;
 export type CreateGrant = z.infer<typeof CreateGrantSchema>;
 export type UpdateGrant = z.infer<typeof UpdateGrantSchema>;
+export type ProgressLocator = z.infer<typeof ProgressLocatorSchema>;
 export type ProgressUpdate = z.infer<typeof ProgressUpdateSchema>;
 export type BookmarkCreate = z.infer<typeof BookmarkCreateSchema>;
 export type HighlightCreate = z.infer<typeof HighlightCreateSchema>;
@@ -295,3 +305,37 @@ export const ReadingInsightSummarySchema = z.object({
 export type ReadingInsightBucket = z.infer<typeof ReadingInsightBucketSchema>;
 export type ReadingInsightSync = z.infer<typeof ReadingInsightSyncSchema>;
 export type ReadingInsightSummary = z.infer<typeof ReadingInsightSummarySchema>;
+
+export const SearchQuerySchema = z.object({
+  q: z.string().min(1).max(500),
+  limit: z.coerce.number().int().min(1).max(50).default(20),
+  offset: z.coerce.number().int().min(0).default(0),
+});
+
+export type SearchQuery = z.infer<typeof SearchQuerySchema>;
+
+export const ExportQuerySchema = z.object({
+  format: z.enum(['markdown', 'html']).default('markdown'),
+});
+
+export type ExportQuery = z.infer<typeof ExportQuerySchema>;
+
+export const HighlightUpdateSchema = HighlightCreateSchema.pick({ note: true, color: true }).partial();
+
+export type HighlightUpdate = z.infer<typeof HighlightUpdateSchema>;
+
+export const NotificationsQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+  offset: z.coerce.number().int().min(0).default(0),
+  unread: z.enum(['true', 'false']).default('false'),
+});
+
+export type NotificationsQuery = z.infer<typeof NotificationsQuerySchema>;
+
+export const RecoveryTokenPayloadSchema = z.object({
+  email: z.string().email(),
+  bookSlug: z.string().optional(),
+  purpose: z.string(),
+});
+
+export type RecoveryTokenPayload = z.infer<typeof RecoveryTokenPayloadSchema>;

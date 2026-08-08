@@ -6,6 +6,7 @@ import { queryAll, execute } from '../../db/client';
 import { BookmarkCreateSchema } from '@do-epub-studio/shared';
 import { readerAuth } from '../../middleware/auth';
 import { parseLocatorRow, assertBookAccess } from '../../lib/tenant-isolation';
+import { ForbiddenError } from '../../lib/http-errors';
 
 export const bookmarksRouter = new Hono<{ Bindings: Env; Variables: { auth: AuthContext } }>();
 
@@ -28,7 +29,7 @@ bookmarksRouter.get('/:bookId/bookmarks', readerAuth, async (c) => {
 
   const bookmarks = await queryAll<BookmarkRow>(
     c.env,
-    `SELECT * FROM bookmarks WHERE book_id = ? AND user_email = ? ORDER BY created_at DESC`,
+    `SELECT * FROM bookmarks WHERE book_id = ? AND user_email = ? ORDER BY created_at DESC LIMIT 1000`,
     [bookId, auth.email],
   );
 
@@ -61,7 +62,7 @@ bookmarksRouter.post('/:bookId/bookmarks', readerAuth, zValidator('json', Bookma
   if (mismatch) return mismatch.response;
 
   if (!auth.capabilities.canBookmark) {
-    return c.json({ ok: false, error: { code: 'FORBIDDEN', message: 'Access denied' } }, 403);
+    throw new ForbiddenError('Access denied');
   }
 
   const id = crypto.randomUUID();

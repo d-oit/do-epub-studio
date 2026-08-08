@@ -1,0 +1,47 @@
+{
+  "$schema": "Gate parity manifest — defines expected checks for each entry point",
+  "version": 1,
+  "local": {
+    "description": "Canonical local quality gate (./scripts/quality_gate.sh)",
+    "checks": [
+      "lint",
+      "typecheck",
+      "test:coverage",
+      "build",
+      "smoke",
+      "design"
+    ]
+  },
+  "pr": {
+    "description": "Required GitHub PR checks (ci.yml + auxiliary workflows)",
+    "checks": [
+      "Lint & Typecheck",
+      "Test (web)",
+      "Test (worker)",
+      "Test (reader-core)",
+      "Test (shared)",
+      "Test (schema)",
+      "Test (testkit)",
+      "Build",
+      "Worker Build",
+      "E2E Tests",
+      "Bundle Size",
+      "CodeQL",
+      "Lighthouse audit",
+      "Codacy Static Code Analysis"
+    ]
+  },
+  "release": {
+    "description": "Required release readiness checks (release.yml)",
+    "checks": [
+      "Release Readiness",
+      "Tag/Version Agreement",
+      "Main Ancestry",
+      "Coverage Gate",
+      "Required PR Checks",
+      "Cross-Browser E2E",
+      "Performance Budgets",
+      "Security Checks"
+    ]
+  }
+}

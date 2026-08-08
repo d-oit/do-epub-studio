@@ -33,7 +33,7 @@ describe('Reader State Routes', () => {
     });
 
     it('returns progress when authenticated', async () => {
-      mockRequireAuth.mockResolvedValue({ email: 'user@example.com', bookId: 'book-1', sessionId: 'session-1' } as any);
+      mockRequireAuth.mockResolvedValue({ email: 'user@example.com', bookId: 'book-1', sessionId: 'session-1' });
 
       mockQueryFirst.mockResolvedValue({
         id: 'progress-1',
@@ -46,7 +46,7 @@ describe('Reader State Routes', () => {
         headers: { 'Authorization': 'Bearer valid' }
       }), env, makePassThroughContext());
       expect(res.status).toBe(200);
-      const body = await res.json() as any;
+      const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } = await res.json();
       expect(body.data.progressPercent).toBe(50);
     });
   });
@@ -56,8 +56,8 @@ describe('Reader State Routes', () => {
       mockRequireAuth.mockResolvedValue({
         email: 'user@example.com',
         capabilities: { canRead: true },
-      } as any);
-      mockExecute.mockResolvedValue({} as any);
+      });
+      mockExecute.mockResolvedValue({ rows: [] });
 
       const res = await app.fetch(new Request('http://localhost/api/books/book-1/progress', {
         method: 'PUT',
@@ -72,14 +72,14 @@ describe('Reader State Routes', () => {
       }), env, makePassThroughContext());
 
       expect(res.status).toBe(200);
-      const body = await res.json() as any;
+      const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } = await res.json();
       expect(body.ok).toBe(true);
     });
   });
 
   describe('GET /api/books/:bookId/bookmarks', () => {
     it('returns list of bookmarks', async () => {
-      mockRequireAuth.mockResolvedValue({ email: 'user@example.com' } as any);
+      mockRequireAuth.mockResolvedValue({ email: 'user@example.com' });
       mockQueryAll.mockResolvedValue([
         { id: '1', locator_json: JSON.stringify({ cfi: 'cfi' }), label: 'bm1', created_at: 'now' }
       ]);
@@ -88,7 +88,7 @@ describe('Reader State Routes', () => {
         headers: { 'Authorization': 'Bearer valid' }
       }), env, makePassThroughContext());
       expect(res.status).toBe(200);
-      const body = await res.json() as any;
+      const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } = await res.json();
       expect(body.data).toHaveLength(1);
     });
   });
@@ -98,8 +98,8 @@ describe('Reader State Routes', () => {
       mockRequireAuth.mockResolvedValue({
         email: 'user@example.com',
         capabilities: { canBookmark: true },
-      } as any);
-      mockExecute.mockResolvedValue({} as any);
+      });
+      mockExecute.mockResolvedValue({ rows: [] });
 
       const res = await app.fetch(new Request('http://localhost/api/books/book-1/bookmarks', {
         method: 'POST',
@@ -119,8 +119,8 @@ describe('Reader State Routes', () => {
 
   describe('DELETE /api/books/:bookId/bookmarks/:bookmarkId', () => {
     it('deletes bookmark and returns success', async () => {
-      mockRequireAuth.mockResolvedValue({ email: 'user@example.com' } as any);
-      mockExecute.mockResolvedValue({} as any);
+      mockRequireAuth.mockResolvedValue({ email: 'user@example.com' });
+      mockExecute.mockResolvedValue({ rows: [] });
 
       const res = await app.fetch(new Request('http://localhost/api/books/book-1/bookmarks/bookmark-1', {
         method: 'DELETE',
@@ -133,7 +133,7 @@ describe('Reader State Routes', () => {
 
   describe('GET /api/books/:bookId/highlights', () => {
     it('returns list of highlights', async () => {
-      mockRequireAuth.mockResolvedValue({ email: 'user@example.com' } as any);
+      mockRequireAuth.mockResolvedValue({ email: 'user@example.com' });
       mockQueryAll.mockResolvedValue([
         { id: '1', chapter_ref: 'c1', cfi_range: 'r1', selected_text: 't', color: '#ff0', created_at: 'now' }
       ]);
@@ -142,7 +142,7 @@ describe('Reader State Routes', () => {
         headers: { 'Authorization': 'Bearer valid' }
       }), env, makePassThroughContext());
       expect(res.status).toBe(200);
-      const body = await res.json() as any;
+      const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } = await res.json();
       expect(body.data).toHaveLength(1);
     });
   });
@@ -152,8 +152,8 @@ describe('Reader State Routes', () => {
       mockRequireAuth.mockResolvedValue({
         email: 'user@example.com',
         capabilities: { canHighlight: true },
-      } as any);
-      mockExecute.mockResolvedValue({} as any);
+      });
+      mockExecute.mockResolvedValue({ rows: [] });
 
       const res = await app.fetch(new Request('http://localhost/api/books/book-1/highlights', {
         method: 'POST',
@@ -174,9 +174,9 @@ describe('Reader State Routes', () => {
 
   describe('PATCH /api/books/:bookId/highlights/:highlightId', () => {
     it('updates highlight and returns success', async () => {
-      mockRequireAuth.mockResolvedValue({ email: 'user@example.com' } as any);
+      mockRequireAuth.mockResolvedValue({ email: 'user@example.com' });
       mockQueryFirst.mockResolvedValue({ user_email: 'user@example.com' });
-      mockExecute.mockResolvedValue({} as any);
+      mockExecute.mockResolvedValue({ rows: [] });
 
       const res = await app.fetch(new Request('http://localhost/api/books/book-1/highlights/highlight-1', {
         method: 'PATCH',
@@ -193,8 +193,8 @@ describe('Reader State Routes', () => {
 
   describe('DELETE /api/books/:bookId/highlights/:highlightId', () => {
     it('deletes highlight and returns success', async () => {
-      mockRequireAuth.mockResolvedValue({ email: 'user@example.com' } as any);
-      mockExecute.mockResolvedValue({} as any);
+      mockRequireAuth.mockResolvedValue({ email: 'user@example.com' });
+      mockExecute.mockResolvedValue({ rows: [] });
 
       const res = await app.fetch(new Request('http://localhost/api/books/book-1/highlights/highlight-1', {
         method: 'DELETE',

@@ -53,3 +53,32 @@ CREATE INDEX IF NOT EXISTS idx_books_owner ON books(owner_id);
 - Migration files: `YYYYMMDD_description.sql`
 - Tables: snake_case, plural (e.g., `books`, `permissions`)
 - Columns: snake_case (e.g., `book_id`, `created_at`)
+
+## Examples
+
+### Migration File
+
+Migrations live in `packages/schema/migrations/` as sequentially numbered SQL files. Add a column with a safe `ALTER TABLE` (from `packages/schema/migrations/0003-epub-validation.sql`):
+
+```sql
+-- Migration: 0005-add-pages-to-insights
+-- Description: Track active page count alongside active minutes
+-- Created: 2026-06-01
+
+ALTER TABLE reading_insights ADD COLUMN active_pages INTEGER NOT NULL DEFAULT 0;
+```
+
+### Apply Migrations
+
+D1 binding is `DB` (see `apps/worker/wrangler.jsonc`). Apply all pending migrations with Wrangler:
+
+```bash
+# Apply to production D1 database
+wrangler d1 migrations apply do-epub-studio
+
+# Verify applied migrations
+wrangler d1 migrations list do-epub-studio
+
+# Run an ad-hoc check
+wrangler d1 execute do-epub-studio --command="SELECT COUNT(*) FROM books"
+```

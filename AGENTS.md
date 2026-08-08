@@ -10,7 +10,7 @@
 # File size limits (lines)
 readonly MAX_LINES_PER_SOURCE_FILE=500
 readonly MAX_LINES_PER_SKILL_MD=250
-readonly MAX_LINES_AGENTS_MD=150
+readonly MAX_LINES_AGENTS_MD=200
 
 # Git/PR configuration
 readonly MAX_COMMIT_SUBJECT_LENGTH=72
@@ -40,7 +40,8 @@ readonly MAX_PR_TITLE_LENGTH=72
 - **MUST use semantic design tokens (\`text-foreground\`, \`bg-background\`, etc.) from \`globals.css\` for all UI components to ensure WCAG 2.1 AA accessibility compliance per ADR-063.**
 - **NEVER merge a PR with failing CI checks.** Before merging, verify ALL required checks pass via `gh pr checks <N>`. NEVER use `--admin` to bypass branch protection or merge with failing checks. If a check fails, fix the failure first — no exceptions.
 - **MUST always fix pre-existing issues when encountered.** Whenever you touch a file (or surface an issue via analysis, lint, typecheck, test, security audit, or review), you MUST fix the pre-existing issue in the same change set — regardless of whether it is in the diff scope. Deferral is not allowed. If a pre-existing issue is too large for the current change, open a follow-up GOAP plan + ADR + tracking issue and link it from the current PR description; the current PR is not mergeable until the follow-up exists. Pre-existing issues in unrelated files are addressed by either: (a) fixing them in the current PR, or (b) opening a follow-up GOAP plan that is actively worked on. "Leave it for later" with no follow-up is a violation.
-- **MUST pass Codacy Static Code Analysis before merge.** The `Codacy Static Code Analysis` row in `gh pr checks <PR>` is treated as a required check on this repo. New issues from `codacy pull-request gh <org> <repo> <pr>` MUST be fixed in code; suppressions are last-resort and require an inline justification. Local ESLint does NOT cover root-level configs (`vite.config.ts`, `vitest.config.ts`, `playwright.config.ts`) — Codacy does, so a green local `pnpm lint` does not guarantee Codacy green. Always re-check `gh pr checks` after pushing. See `.agents/skills/codacy/SKILL.md`.
+  - **CI check failures are pre-existing issues.** When `gh pr checks` shows failing checks (test failures, lint errors, build errors, Codacy issues, bundle budget violations, Lighthouse failures), you MUST investigate and fix them in the current PR. Never dismiss a CI failure as "pre-existing" to avoid the work. Diagnose each failure: if the failure exists on `main` before your changes, it is pre-existing and MUST be fixed in the same changeset. If you cannot fix it (e.g., environment-specific), document it in a GOAP plan with an ADR explaining the policy and link it from the PR. The PR is NOT mergeable until all CI failures are either fixed or have a documented ADR with active follow-up.
+- **MUST pass Codacy Static Code Analysis before merge.** The `Codacy Static Code Analysis` row in `gh pr checks <PR>` is treated as a required check on this repo. New issues from `codacy pull-request gh <org> <repo> <pr>` MUST be fixed in code; suppressions are last-resort and require an inline justification. Local ESLint does NOT cover root-level configs (`vite.config.ts`, `vitest.config.ts`, `playwright.config.ts`) — Codacy does, so a green local `pnpm lint` does not guarantee Codacy green. Always re-check `gh pr checks` after pushing. **Engine names in `.codacy.yml` must use current tool names (e.g., `eslint-8` not `eslint`)** — deprecated names silently break `exclude_paths`. See `.agents/skills/codacy/SKILL.md`.
 - **MUST use static imports over `readFileSync` for repo-bundled assets.** When a Vite/webpack/rollup config or a Node-bundled source needs a JSON file or a static text file (e.g. `VERSION`), prefer `import x from './file.json'` (Vite) or `path.join(__dirname, 'literal')` (Node) over `readFileSync(new URL(..., import.meta.url))`. The `new URL` pattern trips Codacy's `security/detect-non-literal-fs-filename` rule (OWASP path-traversal guard) because the URL is non-literal at the call site. See `.agents/skills/security-code-auditor/SKILL.md` § "File-System Path Patterns".
 - **MUST test security headers (HSTS, CSP defaults) on all responses.** CSP must not be overridden on static file responses.
 - **MUST apply parser timeouts to EPUB content parsing** to prevent infinite loops on malformed input.
@@ -53,18 +54,20 @@ readonly MAX_PR_TITLE_LENGTH=72
 
 1. **Run `./scripts/quality_gate.sh` before commit.** No exceptions.
 2. **Validate workflows:** All GitHub Actions workflows MUST pass validation via `./scripts/validate-workflows.sh` (includes `actionlint` and `zizmor` security scanning).
-3. **Use `./scripts/atomic-commit/run.sh --message "type(scope): description"`.**
+3. **Use `./scripts/atomic-commit/run.sh --message "type(scope): description" --body "WHY"`.** It is safe to run with unrelated uncommitted changes in the working tree: the pre-push rebase uses `git rebase --autostash` (in-progress work is stashed and restored), and any rollback undoes only the just-made commit (`git reset --soft`) — never the working tree.
 4. **Coverage Thresholds:** Enforce minimum coverage via `test:coverage`.
    - `web`: 55% Lines, 48% Functions | `worker`: 55% Lines, 50% Functions
    - `shared`: 40% Lines, 50% Functions | `reader-core`: 72% Lines, 70% Functions
-   - `schema`: 15% Lines, 5% Functions | `testkit`: 25% Lines, 20% Functions
+   - `schema`: 90% Lines, 90% Functions | `testkit`: 25% Lines, 20% Functions
    - `ui`: 10% Lines, 5% Functions
 5. **Validate commit message:** Run `./scripts/validate-commit-message.sh` or ensure format matches `type(scope): description` (max 72 chars).
 6. **NEVER ignore lint warnings, typecheck errors, or test failures.**
 7. **If a lint rule is disabled, add inline comment explaining why.**
+   - **ESLint flat-config plugin scoping rule:** A `rules` override block that references `@typescript-eslint/*` rules MUST either (a) be nested inside a config object that also declares `plugins: { '@typescript-eslint': tseslint }`, or (b) not re-declare those rules at all (inherit from the parent config object). Adding `'@typescript-eslint/some-rule': 'error'` to a bare `{ files, rules }` override block without a `plugins` key causes an ESLint crash ("could not find plugin") in packages that inherit the root config. To enforce a `@typescript-eslint` rule uniformly across all files including tests, set it once in the main config object (which already has `plugins`) — do not duplicate it in a file-glob override. To **relax** a rule for tests, set it to `'off'` in the test-files override. To **tighten** it, simply remove the `'off'` line (the parent `'error'` setting is inherited automatically).
+   - **Always run `pnpm lint` across ALL packages (via `turbo run lint`) before committing** — not just `pnpm --filter <app> lint`. A change to the root `eslint.config.js` affects every package; a local lint pass on one package can hide breakage in others.
 8. **MUST load `goap-agent` skill for any analysis, planning, or multi-step task.** Use GOAP methodology (analyze → decompose → strategize → coordinate → execute → synthesize).
 9. **Document ALL issues as GOAP plans + ADRs in `plans/`.** Warnings, pre-existing issues, and unfixable items each get a GOAP plan with an ADR defining policy. Do NOT edit KNOWN-ISSUES.md directly — that is a reference mirror of monitor-tier items only.
-10. **Releases MUST be cut via the `release-management` skill — no manual tags, no direct CHANGELOG edits.**
+10. **Releases MUST be cut via the `release-management` skill — no manual tags, no direct CHANGELOG edits.** Tags are pushed exclusively via `scripts/release/create-release-tag.sh <version>`; the pre-push hook blocks all other `v*` tag pushes.
 11. **CI MUST enforce Lighthouse mobile preset with route-specific performance budgets** for catalog, admin, auth, and offline routes.
 
 ---
@@ -88,13 +91,10 @@ readonly MAX_PR_TITLE_LENGTH=72
 
 ## TIER 4 — REFERENCE (See Agents-Docs)
 
-- **Architecture decisions:** See `docs/coding-guide.md` and `plans/archive/002-006`
-- **TRIZ analysis:** See `plans/archive/001-triz-analysis.md` + `plans/archive/002-triz-resolution.md`
-- **Skills catalog:** Run `ls .agents/skills/` or see `agents-docs/AVAILABLE_SKILLS.md`
-- **GOAP + ADR pattern:** See `plans/020-goap-sprint-141.md` + `plans/024-adr-warning-management.md`
-- **Learnings:** See `agents-docs/LEARNINGS.md`
-- **Current phase:** All 28 swarm gaps (G1–G28) closed as of 2026-06-15. Rate limiter DO cutover also complete. See `analysis/SWARM_ANALYSIS.md` for resolution evidence.
-- **Swarm completion:** See `plans/097-goap-swarm-close-all-gaps.md` for final execution record.
+- **Architecture & TRIZ:** See `docs/coding-guide.md`, `plans/archive/001-006` (TRIZ + architecture decisions)
+- **Skills & learnings:** Run `ls .agents/skills/` or see `agents-docs/AVAILABLE_SKILLS.md` + `LEARNINGS.md`
+- **GOAP + ADR pattern:** See `plans/archive/020-goap-sprint-141.md` + `plans/archive/024-adr-warning-management.md`
+- **Swarm completion:** All 28 gaps (G1–G28) closed (2026-06-15); Waves 1–4 hardening complete (2026-07-30). See `analysis/SWARM_ANALYSIS.md` + `plans/097-goap-swarm-close-all-gaps.md`.
 
 ---
 
@@ -119,14 +119,13 @@ Run this before finalizing ANY response:
 
 | Category         | Skills                                                                                                                   |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| **Coordination** | `goap-agent`, `triz-analysis`, `triz-solver`, `task-decomposition`, `agent-coordination`, `learn`, `do-web-doc-resolver`, `jules-delegator` |
+| **Coordination** | `goap-agent`, `triz-analysis`, `triz-solver`, `task-decomposition`, `learn`, `do-web-doc-resolver`, `jules-delegator` |
 | **Backend**      | `cloudflare-worker-api`, `secure-invite-and-access`, `turso-schema-migrations`, `pwa-offline-sync`, `cicd-pipeline`      |
 | **Reader/UI**    | `epub-rendering-and-cfi`, `reader-ui-ux`, `accessibility-auditor`                                                        |
 | **Testing**      | `testing-strategy`, `testdata-builders`, `test-runner`, `dogfood`                                                        |
-| **DevOps**       | `github-workflow`, `cicd-pipeline`, `migration-refactoring`                                                              |
-| **Workflow**     | `github-actions-version-fix`, `github-pr-autopilot`, `release-management`                                                |
+| **DevOps & Workflow** | `github-workflow`, `cicd-pipeline`, `migration-refactoring`, `github-actions-version-fix`, `github-pr-autopilot`, `release-management` |
 | **Security**     | `security-code-auditor`, `privacy-first`                                                                                 |
-| **Quality**      | `code-quality`, `code-review-assistant`, `shell-script-quality`, `anti-ai-slop`, `agents-md`                             |
+| **Quality**      | `codacy`, `code-quality`, `code-review-assistant`, `shell-script-quality`, `anti-ai-slop`, `impeccable`, `agents-md`              |
 
 ---
 
@@ -141,11 +140,11 @@ IMPECCABLE_REQUIRED=1 ./scripts/quality_gate.sh  # Design gate blocks on finding
 ./scripts/health-check.sh              # Dev environment check
 
 # Commit workflow
-./scripts/atomic-commit/run.sh --message "type(scope): description"
+./scripts/atomic-commit/run.sh --message "type(scope): description" --body "WHY"
 ./scripts/validate-commit-message.sh <file>  # Validate commit message
 
-# Skills
-skill learn                         # Capture discoveries
+# Codacy — query PR findings (see Skills Reference for skill)
+codacy pull-request gh d-oit do-epub-studio <PR> --output json
 ```
 
 ---

@@ -42,6 +42,10 @@ export class RateLimiterDO extends DurableObject {
       return this.handleReset(path.slice('/reset/'.length));
     }
 
+    if (request.method === 'DELETE' && path.startsWith('/key/')) {
+      return this.handleDeleteKey(path.slice('/key/'.length));
+    }
+
     const checkMatch = matchBounded(/^\/check\/([^/]+)\/([^/]+)$/, path, 1024);
     if (request.method === 'GET' && checkMatch) {
       const maxRequests = parseInt(url.searchParams.get('maxRequests') ?? String(DEFAULT_CONFIG.maxRequests), 10);
@@ -85,6 +89,21 @@ export class RateLimiterDO extends DurableObject {
       remaining: Math.max(0, config.maxRequests - entry.count),
       resetAt: entry.resetAt,
     });
+  }
+
+  private async handleDeleteKey(namespaceAndKey: string): Promise<Response> {
+    // namespaceAndKey is "namespace/key" — split on first slash only
+    const slashIdx = namespaceAndKey.indexOf('/');
+    if (slashIdx === -1) {
+      return new Response('Bad request', { status: 400 });
+    }
+    const namespace = namespaceAndKey.slice(0, slashIdx);
+    const key = namespaceAndKey.slice(slashIdx + 1);
+    if (!namespace || !key) {
+      return new Response('Bad request', { status: 400 });
+    }
+    await this.ctx.storage.delete(`${namespace}:${key}`);
+    return new Response(null, { status: 204 });
   }
 
   private async handleReset(namespace: string): Promise<Response> {

@@ -1,4 +1,3 @@
-import { readFileSync } from 'node:fs';
 import path from 'path';
 import { defineConfig, type PluginOption } from 'vite';
 import react from '@vitejs/plugin-react';
@@ -6,9 +5,13 @@ import { VitePWA } from 'vite-plugin-pwa';
 import { visualizer } from 'rollup-plugin-visualizer';
 import tailwindcss from '@tailwindcss/vite';
 import appIdentity from './src/config/app-identity.json';
+// Static import instead of readFileSync(VERSION) per AGENTS.md Tier 1.
+// scripts/check-app-identity.mjs asserts VERSION === root package.json
+// version, so the package version is the authoritative static source.
+import rootPackage from '../../package.json';
 
 const isAnalyze = process.env.ANALYZE === 'true';
-const appVersion = readFileSync(path.resolve(__dirname, '../../VERSION'), 'utf8').trim();
+const appVersion = rootPackage.version;
 
 export default defineConfig({
   plugins: [
@@ -71,6 +74,7 @@ export default defineConfig({
     outDir: 'dist',
     manifest: true,
     sourcemap: false,
+    chunkSizeWarningLimit: 500,
     rolldownOptions: {
       output: {
         // Vite 8 Rolldown uses codeSplitting or function manualChunks
@@ -96,9 +100,6 @@ export default defineConfig({
             }
             if (id.includes('workbox')) {
               return 'workbox';
-            }
-            if (id.includes('framer-motion')) {
-              return 'framer-motion';
             }
             if (id.includes('i18next') || id.includes('react-i18next')) {
               return 'i18n';

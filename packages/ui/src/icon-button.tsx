@@ -1,9 +1,6 @@
 import { type ComponentPropsWithoutRef, forwardRef } from 'react';
-import { motion } from 'framer-motion';
 
-type MotionButtonProps = ComponentPropsWithoutRef<typeof motion.button>;
-
-export interface IconButtonProps extends Omit<MotionButtonProps, 'onDrag' | 'onDragEnd' | 'onDragStart'> {
+export interface IconButtonProps extends ComponentPropsWithoutRef<'button'> {
   size?: 'sm' | 'md' | 'lg';
   variant?: 'default' | 'ghost' | 'primary';
 }
@@ -23,12 +20,10 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
     };
 
     return (
-      <motion.button
+      <button
         ref={ref}
-        whileTap={{ scale: 'var(--motion-scale-tap-lg)' }}
-        whileHover={{ scale: 'var(--motion-scale-hover-lg)' }}
         className={`
-          rounded-lg transition-colors duration-150
+          rounded-lg transition-all duration-150 hover:scale-110 active:scale-95
           focus:outline-none focus-visible:ring-2 focus-visible:ring-accent
           touch-target
           ${sizeClasses[size]}
@@ -38,7 +33,7 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
         {...props}
       >
         {children}
-      </motion.button>
+      </button>
     );
   },
 );

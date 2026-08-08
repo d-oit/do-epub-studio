@@ -76,7 +76,7 @@ catalogRouter.get('/', zValidator('query', CatalogQuerySchema), async (c) => {
         },
       });
     },
-    { cacheControl: PUBLIC_CACHE_CONTROL },
+    { cacheControl: PUBLIC_CACHE_CONTROL, env: c.env },
     { waitUntil: (p) => c.executionCtx.waitUntil(p) },
   );
 });

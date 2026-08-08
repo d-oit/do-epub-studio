@@ -4,7 +4,7 @@ import { CommentItem } from '../features/reader/components/annotations/CommentIt
 import { HighlightItem } from '../features/reader/components/annotations/HighlightItem';
 import { formatDate } from '../features/reader/components/annotations/formatDate';
 
-vi.mock('../../hooks/useTranslation', () => ({
+vi.mock('../hooks/useTranslation', () => ({
   useTranslation: () => ({
     t: (key: string) => key,
   }),
@@ -36,7 +36,58 @@ describe('formatDate', () => {
   it('returns locale date for old dates', () => {
     const date = new Date(Date.now() - 30 * 86400000).toISOString();
     const result = formatDate(date);
-    expect(result).toMatch(/\d{1,2}\/\d{1,2}\/\d{4}/);
+    // dateStyle:'medium' produces e.g. "Jun 29, 2026" — just verify it's a non-empty formatted date string
+    expect(result).toBeTruthy();
+    expect(result).not.toMatch(/ago$/);
+  });
+
+  it('uses i18n t() when provided for just now', () => {
+    const mockT = vi.fn((key: string, _params?: Record<string, string | number>) => {
+      if (key === 'relativeTime.justNow') return 'jetzt';
+      if (key === 'relativeTime.minutesAgo') return `vor ${String(_params?.count ?? '')}Min`;
+      return key;
+    });
+    const now = new Date().toISOString();
+    expect(formatDate(now, mockT)).toBe('jetzt');
+    expect(mockT).toHaveBeenCalledWith('relativeTime.justNow');
+  });
+
+  it('uses i18n t() when provided for minutes ago', () => {
+    const mockT = vi.fn((key: string, params?: Record<string, string | number>) => {
+      if (key === 'relativeTime.minutesAgo') return `vor ${String(params?.count ?? '')}Min`;
+      return key;
+    });
+    const date = new Date(Date.now() - 5 * 60000).toISOString();
+    const result = formatDate(date, mockT);
+    expect(result).toBe('vor 5Min');
+    expect(mockT).toHaveBeenCalledWith('relativeTime.minutesAgo', { count: 5 });
+  });
+
+  it('uses i18n t() when provided for hours ago', () => {
+    const mockT = vi.fn((key: string, params?: Record<string, string | number>) => {
+      if (key === 'relativeTime.hoursAgo') return `il y a ${String(params?.count ?? '')}h`;
+      return key;
+    });
+    const date = new Date(Date.now() - 3 * 3600000).toISOString();
+    const result = formatDate(date, mockT);
+    expect(result).toBe('il y a 3h');
+    expect(mockT).toHaveBeenCalledWith('relativeTime.hoursAgo', { count: 3 });
+  });
+
+  it('uses i18n t() when provided for days ago', () => {
+    const mockT = vi.fn((key: string, params?: Record<string, string | number>) => {
+      if (key === 'relativeTime.daysAgo') return `${String(params?.count ?? '')}日前`;
+      return key;
+    });
+    const date = new Date(Date.now() - 2 * 86400000).toISOString();
+    const result = formatDate(date, mockT);
+    expect(result).toBe('2日前');
+    expect(mockT).toHaveBeenCalledWith('relativeTime.daysAgo', { count: 2 });
+  });
+
+  it('falls back to English when t is not provided', () => {
+    const date = new Date(Date.now() - 10 * 60000).toISOString();
+    expect(formatDate(date)).toBe('10m ago');
   });
 });
 
@@ -164,8 +215,8 @@ describe('CommentItem', () => {
     };
     render(<CommentItem {...props} />);
     expect(screen.getByDisplayValue('Edited text')).toBeInTheDocument();
-    expect(screen.getByText('Save')).toBeInTheDocument();
-    expect(screen.getByText('Cancel')).toBeInTheDocument();
+    expect(screen.getByText('annotation.save')).toBeInTheDocument();
+    expect(screen.getByText('annotation.cancel')).toBeInTheDocument();
   });
 
   it('calls handleEdit when clicking save in edit mode', () => {
@@ -175,7 +226,7 @@ describe('CommentItem', () => {
       editText: 'Edited text',
     };
     render(<CommentItem {...props} />);
-    fireEvent.click(screen.getByText('Save'));
+    fireEvent.click(screen.getByText('annotation.save'));
     expect(baseProps.handleEdit).toHaveBeenCalledWith('c1');
   });
 
@@ -186,7 +237,7 @@ describe('CommentItem', () => {
       editText: 'Edited text',
     };
     render(<CommentItem {...props} />);
-    fireEvent.click(screen.getByText('Cancel'));
+    fireEvent.click(screen.getByText('annotation.cancel'));
     expect(baseProps.setEditingComment).toHaveBeenCalledWith(null);
   });
 
@@ -286,8 +337,8 @@ describe('HighlightItem', () => {
     if (container) {
       fireEvent.mouseEnter(container);
     }
-    expect(screen.getByText('Edit Note')).toBeInTheDocument();
-    expect(screen.getByText('Delete')).toBeInTheDocument();
+    expect(screen.getByText('annotation.editNote')).toBeInTheDocument();
+    expect(screen.getByText('annotation.delete')).toBeInTheDocument();
   });
 
   it('calls setEditingHighlight when clicking edit', () => {
@@ -296,7 +347,7 @@ describe('HighlightItem', () => {
     if (container) {
       fireEvent.mouseEnter(container);
     }
-    fireEvent.click(screen.getByText('Edit Note'));
+    fireEvent.click(screen.getByText('annotation.editNote'));
     expect(baseProps.setEditingHighlight).toHaveBeenCalledWith('h1');
     expect(baseProps.setHighlightNote).toHaveBeenCalledWith('My note');
   });
@@ -307,7 +358,7 @@ describe('HighlightItem', () => {
     if (container) {
       fireEvent.mouseEnter(container);
     }
-    fireEvent.click(screen.getByText('Delete'));
+    fireEvent.click(screen.getByText('annotation.delete'));
     expect(baseProps.onDelete).toHaveBeenCalledWith('h1');
   });
 
@@ -319,8 +370,8 @@ describe('HighlightItem', () => {
     };
     render(<HighlightItem {...props} />);
     expect(screen.getByDisplayValue('Edited note')).toBeInTheDocument();
-    expect(screen.getByText('Save')).toBeInTheDocument();
-    expect(screen.getByText('Cancel')).toBeInTheDocument();
+    expect(screen.getByText('annotation.save')).toBeInTheDocument();
+    expect(screen.getByText('annotation.cancel')).toBeInTheDocument();
   });
 
   it('calls onEdit when clicking save in edit mode', () => {
@@ -330,7 +381,7 @@ describe('HighlightItem', () => {
       highlightNote: 'Edited note',
     };
     render(<HighlightItem {...props} />);
-    fireEvent.click(screen.getByText('Save'));
+    fireEvent.click(screen.getByText('annotation.save'));
     expect(baseProps.onEdit).toHaveBeenCalledWith('h1');
   });
 
@@ -341,7 +392,7 @@ describe('HighlightItem', () => {
       highlightNote: 'Edited note',
     };
     render(<HighlightItem {...props} />);
-    fireEvent.click(screen.getByText('Cancel'));
+    fireEvent.click(screen.getByText('annotation.cancel'));
     expect(baseProps.setEditingHighlight).toHaveBeenCalledWith(null);
   });
 

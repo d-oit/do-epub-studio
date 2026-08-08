@@ -11,6 +11,7 @@ on:
       - 'docs/**'
       - '**.md'
       - '**.mdx'
+  merge_group:
   schedule:
     - cron: '0 2 * * *'
   workflow_dispatch:
@@ -32,7 +33,7 @@ jobs:
   changes:
     name: Path-based change detection
     runs-on: ubuntu-latest
-    timeout-minutes: 2
+    timeout-minutes: 5
     outputs:
       src: ${{ steps.filter.outputs.src }}
       reader-core: ${{ steps.filter.outputs.reader-core }}
@@ -40,12 +41,12 @@ jobs:
       agent-docs: ${{ steps.filter.outputs.agent-docs }}
       any: ${{ steps.filter.outputs.any }}
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           persist-credentials: false
           submodules: recursive
       - id: filter
-        uses: dorny/paths-filter@f3ceefdc7ef57bc2d8560787d4b6c33e44044cec  # master @ 2026-06-07 (v3.0.2 release commit is unreachable in the Actions registry; pinning to master HEAD for now)
+        uses: dorny/paths-filter@b41dfa943b1939b9b646f67753bfe35cf6e4de03  # master @ 2026-06-07 (v3.0.2 release commit is unreachable in the Actions registry; pinning to master HEAD for now)
         with:
           filters: |
             src:
@@ -61,6 +62,7 @@ jobs:
               - 'packages/reader-core/src/**'
             worker:
               - 'apps/worker/src/**'
+              - 'apps/worker/package.json'
               - 'wrangler.toml'
             agent-docs:
               - '.agents/**'
@@ -85,7 +87,7 @@ jobs:
     name: Setup & Diagnostics
     needs: changes
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 5
     outputs:
       cache-hit: ${{ steps.setup-pnpm.outputs.cache-hit }}
       start-time: ${{ steps.start-time.outputs.time }}
@@ -94,7 +96,7 @@ jobs:
         id: start-time
         run: echo "time=$(date +%s)" >> "$GITHUB_OUTPUT"
 
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           persist-credentials: false
           submodules: recursive
@@ -121,20 +123,40 @@ jobs:
           pnpm turbo run build --dry-run=json 2>/dev/null > turbo-dry.json || true
           node -e "const j=JSON.parse(require('fs').readFileSync('turbo-dry.json','utf8'));for(const t of j.tasks||[]){console.log(t.task+': '+t.cache.cacheStatus)}" || echo "(dry-run unavailable)"
 
+  fast-check:
+    name: Fast Check (Changed Packages)
+    if: github.event_name == 'pull_request'
+    needs: [changes, setup]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+          submodules: recursive
+          fetch-depth: 0  # Need full history for --affected
+      - name: Fetch base branch for --affected
+        run: git fetch origin main:main || true
+      - uses: ./.github/actions/setup-pnpm
+
+      - name: Run fast checks (scoped to changed packages)
+        run: pnpm verify:fast
+
   dep-scan:
     name: Dependency Vulnerability Scan
     needs: setup
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           persist-credentials: false
           submodules: recursive
       - uses: ./.github/actions/setup-pnpm
 
       - name: pnpm audit
-        run: pnpm audit --audit-level=high
+        run: pnpm audit --audit-level=high --ignore-registry-errors
 
   codeql-alert-check:
     name: CodeQL Alert Check
@@ -145,7 +167,7 @@ jobs:
       contents: read
       security-events: read
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           persist-credentials: false
           submodules: recursive
@@ -155,8 +177,16 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           ref="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
-          count=$(gh api "/repos/${{ github.repository }}/code-scanning/alerts?state=open" 2>/dev/null | \
-            jq --arg ref "refs/heads/$ref" '[.[] | select(.most_recent_instance.ref == $ref)] | length' || echo "0")
+          API_RESPONSE=$(gh api "/repos/${{ github.repository }}/code-scanning/alerts?state=open" 2>&1) || {
+            echo "::error::CodeQL API request failed. Cannot determine alert count."
+            echo "Response: $API_RESPONSE"
+            exit 1
+          }
+          count=$(echo "$API_RESPONSE" | jq --arg ref "refs/heads/$ref" '[.[] | select(.most_recent_instance.ref == $ref) | select(.tool.name != "Scorecard")] | length' 2>/dev/null)
+          if [ -z "$count" ] || ! [[ "$count" =~ ^[0-9]+$ ]]; then
+            echo "::error::CodeQL API returned malformed response. Cannot determine alert count."
+            exit 1
+          fi
           echo "::notice::Open CodeQL alerts on $ref: $count"
           [ "$count" = "0" ] || { echo "::error::Open CodeQL alerts on $ref: $count"; exit 1; }
 
@@ -170,12 +200,12 @@ jobs:
       contents: read
       pull-requests: write
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           persist-credentials: false
           submodules: recursive
       - name: Apply path-based labels
-        uses: actions/labeler@f27b608878404679385c85cfa523b85ccb86e213  # v6.1.0
+        uses: actions/labeler@b8dd2d9be0f68b860e7dae5dae7d772984eacd6d  # v6.2.0
         with:
           configuration-path: .github/labeler.yml
           repo-token: ${{ secrets.GITHUB_TOKEN }}
@@ -185,16 +215,16 @@ jobs:
     name: Pre-commit Hooks
     needs: setup
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 7
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           persist-credentials: false
           submodules: recursive
       - uses: ./.github/actions/setup-pnpm
 
       - name: Install pre-commit
-        run: pip install pre-commit
+        run: pip install pre-commit "zizmor==1.26.1" || pip install pre-commit "zizmor==1.26.1" --break-system-packages
 
       - name: Run pre-commit hooks
         run: pre-commit run --all-files --show-diff-on-failure
@@ -202,15 +232,16 @@ jobs:
   lint:
     name: Lint (Node ${{ matrix.node-version }})
     needs: setup
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 5
     strategy:
       matrix:
         node-version: [22, 24]
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           persist-credentials: false
           submodules: recursive
@@ -220,43 +251,19 @@ jobs:
 
       - name: Lint
         id: lint
-        continue-on-error: true
-        run: pnpm lint
-
-      - name: Auto-fix disallowed SHAs
-        if: steps.lint.outcome == 'failure'
-        id: auto-fix
-        env:
-          GITHUB_REF: ${{ github.ref }}
-        run: |
-          if bash scripts/auto-fix-shas.sh; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add scripts/validate-shas.sh
-            if ! git diff --cached --quiet; then
-              git commit -m "chore: auto-update SHA allowlist"
-              # Only push on PR branches (refs/heads/fix/*, chore/*, dependabot/*)
-              if [[ "$GITHUB_REF" =~ ^refs/heads/(fix|chore|dependabot)/ ]]; then
-                git push
-              fi
-            fi
-          fi
-        shell: bash
-
-      - name: Re-run lint to confirm fix
-        if: steps.auto-fix.outcome == 'success'
         run: pnpm lint
 
   typecheck:
     name: Typecheck (Node ${{ matrix.node-version }})
     needs: setup
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 5
     strategy:
       matrix:
         node-version: [22, 24]
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           persist-credentials: false
           submodules: recursive
@@ -270,13 +277,14 @@ jobs:
   test:
     name: Unit Tests (Node ${{ matrix.node-version }})
     needs: setup
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
     strategy:
       matrix:
         node-version: [22, 24]
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           persist-credentials: false
           submodules: recursive
@@ -292,6 +300,12 @@ jobs:
         env:
           NODE_OPTIONS: --max-old-space-size=4096
 
+      - name: Collect test metrics
+        if: always()
+        run: |
+          node scripts/collect-turbo-metrics.mjs test-metrics-node${{ matrix.node-version }}-turbo.json
+          mv test-metrics-node${{ matrix.node-version }}-test.json test-metrics-node${{ matrix.node-version }}.json 2>/dev/null || true
+
       - name: Upload verification output
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
         if: always()
@@ -300,22 +314,46 @@ jobs:
           path: verification_output.txt
           retention-days: 7
 
+      - name: Upload test metrics
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
+        if: always()
+        with:
+          name: test-metrics-node${{ matrix.node-version }}
+          path: test-metrics-node${{ matrix.node-version }}.json
+          retention-days: 7
+
       - name: Upload coverage reports
         uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f  # v7.0.0
         with:
           directory: .
           flags: unittests
 
+  worker-build:
+    name: Worker Build Validation
+    needs: [changes, setup]
+    if: ${{ needs.changes.outputs.worker == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+          submodules: recursive
+      - uses: ./.github/actions/setup-pnpm
+
+      - name: Build Worker (dry-run)
+        run: pnpm --filter @do-epub-studio/worker build
+
   build:
     name: Build (Node ${{ matrix.node-version }})
-    needs: [pre-commit, lint, typecheck, test]
+    needs: [pre-commit, lint, typecheck, test, fast-check]
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 15
     strategy:
       matrix:
         node-version: [22, 24]
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           persist-credentials: false
           submodules: recursive
@@ -354,8 +392,10 @@ jobs:
           WORKSPACE: ${{ github.workspace }}
         run: |
           pnpm build
-          node scripts/check-bundle-size.mjs
+          node scripts/check-bundle-budget.mjs
+          node scripts/collect-turbo-metrics.mjs "$WORKSPACE/baseline-turbo-metrics.json"
           cp baseline-bundle-metrics.json "$WORKSPACE/baseline-bundle-metrics.json"
+          cp baseline-turbo-metrics.json "$WORKSPACE/baseline-turbo-metrics.json" 2>/dev/null || true
           rm -rf "${{ steps.baseline.outputs.baseline-dir }}"
 
       - name: Skip baseline (install failed)
@@ -367,7 +407,9 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
         with:
           name: baseline-metrics-node${{ matrix.node-version }}
-          path: baseline-bundle-metrics.json
+          path: |
+            baseline-bundle-metrics.json
+            baseline-turbo-metrics.json
           retention-days: 1
 
       - name: Generate SBOM
@@ -392,23 +434,25 @@ jobs:
     if: ${{ github.event_name != 'schedule' && (needs.changes.outputs.src == 'true' || needs.changes.outputs.reader-core == 'true') }}
     needs: [changes, build]
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
+    env:
+      PLAYWRIGHT_INCLUDE_WEBKIT: '1'
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           persist-credentials: false
           submodules: recursive
       - uses: ./.github/actions/setup-pnpm
 
       - name: Install Playwright browsers
-        run: pnpm exec playwright install --with-deps chromium
+        run: pnpm exec playwright install --with-deps chromium webkit
 
       - name: Run Dev Smoke E2E tests
         uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60  # v4.0.0
         with:
           timeout_minutes: 10
           max_attempts: 2
-          command: pnpm test:e2e:smoke --project=chromium
+          command: pnpm test:e2e:smoke --project=chromium --project=webkit --project=pixel
           warning_on_retry: true
 
       - name: Download build artifacts
@@ -418,10 +462,13 @@ jobs:
           path: apps/web/dist/
 
       - name: Run Preview Smoke E2E tests
-        run: PLAYWRIGHT_MODE=preview npx playwright test --grep @smoke --project=chromium
+        run: PLAYWRIGHT_MODE=preview npx playwright test --grep @smoke --project=chromium --project=webkit --project=pixel
 
       - name: Run Startup Performance Test
         run: METRICS_OUTPUT=startup-metrics.json PLAYWRIGHT_MODE=preview npx playwright test apps/web/src/__tests__/performance.spec.ts --project=chromium
+
+      - name: Run PWA E2E tests (service workers enabled)
+        run: PLAYWRIGHT_MODE=preview npx playwright test --grep @pwa --project=pwa-chromium
 
       - name: Upload startup metrics
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
@@ -452,7 +499,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           persist-credentials: false
           submodules: recursive
@@ -500,12 +547,12 @@ jobs:
     needs: [changes, build]
     if: ${{ needs.changes.outputs.src == 'true' || needs.changes.outputs.reader-core == 'true' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 10
     permissions:
       contents: read
       pull-requests: write
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           persist-credentials: false
           submodules: recursive
@@ -541,15 +588,16 @@ jobs:
 
       - name: Post benchmark comment
         if: github.event_name == 'pull_request' && hashFiles('bench_comment.md') != ''
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh pr comment ${{ github.event.pull_request.number }} --body-file bench_comment.md --edit-last 2>/dev/null || \
             gh pr comment ${{ github.event.pull_request.number }} --body-file bench_comment.md
 
+      # Blocking per ADR-218: >20% ops/s regression on any benchmark fails the CI check.
       - name: Check for regression
         if: github.event_name == 'pull_request'
-        continue-on-error: true
         run: |
           node scripts/compare-benchmarks.mjs baseline.json head.json
 
@@ -563,10 +611,12 @@ jobs:
       contents: read
       pull-requests: write
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           persist-credentials: false
           submodules: recursive
+
+      - uses: ./.github/actions/setup-pnpm
 
       - name: Download all metrics
         uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806  # v4.1.9
@@ -582,6 +632,12 @@ jobs:
           # Lighthouse runs in a separate workflow; metrics not available here
           find metrics-artifacts/lighthouse-metrics -name "*.json" -exec cp {} metrics/ \; || echo "No lighthouse metrics available (generated in separate workflow)"
           find metrics-artifacts/baseline-metrics-node24 -name "baseline-bundle-metrics.json" -exec mv {} baseline/bundle-metrics.json \; || true
+          find metrics-artifacts/baseline-metrics-node24 -name "baseline-turbo-metrics.json" -exec mv {} baseline/turbo-metrics.json \; || true
+          find metrics-artifacts/test-metrics-node24 -name "test-metrics-node24.json" -exec cp {} metrics/test-metrics.json \; || true
+          find metrics-artifacts/baseline-metrics-node24 -name "test-metrics-node24.json" -exec cp {} baseline/test-metrics.json \; || true
+          # Also look for turbo metrics from the performance-report job itself
+          find metrics-artifacts/turbo-metrics -name "turbo-metrics.json" -exec cp {} metrics/turbo-metrics.json \; || true
+          find metrics-artifacts/turbo-metrics -name "test-metrics.json" -exec cp {} metrics/test-metrics.json \; || true
 
       - name: Collect CI metrics
         env:
@@ -591,6 +647,9 @@ jobs:
           END_TIME="$(date +%s)"
           DURATION=$((END_TIME - START_TIME))
           echo "{\"duration\": $DURATION, \"cacheHit\": \"$CACHE_HIT\"}" > metrics/ci-metrics.json
+
+      - name: Collect Turbo and test metrics
+        run: node scripts/collect-turbo-metrics.mjs metrics/turbo-metrics.json
 
       - name: Generate report
         run: node scripts/report-performance.mjs metrics baseline
@@ -602,6 +661,15 @@ jobs:
         run: |
           gh pr comment "$PR_NUMBER" --body-file performance_report.md --edit-last 2>/dev/null || \
             gh pr comment "$PR_NUMBER" --body-file performance_report.md
+
+      - name: Upload Turbo metrics
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
+        with:
+          name: turbo-metrics
+          path: |
+            metrics/turbo-metrics.json
+            metrics/test-metrics.json
+          retention-days: 7
 
   notify-failure:
     name: Notify on failure
@@ -615,7 +683,7 @@ jobs:
         if: env.SLACK_WEBHOOK != ''
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-        uses: slackapi/slack-github-action@45a88b9581bfab2566dc881e2cd66d334e621e2c  # v3.0.3
+        uses: slackapi/slack-github-action@dcb1066f776dd043e64d0e8ba94ca15cc7e1875d  # v4.0.0
         with:
           webhook: ${{ secrets.SLACK_WEBHOOK }}
           webhook-type: incoming-webhook

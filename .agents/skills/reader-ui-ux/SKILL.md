@@ -23,7 +23,7 @@ Purpose: Deliver premium, intentional, localized, accessible reader/admin UX for
 ## 2026 UI Standards
 
 1. **OKLCH Color Space**: Use `oklch()` for all color tokens to ensure perceptually uniform lightness and support for wide-gamut P3 displays.
-2. **View Transitions**: All major page navigations should use the View Transitions API (React Router v7 `viewTransition: true`).
+2. **View Transitions**: All major page navigations should use the View Transitions API (React Router v7 `viewTransition: true`). Assign `view-transition-name: prevent-flicker` to Sidebar and BottomTabBar to prevent nav flickering during page transitions — exclude them from root cross-fade with `animation: none` in `@view-transition`.
 3. **Scroll-Awareness**: Primary navigation and toolbars should respond to scroll direction (hide on scroll-down, show on scroll-up).
 4. **Panel Mutual Exclusivity**: In complex interfaces like the Reader, ensure only one side panel or overlay is open at a time.
 5. **App Shell**: Always provide a branded loading state via `AppShell` for initial auth resolution.
@@ -32,8 +32,7 @@ Purpose: Deliver premium, intentional, localized, accessible reader/admin UX for
 
 | Resource              | Location                              |
 | --------------------- | ------------------------------------- |
-| Design Tokens         | `plans/008-design-tokens-v2.md`       |
-| Tailwind Config       | `apps/web/tailwind.config.js`         |
+| Design Tokens         | `plans/archive/008-design-tokens-v2.md` |
 | Global Styles         | `apps/web/src/styles/globals.css`     |
 | UI Components         | `apps/web/src/components/ui/`         |
 | Animation Guide       | `references/animation-guide.md`       |
@@ -62,7 +61,7 @@ CI: `npx impeccable detect --json .` runs in quality gate. See `DESIGN.md` for a
 1. **Define experience** – viewport-specific layout + theme rules
 2. **Tokenize** – use semantic tokens (OKLCH) from design system
 3. **Shape** – `/impeccable shape` to plan UX/UI
-4. **Animate** – purposeful micro-interactions with Framer Motion + View Transitions
+4. **Animate** – purposeful micro-interactions with CSS keyframes + View Transitions
 5. **Localize** – add strings to `en/de/fr` catalogs
 6. **Accessibility** – keyboard, ARIA, reduced motion
 7. **State** – Zustand selectors, handle mutual exclusivity
@@ -74,7 +73,7 @@ CI: `npx impeccable detect --json .` runs in quality gate. See `DESIGN.md` for a
 
 - [ ] Layout responsive (mobile/tablet/desktop) with fluid spacing
 - [ ] Strings localized (en/de/fr) and correctly typed
-- [ ] View Transitions enabled for navigation
+- [ ] View Transitions enabled for navigation (with `prevent-flicker` on nav containers)
 - [ ] Panels are mutually exclusive
 - [ ] Scroll-aware behaviors implemented
 - [ ] UI interactions include aria-labels + focus traps
@@ -87,3 +86,4 @@ CI: `npx impeccable detect --json .` runs in quality gate. See `DESIGN.md` for a
 - **Parser timeout:** EPUB content parsing must have a timeout/budget to prevent infinite loops on malformed input.
 - **Parallel preload:** Use `Promise.all` for spine/chapter operations to reduce load time.
 - **Search virtualization:** Lists with >50 items must use the `VirtualList` component for smooth scrolling.
+- **No `dark:` utilities:** Semantic tokens already adapt to dark/sepia themes via `globals.css` CSS variables. Avoid redundant `dark:` Tailwind prefixes.

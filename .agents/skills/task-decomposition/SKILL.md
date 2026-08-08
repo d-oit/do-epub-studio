@@ -197,10 +197,9 @@ The decomposition phase feeds directly into GOAP's planning cycle for optimal ex
 
 ### Integration with Other Skills
 
-- **goap-agent**: Execution planning and multi-agent coordination
+- **goap-agent**: Execution planning and multi-agent coordination (includes parallel execution patterns)
 - **triz-analysis**: Run before decomposition for architectural tasks
 - **triz-solver**: Use when decomposition reveals contradictions
-- **parallel-execution**: Execute independent tasks simultaneously
 
 ## Tips
 

@@ -82,7 +82,8 @@ describe('BookmarksPanel', () => {
 
   it('renders dates', () => {
     render(<BookmarksPanel {...defaultProps} />);
-    expect(screen.getByText('1/1/2026')).toBeInTheDocument();
+    // dateStyle:'medium' produces "Jan 1, 2026" for 2026-01-01 in en locale
+    expect(screen.getByText('Jan 1, 2026')).toBeInTheDocument();
   });
 
   it('marks the panel as a named inline-size container (ADR-105)', () => {

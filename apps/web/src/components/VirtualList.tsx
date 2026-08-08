@@ -21,6 +21,8 @@ export interface VirtualListProps<T> {
   renderItem: (item: T, index: number) => ReactNode;
   /** Called when the visible range changes; useful for scroll-to-active logic. */
   onVisibleRangeChange?: (startIndex: number, endIndex: number) => void;
+  /** When set, scroll the container so this index is visible on mount or change. */
+  scrollToIndex?: number;
 }
 
 const DEFAULT_OVERSCAN = 5;
@@ -33,6 +35,7 @@ export function VirtualList<T>({
   ariaLabel,
   renderItem,
   onVisibleRangeChange,
+  scrollToIndex,
 }: VirtualListProps<T>) {
   const containerRef = useRef<HTMLUListElement>(null);
   const [scrollTop, setScrollTop] = useState(0);
@@ -57,6 +60,19 @@ export function VirtualList<T>({
     }
     setContainerHeight(el.clientHeight);
   }, []);
+
+  // Scroll to the requested index when it changes (e.g., active chapter).
+  useEffect(() => {
+    if (scrollToIndex == null || scrollToIndex < 0) return;
+    const el = containerRef.current;
+    if (!el) return;
+    const targetTop = scrollToIndex * itemHeight;
+    const viewHeight = el.clientHeight;
+    // Only scroll if the target is outside the current visible window.
+    if (targetTop < el.scrollTop || targetTop + itemHeight > el.scrollTop + viewHeight) {
+      el.scrollTop = Math.max(0, targetTop - viewHeight / 2 + itemHeight / 2);
+    }
+  }, [scrollToIndex, itemHeight]);
 
   const onScroll = useCallback((e: React.UIEvent<HTMLUListElement>) => {
     setScrollTop(e.currentTarget.scrollTop);

@@ -112,7 +112,7 @@ readonly MAX_COMMIT_SUBJECT_LENGTH=72
 ./scripts/quality_gate.sh
 
 # Commit workflow
-./scripts/atomic-commit/run.sh --message "type(scope): description"
+./scripts/atomic-commit/run.sh --message "type(scope): description" --body "WHY"
 ```
 
 ## d.o.EPUB Studio Specific Customization

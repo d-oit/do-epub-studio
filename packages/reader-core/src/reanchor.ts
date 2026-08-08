@@ -1,9 +1,10 @@
-import { matchAllBounded } from '@do-epub-studio/shared';
 import type { TocItem } from './epub-types';
 import type { LocatorResult } from './locator';
+import { checkDeadline, createDeadline } from '@do-epub-studio/shared';
 
 const TARGET_TEXT_MAX_LEN = 1024 * 1024;
 const CHAPTER_CONTENT_MAX_LEN = 4 * 1024 * 1024;
+const REANCHOR_TIMEOUT_MS = 15_000;
 
 export interface ReanchorResult {
   success: boolean;
@@ -51,9 +52,12 @@ export async function reanchorByText(
   targetText: string,
   toc: TocItem[],
   loadChapterContent: (href: string) => Promise<string>,
-  options: { fuzzyThreshold?: number; preferChapter?: string } = {},
+  options: { fuzzyThreshold?: number; preferChapter?: string; timeoutMs?: number; traceId?: string } = {},
 ): Promise<ReanchorResult> {
   const { preferChapter } = options;
+  const timeoutMs = options.timeoutMs ?? REANCHOR_TIMEOUT_MS;
+  const traceId = options.traceId;
+  const deadline = createDeadline(timeoutMs);
 
   if (targetText.length < 10) {
     return { success: false, fallback: true, message: 'Text too short for reanchoring' };
@@ -85,19 +89,29 @@ export async function reanchorByText(
   }
 
   const baseToHref = new Map<string, string>();
-  // biome-ignore lint/correctness/useQwikValidLexicalScope: reader-core is not a Qwik app; this is a false positive
-  const collect = (items: TocItem[]) => {
-    for (const item of items) {
-      const href = item.href;
-      const hashIdx = href.indexOf('#');
-      const base = hashIdx === -1 ? href : href.substring(0, hashIdx);
-      if (!baseToHref.has(base)) {
-        baseToHref.set(base, href);
-      }
-      if (item.subitems) collect(item.subitems);
+  // Use iterative stack-based traversal to avoid recursion overhead
+  const stack: TocItem[] = [];
+  for (const item of [...toc].reverse()) {
+    stack.push(item);
+  }
+
+  while (stack.length > 0) {
+    const item = stack.pop();
+    if (!item) continue;
+
+    const href = item.href;
+    const hashIdx = href.indexOf('#');
+    const base = hashIdx === -1 ? href : href.substring(0, hashIdx);
+    if (!baseToHref.has(base)) {
+      baseToHref.set(base, href);
     }
-  };
-  collect(toc);
+
+    if (item.subitems) {
+      for (const sub of [...item.subitems].reverse()) {
+        stack.push(sub);
+      }
+    }
+  }
 
   let basePrefer: string | undefined;
   if (preferChapter) {
@@ -123,6 +137,7 @@ export async function reanchorByText(
 
   // Pass 1: Exact and Partial matches
   for (const href of uniqueHrefs) {
+    checkDeadline(deadline, 'reanchor-by-text', timeoutMs, traceId);
     try {
       const cached = await getCachedData(href);
 
@@ -164,7 +179,12 @@ export async function reanchorByText(
     if (normalizedTargetGeneral === undefined) {
       normalizedTargetGeneral = normalizeText(targetText);
     }
-    words = matchAllBounded(/[\p{L}\p{N}]{4,}/gu, normalizedTargetGeneral, TARGET_TEXT_MAX_LEN).map((m) => m[0]);
+    const targetToProcess = normalizedTargetGeneral.length <= TARGET_TEXT_MAX_LEN
+      ? normalizedTargetGeneral
+      : normalizedTargetGeneral.slice(0, TARGET_TEXT_MAX_LEN);
+    // Use match() instead of matchAll() to reduce object allocations and deduplicate
+    const matchedWords = targetToProcess.match(/[\p{L}\p{N}]{4,}/gu) || [];
+    words = [...new Set(matchedWords)];
   }
 
   const threshold = options.fuzzyThreshold ?? 0.7;
@@ -172,17 +192,27 @@ export async function reanchorByText(
 
   if (words.length > 0) {
     for (const href of uniqueHrefs) {
+      checkDeadline(deadline, 'reanchor-by-text', timeoutMs, traceId);
       try {
         const cached = await getCachedData(href);
         if (cached.wordSet === undefined) {
-          // Optimized word extraction from lower-cased content
-          cached.wordSet = new Set(matchAllBounded(/[\p{L}\p{N}]{4,}/gu, cached.lower, CHAPTER_CONTENT_MAX_LEN).map((m) => m[0]));
+          cached.wordSet = new Set();
+          const contentToProcess = cached.lower.length <= CHAPTER_CONTENT_MAX_LEN
+            ? cached.lower
+            : cached.lower.slice(0, CHAPTER_CONTENT_MAX_LEN);
+          // Use match() instead of matchAll() to reduce object allocations
+          const matches = contentToProcess.match(/[\p{L}\p{N}]{4,}/gu);
+          if (matches) {
+            for (const m of matches) {
+              cached.wordSet.add(m);
+            }
+          }
         }
 
         let matchCount = 0;
         const { wordSet } = cached;
-        for (let i = 0; i < words.length; i++) {
-          const word = String(words[i]);
+        let processedCount = 0;
+        for (const word of words) {
           if (wordSet.has(word)) {
             matchCount++;
             if (matchCount >= targetMatchCount) {
@@ -195,7 +225,8 @@ export async function reanchorByText(
               };
             }
           }
-          if (matchCount + (words.length - 1 - i) < targetMatchCount) {
+          processedCount++;
+          if (matchCount + (words.length - processedCount) < targetMatchCount) {
             break; // Impossible to reach threshold
           }
         }

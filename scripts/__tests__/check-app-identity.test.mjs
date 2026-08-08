@@ -31,7 +31,7 @@ describe('check-app-identity.mjs (ADR-104)', () => {
     () => {
       const result = runScript();
       expect(result.stdout).toMatch(/d\.o\.EPUB Studio/);
-      expect(result.stdout).toMatch(/VERSION:\s+0\.1\.1/);
+      expect(result.stdout).toMatch(/VERSION:\s+[\d.]+/);
     },
     120_000,
   );

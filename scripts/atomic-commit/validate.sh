@@ -35,9 +35,19 @@ log "Running quality gate..."
 echo ""
 
 # Quality gate always runs — no escape hatches
+# Per ADR-187 (fail-closed): exit 3 (skipped phases) is treated as failure.
+# CI must never set SKIP_* variables.
 if [[ -x "$REPO_ROOT/scripts/quality_gate.sh" ]]; then
-    if ! "$REPO_ROOT/scripts/quality_gate.sh"; then
-        error "Quality gate failed - fix all warnings before committing"
+    GATE_EXIT=0
+    "$REPO_ROOT/scripts/quality_gate.sh" || GATE_EXIT=$?
+
+    if [[ $GATE_EXIT -eq 3 ]]; then
+        error "Quality gate reported skipped phases (exit 3)"
+        error "Required phases were skipped via SKIP_* env vars."
+        error "Run without SKIP_* for the full gate: ./scripts/quality_gate.sh"
+        exit 1
+    elif [[ $GATE_EXIT -ne 0 ]]; then
+        error "Quality gate failed (exit $GATE_EXIT) - fix all warnings before committing"
         exit 1
     fi
 else

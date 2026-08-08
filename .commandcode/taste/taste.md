@@ -7,7 +7,7 @@
 - Use GOAP skill as orchestrator with a swarm of agents for multi-step tasks. Confidence: 0.85
 
 # Git
-- Use atomic git commits via `./scripts/atomic-commit/run.sh --message "type(scope): description"`. Confidence: 0.85
+- Use atomic git commits via `./scripts/atomic-commit/run.sh --message "type(scope): description" --body "WHY"`. Confidence: 0.85
 
 # CI
 - All GitHub Actions must pass before considering work complete. Confidence: 0.85

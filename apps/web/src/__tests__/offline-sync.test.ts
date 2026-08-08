@@ -15,6 +15,8 @@ vi.mock('../lib/api', () => ({
   api: {
     post: vi.fn(),
     get: vi.fn(),
+    put: vi.fn(),
+    delete: vi.fn(),
   },
 }));
 
@@ -48,15 +50,15 @@ describe('Offline Sync', () => {
     });
 
     // Mock window event listeners
-    const listeners: Map<string, ((...args: any[]) => void)[]> = new Map();
+    const listeners: Map<string, ((...args: unknown[]) => void)[]> = new Map();
     Object.defineProperty(globalThis, 'window', {
       value: {
-        addEventListener: vi.fn((event: string, handler: (...args: any[]) => void) => {
+        addEventListener: vi.fn((event: string, handler: (...args: unknown[]) => void) => {
           const handlers = listeners.get(event) || [];
           handlers.push(handler);
           listeners.set(event, handlers);
         }),
-        removeEventListener: vi.fn((event: string, handler: (...args: any[]) => void) => {
+        removeEventListener: vi.fn((event: string, handler: (...args: unknown[]) => void) => {
           const handlers = listeners.get(event) || [];
           const index = handlers.indexOf(handler);
           if (index > -1) handlers.splice(index, 1);
@@ -163,7 +165,7 @@ describe('Offline Sync', () => {
       ]);
 
       // Mock API to return 403 (permission revoked)
-      vi.mocked(api.post).mockRejectedValueOnce({ status: 403, message: 'Permission revoked' });
+      vi.mocked(api.put).mockRejectedValueOnce({ status: 403, message: 'Permission revoked' });
 
       // Trigger sync - note: the callback will be invoked asynchronously
       await syncAll();
@@ -190,7 +192,7 @@ describe('Offline Sync', () => {
       };
 
       vi.mocked(db.getSyncQueue).mockResolvedValue([errorItem]);
-      vi.mocked(api.post).mockRejectedValueOnce(new Error('Network error'));
+      vi.mocked(api.put).mockRejectedValueOnce(new Error('Network error'));
 
       // Should not throw
       await expect(syncAll()).resolves.not.toThrow();
@@ -223,6 +225,7 @@ describe('Offline Sync', () => {
 
       // Should remove item without attempting sync
       expect(db.removeSyncQueueItem).toHaveBeenCalledWith('max-retry-item');
+      expect(api.put).not.toHaveBeenCalled();
       expect(api.post).not.toHaveBeenCalled();
     });
   });

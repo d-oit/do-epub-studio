@@ -18,14 +18,6 @@ export { ConfirmDialog } from './confirm-dialog';
 export { SearchInput } from './search-input';
 export { ProgressBar } from './progress-bar';
 export { Tabs } from './tabs';
-export {
-  fadeVariants,
-  slideUpVariants,
-  slideDownVariants,
-  scaleVariants,
-  staggerContainerVariants,
-  staggerItemVariants,
-} from './variants';
 
 export type { ButtonProps } from './button';
 export type { InputProps } from './input';

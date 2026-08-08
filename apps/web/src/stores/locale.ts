@@ -1,7 +1,18 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { availableLocales, type LocaleKey } from '../i18n';
 
-export type SupportedLocale = 'en' | 'de' | 'fr';
+/**
+ * Supported UI locales. Derived from `availableLocales()` so this type and the
+ * `LocaleSwitcher` options can never drift apart.
+ */
+export type SupportedLocale = LocaleKey;
+
+const SUPPORTED_LOCALES = availableLocales().map((l) => l.code) as readonly SupportedLocale[];
+
+function isSupportedLocale(value: string): value is SupportedLocale {
+  return (SUPPORTED_LOCALES as readonly string[]).includes(value);
+}
 
 interface LocaleState {
   locale: SupportedLocale;
@@ -12,11 +23,10 @@ function detectLocale(): SupportedLocale {
   if (typeof navigator === 'undefined' || !navigator.language) {
     return 'en';
   }
+  // Match on the primary language subtag (e.g. 'zh' from 'zh-Hans-CN') against
+  // the full set of supported catalogs, falling back to English.
   const [preferred] = navigator.language.split('-');
-  if (preferred === 'de' || preferred === 'fr') {
-    return preferred;
-  }
-  return 'en';
+  return isSupportedLocale(preferred) ? preferred : 'en';
 }
 
 export const useLocaleStore = create<LocaleState>()(

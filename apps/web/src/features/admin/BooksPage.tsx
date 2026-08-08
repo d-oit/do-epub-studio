@@ -6,8 +6,14 @@ import { useAuthStore } from '../../stores/auth';
 import type { BookResponse } from '@do-epub-studio/shared';
 import { validateEpub } from '@do-epub-studio/shared';
 import { LocaleSwitcher } from '../../components/LocaleSwitcher';
-import { Modal, Button } from '../../components/ui';
+import { Button, ConfirmDialog } from '../../components/ui';
 import { Spinner } from '@do-epub-studio/ui';
+import { BookCreateModal } from './components/BookCreateModal';
+import { BookEditModal } from './components/BookEditModal';
+import { Breadcrumb } from '../../components/navigation';
+
+/** Admin route paths (constants avoid i18next/no-literal-string in JSX). */
+const ADMIN_ROUTES = { admin: '/admin', books: '/admin/books' } as const;
 
 interface CreateBookResponse {
   id: string;
@@ -36,6 +42,7 @@ export function AdminBookResponsesPage() {
     warnings: string[];
   } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [editingBook, setEditingBook] = useState<BookResponse | null>(null);
   const [editTitle, setEditTitle] = useState('');
@@ -46,6 +53,7 @@ export function AdminBookResponsesPage() {
   const [editError, setEditError] = useState<string | null>(null);
 
   const [archivingBookId, setArchivingBookId] = useState<string | null>(null);
+  const [archiveConfirmBook, setArchiveConfirmBook] = useState<BookResponse | null>(null);
 
   const fetchBookResponses = useCallback(async () => {
     setIsLoading(true);
@@ -63,12 +71,31 @@ export function AdminBookResponsesPage() {
     void fetchBookResponses();
   }, [fetchBookResponses]);
 
+  /** Auto-dismiss the success banner after 5s. Clears any pending timer first
+   *  so rapid successive actions don't leave a stale timeout running, and the
+   *  unmount cleanup below cancels it if the page is navigated away mid-wait. */
+  const scheduleSuccessClear = useCallback(() => {
+    if (successTimerRef.current) clearTimeout(successTimerRef.current);
+    successTimerRef.current = setTimeout(() => {
+      setSuccessMessage(null);
+      successTimerRef.current = null;
+    }, 5000);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (successTimerRef.current) clearTimeout(successTimerRef.current);
+    };
+  }, []);
+
   const handleViewGrants = (book: BookResponse) => {
-    void navigate(`/admin/books/${book.id}/grants`, { state: { bookTitle: book.title } });
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises -- navigate() returns void, not Promise (react-router-dom v7)
+    navigate(`/admin/books/${book.id}/grants`, { state: { bookTitle: book.title } });
   };
 
   const handleBackToReader = () => {
-    void navigate('/login');
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises -- navigate() returns void, not Promise (react-router-dom v7)
+    navigate('/login');
   };
 
   const openEditModal = (book: BookResponse) => {
@@ -100,7 +127,7 @@ export function AdminBookResponsesPage() {
       setEditingBook(null);
       setSuccessMessage(t('admin.books.updateSuccess'));
       void fetchBookResponses();
-      setTimeout(() => setSuccessMessage(null), 5000);
+      scheduleSuccessClear();
     } catch (err) {
       setEditError((err as Error).message);
     } finally {
@@ -117,11 +144,12 @@ export function AdminBookResponsesPage() {
       });
       setSuccessMessage(t('admin.books.archiveSuccess'));
       void fetchBookResponses();
-      setTimeout(() => setSuccessMessage(null), 5000);
+      scheduleSuccessClear();
     } catch (err) {
       setError((err as Error).message);
     } finally {
       setArchivingBookId(null);
+      setArchiveConfirmBook(null);
     }
   };
 
@@ -248,7 +276,7 @@ export function AdminBookResponsesPage() {
       setSuccessMessage(t('admin.createBookModal.success'));
       void fetchBookResponses();
 
-      setTimeout(() => setSuccessMessage(null), 5000);
+      scheduleSuccessClear();
     } catch (err) {
       setCreateError((err as Error).message);
     } finally {
@@ -256,8 +284,18 @@ export function AdminBookResponsesPage() {
     }
   };
 
+  // biome-ignore lint/correctness/useQwikValidLexicalScope: React app, not Qwik
+  const handleAuditNav = () => {
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises -- navigate() returns void, not Promise (react-router-dom v7)
+    navigate('/admin/audit');
+  };
+
   return (
-    <main id="main-content" className="min-h-dvh bg-background p-4 sm:p-6 lg:p-8">
+    <main id="main-content" className="min-dvh bg-background p-4 sm:p-6 lg:p-8">
+      <Breadcrumb items={[
+        { labelKey: 'admin.breadcrumb.home', href: ADMIN_ROUTES.admin },
+        { labelKey: 'admin.breadcrumb.books' },
+      ]} />
       <header className="flex justify-between flex-wrap gap-4 items-center mb-8">
         <div>
           <h1 className="text-2xl font-bold text-foreground">
@@ -265,7 +303,7 @@ export function AdminBookResponsesPage() {
           </h1>
           <button
             onClick={handleBackToReader}
-            className="text-sm text-accent hover:opacity-80 mt-1"
+            className="text-sm text-accent hover:opacity-80 mt-1 min-h-[24px] px-2 py-0.5"
           >
             &larr; {t('admin.books.backToReader')}
           </button>
@@ -275,7 +313,7 @@ export function AdminBookResponsesPage() {
             {t('admin.createBook')}
           </Button>
           <button
-            onClick={() => void navigate('/admin/audit')}
+            onClick={handleAuditNav}
             className="px-4 py-2 bg-background border border-border rounded-md text-sm font-medium text-foreground-muted hover:bg-background-secondary"
           >
             {t('admin.books.viewAuditLogs')}
@@ -313,6 +351,11 @@ export function AdminBookResponsesPage() {
               <h3 className="text-lg font-semibold text-foreground mb-2">
                 {book.title}
               </h3>
+              {book.authorName && (
+                <p className="text-sm text-foreground-muted mb-1">
+                  {book.authorName}
+                </p>
+              )}
               <p className="text-sm text-foreground-muted mb-4 line-clamp-2">
                 {book.description || t('admin.books.noDescription')}
               </p>
@@ -323,20 +366,20 @@ export function AdminBookResponsesPage() {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => openEditModal(book)}
-                    className="text-xs font-medium text-foreground-muted hover:text-foreground"
+                    className="touch-target inline-flex items-center text-xs font-medium text-foreground-muted hover:text-foreground"
                   >
                     {t('admin.books.edit')}
                   </button>
                   <button
-                    onClick={() => { if (window.confirm(t('admin.books.confirmArchive'))) void handleArchiveBook(book.id); }}
+                    onClick={() => { setArchiveConfirmBook(book); }}
                     disabled={archivingBookId === book.id}
-                    className="text-xs font-medium text-semantic-error hover:opacity-80 disabled:opacity-50"
+                    className="touch-target inline-flex items-center text-xs font-medium text-semantic-error hover:opacity-80 disabled:opacity-50"
                   >
                     {archivingBookId === book.id ? '...' : t('admin.books.archive')}
                   </button>
                   <button
                     onClick={() => handleViewGrants(book)}
-                    className="text-sm font-medium text-accent hover:opacity-80"
+                    className="touch-target inline-flex items-center text-sm font-medium text-accent hover:opacity-80"
                   >
                     {t('admin.books.manageAccess')} &rarr;
                   </button>
@@ -352,191 +395,52 @@ export function AdminBookResponsesPage() {
         )}
       </div>
 
-      <Modal
+      <BookCreateModal
         isOpen={isCreateModalOpen}
-        onClose={() => {
-          setIsCreateModalOpen(false);
-          resetCreateForm();
-        }}
-        title={t('admin.createBookModal.title')}
-      >
-        <form onSubmit={(e) => { void handleCreateBook(e); }} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-foreground-muted mb-1">
-              {t('admin.createBookModal.titleLabel')}
-            </label>
-            <input
-              type="text"
-              value={bookTitle}
-              onChange={(e) => setBookTitle(e.target.value)}
-              placeholder={t('admin.createBookModal.titlePlaceholder')}
-              className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder:text-foreground-muted focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none transition-all"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-foreground-muted mb-1">
-              {t('admin.createBookModal.authorLabel')}
-            </label>
-            <input
-              type="text"
-              value={authorName}
-              onChange={(e) => setAuthorName(e.target.value)}
-              placeholder={t('admin.createBookModal.authorPlaceholder')}
-              className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder:text-foreground-muted focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none transition-all"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-foreground-muted mb-1">
-              {t('admin.createBookModal.epubLabel')}
-            </label>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".epub"
-              onChange={(e) => setEpubFile(e.target.files?.[0] ?? null)}
-              className="w-full text-sm text-foreground-muted file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-accent/10 file:text-accent hover:file:bg-accent/20 cursor-pointer"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-foreground-muted mb-1">
-              {t('admin.createBookModal.visibilityLabel')}
-            </label>
-            <select
-              value={visibility}
-              onChange={(e) => setVisibility(e.target.value)}
-              className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none transition-all"
-            >
-              <option value="private">{t('admin.createBookModal.visibilityPrivate')}</option>
-              <option value="public">{t('admin.createBookModal.visibilityPublic')}</option>
-            </select>
-          </div>
-
-          {createError && (
-            <div className="p-3 bg-semantic-error/10 border border-semantic-error/30 rounded-lg text-sm text-semantic-error">
-              {createError}
-            </div>
-          )}
-
-          {validationResult && !validationResult.isValid && (
-            <div className="p-3 bg-semantic-error/10 border border-semantic-error/30 rounded-lg text-sm text-semantic-error">
-              <p className="font-bold mb-1">{t('admin.createBookModal.validationErrors')}</p>
-              <ul className="list-disc list-inside">
-                {validationResult.errors.map((err, i) => (
-                  <li key={i}>{err}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {validationResult && validationResult.warnings.length > 0 && (
-            <div className="p-3 bg-semantic-warning/10 border border-semantic-warning/30 rounded-lg text-sm text-semantic-warning">
-              <p className="font-bold mb-1">{t('admin.createBookModal.validationWarnings')}</p>
-              <ul className="list-disc list-inside">
-                {validationResult.warnings.map((warn, i) => (
-                  <li key={i}>{warn}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          <div className="flex justify-end gap-3 pt-2">
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => {
-                setIsCreateModalOpen(false);
-                resetCreateForm();
-              }}
-            >
-              {t('admin.createBookModal.close')}
-            </Button>
-            <Button
-              type="submit"
-              isLoading={isSubmitting}
-            >
-              {isSubmitting ? t('admin.createBookModal.submitting') : t('admin.createBookModal.submit')}
-            </Button>
-          </div>
-        </form>
-      </Modal>
+        onClose={() => { setIsCreateModalOpen(false); resetCreateForm(); }}
+        onSubmit={handleCreateBook}
+        bookTitle={bookTitle}
+        setBookTitle={setBookTitle}
+        authorName={authorName}
+        setAuthorName={setAuthorName}
+        epubFile={epubFile}
+        setEpubFile={setEpubFile}
+        visibility={visibility}
+        setVisibility={setVisibility}
+        isSubmitting={isSubmitting}
+        createError={createError}
+        validationResult={validationResult}
+      />
 
       {editingBook && (
-        <Modal
+        <BookEditModal
           isOpen={!!editingBook}
           onClose={() => setEditingBook(null)}
-          title={t('admin.books.editTitle')}
-        >
-          <form onSubmit={(e) => { void handleUpdateBook(e); }} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-foreground-muted mb-1">
-                {t('admin.createBookModal.titleLabel')}
-              </label>
-              <input
-                type="text"
-                value={editTitle}
-                onChange={(e) => setEditTitle(e.target.value)}
-                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none transition-all"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-foreground-muted mb-1">
-                {t('admin.createBookModal.authorLabel')}
-              </label>
-              <input
-                type="text"
-                value={editAuthor}
-                onChange={(e) => setEditAuthor(e.target.value)}
-                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none transition-all"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-foreground-muted mb-1">
-                {t('admin.createBookModal.descriptionLabel')}
-              </label>
-              <textarea
-                value={editDescription}
-                onChange={(e) => setEditDescription(e.target.value)}
-                rows={3}
-                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none transition-all resize-none"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-foreground-muted mb-1">
-                {t('admin.createBookModal.visibilityLabel')}
-              </label>
-              <select
-                value={editVisibility}
-                onChange={(e) => setEditVisibility(e.target.value)}
-                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none transition-all"
-              >
-                <option value="private">{t('admin.createBookModal.visibilityPrivate')}</option>
-                <option value="public">{t('admin.createBookModal.visibilityPublic')}</option>
-              </select>
-            </div>
-
-            {editError && (
-              <div className="p-3 bg-semantic-error/10 border border-semantic-error/30 rounded-lg text-sm text-semantic-error">
-                {editError}
-              </div>
-            )}
-
-            <div className="flex justify-end gap-3 pt-2">
-              <Button type="button" variant="secondary" onClick={() => setEditingBook(null)}>
-                {t('admin.createBookModal.close')}
-              </Button>
-              <Button type="submit" isLoading={isEditSubmitting}>
-                {isEditSubmitting ? t('admin.createBookModal.submitting') : t('admin.books.saveChanges')}
-              </Button>
-            </div>
-          </form>
-        </Modal>
+          onSubmit={handleUpdateBook}
+          editTitle={editTitle}
+          setEditTitle={setEditTitle}
+          editAuthor={editAuthor}
+          setEditAuthor={setEditAuthor}
+          editDescription={editDescription}
+          setEditDescription={setEditDescription}
+          editVisibility={editVisibility}
+          setEditVisibility={setEditVisibility}
+          isEditSubmitting={isEditSubmitting}
+          editError={editError}
+        />
       )}
+
+      <ConfirmDialog
+        isOpen={archiveConfirmBook !== null}
+        title={t('admin.books.confirmArchiveTitle')}
+        description={t('admin.books.confirmArchive')}
+        confirmLabel={t('admin.books.archive')}
+        cancelLabel={t('annotation.cancel')}
+        variant="danger"
+        isLoading={archivingBookId !== null}
+        onConfirm={() => { if (archiveConfirmBook) void handleArchiveBook(archiveConfirmBook.id); }}
+        onCancel={() => { setArchiveConfirmBook(null); }}
+      />
     </main>
   );
 }

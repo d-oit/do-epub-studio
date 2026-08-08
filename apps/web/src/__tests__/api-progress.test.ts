@@ -1,11 +1,11 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { fetchProgress } from '../lib/api/progress';
 
-vi.mock('../lib/api', () => ({
+vi.mock('../lib/api/core', () => ({
   apiRequest: vi.fn(),
 }));
 
-import { apiRequest } from '../lib/api';
+import { apiRequest } from '../lib/api/core';
 const mockApiRequest = vi.mocked(apiRequest);
 
 describe('progress API', () => {

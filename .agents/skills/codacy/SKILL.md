@@ -14,6 +14,12 @@ Cloud CLI (remote). **Codacy is a required PR check on this repo per
 AGENTS.md Tier 1 — `gh pr checks` showing `fail` on the
 `Codacy Static Code Analysis` row blocks merge.**
 
+## When NOT to Use
+
+- Non-Codacy code smells in files you're editing → use `code-quality`
+- Overall PR risk, cross-file consistency, and holistic review → use `code-review-assistant`
+- Applying the fixes that this skill identifies → use `pr-review-fix`
+
 ## Installation & Auth
 
 ```bash
@@ -50,94 +56,7 @@ anything else, rely on the Cloud PR report.
 
 ## Fix, Don't Suppress — Patterns
 
-Codacy findings are usually genuine. Suppression is the last resort and
-must be justified inline. The repo's standard for the rules Codacy
-flags most often:
-
-### `security/detect-non-literal-fs-filename`
-
-The rule (from `eslint-plugin-security`) blocks `fs.*` calls whose first
-argument could carry untrusted runtime data — i.e. the OWASP path
-traversal pattern. The intent is to prevent an attacker from
-controlling which file Node reads.
-
-It is a false alarm when:
-
-- The path is a literal relative to the config / source file (no
-  `process.env`, no user input, no `req`/`args`).
-- The path is constructed by `path.join(__dirname, '<literal>')`.
-- The path is `import.meta.url`-derived and joined with a literal.
-
-**Fix pattern A (preferred for Vite/webpack/rollup configs): use a
-static import.**
-
-```ts
-// Vite config — works because Vite bundles the config with its own
-// loader. JSON and `?raw` imports are resolved at config-load time.
-import appIdentity from './src/config/app-identity.json';
-import versionText from './src/config/app-identity.json?raw'; // not a thing
-```
-
-For the raw text case (e.g. `VERSION`), use the `?raw` suffix in the
-companion TS module — but **not** in `vite.config.ts` itself, since
-the config bundle is loaded by Node and `?raw` is a Vite-only
-transform.
-
-```ts
-// src/config/app-identity.ts (Vite-bundled source — ?raw works here)
-import versionText from '../../../../VERSION?raw';
-import metadata from './app-identity.json';
-export const APP_VERSION = versionText.trim();
-```
-
-```ts
-// vite.config.ts (Node-loaded — ?raw does NOT work here)
-import { readFileSync } from 'node:fs';
-import path from 'path';
-import appIdentity from './src/config/app-identity.json';
-
-// Resolve relative to the config file's own location; path is a
-// literal joined with a known directory.
-const appVersion = readFileSync(
-  path.resolve(__dirname, '../../VERSION'),
-  'utf8',
-).trim();
-```
-
-If the rule still flags it (it may, on Codacy's older ESLint 8), add
-an inline `eslint-disable-next-line` with a justification. AGENTS.md
-Tier 3 mandates: "If a lint rule is disabled, add inline comment
-explaining why."
-
-```ts
-// eslint-disable-next-line security/detect-non-literal-fs-filename
-//   Path is a literal relative to this config file; no untrusted input
-const appVersion = readFileSync(
-  path.resolve(__dirname, '../../VERSION'),
-  'utf8',
-).trim();
-```
-
-**Never use `new URL('./file', import.meta.url)`** in a Vite config —
-it both flags the rule (the URL is not a literal to the linter) and
-bypasses the cleaner static-import pattern.
-
-**Fix pattern B (general Node): use `path.join` with a literal base.**
-
-```ts
-// BAD — flagged
-const dir = process.env.MY_DIR;
-readFileSync(`${dir}/data.json`);
-
-// GOOD — literal base, joined with a literal
-const dir = path.join(__dirname, 'data');
-readFileSync(path.join(dir, 'config.json'));
-```
-
-**Fix pattern C (Node ≥ 20.11 / 22+): use `import.meta.dirname`.**
-Same caveat as `__dirname` — Codacy's ESLint 8 may still flag it
-because `import.meta.dirname` is not in the rule's static set; add a
-targeted disable with a justification.
+See [references/fix-patterns.md](references/fix-patterns.md) for detailed fix patterns covering regex, lint, type, test, and security issues.
 
 ## Local Analysis
 
@@ -179,6 +98,14 @@ Codacy is configured via `.codacy.yml` in the repository root. See
 defaults: ESLint 8 (security plugin enabled), ShellCheck, markdownlint,
 Trivy for dependency scanning, CodeQL for cross-tool coverage.
 
+**CRITICAL — Engine names must match Codacy's current tool names.**
+The `eslint` engine name is **deprecated** — use `eslint-8` instead.
+Using deprecated names causes Codacy to silently ignore engine-level
+`exclude_paths`, leading to false positives on excluded files.
+
+See `references/config-format.md` § "Engine Name Reference" for the
+full mapping.
+
 ## Required Check vs Informational
 
 `gh pr checks <PR>` shows Codacy as a row. On this repo (per AGENTS.md
@@ -204,6 +131,8 @@ Codacy check regardless of GitHub enforcement.
 | JS/TS/Shell   | ✅ Works | ESLint, Stylelint, ShellCheck |
 | Python/Ruby   | ❌ Fails | Missing runtimes/venv issues |
 | Java/PMD      | ❌ Fails | Missing Java runtime |
+| opengrep test exclusions | ⚠️ Partial | `.codacy.yml` `exclude_paths` works for ESLint (when using correct engine name `eslint-8`) but cloud-side opengrep may still flag HTML-like strings in test files (`<!DOCTYPE html>`, `</html>`). Remove ALL HTML literals from tests. |
+| Biome in test files | ⚠️ False positives | `useQwikValidLexicalScope` (SolidJS rule) flags `const fn = () => ...` at module scope in test files. Use `vi.fn()` wrapper instead. See fix patterns above. |
 
 Always cross-reference with Cloud CLI for full PR data.
 
@@ -218,13 +147,33 @@ Always cross-reference with Cloud CLI for full PR data.
 
 ## Red Flags
 
+- [ ] Using deprecated engine names in `.codacy.yml` (e.g., `eslint`
+      instead of `eslint-8`). Deprecated names silently break
+      `exclude_paths` — files that should be excluded get analyzed,
+      producing false positives. See `references/config-format.md`.
 - [ ] Relying solely on local `codacy-analysis` for non-JS projects.
 - [ ] Attempting to suppress issues without a valid `--ignore-reason`.
 - [ ] Using issue hashes for CLI suppressions.
 - [ ] **Using `--install-dependencies` flag.**
 - [ ] Pushing a PR without `gh pr checks` showing Codacy `pass`.
+- [ ] Using bare `const fn = () => ...` at module scope in test files
+      (triggers Biome `useQwikValidLexicalScope`). Use `vi.fn()` instead.
 - [ ] Suppressing `security/*` rules without an inline justification
       comment and a follow-up plan entry.
+- [ ] `while (true)` in production code — Codacy flags it as "Unexpected
+      constant condition" and "Unnecessary conditional, value is always
+      truthy". Use `for (;;)` for infinite loops; it is semantically
+      identical and does not trigger constant-condition rules.
+- [ ] `process.env.X || 'fallback'` in test files — Codacy flags it as
+      "Non-serializable expression must be wrapped with $(...)". In test
+      files, replace with a plain string literal. The env var lookup adds
+      no value in a mock environment and confuses static analysis.
+- [ ] `Object.hasOwn(obj, key) ? obj[key] : fallback` in test translation
+      mocks — Codacy ESLint flags `obj[key]` as `security/detect-object-injection`.
+      The key is a hardcoded literal in test mocks (no real injection), but
+      Codacy doesn't track that. Fix: use `Map<string, string>` with `.get(key)`
+      and wrap the `t` function with `vi.fn()` — avoids both `detect-object-injection`
+      and `useQwikValidLexicalScope` with zero suppressions.
 - [ ] Editing `.eslint.config.js` to disable a rule that Codacy
       enforces (Codacy does not read the local ESLint config — it
       runs its own).
@@ -246,5 +195,4 @@ Codacy is the **required** static-analysis check. Impeccable is a **UI-only** de
 - `references/config-format.md` - `.codacy.yml` schema
 - `.agents/skills/security-code-auditor/SKILL.md` — broader security
   patterns and the `safe-regex` / OWASP mappings used by Codacy.
-- `AGENTS.md` Tier 1 — required checks and pre-existing-issue policy.
-- `.impeccable/config.json` — Impeccable detector config.
+- `AGENTS.md` Tier 1 — required checks, pre-existing-issue policy. `.impeccable/config.json` — detector config.

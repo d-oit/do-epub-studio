@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
-import { scaleVariants } from '../../../../components/ui';
+import { IconButton } from '../../../../components/ui';
 import { useFocusTrap } from '@do-epub-studio/ui';
 
 export type PageDirection = 'ltr' | 'rtl' | 'default';
@@ -58,23 +57,20 @@ export function ReaderSettingsPanel({
   if (!isOpen) return null;
 
   return (
-    <motion.div
+    <div
       ref={panelRef}
       role="dialog"
       aria-modal="true"
       aria-labelledby="settings-title"
-      initial="initial"
-      animate="animate"
-      exit="exit"
-      variants={scaleVariants}
-      className="fixed top-14 right-4 glass-panel rounded-xl shadow-xl border border-border p-4 z-50 w-72"
+      className="fixed top-14 right-4 glass-panel rounded-xl shadow-xl border border-border p-4 z-50 w-72 animate-scale-in"
     >
       <div className="flex items-center justify-between mb-4">
         <h2 id="settings-title" className="text-sm font-semibold text-foreground">{t('reader.settings')}</h2>
-        <button
+        <IconButton
           onClick={onClose}
-          className="p-1 rounded-lg hover:bg-background-secondary transition-colors text-foreground-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-accent outline-none"
-          aria-label={t('reader.settings.close')}
+          variant="ghost"
+          size="sm"
+          aria-label={t('a11y.close')}
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
@@ -84,7 +80,7 @@ export function ReaderSettingsPanel({
               d="M6 18L18 6M6 6l12 12"
             />
           </svg>
-        </button>
+        </IconButton>
       </div>
 
       <div className="space-y-6">
@@ -93,6 +89,7 @@ export function ReaderSettingsPanel({
             {t('reader.theme')}
           </label>
           <div className="grid grid-cols-2 gap-2">
+            {/* eslint-disable-next-line i18next/no-literal-string -- option keys passed to t() */}
             {(['light', 'dark', 'sepia', 'system'] as const).map((themeOption) => (
               <button
                 key={themeOption}
@@ -105,7 +102,7 @@ export function ReaderSettingsPanel({
                   ${
                     theme === themeOption
                       ? 'bg-accent text-white border-accent font-medium shadow-sm'
-                      : 'bg-background-secondary text-foreground border-border hover:border-foreground-muted dark:bg-background-tertiary'
+                      : 'bg-background-secondary text-foreground border-border hover:border-foreground-muted'
                   }
                 `}
               >
@@ -121,6 +118,7 @@ export function ReaderSettingsPanel({
               {t('reader.fontSize')}
             </label>
             <div className="flex gap-1.5 p-1 bg-background-secondary rounded-lg">
+              {/* eslint-disable-next-line i18next/no-literal-string -- option keys passed to t() */}
               {(['small', 'medium', 'large', 'xlarge'] as const).map((size) => (
                 <button
                   key={size}
@@ -137,6 +135,7 @@ export function ReaderSettingsPanel({
                     }
                   `}
                 >
+                  {/* eslint-disable i18next/no-literal-string -- font size abbreviations */}
                   {size === 'small'
                     ? 'A'
                     : size === 'medium'
@@ -144,6 +143,7 @@ export function ReaderSettingsPanel({
                       : size === 'large'
                         ? 'A++'
                         : 'A+++'}
+                  {/* eslint-enable i18next/no-literal-string */}
                 </button>
               ))}
             </div>
@@ -156,6 +156,7 @@ export function ReaderSettingsPanel({
               {t('reader.fontFamily')}
             </label>
             <div className="flex flex-col gap-1">
+              {/* eslint-disable-next-line i18next/no-literal-string -- option keys passed to t() */}
               {(['serif', 'sans-serif', 'monospace'] as const).map((family) => (
                 <button
                   key={family}
@@ -193,6 +194,7 @@ export function ReaderSettingsPanel({
               {t('reader.settings.direction')}
             </label>
             <div className="grid grid-cols-3 gap-1.5">
+              {/* eslint-disable-next-line i18next/no-literal-string -- option keys passed to t() */}
               {(['default', 'ltr', 'rtl'] as const).map((d) => (
                 <button
                   key={d}
@@ -204,7 +206,7 @@ export function ReaderSettingsPanel({
                     ${
                       direction === d
                         ? 'bg-accent text-white border-accent font-medium shadow-sm'
-                        : 'bg-background-secondary text-foreground border-border hover:border-foreground-muted dark:bg-background-tertiary'
+                        : 'bg-background-secondary text-foreground border-border hover:border-foreground-muted'
                     }
                   `}
                 >
@@ -221,6 +223,7 @@ export function ReaderSettingsPanel({
               {t('reader.settings.writingMode')}
             </label>
             <div className="grid grid-cols-1 gap-1">
+              {/* eslint-disable-next-line i18next/no-literal-string -- option keys passed to t() */}
               {(['horizontal-tb', 'vertical-rl', 'vertical-lr'] as const).map((mode) => (
                 <button
                   key={mode}
@@ -249,6 +252,6 @@ export function ReaderSettingsPanel({
           </div>
         )}
       </div>
-    </motion.div>
+    </div>
   );
 }

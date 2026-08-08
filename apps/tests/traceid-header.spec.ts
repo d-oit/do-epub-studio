@@ -1,4 +1,5 @@
 import { test, expect, type Page, type Route } from '@playwright/test';
+import { TEST_USER } from './fixtures';
 
 const API_PATTERNS = [
   '**/api/access/request',
@@ -90,7 +91,7 @@ async function assertTraceIdInResponse(page: Page) {
 }
 
 test.describe('traceId header assertions', () => {
-  test('all API requests include X-Trace-Id header', async ({ page }) => {
+  test('@mobile all API requests include X-Trace-Id header', async ({ page }) => {
     const seen = await assertTraceIdOnRequest(page);
     const fileUrlResponse = page.waitForResponse((response) =>
       response.url().includes('/api/books/test-book/file-url'),
@@ -98,8 +99,8 @@ test.describe('traceId header assertions', () => {
 
     await page.goto('/login?book=test-book');
 
-    await page.getByLabel('Email Address').fill('test@example.com');
-    await page.getByLabel('Password').fill('test-password');
+    await page.getByLabel('Email Address').fill(TEST_USER.email);
+    await page.getByLabel('Password').fill(TEST_USER.password);
     await page.getByRole('button', { name: 'Sign In' }).click();
     await expect(page).toHaveURL(/\/read\/test-book$/);
     await expect(page.getByRole('button', { name: 'Contents' })).toBeVisible({ timeout: 15000 });
@@ -111,7 +112,7 @@ test.describe('traceId header assertions', () => {
     }
   });
 
-  test('X-Trace-Id header is echoed in API response headers', async ({ page }) => {
+  test('@mobile X-Trace-Id header is echoed in API response headers', async ({ page }) => {
     const responseTraceIds: string[] = [];
 
     await page.route('**/api/access/request', async (route: Route) => {
@@ -138,8 +139,8 @@ test.describe('traceId header assertions', () => {
     );
 
     await page.goto('/login?book=test-book');
-    await page.getByLabel('Email Address').fill('test@example.com');
-    await page.getByLabel('Password').fill('test-password');
+    await page.getByLabel('Email Address').fill(TEST_USER.email);
+    await page.getByLabel('Password').fill(TEST_USER.password);
     await page.getByRole('button', { name: 'Sign In' }).click();
 
     const response = await responsePromise;
@@ -152,7 +153,7 @@ test.describe('traceId header assertions', () => {
 });
 
 test.describe('traceId server responses', () => {
-  test('server response includes traceId in body on error', async ({ page }) => {
+  test('@mobile server response includes traceId in body on error', async ({ page }) => {
     await assertTraceIdInResponse(page);
 
     const responsePromise = page.waitForResponse((res) =>
@@ -160,8 +161,8 @@ test.describe('traceId server responses', () => {
     );
 
     await page.goto('/login?book=test-book');
-    await page.getByLabel('Email Address').fill('test@example.com');
-    await page.getByLabel('Password').fill('test-password');
+    await page.getByLabel('Email Address').fill(TEST_USER.email);
+    await page.getByLabel('Password').fill(TEST_USER.password);
     await page.getByRole('button', { name: 'Sign In' }).click();
 
     const response = await responsePromise;

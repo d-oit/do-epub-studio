@@ -3,9 +3,17 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { FixedLayoutControls } from './FixedLayoutControls';
 
+import { type ReactNode } from 'react';
+
 vi.mock('@do-epub-studio/ui', () => ({
   useFocusTrap: () => {},
   scaleVariants: { initial: {}, animate: {}, exit: {} },
+  IconButton: ({ children, onClick, 'aria-label': ariaLabel, disabled }: { children: ReactNode; onClick: () => void; 'aria-label': string; disabled?: boolean }) => (
+    <button type="button" onClick={onClick} aria-label={ariaLabel} disabled={disabled}>
+      {children}
+    </button>
+  ),
+  Tooltip: ({ children }: { children: ReactNode }) => <>{children}</>,
 }));
 
 function t(key: string): string {
@@ -192,7 +200,7 @@ describe('FixedLayoutControls', () => {
         t={t}
       />,
     );
-    await userEvent.click(screen.getByLabelText('reader.settings.close'));
+    await userEvent.click(screen.getByLabelText('a11y.close'));
     expect(onClose).toHaveBeenCalledOnce();
   });
 

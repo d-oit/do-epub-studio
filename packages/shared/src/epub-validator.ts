@@ -4,6 +4,7 @@ import { matchBounded } from './safe-regex';
 const CONTAINER_XML_MAX_LEN = 64 * 1024;
 const OPF_XML_MAX_LEN = 2 * 1024 * 1024;
 
+/** Result of EPUB file validation including version and errors. */
 export interface ValidationResult {
   isValid: boolean;
   errors: string[];
@@ -11,6 +12,13 @@ export interface ValidationResult {
   epubVersion?: string;
 }
 
+/**
+ * Validate an EPUB file by checking its ZIP structure, mimetype,
+ * container.xml, and OPF package metadata.
+ *
+ * @param data - The EPUB file as an ArrayBuffer
+ * @returns A `ValidationResult` with errors/warnings and optional epubVersion
+ */
 export async function validateEpub(data: ArrayBuffer): Promise<ValidationResult> {
   const result: ValidationResult = {
     isValid: true,

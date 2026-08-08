@@ -6,6 +6,9 @@ on:
     branches: [main]
     paths:
       - 'packages/ui/**'
+      - 'apps/web/src/**/*.css'
+      - 'apps/web/tailwind.config.*'
+      - 'apps/web/src/index.css'
   workflow_dispatch:
 
 env:
@@ -26,7 +29,7 @@ jobs:
     timeout-minutes: 15
     if: github.actor != 'dependabot[bot]'
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -38,7 +41,7 @@ jobs:
         run: pnpm build:storybook --stats-json --output-dir storybook-static
 
       - name: Publish to Chromatic
-        uses: chromaui/action@7ffa9343588f15ff3f4cde30e03cd23204ed6a9c  # v17.7.2
+        uses: chromaui/action@14cfaef73576e69f95f47f60058063f46ca38719  # v18.1.0
         with:
           projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
           storybookBuildDir: storybook-static

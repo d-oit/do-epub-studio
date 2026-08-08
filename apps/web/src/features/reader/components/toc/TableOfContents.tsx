@@ -1,5 +1,6 @@
 import { useRef, useEffect, useCallback } from 'react';
 import { useFocusTrap } from '@do-epub-studio/ui';
+import { IconButton } from '../../../../components/ui';
 import { VirtualList } from '../../../../components/VirtualList';
 import type { TranslationKeys } from '../../../../i18n';
 
@@ -38,6 +39,9 @@ export function TableOfContents({
   const activeItemRef = useRef<HTMLButtonElement>(null);
   useFocusTrap(isOpen, panelRef);
 
+  const shouldVirtualize = toc.length > VIRTUALIZE_THRESHOLD;
+  const activeIndex = toc.findIndex((item) => currentChapter === item.href);
+
   useEffect(() => {
     if (!isOpen) return;
     const handleEscape = (e: KeyboardEvent) => {
@@ -48,14 +52,14 @@ export function TableOfContents({
   }, [isOpen, onClose]);
 
   // Scroll the active chapter into view after the list mounts. For virtualized
-  // lists the active item is only mounted when in the visible window, so we
-  // accept the closest mounted item as the proxy. For short lists the ref
-  // attaches directly.
+  // lists we pass scrollToIndex to VirtualList so it can position the active
+  // item even when it's outside the initial visible window. For short lists
+  // the ref attaches directly.
   useEffect(() => {
-    if (isOpen && activeItemRef.current) {
+    if (isOpen && !shouldVirtualize && activeItemRef.current) {
       activeItemRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
-  }, [isOpen]);
+  }, [isOpen, shouldVirtualize]);
 
   const onVisibleRangeChange = useCallback(
     (start: number, end: number) => {
@@ -98,7 +102,6 @@ export function TableOfContents({
   if (!isOpen) return null;
 
   const isRtl = direction === 'rtl';
-  const shouldVirtualize = toc.length > VIRTUALIZE_THRESHOLD;
 
   return (
     <aside
@@ -114,11 +117,11 @@ export function TableOfContents({
     >
       <div className="p-4 border-b border-border flex justify-between items-center">
         <h2 id="toc-title" className="font-semibold">{t('reader.tableOfContents')}</h2>
-        <button
-          type="button"
+        <IconButton
           onClick={onClose}
-          className="p-1 hover:bg-background-secondary rounded"
-          aria-label={t('reader.settings.close')}
+          variant="ghost"
+          size="sm"
+          aria-label={t('a11y.close')}
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
@@ -128,7 +131,7 @@ export function TableOfContents({
               d="M6 18L18 6M6 6l12 12"
             />
           </svg>
-        </button>
+        </IconButton>
       </div>
       <div className="flex-1 p-2 overflow-hidden">
         {toc.length > 0 ? (
@@ -140,6 +143,7 @@ export function TableOfContents({
               ariaLabel={t('reader.tableOfContents')}
               renderItem={renderTocItem}
               onVisibleRangeChange={onVisibleRangeChange}
+              scrollToIndex={activeIndex >= 0 ? activeIndex : undefined}
             />
           ) : (
             <nav className="overflow-y-auto h-full" data-testid="toc-list">

@@ -1,6 +1,6 @@
 {
   "name": "do-epub-studio",
-  "version": "0.1.1",
+  "version": "0.1.0",
   "private": true,
   "packageManager": "pnpm@10.33.0+sha512.10568bb4a6afb58c9eb3630da90cc9516417abebd3fabbe6739f0ae795728da1491e9db5a544c76ad8eb7570f5c4bb3d6c637b2cb41bfdcdb47fa823c8649319",
   "type": "module",
@@ -22,24 +22,27 @@
     "db:migrate:local": "node scripts/db-migrate-local.mjs",
     "db:migrate:prod": "node scripts/db-migrate-prod.mjs",
     "db:check": "node scripts/db-check.mjs",
-    "verify:fast": "pnpm lint && pnpm typecheck && vitest run --changed main",
+    "verify:fast": "pnpm turbo run lint typecheck --affected && pnpm --filter \"...[origin/main]\" run test:unit",
     "test:e2e:smoke": "PLAYWRIGHT_MODE=dev playwright test --grep @smoke",
     "bench": "pnpm --filter @do-epub-studio/reader-core bench",
     "build:analyze": "ANALYZE=true turbo run build",
     "bundle:budget": "pnpm --filter @do-epub-studio/web bundle:budget",
-    "bundle:budget:enforce": "BUNDLE_BUDGET_FAIL_ON_VIOLATION=1 pnpm --filter @do-epub-studio/web bundle:budget:enforce"
+    "bundle:budget:enforce": "BUNDLE_BUDGET_FAIL_ON_VIOLATION=1 pnpm --filter @do-epub-studio/web bundle:budget:enforce",
+    "knip": "knip",
+    "check:dead-code": "scripts/dead-code-check.sh"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.12.1",
-    "@commitlint/cli": "^19.6.0",
+    "@commitlint/cli": "^21.2.1",
     "@commitlint/config-conventional": "^21.2.0",
     "@eslint/js": "^10.0.0",
-    "@playwright/test": "^1.61.1",
-    "@types/node": "^25",
-    "@vitest/coverage-v8": "4.1.9",
-    "eslint": "^10.6.0",
+    "@playwright/test": "^1.62.1",
+    "@types/node": "^26",
+    "@vitest/coverage-v8": "4.1.10",
+    "eslint": "^10.8.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-import-resolver-typescript": "^4.4.5",
+    "eslint-plugin-i18next": "^6.1.5",
     "eslint-plugin-import-x": "^4.17.1",
     "eslint-plugin-jsx-a11y": "^6.8.0",
     "eslint-plugin-promise": "^7.3.0",
@@ -47,18 +50,20 @@
     "eslint-plugin-react-compiler": "19.1.0-rc.2",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-security": "^4.0.1",
-    "eslint-plugin-unicorn": "^64.0.0",
-    "globals": "^17.7.0",
-    "impeccable": "^3.1.0",
-    "js-yaml": "^5.2.0",
-    "jsdom": "^29.1.1",
-    "prettier": "^3.9.4",
+    "eslint-plugin-unicorn": "^72.0.0",
+    "globals": "^17.8.0",
+    "impeccable": "^3.5.0",
+    "js-yaml": "^5.2.3",
+    "jsdom": "^30.0.1",
+    "knip": "^6.31.0",
+    "madge": "^8.0.0",
+    "prettier": "^3.9.6",
     "rollup-plugin-visualizer": "^7.0.1",
-    "turbo": "^2.10.1",
+    "turbo": "^2.10.8",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.62.1",
-    "vitest": "4.1.9",
-    "wrangler": "^4.105.0"
+    "typescript-eslint": "^8.65.0",
+    "vitest": "4.1.10",
+    "wrangler": "^4.118.0"
   },
   "pnpm": {
     "overrides": {
@@ -66,7 +71,12 @@
       "esbuild": ">=0.28.1",
       "ws": ">=8.21.0",
       "undici": ">=7.28.0 <8.0.0",
-      "@babel/core": ">=7.29.6"
+      "@babel/core": ">=7.29.6",
+      "brace-expansion": ">=5.0.9",
+      "fast-uri": "^3.1.5",
+      "sharp": "^0.35.0",
+      "react-router": "8.3.0",
+      "dompurify": "^3.4.13"
     }
   }
 }

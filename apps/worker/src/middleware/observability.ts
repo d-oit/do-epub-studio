@@ -9,6 +9,7 @@ import {
 
 export const observabilityMiddleware: MiddlewareHandler = async (c, next) => {
   const context = createRequestContext(c.req.raw);
+  c.set('requestContext', context);
   logRequestStart(context);
 
   try {

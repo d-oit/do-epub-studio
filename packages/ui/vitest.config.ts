@@ -12,7 +12,7 @@ export default defineConfig({
       include: ['src/**/*.ts', 'src/**/*.tsx'],
       exclude: ['src/**/*.test.ts', 'src/**/*.test.tsx', 'src/**/*.stories.tsx'],
       reportsDirectory: './coverage',
-      thresholds: { lines: 10, functions: 5, branches: 5, statements: 10 },
+      thresholds: { lines: 40, functions: 30, branches: 30, statements: 40 },
     },
   },
 });

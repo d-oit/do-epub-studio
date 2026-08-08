@@ -7,3 +7,6 @@ export { filesRouter } from './files';
 export { adminRouter } from './admin/index';
 export { securityRouter } from './security';
 export { telemetryRouter } from './telemetry';
+export { notificationsRouter } from './notifications';
+export { searchRouter } from './search';
+export { exportRouter } from './export';

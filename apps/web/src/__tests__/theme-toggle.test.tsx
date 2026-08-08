@@ -16,7 +16,7 @@ vi.mock('../hooks/useTranslation', () => ({
 }));
 
 vi.mock('../components/ui', () => ({
-  IconButton: ({ children, onClick, ...props }: any) => (
+  IconButton: ({ children, onClick, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement> & { children?: React.ReactNode }) => (
     <button onClick={onClick} {...props}>{children}</button>
   ),
 }));

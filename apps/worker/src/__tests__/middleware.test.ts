@@ -18,6 +18,9 @@ import { validateSession, parseAuthHeader } from '../auth/session';
 import type { Env } from '../lib/env';
 import type { RateLimiterDO } from '../lib/rate-limiter-do';
 
+// Mirrors the private SessionRow shape in auth/session.ts
+type SessionLike = { id: string; book_id: string; email: string; session_token_hash: string; expires_at: string; revoked_at: string | null };
+
 function makeEnv(): Env {
   return {
     BOOKS_BUCKET: {
@@ -29,7 +32,10 @@ function makeEnv(): Env {
       delete: () => Promise.resolve(undefined),
       list: () => Promise.resolve({ objects: [], truncated: false, delimitedPrefixes: [] }),
     },
-    TURSO_DATABASE_URL: 'libsql://test.turso.io',
+    DB: { prepare: vi.fn().mockReturnThis(), bind: vi.fn().mockReturnThis(), all: vi.fn().mockResolvedValue({ results: [] }) } as unknown as D1Database,
+    SENDER_EMAIL: {} as unknown as SendEmail,
+    CACHE_KV: { get: vi.fn().mockResolvedValue(null), put: vi.fn().mockResolvedValue(undefined) } as unknown as KVNamespace,
+    TURSO_DATABASE_URL: 'file::memory:',
     TURSO_AUTH_TOKEN: 'test-token',
     SESSION_SIGNING_SECRET: 'test-secret',
     INVITE_TOKEN_SECRET: 'test-invite-secret',
@@ -101,7 +107,7 @@ describe('requireAuth middleware', () => {
     mockParseAuthHeader.mockReturnValue('valid');
     mockValidateSession.mockResolvedValue({
       valid: true,
-      session: makeSessionRow() as any,
+      session: makeSessionRow() as unknown as SessionLike,
       bookId: 'book-1',
     });
     mockQueryFirst.mockResolvedValue({
@@ -124,7 +130,7 @@ describe('requireAuth middleware', () => {
     mockParseAuthHeader.mockReturnValue('valid');
     mockValidateSession.mockResolvedValue({
       valid: true,
-      session: makeSessionRow() as any,
+      session: makeSessionRow() as unknown as SessionLike,
       bookId: 'book-1',
     });
     mockQueryFirst.mockResolvedValue({
@@ -148,7 +154,7 @@ describe('requireAuth middleware', () => {
     mockParseAuthHeader.mockReturnValue('valid');
     mockValidateSession.mockResolvedValue({
       valid: true,
-      session: makeSessionRow() as any,
+      session: makeSessionRow() as unknown as SessionLike,
       bookId: 'book-1',
     });
     mockQueryFirst.mockResolvedValue({

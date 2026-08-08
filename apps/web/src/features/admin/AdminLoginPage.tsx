@@ -59,7 +59,7 @@ export function AdminLoginPage() {
             {t('admin.login.title')}
           </h1>
           <p className="text-foreground-muted mt-2 text-sm">
-            {APP_NAME} Management · {APP_VERSION_LABEL}
+            {APP_NAME} {t('admin.login.managementLabel')} · {APP_VERSION_LABEL}
           </p>
         </div>
 
@@ -110,7 +110,7 @@ export function AdminLoginPage() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => { void navigate('/admin/recover'); }}
+            onClick={() => { void navigate('/admin/recover'); /* eslint-disable-line i18next/no-literal-string -- route path */ }}
             className="text-sm text-foreground-muted hover:text-foreground underline decoration-accent/30 hover:decoration-accent focus-visible:ring-2 focus-visible:ring-accent"
           >
             {t('admin.login.forgotPassword')}
@@ -124,7 +124,7 @@ export function AdminLoginPage() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => { void navigate('/login'); }}
+            onClick={() => { void navigate('/login'); /* eslint-disable-line i18next/no-literal-string -- route path */ }}
             className="underline decoration-accent/30 hover:decoration-accent focus-visible:ring-2 focus-visible:ring-accent"
           >
             {t('admin.login.backToReader')}

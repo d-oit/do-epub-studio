@@ -26,7 +26,7 @@ These metrics ensure the development workflow remains fast and efficient.
 
 ## Enforcement
 
-- **Bundle Size**: Checked on every PR via `scripts/check-bundle-size.mjs`.
+- **Bundle Size**: Checked on every PR via `scripts/check-bundle-budget.mjs` (gzipped per-file + route budgets, T4.1).
 - **Startup Performance**: Measured via Playwright performance tests.
 - **CI Duration**: Tracked and reported in the CI summary.
 - **Lighthouse**: Enforced via `.lighthouserc.json` in the Lighthouse CI workflow.

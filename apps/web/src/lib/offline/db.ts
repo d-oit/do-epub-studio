@@ -25,11 +25,15 @@ export interface AnnotationEntry {
   createdAt: number;
   synced: boolean;
   mutationId: string;
+  /** Comment status — persisted for offline resolve/unresolve (Plan 998). */
+  status?: 'open' | 'resolved';
+  /** Comment visibility — persisted for offline mutations (Plan 998). */
+  visibility?: 'shared' | 'internal' | 'resolved';
 }
 
 export interface SyncQueueItem {
   id: string;
-  type: 'progress' | 'annotation' | 'insight' | 'bookmark' | 'reading-insight';
+  type: 'progress' | 'annotation' | 'reading-insight';
   payload: unknown;
   mutationId: string;
   createdAt: number;
@@ -56,7 +60,7 @@ export interface PermissionCache {
 }
 
 const DB_NAME = 'do-epub-studio';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 let dbInstance: IDBPDatabase | null = null;
 let cachedToken: string | null = null;
@@ -135,32 +139,39 @@ export async function getDB(): Promise<IDBPDatabase> {
   if (dbInstance) return dbInstance;
 
   dbInstance = await openDB(DB_NAME, DB_VERSION, {
-    upgrade(db) {
-      if (!db.objectStoreNames.contains('progress')) {
-        const progressStore = db.createObjectStore('progress', { keyPath: 'id' });
-        progressStore.createIndex('bookId', 'bookId');
-        progressStore.createIndex('synced', 'synced');
+    upgrade(db, oldVersion) {
+      if (oldVersion < 1) {
+        if (!db.objectStoreNames.contains('progress')) {
+          const progressStore = db.createObjectStore('progress', { keyPath: 'id' });
+          progressStore.createIndex('bookId', 'bookId');
+          progressStore.createIndex('synced', 'synced');
+        }
+
+        if (!db.objectStoreNames.contains('annotations')) {
+          const annotationStore = db.createObjectStore('annotations', { keyPath: 'id' });
+          annotationStore.createIndex('bookId', 'bookId');
+          annotationStore.createIndex('synced', 'synced');
+        }
+
+        if (!db.objectStoreNames.contains('syncQueue')) {
+          const queueStore = db.createObjectStore('syncQueue', { keyPath: 'id' });
+          queueStore.createIndex('createdAt', 'createdAt');
+        }
+
+        if (!db.objectStoreNames.contains('permissions')) {
+          db.createObjectStore('permissions', { keyPath: 'bookId' });
+        }
+
+        if (!db.objectStoreNames.contains('readingInsights')) {
+          const insightsStore = db.createObjectStore('readingInsights', { keyPath: ['bookId', 'date'] });
+          insightsStore.createIndex('bookId', 'bookId');
+        }
       }
 
-      if (!db.objectStoreNames.contains('annotations')) {
-        const annotationStore = db.createObjectStore('annotations', { keyPath: 'id' });
-        annotationStore.createIndex('bookId', 'bookId');
-        annotationStore.createIndex('synced', 'synced');
-      }
-
-      if (!db.objectStoreNames.contains('syncQueue')) {
-        const queueStore = db.createObjectStore('syncQueue', { keyPath: 'id' });
-        queueStore.createIndex('createdAt', 'createdAt');
-      }
-
-      if (!db.objectStoreNames.contains('permissions')) {
-        db.createObjectStore('permissions', { keyPath: 'bookId' });
-      }
-
-      if (!db.objectStoreNames.contains('readingInsights')) {
-        const insightsStore = db.createObjectStore('readingInsights', { keyPath: ['bookId', 'date'] });
-        insightsStore.createIndex('bookId', 'bookId');
-      }
+      // v1→v2: AnnotationEntry gains optional status/visibility fields.
+      // No structural migration needed — existing records simply have
+      // undefined for the new fields, which the mapper defaults to
+      // 'open'/'shared' (Plan 998).
     },
   });
 
@@ -259,6 +270,17 @@ export async function getCachedPermission(bookId: string): Promise<PermissionCac
 export async function clearPermissionCache(bookId: string): Promise<void> {
   const db = await getDB();
   await db.delete('permissions', bookId);
+}
+
+export async function getAllCachedPermissions(): Promise<PermissionCache[]> {
+  const db = await getDB();
+  const all = await db.getAll('permissions');
+  const results: PermissionCache[] = [];
+  for (const stored of all) {
+    const entry = await decryptEntry<PermissionCache>(stored as Record<string, unknown>, PERMISSION_PLAINTEXT);
+    if (entry) results.push(entry);
+  }
+  return results;
 }
 
 export async function clearAllPermissionCache(): Promise<void> {

@@ -11,6 +11,8 @@ import {
 } from '@do-epub-studio/shared';
 import { parseLocatorRow, assertBookAccess } from '../lib/tenant-isolation';
 import { readerAuth } from '../middleware/auth';
+import { createReplyNotification } from './notifications';
+import { NotFoundError, ForbiddenError, AppError } from '../lib/http-errors';
 
 export const commentsRouter = new Hono<{ Bindings: Env; Variables: { auth: AuthContext } }>();
 
@@ -37,8 +39,8 @@ commentsRouter.get('/books/:bookId/comments', readerAuth, async (c) => {
 
   const comments = await queryAll<CommentRow>(
     c.env,
-    `SELECT * FROM comments WHERE book_id = ? AND status != 'deleted' ORDER BY created_at ASC`,
-    [bookId],
+    `SELECT * FROM comments WHERE book_id = ? AND status != 'deleted' AND (visibility = 'shared' OR user_email = ?) ORDER BY created_at ASC LIMIT 1000`,
+    [bookId, auth.email],
   );
 
   const parsedComments = await Promise.all(
@@ -83,10 +85,25 @@ commentsRouter.post('/books/:bookId/comments', readerAuth, zValidator('json', Co
   }
 
   if (!canComment) {
-    return c.json({ ok: false, error: { code: 'FORBIDDEN', message: 'Access denied' } }, 403);
+    throw new ForbiddenError('Access denied');
   }
 
   const body = c.req.valid('json');
+
+  if (body.parentCommentId) {
+    const parent = await queryFirst<CommentRow>(
+      c.env,
+      `SELECT * FROM comments WHERE id = ?`,
+      [body.parentCommentId],
+    );
+    if (!parent || parent.status === 'deleted' || parent.book_id !== bookId) {
+      throw new AppError('Parent comment not found or inaccessible', 'INVALID_PARENT_COMMENT', 400);
+    }
+    if (parent.visibility !== 'shared' && parent.user_email !== auth.email) {
+      throw new AppError('Parent comment not found or inaccessible', 'INVALID_PARENT_COMMENT', 403);
+    }
+  }
+
   const id = crypto.randomUUID();
   const now = new Date().toISOString();
 
@@ -114,6 +131,18 @@ commentsRouter.post('/books/:bookId/comments', readerAuth, zValidator('json', Co
     actorEmail: auth.email,
     payload: { bookId, visibility: body.visibility },
   }, c.executionCtx);
+
+  // Trigger notification for reply comments
+  if (body.parentCommentId) {
+    c.executionCtx.waitUntil(
+      createReplyNotification(c.env, {
+        bookId,
+        commentId: id,
+        parentCommentId: body.parentCommentId,
+        replierEmail: auth.email,
+      }),
+    );
+  }
 
   return c.json(
     {
@@ -143,17 +172,14 @@ commentsRouter.patch('/comments/:commentId', readerAuth, zValidator('json', Comm
   ]);
 
   if (!comment) {
-    return c.json(
-      { ok: false, error: { code: 'NOT_FOUND', message: 'Comment not found' } },
-      404,
-    );
+    throw new NotFoundError('Comment');
   }
 
+  const mismatch = await assertBookAccess(c.env, auth, comment.book_id, c.executionCtx);
+  if (mismatch) return mismatch.response;
+
   if (comment.user_email !== auth.email) {
-    return c.json(
-      { ok: false, error: { code: 'FORBIDDEN', message: 'Cannot edit others comments' } },
-      403,
-    );
+    throw new ForbiddenError('Cannot edit others comments');
   }
 
   const body = c.req.valid('json');
@@ -201,17 +227,14 @@ commentsRouter.delete('/comments/:commentId', readerAuth, async (c) => {
   ]);
 
   if (!comment) {
-    return c.json(
-      { ok: false, error: { code: 'NOT_FOUND', message: 'Comment not found' } },
-      404,
-    );
+    throw new NotFoundError('Comment');
   }
 
+  const mismatch = await assertBookAccess(c.env, auth, comment.book_id, c.executionCtx);
+  if (mismatch) return mismatch.response;
+
   if (comment.user_email !== auth.email) {
-    return c.json(
-      { ok: false, error: { code: 'FORBIDDEN', message: 'Cannot delete others comments' } },
-      403,
-    );
+    throw new ForbiddenError('Cannot delete others comments');
   }
 
   await execute(c.env, `UPDATE comments SET status = 'deleted', updated_at = ? WHERE id = ?`, [

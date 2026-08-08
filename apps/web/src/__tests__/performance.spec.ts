@@ -214,7 +214,7 @@ test.describe('Performance', () => {
       const mockFcp = 456.78;
       const mockNav = { domInteractive: 123.45, loadEventEnd: 789.01 };
 
-      const extract = (paintEntries: any[], navEntries: any[]) => {
+      const extract = (paintEntries: { name: string; startTime: number }[], navEntries: { domInteractive: number; loadEventEnd: number }[]) => {
         const fcp = paintEntries.find(entry => entry.name === 'first-contentful-paint');
         const navigation = navEntries[0];
         return {
@@ -226,7 +226,7 @@ test.describe('Performance', () => {
 
       return extract(
         [{ name: 'first-contentful-paint', startTime: mockFcp }],
-        [mockNav as any]
+        [mockNav]
       );
     });
 

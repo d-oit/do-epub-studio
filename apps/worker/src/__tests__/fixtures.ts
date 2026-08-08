@@ -21,7 +21,6 @@ vi.mock('../auth/middleware', async (importOriginal) => {
     ...actual,
     requireAuth: vi.fn(),
     validateSession: vi.fn(),
-    generateToken: vi.fn(),
   };
 });
 
@@ -32,6 +31,7 @@ vi.mock('../auth/admin-middleware', async (importOriginal) => {
     ...actual,
     requireAdminAuth: vi.fn(),
     createAdminSession: vi.fn(),
+    createAdminSessionByEmail: vi.fn(),
     revokeAdminSession: vi.fn(),
     generateAdminToken: vi.fn(),
     hashToken: vi.fn(),
@@ -73,26 +73,26 @@ vi.mock('../audit', () => ({
 
 import { queryFirst, queryAll, execute, transaction } from '../db/client';
 import { requireAuth } from '../auth/middleware';
-import { requireAdminAuth, createAdminSession, revokeAdminSession } from '../auth/admin-middleware';
+import {
+  requireAdminAuth,
+  createAdminSession,
+  createAdminSessionByEmail,
+  revokeAdminSession,
+} from '../auth/admin-middleware';
 import {
   validateGrant,
   computeCapabilities,
   createGrant as createGrantMod,
   getGrantByBookAndSession,
   getGrantsBySession,
-  revokeGrant,
 } from '../auth/password';
 import {
   createSession,
   validateSession as validateSessionMod,
   revokeSession,
 } from '../auth/session';
-import {
-  generateSignedUrl,
-  verifySignedUrlExpiry,
-  verifySignedUrlSignature,
-} from '../storage/signed-url';
-import { logAudit, sanitizeAuditPayload } from '../audit';
+import { generateSignedUrl } from '../storage/signed-url';
+import { logAudit } from '../audit';
 
 // ---------------------------------------------------------------------------
 // Mocked function references - exported as Mocks
@@ -105,31 +105,45 @@ export const mockTransaction = transaction as Mock;
 export const mockRequireAuth = requireAuth as Mock;
 export const mockRequireAdminAuth = requireAdminAuth as Mock;
 export const mockCreateAdminSession = createAdminSession as Mock;
+export const mockCreateAdminSessionByEmail = createAdminSessionByEmail as Mock;
 export const mockRevokeAdminSession = revokeAdminSession as Mock;
 export const mockValidateGrant = validateGrant as Mock;
 export const mockComputeCapabilities = computeCapabilities as Mock;
 export const mockCreateGrant = createGrantMod as Mock;
 export const mockGetGrantByBookAndSession = getGrantByBookAndSession as Mock;
 export const mockGetGrantsBySession = getGrantsBySession as Mock;
-export const mockRevokeGrant = revokeGrant as Mock;
 export const mockCreateSession = createSession as Mock;
 export const mockValidateSessionMod = validateSessionMod as Mock;
 export const mockRevokeSession = revokeSession as Mock;
 export const mockGenerateSignedUrl = generateSignedUrl as Mock;
-export const mockVerifyExpiry = verifySignedUrlExpiry as Mock;
-export const mockVerifySignature = verifySignedUrlSignature as Mock;
 export const mockLogAudit = logAudit as Mock;
-export const mockSanitizeAuditPayload = sanitizeAuditPayload as Mock;
 
 // ---------------------------------------------------------------------------
 // Test helper functions
 // ---------------------------------------------------------------------------
 
 export function makeEnv(): Env {
+  const mockDB = {
+    prepare: vi.fn().mockReturnThis(),
+    bind: vi.fn().mockReturnThis(),
+    all: vi.fn().mockResolvedValue({ results: [] }),
+    first: vi.fn().mockResolvedValue(null),
+    run: vi.fn().mockResolvedValue({}),
+    batch: vi.fn().mockResolvedValue([]),
+    exec: vi.fn().mockResolvedValue({}),
+  };
   return {
     BOOKS_BUCKET: makeMockBucket(),
-    TURSO_DATABASE_URL: process.env.TEST_TURSO_DATABASE_URL || 'libsql://test.turso.io',
-    TURSO_AUTH_TOKEN: process.env.TEST_TURSO_AUTH_TOKEN || 'test-token',
+    DB: mockDB as unknown as D1Database,
+    SENDER_EMAIL: {} as unknown as SendEmail,
+    CACHE_KV: {
+      get: vi.fn().mockResolvedValue(null),
+      put: vi.fn().mockResolvedValue(undefined),
+      delete: vi.fn().mockResolvedValue(undefined),
+      list: vi.fn().mockResolvedValue({ keys: [], list_complete: true }),
+    } as unknown as KVNamespace,
+    TURSO_DATABASE_URL: 'file::memory:',
+    TURSO_AUTH_TOKEN: 'test-token',
     SESSION_SIGNING_SECRET: process.env.TEST_SESSION_SIGNING_SECRET || 'test-secret',
     INVITE_TOKEN_SECRET: process.env.TEST_INVITE_TOKEN_SECRET || 'test-invite-secret',
     APP_BASE_URL: 'https://test.example.com',
@@ -158,12 +172,6 @@ function makeMockBucket(): R2Bucket {
   };
 }
 
-export function makeRequest(headers: Record<string, string> = {}): Request {
-  return new Request('https://test.example.com/api/test', {
-    headers: { 'Content-Type': 'application/json', ...headers },
-  });
-}
-
 export function makeAuthContext(overrides: Partial<AuthContext> = {}): AuthContext {
   return {
     sessionId: 'session-1',
@@ -182,124 +190,14 @@ export function makeAuthContext(overrides: Partial<AuthContext> = {}): AuthConte
   };
 }
 
-export function makeSessionRow(overrides: Record<string, unknown> = {}): Record<string, unknown> {
-  return {
-    id: 'session-1',
-    book_id: 'book-1',
-    email: 'user@example.com',
-    session_token_hash: 'hash',
-    expires_at: new Date(Date.now() + 3600000).toISOString(),
-    created_at: new Date().toISOString(),
-    revoked_at: null,
-    ...overrides,
-  };
-}
-
-export function makeBookRow(overrides: Record<string, unknown> = {}): Record<string, unknown> {
-  return {
-    id: 'book-1',
-    slug: 'test-book',
-    title: 'Test Book',
-    author_name: 'Test Author',
-    description: null,
-    language: 'en',
-    visibility: 'private',
-    cover_image_url: null,
-    published_at: null,
-    ...overrides,
-  };
-}
-
-export function makeGrantRow(overrides: Record<string, unknown> = {}): Record<string, unknown> {
-  return {
-    id: 'grant-1',
-    book_id: 'book-1',
-    email: 'user@example.com',
-    password_hash: null,
-    mode: 'private',
-    allowed: 1,
-    comments_allowed: 0,
-    offline_allowed: 0,
-    expires_at: null,
-    revoked_at: null,
-    ...overrides,
-  };
-}
-
-export function makeProgressRow(overrides: Record<string, unknown> = {}): Record<string, unknown> {
-  return {
-    id: 'progress-1',
-    book_id: 'book-1',
-    user_email: 'user@example.com',
-    locator_json: JSON.stringify({ cfi: 'epubcfi(/6/4)', selectedText: 'test' }),
-    progress_percent: 50,
-    updated_at: new Date().toISOString(),
-    ...overrides,
-  };
-}
-
-export function makeBookmarkRow(overrides: Record<string, unknown> = {}): Record<string, unknown> {
-  return {
-    id: 'bookmark-1',
-    book_id: 'book-1',
-    user_email: 'user@example.com',
-    locator_json: JSON.stringify({ cfi: 'epubcfi(/6/4)', selectedText: 'test' }),
-    label: 'My Bookmark',
-    created_at: new Date().toISOString(),
-    ...overrides,
-  };
-}
-
-export function makeHighlightRow(overrides: Record<string, unknown> = {}): Record<string, unknown> {
-  return {
-    id: 'highlight-1',
-    book_id: 'book-1',
-    user_email: 'user@example.com',
-    chapter_ref: 'Chapter 1',
-    cfi_range: 'epubcfi(/6/4)',
-    selected_text: 'Important passage',
-    note: null,
-    color: '#ffff00',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    ...overrides,
-  };
-}
-
-export function makeCommentRow(overrides: Record<string, unknown> = {}): Record<string, unknown> {
-  return {
-    id: 'comment-1',
-    book_id: 'book-1',
-    user_email: 'user@example.com',
-    chapter_ref: 'Chapter 1',
-    cfi_range: 'epubcfi(/6/4)',
-    selected_text: 'Selected text',
-    body: 'This is a comment',
-    status: 'open',
-    visibility: 'shared',
-    parent_comment_id: null,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    resolved_at: null,
-    ...overrides,
-  };
-}
-
-export function makeAuditLogRow(overrides: Record<string, unknown> = {}): Record<string, unknown> {
-  return {
-    id: 'audit-1',
-    actor_email: 'admin@example.com',
-    entity_type: 'book',
-    entity_id: 'book-1',
-    action: 'created',
-    payload_json: JSON.stringify({ slug: 'test-book' }),
-    created_at: new Date().toISOString(),
-    ...overrides,
-  };
-}
-
 // Typed passthrough ExecutionContext for route tests — replaces `{ waitUntil: () => {} } as any`
 // patterns flagged by Codacy as ESLint8_@typescript-eslint_no-explicit-any.
 export function makePassThroughContext(): ExecutionContext {
-  return { waitUntil: () => {}, passThroughOnException: () => {}, props: {}, exports: {} };
+  return { waitUntil: () => {}, passThroughOnException: () => {}, props: {}, exports: {}, tracing: {} as Tracing };
+}
+
+/** Parse a fetch Response JSON body with known API shape. Avoids `as` cast at each call site. */
+export async function parseBody(res: Response): Promise<{ ok: boolean; data: Record<string, unknown>; error?: { code: string } }> {
+  const json: unknown = await res.json();
+  return json as { ok: boolean; data: Record<string, unknown>; error?: { code: string } };
 }

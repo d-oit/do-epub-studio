@@ -28,20 +28,34 @@ function getMinLevel(): number {
   return LOG_LEVELS.warn;
 }
 
+const MAX_BUFFER_SIZE = 100;
+
 const _buffer: ClientLogEntry[] = [];
 let _flushTimer: ReturnType<typeof setTimeout> | null = null;
+let _dropCount = 0;
 
 function flushBuffer(): void {
   if (_buffer.length === 0) return;
-  const endpoint = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_TELEMETRY_ENDPOINT) || '/api/telemetry';
+  const endpoint = typeof import.meta !== 'undefined' && import.meta.env?.VITE_TELEMETRY_ENDPOINT;
+  if (!endpoint) {
+    _buffer.length = 0;
+    return;
+  }
 
   try {
-    const payload = JSON.stringify({ logs: _buffer.splice(0) });
+    const logs = _buffer.splice(0);
+    const dropped = _dropCount;
+    _dropCount = 0;
+    const payload = JSON.stringify({ logs, dropped });
     const isBrowser = typeof window !== 'undefined';
     if (!isBrowser && !endpoint.startsWith('http')) return;
 
+    const blob = new Blob([payload], { type: 'application/json' });
     if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
-      navigator.sendBeacon(endpoint, new Blob([payload], { type: 'application/json' }));
+      const sent = navigator.sendBeacon(endpoint, blob);
+      if (!sent && typeof fetch !== 'undefined') {
+        void fetch(endpoint, { method: 'POST', body: payload, keepalive: true }).catch(() => {});
+      }
     } else if (typeof fetch !== 'undefined') {
       void fetch(endpoint, { method: 'POST', body: payload, keepalive: true }).catch(() => {});
     }
@@ -79,6 +93,10 @@ export function logClientEvent(entry: ClientLogEntry): void {
   }
 
   if (entry.level === 'warn' || entry.level === 'error') {
+    if (_buffer.length >= MAX_BUFFER_SIZE) {
+      _buffer.shift();
+      _dropCount++;
+    }
     _buffer.push(entry);
     scheduleFlush();
   }
@@ -99,4 +117,51 @@ export function measurePerformance(name: string, startMark: string, endMark: str
   } catch {
     return undefined;
   }
+}
+
+export type PerformanceEntryCallback = (entry: PerformanceEntry) => void;
+
+export function observePerformance(callback: PerformanceEntryCallback): PerformanceObserver | undefined {
+  if (typeof PerformanceObserver === 'undefined') return undefined;
+  try {
+    const observer = new PerformanceObserver((list) => {
+      for (const entry of list.getEntries()) {
+        callback(entry);
+      }
+    });
+    observer.observe({ type: 'mark', buffered: false });
+    observer.observe({ type: 'measure', buffered: false });
+    return observer;
+  } catch {
+    return undefined;
+  }
+}
+
+function percentile(sorted: number[], p: number): number | undefined {
+  if (sorted.length === 0) return undefined;
+  const idx = Math.ceil((p / 100) * sorted.length) - 1;
+  return sorted[Math.max(0, idx)];
+}
+
+export interface PerformanceMetrics {
+  p50: number | undefined;
+  p95: number | undefined;
+  p99: number | undefined;
+  count: number;
+}
+
+export function reportPerformanceMetrics(
+  metricPrefix: string,
+  logFn: (metrics: PerformanceMetrics) => void,
+): void {
+  if (typeof performance === 'undefined') return;
+  const entries = performance.getEntriesByName(metricPrefix);
+  if (entries.length === 0) return;
+  const durations = entries.map((e) => e.duration).sort((a, b) => a - b);
+  logFn({
+    p50: percentile(durations, 50),
+    p95: percentile(durations, 95),
+    p99: percentile(durations, 99),
+    count: durations.length,
+  });
 }

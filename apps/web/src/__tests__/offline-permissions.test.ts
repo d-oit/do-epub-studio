@@ -23,6 +23,7 @@ vi.mock('../lib/offline/db', async () => {
     ...actual,
     cachePermission: vi.fn(),
     getCachedPermission: vi.fn(),
+    getAllCachedPermissions: vi.fn(),
     clearPermissionCache: vi.fn(),
     clearAllPermissionCache: vi.fn(),
   };
@@ -182,14 +183,14 @@ describe('Offline Permissions', () => {
         { status: 200, headers: { 'Content-Type': 'application/json' } }
       );
       vi.mocked(api.get).mockResolvedValue(mockResponse);
-      vi.mocked(db.getCachedPermission).mockResolvedValue({
+      vi.mocked(db.getAllCachedPermissions).mockResolvedValue([{
         bookId: 'book-1',
         grantId: 'grant-1',
         canComment: true,
         canDownloadOffline: true,
         cachedAt: Date.now(),
         expiresAt: Date.now() + 86400000,
-      });
+      }]);
 
       setupZombieDetection(mockOnRevoked);
 

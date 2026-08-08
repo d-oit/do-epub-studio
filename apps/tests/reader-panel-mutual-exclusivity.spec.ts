@@ -1,109 +1,37 @@
-import { test, expect, type Page, type Route } from '@playwright/test';
-
-// ---------------------------------------------------------------------------
-// Constants & fixtures
-// ---------------------------------------------------------------------------
-
-const TEST_USER = {
-  email: 'reader@example.com',
-  password: 'test-password',
-  bookSlug: 'my-test-book',
-};
-
-const LOGIN_RESPONSE = {
-  ok: true,
-  data: {
-    sessionToken: 'test-session-token-abc123',
-    book: {
-      id: 'book-1',
-      slug: TEST_USER.bookSlug,
-      title: 'My Test Book',
-      authorName: 'Test Author',
-    },
-    capabilities: {
-      canRead: true,
-      canComment: true,
-      canHighlight: true,
-      canBookmark: true,
-      canDownloadOffline: false,
-      canExportNotes: false,
-      canManageAccess: false,
-    },
-  },
-};
-
-const BOOK_FILE_URL_RESPONSE = {
-  ok: true,
-  data: { url: 'https://example.com/test-book.epub' },
-};
-
-const PROGRESS_RESPONSE = {
-  ok: true,
-  data: { locator: { cfi: 'epubcfi(/6/4)' }, progressPercent: 0.1 },
-};
+import { test, expect, type Page } from '@playwright/test';
+import { MOCK_EPUB, loginAsReader, mockReaderApi } from './fixtures';
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-async function mockApiRoutes(page: Page) {
-  await page.route('**/api/access/request', async (route: Route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify(LOGIN_RESPONSE),
-    });
-  });
+/**
+ * Click a toolbar action button, automatically handling the mobile overflow
+ * menu.  On narrow viewports (< 640px) the toolbar collapses into a
+ * vertical-dots overflow menu via CSS container query (ADR-105).  This
+ * helper uses the viewport width (matching the container-query breakpoint)
+ * to decide which path to take, and always uses `dispatchEvent` to bypass
+ * pointer-event interception from open side-panels that overlap the toolbar.
+ */
+async function clickToolbarAction(page: Page, name: string | RegExp) {
+  const isNarrow = (page.viewportSize()?.width ?? 1280) < 640;
 
-  await page.route('**/api/books/*/file-url', async (route: Route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify(BOOK_FILE_URL_RESPONSE),
-    });
-  });
-
-  await page.route('**/api/books/*/progress', async (route: Route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify(PROGRESS_RESPONSE),
-    });
-  });
-
-  await page.route('**/api/books/*/highlights', async (route: Route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({ ok: true, data: [] }),
-    });
-  });
-
-  await page.route('**/api/books/*/comments', async (route: Route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({ ok: true, data: [] }),
-    });
-  });
-
-  await page.route('**/api/books/*/bookmarks', async (route: Route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({ ok: true, data: [] }),
-    });
-  });
-}
-
-async function login(page: Page) {
-  await page.goto(`/login?book=${TEST_USER.bookSlug}`);
-  await page.getByLabel('Email Address').fill(TEST_USER.email);
-  await page.getByLabel('Password').fill(TEST_USER.password);
-  await page.getByRole('button', { name: 'Sign In', exact: true }).click();
-  await expect(page).toHaveURL(/\/read\/my-test-book/);
-  // Wait for the reader to load and show the toolbar
-  await expect(page.getByRole('button', { name: /Contents/i })).toBeVisible({ timeout: 15000 });
+  if (isNarrow) {
+    // Mobile / narrow viewport — open the overflow dropdown first.
+    // Use dispatchEvent because open panels (z-50, full-width on mobile)
+    // may cover the toolbar trigger button.
+    await page.getByRole('button', { name: 'More options' }).dispatchEvent('click');
+    const overflowItem = page
+      .locator('.cq-reader-toolbar-overflow')
+      .getByRole('button', { name });
+    await overflowItem.waitFor({ state: 'visible', timeout: 5000 });
+    await overflowItem.dispatchEvent('click');
+  } else {
+    // Desktop — click directly from the main toolbar row.
+    // Use dispatchEvent to bypass pointer-event interception from
+    // open side-panels (z-40) that partially overlay the toolbar area.
+    await page.getByRole('button', { name }).first().dispatchEvent('click');
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -112,17 +40,17 @@ async function login(page: Page) {
 
 test.describe('Reader side-panel mutual exclusivity', () => {
   test.beforeEach(async ({ page }) => {
-    await mockApiRoutes(page);
-    await login(page);
+    await mockReaderApi(page, { epubUrl: '/test-book.epub', epubBuffer: MOCK_EPUB });
+    await loginAsReader(page);
   });
 
-  test('opening search closes table of contents', async ({ page }) => {
-    // Open Table of Contents
-    await page.getByRole('button', { name: 'Contents' }).click();
+  test('@mobile opening search closes table of contents', async ({ page }) => {
+    // Open Table of Contents (always in the left section of the toolbar)
+    await page.getByRole('button', { name: /Contents/i }).click();
     await expect(page.getByRole('heading', { name: 'Contents' })).toBeVisible();
 
     // Open Search
-    await page.getByRole('button', { name: 'Search' }).click();
+    await clickToolbarAction(page, 'Search');
 
     // Search panel should be visible
     await expect(page.getByRole('heading', { name: 'Search', exact: true })).toBeVisible();
@@ -131,9 +59,9 @@ test.describe('Reader side-panel mutual exclusivity', () => {
     await expect(page.getByRole('heading', { name: 'Contents' })).not.toBeVisible();
   });
 
-  test('opening settings closes search', async ({ page }) => {
+  test('@mobile opening settings closes search', async ({ page }) => {
     // Open Search
-    await page.getByRole('button', { name: 'Search' }).click();
+    await clickToolbarAction(page, 'Search');
     await expect(page.getByRole('heading', { name: 'Search', exact: true })).toBeVisible();
 
     // Open Settings. The Search panel (z-50) overlaps the header in
@@ -142,10 +70,7 @@ test.describe('Reader side-panel mutual exclusivity', () => {
     // toolbar button. Mutual exclusivity is still verified by the
     // state assertions below: opening Settings must close the Search
     // panel.
-    await page
-      .getByRole('button', { name: 'Settings' })
-      .first()
-      .dispatchEvent('click');
+    await clickToolbarAction(page, 'Settings');
 
     // Settings panel should be visible (check for unique text like "Font Size")
     await expect(page.getByText('Font Size')).toBeVisible();
@@ -154,13 +79,13 @@ test.describe('Reader side-panel mutual exclusivity', () => {
     await expect(page.getByRole('heading', { name: 'Search', exact: true })).not.toBeVisible();
   });
 
-  test('opening comments closes bookmarks', async ({ page }) => {
+  test('@mobile opening comments closes bookmarks', async ({ page }) => {
     // Open Bookmarks
-    await page.getByRole('button', { name: 'Bookmarks' }).click();
+    await clickToolbarAction(page, 'Bookmarks');
     await expect(page.getByRole('heading', { name: 'Bookmarks' })).toBeVisible();
 
     // Open Comments
-    await page.getByRole('button', { name: 'Comment' }).click();
+    await clickToolbarAction(page, /Comment/i);
 
     // Comments panel should be visible (check for unique heading, plural form in UI: "Comments")
     // The UI renders "Comments" as heading (h2 + plural)
@@ -170,18 +95,27 @@ test.describe('Reader side-panel mutual exclusivity', () => {
     await expect(page.getByRole('heading', { name: 'Bookmarks' })).not.toBeVisible();
   });
 
-  test('opening info panel closes comments', async ({ page }) => {
+  test('@mobile opening info panel closes comments', async ({ page }) => {
     // Open Comments
-    await page.getByRole('button', { name: 'Comment' }).click();
+    await clickToolbarAction(page, /Comment/i);
     await expect(page.getByRole('heading', { name: 'Comments' })).toBeVisible();
 
     // Open Info panel ("About book" tooltip/aria-label)
-    await page.getByRole('button', { name: 'About This Book' }).click();
+    await clickToolbarAction(page, 'About This Book');
 
     // Info panel should be visible (heading "About This Book")
     await expect(page.getByRole('heading', { name: 'About This Book' })).toBeVisible();
 
     // Comments panel should be closed
     await expect(page.getByRole('heading', { name: 'Comments' })).not.toBeVisible();
+  });
+
+  test('@mobile info panel displays book metadata', async ({ page }) => {
+    // Open Info panel
+    await clickToolbarAction(page, 'About This Book');
+    await expect(page.getByRole('heading', { name: 'About This Book' })).toBeVisible();
+
+    // Verify book metadata from the EPUB is displayed
+    await expect(page.getByText('Test')).toBeVisible();
   });
 });

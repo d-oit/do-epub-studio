@@ -13,10 +13,38 @@ fi
 OUTPUT_FILE=".impeccable/last-run.json"
 mkdir -p .impeccable
 
+# Ensure storybook-static and other generated output is excluded from scanning.
+# The submodule's config.json is local and not tracked; create one if missing.
+CONFIG_FILE=".impeccable/config.json"
+if [ ! -f "$CONFIG_FILE" ]; then
+  cat > "$CONFIG_FILE" <<'CONF'
+{
+  "$schema": "https://impeccable.style/config.json",
+  "detector": {
+    "designSystem": { "enabled": true },
+    "ignoreFiles": [
+      ".impeccable/**",
+      "**/coverage/**",
+      "**/node_modules/**",
+      "**/storybook-static/**",
+      "**/playwright-report/**",
+      "**/test-results/**",
+      "apps/worker/src/worker-configuration.d.ts"
+    ],
+    "ignoreValues": [
+      { "rule": "overused-font", "value": "Geist", "reason": "Intentional brand font choice" },
+      { "rule": "bounce-easing", "value": "cubic-bezier(0.34, 1.56, 0.64, 1)", "reason": "Intentional bounce animation for playful interactions" }
+    ]
+  }
+}
+CONF
+fi
+
 echo "::group::Impeccable design detector"
 
-if npx impeccable detect --json . > "$OUTPUT_FILE" 2>/dev/null; then
-  FINDINGS=$(jq '.findings | length' "$OUTPUT_FILE" 2>/dev/null || echo "0")
+npx impeccable detect --json . > "$OUTPUT_FILE" 2>/dev/null || true
+if [ -f "$OUTPUT_FILE" ] && jq empty "$OUTPUT_FILE" 2>/dev/null; then
+  FINDINGS=$(jq 'length' "$OUTPUT_FILE" 2>/dev/null || echo "0")
   echo "Impeccable: $FINDINGS finding(s) in $OUTPUT_FILE"
 else
   FINDINGS=-1

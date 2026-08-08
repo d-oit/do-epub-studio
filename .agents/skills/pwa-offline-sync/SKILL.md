@@ -41,3 +41,26 @@ Purpose: design, implement, and validate offline/PWA behavior (service worker, c
 - [ ] Zombie detection notifies user + stops further reads upon revocation.
 - [ ] Service worker cleans up old caches.
 - [ ] Memory-safe listeners (remove event handlers on `self` when replaced).
+
+## Examples
+
+### Sync Pattern
+
+Queue a write locally, then attempt sync with exponential backoff (from `apps/web/src/lib/offline/sync.ts`):
+
+```ts
+// Enqueue a progress update — persists to IndexedDB immediately
+await queueSync('progress', {
+  bookId, cfi, percentage, mutationId: generateMutationId(),
+}, generateMutationId());
+
+// attemptSync processes the queue item-by-item (oldest first):
+//   success → remove item, mark local record synced
+//   401/403 → clearAllPermissions(), invoke onPermissionRevoked callback (zombie detection)
+//   other error → increment attempts, schedule retry with exponential backoff
+//     delay = min(BASE_DELAY_MS * 2^attempt, MAX_DELAY_MS)  [1s → 30s cap]
+
+// Tear down online/offline listeners and cancel pending retries on unmount:
+const cleanup = setupOnlineListener();
+return () => cleanup(); // also calls cancelPendingRetry()
+```

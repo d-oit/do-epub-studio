@@ -11,6 +11,7 @@ describe('logClientEvent', () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.unstubAllEnvs();
   });
 
   it('logs warn events', () => {
@@ -39,6 +40,42 @@ describe('logClientEvent', () => {
       event: 'test-debug',
     });
     expect(console.log).not.toHaveBeenCalled();
+  });
+
+  it('caps buffer at MAX_BUFFER_SIZE (100 entries)', async () => {
+    // The telemetry endpoint must be available so flushBuffer() actually
+    // sends rather than silently clearing the buffer.
+    // vi.stubEnv sets process.env which Vitest's import.meta.env proxy reads.
+    vi.stubEnv('VITE_TELEMETRY_ENDPOINT', 'https://example.com/telemetry');
+
+    // Mock sendBeacon on the real navigator
+    const sendBeaconSpy = vi.fn().mockReturnValue(true);
+    Object.defineProperty(navigator, 'sendBeacon', {
+      value: sendBeaconSpy,
+      writable: true,
+      configurable: true,
+    });
+
+    // Log 110 warn entries — buffer should cap at 100
+    for (let i = 0; i < 110; i++) {
+      logClientEvent({
+        level: 'warn',
+        traceId: `trace-${i}`,
+        event: `test-event-${i}`,
+      });
+    }
+
+    // All 110 entries pass the level filter and log to console
+    expect(console.warn).toHaveBeenCalledTimes(110);
+
+    // Wait for the flush timer (1000 ms) to fire naturally
+    await new Promise((r) => setTimeout(r, 1200));
+
+    // sendBeacon was called with a Blob containing at most 100 log entries
+    expect(sendBeaconSpy).toHaveBeenCalledTimes(1);
+    const sentBlob = sendBeaconSpy.mock.calls[0][1] as Blob;
+    const payload = JSON.parse(await sentBlob.text());
+    expect(payload.logs.length).toBeLessThanOrEqual(100);
   });
 });
 

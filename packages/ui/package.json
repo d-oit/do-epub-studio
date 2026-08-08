@@ -1,6 +1,6 @@
 {
   "name": "@do-epub-studio/ui",
-  "version": "0.1.1",
+  "version": "0.1.0",
   "private": true,
   "type": "module",
   "main": "./src/index.ts",
@@ -12,26 +12,25 @@
     "storybook": "storybook dev -p 6006",
     "build:storybook": "storybook build -o storybook-static"
   },
-  "dependencies": {
-    "framer-motion": "^12"
-  },
+  "dependencies": {},
   "peerDependencies": {
     "react": "^19",
     "react-dom": "^19"
   },
   "devDependencies": {
-    "@storybook/react-vite": "10.4.6",
-    "@tailwindcss/vite": "^4.3.2",
-    "@testing-library/jest-dom": "^6.9.1",
+    "@storybook/react-vite": "10.5.5",
+    "@tailwindcss/vite": "^4.3.3",
+    "tailwindcss": "^4.3.3",
+    "@testing-library/jest-dom": "^7.0.0",
     "@testing-library/react": "^16.3.2",
-    "@types/node": "^25",
+    "@types/node": "^26",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "jsdom": "^29.1.1",
+    "jsdom": "^30.0.1",
     "react": "^19",
     "react-dom": "^19",
-    "storybook": "10.4.6",
+    "storybook": "10.5.5",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.9"
+    "vitest": "^4.1.10"
   }
 }

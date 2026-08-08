@@ -8,6 +8,7 @@ import { ExpirationPlugin } from 'workbox-expiration';
 import { CacheableResponsePlugin } from 'workbox-cacheable-response';
 import { RangeRequestsPlugin } from 'workbox-range-requests';
 import { createHandlerBoundToURL } from 'workbox-precaching';
+import { enable as enableNavigationPreload } from 'workbox-navigation-preload';
 import { createTraceId } from '@do-epub-studio/shared';
 
 declare let self: ServiceWorkerGlobalScope;
@@ -24,6 +25,12 @@ cleanupOutdatedCaches();
 
 // Precache app shell and assets
 precacheAndRoute(self.__WB_MANIFEST);
+
+// Enable navigation preload for faster SPA navigations when SW is active
+// NavigationPreloadManager may not exist in all browsers (e.g. Firefox)
+if ('navigationPreload' in self.registration) {
+  enableNavigationPreload();
+}
 
 // Handle navigation requests using the precached app shell (index.html)
 // Precached assets are handled by precacheAndRoute; this provides the SPA fallback
@@ -61,35 +68,95 @@ registerRoute(
 
 const DEBUG = process.env.NODE_ENV !== 'production';
 
-// Custom plugin to check storage quota and prevent silent failures
+// --- Quota guard: throttled estimate + measured eviction --------------------
+
+const QUOTA_THRESHOLD = 0.85;
+/** Minimum ms between actual navigator.storage.estimate() calls. */
+const THROTTLE_MS = 60_000;
+/** Min-gap after a *failed* estimate before we retry (prevents hammer). */
+const BACKOFF_MS = 300_000;
+
+let lastEstimateAt = 0;
+let lastFailedAt = 0;
+
+// Caches we are willing to evict, in descending priority order.
+// Caches NOT listed here (e.g. precache / app shell) are never touched.
+const EVICTABLE_PREFIXES = ['images', 'external-assets', 'epub', 'google-fonts-stylesheets', 'google-fonts-webfonts', 'book-content'] as const;
+
+async function evictLargestCache(): Promise<void> {
+  const cacheNames = await caches.keys();
+  let targetName: string | null = null;
+  let targetSize = -1;
+
+  for (const name of cacheNames) {
+    // Skip caches that must never be evicted (precache / app shell).
+    if (name.startsWith('workbox-precache')) continue;
+
+    // Only consider caches that match an evictable prefix, or the fallback.
+    const matchesPrefix = EVICTABLE_PREFIXES.some((p) => name.startsWith(p) || name === p);
+    if (!matchesPrefix && name !== 'external-assets') continue;
+
+    const cache = await caches.open(name);
+    const keys = await cache.keys();
+    if (keys.length > targetSize) {
+      targetSize = keys.length;
+      targetName = name;
+    }
+  }
+
+  if (targetName) {
+    await caches.delete(targetName);
+  } else {
+    // Fallback when nothing matched — keep old behaviour.
+    await caches.delete('external-assets');
+  }
+}
+
 const quotaGuardPlugin = {
   cacheWillUpdate: async ({ response }: { response: Response }) => {
-    if (typeof navigator !== 'undefined' && navigator.storage && navigator.storage.estimate) {
-      try {
-        const { usage, quota } = await navigator.storage.estimate();
-        if (usage !== undefined && quota !== undefined) {
-          const usageRatio = usage / quota;
-          if (usageRatio > 0.85) { // 85% full
-            const traceId = createTraceId();
-            console.warn(
-              JSON.stringify({
-                level: 'warning',
-                traceId,
-                event: 'sw.storage.quota_warning',
-                usage,
-                quota,
-                usageRatio,
-              })
-            );
-            await caches.delete('external-assets');
-          }
-        }
-      } catch (err) {
-        console.error('Error estimating storage:', err);
+    if (typeof navigator === 'undefined' || !navigator.storage?.estimate) {
+      return response;
+    }
+
+    const now = Date.now();
+
+    // Throttle: skip if we estimated recently OR are in a backoff window.
+    if (now - lastEstimateAt < THROTTLE_MS) return response;
+    if (now - lastFailedAt < BACKOFF_MS) return response;
+
+    try {
+      lastEstimateAt = now;
+      const { usage, quota } = await navigator.storage.estimate();
+      if (usage === undefined || quota === undefined) return response;
+
+      const usageRatio = usage / quota;
+      if (usageRatio > QUOTA_THRESHOLD) {
+        const traceId = createTraceId();
+        console.warn(
+          JSON.stringify({
+            level: 'warning',
+            traceId,
+            event: 'sw.storage.quota_warning',
+            usage,
+            quota,
+            usageRatio,
+          })
+        );
+        await evictLargestCache();
       }
+    } catch (err) {
+      lastFailedAt = Date.now();
+      console.error(
+        JSON.stringify({
+          level: 'error',
+          traceId: createTraceId(),
+          event: 'sw.storage.estimate_error',
+          error: err instanceof Error ? err.message : String(err),
+        })
+      );
     }
     return response;
-  }
+  },
 };
 
 // Cache images with CacheFirst strategy
@@ -163,7 +230,7 @@ self.addEventListener('sync', (event: Event) => {
           const { syncAll } = await import('./lib/offline/sync');
           await syncAll();
           if (DEBUG) {
-            console.log(
+              console.log(
               JSON.stringify({
                 level: 'info',
                 traceId,
@@ -199,7 +266,7 @@ self.addEventListener('message', (event) => {
       event.waitUntil(
         caches.delete(cacheName).then((deleted) => {
           if (DEBUG) {
-            console.log(
+              console.log(
               JSON.stringify({ level: 'info', traceId, event: 'sw.cache.cleared', cacheName, deleted }),
             );
           }

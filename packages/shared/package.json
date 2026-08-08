@@ -1,6 +1,6 @@
 {
   "name": "@do-epub-studio/shared",
-  "version": "0.1.1",
+  "version": "0.1.0",
   "private": true,
   "type": "module",
   "main": "./src/index.ts",
@@ -16,9 +16,9 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@types/node": "^25.9.1",
-    "fast-check": "^4.8.0",
+    "@types/node": "^26.1.2",
+    "fast-check": "^4.9.0",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.9"
+    "vitest": "^4.1.10"
   }
 }

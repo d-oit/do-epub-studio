@@ -9,11 +9,11 @@ import {
   updateComment,
 } from '../lib/api/annotations';
 
-vi.mock('../lib/api', () => ({
+vi.mock('../lib/api/core', () => ({
   apiRequest: vi.fn(),
 }));
 
-import { apiRequest } from '../lib/api';
+import { apiRequest } from '../lib/api/core';
 const mockApiRequest = vi.mocked(apiRequest);
 
 describe('annotations API', () => {

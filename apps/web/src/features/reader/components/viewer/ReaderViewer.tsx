@@ -5,7 +5,7 @@ interface ReaderViewerProps {
   epubUrl: string | null;
   error: string | null;
   pageWidthClass: string;
-  viewerRef: React.RefObject<HTMLDivElement>;
+  viewerRef: React.RefObject<HTMLDivElement | null>;
   notAvailableText: string;
 }
 

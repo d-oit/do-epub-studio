@@ -1,11 +1,9 @@
-import { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import {
   Header,
   IconButton,
   Button,
   Tooltip,
-  scaleVariants,
 } from '../../../../components/ui';
 import { useFocusTrap } from '@do-epub-studio/ui';
 import { LocaleSwitcher } from '../../../../components/LocaleSwitcher';
@@ -15,6 +13,7 @@ import type { Comment, Bookmark } from '../../../../stores/reader';
 import type { TranslationKeys } from '../../../../i18n';
 
 import type { ReaderPanel } from '../../hooks/useReaderUi';
+import type { TocItem } from '../../lib/epub-init';
 
 interface ReaderToolbarProps {
   bookTitle: string | null;
@@ -24,6 +23,8 @@ interface ReaderToolbarProps {
   capabilities: { canComment?: boolean } | null;
   activePanel: ReaderPanel;
   isFixedLayout?: boolean;
+  toc: TocItem[];
+  currentChapter: string | null;
   onToggleToc: () => void;
   onToggleSearch: () => void;
   onToggleComments: () => void;
@@ -33,7 +34,7 @@ interface ReaderToolbarProps {
   onToggleFixedLayoutControls?: () => void;
   onExportNotes: () => void;
   onLogout: () => void;
-  t: (key: TranslationKeys) => string;
+  t: (key: TranslationKeys, params?: Record<string, string | number>) => string;
 }
 
 export function ReaderToolbar({
@@ -43,6 +44,8 @@ export function ReaderToolbar({
   capabilities,
   activePanel,
   isFixedLayout = false,
+  toc,
+  currentChapter,
   onToggleToc,
   onToggleSearch,
   onToggleComments,
@@ -86,47 +89,52 @@ export function ReaderToolbar({
     return () => window.removeEventListener('keydown', handleEscape);
   }, [isMenuOpen]);
 
-  const openCommentsCount = comments.filter((c) => c.status === 'open').length;
+  const openCommentsCount = useMemo(() => comments.filter((c) => c.status === 'open').length, [comments]);
   const isHeaderVisible = scrollDirection === 'up';
+
+  const chapterProgressLabel = useMemo(() => {
+    if (!currentChapter || toc.length === 0) return null;
+    const idx = toc.findIndex((item) => item.href === currentChapter);
+    if (idx === -1) return null;
+    return t('reader.chapterProgress', { current: idx + 1, total: toc.length });
+  }, [toc, currentChapter, t]);
 
   return (
     <Header
       sticky
-      animate={{ y: isHeaderVisible ? 0 : 'var(--motion-header-offset)' }}
-      transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
       aria-hidden={isHeaderVisible ? undefined : true}
-      data-container-name="reader-toolbar"
-      className={`cq cq--reader-toolbar ${isHeaderVisible ? '' : 'pointer-events-none'}`}
+      data-container-name="reader-toolbar" /* eslint-disable-line i18next/no-literal-string -- internal container identifier */
+      className={`cq cq--reader-toolbar transition-transform duration-300 ${isHeaderVisible ? 'translate-y-0' : '-translate-y-full pointer-events-none'}`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-14">
           <div className="flex items-center gap-4">
-            <IconButton
-              onClick={onToggleToc}
-              variant="ghost"
-              aria-label={t('reader.tableOfContents')}
-              aria-expanded={activePanel === 'toc'}
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 6h16M4 12h16M4 18h16"
-                />
-              </svg>
-            </IconButton>
+            <Tooltip content={t('reader.tableOfContents')}>
+              <IconButton
+                onClick={onToggleToc}
+                variant="ghost"
+                aria-label={t('reader.tableOfContents')}
+                aria-expanded={activePanel === 'toc'}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 6h16M4 12h16M4 18h16"
+                  />
+                </svg>
+              </IconButton>
+            </Tooltip>
             <div className="flex flex-col">
               <h1 className="text-sm font-semibold text-foreground truncate max-w-[150px] sm:max-w-[300px]">
                 {bookTitle || t('reader.untitledBook')}
               </h1>
               <div className="flex items-center gap-2">
                 <div className="w-24 h-1 bg-border rounded-full overflow-hidden">
-                  <motion.div
-                    className="h-full bg-accent"
-                    initial={{ width: 0 }}
-                    animate={{ width: `${progressPercent}%` }}
-                    transition={{ duration: 0.5 }}
+                  <div
+                    className="h-full bg-accent transition-all duration-500"
+                    style={{ width: `${progressPercent}%` }}
                   />
                 </div>
                 <span className="text-[10px] text-foreground-muted font-medium">
@@ -141,6 +149,11 @@ export function ReaderToolbar({
                   </span>
                 )}
               </div>
+              {chapterProgressLabel && (
+                <span className="text-[10px] text-foreground-muted font-medium" role="status" aria-live="polite">
+                  {chapterProgressLabel}
+                </span>
+              )}
             </div>
           </div>
 
@@ -280,32 +293,29 @@ export function ReaderToolbar({
 
           {/* Mobile overflow menu */}
           <div className="cq-reader-toolbar-overflow relative" ref={menuRef}>
-            <IconButton
-              onClick={() => { setIsMenuOpen(!isMenuOpen); }}
-              variant="ghost"
-              aria-label={t('reader.moreOptions')}
-              aria-expanded={isMenuOpen}
-              aria-haspopup="true"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
-                />
-              </svg>
-            </IconButton>
+            <Tooltip content={t('reader.moreOptions')}>
+              <IconButton
+                onClick={() => { setIsMenuOpen(!isMenuOpen); }}
+                variant="ghost"
+                aria-label={t('reader.moreOptions')}
+                aria-expanded={isMenuOpen}
+                aria-haspopup="true"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
+                  />
+                </svg>
+              </IconButton>
+            </Tooltip>
 
-            <AnimatePresence>
-              {isMenuOpen && (
-                <motion.div
-                  initial="initial"
-                  animate="animate"
-                  exit="exit"
-                  variants={scaleVariants}
-                  className="absolute right-0 mt-2 w-56 glass-panel rounded-xl shadow-xl border border-border p-2 z-[60]"
-                >
+            {isMenuOpen && (
+              <div
+                className="absolute right-0 mt-2 w-56 glass-panel rounded-xl shadow-xl border border-border p-2 z-[60] animate-scale-in"
+              >
                   <div className="flex flex-col gap-1">
                     <button
                       onClick={() => {
@@ -465,9 +475,8 @@ export function ReaderToolbar({
                       {t('reader.signOut')}
                     </button>
                   </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+              </div>
+            )}
           </div>
         </div>
       </div>

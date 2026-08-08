@@ -1,5 +1,6 @@
 import { Component, Suspense, use, useState, useCallback, useRef, type ErrorInfo, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { createTraceId } from '@do-epub-studio/shared';
 import { useTranslation } from '../../hooks/useTranslation';
 import type { TranslationKeys } from '../../i18n';
 import {
@@ -11,6 +12,12 @@ import { useAuthStore } from '../../stores/auth';
 import type { AuditLogResponse } from '@do-epub-studio/shared';
 import { LocaleSwitcher } from '../../components/LocaleSwitcher';
 import { Spinner } from '@do-epub-studio/ui';
+import { logClientEvent } from '../../lib/client-logger';
+import { formatDateTime } from '../../lib/i18n-format';
+import { Breadcrumb } from '../../components/navigation';
+
+/** Admin route paths (constants avoid i18next/no-literal-string in JSX). */
+const AUDIT_ROUTES = { admin: '/admin', books: '/admin/books' } as const;
 
 const PAGE_SIZE = 50;
 const ENTITY_TYPE_OPTIONS: Array<{ value: string; labelKey: TranslationKeys }> = [
@@ -79,7 +86,7 @@ function AuditTable({ data, page, total, onPrev, onNext }: AuditTableProps) {
           {data.entries.map((log) => (
             <tr key={log.id}>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground-muted">
-                {new Date(log.createdAt).toLocaleString()}
+                {formatDateTime(new Date(log.createdAt))}
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-foreground">
                 {log.actorEmail || t('admin.audit.systemActor')}
@@ -104,17 +111,18 @@ function AuditTable({ data, page, total, onPrev, onNext }: AuditTableProps) {
           <button
             onClick={onPrev}
             disabled={page <= 1}
-            className="px-3 py-1 text-sm border border-border rounded disabled:opacity-50 disabled:cursor-not-allowed bg-background text-foreground-muted hover:bg-background-secondary"
+            className="touch-target px-3 py-1 text-sm border border-border rounded disabled:opacity-50 disabled:cursor-not-allowed bg-background text-foreground-muted hover:bg-background-secondary"
           >
             {t('admin.audit.previous')}
           </button>
           <span className="text-sm text-foreground-muted">
+            {/* eslint-disable-next-line i18next/no-literal-string -- template placeholders in .replace() */}
             {t('admin.audit.pageOf').replace('{page}', String(page)).replace('{total}', String(totalPages))}
           </span>
           <button
             onClick={onNext}
             disabled={page >= totalPages}
-            className="px-3 py-1 text-sm border border-border rounded disabled:opacity-50 disabled:cursor-not-allowed bg-background text-foreground-muted hover:bg-background-secondary"
+            className="touch-target px-3 py-1 text-sm border border-border rounded disabled:opacity-50 disabled:cursor-not-allowed bg-background text-foreground-muted hover:bg-background-secondary"
           >
             {t('admin.audit.next')}
           </button>
@@ -170,8 +178,8 @@ class AuditErrorBoundary extends Component<AuditErrorBoundaryProps, AuditErrorBo
     return { error };
   }
 
-  public componentDidCatch(_error: Error, _errorInfo: ErrorInfo): void {
-    // Surface to global error handler in a real app; keep quiet in tests.
+  public componentDidCatch(error: Error, _errorInfo: ErrorInfo): void {
+    logClientEvent({ level: 'error', traceId: createTraceId(), event: 'ui.audit-error-boundary', error: { name: error.name, message: error.message, stack: error.stack } });
   }
 
   public render(): ReactNode {
@@ -253,6 +261,11 @@ export function AdminAuditPage() {
 
   return (
     <main id="main-content" className="min-h-dvh bg-background p-4 sm:p-6 lg:p-8">
+      <Breadcrumb items={[
+        { labelKey: 'admin.breadcrumb.home', href: AUDIT_ROUTES.admin },
+        { labelKey: 'admin.breadcrumb.books', href: AUDIT_ROUTES.books },
+        { labelKey: 'admin.breadcrumb.audit' },
+      ]} />
       <header className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-2xl font-bold text-foreground">
@@ -260,7 +273,7 @@ export function AdminAuditPage() {
           </h1>
           <button
             onClick={handleBack}
-            className="text-sm text-accent hover:opacity-80 mt-1"
+            className="text-sm text-accent hover:opacity-80 mt-1 min-h-[24px] px-2 py-0.5"
           >
             &larr; {t('admin.audit.backToBooks')}
           </button>

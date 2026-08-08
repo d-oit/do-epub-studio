@@ -4,6 +4,7 @@ import { ViewTransitionRoutes } from './components/ViewTransitionRoutes';
 import { useAuthStore } from './stores/auth';
 import { useThemeSync } from './hooks/useThemeSync';
 import { useSessionExpiry } from './hooks/useSessionExpiry';
+import { useDocumentLocale } from './hooks/useDocumentLocale';
 import { useTranslation } from './hooks/useTranslation';
 import { LoginPage } from './features/auth/LoginPage';
 import { AdminLoginPage } from './features/admin/AdminLoginPage';
@@ -28,6 +29,15 @@ const AdminAuditPage = React.lazy(() =>
 );
 const CatalogPage = React.lazy(() =>
   import('./features/catalog/CatalogPage').then((m) => ({ default: m.CatalogPage }))
+);
+const MyLibraryPage = React.lazy(() =>
+  import('./features/library/MyLibraryPage').then((m) => ({ default: m.MyLibraryPage }))
+);
+const AdminDashboard = React.lazy(() =>
+  import('./features/admin/AdminDashboardPage').then((m) => ({ default: m.AdminDashboardPage }))
+);
+const SettingsPage = React.lazy(() =>
+  import('./features/settings/SettingsPage').then((m) => ({ default: m.SettingsPage }))
 );
 
 // Premium glassmorphism loading fallback spinner
@@ -101,9 +111,12 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+// App is exported as a named export (no default) to avoid a duplicate
+// export knip warning. main.tsx imports { App }.
 export function App() {
   useThemeSync();
   useSessionExpiry();
+  useDocumentLocale();
 
   return (
     <Suspense fallback={<LoadingFallback />}>
@@ -125,6 +138,21 @@ export function App() {
         <Route path="/read/:bookSlug" element={
           <ProtectedRoute>
             <ReaderPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/library" element={
+          <ProtectedRoute>
+            <MyLibraryPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/admin" element={
+          <AdminRoute>
+            <AdminDashboard />
+          </AdminRoute>
+        } />
+        <Route path="/settings" element={
+          <ProtectedRoute>
+            <SettingsPage />
           </ProtectedRoute>
         } />
         <Route path="/admin/books" element={
@@ -152,5 +180,3 @@ export function App() {
     </Suspense>
   );
 }
-
-export default App;

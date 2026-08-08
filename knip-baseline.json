@@ -1,0 +1,12 @@
+{
+  "_note": "Knip findings as of 2026-08-01. All pre-existing knip issues and configuration hints have been resolved. The remaining live suppressions in knip.config.ts are documented in-file; do NOT add new suppressions here — fix the code instead.",
+  "_knipVersion": "6.29.0",
+  "unusedFiles": [],
+  "unusedDependencies": [],
+  "unusedDevDependencies": [],
+  "unlistedDependencies": [],
+  "unusedExports_count": 0,
+  "unusedExportedTypes_count": 0,
+  "duplicateExports": [],
+  "madgeCircularDeps": []
+}

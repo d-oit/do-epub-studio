@@ -1,3 +1,4 @@
+import type React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
@@ -23,12 +24,15 @@ vi.mock('../components/LocaleSwitcher', () => ({
 }));
 
 vi.mock('../components/ui', () => ({
-  Modal: ({ isOpen, children, title }: any) => isOpen ? (
-    <div data-testid="modal"><h2>{title}</h2>{children}</div>
+  Modal: ({ isOpen, children, title }: Record<string, unknown>) => isOpen ? (
+    <div data-testid="modal"><h2>{title as string}</h2>{children as React.ReactNode}</div>
   ) : null,
-  Button: ({ children, onClick, ...props }: any) => (
-    <button onClick={onClick} {...props}>{children}</button>
+  Button: ({ children, onClick, ...props }: Record<string, unknown>) => (
+    <button onClick={onClick as React.MouseEventHandler<HTMLButtonElement>} {...props}>{children as React.ReactNode}</button>
   ),
+  ConfirmDialog: ({ isOpen, onCancel, onConfirm }: Record<string, unknown>) => isOpen ? (
+    <div role="dialog"><button type="button" onClick={onCancel as React.MouseEventHandler<HTMLButtonElement>}>cancel</button><button type="button" onClick={onConfirm as React.MouseEventHandler<HTMLButtonElement>}>confirm</button></div>
+  ) : null,
 }));
 
 import { apiRequest } from '../lib/api';

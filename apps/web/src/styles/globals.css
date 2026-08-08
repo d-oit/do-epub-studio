@@ -1,3 +1,11 @@
+/* Self-hosted typography — per ADR-123 (Plan 122).
+   Replaces the previous Google Fonts <link> injection in
+   index.html, removing fonts.googleapis.com +
+   fonts.gstatic.com from the CSP allowlist.
+   font-display: swap (default in @fontsource) avoids FOIT. */
+@import "@fontsource-variable/geist";
+@import "@fontsource/instrument-serif/400.css";
+@import "@fontsource/instrument-serif/400-italic.css";
 @import "tailwindcss";
 
 /* ============================================
@@ -45,7 +53,7 @@
     --color-accent-secondary: oklch(54.1% 0.247 293.0);
     --color-semantic-success: oklch(69.6% 0.149 162.5);
     --color-semantic-warning: oklch(76.9% 0.165 70.1);
-    --color-semantic-error: oklch(63.7% 0.208 25.3);
+    --color-semantic-error: oklch(53% 0.208 25.3);
     --color-semantic-info: oklch(71.5% 0.126 215.2);
 
     /* Border variants */
@@ -381,11 +389,6 @@
   100% { background-position: -200% 0; }
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
 @keyframes slideUp {
   from { transform: translateY(10px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
@@ -429,32 +432,6 @@
   [data-fallback='js'][data-popover-closed='true'] {
     opacity: 0;
     pointer-events: none;
-  }
-}
-
-/* ============================================
-   Reduced Motion
-   ============================================ */
-
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-
-    /* Reset motion control variables to suppress motion transforms */
-    --motion-slide-offset: 0px;
-    --motion-item-offset: 0px;
-    --motion-hover-lift: 0px;
-    --motion-header-offset: 0px;
-    --motion-scale-enter: 1;
-    --motion-scale-tap: 1;
-    --motion-scale-hover: 1;
-    --motion-scale-hover-lg: 1;
-    --motion-scale-tap-lg: 1;
   }
 }
 
@@ -509,10 +486,6 @@
 }
 
 /* ============================================
-   Tailwind @theme
-   ============================================ */
-
-/* ============================================
    View Transitions API
    ============================================ */
 
@@ -525,11 +498,48 @@
     animation: 0.25s ease-out both enter-fade;
   }
 
+  /* Exclude navigation from root transition — keep them static */
+  .sidebar-nav,
+  .bottom-tab-bar {
+    view-transition-name: prevent-flicker;
+  }
+
+  ::view-transition-old(prevent-flicker),
+  ::view-transition-new(prevent-flicker) {
+    animation: none;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     ::view-transition-old(root),
     ::view-transition-new(root) {
       animation-duration: 0.01ms !important;
     }
+  }
+}
+
+/* ============================================
+   Reduced Motion (consolidated)
+   ============================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+
+    /* Reset motion control variables to suppress motion transforms */
+    --motion-slide-offset: 0px;
+    --motion-item-offset: 0px;
+    --motion-hover-lift: 0px;
+    --motion-header-offset: 0px;
+    --motion-scale-enter: 1;
+    --motion-scale-tap: 1;
+    --motion-scale-hover: 1;
+    --motion-scale-hover-lg: 1;
+    --motion-scale-tap-lg: 1;
   }
 }
 
@@ -596,4 +606,163 @@
   --shadow-sm: var(--shadow-sm);
   --shadow-md: var(--shadow-md);
   --shadow-lg: var(--shadow-lg);
+  --shadow-glass: var(--shadow-glass);
+  --ease-out-expo: var(--ease-out-expo);
+  --ease-in-out-expo: var(--ease-in-out-expo);
+  --transition: var(--transition);
+  --header-height: var(--header-height);
+  --sidebar-width: var(--sidebar-width);
+  --content-max-width: var(--content-max-width);
+  --motion-slide-offset: var(--motion-slide-offset);
+  --motion-hover-lift: var(--motion-hover-lift);
+  --motion-scale-enter: var(--motion-scale-enter);
+  --motion-scale-tap: var(--motion-scale-tap);
+  --motion-scale-hover: var(--motion-scale-hover);
 }
+
+/* ============================================
+   Animation Keyframes (CSS-only, replaces framer-motion)
+   ============================================ */
+
+/* Fade animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* Slide animations */
+@keyframes slideInFromTop {
+  from { transform: translateY(-100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes slideOutToTop {
+  from { transform: translateY(0); opacity: 1; }
+  to { transform: translateY(-100%); opacity: 0; }
+}
+
+@keyframes slideInFromBottom {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes slideOutToBottom {
+  from { transform: translateY(0); opacity: 1; }
+  to { transform: translateY(100%); opacity: 0; }
+}
+
+@keyframes slideInFromRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes slideOutToRight {
+  from { transform: translateX(0); }
+  to { transform: translateX(100%); }
+}
+
+@keyframes slideInFromLeft {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes slideOutToLeft {
+  from { transform: translateX(0); }
+  to { transform: translateX(-100%); }
+}
+
+/* Scale animations */
+@keyframes scaleIn {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes scaleOut {
+  from { transform: scale(1); opacity: 1; }
+  to { transform: scale(0.95); opacity: 0; }
+}
+
+/* Combined animations */
+@keyframes slideUpFadeIn {
+  from { transform: translateY(8px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes slideUpFadeOut {
+  from { transform: translateY(0); opacity: 1; }
+  to { transform: translateY(8px); opacity: 0; }
+}
+
+@keyframes slideDownFadeIn {
+  from { transform: translateY(-8px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes slideDownFadeOut {
+  from { transform: translateY(0); opacity: 1; }
+  to { transform: translateY(-8px); opacity: 0; }
+}
+
+/* Animation utility classes */
+.animate-slide-in-top { animation: slideInFromTop 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.animate-slide-out-top { animation: slideOutToTop 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.animate-slide-in-bottom { animation: slideInFromBottom 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.animate-slide-out-bottom { animation: slideOutToBottom 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.animate-slide-in-right { animation: slideInFromRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.animate-slide-out-right { animation: slideOutToRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.animate-slide-in-left { animation: slideInFromLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.animate-slide-out-left { animation: slideOutToLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.animate-fade-in { animation: fadeIn 0.2s ease-out forwards; }
+.animate-fade-out { animation: fadeOut 0.2s ease-in forwards; }
+.animate-scale-in { animation: scaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.animate-scale-out { animation: scaleOut 0.2s ease-in forwards; }
+.animate-slide-up-fade { animation: slideUpFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.animate-slide-down-fade { animation: slideDownFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+/* @starting-style support for exit animations */
+@supports (animation-timing-function: linear) {
+  .animate-exit-top { animation: slideOutToTop 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+  .animate-exit-top:where(:not([data-entering])) { animation: slideOutToTop 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+  .animate-exit-bottom { animation: slideOutToBottom 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+  .animate-exit-right { animation: slideOutToRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+  .animate-exit-left { animation: slideOutToLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+  .animate-exit-scale { animation: scaleOut 0.2s ease-in forwards; }
+}
+
+/* Scroll-driven progress bar — Plan 198 S2 (ADR-105 §4).
+   CSS-only reading progress indicator using animation-timeline.
+   Degrades gracefully: browsers without scroll-driven animation support
+   show no bar (the reader toolbar already has a chapter progress indicator).
+   Respects prefers-reduced-motion (no animation). */
+@supports (animation-timeline: scroll()) {
+  .scroll-progress-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: var(--color-accent);
+    transform-origin: left;
+    z-index: 100;
+    animation: scroll-progress-grow linear forwards;
+    animation-timeline: scroll();
+  }
+
+  @keyframes scroll-progress-grow {
+    from { transform: scaleX(0); }
+    to { transform: scaleX(1); }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scroll-progress-bar {
+    display: none;
+  }
+}
+
+/* Reduced-motion is handled by the consolidated block above */

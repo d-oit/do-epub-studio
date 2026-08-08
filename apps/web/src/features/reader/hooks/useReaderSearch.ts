@@ -22,15 +22,12 @@ interface SpineSection {
   href: string;
 }
 
-interface BookLike extends Pick<Book, 'navigation' | 'load'> {
-  spine: SpineLike;
-}
-
 const DEBOUNCE_MS = 250;
 const MAX_RESULTS = 50;
 const MAX_INPUT_LEN = 120;
 const MIN_QUERY_LEN = 2;
 const SNIPPET_EXCERPT_MAX = 2000;
+const MAX_CONCURRENT = 4;
 
 export function useReaderSearch(book: Book | null, query: string) {
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -66,18 +63,28 @@ export function useReaderSearch(book: Book | null, query: string) {
       const toc = (book.navigation?.toc as NavItem[] | undefined) ?? [];
       void (async (): Promise<void> => {
         try {
-          const searchPromises: Array<Promise<Array<{ cfi: string; excerpt: string; href: string }>>> = [];
-          spine.each((item) => {
-            const href = item.href;
-            const loader = book.load.bind(book);
-            const p = item
-              .load(loader)
-              .then(() => {
+          const items: SpineSection[] = [];
+          spine.each((item) => { items.push(item); });
+
+          const collected: Array<{ cfi: string; excerpt: string; href: string }> = [];
+          let index = 0;
+          const isStale = (): boolean => cancelledRef.current || mySeq !== seqRef.current;
+
+          const worker = async (): Promise<void> => {
+            if (!book) return;
+            while (index < items.length && collected.length < MAX_RESULTS) {
+              if (isStale()) return;
+              const item = items[index++];
+              const loader = book.load.bind(book);
+              try {
+                await item.load(loader);
+                if (isStale()) return;
                 const matches = item.find(trimmed);
-                item.unload();
-                return matches.map((m) => ({ ...m, href }));
-              })
-              .catch((err: unknown) => {
+                for (const m of matches) {
+                  if (collected.length >= MAX_RESULTS) break;
+                  collected.push({ ...m, href: item.href });
+                }
+              } catch (err) {
                 const e = err as Error;
                 logClientEvent({
                   level: 'warn',
@@ -85,22 +92,24 @@ export function useReaderSearch(book: Book | null, query: string) {
                   traceId: createTraceId(),
                   error: { name: e.name, message: e.message },
                 });
-                return [];
-              });
-            searchPromises.push(p);
-          });
-          const spineResults = await Promise.all(searchPromises);
-          if (cancelledRef.current || mySeq !== seqRef.current) return;
-          const allResults = spineResults.flat().slice(0, MAX_RESULTS);
+              } finally {
+                item.unload();
+              }
+            }
+          };
 
-          const processed: SearchResult[] = allResults.map((result) => {
-            return {
-              cfi: result.cfi,
-              cfiRange: result.cfi,
-              excerpt: result.excerpt,
-              chapterTitle: findChapterTitle(toc, result.href),
-            };
-          });
+          const workerCount = Math.min(MAX_CONCURRENT, items.length);
+          await Promise.all(Array.from({ length: workerCount }, () => worker()));
+
+          if (isStale()) return;
+
+          const processed: SearchResult[] = collected.map((result) => ({
+            cfi: result.cfi,
+            cfiRange: result.cfi,
+            excerpt: result.excerpt,
+            chapterTitle: findChapterTitle(toc, result.href),
+          }));
+
           setResults(processed);
           logClientEvent({
             level: 'info',
@@ -191,5 +200,3 @@ function findChapterTitle(toc: NavItem[], href?: string): string | undefined {
   }
   return undefined;
 }
-
-export type { BookLike };

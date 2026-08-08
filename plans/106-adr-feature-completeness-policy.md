@@ -1,7 +1,7 @@
 # ADR-106: Feature Completeness and Incremental Delivery Policy
 
 **Date:** 2026-06-23
-**Status:** Proposed
+**Status:** Accepted
 **Deciders:** Project maintainer
 **Related:** ADR-077 (Phased Feature Delivery), ADR-092 (Feature-Gap Policy)
 

@@ -2,13 +2,10 @@
 
 > **Status:** adopted (per ADR-092, GOAP plan #092)
 > **Audience:** operators, on-call, future maintainers
-> **Last reviewed:** 2026-06-14
+> **Last reviewed:** 2026-07-28
 
 This page documents the client telemetry contract for
-`do-epub-studio`. The intent is to make the contract explicit so
-the worker doesn't need a `/api/telemetry` route baked in by
-default, and so future contributors know what to expect when
-`VITE_TELEMETRY_ENDPOINT` is configured.
+`do-epub-studio`.
 
 ## What the client emits
 
@@ -36,22 +33,33 @@ typed `ClientLogEntry` and buffers it in memory. On
   Examples: a managed log collector, a Cloudflare Worker you
   operate, a third-party observability service.
 
-### When to add a worker-hosted `/api/telemetry`
+### Worker-hosted `/api/telemetry`
 
-Only when all of the following are true:
+The worker provides a built-in `POST /api/telemetry` endpoint that:
 
-1. You control the endpoint and want to correlate client errors
-   with server-side request logs.
-2. The route is **authenticated** (Bearer header, same as every
-   other worker route) and **rate-limited** via the existing
-   middleware.
-3. The route validates the payload (Zod) and **never** logs
-   secrets, session tokens, or full request bodies.
-4. The route returns 204 quickly (<200ms p99) so it doesn't
-   block page transitions.
+1. Requires **no authentication** (telemetry does not carry
+   sensitive data per the sanitization rules below).
+2. Validates the payload with `TelemetryPayloadSchema` (Zod).
+3. Persists events to the `telemetry_events` table in Turso
+   using `waitUntil` for non-blocking writes (does not delay the
+   response).
+4. Returns `202 Accepted` with `{ ok: true }`.
 
-Until those conditions are met, point the client at an external
-collector or leave the endpoint unset.
+The endpoint uses `LoggingEmailTransport` semantics — it also logs
+each event to `console.log/warn/error` for observability in `wrangler tail`.
+
+**When to configure `VITE_TELEMETRY_ENDPOINT` to the worker:**
+- You want correlated client-server traces (the client sends
+  `X-Trace-Id` headers on API calls and the same traceId in
+  telemetry events).
+- You want to query telemetry events via admin audit views.
+- You accept the telemetry retention policy (see below).
+
+**Retention:** Telemetry events in the `telemetry_events` table are kept
+for 90 days by default. See the
+[telemetry retention runbook](./runbooks/telemetry-retention.md) for the
+cleanup job (Worker cron), manual cleanup SQL, verification, and
+ownership.
 
 ## What NOT to send
 

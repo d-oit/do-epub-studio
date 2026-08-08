@@ -6,7 +6,8 @@ import {
   createSpanId,
   TRACE_HEADER,
   SPAN_HEADER,
-  LOCALE_HEADER,
+  TRACEPARENT_HEADER,
+  buildTraceparent,
   type SerializedError,
 } from '../telemetry';
 
@@ -209,7 +210,51 @@ describe('telemetry constants', () => {
     expect(TRACE_HEADER.length).toBeGreaterThan(0);
     expect(typeof SPAN_HEADER).toBe('string');
     expect(SPAN_HEADER.length).toBeGreaterThan(0);
-    expect(typeof LOCALE_HEADER).toBe('string');
-    expect(LOCALE_HEADER.length).toBeGreaterThan(0);
+    expect(TRACEPARENT_HEADER).toBe('traceparent');
+  });
+});
+
+describe('buildTraceparent', () => {
+  it('produces the W3C format 00-<32hex>-<16hex>-01', () => {
+    const result = buildTraceparent(
+      '550e8400-e29b-41d4-a716-446655440000',
+      'abcd1234',
+    );
+    expect(result).toMatch(/^00-[0-9a-f]{32}-[0-9a-f]{16}-01$/);
+  });
+
+  it('strips hyphens from traceId and spanId', () => {
+    const result = buildTraceparent('aabb-ccdd', 'ee-ff');
+    const parts = result.split('-');
+    // W3C format has exactly 4 dash-separated segments
+    expect(parts).toHaveLength(4);
+    expect(parts[0]).toBe('00');
+    expect(parts[3]).toBe('01');
+    // tid and sid segments contain no hyphens (they were stripped)
+    expect(parts[1]).not.toContain('-');
+    expect(parts[2]).not.toContain('-');
+  });
+
+  it('pads short ids to required lengths', () => {
+    const result = buildTraceparent('abc', 'xy');
+    const parts = result.split('-');
+    expect(parts[1]).toHaveLength(32);
+    expect(parts[2]).toHaveLength(16);
+  });
+
+  it('truncates long ids to required lengths', () => {
+    const result = buildTraceparent('a'.repeat(64), 'b'.repeat(32));
+    const parts = result.split('-');
+    expect(parts[1]).toHaveLength(32);
+    expect(parts[2]).toHaveLength(16);
+  });
+
+  it('round-trips createTraceId and createSpanId without throwing', () => {
+    fc.assert(
+      fc.property(fc.integer({ min: 1, max: 50 }), () => {
+        const tp = buildTraceparent(createTraceId(), createSpanId());
+        expect(tp).toMatch(/^00-[0-9a-f]{32}-[0-9a-f]{16}-01$/);
+      }),
+    );
   });
 });

@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { useShallow } from 'zustand/react/shallow';
+import { createTraceId } from '@do-epub-studio/shared';
 import { useReaderStore, useAuthStore } from '../../../stores';
 import type { Highlight, Comment } from '../../../stores';
 import {
@@ -12,6 +13,7 @@ import {
 import { saveAnnotation, queueSync, generateMutationId } from '../../../lib/offline';
 import type { SelectionData } from '../components/annotations';
 import { useOptimisticAnnotationStore } from './useOptimisticAnnotations';
+import { logClientEvent } from '../../../lib/client-logger';
 
 interface AnnotationHandlersReturn {
   handleCreateHighlight: (color: string, selection: SelectionData | null) => Promise<void>;
@@ -57,7 +59,6 @@ export function useAnnotationHandlers(): AnnotationHandlersReturn {
       };
       addOptimisticHighlight(placeholder);
       try {
-        const mutationId = generateMutationId();
         const highlight = await createHighlight(
           bookId,
           {
@@ -72,25 +73,10 @@ export function useAnnotationHandlers(): AnnotationHandlersReturn {
         );
         // Commit real highlight; useOptimistic will re-sync base state to the store.
         addHighlight(highlight);
-
-        if (!navigator.onLine) {
-          await saveAnnotation({
-            id: highlight.id,
-            bookId,
-            type: 'highlight',
-            cfi: selection.cfiRange,
-            text: selection.text,
-            color,
-            createdAt: Date.now(),
-            synced: false,
-            mutationId,
-          });
-          await queueSync('annotation', { bookId, annotation: highlight }, mutationId);
-        }
       } catch (err) {
         // Roll back the optimistic placeholder on error.
         removeOptimistic(tempId, 'highlight');
-        console.error('Failed to create highlight', err);
+        logClientEvent({ level: 'error', traceId: createTraceId(), event: 'annotation.create-highlight.failed', error: { name: (err as Error).name, message: (err as Error).message, stack: (err as Error).stack } });
         throw err;
       }
     },
@@ -130,26 +116,9 @@ export function useAnnotationHandlers(): AnnotationHandlersReturn {
           sessionToken,
         );
         addComment(comment);
-
-        if (!navigator.onLine) {
-          const mutationId = generateMutationId();
-          await saveAnnotation({
-            id: comment.id,
-            bookId,
-            type: 'comment',
-            cfi: selection.cfiRange,
-            text: selection.text,
-            comment: text,
-            chapter: selection.chapterRef,
-            createdAt: Date.now(),
-            synced: false,
-            mutationId,
-          });
-          await queueSync('annotation', { bookId, annotation: comment }, mutationId);
-        }
       } catch (err) {
         removeOptimistic(tempId, 'comment');
-        console.error('Failed to create comment', err);
+        logClientEvent({ level: 'error', traceId: createTraceId(), event: 'annotation.create-comment.failed', error: { name: (err as Error).name, message: (err as Error).message, stack: (err as Error).stack } });
         throw err;
       }
     },
@@ -163,13 +132,36 @@ export function useAnnotationHandlers(): AnnotationHandlersReturn {
       if (!comment) return;
       const newStatus = comment.status === 'resolved' ? 'open' : 'resolved';
       try {
-        await updateComment(commentId, { status: newStatus }, sessionToken);
+        if (!navigator.onLine) {
+          // Plan 998: persist status mutation to IndexedDB for offline restore
+          const mutationId = generateMutationId();
+          await saveAnnotation({
+            id: commentId,
+            bookId,
+            type: 'comment',
+            cfi: comment.cfiRange ?? '',
+            comment: comment.body,
+            chapter: comment.chapterRef ?? undefined,
+            createdAt: new Date(comment.createdAt).getTime(),
+            synced: false,
+            mutationId,
+            status: newStatus,
+            visibility: comment.visibility,
+          });
+          await queueSync(
+            'annotation',
+            { bookId, annotation: { id: commentId, status: newStatus }, action: 'resolve' },
+            mutationId,
+          );
+        } else {
+          await updateComment(commentId, { status: newStatus }, sessionToken);
+        }
         updateCommentInStore(commentId, {
           status: newStatus,
           resolvedAt: newStatus === 'resolved' ? new Date().toISOString() : null,
         });
       } catch (err) {
-        console.error('Failed to update comment', err);
+        logClientEvent({ level: 'error', traceId: createTraceId(), event: 'annotation.resolve-comment.failed', error: { name: (err as Error).name, message: (err as Error).message } });
       }
     },
     [sessionToken, bookId, comments, updateCommentInStore],
@@ -204,7 +196,7 @@ export function useAnnotationHandlers(): AnnotationHandlersReturn {
         addComment(comment);
       } catch (err) {
         removeOptimistic(tempId, 'comment');
-        console.error('Failed to reply to comment', err);
+        logClientEvent({ level: 'error', traceId: createTraceId(), event: 'annotation.reply-comment.failed', error: { name: (err as Error).name, message: (err as Error).message, stack: (err as Error).stack } });
         throw err;
       }
     },
@@ -218,7 +210,7 @@ export function useAnnotationHandlers(): AnnotationHandlersReturn {
         await updateComment(commentId, { body: text }, sessionToken);
         updateCommentInStore(commentId, { body: text, updatedAt: new Date().toISOString() });
       } catch (err) {
-        console.error('Failed to edit comment', err);
+        logClientEvent({ level: 'error', traceId: createTraceId(), event: 'annotation.edit-comment.failed', error: { name: (err as Error).name, message: (err as Error).message } });
       }
     },
     [sessionToken, updateCommentInStore],
@@ -231,7 +223,7 @@ export function useAnnotationHandlers(): AnnotationHandlersReturn {
         await updateComment(commentId, { status: 'deleted' }, sessionToken);
         updateCommentInStore(commentId, { status: 'deleted' });
       } catch (err) {
-        console.error('Failed to delete comment', err);
+        logClientEvent({ level: 'error', traceId: createTraceId(), event: 'annotation.delete-comment.failed', error: { name: (err as Error).name, message: (err as Error).message } });
       }
     },
     [sessionToken, updateCommentInStore],
@@ -244,7 +236,7 @@ export function useAnnotationHandlers(): AnnotationHandlersReturn {
         await updateHighlight(bookId, highlightId, { note }, sessionToken);
         updateHighlightInStore(highlightId, { note, updatedAt: new Date().toISOString() });
       } catch (err) {
-        console.error('Failed to update highlight', err);
+        logClientEvent({ level: 'error', traceId: createTraceId(), event: 'annotation.edit-highlight.failed', error: { name: (err as Error).name, message: (err as Error).message } });
       }
     },
     [sessionToken, bookId, updateHighlightInStore],
@@ -257,7 +249,7 @@ export function useAnnotationHandlers(): AnnotationHandlersReturn {
         await deleteHighlight(bookId, highlightId, sessionToken);
         removeHighlight(highlightId);
       } catch (err) {
-        console.error('Failed to delete highlight', err);
+        logClientEvent({ level: 'error', traceId: createTraceId(), event: 'annotation.delete-highlight.failed', error: { name: (err as Error).name, message: (err as Error).message } });
       }
     },
     [sessionToken, bookId, removeHighlight],

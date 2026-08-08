@@ -29,8 +29,6 @@ interface GrantRow {
   expires_at: string | null;
 }
 
-const SESSION_TOKEN_BYTES = 32;
-
 export async function requireAuth(env: Env, request: Request): Promise<AuthContext | null> {
   const authHeader = request.headers.get('Authorization');
   const token = parseAuthHeader(authHeader);
@@ -78,12 +76,4 @@ export async function requireAuth(env: Env, request: Request): Promise<AuthConte
       canManageAccess: false,
     },
   };
-}
-
-export function generateToken(): string {
-  const array = new Uint8Array(SESSION_TOKEN_BYTES);
-  crypto.getRandomValues(array);
-  return Array.from(array)
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
 }

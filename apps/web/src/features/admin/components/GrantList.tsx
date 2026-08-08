@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Button, Modal, Spinner } from '@do-epub-studio/ui';
 
 import { useTranslation } from '../../../hooks/useTranslation';
+import { formatDate as formatLocaleDate } from '../../../lib/i18n-format';
 import { GRANT_MODES } from './types';
 import type { Grant } from './types';
 
@@ -17,7 +18,7 @@ function modeLabel(mode: string): string {
 
 function formatDate(dateStr: string | null, neverLabel: string): string {
   if (!dateStr) return neverLabel;
-  return new Date(dateStr).toLocaleDateString();
+  return formatLocaleDate(new Date(dateStr));
 }
 
 function isExpired(grant: Grant): boolean {
@@ -177,13 +178,13 @@ export function GrantList({
                         <>
                           <button
                             onClick={() => onEdit(grant)}
-                            className="text-semantic-info hover:opacity-80"
+                            className="text-semantic-info hover:opacity-80 min-h-[24px] px-2 py-0.5"
                           >
                             {t('grants.actions.edit')}
                           </button>
                           <button
                             onClick={() => setRevokingGrant(grant)}
-                            className="text-semantic-error hover:opacity-80"
+                            className="text-semantic-error hover:opacity-80 min-h-[24px] px-2 py-0.5"
                           >
                             {t('grants.actions.revoke')}
                           </button>
@@ -215,6 +216,7 @@ export function GrantList({
         }
       >
         <p className="text-sm text-foreground-muted">
+          {/* eslint-disable-next-line i18next/no-literal-string -- template placeholder in .replace() */}
           {t('grants.revokeMessage').replace('{email}', revokingGrant?.email ?? '')}
         </p>
       </Modal>

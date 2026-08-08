@@ -1,16 +1,16 @@
 import { useState, useEffect } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from '../hooks/useTranslation';
 
 export function OfflineIndicator() {
   const { t } = useTranslation();
-  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+  const [shouldRender, setShouldRender] = useState(!navigator.onLine);
+  const [isExiting, setIsExiting] = useState(false);
 
   useEffect(() => {
     // biome-ignore lint/correctness/useQwikValidLexicalScope: React project, not Qwik — false positive
-    const goOffline = () => { setIsOffline(true); };
+    const goOffline = () => { setShouldRender(true); setIsExiting(false); };
     // biome-ignore lint/correctness/useQwikValidLexicalScope: React project, not Qwik — false positive
-    const goOnline = () => { setIsOffline(false); };
+    const goOnline = () => { setIsExiting(true); };
     window.addEventListener('offline', goOffline);
     window.addEventListener('online', goOnline);
     return () => {
@@ -19,25 +19,25 @@ export function OfflineIndicator() {
     };
   }, []);
 
+  useEffect(() => {
+    if (isExiting) {
+      const timer = setTimeout(() => setShouldRender(false), 200);
+      return () => clearTimeout(timer);
+    }
+  }, [isExiting]);
+
+  if (!shouldRender) return null;
+
   return (
-    <AnimatePresence>
-      {isOffline && (
-        <motion.div
-          key="offline-banner"
-          initial={{ y: -40, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: -40, opacity: 0 }}
-          transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-          className="fixed top-0 inset-x-0 z-[210] flex items-center justify-center px-4 py-2 bg-accent-warning/90 text-foreground text-sm font-medium"
-          role="alert"
-          aria-live="assertive"
-        >
-          <svg className="w-4 h-4 mr-2 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636a9 9 0 11-12.728 0M12 9v4m0 4h.01" />
-          </svg>
-          {t('offline.banner')}
-        </motion.div>
-      )}
-    </AnimatePresence>
+    <div
+      className={`fixed top-0 inset-x-0 z-[210] flex items-center justify-center px-4 py-2 bg-accent-warning/90 text-foreground text-sm font-medium ${isExiting ? 'animate-slide-out-top' : 'animate-slide-in-top'}`}
+      role="alert"
+      aria-live="assertive"
+    >
+      <svg className="w-4 h-4 mr-2 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636a9 9 0 11-12.728 0M12 9v4m0 4h.01" />
+      </svg>
+      {t('offline.banner')}
+    </div>
   );
 }

@@ -12,7 +12,7 @@ Operational scripts for `d.o.EPUB Studio`. All scripts assume execution from the
 ./scripts/quality_gate.sh
 
 # Atomic commit workflow
-./scripts/atomic-commit/run.sh --message "feat(reader): add annotation sync"
+./scripts/atomic-commit/run.sh --message "feat(reader): add annotation sync" --body "WHY"
 ```
 
 ## Quality Gate Scripts
@@ -27,8 +27,7 @@ Operational scripts for `d.o.EPUB Studio`. All scripts assume execution from the
 | `validate-git-hooks.sh` | Detects global git hooks overriding local hooks | git |
 | `validate-shas.sh` | Detects placeholder SHAs in workflow files | none (gh CLI optional) |
 | `run-impeccable.sh` | Wraps `npx impeccable detect --json` for the quality gate (ADR-111) | npx, jq, impeccable |
-| `check-bundle-size.mjs` | Raw-byte bundle budget enforcer (pre-existing budgets in `.performance-budgets.json`) | node |
-| `check-bundle-budget.mjs` | Gzipped bundle budget enforcer per ADR-107 §3 (180 KB main JS / 30 KB main CSS / 80 KB lazy chunk) | node |
+| `check-bundle-budget.mjs` | Unified gzipped bundle budget enforcer per ADR-107 §3 (180 KB main JS / 30 KB main CSS / 80 KB lazy chunk) + boundary rules + route budgets (T4.1) | node |
 | `eval-skills.sh` | Evaluates skill quality via check_structure.py | python3 |
 | `setup-skills.sh` | Creates symlinks for CLI skill folders | none |
 

@@ -2,6 +2,7 @@
 # Git pre-push hook
 # Installed by: scripts/install-hooks.sh
 # Protects main/master branches and validates push target.
+# Blocks direct v* tag pushes — releases must go via scripts/release/create-release-tag.sh.
 # Exit 0 = allowed, Exit 1 = blocked.
 set -euo pipefail
 
@@ -18,6 +19,7 @@ PROTECTED_BRANCHES="^(main|master)$"
 while read -r local_ref local_sha remote_ref remote_sha; do
     # Extract branch name from remote ref
     remote_branch="${remote_ref#refs/heads/}"
+    remote_tag="${remote_ref#refs/tags/}"
 
     # Block direct pushes to protected branches
     if echo "$remote_branch" | grep -qE "$PROTECTED_BRANCHES"; then
@@ -26,6 +28,17 @@ while read -r local_ref local_sha remote_ref remote_sha; do
         echo "Use a pull request or feature branch instead:" >&2
         echo "  git checkout -b feat/your-feature" >&2
         echo "  git push origin feat/your-feature" >&2
+        exit 1
+    fi
+
+    # Block direct v* tag pushes — must use the release script
+    if [[ "$remote_ref" == refs/tags/v* ]] && [[ "${RELEASE_SCRIPT_PUSH:-}" != "1" ]]; then
+        echo -e "${RED}✗ Direct tag push to '$remote_tag' is blocked${NC}" >&2
+        echo "" >&2
+        echo "Releases must be cut via the release-management skill:" >&2
+        echo "  scripts/release/create-release-tag.sh <version>" >&2
+        echo "" >&2
+        echo "See AGENTS.md Rule 10 and plans/ADR-035." >&2
         exit 1
     fi
 done

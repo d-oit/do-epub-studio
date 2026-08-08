@@ -5,16 +5,16 @@
 1. Fetch and merge latest `main`: `git fetch origin main && git merge origin/main`
 2. Create a feature branch: `git checkout -b feat/my-change`
 3. Make changes, write tests, run quality gate: `./scripts/quality_gate.sh`
-4. Commit using the atomic commit script: `./scripts/atomic-commit/run.sh --message "type(scope): description"`
+4. Commit using the atomic commit script: `./scripts/atomic-commit/run.sh --message "type(scope): description" --body "WHY"`
 5. Push and open a PR against `main`. Use the PR template from `.github/`.
 
 ## Commit Convention
 
 Format: `type(scope): description` (max 72 chars)
 
-Types: `feat`, `fix`, `chore`, `docs`, `perf`, `ci`, `refactor`, `test`, `style`, `plans`
+Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`, `ci`, `build`, `perf`, `revert`
 
-Scopes: `web`, `worker`, `reader-core`, `shared`, `schema`, `testkit`, `ui`, `infra`, `ci`, `security`, `ux`, `a11y`, `deps`
+Scopes: `web`, `worker`, `reader-core`, `shared`, `schema`, `testkit`, `ui`, `infra`, `ci`, `security`, `ux`, `a11y`, `deps`, `plans`, `reader`, `api`, `auth`, `offline`, `sync`, `admin`, `catalog`, `epub`, `hooks`, `scripts`, `release`, `quality`
 
 Examples:
 - `feat(reader-core): add fuzzy text reanchoring fallback`

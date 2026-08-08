@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { motion } from 'framer-motion';
 import { useFocusTrap, Spinner } from '@do-epub-studio/ui';
+import { IconButton } from '../../../../components/ui';
 import { useReaderSearch, highlightRanges } from '../../hooks/useReaderSearch';
 import type { Book } from '@intity/epub-js';
 
@@ -115,23 +115,19 @@ export function SearchPanel({ isOpen, book, onClose, onNavigate, t }: SearchPane
   if (!isOpen) return null;
 
   return (
-    <motion.div
+    <div
       ref={panelRef}
-      initial={{ x: '100%' }}
-      animate={{ x: 0 }}
-      exit={{ x: '100%' }}
-      transition={{ type: 'spring', damping: 25, stiffness: 200 }}
       data-container-name="search-panel"
-      className="cq cq--search-panel fixed inset-y-0 right-0 w-full sm:w-96 glass-panel z-50 border-l border-border shadow-2xl flex flex-col"
+      className="cq cq--search-panel fixed inset-y-0 right-0 w-full sm:w-96 glass-panel z-50 border-l border-border shadow-2xl flex flex-col animate-slide-in-right"
       role="search"
       aria-label={t('reader.search')}
     >
       <div className="p-4 border-b border-border flex items-center justify-between">
         <h2 className="text-lg font-semibold text-foreground">{t('reader.search')}</h2>
-        <button
-          type="button"
+        <IconButton
           onClick={onClose}
-          className="p-2 hover:bg-background-secondary rounded-lg transition-colors"
+          variant="ghost"
+          size="sm"
           aria-label={t('a11y.close')}
         >
           <svg
@@ -143,7 +139,7 @@ export function SearchPanel({ isOpen, book, onClose, onNavigate, t }: SearchPane
           >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
-        </button>
+        </IconButton>
       </div>
 
       <div className="p-4 flex flex-col flex-1 overflow-hidden">
@@ -182,26 +178,33 @@ export function SearchPanel({ isOpen, book, onClose, onNavigate, t }: SearchPane
                 <p className="cq-search-result-meta text-xs font-medium text-foreground-muted mb-2 px-1">
                   {t('reader.searchMatches', { n: results.length })}
                 </p>
-                <div style={{ height: results.length * 80, position: 'relative' }}>
+                <ul
+                  style={{ height: results.length * 80, position: 'relative' }}
+                  className="list-none p-0 m-0"
+                >
                   {results.slice(visibleRange.start, visibleRange.end).map((result, i) => (
-                    <button
+                    <li
                       key={result.cfi}
-                      type="button"
-                      onClick={() => { onNavigate(result.cfi); }}
                       style={{ position: 'absolute', top: (visibleRange.start + i) * 80, left: 0, right: 0 }}
-                      className="w-full text-left p-3 rounded-lg hover:bg-background-secondary transition-colors border border-transparent hover:border-border group"
                     >
-                    {result.chapterTitle && (
-                      <span className="block text-[10px] uppercase tracking-wider font-bold text-accent mb-1">
-                        {result.chapterTitle}
-                      </span>
-                    )}
-                    <p className="text-sm text-foreground leading-relaxed line-clamp-3">
-                      {renderSnippet(result.excerpt, query, result.cfi)}
-                    </p>
-                    </button>
+                      <button
+                        type="button"
+                        onClick={() => { onNavigate(result.cfi); }}
+                        className="w-full text-left p-3 rounded-lg hover:bg-background-secondary transition-colors border border-transparent hover:border-border group focus-visible:ring-2 focus-visible:ring-accent outline-none"
+                        aria-label={t('reader.searchResultLabel', { index: visibleRange.start + i + 1, chapter: result.chapterTitle ?? t('reader.untitledBook') })}
+                      >
+                        {result.chapterTitle && (
+                          <span className="block text-[10px] uppercase tracking-wider font-bold text-accent mb-1">
+                            {result.chapterTitle}
+                          </span>
+                        )}
+                        <p className="text-sm text-foreground leading-relaxed line-clamp-3">
+                          {renderSnippet(result.excerpt, query, result.cfi)}
+                        </p>
+                      </button>
+                    </li>
                   ))}
-                </div>
+                </ul>
               </>
             ) : (
               !isSearching && (
@@ -227,6 +230,6 @@ export function SearchPanel({ isOpen, book, onClose, onNavigate, t }: SearchPane
           ) : null}
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }

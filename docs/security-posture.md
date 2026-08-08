@@ -2,7 +2,7 @@
 
 > **Status:** adopted (per ADR-092, GOAP plan #092)
 > **Audience:** auditors, security reviewers, future contributors
-> **Last reviewed:** 2026-06-14
+> **Last reviewed:** 2026-07-30
 
 This page records the standing security decisions for `do-epub-studio`
 so they do not need to be re-litigated on every audit. Where the
@@ -58,6 +58,14 @@ reintroduces the CSRF risk that D1 above already eliminated.
    (`packages/reader-core/src/sanitizer.ts`). The primary XSS vector
    for this product is hostile EPUB HTML, not app code.
 
+**Wave 4 (2026-07) additional compensating control — login lockout:**
+`RateLimiterDO` in `apps/worker/src/routes/access.ts` locks an account after
+5 failed login attempts within a 15-minute window (HTTP 423 Locked). The lock
+expires after 15 minutes. This does not prevent XSS-based token exfiltration
+(that is the CSP and sanitizer's job), but it does prevent an attacker who
+has extracted a token from using it as a pivot to brute-force other users'
+credentials. See ADR-200 for the full decision record.
+
 If the threat model changes (e.g. regulatory demand for defense
 against XSS token theft), revisit this section and adopt cookie
 sessions — which triggers the CSRF reversal above.
@@ -69,17 +77,29 @@ shipped to Cloudflare Pages. Current enforced values:
 
 | Header | Value |
 |--------|-------|
-| `Content-Security-Policy` | `default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://api.fontshare.com; img-src 'self' data: blob:; connect-src 'self' https://*.cloudflare.com; frame-ancestors 'none'; upgrade-insecure-requests` |
+| `Content-Security-Policy` | `default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; style-src-attr 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob:; connect-src 'self' https://*.cloudflare.com; frame-ancestors 'none'; upgrade-insecure-requests` |
 | `X-Frame-Options` | `DENY` |
 | `X-Content-Type-Options` | `nosniff` |
 | `Referrer-Policy` | `strict-origin-when-cross-origin` |
 | `Permissions-Policy` | `camera=(), microphone=(), geolocation=()` |
 | `Cross-Origin-Opener-Policy` | `same-origin` |
 
-The only `unsafe-inline` is in `style-src`, permitted because React
-component libraries emit inline styles. The CSP for **scripts** is
-strict; any change to add `'unsafe-inline'` to `script-src` requires
-an ADR.
+The only `'unsafe-inline'` permitted is in `style-src-attr` (CSP Level 3),
+which governs React component inline `style={…}` attributes (e.g.
+progress-bar widths, virtualization offsets). `<style>` *elements* and
+external stylesheets (`style-src`) are restricted to `'self'` only,
+which is sufficient because:
+
+- Tailwind v4 + Vite compile all styles to a single bundled CSS file
+  served from the same origin in production builds.
+- Dynamic CSS variable updates (e.g. OKLCH theme tokens) flow through
+  React inline `style={…}` rather than injected `<style>` tags.
+- Self-hosted fonts (per ADR-123 / Plan 122) eliminate external
+  `style-src` and `font-src` origins.
+
+The CSP for **scripts** is strict; any change to add `'unsafe-inline'`
+or `'unsafe-eval'` to `script-src` requires an ADR — and any change to
+re-add `'unsafe-inline'` to plain `style-src` also requires one.
 
 ## ReDoS / bounded regex policy (ADR-034)
 
@@ -142,10 +162,14 @@ Never open a public GitHub issue for a suspected vulnerability
 
 ## Cross-references
 
-- ADR-092 — `plans/092-adr-token-storage-and-feature-gap-policy.md`
+- ADR-092 — `plans/archive/092-adr-token-storage-and-feature-gap-policy.md`
   (the policy decisions summarized above)
-- ADR-035 — `plans/035-adr-content-security-policy.md` (CSP detail)
-- ADR-034 — `plans/034-adr-security-redos-hardening.md` (bounded regex)
+- ADR-200 — `plans/200-adr-session-lockout-compensating-control.md`
+  (Wave 4 login lockout as additional compensating control)
+- ADR-080 — `plans/archive/080-adr-session-storage-compensating-controls.md`
+  (regression test governance for compensating controls)
+- ADR-035 — `plans/archive/035-adr-content-security-policy.md` (CSP detail)
+- ADR-034 — `plans/archive/034-adr-security-redos-hardening.md` (bounded regex)
 - ADR-006 — annotation model and rendering contract
 - `docs/security.md` — repository-root security policy
 - `SECURITY.md` — vulnerability disclosure

@@ -1,12 +1,15 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
-import type { Env } from '../../lib/env';
-import { execute, queryFirst } from '../../db/client';
-import { logAudit } from '../../audit';
 import { CreateBookSchema, UpdateBookSchema, validateEpub } from '@do-epub-studio/shared';
+import type { Env } from '../../lib/env';
+import { execute, queryFirst, queryAll, transaction } from '../../db/client';
+import { logAudit } from '../../audit';
 import { UploadCompleteSchema } from '@do-epub-studio/schema';
 import { adminAuth } from '../../middleware/auth';
 import { withByteCap, MaxBodySizeError, DEFAULT_MAX_BODY_BYTES } from '../../lib/stream-body';
+import { bumpCacheVersion } from '../../lib/edge-cache';
+import { NotFoundError, ValidationError, AppError } from '../../lib/http-errors';
+import { createRequestContext, logRequestError } from '../../lib/observability';
 
 export const booksRouter = new Hono<{ Bindings: Env; Variables: { adminUser: { email: string; id: string; role: string } } }>();
 
@@ -66,7 +69,7 @@ booksRouter.put('/:id/upload', adminAuth, async (c) => {
   );
 
   if (!book) {
-    return c.json({ ok: false, error: { code: 'NOT_FOUND', message: 'Book not found' } }, 404);
+    throw new NotFoundError('Book');
   }
 
   const contentType = c.req.header('Content-Type') ?? 'application/epub+zip';
@@ -78,13 +81,10 @@ booksRouter.put('/:id/upload', adminAuth, async (c) => {
   // via withByteCap below.
   const isMultipart = contentType.toLowerCase().startsWith('multipart/');
   if (!isMultipart && contentLength <= 0) {
-    return c.json({ ok: false, error: { code: 'VALIDATION_ERROR', message: 'Missing Content-Length header' } }, 400);
+    throw new ValidationError('Missing Content-Length header');
   }
   if (!isMultipart && contentLength > DEFAULT_MAX_BODY_BYTES) {
-    return c.json(
-      { ok: false, error: { code: 'VALIDATION_ERROR', message: `File too large. Max: ${DEFAULT_MAX_BODY_BYTES} bytes` } },
-      413,
-    );
+    throw new AppError(`File too large. Max: ${DEFAULT_MAX_BODY_BYTES} bytes`, 'VALIDATION_ERROR', 413);
   }
 
   const storageKey = `books/${book.id}/${crypto.randomUUID()}.epub`;
@@ -113,13 +113,10 @@ booksRouter.put('/:id/upload', adminAuth, async (c) => {
       const form = await c.req.raw.formData();
       const fileEntry = form.get('file');
       if (!(fileEntry instanceof File)) {
-        return c.json({ ok: false, error: { code: 'VALIDATION_ERROR', message: 'Missing "file" part' } }, 400);
+        throw new ValidationError('Missing "file" part');
       }
       if (fileEntry.size > DEFAULT_MAX_BODY_BYTES) {
-        return c.json(
-          { ok: false, error: { code: 'VALIDATION_ERROR', message: `File too large. Max: ${DEFAULT_MAX_BODY_BYTES} bytes` } },
-          413,
-        );
+        throw new AppError(`File too large. Max: ${DEFAULT_MAX_BODY_BYTES} bytes`, 'VALIDATION_ERROR', 413);
       }
       declaredSize = fileEntry.size;
       uploadStream = fileEntry.stream();
@@ -130,7 +127,7 @@ booksRouter.put('/:id/upload', adminAuth, async (c) => {
       }
     } else {
       if (!c.req.raw.body) {
-        return c.json({ ok: false, error: { code: 'VALIDATION_ERROR', message: 'Request body is empty' } }, 400);
+        throw new ValidationError('Request body is empty');
       }
       const { stream } = withByteCap(c.req.raw.body, DEFAULT_MAX_BODY_BYTES);
       declaredSize = contentLength;
@@ -154,10 +151,7 @@ booksRouter.put('/:id/upload', adminAuth, async (c) => {
         } catch (err) {
           // Stream errored (likely the byte cap). Surface the right code.
           if (err instanceof MaxBodySizeError) {
-            return c.json(
-              { ok: false, error: { code: 'VALIDATION_ERROR', message: `File too large. Max: ${DEFAULT_MAX_BODY_BYTES} bytes` } },
-              413,
-            );
+            throw new AppError(`File too large. Max: ${DEFAULT_MAX_BODY_BYTES} bytes`, 'VALIDATION_ERROR', 413);
           }
           throw err;
         }
@@ -169,7 +163,7 @@ booksRouter.put('/:id/upload', adminAuth, async (c) => {
           offset += c.byteLength;
         }
         if (merged.byteLength === 0) {
-          return c.json({ ok: false, error: { code: 'VALIDATION_ERROR', message: 'Request body is empty' } }, 400);
+          throw new ValidationError('Request body is empty');
         }
         validationArrayBuffer = merged.buffer.slice(merged.byteOffset, merged.byteOffset + merged.byteLength);
       } else {
@@ -190,17 +184,7 @@ booksRouter.put('/:id/upload', adminAuth, async (c) => {
       validationResults = await validateEpub(validationArrayBuffer);
       customMetadata.validationResults = JSON.stringify(validationResults);
       if (!validationResults.isValid) {
-        return c.json(
-          {
-            ok: false,
-            error: {
-              code: 'VALIDATION_ERROR',
-              message: 'EPUB validation failed',
-              details: validationResults.errors,
-            },
-          },
-          400,
-        );
+        throw new ValidationError('EPUB validation failed', validationResults.errors);
       }
     }
     if (validationSkipped) {
@@ -229,12 +213,9 @@ booksRouter.put('/:id/upload', adminAuth, async (c) => {
     return c.json({ ok: true, data }, 200);
   } catch (err) {
     if (err instanceof MaxBodySizeError) {
-      return c.json(
-        { ok: false, error: { code: 'VALIDATION_ERROR', message: `File too large. Max: ${DEFAULT_MAX_BODY_BYTES} bytes` } },
-        413,
-      );
+      throw new AppError(`File too large. Max: ${DEFAULT_MAX_BODY_BYTES} bytes`, 'VALIDATION_ERROR', 413);
     }
-    return c.json({ ok: false, error: { code: 'UPLOAD_FAILED', message: 'Failed to upload file to storage' } }, 500);
+    throw new AppError('Failed to upload file to storage', 'UPLOAD_FAILED', 500);
   }
 });
 
@@ -262,6 +243,9 @@ booksRouter.post('/:id/upload-complete', adminAuth, zValidator('json', UploadCom
     ],
   );
 
+  // Invalidate edge cache so readers get the fresh EPUB content
+  await bumpCacheVersion(c.env);
+
   await logAudit(c.env, {
     entityType: 'book',
     entityId: bookId,
@@ -284,7 +268,7 @@ booksRouter.patch('/:id', adminAuth, zValidator('json', UpdateBookSchema), async
   );
 
   if (!book) {
-    return c.json({ ok: false, error: { code: 'NOT_FOUND', message: 'Book not found' } }, 404);
+    throw new NotFoundError('Book');
   }
 
   const updates: string[] = [];
@@ -297,7 +281,7 @@ booksRouter.patch('/:id', adminAuth, zValidator('json', UpdateBookSchema), async
   if (body.language !== undefined) { updates.push('language = ?'); values.push(body.language); }
 
   if (updates.length === 0) {
-    return c.json({ ok: false, error: { code: 'NO_CHANGES', message: 'No fields to update' } }, 400);
+    throw new AppError('No fields to update', 'NO_CHANGES', 400);
   }
 
   updates.push('updated_at = ?');
@@ -305,6 +289,9 @@ booksRouter.patch('/:id', adminAuth, zValidator('json', UpdateBookSchema), async
   values.push(bookId);
 
   await execute(c.env, `UPDATE books SET ${updates.join(', ')} WHERE id = ?`, values as (string | number | null)[]);
+
+  // Invalidate edge cache so the catalog reflects the updated metadata
+  await bumpCacheVersion(c.env);
 
   await logAudit(c.env, {
     entityType: 'book',
@@ -328,21 +315,47 @@ booksRouter.delete('/:id', adminAuth, async (c) => {
   );
 
   if (!book) {
-    return c.json({ ok: false, error: { code: 'NOT_FOUND', message: 'Book not found' } }, 404);
+    throw new NotFoundError('Book');
   }
 
-  await execute(
+  // --- Cascade cleanup: delete R2 objects and all child DB rows ---
+  // R2 objects
+  const files = await queryAll<{ storage_key: string }>(
     c.env,
-    "UPDATE books SET archived_at = datetime('now') WHERE id = ?",
+    'SELECT storage_key FROM book_files WHERE book_id = ?',
     [bookId],
   );
+  const r2Ctx = createRequestContext(c.req.raw);
+  const r2DeletePromises = files.map((f) =>
+    // R2 deletion failure during cascade should not block book archive — log and continue
+    c.env.BOOKS_BUCKET.delete(f.storage_key).catch((err: unknown) => {
+      logRequestError(r2Ctx, err, { event: 'book.delete.r2_failure', bookId, storageKey: f.storage_key });
+    }),
+  );
+  // DB child rows (soft-delete the book row, hard-delete dependents)
+  const cascadeStatements = [
+    { sql: 'DELETE FROM reading_insights WHERE book_id = ?', args: [bookId] },
+    { sql: 'DELETE FROM reading_progress WHERE book_id = ?', args: [bookId] },
+    { sql: 'DELETE FROM bookmarks WHERE book_id = ?', args: [bookId] },
+    { sql: 'DELETE FROM highlights WHERE book_id = ?', args: [bookId] },
+    { sql: 'DELETE FROM comments WHERE book_id = ?', args: [bookId] },
+    { sql: 'DELETE FROM reader_sessions WHERE book_id = ?', args: [bookId] },
+    { sql: 'DELETE FROM book_access_grants WHERE book_id = ?', args: [bookId] },
+    { sql: 'DELETE FROM book_files WHERE book_id = ?', args: [bookId] },
+    { sql: "UPDATE books SET archived_at = datetime('now') WHERE id = ?", args: [bookId] },
+  ];
+
+  // R2 deletions run in parallel with the DB transaction
+  c.executionCtx.waitUntil(Promise.all(r2DeletePromises));
+  await transaction(c.env, cascadeStatements);
 
   await logAudit(c.env, {
     entityType: 'book',
     entityId: bookId,
     action: 'archived',
     actorEmail: adminUser.email,
+    payload: { cascadeDeleted: true, r2Objects: files.length },
   }, c.executionCtx);
 
-  return c.json({ ok: true });
+  return c.json({ ok: true, data: { r2ObjectsDeleted: files.length } });
 });

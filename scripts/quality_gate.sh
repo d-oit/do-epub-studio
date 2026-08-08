@@ -1,7 +1,12 @@
 #!/usr/bin/env bash
 # Full quality gate with auto-detection for multiple languages.
-# Exit 0 = silent success, Exit 2 = errors surfaced to agent.
+# Exit 0 = success (all required phases ran and passed)
+# Exit 2 = errors surfaced to agent
 # Used in pre-commit hook and CI.
+#
+# SKIP_* env vars (SKIP_LINT, SKIP_TYPECHECK, etc.) are for local dev convenience
+# only. When any SKIP_* is set, the gate exits with a warning code (exit 3) to
+# indicate that not all required phases were executed. CI must NEVER set these.
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -13,6 +18,9 @@ source "$REPO_ROOT/scripts/lib/colors.sh"
 
 # FAILED acts as an error accumulator
 FAILED=0
+
+# SKIPPED tracks whether any required phase was skipped via SKIP_* env vars
+SKIPPED=0
 
 # DETECTED_LANGUAGES stores which language ecosystems are present
 DETECTED_LANGUAGES=()
@@ -59,6 +67,16 @@ if [ -f "$REPO_ROOT/scripts/check-app-identity.mjs" ]; then
     if ! node "$REPO_ROOT/scripts/check-app-identity.mjs"; then
         FAILED=1
     fi
+fi
+echo ""
+
+# --- Validate ADR index (ADR-083) ---
+printf '%s  ✓ Validating ADR index (ADR-083)...%s\n' "${GREEN}" "${NC}"
+if node "$REPO_ROOT/scripts/check-adr-index.mjs" 2>&1; then
+  printf '%s  ✓ ADR index validation passed (ADR-083).%s\n' "${GREEN}" "${NC}"
+else
+  printf '%s  ✗ ADR index validation failed.%s\n' "${RED}" "${NC}"
+  FAILED=1
 fi
 echo ""
 
@@ -158,6 +176,7 @@ if [[ " ${DETECTED_LANGUAGES[*]} " =~ " typescript " ]]; then
             fi
         else
             printf '%s  ⊘ %s lint skipped (SKIP_LINT=true)%s\n' "${YELLOW}" "$PM" "${NC}"
+            SKIPPED=1
         fi
 
         # Typecheck (respect SKIP_TYPECHECK env var)
@@ -171,6 +190,7 @@ if [[ " ${DETECTED_LANGUAGES[*]} " =~ " typescript " ]]; then
             fi
         else
             printf '%s  ⊘ %s typecheck skipped (SKIP_TYPECHECK=true)%s\n' "${YELLOW}" "$PM" "${NC}"
+            SKIPPED=1
         fi
 
         # Tests (respect SKIP_TESTS env var for local dev without node_modules)
@@ -195,22 +215,49 @@ if [[ " ${DETECTED_LANGUAGES[*]} " =~ " typescript " ]]; then
                 fi
             else
                 printf '%s  ⊘ %s build skipped (SKIP_BUILD=true)%s\n' "${YELLOW}" "$PM" "${NC}"
+                SKIPPED=1
             fi
 
             # Smoke tests (skip with SKIP_SMOKE env var)
             if [ "${SKIP_SMOKE:-false}" != "true" ]; then
-                if ! OUTPUT=$($PM run test:e2e:smoke 2>&1); then
-                    printf '%s  ✗ %s test:e2e:smoke failed%s\n' "${RED}" "$PM" "${NC}"
-                    echo "$OUTPUT" >&2
-                    FAILED=1
-                else
-                    printf '%s  ✓ %s test:e2e:smoke passed%s\n' "${GREEN}" "$PM" "${NC}"
+                # Ensure Playwright browsers are installed (chromium + firefox + webkit required)
+                MISSING_BROWSERS=""
+                if ! ls ~/.cache/ms-playwright/chromium-*/chrome-linux/chrome >/dev/null 2>&1; then
+                    MISSING_BROWSERS="chromium $MISSING_BROWSERS"
+                fi
+                if ! ls ~/.cache/ms-playwright/firefox-*/firefox/firefox >/dev/null 2>&1; then
+                    MISSING_BROWSERS="firefox $MISSING_BROWSERS"
+                fi
+                if ! ls ~/.cache/ms-playwright/webkit-*/pw_run.sh >/dev/null 2>&1; then
+                    MISSING_BROWSERS="webkit $MISSING_BROWSERS"
+                fi
+                if [ -n "$MISSING_BROWSERS" ]; then
+                    printf '%s  ⟳ Installing Playwright browsers (%s)...%s\n' "${YELLOW}" "$MISSING_BROWSERS" "${NC}"
+                    if ! OUTPUT=$(npx playwright install $MISSING_BROWSERS 2>&1); then
+                        printf '%s  ✗ Playwright browser installation failed%s\n' "${RED}" "${NC}"
+                        echo "$OUTPUT" >&2
+                        FAILED=1
+                    else
+                        printf '%s  ✓ Playwright browsers installed%s\n' "${GREEN}" "${NC}"
+                    fi
+                fi
+
+                if [ $FAILED -eq 0 ]; then
+                    if ! OUTPUT=$($PM run test:e2e:smoke 2>&1); then
+                        printf '%s  ✗ %s test:e2e:smoke failed%s\n' "${RED}" "$PM" "${NC}"
+                        echo "$OUTPUT" >&2
+                        FAILED=1
+                    else
+                        printf '%s  ✓ %s test:e2e:smoke passed%s\n' "${GREEN}" "$PM" "${NC}"
+                    fi
                 fi
             else
                 printf '%s  ⊘ %s smoke tests skipped (SKIP_SMOKE=true)%s\n' "${YELLOW}" "$PM" "${NC}"
+                SKIPPED=1
             fi
         else
             printf '%s  ⊘ %s tests skipped (SKIP_TESTS=true)%s\n' "${YELLOW}" "$PM" "${NC}"
+            SKIPPED=1
         fi
     fi
     echo ""
@@ -293,10 +340,13 @@ if [[ " ${DETECTED_LANGUAGES[*]} " =~ " shell " ]]; then
         printf '%s  ⚠ shellcheck not installed - skipping shell checks%s\n' "${YELLOW}" "${NC}"
     fi
 
-    # BATS tests — always run if tests/ directory exists
-    if [ -d "tests" ] && [ -z "${BATS_TEST_FILENAME:-}" ]; then
+    # BATS tests — always run if tests/ or scripts/tests/ directory exists
+    if { [ -d "tests" ] || [ -d "scripts/tests" ]; } && [ -z "${BATS_TEST_FILENAME:-}" ]; then
         if command -v bats &> /dev/null; then
-            if ! OUTPUT=$(bats tests/ 2>&1); then
+            BATS_DIRS=()
+            [ -d "tests" ] && BATS_DIRS+=("tests/")
+            [ -d "scripts/tests" ] && BATS_DIRS+=("scripts/tests/")
+            if ! OUTPUT=$(bats "${BATS_DIRS[@]}" 2>&1); then
                 printf '%s  ✗ bats tests failed%s\n' "${RED}" "${NC}"
                 echo "$OUTPUT" >&2
                 FAILED=1
@@ -359,7 +409,17 @@ if [ "${SKIP_DESIGN:-0}" != "1" ]; then
         printf '%s  ⊘ scripts/run-impeccable.sh not found — skipping%s\n' "${YELLOW}" "${NC}"
     fi
     echo ""
+else
+    SKIPPED=1
 fi
+
+# --- Dead code and circular dependency check ---
+printf '%sChecking for dead code and circular dependencies...%s\n' "${BLUE}" "${NC}"
+if ! "$REPO_ROOT/scripts/dead-code-check.sh"; then
+    printf '%s✗ Dead code / circular deps found — run scripts/dead-code-check.sh for details%s\n' "${RED}" "${NC}"
+    FAILED=1
+fi
+echo ""
 
 # --- Final result ---
 if [ $FAILED -ne 0 ]; then
@@ -369,6 +429,16 @@ if [ $FAILED -ne 0 ]; then
     echo ""
     echo "Fix the errors above and re-run quality gate."
     exit 2
+fi
+
+if [ $SKIPPED -ne 0 ]; then
+    printf '%s─────────────────────────────────────────────────────────────────%s\n' "${YELLOW}" "${NC}"
+    printf '%s│ ⚠ Quality Gate PASSED with skipped phases                    │%s\n' "${YELLOW}" "${NC}"
+    printf '%s─────────────────────────────────────────────────────────────────%s\n' "${YELLOW}" "${NC}"
+    echo ""
+    echo "Some phases were skipped via SKIP_* env vars."
+    echo "Run without SKIP_* for the full gate: ./scripts/quality_gate.sh"
+    exit 3
 fi
 
 printf '%s─────────────────────────────────────────────────────────────────%s\n' "${GREEN}" "${NC}"

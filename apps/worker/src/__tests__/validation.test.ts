@@ -48,7 +48,7 @@ describe('API Validation Integration', () => {
     );
 
     expect(res.status).toBe(400);
-    const body = await res.json() as any;
+    const body: Record<string, unknown> = await res.json();
     // Accept either standard app format or Hono default for now to unblock
     expect(body.ok === false || body.success === false).toBe(true);
   });

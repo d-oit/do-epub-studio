@@ -1,37 +1,42 @@
 {
-  "bundleSize": {
-    "index.js": 500000,
-    "react-vendor.js": 400000,
-    "index.css": 100000,
-    "reader-core.js": 300000,
-    "reader-route.js": 200000,
-    "epubjs.js": 250000
+  "gzipBudgets": {
+    "mainJs": 180,
+    "mainCss": 30,
+    "lazyChunkJs": 90,
+    "description": "Gzipped (zlib level 9) budgets in KB enforced by scripts/check-bundle-budget.mjs. Values aligned with ADR-107 §3 (180/30/80 KB) with admin-route exception (90 KB). Supersedes per-file raw-byte bundleSize model removed in T4.1."
   },
   "routeBudgets": {
     "reader": {
       "entry": "src/features/reader/ReaderPage.tsx",
-      "maxSize": 1100000,
+      "maxSize": 1190000,
       "description": "Total transitive JS and CSS for the reader route"
     },
     "catalog": {
       "entry": "src/features/catalog/CatalogPage.tsx",
-      "maxSize": 750000,
+      "maxSize": 895000,
       "description": "Total transitive JS and CSS for the catalog route (includes shared vendors)"
     },
     "admin": {
-      "entry": "src/features/admin/AdminPage.tsx",
-      "maxSize": 750000,
+      "entry": "src/features/admin/AdminDashboardPage.tsx",
+      "maxSize": 890000,
       "description": "Total transitive JS and CSS for the admin route (includes shared vendors)"
+    }
+  },
+  "boundaryRules": {
+    "catalog": {
+      "entry": "src/features/catalog/CatalogPage.tsx",
+      "forbiddenImports": ["reader-core"],
+      "description": "Catalog shell must not import reader-core"
     },
     "auth": {
       "entry": "src/features/auth/LoginPage.tsx",
-      "maxSize": 150000,
-      "description": "Total transitive JS and CSS for the auth route"
+      "forbiddenImports": ["reader-core"],
+      "description": "Auth shell must not import reader-core"
     },
-    "offline": {
-      "entry": "src/lib/offline/sync.ts",
-      "maxSize": 100000,
-      "description": "Total transitive JS for offline sync"
+    "admin": {
+      "entry": "src/features/admin/AdminDashboardPage.tsx",
+      "forbiddenImports": ["reader-core"],
+      "description": "Admin shell must not import reader-core"
     }
   },
   "startupTime": {

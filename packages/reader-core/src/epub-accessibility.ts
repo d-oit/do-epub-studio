@@ -1,4 +1,4 @@
-import { escapeRegex, matchAllBounded } from '@do-epub-studio/shared';
+import { escapeRegex, matchAllBounded, checkDeadline, createDeadline } from '@do-epub-studio/shared';
 
 export interface AccessibilityMetadata {
   summary?: string;
@@ -13,6 +13,7 @@ export interface AccessibilityMetadata {
 }
 
 const OPF_META_MAX_LEN = 1048576;
+const ACCESSIBILITY_TIMEOUT_MS = 2_000;
 
 function extractMetaProperty(opfXml: string, property: string): string[] {
   const results: string[] = [];
@@ -72,14 +73,22 @@ function extractMetaName(opfXml: string, name: string): string[] {
   return results;
 }
 
-export function parseAccessibilityFromOpf(opfXml: string): AccessibilityMetadata {
+export function parseAccessibilityFromOpf(
+  opfXml: string,
+  options?: { timeoutMs?: number; traceId?: string },
+): AccessibilityMetadata {
   if (!opfXml || opfXml.length > 1048576) {
     return { features: [], hazards: [], controls: [] };
   }
 
+  const timeoutMs = options?.timeoutMs ?? ACCESSIBILITY_TIMEOUT_MS;
+  const traceId = options?.traceId;
+  const deadline = createDeadline(timeoutMs);
+
   const summary = extractMetaProperty(opfXml, 'schema:accessibilitySummary')[0]
     ?? extractMetaName(opfXml, 'schema:accessibilitySummary')[0]
     ?? undefined;
+  checkDeadline(deadline, 'accessibility-parse', timeoutMs, traceId);
 
   const features = [
     ...new Set([
@@ -87,6 +96,7 @@ export function parseAccessibilityFromOpf(opfXml: string): AccessibilityMetadata
       ...extractMetaName(opfXml, 'schema:accessibilityFeature'),
     ]),
   ].filter((f) => f.length > 0 && f.length <= 256);
+  checkDeadline(deadline, 'accessibility-parse', timeoutMs, traceId);
 
   const hazards = [
     ...new Set([
@@ -94,6 +104,7 @@ export function parseAccessibilityFromOpf(opfXml: string): AccessibilityMetadata
       ...extractMetaName(opfXml, 'schema:accessibilityHazard'),
     ]),
   ].filter((h) => h.length > 0 && h.length <= 256);
+  checkDeadline(deadline, 'accessibility-parse', timeoutMs, traceId);
 
   const controls = [
     ...new Set([
@@ -101,26 +112,31 @@ export function parseAccessibilityFromOpf(opfXml: string): AccessibilityMetadata
       ...extractMetaName(opfXml, 'schema:accessibilityControl'),
     ]),
   ].filter((c) => c.length > 0 && c.length <= 256);
+  checkDeadline(deadline, 'accessibility-parse', timeoutMs, traceId);
 
   const api =
     extractMetaProperty(opfXml, 'schema:accessibilityAPI')[0]
     ?? extractMetaName(opfXml, 'schema:accessibilityAPI')[0]
     ?? undefined;
+  checkDeadline(deadline, 'accessibility-parse', timeoutMs, traceId);
 
   const conformsTo =
     extractMetaProperty(opfXml, 'dcterms:conformsTo')[0]
     ?? extractMetaName(opfXml, 'dcterms:conformsTo')[0]
     ?? undefined;
+  checkDeadline(deadline, 'accessibility-parse', timeoutMs, traceId);
 
   const certifiedBy =
     extractMetaProperty(opfXml, 'a11y:certifiedBy')[0]
     ?? extractMetaName(opfXml, 'a11y:certifiedBy')[0]
     ?? undefined;
+  checkDeadline(deadline, 'accessibility-parse', timeoutMs, traceId);
 
   const certifierCredential =
     extractMetaProperty(opfXml, 'a11y:certifierCredential')[0]
     ?? extractMetaName(opfXml, 'a11y:certifierCredential')[0]
     ?? undefined;
+  checkDeadline(deadline, 'accessibility-parse', timeoutMs, traceId);
 
   const certifierReport =
     extractMetaProperty(opfXml, 'a11y:certifierReport')[0]

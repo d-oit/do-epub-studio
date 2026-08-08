@@ -50,7 +50,7 @@ For each implementation unit:
 1. Create feature branch: `feat/issue-NNN-goap-plan`
 2. Implement following AGENTS.md Tier 1–4 rules
 3. Run `./scripts/quality_gate.sh` before commit
-4. Use `./scripts/atomic-commit/run.sh --message "type(scope): description"`
+4. Use `./scripts/atomic-commit/run.sh --message "type(scope): description" --body "WHY"`
 5. Open PR with GOAP plan reference
 
 ## Phase 6: SYNTHESIZE – Documentation & Closeout

@@ -300,4 +300,17 @@ describe('performance-optimized logic correctness', () => {
     expect(result.success).toBe(true);
     expect(result.matchType).toBe('fuzzy');
   });
+
+  it('reanchorByText handles target string with repeated duplicate words correctly', async () => {
+    const loadContent = vi.fn().mockResolvedValue('Literary content often has beautiful repetition.');
+    // Target text has repeated/shuffled words with no long consecutive matching segment >= 20 chars
+    // Shuffled words: "repetition content beautiful content literary repetition beautiful"
+    // Matched/deduplicated unique words: "repetition", "content", "beautiful", "literary"
+    // Deduplication prevents artificial matching inflation on duplicate words.
+    const result = await reanchorByText('repetition content beautiful content literary repetition beautiful', mockToc, loadContent, {
+      fuzzyThreshold: 0.5,
+    });
+    expect(result.success).toBe(true);
+    expect(result.matchType).toBe('fuzzy');
+  });
 });

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { checkRateLimitDO } from '../lib/rate-limit-client';
 import type { Env } from '../lib/env';
+import type { RateLimiterDO } from '../lib/rate-limiter-do';
 
 describe('checkRateLimitDO', () => {
   const makeMockDO = (response: Record<string, unknown>) => ({
@@ -10,18 +11,21 @@ describe('checkRateLimitDO', () => {
     }),
   });
 
-  const makeEnv = (mockDO: any): Env => ({
+  const makeEnv = vi.fn((mockDO: Record<string, unknown>): Env => ({
     RATE_LIMITER: {
       idFromName: vi.fn().mockReturnValue({ toString: () => 'mock-id' }),
       get: vi.fn().mockReturnValue(mockDO),
-    } as any,
-    BOOKS_BUCKET: {} as any,
-    TURSO_DATABASE_URL: process.env.TEST_TURSO_DATABASE_URL || 'http://localhost',
-    TURSO_AUTH_TOKEN: process.env.TEST_TURSO_AUTH_TOKEN || 'test',
-    SESSION_SIGNING_SECRET: process.env.TEST_SESSION_SIGNING_SECRET || 'test',
-    INVITE_TOKEN_SECRET: process.env.TEST_INVITE_TOKEN_SECRET || 'test',
-    APP_BASE_URL: process.env.TEST_APP_BASE_URL || 'http://localhost',
-  });
+    } as unknown as DurableObjectNamespace<RateLimiterDO>,
+    BOOKS_BUCKET: {} as unknown as R2Bucket,
+    DB: { prepare: vi.fn().mockReturnThis(), bind: vi.fn().mockReturnThis(), all: vi.fn().mockResolvedValue({ results: [] }) } as unknown as D1Database,
+    SENDER_EMAIL: {} as unknown as SendEmail,
+    CACHE_KV: { get: vi.fn().mockResolvedValue(null), put: vi.fn().mockResolvedValue(undefined) } as unknown as KVNamespace,
+    TURSO_DATABASE_URL: 'file::memory:',
+    TURSO_AUTH_TOKEN: 'test-token',
+    SESSION_SIGNING_SECRET: 'test-session-secret',
+    INVITE_TOKEN_SECRET: 'test-invite-secret',
+    APP_BASE_URL: 'http://localhost',
+  }));
 
   it('returns allowed: true when DO returns allowed: true', async () => {
     const mockDO = makeMockDO({ allowed: true, remaining: 4, resetAt: 123456789 });

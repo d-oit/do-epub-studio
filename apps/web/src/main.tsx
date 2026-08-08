@@ -1,14 +1,24 @@
+import * as Sentry from '@sentry/react';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
-import { MotionConfig } from 'framer-motion';
 
-import App from './App';
+import { App } from './App';
 import { createSpanId, createTraceId } from '@do-epub-studio/shared';
 import { ToastProvider, useToast } from '@do-epub-studio/ui';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { logClientEvent } from './lib/client-logger';
 import './styles/globals.css';
+
+// Init before anything else; no-op if DSN is absent
+if (import.meta.env.VITE_SENTRY_DSN) {
+  Sentry.init({
+    dsn: import.meta.env.VITE_SENTRY_DSN,
+    tracesSampleRate: 0.1,
+    environment: import.meta.env.MODE,
+    integrations: [Sentry.browserTracingIntegration()],
+  });
+}
 import { registerSW } from 'virtual:pwa-register';
 import { useSwUpdateStore } from './stores/sw-update';
 import { useTranslation } from './hooks/useTranslation';
@@ -26,8 +36,19 @@ export function setErrorToastProvider(
 }
 
 export function handleError(event: ErrorEvent) {
-  const traceId = createTraceId();
   const error = event.error instanceof Error ? event.error : new Error(String(event.error));
+
+  // Suppress Workbox SW errors thrown in async callbacks (setTimeout, etc.)
+  // These are synchronous exceptions, not promise rejections, so handleRejection
+  // cannot catch them.  The crash occurs inside workbox-window's _onStateChange
+  // handler when self.registration is undefined (e.g. Playwright blocks SWs).
+  const stack = error.stack ?? '';
+  if (stack.includes('workbox') || error.message.includes('waiting')) {
+    event.preventDefault();
+    return;
+  }
+
+  const traceId = createTraceId();
   logClientEvent({
     level: 'error',
     event: 'window.error',
@@ -49,8 +70,19 @@ export function handleError(event: ErrorEvent) {
 }
 
 export function handleRejection(event: PromiseRejectionEvent) {
-  const traceId = createTraceId();
   const reason = event.reason instanceof Error ? event.reason : new Error(String(event.reason));
+
+  // Suppress Workbox SW registration errors — these occur when service
+  // workers are blocked (e.g. Playwright's serviceWorkers: 'block')
+  // and cause a non-actionable "Cannot read properties of undefined
+  // (reading 'waiting')" crash inside workbox-window.
+  const stack = reason.stack ?? '';
+  if (stack.includes('workbox') || reason.message.includes('waiting')) {
+    event.preventDefault();
+    return;
+  }
+
+  const traceId = createTraceId();
   logClientEvent({
     level: 'error',
     event: 'window.unhandledrejection',
@@ -93,9 +125,7 @@ export const Root = () => {
           }}
         >
           <BrowserRouter>
-            <MotionConfig reducedMotion="user">
-              <App />
-            </MotionConfig>
+            <App />
           </BrowserRouter>
         </ErrorBoundary>
       </ToastProvider>

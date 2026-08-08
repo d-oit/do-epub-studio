@@ -1,8 +1,7 @@
 import type { Env } from '../lib/env';
 import { queryFirst, execute } from '../db/client';
-import { hashPassword, verifyPassword } from './password';
-import { createRequestContext as _createRequestContext } from '../lib/observability';
-import { createTraceId } from '@do-epub-studio/shared';
+import { verifyPassword } from './password';
+import { logAppError } from '../lib/observability';
 
 export interface AdminAuthContext {
   userId: string;
@@ -92,21 +91,12 @@ export async function requireAdminAuth(
   }
 
   // Update last used time (non-blocking)
-  const traceId = createTraceId();
   execute(
     env,
     `UPDATE admin_sessions SET last_used_at = datetime('now') WHERE id = ?`,
     [session.id],
   ).catch((err: unknown) => {
-    console.error(
-      JSON.stringify({
-        level: 'error',
-        traceId,
-        event: 'admin_session.last_used_update_failed',
-        sessionId: session.id,
-        error: err instanceof Error ? err.message : String(err),
-      }),
-    );
+    logAppError('admin_session.last_used_update_failed', err, { sessionId: session.id });
   });
 
   return {
@@ -229,34 +219,4 @@ export function generateAdminToken(): string {
   return Array.from(array)
     .map((b) => b.toString(16).padStart(2, '0'))
     .join('');
-}
-
-export async function initializeAdminUser(
-  env: Env,
-  email: string,
-  password: string,
-  displayName?: string,
-): Promise<string> {
-  const existing = await queryFirst<{ id: string }>(
-    env,
-    `SELECT id FROM users WHERE email = ?`,
-    [email.toLowerCase()],
-  );
-
-  if (existing) {
-    return existing.id;
-  }
-
-  const id = crypto.randomUUID();
-  const passwordHash = await hashPassword(password);
-  const now = new Date().toISOString();
-
-  await execute(
-    env,
-    `INSERT INTO users (id, email, display_name, global_role, password_hash, created_at, updated_at)
-     VALUES (?, ?, ?, 'admin', ?, ?, ?)`,
-    [id, email.toLowerCase(), displayName || 'Admin', passwordHash, now, now],
-  );
-
-  return id;
 }

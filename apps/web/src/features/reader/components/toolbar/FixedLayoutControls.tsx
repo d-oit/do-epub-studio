@@ -1,6 +1,5 @@
 import { useCallback, useRef } from 'react';
-import { motion } from 'framer-motion';
-import { scaleVariants } from '../../../../components/ui';
+import { IconButton } from '../../../../components/ui';
 import { useFocusTrap } from '@do-epub-studio/ui';
 import type { ReaderSpread, ReaderZoom } from '../../../../stores';
 
@@ -52,16 +51,12 @@ export function FixedLayoutControls({
   if (!isOpen) return null;
 
   return (
-    <motion.div
+    <div
       ref={panelRef}
       role="dialog"
       aria-modal="true"
       aria-labelledby="fl-controls-title"
-      initial="initial"
-      animate="animate"
-      exit="exit"
-      variants={scaleVariants}
-      className="fixed top-14 right-4 glass-panel rounded-xl shadow-xl border border-border p-4 z-50 w-72"
+      className="fixed top-14 right-4 glass-panel rounded-xl shadow-xl border border-border p-4 z-50 w-72 animate-scale-in"
     >
       {/* Live region for zoom level announcements — WCAG 4.1.3 */}
       <div
@@ -78,11 +73,11 @@ export function FixedLayoutControls({
         >
           {t('reader.fixedLayout.title')}
         </h2>
-        <button
-          type="button"
+        <IconButton
           onClick={onClose}
-          className="p-1 rounded-lg hover:bg-background-secondary transition-colors text-foreground-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-accent outline-none"
-          aria-label={t('reader.settings.close')}
+          variant="ghost"
+          size="sm"
+          aria-label={t('a11y.close')}
         >
           <svg
             className="w-4 h-4"
@@ -98,7 +93,7 @@ export function FixedLayoutControls({
               d="M6 18L18 6M6 6l12 12"
             />
           </svg>
-        </button>
+        </IconButton>
       </div>
 
       <div className="space-y-4">
@@ -197,6 +192,6 @@ export function FixedLayoutControls({
           </div>
         </fieldset>
       </div>
-    </motion.div>
+    </div>
   );
 }

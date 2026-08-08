@@ -44,12 +44,12 @@ export const HighlightItem = memo(function HighlightItem({
       tabIndex={0}
     >
       <div
-        className="text-sm text-foreground cursor-pointer hover:text-accent"
+        className="text-sm text-foreground cursor-pointer hover:text-accent p-0.5 px-1 rounded-sm"
         onClick={onNavigate}
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onNavigate(); } }}
         tabIndex={0}
         role="button"
-        style={{ backgroundColor: highlight.color + '60', padding: '2px 4px', borderRadius: '2px' }}
+        style={{ backgroundColor: highlight.color + '60' }}
       >
         {highlight.selectedText.slice(0, 150)}
         {highlight.selectedText.length > 150 ? '...' : ''}
@@ -67,19 +67,21 @@ export const HighlightItem = memo(function HighlightItem({
             className="w-full p-2 text-sm border border-border rounded bg-background"
             rows={2}
             placeholder={t('annotation.notePlaceholder')}
-            // eslint-disable-next-line jsx-a11y/no-autofocus -- Intentional: textarea appears conditionally on user action, auto-focusing improves note-adding workflow
+            // eslint-disable-next-line jsx-a11y/no-autofocus
             autoFocus
           />
           <div className="flex gap-2">
             <button
+              type="button"
               onClick={() => onEdit(highlight.id)}
-              className="px-2 py-1 text-xs bg-accent text-white rounded hover:opacity-90"
+              className="px-3 py-1.5 text-xs bg-accent text-white rounded hover:opacity-90 min-h-[24px]"
             >
               {t('annotation.save')}
             </button>
             <button
+              type="button"
               onClick={() => setEditingHighlight(null)}
-              className="px-2 py-1 text-xs border border-border rounded hover:bg-background-secondary"
+              className="px-3 py-1.5 text-xs border border-border rounded hover:bg-background-secondary min-h-[24px]"
             >
               {t('annotation.cancel')}
             </button>
@@ -89,23 +91,25 @@ export const HighlightItem = memo(function HighlightItem({
         <>
           <div className="mt-2 flex items-center justify-between">
             <span className="text-xs text-foreground-muted">
-              {formatDate(highlight.createdAt)}
+              {formatDate(highlight.createdAt, t)}
             </span>
           </div>
           {showActions && (
             <div className="mt-2 flex gap-2">
               <button
+                type="button"
                 onClick={() => {
                   setEditingHighlight(highlight.id);
                   setHighlightNote(highlight.note || '');
                 }}
-                className="text-xs text-foreground-muted hover:text-foreground"
+                className="text-xs text-foreground-muted hover:text-foreground min-h-[24px] px-2 py-0.5"
               >
                 {t('annotation.editNote')}
               </button>
               <button
+                type="button"
                 onClick={() => onDelete(highlight.id)}
-                className="text-xs text-accent-error hover:opacity-80"
+                className="text-xs text-accent-error hover:opacity-80 min-h-[24px] px-2 py-0.5"
               >
                 {t('annotation.delete')}
               </button>

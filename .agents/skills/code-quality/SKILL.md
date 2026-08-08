@@ -31,6 +31,12 @@ Review and improve inline code patterns. Operates at the file/function level
 - Pre-write quality check before committing a file
 - Legacy code modernization at the function level
 
+## When NOT to Use
+
+- Cross-file or PR-level review → use `code-review-assistant`
+- Finding comes from Codacy static analysis CI → use `codacy`
+- Coordinating multiple fix agents across a PR → use `pr-review-fix`
+
 ## Core Principles
 
 ### DRY
@@ -91,6 +97,10 @@ Use named constants instead of bare numbers like `30000`.
 - Mix abstraction levels
 - Use raw regex on untrusted input — MUST use `matchBounded`/`testBounded`/`matchAllBounded` from `@do-epub-studio/shared`
 - Assume local `pnpm lint` covers all configs — Codacy covers root-level configs (`vite.config.ts`, `vitest.config.ts`, `playwright.config.ts`) that local ESLint does not
+- Add `@typescript-eslint/*` rules to a bare `{ files, rules }` override block that lacks `plugins` — this crashes ESLint in every package that inherits the root config. ESLint flat-config rule: a plugin's rules can only be referenced in a config object that also declares that plugin. To **uniformly enforce** a `@typescript-eslint` rule (including in tests), set it in the main config object (which already declares `plugins`). To **relax** for tests, add `'off'` to the test-files override. Never re-declare `'error'` in a plugin-less override.
+- Run `pnpm --filter <one-package> lint` as the final lint check after touching `eslint.config.js` — always run `pnpm lint` (via Turborepo, all packages) since root config changes affect every package
+- Use `Record<string, string>` + bracket access in test translation mocks — triggers both `security/detect-object-injection` (ESLint) and `useQwikValidLexicalScope` (Biome). Use `Map<string, string>` with `.get(key)` and wrap `t` with `vi.fn()` instead.
+- Leave module-scope `const fn = () => ...` unwrapped in test files — triggers Biome `useQwikValidLexicalScope`. Wrap with `vi.fn()`.
 
 ## Impeccable (UI files only)
 

@@ -1,12 +1,14 @@
 {
   "name": "@do-epub-studio/worker",
-  "version": "0.1.1",
+  "version": "0.1.0",
   "private": true,
   "type": "module",
   "main": "src/index.ts",
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
+    "check:deploy-config": "wrangler deploy --config wrangler.jsonc --dry-run",
+    "build": "wrangler deploy --dry-run --outdir=dist",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src --ext .ts",
     "test:unit": "vitest --run",
@@ -16,21 +18,23 @@
   "dependencies": {
     "@do-epub-studio/schema": "workspace:*",
     "@do-epub-studio/shared": "workspace:*",
-    "@hono/zod-validator": "^0.8.0",
+    "@hono/zod-validator": "^0.9.0",
     "@libsql/client": "^0.17.4",
+    "@sentry/cloudflare": "^10.69.0",
     "argon2-wasm-edge": "^1.0.23",
-    "hono": "^4.12.25",
+    "hono": "^4.12.34",
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@cloudflare/vitest-pool-workers": "^0.16.20",
-    "@cloudflare/workers-types": "^4.20260630.1",
-    "@types/node": "^25",
-    "@vitest/coverage-v8": "4.1.9",
-    "eslint": "^10.6.0",
+    "@do-epub-studio/testkit": "workspace:*",
+    "@cloudflare/vitest-pool-workers": "^0.20.1",
+    "@cloudflare/workers-types": "^5.20260801.1",
+    "@types/node": "^26",
+    "@vitest/coverage-v8": "4.1.10",
+    "eslint": "^10.8.0",
     "jszip": "^3.10.1",
     "typescript": "^6.0.3",
-    "vitest": "4.1.9",
-    "wrangler": "^4.105.0"
+    "vitest": "4.1.10",
+    "wrangler": "^4.118.0"
   }
 }

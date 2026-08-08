@@ -15,6 +15,8 @@ import {
 
 vi.mock('../client-logger', () => ({
   logClientEvent: vi.fn(),
+  createPerformanceMark: vi.fn(),
+  measurePerformance: vi.fn(() => undefined),
 }));
 
 describe('Conflict Resolution', () => {

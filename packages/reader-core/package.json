@@ -1,6 +1,6 @@
 {
   "name": "@do-epub-studio/reader-core",
-  "version": "0.1.1",
+  "version": "0.1.0",
   "private": true,
   "type": "module",
   "main": "./src/index.ts",
@@ -14,14 +14,14 @@
   "dependencies": {
     "@do-epub-studio/shared": "workspace:*",
     "@intity/epub-js": "^0.3.96",
-    "dompurify": "^3.4.11",
+    "dompurify": "^3.4.13",
     "fflate": "^0.8.3"
   },
   "devDependencies": {
     "@types/jsdom": "^28.0.3",
-    "@types/node": "^25",
-    "fast-check": "^4.8.0",
+    "@types/node": "^26",
+    "fast-check": "^4.9.0",
     "typescript": "^6.0.3",
-    "vitest": "4.1.9"
+    "vitest": "4.1.10"
   }
 }

@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { ReaderViewer } from './ReaderViewer';
 
 describe('ReaderViewer', () => {
-  const mockRef = { current: null as unknown as HTMLDivElement };
+  const mockRef = { current: null as HTMLDivElement | null };
 
   it('renders loading state', () => {
     render(
@@ -12,7 +12,7 @@ describe('ReaderViewer', () => {
         epubUrl={null}
         error={null}
         pageWidthClass="max-w-3xl"
-        viewerRef={{ current: null as unknown as HTMLDivElement }}
+        viewerRef={{ current: null }}
         notAvailableText="No book selected"
       />
     );
@@ -26,7 +26,7 @@ describe('ReaderViewer', () => {
         epubUrl={null}
         error="Failed to load book"
         pageWidthClass="max-w-3xl"
-        viewerRef={{ current: null as unknown as HTMLDivElement }}
+        viewerRef={{ current: null }}
         notAvailableText="No book selected"
       />
     );
@@ -40,7 +40,7 @@ describe('ReaderViewer', () => {
         epubUrl={null}
         error={null}
         pageWidthClass="max-w-3xl"
-        viewerRef={{ current: null as unknown as HTMLDivElement }}
+        viewerRef={{ current: null }}
         notAvailableText="No book selected"
       />
     );

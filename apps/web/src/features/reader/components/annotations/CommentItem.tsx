@@ -1,6 +1,6 @@
 import { useState, memo } from 'react';
 import type { Comment } from '../../../../stores';
-import type { TranslationKeys } from '../../../../i18n';
+import type { TFunction } from '../../../../hooks/useTranslation';
 import { formatDate } from './formatDate';
 
 export interface CommentItemProps {
@@ -19,7 +19,7 @@ export interface CommentItemProps {
   onResolve: (id: string) => void;
   onDelete: (id: string) => void;
   onNavigate: () => void;
-  t: (key: TranslationKeys) => string;
+  t: TFunction;
 }
 
 export const CommentItem = memo(function CommentItem({
@@ -84,15 +84,15 @@ export const CommentItem = memo(function CommentItem({
           <div className="flex gap-2">
             <button
               onClick={() => handleEdit(comment.id)}
-              className="px-2 py-1 text-xs bg-accent text-white rounded hover:opacity-90"
+              className="px-3 py-1.5 text-xs bg-accent text-white rounded hover:opacity-90 min-h-[24px]"
             >
-              Save
+              {t('annotation.save')}
             </button>
             <button
               onClick={() => setEditingComment(null)}
-              className="px-2 py-1 text-xs border border-border rounded hover:bg-background-secondary"
+              className="px-3 py-1.5 text-xs border border-border rounded hover:bg-background-secondary min-h-[24px]"
             >
-              Cancel
+              {t('annotation.cancel')}
             </button>
           </div>
         </div>
@@ -101,7 +101,7 @@ export const CommentItem = memo(function CommentItem({
           <p className="text-sm text-foreground">{comment.body}</p>
           <div className="mt-2 flex items-center justify-between">
             <span className="text-xs text-foreground-muted">
-              {comment.userEmail} · {formatDate(comment.createdAt)}
+              {comment.userEmail} · {formatDate(comment.createdAt, t)}
             </span>
             {comment.status === 'resolved' && (
               <span className="text-xs text-accent-success">{t('comment.resolved')}</span>
@@ -116,7 +116,7 @@ export const CommentItem = memo(function CommentItem({
             <div key={reply.id} className="text-sm">
               <p className="text-foreground">{reply.body}</p>
               <span className="text-xs text-foreground-muted">
-                {reply.userEmail} · {formatDate(reply.createdAt)}
+                {reply.userEmail} · {formatDate(reply.createdAt, t)}
               </span>
             </div>
           ))}
@@ -137,13 +137,13 @@ export const CommentItem = memo(function CommentItem({
           <div className="flex gap-2">
             <button
               onClick={() => handleReply(comment.id)}
-              className="px-2 py-1 text-xs bg-accent text-white rounded hover:opacity-90"
+              className="px-3 py-1.5 text-xs bg-accent text-white rounded hover:opacity-90 min-h-[24px]"
             >
               {t('comment.reply')}
             </button>
             <button
               onClick={() => setReplyingTo(null)}
-              className="px-2 py-1 text-xs border border-border rounded hover:bg-background-secondary"
+              className="px-3 py-1.5 text-xs border border-border rounded hover:bg-background-secondary min-h-[24px]"
             >
               {t('annotation.cancel')}
             </button>
@@ -158,7 +158,7 @@ export const CommentItem = memo(function CommentItem({
               setReplyingTo(comment.id);
               setReplyText('');
             }}
-            className="text-xs text-accent hover:opacity-80"
+            className="text-xs text-accent hover:opacity-80 min-h-[24px] px-2 py-0.5"
           >
             {t('comment.reply')}
           </button>
@@ -167,19 +167,19 @@ export const CommentItem = memo(function CommentItem({
               setEditingComment(comment.id);
               setEditText(comment.body);
             }}
-            className="text-xs text-foreground-muted hover:text-foreground"
+            className="text-xs text-foreground-muted hover:text-foreground min-h-[24px] px-2 py-0.5"
           >
             {t('comment.edit')}
           </button>
           <button
             onClick={() => onResolve(comment.id)}
-            className="text-xs text-accent-success hover:opacity-80"
+            className="text-xs text-accent-success hover:opacity-80 min-h-[24px] px-2 py-0.5"
           >
             {comment.status === 'resolved' ? t('comment.unresolve') : t('comment.resolve')}
           </button>
           <button
             onClick={() => onDelete(comment.id)}
-            className="text-xs text-accent-error hover:opacity-80"
+            className="text-xs text-accent-error hover:opacity-80 min-h-[24px] px-2 py-0.5"
           >
             {t('comment.delete')}
           </button>

@@ -2,7 +2,11 @@
 
 ## Status: ACTIVE
 
-Lighthouse CI has been restored per Issue #160. The measurement targets the `/reader` route via a Cloudflare Pages preview deployment.
+Lighthouse CI has been restored per Issue #160. It measures the real
+public routes (`/`, `/catalog`, `/login`, `/admin`) via a Cloudflare
+Pages preview deployment. The reader route is dynamic (`/read/:bookSlug`)
+and auth-protected, so it requires an auth-fixture script to audit; that
+is tracked as follow-up F1 of `plans/216-goap-execute-plan215-non-gated-waves.md`.
 
 ## Configuration
 
@@ -26,11 +30,12 @@ In addition to Lighthouse scores, the project enforces hard JS/CSS budget gates 
 
 - **Workflow:** `.github/workflows/lighthouse.yml`
 - **Trigger:** PRs to `main` (with path filters to skip docs-only changes) + manual dispatch
+- **Mode:** Advisory-only — assertion failures produce `::warning::` annotations but do not block merging
 - **How it works:**
   1. Builds the web app
   2. Deploys a preview to Cloudflare Pages via wrangler-action (OIDC)
-  3. Runs Lighthouse CI with 3 passes on the `/reader` URL
-  4. Asserts score thresholds (accessibility is a hard error)
+  3. Runs Lighthouse CI with 3 passes on the public routes (`/`, `/catalog`, `/login`, `/admin`)
+  4. Reports score thresholds as advisory annotations (not blocking)
   5. Comments PR with category scores and route-aware bundle sizes.
 
 ## Running Locally
@@ -42,18 +47,18 @@ In addition to Lighthouse scores, the project enforces hard JS/CSS budget gates 
 pnpm --filter @do-epub-studio/web build
 
 # Run size check (including route-aware budgets)
-node scripts/check-bundle-size.mjs
+node scripts/check-bundle-budget.mjs
 ```
 
 ### Lighthouse Audit
 
 ```bash
 # Run Lighthouse against the production URL
-npx lhci collect --url=https://do-epub-studio.pages.dev/reader
+npx lhci collect --url=https://do-epub-studio.pages.dev/login
 npx lhci assert
 
 # Or against local dev server (requires running API backend)
-npx lhci collect --url=http://localhost:5173/reader --settings.preset=desktop
+npx lhci collect --url=http://localhost:5173/login --settings.preset=desktop
 npx lhci assert
 ```
 

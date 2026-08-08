@@ -130,19 +130,19 @@ describe('CommentItem', () => {
   it('shows editing textarea when editing', () => {
     render(<CommentItem {...defaultProps} editingComment="c1" editText="Edit content" />);
     expect(screen.getByDisplayValue('Edit content')).toBeInTheDocument();
-    expect(screen.getByText('Save')).toBeInTheDocument();
-    expect(screen.getByText('Cancel')).toBeInTheDocument();
+    expect(screen.getByText('annotation.save')).toBeInTheDocument();
+    expect(screen.getByText('annotation.cancel')).toBeInTheDocument();
   });
 
   it('calls handleEdit on save', () => {
     render(<CommentItem {...defaultProps} editingComment="c1" editText="Updated" />);
-    fireEvent.click(screen.getByText('Save'));
+    fireEvent.click(screen.getByText('annotation.save'));
     expect(defaultProps.handleEdit).toHaveBeenCalledWith('c1');
   });
 
   it('clears editing on cancel', () => {
     render(<CommentItem {...defaultProps} editingComment="c1" editText="text" />);
-    fireEvent.click(screen.getByText('Cancel'));
+    fireEvent.click(screen.getByText('annotation.cancel'));
     expect(defaultProps.setEditingComment).toHaveBeenCalledWith(null);
   });
 

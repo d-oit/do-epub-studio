@@ -10,11 +10,12 @@ import {
   saveAnnotation,
   type SyncQueueItem,
 } from './db';
-import { api } from '../api';
+import { api, apiRequest } from '../api';
 import type { AnnotationEntry } from './db';
 import { clearAllPermissions } from './permissions';
 import { createTraceId, createSpanId } from '@do-epub-studio/shared';
 import { logClientEvent } from '../client-logger';
+import { resolveConflict, ConflictType, getPendingConflicts, clearResolvedConflicts } from './conflict-resolution';
 
 const MAX_RETRY_ATTEMPTS = 5;
 const BASE_DELAY_MS = 1000;
@@ -35,6 +36,9 @@ let onPermissionRevoked: ((bookId: string) => void) | null = null;
  */
 let retryTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
+/** Single-flight drain guard: only one attemptSync loop runs at a time. */
+let drainPromise: Promise<void> | null = null;
+
 export function setPermissionRevokedCallback(callback: (bookId: string) => void): void {
   onPermissionRevoked = callback;
 }
@@ -47,6 +51,11 @@ export function cancelPendingRetry(): void {
   }
 }
 
+/** Reset the single-flight drain guard. Exported for test teardown only. */
+export function resetDrainPromise(): void {
+  drainPromise = null;
+}
+
 export function generateMutationId(): string {
   return uuidv4();
 }
@@ -57,7 +66,7 @@ function calculateDelay(attempt: number): number {
 }
 
 export async function queueSync(
-  type: 'progress' | 'annotation' | 'insight' | 'bookmark' | 'reading-insight',
+  type: 'progress' | 'annotation' | 'reading-insight',
   payload: unknown,
   mutationId: string,
 ): Promise<void> {
@@ -70,91 +79,139 @@ export async function queueSync(
     attempts: 0,
   };
   await addToSyncQueue(item);
-  void attemptSync();
+  void ensureDrain();
+}
+
+function ensureDrain(): Promise<void> {
+  if (drainPromise) return drainPromise;
+  drainPromise = attemptSync().finally(() => {
+    drainPromise = null;
+  });
+  return drainPromise;
 }
 
 async function attemptSync(): Promise<void> {
   if (!navigator.onLine) return;
 
-  const queue = await getSyncQueue();
-  if (!queue || queue.length === 0) return;
+  const snapshot = await getSyncQueue();
+  if (!snapshot || snapshot.length === 0) return;
 
-  const item = queue.sort((a, b) => a.createdAt - b.createdAt)[0];
+  // Sort once by creation time; drain FIFO.
+  const sorted = [...snapshot].sort((a, b) => a.createdAt - b.createdAt);
+  const processed = new Set<string>();
 
-  const traceId = createTraceId();
-  const spanId = createSpanId();
+  for (const item of sorted) {
+    if (!navigator.onLine) return;
+    if (processed.has(item.id)) continue;
 
-  if (item.attempts >= MAX_RETRY_ATTEMPTS) {
-    await removeSyncQueueItem(item.id);
-    logClientEvent({
-      level: 'warn',
-      traceId,
-      spanId,
-      event: 'sync.item.exceeded_max_retries',
-      metadata: { itemId: item.id, type: item.type, attempts: item.attempts },
-    });
-    return;
-  }
+    const traceId = createTraceId();
+    const spanId = createSpanId();
 
-  const result = await syncItem(item, traceId, spanId);
-
-  if (result.success) {
-    await removeSyncQueueItem(item.id);
-    await markAsSynced(item.type, item.mutationId);
-    logClientEvent({
-      level: 'info',
-      traceId,
-      spanId,
-      event: 'sync.item.success',
-      metadata: { itemId: item.id, type: item.type },
-    });
-  } else if (result.error === 'permission_revoked') {
-    logClientEvent({
-      level: 'error',
-      traceId,
-      spanId,
-      event: 'sync.permission_revoked',
-      metadata: { itemId: item.id, type: item.type },
-    });
-    await clearAllPermissions();
-
-    // Notify UI about permission revocation
-    if (onPermissionRevoked) {
-      const payload = item.payload as { bookId?: string };
-      if (payload?.bookId) {
-        onPermissionRevoked(payload.bookId);
-      }
+    if (item.attempts >= MAX_RETRY_ATTEMPTS) {
+      await removeSyncQueueItem(item.id);
+      processed.add(item.id);
+      logClientEvent({
+        level: 'warn',
+        traceId,
+        spanId,
+        event: 'sync.item.exceeded_max_retries',
+        metadata: { itemId: item.id, type: item.type, attempts: item.attempts },
+      });
+      continue;
     }
 
-    // Remove the failing item so the queue doesn't stall
-    await removeSyncQueueItem(item.id);
-  } else {
-    item.attempts++;
-    item.lastAttempt = Date.now();
-    item.error = result.error;
-    await updateSyncQueueItem(item);
+    const result = await syncItem(item, traceId, spanId);
 
-    logClientEvent({
-      level: 'warn',
-      traceId,
-      spanId,
-      event: 'sync.item.retry_scheduled',
-      metadata: {
-        itemId: item.id,
-        type: item.type,
-        attempt: item.attempts,
-        error: result.error,
-      },
-    });
+    if (result.success) {
+      await removeSyncQueueItem(item.id);
+      processed.add(item.id);
+      await markAsSynced(item.type, item.mutationId);
+      // Clear any pending conflicts for this entity after successful sync
+      if (item.type === 'progress') {
+        const payload = item.payload as { bookId?: string };
+        if (payload?.bookId) {
+          const pendingBefore = getPendingConflicts(payload.bookId).length;
+          clearResolvedConflicts(payload.bookId);
+          const pendingAfter = getPendingConflicts(payload.bookId).length;
+          if (pendingBefore !== pendingAfter) {
+            logClientEvent({
+              level: 'info',
+              traceId,
+              spanId,
+              event: 'sync.conflicts_cleared',
+              metadata: {
+                itemId: item.id,
+                bookId: payload.bookId,
+                cleared: pendingBefore - pendingAfter,
+              },
+            });
+          }
+        }
+      }
+      logClientEvent({
+        level: 'info',
+        traceId,
+        spanId,
+        event: 'sync.item.success',
+        metadata: { itemId: item.id, type: item.type },
+      });
+    } else if (result.error === 'permission_revoked') {
+      logClientEvent({
+        level: 'error',
+        traceId,
+        spanId,
+        event: 'sync.permission_revoked',
+        metadata: { itemId: item.id, type: item.type },
+      });
+      await clearAllPermissions();
 
-    const delay = calculateDelay(item.attempts);
-    // Clear any previously scheduled retry before scheduling a new one
-    // to prevent multiple concurrent retry chains (memory leak fix).
-    cancelPendingRetry();
-    retryTimeoutId = setTimeout(() => {
-      retryTimeoutId = null;
-      void attemptSync();
-    }, delay);
+      if (onPermissionRevoked) {
+        const payload = item.payload as { bookId?: string };
+        if (payload?.bookId) {
+          onPermissionRevoked(payload.bookId);
+        }
+      }
+
+      await removeSyncQueueItem(item.id);
+      processed.add(item.id);
+    } else if (result.error === 'conflict_requires_manual_resolution') {
+      // Conflict cannot be auto-resolved — remove from queue to prevent infinite retries
+      logClientEvent({
+        level: 'warn',
+        traceId,
+        spanId,
+        event: 'sync.conflict_manual_required',
+        metadata: { itemId: item.id, type: item.type },
+      });
+      await removeSyncQueueItem(item.id);
+      processed.add(item.id);
+    } else {
+      item.attempts++;
+      item.lastAttempt = Date.now();
+      item.error = result.error;
+      await updateSyncQueueItem(item);
+
+      logClientEvent({
+        level: 'warn',
+        traceId,
+        spanId,
+        event: 'sync.item.retry_scheduled',
+        metadata: {
+          itemId: item.id,
+          type: item.type,
+          attempt: item.attempts,
+          error: result.error,
+        },
+      });
+
+      const delay = calculateDelay(item.attempts);
+      cancelPendingRetry();
+      retryTimeoutId = setTimeout(() => {
+        retryTimeoutId = null;
+        void ensureDrain();
+      }, delay);
+      return;
+    }
   }
 }
 
@@ -167,11 +224,9 @@ async function syncItem(item: SyncQueueItem, traceId: string, spanId: string): P
         percentage: number;
         mutationId: string;
       };
-      await api.post(`/api/books/${payload.bookId}/progress`, {
-        bookId: payload.bookId,
+      await api.put(`/api/books/${payload.bookId}/progress`, {
         locator: {
           cfi: payload.cfi,
-          selectedText: '',
         },
         progressPercent: payload.percentage,
         mutationId: payload.mutationId,
@@ -179,69 +234,45 @@ async function syncItem(item: SyncQueueItem, traceId: string, spanId: string): P
     } else if (item.type === 'annotation') {
       const payload = item.payload as {
         bookId: string;
-        annotation: Omit<AnnotationEntry, 'synced' | 'mutationId'>;
+        annotation: Omit<AnnotationEntry, 'synced' | 'mutationId'> & { id?: string; status?: string };
+        action?: string;
       };
 
-      if (payload.annotation.type === 'highlight') {
+      if (payload.action === 'resolve') {
+        await apiRequest(`/api/comments/${payload.annotation.id}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ status: payload.annotation.status }),
+        });
+      } else if (payload.annotation.type === 'highlight') {
         await api.post(`/api/books/${payload.bookId}/highlights`, {
-          chapterRef: payload.annotation.chapter,
-          cfiRange: payload.annotation.cfi,
-          selectedText: payload.annotation.text ?? '',
-          color: payload.annotation.color ?? 'yellow',
+          locator: {
+            cfi: payload.annotation.cfi,
+            selectedText: payload.annotation.text ?? '',
+            chapterRef: payload.annotation.chapter ?? '',
+          },
+          color: payload.annotation.color ?? '#ffff00',
           note: payload.annotation.comment ?? '',
-          mutationId: item.mutationId,
         });
       } else if (payload.annotation.type === 'bookmark') {
         await api.post(`/api/books/${payload.bookId}/bookmarks`, {
           locator: {
             cfi: payload.annotation.cfi,
-            chapter: payload.annotation.chapter,
-            selectedText: payload.annotation.text ?? '',
+            selectedText: payload.annotation.text ?? payload.annotation.cfi,
+            chapterRef: payload.annotation.chapter ?? '',
           },
-          label: payload.annotation.comment ?? '',
-          mutationId: item.mutationId,
+          label: payload.annotation.text ?? '',
         });
       } else {
         await api.post(`/api/books/${payload.bookId}/comments`, {
-          chapterRef: payload.annotation.chapter,
-          cfiRange: payload.annotation.cfi,
-          selectedText: payload.annotation.text ?? '',
+          locator: {
+            cfi: payload.annotation.cfi,
+            selectedText: payload.annotation.text ?? '',
+            chapterRef: payload.annotation.chapter ?? '',
+          },
           body: payload.annotation.comment ?? '',
           visibility: 'shared' as const,
-          mutationId: item.mutationId,
         });
       }
-    } else if (item.type === 'insight') {
-      const payload = item.payload as {
-        bookId: string;
-        bucketDate: string;
-        activeMinutes: number;
-        activePages: number;
-        mutationId: string;
-      };
-      await api.post(`/api/books/${payload.bookId}/insights/sync`, {
-        bucketDate: payload.bucketDate,
-        activeMinutes: payload.activeMinutes,
-        activePages: payload.activePages,
-        mutationId: payload.mutationId,
-      });
-    } else if (item.type === 'bookmark') {
-      const payload = item.payload as {
-        bookId: string;
-        cfi: string;
-        chapter?: string;
-        label?: string;
-        mutationId: string;
-      };
-      await api.post(`/api/books/${payload.bookId}/bookmarks`, {
-        locator: {
-          cfi: payload.cfi,
-          chapter: payload.chapter ?? '',
-          selectedText: '',
-        },
-        label: payload.label ?? '',
-        mutationId: payload.mutationId,
-      });
     } else if (item.type === 'reading-insight') {
       const payload = item.payload as {
         bookId: string;
@@ -277,6 +308,51 @@ async function syncItem(item: SyncQueueItem, traceId: string, spanId: string): P
       return { success: false, error: 'permission_revoked' };
     }
 
+    // Check for conflict (409) — only for progress type
+    if (status === 409 && item.type === 'progress') {
+      const payload = item.payload as {
+        bookId: string;
+        cfi: string;
+        percentage: number;
+        mutationId: string;
+      };
+
+      // We don't have the remote version from a 409. Use equal timestamps
+      // to force the manual resolution path — the user must decide which
+      // version to keep since we can't determine the remote state.
+      const resolution = resolveConflict(
+        ConflictType.ProgressUpdate,
+        item.payload,
+        item.payload,
+        item.createdAt,
+        item.createdAt,
+        payload.bookId,
+        payload.bookId,
+      );
+
+      logClientEvent({
+        level: 'warn',
+        traceId,
+        spanId,
+        event: 'sync.item.conflict',
+        metadata: {
+          itemId: item.id,
+          type: item.type,
+          resolved: resolution.resolved,
+          strategy: resolution.strategy,
+          winner: resolution.winner,
+        },
+      });
+
+      if (resolution.resolved && resolution.winner === 'local') {
+        // Local wins LWW — sync is successful, no need to re-send
+        return { success: true };
+      }
+
+      // Remote wins or manual resolution needed — cannot auto-resolve without remote version
+      return { success: false, error: 'conflict_requires_manual_resolution' };
+    }
+
     logClientEvent({
       level: 'error',
       traceId,
@@ -290,32 +366,35 @@ async function syncItem(item: SyncQueueItem, traceId: string, spanId: string): P
   }
 }
 
-async function markAsSynced(type: 'progress' | 'annotation' | 'insight' | 'bookmark' | 'reading-insight', mutationId: string): Promise<void> {
+async function markAsSynced(type: 'progress' | 'annotation' | 'reading-insight', mutationId: string): Promise<void> {
   if (type === 'progress') {
     const unsynced = await getUnsyncedProgress();
     const entry = unsynced.find((e) => e.mutationId === mutationId);
     if (entry) {
       await saveProgress({ ...entry, synced: true });
     }
-  } else if (type === 'annotation' || type === 'bookmark') {
+  } else if (type === 'annotation') {
     const unsynced = await getUnsyncedAnnotations();
     const entry = unsynced.find((e) => e.mutationId === mutationId);
     if (entry) {
       await saveAnnotation({ ...entry, synced: true });
     }
   }
-  // 'insight' and 'reading-insight' items are server-side only; no local mark-as-synced needed.
+  // 'reading-insight' items are server-side only; the local IndexedDB
+  // store is the source of truth and the server sync is append-only (UPSERT).
+  // No local mark-as-synced is needed — the queue item itself is removed
+  // on success, and the local insight entry persists for the InfoPanel.
 }
 
 export async function syncAll(): Promise<void> {
   if (!navigator.onLine) return;
-  await attemptSync();
+  await ensureDrain();
 }
 
 export function setupOnlineListener(): () => void {
   const handler = () => {
     if (navigator.onLine) {
-      void attemptSync();
+      void ensureDrain();
     }
   };
 

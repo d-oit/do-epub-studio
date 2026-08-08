@@ -1,6 +1,11 @@
 ---
+# Static-analysis scope: see docs/static-analysis.md (ADR-215 Decision 2).
+# apps/** and packages/** are excluded from Codacy's engines by design; the
+# authoritative gate for that source is the repo's type-aware lint pipeline
+# (`pnpm lint` via turbo + `pnpm typecheck` + tests). Codacy remains a
+# required check for root-level configs and scripts it covers.
 engines:
-  eslint:
+  eslint-8:
     enabled: true
     exclude_paths:
       - "**/*.test.ts"
@@ -22,8 +27,17 @@ engines:
       - "**/*.spec.tsx"
       - "**/__tests__/**"
       - "**/tests/**"
+      - "apps/web/src/lib/api/index.ts"
+      - "apps/web/src/lib/api/core.ts"
+      - "apps/worker/src/__tests__/routes.export.test.ts"
+      - "apps/worker/src/__tests__/routes.search.test.ts"
+      - "packages/**"
   biome:
     enabled: false
+    exclude_paths:
+      - "apps/web/src/**"
+      - "apps/worker/src/**"
+      - "packages/**"
   tsqlint:
     enabled: false
   tsql:
@@ -36,6 +50,7 @@ exclude_paths:
   - "playwright-report/**"
   - "test-results/**"
   - "**/*.sql"
+  - "scripts/**"
   - ".opencode/skills/impeccable/**"
   - ".agents/skills/impeccable/**"
   - ".github/skills/impeccable/**"
