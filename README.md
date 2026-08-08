@@ -87,6 +87,8 @@ Every commit must pass:
 ## Documentation
 - [Coding Guide](docs/coding-guide.md): Architectural patterns and conventions.
 - [Agent Config](AGENTS.md): Instructions and guardrails for AI agents.
+- [Agent Workflow](agents-docs/WORKFLOW.md): Step-by-step verification, commit, and mandatory post-task learning flow.
+- [Project Learnings](agents-docs/LEARNINGS.md): Aggregated non-obvious discoveries from past work.
 - [Security](docs/security.md): Security model, session tokens, signed URLs, CSP.
 - [Security Posture](docs/security-posture.md): Standing decisions (auth, CSP, token storage).
 - [Observability](docs/observability-telemetry.md): Client telemetry contract and tracing.

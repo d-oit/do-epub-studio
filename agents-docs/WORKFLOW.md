@@ -98,6 +98,22 @@ If an issue cannot be fixed:
 ./scripts/atomic-commit/run.sh --dry-run
 ```
 
+### 7. Capture Learnings (Mandatory)
+
+After every non-trivial change — before opening the PR:
+
+1. Load the `learn` skill and extract non-obvious discoveries from the work
+   just completed (see [Post-Task Learning](#post-task-learning) for what
+   qualifies).
+2. File each learning in its scoped location (project-wide →
+   `agents-docs/LEARNINGS.md`; script → `scripts/AGENTS.md`; skill →
+   `.agents/skills/<name>/AGENTS.md`).
+3. Include the learnings in the same PR that produced them. If there is
+   genuinely nothing non-obvious, state "no new learnings" in the PR
+   description — silence is not a valid skip.
+
+A PR is not complete until this step is done (AGENTS.md Tier 2 #12).
+
 ---
 
 ## Pre-Existing Issue Resolution
@@ -156,6 +172,9 @@ git push -u origin HEAD
 ---
 
 ## Post-Task Learning
+
+> Mandatory per AGENTS.md Tier 2 #12 — see Step 7 of the Full Verification
+> Sequence for where this runs in the commit flow.
 
 After non-trivial work, capture non-obvious discoveries:
 

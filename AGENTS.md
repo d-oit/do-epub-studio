@@ -69,6 +69,7 @@ readonly MAX_PR_TITLE_LENGTH=72
 9. **Document ALL issues as GOAP plans + ADRs in `plans/`.** Warnings, pre-existing issues, and unfixable items each get a GOAP plan with an ADR defining policy. Do NOT edit KNOWN-ISSUES.md directly — that is a reference mirror of monitor-tier items only.
 10. **Releases MUST be cut via the `release-management` skill — no manual tags, no direct CHANGELOG edits.** Tags are pushed exclusively via `scripts/release/create-release-tag.sh <version>`; the pre-push hook blocks all other `v*` tag pushes.
 11. **CI MUST enforce Lighthouse mobile preset with route-specific performance budgets** for catalog, admin, auth, and offline routes.
+12. **MUST run the `learn` skill after every non-trivial change.** Capture non-obvious learnings in the same PR that produced them, using the scoping rules in `agents-docs/LEARNINGS.md` (project-wide → `agents-docs/LEARNINGS.md`, script → `scripts/AGENTS.md`, skill → `.agents/skills/<name>/AGENTS.md`). A PR is not complete until its learnings are recorded or explicitly none exist.
 
 ---
 
@@ -85,7 +86,6 @@ readonly MAX_PR_TITLE_LENGTH=72
 - **Use OKLCH for color tokens** to ensure perceptually uniform lightness and wide-gamut P3 support.
 - **Enable View Transitions** for all page-to-page navigations.
 - **Enforce mutual exclusivity** for reader side-panels (TOC, Settings, etc.).
-- **Document coding workflow changes via `learn` skill.**
 
 ---
 
@@ -112,6 +112,7 @@ Run this before finalizing ANY response:
 - [ ] Did I run quality gate before commit?
 - [ ] Is my commit message under 72 chars with correct format?
 - [ ] Did I use feature branch (not main) for changes?
+- [ ] Did I capture non-obvious learnings via the `learn` skill in this PR (Tier 2 #12)?
 
 ---
 

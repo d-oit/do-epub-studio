@@ -1,7 +1,7 @@
 # GOAP 218: Reader Runtime Performance Optimization Swarm
 
 **Date:** 2026-08-06
-**Status:** Proposed
+**Status:** Completed (Waves 1–4 via PRs #924/#925/#930; bundle-baseline artifact wiring and `createEpubLoader` wrapper decision carried to plan 221)
 **Goal:** Replace broad budget ceilings with measured regression baselines,
 instrument the EPUB reader runtime path, and optimize the critical rendering
 pipeline using a coordinated swarm of agents.

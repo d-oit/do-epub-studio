@@ -16,7 +16,7 @@ Auto-generated from skill definitions. Run this script to regenerate.
 
 ## Knowledge-Management
 
-| `learn` | Extract non-obvious session learnings into scoped files. Activate after non-trivial tasks to capture fragile config, quirks, or breakthroughs. |
+| `learn` | Extract non-obvious session learnings into scoped files. MANDATORY after every non-trivial change (AGENTS.md Tier 2 #12): capture fragile config, quirks, or breakthroughs in the same PR that produced them. |
 | `memory-context` | Retrieve past learnings and analysis via csm CLI. Activate at session start or when facing a problem that might have been solved before. |
 
 ## Quality
