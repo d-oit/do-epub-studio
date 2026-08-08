@@ -29,7 +29,7 @@
     --color-accent: oklch(48% 0.16 250);
     --color-accent-success: oklch(70% 0.15 150);
     --color-accent-warning: oklch(75% 0.15 80);
-    --color-accent-error: oklch(65% 0.2 25);
+    --color-accent-error: oklch(53% 0.2 25);
     --color-border: oklch(92% 0 0);
 
     /* Primary scale (blue) */
@@ -133,7 +133,7 @@
       --color-accent: oklch(52% 0.2 250);
       --color-accent-success: oklch(70% 0.2 150);
       --color-accent-warning: oklch(75% 0.2 80);
-      --color-accent-error: oklch(65% 0.25 25);
+      --color-accent-error: oklch(52% 0.25 25);
       --color-accent-secondary: oklch(54.1% 0.28 293.0);
       --color-primary-500: oklch(62.3% 0.22 259.8);
       --color-primary-600: oklch(54.6% 0.25 262.9);
@@ -156,7 +156,7 @@
     --color-accent: oklch(55% 0.16 250);
     --color-accent-success: oklch(75% 0.15 150);
     --color-accent-warning: oklch(80% 0.15 80);
-    --color-accent-error: oklch(70% 0.2 25);
+    --color-accent-error: oklch(55% 0.2 25);
     --color-border: oklch(25% 0 0);
 
     /* Primary scale (flipped for dark) */
@@ -197,7 +197,7 @@
     --color-accent: oklch(55% 0.12 85);
     --color-accent-success: oklch(65% 0.15 150);
     --color-accent-warning: oklch(70% 0.15 85);
-    --color-accent-error: oklch(60% 0.2 25);
+    --color-accent-error: oklch(48% 0.2 25);
     --color-border: oklch(90% 0.06 85);
 
     /* Primary scale (warm-reduced chroma) */
