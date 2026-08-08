@@ -30,6 +30,7 @@ export interface EpubLoader {
   createRendition(container: HTMLElement): EpubRenditionHandle;
   destroy(): void;
   getMetadata(): BookMetadata;
+  getBook(): Book | null;
   getToc(): TocItem[];
   getSpineItems(): SpineItem[];
   getProgress(): ProgressPosition | null;
@@ -316,6 +317,9 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
     },
     getMetadata(): BookMetadata {
       return { ...metadata };
+    },
+    getBook(): Book | null {
+      return book;
     },
     getToc(): TocItem[] {
       return [...toc];

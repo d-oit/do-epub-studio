@@ -366,14 +366,7 @@ jobs:
         run: pnpm build
 
       - name: Check bundle size
-        run: METRICS_OUTPUT=bundle-metrics.json pnpm --filter @do-epub-studio/web test:bundle
-
-      - name: Upload bundle metrics
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
-        with:
-          name: bundle-metrics-node${{ matrix.node-version }}
-          path: apps/web/bundle-metrics.json
-          retention-days: 1
+        run: pnpm --filter @do-epub-studio/web test:bundle
 
       - name: Setup baseline (PR only)
         if: github.event_name == 'pull_request'
@@ -388,13 +381,11 @@ jobs:
         continue-on-error: true
         working-directory: ${{ steps.baseline.outputs.baseline-dir }}
         env:
-          METRICS_OUTPUT: baseline-bundle-metrics.json
           WORKSPACE: ${{ github.workspace }}
         run: |
           pnpm build
           node scripts/check-bundle-budget.mjs
           node scripts/collect-turbo-metrics.mjs "$WORKSPACE/baseline-turbo-metrics.json"
-          cp baseline-bundle-metrics.json "$WORKSPACE/baseline-bundle-metrics.json"
           cp baseline-turbo-metrics.json "$WORKSPACE/baseline-turbo-metrics.json" 2>/dev/null || true
           rm -rf "${{ steps.baseline.outputs.baseline-dir }}"
 
@@ -408,7 +399,6 @@ jobs:
         with:
           name: baseline-metrics-node${{ matrix.node-version }}
           path: |
-            baseline-bundle-metrics.json
             baseline-turbo-metrics.json
           retention-days: 1
 
@@ -627,11 +617,9 @@ jobs:
         run: |
           mkdir -p metrics
           mkdir -p baseline
-          find metrics-artifacts/bundle-metrics-node24 -name "*.json" -exec cp {} metrics/ \; || true
           find metrics-artifacts/startup-metrics -name "*.json" -exec cp {} metrics/ \; || true
           # Lighthouse runs in a separate workflow; metrics not available here
           find metrics-artifacts/lighthouse-metrics -name "*.json" -exec cp {} metrics/ \; || echo "No lighthouse metrics available (generated in separate workflow)"
-          find metrics-artifacts/baseline-metrics-node24 -name "baseline-bundle-metrics.json" -exec mv {} baseline/bundle-metrics.json \; || true
           find metrics-artifacts/baseline-metrics-node24 -name "baseline-turbo-metrics.json" -exec mv {} baseline/turbo-metrics.json \; || true
           find metrics-artifacts/test-metrics-node24 -name "test-metrics-node24.json" -exec cp {} metrics/test-metrics.json \; || true
           find metrics-artifacts/baseline-metrics-node24 -name "test-metrics-node24.json" -exec cp {} baseline/test-metrics.json \; || true

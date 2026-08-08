@@ -26,7 +26,7 @@ vi.mock('@do-epub-studio/reader-core', async (importOriginal) => {
   const actual = await importOriginal();
   return {
     ...(actual as Record<string, unknown>),
-    parseEpubInWorker: vi.fn().mockResolvedValue({ valid: true, data: new Uint8Array([0, 0, 0, 4]) }),
+    createEpubLoader: createEpubLoaderMock,
   };
 });
 
@@ -37,7 +37,7 @@ vi.mock('../../../lib/offline', () => ({
   generateMutationId: vi.fn(() => 'mock-mutation-id'),
 }));
 
-const { mockRendition, mockBook, mockEpubFn } = vi.hoisted(() => {
+const { mockRendition, mockBook, mockEpubFn, createEpubLoaderMock } = vi.hoisted(() => {
   const rendition = {
     themes: { registerRules: vi.fn(), select: vi.fn() },
     hooks: {
@@ -73,6 +73,10 @@ const { mockRendition, mockBook, mockEpubFn } = vi.hoisted(() => {
     mockRendition: rendition,
     mockBook: book,
     mockEpubFn: vi.fn(() => book),
+    createEpubLoaderMock: vi.fn(() => ({
+      load: vi.fn().mockResolvedValue(undefined),
+      getBook: vi.fn(() => book),
+    })),
   };
 });
 
@@ -150,7 +154,7 @@ describe('useReaderEpub', () => {
     );
 
     await waitFor(() => {
-      expect(mockEpubFn).toHaveBeenCalled();
+      expect(createEpubLoaderMock).toHaveBeenCalled();
     });
 
     await waitFor(() => {
@@ -176,7 +180,7 @@ describe('useReaderEpub', () => {
     );
 
     await waitFor(() => {
-      expect(mockEpubFn).not.toHaveBeenCalled();
+      expect(createEpubLoaderMock).not.toHaveBeenCalled();
     });
   });
 
