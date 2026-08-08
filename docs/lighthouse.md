@@ -4,9 +4,11 @@
 
 Lighthouse CI has been restored per Issue #160. It measures the real
 public routes (`/`, `/catalog`, `/login`, `/admin`) via a Cloudflare
-Pages preview deployment. The reader route is dynamic (`/read/:bookSlug`)
-and auth-protected, so it requires an auth-fixture script to audit; that
-is tracked as follow-up F1 of `plans/216-goap-execute-plan215-non-gated-waves.md`.
+Pages preview deployment. The reader route (`/read/:bookSlug`) is
+auth-protected and audited via the seeded auth-fixture script
+`lighthouse/auth-reader-fixture.mjs` (wired in `.lighthouserc.json`);
+originally tracked as follow-up F1 of
+`plans/archive/216-goap-execute-plan215-non-gated-waves.md`, now complete.
 
 ## Configuration
 

@@ -2,7 +2,7 @@
 
 > **Status:** Accepted
 > **Supersedes:** none
-> **Related:** `plans/216-goap-execute-plan215-non-gated-waves.md`, ADR-021, ADR-067
+> **Related:** `plans/archive/216-goap-execute-plan215-non-gated-waves.md`, ADR-021, ADR-067
 > **Deciders:** maintainers
 > **Tags:** testing, ci, vitest
 

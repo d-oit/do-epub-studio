@@ -1,7 +1,7 @@
 # GOAP 215: All-Dimension Audit Recommendations (Compact Backlog)
 
 **Date:** 2026-08-03
-**Status:** Proposed
+**Status:** Completed (non-gated waves via GOAP-216; R1/R12/N3 email items remain gated; N6/R10 carried to plan 221; N8 closed as already satisfied)
 **Decision:** [ADR-215](215-adr-audit-wave-2026-08-03-execution-policy.md)
 **Goal:** Consolidate the fresh 2026-08-03 audit — security, performance,
 lint/build/test best practices, i18n, new features, responsive UI/UX, test
