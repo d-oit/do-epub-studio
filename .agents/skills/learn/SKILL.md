@@ -2,8 +2,9 @@
 version: "1.0.0"
 name: learn
 description: >
-  Extract non-obvious session learnings into scoped files. Activate after
-  non-trivial tasks to capture fragile config, quirks, or breakthroughs.
+  Extract non-obvious session learnings into scoped files. MANDATORY after
+  every non-trivial change (AGENTS.md Tier 2 #12): capture fragile config,
+  quirks, or breakthroughs in the same PR that produced them.
 category: knowledge-management
 allowed-tools: Read Write Edit Grep Glob
 license: MIT
@@ -15,7 +16,20 @@ Extract non-obvious session learnings into scoped files to preserve knowledge ac
 
 ## When to Use
 
-Activate after completing a non-trivial task to capture insights that would otherwise be lost.
+**Mandatory** after completing any non-trivial change (AGENTS.md Tier 2 #12) —
+run before opening the PR, and include the learnings in the same PR that
+produced them. If nothing qualifies, state "no new learnings" in the PR
+description instead of skipping silently.
+
+## Capture Checklist
+
+Ask after every change; answer "yes" → capture:
+
+1. Did a file relationship surprise me (files that must change together)?
+2. Did the code behave differently than it appeared to (hidden execution path)?
+3. Did an error message mislead me before I found the real cause?
+4. Did I use a command, flag, or env var not documented in README/AGENTS.md?
+5. Did I discover a constraint only visible at runtime or in CI?
 
 ## Instructions
 

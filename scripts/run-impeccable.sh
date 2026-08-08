@@ -10,13 +10,21 @@ if [[ "${1:-}" == "--required" ]]; then
   REQUIRED=1
 fi
 
+# .impeccable/ may be root-owned when a containerized job created it on a
+# mounted volume; fall back to a temp output so the gate still runs.
 OUTPUT_FILE=".impeccable/last-run.json"
-mkdir -p .impeccable
+mkdir -p .impeccable 2>/dev/null || true
+WRITABLE=1
+if [ ! -w .impeccable ]; then
+  WRITABLE=0
+  OUTPUT_FILE="$(mktemp)"
+  echo "::warning::.impeccable/ is not writable (root-owned?) — running impeccable without local config"
+fi
 
 # Ensure storybook-static and other generated output is excluded from scanning.
 # The submodule's config.json is local and not tracked; create one if missing.
 CONFIG_FILE=".impeccable/config.json"
-if [ ! -f "$CONFIG_FILE" ]; then
+if [[ "$WRITABLE" == "1" && ! -f "$CONFIG_FILE" ]]; then
   cat > "$CONFIG_FILE" <<'CONF'
 {
   "$schema": "https://impeccable.style/config.json",

@@ -68,8 +68,10 @@ tests; final gate `./scripts/quality_gate.sh` before push.
 - **N6** (skeletons/shortcuts/Storybook), **N7** (OTel evaluation) —
   unscheduled backlog per Plan 215 §3.
 - **LHCI auth fixture for protected reader/admin routes** (part of R5
-  acceptance) — needs a seeded preview environment; tracked as the
-  follow-up item in this plan's PR description.
+  acceptance) — ~~needs a seeded preview environment; tracked as the
+  follow-up item in this plan's PR description~~ **Done**: seeded auth fixture
+  `lighthouse/auth-reader-fixture.mjs` wired in `.lighthouserc.json` covering
+  `/admin` and `/read/test-book`.
 - **Plan 215 §5 criterion "plan's own PR contains no source changes"** —
   superseded: Plans 214/215 ship in this execution PR together with the
   Wave 1–3 remediation they govern (single-PR delivery requested by the
