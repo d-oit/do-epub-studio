@@ -161,6 +161,7 @@ export function createEpubAnnotationAdapter(rendition: Rendition): AnnotationAda
       pendingChapterHref = null;
       pendingHighlights = [];
       pendingComments = [];
+      pendingOnNavigate = null;
     },
   };
 }
