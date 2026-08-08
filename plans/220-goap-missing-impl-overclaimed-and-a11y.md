@@ -48,5 +48,5 @@ Quality gates:
 - [x] Danger button `bg-accent-error text-white` contrast preserved/improved
 - [x] `./scripts/quality_gate.sh` passes before push
 - [x] One feature-branch PR, atomic commits, PR template + AI verification section
-- [ ] All CI checks pass; any PR feedback addressed and re-pushed
+- [x] All CI checks pass; any PR feedback addressed and re-pushed
 - [x] Plan statuses (219 T3.3 = done, T3.1 = now done) recorded accurately
