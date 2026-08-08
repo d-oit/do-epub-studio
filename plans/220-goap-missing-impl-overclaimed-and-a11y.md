@@ -5,7 +5,7 @@
 **Goal:** Close the genuinely-missing implementation gaps that plans 219/216/217/218
 declared complete (`[x]`) but the verification swarm proved are not on `main`, and
 fix the `accent-error` color-contrast defect that caused scheduled CI E2E failure
-#928. All CI must pass.
+issue 928. All CI must pass.
 **Related:** Plan 212, Plan 216, Plan 217, Plan 218, Plan 219, ADR-212, ADR-063a
 
 ## 1. Analysis (verification swarm, main @ 4db1f70)
