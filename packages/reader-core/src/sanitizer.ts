@@ -6,6 +6,12 @@ const SANITIZE_TIMEOUT_MS = 5_000;
 const TREEWALKER_CHECK_INTERVAL = 100;
 const SANITIZE_CACHE_MAX = 10;
 
+/**
+ * Bump whenever sanitizer allowlists/behavior change so cached chapter output
+ * from a prior build is invalidated (ADR-218 T2.2: stale-on-policy-change).
+ */
+export const SANITIZER_POLICY_VERSION = 1;
+
 const SAFE_SVG_TAGS = [
   'svg',
   'g',
@@ -402,15 +408,42 @@ export interface SanitizeHook {
 }
 
 export function createEpubSanitizerHook(
-  options?: { timeoutMs?: number; traceId?: string },
+  options?: { timeoutMs?: number; traceId?: string; policyVersion?: number },
 ): SanitizeHook {
+  const policyVersion = options?.policyVersion ?? SANITIZER_POLICY_VERSION;
   const cache = new Map<string, string>();
+
+  function keyFor(href: string): string {
+    return `${policyVersion}:${href}`;
+  }
+
+  // Map iteration order === insertion order; on access we delete+re-set to
+  // move the entry to the MRU position, giving true LRU eviction.
+  function touch(href: string): string | undefined {
+    const key = keyFor(href);
+    const value = cache.get(key);
+    if (value !== undefined) {
+      cache.delete(key);
+      cache.set(key, value);
+    }
+    return value;
+  }
+
+  function store(href: string, value: string): void {
+    const key = keyFor(href);
+    cache.set(key, value);
+    if (cache.size > SANITIZE_CACHE_MAX) {
+      const oldest = cache.keys().next().value;
+      if (oldest !== undefined) cache.delete(oldest);
+    }
+  }
+
   function hook(contents: { document?: Document; href?: string }): void {
     const doc = contents.document;
     if (!doc) return;
     const href = contents.href;
     if (href) {
-      const cached = cache.get(href);
+      const cached = touch(href);
       if (cached !== undefined) {
         const root = doc.documentElement;
         const parser = new DOMParser();
@@ -425,11 +458,7 @@ export function createEpubSanitizerHook(
 
     sanitizeEpubDocument(doc, options);
     if (href) {
-      cache.set(href, doc.documentElement.outerHTML);
-      if (cache.size > SANITIZE_CACHE_MAX) {
-        const firstKey = cache.keys().next().value;
-        if (firstKey !== undefined) cache.delete(firstKey);
-      }
+      store(href, doc.documentElement.outerHTML);
     }
   }
 
