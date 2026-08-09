@@ -5,6 +5,7 @@ Individual provider implementations for the Web Doc Resolver.
 import json
 import logging
 import os
+import shutil
 import subprocess
 import time
 import urllib.parse
@@ -262,13 +263,14 @@ def resolve_with_docling(url: str, max_chars: int) -> ResolvedResult | None:
     except ValueError as exc:
         logger.warning("resolve_with_docling: rejected unsafe URL: %s", exc)
         return None
+    docling_bin = shutil.which("docling") or "docling"
     try:
-        res = subprocess.run(  # noqa: S603 S607  # nosec B603 B607 — list args, shell=False, url validated above
-            ["docling", "--format", "markdown", url],
+        res = subprocess.run(  # noqa: S603  # nosec B603 — list args, shell=False, url validated, binary resolved via shutil.which
+            [docling_bin, "--format", "markdown", url],
             capture_output=True,
             text=True,
             timeout=60,
-            shell=False,  # nosec B603
+            shell=False,
         )
         if res.returncode == 0:
             return ResolvedResult(source="docling", content=res.stdout[:max_chars], url=url)
@@ -283,9 +285,10 @@ def resolve_with_ocr(url: str, max_chars: int) -> ResolvedResult | None:
     except ValueError as exc:
         logger.warning("resolve_with_ocr: rejected unsafe URL: %s", exc)
         return None
+    tesseract_bin = shutil.which("tesseract") or "tesseract"
     try:
-        res = subprocess.run(  # noqa: S603 S607  # nosec B603 B607 — list args, shell=False, url validated above
-            ["tesseract", url, "stdout"], capture_output=True, text=True, timeout=30  # nosec B603
+        res = subprocess.run(  # noqa: S603  # nosec B603 — list args, shell=False, url validated, binary resolved via shutil.which
+            [tesseract_bin, url, "stdout"], capture_output=True, text=True, timeout=30
         )
         if res.returncode == 0:
             return ResolvedResult(source="ocr-tesseract", content=res.stdout[:max_chars], url=url)
