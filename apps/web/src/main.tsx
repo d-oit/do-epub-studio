@@ -175,6 +175,17 @@ if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
     },
     onRegisterError(error) {
       const err = error instanceof Error ? error : new Error(String(error));
+      // Suppress workbox-window's internal "Cannot read properties of undefined
+      // (reading 'waiting')" error that fires when Playwright blocks SW
+      // registration.  Match the exact error text to avoid swallowing real
+      // registration failures whose messages happen to mention "waiting".
+      const stack = err.stack ?? '';
+      if (
+        stack.includes('workbox') ||
+        err.message === "Cannot read properties of undefined (reading 'waiting')"
+      ) {
+        return;
+      }
       logClientEvent({
         level: 'error',
         event: 'sw.registration_failed',

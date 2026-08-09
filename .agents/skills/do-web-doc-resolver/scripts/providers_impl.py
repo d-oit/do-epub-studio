@@ -7,6 +7,7 @@ import logging
 import os
 import subprocess
 import time
+import urllib.parse
 
 from .models import ResolvedResult
 from .utils import (
@@ -25,6 +26,16 @@ TAVILY_RESULTS = int(os.getenv("WEB_RESOLVER_TAVILY_RESULTS", "5"))
 DDG_RESULTS = int(os.getenv("WEB_RESOLVER_DDG_RESULTS", "5"))
 
 _rate_limits: dict[str, float] = {}
+
+
+def _validate_url(url: str) -> str:
+    """Raise ValueError if url is not a safe http/https URL."""
+    parsed = urllib.parse.urlparse(url)
+    if parsed.scheme not in ("http", "https"):
+        raise ValueError(f"Unsafe URL scheme: {parsed.scheme!r}")
+    if not parsed.netloc:
+        raise ValueError("URL missing host")
+    return url
 
 
 def _is_rate_limited(provider: str) -> bool:
@@ -247,8 +258,17 @@ def resolve_with_mistral_websearch(query: str, max_chars: int = MAX_CHARS) -> Re
 
 def resolve_with_docling(url: str, max_chars: int) -> ResolvedResult | None:
     try:
-        res = subprocess.run(
-            ["docling", "--format", "markdown", url], capture_output=True, text=True, timeout=60
+        _validate_url(url)
+    except ValueError as exc:
+        logger.warning("resolve_with_docling: rejected unsafe URL: %s", exc)
+        return None
+    try:
+        res = subprocess.run(  # noqa: S603 S607  # nosec B603 B607 — list args, shell=False, url validated above
+            ["docling", "--format", "markdown", url],
+            capture_output=True,
+            text=True,
+            timeout=60,
+            shell=False,  # nosec B603
         )
         if res.returncode == 0:
             return ResolvedResult(source="docling", content=res.stdout[:max_chars], url=url)
@@ -259,8 +279,13 @@ def resolve_with_docling(url: str, max_chars: int) -> ResolvedResult | None:
 
 def resolve_with_ocr(url: str, max_chars: int) -> ResolvedResult | None:
     try:
-        res = subprocess.run(
-            ["tesseract", url, "stdout"], capture_output=True, text=True, timeout=30
+        _validate_url(url)
+    except ValueError as exc:
+        logger.warning("resolve_with_ocr: rejected unsafe URL: %s", exc)
+        return None
+    try:
+        res = subprocess.run(  # noqa: S603 S607  # nosec B603 B607 — list args, shell=False, url validated above
+            ["tesseract", url, "stdout"], capture_output=True, text=True, timeout=30  # nosec B603
         )
         if res.returncode == 0:
             return ResolvedResult(source="ocr-tesseract", content=res.stdout[:max_chars], url=url)
