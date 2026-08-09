@@ -263,12 +263,12 @@ def resolve_with_docling(url: str, max_chars: int) -> ResolvedResult | None:
         logger.warning("resolve_with_docling: rejected unsafe URL: %s", exc)
         return None
     try:
-        res = subprocess.run(  # noqa: S603 S607 — list args, shell=False, url validated above
+        res = subprocess.run(  # noqa: S603 S607  # nosec B603 B607 — list args, shell=False, url validated above
             ["docling", "--format", "markdown", url],
             capture_output=True,
             text=True,
             timeout=60,
-            shell=False,
+            shell=False,  # nosec B603
         )
         if res.returncode == 0:
             return ResolvedResult(source="docling", content=res.stdout[:max_chars], url=url)
@@ -284,8 +284,8 @@ def resolve_with_ocr(url: str, max_chars: int) -> ResolvedResult | None:
         logger.warning("resolve_with_ocr: rejected unsafe URL: %s", exc)
         return None
     try:
-        res = subprocess.run(  # noqa: S603 S607 — list args, shell=False, url validated above
-            ["tesseract", url, "stdout"], capture_output=True, text=True, timeout=30
+        res = subprocess.run(  # noqa: S603 S607  # nosec B603 B607 — list args, shell=False, url validated above
+            ["tesseract", url, "stdout"], capture_output=True, text=True, timeout=30  # nosec B603
         )
         if res.returncode == 0:
             return ResolvedResult(source="ocr-tesseract", content=res.stdout[:max_chars], url=url)
