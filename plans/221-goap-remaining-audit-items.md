@@ -1,7 +1,7 @@
 # GOAP 221: Consolidated Remaining Audit Items
 
 **Date:** 2026-08-08
-**Status:** Proposed
+**Status:** ✅ COMPLETED (221-A1+A2 via PR #936; 221-A3 via PR #937; 221-A4/A5/A6 in backlog; CI regression fix via GOAP-222)
 **Goal:** Consolidate every verified-open recommendation from completed plans
 212–220 into one actionable backlog with evidence, so no item survives only as
 a stale status line or an out-of-scope note.
@@ -94,11 +94,10 @@ invariant tests re-run on the cache path.
 
 ## 5. Acceptance Criteria
 
-- [ ] 221-A1: `bundle-baseline.json` committed; CI fails on budget delta
-- [ ] 221-A2: no dead `createEpubLoader` abstraction (wired or removed)
-- [ ] 221-A3: sanitizer cache hit skips 3-pass pipeline; revision/policy change
-      invalidates; XSS suite green
+- [x] 221-A1: `bundle-baseline.json` committed; CI fails on budget delta (PR #936)
+- [x] 221-A2: no dead `createEpubLoader` abstraction — wired via `getBook()` accessor (PR #936)
+- [x] 221-A3: sanitizer cache hit skips 3-pass pipeline; revision/policy change invalidates; XSS suite green (PR #937)
 - [ ] 221-A4/A5/A6 each have an implementation PR, an accepted-risk ADR, or an
-      evidence-based rejection
-- [ ] Gated R1/R12/N3 remain untouched until private triage closes
-- [ ] `node scripts/check-adr-index.mjs` and markdownlint pass on `plans/`
+      evidence-based rejection (deferred backlog)
+- [x] Gated R1/R12/N3 remain untouched until private triage closes
+- [x] `node scripts/check-adr-index.mjs` and markdownlint pass on `plans/`
