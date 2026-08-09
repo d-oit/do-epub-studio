@@ -58,7 +58,15 @@ class EpubParserWorkerPool {
         if (id) {
           const pending = this.pending.get(id);
           if (pending) {
-            pending.reject(new Error(`Worker error: ${event.message}`));
+            // event.message is undefined for cross-origin / MIME-type / 404 worker
+            // load failures.  Fall back to filename:line info when available so the
+            // error is actionable instead of "Worker error: undefined".
+            const msg =
+              event.message ??
+              (event.filename
+                ? `Worker load failed: ${event.filename}:${event.lineno}`
+                : 'Worker initialization failed');
+            pending.reject(new Error(msg));
             this.pending.delete(id);
           }
         }
