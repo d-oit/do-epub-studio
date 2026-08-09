@@ -20,7 +20,9 @@
 | A4 | a11y | ReaderToolbar `aria-hidden` when scrolled, but buttons remain Tab-reachable (phantom focus zone) | `apps/web/src/features/reader/components/toolbar/ReaderToolbar.tsx` | 419 |
 | A5 | a11y | Dark-mode `accent-error` contrast 3.60:1 — fails WCAG AA 4.5:1 | `apps/web/src/styles/globals.css` | dark-mode block |
 | A6 | perf | EPUB parser Worker never terminated on `destroy()` — globalPool persists broken state | `packages/reader-core/src/epub-loader.ts` | 339 |
-| A7 | correctness | Race: unmount calls `destroy()` while `rendition.display()` is still in-flight → use-after-destroy | `apps/web/src/features/reader/hooks/useReaderEpub.ts` | 369 |
+| A7 | correctness | Race: `loadInner` writes state after `destroy()` — no `destroyed` guard after second await group | `packages/reader-core/src/epub-loader.ts` | 215 |
+| A8 | correctness | `onerror` only rejects the first pending parse — all others hang 30s; crashed worker reused | `packages/reader-core/src/epub-parser-worker.ts` | 57 |
+| A9 | correctness | `setError` called in `catch` without `active` guard — state update on unmounted component | `apps/web/src/features/reader/hooks/useReaderEpub.ts` | 363 |
 
 ### P2 — Should fix (high-value, clear fix)
 
@@ -54,6 +56,7 @@
 | C2 | a11y | 8/9 decorative SVGs in `OverflowMenu` lack `aria-hidden` |
 | C3 | a11y | Mini progress bar in `ToolbarLeft` lacks `aria-hidden` (duplicate of `role="progressbar"`) |
 | C4 | perf | `Array.from({ length: N })` in skeleton components not memoized |
+| C14 | correctness | Cache HIT does not sync `<html>` element attributes (`lang`, `dir`) to live document |
 | C5 | perf | Auth/admin pages (`LoginPage`, `AdminLoginPage`, etc.) eagerly imported into main bundle |
 | C6 | security | LRU sanitizer cache misleading comment — `policyVersion` never passed at any call site |
 | C7 | test | Sanitizer cache HIT test verifies no re-sanitization but not content correctness |
@@ -91,7 +94,7 @@
 
 | Task | Items | Key files |
 |------|-------|-----------|
-| W3.1 | A6+A7: Call `terminateParserWorker()` in `epub-loader.ts` `destroy()`; guard `rendition.display()` against post-destroy call | `epub-loader.ts`, `useReaderEpub.ts` |
+| W3.1 | A6+A7+A8+A9: Fix epub-parser-worker `onerror` to reject all pending + restart pool; add `destroyed` guards after all `await`s in `loadInner`; add `if (active)` guard in `catch`; call `terminateParserWorker()` in `destroy()` | `epub-loader.ts`, `epub-parser-worker.ts`, `useReaderEpub.ts` |
 | W3.2 | B5: Store sanitized DOM nodes directly (not serialized HTML) to avoid re-parse on cache HIT, or remove the cache if the overhead exceeds benefit | `sanitizer.ts` |
 | W3.3 | B6: Add `debounce` (500ms) to progress `PUT` handler | `useEpubProgress.ts` |
 | W3.4 | B7: Append baseline delta table to `summary` in `check-bundle-budget.mjs` | `scripts/check-bundle-budget.mjs` |
