@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { useKeyboardShortcut } from '../../../../hooks/useKeyboardShortcut';
 import { useTranslation } from '../../../../hooks/useTranslation';
 import type { TranslationKeys } from '../../../../i18n/en';
 import { Tooltip, IconButton } from '../../../../components/ui';
@@ -75,6 +76,12 @@ export function AnnotationToolbar({
     updatePosition();
   }, [selection]);
 
+  useKeyboardShortcut(
+    'Escape',
+    () => { if (showColorPicker) setShowColorPicker(false); else onClose(); },
+    { enabled: !useNativePopover },
+  );
+
   useEffect(() => {
     if (useNativePopover) return;
     const handleClickOutside = (e: MouseEvent) => {
@@ -82,24 +89,11 @@ export function AnnotationToolbar({
         onClose();
       }
     };
-
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        if (showColorPicker) {
-          setShowColorPicker(false);
-        } else {
-          onClose();
-        }
-      }
-    };
-
     document.addEventListener('mousedown', handleClickOutside);
-    document.addEventListener('keydown', handleEscape);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('keydown', handleEscape);
     };
-  }, [onClose, showColorPicker, useNativePopover]);
+  }, [onClose, useNativePopover]);
 
   const toggleColorPicker = useCallback(() => {
     if (useNativePopover) {

@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
+import { useKeyboardShortcut } from '../../../../hooks/useKeyboardShortcut';
 import {
   Header,
   IconButton,
@@ -76,18 +77,7 @@ export function ReaderToolbar({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  useEffect(() => {
-    if (!isMenuOpen) return;
-
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setIsMenuOpen(false);
-      }
-    };
-
-    window.addEventListener('keydown', handleEscape);
-    return () => window.removeEventListener('keydown', handleEscape);
-  }, [isMenuOpen]);
+  useKeyboardShortcut('Escape', () => setIsMenuOpen(false), { enabled: isMenuOpen });
 
   const openCommentsCount = useMemo(() => comments.filter((c) => c.status === 'open').length, [comments]);
   const isHeaderVisible = scrollDirection === 'up';

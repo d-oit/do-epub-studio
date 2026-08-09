@@ -1,6 +1,7 @@
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
 import { useFocusTrap } from '@do-epub-studio/ui';
 import { CommentInput } from '../annotations/CommentInput';
+import { useKeyboardShortcut } from '../../../../hooks/useKeyboardShortcut';
 
 interface CommentInputModalProps {
   isOpen: boolean;
@@ -22,21 +23,7 @@ export function CommentInputModal({
   const modalRef = useRef<HTMLDivElement>(null);
 
   useFocusTrap(isOpen && !!selection, modalRef);
-
-  useEffect(() => {
-    if (!isOpen || !selection) return;
-
-    function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape') {
-        onCancel();
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isOpen, selection, onCancel]);
+  useKeyboardShortcut('Escape', onCancel, { enabled: isOpen && !!selection });
 
   if (!isOpen || !selection) return null;
 

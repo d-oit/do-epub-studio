@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useKeyboardShortcut } from '../../../../hooks/useKeyboardShortcut';
 import { IconButton } from '../../../../components/ui';
 import type { AccessibilityMetadata } from '@do-epub-studio/reader-core';
 import { computeInsightSummary } from '../../../../lib/offline/reading-insights';
@@ -74,14 +75,10 @@ export function InfoPanel({ isOpen, onClose, metadata, bookId, progressPercent, 
   const panelRef = useRef<HTMLDivElement>(null);
   const [insights, setInsights] = useState<InsightSummary | null>(null);
 
+  useKeyboardShortcut('Escape', onClose, { enabled: isOpen });
+
   useEffect(() => {
     if (!isOpen || !bookId) return;
-
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', handleEscape);
-
     let cancelled = false;
     computeInsightSummary(bookId, progressPercent)
       .then((summary) => {
@@ -90,12 +87,8 @@ export function InfoPanel({ isOpen, onClose, metadata, bookId, progressPercent, 
       .catch(() => {
         if (!cancelled) setInsights(null);
       });
-
-    return () => {
-      cancelled = true;
-      window.removeEventListener('keydown', handleEscape);
-    };
-  }, [isOpen, onClose, bookId, progressPercent]);
+    return () => { cancelled = true; };
+  }, [isOpen, bookId, progressPercent]);
 
   if (!isOpen) return null;
 

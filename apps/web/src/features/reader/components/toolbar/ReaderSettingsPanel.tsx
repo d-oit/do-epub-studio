@@ -1,6 +1,7 @@
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
 import { IconButton } from '../../../../components/ui';
 import { useFocusTrap } from '@do-epub-studio/ui';
+import { useKeyboardShortcut } from '../../../../hooks/useKeyboardShortcut';
 
 export type PageDirection = 'ltr' | 'rtl' | 'default';
 export type WritingMode = 'horizontal-tb' | 'vertical-rl' | 'vertical-lr';
@@ -40,19 +41,7 @@ export function ReaderSettingsPanel({
 }: ReaderSettingsPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   useFocusTrap(isOpen, panelRef);
-
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
-    };
-
-    window.addEventListener('keydown', handleEscape);
-    return () => window.removeEventListener('keydown', handleEscape);
-  }, [isOpen, onClose]);
+  useKeyboardShortcut('Escape', onClose, { enabled: isOpen });
 
   if (!isOpen) return null;
 

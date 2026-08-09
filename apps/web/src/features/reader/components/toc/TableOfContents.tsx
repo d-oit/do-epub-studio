@@ -3,6 +3,7 @@ import { useFocusTrap } from '@do-epub-studio/ui';
 import { IconButton } from '../../../../components/ui';
 import { VirtualList } from '../../../../components/VirtualList';
 import type { TranslationKeys } from '../../../../i18n';
+import { useKeyboardShortcut } from '../../../../hooks/useKeyboardShortcut';
 
 interface TocItem {
   label: string;
@@ -42,14 +43,7 @@ export function TableOfContents({
   const shouldVirtualize = toc.length > VIRTUALIZE_THRESHOLD;
   const activeIndex = toc.findIndex((item) => currentChapter === item.href);
 
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', handleEscape);
-    return () => window.removeEventListener('keydown', handleEscape);
-  }, [isOpen, onClose]);
+  useKeyboardShortcut('Escape', onClose, { enabled: isOpen });
 
   // Scroll the active chapter into view after the list mounts. For virtualized
   // lists we pass scrollToIndex to VirtualList so it can position the active

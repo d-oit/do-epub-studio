@@ -13,6 +13,13 @@ import { AppShell } from './components/AppShell';
 import { SwUpdateNotification } from './components/SwUpdateNotification';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { NotFoundPage } from './features/errors/NotFoundPage';
+import {
+  LibrarySkeleton,
+  CatalogSkeleton,
+  AdminSkeleton,
+  ReaderSkeleton,
+  SettingsSkeleton,
+} from './components/skeletons';
 
 // Lazy load route components (named exports)
 const ReaderPage = React.lazy(() =>
@@ -131,48 +138,48 @@ export function App() {
       <OfflineIndicator />
       <ViewTransitionRoutes>
         <Route path="/" element={<AppShell />} />
-        <Route path="/catalog" element={<CatalogPage />} />
+        <Route path="/catalog" element={<Suspense fallback={<CatalogSkeleton />}><CatalogPage /></Suspense>} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/admin/login" element={<AdminLoginPage />} />
         <Route path="/admin/recover" element={<AdminRecoverPage />} />
         <Route path="/read/:bookSlug" element={
           <ProtectedRoute>
-            <ReaderPage />
+            <Suspense fallback={<ReaderSkeleton />}><ReaderPage /></Suspense>
           </ProtectedRoute>
         } />
         <Route path="/library" element={
           <ProtectedRoute>
-            <MyLibraryPage />
+            <Suspense fallback={<LibrarySkeleton />}><MyLibraryPage /></Suspense>
           </ProtectedRoute>
         } />
         <Route path="/admin" element={
           <AdminRoute>
-            <AdminDashboard />
+            <Suspense fallback={<AdminSkeleton />}><AdminDashboard /></Suspense>
           </AdminRoute>
         } />
         <Route path="/settings" element={
           <ProtectedRoute>
-            <SettingsPage />
+            <Suspense fallback={<SettingsSkeleton />}><SettingsPage /></Suspense>
           </ProtectedRoute>
         } />
         <Route path="/admin/books" element={
           <AdminRoute>
-            <AdminBookResponsesPage />
+            <Suspense fallback={<AdminSkeleton />}><AdminBookResponsesPage /></Suspense>
           </AdminRoute>
         } />
         <Route path="/admin/grants" element={
           <AdminRoute>
-            <AdminGrantResponsesPage />
+            <Suspense fallback={<AdminSkeleton />}><AdminGrantResponsesPage /></Suspense>
           </AdminRoute>
         } />
         <Route path="/admin/books/:bookId/grants" element={
           <AdminRoute>
-            <AdminGrantResponsesPage />
+            <Suspense fallback={<AdminSkeleton />}><AdminGrantResponsesPage /></Suspense>
           </AdminRoute>
         } />
         <Route path="/admin/audit" element={
           <AdminRoute>
-            <AdminAuditPage />
+            <Suspense fallback={<AdminSkeleton />}><AdminAuditPage /></Suspense>
           </AdminRoute>
         } />
         <Route path="*" element={<NotFoundPage />} />
