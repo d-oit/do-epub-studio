@@ -7,6 +7,7 @@ import logging
 import os
 import subprocess
 import time
+import urllib.parse
 
 from .models import ResolvedResult
 from .utils import (
@@ -18,6 +19,21 @@ from .utils import (
 logger = logging.getLogger(__name__)
 
 MAX_CHARS = int(os.getenv("WEB_RESOLVER_MAX_CHARS", "8000"))
+
+
+def _validate_url(url: str) -> str:
+    """Raise ValueError if url is not a safe http/https URL.
+
+    Validates scheme and host presence before the URL is forwarded to a
+    subprocess so that command-injection vectors (e.g. shell metacharacters
+    disguised as a URL) are rejected early.
+    """
+    parsed = urllib.parse.urlparse(url)
+    if parsed.scheme not in ("http", "https"):
+        raise ValueError(f"Unsafe URL scheme: {parsed.scheme!r}")
+    if not parsed.netloc:
+        raise ValueError("URL missing host")
+    return url
 MIN_CHARS = int(os.getenv("WEB_RESOLVER_MIN_CHARS", "200"))
 DEFAULT_TIMEOUT = int(os.getenv("WEB_RESOLVER_TIMEOUT", "30"))
 EXA_RESULTS = int(os.getenv("WEB_RESOLVER_EXA_RESULTS", "5"))
@@ -246,9 +262,23 @@ def resolve_with_mistral_websearch(query: str, max_chars: int = MAX_CHARS) -> Re
 
 
 def resolve_with_docling(url: str, max_chars: int) -> ResolvedResult | None:
+    # Validate URL scheme and host before passing to subprocess.  Arguments
+    # are already passed as a list with shell=False (S603/S607 safe); the
+    # _validate_url call below guards against non-http(s) schemes and empty
+    # hosts so the url token cannot carry shell metacharacters that would be
+    # interpreted by the OS argv parser.
     try:
-        res = subprocess.run(
-            ["docling", "--format", "markdown", url], capture_output=True, text=True, timeout=60
+        _validate_url(url)
+    except ValueError as exc:
+        logger.warning("resolve_with_docling: rejected unsafe URL: %s", exc)
+        return None
+    try:
+        res = subprocess.run(  # noqa: S603 — args are a list, shell=False, url validated above
+            ["docling", "--format", "markdown", url],
+            capture_output=True,
+            text=True,
+            timeout=60,
+            shell=False,
         )
         if res.returncode == 0:
             return ResolvedResult(source="docling", content=res.stdout[:max_chars], url=url)

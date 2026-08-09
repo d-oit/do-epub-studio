@@ -156,14 +156,136 @@ def resolve_url(
     return {"source": "none", "url": url, "content": "Failed"}
 
 
+def _drain_completed_futures(
+    active_futures: dict,
+    done: set,
+    url: str,
+    max_chars: int,
+    domain: str | None,
+    cache: Any,
+    metrics: ResolveMetrics,
+    budget: Any,
+) -> tuple[bool, list[dict[str, Any]]]:
+    """Process a set of completed futures and return (found_acceptable, yielded_items).
+
+    Returns True in the first element when an acceptable result was found; the
+    second element contains any dicts that should be yielded to the caller.
+    """
+    results_to_yield: list[dict[str, Any]] = []
+    for f in list(done):
+        if f not in active_futures:
+            continue
+        p_name_done, pt_done, s_time = active_futures.pop(f)
+        latency = int((time.time() - s_time) * 1000)
+        budget.record_attempt(is_paid=pt_done.is_paid(), latency_ms=latency)
+        try:
+            res_or_content = f.result()
+        except Exception as e:
+            err_type = _detect_error_type(e)
+            if err_type not in (ErrorType.AUTH_ERROR, ErrorType.SSRF_BLOCKED):
+                _circuit_breakers.record_failure(p_name_done)
+            metrics.record_provider(pt_done, latency, False)
+            continue
+
+        if not res_or_content:
+            _circuit_breakers.record_failure(p_name_done)
+            metrics.record_provider(pt_done, latency, False)
+            continue
+
+        content = (
+            res_or_content.content
+            if isinstance(res_or_content, ResolvedResult)
+            else str(res_or_content)
+        )
+        q_score = quality.score_content(content)
+
+        if q_score.acceptable or pt_done == ProviderType.LLMS_TXT:
+            _circuit_breakers.record_success(p_name_done)
+            metrics.record_provider(pt_done, latency, True)
+            if domain:
+                _routing_memory.record(domain, p_name_done, True, latency, q_score.score)
+
+            if pt_done == ProviderType.LLMS_TXT:
+                results_to_yield.append(
+                    {
+                        "source": "llms.txt",
+                        "url": url,
+                        "content": compact_content(content, max_chars),
+                        "metrics": metrics,
+                    }
+                )
+            elif isinstance(res_or_content, ResolvedResult):
+                res_or_content.metrics, res_or_content.score = metrics, q_score.score
+                results_to_yield.append(res_or_content.to_dict())
+            return True, results_to_yield
+        else:
+            cache_negative.write_negative_cache(cache, url, p_name_done, "thin_content", 1800)
+            if domain:
+                _routing_memory.record(domain, p_name_done, False, latency, q_score.score)
+
+    return False, results_to_yield
+
+
+def _run_hedged_cascade(
+    url: str,
+    max_chars: int,
+    eligible: list[str],
+    cascade_map: dict[str, tuple[ProviderType, Any]],
+    budget: Any,
+    cache: Any,
+    domain: str | None,
+    metrics: ResolveMetrics,
+    executor: concurrent.futures.ThreadPoolExecutor,
+) -> Generator[dict[str, Any], None, None]:
+    """Submit providers with latency-based hedging and yield the first acceptable result."""
+    active_futures: dict[Any, tuple[str, ProviderType, float]] = {}
+
+    for i, p_name in enumerate(eligible):
+        pt, func = cascade_map[p_name]
+        if not budget.can_try(is_paid=pt.is_paid()):
+            if budget.stop_reason in ("paid_disabled", "max_paid_attempts"):
+                continue
+            break
+        if cache_negative.should_skip_from_negative_cache(cache, url, p_name):
+            continue
+        if _circuit_breakers.is_open(p_name):
+            continue
+
+        logger.info(f"Starting probe: {p_name}")
+        start_time_probe = time.time()
+        future = executor.submit(func)
+        active_futures[future] = (p_name, pt, start_time_probe)
+        threshold = _routing_memory.get_p75_latency(domain or "any", p_name) / 1000.0
+
+        while active_futures:
+            elapsed = time.time() - start_time_probe
+            if i < len(eligible) - 1 and elapsed >= threshold:
+                logger.info(f"Hedging threshold reached for {p_name} ({threshold}s)")
+                break
+
+            done, _ = concurrent.futures.wait(
+                active_futures.keys(),
+                timeout=0.01,
+                return_when=concurrent.futures.FIRST_COMPLETED,
+            )
+            found_acceptable, items = _drain_completed_futures(
+                active_futures, done, url, max_chars, domain, cache, metrics, budget
+            )
+            yield from items
+            if found_acceptable:
+                return
+            if done:
+                break
+            if not active_futures:
+                break
+
+
 def resolve_url_stream(
     url: str, max_chars: int = MAX_CHARS, profile: Profile = Profile.BALANCED
 ) -> Generator[dict[str, Any], None, None]:
     logger.info(f"Resolving URL: {url}")
     metrics = ResolveMetrics()
-    budget_data = routing.PROFILE_BUDGETS.get(
-        profile.value, routing.PROFILE_BUDGETS["balanced"]
-    )
+    budget_data = routing.PROFILE_BUDGETS.get(profile.value, routing.PROFILE_BUDGETS["balanced"])
     budget = routing.ResolutionBudget(
         max_provider_attempts=budget_data["max_provider_attempts"],
         max_paid_attempts=budget_data["max_paid_attempts"],
@@ -205,105 +327,15 @@ def resolve_url_stream(
     cache = _get_cache()
     domain = routing.extract_domain(url)
     eligible = [p for p in provider_names if p in cascade_map]
-    active_futures = {}
 
     executor = concurrent.futures.ThreadPoolExecutor(max_workers=max(1, len(eligible)))
     try:
-        for i, p_name in enumerate(eligible):
-            pt, func = cascade_map[p_name]
-            if not budget.can_try(is_paid=pt.is_paid()):
-                if budget.stop_reason in ("paid_disabled", "max_paid_attempts"):
-                    continue
-                break
-            if cache_negative.should_skip_from_negative_cache(cache, url, p_name):
-                continue
-            if _circuit_breakers.is_open(p_name):
-                continue
-
-            logger.info(f"Starting probe: {p_name}")
-            start_time_probe = time.time()
-            future = executor.submit(func)
-            active_futures[future] = (p_name, pt, start_time_probe)
-            threshold = _routing_memory.get_p75_latency(domain or "any", p_name) / 1000.0
-
-            while active_futures:
-                elapsed = time.time() - start_time_probe
-
-                # If we've hit the threshold, start the next provider (hedging)
-                if i < len(eligible) - 1 and elapsed >= threshold:
-                    logger.info(f"Hedging threshold reached for {p_name} ({threshold}s)")
-                    break
-
-                # Wait for any task to complete
-                done, _ = concurrent.futures.wait(
-                    active_futures.keys(),
-                    timeout=0.01,
-                    return_when=concurrent.futures.FIRST_COMPLETED,
-                )
-
-                found_acceptable = False
-                for f in list(done):
-                    if f not in active_futures:
-                        continue
-                    p_name_done, pt_done, s_time = active_futures.pop(f)
-                    latency = int((time.time() - s_time) * 1000)
-                    budget.record_attempt(is_paid=pt_done.is_paid(), latency_ms=latency)
-                    try:
-                        res_or_content = f.result()
-                    except Exception as e:
-                        err_type = _detect_error_type(e)
-                        if err_type not in (ErrorType.AUTH_ERROR, ErrorType.SSRF_BLOCKED):
-                            _circuit_breakers.record_failure(p_name_done)
-                        metrics.record_provider(pt_done, latency, False)
-                        continue
-                    if res_or_content:
-                        if isinstance(res_or_content, ResolvedResult):
-                            content = res_or_content.content
-                        else:
-                            content = str(res_or_content)
-
-                        q_score = quality.score_content(content)
-                        if q_score.acceptable or pt_done == ProviderType.LLMS_TXT:
-                            _circuit_breakers.record_success(p_name_done)
-                            metrics.record_provider(pt_done, latency, True)
-                            if domain:
-                                _routing_memory.record(
-                                    domain, p_name_done, True, latency, q_score.score
-                                )
-
-                            found_acceptable = True
-                            if pt_done == ProviderType.LLMS_TXT:
-                                yield {
-                                    "source": "llms.txt",
-                                    "url": url,
-                                    "content": compact_content(content, max_chars),
-                                    "metrics": metrics,
-                                }
-                            elif isinstance(res_or_content, ResolvedResult):
-                                res_or_content.metrics, res_or_content.score = (
-                                    metrics,
-                                    q_score.score,
-                                )
-                                yield res_or_content.to_dict()
-                            break
-                        else:
-                            cache_negative.write_negative_cache(
-                                cache, url, p_name_done, "thin_content", 1800
-                            )
-                            if domain:
-                                _routing_memory.record(
-                                    domain, p_name_done, False, latency, q_score.score
-                                )
-                    else:
-                        _circuit_breakers.record_failure(p_name_done)
-                        metrics.record_provider(pt_done, latency, False)
-
-                if found_acceptable:
-                    return
-                if done:
-                    break
-                if not active_futures:
-                    break
+        for item in _run_hedged_cascade(
+            url, max_chars, eligible, cascade_map, budget, cache, domain, metrics, executor
+        ):
+            yield item
+            if item.get("source") not in ("none", "partial"):
+                return
     finally:
         executor.shutdown(wait=False, cancel_futures=True)
 
@@ -325,6 +357,102 @@ def resolve_query(
         if result.get("source") != "partial":
             return result
     return {"source": "none", "query": query, "content": "Failed"}
+
+
+def _drain_completed_query_futures(
+    active_futures: dict,
+    done: set,
+    query: str,
+    max_chars: int,
+    cache: Any,
+    metrics: ResolveMetrics,
+    budget: Any,
+) -> tuple[bool, list[dict[str, Any]]]:
+    """Process a set of completed query futures and return (found_acceptable, yielded_items)."""
+    results_to_yield: list[dict[str, Any]] = []
+    for f in list(done):
+        if f not in active_futures:
+            continue
+        p_name_done, pt_done, s_time = active_futures.pop(f)
+        latency = int((time.time() - s_time) * 1000)
+        budget.record_attempt(is_paid=pt_done.is_paid(), latency_ms=latency)
+        try:
+            res = f.result()
+        except Exception as e:
+            err_type = _detect_error_type(e)
+            if err_type not in (ErrorType.AUTH_ERROR, ErrorType.SSRF_BLOCKED):
+                _circuit_breakers.record_failure(p_name_done)
+            metrics.record_provider(pt_done, latency, False)
+            continue
+        if res:
+            q_score = quality.score_content(res.content)
+            if q_score.acceptable:
+                _circuit_breakers.record_success(p_name_done)
+                metrics.record_provider(pt_done, latency, True)
+                _routing_memory.record("query", p_name_done, True, latency, q_score.score)
+                res.metrics, res.score = metrics, q_score.score
+                results_to_yield.append(res.to_dict())
+                return True, results_to_yield
+            else:
+                cache_negative.write_negative_cache(cache, query, p_name_done, "thin_content", 1800)
+                _routing_memory.record("query", p_name_done, False, latency, q_score.score)
+        else:
+            _circuit_breakers.record_failure(p_name_done)
+            metrics.record_provider(pt_done, latency, False)
+    return False, results_to_yield
+
+
+def _run_hedged_query_cascade(
+    query: str,
+    max_chars: int,
+    eligible: list[str],
+    cascade_map: dict[str, tuple[ProviderType, Any]],
+    budget: Any,
+    cache: Any,
+    metrics: ResolveMetrics,
+    executor: concurrent.futures.ThreadPoolExecutor,
+) -> Generator[dict[str, Any], None, None]:
+    """Submit query providers with latency-based hedging and yield the first acceptable result."""
+    active_futures: dict[Any, tuple[str, ProviderType, float]] = {}
+
+    for i, p_name in enumerate(eligible):
+        pt, func = cascade_map[p_name]
+        if not budget.can_try(is_paid=pt.is_paid()):
+            if budget.stop_reason in ("paid_disabled", "max_paid_attempts"):
+                continue
+            break
+        if cache_negative.should_skip_from_negative_cache(cache, query, p_name):
+            continue
+        if _circuit_breakers.is_open(p_name):
+            continue
+
+        logger.info(f"Starting probe: {p_name}")
+        start_time_probe = time.time()
+        future = executor.submit(func, query, max_chars)
+        active_futures[future] = (p_name, pt, start_time_probe)
+        threshold = _routing_memory.get_p75_latency("query", p_name) / 1000.0
+
+        while active_futures:
+            elapsed = time.time() - start_time_probe
+            if i < len(eligible) - 1 and elapsed >= threshold:
+                logger.info(f"Hedging threshold reached for {p_name} ({threshold}s)")
+                break
+
+            done, _ = concurrent.futures.wait(
+                active_futures.keys(),
+                timeout=0.01,
+                return_when=concurrent.futures.FIRST_COMPLETED,
+            )
+            found_acceptable, items = _drain_completed_query_futures(
+                active_futures, done, query, max_chars, cache, metrics, budget
+            )
+            yield from items
+            if found_acceptable:
+                return
+            if done:
+                break
+            if not active_futures:
+                break
 
 
 def resolve_query_stream(
@@ -356,79 +484,11 @@ def resolve_query_stream(
     }
     cache = _get_cache()
     eligible = [p for p in provider_names if p in cascade_map]
-    active_futures = {}
     executor = concurrent.futures.ThreadPoolExecutor(max_workers=max(1, len(eligible)))
     try:
-        for i, p_name in enumerate(eligible):
-            pt, func = cascade_map[p_name]
-            if not budget.can_try(is_paid=pt.is_paid()):
-                if budget.stop_reason in ("paid_disabled", "max_paid_attempts"):
-                    continue
-                break
-            if cache_negative.should_skip_from_negative_cache(cache, query, p_name):
-                continue
-            if _circuit_breakers.is_open(p_name):
-                continue
-            logger.info(f"Starting probe: {p_name}")
-            start_time_probe = time.time()
-            future = executor.submit(func, query, max_chars)
-            active_futures[future] = (p_name, pt, start_time_probe)
-            threshold = _routing_memory.get_p75_latency("query", p_name) / 1000.0
-            while active_futures:
-                elapsed = time.time() - start_time_probe
-                if i < len(eligible) - 1 and elapsed >= threshold:
-                    break
-
-                done, _ = concurrent.futures.wait(
-                    active_futures.keys(),
-                    timeout=0.01,
-                    return_when=concurrent.futures.FIRST_COMPLETED,
-                )
-                found_acceptable = False
-                for f in list(done):
-                    if f not in active_futures:
-                        continue
-                    p_name_done, pt_done, s_time = active_futures.pop(f)
-                    latency = int((time.time() - s_time) * 1000)
-                    budget.record_attempt(is_paid=pt_done.is_paid(), latency_ms=latency)
-                    try:
-                        res = f.result()
-                    except Exception as e:
-                        err_type = _detect_error_type(e)
-                        if err_type not in (ErrorType.AUTH_ERROR, ErrorType.SSRF_BLOCKED):
-                            _circuit_breakers.record_failure(p_name_done)
-                        metrics.record_provider(pt_done, latency, False)
-                        continue
-                    if res:
-                        q_score = quality.score_content(res.content)
-                        if q_score.acceptable:
-                            _circuit_breakers.record_success(p_name_done)
-                            metrics.record_provider(pt_done, latency, True)
-                            _routing_memory.record(
-                                "query", p_name_done, True, latency, q_score.score
-                            )
-
-                            found_acceptable = True
-                            res.metrics, res.score = metrics, q_score.score
-                            yield res.to_dict()
-                            break
-                        else:
-                            cache_negative.write_negative_cache(
-                                cache, query, p_name_done, "thin_content", 1800
-                            )
-                            _routing_memory.record(
-                                "query", p_name_done, False, latency, q_score.score
-                            )
-                    else:
-                        _circuit_breakers.record_failure(p_name_done)
-                        metrics.record_provider(pt_done, latency, False)
-
-                if found_acceptable:
-                    return
-                if done:
-                    break
-                if not active_futures:
-                    break
+        yield from _run_hedged_query_cascade(
+            query, max_chars, eligible, cascade_map, budget, cache, metrics, executor
+        )
     finally:
         executor.shutdown(wait=False, cancel_futures=True)
 

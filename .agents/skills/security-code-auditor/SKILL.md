@@ -77,7 +77,7 @@ const clean = DOMPurify.sanitize(epubContent, {
 
 ```typescript
 // BAD
-const API_KEY = 'sk-live-abc123';
+const API_KEY = 'YOUR_API_KEY_HERE';
 
 // GOOD
 const API_KEY = process.env.EPUB_API_KEY;
