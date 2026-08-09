@@ -76,10 +76,14 @@ export function AnnotationToolbar({
     updatePosition();
   }, [selection]);
 
+  // On the native-popover path the browser also handles Escape for the picker,
+  // but we still need the hook active so a second Escape dismisses the toolbar.
+  // The handler checks showColorPicker via handlerRef.current (always current):
+  //   - picker open  → close picker (picker also closes via native dismiss; no-op)
+  //   - picker closed → close toolbar
   useKeyboardShortcut(
     'Escape',
     () => { if (showColorPicker) setShowColorPicker(false); else onClose(); },
-    { enabled: !useNativePopover },
   );
 
   useEffect(() => {

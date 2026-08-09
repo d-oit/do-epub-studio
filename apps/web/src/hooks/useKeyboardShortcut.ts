@@ -3,7 +3,12 @@ import { useEffect, useRef } from 'react';
 type ModKey = 'ctrl' | 'alt' | 'shift' | 'meta';
 
 interface UseKeyboardShortcutOptions {
-  /** Extra modifier keys that must be held. Default: none. */
+  /**
+   * Modifier keys that MUST be held. Matching is additive: all listed mods
+   * must be active, but unlisted mods being held does NOT prevent the handler
+   * from firing. E.g. `mods: ['ctrl']` fires on both Ctrl+K and Ctrl+Shift+K.
+   * Default: none (any modifier state accepted).
+   */
   mods?: ModKey[];
   /** Only register when true. Defaults to true. */
   enabled?: boolean;
