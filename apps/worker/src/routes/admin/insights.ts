@@ -27,11 +27,13 @@ interface InsightAggRow {
  *   limit  (default 20, max 100)
  *   offset (default 0)
  */
+const MAX_OFFSET = 100_000;
+
 adminInsightsRouter.get('/insights', adminAuth, async (c) => {
-  const rawLimit = Number(c.req.query('limit') ?? 20);
-  const rawOffset = Number(c.req.query('offset') ?? 0);
+  const rawLimit = parseInt(c.req.query('limit') ?? '20', 10);
+  const rawOffset = parseInt(c.req.query('offset') ?? '0', 10);
   const limit = Math.min(Math.max(1, Number.isFinite(rawLimit) ? rawLimit : 20), 100);
-  const offset = Math.max(0, Number.isFinite(rawOffset) ? rawOffset : 0);
+  const offset = Math.min(Math.max(0, Number.isFinite(rawOffset) ? rawOffset : 0), MAX_OFFSET);
 
   const rows = await queryAll<InsightAggRow>(
     c.env,

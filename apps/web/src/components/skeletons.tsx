@@ -5,12 +5,7 @@
  */
 
 import type { ReactNode } from 'react';
-
-const LABEL_LIBRARY = 'Loading library';
-const LABEL_CATALOG = 'Loading catalog';
-const LABEL_ADMIN = 'Loading page';
-const LABEL_READER = 'Loading reader';
-const LABEL_SETTINGS = 'Loading settings';
+import { useTranslation } from '../hooks/useTranslation';
 
 function SkeletonBlock({ className }: { className: string }) {
   return <div className={`animate-pulse rounded bg-surface/60 ${className}`} aria-hidden="true" />;
@@ -56,8 +51,9 @@ function SkeletonShell({ children, label }: { children: ReactNode; label: string
 }
 
 export function LibrarySkeleton() {
+  const { t } = useTranslation();
   return (
-    <SkeletonShell label={LABEL_LIBRARY}>
+    <SkeletonShell label={t('a11y.loading_page')}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" aria-hidden="true">
         <SkeletonBlock className="h-7 w-40 mb-6" />
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
@@ -69,8 +65,9 @@ export function LibrarySkeleton() {
 }
 
 export function CatalogSkeleton() {
+  const { t } = useTranslation();
   return (
-    <SkeletonShell label={LABEL_CATALOG}>
+    <SkeletonShell label={t('a11y.loading_page')}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" aria-hidden="true">
         <SkeletonBlock className="h-7 w-32 mb-4" />
         <SkeletonBlock className="h-10 w-full max-w-sm mb-6 rounded-lg" />
@@ -83,8 +80,9 @@ export function CatalogSkeleton() {
 }
 
 export function AdminSkeleton() {
+  const { t } = useTranslation();
   return (
-    <SkeletonShell label={LABEL_ADMIN}>
+    <SkeletonShell label={t('a11y.loading_page')}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" aria-hidden="true">
         <SkeletonBlock className="h-7 w-48 mb-6" />
         <div className="rounded-xl border border-border bg-surface/40 p-4">
@@ -96,13 +94,14 @@ export function AdminSkeleton() {
 }
 
 export function ReaderSkeleton() {
+  const { t } = useTranslation();
   return (
     <div
       className="min-h-dvh bg-background flex flex-col"
       role="status"
       aria-live="polite"
       aria-busy="true"
-      aria-label={LABEL_READER}
+      aria-label={t('a11y.loading_page')}
     >
       <div className="h-14 border-b border-border bg-background-secondary" aria-hidden="true" />
       <div className="flex-1 flex items-start justify-center pt-12 px-6" aria-hidden="true">
@@ -123,8 +122,9 @@ export function ReaderSkeleton() {
 }
 
 export function SettingsSkeleton() {
+  const { t } = useTranslation();
   return (
-    <SkeletonShell label={LABEL_SETTINGS}>
+    <SkeletonShell label={t('a11y.loading_page')}>
       <div className="max-w-2xl mx-auto px-4 py-8" aria-hidden="true">
         <SkeletonBlock className="h-7 w-32 mb-6" />
         {Array.from({ length: 4 }, (_, i) => (

@@ -606,5 +606,66 @@ describe('Admin Routes', () => {
 
       expect(res.status).toBe(401);
     });
+
+    it('clamps negative offset to 0', async () => {
+      mockRequireAdminAuth.mockResolvedValue({
+        ok: true,
+        context: { userId: 'admin-1', email: 'admin@example.com', globalRole: 'admin' },
+      });
+      mockQueryAll.mockResolvedValue([]);
+
+      const res = await app.fetch(
+        new Request('http://localhost/api/admin/insights?offset=-5', {
+          headers: { Authorization: 'Bearer admin-token' },
+        }),
+        env,
+        makePassThroughContext(),
+      );
+
+      expect(res.status).toBe(200);
+      const body: { pagination: { offset: number } } = await res.json();
+      expect(body.pagination.offset).toBe(0);
+    });
+
+    it('integer-truncates float limit and offset', async () => {
+      mockRequireAdminAuth.mockResolvedValue({
+        ok: true,
+        context: { userId: 'admin-1', email: 'admin@example.com', globalRole: 'admin' },
+      });
+      mockQueryAll.mockResolvedValue([]);
+
+      const res = await app.fetch(
+        new Request('http://localhost/api/admin/insights?limit=1.9&offset=2.7', {
+          headers: { Authorization: 'Bearer admin-token' },
+        }),
+        env,
+        makePassThroughContext(),
+      );
+
+      expect(res.status).toBe(200);
+      const body: { pagination: { limit: number; offset: number } } = await res.json();
+      expect(body.pagination.limit).toBe(1);
+      expect(body.pagination.offset).toBe(2);
+    });
+
+    it('caps offset at MAX_OFFSET', async () => {
+      mockRequireAdminAuth.mockResolvedValue({
+        ok: true,
+        context: { userId: 'admin-1', email: 'admin@example.com', globalRole: 'admin' },
+      });
+      mockQueryAll.mockResolvedValue([]);
+
+      const res = await app.fetch(
+        new Request('http://localhost/api/admin/insights?offset=9999999', {
+          headers: { Authorization: 'Bearer admin-token' },
+        }),
+        env,
+        makePassThroughContext(),
+      );
+
+      expect(res.status).toBe(200);
+      const body: { pagination: { offset: number } } = await res.json();
+      expect(body.pagination.offset).toBe(100_000);
+    });
   });
 });
