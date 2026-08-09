@@ -1,7 +1,7 @@
 # GOAP 223: Implement 221 Backlog Items — A4, A5, A6
 
 **Date:** 2026-08-09
-**Status:** IN PROGRESS
+**Status:** IN REVIEW (PR #941)
 **Goal:** Implement the three deferred backlog items from Plan 221 (A4, A5, A6):
 centralized keyboard shortcuts, page-level skeleton screens, admin reading-insights
 aggregation, and mark the OTel evaluation as satisfied by ADR-217.

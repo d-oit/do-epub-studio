@@ -97,8 +97,8 @@ invariant tests re-run on the cache path.
 - [x] 221-A1: `bundle-baseline.json` committed; CI fails on budget delta (PR #936)
 - [x] 221-A2: no dead `createEpubLoader` abstraction — wired via `getBook()` accessor (PR #936)
 - [x] 221-A3: sanitizer cache hit skips 3-pass pipeline; revision/policy change invalidates; XSS suite green (PR #937)
-- [ ] 221-A4: centralized keyboard shortcuts + page-level skeletons (PR #GOAP-223)
-- [ ] 221-A5: admin reading-insights aggregation endpoint (PR #GOAP-223)
+- [ ] 221-A4: centralized keyboard shortcuts + page-level skeletons (PR #941)
+- [ ] 221-A5: admin reading-insights aggregation endpoint (PR #941)
 - [x] 221-A6: OTel evaluation writeup satisfied by ADR-217 (`plans/217-adr-opentelemetry-evaluation.md`) — accepted-defer decision with explicit revisit criteria; no new code needed
 - [x] Gated R1/R12/N3 remain untouched until private triage closes
 - [x] `node scripts/check-adr-index.mjs` and markdownlint pass on `plans/`
