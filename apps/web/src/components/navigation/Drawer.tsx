@@ -1,4 +1,5 @@
-import { useEffect, useCallback, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useKeyboardShortcut } from '../../hooks/useKeyboardShortcut';
 import { NavLink } from 'react-router-dom';
 import { useTranslation } from '../../hooks/useTranslation';
 import { AppLogo } from '../../components/ui';
@@ -15,25 +16,18 @@ export function Drawer({ isOpen, onClose }: DrawerProps) {
   const [shouldRender, setShouldRender] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
 
-  const handleEscape = useCallback(
-    (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    },
-    [onClose],
-  );
+  useKeyboardShortcut('Escape', onClose, { enabled: isOpen });
 
   useEffect(() => {
     if (isOpen) {
-      document.addEventListener('keydown', handleEscape);
       document.body.style.overflow = 'hidden';
       setShouldRender(true);
       setIsExiting(false);
     }
     return () => {
-      document.removeEventListener('keydown', handleEscape);
       document.body.style.overflow = '';
     };
-  }, [isOpen, handleEscape]);
+  }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen && shouldRender) {

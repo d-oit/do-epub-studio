@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { useKeyboardShortcut } from '../../../../hooks/useKeyboardShortcut';
 import { useTranslation } from '../../../../hooks/useTranslation';
 import type { TranslationKeys } from '../../../../i18n/en';
 import { Tooltip, IconButton } from '../../../../components/ui';
@@ -75,6 +76,16 @@ export function AnnotationToolbar({
     updatePosition();
   }, [selection]);
 
+  // On the native-popover path the browser also handles Escape for the picker,
+  // but we still need the hook active so a second Escape dismisses the toolbar.
+  // The handler checks showColorPicker via handlerRef.current (always current):
+  //   - picker open  → close picker (picker also closes via native dismiss; no-op)
+  //   - picker closed → close toolbar
+  useKeyboardShortcut(
+    'Escape',
+    () => { if (showColorPicker) setShowColorPicker(false); else onClose(); },
+  );
+
   useEffect(() => {
     if (useNativePopover) return;
     const handleClickOutside = (e: MouseEvent) => {
@@ -82,24 +93,11 @@ export function AnnotationToolbar({
         onClose();
       }
     };
-
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        if (showColorPicker) {
-          setShowColorPicker(false);
-        } else {
-          onClose();
-        }
-      }
-    };
-
     document.addEventListener('mousedown', handleClickOutside);
-    document.addEventListener('keydown', handleEscape);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('keydown', handleEscape);
     };
-  }, [onClose, showColorPicker, useNativePopover]);
+  }, [onClose, useNativePopover]);
 
   const toggleColorPicker = useCallback(() => {
     if (useNativePopover) {

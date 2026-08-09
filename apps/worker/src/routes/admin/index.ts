@@ -5,6 +5,7 @@ import { booksRouter } from './books';
 import { grantsRouter } from './grants';
 import { auditRouter } from './audit';
 import { statsRouter } from './stats';
+import { adminInsightsRouter } from './insights';
 
 export const adminRouter = new Hono<{ Bindings: Env; Variables: { adminUser: { email: string; id: string; role: string } } }>();
 
@@ -13,3 +14,4 @@ adminRouter.route('/books', booksRouter);
 adminRouter.route('/', grantsRouter);
 adminRouter.route('/', auditRouter);
 adminRouter.route('/', statsRouter);
+adminRouter.route('/', adminInsightsRouter);

@@ -1,4 +1,5 @@
-import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import { useState, useCallback, useMemo, useRef } from 'react';
+import { useKeyboardShortcut } from '../../../../hooks/useKeyboardShortcut';
 import { useFocusTrap } from '@do-epub-studio/ui';
 import { IconButton } from '../../../../components/ui';
 import type { Comment, Highlight } from '../../../../stores';
@@ -48,14 +49,7 @@ export function CommentsPanel({
   const panelRef = useRef<HTMLElement>(null);
   useFocusTrap(isOpen, panelRef);
 
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', handleEscape);
-    return () => window.removeEventListener('keydown', handleEscape);
-  }, [isOpen, onClose]);
+  useKeyboardShortcut('Escape', onClose, { enabled: isOpen });
 
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<'comments' | 'highlights'>('comments');

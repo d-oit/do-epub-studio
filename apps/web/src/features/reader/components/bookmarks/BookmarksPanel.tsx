@@ -1,4 +1,5 @@
-import { useRef, useEffect } from 'react';
+import { useRef } from 'react';
+import { useKeyboardShortcut } from '../../../../hooks/useKeyboardShortcut';
 import { useFocusTrap } from '@do-epub-studio/ui';
 import { IconButton, Tooltip } from '../../../../components/ui';
 import { useTranslation } from '../../../../hooks/useTranslation';
@@ -26,14 +27,7 @@ export function BookmarksPanel({
   const panelRef = useRef<HTMLElement>(null);
   useFocusTrap(isOpen, panelRef);
 
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', handleEscape);
-    return () => window.removeEventListener('keydown', handleEscape);
-  }, [isOpen, onClose]);
+  useKeyboardShortcut('Escape', onClose, { enabled: isOpen });
 
   if (!isOpen) return null;
 
