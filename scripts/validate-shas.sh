@@ -52,6 +52,7 @@ ALLOWED_SHAS=(
     "chromaui/action@7ffa9343588f15ff3f4cde30e03cd23204ed6a9c"
     "dorny/paths-filter@9af6e5a9d010d1ae8ec570390b3d793e2b70a402"
     "dorny/paths-filter@b41dfa943b1939b9b646f67753bfe35cf6e4de03"
+    "dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d"
     "github/codeql-action/init@54f647b7e1bb85c95cddabcd46b0c578ec92bc1a"
     "github/codeql-action/analyze@54f647b7e1bb85c95cddabcd46b0c578ec92bc1a"
     "chromaui/action@94713c544284a14195de3b50ef24301579f1877e"
