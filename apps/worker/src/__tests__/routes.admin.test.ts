@@ -198,6 +198,13 @@ describe('Admin Routes', () => {
       expect(res.status).toBe(200);
       const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } = await res.json();
       expect(body.data).toHaveLength(1);
+      // B2 (GOAP-224 W1.4): grants SELECT must be an explicit column list —
+      // no `SELECT *`, and the Argon2id `password_hash` must never be fetched
+      // into the Worker heap.
+      const sql = mockQueryAll.mock.calls[0][1] as string;
+      expect(sql).toMatch(/FROM book_access_grants/);
+      expect(sql).not.toMatch(/SELECT\s+\*/i);
+      expect(sql).not.toContain('password_hash');
     });
   });
 
