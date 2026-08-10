@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { type ReactNode } from 'react';
 import { InfoPanel } from './InfoPanel';
 import * as readingInsights from '../../../../lib/offline/reading-insights';
 
@@ -7,6 +8,14 @@ vi.mock('../../../../lib/offline/reading-insights', async (importOriginal) => {
   const actual = await importOriginal<typeof readingInsights>();
   return { ...actual, computeInsightSummary: vi.fn() };
 });
+
+const mockUseFocusTrap = vi.fn();
+vi.mock('@do-epub-studio/ui', () => ({
+  useFocusTrap: (...args: unknown[]) => mockUseFocusTrap(...args),
+  IconButton: ({ children, onClick, 'aria-label': ariaLabel }: { children: ReactNode; onClick: () => void; 'aria-label': string }) => (
+    <button type="button" onClick={onClick} aria-label={ariaLabel}>{children}</button>
+  ),
+}));
 
 const mockCompute = readingInsights.computeInsightSummary as unknown as ReturnType<typeof vi.fn>;
 
@@ -30,6 +39,18 @@ const baseProps = {
 describe('InfoPanel', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  it('calls useFocusTrap with isOpen and the panel ref when open', () => {
+    mockCompute.mockResolvedValue(null);
+    render(<InfoPanel {...baseProps} isOpen={true} />);
+    expect(mockUseFocusTrap).toHaveBeenCalledWith(true, expect.objectContaining({ current: expect.any(HTMLElement) }));
+  });
+
+  it('calls useFocusTrap with false when closed', () => {
+    mockCompute.mockResolvedValue(null);
+    render(<InfoPanel {...baseProps} isOpen={false} />);
+    expect(mockUseFocusTrap).toHaveBeenCalledWith(false, expect.objectContaining({ current: null }));
   });
 
   it('renders insights once computeInsightSummary resolves', async () => {

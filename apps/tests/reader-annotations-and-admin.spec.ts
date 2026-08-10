@@ -40,7 +40,7 @@ test.describe('Reader annotations', () => {
     suppressWorkboxErrors(page);
     await loginAsReader(page);
 
-    // On mobile, Export Notes is in the overflow menu
+    // On mobile, Export Notes is in the overflow menu (role="menuitem" after GOAP-224 B8)
     const width = page.viewportSize()?.width ?? 1280;
     if (width < 640) {
       const moreBtn = page.getByRole('button', { name: /More [Oo]ptions/i });
@@ -48,9 +48,12 @@ test.describe('Reader annotations', () => {
         await moreBtn.click();
         await page.waitForTimeout(200);
       }
+      const exportButton = page.getByRole('menuitem', { name: 'Export Notes', exact: true });
+      await expect(exportButton).toBeVisible();
+    } else {
+      const exportButton = page.getByRole('button', { name: 'Export Notes', exact: true });
+      await expect(exportButton).toBeVisible();
     }
-    const exportButton = page.getByRole('button', { name: 'Export Notes', exact: true });
-    await expect(exportButton).toBeVisible();
   });
 
   test('@mobile renders reader page with mocked book and displays content', async ({ page }) => {
@@ -207,9 +210,10 @@ test.describe('Accessibility', () => {
       // On mobile, toolbar buttons collapse into an overflow menu
       await expect(page.getByRole('button', { name: 'More options' })).toBeVisible({ timeout: 60000 });
       await page.getByRole('button', { name: 'More options' }).click();
-      await expect(page.locator('.cq-reader-toolbar-overflow').getByRole('button', { name: 'Settings' })).toBeVisible();
-      await expect(page.locator('.cq-reader-toolbar-overflow').getByRole('button', { name: 'Bookmarks' })).toBeVisible();
-      await expect(page.locator('.cq-reader-toolbar-overflow').getByRole('button', { name: 'Sign Out' })).toBeVisible();
+      // Menu items use role="menuitem" after GOAP-224 a11y fix (B8)
+      await expect(page.locator('.cq-reader-toolbar-overflow').getByRole('menuitem', { name: 'Settings' })).toBeVisible();
+      await expect(page.locator('.cq-reader-toolbar-overflow').getByRole('menuitem', { name: 'Bookmarks' })).toBeVisible();
+      await expect(page.locator('.cq-reader-toolbar-overflow').getByRole('menuitem', { name: 'Sign Out' })).toBeVisible();
     } else {
       await expect(page.getByRole('button', { name: 'Contents' })).toBeVisible({ timeout: 60000 });
       await expect(page.getByRole('button', { name: 'Settings' })).toBeVisible({ timeout: 60000 });

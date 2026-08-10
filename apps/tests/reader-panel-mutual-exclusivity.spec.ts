@@ -21,9 +21,10 @@ async function clickToolbarAction(page: Page, name: string | RegExp) {
     // Use dispatchEvent because open panels (z-50, full-width on mobile)
     // may cover the toolbar trigger button.
     await page.getByRole('button', { name: 'More options' }).dispatchEvent('click');
+    // Overflow menu items use role="menuitem" after GOAP-224 a11y fix (B8)
     const overflowItem = page
       .locator('.cq-reader-toolbar-overflow')
-      .getByRole('button', { name });
+      .getByRole('menuitem', { name });
     await overflowItem.waitFor({ state: 'visible', timeout: 5000 });
     await overflowItem.dispatchEvent('click');
   } else {
