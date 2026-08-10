@@ -3,6 +3,7 @@ import { useKeyboardShortcut } from '../../../../hooks/useKeyboardShortcut';
 import { useTranslation } from '../../../../hooks/useTranslation';
 import type { TranslationKeys } from '../../../../i18n/en';
 import { Tooltip, IconButton } from '../../../../components/ui';
+import { useFocusTrap } from '@do-epub-studio/ui';
 import type { SupportedLocale } from '../../../../stores/locale';
 
 export interface SelectionData {
@@ -86,6 +87,10 @@ export function AnnotationToolbar({
     () => { if (showColorPicker) setShowColorPicker(false); else onClose(); },
   );
 
+  // B10: Focus trap for the non-native color picker fallback path only.
+  // On the native popover path the browser manages focus for popover="auto".
+  useFocusTrap(!useNativePopover && showColorPicker, colorPickerRef);
+
   useEffect(() => {
     if (useNativePopover) return;
     const handleClickOutside = (e: MouseEvent) => {
@@ -160,7 +165,7 @@ export function AnnotationToolbar({
               ref={colorPickerRef}
               id="annotation-color-picker"
               role="dialog"
-              aria-label={`${t('annotation.highlight')} colors`}
+              aria-label={t('annotation.highlight_colors')}
               popover="auto"
               data-fallback={useNativePopover ? undefined : 'js'}
               className="glass-panel rounded-xl shadow-glass border border-border p-2 flex gap-2"
