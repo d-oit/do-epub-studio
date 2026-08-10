@@ -96,16 +96,18 @@ invariant tests re-run on the cache path.
 
 - [x] 221-A1: `bundle-baseline.json` committed; CI fails on budget delta (PR #936)
 - [x] 221-A2: no dead `createEpubLoader` abstraction — wired via `getBook()` accessor (PR #936)
-- [x] 221-A3: sanitizer cache hit skips 3-pass pipeline; revision/policy change invalidates; XSS suite green (PR #937)
-  - **Note (2026-08-10 verify):** the item table above originally stated the cache
-    key was `bookRevision + spineItemHref + sanitizerPolicyVersion`. The shipped
-    cache (`createEpubSanitizerHook`) keys entries by `SANITIZER_POLICY_VERSION +
+- [x] 221-A3: sanitizer cache hit skips 3-pass pipeline; cache scoped per book load + policy-version change invalidates; XSS suite green (PR #937)
+  - **Note (2026-08-10 verify):** the AC wording was corrected from "revision/policy
+    change invalidates" — there is no `revision` component in the cache key. The
+    table entry above originally stated the cache key was `bookRevision +
+    spineItemHref + sanitizerPolicyVersion`, also stale. The shipped cache
+    (`createEpubSanitizerHook`) keys entries by `SANITIZER_POLICY_VERSION +
     href` only, because the hook — and its in-memory LRU `Map` — is constructed
     fresh per book load (`useReaderEpub.ts` / `epub-loader.ts`), which is what
-    scopes the cache to a single `bookRevision` and a single book. Adding
-    `bookRevision` to the key would be redundant (the map is never shared across
-    books) and would add a per-entry cache-key dimension with no observable
-    benefit. The `bookRevision`-in-key claim was stale; the table row was
+    scopes the cache to a single book and revision. Adding `bookRevision` to the
+    key would be redundant (the map is never shared across books) and would add a
+    per-entry cache-key dimension with no observable benefit. Both stale claims
+    (the `bookRevision` key component and "revision … invalidates") were
     corrected to match the verified implementation.
 - [x] 221-A4: centralized keyboard shortcuts + page-level skeletons (PR #941, merged)
 - [x] 221-A5: admin reading-insights aggregation endpoint (PR #941, merged)

@@ -150,14 +150,14 @@ Wave 1 and Wave 2 are disjoint file sets → can be developed in parallel branch
   - Verified on main (post-#946): overflow trigger `aria-haspopup="menu"` + `role="menu"` popup with arrow-key/Home/End nav; picker `role="dialog"` `aria-label={t('annotation.highlight_colors')}` with `useFocusTrap` on the non-native path; comment/bookmark badges appended to `aria-label` via `*_with_count` keys.
 - [x] W3.1: `epub-loader.ts` destroy() calls `terminateParserWorker()`
 - [x] W3.2: LRU cache HIT resolves from the serialized-string cache *without*
-      re-running the multi-pass DOMPurify pipeline (Option A, accepted-with-rationale)
-  - **Note (2026-08-10 verify):** the original AC line "HIT does not invoke
-    `DOMParser.parseFromString`" was inaccurate for the delivered design — see the
-    B5 note below. The implemented (and shipped) behavior is Option A: the cache
-    stores serialized HTML strings, so a HIT re-parses cached output with a
-    browser-native `DOMParser` + `sanitizeDom` instead of re-running the multi-pass
-    DOMPurify pipeline (a HIT does not call `DOMPurify.sanitize`). This AC line is
-    corrected to match the accepted-rationale decision.
+      re-running the multi-pass DOMPurify pipeline (Option A, accepted-with-rationale;
+      see B5 note below)
+  - **Note (2026-08-10 verify):** the original AC line was "LRU cache HIT does not
+    invoke `DOMParser.parseFromString`", which misstated the delivered design. A HIT
+    resolves from the serialized-string cache and *does* re-parse via a browser-native
+    `DOMParser` + `sanitizeDom` — it skips only the multi-pass DOMPurify pipeline
+    (never calls DOMPurify on a HIT). AC line corrected; the accepted-with-rationale
+    decision itself is unchanged (see B5).
   - B5 decided accepted-with-rationale (Option A): re-parse measured ~0.3-4ms in
     browser (sub-ms to a few ms; ~7ms even in jsdom at 30KB) vs the multi-pass
     DOMPurify MISS — string cache retained; rationale documented in
