@@ -24,7 +24,8 @@ test.describe('Advanced accessibility — keyboard navigation', () => {
       await expect(moreBtn).toBeVisible({ timeout: 60000 });
       await moreBtn.focus();
       await page.keyboard.press('Enter');
-      await expect(page.locator('.cq-reader-toolbar-overflow').getByRole('button', { name: 'Settings' })).toBeVisible();
+      // Menu items use role="menuitem" after GOAP-224 a11y fix (B8)
+      await expect(page.locator('.cq-reader-toolbar-overflow').getByRole('menuitem', { name: 'Settings' })).toBeVisible();
     } else {
       const contentsBtn = page.getByRole('button', { name: 'Contents' });
       await expect(contentsBtn).toBeVisible({ timeout: 60000 });

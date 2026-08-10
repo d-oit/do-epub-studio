@@ -57,7 +57,9 @@ describe('ReaderToolbar', () => {
         'reader.untitledBook': 'Untitled Book',
         'reader.chapterProgress': `Chapter ${params?.current} of ${params?.total}`,
         'annotation.comment': 'Comment',
+        'annotation.comment_with_count': `Comment (${params?.count} open)`,
         'reader.bookmarks': 'Bookmarks',
+        'reader.bookmarks_with_count': `Bookmarks (${params?.count})`,
         'reader.aboutBook': 'About This Book',
         'reader.exportNotes': 'Export Notes',
         'reader.settings': 'Settings',
@@ -439,5 +441,56 @@ describe('ReaderToolbar', () => {
     fireEvent.click(menuButton);
     expect(screen.getAllByText('Search').length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText('Sign Out').length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('ArrowDown moves focus to next menuitem in overflow menu', () => {
+    render(<ReaderToolbar {...mockProps} />);
+    const menuButton = screen.getByLabelText('More Options');
+    fireEvent.click(menuButton);
+
+    const menuItems = screen.getAllByRole('menuitem');
+    expect(menuItems.length).toBeGreaterThan(1);
+
+    // Focus first menuitem, fire ArrowDown → should move to second
+    menuItems[0].focus();
+    const menuContainer = menuItems[0].closest('[role="menu"]') as HTMLElement;
+    fireEvent.keyDown(menuContainer, { key: 'ArrowDown' });
+    expect(document.activeElement).toBe(menuItems[1]);
+  });
+
+  it('ArrowUp wraps to last menuitem from first', () => {
+    render(<ReaderToolbar {...mockProps} />);
+    const menuButton = screen.getByLabelText('More Options');
+    fireEvent.click(menuButton);
+
+    const menuItems = screen.getAllByRole('menuitem');
+    menuItems[0].focus();
+    const menuContainer = menuItems[0].closest('[role="menu"]') as HTMLElement;
+    fireEvent.keyDown(menuContainer, { key: 'ArrowUp' });
+    expect(document.activeElement).toBe(menuItems[menuItems.length - 1]);
+  });
+
+  it('Home moves focus to first menuitem', () => {
+    render(<ReaderToolbar {...mockProps} />);
+    const menuButton = screen.getByLabelText('More Options');
+    fireEvent.click(menuButton);
+
+    const menuItems = screen.getAllByRole('menuitem');
+    menuItems[menuItems.length - 1].focus();
+    const menuContainer = menuItems[0].closest('[role="menu"]') as HTMLElement;
+    fireEvent.keyDown(menuContainer, { key: 'Home' });
+    expect(document.activeElement).toBe(menuItems[0]);
+  });
+
+  it('End moves focus to last menuitem', () => {
+    render(<ReaderToolbar {...mockProps} />);
+    const menuButton = screen.getByLabelText('More Options');
+    fireEvent.click(menuButton);
+
+    const menuItems = screen.getAllByRole('menuitem');
+    menuItems[0].focus();
+    const menuContainer = menuItems[0].closest('[role="menu"]') as HTMLElement;
+    fireEvent.keyDown(menuContainer, { key: 'End' });
+    expect(document.activeElement).toBe(menuItems[menuItems.length - 1]);
   });
 });

@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { useKeyboardShortcut } from '../../../../hooks/useKeyboardShortcut';
 import { IconButton } from '../../../../components/ui';
+import { useFocusTrap } from '@do-epub-studio/ui';
 import type { AccessibilityMetadata } from '@do-epub-studio/reader-core';
 import { computeInsightSummary } from '../../../../lib/offline/reading-insights';
+import { AccessibilitySection } from './AccessibilitySection';
+import { InsightsSection } from './InsightsSection';
 
 interface BookInfo {
   title: string;
@@ -30,180 +33,12 @@ interface InfoPanelProps {
   t: (key: string) => string;
 }
 
-function FeatureBadge({ label }: { label: string }) {
-  return (
-    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-accent/10 text-accent border border-accent/20">
-      {label}
-    </span>
-  );
-}
-
-function formatHazard(hazard: string): string {
-  switch (hazard) {
-    case 'none': return 'None';
-    case 'flashing': return 'Flashing';
-    case 'motionSimulation': return 'Motion Simulation';
-    case 'sound': return 'Sound';
-    case 'unknown': return 'Unknown';
-    default: return hazard;
-  }
-}
-
-function HazardBadge({ hazard }: { hazard: string }) {
-  const isNone = hazard === 'none';
-  return (
-    <span
-      className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${
-        isNone
-          ? 'bg-success/10 text-success border-success/20'
-          : 'bg-warning/10 text-warning border-warning/20'
-      }`}
-    >
-      {formatHazard(hazard)}
-    </span>
-  );
-}
-
-function formatMinutes(minutes: number): string {
-  if (minutes < 60) return `${minutes} min`;
-  const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
-  return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
-}
-
-type TFn = (key: string) => string;
-
-function AccessibilitySection({ a11y, t }: { a11y: AccessibilityMetadata; t: TFn }) {
-  return (
-    <section>
-      <h3 className="text-xs font-semibold text-foreground-muted uppercase tracking-wider mb-2">
-        {t('reader.accessibility')}
-      </h3>
-      <div className="space-y-3">
-        {a11y.summary && (
-          <p className="text-sm text-foreground leading-relaxed">{a11y.summary}</p>
-        )}
-        {a11y.conformsTo && (
-          <div>
-            <span className="text-xs text-foreground-muted">{t('reader.conformsTo')}: </span>
-            <span className="text-xs text-foreground font-medium">{a11y.conformsTo}</span>
-          </div>
-        )}
-        {a11y.features.length > 0 && (
-          <div>
-            <p className="text-xs text-foreground-muted mb-1.5">{t('reader.features')}</p>
-            <div className="flex flex-wrap gap-1.5">
-              {a11y.features.map((f) => <FeatureBadge key={f} label={f} />)}
-            </div>
-          </div>
-        )}
-        {a11y.hazards.length > 0 && (
-          <div>
-            <p className="text-xs text-foreground-muted mb-1.5">{t('reader.hazards')}</p>
-            <div className="flex flex-wrap gap-1.5">
-              {a11y.hazards.map((h) => <HazardBadge key={h} hazard={h} />)}
-            </div>
-          </div>
-        )}
-        {a11y.controls.length > 0 && (
-          <div>
-            <p className="text-xs text-foreground-muted mb-1.5">{t('reader.controls')}</p>
-            <div className="flex flex-wrap gap-1.5">
-              {a11y.controls.map((c) => <FeatureBadge key={c} label={c} />)}
-            </div>
-          </div>
-        )}
-        {a11y.api && (
-          <div className="text-xs">
-            <span className="text-foreground-muted">{t('reader.api')}: </span>
-            <span className="text-foreground font-medium">{a11y.api}</span>
-          </div>
-        )}
-        {a11y.certifiedBy && (
-          <div className="text-xs">
-            <span className="text-foreground-muted">{t('reader.certifiedBy')}: </span>
-            <span className="text-foreground font-medium">{a11y.certifiedBy}</span>
-            {a11y.certifierCredential && (
-              <span className="text-foreground-muted"> ({a11y.certifierCredential})</span>
-            )}
-          </div>
-        )}
-        {a11y.certifierReport && (
-          <div className="text-xs">
-            <a
-              href={a11y.certifierReport}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-accent hover:underline"
-            >
-              {t('reader.certificationReport')}
-            </a>
-          </div>
-        )}
-      </div>
-    </section>
-  );
-}
-
-function InsightsSection({ insights, t }: { insights: InsightSummary; t: TFn }) {
-  return (
-    <section>
-      <h3 className="text-xs font-semibold text-foreground-muted uppercase tracking-wider mb-2">
-        {t('reader.readingInsights')}
-      </h3>
-      <dl className="space-y-2">
-        {insights.totalActiveMinutes > 0 && (
-          <div>
-            <dt className="text-xs text-foreground-muted">{t('reader.totalActiveTime')}</dt>
-            <dd className="text-sm text-foreground">{formatMinutes(insights.totalActiveMinutes)}</dd>
-          </div>
-        )}
-        {insights.totalActivePages > 0 && (
-          <div>
-            <dt className="text-xs text-foreground-muted">{t('reader.pagesRead')}</dt>
-            <dd className="text-sm text-foreground">{insights.totalActivePages}</dd>
-          </div>
-        )}
-        {insights.estimatedMinutesRemaining !== null && (
-          <div>
-            <dt className="text-xs text-foreground-muted">{t('reader.estimatedRemaining')}</dt>
-            <dd className="text-sm text-foreground">{formatMinutes(insights.estimatedMinutesRemaining)}</dd>
-          </div>
-        )}
-        {insights.currentStreakDays > 0 && (
-          <div>
-            <dt className="text-xs text-foreground-muted">{t('reader.readingStreak')}</dt>
-            <dd className="text-sm text-foreground">
-              {insights.currentStreakDays} {t('reader.days')}
-            </dd>
-          </div>
-        )}
-        {insights.recentActivity.length > 0 && (
-          <div>
-            <dt className="text-xs text-foreground-muted">{t('reader.recentActivity')}</dt>
-            <dd className="text-foreground text-xs leading-tight">
-              <ul className="space-y-1 mt-1">
-                {[...insights.recentActivity].reverse().map((a) => (
-                  <li key={a.date} className="flex justify-between">
-                    <span>{a.date}</span>
-                    {/* eslint-disable-next-line i18next/no-literal-string -- unit suffix and separator */}
-                    <span className="text-foreground-muted">{formatMinutes(a.activeMinutes)} • {a.activePages}p</span>
-                  </li>
-                ))}
-              </ul>
-            </dd>
-          </div>
-        )}
-      </dl>
-    </section>
-  );
-}
-
 export function InfoPanel({ isOpen, onClose, metadata, bookId, progressPercent, t }: InfoPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const [insights, setInsights] = useState<InsightSummary | null>(null);
 
   useKeyboardShortcut('Escape', onClose, { enabled: isOpen });
+  useFocusTrap(isOpen, panelRef);
 
   useEffect(() => {
     if (!isOpen || !bookId) return;
