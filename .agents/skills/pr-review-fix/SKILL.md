@@ -201,12 +201,13 @@ If the PR changes CSS, component roles, or aria attributes, Chromatic will flag 
 # Confirm everything is green
 gh pr checks $PR  # all non-skipping checks must pass
 
-# Enable auto-merge (fires automatically when the last check passes)
-gh pr merge $PR --squash --auto
-
-# OR merge directly if all checks already pass
+# Merge directly — NEVER use --auto
 gh pr merge $PR --squash
 ```
+
+**Do NOT use `--auto`.** Auto-merge fires asynchronously and silently fails when
+the branch is BEHIND or threads are unresolved. Always work through steps 1–4
+first, then merge directly with `gh pr merge <N> --squash`.
 
 ## Delegation Map
 
