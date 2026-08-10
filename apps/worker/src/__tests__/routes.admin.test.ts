@@ -682,5 +682,62 @@ describe('Admin Routes', () => {
       const body: { pagination: { offset: number } } = await res.json();
       expect(body.pagination.offset).toBe(100_000);
     });
+
+    // GOAP-224 B15/B19: non-numeric query params parse to NaN and must fall
+    // back to the defaults instead of firing a bogus SQL LIMIT/OFFSET or 500.
+    it('falls back to default limit/offset for non-numeric params (B15/B19)', async () => {
+      mockRequireAdminAuth.mockResolvedValue({
+        ok: true,
+        context: { userId: 'admin-1', email: 'admin@example.com', globalRole: 'admin' },
+      });
+      mockQueryAll.mockResolvedValue([]);
+
+      const res = await app.fetch(
+        new Request('http://localhost/api/admin/insights?limit=abc&offset=abc', {
+          headers: { Authorization: 'Bearer admin-token' },
+        }),
+        env,
+        makePassThroughContext(),
+      );
+
+      expect(res.status).toBe(200);
+      const body: { pagination: { limit: number; offset: number } } = await res.json();
+      expect(body.pagination.limit).toBe(20);
+      expect(body.pagination.offset).toBe(0);
+    });
+
+    it('falls back independently per NaN param (B19)', async () => {
+      mockRequireAdminAuth.mockResolvedValue({
+        ok: true,
+        context: { userId: 'admin-1', email: 'admin@example.com', globalRole: 'admin' },
+      });
+      mockQueryAll.mockResolvedValue([]);
+
+      // limit NaN → 20; offset valid → respected.
+      const resLimitNaN = await app.fetch(
+        new Request('http://localhost/api/admin/insights?limit=not-a-number&offset=7', {
+          headers: { Authorization: 'Bearer admin-token' },
+        }),
+        env,
+        makePassThroughContext(),
+      );
+      expect(resLimitNaN.status).toBe(200);
+      const bodyLimitNaN: { pagination: { limit: number; offset: number } } = await resLimitNaN.json();
+      expect(bodyLimitNaN.pagination.limit).toBe(20);
+      expect(bodyLimitNaN.pagination.offset).toBe(7);
+
+      // offset NaN → 0; limit valid → respected.
+      const resOffsetNaN = await app.fetch(
+        new Request('http://localhost/api/admin/insights?limit=3&offset=nope', {
+          headers: { Authorization: 'Bearer admin-token' },
+        }),
+        env,
+        makePassThroughContext(),
+      );
+      expect(resOffsetNaN.status).toBe(200);
+      const bodyOffsetNaN: { pagination: { limit: number; offset: number } } = await resOffsetNaN.json();
+      expect(bodyOffsetNaN.pagination.limit).toBe(3);
+      expect(bodyOffsetNaN.pagination.offset).toBe(0);
+    });
   });
 });

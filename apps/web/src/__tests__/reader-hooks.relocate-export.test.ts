@@ -51,7 +51,8 @@ describe('createRelocatedHandler', () => {
       markPageRead,
     );
 
-    expect(typeof handler).toBe('function');
+    expect(typeof handler.onRelocated).toBe('function');
+    expect(typeof handler.flush).toBe('function');
   });
 
   it('saves progress when online', async () => {
@@ -74,7 +75,9 @@ describe('createRelocatedHandler', () => {
 
     Object.defineProperty(navigator, 'onLine', { value: true, writable: true });
 
-    await handler({ start: { cfi: 'epubcfi(/6/4)', progress: 50, href: 'ch1.xhtml' } });
+    await handler.onRelocated({ start: { cfi: 'epubcfi(/6/4)', progress: 50, href: 'ch1.xhtml' } });
+    // GOAP-224 B6: online PUTs are debounced; flush to force the save.
+    await handler.flush();
 
     expect(setProgress).toHaveBeenCalled();
     expect(onChapterChange).toHaveBeenCalled();
@@ -101,7 +104,7 @@ describe('createRelocatedHandler', () => {
 
     Object.defineProperty(navigator, 'onLine', { value: false, writable: true });
 
-    await handler({ start: { cfi: 'epubcfi(/6/4)', progress: 50, href: 'ch1.xhtml' } });
+    await handler.onRelocated({ start: { cfi: 'epubcfi(/6/4)', progress: 50, href: 'ch1.xhtml' } });
 
     expect(saveProgress).toHaveBeenCalled();
     expect(queueSync).toHaveBeenCalled();
@@ -128,7 +131,9 @@ describe('createRelocatedHandler', () => {
 
     Object.defineProperty(navigator, 'onLine', { value: true, writable: true });
 
-    await handler({ start: { cfi: 'epubcfi(/6/4)', progress: 50, href: 'ch1.xhtml' } });
+    await handler.onRelocated({ start: { cfi: 'epubcfi(/6/4)', progress: 50, href: 'ch1.xhtml' } });
+    // GOAP-224 B6: online PUTs are debounced; flush to force the save.
+    await handler.flush();
 
     expect(saveProgress).toHaveBeenCalled();
   });
@@ -153,7 +158,7 @@ describe('createRelocatedHandler', () => {
 
     Object.defineProperty(navigator, 'onLine', { value: true, writable: true });
 
-    await handler({ start: { cfi: 'epubcfi(/6/4)', progress: 50, href: 'ch2.xhtml' } });
+    await handler.onRelocated({ start: { cfi: 'epubcfi(/6/4)', progress: 50, href: 'ch2.xhtml' } });
 
     expect(setCurrentChapter).toHaveBeenCalledWith('ch2.xhtml');
     expect(currentChapterRef.current).toBe('ch2.xhtml');

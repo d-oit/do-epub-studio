@@ -31,13 +31,17 @@ jobs:
           github-token: '${{ secrets.GITHUB_TOKEN }}'
           skip-commit-verification: true
 
-      - name: Approve and enable auto-merge for safe updates
+      # GOAP-224 Step 9: the repo enforces an explicit no-automerge rule
+      # (AGENTS.md Tier 1, commit bddcfc5). `gh pr merge --auto` violated it.
+      # Approve + label `merge-ready` instead: a human explicitly merges, so a
+      # Dependabot update can never land without a human ack.
+      - name: Approve safe updates but require explicit merge (no-automerge rule)
         if: |
           steps.metadata.outputs.update-type == 'version-update:semver-minor' ||
           steps.metadata.outputs.update-type == 'version-update:semver-patch'
         run: |
           gh pr review --approve "$PR_URL"
-          gh pr merge --auto --squash "$PR_URL"
+          gh pr edit "$PR_URL" --add-label "merge-ready"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

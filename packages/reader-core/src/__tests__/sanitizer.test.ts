@@ -44,6 +44,25 @@ describe('sanitizeSvg', () => {
     expect(result).toContain('<rect');
   });
 
+  // GOAP-224 A1 acceptance: the ALLOWED_TAGS allowlist must strip arbitrary
+  // HTML (script, foreignObject) smuggled inside an SVG while preserving
+  // allowed SVG elements (path) and dropping event-handler attributes.
+  it('strips HTML tags and event handlers while keeping allowed SVG tags', () => {
+    const html =
+      '<svg xmlns="http://www.w3.org/2000/svg">' +
+      '<script>alert(1)</script>' +
+      '<foreignObject><body onload="alert(1)"></body></foreignObject>' +
+      '<path d="M0 0h10v10H0z" onload="alert(2)"/>' +
+      '</svg>';
+    const result = sanitizeSvg(html);
+    expect(result).toContain('<path');
+    expect(result).not.toContain('script');
+    expect(result).not.toContain('foreignObject');
+    expect(result).not.toContain('foreignobject');
+    expect(result).not.toContain('onload');
+    expect(result).not.toContain('alert');
+  });
+
   it('blocks javascript: URLs in href attributes', () => {
     const html = '<svg xmlns="http://www.w3.org/2000/svg"><use href="javascript:alert(1)"/><image xlink:href="javascript:alert(2)"/></svg>';
     const result = sanitizeSvg(html);
@@ -292,6 +311,35 @@ describe('createEpubSanitizerHook', () => {
     hook({ document: doc2, href: 'chapter1.xhtml' });
     expect(sanitizeSpy.mock.calls.length).toBe(hitCount);
     expect(doc2.querySelector('script')).toBeNull();
+  });
+
+  // GOAP-224 B18 + C14: the cache-HIT path must reproduce the MISS output
+  // byte-for-byte (including the DOMPurify 3-pass result) and sync the live
+  // <html> attributes — otherwise re-rendering a cached chapter drops lang/dir.
+  it('produces byte-identical output on cache HIT and syncs html attributes (B18/C14)', () => {
+    const { hook } = createEpubSanitizerHook();
+    const sanitizeSpy = vi.spyOn(DOMPurify, 'sanitize');
+
+    const input = '<html lang="ar" dir="rtl"><head><script>alert(1)</script><title>Ch</title></head><body><p onclick="x()">Hello</p></body></html>';
+
+    const missDoc = new DOMParser().parseFromString(input, 'text/html');
+    hook({ document: missDoc, href: 'chapter1.xhtml' });
+    const missOutput = missDoc.documentElement.outerHTML;
+    const missCount = sanitizeSpy.mock.calls.length;
+    expect(missCount).toBeGreaterThan(0);
+
+    // Same raw input for the same href — a cache HIT must not re-run the
+    // DOMPurify pipeline.
+    const hitDoc = new DOMParser().parseFromString(input, 'text/html');
+    hook({ document: hitDoc, href: 'chapter1.xhtml' });
+    expect(sanitizeSpy.mock.calls.length).toBe(missCount);
+
+    expect(hitDoc.documentElement.outerHTML).toBe(missOutput);
+    expect(hitDoc.querySelector('script')).toBeNull();
+    expect(hitDoc.querySelector('p')?.getAttribute('onclick')).toBeNull();
+    // C14: <html> attributes (lang, dir) synced on HIT exactly like MISS.
+    expect(hitDoc.documentElement.getAttribute('lang')).toBe('ar');
+    expect(hitDoc.documentElement.getAttribute('dir')).toBe('rtl');
   });
 
   it('invalidates the cache when the sanitizer policy version changes', () => {

@@ -446,6 +446,25 @@ export function createEpubSanitizerHook(
     return `${policyVersion}:${href}`;
   }
 
+  // GOAP-224 B5 (accepted-with-rationale): the cache stores serialized HTML
+  // strings, so a cache HIT re-parses cached output with a browser-native
+  // DOMParser + sanitizeDom instead of holding live Element nodes in the Map.
+  // This is intentional — detached DOM nodes would keep large subtrees alive
+  // per chapter (memory bloat + stale-reference risk), while the re-parse is
+  // ~0.3-4ms for typical chapters (sub-ms to a few ms in the browser) and far
+  // cheaper than re-running the multi-pass DOMPurify pipeline on a MISS.
+  function copyHtmlAttributesWhenChanged(target: HTMLElement, source: HTMLElement): void {
+    // Mirror sanitizeEpubDocument pass (b): sync <html> attributes (lang, dir)
+    // so the cache-HIT and cache-MISS paths leave the live document with
+    // identical attributes (GOAP-224 C14).
+    for (const attr of Array.from(target.attributes)) {
+      if (source.getAttribute(attr.name) === null) target.removeAttribute(attr.name);
+    }
+    for (const attr of Array.from(source.attributes)) {
+      target.setAttribute(attr.name, attr.value);
+    }
+  }
+
   // Map iteration order === insertion order; on access we delete+re-set to
   // move the entry to the MRU position, giving true LRU eviction.
   function touch(href: string): string | undefined {
@@ -477,7 +496,9 @@ export function createEpubSanitizerHook(
         const root = doc.documentElement;
         const parser = new DOMParser();
         const cachedDoc = parser.parseFromString(cached, 'text/html');
-        root.replaceChildren(...Array.from(cachedDoc.documentElement.childNodes));
+        const cachedRoot = cachedDoc.documentElement;
+        root.replaceChildren(...Array.from(cachedRoot.childNodes));
+        copyHtmlAttributesWhenChanged(root, cachedRoot);
         const timeoutMs = options?.timeoutMs ?? SANITIZE_TIMEOUT_MS;
         const deadline = createDeadline(timeoutMs);
         sanitizeDom(doc, deadline, timeoutMs, options?.traceId);

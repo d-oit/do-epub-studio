@@ -77,4 +77,60 @@ describe('check-bundle-budget.mjs (ADR-107 §3)', () => {
     expect(result.status).toBe(2);
     expect(result.stdout + result.stderr).toMatch(/dist directory not found/);
   });
+
+  // GOAP-224 B7: a baseline-delta violation must surface the growth table in
+  // the report body (BUNDLE_BUDGET_REPORT), not just a bare violation count.
+  it('folds the baseline delta table into the report on a violation (B7)', () => {
+    const manifest = {
+      'src/features/reader/ReaderPage.tsx': {
+        file: 'assets/reader-route-INFLATED.js',
+        isEntry: true,
+        imports: [],
+        css: [],
+      },
+    };
+    fs.mkdirSync(path.join(tempDist, '.vite'), { recursive: true });
+    fs.writeFileSync(path.join(tempDist, '.vite', 'manifest.json'), JSON.stringify(manifest));
+    // 60KB of incompressible data => ~59KB gz, ~30KB over the baseline's ~29KB entry.
+    fs.writeFileSync(
+      path.join(assetsDir, 'reader-route-INFLATED.js'),
+      crypto.randomBytes(60 * 1024),
+    );
+
+    const baselinePath = path.join(__dirname, 'temp-baseline-budget.json');
+    fs.writeFileSync(
+      baselinePath,
+      JSON.stringify({
+        routes: {
+          reader: {
+            entry: 'assets/reader-route-BASE.js',
+            gzip: 29659,
+            brotli: 25227,
+            totalTransitive: { gzip: 262005, brotli: 227608 },
+          },
+        },
+      }),
+    );
+
+    try {
+      const reportPath = path.join(__dirname, 'temp-budget-report.md');
+      const result = runScript([], {
+        BUNDLE_BUDGET_BASELINE: baselinePath,
+        BUNDLE_BUDGET_REPORT: reportPath,
+      });
+
+      expect(result.status).toBe(0);
+      expect(result.stdout).toContain('### Baseline delta comparison');
+      expect(result.stdout).toMatch(/reader \| -?[\d.]+ \| -?[\d.]+ \| -?[\d.]+% \| ❌/);
+
+      const report = fs.readFileSync(reportPath, 'utf8');
+      expect(report).toContain('### Bundle budget (gzipped + brotli) — ADR-107 §3');
+      expect(report).toContain('### Baseline delta comparison');
+      expect(report).toMatch(/reader \| -?[\d.]+ \| -?[\d.]+ \| -?[\d.]+% \| ❌/);
+
+      fs.rmSync(reportPath, { force: true });
+    } finally {
+      fs.rmSync(baselinePath, { force: true });
+    }
+  });
 });

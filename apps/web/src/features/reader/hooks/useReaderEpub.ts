@@ -56,6 +56,7 @@ export function useReaderEpub(
   const tocRef = useRef<TocItem[]>([]);
   const adapterRef = useRef<AnnotationAdapter | null>(null);
   const prefetchManagerRef = useRef<PrefetchManager | null>(null);
+  const progressFlushRef = useRef<(() => Promise<void>) | null>(null);
   const loaderRef = useRef<ReturnType<typeof createEpubLoader> | null>(null);
   const onNavigateToAnnotationRef = useRef(onNavigateToAnnotation);
   onNavigateToAnnotationRef.current = onNavigateToAnnotation;
@@ -325,7 +326,7 @@ export function useReaderEpub(
                 onNavigateToAnnotationRef.current,
               );
             };
-            return createRelocatedHandler(
+            const relocatedHandler = createRelocatedHandler(
               bookId,
               sessionToken,
               setProgress,
@@ -339,6 +340,10 @@ export function useReaderEpub(
               },
               () => markPageRead?.(),
             );
+            // GOAP-224 B6: the online progress PUT is debounced; call
+            // flush() on unmount so the final position is not lost.
+            progressFlushRef.current = relocatedHandler.flush;
+            return relocatedHandler.onRelocated;
           })(),
         );
 
@@ -360,7 +365,11 @@ export function useReaderEpub(
           error: { name: error.name, message: error.message, stack: error.stack },
           metadata: { bookId },
         });
-        setError(t('reader.loadError'));
+        // GOAP-224 A9: the component may have unmounted while initEpub was
+        // awaiting (cleanup sets `active = false` and destroys the loader,
+        // which rejects the in-flight load). Only surface the error to the
+        // reader store while this effect is still active.
+        if (active) setError(t('reader.loadError'));
       }
     };
 
@@ -374,6 +383,11 @@ export function useReaderEpub(
       }
       prefetchManagerRef.current?.destroy();
       renditionRef.current?.destroy();
+      // GOAP-224 B6: flush the debounced progress save before teardown so the
+      // final reading position reaches the server / offline queue even if the
+      // 500ms window never elapsed.
+      void progressFlushRef.current?.();
+      progressFlushRef.current = null;
       loaderRef.current?.destroy();
       loaderRef.current = null;
     };

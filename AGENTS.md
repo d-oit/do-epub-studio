@@ -59,10 +59,10 @@ readonly MAX_PR_TITLE_LENGTH=72
 2. **Validate workflows:** All GitHub Actions workflows MUST pass validation via `./scripts/validate-workflows.sh` (includes `actionlint` and `zizmor` security scanning).
 3. **Use `./scripts/atomic-commit/run.sh --message "type(scope): description" --body "WHY"`.** It is safe to run with unrelated uncommitted changes in the working tree: the pre-push rebase uses `git rebase --autostash` (in-progress work is stashed and restored), and any rollback undoes only the just-made commit (`git reset --soft`) — never the working tree.
 4. **Coverage Thresholds:** Enforce minimum coverage via `test:coverage`.
-   - `web`: 55% Lines, 48% Functions | `worker`: 55% Lines, 50% Functions
+   - `web`: 55% Lines, 48% Functions | `worker`: 65% Lines, 60% Functions
    - `shared`: 40% Lines, 50% Functions | `reader-core`: 72% Lines, 70% Functions
    - `schema`: 90% Lines, 90% Functions | `testkit`: 25% Lines, 20% Functions
-   - `ui`: 10% Lines, 5% Functions
+   - `ui`: 40% Lines, 30% Functions
 5. **Validate commit message:** Run `./scripts/validate-commit-message.sh` or ensure format matches `type(scope): description` (max 72 chars).
 6. **NEVER ignore lint warnings, typecheck errors, or test failures.**
 7. **If a lint rule is disabled, add inline comment explaining why.**

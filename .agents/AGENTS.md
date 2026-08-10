@@ -117,9 +117,9 @@ test: {
 
 | Issue | Severity | Status |
 |-------|----------|--------|
-| EPUB sanitization | HIGH | Not implemented - add DOMPurify |
-| External URL blocking | MEDIUM | Partial - need allowlist |
-| Session token rotation | MEDIUM | Not implemented |
+| EPUB sanitization | HIGH | Implemented — `packages/reader-core/src/sanitizer.ts`: DOMPurify 3.4.13 allowlist (`ALLOWED_TAGS`/`ALLOWED_ATTR`) + `sanitizeDom` scheme/event-attr enforcement + sanitizer tests (#945, #224 A1/A2) |
+| External URL blocking | MEDIUM | Partial — scheme allowlist only: `sanitizeDom` blocks `javascript:`/`data:`/`vbscript:` and non-`http(s)`/`mailto` schemes on `use`/`image` `href`. No host allowlist for `http(s)` and no fetch-level guard. Follow-up hardening item (per GOAP-224), not a must-fix for the current threat model. |
+| Session token rotation | MEDIUM | Implemented — `apps/worker/src/routes/access.ts` `/refresh` revokes the old token (`revokeSession`) before issuing a new one; `/logout` revokes; covered by `routes.access.test.ts` |
 
 ## Reference Files
 

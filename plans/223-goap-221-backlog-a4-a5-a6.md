@@ -1,7 +1,7 @@
 # GOAP 223: Implement 221 Backlog Items — A4, A5, A6
 
 **Date:** 2026-08-09
-**Status:** IN REVIEW (PR #941)
+**Status:** ✅ COMPLETED (PR #941)
 **Goal:** Implement the three deferred backlog items from Plan 221 (A4, A5, A6):
 centralized keyboard shortcuts, page-level skeleton screens, admin reading-insights
 aggregation, and mark the OTel evaluation as satisfied by ADR-217.
@@ -82,17 +82,17 @@ Wave 3: Quality gate, T5 docs, commit + PR
 
 ## 4. Acceptance Criteria
 
-- [ ] `useKeyboardShortcut(key, handler, { deps, condition })` hook exported from
+- [x] `useKeyboardShortcut(key, handler, { deps, condition })` hook exported from
       `apps/web/src/hooks/useKeyboardShortcut.ts`; unit-tested
-- [ ] All 8+ scattered `addEventListener('keydown', ...)` Escape handlers replaced with
+- [x] All 8+ scattered `addEventListener('keydown', ...)` Escape handlers replaced with
       the hook; no more raw window/document listeners for single-key shortcuts in
       components that don't need global control
-- [ ] Page-level skeletons render content-shaped placeholders for Library, Catalog,
+- [x] Page-level skeletons render content-shaped placeholders for Library, Catalog,
       Admin, and Reader route Suspense boundaries
-- [ ] `GET /admin/insights` returns aggregated book-level reading data without
+- [x] `GET /admin/insights` returns aggregated book-level reading data without
       exposing individual email; paginated; `adminAuth` required
-- [ ] New worker route covered by a unit test; existing `routes.admin.test.ts` green
-- [ ] 221-A6 marked `[x]` in plan 221 with ADR-217 reference
-- [ ] `./scripts/quality_gate.sh` passes
-- [ ] Coverage thresholds maintained (web ≥55% lines/48% funcs; worker ≥55%/50%)
-- [ ] One PR, atomic commits, PR template + AI verification section
+- [x] New worker route covered by a unit test; existing `routes.admin.test.ts` green
+- [x] 221-A6 marked `[x]` in plan 221 with ADR-217 reference
+- [x] `./scripts/quality_gate.sh` passes
+- [x] Coverage thresholds maintained (web ≥55% lines/48% funcs; worker ≥55%/50%)
+- [x] One PR, atomic commits, PR template + AI verification section

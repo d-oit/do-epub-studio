@@ -15,7 +15,16 @@ export function useDocumentLocale(): void {
   const locale = useLocaleStore((state) => state.locale);
 
   useEffect(() => {
-    document.documentElement.dir = RTL_LOCALES.has(locale) ? 'rtl' : 'ltr';
-    document.documentElement.lang = locale;
+    const html = document.documentElement;
+    const prevDir = html.dir;
+    const prevLang = html.lang;
+    html.dir = RTL_LOCALES.has(locale) ? 'rtl' : 'ltr';
+    html.lang = locale;
+    return () => {
+      // Restore the attributes we mutated so unmount leaves the document as
+      // it was found (GOAP-224 B14: no leaked DOM mutation on teardown).
+      html.dir = prevDir;
+      html.lang = prevLang;
+    };
   }, [locale]);
 }

@@ -69,6 +69,7 @@ vi.mock('@intity/epub-js', () => {
 
 // Get mock references after hoisting
 interface MockBook {
+  opened: Promise<void>;
   renderTo: ReturnType<typeof vi.fn>;
   destroy: ReturnType<typeof vi.fn>;
   packaging: { direction: string; metadata: Map<string, string> };
@@ -273,6 +274,34 @@ describe('createEpubLoader', () => {
     loader.destroy();
 
     await expect(loader.load('test.epub')).rejects.toThrow('EpubLoader has been destroyed');
+  });
+
+  // GOAP-224 A7: destroy() may run while loadInner is awaiting (reader
+  // unmount). The remaining awaits must bail out before writing any instance
+  // state so a destroyed loader cannot resurrect `book`/raws after teardown.
+  it('does not write state when destroy() runs mid-load (A7)', async () => {
+    const { promise: deferredOpened, resolve: resolveOpened } = Promise.withResolvers<void>();
+    epubjsMock.__mockBook.opened = deferredOpened;
+
+    const loader = createEpubLoader();
+    const loadPromise = loader.load('test.epub');
+
+    // Flush microtasks: awaiting resolved promises yields to the microtask
+    // queue, running the loadInner chain (fallback worker parse resolves then
+    // blocks on the held `book.opened` deferred). No real timers are needed.
+    await Promise.resolve();
+    await Promise.resolve();
+
+    loader.destroy();
+    resolveOpened();
+
+    // loadInner must return cleanly rather than write rawNav/rawSpine/book
+    // after destroy; the destroyed loader stays null.
+    await expect(loadPromise).resolves.toBeUndefined();
+    expect(loader.getBook()).toBeNull();
+    expect(loader.getToc()).toEqual([]);
+    expect(loader.getSpineItems()).toEqual([]);
+    expect(loader.getMetadata()).toEqual({ title: '' });
   });
 
   it('emits events via onEvent callback', async () => {

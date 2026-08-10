@@ -328,6 +328,42 @@ jobs:
           directory: .
           flags: unittests
 
+  # GOAP-224 Step 7: the repo's full quality gate (knip dead-code, madge
+  # circular deps, Impeccable design, markdownlint, agent-adapter sync,
+  # gate-parity, coverage thresholds, build, smoke) was previously only wired
+  # into local pre-commit via minimal_quality_gate.sh. Run it in CI on `main`
+  # pushes and non-draft PRs. The gate self-installs actionlint/zizmor and
+  # Playwright browsers, so checkout + setup-pnpm suffice.
+  # Note: `pnpm format:check` is intentionally NOT a CI step — the repo carries
+  # ~710 pre-committed prettier-dirty files (pre-existing debt), so a repo-wide
+  # format gate would fail on main. Tracked as a follow-up cleanup; enforce
+  # format only after the codebase is formatted.
+  # Contingency (GOAP-224): if runtime exceeds ~45 min, split — keep
+  # knip/format/typecheck/dead-code in this PR job and move Impeccable +
+  # full build + smoke to a nightly `main`-only job.
+  quality-gate:
+    name: Full Quality Gate
+    needs: [changes, setup]
+    if: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.draft == false) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+          submodules: recursive
+          fetch-depth: 0
+      - uses: ./.github/actions/setup-pnpm
+
+      - name: Check agent-adapter sync
+        run: node scripts/check-agent-sync.mjs
+
+      - name: Validate gate parity manifest
+        run: bash scripts/validate-gate-parity.sh
+
+      - name: Run full quality gate
+        run: bash scripts/quality_gate.sh
+
   worker-build:
     name: Worker Build Validation
     needs: [changes, setup]
