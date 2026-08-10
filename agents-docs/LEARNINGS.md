@@ -197,6 +197,13 @@
 - **Cache-hit path replaces doc children with cached (older) output**: `createEpubSanitizerHook` on a hit re-parses the cached sanitized HTML and swaps it into the target doc — so a later document's own content is discarded. Tests must assert the doc is script-free after a hit, NOT that its original elements survive.
 - **True LRU via Map delete+re-set**: `Map` preserves insertion order, so `touch` (delete+set) moves an entry to MRU; evict with `cache.keys().next().value`. To observe eviction in tests, spy on `DOMPurify.sanitize` and assert it re-runs for an evicted href (a hit skips DOMPurify entirely, running only `sanitizeDom`).
 
+### GOAP 224 Wave 1 — Sanitizer Allowlist & PII Fixes (2026-08-10)
+
+- **`sanitizeSvg` ALLOWED_TAGS requires SVG filter primitives**: Switching from `ADD_TAGS+FORBID_TAGS` to `ALLOWED_TAGS` strips any tag not in the list. `SAFE_SVG_TAGS` originally omitted all `fe*` filter primitives (`feGaussianBlur`, `feBlend`, etc.) — add them or inline SVG filters silently vanish. Bump `SANITIZER_POLICY_VERSION` any time allowlists change; the integer is embedded in LRU cache keys.
+- **`foreignObject` removal cascades to `EPUB_ALLOWED_TAGS`**: `EPUB_ALLOWED_TAGS` is built as `[...STRUCTURAL_TAGS, ...EPUB_HEAD_TAGS, ...EPUB_BODY_TAGS, ...SAFE_SVG_TAGS]`. Removing `foreignObject` from `EPUB_BODY_TAGS` is enough — do not also remove `svg` which comes from `SAFE_SVG_TAGS`.
+- **`Comment` API shape change cascades to 15+ files**: Renaming `userEmail → displayName + isOwn` in the worker API response requires updating: `dtos.ts` (shared DTO interface), `reader.ts` (frontend store type), `CommentItem.tsx` (render), `mapOfflineAnnotation.ts` (offline mapper), `useAnnotationHandlers.ts` (optimistic placeholders), `useExportNotes.ts` (import roundtrip), and 10+ test files. Run `grep -rn "userEmail" apps/web/src packages` to find them all.
+- **Worker typecheck runs from worktree but needs `pnpm install` first**: Fresh worktrees have no `node_modules`. Run `pnpm install --frozen-lockfile` from the worktree root before attempting `pnpm --filter ... typecheck`; the shared pnpm store means install is fast (~7s) even though it re-links everything.
+
 ### GOAP 222 — CI Worker Error + Workbox SW Guard (2026-08-09)
 
 - **`worker.onerror` event.message is undefined for cross-origin load failures**: When a Worker fails to load (404, MIME type, CSP), the browser fires an `ErrorEvent` with `message === undefined` by spec (sanitized for cross-origin). Always fall back to `event.filename:event.lineno` or a generic string — never interpolate `event.message` directly into an error string or you get "Worker error: undefined" in prod logs.
