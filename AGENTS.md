@@ -24,6 +24,8 @@ readonly MAX_PR_TITLE_LENGTH=72
 **NEVER ignore these rules. Violations cause security incidents or data loss.**
 
 - **MUST fetch and integrate latest `main` branch before starting any changes.** Run `git fetch origin main && git merge origin/main` (or rebase) to stay up-to-date.
+- **MUST rebase onto `main` before attempting to merge a PR.** If `gh pr view <N> --json mergeStateStatus` returns `BEHIND`, run `git fetch origin main && git rebase origin/main` in the worktree, then `git push --force origin <branch>`. Auto-merge (`--auto` flag) will not fire while the branch is behind.
+- **MUST resolve ALL review threads before a PR can merge.** The repo enforces `required_review_thread_resolution: true`. After every push, run `gh api graphql` to list unresolved threads (type `reviewThreads`, filter `isResolved: false`). Resolve confirmed-fixed threads via `resolveReviewThread` mutation; for false-positive bot findings (e.g. OwlWatch flagging plan documents as live code), resolve with a note explaining why it is a false positive. A PR with any unresolved thread will have `mergeStateStatus: BLOCKED` regardless of CI.
 - **NEVER commit to `main` directly.** Always use feature branches + PRs.
 - **NEVER leak secrets, tokens, or credentials in code.** Use `.dev.vars` for local only.
 - **NEVER expose R2 file URLs to clients.** Use signed URLs via Workers.
