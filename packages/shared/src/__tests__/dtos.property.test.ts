@@ -267,12 +267,14 @@ describe('CommentResponse structure', () => {
       fc.property(
         nonEmptyString,
         fc.string(),
+        fc.boolean(),
         fc.string(),
         fc.string(),
-        (id, userEmail, body, createdAt) => {
+        (id, displayName, isOwn, body, createdAt) => {
           const comment: CommentResponse = {
             id,
-            userEmail,
+            displayName,
+            isOwn,
             body,
             status: 'open',
             visibility: 'shared',

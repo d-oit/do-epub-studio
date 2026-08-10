@@ -50,7 +50,7 @@ grantsRouter.get('/books/:id/grants', adminAuth, async (c) => {
   const bookId = c.req.param('id');
   const grants = (await queryAll(
     c.env,
-    `SELECT * FROM book_access_grants WHERE book_id = ? ORDER BY created_at DESC`,
+    `SELECT id, book_id, email, mode, allowed, comments_allowed, offline_allowed, expires_at, created_at, revoked_at FROM book_access_grants WHERE book_id = ? ORDER BY created_at DESC`,
     [bookId],
   )) as unknown as GrantRow[];
 

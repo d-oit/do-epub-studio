@@ -89,7 +89,8 @@ export function useAnnotationHandlers(): AnnotationHandlersReturn {
       const tempId = `optimistic-cm-${Date.now()}`;
       const placeholder: Comment = {
         id: tempId,
-        userEmail: useAuthStore.getState().email ?? 'you',
+        displayName: useAuthStore.getState().email?.split('@')[0] ?? 'you',
+        isOwn: true,
         chapterRef: selection.chapterRef,
         cfiRange: selection.cfiRange,
         selectedText: selection.text,
@@ -174,7 +175,8 @@ export function useAnnotationHandlers(): AnnotationHandlersReturn {
       const tempId = `optimistic-reply-${Date.now()}`;
       const placeholder: Comment = {
         id: tempId,
-        userEmail: useAuthStore.getState().email ?? 'you',
+        displayName: useAuthStore.getState().email?.split('@')[0] ?? 'you',
+        isOwn: true,
         chapterRef: parent?.chapterRef ?? null,
         cfiRange: parent?.cfiRange ?? null,
         selectedText: parent?.selectedText ?? null,

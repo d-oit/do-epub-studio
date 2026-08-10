@@ -36,7 +36,8 @@ export interface Highlight {
 
 export interface Comment {
   id: string;
-  userEmail: string;
+  displayName: string;
+  isOwn: boolean;
   chapterRef: string | null;
   cfiRange: string | null;
   selectedText: string | null;

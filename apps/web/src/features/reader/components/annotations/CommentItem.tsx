@@ -101,7 +101,7 @@ export const CommentItem = memo(function CommentItem({
           <p className="text-sm text-foreground">{comment.body}</p>
           <div className="mt-2 flex items-center justify-between">
             <span className="text-xs text-foreground-muted">
-              {comment.userEmail} · {formatDate(comment.createdAt, t)}
+              {comment.displayName} · {formatDate(comment.createdAt, t)}
             </span>
             {comment.status === 'resolved' && (
               <span className="text-xs text-accent-success">{t('comment.resolved')}</span>
@@ -116,7 +116,7 @@ export const CommentItem = memo(function CommentItem({
             <div key={reply.id} className="text-sm">
               <p className="text-foreground">{reply.body}</p>
               <span className="text-xs text-foreground-muted">
-                {reply.userEmail} · {formatDate(reply.createdAt, t)}
+                {reply.displayName} · {formatDate(reply.createdAt, t)}
               </span>
             </div>
           ))}

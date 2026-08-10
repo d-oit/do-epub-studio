@@ -182,7 +182,8 @@ function exportedToEntities(payload: NotesExport): {
         case 'comment':
           comments.push({
             id: ann.id,
-            userEmail: 'imported@local',
+            displayName: 'imported',
+            isOwn: true,
             chapterRef: ann.locator?.chapterRef ?? null,
             cfiRange: ann.locator?.cfi ?? null,
             selectedText: ann.selectedText,

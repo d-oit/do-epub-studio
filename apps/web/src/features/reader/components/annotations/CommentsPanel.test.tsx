@@ -15,7 +15,8 @@ const mockComments: Comment[] = [
   {
     id: 'comment-1',
     body: 'First comment',
-    userEmail: 'user@example.com',
+    displayName: 'user',
+    isOwn: true,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     status: 'open',
@@ -30,7 +31,8 @@ const mockComments: Comment[] = [
   {
     id: 'comment-2',
     body: 'Resolved comment',
-    userEmail: 'user@example.com',
+    displayName: 'user',
+    isOwn: true,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     status: 'resolved',

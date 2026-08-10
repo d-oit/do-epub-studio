@@ -10,7 +10,7 @@ const SANITIZE_CACHE_MAX = 10;
  * Bump whenever sanitizer allowlists/behavior change so cached chapter output
  * from a prior build is invalidated (ADR-218 T2.2: stale-on-policy-change).
  */
-export const SANITIZER_POLICY_VERSION = 1;
+export const SANITIZER_POLICY_VERSION = 2;
 
 const SAFE_SVG_TAGS = [
   'svg',
@@ -30,6 +30,31 @@ const SAFE_SVG_TAGS = [
   'clipPath',
   'mask',
   'filter',
+  'feBlend',
+  'feColorMatrix',
+  'feComponentTransfer',
+  'feComposite',
+  'feConvolveMatrix',
+  'feDiffuseLighting',
+  'feDisplacementMap',
+  'feDistantLight',
+  'feDropShadow',
+  'feFlood',
+  'feFuncA',
+  'feFuncB',
+  'feFuncG',
+  'feFuncR',
+  'feGaussianBlur',
+  'feImage',
+  'feMerge',
+  'feMergeNode',
+  'feMorphology',
+  'feOffset',
+  'fePointLight',
+  'feSpecularLighting',
+  'feSpotLight',
+  'feTile',
+  'feTurbulence',
   'linearGradient',
   'radialGradient',
   'stop',
@@ -134,7 +159,6 @@ const EPUB_BODY_TAGS = [
   'picture',
   'source',
   'svg',
-  'foreignObject',
 ];
 
 const EPUB_ALLOWED_TAGS = [...STRUCTURAL_TAGS, ...EPUB_HEAD_TAGS, ...EPUB_BODY_TAGS, ...SAFE_SVG_TAGS];
@@ -263,9 +287,8 @@ const SVG_ALLOWED_ATTRS = [
 
 function buildPurifyConfig(): Config {
   return {
-    ADD_TAGS: [...SAFE_SVG_TAGS],
+    ALLOWED_TAGS: SAFE_SVG_TAGS,
     ADD_ATTR: [...SVG_ALLOWED_ATTRS],
-    FORBID_TAGS: ['foreignObject', 'script', 'style', 'iframe', 'object', 'embed', 'applet', 'meta', 'link'],
     FORBID_ATTR: SVG_EVENT_ATTRS,
     ALLOW_ARIA_ATTR: true,
     ALLOW_DATA_ATTR: false,
