@@ -95,7 +95,8 @@ export interface HighlightResponse {
 
 export interface CommentResponse {
   id: string;
-  userEmail: string;
+  displayName: string;
+  isOwn: boolean;
   chapterRef: string | null;
   cfiRange: string | null;
   selectedText: string | null;

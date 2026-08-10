@@ -26,7 +26,8 @@ describe('notes round-trip', () => {
       comments: [
         {
           id: 'c1',
-          userEmail: 'a@b.com',
+          displayName: 'a',
+          isOwn: false,
           chapterRef: 'ch1.xhtml',
           cfiRange: 'epubcfi(/6/4!/4/2/3:0)',
           selectedText: 'some text',
@@ -86,7 +87,8 @@ describe('notes round-trip', () => {
       comments: [
         {
           id: 'c1',
-          userEmail: 'a@b.com',
+          displayName: 'a',
+          isOwn: false,
           chapterRef: 'ch1.xhtml',
           cfiRange: 'epubcfi(/6/4!/4/2/3:0)',
           selectedText: 'some text',

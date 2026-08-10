@@ -119,7 +119,8 @@ describe('useReaderStore', () => {
     it('adds root comment', () => {
       const comment = {
         id: '1',
-        userEmail: 'test@example.com',
+        displayName: 'test',
+        isOwn: true,
         chapterRef: null,
         cfiRange: null,
         selectedText: null,
@@ -138,7 +139,8 @@ describe('useReaderStore', () => {
     it('adds reply comment', () => {
       const parent = {
         id: '1',
-        userEmail: 'test@example.com',
+        displayName: 'test',
+        isOwn: true,
         chapterRef: null,
         cfiRange: null,
         selectedText: null,
@@ -152,7 +154,8 @@ describe('useReaderStore', () => {
       };
       const reply = {
         id: '2',
-        userEmail: 'test@example.com',
+        displayName: 'test',
+        isOwn: true,
         chapterRef: null,
         cfiRange: null,
         selectedText: null,
@@ -173,7 +176,8 @@ describe('useReaderStore', () => {
     it('updates comment', () => {
       const comment = {
         id: '1',
-        userEmail: 'test@example.com',
+        displayName: 'test',
+        isOwn: true,
         chapterRef: null,
         cfiRange: null,
         selectedText: null,
@@ -192,7 +196,7 @@ describe('useReaderStore', () => {
 
     it('sets comments', () => {
       const comments = [
-        { id: '1', userEmail: 'a@b.com', chapterRef: null, cfiRange: null, selectedText: null, body: 'Hi', status: 'open' as const, visibility: 'shared' as const, parentCommentId: null, createdAt: '', updatedAt: '', resolvedAt: null },
+        { id: '1', displayName: 'a', isOwn: false, chapterRef: null, cfiRange: null, selectedText: null, body: 'Hi', status: 'open' as const, visibility: 'shared' as const, parentCommentId: null, createdAt: '', updatedAt: '', resolvedAt: null },
       ];
       useReaderStore.getState().setComments(comments);
       expect(useReaderStore.getState().comments).toHaveLength(1);

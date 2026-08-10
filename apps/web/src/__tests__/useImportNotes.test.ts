@@ -15,7 +15,7 @@ vi.mock('../stores', () => ({
   useReaderStore: vi.fn((selector) => {
     const state = {
       highlights: [{ id: 'h1', selectedText: 'existing', chapterRef: 'ch1', cfiRange: 'cfi1', color: '#ff0', note: null, createdAt: '2026-01-01', updatedAt: '2026-01-01' }],
-      comments: [{ id: 'c1', text: 'existing comment', chapterRef: 'ch1', status: 'open', createdAt: '2026-01-01', userEmail: 'user@test.com' }],
+      comments: [{ id: 'c1', text: 'existing comment', chapterRef: 'ch1', status: 'open', createdAt: '2026-01-01', displayName: 'user', isOwn: true }],
       bookmarks: [{ id: 'b1', label: 'existing bookmark', chapterRef: 'ch1', cfi: 'cfi1' }],
       setHighlights: mockSetHighlights,
       setComments: mockSetComments,

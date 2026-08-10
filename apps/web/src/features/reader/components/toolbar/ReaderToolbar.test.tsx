@@ -199,8 +199,8 @@ describe('ReaderToolbar', () => {
 
   it('shows open comments count', () => {
     const comments = [
-      { id: '1', status: 'open' as const, body: 'Comment 1', userEmail: 'a@b.com', chapterRef: null, cfiRange: null, selectedText: null, visibility: 'shared' as const, parentCommentId: null, createdAt: '', updatedAt: '', resolvedAt: null },
-      { id: '2', status: 'resolved' as const, body: 'Comment 2', userEmail: 'a@b.com', chapterRef: null, cfiRange: null, selectedText: null, visibility: 'shared' as const, parentCommentId: null, createdAt: '', updatedAt: '', resolvedAt: null },
+      { id: '1', status: 'open' as const, body: 'Comment 1', displayName: 'a', isOwn: false, chapterRef: null, cfiRange: null, selectedText: null, visibility: 'shared' as const, parentCommentId: null, createdAt: '', updatedAt: '', resolvedAt: null },
+      { id: '2', status: 'resolved' as const, body: 'Comment 2', displayName: 'a', isOwn: false, chapterRef: null, cfiRange: null, selectedText: null, visibility: 'shared' as const, parentCommentId: null, createdAt: '', updatedAt: '', resolvedAt: null },
     ];
     render(<ReaderToolbar {...mockProps} comments={comments} />);
     expect(screen.getByText('1')).toBeInTheDocument();
@@ -413,7 +413,7 @@ describe('ReaderToolbar', () => {
 
   it('shows comments count in mobile menu', () => {
     const comments = [
-      { id: '1', status: 'open' as const, body: 'Comment 1', userEmail: 'a@b.com', chapterRef: null, cfiRange: null, selectedText: null, visibility: 'shared' as const, parentCommentId: null, createdAt: '', updatedAt: '', resolvedAt: null },
+      { id: '1', status: 'open' as const, body: 'Comment 1', displayName: 'a', isOwn: false, chapterRef: null, cfiRange: null, selectedText: null, visibility: 'shared' as const, parentCommentId: null, createdAt: '', updatedAt: '', resolvedAt: null },
     ];
     render(<ReaderToolbar {...mockProps} comments={comments} />);
     const menuButton = screen.getByLabelText('More Options');

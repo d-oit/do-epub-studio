@@ -222,7 +222,7 @@ accessRouter.post('/request', zValidator('json', AccessRequestSchema), async (c)
     deleteRateLimitKey(c.env, 'auth_lockout', emailKey),
   ]);
 
-  const session = await createSession(c.env, result.book.id, email);
+  const session = await createSession(c.env, result.book.id, emailKey);
 
   await logAudit(c.env, {
     entityType: 'session',

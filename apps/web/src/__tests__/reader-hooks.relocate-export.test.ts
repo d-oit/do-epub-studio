@@ -168,8 +168,8 @@ describe('useExportNotes', () => {
         { id: 'h1', selectedText: 'highlighted text', color: '#ff0000', note: 'My note', chapterRef: null, cfiRange: null, createdAt: '', updatedAt: '' },
       ],
       comments: [
-        { id: 'c1', body: 'Great point!', status: 'open', selectedText: 'some text', userEmail: 'a@b.com', chapterRef: null, cfiRange: null, visibility: 'shared', parentCommentId: null, createdAt: '', updatedAt: '', resolvedAt: null },
-        { id: 'c2', body: 'Deleted', status: 'deleted', selectedText: null, userEmail: 'a@b.com', chapterRef: null, cfiRange: null, visibility: 'shared', parentCommentId: null, createdAt: '', updatedAt: '', resolvedAt: null },
+        { id: 'c1', body: 'Great point!', status: 'open', selectedText: 'some text', displayName: 'a', isOwn: false, chapterRef: null, cfiRange: null, visibility: 'shared', parentCommentId: null, createdAt: '', updatedAt: '', resolvedAt: null },
+        { id: 'c2', body: 'Deleted', status: 'deleted', selectedText: null, displayName: 'a', isOwn: false, chapterRef: null, cfiRange: null, visibility: 'shared', parentCommentId: null, createdAt: '', updatedAt: '', resolvedAt: null },
       ],
     });
   });

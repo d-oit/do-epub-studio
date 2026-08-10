@@ -27,7 +27,7 @@ import { logClientEvent } from '../../../lib/client-logger';
 import { getProgress, getAnnotations } from '../../../lib/offline';
 
 const mockHighlights: Highlight[] = [{ id: 'h1', chapterRef: 'ch1', cfiRange: 'cfi1', selectedText: 'text', note: null, color: 'yellow', createdAt: '2024-01-01', updatedAt: '2024-01-01' }];
-const mockComments: Comment[] = [{ id: 'c1', userEmail: '', chapterRef: 'ch1', cfiRange: 'cfi1', selectedText: null, body: 'body', status: 'open', visibility: 'shared', parentCommentId: null, createdAt: '2024-01-01', updatedAt: '2024-01-01', resolvedAt: null }];
+const mockComments: Comment[] = [{ id: 'c1', displayName: '', isOwn: true, chapterRef: 'ch1', cfiRange: 'cfi1', selectedText: null, body: 'body', status: 'open', visibility: 'shared', parentCommentId: null, createdAt: '2024-01-01', updatedAt: '2024-01-01', resolvedAt: null }];
 const mockBookmarks: Bookmark[] = [{ id: 'b1', locator: { cfi: 'cfi1' }, label: 'mark', createdAt: '2024-01-01' }];
 const mockProgress: ReadingProgress = { locator: { cfi: 'cfi1' }, progressPercent: 0.5, updatedAt: '2024-01-01' };
 
