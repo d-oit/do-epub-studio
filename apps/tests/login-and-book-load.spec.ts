@@ -65,13 +65,18 @@ test.describe('Login and book load (desktop)', () => {
     // On narrow viewports, Settings and Sign Out are behind a "More options"
     // overflow menu (container-query driven). On wide viewports they are
     // directly visible. Handle both cases for cross-engine smoke test.
+    // Settings/Sign Out are direct buttons on wide viewports; inside the
+    // overflow menu they become role="menuitem" (GOAP-224 a11y fix B8).
     const settingsButton = page.getByRole('button', { name: /Settings/i });
     const isSettingsVisible = await settingsButton.isVisible().catch(() => false);
     if (!isSettingsVisible) {
       await page.getByRole('button', { name: 'More options' }).click();
+      await expect(page.getByRole('menuitem', { name: /Settings/i })).toBeVisible({ timeout: 60000 });
+      await expect(page.getByRole('menuitem', { name: /Sign Out/i })).toBeVisible({ timeout: 60000 });
+    } else {
+      await expect(page.getByRole('button', { name: /Settings/i })).toBeVisible({ timeout: 60000 });
+      await expect(page.getByRole('button', { name: /Sign Out/i })).toBeVisible({ timeout: 60000 });
     }
-    await expect(page.getByRole('button', { name: /Settings/i })).toBeVisible({ timeout: 60000 });
-    await expect(page.getByRole('button', { name: /Sign Out/i })).toBeVisible({ timeout: 60000 });
   });
 
   test('@mobile shows loading spinner while book URL is being fetched', async ({ page }) => {
@@ -182,16 +187,17 @@ test.describe('Login and book load (mobile)', () => {
     const header = page.locator('header.fixed');
     await expect(header).toBeVisible();
 
-    // Sign Out button must be accessible
+    // Sign Out is in overflow menu with role="menuitem" after GOAP-224 a11y fix (B8)
     await page.getByRole('button', { name: 'More options' }).click();
-    await expect(page.getByRole('button', { name: /Sign Out/i })).toBeVisible({ timeout: 60000 });
+    await expect(page.getByRole('menuitem', { name: /Sign Out/i })).toBeVisible({ timeout: 60000 });
   });
 
   test('@mobile settings panel is accessible on mobile', async ({ page }) => {
     await login(page);
 
     await page.getByRole('button', { name: 'More options' }).click();
-    await page.getByRole('button', { name: 'Settings' }).click();
+    // Settings is a menuitem in overflow menu after GOAP-224 a11y fix (B8)
+    await page.getByRole('menuitem', { name: 'Settings' }).click();
     await expect(page.getByText('Theme')).toBeVisible();
     await expect(page.getByText('Font Size')).toBeVisible();
   });

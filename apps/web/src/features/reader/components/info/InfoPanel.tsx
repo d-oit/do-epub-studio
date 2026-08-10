@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useKeyboardShortcut } from '../../../../hooks/useKeyboardShortcut';
 import { IconButton } from '../../../../components/ui';
+import { useFocusTrap } from '@do-epub-studio/ui';
 import type { AccessibilityMetadata } from '@do-epub-studio/reader-core';
 import { computeInsightSummary } from '../../../../lib/offline/reading-insights';
 
@@ -83,12 +84,31 @@ function AccessibilitySection({ a11y, t }: { a11y: AccessibilityMetadata; t: TFn
         {a11y.summary && (
           <p className="text-sm text-foreground leading-relaxed">{a11y.summary}</p>
         )}
-        {a11y.conformsTo && (
-          <div>
-            <span className="text-xs text-foreground-muted">{t('reader.conformsTo')}: </span>
-            <span className="text-xs text-foreground font-medium">{a11y.conformsTo}</span>
-          </div>
-        )}
+        <dl className="space-y-2">
+          {a11y.conformsTo && (
+            <div>
+              <dt className="text-xs text-foreground-muted">{t('reader.conformsTo')}</dt>
+              <dd className="text-xs text-foreground font-medium">{a11y.conformsTo}</dd>
+            </div>
+          )}
+          {a11y.api && (
+            <div>
+              <dt className="text-xs text-foreground-muted">{t('reader.api')}</dt>
+              <dd className="text-xs text-foreground font-medium">{a11y.api}</dd>
+            </div>
+          )}
+          {a11y.certifiedBy && (
+            <div>
+              <dt className="text-xs text-foreground-muted">{t('reader.certifiedBy')}</dt>
+              <dd className="text-xs text-foreground font-medium">
+                {a11y.certifiedBy}
+                {a11y.certifierCredential && (
+                  <span className="text-foreground-muted"> ({a11y.certifierCredential})</span>
+                )}
+              </dd>
+            </div>
+          )}
+        </dl>
         {a11y.features.length > 0 && (
           <div>
             <p className="text-xs text-foreground-muted mb-1.5">{t('reader.features')}</p>
@@ -111,21 +131,6 @@ function AccessibilitySection({ a11y, t }: { a11y: AccessibilityMetadata; t: TFn
             <div className="flex flex-wrap gap-1.5">
               {a11y.controls.map((c) => <FeatureBadge key={c} label={c} />)}
             </div>
-          </div>
-        )}
-        {a11y.api && (
-          <div className="text-xs">
-            <span className="text-foreground-muted">{t('reader.api')}: </span>
-            <span className="text-foreground font-medium">{a11y.api}</span>
-          </div>
-        )}
-        {a11y.certifiedBy && (
-          <div className="text-xs">
-            <span className="text-foreground-muted">{t('reader.certifiedBy')}: </span>
-            <span className="text-foreground font-medium">{a11y.certifiedBy}</span>
-            {a11y.certifierCredential && (
-              <span className="text-foreground-muted"> ({a11y.certifierCredential})</span>
-            )}
           </div>
         )}
         {a11y.certifierReport && (
@@ -204,6 +209,7 @@ export function InfoPanel({ isOpen, onClose, metadata, bookId, progressPercent, 
   const [insights, setInsights] = useState<InsightSummary | null>(null);
 
   useKeyboardShortcut('Escape', onClose, { enabled: isOpen });
+  useFocusTrap(isOpen, panelRef);
 
   useEffect(() => {
     if (!isOpen || !bookId) return;
