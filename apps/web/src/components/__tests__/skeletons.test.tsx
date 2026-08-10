@@ -6,6 +6,7 @@ import {
   AdminSkeleton,
   ReaderSkeleton,
   SettingsSkeleton,
+  AuthSkeleton,
 } from '../skeletons';
 
 vi.mock('../../hooks/useTranslation', () => ({
@@ -22,6 +23,7 @@ const SKELETONS = [
   ['AdminSkeleton', AdminSkeleton],
   ['ReaderSkeleton', ReaderSkeleton],
   ['SettingsSkeleton', SettingsSkeleton],
+  ['AuthSkeleton', AuthSkeleton],
 ] as const;
 
 describe('page skeleton components', () => {
