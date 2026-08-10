@@ -56,7 +56,6 @@ interface ToolbarIconButtonProps {
   label: string;
   svgPath: string | string[];
   onClick: () => void;
-  isActive?: boolean;
   isExpanded?: boolean;
   badge?: number;
   badgeLabel?: string;
