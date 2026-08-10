@@ -105,6 +105,7 @@ export const fr: Record<TranslationKeys, string> = {
   'reader.readingStreak': 'Série de lecture',
   'reader.recentActivity': 'Activité récente',
   'reader.days': 'jours',
+  'reader.pages_abbr': 'p',
   'admin.dashboardTitle': 'Tableau de bord',
   'admin.breadcrumb.home': 'Admin',
   'admin.breadcrumb.books': 'Livres',

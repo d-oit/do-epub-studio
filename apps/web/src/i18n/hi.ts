@@ -105,6 +105,7 @@ export const hi: Record<TranslationKeys, string> = {
   'reader.readingStreak': 'पठन श्रृंखला',
   'reader.recentActivity': 'हालिया गतिविधि',
   'reader.days': 'दिन',
+  'reader.pages_abbr': 'p',
   'admin.dashboardTitle': 'एडमिन डैशबोर्ड',
   'admin.breadcrumb.home': 'एडमिन',
   'admin.breadcrumb.books': 'पुस्तकें',

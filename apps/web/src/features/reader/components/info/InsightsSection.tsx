@@ -56,8 +56,7 @@ export function InsightsSection({ insights, t }: { insights: InsightSummary; t: 
                 {[...insights.recentActivity].reverse().map((a) => (
                   <li key={a.date} className="flex justify-between">
                     <span>{a.date}</span>
-                    {/* eslint-disable-next-line i18next/no-literal-string -- unit suffix and separator */}
-                    <span className="text-foreground-muted">{formatMinutes(a.activeMinutes)} • {a.activePages}p</span>
+                    <span className="text-foreground-muted">{formatMinutes(a.activeMinutes)} · {a.activePages}{t('reader.pages_abbr')}</span>
                   </li>
                 ))}
               </ul>

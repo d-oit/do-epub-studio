@@ -105,6 +105,7 @@ export const ar: Record<TranslationKeys, string> = {
   'reader.readingStreak': 'سلسلة القراءة',
   'reader.recentActivity': 'النشاط الأخير',
   'reader.days': 'أيام',
+  'reader.pages_abbr': 'p',
   'admin.dashboardTitle': 'لوحة تحكم المسؤول',
   'admin.breadcrumb.home': 'المسؤول',
   'admin.breadcrumb.books': 'الكتب',

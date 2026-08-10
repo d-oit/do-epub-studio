@@ -105,6 +105,7 @@ export const nl: Record<TranslationKeys, string> = {
   'reader.readingStreak': 'Leesreeks',
   'reader.recentActivity': 'Recente activiteit',
   'reader.days': 'dagen',
+  'reader.pages_abbr': 'p',
   'admin.dashboardTitle': 'Beheerdersdashboard',
   'admin.breadcrumb.home': 'Beheerder',
   'admin.breadcrumb.books': 'Boeken',

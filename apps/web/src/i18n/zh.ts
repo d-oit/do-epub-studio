@@ -105,6 +105,7 @@ export const zh: Record<TranslationKeys, string> = {
   'reader.readingStreak': '连续阅读',
   'reader.recentActivity': '最近活动',
   'reader.days': '天',
+  'reader.pages_abbr': 'p',
   'admin.dashboardTitle': '管理面板',
   'admin.breadcrumb.home': '管理',
   'admin.breadcrumb.books': '图书',

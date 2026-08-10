@@ -105,6 +105,7 @@ export const ja: Record<TranslationKeys, string> = {
   'reader.readingStreak': '読書ストリーク',
   'reader.recentActivity': '最近のアクティビティ',
   'reader.days': '日',
+  'reader.pages_abbr': 'p',
   'admin.dashboardTitle': '管理ダッシュボード',
   'admin.breadcrumb.home': '管理者',
   'admin.breadcrumb.books': '書籍',

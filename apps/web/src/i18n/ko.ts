@@ -105,6 +105,7 @@ export const ko: Record<TranslationKeys, string> = {
   'reader.readingStreak': '독서 연속',
   'reader.recentActivity': '최근 활동',
   'reader.days': '일',
+  'reader.pages_abbr': 'p',
   'admin.dashboardTitle': '관리 대시보드',
   'admin.breadcrumb.home': '관리자',
   'admin.breadcrumb.books': '도서',

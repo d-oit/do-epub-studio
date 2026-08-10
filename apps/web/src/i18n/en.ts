@@ -104,6 +104,7 @@ export const en = {
   'reader.readingStreak': 'Reading Streak',
   'reader.recentActivity': 'Recent Activity',
   'reader.days': 'days',
+  'reader.pages_abbr': 'p',
   'admin.dashboardTitle': 'Admin Dashboard',
   'admin.breadcrumb.home': 'Admin',
   'admin.breadcrumb.books': 'Books',
