@@ -123,13 +123,20 @@ Wave 1 and Wave 2 are disjoint file sets → can be developed in parallel branch
 - [x] W1.1: `sanitizeSvg` uses `ALLOWED_TAGS` only; no `FORBID_TAGS`-only path in reader-core
 - [x] W1.2: `foreignObject` removed from `EPUB_ALLOWED_TAGS`; EPUB sanitizer tests updated
   - Verified on main (post-#945): `sanitizeSvg` uses `ALLOWED_TAGS` (`SAFE_SVG_TAGS`); `foreignObject` removed from `EPUB_BODY_TAGS`; composite allowlist test (#224 A1) added; OwlWatch `sanitizeSvg` flag is stale.
-- [ ] W1.3: `/comments` endpoint omits `userEmail` for shared comments; uses anonymized display name or truncated identifier
-- [ ] W1.4: grants SELECT excludes `password_hash`; audit offset capped at `MAX_OFFSET`
-- [ ] W1.5: `createSession` called with `emailKey` in access.ts
-- [ ] W2.1: InfoPanel passes `useFocusTrap(isOpen, panelRef)` — focus enters on open, returns on close
-- [ ] W2.2: Toolbar buttons not reachable by Tab when `aria-hidden`
-- [ ] W2.3: Dark-mode `text-accent-error` on `bg-accent-error/10` ≥ 4.5:1
-- [ ] W2.4: Overflow menu popup has correct ARIA role; color picker label translated; focus trap on picker; counts in button aria-labels
+- [x] W1.3: `/comments` endpoint omits `userEmail` for shared comments; uses anonymized display name or truncated identifier
+  - Verified on main (post-#945): `comments.ts` GET maps rows to `displayName` (first 2 chars + `***`) + `isOwn`; neither the list nor the POST response payloads contain `userEmail`.
+- [x] W1.4: grants SELECT excludes `password_hash`; audit offset capped at `MAX_OFFSET`
+  - Verified on main (post-#945): grants GET uses explicit `SELECT id, book_id, email, mode, …` (no `SELECT *`); audit route caps `offset` via `Math.min(offset, MAX_AUDIT_OFFSET = 100_000)`.
+- [x] W1.5: `createSession` called with `emailKey` in access.ts
+  - Verified on main (post-#945): `/request` reaches `emailKey = email.toLowerCase()` then `createSession(c.env, result.book.id, emailKey)` (success path); audit + rate-limit keys use the same normalized key.
+- [x] W2.1: InfoPanel passes `useFocusTrap(isOpen, panelRef)` — focus enters on open, returns on close
+  - Verified on main (post-#946): `InfoPanel.tsx` calls `useFocusTrap(isOpen, panelRef)`.
+- [x] W2.2: Toolbar buttons not reachable by Tab when `aria-hidden`
+  - Verified on main (post-#946): `ReaderToolbar` `<Header … inert aria-hidden>` when scrolled (scroll direction ≠ `up`); `inert` removes Tab reachability.
+- [x] W2.3: Dark-mode `text-accent-error` on `bg-accent-error/10` ≥ 4.5:1
+  - Verified on main (post-#946): dark-mode `--color-accent-error: oklch(65% 0.2 25)` ≥ the `oklch(63% 0.2 25)` target.
+- [x] W2.4: Overflow menu popup has correct ARIA role; color picker label translated; focus trap on picker; counts in button aria-labels
+  - Verified on main (post-#946): overflow trigger `aria-haspopup="menu"` + `role="menu"` popup with arrow-key/Home/End nav; picker `role="dialog"` `aria-label={t('annotation.highlight_colors')}` with `useFocusTrap` on the non-native path; comment/bookmark badges appended to `aria-label` via `*_with_count` keys.
 - [x] W3.1: `epub-loader.ts` destroy() calls `terminateParserWorker()`
 - [x] W3.2: LRU cache HIT does not invoke `DOMParser.parseFromString`
   - B5 decided accepted-with-rationale (Option A): re-parse measured ~0.3-4ms in
