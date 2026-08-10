@@ -87,6 +87,7 @@ const SCAN_EXCLUDE_PATHS = new Set(
 // at any nesting level (e.g. node_modules) must include a leading path
 // segment to match deeply. Simpler entries match only at repo root.
 const SCAN_EXCLUDE_DIR_PREFIXES = [
+  '.claude/worktrees/', // gitignored agent worktrees (see .gitignore); not part of the repo tree — CI checkouts have no such dir
   '.git/',
   '.turbo/',
   'apps/web/dist/',

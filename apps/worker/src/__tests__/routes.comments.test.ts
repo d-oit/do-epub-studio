@@ -49,6 +49,14 @@ describe('Comments Routes', () => {
       expect(res.status).toBe(200);
       const body: Record<string, unknown> = await res.json();
       expect(body.data).toHaveLength(1);
+      // B1 (GOAP-224 W1.3): shared-comment payload must mask author email —
+      // displayName is a truncated identifier and no userEmail key leaks.
+      const data = body.data as Array<Record<string, unknown>>;
+      const comment = data[0];
+      expect(comment?.displayName).toBe('ot***');
+      expect(comment.isOwn).toBe(false);
+      expect('userEmail' in comment).toBe(false);
+      expect('user_email' in comment).toBe(false);
     });
   });
 
