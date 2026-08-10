@@ -289,7 +289,8 @@ function buildPurifyConfig(): Config {
   return {
     ALLOWED_TAGS: SAFE_SVG_TAGS,
     ADD_ATTR: [...SVG_ALLOWED_ATTRS],
-    FORBID_ATTR: SVG_EVENT_ATTRS,
+    // Block href and xlink:href on filter primitives (e.g. feImage) to prevent SSRF
+    FORBID_ATTR: [...SVG_EVENT_ATTRS, 'href', 'xlink:href'],
     ALLOW_ARIA_ATTR: true,
     ALLOW_DATA_ATTR: false,
     WHOLE_DOCUMENT: false,

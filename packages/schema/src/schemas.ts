@@ -186,7 +186,7 @@ export const AuditQuerySchema = z.object({
   entityType: EntityTypeSchema.optional(),
   entityId: z.string().optional(),
   limit: z.coerce.number().int().positive().max(100).default(50),
-  offset: z.coerce.number().int().nonnegative().default(0),
+  offset: z.coerce.number().int().nonnegative().max(100_000).default(0),
   from: z.string().datetime().optional(),
   to: z.string().datetime().optional(),
 });

@@ -50,11 +50,17 @@ describe('sanitizeSvg', () => {
     expect(result).not.toContain('javascript:');
   });
 
-  it('allows safe href attributes', () => {
-    const html = '<svg xmlns="http://www.w3.org/2000/svg"><use href="#mySymbol"/><image href="image.png"/></svg>';
+  it('strips all href and xlink:href attributes (SSRF prevention)', () => {
+    // sanitizeSvg is for standalone SVG snippets — href is forbidden to block
+    // feImage SSRF (external resource loading via <feImage href="https://..."/>)
+    const html = '<svg xmlns="http://www.w3.org/2000/svg"><use href="#mySymbol"/><image href="image.png"/><feImage href="https://evil.com/track.gif"/></svg>';
     const result = sanitizeSvg(html);
-    expect(result).toContain('#mySymbol');
-    expect(result).toContain('image.png');
+    expect(result).not.toContain('href');
+    expect(result).not.toContain('xlink:href');
+    expect(result).not.toContain('evil.com');
+    // Elements are still present — only the href attribute is removed
+    expect(result).toContain('<use');
+    expect(result).toContain('<image');
   });
 
   it('removes style elements from SVG', () => {
@@ -84,6 +90,15 @@ describe('sanitizeSvg', () => {
   it('handles empty string gracefully', () => {
     const result = sanitizeSvg('');
     expect(result).toBe('');
+  });
+
+  it('blocks feImage href to prevent SSRF', () => {
+    const html = '<svg xmlns="http://www.w3.org/2000/svg"><filter id="f1"><feImage href="https://evil.com/track.gif" result="img"/></filter><rect width="100" height="100" filter="url(#f1)"/></svg>';
+    const result = sanitizeSvg(html);
+    expect(result).not.toContain('href');
+    expect(result).not.toContain('evil.com');
+    // The feImage element itself remains (it is in SAFE_SVG_TAGS); only href is removed
+    expect(result).toContain('<feImage');
   });
 
   it('sanitizes XSS via SVG animate elements', () => {

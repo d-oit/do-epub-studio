@@ -46,7 +46,7 @@ commentsRouter.get('/books/:bookId/comments', readerAuth, async (c) => {
   const parsedComments = await Promise.all(
     comments.map(async (cm) => ({
       id: cm.id,
-      displayName: cm.user_email.split('@')[0],
+      displayName: cm.user_email.slice(0, 2) + '***',
       isOwn: cm.user_email === auth.email,
       locator: await parseLocatorRow(
         c.env,
@@ -150,7 +150,7 @@ commentsRouter.post('/books/:bookId/comments', readerAuth, zValidator('json', Co
       ok: true,
       data: {
         id,
-        displayName: auth.email.split('@')[0],
+        displayName: auth.email.slice(0, 2) + '***',
         isOwn: true,
         locator: body.locator,
         body: body.body,
