@@ -287,9 +287,14 @@ const SVG_ALLOWED_ATTRS = [
 
 function buildPurifyConfig(): Config {
   return {
+    // Explicit allowlist — only known-safe SVG tags survive (no HTML tags).
     ALLOWED_TAGS: SAFE_SVG_TAGS,
-    ADD_ATTR: [...SVG_ALLOWED_ATTRS],
-    // Block href and xlink:href on filter primitives (e.g. feImage) to prevent SSRF
+    // ALLOWED_ATTR replaces DOMPurify's HTML default attribute list entirely.
+    // Using ADD_ATTR would layer SVG attrs on top of the HTML defaults, leaving
+    // data-*, aria-*, and event-like attributes from the HTML set in play.
+    ALLOWED_ATTR: [...SVG_ALLOWED_ATTRS],
+    // Belt-and-suspenders: block href/xlink:href on filter primitives (feImage
+    // SSRF) and all event handlers even if ALLOWED_ATTR misses one.
     FORBID_ATTR: [...SVG_EVENT_ATTRS, 'href', 'xlink:href'],
     ALLOW_ARIA_ATTR: true,
     ALLOW_DATA_ATTR: false,
