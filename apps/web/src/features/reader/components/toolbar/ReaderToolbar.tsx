@@ -40,6 +40,49 @@ interface ReaderToolbarProps {
 
 type TFn = (key: TranslationKeys, params?: Record<string, string | number>) => string;
 
+// ─── SVG path constants (avoids i18next/no-literal-string on JSX props) ────
+const PATH_SEARCH = 'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z';
+const PATH_COMMENT = 'M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z';
+const PATH_BOOKMARK = 'M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z';
+const PATH_INFO = 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z';
+const PATH_FIXED_LAYOUT = 'M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4';
+const PATH_EXPORT = 'M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z';
+const PATH_SETTINGS_GEAR = 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z';
+const PATH_SETTINGS_DOT = 'M15 12a3 3 0 11-6 0 3 3 0 016 0z';
+
+// ─── Shared toolbar button: Tooltip + IconButton + svg path ─────────────────
+
+interface ToolbarIconButtonProps {
+  label: string;
+  svgPath: string | string[];
+  onClick: () => void;
+  isActive?: boolean;
+  isExpanded?: boolean;
+  badge?: number;
+  badgeLabel?: string;
+}
+
+function ToolbarIconButton({ label, svgPath, onClick, isExpanded, badge, badgeLabel }: ToolbarIconButtonProps) {
+  const paths = Array.isArray(svgPath) ? svgPath : [svgPath];
+  const ariaLabel = badge && badge > 0 && badgeLabel ? badgeLabel : label;
+  return (
+    <Tooltip content={label}>
+      <IconButton onClick={onClick} variant="ghost" aria-label={ariaLabel} aria-expanded={isExpanded} className="relative">
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          {paths.map((d, i) => (
+            <path key={i} strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={d} />
+          ))}
+        </svg>
+        {badge != null && badge > 0 && (
+          <span className="absolute -top-1 -right-1 w-4 h-4 bg-accent text-white text-[10px] rounded-full flex items-center justify-center font-bold" aria-hidden="true">
+            {badge}
+          </span>
+        )}
+      </IconButton>
+    </Tooltip>
+  );
+}
+
 // ─── Left section: TOC toggle + book title + progress ───────────────────────
 
 interface ToolbarLeftProps {
@@ -145,82 +188,31 @@ function ToolbarActions({
 }: ToolbarActionsProps) {
   return (
     <div className="cq-reader-toolbar-actions items-center gap-1">
-      <Tooltip content={t('reader.search')}>
-        <IconButton onClick={onToggleSearch} variant="ghost" aria-label={t('reader.search')} aria-expanded={activePanel === 'search'}>
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-        </IconButton>
-      </Tooltip>
+      <ToolbarIconButton label={t('reader.search')} onClick={onToggleSearch} isExpanded={activePanel === 'search'} svgPath={PATH_SEARCH} />
       {capabilities?.canComment && (
-        <Tooltip content={t('annotation.comment')}>
-          <IconButton
-            onClick={onToggleComments}
-            variant="ghost"
-            aria-label={openCommentsCount > 0 ? t('annotation.comment_with_count', { count: openCommentsCount }) : t('annotation.comment')}
-            aria-expanded={activePanel === 'comments'}
-            className="relative"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-            </svg>
-            {openCommentsCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-accent text-white text-[10px] rounded-full flex items-center justify-center font-bold" aria-hidden="true">
-                {openCommentsCount}
-              </span>
-            )}
-          </IconButton>
-        </Tooltip>
+        <ToolbarIconButton
+          label={t('annotation.comment')}
+          onClick={onToggleComments}
+          isExpanded={activePanel === 'comments'}
+          svgPath={PATH_COMMENT}
+          badge={openCommentsCount}
+          badgeLabel={t('annotation.comment_with_count', { count: openCommentsCount })}
+        />
       )}
-      <Tooltip content={t('reader.bookmarks')}>
-        <IconButton
-          onClick={onToggleBookmarks}
-          variant="ghost"
-          aria-label={bookmarkCount > 0 ? t('reader.bookmarks_with_count', { count: bookmarkCount }) : t('reader.bookmarks')}
-          aria-expanded={activePanel === 'bookmarks'}
-          className="relative"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-          </svg>
-          {bookmarkCount > 0 && (
-            <span className="absolute -top-1 -right-1 w-4 h-4 bg-accent text-white text-[10px] rounded-full flex items-center justify-center font-bold" aria-hidden="true">
-              {bookmarkCount}
-            </span>
-          )}
-        </IconButton>
-      </Tooltip>
-      <Tooltip content={t('reader.aboutBook')}>
-        <IconButton onClick={onToggleInfo} variant="ghost" aria-label={t('reader.aboutBook')} aria-expanded={activePanel === 'info'}>
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        </IconButton>
-      </Tooltip>
+      <ToolbarIconButton
+        label={t('reader.bookmarks')}
+        onClick={onToggleBookmarks}
+        isExpanded={activePanel === 'bookmarks'}
+        svgPath={PATH_BOOKMARK}
+        badge={bookmarkCount}
+        badgeLabel={t('reader.bookmarks_with_count', { count: bookmarkCount })}
+      />
+      <ToolbarIconButton label={t('reader.aboutBook')} onClick={onToggleInfo} isExpanded={activePanel === 'info'} svgPath={PATH_INFO} />
       {isFixedLayout && onToggleFixedLayoutControls && (
-        <Tooltip content={t('reader.fixedLayout.title')}>
-          <IconButton onClick={onToggleFixedLayoutControls} variant="ghost" aria-label={t('reader.fixedLayout.title')} aria-expanded={activePanel === 'fl-controls'}>
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-            </svg>
-          </IconButton>
-        </Tooltip>
+        <ToolbarIconButton label={t('reader.fixedLayout.title')} onClick={onToggleFixedLayoutControls} isExpanded={activePanel === 'fl-controls'} svgPath={PATH_FIXED_LAYOUT} />
       )}
-      <Tooltip content={t('reader.exportNotes')}>
-        <IconButton onClick={onExportNotes} variant="ghost" aria-label={t('reader.exportNotes')}>
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-        </IconButton>
-      </Tooltip>
-      <Tooltip content={t('reader.settings')}>
-        <IconButton onClick={onToggleSettings} variant="ghost" aria-label={t('reader.settings')} aria-expanded={activePanel === 'settings'}>
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-          </svg>
-        </IconButton>
-      </Tooltip>
+      <ToolbarIconButton label={t('reader.exportNotes')} onClick={onExportNotes} svgPath={PATH_EXPORT} />
+      <ToolbarIconButton label={t('reader.settings')} onClick={onToggleSettings} isExpanded={activePanel === 'settings'} svgPath={[PATH_SETTINGS_GEAR, PATH_SETTINGS_DOT]} />
       <div className="mx-1 h-6 w-px bg-border cq-reader-toolbar-divider" />
       <LocaleSwitcher />
       <Button onClick={onLogout} variant="ghost" size="sm">
