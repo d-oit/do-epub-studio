@@ -12,6 +12,11 @@ PR_NUMBER="${1:-}"
 TIMEOUT="${2:-1800}"
 BASE_POLL_INTERVAL=10
 MAX_POLL_INTERVAL=60
+# How long to wait for the FIRST check run to appear before declaring the PR
+# has no CI status. GitHub Actions registers checks asynchronously and can
+# exceed 60s on a freshly created PR — a hardcoded 60s here rolled back good
+# PRs. Override with ATOMIC_COMMIT_NO_CHECKS_GRACE (seconds).
+NO_CHECKS_GRACE="${ATOMIC_COMMIT_NO_CHECKS_GRACE:-300}"
 
 # Source shared libs
 # shellcheck source=scripts/lib/colors.sh
@@ -101,10 +106,11 @@ while true; do
         break
     fi
 
-    if [[ $TOTAL_COUNT -eq 0 ]] && [[ $ELAPSED -gt 60 ]]; then
-        error "No CI checks detected after 60s"
+    if [[ $TOTAL_COUNT -eq 0 ]] && [[ $ELAPSED -gt $NO_CHECKS_GRACE ]]; then
+        error "No CI checks detected after ${NO_CHECKS_GRACE}s"
         error "This PR has no CI status — cannot verify checks passed"
         error "Ensure CI is configured for this repository and branch"
+        error "Override the grace window with ATOMIC_COMMIT_NO_CHECKS_GRACE (seconds)"
         exit 1
     fi
 
