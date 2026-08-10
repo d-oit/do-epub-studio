@@ -122,7 +122,7 @@ Wave 1 and Wave 2 are disjoint file sets → can be developed in parallel branch
 
 - [x] W1.1: `sanitizeSvg` uses `ALLOWED_TAGS` only; no `FORBID_TAGS`-only path in reader-core
 - [x] W1.2: `foreignObject` removed from `EPUB_ALLOWED_TAGS`; EPUB sanitizer tests updated
-   - Verified on main (post-#945): `sanitizeSvg` uses `ALLOWED_TAGS` (`SAFE_SVG_TAGS`); `foreignObject` removed from `EPUB_BODY_TAGS`; composite allowlist test (#224 A1) added; OwlWatch `sanitizeSvg` flag is stale.
+  - Verified on main (post-#945): `sanitizeSvg` uses `ALLOWED_TAGS` (`SAFE_SVG_TAGS`); `foreignObject` removed from `EPUB_BODY_TAGS`; composite allowlist test (#224 A1) added; OwlWatch `sanitizeSvg` flag is stale.
 - [ ] W1.3: `/comments` endpoint omits `userEmail` for shared comments; uses anonymized display name or truncated identifier
 - [ ] W1.4: grants SELECT excludes `password_hash`; audit offset capped at `MAX_OFFSET`
 - [ ] W1.5: `createSession` called with `emailKey` in access.ts
@@ -132,17 +132,17 @@ Wave 1 and Wave 2 are disjoint file sets → can be developed in parallel branch
 - [ ] W2.4: Overflow menu popup has correct ARIA role; color picker label translated; focus trap on picker; counts in button aria-labels
 - [x] W3.1: `epub-loader.ts` destroy() calls `terminateParserWorker()`
 - [x] W3.2: LRU cache HIT does not invoke `DOMParser.parseFromString`
-   - B5 decided accepted-with-rationale (Option A): re-parse measured ~0.3-4ms in
-     browser (sub-ms to a few ms; ~7ms even in jsdom at 30KB) vs the multi-pass
-     DOMPurify MISS — string cache retained; rationale documented in
-     `sanitizer.ts`. C14 (HIT `<html>` attr sync) fixed for byte-for-byte parity.
+  - B5 decided accepted-with-rationale (Option A): re-parse measured ~0.3-4ms in
+    browser (sub-ms to a few ms; ~7ms even in jsdom at 30KB) vs the multi-pass
+    DOMPurify MISS — string cache retained; rationale documented in
+    `sanitizer.ts`. C14 (HIT `<html>` attr sync) fixed for byte-for-byte parity.
 - [x] W3.3: Rapid page-flip generates at most 1 PUT per 500ms
 - [x] W3.4: PR comments show baseline delta table when budget fails
 - [x] W4.1: `LoadingFallback` and dead import removed from App.tsx; `PageLoadingFallback` deleted or repurposed
 - [x] W4.2: `useDocumentLocale`, insights NaN, and `useKeyboardShortcut` target lifecycle covered by tests
 - [x] W4.3: `AccessibilitySection` uses `dl/dt/dd`; SVGs and mini bar aria-hidden
-   - Verified in code (post-#946): AccessibilitySection uses `dl/dt/dd` (HTML5
-     `<div>` group wrappers are spec-valid); all OverflowMenu decorative SVGs and
-     the ToolbarLeft mini progress bar carry `aria-hidden="true"`.
+  - Verified in code (post-#946): AccessibilitySection uses `dl/dt/dd` (HTML5
+    `<div>` group wrappers are spec-valid); all OverflowMenu decorative SVGs and
+    the ToolbarLeft mini progress bar carry `aria-hidden="true"`.
 - [x] W4.4: Plans archived/updated; AGENTS.md and LEARNINGS.md current
 - [x] All waves: `./scripts/quality_gate.sh` passes; CI green
