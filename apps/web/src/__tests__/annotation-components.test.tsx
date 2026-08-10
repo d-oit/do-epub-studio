@@ -96,7 +96,8 @@ describe('CommentItem', () => {
     comment: {
       id: 'c1',
       body: 'Test comment',
-      userEmail: 'test@example.com',
+      displayName: 'test',
+      isOwn: true,
       status: 'open' as const,
       visibility: 'shared' as const,
       selectedText: 'selected text',
@@ -129,9 +130,9 @@ describe('CommentItem', () => {
     expect(screen.getByText('Test comment')).toBeInTheDocument();
   });
 
-  it('renders user email', () => {
+  it('renders display name', () => {
     render(<CommentItem {...baseProps} />);
-    expect(screen.getByText(/test@example.com/)).toBeInTheDocument();
+    expect(screen.getByText(/test/)).toBeInTheDocument();
   });
 
   it('renders selected text when present', () => {
@@ -274,7 +275,8 @@ describe('CommentItem', () => {
           {
             id: 'r1',
             body: 'Reply 1',
-            userEmail: 'reply@example.com',
+            displayName: 'reply',
+            isOwn: false,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
             status: 'open' as const,

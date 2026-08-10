@@ -15,7 +15,8 @@ const baseComment: Comment = {
   cfiRange: 'epubcfi(/6/4)',
   selectedText: 'quoted text',
   body: 'This is a comment',
-  userEmail: 'user@test.com',
+  displayName: 'user',
+  isOwn: true,
   status: 'open',
   visibility: 'shared',
   parentCommentId: null,
@@ -59,9 +60,9 @@ describe('CommentItem', () => {
     expect(screen.getByText(/quoted text/)).toBeInTheDocument();
   });
 
-  it('renders user email and date', () => {
+  it('renders display name and date', () => {
     render(<CommentItem {...defaultProps} />);
-    expect(screen.getByText(/user@test.com/)).toBeInTheDocument();
+    expect(screen.getByText(/user/)).toBeInTheDocument();
   });
 
   it('applies current chapter styling', () => {
@@ -171,8 +172,8 @@ describe('CommentItem', () => {
     const commentWithReplies = {
       ...baseComment,
       replies: [
-        { id: 'r1', body: 'Reply one', userEmail: 'reply@test.com', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), chapterRef: null, cfiRange: null, selectedText: null, status: 'open' as const, visibility: 'shared' as const, parentCommentId: 'c1', resolvedAt: null },
-        { id: 'r2', body: 'Reply two', userEmail: 'reply2@test.com', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), chapterRef: null, cfiRange: null, selectedText: null, status: 'open' as const, visibility: 'shared' as const, parentCommentId: 'c1', resolvedAt: null },
+        { id: 'r1', body: 'Reply one', displayName: 'reply', isOwn: false, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), chapterRef: null, cfiRange: null, selectedText: null, status: 'open' as const, visibility: 'shared' as const, parentCommentId: 'c1', resolvedAt: null },
+        { id: 'r2', body: 'Reply two', displayName: 'reply2', isOwn: false, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), chapterRef: null, cfiRange: null, selectedText: null, status: 'open' as const, visibility: 'shared' as const, parentCommentId: 'c1', resolvedAt: null },
       ] as Comment[],
     };
     render(<CommentItem {...defaultProps} comment={commentWithReplies} />);

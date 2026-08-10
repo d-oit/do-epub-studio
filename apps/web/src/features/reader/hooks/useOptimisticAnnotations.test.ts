@@ -21,7 +21,8 @@ function makeHighlight(overrides: Partial<Highlight>): Highlight {
 function makeComment(overrides: Partial<Comment>): Comment {
   return {
     id: 'c-1',
-    userEmail: 'a@ex.com',
+    displayName: 'a',
+    isOwn: true,
     chapterRef: 'ch-1',
     cfiRange: 'epubcfi(/6/4)',
     selectedText: 'Hello world',

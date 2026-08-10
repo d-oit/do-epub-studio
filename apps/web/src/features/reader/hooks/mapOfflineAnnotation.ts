@@ -21,7 +21,8 @@ export function mapOfflineComment(a: AnnotationEntry): Comment {
   const visibility = a.visibility ?? 'shared';
   return {
     id: a.id,
-    userEmail: '',
+    displayName: '',
+    isOwn: true,
     chapterRef: a.chapter ?? null,
     cfiRange: a.cfi,
     selectedText: a.text ?? null,

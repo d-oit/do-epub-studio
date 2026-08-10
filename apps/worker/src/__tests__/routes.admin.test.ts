@@ -285,6 +285,21 @@ describe('Admin Routes', () => {
       const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } = await res.json();
       expect(body.data.entries).toHaveLength(1);
     });
+
+    it('rejects offset > 100_000 at schema validation', async () => {
+      mockRequireAdminAuth.mockResolvedValue({
+        ok: true,
+        context: { userId: 'admin-1', email: 'admin@example.com', globalRole: 'admin' },
+      });
+
+      const res = await app.fetch(
+        new Request('http://localhost/api/admin/audit?offset=999999'),
+        env,
+        makePassThroughContext(),
+      );
+      // Zod rejects offset > 100_000 with a 400
+      expect(res.status).toBe(400);
+    });
   });
 
   describe('DELETE /api/admin/books/:id — cascade delete', () => {
