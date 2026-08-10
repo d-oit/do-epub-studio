@@ -34,8 +34,9 @@ bash scripts/autopilot.sh 123
 5. **Processes review comments** – Classifies comments as must‑fix (halt),
    should‑fix (acknowledge), or discussion (reply politely).
 6. **Waits for CI** – Re‑checks status checks after each action.
-7. **Merges** – Uses `gh pr merge --squash --delete-branch --auto` when all
-   conditions are met.
+7. **Merges** – After all conditions are met, asks the human to confirm the
+   merge (per the repo no-automerge rule — see AGENTS.md Tier 1), then uses
+   `gh pr merge --squash --delete-branch` (never `--admin`, never `--auto`).
 
 ## When NOT to Use
 

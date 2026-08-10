@@ -147,6 +147,68 @@ gh pr checks $PR --watch
 
 If CI fails, investigate and fix. Never bypass with `--admin`.
 
+### Phase 10: Merge Readiness (MANDATORY before merge)
+
+Run this checklist in order. A PR that skips any step will not merge.
+
+**Step 1 — Branch must be up to date with main:**
+```bash
+gh pr view $PR --json mergeStateStatus --jq '.mergeStateStatus'
+# Must be CLEAN or MERGEABLE. If BEHIND:
+git fetch origin main && git rebase origin/main
+git push --force origin <branch>
+```
+
+**Step 2 — All review threads must be resolved:**
+```bash
+gh api graphql -f query='{
+  repository(owner: "OWNER", name: "REPO") {
+    pullRequest(number: PR_NUMBER) {
+      reviewThreads(first: 20) {
+        nodes { id isResolved comments(first:1) { nodes { body } } }
+      }
+    }
+  }
+}' | python3 -c "
+import json,sys
+d=json.load(sys.stdin)
+threads=d['data']['repository']['pullRequest']['reviewThreads']['nodes']
+unresolved=[t for t in threads if not t['isResolved']]
+print(f'{len(unresolved)} unresolved thread(s)')
+for t in unresolved:
+    print(t['id'], t['comments']['nodes'][0]['body'][:80])
+"
+```
+
+For each unresolved thread:
+- **Real issue**: fix the code, push, then resolve the thread.
+- **False positive** (e.g. OwlWatch flagging plan documents as live code bugs, or a stale finding for an issue already fixed elsewhere): resolve via GraphQL mutation with a comment explaining why it is a false positive.
+
+```bash
+gh api graphql -f query='mutation {
+  resolveReviewThread(input: {threadId: "THREAD_ID"}) { thread { isResolved } }
+}'
+```
+
+**Step 3 — OwlWatch-specific guidance:**
+OwlWatch scans markdown files (plans/, agents-docs/) and flags descriptions of vulnerabilities as if they were live code. These are always false positives on docs-only PRs. Resolve without code changes but add a comment: "False positive: this finding describes an issue documented in the plan that was already fixed in PR #NNN."
+
+**Step 4 — Chromatic visual regression:**
+If the PR changes CSS, component roles, or aria attributes, Chromatic will flag visual changes as pending baselines. These are expected and must be accepted at the Chromatic UI before the `UI Tests` check turns green. Navigate to the build URL shown in `gh pr checks $PR` and click "Accept all changes."
+
+**Step 5 — Final merge:**
+```bash
+# Confirm everything is green
+gh pr checks $PR  # all non-skipping checks must pass
+
+# Merge directly — NEVER use --auto
+gh pr merge $PR --squash
+```
+
+**Do NOT use `--auto`.** Auto-merge fires asynchronously and silently fails when
+the branch is BEHIND or threads are unresolved. Always work through steps 1–4
+first, then merge directly with `gh pr merge <N> --squash`.
+
 ## Delegation Map
 
 | Phase | Skill | Purpose |
@@ -167,6 +229,9 @@ If CI fails, investigate and fix. Never bypass with `--admin`.
 - [ ] Must-fix issues auto-fixed
 - [ ] Quality gate passes after fixes
 - [ ] All CI checks pass
+- [ ] Branch is up to date with main (`mergeStateStatus: CLEAN`)
+- [ ] All review threads resolved (no `isResolved: false` entries)
+- [ ] Chromatic baselines accepted if visual changes present
 - [ ] Report delivered to user
 
 ## References

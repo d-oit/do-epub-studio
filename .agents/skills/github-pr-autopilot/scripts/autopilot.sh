@@ -143,17 +143,23 @@ while [ $ITER -lt $MAX_ITER ]; do
         continue
     fi
 
-    # All conditions met – merge!
+    # All conditions met – merge, but ONLY with explicit human confirmation
+    # (repo no-automerge rule — AGENTS.md Tier 1; never --admin, never --auto).
     echo ""
     echo "✅ PR #$PR_ID is ready to merge:"
     echo "   - Approved (or no review required)"
     echo "   - Conflict‑free"
     echo "   - All CI checks passing"
     echo ""
-    echo "   Merging with --squash --delete-branch..."
-    gh pr merge "$PR_ID" --squash --delete-branch --auto
+    if [ "${AUTOPILOT_CONFIRM:-0}" != "1" ]; then
+        echo "   Merging requires explicit human confirmation (AUTOPILOT_CONFIRM=1)."
+        echo "   Run manually when ready: gh pr merge $PR_ID --squash --delete-branch"
+        exit 1
+    fi
+    echo "   AUTOPILOT_CONFIRM=1 — merging with --squash --delete-branch..."
+    gh pr merge "$PR_ID" --squash --delete-branch
     echo ""
-    echo "🎉 PR #$PR_ID has been merged (or added to the merge queue)"
+    echo "🎉 PR #$PR_ID has been merged"
     exit 0
 done
 
