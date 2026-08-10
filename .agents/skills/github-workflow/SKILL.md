@@ -62,11 +62,15 @@ gh run watch <run-id>
 gh run view <run-id> --log
 ```
 
-### Auto-Merge Workflow
+### Merge Workflow (no automerge — requires explicit human confirmation)
 
 ```bash
-# Enable auto-merge
-gh pr merge <pr-number> --admin --auto
+# Never use `--admin` (bypasses branch protection) or `--auto` (automerge):
+# the repo enforces an explicit no-automerge rule (AGENTS.md Tier 1). Before any
+# merge, confirm the action explicitly with the user, verify every required
+# check is green (`gh pr checks <pr-number>`), then merge on their go-ahead:
+gh pr checks <pr-number>
+gh pr merge <pr-number> --squash
 ```
 
 ## Pre-Existing Issue Detection
@@ -151,8 +155,9 @@ git push -u origin HEAD
 # 4. Create PR with label
 gh pr create --title "hotfix: critical fix" --label "hotfix"
 
-# 5. Auto-merge if approved
-gh pr merge <pr-number> --admin --auto
+# 5. Merge only after human confirmation + green checks (no --admin/--auto)
+gh pr checks <pr-number>
+gh pr merge <pr-number> --squash
 ```
 
 ### Rebase Workflow
