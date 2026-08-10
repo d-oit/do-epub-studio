@@ -1,7 +1,7 @@
 # GOAP 224: Audit Wave 2026-08-09 — Findings & Action Plan
 
 **Date:** 2026-08-09
-**Status:** ✅ COMPLETED (Waves 1-4 merged; PRs #945/#946 + Wave 3/4 PR)
+**Status:** ✅ COMPLETED (Waves 1-4 merged; PRs #945/#946 + Wave 3/4 PR; P3 backlog C4–C9 closed in follow-up PR)
 **Baseline commit:** `f1cd065` (main after PR #941 + #942)
 **Method:** 6-dimension parallel swarm (security, correctness, performance, a11y, dead-code, test-coverage) with adversarial verification pass.
 **Related:** Plans 212–223, ADR-212
@@ -66,6 +66,17 @@
 | C11 | dead | Plan 220 COMPLETED but not archived |
 | C12 | dead | `AGENTS.md` worker coverage minimum stale (documents 55/50, enforces 65/60) |
 | C13 | dead | LEARNINGS.md missing GOAP-223 plan summary section |
+
+### P3 backlog closure (2026-08-10, follow-up PR)
+
+C4–C9 were listed in the backlog but not assigned to any wave; closed as a cohort:
+
+- [x] **C4** — skeleton arrays hoisted to module scope in `apps/web/src/components/skeletons.tsx` (one allocation at module load, none per Suspense render).
+- [x] **C5** — `LoginPage` / `AdminLoginPage` / `AdminRecoverPage` converted to `React.lazy()` with `AuthSkeleton` (new export in `apps/web/src/components/skeletons.tsx`, wired via the existing route-skeleton import in `apps/web/src/App.tsx`; `NotFoundPage` stays eager as the tiny catch-all).
+- [x] **C6** — `SANITIZER_POLICY_VERSION` doc comment rewritten in `sanitizer.ts`: the version prefixes per-hook LRU keys; caches are in-memory per book load so there is no cross-build persistence claim, and no caller passes `policyVersion` (each hook captures the constant default at construction).
+- [x] **C7** — already satisfied by the byte-identical cache-HIT test (`produces byte-identical output on cache HIT and syncs html attributes (B18/C14)`); verified, no new code.
+- [x] **C8** — closed-with-rationale: a runtime bump of the module constant cannot invalidate an already-constructed hook (version + Map captured at construction), so cross-instance invalidation is the correct observable contract; the existing test gained an explanatory comment.
+- [x] **C9** — `ScrollProgressBar.test.tsx` added (decorative-only contract: `aria-hidden` root, zero announce-able/interactive content).
 
 ---
 

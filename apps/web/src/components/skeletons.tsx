@@ -31,6 +31,14 @@ function SkeletonRow() {
   );
 }
 
+// GOAP-224 C4: hoist card/row key arrays to module scope so the per-render
+// `Array.from({ length: N })` allocations are paid once at module load, not on
+// every Suspense fallback render. Skeleton placeholders are static by design.
+const LIBRARY_CARD_KEYS = Array.from({ length: 10 }, (_, i) => i);
+const CATALOG_CARD_KEYS = Array.from({ length: 8 }, (_, i) => i);
+const ADMIN_ROW_KEYS = Array.from({ length: 6 }, (_, i) => i);
+const SETTINGS_GROUP_KEYS = Array.from({ length: 4 }, (_, i) => i);
+
 function SkeletonShell({ children, label }: { children: ReactNode; label: string }) {
   return (
     <div
@@ -57,7 +65,7 @@ export function LibrarySkeleton() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" aria-hidden="true">
         <SkeletonBlock className="h-7 w-40 mb-6" />
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-          {Array.from({ length: 10 }, (_, i) => <SkeletonCard key={i} />)}
+          {LIBRARY_CARD_KEYS.map((i) => <SkeletonCard key={i} />)}
         </div>
       </div>
     </SkeletonShell>
@@ -72,7 +80,7 @@ export function CatalogSkeleton() {
         <SkeletonBlock className="h-7 w-32 mb-4" />
         <SkeletonBlock className="h-10 w-full max-w-sm mb-6 rounded-lg" />
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-          {Array.from({ length: 8 }, (_, i) => <SkeletonCard key={i} />)}
+          {CATALOG_CARD_KEYS.map((i) => <SkeletonCard key={i} />)}
         </div>
       </div>
     </SkeletonShell>
@@ -86,7 +94,7 @@ export function AdminSkeleton() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" aria-hidden="true">
         <SkeletonBlock className="h-7 w-48 mb-6" />
         <div className="rounded-xl border border-border bg-surface/40 p-4">
-          {Array.from({ length: 6 }, (_, i) => <SkeletonRow key={i} />)}
+          {ADMIN_ROW_KEYS.map((i) => <SkeletonRow key={i} />)}
         </div>
       </div>
     </SkeletonShell>
@@ -121,13 +129,35 @@ export function ReaderSkeleton() {
   );
 }
 
+// GOAP-224 C5: fallback for the lazy auth routes (/login, /admin/login,
+// /admin/recover). Follows the ReaderSkeleton full-bleed pattern — no app
+// header bar, centered card matching the login/recover form layout.
+export function AuthSkeleton() {
+  const { t } = useTranslation();
+  return (
+    <div
+      className="min-h-dvh bg-background flex items-center justify-center p-6"
+      role="status"
+      aria-live="polite"
+      aria-busy="true"
+      aria-label={t('a11y.loading_page')}
+    >
+      <div className="w-full max-w-md rounded-xl border border-border bg-surface/40 p-6 flex flex-col gap-4" aria-hidden="true">
+        <SkeletonBlock className="h-7 w-2/3" />
+        <SkeletonBlock className="h-10 w-full rounded-lg" />
+        <SkeletonBlock className="h-10 w-full rounded-lg" />
+      </div>
+    </div>
+  );
+}
+
 export function SettingsSkeleton() {
   const { t } = useTranslation();
   return (
     <SkeletonShell label={t('a11y.loading_page')}>
       <div className="max-w-2xl mx-auto px-4 py-8" aria-hidden="true">
         <SkeletonBlock className="h-7 w-32 mb-6" />
-        {Array.from({ length: 4 }, (_, i) => (
+        {SETTINGS_GROUP_KEYS.map((i) => (
           <div key={i} className="mb-4 p-4 rounded-xl border border-border bg-surface/40 flex flex-col gap-3">
             <SkeletonBlock className="h-4 w-1/3" />
             <SkeletonBlock className="h-9 w-full rounded-lg" />

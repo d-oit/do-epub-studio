@@ -5,9 +5,6 @@ import { useAuthStore } from './stores/auth';
 import { useThemeSync } from './hooks/useThemeSync';
 import { useSessionExpiry } from './hooks/useSessionExpiry';
 import { useDocumentLocale } from './hooks/useDocumentLocale';
-import { LoginPage } from './features/auth/LoginPage';
-import { AdminLoginPage } from './features/admin/AdminLoginPage';
-import { AdminRecoverPage } from './features/admin/AdminRecoverPage';
 import { AppShell } from './components/AppShell';
 import { SwUpdateNotification } from './components/SwUpdateNotification';
 import { OfflineIndicator } from './components/OfflineIndicator';
@@ -18,9 +15,22 @@ import {
   AdminSkeleton,
   ReaderSkeleton,
   SettingsSkeleton,
+  AuthSkeleton,
 } from './components/skeletons';
 
-// Lazy load route components (named exports)
+// Lazy load route components (named exports). GOAP-224 C5: auth pages
+// (/login, /admin/login, /admin/recover) were eagerly imported into the main
+// bundle although they render only on auth routes — same treatment as all other
+// route pages below.
+const LoginPage = React.lazy(() =>
+  import('./features/auth/LoginPage').then((m) => ({ default: m.LoginPage }))
+);
+const AdminLoginPage = React.lazy(() =>
+  import('./features/admin/AdminLoginPage').then((m) => ({ default: m.AdminLoginPage }))
+);
+const AdminRecoverPage = React.lazy(() =>
+  import('./features/admin/AdminRecoverPage').then((m) => ({ default: m.AdminRecoverPage }))
+);
 const ReaderPage = React.lazy(() =>
   import('./features/reader/ReaderPage').then((m) => ({ default: m.ReaderPage }))
 );
@@ -103,9 +113,9 @@ export function App() {
       <ViewTransitionRoutes>
         <Route path="/" element={<AppShell />} />
         <Route path="/catalog" element={<Suspense fallback={<CatalogSkeleton />}><CatalogPage /></Suspense>} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/admin/login" element={<AdminLoginPage />} />
-        <Route path="/admin/recover" element={<AdminRecoverPage />} />
+        <Route path="/login" element={<Suspense fallback={<AuthSkeleton />}><LoginPage /></Suspense>} />
+        <Route path="/admin/login" element={<Suspense fallback={<AuthSkeleton />}><AdminLoginPage /></Suspense>} />
+        <Route path="/admin/recover" element={<Suspense fallback={<AuthSkeleton />}><AdminRecoverPage /></Suspense>} />
         <Route path="/read/:bookSlug" element={
           <ProtectedRoute>
             <Suspense fallback={<ReaderSkeleton />}><ReaderPage /></Suspense>
