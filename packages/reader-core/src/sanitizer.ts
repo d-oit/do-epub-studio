@@ -7,8 +7,16 @@ const TREEWALKER_CHECK_INTERVAL = 100;
 const SANITIZE_CACHE_MAX = 10;
 
 /**
- * Bump whenever sanitizer allowlists/behavior change so cached chapter output
- * from a prior build is invalidated (ADR-218 T2.2: stale-on-policy-change).
+ * Cache-key prefix for the per-hook sanitizer LRU (GOAP-224 C6).
+ *
+ * `createEpubSanitizerHook()` builds a fresh in-memory `Map` per hook and, per
+ * book load, a new hook is constructed — so the cache never outlives a book
+ * session and there is no cross-build persistence to invalidate. The version
+ * still matters: it is embedded in every cache key (`${version}:${href}`), so
+ * bumping it when allowlists/behavior change guarantees that a long-lived hook
+ * created with a newer policy never serves output sanitized under an older
+ * policy, and separate-policy hooks never share entries (each captures its own
+ * copy at construction; no caller passes it explicitly).
  */
 export const SANITIZER_POLICY_VERSION = 2;
 

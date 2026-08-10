@@ -342,6 +342,12 @@ describe('createEpubSanitizerHook', () => {
     expect(hitDoc.documentElement.getAttribute('dir')).toBe('rtl');
   });
 
+  // GOAP-224 C8: policy-version invalidation is tested across hook instances,
+  // not as a runtime bump of the module constant. This is the correct observable
+  // contract for this design: a hook captures `policyVersion` (and its own Map)
+  // at construction, so a bump affects only hooks created afterwards — there is
+  // no shared/global cache a mid-session constant change could invalidate. Two
+  // hooks with different versions must never share cached output.
   it('invalidates the cache when the sanitizer policy version changes', () => {
     const sanitizeSpy = vi.spyOn(DOMPurify, 'sanitize');
     const { hook: hookA } = createEpubSanitizerHook({ policyVersion: 1 });
