@@ -51,7 +51,8 @@ describe('mapOfflineComment', () => {
     const result = mapOfflineComment(entry);
     expect(result).toEqual({
       id: 'a1',
-      userEmail: '',
+      displayName: '',
+      isOwn: true,
       chapterRef: 'ch1',
       cfiRange: 'epubcfi(/6/4[ch1]!/4/2)',
       selectedText: 'context',

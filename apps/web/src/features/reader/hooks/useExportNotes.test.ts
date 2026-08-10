@@ -46,7 +46,7 @@ describe('useExportNotes — buildNotesExport', () => {
         { id: 'h1', selectedText: 'text', color: '#ff0000', note: null, chapterRef: null, cfiRange: null, createdAt: '2026-01-01', updatedAt: '2026-01-01' },
       ],
       comments: [
-        { id: 'c1', userEmail: 'u@e.com', body: 'body', status: 'open', visibility: 'shared', parentCommentId: null, selectedText: null, chapterRef: null, cfiRange: null, createdAt: '2026-01-01', updatedAt: '2026-01-01', resolvedAt: null },
+        { id: 'c1', displayName: 'u', isOwn: false, body: 'body', status: 'open', visibility: 'shared', parentCommentId: null, selectedText: null, chapterRef: null, cfiRange: null, createdAt: '2026-01-01', updatedAt: '2026-01-01', resolvedAt: null },
       ],
       bookmarks: [
         { id: 'b1', locator: { cfi: 'cfi', selectedText: 'text' }, label: 'mark', createdAt: '2026-01-01' },
@@ -65,8 +65,8 @@ describe('useExportNotes — buildNotesExport', () => {
       bookId: null,
       highlights: [],
       comments: [
-        { id: 'c1', userEmail: 'u@e.com', body: 'open', status: 'open', visibility: 'shared', parentCommentId: null, selectedText: null, chapterRef: null, cfiRange: null, createdAt: '2026-01-01', updatedAt: '2026-01-01', resolvedAt: null },
-        { id: 'c2', userEmail: 'u@e.com', body: 'deleted', status: 'deleted', visibility: 'shared', parentCommentId: null, selectedText: null, chapterRef: null, cfiRange: null, createdAt: '2026-01-01', updatedAt: '2026-01-01', resolvedAt: null },
+        { id: 'c1', displayName: 'u', isOwn: false, body: 'open', status: 'open', visibility: 'shared', parentCommentId: null, selectedText: null, chapterRef: null, cfiRange: null, createdAt: '2026-01-01', updatedAt: '2026-01-01', resolvedAt: null },
+        { id: 'c2', displayName: 'u', isOwn: false, body: 'deleted', status: 'deleted', visibility: 'shared', parentCommentId: null, selectedText: null, chapterRef: null, cfiRange: null, createdAt: '2026-01-01', updatedAt: '2026-01-01', resolvedAt: null },
       ],
       bookmarks: [],
     });

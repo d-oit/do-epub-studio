@@ -8,8 +8,11 @@ import { AuditQuerySchema } from '@do-epub-studio/shared';
 
 export const auditRouter = new Hono<{ Bindings: Env; Variables: { adminUser: { email: string; id: string; role: string } } }>();
 
+const MAX_AUDIT_OFFSET = 100_000;
+
 auditRouter.get('/audit', adminAuth, zValidator('query', AuditQuerySchema), async (c) => {
-  const { entityType, entityId, limit, offset, from, to } = c.req.valid('query');
+  const { entityType, entityId, limit, from, to } = c.req.valid('query');
+  const offset = Math.min(c.req.valid('query').offset, MAX_AUDIT_OFFSET);
 
   await logAudit(c.env, {
     entityType: entityType ?? 'user', // default to user for query logging if undefined
