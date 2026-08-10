@@ -47,7 +47,7 @@ as untrusted: each "completed" claim was confirmed against source files.
 | --- | --- | --- | --- | --- |
 | 221-A1 | P2 | 218-T1.4 | Commit `bundle-baseline.json` artifact and wire CI delta enforcement (>10 KB gzip entry chunk, >3% route growth per ADR-218 D5) | `scripts/bundle-baseline.mjs` exists; no artifact, no CI consumer |
 | 221-A2 | P2 | 218-T2.1 | Resolve `createEpubLoader` dead abstraction: wire it into `useReaderEpub.ts` or remove the wrapper (keep `parseEpubInWorker` path) | `packages/reader-core/src/epub-loader.ts:136-137`; only tests/bench import it |
-| 221-A3 | P2 | 218-T2.2 | Complete sanitizer cache: LRU max 10 keyed by `bookRevision + spineItemHref + sanitizerPolicyVersion`; re-run XSS sanitizer suite | `packages/reader-core/src/sanitizer.ts:272,407-428` (partial in-module cache only) |
+| 221-A3 | P2 | 218-T2.2 | Complete sanitizer cache: LRU max 10 keyed by `sanitizerPolicyVersion + spineItemHref` (scoped per book load via hook construction); re-run XSS sanitizer suite | `packages/reader-core/src/sanitizer.ts:272,407-428` (partial in-module cache only) |
 | 221-A4 | P3 | 215-N6 | UI polish bundle: page-level skeletons (spinner-only today), centralized keyboard shortcuts module, app-level Storybook decision | `apps/web/src/components/PageLoadingFallback.tsx:9-32`; scattered `keydown` handlers; Storybook only in `packages/ui` |
 | 221-A5 | P2 | 215-R10 | Admin reading-insights aggregation after privacy review (ADR-102b); paginated, no raw reader timelines | `apps/worker/src/routes/reader/insights.ts:25` per-book only; admin `stats.ts` has no insights aggregation |
 | 221-A6 | P3 | 215-N7 / ADR-217 | OpenTelemetry evaluation writeup: accept, reject, or scope OTel vs custom traceparent | `packages/shared/src/telemetry.ts`; ADR-217 defers the decision |
@@ -97,6 +97,16 @@ invariant tests re-run on the cache path.
 - [x] 221-A1: `bundle-baseline.json` committed; CI fails on budget delta (PR #936)
 - [x] 221-A2: no dead `createEpubLoader` abstraction — wired via `getBook()` accessor (PR #936)
 - [x] 221-A3: sanitizer cache hit skips 3-pass pipeline; revision/policy change invalidates; XSS suite green (PR #937)
+  - **Note (2026-08-10 verify):** the item table above originally stated the cache
+    key was `bookRevision + spineItemHref + sanitizerPolicyVersion`. The shipped
+    cache (`createEpubSanitizerHook`) keys entries by `SANITIZER_POLICY_VERSION +
+    href` only, because the hook — and its in-memory LRU `Map` — is constructed
+    fresh per book load (`useReaderEpub.ts` / `epub-loader.ts`), which is what
+    scopes the cache to a single `bookRevision` and a single book. Adding
+    `bookRevision` to the key would be redundant (the map is never shared across
+    books) and would add a per-entry cache-key dimension with no observable
+    benefit. The `bookRevision`-in-key claim was stale; the table row was
+    corrected to match the verified implementation.
 - [x] 221-A4: centralized keyboard shortcuts + page-level skeletons (PR #941, merged)
 - [x] 221-A5: admin reading-insights aggregation endpoint (PR #941, merged)
 - [x] 221-A6: OTel evaluation writeup satisfied by ADR-217 (`plans/217-adr-opentelemetry-evaluation.md`) — accepted-defer decision with explicit revisit criteria; no new code needed
