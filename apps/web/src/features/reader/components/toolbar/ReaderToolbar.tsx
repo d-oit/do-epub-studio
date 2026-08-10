@@ -386,26 +386,12 @@ function OverflowMenu({
 
 // ─── Main toolbar orchestrator ───────────────────────────────────────────────
 
-export function ReaderToolbar({
-  bookTitle,
-  comments,
-  bookmarks,
-  capabilities,
-  activePanel,
-  isFixedLayout = false,
-  toc,
-  currentChapter,
-  onToggleToc,
-  onToggleSearch,
-  onToggleComments,
-  onToggleBookmarks,
-  onToggleSettings,
-  onToggleInfo,
-  onToggleFixedLayoutControls,
-  onExportNotes,
-  onLogout,
-  t,
-}: ReaderToolbarProps) {
+function useReaderToolbarState(
+  comments: Comment[],
+  toc: TocItem[],
+  currentChapter: string | null,
+  t: TFn,
+) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   useFocusTrap(isMenuOpen, menuRef);
@@ -437,20 +423,45 @@ export function ReaderToolbar({
     return t('reader.chapterProgress', { current: idx + 1, total: toc.length });
   }, [toc, currentChapter, t]);
 
+  return {
+    isMenuOpen, setIsMenuOpen, menuRef,
+    progressPercent, isOffline, pendingSyncCount,
+    openCommentsCount, isHeaderVisible, chapterProgressLabel,
+  };
+}
+
+export function ReaderToolbar({
+  bookTitle,
+  comments,
+  bookmarks,
+  capabilities,
+  activePanel,
+  isFixedLayout = false,
+  toc,
+  currentChapter,
+  onToggleToc,
+  onToggleSearch,
+  onToggleComments,
+  onToggleBookmarks,
+  onToggleSettings,
+  onToggleInfo,
+  onToggleFixedLayoutControls,
+  onExportNotes,
+  onLogout,
+  t,
+}: ReaderToolbarProps) {
+  const {
+    isMenuOpen, setIsMenuOpen, menuRef,
+    progressPercent, isOffline, pendingSyncCount,
+    openCommentsCount, isHeaderVisible, chapterProgressLabel,
+  } = useReaderToolbarState(comments, toc, currentChapter, t);
+
   const sharedActionProps = {
-    capabilities,
-    isFixedLayout,
-    openCommentsCount,
+    capabilities, isFixedLayout, openCommentsCount,
     bookmarkCount: bookmarks.length,
-    onToggleSearch,
-    onToggleComments,
-    onToggleBookmarks,
-    onToggleInfo,
-    onToggleFixedLayoutControls,
-    onExportNotes,
-    onToggleSettings,
-    onLogout,
-    t,
+    onToggleSearch, onToggleComments, onToggleBookmarks,
+    onToggleInfo, onToggleFixedLayoutControls,
+    onExportNotes, onToggleSettings, onLogout, t,
   };
 
   return (
