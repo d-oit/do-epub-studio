@@ -9,7 +9,7 @@ import type {
   PageDirection,
 } from './epub-types';
 import { createTraceId, createSpanId, serializeError, testBounded, withTimeout } from '@do-epub-studio/shared';
-import { parseEpubInWorker } from './epub-parser-worker';
+import { parseEpubInWorker, terminateParserWorker } from './epub-parser-worker';
 import { createEpubSanitizerHook } from './sanitizer';
 
 type EventCallback = (data: unknown) => void;
@@ -206,6 +206,10 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
   async function loadInner(url: string | Uint8Array, signal?: AbortSignal): Promise<void> {
     safeMark('epub-fetch-start');
     const result = await parseEpubInWorker(url);
+    // GOAP-224 A7: destroy() may have run while we were awaiting the worker
+    // (e.g. reader unmount). Bail before touching any instance state so a
+    // destroyed loader cannot keep mutating `book`/raws after teardown.
+    if (destroyed) return;
     if (!result.valid || !result.data) {
       throw new Error(result.error ?? 'Failed to parse EPUB');
     }
@@ -219,6 +223,7 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
     safeMark('epub-unzip-start');
     book = ePub(result.data);
     await book.opened;
+    if (destroyed) return;
     safeMark('epub-unzip-end');
     safeMeasure('epub-unzip', 'epub-unzip-start', 'epub-unzip-end');
 
@@ -230,6 +235,7 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
       book.loaded.metadata,
     ]);
     const spine = await book.loaded.spine;
+    if (destroyed) return;
 
     rawNav = nav ?? null;
     rawMeta = meta ?? null;
@@ -352,6 +358,10 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
       renditionHandle = null;
       book = null;
       eventListeners.clear();
+      // GOAP-224 A6: the shared parser worker pool must not outlive this
+      // loader. terminateParserWorker() is idempotent (guards on the pool) and
+      // resets the module-level pool so the next loader gets a fresh worker.
+      terminateParserWorker();
     },
     getMetadata(): BookMetadata {
       ensureParsed();

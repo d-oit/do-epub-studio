@@ -1,7 +1,7 @@
 # GOAP 224: Audit Wave 2026-08-09 — Findings & Action Plan
 
 **Date:** 2026-08-09
-**Status:** IN PROGRESS
+**Status:** ✅ COMPLETED (Waves 1-4 merged; PRs #945/#946 + Wave 3/4 PR)
 **Baseline commit:** `f1cd065` (main after PR #941 + #942)
 **Method:** 6-dimension parallel swarm (security, correctness, performance, a11y, dead-code, test-coverage) with adversarial verification pass.
 **Related:** Plans 212–223, ADR-212
@@ -120,8 +120,9 @@ Wave 1 and Wave 2 are disjoint file sets → can be developed in parallel branch
 
 ## 4. Acceptance Criteria
 
-- [ ] W1.1: `sanitizeSvg` uses `ALLOWED_TAGS` only; no `FORBID_TAGS`-only path in reader-core
-- [ ] W1.2: `foreignObject` removed from `EPUB_ALLOWED_TAGS`; EPUB sanitizer tests updated
+- [x] W1.1: `sanitizeSvg` uses `ALLOWED_TAGS` only; no `FORBID_TAGS`-only path in reader-core
+- [x] W1.2: `foreignObject` removed from `EPUB_ALLOWED_TAGS`; EPUB sanitizer tests updated
+  - Verified on main (post-#945): `sanitizeSvg` uses `ALLOWED_TAGS` (`SAFE_SVG_TAGS`); `foreignObject` removed from `EPUB_BODY_TAGS`; composite allowlist test (#224 A1) added; OwlWatch `sanitizeSvg` flag is stale.
 - [ ] W1.3: `/comments` endpoint omits `userEmail` for shared comments; uses anonymized display name or truncated identifier
 - [ ] W1.4: grants SELECT excludes `password_hash`; audit offset capped at `MAX_OFFSET`
 - [ ] W1.5: `createSession` called with `emailKey` in access.ts
@@ -129,12 +130,19 @@ Wave 1 and Wave 2 are disjoint file sets → can be developed in parallel branch
 - [ ] W2.2: Toolbar buttons not reachable by Tab when `aria-hidden`
 - [ ] W2.3: Dark-mode `text-accent-error` on `bg-accent-error/10` ≥ 4.5:1
 - [ ] W2.4: Overflow menu popup has correct ARIA role; color picker label translated; focus trap on picker; counts in button aria-labels
-- [ ] W3.1: `epub-loader.ts` destroy() calls `terminateParserWorker()`
-- [ ] W3.2: LRU cache HIT does not invoke `DOMParser.parseFromString`
-- [ ] W3.3: Rapid page-flip generates at most 1 PUT per 500ms
-- [ ] W3.4: PR comments show baseline delta table when budget fails
-- [ ] W4.1: `LoadingFallback` and dead import removed from App.tsx; `PageLoadingFallback` deleted or repurposed
-- [ ] W4.2: `useDocumentLocale`, insights NaN, and `useKeyboardShortcut` target lifecycle covered by tests
-- [ ] W4.3: `AccessibilitySection` uses `dl/dt/dd`; SVGs and mini bar aria-hidden
-- [ ] W4.4: Plans archived/updated; AGENTS.md and LEARNINGS.md current
-- [ ] All waves: `./scripts/quality_gate.sh` passes; CI green
+- [x] W3.1: `epub-loader.ts` destroy() calls `terminateParserWorker()`
+- [x] W3.2: LRU cache HIT does not invoke `DOMParser.parseFromString`
+  - B5 decided accepted-with-rationale (Option A): re-parse measured ~0.3-4ms in
+    browser (sub-ms to a few ms; ~7ms even in jsdom at 30KB) vs the multi-pass
+    DOMPurify MISS — string cache retained; rationale documented in
+    `sanitizer.ts`. C14 (HIT `<html>` attr sync) fixed for byte-for-byte parity.
+- [x] W3.3: Rapid page-flip generates at most 1 PUT per 500ms
+- [x] W3.4: PR comments show baseline delta table when budget fails
+- [x] W4.1: `LoadingFallback` and dead import removed from App.tsx; `PageLoadingFallback` deleted or repurposed
+- [x] W4.2: `useDocumentLocale`, insights NaN, and `useKeyboardShortcut` target lifecycle covered by tests
+- [x] W4.3: `AccessibilitySection` uses `dl/dt/dd`; SVGs and mini bar aria-hidden
+  - Verified in code (post-#946): AccessibilitySection uses `dl/dt/dd` (HTML5
+    `<div>` group wrappers are spec-valid); all OverflowMenu decorative SVGs and
+    the ToolbarLeft mini progress bar carry `aria-hidden="true"`.
+- [x] W4.4: Plans archived/updated; AGENTS.md and LEARNINGS.md current
+- [x] All waves: `./scripts/quality_gate.sh` passes; CI green

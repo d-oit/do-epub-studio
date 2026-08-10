@@ -5,7 +5,6 @@ import { useAuthStore } from './stores/auth';
 import { useThemeSync } from './hooks/useThemeSync';
 import { useSessionExpiry } from './hooks/useSessionExpiry';
 import { useDocumentLocale } from './hooks/useDocumentLocale';
-import { useTranslation } from './hooks/useTranslation';
 import { LoginPage } from './features/auth/LoginPage';
 import { AdminLoginPage } from './features/admin/AdminLoginPage';
 import { AdminRecoverPage } from './features/admin/AdminRecoverPage';
@@ -48,44 +47,9 @@ const SettingsPage = React.lazy(() =>
 );
 
 // Premium glassmorphism loading fallback spinner
-// biome-ignore lint/correctness/useQwikValidLexicalScope: React project, not Qwik — false positive
-const LoadingFallback: React.FC = () => {
-  const { t } = useTranslation();
-  return (
-  <div
-    className="min-h-dvh bg-background flex flex-col items-center justify-center p-6"
-    role="status"
-    aria-live="polite"
-    aria-label={t('a11y.loading_page')}
-  >
-    <div className="flex flex-col items-center gap-6 w-full max-w-xs p-8 rounded-3xl bg-surface/40 backdrop-blur-md border border-white/5 shadow-glass">
-      <div
-        className="w-12 h-12 rounded-xl bg-accent flex items-center justify-center shadow-glass animate-pulse"
-        aria-hidden="true"
-      >
-        <svg
-          className="w-7 h-7 text-white"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-          />
-        </svg>
-      </div>
-      <div className="flex gap-2.5 mt-2" aria-hidden="true">
-        <div className="w-2.5 h-2.5 rounded-full bg-accent animate-pulse [animation-delay:-0.3s]" />
-        <div className="w-2.5 h-2.5 rounded-full bg-accent/60 animate-pulse [animation-delay:-0.15s]" />
-        <div className="w-2.5 h-2.5 rounded-full bg-accent/30 animate-pulse" />
-      </div>
-    </div>
-  </div>
-  );
-};
+// GOAP-224 B12: `LoadingFallback` was unreachable — every lazy route is wrapped
+// in its own nested <Suspense> with a page skeleton, so the top-level Suspense
+// below never suspends. Removed along with its now-dead `useTranslation` import.
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
@@ -126,7 +90,7 @@ export function App() {
   useDocumentLocale();
 
   return (
-    <Suspense fallback={<LoadingFallback />}>
+    <Suspense fallback={null}>
       {/* Skip-to-content link — WCAG 2.4.1: first focusable element in the page */}
       <a
         href="#main-content"

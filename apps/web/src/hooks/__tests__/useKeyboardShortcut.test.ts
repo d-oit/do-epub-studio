@@ -56,4 +56,32 @@ describe('useKeyboardShortcut', () => {
     expect(h1).toHaveBeenCalledTimes(1);
     expect(h2).toHaveBeenCalledTimes(1);
   });
+
+  it('attaches the listener to the provided target element (B16)', () => {
+    const handler = vi.fn();
+    const target = document.createElement('div');
+    renderHook(() => useKeyboardShortcut('Escape', handler, { target }));
+
+    target.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    expect(handler).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not fire on window when a target element is set (B16)', () => {
+    const handler = vi.fn();
+    const target = document.createElement('div');
+    renderHook(() => useKeyboardShortcut('Escape', handler, { target }));
+
+    fireKey('Escape');
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  it('removes the listener from the target element on unmount (B16)', () => {
+    const handler = vi.fn();
+    const target = document.createElement('div');
+    const { unmount } = renderHook(() => useKeyboardShortcut('Escape', handler, { target }));
+
+    unmount();
+    target.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    expect(handler).not.toHaveBeenCalled();
+  });
 });

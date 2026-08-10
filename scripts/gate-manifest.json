@@ -28,7 +28,8 @@
       "Bundle Size",
       "CodeQL",
       "Lighthouse audit",
-      "Codacy Static Code Analysis"
+      "Codacy Static Code Analysis",
+      "Quality Gate"
     ]
   },
   "release": {

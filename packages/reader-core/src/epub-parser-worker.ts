@@ -54,21 +54,32 @@ class EpubParserWorkerPool {
       };
 
       this.worker.onerror = (event) => {
-        const id = this.pending.keys().next().value;
-        if (id) {
-          const pending = this.pending.get(id);
-          if (pending) {
-            // event.message is undefined for cross-origin / MIME-type / 404 worker
-            // load failures.  Fall back to filename:line info when available so the
-            // error is actionable instead of "Worker error: undefined".
-            const msg =
-              event.message ??
-              (event.filename
-                ? `Worker load failed: ${event.filename}:${event.lineno}`
-                : 'Worker initialization failed');
-            pending.reject(new Error(msg));
-            this.pending.delete(id);
+        // GOAP-224 A8: reject ALL in-flight parses, not just the first. The
+        // previously-resolved handler only rejected `pending.keys().next().value`
+        // and left every other parse hanging until the 30s timeout while the
+        // crashed worker stayed in the pool for reuse.
+        const msg =
+          event.message ??
+          (event.filename
+            ? `Worker load failed: ${event.filename}:${event.lineno}`
+            : 'Worker initialization failed');
+        const error = new Error(msg);
+        for (const [, pending] of this.pending) {
+          pending.reject(error);
+        }
+        this.pending.clear();
+
+        // The worker is in an unknown state after an error event — terminate it
+        // and clear the slot so the next parse() spawns a fresh worker. Do NOT
+        // set `terminated` (that would permanently demote the pool to the
+        // main-thread fallback path instead of transparently recovering).
+        if (this.worker) {
+          try {
+            this.worker.terminate();
+          } catch {
+            // already terminated by the runtime
           }
+          this.worker = null;
         }
       };
     } catch {

@@ -67,7 +67,11 @@ function brotliSize(buffer) {
 }
 
 function loadBaseline() {
-  const baselinePath = path.resolve(rootDir, 'bundle-baseline.json');
+  // BUNDLE_BUDGET_BASELINE allows tests/CI to point at a specific baseline
+  // file without mutating the committed bundle-baseline.json.
+  const baselinePath = process.env.BUNDLE_BUDGET_BASELINE
+    ? path.resolve(process.env.BUNDLE_BUDGET_BASELINE)
+    : path.resolve(rootDir, 'bundle-baseline.json');
   if (!fs.existsSync(baselinePath) || NO_BASELINE) return null;
   try {
     return JSON.parse(fs.readFileSync(baselinePath, 'utf8'));
@@ -160,6 +164,25 @@ function buildTable(rows) {
   return lines.join('\n');
 }
 
+// GOAP-224 B7: baseline-vs-current growth table per route. Folding this into
+// the report/PR-comment body gives reviewers the root cause of a budget
+// violation (which entry/total grew, by how much) instead of a bare count.
+function buildBaselineDeltaTable(sections) {
+  const lines = [
+    '',
+    '### Baseline delta comparison',
+    '',
+    '| Route | Entry Δ (KB) | Total Δ (KB) | Total Δ (%) | Entry Fail | Total Fail | Status |',
+    '| :--- | ---: | ---: | ---: | :--- | :--- | :--- |',
+  ];
+  for (const s of sections) {
+    lines.push(
+      `| ${s.route} | ${(s.entryDelta / 1024).toFixed(2)} | ${(s.totalDelta / 1024).toFixed(2)} | ${s.totalPct.toFixed(2)}% | ${s.entryFail ? '❌' : '✅'} | ${s.totalFail ? '❌' : '✅'} | ${s.passed ? '✅' : '❌'} |`,
+    );
+  }
+  return lines.join('\n');
+}
+
 function main() {
   const distDir = distDirArg();
   if (!distDir.startsWith(rootDir)) {
@@ -215,7 +238,7 @@ function main() {
   rows.sort((a, b) => b.gzSize - a.gzSize);
 
   const table = buildTable(rows);
-  const summary = [
+  let summary = [
     '### Bundle budget (gzipped + brotli) — ADR-107 §3',
     '',
     table,
@@ -231,19 +254,11 @@ function main() {
   if (baseline) {
     const { sections, violations: baselineViolations } = checkBaselineDelta(distDir, baseline);
     if (sections.length > 0) {
-      const lines = [
-        '',
-        '### Baseline delta comparison',
-        '',
-        '| Route | Entry Δ (KB) | Total Δ (KB) | Total Δ (%) | Entry Fail | Total Fail | Status |',
-        '| :--- | ---: | ---: | ---: | :--- | :--- | :--- |',
-      ];
-      for (const s of sections) {
-        lines.push(
-          `| ${s.route} | ${(s.entryDelta / 1024).toFixed(2)} | ${(s.totalDelta / 1024).toFixed(2)} | ${s.totalPct.toFixed(2)}% | ${s.entryFail ? '❌' : '✅'} | ${s.totalFail ? '❌' : '✅'} | ${s.passed ? '✅' : '❌'} |`,
-        );
-      }
-      console.log(lines.join('\n'));
+      const deltaTable = buildBaselineDeltaTable(sections);
+      // GOAP-224 B7: append the delta table to `summary` (not just stdout) so
+      // BUNDLE_BUDGET_REPORT / PR comments carry the growth detail.
+      summary += `\n${deltaTable}`;
+      console.log(`\n${deltaTable}`);
       violations += baselineViolations.length;
     }
   }

@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import { parseEpubInWorker, terminateParserWorker } from '../epub-parser-worker';
 import type { EpubParseResult } from '../epub-parser-worker';
 
@@ -92,5 +92,113 @@ describe('terminateParserWorker', () => {
     terminateParserWorker();
     terminateParserWorker();
     expect(() => terminateParserWorker()).not.toThrow();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// GOAP-224 A8/A6 — worker error recovery. jsdom has no global Worker, so the
+// pool falls back to the main-thread path and the onerror handler is never
+// exercised by the tests above. Stub a controllable Worker to drive it.
+// ---------------------------------------------------------------------------
+class FakeWorker {
+  static instances: FakeWorker[] = [];
+  onmessage: ((event: { data: WorkerToMainMessage }) => void) | null = null;
+  onerror: ((event: { message?: string; filename?: string; lineno?: number }) => void) | null = null;
+  terminated = false;
+  posted: unknown[] = [];
+
+  constructor() {
+    FakeWorker.instances.push(this);
+  }
+
+  postMessage(message: unknown): void {
+    this.posted.push(message);
+  }
+
+  terminate(): void {
+    this.terminated = true;
+  }
+}
+
+interface WorkerToMainMessage {
+  type: 'result';
+  id: string;
+  result: unknown;
+}
+
+describe('worker error recovery (GOAP-224 A8/A6)', () => {
+  beforeEach(() => {
+    vi.stubGlobal('Worker', FakeWorker);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    FakeWorker.instances = [];
+    terminateParserWorker();
+  });
+
+  function getWorker(): FakeWorker {
+    const worker = FakeWorker.instances[0];
+    if (!worker) throw new Error('expected a spawned worker instance');
+    return worker;
+  }
+
+  it('rejects ALL pending parses on worker error, terminates the worker, and spawns a fresh one (A8)', async () => {
+    const p1 = parseEpubInWorker(new Uint8Array([1, 2, 3]));
+    const p2 = parseEpubInWorker(new Uint8Array([4, 5, 6]));
+    await Promise.resolve();
+
+    const worker = getWorker();
+    expect(worker.posted).toHaveLength(2);
+
+    const reject1 = expect(p1).rejects.toThrow('worker crashed');
+    const reject2 = expect(p2).rejects.toThrow('worker crashed');
+    worker.onerror?.({ message: 'worker crashed', filename: 'epub-parser.worker.ts', lineno: 7 });
+    await reject1;
+    await reject2;
+
+    // Crashed worker is terminated, not left in the pool.
+    expect(worker.terminated).toBe(true);
+
+    // The pool slot is nulled so the next parse spawns a brand-new worker.
+    const p3 = parseEpubInWorker(new Uint8Array([7, 8, 9]));
+    await Promise.resolve();
+    expect(FakeWorker.instances.length).toBe(2);
+
+    terminateParserWorker();
+    await expect(p3).rejects.toThrow('Worker terminated');
+  });
+
+  it('terminates the crashed worker even when no parse is pending (A8 edge case)', async () => {
+    const p1 = parseEpubInWorker(new Uint8Array([1, 2, 3]));
+    await Promise.resolve();
+    const worker = getWorker();
+
+    const reject1 = expect(p1).rejects.toThrow('boom');
+    worker.onerror?.({ message: 'boom' });
+    await reject1;
+
+    expect(worker.terminated).toBe(true);
+
+    // A second error event (pool now empty) must not throw.
+    expect(() => worker.onerror?.({ message: 'again' })).not.toThrow();
+  });
+
+  it('terminateParserWorker rejects pending parses and resets the pool so the next parse uses a fresh worker (A6)', async () => {
+    const p1 = parseEpubInWorker(new Uint8Array([1, 2, 3]));
+    await Promise.resolve();
+    const worker = getWorker();
+
+    const rejection = expect(p1).rejects.toThrow('Worker terminated');
+    terminateParserWorker();
+    await rejection;
+    expect(worker.terminated).toBe(true);
+
+    const p2 = parseEpubInWorker(new Uint8Array([4, 5, 6]));
+    await Promise.resolve();
+    expect(FakeWorker.instances.length).toBe(2);
+
+    terminateParserWorker();
+    await expect(p2).rejects.toThrow('Worker terminated');
   });
 });

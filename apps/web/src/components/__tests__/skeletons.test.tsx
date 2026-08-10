@@ -48,18 +48,21 @@ describe('page skeleton components', () => {
   }
 
   it('all skeleton decorative blocks are aria-hidden', () => {
-    const { container } = render(<LibrarySkeleton />);
-    // Structural containers should be aria-hidden; status container should not
-    const hiddenEls = container.querySelectorAll('[aria-hidden="true"]');
-    expect(hiddenEls.length).toBeGreaterThan(0);
-    // The root role="status" must NOT be aria-hidden
-    const status = container.querySelector('[role="status"]');
-    expect(status?.getAttribute('aria-hidden')).toBeNull();
+    for (const [name, Skeleton] of SKELETONS) {
+      const { container } = render(<Skeleton />);
+      const hiddenEls = container.querySelectorAll('[aria-hidden="true"]');
+      expect(hiddenEls.length, `${name} must have aria-hidden decorative blocks`).toBeGreaterThan(0);
+      // The root role="status" must NOT be aria-hidden
+      const status = container.querySelector('[role="status"]');
+      expect(status?.getAttribute('aria-hidden'), `${name} status must not be aria-hidden`).toBeNull();
+    }
   });
 
   it('skeletons do not render visible text (decorative blocks only)', () => {
-    render(<LibrarySkeleton />);
-    // No visible text children — all content is aria-hidden decorative blocks
-    expect(screen.queryAllByText(/./)).toHaveLength(0);
+    for (const [name, Skeleton] of SKELETONS) {
+      const { unmount } = render(<Skeleton />);
+      expect(screen.queryAllByText(/./), `${name} must have no visible text`).toHaveLength(0);
+      unmount();
+    }
   });
 });
