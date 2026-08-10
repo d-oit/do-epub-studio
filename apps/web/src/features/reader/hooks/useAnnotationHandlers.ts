@@ -15,33 +15,23 @@ import type { SelectionData } from '../components/annotations';
 import { useOptimisticAnnotationStore } from './useOptimisticAnnotations';
 import { logClientEvent } from '../../../lib/client-logger';
 
-interface AnnotationHandlersReturn {
+// ─── Highlight handlers ───────────────────────────────────────────────────────
+
+interface HighlightHandlersReturn {
   handleCreateHighlight: (color: string, selection: SelectionData | null) => Promise<void>;
-  handleCreateComment: (text: string, selection: SelectionData | null) => Promise<void>;
-  handleResolveComment: (commentId: string) => Promise<void>;
-  handleReplyToComment: (parentId: string, text: string) => Promise<void>;
-  handleEditComment: (commentId: string, text: string) => Promise<void>;
-  handleDeleteComment: (commentId: string) => Promise<void>;
   handleEditHighlight: (highlightId: string, note: string) => Promise<void>;
   handleDeleteHighlight: (highlightId: string) => Promise<void>;
 }
 
-export function useAnnotationHandlers(): AnnotationHandlersReturn {
+export function useHighlightHandlers(): HighlightHandlersReturn {
   const sessionToken = useAuthStore((state) => state.sessionToken);
   const bookId = useAuthStore((state) => state.bookId);
 
   const addHighlight = useReaderStore((s) => s.addHighlight);
   const updateHighlightInStore = useReaderStore((s) => s.updateHighlight);
   const removeHighlight = useReaderStore((s) => s.removeHighlight);
-  const addComment = useReaderStore((s) => s.addComment);
-  const updateCommentInStore = useReaderStore((s) => s.updateComment);
-  const comments = useReaderStore(useShallow((s) => s.comments));
 
-  const {
-    addOptimisticHighlight,
-    addOptimisticComment,
-    removeOptimistic,
-  } = useOptimisticAnnotationStore();
+  const { addOptimisticHighlight, removeOptimistic } = useOptimisticAnnotationStore();
 
   const handleCreateHighlight = useCallback(
     async (color: string, selection: SelectionData | null) => {
@@ -82,6 +72,55 @@ export function useAnnotationHandlers(): AnnotationHandlersReturn {
     },
     [sessionToken, bookId, addHighlight, addOptimisticHighlight, removeOptimistic],
   );
+
+  const handleEditHighlight = useCallback(
+    async (highlightId: string, note: string) => {
+      if (!sessionToken || !bookId) return;
+      try {
+        await updateHighlight(bookId, highlightId, { note }, sessionToken);
+        updateHighlightInStore(highlightId, { note, updatedAt: new Date().toISOString() });
+      } catch (err) {
+        logClientEvent({ level: 'error', traceId: createTraceId(), event: 'annotation.edit-highlight.failed', error: { name: (err as Error).name, message: (err as Error).message } });
+      }
+    },
+    [sessionToken, bookId, updateHighlightInStore],
+  );
+
+  const handleDeleteHighlight = useCallback(
+    async (highlightId: string) => {
+      if (!sessionToken || !bookId) return;
+      try {
+        await deleteHighlight(bookId, highlightId, sessionToken);
+        removeHighlight(highlightId);
+      } catch (err) {
+        logClientEvent({ level: 'error', traceId: createTraceId(), event: 'annotation.delete-highlight.failed', error: { name: (err as Error).name, message: (err as Error).message } });
+      }
+    },
+    [sessionToken, bookId, removeHighlight],
+  );
+
+  return { handleCreateHighlight, handleEditHighlight, handleDeleteHighlight };
+}
+
+// ─── Comment handlers ─────────────────────────────────────────────────────────
+
+interface CommentHandlersReturn {
+  handleCreateComment: (text: string, selection: SelectionData | null) => Promise<void>;
+  handleResolveComment: (commentId: string) => Promise<void>;
+  handleReplyToComment: (parentId: string, text: string) => Promise<void>;
+  handleEditComment: (commentId: string, text: string) => Promise<void>;
+  handleDeleteComment: (commentId: string) => Promise<void>;
+}
+
+export function useCommentHandlers(): CommentHandlersReturn {
+  const sessionToken = useAuthStore((state) => state.sessionToken);
+  const bookId = useAuthStore((state) => state.bookId);
+
+  const addComment = useReaderStore((s) => s.addComment);
+  const updateCommentInStore = useReaderStore((s) => s.updateComment);
+  const comments = useReaderStore(useShallow((s) => s.comments));
+
+  const { addOptimisticComment, removeOptimistic } = useOptimisticAnnotationStore();
 
   const handleCreateComment = useCallback(
     async (text: string, selection: SelectionData | null) => {
@@ -231,40 +270,21 @@ export function useAnnotationHandlers(): AnnotationHandlersReturn {
     [sessionToken, updateCommentInStore],
   );
 
-  const handleEditHighlight = useCallback(
-    async (highlightId: string, note: string) => {
-      if (!sessionToken || !bookId) return;
-      try {
-        await updateHighlight(bookId, highlightId, { note }, sessionToken);
-        updateHighlightInStore(highlightId, { note, updatedAt: new Date().toISOString() });
-      } catch (err) {
-        logClientEvent({ level: 'error', traceId: createTraceId(), event: 'annotation.edit-highlight.failed', error: { name: (err as Error).name, message: (err as Error).message } });
-      }
-    },
-    [sessionToken, bookId, updateHighlightInStore],
-  );
-
-  const handleDeleteHighlight = useCallback(
-    async (highlightId: string) => {
-      if (!sessionToken || !bookId) return;
-      try {
-        await deleteHighlight(bookId, highlightId, sessionToken);
-        removeHighlight(highlightId);
-      } catch (err) {
-        logClientEvent({ level: 'error', traceId: createTraceId(), event: 'annotation.delete-highlight.failed', error: { name: (err as Error).name, message: (err as Error).message } });
-      }
-    },
-    [sessionToken, bookId, removeHighlight],
-  );
-
   return {
-    handleCreateHighlight,
     handleCreateComment,
     handleResolveComment,
     handleReplyToComment,
     handleEditComment,
     handleDeleteComment,
-    handleEditHighlight,
-    handleDeleteHighlight,
   };
+}
+
+// ─── Orchestrator (thin combinator) ─────────────────────────────────────────
+
+interface AnnotationHandlersReturn extends HighlightHandlersReturn, CommentHandlersReturn {}
+
+export function useAnnotationHandlers(): AnnotationHandlersReturn {
+  const highlightHandlers = useHighlightHandlers();
+  const commentHandlers = useCommentHandlers();
+  return { ...highlightHandlers, ...commentHandlers };
 }
