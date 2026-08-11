@@ -13,6 +13,8 @@ interface InsightSummary {
   estimatedMinutesRemaining: number | null;
   currentStreakDays: number;
   recentActivity: { date: string; activeMinutes: number; activePages: number }[];
+  chapterDurations: { href: string; activeMinutes: number }[];
+  readingSpeedWpm: number | null;
 }
 
 export function useReadingTimer(bookId: string | null) {
@@ -36,6 +38,10 @@ export function useReadingTimer(bookId: string | null) {
 
   const markPageRead = useCallback(() => {
     timerRef.current?.markPageRead();
+  }, []);
+
+  const setChapter = useCallback((href: string | null, wordCount?: number) => {
+    timerRef.current?.setChapter(href, wordCount);
   }, []);
 
   const flush = useCallback(async () => {
@@ -96,10 +102,12 @@ export function useReadingTimer(bookId: string | null) {
         estimatedMinutesRemaining: null,
         currentStreakDays: 0,
         recentActivity: [],
+        chapterDurations: [],
+        readingSpeedWpm: null,
       };
     }
     return computeInsightSummary(bookId, progress.progressPercent);
   }, [bookId, progress.progressPercent]);
 
-  return { markLoaded, markPageRead, flush, syncToServer, getSummary };
+  return { markLoaded, markPageRead, setChapter, flush, syncToServer, getSummary };
 }

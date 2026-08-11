@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import type { Env } from '../lib/env';
+import type { RequestContext } from '../lib/observability';
 import { validateGrant, computeCapabilities, getGrantByBookAndSession, getGrantsBySession } from '../auth/password';
 import { createSession, validateSession, revokeSession } from '../auth/session';
 import { logAudit } from '../audit';
@@ -11,7 +12,7 @@ import { checkRateLimitDO, deleteRateLimitKey } from '../lib/rate-limit-client';
 import { queryFirst } from '../db/client';
 import { createEmailTransport } from '../lib/email-transport';
 
-export const accessRouter = new Hono<{ Bindings: Env }>();
+export const accessRouter = new Hono<{ Bindings: Env; Variables: { requestContext: RequestContext } }>();
 
 accessRouter.post('/recovery-request', zValidator('json', RecoveryRequestSchema), async (c) => {
   const { bookSlug, email } = c.req.valid('json');
@@ -57,6 +58,7 @@ accessRouter.post('/recovery-request', zValidator('json', RecoveryRequestSchema)
         subject: 'Recover access to your book',
         text: `Click the link to recover access: ${recoveryUrl}`,
         html: `<p>Click <a href="${recoveryUrl}">here</a> to recover access to your book.</p>`,
+        context: c.get('requestContext'),
       });
 
       const tokenHash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(token));

@@ -81,6 +81,7 @@ tests; final gate `./scripts/quality_gate.sh` before push.
 
 - [x] All Wave 1/2 tasks above land with tests where behavior changed.
 - [x] No first-party test file exceeds 500 lines.
+  - Note (2026-08-11 verify): this line was stale at verify time — `apps/worker/src/__tests__/routes.admin.test.ts` had regrown to 751 lines (GOAP-223/224 appended the admin-insights cases there). Re-split in GOAP-226 (`routes.admin.insights.test.ts`); the claim is true again on main.
 - [x] `node scripts/check-adr-index.mjs` and markdownlint pass.
 - [x] `./scripts/quality_gate.sh` passes before push.
 - [x] One PR, atomic commits, PR template + AI verification section.

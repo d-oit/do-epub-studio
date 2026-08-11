@@ -70,13 +70,20 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  worker: {
+    // reader-core constructs module workers (`new Worker(url, { type: 'module' })`
+    // for epub-parser + reanchor). Vite's default iife worker format mis-bundles
+    // them in production builds (epub-parser inlined as a data: URL with a bogus
+    // MIME, reanchor emitted as raw .ts), which made every production build fail
+    // to load books (scheduled E2E, issue #957). ES format emits real worker chunks.
+    format: 'es',
+  },
   build: {
     outDir: 'dist',
     manifest: true,
     sourcemap: false,
     chunkSizeWarningLimit: 500,
-    rolldownOptions: {
-      output: {
+    rolldownOptions: {      output: {
         // Vite 8 Rolldown uses codeSplitting or function manualChunks
         manualChunks: (id) => {
           if (id.includes('node_modules')) {

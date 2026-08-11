@@ -5,6 +5,7 @@ import { queryAll, transaction } from '../../db/client';
 import { createGrant } from '../../auth/password';
 import { logAudit } from '../../audit';
 import { CreateGrantSchema, UpdateGrantSchema } from '@do-epub-studio/shared';
+import { GrantsListQuerySchema } from '@do-epub-studio/schema';
 import { adminAuth } from '../../middleware/auth';
 
 export const grantsRouter = new Hono<{ Bindings: Env; Variables: { adminUser: { email: string; id: string; role: string } } }>();
@@ -46,12 +47,13 @@ grantsRouter.post('/books/:id/grants', adminAuth, zValidator('json', CreateGrant
   return c.json({ ok: true, data: { id: grantId, email: body.email } }, 201);
 });
 
-grantsRouter.get('/books/:id/grants', adminAuth, async (c) => {
+grantsRouter.get('/books/:id/grants', adminAuth, zValidator('query', GrantsListQuerySchema), async (c) => {
   const bookId = c.req.param('id');
+  const { limit, offset } = c.req.valid('query');
   const grants = (await queryAll(
     c.env,
-    `SELECT id, book_id, email, mode, allowed, comments_allowed, offline_allowed, expires_at, created_at, revoked_at FROM book_access_grants WHERE book_id = ? ORDER BY created_at DESC`,
-    [bookId],
+    `SELECT id, book_id, email, mode, allowed, comments_allowed, offline_allowed, expires_at, created_at, revoked_at FROM book_access_grants WHERE book_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?`,
+    [bookId, limit, offset],
   )) as unknown as GrantRow[];
 
   return c.json({

@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import type { Env } from '../../lib/env';
+import type { RequestContext } from '../../lib/observability';
 import { LoginSchema, AdminRecoveryRequestSchema, RecoveryVerifySchema, RecoveryTokenPayloadSchema, JWT_PURPOSE_ADMIN_RECOVER } from '@do-epub-studio/schema';
 import { checkRateLimitDO } from '../../lib/rate-limit-client';
 import { createAdminSession, createAdminSessionByEmail, revokeAdminSession } from '../../auth/admin-middleware';
@@ -10,7 +11,7 @@ import { queryFirst } from '../../db/client';
 import { sign, verify } from 'hono/jwt';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
 
-export const authRouter = new Hono<{ Bindings: Env }>();
+export const authRouter = new Hono<{ Bindings: Env; Variables: { requestContext: RequestContext } }>();
 
 authRouter.post('/login', zValidator('json', LoginSchema), async (c) => {
   const { email, password } = c.req.valid('json');
@@ -112,6 +113,7 @@ authRouter.post('/recovery-request', zValidator('json', AdminRecoveryRequestSche
       subject: 'Recover access to d.o.EPUB Studio Admin',
       text: `Click the link to recover admin access: ${recoveryUrl}`,
       html: `<p>Click <a href="${recoveryUrl}">here</a> to recover admin access.</p>`,
+      context: c.get('requestContext'),
     });
 
     const tokenHash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(token));

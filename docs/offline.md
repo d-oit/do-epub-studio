@@ -83,8 +83,10 @@ queueSync(type, payload, mutationId)
 ### Sync Protocol
 
 1. Queue is FIFO (sorted by `createdAt`)
-2. POST/PUT to Worker API with `mutationId` in body
-3. Server uses mutationId for idempotency (UUID v7)
+2. POST/PUT to Worker API with `mutationId` in body (client-side correlation only)
+3. Server idempotency is per-resource, not per-mutationId: progress UPSERTs on
+   `(book_id, user_email)` and reading-insight buckets merge with `MAX()`; the
+   `mutationId` itself is not read by any worker route
 4. On success: remove from syncQueue, mark local entry as `synced: true`
 5. On failure: increment `attempts`, schedule retry with exponential backoff
 
@@ -125,8 +127,8 @@ File: `apps/web/src/sw.ts`
 | Google Fonts stylesheets | `google-fonts-stylesheets` | CacheFirst | 1 year |
 | Google Fonts webfonts | `google-fonts-webfonts` | CacheFirst | 1 year |
 | Images | `images` | CacheFirst | 30 days |
-| EPUB files (`/api/files/`) | `epub-files` | CacheFirst | 7 days |
-| API responses (`/api/`) | `api-responses` | NetworkFirst | 15 min |
+| EPUB files (`/api/files/`) | `book-content` | StaleWhileRevalidate + RangeRequests | 7 days |
+| API responses (`/api/`) | `api-responses` | NetworkFirst | 1 hour |
 
 ### Background Sync
 

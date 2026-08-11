@@ -25,6 +25,8 @@ const summary = {
   estimatedMinutesRemaining: 12,
   currentStreakDays: 2,
   recentActivity: [],
+  chapterDurations: [],
+  readingSpeedWpm: null,
 };
 
 const baseProps = {
@@ -89,5 +91,32 @@ describe('InfoPanel', () => {
     await Promise.resolve();
 
     expect(mockCompute).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders chapter time and reading speed when present', async () => {
+    mockCompute.mockResolvedValue({
+      ...summary,
+      chapterDurations: [{ href: 'ch1', activeMinutes: 12 }],
+      readingSpeedWpm: 250,
+    });
+
+    render(<InfoPanel {...baseProps} />);
+
+    expect(await screen.findByText('reader.chapterTime')).toBeInTheDocument();
+    expect(screen.getByText('reader.chapterTimeValue')).toBeInTheDocument();
+    expect(screen.getByText('reader.readingSpeed')).toBeInTheDocument();
+    expect(screen.getByText('reader.readingSpeedValue')).toBeInTheDocument();
+  });
+
+  it('hides chapter time and reading speed when absent', async () => {
+    mockCompute.mockResolvedValue(summary);
+
+    render(<InfoPanel {...baseProps} />);
+
+    expect(await screen.findByText('reader.totalActiveTime')).toBeInTheDocument();
+    expect(screen.queryByText('reader.chapterTime')).not.toBeInTheDocument();
+    expect(screen.queryByText('reader.chapterTimeValue')).not.toBeInTheDocument();
+    expect(screen.queryByText('reader.readingSpeed')).not.toBeInTheDocument();
+    expect(screen.queryByText('reader.readingSpeedValue')).not.toBeInTheDocument();
   });
 });

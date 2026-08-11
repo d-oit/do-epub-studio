@@ -48,6 +48,10 @@ export interface ReadingInsightEntry {
   activeMinutes: number;
   activePages: number;
   lastUpdated: number;
+  /** Cumulative active minutes per chapter (href -> minutes). Optional; absent for pre-feature entries. */
+  chapterMinutes?: Record<string, number>;
+  /** Word count per chapter read (href -> words). Optional; absent for pre-feature entries. */
+  chapterWords?: Record<string, number>;
 }
 
 export interface PermissionCache {

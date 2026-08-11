@@ -38,6 +38,19 @@ engines:
       - "apps/web/src/**"
       - "apps/worker/src/**"
       - "packages/**"
+  owlwatch:
+    enabled: true
+    exclude_paths:
+      - "**/*.test.ts"
+      - "**/*.test.tsx"
+      - "**/*.spec.ts"
+      - "**/*.spec.tsx"
+      - "**/__tests__/**"
+      - "**/tests/**"
+      - "scripts/**"
+      - "apps/web/src/**"
+      - "apps/worker/src/**"
+      - "packages/**"
   tsqlint:
     enabled: false
   tsql:

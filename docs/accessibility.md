@@ -90,7 +90,8 @@ RTL (right-to-left) layout is implemented for Arabic. The app shell keeps
 (`ar`) renders `dir="rtl"`, all other supported locales render `ltr`. The
 reader honors `document.documentElement.dir` as its default text direction.
 Full RTL viewport regression coverage (no horizontal overflow on mobile,
-tablet, and desktop) is tracked under GOAP-215 (R9).
+tablet, and desktop) is enforced by `apps/tests/viewport-regression.spec.ts`
+(RTL runs across the 320–1440 + landscape matrix).
 
 ## References
 

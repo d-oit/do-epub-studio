@@ -74,3 +74,10 @@ self.onmessage = async (event: MessageEvent<ParseRequest>) => {
     }
   }
 };
+
+// Ready handshake: the pool treats a 'ready' message as proof the worker
+// script actually loaded. If onerror fires before this arrives, the pool
+// treats it as a LOAD failure and degrades to the main-thread fallback parse
+// instead of failing the book load (issue #957 — mis-bundled worker chunks in
+// production builds never start).
+self.postMessage({ type: 'ready' });

@@ -294,8 +294,19 @@ test.describe('Internationalization', () => {
       /Select language|Sprache auswählen|Sélectionner la langue/,
     );
     await localeSelect.selectOption('de');
-    // Wait for Zustand persist middleware to write to localStorage
-    await page.waitForFunction(() => localStorage.getItem('do-epub-locale') === 'de');
+    // Wait for Zustand persist middleware to write to localStorage. The store
+    // persists a JSON envelope ({ state, version }), not the bare locale — the
+    // raw-key comparison would never match (nightly scheduled E2E failure).
+    await page.waitForFunction(() => {
+      const raw = localStorage.getItem('do-epub-locale');
+      if (!raw) return false;
+      try {
+        const parsed = JSON.parse(raw) as { state?: { locale?: string } };
+        return parsed.state?.locale === 'de';
+      } catch {
+        return false;
+      }
+    });
 
     await page.reload();
 

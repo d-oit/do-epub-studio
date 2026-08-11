@@ -94,5 +94,5 @@ Wave 3: Quality gate, T5 docs, commit + PR
 - [x] New worker route covered by a unit test; existing `routes.admin.test.ts` green
 - [x] 221-A6 marked `[x]` in plan 221 with ADR-217 reference
 - [x] `./scripts/quality_gate.sh` passes
-- [x] Coverage thresholds maintained (web ≥55% lines/48% funcs; worker ≥55%/50%)
+- [x] Coverage thresholds maintained (web ≥55% lines/48% funcs; worker ≥65%/60% — corrected from the stale 55/50 documented value; enforced thresholds live in `apps/worker/vitest.config.ts` and AGENTS.md)
 - [x] One PR, atomic commits, PR template + AI verification section

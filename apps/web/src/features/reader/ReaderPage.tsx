@@ -108,6 +108,7 @@ export function ReaderPage() {
   const {
     markLoaded: markInsightsLoaded,
     markPageRead,
+    setChapter,
     flush: flushInsights,
     syncToServer: syncInsightsToServer,
   } = useReadingTimer(bookId);
@@ -139,6 +140,7 @@ export function ReaderPage() {
     handleNavigateToAnnotationRef.current,
     progress.locator?.cfi,
     markPageRead,
+    setChapter,
   );
 
   // Navigate to an annotation by displaying the given chapter/CFI on the

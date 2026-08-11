@@ -164,7 +164,7 @@ export function logAppError(
   event: string,
   error: unknown,
   metadata?: Record<string, unknown>,
-  context?: Pick<RequestContext, 'traceId' | 'spanId'>,
+  context?: { traceId: string; spanId?: string },
 ): void {
   log({
     level: 'error',
@@ -187,7 +187,7 @@ export function logAppError(
 export function logAppInfo(
   event: string,
   metadata?: Record<string, unknown>,
-  context?: Pick<RequestContext, 'traceId' | 'spanId'>,
+  context?: { traceId: string; spanId?: string },
 ): void {
   log({
     level: 'info',
@@ -209,7 +209,7 @@ export function logAppInfo(
 export function logAppWarn(
   event: string,
   metadata?: Record<string, unknown>,
-  context?: Pick<RequestContext, 'traceId' | 'spanId'>,
+  context?: { traceId: string; spanId?: string },
 ): void {
   log({
     level: 'warn',
