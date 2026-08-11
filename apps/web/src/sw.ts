@@ -10,6 +10,7 @@ import { RangeRequestsPlugin } from 'workbox-range-requests';
 import { createHandlerBoundToURL } from 'workbox-precaching';
 import { enable as enableNavigationPreload } from 'workbox-navigation-preload';
 import { createTraceId } from '@do-epub-studio/shared';
+import { swLogEvent } from './sw-logger';
 
 declare let self: ServiceWorkerGlobalScope;
 
@@ -113,7 +114,13 @@ async function evictLargestCache(): Promise<void> {
 }
 
 const quotaGuardPlugin = {
-  cacheWillUpdate: async ({ response }: { response: Response }) => {
+  cacheWillUpdate: async ({
+    request,
+    response,
+  }: {
+    request: Request;
+    response: Response;
+  }) => {
     if (typeof navigator === 'undefined' || !navigator.storage?.estimate) {
       return response;
     }
@@ -132,27 +139,21 @@ const quotaGuardPlugin = {
       const usageRatio = usage / quota;
       if (usageRatio > QUOTA_THRESHOLD) {
         const traceId = createTraceId();
-        console.warn(
-          JSON.stringify({
-            level: 'warning',
-            traceId,
-            event: 'sw.storage.quota_warning',
-            usage,
-            quota,
-            usageRatio,
-          })
+        swLogEvent(
+          'warning',
+          'sw.storage.quota_warning',
+          { traceId, usage, quota, usageRatio },
+          { request },
         );
         await evictLargestCache();
       }
     } catch (err) {
       lastFailedAt = Date.now();
-      console.error(
-        JSON.stringify({
-          level: 'error',
-          traceId: createTraceId(),
-          event: 'sw.storage.estimate_error',
-          error: err instanceof Error ? err.message : String(err),
-        })
+      swLogEvent(
+        'error',
+        'sw.storage.estimate_error',
+        { traceId: createTraceId(), error: err instanceof Error ? err.message : String(err) },
+        { request },
       );
     }
     return response;
@@ -222,34 +223,25 @@ self.addEventListener('sync', (event: Event) => {
       (async () => {
         const traceId = createTraceId();
         if (DEBUG) {
-          console.log(
-            JSON.stringify({ level: 'info', traceId, event: 'sw.sync.start', tag: syncEvent.tag }),
-          );
+          swLogEvent('info', 'sw.sync.start', { traceId, tag: syncEvent.tag });
         }
         try {
           const { syncAll } = await import('./lib/offline/sync');
           await syncAll();
           if (DEBUG) {
-              console.log(
-              JSON.stringify({
-                level: 'info',
-                traceId,
-                event: 'sw.sync.complete',
-                tag: syncEvent.tag,
-              }),
-            );
+            swLogEvent('info', 'sw.sync.complete', { traceId, tag: syncEvent.tag });
           }
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error);
-          console.error(
-            JSON.stringify({
-              level: 'error',
-              traceId,
-              event: 'sw.sync.failed',
-              tag: syncEvent.tag,
-              error: { message },
-            }),
-          );
+          swLogEvent('error', 'sw.sync.failed', {
+            traceId,
+            tag: syncEvent.tag,
+            error: { message },
+          });
+          // Surface the failure (rejects the waitUntil promise) so
+          // Workbox/background-sync can observe and retry. Log first, then let
+          // the error propagate — never swallow retryable sync failures.
+          throw error;
         }
       })(),
     );
@@ -266,12 +258,39 @@ self.addEventListener('message', (event) => {
       event.waitUntil(
         caches.delete(cacheName).then((deleted) => {
           if (DEBUG) {
-              console.log(
-              JSON.stringify({ level: 'info', traceId, event: 'sw.cache.cleared', cacheName, deleted }),
-            );
+            swLogEvent('info', 'sw.cache.cleared', { traceId, cacheName, deleted });
           }
         }),
       );
     }
   }
+});
+
+// --- Global error handlers: redacted, never rethrown ------------------------
+
+function toErrorRecord(error: unknown): { name: string; message: string } {
+  if (error instanceof Error) {
+    return { name: error.name, message: error.message };
+  }
+  return { name: 'Unknown', message: typeof error === 'string' ? error : String(error) };
+}
+
+self.addEventListener('error', (event) => {
+  // ``event.error`` is DOM-typed `any`; capture it as `unknown` so the
+  // serializer sees a safe type and nothing leaks.
+  const err: unknown = event.error;
+  swLogEvent('error', 'sw.global.error', {
+    message: event.message ?? toErrorRecord(err).message,
+    filename: event.filename,
+    lineno: event.lineno,
+    colno: event.colno,
+    error: toErrorRecord(err),
+  });
+});
+
+self.addEventListener('unhandledrejection', (event) => {
+  const reason: unknown = event.reason;
+  swLogEvent('error', 'sw.global.unhandledrejection', {
+    error: toErrorRecord(reason ?? 'Unknown rejection reason'),
+  });
 });
