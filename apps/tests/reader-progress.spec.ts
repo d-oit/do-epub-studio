@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test } from '@playwright/test';
 import { MOCK_EPUB } from './fixtures';
 
 test.describe('Reader Progress Persistence', () => {
@@ -85,7 +85,7 @@ test.describe('Reader Progress Persistence', () => {
     // Success if we reached this point with the mocked GET returning updatedCfi
   });
 
-  test('@mobile should fallback to IndexedDB if network is offline', async ({ page }) => {
+  test('@mobile should fallback to IndexedDB if network is offline', async ({ page: _page }) => {
     // Similar to above but with route.abort() and checking source:offline telemetry
   });
 });
