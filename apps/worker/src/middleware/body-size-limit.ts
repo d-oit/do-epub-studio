@@ -1,4 +1,5 @@
 import type { MiddlewareHandler } from 'hono';
+import { apiError } from '../lib/api-error';
 
 const UPLOAD_PATH_RE = /^\/api\/admin\/books\/[^/]+\/upload(?:\/|$)/;
 
@@ -25,16 +26,7 @@ export function bodySizeLimit(maxBytes = 1_048_576): MiddlewareHandler {
     if (contentLengthHeader !== undefined && contentLengthHeader !== null) {
       const contentLength = parseInt(contentLengthHeader, 10);
       if (!Number.isNaN(contentLength) && contentLength > maxBytes) {
-        return c.json(
-          {
-            ok: false,
-            error: {
-              code: 'PAYLOAD_TOO_LARGE',
-              message: 'Request body exceeds size limit',
-            },
-          },
-          413,
-        );
+        return apiError(c, 413, 'PAYLOAD_TOO_LARGE', 'Request body exceeds size limit');
       }
     } else {
       // No Content-Length — chunked or unknown; pump the clone.
@@ -59,16 +51,7 @@ export function bodySizeLimit(maxBytes = 1_048_576): MiddlewareHandler {
           });
         }
         if (tooLarge) {
-          return c.json(
-            {
-              ok: false,
-              error: {
-                code: 'PAYLOAD_TOO_LARGE',
-                message: 'Request body exceeds size limit',
-              },
-            },
-            413,
-          );
+          return apiError(c, 413, 'PAYLOAD_TOO_LARGE', 'Request body exceeds size limit');
         }
       }
     }

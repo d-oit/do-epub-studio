@@ -6,6 +6,7 @@ import { queryAll, execute } from '../../db/client';
 import { BookmarkCreateSchema } from '@do-epub-studio/shared';
 import { readerAuth } from '../../middleware/auth';
 import { parseLocatorRow, assertBookAccess } from '../../lib/tenant-isolation';
+import { getRequestTraceId } from '../../lib/api-error';
 import { ForbiddenError } from '../../lib/http-errors';
 
 export const bookmarksRouter = new Hono<{ Bindings: Env; Variables: { auth: AuthContext } }>();
@@ -24,7 +25,7 @@ bookmarksRouter.get('/:bookId/bookmarks', readerAuth, async (c) => {
   const bookId = c.req.param('bookId');
   const auth = c.get('auth');
 
-  const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx);
+  const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx, getRequestTraceId(c));
   if (mismatch) return mismatch.response;
 
   const bookmarks = await queryAll<BookmarkRow>(
@@ -58,7 +59,7 @@ bookmarksRouter.post('/:bookId/bookmarks', readerAuth, zValidator('json', Bookma
   const auth = c.get('auth');
   const body = c.req.valid('json');
 
-  const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx);
+  const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx, getRequestTraceId(c));
   if (mismatch) return mismatch.response;
 
   if (!auth.capabilities.canBookmark) {
@@ -89,7 +90,7 @@ bookmarksRouter.delete('/:bookId/bookmarks/:bookmarkId', readerAuth, async (c) =
   const { bookId, bookmarkId } = c.req.param();
   const auth = c.get('auth');
 
-  const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx);
+  const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx, getRequestTraceId(c));
   if (mismatch) return mismatch.response;
 
   await execute(c.env, `DELETE FROM bookmarks WHERE id = ? AND book_id = ? AND user_email = ?`, [

@@ -64,6 +64,7 @@ export async function assertBookAccess(
   auth: AuthContext,
   urlBookId: string,
   ctx?: { waitUntil: (p: Promise<unknown>) => void },
+  traceId?: string,
 ): Promise<null | { ok: false; response: Response }> {
   if (auth.bookId === urlBookId) {
     return null;
@@ -102,6 +103,7 @@ export async function assertBookAccess(
           error: {
             code: 'BOOK_SESSION_MISMATCH',
             message: 'Session does not grant access to this book',
+            traceId,
           },
         },
         { status: 403 },

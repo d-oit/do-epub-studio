@@ -7,6 +7,7 @@ import { logAudit } from '../../audit';
 import { HighlightCreateSchema, HighlightUpdateSchema } from '@do-epub-studio/schema';
 import { readerAuth } from '../../middleware/auth';
 import { assertBookAccess } from '../../lib/tenant-isolation';
+import { getRequestTraceId } from '../../lib/api-error';
 import { NotFoundError, ForbiddenError } from '../../lib/http-errors';
 
 export const highlightsRouter = new Hono<{ Bindings: Env; Variables: { auth: AuthContext } }>();
@@ -29,7 +30,7 @@ highlightsRouter.get('/:bookId/highlights', readerAuth, async (c) => {
   const bookId = c.req.param('bookId');
   const auth = c.get('auth');
 
-  const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx);
+  const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx, getRequestTraceId(c));
   if (mismatch) return mismatch.response;
 
   const highlights = await queryAll<HighlightRow>(
@@ -58,7 +59,7 @@ highlightsRouter.post('/:bookId/highlights', readerAuth, zValidator('json', High
   const auth = c.get('auth');
   const body = c.req.valid('json');
 
-  const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx);
+  const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx, getRequestTraceId(c));
   if (mismatch) return mismatch.response;
 
   if (!auth.capabilities.canHighlight) {
@@ -117,7 +118,7 @@ highlightsRouter.delete('/:bookId/highlights/:highlightId', readerAuth, async (c
   const { bookId, highlightId } = c.req.param();
   const auth = c.get('auth');
 
-  const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx);
+  const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx, getRequestTraceId(c));
   if (mismatch) return mismatch.response;
 
   await execute(c.env, `DELETE FROM highlights WHERE id = ? AND book_id = ? AND user_email = ?`, [
@@ -142,7 +143,7 @@ highlightsRouter.patch('/:bookId/highlights/:highlightId', readerAuth, zValidato
   const auth = c.get('auth');
   const body = c.req.valid('json');
 
-  const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx);
+  const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx, getRequestTraceId(c));
   if (mismatch) return mismatch.response;
 
   const highlight = await queryFirst<HighlightRow>(c.env, `SELECT * FROM highlights WHERE id = ? AND book_id = ?`, [

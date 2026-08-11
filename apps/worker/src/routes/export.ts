@@ -5,6 +5,7 @@ import type { AuthContext } from '../auth/middleware';
 import { queryAll } from '../db/client';
 import { readerAuth } from '../middleware/auth';
 import { assertBookAccess } from '../lib/tenant-isolation';
+import { getRequestTraceId } from '../lib/api-error';
 import { ExportQuerySchema } from '@do-epub-studio/schema';
 
 /** Maximum rows per entity type to prevent unbounded memory usage on large exports. */
@@ -57,7 +58,7 @@ exportRouter.get(
     const { format } = c.req.valid('query');
     const auth = c.get('auth');
 
-    const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx);
+    const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx, getRequestTraceId(c));
     if (mismatch) return mismatch.response;
 
     // The three queries are independent (separate tables, each with its own

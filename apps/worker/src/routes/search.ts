@@ -5,6 +5,7 @@ import type { AuthContext } from '../auth/middleware';
 import { queryFirst, queryAll } from '../db/client';
 import { readerAuth } from '../middleware/auth';
 import { assertBookAccess } from '../lib/tenant-isolation';
+import { getRequestTraceId } from '../lib/api-error';
 import { SearchQuerySchema } from '@do-epub-studio/schema';
 
 export const searchRouter = new Hono<{ Bindings: Env; Variables: { auth: AuthContext } }>();
@@ -32,7 +33,7 @@ searchRouter.get(
     const auth = c.get('auth');
 
     // Verify book access
-    const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx);
+    const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx, getRequestTraceId(c));
     if (mismatch) return mismatch.response;
 
     // Check if book is indexed
