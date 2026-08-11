@@ -22,6 +22,8 @@ interface InsightSummary {
   estimatedMinutesRemaining: number | null;
   currentStreakDays: number;
   recentActivity: { date: string; activeMinutes: number; activePages: number }[];
+  chapterDurations: { href: string; activeMinutes: number }[];
+  readingSpeedWpm: number | null;
 }
 
 interface InfoPanelProps {

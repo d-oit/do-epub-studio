@@ -19,6 +19,8 @@ follows the privacy boundaries defined in ADR-102.
 | Estimated time remaining | Active time + progress | Shown only when confidence is sufficient |
 | Current reading streak | Local daily buckets | Consecutive days with reading activity |
 | Recent activity | Per-book local summary | Last 7 days of activity |
+| Chapter duration | Per-chapter active deltas | Time spent on each chapter (local only) |
+| Reading speed | Word count / active time | Book-level estimate in words-per-minute (local only) |
 
 ## Privacy Boundaries
 
@@ -28,6 +30,7 @@ Per ADR-102, reading insights are:
 - **Active time only** — hidden tabs, background windows, and idle periods do not count
 - **Coarse granularity** — any server-bound duration is rounded to whole minutes
 - **No raw reading locations** — no CFI, selected text, chapter titles, or snippets
+- **Chapter identity stays local** — per-chapter durations and word counts (`chapterMinutes`/`chapterWords`) are computed and stored locally only and are never included in server sync
 - **No third-party analytics** — all data stays in d.o.EPUB Studio
 - **Admin aggregation only** — no individual reader behavior timelines
 
@@ -66,6 +69,9 @@ interface ReadingInsightEntry {
   date: string; // YYYY-MM-DD
   activeMinutes: number;
   lastUpdated: number;
+  // Optional, local-only (never synced to the server):
+  chapterMinutes?: Record<string, number>; // href -> cumulative active minutes
+  chapterWords?: Record<string, number>; // href -> word count of the chapter
 }
 ```
 
@@ -129,6 +135,5 @@ Retrieves the user's reading insights for a book.
 
 ## Future Work
 
-- Admin aggregation views (per-book or per-grant summaries)
 - Reader-facing time-of-day insights
 - Export insights as CSV/JSON

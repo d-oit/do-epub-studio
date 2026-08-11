@@ -14,12 +14,10 @@ import {
   useAuthStore,
   useReaderStore,
   usePreferencesStore,
-  FONT_SIZES,
-  LINE_HEIGHTS,
 } from '../../../stores';
 import { useTranslation } from '../../../hooks/useTranslation';
 import { createEpubAnnotationAdapter, type AnnotationAdapter, type HighlightRecord, type CommentRecord } from '@do-epub-studio/reader-core';
-import { createRelocatedHandler } from './useEpubProgress';
+import { createFixedLayoutZoomHook, createRelocatedSetup, createThemeApplier, isSystemDark } from './useReaderEpub.helpers';
 import { applyDirectionAndWritingMode, type TocItem, type BookInfo } from '../lib/epub-init';
 import { PrefetchManager, type SpineItem } from '../../../lib/prefetch-manager';
 
@@ -32,6 +30,7 @@ export function useReaderEpub(
   onNavigateToAnnotation: (chapterRef: string, cfiRange?: string) => void | Promise<void>,
   progressCfi?: string,
   markPageRead?: () => void,
+  setChapter?: (href: string | null, wordCount?: number) => void,
 ) {
   const sessionToken = useAuthStore((s) => s.sessionToken);
   const bookId = useAuthStore((s) => s.bookId);
@@ -68,48 +67,18 @@ export function useReaderEpub(
   const [toc, setToc] = useState<TocItem[]>([]);
   const [metadata, setMetadata] = useState<BookInfo | null>(null);
 
-  const isSystemDark = () => {
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
-  };
-
   const resolvedTheme =
     readerTheme === 'system' ? (isSystemDark() ? 'dark' : 'light') : readerTheme;
 
   const applyThemesRef = useRef<(rendition: Rendition) => void>(() => { /* noop */ });
-  applyThemesRef.current = (rendition: Rendition) => {
-    const container = rootRef.current;
-    if (!container) return;
-    const style = getComputedStyle(container);
-    const bg = style.getPropertyValue('--color-background').trim();
-    const fg = style.getPropertyValue('--color-foreground').trim();
-    const effectiveTheme =
-      readerTheme === 'system' ? (isSystemDark() ? 'dark' : 'light') : readerTheme;
-    const imgFilter =
-      effectiveTheme === 'dark'
-        ? 'invert(1) hue-rotate(180deg)'
-        : effectiveTheme === 'sepia'
-          ? 'sepia(1)'
-          : 'none';
-    const bodyStyles: Record<string, string> = {
-      background: bg,
-      color: fg,
-    };
-    if (!fixedLayoutRef.current) {
-      bodyStyles['font-size'] = FONT_SIZES[readerFontSize];
-      bodyStyles['line-height'] = LINE_HEIGHTS[readerLineHeight];
-      bodyStyles['font-family'] =
-        readerFontFamily === 'serif'
-          ? 'serif'
-          : readerFontFamily === 'sans-serif'
-            ? 'sans-serif'
-            : 'monospace';
-    }
-    rendition.themes.registerRules('reader-theme', {
-      body: bodyStyles,
-      img: { filter: imgFilter },
-    });
-    rendition.themes.select('reader-theme');
-  };
+  applyThemesRef.current = createThemeApplier({
+    rootRef,
+    readerTheme,
+    fixedLayoutRef,
+    readerFontSize,
+    readerLineHeight,
+    readerFontFamily,
+  });
 
   useEffect(() => {
     if (!epubUrl || !viewerRef.current) return;
@@ -251,24 +220,9 @@ export function useReaderEpub(
             }
           });
           // Apply the user-chosen zoom to every fresh content document.
-          // The current zoom is read from `zoomRef` (kept fresh by the
-          // effect above) so changes propagate via the spread re-display.
-          rendition.hooks.content.register((contents: Contents) => {
-            const doc = contents.document;
-            if (!doc?.documentElement) return;
-            const reducedMotion = getPrefersReducedMotion();
-            const transition = reducedMotion ? 'none' : 'transform 0.18s ease-out';
-            const scale = zoomRef.current.toFixed(2);
-            let styleEl = doc.getElementById('__fl_zoom_style__');
-            if (!(styleEl instanceof HTMLStyleElement)) {
-              styleEl = doc.createElement('style');
-              styleEl.id = '__fl_zoom_style__';
-              doc.head?.appendChild(styleEl);
-            }
-            styleEl.textContent =
-              `html { transform: scale(${scale}); transform-origin: top center; ` +
-              `transition: ${transition}; }`;
-          });
+          // The current zoom is read from `zoomRef` (kept fresh by the effect
+          // above) so changes propagate via the spread re-display.
+          rendition.hooks.content.register(createFixedLayoutZoomHook(zoomRef));
         }
 
         applyThemesRef.current(rendition);
@@ -316,35 +270,23 @@ export function useReaderEpub(
 
         rendition.on(
           'relocated',
-          (() => {
-            if (!sessionToken || !bookId) return () => { /* noop */ };
-            const renderAnnotations = () => {
-              adapter.scheduleRender(
-                currentChapterRef.current,
-                highlightsRef.current,
-                commentsRef.current,
-                onNavigateToAnnotationRef.current,
-              );
-            };
-            const relocatedHandler = createRelocatedHandler(
-              bookId,
-              sessionToken,
-              setProgress,
-              setCurrentChapter,
-              tocRef.current,
-              currentChapterRef,
-              () => {
-                renderAnnotations();
-                // Trigger prefetch for next chapter
-                void prefetchManagerRef.current?.onChapterChange(currentChapterRef.current ?? '');
-              },
-              () => markPageRead?.(),
-            );
-            // GOAP-224 B6: the online progress PUT is debounced; call
-            // flush() on unmount so the final position is not lost.
-            progressFlushRef.current = relocatedHandler.flush;
-            return relocatedHandler.onRelocated;
-          })(),
+          createRelocatedSetup({
+            bookId,
+            sessionToken,
+            rendition,
+            setProgress,
+            setCurrentChapter,
+            toc: tocRef.current,
+            currentChapterRef,
+            highlightsRef,
+            commentsRef,
+            onNavigateToAnnotationRef,
+            adapter,
+            prefetchManager: prefetchManagerRef,
+            progressFlushRef,
+            setChapter,
+            markPageRead,
+          }),
         );
 
         rendition.on('displayed', () => {
@@ -409,6 +351,7 @@ export function useReaderEpub(
     readerWritingMode,
     t,
     markPageRead,
+    setChapter,
   ]);
 
   // Re-apply themes on preference changes (system dark-mode handled below).

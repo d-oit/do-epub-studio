@@ -170,6 +170,8 @@ describe('useReadingTimer', () => {
       estimatedMinutesRemaining: null,
       currentStreakDays: 0,
       recentActivity: [],
+      chapterDurations: [],
+      readingSpeedWpm: null,
     });
   });
 

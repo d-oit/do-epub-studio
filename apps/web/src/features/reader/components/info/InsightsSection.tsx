@@ -1,4 +1,4 @@
-type TFn = (key: string) => string;
+type TFn = (key: string, params?: Record<string, string | number>) => string;
 
 interface InsightSummary {
   totalActiveMinutes: number;
@@ -6,6 +6,8 @@ interface InsightSummary {
   estimatedMinutesRemaining: number | null;
   currentStreakDays: number;
   recentActivity: { date: string; activeMinutes: number; activePages: number }[];
+  chapterDurations: { href: string; activeMinutes: number }[];
+  readingSpeedWpm: number | null;
 }
 
 function formatMinutes(minutes: number): string {
@@ -45,6 +47,22 @@ export function InsightsSection({ insights, t }: { insights: InsightSummary; t: 
             <dt className="text-xs text-foreground-muted">{t('reader.readingStreak')}</dt>
             <dd className="text-sm text-foreground">
               {insights.currentStreakDays} {t('reader.days')}
+            </dd>
+          </div>
+        )}
+        {insights.chapterDurations.length > 0 && (
+          <div>
+            <dt className="text-xs text-foreground-muted">{t('reader.chapterTime')}</dt>
+            <dd className="text-sm text-foreground">
+              {t('reader.chapterTimeValue', { minutes: insights.chapterDurations[0].activeMinutes })}
+            </dd>
+          </div>
+        )}
+        {insights.readingSpeedWpm !== null && (
+          <div>
+            <dt className="text-xs text-foreground-muted">{t('reader.readingSpeed')}</dt>
+            <dd className="text-sm text-foreground">
+              {t('reader.readingSpeedValue', { wpm: insights.readingSpeedWpm })}
             </dd>
           </div>
         )}
