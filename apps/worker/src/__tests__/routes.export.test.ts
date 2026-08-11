@@ -46,6 +46,36 @@ describe('Export Routes', () => {
     expect((body.data.content as string).length).toBeGreaterThan(100);
   });
 
+  it('runs the three export queries concurrently', async () => {
+    mockRequireAuth.mockResolvedValue(makeAuthContext());
+    const mockFirst = vi.fn().mockResolvedValue({ title: 'Test Book' });
+    (env.DB as unknown as { first: ReturnType<typeof vi.fn> }).first = mockFirst;
+
+    // Deferred promises let us observe that all three queries are started
+    // before any result is consumed — the observable signal of Promise.all.
+    const resolvers: Array<(v: unknown[]) => void> = [];
+    mockQueryAll.mockImplementation(() => new Promise<unknown[]>((resolve) => {
+      resolvers.push(resolve);
+    }));
+
+    const reqPromise = app.fetch(new Request('http://localhost/api/books/b1/export?format=markdown', {
+      headers: { Authorization: 'Bearer valid' },
+    }), env, makePassThroughContext());
+
+    // All three queryAll calls must be issued before any response is produced.
+    await vi.waitFor(() => expect(mockQueryAll).toHaveBeenCalledTimes(3));
+
+    resolvers[0]([{ id: 'h1', selected_text: 'Concurrent', color: 'yellow', note: null, chapter_ref: 'ch1', cfi_range: null, created_at: '2026-07-18' }]);
+    resolvers[1]([]);
+    resolvers[2]([]);
+
+    const res = await reqPromise;
+    expect(res.status).toBe(200);
+    const body = await parseBody(res);
+    const content = body.data.content as string;
+    expect(content).toContain('Concurrent');
+  });
+
   it('returns 400 for invalid format', async () => {
     mockRequireAuth.mockResolvedValue(makeAuthContext());
     const res = await app.fetch(new Request('http://localhost/api/books/b1/export?format=invalid', { headers: { Authorization: 'Bearer valid' } }), env, makePassThroughContext());

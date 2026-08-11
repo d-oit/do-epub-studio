@@ -60,26 +60,31 @@ exportRouter.get(
     const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx);
     if (mismatch) return mismatch.response;
 
-    const highlights = await queryAll<HighlightRow>(
-      c.env,
-      `SELECT id, selected_text, color, note, chapter_ref, cfi_range, created_at
-       FROM highlights WHERE book_id = ? AND user_email = ? ORDER BY created_at ASC LIMIT ?`,
-      [bookId, auth.email, MAX_EXPORT_ROWS],
-    );
-
-    const comments = await queryAll<CommentRow>(
-      c.env,
-      `SELECT id, body, selected_text, chapter_ref, cfi_range, status, parent_comment_id, created_at
-       FROM comments WHERE book_id = ? AND user_email = ? AND status != 'deleted' ORDER BY created_at ASC LIMIT ?`,
-      [bookId, auth.email, MAX_EXPORT_ROWS],
-    );
-
-    const bookmarks = await queryAll<BookmarkRow>(
-      c.env,
-      `SELECT id, label, locator_json, created_at
-       FROM bookmarks WHERE book_id = ? AND user_email = ? ORDER BY created_at ASC LIMIT ?`,
-      [bookId, auth.email, MAX_EXPORT_ROWS],
-    );
+    // The three queries are independent (separate tables, each with its own
+    // internal ORDER BY and a bounded LIMIT), so they can run concurrently.
+    // Each result is a complete, ordered array — the Markdown/Html generator
+    // combines them downstream without relying on cross-query interleaving, so
+    // concurrent execution preserves the output exactly.
+    const [highlights, comments, bookmarks] = await Promise.all([
+      queryAll<HighlightRow>(
+        c.env,
+        `SELECT id, selected_text, color, note, chapter_ref, cfi_range, created_at
+         FROM highlights WHERE book_id = ? AND user_email = ? ORDER BY created_at ASC LIMIT ?`,
+        [bookId, auth.email, MAX_EXPORT_ROWS],
+      ),
+      queryAll<CommentRow>(
+        c.env,
+        `SELECT id, body, selected_text, chapter_ref, cfi_range, status, parent_comment_id, created_at
+         FROM comments WHERE book_id = ? AND user_email = ? AND status != 'deleted' ORDER BY created_at ASC LIMIT ?`,
+        [bookId, auth.email, MAX_EXPORT_ROWS],
+      ),
+      queryAll<BookmarkRow>(
+        c.env,
+        `SELECT id, label, locator_json, created_at
+         FROM bookmarks WHERE book_id = ? AND user_email = ? ORDER BY created_at ASC LIMIT ?`,
+        [bookId, auth.email, MAX_EXPORT_ROWS],
+      ),
+    ]);
 
     const book = await c.env.DB.prepare(
       `SELECT title FROM books WHERE id = ?`,
