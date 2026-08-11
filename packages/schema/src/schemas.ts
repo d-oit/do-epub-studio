@@ -90,6 +90,9 @@ export const TelemetryLogSchema = z.object({
 
 export const TelemetryPayloadSchema = z.object({
   logs: z.array(TelemetryLogSchema).max(100),
+  // Client logger's bounded buffer may drop entries when it overflows; report
+  // the count so worker-side drop pressure is observable (Plan 212 O3).
+  dropped: z.number().int().nonnegative().optional(),
 });
 
 export const CreateBookSchema = z.object({
@@ -207,6 +210,17 @@ export const LibraryQuerySchema = z.object({
 });
 
 export type LibraryQuery = z.infer<typeof LibraryQuerySchema>;
+
+// Admin grants list: bounded like the library endpoint, but with a higher
+// default so the (non-paginated) admin grants view is not silently truncated.
+// LIMIT 1000 matches the comments/bookmarks/highlights list convention from
+// plan 212-P4 (bounded scans, no unbounded reads).
+export const GrantsListQuerySchema = z.object({
+  limit: z.coerce.number().int().positive().max(1000).default(1000),
+  offset: z.coerce.number().int().nonnegative().default(0),
+});
+
+export type GrantsListQuery = z.infer<typeof GrantsListQuerySchema>;
 
 export const LoginSchema = z.object({
   email: z.string().email().max(255),
