@@ -61,7 +61,37 @@ Design decisions:
 - ADR-199 i18n plural-rule catalogs (deferral stands; the helper is now available)
 - ADR-217 OTel decision (evaluation ADR stands)
 
-## 4. Acceptance Criteria
+## 4. Issue #957 — scheduled cross-browser E2E red for five nights
+
+While validating CI, issue #957 (auto-filed "CI failure on main: 31456496738")
+was triaged. The scheduled E2E lane had failed every night 2026-08-07→08-11
+with rotating `@mobile` reader failures. Root causes and fixes (in this PR):
+
+1. **Production worker mis-bundling (deterministic, the big one):** Vite 8 /
+   Rolldown mis-bundles reader-core's module workers — `epub-parser.worker`
+   was inlined as a base64 `data:` URL with a bogus `video/mp2t` MIME and
+   `reanchor.worker` emitted as raw `.ts` — so `new Worker(url, { type:
+   'module' })` failed to LOAD in every production build. GOAP-224 A8 then
+   rejected all in-flight parses (no fallback), so every book load failed with
+   "Failed to load book". Fixes: `worker: { format: 'es' }` in the web Vite
+   config (correct for module workers), plus a **ready-handshake** in
+   `EpubParserWorkerPool` — onerror before `ready` is a LOAD failure and
+   degrades to the documented main-thread fallback (ADR-218 §6); onerror after
+   `ready` remains the A8 runtime-crash path (reject + respawn).
+2. **Test-harness determinism:** landmarks tests counted before hydration;
+   `clickToolbarButton` queried `role=button` where GOAP-224 B8 put
+   `role="menuitem"`; `loginAsReader/Admin` used flaky `networkidle`;
+   `mockReaderApi` left the default EPUB URL unmocked (real cross-origin
+   example.com fetch → intermittent CORS pageerror); `suppressWorkboxErrors`
+   rethrew network-level noise; the locale-persist assertion compared raw
+   localStorage against `'de'` (zustand persists a JSON envelope); the
+   reader-progress test registered telemetry waits after triggering the load.
+3. **Verification:** full `@mobile` suite in preview mode with a CI-matching
+   build (`VITE_LOG_LEVEL=info` baked at build time) under 2 workers + 2
+   retries: **194 passed / 0 failed**. The dispatched full-CI run on the PR
+   branch re-validates the complete scheduled lane end-to-end.
+
+## 5. Acceptance Criteria
 
 - [x] Grants list endpoint bounded (LIMIT/OFFSET) with documented schema; export queries concurrent with bounds preserved
 - [x] Client telemetry drop pressure observable server-side (optional `dropped` int, fail-open)
@@ -72,3 +102,4 @@ Design decisions:
 - [x] Reading insights record chapter identity + display chapter duration and reading speed (local-only); docs updated
 - [x] Stale doc/plan lines corrected (offline.md, reading-insights.md, accessibility.md, README, plans 212/216/223)
 - [x] `./scripts/quality_gate.sh` passes; PR CI green on GitHub
+- [x] Issue #957 closed by root-cause fixes (worker fallback + harness determinism); scheduled E2E lane green on re-dispatch
