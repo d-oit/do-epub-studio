@@ -1,7 +1,7 @@
 # GOAP 212: Comprehensive Product, Security, Performance, and Reliability Audit
 
 **Date:** 2026-08-02
-**Status:** Completed (non-security work via GOAP-213 PR #897 and GOAP-217 PR #915; S1–S9 remain in private triage per ADR-212)
+**Status:** Completed (non-security work via GOAP-213 PR #897, GOAP-217 PR #915, and GOAP-226 (2026-08-11) closing the remaining implementable gaps: P4 grants pagination, P8 export concurrency, O3 telemetry drop signal, O6 SW observability, F1 chapter duration + reading speed; S1–S9 remain in private triage per ADR-212)
 **Goal:** Convert the evidence-based audit into sequenced, testable remediation work without duplicating completed plans 207–211.
 **Decision:** [ADR-212](212-adr-risk-first-audit-remediation-policy.md)
 

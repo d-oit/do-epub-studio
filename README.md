@@ -24,7 +24,7 @@ do-epub-studio/
 
 ## Core Stack
 - **Frontend**: React 19 + Vite 8 + Tailwind 4 + Zustand 5
-- **Backend**: Cloudflare Workers + D1/Turso + R2
+- **Backend**: Cloudflare Workers + D1 (production; local dev uses a libSQL/Turso-compatible runtime via `apps/worker/wrangler.jsonc`) + R2
 - **Language**: TypeScript 6 (Strict Mode)
 - **Testing**: Vitest 4 + Playwright 1.59+ (Chromium + WebKit in PR smoke CI)
 - **Tooling**: Turborepo 2.9 + pnpm 10
