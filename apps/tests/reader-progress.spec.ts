@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { mockReaderApi, MOCK_EPUB } from './fixtures';
+import { MOCK_EPUB } from './fixtures';
 
 test.describe('Reader Progress Persistence', () => {
   test('@mobile should save progress and resume from the same CFI on reload', async ({ page }) => {
