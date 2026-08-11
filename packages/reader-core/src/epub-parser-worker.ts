@@ -20,7 +20,7 @@ interface WorkerResultMessage {
 }
 
 type MainToWorkerMessage = WorkerPoolMessage;
-type WorkerToMainMessage = WorkerResultMessage;
+type WorkerToMainMessage = WorkerResultMessage | { type: 'ready' };
 
 const PARSE_TIMEOUT_MS = 30_000;
 
@@ -28,10 +28,16 @@ class EpubParserWorkerPool {
   private worker: Worker | null = null;
   private pending = new Map<
     string,
-    { resolve: (r: EpubParseResult) => void; reject: (e: Error) => void }
+    {
+      resolve: (r: EpubParseResult) => void;
+      reject: (e: Error) => void;
+      source: string | Uint8Array;
+    }
   >();
   private idCounter = 0;
   private terminated = false;
+  /** True once the worker posts its 'ready' handshake — proof the script loaded. */
+  private workerReady = false;
 
   private getWorker(): Worker | null {
     if (this.worker) return this.worker;
@@ -41,9 +47,14 @@ class EpubParserWorkerPool {
     try {
       const workerUrl = new URL('./epub-parser.worker.ts', import.meta.url);
       this.worker = new Worker(workerUrl, { type: 'module' });
+      this.workerReady = false;
 
       this.worker.onmessage = (event: MessageEvent<WorkerToMainMessage>) => {
         const data = event.data;
+        if (data.type === 'ready') {
+          this.workerReady = true;
+          return;
+        }
         if (data.type === 'result') {
           const pending = this.pending.get(data.id);
           if (pending) {
@@ -54,20 +65,35 @@ class EpubParserWorkerPool {
       };
 
       this.worker.onerror = (event) => {
-        // GOAP-224 A8: reject ALL in-flight parses, not just the first. The
-        // previously-resolved handler only rejected `pending.keys().next().value`
-        // and left every other parse hanging until the 30s timeout while the
-        // crashed worker stayed in the pool for reuse.
         const msg =
           event.message ??
           (event.filename
             ? `Worker load failed: ${event.filename}:${event.lineno}`
             : 'Worker initialization failed');
         const error = new Error(msg);
-        for (const [, pending] of this.pending) {
-          pending.reject(error);
-        }
+        const pendingList = [...this.pending.values()];
         this.pending.clear();
+
+        if (!this.workerReady) {
+          // LOAD failure: the worker script never started (e.g. production
+          // builds where the worker chunk is mis-served — see issue #957).
+          // Degrade to the documented main-thread fallback instead of failing
+          // every book load. ADR-218 §6: the worker is the preferred path, the
+          // main-thread fallback exists for exactly this "worker unavailable"
+          // case.
+          for (const pending of pendingList) {
+            void this.fallbackParse(pending.source).then(pending.resolve, pending.reject);
+          }
+        } else {
+          // GOAP-224 A8: runtime crash after a successful load — reject ALL
+          // in-flight parses, not just the first. The previously-resolved
+          // handler only rejected `pending.keys().next().value` and left every
+          // other parse hanging until the 30s timeout while the crashed worker
+          // stayed in the pool for reuse.
+          for (const pending of pendingList) {
+            pending.reject(error);
+          }
+        }
 
         // The worker is in an unknown state after an error event — terminate it
         // and clear the slot so the next parse() spawns a fresh worker. Do NOT
@@ -112,6 +138,7 @@ class EpubParserWorkerPool {
           clearTimeout(timer);
           reject(err);
         },
+        source,
       });
 
       const timer = setTimeout(() => {

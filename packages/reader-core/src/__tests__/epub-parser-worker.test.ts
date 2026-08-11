@@ -121,7 +121,7 @@ class FakeWorker {
 }
 
 interface WorkerToMainMessage {
-  type: 'result';
+  type: 'result' | 'ready';
   id: string;
   result: unknown;
 }
@@ -151,6 +151,10 @@ describe('worker error recovery (GOAP-224 A8/A6)', () => {
     const worker = getWorker();
     expect(worker.posted).toHaveLength(2);
 
+    // The worker loaded successfully (ready handshake) — the onerror below is
+    // therefore a RUNTIME crash, which must reject in-flight parses (A8).
+    worker.onmessage?.({ data: { type: 'ready' } as WorkerToMainMessage });
+
     const reject1 = expect(p1).rejects.toThrow('worker crashed');
     const reject2 = expect(p2).rejects.toThrow('worker crashed');
     worker.onerror?.({ message: 'worker crashed', filename: 'epub-parser.worker.ts', lineno: 7 });
@@ -174,6 +178,7 @@ describe('worker error recovery (GOAP-224 A8/A6)', () => {
     await Promise.resolve();
     const worker = getWorker();
 
+    worker.onmessage?.({ data: { type: 'ready' } as WorkerToMainMessage });
     const reject1 = expect(p1).rejects.toThrow('boom');
     worker.onerror?.({ message: 'boom' });
     await reject1;
@@ -200,5 +205,62 @@ describe('worker error recovery (GOAP-224 A8/A6)', () => {
 
     terminateParserWorker();
     await expect(p2).rejects.toThrow('Worker terminated');
+  });
+});
+
+describe('worker LOAD failure (GOAP-226 — issue #957)', () => {
+  beforeEach(() => {
+    vi.stubGlobal('Worker', FakeWorker);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    FakeWorker.instances = [];
+    terminateParserWorker();
+  });
+
+  function getWorker(): FakeWorker {
+    const worker = FakeWorker.instances[0];
+    if (!worker) throw new Error('expected a spawned worker instance');
+    return worker;
+  }
+
+  it('degrades to the main-thread fallback when the worker never loads (no ready handshake)', async () => {
+    const p1 = parseEpubInWorker(new Uint8Array([1, 2, 3]));
+    const p2 = parseEpubInWorker(new Uint8Array([4, 5, 6]));
+    await Promise.resolve();
+
+    const worker = getWorker();
+    // NO 'ready' message — the worker script never started (production builds
+    // where the worker chunk is mis-served). onerror must NOT reject; every
+    // pending parse resolves through fallbackParse (fetch + validateArchive,
+    // both mocked above).
+    const result1 = expect(p1).resolves.toMatchObject({ valid: true });
+    const result2 = expect(p2).resolves.toMatchObject({ valid: true });
+    worker.onerror?.({ message: 'Worker initialization failed' });
+    await result1;
+    await result2;
+
+    // The failed worker is terminated and the slot cleared for a fresh one.
+    expect(worker.terminated).toBe(true);
+  });
+
+  it('does not reject pending parses on a load failure that arrives after one result', async () => {
+    const p1 = parseEpubInWorker(new Uint8Array([1, 2, 3]));
+    await Promise.resolve();
+    const worker = getWorker();
+
+    // Worker started and answered one parse...
+    const settled = expect(p1).resolves.toMatchObject({ valid: true });
+    worker.onmessage?.({ data: { type: 'result', id: (worker.posted[0] as { id: string }).id, result: { valid: true, data: new ArrayBuffer(4) } } as unknown as WorkerToMainMessage });
+    await settled;
+
+    // ...but then a second parse finds the worker had never sent 'ready' (the
+    // ready message was lost) and errors — still degrade, never reject.
+    const p2 = parseEpubInWorker(new Uint8Array([7, 8, 9]));
+    await Promise.resolve();
+    const settled2 = expect(p2).resolves.toMatchObject({ valid: true });
+    worker.onerror?.({ message: 'Worker initialization failed' });
+    await settled2;
   });
 });
