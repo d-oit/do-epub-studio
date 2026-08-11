@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { mockReaderApi, MOCK_EPUB } from './fixtures';
 
 test.describe('Reader Progress Persistence', () => {
   test('@mobile should save progress and resume from the same CFI on reload', async ({ page }) => {
@@ -37,6 +38,12 @@ test.describe('Reader Progress Persistence', () => {
       });
     });
 
+    // Serve the EPUB so the book actually loads — without it the reader shows
+    // "Failed to load book" and progress telemetry timing becomes load-dependent.
+    await page.route('**/mock-book.epub', async (route) => {
+      await route.fulfill({ status: 200, contentType: 'application/epub+zip', body: MOCK_EPUB });
+    });
+
     await page.route('**/api/books/**/highlights', (route) => route.fulfill({ body: JSON.stringify({ ok: true, data: [] }) }));
     await page.route('**/api/books/**/comments', (route) => route.fulfill({ body: JSON.stringify({ ok: true, data: [] }) }));
     await page.route('**/api/books/**/bookmarks', (route) => route.fulfill({ body: JSON.stringify({ ok: true, data: [] }) }));
@@ -53,13 +60,12 @@ test.describe('Reader Progress Persistence', () => {
       }));
     });
 
-    // 3. Load reader
-    await page.goto(`/read/${bookId}`);
-
-    // Wait for progress_loaded telemetry event
+    // 3. Load reader — register the telemetry wait BEFORE navigating so the
+    //    event cannot fire ahead of the listener (race under fast reloads).
     const progressLoadedPromise = page.waitForEvent('console', msg =>
       msg.text().includes('reader.progress_loaded') && msg.text().includes('"source":"server"')
     );
+    await page.goto(`/read/${bookId}`);
     await progressLoadedPromise;
 
     // 4. Verify initial CFI (this is hard without a real EPUB, but we can check if the PUT was called later)
@@ -69,13 +75,11 @@ test.describe('Reader Progress Persistence', () => {
     // Set a new CFI
     currentCfi = updatedCfi;
 
-    // Reload
-    await page.reload();
-
-    // Wait for reload telemetry
+    // Reload — register the wait first (same race as the initial load).
     const reloadProgressLoadedPromise = page.waitForEvent('console', msg =>
       msg.text().includes('reader.progress_loaded') && msg.text().includes('"source":"server"')
     );
+    await page.reload();
     await reloadProgressLoadedPromise;
 
     // Success if we reached this point with the mocked GET returning updatedCfi

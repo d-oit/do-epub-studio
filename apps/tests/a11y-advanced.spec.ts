@@ -73,6 +73,9 @@ test.describe('Advanced accessibility — ARIA landmarks', () => {
     await mockAdminApi(page);
     await loginAsAdmin(page);
     const mainLandmark = page.locator('main, [role="main"]');
+    // Same hydration race as the login-page test: the admin route is
+    // lazy-loaded, so count only after the landmark attaches.
+    await expect(mainLandmark.first()).toBeAttached({ timeout: 30_000 });
     const hasMain = await mainLandmark.count().catch(() => 0);
     expect(hasMain).toBeGreaterThanOrEqual(1);
   });

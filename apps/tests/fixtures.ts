@@ -211,6 +211,7 @@ export interface MockRouteOptions {
 
 export async function mockReaderApi(page: Page, opts: MockRouteOptions = {}) {
   const bookSlug = opts.bookSlug ?? TEST_USER.bookSlug;
+  const hasCustomEpubUrl = opts.epubUrl !== undefined;
   const epubUrl = opts.epubUrl ?? `https://example.com/${bookSlug}.epub`;
   const loginResp = opts.loginResponse ?? LOGIN_RESPONSE;
 
@@ -222,10 +223,16 @@ export async function mockReaderApi(page: Page, opts: MockRouteOptions = {}) {
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { url: epubUrl } }) });
   });
 
-  if (opts.epubBuffer) {
+  // Always intercept the DEFAULT EPUB URL. The default mock URL
+  // (https://example.com/...) is a real cross-origin fetch that is not served
+  // with CORS headers reliably; when the fetch fails it surfaces as an uncaught
+  // page error, which suppressWorkboxErrors rethrows — failing reader tests on
+  // the nightly scheduled E2E lane (issue #957). Tests that pass an explicit
+  // epubUrl WITHOUT epubBuffer opt out here and exercise real-network behavior.
+  if (opts.epubBuffer || !hasCustomEpubUrl) {
     const epubPattern = epubUrl.startsWith('http') ? `**/${bookSlug}.epub` : `**${epubUrl}`;
     await page.route(epubPattern, async (route: Route) => {
-      await route.fulfill({ status: 200, contentType: 'application/epub+zip', body: opts.epubBuffer });
+      await route.fulfill({ status: 200, contentType: 'application/epub+zip', body: opts.epubBuffer ?? MOCK_EPUB });
     });
   }
 
@@ -322,7 +329,12 @@ export async function clickToolbarButton(page: Page, buttonName: string | RegExp
   const moreBtn = page.getByRole('button', { name: /More [Oo]ptions/i });
   if (await moreBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
     await moreBtn.dispatchEvent('click');
-    const overflowBtn = page.locator('.cq-reader-toolbar-overflow').getByRole('button', { name: buttonName });
+    // GOAP-224 B8: overflow entries are role="menuitem" (WAI-ARIA Menu Button
+    // Pattern), not buttons — match either so the helper keeps working.
+    const overflowMenu = page.locator('.cq-reader-toolbar-overflow');
+    const overflowBtn = overflowMenu
+      .getByRole('menuitem', { name: buttonName })
+      .or(overflowMenu.getByRole('button', { name: buttonName }));
     await overflowBtn.waitFor({ state: 'visible', timeout: 5000 });
     await overflowBtn.dispatchEvent('click');
     return;
@@ -340,7 +352,16 @@ export async function clickToolbarButton(page: Page, buttonName: string | RegExp
  */
 export function suppressWorkboxErrors(page: Page) {
   page.on('pageerror', (error) => {
-    if (error.message.includes("reading 'waiting'")) return;
+    const msg = error.message;
+    if (msg.includes("reading 'waiting'")) return;
+    // Environmental network noise in the E2E preview env (no Worker backend):
+    // unmocked requests to localhost:8787 and cross-origin mock URLs surface as
+    // page errors that are NOT app bugs. Treat network-level failures as noise
+    // (they kept killing reader tests mid-axe-scan on the scheduled lane —
+    // issue #957); rethrow anything that looks like an app-logic error.
+    if (/Failed to load resource|ERR_CONNECTION_REFUSED|access control checks|Failed to fetch|AbortError|net::ERR_|Worker initialization failed/i.test(msg)) {
+      return;
+    }
     throw error;
   });
 }
@@ -352,7 +373,12 @@ export async function loginAsReader(page: Page, bookSlug?: string) {
   await page.getByLabel('Password').fill(TEST_USER.password);
   await page.getByRole('button', { name: 'Sign In', exact: true }).click();
   await expect(page).toHaveURL(new RegExp(`/read/${slug}$`), { timeout: 15000 });
-  await page.waitForLoadState('networkidle');
+  // The reader is mounted once the toolbar renders. `networkidle` is
+  // unreliable here: unmocked background fetches (e.g. bookmarks when the
+  // test passes includeBookmarks: false) hit the absent Worker at
+  // localhost:8787, and under parallel load the network never settles within
+  // the timeout — the root cause of nightly scheduled E2E flakiness (#957).
+  await expect(page.locator('[data-container-name="reader-toolbar"]')).toBeVisible({ timeout: 20000 });
 }
 
 export async function loginAsAdmin(page: Page) {
@@ -361,5 +387,7 @@ export async function loginAsAdmin(page: Page) {
   await page.getByLabel('Password').fill(ADMIN_USER.password);
   await page.getByRole('button', { name: 'Sign In', exact: true }).click();
   await expect(page).toHaveURL(/\/admin\/books/, { timeout: 15000 });
-  await page.waitForLoadState('networkidle');
+  // Wait for the admin books page to mount instead of networkidle — background
+  // fetches keep the network busy under parallel load (issue #957 flakiness).
+  await expect(page.locator('main#main-content')).toBeVisible({ timeout: 20000 });
 }
