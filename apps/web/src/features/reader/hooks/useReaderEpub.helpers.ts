@@ -90,6 +90,28 @@ export function createThemeApplier({
 }
 
 /**
+ * Injects or updates the fixed-layout zoom stylesheet on a content document.
+ * Shared by `createFixedLayoutZoomHook` (new-content hook) and the inline
+ * zoom effect in `useReaderEpub` (re-apply on zoom change) — one
+ * implementation so the transform/transition contract cannot drift.
+ */
+export function applyFixedLayoutZoomStyle(
+  doc: Document,
+  scale: string,
+  transition: string,
+): void {
+  let styleEl = doc.getElementById('__fl_zoom_style__');
+  if (!(styleEl instanceof HTMLStyleElement)) {
+    styleEl = doc.createElement('style');
+    styleEl.id = '__fl_zoom_style__';
+    doc.head?.appendChild(styleEl);
+  }
+  styleEl.textContent =
+    `html { transform: scale(${scale}); transform-origin: top center; ` +
+    `transition: ${transition}; }`;
+}
+
+/**
  * Factory for the fixed-layout zoom content hook. For every fresh content
  * document it injects a `transform: scale()` stylesheet — the current zoom is
  * read from `zoomRef` (kept fresh by the reader hook's effect) so changes
@@ -103,16 +125,7 @@ export function createFixedLayoutZoomHook(
     if (!doc?.documentElement) return;
     const reducedMotion = getPrefersReducedMotion();
     const transition = reducedMotion ? 'none' : 'transform 0.18s ease-out';
-    const scale = zoomRef.current.toFixed(2);
-    let styleEl = doc.getElementById('__fl_zoom_style__');
-    if (!(styleEl instanceof HTMLStyleElement)) {
-      styleEl = doc.createElement('style');
-      styleEl.id = '__fl_zoom_style__';
-      doc.head?.appendChild(styleEl);
-    }
-    styleEl.textContent =
-      `html { transform: scale(${scale}); transform-origin: top center; ` +
-      `transition: ${transition}; }`;
+    applyFixedLayoutZoomStyle(doc, zoomRef.current.toFixed(2), transition);
   };
 }
 

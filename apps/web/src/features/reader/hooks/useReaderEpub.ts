@@ -17,7 +17,7 @@ import {
 } from '../../../stores';
 import { useTranslation } from '../../../hooks/useTranslation';
 import { createEpubAnnotationAdapter, type AnnotationAdapter, type HighlightRecord, type CommentRecord } from '@do-epub-studio/reader-core';
-import { createFixedLayoutZoomHook, createRelocatedSetup, createThemeApplier, isSystemDark } from './useReaderEpub.helpers';
+import { applyFixedLayoutZoomStyle, createFixedLayoutZoomHook, createRelocatedSetup, createThemeApplier, isSystemDark } from './useReaderEpub.helpers';
 import { applyDirectionAndWritingMode, type TocItem, type BookInfo } from '../lib/epub-init';
 import { PrefetchManager, type SpineItem } from '../../../lib/prefetch-manager';
 
@@ -396,15 +396,7 @@ export function useReaderEpub(
     contentsList.forEach((contents) => {
       const doc = contents.document;
       if (!doc?.documentElement) return;
-      let styleEl = doc.getElementById('__fl_zoom_style__');
-      if (!(styleEl instanceof HTMLStyleElement)) {
-        styleEl = doc.createElement('style');
-        styleEl.id = '__fl_zoom_style__';
-        doc.head?.appendChild(styleEl);
-      }
-      styleEl.textContent =
-        `html { transform: scale(${scale}); transform-origin: top center; ` +
-        `transition: ${transition}; }`;
+      applyFixedLayoutZoomStyle(doc, scale, transition);
     });
   }, [readerZoom]);
 
