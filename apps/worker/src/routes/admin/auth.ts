@@ -10,6 +10,7 @@ import { createEmailTransport } from '../../lib/email-transport';
 import { queryFirst } from '../../db/client';
 import { sign, verify } from 'hono/jwt';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
+import { apiError } from '../../lib/api-error';
 
 export const authRouter = new Hono<{ Bindings: Env; Variables: { requestContext: RequestContext } }>();
 
@@ -22,22 +23,13 @@ authRouter.post('/login', zValidator('json', LoginSchema), async (c) => {
   });
 
   if (!rateLimit.allowed) {
-    return c.json(
-      {
-        ok: false,
-        error: { code: 'TOO_MANY_REQUESTS', message: 'Too many login attempts. Please try again later.' },
-      },
-      429,
-    );
+    return apiError(c, 429, 'TOO_MANY_REQUESTS', 'Too many login attempts. Please try again later.');
   }
 
   const result = await createAdminSession(c.env, email, password);
 
   if (!result.ok) {
-    return c.json(
-      { ok: false, error: { code: 'INVALID_CREDENTIALS', message: result.error } },
-      result.status as ContentfulStatusCode,
-    );
+    return apiError(c, result.status as ContentfulStatusCode, 'INVALID_CREDENTIALS', result.error);
   }
 
   await logAudit(c.env, {
@@ -66,10 +58,7 @@ authRouter.post('/logout', async (c) => {
   const token = authHeader?.replace('Bearer ', '') ?? '';
 
   if (!token) {
-    return c.json(
-      { ok: false, error: { code: 'MISSING_TOKEN', message: 'Authorization token required' } },
-      400,
-    );
+    return apiError(c, 400, 'MISSING_TOKEN', 'Authorization token required');
   }
 
   await revokeAdminSession(c.env, token);
@@ -86,10 +75,7 @@ authRouter.post('/recovery-request', zValidator('json', AdminRecoveryRequestSche
   });
 
   if (!rateLimit.allowed) {
-    return c.json(
-      { ok: false, error: { code: 'TOO_MANY_REQUESTS', message: 'Too many recovery attempts. Please try again later.' } },
-      429,
-    );
+    return apiError(c, 429, 'TOO_MANY_REQUESTS', 'Too many recovery attempts. Please try again later.');
   }
 
   const user = await queryFirst<{ id: string; email: string }>(
@@ -139,10 +125,7 @@ authRouter.post('/recovery-verify', zValidator('json', RecoveryVerifySchema), as
     const parsed = RecoveryTokenPayloadSchema.safeParse(raw);
 
     if (!parsed.success || parsed.data.purpose !== JWT_PURPOSE_ADMIN_RECOVER) {
-      return c.json(
-        { ok: false, error: { code: 'INVALID_TOKEN', message: 'Invalid recovery token' } },
-        401,
-      );
+      return apiError(c, 401, 'INVALID_TOKEN', 'Invalid recovery token');
     }
 
     const user = await queryFirst<{ id: string; email: string; global_role: string }>(
@@ -152,19 +135,13 @@ authRouter.post('/recovery-verify', zValidator('json', RecoveryVerifySchema), as
     );
 
     if (!user) {
-      return c.json(
-        { ok: false, error: { code: 'ACCESS_DENIED', message: 'Access denied' } },
-        401,
-      );
+      return apiError(c, 401, 'ACCESS_DENIED', 'Access denied');
     }
 
     const session = await createAdminSessionByEmail(c.env, parsed.data.email);
 
     if (!session.ok) {
-      return c.json(
-        { ok: false, error: { code: 'SESSION_FAILED', message: 'Failed to create session' } },
-        500,
-      );
+      return apiError(c, 500, 'SESSION_FAILED', 'Failed to create session');
     }
 
     await logAudit(c.env, {
@@ -183,9 +160,6 @@ authRouter.post('/recovery-verify', zValidator('json', RecoveryVerifySchema), as
       },
     });
   } catch {
-    return c.json(
-      { ok: false, error: { code: 'INVALID_TOKEN', message: 'Invalid or expired recovery link' } },
-      401,
-    );
+    return apiError(c, 401, 'INVALID_TOKEN', 'Invalid or expired recovery link');
   }
 });

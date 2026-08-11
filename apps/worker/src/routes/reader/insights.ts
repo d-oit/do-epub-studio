@@ -6,6 +6,7 @@ import { queryAll, execute } from '../../db/client';
 import { ReadingInsightSyncSchema } from '@do-epub-studio/schema';
 import { readerAuth } from '../../middleware/auth';
 import { assertBookAccess } from '../../lib/tenant-isolation';
+import { getRequestTraceId } from '../../lib/api-error';
 import { ForbiddenError, AppError } from '../../lib/http-errors';
 import { createRequestContext, logRequestError } from '../../lib/observability';
 
@@ -26,7 +27,7 @@ insightsRouter.get('/:bookId/insights', readerAuth, async (c) => {
   const bookId = c.req.param('bookId');
   const auth = c.get('auth');
 
-  const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx);
+  const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx, getRequestTraceId(c));
   if (mismatch) return mismatch.response;
 
   const rows = await queryAll<InsightRow>(
@@ -65,7 +66,7 @@ insightsRouter.post('/:bookId/insights/sync', readerAuth, zValidator('json', Rea
   const auth = c.get('auth');
   const body = c.req.valid('json');
 
-  const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx);
+  const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx, getRequestTraceId(c));
   if (mismatch) return mismatch.response;
 
   if (!auth.capabilities.canRead) {

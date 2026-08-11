@@ -281,4 +281,56 @@ describe('Telemetry API', () => {
 
     vi.doUnmock('../db/client');
   });
+
+  it('should persist sanitized (bounded, hex-only) client trace/span ids', async () => {
+    // O4: raw client traceId/spanId must never reach the DB verbatim.
+    // Re-import the app after vi.doMock('<db/client>') to exercise the module
+    // loading boundary, mirroring the persistence-failure test above.
+    const insertArgs: unknown[][] = [];
+    const mockExecute = vi.fn().mockImplementation((_env: unknown, _sql: unknown, args: unknown[]) => {
+      insertArgs.push(args);
+      return Promise.resolve();
+    });
+    vi.doMock('../db/client', () => ({ execute: mockExecute }));
+
+    const { app: freshApp } = await import('../app');
+
+    // 30 hex chars + junk, repeated 5x → 150 hex chars after filtering, then truncated to 64.
+    const garbageTraceId = ('zzz' + 'a'.repeat(30) + '!@#').repeat(5);
+    const payload = {
+      logs: [
+        {
+          level: 'info',
+          traceId: garbageTraceId,
+          spanId: 'abc!123#xyz',
+          event: 'test_sanitize_persist',
+        },
+      ],
+    };
+
+    const ctx = createMockExecutionCtx();
+    const res = await freshApp.fetch(
+      new Request('http://localhost/api/telemetry', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      }),
+      { DB: { prepare: vi.fn().mockReturnThis(), bind: vi.fn().mockReturnThis(), all: vi.fn() } },
+      ctx,
+    );
+
+    expect(res.status).toBe(202);
+
+    // Allow microtasks to flush for the waitUntil promise
+    await new Promise((r) => setTimeout(r, 10));
+
+    expect(insertArgs).toHaveLength(1);
+    const [, , traceId, spanId] = insertArgs[0] as [unknown, unknown, string, string];
+    expect(traceId).toMatch(/^[0-9a-fA-F]+$/);
+    expect(traceId).toHaveLength(64); // 150 hex filtered from garbage, truncated to 64
+    expect(spanId).toMatch(/^[0-9a-fA-F]+$/);
+    expect(spanId).toBe('abc123'); // site non-hex stripped
+
+    vi.doUnmock('../db/client');
+  });
 });

@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { apiRequest } from '../../../../lib/api';
+import { logThrottled } from '../../../../lib/client-logger';
+import { createTraceId, createSpanId } from '@do-epub-studio/shared';
 
 interface NotificationBadgeProps {
   t: (key: string) => string;
@@ -15,8 +17,19 @@ export function NotificationBadge({ t, onClick }: NotificationBadgeProps) {
       if (typeof data.count === 'number') {
         setCount(data.count);
       }
-    } catch {
-      // Silently fail — badge stays at 0
+    } catch (err) {
+      // Surface poll failures (O5) without changing the badge UX: the badge
+      // stays at 0, but the failure is observable at most once per minute.
+      logThrottled('notifications.poll_failed', {
+        level: 'warn',
+        traceId: createTraceId(),
+        spanId: createSpanId(),
+        event: 'notifications.poll_failed',
+        error: {
+          name: 'PollError',
+          message: err instanceof Error ? err.message : String(err),
+        },
+      });
     }
   }, []);
 

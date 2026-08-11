@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion -- test assertions */
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   ConflictType,
   ConflictResolutionStrategy,
@@ -11,7 +11,11 @@ import {
   clearResolvedConflicts,
   clearAllConflicts,
   hasPendingConflicts,
+  hydrateConflicts,
+  flushConflictWrites,
+  __clearConflictCache,
 } from './conflict-resolution';
+import { setTokenOverride, clearConflictsStore, getAllConflicts } from './db';
 
 vi.mock('../client-logger', () => ({
   logClientEvent: vi.fn(),
@@ -304,6 +308,77 @@ describe('Conflict Resolution', () => {
       expect(hasPendingConflicts('book-1')).toBe(true);
       expect(hasPendingConflicts('book-2')).toBe(true);
       expect(hasPendingConflicts('book-3')).toBe(false);
+    });
+  });
+
+  describe('conflict persistence (IndexedDB)', () => {
+    const TEST_TOKEN = 'test-session-token-for-conflicts';
+
+    beforeEach(async () => {
+      setTokenOverride(TEST_TOKEN);
+      __clearConflictCache();
+      clearAllConflicts();
+      await flushConflictWrites(); // drain any queued writes from prior tests
+      await clearConflictsStore();
+    });
+
+    afterEach(() => {
+      setTokenOverride(null);
+      __clearConflictCache();
+      clearAllConflicts();
+    });
+
+    it('round-trips a detected conflict through IndexedDB', async () => {
+      const conflict = detectConflict(
+        ConflictType.AnnotationEdit,
+        localVersion,
+        remoteVersion,
+        1000,
+        1000,
+        'book-1',
+        'annotation-1',
+      );
+      expect(conflict).not.toBeNull();
+      await flushConflictWrites();
+
+      // Fresh session: clear the in-memory Map, hydrated from the durable store.
+      __clearConflictCache();
+      await hydrateConflicts();
+
+      const pending = getPendingConflicts('book-1');
+      expect(pending).toHaveLength(1);
+      expect(pending[0]).toMatchObject({
+        type: ConflictType.AnnotationEdit,
+        bookId: 'book-1',
+        entityId: 'annotation-1',
+        resolved: false,
+      });
+      expect(pending[0].localVersion).toEqual(localVersion);
+      expect(pending[0].remoteVersion).toEqual(remoteVersion);
+    });
+
+    it('purges resolve + clear from the durable store', async () => {
+      const conflict = detectConflict(
+        ConflictType.ProgressUpdate,
+        localVersion,
+        remoteVersion,
+        2000,
+        2000,
+        'book-1',
+        'progress-1',
+      );
+      expect(conflict).not.toBeNull();
+
+      resolveManualConflict(conflict!.id, 'local');
+      clearResolvedConflicts('book-1');
+      await flushConflictWrites();
+
+      // Fresh session: a resolved-and-purged conflict must not resurrect.
+      __clearConflictCache();
+      await hydrateConflicts();
+      expect(getPendingConflicts('book-1')).toHaveLength(0);
+      // The durable surface is now empty too — resolve + clear purged it.
+      expect(await getAllConflicts()).toHaveLength(0);
     });
   });
 });

@@ -1,6 +1,7 @@
 import type { MiddlewareHandler } from 'hono';
 import type { Env } from '../lib/env';
 import { formatZodError } from '@do-epub-studio/shared';
+import { apiError } from '../lib/api-error';
 
 /**
  * Global middleware that reformats zod validation errors from zValidator
@@ -21,16 +22,7 @@ export const validationErrorFormatter: MiddlewareHandler<{ Bindings: Env }> = as
     // might have already set the response.
     if (body.success === false && body.error && typeof body.error === 'object' && 'issues' in (body.error as Record<string, unknown>)) {
       const err = body.error as { issues: Array<{ path: (string | number)[]; message: string }> };
-      c.res = c.json(
-        {
-          ok: false,
-          error: {
-            code: 'VALIDATION_ERROR',
-            message: formatZodError(err),
-          },
-        },
-        400,
-      );
+      c.res = apiError(c, 400, 'VALIDATION_ERROR', formatZodError(err));
       return;
     }
 
@@ -41,16 +33,7 @@ export const validationErrorFormatter: MiddlewareHandler<{ Bindings: Env }> = as
 
     const err = body.error;
     if (err && typeof err === 'object' && 'issues' in err && Array.isArray(err.issues)) {
-      c.res = c.json(
-        {
-          ok: false,
-          error: {
-            code: 'VALIDATION_ERROR',
-            message: formatZodError(err as { issues: Array<{ path: (string | number)[]; message: string }> }),
-          },
-        },
-        400,
-      );
+      c.res = apiError(c, 400, 'VALIDATION_ERROR', formatZodError(err as { issues: Array<{ path: (string | number)[]; message: string }> }));
     }
   } catch {
     // Response body is not parseable JSON — leave it as-is

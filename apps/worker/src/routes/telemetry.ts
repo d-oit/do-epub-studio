@@ -5,6 +5,7 @@ import type { RequestContext } from '../lib/observability';
 import { TelemetryPayloadSchema } from '@do-epub-studio/shared';
 import { scrub } from '../lib/redact';
 import { logAppError, logAppInfo, logAppWarn } from '../lib/observability';
+import { apiError } from '../lib/api-error';
 
 export const telemetryRouter = new Hono<{ Bindings: Env; Variables: { requestContext: RequestContext } }>();
 
@@ -12,17 +13,13 @@ telemetryRouter.post(
   '/telemetry',
   zValidator('json', TelemetryPayloadSchema, (result, c) => {
     if (!result.success) {
-      return c.json(
-        {
-          ok: false,
-          error: {
-            code: 'VALIDATION_ERROR',
-            message: result.error.issues
-              .map((i) => (i.path.length > 0 ? i.path.join('.') + ': ' : '') + i.message)
-              .join('; '),
-          },
-        },
+      return apiError(
+        c,
         400,
+        'VALIDATION_ERROR',
+        result.error.issues
+          .map((i) => (i.path.length > 0 ? i.path.join('.') + ': ' : '') + i.message)
+          .join('; '),
       );
     }
   }),
@@ -106,8 +103,8 @@ async function persistTelemetry(
         [
           crypto.randomUUID(),
           log.level,
-          log.traceId,
-          log.spanId ?? null,
+          sanitizeTraceId(log.traceId),
+          sanitizeTraceId(log.spanId ?? null),
           log.event,
           log.metadata ? JSON.stringify(scrub(log.metadata)) : null,
           log.error ? JSON.stringify(scrub(log.error)) : null,

@@ -8,6 +8,7 @@ import {
   mockValidateGrant, mockCreateSession, mockValidateSessionMod,
 } from './fixtures';
 import { app } from '../app';
+import { checkRateLimitDO } from '../lib/rate-limit-client';
 import {
   AccessRequestSchema, RecoveryRequestSchema, RecoveryVerifySchema,
   CreateBookSchema, UpdateBookSchema,
@@ -133,6 +134,9 @@ describe('Worker route envelope contract', () => {
     expect(typeof err.code).toBe('string');
     expect(typeof err.message).toBe('string');
     expect(err.code).toBe('SESSION_INVALID');
+    // O7: inline error envelopes correlate with the response's trace header.
+    expect(err.traceId).toBe(res.headers.get('X-Trace-Id'));
+    expect(err.traceId).toBeTruthy();
   });
 
   it('POST /api/access/request — 200 carries { ok: true, data: { sessionToken } }', async () => {
@@ -175,5 +179,35 @@ describe('Worker route envelope contract', () => {
     // validationErrorFormatter normalises zValidator errors; accept either format
     const body: Record<string, unknown> = await res.json();
     expect(body.ok === false || body.success === false).toBe(true);
+    if (body.ok === false) {
+      // O7: the rewritten VALIDATION_ERROR envelope carries the request traceId.
+      const err = body.error as { traceId?: string };
+      expect(err.traceId).toBe(res.headers.get('X-Trace-Id'));
+    }
+  });
+
+  it('POST /api/access/request — 429 rate-limit envelope carries traceId', async () => {
+    vi.mocked(checkRateLimitDO).mockResolvedValue({
+      allowed: false,
+      remaining: 0,
+      resetAt: Date.now() + 30_000,
+    });
+
+    const res = await app.fetch(
+      new Request('http://localhost/api/access/request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'CF-Connecting-IP': '9.9.9.9' },
+        body: JSON.stringify({ bookSlug: 'test-book', email: 'r@example.com', password: 'pw' }),
+      }),
+      env, makePassThroughContext(),
+    );
+    expect(res.status).toBe(429);
+    const body: ApiResponse = await res.json();
+    expect(body.ok).toBe(false);
+    const err = body.error as ApiError;
+    expect(err.code).toBe('TOO_MANY_REQUESTS');
+    // O7: rate-limit envelope built without a Hono `c` still carries the traceId.
+    expect(err.traceId).toBe(res.headers.get('X-Trace-Id'));
+    expect(err.traceId).toBeTruthy();
   });
 });

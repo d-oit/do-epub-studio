@@ -38,6 +38,7 @@ export function getRateLimitConfig(path: string): { config: RateLimitConfig; cat
 export async function applyRateLimit(
   request: Request,
   env: Env,
+  traceId?: string,
 ): Promise<{ response?: Response; metadata?: RateLimitMetadata }> {
   const url = new URL(request.url);
   const path = url.pathname;
@@ -64,6 +65,7 @@ export async function applyRateLimit(
           error: {
             code: 'TOO_MANY_REQUESTS',
             message: 'Rate limit exceeded. Please try again later.',
+            traceId,
           },
         },
         {
@@ -95,6 +97,7 @@ export async function applyRateLimit(
             error: {
               code: 'TOO_MANY_REQUESTS',
               message: 'Rate limit exceeded. Please try again later.',
+              traceId,
             },
           },
           {

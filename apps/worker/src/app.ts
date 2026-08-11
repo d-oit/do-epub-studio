@@ -44,7 +44,7 @@ app.use('*', bodySizeLimit());
 
 // Rate Limiting
 app.use('*', async (c, next) => {
-  const { response: rateLimitResponse, metadata } = await applyRateLimit(c.req.raw, c.env);
+  const { response: rateLimitResponse, metadata } = await applyRateLimit(c.req.raw, c.env, c.get('requestContext').traceId);
   if (rateLimitResponse) {
     return rateLimitResponse;
   }

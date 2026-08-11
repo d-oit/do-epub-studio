@@ -5,6 +5,7 @@ import { queryFirst, queryAll } from '../db/client';
 import type { AuthContext } from '../auth/middleware';
 import { readerAuth } from '../middleware/auth';
 import { assertBookAccess } from '../lib/tenant-isolation';
+import { getRequestTraceId } from '../lib/api-error';
 import { NotFoundError, ForbiddenError } from '../lib/http-errors';
 import { LibraryQuerySchema } from '@do-epub-studio/schema';
 
@@ -71,7 +72,7 @@ booksRouter.get('/:id', readerAuth, async (c) => {
   const id = c.req.param('id');
   const auth = c.get('auth');
 
-  const mismatch = await assertBookAccess(c.env, auth, id, c.executionCtx);
+  const mismatch = await assertBookAccess(c.env, auth, id, c.executionCtx, getRequestTraceId(c));
   if (mismatch) return mismatch.response;
 
   const book = await queryFirst(
@@ -111,7 +112,7 @@ booksRouter.post('/:id/file-url', readerAuth, async (c) => {
   const auth = c.get('auth');
   const { generateSignedUrl } = await import('../storage/signed-url');
 
-  const mismatch = await assertBookAccess(c.env, auth, id, c.executionCtx);
+  const mismatch = await assertBookAccess(c.env, auth, id, c.executionCtx, getRequestTraceId(c));
   if (mismatch) return mismatch.response;
 
   if (!auth.capabilities.canRead) {

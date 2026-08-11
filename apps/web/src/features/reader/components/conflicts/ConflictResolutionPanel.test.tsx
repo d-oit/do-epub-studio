@@ -58,18 +58,19 @@ describe('ConflictResolutionPanel', () => {
     expect(container.innerHTML).toBe('');
   });
 
-  it('renders unresolved conflict', () => {
+  it('renders unresolved conflict', async () => {
     seedConflict();
     render(<ConflictResolutionPanel />);
+    // Hydration (IndexedDB read) is now async (Plan 228 F2), so await the effect.
     expect(
-      screen.getByText('reader.conflicts.summary', { exact: true }),
+      await screen.findByText('reader.conflicts.summary', { exact: true }),
     ).toBeInTheDocument();
   });
 
-  it('keep-local resolves a conflict', () => {
+  it('keep-local resolves a conflict', async () => {
     const conflictId = seedConflict();
     render(<ConflictResolutionPanel />);
-    const keepLocalBtn = screen.getByRole('button', {
+    const keepLocalBtn = await screen.findByRole('button', {
       name: /reader\.conflicts\.keepLocal/i,
     });
     fireEvent.click(keepLocalBtn);
@@ -78,10 +79,10 @@ describe('ConflictResolutionPanel', () => {
     expect(updated?.resolution).toBe('local');
   });
 
-  it('keep-remote resolves a conflict', () => {
+  it('keep-remote resolves a conflict', async () => {
     const conflictId = seedConflict();
     render(<ConflictResolutionPanel />);
-    const keepRemoteBtn = screen.getByRole('button', {
+    const keepRemoteBtn = await screen.findByRole('button', {
       name: /reader\.conflicts\.keepRemote/i,
     });
     fireEvent.click(keepRemoteBtn);
@@ -90,10 +91,10 @@ describe('ConflictResolutionPanel', () => {
     expect(updated?.resolution).toBe('remote');
   });
 
-  it('dismiss clears a conflict', () => {
+  it('dismiss clears a conflict', async () => {
     const conflictId = seedConflict();
     render(<ConflictResolutionPanel />);
-    const dismissBtn = screen.getByRole('button', { name: /reader\.conflicts\.dismiss/i });
+    const dismissBtn = await screen.findByRole('button', { name: /reader\.conflicts\.dismiss/i });
     fireEvent.click(dismissBtn);
     const updated = useReaderStore.getState().conflicts.find((c) => c.id === conflictId);
     expect(updated?.resolved).toBe(true);

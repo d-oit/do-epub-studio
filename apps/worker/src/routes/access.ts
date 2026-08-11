@@ -11,6 +11,7 @@ import { sign, verify } from 'hono/jwt';
 import { checkRateLimitDO, deleteRateLimitKey } from '../lib/rate-limit-client';
 import { queryFirst } from '../db/client';
 import { createEmailTransport } from '../lib/email-transport';
+import { apiError } from '../lib/api-error';
 
 export const accessRouter = new Hono<{ Bindings: Env; Variables: { requestContext: RequestContext } }>();
 
@@ -24,13 +25,7 @@ accessRouter.post('/recovery-request', zValidator('json', RecoveryRequestSchema)
   });
 
   if (!rateLimit.allowed) {
-    return c.json(
-      {
-        ok: false,
-        error: { code: 'TOO_MANY_REQUESTS', message: 'Too many recovery attempts. Please try again later.' },
-      },
-      429,
-    );
+    return apiError(c, 429, 'TOO_MANY_REQUESTS', 'Too many recovery attempts. Please try again later.');
   }
 
   const book = await queryFirst<{ id: string; slug: string }>(
@@ -86,25 +81,13 @@ accessRouter.post('/verify-recovery', zValidator('json', RecoveryVerifySchema), 
     const parsed = RecoveryTokenPayloadSchema.safeParse(raw);
 
     if (!parsed.success || parsed.data.purpose !== JWT_PURPOSE_READER_RECOVER || !parsed.data.bookSlug) {
-      return c.json(
-        {
-          ok: false,
-          error: { code: 'INVALID_TOKEN', message: 'Invalid or expired recovery link' },
-        },
-        401,
-      );
+      return apiError(c, 401, 'INVALID_TOKEN', 'Invalid or expired recovery link');
     }
 
     const result = await validateGrant(c.env, parsed.data.bookSlug, parsed.data.email);
 
     if (!result.valid || !result.grant || !result.book) {
-      return c.json(
-        {
-          ok: false,
-          error: { code: 'ACCESS_DENIED', message: 'Access denied' },
-        },
-        401,
-      );
+      return apiError(c, 401, 'ACCESS_DENIED', 'Access denied');
     }
 
     const session = await createSession(c.env, result.book.id, parsed.data.email);
@@ -134,13 +117,7 @@ accessRouter.post('/verify-recovery', zValidator('json', RecoveryVerifySchema), 
       },
     });
   } catch {
-    return c.json(
-      {
-        ok: false,
-        error: { code: 'INVALID_TOKEN', message: 'Invalid or expired recovery link' },
-      },
-      401,
-    );
+    return apiError(c, 401, 'INVALID_TOKEN', 'Invalid or expired recovery link');
   }
 });
 
@@ -155,13 +132,7 @@ accessRouter.post('/request', zValidator('json', AccessRequestSchema), async (c)
   });
 
   if (!rateLimit.allowed) {
-    return c.json(
-      {
-        ok: false,
-        error: { code: 'TOO_MANY_REQUESTS', message: 'Too many login attempts. Please try again later.' },
-      },
-      429,
-    );
+    return apiError(c, 429, 'TOO_MANY_REQUESTS', 'Too many login attempts. Please try again later.');
   }
 
   // Check account lockout (triggered after 5 consecutive failures; lasts 15 minutes)
@@ -172,17 +143,7 @@ accessRouter.post('/request', zValidator('json', AccessRequestSchema), async (c)
 
   if (!lockoutCheck.allowed) {
     const retryAfter = Math.ceil((lockoutCheck.resetAt - Date.now()) / 1000);
-    return c.json(
-      {
-        ok: false,
-        error: {
-          code: 'ACCOUNT_LOCKED',
-          message: 'Account temporarily locked due to repeated failed login attempts. Please try again later.',
-        },
-      },
-      423,
-      { 'Retry-After': String(retryAfter) },
-    );
+    return apiError(c, 423, 'ACCOUNT_LOCKED', 'Account temporarily locked due to repeated failed login attempts. Please try again later.', { 'Retry-After': String(retryAfter) });
   }
 
   const result = await validateGrant(c.env, bookSlug, emailKey, password);
@@ -209,13 +170,7 @@ accessRouter.post('/request', zValidator('json', AccessRequestSchema), async (c)
       });
     }
 
-    return c.json(
-      {
-        ok: false,
-        error: { code: 'ACCESS_DENIED', message: 'Access denied' },
-      },
-      401,
-    );
+    return apiError(c, 401, 'ACCESS_DENIED', 'Access denied');
   }
 
   // Successful login — clear failure counter and any lingering lockout
@@ -268,35 +223,17 @@ accessRouter.post('/refresh', async (c) => {
   const result = await validateSession(c.env, token);
 
   if (!result.valid || !result.session) {
-    return c.json(
-      {
-        ok: false,
-        error: { code: 'SESSION_INVALID', message: 'Invalid session' },
-      },
-      401,
-    );
+    return apiError(c, 401, 'SESSION_INVALID', 'Invalid session');
   }
 
   if (!result.bookId) {
-    return c.json(
-      {
-        ok: false,
-        error: { code: 'SESSION_INVALID', message: 'Invalid session' },
-      },
-      401,
-    );
+    return apiError(c, 401, 'SESSION_INVALID', 'Invalid session');
   }
 
   // Security: Verify the grant is still valid before refreshing
   const grant = await getGrantByBookAndSession(c.env, result.bookId, result.session.email);
   if (!grant || grant.revoked_at || (grant.expires_at && new Date(grant.expires_at) < new Date())) {
-    return c.json(
-      {
-        ok: false,
-        error: { code: 'ACCESS_DENIED', message: 'Access has been revoked or expired' },
-      },
-      403,
-    );
+    return apiError(c, 403, 'ACCESS_DENIED', 'Access has been revoked or expired');
   }
 
   const newSession = await createSession(c.env, result.bookId, result.session.email);
@@ -319,13 +256,7 @@ accessRouter.get('/validate', zValidator('query', ValidateQuerySchema), async (c
   const sessionResult = await validateSession(c.env, token);
 
   if (!sessionResult.valid || !sessionResult.session) {
-    return c.json(
-      {
-        ok: false,
-        error: { code: 'SESSION_INVALID', message: 'Invalid session' },
-      },
-      401,
-    );
+    return apiError(c, 401, 'SESSION_INVALID', 'Invalid session');
   }
 
   const grant = await getGrantByBookAndSession(c.env, bookId, sessionResult.session.email);
@@ -360,13 +291,7 @@ accessRouter.get('/validate-all', async (c) => {
   const sessionResult = await validateSession(c.env, token);
 
   if (!sessionResult.valid || !sessionResult.session) {
-    return c.json(
-      {
-        ok: false,
-        error: { code: 'SESSION_INVALID', message: 'Invalid session' },
-      },
-      401,
-    );
+    return apiError(c, 401, 'SESSION_INVALID', 'Invalid session');
   }
 
   const grants = await getGrantsBySession(c.env, sessionResult.session.email);

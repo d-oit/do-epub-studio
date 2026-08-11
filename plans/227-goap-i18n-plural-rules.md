@@ -1,7 +1,7 @@
 # GOAP 227: Wire Plural Rules Into Count Messages (ADR-199 follow-up)
 
 **Date:** 2026-08-11
-**Status:** In PR (one PR, atomic commits per logical change)
+**Status:** ✅ COMPLETED (merged as PR #964, commit 5a03f4b)
 **Baseline:** `main` @ `d5f5e66` (post GOAP-226)
 **Related:** ADR-199, Plan 214-R8, Plan 226, `plans/226-goap-verify-gap-closure.md`
 
@@ -54,8 +54,8 @@ the documented option if the plural-key surface grows (recorded in ADR-199).
 
 ## 3. Acceptance Criteria
 
-- [ ] `translate('comment.replies', 'ru', { count: 3 })` → `3 ответа` (few), `count: 5` → `5 ответов` (many); ar zero/one/two correct
-- [ ] All 13 locales have plural variants for `comment.replies` + `offline.pendingSync`; no `{{count}}` remains
-- [ ] Parity test passes with shape parity; new string key with `{count}` outside the allowlist fails CI
-- [ ] Existing i18n tests (parity, formatting, rendered-text) green
-- [ ] `./scripts/quality_gate.sh` passes; PR CI green
+- [x] `translate('comment.replies', 'ru', { count: 3 })` → `3 ответа` (few), `count: 5` → `5 ответов` (many); ar zero/one/two correct
+- [x] All 13 locales have plural variants for `comment.replies` + `offline.pendingSync`; no `{{count}}` remains
+- [x] Parity test passes with shape parity; new string key with `{count}` outside the allowlist fails CI
+- [x] Existing i18n tests (parity, formatting, rendered-text) green
+- [x] `./scripts/quality_gate.sh` passes; PR CI green

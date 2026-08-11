@@ -10,6 +10,7 @@ import {
   CommentUpdateSchema,
 } from '@do-epub-studio/shared';
 import { parseLocatorRow, assertBookAccess } from '../lib/tenant-isolation';
+import { getRequestTraceId } from '../lib/api-error';
 import { readerAuth } from '../middleware/auth';
 import { createReplyNotification } from './notifications';
 import { NotFoundError, ForbiddenError, AppError } from '../lib/http-errors';
@@ -34,7 +35,7 @@ commentsRouter.get('/books/:bookId/comments', readerAuth, async (c) => {
   const bookId = c.req.param('bookId');
   const auth = c.get('auth');
 
-  const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx);
+  const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx, getRequestTraceId(c));
   if (mismatch) return mismatch.response;
 
   const comments = await queryAll<CommentRow>(
@@ -73,7 +74,7 @@ commentsRouter.post('/books/:bookId/comments', readerAuth, zValidator('json', Co
   const bookId = c.req.param('bookId');
   const auth = c.get('auth');
 
-  const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx);
+  const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx, getRequestTraceId(c));
   if (mismatch) return mismatch.response;
 
   // Use session capabilities if bookId matches session, otherwise re-fetch
@@ -177,7 +178,7 @@ commentsRouter.patch('/comments/:commentId', readerAuth, zValidator('json', Comm
     throw new NotFoundError('Comment');
   }
 
-  const mismatch = await assertBookAccess(c.env, auth, comment.book_id, c.executionCtx);
+  const mismatch = await assertBookAccess(c.env, auth, comment.book_id, c.executionCtx, getRequestTraceId(c));
   if (mismatch) return mismatch.response;
 
   if (comment.user_email !== auth.email) {
@@ -232,7 +233,7 @@ commentsRouter.delete('/comments/:commentId', readerAuth, async (c) => {
     throw new NotFoundError('Comment');
   }
 
-  const mismatch = await assertBookAccess(c.env, auth, comment.book_id, c.executionCtx);
+  const mismatch = await assertBookAccess(c.env, auth, comment.book_id, c.executionCtx, getRequestTraceId(c));
   if (mismatch) return mismatch.response;
 
   if (comment.user_email !== auth.email) {
