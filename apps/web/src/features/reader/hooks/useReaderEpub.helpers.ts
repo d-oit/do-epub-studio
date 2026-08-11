@@ -112,6 +112,37 @@ export function applyFixedLayoutZoomStyle(
 }
 
 /**
+ * Fixed-layout content hooks: viewport-meta injection and overflow lock.
+ * Lives here (not inline in `useReaderEpub`) so all fixed-layout DOM
+ * injection is in one module with `applyFixedLayoutZoomStyle`.
+ */
+export function createFixedLayoutContentHooks(
+  fixedLayoutViewport: string | null | undefined,
+): {
+  applyViewportMeta: (contents: Contents) => void;
+  lockOverflow: (contents: Contents) => void;
+} {
+  return {
+    applyViewportMeta: (contents: Contents) => {
+      const doc = contents.document;
+      if (!doc) return;
+      let existing = doc.querySelector('meta[name="viewport"]');
+      if (!existing) {
+        existing = doc.createElement('meta');
+        existing.setAttribute('name', 'viewport');
+        doc.head?.appendChild(existing);
+      }
+      existing.setAttribute('content', fixedLayoutViewport ?? '');
+    },
+    lockOverflow: (contents: Contents) => {
+      if (contents.document?.documentElement) {
+        contents.document.documentElement.style.setProperty('overflow', 'hidden', 'important');
+      }
+    },
+  };
+}
+
+/**
  * Factory for the fixed-layout zoom content hook. For every fresh content
  * document it injects a `transform: scale()` stylesheet — the current zoom is
  * read from `zoomRef` (kept fresh by the reader hook's effect) so changes

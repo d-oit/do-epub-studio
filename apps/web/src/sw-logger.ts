@@ -76,6 +76,35 @@ export interface SwLogOptions {
   sink?: Pick<Console, 'log' | 'warn' | 'error'>;
 }
 
+/** Resolves the header source from an optional request/headers option. */
+function resolveHeaderSource(
+  options: SwLogOptions,
+): TraceHeaderSource | undefined {
+  const source = options.request;
+  if (!source) return undefined;
+  return 'headers' in source ? source.headers : source;
+}
+
+/**
+ * Reads a traceparent/x-trace-id from the initiating request's headers.
+ * Returns the value to attach to the log line, or undefined to omit it.
+ */
+function extractTraceHeader(headers: TraceHeaderSource | undefined): string | undefined {
+  if (!headers || typeof headers.get !== 'function') return undefined;
+  return headers.get(TRACEPARENT_HEADER) ?? headers.get(TRACE_ID_HEADER) ?? undefined;
+}
+
+/** Routes a serialized line to the correct console level. */
+function emitLine(
+  sink: Pick<Console, 'log' | 'warn' | 'error'>,
+  level: SwLogLevel,
+  line: string,
+): void {
+  if (level === 'error') sink.error(line);
+  else if (level === 'warning') sink.warn(line);
+  else sink.log(line);
+}
+
 /**
  * Emit a single redacted JSON log line. Never throws — logging must not break
  * request/sync handling, and secrets must never reach the output.
@@ -91,17 +120,8 @@ export function swLogEvent(
 
   // Trace propagation: pull a traceparent/x-trace-id from the initiating
   // request's headers when available; otherwise omit the field entirely.
-  const source = options.request ?? undefined;
-  const headers = source && 'headers' in source ? source.headers : source;
-  if (headers && typeof headers.get === 'function') {
-    const traceHeader =
-      headers.get(TRACEPARENT_HEADER) ?? headers.get(TRACE_ID_HEADER) ?? undefined;
-    if (traceHeader) body.traceHeader = traceHeader;
-  }
+  const traceHeader = extractTraceHeader(resolveHeaderSource(options));
+  if (traceHeader) body.traceHeader = traceHeader;
 
-  const line = JSON.stringify(redactLog({ ...body, ...extras }));
-
-  if (level === 'error') sink.error(line);
-  else if (level === 'warning') sink.warn(line);
-  else sink.log(line);
+  emitLine(sink, level, JSON.stringify(redactLog({ ...body, ...extras })));
 }

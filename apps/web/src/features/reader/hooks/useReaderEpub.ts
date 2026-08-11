@@ -17,7 +17,7 @@ import {
 } from '../../../stores';
 import { useTranslation } from '../../../hooks/useTranslation';
 import { createEpubAnnotationAdapter, type AnnotationAdapter, type HighlightRecord, type CommentRecord } from '@do-epub-studio/reader-core';
-import { applyFixedLayoutZoomStyle, createFixedLayoutZoomHook, createRelocatedSetup, createThemeApplier, isSystemDark } from './useReaderEpub.helpers';
+import { applyFixedLayoutZoomStyle, createFixedLayoutContentHooks, createFixedLayoutZoomHook, createRelocatedSetup, createThemeApplier, isSystemDark } from './useReaderEpub.helpers';
 import { applyDirectionAndWritingMode, type TocItem, type BookInfo } from '../lib/epub-init';
 import { PrefetchManager, type SpineItem } from '../../../lib/prefetch-manager';
 
@@ -198,27 +198,11 @@ export function useReaderEpub(
         rendition.hooks.content.register(baseSanitizer);
 
         if (fixedLayout) {
+          const contentHooks = createFixedLayoutContentHooks(fixedLayoutViewport);
           if (fixedLayoutViewport) {
-            const viewportValue = fixedLayoutViewport;
-            rendition.hooks.content.register((contents: Contents) => {
-              const doc = contents.document;
-              if (doc) {
-                let existing = doc.querySelector('meta[name="viewport"]');
-                if (!existing) {
-                  existing = doc.createElement('meta');
-                  existing.setAttribute('name', 'viewport');
-                  doc.head?.appendChild(existing);
-                }
-                existing.setAttribute('content', viewportValue);
-              }
-            });
+            rendition.hooks.content.register(contentHooks.applyViewportMeta);
           }
-          rendition.hooks.content.register((contents: Contents) => {
-            const doc = contents.document;
-            if (doc?.documentElement) {
-              doc.documentElement.style.setProperty('overflow', 'hidden', 'important');
-            }
-          });
+          rendition.hooks.content.register(contentHooks.lockOverflow);
           // Apply the user-chosen zoom to every fresh content document.
           // The current zoom is read from `zoomRef` (kept fresh by the effect
           // above) so changes propagate via the spread re-display.
