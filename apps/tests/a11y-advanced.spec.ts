@@ -60,6 +60,10 @@ test.describe('Advanced accessibility — ARIA landmarks', () => {
     await page.goto('/login');
     const mainLandmark = page.locator('main, [role="main"]');
     const navLandmark = page.locator('nav, [role="navigation"]');
+    // Wait for the SPA to hydrate before counting: the app renders <main>
+    // synchronously on mount, so counting immediately after goto races
+    // React hydration on slow CI runners (issue #957 — flaky scheduled E2E).
+    await expect(mainLandmark.or(navLandmark).first()).toBeAttached({ timeout: 30_000 });
     const hasMain = await mainLandmark.count().catch(() => 0);
     const hasNav = await navLandmark.count().catch(() => 0);
     expect(hasMain + hasNav).toBeGreaterThanOrEqual(1);
