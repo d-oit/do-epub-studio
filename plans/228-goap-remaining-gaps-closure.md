@@ -1,7 +1,7 @@
 # GOAP 228: Close Remaining Audit Gaps (O4/O5/O7 residuals + F2 conflict persistence) & Archive Closed Plans
 
 **Date:** 2026-08-11
-**Status:** ✅ COMPLETED (PR #965)
+**Status:** ✅ COMPLETED (merged as PR #965, commit ab3ee7c)
 **Baseline:** `main` @ `5a03f4b` (post-GOAP-227, PR #964)
 **Related:** Plans 212, 214, 215, 221–227; ADR-005, ADR-212, ADR-214
 
