@@ -1,7 +1,7 @@
 # GOAP 226: Verify-Driven Gap Closure — Remaining Implementable Audit Items
 
 **Date:** 2026-08-11
-**Status:** In PR (one PR, atomic commits per slice)
+**Status:** ✅ COMPLETED (merged as PR #958, commit d5f5e66)
 **Baseline:** `main` @ `2bbcbf4` (post GOAP-225)
 **Method:** 3-scout parallel verification of plans 212/214/215/221–224 against
 source (status lines treated as untrusted per GOAP-225), then a 6-slice
