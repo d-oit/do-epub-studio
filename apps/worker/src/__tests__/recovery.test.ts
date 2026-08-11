@@ -11,6 +11,14 @@ import {
 import { app } from '../app';
 import { sign } from 'hono/jwt';
 import { JWT_PURPOSE_READER_RECOVER, JWT_PURPOSE_ADMIN_RECOVER } from '@do-epub-studio/schema';
+import { TRACE_HEADER } from '@do-epub-studio/shared';
+
+// Capture recovery-emails to assert trace-context threading (Plan 214 R3).
+// Default to a no-op transport so existing tests are unaffected.
+vi.mock('../lib/email-transport', () => ({
+  createEmailTransport: vi.fn(() => ({ send: vi.fn().mockResolvedValue(undefined) })),
+}));
+import { createEmailTransport } from '../lib/email-transport';
 
 describe('Access Recovery Routes', () => {
   const env = makeEnv();
@@ -57,6 +65,34 @@ describe('Access Recovery Routes', () => {
       expect(res.status).toBe(200);
       expect(body.ok).toBe(true);
       // Audit log check would happen here if we had a spy on logAudit
+    });
+
+    it('threads the request trace context into the recovery email send', async () => {
+      mockQueryFirst.mockResolvedValue({ id: 'book-1', slug: 'test-book' });
+      mockGetGrantByBookAndSession.mockResolvedValue({
+        id: 'grant-1',
+        book_id: 'book-1',
+        email: 'reader@example.com',
+        revoked_at: null,
+        expires_at: null,
+      });
+
+      const captureSend = vi.fn().mockResolvedValue(undefined);
+      vi.mocked(createEmailTransport).mockReturnValue({ send: captureSend });
+
+      const res = await app.fetch(new Request('http://localhost/api/access/recovery-request', {
+        method: 'POST',
+        body: JSON.stringify(validPayload),
+        headers: { 'Content-Type': 'application/json', [TRACE_HEADER]: 'deadbeef-1234' },
+      }), env, makePassThroughContext());
+
+      expect(res.status).toBe(200);
+
+      // The recovery email send receives the request's trace context (Plan 214 R3).
+      expect(captureSend).toHaveBeenCalledTimes(1);
+      const message = captureSend.mock.calls[0][0] as { context?: { traceId: string; spanId?: string } };
+      expect(message.context).toBeDefined();
+      expect(message.context?.traceId).toBe('deadbeef-1234');
     });
   });
 

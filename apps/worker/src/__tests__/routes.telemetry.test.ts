@@ -201,6 +201,43 @@ describe('Telemetry API', () => {
     expect(logString).toContain('[REDACTED]');
   });
 
+  it('should emit telemetry.dropped when the client reports drop pressure', async () => {
+    const payload = {
+      dropped: 7,
+      logs: [
+        { level: 'info', traceId: 'trace-drop', event: 'buffer_overflow', metadata: { key: 'val' } },
+      ],
+    };
+
+    const ctx = createMockExecutionCtx();
+    const res = await app.fetch(
+      new Request('http://localhost/api/telemetry', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      }),
+      {},
+      ctx,
+    );
+
+    // Fail-open: drop pressure never rejects the request.
+    expect(res.status).toBe(202);
+    const body = await res.json();
+    assertOk(body);
+
+    // drop pressure routes through logAppWarn → console.warn
+    expect(console.warn).toHaveBeenCalled();
+    const warnLogs = vi.mocked(console.warn).mock.calls
+      .map((call: unknown[]) => call[0] as string);
+    const dropLog = warnLogs.find((msg) => {
+      try { return (JSON.parse(msg) as Record<string, unknown>).event === 'telemetry.dropped'; }
+      catch { return false; }
+    });
+    expect(dropLog).toBeDefined();
+    const parsed = JSON.parse(dropLog ?? '{}') as Record<string, unknown>;
+    expect((parsed.metadata as Record<string, unknown>).dropped).toBe(7);
+  });
+
   it('should emit telemetry.persistence.failed on DB error and still return 202', async () => {
     const mockExecute = vi.fn().mockRejectedValue(new Error('DB connection lost'));
     vi.doMock('../db/client', () => ({ execute: mockExecute }));

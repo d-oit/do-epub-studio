@@ -27,8 +27,24 @@ telemetryRouter.post(
     }
   }),
   (c) => {
-    const { logs } = c.req.valid('json');
+    const { logs, dropped } = c.req.valid('json');
     const ingestCtx = c.get('requestContext');
+
+    // Surface client-side drop pressure (Plan 212 O3): the client logger's
+    // bounded buffer may drop entries when it overflows. Emit a structured
+    // signal so the condition is observable. Fail-open — never throw for drops.
+    if (typeof dropped === 'number' && dropped > 0) {
+      logAppWarn(
+        'telemetry.dropped',
+        {
+          dropped,
+          _receivedAt: new Date().toISOString(),
+          ingestTraceId: ingestCtx.traceId,
+          ingestSpanId: ingestCtx.spanId,
+        },
+        ingestCtx,
+      );
+    }
 
     // Persist telemetry events to the database asynchronously
     const persistPromise = persistTelemetry(c.env, logs, ingestCtx);

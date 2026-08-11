@@ -6,6 +6,12 @@ export interface EmailMessage {
   subject: string;
   text: string;
   html?: string;
+  /**
+   * Optional request trace context (Plan 214 R3). Purely tracing plumbing: the
+   * send/fallback logs inherit the initiating request's trace ids instead of
+   * minting an unrelated trace. Never changes transport behavior.
+   */
+  context?: { traceId: string; spanId?: string };
 }
 
 export interface EmailTransport {
@@ -14,11 +20,15 @@ export interface EmailTransport {
 
 class LoggingEmailTransport implements EmailTransport {
   send(message: EmailMessage): Promise<void> {
-    logAppInfo('email.send', {
-      to: message.to,
-      subject: message.subject,
-      textPreview: message.text.slice(0, 200),
-    });
+    logAppInfo(
+      'email.send',
+      {
+        to: message.to,
+        subject: message.subject,
+        textPreview: message.text.slice(0, 200),
+      },
+      message.context,
+    );
     return Promise.resolve();
   }
 }
