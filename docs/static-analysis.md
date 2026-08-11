@@ -36,7 +36,10 @@ what local ESLint does **not** cover:
 `apps/**`, `worker/**`, and `packages/**` are excluded from Codacy's
 engines (`.codacy.yml` `exclude_paths`) so the lint pipeline is the
 single source of truth for that source. Codacy acting as an advisory
-layer on config/scripts is the intended scope.
+layer on config/scripts is the intended scope. This includes the
+OwlWatch engine — its findings over `apps/**`/`packages/**` are
+excluded the same way (added 2026-08-11 when OwlWatch began reporting
+on app source against the strict "0 new issues" ruleset).
 
 ## When to expand Codacy scope
 
