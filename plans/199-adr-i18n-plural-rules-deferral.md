@@ -1,9 +1,9 @@
 # ADR-199 — i18n Plural Rules: Deferral
 
-**Status:** Accepted (deferred)
+**Status:** Accepted (deferred) — follow-up implemented 2026-08-11 via GOAP-227: plural-category variants for count-bearing keys, resolved by `Intl.PluralRules` through the `pluralize()` helper (structured catalog values; no ICU MessageFormat migration). The full ICU MessageFormat option remains documented below if the plural-key surface grows.
 **Date:** 2026-07-29
 **Authors:** d-oit
-**Related:** Wave 2 i18n hardening (`feat/wave2-i18n-hardening`)
+**Related:** Wave 2 i18n hardening (`feat/wave2-i18n-hardening`), GOAP-227 (`plans/227-goap-i18n-plural-rules.md`)
 
 ---
 
@@ -39,9 +39,23 @@ Plural rules support is **deferred** pending a catalog format decision.
 
 ## Follow-up required
 
-Before adding any language that uses more than 2 plural categories, or before the `ar`/`ru`/`hi` locale share exceeds 5% of active users:
+Before adding any language that uses more than 2 plural categories, or before
+the `ar`/`ru`/`hi` locale share exceeds 5% of active users:
 
-1. Choose a plural-aware message format (recommendation: ICU MessageFormat via `@formatjs/intl-messageformat`, consistent with React Intl ecosystem).
-2. Migrate all `count`-bearing catalog keys across all 13 locales.
-3. Update `useTranslation` to call the ICU resolver.
-4. Add a CI check that rejects new catalog keys containing `{count}` without a plural form.
+1. ~~Choose a plural-aware message format~~ **Done (GOAP-227, 2026-08-11):**
+   structured plural-category values (`{ zero?, one?, two?, few?, many?,
+   other }`) in the existing catalogs, resolved via `Intl.PluralRules` through
+   `apps/web/src/lib/i18n-format.ts` `pluralize()` and `translate()` in
+   `apps/web/src/i18n/index.ts`. ICU MessageFormat via `@formatjs/...` remains
+   the fallback option if the plural-key surface outgrows the structured form.
+2. ~~Migrate all `count`-bearing catalog keys across all 13 locales~~ **Done
+   (GOAP-227):** `comment.replies` + `offline.pendingSync` migrated (also
+   fixed a `{{count}}` double-brace bug). Grammar-neutral count keys
+   (`relativeTime.*` abbreviated units, `*_with_count` badges) deliberately
+   stay as strings — units and parenthetical counts do not inflect.
+3. ~~Update `useTranslation` to call the ICU resolver~~ **Done (GOAP-227):**
+   `translate()` resolves plural objects with `pluralize()` for the `count`
+   param; no dependency added.
+4. ~~Add a CI check that rejects new catalog keys containing `{count}` without
+   a plural form~~ **Done (GOAP-227):** enforced in the i18n parity test with a
+   documented grammar-neutral allowlist.

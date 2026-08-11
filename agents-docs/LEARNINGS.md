@@ -262,3 +262,10 @@
 - **SW sync failure handling**: log first, then rethrow — rejecting the `waitUntil` promise lets Workbox/background-sync observe and retry. Swallowing sync failures in the SW makes offline writes silently lost.
 - **jsdom never fires focus/visibility transitions**: `ReadingTimer.startTicking()` only runs on a state transition, so accumulation tests deadlock under `vi.useFakeTimers` + fake-indexeddb. Drive the real interval via the private `startTicking` and mock the db module in-memory for deterministic unit tests.
 - **Over-500 source files can pre-exist your change**: `useReaderEpub.ts` was already 527 lines before F1 added 11. When a PR touches a file over the AGENTS.md 500-LOC cap, split it in the same PR (extract self-contained factories to a sibling `*.helpers.ts`), and re-run the hook's test suite — 538→470 with zero behavior change.
+
+### GOAP 227 — I18n Plural Rules Wiring (2026-08-11)
+
+- **ADR-199's follow-up is now implementable without the ICU migration**: the shipped `pluralize()` helper plus *structured catalog values* (`{ zero?, one?, two?, few?, many?, other }` on count-bearing keys only) closes the deferral — `translate()` resolves the object with `Intl.PluralRules` for the `count` param. No `@formatjs` dependency; the ICU option stays documented if the plural surface grows.
+- **Only 2 of the 7 `{count}` keys are true plurals**: `comment.replies` and `offline.pendingSync`. The other five (`relativeTime.*` abbreviated units, `*_with_count` parenthetical badges) are grammar-neutral — migrate only what inflects, and encode that as a parity-test allowlist so new `{count}` string keys fail CI unless they're neutral.
+- **`{{count}}` double braces were a latent rendering bug** in every locale's `comment.replies` (translate's `replaceAll('{count}', …)` leaves the outer braces → literal `{N}`). Dead keys hide bugs; the plural migration surfaced and fixed it.
+- **When a catalog's value type changes, the locale files need the type annotation too**: `export const en: Record<string, TranslationValue>` must be mirrored in all 12 locale files (`Record<TranslationKeys, TranslationValue>`) or the loader's widened type rejects them.
