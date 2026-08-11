@@ -1,7 +1,7 @@
-import type { TranslationKeys } from './en';
+import type { TranslationKeys, TranslationValue } from './en';
 import { APP_NAME } from '../config/app-identity';
 
-export const es: Record<TranslationKeys, string> = {
+export const es: Record<TranslationKeys, TranslationValue> = {
   'app.title': APP_NAME,
   'app.versionLabel': 'Versi\u00f3n',
   'login.subtitle': 'Inicia sesi\u00f3n para acceder a tus libros',
@@ -218,7 +218,7 @@ export const es: Record<TranslationKeys, string> = {
   'comment.delete': 'Eliminar',
   'comment.placeholder': 'Escribe un comentario...',
   'comment.resolved': 'Resuelto',
-  'comment.replies': '{{count}} respuestas',
+  'comment.replies': { one: '{count} respuesta', other: '{count} respuestas' },
   'comment.noComments': 'A\u00fan no hay comentarios',
   'comment.status.open': 'Abierto',
   'comment.status.resolved': 'Resuelto',
@@ -329,7 +329,7 @@ export const es: Record<TranslationKeys, string> = {
   'catalog.pagination.info': 'Mostrando {from}\u2013{to} de {total}',
   'offline.banner': 'Est\u00e1s sin conexi\u00f3n. Los cambios se sincronizar\u00e1n cuando te reconectes.',
   'offline.indicator': 'Sin conexi\u00f3n',
-  'offline.pendingSync': '{count} sincronizaci\u00f3n pendiente',
+  'offline.pendingSync': { one: '{count} sincronización pendiente', other: '{count} sincronizaciones pendientes' },
   'reader.bookmarks.title': 'Marcadores',
   'reader.bookmarks.addTitle': 'A\u00f1adir marcador en la posici\u00f3n actual',
   'reader.bookmarks.empty': 'A\u00fan no hay marcadores. Haz clic en el icono de marcador para guardar tu lugar.',

@@ -1,7 +1,7 @@
-import type { TranslationKeys } from './en';
+import type { TranslationKeys, TranslationValue } from './en';
 import { APP_NAME } from '../config/app-identity';
 
-export const ko: Record<TranslationKeys, string> = {
+export const ko: Record<TranslationKeys, TranslationValue> = {
   'app.title': APP_NAME,
   'app.versionLabel': '버전',
   'login.subtitle': '로그인하여 도서에 접근하세요',
@@ -218,7 +218,7 @@ export const ko: Record<TranslationKeys, string> = {
   'comment.delete': '삭제',
   'comment.placeholder': '댓글을 작성하세요...',
   'comment.resolved': '해결됨',
-  'comment.replies': '{{count}}개의 답글',
+  'comment.replies': { other: '{count}개의 답글' },
   'comment.noComments': '아직 댓글이 없습니다',
   'comment.status.open': '열림',
   'comment.status.resolved': '해결됨',
@@ -329,7 +329,7 @@ export const ko: Record<TranslationKeys, string> = {
   'catalog.pagination.info': '{from}–{to} / {total} 표시',
   'offline.banner': '오프라인 상태입니다. 재연결 시 변경사항이 동기화됩니다.',
   'offline.indicator': '오프라인',
-  'offline.pendingSync': '{count}개 동기화 대기',
+  'offline.pendingSync': { other: '{count}개 동기화 대기' },
   'reader.bookmarks.title': '북마크',
   'reader.bookmarks.addTitle': '현재 위치에 북마크 추가',
   'reader.bookmarks.empty': '아직 북마크가 없습니다. 북마크 아이콘을 클릭하여 위치를 저장하세요.',

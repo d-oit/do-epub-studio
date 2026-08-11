@@ -1,5 +1,12 @@
 import { APP_NAME } from '../config/app-identity';
+import type { PluralCategories } from '../lib/i18n-plural';
 
+/** A catalog value is either a plain template string or plural variants for the `count` param (ADR-199 / GOAP-227). */
+export type TranslationValue = string | PluralCategories;
+
+// Deliberately NOT annotated as Record<string, …>: `TranslationKeys = keyof
+// typeof en` must stay the literal key union for the type-aware lint rules
+// (i18next/no-literal-string allowlist, no-unnecessary-type-assertion).
 export const en = {
   'app.title': APP_NAME,
   'app.versionLabel': 'Version',
@@ -217,7 +224,10 @@ export const en = {
   'comment.delete': 'Delete',
   'comment.placeholder': 'Write a comment...',
   'comment.resolved': 'Resolved',
-  'comment.replies': '{{count}} replies',
+  'comment.replies': {
+    one: '{count} reply',
+    other: '{count} replies',
+  },
   'comment.noComments': 'No comments yet',
   'comment.status.open': 'Open',
   'comment.status.resolved': 'Resolved',
@@ -327,7 +337,10 @@ export const en = {
 'catalog.pagination.info': 'Showing {from}–{to} of {total}',
 'offline.banner': 'You are offline. Changes will sync when reconnected.',
 'offline.indicator': 'Offline',
-  'offline.pendingSync': '{count} pending sync',
+  'offline.pendingSync': {
+    one: '{count} pending sync',
+    other: '{count} pending syncs',
+  },
   'reader.bookmarks.title': 'Bookmarks',
   'reader.bookmarks.addTitle': 'Add bookmark at current position',
   'reader.bookmarks.empty': 'No bookmarks yet. Click the bookmark icon to save your place.',

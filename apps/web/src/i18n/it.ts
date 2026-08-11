@@ -1,7 +1,7 @@
-import type { TranslationKeys } from './en';
+import type { TranslationKeys, TranslationValue } from './en';
 import { APP_NAME } from '../config/app-identity';
 
-export const it: Record<TranslationKeys, string> = {
+export const it: Record<TranslationKeys, TranslationValue> = {
   'app.title': APP_NAME,
   'app.versionLabel': 'Versione',
   'login.subtitle': 'Accedi per visualizzare i tuoi libri',
@@ -218,7 +218,7 @@ export const it: Record<TranslationKeys, string> = {
   'comment.delete': 'Elimina',
   'comment.placeholder': 'Scrivi un commento...',
   'comment.resolved': 'Risolto',
-  'comment.replies': '{{count}} risposte',
+  'comment.replies': { one: '{count} risposta', other: '{count} risposte' },
   'comment.noComments': 'Nessun commento ancora',
   'comment.status.open': 'Aperto',
   'comment.status.resolved': 'Risolto',
@@ -329,7 +329,7 @@ export const it: Record<TranslationKeys, string> = {
   'catalog.pagination.info': 'Visualizzazione {from}–{to} di {total}',
   'offline.banner': 'Sei offline. Le modifiche verranno sincronizzate alla riconnessione.',
   'offline.indicator': 'Offline',
-  'offline.pendingSync': '{count} sincronizzazione in sospeso',
+  'offline.pendingSync': { one: '{count} sincronizzazione in sospeso', other: '{count} sincronizzazioni in sospeso' },
   'reader.bookmarks.title': 'Segnalibri',
   'reader.bookmarks.addTitle': 'Aggiungi segnalibro alla posizione corrente',
   'reader.bookmarks.empty': 'Nessun segnalibro ancora. Clicca sull\'icona del segnalibro per salvare la posizione.',

@@ -1,7 +1,7 @@
-import type { TranslationKeys } from './en';
+import type { TranslationKeys, TranslationValue } from './en';
 import { APP_NAME } from '../config/app-identity';
 
-export const ar: Record<TranslationKeys, string> = {
+export const ar: Record<TranslationKeys, TranslationValue> = {
   'app.title': APP_NAME,
   'app.versionLabel': 'الإصدار',
   'login.subtitle': 'سجّل الدخول للوصول إلى كتبك',
@@ -218,7 +218,7 @@ export const ar: Record<TranslationKeys, string> = {
   'comment.delete': 'حذف',
   'comment.placeholder': 'اكتب تعليقاً...',
   'comment.resolved': 'تم الحل',
-  'comment.replies': '{{count}} ردود',
+  'comment.replies': { zero: 'لا ردود', one: 'رد واحد', two: 'ردّان', few: '{count} ردود', many: '{count} ردًّا', other: '{count} رد' },
   'comment.noComments': 'لا تعليقات بعد',
   'comment.status.open': 'مفتوح',
   'comment.status.resolved': 'تم الحل',
@@ -329,7 +329,7 @@ export const ar: Record<TranslationKeys, string> = {
   'catalog.pagination.info': 'عرض {from}–{to} من {total}',
   'offline.banner': 'أنت غير متصل. ستتم مزامنة التغييرات عند إعادة الاتصال.',
   'offline.indicator': 'غير متصل',
-  'offline.pendingSync': '{count} مزامنة معلقة',
+  'offline.pendingSync': { zero: 'لا مزامنة معلقة', one: '{count} مزامنة معلقة', two: '{count} مزامنتان معلقتان', few: '{count} مزامنات معلقة', many: '{count} مزامنة معلقة', other: '{count} مزامنة معلقة' },
   'reader.bookmarks.title': 'الإشارات المرجعية',
   'reader.bookmarks.addTitle': 'إضافة إشارة مرجعية في الموضع الحالي',
   'reader.bookmarks.empty': 'لا توجد إشارات مرجعية بعد. انقر على أيقونة الإشارة المرجعية لحفظ الموضع.',

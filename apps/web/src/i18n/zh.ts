@@ -1,7 +1,7 @@
-import type { TranslationKeys } from './en';
+import type { TranslationKeys, TranslationValue } from './en';
 import { APP_NAME } from '../config/app-identity';
 
-export const zh: Record<TranslationKeys, string> = {
+export const zh: Record<TranslationKeys, TranslationValue> = {
   'app.title': APP_NAME,
   'app.versionLabel': '版本',
   'login.subtitle': '登录以访问您的书籍',
@@ -218,7 +218,7 @@ export const zh: Record<TranslationKeys, string> = {
   'comment.delete': '删除',
   'comment.placeholder': '写评论...',
   'comment.resolved': '已解决',
-  'comment.replies': '{{count}}条回复',
+  'comment.replies': { other: '{count}条回复' },
   'comment.noComments': '暂无评论',
   'comment.status.open': '开放',
   'comment.status.resolved': '已解决',
@@ -329,7 +329,7 @@ export const zh: Record<TranslationKeys, string> = {
   'catalog.pagination.info': '显示{from}–{to}，共{total}项',
   'offline.banner': '您处于离线状态。重新连接后将同步更改。',
   'offline.indicator': '离线',
-  'offline.pendingSync': '{count}项待同步',
+  'offline.pendingSync': { other: '{count}项待同步' },
   'reader.bookmarks.title': '书签',
   'reader.bookmarks.addTitle': '在当前位置添加书签',
   'reader.bookmarks.empty': '暂无书签。点击书签图标保存位置。',

@@ -1,7 +1,7 @@
-import type { TranslationKeys } from './en';
+import type { TranslationKeys, TranslationValue } from './en';
 import { APP_NAME } from '../config/app-identity';
 
-export const pt: Record<TranslationKeys, string> = {
+export const pt: Record<TranslationKeys, TranslationValue> = {
   'app.title': APP_NAME,
   'app.versionLabel': 'Versão',
   'login.subtitle': 'Faça login para acessar seus livros',
@@ -218,7 +218,7 @@ export const pt: Record<TranslationKeys, string> = {
   'comment.delete': 'Excluir',
   'comment.placeholder': 'Escreva um comentário...',
   'comment.resolved': 'Resolvido',
-  'comment.replies': '{{count}} respostas',
+  'comment.replies': { one: '{count} resposta', other: '{count} respostas' },
   'comment.noComments': 'Nenhum comentário ainda',
   'comment.status.open': 'Aberto',
   'comment.status.resolved': 'Resolvido',
@@ -329,7 +329,7 @@ export const pt: Record<TranslationKeys, string> = {
   'catalog.pagination.info': 'Mostrando {from}–{to} de {total}',
   'offline.banner': 'Você está offline. As alterações serão sincronizadas quando reconectado.',
   'offline.indicator': 'Offline',
-  'offline.pendingSync': '{count} sincronização pendente',
+  'offline.pendingSync': { one: '{count} sincronização pendente', other: '{count} sincronizações pendentes' },
   'reader.bookmarks.title': 'Favoritos',
   'reader.bookmarks.addTitle': 'Adicionar favorito na posição atual',
   'reader.bookmarks.empty': 'Nenhum favorito ainda. Clique no ícone de favorito para salvar seu lugar.',

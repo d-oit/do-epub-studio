@@ -1,7 +1,7 @@
-import type { TranslationKeys } from './en';
+import type { TranslationKeys, TranslationValue } from './en';
 import { APP_NAME } from '../config/app-identity';
 
-export const fr: Record<TranslationKeys, string> = {
+export const fr: Record<TranslationKeys, TranslationValue> = {
   'app.title': APP_NAME,
   'app.versionLabel': 'Version',
   'login.subtitle': 'Connectez-vous pour accéder à vos livres',
@@ -218,7 +218,7 @@ export const fr: Record<TranslationKeys, string> = {
   'comment.delete': 'Supprimer',
   'comment.placeholder': 'Écrire un commentaire...',
   'comment.resolved': 'Résolu',
-  'comment.replies': '{{count}} réponses',
+  'comment.replies': { one: '{count} réponse', other: '{count} réponses' },
   'comment.noComments': 'Pas encore de commentaires',
   'comment.status.open': 'Ouvert',
   'comment.status.resolved': 'Résolu',
@@ -329,7 +329,7 @@ export const fr: Record<TranslationKeys, string> = {
   'catalog.pagination.info': 'Affichage de {from}–{to} sur {total}',
   'offline.banner': 'Vous êtes hors ligne. Les modifications seront synchronisées lors de la reconnexion.',
   'offline.indicator': 'Hors ligne',
-  'offline.pendingSync': '{count} synchronisation en attente',
+  'offline.pendingSync': { one: '{count} synchronisation en attente', other: '{count} synchronisations en attente' },
   'reader.bookmarks.title': 'Signets',
   'reader.bookmarks.addTitle': 'Ajouter un signet à la position actuelle',
   'reader.bookmarks.empty': 'Pas encore de signets. Cliquez sur l\'icône de signet pour enregistrer votre position.',

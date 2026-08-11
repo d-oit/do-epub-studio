@@ -1,7 +1,7 @@
-import type { TranslationKeys } from './en';
+import type { TranslationKeys, TranslationValue } from './en';
 import { APP_NAME } from '../config/app-identity';
 
-export const de: Record<TranslationKeys, string> = {
+export const de: Record<TranslationKeys, TranslationValue> = {
   'app.title': APP_NAME,
   'app.versionLabel': 'Version',
   'login.subtitle': 'Melde Sie sich an, um auf Ihre Bücher zuzugreifen',
@@ -218,7 +218,7 @@ export const de: Record<TranslationKeys, string> = {
   'comment.delete': 'Löschen',
   'comment.placeholder': 'Kommentar schreiben...',
   'comment.resolved': 'Erledigt',
-  'comment.replies': '{{count}} Antworten',
+  'comment.replies': { one: '{count} Antwort', other: '{count} Antworten' },
   'comment.noComments': 'Noch keine Kommentare',
   'comment.status.open': 'Offen',
   'comment.status.resolved': 'Erledigt',
@@ -329,7 +329,7 @@ export const de: Record<TranslationKeys, string> = {
   'catalog.pagination.info': 'Zeige {from}–{to} von {total}',
   'offline.banner': 'Sie sind offline. Änderungen werden bei erneuter Verbindung synchronisiert.',
   'offline.indicator': 'Offline',
-  'offline.pendingSync': '{count} ausstehende Synchronisierung',
+  'offline.pendingSync': { one: '{count} ausstehende Synchronisierung', other: '{count} ausstehende Synchronisierungen' },
   'reader.bookmarks.title': 'Lesezeichen',
   'reader.bookmarks.addTitle': 'Lesezeichen an aktueller Position hinzufügen',
   'reader.bookmarks.empty': 'Noch keine Lesezeichen. Klicken Sie auf das Lesezeichen-Symbol, um Ihren Ort zu speichern.',

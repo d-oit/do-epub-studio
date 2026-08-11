@@ -1,12 +1,14 @@
 import { describe, it, expect } from 'vitest';
-import { translate, formatNumber, formatDate } from '../i18n';
+import { translate, formatNumber, formatDate, ensureLocale } from '../i18n';
 import { en } from '../i18n/en';
 import { pluralize } from '../lib/i18n-format';
 
 describe('translate', () => {
   it('replaces all occurrences of a placeholder', () => {
     // Find a key with a placeholder to verify replaceAll behavior
-    const keyWithParam = Object.keys(en).find((k) => en[k as keyof typeof en].includes('{'));
+    const keyWithParam = Object.keys(en).find(
+      (k) => typeof en[k as keyof typeof en] === 'string' && (en[k as keyof typeof en] as string).includes('{'),
+    );
     if (keyWithParam) {
       const result = translate(keyWithParam as never, 'en', { 0: 'TEST' });
       expect(result).not.toContain('{0}');
@@ -135,5 +137,46 @@ describe('pluralize', () => {
     expect(pluralize('en', 0, { other: 'N' })).toBe('N');
     // Never returns undefined even when the count maps to a non-other category.
     expect(pluralize('en', 1, { other: 'N' })).toBe('N');
+  });
+});
+
+describe('plural-aware count messages (GOAP-227 / ADR-199)', () => {
+  it('resolves English one/other', () => {
+    expect(translate('comment.replies', 'en', { count: 1 })).toBe('1 reply');
+    expect(translate('comment.replies', 'en', { count: 5 })).toBe('5 replies');
+    expect(translate('offline.pendingSync', 'en', { count: 1 })).toBe('1 pending sync');
+    expect(translate('offline.pendingSync', 'en', { count: 2 })).toBe('2 pending syncs');
+  });
+
+  it('resolves Russian one/few/many', async () => {
+    await ensureLocale('ru');
+    expect(translate('comment.replies', 'ru', { count: 1 })).toBe('1 ответ');
+    expect(translate('comment.replies', 'ru', { count: 3 })).toBe('3 ответа');
+    expect(translate('comment.replies', 'ru', { count: 5 })).toBe('5 ответов');
+  });
+
+  it('resolves Arabic zero/one/two/few/many', async () => {
+    await ensureLocale('ar');
+    expect(translate('comment.replies', 'ar', { count: 0 })).toBe('لا ردود');
+    expect(translate('comment.replies', 'ar', { count: 1 })).toBe('رد واحد');
+    expect(translate('comment.replies', 'ar', { count: 2 })).toBe('ردّان');
+    expect(translate('comment.replies', 'ar', { count: 3 })).toBe('3 ردود');
+    expect(translate('comment.replies', 'ar', { count: 11 })).toBe('11 ردًّا');
+  });
+
+  it('resolves Hindi one/other (0 is plural)', async () => {
+    await ensureLocale('hi');
+    expect(translate('comment.replies', 'hi', { count: 1 })).toBe('1 उत्तर');
+    expect(translate('comment.replies', 'hi', { count: 0 })).toBe('0 उत्तर');
+  });
+
+  it('never emits literal braces for migrated keys', () => {
+    expect(translate('comment.replies', 'en', { count: 2 })).not.toContain('{');
+    expect(translate('comment.replies', 'en', { count: 2 })).not.toContain('}');
+  });
+
+  it('falls back to the other category when count is missing', () => {
+    // No count param — use the other form without interpolation.
+    expect(translate('comment.replies', 'en')).toBe('{count} replies');
   });
 });
