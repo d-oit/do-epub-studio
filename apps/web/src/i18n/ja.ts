@@ -1,7 +1,7 @@
-import type { TranslationKeys } from './en';
+import type { TranslationKeys, TranslationValue } from './en';
 import { APP_NAME } from '../config/app-identity';
 
-export const ja: Record<TranslationKeys, string> = {
+export const ja: Record<TranslationKeys, TranslationValue> = {
   'app.title': APP_NAME,
   'app.versionLabel': 'バージョン',
   'login.subtitle': 'ログインして書籍にアクセス',
@@ -218,7 +218,7 @@ export const ja: Record<TranslationKeys, string> = {
   'comment.delete': '削除',
   'comment.placeholder': 'コメントを書く...',
   'comment.resolved': '解決済み',
-  'comment.replies': '{{count}}件の返信',
+  'comment.replies': { other: '{count}件の返信' },
   'comment.noComments': 'まだコメントがありません',
   'comment.status.open': 'オープン',
   'comment.status.resolved': '解決済み',
@@ -329,7 +329,7 @@ export const ja: Record<TranslationKeys, string> = {
   'catalog.pagination.info': '{from}～{to} / {total}件を表示',
   'offline.banner': 'オフラインです。再接続時に変更が同期されます。',
   'offline.indicator': 'オフライン',
-  'offline.pendingSync': '{count}件の同期保留',
+  'offline.pendingSync': { other: '{count}件の同期保留' },
   'reader.bookmarks.title': 'ブックマーク',
   'reader.bookmarks.addTitle': '現在位置にブックマークを追加',
   'reader.bookmarks.empty': 'まだブックマークがありません。ブックマークアイコンをクリックして場所を保存してください。',

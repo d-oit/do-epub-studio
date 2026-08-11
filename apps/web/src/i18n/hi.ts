@@ -1,7 +1,7 @@
-import type { TranslationKeys } from './en';
+import type { TranslationKeys, TranslationValue } from './en';
 import { APP_NAME } from '../config/app-identity';
 
-export const hi: Record<TranslationKeys, string> = {
+export const hi: Record<TranslationKeys, TranslationValue> = {
   'app.title': APP_NAME,
   'app.versionLabel': 'संस्करण',
   'login.subtitle': 'अपनी पुस्तकों तक पहुँचने के लिए लॉग इन करें',
@@ -218,7 +218,7 @@ export const hi: Record<TranslationKeys, string> = {
   'comment.delete': 'हटाएं',
   'comment.placeholder': 'टिप्पणी लिखें...',
   'comment.resolved': 'हल',
-  'comment.replies': '{{count}} उत्तर',
+  'comment.replies': { one: '{count} उत्तर', other: '{count} उत्तर' },
   'comment.noComments': 'अभी तक कोई टिप्पणी नहीं',
   'comment.status.open': 'खुला',
   'comment.status.resolved': 'हल',
@@ -329,7 +329,7 @@ export const hi: Record<TranslationKeys, string> = {
   'catalog.pagination.info': '{from}–{to} / {total} दिखा रहा है',
   'offline.banner': 'आप ऑफ़लाइन हैं। पुनः कनेक्ट होने पर परिवर्तन सिंक होंगे।',
   'offline.indicator': 'ऑफ़लाइन',
-  'offline.pendingSync': '{count} सिंक लंबित',
+  'offline.pendingSync': { one: '{count} सिंक लंबित', other: '{count} सिंक लंबित' },
   'reader.bookmarks.title': 'बुकमार्क',
   'reader.bookmarks.addTitle': 'वर्तमान स्थिति पर बुकमार्क जोड़ें',
   'reader.bookmarks.empty': 'अभी तक कोई बुकमार्क नहीं। अपना स्थान सहेजने के लिए बुकमार्क आइकन पर क्लिक करें।',

@@ -1,7 +1,7 @@
-import type { TranslationKeys } from './en';
+import type { TranslationKeys, TranslationValue } from './en';
 import { APP_NAME } from '../config/app-identity';
 
-export const nl: Record<TranslationKeys, string> = {
+export const nl: Record<TranslationKeys, TranslationValue> = {
   'app.title': APP_NAME,
   'app.versionLabel': 'Versie',
   'login.subtitle': 'Log in om toegang te krijgen tot je boeken',
@@ -218,7 +218,7 @@ export const nl: Record<TranslationKeys, string> = {
   'comment.delete': 'Verwijderen',
   'comment.placeholder': 'Schrijf een opmerking...',
   'comment.resolved': 'Opgelost',
-  'comment.replies': '{{count}} antwoorden',
+  'comment.replies': { one: '{count} antwoord', other: '{count} antwoorden' },
   'comment.noComments': 'Nog geen opmerkingen',
   'comment.status.open': 'Open',
   'comment.status.resolved': 'Opgelost',
@@ -329,7 +329,7 @@ export const nl: Record<TranslationKeys, string> = {
   'catalog.pagination.info': '{from}–{to} van {total} weergegeven',
   'offline.banner': 'Je bent offline. Wijzigingen worden gesynchroniseerd bij herverbinding.',
   'offline.indicator': 'Offline',
-  'offline.pendingSync': '{count} synchronisatie in afwachting',
+  'offline.pendingSync': { one: '{count} synchronisatie in afwachting', other: '{count} synchronisaties in afwachting' },
   'reader.bookmarks.title': 'Bladwijzers',
   'reader.bookmarks.addTitle': 'Bladwijzer toevoegen op huidige positie',
   'reader.bookmarks.empty': 'Nog geen bladwijzers. Klik op het bladwijzerpictogram om je locatie op te slaan.',

@@ -1,7 +1,7 @@
-import type { TranslationKeys } from './en';
+import type { TranslationKeys, TranslationValue } from './en';
 import { APP_NAME } from '../config/app-identity';
 
-export const ru: Record<TranslationKeys, string> = {
+export const ru: Record<TranslationKeys, TranslationValue> = {
   'app.title': APP_NAME,
   'app.versionLabel': 'Версия',
   'login.subtitle': 'Войдите для доступа к книгам',
@@ -218,7 +218,7 @@ export const ru: Record<TranslationKeys, string> = {
   'comment.delete': 'Удалить',
   'comment.placeholder': 'Написать комментарий...',
   'comment.resolved': 'Решено',
-  'comment.replies': '{{count}} ответов',
+  'comment.replies': { one: '{count} ответ', few: '{count} ответа', many: '{count} ответов', other: '{count} ответа' },
   'comment.noComments': 'Пока нет комментариев',
   'comment.status.open': 'Открыт',
   'comment.status.resolved': 'Решено',
@@ -329,7 +329,7 @@ export const ru: Record<TranslationKeys, string> = {
   'catalog.pagination.info': 'Показано {from}–{to} из {total}',
   'offline.banner': 'Вы не в сети. Изменения будут синхронизированы при подключении.',
   'offline.indicator': 'Офлайн',
-  'offline.pendingSync': '{count} синхронизация ожидает',
+  'offline.pendingSync': { one: '{count} синхронизация ожидает', few: '{count} синхронизации ожидают', many: '{count} синхронизаций ожидают', other: '{count} синхронизации ожидают' },
   'reader.bookmarks.title': 'Закладки',
   'reader.bookmarks.addTitle': 'Добавить закладку в текущей позиции',
   'reader.bookmarks.empty': 'Пока нет закладок. Нажмите на значок закладки, чтобы сохранить место.',
