@@ -1,4 +1,5 @@
-import { en, type TranslationKeys } from './en';
+import { en, type TranslationKeys, type TranslationValue } from './en';
+import { pluralize } from '../lib/i18n-plural';
 
 /** Locale key type — union of all supported locale codes. */
 export type LocaleKey =
@@ -17,7 +18,7 @@ export type LocaleKey =
   | 'nl';
 
 /** Lazy-loaded dictionaries. Starts with English (the synchronous fallback). */
-const loadedDictionaries: Record<string, Record<string, string>> = { en };
+const loadedDictionaries: Record<string, Record<string, TranslationValue>> = { en };
 
 /**
  * Ensure the given locale dictionary is loaded into memory. Safe to call
@@ -31,7 +32,7 @@ export async function ensureLocale(locale: LocaleKey): Promise<void> {
   if (mod) loadedDictionaries[locale] = mod;
 }
 
-async function loadLocaleModule(locale: LocaleKey): Promise<Record<string, string> | undefined> {
+async function loadLocaleModule(locale: LocaleKey): Promise<Record<string, TranslationValue> | undefined> {
   switch (locale) {
     case 'de': return (await import('./de')).de;
     case 'fr': return (await import('./fr')).fr;
@@ -56,11 +57,22 @@ export function translate(
   params?: Record<string, string | number>,
 ): string {
   const catalog = loadedDictionaries[locale] ?? loadedDictionaries.en;
-  const template = catalog[key] ?? loadedDictionaries.en[key] ?? key;
+  const value = catalog[key] ?? loadedDictionaries.en[key] ?? key;
+  let template: string;
+  if (typeof value === 'string') {
+    template = value;
+  } else if (params && typeof params.count === 'number') {
+    // GOAP-227 (ADR-199 follow-up): plural-aware keys carry CLDR category
+    // variants; Intl.PluralRules picks the form for the active locale
+    // (ar zero/one/two/few/many, ru one/few/many, hi one/other, ...).
+    template = pluralize(locale, params.count, value);
+  } else {
+    template = value.other;
+  }
   if (!params) return template;
   let result = template;
-  for (const [paramName, value] of Object.entries(params)) {
-    result = result.replaceAll(`{${paramName}}`, String(value));
+  for (const [paramName, paramValue] of Object.entries(params)) {
+    result = result.replaceAll(`{${paramName}}`, String(paramValue));
   }
   return result;
 }
