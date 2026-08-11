@@ -26,7 +26,9 @@ import { nl } from '../i18n/nl';
  * after intentionally changing translations, then update E2E tests in the same commit.
  */
 
-const enCatalog = en as Record<string, string>;
+import type { TranslationValue } from '../i18n/en';
+
+const enCatalog = en as Record<string, TranslationValue>;
 
 describe('i18n rendered text snapshots', () => {
   it('login page critical text matches snapshot', () => {
