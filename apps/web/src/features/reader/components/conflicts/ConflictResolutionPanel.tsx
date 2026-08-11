@@ -7,6 +7,7 @@ import {
   getPendingConflicts,
   resolveManualConflict,
   clearResolvedConflicts,
+  hydrateConflicts,
   type ConflictRecord,
   type ConflictType,
 } from '../../../../lib/offline/conflict-resolution';
@@ -96,27 +97,38 @@ export function ConflictResolutionPanel() {
   useEffect(() => {
     if (!bookId || hasSyncedRef.current) return;
     hasSyncedRef.current = true;
-    const pending = getPendingConflicts(bookId);
-    const existingIds = new Set(conflicts.map((c) => c.id));
-    const newConflicts = pending.filter((c) => !existingIds.has(c.id));
-    if (newConflicts.length > 0) {
-      setConflicts([...conflicts, ...newConflicts]);
-    }
+    void (async () => {
+      // Plan 228 F2: reloads must surface persisted conflicts before reading
+      // the pending set, and resolve/dismiss purges flow back to IndexedDB.
+      await hydrateConflicts();
+      const pending = getPendingConflicts(bookId);
+      const existingIds = new Set(conflicts.map((c) => c.id));
+      const newConflicts = pending.filter((c) => !existingIds.has(c.id));
+      if (newConflicts.length > 0) {
+        setConflicts([...conflicts, ...newConflicts]);
+      }
+    })();
   }, [bookId, conflicts, setConflicts]);
 
   const handleResolve = useCallback(
     (conflictId: string, resolution: 'local' | 'remote') => {
+      // Plan 228 F2: resolve in the module Map (write-through purges it from
+      // the durable store), then reflect the resolution in the UI store.
       resolveManualConflict(conflictId, resolution);
-      storeResolveConflict(conflictId, resolution);
       if (bookId) clearResolvedConflicts(bookId);
+      storeResolveConflict(conflictId, resolution);
     },
     [storeResolveConflict, bookId],
   );
 
   const handleDismiss = useCallback(
     (conflictId: string) => {
-      storeResolveConflict(conflictId, 'local');
+      // Dismissal must mark the conflict resolved in the module Map so
+      // clearResolvedConflicts purges it (Map + IndexedDB); otherwise it
+      // resurfaces on reload (Plan 228 F2).
+      resolveManualConflict(conflictId, 'local');
       if (bookId) clearResolvedConflicts(bookId);
+      storeResolveConflict(conflictId, 'local');
     },
     [storeResolveConflict, bookId],
   );

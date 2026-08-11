@@ -63,8 +63,42 @@ export interface PermissionCache {
   expiresAt: number;
 }
 
+/**
+ * Offline conflict categories (value + type merged). Lives here with the other
+ * persisted record shapes; `conflict-resolution.ts` re-exports it so external
+ * modules keep importing from the domain module. Kept as a value/type pair
+ * (not an enum) so `db.ts` can type the conflicts store without importing the
+ * domain module — madge treats `import type` as a real edge, which would
+ * create a forbidden circular dependency.
+ */
+export const ConflictType = {
+  ProgressUpdate: 'progress_update',
+  AnnotationEdit: 'annotation_edit',
+  BookmarkChange: 'bookmark_change',
+  CommentUpdate: 'comment_update',
+} as const;
+
+export type ConflictType = (typeof ConflictType)[keyof typeof ConflictType];
+
+/** A conflict requiring user resolution; `localVersion`/`remoteVersion`
+ *  (entity contents) are encrypted at rest, everything else is plaintext. */
+export interface ConflictRecord {
+  id: string;
+  type: ConflictType;
+  localVersion: unknown;
+  remoteVersion: unknown;
+  localTimestamp: number;
+  remoteTimestamp: number;
+  resolved: boolean;
+  resolution: 'local' | 'remote' | null;
+  resolvedAt: number | null;
+  bookId: string;
+  entityId: string;
+  createdAt: number;
+}
+
 const DB_NAME = 'do-epub-studio';
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 
 let dbInstance: IDBPDatabase | null = null;
 let cachedToken: string | null = null;
@@ -131,6 +165,18 @@ const ANNOTATION_PLAINTEXT = ['id', 'bookId', 'synced'] as const;
 const SYNC_QUEUE_PLAINTEXT = ['id', 'createdAt'] as const;
 const READING_INSIGHT_PLAINTEXT = ['bookId', 'date'] as const;
 const PERMISSION_PLAINTEXT = ['bookId'] as const;
+const CONFLICT_PLAINTEXT = [
+  'id',
+  'bookId',
+  'entityId',
+  'type',
+  'localTimestamp',
+  'remoteTimestamp',
+  'createdAt',
+  'resolved',
+  'resolution',
+  'resolvedAt',
+] as const;
 
 export function closeDb(): void {
   if (dbInstance) {
@@ -176,6 +222,15 @@ export async function getDB(): Promise<IDBPDatabase> {
       // No structural migration needed — existing records simply have
       // undefined for the new fields, which the mapper defaults to
       // 'open'/'shared' (Plan 998).
+
+      // v2→v3: durable offline-sync conflict store (Plan 228 F2). The store
+      // mirrors the in-memory pendingConflicts Map; local/remote entity
+      // versions are encrypted like the sync queue / reading-insights stores.
+      if (oldVersion < 3) {
+        if (!db.objectStoreNames.contains('conflicts')) {
+          db.createObjectStore('conflicts', { keyPath: 'id' });
+        }
+      }
     },
   });
 
@@ -296,7 +351,7 @@ export async function clearAllPermissionCache(): Promise<void> {
 
 export async function clearAllEncryptedData(): Promise<void> {
   const db = await getDB();
-  const stores = ['progress', 'annotations', 'syncQueue', 'permissions', 'readingInsights'];
+  const stores = ['progress', 'annotations', 'syncQueue', 'permissions', 'readingInsights', 'conflicts'];
   const tx = db.transaction(stores, 'readwrite');
   await Promise.all(stores.map((name) => tx.objectStore(name).clear()));
   await tx.done;
@@ -332,4 +387,41 @@ export async function getAllReadingInsights(): Promise<ReadingInsightEntry[]> {
     (all as Record<string, unknown>[]).map((e) => decryptEntry<ReadingInsightEntry>(e, READING_INSIGHT_PLAINTEXT)),
   );
   return decrypted.filter((e): e is ReadingInsightEntry => e !== null);
+}
+
+/**
+ * Persist the full pending-conflicts set. The `conflicts` store mirrors the
+ * in-memory Map, so this reconciles (clear + put): resolve/dismiss purges are
+ * reflected on disk, keeping the durable surface exactly the set of unresolved
+ * conflicts requiring user resolution.
+ */
+export async function saveConflicts(conflicts: ConflictRecord[]): Promise<void> {
+  const db = await getDB();
+  const stored = await Promise.all(
+    conflicts.map((c) => encryptEntry<ConflictRecord>(c, CONFLICT_PLAINTEXT)),
+  );
+  const tx = db.transaction('conflicts', 'readwrite');
+  void tx.store.clear();
+  for (const row of stored) {
+    void tx.store.put(row);
+  }
+  await tx.done;
+}
+
+/** Read every stored conflict, decrypting local/remote versions; drops rows that fail decryption. */
+export async function getAllConflicts(): Promise<ConflictRecord[]> {
+  const db = await getDB();
+  const all = (await db.getAll('conflicts')) as Record<string, unknown>[];
+  const decrypted = await Promise.all(
+    all.map((e) => decryptEntry<ConflictRecord>(e, CONFLICT_PLAINTEXT)),
+  );
+  return decrypted.filter((e): e is ConflictRecord => e !== null);
+}
+
+/** Wipe the conflicts store (used by purge + tests). */
+export async function clearConflictsStore(): Promise<void> {
+  const db = await getDB();
+  const tx = db.transaction('conflicts', 'readwrite');
+  await tx.store.clear();
+  await tx.done;
 }

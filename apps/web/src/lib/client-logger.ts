@@ -102,6 +102,24 @@ export function logClientEvent(entry: ClientLogEntry): void {
   }
 }
 
+// Last-emit timestamp per throttle key. Keeps a repeated failure (e.g. a polling
+// loop that errors every 30s) observable at most once per interval instead of
+// spamming telemetry.
+const _throttleStamps = new Map<string, number>();
+
+/**
+ * Emit `entry` at most once per `intervalMs` per `key`. Returns true if emitted,
+ * false if the same `key` was emitted within the interval.
+ */
+export function logThrottled(key: string, entry: ClientLogEntry, intervalMs = 60_000): boolean {
+  const now = Date.now();
+  const last = _throttleStamps.get(key) ?? 0;
+  if (now - last < intervalMs) return false;
+  _throttleStamps.set(key, now);
+  logClientEvent(entry);
+  return true;
+}
+
 export function createPerformanceMark(name: string): void {
   if (typeof performance !== 'undefined' && performance.mark) {
     performance.mark(name);

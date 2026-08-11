@@ -1,32 +1,18 @@
 import { createTraceId, createSpanId } from '@do-epub-studio/shared';
 import { logClientEvent } from '../client-logger';
 import { v4 as uuidv4 } from 'uuid';
+import { saveConflicts, getAllConflicts } from './db';
+import type { ConflictRecord, ConflictType } from './db';
 
-export enum ConflictType {
-  ProgressUpdate = 'progress_update',
-  AnnotationEdit = 'annotation_edit',
-  BookmarkChange = 'bookmark_change',
-  CommentUpdate = 'comment_update',
-}
+// Canonical conflict record shape + category type live in `db.ts` (the storage
+// module owns persisted record shapes); re-export so the public API stays at
+// this domain module for all existing importers.
+export { ConflictType } from './db';
+export type { ConflictRecord } from './db';
 
 export enum ConflictResolutionStrategy {
   LastWriteWins = 'last_write_wins',
   Manual = 'manual',
-}
-
-export interface ConflictRecord {
-  id: string;
-  type: ConflictType;
-  localVersion: unknown;
-  remoteVersion: unknown;
-  localTimestamp: number;
-  remoteTimestamp: number;
-  resolved: boolean;
-  resolution: 'local' | 'remote' | null;
-  resolvedAt: number | null;
-  bookId: string;
-  entityId: string;
-  createdAt: number;
 }
 
 export interface ConflictResolutionResult {
@@ -39,6 +25,63 @@ export interface ConflictResolutionResult {
 const pendingConflicts = new Map<string, ConflictRecord>();
 
 const MANUAL_CONFLICT_THRESHOLD_MS = 5_000;
+
+// The in-memory Map is the synchronous hot store; IndexedDB is the durable
+// mirror (Plan 228 F2). Writes are serialized through `writeChain` so a resolve
+// followed by a clear cannot race, and failures degrade to a logged warning
+// (the in-memory session keeps working).
+let hydrationPromise: Promise<void> | null = null;
+let writeChain: Promise<void> = Promise.resolve();
+
+function writeThrough(): Promise<void> {
+  writeChain = writeChain
+    .then(() => saveConflicts([...pendingConflicts.values()]))
+    .catch((err) => {
+      logClientEvent({
+        level: 'warn',
+        traceId: createTraceId(),
+        spanId: createSpanId(),
+        event: 'conflict.persist.failed',
+        metadata: { errorMessage: err instanceof Error ? err.message : String(err) },
+      });
+    });
+  return writeChain;
+}
+
+/** Test/smoke seam: await all queued writes have settled (deterministic asserts). */
+export function flushConflictWrites(): Promise<void> {
+  return writeChain;
+}
+
+/** Load stored conflicts into the in-memory Map once. A stored record replaces
+ *  an in-memory record with the same id; stored records not in the Map are added. */
+export function hydrateConflicts(): Promise<void> {
+  if (!hydrationPromise) {
+    hydrationPromise = getAllConflicts()
+      .then((stored) => {
+        for (const record of stored) {
+          pendingConflicts.set(record.id, record);
+        }
+      })
+      .catch((err) => {
+        logClientEvent({
+          level: 'warn',
+          traceId: createTraceId(),
+          spanId: createSpanId(),
+          event: 'conflict.hydrate.failed',
+          metadata: { errorMessage: err instanceof Error ? err.message : String(err) },
+        });
+      });
+  }
+  return hydrationPromise;
+}
+
+/** Test-only: clear the in-memory Map WITHOUT writing, simulating a fresh
+ *  session so `hydrateConflicts()` re-runs. */
+export function __clearConflictCache(): void {
+  pendingConflicts.clear();
+  hydrationPromise = null;
+}
 
 export function detectConflict(
   type: ConflictType,
@@ -77,6 +120,7 @@ export function detectConflict(
         entityId,
       },
     });
+    void writeThrough();
     return conflict;
   }
   return null;
@@ -170,6 +214,8 @@ export function resolveManualConflict(
     metadata: { conflictId, resolution, type: conflict.type },
   });
 
+  void writeThrough();
+
   return {
     resolved: true,
     strategy: ConflictResolutionStrategy.Manual,
@@ -179,15 +225,24 @@ export function resolveManualConflict(
 }
 
 export function clearResolvedConflicts(bookId?: string): void {
+  let purged = false;
   for (const [id, conflict] of pendingConflicts) {
     if (conflict.resolved && (!bookId || conflict.bookId === bookId)) {
       pendingConflicts.delete(id);
+      purged = true;
     }
+  }
+  if (purged) {
+    void writeThrough();
   }
 }
 
 export function clearAllConflicts(): void {
+  const hadEntries = pendingConflicts.size > 0;
   pendingConflicts.clear();
+  if (hadEntries) {
+    void writeThrough();
+  }
 }
 
 export function hasPendingConflicts(bookId?: string): boolean {
