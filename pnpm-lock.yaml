@@ -16,6 +16,11 @@ overrides:
   react-router: 8.3.0
   dompurify: ^3.4.13
 
+patchedDependencies:
+  '@intity/epub-js@0.3.97':
+    hash: 730fe964cadd21668b106101e33bbc636daa0e8b977ea1a85d2c6522f7bc3fa2
+    path: patches/@intity__epub-js@0.3.97.patch
+
 importers:
 
   .:
@@ -136,7 +141,7 @@ importers:
         version: 5.3.0
       '@intity/epub-js':
         specifier: ^0.3.97
-        version: 0.3.97
+        version: 0.3.97(patch_hash=730fe964cadd21668b106101e33bbc636daa0e8b977ea1a85d2c6522f7bc3fa2)
       '@sentry/react':
         specifier: ^10.69.0
         version: 10.69.0(react@19.2.8)
@@ -312,7 +317,7 @@ importers:
         version: link:../shared
       '@intity/epub-js':
         specifier: ^0.3.97
-        version: 0.3.97
+        version: 0.3.97(patch_hash=730fe964cadd21668b106101e33bbc636daa0e8b977ea1a85d2c6522f7bc3fa2)
       dompurify:
         specifier: ^3.4.13
         version: 3.4.13
@@ -7657,7 +7662,7 @@ snapshots:
   '@img/sharp-win32-x64@0.35.3':
     optional: true
 
-  '@intity/epub-js@0.3.97':
+  '@intity/epub-js@0.3.97(patch_hash=730fe964cadd21668b106101e33bbc636daa0e8b977ea1a85d2c6522f7bc3fa2)':
     dependencies:
       assert: 2.1.0
       event-emitter: 0.3.5

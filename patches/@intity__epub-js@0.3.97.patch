@@ -1,0 +1,30 @@
+diff --git a/lib/index.js b/lib/index.js
+new file mode 100644
+index 0000000..4c93e77
+--- /dev/null
++++ b/lib/index.js
+@@ -0,0 +1,11 @@
++/**
++ * pnpm patch (GOAP-228 close-out): the 0.3.97 npm tarball shipped without the
++ * `lib/` and `src/` builds its package.json `main`/`module` point to, so the
++ * package is un-importable. Restore a minimal ESM `lib/index.js` (the package
++ * is `"type":"module"`) that re-exports the shipped isomorphic CommonJS bundle
++ * (`dist/server/epub.cjs`) as the default. `import ePub` usage is unchanged.
++ */
++import epub from '../dist/server/epub.cjs';
++
++export default epub.ePub;
++export { epub as ePub };
+diff --git a/package.json b/package.json
+index ec65b47..0a76cb5 100644
+--- a/package.json
++++ b/package.json
+@@ -5,7 +5,7 @@
+   "main": "lib/index.js",
+   "type": "module",
+   "types": "types/index.d.ts",
+-  "module": "src/index.js",
++  "module": "lib/index.js",
+   "repository": {
+     "type": "git",
+     "url": "git+https://github.com/intity/epub-js.git"
