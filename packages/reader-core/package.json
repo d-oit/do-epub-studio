@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@do-epub-studio/shared": "workspace:*",
-    "@intity/epub-js": "^0.3.96",
+    "@intity/epub-js": "^0.3.97",
     "dompurify": "^3.4.13",
     "fflate": "^0.8.3"
   },
