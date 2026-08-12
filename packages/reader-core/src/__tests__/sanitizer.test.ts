@@ -267,6 +267,49 @@ describe('sanitizeDom', () => {
     sanitizeDom(doc);
     expect(doc.querySelector('use')?.getAttribute('href')).toBeNull();
   });
+
+  it('removes non-whitelisted-scheme hrefs from feImage (SSRF gap fix)', () => {
+    // feImage references an external raster/filter resource via href/xlink:href;
+    // the EPUB pipeline (sanitizeEpubDocument pass (a)) permits `href` on
+    // allowed SVG tags, so only this scheme pass protects it. javascript:/data:/
+    // non-http(s)/mailto schemes must be stripped.
+    const html =
+      '<svg xmlns="http://www.w3.org/2000/svg">' +
+      '<feImage href="data:text/html;base64,PHNjcmlwdD4="/>' +
+      '<feImage xlink:href="javascript:alert(1)"/>' +
+      '<feImage href="ftp://host/filter.png"/>' +
+      '</svg>';
+    const doc = createDoc(html);
+    sanitizeDom(doc);
+    const images = doc.querySelectorAll('feImage');
+    expect(images).toHaveLength(3);
+    images.forEach((img) => {
+      expect(img.getAttribute('href')).toBeNull();
+      expect(img.getAttributeNS('http://www.w3.org/1999/xlink', 'href')).toBeNull();
+    });
+  });
+
+  it('keeps http/https hrefs on feImage', () => {
+    const html =
+      '<svg xmlns="http://www.w3.org/2000/svg">' +
+      '<feImage href="https://example.com/filter.svg"/>' +
+      '</svg>';
+    const doc = createDoc(html);
+    sanitizeDom(doc);
+    expect(doc.querySelector('feImage')?.getAttribute('href')).toBe('https://example.com/filter.svg');
+  });
+
+  it('strips non-whitelisted-scheme feImage hrefs through the EPUB document pipeline', () => {
+    const html =
+      '<html><body>' +
+      '<svg xmlns="http://www.w3.org/2000/svg">' +
+      '<feImage href="data:text/html;base64,PHNjcmlwdD4="/>' +
+      '</svg>' +
+      '</body></html>';
+    const doc = createDoc(html);
+    sanitizeEpubDocument(doc);
+    expect(doc.querySelector('feImage')?.getAttribute('href')).toBeNull();
+  });
 });
 
 describe('sanitizeEpubDocument', () => {

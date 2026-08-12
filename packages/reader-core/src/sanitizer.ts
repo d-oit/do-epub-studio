@@ -381,9 +381,20 @@ const ALLOWED_SCHEMES = new Set(['http', 'https', 'mailto']);
  * Sanitizes one element's attributes in place: strips `on*` event handlers and
  * removes non-whitelisted-scheme hrefs from linkable elements. `el.localName`
  * is already lowercase for HTML/SVG so callers avoid `.toLowerCase()` overhead.
+ *
+ * `feImage` is included alongside `use`/`image`: it references an external
+ * raster/filter resource via `href`/`xlink:href`, so an un-checked `data:`/
+ * `ftp:`/`javascript:` href would otherwise slip through the EPUB pipeline
+ * (pass (a) permits `href` on allowed SVG tags, and only this pass enforces
+ * the scheme allowlist for non-`use`/`image` linkable elements).
  */
 function sanitizeElementAttributes(el: Element): void {
-  const isLinkable = el.localName === 'use' || el.localName === 'image';
+  const localName = el.localName;
+  const isLinkable =
+    localName === 'use' ||
+    localName === 'image' ||
+    localName === 'feimage' ||
+    localName === 'feImage';
   const attrs = el.attributes;
 
   for (let i = attrs.length - 1; i >= 0; i--) {
