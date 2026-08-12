@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import DOMPurify from 'dompurify';
-import { sanitizeSvg, sanitizeDom, sanitizeEpubDocument, createSvgSanitizerHook, createEpubSanitizerHook, SANITIZER_POLICY_VERSION, buildExternalUrlCsp, createExternalUrlGuardHook } from '../sanitizer';
+import { sanitizeSvg, sanitizeDom, sanitizeEpubDocument, createSvgSanitizerHook, createEpubSanitizerHook, SANITIZER_POLICY_VERSION, buildExternalUrlCsp, createExternalUrlGuardHook, isAllowedExternalHost } from '../sanitizer';
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -133,6 +133,48 @@ describe('sanitizeSvg', () => {
     expect(result).not.toContain('iframe');
     expect(result).not.toContain('evil');
     expect(result).toContain('<rect');
+  });
+});
+
+describe('isAllowedExternalHost', () => {
+  const allow = (hosts: string[]) => ({ mode: 'allowlist' as const, hosts });
+
+  it('matches exact host', () => {
+    expect(isAllowedExternalHost('https://example.com/a.svg', allow(['example.com']))).toBe(true);
+  });
+
+  it('matches strict subdomains of an allowlist entry', () => {
+    expect(isAllowedExternalHost('https://cdn.example.com/a.svg', allow(['example.com']))).toBe(true);
+    expect(isAllowedExternalHost('https://a.b.example.com/x', allow(['example.com']))).toBe(true);
+  });
+
+  it('rejects a host that only contains the entry as a suffix of its own label', () => {
+    // `example.com.evil.org` ends with neither `.example.com` nor `example.com`.
+    expect(isAllowedExternalHost('https://example.com.evil.org/x', allow(['example.com']))).toBe(false);
+    expect(isAllowedExternalHost('https://notexample.com/x', allow(['example.com']))).toBe(false);
+  });
+
+  it('normalizes a trailing dot on both host and entry', () => {
+    expect(isAllowedExternalHost('https://example.com.:8443/a', allow(['example.com.']))).toBe(true);
+  });
+
+  it('normalizes port, userinfo and host case', () => {
+    expect(isAllowedExternalHost('https://user:pass@EXAMPLE.COM:8443/a.svg', allow(['example.com']))).toBe(true);
+  });
+
+  it('denies the whole allowlist under block-all', () => {
+    expect(isAllowedExternalHost('https://example.com/a', { mode: 'block-all' })).toBe(false);
+  });
+
+  it('denies unparseable / malformed hosts (safe default)', () => {
+    expect(isAllowedExternalHost('http:///no-host/x', allow(['example.com']))).toBe(false);
+    expect(isAllowedExternalHost('https://exa mple.com/x', allow(['example.com']))).toBe(false);
+    expect(isAllowedExternalHost('https://[::1]/x', allow(['example.com']))).toBe(false);
+  });
+
+  it('denies a host longer than the DNS bound', () => {
+    const longHost = `${'a'.repeat(253)}.example.com`;
+    expect(isAllowedExternalHost(`https://${longHost}/x`, allow(['example.com']))).toBe(false);
   });
 });
 

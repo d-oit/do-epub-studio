@@ -412,45 +412,82 @@ const MAX_HOST_LENGTH = 253;
  * to DNS length — mirrors the constant-work approach of `getScheme`. An
  * unparseable value returns `null` so callers can default-deny.
  */
-function parseHttpHost(val: string): string | null {
-  const schemeIdx = val.indexOf('://');
-  if (schemeIdx <= 0) return null;
+function isDnsHostCharCode(code: number): boolean {
+  return (
+    (code >= 97 && code <= 122) /* a-z */ ||
+    (code >= 48 && code <= 57) /* 0-9 */ ||
+    code === 45 /* - */ ||
+    code === 46 /* . */
+  );
+}
+
+/** Index just past the hostname segment: first '/', '?', '#' or end-of-string. */
+function findHostEnd(val: string, start: number): number {
   let end = val.length;
-  for (let i = schemeIdx + 3; i < end; i++) {
+  for (let i = start; i < end; i++) {
     const code = val.charCodeAt(i);
-    // Hostname terminates at the first of '/', '?', '#'.
     if (code === 47 /* / */ || code === 63 /* ? */ || code === 35 /* # */) {
       end = i;
       break;
     }
   }
-  // Newer RFCs allow trailing dots; strip them so `example.com.` === `example.com`.
-  while (end > schemeIdx + 3 && val.charCodeAt(end - 1) === 46 /* . */) {
-    end--;
-  }
-  // Strip userinfo ("user:pass@host").
-  let start = schemeIdx + 3;
+  return end;
+}
+
+/**
+ * Returns `[hostStart, hostEnd]` for the actual hostname within `[start, ~)` of
+ * `val`, or `null` if the resulting host is empty. Drops userinfo
+ * ("user:pass@host") and any port (":8080").
+ */
+function stripHostCredentials(
+  val: string,
+  start: number,
+  initialEnd: number,
+): [number, number] | null {
+  let hostStart = start;
+  let end = initialEnd;
   for (let i = start; i < end; i++) {
-    if (val.charCodeAt(i) === 64 /* @ */) start = i + 1;
+    if (val.charCodeAt(i) === 64 /* @ */) hostStart = i + 1;
   }
-  if (start >= end) return null;
-  // Strip port (":8080").
-  for (let i = start; i < end; i++) {
+  if (hostStart >= end) return null;
+  for (let i = hostStart; i < end; i++) {
     if (val.charCodeAt(i) === 58 /* : */) {
       end = i;
       break;
     }
   }
-  if (start >= end || end - start > MAX_HOST_LENGTH) return null;
-  const host = val.substring(start, end).toLowerCase();
+  if (hostStart >= end) return null;
+  return [hostStart, end];
+}
+
+/**
+ * Extracts the lowercased, scheme/port/userinfo-stripped hostname from an
+ * absolute `http://`/`https://` URL, or `null` if the value is not a
+ * well-formed one. Char-scan based (no regex / URL-parser allocation), bounded
+ * to DNS length — mirrors the constant-work approach of `getScheme`. An
+ * unparseable value returns `null` so callers can default-deny.
+ */
+function parseHttpHost(val: string): string | null {
+  const schemeIdx = val.indexOf('://');
+  if (schemeIdx <= 0) return null;
+  const hostStart = schemeIdx + 3;
+  const hostEnd = findHostEnd(val, hostStart);
+  if (hostEnd <= hostStart) return null;
+  const span = stripHostCredentials(val, hostStart, hostEnd);
+  if (span === null) return null;
+  const [start, end] = span;
+  if (end - start > MAX_HOST_LENGTH) return null;
+  // Lowercase first so the char whitelist can be a-z/0-9/-/. regardless of
+  // the source casing.
+  let host = val.substring(start, end).toLowerCase();
+  // Newer RFCs allow trailing dots; strip them so `example.com.` ===
+  // `example.com` (also applies when a port follows, `example.com.:8443`).
+  while (host.length > 0 && host.charCodeAt(host.length - 1) === 46 /* . */) {
+    host = host.slice(0, -1);
+  }
+  if (host.length === 0) return null;
   for (let i = 0; i < host.length; i++) {
-    const code = host.charCodeAt(i);
-    const valid =
-      (code >= 97 && code <= 122) /* a-z */ ||
-      (code >= 48 && code <= 57) /* 0-9 */ ||
-      code === 45 /* - */ ||
-      code === 46 /* . */;
-    if (!valid) return null;
+    if (!isDnsHostCharCode(host.charCodeAt(i))) return null;
   }
   return host;
 }
@@ -472,6 +509,22 @@ export function isAllowedExternalHost(urlValue: string, policy: ExternalUrlPolic
     if (host === normalized || host.endsWith(`.${normalized}`)) return true;
   }
   return false;
+}
+
+/**
+ * Whether a linkable element's `href`/`xlink:href` value must be stripped:
+ * scheme-aware gate that keeps relative/fragment and `mailto:` URLs, applies
+ * the host allowlist (default-deny) to absolute `http(s)` URLs, and drops every
+ * other scheme (data:/javascript:/ftp:/…).
+ */
+function shouldStripHref(val: string, policy: ExternalUrlPolicy): boolean {
+  const scheme = getScheme(val.trim());
+  if (scheme === null) return false; // relative / fragment — keep
+  if (scheme === 'http' || scheme === 'https') {
+    // Host allowlist (Layer 1 of the external-URL guard): default-deny.
+    return !isAllowedExternalHost(val, policy);
+  }
+  return !ALLOWED_SCHEMES.has(scheme);
 }
 
 /**
@@ -503,21 +556,11 @@ function sanitizeElementAttributes(el: Element, policy: ExternalUrlPolicy): void
       el.removeAttribute(name);
       continue;
     }
-    if (!isLinkable || (name !== 'href' && name !== 'xlink:href')) continue;
-
-    const val = attr.value;
-    if (!val) continue;
-    const scheme = getScheme(val.trim());
-    if (scheme === null) continue; // relative / fragment — keep
-    if (scheme === 'http' || scheme === 'https') {
-      // Host allowlist (Layer 1 of the external-URL guard): default-deny.
-      if (!isAllowedExternalHost(val, policy)) {
+    if (isLinkable && (name === 'href' || name === 'xlink:href')) {
+      const val = attr.value;
+      if (val && shouldStripHref(val, policy)) {
         el.removeAttribute(name);
       }
-      continue;
-    }
-    if (!ALLOWED_SCHEMES.has(scheme)) {
-      el.removeAttribute(name);
     }
   }
 }
