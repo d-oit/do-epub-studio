@@ -34,12 +34,18 @@ function textToArrayBuffer(text: string): ArrayBuffer {
 }
 
 async function getWebCrypto(): Promise<Crypto> {
+  // Prefer Node's webcrypto under Node runtimes (vitest/SSR). In browsers the
+  // `node:crypto` specifier is unavailable; some dev servers shim `node:*`
+  // builtins into a stub whose `webcrypto` export is `undefined` instead of
+  // rejecting, so only accept it when it actually yields a Crypto, else fall
+  // back to the global `crypto`.
   try {
     const { webcrypto } = await import('node:crypto');
-    return webcrypto as unknown as Crypto;
+    if (webcrypto) return webcrypto as unknown as Crypto;
   } catch {
-    return crypto;
+    // fall through to the browser global
   }
+  return crypto;
 }
 
 async function getSubtle(): Promise<SubtleCrypto> {
