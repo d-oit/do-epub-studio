@@ -1,6 +1,6 @@
 import DOMPurify from 'dompurify';
 import type { Config } from 'dompurify';
-import { matchBounded, checkDeadline, createDeadline } from '@do-epub-studio/shared';
+import { checkDeadline, createDeadline } from '@do-epub-studio/shared';
 
 const SANITIZE_TIMEOUT_MS = 5_000;
 const TREEWALKER_CHECK_INTERVAL = 100;
@@ -325,6 +325,42 @@ export function sanitizeSvg(svgContent: string): string {
   return DOMPurify.sanitize(svgContent, getConfig());
 }
 
+/**
+ * Safely extracts the scheme part from a URI string (e.g. "https" from "https://example.com").
+ * Returns the lowercase scheme, or null if no valid scheme is present.
+ * This avoids the considerable overhead of regular expressions and matchBounded, improving sanitization performance.
+ */
+function getScheme(val: string): string | null {
+  const colonIdx = val.indexOf(':');
+  // A valid scheme must have at least one character before the first colon, and should not be extremely long (max 32 chars)
+  if (colonIdx <= 0 || colonIdx > 32) return null;
+
+  // The first character must be a letter (A-Z or a-z)
+  const firstCode = val.charCodeAt(0);
+  if (
+    !((firstCode >= 65 && firstCode <= 90) || (firstCode >= 97 && firstCode <= 122))
+  ) {
+    return null;
+  }
+
+  // Subsequent characters must be letters, digits, "+", ".", or "-"
+  for (let i = 1; i < colonIdx; i++) {
+    const code = val.charCodeAt(i);
+    if (
+      !((code >= 65 && code <= 90) ||
+        (code >= 97 && code <= 122) ||
+        (code >= 48 && code <= 57) ||
+        code === 43 ||
+        code === 46 ||
+        code === 45)
+    ) {
+      return null;
+    }
+  }
+
+  return val.substring(0, colonIdx).toLowerCase();
+}
+
 export function sanitizeDom(
   node: Document | DocumentFragment | Element,
   deadline?: number,
@@ -366,27 +402,10 @@ export function sanitizeDom(
           const val = attr.value;
           if (val) {
             const trimmedVal = val.trim();
-            if (trimmedVal.indexOf(':') !== -1) {
-              const lowerVal = trimmedVal.toLowerCase();
-
-              // Explicitly block dangerous schemes and non-whitelisted ones
-              if (
-                lowerVal.startsWith('javascript:') ||
-                lowerVal.startsWith('data:') ||
-                lowerVal.startsWith('vbscript:')
-              ) {
+            const scheme = getScheme(trimmedVal);
+            if (scheme !== null) {
+              if (scheme !== 'http' && scheme !== 'https' && scheme !== 'mailto') {
                 el.removeAttribute(name);
-                continue;
-              }
-
-              // Guard regex against untrusted input per ADR-034
-              const schemeMatch = matchBounded(/^([a-zA-Z][a-zA-Z0-9+.-]*):/, trimmedVal, 2048);
-              if (schemeMatch && schemeMatch[1]) {
-                const scheme = schemeMatch[1].toLowerCase();
-                // Whitelist safe schemes
-                if (scheme !== 'http' && scheme !== 'https' && scheme !== 'mailto') {
-                  el.removeAttribute(name);
-                }
               }
             }
           }
