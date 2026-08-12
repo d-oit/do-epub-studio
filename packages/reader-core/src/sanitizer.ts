@@ -332,8 +332,15 @@ export function sanitizeSvg(svgContent: string): string {
  */
 function getScheme(val: string): string | null {
   const colonIdx = val.indexOf(':');
-  // A valid scheme must have at least one character before the first colon, and should not be extremely long (max 32 chars)
-  if (colonIdx <= 0 || colonIdx > 32) return null;
+  // A valid scheme must have at least one character before the first colon.
+  // Cap the scan at 2048 to preserve the old matchBounded(w, 2048) rejection
+  // window (ADR-034): a value whose first ':' sits beyond that bound had its
+  // regex skipped and the attribute was kept. No browser-executable scheme is
+  // anywhere near this long, so treating a longer prefix as "not a scheme"
+  // (keep) cannot introduce a javascript:/data:/vbscript: vector — and keeps
+  // per-attribute work constant-bounded. Schemes of 33..2048 chars that the old
+  // 32-char assumption would have kept are still matched and removed.
+  if (colonIdx <= 0 || colonIdx > 2048) return null;
 
   // The first character must be a letter (A-Z or a-z)
   const firstCode = val.charCodeAt(0);
