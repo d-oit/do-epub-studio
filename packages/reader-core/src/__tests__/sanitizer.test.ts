@@ -170,6 +170,146 @@ describe('sanitizeDom', () => {
       sanitizeDom(doc);
     }).not.toThrow();
   });
+
+  it('removes javascript: href from use/image elements by scheme', () => {
+    const html =
+      '<svg xmlns="http://www.w3.org/2000/svg">' +
+      '<use href="javascript:alert(1)"/>' +
+      '<image href="javascript:evil()"/>' +
+      '</svg>';
+    const doc = createDoc(html);
+    sanitizeDom(doc);
+    expect(doc.querySelector('use')?.getAttribute('href')).toBeNull();
+    expect(doc.querySelector('image')?.getAttribute('href')).toBeNull();
+  });
+
+  it('removes mixed-case and non-http(s)/mailto schemes on linkable elements', () => {
+    const html =
+      '<svg xmlns="http://www.w3.org/2000/svg">' +
+      '<use href="JaVaScRiPt:alert(1)"/>' +
+      '<use href="data:text/html;base64,PHNjcmlwdD4="/>' +
+      '<use href="vbscript:msgbox(1)"/>' +
+      '<use href="ftp://host/file.svg"/>' +
+      '</svg>';
+    const doc = createDoc(html);
+    sanitizeDom(doc);
+    const uses = doc.querySelectorAll('use');
+    expect(uses).toHaveLength(4);
+    uses.forEach((use) => {
+      expect(use.getAttribute('href')).toBeNull();
+    });
+  });
+
+  it('keeps http, https and mailto hrefs on use/image elements', () => {
+    const html =
+      '<svg xmlns="http://www.w3.org/2000/svg">' +
+      '<use href="http://example.com/a.svg"/>' +
+      '<use href="https://example.com/b.svg"/>' +
+      '<image href="mailto:user@example.com"/>' +
+      '</svg>';
+    const doc = createDoc(html);
+    sanitizeDom(doc);
+    expect(doc.querySelectorAll('use')[0]?.getAttribute('href')).toBe('http://example.com/a.svg');
+    expect(doc.querySelectorAll('use')[1]?.getAttribute('href')).toBe('https://example.com/b.svg');
+    expect(doc.querySelector('image')?.getAttribute('href')).toBe('mailto:user@example.com');
+  });
+
+  it('keeps scheme-less relative and fragment hrefs on use/image elements', () => {
+    const html =
+      '<svg xmlns="http://www.w3.org/2000/svg">' +
+      '<use href="images/icon.svg"/>' +
+      '<use href="#glyph"/>' +
+      '</svg>';
+    const doc = createDoc(html);
+    sanitizeDom(doc);
+    const uses = doc.querySelectorAll('use');
+    expect(uses[0]?.getAttribute('href')).toBe('images/icon.svg');
+    expect(uses[1]?.getAttribute('href')).toBe('#glyph');
+  });
+
+  it('removes hrefs with schemes longer than 32 chars (equivalence with old regex)', () => {
+    // Old code matched any [a-zA-Z][a-zA-Z0-9+.-]* scheme up to the 2048-char
+    // matchBounded window and removed it unless whitelisted. getScheme must
+    // match that: a 64-char scheme prefix is a real scheme, not "no scheme",
+    // and must be removed — not kept via an arbitrary short cap.
+    const longScheme = 'a'.repeat(64);
+    const html =
+      `<svg xmlns="http://www.w3.org/2000/svg">` +
+      `<use href="${longScheme}:evil"/>` +
+      `</svg>`;
+    const doc = createDoc(html);
+    sanitizeDom(doc);
+    expect(doc.querySelector('use')?.getAttribute('href')).toBeNull();
+  });
+
+  it('keeps hrefs whose colon sits beyond the 2048-char scan bound', () => {
+    // A 5000-char alpha prefix with the ':' at index 5000 is beyond the
+    // matchBounded window the old regex operated in (it returned null and kept
+    // the attribute); no browser-executable scheme is 5000 chars, so keeping
+    // it is not a javascript:/data:/vbscript: vector and matches OLD behavior.
+    const hugePrefix = 'b'.repeat(5000);
+    const html =
+      `<svg xmlns="http://www.w3.org/2000/svg">` +
+      `<use href="${hugePrefix}:evil"/>` +
+      `</svg>`;
+    const doc = createDoc(html);
+    sanitizeDom(doc);
+    expect(doc.querySelector('use')?.getAttribute('href')).not.toBeNull();
+  });
+
+  it('removes hrefs with schemes up to the 2048-char scan bound', () => {
+    const nearBoundScheme = 'c'.repeat(2048);
+    const html =
+      `<svg xmlns="http://www.w3.org/2000/svg">` +
+      `<use href="${nearBoundScheme}:evil"/>` +
+      `</svg>`;
+    const doc = createDoc(html);
+    sanitizeDom(doc);
+    expect(doc.querySelector('use')?.getAttribute('href')).toBeNull();
+  });
+
+  it('removes non-whitelisted-scheme hrefs from feImage (SSRF gap fix)', () => {
+    // feImage references an external raster/filter resource via href/xlink:href;
+    // the EPUB pipeline (sanitizeEpubDocument pass (a)) permits `href` on
+    // allowed SVG tags, so only this scheme pass protects it. javascript:/data:/
+    // non-http(s)/mailto schemes must be stripped.
+    const html =
+      '<svg xmlns="http://www.w3.org/2000/svg">' +
+      '<feImage href="data:text/html;base64,PHNjcmlwdD4="/>' +
+      '<feImage xlink:href="javascript:alert(1)"/>' +
+      '<feImage href="ftp://host/filter.png"/>' +
+      '</svg>';
+    const doc = createDoc(html);
+    sanitizeDom(doc);
+    const images = doc.querySelectorAll('feImage');
+    expect(images).toHaveLength(3);
+    images.forEach((img) => {
+      expect(img.getAttribute('href')).toBeNull();
+      expect(img.getAttributeNS('http://www.w3.org/1999/xlink', 'href')).toBeNull();
+    });
+  });
+
+  it('keeps http/https hrefs on feImage', () => {
+    const html =
+      '<svg xmlns="http://www.w3.org/2000/svg">' +
+      '<feImage href="https://example.com/filter.svg"/>' +
+      '</svg>';
+    const doc = createDoc(html);
+    sanitizeDom(doc);
+    expect(doc.querySelector('feImage')?.getAttribute('href')).toBe('https://example.com/filter.svg');
+  });
+
+  it('strips non-whitelisted-scheme feImage hrefs through the EPUB document pipeline', () => {
+    const html =
+      '<html><body>' +
+      '<svg xmlns="http://www.w3.org/2000/svg">' +
+      '<feImage href="data:text/html;base64,PHNjcmlwdD4="/>' +
+      '</svg>' +
+      '</body></html>';
+    const doc = createDoc(html);
+    sanitizeEpubDocument(doc);
+    expect(doc.querySelector('feImage')?.getAttribute('href')).toBeNull();
+  });
 });
 
 describe('sanitizeEpubDocument', () => {

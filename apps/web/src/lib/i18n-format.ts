@@ -24,4 +24,3 @@ export function formatDateTime(date: Date, options?: Intl.DateTimeFormatOptions)
 // Plural helpers live in ./i18n-plural (locale-pure, no store/loader imports)
 // to keep catalog + loader imports cycle-free; re-export for existing callers.
 export { pluralize } from './i18n-plural';
-export type { PluralCategories } from './i18n-plural';
