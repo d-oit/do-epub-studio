@@ -27,14 +27,14 @@
   },
   "devDependencies": {
     "@do-epub-studio/testkit": "workspace:*",
-    "@cloudflare/vitest-pool-workers": "^0.20.1",
-    "@cloudflare/workers-types": "^5.20260801.1",
+    "@cloudflare/vitest-pool-workers": "^0.20.3",
+    "@cloudflare/workers-types": "^5.20260808.1",
     "@types/node": "^26",
     "@vitest/coverage-v8": "4.1.10",
-    "eslint": "^10.8.0",
+    "eslint": "^10.8.1",
     "jszip": "^3.10.1",
     "typescript": "^6.0.3",
     "vitest": "4.1.10",
-    "wrangler": "^4.118.0"
+    "wrangler": "^4.120.0"
   }
 }
