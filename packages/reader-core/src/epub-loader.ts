@@ -10,7 +10,7 @@ import type {
 } from './epub-types';
 import { createTraceId, createSpanId, serializeError, testBounded, withTimeout } from '@do-epub-studio/shared';
 import { parseEpubInWorker, terminateParserWorker } from './epub-parser-worker';
-import { createEpubSanitizerHook } from './sanitizer';
+import { createEpubSanitizerHook, createExternalUrlGuardHook, type ExternalUrlPolicy } from './sanitizer';
 
 type EventCallback = (data: unknown) => void;
 
@@ -46,6 +46,12 @@ interface EpubLoaderOptions {
   manager?: 'default' | 'continuous';
   /** Total timeout for the entire load pipeline (default: 30s) */
   loadTimeoutMs?: number;
+  /**
+   * External (absolute `http(s)`) URL policy for EPUB content. Defaults to
+   * `block-all`: content cannot trigger any network egress. Pass an allowlist
+   * to permit specific trusted hosts (see `ExternalUrlPolicy`).
+   */
+  externalUrlPolicy?: ExternalUrlPolicy;
 }
 
 export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
@@ -260,8 +266,11 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
       manager: options?.manager,
     });
 
-    // Security: ADR-035 Mandatory sanitization
-    rendition.hooks.content.register(createEpubSanitizerHook().hook);
+    // Security: ADR-035 Mandatory sanitization + external-URL hardening.
+    // Layer 1 strips disallowed external http(s) hrefs at content-ingestion;
+    // Layer 2 (CSP) is the fetch-level egress guard backstop.
+    rendition.hooks.content.register(createEpubSanitizerHook({ externalUrlPolicy: options?.externalUrlPolicy }).hook);
+    rendition.hooks.content.register(createExternalUrlGuardHook(options?.externalUrlPolicy).hook);
 
     // Bridge rendition events to the loader's event system
     rendition.on('relocated', (location: Location) => {

@@ -6,6 +6,7 @@ import {
   parseAccessibilityFromOpf,
   parseFixedLayoutFromOpf,
   createEpubSanitizerHook,
+  createExternalUrlGuardHook,
 } from '@do-epub-studio/reader-core';
 import { createSpanId, createTraceId } from '@do-epub-studio/shared';
 import { logClientEvent, createPerformanceMark, measurePerformance, observePerformance, reportPerformanceMetrics } from '../../../lib/client-logger';
@@ -196,6 +197,9 @@ export function useReaderEpub(
         // Security: Mandatory sanitization of all EPUB content
         const { hook: baseSanitizer } = createEpubSanitizerHook();
         rendition.hooks.content.register(baseSanitizer);
+        // Fetch-level egress guard backstop: strict CSP so the browser refuses
+        // external subresource fetches even if a URL evades the sanitizer.
+        rendition.hooks.content.register(createExternalUrlGuardHook().hook);
 
         if (fixedLayout) {
           const contentHooks = createFixedLayoutContentHooks(fixedLayoutViewport);
