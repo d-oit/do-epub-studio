@@ -193,7 +193,14 @@ export function makeAuthContext(overrides: Partial<AuthContext> = {}): AuthConte
 // Typed passthrough ExecutionContext for route tests — replaces `{ waitUntil: () => {} } as any`
 // patterns flagged by Codacy as ESLint8_@typescript-eslint_no-explicit-any.
 export function makePassThroughContext(): ExecutionContext {
-  return { waitUntil: () => {}, passThroughOnException: () => {}, props: {}, exports: {}, tracing: {} as Tracing };
+  return {
+    waitUntil: () => {},
+    passThroughOnException: () => {},
+    abort: () => {},
+    props: {},
+    exports: {},
+    tracing: {} as Tracing,
+  };
 }
 
 /** Parse a fetch Response JSON body with known API shape. Avoids `as` cast at each call site. */
