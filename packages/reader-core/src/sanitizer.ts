@@ -326,6 +326,19 @@ export function sanitizeSvg(svgContent: string): string {
 }
 
 /**
+ * NOTE — intentional divergence from the external-URL policy (owl-watch
+ * tracker "Inconsistent href sanitization policy between document and SVG
+ * pass"): `sanitizeSvg` is for UNTRUSTED standalone SVG snippets and
+ * unconditionally strips every `href`/`xlink:href` (FORBID_ATTR), regardless
+ * of `ExternalUrlPolicy`. It has no production callers today. The EPUB content
+ * pipeline (`sanitizeDom` → `sanitizeEpubDocument`/`createEpubSanitizerHook`)
+ * is where per-book host allowlists apply, on a sanitizer that has already
+ * vetted the document. If `sanitizeSvg` ever needs to honor a host allowlist,
+ * switch it to the DOM pass + policy (like `createSvgSanitizerHook`) instead
+ * of weakening FORBID_ATTR.
+ */
+
+/**
  * Whether `code` is an ASCII letter (A-Z, a-z) — the required first character
  * of a URI scheme per RFC 3986 §3.1.
  */
