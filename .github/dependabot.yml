@@ -46,6 +46,14 @@ updates:
         dependency-type: "production"
         update-types:
           - "patch"
+    ignore:
+      # @intity/epub-js 0.3.97 is an un-importable npm publish (package.json
+      # main/module point to lib/index.js + src/index.js that the tarball does
+      # not ship; only dist/, types/ are published). Upgrading also drags
+      # jsdom@29/resize-observer into the reader runtime bundle. Do not re-propose
+      # it; retry only on a fixed release that ships a resolvable entry point.
+      - dependency-name: "@intity/epub-js"
+        versions: [">=0.3.97, <0.4.0"]
 
   # Docker (if used)
   - package-ecosystem: "docker"

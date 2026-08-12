@@ -40,8 +40,26 @@ jobs:
           steps.metadata.outputs.update-type == 'version-update:semver-minor' ||
           steps.metadata.outputs.update-type == 'version-update:semver-patch'
         run: |
-          gh pr review --approve "$PR_URL"
-          gh pr edit "$PR_URL" --add-label "merge-ready"
+          # GOAP-228 process fix: never re-bless a PR the owner blocked or whose
+          # required checks are red. Only approve+label when it is actually
+          # mergeable; otherwise strip `merge-ready` so the bot cannot mask a
+          # blocked PR (e.g. #960 bundle-budget failure).
+          STATE="$(gh pr view "$PR_URL" --json mergeStateStatus,statusCheckRollup -q '
+            if (.mergeStateStatus == "BLOCKED") then "blocked"
+            elif ([.statusCheckRollup[]? | select(
+              .conclusion == "FAILURE" or .conclusion == "TIMED_OUT"
+              or .conclusion == "ACTION_REQUIRED" or .conclusion == "CANCELLED"
+            )] | length) > 0 then "failing"
+            else "mergeable"
+            end')"
+          echo "dependabot mergeability state: $STATE"
+          if [ "$STATE" = "mergeable" ]; then
+            gh pr review --approve "$PR_URL"
+            gh pr edit "$PR_URL" --add-label "merge-ready"
+          else
+            gh pr edit "$PR_URL" --remove-label "merge-ready" 2>/dev/null || true
+            echo "Not approving $PR_URL — state=$STATE (owner block or failing checks)."
+          fi
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
