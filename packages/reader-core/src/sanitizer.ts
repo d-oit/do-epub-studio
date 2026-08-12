@@ -18,7 +18,7 @@ const SANITIZE_CACHE_MAX = 10;
  * policy, and separate-policy hooks never share entries (each captures its own
  * copy at construction; no caller passes it explicitly).
  */
-export const SANITIZER_POLICY_VERSION = 2;
+export const SANITIZER_POLICY_VERSION = 3;
 
 const SAFE_SVG_TAGS = [
   'svg',
@@ -326,6 +326,19 @@ export function sanitizeSvg(svgContent: string): string {
 }
 
 /**
+ * NOTE — intentional divergence from the external-URL policy (owl-watch
+ * tracker "Inconsistent href sanitization policy between document and SVG
+ * pass"): `sanitizeSvg` is for UNTRUSTED standalone SVG snippets and
+ * unconditionally strips every `href`/`xlink:href` (FORBID_ATTR), regardless
+ * of `ExternalUrlPolicy`. It has no production callers today. The EPUB content
+ * pipeline (`sanitizeDom` → `sanitizeEpubDocument`/`createEpubSanitizerHook`)
+ * is where per-book host allowlists apply, on a sanitizer that has already
+ * vetted the document. If `sanitizeSvg` ever needs to honor a host allowlist,
+ * switch it to the DOM pass + policy (like `createSvgSanitizerHook`) instead
+ * of weakening FORBID_ATTR.
+ */
+
+/**
  * Whether `code` is an ASCII letter (A-Z, a-z) — the required first character
  * of a URI scheme per RFC 3986 §3.1.
  */
@@ -378,8 +391,165 @@ function getScheme(val: string): string | null {
 const ALLOWED_SCHEMES = new Set(['http', 'https', 'mailto']);
 
 /**
+ * Policy for absolute `http(s)` URLs in EPUB content — the counterpart to the
+ * scheme allowlist, closing the remaining MEDIUM external-URL gap (GOAP-224):
+ * a scheme-only grant previously let any `http(s)` host through, so a
+ * malicious book could reference an arbitrary tracking/CDN host.
+ *
+ * - `{ mode: 'block-all' }` (DEFAULT): every absolute `http(s)` href on a
+ *   linkable element is stripped. EPUB content cannot cause any network
+ *   egress. This matches the security checklist ("External resource loading
+ *   blocked in EPUB") and the privacy-first stance of the reader.
+ * - `{ mode: 'allowlist', hosts: [...] }`: an `http(s)` href is kept only when
+ *   its host equals an entry or is a strict subdomain of one (e.g.
+ *   `example.com` also allows `img.example.com`). Entries are host-only — no
+ *   scheme/port/path.
+ *
+ * `mailto:`, scheme-less relative, and fragment URLs are never subject to this
+ * policy (they cannot cause network egress).
+ */
+export interface ExternalUrlPolicy {
+  mode: 'block-all' | 'allowlist';
+  hosts?: string[];
+}
+
+export const DEFAULT_EXTERNAL_URL_POLICY: ExternalUrlPolicy = { mode: 'block-all' };
+
+/** Upper bound for a hostname (max DNS label length): rejects absurd input. */
+const MAX_HOST_LENGTH = 253;
+
+/**
+ * Extracts the lowercased, scheme/port/userinfo-stripped hostname from an
+ * absolute `http://`/`https://` URL, or `null` if the value is not a
+ * well-formed one. Char-scan based (no regex / URL-parser allocation), bounded
+ * to DNS length — mirrors the constant-work approach of `getScheme`. An
+ * unparseable value returns `null` so callers can default-deny.
+ */
+function isDnsHostCharCode(code: number): boolean {
+  return (
+    (code >= 97 && code <= 122) /* a-z */ ||
+    (code >= 48 && code <= 57) /* 0-9 */ ||
+    code === 45 /* - */ ||
+    code === 46 /* . */
+  );
+}
+
+/** Index just past the hostname segment: first '/', '?', '#' or end-of-string. */
+function findHostEnd(val: string, start: number): number {
+  let end = val.length;
+  for (let i = start; i < end; i++) {
+    const code = val.charCodeAt(i);
+    if (code === 47 /* / */ || code === 63 /* ? */ || code === 35 /* # */) {
+      end = i;
+      break;
+    }
+  }
+  return end;
+}
+
+/**
+ * Returns `[hostStart, hostEnd]` for the actual hostname within `[start, ~)` of
+ * `val`, or `null` if the resulting host is empty. Drops userinfo
+ * ("user:pass@host") and any port (":8080").
+ */
+function stripHostCredentials(
+  val: string,
+  start: number,
+  initialEnd: number,
+): [number, number] | null {
+  let hostStart = start;
+  let end = initialEnd;
+  for (let i = start; i < end; i++) {
+    if (val.charCodeAt(i) === 64 /* @ */) hostStart = i + 1;
+  }
+  if (hostStart >= end) return null;
+  for (let i = hostStart; i < end; i++) {
+    if (val.charCodeAt(i) === 58 /* : */) {
+      end = i;
+      break;
+    }
+  }
+  if (hostStart >= end) return null;
+  return [hostStart, end];
+}
+
+/**
+ * Extracts the lowercased, scheme/port/userinfo-stripped hostname from an
+ * absolute `http://`/`https://` URL, or `null` if the value is not a
+ * well-formed one. Char-scan based (no regex / URL-parser allocation), bounded
+ * to DNS length — mirrors the constant-work approach of `getScheme`. An
+ * unparseable value returns `null` so callers can default-deny.
+ */
+function parseHttpHost(val: string): string | null {
+  const schemeIdx = val.indexOf('://');
+  if (schemeIdx <= 0) return null;
+  const hostStart = schemeIdx + 3;
+  const hostEnd = findHostEnd(val, hostStart);
+  if (hostEnd <= hostStart) return null;
+  const span = stripHostCredentials(val, hostStart, hostEnd);
+  if (span === null) return null;
+  const [start, end] = span;
+  if (end - start > MAX_HOST_LENGTH) return null;
+  // Lowercase first so the char whitelist can be a-z/0-9/-/. regardless of
+  // the source casing.
+  let host = val.substring(start, end).toLowerCase();
+  // Newer RFCs allow trailing dots; strip them so `example.com.` ===
+  // `example.com` (also applies when a port follows, `example.com.:8443`).
+  while (host.length > 0 && host.charCodeAt(host.length - 1) === 46 /* . */) {
+    host = host.slice(0, -1);
+  }
+  if (host.length === 0) return null;
+  for (let i = 0; i < host.length; i++) {
+    if (!isDnsHostCharCode(host.charCodeAt(i))) return null;
+  }
+  return host;
+}
+
+/**
+ * Whether a normalized host equals an allowlist entry or is a strict subdomain
+ * of it. A malformed entry is skipped (never matches).
+ */
+function hostMatchesAllowlistEntry(host: string, entry: string): boolean {
+  const normalized = parseHttpHost(entry.includes('://') ? entry : `https://${entry}`);
+  if (normalized === null) return false;
+  return host === normalized || host.endsWith(`.${normalized}`);
+}
+
+/**
+ * Whether an absolute `http(s)` URL's host passes the given policy. Under
+ * `block-all` (default) nothing passes; under `allowlist`, the host must equal
+ * an entry or be a strict subdomain of one.
+ */
+export function isAllowedExternalHost(urlValue: string, policy: ExternalUrlPolicy): boolean {
+  const hosts = policy.mode === 'allowlist' ? policy.hosts : undefined;
+  if (!hosts || hosts.length === 0) return false;
+  const host = parseHttpHost(urlValue);
+  if (host === null) return false;
+  for (const entry of hosts) {
+    if (hostMatchesAllowlistEntry(host, entry)) return true;
+  }
+  return false;
+}
+
+/**
+ * Whether a linkable element's `href`/`xlink:href` value must be stripped:
+ * scheme-aware gate that keeps relative/fragment and `mailto:` URLs, applies
+ * the host allowlist (default-deny) to absolute `http(s)` URLs, and drops every
+ * other scheme (data:/javascript:/ftp:/…).
+ */
+function shouldStripHref(val: string, policy: ExternalUrlPolicy): boolean {
+  const scheme = getScheme(val.trim());
+  if (scheme === null) return false; // relative / fragment — keep
+  if (scheme === 'http' || scheme === 'https') {
+    // Host allowlist (Layer 1 of the external-URL guard): default-deny.
+    return !isAllowedExternalHost(val, policy);
+  }
+  return !ALLOWED_SCHEMES.has(scheme);
+}
+
+/**
  * Sanitizes one element's attributes in place: strips `on*` event handlers and
- * removes non-whitelisted-scheme hrefs from linkable elements. `el.localName`
+ * applies the scheme + host policy to hrefs on linkable elements. `el.localName`
  * is already lowercase for HTML/SVG so callers avoid `.toLowerCase()` overhead.
  *
  * `feImage` is included alongside `use`/`image`: it references an external
@@ -388,7 +558,7 @@ const ALLOWED_SCHEMES = new Set(['http', 'https', 'mailto']);
  * (pass (a) permits `href` on allowed SVG tags, and only this pass enforces
  * the scheme allowlist for non-`use`/`image` linkable elements).
  */
-function sanitizeElementAttributes(el: Element): void {
+function sanitizeElementAttributes(el: Element, policy: ExternalUrlPolicy): void {
   const localName = el.localName;
   // SVG local names preserve case (feImage) in both HTML and XHTML/XML parse
   // modes, so compare case-insensitively rather than relying on one casing.
@@ -406,13 +576,11 @@ function sanitizeElementAttributes(el: Element): void {
       el.removeAttribute(name);
       continue;
     }
-    if (!isLinkable || (name !== 'href' && name !== 'xlink:href')) continue;
-
-    const val = attr.value;
-    if (!val) continue;
-    const scheme = getScheme(val.trim());
-    if (scheme !== null && !ALLOWED_SCHEMES.has(scheme)) {
-      el.removeAttribute(name);
+    if (isLinkable && (name === 'href' || name === 'xlink:href')) {
+      const val = attr.value;
+      if (val && shouldStripHref(val, policy)) {
+        el.removeAttribute(name);
+      }
     }
   }
 }
@@ -422,6 +590,7 @@ export function sanitizeDom(
   deadline?: number,
   timeoutMs?: number,
   traceId?: string,
+  policy: ExternalUrlPolicy = DEFAULT_EXTERNAL_URL_POLICY,
 ): void {
   const root = node.nodeType === Node.DOCUMENT_NODE ? (node as Document).documentElement : node;
   if (!root) return;
@@ -443,7 +612,7 @@ export function sanitizeDom(
     }
 
     if (el.hasAttributes()) {
-      sanitizeElementAttributes(el);
+      sanitizeElementAttributes(el, policy);
     }
     el = walker.nextNode() as Element | null;
   }
@@ -451,10 +620,11 @@ export function sanitizeDom(
 
 export function sanitizeEpubDocument(
   doc: Document,
-  options?: { timeoutMs?: number; traceId?: string },
+  options?: { timeoutMs?: number; traceId?: string; externalUrlPolicy?: ExternalUrlPolicy },
 ): void {
   const timeoutMs = options?.timeoutMs ?? SANITIZE_TIMEOUT_MS;
   const traceId = options?.traceId;
+  const policy = options?.externalUrlPolicy ?? DEFAULT_EXTERNAL_URL_POLICY;
   const deadline = createDeadline(timeoutMs);
 
   const root = doc.documentElement;
@@ -490,16 +660,22 @@ export function sanitizeEpubDocument(
   checkDeadline(deadline, 'epub-sanitize', timeoutMs, traceId);
 
   // Pass (c): sanitizeDom() for href-scheme + event-attr enforcement
-  sanitizeDom(doc, deadline, timeoutMs, traceId);
+  sanitizeDom(doc, deadline, timeoutMs, traceId, policy);
 }
 export interface SanitizeHook {
   hook: (contents: { document?: Document; href?: string }) => void;
 }
 
 export function createEpubSanitizerHook(
-  options?: { timeoutMs?: number; traceId?: string; policyVersion?: number },
+  options?: {
+    timeoutMs?: number;
+    traceId?: string;
+    policyVersion?: number;
+    externalUrlPolicy?: ExternalUrlPolicy;
+  },
 ): SanitizeHook {
   const policyVersion = options?.policyVersion ?? SANITIZER_POLICY_VERSION;
+  const policy = options?.externalUrlPolicy ?? DEFAULT_EXTERNAL_URL_POLICY;
   const cache = new Map<string, string>();
 
   function keyFor(href: string): string {
@@ -561,7 +737,7 @@ export function createEpubSanitizerHook(
         copyHtmlAttributesWhenChanged(root, cachedRoot);
         const timeoutMs = options?.timeoutMs ?? SANITIZE_TIMEOUT_MS;
         const deadline = createDeadline(timeoutMs);
-        sanitizeDom(doc, deadline, timeoutMs, options?.traceId);
+        sanitizeDom(doc, deadline, timeoutMs, options?.traceId, policy);
         return;
       }
     }
@@ -578,7 +754,11 @@ export function createEpubSanitizerHook(
 }
 
 export function createSvgSanitizerHook(
-  options?: { timeoutMs?: number; traceId?: string },
+  options?: {
+    timeoutMs?: number;
+    traceId?: string;
+    externalUrlPolicy?: ExternalUrlPolicy;
+  },
 ): (contents: { document?: Document }) => void {
   return (contents: { document?: Document }) => {
     const doc = contents.document;
@@ -586,11 +766,96 @@ export function createSvgSanitizerHook(
 
     const timeoutMs = options?.timeoutMs ?? SANITIZE_TIMEOUT_MS;
     const traceId = options?.traceId;
+    const policy = options?.externalUrlPolicy ?? DEFAULT_EXTERNAL_URL_POLICY;
     const deadline = createDeadline(timeoutMs);
 
     const svgElements = doc.querySelectorAll('svg');
     for (const svg of svgElements) {
-      sanitizeDom(svg, deadline, timeoutMs, traceId);
+      sanitizeDom(svg, deadline, timeoutMs, traceId, policy);
     }
   };
+}
+
+/**
+ * Parity helper for the fetch-level egress guard (Layer 2): returns the
+ * browser-security directives that keep book-local resources working while
+ * default-denying external subresource egress.
+ *
+ * - `img-src 'self' blob: data:` keeps manifest resources (rewritten by epubjs
+ *   to `blob:` URLs) and allowed `data:` images; in block-all mode NO external
+ *   origin appears, so the browser cannot load any `http(s)` image.
+ * - `style-src 'self' 'unsafe-inline' blob:` keeps book stylesheets (blob) and
+ *   inline `<style>`/`style` attributes the sanitizer preserves.
+ * - `font-src`/`media-src`/`connect-src` default-deny external egress.
+ * - `object-src 'none'` / `frame-src 'none'` / `base-uri 'none'` / `form-action 'none'`
+ *   harden against plugin/embedding/base-tag/form abuse.
+ *
+ * In allowlist mode, each allowlisted host (and its subdomains) is added as an
+ * `https://<host>` source to `img-src`/`style-src`/`font-src`/`media-src`/
+ * `connect-src`, so explicitly-allowed publishers/CDNs can load resources while
+ * everything else stays blocked.
+ */
+export function buildExternalUrlCsp(policy: ExternalUrlPolicy): string {
+  const origins: string[] = [];
+  if (policy.mode === 'allowlist') {
+    for (const entry of policy.hosts ?? []) {
+      const host = parseHttpHost(entry.includes('://') ? entry : `https://${entry}`);
+      if (host !== null) origins.push(`https://${host}`);
+    }
+  }
+  const src = ['\'self\'', 'blob:', 'data:', ...origins].join(' ');
+  const styleSrc = ['\'self\'', '\'unsafe-inline\'', 'blob:', 'data:', ...origins].join(' ');
+  return [
+    `img-src ${src}`,
+    `style-src ${styleSrc}`,
+    `font-src ${src}`,
+    `media-src ${src}`,
+    `connect-src ${'\'self\'' + (origins.length ? ` ${origins.join(' ')}` : '')}`,
+    'object-src \'none\'',
+    'frame-src \'none\'',
+    'base-uri \'none\'',
+    'form-action \'none\'',
+  ].join('; ');
+}
+
+export interface ExternalUrlGuardHook {
+  hook: (contents: { document?: Document } | Document) => void;
+}
+
+/**
+ * Fetch-level egress guard (Layer 2 of the external-URL hardening): a rendition
+ * content hook that injects a strict CSP `<meta>` into every rendered chapter
+ * so the browser refuses external subresource fetches even if a URL evades the
+ * sanitizer (e.g. a future bypass or a dynamically-injected element). The
+ * sanitizer is Layer 1 and strips the same URLs at content-ingestion time; this
+ * hook is the network-plane backstop.
+ *
+ * `contents` may be a `Contents` object (`.document`) or a raw `Document` —
+ * mirroring the payload epubjs delivers to content hooks.
+ */
+export function createExternalUrlGuardHook(
+  policy: ExternalUrlPolicy = DEFAULT_EXTERNAL_URL_POLICY,
+): ExternalUrlGuardHook {
+  const csp = buildExternalUrlCsp(policy);
+
+  function hook(contents: { document?: Document } | Document): void {
+    let doc: Document | null | undefined;
+    if (contents && typeof contents === 'object' && 'document' in contents) {
+      doc = contents.document;
+    } else {
+      doc = contents as Document | undefined;
+    }
+    if (!doc || !doc.head) return;
+    const existing = doc.head.querySelector('meta[http-equiv="Content-Security-Policy"]');
+    if (existing) {
+      existing.setAttribute('content', csp);
+      return;
+    }
+    const meta = doc.createElement('meta');
+    meta.setAttribute('http-equiv', 'Content-Security-Policy');
+    meta.setAttribute('content', csp);
+    doc.head.appendChild(meta);
+  }
+
+  return { hook };
 }
