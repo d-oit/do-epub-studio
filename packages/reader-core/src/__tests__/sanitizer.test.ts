@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import DOMPurify from 'dompurify';
-import { sanitizeSvg, sanitizeDom, sanitizeEpubDocument, createSvgSanitizerHook, createEpubSanitizerHook, SANITIZER_POLICY_VERSION } from '../sanitizer';
+import { sanitizeSvg, sanitizeDom, sanitizeEpubDocument, createSvgSanitizerHook, createEpubSanitizerHook, SANITIZER_POLICY_VERSION, buildExternalUrlCsp, createExternalUrlGuardHook } from '../sanitizer';
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -200,7 +200,7 @@ describe('sanitizeDom', () => {
     });
   });
 
-  it('keeps http, https and mailto hrefs on use/image elements', () => {
+  it('keeps mailto but strips http/https hrefs on use/image by default (host allowlist)', () => {
     const html =
       '<svg xmlns="http://www.w3.org/2000/svg">' +
       '<use href="http://example.com/a.svg"/>' +
@@ -209,9 +209,80 @@ describe('sanitizeDom', () => {
       '</svg>';
     const doc = createDoc(html);
     sanitizeDom(doc);
-    expect(doc.querySelectorAll('use')[0]?.getAttribute('href')).toBe('http://example.com/a.svg');
-    expect(doc.querySelectorAll('use')[1]?.getAttribute('href')).toBe('https://example.com/b.svg');
+    // GoAP-224 hardening: absolute http(s) hosts are default-deny (block-all),
+    // so the browser cannot egress to an arbitrary CDN/host from EPUB content.
+    expect(doc.querySelectorAll('use')[0]?.getAttribute('href')).toBeNull();
+    expect(doc.querySelectorAll('use')[1]?.getAttribute('href')).toBeNull();
     expect(doc.querySelector('image')?.getAttribute('href')).toBe('mailto:user@example.com');
+  });
+
+  it('keeps http/https hrefs whose host is allowlisted', () => {
+    const html =
+      '<svg xmlns="http://www.w3.org/2000/svg">' +
+      '<use href="https://example.com/a.svg"/>' +
+      '<use href="https://cdn.example.com/b.svg"/>' +
+      '<use href="https://evil.org/c.svg"/>' +
+      '</svg>';
+    const doc = createDoc(html);
+    const policy = { mode: 'allowlist' as const, hosts: ['example.com'] };
+    sanitizeDom(doc, undefined, undefined, undefined, policy);
+    const uses = doc.querySelectorAll('use');
+    expect(uses[0]?.getAttribute('href')).toBe('https://example.com/a.svg');
+    // Strict subdomains of an entry are allowed.
+    expect(uses[1]?.getAttribute('href')).toBe('https://cdn.example.com/b.svg');
+    // Non-allowlisted host is stripped.
+    expect(uses[2]?.getAttribute('href')).toBeNull();
+  });
+
+  it('normalizes ports, userinfo and scheme case in allowlist matching', () => {
+    const html =
+      '<svg xmlns="http://www.w3.org/2000/svg">' +
+      '<use href="https://user:pass@EXAMPLE.com:8443/a.svg"/>' +
+      '<use href="http://example.com.evil.org/x.svg"/>' +
+      '<use href="https://sub.example.co/y.svg"/>' +
+      '</svg>';
+    const doc = createDoc(html);
+    const policy = { mode: 'allowlist' as const, hosts: ['example.com'] };
+    sanitizeDom(doc, undefined, undefined, undefined, policy);
+    const uses = doc.querySelectorAll('use');
+    // Host case, port and userinfo are normalized away; entry matches.
+    expect(uses[0]?.getAttribute('href')).toBe('https://user:pass@EXAMPLE.com:8443/a.svg');
+    // `example.com.evil.org` is NOT a subdomain of `example.com` (boundary match).
+    expect(uses[1]?.getAttribute('href')).toBeNull();
+    // `sub.example.co` does not match `example.com`.
+    expect(uses[2]?.getAttribute('href')).toBeNull();
+  });
+
+  it('block-all policy strips http(s) but keeps relative/fragment/mailto', () => {
+    const html =
+      '<svg xmlns="http://www.w3.org/2000/svg">' +
+      '<use href="https://evil.com/glyph.svg"/>' +
+      '<use href="images/icon.svg"/>' +
+      '<use href="#glyph"/>' +
+      '</svg>';
+    const doc = createDoc(html);
+    const policy = { mode: 'block-all' as const };
+    sanitizeDom(doc, undefined, undefined, undefined, policy);
+    const uses = doc.querySelectorAll('use');
+    expect(uses[0]?.getAttribute('href')).toBeNull();
+    expect(uses[1]?.getAttribute('href')).toBe('images/icon.svg');
+    expect(uses[2]?.getAttribute('href')).toBe('#glyph');
+  });
+
+  it('strips malformed/unparseable http hrefs (parse failure = deny)', () => {
+    const html =
+      '<svg xmlns="http://www.w3.org/2000/svg">' +
+      '<use href="http:///no-host/path.svg"/>' +
+      '<use href="http://exa mple.com/x.svg"/>' +
+      '<use href="http://[::1]/x.svg"/>' +
+      '</svg>';
+    const doc = createDoc(html);
+    const policy = { mode: 'allowlist' as const, hosts: ['example.com'] };
+    sanitizeDom(doc, undefined, undefined, undefined, policy);
+    const uses = doc.querySelectorAll('use');
+    uses.forEach((use) => {
+      expect(use.getAttribute('href')).toBeNull();
+    });
   });
 
   it('keeps scheme-less relative and fragment hrefs on use/image elements', () => {
@@ -289,14 +360,20 @@ describe('sanitizeDom', () => {
     });
   });
 
-  it('keeps http/https hrefs on feImage', () => {
+  it('strips http/https hrefs on feImage by default and keeps allowlisted hosts', () => {
     const html =
       '<svg xmlns="http://www.w3.org/2000/svg">' +
       '<feImage href="https://example.com/filter.svg"/>' +
       '</svg>';
     const doc = createDoc(html);
+    // default = block-all → stripped
     sanitizeDom(doc);
-    expect(doc.querySelector('feImage')?.getAttribute('href')).toBe('https://example.com/filter.svg');
+    expect(doc.querySelector('feImage')?.getAttribute('href')).toBeNull();
+
+    // allowlisted host → kept
+    const allowDoc = createDoc(html);
+    sanitizeDom(allowDoc, undefined, undefined, undefined, { mode: 'allowlist', hosts: ['example.com'] });
+    expect(allowDoc.querySelector('feImage')?.getAttribute('href')).toBe('https://example.com/filter.svg');
   });
 
   it('strips non-whitelisted-scheme feImage hrefs through the EPUB document pipeline', () => {
@@ -386,6 +463,27 @@ describe('sanitizeEpubDocument', () => {
     expect(doc.head).not.toBeNull();
     expect(doc.body).not.toBeNull();
     expect(doc.body.querySelector('p')).not.toBeNull();
+  });
+
+  it('applies the externalUrlPolicy option through the EPUB document pipeline', () => {
+    const externalImg =
+      '<html><body>' +
+      '<svg xmlns="http://www.w3.org/2000/svg">' +
+      '<image href="https://cdn.example.com/cover.jpg"/>' +
+      '<use href="https://evil.org/track.svg"/>' +
+      '</svg>' +
+      '</body></html>';
+
+    // default (block-all): external hosts stripped
+    const blockDoc = createDoc(externalImg);
+    sanitizeEpubDocument(blockDoc);
+    expect(blockDoc.querySelector('image')?.getAttribute('href')).toBeNull();
+
+    // allowlist permits example.com (exact + subdomain), strips others
+    const allowDoc = createDoc(externalImg);
+    sanitizeEpubDocument(allowDoc, { externalUrlPolicy: { mode: 'allowlist', hosts: ['example.com'] } });
+    expect(allowDoc.querySelector('image')?.getAttribute('href')).toBe('https://cdn.example.com/cover.jpg');
+    expect(allowDoc.querySelector('use')?.getAttribute('href')).toBeNull();
   });
 
   it('is idempotent (safe to invoke multiple times)', () => {
@@ -541,6 +639,96 @@ describe('createSvgSanitizerHook', () => {
 
   it('returns a function that handles null document', () => {
     const hook = createSvgSanitizerHook();
+    expect(() => hook({ document: undefined })).not.toThrow();
+  });
+
+  it('applies externalUrlPolicy to nested svg use/image hrefs', () => {
+    const hook = createSvgSanitizerHook({ externalUrlPolicy: { mode: 'allowlist', hosts: ['example.com'] } });
+    const doc = new DOMParser().parseFromString(
+      '<html><body>' +
+        '<svg xmlns="http://www.w3.org/2000/svg">' +
+        '<use href="https://example.com/a.svg"/>' +
+        '<use href="https://evil.org/b.svg"/>' +
+        '</svg>' +
+        '</body></html>',
+      'text/html',
+    );
+    hook({ document: doc });
+    const uses = doc.querySelectorAll('use');
+    expect(uses[0]?.getAttribute('href')).toBe('https://example.com/a.svg');
+    expect(uses[1]?.getAttribute('href')).toBeNull();
+  });
+});
+
+describe('buildExternalUrlCsp', () => {
+  it('block-all policy default-denies every external subresource source', () => {
+    const csp = buildExternalUrlCsp({ mode: 'block-all' });
+    const directives = new Map(
+      csp.split(';').map((d) => {
+        const [k, ...rest] = d.trim().split(' ');
+        return [k, rest.join(' ')];
+      }),
+    );
+    // No external origin appears anywhere.
+    expect(csp).not.toContain('https://');
+    // Book-local resources still work.
+    expect(directives.get('img-src')).toContain('blob:');
+    expect(directives.get('img-src')).toContain('data:');
+    expect(directives.get('img-src')).toContain("'self'");
+    expect(directives.get('style-src')).toContain("'unsafe-inline'");
+    expect(directives.get('object-src')).toBe("'none'");
+    expect(directives.get('frame-src')).toBe("'none'");
+    expect(directives.get('base-uri')).toBe("'none'");
+    expect(directives.get('form-action')).toBe("'none'");
+    expect(directives.get('connect-src')).toBe("'self'");
+  });
+
+  it('allowlist policy adds https origins to subresource directives', () => {
+    const csp = buildExternalUrlCsp({ mode: 'allowlist', hosts: ['example.com', 'cdn.example.com'] });
+    const directives = new Map(
+      csp.split(';').map((d) => {
+        const [k, ...rest] = d.trim().split(' ');
+        return [k, rest.join(' ')];
+      }),
+    );
+    expect(directives.get('img-src')).toContain('https://example.com');
+    expect(directives.get('connect-src')).toContain('https://example.com');
+  });
+});
+
+describe('createExternalUrlGuardHook', () => {
+  function docFrom(html: string): Document {
+    return new DOMParser().parseFromString(html, 'text/html');
+  }
+
+  it('injects a strict CSP meta into the chapter head (block-all default)', () => {
+    const { hook } = createExternalUrlGuardHook();
+    const doc = docFrom('<html><head><title>Ch</title></head><body><p>x</p></body></html>');
+    hook({ document: doc });
+    const meta = doc.head?.querySelector('meta[http-equiv="Content-Security-Policy"]');
+    expect(meta).not.toBeNull();
+    expect(meta?.getAttribute('content')).toContain("img-src 'self' blob: data:");
+    expect(meta?.getAttribute('content')).not.toContain('https://');
+  });
+
+  it('accepts a raw Document payload (epubjs section hook path)', () => {
+    const { hook } = createExternalUrlGuardHook();
+    const doc = docFrom('<html><head></head><body><p>x</p></body></html>');
+    hook(doc);
+    expect(doc.head?.querySelector('meta[http-equiv="Content-Security-Policy"]')).not.toBeNull();
+  });
+
+  it('is idempotent across repeated invocation', () => {
+    const { hook } = createExternalUrlGuardHook();
+    const doc = docFrom('<html><head></head><body></body></html>');
+    hook({ document: doc });
+    hook({ document: doc });
+    expect(doc.head?.querySelectorAll('meta[http-equiv="Content-Security-Policy"]')).toHaveLength(1);
+  });
+
+  it('does not throw when the document has no head', () => {
+    const { hook } = createExternalUrlGuardHook();
+    expect(() => hook({})).not.toThrow();
     expect(() => hook({ document: undefined })).not.toThrow();
   });
 });
