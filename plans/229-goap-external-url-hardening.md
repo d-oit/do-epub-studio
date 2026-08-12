@@ -1,7 +1,7 @@
 # GOAP-229: External-URL Hardening — Sanitizer Host Allowlist + Fetch-Level Egress Guard
 
 **Date:** 2026-08-12
-**Status:** ✅ COMPLETED (merged as PR <this PR>)
+**Status:** ✅ COMPLETED (merged as PR #972, commit 3563293)
 **Baseline:** `main` @ `4785286` (post GOAP-228, PR #965/966)
 **Related:** Plans 212 (`archive/212-…`), 224 (`archive/224-…`), 228; ADR-212, ADR-214; security checklist
 **Finding closed:** External-URL blocking was **partial** — scheme allowlist only
