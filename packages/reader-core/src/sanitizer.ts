@@ -390,11 +390,12 @@ const ALLOWED_SCHEMES = new Set(['http', 'https', 'mailto']);
  */
 function sanitizeElementAttributes(el: Element): void {
   const localName = el.localName;
+  // SVG local names preserve case (feImage) in both HTML and XHTML/XML parse
+  // modes, so compare case-insensitively rather than relying on one casing.
   const isLinkable =
     localName === 'use' ||
     localName === 'image' ||
-    localName === 'feimage' ||
-    localName === 'feImage';
+    localName.toLowerCase() === 'feimage';
   const attrs = el.attributes;
 
   for (let i = attrs.length - 1; i >= 0; i--) {
