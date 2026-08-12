@@ -18,7 +18,7 @@
     "fflate": "^0.8.3"
   },
   "devDependencies": {
-    "@types/jsdom": "^28.0.3",
+    "@types/jsdom": "^30.0.0",
     "@types/node": "^26",
     "fast-check": "^4.9.0",
     "typescript": "^6.0.3",
