@@ -37,25 +37,26 @@ vi.mock('@intity/epub-js', () => {
   const mockBook = {
     opened: Promise.resolve(),
     loaded: {
-      spine: Promise.resolve([
-        { index: 0, href: 'chapter1.xhtml', properties: ['page-spread-right'] },
-        { index: 1, href: 'chapter2.xhtml' },
-      ]),
       navigation: Promise.resolve({
         toc: [
           { label: 'Chapter 1', href: 'chapter1.xhtml' },
           { label: 'Chapter 2', href: 'chapter2.xhtml' },
         ],
       }),
-      metadata: Promise.resolve(
-        new Map([
+      // epub-js 0.3.97: metadata/spine now resolve via loaded.packaging.
+      packaging: Promise.resolve({
+        metadata: new Map([
           ['title', 'Test Book'],
           ['creator', 'Test Author'],
           ['language', 'en'],
           ['publisher', 'Test Publisher'],
           ['description', 'A test book'],
         ]),
-      ),
+        spine: [
+          { index: 0, href: 'chapter1.xhtml', properties: ['page-spread-right'] },
+          { index: 1, href: 'chapter2.xhtml' },
+        ],
+      }),
     },
     packaging: { direction: 'default', metadata: new Map() },
     renderTo: vi.fn().mockReturnValue(mockRendition),

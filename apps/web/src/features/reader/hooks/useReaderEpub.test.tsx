@@ -63,7 +63,8 @@ const { mockRendition, mockBook, mockEpubFn, createEpubLoaderMock } = vi.hoisted
     ready: Promise.resolve(),
     loaded: {
       navigation: Promise.resolve({ toc: [] }),
-      metadata: Promise.resolve(new Map()),
+      // epub-js 0.3.97: metadata now resolves via loaded.packaging.
+      packaging: Promise.resolve({ metadata: new Map() }),
     },
     packaging: { direction: 'default', metadata: new Map() },
     renderTo: vi.fn(() => rendition),

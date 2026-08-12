@@ -1,7 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
-import type { Book, NavItem } from '@intity/epub-js';
+import type { Book } from '@intity/epub-js';
 import { createTraceId } from '@do-epub-studio/shared';
 import { logClientEvent } from '../../../lib/client-logger';
+
+// epub-js 0.3.97 dropped the `NavItem` type export; keep a local shape
+// (mirrors 0.3.96: label/href required).
+type NavItem = { label: string; href: string; subitems?: NavItem[] };
 
 export interface SearchResult {
   cfi: string;

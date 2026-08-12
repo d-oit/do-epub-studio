@@ -1,6 +1,19 @@
 import { useEffect, useRef, useState } from 'react';
-import type { Book, Rendition, NavItem, Contents } from '@intity/epub-js';
+import type { Book, Rendition, Contents } from '@intity/epub-js';
 import type { PageDirection, ReaderZoom } from '../../../stores';
+
+// epub-js 0.3.97 dropped the `NavItem` type export; the reader only reads
+// label/href off toc entries. Mirrors 0.3.96 (strings required, like TocItem).
+type NavItem = { label: string; href: string; subitems?: NavItem[] };
+
+// epub-js 0.3.97 dropped the public `on`/`off` typings from Rendition (the
+// runtime EventEmitter still supports them) — widen the type at construction.
+// The listener param is `never[]` so any function (even one accepting a typed
+// payload) is assignable, mirroring epubjs's own `(type, listener)` signature.
+type RenditionWithEvents = Rendition & {
+  on(event: string, listener: (...args: never[]) => void): void;
+  off(event: string, listener: (...args: never[]) => void): void;
+};
 import {
   createEpubLoader,
   parseAccessibilityFromOpf,
@@ -93,10 +106,24 @@ export function useReaderEpub(
         const book = loader.getBook();
         if (!book) throw new Error('EPUB load returned no book');
         bookRef.current = book;
-        await book.ready;
+        await book.opened;
         if (!active) return;
-        const [navigation, meta] = await Promise.all([book.loaded.navigation, book.loaded.metadata]);
-        const tocItems: TocItem[] = navigation.toc
+        const rawLoaded = book.loaded;
+        if (!rawLoaded) {
+          throw new Error('EPUB opened without loaded data');
+        }
+        const resolvedLoad = (await Promise.all([
+          rawLoaded.packaging,
+          rawLoaded.navigation,
+        ])) as [unknown, unknown];
+        const navigationAny = resolvedLoad[1];
+        const packagingAny = resolvedLoad[0];
+        const navigation = navigationAny as
+          | { toc?: NavItem[] }
+          | null
+          | undefined;
+        const meta = (packagingAny as { metadata?: Map<string, string> } | null | undefined)?.metadata;
+        const tocItems: TocItem[] = navigation?.toc
           ? navigation.toc.map((item: NavItem) => ({ label: item.label, href: item.href }))
           : [];
         setToc(tocItems);
@@ -145,8 +172,11 @@ export function useReaderEpub(
           try {
             const containerMeta = book.container as unknown as { fullPath: string };
             const opfPath = containerMeta.fullPath;
-            if (opfPath && book.archive) {
-              const opfXml = await book.archive.getText('/' + opfPath);
+            const bookArchive = (book as unknown as {
+              archive?: { getText(p: string): Promise<string | undefined> };
+            }).archive;
+            if (opfPath && bookArchive) {
+              const opfXml = await bookArchive.getText('/' + opfPath);
               if (opfXml) {
                 const fl = parseFixedLayoutFromOpf(opfXml);
                 if (fl && !fixedLayout) {
@@ -184,13 +214,15 @@ export function useReaderEpub(
             ? 'right'
             : 'auto';
 
+        // epub-js 0.3.97 dropped the public on/off typings from Rendition
+        // (runtime EventEmitter still has them) — widen once at construction.
         const rendition = book.renderTo(viewer, {
           width: '100%',
           height: '100%',
           spread: effectiveSpread,
           sandbox: ['allow-same-origin'],
           defaultDirection: bookDirection === 'default' ? undefined : bookDirection,
-        });
+        }) as RenditionWithEvents;
         renditionRef.current = rendition;
 
         // Security: Mandatory sanitization of all EPUB content
@@ -222,7 +254,7 @@ export function useReaderEpub(
         await rendition.display(progressCfi);
         if (!active) return;
 
-        const initialLocation = rendition.location;
+        const initialLocation = rendition.location as { start?: { href?: string } } | null;
         if (initialLocation?.start) {
           const startHref = initialLocation.start.href ?? null;
           currentChapterRef.current = startHref;
@@ -254,6 +286,10 @@ export function useReaderEpub(
 
         rendition.on(
           'relocated',
+          // The relocated handler is async; epubjs's EventEmitter fires-and-forgets
+          // the listener's return (it is not awaited), so the returned Promise is
+          // intentionally not chained here.
+          // eslint-disable-next-line @typescript-eslint/no-misused-promises -- fire-and-forget event handler
           createRelocatedSetup({
             bookId,
             sessionToken,
@@ -360,7 +396,7 @@ export function useReaderEpub(
     if (layoutSettings) {
       layoutSettings.spread = readerSpread;
     }
-    const currentCfi = rendition.location?.start?.cfi;
+    const currentCfi = (rendition.location as { start?: { cfi?: string } } | undefined)?.start?.cfi;
     if (currentCfi) {
       void rendition.display(currentCfi);
     }

@@ -1,6 +1,23 @@
 import ePub from '@intity/epub-js';
-import type { Book, Rendition, Location, Contents } from '@intity/epub-js';
-import type { SpineItem as EpubSpineItem } from '@intity/epub-js/types/section';
+import type { Book, Rendition, Contents } from '@intity/epub-js';
+// epub-js 0.3.97 dropped the named `SpineItem` export from types/section; the
+// loader only needs the index/href/properties slice it reads off each item.
+interface EpubSpineItem {
+  index?: number;
+  href?: string;
+  properties?: string[];
+}
+
+// epub-js 0.3.97 typed `Location.start` as `{}`; keep the slice the loader reads
+// (values come from the runtime relocation object; pins 0.3.96 behavior).
+interface RenditionLocationLike {
+  start?: {
+    cfi?: string;
+    percentage?: number;
+    href?: string;
+    displayed?: { page?: number };
+  };
+}
 import type {
   TocItem,
   SpineItem,
@@ -13,6 +30,15 @@ import { parseEpubInWorker, terminateParserWorker } from './epub-parser-worker';
 import { createEpubSanitizerHook } from './sanitizer';
 
 type EventCallback = (data: unknown) => void;
+
+// @intity/epub-js 0.3.97 removed the public `on`/`off` typings from Rendition
+// even though the runtime EventEmitter still supports them (typing
+// regression); restore the event surface so the loader can bridge rendition
+// events. Behavior is unchanged.
+type RenditionWithEvents = Rendition & {
+  on(event: string, listener: (...args: unknown[]) => void): void;
+  off(event: string, listener: (...args: unknown[]) => void): void;
+};
 
 export interface EpubRenditionHandle {
   display(target?: string): Promise<void>;
@@ -50,7 +76,7 @@ interface EpubLoaderOptions {
 
 export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
   let book: Book | null = null;
-  let rendition: Rendition | null = null;
+  let rendition: RenditionWithEvents | null = null;
   let renditionHandle: EpubRenditionHandle | null = null;
   let toc: TocItem[] = [];
   let spineItems: SpineItem[] = [];
@@ -227,19 +253,27 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
     safeMark('epub-unzip-end');
     safeMeasure('epub-unzip', 'epub-unzip-start', 'epub-unzip-end');
 
-    // Fetch navigation, spine, and metadata in parallel — they are
-    // independent and already-resolved by the time `opened` fires.
-    // Sequential awaits add 20-60ms each on large EPUBs (per plan 065).
-    const [nav, meta] = await Promise.all([
-      book.loaded.navigation,
-      book.loaded.metadata,
-    ]);
-    const spine = await book.loaded.spine;
+    // Fetch navigation and metadata/spine in parallel for big-EPUB speed
+    // (plan 065). epub-js 0.3.97 removed `loaded.metadata`/`loaded.spine`;
+    // metadata and spine now live on `loaded.packaging` (same Map shapes).
+    const rawLoaded = book.loaded;
+    if (!rawLoaded) {
+      throw new Error('Book opened without loaded data');
+    }
+    const resolved = (await Promise.all([
+      rawLoaded.packaging,
+      rawLoaded.navigation,
+    ])) as [unknown, unknown];
+    const nav = resolved[1] as { toc?: unknown } | null;
+    const packaging = resolved[0] as
+      | { metadata?: Map<string, string>; spine?: unknown }
+      | null
+      | undefined;
     if (destroyed) return;
 
     rawNav = nav ?? null;
-    rawMeta = meta ?? null;
-    rawSpine = spine ?? null;
+    rawMeta = packaging?.metadata ?? null;
+    rawSpine = packaging?.spine ?? null;
   }
 
   function createRenditionHandle(container: HTMLElement): EpubRenditionHandle {
@@ -251,6 +285,8 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
       return renditionHandle as EpubRenditionHandle;
     }
 
+    // The runtime rendition is an EventEmitter; the 0.3.97 typings dropped on/off
+    // (see RenditionWithEvents) — cast at the single construction boundary.
     rendition = book.renderTo(container, {
       width: '100%',
       height: '100%',
@@ -258,19 +294,20 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
       sandbox: ['allow-same-origin'],
       flow: options?.flow,
       manager: options?.manager,
-    });
+    }) as RenditionWithEvents;
 
     // Security: ADR-035 Mandatory sanitization
     rendition.hooks.content.register(createEpubSanitizerHook().hook);
 
     // Bridge rendition events to the loader's event system
-    rendition.on('relocated', (location: Location) => {
+    rendition.on('relocated', (location: unknown) => {
+      const start = (location as RenditionLocationLike).start ?? {};
       const progress: ProgressPosition = {
-        cfi: location.start.cfi,
-        percentage: location.start.percentage,
+        cfi: start.cfi ?? '',
+        percentage: start.percentage ?? 0,
         displayed: {
-          index: location.start.displayed?.page ?? 0,
-          href: location.start.href,
+          index: start.displayed?.page ?? 0,
+          href: start.href ?? '',
         },
       };
       currentProgress = progress;
@@ -310,13 +347,11 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
       },
       on(event: string, callback: EventCallback): void {
         if (!rendition) return;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- epubjs event callbacks have varying signatures
-        rendition.on(event, callback as any);
+        rendition.on(event, callback);
       },
       off(event: string, callback: EventCallback): void {
         if (!rendition) return;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- epubjs event callbacks have varying signatures
-        rendition.off(event, callback as any);
+        rendition.off(event, callback);
       },
       getContents(): Contents[] {
         if (!rendition) return [];
