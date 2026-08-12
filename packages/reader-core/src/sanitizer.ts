@@ -326,6 +326,28 @@ export function sanitizeSvg(svgContent: string): string {
 }
 
 /**
+ * Whether `code` is an ASCII letter (A-Z, a-z) — the required first character
+ * of a URI scheme per RFC 3986 §3.1.
+ */
+function isAlphaCode(code: number): boolean {
+  return (code >= 65 && code <= 90) || (code >= 97 && code <= 122);
+}
+
+/**
+ * Whether `code` is a valid (non-first) scheme character: letters, digits,
+ * "+", ".", "-" (RFC 3986 §3.1).
+ */
+function isSchemeCharCode(code: number): boolean {
+  return (
+    isAlphaCode(code) ||
+    (code >= 48 && code <= 57) ||
+    code === 43 /* + */ ||
+    code === 46 /* . */ ||
+    code === 45 /* - */
+  );
+}
+
+/**
  * Safely extracts the scheme part from a URI string (e.g. "https" from "https://example.com").
  * Returns the lowercase scheme, or null if no valid scheme is present.
  * This avoids the considerable overhead of regular expressions and matchBounded, improving sanitization performance.
@@ -342,30 +364,45 @@ function getScheme(val: string): string | null {
   // 32-char assumption would have kept are still matched and removed.
   if (colonIdx <= 0 || colonIdx > 2048) return null;
 
-  // The first character must be a letter (A-Z or a-z)
-  const firstCode = val.charCodeAt(0);
-  if (
-    !((firstCode >= 65 && firstCode <= 90) || (firstCode >= 97 && firstCode <= 122))
-  ) {
-    return null;
-  }
-
-  // Subsequent characters must be letters, digits, "+", ".", or "-"
+  // The first character must be a letter (A-Z or a-z); the rest must be
+  // scheme characters (letters/digits/"+"/"."/"-").
+  if (!isAlphaCode(val.charCodeAt(0))) return null;
   for (let i = 1; i < colonIdx; i++) {
-    const code = val.charCodeAt(i);
-    if (
-      !((code >= 65 && code <= 90) ||
-        (code >= 97 && code <= 122) ||
-        (code >= 48 && code <= 57) ||
-        code === 43 ||
-        code === 46 ||
-        code === 45)
-    ) {
-      return null;
-    }
+    if (!isSchemeCharCode(val.charCodeAt(i))) return null;
   }
 
   return val.substring(0, colonIdx).toLowerCase();
+}
+
+/** Schemes that are kept on linkable (`use`/`image`) href attributes. */
+const ALLOWED_SCHEMES = new Set(['http', 'https', 'mailto']);
+
+/**
+ * Sanitizes one element's attributes in place: strips `on*` event handlers and
+ * removes non-whitelisted-scheme hrefs from linkable elements. `el.localName`
+ * is already lowercase for HTML/SVG so callers avoid `.toLowerCase()` overhead.
+ */
+function sanitizeElementAttributes(el: Element): void {
+  const isLinkable = el.localName === 'use' || el.localName === 'image';
+  const attrs = el.attributes;
+
+  for (let i = attrs.length - 1; i >= 0; i--) {
+    const attr = attrs.item(i);
+    if (!attr) continue;
+    const name = attr.name;
+    if (name.startsWith('on')) {
+      el.removeAttribute(name);
+      continue;
+    }
+    if (!isLinkable || (name !== 'href' && name !== 'xlink:href')) continue;
+
+    const val = attr.value;
+    if (!val) continue;
+    const scheme = getScheme(val.trim());
+    if (scheme !== null && !ALLOWED_SCHEMES.has(scheme)) {
+      el.removeAttribute(name);
+    }
+  }
 }
 
 export function sanitizeDom(
@@ -394,30 +431,7 @@ export function sanitizeDom(
     }
 
     if (el.hasAttributes()) {
-      // Use localName which is already lowercase for HTML/SVG elements to avoid .toLowerCase() overhead.
-      const tag = el.localName;
-      const isLinkable = tag === 'use' || tag === 'image';
-      const attrs = el.attributes;
-
-      for (let i = attrs.length - 1; i >= 0; i--) {
-        const attr = attrs.item(i);
-        if (!attr) continue;
-        const name = attr.name;
-        if (name.startsWith('on')) {
-          el.removeAttribute(name);
-        } else if (isLinkable && (name === 'href' || name === 'xlink:href')) {
-          const val = attr.value;
-          if (val) {
-            const trimmedVal = val.trim();
-            const scheme = getScheme(trimmedVal);
-            if (scheme !== null) {
-              if (scheme !== 'http' && scheme !== 'https' && scheme !== 'mailto') {
-                el.removeAttribute(name);
-              }
-            }
-          }
-        }
-      }
+      sanitizeElementAttributes(el);
     }
     el = walker.nextNode() as Element | null;
   }
