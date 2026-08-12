@@ -506,20 +506,27 @@ function parseHttpHost(val: string): string | null {
 }
 
 /**
+ * Whether a normalized host equals an allowlist entry or is a strict subdomain
+ * of it. A malformed entry is skipped (never matches).
+ */
+function hostMatchesAllowlistEntry(host: string, entry: string): boolean {
+  const normalized = parseHttpHost(entry.includes('://') ? entry : `https://${entry}`);
+  if (normalized === null) return false;
+  return host === normalized || host.endsWith(`.${normalized}`);
+}
+
+/**
  * Whether an absolute `http(s)` URL's host passes the given policy. Under
  * `block-all` (default) nothing passes; under `allowlist`, the host must equal
  * an entry or be a strict subdomain of one.
  */
 export function isAllowedExternalHost(urlValue: string, policy: ExternalUrlPolicy): boolean {
-  if (policy.mode === 'block-all') return false;
-  const hosts = policy.hosts;
+  const hosts = policy.mode === 'allowlist' ? policy.hosts : undefined;
   if (!hosts || hosts.length === 0) return false;
   const host = parseHttpHost(urlValue);
   if (host === null) return false;
   for (const entry of hosts) {
-    const normalized = parseHttpHost(entry.includes('://') ? entry : `https://${entry}`);
-    if (normalized === null) continue;
-    if (host === normalized || host.endsWith(`.${normalized}`)) return true;
+    if (hostMatchesAllowlistEntry(host, entry)) return true;
   }
   return false;
 }
