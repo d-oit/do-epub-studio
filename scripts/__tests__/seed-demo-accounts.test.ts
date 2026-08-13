@@ -6,8 +6,11 @@ import {
   RESERVED,
 } from '../seed-demo-accounts.mjs';
 
-const ADMIN_SECRET = 'op-admin-pass-secret';
-const READER_SECRET = 'op-reader-pass-secret';
+// Test-only fixture credentials — never real secrets. In production,
+// operator passwords arrive via DEMO_ADMIN_PASSWORD/DEMO_READER_PASSWORD env
+// vars and are never committed (ADR-233).
+const ADMIN_SECRET = 'TEST-ONLY-admin-fixture-pass';
+const READER_SECRET = 'TEST-ONLY-reader-fixture-pass';
 const MOCK_HASH = 'argon2id$MOCK$hash';
 
 function env(overrides = {}) {
