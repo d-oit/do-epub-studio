@@ -3,21 +3,35 @@ import {
   makeEnv,
   makePassThroughContext,
   mockQueryFirst,
-  mockCreateAdminSessionByEmail,
+  mockCreateResetToken,
+  mockVerifyResetToken,
+  mockBumpResetTokenAttempt,
+  mockChangePasswordAndConsumeResetToken,
+  mockAccountIsLocked,
+  mockIsPasswordDerivative,
+  mockRevokeAllAdminSessionsForUser,
+  parseBody,
 } from './fixtures';
 import { app } from '../app';
-import { sign } from 'hono/jwt';
-import { JWT_PURPOSE_ADMIN_RECOVER, JWT_PURPOSE_READER_RECOVER } from '@do-epub-studio/schema';
+
+vi.mock('../lib/email-transport', () => ({
+  createEmailTransport: vi.fn(() => ({ send: vi.fn().mockResolvedValue(undefined) })),
+}));
+
+const STRONG = 'Str0ng!Passphrase#2026';
 
 describe('Security: Admin Recovery Flow', () => {
   const env = makeEnv();
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockAccountIsLocked.mockReturnValue(false);
+    mockIsPasswordDerivative.mockReturnValue(false);
   });
 
-  it('POST /api/admin/recovery-request should succeed for valid admin email', async () => {
-    mockQueryFirst.mockResolvedValue({ id: 'admin-1', email: 'admin@example.com' });
+  it('POST /api/admin/recovery-request succeeds for a valid admin email and mints a reset token', async () => {
+    mockQueryFirst.mockResolvedValue({ id: 'admin-1', email: 'admin@example.com', global_role: 'admin', disabled_at: null, compromised_at: null });
+    mockCreateResetToken.mockResolvedValue('raw-reset-token');
 
     const res = await app.fetch(
       new Request('http://localhost/api/admin/recovery-request', {
@@ -30,148 +44,151 @@ describe('Security: Admin Recovery Flow', () => {
     );
 
     expect(res.status).toBe(200);
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion -- needed for property access
-    const body = await res.json() as { ok: boolean; data?: { token: string; user?: { role: string } } };
+    const body = await parseBody(res);
     expect(body.ok).toBe(true);
-    // Verify it used global_role in the check (by implication of queryFirst being called)
-    expect(mockQueryFirst).toHaveBeenCalledWith(
+    expect(mockCreateResetToken).toHaveBeenCalledWith(
       expect.anything(),
-      expect.stringContaining('global_role = ?'),
-      ['admin@example.com', 'admin']
+      expect.objectContaining({ purpose: 'admin_reset', userId: 'admin-1' }),
     );
   });
 
-  it('POST /api/admin/recovery-verify should succeed with valid token', async () => {
-    const payload = {
-      email: 'admin@example.com',
-      purpose: JWT_PURPOSE_ADMIN_RECOVER,
-      exp: Math.floor(Date.now() / 1000) + 3600,
-    };
-    const token = await sign(payload, env.INVITE_TOKEN_SECRET, 'HS256');
-
-    mockQueryFirst.mockResolvedValue({
-      id: 'admin-1',
-      email: 'admin@example.com',
-      global_role: 'admin'
-    });
-
-    mockCreateAdminSessionByEmail.mockResolvedValue({
-      ok: true,
-      token: 'session-token',
-      user: { id: 'admin-1', email: 'admin@example.com', role: 'admin' }
-    });
+  it('POST /api/admin/recovery-request returns success for a non-existent email (no enumeration)', async () => {
+    mockQueryFirst.mockResolvedValue(null);
 
     const res = await app.fetch(
-      new Request('http://localhost/api/admin/recovery-verify', {
+      new Request('http://localhost/api/admin/recovery-request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token }),
+        body: JSON.stringify({ email: 'ghost@example.com' }),
       }),
       env,
       makePassThroughContext(),
     );
 
     expect(res.status).toBe(200);
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion -- needed for property access
-    const body = await res.json() as { ok: boolean; data?: { token: string; user?: { role: string } } };
+    const body = await parseBody(res);
     expect(body.ok).toBe(true);
-    expect(body.data?.token).toBe('session-token');
-    expect(body.data?.user?.role).toBe('admin');
+    expect(mockCreateResetToken).not.toHaveBeenCalled();
   });
 
-  it('returns 401 if token has wrong purpose', async () => {
-    const payload = {
-      email: 'admin@example.com',
-      purpose: 'invalid_purpose',
-      exp: Math.floor(Date.now() / 1000) + 3600,
-    };
-    const token = await sign(payload, env.INVITE_TOKEN_SECRET, 'HS256');
+  it('POST /api/admin/recovery-verify accepts newPassword+confirm, resets, revokes sessions, returns reset-complete (no login)', async () => {
+    mockVerifyResetToken.mockResolvedValue({ ok: true, record: { id: 'rt-1', userId: 'admin-1', purpose: 'admin_reset' } });
+    mockQueryFirst.mockResolvedValue({ id: 'admin-1', email: 'admin@example.com', disabled_at: null, compromised_at: null, global_role: 'admin' });
 
     const res = await app.fetch(
       new Request('http://localhost/api/admin/recovery-verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token }),
+        body: JSON.stringify({ token: 'reset-token', newPassword: STRONG, newPasswordConfirm: STRONG }),
+      }),
+      env,
+      makePassThroughContext(),
+    );
+
+    expect(res.status).toBe(200);
+    const body = await parseBody(res);
+    expect(body.ok).toBe(true);
+    expect(body.data).toEqual({ reset: true });
+    expect(mockBumpResetTokenAttempt).toHaveBeenCalledWith(expect.anything(), 'rt-1');
+    expect(mockChangePasswordAndConsumeResetToken).toHaveBeenCalledWith(expect.anything(), 'admin-1', STRONG, 'rt-1');
+    expect(mockRevokeAllAdminSessionsForUser).toHaveBeenCalledWith(expect.anything(), 'admin-1');
+  });
+
+  it('rejects a reused (replayed) reset token as generic INVALID_TOKEN', async () => {
+    mockVerifyResetToken.mockResolvedValue({ ok: false, reason: 'used' });
+
+    const res = await app.fetch(
+      new Request('http://localhost/api/admin/recovery-verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: 'reused', newPassword: STRONG, newPasswordConfirm: STRONG }),
       }),
       env,
       makePassThroughContext(),
     );
 
     expect(res.status).toBe(401);
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion -- needed for property access
-    const body = await res.json() as { ok: boolean; error: { code: string } };
-    expect(body.error.code).toBe('INVALID_TOKEN');
+    const body = await parseBody(res);
+    expect(body.error?.code).toBe('INVALID_TOKEN');
+    expect(mockChangePasswordAndConsumeResetToken).not.toHaveBeenCalled();
   });
 
-  it('returns 401 if token has no purpose', async () => {
-    const payload = {
-      email: 'admin@example.com',
-      exp: Math.floor(Date.now() / 1000) + 3600,
-    };
-    const token = await sign(payload, env.INVITE_TOKEN_SECRET, 'HS256');
+  it('rejects an expired reset token and cannot change the password', async () => {
+    mockVerifyResetToken.mockResolvedValue({ ok: false, reason: 'expired' });
 
     const res = await app.fetch(
       new Request('http://localhost/api/admin/recovery-verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token }),
+        body: JSON.stringify({ token: 'expired', newPassword: STRONG, newPasswordConfirm: STRONG }),
       }),
       env,
       makePassThroughContext(),
     );
 
     expect(res.status).toBe(401);
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion -- needed for property access
-    const body = await res.json() as { ok: boolean; error: { code: string } };
-    expect(body.error.code).toBe('INVALID_TOKEN');
+    const body = await parseBody(res);
+    expect(body.error?.code).toBe('INVALID_TOKEN');
+    expect(mockChangePasswordAndConsumeResetToken).not.toHaveBeenCalled();
   });
 
-  it('returns 401 if token is expired', async () => {
-    const payload = {
-      email: 'admin@example.com',
-      purpose: JWT_PURPOSE_ADMIN_RECOVER,
-      exp: Math.floor(Date.now() / 1000) - 3600,
-    };
-    const token = await sign(payload, env.INVITE_TOKEN_SECRET, 'HS256');
+  it('rejects mismatched password confirmation (schema-level)', async () => {
+    mockVerifyResetToken.mockResolvedValue({ ok: true, record: { id: 'rt-1', userId: 'admin-1', purpose: 'admin_reset' } });
 
     const res = await app.fetch(
       new Request('http://localhost/api/admin/recovery-verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token }),
+        body: JSON.stringify({ token: 't', newPassword: STRONG, newPasswordConfirm: 'Different123!' }),
+      }),
+      env,
+      makePassThroughContext(),
+    );
+
+    // Zod validation failure routes through the validation error formatter.
+    expect([400, 422]).toContain(res.status);
+    expect(mockChangePasswordAndConsumeResetToken).not.toHaveBeenCalled();
+  });
+
+  it('rejects a weak/service-derivative password', async () => {
+    mockVerifyResetToken.mockResolvedValue({ ok: true, record: { id: 'rt-1', userId: 'admin-1', purpose: 'admin_reset' } });
+    mockQueryFirst.mockResolvedValue({ id: 'admin-1', email: 'admin@example.com', disabled_at: null, compromised_at: null, global_role: 'admin' });
+    mockIsPasswordDerivative.mockReturnValue(true);
+
+    const res = await app.fetch(
+      new Request('http://localhost/api/admin/recovery-verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: 't', newPassword: 'admin@example.com12345', newPasswordConfirm: 'admin@example.com12345' }),
+      }),
+      env,
+      makePassThroughContext(),
+    );
+
+    expect(res.status).toBe(400);
+    const body = await parseBody(res);
+    expect(body.error?.code).toBe('WEAK_PASSWORD');
+    expect(mockChangePasswordAndConsumeResetToken).not.toHaveBeenCalled();
+  });
+
+  it('returns generic INVALID_TOKEN for a lock-disabled account', async () => {
+    mockVerifyResetToken.mockResolvedValue({ ok: true, record: { id: 'rt-1', userId: 'admin-1', purpose: 'admin_reset' } });
+    mockQueryFirst.mockResolvedValue({ id: 'admin-1', email: 'admin@example.com', disabled_at: '2026-01-01T00:00:00Z', compromised_at: null, global_role: 'admin' });
+    mockAccountIsLocked.mockReturnValue(true);
+
+    const res = await app.fetch(
+      new Request('http://localhost/api/admin/recovery-verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: 't', newPassword: STRONG, newPasswordConfirm: STRONG }),
       }),
       env,
       makePassThroughContext(),
     );
 
     expect(res.status).toBe(401);
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion -- needed for property access
-    const body = await res.json() as { ok: boolean; error: { code: string } };
-    expect(body.error.code).toBe('INVALID_TOKEN');
-  });
-
-  it('returns 401 if reader-purpose token submitted to admin endpoint (cross-context)', async () => {
-    const payload = {
-      email: 'admin@example.com',
-      purpose: JWT_PURPOSE_READER_RECOVER,
-      exp: Math.floor(Date.now() / 1000) + 3600,
-    };
-    const token = await sign(payload, env.INVITE_TOKEN_SECRET, 'HS256');
-
-    const res = await app.fetch(
-      new Request('http://localhost/api/admin/recovery-verify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token }),
-      }),
-      env,
-      makePassThroughContext(),
-    );
-
-    expect(res.status).toBe(401);
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion -- needed for property access
-    const body = await res.json() as { ok: boolean; error: { code: string } };
-    expect(body.error.code).toBe('INVALID_TOKEN');
-    expect(mockQueryFirst).not.toHaveBeenCalled();
+    const body = await parseBody(res);
+    expect(body.error?.code).toBe('INVALID_TOKEN');
+    expect(mockChangePasswordAndConsumeResetToken).not.toHaveBeenCalled();
   });
 });
