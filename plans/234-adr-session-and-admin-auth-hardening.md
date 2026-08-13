@@ -83,4 +83,3 @@ reads. Step-up for sensitive actions gives better risk-adjusted coverage.
 - MFA metadata cannot downgrade an enrolled account without step-up.
 - Audit logs contain event names and trace IDs, but no tokens, passwords,
   recovery codes, user agents, or raw IP addresses.
-

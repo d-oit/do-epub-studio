@@ -100,4 +100,3 @@ reset to keep session handling simpler and reduce accidental bypasses.
 - Password reset invalidates existing reader/admin sessions.
 - Recovery request response does not reveal whether the account exists.
 - No reset token, password, or reset URL appears in audit logs or telemetry.
-

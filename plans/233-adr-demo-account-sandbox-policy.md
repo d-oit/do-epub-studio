@@ -84,4 +84,3 @@ Rejected. E2E fixtures mock APIs and are not an operational account lifecycle.
 - Reseeding revokes prior demo sessions.
 - Demo admin cannot modify non-demo content unless explicitly configured for a
   throwaway preview database.
-

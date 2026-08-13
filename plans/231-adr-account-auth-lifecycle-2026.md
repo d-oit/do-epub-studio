@@ -93,4 +93,3 @@ grant access.
 - Backfill is idempotent and leaves no orphan `user_id` values.
 - Admin audit screens can show account events without exposing password hashes
   or reset-token hashes.
-

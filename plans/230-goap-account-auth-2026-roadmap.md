@@ -145,4 +145,3 @@ Implemented A1–A7 across a single PR:
   IPs (only `ipHash` / `traceId`).
 
 ADRs 231–234 are marked Accepted. See ADR-INDEX.md.
-
