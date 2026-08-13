@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from '../../hooks/useTranslation';
 import { apiRequest } from '../../lib/api';
-import { useAuthStore } from '../../stores/auth';
 import { LocaleSwitcher } from '../../components/LocaleSwitcher';
 import { Button, Input, AppLogo } from '../../components/ui';
 import { ThemeToggle } from '../../components/ThemeToggle';
@@ -17,16 +16,17 @@ export function AdminRecoverPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const setAdminAuth = useAuthStore((state) => state.setAdminAuth);
 
   const token = searchParams.get('token');
   const mode: Mode = token ? 'verify' : 'request';
 
   const [email, setEmail] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [newPasswordConfirm, setNewPasswordConfirm] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
+  const [resetComplete, setResetComplete] = useState(false);
 
   useEffect(() => {
     logClientEvent({
@@ -68,15 +68,14 @@ export function AdminRecoverPage() {
     setError(null);
 
     try {
-      const data = await apiRequest<{ sessionToken: string; email: string }>(
+      await apiRequest<{ ok: boolean; data: { reset: boolean } }>(
         '/api/admin/recovery-verify',
         {
           method: 'POST',
-          body: JSON.stringify({ token, newPassword }),
+          body: JSON.stringify({ token, newPassword, newPasswordConfirm }),
         },
       );
-      setAdminAuth({ sessionToken: data.sessionToken, email: data.email });
-      handleNavigate('/admin/books');
+      setResetComplete(true);
     } catch (err) {
       setError((err as Error).message || t('admin.recover.verifyFailed'));
     } finally {
@@ -125,6 +124,29 @@ export function AdminRecoverPage() {
                 {isLoading ? t('admin.recover.sending') : t('admin.recover.sendLink')}
               </Button>
             </form>
+          ) : resetComplete ? (
+            <div className="space-y-4 text-center" role="status">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-accent/10">
+                <svg className="h-6 w-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <h2 className="text-xl font-semibold text-foreground">
+                {t('admin.recover.successTitle')}
+              </h2>
+              <p className="text-sm text-foreground-muted">
+                {t('admin.recover.successMessage')}
+              </p>
+              <Button
+                type="button"
+                className="w-full"
+                onClick={() => {
+                  handleNavigate('/admin/login'); // eslint-disable-line i18next/no-literal-string -- route path
+                }}
+              >
+                {t('admin.recover.signInNow')}
+              </Button>
+            </div>
           ) : (
             <form onSubmit={(e) => { void handleVerify(e); }} className="space-y-4">
               <p className="text-sm text-foreground-muted">
@@ -135,6 +157,15 @@ export function AdminRecoverPage() {
                 label={t('admin.recover.newPassword')}
                 value={newPassword}
                 onChange={(e) => { setNewPassword(e.target.value); }}
+                required
+                autoComplete="new-password"
+                minLength={12}
+              />
+              <Input
+                type="password"
+                label={t('admin.recover.newPasswordConfirm')}
+                value={newPasswordConfirm}
+                onChange={(e) => { setNewPasswordConfirm(e.target.value); }}
                 required
                 autoComplete="new-password"
                 minLength={12}

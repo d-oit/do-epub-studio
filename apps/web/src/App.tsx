@@ -43,6 +43,9 @@ const AdminGrantResponsesPage = React.lazy(() =>
 const AdminAuditPage = React.lazy(() =>
   import('./features/admin/AuditLogPage').then((m) => ({ default: m.AdminAuditPage }))
 );
+const AccountSettingsPage = React.lazy(() =>
+  import('./features/admin/AccountSettingsPage').then((m) => ({ default: m.AccountSettingsPage }))
+);
 const CatalogPage = React.lazy(() =>
   import('./features/catalog/CatalogPage').then((m) => ({ default: m.CatalogPage }))
 );
@@ -154,6 +157,11 @@ export function App() {
         <Route path="/admin/audit" element={
           <AdminRoute>
             <Suspense fallback={<AdminSkeleton />}><AdminAuditPage /></Suspense>
+          </AdminRoute>
+        } />
+        <Route path="/admin/account" element={
+          <AdminRoute>
+            <Suspense fallback={<AdminSkeleton />}><AccountSettingsPage /></Suspense>
           </AdminRoute>
         } />
         <Route path="*" element={<NotFoundPage />} />

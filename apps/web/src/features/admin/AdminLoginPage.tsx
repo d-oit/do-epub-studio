@@ -24,7 +24,7 @@ export function AdminLoginPage() {
     setError(null);
 
     try {
-      const data = await apiRequest<{ sessionToken: string; email: string }>(
+      const data = await apiRequest<{ token: string; user: { id: string; email: string; role: string } }>(
         '/api/admin/login',
         {
           method: 'POST',
@@ -32,7 +32,7 @@ export function AdminLoginPage() {
         },
       );
 
-      setAdminAuth({ sessionToken: data.sessionToken, email: data.email });
+      setAdminAuth({ sessionToken: data.token, email: data.user.email });
       void navigate('/admin/books');
     } catch (err) {
       setError((err as Error).message || t('admin.login.invalidCredentials'));
