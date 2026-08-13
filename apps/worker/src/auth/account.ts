@@ -47,12 +47,20 @@ export function accountIsLocked(account: Pick<AccountRow, 'disabled_at' | 'compr
   return Boolean(account.disabled_at) || Boolean(account.compromised_at);
 }
 
-/** Reject service-name/email-derivative passwords when the identity is known. */
+/**
+ * Reject passwords that embed identity/service markers: the email local-part,
+ * the email domain, or the product-name family. Substring-matching after
+ * lowercasing (all normalized) — treats base/sub-fuzz variants as derivatives.
+ */
+const SERVICE_MARKERS = ['doepubstudio', 'epubstudio', 'd.o.epub', 'do-epub'];
+
 export function isPasswordDerivative(password: string, email: string): boolean {
-  const local = email.split('@')[0]?.toLowerCase() ?? '';
-  const user = password.toLowerCase();
-  if (local.length >= 4 && user.includes(local)) return true;
-  return false;
+  const p = password.toLowerCase();
+  const atParts = email.toLowerCase().split('@');
+  const local = atParts[0] ?? '';
+  const domain = atParts[1] ?? '';
+  const markers = [local, domain, ...SERVICE_MARKERS].filter((m) => m.length >= 4);
+  return markers.some((m) => p.includes(m));
 }
 
 export async function changePassword(

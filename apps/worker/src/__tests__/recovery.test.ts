@@ -9,7 +9,7 @@ import {
   mockComputeCapabilities,
   mockCreateResetToken,
   mockVerifyResetToken,
-  mockMarkResetTokenUsed,
+  mockClaimResetToken,
 } from './fixtures';
 import { app } from '../app';
 import { TRACE_HEADER } from '@do-epub-studio/shared';
@@ -178,6 +178,7 @@ describe('Access Recovery Routes', () => {
         canManageAccess: false,
       });
       mockCreateSession.mockResolvedValue({ token: 'new-session-token', expiresAt: '2030-01-01T00:00:00.000Z' });
+      mockClaimResetToken.mockResolvedValue(true);
 
       const res = await app.fetch(new Request('http://localhost/api/access/verify-recovery', {
         method: 'POST',
@@ -190,7 +191,7 @@ describe('Access Recovery Routes', () => {
       expect(body.ok).toBe(true);
       expect(body.data.sessionToken).toBe('new-session-token');
       // The token must be consumed in the same operation that issues the session.
-      expect(mockMarkResetTokenUsed).toHaveBeenCalledWith(expect.anything(), 'rt-1');
+      expect(mockClaimResetToken).toHaveBeenCalledWith(expect.anything(), 'rt-1');
     });
   });
 });

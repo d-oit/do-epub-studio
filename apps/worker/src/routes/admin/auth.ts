@@ -15,6 +15,7 @@ import {
   revokeAdminSession,
   revokeAllAdminSessionsForUser,
   revokeAllReaderSessionsForUser,
+  revokeAllReaderSessionsForEmail,
   raiseAdminAssurance,
   listAdminSessionsForUser,
   hashToken as hashAdminToken,
@@ -32,6 +33,7 @@ import {
   verifyResetToken,
   bumpResetTokenAttempt,
   revokeTokensForAccount,
+  purgeExpiredTokensForAccount,
 } from '../../auth/reset';
 import { logAudit } from '../../audit';
 import { createEmailTransport } from '../../lib/email-transport';
@@ -107,7 +109,9 @@ authRouter.post('/recovery-request', zValidator('json', AdminRecoveryRequestSche
   const { email } = c.req.valid('json');
   const emailKey = email.toLowerCase();
   const traceId = c.get('requestContext').traceId;
-  const ipHash = await hashString(`${getClientIp(c)}:${emailKey}`);
+  // Pure-IP hash: the per-IP rate-limit key must not be salted by the target
+  // email or it becomes per-IP-per-account and defeats the per-IP cap.
+  const ipHash = await hashString(getClientIp(c));
 
   // Per-account rate limit (uniform request path, no enumeration).
   const accountRate = await checkRateLimitDO(c.env, 'auth_admin_recovery', emailKey, {
@@ -131,6 +135,9 @@ authRouter.post('/recovery-request', zValidator('json', AdminRecoveryRequestSche
   );
 
   if (user && user.global_role === 'admin' && !user.disabled_at && !user.compromised_at) {
+    // Clean up this account's expired tokens before minting a fresh one.
+    await purgeExpiredTokensForAccount(c.env, { userId: user.id, email: emailKey });
+
     const token = await createResetToken(c.env, {
       purpose: 'admin_reset',
       userId: user.id,
@@ -141,13 +148,15 @@ authRouter.post('/recovery-request', zValidator('json', AdminRecoveryRequestSche
     const resetUrl = `${c.env.APP_BASE_URL}/admin/recover?token=${token}`;
 
     const transport = createEmailTransport(c.env);
-    await transport.send({
+    // Fire-and-forget: don't let response latency reveal account existence
+    // (CWE-204 timing side channel); the reset email still always sends for eligible users.
+    c.executionCtx.waitUntil(transport.send({
       to: emailKey,
       subject: 'Reset your d.o.EPUB Studio Admin password',
       text: `Click the link to reset your admin password (valid for 15 minutes): ${resetUrl}`,
       html: `<p>Click <a href="${resetUrl}">here</a> to reset your admin password. This link expires in 15 minutes.</p>`,
       context: c.get('requestContext'),
-    });
+    }));
 
     await logAudit(c.env, {
       entityType: 'user',
@@ -223,7 +232,11 @@ authRouter.post('/recovery-verify', zValidator('json', AdminRecoveryVerifySchema
 
   // Session revocation after reset (ADR-232): no auto-login; all prior sessions die.
   await revokeAllAdminSessionsForUser(c.env, verify.record.userId);
+  // Revoke reader sessions both by user_id AND by email: reader_sessions created
+  // before the user_id backfill carry a NULL user_id (CWE-613), so revoking by
+  // email alone guarantees the account's live reader sessions are terminated.
   await revokeAllReaderSessionsForUser(c.env, verify.record.userId);
+  await revokeAllReaderSessionsForEmail(c.env, account.email);
   await revokeTokensForAccount(c.env, { userId: verify.record.userId, email: account.email });
 
   await logAudit(c.env, {

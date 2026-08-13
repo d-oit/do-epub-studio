@@ -1,5 +1,5 @@
 import type { Env } from '../lib/env';
-import { queryFirst, queryAll, execute } from '../db/client';
+import { queryFirst, queryAll, execute, transaction } from '../db/client';
 import { verifyPassword } from './password';
 import { logAppError } from '../lib/observability';
 
@@ -140,7 +140,9 @@ export async function createAdminSession(
   }
 
   if (user.disabled_at || user.compromised_at) {
-    return { ok: false, status: 403, error: 'Account disabled' };
+    // Uniform 401 on the login path: do not reveal whether the account exists,
+    // is disabled, or is compromised (ADR-231 generic errors / CWE-204).
+    return { ok: false, status: 401, error: 'Invalid credentials' };
   }
 
   const validPassword = await verifyPassword(password, user.password_hash);
@@ -149,7 +151,7 @@ export async function createAdminSession(
   }
 
   if (user.global_role !== 'admin') {
-    return { ok: false, status: 403, error: 'Admin access required' };
+    return { ok: false, status: 401, error: 'Invalid credentials' };
   }
 
   const token = generateAdminToken();
@@ -237,6 +239,15 @@ export async function revokeAllAdminSessionsForUser(
   }
 }
 
+export async function revokeAllReaderSessionsForEmail(env: Env, email: string): Promise<void> {
+  await execute(
+    env,
+    `UPDATE reader_sessions SET revoked_at = datetime('now')
+     WHERE email = ? AND revoked_at IS NULL`,
+    [email.toLowerCase()],
+  );
+}
+
 export async function revokeAllReaderSessionsForUser(env: Env, userId: string): Promise<void> {
   await execute(
     env,
@@ -272,28 +283,31 @@ export async function raiseAdminAssurance(
   const now = new Date().toISOString();
   const expiresAt = new Date(Date.now() + ADMIN_SESSION_TTL_HOURS * 60 * 60 * 1000).toISOString();
 
-  await execute(
-    env,
-    `INSERT INTO admin_sessions
+  // Atomic rotation: the new-session insert and the old-session revoke must
+  // succeed together so a failed revoke never leaves both tokens live (the
+  // repo wraps paired interdependent statements via db.transaction).
+  await transaction(env, [
+    {
+      sql: `INSERT INTO admin_sessions
        (id, user_id, token_hash, expires_at, created_at, last_used_at, assurance_level, rotated_from, step_up_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [
-      crypto.randomUUID(),
-      session.user_id,
-      rotatedHash,
-      expiresAt,
-      now,
-      now,
-      level,
-      session.id,
-      now,
-    ],
-  );
-  await execute(
-    env,
-    `UPDATE admin_sessions SET revoked_at = datetime('now') WHERE id = ?`,
-    [session.id],
-  );
+      args: [
+        crypto.randomUUID(),
+        session.user_id,
+        rotatedHash,
+        expiresAt,
+        now,
+        now,
+        level,
+        session.id,
+        now,
+      ],
+    },
+    {
+      sql: `UPDATE admin_sessions SET revoked_at = datetime('now') WHERE id = ?`,
+      args: [session.id],
+    },
+  ]);
 
   return { ok: true, token: rotatedToken };
 }

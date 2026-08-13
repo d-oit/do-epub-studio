@@ -134,12 +134,41 @@ export async function bumpResetTokenAttempt(env: Env, tokenId: string): Promise<
 }
 
 /** Mark a token consumed. Must run in the same operation that changes the password. */
-export async function markResetTokenUsed(env: Env, tokenId: string): Promise<void> {
-  await execute(
-    env,
+export async function claimResetToken(env: Env, tokenId: string): Promise<boolean> {
+  const res = await env.DB.prepare(
     `UPDATE password_reset_tokens SET used_at = datetime('now') WHERE id = ? AND used_at IS NULL`,
-    [tokenId],
-  );
+  ).bind(tokenId).run();
+  return (res.meta?.changes ?? 0) > 0;
+}
+
+/**
+ * Opportunistic cleanup of expired/unused tokens for an account (ADR-232:
+ * "cleanup job for expired tokens"). Bounded to a single account so the table
+ * cannot grow unbounded while avoiding a scheduler dependency in the worker.
+ * Note: `expires_at` is stored as ISO-8601 and must be normalized with
+ * `datetime()` before comparing against `datetime('now')` (a space-separated
+ * SQLite timestamp) to avoid a lexical-format mismatch.
+ */
+export async function purgeExpiredTokensForAccount(
+  env: Env,
+  opts: { userId?: string; email?: string },
+): Promise<void> {
+  if (opts.userId) {
+    await execute(
+      env,
+      `DELETE FROM password_reset_tokens
+       WHERE user_id = ? AND used_at IS NULL AND datetime(expires_at) < datetime('now')`,
+      [opts.userId],
+    );
+  }
+  if (opts.email) {
+    await execute(
+      env,
+      `DELETE FROM password_reset_tokens
+       WHERE email = ? AND used_at IS NULL AND datetime(expires_at) < datetime('now')`,
+      [opts.email.toLowerCase()],
+    );
+  }
 }
 
 /** Invalidate all outstanding tokens for an account (e.g. after a password change). */

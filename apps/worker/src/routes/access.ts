@@ -8,7 +8,8 @@ import {
   createResetToken,
   verifyResetToken,
   bumpResetTokenAttempt,
-  markResetTokenUsed,
+  claimResetToken,
+  purgeExpiredTokensForAccount,
 } from '../auth/reset';
 import { logAudit } from '../audit';
 import { AccessRequestSchema, RecoveryRequestSchema, RecoveryVerifySchema } from '@do-epub-studio/shared';
@@ -33,7 +34,9 @@ accessRouter.post('/recovery-request', zValidator('json', RecoveryRequestSchema)
   const { bookSlug, email } = c.req.valid('json');
   const emailKey = email.toLowerCase();
   const traceId = c.get('requestContext').traceId;
-  const ipHash = await hashString(`${getClientIp(c)}:${bookSlug}`);
+  // Pure-IP hash: the per-IP rate-limit key must not be salted by the target
+  // email or it becomes per-IP-per-account and defeats the per-IP cap.
+  const ipHash = await hashString(getClientIp(c));
 
   // Rate limit by email (max 3 per 5 min) + by IP to bound abuse (ADR-232).
   const accountRate = await checkRateLimitDO(c.env, 'auth_recovery', emailKey, {
@@ -59,6 +62,8 @@ accessRouter.post('/recovery-request', zValidator('json', RecoveryRequestSchema)
     const grant = await getGrantByBookAndSession(c.env, book.id, emailKey);
 
     if (grant && !grant.revoked_at && (!grant.expires_at || new Date(grant.expires_at) > new Date())) {
+      await purgeExpiredTokensForAccount(c.env, { email: emailKey });
+
       const token = await createResetToken(c.env, {
         purpose: 'reader_magic_link',
         email: emailKey,
@@ -68,13 +73,15 @@ accessRouter.post('/recovery-request', zValidator('json', RecoveryRequestSchema)
       const recoveryUrl = `${c.env.APP_BASE_URL}/login?book=${bookSlug}&token=${token}`;
 
       const transport = createEmailTransport(c.env);
-      await transport.send({
+      // Fire-and-forget: don't let the response latency reveal account existence
+      // (CWE-204 timing side channel); the send still always happens for eligible users.
+      c.executionCtx.waitUntil(transport.send({
         to: emailKey,
         subject: 'Recover access to your book',
         text: `Click the link to recover access (valid for 30 minutes): ${recoveryUrl}`,
         html: `<p>Click <a href="${recoveryUrl}">here</a> to recover access to your book. This link expires in 30 minutes.</p>`,
         context: c.get('requestContext'),
-      });
+      }));
 
       await logAudit(c.env, {
         entityType: 'session',
@@ -93,6 +100,15 @@ accessRouter.post('/recovery-request', zValidator('json', RecoveryRequestSchema)
 accessRouter.post('/verify-recovery', zValidator('json', RecoveryVerifySchema), async (c) => {
   const { token } = c.req.valid('json');
   const traceId = c.get('requestContext').traceId;
+
+  // Per-IP rate limit on the verify path (ADR-232 parity with admin reset).
+  const ipVerifyRate = await checkRateLimitDO(c.env, 'auth_recovery_verify_ip', await hashString(getClientIp(c)), {
+    maxRequests: 10,
+    windowMs: 300_000,
+  });
+  if (!ipVerifyRate.allowed) {
+    return apiError(c, 429, 'TOO_MANY_REQUESTS', 'Too many recovery attempts. Please try again later.');
+  }
 
   const verify = await verifyResetToken(c.env, token, 'reader_magic_link');
 
@@ -114,11 +130,12 @@ accessRouter.post('/verify-recovery', zValidator('json', RecoveryVerifySchema), 
     return apiError(c, 401, 'INVALID_TOKEN', 'Invalid or expired recovery link');
   }
 
-  // Reader magic-link tokens carry only the grant email; issue the session
-  // bound to that reader's first active grant (ADR-232 persisted flow).
+  // Reader magic-link tokens carry the grant email. Bind the session to a live,
+  // ALLOWED grant (never an `allowed=0` denied grant) chosen deterministically
+  // so the recovered access is real (ADR-232 persisted flow).
   const grants = await getGrantsBySession(c.env, grantedEmail);
   const activeGrant = grants.find(
-    (g) => !g.revoked_at && (!g.expires_at || new Date(g.expires_at) > new Date()),
+    (g) => g.allowed === 1 && !g.revoked_at && (!g.expires_at || new Date(g.expires_at) > new Date()),
   );
 
   if (!activeGrant) {
@@ -129,6 +146,19 @@ accessRouter.post('/verify-recovery', zValidator('json', RecoveryVerifySchema), 
       payload: { reason: 'no_grant', traceId },
     }, c.executionCtx);
     return apiError(c, 401, 'ACCESS_DENIED', 'Access denied');
+  }
+
+  // Single-use: claim the token BEFORE issuing a session so concurrent requests
+  // with the same captured link cannot mint multiple sessions (CWE-362).
+  const claimed = await claimResetToken(c.env, verify.record.id);
+  if (!claimed) {
+    await logAudit(c.env, {
+      entityType: 'session',
+      entityId: grantedEmail,
+      action: 'recovery_denied',
+      payload: { reason: 'replay', traceId },
+    }, c.executionCtx);
+    return apiError(c, 401, 'INVALID_TOKEN', 'Invalid or expired recovery link');
   }
 
   const book = await queryFirst<{ id: string; slug: string; title: string; author_name: string | null; visibility: string; cover_image_url: string | null }>(
@@ -142,9 +172,6 @@ accessRouter.post('/verify-recovery', zValidator('json', RecoveryVerifySchema), 
   }
 
   const session = await createSession(c.env, book.id, grantedEmail);
-
-  // Single-use: mark the magic-link token consumed alongside session issuance.
-  await markResetTokenUsed(c.env, verify.record.id);
 
   await logAudit(c.env, {
     entityType: 'session',

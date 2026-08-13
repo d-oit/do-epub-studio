@@ -161,7 +161,7 @@ describe('admin-middleware', () => {
       if (!result.ok) expect(result.status).toBe(401);
     });
 
-    it('returns 403 for non-admin user', async () => {
+    it('returns 401 for non-admin user (uniform login response, CWE-204)', async () => {
       vi.mocked(db.queryFirst).mockResolvedValue({
         id: 'user-1',
         email: 'user@example.com',
@@ -171,7 +171,7 @@ describe('admin-middleware', () => {
       vi.mocked(password.verifyPassword).mockResolvedValue(true);
       const result = await createAdminSession(env, 'user@example.com', 'password');
       expect(result.ok).toBe(false);
-      if (!result.ok) expect(result.status).toBe(403);
+      if (!result.ok) expect(result.status).toBe(401);
     });
 
     it('returns token for valid admin credentials', async () => {

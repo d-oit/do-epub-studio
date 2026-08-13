@@ -10,6 +10,7 @@ import {
   mockAccountIsLocked,
   mockIsPasswordDerivative,
   mockRevokeAllAdminSessionsForUser,
+  mockRevokeAllReaderSessionsForEmail,
   parseBody,
 } from './fixtures';
 import { app } from '../app';
@@ -92,6 +93,8 @@ describe('Security: Admin Recovery Flow', () => {
     expect(mockBumpResetTokenAttempt).toHaveBeenCalledWith(expect.anything(), 'rt-1');
     expect(mockChangePasswordAndConsumeResetToken).toHaveBeenCalledWith(expect.anything(), 'admin-1', STRONG, 'rt-1');
     expect(mockRevokeAllAdminSessionsForUser).toHaveBeenCalledWith(expect.anything(), 'admin-1');
+    // Non-backfilled reader_sessions (user_id NULL) must be revoked by email too (CWE-613).
+    expect(mockRevokeAllReaderSessionsForEmail).toHaveBeenCalledWith(expect.anything(), 'admin@example.com');
   });
 
   it('rejects a reused (replayed) reset token as generic INVALID_TOKEN', async () => {

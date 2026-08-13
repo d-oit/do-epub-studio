@@ -36,6 +36,7 @@ vi.mock('../auth/admin-middleware', async (importOriginal) => {
     hashToken: vi.fn(),
     revokeAllAdminSessionsForUser: vi.fn(),
     revokeAllReaderSessionsForUser: vi.fn(),
+    revokeAllReaderSessionsForEmail: vi.fn(),
     raiseAdminAssurance: vi.fn(),
     listAdminSessionsForUser: vi.fn(),
   };
@@ -45,8 +46,9 @@ vi.mock('../auth/reset', () => ({
   createResetToken: vi.fn(),
   verifyResetToken: vi.fn(),
   bumpResetTokenAttempt: vi.fn(),
-  markResetTokenUsed: vi.fn(),
+  claimResetToken: vi.fn(),
   revokeTokensForAccount: vi.fn(),
+  purgeExpiredTokensForAccount: vi.fn(),
 }));
 
 vi.mock('../auth/account', () => ({
@@ -102,6 +104,7 @@ import {
   createAdminSession,
   revokeAdminSession,
   revokeAllAdminSessionsForUser,
+  revokeAllReaderSessionsForEmail,
   raiseAdminAssurance,
   listAdminSessionsForUser,
   hashToken as _hashAdminToken,
@@ -136,6 +139,7 @@ export const mockRequireAdminAuth = requireAdminAuth as Mock;
 export const mockCreateAdminSession = createAdminSession as Mock;
 export const mockRevokeAdminSession = revokeAdminSession as Mock;
 export const mockRevokeAllAdminSessionsForUser = revokeAllAdminSessionsForUser as Mock;
+export const mockRevokeAllReaderSessionsForEmail = revokeAllReaderSessionsForEmail as Mock;
 export const mockRaiseAdminAssurance = raiseAdminAssurance as Mock;
 export const mockListAdminSessionsForUser = listAdminSessionsForUser as Mock;
 export const mockHashAdminToken = _hashAdminToken as Mock;
@@ -152,7 +156,7 @@ export const mockLogAudit = logAudit as Mock;
 export const mockCreateResetToken = (resetMod.createResetToken as Mock);
 export const mockVerifyResetToken = (resetMod.verifyResetToken as Mock);
 export const mockBumpResetTokenAttempt = (resetMod.bumpResetTokenAttempt as Mock);
-export const mockMarkResetTokenUsed = (resetMod.markResetTokenUsed as Mock);
+export const mockClaimResetToken = (resetMod.claimResetToken as Mock);
 export const mockGetAccountByEmail = (accountMod.getAccountByEmail as Mock);
 export const mockAccountIsLocked = (accountMod.accountIsLocked as Mock);
 export const mockIsPasswordDerivative = (accountMod.isPasswordDerivative as Mock);
