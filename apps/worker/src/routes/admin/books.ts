@@ -6,6 +6,7 @@ import { execute, queryFirst, queryAll, transaction } from '../../db/client';
 import { logAudit } from '../../audit';
 import { UploadCompleteSchema } from '@do-epub-studio/schema';
 import { adminAuth } from '../../middleware/auth';
+import { requireStepUp } from '../../middleware/step-up';
 import { withByteCap, MaxBodySizeError, DEFAULT_MAX_BODY_BYTES } from '../../lib/stream-body';
 import { bumpCacheVersion } from '../../lib/edge-cache';
 import { NotFoundError, ValidationError, AppError } from '../../lib/http-errors';
@@ -59,7 +60,8 @@ booksRouter.post('/', adminAuth, zValidator('json', CreateBookSchema), async (c)
   );
 });
 
-booksRouter.put('/:id/upload', adminAuth, async (c) => {
+// ADR-234 sensitive-action "book file upload": ingests a new EPUB into R2.
+booksRouter.put('/:id/upload', adminAuth, requireStepUp, async (c) => {
   const bookId = c.req.param('id');
 
   const book = await queryFirst<{ id: string; slug: string }>(
@@ -219,7 +221,9 @@ booksRouter.put('/:id/upload', adminAuth, async (c) => {
   }
 });
 
-booksRouter.post('/:id/upload-complete', adminAuth, zValidator('json', UploadCompleteSchema), async (c) => {
+// ADR-234 sensitive-action "book file upload" (finalize): records the uploaded
+// file row and invalidates the edge cache.
+booksRouter.post('/:id/upload-complete', adminAuth, requireStepUp, zValidator('json', UploadCompleteSchema), async (c) => {
   const bookId = c.req.param('id');
   const body = c.req.valid('json');
   const fileId = crypto.randomUUID();
@@ -304,7 +308,9 @@ booksRouter.patch('/:id', adminAuth, zValidator('json', UpdateBookSchema), async
   return c.json({ ok: true });
 });
 
-booksRouter.delete('/:id', adminAuth, async (c) => {
+// ADR-234 sensitive-action "book deletion": archives a book and cascades to
+// R2 objects, grants, and all reader data.
+booksRouter.delete('/:id', adminAuth, requireStepUp, async (c) => {
   const bookId = c.req.param('id');
   const adminUser = c.get('adminUser');
 

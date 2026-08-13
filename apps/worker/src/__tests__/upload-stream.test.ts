@@ -105,7 +105,13 @@ describe('Admin Upload Route — streaming path (V12)', () => {
       ok: true,
       context: { userId: 'admin-1', email: 'admin@example.com', globalRole: 'admin' },
     });
-    mockQueryFirst.mockResolvedValue({ id: 'book-1', slug: 'book-slug' });
+    mockQueryFirst.mockImplementation((_env, sql) => {
+      // ADR-234: the step-up middleware first resolves the admin session.
+      if (typeof sql === 'string' && sql.includes('admin_sessions')) {
+        return { assurance_level: 'step_up' };
+      }
+      return { id: 'book-1', slug: 'book-slug' };
+    });
   });
 
   it('uploads a small EPUB via the streaming body and validates it', async () => {

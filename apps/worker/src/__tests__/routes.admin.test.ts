@@ -11,6 +11,7 @@ import {
   mockCreateAdminSession,
   mockRevokeAdminSession,
   mockRequireAdminAuth,
+  mockStepUpAssured,
 } from './fixtures';
 import { app } from '../app';
 
@@ -102,6 +103,7 @@ describe('Admin Routes', () => {
   describe('PUT /api/admin/books/:id/upload', () => {
     it('uploads file to bucket', async () => {
       mockAdminAuth();
+      mockStepUpAssured();
 
       mockQueryFirst.mockResolvedValue({ id: 'book-1', slug: 'book-slug' });
 
@@ -130,6 +132,7 @@ describe('Admin Routes', () => {
   describe('POST /api/admin/books/:id/upload-complete', () => {
     it('records file in database', async () => {
       mockAdminAuth();
+      mockStepUpAssured();
 
       mockExecute.mockResolvedValue({ rows: [] });
 
@@ -152,6 +155,7 @@ describe('Admin Routes', () => {
   describe('POST /api/admin/books/:id/grants', () => {
     it('creates grant and returns success', async () => {
       mockAdminAuth();
+      mockStepUpAssured();
 
       mockCreateGrant.mockResolvedValue('grant-1');
 
@@ -202,6 +206,7 @@ describe('Admin Routes', () => {
   describe('PATCH /api/admin/grants/:id', () => {
     it('updates grant and returns success', async () => {
       mockAdminAuth();
+      mockStepUpAssured();
 
       mockTransaction.mockResolvedValue(undefined);
 
@@ -219,6 +224,7 @@ describe('Admin Routes', () => {
 
     it('revokes active reader_sessions on grant update (TIER-1)', async () => {
       mockAdminAuth();
+      mockStepUpAssured();
 
       mockTransaction.mockResolvedValue(undefined);
 
@@ -246,6 +252,7 @@ describe('Admin Routes', () => {
   describe('POST /api/admin/grants/:id/revoke', () => {
     it('revokes grant and returns success', async () => {
       mockAdminAuth();
+      mockStepUpAssured();
 
       mockTransaction.mockResolvedValue(undefined);
 
@@ -288,6 +295,7 @@ describe('Admin Routes', () => {
   describe('DELETE /api/admin/books/:id — cascade delete', () => {
     it('soft-deletes book and cascades to all child tables + R2 objects', async () => {
       mockAdminAuth();
+      mockStepUpAssured();
 
       // Book exists and is not archived
       mockQueryFirst.mockResolvedValue({ id: 'book-1' });
@@ -337,6 +345,7 @@ describe('Admin Routes', () => {
 
     it('returns 404 when book not found or already archived', async () => {
       mockAdminAuth();
+      mockStepUpAssured();
 
       mockQueryFirst.mockResolvedValue(null);
 
@@ -350,6 +359,7 @@ describe('Admin Routes', () => {
 
     it('succeeds even when R2 delete fails', async () => {
       mockAdminAuth();
+      mockStepUpAssured();
 
       mockQueryFirst.mockResolvedValue({ id: 'book-1' });
       const mockBucketDelete = vi.fn().mockRejectedValue(new Error('R2 unavailable'));
@@ -378,6 +388,7 @@ describe('Admin Routes', () => {
 
     it('handles book with no files gracefully', async () => {
       mockAdminAuth();
+      mockStepUpAssured();
 
       mockQueryFirst.mockResolvedValue({ id: 'book-1' });
       const mockBucketDelete = vi.fn();
@@ -404,6 +415,7 @@ describe('Admin Routes', () => {
 
     it('verifies correct argument binding for cascade statements', async () => {
       mockAdminAuth();
+      mockStepUpAssured();
 
       mockQueryFirst.mockResolvedValue({ id: 'book-1' });
       const mockBucketDelete = vi.fn().mockResolvedValue(undefined);
