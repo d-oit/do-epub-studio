@@ -31,12 +31,38 @@ vi.mock('../auth/admin-middleware', async (importOriginal) => {
     ...actual,
     requireAdminAuth: vi.fn(),
     createAdminSession: vi.fn(),
-    createAdminSessionByEmail: vi.fn(),
     revokeAdminSession: vi.fn(),
     generateAdminToken: vi.fn(),
     hashToken: vi.fn(),
+    revokeAllAdminSessionsForUser: vi.fn(),
+    revokeAllReaderSessionsForUser: vi.fn(),
+    revokeAllReaderSessionsForEmail: vi.fn(),
+    raiseAdminAssurance: vi.fn(),
+    listAdminSessionsForUser: vi.fn(),
   };
 });
+
+vi.mock('../auth/reset', () => ({
+  createResetToken: vi.fn(),
+  verifyResetToken: vi.fn(),
+  bumpResetTokenAttempt: vi.fn(),
+  claimResetToken: vi.fn(),
+  revokeTokensForAccount: vi.fn(),
+  purgeExpiredTokensForAccount: vi.fn(),
+}));
+
+vi.mock('../auth/account', () => ({
+  getAccountByEmail: vi.fn(),
+  getAccountById: vi.fn(),
+  accountIsLocked: vi.fn(),
+  isPasswordDerivative: vi.fn(),
+  verifyAccountPassword: vi.fn(),
+  changePassword: vi.fn(),
+  changePasswordAndConsumeResetToken: vi.fn(),
+  setAccountDisabled: vi.fn(),
+  markEmailVerified: vi.fn(),
+  updateLastLogin: vi.fn(),
+}));
 
 vi.mock('../auth/password', () => ({
   validateGrant: vi.fn(),
@@ -76,8 +102,12 @@ import { requireAuth } from '../auth/middleware';
 import {
   requireAdminAuth,
   createAdminSession,
-  createAdminSessionByEmail,
   revokeAdminSession,
+  revokeAllAdminSessionsForUser,
+  revokeAllReaderSessionsForEmail,
+  raiseAdminAssurance,
+  listAdminSessionsForUser,
+  hashToken as _hashAdminToken,
 } from '../auth/admin-middleware';
 import {
   validateGrant,
@@ -93,6 +123,8 @@ import {
 } from '../auth/session';
 import { generateSignedUrl } from '../storage/signed-url';
 import { logAudit } from '../audit';
+import * as resetMod from '../auth/reset';
+import * as accountMod from '../auth/account';
 
 // ---------------------------------------------------------------------------
 // Mocked function references - exported as Mocks
@@ -105,8 +137,12 @@ export const mockTransaction = transaction as Mock;
 export const mockRequireAuth = requireAuth as Mock;
 export const mockRequireAdminAuth = requireAdminAuth as Mock;
 export const mockCreateAdminSession = createAdminSession as Mock;
-export const mockCreateAdminSessionByEmail = createAdminSessionByEmail as Mock;
 export const mockRevokeAdminSession = revokeAdminSession as Mock;
+export const mockRevokeAllAdminSessionsForUser = revokeAllAdminSessionsForUser as Mock;
+export const mockRevokeAllReaderSessionsForEmail = revokeAllReaderSessionsForEmail as Mock;
+export const mockRaiseAdminAssurance = raiseAdminAssurance as Mock;
+export const mockListAdminSessionsForUser = listAdminSessionsForUser as Mock;
+export const mockHashAdminToken = _hashAdminToken as Mock;
 export const mockValidateGrant = validateGrant as Mock;
 export const mockComputeCapabilities = computeCapabilities as Mock;
 export const mockCreateGrant = createGrantMod as Mock;
@@ -117,6 +153,16 @@ export const mockValidateSessionMod = validateSessionMod as Mock;
 export const mockRevokeSession = revokeSession as Mock;
 export const mockGenerateSignedUrl = generateSignedUrl as Mock;
 export const mockLogAudit = logAudit as Mock;
+export const mockCreateResetToken = (resetMod.createResetToken as Mock);
+export const mockVerifyResetToken = (resetMod.verifyResetToken as Mock);
+export const mockBumpResetTokenAttempt = (resetMod.bumpResetTokenAttempt as Mock);
+export const mockClaimResetToken = (resetMod.claimResetToken as Mock);
+export const mockGetAccountByEmail = (accountMod.getAccountByEmail as Mock);
+export const mockAccountIsLocked = (accountMod.accountIsLocked as Mock);
+export const mockIsPasswordDerivative = (accountMod.isPasswordDerivative as Mock);
+export const mockVerifyAccountPassword = (accountMod.verifyAccountPassword as Mock);
+export const mockChangePassword = (accountMod.changePassword as Mock);
+export const mockChangePasswordAndConsumeResetToken = (accountMod.changePasswordAndConsumeResetToken as Mock);
 
 // ---------------------------------------------------------------------------
 // Test helper functions
@@ -172,8 +218,7 @@ function makeMockBucket(): R2Bucket {
   };
 }
 
-export function makeAuthContext(overrides: Partial<AuthContext> = {}): AuthContext {
-  return {
+export function makeAuthContext(overrides: Partial<AuthContext> = {}): AuthContext {  return {
     sessionId: 'session-1',
     email: 'user@example.com',
     bookId: 'book-1',
@@ -189,6 +234,14 @@ export function makeAuthContext(overrides: Partial<AuthContext> = {}): AuthConte
     ...overrides,
   };
 }
+
+/**
+ * Arm a single `queryFirst` call to resolve as an elevated admin session for
+ * `requireStepUp`. Call after setting up `requireAdminAuth` and BEFORE seeding
+ * any handler-level DB rows, because the step-up lookups runs first.
+ */
+export const mockStepUpAssured = () =>
+  mockQueryFirst.mockResolvedValueOnce({ assurance_level: 'step_up' });
 
 // Typed passthrough ExecutionContext for route tests — replaces `{ waitUntil: () => {} } as any`
 // patterns flagged by Codacy as ESLint8_@typescript-eslint_no-explicit-any.

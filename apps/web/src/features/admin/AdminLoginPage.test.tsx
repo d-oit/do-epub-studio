@@ -134,8 +134,8 @@ describe('AdminLoginPage', () => {
       const user = userEvent.setup();
       const mockApiRequest = vi.mocked(apiRequest);
       mockApiRequest.mockResolvedValueOnce({
-        sessionToken: process.env.TEST_SESSION_TOKEN || 'test-token',
-        email: 'admin@example.com',
+        token: 'test-token',
+        user: { id: 'u1', email: 'admin@example.com', role: 'admin' },
       });
 
       renderLoginPage();
@@ -155,11 +155,32 @@ describe('AdminLoginPage', () => {
       });
     });
 
+    it('stores the token and user email in the auth store', async () => {
+      const user = userEvent.setup();
+      vi.mocked(apiRequest).mockResolvedValueOnce({
+        token: 'tok-123',
+        user: { id: 'u1', email: 'admin@example.com', role: 'admin' },
+      });
+
+      renderLoginPage();
+
+      await user.type(screen.getByLabelText('admin.login.email'), 'admin@example.com');
+      await user.type(screen.getByLabelText('admin.login.password'), 'password123');
+      await user.click(screen.getByRole('button', { name: 'admin.login.signIn' }));
+
+      await waitFor(() => {
+        expect(mockSetAdminAuth).toHaveBeenCalledWith({
+          sessionToken: 'tok-123',
+          email: 'admin@example.com',
+        });
+      });
+    });
+
     it('navigates to /admin/books on successful login', async () => {
       const user = userEvent.setup();
       vi.mocked(apiRequest).mockResolvedValueOnce({
-        sessionToken: process.env.TEST_SESSION_TOKEN || 'test-token',
-        email: 'admin@example.com',
+        token: 'test-token',
+        user: { id: 'u1', email: 'admin@example.com', role: 'admin' },
       });
 
       renderLoginPage();

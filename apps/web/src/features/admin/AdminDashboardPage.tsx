@@ -81,6 +81,11 @@ export function AdminDashboardPage() {
     // eslint-disable-next-line @typescript-eslint/no-floating-promises -- navigate() returns void, not Promise (react-router-dom v7)
     navigate('/admin/audit');
   };
+  // biome-ignore lint/correctness/useQwikValidLexicalScope: React app, not Qwik
+  const handleAccountNav = () => {
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises -- navigate() returns void, not Promise (react-router-dom v7)
+    navigate('/admin/account');
+  };
 
   return (
     <main id="main-content" className="min-h-dvh bg-background p-4 sm:p-6 lg:p-8">
@@ -97,6 +102,9 @@ export function AdminDashboardPage() {
             </button>
             <button type="button" onClick={handleAuditNav} className="text-accent hover:opacity-80">
               {t('admin.audit.title')} &rarr;
+            </button>
+            <button type="button" onClick={handleAccountNav} className="text-accent hover:opacity-80">
+              {t('admin.account.title')} &rarr;
             </button>
           </div>
         </div>

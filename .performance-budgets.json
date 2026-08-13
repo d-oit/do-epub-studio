@@ -2,8 +2,8 @@
   "gzipBudgets": {
     "mainJs": 180,
     "mainCss": 30,
-    "lazyChunkJs": 90,
-    "description": "Gzipped (zlib level 9) budgets in KB enforced by scripts/check-bundle-budget.mjs. Values aligned with ADR-107 §3 (180/30/80 KB) with admin-route exception (90 KB). Supersedes per-file raw-byte bundleSize model removed in T4.1."
+    "lazyChunkJs": 95,
+    "description": "Gzipped (zlib level 9) budgets in KB enforced by scripts/check-bundle-budget.mjs. Values aligned with ADR-107 §3 (180/30/80 KB) with admin-route exception (90 KB). lazyChunkJs raised 90 -> 95 by GOAP-230: the shared admin chunk now includes the step-up reauth modal + account-settings nav needed by admin Grants/Books pages; no other lazy chunk exceeds 90 KB."
   },
   "routeBudgets": {
     "reader": {

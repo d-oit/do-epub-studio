@@ -65,7 +65,7 @@ describe('App identity and version governance (ADR-104)', () => {
 
   it('Worker recovery email subject uses the canonical Admin brand', () => {
     expect(workerAuthSource).toContain(
-      "subject: 'Recover access to d.o.EPUB Studio Admin'",
+      "subject: 'Reset your d.o.EPUB Studio Admin password'",
     );
   });
 

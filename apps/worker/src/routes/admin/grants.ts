@@ -7,6 +7,7 @@ import { logAudit } from '../../audit';
 import { CreateGrantSchema, UpdateGrantSchema } from '@do-epub-studio/shared';
 import { GrantsListQuerySchema } from '@do-epub-studio/schema';
 import { adminAuth } from '../../middleware/auth';
+import { requireStepUp } from '../../middleware/step-up';
 
 export const grantsRouter = new Hono<{ Bindings: Env; Variables: { adminUser: { email: string; id: string; role: string } } }>();
 
@@ -23,7 +24,8 @@ interface GrantRow {
   revoked_at: string | null;
 }
 
-grantsRouter.post('/books/:id/grants', adminAuth, zValidator('json', CreateGrantSchema), async (c) => {
+// ADR-234 sensitive-action "grant issuance": granting a new reader access.
+grantsRouter.post('/books/:id/grants', adminAuth, requireStepUp, zValidator('json', CreateGrantSchema), async (c) => {
   const bookId = c.req.param('id');
   const body = c.req.valid('json');
   const adminUser = c.get('adminUser');
@@ -71,7 +73,9 @@ grantsRouter.get('/books/:id/grants', adminAuth, zValidator('query', GrantsListQ
   });
 });
 
-grantsRouter.patch('/grants/:id', adminAuth, zValidator('json', UpdateGrantSchema), async (c) => {
+// ADR-234 sensitive-action "grant modification": privilege/expiry change +
+// immediate reader-session revocation.
+grantsRouter.patch('/grants/:id', adminAuth, requireStepUp, zValidator('json', UpdateGrantSchema), async (c) => {
   const grantId = c.req.param('id');
   const body = c.req.valid('json');
   const adminUser = c.get('adminUser');
@@ -124,7 +128,9 @@ grantsRouter.patch('/grants/:id', adminAuth, zValidator('json', UpdateGrantSchem
   return c.json({ ok: true, data: { id: grantId, ...body, sessionsRevoked: true } });
 });
 
-grantsRouter.post('/grants/:id/revoke', adminAuth, async (c) => {
+// ADR-234 sensitive-action "grant revocation" (incl. bulk revoke via
+// repeated calls): revokes an access grant and all attached reader sessions.
+grantsRouter.post('/grants/:id/revoke', adminAuth, requireStepUp, async (c) => {
   const grantId = c.req.param('id');
   const adminUser = c.get('adminUser');
 

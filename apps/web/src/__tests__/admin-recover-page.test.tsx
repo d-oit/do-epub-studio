@@ -56,6 +56,10 @@ vi.mock('../hooks/useTranslation', () => ({
         'admin.recover.verifyFailed': 'Verification failed.',
         'admin.login.email': 'Email',
         'admin.recover.newPassword': 'New Password',
+        'admin.recover.newPasswordConfirm': 'Confirm New Password',
+        'admin.recover.successTitle': 'Password Reset Complete',
+        'admin.recover.successMessage': 'Your password has been reset.',
+        'admin.recover.signInNow': 'Go to Sign In',
         'admin.recover.sending': 'Sending...',
         'admin.recover.sendLink': 'Send Recovery Link',
         'admin.recover.resetting': 'Resetting...',
@@ -179,10 +183,11 @@ describe('AdminRecoverPage', () => {
       );
       expect(screen.getByRole('heading', { name: 'Reset Password' })).toBeInTheDocument();
       expect(screen.getByLabelText('New Password')).toBeInTheDocument();
+      expect(screen.getByLabelText('Confirm New Password')).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Reset Password' })).toBeInTheDocument();
     });
 
-    it('calls POST /api/admin/recovery-verify on submit and updates auth store', async () => {
+    it('calls POST /api/admin/recovery-verify with confirm and does not auto-login', async () => {
       const user = userEvent.setup();
       const mockSetAdminAuth = vi.fn();
       vi.mocked(useAuthStore).mockImplementation((selector) => {
@@ -204,7 +209,7 @@ describe('AdminRecoverPage', () => {
         };
         return selector(state);
       });
-      vi.mocked(apiRequest).mockResolvedValue({ sessionToken: 'tok', email: 'a@b.com' });
+      vi.mocked(apiRequest).mockResolvedValue({ ok: true, data: { reset: true } });
 
       render(
         <MemoryRouter initialEntries={['/admin/recover?token=abc123']}>
@@ -213,23 +218,26 @@ describe('AdminRecoverPage', () => {
       );
 
       await user.type(screen.getByLabelText('New Password'), 'supersecretpw1');
+      await user.type(screen.getByLabelText('Confirm New Password'), 'supersecretpw1');
       await user.click(screen.getByRole('button', { name: 'Reset Password' }));
 
       await waitFor(() => {
         expect(apiRequest).toHaveBeenCalledWith('/api/admin/recovery-verify', {
           method: 'POST',
-          body: JSON.stringify({ token: 'abc123', newPassword: 'supersecretpw1' }),
+          body: JSON.stringify({
+            token: 'abc123',
+            newPassword: 'supersecretpw1',
+            newPasswordConfirm: 'supersecretpw1',
+          }),
         });
       });
 
-      await waitFor(() => {
-        expect(mockSetAdminAuth).toHaveBeenCalledWith({ sessionToken: 'tok', email: 'a@b.com' });
-      });
+      expect(mockSetAdminAuth).not.toHaveBeenCalled();
     });
 
-    it('navigates to /admin/books after successful verify', async () => {
+    it('shows a neutral success state after successful verify', async () => {
       const user = userEvent.setup();
-      vi.mocked(apiRequest).mockResolvedValue({ sessionToken: 'tok', email: 'a@b.com' });
+      vi.mocked(apiRequest).mockResolvedValue({ ok: true, data: { reset: true } });
 
       render(
         <MemoryRouter initialEntries={['/admin/recover?token=abc123']}>
@@ -238,11 +246,54 @@ describe('AdminRecoverPage', () => {
       );
 
       await user.type(screen.getByLabelText('New Password'), 'supersecretpw1');
+      await user.type(screen.getByLabelText('Confirm New Password'), 'supersecretpw1');
       await user.click(screen.getByRole('button', { name: 'Reset Password' }));
 
       await waitFor(() => {
-        expect(mockNavigate).toHaveBeenCalledWith('/admin/books');
+        expect(screen.getByRole('status')).toHaveTextContent('Your password has been reset.');
       });
+    });
+
+    it('does not auto-login after successful verify', async () => {
+      const user = userEvent.setup();
+      vi.mocked(apiRequest).mockResolvedValue({ ok: true, data: { reset: true } });
+
+      render(
+        <MemoryRouter initialEntries={['/admin/recover?token=abc123']}>
+          <AdminRecoverPage />
+        </MemoryRouter>,
+      );
+
+      await user.type(screen.getByLabelText('New Password'), 'supersecretpw1');
+      await user.type(screen.getByLabelText('Confirm New Password'), 'supersecretpw1');
+      await user.click(screen.getByRole('button', { name: 'Reset Password' }));
+
+      await waitFor(() => {
+        expect(screen.getByRole('status')).toBeInTheDocument();
+      });
+      expect(mockNavigate).not.toHaveBeenCalledWith('/admin/books');
+    });
+
+    it('navigates to /admin/login when the success sign-in link is clicked', async () => {
+      const user = userEvent.setup();
+      vi.mocked(apiRequest).mockResolvedValue({ ok: true, data: { reset: true } });
+
+      render(
+        <MemoryRouter initialEntries={['/admin/recover?token=abc123']}>
+          <AdminRecoverPage />
+        </MemoryRouter>,
+      );
+
+      await user.type(screen.getByLabelText('New Password'), 'supersecretpw1');
+      await user.type(screen.getByLabelText('Confirm New Password'), 'supersecretpw1');
+      await user.click(screen.getByRole('button', { name: 'Reset Password' }));
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: 'Go to Sign In' })).toBeInTheDocument();
+      });
+      await user.click(screen.getByRole('button', { name: 'Go to Sign In' }));
+
+      expect(mockNavigate).toHaveBeenCalledWith('/admin/login');
     });
 
     it('shows error on failed verify', async () => {
@@ -256,6 +307,7 @@ describe('AdminRecoverPage', () => {
       );
 
       await user.type(screen.getByLabelText('New Password'), 'supersecretpw1');
+      await user.type(screen.getByLabelText('Confirm New Password'), 'supersecretpw1');
       await user.click(screen.getByRole('button', { name: 'Reset Password' }));
 
       await waitFor(() => {
@@ -332,6 +384,7 @@ describe('AdminRecoverPage', () => {
       );
 
       await user.type(screen.getByLabelText('New Password'), 'supersecretpw1');
+      await user.type(screen.getByLabelText('Confirm New Password'), 'supersecretpw1');
       await user.click(screen.getByRole('button', { name: 'Reset Password' }));
 
       const button = screen.getByRole('button', { name: 'Resetting...' });
@@ -371,6 +424,7 @@ describe('AdminRecoverPage', () => {
       );
 
       await user.type(screen.getByLabelText('New Password'), 'supersecretpw1');
+      await user.type(screen.getByLabelText('Confirm New Password'), 'supersecretpw1');
       await user.click(screen.getByRole('button', { name: 'Reset Password' }));
 
       await waitFor(() => {

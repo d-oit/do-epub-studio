@@ -1,3 +1,8 @@
-/** JWT purpose claims for domain separation of tokens sharing the same secret. */
-export const JWT_PURPOSE_READER_RECOVER = 'reader_recover' as const;
-export const JWT_PURPOSE_ADMIN_RECOVER = 'admin_recover' as const;
+/**
+ * Token purpose / domain-separation constants.
+ *
+ * The stateless-JWT recovery flow (JWT_PURPOSE_READER_RECOVER / ADMIN_RECOVER)
+ * was removed in GOAP-230 in favor of persisted single-use reset/magic-link
+ * tokens (see apps/worker/src/auth/reset.ts). No JWT purpose claims remain.
+ */
+export {};

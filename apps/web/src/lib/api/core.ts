@@ -100,7 +100,10 @@ export async function apiRequest<T>(endpoint: string, options: ApiRequestOptions
       if (!data.ok) {
         const errorMessage = data.error?.message ?? 'Request failed';
         const apiError = new Error(errorMessage);
-        (apiError as Error & { traceId?: string }).traceId = data.error?.traceId ?? response.headers.get('x-trace-id') ?? traceId;
+        const annotated = apiError as Error & { code?: string; status?: number; traceId?: string };
+        annotated.code = data.error?.code;
+        annotated.status = response.status;
+        annotated.traceId = data.error?.traceId ?? response.headers.get('x-trace-id') ?? traceId;
         logClientEvent({ level: 'error', event: 'api.error', traceId, spanId, metadata: { endpoint, status: response.status }, error: { name: apiError.name, message: apiError.message, stack: apiError.stack } });
         throw apiError;
       }

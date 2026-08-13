@@ -4,27 +4,51 @@ import type { Env } from '../lib/env';
 import type { RequestContext } from '../lib/observability';
 import { validateGrant, computeCapabilities, getGrantByBookAndSession, getGrantsBySession } from '../auth/password';
 import { createSession, validateSession, revokeSession } from '../auth/session';
+import {
+  createResetToken,
+  verifyResetToken,
+  bumpResetTokenAttempt,
+  claimResetToken,
+  purgeExpiredTokensForAccount,
+} from '../auth/reset';
 import { logAudit } from '../audit';
-import { AccessRequestSchema, RecoveryRequestSchema, RecoveryVerifySchema, RecoveryTokenPayloadSchema } from '@do-epub-studio/shared';
-import { ValidateQuerySchema, JWT_PURPOSE_READER_RECOVER } from '@do-epub-studio/schema';
-import { sign, verify } from 'hono/jwt';
+import { AccessRequestSchema, RecoveryRequestSchema, RecoveryVerifySchema } from '@do-epub-studio/shared';
+import { ValidateQuerySchema } from '@do-epub-studio/schema';
 import { checkRateLimitDO, deleteRateLimitKey } from '../lib/rate-limit-client';
 import { queryFirst } from '../db/client';
 import { createEmailTransport } from '../lib/email-transport';
 import { apiError } from '../lib/api-error';
 
+function getClientIp(c: { req: { header(name: string): string | undefined } }): string {
+  return c.req.header('CF-Connecting-IP') ?? c.req.header('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
+}
+
+async function hashString(value: string): Promise<string> {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));
+  return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
 export const accessRouter = new Hono<{ Bindings: Env; Variables: { requestContext: RequestContext } }>();
 
 accessRouter.post('/recovery-request', zValidator('json', RecoveryRequestSchema), async (c) => {
   const { bookSlug, email } = c.req.valid('json');
+  const emailKey = email.toLowerCase();
+  const traceId = c.get('requestContext').traceId;
+  // Pure-IP hash: the per-IP rate-limit key must not be salted by the target
+  // email or it becomes per-IP-per-account and defeats the per-IP cap.
+  const ipHash = await hashString(getClientIp(c));
 
-  // Rate limit by email to prevent abuse (max 3 requests per 5 minutes)
-  const rateLimit = await checkRateLimitDO(c.env, 'auth_recovery', email.toLowerCase(), {
+  // Rate limit by email (max 3 per 5 min) + by IP to bound abuse (ADR-232).
+  const accountRate = await checkRateLimitDO(c.env, 'auth_recovery', emailKey, {
     maxRequests: 3,
     windowMs: 300_000,
   });
+  const ipRate = await checkRateLimitDO(c.env, 'auth_recovery_ip', ipHash, {
+    maxRequests: 10,
+    windowMs: 300_000,
+  });
 
-  if (!rateLimit.allowed) {
+  if (!accountRate.allowed || !ipRate.allowed) {
     return apiError(c, 429, 'TOO_MANY_REQUESTS', 'Too many recovery attempts. Please try again later.');
   }
 
@@ -35,36 +59,36 @@ accessRouter.post('/recovery-request', zValidator('json', RecoveryRequestSchema)
   );
 
   if (book) {
-    const grant = await getGrantByBookAndSession(c.env, book.id, email.toLowerCase());
+    const grant = await getGrantByBookAndSession(c.env, book.id, emailKey);
 
     if (grant && !grant.revoked_at && (!grant.expires_at || new Date(grant.expires_at) > new Date())) {
-      const payload = {
-        email: email.toLowerCase(),
-        bookSlug,
-        purpose: JWT_PURPOSE_READER_RECOVER,
-        exp: Math.floor(Date.now() / 1000) + 3600,
-      };
-      const token = await sign(payload, c.env.INVITE_TOKEN_SECRET, 'HS256');
+      await purgeExpiredTokensForAccount(c.env, { email: emailKey });
+
+      const token = await createResetToken(c.env, {
+        purpose: 'reader_magic_link',
+        email: emailKey,
+        ipHash,
+        traceId,
+      });
       const recoveryUrl = `${c.env.APP_BASE_URL}/login?book=${bookSlug}&token=${token}`;
 
       const transport = createEmailTransport(c.env);
-      await transport.send({
-        to: email.toLowerCase(),
+      // Fire-and-forget: don't let the response latency reveal account existence
+      // (CWE-204 timing side channel); the send still always happens for eligible users.
+      c.executionCtx.waitUntil(transport.send({
+        to: emailKey,
         subject: 'Recover access to your book',
-        text: `Click the link to recover access: ${recoveryUrl}`,
-        html: `<p>Click <a href="${recoveryUrl}">here</a> to recover access to your book.</p>`,
+        text: `Click the link to recover access (valid for 30 minutes): ${recoveryUrl}`,
+        html: `<p>Click <a href="${recoveryUrl}">here</a> to recover access to your book. This link expires in 30 minutes.</p>`,
         context: c.get('requestContext'),
-      });
-
-      const tokenHash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(token));
-      const hashHex = [...new Uint8Array(tokenHash)].map(b => b.toString(16).padStart(2, '0')).join('');
+      }));
 
       await logAudit(c.env, {
         entityType: 'session',
         entityId: book.id,
         action: 'recovery_requested',
-        actorEmail: email.toLowerCase(),
-        payload: { tokenHash: hashHex },
+        actorEmail: emailKey,
+        payload: { ipHash },
       }, c.executionCtx);
     }
   }
@@ -75,50 +99,104 @@ accessRouter.post('/recovery-request', zValidator('json', RecoveryRequestSchema)
 
 accessRouter.post('/verify-recovery', zValidator('json', RecoveryVerifySchema), async (c) => {
   const { token } = c.req.valid('json');
+  const traceId = c.get('requestContext').traceId;
 
-  try {
-    const raw = await verify(token, c.env.INVITE_TOKEN_SECRET, 'HS256');
-    const parsed = RecoveryTokenPayloadSchema.safeParse(raw);
+  // Per-IP rate limit on the verify path (ADR-232 parity with admin reset).
+  const ipVerifyRate = await checkRateLimitDO(c.env, 'auth_recovery_verify_ip', await hashString(getClientIp(c)), {
+    maxRequests: 10,
+    windowMs: 300_000,
+  });
+  if (!ipVerifyRate.allowed) {
+    return apiError(c, 429, 'TOO_MANY_REQUESTS', 'Too many recovery attempts. Please try again later.');
+  }
 
-    if (!parsed.success || parsed.data.purpose !== JWT_PURPOSE_READER_RECOVER || !parsed.data.bookSlug) {
-      return apiError(c, 401, 'INVALID_TOKEN', 'Invalid or expired recovery link');
-    }
+  const verify = await verifyResetToken(c.env, token, 'reader_magic_link');
 
-    const result = await validateGrant(c.env, parsed.data.bookSlug, parsed.data.email);
-
-    if (!result.valid || !result.grant || !result.book) {
-      return apiError(c, 401, 'ACCESS_DENIED', 'Access denied');
-    }
-
-    const session = await createSession(c.env, result.book.id, parsed.data.email);
-
+  if (!verify.ok) {
+    const reason = verify.reason;
     await logAudit(c.env, {
       entityType: 'session',
-      entityId: result.book.id,
-      action: 'access_granted',
-      actorEmail: parsed.data.email,
-      payload: { grantId: result.grant.id, method: 'magic_link' },
+      entityId: 'unknown',
+      action: 'recovery_denied',
+      payload: { reason: reason === 'used' ? 'replay' : reason, traceId },
     }, c.executionCtx);
-
-    return c.json({
-      ok: true,
-      data: {
-        sessionToken: session.token,
-        expiresAt: session.expiresAt,
-        book: {
-          id: result.book.id,
-          slug: result.book.slug,
-          title: result.book.title,
-          authorName: result.book.author_name,
-          visibility: result.book.visibility,
-          coverImageUrl: result.book.cover_image_url,
-        },
-        capabilities: computeCapabilities(result.grant),
-      },
-    });
-  } catch {
     return apiError(c, 401, 'INVALID_TOKEN', 'Invalid or expired recovery link');
   }
+
+  await bumpResetTokenAttempt(c.env, verify.record.id);
+
+  const grantedEmail = verify.record.email;
+  if (!grantedEmail) {
+    return apiError(c, 401, 'INVALID_TOKEN', 'Invalid or expired recovery link');
+  }
+
+  // Reader magic-link tokens carry the grant email. Bind the session to a live,
+  // ALLOWED grant (never an `allowed=0` denied grant) chosen deterministically
+  // so the recovered access is real (ADR-232 persisted flow).
+  const grants = await getGrantsBySession(c.env, grantedEmail);
+  const activeGrant = grants.find(
+    (g) => g.allowed === 1 && !g.revoked_at && (!g.expires_at || new Date(g.expires_at) > new Date()),
+  );
+
+  if (!activeGrant) {
+    await logAudit(c.env, {
+      entityType: 'session',
+      entityId: grantedEmail,
+      action: 'recovery_denied',
+      payload: { reason: 'no_grant', traceId },
+    }, c.executionCtx);
+    return apiError(c, 401, 'ACCESS_DENIED', 'Access denied');
+  }
+
+  // Single-use: claim the token BEFORE issuing a session so concurrent requests
+  // with the same captured link cannot mint multiple sessions (CWE-362).
+  const claimed = await claimResetToken(c.env, verify.record.id);
+  if (!claimed) {
+    await logAudit(c.env, {
+      entityType: 'session',
+      entityId: grantedEmail,
+      action: 'recovery_denied',
+      payload: { reason: 'replay', traceId },
+    }, c.executionCtx);
+    return apiError(c, 401, 'INVALID_TOKEN', 'Invalid or expired recovery link');
+  }
+
+  const book = await queryFirst<{ id: string; slug: string; title: string; author_name: string | null; visibility: string; cover_image_url: string | null }>(
+    c.env,
+    `SELECT id, slug, title, author_name, visibility, cover_image_url FROM books WHERE id = ?`,
+    [activeGrant.book_id],
+  );
+
+  if (!book) {
+    return apiError(c, 401, 'ACCESS_DENIED', 'Access denied');
+  }
+
+  const session = await createSession(c.env, book.id, grantedEmail);
+
+  await logAudit(c.env, {
+    entityType: 'session',
+    entityId: book.id,
+    action: 'access_granted',
+    actorEmail: grantedEmail,
+    payload: { grantId: activeGrant.id, method: 'magic_link' },
+  }, c.executionCtx);
+
+  return c.json({
+    ok: true,
+    data: {
+      sessionToken: session.token,
+      expiresAt: session.expiresAt,
+      book: {
+        id: book.id,
+        slug: book.slug,
+        title: book.title,
+        authorName: book.author_name,
+        visibility: book.visibility,
+        coverImageUrl: book.cover_image_url,
+      },
+      capabilities: computeCapabilities(activeGrant),
+    },
+  });
 });
 
 accessRouter.post('/request', zValidator('json', AccessRequestSchema), async (c) => {

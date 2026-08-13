@@ -10,6 +10,7 @@ import { Button, ConfirmDialog } from '../../components/ui';
 import { Spinner } from '@do-epub-studio/ui';
 import { BookCreateModal } from './components/BookCreateModal';
 import { BookEditModal } from './components/BookEditModal';
+import { useAdminStepUp } from './step-up';
 import { Breadcrumb } from '../../components/navigation';
 
 /** Admin route paths (constants avoid i18next/no-literal-string in JSX). */
@@ -24,6 +25,7 @@ export function AdminBookResponsesPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const sessionToken = useAuthStore((state) => state.sessionToken);
+  const { execute: executeWithStepUp, modal: stepUpModal } = useAdminStepUp();
   const [books, setBookResponses] = useState<BookResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -114,16 +116,20 @@ export function AdminBookResponsesPage() {
     setIsEditSubmitting(true);
 
     try {
-      await apiRequest(`/api/admin/books/${editingBook.id}`, {
-        method: 'PATCH',
-        token: sessionToken ?? undefined,
-        body: JSON.stringify({
-          title: editTitle.trim(),
-          authorName: editAuthor.trim() || null,
-          description: editDescription.trim() || null,
-          visibility: editVisibility,
-        }),
-      });
+      await executeWithStepUp(
+        (tok) =>
+          apiRequest(`/api/admin/books/${editingBook.id}`, {
+            method: 'PATCH',
+            token: tok ?? undefined,
+            body: JSON.stringify({
+              title: editTitle.trim(),
+              authorName: editAuthor.trim() || null,
+              description: editDescription.trim() || null,
+              visibility: editVisibility,
+            }),
+          }),
+        sessionToken ?? undefined,
+      );
       setEditingBook(null);
       setSuccessMessage(t('admin.books.updateSuccess'));
       void fetchBookResponses();
@@ -138,10 +144,14 @@ export function AdminBookResponsesPage() {
   const handleArchiveBook = async (bookId: string) => {
     setArchivingBookId(bookId);
     try {
-      await apiRequest(`/api/admin/books/${bookId}`, {
-        method: 'DELETE',
-        token: sessionToken ?? undefined,
-      });
+      await executeWithStepUp(
+        (tok) =>
+          apiRequest(`/api/admin/books/${bookId}`, {
+            method: 'DELETE',
+            token: tok ?? undefined,
+          }),
+        sessionToken ?? undefined,
+      );
       setSuccessMessage(t('admin.books.archiveSuccess'));
       void fetchBookResponses();
       scheduleSuccessClear();
@@ -217,22 +227,27 @@ export function AdminBookResponsesPage() {
     setIsSubmitting(true);
 
     try {
-      const createResult = await apiRequest<CreateBookResponse>('/api/admin/books', {
-        method: 'POST',
-        token: sessionToken ?? undefined,
-        body: JSON.stringify({
-          title: bookTitle.trim(),
-          slug,
-          authorName: authorName.trim() || null,
-          visibility,
-        }),
-      });
+      const createResult = await executeWithStepUp(
+        (tok) =>
+          apiRequest<CreateBookResponse>('/api/admin/books', {
+            method: 'POST',
+            token: tok ?? undefined,
+            body: JSON.stringify({
+              title: bookTitle.trim(),
+              slug,
+              authorName: authorName.trim() || null,
+              visibility,
+            }),
+          }),
+        sessionToken ?? undefined,
+      );
 
       const uploadUrl = createResult.uploadUrl;
+      const uploadToken = sessionToken ?? '';
       const uploadResponse = await fetch(uploadUrl, {
         method: 'PUT',
         body: epubFile,
-        headers: { 'Authorization': `Bearer ${sessionToken ?? ''}`, 'Content-Type': 'application/octet-stream' },
+        headers: { 'Authorization': `Bearer ${uploadToken}`, 'Content-Type': 'application/octet-stream' },
       });
 
       if (!uploadResponse.ok) {
@@ -255,17 +270,21 @@ export function AdminBookResponsesPage() {
         }
       };
 
-      await apiRequest(`/api/admin/books/${createResult.id}/upload-complete`, {
-        method: 'POST',
-        token: sessionToken ?? undefined,
-        body: JSON.stringify({
-          storageKey: uploadResult.data.storageKey,
-          originalFilename: epubFile.name,
-          fileSizeBytes: epubFile.size,
-          mimeType: epubFile.type || 'application/epub+zip',
-          validationResults: uploadResult.data.validation,
-        }),
-      });
+      await executeWithStepUp(
+        (tok) =>
+          apiRequest(`/api/admin/books/${createResult.id}/upload-complete`, {
+            method: 'POST',
+            token: tok ?? undefined,
+            body: JSON.stringify({
+              storageKey: uploadResult.data.storageKey,
+              originalFilename: epubFile.name,
+              fileSizeBytes: epubFile.size,
+              mimeType: epubFile.type || 'application/epub+zip',
+              validationResults: uploadResult.data.validation,
+            }),
+          }),
+        sessionToken ?? undefined,
+      );
 
       if (uploadResult.data.validation) {
         setValidationResult(uploadResult.data.validation);
@@ -441,6 +460,8 @@ export function AdminBookResponsesPage() {
         onConfirm={() => { if (archiveConfirmBook) void handleArchiveBook(archiveConfirmBook.id); }}
         onCancel={() => { setArchiveConfirmBook(null); }}
       />
+
+      {stepUpModal}
     </main>
   );
 }

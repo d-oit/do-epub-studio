@@ -20,6 +20,7 @@ import {
   GrantList,
   emptyFormData,
 } from './components';
+import { useAdminStepUp } from './step-up';
 import type { Grant, GrantFormData } from './components';
 
 /** Admin route paths (constants avoid i18next/no-literal-string in JSX). */
@@ -63,6 +64,8 @@ function GrantsView({ data, bookId, token }: { data: GrantsBodyData; bookId: str
 
   const { books, grants } = data;
 
+  const { execute: executeWithStepUp, modal: stepUpModal } = useAdminStepUp();
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingGrant, setEditingGrant] = useState<Grant | null>(null);
   const [formData, setFormData] = useState<GrantFormData>(emptyFormData());
@@ -102,31 +105,39 @@ function GrantsView({ data, bookId, token }: { data: GrantsBodyData; bookId: str
 
       try {
         if (editing) {
-          await apiRequest(`/api/admin/grants/${editing.id}`, {
-            method: 'PATCH',
-            token: token || undefined,
-            body: JSON.stringify({
-              mode,
-              commentsAllowed,
-              offlineAllowed,
-              expiresAt: expiresAt ? new Date(expiresAt).toISOString() : null,
-            }),
-          });
+          await executeWithStepUp(
+            (tok) =>
+              apiRequest(`/api/admin/grants/${editing.id}`, {
+                method: 'PATCH',
+                token: tok || undefined,
+                body: JSON.stringify({
+                  mode,
+                  commentsAllowed,
+                  offlineAllowed,
+                  expiresAt: expiresAt ? new Date(expiresAt).toISOString() : null,
+                }),
+              }),
+            token,
+          );
         } else {
           const password = getString('password', '');
-          await apiRequest(`/api/admin/books/${bookId}/grants`, {
-            method: 'POST',
-            token: token || undefined,
-            body: JSON.stringify({
-              bookId,
-              email,
-              password,
-              mode,
-              commentsAllowed,
-              offlineAllowed,
-              expiresAt: expiresAt ? new Date(expiresAt).toISOString() : null,
-            }),
-          });
+          await executeWithStepUp(
+            (tok) =>
+              apiRequest(`/api/admin/books/${bookId}/grants`, {
+                method: 'POST',
+                token: tok || undefined,
+                body: JSON.stringify({
+                  bookId,
+                  email,
+                  password,
+                  mode,
+                  commentsAllowed,
+                  offlineAllowed,
+                  expiresAt: expiresAt ? new Date(expiresAt).toISOString() : null,
+                }),
+              }),
+            token,
+          );
         }
         if (bookId) invalidateGrantsCache(bookId);
         setIsModalOpen(false);
@@ -169,16 +180,20 @@ function GrantsView({ data, bookId, token }: { data: GrantsBodyData; bookId: str
   const handleRevokeGrant = useCallback(
     async (grant: Grant) => {
       try {
-        await apiRequest(`/api/admin/grants/${grant.id}/revoke`, {
-          method: 'POST',
-          token: token || undefined,
-        });
+        await executeWithStepUp(
+          (tok) =>
+            apiRequest(`/api/admin/grants/${grant.id}/revoke`, {
+              method: 'POST',
+              token: tok || undefined,
+            }),
+          token,
+        );
         if (bookId) invalidateGrantsCache(bookId);
       } catch (err) {
         alert((err as Error).message);
       }
     },
-    [token, bookId],
+    [executeWithStepUp, token, bookId],
   );
 
   const currentBookTitle = locationState?.bookTitle ?? (bookId ? books.find((b) => b.id === bookId)?.title : undefined);
@@ -238,6 +253,8 @@ function GrantsView({ data, bookId, token }: { data: GrantsBodyData; bookId: str
         onSubmit={formAction}
         onClose={() => setIsModalOpen(false)}
       />
+
+      {stepUpModal}
     </PageContainer>
   );
 }
