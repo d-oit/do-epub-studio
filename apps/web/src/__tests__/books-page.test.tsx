@@ -30,6 +30,9 @@ vi.mock('../components/ui', () => ({
   Button: ({ children, onClick, ...props }: Record<string, unknown>) => (
     <button onClick={onClick as React.MouseEventHandler<HTMLButtonElement>} {...props}>{children as React.ReactNode}</button>
   ),
+  Input: ({ label, id, ...props }: Record<string, unknown>) => (
+    <div>{label ? <label htmlFor={id as string}>{label as string}</label> : null}<input id={id as string} {...props} /></div>
+  ),
   ConfirmDialog: ({ isOpen, onCancel, onConfirm }: Record<string, unknown>) => isOpen ? (
     <div role="dialog"><button type="button" onClick={onCancel as React.MouseEventHandler<HTMLButtonElement>}>cancel</button><button type="button" onClick={onConfirm as React.MouseEventHandler<HTMLButtonElement>}>confirm</button></div>
   ) : null,
