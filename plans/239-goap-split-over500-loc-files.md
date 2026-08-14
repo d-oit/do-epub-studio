@@ -1,7 +1,7 @@
 # GOAP-239: Split >500-LOC Source Files (admin/auth.ts + schema/schemas.ts)
 
 **Date:** 2026-08-14
-**Status:** In Progress (this PR)
+**Status:** ✅ COMPLETED (merged as PR #980, commit ea5a1e2)
 **Baseline:** `main` @ `8b458f5` (post GOAP-238, PRs #978/#979)
 **Related:** Plan 226 (§5 source-LOC policy); ADR-078 (Zod schema centralization); ADR-234 (auth); AGENTS.md source-LOC cap
 
