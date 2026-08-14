@@ -12,6 +12,7 @@ import {
   purgeExpiredTokensForAccount,
 } from '../auth/reset';
 import { logAudit } from '../audit';
+import { logRiskEvent, RISK_EVENTS } from '../audit/risk';
 import { AccessRequestSchema, RecoveryRequestSchema, RecoveryVerifySchema } from '@do-epub-studio/shared';
 import { ValidateQuerySchema } from '@do-epub-studio/schema';
 import { checkRateLimitDO, deleteRateLimitKey } from '../lib/rate-limit-client';
@@ -120,6 +121,15 @@ accessRouter.post('/verify-recovery', zValidator('json', RecoveryVerifySchema), 
       action: 'recovery_denied',
       payload: { reason: reason === 'used' ? 'replay' : reason, traceId },
     }, c.executionCtx);
+    // Replaying an already-consumed reader magic link (ADR-234 item 7).
+    if (verify.reason === 'used') {
+      await logRiskEvent(c.env, c.executionCtx, {
+        kind: RISK_EVENTS.tokenReplay,
+        entityId: 'unknown',
+        entityType: 'user',
+        payload: { kind: 'password_reset', account: 'unknown' },
+      });
+    }
     return apiError(c, 401, 'INVALID_TOKEN', 'Invalid or expired recovery link');
   }
 
@@ -158,6 +168,13 @@ accessRouter.post('/verify-recovery', zValidator('json', RecoveryVerifySchema), 
       action: 'recovery_denied',
       payload: { reason: 'replay', traceId },
     }, c.executionCtx);
+    // Concurrent single-use claim lost -> token reuse (ADR-234 item 7).
+    await logRiskEvent(c.env, c.executionCtx, {
+      kind: RISK_EVENTS.tokenReplay,
+      entityId: grantedEmail,
+      entityType: 'user',
+      payload: { kind: 'password_reset', account: grantedEmail },
+    });
     return apiError(c, 401, 'INVALID_TOKEN', 'Invalid or expired recovery link');
   }
 
@@ -220,6 +237,14 @@ accessRouter.post('/request', zValidator('json', AccessRequestSchema), async (c)
   });
 
   if (!lockoutCheck.allowed) {
+    // Observational lockout risk event (ADR-234 item 7): emit when the account
+    // lockout path fires (423 ACCOUNT_LOCKED). Lockout semantics unchanged.
+    await logRiskEvent(c.env, c.executionCtx, {
+      kind: RISK_EVENTS.loginLocked,
+      entityId: emailKey,
+      entityType: 'user',
+      payload: { account: emailKey, ipHash: await hashString(getClientIp(c)) },
+    });
     const retryAfter = Math.ceil((lockoutCheck.resetAt - Date.now()) / 1000);
     return apiError(c, 423, 'ACCOUNT_LOCKED', 'Account temporarily locked due to repeated failed login attempts. Please try again later.', { 'Retry-After': String(retryAfter) });
   }

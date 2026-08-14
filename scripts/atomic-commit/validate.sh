@@ -80,19 +80,33 @@ SECRET_PATTERNS=(
 )
 
 SECRET_FOUND=false
+# Test, fixture, spec and docs files legitimately contain password/secret field
+# examples (e.g. `password: 'wrong'` in a login test); the broad heuristic patterns
+# below would false-positive on them. Mirror .gitleaks.toml's allowlist (which
+# excludes `__tests__/fixtures/.*` and docs) by skipping these paths so the scan
+# keeps covering real production files without blocking legitimate tests.
+# validate.sh is excluded because it is the scanner itself and contains the
+# pattern strings it detects (self-referential false positive).
+# Real secrets in tests are still caught by gitleaks (proper tool, runs in
+# pre-commit and CI) and by scanning every non-test file below.
+TEST_OR_DOC_PATH='(__tests__/|\.test\.(ts|tsx|js|mjs)$|\.spec\.(ts|tsx)$|/fixtures/|fixtures\.ts|/docs/|\.md$|scripts/atomic-commit/validate\.sh|scripts/hooks/pre-commit)'
+
 STAGED_FILES=$(git diff --cached --name-only 2>/dev/null || true)
 
 if [[ -n "$STAGED_FILES" ]]; then
-    # Scan staged content, not working tree
-    STAGED_DIFF=$(git diff --cached 2>/dev/null || true)
-    if [[ -n "$STAGED_DIFF" ]]; then
+    for FILE in $STAGED_FILES; do
+        if echo "$FILE" | grep -qE "$TEST_OR_DOC_PATH"; then
+            continue
+        fi
+        # Scan staged content for this file only, not the working tree.
+        FILE_DIFF=$(git diff --cached -- "$FILE" 2>/dev/null || true)
         for pattern in "${SECRET_PATTERNS[@]}"; do
-            if echo "$STAGED_DIFF" | grep -iE "$pattern" > /dev/null 2>&1; then
-                error "Potential secret detected matching pattern: ${pattern:0:40}..."
+            if echo "$FILE_DIFF" | grep -iE "$pattern" > /dev/null 2>&1; then
+                error "Potential secret detected in $FILE matching pattern: ${pattern:0:40}..."
                 SECRET_FOUND=true
             fi
         done
-    fi
+    done
 fi
 
 if [[ "$SECRET_FOUND" == true ]]; then

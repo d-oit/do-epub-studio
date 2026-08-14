@@ -62,10 +62,6 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function toast(_type: ToastType, _message: string, _duration?: number) {
-  console.warn('Toast not initialized - wrap app in ToastProvider');
-}
-
 function ToastContainer({
   toasts,
   onDismiss,

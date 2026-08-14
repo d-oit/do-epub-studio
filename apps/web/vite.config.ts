@@ -83,7 +83,7 @@ export default defineConfig({
     manifest: true,
     sourcemap: false,
     chunkSizeWarningLimit: 500,
-    rolldownOptions: {      output: {
+    rolldownOptions: { output: {
         // Vite 8 Rolldown uses codeSplitting or function manualChunks
         manualChunks: (id) => {
           if (id.includes('node_modules')) {

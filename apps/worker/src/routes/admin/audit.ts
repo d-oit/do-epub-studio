@@ -11,7 +11,7 @@ export const auditRouter = new Hono<{ Bindings: Env; Variables: { adminUser: { e
 const MAX_AUDIT_OFFSET = 100_000;
 
 auditRouter.get('/audit', adminAuth, zValidator('query', AuditQuerySchema), async (c) => {
-  const { entityType, entityId, limit, from, to } = c.req.valid('query');
+  const { entityType, entityId, action, limit, from, to } = c.req.valid('query');
   const offset = Math.min(c.req.valid('query').offset, MAX_AUDIT_OFFSET);
 
   await logAudit(c.env, {
@@ -30,6 +30,10 @@ auditRouter.get('/audit', adminAuth, zValidator('query', AuditQuerySchema), asyn
   if (entityId) {
     conditions.push('entity_id = ?');
     args.push(entityId);
+  }
+  if (action) {
+    conditions.push('action = ?');
+    args.push(action);
   }
   if (from) {
     conditions.push('created_at >= ?');

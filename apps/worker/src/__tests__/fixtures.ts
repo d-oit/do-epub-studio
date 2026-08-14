@@ -73,7 +73,6 @@ vi.mock('../auth/password', () => ({
   createGrant: vi.fn(),
   hashPassword: vi.fn(),
   verifyPassword: vi.fn(),
-  revokeGrant: vi.fn(),
 }));
 
 vi.mock('../auth/session', () => ({

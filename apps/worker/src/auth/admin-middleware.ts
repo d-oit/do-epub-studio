@@ -2,6 +2,7 @@ import type { Env } from '../lib/env';
 import { queryFirst, queryAll, execute, transaction } from '../db/client';
 import { verifyPassword } from './password';
 import { logAppError } from '../lib/observability';
+import { logRiskEvent, RISK_EVENTS } from '../audit/risk';
 
 export interface AdminAuthContext {
   userId: string;
@@ -120,6 +121,12 @@ export async function requireAdminAuth(
 
 export type AdminSessionUser = { id: string; email: string; role: string };
 
+/** Client fingerprint hints threaded through session mint (observational only). */
+export interface AdminSessionClientHints {
+  ipHash?: string;
+  deviceLabelHash?: string;
+}
+
 /**
  * True when the account has MFA enrolled (mfa_method === 'passkey'), i.e. a
  * login second factor must be presented before a usable session exists. Queried
@@ -133,6 +140,55 @@ async function accountRequiresMfa(env: Env, userId: string): Promise<boolean> {
 }
 
 /**
+ * Persist client fingerprint columns on a freshly minted session and, when the
+ * session matches neither the device nor the IP of any prior active session,
+ * emit an observational suspicious-device-change risk event. Never throws; risk
+ * detection must not break the login flow.
+ */
+async function emitSuspiciousDeviceChangeIfNovel(
+  env: Env,
+  user: AdminSessionUser,
+  sessionId: string,
+  clientHints: AdminSessionClientHints | undefined,
+): Promise<void> {
+  if (!clientHints || (!clientHints.deviceLabelHash && !clientHints.ipHash)) return;
+
+  const prior = await queryAll<{ device_label_hash: string | null; ip_hash: string | null }>(
+    env,
+    `SELECT device_label_hash, ip_hash
+     FROM admin_sessions
+     WHERE user_id = ? AND revoked_at IS NULL AND id != ?`,
+    [user.id, sessionId],
+  );
+
+  // No other active session to compare against — nothing novel to report.
+  if (prior.length === 0) return;
+
+  const matchesDevice = prior.some(
+    (s) => s.device_label_hash && clientHints.deviceLabelHash && s.device_label_hash === clientHints.deviceLabelHash,
+  );
+  const matchesIp = prior.some(
+    (s) => s.ip_hash && clientHints.ipHash && s.ip_hash === clientHints.ipHash,
+  );
+
+  // A session that shares either the device or the IP with a known session is
+  // expected; only a session novel on BOTH axes is flagged.
+  if (matchesDevice || matchesIp) return;
+
+  await logRiskEvent(env, undefined, {
+    kind: RISK_EVENTS.suspiciousDeviceChange,
+    actorEmail: user.email,
+    entityId: user.id,
+    entityType: 'user',
+    payload: {
+      account: user.email,
+      deviceLabelHash: clientHints.deviceLabelHash ?? null,
+      priorSessionCount: prior.length,
+    },
+  });
+}
+
+/**
  * Insert a fresh admin session row at the given assurance level and return the
  * raw (unhashed) token that becomes the caller's bearer credential.
  */
@@ -140,7 +196,8 @@ async function insertAdminSession(
   env: Env,
   userId: string,
   assuranceLevel: 'password' | 'step_up' | 'mfa',
-): Promise<{ token: string }> {
+  clientHints?: AdminSessionClientHints,
+): Promise<{ token: string; sessionId: string }> {
   const token = generateAdminToken();
   const tokenHash = await hashToken(token);
   const sessionId = crypto.randomUUID();
@@ -149,12 +206,22 @@ async function insertAdminSession(
 
   await execute(
     env,
-    `INSERT INTO admin_sessions (id, user_id, token_hash, expires_at, created_at, last_used_at, assurance_level)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    [sessionId, userId, tokenHash, expiresAt, now, now, assuranceLevel],
+    `INSERT INTO admin_sessions (id, user_id, token_hash, expires_at, created_at, last_used_at, assurance_level, device_label_hash, ip_hash)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      sessionId,
+      userId,
+      tokenHash,
+      expiresAt,
+      now,
+      now,
+      assuranceLevel,
+      clientHints?.deviceLabelHash ?? null,
+      clientHints?.ipHash ?? null,
+    ],
   );
 
-  return { token };
+  return { token, sessionId };
 }
 
 /**
@@ -165,8 +232,10 @@ async function insertAdminSession(
 export async function createAdminSessionMfa(
   env: Env,
   user: AdminSessionUser,
+  clientHints?: AdminSessionClientHints,
 ): Promise<{ ok: true; token: string; user: AdminSessionUser }> {
-  const inserted = await insertAdminSession(env, user.id, 'mfa');
+  const inserted = await insertAdminSession(env, user.id, 'mfa', clientHints);
+  await emitSuspiciousDeviceChangeIfNovel(env, user, inserted.sessionId, clientHints);
   return { ok: true, token: inserted.token, user };
 }
 
@@ -174,6 +243,7 @@ export async function createAdminSession(
   env: Env,
   email: string,
   password: string,
+  clientHints?: AdminSessionClientHints,
 ): Promise<
   | { ok: true; token: string; user: AdminSessionUser }
   | { ok: true; mfaRequired: true; user: AdminSessionUser }
@@ -220,7 +290,8 @@ export async function createAdminSession(
     return { ok: true, mfaRequired: true, user: publicUser };
   }
 
-  const inserted = await insertAdminSession(env, user.id, 'password');
+  const inserted = await insertAdminSession(env, user.id, 'password', clientHints);
+  await emitSuspiciousDeviceChangeIfNovel(env, publicUser, inserted.sessionId, clientHints);
 
   // Record the authenticated login timestamp (non-critical update).
   execute(

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, act } from '@testing-library/react';
 import { Modal } from '../modal';
-import { ToastProvider, useToast, toast } from '../toast';
+import { ToastProvider, useToast } from '../toast';
 
 describe('Modal', () => {
   const onClose = vi.fn();
@@ -132,15 +132,6 @@ describe('Modal', () => {
     );
     const dialog = screen.getByRole('dialog');
     expect(dialog).toHaveAttribute('aria-describedby');
-  });
-});
-
-describe('toast standalone function', () => {
-  it('calls console.warn when not initialized', () => {
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    toast('success', 'Test');
-    expect(warn).toHaveBeenCalledWith('Toast not initialized - wrap app in ToastProvider');
-    warn.mockRestore();
   });
 });
 

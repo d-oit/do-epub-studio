@@ -26,7 +26,7 @@
 
 ## IndexedDB Stores
 
-Database: `do-epub-studio` (version 1)
+Database: `do-epub-studio` (version 3)
 
 | Store | Key Path | Indexes | Purpose |
 |-------|----------|---------|---------|
@@ -34,6 +34,8 @@ Database: `do-epub-studio` (version 1)
 | `annotations` | `id` | `bookId`, `synced` | Highlights, comments, bookmarks |
 | `syncQueue` | `id` | `createdAt` | Outbound sync mutation queue |
 | `permissions` | `bookId` | — | Cached grant info for offline access |
+| `readingInsights` | `[bookId, date]` | `bookId` | Aggregated reading-insight buckets (active minutes/pages) |
+| `conflicts` | `id` | — | Durable pending-conflict records (Plan 228) |
 
 Schema defined in `apps/web/src/lib/offline/db.ts`:
 
@@ -50,10 +52,12 @@ interface AnnotationEntry {
   cfi: string; endCfi?: string; text?: string;
   comment?: string; color?: string; chapter?: string;
   createdAt: number; synced: boolean; mutationId: string;
+  status?: 'open' | 'resolved';
+  visibility?: 'shared' | 'internal' | 'resolved';
 }
 
 interface SyncQueueItem {
-  id: string; type: 'progress' | 'annotation';
+  id: string; type: 'progress' | 'annotation' | 'reading-insight';
   payload: unknown; mutationId: string;
   createdAt: number; attempts: number;
   lastAttempt?: number; error?: string;
@@ -101,12 +105,30 @@ MAX_RETRY_ATTEMPTS = 5
 
 ### Conflict Resolution
 
-| Entity | Strategy |
-|--------|----------|
-| Progress | Last-write-wins (by `lastRead` timestamp) |
-| Bookmarks | Last-write-wins |
-| Highlights | Last-write-wins |
-| Comments | Append-only (no overwrite) |
+Conflicts are categorised by `ConflictType` (`progress_update`, `annotation_edit`,
+`bookmark_change`, `comment_update`) and detected in `apps/web/src/lib/offline/conflict-resolution.ts`.
+Two strategies exist — `last_write_wins` and `manual`.
+
+| Entity | Strategy | Notes |
+|--------|----------|-------|
+| Progress | Last-write-wins | Winner chosen by `lastRead` timestamp; no manual review |
+| Bookmarks | Last-write-wins | |
+| Highlights | Last-write-wins | |
+| Comments | Conditional | Manual when timestamps collide or diverge |
+
+When local and remote timestamps collide (`localTimestamp === remoteTimestamp`) or
+diverge beyond `MANUAL_CONFLICT_THRESHOLD_MS` (5s), `resolveConflict` returns the
+`Manual` strategy and records a `ConflictRecord` in both the in-memory
+`pendingConflicts` map and the durable `conflicts` IndexedDB store (Plan 228
+F2). The sync item is then removed from the queue and the worker responds
+`409 conflict_requires_manual_resolution` so it is not retried forever; the UI
+surfaces the pending conflict for a manual local/remote (or merged) resolution
+via `resolveManualConflict`.
+
+Otherwise conflicts auto-resolve with `resolveWithLWW` (`last_write_wins`),
+taking the version with the later timestamp. The earlier claim that comments are
+"append-only (no overwrite)" is incorrect — comment edits sync through
+`PATCH /api/comments/:id` and follow the same conflict-detection path.
 
 ### Permission Revocation Detection
 
