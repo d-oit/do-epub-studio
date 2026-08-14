@@ -118,14 +118,70 @@ export async function requireAdminAuth(
   };
 }
 
+export type AdminSessionUser = { id: string; email: string; role: string };
+
+/**
+ * True when the account has MFA enrolled (mfa_method === 'passkey'), i.e. a
+ * login second factor must be presented before a usable session exists. Queried
+ * locally rather than importing auth/mfa (which depends on this module for
+ * hashToken) to avoid a circular import; `mfa_method` is the single source of
+ * truth, mirrored by auth/mfa#userHasMfa.
+ */
+async function accountRequiresMfa(env: Env, userId: string): Promise<boolean> {
+  const row = await queryFirst<{ mfa_method: string | null }>(env, `SELECT mfa_method FROM users WHERE id = ?`, [userId]);
+  return row?.mfa_method === 'passkey';
+}
+
+/**
+ * Insert a fresh admin session row at the given assurance level and return the
+ * raw (unhashed) token that becomes the caller's bearer credential.
+ */
+async function insertAdminSession(
+  env: Env,
+  userId: string,
+  assuranceLevel: 'password' | 'step_up' | 'mfa',
+): Promise<{ token: string }> {
+  const token = generateAdminToken();
+  const tokenHash = await hashToken(token);
+  const sessionId = crypto.randomUUID();
+  const now = new Date().toISOString();
+  const expiresAt = new Date(Date.now() + ADMIN_SESSION_TTL_HOURS * 60 * 60 * 1000).toISOString();
+
+  await execute(
+    env,
+    `INSERT INTO admin_sessions (id, user_id, token_hash, expires_at, created_at, last_used_at, assurance_level)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    [sessionId, userId, tokenHash, expiresAt, now, now, assuranceLevel],
+  );
+
+  return { token };
+}
+
+/**
+ * Mint an `mfa`-assurance admin session after a successful login-time second
+ * factor (passkey or recovery code) on an enrolled account. This is the only
+ * path that creates an `mfa` session without an existing bearer token.
+ */
+export async function createAdminSessionMfa(
+  env: Env,
+  user: AdminSessionUser,
+): Promise<{ ok: true; token: string; user: AdminSessionUser }> {
+  const inserted = await insertAdminSession(env, user.id, 'mfa');
+  return { ok: true, token: inserted.token, user };
+}
+
 export async function createAdminSession(
   env: Env,
   email: string,
   password: string,
-): Promise<{ ok: true; token: string; user: { id: string; email: string; role: string } } | { ok: false; status: number; error: string }> {
+): Promise<
+  | { ok: true; token: string; user: AdminSessionUser }
+  | { ok: true; mfaRequired: true; user: AdminSessionUser }
+  | { ok: false; status: number; error: string }
+> {
   const user = (await queryFirst(
     env,
-    `SELECT id, email, global_role, password_hash
+    `SELECT id, email, global_role, password_hash, disabled_at, compromised_at
      FROM users
      WHERE email = ?`,
     [email.toLowerCase()],
@@ -154,18 +210,17 @@ export async function createAdminSession(
     return { ok: false, status: 401, error: 'Invalid credentials' };
   }
 
-  const token = generateAdminToken();
-  const tokenHash = await hashToken(token);
-  const sessionId = crypto.randomUUID();
-  const now = new Date().toISOString();
-  const expiresAt = new Date(Date.now() + ADMIN_SESSION_TTL_HOURS * 60 * 60 * 1000).toISOString();
+  const publicUser: AdminSessionUser = { id: user.id, email: user.email, role: user.global_role };
 
-  await execute(
-    env,
-    `INSERT INTO admin_sessions (id, user_id, token_hash, expires_at, created_at, last_used_at, assurance_level)
-     VALUES (?, ?, ?, ?, ?, ?, 'password')`,
-    [sessionId, user.id, tokenHash, expiresAt, now, now],
-  );
+  // ADR-234 MFA gap closure: a password alone must not mint a usable session
+  // for an enrolled account — a second factor is required first. No session is
+  // inserted here; the login/mfa/* endpoints complete the factor and call
+  // createAdminSessionMfa.
+  if (await accountRequiresMfa(env, user.id)) {
+    return { ok: true, mfaRequired: true, user: publicUser };
+  }
+
+  const inserted = await insertAdminSession(env, user.id, 'password');
 
   // Record the authenticated login timestamp (non-critical update).
   execute(
@@ -178,12 +233,8 @@ export async function createAdminSession(
 
   return {
     ok: true,
-    token,
-    user: {
-      id: user.id,
-      email: user.email,
-      role: user.global_role,
-    },
+    token: inserted.token,
+    user: publicUser,
   };
 }
 

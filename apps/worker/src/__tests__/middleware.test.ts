@@ -40,6 +40,8 @@ function makeEnv(): Env {
     SESSION_SIGNING_SECRET: 'test-secret',
     INVITE_TOKEN_SECRET: 'test-invite-secret',
     APP_BASE_URL: 'https://test.example.com',
+    WEBAUTHN_RP_ID: 'localhost',
+    WEBAUTHN_ORIGIN: 'http://localhost:5173',
     RATE_LIMITER: {
       idFromName: vi.fn().mockReturnValue({ toString: () => 'mock-id' }),
       get: vi.fn().mockReturnValue({

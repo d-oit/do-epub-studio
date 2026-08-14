@@ -6,6 +6,9 @@ export interface Env extends CloudflareEnv {
   EMAIL_SENDER?: string;
   SENTRY_DSN?: string;
   ENVIRONMENT?: string;
+  WEBAUTHN_RP_ID: string;
+  WEBAUTHN_RP_NAME?: string;
+  WEBAUTHN_ORIGIN: string;
 }
 
 export type JsonRow = Record<string, string | number | null | undefined>;

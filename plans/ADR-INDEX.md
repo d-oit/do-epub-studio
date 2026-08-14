@@ -87,7 +87,7 @@
 | 231    | Account Auth Lifecycle             | `plans/231-adr-account-auth-lifecycle-2026.md`         | Accepted (GOAP-230) |
 | 232    | Password Reset Token Governance    | `plans/232-adr-password-reset-token-governance.md`     | Accepted (GOAP-230) |
 | 233    | Demo Account Sandbox Policy        | `plans/233-adr-demo-account-sandbox-policy.md`         | Accepted (GOAP-230) |
-| 234    | Session and Admin Auth Hardening   | `plans/234-adr-session-and-admin-auth-hardening.md`    | Accepted (GOAP-230) |
+| 234    | Session and Admin Auth Hardening   | `plans/234-adr-session-and-admin-auth-hardening.md`    | Accepted (GOAP-230; items 5+6 passkeys/recovery in ADR-234 follow-up PR) |
 
 ## Proposed
 
@@ -111,7 +111,7 @@ None.
 | 046    | Codebase Optimizations (GOAP)               | `plans/archive/046-goap-codebase-optimizations.md`                                   | GOAP, not ADR |
 | 048    | Closeout 2026-05-23 (GOAP)                  | `plans/archive/048-goap-closeout-2026-05-23.md`                                      | GOAP, not ADR |
 | 095    | Merge Orchestration (GOAP)                  | `plans/archive/095-goap-merge-orchestration-2026-06-15.md`                           | GOAP, not ADR |
-| 230    | Account Auth Roadmap (GOAP)                 | `plans/230-goap-account-auth-2026-roadmap.md`   | GOAP, not ADR (implementation complete) |
+| 230    | Account Auth Roadmap (GOAP)                 | `plans/230-goap-account-auth-2026-roadmap.md`   | GOAP, not ADR (implementation complete; A5/A6 passkeys + recovery in ADR-234 follow-up) |
 
 ## Pending
 

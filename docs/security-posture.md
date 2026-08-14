@@ -142,6 +142,12 @@ an `ALLOWED_TAGS` allowlist (not `FORBID_TAGS`-only) and the
 - Grant changes revoke **all** active sessions for that grant
   immediately. See `apps/worker/src/routes/access.ts`
   (`recovery-request`, `verify-recovery`, `/refresh`).
+- Admin MFA (ADR-234 items 5+6): passkeys enrolled via WebAuthn
+  (`apps/worker/src/auth/mfa.ts`, `routes/admin/auth.ts`) raise the
+  admin session to `mfa` assurance; the `requireMfa` middleware
+  (`apps/worker/src/middleware/mfa.ts`) guards MFA-management and
+  high-sensitivity mutations. Recovery codes are SHA-256 hashed at
+  rest, single-use, and shown once.
 
 ## Vulnerability disclosure
 

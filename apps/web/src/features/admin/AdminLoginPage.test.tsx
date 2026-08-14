@@ -37,6 +37,11 @@ vi.mock('../../stores/auth', () => ({
 }));
 
 import { apiRequest } from '../../lib/api';
+import * as webauthnBrowser from '@simplewebauthn/browser';
+
+vi.mock('@simplewebauthn/browser', () => ({
+  startAuthentication: vi.fn(),
+}));
 
 describe('AdminLoginPage', () => {
   beforeEach(() => {
@@ -249,6 +254,92 @@ describe('AdminLoginPage', () => {
       await user.click(screen.getByText('admin.login.backToReader'));
 
       expect(mockNavigate).toHaveBeenCalledWith('/login');
+    });
+  });
+
+  describe('MFA second factor', () => {
+    const mfaUser = { id: 'u1', email: 'admin@example.com', role: 'admin' };
+
+    it('renders the second-factor step and issues no session when mfa is required', async () => {
+      vi.mocked(apiRequest).mockResolvedValueOnce({ mfaRequired: true, user: mfaUser });
+      const user = userEvent.setup();
+      renderLoginPage();
+
+      await user.type(screen.getByLabelText('admin.login.email'), 'admin@example.com');
+      await user.type(screen.getByLabelText('admin.login.password'), 'password123');
+      await user.click(screen.getByRole('button', { name: 'admin.login.signIn' }));
+
+      await waitFor(() => {
+        expect(screen.getByText('admin.login.usePasskey')).toBeInTheDocument();
+        expect(screen.getByText('admin.login.useRecoveryCode')).toBeInTheDocument();
+      });
+      expect(mockSetAdminAuth).not.toHaveBeenCalled();
+    });
+
+    it('passkey path starts and verifies a ceremony, then stores auth', async () => {
+      const mockApi = vi.mocked(apiRequest);
+      mockApi
+        .mockResolvedValueOnce({ mfaRequired: true, loginTicket: 'ticket-1', user: mfaUser })
+        .mockResolvedValueOnce({ options: { challenge: 'chal-x' } })
+        .mockResolvedValueOnce({ token: 'mfa-token', user: mfaUser });
+      vi.mocked(webauthnBrowser.startAuthentication).mockResolvedValue({ id: 'cred-1' } as never);
+
+      const user = userEvent.setup();
+      renderLoginPage();
+
+      await user.type(screen.getByLabelText('admin.login.email'), 'admin@example.com');
+      await user.type(screen.getByLabelText('admin.login.password'), 'password123');
+      await user.click(screen.getByRole('button', { name: 'admin.login.signIn' }));
+
+      await waitFor(() => expect(screen.getByText('admin.login.usePasskey')).toBeInTheDocument());
+      await user.click(screen.getByText('admin.login.usePasskey'));
+
+      await waitFor(() => {
+        expect(mockApi).toHaveBeenCalledWith('/api/admin/login/mfa/start', {
+          method: 'POST',
+          body: JSON.stringify({ loginTicket: 'ticket-1' }),
+        });
+      });
+      await waitFor(() => {
+        expect(mockApi).toHaveBeenCalledWith('/api/admin/login/mfa/verify', {
+          method: 'POST',
+          body: JSON.stringify({ loginTicket: 'ticket-1', authenticationResponse: { id: 'cred-1' } }),
+        });
+      });
+      await waitFor(() => {
+        expect(mockSetAdminAuth).toHaveBeenCalledWith({ sessionToken: 'mfa-token', email: 'admin@example.com' });
+      });
+    });
+
+    it('recovery path redeems a code and stores auth', async () => {
+      const mockApi = vi.mocked(apiRequest);
+      mockApi
+        .mockResolvedValueOnce({ mfaRequired: true, user: mfaUser })
+        .mockResolvedValueOnce({ token: 'recovery-token', user: mfaUser });
+
+      const user = userEvent.setup();
+      renderLoginPage();
+
+      await user.type(screen.getByLabelText('admin.login.email'), 'admin@example.com');
+      await user.type(screen.getByLabelText('admin.login.password'), 'password123');
+      await user.click(screen.getByRole('button', { name: 'admin.login.signIn' }));
+
+      await waitFor(() => expect(screen.getByText('admin.login.useRecoveryCode')).toBeInTheDocument());
+      await user.click(screen.getByText('admin.login.useRecoveryCode'));
+
+      const codeInput = screen.getByLabelText('admin.login.recoveryCode');
+      await user.type(codeInput, '0123456789abcdef');
+      await user.click(screen.getByRole('button', { name: 'admin.login.verifyRecovery' }));
+
+      await waitFor(() => {
+        expect(mockApi).toHaveBeenCalledWith('/api/admin/login/mfa/recovery-verify', {
+          method: 'POST',
+          body: JSON.stringify({ email: 'admin@example.com', password: 'password123', recoveryCode: '0123456789abcdef' }),
+        });
+      });
+      await waitFor(() => {
+        expect(mockSetAdminAuth).toHaveBeenCalledWith({ sessionToken: 'recovery-token', email: 'admin@example.com' });
+      });
     });
   });
 });

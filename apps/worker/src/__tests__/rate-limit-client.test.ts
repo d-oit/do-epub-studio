@@ -25,6 +25,8 @@ describe('checkRateLimitDO', () => {
     SESSION_SIGNING_SECRET: 'test-session-secret',
     INVITE_TOKEN_SECRET: 'test-invite-secret',
     APP_BASE_URL: 'http://localhost',
+    WEBAUTHN_RP_ID: 'localhost',
+    WEBAUTHN_ORIGIN: 'http://localhost:5173',
   }));
 
   it('returns allowed: true when DO returns allowed: true', async () => {

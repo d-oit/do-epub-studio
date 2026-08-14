@@ -11,10 +11,13 @@ vi.mock('../lib/api', () => ({
 }));
 
 vi.mock('../stores/auth', () => ({
-  useAuthStore: vi.fn((selector) => {
-    const state = { sessionToken: 'tok-123' };
-    return selector(state);
-  }),
+  useAuthStore: Object.assign(
+    vi.fn((selector) => {
+      const state = { sessionToken: 'tok-123' };
+      return selector(state);
+    }),
+    { getState: () => ({ sessionToken: 'tok-123', refreshSession: vi.fn() }) },
+  ),
 }));
 
 vi.mock('../hooks/useTranslation', () => ({
@@ -58,6 +61,21 @@ vi.mock('../components/ui', () => ({
       </div>
     );
   },
+  Modal: ({ isOpen, children, footer }: { isOpen: boolean; children?: React.ReactNode; footer?: React.ReactNode }) =>
+    isOpen ? (
+      <div role="dialog">
+        {children}
+        {footer}
+      </div>
+    ) : null,
+  ConfirmDialog: ({ isOpen, description, confirmLabel, onConfirm, onCancel }: { isOpen: boolean; description?: string; confirmLabel?: string; onConfirm?: () => void; onCancel?: () => void }) =>
+    isOpen ? (
+      <div role="alertdialog">
+        {description && <p>{description}</p>}
+        <button onClick={onConfirm}>{confirmLabel ?? 'Confirm'}</button>
+        <button onClick={onCancel}>Cancel</button>
+      </div>
+    ) : null,
 }));
 
 const sessions = {
@@ -77,9 +95,19 @@ const sessions = {
 describe('AccountSettingsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(apiRequest).mockImplementation((endpoint: string) =>
-      endpoint === '/api/admin/account/sessions' ? Promise.resolve(sessions) : Promise.resolve({ ok: true }),
-    );
+    vi.mocked(apiRequest).mockImplementation((endpoint: string) => {
+      if (endpoint === '/api/admin/account/sessions') return Promise.resolve(sessions);
+      if (endpoint === '/api/admin/account/mfa/status') {
+        return Promise.resolve({
+          mfaEnrolled: false,
+          method: null,
+          enrolledAt: null,
+          passkeys: [],
+          recoveryCodesPresent: false,
+        });
+      }
+      return Promise.resolve({ ok: true });
+    });
   });
 
   it('renders the change password form and sessions section', () => {
@@ -144,7 +172,9 @@ describe('AccountSettingsPage', () => {
     vi.mocked(apiRequest).mockImplementation((endpoint: string) =>
       endpoint === '/api/admin/account/sessions'
         ? Promise.resolve(sessions)
-        : Promise.reject(new Error('bad current password')),
+        : endpoint === '/api/admin/account/mfa/status'
+          ? Promise.resolve({ mfaEnrolled: false, method: null, enrolledAt: null, passkeys: [], recoveryCodesPresent: false })
+          : Promise.reject(new Error('bad current password')),
     );
 
     render(

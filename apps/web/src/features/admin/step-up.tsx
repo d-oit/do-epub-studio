@@ -3,6 +3,7 @@ import { useTranslation } from '../../hooks/useTranslation';
 import { apiRequest } from '../../lib/api';
 import { useAuthStore } from '../../stores/auth';
 import { Button, Input, Modal } from '../../components/ui';
+import { performPasskeyAuth, isMfaRequired } from './mfa';
 
 /** Error shape surfaced by apiRequest for a !ok response (see lib/api/core.ts). */
 export interface ApiError extends Error {
@@ -66,6 +67,12 @@ export function useAdminStepUp(): AdminStepUp {
   const execute = useCallback(<T,>(fn: (token: string) => Promise<T>, currentToken?: string): Promise<T> => {
     const token = currentToken ?? useAuthStore.getState().sessionToken ?? '';
     return fn(token).catch((err: unknown) => {
+      // 428 MFA_REQUIRED: the guarded mutation needs `mfa` assurance, so run
+      // the passkey ceremony (native browser prompt) and retry with the
+      // rotated token. No password modal is needed for this path.
+      if (isMfaRequired(err)) {
+        return performPasskeyAuth().then((newToken) => fn(newToken));
+      }
       if (!isStepUpRequired(err)) throw err;
       return new Promise<T>((resolve, reject) => {
         pendingRef.current = {

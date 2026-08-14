@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { startAuthentication, type PublicKeyCredentialRequestOptionsJSON } from '@simplewebauthn/browser';
 import { useTranslation } from '../../hooks/useTranslation';
 import { apiRequest } from '../../lib/api';
 import { useAuthStore } from '../../stores/auth';
@@ -8,6 +9,22 @@ import { Button, Input, AppLogo } from '../../components/ui';
 import { ThemeToggle } from '../../components/ThemeToggle';
 import { APP_NAME, APP_VERSION_LABEL } from '../../config/app-identity';
 
+interface AdminUser {
+  id: string;
+  email: string;
+  role: string;
+}
+
+interface AdminLoginResponse {
+  token?: string;
+  user: AdminUser;
+  mfaRequired?: boolean;
+  loginTicket?: string;
+}
+
+type LoginStep = 'credentials' | 'mfa';
+type MfaMode = 'passkey' | 'recovery';
+
 export function AdminLoginPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -15,8 +32,19 @@ export function AdminLoginPage() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [step, setStep] = useState<LoginStep>('credentials');
+  const [mfaMode, setMfaMode] = useState<MfaMode | null>(null);
+  const [recoveryEmail, setRecoveryEmail] = useState('');
+  const [recoveryPassword, setRecoveryPassword] = useState('');
+  const [recoveryCode, setRecoveryCode] = useState('');
+  const [loginTicket, setLoginTicket] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const completeSignIn = (data: { token: string; user: AdminUser }) => {
+    setAdminAuth({ sessionToken: data.token, email: data.user.email });
+    void navigate('/admin/books');
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,7 +52,7 @@ export function AdminLoginPage() {
     setError(null);
 
     try {
-      const data = await apiRequest<{ token: string; user: { id: string; email: string; role: string } }>(
+      const data = await apiRequest<AdminLoginResponse>(
         '/api/admin/login',
         {
           method: 'POST',
@@ -32,8 +60,89 @@ export function AdminLoginPage() {
         },
       );
 
-      setAdminAuth({ sessionToken: data.token, email: data.user.email });
-      void navigate('/admin/books');
+      if (data.mfaRequired) {
+        // ADR-234: an enrolled account requires a second factor before a
+        // session exists. Keep the factor-1 login ticket (password proof) to
+        // present at /login/mfa/*; pre-fill recovery email + password.
+        setLoginTicket(data.loginTicket ?? null);
+        setRecoveryEmail(data.user.email);
+        setRecoveryPassword(password);
+        setMfaMode(null);
+        setRecoveryCode('');
+        setStep('mfa');
+        return;
+      }
+
+      if (!data.token) {
+        throw new Error('No session token returned');
+      }
+      completeSignIn({ token: data.token, user: data.user });
+    } catch (err) {
+      setError((err as Error).message || t('admin.login.invalidCredentials'));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handlePasskey = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      if (!loginTicket) {
+        throw new Error('MFA login requires a verified password first');
+      }
+      const start = await apiRequest<{ options: PublicKeyCredentialRequestOptionsJSON }>(
+        '/api/admin/login/mfa/start',
+        {
+          method: 'POST',
+          body: JSON.stringify({ loginTicket }),
+        },
+      );
+
+      const response = await startAuthentication({ optionsJSON: start.options });
+      const data = await apiRequest<AdminLoginResponse>(
+        '/api/admin/login/mfa/verify',
+        {
+          method: 'POST',
+          body: JSON.stringify({ loginTicket, authenticationResponse: response }),
+        },
+      );
+
+      if (!data.token) {
+        throw new Error('No session token returned');
+      }
+      completeSignIn({ token: data.token, user: data.user });
+    } catch (err) {
+      setError((err as Error).message || t('admin.login.invalidCredentials'));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRecovery = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const data = await apiRequest<AdminLoginResponse>(
+        '/api/admin/login/mfa/recovery-verify',
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            email: recoveryEmail,
+            password: recoveryPassword,
+            recoveryCode,
+          }),
+        },
+      );
+
+      if (!data.token) {
+        throw new Error('No session token returned');
+      }
+      completeSignIn({ token: data.token, user: data.user });
     } catch (err) {
       setError((err as Error).message || t('admin.login.invalidCredentials'));
     } finally {
@@ -73,38 +182,129 @@ export function AdminLoginPage() {
           </div>
         )}
 
-        <form onSubmit={(e) => { void handleSubmit(e); }}>
-          <div className="space-y-4">
-            <Input
-              id="email"
-              label={t('admin.login.email')}
-              type="email"
-              required
-              autoComplete="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
+        {step === 'credentials' ? (
+          <form onSubmit={(e) => { void handleSubmit(e); }}>
+            <div className="space-y-4">
+              <Input
+                id="email"
+                label={t('admin.login.email')}
+                type="email"
+                required
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
 
-            <Input
-              id="password"
-              label={t('admin.login.password')}
-              type="password"
-              required
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
+              <Input
+                id="password"
+                label={t('admin.login.password')}
+                type="password"
+                required
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
 
-            <Button
-              type="submit"
-              className="w-full"
-              isLoading={isLoading}
-              loadingLabel={t('admin.login.signingIn')}
-            >
-              {t('admin.login.signIn')}
-            </Button>
+              <Button
+                type="submit"
+                className="w-full"
+                isLoading={isLoading}
+                loadingLabel={t('admin.login.signingIn')}
+              >
+                {t('admin.login.signIn')}
+              </Button>
+            </div>
+          </form>
+        ) : (
+          <div className="space-y-5">
+            <div>
+              <h2 className="text-lg font-semibold text-foreground">
+                {t('admin.login.mfaTitle')}
+              </h2>
+              <p className="mt-1 text-sm text-foreground-muted">
+                {t('admin.login.mfaDescription')}
+              </p>
+            </div>
+
+            {mfaMode === null && (
+              <div className="space-y-3">
+                <Button
+                  type="button"
+                  className="w-full"
+                  isLoading={isLoading}
+                  loadingLabel={t('admin.login.signingIn')}
+                  onClick={() => { void handlePasskey(); }}
+                >
+                  {t('admin.login.usePasskey')}
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="w-full"
+                  disabled={isLoading}
+                  onClick={() => { setMfaMode('recovery'); setError(null); }}
+                >
+                  {t('admin.login.useRecoveryCode')}
+                </Button>
+              </div>
+            )}
+
+            {mfaMode === 'recovery' && (
+              <form onSubmit={(e) => { void handleRecovery(e); }}>
+                <div className="space-y-4">
+                  <Input
+                    id="recovery-email"
+                    label={t('admin.login.email')}
+                    type="email"
+                    required
+                    autoComplete="email"
+                    value={recoveryEmail}
+                    readOnly
+                  />
+
+                  <Input
+                    id="recovery-password"
+                    label={t('admin.login.password')}
+                    type="password"
+                    required
+                    autoComplete="current-password"
+                    value={recoveryPassword}
+                    onChange={(e) => setRecoveryPassword(e.target.value)}
+                  />
+
+                  <Input
+                    id="recovery-code"
+                    label={t('admin.login.recoveryCode')}
+                    type="text"
+                    required
+                    autoComplete="one-time-code"
+                    value={recoveryCode}
+                    onChange={(e) => setRecoveryCode(e.target.value)}
+                  />
+
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    isLoading={isLoading}
+                    loadingLabel={t('admin.login.signingIn')}
+                  >
+                    {t('admin.login.verifyRecovery')}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => { setMfaMode(null); }}
+                    disabled={isLoading}
+                  >
+                    {t('admin.login.back')}
+                  </Button>
+                </div>
+              </form>
+            )}
           </div>
-        </form>
+        )}
 
         <div className="mt-4 text-center">
           <Button

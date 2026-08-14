@@ -26,6 +26,8 @@ describe('auth/password.ts coverage', () => {
     SESSION_SIGNING_SECRET: 'secret',
     INVITE_TOKEN_SECRET: 'secret',
     APP_BASE_URL: 'url',
+    WEBAUTHN_RP_ID: 'localhost',
+    WEBAUTHN_ORIGIN: 'http://localhost:5173',
     RATE_LIMITER: {} as unknown as Env['RATE_LIMITER'],
   };
 

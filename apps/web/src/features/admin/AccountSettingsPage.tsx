@@ -5,6 +5,7 @@ import { apiRequest } from '../../lib/api';
 import { useAuthStore } from '../../stores/auth';
 import { Button, Input } from '../../components/ui';
 import { Breadcrumb } from '../../components/navigation';
+import { MfaSection } from './MfaSection';
 
 interface AdminSession {
   id: string;
@@ -232,6 +233,9 @@ export function AccountSettingsPage() {
             ))}
           </ul>
         </section>
+
+        {/* Security / MFA (ADR-234 items 5+6) */}
+        <MfaSection />
       </div>
 
       <div className="mt-8">
