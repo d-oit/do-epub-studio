@@ -248,42 +248,37 @@ async function syncProgress(item: SyncQueueItem): Promise<void> {
   });
 }
 
-async function syncAnnotation(item: SyncQueueItem): Promise<void> {
-  const payload = item.payload as AnnotationSyncPayload;
+async function syncAnnotationResolve(payload: AnnotationSyncPayload): Promise<void> {
+  await apiRequest(`/api/comments/${payload.annotation.id}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ status: payload.annotation.status }),
+  });
+}
 
-  if (payload.action === 'resolve') {
-    await apiRequest(`/api/comments/${payload.annotation.id}`, {
-      method: 'PATCH',
-      body: JSON.stringify({ status: payload.annotation.status }),
-    });
-    return;
-  }
+async function syncAnnotationHighlight(payload: AnnotationSyncPayload): Promise<void> {
+  await api.post(`/api/books/${payload.bookId}/highlights`, {
+    locator: {
+      cfi: payload.annotation.cfi,
+      selectedText: payload.annotation.text ?? '',
+      chapterRef: payload.annotation.chapter ?? '',
+    },
+    color: payload.annotation.color ?? '#ffff00',
+    note: payload.annotation.comment ?? '',
+  });
+}
 
-  if (payload.annotation.type === 'highlight') {
-    await api.post(`/api/books/${payload.bookId}/highlights`, {
-      locator: {
-        cfi: payload.annotation.cfi,
-        selectedText: payload.annotation.text ?? '',
-        chapterRef: payload.annotation.chapter ?? '',
-      },
-      color: payload.annotation.color ?? '#ffff00',
-      note: payload.annotation.comment ?? '',
-    });
-    return;
-  }
+async function syncAnnotationBookmark(payload: AnnotationSyncPayload): Promise<void> {
+  await api.post(`/api/books/${payload.bookId}/bookmarks`, {
+    locator: {
+      cfi: payload.annotation.cfi,
+      selectedText: payload.annotation.text ?? payload.annotation.cfi,
+      chapterRef: payload.annotation.chapter ?? '',
+    },
+    label: payload.annotation.text ?? '',
+  });
+}
 
-  if (payload.annotation.type === 'bookmark') {
-    await api.post(`/api/books/${payload.bookId}/bookmarks`, {
-      locator: {
-        cfi: payload.annotation.cfi,
-        selectedText: payload.annotation.text ?? payload.annotation.cfi,
-        chapterRef: payload.annotation.chapter ?? '',
-      },
-      label: payload.annotation.text ?? '',
-    });
-    return;
-  }
-
+async function syncAnnotationComment(payload: AnnotationSyncPayload): Promise<void> {
   await api.post(`/api/books/${payload.bookId}/comments`, {
     locator: {
       cfi: payload.annotation.cfi,
@@ -293,6 +288,26 @@ async function syncAnnotation(item: SyncQueueItem): Promise<void> {
     body: payload.annotation.comment ?? '',
     visibility: 'shared' as const,
   });
+}
+
+async function syncAnnotation(item: SyncQueueItem): Promise<void> {
+  const payload = item.payload as AnnotationSyncPayload;
+
+  if (payload.action === 'resolve') {
+    await syncAnnotationResolve(payload);
+    return;
+  }
+
+  switch (payload.annotation.type) {
+    case 'highlight':
+      await syncAnnotationHighlight(payload);
+      return;
+    case 'bookmark':
+      await syncAnnotationBookmark(payload);
+      return;
+    default:
+      await syncAnnotationComment(payload);
+  }
 }
 
 async function syncReadingInsight(item: SyncQueueItem): Promise<void> {
