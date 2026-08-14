@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { createRecoveryCodes, verifyRecoveryCode, consumeChallenge, isChallengeUsable, storeChallenge } from '../auth/mfa';
+import { createRecoveryCodes, hashRecoveryCode, verifyRecoveryCode, consumeChallenge, isChallengeUsable, storeChallenge } from '../auth/mfa';
 import type { Env } from '../lib/env';
 
 // ---------------------------------------------------------------------------
@@ -22,7 +22,7 @@ vi.mock('../auth/admin-middleware', () => ({
   }),
 }));
 
-import { execute } from '../db/client';
+import { queryFirst, execute } from '../db/client';
 
 function env() {
   return { DB: { prepare: vi.fn() } } as any; // eslint-disable-line @typescript-eslint/no-explicit-any -- test helper
@@ -48,35 +48,32 @@ describe('recovery codes (real helpers)', () => {
     }
   });
 
-  it('verifyRecoveryCode returns true only when the atomic UPDATE consumed the code', async () => {
-    const makeEnvWithChanges = (changes: number) =>
-      ({
-        DB: {
-          prepare: () => ({
-            bind: () => ({
-              run: () => ({ meta: { changes } }),
-            }),
-          }),
-        },
-      } as unknown as Env);
+  it('validateRecoveryCode is single-use: the matched code is removed on verification', async () => {
+    const { codes, hashes } = await createRecoveryCodes(10);
 
-    expect(await verifyRecoveryCode(makeEnvWithChanges(1), 'user-1', 'SOME-CODE')).toBe(true);
-    expect(await verifyRecoveryCode(makeEnvWithChanges(0), 'user-1', 'SOME-CODE')).toBe(false);
+    // First verification round: hashes are stored and returned from DB.
+    (queryFirst as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ recovery_codes_hash_json: JSON.stringify(hashes) });
+
+    const ok = await verifyRecoveryCode(env(), 'user-1', codes[0]);
+    expect(ok).toBe(true);
+
+    // The remaining hashes written back must NOT include code[0]'s hash.
+    const writeCall = (execute as ReturnType<typeof vi.fn>).mock.calls.find(
+      (c) => typeof c[1] === 'string' && c[1].includes('recovery_codes_hash_json'),
+    );
+    expect(writeCall).toBeDefined();
+    if (!writeCall) throw new Error('expected write call');
+    const remainingRaw = (writeCall[2] as string[])[0];
+    const remaining = JSON.parse(remainingRaw) as string[];
+    const usedHash = await hashRecoveryCode(codes[0]);
+    expect(remaining).not.toContain(usedHash);
+    expect(remaining).toHaveLength(9);
   });
 
-  it('issues a single atomic JSON1 UPDATE that removes the matched hash only if still present', async () => {
-    const run = vi.fn(() => ({ meta: { changes: 1 } }));
-    const bind = vi.fn(() => ({ run }));
-    const prepare = vi.fn((_sql: string) => ({ bind }));
-    const envDb = { DB: { prepare } } as unknown as Env;
-    const { codes } = await createRecoveryCodes(1);
-
-    await verifyRecoveryCode(envDb, 'user-1', codes[0]);
-
-    const sql = prepare.mock.calls[0][0];
-    expect(sql).toContain('recovery_codes_hash_json');
-    expect(sql).toContain('json_group_array');
-    expect(sql).toContain('EXISTS');
+  it('returns false when no stored codes match', async () => {
+    (queryFirst as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ recovery_codes_hash_json: JSON.stringify(['abc']) });
+    const ok = await verifyRecoveryCode(env(), 'user-1', 'nope');
+    expect(ok).toBe(false);
   });
 });
 

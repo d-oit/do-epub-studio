@@ -321,28 +321,41 @@ export async function clearMfaEnrolled(env: Env, userId: string): Promise<void> 
 
 /**
  * Verify a single-use recovery code against the hashed set stored on the
- * account. On match, atomically removes the hash and returns true; returns
- * false if no code matches or none are stored. Consumption is a single
- * conditional UPDATE (SQLite JSON1) keyed on the hash still being present, so
- * two concurrent redemptions can never both succeed or clobber each other's
- * write — the single-use invariant holds without an explicit transaction.
+ * account. On match, re-writes the array with the used code removed, then
+ * returns true. Returns false if no code matches or none are stored.
+ *
+ * NOTE: consumption is a read-modify-write, so under concurrent redemptions
+ * two requests could theoretically clobber each other and leave a code
+ * replayable. This is accepted: the recovery path is per-email rate-limited
+ * (5/300 s) and there is no real-D1 integration harness in this repo to safely
+ * validate an atomic SQLite JSON1 rewrite on this critical locked-out-admin
+ * fallback — an untested single-statement rewrite is worse than the narrow,
+ * mitigated race it would close. Re-evaluate if a real-D1 test layer lands.
  */
 export async function verifyRecoveryCode(env: Env, userId: string, code: string): Promise<boolean> {
+  const row = await queryFirst<{ recovery_codes_hash_json: string | null }>(
+    env,
+    `SELECT recovery_codes_hash_json FROM users WHERE id = ?`,
+    [userId],
+  );
+  const raw = row?.recovery_codes_hash_json;
+  if (!raw) return false;
+
+  let hashes: string[];
+  try {
+    hashes = JSON.parse(raw) as string[];
+  } catch {
+    return false;
+  }
+  if (!Array.isArray(hashes) || hashes.length === 0) return false;
+
   const candidate = await hashRecoveryCode(code);
-  const res = await env.DB.prepare(
-    `UPDATE users
-     SET recovery_codes_hash_json = (
-       SELECT json_group_array(value)
-       FROM json_each(users.recovery_codes_hash_json)
-       WHERE value != ?
-     )
-     WHERE id = ?
-       AND recovery_codes_hash_json IS NOT NULL
-       AND EXISTS (
-         SELECT 1 FROM json_each(users.recovery_codes_hash_json) WHERE value = ?
-       )`,
-  ).bind(candidate, userId, candidate).run();
-  return (res.meta?.changes ?? 0) > 0;
+  const idx = hashes.indexOf(candidate);
+  if (idx === -1) return false;
+
+  hashes = hashes.filter((_, i) => i !== idx);
+  await writeRecoveryHashes(env, userId, hashes);
+  return true;
 }
 
 // ---------------------------------------------------------------------------
