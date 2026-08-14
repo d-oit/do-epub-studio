@@ -1,7 +1,7 @@
 # GOAP-240: Vitest 4 & Vite 8 Deprecation Migration
 
 **Date:** 2026-08-14
-**Status:** In Progress (this PR)
+**Status:** ✅ COMPLETED (merged as PR #982, commit ef95519)
 **Baseline:** `main` @ `051b5fc` (post GOAP-239, PRs #980/#981)
 **Related:** ADR-216 (Vitest pool policy); ADR-105b (error/observability completeness); docs/conventions.md
 
