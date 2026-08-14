@@ -63,6 +63,28 @@ describe('Admin Routes', () => {
 
       expect(res.status).toBe(401);
     });
+
+    it('returns mfaRequired with no token for an MFA-enrolled admin (ADR-234)', async () => {
+      mockCreateAdminSession.mockResolvedValue({
+        ok: true,
+        mfaRequired: true,
+        user: { id: 'admin-1', email: 'admin@example.com', role: 'admin' },
+      });
+
+      const res = await app.fetch(new Request('http://localhost/api/admin/login', {
+        method: 'POST',
+        body: JSON.stringify({ email: 'admin@example.com', password: 'password' }),
+        headers: { 'Content-Type': 'application/json' },
+      }), env, makePassThroughContext());
+
+      expect(res.status).toBe(200);
+      const body: { ok: boolean; data: { mfaRequired?: boolean; token?: string; loginTicket?: string } } = await res.json();
+      expect(body.data.mfaRequired).toBe(true);
+      // Factor-1 (password) proof: a single-use login ticket is issued so the
+      // later /login/mfa/* passkey ceremony can never mint a session alone.
+      expect(body.data.loginTicket).toEqual(expect.any(String));
+      expect(body.data.token).toBeUndefined();
+    });
   });
 
   describe('POST /api/admin/logout', () => {

@@ -190,7 +190,7 @@ export const ADMIN_USER = {
 export const ADMIN_LOGIN_RESPONSE = {
   ok: true,
   data: {
-    sessionToken: 'admin-session-token',
+    token: 'admin-session-token',
     user: { id: 'admin-1', email: ADMIN_USER.email, role: 'admin' },
   },
 };

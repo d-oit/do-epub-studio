@@ -83,3 +83,21 @@ reads. Step-up for sensitive actions gives better risk-adjusted coverage.
 - MFA metadata cannot downgrade an enrolled account without step-up.
 - Audit logs contain event names and trace IDs, but no tokens, passwords,
   recovery codes, user agents, or raw IP addresses.
+
+## Closure Record (2026-08-13)
+
+- **Items 1–4** (session inventory, logout-all, rotation, step-up reauth,
+  MFA-ready schema) implemented in PR #974.
+- **Items 5–6** (WebAuthn passkeys enroll/remove + recovery-code
+  generate/regenerate) implemented in the ADR-234 items 5+6 follow-up PR:
+  `passkey_credentials` + `webauthn_challenges` tables (migration 0010);
+  `auth/mfa.ts` helper layer; `middleware/mfa.ts` `requireMfa`; MFA routes on
+  the admin `authRouter`; shared Zod schemas; web `useAdminMfa` hook,
+  `MfaSection` in Account Settings, and `isMfaRequired` passkey step-up in
+  `step-up.tsx`. Recovery codes are SHA-256 hashed at rest, single-use
+  (rewrite-on-match), and displayed once. Enrollment requires recent password
+  step-up + current password; removal/regeneration require `mfa` assurance.
+  Passkey authentication rotates the bearer token and revokes other sessions.
+- **Item 7** (risk-event handling) remains deferred to a follow-up PR. The
+  `verifyRecoveryCode` helper is implemented and tested as the hook for the
+  deferred risk/factor-recovery work.

@@ -31,6 +31,7 @@ vi.mock('../auth/admin-middleware', async (importOriginal) => {
     ...actual,
     requireAdminAuth: vi.fn(),
     createAdminSession: vi.fn(),
+    createAdminSessionMfa: vi.fn(),
     revokeAdminSession: vi.fn(),
     generateAdminToken: vi.fn(),
     hashToken: vi.fn(),
@@ -102,6 +103,7 @@ import { requireAuth } from '../auth/middleware';
 import {
   requireAdminAuth,
   createAdminSession,
+  createAdminSessionMfa,
   revokeAdminSession,
   revokeAllAdminSessionsForUser,
   revokeAllReaderSessionsForEmail,
@@ -137,6 +139,7 @@ export const mockTransaction = transaction as Mock;
 export const mockRequireAuth = requireAuth as Mock;
 export const mockRequireAdminAuth = requireAdminAuth as Mock;
 export const mockCreateAdminSession = createAdminSession as Mock;
+export const mockCreateAdminSessionMfa = createAdminSessionMfa as Mock;
 export const mockRevokeAdminSession = revokeAdminSession as Mock;
 export const mockRevokeAllAdminSessionsForUser = revokeAllAdminSessionsForUser as Mock;
 export const mockRevokeAllReaderSessionsForEmail = revokeAllReaderSessionsForEmail as Mock;
@@ -193,6 +196,9 @@ export function makeEnv(): Env {
     SESSION_SIGNING_SECRET: process.env.TEST_SESSION_SIGNING_SECRET || 'test-secret',
     INVITE_TOKEN_SECRET: process.env.TEST_INVITE_TOKEN_SECRET || 'test-invite-secret',
     APP_BASE_URL: 'https://test.example.com',
+    WEBAUTHN_RP_ID: 'localhost',
+    WEBAUTHN_RP_NAME: 'd.o.EPUB Studio',
+    WEBAUTHN_ORIGIN: 'http://localhost:5173',
     RATE_LIMITER: {
       idFromName: vi.fn().mockReturnValue({ toString: () => 'mock-id' }),
       get: vi.fn().mockReturnValue({

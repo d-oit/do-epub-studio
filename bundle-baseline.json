@@ -1,31 +1,31 @@
 {
-  "generated": "2026-08-08",
+  "generated": "2026-08-14",
   "routes": {
     "reader": {
-      "entry": "assets/reader-route-jkd38M3p.js",
-      "gzip": 29659,
-      "brotli": 25227,
+      "entry": "assets/reader-route-B0Ojz_S6.js",
+      "gzip": 31473,
+      "brotli": 26741,
       "totalTransitive": {
-        "gzip": 262005,
-        "brotli": 227608
+        "gzip": 273562,
+        "brotli": 236680
       }
     },
     "catalog": {
-      "entry": "assets/CatalogPage-1f03JXG6.js",
-      "gzip": 1852,
-      "brotli": 1644,
+      "entry": "assets/CatalogPage-CF3Bm0W1.js",
+      "gzip": 1854,
+      "brotli": 1646,
       "totalTransitive": {
-        "gzip": 173468,
-        "brotli": 151151
+        "gzip": 180217,
+        "brotli": 156284
       }
     },
     "admin": {
-      "entry": "assets/admin-route-D0wQoQh-.js",
-      "gzip": 91004,
-      "brotli": 79426,
+      "entry": "assets/admin-route-g8wDR8Dz.js",
+      "gzip": 98853,
+      "brotli": 85568,
       "totalTransitive": {
-        "gzip": 171616,
-        "brotli": 149507
+        "gzip": 178363,
+        "brotli": 154638
       }
     }
   }

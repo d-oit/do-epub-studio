@@ -185,11 +185,34 @@ describe('admin-middleware', () => {
       vi.mocked(db.execute).mockResolvedValue({ rows: [] });
       const result = await createAdminSession(env, 'admin@example.com', 'password');
       expect(result.ok).toBe(true);
-      if (result.ok) {
+      if (result.ok && 'token' in result) {
         expect(result.token).toBeDefined();
         expect(result.token.length).toBe(64); // 32 bytes hex
         expect(result.user.role).toBe('admin');
       }
+    });
+
+    it('returns mfaRequired with no session insert for an MFA-enrolled admin (ADR-234)', async () => {
+      vi.mocked(db.queryFirst)
+        .mockResolvedValueOnce({
+          id: 'user-1',
+          email: 'admin@example.com',
+          global_role: 'admin',
+          password_hash: 'hashed',
+        })
+        .mockResolvedValueOnce({
+          mfa_method: 'passkey',
+          mfa_enrolled_at: '2026-08-13T00:00:00.000Z',
+        });
+      vi.mocked(password.verifyPassword).mockResolvedValue(true);
+      vi.mocked(db.execute).mockResolvedValue({ rows: [] });
+      const result = await createAdminSession(env, 'admin@example.com', 'password');
+      expect(result.ok).toBe(true);
+      if (result.ok && 'mfaRequired' in result) {
+        expect(result.mfaRequired).toBe(true);
+      }
+      // No session INSERT may run when a second factor is still required.
+      expect(db.execute).not.toHaveBeenCalled();
     });
   });
 

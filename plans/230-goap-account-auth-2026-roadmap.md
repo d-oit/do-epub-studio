@@ -136,6 +136,11 @@ Implemented A1–A7 across a single PR:
   (`middleware/step-up.ts`), session inventory and rotation, account-wide
   revocation. MFA-ready schema (`mfa_method`, `mfa_enrolled_at`,
   `recovery_codes_hash_json`) is present for the follow-up passkey/TOTP work.
+  **Passkey enroll/remove (WebAuthn) is now implemented** in the ADR-234
+  items 5+6 follow-up PR: `requireMfa` middleware, MFA routes, `useAdminMfa`
+  web hook + Account Settings UI. **Recovery codes (A6)** are generated and
+  regenerated hashed-at-rest and single-use via the same PR. Item 7
+  (risk-event handling) remains the open follow-up.
 - **A6 (demo seed):** `scripts/seed-demo-accounts.mjs` — fails closed outside
   `DEMO_ACCOUNTS_ENABLED=1` + non-production gates, operator-provided Argon2id
   passwords, `created_by_demo=1`, idempotent reseed that revokes prior sessions.
