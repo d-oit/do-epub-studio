@@ -215,75 +215,103 @@ async function attemptSync(): Promise<void> {
   }
 }
 
+/** Progress payload synced from the offline queue. */
+interface ProgressSyncPayload {
+  bookId: string;
+  cfi: string;
+  percentage: number;
+  mutationId: string;
+}
+
+/** Annotation payload synced from the offline queue. */
+interface AnnotationSyncPayload {
+  bookId: string;
+  annotation: Omit<AnnotationEntry, 'synced' | 'mutationId'> & { id?: string; status?: string };
+  action?: string;
+}
+
+/** Reading-insight payload synced from the offline queue. */
+interface ReadingInsightSyncPayload {
+  bookId: string;
+  buckets: { date: string; activeMinutes: number; activePages: number }[];
+  mutationId: string;
+}
+
+async function syncProgress(item: SyncQueueItem): Promise<void> {
+  const payload = item.payload as ProgressSyncPayload;
+  await api.put(`/api/books/${payload.bookId}/progress`, {
+    locator: {
+      cfi: payload.cfi,
+    },
+    progressPercent: payload.percentage,
+    mutationId: payload.mutationId,
+  });
+}
+
+async function syncAnnotation(item: SyncQueueItem): Promise<void> {
+  const payload = item.payload as AnnotationSyncPayload;
+
+  if (payload.action === 'resolve') {
+    await apiRequest(`/api/comments/${payload.annotation.id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status: payload.annotation.status }),
+    });
+    return;
+  }
+
+  if (payload.annotation.type === 'highlight') {
+    await api.post(`/api/books/${payload.bookId}/highlights`, {
+      locator: {
+        cfi: payload.annotation.cfi,
+        selectedText: payload.annotation.text ?? '',
+        chapterRef: payload.annotation.chapter ?? '',
+      },
+      color: payload.annotation.color ?? '#ffff00',
+      note: payload.annotation.comment ?? '',
+    });
+    return;
+  }
+
+  if (payload.annotation.type === 'bookmark') {
+    await api.post(`/api/books/${payload.bookId}/bookmarks`, {
+      locator: {
+        cfi: payload.annotation.cfi,
+        selectedText: payload.annotation.text ?? payload.annotation.cfi,
+        chapterRef: payload.annotation.chapter ?? '',
+      },
+      label: payload.annotation.text ?? '',
+    });
+    return;
+  }
+
+  await api.post(`/api/books/${payload.bookId}/comments`, {
+    locator: {
+      cfi: payload.annotation.cfi,
+      selectedText: payload.annotation.text ?? '',
+      chapterRef: payload.annotation.chapter ?? '',
+    },
+    body: payload.annotation.comment ?? '',
+    visibility: 'shared' as const,
+  });
+}
+
+async function syncReadingInsight(item: SyncQueueItem): Promise<void> {
+  const payload = item.payload as ReadingInsightSyncPayload;
+  await api.post(`/api/books/${payload.bookId}/insights/sync`, {
+    bookId: payload.bookId,
+    buckets: payload.buckets,
+    mutationId: payload.mutationId,
+  });
+}
+
 async function syncItem(item: SyncQueueItem, traceId: string, spanId: string): Promise<SyncResult> {
   try {
     if (item.type === 'progress') {
-      const payload = item.payload as {
-        bookId: string;
-        cfi: string;
-        percentage: number;
-        mutationId: string;
-      };
-      await api.put(`/api/books/${payload.bookId}/progress`, {
-        locator: {
-          cfi: payload.cfi,
-        },
-        progressPercent: payload.percentage,
-        mutationId: payload.mutationId,
-      });
+      await syncProgress(item);
     } else if (item.type === 'annotation') {
-      const payload = item.payload as {
-        bookId: string;
-        annotation: Omit<AnnotationEntry, 'synced' | 'mutationId'> & { id?: string; status?: string };
-        action?: string;
-      };
-
-      if (payload.action === 'resolve') {
-        await apiRequest(`/api/comments/${payload.annotation.id}`, {
-          method: 'PATCH',
-          body: JSON.stringify({ status: payload.annotation.status }),
-        });
-      } else if (payload.annotation.type === 'highlight') {
-        await api.post(`/api/books/${payload.bookId}/highlights`, {
-          locator: {
-            cfi: payload.annotation.cfi,
-            selectedText: payload.annotation.text ?? '',
-            chapterRef: payload.annotation.chapter ?? '',
-          },
-          color: payload.annotation.color ?? '#ffff00',
-          note: payload.annotation.comment ?? '',
-        });
-      } else if (payload.annotation.type === 'bookmark') {
-        await api.post(`/api/books/${payload.bookId}/bookmarks`, {
-          locator: {
-            cfi: payload.annotation.cfi,
-            selectedText: payload.annotation.text ?? payload.annotation.cfi,
-            chapterRef: payload.annotation.chapter ?? '',
-          },
-          label: payload.annotation.text ?? '',
-        });
-      } else {
-        await api.post(`/api/books/${payload.bookId}/comments`, {
-          locator: {
-            cfi: payload.annotation.cfi,
-            selectedText: payload.annotation.text ?? '',
-            chapterRef: payload.annotation.chapter ?? '',
-          },
-          body: payload.annotation.comment ?? '',
-          visibility: 'shared' as const,
-        });
-      }
+      await syncAnnotation(item);
     } else if (item.type === 'reading-insight') {
-      const payload = item.payload as {
-        bookId: string;
-        buckets: { date: string; activeMinutes: number; activePages: number }[];
-        mutationId: string;
-      };
-      await api.post(`/api/books/${payload.bookId}/insights/sync`, {
-        bookId: payload.bookId,
-        buckets: payload.buckets,
-        mutationId: payload.mutationId,
-      });
+      await syncReadingInsight(item);
     }
     return { success: true };
   } catch (error) {
@@ -314,12 +342,7 @@ async function syncItem(item: SyncQueueItem, traceId: string, spanId: string): P
 
     // Check for conflict (409) — only for progress type
     if (status === 409 && item.type === 'progress') {
-      const payload = item.payload as {
-        bookId: string;
-        cfi: string;
-        percentage: number;
-        mutationId: string;
-      };
+      const payload = item.payload as ProgressSyncPayload;
 
       // We don't have the remote version from a 409. Use equal timestamps
       // to force the manual resolution path — the user must decide which
