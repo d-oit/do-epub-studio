@@ -1,7 +1,7 @@
 # ADR-234: Session and Admin Auth Hardening
 
 **Date:** 2026-08-13
-\*\*Status:\*\* Accepted
+**Status:** Accepted
 **Deciders:** Project maintainer, security reviewer, product owner
 **Related:** GOAP-230, ADR-080, ADR-092, ADR-200, ADR-212, ADR-214, ADR-231, ADR-232
 
@@ -101,3 +101,7 @@ reads. Step-up for sensitive actions gives better risk-adjusted coverage.
 - **Item 7** (risk-event handling) remains deferred to a follow-up PR. The
   `verifyRecoveryCode` helper is implemented and tested as the hook for the
   deferred risk/factor-recovery work.
+- **GOAP-236 merge:** items 5+6 (passkeys + recovery) were merged together via
+  GOAP-236, landing with migrations 0010 (`passkey_credentials` +
+  `webauthn_challenges`) and 0011. ADR-234 **item 7** (risk-event handling) is
+  being delivered by GOAP-237 in this PR.

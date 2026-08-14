@@ -1,7 +1,7 @@
 # ADR-233: Demo Account Sandbox Policy
 
 **Date:** 2026-08-13
-\*\*Status:\*\* Accepted
+**Status:** Accepted
 **Deciders:** Project maintainer, security reviewer, product owner
 **Related:** GOAP-230, ADR-004, ADR-092, ADR-106, ADR-231, ADR-232, ADR-234
 

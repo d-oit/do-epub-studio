@@ -66,19 +66,3 @@ export function scrub(value: unknown, depth = 0): unknown {
   }
   return value;
 }
-
-export function scrubForLog(payload: unknown): string {
-  const scrubbed: unknown = scrub(payload);
-  const seen = new WeakSet<object>();
-  try {
-    return JSON.stringify(scrubbed, (_key: string, val: unknown) => {
-      if (typeof val === 'object' && val !== null) {
-        if (seen.has(val)) return '[Circular]';
-        seen.add(val);
-      }
-      return val;
-    });
-  } catch {
-    return REDACTED;
-  }
-}

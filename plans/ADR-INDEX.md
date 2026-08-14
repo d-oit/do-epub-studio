@@ -77,7 +77,7 @@
 | 185    | Agent Workflow Harness Standards                                           | `plans/archive/185-adr-agent-workflow-harness-standards.md`              | Accepted                                                             |
 | 187    | Fail-Closed Engineering Gates                                              | `plans/archive/187-adr-fail-closed-engineering-gates.md`                 | Accepted                                                             |
 | 198    | Verified-Closure Methodology                                               | `plans/archive/198-adr-verified-closure-methodology.md`                  | Accepted                                                             |
-| 199    | i18n Plural Rules Deferral                                                 | `plans/199-adr-i18n-plural-rules-deferral.md`                            | Accepted (deferred)                                                  |
+| 199    | i18n Plural Rules Deferral                                                 | `plans/199-adr-i18n-plural-rules-deferral.md`                            | Accepted (deferred; GOAP-227 follow-up implemented Intl.PluralRules, PR #964) |
 | 200    | Login Lockout as Compensating Control for localStorage Token Storage       | `plans/200-adr-session-lockout-compensating-control.md`                  | Accepted (Wave 4-C)                                                  |
 | 201    | WebKit in PR smoke CI                                                      | `plans/ADR-201-webkit-smoke-ci.md`                                       | Accepted                                                             |
 | 216    | Vitest Pool Policy and Mobile Test Isolation                               | `plans/216-adr-vitest-pool-policy.md`                                    | Accepted                                                             |
@@ -87,7 +87,7 @@
 | 231    | Account Auth Lifecycle             | `plans/231-adr-account-auth-lifecycle-2026.md`         | Accepted (GOAP-230) |
 | 232    | Password Reset Token Governance    | `plans/232-adr-password-reset-token-governance.md`     | Accepted (GOAP-230) |
 | 233    | Demo Account Sandbox Policy        | `plans/233-adr-demo-account-sandbox-policy.md`         | Accepted (GOAP-230) |
-| 234    | Session and Admin Auth Hardening   | `plans/234-adr-session-and-admin-auth-hardening.md`    | Accepted (GOAP-230; items 5+6 passkeys/recovery in ADR-234 follow-up PR) |
+| 234    | Session and Admin Auth Hardening   | `plans/234-adr-session-and-admin-auth-hardening.md`    | Accepted (GOAP-230; items 5+6 passkeys/recovery merged via GOAP-236 with migration 0011) |
 
 ## Proposed
 
@@ -111,7 +111,7 @@ None.
 | 046    | Codebase Optimizations (GOAP)               | `plans/archive/046-goap-codebase-optimizations.md`                                   | GOAP, not ADR |
 | 048    | Closeout 2026-05-23 (GOAP)                  | `plans/archive/048-goap-closeout-2026-05-23.md`                                      | GOAP, not ADR |
 | 095    | Merge Orchestration (GOAP)                  | `plans/archive/095-goap-merge-orchestration-2026-06-15.md`                           | GOAP, not ADR |
-| 230    | Account Auth Roadmap (GOAP)                 | `plans/230-goap-account-auth-2026-roadmap.md`   | GOAP, not ADR (implementation complete; A5/A6 passkeys + recovery in ADR-234 follow-up) |
+| 230    | Account Auth Roadmap (GOAP)                 | `plans/230-goap-account-auth-2026-roadmap.md`   | GOAP, not ADR (implementation complete; A5/A6 passkeys + recovery merged via GOAP-236) |
 
 ## Pending
 

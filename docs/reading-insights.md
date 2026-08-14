@@ -55,6 +55,7 @@ visible, focused, loaded, and not idle.
 
 - `apps/worker/src/routes/reader/insights.ts` — Worker route for insight sync
 - `packages/schema/migrations/0004-reading-insights.sql` — Database migration
+- `packages/schema/migrations/0005-add-pages-to-insights.sql` — Adds `active_pages`
 
 The sync endpoint accepts coarse daily buckets and uses `MAX()` to merge
 conflicting values (first-write wins for higher values, prevents data loss).
@@ -68,6 +69,7 @@ interface ReadingInsightEntry {
   bookId: string;
   date: string; // YYYY-MM-DD
   activeMinutes: number;
+  activePages: number;
   lastUpdated: number;
   // Optional, local-only (never synced to the server):
   chapterMinutes?: Record<string, number>; // href -> cumulative active minutes
@@ -84,6 +86,7 @@ CREATE TABLE reading_insights (
   user_email TEXT NOT NULL,
   bucket_date TEXT NOT NULL,
   active_minutes INTEGER NOT NULL DEFAULT 0,
+  active_pages INTEGER NOT NULL DEFAULT 0,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now')),
   FOREIGN KEY (book_id) REFERENCES books(id) ON DELETE CASCADE,
@@ -102,8 +105,9 @@ Syncs local reading insight buckets to the server.
 {
   "bookId": "uuid",
   "buckets": [
-    { "date": "2026-06-19", "activeMinutes": 15 }
-  ]
+    { "date": "2026-06-19", "activeMinutes": 15, "activePages": 8 }
+  ],
+  "mutationId": "client-generated-id"
 }
 ```
 
@@ -119,9 +123,10 @@ Retrieves the user's reading insights for a book.
   "ok": true,
   "data": {
     "totalActiveMinutes": 120,
+    "totalActivePages": 60,
     "currentStreakDays": 3,
     "recentActivity": [
-      { "date": "2026-06-19", "activeMinutes": 15 }
+      { "date": "2026-06-19", "activeMinutes": 15, "activePages": 8 }
     ]
   }
 }

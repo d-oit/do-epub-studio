@@ -58,7 +58,7 @@ export function AdminRecoverPage() {
   };
 
   const handleNavigate = (path: string): void => {
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises -- navigate() returns void, not Promise (react-router-dom v7)
     navigate(path);
   };
 

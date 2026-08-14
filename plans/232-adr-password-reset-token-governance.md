@@ -1,7 +1,7 @@
 # ADR-232: Password Reset Token Governance
 
 **Date:** 2026-08-13
-\*\*Status:\*\* Accepted
+**Status:** Accepted
 **Deciders:** Project maintainer, security reviewer, product owner
 **Related:** GOAP-230, ADR-004, ADR-080, ADR-092, ADR-200, ADR-231, ADR-234
 
