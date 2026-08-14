@@ -4,11 +4,11 @@ import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import { visualizer } from 'rollup-plugin-visualizer';
 import tailwindcss from '@tailwindcss/vite';
-import appIdentity from './src/config/app-identity.json';
+import appIdentity from './src/config/app-identity.json' with { type: 'json' };
 // Static import instead of readFileSync(VERSION) per AGENTS.md Tier 1.
 // scripts/check-app-identity.mjs asserts VERSION === root package.json
 // version, so the package version is the authoritative static source.
-import rootPackage from '../../package.json';
+import rootPackage from '../../package.json' with { type: 'json' };
 
 const isAnalyze = process.env.ANALYZE === 'true';
 const appVersion = rootPackage.version;
@@ -67,7 +67,7 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
+      '@': path.resolve(import.meta.dirname, './src'),
     },
   },
   worker: {

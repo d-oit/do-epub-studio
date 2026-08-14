@@ -120,6 +120,7 @@ None.
 | 237    | ADR-234 Item 7 Risk-Event Handling (GOAP)   | `plans/237-goap-risk-event-handling.md`                                              | COMPLETED: PR #977 |
 | 238    | Docs Drift & Code Cleanup (GOAP)            | `plans/238-goap-docs-drift-and-code-cleanup.md`                                      | COMPLETED: PR #978 |
 | 239    | Split >500-LOC Files (GOAP)                 | `plans/239-goap-split-over500-loc-files.md`                                          | COMPLETED: PR #980 |
+| 240    | Vitest 4 Migration (GOAP)                   | `plans/240-goap-vitest4-migration.md`                                                | This PR |
 
 ## Pending
 
