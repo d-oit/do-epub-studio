@@ -303,8 +303,12 @@ async function syncItem(item: SyncQueueItem, traceId: string, spanId: string): P
       return { success: false, error: 'permission_revoked' };
     }
 
-    // Check for specific error messages
-    if (message.includes('revoked') || message.includes('permission')) {
+    // Check for specific error messages (fallback when status is unavailable).
+    // Server revocations always return 401/403 — handled above — so do NOT treat a
+    // generic "permission" substring as revocation (would spuriously clear the
+    // local permission cache). Only an explicit revoked mention maps to the
+    // permission_revoked outcome.
+    if (message.includes('revoked')) {
       return { success: false, error: 'permission_revoked' };
     }
 

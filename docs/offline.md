@@ -100,7 +100,7 @@ queueSync(type, payload, mutationId)
 BASE_DELAY_MS = 1000
 MAX_DELAY_MS = 30000
 MAX_RETRY_ATTEMPTS = 5
-// delay = 1s, 2s, 4s, 8s, 16s (capped at 30s)
+// delay = 2s, 4s, 8s, 16s, 30s (capped)
 ```
 
 ### Conflict Resolution
@@ -132,7 +132,7 @@ taking the version with the later timestamp. The earlier claim that comments are
 
 ### Permission Revocation Detection
 
-- `syncItem()` returns `permission_revoked` on 401/403 or `revoked`/`permission` in error message
+- `syncItem()` returns `permission_revoked` on 401/403 or `revoked` in error message
 - Clears all cached permissions in IndexedDB
 - Calls `onPermissionRevoked` callback → UI shows access revoked message
 - Failing sync item is removed from queue (prevents stall)
@@ -149,6 +149,7 @@ File: `apps/web/src/sw.ts`
 | Google Fonts stylesheets | `google-fonts-stylesheets` | CacheFirst | 1 year |
 | Google Fonts webfonts | `google-fonts-webfonts` | CacheFirst | 1 year |
 | Images | `images` | CacheFirst | 30 days |
+| External assets (cross-origin non-API) | external-assets | StaleWhileRevalidate | 7 days |
 | EPUB files (`/api/files/`) | `book-content` | StaleWhileRevalidate + RangeRequests | 7 days |
 | API responses (`/api/`) | `api-responses` | NetworkFirst | 1 hour |
 

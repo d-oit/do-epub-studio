@@ -98,10 +98,11 @@ reads. Step-up for sensitive actions gives better risk-adjusted coverage.
   (rewrite-on-match), and displayed once. Enrollment requires recent password
   step-up + current password; removal/regeneration require `mfa` assurance.
   Passkey authentication rotates the bearer token and revokes other sessions.
-- **Item 7** (risk-event handling) remains deferred to a follow-up PR. The
-  `verifyRecoveryCode` helper is implemented and tested as the hook for the
-  deferred risk/factor-recovery work.
+- **Item 7** (risk-event handling) shipped via GOAP-237 (merged as PR #977): the
+  `verifyRecoveryCode` helper and the single-use reset/login-ticket tokens feed
+  `logRiskEvent` (`facility: 'risk'`) for token-replay, login-lockout and
+  suspicious-device-change detection. No behavioral lockout change (observational).
 - **GOAP-236 merge:** items 5+6 (passkeys + recovery) were merged together via
   GOAP-236, landing with migrations 0010 (`passkey_credentials` +
-  `webauthn_challenges`) and 0011. ADR-234 **item 7** (risk-event handling) is
-  being delivered by GOAP-237 in this PR.
+  `webauthn_challenges`) and 0011. ADR-234 **item 7** (risk-event handling)
+  shipped via GOAP-237 (PR #977).

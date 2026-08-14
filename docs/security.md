@@ -89,7 +89,7 @@ This prevents anchor injection: even if a CFI is malformed, the text and chapter
 - **CORS**: Restricted to `env.APP_BASE_URL` origin; `Vary: Origin` header
 - **Security headers**: Applied via `applySecurityHeaders()` (CSP, X-Frame-Options, etc.)
 - **Rate limiting**: `RateLimiterDO` durable object per IP
-- **Audit logging**: All grant/session changes logged to `audit_logs` table
+- **Audit logging**: All grant/session changes logged to `audit_log` table
 ## ReDoS Hardening (ADR-034)
 
 All regex patterns processing untrusted input (CFI locators, annotation text, URLs) MUST use the `matchBounded` / `testBounded` helpers from `@do-epub-studio/shared` (see `packages/shared/src/safe-regex.ts`).
