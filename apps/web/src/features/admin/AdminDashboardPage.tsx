@@ -68,23 +68,19 @@ export function AdminDashboardPage() {
 
   // biome-ignore lint/correctness/useQwikValidLexicalScope: React app, not Qwik
   const handleBooksNav = () => {
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises -- navigate() returns void, not Promise (react-router-dom v7)
-    navigate('/admin/books');
+    void navigate('/admin/books');
   };
   // biome-ignore lint/correctness/useQwikValidLexicalScope: React app, not Qwik
   const handleGrantsNav = () => {
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises -- navigate() returns void, not Promise (react-router-dom v7)
-    navigate('/admin/grants');
+    void navigate('/admin/grants');
   };
   // biome-ignore lint/correctness/useQwikValidLexicalScope: React app, not Qwik
   const handleAuditNav = () => {
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises -- navigate() returns void, not Promise (react-router-dom v7)
-    navigate('/admin/audit');
+    void navigate('/admin/audit');
   };
   // biome-ignore lint/correctness/useQwikValidLexicalScope: React app, not Qwik
   const handleAccountNav = () => {
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises -- navigate() returns void, not Promise (react-router-dom v7)
-    navigate('/admin/account');
+    void navigate('/admin/account');
   };
 
   return (

@@ -243,8 +243,7 @@ export function AccountSettingsPage() {
           variant="ghost"
           size="sm"
           onClick={() => {
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises -- navigate() returns void (react-router-dom v7)
-            navigate(ADMIN_ROUTES.admin);
+            void navigate(ADMIN_ROUTES.admin);
           }}
         >
           {t('admin.account.backToDashboard')}
