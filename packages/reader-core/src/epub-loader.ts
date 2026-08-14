@@ -397,11 +397,12 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
       await rendition.display(cfi);
     },
     on(event: string, callback: EventCallback): void {
-      if (!eventListeners.has(event)) {
-        eventListeners.set(event, new Set());
+      let listeners = eventListeners.get(event);
+      if (!listeners) {
+        listeners = new Set();
+        eventListeners.set(event, listeners);
       }
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- listeners was just set guard above
-      eventListeners.get(event)!.add(callback);
+      listeners.add(callback);
     },
     off(event: string, callback: EventCallback): void {
       eventListeners.get(event)?.delete(callback);

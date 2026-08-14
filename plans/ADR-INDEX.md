@@ -87,7 +87,7 @@
 | 231    | Account Auth Lifecycle             | `plans/231-adr-account-auth-lifecycle-2026.md`         | Accepted (GOAP-230) |
 | 232    | Password Reset Token Governance    | `plans/232-adr-password-reset-token-governance.md`     | Accepted (GOAP-230) |
 | 233    | Demo Account Sandbox Policy        | `plans/233-adr-demo-account-sandbox-policy.md`         | Accepted (GOAP-230) |
-| 234    | Session and Admin Auth Hardening   | `plans/234-adr-session-and-admin-auth-hardening.md`    | Accepted (GOAP-230; items 5+6 passkeys/recovery merged via GOAP-236 with migration 0011) |
+| 234    | Session and Admin Auth Hardening   | `plans/234-adr-session-and-admin-auth-hardening.md`    | Accepted (GOAP-230; items 5+6 passkeys/recovery merged via GOAP-236 with migration 0011; item 7 risk-event handling merged via GOAP-237/PR #977) |
 
 ## Proposed
 
@@ -111,7 +111,14 @@ None.
 | 046    | Codebase Optimizations (GOAP)               | `plans/archive/046-goap-codebase-optimizations.md`                                   | GOAP, not ADR |
 | 048    | Closeout 2026-05-23 (GOAP)                  | `plans/archive/048-goap-closeout-2026-05-23.md`                                      | GOAP, not ADR |
 | 095    | Merge Orchestration (GOAP)                  | `plans/archive/095-goap-merge-orchestration-2026-06-15.md`                           | GOAP, not ADR |
+| 226    | Verify-Driven Gap Closure (GOAP)            | `plans/226-goap-verify-gap-closure.md`                                               | COMPLETED: PR #958 |
+| 227    | i18n Plural Rules (GOAP)                    | `plans/227-goap-i18n-plural-rules.md`                                                | COMPLETED: PR #964 |
+| 228    | Remaining Gaps Closure (GOAP)               | `plans/228-goap-remaining-gaps-closure.md`                                           | COMPLETED: PR #965 |
+| 229    | External-URL Hardening (GOAP)               | `plans/229-goap-external-url-hardening.md`                                           | COMPLETED: PR #972 |
 | 230    | Account Auth Roadmap (GOAP)                 | `plans/230-goap-account-auth-2026-roadmap.md`   | GOAP, not ADR (implementation complete; A5/A6 passkeys + recovery merged via GOAP-236) |
+| 236    | ADR-234 Items 5+6 Review & Merge (GOAP)     | `plans/236-goap-adr234-items56-review-and-merge.md`                                  | Complete: PR #975 |
+| 237    | ADR-234 Item 7 Risk-Event Handling (GOAP)   | `plans/237-goap-risk-event-handling.md`                                              | COMPLETED: PR #977 |
+| 238    | Docs Drift & Code Cleanup (GOAP)            | `plans/238-goap-docs-drift-and-code-cleanup.md`                                      | This PR |
 
 ## Pending
 

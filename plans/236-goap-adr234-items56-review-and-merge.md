@@ -1,6 +1,6 @@
 # GOAP-236: ADR-234 Items 5+6 — Review, Remediate, and Merge
 
-**Status:** Complete
+**Status:** ✅ Complete (merged as PR #975, commit a3827d5)
 **Date:** 2026-08-14
 **Goal:** Drive the in-progress ADR-234 items 5+6 follow-up (WebAuthn passkeys + recovery codes + MFA) to a mergeable PR with all CI green, addressing all review findings and PR comments.
 

@@ -136,7 +136,7 @@ Retrieves the user's reading insights for a book.
 
 - `apps/worker/src/__tests__/routes.insights.test.ts` — Worker route tests
 - `apps/web/src/lib/offline/reading-insights.test.ts` — Client timer tests
-- `apps/web/src/__tests__/info-panel.test.tsx` — InfoPanel integration tests
+- `apps/web/src/features/reader/components/info/InfoPanel.test.tsx` — InfoPanel integration tests
 
 ## Future Work
 

@@ -46,7 +46,7 @@ Cloudflare Worker (apps/worker)
   ├─ libSQL/Turso DB (apps/worker/src/db/)
   │   • reader_sessions, book_access_grants, books
   │   • reader_progress, bookmarks, highlights, comments
-  │   • audit_logs
+  │   • audit_log
   │
   └─ R2 storage (signed URL generation)
 ```
@@ -82,14 +82,18 @@ Cloudflare Worker (apps/worker)
 
 ```typescript
 interface EpubLoader {
-  load(url: string): Promise<void>;
+  load(url: string | Uint8Array): Promise<void>;
   createRendition(container: HTMLElement): EpubRenditionHandle;
   destroy(): void;
   getMetadata(): BookMetadata;
+  getBook(): Book | null;
   getToc(): TocItem[];
   getSpineItems(): SpineItem[];
   getProgress(): ProgressPosition | null;
   setProgress(cfi: string): Promise<void>;
+  on(event: string, callback: EventCallback): void;
+  off(event: string, callback: EventCallback): void;
+  rendition: EpubRenditionHandle | null;
 }
 ```
 
@@ -324,7 +328,7 @@ text excerpt + chapter reference. Do not rely only on raw DOM offsets.
 | Risk | Mitigation |
 |---|---|
 | EPUB anchor drift | CFI + selected text + chapter reference fallback (ADR-006) |
-| Offline conflict drift | Entity-specific merge rules; append-only comments; idempotent sync mutations |
+| Offline conflict drift | Entity-specific merge rules; editable comments (PATCH); per-resource idempotency (UPSERT/MAX merge) |
 | Grant leakage | Generic auth errors; short-lived sessions; short-lived signed URLs; audit logs |
 | Overcomplicated auth too early | Start with email + optional password; avoid full account system in MVP |
 | Public/private storage mistakes | All file access through Worker gate; never expose raw storage paths |

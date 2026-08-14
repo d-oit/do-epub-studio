@@ -211,15 +211,30 @@ describe('sync', () => {
       });
     });
 
-    it('handles permission revocation via error message', async () => {
+    it('does not treat a generic permission message as revocation', async () => {
       vi.mocked(db.getSyncQueue).mockResolvedValue([{
-        id: 'item-7', type: 'progress',
-        payload: { bookId: 'b1', cfi: 'cfi', percentage: 50, mutationId: 'm7' },
-        mutationId: 'm7', createdAt: 700, attempts: 0,
+        id: 'item-71', type: 'progress',
+        payload: { bookId: 'b1', cfi: 'cfi', percentage: 50, mutationId: 'm71' },
+        mutationId: 'm71', createdAt: 7100, attempts: 0,
       }]);
       vi.mocked(api.put).mockRejectedValue(new Error('permission denied'));
 
-      await queueSync('progress', { bookId: 'b1', cfi: 'cfi', percentage: 50, mutationId: 'm7' }, 'm7');
+      await queueSync('progress', { bookId: 'b1', cfi: 'cfi', percentage: 50, mutationId: 'm71' }, 'm71');
+      await vi.waitFor(() => {
+        expect(db.updateSyncQueueItem).toHaveBeenCalled();
+      });
+      expect(clearAllPermissions).not.toHaveBeenCalled();
+    });
+
+    it('treats revoked mention without status as revocation', async () => {
+      vi.mocked(db.getSyncQueue).mockResolvedValue([{
+        id: 'item-72', type: 'progress',
+        payload: { bookId: 'b1', cfi: 'cfi', percentage: 50, mutationId: 'm72' },
+        mutationId: 'm72', createdAt: 7200, attempts: 0,
+      }]);
+      vi.mocked(api.put).mockRejectedValue(new Error('Access has been revoked or expired'));
+
+      await queueSync('progress', { bookId: 'b1', cfi: 'cfi', percentage: 50, mutationId: 'm72' }, 'm72');
       await vi.waitFor(() => {
         expect(clearAllPermissions).toHaveBeenCalled();
       });
