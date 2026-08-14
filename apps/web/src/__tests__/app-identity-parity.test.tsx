@@ -28,7 +28,7 @@ const webPkg = JSON.parse(
   readFileSync(resolve(repoRoot, 'apps/web/package.json'), 'utf8'),
 );
 const workerAuthSource = readFileSync(
-  resolve(repoRoot, 'apps/worker/src/routes/admin/auth.ts'),
+  resolve(repoRoot, 'apps/worker/src/routes/admin/auth/recovery.ts'),
   'utf8',
 );
 const headerStorySource = readFileSync(
