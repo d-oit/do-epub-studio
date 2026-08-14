@@ -119,7 +119,7 @@ None.
 | 236    | ADR-234 Items 5+6 Review & Merge (GOAP)     | `plans/236-goap-adr234-items56-review-and-merge.md`                                  | Complete: PR #975 |
 | 237    | ADR-234 Item 7 Risk-Event Handling (GOAP)   | `plans/237-goap-risk-event-handling.md`                                              | COMPLETED: PR #977 |
 | 238    | Docs Drift & Code Cleanup (GOAP)            | `plans/238-goap-docs-drift-and-code-cleanup.md`                                      | COMPLETED: PR #978 |
-| 239    | Split >500-LOC Files (GOAP)                 | `plans/239-goap-split-over500-loc-files.md`                                          | This PR |
+| 239    | Split >500-LOC Files (GOAP)                 | `plans/239-goap-split-over500-loc-files.md`                                          | COMPLETED: PR #980 |
 
 ## Pending
 
