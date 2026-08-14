@@ -792,6 +792,7 @@ describe('Admin MFA (ADR-234 items 5+6)', () => {
       expect(mockCreateAdminSessionMfa).toHaveBeenCalledWith(
         expect.anything(),
         { id: 'admin-1', email: 'admin@example.com', role: 'admin' },
+        expect.objectContaining({ ipHash: expect.any(String), deviceLabelHash: expect.any(String) }),
       );
       expect(mockLogAudit).toHaveBeenCalledWith(
         expect.anything(),

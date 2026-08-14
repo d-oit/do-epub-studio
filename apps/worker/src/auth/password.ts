@@ -145,12 +145,6 @@ export async function createGrant(
   return id;
 }
 
-export async function revokeGrant(env: Env, grantId: string): Promise<void> {
-  await execute(env, `UPDATE book_access_grants SET revoked_at = datetime('now') WHERE id = ?`, [
-    grantId,
-  ]);
-}
-
 export function computeCapabilities(grant: GrantRow) {
   return {
     canRead: grant.allowed === 1,

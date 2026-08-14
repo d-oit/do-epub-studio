@@ -58,6 +58,11 @@
 
 ### CI / Tooling
 
+- **`rolldownOptions: { output: {` brace-count pitfall**: A "cosmetic" whitespace edit collapsing `rolldownOptions: {      output: {` to `rolldownOptions: {` silently deletes the `output:` opener while the two closing braces (`output` then `rolldownOptions`) remain — so the object tree nests `server:`/`manualChunks` incorrectly and only the BUILD + knip config-load fail (not `tsc`/`lint`, which skip `vite.config.ts`). When "normalizing" a single-line multi-brace allocation, recount every closer; verify with `pnpm --filter web build`, not typecheck.
+- **knip `ignoreFiles` must list only live files**: deleting a dead barrel (`src/auth/index.ts`, `src/db/index.ts`, `src/storage/index.ts`) leaves stale `ignoreFiles` entries in `knip.config.ts` that surface as "Remove from ignoreFiles" hints — and `knip` aborts if a ConfigPath can't be loaded. Delete dead exports AND their `ignoreFiles` entry together.
+- **Audit `action` strings are free-form/inline** (`logAudit` takes an arbitrary `action` string; no enum). Risk events use a `risk_` action prefix + a `facility:'risk'` payload marker so they are queryable through the `AuditQuerySchema.action` exact filter added in GOAP-237.
+- **Raw IP never persisted**: `getClientIp()`/`hashString()` yield only a SHA-256 `ipHash`; risk-event payloads carry `ipHash`/`deviceLabelHash` (UA fingerprint), never the raw value. `device_label_hash` existed on `admin_sessions` but was never populated before GOAP-237.
+
 - **pnpm corepack prompts**: On fresh environments, `pnpm` may prompt interactively for corepack downloads. Use `corepack enable && echo "Y" | pnpm install` for non-interactive setup.
 - **pnpm frozen-lockfile + dep changes**: After adding new dependencies to package.json, `pnpm install --frozen-lockfile` fails with `ERR_PNPM_OUTDATED_LOCKFILE`. Run `pnpm install --no-frozen-lockfile` to update lockfile, then commit the updated pnpm-lock.yaml.
 - **Dependabot Corruption Risk**: Dependabot PRs can become "corrupted" and include massive deletions of unrelated files. Always perform a full file-level diff before merging automated dependency updates.

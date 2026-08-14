@@ -384,6 +384,7 @@ export const CspReportSchema = z.object({
 export const AuditQuerySchema = z.object({
   entityType: EntityTypeSchema.optional(),
   entityId: z.string().optional(),
+  action: z.string().min(1).max(100).optional(),
   limit: z.coerce.number().int().positive().max(100).default(50),
   offset: z.coerce.number().int().nonnegative().max(100_000).default(0),
   from: z.string().datetime().optional(),

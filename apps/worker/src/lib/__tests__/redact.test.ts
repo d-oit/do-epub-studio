@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { scrub, scrubForLog, isSensitiveKey } from '../redact';
+import { scrub, isSensitiveKey } from '../redact';
 
 describe('Log Redaction', () => {
   describe('isSensitiveKey', () => {
@@ -72,26 +72,6 @@ describe('Log Redaction', () => {
       expect(scrub(42)).toBe(42);
       expect(scrub(true)).toBe(true);
       expect(scrub('hello')).toBe('hello');
-    });
-  });
-
-  describe('scrubForLog', () => {
-    it('returns a JSON string', () => {
-      const result = scrubForLog({ password: 'secret', username: 'jdoe' });
-      expect(typeof result).toBe('string');
-      expect(result).toContain('"username":"jdoe"');
-      expect(result).toContain('"password":"[REDACTED]"');
-    });
-
-    it('handles circular references gracefully', () => {
-      const obj: Record<string, unknown> = { name: 'test' };
-      obj.self = obj;
-      const result = scrubForLog(obj);
-      // The scrub function has a depth limit, so circular references
-      // are truncated at depth 8. The result is a valid JSON string
-      // that does not throw.
-      expect(typeof result).toBe('string');
-      expect(result).toContain('"name"');
     });
   });
 });

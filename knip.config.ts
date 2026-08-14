@@ -69,12 +69,6 @@ const config: KnipConfig = {
         '@libsql/client',
         '@cloudflare/vitest-pool-workers',
       ],
-      // Barrel files not traced from entry point — pre-existing baseline
-      ignoreFiles: [
-        'src/auth/index.ts',
-        'src/db/index.ts',
-        'src/storage/index.ts',
-      ],
     },
 
     // ---- packages/reader-core --------------------------------------------

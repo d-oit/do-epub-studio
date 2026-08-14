@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { validateGrant, computeCapabilities, getGrantByBookAndSession, getGrantsBySession, revokeGrant, createGrant } from '../auth/password';
+import { validateGrant, computeCapabilities, getGrantByBookAndSession, getGrantsBySession, createGrant } from '../auth/password';
 import type { QueryResult } from '../db/client';
 import type { Env } from '../lib/env';
 import * as db from '../db/client';
@@ -94,11 +94,6 @@ describe('auth/password.ts coverage', () => {
     vi.mocked(db.execute).mockResolvedValue(emptyResult);
     const id = await createGrant(env, 'b1', 'e@ex.com', { password: 'p' });
     expect(id).toBeDefined();
-    expect(db.execute).toHaveBeenCalled();
-  });
-
-  it('revokeGrant updates DB', async () => {
-    await revokeGrant(env, 'g1');
     expect(db.execute).toHaveBeenCalled();
   });
 

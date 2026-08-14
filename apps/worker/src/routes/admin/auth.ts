@@ -82,6 +82,7 @@ import {
   decodeBase64UrlToBytes,
 } from '../../auth/mfa';
 import { logAudit } from '../../audit';
+import { logRiskEvent, RISK_EVENTS, deviceFingerprint } from '../../audit/risk';
 import { createEmailTransport } from '../../lib/email-transport';
 import { queryFirst } from '../../db/client';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
@@ -113,9 +114,27 @@ authRouter.post('/login', zValidator('json', LoginSchema), async (c) => {
     return apiError(c, 429, 'TOO_MANY_REQUESTS', 'Too many login attempts. Please try again later.');
   }
 
-  const result = await createAdminSession(c.env, email, password);
+  const clientHints = {
+    ipHash: await hashString(getClientIp(c)),
+    deviceLabelHash: await deviceFingerprint(c.req.header('User-Agent')),
+  };
+
+  const result = await createAdminSession(c.env, email, password, clientHints);
 
   if (!result.ok) {
+    // Observational lockout risk event (ADR-234 item 7): emit when a login
+    // attempt is rejected because the target account is actually locked
+    // (disabled/compromised). Semantics unchanged.
+    const lockedAccount = await getAccountByEmail(c.env, email.toLowerCase());
+    if (lockedAccount && accountIsLocked(lockedAccount)) {
+      await logRiskEvent(c.env, c.executionCtx, {
+        kind: RISK_EVENTS.loginLocked,
+        actorEmail: lockedAccount.email,
+        entityId: lockedAccount.id,
+        entityType: 'user',
+        payload: { account: email.toLowerCase(), ipHash: clientHints.ipHash },
+      });
+    }
     return apiError(c, result.status as ContentfulStatusCode, 'INVALID_CREDENTIALS', result.error);
   }
 
@@ -233,70 +252,93 @@ authRouter.post('/login/mfa/start', zValidator('json', LoginMfaStartSchema), asy
   return c.json({ ok: true, data: { options } });
 });
 
-authRouter.post('/login/mfa/verify', zValidator('json', LoginMfaVerifySchema), async (c) => {
-  const { loginTicket, authenticationResponse } = c.req.valid('json');
-  const response = authenticationResponse as unknown as AuthenticationResponseJSON;
+/**
+ * Factor-2 (WebAuthn passkey) verification for admin login. Encapsulates the
+ * single-use challenge consumption, credential lookup/ownership check, and
+ * passkey verification so the `/login/mfa/verify` handler stays readable
+ * (ADR-234 items 5+6 + 7). On failure it emits the existing `mfa_auth_failure`
+ * audit event and returns a response shape the handler maps to an apiError.
+ */
+interface MfaFactorContext {
+  env: Env;
+  executionCtx: { waitUntil: (p: Promise<unknown>) => void } | undefined;
+}
 
-  const rateLimit = await checkRateLimitDO(c.env, 'auth_admin_mfa_verify', loginTicket, {
-    maxRequests: 10,
-    windowMs: 60_000,
+type MfaFactorOutcome =
+  | {
+      ok: true;
+      stored: { raw_challenge: string };
+      credential: { credential_id: string; public_key: string; counter: number; transports: string | null };
+      newCounter: number;
+    }
+  | { ok: false; status: number; code: string; message: string };
+
+/** Emit the `mfa_auth_failure` audit event and return a failure outcome. */
+const MFA_FAILURE_OUTCOME: { ok: false; status: number; code: string; message: string } = {
+  ok: false,
+  status: 401,
+  code: 'MFA_FAILED',
+  message: 'MFA authentication failed',
+};
+
+async function logMfaFailure(
+  c: MfaFactorContext,
+  user: { id: string; email: string },
+  reason: string,
+): Promise<void> {
+  await logAudit(c.env, {
+    entityType: 'user',
+    entityId: user.id,
+    action: 'mfa_auth_failure',
+    actorEmail: user.email,
+    payload: { reason },
+  }, c.executionCtx);
+}
+
+/** Emit a login-ticket replay risk event (ADR-234 item 7). */
+async function logLoginTicketReplay(
+  c: MfaFactorContext,
+  user: { id: string; email: string },
+): Promise<void> {
+  await logRiskEvent(c.env, c.executionCtx, {
+    kind: RISK_EVENTS.tokenReplay,
+    actorEmail: user.email,
+    entityId: user.id,
+    entityType: 'user',
+    payload: { kind: 'login_ticket', account: user.email },
   });
-  if (!rateLimit.allowed) {
-    return apiError(c, 429, 'TOO_MANY_REQUESTS', 'Too many attempts. Please try again later.');
-  }
+}
 
-  const ticket = await findLoginTicket(c.env, loginTicket);
-  if (!isLoginTicketUsable(ticket)) {
-    return apiError(c, 401, 'INVALID_LOGIN_TICKET', 'Complete password sign-in before passkey login');
-  }
-
-  const user = await queryFirst<{ id: string; email: string; global_role: string; disabled_at: string | null; compromised_at: string | null }>(
-    c.env,
-    `SELECT id, email, global_role, disabled_at, compromised_at FROM users WHERE id = ?`,
-    [ticket.user_id],
-  );
-
-  if (!user || user.global_role !== 'admin' || user.disabled_at || user.compromised_at || !(await userHasMfa(c.env, user.id))) {
-    return apiError(c, 401, 'MFA_REQUIRED', 'MFA is required to complete sign-in');
-  }
-
+async function verifyPasskeyFactor(
+  c: MfaFactorContext,
+  user: { id: string; email: string },
+  response: AuthenticationResponseJSON,
+): Promise<MfaFactorOutcome> {
   const challengeId = decodeClientDataChallenge(response.response.clientDataJSON ?? '');
   if (!challengeId) {
-    return apiError(c, 400, 'INVALID_CHALLENGE', 'Invalid or missing WebAuthn challenge');
+    return { ok: false, status: 400, code: 'INVALID_CHALLENGE', message: 'Invalid or missing WebAuthn challenge' };
   }
 
   const stored = await findChallenge(c.env, challengeId);
   if (!isChallengeUsable(stored, { userId: user.id, purpose: 'authentication' })) {
-    return apiError(c, 400, 'INVALID_CHALLENGE', 'Invalid, used, or expired challenge');
+    return { ok: false, status: 400, code: 'INVALID_CHALLENGE', message: 'Invalid, used, or expired challenge' };
   }
 
   // Consume first: single-use + expiry enforced atomically before verification.
   const consumed = await consumeChallenge(c.env, challengeId);
   if (!consumed) {
-    return apiError(c, 400, 'INVALID_CHALLENGE', 'Invalid, used, or expired challenge');
+    return { ok: false, status: 400, code: 'INVALID_CHALLENGE', message: 'Invalid, used, or expired challenge' };
   }
 
   const credentialRow = await getPasskeyByCredentialId(c.env, response.id);
   if (!credentialRow) {
-    await logAudit(c.env, {
-      entityType: 'user',
-      entityId: user.id,
-      action: 'mfa_auth_failure',
-      actorEmail: user.email,
-      payload: { reason: 'unknown_credential' },
-    }, c.executionCtx);
-    return apiError(c, 401, 'MFA_FAILED', 'MFA authentication failed');
+    await logMfaFailure(c, user, 'unknown_credential');
+    return MFA_FAILURE_OUTCOME;
   }
 
   if (credentialRow.user_id !== user.id) {
-    await logAudit(c.env, {
-      entityType: 'user',
-      entityId: user.id,
-      action: 'mfa_auth_failure',
-      actorEmail: user.email,
-      payload: { reason: 'credential_not_owned' },
-    }, c.executionCtx);
-    return apiError(c, 401, 'MFA_FAILED', 'MFA authentication failed');
+    await logMfaFailure(c, user, 'credential_not_owned');
+    return MFA_FAILURE_OUTCOME;
   }
 
   let verification;
@@ -316,41 +358,90 @@ authRouter.post('/login/mfa/verify', zValidator('json', LoginMfaVerifySchema), a
       },
     });
   } catch {
-    await logAudit(c.env, {
-      entityType: 'user',
-      entityId: user.id,
-      action: 'mfa_auth_failure',
-      actorEmail: user.email,
-      payload: { reason: 'verification_error' },
-    }, c.executionCtx);
-    return apiError(c, 401, 'MFA_FAILED', 'MFA authentication failed');
+    await logMfaFailure(c, user, 'verification_error');
+    return MFA_FAILURE_OUTCOME;
   }
 
   if (!verification.verified) {
-    await logAudit(c.env, {
-      entityType: 'user',
-      entityId: user.id,
-      action: 'mfa_auth_failure',
-      actorEmail: user.email,
-      payload: { reason: 'not_verified' },
-    }, c.executionCtx);
-    return apiError(c, 401, 'MFA_FAILED', 'MFA authentication failed');
+    await logMfaFailure(c, user, 'not_verified');
+    return MFA_FAILURE_OUTCOME;
   }
 
-  await updatePasskeyCounter(c.env, credentialRow.credential_id, verification.authenticationInfo.newCounter);
+  return {
+    ok: true,
+    stored,
+    credential: credentialRow,
+    newCounter: verification.authenticationInfo.newCounter,
+  };
+}
+
+authRouter.post('/login/mfa/verify', zValidator('json', LoginMfaVerifySchema), async (c) => {
+  const { loginTicket, authenticationResponse } = c.req.valid('json');
+  const response = authenticationResponse as unknown as AuthenticationResponseJSON;
+
+  const rateLimit = await checkRateLimitDO(c.env, 'auth_admin_mfa_verify', loginTicket, {
+    maxRequests: 10,
+    windowMs: 60_000,
+  });
+  if (!rateLimit.allowed) {
+    return apiError(c, 429, 'TOO_MANY_REQUESTS', 'Too many attempts. Please try again later.');
+  }
+
+  const ticket = await findLoginTicket(c.env, loginTicket);
+  const ticketReplay = Boolean(ticket?.used_at);
+  const ticketUserId = ticket?.user_id;
+  if (!isLoginTicketUsable(ticket)) {
+    // A present-but-already-consumed ticket is a single-use replay (ADR-234
+    // item 7). Observational risk event; the rejection itself is unchanged.
+    if (ticketReplay) {
+      await logRiskEvent(c.env, c.executionCtx, {
+        kind: RISK_EVENTS.tokenReplay,
+        entityId: ticketUserId ?? 'unknown',
+        entityType: 'user',
+        payload: { kind: 'login_ticket', account: 'unknown' },
+      });
+    }
+    return apiError(c, 401, 'INVALID_LOGIN_TICKET', 'Complete password sign-in before passkey login');
+  }
+
+  const user = await queryFirst<{ id: string; email: string; global_role: string; disabled_at: string | null; compromised_at: string | null }>(
+    c.env,
+    `SELECT id, email, global_role, disabled_at, compromised_at FROM users WHERE id = ?`,
+    [ticket.user_id],
+  );
+
+  if (!user || user.global_role !== 'admin' || user.disabled_at || user.compromised_at || !(await userHasMfa(c.env, user.id))) {
+    return apiError(c, 401, 'MFA_REQUIRED', 'MFA is required to complete sign-in');
+  }
+
+  const factor = await verifyPasskeyFactor(c, user, response);
+  if (!factor.ok) {
+    return apiError(c, factor.status as ContentfulStatusCode, factor.code, factor.message);
+  }
 
   // Factor 2 (passkey) verified. Consume the factor-1 login ticket atomically —
   // only the first concurrent caller wins the single-use right to mint an `mfa`
   // session, so a ticket can never be replayed to mint a second session.
   const consumedTicket = await consumeLoginTicket(c.env, loginTicket);
   if (!consumedTicket) {
+    // Failed single-use claim -> the ticket was already consumed or expired.
+    // Emit an observational login-ticket replay risk event (ADR-234 item 7).
+    await logLoginTicketReplay(c, user);
     return apiError(c, 401, 'INVALID_LOGIN_TICKET', 'Complete password sign-in before passkey login');
   }
+
+  // Update the passkey counter only after the login ticket is successfully
+  // consumed — if the consumption fails (concurrent race), we abort without
+  // mutating the counter, keeping the credential state consistent.
+  await updatePasskeyCounter(c.env, factor.credential.credential_id, factor.newCounter);
 
   const session = await createAdminSessionMfa(c.env, {
     id: user.id,
     email: user.email,
     role: user.global_role,
+  }, {
+    ipHash: await hashString(getClientIp(c)),
+    deviceLabelHash: await deviceFingerprint(c.req.header('User-Agent')),
   });
 
   await logAudit(c.env, {
@@ -407,6 +498,17 @@ authRouter.post('/login/mfa/recovery-verify', zValidator('json', RecoveryVerifyL
       action: 'mfa_recovery_failure',
       actorEmail: user.email,
     }, c.executionCtx);
+    // A valid password with an unverifiable single-use recovery code is a
+    // replay/tamper signal on the recovery code (ADR-234 item 7). Observational.
+    if (validPassword && !validCode) {
+      await logRiskEvent(c.env, c.executionCtx, {
+        kind: RISK_EVENTS.tokenReplay,
+        actorEmail: user.email,
+        entityId: user.id,
+        entityType: 'user',
+        payload: { kind: 'recovery_code', account: user.email },
+      });
+    }
     return apiError(c, 401, 'INVALID_CREDENTIALS', 'Recovery verification failed');
   }
 
@@ -414,6 +516,9 @@ authRouter.post('/login/mfa/recovery-verify', zValidator('json', RecoveryVerifyL
     id: user.id,
     email: user.email,
     role: user.global_role,
+  }, {
+    ipHash: await hashString(getClientIp(c)),
+    deviceLabelHash: await deviceFingerprint(c.req.header('User-Agent')),
   });
 
   await logAudit(c.env, {
@@ -539,6 +644,15 @@ authRouter.post('/recovery-verify', zValidator('json', AdminRecoveryVerifySchema
       action: 'admin_reset_denied',
       payload: { reason, ipHash, traceId },
     }, c.executionCtx);
+    // Replaying an already-consumed admin reset token (ADR-234 item 7).
+    if (!verify.ok && verify.reason === 'used') {
+      await logRiskEvent(c.env, c.executionCtx, {
+        kind: RISK_EVENTS.tokenReplay,
+        entityId: 'unknown',
+        entityType: 'user',
+        payload: { kind: 'password_reset', account: 'unknown' },
+      });
+    }
     return apiError(c, 401, 'INVALID_TOKEN', 'Invalid or expired reset link');
   }
 
