@@ -118,7 +118,7 @@ None.
 | 230    | Account Auth Roadmap (GOAP)                 | `plans/230-goap-account-auth-2026-roadmap.md`   | GOAP, not ADR (implementation complete; A5/A6 passkeys + recovery merged via GOAP-236) |
 | 236    | ADR-234 Items 5+6 Review & Merge (GOAP)     | `plans/236-goap-adr234-items56-review-and-merge.md`                                  | Complete: PR #975 |
 | 237    | ADR-234 Item 7 Risk-Event Handling (GOAP)   | `plans/237-goap-risk-event-handling.md`                                              | COMPLETED: PR #977 |
-| 238    | Docs Drift & Code Cleanup (GOAP)            | `plans/238-goap-docs-drift-and-code-cleanup.md`                                      | This PR |
+| 238    | Docs Drift & Code Cleanup (GOAP)            | `plans/238-goap-docs-drift-and-code-cleanup.md`                                      | COMPLETED: PR #978 |
 
 ## Pending
 

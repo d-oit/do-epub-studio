@@ -1,7 +1,7 @@
 # GOAP-238: Baseline Verification — Plan Closure, Docs Drift & Pre-Existing Code Fixes
 
 **Date:** 2026-08-14
-**Status:** In Progress (this PR)
+**Status:** ✅ COMPLETED (merged as PR #978, commit e8bfa29)
 **Baseline:** `main` @ `3bd190d` (post GOAP-237, PR #977)
 **Related:** Plans 226–237; ADR-219/ADR-234 closure records; ADR-INDEX
 
