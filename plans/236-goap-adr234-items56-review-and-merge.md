@@ -16,6 +16,7 @@ Working tree (uncommitted, on `main`) contains the ADR-234 items 5+6 feature:
 ## Strategy: Swarm (review) → Hybrid (implement)
 
 ### Phase 1 — Review swarm (parallel, read-only)
+
 | Slice | Agent | Target |
 |---|---|---|
 | A Security | security-reviewer | worker auth/mfa.ts, middleware/mfa.ts, routes/admin/auth.ts, admin-middleware.ts, migration 0010 |
