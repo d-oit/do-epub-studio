@@ -1,7 +1,7 @@
 # GOAP-241: Remaining Pre-Existing Build Warnings + Baseline Closure
 
 **Date:** 2026-08-14
-**Status:** Submitted (PR #984, branch `feat/goap-241-warning-closure`) — all executing CI checks green; Chromatic "UI Tests" baseline-acceptance gate pending org access (per LEARNINGS); no actionable review comments (repowise health gate passed).
+**Status:** ✅ COMPLETED (merged as PR #984, commit 16cdf11)
 **Baseline:** `main` @ `338e024` (post GOAP-240, PR #982/#983)
 **Related:** Plans 238, 240; ADR-024 (warning management); ADR-216 (Vitest pool);
 `agents-docs/LEARNINGS.md`
