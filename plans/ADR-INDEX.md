@@ -123,7 +123,7 @@ None.
 | 240    | Vitest 4 Migration (GOAP)                   | `plans/240-goap-vitest4-migration.md`                                                | COMPLETED: PR #982 |
 | 241    | Warning Closure & Pre-Existing Fixes (GOAP) | `plans/241-goap-warning-closure.md`                                                 | COMPLETED: PR #984 |
 | 242    | Export Sanitization Hardening + Review Closure (GOAP) | `plans/242-goap-export-hardening-merge.md`                                  | COMPLETED: PR #987 |
-| 243    | Web `as unknown as` Cast Cleanup (GOAP) | `plans/243-goap-web-cast-cleanup.md`                                        | IN PROGRESS (PR pending) |
+| 243    | Web `as unknown as` Cast Cleanup (GOAP) | `plans/243-goap-web-cast-cleanup.md`                                        | COMPLETED: PR #989 |
 
 ## Pending
 

@@ -1,7 +1,7 @@
 # GOAP-243: Web `as unknown as` Cast Cleanup
 
 **Date:** 2026-08-15
-**Status:** 🚧 IN PROGRESS (PR pending)
+**Status:** ✅ COMPLETED (merged as PR #989, commit 79056ff)
 **Baseline:** `main` @ `5d10ba3` (post GOAP-242, PR #988)
 **Related:** plans/241 (worker-side cast cleanup); GOAP-242 (which deferred web-side
 casts to a dedicated follow-up)
