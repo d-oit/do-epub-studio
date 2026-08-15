@@ -106,14 +106,14 @@ function generateMarkdownExport(
   comments: CommentRow[],
   bookmarks: BookmarkRow[],
 ): string {
-  const lines: string[] = [`# ${title}`, '', `> Exported on ${new Date().toISOString().split('T')[0]}`, ''];
+  const lines: string[] = [`# ${escMd(title)}`, '', `> Exported on ${new Date().toISOString().split('T')[0]}`, ''];
 
   if (highlights.length > 0) {
     lines.push('## Highlights', '');
     for (const h of highlights) {
-      const loc = h.chapter_ref ? ` (Chapter: ${h.chapter_ref})` : '';
-      lines.push(`- **${h.selected_text}**${loc}`);
-      if (h.note) lines.push(`  > ${h.note}`);
+      const loc = h.chapter_ref ? ` (Chapter: ${escMd(h.chapter_ref)})` : '';
+      lines.push(`- **${escMd(h.selected_text)}**${loc}`);
+      if (h.note) lines.push(`  > ${escMd(h.note)}`);
       lines.push('');
     }
   }
@@ -123,11 +123,11 @@ function generateMarkdownExport(
     const topLevel = comments.filter((c) => !c.parent_comment_id);
     const replies = comments.filter((c) => c.parent_comment_id);
     for (const c of topLevel) {
-      const loc = c.chapter_ref ? ` (Chapter: ${c.chapter_ref})` : '';
-      if (c.selected_text) lines.push(`> "${c.selected_text}"${loc}`);
-      lines.push(c.body);
+      const loc = c.chapter_ref ? ` (Chapter: ${escMd(c.chapter_ref)})` : '';
+      if (c.selected_text) lines.push(`> "${escMd(c.selected_text)}"${loc}`);
+      lines.push(escMd(c.body));
       for (const r of replies.filter((r) => r.parent_comment_id === c.id)) {
-        lines.push(`  > Reply: ${r.body}`);
+        lines.push(`  > Reply: ${escMd(r.body)}`);
       }
       lines.push('');
     }
@@ -135,7 +135,7 @@ function generateMarkdownExport(
 
   if (bookmarks.length > 0) {
     lines.push('## Bookmarks', '');
-    for (const b of bookmarks) lines.push(`- ${b.label ?? 'Untitled bookmark'}`);
+    for (const b of bookmarks) lines.push(`- ${escMd(b.label ?? 'Untitled bookmark')}`);
     lines.push('');
   }
 
@@ -195,5 +195,14 @@ blockquote{border-left:3px solid #ddd;padding-left:1rem;color:#666}
 }
 
 function esc(text: string): string {
-  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function escMd(text: string): string {
+  return text.replace(/([\\`*_{}[\]()#+-.!<>~])/g, '\\$1');
 }

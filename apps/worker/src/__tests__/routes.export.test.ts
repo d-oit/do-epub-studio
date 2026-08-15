@@ -46,13 +46,81 @@ describe('Export Routes', () => {
     expect((body.data.content as string).length).toBeGreaterThan(100);
   });
 
+  it('escapes special characters including single quotes in HTML export', async () => {
+    mockRequireAuth.mockResolvedValue(makeAuthContext());
+    const highlightData = {
+      id: 'h1',
+      selected_text: `<script>alert('XSS')</script>`,
+      color: 'yellow',
+      note: `User's "special" & <dangerous> note`,
+      chapter_ref: `Ch 1 & '2'`,
+      cfi_range: null,
+      created_at: '2026-07-18',
+    };
+    mockQueryAll.mockResolvedValueOnce([highlightData]);
+    mockQueryAll.mockResolvedValueOnce([]);
+    mockQueryAll.mockResolvedValueOnce([]);
+    const mockFirst = vi.fn().mockResolvedValue({ title: `O'Reilly <Book> & "More"` });
+    (env.DB as unknown as { first: ReturnType<typeof vi.fn> }).first = mockFirst;
+
+    const res = await app.fetch(
+      new Request('http://localhost/api/books/b1/export?format=html', {
+        headers: { Authorization: 'Bearer valid' },
+      }),
+      env,
+      makePassThroughContext(),
+    );
+
+    expect(res.status).toBe(200);
+    const body = await parseBody(res);
+    const content = body.data.content as string;
+
+    expect(content).not.toContain('<script>');
+    expect(content).toContain('&lt;script&gt;');
+    expect(content).toContain('O&#39;Reilly');
+    expect(content).toContain('User&#39;s');
+    expect(content).toContain('&quot;special&quot;');
+  });
+
+  it('escapes markdown formatting characters in Markdown export', async () => {
+    mockRequireAuth.mockResolvedValue(makeAuthContext());
+    const highlightData = {
+      id: 'h1',
+      selected_text: '*Bold & [Link](http://evil.com)* # Header',
+      color: 'yellow',
+      note: 'Note with `code` and > quote',
+      chapter_ref: 'Ch #1 *test*',
+      cfi_range: null,
+      created_at: '2026-07-18',
+    };
+    mockQueryAll.mockResolvedValueOnce([highlightData]);
+    mockQueryAll.mockResolvedValueOnce([]);
+    mockQueryAll.mockResolvedValueOnce([]);
+    const mockFirst = vi.fn().mockResolvedValue({ title: '# Title with [link]' });
+    (env.DB as unknown as { first: ReturnType<typeof vi.fn> }).first = mockFirst;
+
+    const res = await app.fetch(
+      new Request('http://localhost/api/books/b1/export?format=markdown', {
+        headers: { Authorization: 'Bearer valid' },
+      }),
+      env,
+      makePassThroughContext(),
+    );
+
+    expect(res.status).toBe(200);
+    const body = await parseBody(res);
+    const content = body.data.content as string;
+
+    expect(content).toContain('\\# Title');
+    expect(content).toContain('\\[link\\]');
+    expect(content).toContain('\\*Bold');
+  });
+
   it('runs the three export queries concurrently', async () => {
     mockRequireAuth.mockResolvedValue(makeAuthContext());
     const mockFirst = vi.fn().mockResolvedValue({ title: 'Test Book' });
     (env.DB as unknown as { first: ReturnType<typeof vi.fn> }).first = mockFirst;
 
-    // Deferred promises let us observe that all three queries are started
-    // before any result is consumed — the observable signal of Promise.all.
     const resolvers: Array<(v: unknown[]) => void> = [];
     mockQueryAll.mockImplementation(() => new Promise<unknown[]>((resolve) => {
       resolvers.push(resolve);
@@ -62,7 +130,6 @@ describe('Export Routes', () => {
       headers: { Authorization: 'Bearer valid' },
     }), env, makePassThroughContext());
 
-    // All three queryAll calls must be issued before any response is produced.
     await vi.waitFor(() => expect(mockQueryAll).toHaveBeenCalledTimes(3));
 
     resolvers[0]([{ id: 'h1', selected_text: 'Concurrent', color: 'yellow', note: null, chapter_ref: 'ch1', cfi_range: null, created_at: '2026-07-18' }]);
