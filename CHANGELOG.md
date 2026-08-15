@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- fix(worker): annotation exports now escape single quotes (HTML) and Markdown syntax (Markdown) in user content to prevent injection.
+
 <!-- Previous release history (v0.1.1, v0.2.0) archived — intentional version reset to 0.1.0 per Wave 6. -->
 
 ## [0.1.0] - 2026-05-17
