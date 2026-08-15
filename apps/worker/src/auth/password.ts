@@ -1,8 +1,8 @@
-import type { Env } from '../lib/env';
+import type { Env, JsonRow } from '../lib/env';
 import { queryFirst, execute } from '../db/client';
 import { argon2id, argon2Verify } from 'argon2-wasm-edge';
 
-interface GrantRow {
+interface GrantRow extends JsonRow {
   id: string;
   book_id: string;
   email: string;
@@ -73,14 +73,14 @@ export async function validateGrant(
     return { valid: false, error: 'Book not found' };
   }
 
-  const grant = (await queryFirst(
+  const grant = await queryFirst<GrantRow>(
     env,
     `SELECT id, book_id, email, password_hash, mode, allowed, comments_allowed,
             offline_allowed, expires_at, revoked_at
      FROM book_access_grants
      WHERE book_id = ? AND email = ? AND revoked_at IS NULL`,
     [book.id, email.toLowerCase()],
-  )) as GrantRow | null;
+  );
 
   if (!grant) {
     return { valid: false, error: 'Access denied' };
@@ -169,17 +169,17 @@ export async function getGrantByBookAndSession(
      FROM book_access_grants
      WHERE book_id = ? AND email = ? AND allowed = 1 AND revoked_at IS NULL`,
     [bookId, email.toLowerCase()],
-  ) as Promise<GrantRow | null>;
+  );
 }
 
 export async function getGrantsBySession(env: Env, email: string): Promise<GrantRow[]> {
   const { queryAll } = await import('../db/client');
-  return queryAll(
+  return queryAll<GrantRow>(
     env,
     `SELECT id, book_id, email, password_hash, mode, allowed, comments_allowed,
             offline_allowed, expires_at, revoked_at
      FROM book_access_grants
      WHERE email = ? AND revoked_at IS NULL`,
     [email.toLowerCase()],
-  ) as unknown as Promise<GrantRow[]>;
+  );
 }

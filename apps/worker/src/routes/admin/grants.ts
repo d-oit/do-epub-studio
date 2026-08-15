@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
-import type { Env } from '../../lib/env';
+import type { Env, JsonRow } from '../../lib/env';
 import { queryAll, transaction } from '../../db/client';
 import { createGrant } from '../../auth/password';
 import { logAudit } from '../../audit';
@@ -11,7 +11,7 @@ import { requireStepUp } from '../../middleware/step-up';
 
 export const grantsRouter = new Hono<{ Bindings: Env; Variables: { adminUser: { email: string; id: string; role: string } } }>();
 
-interface GrantRow {
+interface GrantRow extends JsonRow {
   id: string;
   book_id: string;
   email: string;
@@ -52,11 +52,11 @@ grantsRouter.post('/books/:id/grants', adminAuth, requireStepUp, zValidator('jso
 grantsRouter.get('/books/:id/grants', adminAuth, zValidator('query', GrantsListQuerySchema), async (c) => {
   const bookId = c.req.param('id');
   const { limit, offset } = c.req.valid('query');
-  const grants = (await queryAll(
+  const grants = await queryAll<GrantRow>(
     c.env,
     `SELECT id, book_id, email, mode, allowed, comments_allowed, offline_allowed, expires_at, created_at, revoked_at FROM book_access_grants WHERE book_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?`,
     [bookId, limit, offset],
-  )) as unknown as GrantRow[];
+  );
 
   return c.json({
     ok: true,
