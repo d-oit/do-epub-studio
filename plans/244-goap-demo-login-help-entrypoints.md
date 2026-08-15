@@ -1,0 +1,130 @@
+# GOAP-244: Demo Login and Help Entry Points
+
+**Date:** 2026-08-15
+**Status:** COMPLETED
+**Related:** ADR-004, ADR-080, ADR-092, ADR-106, ADR-231, ADR-233, ADR-234, ADR-244
+
+## Goal
+
+Analyze the current login and documentation surfaces, then define a scoped
+implementation plan for easy demo access and a visible help/how-to-use link.
+This plan has been fully implemented.
+
+## Current Evidence
+
+| Area | Evidence | Finding |
+| --- | --- | --- |
+| Reader login UI | `apps/web/src/features/auth/LoginPage.tsx:62`, `apps/web/src/features/auth/LoginPage.tsx:74`, `apps/web/src/features/auth/LoginPage.tsx:282` | Reader login already posts `{ email, password, bookSlug }` to `/api/access/request`; it has no demo shortcut. |
+| Admin login UI | `apps/web/src/features/admin/AdminLoginPage.tsx:55`, `apps/web/src/features/admin/AdminLoginPage.tsx:185` | Admin login already posts credentials to `/api/admin/login`; it has no demo shortcut and may branch into MFA. |
+| Route surface | `apps/web/src/App.tsx:119`, `apps/web/src/App.tsx:120` | Reader and admin login pages are separate lazy routes, so role-specific demo affordances can be added without changing guarded app routes. |
+| Demo seed | `scripts/seed-demo-accounts.mjs:38`, `scripts/seed-demo-accounts.mjs:74`, `scripts/seed-demo-accounts.mjs:138`, `scripts/seed-demo-accounts.mjs:197` | ADR-233 is implemented as a fail-closed seed with separate reserved reader/admin accounts and a demo-book grant. |
+| Demo policy | `plans/233-adr-demo-account-sandbox-policy.md` | Existing policy covers safe seeding, but not user-visible one-click login entry points. |
+| Help docs | `docs/ONBOARDING.md`, `docs/setup-local.md`, `docs/coding-guide.md` | Existing docs are contributor/setup oriented; there is no stable end-user help URL exposed on auth screens. |
+| Frontend config | `apps/web/src/config/app-identity.ts`, `apps/web/src/vite-env.d.ts` | Public Vite config exists for runtime URLs, but there is no `VITE_HELP_URL` or demo-login feature flag contract. |
+
+## Improvement Summary
+
+1. Add a visible "Use reader demo" option on `/login`.
+2. Add a visible "Use admin demo" option on `/admin/login`.
+3. Add a visible "Help / how to use" link on both auth screens.
+4. Keep demo credentials out of browser code, env files, telemetry, snapshots,
+   and docs.
+5. Gate demo login on the Worker side even if the frontend accidentally renders
+   the buttons.
+
+## TRIZ Analysis
+
+### Contradiction 1
+
+**Improving:** First-run usability and stakeholder review speed.
+**Worsens:** Auth blast radius if demo credentials are exposed or enabled in
+production.
+**Reality:** ADR-233 already seeds accounts safely, but the only usable login
+path still requires knowing the reserved email, password, and reader book slug.
+**TRIZ principles available:** Segmentation, condition separation, extraction.
+**Resolution:** Segment demo access into dedicated non-production endpoints
+that mint sessions only for `created_by_demo=1` accounts and only when explicit
+server-side demo flags pass.
+
+### Contradiction 2
+
+**Improving:** Admin demo convenience.
+**Worsens:** Administrative capability risk.
+**Reality:** The seed disables demo admin outside local by default and ADR-234
+requires higher assurance for sensitive admin operations. One-click admin demo
+must not bypass production gates or grant access to real content.
+**TRIZ principles available:** Local quality, partial action, nesting.
+**Resolution:** Allow admin demo only in local/throwaway preview environments,
+log the demo-login audit event, and keep sensitive mutations behind existing
+step-up/MFA checks.
+
+### Contradiction 3
+
+**Improving:** Clear help discovery from login.
+**Worsens:** Config sprawl and hardcoded environment-specific URLs.
+**Reality:** Existing docs are internal and no help URL contract exists.
+**TRIZ principles available:** Extraction, dynamicity.
+**Resolution:** Extract help destination into a validated public config value
+with tests, and render it as a normal external or internal link.
+
+## Decomposition
+
+| Phase | Priority | Tasks | Dependencies | Gate |
+| --- | --- | --- | --- | --- |
+| 1. Contract | P0 | Define `DEMO_LOGIN_ENABLED`, optional preview allowlist, `DEMO_BOOK_SLUG`, and `VITE_HELP_URL`/`VITE_DEMO_LOGIN_ENABLED` contracts. | ADR-244 | Config is documented without secrets or hardcoded deployment URLs. |
+| 2. Worker demo sessions | P0 | Add separate reader/admin demo session endpoints returning the existing login response shapes. Validate `created_by_demo=1`, demo book grant, disabled/compromised state, production-like env, and audit logging. | Phase 1, ADR-233 | Worker tests prove production fail-closed and no password disclosure. |
+| 3. Web login UI | P0 | Add role-specific demo buttons to `LoginPage` and `AdminLoginPage`; call the new endpoints, reuse existing `setAuth`/`setAdminAuth`, and navigate to `/read/:slug` or `/admin/books`. | Phase 2 | Web tests cover button visibility, loading/error states, and navigation. |
+| 4. Help link | P1 | Add a validated public help URL helper and render "Help / how to use" links on both auth screens. | Phase 1 | Tests cover `href`, `target`, and `rel` behavior; invalid URL hides the link. |
+| 5. i18n and docs | P1 | Add translation keys for all locale catalogs and document local/demo setup plus the help URL contract. | Phases 3-4 | i18n tests pass; docs contain placeholders only. |
+| 6. Verification | P0 | Run targeted web/worker tests, lint/typecheck, `./scripts/quality_gate.sh`, and Codacy PR check before merge. | All phases | All required checks pass. |
+
+## Recommended Design
+
+- Prefer server-minted demo sessions over browser-shipped demo passwords.
+- Keep separate endpoints, e.g. `POST /api/demo/reader-login` and
+  `POST /api/demo/admin-login`, so reader/admin telemetry, tests, and gates are
+  unambiguous.
+- Return the same DTOs as existing login routes to avoid a second auth-store
+  model.
+- Show demo buttons only when `VITE_DEMO_LOGIN_ENABLED === '1'`, but treat that
+  as UI-only. The Worker remains authoritative.
+- Reader demo endpoint should use `DEMO_BOOK_SLUG` and fail if the demo book or
+  demo grant is missing.
+- Admin demo endpoint should fail if the demo admin is disabled, compromised,
+  not `created_by_demo=1`, or the environment is production-like.
+- Help link should be configured through public config, validated with `URL`,
+  and rendered with `rel="noopener noreferrer"` for external targets.
+
+## Risks
+
+- A demo admin against a shared preview database can mutate real preview
+  content. Mitigation: enable only on local or throwaway preview databases and
+  keep existing step-up gates for sensitive mutations.
+- Reader demo depends on the demo book existing. Mitigation: make the endpoint
+  fail with a generic disabled response and document the seed order.
+- Locale churn is broad because login strings exist in every catalog. Mitigation:
+  add exact keys in one small patch and keep copy short.
+
+## Acceptance Criteria
+
+- `/login` has an accessible, tested reader-demo action when demo login is
+  enabled.
+- `/admin/login` has an accessible, tested admin-demo action when demo login is
+  enabled.
+- Demo login never requires plaintext credentials in frontend code or public
+  docs.
+- Worker demo endpoints fail closed in production-like environments.
+- Reader demo grants only the configured demo book.
+- Admin demo cannot sign in when disabled or compromised.
+- Both auth pages expose a help/how-to-use link when a valid help URL is
+  configured.
+- Audit/telemetry include trace IDs but no tokens, passwords, reset links, raw
+  IPs, or personal data beyond the existing placeholder demo identifiers.
+
+## Out of Scope
+
+- Building the full help website content.
+- Changing production account auth, MFA, password reset, or session storage
+  policy.
+- Enabling demo accounts in production.
+
