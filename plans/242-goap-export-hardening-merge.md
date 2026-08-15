@@ -1,10 +1,10 @@
 # GOAP-242: Export Sanitization Hardening + Review Comment Closure
 
 **Date:** 2026-08-14
-**Status:** ✅ Open PR #987, all CI green (fast-check, worker build, full quality gate, pre-commit, Codacy, CodeQL, Repowise, Lighthouse, Cloudflare Pages); supersedes PR #985
+**Status:** ✅ COMPLETED (merged as PR #987, commit a6d4c0f; supersedes PR #985)
 **Baseline:** `main` @ `dac462c` (post GOAP-241, PR #986)
-**Related:** plans/241; ADR-024 (warning management); open PR #985 (prior Jules
-attempt at the same export hardening)
+**Related:** plans/241; ADR-024 (warning management); PR #985 (superseded prior
+Jules attempt at the same export hardening)
 
 ## Goal
 
