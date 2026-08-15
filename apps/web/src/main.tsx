@@ -154,7 +154,9 @@ if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
     },
     onRegistered(registration) {
       if (registration) {
-        const syncReg = registration as unknown as {
+        // Background Sync API is not yet on the standard ServiceWorkerRegistration
+        // type; extend it locally and feature-check before calling.
+        const syncReg = registration as ServiceWorkerRegistration & {
           sync?: {
             register(tag: string): Promise<void>;
           };

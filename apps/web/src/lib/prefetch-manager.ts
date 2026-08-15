@@ -18,6 +18,11 @@ interface Connection {
   removeEventListener?: (type: string, handler: () => void) => void;
 }
 
+/** Standard Navigator extended with the experimental Network Information API. */
+interface NavigatorWithConnection extends Navigator {
+  connection?: Connection;
+}
+
 interface StorageEstimate {
   usage?: number;
   quota?: number;
@@ -54,7 +59,7 @@ export class PrefetchManager {
 
   private getConnection(): Connection | null {
     if (typeof navigator === 'undefined') return null;
-    return (navigator as unknown as { connection?: Connection }).connection ?? null;
+    return (navigator as NavigatorWithConnection).connection ?? null;
   }
 
   /**
