@@ -109,4 +109,3 @@ value keeps deployment ownership outside source code.
 - The implementation does not add plaintext demo credentials, real personal
   data, or hardcoded deployment-specific URLs.
 - `./scripts/quality_gate.sh` and the Codacy PR check pass before merge.
-
