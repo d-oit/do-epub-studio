@@ -8,6 +8,7 @@ import { LocaleSwitcher } from '../../components/LocaleSwitcher';
 import { Button, Input, AppLogo } from '../../components/ui';
 import { ThemeToggle } from '../../components/ThemeToggle';
 import { APP_NAME, APP_VERSION_LABEL } from '../../config/app-identity';
+import { isDemoLoginEnabled, resolveHelpUrl } from '../../config/demo-config';
 
 interface AdminUser {
   id: string;
@@ -40,6 +41,8 @@ export function AdminLoginPage() {
   const [loginTicket, setLoginTicket] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [demoLoading, setDemoLoading] = useState(false);
+  const [demoError, setDemoError] = useState<string | null>(null);
 
   const completeSignIn = (data: { token: string; user: AdminUser }) => {
     setAdminAuth({ sessionToken: data.token, email: data.user.email });
@@ -149,6 +152,26 @@ export function AdminLoginPage() {
       setIsLoading(false);
     }
   };
+
+  const handleDemoLogin = async () => {
+    setDemoLoading(true);
+    setDemoError(null);
+    try {
+      const data = await apiRequest<AdminLoginResponse>('/api/demo/admin-login', {
+        method: 'POST',
+      });
+      if (!data.token) {
+        throw new Error('No session token returned');
+      }
+      completeSignIn({ token: data.token, user: data.user });
+    } catch (err) {
+      setDemoError((err as Error).message || t('admin.login.invalidCredentials'));
+    } finally {
+      setDemoLoading(false);
+    }
+  };
+
+  const helpLink = resolveHelpUrl();
 
   return (
     <div className="relative min-h-dvh overflow-x-clip bg-background px-4 py-6 sm:px-6 lg:px-8">
@@ -306,6 +329,31 @@ export function AdminLoginPage() {
           </div>
         )}
 
+        {demoError && (
+          <div
+            role="alert"
+            aria-live="polite"
+            className="mt-4 p-3 bg-accent-error/10 border border-accent-error/20 rounded text-sm text-accent-error"
+          >
+            {demoError}
+          </div>
+        )}
+
+        {isDemoLoginEnabled() && step === 'credentials' && (
+          <div className="mt-4">
+            <Button
+              type="button"
+              variant="secondary"
+              className="w-full"
+              isLoading={demoLoading}
+              loadingLabel={t('admin.login.demoSigningIn')}
+              onClick={() => { void handleDemoLogin(); }}
+            >
+              {t('admin.login.demoAdmin')}
+            </Button>
+          </div>
+        )}
+
         <div className="mt-4 text-center">
           <Button
             variant="ghost"
@@ -330,6 +378,19 @@ export function AdminLoginPage() {
             {t('admin.login.backToReader')}
           </Button>
         </div>
+
+        {helpLink && (
+          <div className="mt-3 text-center">
+            <a
+              href={helpLink.href}
+              target={helpLink.isExternal ? '_blank' : undefined}
+              rel={helpLink.isExternal ? 'noopener noreferrer' : undefined}
+              className="text-xs text-accent hover:opacity-80 underline underline-offset-2 transition-colors"
+            >
+              {t('admin.login.helpLink')}
+            </a>
+          </div>
+        )}
       </section>
       </main>
     </div>

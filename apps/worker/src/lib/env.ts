@@ -6,6 +6,10 @@ export interface Env extends CloudflareEnv {
   EMAIL_SENDER?: string;
   SENTRY_DSN?: string;
   ENVIRONMENT?: string;
+  DEMO_LOGIN_ENABLED?: string;
+  DEMO_BOOK_SLUG?: string;
+  CF_PAGES?: string;
+  DEMO_ACCOUNTS_PROD_ALLOWLIST?: string;
   WEBAUTHN_RP_ID: string;
   WEBAUTHN_RP_NAME?: string;
   WEBAUTHN_ORIGIN: string;

@@ -20,6 +20,7 @@ import {
   notificationsRouter,
   searchRouter,
   exportRouter,
+  demoRouter,
 } from './routes';
 import { validationErrorFormatter } from './middleware/validation';
 
@@ -75,6 +76,7 @@ app.route('/api', securityRouter);
 app.route('/api', telemetryRouter);
 app.route('/api', notificationsRouter);
 app.route('/api', searchRouter);
+app.route('/api/demo', demoRouter);
 app.route('/api', exportRouter);
 
 app.onError((err, c) => {

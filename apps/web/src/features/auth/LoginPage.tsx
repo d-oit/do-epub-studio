@@ -8,6 +8,7 @@ import { LocaleSwitcher } from '../../components/LocaleSwitcher';
 import { Button, Input, AppLogo } from '../../components/ui';
 import { ThemeToggle } from '../../components/ThemeToggle';
 import { APP_NAME, APP_VERSION_LABEL, APP_DESCRIPTION } from '../../config/app-identity';
+import { isDemoLoginEnabled, resolveHelpUrl } from '../../config/demo-config';
 
 interface SessionCapabilities {
   canRead: boolean;
@@ -58,6 +59,8 @@ export function LoginPage() {
   const [isRecoveryMode, setIsRecoveryMode] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [verifyError, setVerifyError] = useState<string | null>(null);
+  const [demoLoading, setDemoLoading] = useState(false);
+  const [demoError, setDemoError] = useState<string | null>(null);
 
   const bookSlug = searchParams.get('book') || '';
   const recoveryToken = searchParams.get('token');
@@ -144,6 +147,32 @@ export function LoginPage() {
     })();
     return () => { cancelledRef.value = true; };
   }, [recoveryToken, navigate, setAuth]);
+
+  const handleDemoLogin = async () => {
+    setDemoLoading(true);
+    setDemoError(null);
+    try {
+      const data = await apiRequest<SessionResponse>('/api/demo/reader-login', {
+        method: 'POST',
+      });
+      setAuth({
+        sessionToken: data.sessionToken,
+        sessionExpiresAt: data.expiresAt ? new Date(data.expiresAt).getTime() : null,
+        bookId: data.book.id,
+        bookSlug: data.book.slug,
+        bookTitle: data.book.title,
+        email: '',
+        capabilities: data.capabilities,
+      });
+      void navigate(`/read/${data.book.slug}`);
+    } catch (err) {
+      setDemoError((err as Error).message);
+    } finally {
+      setDemoLoading(false);
+    }
+  };
+
+  const helpLink = resolveHelpUrl();
 
   const formError = isRecoveryMode ? recoveryState.error : loginState.error;
   const isRecoverySuccess = isRecoveryMode && recoveryState.success;
@@ -317,6 +346,31 @@ export function LoginPage() {
             </form>
           )}
 
+          {demoError && (
+            <div
+              role="alert"
+              aria-live="polite"
+              className="mt-4 p-3 bg-accent-error/10 border border-accent-error/30 rounded-lg text-sm text-accent-error"
+            >
+              {demoError}
+            </div>
+          )}
+
+          {isDemoLoginEnabled() && !isRecoveryMode && (
+            <div className="mt-4">
+              <Button
+                type="button"
+                variant="secondary"
+                className="w-full"
+                isLoading={demoLoading}
+                loadingLabel={t('login.demoSigningIn')}
+                onClick={() => { void handleDemoLogin(); }}
+              >
+                {t('login.demoReader')}
+              </Button>
+            </div>
+          )}
+
           <div className="mt-6 pt-4 border-t border-border text-center">
             <Button
               variant="ghost"
@@ -327,6 +381,19 @@ export function LoginPage() {
               {t('login.adminLink')}
             </Button>
           </div>
+
+          {helpLink && (
+            <div className="mt-3 text-center">
+              <a
+                href={helpLink.href}
+                target={helpLink.isExternal ? '_blank' : undefined}
+                rel={helpLink.isExternal ? 'noopener noreferrer' : undefined}
+                className="text-xs text-accent hover:opacity-80 underline underline-offset-2 transition-colors"
+              >
+                {t('login.helpLink')}
+              </a>
+            </div>
+          )}
         </section>
 
         <p className="text-center text-xs text-foreground-muted lg:col-start-2">

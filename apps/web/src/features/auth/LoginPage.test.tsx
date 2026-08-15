@@ -12,6 +12,12 @@ vi.mock('../../lib/api', () => ({
   apiRequest: vi.fn(),
 }));
 
+const mockIsDemoLoginEnabled = vi.fn();
+const mockResolveHelpUrl = vi.fn();
+vi.mock('../../config/demo-config', () => ({
+  isDemoLoginEnabled: () => mockIsDemoLoginEnabled(),
+  resolveHelpUrl: () => mockResolveHelpUrl(),
+}));
 vi.mock('../../hooks/useTranslation', () => ({
   useTranslation: () => ({ t: (k: string) => k, locale: 'en' }),
 }));
@@ -70,6 +76,8 @@ describe('LoginPage', () => {
       email: null,
       capabilities: null,
     });
+    mockIsDemoLoginEnabled.mockReturnValue(false);
+    mockResolveHelpUrl.mockReturnValue(null);
   });
 
   it('renders login form', () => {
@@ -272,6 +280,73 @@ describe('LoginPage', () => {
 
     await waitFor(() => {
       expect(mockNavigate).toHaveBeenCalledWith('/read/book-two');
+    });
+  });
+
+  describe('demo login', () => {
+    it('hides demo button when demo login is disabled', () => {
+      mockIsDemoLoginEnabled.mockReturnValue(false);
+      render(<MemoryRouter><LoginPage /></MemoryRouter>);
+      expect(screen.queryByText('login.demoReader')).not.toBeInTheDocument();
+    });
+
+    it('shows demo button when demo login is enabled', () => {
+      mockIsDemoLoginEnabled.mockReturnValue(true);
+      render(<MemoryRouter><LoginPage /></MemoryRouter>);
+      expect(screen.getByText('login.demoReader')).toBeInTheDocument();
+    });
+
+    it('handles successful demo login', async () => {
+      mockIsDemoLoginEnabled.mockReturnValue(true);
+      vi.mocked(apiRequest).mockResolvedValueOnce({
+        sessionToken: 'demo-tok',
+        book: { id: 'b1', slug: 'demo', title: 'Demo Book', authorName: 'Author' },
+        capabilities: null,
+      });
+
+      render(<MemoryRouter><LoginPage /></MemoryRouter>);
+      fireEvent.click(screen.getByText('login.demoReader'));
+
+      await waitFor(() => {
+        expect(mockNavigate).toHaveBeenCalledWith('/read/demo');
+      });
+    });
+
+    it('shows error on demo login failure', async () => {
+      mockIsDemoLoginEnabled.mockReturnValue(true);
+      vi.mocked(apiRequest).mockRejectedValueOnce(new Error('Demo disabled'));
+
+      render(<MemoryRouter><LoginPage /></MemoryRouter>);
+      fireEvent.click(screen.getByText('login.demoReader'));
+
+      await waitFor(() => {
+        expect(screen.getByText('Demo disabled')).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('help link', () => {
+    it('hides help link when no help URL configured', () => {
+      mockResolveHelpUrl.mockReturnValue(null);
+      render(<MemoryRouter><LoginPage /></MemoryRouter>);
+      expect(screen.queryByText('login.helpLink')).not.toBeInTheDocument();
+    });
+
+    it('renders help link with correct href for external URL', () => {
+      mockResolveHelpUrl.mockReturnValue({ href: 'https://help.example.com', isExternal: true });
+      render(<MemoryRouter><LoginPage /></MemoryRouter>);
+      const link = screen.getByText('login.helpLink').closest('a');
+      expect(link).toHaveAttribute('href', 'https://help.example.com');
+      expect(link).toHaveAttribute('target', '_blank');
+      expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+    });
+
+    it('renders help link without external attrs for internal URL', () => {
+      mockResolveHelpUrl.mockReturnValue({ href: 'http://localhost/help', isExternal: false });
+      render(<MemoryRouter><LoginPage /></MemoryRouter>);
+      const link = screen.getByText('login.helpLink').closest('a');
+      expect(link).toHaveAttribute('href', 'http://localhost/help');
+      expect(link).not.toHaveAttribute('target', '_blank');
     });
   });
 });
