@@ -24,7 +24,8 @@ export function Modal({ isOpen, onClose, title, description, children, footer, s
 
   useEffect(() => {
     if (isOpen) {
-      triggerRef.current = document.activeElement as HTMLElement;
+      const activeElement = document.activeElement;
+      if (activeElement instanceof HTMLElement) triggerRef.current = activeElement;
       setShouldRender(true);
       setIsExiting(false);
     }

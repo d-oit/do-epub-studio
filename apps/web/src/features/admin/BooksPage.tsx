@@ -91,13 +91,11 @@ export function AdminBookResponsesPage() {
   }, []);
 
   const handleViewGrants = (book: BookResponse) => {
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises -- navigate() returns void, not Promise (react-router-dom v7)
-    navigate(`/admin/books/${book.id}/grants`, { state: { bookTitle: book.title } });
+    void navigate(`/admin/books/${book.id}/grants`, { state: { bookTitle: book.title } });
   };
 
   const handleBackToReader = () => {
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises -- navigate() returns void, not Promise (react-router-dom v7)
-    navigate('/login');
+    void navigate('/login');
   };
 
   const openEditModal = (book: BookResponse) => {
@@ -305,8 +303,7 @@ export function AdminBookResponsesPage() {
 
   // biome-ignore lint/correctness/useQwikValidLexicalScope: React app, not Qwik
   const handleAuditNav = () => {
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises -- navigate() returns void, not Promise (react-router-dom v7)
-    navigate('/admin/audit');
+    void navigate('/admin/audit');
   };
 
   return (

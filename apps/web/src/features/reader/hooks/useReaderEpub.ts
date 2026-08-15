@@ -432,7 +432,8 @@ export function useReaderEpub(
     return () => {
       reportPerformanceMetrics('reader:load', (m) => {
         logClientEvent({ level: 'info', traceId: createTraceId(), spanId: createSpanId(),
-          event: 'reader:perf_summary', metadata: m as unknown as Record<string, unknown> });
+          event: 'reader:perf_summary',
+          metadata: { p50: m.p50, p95: m.p95, p99: m.p99, count: m.count } });
       });
       observer?.disconnect();
     };

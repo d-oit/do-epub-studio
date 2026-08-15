@@ -2,6 +2,11 @@
   "name": "do-epub-studio-worker",
   "main": "src/index.ts",
   "compatibility_date": "2026-05-30",
+  // @sentry/cloudflare (the worker's Sentry integration) imports node:async_hooks,
+  // which requires the nodejs_compat compatibility flag. Without it, `wrangler deploy`
+  // emits a pre-existing build warning and the SDK's async-context tracking can fail at
+  // runtime. Keep this flag enabled for the sentry-required async primitives.
+  "compatibility_flags": ["nodejs_compat"],
   "vars": {
     "APP_BASE_URL": "https://do-epub-studio.example.com",
     "TURSO_DATABASE_URL": "file::memory:",

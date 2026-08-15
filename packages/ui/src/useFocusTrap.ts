@@ -55,7 +55,8 @@ export function useFocusTrap(
     const capturedRestoreRef = restoreRef?.current;
 
     if (active) {
-      previousFocus.current = document.activeElement as HTMLElement | null;
+      const activeElement = document.activeElement;
+      previousFocus.current = activeElement instanceof HTMLElement ? activeElement : null;
 
       const container = containerRef.current;
       if (container) {

@@ -25,18 +25,14 @@ export function AppShell() {
       const options = { replace: true };
       if (isAuthenticated) {
         if (isAdmin) {
-          // eslint-disable-next-line @typescript-eslint/no-floating-promises -- navigate() returns void, not Promise (react-router-dom v7)
-          navigate('/admin', options);
+          void navigate('/admin', options);
         } else if (bookSlug) {
-          // eslint-disable-next-line @typescript-eslint/no-floating-promises -- navigate() returns void, not Promise (react-router-dom v7)
-          navigate(`/read/${bookSlug}`, options);
+          void navigate(`/read/${bookSlug}`, options);
         } else {
-          // eslint-disable-next-line @typescript-eslint/no-floating-promises -- navigate() returns void, not Promise (react-router-dom v7)
-          navigate('/login', options);
+          void navigate('/login', options);
         }
       } else {
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises -- navigate() returns void, not Promise (react-router-dom v7)
-        navigate('/login', options);
+        void navigate('/login', options);
       }
     }
   }, [isResolving, isAuthenticated, bookSlug, isAdmin, navigate]);
