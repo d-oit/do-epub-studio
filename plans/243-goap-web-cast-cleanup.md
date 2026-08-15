@@ -34,6 +34,15 @@ GOAP-241/242; this closes the same class of finding on the web package.
 - `pnpm --filter @do-epub-studio/web build` — clean (no new warnings; the two known benign ones from GOAP-241 unchanged).
 - `pnpm verify:fast` scoped to web — green in CI.
 
+## Deferred (tracked, not in this PR)
+
+- OwlWatch **MEDIUM**: `useReaderEpub.ts` `initEpub` is ~216 lines. This is
+  **pre-existing** (identical span on `main`; this PR's changes to the file are
+  type-only and the file is 3 lines shorter than before) and distinct from cast
+  cleanup. Splitting reader-initialization wiring is a separate,
+  E2E-gated refactor (PR-time CI does not run E2E), so it is deliberately out
+  of scope here. Open as a follow-up task.
+
 ## Acceptance
 
 - [ ] New PR opened; all CI green (fast-check, quality gate, pre-commit, worker/build, Codacy, CodeQL, Repowise, Lighthouse, Cloudflare Pages).
