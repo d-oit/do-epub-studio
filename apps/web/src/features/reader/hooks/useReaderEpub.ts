@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import type { Book, Rendition, NavItem, Contents } from '@intity/epub-js';
+import type { Book, Rendition, NavItem } from '@intity/epub-js';
+import type { EpubBookInternals, EpubRenditionInternals } from '../lib/epub-internals';
 import type { PageDirection, ReaderZoom } from '../../../stores';
 import {
   createEpubLoader,
@@ -104,7 +105,7 @@ export function useReaderEpub(
         tocRef.current = tocItems;
 
         // Initialize PrefetchManager with spine items
-        const spineLike = (book as unknown as { spine?: { each: (cb: (item: SpineItem & { href: string }) => void) => void } }).spine;
+        const spineLike = (book as EpubBookInternals<{ href: string }>).spine;
         if (spineLike) {
           const spineItems: SpineItem[] = [];
           spineLike.each((item) => {
@@ -144,8 +145,7 @@ export function useReaderEpub(
             fixedLayoutViewport = pkgMeta.get('viewport') ?? undefined;
           }
           try {
-            const containerMeta = book.container as unknown as { fullPath: string };
-            const opfPath = containerMeta.fullPath;
+            const opfPath = (book as EpubBookInternals<{ href: string }>).container?.fullPath;
             if (opfPath && book.archive) {
               const opfXml = await book.archive.getText('/' + opfPath);
               if (opfXml) {
@@ -357,9 +357,7 @@ export function useReaderEpub(
   useEffect(() => {
     const rendition = renditionRef.current;
     if (!rendition || !fixedLayoutRef.current) return;
-    const renditionWithLayout = rendition as unknown as {
-      layout?: { settings?: { spread?: string } };
-    };
+    const renditionWithLayout = rendition as EpubRenditionInternals;
     const layoutSettings = renditionWithLayout.layout?.settings;
     if (layoutSettings) {
       layoutSettings.spread = readerSpread;
@@ -375,8 +373,7 @@ export function useReaderEpub(
     if (!fixedLayoutRef.current) return;
     const rendition = renditionRef.current;
     if (!rendition) return;
-    const renditionWithContents = rendition as unknown as { _contents?: Contents[] };
-    const contentsList = renditionWithContents._contents;
+    const contentsList = (rendition as EpubRenditionInternals)._contents;
     if (!Array.isArray(contentsList)) return;
     const reducedMotion = getPrefersReducedMotion();
     const transition = reducedMotion ? 'none' : 'transform 0.18s ease-out';

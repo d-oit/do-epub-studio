@@ -272,11 +272,8 @@ export function extractSelectionData(iframe: HTMLIFrameElement): SelectionData |
   const chapterRef = window.location.hash.slice(1) || '';
 
   let cfiRange = '';
-  if (
-    'cfiRange' in range &&
-    typeof (range as unknown as { cfiRange?: string }).cfiRange === 'string'
-  ) {
-    cfiRange = (range as unknown as { cfiRange: string }).cfiRange;
+  if ('cfiRange' in range && typeof range.cfiRange === 'string') {
+    cfiRange = range.cfiRange;
   }
 
   return {

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import type { Book, NavItem } from '@intity/epub-js';
+import type { EpubBookInternals } from '../lib/epub-internals';
 import { createTraceId } from '@do-epub-studio/shared';
 import { logClientEvent } from '../../../lib/client-logger';
 
@@ -8,11 +9,6 @@ export interface SearchResult {
   cfiRange: string;
   excerpt: string;
   chapterTitle?: string;
-}
-
-interface SpineLike {
-  each: (cb: (item: SpineSection) => void) => void;
-  get: (cfi: string) => SpineSection | undefined;
 }
 
 interface SpineSection {
@@ -59,8 +55,11 @@ export function useReaderSearch(book: Book | null, query: string) {
     const timeoutId = setTimeout(() => {
       if (cancelledRef.current || mySeq !== seqRef.current) return;
       const startedAt = Date.now();
-      const spine = (book as unknown as { spine: SpineLike }).spine;
+      // epub.js populates `book.spine` only after the book has loaded, which is
+      // guaranteed at this point (the hook awaits `book.ready` before starting).
+      const spine = (book as EpubBookInternals<SpineSection>).spine;
       const toc = (book.navigation?.toc as NavItem[] | undefined) ?? [];
+      if (!spine) return;
       void (async (): Promise<void> => {
         try {
           const items: SpineSection[] = [];

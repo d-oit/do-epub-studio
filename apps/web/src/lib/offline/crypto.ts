@@ -22,9 +22,8 @@ function base64ToUint8Array(base64: string): Uint8Array {
 }
 
 function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
-  if (typeof Buffer !== 'undefined') {
-    return Buffer.from(bytes) as unknown as ArrayBuffer;
-  }
+  // Copy the exact byte window. `bytes` may be Buffer-backed (Node/vitest) with
+  // a pooled backing store, so never hand that pool up to the caller.
   return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
 }
 
@@ -41,7 +40,12 @@ async function getWebCrypto(): Promise<Crypto> {
   // back to the global `crypto`.
   try {
     const { webcrypto } = await import('node:crypto');
-    if (webcrypto) return webcrypto as unknown as Crypto;
+    if (webcrypto) {
+      // Node's webcrypto is typed against its own CryptoKey/KeyUsage, whose
+      // `usages` union is stricter than the DOM's (e.g. 'decapsulateBits'), so
+      // TS rejects a plain `as Crypto`. Runtime-compatible; isolate the bridge.
+      return webcrypto as unknown as Crypto;
+    }
   } catch {
     // fall through to the browser global
   }
