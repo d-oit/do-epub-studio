@@ -204,6 +204,8 @@ export const DEMO_READER_RESPONSE = {
       slug: 'demo',
       title: 'Demo Book',
       authorName: 'Demo Author',
+      visibility: 'public',
+      coverImageUrl: null,
     },
     capabilities: {
       canRead: true,

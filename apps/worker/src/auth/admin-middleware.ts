@@ -238,19 +238,31 @@ export async function createAdminSessionMfa(
   await emitSuspiciousDeviceChangeIfNovel(env, user, inserted.sessionId, clientHints);
   return { ok: true, token: inserted.token, user };
 }
+
 /**
  * ADR-244: Mint a `password`-assurance admin session for a pre-verified demo
  * admin account. The caller (demo route) has already confirmed
  * `created_by_demo = 1`, `global_role = 'admin'`, and the account is not
- * disabled/compromised — so no password or MFA check runs here. This must
- * never be called from a production-like environment; the demo route enforces
- * that gate before reaching this point.
+ * disabled/compromised — so no password check runs here. This must never be
+ * called from a production-like environment; the demo route enforces that gate
+ * before reaching this point.
+ *
+ * MFA guard: if the demo admin has since been enrolled with a passkey
+ * (mfa_method === 'passkey'), refuse to mint a password-assurance session so
+ * the second factor is never bypassed (ADR-234). The demo route returns a
+ * generic disabled response when this rejects.
  */
 export async function createAdminDemoSession(
   env: Env,
   user: AdminSessionUser,
   clientHints?: AdminSessionClientHints,
-): Promise<{ ok: true; token: string; user: AdminSessionUser }> {
+): Promise<
+  | { ok: true; token: string; user: AdminSessionUser }
+  | { ok: false; status: 403; error: string }
+> {
+  if (await accountRequiresMfa(env, user.id)) {
+    return { ok: false, status: 403, error: 'Demo admin must complete multi-factor authentication.' };
+  }
   const inserted = await insertAdminSession(env, user.id, 'password', clientHints);
   await emitSuspiciousDeviceChangeIfNovel(env, user, inserted.sessionId, clientHints);
   return { ok: true, token: inserted.token, user };

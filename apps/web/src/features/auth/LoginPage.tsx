@@ -1,4 +1,4 @@
-import React, { useActionState, useEffect, useState } from 'react';
+import React, { useActionState, useEffect, useMemo, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from '../../hooks/useTranslation';
@@ -172,7 +172,7 @@ export function LoginPage() {
     }
   };
 
-  const helpLink = resolveHelpUrl();
+  const helpLink = useMemo(() => resolveHelpUrl(), []);
 
   const formError = isRecoveryMode ? recoveryState.error : loginState.error;
   const isRecoverySuccess = isRecoveryMode && recoveryState.success;

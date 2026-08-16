@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { startAuthentication, type PublicKeyCredentialRequestOptionsJSON } from '@simplewebauthn/browser';
 import { useTranslation } from '../../hooks/useTranslation';
@@ -171,7 +171,7 @@ export function AdminLoginPage() {
     }
   };
 
-  const helpLink = resolveHelpUrl();
+  const helpLink = useMemo(() => resolveHelpUrl(), []);
 
   return (
     <div className="relative min-h-dvh overflow-x-clip bg-background px-4 py-6 sm:px-6 lg:px-8">

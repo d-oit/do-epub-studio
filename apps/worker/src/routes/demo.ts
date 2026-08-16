@@ -10,18 +10,18 @@
  *  3. Target account exists and is marked created_by_demo = 1
  *  4. Target account is not disabled or compromised
  *  5. Reader: demo book + live grant exist
- *  5. Admin: account global_role === 'admin'
+ *  6. Admin: account global_role === 'admin'
  *
  * All error paths return a generic DEMO_DISABLED response to avoid
  * revealing whether demo accounts exist in this deployment.
  */
 
 import { Hono, type Context } from 'hono';
-import type { Env } from '../lib/env';
+import type { Env, JsonRow } from '../lib/env';
 import type { RequestContext } from '../lib/observability';
 import { getClientIp, hashString } from './admin/auth/shared';
 import { createSession } from '../auth/session';
-import { validateGrant, computeCapabilities } from '../auth/password';
+import { getGrantByBookAndSession, computeCapabilities } from '../auth/password';
 import { createAdminDemoSession, type AdminSessionUser, type AdminSessionClientHints } from '../auth/admin-middleware';
 import { accountIsLocked } from '../auth/account';
 import { logAudit } from '../audit';
@@ -38,14 +38,13 @@ type DemoContext = Context<{ Bindings: Env; Variables: { requestContext: Request
 const DEMO_READER_EMAIL = 'demo.reader@example.local';
 const DEMO_ADMIN_EMAIL = 'demo.admin@example.local';
 
-interface DemoUserRow {
+interface DemoUserRow extends JsonRow {
   id: string;
   email: string;
   global_role: string;
   created_by_demo: number;
   disabled_at: string | null;
   compromised_at: string | null;
-  [key: string]: string | number | null | undefined;
 }
 
 /**
@@ -122,22 +121,41 @@ demoRouter.post('/reader-login', async (c) => {
     return demoDisabled(c);
   }
 
-  // Gate 5: validate the demo book + live grant (no password — server-minted)
-  const result = await validateGrant(c.env, bookSlug, DEMO_READER_EMAIL);
+  // Gate 5: verify the demo book exists and the demo reader has a live grant.
+  // Direct lookup (not validateGrant) so the demo login never depends on the
+  // operator-supplied reader password hash (ADR-233 seeds one when
+  // DEMO_READER_PASSWORD is set). Server-minted, password-free session.
+  const book = await queryFirst<{
+    id: string;
+    slug: string;
+    title: string;
+    author_name: string | null;
+    visibility: string;
+    cover_image_url: string | null;
+  }>(
+    c.env,
+    `SELECT id, slug, title, author_name, visibility, cover_image_url
+     FROM books WHERE slug = ?`,
+    [bookSlug],
+  );
+  if (!book) {
+    return demoDisabled(c);
+  }
 
-  if (!result.valid || !result.grant || !result.book) {
+  const grant = await getGrantByBookAndSession(c.env, book.id, DEMO_READER_EMAIL);
+  if (!grant || (grant.expires_at && new Date(grant.expires_at) < new Date())) {
     return demoDisabled(c);
   }
 
   // Mint the session — same shape as /api/access/request
-  const session = await createSession(c.env, result.book.id, DEMO_READER_EMAIL);
+  const session = await createSession(c.env, book.id, DEMO_READER_EMAIL);
 
   await logAudit(c.env, {
     entityType: 'session',
-    entityId: result.book.id,
+    entityId: book.id,
     action: 'demo_reader_login',
     actorEmail: DEMO_READER_EMAIL,
-    payload: { grantId: result.grant.id, ipHash },
+    payload: { grantId: grant.id, ipHash },
   }, c.executionCtx);
 
   return c.json({
@@ -146,14 +164,14 @@ demoRouter.post('/reader-login', async (c) => {
       sessionToken: session.token,
       expiresAt: session.expiresAt,
       book: {
-        id: result.book.id,
-        slug: result.book.slug,
-        title: result.book.title,
-        authorName: result.book.author_name,
-        visibility: result.book.visibility,
-        coverImageUrl: result.book.cover_image_url,
+        id: book.id,
+        slug: book.slug,
+        title: book.title,
+        authorName: book.author_name,
+        visibility: book.visibility,
+        coverImageUrl: book.cover_image_url,
       },
-      capabilities: computeCapabilities(result.grant),
+      capabilities: computeCapabilities(grant),
     },
   });
 });
@@ -195,6 +213,16 @@ demoRouter.post('/admin-login', async (c) => {
   const clientHints: AdminSessionClientHints = { ipHash };
   const publicUser: AdminSessionUser = { id: user.id, email: user.email, role: user.global_role };
   const result = await createAdminDemoSession(c.env, publicUser, clientHints);
+
+  if (!result.ok) {
+    await logRiskEvent(c.env, c.executionCtx, {
+      kind: RISK_EVENTS.loginLocked,
+      entityId: DEMO_ADMIN_EMAIL,
+      entityType: 'user',
+      payload: { reason: 'demo_admin_mfa_required', ipHash },
+    });
+    return demoDisabled(c);
+  }
 
   await logAudit(c.env, {
     entityType: 'user',

@@ -3,7 +3,7 @@ import {
   makeEnv,
   makePassThroughContext,
   mockQueryFirst,
-  mockValidateGrant,
+  mockGetGrantByBookAndSession,
   mockComputeCapabilities,
   mockCreateSession,
   mockCreateAdminDemoSession,
@@ -175,8 +175,8 @@ describe('Demo Routes — POST /api/demo/reader-login', () => {
   });
 
   it('returns 403 DEMO_DISABLED when demo book or grant is missing', async () => {
-    mockQueryFirst.mockResolvedValueOnce(DEMO_READER_USER);
-    mockValidateGrant.mockResolvedValue({ valid: false, error: 'Book not found' });
+    mockQueryFirst.mockResolvedValueOnce(DEMO_READER_USER); // user lookup
+    mockQueryFirst.mockResolvedValueOnce(null); // book lookup — not found
 
     const res = await app.fetch(
       new Request('http://localhost/api/demo/reader-login', { method: 'POST' }),
@@ -188,13 +188,27 @@ describe('Demo Routes — POST /api/demo/reader-login', () => {
     expect(body.error.code).toBe('DEMO_DISABLED');
   });
 
-  it('mints a reader session and returns the same DTO as /api/access/request', async () => {
-    mockQueryFirst.mockResolvedValueOnce(DEMO_READER_USER);
-    mockValidateGrant.mockResolvedValue({
-      valid: true,
-      grant: DEMO_GRANT,
-      book: DEMO_BOOK,
-    });
+  it('returns 403 DEMO_DISABLED when demo reader grant is missing', async () => {
+    mockQueryFirst.mockResolvedValueOnce(DEMO_READER_USER); // user lookup
+    mockQueryFirst.mockResolvedValueOnce(DEMO_BOOK); // book lookup
+    mockGetGrantByBookAndSession.mockResolvedValue(null); // no live grant
+
+    const res = await app.fetch(
+      new Request('http://localhost/api/demo/reader-login', { method: 'POST' }),
+      env,
+      makePassThroughContext(),
+    );
+    expect(res.status).toBe(403);
+    const body: { ok: boolean; data: Record<string, unknown>; error: { code: string; message?: string } } = await res.json();
+    expect(body.error.code).toBe('DEMO_DISABLED');
+  });
+
+  it('mints a reader session via direct grant lookup even when the demo grant has a password hash (no password shipped)', async () => {
+    mockQueryFirst.mockResolvedValueOnce(DEMO_READER_USER); // user lookup
+    mockQueryFirst.mockResolvedValueOnce(DEMO_BOOK); // book lookup
+    // Password-protected demo grant (ADR-233 seeds a reader password) — the demo
+    // login must still mint a session without the operator password (server-minted).
+    mockGetGrantByBookAndSession.mockResolvedValue({ ...DEMO_GRANT, password_hash: 'argon2-hash', mode: 'password_protected' });
     mockCreateSession.mockResolvedValue({ token: 'demo-session-token', expiresAt: '2030-01-01T00:00:00.000Z' });
 
     const res = await app.fetch(
@@ -387,5 +401,20 @@ describe('Demo Routes — POST /api/demo/admin-login', () => {
     expect(res.status).toBe(429);
     const body: { ok: boolean; data: Record<string, unknown>; error: { code: string; message?: string } } = await res.json();
     expect(body.error.code).toBe('TOO_MANY_REQUESTS');
+  });
+
+  it('returns 403 DEMO_DISABLED when a demo admin is MFA-enrolled (no password-assurance bypass)', async () => {
+    mockQueryFirst.mockResolvedValueOnce(DEMO_ADMIN_USER); // user lookup
+    // createAdminDemoSession refuses when the account is MFA-enrolled.
+    mockCreateAdminDemoSession.mockResolvedValue({ ok: false, status: 403, error: 'Demo admin must complete multi-factor authentication.' });
+
+    const res = await app.fetch(
+      new Request('http://localhost/api/demo/admin-login', { method: 'POST' }),
+      env,
+      makePassThroughContext(),
+    );
+    expect(res.status).toBe(403);
+    const body: { ok: boolean; data: Record<string, unknown>; error: { code: string; message?: string } } = await res.json();
+    expect(body.error.code).toBe('DEMO_DISABLED');
   });
 });
