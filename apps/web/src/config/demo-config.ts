@@ -12,6 +12,21 @@ export interface HelpLinkProps {
 }
 
 /**
+ * Reserved demo account identifiers + documented public demo credentials.
+ * These match the Worker seed contract (scripts/seed-demo-accounts.mjs) and
+ * ADR-233 reserved emails. The passwords are documented public values used
+ * only in non-production demo environments — the Worker fail-closes in
+ * production-like environments regardless of these.
+ */
+export const DEMO_READER_EMAIL = 'demo.reader@example.local';
+export const DEMO_ADMIN_EMAIL = 'demo.admin@example.local';
+export const DEMO_READER_PASSWORD =
+  import.meta.env.VITE_DEMO_READER_PASSWORD || 'demo-reader-password';
+export const DEMO_ADMIN_PASSWORD =
+  import.meta.env.VITE_DEMO_ADMIN_PASSWORD || 'demo-admin-password';
+export const DEMO_BOOK_SLUG = import.meta.env.VITE_DEMO_BOOK_SLUG || 'demo';
+
+/**
  * Resolve the help URL. The in-app `/help` route ships in every deployment,
  * so the default is that same-origin page. An explicit absolute `http(s)`
  * `VITE_HELP_URL` (external link when off-origin) or a leading-slash path

@@ -164,3 +164,21 @@ demo, and ship an in-product "what this app does / how to use" page.
    local/E2E-only per ADR-233/244).
 5. Add i18n keys for the help page across all locale catalogs.
 6. Add web + E2E tests covering the help page and the same-origin link.
+
+## Amendment C: Documented demo password (2026-08-16)
+
+### Tasks
+
+1. Default both demo passwords in the seed to documented values
+   (`demo-reader-password` / `demo-admin-password`), hashed with Argon2id;
+   remove the operator-password guard so demo users always have a usable
+   password. Overridable via env.
+2. Add `VITE_DEMO_READER_PASSWORD` / `VITE_DEMO_ADMIN_PASSWORD` web env +
+   typing; document both in `.env.local.example` / `.dev.vars.example`.
+3. Show demo email + password + book slug on the reader and admin login demo
+   info panels and the help page.
+4. Update i18n `login.demoInfo`, `admin.login.demoInfo`, and `help.demo*`
+   strings across all locale catalogs (credential now includes password).
+5. Add E2E tests: sign in as demo reader and demo admin via the normal
+   email+password forms; assert navigation.
+6. Update fixtures (demo credential constants, admin login mock option).

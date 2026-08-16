@@ -195,6 +195,17 @@ export const ADMIN_LOGIN_RESPONSE = {
   },
 };
 
+export const DEMO_READER = {
+  email: 'demo.reader@example.local',
+  password: process.env.DEMO_READER_PASSWORD || 'demo-reader-password',
+  bookSlug: 'demo',
+};
+
+export const DEMO_ADMIN = {
+  email: 'demo.admin@example.local',
+  password: process.env.DEMO_ADMIN_PASSWORD || 'demo-admin-password',
+};
+
 export const DEMO_READER_RESPONSE = {
   ok: true,
   data: {
@@ -318,9 +329,9 @@ export async function mockDemoAdminApi(page: Page) {
   });
 }
 
-export async function mockAdminApi(page: Page) {
+export async function mockAdminApi(page: Page, opts: { adminLoginResponse?: { ok: true; data: { token: string; user: { id: string; email: string; role: string } } } } = {}) {
   await page.route('**/api/admin/login', async (route: Route) => {
-    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(ADMIN_LOGIN_RESPONSE) });
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(opts.adminLoginResponse ?? ADMIN_LOGIN_RESPONSE) });
   });
 
   await mockDemoAdminApi(page);

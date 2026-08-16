@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { mockReaderApi, mockAdminApi, suppressWorkboxErrors, DEMO_READER_RESPONSE } from './fixtures';
+import { mockReaderApi, mockAdminApi, suppressWorkboxErrors, DEMO_READER, DEMO_ADMIN, DEMO_READER_RESPONSE, DEMO_ADMIN_RESPONSE } from './fixtures';
 
 // ---------------------------------------------------------------------------
 // ADR-244 / GOAP-244: demo login entry points + help links.
@@ -58,6 +58,27 @@ test.describe('Demo login entry points (ADR-244)', () => {
     await expect(page).toHaveURL(/\/login/);
   });
 
+  test('@mobile @smoke signs in as the demo reader with email + password', async ({ page }) => {
+    // The demo reader account has a documented password; the normal
+    // /api/access/request flow authenticates it against the seeded hash.
+    await mockReaderApi(page, { bookSlug: DEMO_READER.bookSlug, loginResponse: DEMO_READER_RESPONSE });
+    await page.goto(`/login?book=${DEMO_READER.bookSlug}`);
+
+    // Demo info panel surfaces the reserved email, password, and book slug.
+    const demoInfoPanel = page.getByText(/Demo account: demo\.reader@example\.local/);
+    await expect(demoInfoPanel).toBeVisible();
+    await expect(demoInfoPanel).toContainText(DEMO_READER.password);
+    await expect(demoInfoPanel).toContainText(DEMO_READER.bookSlug);
+
+    // Sign in through the normal credential form with the demo credentials.
+    await page.getByLabel('Email Address').fill(DEMO_READER.email);
+    await page.getByLabel('Password').fill(DEMO_READER.password);
+    await page.getByRole('button', { name: 'Sign In', exact: true }).click();
+
+    await expect(page).toHaveURL(/\/read\/demo$/, { timeout: 15000 });
+    await expect(page.locator('[data-container-name="reader-toolbar"]')).toBeVisible({ timeout: 20000 });
+  });
+
   // ---------------------------------------------------------------------
   // Help link (reader + admin)
   // ---------------------------------------------------------------------
@@ -77,6 +98,26 @@ test.describe('Demo login entry points (ADR-244)', () => {
     const helpLink = page.getByRole('link', { name: 'Help / How to use' });
     await expect(helpLink).toBeVisible();
     await expect(helpLink).toHaveAttribute('href', '/help');
+  });
+
+  test('@mobile @smoke signs in as the demo admin with email + password', async ({ page }) => {
+    // The demo admin account has a documented password; /api/admin/login
+    // authenticates it against the seeded hash.
+    await mockAdminApi(page, { adminLoginResponse: DEMO_ADMIN_RESPONSE });
+    await page.goto('/admin/login');
+
+    // Demo info panel surfaces the reserved admin email and password.
+    const demoInfoPanel = page.getByText(/Demo account: demo\.admin@example\.local/);
+    await expect(demoInfoPanel).toBeVisible();
+    await expect(demoInfoPanel).toContainText(DEMO_ADMIN.password);
+
+    // Sign in through the normal credential form with the demo credentials.
+    await page.getByLabel('Email Address').fill(DEMO_ADMIN.email);
+    await page.getByLabel('Password').fill(DEMO_ADMIN.password);
+    await page.getByRole('button', { name: 'Sign In', exact: true }).click();
+
+    await expect(page).toHaveURL(/\/admin\/books$/, { timeout: 15000 });
+    await expect(page.locator('main#main-content')).toBeVisible({ timeout: 20000 });
   });
 
   // ---------------------------------------------------------------------

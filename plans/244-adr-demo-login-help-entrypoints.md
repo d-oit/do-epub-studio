@@ -171,3 +171,27 @@ Decisions:
    `VITE_DEMO_LOGIN_ENABLED` — demo login is gated for local/E2E per
    ADR-233/244. `.env.local.example` documents `VITE_HELP_URL=/help` and
    `VITE_DEMO_BOOK_SLUG=demo` so local dev shows the full demo experience.
+
+## Amendment C: Documented demo password (2026-08-16)
+
+Product decision (user-directed, overrides ADR-244 decision 7 "no
+browser-shipped demo passwords" for the demo accounts): the reserved demo
+reader and admin users have documented public passwords and sign in through
+the normal email+password forms. ADR-233's threat model is preserved by the
+existing fail-closed gates — the seed and Worker refuse production-like
+environments, and the demo admin stays disabled outside local unless
+explicitly allowlisted. The credentials are Stripe-test-card-style published
+values, not server secrets.
+
+Decisions:
+
+1. **Documented passwords:** `demo-reader-password` / `demo-admin-password`
+   (overridable via `DEMO_READER_PASSWORD` / `DEMO_ADMIN_PASSWORD` seed env
+   and `VITE_DEMO_READER_PASSWORD` / `VITE_DEMO_ADMIN_PASSWORD` web env).
+   The seed provisions both demo users with Argon2id hashes of these values
+   (the reader grant is `password_protected`, never passwordless).
+2. **Login screens:** the demo info panels show email + password + book slug
+   so a reviewer can sign in through the normal form or the one-click button.
+3. **E2E coverage:** new tests sign in as the demo reader and demo admin via
+   the standard email+password forms and assert navigation into the app.
+4. **Non-production only:** production fail-closed behavior is unchanged.

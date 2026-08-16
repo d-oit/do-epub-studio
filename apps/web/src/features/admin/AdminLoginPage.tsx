@@ -8,7 +8,7 @@ import { LocaleSwitcher } from '../../components/LocaleSwitcher';
 import { Button, Input, AppLogo } from '../../components/ui';
 import { ThemeToggle } from '../../components/ThemeToggle';
 import { APP_NAME, APP_VERSION_LABEL } from '../../config/app-identity';
-import { isDemoLoginEnabled, resolveHelpUrl } from '../../config/demo-config';
+import { isDemoLoginEnabled, resolveHelpUrl, DEMO_ADMIN_EMAIL, DEMO_ADMIN_PASSWORD } from '../../config/demo-config';
 
 interface AdminUser {
   id: string;
@@ -269,7 +269,7 @@ function AdminDemoBlock({
         {t('admin.login.demoAdmin')}
       </Button>
       <p className="mt-2 text-xs text-foreground-muted text-center">
-        {t('admin.login.demoInfo', { email: 'demo.admin@example.local' })}
+        {t('admin.login.demoInfo', { email: DEMO_ADMIN_EMAIL, password: DEMO_ADMIN_PASSWORD })}
       </p>
     </div>
   );

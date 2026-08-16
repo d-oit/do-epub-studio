@@ -17,6 +17,11 @@ const mockResolveHelpUrl = vi.fn();
 vi.mock('../../config/demo-config', () => ({
   isDemoLoginEnabled: () => mockIsDemoLoginEnabled(),
   resolveHelpUrl: () => mockResolveHelpUrl(),
+  DEMO_READER_EMAIL: 'demo.reader@example.local',
+  DEMO_READER_PASSWORD: 'demo-reader-password',
+  DEMO_ADMIN_EMAIL: 'demo.admin@example.local',
+  DEMO_ADMIN_PASSWORD: 'demo-admin-password',
+  DEMO_BOOK_SLUG: 'demo',
 }));
 vi.mock('../../hooks/useTranslation', () => ({
   useTranslation: () => ({ t: (k: string) => k, locale: 'en' }),

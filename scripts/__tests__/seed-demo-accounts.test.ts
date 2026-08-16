@@ -6,9 +6,11 @@ import {
   RESERVED,
 } from '../seed-demo-accounts.mjs';
 
-// Test-only fixture credentials — never real secrets. In production,
-// operator passwords arrive via DEMO_ADMIN_PASSWORD/DEMO_READER_PASSWORD env
-// vars and are never committed (ADR-233).
+// Test-only fixture credentials — never real secrets. Demo users are provisioned
+// with documented public passwords (demo-admin-password / demo-reader-password)
+// that operators may override via DEMO_ADMIN_PASSWORD/DEMO_READER_PASSWORD env
+// vars. Passwords are only ever stored as Argon2id hashes (ADR-233), and the
+// seed refuses production-like environments.
 const ADMIN_SECRET = 'TEST-ONLY-admin-fixture-pass';
 const READER_SECRET = 'TEST-ONLY-reader-fixture-pass';
 const MOCK_HASH = 'argon2id$MOCK$hash';
@@ -103,17 +105,20 @@ describe('seed-demo-accounts.mjs (ADR-233)', () => {
       expect(result.ok).toBe(false);
     });
 
-    it('refuses when DEMO_ADMIN_PASSWORD is missing', async () => {
+    it('provisions with documented default demo passwords when env passwords are absent', async () => {
       const { db, calls } = makeDb();
       const result = await seedDemoAccounts({
         db,
         hasPassword: mockHash,
-        env: env({ DEMO_ADMIN_PASSWORD: undefined }),
+        env: env({ DEMO_ADMIN_PASSWORD: undefined, DEMO_READER_PASSWORD: undefined }),
       });
-      expect(result.ok).toBe(false);
-      expect(result.reason).toMatch(/DEMO_ADMIN_PASSWORD/);
-      expect(process.exitCode).toBe(1);
-      expect(calls).toHaveLength(0);
+      expect(result.ok).toBe(true);
+
+      // Both demo users always get password hashes (never passwordless).
+      const userWrites = calls.filter(({ sql }) => sql.includes('INSERT INTO users'));
+      expect(userWrites).toHaveLength(2);
+      const allArgs = JSON.stringify(calls.map((c) => c.args));
+      expect(allArgs).toContain(MOCK_HASH);
     });
   });
 

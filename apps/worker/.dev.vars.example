@@ -5,4 +5,9 @@ INVITE_TOKEN_SECRET=
 APP_BASE_URL=http://127.0.0.1:5173
 DEMO_LOGIN_ENABLED=1
 DEMO_BOOK_SLUG=demo
+# Documented public demo credentials (non-production only — the seed and the
+# Worker fail-closed in production-like environments). These match the values
+# the frontend shows (VITE_DEMO_READER_PASSWORD / VITE_DEMO_ADMIN_PASSWORD).
+DEMO_READER_PASSWORD=demo-reader-password
+DEMO_ADMIN_PASSWORD=demo-admin-password
 DEMO_ACCOUNTS_PROD_ALLOWLIST=

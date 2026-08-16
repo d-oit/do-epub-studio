@@ -8,7 +8,7 @@ import { LocaleSwitcher } from '../../components/LocaleSwitcher';
 import { Button, Input, AppLogo } from '../../components/ui';
 import { ThemeToggle } from '../../components/ThemeToggle';
 import { APP_NAME, APP_VERSION_LABEL, APP_DESCRIPTION } from '../../config/app-identity';
-import { isDemoLoginEnabled, resolveHelpUrl } from '../../config/demo-config';
+import { isDemoLoginEnabled, resolveHelpUrl, DEMO_READER_EMAIL, DEMO_READER_PASSWORD, DEMO_BOOK_SLUG } from '../../config/demo-config';
 
 interface SessionCapabilities {
   canRead: boolean;
@@ -196,7 +196,7 @@ function DemoLoginBlock({ loading, error, onLogin }: { loading: boolean; error: 
         {t('login.demoReader')}
       </Button>
       <p className="mt-2 text-xs text-foreground-muted text-center">
-        {t('login.demoInfo', { email: 'demo.reader@example.local', slug: import.meta.env.VITE_DEMO_BOOK_SLUG || 'demo' })}
+        {t('login.demoInfo', { email: DEMO_READER_EMAIL, password: DEMO_READER_PASSWORD, slug: DEMO_BOOK_SLUG })}
       </p>
     </div>
   );

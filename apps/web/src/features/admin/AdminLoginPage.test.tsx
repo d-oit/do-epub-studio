@@ -32,6 +32,8 @@ const mockResolveHelpUrl = vi.fn();
 vi.mock('../../config/demo-config', () => ({
   isDemoLoginEnabled: () => mockIsDemoLoginEnabled(),
   resolveHelpUrl: () => mockResolveHelpUrl(),
+  DEMO_ADMIN_EMAIL: 'demo.admin@example.local',
+  DEMO_ADMIN_PASSWORD: 'demo-admin-password',
 }));
 
 // Mock useAuthStore

@@ -4,6 +4,7 @@ import { AppLogo, Button } from '../../components/ui';
 import { ThemeToggle } from '../../components/ThemeToggle';
 import { LocaleSwitcher } from '../../components/LocaleSwitcher';
 import { APP_NAME, APP_VERSION_LABEL } from '../../config/app-identity';
+import { DEMO_READER_EMAIL, DEMO_READER_PASSWORD, DEMO_ADMIN_EMAIL, DEMO_ADMIN_PASSWORD, DEMO_BOOK_SLUG } from '../../config/demo-config';
 
 export function HelpPage() {
   const { t } = useTranslation();
@@ -45,10 +46,10 @@ export function HelpPage() {
             </p>
             <ul className="mt-4 space-y-2 text-sm text-foreground">
               <li className="rounded-md bg-background p-3 font-medium">
-                {t('help.demoReader', { email: 'demo.reader@example.local', slug: import.meta.env.VITE_DEMO_BOOK_SLUG || 'demo' })}
+                {t('help.demoReader', { email: DEMO_READER_EMAIL, password: DEMO_READER_PASSWORD, slug: DEMO_BOOK_SLUG })}
               </li>
               <li className="rounded-md bg-background p-3 font-medium">
-                {t('help.demoAdmin', { email: 'demo.admin@example.local' })}
+                {t('help.demoAdmin', { email: DEMO_ADMIN_EMAIL, password: DEMO_ADMIN_PASSWORD })}
               </li>
             </ul>
           </div>
