@@ -3,7 +3,15 @@ import { logClientEvent } from '../client-logger';
 import { getCurrentLocale } from '../../stores/locale';
 import { useAuthStore } from '../../stores/auth';
 
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8787';
+/**
+ * API base URL. Production builds must reach the Worker via a configured
+ * `VITE_API_BASE_URL` or a same-origin `/api` route — never a hardcoded
+ * localhost (banned in docs/banned-patterns.md). Dev builds fall back to the
+ * local Wrangler instance for `pnpm dev` without a `.env.local`.
+ */
+export const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ||
+  (import.meta.env.PROD ? window.location.origin : 'http://localhost:8787');
 
 interface ApiResponse<T> {
   ok: boolean;

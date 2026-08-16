@@ -201,19 +201,30 @@ export async function seedDemoAccounts({
     disabledAt: null,
   });
 
-  // Reader demo grant against a demo book (if present). Never an orphan grant.
+  // Reader demo grant against a demo book. Provision a minimal placeholder
+  // book when none exists so the demo reader can always sign in and reach a
+  // book landing page (GOAP-244: demo accounts must be sign-in-ready on a
+  // fresh DB, not silently skipped). The book is empty until an operator
+  // uploads real content; the demo grant is never an orphan.
   const bookRow = await findBook(db, bookSlug);
-  if (bookRow) {
+  let bookId = bookRow?.id ?? null;
+  if (!bookId) {
+    bookId = await provisionDemoBook(db, bookSlug);
+    if (bookId) {
+      log.log(`✓ Provisioned demo book "${bookSlug}" (placeholder; upload content to fill it).`);
+    }
+  }
+  if (bookId) {
     const mode = readerHash ? 'password_protected' : 'reader_only';
     await upsertGrant(db, {
       adminUserId,
-      bookId: bookRow.id,
+      bookId,
       email: RESERVED.reader.email,
       passwordHash: readerHash,
       mode,
     });
   } else {
-    log.warn(`⚠ No book with slug "${bookSlug}" found; reader demo grant skipped.`);
+    log.warn(`⚠ Demo book "${bookSlug}" could not be provisioned; reader demo grant skipped.`);
   }
 
   log.log(`✓ Seeded demo accounts (reader=${RESERVED.reader.email}, admin=${RESERVED.admin.email}).`);
@@ -228,6 +239,32 @@ async function findUserId(db, email) {
 async function findBook(db, slug) {
   const res = await db('SELECT id FROM books WHERE slug = ?', [slug]);
   return res?.rows?.[0] ?? null;
+}
+
+const upsertBookSql = 'INSERT INTO books '
+  + '(id, slug, title, author_name, description, language, visibility, '
+  + 'created_at, updated_at) '
+  + 'VALUES (?, ?, ?, ?, ?, ?, ?, datetime(\'now\'), datetime(\'now\')) '
+  + 'ON CONFLICT(slug) DO NOTHING';
+
+/**
+ * Create a minimal placeholder demo book so the reader demo grant is not an
+ * orphan. Safe to call on every seed run (ON CONFLICT DO NOTHING + re-select).
+ * Returns the book id when a book is now present, else null.
+ */
+async function provisionDemoBook(db, slug) {
+  try {
+    await db(upsertBookSql, [
+      randomUUID(), slug, 'Demo Book', 'Demo Author', null, 'en', 'public',
+    ]);
+    const row = await findBook(db, slug);
+    return row?.id ?? null;
+  } catch (err) {
+    // A schema without a books table, or a read-only/remote variant, must not
+    // fail the whole seed — the demo reader simply has no grant to attach to.
+    process.stderr.write(`⚠ Could not provision demo book "${slug}": ${err?.message ?? err}\n`);
+    return null;
+  }
 }
 
 const upsertUserSql = 'INSERT INTO users '

@@ -27,9 +27,11 @@ function env(overrides = {}) {
 
 function makeDb() {
   const calls = [];
+  let bookExists = false;
   const db = async (sql, args = []) => {
     calls.push({ sql, args });
-    if (sql.includes('FROM books')) return { rows: [{ id: 'book-1' }] };
+    if (sql.includes('INSERT INTO books')) bookExists = true;
+    if (sql.includes('FROM books')) return { rows: bookExists ? [{ id: 'book-1' }] : [] };
     if (sql.includes('FROM users')) return { rows: [] };
     return { rows: [] };
   };
@@ -166,6 +168,22 @@ describe('seed-demo-accounts.mjs (ADR-233)', () => {
       expect(grant).toBeTruthy();
       expect(grant.sql).toContain('book_id');
       expect(grant.sql).toContain('mode');
+    });
+
+    it('provisions a missing demo book so the reader grant is never skipped', async () => {
+      const { db, calls } = makeDb();
+      await seedDemoAccounts({ db, hasPassword: mockHash, env: env() });
+
+      // A fresh DB has no demo book → the seed must create a placeholder so
+      // the demo reader can always sign in (GOAP-244).
+      const bookInsert = calls.find(({ sql }) => sql.includes('INSERT INTO books'));
+      expect(bookInsert).toBeTruthy();
+      expect(bookInsert.sql).toContain('slug');
+      expect(bookInsert.args).toContain('demo');
+
+      const grant = calls.find(({ sql }) => sql.includes('INSERT INTO book_access_grants'));
+      expect(grant).toBeTruthy();
+      expect(grant.args).toContain('book-1'); // provisioned book id backs the grant
     });
 
     it('disables the demo admin by default in non-local environments', async () => {
