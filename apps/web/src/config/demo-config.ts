@@ -12,21 +12,15 @@ export interface HelpLinkProps {
 }
 
 /**
- * Resolve the help URL from public env config. Returns `null` when the URL
- * is missing, empty, or fails validation.
- *
- * Accepts an absolute `http(s)` URL (rendered as an external link when it
- * points off-origin) or a same-origin path starting with `/` (e.g.
- * `VITE_HELP_URL=/help`) so an in-app help page works on any origin —
- * localhost, previews, and production — without baking a hostname.
+ * Resolve the help URL. The in-app `/help` route ships in every deployment,
+ * so the default is that same-origin page. An explicit absolute `http(s)`
+ * `VITE_HELP_URL` (external link when off-origin) or a leading-slash path
+ * overrides it; an invalid explicit value still falls back to `/help`.
  */
-export function resolveHelpUrl(): HelpLinkProps | null {
+export function resolveHelpUrl(): HelpLinkProps {
   const raw = import.meta.env.VITE_HELP_URL;
-  if (!raw) return null;
-
-  const currentOrigin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost';
-
-  // Same-origin path: point at it relative to whatever origin serves the app.
+  const fallback: HelpLinkProps = { href: '/help', isExternal: false };
+  if (!raw) return fallback;
   if (raw.startsWith('/')) {
     return { href: raw, isExternal: false };
   }
@@ -35,9 +29,10 @@ export function resolveHelpUrl(): HelpLinkProps | null {
   try {
     parsed = new URL(raw);
   } catch {
-    return null;
+    return fallback;
   }
 
+  const currentOrigin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost';
   return { href: parsed.href, isExternal: parsed.origin !== currentOrigin };
 }
 

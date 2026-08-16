@@ -4,7 +4,6 @@ import { AppLogo, Button } from '../../components/ui';
 import { ThemeToggle } from '../../components/ThemeToggle';
 import { LocaleSwitcher } from '../../components/LocaleSwitcher';
 import { APP_NAME, APP_VERSION_LABEL } from '../../config/app-identity';
-import { isDemoLoginEnabled } from '../../config/demo-config';
 
 export function HelpPage() {
   const { t } = useTranslation();
@@ -37,24 +36,22 @@ export function HelpPage() {
             </p>
           </div>
 
-          {isDemoLoginEnabled() && (
-            <div className="rounded-lg border border-border bg-background-secondary p-5 shadow-md sm:p-7">
-              <h2 className="text-lg font-semibold text-foreground">
-                {t('help.demoTitle')}
-              </h2>
-              <p className="mt-2 text-sm text-foreground-muted">
-                {t('help.demoBody')}
-              </p>
-              <ul className="mt-4 space-y-2 text-sm text-foreground">
-                <li className="rounded-md bg-background p-3 font-medium">
-                  {t('help.demoReader', { email: 'demo.reader@example.local', slug: import.meta.env.VITE_DEMO_BOOK_SLUG || 'demo' })}
-                </li>
-                <li className="rounded-md bg-background p-3 font-medium">
-                  {t('help.demoAdmin', { email: 'demo.admin@example.local' })}
-                </li>
-              </ul>
-            </div>
-          )}
+          <div className="rounded-lg border border-border bg-background-secondary p-5 shadow-md sm:p-7">
+            <h2 className="text-lg font-semibold text-foreground">
+              {t('help.demoTitle')}
+            </h2>
+            <p className="mt-2 text-sm text-foreground-muted">
+              {t('help.demoBody')}
+            </p>
+            <ul className="mt-4 space-y-2 text-sm text-foreground">
+              <li className="rounded-md bg-background p-3 font-medium">
+                {t('help.demoReader', { email: 'demo.reader@example.local', slug: import.meta.env.VITE_DEMO_BOOK_SLUG || 'demo' })}
+              </li>
+              <li className="rounded-md bg-background p-3 font-medium">
+                {t('help.demoAdmin', { email: 'demo.admin@example.local' })}
+              </li>
+            </ul>
+          </div>
         </section>
 
         <div className="mt-10 flex flex-col items-center gap-3">

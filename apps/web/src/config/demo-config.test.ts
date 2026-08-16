@@ -15,27 +15,27 @@ describe('demo-config env helpers', () => {
     expect(isDemoLoginEnabled()).toBe(true);
   });
 
-  it('resolveHelpUrl returns null when the URL is unset or empty', () => {
-    expect(resolveHelpUrl()).toBeNull();
+  it('resolveHelpUrl defaults to the in-app /help page when unset or empty', () => {
+    // The /help route ships in every deployment, so no env config is needed.
+    expect(resolveHelpUrl()).toEqual({ href: '/help', isExternal: false });
     vi.stubEnv('VITE_HELP_URL', '');
-    expect(resolveHelpUrl()).toBeNull();
+    expect(resolveHelpUrl()).toEqual({ href: '/help', isExternal: false });
   });
 
   it('resolveHelpUrl treats a leading-slash path as a same-origin route', () => {
-    vi.stubEnv('VITE_HELP_URL', '/help');
-    const result = resolveHelpUrl();
-    expect(result).toEqual({ href: '/help', isExternal: false });
+    vi.stubEnv('VITE_HELP_URL', '/guide');
+    expect(resolveHelpUrl()).toEqual({ href: '/guide', isExternal: false });
   });
 
   it('resolveHelpUrl marks an absolute off-origin URL as external', () => {
     vi.stubEnv('VITE_HELP_URL', 'https://docs.example.com/guide');
-    const result = resolveHelpUrl() ?? { href: '', isExternal: false };
+    const result = resolveHelpUrl();
     expect(result.href).toBe('https://docs.example.com/guide');
     expect(result.isExternal).toBe(true);
   });
 
-  it('resolveHelpUrl returns null for an invalid URL', () => {
+  it('resolveHelpUrl falls back to /help for an invalid explicit URL', () => {
     vi.stubEnv('VITE_HELP_URL', 'not a url');
-    expect(resolveHelpUrl()).toBeNull();
+    expect(resolveHelpUrl()).toEqual({ href: '/help', isExternal: false });
   });
 });

@@ -3,11 +3,6 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { HelpPage } from './HelpPage';
 
-const mockIsDemoLoginEnabled = vi.fn();
-vi.mock('../../config/demo-config', () => ({
-  isDemoLoginEnabled: () => mockIsDemoLoginEnabled(),
-  resolveHelpUrl: () => null,
-}));
 vi.mock('../../hooks/useTranslation', () => ({
   useTranslation: () => ({ t: (k: string) => k, locale: 'en' }),
 }));
@@ -27,7 +22,6 @@ vi.mock('../../components/ui', () => ({
 describe('HelpPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockIsDemoLoginEnabled.mockReturnValue(false);
   });
 
   it('renders app intro', () => {
@@ -36,13 +30,7 @@ describe('HelpPage', () => {
     expect(screen.getByText(/help.intro/)).toBeInTheDocument();
   });
 
-  it('shows demo accounts only when demo login is enabled', () => {
-    mockIsDemoLoginEnabled.mockReturnValue(false);
-    const { unmount } = render(<MemoryRouter><HelpPage /></MemoryRouter>);
-    expect(screen.queryByText(/help.demoTitle/)).not.toBeInTheDocument();
-    unmount();
-
-    mockIsDemoLoginEnabled.mockReturnValue(true);
+  it('shows demo accounts on the info page regardless of demo flag', () => {
     render(<MemoryRouter><HelpPage /></MemoryRouter>);
     expect(screen.getByText(/help.demoTitle/)).toBeInTheDocument();
     expect(screen.getByText(/help.demoReader/)).toBeInTheDocument();
