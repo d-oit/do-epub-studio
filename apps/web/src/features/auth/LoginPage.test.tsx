@@ -295,6 +295,17 @@ describe('LoginPage', () => {
       render(<MemoryRouter><LoginPage /></MemoryRouter>);
       expect(screen.getByText('login.demoReader')).toBeInTheDocument();
     });
+    it('shows demo account info text when demo login is enabled', () => {
+      mockIsDemoLoginEnabled.mockReturnValue(true);
+      render(<MemoryRouter><LoginPage /></MemoryRouter>);
+      expect(screen.getByText(/login\.demoInfo/)).toBeInTheDocument();
+    });
+
+    it('hides demo info panel when demo login is disabled', () => {
+      mockIsDemoLoginEnabled.mockReturnValue(false);
+      render(<MemoryRouter><LoginPage /></MemoryRouter>);
+      expect(screen.queryByText(/login\.demoInfo/)).not.toBeInTheDocument();
+    });
 
     it('handles successful demo login', async () => {
       mockIsDemoLoginEnabled.mockReturnValue(true);

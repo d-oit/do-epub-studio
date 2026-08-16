@@ -182,7 +182,7 @@ export function AdminLoginPage() {
 
       <main
         id="main-content"
-        className="mx-auto flex min-h-[calc(100dvh-3rem)] w-full max-w-md items-center pt-16"
+        className="mx-auto flex min-h-[calc(100dvh-3rem)] w-full max-w-md items-start pt-16 pb-8"
       >
       <section className="w-full rounded-lg border border-border bg-background-secondary p-5 shadow-md sm:p-7 lg:p-8">
         <div className="text-center mb-8">
@@ -351,6 +351,9 @@ export function AdminLoginPage() {
             >
               {t('admin.login.demoAdmin')}
             </Button>
+            <p className="mt-2 text-xs text-foreground-muted text-center">
+              {t('admin.login.demoInfo', { email: 'demo.admin@example.local' })}
+            </p>
           </div>
         )}
 
@@ -378,14 +381,13 @@ export function AdminLoginPage() {
             {t('admin.login.backToReader')}
           </Button>
         </div>
-
         {helpLink && (
-          <div className="mt-3 text-center">
+          <div className="mt-4 text-center">
             <a
               href={helpLink.href}
               target={helpLink.isExternal ? '_blank' : undefined}
               rel={helpLink.isExternal ? 'noopener noreferrer' : undefined}
-              className="text-xs text-accent hover:opacity-80 underline underline-offset-2 transition-colors"
+              className="text-sm text-accent hover:opacity-80 underline underline-offset-2 transition-colors font-medium"
             >
               {t('admin.login.helpLink')}
             </a>

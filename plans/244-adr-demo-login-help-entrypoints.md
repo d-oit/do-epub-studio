@@ -109,3 +109,38 @@ value keeps deployment ownership outside source code.
 - The implementation does not add plaintext demo credentials, real personal
   data, or hardcoded deployment-specific URLs.
 - `./scripts/quality_gate.sh` and the Codacy PR check pass before merge.
+
+## Amendment A: Full-page visibility and demo info (2026-08-16)
+
+### Problem
+
+The original implementation added demo buttons, admin link, and help link
+inside the login card, but the card grew taller than the viewport on
+smaller screens. The `items-center` grid + `min-h-[calc(100dvh-3rem)]`
+clipped the bottom content (admin description, help link) so users had to
+scroll to discover them. The demo buttons also lacked context — no
+indication of which account or book slug the demo uses.
+
+### Decision
+
+1. **Layout:** Change auth screens from vertically centered to
+   top-anchored + scrollable. The card starts near the top and the page
+   scrolls naturally if content exceeds the viewport — no content is
+   clipped or hidden below the fold on any viewport.
+
+2. **Demo info panel:** When demo login is enabled, show a compact info
+   panel beneath the demo button revealing the reserved demo email
+   (`demo.reader@example.local` / `demo.admin@example.local`) and the
+   configured demo book slug. This is NOT a credential disclosure — the
+   reserved emails are documented in ADR-233 and the seed script; the
+   demo password is never shipped to the browser. The panel explains that
+   clicking the button signs in to the demo account without a password.
+
+3. **Admin description inside card:** Move the "Are you an author or
+   manager?" text and the admin/reader cross-link inside the card so
+   they are always visible alongside the form, not orphaned below the
+   card in a grid column.
+
+4. **Help link prominence:** Render the help link inside the card footer
+   with slightly larger text and a distinct icon-like prefix so it is
+   discoverable without scrolling.

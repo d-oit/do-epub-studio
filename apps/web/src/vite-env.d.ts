@@ -6,6 +6,7 @@ interface ImportMetaEnv {
   readonly VITE_TELEMETRY_ENDPOINT?: string;
   readonly VITE_SENTRY_DSN?: string;
   readonly VITE_DEMO_LOGIN_ENABLED?: string;
+  readonly VITE_DEMO_BOOK_SLUG?: string;
   readonly VITE_HELP_URL?: string;
 }
 interface ImportMeta {

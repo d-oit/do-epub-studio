@@ -30,7 +30,11 @@ test.describe('Demo login entry points (ADR-244)', () => {
     const demoButton = page.getByRole('button', { name: 'Use reader demo' });
     await expect(demoButton).toBeVisible();
 
+    // Demo info panel shows the reserved email and book slug (Amendment A).
+    await expect(page.getByText(/Demo account: demo\.reader@example\.local/)).toBeVisible();
+
     await demoButton.click();
+
 
     // Reader demo mints a session for the configured demo book and navigates into it.
     await expect(page).toHaveURL(/\/read\/demo$/, { timeout: 15000 });
@@ -84,6 +88,9 @@ test.describe('Demo login entry points (ADR-244)', () => {
 
     const demoButton = page.getByRole('button', { name: 'Use admin demo' });
     await expect(demoButton).toBeVisible();
+
+    // Demo info panel shows the reserved admin email (Amendment A).
+    await expect(page.getByText(/demo\.admin@example\.local/)).toBeVisible();
 
     await demoButton.click();
 

@@ -123,7 +123,24 @@ with tests, and render it as a normal external or internal link.
 
 ## Out of Scope
 
-- Building the full help website content.
-- Changing production account auth, MFA, password reset, or session storage
-  policy.
 - Enabling demo accounts in production.
+
+## Amendment A: Full-page visibility and demo info (2026-08-16)
+
+### Problem
+
+The auth card grew taller than the viewport on smaller screens, clipping
+the admin description and help link below the fold. Demo buttons lacked
+context about which account or book slug the demo uses.
+
+### Tasks
+
+1. Change auth screens from vertically centered to top-anchored +
+   scrollable so all content is visible without clipping.
+2. Add a demo info panel (when demo login is enabled) showing the
+   reserved demo email and configured book slug — no password is
+   shipped; the panel explains the one-click server-minted session.
+3. Move the admin/reader cross-link and description inside the card.
+4. Make the help link more prominent (larger text, inside card footer).
+5. Add i18n keys for the demo info text across all locale catalogs.
+6. Update web + E2E tests for the new layout and demo info panel.

@@ -215,7 +215,7 @@ export function LoginPage() {
       <main
         id="main-content"
         tabIndex={-1}
-        className="mx-auto grid min-h-[calc(100dvh-3rem)] w-full max-w-6xl items-center gap-8 pt-16 lg:grid-cols-[minmax(0,0.9fr)_minmax(22rem,28rem)] lg:gap-12"
+        className="mx-auto grid min-h-[calc(100dvh-3rem)] w-full max-w-6xl items-start gap-8 pt-16 pb-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(22rem,28rem)] lg:gap-12"
       >
         <section className="hidden min-w-0 lg:block">
           <div className="max-w-xl">
@@ -368,10 +368,13 @@ export function LoginPage() {
               >
                 {t('login.demoReader')}
               </Button>
+              <p className="mt-2 text-xs text-foreground-muted text-center">
+                {t('login.demoInfo', { email: 'demo.reader@example.local', slug: import.meta.env.VITE_DEMO_BOOK_SLUG || 'demo' })}
+              </p>
             </div>
           )}
 
-          <div className="mt-6 pt-4 border-t border-border text-center">
+          <div className="mt-6 pt-4 border-t border-border text-center space-y-2">
             <Button
               variant="ghost"
               size="sm"
@@ -380,25 +383,24 @@ export function LoginPage() {
             >
               {t('login.adminLink')}
             </Button>
+            <p className="text-xs text-foreground-muted">
+              {t('login.adminDescription')}
+            </p>
           </div>
 
           {helpLink && (
-            <div className="mt-3 text-center">
+            <div className="mt-4 text-center">
               <a
                 href={helpLink.href}
                 target={helpLink.isExternal ? '_blank' : undefined}
                 rel={helpLink.isExternal ? 'noopener noreferrer' : undefined}
-                className="text-xs text-accent hover:opacity-80 underline underline-offset-2 transition-colors"
+                className="text-sm text-accent hover:opacity-80 underline underline-offset-2 transition-colors font-medium"
               >
                 {t('login.helpLink')}
               </a>
             </div>
           )}
         </section>
-
-        <p className="text-center text-xs text-foreground-muted lg:col-start-2">
-          {t('login.adminDescription')}
-        </p>
       </main>
     </div>
   );
