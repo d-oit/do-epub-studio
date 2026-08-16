@@ -545,7 +545,8 @@ jobs:
         # builds keep the default warn level outside of E2E).
         # VITE_DEMO_LOGIN_ENABLED + VITE_HELP_URL bake the demo buttons and
         # help link into the build so the demo-login E2E spec runs here.
-        run: VITE_LOG_LEVEL=info VITE_DEMO_LOGIN_ENABLED=1 VITE_HELP_URL=https://help.example.com/guide pnpm --filter @do-epub-studio/web build
+        # VITE_HELP_URL=/help mirrors Amendment B (same-origin in-app page).
+        run: VITE_LOG_LEVEL=info VITE_DEMO_LOGIN_ENABLED=1 VITE_DEMO_BOOK_SLUG=demo VITE_HELP_URL=/help pnpm --filter @do-epub-studio/web build
 
       - name: Run full cross-browser E2E tests
         uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60  # v4.0.0

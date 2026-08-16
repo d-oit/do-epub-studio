@@ -52,7 +52,11 @@ jobs:
 
       - name: Build
         if: steps.secrets.outputs.available == 'true'
-        run: pnpm build
+        # VITE_HELP_URL points at the same-origin in-app /help route so the
+        # auth-screen "Help / how to use" link renders on deployed previews.
+        # VITE_DEMO_LOGIN_ENABLED stays OFF in deployments — demo buttons are
+        # local/E2E only (ADR-233/244).
+        run: VITE_HELP_URL=/help pnpm build
 
       - name: Deploy preview to Cloudflare Pages
         if: steps.secrets.outputs.available == 'true'

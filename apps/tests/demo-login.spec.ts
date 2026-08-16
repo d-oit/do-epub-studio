@@ -67,7 +67,8 @@ test.describe('Demo login entry points (ADR-244)', () => {
 
     const helpLink = page.getByRole('link', { name: 'Help / How to use' });
     await expect(helpLink).toBeVisible();
-    await expect(helpLink).toHaveAttribute('rel', 'noopener noreferrer');
+    // Amendment B: VITE_HELP_URL=/help is a same-origin in-app route.
+    await expect(helpLink).toHaveAttribute('href', '/help');
   });
 
   test('@mobile renders a help link on the admin login screen', async ({ page }) => {
@@ -75,7 +76,7 @@ test.describe('Demo login entry points (ADR-244)', () => {
 
     const helpLink = page.getByRole('link', { name: 'Help / How to use' });
     await expect(helpLink).toBeVisible();
-    await expect(helpLink).toHaveAttribute('rel', 'noopener noreferrer');
+    await expect(helpLink).toHaveAttribute('href', '/help');
   });
 
   // ---------------------------------------------------------------------

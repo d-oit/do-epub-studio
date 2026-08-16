@@ -144,3 +144,23 @@ context about which account or book slug the demo uses.
 4. Make the help link more prominent (larger text, inside card footer).
 5. Add i18n keys for the demo info text across all locale catalogs.
 6. Update web + E2E tests for the new layout and demo info panel.
+
+## Amendment B: In-app help page and same-origin help URL (2026-08-16)
+
+The deployed previews never set an absolute `VITE_HELP_URL`, so the help
+link never rendered. Research-backed resolution (Authgear 2025, SaaSUI
+2026, MicroFounder, Rajiv Pant 2026): keep the password-free one-click
+demo, and ship an in-product "what this app does / how to use" page.
+
+### Tasks
+
+1. Add a public `/help` route rendering a standalone help page: app intro,
+   reader vs admin roles, reserved demo emails + book slug — no password.
+2. Extend `resolveHelpUrl` to accept a same-origin path (`/help`) so the
+   link renders on any origin without baking a hostname.
+3. Wire `VITE_HELP_URL=/help` into `.env.local.example`, the preview
+   deploy (lighthouse.yml), and the E2E demo build (ci.yml e2e-full).
+4. Keep `VITE_DEMO_LOGIN_ENABLED` off in deployments (demo buttons remain
+   local/E2E-only per ADR-233/244).
+5. Add i18n keys for the help page across all locale catalogs.
+6. Add web + E2E tests covering the help page and the same-origin link.

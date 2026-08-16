@@ -144,3 +144,30 @@ indication of which account or book slug the demo uses.
 4. **Help link prominence:** Render the help link inside the card footer
    with slightly larger text and a distinct icon-like prefix so it is
    discoverable without scrolling.
+
+### Amendment B: In-app help page and same-origin help URL (2026-08-16)
+
+The original help contract required an absolute external `VITE_HELP_URL`.
+On real deployments nobody configured one, so the help link never rendered.
+Research into 2025-2026 login/demo UX (Authgear, SaaSUI, MicroFounder,
+Rajiv Pant) confirms: the leading pattern is a password-free, one-click
+demo (Parabol/Refiner) with an in-product "what this app does / how to use"
+page — credentials are not a login-page mechanism.
+
+Decisions:
+
+1. **New public `/help` route** — a standalone page (no auth required)
+   explaining what d.o.EPUB Studio does, the reader vs admin roles, and the
+   reserved demo accounts (emails + book slug). No demo password is ever
+   rendered; ADR-233/244 still forbid browser-shipped credentials.
+
+2. **Same-origin help URL:** `resolveHelpUrl` now accepts a leading-slash
+   path (`VITE_HELP_URL=/help`) as an internal route on any origin —
+   localhost, previews, production — instead of requiring an absolute
+   external URL that deployments never set.
+
+3. **Demo buttons stay local/E2E only.** The Cloudflare Pages preview build
+   bakes `VITE_HELP_URL=/help` so the help link renders, but does NOT bake
+   `VITE_DEMO_LOGIN_ENABLED` — demo login is gated for local/E2E per
+   ADR-233/244. `.env.local.example` documents `VITE_HELP_URL=/help` and
+   `VITE_DEMO_BOOK_SLUG=demo` so local dev shows the full demo experience.
