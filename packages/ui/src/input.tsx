@@ -11,8 +11,10 @@ export interface InputProps extends ComponentPropsWithoutRef<'input'> {
    * practice: an eye icon plus a changing action label ("Show password" ↔
    * "Hide password") with `aria-controls` pointing at the field, no
    * `aria-pressed`, focus stays on the button, and the password value is never
-   * announced. The icon is decorative (`aria-hidden`); the label is the
-   * accessible name.
+   * announced. At `sm+` the icon and the localized label are both visible; on
+   * the smallest screens only the icon renders and the label becomes the
+   * button's `aria-label` — long-locale labels (e.g. French "Afficher le mot
+   * de passe") would otherwise overflow the input's padding reservation.
    */
   showPasswordLabel?: string;
   hidePasswordLabel?: string;
@@ -66,7 +68,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
               text-foreground placeholder:text-foreground-muted
               transition-all duration-150
               outline-none
-              ${showToggle ? 'pr-28' : ''}
+              ${showToggle ? 'pr-12 sm:pr-28' : ''}
               ${error ? 'border-accent-error focus:border-accent-error focus:ring-accent-error/15' : 'border-border focus:border-accent focus:ring-[3px] focus:ring-accent/15'}
               ${className}
             `}
@@ -77,11 +79,12 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
               type="button"
               aria-controls={inputId}
               aria-expanded={passwordVisible}
+              aria-label={toggleLabel}
               onClick={() => setPasswordVisible((v) => !v)}
               className="absolute inset-y-0 right-1.5 my-auto flex h-9 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium text-accent hover:bg-background hover:underline underline-offset-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
             >
               {passwordVisible ? <EyeOffIcon /> : <EyeIcon />}
-              {toggleLabel}
+              <span className="hidden sm:inline">{toggleLabel}</span>
             </button>
           )}
         </div>

@@ -93,5 +93,17 @@ describe('Input', () => {
       expect(toggle).toHaveAttribute('aria-controls', 'pw');
       expect(screen.getByLabelText('Password')).toHaveAttribute('id', 'pw');
     });
+
+    it('keeps the accessible name when the label text is hidden on small screens', () => {
+      // The label renders inside a Tailwind `hidden sm:inline` span (icon-only
+      // below sm for long-locale overflow), so the button's accessible name
+      // must come from aria-label instead of text content.
+      render(<Input id="pw" label="Password" type="password" showPasswordLabel="Show password" hidePasswordLabel="Hide password" />);
+      const toggle = screen.getByRole('button', { name: 'Show password' });
+      expect(toggle).toHaveAttribute('aria-label', 'Show password');
+
+      fireEvent.click(toggle);
+      expect(toggle).toHaveAttribute('aria-label', 'Hide password');
+    });
   });
 });

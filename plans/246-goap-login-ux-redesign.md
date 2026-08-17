@@ -79,7 +79,7 @@ feature-card below `lg`; identical i18n keys, two presentations.
 
 - TypeScript's `keyof typeof en` catalog mirroring turns "forgot a locale"
   into a compile error — the i18n step is self-verifying.
-- Testing-library text matching: a decorative ` →` appended inside an anchor
+- Testing-library text matching: a decorative `→` appended inside an anchor
   breaks `getByText` exact matching and is read aloud by screen readers;
   keep link text as a single clean string.
 - Hero and mobile variants rendering the same keys require `getAllByText`
