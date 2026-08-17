@@ -50,6 +50,34 @@ test.describe('Login and book load (desktop)', () => {
     await expect(page.getByRole('button', { name: 'Sign In', exact: true })).toBeVisible();
   });
 
+  test('@mobile @smoke shows and hides the password via the toggle', async ({ page }) => {
+    await page.goto(`/login?book=${TEST_USER.bookSlug}`);
+    await page.getByLabel('Password').fill(TEST_USER.password);
+
+    const passwordInput = page.getByLabel('Password');
+    await expect(passwordInput).toHaveAttribute('type', 'password');
+
+    // GOV.UK-style toggle: icon + changing action label (WCAG 3.3.8).
+    await page.getByRole('button', { name: 'Show password' }).click();
+    await expect(passwordInput).toHaveAttribute('type', 'text');
+    await expect(page.getByRole('button', { name: 'Hide password' })).toBeVisible();
+
+    await page.getByRole('button', { name: 'Hide password' }).click();
+    await expect(passwordInput).toHaveAttribute('type', 'password');
+    await expect(page.getByRole('button', { name: 'Show password' })).toBeVisible();
+  });
+
+  test('renders the feature hero on desktop viewports', async ({ page }) => {
+    await page.goto(`/login?book=${TEST_USER.bookSlug}`);
+
+    // ADR-245: the desktop hero carries value props + the access note.
+    await expect(page.getByText('Responsive EPUB reading')).toBeVisible();
+    await expect(page.getByText('Highlights, annotations & bookmarks')).toBeVisible();
+    await expect(page.getByText('Offline reading with sync')).toBeVisible();
+    await expect(page.getByText('Upload & manage books')).toBeVisible();
+    await expect(page.getByText(/No signup needed/)).toBeVisible();
+  });
+
   test('@mobile @smoke logs in and navigates to the reader', async ({ page }) => {
     await login(page);
 

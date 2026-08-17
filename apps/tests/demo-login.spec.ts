@@ -27,11 +27,8 @@ test.describe('Demo login entry points (ADR-244)', () => {
     await mockReaderApi(page, { demoLoginResponse: DEMO_READER_RESPONSE });
     await page.goto('/login?book=demo');
 
-    const demoButton = page.getByRole('button', { name: 'Use reader demo' });
+    const demoButton = page.getByRole('button', { name: 'Try the demo' });
     await expect(demoButton).toBeVisible();
-
-    // Demo info panel shows the reserved email and book slug (Amendment A).
-    await expect(page.getByText(/Demo account: demo\.reader@example\.local/)).toBeVisible();
 
     await demoButton.click();
 
@@ -51,7 +48,7 @@ test.describe('Demo login entry points (ADR-244)', () => {
     });
     await page.goto('/login?book=demo');
 
-    await page.getByRole('button', { name: 'Use reader demo' }).click();
+    await page.getByRole('button', { name: 'Try the demo' }).click();
 
     // The demo button must surface the fail-closed error instead of navigating.
     await expect(page.getByText('Demo login is not available.')).toBeVisible({ timeout: 10000 });
@@ -64,15 +61,13 @@ test.describe('Demo login entry points (ADR-244)', () => {
     await mockReaderApi(page, { bookSlug: DEMO_READER.bookSlug, loginResponse: DEMO_READER_RESPONSE });
     await page.goto(`/login?book=${DEMO_READER.bookSlug}`);
 
-    // Demo info panel surfaces the reserved email, password, and book slug.
-    const demoInfoPanel = page.getByText(/Demo account: demo\.reader@example\.local/);
-    await expect(demoInfoPanel).toBeVisible();
-    await expect(demoInfoPanel).toContainText(DEMO_READER.password);
-    await expect(demoInfoPanel).toContainText(DEMO_READER.bookSlug);
+    // "Fill demo credentials" autofills the documented demo account into the
+    // form (ADR-245 replaces the plaintext info line with this action).
+    await page.getByRole('button', { name: 'Fill demo credentials' }).click();
+    await expect(page.getByLabel('Email Address')).toHaveValue(DEMO_READER.email);
+    await expect(page.getByLabel('Password')).toHaveValue(DEMO_READER.password);
 
     // Sign in through the normal credential form with the demo credentials.
-    await page.getByLabel('Email Address').fill(DEMO_READER.email);
-    await page.getByLabel('Password').fill(DEMO_READER.password);
     await page.getByRole('button', { name: 'Sign In', exact: true }).click();
 
     await expect(page).toHaveURL(/\/read\/demo$/, { timeout: 15000 });
@@ -106,14 +101,12 @@ test.describe('Demo login entry points (ADR-244)', () => {
     await mockAdminApi(page, { adminLoginResponse: DEMO_ADMIN_RESPONSE });
     await page.goto('/admin/login');
 
-    // Demo info panel surfaces the reserved admin email and password.
-    const demoInfoPanel = page.getByText(/Demo account: demo\.admin@example\.local/);
-    await expect(demoInfoPanel).toBeVisible();
-    await expect(demoInfoPanel).toContainText(DEMO_ADMIN.password);
+    // "Fill admin credentials" autofills the documented demo admin account.
+    await page.getByRole('button', { name: 'Fill admin credentials' }).click();
+    await expect(page.getByLabel('Email Address')).toHaveValue(DEMO_ADMIN.email);
+    await expect(page.getByLabel('Password')).toHaveValue(DEMO_ADMIN.password);
 
     // Sign in through the normal credential form with the demo credentials.
-    await page.getByLabel('Email Address').fill(DEMO_ADMIN.email);
-    await page.getByLabel('Password').fill(DEMO_ADMIN.password);
     await page.getByRole('button', { name: 'Sign In', exact: true }).click();
 
     await expect(page).toHaveURL(/\/admin\/books$/, { timeout: 15000 });
@@ -128,11 +121,8 @@ test.describe('Demo login entry points (ADR-244)', () => {
     await mockAdminApi(page);
     await page.goto('/admin/login');
 
-    const demoButton = page.getByRole('button', { name: 'Use admin demo' });
+    const demoButton = page.getByRole('button', { name: 'Try admin demo' });
     await expect(demoButton).toBeVisible();
-
-    // Demo info panel shows the reserved admin email (Amendment A).
-    await expect(page.getByText(/demo\.admin@example\.local/)).toBeVisible();
 
     await demoButton.click();
 

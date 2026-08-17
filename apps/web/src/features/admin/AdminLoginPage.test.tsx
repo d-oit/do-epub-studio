@@ -358,13 +358,27 @@ describe('AdminLoginPage', () => {
     it('hides demo button when demo login is disabled', () => {
       mockIsDemoLoginEnabled.mockReturnValue(false);
       renderLoginPage();
-      expect(screen.queryByText('admin.login.demoAdmin')).not.toBeInTheDocument();
+      expect(screen.queryByText('admin.login.demoTry')).not.toBeInTheDocument();
+      expect(screen.queryByText('admin.login.demoFillCredentials')).not.toBeInTheDocument();
     });
 
     it('shows demo button when demo login is enabled', () => {
       mockIsDemoLoginEnabled.mockReturnValue(true);
       renderLoginPage();
-      expect(screen.getByText('admin.login.demoAdmin')).toBeInTheDocument();
+      expect(screen.getByText('admin.login.demoTry')).toBeInTheDocument();
+      expect(screen.getByText('admin.login.demoOr')).toBeInTheDocument();
+    });
+
+    it('fills admin demo credentials into the form fields', async () => {
+      mockIsDemoLoginEnabled.mockReturnValue(true);
+      renderLoginPage();
+
+      fireEvent.click(screen.getByText('admin.login.demoFillCredentials'));
+
+      await waitFor(() => {
+        expect(screen.getByLabelText('admin.login.email')).toHaveValue('demo.admin@example.local');
+        expect(screen.getByLabelText('admin.login.password')).toHaveValue('demo-admin-password');
+      });
     });
 
     it('handles successful demo admin login', async () => {
@@ -375,7 +389,7 @@ describe('AdminLoginPage', () => {
       });
 
       renderLoginPage();
-      fireEvent.click(screen.getByText('admin.login.demoAdmin'));
+      fireEvent.click(screen.getByText('admin.login.demoTry'));
 
       await waitFor(() => {
         expect(mockNavigate).toHaveBeenCalledWith('/admin/books');
@@ -387,11 +401,31 @@ describe('AdminLoginPage', () => {
       vi.mocked(apiRequest).mockRejectedValueOnce(new Error('Demo disabled'));
 
       renderLoginPage();
-      fireEvent.click(screen.getByText('admin.login.demoAdmin'));
+      fireEvent.click(screen.getByText('admin.login.demoTry'));
 
       await waitFor(() => {
         expect(screen.getByText('Demo disabled')).toBeInTheDocument();
       });
+    });
+  });
+
+  describe('hero and app info', () => {
+    it('renders the admin feature bullets', () => {
+      renderLoginPage();
+      // Hero (desktop) and mobile info both render the shared feature list.
+      expect(screen.getAllByText('admin.login.hero.feature.books').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('admin.login.hero.feature.grants').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('admin.login.hero.feature.audit').length).toBeGreaterThan(0);
+    });
+
+    it('renders the admin access note', () => {
+      renderLoginPage();
+      expect(screen.getAllByText('admin.login.howAccessWorks').length).toBeGreaterThan(0);
+    });
+
+    it('renders the show/hide password toggle', () => {
+      renderLoginPage();
+      expect(screen.getAllByText('ui.showPassword').length).toBeGreaterThan(0);
     });
   });
 
