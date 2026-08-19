@@ -49,6 +49,10 @@ export const RESERVED = {
 };
 
 export const DEFAULT_BOOK_SLUG = 'demo';
+/** Documented public demo password for the reader account (non-production only). */
+export const DEMO_READER_DEFAULT_PASSWORD = 'demo-reader-password';
+/** Documented public demo password for the admin account (non-production only). */
+export const DEMO_ADMIN_DEFAULT_PASSWORD = 'demo-admin-password';
 export const BATCH_LIMIT = 2000;
 
 /**
@@ -70,6 +74,9 @@ export function isProductionLike(env = {}) {
 /**
  * Pure guard check. Returns a human-readable failure reason, or null when all
  * guards pass. This does NOT touch process.exitCode.
+ *
+ * Demo credentials are documented public values (non-production only, enforced
+ * below); operators may override via DEMO_ADMIN_PASSWORD/DEMO_READER_PASSWORD.
  */
 export function checkGuards(env = {}) {
   if (env.DEMO_ACCOUNTS_ENABLED !== '1') {
@@ -77,10 +84,6 @@ export function checkGuards(env = {}) {
   }
   if (isProductionLike(env)) {
     return 'Refusing to seed demo accounts: environment is production.';
-  }
-  if (!env.DEMO_ADMIN_PASSWORD) {
-    return 'DEMO_ADMIN_PASSWORD is not set; refusing to seed demo accounts '
-      + '(operator-provided, never tracked in repo).';
   }
   return null;
 }
@@ -158,12 +161,16 @@ export async function seedDemoAccounts({
   const isLocal = String(env.ENVIRONMENT || 'local').toLowerCase() === 'local';
   const adminDisabledAt = isLocal ? null : new Date().toISOString();
 
+  // Documented public demo credentials (non-production only; the production
+  // guard above fails closed). Operators may override via env, but the demo
+  // users always have a usable password for normal email+password login.
+  const adminPassword = env.DEMO_ADMIN_PASSWORD || DEMO_ADMIN_DEFAULT_PASSWORD;
+  const readerPassword = env.DEMO_READER_PASSWORD || DEMO_READER_DEFAULT_PASSWORD;
+
   // Never let passwords reach logs/audit/stdout — only their hashes are
   // written to the DB, and we do not even log those.
-  const adminHash = await hasPassword(env.DEMO_ADMIN_PASSWORD);
-  const readerHash = env.DEMO_READER_PASSWORD
-    ? await hasPassword(env.DEMO_READER_PASSWORD)
-    : null;
+  const adminHash = await hasPassword(adminPassword);
+  const readerHash = await hasPassword(readerPassword);
 
   const adminUserId = (await findUserId(db, RESERVED.admin.email)) ?? randomUUID();
   const readerUserId = (await findUserId(db, RESERVED.reader.email)) ?? randomUUID();
@@ -194,19 +201,30 @@ export async function seedDemoAccounts({
     disabledAt: null,
   });
 
-  // Reader demo grant against a demo book (if present). Never an orphan grant.
+  // Reader demo grant against a demo book. Provision a minimal placeholder
+  // book when none exists so the demo reader can always sign in and reach a
+  // book landing page (GOAP-244: demo accounts must be sign-in-ready on a
+  // fresh DB, not silently skipped). The book is empty until an operator
+  // uploads real content; the demo grant is never an orphan.
   const bookRow = await findBook(db, bookSlug);
-  if (bookRow) {
+  let bookId = bookRow?.id ?? null;
+  if (!bookId) {
+    bookId = await provisionDemoBook(db, bookSlug);
+    if (bookId) {
+      log.log(`✓ Provisioned demo book "${bookSlug}" (placeholder; upload content to fill it).`);
+    }
+  }
+  if (bookId) {
     const mode = readerHash ? 'password_protected' : 'reader_only';
     await upsertGrant(db, {
       adminUserId,
-      bookId: bookRow.id,
+      bookId,
       email: RESERVED.reader.email,
       passwordHash: readerHash,
       mode,
     });
   } else {
-    log.warn(`⚠ No book with slug "${bookSlug}" found; reader demo grant skipped.`);
+    log.warn(`⚠ Demo book "${bookSlug}" could not be provisioned; reader demo grant skipped.`);
   }
 
   log.log(`✓ Seeded demo accounts (reader=${RESERVED.reader.email}, admin=${RESERVED.admin.email}).`);
@@ -221,6 +239,32 @@ async function findUserId(db, email) {
 async function findBook(db, slug) {
   const res = await db('SELECT id FROM books WHERE slug = ?', [slug]);
   return res?.rows?.[0] ?? null;
+}
+
+const upsertBookSql = 'INSERT INTO books '
+  + '(id, slug, title, author_name, description, language, visibility, '
+  + 'created_at, updated_at) '
+  + 'VALUES (?, ?, ?, ?, ?, ?, ?, datetime(\'now\'), datetime(\'now\')) '
+  + 'ON CONFLICT(slug) DO NOTHING';
+
+/**
+ * Create a minimal placeholder demo book so the reader demo grant is not an
+ * orphan. Safe to call on every seed run (ON CONFLICT DO NOTHING + re-select).
+ * Returns the book id when a book is now present, else null.
+ */
+async function provisionDemoBook(db, slug) {
+  try {
+    await db(upsertBookSql, [
+      randomUUID(), slug, 'Demo Book', 'Demo Author', null, 'en', 'public',
+    ]);
+    const row = await findBook(db, slug);
+    return row?.id ?? null;
+  } catch (err) {
+    // A schema without a books table, or a read-only/remote variant, must not
+    // fail the whole seed — the demo reader simply has no grant to attach to.
+    process.stderr.write(`⚠ Could not provision demo book "${slug}": ${err?.message ?? err}\n`);
+    return null;
+  }
 }
 
 const upsertUserSql = 'INSERT INTO users '

@@ -195,6 +195,49 @@ export const ADMIN_LOGIN_RESPONSE = {
   },
 };
 
+export const DEMO_READER = {
+  email: 'demo.reader@example.local',
+  password: process.env.DEMO_READER_PASSWORD || 'demo-reader-password',
+  bookSlug: 'demo',
+};
+
+export const DEMO_ADMIN = {
+  email: 'demo.admin@example.local',
+  password: process.env.DEMO_ADMIN_PASSWORD || 'demo-admin-password',
+};
+
+export const DEMO_READER_RESPONSE = {
+  ok: true,
+  data: {
+    sessionToken: 'demo-reader-session-token',
+    book: {
+      id: 'book-demo',
+      slug: 'demo',
+      title: 'Demo Book',
+      authorName: 'Demo Author',
+      visibility: 'public',
+      coverImageUrl: null,
+    },
+    capabilities: {
+      canRead: true,
+      canComment: true,
+      canHighlight: true,
+      canBookmark: true,
+      canDownloadOffline: false,
+      canExportNotes: false,
+      canManageAccess: false,
+    },
+  },
+};
+
+export const DEMO_ADMIN_RESPONSE = {
+  ok: true,
+  data: {
+    token: 'demo-admin-session-token',
+    user: { id: 'demo-admin-1', email: 'demo.admin@example.local', role: 'admin' },
+  },
+};
+
 // ---------------------------------------------------------------------------
 // Route mock helpers
 // ---------------------------------------------------------------------------
@@ -204,6 +247,7 @@ export interface MockRouteOptions {
   epubUrl?: string;
   epubBuffer?: Buffer;
   loginResponse?: typeof LOGIN_RESPONSE;
+  demoLoginResponse?: typeof DEMO_READER_RESPONSE;
   includeBookmarks?: boolean;
   includeLogout?: boolean;
   includeInsights?: boolean;
@@ -218,6 +262,13 @@ export async function mockReaderApi(page: Page, opts: MockRouteOptions = {}) {
   await page.route('**/api/access/request', async (route: Route) => {
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(loginResp) });
   });
+
+  // ADR-244: demo reader session entry point. Same DTO shape as /api/access/request.
+  if (opts.demoLoginResponse) {
+    await page.route('**/api/demo/reader-login', async (route: Route) => {
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(opts.demoLoginResponse) });
+    });
+  }
 
   await page.route('**/api/books/*/file-url', async (route: Route) => {
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { url: epubUrl } }) });
@@ -267,10 +318,23 @@ export async function mockReaderApi(page: Page, opts: MockRouteOptions = {}) {
   }
 }
 
-export async function mockAdminApi(page: Page) {
-  await page.route('**/api/admin/login', async (route: Route) => {
-    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(ADMIN_LOGIN_RESPONSE) });
+/**
+ * ADR-244: mock the demo admin session endpoint. Caller must also call
+ * `mockAdminApi` (or this returns after wiring just the demo route) so the
+ * `/admin/books` destination resolves.
+ */
+export async function mockDemoAdminApi(page: Page) {
+  await page.route('**/api/demo/admin-login', async (route: Route) => {
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(DEMO_ADMIN_RESPONSE) });
   });
+}
+
+export async function mockAdminApi(page: Page, opts: { adminLoginResponse?: { ok: true; data: { token: string; user: { id: string; email: string; role: string } } } } = {}) {
+  await page.route('**/api/admin/login', async (route: Route) => {
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(opts.adminLoginResponse ?? ADMIN_LOGIN_RESPONSE) });
+  });
+
+  await mockDemoAdminApi(page);
 
   await page.route('**/api/admin/books**', async (route: Route) => {
     const books = [

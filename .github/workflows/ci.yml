@@ -543,17 +543,21 @@ jobs:
         # VITE_LOG_LEVEL=info enables E2E tests to observe progress
         # and lifecycle telemetry events in preview mode (production
         # builds keep the default warn level outside of E2E).
-        run: VITE_LOG_LEVEL=info pnpm --filter @do-epub-studio/web build
+        # VITE_DEMO_LOGIN_ENABLED + VITE_HELP_URL bake the demo buttons and
+        # help link into the build so the demo-login E2E spec runs here.
+        # VITE_HELP_URL=/help mirrors Amendment B (same-origin in-app page).
+        run: VITE_LOG_LEVEL=info VITE_DEMO_LOGIN_ENABLED=1 VITE_DEMO_BOOK_SLUG=demo VITE_HELP_URL=/help pnpm --filter @do-epub-studio/web build
 
       - name: Run full cross-browser E2E tests
         uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60  # v4.0.0
         with:
           timeout_minutes: 30
           max_attempts: 2
-          command: PLAYWRIGHT_MODE=preview pnpm test:e2e --retries=1
+          command: E2E_DEMO_LOGIN=1 PLAYWRIGHT_MODE=preview pnpm test:e2e --retries=1
         env:
           PLAYWRIGHT_INCLUDE_WEBKIT: '1'
           PLAYWRIGHT_MODE: preview
+          E2E_DEMO_LOGIN: '1'
           retry_wait_seconds: 30
           warning_on_retry: true
 

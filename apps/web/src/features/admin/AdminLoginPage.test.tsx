@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AdminLoginPage } from './AdminLoginPage';
 import { BrowserRouter } from 'react-router-dom';
@@ -27,6 +27,15 @@ vi.mock('../../lib/api', () => ({
   apiRequest: vi.fn().mockResolvedValue(null),
 }));
 
+const mockIsDemoLoginEnabled = vi.fn();
+const mockResolveHelpUrl = vi.fn();
+vi.mock('../../config/demo-config', () => ({
+  isDemoLoginEnabled: () => mockIsDemoLoginEnabled(),
+  resolveHelpUrl: () => mockResolveHelpUrl(),
+  DEMO_ADMIN_EMAIL: 'demo.admin@example.local',
+  DEMO_ADMIN_PASSWORD: 'demo-admin-password',
+}));
+
 // Mock useAuthStore
 const mockSetAdminAuth = vi.fn();
 vi.mock('../../stores/auth', () => ({
@@ -46,6 +55,8 @@ vi.mock('@simplewebauthn/browser', () => ({
 describe('AdminLoginPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockIsDemoLoginEnabled.mockReturnValue(false);
+    mockResolveHelpUrl.mockReturnValue(null);
   });
 
   afterEach(() => {
@@ -340,6 +351,64 @@ describe('AdminLoginPage', () => {
       await waitFor(() => {
         expect(mockSetAdminAuth).toHaveBeenCalledWith({ sessionToken: 'recovery-token', email: 'admin@example.com' });
       });
+    });
+  });
+
+  describe('demo login', () => {
+    it('hides demo button when demo login is disabled', () => {
+      mockIsDemoLoginEnabled.mockReturnValue(false);
+      renderLoginPage();
+      expect(screen.queryByText('admin.login.demoAdmin')).not.toBeInTheDocument();
+    });
+
+    it('shows demo button when demo login is enabled', () => {
+      mockIsDemoLoginEnabled.mockReturnValue(true);
+      renderLoginPage();
+      expect(screen.getByText('admin.login.demoAdmin')).toBeInTheDocument();
+    });
+
+    it('handles successful demo admin login', async () => {
+      mockIsDemoLoginEnabled.mockReturnValue(true);
+      vi.mocked(apiRequest).mockResolvedValueOnce({
+        token: 'demo-admin-tok',
+        user: { id: 'u1', email: 'demo.admin@example.local', role: 'admin' },
+      });
+
+      renderLoginPage();
+      fireEvent.click(screen.getByText('admin.login.demoAdmin'));
+
+      await waitFor(() => {
+        expect(mockNavigate).toHaveBeenCalledWith('/admin/books');
+      });
+    });
+
+    it('shows error on demo admin login failure', async () => {
+      mockIsDemoLoginEnabled.mockReturnValue(true);
+      vi.mocked(apiRequest).mockRejectedValueOnce(new Error('Demo disabled'));
+
+      renderLoginPage();
+      fireEvent.click(screen.getByText('admin.login.demoAdmin'));
+
+      await waitFor(() => {
+        expect(screen.getByText('Demo disabled')).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('help link', () => {
+    it('hides help link when no help URL configured', () => {
+      mockResolveHelpUrl.mockReturnValue(null);
+      renderLoginPage();
+      expect(screen.queryByText('admin.login.helpLink')).not.toBeInTheDocument();
+    });
+
+    it('renders help link with correct href and rel for external URL', () => {
+      mockResolveHelpUrl.mockReturnValue({ href: 'https://help.example.com', isExternal: true });
+      renderLoginPage();
+      const link = screen.getByText('admin.login.helpLink').closest('a');
+      expect(link).toHaveAttribute('href', 'https://help.example.com');
+      expect(link).toHaveAttribute('target', '_blank');
+      expect(link).toHaveAttribute('rel', 'noopener noreferrer');
     });
   });
 });

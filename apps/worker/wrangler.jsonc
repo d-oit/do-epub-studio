@@ -13,6 +13,9 @@
     "TURSO_AUTH_TOKEN": "",
     "SENTRY_DSN": "",
     "ENVIRONMENT": "development",
+    "DEMO_LOGIN_ENABLED": "",
+    "DEMO_BOOK_SLUG": "demo",
+    "DEMO_ACCOUNTS_PROD_ALLOWLIST": "",
     "WEBAUTHN_RP_ID": "localhost",
     "WEBAUTHN_RP_NAME": "d.o.EPUB Studio",
     "WEBAUTHN_ORIGIN": "http://localhost:5173"

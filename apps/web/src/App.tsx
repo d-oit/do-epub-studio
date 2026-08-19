@@ -49,6 +49,9 @@ const AccountSettingsPage = React.lazy(() =>
 const CatalogPage = React.lazy(() =>
   import('./features/catalog/CatalogPage').then((m) => ({ default: m.CatalogPage }))
 );
+const HelpPage = React.lazy(() =>
+  import('./features/help/HelpPage').then((m) => ({ default: m.HelpPage }))
+);
 const MyLibraryPage = React.lazy(() =>
   import('./features/library/MyLibraryPage').then((m) => ({ default: m.MyLibraryPage }))
 );
@@ -116,6 +119,7 @@ export function App() {
       <ViewTransitionRoutes>
         <Route path="/" element={<AppShell />} />
         <Route path="/catalog" element={<Suspense fallback={<CatalogSkeleton />}><CatalogPage /></Suspense>} />
+        <Route path="/help" element={<Suspense fallback={<AuthSkeleton />}><HelpPage /></Suspense>} />
         <Route path="/login" element={<Suspense fallback={<AuthSkeleton />}><LoginPage /></Suspense>} />
         <Route path="/admin/login" element={<Suspense fallback={<AuthSkeleton />}><AdminLoginPage /></Suspense>} />
         <Route path="/admin/recover" element={<Suspense fallback={<AuthSkeleton />}><AdminRecoverPage /></Suspense>} />

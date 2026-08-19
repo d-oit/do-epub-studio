@@ -31,6 +31,7 @@ vi.mock('../auth/admin-middleware', async (importOriginal) => {
     ...actual,
     requireAdminAuth: vi.fn(),
     createAdminSession: vi.fn(),
+    createAdminDemoSession: vi.fn(),
     createAdminSessionMfa: vi.fn(),
     revokeAdminSession: vi.fn(),
     generateAdminToken: vi.fn(),
@@ -102,6 +103,7 @@ import { requireAuth } from '../auth/middleware';
 import {
   requireAdminAuth,
   createAdminSession,
+  createAdminDemoSession,
   createAdminSessionMfa,
   revokeAdminSession,
   revokeAllAdminSessionsForUser,
@@ -138,6 +140,7 @@ export const mockTransaction = transaction as Mock;
 export const mockRequireAuth = requireAuth as Mock;
 export const mockRequireAdminAuth = requireAdminAuth as Mock;
 export const mockCreateAdminSession = createAdminSession as Mock;
+export const mockCreateAdminDemoSession = createAdminDemoSession as Mock;
 export const mockCreateAdminSessionMfa = createAdminSessionMfa as Mock;
 export const mockRevokeAdminSession = revokeAdminSession as Mock;
 export const mockRevokeAllAdminSessionsForUser = revokeAllAdminSessionsForUser as Mock;

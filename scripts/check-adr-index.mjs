@@ -51,7 +51,14 @@ for (const section of sections) {
     if (!baseMatch) continue;
     const baseNum = baseMatch[1];
 
-    addNumber(baseNum, { row: line, section: sectionName, num: numStr });
+    // ADR-083 §2: plan numbers (0NN-goap-*) and ADR numbers (0NN-adr-*) share
+    // the numeric space but are distinguished by filename prefix — a matching
+    // plan/ADR pair (e.g. GOAP-244 + ADR-244) is a sibling relationship, not a
+    // collision. Only ADR rows participate in duplicate detection.
+    const isAdrRow = filePath && filePath.includes('-adr-');
+    if (isAdrRow) {
+      addNumber(baseNum, { row: line, section: sectionName, num: numStr });
+    }
 
     if (sectionName.startsWith('Accepted') && filePath) {
       const cleanPath = filePath.replace(/`/g, '').trim();

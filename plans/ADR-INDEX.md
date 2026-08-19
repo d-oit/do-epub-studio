@@ -88,6 +88,7 @@
 | 232    | Password Reset Token Governance    | `plans/232-adr-password-reset-token-governance.md`     | Accepted (GOAP-230) |
 | 233    | Demo Account Sandbox Policy        | `plans/233-adr-demo-account-sandbox-policy.md`         | Accepted (GOAP-230) |
 | 234    | Session and Admin Auth Hardening   | `plans/234-adr-session-and-admin-auth-hardening.md`    | Accepted (GOAP-230; items 5+6 passkeys/recovery merged via GOAP-236 with migration 0011; item 7 risk-event handling merged via GOAP-237/PR #977) |
+| 244    | Demo Login and Help Entry Points   | `plans/244-adr-demo-login-help-entrypoints.md`        | Accepted (GOAP-244) |
 
 ## Proposed
 
@@ -124,6 +125,7 @@ None.
 | 241    | Warning Closure & Pre-Existing Fixes (GOAP) | `plans/241-goap-warning-closure.md`                                                 | COMPLETED: PR #984 |
 | 242    | Export Sanitization Hardening + Review Closure (GOAP) | `plans/242-goap-export-hardening-merge.md`                                  | COMPLETED: PR #987 |
 | 243    | Web `as unknown as` Cast Cleanup (GOAP) | `plans/243-goap-web-cast-cleanup.md`                                        | COMPLETED: PR #989 |
+| 244    | Demo Login and Help Entry Points (GOAP) | `plans/244-goap-demo-login-help-entrypoints.md`                              | COMPLETED |
 
 ## Pending
 

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { startAuthentication, type PublicKeyCredentialRequestOptionsJSON } from '@simplewebauthn/browser';
 import { useTranslation } from '../../hooks/useTranslation';
@@ -8,6 +8,7 @@ import { LocaleSwitcher } from '../../components/LocaleSwitcher';
 import { Button, Input, AppLogo } from '../../components/ui';
 import { ThemeToggle } from '../../components/ThemeToggle';
 import { APP_NAME, APP_VERSION_LABEL } from '../../config/app-identity';
+import { isDemoLoginEnabled, resolveHelpUrl, DEMO_ADMIN_EMAIL, DEMO_ADMIN_PASSWORD } from '../../config/demo-config';
 
 interface AdminUser {
   id: string;
@@ -25,6 +26,255 @@ interface AdminLoginResponse {
 type LoginStep = 'credentials' | 'mfa';
 type MfaMode = 'passkey' | 'recovery';
 
+function useAdminDemoLogin() {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const setAdminAuth = useAuthStore((state) => state.setAdminAuth);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const login = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await apiRequest<AdminLoginResponse>('/api/demo/admin-login', {
+        method: 'POST',
+      });
+      if (!data.token) {
+        throw new Error('No session token returned');
+      }
+      setAdminAuth({ sessionToken: data.token, email: data.user.email });
+      void navigate('/admin/books');
+    } catch (err) {
+      setError((err as Error).message || t('admin.login.invalidCredentials'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { loading, error, login };
+}
+
+function AdminLoginHeader() {
+  const { t } = useTranslation();
+  return (
+    <div className="text-center mb-8">
+      <AppLogo size={44} className="mx-auto mb-3 text-accent" />
+      <h1 className="text-2xl font-bold text-foreground">
+        {t('admin.login.title')}
+      </h1>
+      <p className="text-foreground-muted mt-2 text-sm">
+        {APP_NAME} {t('admin.login.managementLabel')} · {APP_VERSION_LABEL}
+      </p>
+    </div>
+  );
+}
+
+interface CredentialsFormProps {
+  email: string;
+  password: string;
+  isLoading: boolean;
+  onEmailChange: (value: string) => void;
+  onPasswordChange: (value: string) => void;
+  onSubmit: (e: React.FormEvent) => void;
+}
+
+function AdminCredentialsForm({
+  email,
+  password,
+  isLoading,
+  onEmailChange,
+  onPasswordChange,
+  onSubmit,
+}: CredentialsFormProps) {
+  const { t } = useTranslation();
+  return (
+    <form onSubmit={onSubmit}>
+      <div className="space-y-4">
+        <Input
+          id="email"
+          label={t('admin.login.email')}
+          type="email"
+          required
+          autoComplete="email"
+          value={email}
+          onChange={(e) => onEmailChange(e.target.value)}
+        />
+
+        <Input
+          id="password"
+          label={t('admin.login.password')}
+          type="password"
+          required
+          autoComplete="current-password"
+          value={password}
+          onChange={(e) => onPasswordChange(e.target.value)}
+        />
+
+        <Button
+          type="submit"
+          className="w-full"
+          isLoading={isLoading}
+          loadingLabel={t('admin.login.signingIn')}
+        >
+          {t('admin.login.signIn')}
+        </Button>
+      </div>
+    </form>
+  );
+}
+
+function MfaFactorChooser({
+  isLoading,
+  onPasskey,
+  onRecovery,
+}: {
+  isLoading: boolean;
+  onPasskey: () => void;
+  onRecovery: () => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <div className="space-y-3">
+      <Button
+        type="button"
+        className="w-full"
+        isLoading={isLoading}
+        loadingLabel={t('admin.login.signingIn')}
+        onClick={onPasskey}
+      >
+        {t('admin.login.usePasskey')}
+      </Button>
+      <Button
+        type="button"
+        variant="secondary"
+        className="w-full"
+        disabled={isLoading}
+        onClick={onRecovery}
+      >
+        {t('admin.login.useRecoveryCode')}
+      </Button>
+    </div>
+  );
+}
+
+interface RecoveryFormProps {
+  recoveryEmail: string;
+  recoveryPassword: string;
+  recoveryCode: string;
+  isLoading: boolean;
+  onRecoveryPasswordChange: (value: string) => void;
+  onRecoveryCodeChange: (value: string) => void;
+  onSubmit: (e: React.FormEvent) => void;
+  onBack: () => void;
+}
+
+function AdminRecoveryForm({
+  recoveryEmail,
+  recoveryPassword,
+  recoveryCode,
+  isLoading,
+  onRecoveryPasswordChange,
+  onRecoveryCodeChange,
+  onSubmit,
+  onBack,
+}: RecoveryFormProps) {
+  const { t } = useTranslation();
+  return (
+    <form onSubmit={onSubmit}>
+      <div className="space-y-4">
+        <Input
+          id="recovery-email"
+          label={t('admin.login.email')}
+          type="email"
+          required
+          autoComplete="email"
+          value={recoveryEmail}
+          readOnly
+        />
+
+        <Input
+          id="recovery-password"
+          label={t('admin.login.password')}
+          type="password"
+          required
+          autoComplete="current-password"
+          value={recoveryPassword}
+          onChange={(e) => onRecoveryPasswordChange(e.target.value)}
+        />
+
+        <Input
+          id="recovery-code"
+          label={t('admin.login.recoveryCode')}
+          type="text"
+          required
+          autoComplete="one-time-code"
+          value={recoveryCode}
+          onChange={(e) => onRecoveryCodeChange(e.target.value)}
+        />
+
+        <Button
+          type="submit"
+          className="w-full"
+          isLoading={isLoading}
+          loadingLabel={t('admin.login.signingIn')}
+        >
+          {t('admin.login.verifyRecovery')}
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="w-full"
+          onClick={onBack}
+          disabled={isLoading}
+        >
+          {t('admin.login.back')}
+        </Button>
+      </div>
+    </form>
+  );
+}
+
+function AdminDemoBlock({
+  loading,
+  error,
+  onLogin,
+}: {
+  loading: boolean;
+  error: string | null;
+  onLogin: () => void;
+}) {
+  const { t } = useTranslation();
+  if (!isDemoLoginEnabled()) return null;
+  return (
+    <div className="mt-4">
+      {error && (
+        <div
+          role="alert"
+          aria-live="polite"
+          className="mb-4 p-3 bg-accent-error/10 border border-accent-error/20 rounded text-sm text-accent-error"
+        >
+          {error}
+        </div>
+      )}
+      <Button
+        type="button"
+        variant="secondary"
+        className="w-full"
+        isLoading={loading}
+        loadingLabel={t('admin.login.demoSigningIn')}
+        onClick={onLogin}
+      >
+        {t('admin.login.demoAdmin')}
+      </Button>
+      <p className="mt-2 text-xs text-foreground-muted text-center">
+        {t('admin.login.demoInfo', { email: DEMO_ADMIN_EMAIL, password: DEMO_ADMIN_PASSWORD })}
+      </p>
+    </div>
+  );
+}
+
 export function AdminLoginPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -40,6 +290,7 @@ export function AdminLoginPage() {
   const [loginTicket, setLoginTicket] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const demo = useAdminDemoLogin();
 
   const completeSignIn = (data: { token: string; user: AdminUser }) => {
     setAdminAuth({ sessionToken: data.token, email: data.user.email });
@@ -150,6 +401,8 @@ export function AdminLoginPage() {
     }
   };
 
+  const helpLink = useMemo(() => resolveHelpUrl(), []);
+
   return (
     <div className="relative min-h-dvh overflow-x-clip bg-background px-4 py-6 sm:px-6 lg:px-8">
       <div className="fixed right-3 top-3 z-20 flex items-center gap-2 sm:right-4 sm:top-4">
@@ -159,18 +412,10 @@ export function AdminLoginPage() {
 
       <main
         id="main-content"
-        className="mx-auto flex min-h-[calc(100dvh-3rem)] w-full max-w-md items-center pt-16"
+        className="mx-auto flex min-h-[calc(100dvh-3rem)] w-full max-w-md items-start pt-16 pb-8"
       >
       <section className="w-full rounded-lg border border-border bg-background-secondary p-5 shadow-md sm:p-7 lg:p-8">
-        <div className="text-center mb-8">
-          <AppLogo size={44} className="mx-auto mb-3 text-accent" />
-          <h1 className="text-2xl font-bold text-foreground">
-            {t('admin.login.title')}
-          </h1>
-          <p className="text-foreground-muted mt-2 text-sm">
-            {APP_NAME} {t('admin.login.managementLabel')} · {APP_VERSION_LABEL}
-          </p>
-        </div>
+        <AdminLoginHeader />
 
         {error && (
           <div
@@ -183,38 +428,14 @@ export function AdminLoginPage() {
         )}
 
         {step === 'credentials' ? (
-          <form onSubmit={(e) => { void handleSubmit(e); }}>
-            <div className="space-y-4">
-              <Input
-                id="email"
-                label={t('admin.login.email')}
-                type="email"
-                required
-                autoComplete="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-
-              <Input
-                id="password"
-                label={t('admin.login.password')}
-                type="password"
-                required
-                autoComplete="current-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-
-              <Button
-                type="submit"
-                className="w-full"
-                isLoading={isLoading}
-                loadingLabel={t('admin.login.signingIn')}
-              >
-                {t('admin.login.signIn')}
-              </Button>
-            </div>
-          </form>
+          <AdminCredentialsForm
+            email={email}
+            password={password}
+            isLoading={isLoading}
+            onEmailChange={setEmail}
+            onPasswordChange={setPassword}
+            onSubmit={(e) => { void handleSubmit(e); }}
+          />
         ) : (
           <div className="space-y-5">
             <div>
@@ -227,83 +448,34 @@ export function AdminLoginPage() {
             </div>
 
             {mfaMode === null && (
-              <div className="space-y-3">
-                <Button
-                  type="button"
-                  className="w-full"
-                  isLoading={isLoading}
-                  loadingLabel={t('admin.login.signingIn')}
-                  onClick={() => { void handlePasskey(); }}
-                >
-                  {t('admin.login.usePasskey')}
-                </Button>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  className="w-full"
-                  disabled={isLoading}
-                  onClick={() => { setMfaMode('recovery'); setError(null); }}
-                >
-                  {t('admin.login.useRecoveryCode')}
-                </Button>
-              </div>
+              <MfaFactorChooser
+                isLoading={isLoading}
+                onPasskey={() => { void handlePasskey(); }}
+                onRecovery={() => { setMfaMode('recovery'); setError(null); }}
+              />
             )}
 
             {mfaMode === 'recovery' && (
-              <form onSubmit={(e) => { void handleRecovery(e); }}>
-                <div className="space-y-4">
-                  <Input
-                    id="recovery-email"
-                    label={t('admin.login.email')}
-                    type="email"
-                    required
-                    autoComplete="email"
-                    value={recoveryEmail}
-                    readOnly
-                  />
-
-                  <Input
-                    id="recovery-password"
-                    label={t('admin.login.password')}
-                    type="password"
-                    required
-                    autoComplete="current-password"
-                    value={recoveryPassword}
-                    onChange={(e) => setRecoveryPassword(e.target.value)}
-                  />
-
-                  <Input
-                    id="recovery-code"
-                    label={t('admin.login.recoveryCode')}
-                    type="text"
-                    required
-                    autoComplete="one-time-code"
-                    value={recoveryCode}
-                    onChange={(e) => setRecoveryCode(e.target.value)}
-                  />
-
-                  <Button
-                    type="submit"
-                    className="w-full"
-                    isLoading={isLoading}
-                    loadingLabel={t('admin.login.signingIn')}
-                  >
-                    {t('admin.login.verifyRecovery')}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="w-full"
-                    onClick={() => { setMfaMode(null); }}
-                    disabled={isLoading}
-                  >
-                    {t('admin.login.back')}
-                  </Button>
-                </div>
-              </form>
+              <AdminRecoveryForm
+                recoveryEmail={recoveryEmail}
+                recoveryPassword={recoveryPassword}
+                recoveryCode={recoveryCode}
+                isLoading={isLoading}
+                onRecoveryPasswordChange={setRecoveryPassword}
+                onRecoveryCodeChange={setRecoveryCode}
+                onSubmit={(e) => { void handleRecovery(e); }}
+                onBack={() => { setMfaMode(null); }}
+              />
             )}
           </div>
+        )}
+
+        {step === 'credentials' && (
+          <AdminDemoBlock
+            loading={demo.loading}
+            error={demo.error}
+            onLogin={() => { void demo.login(); }}
+          />
         )}
 
         <div className="mt-4 text-center">
@@ -330,6 +502,18 @@ export function AdminLoginPage() {
             {t('admin.login.backToReader')}
           </Button>
         </div>
+        {helpLink && (
+          <div className="mt-4 text-center">
+            <a
+              href={helpLink.href}
+              target={helpLink.isExternal ? '_blank' : undefined}
+              rel={helpLink.isExternal ? 'noopener noreferrer' : undefined}
+              className="text-sm text-accent hover:opacity-80 underline underline-offset-2 transition-colors font-medium"
+            >
+              {t('admin.login.helpLink')}
+            </a>
+          </div>
+        )}
       </section>
       </main>
     </div>
