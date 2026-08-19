@@ -78,6 +78,9 @@ ALLOWED_SHAS=(
     "actions/stale@4391f3da665fdf50b6810c1a66712fb9ba21aa93"
     "ossf/scorecard-action@55891bbd73f2425e97637d96e306fc9d491d0b21"
     "ossf/scorecard-action@2d1146689b8cda280b9bc96326124645441f03bc"
+    "github/codeql-action/init@ff2f1c621b7f889edc0d3c761ac2e6a3f8cdb0dd"
+    "github/codeql-action/analyze@ff2f1c621b7f889edc0d3c761ac2e6a3f8cdb0dd"
+    "github/codeql-action/upload-sarif@ff2f1c621b7f889edc0d3c761ac2e6a3f8cdb0dd"
 )
 
 # Function to check if an action@sha is allowed
