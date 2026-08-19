@@ -39,7 +39,15 @@ if ! command -v actionlint &> /dev/null; then
   if [[ "$OS" == "linux" || "$OS" == "darwin" ]]; then
     printf '%sInstalling actionlint...%s\n' "${BLUE}" "${NC}"
     URL="https://github.com/rhysd/actionlint/releases/download/v1.6.26/actionlint_1.6.26_${OS}_${ARCH}.tar.gz"
-    curl -sSL "$URL" | tar xz -C "$HOME/.local/bin" actionlint 2>/dev/null || true
+    # Retry transient release-download failures (issue #1003): a single
+    # curl|tar that silently swallowed errors left CI hard-failing on
+    # "actionlint is required but not available" when the download blipped.
+    for _ in 1 2 3; do
+      if curl -fsSL --retry 3 --retry-delay 2 --retry-all-errors "$URL" | tar xz -C "$HOME/.local/bin" actionlint 2>/dev/null; then
+        break
+      fi
+      sleep 2
+    done
   fi
 fi
 
