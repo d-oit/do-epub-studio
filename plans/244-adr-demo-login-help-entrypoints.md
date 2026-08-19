@@ -34,6 +34,8 @@ Implementation must provide:
 6. Admin demo login denied when the account is disabled, compromised, non-admin,
    or not marked as a demo account.
 7. No browser-shipped demo passwords and no tracked plaintext demo credentials.
+   (Superseded for the reserved demo accounts by Amendment C, which publishes
+   documented, non-secret demo passwords for normal-form sign-in.)
 8. Audit/telemetry events with trace IDs and without tokens, passwords, reset
    links, raw IPs, or credential material.
 9. A public, validated help URL contract for both auth screens.
@@ -53,8 +55,10 @@ boundary.
 
 ## Security Requirements
 
-- Demo login must never be implemented by committing demo passwords or placing
-  demo passwords in `VITE_*` variables.
+- Demo login must never be implemented by committing server-secret passwords or
+  placing server-secret passwords in `VITE_*` variables. The documented demo
+  passwords (`demo-reader-password` / `demo-admin-password`, see Amendment C) are
+  public, non-secret values and are exempt from this rule.
 - Demo endpoints must return a generic disabled/unauthorized response when the
   environment, account, book, or grant is not eligible.
 - Demo admin login must not bypass existing admin route guards, account state
