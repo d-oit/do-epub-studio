@@ -34,12 +34,16 @@ function seedConflict(overrides?: {
   localTimestamp?: number;
   remoteTimestamp?: number;
 }): string {
+  // Single timestamp: detectConflict() only creates a manual conflict when
+  // localTimestamp === remoteTimestamp, so two separate Date.now() calls could
+  // tick the millisecond between them and return null (flaky empty render).
+  const now = Date.now();
   const conflict = detectConflict(
     overrides?.type ?? ConflictType.ProgressUpdate,
     overrides?.localVersion ?? { percent: 50 },
     overrides?.remoteVersion ?? { percent: 30 },
-    overrides?.localTimestamp ?? Date.now(),
-    overrides?.remoteTimestamp ?? Date.now(),
+    overrides?.localTimestamp ?? now,
+    overrides?.remoteTimestamp ?? now,
     BOOK_ID,
     'entity-1',
   );
