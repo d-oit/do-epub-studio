@@ -749,12 +749,17 @@ jobs:
 
   close-failure-issues:
     name: Close resolved CI failure issues
+    # Tolerate 'skipped' (build + e2e-smoke skip on scheduled runs with no
+    # path-filter changes; e2e-full skips on push) but never close while any
+    # gated job actually failed. Gate on e2e-full so a scheduled E2E failure
+    # is not closed by a later green push while it still fails (issue #994).
     if: ${{ always() && github.ref == 'refs/heads/main'
-      && needs.lint.result == 'success'
-      && needs.typecheck.result == 'success'
-      && needs.test.result == 'success'
-      && needs.build.result == 'success' }}
-    needs: [lint, typecheck, test, build, e2e-smoke, bench]
+      && needs.lint.result != 'failure'
+      && needs.typecheck.result != 'failure'
+      && needs.test.result != 'failure'
+      && needs.build.result != 'failure'
+      && needs.e2e-full.result != 'failure' }}
+    needs: [lint, typecheck, test, build, e2e-smoke, e2e-full, bench]
     runs-on: ubuntu-latest
     permissions:
       issues: write
