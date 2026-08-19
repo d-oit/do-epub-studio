@@ -78,7 +78,6 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             <button
               type="button"
               aria-controls={inputId}
-              aria-expanded={passwordVisible}
               aria-label={toggleLabel}
               onClick={() => setPasswordVisible((v) => !v)}
               className="absolute inset-y-0 right-1.5 my-auto flex h-9 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium text-accent hover:bg-background hover:underline underline-offset-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"

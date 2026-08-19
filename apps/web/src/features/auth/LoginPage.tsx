@@ -261,7 +261,7 @@ function useDemoLogin() {
       const data = await apiRequest<SessionResponse>('/api/demo/reader-login', {
         method: 'POST',
       });
-      setAuth(toAuthStorePayload(data, ''));
+      setAuth(toAuthStorePayload(data, DEMO_READER_EMAIL));
       void navigate(`/read/${data.book.slug}`);
     } catch (err) {
       setError((err as Error).message);
