@@ -79,12 +79,15 @@ describe('Input', () => {
 
       fireEvent.click(toggle);
       expect(input).toHaveAttribute('type', 'text');
-      expect(toggle).toHaveAttribute('aria-expanded', 'true');
+      // GOV.UK pattern: state is conveyed by the changing accessible name,
+      // not aria-expanded/aria-pressed (which would mis-announce a disclosure).
+      expect(toggle).not.toHaveAttribute('aria-expanded');
+      expect(toggle).not.toHaveAttribute('aria-pressed');
       expect(screen.getByRole('button', { name: 'Hide password' })).toBeInTheDocument();
 
       fireEvent.click(toggle);
       expect(input).toHaveAttribute('type', 'password');
-      expect(toggle).toHaveAttribute('aria-expanded', 'false');
+      expect(screen.getByRole('button', { name: 'Show password' })).toBeInTheDocument();
     });
 
     it('links the toggle to the input via aria-controls', () => {
