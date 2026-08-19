@@ -37,3 +37,39 @@ See execution record for commits.
 - #993 "UI Tests (Chromatic)" requires a human to accept 70 baselines.
 - Auth-touching PRs (#991, #993) require human review per repo policy.
 - No `gh pr merge --auto`; manual squash merge only after full checklist.
+
+## Phase 5 — Synthesis (COMPLETE)
+
+### Merged (non-auth, CI green incl. Codacy)
+
+| PR | What | Result |
+|----|------|--------|
+| #992 | github-actions bump (codeql 4.37.7) | allowlist fix → green → merged |
+| #998 | @sentry/react bump | merged |
+| #997 | @sentry/cloudflare bump | rebased (lockfile) → merged |
+| #996 | production-deps bump (2) | merged |
+| #995 | dev-deps bump (17) | rebased (lockfile) → merged |
+| #999 | fix #994: harden 2 flaky E2E + CI failure auto-close | merged |
+| #1000 | learnings doc (Dependabot force-push + Chromatic actor) | merged |
+| #1002 | de-flake ConflictResolutionPanel seed timestamp | merged |
+| #1004 | retry actionlint download (fix #1003) | merged |
+
+### Issues resolved
+
+- **#994** — fixed by #999 (flaky webkit performance + settings-panel overflow; plus `close-failure-issues` now gates on `e2e-full` and no longer depends on skipped `build`).
+- **#1001** — fixed by #1002 (`seedConflict()` called `Date.now()` twice; ms tick yielded unequal timestamps → `detectConflict` returned null → empty panel).
+- **#1003** — fixed by #1004 (transient actionlint release-download blip; `curl | tar || true` swallowed the error → hard-fail "actionlint not available"; now retries 3x).
+
+### Remaining (left for human — user chose "non-auth only")
+
+- **#991** demo login + help (GOAP-244) — now **CLEAN** (stale OwlWatch thread resolved); needs human review before merge.
+- **#993** login UX redesign — stacked on #991; blocked only on Chromatic baseline acceptance (human click).
+
+### Pre-existing issues fixed in-scope
+
+1. `close-failure-issues` job `skipped` on scheduled runs (depended on PR-only `build`; didn't gate on `e2e-full`) → fixed in #999.
+2. `clickToolbarButton` fell through to `dispatchEvent` on a hidden settings button on narrow viewports → hardened in #999.
+3. `seedConflict()` double-`Date.now()` race → fixed in #1002.
+4. `validate-workflows.sh` actionlint download swallowed errors → retry added in #1004.
+
+**Final state:** 0 open issues, 0 open non-auth PRs; `main` green. Only the two auth PRs (#991, #993) remain, both requiring human review per scope decision.
