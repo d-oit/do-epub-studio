@@ -325,23 +325,22 @@ export async function clickToolbarButton(page: Page, buttonName: string | RegExp
     return;
   }
 
-  // If not visible, try overflow menu
+  // If not visible, it is behind the "More options" overflow menu
+  // (container-query driven). Wait for the trigger to actually render: the
+  // toolbar re-renders lazily and a short isVisible() check races it, which
+  // previously fell through to a blind dispatchEvent on the hidden button and
+  // timed out on the scheduled cross-browser lane (issue #994).
   const moreBtn = page.getByRole('button', { name: /More [Oo]ptions/i });
-  if (await moreBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-    await moreBtn.dispatchEvent('click');
-    // GOAP-224 B8: overflow entries are role="menuitem" (WAI-ARIA Menu Button
-    // Pattern), not buttons — match either so the helper keeps working.
-    const overflowMenu = page.locator('.cq-reader-toolbar-overflow');
-    const overflowBtn = overflowMenu
-      .getByRole('menuitem', { name: buttonName })
-      .or(overflowMenu.getByRole('button', { name: buttonName }));
-    await overflowBtn.waitFor({ state: 'visible', timeout: 5000 });
-    await overflowBtn.dispatchEvent('click');
-    return;
-  }
-
-  // Fallback: click directly anyway
-  await directBtn.dispatchEvent('click');
+  await moreBtn.waitFor({ state: 'visible', timeout: 10000 });
+  await moreBtn.dispatchEvent('click');
+  // GOAP-224 B8: overflow entries are role="menuitem" (WAI-ARIA Menu Button
+  // Pattern), not buttons — match either so the helper keeps working.
+  const overflowMenu = page.locator('.cq-reader-toolbar-overflow');
+  const overflowBtn = overflowMenu
+    .getByRole('menuitem', { name: buttonName })
+    .or(overflowMenu.getByRole('button', { name: buttonName }));
+  await overflowBtn.waitFor({ state: 'visible', timeout: 5000 });
+  await overflowBtn.dispatchEvent('click');
 }
 
 /**
