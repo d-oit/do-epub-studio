@@ -9,6 +9,8 @@ import { Button, Input, AppLogo } from '../../components/ui';
 import { ThemeToggle } from '../../components/ThemeToggle';
 import { APP_NAME, APP_VERSION_LABEL } from '../../config/app-identity';
 import { isDemoLoginEnabled, resolveHelpUrl, DEMO_ADMIN_EMAIL, DEMO_ADMIN_PASSWORD } from '../../config/demo-config';
+import { AdminLoginHero, AdminMobileInfo } from './AdminLoginHero';
+import { MfaFactorChooser, AdminRecoveryForm } from './AdminMfaForms';
 
 interface AdminUser {
   id: string;
@@ -109,6 +111,8 @@ function AdminCredentialsForm({
           autoComplete="current-password"
           value={password}
           onChange={(e) => onPasswordChange(e.target.value)}
+          showPasswordLabel={t('ui.showPassword')}
+          hidePasswordLabel={t('ui.hidePassword')}
         />
 
         <Button
@@ -124,153 +128,56 @@ function AdminCredentialsForm({
   );
 }
 
-function MfaFactorChooser({
-  isLoading,
-  onPasskey,
-  onRecovery,
-}: {
-  isLoading: boolean;
-  onPasskey: () => void;
-  onRecovery: () => void;
-}) {
-  const { t } = useTranslation();
-  return (
-    <div className="space-y-3">
-      <Button
-        type="button"
-        className="w-full"
-        isLoading={isLoading}
-        loadingLabel={t('admin.login.signingIn')}
-        onClick={onPasskey}
-      >
-        {t('admin.login.usePasskey')}
-      </Button>
-      <Button
-        type="button"
-        variant="secondary"
-        className="w-full"
-        disabled={isLoading}
-        onClick={onRecovery}
-      >
-        {t('admin.login.useRecoveryCode')}
-      </Button>
-    </div>
-  );
-}
-
-interface RecoveryFormProps {
-  recoveryEmail: string;
-  recoveryPassword: string;
-  recoveryCode: string;
-  isLoading: boolean;
-  onRecoveryPasswordChange: (value: string) => void;
-  onRecoveryCodeChange: (value: string) => void;
-  onSubmit: (e: React.FormEvent) => void;
-  onBack: () => void;
-}
-
-function AdminRecoveryForm({
-  recoveryEmail,
-  recoveryPassword,
-  recoveryCode,
-  isLoading,
-  onRecoveryPasswordChange,
-  onRecoveryCodeChange,
-  onSubmit,
-  onBack,
-}: RecoveryFormProps) {
-  const { t } = useTranslation();
-  return (
-    <form onSubmit={onSubmit}>
-      <div className="space-y-4">
-        <Input
-          id="recovery-email"
-          label={t('admin.login.email')}
-          type="email"
-          required
-          autoComplete="email"
-          value={recoveryEmail}
-          readOnly
-        />
-
-        <Input
-          id="recovery-password"
-          label={t('admin.login.password')}
-          type="password"
-          required
-          autoComplete="current-password"
-          value={recoveryPassword}
-          onChange={(e) => onRecoveryPasswordChange(e.target.value)}
-        />
-
-        <Input
-          id="recovery-code"
-          label={t('admin.login.recoveryCode')}
-          type="text"
-          required
-          autoComplete="one-time-code"
-          value={recoveryCode}
-          onChange={(e) => onRecoveryCodeChange(e.target.value)}
-        />
-
-        <Button
-          type="submit"
-          className="w-full"
-          isLoading={isLoading}
-          loadingLabel={t('admin.login.signingIn')}
-        >
-          {t('admin.login.verifyRecovery')}
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="w-full"
-          onClick={onBack}
-          disabled={isLoading}
-        >
-          {t('admin.login.back')}
-        </Button>
-      </div>
-    </form>
-  );
-}
-
 function AdminDemoBlock({
   loading,
   error,
   onLogin,
+  onFillCredentials,
 }: {
   loading: boolean;
   error: string | null;
   onLogin: () => void;
+  onFillCredentials: () => void;
 }) {
   const { t } = useTranslation();
   if (!isDemoLoginEnabled()) return null;
   return (
-    <div className="mt-4">
+    <div className="mt-5">
+      <div className="flex items-center gap-3" aria-hidden="true">
+        <span className="h-px flex-1 bg-border" />
+        <span className="text-xs uppercase tracking-wide text-foreground-muted">{t('admin.login.demoOr')}</span>
+        <span className="h-px flex-1 bg-border" />
+      </div>
+
       {error && (
         <div
           role="alert"
           aria-live="polite"
-          className="mb-4 p-3 bg-accent-error/10 border border-accent-error/20 rounded text-sm text-accent-error"
+          className="mt-4 p-3 bg-accent-error/10 border border-accent-error/20 rounded text-sm text-accent-error"
         >
           {error}
         </div>
       )}
+
       <Button
         type="button"
-        variant="secondary"
-        className="w-full"
+        variant="primary"
+        className="mt-4 w-full"
         isLoading={loading}
         loadingLabel={t('admin.login.demoSigningIn')}
         onClick={onLogin}
       >
-        {t('admin.login.demoAdmin')}
+        {t('admin.login.demoTry')}
       </Button>
-      <p className="mt-2 text-xs text-foreground-muted text-center">
-        {t('admin.login.demoInfo', { email: DEMO_ADMIN_EMAIL, password: DEMO_ADMIN_PASSWORD })}
-      </p>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        className="mt-1 w-full"
+        onClick={onFillCredentials}
+      >
+        {t('admin.login.demoFillCredentials')}
+      </Button>
     </div>
   );
 }
@@ -412,8 +319,14 @@ export function AdminLoginPage() {
 
       <main
         id="main-content"
-        className="mx-auto flex min-h-[calc(100dvh-3rem)] w-full max-w-md items-start pt-16 pb-8"
+        className="mx-auto grid min-h-[calc(100dvh-3rem)] w-full max-w-6xl items-start gap-8 pt-16 pb-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(22rem,28rem)] lg:gap-12"
       >
+      <section className="hidden min-w-0 lg:block">
+        <AdminLoginHero />
+      </section>
+
+      <AdminMobileInfo />
+
       <section className="w-full rounded-lg border border-border bg-background-secondary p-5 shadow-md sm:p-7 lg:p-8">
         <AdminLoginHeader />
 
@@ -475,6 +388,10 @@ export function AdminLoginPage() {
             loading={demo.loading}
             error={demo.error}
             onLogin={() => { void demo.login(); }}
+            onFillCredentials={() => {
+              setEmail(DEMO_ADMIN_EMAIL);
+              setPassword(DEMO_ADMIN_PASSWORD);
+            }}
           />
         )}
 

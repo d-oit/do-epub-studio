@@ -39,6 +39,14 @@ const loginPageSource = readFileSync(
   resolve(repoRoot, 'apps/web/src/features/auth/LoginPage.tsx'),
   'utf8',
 );
+const loginHeroSource = readFileSync(
+  resolve(repoRoot, 'apps/web/src/features/auth/LoginHero.tsx'),
+  'utf8',
+);
+const loginMobileInfoSource = readFileSync(
+  resolve(repoRoot, 'apps/web/src/features/auth/LoginMobileInfo.tsx'),
+  'utf8',
+);
 
 describe('App identity and version governance (ADR-104)', () => {
   it('runtime identity matches the canonical app-identity.json', () => {
@@ -70,9 +78,11 @@ describe('App identity and version governance (ADR-104)', () => {
   });
 
   it('LoginPage renders the canonical name and version', () => {
-    // The LoginPage renders {APP_NAME} (imported from app-identity.ts)
-    // and {APP_VERSION_LABEL}, so the source must reference both.
-    expect(loginPageSource).toContain('APP_NAME');
+    // The login feature renders {APP_NAME} (imported from app-identity.ts)
+    // via its hero/mobile-info components (ADR-245 extraction) and
+    // {APP_VERSION_LABEL} in the card header.
+    expect(loginHeroSource).toContain('APP_NAME');
+    expect(loginMobileInfoSource).toContain('APP_NAME');
     expect(loginPageSource).toContain('APP_VERSION_LABEL');
   });
 

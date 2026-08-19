@@ -1,4 +1,4 @@
-import React, { useActionState, useEffect, useMemo, useState } from 'react';
+import React, { useActionState, useEffect, useMemo, useRef, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from '../../hooks/useTranslation';
@@ -7,8 +7,10 @@ import { useAuthStore } from '../../stores/auth';
 import { LocaleSwitcher } from '../../components/LocaleSwitcher';
 import { Button, Input, AppLogo } from '../../components/ui';
 import { ThemeToggle } from '../../components/ThemeToggle';
-import { APP_NAME, APP_VERSION_LABEL, APP_DESCRIPTION } from '../../config/app-identity';
-import { isDemoLoginEnabled, resolveHelpUrl, DEMO_READER_EMAIL, DEMO_READER_PASSWORD, DEMO_BOOK_SLUG } from '../../config/demo-config';
+import { APP_VERSION_LABEL } from '../../config/app-identity';
+import { isDemoLoginEnabled, resolveHelpUrl, DEMO_READER_EMAIL, DEMO_READER_PASSWORD } from '../../config/demo-config';
+import { LoginHero } from './LoginHero';
+import { LoginMobileInfo } from './LoginMobileInfo';
 
 interface SessionCapabilities {
   canRead: boolean;
@@ -76,12 +78,18 @@ interface FormAction {
   (fd: FormData): void;
 }
 
-function LoginForm({ action, onRecovery }: { action: FormAction; onRecovery: () => void }) {
+interface LoginFormRefs {
+  emailRef: React.RefObject<HTMLInputElement | null>;
+  passwordRef: React.RefObject<HTMLInputElement | null>;
+}
+
+function LoginForm({ action, onRecovery, emailRef, passwordRef }: { action: FormAction; onRecovery: () => void } & LoginFormRefs) {
   const { t } = useTranslation();
   return (
     <form action={action} noValidate>
       <div className="space-y-4">
         <Input
+          ref={emailRef}
           id="email"
           label={t('login.emailLabel')}
           type="email"
@@ -94,12 +102,15 @@ function LoginForm({ action, onRecovery }: { action: FormAction; onRecovery: () 
 
         <div>
           <Input
+            ref={passwordRef}
             id="password"
             label={t('login.passwordLabel')}
             type="password"
             name="password" /* eslint-disable-line i18next/no-literal-string -- form field name */
             autoComplete="current-password"
             placeholder={t('login.passwordPlaceholder')}
+            showPasswordLabel={t('ui.showPassword')}
+            hidePasswordLabel={t('ui.hidePassword')}
           />
           <button
             type="button"
@@ -171,33 +182,56 @@ function RecoverySuccessView({ onBack }: { onBack: () => void }) {
   );
 }
 
-function DemoLoginBlock({ loading, error, onLogin }: { loading: boolean; error: string | null; onLogin: () => void }) {
+function DemoLoginBlock({
+  loading,
+  error,
+  onLogin,
+  onFillCredentials,
+}: {
+  loading: boolean;
+  error: string | null;
+  onLogin: () => void;
+  onFillCredentials: () => void;
+}) {
   const { t } = useTranslation();
   if (!isDemoLoginEnabled()) return null;
   return (
-    <div className="mt-4">
+    <div className="mt-5">
+      <div className="flex items-center gap-3" aria-hidden="true">
+        <span className="h-px flex-1 bg-border" />
+        <span className="text-xs uppercase tracking-wide text-foreground-muted">{t('login.demoOr')}</span>
+        <span className="h-px flex-1 bg-border" />
+      </div>
+
       {error && (
         <div
           role="alert"
           aria-live="polite"
-          className="mb-4 p-3 bg-accent-error/10 border border-accent-error/30 rounded-lg text-sm text-accent-error"
+          className="mt-4 p-3 bg-accent-error/10 border border-accent-error/30 rounded-lg text-sm text-accent-error"
         >
           {error}
         </div>
       )}
+
       <Button
         type="button"
-        variant="secondary"
-        className="w-full"
+        variant="primary"
+        className="mt-4 w-full"
         isLoading={loading}
         loadingLabel={t('login.demoSigningIn')}
         onClick={onLogin}
       >
-        {t('login.demoReader')}
+        {t('login.demoTry')}
       </Button>
-      <p className="mt-2 text-xs text-foreground-muted text-center">
-        {t('login.demoInfo', { email: DEMO_READER_EMAIL, password: DEMO_READER_PASSWORD, slug: DEMO_BOOK_SLUG })}
-      </p>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        className="mt-1 w-full"
+        onClick={onFillCredentials}
+      >
+        {t('login.demoFillCredentials')}
+      </Button>
     </div>
   );
 }
@@ -227,7 +261,7 @@ function useDemoLogin() {
       const data = await apiRequest<SessionResponse>('/api/demo/reader-login', {
         method: 'POST',
       });
-      setAuth(toAuthStorePayload(data, ''));
+      setAuth(toAuthStorePayload(data, DEMO_READER_EMAIL));
       void navigate(`/read/${data.book.slug}`);
     } catch (err) {
       setError((err as Error).message);
@@ -245,9 +279,6 @@ function LoginCardHeader({ isRecoveryMode, bookSlug }: { isRecoveryMode: boolean
     <>
       <div className="flex flex-col items-center mb-6">
         <AppLogo size={48} className="text-accent mb-3" />
-        <h1 className="text-center font-display text-2xl font-bold leading-tight text-foreground lg:hidden">
-          {APP_NAME}
-        </h1>
         <p className="mt-1 text-center text-xs font-medium text-foreground-muted">
           {t('app.versionLabel')} {APP_VERSION_LABEL}
         </p>
@@ -275,6 +306,17 @@ export function LoginPage() {
   const [isVerifying, setIsVerifying] = useState(false);
   const [verifyError, setVerifyError] = useState<string | null>(null);
   const demo = useDemoLogin();
+
+  // Uncontrolled FormData inputs: demo autofill writes values directly via
+  // refs instead of converting the form to controlled state (ADR-245).
+  const emailRef = useRef<HTMLInputElement>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
+
+  const fillDemoCredentials = () => {
+    if (emailRef.current) emailRef.current.value = DEMO_READER_EMAIL;
+    if (passwordRef.current) passwordRef.current.value = DEMO_READER_PASSWORD;
+    emailRef.current?.focus();
+  };
 
   const bookSlug = searchParams.get('book') || '';
   const recoveryToken = searchParams.get('token');
@@ -372,19 +414,10 @@ export function LoginPage() {
         className="mx-auto grid min-h-[calc(100dvh-3rem)] w-full max-w-6xl items-start gap-8 pt-16 pb-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(22rem,28rem)] lg:gap-12"
       >
         <section className="hidden min-w-0 lg:block">
-          <div className="max-w-xl">
-            <AppLogo size={72} className="mb-6 text-accent" />
-            <p className="mb-3 text-sm font-medium uppercase tracking-[0.12em] text-foreground-muted">
-              {APP_VERSION_LABEL}
-            </p>
-            <h1 className="text-balance font-display text-5xl font-bold leading-tight text-foreground xl:text-6xl">
-              {APP_NAME}
-            </h1>
-            <p className="mt-5 max-w-lg text-lg text-foreground-muted">
-              {APP_DESCRIPTION}
-            </p>
-          </div>
+          <LoginHero />
         </section>
+
+        <LoginMobileInfo />
 
         <section className="w-full rounded-lg border border-border bg-background-secondary p-5 shadow-md sm:p-7 lg:p-8">
           <LoginCardHeader isRecoveryMode={isRecoveryMode} bookSlug={bookSlug} />
@@ -404,7 +437,12 @@ export function LoginPage() {
           ) : isRecoveryMode ? (
             <RecoveryForm action={recoveryAction} onBack={() => setIsRecoveryMode(false)} />
           ) : (
-            <LoginForm action={loginAction} onRecovery={() => setIsRecoveryMode(true)} />
+            <LoginForm
+              action={loginAction}
+              onRecovery={() => setIsRecoveryMode(true)}
+              emailRef={emailRef}
+              passwordRef={passwordRef}
+            />
           )}
 
           {!isRecoveryMode && (
@@ -412,6 +450,7 @@ export function LoginPage() {
               loading={demo.loading}
               error={demo.error}
               onLogin={() => { void demo.login(); }}
+              onFillCredentials={fillDemoCredentials}
             />
           )}
 

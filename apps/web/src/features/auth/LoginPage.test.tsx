@@ -41,10 +41,11 @@ vi.mock('../../components/ui', () => ({
       {isLoading ? loadingLabel : children}
     </button>
   ),
-  Input: ({ id, label, type, value, onChange, placeholder, required, name, autoComplete, inputMode }: React.InputHTMLAttributes<HTMLInputElement> & { label?: React.ReactNode }) => (
+  Input: ({ id, label, type, value, onChange, placeholder, required, name, autoComplete, inputMode, ref, showPasswordLabel }: React.InputHTMLAttributes<HTMLInputElement> & { label?: React.ReactNode; ref?: React.Ref<HTMLInputElement>; showPasswordLabel?: string }) => (
     <div>
       <label htmlFor={id}>{label}</label>
       <input
+        ref={ref}
         id={id}
         type={type}
         value={value}
@@ -55,6 +56,9 @@ vi.mock('../../components/ui', () => ({
         autoComplete={autoComplete}
         inputMode={inputMode}
       />
+      {type === 'password' && showPasswordLabel && (
+        <button type="button" aria-expanded={false}>{showPasswordLabel}</button>
+      )}
     </div>
   ),
   AppLogo: () => <div data-testid="app-logo" />,
@@ -292,24 +296,25 @@ describe('LoginPage', () => {
     it('hides demo button when demo login is disabled', () => {
       mockIsDemoLoginEnabled.mockReturnValue(false);
       render(<MemoryRouter><LoginPage /></MemoryRouter>);
-      expect(screen.queryByText('login.demoReader')).not.toBeInTheDocument();
+      expect(screen.queryByText('login.demoTry')).not.toBeInTheDocument();
+      expect(screen.queryByText('login.demoFillCredentials')).not.toBeInTheDocument();
     });
 
     it('shows demo button when demo login is enabled', () => {
       mockIsDemoLoginEnabled.mockReturnValue(true);
       render(<MemoryRouter><LoginPage /></MemoryRouter>);
-      expect(screen.getByText('login.demoReader')).toBeInTheDocument();
-    });
-    it('shows demo account info text when demo login is enabled', () => {
-      mockIsDemoLoginEnabled.mockReturnValue(true);
-      render(<MemoryRouter><LoginPage /></MemoryRouter>);
-      expect(screen.getByText(/login\.demoInfo/)).toBeInTheDocument();
+      expect(screen.getByText('login.demoTry')).toBeInTheDocument();
+      expect(screen.getByText('login.demoOr')).toBeInTheDocument();
     });
 
-    it('hides demo info panel when demo login is disabled', () => {
-      mockIsDemoLoginEnabled.mockReturnValue(false);
+    it('fills demo credentials into the form fields', () => {
+      mockIsDemoLoginEnabled.mockReturnValue(true);
       render(<MemoryRouter><LoginPage /></MemoryRouter>);
-      expect(screen.queryByText(/login\.demoInfo/)).not.toBeInTheDocument();
+
+      fireEvent.click(screen.getByText('login.demoFillCredentials'));
+
+      expect(screen.getByLabelText('login.emailLabel')).toHaveValue('demo.reader@example.local');
+      expect(screen.getByLabelText('login.passwordLabel')).toHaveValue('demo-reader-password');
     });
 
     it('handles successful demo login', async () => {
@@ -321,7 +326,7 @@ describe('LoginPage', () => {
       });
 
       render(<MemoryRouter><LoginPage /></MemoryRouter>);
-      fireEvent.click(screen.getByText('login.demoReader'));
+      fireEvent.click(screen.getByText('login.demoTry'));
 
       await waitFor(() => {
         expect(mockNavigate).toHaveBeenCalledWith('/read/demo');
@@ -333,11 +338,35 @@ describe('LoginPage', () => {
       vi.mocked(apiRequest).mockRejectedValueOnce(new Error('Demo disabled'));
 
       render(<MemoryRouter><LoginPage /></MemoryRouter>);
-      fireEvent.click(screen.getByText('login.demoReader'));
+      fireEvent.click(screen.getByText('login.demoTry'));
 
       await waitFor(() => {
         expect(screen.getByText('Demo disabled')).toBeInTheDocument();
       });
+    });
+  });
+
+  describe('hero and app info', () => {
+    it('renders the four feature bullets', () => {
+      render(<MemoryRouter><LoginPage /></MemoryRouter>);
+      // Hero (desktop) and mobile info both render the shared feature list.
+      expect(screen.getAllByText('login.hero.feature.reading').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('login.hero.feature.annotations').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('login.hero.feature.offline').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('login.hero.feature.management').length).toBeGreaterThan(0);
+    });
+
+    it('renders the access note and hero help link', () => {
+      mockResolveHelpUrl.mockReturnValue({ href: '/help', isExternal: false });
+      render(<MemoryRouter><LoginPage /></MemoryRouter>);
+      expect(screen.getAllByText('login.hero.howAccessWorks').length).toBeGreaterThan(0);
+      const heroLink = screen.getByText('login.hero.learnMore').closest('a');
+      expect(heroLink).toHaveAttribute('href', '/help');
+    });
+
+    it('renders the show/hide password toggle', () => {
+      render(<MemoryRouter><LoginPage /></MemoryRouter>);
+      expect(screen.getByText('ui.showPassword')).toBeInTheDocument();
     });
   });
 
