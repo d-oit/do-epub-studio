@@ -55,7 +55,7 @@ export function LoginHero() {
   return (
     <div className="max-w-xl">
       <AppLogo size={72} className="mb-6 text-accent" />
-      <p className="mb-3 text-sm font-medium uppercase tracking-[0.12em] text-foreground-muted">
+      <p className="mb-3 text-sm font-medium tracking-[0.12em] text-foreground-muted">
         {APP_VERSION_LABEL}
       </p>
       <h1 className="text-balance font-display text-5xl font-bold leading-tight text-foreground xl:text-6xl">
