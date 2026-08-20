@@ -72,6 +72,17 @@ describe('Input', () => {
       expect(screen.getByLabelText('Password')).toHaveAttribute('type', 'password');
     });
 
+    it('anchors the toggle to the leading edge with matching input padding', () => {
+      render(<Input id="pw" label="Password" type="password" showPasswordLabel="Show password" hidePasswordLabel="Hide password" />);
+      const toggle = screen.getByRole('button', { name: 'Show password' });
+      const input = screen.getByLabelText('Password');
+
+      expect(toggle).toHaveClass('start-1.5', 'min-h-11', 'min-w-11');
+      expect(toggle).not.toHaveClass('right-1.5');
+      expect(input).toHaveClass('ps-12', 'sm:ps-36');
+      expect(input).not.toHaveClass('pr-12', 'sm:pr-28');
+    });
+
     it('toggles input type and label on click', () => {
       render(<Input id="pw" label="Password" type="password" showPasswordLabel="Show password" hidePasswordLabel="Hide password" />);
       const input = screen.getByLabelText('Password');

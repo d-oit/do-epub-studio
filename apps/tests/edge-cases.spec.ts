@@ -15,7 +15,7 @@ test.describe('Edge Cases & Error Handling', () => {
 
     // Fill in values that should fail (mocked or handled by app)
     await page.getByLabel('Email Address').fill('wrong@example.com');
-    await page.getByLabel('Password').fill('wrongpassword');
+    await page.getByRole('textbox', { name: 'Password' }).fill('wrongpassword');
 
     await page.getByRole('button', { name: 'Sign In' }).click();
 
@@ -28,7 +28,7 @@ test.describe('Edge Cases & Error Handling', () => {
 
     await page.goto('/admin/login');
     await page.getByLabel('Email Address').fill(ADMIN_USER.email);
-    await page.getByLabel('Password').fill(ADMIN_USER.password);
+    await page.getByRole('textbox', { name: 'Password' }).fill(ADMIN_USER.password);
     await page.getByRole('button', { name: 'Sign In' }).click();
     await expect(page).toHaveURL(/\/admin\/books/);
 

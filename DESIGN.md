@@ -48,6 +48,13 @@ All colors use OKLCH for perceptually uniform lightness and P3 wide-gamut suppor
 - Keyboard navigation for all interactive elements
 - Screen reader compatibility (LiveRegion component)
 
+### Password visibility controls
+- The show/hide password control is anchored to the **left/leading edge** of the field by product direction.
+- Use logical start positioning and matching start-side input padding so the control never overlays typed text and remains correct in RTL locales.
+- Keep the localized action label alongside the eye icon at `sm+`; icon-only presentation is permitted below `sm` only when the localized label remains the button's accessible name.
+- Preserve a minimum 44px touch target, visible focus ring, `type="button"`, and `aria-controls` linking the control to its input.
+- Test both the semantic toggle behavior and its rendered placement; a password toggle is not considered complete if it only works functionally but drifts to the trailing edge.
+
 ## Platform APIs (ADR-105)
 - Native Popover API for tooltips/menus (with `@supports` fallback)
 - Container Queries for responsive panels/tables

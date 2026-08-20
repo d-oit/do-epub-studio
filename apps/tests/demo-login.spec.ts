@@ -65,7 +65,7 @@ test.describe('Demo login entry points (ADR-244)', () => {
     // form (ADR-245 replaces the plaintext info line with this action).
     await page.getByRole('button', { name: 'Fill demo credentials' }).click();
     await expect(page.getByLabel('Email Address')).toHaveValue(DEMO_READER.email);
-    await expect(page.getByLabel('Password')).toHaveValue(DEMO_READER.password);
+    await expect(page.getByRole('textbox', { name: 'Password' })).toHaveValue(DEMO_READER.password);
 
     // Sign in through the normal credential form with the demo credentials.
     await page.getByRole('button', { name: 'Sign In', exact: true }).click();
@@ -104,7 +104,7 @@ test.describe('Demo login entry points (ADR-244)', () => {
     // "Fill admin credentials" autofills the documented demo admin account.
     await page.getByRole('button', { name: 'Fill admin credentials' }).click();
     await expect(page.getByLabel('Email Address')).toHaveValue(DEMO_ADMIN.email);
-    await expect(page.getByLabel('Password')).toHaveValue(DEMO_ADMIN.password);
+    await expect(page.getByRole('textbox', { name: 'Password' })).toHaveValue(DEMO_ADMIN.password);
 
     // Sign in through the normal credential form with the demo credentials.
     await page.getByRole('button', { name: 'Sign In', exact: true }).click();
