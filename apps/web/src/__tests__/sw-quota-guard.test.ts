@@ -53,8 +53,16 @@ describe('quotaGuardPlugin – source-level invariants', () => {
     expect(swContent).toContain("'images'");
     expect(swContent).toContain("'external-assets'");
     expect(swContent).toContain("'book-content'");
-    expect(swContent).toContain("'google-fonts-stylesheets'");
-    expect(swContent).toContain("'google-fonts-webfonts'");
+  });
+
+  it('does not cache external font origins (ADR-123 self-hosted fonts)', () => {
+    // Fonts are self-hosted via @fontsource since PR #748; the CSP allowlist
+    // no longer contains fonts.googleapis.com / fonts.gstatic.com, so the SW
+    // must not register caching routes or evictable caches for them either.
+    expect(swContent).not.toContain('fonts.googleapis.com');
+    expect(swContent).not.toContain('fonts.gstatic.com');
+    expect(swContent).not.toContain('google-fonts-stylesheets');
+    expect(swContent).not.toContain('google-fonts-webfonts');
   });
 
   it('measures cache size via cache.keys().length', () => {
@@ -210,7 +218,7 @@ describe('quotaGuardPlugin – throttling logic (unit)', () => {
 describe('quotaGuardPlugin – eviction logic (unit)', () => {
   it('evicts cache with most entries among evictable prefixes', () => {
     // Simulate the eviction decision logic
-    const EVICTABLE_PREFIXES = ['images', 'external-assets', 'epub', 'google-fonts-stylesheets', 'google-fonts-webfonts', 'book-content'] as const;
+    const EVICTABLE_PREFIXES = ['images', 'external-assets', 'epub', 'book-content'] as const;
 
     const cacheEntries: Record<string, number> = {
       'workbox-precache-v2': 5,
