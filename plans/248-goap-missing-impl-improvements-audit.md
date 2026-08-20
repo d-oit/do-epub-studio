@@ -136,7 +136,14 @@ can run parallel after Phases 1–2 land. Swarm agents: `reader-ui-ux` /
   entry to `agents-docs/KNOWN-ISSUES-RESOLVED.md`.
 - **F8 (P2)** ✅ Evaluated + rejected (measured, see finding).
 - **F9 (P2)** ⏳ Not run — patch bumps remain dependabot-grouped follow-up.
-- **F7 (P2)** ⏳ Not started — TS 7 migration is a separate evaluation PR.
+- **F7 (P2)** ✅ Evaluated 2026-08-20, **deferred — not adoptable yet**. TS 7.0.2
+  typecheck passes 7/7 packages after a one-line config migration (removing
+  `baseUrl` from `tsconfig.base.json` — TS5102, `paths` already relative).
+  **Blocker:** typescript-eslint 8.67.0 hard-errors on TS 7.0
+  ("typescript-eslint does not support TS 7.0"; support tracked for TS >= 7.1,
+  issue #10940), which breaks the lint gate repo-wide. Re-evaluate once
+  typescript-eslint ships TS >= 7.1 support; the `baseUrl` removal is the only
+  config change required.
 
 ## 6. Constraints / Human-in-the-loop
 
