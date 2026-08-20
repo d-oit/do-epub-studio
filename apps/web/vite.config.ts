@@ -51,6 +51,13 @@ export default defineConfig({
         ],
       },
       strategies: 'injectManifest',
+      // Build the SW as an IIFE (classic worker), NOT an ES module. The plugin's
+      // client registers the SW with `type: 'classic'` in production, but Vite 8
+      // (Rolldown) emits `import.meta` in the module-preload helper of ES-format
+      // bundles that contain dynamic imports — a parse error in classic workers:
+      // "Cannot use 'import.meta' outside a module" → sw.registration_failed.
+      // IIFE output has no `import.meta` and evaluates fine as a classic worker.
+      injectManifest: { rollupFormat: 'iife' },
       srcDir: 'src',
       filename: 'sw.ts',
     }),

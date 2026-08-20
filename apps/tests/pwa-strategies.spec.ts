@@ -151,3 +151,36 @@ test.describe('PWA Caching Strategies', () => {
     await context.setOffline(false);
   });
 });
+
+// Hard assertion (no skip) that the service worker registers and activates.
+// The beforeEach above SKIPS when the SW is unavailable, which hid the
+// production regression where `sw.js` was built as an ES module but
+// registered as a classic worker ("Cannot use 'import.meta' outside a
+// module" → sw.registration_failed). This test must FAIL loudly if the SW
+// ever stops registering, so the PWA layer cannot silently rot again.
+test.describe('Service Worker Registration (production)', () => {
+  test('@pwa service worker registers and activates', async ({ page }) => {
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
+
+    const reg = await page.evaluate(async () => {
+      const registration = await Promise.race([
+        navigator.serviceWorker.ready,
+        new Promise<never>((_, reject) =>
+          setTimeout(
+            () => reject(new Error('Service worker never became ready — registration failed')),
+            30_000,
+          ),
+        ),
+      ]);
+      return {
+        active: Boolean(registration.active),
+        scriptURL: registration.active?.scriptURL ?? null,
+        scope: registration.scope,
+      };
+    });
+
+    expect(reg.active).toBe(true);
+    expect(reg.scriptURL).toMatch(/\/sw\.js$/);
+    expect(reg.scope).toBe(new URL('/', page.url()).href);
+  });
+});

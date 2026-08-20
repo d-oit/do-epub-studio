@@ -161,17 +161,36 @@ if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
             register(tag: string): Promise<void>;
           };
         };
-        if (syncReg.sync) {
-          void syncReg.sync.register('sync-reader-state').catch((err: unknown) => {
-            const error = err instanceof Error ? err : new Error(String(err));
-            logClientEvent({
-              level: 'error',
-              event: 'sw.background_sync_register_failed',
-              traceId: createTraceId(),
-              spanId: createSpanId(),
-              error: { name: error.name, message: error.message, stack: error.stack },
+        const sync = syncReg.sync;
+        if (sync) {
+          const registerSync = () => {
+            void sync.register('sync-reader-state').catch((err: unknown) => {
+              const error = err instanceof Error ? err : new Error(String(err));
+              logClientEvent({
+                level: 'error',
+                event: 'sw.background_sync_register_failed',
+                traceId: createTraceId(),
+                spanId: createSpanId(),
+                error: { name: error.name, message: error.message, stack: error.stack },
+              });
             });
-          });
+          };
+          // Background Sync registration requires an ACTIVE worker; calling it
+          // during first install throws InvalidStateError
+          // ("no active Service Worker"). Defer until activation completes.
+          if (registration.active) {
+            registerSync();
+          } else {
+            const worker = registration.installing ?? registration.waiting;
+            if (worker) {
+              worker.addEventListener('statechange', function onStateChange() {
+                if (worker.state === 'activated') {
+                  worker.removeEventListener('statechange', onStateChange);
+                  registerSync();
+                }
+              });
+            }
+          }
         }
       }
     },
