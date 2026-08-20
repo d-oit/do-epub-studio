@@ -75,4 +75,3 @@ Before adding an entry:
 - Review quarterly to remove resolved entries
 - Update mitigations that have changed
 - Archive resolved to `agents-docs/KNOWN-ISSUES-RESOLVED.md` (create when needed)
-
