@@ -92,6 +92,7 @@
 | 245    | Login Page UX Redesign             | `plans/245-adr-login-ux-redesign.md`                  | Accepted (GOAP-246; supersedes ADR-244 Amendment C decision 2) |
 | 248    | Swarm Audit Findings Prioritization Policy | `plans/248-adr-swarm-audit-improvements-policy.md`    | Accepted (GOAP-248) |
 | 249    | Password Toggle Placement and Visual Regression Policy | `plans/249-adr-password-toggle-placement.md` | Accepted |
+| 250    | Atomic Commit Check Detection | `plans/250-adr-atomic-commit-check-detection.md` | Accepted |
 
 ## Proposed
 
