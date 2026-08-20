@@ -4,6 +4,25 @@
 **Status:** BLOCKED on credentials (see issue #1014 comment, Aug 20 2026)
 **Related:** ADR-252, issue #1014
 
+## Progress (Aug 20 2026, second pass)
+
+Code-level blockers from the runbook are now fixed in PR #1021 (no credentials
+needed):
+
+- **Added `GET /api/health`** — the ADR-252 acceptance contract referenced a
+  health endpoint that did not exist in the worker. New route + unit test.
+- **Release workflow now deploys the worker** — `release.yml` only ran
+  `wrangler deploy --dry-run`, assuming Cloudflare Git integration deploys the
+  worker. It does not (Pages Git integration ships only the static SPA; the
+  documented `*.workers.dev` URLs fail DNS). The release now runs a real
+  `wrangler deploy` via `wrangler-action`.
+- **Post-deploy health check is fail-closed** — previously it exited 0 with a
+  warning even when the API was unreachable. It now asserts `GET /api/health`
+  returns `200` + `{"ok":true}` and exits 1 otherwise (ADR-187).
+
+Remaining blocker is unchanged: **credentials**. The deploy will fail at the
+D1/KV/R2 bindings until the infra is provisioned per the runbook below.
+
 ## Investigation findings (Aug 20 2026)
 
 Attempted to execute this plan; blocked before step 1 by missing credentials:

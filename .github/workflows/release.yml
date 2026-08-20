@@ -249,12 +249,21 @@ jobs:
             exit 1
           fi
 
-      - name: Validate Worker deployment configuration
-        working-directory: apps/worker
+      - name: Deploy Worker API
+        # GOAP-252: the worker is NOT deployed by Cloudflare Git integration
+        # (Pages Git integration only ships the static SPA; the documented
+        # *.workers.dev URLs fail DNS). The release must deploy it explicitly.
+        uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0  # v4.0.0
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        run: pnpm exec wrangler deploy --config wrangler.jsonc --dry-run
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          packageManager: pnpm
+          wranglerVersion: '4'
+          workingDirectory: apps/worker
+          command: deploy --config wrangler.jsonc
 
       - name: Generate SBOM
         run: npx --yes @cyclonedx/cyclonedx-npm@4.2.1 --ignore-npm-errors --output-format json --output-file sbom.cyclonedx.json
@@ -291,17 +300,22 @@ jobs:
 
       - name: Post-deploy health check
         run: |
-          # Deployment is now handled by Cloudflare Git integration (async).
-          # Wait longer for propagation before checking.
-          echo "Waiting for Cloudflare deployment to propagate (up to 60s)..."
+          # GOAP-252: assert the API answers JSON at /api/health — a static SPA
+          # host or missing worker returns HTML/redirects instead. Fail closed
+          # (ADR-187: Unavailable must block readiness, not silently pass).
           WORKER_URL="${WORKER_URL:-https://do-epub-studio.d-oit.workers.dev}"
+          HEALTH_URL="$WORKER_URL/api/health"
+          echo "Waiting for worker API to serve JSON (up to 60s): $HEALTH_URL"
           for i in $(seq 1 12); do
-            HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$WORKER_URL" --connect-timeout 5 --max-time 10 || echo "000")
-            if [ "$HTTP_STATUS" != "000" ] && [ "$HTTP_STATUS" -lt 500 ]; then
-              echo "Worker health check: HTTP $HTTP_STATUS (attempt $i)"
+            RESPONSE=$(curl -s -w "\n%{http_code}" "$HEALTH_URL" --connect-timeout 5 --max-time 10 || true)
+            HTTP_STATUS=$(printf '%s' "$RESPONSE" | tail -n 1)
+            BODY=$(printf '%s' "$RESPONSE" | sed '$d')
+            if [ "$HTTP_STATUS" = "200" ] && printf '%s' "$BODY" | grep -q '"ok":true'; then
+              echo "Worker API healthy: HTTP $HTTP_STATUS (attempt $i)"
               exit 0
             fi
-            echo "Attempt $i: HTTP $HTTP_STATUS — retrying in 5s..."
+            echo "Attempt $i: HTTP ${HTTP_STATUS:-000} — retrying in 5s..."
             sleep 5
           done
-          echo "::warning::Worker may not be healthy after 60s (HTTP $HTTP_STATUS) — check Cloudflare dashboard"
+          echo "::error::Worker API not healthy after 60s (HTTP ${HTTP_STATUS:-000}). Check the deployed worker and the wrangler.jsonc bindings (D1/KV/R2 must be provisioned)."
+          exit 1
