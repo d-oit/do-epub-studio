@@ -43,29 +43,10 @@ registerRoute(
   }),
 );
 
-// Cache Google Fonts stylesheets
-registerRoute(
-  /^https:\/\/fonts\.googleapis\.com\/.*/i,
-  new CacheFirst({
-    cacheName: 'google-fonts-stylesheets',
-    plugins: [
-      new ExpirationPlugin({ maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 }),
-      new CacheableResponsePlugin({ statuses: [0, 200] }),
-    ],
-  }),
-);
-
-// Cache Google Fonts web fonts
-registerRoute(
-  /^https:\/\/fonts\.gstatic\.com\/.*/i,
-  new CacheFirst({
-    cacheName: 'google-fonts-webfonts',
-    plugins: [
-      new ExpirationPlugin({ maxEntries: 30, maxAgeSeconds: 60 * 60 * 24 * 365 }),
-      new CacheableResponsePlugin({ statuses: [0, 200] }),
-    ],
-  }),
-);
+// Fonts are self-hosted via @fontsource (ADR-123, PR #748) — no external font
+// origins are cached. CSP `font-src 'self'` blocks the old external font CDN
+// origins, so the pre-ADR-123 Google Fonts CacheFirst routes (removed in
+// GOAP-248) could never match and were dead code.
 
 const DEBUG = process.env.NODE_ENV !== 'production';
 
@@ -82,7 +63,7 @@ let lastFailedAt = 0;
 
 // Caches we are willing to evict, in descending priority order.
 // Caches NOT listed here (e.g. precache / app shell) are never touched.
-const EVICTABLE_PREFIXES = ['images', 'external-assets', 'epub', 'google-fonts-stylesheets', 'google-fonts-webfonts', 'book-content'] as const;
+const EVICTABLE_PREFIXES = ['images', 'external-assets', 'epub', 'book-content'] as const;
 
 async function evictLargestCache(): Promise<void> {
   const cacheNames = await caches.keys();
