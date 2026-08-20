@@ -1,8 +1,20 @@
 # GOAP-252: Deploy Worker API for the Render-Hosted Frontend
 
 **Date:** Current session
-**Status:** OPEN (follow-up from GOAP-251 / PR #1013)
+**Status:** BLOCKED on credentials (see issue #1014 comment, Aug 20 2026)
 **Related:** ADR-252, issue #1014
+
+## Investigation findings (Aug 20 2026)
+
+Attempted to execute this plan; blocked before step 1 by missing credentials:
+
+- `wrangler whoami` → "Not logged in. Your auth token has expired and could not be refreshed" (OAuth token in `~/.config/.wrangler/config/default.toml` expired 2026-04-12).
+- Turso CLI installed at `~/.turso/turso` but `turso auth whoami` → "You are not logged in".
+- GitHub Actions secrets contain only `CHROMATIC_PROJECT_TOKEN` + `CODACY_PROJECT_TOKEN` — no Cloudflare or Turso tokens.
+- `apps/worker/wrangler.jsonc` is dev-only: placeholder D1/KV IDs, `file::memory:` Turso URL, `ENVIRONMENT: development`.
+- `release.yml` only dry-runs `wrangler deploy` (line 257) — no real automated deploy exists.
+
+Full runbook (wrangler login → turso login → provision D1/KV/R2/Turso → set secrets → migrations → deploy → VITE_API_BASE_URL) is posted on issue #1014.
 
 ## Problem
 
