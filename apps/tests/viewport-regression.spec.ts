@@ -9,6 +9,25 @@ test.describe('Viewport regression matrix', () => {
         'input[type="password"], input[name="password"], label:has-text("Password")',
         'button:has-text("Sign In"), button[type="submit"]',
       ],
+      assertAtEachViewport: async (page, viewport) => {
+        const passwordInput = page.getByRole('textbox', { name: 'Password' });
+        const toggle = page.locator('button[aria-controls="password"]');
+        const passwordBox = await passwordInput.boundingBox();
+        const toggleBox = await toggle.boundingBox();
+
+        expect(passwordBox, `${viewport.label}: password field should have geometry`).not.toBeNull();
+        expect(toggleBox, `${viewport.label}: password toggle should have geometry`).not.toBeNull();
+        expect(toggleBox!.x, `${viewport.label}: toggle stays inside the field`).toBeGreaterThanOrEqual(passwordBox!.x);
+        expect(toggleBox!.x, `${viewport.label}: toggle stays on the leading half`).toBeLessThan(passwordBox!.x + passwordBox!.width / 2);
+        expect(toggleBox!.x + toggleBox!.width, `${viewport.label}: toggle does not overflow the field`).toBeLessThanOrEqual(passwordBox!.x + passwordBox!.width);
+        expect(toggleBox!.y + toggleBox!.height / 2, `${viewport.label}: toggle is vertically centered`).toBeGreaterThan(passwordBox!.y);
+        expect(toggleBox!.y + toggleBox!.height / 2, `${viewport.label}: toggle is vertically centered`).toBeLessThan(passwordBox!.y + passwordBox!.height);
+
+        await toggle.click();
+        await expect(passwordInput, `${viewport.label}: toggle reveals password`).toHaveAttribute('type', 'text');
+        await toggle.click();
+        await expect(passwordInput, `${viewport.label}: toggle hides password`).toHaveAttribute('type', 'password');
+      },
     });
   });
 

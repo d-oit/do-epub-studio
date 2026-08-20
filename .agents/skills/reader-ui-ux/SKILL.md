@@ -77,6 +77,7 @@ CI: `npx impeccable detect --json .` runs in quality gate. See `DESIGN.md` for a
 - [ ] Panels are mutually exclusive
 - [ ] Scroll-aware behaviors implemented
 - [ ] UI interactions include aria-labels + focus traps
+- [ ] Password visibility controls follow the documented leading-edge placement contract
 - [ ] Reduced motion support implemented
 - [ ] No hardcoded colors - all OKLCH tokens
 - [ ] Touch targets minimum 44px on mobile

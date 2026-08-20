@@ -18,6 +18,7 @@ Design tokens are the single source of truth. **Never** deviate without updating
 - [ ] **Responsive**: Layouts work from 320px to 2560px
 - [ ] **Motion**: Respects `prefers-reduced-motion`
 - [ ] **Accessibility**: Touch targets min 44px, focus visible, ARIA labels
+- [ ] **Password toggle placement**: Show/hide controls are anchored to the documented leading/left edge, with matching input padding and RTL-safe logical positioning
 
 ## Forbidden Patterns
 
@@ -46,6 +47,24 @@ const button = cva('bg-accent text-white', {
   variants: { size: { sm: 'px-2', lg: 'px-4' } }
 });
 ```
+
+## Auth Control Placement Regression
+
+For every password field with a visibility control, assert both behavior and geometry:
+
+```typescript
+const password = page.getByLabel('Password');
+const toggle = page.getByRole('button', { name: 'Show password' });
+const passwordBox = await password.boundingBox();
+const toggleBox = await toggle.boundingBox();
+expect(passwordBox).not.toBeNull();
+expect(toggleBox).not.toBeNull();
+expect(toggleBox!.x).toBeLessThan(passwordBox!.x + passwordBox!.width / 2);
+```
+
+A class-name assertion alone can miss a broken generated stylesheet; a browser geometry assertion catches the rendered result. Because the toggle also has an accessible `aria-label`, target the password input by role (`textbox`) rather than `getByLabel('Password')`, which can match both controls in Playwright strict mode.
+
+Run the auth placement matrix from `apps/tests/viewport-matrix.ts`: small/medium/large mobile, tablet, laptop, desktop, large desktop, and landscape mobile. The control must remain inside the field, on its leading/left half, vertically centered, and keyboard/ARIA usable at every size.
 
 ## Visual Regression Testing
 

@@ -100,7 +100,7 @@ test.describe('traceId header assertions', () => {
     await page.goto('/login?book=test-book');
 
     await page.getByLabel('Email Address').fill(TEST_USER.email);
-    await page.getByLabel('Password').fill(TEST_USER.password);
+    await page.getByRole('textbox', { name: 'Password' }).fill(TEST_USER.password);
     await page.getByRole('button', { name: 'Sign In' }).click();
     await expect(page).toHaveURL(/\/read\/test-book$/);
     await expect(page.getByRole('button', { name: 'Contents' })).toBeVisible({ timeout: 15000 });
@@ -140,7 +140,7 @@ test.describe('traceId header assertions', () => {
 
     await page.goto('/login?book=test-book');
     await page.getByLabel('Email Address').fill(TEST_USER.email);
-    await page.getByLabel('Password').fill(TEST_USER.password);
+    await page.getByRole('textbox', { name: 'Password' }).fill(TEST_USER.password);
     await page.getByRole('button', { name: 'Sign In' }).click();
 
     const response = await responsePromise;
@@ -162,7 +162,7 @@ test.describe('traceId server responses', () => {
 
     await page.goto('/login?book=test-book');
     await page.getByLabel('Email Address').fill(TEST_USER.email);
-    await page.getByLabel('Password').fill(TEST_USER.password);
+    await page.getByRole('textbox', { name: 'Password' }).fill(TEST_USER.password);
     await page.getByRole('button', { name: 'Sign In' }).click();
 
     const response = await responsePromise;

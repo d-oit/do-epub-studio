@@ -16,6 +16,7 @@ The CLI uses Chrome/Chromium via CDP. Install via `npm i -g agent-browser` or `b
 2. **Snapshot**: `agent-browser snapshot -i` (get element refs like `@e1`, `@e2`)
 3. **Interact**: Use refs to click, fill, select
 4. **Re-snapshot**: After navigation or DOM changes, get fresh refs
+5. **Verify rendered geometry for UI placement requests**: DOM order and class names do not prove visual placement; use bounding boxes or a screenshot after the change.
 
 ```bash
 agent-browser open https://example.com/form

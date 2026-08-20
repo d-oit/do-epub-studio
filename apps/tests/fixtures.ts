@@ -433,7 +433,7 @@ export async function loginAsReader(page: Page, bookSlug?: string) {
   const slug = bookSlug ?? TEST_USER.bookSlug;
   await page.goto(`/login?book=${slug}`);
   await page.getByLabel('Email Address').fill(TEST_USER.email);
-  await page.getByLabel('Password').fill(TEST_USER.password);
+  await page.getByRole('textbox', { name: 'Password' }).fill(TEST_USER.password);
   await page.getByRole('button', { name: 'Sign In', exact: true }).click();
   await expect(page).toHaveURL(new RegExp(`/read/${slug}$`), { timeout: 15000 });
   // The reader is mounted once the toolbar renders. `networkidle` is
@@ -447,7 +447,7 @@ export async function loginAsReader(page: Page, bookSlug?: string) {
 export async function loginAsAdmin(page: Page) {
   await page.goto('/admin/login');
   await page.getByLabel('Email Address').fill(ADMIN_USER.email);
-  await page.getByLabel('Password').fill(ADMIN_USER.password);
+  await page.getByRole('textbox', { name: 'Password' }).fill(ADMIN_USER.password);
   await page.getByRole('button', { name: 'Sign In', exact: true }).click();
   await expect(page).toHaveURL(/\/admin\/books/, { timeout: 15000 });
   // Wait for the admin books page to mount instead of networkidle — background

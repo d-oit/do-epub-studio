@@ -84,6 +84,9 @@
 
 ### UI/UX
 
+- **Password toggle locator and geometry**: A password visibility button with `aria-label="Show password"` can be returned alongside the password input by Playwright's `getByLabel`; use `getByRole('textbox', { name: 'Password' })` for the field. Verify placement with bounding boxes because source utility classes do not prove generated CSS rendered the control on the intended edge.
+- **Playwright viewport matrix scope**: A fixture-dependent `test.skip` callback must be registered at `describe` scope, not inside `beforeEach`; reuse `apps/tests/viewport-matrix.ts` and run the geometry test once in Chromium rather than multiplying it across browser/device projects.
+
 - **framer-motion removed (2026-07)**: Project migrated to CSS-only animations. `framer-motion` is no longer installed or imported in any source file. All test mocks for `framer-motion` (test-setup.ts, drawer.test.tsx, main.test.tsx, Modal.test.tsx, Input.test.tsx) have been removed as dead code. Historical note: When mocking `framer-motion` in Vitest, filtering out motion-specific props and mapping them to `data-*` attributes prevented React DOM warnings.
 - **React RefObject readonly**: `React.RefObject<T>` has a readonly `current` property. Use `useRef<T | null>(initialValue)` instead when you need to mutate `.current` inside effects or event handlers.
 - **react-hooks/exhaustive-deps with refs**: When capturing a ref's `.current` value inside `useEffect`, exclude the ref from the dependency array and capture the value at effect execution time.
