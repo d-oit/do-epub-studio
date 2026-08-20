@@ -225,12 +225,47 @@ describe('main.tsx', () => {
       if (registeredCall && typeof registeredCall.onRegistered === 'function') {
         const mockSyncRegister = vi.fn().mockResolvedValue(undefined);
         const mockRegistration = {
+          active: true,
           sync: {
             register: mockSyncRegister,
           },
         };
 
         registeredCall.onRegistered(mockRegistration);
+        expect(mockSyncRegister).toHaveBeenCalledWith('sync-reader-state');
+      }
+    });
+
+    it('defers background sync registration until the worker activates', async () => {
+      document.body.innerHTML = '<div id="root"></div>';
+      await import('../main');
+
+      const registeredCall = mockRegisterSW.mock.calls[0]?.[0];
+      expect(registeredCall).toBeDefined();
+
+      if (registeredCall && typeof registeredCall.onRegistered === 'function') {
+        const mockSyncRegister = vi.fn().mockResolvedValue(undefined);
+        const listeners: Array<() => void> = [];
+        const mockWorker = {
+          state: 'installing',
+          addEventListener: vi.fn((_type: string, cb: () => void) => listeners.push(cb)),
+          removeEventListener: vi.fn(),
+        };
+        const mockRegistration = {
+          active: false,
+          installing: mockWorker,
+          waiting: null,
+          sync: {
+            register: mockSyncRegister,
+          },
+        };
+
+        registeredCall.onRegistered(mockRegistration);
+        expect(mockSyncRegister).not.toHaveBeenCalled();
+
+        // Simulate the worker reaching the activated state.
+        mockWorker.state = 'activated';
+        for (const cb of listeners) cb();
         expect(mockSyncRegister).toHaveBeenCalledWith('sync-reader-state');
       }
     });
