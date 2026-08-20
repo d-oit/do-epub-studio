@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { App } from '../App';
 import { useAuthStore } from '../stores/auth';
 
 vi.mock('../hooks/useThemeSync', () => ({
@@ -18,7 +19,8 @@ vi.mock('../hooks/useTranslation', () => ({
 }));
 
 vi.mock('../components/ViewTransitionRoutes', () => ({
-  ViewTransitionRoutes: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  // Keep route matching functional so the real route table in <App /> works.
+  ViewTransitionRoutes: ({ children }: { children: React.ReactNode }) => <Routes>{children}</Routes>,
 }));
 
 vi.mock('../components/SwUpdateNotification', () => ({
@@ -116,6 +118,35 @@ describe('App routes', () => {
         <Routes>
           <Route path="*" element={<div>Not Found</div>} />
         </Routes>
+      </MemoryRouter>,
+    );
+    expect(screen.getByText('Not Found')).toBeInTheDocument();
+  });
+
+  it('renders login page at /login via the app route table', async () => {
+    render(
+      <MemoryRouter initialEntries={['/login']}>
+        <App />
+      </MemoryRouter>,
+    );
+    expect(await screen.findByText('Login Page')).toBeInTheDocument();
+  });
+
+  // Static hosts (Render, GitHub Pages) serve the SPA at /index.html; it must
+  // behave like the root (reach the login) instead of hitting the 404 catch-all.
+  it('redirects /index.html to the root shell', () => {
+    render(
+      <MemoryRouter initialEntries={['/index.html']}>
+        <App />
+      </MemoryRouter>,
+    );
+    expect(screen.getByText('App Shell')).toBeInTheDocument();
+  });
+
+  it('still renders 404 for genuinely unknown paths via the app route table', () => {
+    render(
+      <MemoryRouter initialEntries={['/definitely-not-a-route']}>
+        <App />
       </MemoryRouter>,
     );
     expect(screen.getByText('Not Found')).toBeInTheDocument();

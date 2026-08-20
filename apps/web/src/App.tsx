@@ -168,6 +168,9 @@ export function App() {
             <Suspense fallback={<AdminSkeleton />}><AccountSettingsPage /></Suspense>
           </AdminRoute>
         } />
+        {/* Static hosts serve /index.html as the SPA entry; treat it as the
+            root so it reaches the login instead of the catch-all 404. */}
+        <Route path="/index.html" element={<Navigate to="/" replace />} />
         <Route path="*" element={<NotFoundPage />} />
       </ViewTransitionRoutes>
     </Suspense>
