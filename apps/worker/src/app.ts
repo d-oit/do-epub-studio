@@ -8,6 +8,7 @@ import { corsMiddleware } from './middleware/cors';
 import { applyRateLimit, addRateLimitHeaders } from './middleware/rate-limit';
 import { bodySizeLimit } from './middleware/body-size-limit';
 import {
+  healthRouter,
   accessRouter,
   booksRouter,
   catalogRouter,
@@ -65,6 +66,7 @@ app.options('*', (_c) => {
 // Reformat zValidator error responses to match app standard format
 app.use('*', validationErrorFormatter);
 
+app.route('/api', healthRouter);
 app.route('/api/access', accessRouter);
 app.route('/api/books', booksRouter);
 app.route('/api/catalog', catalogRouter);

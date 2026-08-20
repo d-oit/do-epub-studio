@@ -1,3 +1,4 @@
+export { healthRouter } from './health';
 export { accessRouter } from './access';
 export { booksRouter } from './books';
 export { catalogRouter } from './catalog';
