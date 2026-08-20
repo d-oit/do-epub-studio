@@ -54,8 +54,11 @@ while true; do
         exit 1
     fi
 
-    # Use structured JSON output for reliable parsing
-    CHECKS_JSON=$(gh pr checks "$PR_NUMBER" --json name,state,conclusion,status 2>/dev/null || echo "[]")
+    # Use fields supported by the installed GitHub CLI. `conclusion` and
+    # `status` are GraphQL fields exposed by `gh pr view`, but are not valid
+    # `gh pr checks --json` fields; `bucket` is the stable pass/fail/pending/
+    # skipping classification for this command.
+    CHECKS_JSON=$(gh pr checks "$PR_NUMBER" --json name,state,bucket 2>/dev/null || echo "[]")
 
     # Parse check states
     PENDING_COUNT=0
@@ -63,27 +66,33 @@ while true; do
     SUCCESS_COUNT=0
     TOTAL_COUNT=0
 
-# shellcheck disable=SC2034
-    while IFS='|' read -r name state conclusion status; do
+    while IFS='|' read -r name state bucket; do
         [[ -z "$name" ]] && continue
         TOTAL_COUNT=$((TOTAL_COUNT + 1))
 
-        case "$state" in
-            PENDING|QUEUED|IN_PROGRESS|REQUESTED|WAITING)
+        case "$bucket" in
+            pending)
                 PENDING_COUNT=$((PENDING_COUNT + 1))
                 ;;
-            COMPLETED)
-                case "$conclusion" in
-                    SUCCESS|NEUTRAL)
+            fail)
+                FAILED_COUNT=$((FAILED_COUNT + 1))
+                ;;
+            pass|skipping)
+                SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
+                ;;
+            *)
+                # Fail closed for an unknown bucket or a future CLI value.
+                case "$state" in
+                    SUCCESS|NEUTRAL|SKIPPED)
                         SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
                         ;;
-                    FAILURE|CANCELLED|TIMED_OUT|ACTION_REQUIRED|STALE)
+                    *)
                         FAILED_COUNT=$((FAILED_COUNT + 1))
                         ;;
                 esac
                 ;;
         esac
-    done < <(echo "$CHECKS_JSON" | jq -r '.[] | "\(.name)|\(.state)|\(.conclusion)|\(.status)"' 2>/dev/null || true)
+    done < <(echo "$CHECKS_JSON" | jq -r '.[] | "\(.name)|\(.state)|\(.bucket)"' 2>/dev/null || true)
 
     # Show progress
     if [[ $TOTAL_COUNT -gt 0 ]]; then

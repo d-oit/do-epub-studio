@@ -57,7 +57,7 @@ test.describe('App identity and responsive shell', () => {
       await expect(page.getByRole('heading', { name: appIdentity.name })).toBeVisible();
       await expect(page.getByText(`Version v${appVersion}`)).toBeVisible();
       await expect(page.getByLabel('Email Address')).toBeVisible();
-      await expect(page.getByLabel('Password')).toBeVisible();
+      await expect(page.getByRole('textbox', { name: 'Password' })).toBeVisible();
       await expect(page.getByRole('button', { name: 'Sign In', exact: true })).toBeVisible();
 
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);

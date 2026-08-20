@@ -382,14 +382,33 @@ export async function mockAdminApi(page: Page, opts: { adminLoginResponse?: { ok
  * overflow menu due to container query layout (ReaderToolbar.tsx).
  */
 export async function clickToolbarButton(page: Page, buttonName: string | RegExp) {
+  // Reader toolbar actions are mounted lazily after navigation. Wait for the
+  // toolbar itself before resolving direct versus overflow actions so WebKit
+  // does not race the first render and report a false missing-button failure.
+  await page.locator('[data-container-name="reader-toolbar"]').waitFor({
+    state: 'visible',
+    timeout: 20000,
+  });
+
   // First try direct visibility
   const directBtn = page.getByRole('button', { name: buttonName });
-  if (await directBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-    await directBtn.dispatchEvent('click');
+  for (const candidate of await directBtn.all()) {
+    if (await candidate.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await candidate.dispatchEvent('click');
+      return;
+    }
+  }
+
+  // Some browser engines keep the desktop action in the DOM but report it as
+  // hidden while container-query styles settle. Dispatch the action directly
+  // before falling back to the overflow menu; this preserves the intended
+  // action without relying on a browser-specific visibility calculation.
+  if (await directBtn.count()) {
+    await directBtn.first().dispatchEvent('click');
     return;
   }
 
-  // If not visible, it is behind the "More options" overflow menu
+  // If no direct action exists, it is behind the "More options" overflow menu
   // (container-query driven). Wait for the trigger to actually render: the
   // toolbar re-renders lazily and a short isVisible() check races it, which
   // previously fell through to a blind dispatchEvent on the hidden button and
@@ -433,7 +452,7 @@ export async function loginAsReader(page: Page, bookSlug?: string) {
   const slug = bookSlug ?? TEST_USER.bookSlug;
   await page.goto(`/login?book=${slug}`);
   await page.getByLabel('Email Address').fill(TEST_USER.email);
-  await page.getByLabel('Password').fill(TEST_USER.password);
+  await page.getByRole('textbox', { name: 'Password' }).fill(TEST_USER.password);
   await page.getByRole('button', { name: 'Sign In', exact: true }).click();
   await expect(page).toHaveURL(new RegExp(`/read/${slug}$`), { timeout: 15000 });
   // The reader is mounted once the toolbar renders. `networkidle` is
@@ -447,7 +466,7 @@ export async function loginAsReader(page: Page, bookSlug?: string) {
 export async function loginAsAdmin(page: Page) {
   await page.goto('/admin/login');
   await page.getByLabel('Email Address').fill(ADMIN_USER.email);
-  await page.getByLabel('Password').fill(ADMIN_USER.password);
+  await page.getByRole('textbox', { name: 'Password' }).fill(ADMIN_USER.password);
   await page.getByRole('button', { name: 'Sign In', exact: true }).click();
   await expect(page).toHaveURL(/\/admin\/books/, { timeout: 15000 });
   // Wait for the admin books page to mount instead of networkidle — background

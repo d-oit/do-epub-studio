@@ -8,6 +8,7 @@ export const VIEWPORT_MATRIX = [
   { label: 'tablet', width: 768, height: 1024 },
   { label: 'laptop', width: 1024, height: 768 },
   { label: 'desktop', width: 1440, height: 900 },
+  { label: 'large-desktop', width: 1920, height: 1080 },
   { label: 'landscape-mobile', width: 812, height: 375 },
 ] as const;
 

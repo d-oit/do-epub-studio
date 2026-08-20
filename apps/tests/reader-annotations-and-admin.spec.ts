@@ -122,7 +122,7 @@ test.describe('Admin console', () => {
     await page.goto(`/admin/login`);
     await expect(page.getByRole('heading', { name: /Admin/i })).toBeVisible();
     await expect(page.getByLabel('Email Address')).toBeVisible();
-    await expect(page.getByLabel('Password')).toBeVisible();
+    await expect(page.getByRole('textbox', { name: 'Password' })).toBeVisible();
   });
 
   test('@mobile navigates to books page after admin login', async ({ page }) => {
@@ -197,7 +197,7 @@ test.describe('Accessibility', () => {
     await expect(emailInput).toBeVisible();
     await expect(emailInput).toHaveAttribute('type', 'email');
 
-    const passwordInput = page.getByLabel('Password');
+    const passwordInput = page.getByRole('textbox', { name: 'Password' });
     await expect(passwordInput).toBeVisible();
     await expect(passwordInput).toHaveAttribute('type', 'password');
   });
@@ -247,7 +247,7 @@ test.describe('Accessibility', () => {
     await page.goto(`/login?book=${TEST_USER.bookSlug}`);
 
     await page.getByLabel('Email Address').fill(TEST_USER.email);
-    await page.getByLabel('Password').fill(TEST_USER.password);
+    await page.getByRole('textbox', { name: 'Password' }).fill(TEST_USER.password);
     await page.getByRole('button', { name: 'Sign In', exact: true }).click();
 
     const errorElement = page.getByText('Access denied');
