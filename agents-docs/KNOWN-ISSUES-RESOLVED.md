@@ -30,6 +30,20 @@
 
 ---
 
+### [Testing Infrastructure - Playwright Browsers] (RESOLVED)
+
+**Issue:** `Error: browserType.launch: Executable doesn't exist at /home/doit/.cache/ms-playwright/...` (6 E2E smoke tests fail)
+
+**Location:** `scripts/quality_gate.sh` (test:e2e:smoke step), `apps/tests/*.spec.ts`
+
+**Reason:** Playwright browsers were not installed in the development environment. A lockfile regeneration updated Playwright (1.59.1 → 1.60.0 at the time), requiring browser binary re-download.
+
+**Resolution:** `scripts/quality_gate.sh` now detects missing browser executables and runs `npx playwright install <missing>` automatically; CI installs browsers explicitly (`pnpm exec playwright install --with-deps chromium webkit` in `ci.yml`). Local E2E smoke runs no longer fail on missing browsers.
+
+**Date Resolved:** 2026-08-20 (GOAP-248)
+
+---
+
 ### [CI/CD - Lighthouse Audit] (RESOLVED)
 
 **Issue:** Lighthouse audit consistently fails on all PRs with assertion failures (performance/accessibility thresholds not met)

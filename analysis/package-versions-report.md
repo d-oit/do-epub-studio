@@ -1,6 +1,13 @@
 # Package Versions Analysis Report
 
-**Generated:** 2025-09-25
+> **⚠️ SUPERSEDED (GOAP-248, 2026-08-20):** This 2025-09-25 snapshot documents
+> a React 18 / Vite 7-era stack. The project is now on React 19 + Vite 8
+> (Rolldown) + Tailwind 4 + Vitest 4. Current dependency health is maintained
+> by `pnpm outdated -r` (patch-level lag only as of 2026-08-20) and
+> `pnpm audit --prod` (0 known vulnerabilities). Do not treat version numbers
+> in this report as current.
+
+**Generated:** 2025-09-25 (superseded 2026-08-20)
 **Project:** do-epub-studio (Monorepo with pnpm workspaces)
 **Package Manager:** pnpm@10.33.0
 
