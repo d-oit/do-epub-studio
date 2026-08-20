@@ -34,6 +34,16 @@ export const WithError: Story = {
   },
 };
 
+export const PasswordVisibility: Story = {
+  args: {
+    label: 'Password',
+    type: 'password',
+    value: 'example-password',
+    showPasswordLabel: 'Show password',
+    hidePasswordLabel: 'Hide password',
+  },
+};
+
 export const WithHelperText: Story = {
   args: {
     label: 'Username',

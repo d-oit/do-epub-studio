@@ -20,7 +20,7 @@ const SETTINGS_PANEL_TIMEOUT = 15_000;
 async function login(page: Page) {
   await page.goto(`/login?book=${TEST_USER.bookSlug}`);
   await page.getByLabel('Email Address').fill(TEST_USER.email);
-  await page.getByLabel('Password').fill(TEST_USER.password);
+  await page.getByRole('textbox', { name: 'Password' }).fill(TEST_USER.password);
   await page.getByRole('button', { name: 'Sign In', exact: true }).click();
 }
 
@@ -46,19 +46,26 @@ test.describe('Login and book load (desktop)', () => {
 
     // Form fields
     await expect(page.getByLabel('Email Address')).toBeVisible();
-    await expect(page.getByLabel('Password')).toBeVisible();
+    await expect(page.getByRole('textbox', { name: 'Password' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Sign In', exact: true })).toBeVisible();
   });
 
   test('@mobile @smoke shows and hides the password via the toggle', async ({ page }) => {
     await page.goto(`/login?book=${TEST_USER.bookSlug}`);
-    await page.getByLabel('Password').fill(TEST_USER.password);
+    await page.getByRole('textbox', { name: 'Password' }).fill(TEST_USER.password);
 
-    const passwordInput = page.getByLabel('Password');
+    const passwordInput = page.getByRole('textbox', { name: 'Password' });
     await expect(passwordInput).toHaveAttribute('type', 'password');
 
     // GOV.UK-style toggle: icon + changing action label (WCAG 3.3.8).
-    await page.getByRole('button', { name: 'Show password' }).click();
+    const toggle = page.getByRole('button', { name: 'Show password' });
+    const passwordBox = await passwordInput.boundingBox();
+    const toggleBox = await toggle.boundingBox();
+    expect(passwordBox).not.toBeNull();
+    expect(toggleBox).not.toBeNull();
+    expect(toggleBox!.x).toBeLessThan(passwordBox!.x + passwordBox!.width / 2);
+
+    await toggle.click();
     await expect(passwordInput).toHaveAttribute('type', 'text');
     await expect(page.getByRole('button', { name: 'Hide password' })).toBeVisible();
 
@@ -71,11 +78,12 @@ test.describe('Login and book load (desktop)', () => {
     await page.goto(`/login?book=${TEST_USER.bookSlug}`);
 
     // ADR-245: the desktop hero carries value props + the access note.
-    await expect(page.getByText('Responsive EPUB reading')).toBeVisible();
-    await expect(page.getByText('Highlights, annotations & bookmarks')).toBeVisible();
-    await expect(page.getByText('Offline reading with sync')).toBeVisible();
-    await expect(page.getByText('Upload & manage books')).toBeVisible();
-    await expect(page.getByText(/No signup needed/)).toBeVisible();
+    const desktopHero = page.getByRole('list').first();
+    await expect(desktopHero.getByText('Responsive EPUB reading')).toBeVisible();
+    await expect(desktopHero.getByText('Highlights, annotations & bookmarks')).toBeVisible();
+    await expect(desktopHero.getByText('Offline reading with sync')).toBeVisible();
+    await expect(desktopHero.getByText('Upload & manage books')).toBeVisible();
+    await expect(page.getByText(/No signup needed/).first()).toBeVisible();
   });
 
   test('@mobile @smoke logs in and navigates to the reader', async ({ page }) => {
@@ -197,7 +205,7 @@ test.describe('Login and book load (mobile)', () => {
 
     // Form fields should still be visible and fillable
     await expect(page.getByLabel('Email Address')).toBeVisible();
-    await expect(page.getByLabel('Password')).toBeVisible();
+    await expect(page.getByRole('textbox', { name: 'Password' })).toBeVisible();
 
     await login(page);
 
