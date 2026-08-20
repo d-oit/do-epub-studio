@@ -28,7 +28,9 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'prompt',
-      includeAssets: ['favicon.ico', 'robots.txt', 'apple-touch-icon.png'],
+      // Only precache assets that actually ship from public/. favicon.ico has no
+      // source (index.html references /favicon.svg), so it must not be listed.
+      includeAssets: ['robots.txt', 'apple-touch-icon.png'],
       manifest: {
         name: appIdentity.name,
         short_name: appIdentity.shortName,
