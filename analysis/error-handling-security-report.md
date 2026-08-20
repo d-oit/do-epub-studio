@@ -1,7 +1,13 @@
 # Error Handling and Security Analysis Report
 
+> **⚠️ SUPERSEDED (GOAP-248, 2026-08-20):** This 2025-01-16 report predates
+> most of the current security surface. Findings below that are now resolved
+> are marked inline. For the current security posture see
+> `docs/security-posture.md`, `docs/security.md`, and the route/coverage
+> evidence in `plans/248-goap-missing-impl-improvements-audit.md` (T5).
+
 **Project:** do-epub-studio
-**Date:** 2025-01-16
+**Date:** 2025-01-16 (superseded 2026-08-20)
 **Analyzer:** Code Analysis Tool
 
 ---
@@ -353,7 +359,7 @@ rendition.on(event, callback as any);
 | Priority | Issue | Action |
 |----------|-------|--------|
 | **High** | #5 | Move test credentials to environment variables |
-| **High** | #6 | Implement rate limiting |
+| **High** | #6 | Implement rate limiting — **RESOLVED** (Durable-Object `RateLimiterDO` + auth lockout 5/15min; see `apps/worker/src/lib/rate-limiter-do.ts` and ADR-200/232) |
 | **High** | #3 | Add database error context |
 | **Medium** | #1 | Create error message utility function |
 | **Medium** | #2 | Add user-facing error states |
@@ -374,8 +380,8 @@ rendition.on(event, callback as any);
 - [x] **Authentication middleware** - requireAuth and requireAdminAuth implemented
 - [x] **Authorization checks** - Capability-based access control
 - [x] **Secrets in .gitignore** - .env files excluded
-- [ ] Rate limiting - **NOT IMPLEMENTED**
-- [ ] Test credentials - **HARDCODED** (needs fixing)
+- [x] **Rate limiting** - Implemented via Durable-Object `RateLimiterDO` (auth 10/min, files 30/min, api 60/min) + per-email lockout (5 attempts / 15 min) and per-IP/account recovery limits; see `apps/worker/src/middleware/rate-limit.ts` (resolved post-report)
+- [x] **Test credentials** - Moved to env-driven demo accounts per ADR-233/244; demo passwords are documented in `.env` examples, never hardcoded in source
 
 ---
 
