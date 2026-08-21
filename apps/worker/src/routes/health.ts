@@ -11,5 +11,17 @@ import type { Env } from '../lib/env';
 export const healthRouter = new Hono<{ Bindings: Env }>();
 
 healthRouter.get('/health', (c) => {
-  return c.json({ ok: true, service: 'do-epub-studio-worker' });
+  // TEMPORARY diagnostic (GOAP-252): report whether Pages bindings reached the
+  // function so we can confirm D1/KV attach to Git-integrated builds. Removed
+  // once the binding wiring is verified on production.
+  return c.json({
+    ok: true,
+    service: 'do-epub-studio-worker',
+    diag: {
+      hasDb: typeof c.env.DB !== 'undefined',
+      hasKv: typeof c.env.CACHE_KV !== 'undefined',
+      env: c.env.ENVIRONMENT ?? null,
+      baseUrl: c.env.APP_BASE_URL ?? null,
+    },
+  });
 });
