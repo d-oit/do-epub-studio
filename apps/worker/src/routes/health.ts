@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import type { Env } from '../lib/env';
 import { verifyPassword } from '../auth/password';
 import { createAdminSession } from '../auth/admin-middleware';
+import { logAudit } from '../audit';
 
 /**
  * Liveness probe (ADR-252): `GET /api/health` must return a non-HTML,
@@ -57,6 +58,21 @@ healthRouter.get('/health', async (c) => {
       deviceLabelHash: 'diag-device-hash',
     });
     diag.createSession = session.ok ? 'ok' : JSON.stringify(session);
+    // Replicate the login route's post-session `logAudit` call exactly.
+    if (session.ok && 'token' in session) {
+      try {
+        await logAudit(c.env, {
+          entityType: 'user',
+          entityId: session.user.id,
+          action: 'admin_login',
+          actorEmail: session.user.email,
+          payload: { role: session.user.role },
+        }, c.executionCtx);
+        diag.postLogAudit = 'ok';
+      } catch (e) {
+        diag.postLogAuditError = e instanceof Error ? `${e.name}: ${e.message}` : String(e);
+      }
+    }
   } catch (e) {
     diag.createSessionError = e instanceof Error ? `${e.name}: ${e.message}` : String(e);
   }
