@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import type { Env } from '../lib/env';
 import { verifyPassword } from '../auth/password';
+import { createAdminSession } from '../auth/admin-middleware';
 
 /**
  * Liveness probe (ADR-252): `GET /api/health` must return a non-HTML,
@@ -47,6 +48,14 @@ healthRouter.get('/health', async (c) => {
     }
   } catch (e) {
     diag.verifyStoredError = e instanceof Error ? e.message : String(e);
+  }
+  // TEMPORARY diagnostic (GOAP-252): run the FULL createAdminSession (the login
+  // route's core) and surface where it fails. This is the login 500 root cause.
+  try {
+    const session = await createAdminSession(c.env, 'dmmotec@gmail.com', 'TempTestPass123!', {});
+    diag.createSession = session.ok ? 'ok' : JSON.stringify(session);
+  } catch (e) {
+    diag.createSessionError = e instanceof Error ? `${e.name}: ${e.message}` : String(e);
   }
   return c.json({ ok: true, service: 'do-epub-studio-worker', diag });
 });
