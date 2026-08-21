@@ -1,6 +1,5 @@
 import { Hono } from 'hono';
 import type { Env } from '../lib/env';
-import { argon2id, argon2Verify } from 'argon2-wasm-edge';
 import { verifyPassword } from '../auth/password';
 
 /**
@@ -36,24 +35,10 @@ healthRouter.get('/health', async (c) => {
       diag.usersQueryError = e instanceof Error ? e.message : String(e);
     }
   }
-  // TEMPORARY argon2 self-test (GOAP-252): prove the hashing runtime works on
-  // Pages. If this fails, login's verifyPassword silently returns false -> 401.
-  try {
-    const h = await argon2id({
-      password: 'selftest-pass',
-      salt: new Uint8Array(16),
-      iterations: 3,
-      parallelism: 4,
-      memorySize: 65536,
-      hashLength: 32,
-      outputType: 'encoded',
-    });
-    diag.argon2SelfTest = await argon2Verify({ password: 'selftest-pass', hash: h });
-  } catch (e) {
-    diag.argon2SelfTestError = e instanceof Error ? e.message : String(e);
-  }
   // TEMPORARY diagnostic (GOAP-252): run the exact login password verification
   // against the stored admin hash to isolate where the login 500 originates.
+  // (A self-test proved argon2-wasm-edge works on Pages once the pre-compiled
+  // wasm modules are registered; the login 500 is elsewhere.)
   try {
     const row = await c.env.DB.prepare("SELECT password_hash FROM users WHERE email = 'dmmotec@gmail.com'").first();
     diag.storedHash = row?.password_hash ? String(row.password_hash).slice(0, 30) + '...' : null;
