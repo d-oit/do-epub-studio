@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import type { Env } from '../lib/env';
+import { argon2id, argon2Verify } from 'argon2-wasm-edge';
 
 /**
  * Liveness probe (ADR-252): `GET /api/health` must return a non-HTML,
@@ -33,6 +34,22 @@ healthRouter.get('/health', async (c) => {
     } catch (e) {
       diag.usersQueryError = e instanceof Error ? e.message : String(e);
     }
+  }
+  // TEMPORARY argon2 self-test (GOAP-252): prove the hashing runtime works on
+  // Pages. If this fails, login's verifyPassword silently returns false -> 401.
+  try {
+    const h = await argon2id({
+      password: 'selftest-pass',
+      salt: new Uint8Array(16),
+      iterations: 3,
+      parallelism: 4,
+      memorySize: 65536,
+      hashLength: 32,
+      outputType: 'encoded',
+    });
+    diag.argon2SelfTest = await argon2Verify({ password: 'selftest-pass', hash: h });
+  } catch (e) {
+    diag.argon2SelfTestError = e instanceof Error ? e.message : String(e);
   }
   return c.json({ ok: true, service: 'do-epub-studio-worker', diag });
 });
