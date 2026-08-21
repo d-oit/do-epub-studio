@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import type { Env } from '../lib/env';
 import { argon2id, argon2Verify } from 'argon2-wasm-edge';
+import { verifyPassword } from '../auth/password';
 
 /**
  * Liveness probe (ADR-252): `GET /api/health` must return a non-HTML,
@@ -50,6 +51,17 @@ healthRouter.get('/health', async (c) => {
     diag.argon2SelfTest = await argon2Verify({ password: 'selftest-pass', hash: h });
   } catch (e) {
     diag.argon2SelfTestError = e instanceof Error ? e.message : String(e);
+  }
+  // TEMPORARY diagnostic (GOAP-252): run the exact login password verification
+  // against the stored admin hash to isolate where the login 500 originates.
+  try {
+    const row = await c.env.DB.prepare("SELECT password_hash FROM users WHERE email = 'dmmotec@gmail.com'").first();
+    diag.storedHash = row?.password_hash ? String(row.password_hash).slice(0, 30) + '...' : null;
+    if (row?.password_hash) {
+      diag.verifyStored = await verifyPassword('TempTestPass123!', String(row.password_hash));
+    }
+  } catch (e) {
+    diag.verifyStoredError = e instanceof Error ? e.message : String(e);
   }
   return c.json({ ok: true, service: 'do-epub-studio-worker', diag });
 });
