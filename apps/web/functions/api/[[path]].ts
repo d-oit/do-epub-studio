@@ -18,8 +18,8 @@
  *  - Email Sending is not a Pages Function binding; recovery email falls back
  *    to `LoggingEmailTransport` (login is unaffected).
  */
-import { app } from '../../apps/worker/src/app';
-import type { Env } from '../../apps/worker/src/lib/env';
+import { app } from '../../../worker/src/app';
+import type { Env } from '../../../worker/src/lib/env';
 
 interface PagesFunctionContext {
   request: Request;
