@@ -52,7 +52,10 @@ healthRouter.get('/health', async (c) => {
   // TEMPORARY diagnostic (GOAP-252): run the FULL createAdminSession (the login
   // route's core) and surface where it fails. This is the login 500 root cause.
   try {
-    const session = await createAdminSession(c.env, 'dmmotec@gmail.com', 'TempTestPass123!', {});
+    const session = await createAdminSession(c.env, 'dmmotec@gmail.com', 'TempTestPass123!', {
+      ipHash: 'diag-ip-hash',
+      deviceLabelHash: 'diag-device-hash',
+    });
     diag.createSession = session.ok ? 'ok' : JSON.stringify(session);
   } catch (e) {
     diag.createSessionError = e instanceof Error ? `${e.name}: ${e.message}` : String(e);
