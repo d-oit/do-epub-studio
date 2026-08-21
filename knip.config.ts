@@ -56,6 +56,9 @@ const config: KnipConfig = {
       ],
       // Barrel index not imported by any consumer — pre-existing baseline
       ignoreFiles: ['src/lib/index.ts'],
+      // Pages Function entry point — bundled by Cloudflare at deploy time,
+      // never imported by app source (GOAP-252).
+      ignore: ['functions/api/[[path]].ts'],
     },
 
     // ---- apps/worker -----------------------------------------------------
