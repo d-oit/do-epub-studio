@@ -30,6 +30,19 @@ export function SearchInput({
     return () => { clearTimeout(timer); };
   }, [local, debounceMs, onChange, value]);
 
+  const handleClear = () => {
+    setLocal('');
+    if (onClear) onClear();
+    else onChange('');
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Escape' && (value || local)) {
+      e.preventDefault();
+      handleClear();
+    }
+  };
+
   return (
     <div className={`relative ${className}`}>
       <label htmlFor={id} className="sr-only">{ariaLabel}</label>
@@ -42,21 +55,20 @@ export function SearchInput({
           if (debounceMs > 0) setLocal(v);
           else onChange(v);
         }}
+        onKeyDown={handleKeyDown}
         placeholder={placeholder}
         className="w-full rounded-md border border-border bg-surface px-3 py-2 pe-9 text-sm text-foreground placeholder:text-foreground-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
       />
       {(value || local) && (
         <button
           type="button"
-          onClick={() => {
-            setLocal('');
-            if (onClear) onClear();
-            else onChange('');
-          }}
+          onClick={handleClear}
           aria-label="Clear search"
-          className="absolute right-2 top-1/2 -translate-y-1/2 rounded-sm min-w-[24px] min-h-[24px] p-1 text-foreground-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center rounded-md min-w-[28px] min-h-[28px] p-1 text-foreground-muted hover:text-foreground hover:bg-background-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent transition-colors"
         >
-          ✕
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
         </button>
       )}
     </div>

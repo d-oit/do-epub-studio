@@ -31,4 +31,21 @@ describe('SearchInput', () => {
     fireEvent.click(screen.getByLabelText('Clear search'));
     expect(onChange).toHaveBeenCalledWith('');
   });
+
+  it('clears value when Escape key is pressed in the search input', () => {
+    const onChange = vi.fn();
+    render(<SearchInput value="hello" onChange={onChange} />);
+    const input = screen.getByRole('searchbox');
+    fireEvent.keyDown(input, { key: 'Escape' });
+    expect(onChange).toHaveBeenCalledWith('');
+  });
+
+  it('calls custom onClear when Escape key is pressed if onClear is provided', () => {
+    const onChange = vi.fn();
+    const onClear = vi.fn();
+    render(<SearchInput value="hello" onChange={onChange} onClear={onClear} />);
+    const input = screen.getByRole('searchbox');
+    fireEvent.keyDown(input, { key: 'Escape' });
+    expect(onClear).toHaveBeenCalled();
+  });
 });
