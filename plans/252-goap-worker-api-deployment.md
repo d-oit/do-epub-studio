@@ -1,85 +1,64 @@
-# GOAP-252: Deploy Worker API for the Render-Hosted Frontend
+# GOAP-252: Serve the API on the same origin as the deployed frontend
 
 **Date:** Current session
-**Status:** BLOCKED on credentials (see issue #1014 comment, Aug 20 2026)
+**Status:** Code complete — API wired into the Cloudflare Pages build via Pages Functions; remaining work is operator dashboard setup (D1/KV/R2 bindings + vars) and data seeding.
 **Related:** ADR-252, issue #1014
 
-## Progress (Aug 20 2026, second pass)
+## Decision (updated)
 
-Code-level blockers from the runbook are now fixed in PR #1021 (no credentials
-needed):
+The frontend build runs on **Cloudflare Pages directly** (Pages Git
+integration, root `wrangler.toml`). The API is served on the **same origin**
+by a Pages Function (`functions/api/[[path]].ts`) that re-serves the existing
+Worker's Hono app. This is ADR-252's "preferred long-term" option: no
+separate Worker deployment, no `VITE_API_BASE_URL`, no CORS.
 
-- **Added `GET /api/health`** — the ADR-252 acceptance contract referenced a
+## Completed work
+
+### PR #1018
+- Added `GET /api/health` — the ADR-252 acceptance contract referenced a
   health endpoint that did not exist in the worker. New route + unit test.
-- **Release workflow now deploys the worker** — `release.yml` only ran
-  `wrangler deploy --dry-run`, assuming Cloudflare Git integration deploys the
-  worker. It does not (Pages Git integration ships only the static SPA; the
-  documented `*.workers.dev` URLs fail DNS). The release now runs a real
-  `wrangler deploy` via `wrangler-action`.
-- **Post-deploy health check is fail-closed** — previously it exited 0 with a
-  warning even when the API was unreachable. It now asserts `GET /api/health`
-  returns `200` + `{"ok":true}` and exits 1 otherwise (ADR-187).
+- Post-deploy health check is fail-closed — asserts `GET /api/health` returns
+  `200` + `{"ok":true}` and exits 1 otherwise (ADR-187).
 
-Remaining blocker is unchanged: **credentials**. The deploy will fail at the
-D1/KV/R2 bindings until the infra is provisioned per the runbook below.
+### PR #1019
+- Wired D1 `migrations_dir` → `packages/schema/migrations` (the 12 migrations
+  were unreachable, so a fresh DB would deploy empty).
+- Corrected the infrastructure runbook (D1 is the runtime DB, not Turso).
 
-## Investigation findings (Aug 20 2026)
+### PR #1021 (this change)
+- Added `functions/api/[[path]].ts` — a Cloudflare Pages Function catch-all
+  that serves the Worker's Hono app on `/api/*` same-origin. Bundled
+  automatically by the Pages build (verified: `wrangler pages functions build`
+  compiles a ~2MB bundle; `wrangler pages dev` serves `/api/health` as JSON
+  and returns JSON errors instead of the SPA HTML fallback).
+- Removed the standalone `wrangler deploy` step from `release.yml` (the API
+  rides the Pages deployment — no credentials needed) and pointed the
+  post-deploy health check at `https://do-epub-studio.pages.dev/api/health`.
+- Updated `docs/runbooks/infrastructure-setup.md` for the Pages Functions
+  model (dashboard bindings, no `VITE_API_BASE_URL`).
 
-Attempted to execute this plan; blocked before step 1 by missing credentials:
+## Remaining (operator, no code changes)
 
-- `wrangler whoami` → "Not logged in. Your auth token has expired and could not be refreshed" (OAuth token in `~/.config/.wrangler/config/default.toml` expired 2026-04-12).
-- Turso CLI installed at `~/.turso/turso` but `turso auth whoami` → "You are not logged in".
-- GitHub Actions secrets contain only `CHROMATIC_PROJECT_TOKEN` + `CODACY_PROJECT_TOKEN` — no Cloudflare or Turso tokens.
-- `apps/worker/wrangler.jsonc` is dev-only: placeholder D1/KV IDs, `file::memory:` Turso URL, `ENVIRONMENT: development`.
-- `release.yml` only dry-runs `wrangler deploy` (line 257) — no real automated deploy exists.
+1. Create D1 (`wrangler d1 create do-epub-studio`), R2 bucket, KV namespace.
+2. Apply migrations (`wrangler d1 migrations apply do-epub-studio --remote`).
+3. Bind `DB` / `BOOKS_BUCKET` / `CACHE_KV` on the Pages project (dashboard).
+4. Set Pages env vars/secrets: `SESSION_SIGNING_SECRET`, `INVITE_TOKEN_SECRET`,
+   `APP_BASE_URL=https://do-epub-studio.pages.dev`, `ENVIRONMENT=production`,
+   `WEBAUTHN_RP_ID` / `WEBAUTHN_ORIGIN`.
+5. Seed accounts/books (schema migrations + admin bootstrap).
+6. Push to production branch → Pages builds frontend + `functions/` → the API
+   is live on the same origin. Verify `GET /api/health` and login.
 
-Full runbook (wrangler login → turso login → provision D1/KV/R2/Turso → set secrets → migrations → deploy → VITE_API_BASE_URL) is posted on issue #1014.
+## Problem (original)
 
-## Problem
-
-While sweeping the deployed site (`https://do-epub-studio.onrender.com/`) for
-console errors, the `/catalog` route logs two errors on every visit:
-
-- `api.parse-error` — `/api/catalog?limit=24&offset=0` returns `200` with an
-  HTML body (`<!DOCTYPE html>`) instead of JSON.
-- `api.network-error` — "Invalid server response".
-
-Root cause is **server-side and pre-existing** (reproducible with curl, which
-bypasses the service worker entirely):
-
-1. The Render deployment is a static SPA whose fallback catch-all 301s every
-   unknown path — including `/api/*` — to `/index.html`:
-   `GET /api/catalog` → `301 → /index.html?limit=24&offset=0`.
-2. The API backend is a Cloudflare Worker (`apps/worker`) that is deployed only
-   by the **release workflow** (`release.yml`, `wrangler deploy`). Its
-   documented URLs (`https://api.do-epub-studio.workers.dev` and
-   `https://do-epub-studio.d-oit.workers.dev`) currently fail DNS.
-3. The web app only calls same-origin `/api/*` in production unless
-   `VITE_API_BASE_URL` is baked in — no Render deployment sets it.
-
-Unauthenticated routes (`/login`, `/help`, `/admin/login`, `/library`,
-`/settings`) are console-clean; only API-backed pages (`/catalog`, login
-submit, reader load) are affected.
-
-## Execution (proposed)
-
-1. Deploy the worker to a stable URL: `pnpm exec wrangler deploy` with Turso/R2
-   env (see `docs/runbooks/infrastructure-setup.md`); verify
-   `GET /api/health` returns 200/204.
-2. Configure the Render service env `VITE_API_BASE_URL` to the deployed worker
-   origin (or add `render.yaml` to the repo so the API is served on the same
-   origin).
-3. Rebuild the web app with the env var; verify `/catalog` loads JSON and the
-   reader demo login works.
-4. Add a CI smoke check that asserts `GET /api/catalog` does not return HTML
-   (catches "SPA fallback swallowed the API" regressions).
+While sweeping the deployed site for console errors, `/catalog` and login
+submit logged `api.parse-error` / "Invalid server response" because `/api/*`
+hit a static SPA fallback (HTML) instead of a JSON API. The API backend
+(`apps/worker`) had never been deployed to a reachable URL.
 
 ## Acceptance criteria
 
-- `GET /api/catalog` returns JSON from the deployed origin (200 + content-type
-  `application/json`).
-- `/catalog` page shows no `api.parse-error` / `api.network-error` console
-  errors.
+- `GET /api/health` returns `200` + `{"ok":true}` from the Pages origin.
+- `GET /api/catalog` returns JSON, not HTML.
 - Login (reader + admin) works against the live API.
-- The tracking issue #1014 is closed with evidence (curl output + console
-  screenshot).
+- Issue #1014 closed with evidence (curl output + browser verification).
