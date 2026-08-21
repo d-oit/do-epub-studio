@@ -22,6 +22,9 @@ healthRouter.get('/health', async (c) => {
     hasKv: typeof c.env.CACHE_KV !== 'undefined',
     env: c.env.ENVIRONMENT ?? null,
     baseUrl: c.env.APP_BASE_URL ?? null,
+    // TEMPORARY (GOAP-252): from the Pages function header diagnostic.
+    pagesHasCtx: c.req.header('x-diag-has-ctx') ?? null,
+    pagesCtxKeys: c.req.header('x-diag-ctx-keys') ?? null,
   };
   if (typeof c.env.DB !== 'undefined') {
     try {

@@ -32,5 +32,12 @@ export async function onRequest(context: PagesFunctionContext): Promise<Response
   // Register the pre-compiled Argon2 wasm modules before the Hono app runs so
   // password hashing (argon2-wasm-edge) works on Pages. Idempotent and cheap.
   await registerArgon2Wasm();
-  return app.fetch(context.request, context.env, context.ctx);
+  // TEMPORARY diagnostic (GOAP-252): surface whether the Pages execution
+  // context reached `app.fetch` (c.executionCtx throws otherwise).
+  const diagReq = new Request(context.request, {
+    headers: new Headers(context.request.headers),
+  });
+  diagReq.headers.set('x-diag-has-ctx', String(typeof context.ctx !== 'undefined'));
+  diagReq.headers.set('x-diag-ctx-keys', typeof context.ctx === 'object' && context.ctx !== null ? Object.keys(context.ctx).join(',') : 'n/a');
+  return app.fetch(diagReq, context.env, context.ctx);
 }
