@@ -2,90 +2,74 @@
 
 This runbook documents the steps to set up production infrastructure for
 d.o.EPUB Studio. It is intended for operators with access to the
-Cloudflare dashboard and relevant API keys.
+Cloudflare dashboard.
 
-**Production origins (GOAP-252):**
+## Deployment model (GOAP-252)
 
-| Surface | Origin |
+The app is served entirely by **Cloudflare Pages** — the build runs on
+Cloudflare directly (Pages Git integration, see root `wrangler.toml`):
+
+| Surface | How it's served |
 |---|---|
-| Frontend (Render static SPA) | `https://do-epub-studio.onrender.com` |
-| Worker API | `https://api.do-epub-studio.workers.dev` (after `wrangler deploy`) |
+| Frontend (SPA) | Pages Git integration builds `apps/web/dist` |
+| API (`/api/*`) | Pages Functions (`functions/api/[[path]].ts`) re-serves the existing Worker's Hono app on the **same origin** |
 
-The web build must target the Worker via `VITE_API_BASE_URL` at build time;
-the Worker must allow the frontend origin via `APP_BASE_URL` (CORS,
-recovery links, signed file URLs) and WebAuthn settings. Setting the wrong
-origin here breaks login, recovery emails, and passkeys even after a
-successful deploy.
+Because the API shares the frontend's origin, production needs **no separate
+Worker deployment, no `VITE_API_BASE_URL`, and no CORS** — the web app's
+production default (`window.location.origin`) already targets same-origin
+`/api/*`.
+
+Cloudflare resources (D1, R2, KV) are bound to the Pages project via the
+dashboard. The Worker's `wrangler.jsonc` is still used for **local dev**
+(`wrangler dev`) and tests only.
 
 ---
 
 ## Prerequisites
 
 - Cloudflare account with access to the d.o.EPUB Studio zone
-- `wrangler` CLI installed and authenticated (`wrangler login`)
+- `wrangler` CLI installed and authenticated (`wrangler login`) — only needed
+  for local dev and one-time resource provisioning
 - Node.js 20+ and pnpm
 
 ---
 
 ## 1. Cloudflare Email Sending Binding
 
-### Dashboard Setup
-
-1. Go to Cloudflare Dashboard → your zone → **Email** → **Email Routing**
-2. Set up Email Routing if not already configured (DNS records are
-   auto-added)
-3. Under **Sending**, set up a sending domain (verify domain via DNS TXT
-   record)
-4. Go to your Worker → **Settings** → **Bindings** → **Add Binding**
-5. Select **Email Sending** as the binding type
-6. Set the binding variable name to: `EMAIL_SEND`
-7. Set the sender email address (e.g., `noreply@do-epub-studio.example.com`)
-
-### Configuration
-
-The `EMAIL_SENDER` variable should be set in `wrangler.jsonc` `vars` (or as
-a Worker secret):
-
-```json
-"vars": {
-  "EMAIL_SENDER": "noreply@do-epub-studio.example.com"
-}
-```
-
-### Verification
-
-Run the health check or manually test via:
-
-```bash
-curl -X POST https://api.do-epub-studio.workers.dev/api/admin/recovery-request \
-  -H "Content-Type: application/json" \
-  -d '{"email": "test@example.com"}'
-```
-
-If the binding is configured, the email should arrive. If it falls back
-to `LoggingEmailTransport`, check `wrangler tail` for the warning log.
+> Email Sending is **not** a supported Pages Function binding. Recovery email
+> falls back to `LoggingEmailTransport` (logged, not delivered) — login is
+> unaffected. If email delivery is required later, deploy the Worker
+> standalone (see `apps/worker/wrangler.jsonc`) and point the frontend at it
+> via `VITE_API_BASE_URL`.
 
 ---
 
 ## 2. D1 Database (runtime DB)
 
-The Worker's runtime database is **D1** (`env.DB`, see
+The API's runtime database is **D1** (`env.DB`, see
 `apps/worker/src/db/client.ts`). The 12 migrations live in
-`packages/schema/migrations/` and are wired via `migrations_dir` in
-`apps/worker/wrangler.jsonc` — `wrangler d1 migrations apply` and
-`wrangler deploy` pick them up automatically.
+`packages/schema/migrations/` (wired via `migrations_dir` in
+`apps/worker/wrangler.jsonc` for local use).
 
 ### Provisioning
 
 ```bash
 # Create the production database
 pnpm exec wrangler d1 create do-epub-studio
-# → note the returned database_id and paste it into wrangler.jsonc's
-#   d1_databases[0].database_id (replace the placeholder)
+# → note the returned database_id
 
 # Apply all migrations
 pnpm exec wrangler d1 migrations apply do-epub-studio --remote
 ```
+
+### Bind to the Pages project
+
+In the Cloudflare dashboard → your Pages project → **Settings → Bindings →
+Add → D1 database**:
+- Variable name: `DB`
+- D1 database: `do-epub-studio`
+
+Redeploy the project for the binding to take effect.
 
 ### Verification
 
@@ -96,7 +80,7 @@ pnpm exec wrangler d1 migrations list do-epub-studio
 
 > **Note:** Turso (`TURSO_DATABASE_URL` / `@libsql/client`) is only used by
 > the standalone demo-account seed script and the demo-login fail-closed
-> detection — it is NOT the Worker's runtime DB. Production demo login is
+> detection — it is NOT the API's runtime DB. Production demo login is
 > disabled regardless (fail-closed, ADR-233/244).
 
 ---
@@ -109,7 +93,11 @@ pnpm exec wrangler d1 migrations list do-epub-studio
 pnpm exec wrangler r2 bucket create do-epub-studio-books
 ```
 
-The bucket is already bound in `wrangler.jsonc` as `BOOKS_BUCKET`.
+### Bind to the Pages project
+
+Dashboard → Pages project → **Settings → Bindings → Add → R2 bucket**:
+- Variable name: `BOOKS_BUCKET`
+- R2 bucket: `do-epub-studio-books`
 
 ---
 
@@ -119,110 +107,74 @@ The bucket is already bound in `wrangler.jsonc` as `BOOKS_BUCKET`.
 
 ```bash
 pnpm exec wrangler kv namespace create CACHE_KV
-# → note the returned id and paste it into wrangler.jsonc's
-#   kv_namespaces[0].id (replace the placeholder-cache-kv-id)
+# → note the returned id
 ```
+
+### Bind to the Pages project
+
+Dashboard → Pages project → **Settings → Bindings → Add → KV namespace**:
+- Variable name: `CACHE_KV`
+- KV namespace: the created namespace
 
 ---
 
-## 5. Worker Secrets
+## 5. Environment Variables & Secrets (Pages dashboard)
 
-Set all required secrets (from `apps/worker`):
+Set on the Pages project (Settings → Environment variables; use secrets for
+sensitive values):
 
-```bash
-# Session signing secret (used for signed URLs and token HMAC)
-echo "SESSION_SIGNING_SECRET=<random-hex-64>" | pnpm exec wrangler secret put SESSION_SIGNING_SECRET
-
-# Invite token secret (used for magic-link JWT signing)
-echo "INVITE_TOKEN_SECRET=<random-hex-64>" | pnpm exec wrangler secret put INVITE_TOKEN_SECRET
-
-# Application base URL = the FRONTEND origin (CORS allowlist, recovery
-# links, signed file URLs). NOT the worker URL.
-echo "APP_BASE_URL=https://do-epub-studio.onrender.com" | pnpm exec wrangler secret put APP_BASE_URL
-
-# Environment flag
-echo "ENVIRONMENT=production" | pnpm exec wrangler secret put ENVIRONMENT
-
-# WebAuthn must match the frontend origin or admin passkey login breaks.
-echo "WEBAUTHN_RP_ID=do-epub-studio.onrender.com" | pnpm exec wrangler secret put WEBAUTHN_RP_ID
-echo "WEBAUTHN_ORIGIN=https://do-epub-studio.onrender.com" | pnpm exec wrangler secret put WEBAUTHN_ORIGIN
-
-# Demo login stays OFF in production (fail-closed). Leave unset.
+```text
+SESSION_SIGNING_SECRET   # random hex (signed URLs + token HMAC)
+INVITE_TOKEN_SECRET      # random hex (magic-link JWT signing)
+APP_BASE_URL             # https://do-epub-studio.pages.dev (frontend origin)
+ENVIRONMENT              # production
+WEBAUTHN_RP_ID           # do-epub-studio.pages.dev
+WEBAUTHN_ORIGIN          # https://do-epub-studio.pages.dev
+DEMO_LOGIN_ENABLED       # leave unset (fail-closed in production)
 ```
 
-### Secret Generation Helper
-
-To generate cryptographically strong secrets:
+Secret generation:
 
 ```bash
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 
+> The `RATE_LIMITER` Durable Object cannot be created inside a Pages project,
+> so rate limiting fails open (documented in
+> `apps/worker/src/lib/rate-limit-client.ts`) — acceptable; the API still
+> works without it.
+
 ---
 
-## 6. Durable Objects
+## 6. Deploy
 
-### Migration
-
-Durable Objects require a migration step during first deploy:
+Nothing to deploy manually — pushing to the production branch triggers the
+Cloudflare Pages build (frontend + `functions/`). To preview locally:
 
 ```bash
-pnpm exec wrangler deploy --latest-migration
+pnpm --filter @do-epub-studio/web build
+pnpm exec wrangler pages dev apps/web/dist --compatibility-date=2026-05-30
 ```
 
-This registers the `RateLimiterDO` class and provisions the Durable Object
-namespace.
-
----
-
-## 7. Frontend build (`VITE_API_BASE_URL`)
-
-The web app only calls same-origin `/api/*` in production when
-`VITE_API_BASE_URL` is baked in at build time (see
-`apps/web/src/lib/api/core.ts`). On the Render service:
-
-1. Set env var `VITE_API_BASE_URL=https://api.do-epub-studio.workers.dev`
-2. Rebuild/redeploy (Vite inlines env vars at build time)
-3. Verify the deployed bundle contains the worker origin:
-   `grep -o 'api.do-epub-studio.workers.dev' <bundle.js>`
-
----
-
-## 8. Deploy
+Verify the API is live (same origin as the site):
 
 ```bash
-cd apps/worker
-pnpm exec wrangler deploy --config wrangler.jsonc
-# First deploy: pnpm exec wrangler deploy --latest-migration
-```
-
-Verify the API is live:
-
-```bash
-curl -s https://api.do-epub-studio.workers.dev/api/health
+curl -s https://do-epub-studio.pages.dev/api/health
 # → {"ok":true,"service":"do-epub-studio-worker"}
 ```
 
-> The release workflow (`.github/workflows/release.yml`) also deploys the
-> Worker on every `v*` tag once `CLOUDFLARE_API_TOKEN` +
-> `CLOUDFLARE_ACCOUNT_ID` secrets exist, and its post-deploy health check
-> asserts the `/api/health` JSON contract (fail-closed, GOAP-252).
+> The release workflow (`.github/workflows/release.yml`) runs a fail-closed
+> post-deploy health check against `https://do-epub-studio.pages.dev/api/health`
+> (asserts `200` + `{"ok":true}`).
 
 ---
 
-## 9. Verification Checklist
+## 7. Verification Checklist
 
 After all infrastructure is configured, run through this checklist:
 
-### Email
-- [ ] `createEmailTransport(env)` returns `SendEmailTransport`
-  (check: `env.EMAIL_SEND` is defined)
-- [ ] Recovery-request flow sends actual email
-- [ ] Email arrives with correct sender, subject, and content
-
 ### Database
-- [ ] `wrangler d1 execute do-epub-studio --remote --command="SELECT COUNT(*) FROM books"`
-  returns successfully
+- [ ] `wrangler d1 execute do-epub-studio --remote --command="SELECT COUNT(*) FROM books"` returns successfully
 - [ ] All 12 migrations applied (`wrangler d1 migrations list do-epub-studio`)
 - [ ] Admin login works (validates Argon2id password hash)
 
@@ -230,20 +182,14 @@ After all infrastructure is configured, run through this checklist:
 - [ ] `wrangler r2 object list do-epub-studio-books` shows EPUB files
 - [ ] Signed URL flow works: request → signed URL → file stream
 
-### Durable Objects
-- [ ] Rate limiter counters work: rapid requests to a single route
-  return 429 after the limit
-- [ ] `wrangler tail` shows rate limiter logs
-
 ### Health & API contract (GOAP-252)
-- [ ] `GET /api/health` returns `200` + `{"ok":true,"service":"do-epub-studio-worker"}`
-- [ ] `GET /api/catalog?limit=1` returns JSON, NOT HTML
-  (`curl -sI ... | grep -i content-type` shows `application/json`)
-- [ ] Login submit from the Render frontend returns a session, not
-  "Invalid server response" (CORS + `VITE_API_BASE_URL` correct)
+- [ ] `GET https://do-epub-studio.pages.dev/api/health` returns `200` + `{"ok":true}`
+- [ ] `GET https://do-epub-studio.pages.dev/api/catalog?limit=1` returns JSON, NOT HTML
+- [ ] Login submit from the site returns a session, not "Invalid server response"
+- [ ] A static path (e.g. `/robots.txt`) still serves the asset, not the API
 
 ### Security Headers
-- [ ] All responses include CSP, HSTS, and X-Content-Type-Options headers
+- [ ] All API responses include CSP, HSTS, and X-Content-Type-Options headers
 - [ ] CSP does not contain `unsafe-inline` for scripts
 - [ ] traceId is present in all error responses
 
@@ -257,18 +203,15 @@ After all infrastructure is configured, run through this checklist:
 ## Appendix: Useful Commands
 
 ```bash
-# View real-time logs
+# View real-time logs (local dev)
 pnpm exec wrangler tail
 
-# Run a SQL query against D1
+# Run a SQL query against D1 (remote)
 pnpm exec wrangler d1 execute do-epub-studio --remote --command="SELECT * FROM audit_log LIMIT 10"
 
 # List all R2 objects
 pnpm exec wrangler r2 object list do-epub-studio-books
 
-# Deploy with migrations
-pnpm exec wrangler deploy --latest-migration
-
-# Rollback to previous version
-pnpm exec wrangler rollback
+# Apply D1 migrations
+pnpm exec wrangler d1 migrations apply do-epub-studio --remote
 ```
