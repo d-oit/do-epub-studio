@@ -8,7 +8,10 @@
   // runtime. Keep this flag enabled for the sentry-required async primitives.
   "compatibility_flags": ["nodejs_compat"],
   "vars": {
-    "APP_BASE_URL": "https://do-epub-studio.example.com",
+    // Frontend origin served by the Cloudflare Pages project (GOAP-252).
+    // Production overrides come from the Pages dashboard; these defaults keep
+    // the worker-deploy path and local dev from baking in placeholder origins.
+    "APP_BASE_URL": "https://do-epub-studio.pages.dev",
     "TURSO_DATABASE_URL": "file::memory:",
     "TURSO_AUTH_TOKEN": "",
     "SENTRY_DSN": "",
@@ -16,19 +19,20 @@
     "DEMO_LOGIN_ENABLED": "",
     "DEMO_BOOK_SLUG": "demo",
     "DEMO_ACCOUNTS_PROD_ALLOWLIST": "",
-    "WEBAUTHN_RP_ID": "localhost",
+    "WEBAUTHN_RP_ID": "do-epub-studio.pages.dev",
     "WEBAUTHN_RP_NAME": "d.o.EPUB Studio",
-    "WEBAUTHN_ORIGIN": "http://localhost:5173"
+    "WEBAUTHN_ORIGIN": "https://do-epub-studio.pages.dev"
   },
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "do-epub-studio",
-      "database_id": "placeholder-replace-with-real-id",
+      "database_id": "dd47f3de-9ea0-4a00-898d-c49cc0dd271f",
       // The schema package owns all D1 migrations (0001-0012). Point wrangler
       // at it so `wrangler d1 migrations apply` and `wrangler deploy` pick up
-      // pending migrations automatically (GOAP-252).
-      "migrations_dir": "../packages/schema/migrations"
+      // pending migrations automatically (GOAP-252). Resolved relative to this
+      // file (apps/worker/), so it must go up two levels to the repo root.
+      "migrations_dir": "../../packages/schema/migrations"
     }
   ],
   "r2_buckets": [
@@ -40,7 +44,7 @@
   "kv_namespaces": [
     {
       "binding": "CACHE_KV",
-      "id": "placeholder-cache-kv-id"
+      "id": "5328daf8b5de4c0da83ac97ee4cc9ea4"
     }
   ],
   "durable_objects": {
