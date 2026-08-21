@@ -39,5 +39,7 @@ export async function onRequest(context: PagesFunctionContext): Promise<Response
   });
   diagReq.headers.set('x-diag-has-ctx', String(typeof context.ctx !== 'undefined'));
   diagReq.headers.set('x-diag-ctx-keys', typeof context.ctx === 'object' && context.ctx !== null ? Object.keys(context.ctx).join(',') : 'n/a');
+  diagReq.headers.set('x-diag-context-keys', Object.keys(context).join(','));
+  diagReq.headers.set('x-diag-has-waituntil', String(typeof (context as { waitUntil?: unknown }).waitUntil !== 'undefined'));
   return app.fetch(diagReq, context.env, context.ctx);
 }

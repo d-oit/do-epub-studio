@@ -25,6 +25,8 @@ healthRouter.get('/health', async (c) => {
     // TEMPORARY (GOAP-252): from the Pages function header diagnostic.
     pagesHasCtx: c.req.header('x-diag-has-ctx') ?? null,
     pagesCtxKeys: c.req.header('x-diag-ctx-keys') ?? null,
+    pagesContextKeys: c.req.header('x-diag-context-keys') ?? null,
+    pagesHasWaitUntil: c.req.header('x-diag-has-waituntil') ?? null,
   };
   if (typeof c.env.DB !== 'undefined') {
     try {
