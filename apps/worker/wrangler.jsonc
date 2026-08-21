@@ -24,7 +24,11 @@
     {
       "binding": "DB",
       "database_name": "do-epub-studio",
-      "database_id": "placeholder-replace-with-real-id"
+      "database_id": "placeholder-replace-with-real-id",
+      // The schema package owns all D1 migrations (0001-0012). Point wrangler
+      // at it so `wrangler d1 migrations apply` and `wrangler deploy` pick up
+      // pending migrations automatically (GOAP-252).
+      "migrations_dir": "../packages/schema/migrations"
     }
   ],
   "r2_buckets": [
