@@ -12,7 +12,7 @@ Cloudflare directly (Pages Git integration, see root `wrangler.toml`):
 | Surface | How it's served |
 |---|---|
 | Frontend (SPA) | Pages Git integration builds `apps/web/dist` |
-| API (`/api/*`) | Pages Functions (`functions/api/[[path]].ts`) re-serves the existing Worker's Hono app on the **same origin** |
+| API (`/api/*`) | Pages Functions (`apps/web/functions/api/[[path]].ts`) re-serves the existing Worker's Hono app on the **same origin** |
 
 Because the API shares the frontend's origin, production needs **no separate
 Worker deployment, no `VITE_API_BASE_URL`, and no CORS** — the web app's

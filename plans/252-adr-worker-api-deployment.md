@@ -24,9 +24,11 @@ deploy and its credential/CORS/VITE_API_BASE_URL burden.
 The production API MUST be served on the **same origin** as the frontend via
 **Cloudflare Pages Functions**:
 
-1. `functions/api/[[path]].ts` re-serves the existing Worker's Hono app
-   (`apps/worker/src/app`) for all `/api/*` requests. The Pages build bundles
-   it automatically alongside the static SPA.
+1. `apps/web/functions/api/[[path]].ts` re-serves the existing Worker's Hono
+   app (`apps/worker/src/app`) for all `/api/*` requests. The Pages build
+   bundles it automatically alongside the static SPA. The `functions/`
+   directory must live under the Pages project root (`apps/web`) — the Git
+   integration does not detect it at the repo root.
 2. Cloudflare resources (D1 `DB`, R2 `BOOKS_BUCKET`, KV `CACHE_KV`) and
    vars/secrets are bound to the Pages project in the Cloudflare dashboard
    (the Worker's `wrangler.jsonc` remains the local-dev config).

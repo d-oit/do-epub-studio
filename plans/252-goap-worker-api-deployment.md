@@ -26,11 +26,14 @@ separate Worker deployment, no `VITE_API_BASE_URL`, no CORS.
 - Corrected the infrastructure runbook (D1 is the runtime DB, not Turso).
 
 ### PR #1021 (this change)
-- Added `functions/api/[[path]].ts` — a Cloudflare Pages Function catch-all
-  that serves the Worker's Hono app on `/api/*` same-origin. Bundled
-  automatically by the Pages build (verified: `wrangler pages functions build`
-  compiles a ~2MB bundle; `wrangler pages dev` serves `/api/health` as JSON
-  and returns JSON errors instead of the SPA HTML fallback).
+- Added `apps/web/functions/api/[[path]].ts` — a Cloudflare Pages Function
+  catch-all that serves the Worker's Hono app on `/api/*` same-origin.
+  **Location matters:** the Pages Git integration only detects `functions/`
+  under the project root (`apps/web`), NOT at the repo root — verified by
+  deploying at both locations. Bundled automatically by the Pages build
+  (verified: `wrangler pages functions build` compiles a ~2MB bundle;
+  `wrangler pages dev` serves `/api/health` as JSON; the live preview returns
+  `{"ok":true}` for `/api/health`).
 - Removed the standalone `wrangler deploy` step from `release.yml` (the API
   rides the Pages deployment — no credentials needed) and pointed the
   post-deploy health check at `https://do-epub-studio.pages.dev/api/health`.
