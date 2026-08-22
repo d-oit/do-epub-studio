@@ -21,4 +21,3 @@ ENVIRONMENT = "production"
 WEBAUTHN_RP_ID = "do-epub-studio.pages.dev"
 WEBAUTHN_RP_NAME = "d.o.EPUB Studio"
 WEBAUTHN_ORIGIN = "https://do-epub-studio.pages.dev"
-
