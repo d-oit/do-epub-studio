@@ -22,7 +22,3 @@ WEBAUTHN_RP_ID = "do-epub-studio.pages.dev"
 WEBAUTHN_RP_NAME = "d.o.EPUB Studio"
 WEBAUTHN_ORIGIN = "https://do-epub-studio.pages.dev"
 
-# TEMPORARY (GOAP-252): enable function logs so the tail surfaces the DB 500
-# root cause. Removed once the login is verified on production.
-[observability]
-enabled = true
