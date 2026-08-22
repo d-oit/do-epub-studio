@@ -21,8 +21,9 @@ describe('AccessRequestSchema', () => {
     expect(() => AccessRequestSchema.parse({ bookSlug: 'book', email: 'not-an-email' })).toThrow();
   });
 
-  it('rejects empty bookSlug', () => {
-    expect(() => AccessRequestSchema.parse({ bookSlug: '', email: 'a@b.com' })).toThrow();
+  it('accepts empty bookSlug', () => {
+    const result = AccessRequestSchema.parse({ bookSlug: '', email: 'a@b.com' });
+    expect(result.bookSlug).toBe('');
   });
 });
 

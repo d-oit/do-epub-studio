@@ -33,6 +33,9 @@ export const accessRouter = new Hono<{ Bindings: Env; Variables: { requestContex
 
 accessRouter.post('/recovery-request', zValidator('json', RecoveryRequestSchema), async (c) => {
   const { bookSlug, email } = c.req.valid('json');
+  if (!bookSlug) {
+    return apiError(c, 400, 'MISSING_BOOK', 'Book slug is required');
+  }
   const emailKey = email.toLowerCase();
   const traceId = c.get('requestContext').traceId;
   // Pure-IP hash: the per-IP rate-limit key must not be salted by the target
@@ -218,6 +221,9 @@ accessRouter.post('/verify-recovery', zValidator('json', RecoveryVerifySchema), 
 
 accessRouter.post('/request', zValidator('json', AccessRequestSchema), async (c) => {
   const { bookSlug, email, password } = c.req.valid('json');
+  if (!bookSlug) {
+    return apiError(c, 400, 'MISSING_BOOK', 'Book slug is required');
+  }
   const emailKey = email.toLowerCase();
 
   // Rate limit by email to prevent brute-force attacks (max 5 requests per minute)

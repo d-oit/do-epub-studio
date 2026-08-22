@@ -35,10 +35,6 @@ const headerStorySource = readFileSync(
   resolve(repoRoot, 'packages/ui/src/__stories__/Header.stories.tsx'),
   'utf8',
 );
-const loginCardHeaderSource = readFileSync(
-  resolve(repoRoot, 'apps/web/src/features/auth/LoginCardHeader.tsx'),
-  'utf8',
-);
 const loginHeroSource = readFileSync(
   resolve(repoRoot, 'apps/web/src/features/auth/LoginHero.tsx'),
   'utf8',
@@ -80,10 +76,10 @@ describe('App identity and version governance (ADR-104)', () => {
   it('LoginPage renders the canonical name and version', () => {
     // The login feature renders {APP_NAME} (imported from app-identity.ts)
     // via its hero/mobile-info components (ADR-245 extraction) and
-    // {APP_VERSION_LABEL} in the card header.
+    // {APP_VERSION_LABEL} in the hero (desktop) or mobile info.
     expect(loginHeroSource).toContain('APP_NAME');
+    expect(loginHeroSource).toContain('APP_VERSION_LABEL');
     expect(loginMobileInfoSource).toContain('APP_NAME');
-    expect(loginCardHeaderSource).toContain('APP_VERSION_LABEL');
   });
 
   it('Storybook header fixture uses the canonical brand', () => {

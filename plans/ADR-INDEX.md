@@ -133,6 +133,7 @@ None.
 | 243    | Web `as unknown as` Cast Cleanup (GOAP) | `plans/243-goap-web-cast-cleanup.md`                                        | COMPLETED: PR #989 |
 | 244    | Demo Login and Help Entry Points (GOAP) | `plans/244-goap-demo-login-help-entrypoints.md`                              | COMPLETED |
 | 246    | Login Page UX Redesign (GOAP)     | `plans/246-goap-login-ux-redesign.md`                 | COMPLETED (ADR-245) |
+| 253    | Login No-Book Guard & UI Modernization (ADR + GOAP) | `plans/253-adr-login-no-book-guard-modernization.md`, `plans/253-goap-login-no-book-guard-modernization.md` | ACCEPTED (PR #1028) |
 
 ## Pending
 

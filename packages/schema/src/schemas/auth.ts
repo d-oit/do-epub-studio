@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { WebAuthnResponseSchema } from './mfa';
 
 export const AccessRequestSchema = z.object({
-  bookSlug: z.string().min(1).max(255),
+  bookSlug: z.string().max(255).optional(),
   email: z.string().email().max(255),
   password: z.string().max(255).optional(),
 });
@@ -10,7 +10,7 @@ export const AccessRequestSchema = z.object({
 export type AccessRequest = z.infer<typeof AccessRequestSchema>;
 
 export const RecoveryRequestSchema = z.object({
-  bookSlug: z.string().min(1).max(255),
+  bookSlug: z.string().max(255).optional(),
   email: z.string().email().max(255),
 });
 

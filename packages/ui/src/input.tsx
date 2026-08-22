@@ -64,12 +64,12 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             spellCheck={props.spellCheck ?? (type === 'password' ? false : undefined)}
             autoCapitalize={props.autoCapitalize ?? (type === 'password' ? 'off' : undefined)}
             className={`
-              w-full px-4 py-3 bg-background border rounded-lg
-              text-foreground placeholder:text-foreground-muted
+              w-full px-4 py-3 bg-background border border-border/60 rounded-lg
+              text-foreground placeholder:text-foreground-muted/50
               transition-all duration-150
               outline-none
               ${showToggle ? 'ps-12 sm:ps-36' : ''}
-              ${error ? 'border-accent-error focus:border-accent-error focus:ring-accent-error/15' : 'border-border focus:border-accent focus:ring-[3px] focus:ring-accent/15'}
+              ${error ? 'border-accent-error focus:border-accent-error focus:ring-accent-error/15' : 'focus:border-accent focus:ring-[3px] focus:ring-accent/15'}
               ${className}
             `}
             {...(props)}
@@ -80,7 +80,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
               aria-controls={inputId}
               aria-label={toggleLabel}
               onClick={() => setPasswordVisible((v) => !v)}
-              className="absolute inset-y-0 start-1.5 my-auto flex min-h-11 min-w-11 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium text-accent hover:bg-background hover:underline underline-offset-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+              className="absolute inset-y-0 start-1.5 my-auto flex min-h-11 min-w-11 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium text-accent hover:bg-accent/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
             >
               {passwordVisible ? <EyeOffIcon /> : <EyeIcon />}
               <span className="hidden sm:inline">{toggleLabel}</span>

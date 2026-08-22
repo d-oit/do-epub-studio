@@ -54,9 +54,10 @@ export function AdminLoginHero() {
   return (
     <div className="max-w-xl">
       <AppLogo size={72} className="mb-6 text-accent" />
-      <h1 className="text-balance font-display text-5xl font-bold leading-tight text-foreground xl:text-6xl">
+      <h1 className="text-balance font-display text-6xl font-bold leading-tight text-foreground xl:text-7xl">
         {APP_NAME}
       </h1>
+      <div className="mt-4 h-1 w-16 rounded-full bg-accent" />
       <p className="mt-5 max-w-lg text-lg text-foreground-muted">
         {APP_DESCRIPTION}
       </p>
@@ -65,7 +66,7 @@ export function AdminLoginHero() {
         <AdminFeatureList />
       </div>
 
-      <p className="mt-8 max-w-md rounded-lg border border-border bg-background-secondary p-4 text-sm leading-relaxed text-foreground-muted">
+      <p className="mt-8 max-w-md glass-card p-4 text-sm leading-relaxed text-foreground-muted">
         {t('admin.login.howAccessWorks')}
       </p>
 
@@ -87,7 +88,7 @@ export function AdminLoginHero() {
 export function AdminMobileInfo() {
   const { t } = useTranslation();
   return (
-    <div className="rounded-lg border border-border bg-background-secondary p-5 lg:hidden">
+    <div data-testid="admin-mobile-info" className="glass-card p-5 lg:hidden">
       <div className="flex items-center gap-3">
         <AppLogo size={32} className="shrink-0 text-accent" />
         <div className="min-w-0">

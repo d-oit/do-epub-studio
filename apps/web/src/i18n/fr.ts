@@ -14,6 +14,7 @@ export const fr: Record<TranslationKeys, TranslationValue> = {
   'login.bookSlugPlaceholder': 'mon-livre',
   'login.emailPlaceholder': 'lecteur@example.com',
   'login.passwordPlaceholder': 'Entrer le mot de passe',
+  'login.noBookContext': "Ce lien ne contient pas de livre. Ouvrez un lien dédié à un livre pour vous connecter, ou essayez la démo ci-dessous.",
   'login.submit': 'Se connecter',
   'login.signingIn': 'Connexion...',
   'login.forgotPassword': 'Mot de passe oublié ?',

@@ -23,9 +23,14 @@ describe('AccessRequestSchema', () => {
     expect(result.success).toBe(true);
   });
 
-  it('rejects empty bookSlug', () => {
+  it('accepts missing bookSlug (optional)', () => {
+    const result = AccessRequestSchema.safeParse({ email: 'a@b.com' });
+    expect(result.success).toBe(true);
+  });
+
+  it('accepts empty bookSlug', () => {
     const result = AccessRequestSchema.safeParse({ bookSlug: '', email: 'a@b.com' });
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
   });
 
   it('rejects invalid email', () => {

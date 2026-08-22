@@ -14,6 +14,7 @@ export const zh: Record<TranslationKeys, TranslationValue> = {
   'login.bookSlugPlaceholder': 'my-book-slug',
   'login.emailPlaceholder': 'reader@example.com',
   'login.passwordPlaceholder': '输入密码',
+  'login.noBookContext': '此链接未包含图书。请打开图书专用链接登录，或在下方试用演示。',
   'login.submit': '登录',
   'login.signingIn': '登录中...',
   'login.forgotPassword': '忘记密码？',

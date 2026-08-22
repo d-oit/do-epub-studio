@@ -14,6 +14,7 @@ export const nl: Record<TranslationKeys, TranslationValue> = {
   'login.bookSlugPlaceholder': 'mijn-boek-slug',
   'login.emailPlaceholder': 'lezer@example.com',
   'login.passwordPlaceholder': 'Voer wachtwoord in',
+  'login.noBookContext': 'Deze link bevat geen boek. Open een boekspecifieke link om in te loggen, of probeer hieronder de demo.',
   'login.submit': 'Inloggen',
   'login.signingIn': 'Inloggen...',
   'login.forgotPassword': 'Wachtwoord vergeten?',
