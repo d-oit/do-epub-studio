@@ -1,2 +1,23 @@
 name = "do-epub-studio"
 pages_build_output_dir = "apps/web/dist"
+
+# Pages Functions bindings (GOAP-252 / issue #1014). Declared here so the
+# Cloudflare Pages Git-integrated build attaches them to the `/api/*` function
+# (dashboard/API deployment_configs bindings were not being applied to builds).
+# Secrets (SESSION_SIGNING_SECRET, INVITE_TOKEN_SECRET) stay in the dashboard.
+
+[[d1_databases]]
+binding = "DB"
+database_name = "do-epub-studio"
+database_id = "dd47f3de-9ea0-4a00-898d-c49cc0dd271f"
+
+[[kv_namespaces]]
+binding = "CACHE_KV"
+id = "5328daf8b5de4c0da83ac97ee4cc9ea4"
+
+[vars]
+APP_BASE_URL = "https://do-epub-studio.pages.dev"
+ENVIRONMENT = "production"
+WEBAUTHN_RP_ID = "do-epub-studio.pages.dev"
+WEBAUTHN_RP_NAME = "d.o.EPUB Studio"
+WEBAUTHN_ORIGIN = "https://do-epub-studio.pages.dev"
