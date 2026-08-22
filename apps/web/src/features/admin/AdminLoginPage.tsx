@@ -7,7 +7,7 @@ import { useAuthStore } from '../../stores/auth';
 import { LocaleSwitcher } from '../../components/LocaleSwitcher';
 import { Button, Input, AppLogo } from '../../components/ui';
 import { ThemeToggle } from '../../components/ThemeToggle';
-import { APP_NAME, APP_VERSION_LABEL } from '../../config/app-identity';
+import { APP_NAME } from '../../config/app-identity';
 import { isDemoLoginEnabled, resolveHelpUrl, DEMO_ADMIN_EMAIL, DEMO_ADMIN_PASSWORD } from '../../config/demo-config';
 import { AdminLoginHero, AdminMobileInfo } from './AdminLoginHero';
 import { MfaFactorChooser, AdminRecoveryForm } from './AdminMfaForms';
@@ -62,11 +62,12 @@ function AdminLoginHeader() {
   return (
     <div className="text-center mb-8">
       <AppLogo size={44} className="mx-auto mb-3 text-accent" />
-      <h1 className="text-2xl font-bold text-foreground">
+      <h2 className="font-display text-xl font-bold text-foreground">
         {t('admin.login.title')}
-      </h1>
-      <p className="text-foreground-muted mt-2 text-sm">
-        {APP_NAME} {t('admin.login.managementLabel')} · {APP_VERSION_LABEL}
+      </h2>
+      <div className="mt-2 h-0.5 w-8 mx-auto rounded-full bg-accent/40" />
+      <p className="text-foreground-muted mt-3 text-sm">
+        {APP_NAME} {t('admin.login.managementLabel')}
       </p>
     </div>
   );
@@ -312,6 +313,13 @@ export function AdminLoginPage() {
 
   return (
     <div className="relative min-h-dvh overflow-x-clip bg-background px-4 py-6 sm:px-6 lg:px-8">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none fixed inset-0 -z-10"
+        style={{
+          background: 'radial-gradient(ellipse 80% 50% at 50% -20%, oklch(var(--color-accent) / 0.08), transparent)',
+        }}
+      />
       <div className="fixed right-3 top-3 z-20 flex items-center gap-2 sm:right-4 sm:top-4">
         <ThemeToggle />
         <LocaleSwitcher />
@@ -327,7 +335,7 @@ export function AdminLoginPage() {
 
       <AdminMobileInfo />
 
-      <section className="w-full rounded-lg border border-border bg-background-secondary p-5 shadow-md sm:p-7 lg:p-8">
+      <section className="glass-card w-full p-5 sm:p-7 lg:p-8">
         <AdminLoginHeader />
 
         {error && (

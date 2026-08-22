@@ -58,15 +58,16 @@ export function LoginHero() {
       <p className="mb-3 text-sm font-medium tracking-[0.12em] text-foreground-muted">
         {APP_VERSION_LABEL}
       </p>
-      <h1 className="text-balance font-display text-5xl font-bold leading-tight text-foreground xl:text-6xl">
+      <h1 className="text-balance font-display text-6xl font-bold leading-tight text-foreground xl:text-7xl">
         {APP_NAME}
       </h1>
+      <div className="mt-4 h-1 w-16 rounded-full bg-accent" />
 
       <div className="mt-8">
         <LoginFeatureList />
       </div>
 
-      <p className="mt-8 max-w-md rounded-lg border border-border bg-background-secondary p-4 text-sm leading-relaxed text-foreground-muted">
+      <p className="mt-8 max-w-md glass-card p-4 text-sm leading-relaxed text-foreground-muted">
         {t('login.hero.howAccessWorks')}
       </p>
 

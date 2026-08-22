@@ -1,6 +1,5 @@
 import { useTranslation } from '../../hooks/useTranslation';
 import { AppLogo } from '../../components/ui';
-import { APP_VERSION_LABEL } from '../../config/app-identity';
 
 export function LoginCardHeader({ isRecoveryMode, bookSlug }: { isRecoveryMode: boolean; bookSlug: string }) {
   const { t } = useTranslation();
@@ -8,12 +7,10 @@ export function LoginCardHeader({ isRecoveryMode, bookSlug }: { isRecoveryMode: 
     <>
       <div className="flex flex-col items-center mb-6">
         <AppLogo size={48} className="text-accent mb-3" />
-        <p className="mt-1 text-center text-xs font-medium text-foreground-muted">
-          {t('app.versionLabel')} {APP_VERSION_LABEL}
-        </p>
-        <p className="text-foreground-muted text-sm mt-1 text-center">
+        <h2 className="font-display text-xl font-bold text-foreground">
           {isRecoveryMode ? t('login.recoveryTitle') : t('login.subtitle')}
-        </p>
+        </h2>
+        <div className="mt-2 h-0.5 w-8 rounded-full bg-accent/40" />
       </div>
 
       {bookSlug && (

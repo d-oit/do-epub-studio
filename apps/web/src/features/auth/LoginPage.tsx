@@ -126,6 +126,13 @@ export function LoginPage() {
 
   return (
     <div className="relative min-h-dvh overflow-x-clip bg-background px-4 py-6 sm:px-6 lg:px-8">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none fixed inset-0 -z-10"
+        style={{
+          background: 'radial-gradient(ellipse 80% 50% at 50% -20%, oklch(var(--color-accent) / 0.08), transparent)',
+        }}
+      />
       <div className="fixed right-3 top-3 z-20 flex items-center gap-2 sm:right-4 sm:top-4">
         <ThemeToggle />
         <LocaleSwitcher />
@@ -142,7 +149,7 @@ export function LoginPage() {
 
         <LoginMobileInfo />
 
-        <section className="w-full rounded-lg border border-border bg-background-secondary p-5 shadow-md sm:p-7 lg:p-8">
+        <section className="glass-card w-full p-5 sm:p-7 lg:p-8">
           <LoginCardHeader isRecoveryMode={isRecoveryMode} bookSlug={bookSlug} />
 
           {formError && (
