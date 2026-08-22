@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 
 // ---------------------------------------------------------------------------
 // Cloudflare Pages E2E login tests
@@ -27,16 +27,6 @@ const ADMIN = {
   email: process.env.E2E_ADMIN_EMAIL || 'admin@example.com',
   password: process.env.E2E_ADMIN_PASSWORD || 'test-password',
 };
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-async function waitForCloudflareHeaders(page: Page) {
-  // Cloudflare Pages responses include cf-ray and server: cloudflare headers.
-  // Wait for the first navigation to complete with these headers.
-  await page.waitForLoadState('networkidle');
-}
 
 // ---------------------------------------------------------------------------
 // Reader login tests (Cloudflare)
@@ -218,15 +208,10 @@ test.describe('Cloudflare deployment checks', () => {
   test.use({ baseURL: BASE_URL });
 
   test('API responses include Cloudflare headers', async ({ page }) => {
-    const responsePromise = page.waitForResponse(
-      (resp) => resp.url().includes('/api/') && resp.status() === 200,
-    );
-
     await page.goto('/login');
     await page.waitForLoadState('networkidle');
 
-    // Just verify the page loaded — the API call may not happen on login page
-    // This test ensures the Cloudflare Pages function is reachable
+    // Verify the page loaded — this ensures the Cloudflare Pages function is reachable
     await expect(page.getByLabel('Email Address')).toBeVisible();
   });
 
