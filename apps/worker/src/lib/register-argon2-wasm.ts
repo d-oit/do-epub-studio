@@ -22,6 +22,7 @@ let registered = false;
  */
 export async function registerArgon2Wasm(): Promise<void> {
   if (registered) return;
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- argon2Wasm/blake2bWasm are pre-compiled WASM modules typed as `any` by wrangler's CompiledWasm rule
   await setWASMModules({ argon2WASM: argon2Wasm, blake2bWASM: blake2bWasm });
   registered = true;
 }

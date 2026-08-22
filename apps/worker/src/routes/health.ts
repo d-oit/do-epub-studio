@@ -48,9 +48,10 @@ healthRouter.get('/health', async (c) => {
   // wasm modules are registered; the login 500 is elsewhere.)
   try {
     const row = await c.env.DB.prepare("SELECT password_hash FROM users WHERE email = 'dmmotec@gmail.com'").first();
-    diag.storedHash = row?.password_hash ? String(row.password_hash).slice(0, 30) + '...' : null;
-    if (row?.password_hash) {
-      diag.verifyStored = await verifyPassword('TempTestPass123!', String(row.password_hash));
+    const hash = typeof row?.password_hash === 'string' ? row.password_hash : null;
+    diag.storedHash = hash ? hash.slice(0, 30) + '...' : null;
+    if (hash) {
+      diag.verifyStored = await verifyPassword('TempTestPass123!', hash);
     }
   } catch (e) {
     diag.verifyStoredError = e instanceof Error ? e.message : String(e);
