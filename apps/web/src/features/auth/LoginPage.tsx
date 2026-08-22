@@ -149,7 +149,7 @@ export function LoginPage() {
 
         <LoginMobileInfo />
 
-        <section className="glass-card w-full p-5 sm:p-7 lg:p-8">
+        <section className="glass-card backdrop-blur-lg w-full p-5 sm:p-7 lg:p-8">
           <LoginCardHeader isRecoveryMode={isRecoveryMode} bookSlug={bookSlug} />
 
           {formError && (

@@ -67,7 +67,7 @@ export function LoginHero() {
         <LoginFeatureList />
       </div>
 
-      <p className="mt-8 max-w-md glass-card p-4 text-sm leading-relaxed text-foreground-muted">
+      <p className="mt-8 max-w-md glass-card backdrop-blur-lg p-4 text-sm leading-relaxed text-foreground-muted">
         {t('login.hero.howAccessWorks')}
       </p>
 
