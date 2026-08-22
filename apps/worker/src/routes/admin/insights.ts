@@ -1,4 +1,6 @@
 import { Hono } from 'hono';
+import { zValidator } from '@hono/zod-validator';
+import { AdminInsightsQuerySchema } from '@do-epub-studio/schema';
 import type { Env } from '../../lib/env';
 import { queryAll } from '../../db/client';
 import { adminAuth } from '../../middleware/auth';
@@ -27,13 +29,8 @@ interface InsightAggRow {
  *   limit  (default 20, max 100)
  *   offset (default 0)
  */
-const MAX_OFFSET = 100_000;
-
-adminInsightsRouter.get('/insights', adminAuth, async (c) => {
-  const rawLimit = parseInt(c.req.query('limit') ?? '20', 10);
-  const rawOffset = parseInt(c.req.query('offset') ?? '0', 10);
-  const limit = Math.min(Math.max(1, Number.isFinite(rawLimit) ? rawLimit : 20), 100);
-  const offset = Math.min(Math.max(0, Number.isFinite(rawOffset) ? rawOffset : 0), MAX_OFFSET);
+adminInsightsRouter.get('/insights', adminAuth, zValidator('query', AdminInsightsQuerySchema), async (c) => {
+  const { limit, offset } = c.req.valid('query');
 
   const rows = await queryAll<InsightAggRow>(
     c.env,

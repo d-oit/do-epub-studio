@@ -38,3 +38,10 @@ export const ReadingInsightSummarySchema = z.object({
 });
 
 export type ReadingInsightSummary = z.infer<typeof ReadingInsightSummarySchema>;
+
+export const AdminInsightsQuerySchema = z.object({
+  limit: z.coerce.number().int().positive().max(100).default(20),
+  offset: z.coerce.number().int().nonnegative().max(100_000).default(0),
+});
+
+export type AdminInsightsQuery = z.infer<typeof AdminInsightsQuerySchema>;
