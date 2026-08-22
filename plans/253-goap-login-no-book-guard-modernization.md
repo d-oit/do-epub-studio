@@ -6,10 +6,10 @@
 
 ## 1. Goal
 
-Implement the ADR-253 decisions on branch `feat/login-visual-overhaul` (PR
-#1028) so the PR can merge with review findings addressed: no-dead-end login
-UX, stable E2E anchors, and a verified single source of truth for the glass
-blur.
+Implement the ADR-253 decisions on branch `feat/login-visual-overhaul`
+(PR 1028) so the PR can merge with review findings addressed: no-dead-end
+login UX, stable E2E anchors, and a verified single source of truth for the
+glass blur.
 
 ## 2. State Analysis
 
