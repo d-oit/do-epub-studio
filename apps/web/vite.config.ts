@@ -13,6 +13,31 @@ import rootPackage from '../../package.json' with { type: 'json' };
 const isAnalyze = process.env.ANALYZE === 'true';
 const appVersion = rootPackage.version;
 
+/**
+ * lightningcss (the Tailwind v4 pipeline) rewrites a literal
+ * `backdrop-filter` + `-webkit-backdrop-filter` pair down to the -webkit-
+ * form only — its bundled browser data marks the standard property as
+ * unsupported, so Firefox renders no glass blur in production (GOAP-253 A5).
+ * This restores the standard declaration beside every -webkit- twin in
+ * emitted CSS. Remove once lightningcss ships corrected backdrop-filter data.
+ */
+function restoreStandardBackdropFilter(): PluginOption {
+  return {
+    name: 'restore-standard-backdrop-filter',
+    apply: 'build',
+    generateBundle(_, bundle) {
+      for (const file of Object.values(bundle)) {
+        if (file.type === 'asset' && file.fileName.endsWith('.css')) {
+          file.source = String(file.source).replace(
+            /-webkit-backdrop-filter:([^;}]+)/g,
+            (_m, value: string) => `backdrop-filter:${value};-webkit-backdrop-filter:${value}`,
+          );
+        }
+      }
+    },
+  };
+}
+
 export default defineConfig({
   plugins: [
     {
@@ -26,6 +51,7 @@ export default defineConfig({
     },
     react(),
     tailwindcss(),
+    restoreStandardBackdropFilter(),
     VitePWA({
       registerType: 'prompt',
       // Only precache assets that actually ship from public/. favicon.ico has no

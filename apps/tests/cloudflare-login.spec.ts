@@ -39,7 +39,7 @@ test.describe('Cloudflare reader login', () => {
     await page.goto(`/login?book=${READER.bookSlug}`);
 
     // The login card should have the glass-card class (glassmorphism)
-    const loginCard = page.locator('section.glass-card');
+    const loginCard = page.getByTestId('login-card');
     await expect(loginCard).toBeVisible();
 
     // Form fields should be present
@@ -102,7 +102,7 @@ test.describe('Cloudflare reader login', () => {
     await page.goto(`/login?book=${READER.bookSlug}`);
 
     // Desktop hero should show feature bullets
-    const hero = page.locator('section.hidden.lg\\:block');
+    const hero = page.getByTestId('login-hero');
     await expect(hero.getByText('Responsive EPUB reading')).toBeVisible();
     await expect(hero.getByText('Highlights, annotations & bookmarks')).toBeVisible();
     await expect(hero.getByText('Offline reading with sync')).toBeVisible();
@@ -113,7 +113,7 @@ test.describe('Cloudflare reader login', () => {
     await page.goto(`/login?book=${READER.bookSlug}`);
 
     // Mobile info card should be visible (has glass-card class)
-    const mobileInfo = page.locator('div.glass-card.lg\\:hidden');
+    const mobileInfo = page.getByTestId('login-mobile-info');
     await expect(mobileInfo).toBeVisible();
   });
 
@@ -147,7 +147,7 @@ test.describe('Cloudflare admin login', () => {
   test('@smoke renders the admin login page with glass morphism', async ({ page }) => {
     await page.goto('/admin/login');
 
-    const loginCard = page.locator('section.glass-card');
+    const loginCard = page.getByTestId('admin-login-card');
     await expect(loginCard).toBeVisible();
 
     await expect(page.getByLabel('Email Address')).toBeVisible();
@@ -183,7 +183,7 @@ test.describe('Cloudflare admin login', () => {
   test('renders the admin hero with feature list', async ({ page }) => {
     await page.goto('/admin/login');
 
-    const hero = page.locator('section.hidden.lg\\:block');
+    const hero = page.getByTestId('admin-login-hero');
     await expect(hero.getByText('Upload & manage EPUBs')).toBeVisible();
     await expect(hero.getByText('Reader access grants')).toBeVisible();
     await expect(hero.getByText('Audit logs')).toBeVisible();

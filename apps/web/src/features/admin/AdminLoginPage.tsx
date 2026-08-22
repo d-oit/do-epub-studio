@@ -329,13 +329,13 @@ export function AdminLoginPage() {
         id="main-content"
         className="mx-auto grid min-h-[calc(100dvh-3rem)] w-full max-w-6xl items-start gap-8 pt-16 pb-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(22rem,28rem)] lg:gap-12"
       >
-      <section className="hidden min-w-0 lg:block">
+      <section data-testid="admin-login-hero" className="hidden min-w-0 lg:block">
         <AdminLoginHero />
       </section>
 
       <AdminMobileInfo />
 
-      <section className="glass-card backdrop-blur-lg w-full p-5 sm:p-7 lg:p-8">
+      <section data-testid="admin-login-card" className="glass-card w-full p-5 sm:p-7 lg:p-8">
         <AdminLoginHeader />
 
         {error && (

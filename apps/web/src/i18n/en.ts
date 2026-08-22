@@ -20,6 +20,7 @@ export const en = {
   'login.bookSlugPlaceholder': 'my-book-slug',
   'login.emailPlaceholder': 'reader@example.com',
   'login.passwordPlaceholder': 'Enter password',
+  'login.noBookContext': 'This link does not include a book. Open a book-specific link to sign in, or try the demo below.',
   'login.submit': 'Sign In',
   'login.signingIn': 'Signing in...',
   'login.forgotPassword': 'Forgot password?',

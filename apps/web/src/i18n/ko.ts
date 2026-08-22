@@ -14,6 +14,7 @@ export const ko: Record<TranslationKeys, TranslationValue> = {
   'login.bookSlugPlaceholder': 'my-book-slug',
   'login.emailPlaceholder': 'reader@example.com',
   'login.passwordPlaceholder': '비밀번호 입력',
+  'login.noBookContext': '이 링크에는 책이 포함되어 있지 않습니다. 책 전용 링크를 통해 로그인하거나 아래에서 데모를 사용해 보세요.',
   'login.submit': '로그인',
   'login.signingIn': '로그인 중...',
   'login.forgotPassword': '비밀번호를 잊으셨나요?',

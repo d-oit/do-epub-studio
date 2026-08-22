@@ -14,6 +14,7 @@ export const hi: Record<TranslationKeys, TranslationValue> = {
   'login.bookSlugPlaceholder': 'my-book-slug',
   'login.emailPlaceholder': 'reader@example.com',
   'login.passwordPlaceholder': 'पासवर्ड दर्ज करें',
+  'login.noBookContext': 'इस लिंक में कोई पुस्तक शामिल नहीं है। साइन इन करने के लिए किसी पुस्तक-विशिष्ट लिंक को खोलें, या नीचे डेमो आज़माएँ।',
   'login.submit': 'लॉग इन',
   'login.signingIn': 'लॉग इन हो रहा है...',
   'login.forgotPassword': 'पासवर्ड भूल गए?',

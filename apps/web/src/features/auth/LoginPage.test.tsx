@@ -36,8 +36,8 @@ vi.mock('../../components/ThemeToggle', () => ({
 }));
 
 vi.mock('../../components/ui', () => ({
-  Button: ({ children, type, onClick, isLoading, loadingLabel, className }: React.ButtonHTMLAttributes<HTMLButtonElement> & { isLoading?: boolean; loadingLabel?: React.ReactNode; children?: React.ReactNode }) => (
-    <button type={type || 'button'} onClick={onClick} disabled={isLoading} className={className}>
+  Button: ({ children, type, onClick, isLoading, loadingLabel, className, disabled }: React.ButtonHTMLAttributes<HTMLButtonElement> & { isLoading?: boolean; loadingLabel?: React.ReactNode; children?: React.ReactNode }) => (
+    <button type={type || 'button'} onClick={onClick} disabled={disabled || isLoading} className={className}>
       {isLoading ? loadingLabel : children}
     </button>
   ),
@@ -96,6 +96,25 @@ describe('LoginPage', () => {
     expect(screen.getByText('login.submit')).toBeInTheDocument();
   });
 
+  it('shows no-book notice and disables submit without book param', () => {
+    render(<MemoryRouter><LoginPage /></MemoryRouter>);
+    expect(screen.getByRole('status')).toHaveTextContent('login.noBookContext');
+    expect(screen.getByText('login.submit')).toBeDisabled();
+  });
+
+  it('keeps demo entry available when book context is missing', () => {
+    mockIsDemoLoginEnabled.mockReturnValue(true);
+    render(<MemoryRouter><LoginPage /></MemoryRouter>);
+    expect(screen.getByText('login.demoTry')).toBeEnabled();
+  });
+
+  it('hides no-book notice and enables submit with book param', () => {
+    mockUseSearchParams.mockReturnValue([new URLSearchParams('book=my-book'), vi.fn()]);
+    render(<MemoryRouter><LoginPage /></MemoryRouter>);
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    expect(screen.getByText('login.submit')).toBeEnabled();
+  });
+
   it('renders branding', () => {
     render(<MemoryRouter><LoginPage /></MemoryRouter>);
     expect(screen.getAllByText('d.o.EPUB Studio').length).toBeGreaterThan(0);
@@ -114,6 +133,7 @@ describe('LoginPage', () => {
   });
 
   it('handles successful login', async () => {
+    mockUseSearchParams.mockReturnValue([new URLSearchParams('book=my-book'), vi.fn()]);
     vi.mocked(apiRequest).mockResolvedValue({
       sessionToken: 'test-token',
       expiresAt: '2026-12-31T00:00:00Z',
@@ -134,6 +154,7 @@ describe('LoginPage', () => {
   });
 
   it('handles login error', async () => {
+    mockUseSearchParams.mockReturnValue([new URLSearchParams('book=my-book'), vi.fn()]);
     vi.mocked(apiRequest).mockRejectedValue(new Error('Invalid credentials'));
 
     render(<MemoryRouter><LoginPage /></MemoryRouter>);
@@ -275,6 +296,7 @@ describe('LoginPage', () => {
   });
 
   it('handles login without expiresAt', async () => {
+    mockUseSearchParams.mockReturnValue([new URLSearchParams('book=my-book'), vi.fn()]);
     vi.mocked(apiRequest).mockResolvedValue({
       sessionToken: 'no-expire-token',
       book: { id: 'book-2', slug: 'book-two', title: 'Book Two', authorName: 'B' },

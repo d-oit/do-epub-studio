@@ -143,13 +143,13 @@ export function LoginPage() {
         tabIndex={-1}
         className="mx-auto grid min-h-[calc(100dvh-3rem)] w-full max-w-6xl items-start gap-8 pt-16 pb-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(22rem,28rem)] lg:gap-12"
       >
-        <section className="hidden min-w-0 lg:block">
+        <section data-testid="login-hero" className="hidden min-w-0 lg:block">
           <LoginHero />
         </section>
 
         <LoginMobileInfo />
 
-        <section className="glass-card backdrop-blur-lg w-full p-5 sm:p-7 lg:p-8">
+        <section data-testid="login-card" className="glass-card w-full p-5 sm:p-7 lg:p-8">
           <LoginCardHeader isRecoveryMode={isRecoveryMode} bookSlug={bookSlug} />
 
           {formError && (
@@ -172,6 +172,7 @@ export function LoginPage() {
               onRecovery={() => setIsRecoveryMode(true)}
               emailRef={emailRef}
               passwordRef={passwordRef}
+              noBookContext={!bookSlug}
             />
           )}
 

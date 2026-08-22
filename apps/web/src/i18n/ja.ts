@@ -14,6 +14,7 @@ export const ja: Record<TranslationKeys, TranslationValue> = {
   'login.bookSlugPlaceholder': 'my-book-slug',
   'login.emailPlaceholder': 'reader@example.com',
   'login.passwordPlaceholder': 'パスワードを入力',
+  'login.noBookContext': 'このリンクには書籍が含まれていません。書籍専用のリンクからログインするか、以下のデモをお試しください。',
   'login.submit': 'ログイン',
   'login.signingIn': 'ログイン中...',
   'login.forgotPassword': 'パスワードを忘れた？',

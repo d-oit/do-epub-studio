@@ -260,6 +260,8 @@
 @layer components {
   .glass-panel {
     background: color-mix(in oklch, var(--color-background) 80%, transparent);
+    /* Restored at build time by restoreStandardBackdropFilter() in
+       vite.config.ts — see GOAP-253 A5 / ADR-253 §4. */
     backdrop-filter: blur(24px) saturate(180%);
     -webkit-backdrop-filter: blur(24px) saturate(180%);
     border: 1px solid color-mix(in oklch, var(--color-foreground) 10%, transparent);

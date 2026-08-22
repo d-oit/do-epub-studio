@@ -14,6 +14,7 @@ export const ru: Record<TranslationKeys, TranslationValue> = {
   'login.bookSlugPlaceholder': 'my-book-slug',
   'login.emailPlaceholder': 'reader@example.com',
   'login.passwordPlaceholder': 'Введите пароль',
+  'login.noBookContext': 'Эта ссылка не содержит книги. Откройте ссылку для конкретной книги, чтобы войти, или попробуйте демо ниже.',
   'login.submit': 'Войти',
   'login.signingIn': 'Вход...',
   'login.forgotPassword': 'Забыли пароль?',

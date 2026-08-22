@@ -66,7 +66,7 @@ export function AdminLoginHero() {
         <AdminFeatureList />
       </div>
 
-      <p className="mt-8 max-w-md glass-card backdrop-blur-lg p-4 text-sm leading-relaxed text-foreground-muted">
+      <p className="mt-8 max-w-md glass-card p-4 text-sm leading-relaxed text-foreground-muted">
         {t('admin.login.howAccessWorks')}
       </p>
 
@@ -88,7 +88,7 @@ export function AdminLoginHero() {
 export function AdminMobileInfo() {
   const { t } = useTranslation();
   return (
-    <div className="glass-card backdrop-blur-lg p-5 lg:hidden">
+    <div data-testid="admin-mobile-info" className="glass-card p-5 lg:hidden">
       <div className="flex items-center gap-3">
         <AppLogo size={32} className="shrink-0 text-accent" />
         <div className="min-w-0">
