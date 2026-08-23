@@ -138,23 +138,40 @@ export function LoginPage() {
         <LocaleSwitcher />
       </div>
 
-      <main
+            <main
         id="main-content"
         tabIndex={-1}
-        className="grid min-h-dvh lg:grid-cols-[1.1fr_1fr]"
+        className="flex min-h-dvh flex-col items-center justify-center px-4 py-10 sm:px-6"
       >
-        <section
-          data-testid="login-hero"
-          className="paper-grain hidden min-w-0 items-stretch bg-background-secondary lg:flex"
-        >
-          <LoginHero />
-        </section>
+        <div className="w-full max-w-md">
+          <LoginMobileInfo />
 
-        <div className="flex flex-col items-center justify-center px-4 py-8 sm:px-6 lg:px-10">
-          <div className="w-full max-w-md">
-            <LoginMobileInfo />
+          <details
+            data-testid="login-about"
+            open
+            className="group mb-5 rounded-xl border border-border/60 bg-background-secondary/60"
+          >
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 text-sm font-medium text-foreground [&::-webkit-details-marker]:hidden">
+              <span>{t('login.aboutToggle')}</span>
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-4 w-4 text-foreground-muted transition-transform group-open:rotate-180"
+              >
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </summary>
+            <div className="px-5 pb-5">
+              <LoginHero />
+            </div>
+          </details>
 
-            <section data-testid="login-card" className="glass-card w-full p-5 sm:p-7 lg:p-8">
+                      <section data-testid="login-card" className="glass-card w-full p-5 sm:p-7">
           <LoginCardHeader isRecoveryMode={isRecoveryMode} bookSlug={bookSlug} />
 
           {formError && (
@@ -216,8 +233,7 @@ export function LoginPage() {
               </a>
             </div>
           )}
-            </section>
-          </div>
+          </section>
         </div>
       </main>
     </div>

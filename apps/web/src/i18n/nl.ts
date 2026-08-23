@@ -41,6 +41,7 @@ export const nl: Record<TranslationKeys, TranslationValue> = {
   'login.hero.learnMore': 'Meer informatie',
   'login.heroTitle': 'Een rustig, doordacht thuis voor je bibliotheek.',
   'login.heroBody': "Upload EPUB's, lees met typografische zorg en houd elke annotatie gesynchroniseerd — ook offline.",
+  'login.aboutToggle': 'Over deze studio',
   'help.title': 'Help en zo werkt het',
   'help.intro': '{app} is een werkruimte voor het lezen van EPUB en redactioneel werk. Log in om boeken te lezen, of upload en beheer je boeken als auteur of manager.',
   'help.demoTitle': 'Probeer de demo',

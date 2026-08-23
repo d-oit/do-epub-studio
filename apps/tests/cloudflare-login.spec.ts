@@ -98,22 +98,22 @@ test.describe('Cloudflare reader login', () => {
     await expect(page).toHaveURL(/\/login/);
   });
 
-  test('renders the hero section with feature list on desktop', async ({ page }) => {
+  test('renders the collapsible about section with feature bullets', async ({ page }) => {
     await page.goto(`/login?book=${READER.bookSlug}`);
 
-    // Desktop hero should show feature bullets
-    const hero = page.getByTestId('login-hero');
-    await expect(hero.getByText('Responsive EPUB reading')).toBeVisible();
-    await expect(hero.getByText('Highlights, annotations & bookmarks')).toBeVisible();
-    await expect(hero.getByText('Offline reading with sync')).toBeVisible();
+    // The collapsible "About this studio" disclosure shows the feature bullets
+    const about = page.getByTestId('login-about');
+    await expect(about.getByText('Responsive EPUB reading')).toBeVisible();
+    await expect(about.getByText('Highlights, annotations & bookmarks')).toBeVisible();
+    await expect(about.getByText('Offline reading with sync')).toBeVisible();
   });
 
   test('renders the mobile info card on small viewports', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
     await page.goto(`/login?book=${READER.bookSlug}`);
 
-    // Mobile info card should be visible (has glass-card class)
-    const mobileInfo = page.getByTestId('login-mobile-info');
+    // The always-visible brand header (logo + name) should show on small screens
+    const mobileInfo = page.getByTestId('login-brand');
     await expect(mobileInfo).toBeVisible();
   });
 

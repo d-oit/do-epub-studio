@@ -315,18 +315,12 @@ describe('LoginPage', () => {
   });
 
   describe('demo login', () => {
-    it('hides demo button when demo login is disabled', () => {
+    it('shows the demo button directly on the login page', () => {
       mockIsDemoLoginEnabled.mockReturnValue(false);
-      render(<MemoryRouter><LoginPage /></MemoryRouter>);
-      expect(screen.queryByText('login.demoTry')).not.toBeInTheDocument();
-      expect(screen.queryByText('login.demoFillCredentials')).not.toBeInTheDocument();
-    });
-
-    it('shows demo button when demo login is enabled', () => {
-      mockIsDemoLoginEnabled.mockReturnValue(true);
       render(<MemoryRouter><LoginPage /></MemoryRouter>);
       expect(screen.getByText('login.demoTry')).toBeInTheDocument();
       expect(screen.getByText('login.demoOr')).toBeInTheDocument();
+      expect(screen.getByText('login.demoFillCredentials')).toBeInTheDocument();
     });
 
     it('fills demo credentials into the form fields', () => {
