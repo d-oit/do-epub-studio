@@ -41,6 +41,7 @@ export const ja: Record<TranslationKeys, TranslationValue> = {
   'login.hero.learnMore': '詳しく見る',
   'login.heroTitle': 'あなたの本棚にふさわしい、静かで居心地のよい場所。',
   'login.heroBody': 'EPUB をアップロードし、美しい組版で読み、すべての注釈を同期し続けます — オフラインでも。',
+  'login.aboutToggle': 'このスタジオについて',
   'help.title': 'ヘルプと使い方',
   'help.intro': '{app} は EPUB の読み取りおよび編集用ワークスペースです。ログインして書籍を読むか、著者や管理者として書籍をアップロードして管理できます。',
   'help.demoTitle': 'デモをお試しください',

@@ -4,7 +4,7 @@ import { useTranslation } from '../../hooks/useTranslation';
 import { apiRequest } from '../../lib/api';
 import { useAuthStore } from '../../stores/auth';
 import { Button } from '../../components/ui';
-import { isDemoLoginEnabled, DEMO_READER_EMAIL } from '../../config/demo-config';
+import { DEMO_READER_EMAIL } from '../../config/demo-config';
 
 export interface SessionCapabilities {
   canRead: boolean;
@@ -71,8 +71,11 @@ export function DemoLoginBlock({
   onLogin: () => void;
   onFillCredentials: () => void;
 }) {
+  // The demo buttons are always shown so users can try the app directly
+  // (product direction 2026-08-23). This is UI-only — the Worker remains the
+  // authoritative gate and fail-closes the demo endpoints in
+  // production-like environments regardless (see demo-config comment).
   const { t } = useTranslation();
-  if (!isDemoLoginEnabled()) return null;
   return (
     <div className="mt-5">
       <div className="flex items-center gap-3" aria-hidden="true">
