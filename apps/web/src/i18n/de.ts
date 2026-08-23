@@ -39,6 +39,8 @@ export const de: Record<TranslationKeys, TranslationValue> = {
   'login.hero.feature.management': 'Bücher hochladen & verwalten',
   'login.hero.howAccessWorks': 'Keine Registrierung nötig — der Zugang wird von einem Autor oder Manager vergeben.',
   'login.hero.learnMore': 'Mehr erfahren',
+  'login.heroTitle': 'Ein ruhiges, durchdachtes Zuhause für deine Bibliothek.',
+  'login.heroBody': 'EPUBs hochladen, mit typografischer Sorgfalt lesen und alle Anmerkungen synchron halten — auch offline.',
   'help.title': 'Hilfe & Verwendung',
   'help.intro': '{app} ist ein Arbeitsbereich zum Lesen und Bearbeiten von EPUB. Melden Sie sich an, um Bücher zu lesen, oder laden Sie als Autor oder Verwalter Ihre Bücher hoch und verwalten Sie sie.',
   'help.demoTitle': 'Demo ausprobieren',

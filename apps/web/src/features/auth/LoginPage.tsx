@@ -125,7 +125,7 @@ export function LoginPage() {
   }
 
   return (
-    <div className="relative min-h-dvh overflow-x-clip bg-background px-4 py-6 sm:px-6 lg:px-8">
+    <div className="relative min-h-dvh overflow-x-clip bg-background">
       <div
         aria-hidden="true"
         className="pointer-events-none fixed inset-0 -z-10"
@@ -141,15 +141,20 @@ export function LoginPage() {
       <main
         id="main-content"
         tabIndex={-1}
-        className="mx-auto grid min-h-[calc(100dvh-3rem)] w-full max-w-6xl items-start gap-8 pt-16 pb-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(22rem,28rem)] lg:gap-12"
+        className="grid min-h-dvh lg:grid-cols-[1.1fr_1fr]"
       >
-        <section data-testid="login-hero" className="hidden min-w-0 lg:block">
+        <section
+          data-testid="login-hero"
+          className="paper-grain hidden min-w-0 items-stretch bg-background-secondary lg:flex"
+        >
           <LoginHero />
         </section>
 
-        <LoginMobileInfo />
+        <div className="flex flex-col items-center justify-center px-4 py-8 sm:px-6 lg:px-10">
+          <div className="w-full max-w-md">
+            <LoginMobileInfo />
 
-        <section data-testid="login-card" className="glass-card w-full p-5 sm:p-7 lg:p-8">
+            <section data-testid="login-card" className="glass-card w-full p-5 sm:p-7 lg:p-8">
           <LoginCardHeader isRecoveryMode={isRecoveryMode} bookSlug={bookSlug} />
 
           {formError && (
@@ -211,7 +216,9 @@ export function LoginPage() {
               </a>
             </div>
           )}
-        </section>
+            </section>
+          </div>
+        </div>
       </main>
     </div>
   );
