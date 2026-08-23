@@ -49,7 +49,7 @@ artifact **in the same PR** as the bundle change.
 The baseline covers three routes currently: `reader`, `catalog`, `admin`
 (per `routeBudgets` in `.performance-budgets.json`). **Auth and offline routes
 are not baselined** — tracked as a follow-up in
-`plans/221-goap-remaining-audit-items.md` (221-A1).
+`plans/archive/221-goap-remaining-audit-items.md` (221-A1).
 
 ## Troubleshooting
 

@@ -2,7 +2,7 @@
 
 > **Status:** Accepted (2026-08-20)
 > **Supersedes:** none
-> **Related:** `plans/248-goap-missing-impl-improvements-audit.md`,
+> **Related:** `plans/archive/248-goap-missing-impl-improvements-audit.md`,
 > ADR-083, ADR-106, ADR-181, ADR-212, ADR-214, ADR-215, ADR-218, ADR-217
 > **Deciders:** maintainers
 > **Tags:** governance, audit, prioritization, docs-drift

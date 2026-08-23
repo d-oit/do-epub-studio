@@ -118,22 +118,25 @@ None.
 | 046    | Codebase Optimizations (GOAP)               | `plans/archive/046-goap-codebase-optimizations.md`                                   | GOAP, not ADR |
 | 048    | Closeout 2026-05-23 (GOAP)                  | `plans/archive/048-goap-closeout-2026-05-23.md`                                      | GOAP, not ADR |
 | 095    | Merge Orchestration (GOAP)                  | `plans/archive/095-goap-merge-orchestration-2026-06-15.md`                           | GOAP, not ADR |
-| 226    | Verify-Driven Gap Closure (GOAP)            | `plans/226-goap-verify-gap-closure.md`                                               | COMPLETED: PR #958 |
-| 227    | i18n Plural Rules (GOAP)                    | `plans/227-goap-i18n-plural-rules.md`                                                | COMPLETED: PR #964 |
-| 228    | Remaining Gaps Closure (GOAP)               | `plans/228-goap-remaining-gaps-closure.md`                                           | COMPLETED: PR #965 |
-| 229    | External-URL Hardening (GOAP)               | `plans/229-goap-external-url-hardening.md`                                           | COMPLETED: PR #972 |
-| 230    | Account Auth Roadmap (GOAP)                 | `plans/230-goap-account-auth-2026-roadmap.md`   | GOAP, not ADR (implementation complete; A5/A6 passkeys + recovery merged via GOAP-236) |
-| 236    | ADR-234 Items 5+6 Review & Merge (GOAP)     | `plans/236-goap-adr234-items56-review-and-merge.md`                                  | Complete: PR #975 |
-| 237    | ADR-234 Item 7 Risk-Event Handling (GOAP)   | `plans/237-goap-risk-event-handling.md`                                              | COMPLETED: PR #977 |
-| 238    | Docs Drift & Code Cleanup (GOAP)            | `plans/238-goap-docs-drift-and-code-cleanup.md`                                      | COMPLETED: PR #978 |
-| 239    | Split >500-LOC Files (GOAP)                 | `plans/239-goap-split-over500-loc-files.md`                                          | COMPLETED: PR #980 |
-| 240    | Vitest 4 Migration (GOAP)                   | `plans/240-goap-vitest4-migration.md`                                                | COMPLETED: PR #982 |
-| 241    | Warning Closure & Pre-Existing Fixes (GOAP) | `plans/241-goap-warning-closure.md`                                                 | COMPLETED: PR #984 |
-| 242    | Export Sanitization Hardening + Review Closure (GOAP) | `plans/242-goap-export-hardening-merge.md`                                  | COMPLETED: PR #987 |
-| 243    | Web `as unknown as` Cast Cleanup (GOAP) | `plans/243-goap-web-cast-cleanup.md`                                        | COMPLETED: PR #989 |
-| 244    | Demo Login and Help Entry Points (GOAP) | `plans/244-goap-demo-login-help-entrypoints.md`                              | COMPLETED |
-| 246    | Login Page UX Redesign (GOAP)     | `plans/246-goap-login-ux-redesign.md`                 | COMPLETED (ADR-245) |
-| 253    | Login No-Book Guard & UI Modernization (ADR + GOAP) | `plans/253-adr-login-no-book-guard-modernization.md`, `plans/253-goap-login-no-book-guard-modernization.md` | ACCEPTED (PR #1028) |
+| 226    | Verify-Driven Gap Closure (GOAP)            | `plans/archive/226-goap-verify-gap-closure.md`                                               | COMPLETED: PR #958 |
+| 227    | i18n Plural Rules (GOAP)                    | `plans/archive/227-goap-i18n-plural-rules.md`                                                | COMPLETED: PR #964 |
+| 228    | Remaining Gaps Closure (GOAP)               | `plans/archive/228-goap-remaining-gaps-closure.md`                                           | COMPLETED: PR #965 |
+| 229    | External-URL Hardening (GOAP)               | `plans/archive/229-goap-external-url-hardening.md`                                           | COMPLETED: PR #972 |
+| 230    | Account Auth Roadmap (GOAP)                 | `plans/archive/230-goap-account-auth-2026-roadmap.md`   | GOAP, not ADR (implementation complete; A5/A6 passkeys + recovery merged via GOAP-236) |
+| 236    | ADR-234 Items 5+6 Review & Merge (GOAP)     | `plans/archive/236-goap-adr234-items56-review-and-merge.md`                                  | Complete: PR #975 |
+| 237    | ADR-234 Item 7 Risk-Event Handling (GOAP)   | `plans/archive/237-goap-risk-event-handling.md`                                              | COMPLETED: PR #977 |
+| 238    | Docs Drift & Code Cleanup (GOAP)            | `plans/archive/238-goap-docs-drift-and-code-cleanup.md`                                      | COMPLETED: PR #978 |
+| 239    | Split >500-LOC Files (GOAP)                 | `plans/archive/239-goap-split-over500-loc-files.md`                                          | COMPLETED: PR #980 |
+| 240    | Vitest 4 Migration (GOAP)                   | `plans/archive/240-goap-vitest4-migration.md`                                                | COMPLETED: PR #982 |
+| 241    | Warning Closure & Pre-Existing Fixes (GOAP) | `plans/archive/241-goap-warning-closure.md`                                                 | COMPLETED: PR #984 |
+| 242    | Export Sanitization Hardening + Review Closure (GOAP) | `plans/archive/242-goap-export-hardening-merge.md`                                  | COMPLETED: PR #987 |
+| 243    | Web `as unknown as` Cast Cleanup (GOAP) | `plans/archive/243-goap-web-cast-cleanup.md`                                        | COMPLETED: PR #989 |
+| 244    | Demo Login and Help Entry Points (GOAP) | `plans/archive/244-goap-demo-login-help-entrypoints.md`                              | COMPLETED |
+| 246    | Login Page UX Redesign (GOAP)     | `plans/archive/246-goap-login-ux-redesign.md`                 | COMPLETED (ADR-245) |
+| 247    | Open PR Review, CI Remediation & Issues (GOAP) | `plans/247-goap-swarm-pr-review-ci-issues.md` | IN PROGRESS |
+| 253    | Login No-Book Guard & UI Modernization (ADR + GOAP) | `plans/253-adr-login-no-book-guard-modernization.md`, `plans/archive/253-goap-login-no-book-guard-modernization.md` | ACCEPTED (PR #1028) |
+| 254    | UI/UX & Concept Modernization Master Plan (GOAP) | `plans/254-goap-uiux-modernization-master-plan.md` | IN PROGRESS (W1 complete) |
+| 255    | epub-sparkle UI/UX Port — Editorial Alignment (GOAP) | `plans/255-goap-epub-sparkle-uiux-port.md` | IN PROGRESS (W1) |
 
 ## Pending
 
