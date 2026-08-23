@@ -45,6 +45,8 @@ export const en = {
   'login.hero.feature.management': 'Upload & manage books',
   'login.hero.howAccessWorks': 'No signup needed — access is granted by an author or manager.',
   'login.hero.learnMore': 'Learn more',
+  'login.heroTitle': 'A quiet, considered home for your library.',
+  'login.heroBody': 'Upload EPUBs, read with typographic care, and keep every annotation in sync — even offline.',
   'help.title': 'Help & How to Use',
   'help.intro': '{app} is an EPUB reading and editorial workspace. Sign in to read books, or as an author or manager, upload and manage your books.',
   'help.demoTitle': 'Try the demo',

@@ -3,7 +3,7 @@ import { AppLogo } from '../../components/ui';
 import { APP_NAME, APP_VERSION_LABEL } from '../../config/app-identity';
 import { resolveHelpUrl } from '../../config/demo-config';
 
-/** Value-prop bullets shared by the desktop hero and the compact mobile info panel. */
+/** Value-prop bullets shared by the compact mobile info panel. */
 export const LOGIN_FEATURE_KEYS = [
   'login.hero.feature.reading',
   'login.hero.feature.annotations',
@@ -47,28 +47,34 @@ export function LoginFeatureList({ compact = false }: { compact?: boolean }) {
   );
 }
 
-/** Desktop-only left panel: brand, value props, access note, help link. */
+/**
+ * Desktop-only editorial hero for the split-screen login. Rendered on the
+ * paper-grain left panel at `lg` and up: eyebrow brand, a serif headline,
+ * and a short lede above the sign-in form.
+ */
 export function LoginHero() {
   const { t } = useTranslation();
   const helpLink = resolveHelpUrl();
 
   return (
-    <div className="max-w-xl">
-      <AppLogo size={72} className="mb-6 text-accent" />
-      <p className="mb-3 text-sm font-medium tracking-[0.12em] text-foreground-muted">
-        {APP_VERSION_LABEL}
-      </p>
-      <h1 className="text-balance font-display text-6xl font-bold leading-tight text-foreground xl:text-7xl">
-        {APP_NAME}
-      </h1>
-      <div className="mt-4 h-1 w-16 rounded-full bg-accent" />
-
-      <div className="mt-8">
-        <LoginFeatureList />
+    <div className="flex w-full flex-col justify-center px-10 py-16 sm:px-14 lg:px-16">
+      <div className="flex items-center gap-3">
+        <AppLogo size={40} className="shrink-0 text-accent" />
+        <p className="eyebrow text-sm font-medium uppercase tracking-[0.2em] text-foreground-muted">
+          {APP_NAME}
+        </p>
       </div>
 
-      <p className="mt-8 max-w-md glass-card p-4 text-sm leading-relaxed text-foreground-muted">
-        {t('login.hero.howAccessWorks')}
+      <h1 className="mt-8 text-balance-tight font-display text-4xl font-semibold leading-[1.1] text-foreground xl:text-6xl">
+        {t('login.heroTitle')}
+      </h1>
+
+      <p className="mt-5 max-w-md text-base leading-relaxed text-foreground-muted lg:text-lg">
+        {t('login.heroBody')}
+      </p>
+
+      <p className="mt-12 font-mono text-xs uppercase tracking-[0.18em] text-foreground-muted">
+        {APP_VERSION_LABEL}
       </p>
 
       {helpLink && (
