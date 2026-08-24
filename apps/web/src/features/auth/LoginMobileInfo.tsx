@@ -8,7 +8,7 @@ import { APP_NAME, APP_DESCRIPTION } from '../../config/app-identity';
  */
 export function LoginMobileInfo() {
   return (
-    <div data-testid="login-brand" className="flex items-center gap-3 pb-5">
+    <div data-testid="login-brand" className="flex items-center gap-3 pb-5 lg:hidden">
       <AppLogo size={32} className="shrink-0 text-accent" />
       <div className="min-w-0">
         <h1 className="font-display text-xl font-bold leading-tight text-foreground">{APP_NAME}</h1>

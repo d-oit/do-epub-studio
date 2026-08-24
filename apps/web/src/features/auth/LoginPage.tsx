@@ -7,11 +7,16 @@ import { LocaleSwitcher } from '../../components/LocaleSwitcher';
 import { Button } from '../../components/ui';
 import { ThemeToggle } from '../../components/ThemeToggle';
 import { resolveHelpUrl, DEMO_READER_EMAIL, DEMO_READER_PASSWORD } from '../../config/demo-config';
-import { LoginHero } from './LoginHero';
+import { LoginHero, LoginFeatureList } from './LoginHero';
 import { LoginMobileInfo } from './LoginMobileInfo';
 import { LoginForm, RecoveryForm } from './LoginForm';
 import { RecoverySuccessView, TokenVerifyingView, TokenErrorView } from './RecoveryViews';
-import { DemoLoginBlock, useDemoLogin, toAuthStorePayload, type SessionResponse } from './DemoLogin';
+import {
+  DemoLoginBlock,
+  useDemoLogin,
+  toAuthStorePayload,
+  type SessionResponse,
+} from './DemoLogin';
 import { LoginCardHeader } from './LoginCardHeader';
 
 interface AuthState {
@@ -53,13 +58,10 @@ export function LoginPage() {
       const email = getString('email');
       const password = getString('password');
       try {
-        const data = await apiRequest<SessionResponse>(
-          '/api/access/request',
-          {
-            method: 'POST',
-            body: JSON.stringify({ email, password, bookSlug }),
-          },
-        );
+        const data = await apiRequest<SessionResponse>('/api/access/request', {
+          method: 'POST',
+          body: JSON.stringify({ email, password, bookSlug }),
+        });
 
         setAuth(toAuthStorePayload(data, email));
         void navigate(`/read/${data.book.slug}`);
@@ -108,7 +110,9 @@ export function LoginPage() {
         if (!cancelledRef.value) setIsVerifying(false);
       }
     })();
-    return () => { cancelledRef.value = true; };
+    return () => {
+      cancelledRef.value = true;
+    };
   }, [recoveryToken, navigate, setAuth]);
 
   const helpLink = useMemo(() => resolveHelpUrl(), []);
@@ -130,7 +134,8 @@ export function LoginPage() {
         aria-hidden="true"
         className="pointer-events-none fixed inset-0 -z-10"
         style={{
-          background: 'radial-gradient(ellipse 80% 50% at 50% -20%, oklch(var(--color-accent) / 0.08), transparent)',
+          background:
+            'radial-gradient(ellipse 80% 50% at 50% -20%, oklch(var(--color-accent) / 0.08), transparent)',
         }}
       />
       <div className="fixed right-3 top-3 z-20 flex items-center gap-2 sm:right-4 sm:top-4">
@@ -138,103 +143,94 @@ export function LoginPage() {
         <LocaleSwitcher />
       </div>
 
-            <main
+      <main
         id="main-content"
         tabIndex={-1}
-        className="flex min-h-dvh flex-col items-center justify-center px-4 py-10 sm:px-6"
+        className="lg:grid lg:min-h-dvh lg:grid-cols-[1.1fr_1fr] xl:grid-cols-[1.2fr_1fr]"
       >
-        <div className="w-full max-w-md">
-          <LoginMobileInfo />
+        {/* Desktop brand panel — the former collapsible "about" content,
+            now always visible (no disclosure interaction required). */}
+        <aside className="hidden items-stretch border-e border-border bg-background-secondary px-10 py-12 shadow-spine lg:flex xl:px-16">
+          <LoginHero />
+        </aside>
 
-          <details
-            data-testid="login-about"
-            open
-            className="group mb-5 rounded-xl border border-border/60 bg-background-secondary/60"
-          >
-            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 text-sm font-medium text-foreground [&::-webkit-details-marker]:hidden">
-              <span>{t('login.aboutToggle')}</span>
-              <svg
-                aria-hidden="true"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="h-4 w-4 text-foreground-muted transition-transform group-open:rotate-180"
-              >
-                <polyline points="6 9 12 15 18 9" />
-              </svg>
-            </summary>
-            <div className="px-5 pb-5">
-              <LoginHero />
+        <section className="flex flex-col items-center justify-center px-4 py-10 sm:px-6">
+          <div className="w-full max-w-md">
+            <LoginMobileInfo />
+
+            <section data-testid="login-card" className="glass-card w-full p-5 sm:p-7">
+              <LoginCardHeader isRecoveryMode={isRecoveryMode} bookSlug={bookSlug} />
+
+              {formError && (
+                <div
+                  role="alert"
+                  aria-live="polite"
+                  className="mb-6 p-3 bg-accent-error/10 border border-accent-error/30 rounded-lg text-sm text-accent-error"
+                >
+                  {formError}
+                </div>
+              )}
+
+              {isRecoverySuccess ? (
+                <RecoverySuccessView onBack={() => setIsRecoveryMode(false)} />
+              ) : isRecoveryMode ? (
+                <RecoveryForm action={recoveryAction} onBack={() => setIsRecoveryMode(false)} />
+              ) : (
+                <LoginForm
+                  action={loginAction}
+                  onRecovery={() => setIsRecoveryMode(true)}
+                  emailRef={emailRef}
+                  passwordRef={passwordRef}
+                  noBookContext={!bookSlug}
+                />
+              )}
+
+              {!isRecoveryMode && (
+                <DemoLoginBlock
+                  loading={demo.loading}
+                  error={demo.error}
+                  onLogin={() => {
+                    void demo.login();
+                  }}
+                  onFillCredentials={fillDemoCredentials}
+                />
+              )}
+
+              <div className="mt-6 pt-4 border-t border-border text-center space-y-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  /* eslint-disable-next-line i18next/no-literal-string -- route path */
+                  onClick={() => void navigate('/admin/login')}
+                  className="text-foreground-muted hover:text-foreground text-sm"
+                >
+                  {t('login.adminLink')}
+                </Button>
+                <p className="text-xs text-foreground-muted">{t('login.adminDescription')}</p>
+              </div>
+
+              {helpLink && (
+                <div className="mt-4 text-center">
+                  <a
+                    href={helpLink.href}
+                    target={helpLink.isExternal ? '_blank' : undefined}
+                    rel={helpLink.isExternal ? 'noopener noreferrer' : undefined}
+                    className="text-sm text-accent hover:opacity-80 underline underline-offset-2 transition-colors font-medium"
+                  >
+                    {t('login.helpLink')}
+                  </a>
+                </div>
+              )}
+            </section>
+
+            <div className="mt-8 lg:hidden" data-testid="login-about">
+              <LoginFeatureList compact />
+              <p className="mt-4 text-xs leading-relaxed text-foreground-muted">
+                {t('login.hero.howAccessWorks')}
+              </p>
             </div>
-          </details>
-
-                      <section data-testid="login-card" className="glass-card w-full p-5 sm:p-7">
-          <LoginCardHeader isRecoveryMode={isRecoveryMode} bookSlug={bookSlug} />
-
-          {formError && (
-            <div
-              role="alert"
-              aria-live="polite"
-              className="mb-6 p-3 bg-accent-error/10 border border-accent-error/30 rounded-lg text-sm text-accent-error"
-            >
-              {formError}
-            </div>
-          )}
-
-          {isRecoverySuccess ? (
-            <RecoverySuccessView onBack={() => setIsRecoveryMode(false)} />
-          ) : isRecoveryMode ? (
-            <RecoveryForm action={recoveryAction} onBack={() => setIsRecoveryMode(false)} />
-          ) : (
-            <LoginForm
-              action={loginAction}
-              onRecovery={() => setIsRecoveryMode(true)}
-              emailRef={emailRef}
-              passwordRef={passwordRef}
-              noBookContext={!bookSlug}
-            />
-          )}
-
-          {!isRecoveryMode && (
-            <DemoLoginBlock
-              loading={demo.loading}
-              error={demo.error}
-              onLogin={() => { void demo.login(); }}
-              onFillCredentials={fillDemoCredentials}
-            />
-          )}
-
-          <div className="mt-6 pt-4 border-t border-border text-center space-y-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => void navigate('/admin/login') /* eslint-disable-line i18next/no-literal-string -- route path */}
-              className="text-foreground-muted hover:text-foreground text-sm"
-            >
-              {t('login.adminLink')}
-            </Button>
-            <p className="text-xs text-foreground-muted">
-              {t('login.adminDescription')}
-            </p>
           </div>
-
-          {helpLink && (
-            <div className="mt-4 text-center">
-              <a
-                href={helpLink.href}
-                target={helpLink.isExternal ? '_blank' : undefined}
-                rel={helpLink.isExternal ? 'noopener noreferrer' : undefined}
-                className="text-sm text-accent hover:opacity-80 underline underline-offset-2 transition-colors font-medium"
-              >
-                {t('login.helpLink')}
-              </a>
-            </div>
-          )}
-          </section>
-        </div>
+        </section>
       </main>
     </div>
   );
