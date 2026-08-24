@@ -41,7 +41,6 @@ export const it: Record<TranslationKeys, TranslationValue> = {
   'login.hero.learnMore': 'Scopri di più',
   'login.heroTitle': 'Una casa tranquilla e curata per la tua biblioteca.',
   'login.heroBody': 'Carica EPUB, leggi con cura tipografica e tieni ogni annotazione sincronizzata, anche offline.',
-  'login.aboutToggle': 'Info su questo studio',
   'help.title': 'Aiuto e come usare',
   'help.intro': '{app} è uno spazio di lavoro per la lettura e la redazione di EPUB. Accedi per leggere libri oppure, come autore o gestore, carica e gestisci i tuoi libri.',
   'help.demoTitle': 'Prova la demo',

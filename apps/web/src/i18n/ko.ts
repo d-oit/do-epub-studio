@@ -41,7 +41,6 @@ export const ko: Record<TranslationKeys, TranslationValue> = {
   'login.hero.learnMore': '자세히 알아보기',
   'login.heroTitle': '당신의 서재를 위한 조용하고 정돈된 공간.',
   'login.heroBody': 'EPUB을 업로드하고, 정성스러운 활자로 읽으며, 모든 주석을 동기화하세요 — 오프라인에서도.',
-  'login.aboutToggle': '이 스튜디오 정보',
   'help.title': '도움말 및 사용 방법',
   'help.intro': '{app}은 EPUB 리딩 및 편집 작업 공간입니다. 로그인하여 책을 읽거나, 저자나 관리자로서 책을 업로드하고 관리할 수 있습니다.',
   'help.demoTitle': '데모 사용해 보기',

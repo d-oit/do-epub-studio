@@ -98,23 +98,27 @@ test.describe('Cloudflare reader login', () => {
     await expect(page).toHaveURL(/\/login/);
   });
 
-  test('renders the collapsible about section with feature bullets', async ({ page }) => {
+  test('renders the feature bullets without any interaction', async ({ page }) => {
     await page.goto(`/login?book=${READER.bookSlug}`);
 
-    // The collapsible "About this studio" disclosure shows the feature bullets
-    const about = page.getByTestId('login-about');
-    await expect(about.getByText('Responsive EPUB reading')).toBeVisible();
-    await expect(about.getByText('Highlights, annotations & bookmarks')).toBeVisible();
-    await expect(about.getByText('Offline reading with sync')).toBeVisible();
+    // The brand panel (desktop) / info block (mobile) shows the feature
+    // bullets directly — no disclosure interaction required.
+    await expect(page.getByText('Responsive EPUB reading')).toBeVisible();
+    await expect(page.getByText('Highlights, annotations & bookmarks')).toBeVisible();
+    await expect(page.getByText('Offline reading with sync')).toBeVisible();
   });
 
-  test('renders the mobile info card on small viewports', async ({ page }) => {
+  test('renders the mobile brand header and info block on small viewports', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
     await page.goto(`/login?book=${READER.bookSlug}`);
 
-    // The always-visible brand header (logo + name) should show on small screens
+    // The brand header (logo + name) shows above the card on small screens
     const mobileInfo = page.getByTestId('login-brand');
     await expect(mobileInfo).toBeVisible();
+
+    // The compact info block below the card carries the access note
+    await expect(page.getByTestId('login-about')).toBeVisible();
+    await expect(page.getByText(/No signup needed/)).toBeVisible();
   });
 
   test('handles empty bookSlug gracefully', async ({ page }) => {
