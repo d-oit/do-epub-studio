@@ -149,7 +149,7 @@ export function LoginPage() {
 
         <LoginMobileInfo />
 
-        <section data-testid="login-card" className="glass-card w-full p-5 sm:p-7 lg:p-8">
+        <section data-testid="login-card" className="glass-card min-w-0 w-full p-5 sm:p-7 lg:p-8">
           <LoginCardHeader isRecoveryMode={isRecoveryMode} bookSlug={bookSlug} />
 
           {formError && (

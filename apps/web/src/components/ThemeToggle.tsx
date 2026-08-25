@@ -20,6 +20,7 @@ export function ThemeToggle() {
 
   return (
     <IconButton
+      data-testid="theme-toggle"
       onClick={toggleTheme}
       variant="ghost"
       aria-label={resolvedTheme === 'dark' ? t('theme.toggle.light') : t('theme.toggle.dark')}

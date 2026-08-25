@@ -14,6 +14,46 @@ export const VIEWPORT_MATRIX = [
 
 export type Viewport = (typeof VIEWPORT_MATRIX)[number];
 
+export interface Rect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+/**
+ * Checks if two bounding rectangles intersect.
+ */
+export function rectanglesIntersect(first: Rect, second: Rect): boolean {
+  return !(
+    first.x + first.width <= second.x ||
+    second.x + second.width <= first.x ||
+    first.y + first.height <= second.y ||
+    second.y + second.height <= first.y
+  );
+}
+
+/**
+ * Checks if a child rectangle is completely contained within a container rectangle.
+ * Allows a small tolerance (default 0.5px) for subpixel rounding.
+ */
+export function isContainedIn(child: Rect, container: Rect, tolerance = 0.5): boolean {
+  return (
+    child.x >= container.x - tolerance &&
+    child.y >= container.y - tolerance &&
+    child.x + child.width <= container.x + container.width + tolerance &&
+    child.y + child.height <= container.y + container.height + tolerance
+  );
+}
+
+/**
+ * Checks if a rectangle is completely contained within the viewport boundaries (0, 0, viewport.width, viewport.height).
+ * Allows a small tolerance (default 0.5px) for subpixel rounding.
+ */
+export function isContainedInViewport(rect: Rect, viewport: { width: number; height: number }, tolerance = 0.5): boolean {
+  return isContainedIn(rect, { x: 0, y: 0, width: viewport.width, height: viewport.height }, tolerance);
+}
+
 /**
  * Assert no horizontal overflow and visible key elements across all viewports.
  * Call this from any E2E test to verify responsive behavior.

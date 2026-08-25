@@ -11,7 +11,7 @@ import { LoginFeatureList } from './LoginHero';
 export function LoginMobileInfo() {
   const { t } = useTranslation();
   return (
-    <div data-testid="login-mobile-info" className="glass-card p-5 lg:hidden">
+    <div data-testid="login-mobile-info" className="glass-card min-w-0 p-5 lg:hidden">
       <div className="flex items-center gap-3">
         <AppLogo size={32} className="shrink-0 text-accent" />
         <div className="min-w-0">

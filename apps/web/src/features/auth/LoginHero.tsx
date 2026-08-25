@@ -40,7 +40,7 @@ export function LoginFeatureList({ compact = false }: { compact?: boolean }) {
       {LOGIN_FEATURE_KEYS.map((key) => (
         <li key={key} className={`flex items-start gap-2.5 ${compact ? 'text-xs' : 'text-sm'}`}>
           <CheckMark />
-          <span className="text-foreground">{t(key)}</span>
+          <span className="min-w-0 break-words text-foreground">{t(key)}</span>
         </li>
       ))}
     </ul>
