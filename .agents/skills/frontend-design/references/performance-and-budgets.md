@@ -21,3 +21,8 @@ When evaluating `frontend-design` outputs, measure effectiveness using NVIDIA Sk
 - **Tier 1 (Validation)**: Confirm code contains no un-sanitized scripts, hardcoded hex colors, or invalid Tailwind syntax.
 - **Tier 2 (Deduplication)**: Ensure new UI implementations reuse primitives from `@do-epub-studio/ui` rather than duplicating existing components.
 - **Tier 3 (Skill Lift & Dimensions)**: Measure Correctness (OKLCH token usage and responsive grid layout), Effectiveness (WCAG compliance and container queries), and Efficiency (zero unnecessary dependencies or bundle inflation).
+
+## Attention Budget Optimization (`asm` Integration)
+
+- Keep the frontmatter description in `SKILL.md` under 200 characters to ensure minimal resident context cost across agent providers.
+- Maintain L3 on-demand reference loading via progressive disclosure to prevent context bloat during model execution.
