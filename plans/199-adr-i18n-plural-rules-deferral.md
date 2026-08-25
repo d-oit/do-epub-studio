@@ -3,7 +3,7 @@
 **Status:** Accepted (deferred) — follow-up implemented 2026-08-11 via GOAP-227: plural-category variants for count-bearing keys, resolved by `Intl.PluralRules` through the `pluralize()` helper (structured catalog values; no ICU MessageFormat migration). The full ICU MessageFormat option remains documented below if the plural-key surface grows.
 **Date:** 2026-07-29
 **Authors:** d-oit
-**Related:** Wave 2 i18n hardening (`feat/wave2-i18n-hardening`), GOAP-227 (`plans/227-goap-i18n-plural-rules.md`)
+**Related:** Wave 2 i18n hardening (`feat/wave2-i18n-hardening`), GOAP-227 (`plans/archive/227-goap-i18n-plural-rules.md`)
 
 ---
 

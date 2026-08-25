@@ -18,6 +18,8 @@ do-epub-studio/
 ├── packages/
 │   ├── schema/       # Shared Zod schemas (validation contracts)
 │   ├── shared/       # Shared DTOs, types, utilities
+│   ├── ui/           # Design system components (Button, Modal, Tooltip, …)
+│   ├── testkit/      # Deterministic test fixtures & builders
 │   └── reader-core/  # EPUB parsing engine (epubjs)
 └── scripts/          # Quality gates, migrations, CI helpers
 ```
