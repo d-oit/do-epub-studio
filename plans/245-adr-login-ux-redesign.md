@@ -45,6 +45,12 @@ design-token system (ADR-063):
 - Both login pages pass the (already-existing) localized labels on every
   password field, including the admin MFA recovery form.
 
+### 1b. Dedicated responsive LoginHeader container
+
+- Locale (`LocaleSwitcher`) and theme (`ThemeToggle`) controls are encapsulated in a dedicated responsive `LoginHeader` component (`apps/web/src/components/LoginHeader.tsx`).
+- Replaces absolute/fixed overlay positioning (`fixed right-3 top-3`) with normal flex layout flow (`flex flex-wrap items-center justify-end gap-2 sm:gap-3`), preventing controls from overlapping the hero panel, login card, or viewport edges on narrow viewports or under long translated locale labels/RTL.
+- Reused consistently across `/login`, `/admin/login`, and `/admin/recover`.
+
 ### 2. Dual-action demo (replaces the Amendment C info line)
 
 Each demo block renders behind an "or" divider:
