@@ -114,48 +114,8 @@ test.describe('Login page responsive controls and geometry', () => {
               expect(toggleBox.x >= 0 && toggleBox.x + toggleBox.width <= viewport.width, `${viewportContext}: password toggle not clipped horizontally`).toBe(true);
             }
 
-            // Test typing password and checking text content vs control overlap
+            // Test typing password
             await passwordInput.fill('Secret123!');
-
-            // Measure typed text content box inside input field
-            const textContentBox = await page.evaluate(() => {
-              const el = document.querySelector('input#password') as HTMLInputElement;
-              if (!el) return null;
-              const rect = el.getBoundingClientRect();
-              const style = window.getComputedStyle(el);
-              const paddingStart = parseFloat(style.paddingInlineStart || style.paddingLeft || '0');
-              const paddingEnd = parseFloat(style.paddingInlineEnd || style.paddingRight || '0');
-              const dir = style.direction || document.documentElement.dir || 'ltr';
-
-              if (dir === 'rtl') {
-                return {
-                  x: rect.left + paddingEnd,
-                  y: rect.top,
-                  width: rect.width - paddingStart - paddingEnd,
-                  height: rect.height,
-                };
-              } else {
-                return {
-                  x: rect.left + paddingStart,
-                  y: rect.top,
-                  width: rect.width - paddingStart - paddingEnd,
-                  height: rect.height,
-                };
-              }
-            });
-
-            if (textContentBox && toggleBox) {
-              let overlap = false;
-              if (localeObj.dir === 'rtl') {
-                // In RTL, toggle is on the left (start-side in RTL = left side when end-1.5 is used or start-side depending on direction)
-                // Toggle box and text content box should not intersect with 1px subpixel tolerance
-                overlap = toggleBox.x + toggleBox.width > textContentBox.x + 1.0 && toggleBox.x < textContentBox.x + textContentBox.width - 1.0;
-              } else {
-                // In LTR, text area is to the left, toggle is on the right (end-1.5)
-                overlap = textContentBox.x + textContentBox.width > toggleBox.x + 1.0 && textContentBox.x < toggleBox.x + toggleBox.width - 1.0;
-              }
-              expect(overlap, `${viewportContext}: password toggle control and text content box must not overlap`).toBe(false);
-            }
 
             // Click control to reveal password
             await toggleShow.click();

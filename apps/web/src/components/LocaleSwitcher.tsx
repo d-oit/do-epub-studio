@@ -6,7 +6,7 @@ export function LocaleSwitcher(): React.ReactNode {
 
   return (
     <select
-      data-testid="locale-switcher"
+      data-testid="locale-switcher" /* eslint-disable-line i18next/no-literal-string -- test id */
       aria-label={t('a11y.select_locale')}
       className="bg-background border border-border rounded-lg px-2 h-10 text-sm focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none transition-all duration-150"
       value={locale}
