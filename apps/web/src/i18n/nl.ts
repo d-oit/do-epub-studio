@@ -39,6 +39,8 @@ export const nl: Record<TranslationKeys, TranslationValue> = {
   'login.hero.feature.management': 'Boeken uploaden & beheren',
   'login.hero.howAccessWorks': 'Geen registratie nodig — toegang wordt verleend door een auteur of beheerder.',
   'login.hero.learnMore': 'Meer informatie',
+  'login.heroTitle': 'Een rustig, doordacht thuis voor je bibliotheek.',
+  'login.heroBody': "Upload EPUB's, lees met typografische zorg en houd elke annotatie gesynchroniseerd — ook offline.",
   'help.title': 'Help en zo werkt het',
   'help.intro': '{app} is een werkruimte voor het lezen van EPUB en redactioneel werk. Log in om boeken te lezen, of upload en beheer je boeken als auteur of manager.',
   'help.demoTitle': 'Probeer de demo',

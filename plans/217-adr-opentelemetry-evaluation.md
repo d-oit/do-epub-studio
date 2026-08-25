@@ -2,7 +2,7 @@
 
 > **Status:** Accepted (deferred decision: evaluation scheduled)
 > **Supersedes:** none
-> **Related:** `plans/215-goap-all-dimension-audit-recommendations.md` (N7), ADR-067, ADR-212
+> **Related:** `plans/archive/215-goap-all-dimension-audit-recommendations.md` (N7), ADR-067, ADR-212
 > **Deciders:** maintainers
 > **Tags:** observability, telemetry, otel, deferral
 

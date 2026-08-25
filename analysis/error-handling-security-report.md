@@ -4,7 +4,7 @@
 > most of the current security surface. Findings below that are now resolved
 > are marked inline. For the current security posture see
 > `docs/security-posture.md`, `docs/security.md`, and the route/coverage
-> evidence in `plans/248-goap-missing-impl-improvements-audit.md` (T5).
+> evidence in `plans/archive/248-goap-missing-impl-improvements-audit.md` (T5).
 
 **Project:** do-epub-studio
 **Date:** 2025-01-16 (superseded 2026-08-20)

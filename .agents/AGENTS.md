@@ -13,12 +13,12 @@ Always use **latest stable versions** with security patches:
 
 | Package | Current | Latest Security | Notes |
 |---------|---------|-----------------|-------|
-| React | 18.x | 18.3.1+ | Avoid 18.0.x (early bugs) |
-| TypeScript | 5.4+ | 5.8+ | Latest for type safety |
-| Vitest | 1.x | 2.x | Upgrade recommended |
-| Vite | 6.x | 6.2+ | Security fixes |
-| Workbox | 7.4.x | 7.3.0+ | PWA caching |
-| DOMPurify | (add) | 3.2+ | Required for EPUB sanitization |
+| React | 19.x | 19.x | React 19 patterns adopted: `useOptimistic`, `useActionState`, `useFormStatus` (see DESIGN.md §Platform APIs) |
+| TypeScript | ^6.0.3 | 6.x strict | Strict mode enforced |
+| Vitest | 4.1.11 | 4.x | `pool: 'forks'` (ADR-216); v4 removed `singleFork` |
+| Vite | 8.2.2 | 8.x | `@vitejs/plugin-react` ^6 |
+| PWA | vite-plugin-pwa ^1.3.0 | latest | Replaces raw Workbox config; SW classic format per ADR-251 |
+| DOMPurify | 3.4.14 | 3.4+ | Implemented in `packages/reader-core/src/sanitizer.ts` |
 
 ### Before Any Implementation
 
@@ -102,11 +102,10 @@ test: {
 
 ### Known Warnings (Do Not Fix)
 
-1. **React Router Future Flags** (non-blocking)
-   - `v7_startTransition` warning
-   - `v7_relativeSplatPath` warning
-   - **Why not fix**: Requires React Router v7 upgrade (breaking)
-   - **Workaround**: Ignore until v7 migration planned
+1. **React Router future-flag warnings — RESOLVED (2026-08-23)**
+   - Router is `react-router-dom ^7.18.2`; the v6-era `v7_startTransition`
+     and `v7_relativeSplatPath` warnings no longer apply.
+   - Do not re-add v6 compatibility flags or downgrade guidance.
 
 2. **ESLint `no-autofocus` in tests**
    - Test files use `autoFocus` to test the prop
@@ -117,7 +116,7 @@ test: {
 
 | Issue | Severity | Status |
 |-------|----------|--------|
-| EPUB sanitization | HIGH | Implemented — `packages/reader-core/src/sanitizer.ts`: DOMPurify 3.4.13 allowlist (`ALLOWED_TAGS`/`ALLOWED_ATTR`) + `sanitizeDom` scheme/event-attr enforcement + sanitizer tests (#945, #224 A1/A2) |
+| EPUB sanitization | HIGH | Implemented — `packages/reader-core/src/sanitizer.ts`: DOMPurify 3.4.14 allowlist (`ALLOWED_TAGS`/`ALLOWED_ATTR`) + `sanitizeDom` scheme/event-attr enforcement + sanitizer tests (#945, #224 A1/A2) |
 | External URL blocking | MEDIUM | Partial — scheme allowlist only: `sanitizeDom` blocks `javascript:`/`data:`/`vbscript:` and non-`http(s)`/`mailto` schemes on `use`/`image` `href`. No host allowlist for `http(s)` and no fetch-level guard. Follow-up hardening item (per GOAP-224), not a must-fix for the current threat model. |
 | Session token rotation | MEDIUM | Implemented — `apps/worker/src/routes/access.ts` `/refresh` revokes the old token (`revokeSession`) before issuing a new one; `/logout` revokes; covered by `routes.access.test.ts` |
 

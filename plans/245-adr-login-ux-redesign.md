@@ -139,3 +139,23 @@ pattern; refs are simpler and the credentials are public anyway.
   E2E).
 - All touched files ≤ 500 lines.
 - `./scripts/quality_gate.sh` and the Codacy PR check pass before merge.
+
+## Amendment D (2026-08-24): Collapse removed — always-visible split layout
+
+**Supersedes Decision 3's below-`lg` disclosure framing and the collapsible
+"about" section.** The `<details data-testid="login-about">` wrapper around
+`LoginHero` is reverted: a disclosure above the form pushed the sign-in
+action below the fold and charged an interaction cost for content that is
+static. The page now renders:
+
+- **`lg+`:** a two-column split — the hero content as an always-visible
+  editorial brand panel (brand lockup, serif display headline, value props,
+  access note, version + help link, staggered slide-up-fade entrance) beside
+  the centered form column (`shadow-spine` book-gutter accent).
+- **Below `lg`:** form-first single column — compact brand header
+  (`login-brand`, now `lg:hidden`), the card, then a compact info block
+  (`login-about` testid retained) with the feature list and access note.
+
+The `login.aboutToggle` key was removed from all 13 catalogs (parity test
+enforces uniformity). E2E assertions in `cloudflare-login.spec.ts` no longer
+target a disclosure; feature bullets must be visible without interaction.

@@ -39,6 +39,8 @@ export const zh: Record<TranslationKeys, TranslationValue> = {
   'login.hero.feature.management': '上传与管理图书',
   'login.hero.howAccessWorks': '无需注册 — 访问权限由作者或管理员授予。',
   'login.hero.learnMore': '了解更多',
+  'login.heroTitle': '一个安静而考究的所在，安放你的书房。',
+  'login.heroBody': '上传 EPUB，以精心的排版阅读，并让每一条批注保持同步——即使离线也是如此。',
   'help.title': '帮助与使用方法',
   'help.intro': '{app} 是 EPUB 阅读与编辑工作区。登录即可阅读图书，或作为作者或管理员上传和管理图书。',
   'help.demoTitle': '试用演示',
