@@ -132,13 +132,13 @@ export function LoginPage() {
     <div className="relative min-h-dvh overflow-x-clip bg-background">
       <div
         aria-hidden="true"
-        className="pointer-events-none fixed inset-0 -z-10"
+        className="pointer-events-none fixed inset-0 -z-10 opacity-70"
         style={{
           background:
-            'radial-gradient(ellipse 80% 50% at 50% -20%, oklch(var(--color-accent) / 0.08), transparent)',
+            'radial-gradient(ellipse 70% 55% at 18% 10%, oklch(var(--color-accent) / 0.11), transparent 65%)',
         }}
       />
-      <div className="fixed right-3 top-3 z-20 flex items-center gap-2 sm:right-4 sm:top-4">
+      <div className="fixed right-4 top-4 z-20 flex items-center gap-2 sm:right-6 sm:top-6">
         <ThemeToggle />
         <LocaleSwitcher />
       </div>
@@ -150,15 +150,15 @@ export function LoginPage() {
       >
         {/* Desktop brand panel — the former collapsible "about" content,
             now always visible (no disclosure interaction required). */}
-        <aside className="hidden items-stretch border-e border-border bg-background-secondary px-10 py-12 shadow-spine lg:flex xl:px-16">
+        <aside className="hidden items-stretch border-e border-border bg-background-secondary/80 px-10 py-12 shadow-spine backdrop-blur-sm lg:flex xl:px-16">
           <LoginHero />
         </aside>
 
-        <section className="flex flex-col items-center justify-center px-4 py-10 sm:px-6">
-          <div className="w-full max-w-md">
+        <section className="flex flex-col items-center justify-center px-4 py-16 sm:px-6 lg:px-12">
+          <div className="w-full max-w-[26rem]">
             <LoginMobileInfo />
 
-            <section data-testid="login-card" className="glass-card w-full p-5 sm:p-7">
+            <section data-testid="login-card" className="glass-card w-full border border-border/80 p-6 shadow-page sm:p-8">
               <LoginCardHeader isRecoveryMode={isRecoveryMode} bookSlug={bookSlug} />
 
               {formError && (

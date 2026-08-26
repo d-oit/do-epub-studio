@@ -26,7 +26,7 @@ export function LoginForm({ action, onRecovery, emailRef, passwordRef, noBookCon
   return (
     <form action={action} noValidate>
       {noBookContext && (
-        <p role="status" className="mb-4 p-3 bg-background-tertiary border border-border rounded-lg text-sm text-foreground-muted">
+        <p role="status" className="mb-5 rounded-lg border border-accent-warning/30 bg-accent-warning/10 px-3 py-2.5 text-sm leading-relaxed text-foreground-muted">
           {t('login.noBookContext')}
         </p>
       )}
