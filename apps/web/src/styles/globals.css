@@ -800,24 +800,24 @@
 /* Password visibility toggle (packages/ui Input). Plain CSS, not Tailwind
    utilities: the design-system package lives outside the app's Tailwind scan
    root, so its own utility classes are never generated. Anchors the control to
-   the leading edge with matching start padding so it never overlays typed text
-   (DESIGN.md §Password visibility controls). The long localized label may
-   truncate on the widest locales; the full label stays the button's accessible
-   name via aria-label + title. */
+   the trailing edge with matching end padding so it never overlays typed text
+   or placeholder content (DESIGN.md §Password visibility controls). The long
+   localized label may truncate on the widest locales; the full label stays the
+   button's accessible name via aria-label + title. */
 .pw-field {
   position: relative;
 }
-.pw-field > input[type='password'] {
-  padding-inline-start: 3.5rem;
+.pw-field--has-toggle > input {
+  padding-inline-end: 3.5rem;
 }
 .pw-field .pw-toggle {
   position: absolute;
   inset-block: 0;
-  inset-inline-start: 0.25rem;
+  inset-inline-end: 0.25rem;
   margin-block: auto;
   display: flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: flex-end;
   gap: 0.25rem;
   width: 3rem;
   height: calc(100% - 0.5rem);
@@ -840,14 +840,13 @@
 .pw-field .pw-toggle-label {
   display: none;
   min-width: 0;
-  flex: 1;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 @media (min-width: 640px) {
-  .pw-field > input[type='password'] {
-    padding-inline-start: 11.75rem;
+  .pw-field--has-toggle > input {
+    padding-inline-end: 11.75rem;
   }
   .pw-field .pw-toggle {
     width: 11rem;
