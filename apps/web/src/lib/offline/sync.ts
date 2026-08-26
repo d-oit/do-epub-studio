@@ -435,17 +435,21 @@ export async function syncAll(): Promise<void> {
 
 export function setupOnlineListener(): () => void {
   const handler = () => {
-    if (navigator.onLine) {
+    if (typeof navigator !== 'undefined' && navigator.onLine) {
       void ensureDrain();
     }
   };
 
-  window.addEventListener('online', handler);
-  window.addEventListener('offline', handler);
+  if (typeof window !== 'undefined') {
+    window.addEventListener('online', handler);
+    window.addEventListener('offline', handler);
+  }
 
   return () => {
-    window.removeEventListener('online', handler);
-    window.removeEventListener('offline', handler);
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('online', handler);
+      window.removeEventListener('offline', handler);
+    }
     // Also cancel any pending retry to avoid leaks when the listener is torn down
     cancelPendingRetry();
   };
