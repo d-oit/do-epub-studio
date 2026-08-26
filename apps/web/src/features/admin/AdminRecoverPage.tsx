@@ -82,10 +82,10 @@ export function AdminRecoverPage() {
   };
 
   return (
-    <div className="relative min-h-dvh overflow-x-clip bg-background px-4 py-6 sm:px-6 lg:px-8">
+    <div className="relative flex min-h-dvh flex-col overflow-x-clip bg-background">
       <LoginHeader />
 
-      <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col items-center justify-center gap-8">
+      <main className="mx-auto flex flex-1 w-full max-w-md flex-col items-center justify-center gap-8 px-4 py-6 sm:px-6 lg:px-8">
         <header className="flex flex-col items-center gap-3">
           <AppLogo />
           <p className="text-sm text-foreground-muted">{APP_NAME} · {APP_VERSION_LABEL}</p>

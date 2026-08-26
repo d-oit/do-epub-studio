@@ -95,6 +95,7 @@
 | 250    | Atomic Commit Check Detection | `plans/250-adr-atomic-commit-check-detection.md` | Accepted |
 | 251    | Service Worker Build Format Matches Classic Registration | `plans/251-adr-service-worker-build-format.md` | Accepted |
 | 252    | API Backend Must Be Deployed for the Render-Hosted Frontend | `plans/252-adr-worker-api-deployment.md` | Accepted |
+| 256    | Login Header Layout Modernization and Responsive Flex Contract | `plans/256-adr-login-header-layout-modernization.md` | Accepted |
 
 ## Proposed
 

@@ -128,7 +128,7 @@ export function LoginPage() {
   }
 
   return (
-    <div className="relative min-h-dvh overflow-x-clip bg-background">
+    <div className="relative flex min-h-dvh flex-col overflow-x-clip bg-background">
       <div
         aria-hidden="true"
         className="pointer-events-none fixed inset-0 -z-10"
@@ -142,7 +142,7 @@ export function LoginPage() {
       <main
         id="main-content"
         tabIndex={-1}
-        className="lg:grid lg:min-h-dvh lg:grid-cols-[1.1fr_1fr] xl:grid-cols-[1.2fr_1fr]"
+        className="flex-1 lg:grid lg:min-h-dvh lg:grid-cols-[1.1fr_1fr] xl:grid-cols-[1.2fr_1fr]"
       >
         {/* Desktop brand panel — the former collapsible "about" content,
             now always visible (no disclosure interaction required). */}

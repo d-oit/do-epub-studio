@@ -7,12 +7,14 @@ export interface LoginHeaderProps {
 
 export function LoginHeader({ className = '' }: LoginHeaderProps) {
   return (
-    <div
+    <header
       data-testid="login-header-controls"
-      className={`fixed right-3 top-3 z-20 flex max-w-[calc(100vw-1.5rem)] flex-wrap items-center justify-end gap-2 sm:right-4 sm:top-4 sm:gap-3 ${className}`}
+      className={`relative z-20 flex w-full max-w-7xl mx-auto items-center justify-end gap-2 px-4 pt-4 sm:gap-3 sm:px-6 lg:px-8 ${className}`}
     >
-      <ThemeToggle />
-      <LocaleSwitcher />
-    </div>
+      <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
+        <ThemeToggle />
+        <LocaleSwitcher />
+      </div>
+    </header>
   );
 }

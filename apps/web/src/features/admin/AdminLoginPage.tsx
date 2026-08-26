@@ -311,7 +311,7 @@ export function AdminLoginPage() {
   const helpLink = useMemo(() => resolveHelpUrl(), []);
 
   return (
-    <div className="relative min-h-dvh overflow-x-clip bg-background px-4 py-6 sm:px-6 lg:px-8">
+    <div className="relative flex min-h-dvh flex-col overflow-x-clip bg-background">
       <div
         aria-hidden="true"
         className="pointer-events-none fixed inset-0 -z-10"
@@ -323,7 +323,7 @@ export function AdminLoginPage() {
 
       <main
         id="main-content"
-        className="mx-auto grid min-h-[calc(100dvh-3rem)] w-full max-w-6xl items-start gap-8 pt-16 pb-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(22rem,28rem)] lg:gap-12"
+        className="mx-auto flex-1 grid w-full max-w-6xl items-start gap-8 px-4 pt-4 pb-8 sm:px-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(22rem,28rem)] lg:gap-12 lg:px-8"
       >
       <section data-testid="admin-login-hero" className="hidden min-w-0 lg:block">
         <AdminLoginHero />
