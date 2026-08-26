@@ -48,19 +48,19 @@ test.describe('Cloudflare reader login', () => {
     await expect(page.getByRole('button', { name: 'Sign In', exact: true })).toBeVisible();
   });
 
-  test('@smoke password toggle works on the left side', async ({ page }) => {
+  test('@smoke password toggle works on the right side', async ({ page }) => {
     await page.goto(`/login?book=${READER.bookSlug}`);
 
     const passwordInput = page.getByRole('textbox', { name: 'Password' });
     await expect(passwordInput).toHaveAttribute('type', 'password');
 
-    // Toggle should be on the LEFT side of the password field (ADR-249)
+    // Toggle should be on the RIGHT side of the password field (ADR-249)
     const toggle = page.getByRole('button', { name: 'Show password' });
     const passwordBox = await passwordInput.boundingBox();
     const toggleBox = await toggle.boundingBox();
     expect(passwordBox).not.toBeNull();
     expect(toggleBox).not.toBeNull();
-    expect(toggleBox!.x).toBeLessThan(passwordBox!.x + passwordBox!.width / 2);
+    expect(toggleBox!.x + toggleBox!.width / 2).toBeGreaterThan(passwordBox!.x + passwordBox!.width / 2);
 
     // Click toggle — should show password
     await toggle.click();

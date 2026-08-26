@@ -72,16 +72,16 @@ describe('Input', () => {
       expect(screen.getByLabelText('Password')).toHaveAttribute('type', 'password');
     });
 
-    it('anchors the toggle to the leading edge with matching input padding', () => {
+    it('anchors the toggle to the trailing edge with matching input padding', () => {
       render(<Input id="pw" label="Password" type="password" showPasswordLabel="Show password" hidePasswordLabel="Hide password" />);
       const field = screen.getByLabelText('Password').closest('.pw-field');
       const toggle = screen.getByRole('button', { name: 'Show password' });
 
-      // Geometry + start-edge anchor live in plain CSS (globals.css) because
+      // Geometry + trailing-edge anchor live in plain CSS (globals.css) because
       // packages/ui utilities are not scanned by the app's Tailwind config.
       expect(field).not.toBeNull();
+      expect(field).toHaveClass('pw-field--has-toggle');
       expect(toggle).toHaveClass('pw-toggle');
-      expect(toggle).not.toHaveClass('right-1');
       // The full label is preserved as the accessible name.
       expect(toggle).toHaveAttribute('aria-label', 'Show password');
     });

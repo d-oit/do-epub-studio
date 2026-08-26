@@ -54,7 +54,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             {label}
           </label>
         )}
-        <div className="relative pw-field">
+        <div className={`relative pw-field ${showToggle ? 'pw-field--has-toggle' : ''}`}>
           <input
             ref={ref}
             id={inputId}
