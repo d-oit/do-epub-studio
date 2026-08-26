@@ -3,9 +3,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from '../../hooks/useTranslation';
 import { apiRequest } from '../../lib/api';
 import { useAuthStore } from '../../stores/auth';
-import { LocaleSwitcher } from '../../components/LocaleSwitcher';
 import { Button } from '../../components/ui';
-import { ThemeToggle } from '../../components/ThemeToggle';
+import { LoginHeader } from '../../components/LoginHeader';
 import { resolveHelpUrl, DEMO_READER_EMAIL, DEMO_READER_PASSWORD } from '../../config/demo-config';
 import { LoginHero, LoginFeatureList } from './LoginHero';
 import { LoginMobileInfo } from './LoginMobileInfo';
@@ -138,15 +137,14 @@ export function LoginPage() {
             'radial-gradient(ellipse 80% 50% at 50% -20%, oklch(var(--color-accent) / 0.08), transparent)',
         }}
       />
-      <div className="fixed right-3 top-3 z-20 flex items-center gap-2 sm:right-4 sm:top-4">
-        <ThemeToggle />
-        <LocaleSwitcher />
+      <div className="w-full px-4 pt-3 sm:px-6 sm:pt-4">
+        <LoginHeader />
       </div>
 
       <main
         id="main-content"
         tabIndex={-1}
-        className="lg:grid lg:min-h-dvh lg:grid-cols-[1.1fr_1fr] xl:grid-cols-[1.2fr_1fr]"
+        className="lg:grid lg:min-h-[calc(100dvh-4rem)] lg:grid-cols-[1.1fr_1fr] xl:grid-cols-[1.2fr_1fr]"
       >
         {/* Desktop brand panel — the former collapsible "about" content,
             now always visible (no disclosure interaction required). */}

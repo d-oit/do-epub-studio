@@ -4,9 +4,8 @@ import { startAuthentication, type PublicKeyCredentialRequestOptionsJSON } from 
 import { useTranslation } from '../../hooks/useTranslation';
 import { apiRequest } from '../../lib/api';
 import { useAuthStore } from '../../stores/auth';
-import { LocaleSwitcher } from '../../components/LocaleSwitcher';
 import { Button, Input, AppLogo } from '../../components/ui';
-import { ThemeToggle } from '../../components/ThemeToggle';
+import { LoginHeader } from '../../components/LoginHeader';
 import { APP_NAME } from '../../config/app-identity';
 import { isDemoLoginEnabled, resolveHelpUrl, DEMO_ADMIN_EMAIL, DEMO_ADMIN_PASSWORD } from '../../config/demo-config';
 import { AdminLoginHero, AdminMobileInfo } from './AdminLoginHero';
@@ -320,14 +319,13 @@ export function AdminLoginPage() {
           background: 'radial-gradient(ellipse 80% 50% at 50% -20%, oklch(var(--color-accent) / 0.08), transparent)',
         }}
       />
-      <div className="fixed right-3 top-3 z-20 flex items-center gap-2 sm:right-4 sm:top-4">
-        <ThemeToggle />
-        <LocaleSwitcher />
+      <div className="w-full max-w-6xl mx-auto mb-4">
+        <LoginHeader />
       </div>
 
       <main
         id="main-content"
-        className="mx-auto grid min-h-[calc(100dvh-3rem)] w-full max-w-6xl items-start gap-8 pt-16 pb-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(22rem,28rem)] lg:gap-12"
+        className="mx-auto grid min-h-[calc(100dvh-6rem)] w-full max-w-6xl items-start gap-8 pb-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(22rem,28rem)] lg:gap-12"
       >
       <section data-testid="admin-login-hero" className="hidden min-w-0 lg:block">
         <AdminLoginHero />
