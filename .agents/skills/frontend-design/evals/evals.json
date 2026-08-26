@@ -1,0 +1,28 @@
+{
+  "skill_name": "frontend-design",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Design a responsive reader navigation header with theme selector and quick settings button using project design standards.",
+      "expected_output": "The agent creates a responsive navigation header utilizing OKLCH design tokens (bg-background, text-foreground, border-border), container query utilities (@container), semantic HTML elements (header, nav), View Transition attributes, and references performance budget limits.",
+      "assertions": [
+        "Uses OKLCH semantic design tokens from globals.css",
+        "Applies container query utilities (@container)",
+        "Uses semantic HTML elements without redundant ARIA roles",
+        "Includes View Transition support for page/panel navigation",
+        "Respects performance budget constraints"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Scaffold a multi-column dashboard card layout for book analytics respecting editorial minimalist design guidelines.",
+      "expected_output": "The agent designs a card layout using CSS grid with minmax/fluid spacing, Instrument Serif font tokens for headings, Geist body text, Card components from packages/ui, and container queries for sub-component responsiveness.",
+      "assertions": [
+        "Adheres to editorial minimalist aesthetic from DESIGN.md",
+        "Uses Instrument Serif for display headings and Geist for body text",
+        "Implements fluid grid layout using CSS Grid and container queries",
+        "Employs UI primitives from packages/ui"
+      ]
+    }
+  ]
+}

@@ -39,6 +39,8 @@ export const es: Record<TranslationKeys, TranslationValue> = {
   'login.hero.feature.management': 'Subir y gestionar libros',
   'login.hero.howAccessWorks': 'No hace falta registrarse: el acceso lo concede un autor o gestor.',
   'login.hero.learnMore': 'M\u00e1s informaci\u00f3n',
+  'login.heroTitle': 'Un hogar tranquilo y meditado para tu biblioteca.',
+  'login.heroBody': 'Sube EPUB, lee con esmero tipográfico y mantén cada anotación sincronizada, incluso sin conexión.',
   'help.title': 'Ayuda y c\u00f3mo usar',
   'help.intro': '{app} es un espacio de trabajo de lectura y edici\u00f3n de EPUB. Inicia sesi\u00f3n para leer libros o, como autor o gestor, sube y administra tus libros.',
   'help.demoTitle': 'Probar la demo',

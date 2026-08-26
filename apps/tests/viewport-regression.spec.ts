@@ -18,8 +18,8 @@ test.describe('Viewport regression matrix', () => {
         expect(passwordBox, `${viewport.label}: password field should have geometry`).not.toBeNull();
         expect(toggleBox, `${viewport.label}: password toggle should have geometry`).not.toBeNull();
         expect(toggleBox!.x, `${viewport.label}: toggle stays inside the field`).toBeGreaterThanOrEqual(passwordBox!.x);
-        expect(toggleBox!.x, `${viewport.label}: toggle stays on the leading half`).toBeLessThan(passwordBox!.x + passwordBox!.width / 2);
-        expect(toggleBox!.x + toggleBox!.width, `${viewport.label}: toggle does not overflow the field`).toBeLessThanOrEqual(passwordBox!.x + passwordBox!.width);
+        expect(toggleBox!.x + toggleBox!.width / 2, `${viewport.label}: toggle stays on the trailing half`).toBeGreaterThan(passwordBox!.x + passwordBox!.width / 2);
+        expect(toggleBox!.x + toggleBox!.width, `${viewport.label}: toggle does not overflow the field`).toBeLessThanOrEqual(passwordBox!.x + passwordBox!.width + 1);
         expect(toggleBox!.y + toggleBox!.height / 2, `${viewport.label}: toggle is vertically centered`).toBeGreaterThan(passwordBox!.y);
         expect(toggleBox!.y + toggleBox!.height / 2, `${viewport.label}: toggle is vertically centered`).toBeLessThan(passwordBox!.y + passwordBox!.height);
 

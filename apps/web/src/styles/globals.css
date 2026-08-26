@@ -20,34 +20,35 @@
   }
 
   :root {
-    /* OKLCH Color Tokens (Perceptually Uniform) */
-    --color-background: oklch(100% 0 0);
-    --color-background-secondary: oklch(97% 0 0);
-    --color-background-tertiary: oklch(92% 0 0);
-    --color-foreground: oklch(15% 0 0);
-    --color-foreground-muted: oklch(40% 0 0);
-    --color-accent: oklch(48% 0.16 250);
+    /* OKLCH Color Tokens (Perceptually Uniform)
+       Paper/ink/ember — ported from epub-sparkle (GOAP-255) */
+    --color-background: oklch(97.6% 0.011 84);
+    --color-background-secondary: oklch(99.5% 0.005 85);
+    --color-background-tertiary: oklch(94.5% 0.012 82);
+    --color-foreground: oklch(22% 0.02 62);
+    --color-foreground-muted: oklch(35% 0.02 66);
+    --color-accent: oklch(55% 0.15 52);
     --color-accent-success: oklch(70% 0.15 150);
     --color-accent-warning: oklch(75% 0.15 80);
     --color-accent-error: oklch(53% 0.2 25);
-    --color-border: oklch(92% 0 0);
+    --color-border: oklch(90% 0.018 82);
 
-    /* Primary scale (blue) */
-    --color-primary-50: oklch(97.0% 0.014 254.4);
-    --color-primary-100: oklch(93.2% 0.032 255.5);
-    --color-primary-200: oklch(88.2% 0.057 254.1);
-    --color-primary-300: oklch(80.9% 0.096 251.8);
-    --color-primary-400: oklch(71.4% 0.143 254.6);
-    --color-primary-500: oklch(62.3% 0.188 259.8);
-    --color-primary-600: oklch(54.6% 0.215 262.9);
-    --color-primary-700: oklch(48.8% 0.217 264.4);
-    --color-primary-800: oklch(42.4% 0.181 265.6);
-    --color-primary-900: oklch(37.9% 0.138 265.5);
+    /* Primary scale (ember, hue 52-62) */
+    --color-primary-50: oklch(98% 0.02 52);
+    --color-primary-100: oklch(96.5% 0.035 52);
+    --color-primary-200: oklch(92% 0.06 52);
+    --color-primary-300: oklch(83% 0.095 52);
+    --color-primary-400: oklch(70% 0.13 52);
+    --color-primary-500: oklch(55% 0.15 52);
+    --color-primary-600: oklch(47% 0.145 55);
+    --color-primary-700: oklch(40% 0.13 58);
+    --color-primary-800: oklch(34% 0.105 60);
+    --color-primary-900: oklch(28% 0.08 62);
 
     /* Surface & muted */
-    --color-surface: oklch(14.5% 0 0);
-    --color-muted: oklch(97.0% 0 0);
-    --color-muted-foreground: oklch(55.6% 0 0);
+    --color-surface: oklch(99.5% 0.005 85);
+    --color-muted: oklch(94.5% 0.012 82);
+    --color-muted-foreground: oklch(48% 0.02 68);
 
     /* Semantic & secondary accents */
     --color-accent-secondary: oklch(54.1% 0.247 293.0);
@@ -57,8 +58,8 @@
     --color-semantic-info: oklch(71.5% 0.126 215.2);
 
     /* Border variants */
-    --color-border-light: oklch(97.0% 0 0);
-    --color-border-dark: oklch(26.9% 0 0);
+    --color-border-light: oklch(96% 0.014 84);
+    --color-border-dark: oklch(30% 0.014 70);
 
     /* Motion control variables */
     --motion-slide-offset: 20px;
@@ -121,7 +122,8 @@
     --shadow-sm: 0 1px 2px oklch(0.2 0.01 80 / 0.06);
     --shadow-md: 0 4px 12px oklch(0.2 0.01 80 / 0.08);
     --shadow-lg: 0 12px 32px oklch(0.2 0.01 80 / 0.12);
-    --shadow-glass: 0 4px 24px rgba(0, 0, 0, 0.08);
+    --shadow-page: 0 1px 0 var(--color-border), 0 18px 40px -28px oklch(30% 0.03 60 / 40%);
+    --shadow-spine: -6px 0 12px -8px oklch(25% 0.03 60 / 45%) inset;
 
     /* Transitions */
     --transition: 180ms cubic-bezier(0.16, 1, 0.3, 1);
@@ -130,14 +132,14 @@
   /* Wide-gamut P3 overrides */
   @media (color-gamut: p3) {
     :root {
-      --color-accent: oklch(52% 0.2 250);
+      --color-accent: oklch(57% 0.17 52);
       --color-accent-success: oklch(70% 0.2 150);
       --color-accent-warning: oklch(75% 0.2 80);
       --color-accent-error: oklch(52% 0.25 25);
       --color-accent-secondary: oklch(54.1% 0.28 293.0);
-      --color-primary-500: oklch(62.3% 0.22 259.8);
-      --color-primary-600: oklch(54.6% 0.25 262.9);
-      --color-primary-700: oklch(48.8% 0.25 264.4);
+      --color-primary-500: oklch(57% 0.17 52);
+      --color-primary-600: oklch(49% 0.16 55);
+      --color-primary-700: oklch(42% 0.145 58);
       --color-semantic-success: oklch(69.6% 0.18 162.5);
       --color-semantic-warning: oklch(76.9% 0.2 70.1);
       --color-semantic-error: oklch(63.7% 0.25 25.3);
@@ -148,33 +150,33 @@
 
   .dark,
   [data-theme="dark"] {
-    --color-background: oklch(12% 0 0);
-    --color-background-secondary: oklch(16% 0 0);
-    --color-background-tertiary: oklch(22% 0 0);
-    --color-foreground: oklch(98% 0 0);
-    --color-foreground-muted: oklch(70% 0 0);
-    --color-accent: oklch(55% 0.16 250);
+    --color-background: oklch(19% 0.012 70);
+    --color-background-secondary: oklch(23% 0.013 70);
+    --color-background-tertiary: oklch(27% 0.013 70);
+    --color-foreground: oklch(93% 0.01 85);
+    --color-foreground-muted: oklch(82% 0.012 82);
+    --color-accent: oklch(72% 0.13 62);
     --color-accent-success: oklch(75% 0.15 150);
     --color-accent-warning: oklch(80% 0.15 80);
     --color-accent-error: oklch(65% 0.2 25);
-    --color-border: oklch(25% 0 0);
+    --color-border: oklch(30% 0.014 70);
 
     /* Primary scale (flipped for dark) */
-    --color-primary-50: oklch(37.9% 0.138 265.5);
-    --color-primary-100: oklch(42.4% 0.181 265.6);
-    --color-primary-200: oklch(48.8% 0.217 264.4);
-    --color-primary-300: oklch(54.6% 0.215 262.9);
-    --color-primary-400: oklch(62.3% 0.188 259.8);
-    --color-primary-500: oklch(71.4% 0.143 254.6);
-    --color-primary-600: oklch(80.9% 0.096 251.8);
-    --color-primary-700: oklch(88.2% 0.057 254.1);
-    --color-primary-800: oklch(93.2% 0.032 255.5);
-    --color-primary-900: oklch(97.0% 0.014 254.4);
+    --color-primary-50: oklch(40% 0.11 62);
+    --color-primary-100: oklch(45% 0.12 60);
+    --color-primary-200: oklch(52% 0.13 58);
+    --color-primary-300: oklch(60% 0.13 55);
+    --color-primary-400: oklch(68% 0.13 52);
+    --color-primary-500: oklch(72% 0.13 62);
+    --color-primary-600: oklch(79% 0.13 60);
+    --color-primary-700: oklch(85% 0.11 58);
+    --color-primary-800: oklch(91% 0.07 56);
+    --color-primary-900: oklch(96% 0.04 52);
 
     /* Surface & muted */
-    --color-surface: oklch(10% 0 0);
-    --color-muted: oklch(26.9% 0 0);
-    --color-muted-foreground: oklch(71.5% 0 0);
+    --color-surface: oklch(23% 0.013 70);
+    --color-muted: oklch(27% 0.013 70);
+    --color-muted-foreground: oklch(72% 0.014 80);
 
     /* Semantic & secondary accents */
     --color-accent-secondary: oklch(65% 0.25 293.0);
@@ -184,8 +186,8 @@
     --color-semantic-info: oklch(75% 0.16 215.2);
 
     /* Border variants */
-    --color-border-light: oklch(22% 0 0);
-    --color-border-dark: oklch(35% 0 0);
+    --color-border-light: oklch(23% 0.013 70);
+    --color-border-dark: oklch(36% 0.014 70);
   }
 
   [data-theme="sepia"] {
@@ -308,6 +310,33 @@
 
   .text-pretty {
     text-wrap: pretty;
+  }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    font-size: var(--text-xs);
+    color: var(--color-muted-foreground);
+  }
+
+  .text-balance-tight {
+    text-wrap: balance;
+    letter-spacing: -0.015em;
+  }
+
+  .paper-grain {
+    position: relative;
+  }
+
+  .paper-grain::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.4;
+    background-image: radial-gradient(var(--color-border) 0.5px, transparent 0.5px);
+    background-size: 4px 4px;
   }
 
   .scrollbar-hide {
@@ -607,8 +636,8 @@
   --radius-full: var(--radius-full);
   --shadow-sm: var(--shadow-sm);
   --shadow-md: var(--shadow-md);
-  --shadow-lg: var(--shadow-lg);
-  --shadow-glass: var(--shadow-glass);
+  --shadow-page: var(--shadow-page);
+  --shadow-spine: var(--shadow-spine);
   --ease-out-expo: var(--ease-out-expo);
   --ease-in-out-expo: var(--ease-in-out-expo);
   --transition: var(--transition);
@@ -767,4 +796,62 @@
   }
 }
 
-/* Reduced-motion is handled by the consolidated block above */
+
+/* Password visibility toggle (packages/ui Input). Plain CSS, not Tailwind
+   utilities: the design-system package lives outside the app's Tailwind scan
+   root, so its own utility classes are never generated. Anchors the control to
+   the trailing edge with matching end padding so it never overlays typed text
+   or placeholder content (DESIGN.md §Password visibility controls). The long
+   localized label may truncate on the widest locales; the full label stays the
+   button's accessible name via aria-label + title. */
+.pw-field {
+  position: relative;
+}
+.pw-field--has-toggle > input {
+  padding-inline-end: 3.5rem;
+}
+.pw-field .pw-toggle {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-end: 0.25rem;
+  margin-block: auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.25rem;
+  width: 3rem;
+  height: calc(100% - 0.5rem);
+  min-height: 2.75rem;
+  padding-inline: 0.5rem;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1;
+  color: var(--color-accent);
+  transition: background-color 150ms ease;
+}
+.pw-field .pw-toggle:hover {
+  background-color: color-mix(in oklch, var(--color-accent) 6%, transparent);
+}
+.pw-field .pw-toggle:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px color-mix(in oklch, var(--color-accent) 40%, transparent);
+}
+.pw-field .pw-toggle-label {
+  display: none;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+@media (min-width: 640px) {
+  .pw-field--has-toggle > input {
+    padding-inline-end: 11.75rem;
+  }
+  .pw-field .pw-toggle {
+    width: 11rem;
+  }
+  .pw-field .pw-toggle-label {
+    display: inline;
+  }
+}

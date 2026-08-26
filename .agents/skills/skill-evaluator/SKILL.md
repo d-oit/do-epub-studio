@@ -205,6 +205,8 @@ Save actionable feedback per eval directory. Catches:
 
 ## References
 
+- `references/skillevaluator-framework.md` — NVIDIA SkillEvaluator multi-tier framework integration (Tier 1 Validation, Tier 2 Deduplication, Tier 3 Live Evaluation & Skill Lift).
+- `references/asm-standards.md` — Agent Skill Manager (asm) standards for attention budget, frontmatter residency optimization, and multi-provider compatibility.
 - `skill-creator` — Creates skills; delegates evaluation here.
 - `agents-docs/SKILLS.md` — Project skill authoring guide.
 - [agentskills.io/skill-creation/evaluating-skills](https://agentskills.io/skill-creation/evaluating-skills) — Official eval guide.

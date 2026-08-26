@@ -3,9 +3,8 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from '../../hooks/useTranslation';
 import { apiRequest } from '../../lib/api';
-import { LocaleSwitcher } from '../../components/LocaleSwitcher';
 import { Button, Input, AppLogo } from '../../components/ui';
-import { ThemeToggle } from '../../components/ThemeToggle';
+import { LoginHeader } from '../../components/LoginHeader';
 import { APP_NAME, APP_VERSION_LABEL } from '../../config/app-identity';
 import { logClientEvent } from '../../lib/client-logger';
 import { createSpanId, createTraceId } from '@do-epub-studio/shared';
@@ -84,10 +83,7 @@ export function AdminRecoverPage() {
 
   return (
     <div className="relative min-h-dvh overflow-x-clip bg-background px-4 py-6 sm:px-6 lg:px-8">
-      <div className="fixed right-3 top-3 z-20 flex items-center gap-2 sm:right-4 sm:top-4">
-        <ThemeToggle />
-        <LocaleSwitcher />
-      </div>
+      <LoginHeader />
 
       <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col items-center justify-center gap-8">
         <header className="flex flex-col items-center gap-3">

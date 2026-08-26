@@ -3,7 +3,7 @@ import { AppLogo } from '../../components/ui';
 import { APP_NAME, APP_VERSION_LABEL } from '../../config/app-identity';
 import { resolveHelpUrl } from '../../config/demo-config';
 
-/** Value-prop bullets shared by the desktop hero and the compact mobile info panel. */
+/** Value-prop bullets shown in the brand panel and the compact mobile block. */
 export const LOGIN_FEATURE_KEYS = [
   'login.hero.feature.reading',
   'login.hero.feature.annotations',
@@ -29,10 +29,7 @@ function CheckMark() {
   );
 }
 
-/**
- * Feature bullet list for the login screens. `compact` renders the
- * small-screen variant (tighter leading, smaller text).
- */
+/** Feature bullet list shown in the brand panel and mobile info block. */
 export function LoginFeatureList({ compact = false }: { compact?: boolean }) {
   const { t } = useTranslation();
   return (
@@ -47,40 +44,57 @@ export function LoginFeatureList({ compact = false }: { compact?: boolean }) {
   );
 }
 
-/** Desktop-only left panel: brand, value props, access note, help link. */
+/**
+ * Desktop (lg+) brand panel: an always-visible editorial column that replaces
+ * the former collapsible "about" disclosure. Brand lockup, serif display
+ * headline, lede, value props, access note, and help link — no interaction
+ * required to see any of it. Entrance is a staggered slide-up-fade; the global
+ * prefers-reduced-motion block collapses it to an instant render.
+ */
 export function LoginHero() {
   const { t } = useTranslation();
   const helpLink = resolveHelpUrl();
 
   return (
-    <div className="max-w-xl">
-      <AppLogo size={72} className="mb-6 text-accent" />
-      <p className="mb-3 text-sm font-medium tracking-[0.12em] text-foreground-muted">
-        {APP_VERSION_LABEL}
-      </p>
-      <h1 className="text-balance font-display text-6xl font-bold leading-tight text-foreground xl:text-7xl">
-        {APP_NAME}
-      </h1>
-      <div className="mt-4 h-1 w-16 rounded-full bg-accent" />
+    <div className="flex h-full w-full flex-col justify-between gap-10">
+      <div className="flex animate-slide-up-fade items-center gap-3">
+        <AppLogo size={28} className="shrink-0 text-accent" />
+        <p className="font-medium text-foreground">{APP_NAME}</p>
+      </div>
 
-      <div className="mt-8">
+      <div>
+        <h1 className="animate-slide-up-fade text-balance-tight font-display text-4xl font-semibold leading-[1.08] text-foreground [animation-delay:80ms] xl:text-[3.4rem]">
+          {t('login.heroTitle')}
+        </h1>
+        <p className="mt-5 max-w-[52ch] animate-slide-up-fade text-base leading-relaxed text-foreground-muted [animation-delay:160ms]">
+          {t('login.heroBody')}
+        </p>
+      </div>
+
+      <div className="animate-slide-up-fade [animation-delay:240ms]">
         <LoginFeatureList />
       </div>
 
-      <p className="mt-8 max-w-md glass-card p-4 text-sm leading-relaxed text-foreground-muted">
-        {t('login.hero.howAccessWorks')}
-      </p>
-
-      {helpLink && (
-        <a
-          href={helpLink.href}
-          target={helpLink.isExternal ? '_blank' : undefined}
-          rel={helpLink.isExternal ? 'noopener noreferrer' : undefined}
-          className="mt-4 inline-block text-sm font-medium text-accent underline underline-offset-4 transition-opacity hover:opacity-80"
-        >
-          {t('login.hero.learnMore')}
-        </a>
-      )}
+      <div className="animate-slide-up-fade border-t border-border pt-5 [animation-delay:320ms]">
+        <p className="text-sm leading-relaxed text-foreground-muted">
+          {t('login.hero.howAccessWorks')}
+        </p>
+        <div className="mt-4 flex items-center justify-between gap-4">
+          <span className="font-mono text-xs uppercase tracking-[0.18em] text-foreground-muted">
+            {APP_VERSION_LABEL}
+          </span>
+          {helpLink && (
+            <a
+              href={helpLink.href}
+              target={helpLink.isExternal ? '_blank' : undefined}
+              rel={helpLink.isExternal ? 'noopener noreferrer' : undefined}
+              className="text-sm font-medium text-accent underline underline-offset-4 transition-opacity hover:opacity-80"
+            >
+              {t('login.hero.learnMore')}
+            </a>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

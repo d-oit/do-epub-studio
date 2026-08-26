@@ -1,13 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { apiRequest } from '../../lib/api';
 import { useAuthStore } from '../../stores/auth';
 import { useTranslation } from '../../hooks/useTranslation';
-import { formatDate } from '../../lib/i18n-format';
-import { AppLogo, ProgressBar } from '../../components/ui';
+import { AppLogo } from '../../components/ui';
 import { Spinner } from '@do-epub-studio/ui';
 import { APP_NAME, APP_VERSION_LABEL } from '../../config/app-identity';
 import type { LibraryBookResponse, PaginatedResponse } from '@do-epub-studio/shared';
+import { BookCard } from './BookCard';
 
 const PAGE_SIZE = 50;
 
@@ -103,19 +102,7 @@ export function MyLibraryPage() {
                 <ul className="grid list-none gap-4 p-0 sm:grid-cols-2 lg:grid-cols-3">
                   {inProgress.map((book) => (
                     <li key={book.id}>
-                      <Link
-                        to={`/read/${book.slug}`}
-                        className="group block h-full rounded-lg border border-border bg-background-secondary p-5 shadow-sm transition-[box-shadow,transform] hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-2 focus-visible:outline-accent"
-                      >
-                        <h3 className="mb-1 line-clamp-2 text-lg font-semibold leading-snug group-hover:text-accent">{book.title}</h3>
-                        {book.authorName && <p className="mb-3 text-sm text-foreground-muted">{book.authorName}</p>}
-                        <ProgressBar value={book.progressPercent} showValue className="mb-2" label={t('library.progress')} />
-                        {book.progressUpdatedAt && (
-                          <p className="text-xs text-foreground-muted">
-                            {t('library.lastRead')} {formatDate(new Date(book.progressUpdatedAt))}
-                          </p>
-                        )}
-                      </Link>
+                      <BookCard book={book} />
                     </li>
                   ))}
                 </ul>
@@ -128,13 +115,7 @@ export function MyLibraryPage() {
                 <ul className="grid list-none gap-4 p-0 sm:grid-cols-2 lg:grid-cols-3">
                   {notStarted.map((book) => (
                     <li key={book.id}>
-                      <Link
-                        to={`/read/${book.slug}`}
-                        className="group block h-full rounded-lg border border-border bg-background-secondary p-5 shadow-sm transition-[box-shadow,transform] hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-2 focus-visible:outline-accent"
-                      >
-                        <h3 className="mb-1 line-clamp-2 text-lg font-semibold leading-snug group-hover:text-accent">{book.title}</h3>
-                        {book.authorName && <p className="text-sm text-foreground-muted">{book.authorName}</p>}
-                      </Link>
+                      <BookCard book={book} />
                     </li>
                   ))}
                 </ul>
@@ -147,14 +128,7 @@ export function MyLibraryPage() {
                 <ul className="grid list-none gap-4 p-0 sm:grid-cols-2 lg:grid-cols-3">
                   {completed.map((book) => (
                     <li key={book.id}>
-                      <Link
-                        to={`/read/${book.slug}`}
-                        className="group block h-full rounded-lg border border-border bg-background-secondary p-5 shadow-sm transition-[box-shadow,transform] hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-2 focus-visible:outline-accent"
-                      >
-                        <h3 className="mb-1 line-clamp-2 text-lg font-semibold leading-snug group-hover:text-accent">{book.title}</h3>
-                        {book.authorName && <p className="text-sm text-foreground-muted">{book.authorName}</p>}
-                        <span className="mt-2 inline-block text-xs font-medium text-accent">{t('library.finished')}</span>
-                      </Link>
+                      <BookCard book={book} />
                     </li>
                   ))}
                 </ul>

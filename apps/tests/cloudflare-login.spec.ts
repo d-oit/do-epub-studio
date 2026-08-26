@@ -48,19 +48,19 @@ test.describe('Cloudflare reader login', () => {
     await expect(page.getByRole('button', { name: 'Sign In', exact: true })).toBeVisible();
   });
 
-  test('@smoke password toggle works on the left side', async ({ page }) => {
+  test('@smoke password toggle works on the right side', async ({ page }) => {
     await page.goto(`/login?book=${READER.bookSlug}`);
 
     const passwordInput = page.getByRole('textbox', { name: 'Password' });
     await expect(passwordInput).toHaveAttribute('type', 'password');
 
-    // Toggle should be on the LEFT side of the password field (ADR-249)
+    // Toggle should be on the RIGHT side of the password field (ADR-249)
     const toggle = page.getByRole('button', { name: 'Show password' });
     const passwordBox = await passwordInput.boundingBox();
     const toggleBox = await toggle.boundingBox();
     expect(passwordBox).not.toBeNull();
     expect(toggleBox).not.toBeNull();
-    expect(toggleBox!.x).toBeLessThan(passwordBox!.x + passwordBox!.width / 2);
+    expect(toggleBox!.x + toggleBox!.width / 2).toBeGreaterThan(passwordBox!.x + passwordBox!.width / 2);
 
     // Click toggle — should show password
     await toggle.click();
@@ -98,23 +98,27 @@ test.describe('Cloudflare reader login', () => {
     await expect(page).toHaveURL(/\/login/);
   });
 
-  test('renders the hero section with feature list on desktop', async ({ page }) => {
+  test('renders the feature bullets without any interaction', async ({ page }) => {
     await page.goto(`/login?book=${READER.bookSlug}`);
 
-    // Desktop hero should show feature bullets
-    const hero = page.getByTestId('login-hero');
-    await expect(hero.getByText('Responsive EPUB reading')).toBeVisible();
-    await expect(hero.getByText('Highlights, annotations & bookmarks')).toBeVisible();
-    await expect(hero.getByText('Offline reading with sync')).toBeVisible();
+    // The brand panel (desktop) / info block (mobile) shows the feature
+    // bullets directly — no disclosure interaction required.
+    await expect(page.getByText('Responsive EPUB reading')).toBeVisible();
+    await expect(page.getByText('Highlights, annotations & bookmarks')).toBeVisible();
+    await expect(page.getByText('Offline reading with sync')).toBeVisible();
   });
 
-  test('renders the mobile info card on small viewports', async ({ page }) => {
+  test('renders the mobile brand header and info block on small viewports', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
     await page.goto(`/login?book=${READER.bookSlug}`);
 
-    // Mobile info card should be visible (has glass-card class)
-    const mobileInfo = page.getByTestId('login-mobile-info');
+    // The brand header (logo + name) shows above the card on small screens
+    const mobileInfo = page.getByTestId('login-brand');
     await expect(mobileInfo).toBeVisible();
+
+    // The compact info block below the card carries the access note
+    await expect(page.getByTestId('login-about')).toBeVisible();
+    await expect(page.getByText(/No signup needed/)).toBeVisible();
   });
 
   test('handles empty bookSlug gracefully', async ({ page }) => {

@@ -39,6 +39,8 @@ export const ar: Record<TranslationKeys, TranslationValue> = {
   'login.hero.feature.management': 'تحميل الكتب وإدارتها',
   'login.hero.howAccessWorks': 'لا حاجة للتسجيل — يُمنح الوصول من مؤلف أو مدير.',
   'login.hero.learnMore': 'اعرف المزيد',
+  'login.heroTitle': 'موطن هادئ ومدروس لمكتبتك.',
+  'login.heroBody': 'ارفع ملفات EPUB، واقرأ بعناية تيبوغرافية، واحتفظ بكل تعليق مزامَناً — حتى دون اتصال.',
   'help.title': 'المساعدة وطريقة الاستخدام',
   'help.intro': '{app} هو مساحة عمل لقراءة ملفات EPUB وتحريرها. سجّل الدخول لقراءة الكتب، أو كمؤلف أو مدير، ارفع كتبك وأدرها.',
   'help.demoTitle': 'جرّب النسخة التجريبية',

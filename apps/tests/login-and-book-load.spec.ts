@@ -63,7 +63,7 @@ test.describe('Login and book load (desktop)', () => {
     const toggleBox = await toggle.boundingBox();
     expect(passwordBox).not.toBeNull();
     expect(toggleBox).not.toBeNull();
-    expect(toggleBox!.x).toBeLessThan(passwordBox!.x + passwordBox!.width / 2);
+    expect(toggleBox!.x + toggleBox!.width / 2).toBeGreaterThan(passwordBox!.x + passwordBox!.width / 2);
 
     await toggle.click();
     await expect(passwordInput).toHaveAttribute('type', 'text');
