@@ -27,7 +27,7 @@ export function ReaderTypographyForm() {
           aria-valuemax={160}
           aria-valuenow={Math.round(prefs.fontScale * 100)}
           onChange={(e) => updatePrefs({ fontScale: parseFloat(e.target.value) })}
-          className="accent-[var(--color-accent)]"
+          className="h-11 w-full cursor-pointer accent-[var(--color-accent)] touch-target"
         />
       </div>
 
@@ -48,7 +48,7 @@ export function ReaderTypographyForm() {
           aria-valuemax={190}
           aria-valuenow={Math.round(prefs.lineHeight * 100)}
           onChange={(e) => updatePrefs({ lineHeight: parseFloat(e.target.value) })}
-          className="accent-[var(--color-accent)]"
+          className="h-11 w-full cursor-pointer accent-[var(--color-accent)] touch-target"
         />
       </div>
 
@@ -59,9 +59,9 @@ export function ReaderTypographyForm() {
           <button
             type="button"
             onClick={() => updatePrefs({ fontFamily: 'serif' })}
-            className={`px-3 py-1.5 text-sm rounded font-serif transition-colors ${
+            className={`min-h-11 px-3 py-2 text-sm font-medium rounded font-serif transition-colors touch-target ${
               prefs.fontFamily === 'serif'
-                ? 'bg-[var(--color-foreground)] text-[var(--color-paper)]'
+                ? 'bg-[var(--color-foreground)] text-[var(--color-paper)] shadow-sm'
                 : 'text-[var(--color-foreground)] hover:bg-[color-mix(in_oklch,var(--color-paper)_90%,var(--color-foreground)_10%)]'
             }`}
           >
@@ -70,9 +70,9 @@ export function ReaderTypographyForm() {
           <button
             type="button"
             onClick={() => updatePrefs({ fontFamily: 'sans' })}
-            className={`px-3 py-1.5 text-sm rounded font-sans transition-colors ${
+            className={`min-h-11 px-3 py-2 text-sm font-medium rounded font-sans transition-colors touch-target ${
               prefs.fontFamily === 'sans'
-                ? 'bg-[var(--color-foreground)] text-[var(--color-paper)]'
+                ? 'bg-[var(--color-foreground)] text-[var(--color-paper)] shadow-sm'
                 : 'text-[var(--color-foreground)] hover:bg-[color-mix(in_oklch,var(--color-paper)_90%,var(--color-foreground)_10%)]'
             }`}
           >
@@ -90,9 +90,9 @@ export function ReaderTypographyForm() {
               key={marginOption}
               type="button"
               onClick={() => updatePrefs({ margin: marginOption })}
-              className={`px-2 py-1.5 text-xs capitalize rounded transition-colors ${
+              className={`min-h-11 px-2 py-2 text-xs font-medium capitalize rounded transition-colors touch-target ${
                 prefs.margin === marginOption
-                  ? 'bg-[var(--color-foreground)] text-[var(--color-paper)]'
+                  ? 'bg-[var(--color-foreground)] text-[var(--color-paper)] shadow-sm'
                   : 'text-[var(--color-foreground)] hover:bg-[color-mix(in_oklch,var(--color-paper)_90%,var(--color-foreground)_10%)]'
               }`}
             >
@@ -105,16 +105,16 @@ export function ReaderTypographyForm() {
       {/* Theme selection */}
       <div className="flex flex-col gap-2">
         <span className="text-sm font-medium">Theme</span>
-        <div className="grid grid-cols-4 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {(['paper', 'light', 'sepia', 'dark'] as const).map((tOption) => (
             <button
               key={tOption}
               type="button"
               onClick={() => updatePrefs({ theme: tOption })}
-              className={`px-2 py-2 text-xs capitalize rounded-[var(--radius-paper)] border transition-all ${
+              className={`min-h-11 px-2 py-2 text-xs font-medium capitalize rounded-[var(--radius-paper)] border transition-all touch-target ${
                 prefs.theme === tOption
-                  ? 'border-[var(--color-accent)] ring-2 ring-[var(--color-accent)]'
-                  : 'border-[var(--color-rule)]'
+                  ? 'border-[var(--color-accent)] ring-2 ring-[var(--color-accent)] font-semibold'
+                  : 'border-[var(--color-rule)] hover:bg-[color-mix(in_oklch,var(--color-paper)_90%,var(--color-foreground)_10%)]'
               }`}
             >
               {tOption}
