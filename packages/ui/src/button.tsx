@@ -1,6 +1,6 @@
 import { forwardRef } from 'react';
 
-export interface ButtonProps {
+export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
   size?: 'sm' | 'md' | 'lg';
   isLoading?: boolean;
@@ -8,8 +8,6 @@ export interface ButtonProps {
   children?: React.ReactNode;
   className?: string;
   disabled?: boolean;
-  type?: 'button' | 'submit' | 'reset';
-  onClick?: () => void;
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
@@ -24,27 +22,35 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       disabled,
       type = 'button',
       onClick,
+      ...props
     },
     ref,
   ) => {
-    const baseClasses =
-      'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 hover:scale-[1.02] active:scale-[0.98]';
+    const baseClasses = [
+      'inline-flex items-center justify-center gap-2',
+      'min-h-11 px-4 text-sm font-medium tracking-tight',
+      'rounded-[var(--radius-paper)] transition-[background-color,box-shadow,transform]',
+      'duration-200 ease-[var(--ease-out-expo)]',
+      'focus-visible:outline-none focus-visible:ring-2',
+      'focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2',
+      'focus-visible:ring-offset-[var(--color-paper)]',
+      'disabled:pointer-events-none disabled:opacity-50',
+      'motion-safe:active:scale-[0.98]',
+    ].join(' ');
 
     const variantClasses = {
-      primary:
-        'bg-accent text-white hover:bg-accent/90 focus-visible:ring-accent disabled:bg-accent/50',
+      primary: 'bg-[var(--color-foreground)] text-[var(--color-paper)] hover:opacity-90',
       secondary:
-        'bg-background-secondary text-foreground border border-border hover:bg-background-tertiary focus-visible:ring-accent',
+        'bg-transparent text-[var(--color-foreground)] border border-[var(--color-rule)] hover:bg-[color-mix(in_oklch,var(--color-paper)_88%,var(--color-foreground)_12%)]',
       ghost:
-        'text-foreground hover:text-foreground hover:bg-background-secondary focus-visible:ring-accent',
-      danger:
-        'bg-accent-error text-white hover:bg-accent-error/90 focus-visible:ring-accent-error disabled:bg-accent-error/50',
+        'bg-transparent hover:bg-[color-mix(in_oklch,var(--color-paper)_90%,var(--color-foreground)_10%)] text-[var(--color-foreground)]',
+      danger: 'bg-[var(--color-accent-error)] text-[var(--color-paper)] hover:opacity-90',
     };
 
     const sizeClasses = {
-      sm: 'px-3 py-1.5 text-sm',
-      md: 'px-4 py-2 text-sm',
-      lg: 'px-6 py-3 text-base',
+      sm: 'min-h-9 px-3 text-xs',
+      md: 'min-h-11 px-4 text-sm',
+      lg: 'min-h-12 px-6 text-base',
     };
 
     return (
@@ -55,6 +61,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
         disabled={disabled || isLoading}
         aria-busy={isLoading}
+        {...props}
       >
         {isLoading ? (
           <>

@@ -1,28 +1,24 @@
 import { forwardRef } from 'react';
 
-export interface CardProps {
-  variant?: 'default' | 'glass' | 'elevated';
-  hover?: boolean;
+export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
+  elevated?: boolean;
   children?: React.ReactNode;
   className?: string;
 }
 
 export const Card = forwardRef<HTMLDivElement, CardProps>(
-  ({ variant = 'default', hover = true, children, className = '' }, ref) => {
-    const baseClasses = 'rounded-xl overflow-hidden animate-slide-up-fade';
-
-    const variantClasses = {
-      default: 'bg-background-secondary border border-border',
-      glass: 'glass-card',
-      elevated: 'bg-background shadow-lg border border-border/50',
-    };
-
-    const hoverClass = hover ? 'hover:-translate-y-0.5 transition-transform duration-200' : '';
+  ({ elevated = false, children, className = '', ...props }, ref) => {
+    const paperClasses = [
+      'bg-[var(--color-paper)] text-[var(--color-ink)]',
+      'rounded-[var(--radius-paper)] border border-[var(--color-rule)]',
+      elevated ? 'shadow-[var(--elevation-2)]' : 'shadow-[var(--elevation-1)]',
+    ].join(' ');
 
     return (
       <div
         ref={ref}
-        className={`${baseClasses} ${variantClasses[variant]} ${hoverClass} ${className}`}
+        className={`${paperClasses} ${className}`}
+        {...props}
       >
         {children}
       </div>

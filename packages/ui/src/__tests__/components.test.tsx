@@ -114,29 +114,17 @@ describe('Badge', () => {
 });
 
 describe('Card', () => {
-  it('renders with default variant', () => {
+  it('renders with paper surface default styling', () => {
     render(<Card>Content</Card>);
     const card = screen.getByText('Content');
-    expect(card).toHaveClass('bg-background-secondary');
+    expect(card).toHaveClass('bg-[var(--color-paper)]');
+    expect(card).toHaveClass('shadow-[var(--elevation-1)]');
   });
 
-  it('renders with glass variant', () => {
-    render(<Card variant="glass">Content</Card>);
+  it('renders with elevated shadow when elevated=true', () => {
+    render(<Card elevated>Content</Card>);
     const card = screen.getByText('Content');
-    expect(card).toHaveClass('glass-card');
-  });
-
-  it('renders with elevated variant', () => {
-    render(<Card variant="elevated">Content</Card>);
-    const card = screen.getByText('Content');
-    expect(card).toHaveClass('bg-background');
-    expect(card).toHaveClass('shadow-lg');
-  });
-
-  it('renders without hover when hover=false', () => {
-    render(<Card hover={false}>Content</Card>);
-    const card = screen.getByText('Content');
-    expect(card).toBeInTheDocument();
+    expect(card).toHaveClass('shadow-[var(--elevation-2)]');
   });
 
   it('applies custom className', () => {
@@ -185,40 +173,30 @@ describe('Header', () => {
 
 describe('IconButton', () => {
   it('renders with default size and variant', () => {
-    render(<IconButton>Click</IconButton>);
+    render(<IconButton label="Click">Click</IconButton>);
     const button = screen.getByRole('button');
-    expect(button).toHaveClass('p-2');
-    expect(button).toHaveClass('text-foreground');
-  });
-
-  it('renders with sm size', () => {
-    render(<IconButton size="sm">Click</IconButton>);
-    expect(screen.getByRole('button')).toHaveClass('p-1.5');
-  });
-
-  it('renders with lg size', () => {
-    render(<IconButton size="lg">Click</IconButton>);
-    expect(screen.getByRole('button')).toHaveClass('p-3');
+    expect(button).toHaveClass('size-11');
+    expect(button).toHaveClass('bg-transparent');
   });
 
   it('renders with ghost variant', () => {
-    render(<IconButton variant="ghost">Click</IconButton>);
-    expect(screen.getByRole('button')).toHaveClass('text-foreground/70');
+    render(<IconButton variant="ghost" label="Click">Click</IconButton>);
+    expect(screen.getByRole('button')).toHaveClass('bg-transparent');
   });
 
   it('renders with primary variant', () => {
-    render(<IconButton variant="primary">Click</IconButton>);
-    expect(screen.getByRole('button')).toHaveClass('text-accent');
+    render(<IconButton variant="primary" label="Click">Click</IconButton>);
+    expect(screen.getByRole('button')).toHaveClass('bg-[var(--color-foreground)]');
   });
 
   it('applies custom className', () => {
-    render(<IconButton className="custom">Click</IconButton>);
+    render(<IconButton className="custom" label="Click">Click</IconButton>);
     expect(screen.getByRole('button')).toHaveClass('custom');
   });
 
   it('forwards ref', () => {
     const ref = { current: null };
-    render(<IconButton ref={ref}>Click</IconButton>);
+    render(<IconButton ref={ref} label="Click">Click</IconButton>);
     expect(ref.current).toBeInstanceOf(HTMLButtonElement);
   });
 });
