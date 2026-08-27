@@ -2,7 +2,6 @@ import { useRef } from 'react';
 import { IconButton } from '../../../../components/ui';
 import { useFocusTrap } from '@do-epub-studio/ui';
 import { useKeyboardShortcut } from '../../../../hooks/useKeyboardShortcut';
-import { ReaderTypographyForm } from '../ReaderTypographyForm';
 
 export type PageDirection = 'ltr' | 'rtl' | 'default';
 export type WritingMode = 'horizontal-tb' | 'vertical-rl' | 'vertical-lr';
@@ -52,7 +51,7 @@ export function ReaderSettingsPanel({
       role="dialog"
       aria-modal="true"
       aria-labelledby="settings-title"
-      className="fixed top-14 right-4 glass-panel rounded-xl shadow-xl border border-border p-4 z-50 w-80 animate-scale-in"
+      className="fixed top-14 right-4 glass-panel rounded-xl shadow-xl border border-border p-4 z-50 w-72 animate-scale-in"
     >
       <div className="flex items-center justify-between mb-4">
         <h2 id="settings-title" className="text-sm font-semibold text-foreground">{t('reader.settings')}</h2>
@@ -74,8 +73,6 @@ export function ReaderSettingsPanel({
       </div>
 
       <div className="space-y-6">
-        <ReaderTypographyForm />
-
         <div>
           <label className="block text-xs font-medium text-foreground-muted uppercase tracking-wider mb-2">
             {t('reader.theme')}

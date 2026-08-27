@@ -11,4 +11,5 @@ export {
   Pagination,
   SearchInput,
   ConfirmDialog,
+  ProgressBar,
 } from '@do-epub-studio/ui';

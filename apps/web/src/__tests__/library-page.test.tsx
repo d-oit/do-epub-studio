@@ -56,7 +56,7 @@ describe('MyLibraryPage', () => {
     vi.clearAllMocks();
   });
 
-  it('shows loading spinner initially', () => {
+  it('shows loading skeleton initially', () => {
     mockApiRequest.mockImplementation(() => new Promise(() => {}));
     renderLibrary();
     expect(screen.getAllByTestId('skeleton').length).toBeGreaterThan(0);
