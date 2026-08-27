@@ -9,11 +9,7 @@ const meta = {
   },
   tags: ['autodocs'],
   argTypes: {
-    variant: {
-      control: 'select',
-      options: ['default', 'glass', 'elevated'],
-    },
-    hover: {
+    elevated: {
       control: 'boolean',
     },
   },
@@ -33,21 +29,9 @@ export const Default: Story = {
   },
 };
 
-export const Glass: Story = {
-  args: {
-    variant: 'glass',
-    children: (
-      <div className="p-6">
-        <h3 className="text-lg font-semibold text-foreground">Glass Card</h3>
-        <p className="text-foreground-muted text-sm mt-2">Frosted glass effect with blur backdrop.</p>
-      </div>
-    ),
-  },
-};
-
 export const Elevated: Story = {
   args: {
-    variant: 'elevated',
+    elevated: true,
     children: (
       <div className="p-6">
         <h3 className="text-lg font-semibold text-foreground">Elevated</h3>
