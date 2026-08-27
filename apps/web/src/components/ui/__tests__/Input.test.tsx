@@ -22,13 +22,13 @@ describe('Input', () => {
   it('has correct focus ring classes', () => {
     render(<Input label="Test Ring" />);
     const input = screen.getByLabelText('Test Ring');
-    expect(input.className).toContain('focus:ring-[3px]');
-    expect(input.className).toContain('focus:ring-accent/15');
+    expect(input.className).toContain('focus-visible:ring-2');
+    expect(input.className).toContain('focus-visible:ring-[var(--color-accent)]');
   });
 
   it('has correct focus ring classes in error state', () => {
     render(<Input label="Test Error" error="Error" />);
     const input = screen.getByLabelText('Test Error');
-    expect(input.className).toContain('focus:ring-accent-error/15');
+    expect(input.className).toContain('border-[var(--color-accent-error)]');
   });
 });

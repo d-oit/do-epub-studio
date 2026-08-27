@@ -1,3 +1,4 @@
+/* eslint-disable i18next/no-literal-string -- Workspace layout labels */
 import { useEffect, useState } from 'react';
 
 export function EditorialWorkspace({
