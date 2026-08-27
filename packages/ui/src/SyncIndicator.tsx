@@ -25,7 +25,9 @@ export function SyncIndicator({
     <button
       type="button"
       onClick={status === 'conflict' ? onConflictClick : undefined}
-      className={status === 'conflict' ? 'cursor-pointer' : 'cursor-default'}
+      className={`min-h-11 inline-flex items-center touch-target rounded-[var(--radius-paper)] ${
+        status === 'conflict' ? 'cursor-pointer active:scale-95 transition-transform' : 'cursor-default'
+      }`}
     >
       <Badge
         variant={status === 'conflict' ? 'warning' : 'info'}
