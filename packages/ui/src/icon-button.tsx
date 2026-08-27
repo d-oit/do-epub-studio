@@ -7,7 +7,7 @@ export interface IconButtonProps extends ComponentPropsWithoutRef<'button'> {
 }
 
 export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
-  ({ size = 'md', variant = 'ghost', label, children, className = '', ...props }, ref) => {
+  ({ size: _size = 'md', variant = 'ghost', label, children, className = '', ...props }, ref) => {
     const computedLabel = label || props['aria-label'] || (typeof children === 'string' ? children : undefined);
 
     const baseClasses = [
@@ -38,7 +38,6 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
         {...props}
       >
         {children}
-        {computedLabel && <span className="sr-only">{computedLabel}</span>}
       </button>
     );
   },
