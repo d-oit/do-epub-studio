@@ -23,7 +23,7 @@ interface ReaderPrefsState {
   userId: string | null;
   setUserId: (userId: string | null) => void;
   updatePrefs: (updates: Partial<ReaderPrefs>) => void;
-  loadPrefs: (userId?: string | null) => Promise<void>;
+  loadPrefs: (userId?: string | null) => void;
 }
 
 function getDbKey(userId?: string | null) {
@@ -35,7 +35,7 @@ export const useReaderPrefsStore = create<ReaderPrefsState>((set, get) => ({
   userId: null,
   setUserId: (userId) => {
     set({ userId });
-    void get().loadPrefs(userId);
+    get().loadPrefs(userId);
   },
   updatePrefs: (updates) => {
     const newPrefs = { ...get().prefs, ...updates };
@@ -47,7 +47,7 @@ export const useReaderPrefsStore = create<ReaderPrefsState>((set, get) => ({
       // Storage unavailable or quota exceeded
     }
   },
-  loadPrefs: async (userId) => {
+  loadPrefs: (userId) => {
     const key = getDbKey(userId ?? get().userId);
     try {
       const stored = localStorage.getItem(key);

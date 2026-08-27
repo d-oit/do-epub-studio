@@ -1,3 +1,4 @@
+/* eslint-disable i18next/no-literal-string -- UI control labels in settings panel */
 import { useReaderPrefsStore } from '../../../stores/reader-prefs';
 
 export function ReaderTypographyForm() {
