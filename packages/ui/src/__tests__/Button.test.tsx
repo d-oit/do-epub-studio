@@ -11,19 +11,19 @@ describe('Button', () => {
   it('renders with primary variant by default', () => {
     render(<Button>Primary</Button>);
     const button = screen.getByRole('button');
-    expect(button.className).toContain('bg-accent');
+    expect(button.className).toContain('bg-[var(--color-foreground)]');
   });
 
   it('renders with secondary variant', () => {
     render(<Button variant="secondary">Secondary</Button>);
     const button = screen.getByRole('button');
-    expect(button.className).toContain('bg-background-secondary');
+    expect(button.className).toContain('border-[var(--color-rule)]');
   });
 
   it('renders with ghost variant', () => {
     render(<Button variant="ghost">Ghost</Button>);
     const button = screen.getByRole('button');
-    expect(button.className).toContain('text-foreground');
+    expect(button.className).toContain('text-[var(--color-foreground)]');
   });
 
   it('calls onClick when clicked', () => {
