@@ -1,13 +1,12 @@
 import { type ComponentPropsWithoutRef, forwardRef } from 'react';
 
 export interface IconButtonProps extends ComponentPropsWithoutRef<'button'> {
-  size?: 'sm' | 'md' | 'lg';
   variant?: 'default' | 'ghost' | 'primary';
   label?: string;
 }
 
 export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
-  ({ size: _size = 'md', variant = 'ghost', label, children, className = '', ...props }, ref) => {
+  ({ variant = 'ghost', label, children, className = '', ...props }, ref) => {
     const computedLabel = label || props['aria-label'] || (typeof children === 'string' ? children : undefined);
 
     const baseClasses = [

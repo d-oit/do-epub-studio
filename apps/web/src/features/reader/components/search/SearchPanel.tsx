@@ -127,7 +127,6 @@ export function SearchPanel({ isOpen, book, onClose, onNavigate, t }: SearchPane
         <IconButton
           onClick={onClose}
           variant="ghost"
-          size="sm"
           aria-label={t('a11y.close')}
         >
           <svg

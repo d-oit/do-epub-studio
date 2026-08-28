@@ -109,6 +109,29 @@ describe('MyLibraryPage', () => {
     });
   });
 
+  it('shows ProgressBar for in-progress books', async () => {
+    mockApiRequest.mockResolvedValue(mockPaginatedResponse);
+    renderLibrary();
+    await waitFor(() => {
+      const bars = screen.getAllByTestId('progress-bar');
+      expect(bars).toHaveLength(1);
+      expect(bars[0]).toHaveAttribute('data-value', '45');
+    });
+  });
+
+  it('does not show ProgressBar for not-started or completed books', async () => {
+    mockApiRequest.mockResolvedValue(mockPaginatedResponse);
+    renderLibrary();
+    await waitFor(() => {
+      const inProgressBars = screen.getByText('library.inProgress').closest('section')?.querySelectorAll('[data-testid="progress-bar"]');
+      expect(inProgressBars).toHaveLength(1);
+      const notStartedBars = screen.getByText('library.notStarted').closest('section')?.querySelectorAll('[data-testid="progress-bar"]');
+      expect(notStartedBars).toHaveLength(0);
+      const completedBars = screen.getByText('library.completed').closest('section')?.querySelectorAll('[data-testid="progress-bar"]');
+      expect(completedBars).toHaveLength(0);
+    });
+  });
+
   it('calls apiRequest with pagination params', async () => {
     mockApiRequest.mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 50, hasMore: false });
     renderLibrary();
@@ -124,6 +147,15 @@ describe('MyLibraryPage', () => {
       expect(screen.getByText('Author A')).toBeInTheDocument();
       expect(screen.getByText('Author B')).toBeInTheDocument();
       expect(screen.getByText('Author C')).toBeInTheDocument();
+    });
+  });
+
+  it('renders "library.finished" badge for completed books', async () => {
+    mockApiRequest.mockResolvedValue(mockPaginatedResponse);
+    renderLibrary();
+    await waitFor(() => {
+      const completedSection = screen.getByText('library.completed').closest('section');
+      expect(completedSection).toHaveTextContent('library.finished');
     });
   });
 

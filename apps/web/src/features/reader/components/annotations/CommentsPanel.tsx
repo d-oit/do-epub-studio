@@ -176,7 +176,6 @@ export function CommentsPanel({
         <IconButton
           onClick={onClose}
           variant="ghost"
-          size="sm"
           aria-label={t('reader.settings.close')}
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

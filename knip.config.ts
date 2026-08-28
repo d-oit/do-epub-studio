@@ -55,13 +55,7 @@ const config: KnipConfig = {
         'jszip',
       ],
       // Barrel index not imported by any consumer — pre-existing baseline
-      ignoreFiles: [
-        'src/lib/index.ts',
-        'src/features/workspace/**',
-        'src/lib/theme-transitions.ts',
-        'src/stores/reader-prefs.ts',
-        'src/features/reader/components/ReaderTypographyForm.tsx',
-      ],
+      ignoreFiles: ['src/lib/index.ts'],
       // Pages Function entry point — bundled by Cloudflare at deploy time,
       // never imported by app source (GOAP-252). Declared as an entry (not
       // `ignore`) so knip traces its imports into apps/worker sources
