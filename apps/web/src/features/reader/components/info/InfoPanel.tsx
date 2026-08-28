@@ -69,7 +69,7 @@ export function InfoPanel({ isOpen, onClose, metadata, bookId, progressPercent, 
         <h2 id="info-panel-title" className="font-semibold text-foreground">
           {t('reader.aboutBook')}
         </h2>
-        <IconButton onClick={onClose} variant="ghost" size="sm" aria-label={t('a11y.close')}>
+        <IconButton onClick={onClose} variant="ghost" aria-label={t('a11y.close')}>
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>

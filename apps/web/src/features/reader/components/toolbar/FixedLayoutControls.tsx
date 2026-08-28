@@ -76,7 +76,6 @@ export function FixedLayoutControls({
         <IconButton
           onClick={onClose}
           variant="ghost"
-          size="sm"
           aria-label={t('a11y.close')}
         >
           <svg
