@@ -1,6 +1,6 @@
 # ADR-256: Login Header Layout Modernization and Responsive Flex Contract
 
-**Date:** Current session
+**Date:** 2026-08-26
 **Status:** Accepted
 **Deciders:** Project maintainer, product owner
 **Related:** ADR-245, ADR-249, ADR-253, GOAP-254
@@ -24,7 +24,7 @@ Modernize `LoginHeader` (`apps/web/src/components/LoginHeader.tsx`) to use a res
    - Below narrow breakpoints or when long translated locale labels are present, allow controlled flex wrapping/stacking without introducing horizontal overflow (`overflow-x-clip`) or edge collisions.
 
 3. **Accessibility & Visual Hierarchy:**
-   - Ensure all controls retain explicit focus rings (`focus-visible:ring-2 focus-visible:ring-accent outline-none`).
+   - Controls retain their existing focus styles (LocaleSwitcher: `focus:ring-2 focus:ring-accent/20 outline-none`; ThemeToggle: UA-default focus outline) and the keyboard contract is unchanged.
    - Maintain full RTL (`dir="rtl"`) direction support, allowing `justify-end` and flex alignment to naturally mirror without clipping or overlap.
    - Preserve existing dark/light theme switching behavior and interactive contracts.
 

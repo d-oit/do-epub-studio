@@ -142,7 +142,7 @@ export function LoginPage() {
       <main
         id="main-content"
         tabIndex={-1}
-        className="flex-1 lg:grid lg:min-h-dvh lg:grid-cols-[1.1fr_1fr] xl:grid-cols-[1.2fr_1fr]"
+        className="flex-1 lg:grid lg:grid-cols-[1.1fr_1fr] xl:grid-cols-[1.2fr_1fr]"
       >
         {/* Desktop brand panel — the former collapsible "about" content,
             now always visible (no disclosure interaction required). */}
