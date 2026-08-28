@@ -23,7 +23,7 @@ export const I18N_E2E_STRINGS = {
   },
   fr: {
     loginSubtitle: 'Connectez-vous pour accéder à vos livres',
-    loginSubmit: 'Connexion',
+    loginSubmit: 'Se connecter',
     localeAriaLabel: /Sélectionner la langue/,
   },
   es: {
