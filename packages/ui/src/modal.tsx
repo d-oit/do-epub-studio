@@ -90,6 +90,7 @@ export function Modal({ isOpen, onClose, title, description, children, footer, s
               <IconButton
                 onClick={onClose}
                 label="Close"
+                size="sm"
                 variant="ghost"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
