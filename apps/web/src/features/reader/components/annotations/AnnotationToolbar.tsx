@@ -228,6 +228,7 @@ export function AnnotationToolbar({
       <IconButton
         onClick={onClose}
         variant="ghost"
+        size="sm"
         aria-label={t('a11y.close')}
         className="text-foreground-muted hover:text-foreground"
       >

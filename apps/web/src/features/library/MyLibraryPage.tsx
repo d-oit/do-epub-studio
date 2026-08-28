@@ -72,7 +72,7 @@ export function MyLibraryPage() {
 
   return (
     <main
-      id="main-content"
+      id="main"
       className="min-h-dvh bg-[var(--color-background)] px-4 py-6 text-[var(--color-foreground)] sm:px-6 md:py-10 lg:px-8 2xl:px-12"
     >
       <div className="mx-auto max-w-7xl">
@@ -108,9 +108,9 @@ export function MyLibraryPage() {
               <section aria-labelledby="heading-in-progress">
                 <h2 id="heading-in-progress" className="mb-6 font-[family-name:var(--font-display)] text-xl font-bold text-[var(--color-foreground)]">{t('library.inProgress')}</h2>
                 <ul className="@container/shelf grid grid-cols-2 gap-6 @md/shelf:grid-cols-3 @2xl/shelf:grid-cols-5 list-none p-0">
-                  {inProgress.map((book) => (
+                  {inProgress.map((book, idx) => (
                     <li key={book.id}>
-                      <BookCard book={book} />
+                      <BookCard book={book} isFirst={idx === 0} />
                     </li>
                   ))}
                 </ul>
@@ -121,9 +121,9 @@ export function MyLibraryPage() {
               <section aria-labelledby="heading-not-started">
                 <h2 id="heading-not-started" className="mb-6 font-[family-name:var(--font-display)] text-xl font-bold text-[var(--color-foreground)]">{t('library.notStarted')}</h2>
                 <ul className="@container/shelf grid grid-cols-2 gap-6 @md/shelf:grid-cols-3 @2xl/shelf:grid-cols-5 list-none p-0">
-                  {notStarted.map((book) => (
+                  {notStarted.map((book, idx) => (
                     <li key={book.id}>
-                      <BookCard book={book} />
+                      <BookCard book={book} isFirst={inProgress.length === 0 && idx === 0} />
                     </li>
                   ))}
                 </ul>
@@ -134,9 +134,9 @@ export function MyLibraryPage() {
               <section aria-labelledby="heading-completed">
                 <h2 id="heading-completed" className="mb-6 font-[family-name:var(--font-display)] text-xl font-bold text-[var(--color-foreground)]">{t('library.completed')}</h2>
                 <ul className="@container/shelf grid grid-cols-2 gap-6 @md/shelf:grid-cols-3 @2xl/shelf:grid-cols-5 list-none p-0">
-                  {completed.map((book) => (
+                  {completed.map((book, idx) => (
                     <li key={book.id}>
-                      <BookCard book={book} />
+                      <BookCard book={book} isFirst={inProgress.length === 0 && notStarted.length === 0 && idx === 0} />
                     </li>
                   ))}
                 </ul>
