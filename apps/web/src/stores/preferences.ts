@@ -15,6 +15,8 @@ interface ReaderPreferences {
   pageWidth: 'narrow' | 'normal' | 'wide' | 'full';
   direction: PageDirection;
   writingMode: WritingMode;
+  /** Opt-in for on-device AI features (issue #318). Default off. */
+  aiEnabled: boolean;
 }
 
 interface PreferencesState {
@@ -26,6 +28,7 @@ interface PreferencesState {
   setPageWidth: (pageWidth: 'narrow' | 'normal' | 'wide' | 'full') => void;
   setDirection: (direction: PageDirection) => void;
   setWritingMode: (writingMode: WritingMode) => void;
+  setAiEnabled: (enabled: boolean) => void;
 }
 
 const FONT_SIZES: Record<FontSize, string> = {
@@ -76,6 +79,7 @@ export const usePreferencesStore = create<PreferencesState>()(
         pageWidth: 'normal',
         direction: 'default',
         writingMode: 'horizontal-tb',
+        aiEnabled: false,
       },
       setTheme: (theme) => {
         if (get().reader.theme === theme) return;
@@ -105,6 +109,10 @@ export const usePreferencesStore = create<PreferencesState>()(
         if (state.reader.writingMode === writingMode) return state;
         return { reader: { ...state.reader, writingMode } };
       }),
+      setAiEnabled: (enabled) => {
+        if (get().reader.aiEnabled === enabled) return;
+        set((state) => ({ reader: { ...state.reader, aiEnabled: enabled } }));
+      },
     }),
     {
       name: 'do-epub-preferences',

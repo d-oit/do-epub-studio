@@ -19,6 +19,8 @@ interface ReaderSettingsPanelProps {
   onSetFontFamily: (family: 'serif' | 'sans-serif' | 'monospace') => void;
   onSetDirection?: (direction: PageDirection) => void;
   onSetWritingMode?: (writingMode: WritingMode) => void;
+  aiEnabled: boolean;
+  onSetAiEnabled?: (enabled: boolean) => void;
   isFixedLayout?: boolean;
   t: (key: string) => string;
 }
@@ -36,6 +38,8 @@ export function ReaderSettingsPanel({
   onSetFontFamily,
   onSetDirection,
   onSetWritingMode,
+  aiEnabled,
+  onSetAiEnabled,
   isFixedLayout = false,
   t,
 }: ReaderSettingsPanelProps) {
@@ -231,6 +235,25 @@ export function ReaderSettingsPanel({
                 </button>
               ))}
             </div>
+          </div>
+        )}
+
+        {onSetAiEnabled && (
+          <div>
+            <label className="block text-xs font-medium text-foreground-muted uppercase tracking-wider mb-2">
+              {t('reader.settings.ai.title')}
+            </label>
+            <label className="flex items-start gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={aiEnabled}
+                onChange={(event) => onSetAiEnabled(event.target.checked)}
+                className="mt-0.5 accent-accent"
+              />
+              <span className="text-xs text-foreground-muted">
+                {t('reader.settings.ai.description')}
+              </span>
+            </label>
           </div>
         )}
 

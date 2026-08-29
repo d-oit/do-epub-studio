@@ -83,6 +83,8 @@ export const ar: Record<TranslationKeys, TranslationValue> = {
   'reader.settings.fontSize.medium': 'متوسط',
   'reader.settings.fontSize.large': 'كبير',
   'reader.settings.fontSize.xlarge': 'كبير جداً',
+  'reader.settings.ai.title': 'المساعدة بالذكاء الاصطناعي',
+  'reader.settings.ai.description': 'مساعدات الذكاء الاصطناعي على الجهاز (ملخصات الفصول). متوقفة افتراضيًا؛ نصوصك لا تغادر جهازك أبدًا.',
   'reader.settings.fontFamily.serif': 'Serif',
   'reader.settings.fontFamily.sans-serif': 'Sans Serif',
   'reader.settings.fontFamily.monospace': 'Monospace',

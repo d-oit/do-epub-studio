@@ -5,7 +5,6 @@ import { createSpanId, createTraceId } from '@do-epub-studio/shared';
 import { useTranslation } from '../../hooks/useTranslation';
 import { apiRequest } from '../../lib/api/index';
 import { logClientEvent } from '../../lib/client-logger';
-import { useAuthStore, useReaderStore, usePreferencesStore } from '../../stores';
 import { setupOnlineListener, getSyncQueue } from '../../lib/offline';
 import { setupZombieDetection } from '../../lib/offline/permissions';
 import { AnnotationToolbar, extractSelectionData, CommentsPanel } from './components/annotations';
@@ -32,6 +31,14 @@ import {
   ScrollProgressBar,
 } from './components';
 import { ConflictResolutionPanel } from './components/conflicts/ConflictResolutionPanel';
+import { useAuthStore, useReaderStore, usePreferencesStore } from '../../stores';
+import { initAiPlugins } from '../../lib/ai-plugins';
+
+// Reader route owns AI features (GOAP-318): registering here keeps the
+// reader-core extension point out of the shared entry graph, honoring the
+// ADR-107 route boundary rules (catalog/admin/auth must not import
+// reader-core). Idempotent.
+initAiPlugins();
 
 export function ReaderPage() {
   const { bookSlug } = useParams<{ bookSlug: string }>();
@@ -83,11 +90,13 @@ export function ReaderPage() {
   const readerPageWidth = usePreferencesStore((s) => s.reader.pageWidth);
   const readerDirection = usePreferencesStore((s) => s.reader.direction);
   const readerWritingMode = usePreferencesStore((s) => s.reader.writingMode);
+  const aiEnabled = usePreferencesStore((s) => s.reader.aiEnabled);
   const setTheme = usePreferencesStore((s) => s.setTheme);
   const setFontFamily = usePreferencesStore((s) => s.setFontFamily);
   const setFontSize = usePreferencesStore((s) => s.setFontSize);
   const setDirection = usePreferencesStore((s) => s.setDirection);
   const setWritingMode = usePreferencesStore((s) => s.setWritingMode);
+  const setAiEnabled = usePreferencesStore((s) => s.setAiEnabled);
 
   const { t, locale } = useTranslation();
 
@@ -225,7 +234,10 @@ export function ReaderPage() {
     setIsLoading(true);
     const fetch = async () => {
       try {
-        const data = await apiRequest<{ url: string }>(`/api/books/${bookSlug}/file-url`, {
+        // Sessions are bound to the book UUID; assertBookAccess compares the
+        // URL param against auth.bookId with no slug fallback, so file-url
+        // must be addressed by id like every other reader API call.
+        const data = await apiRequest<{ url: string }>(`/api/books/${bookId}/file-url`, {
           method: 'POST',
           token: sessionToken,
           body: JSON.stringify({}),
@@ -247,7 +259,7 @@ export function ReaderPage() {
       aborted = true;
       controller.abort();
     };
-  }, [sessionToken, bookSlug, navigate, setError, t, markInsightsLoaded]);
+  }, [sessionToken, bookSlug, bookId, navigate, setError, t, markInsightsLoaded]);
 
   useEffect(() => {
     return () => {
@@ -330,6 +342,8 @@ export function ReaderPage() {
           onSetFontFamily={setFontFamily}
           onSetDirection={setDirection}
           onSetWritingMode={setWritingMode}
+          aiEnabled={aiEnabled}
+          onSetAiEnabled={setAiEnabled}
           isFixedLayout={isFixedLayout}
           t={tFn}
         />

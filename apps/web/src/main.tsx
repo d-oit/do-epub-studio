@@ -133,6 +133,7 @@ export const Root = () => {
   );
 };
 
+
 const rootElement = document.getElementById('root');
 if (rootElement) {
   ReactDOM.createRoot(rootElement).render(<Root />);

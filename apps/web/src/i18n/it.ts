@@ -83,6 +83,8 @@ export const it: Record<TranslationKeys, TranslationValue> = {
   'reader.settings.fontSize.medium': 'Medio',
   'reader.settings.fontSize.large': 'Grande',
   'reader.settings.fontSize.xlarge': 'Extra grande',
+  'reader.settings.ai.title': 'Assistente IA',
+  'reader.settings.ai.description': 'Funzioni IA sul dispositivo (riepiloghi dei capitoli). Disattivata di default; il tuo testo non lascia mai il dispositivo.',
   'reader.settings.fontFamily.serif': 'Serif',
   'reader.settings.fontFamily.sans-serif': 'Sans Serif',
   'reader.settings.fontFamily.monospace': 'Monospace',

@@ -142,6 +142,15 @@ None.
 | 253    | Login No-Book Guard & UI Modernization (ADR + GOAP) | `plans/253-adr-login-no-book-guard-modernization.md`, `plans/archive/253-goap-login-no-book-guard-modernization.md` | ACCEPTED (PR #1028) |
 | 254    | UI/UX & Concept Modernization Master Plan (GOAP) | `plans/254-goap-uiux-modernization-master-plan.md` | IN PROGRESS (W1 complete) |
 | 255    | epub-sparkle UI/UX Port — Editorial Alignment (GOAP) | `plans/255-goap-epub-sparkle-uiux-port.md` | IN PROGRESS (W1) |
+| 257    | Open-Issues Sprint (GOAP) | `plans/257-goap-sprint-open-issues.md` | COMPLETED (sprint record; per-issue docs 258-265) |
+| 258    | Issue #345 CI Failure on Main (GOAP) | `plans/258-goap-issue-345.md` | COMPLETED (verified 2026-08-29; issue closed 2026-05-26) |
+| 259    | Issue #339 ZIP Bomb Defense (GOAP) | `plans/259-goap-issue-339.md` | COMPLETED (verified 2026-08-29; issue closed 2026-05-26) |
+| 260    | Issue #312 Dependency Scanning (GOAP) | `plans/260-goap-issue-312.md` | COMPLETED (verified 2026-08-29; issue closed 2026-05-26) |
+| 261    | Issue #314 Schema Consolidation (GOAP) | `plans/261-goap-issue-314.md` | COMPLETED (verified 2026-08-29; issue closed 2026-05-26) |
+| 262    | Issue #318 AI Plugin Architecture (GOAP + ADR) | `plans/262-goap-issue-318.md` | IN PROGRESS (impl on `feat/issue-318-goap-plan`) |
+| 263    | Issue #316 OKLCH Color System (GOAP) | `plans/263-goap-issue-316.md` | COMPLETED (verified 2026-08-29; issue closed 2026-05-26) |
+| 264    | Issue #315 View Transitions (GOAP) | `plans/264-goap-issue-315.md` | COMPLETED (verified 2026-08-29; issue closed 2026-05-26) |
+| 265    | Issue #317 Offline E2E (GOAP) | `plans/265-goap-issue-317.md` | COMPLETED (verified 2026-08-29; issue closed 2026-05-26) |
 
 ## Pending
 

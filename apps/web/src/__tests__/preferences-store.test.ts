@@ -29,6 +29,7 @@ describe('usePreferencesStore', () => {
         pageWidth: 'normal',
         direction: 'default',
         writingMode: 'horizontal-tb',
+        aiEnabled: false,
       },
     });
   });
@@ -108,5 +109,16 @@ describe('usePreferencesStore', () => {
   it('does not set writing mode if same', () => {
     usePreferencesStore.getState().setWritingMode('horizontal-tb');
     expect(usePreferencesStore.getState().reader.writingMode).toBe('horizontal-tb');
+  });
+
+  it('defaults AI features to off and enables them on opt-in', () => {
+    expect(usePreferencesStore.getState().reader.aiEnabled).toBe(false);
+    usePreferencesStore.getState().setAiEnabled(true);
+    expect(usePreferencesStore.getState().reader.aiEnabled).toBe(true);
+  });
+
+  it('does not set aiEnabled if same', () => {
+    usePreferencesStore.getState().setAiEnabled(false);
+    expect(usePreferencesStore.getState().reader.aiEnabled).toBe(false);
   });
 });

@@ -83,6 +83,8 @@ export const hi: Record<TranslationKeys, TranslationValue> = {
   'reader.settings.fontSize.medium': 'मध्यम',
   'reader.settings.fontSize.large': 'बड़ा',
   'reader.settings.fontSize.xlarge': 'अति बड़ा',
+  'reader.settings.ai.title': 'AI सहायता',
+  'reader.settings.ai.description': 'डिवाइस-पर AI सुविधाएँ (अध्याय सारांश)। डिफ़ॉल्ट में बंद; आपका पाठ कभी आपके डिवाइस से बाहर नहीं जाता।',
   'reader.settings.fontFamily.serif': 'Serif',
   'reader.settings.fontFamily.sans-serif': 'Sans Serif',
   'reader.settings.fontFamily.monospace': 'Monospace',

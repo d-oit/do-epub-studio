@@ -13,6 +13,8 @@ describe('ReaderSettingsPanel', () => {
     onSetFontSize: vi.fn(),
     onSetFontFamily: vi.fn(),
     t: (key: string) => key,
+    aiEnabled: false,
+    onSetAiEnabled: vi.fn(),
   };
 
   it('handles Escape key', () => {
@@ -58,5 +60,23 @@ describe('ReaderSettingsPanel', () => {
   it('does not show fixed layout indicator when isFixedLayout is false', () => {
     render(<ReaderSettingsPanel {...mockProps} isFixedLayout={false} />);
     expect(screen.queryByText('reader.settings.fixedLayout')).toBeNull();
+  });
+
+  it('hides the AI section when no setter is provided', () => {
+    render(<ReaderSettingsPanel {...mockProps} onSetAiEnabled={undefined} />);
+    expect(screen.queryByText('reader.settings.ai.title')).toBeNull();
+  });
+
+  it('renders the AI opt-in section and calls onSetAiEnabled', () => {
+    render(<ReaderSettingsPanel {...mockProps} aiEnabled={false} />);
+    const checkbox = screen.getByRole('checkbox');
+    expect(checkbox).not.toBeChecked();
+    fireEvent.click(checkbox);
+    expect(mockProps.onSetAiEnabled).toHaveBeenCalledWith(true);
+  });
+
+  it('reflects an enabled AI state on the checkbox', () => {
+    render(<ReaderSettingsPanel {...mockProps} aiEnabled={true} />);
+    expect(screen.getByRole('checkbox')).toBeChecked();
   });
 });

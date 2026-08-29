@@ -83,6 +83,8 @@ export const nl: Record<TranslationKeys, TranslationValue> = {
   'reader.settings.fontSize.medium': 'Gemiddeld',
   'reader.settings.fontSize.large': 'Groot',
   'reader.settings.fontSize.xlarge': 'Zeer groot',
+  'reader.settings.ai.title': 'AI-assistent',
+  'reader.settings.ai.description': 'AI-functies op het apparaat (hoofdstukken samenvatten). Standaard uit; uw tekst verlaat nooit uw apparaat.',
   'reader.settings.fontFamily.serif': 'Serif',
   'reader.settings.fontFamily.sans-serif': 'Schreefloos',
   'reader.settings.fontFamily.monospace': 'Monospace',
