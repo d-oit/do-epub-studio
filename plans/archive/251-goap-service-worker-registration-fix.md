@@ -1,6 +1,6 @@
 # GOAP-251: Fix Service Worker Registration Failure in Production
 
-**Date:** Current session
+**Date:** 2026-08-20
 **Status:** COMPLETED
 **Related:** ADR-251
 

@@ -1,6 +1,6 @@
 # GOAP-249: Password Toggle Placement Regression Fix
 
-**Date:** Current session
+**Date:** 2026-08-20
 **Status:** COMPLETED
 **Related:** ADR-249, ADR-245, ADR-063a
 

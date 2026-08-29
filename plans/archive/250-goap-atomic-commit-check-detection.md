@@ -1,6 +1,6 @@
 # GOAP-250: Restore Atomic Commit CI Check Detection
 
-**Date:** Current session
+**Date:** 2026-08-20
 **Status:** COMPLETED
 **Related:** ADR-250
 

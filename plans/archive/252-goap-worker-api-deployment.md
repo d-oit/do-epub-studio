@@ -1,6 +1,6 @@
 # GOAP-252: Serve the API on the same origin as the deployed frontend
 
-**Date:** Current session
+**Date:** 2026-08-20
 **Status:** Code complete — API wired into the Cloudflare Pages build via Pages Functions; remaining work is operator dashboard setup (D1/KV/R2 bindings + vars) and data seeding.
 **Related:** ADR-252, issue #1014
 

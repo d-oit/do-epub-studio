@@ -1,6 +1,6 @@
 # ADR-249: Password Toggle Placement and Visual Regression Policy
 
-**Date:** Current session
+**Date:** 2026-08-20
 **Status:** Accepted
 **Deciders:** Project maintainer, product owner
 **Related:** ADR-032, ADR-063a, ADR-105, ADR-245, GOAP-249

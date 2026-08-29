@@ -1,6 +1,6 @@
 # ADR-251: Service Worker Build Format Matches Classic Registration
 
-**Date:** Current session
+**Date:** 2026-08-20
 **Status:** Accepted
 **Deciders:** Project maintainer
 **Related:** ADR-005, ADR-124, GOAP-251
