@@ -9,9 +9,19 @@ import { useAuthStore } from '../../stores/auth';
  * localhost (banned in docs/banned-patterns.md). Dev builds fall back to the
  * local Wrangler instance for `pnpm dev` without a `.env.local`.
  */
+function getOrigin(): string {
+  if (typeof window !== 'undefined' && window.location?.origin) {
+    return window.location.origin;
+  }
+  if (typeof self !== 'undefined' && self.location?.origin) {
+    return self.location.origin;
+  }
+  return '';
+}
+
 export const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
-  (import.meta.env.PROD ? window.location.origin : 'http://localhost:8787');
+  (import.meta.env.PROD ? getOrigin() : 'http://localhost:8787');
 
 interface ApiResponse<T> {
   ok: boolean;
