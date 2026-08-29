@@ -47,7 +47,6 @@ export function BookmarksPanel({
             <IconButton
               onClick={onAddBookmark}
               variant="ghost"
-              size="sm"
               aria-label={t('a11y.add_bookmark')}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -63,7 +62,6 @@ export function BookmarksPanel({
           <IconButton
             onClick={onClose}
             variant="ghost"
-            size="sm"
             aria-label={t('a11y.close')}
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -105,7 +103,6 @@ export function BookmarksPanel({
                     <IconButton
                       onClick={() => { onDeleteBookmark(bookmark.id); }}
                       variant="ghost"
-                      size="sm"
                       className="text-foreground-muted hover:text-accent-error transition-colors"
                       aria-label={t('a11y.delete_bookmark')}
                     >

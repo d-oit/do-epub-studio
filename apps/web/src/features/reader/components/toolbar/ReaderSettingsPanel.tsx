@@ -58,7 +58,6 @@ export function ReaderSettingsPanel({
         <IconButton
           onClick={onClose}
           variant="ghost"
-          size="sm"
           aria-label={t('a11y.close')}
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
