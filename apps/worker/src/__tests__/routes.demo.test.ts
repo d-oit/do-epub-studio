@@ -373,6 +373,11 @@ describe('Demo Routes — POST /api/demo/admin-login', () => {
     expect(res.status).toBe(403);
     const body: { ok: boolean; data: Record<string, unknown>; error: { code: string; message?: string } } = await res.json();
     expect(body.error.code).toBe('DEMO_DISABLED');
+    // App-level middleware (middleware/rate-limit.ts) calls checkRateLimitDO once
+    // per request before route gates run; a second call would mean checkDemoGates
+    // passed the env gate and reached its own rate-limit step. Exactly one call
+    // therefore pins that the production gate fired before any route work.
+    expect(mockCheckRateLimitDO).toHaveBeenCalledTimes(1);
     expect(mockQueryFirst).not.toHaveBeenCalled();
     expect(mockCreateAdminDemoSession).not.toHaveBeenCalled();
   });
