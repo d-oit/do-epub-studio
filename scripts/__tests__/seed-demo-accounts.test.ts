@@ -69,6 +69,58 @@ describe('seed-demo-accounts.mjs (ADR-233)', () => {
     it('does not flag a local env', () => {
       expect(isProductionLike({ ENVIRONMENT: 'local' })).toBe(false);
     });
+
+    // Fail-closed matrix pin — ADR-233 Acceptance ("Seed command fails when
+    // production indicators are present") + ADR-244 Amendment C ("Non-production
+    // only"). DEMO_ACCOUNTS_PROD_ALLOWLIST must ONLY bypass the CF_PAGES signal;
+    // it must never demote ENVIRONMENT=production or a production
+    // TURSO_DATABASE_URL.
+    it('stays production when ENVIRONMENT=production AND DEMO_ACCOUNTS_PROD_ALLOWLIST is set (dangerous combo)', () => {
+      expect(
+        isProductionLike({
+          ENVIRONMENT: 'production',
+          DEMO_ACCOUNTS_PROD_ALLOWLIST: 'demo-preview',
+        }),
+      ).toBe(true);
+    });
+
+    it('stays production when every signal is set (ENVIRONMENT + CF_PAGES + allowlist)', () => {
+      expect(
+        isProductionLike({
+          ENVIRONMENT: 'production',
+          CF_PAGES: '1',
+          DEMO_ACCOUNTS_PROD_ALLOWLIST: 'demo-preview',
+        }),
+      ).toBe(true);
+    });
+
+    it('stays production when a production TURSO_DATABASE_URL is set alongside DEMO_ACCOUNTS_PROD_ALLOWLIST', () => {
+      expect(
+        isProductionLike({
+          TURSO_DATABASE_URL: 'libsql://production.example.com',
+          DEMO_ACCOUNTS_PROD_ALLOWLIST: 'demo-preview',
+        }),
+      ).toBe(true);
+    });
+
+    it('is case-insensitive on ENVIRONMENT (Production)', () => {
+      expect(isProductionLike({ ENVIRONMENT: 'Production' })).toBe(true);
+    });
+
+    it('is not production for an empty env', () => {
+      expect(isProductionLike({})).toBe(false);
+    });
+
+    it('keeps the CF_PAGES allowlist bypass live even with other non-production signals present', () => {
+      expect(
+        isProductionLike({
+          CF_PAGES: '1',
+          DEMO_ACCOUNTS_PROD_ALLOWLIST: 'demo-preview',
+          ENVIRONMENT: 'staging',
+          TURSO_DATABASE_URL: 'libsql://staging.example',
+        }),
+      ).toBe(false);
+    });
   });
 
   describe('fail-closed guards', () => {
@@ -91,6 +143,22 @@ describe('seed-demo-accounts.mjs (ADR-233)', () => {
         db,
         hasPassword: mockHash,
         env: env({ ENVIRONMENT: 'production' }),
+      });
+      expect(result.ok).toBe(false);
+      expect(result.reason).toMatch(/production/i);
+      expect(process.exitCode).toBe(1);
+      expect(calls).toHaveLength(0);
+    });
+
+    it('refuses the dangerous combo ENVIRONMENT=production + DEMO_ACCOUNTS_PROD_ALLOWLIST and writes nothing', async () => {
+      const { db, calls } = makeDb();
+      const result = await seedDemoAccounts({
+        db,
+        hasPassword: mockHash,
+        env: env({
+          ENVIRONMENT: 'production',
+          DEMO_ACCOUNTS_PROD_ALLOWLIST: 'demo-preview',
+        }),
       });
       expect(result.ok).toBe(false);
       expect(result.reason).toMatch(/production/i);
