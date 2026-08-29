@@ -3,6 +3,7 @@ import {
   SearchQuerySchema,
   ExportQuerySchema,
   NotificationsQuerySchema,
+  AdminInsightsQuerySchema,
 } from '../schemas';
 
 describe('SearchQuerySchema', () => {
@@ -99,5 +100,40 @@ describe('NotificationsQuerySchema', () => {
 
   it('rejects invalid unread value', () => {
     expect(() => NotificationsQuerySchema.parse({ unread: 'yes' })).toThrow();
+  });
+});
+
+describe('AdminInsightsQuerySchema', () => {
+  it('accepts valid query with defaults', () => {
+    const result = AdminInsightsQuerySchema.parse({});
+    expect(result.limit).toBe(20);
+    expect(result.offset).toBe(0);
+  });
+
+  it('coerces string limit and offset', () => {
+    const result = AdminInsightsQuerySchema.parse({ limit: '10', offset: '50' });
+    expect(result.limit).toBe(10);
+    expect(result.offset).toBe(50);
+  });
+
+  it('rejects non-numeric limit or offset', () => {
+    expect(() => AdminInsightsQuerySchema.parse({ limit: 'abc' })).toThrow();
+    expect(() => AdminInsightsQuerySchema.parse({ offset: 'xyz' })).toThrow();
+  });
+
+  it('rejects limit > 100', () => {
+    expect(() => AdminInsightsQuerySchema.parse({ limit: 101 })).toThrow();
+  });
+
+  it('rejects limit < 1', () => {
+    expect(() => AdminInsightsQuerySchema.parse({ limit: 0 })).toThrow();
+  });
+
+  it('rejects negative offset', () => {
+    expect(() => AdminInsightsQuerySchema.parse({ offset: -1 })).toThrow();
+  });
+
+  it('rejects offset > 100000', () => {
+    expect(() => AdminInsightsQuerySchema.parse({ offset: 100001 })).toThrow();
   });
 });
