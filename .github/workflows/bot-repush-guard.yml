@@ -1,0 +1,96 @@
+name: Bot repush guard
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+# This guard inspects the PR's commit list via pulls.listCommits, which is
+# base-relative. GitHub emits no pull_request event when a PR's base branch
+# changes, so retargeting a PR leaves the previous result until the next
+# push (synchronize) or reopen.
+jobs:
+  bot-repush-guard:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+
+    steps:
+      - name: Fail when google-labs-jules[bot] commits on top of human commits
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const pull_number = context.issue.number;
+
+            const authorName = (commit) => {
+              const author = commit.author || commit.commit.author || {};
+              return author.login || author.name || "";
+            };
+            const isBot = (commit) => authorName(commit).toLowerCase().endsWith("[bot]");
+            const isJules = (commit) => /jules\[bot\]/i.test(authorName(commit));
+
+            try {
+              const commits = [];
+              let page = 0;
+              while (true) {
+                const { data } = await github.rest.pulls.listCommits({
+                  owner,
+                  repo,
+                  pull_number,
+                  per_page: 100,
+                  page,
+                });
+                commits.push(...data);
+                if (data.length < 100) {
+                  break;
+                }
+                page += 1;
+              }
+
+              // pulls.listCommits returns commits oldest-first (topological order);
+              // that order is the contract for "above": a commit later in the list is
+              // on top of an earlier one regardless of committer dates (force-pushes
+              // re-stamp them, so re-sorting here could desync the walk from topology).
+
+              let sawHuman = false;
+              const offenders = [];
+              for (const commit of commits) {
+                if (isBot(commit)) {
+                  if (sawHuman && isJules(commit)) {
+                    offenders.push(commit.sha);
+                  }
+                } else {
+                  sawHuman = true;
+                }
+              }
+
+              if (offenders.length > 0) {
+                core.setFailed(
+                  `google-labs-jules[bot] committed on top of human commits (${offenders.join(", ")}). ` +
+                    "A bot re-pushed after human work — the branch may have reverted a human fix. " +
+                    "Re-apply the human fix or close the PR; if this is intentional, the check can be overridden by the PR author."
+                );
+              } else {
+                core.info(
+                  `Checked ${commits.length} commit(s) on PR #${pull_number}: no jules[bot] re-push over human commits.`
+                );
+              }
+            } catch (error) {
+              // Fail closed on auth/permission problems: a 401/403/404 means the
+              // guard cannot read the PR at all, so refusing the check would
+              // silently disable it.
+              const status = error.status ?? error.response?.status;
+              if (status === 401 || status === 403 || status === 404) {
+                core.setFailed(
+                  `bot-repush-guard could not read PR commits (HTTP ${status}) — ` +
+                    "check workflow permissions/token scope; failing closed for misconfiguration"
+                );
+              } else {
+                // Fail open for transient errors: an API hiccup must never block a PR.
+                core.warning(`Bot repush guard could not check commits: ${error.message}`);
+              }
+            }
