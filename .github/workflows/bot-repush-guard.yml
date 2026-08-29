@@ -7,6 +7,10 @@ on:
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
+# This guard inspects the PR's commit list via pulls.listCommits, which is
+# base-relative. GitHub emits no pull_request event when a PR's base branch
+# changes, so retargeting a PR leaves the previous result until the next
+# push (synchronize) or reopen.
 jobs:
   bot-repush-guard:
     runs-on: ubuntu-latest
@@ -47,11 +51,10 @@ jobs:
                 page += 1;
               }
 
-              // API returns commits oldest-first; sort by commit date to be safe.
-              commits.sort(
-                (a, b) =>
-                  new Date(a.commit.committer.date) - new Date(b.commit.committer.date)
-              );
+              // pulls.listCommits returns commits oldest-first (topological order);
+              // that order is the contract for "above": a commit later in the list is
+              // on top of an earlier one regardless of committer dates (force-pushes
+              // re-stamp them, so re-sorting here could desync the walk from topology).
 
               let sawHuman = false;
               const offenders = [];
@@ -77,6 +80,17 @@ jobs:
                 );
               }
             } catch (error) {
-              // Fail open: an API hiccup must never block a PR.
-              core.warning(`Bot repush guard could not check commits: ${error.message}`);
+              // Fail closed on auth/permission problems: a 401/403/404 means the
+              // guard cannot read the PR at all, so refusing the check would
+              // silently disable it.
+              const status = error.status ?? error.response?.status;
+              if (status === 401 || status === 403 || status === 404) {
+                core.setFailed(
+                  `bot-repush-guard could not read PR commits (HTTP ${status}) — ` +
+                    "check workflow permissions/token scope; failing closed for misconfiguration"
+                );
+              } else {
+                // Fail open for transient errors: an API hiccup must never block a PR.
+                core.warning(`Bot repush guard could not check commits: ${error.message}`);
+              }
             }
