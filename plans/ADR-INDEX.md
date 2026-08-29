@@ -94,7 +94,7 @@
 | 249    | Password Toggle Placement and Visual Regression Policy | `plans/249-adr-password-toggle-placement.md` | Accepted |
 | 250    | Atomic Commit Check Detection | `plans/250-adr-atomic-commit-check-detection.md` | Accepted |
 | 251    | Service Worker Build Format Matches Classic Registration | `plans/251-adr-service-worker-build-format.md` | Accepted |
-| 252    | API Backend Must Be Deployed for the Render-Hosted Frontend | `plans/252-adr-worker-api-deployment.md` | Accepted |
+| 252    | Serve the API on the same origin as the deployed frontend | `plans/252-adr-worker-api-deployment.md` | Accepted |
 | 256    | Login Header Layout Modernization and Responsive Flex Contract | `plans/256-adr-login-header-layout-modernization.md` | Accepted |
 
 ## Proposed
@@ -135,6 +135,10 @@ None.
 | 244    | Demo Login and Help Entry Points (GOAP) | `plans/archive/244-goap-demo-login-help-entrypoints.md`                              | COMPLETED |
 | 246    | Login Page UX Redesign (GOAP)     | `plans/archive/246-goap-login-ux-redesign.md`                 | COMPLETED (ADR-245) |
 | 247    | Open PR Review, CI Remediation & Issues (GOAP) | `plans/247-goap-swarm-pr-review-ci-issues.md` | IN PROGRESS |
+| 249    | Password Toggle Placement Regression Fix (GOAP)                  | `plans/archive/249-goap-password-toggle-placement.md`       | COMPLETED                                                       |
+| 250    | Restore Atomic Commit CI Check Detection (GOAP)                  | `plans/archive/250-goap-atomic-commit-check-detection.md`   | COMPLETED                                                       |
+| 251    | Fix Service Worker Registration Failure in Production (GOAP)     | `plans/archive/251-goap-service-worker-registration-fix.md` | COMPLETED                                                       |
+| 252    | Serve the API on the same origin as the deployed frontend (GOAP) | `plans/archive/252-goap-worker-api-deployment.md`           | Code complete — operator dashboard setup + data seeding pending |
 | 253    | Login No-Book Guard & UI Modernization (ADR + GOAP) | `plans/253-adr-login-no-book-guard-modernization.md`, `plans/archive/253-goap-login-no-book-guard-modernization.md` | ACCEPTED (PR #1028) |
 | 254    | UI/UX & Concept Modernization Master Plan (GOAP) | `plans/254-goap-uiux-modernization-master-plan.md` | IN PROGRESS (W1 complete) |
 | 255    | epub-sparkle UI/UX Port — Editorial Alignment (GOAP) | `plans/255-goap-epub-sparkle-uiux-port.md` | IN PROGRESS (W1) |
