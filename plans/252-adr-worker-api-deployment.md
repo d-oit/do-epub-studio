@@ -1,6 +1,6 @@
 # ADR-252: Serve the API on the same origin as the deployed frontend
 
-**Date:** Current session
+**Date:** 2026-08-20
 **Status:** Accepted (supersedes the standalone-Worker approach below)
 **Deciders:** Project maintainer
 **Related:** ADR-004, ADR-244, GOAP-251, GOAP-252, issue #1014

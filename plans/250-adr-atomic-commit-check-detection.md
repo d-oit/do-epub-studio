@@ -1,6 +1,6 @@
 # ADR-250: Atomic Commit Check Detection Uses Supported CLI Fields
 
-**Date:** Current session
+**Date:** 2026-08-20
 **Status:** Accepted
 **Deciders:** Project maintainer
 **Related:** ADR-083, ADR-187, GOAP-250
