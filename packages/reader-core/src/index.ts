@@ -10,3 +10,4 @@ export * from './epub-types';
 export * from './sanitizer';
 export * from './epub-accessibility';
 export * from './fixed-layout';
+export * from './ai';

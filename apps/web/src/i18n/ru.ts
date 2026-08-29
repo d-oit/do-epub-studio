@@ -83,6 +83,8 @@ export const ru: Record<TranslationKeys, TranslationValue> = {
   'reader.settings.fontSize.medium': 'Средний',
   'reader.settings.fontSize.large': 'Большой',
   'reader.settings.fontSize.xlarge': 'Очень большой',
+  'reader.settings.ai.title': 'AI-помощник',
+  'reader.settings.ai.description': 'Возможности ИИ на устройстве (краткие содержания глав). По умолчанию выключено; ваш текст никогда не покидает устройство.',
   'reader.settings.fontFamily.serif': 'Serif',
   'reader.settings.fontFamily.sans-serif': 'Sans Serif',
   'reader.settings.fontFamily.monospace': 'Monospace',

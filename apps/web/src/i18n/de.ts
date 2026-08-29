@@ -83,6 +83,8 @@ export const de: Record<TranslationKeys, TranslationValue> = {
   'reader.settings.fontSize.medium': 'Mittel',
   'reader.settings.fontSize.large': 'Groß',
   'reader.settings.fontSize.xlarge': 'Sehr groß',
+  'reader.settings.ai.title': 'KI-Assistenz',
+  'reader.settings.ai.description': 'KI-Funktionen auf dem Gerät (Kapitelzusammenfassungen). Standardmäßig deaktiviert; Ihr Text verlässt Ihr Gerät nie.',
   'reader.settings.fontFamily.serif': 'Serife',
   'reader.settings.fontFamily.sans-serif': 'Serifenlos',
   'reader.settings.fontFamily.monospace': 'Monospace',

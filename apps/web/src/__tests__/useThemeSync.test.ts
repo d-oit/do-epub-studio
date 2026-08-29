@@ -38,6 +38,7 @@ beforeEach(() => {
       pageWidth: 'normal',
       direction: 'default',
       writingMode: 'horizontal-tb',
+      aiEnabled: false,
     },
   });
   document.documentElement.removeAttribute('data-theme');

@@ -83,6 +83,8 @@ export const ja: Record<TranslationKeys, TranslationValue> = {
   'reader.settings.fontSize.medium': '中',
   'reader.settings.fontSize.large': '大',
   'reader.settings.fontSize.xlarge': '特大',
+  'reader.settings.ai.title': 'AI アシスタント',
+  'reader.settings.ai.description': 'デバイス内 AI 機能（章の要約）。既定では無効です。テキストは端末外に送信されません。',
   'reader.settings.fontFamily.serif': 'セリフ',
   'reader.settings.fontFamily.sans-serif': 'サンセリフ',
   'reader.settings.fontFamily.monospace': 'モノスペース',

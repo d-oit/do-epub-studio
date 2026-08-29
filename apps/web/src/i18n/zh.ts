@@ -83,6 +83,8 @@ export const zh: Record<TranslationKeys, TranslationValue> = {
   'reader.settings.fontSize.medium': '中',
   'reader.settings.fontSize.large': '大',
   'reader.settings.fontSize.xlarge': '特大',
+  'reader.settings.ai.title': 'AI 助手',
+  'reader.settings.ai.description': '设备端 AI 功能（章节摘要）。默认关闭；您的文本永远不会离开设备。',
   'reader.settings.fontFamily.serif': '衬线',
   'reader.settings.fontFamily.sans-serif': '无衬线',
   'reader.settings.fontFamily.monospace': '等宽',

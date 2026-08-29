@@ -89,6 +89,8 @@ export const en = {
   'reader.settings.fontSize.medium': 'Medium',
   'reader.settings.fontSize.large': 'Large',
   'reader.settings.fontSize.xlarge': 'Extra Large',
+  'reader.settings.ai.title': 'AI Assist',
+  'reader.settings.ai.description': 'On-device AI features (chapter summaries). Off by default; your text never leaves your device.',
   'reader.settings.fontFamily.serif': 'Serif',
   'reader.settings.fontFamily.sans-serif': 'Sans Serif',
   'reader.settings.fontFamily.monospace': 'Monospace',

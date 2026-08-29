@@ -83,6 +83,8 @@ export const ko: Record<TranslationKeys, TranslationValue> = {
   'reader.settings.fontSize.medium': '보통',
   'reader.settings.fontSize.large': '크게',
   'reader.settings.fontSize.xlarge': '아주 크게',
+  'reader.settings.ai.title': 'AI 어시스턴트',
+  'reader.settings.ai.description': '기기 내 AI 기능(장 요약). 기본값: 꺼짐; 텍스트는 기기를 떠나지 않습니다.',
   'reader.settings.fontFamily.serif': '세리프',
   'reader.settings.fontFamily.sans-serif': '산세리프',
   'reader.settings.fontFamily.monospace': '고정폭',

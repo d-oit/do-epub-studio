@@ -27,6 +27,7 @@ function resetStores() {
       pageWidth: 'normal',
       direction: 'default',
       writingMode: 'horizontal-tb',
+      aiEnabled: false,
     },
   });
   useAuthStore.setState({
