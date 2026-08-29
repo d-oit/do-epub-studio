@@ -3,7 +3,7 @@ import { apiRequest } from '../../lib/api';
 import { useAuthStore } from '../../stores/auth';
 import { useTranslation } from '../../hooks/useTranslation';
 import { AppLogo } from '../../components/ui';
-import { Spinner } from '@do-epub-studio/ui';
+import { Spinner, Skeleton } from '@do-epub-studio/ui';
 import { APP_NAME, APP_VERSION_LABEL } from '../../config/app-identity';
 import type { LibraryBookResponse, PaginatedResponse } from '@do-epub-studio/shared';
 import { BookCard } from './BookCard';
@@ -72,37 +72,45 @@ export function MyLibraryPage() {
 
   return (
     <main
-      id="main-content"
-      className="min-h-dvh bg-background px-4 py-6 text-foreground sm:px-6 md:py-10 lg:px-8 2xl:px-12"
+      id="main"
+      className="min-h-dvh bg-[var(--color-background)] px-4 py-6 text-[var(--color-foreground)] sm:px-6 md:py-10 lg:px-8 2xl:px-12"
     >
       <div className="mx-auto max-w-7xl">
-        <header className="mb-8 flex flex-col gap-6 border-b border-border pb-6">
+        <header className="mb-8 flex flex-col gap-6 border-b border-[var(--color-rule)] pb-6">
           <div className="mb-4 flex items-center gap-3">
-            <AppLogo size={32} className="text-accent" />
+            <AppLogo size={32} className="text-[var(--color-accent)]" />
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-foreground">{APP_NAME}</p>
-              <p className="text-xs text-foreground-muted">{APP_VERSION_LABEL}</p>
+              <p className="truncate text-sm font-semibold text-[var(--color-foreground)]">{APP_NAME}</p>
+              <p className="text-xs text-[var(--color-muted-foreground)]">{APP_VERSION_LABEL}</p>
             </div>
           </div>
           <h1 className="text-balance text-3xl font-bold tracking-tight md:text-4xl">{t('library.title')}</h1>
-          <p className="mt-2 max-w-2xl text-foreground-muted">{t('library.subtitle')}</p>
+          <p className="mt-2 max-w-2xl text-[var(--color-muted-foreground)]">{t('library.subtitle')}</p>
         </header>
 
         {isLoading ? (
-          <div className="flex justify-center py-12"><Spinner /></div>
+          <div className="@container/shelf grid grid-cols-2 gap-6 @md/shelf:grid-cols-3 @2xl/shelf:grid-cols-5">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="flex flex-col gap-3">
+                <Skeleton className="aspect-[2/3] w-full rounded-[var(--radius-paper)]" />
+                <Skeleton className="h-6 w-3/4 rounded" />
+                <Skeleton className="h-4 w-1/2 rounded" />
+              </div>
+            ))}
+          </div>
         ) : error ? (
-          <p role="alert" className="text-center text-accent-error">{error}</p>
+          <p role="alert" className="text-center text-[var(--color-accent-error)]">{error}</p>
         ) : books.length === 0 ? (
-          <p className="text-center text-foreground-muted">{t('library.empty')}</p>
+          <p className="text-center text-[var(--color-muted-foreground)]">{t('library.empty')}</p>
         ) : (
-          <div className="space-y-10">
+          <div className="space-y-12">
             {inProgress.length > 0 && (
-              <section>
-                <h2 className="mb-4 text-lg font-semibold text-foreground">{t('library.inProgress')}</h2>
-                <ul className="grid list-none gap-4 p-0 sm:grid-cols-2 lg:grid-cols-3">
-                  {inProgress.map((book) => (
+              <section aria-labelledby="heading-in-progress">
+                <h2 id="heading-in-progress" className="mb-6 font-[family-name:var(--font-display)] text-xl font-bold text-[var(--color-foreground)]">{t('library.inProgress')}</h2>
+                <ul className="@container/shelf grid grid-cols-2 gap-6 @md/shelf:grid-cols-3 @2xl/shelf:grid-cols-5 list-none p-0">
+                  {inProgress.map((book, idx) => (
                     <li key={book.id}>
-                      <BookCard book={book} />
+                      <BookCard book={book} isFirst={idx === 0} />
                     </li>
                   ))}
                 </ul>
@@ -110,12 +118,12 @@ export function MyLibraryPage() {
             )}
 
             {notStarted.length > 0 && (
-              <section>
-                <h2 className="mb-4 text-lg font-semibold text-foreground">{t('library.notStarted')}</h2>
-                <ul className="grid list-none gap-4 p-0 sm:grid-cols-2 lg:grid-cols-3">
-                  {notStarted.map((book) => (
+              <section aria-labelledby="heading-not-started">
+                <h2 id="heading-not-started" className="mb-6 font-[family-name:var(--font-display)] text-xl font-bold text-[var(--color-foreground)]">{t('library.notStarted')}</h2>
+                <ul className="@container/shelf grid grid-cols-2 gap-6 @md/shelf:grid-cols-3 @2xl/shelf:grid-cols-5 list-none p-0">
+                  {notStarted.map((book, idx) => (
                     <li key={book.id}>
-                      <BookCard book={book} />
+                      <BookCard book={book} isFirst={inProgress.length === 0 && idx === 0} />
                     </li>
                   ))}
                 </ul>
@@ -123,12 +131,12 @@ export function MyLibraryPage() {
             )}
 
             {completed.length > 0 && (
-              <section>
-                <h2 className="mb-4 text-lg font-semibold text-foreground">{t('library.completed')}</h2>
-                <ul className="grid list-none gap-4 p-0 sm:grid-cols-2 lg:grid-cols-3">
-                  {completed.map((book) => (
+              <section aria-labelledby="heading-completed">
+                <h2 id="heading-completed" className="mb-6 font-[family-name:var(--font-display)] text-xl font-bold text-[var(--color-foreground)]">{t('library.completed')}</h2>
+                <ul className="@container/shelf grid grid-cols-2 gap-6 @md/shelf:grid-cols-3 @2xl/shelf:grid-cols-5 list-none p-0">
+                  {completed.map((book, idx) => (
                     <li key={book.id}>
-                      <BookCard book={book} />
+                      <BookCard book={book} isFirst={inProgress.length === 0 && notStarted.length === 0 && idx === 0} />
                     </li>
                   ))}
                 </ul>
@@ -143,7 +151,7 @@ export function MyLibraryPage() {
               type="button"
               onClick={() => { void loadMore(); }}
               disabled={isLoadingMore}
-              className="rounded-lg border border-border bg-background-secondary px-6 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-background-secondary/80 disabled:opacity-50"
+              className="rounded-[var(--radius-paper)] border border-[var(--color-rule)] bg-[var(--color-paper)] px-6 py-2.5 text-sm font-medium text-[var(--color-foreground)] transition-colors hover:bg-[color-mix(in_oklch,var(--color-paper)_90%,var(--color-foreground)_10%)] disabled:opacity-50"
             >
               {isLoadingMore ? <Spinner /> : t('library.loadMore')}
             </button>
