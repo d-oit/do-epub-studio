@@ -5,7 +5,6 @@ import { createSpanId, createTraceId } from '@do-epub-studio/shared';
 import { useTranslation } from '../../hooks/useTranslation';
 import { apiRequest } from '../../lib/api/index';
 import { logClientEvent } from '../../lib/client-logger';
-import { useAuthStore, useReaderStore, usePreferencesStore } from '../../stores';
 import { setupOnlineListener, getSyncQueue } from '../../lib/offline';
 import { setupZombieDetection } from '../../lib/offline/permissions';
 import { AnnotationToolbar, extractSelectionData, CommentsPanel } from './components/annotations';
@@ -32,6 +31,14 @@ import {
   ScrollProgressBar,
 } from './components';
 import { ConflictResolutionPanel } from './components/conflicts/ConflictResolutionPanel';
+import { useAuthStore, useReaderStore, usePreferencesStore } from '../../stores';
+import { initAiPlugins } from '../../lib/ai-plugins';
+
+// Reader route owns AI features (GOAP-318): registering here keeps the
+// reader-core extension point out of the shared entry graph, honoring the
+// ADR-107 route boundary rules (catalog/admin/auth must not import
+// reader-core). Idempotent.
+initAiPlugins();
 
 export function ReaderPage() {
   const { bookSlug } = useParams<{ bookSlug: string }>();
