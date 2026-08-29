@@ -20,6 +20,9 @@ export { ConfirmDialog } from './confirm-dialog';
 export { SearchInput } from './search-input';
 export { ProgressBar } from './progress-bar';
 export { Tabs } from './tabs';
+export { SyncIndicator } from './SyncIndicator';
+export { ReaderToolbar } from './toolbar';
+export { ReaderSettings } from './reader-settings';
 
 export type { ButtonProps } from './button';
 export type { InputProps } from './input';
@@ -37,3 +40,4 @@ export type { ConfirmDialogProps } from './confirm-dialog';
 export type { SearchInputProps } from './search-input';
 export type { ProgressBarProps } from './progress-bar';
 export type { TabsProps, TabItem } from './tabs';
+export type { SyncUi } from './SyncIndicator';
