@@ -141,6 +141,8 @@ jobs:
 
       - name: Run fast checks (scoped to changed packages)
         run: pnpm verify:fast
+      - name: Run scripts unit tests (fail-closed gate pins)
+        run: pnpm vitest run scripts/__tests__
 
   dep-scan:
     name: Dependency Vulnerability Scan
