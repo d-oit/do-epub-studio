@@ -5,17 +5,6 @@ export interface InputProps extends ComponentPropsWithoutRef<'input'> {
   label?: string;
   error?: string;
   helperText?: string;
-  /**
-   * When provided (with `hidePasswordLabel`) AND `type === 'password'`, renders
-   * a trailing "show/hide password" toggle per GOV.UK / WCAG 3.3.8 best
-   * practice: an eye icon plus a changing action label ("Show password" ↔
-   * "Hide password") with `aria-controls` pointing at the field, no
-   * `aria-pressed`, focus stays on the button, and the password value is never
-   * announced. At `sm+` the icon and the localized label are both visible; on
-   * the smallest screens only the icon renders and the label becomes the
-   * button's `aria-label` — long-locale labels (e.g. French "Afficher le mot
-   * de passe") would otherwise overflow the input's padding reservation.
-   */
   showPasswordLabel?: string;
   hidePasswordLabel?: string;
 }
@@ -36,9 +25,8 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     const inputId = id || generatedId;
     const errorId = `${inputId}-error`;
     const helperId = `${inputId}-helper`;
-    const describedBy = error ? errorId : helperText ? helperId : undefined;
+    const describedBy = error ? `${inputId}-error` : helperText ? helperId : undefined;
 
-    // Toggle exists only for password fields that provide localized labels.
     const showToggle = type === 'password' && !!showPasswordLabel && !!hidePasswordLabel;
     const [passwordVisible, setPasswordVisible] = useState(false);
     const inputType = showToggle ? (passwordVisible ? 'text' : 'password') : type;
@@ -50,7 +38,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className="w-full">
         {label && (
-          <label htmlFor={inputId} className="block text-sm font-medium text-foreground mb-1.5">
+          <label htmlFor={inputId} className="block text-sm font-medium text-[var(--color-foreground)] mb-1.5">
             {label}
           </label>
         )}
@@ -59,19 +47,19 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             ref={ref}
             id={inputId}
             type={inputType}
-            aria-invalid={error ? 'true' : undefined}
+            aria-invalid={Boolean(error)}
             aria-describedby={describedBy}
             spellCheck={props.spellCheck ?? (type === 'password' ? false : undefined)}
             autoCapitalize={props.autoCapitalize ?? (type === 'password' ? 'off' : undefined)}
-            className={`
-              w-full px-4 py-3 bg-background border border-border/60 rounded-lg
-              text-foreground placeholder:text-foreground-muted/50
-              transition-all duration-150
-              outline-none
-              ${error ? 'border-accent-error focus:border-accent-error focus:ring-accent-error/15' : 'focus:border-accent focus:ring-[3px] focus:ring-accent/15'}
-              ${className}
-            `}
-            {...(props)}
+            className={[
+              'min-h-11 w-full rounded-[var(--radius-paper)] bg-[var(--color-paper)]',
+              'border border-[var(--color-rule)] px-3 text-[var(--color-foreground)]',
+              'placeholder:text-[var(--color-muted-foreground)]',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]',
+              error ? 'border-[var(--color-accent-error)]' : '',
+              className,
+            ].filter(Boolean).join(' ')}
+            {...props}
           />
           {showToggle && (
             <button
@@ -88,11 +76,11 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           )}
         </div>
         {error ? (
-          <p id={errorId} className="mt-1.5 text-sm text-accent-error">
+          <p id={errorId} className="mt-1.5 text-sm text-[var(--color-accent-error)]">
             {error}
           </p>
         ) : helperText ? (
-          <p id={helperId} className="mt-1.5 text-sm text-foreground-muted">
+          <p id={helperId} className="mt-1.5 text-sm text-[var(--color-muted-foreground)]">
             {helperText}
           </p>
         ) : null}

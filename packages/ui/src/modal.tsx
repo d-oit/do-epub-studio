@@ -1,6 +1,7 @@
 import { type ReactNode, useId, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useFocusTrap } from './useFocusTrap';
+import { IconButton } from './icon-button';
 
 export interface ModalProps {
   isOpen: boolean;
@@ -82,27 +83,28 @@ export function Modal({ isOpen, onClose, title, description, children, footer, s
         aria-describedby={description ? descriptionId : undefined}
         className={`fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full ${sizeClasses[size]} z-50 ${isExiting ? 'animate-scale-out' : 'animate-scale-in'}`}
       >
-        <div className="glass-panel rounded-2xl p-6 m-4">
+        <div className="bg-[var(--color-paper)] text-[var(--color-ink)] border border-[var(--color-rule)] shadow-[var(--elevation-2)] rounded-[var(--radius-paper)] p-6 m-4">
           {title && (
             <div className="flex items-center justify-between mb-4">
-              <h2 id={titleId} className="text-lg font-semibold text-foreground">{title}</h2>
-              <button
+              <h2 id={titleId} className="text-lg font-semibold text-[var(--color-foreground)]">{title}</h2>
+              <IconButton
                 onClick={onClose}
-                className="p-1 rounded-lg hover:bg-background-secondary transition-colors"
-                aria-label="Close"
+                label="Close"
+                size="sm"
+                variant="ghost"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
-              </button>
+              </IconButton>
             </div>
           )}
           {description && (
-            <p id={descriptionId} className="text-sm text-foreground-muted mb-4">{description}</p>
+            <p id={descriptionId} className="text-sm text-[var(--color-muted-foreground)] mb-4">{description}</p>
           )}
           {children}
           {footer && (
-            <div className="mt-4 pt-4 border-t border-border">
+            <div className="mt-4 pt-4 border-t border-[var(--color-rule)]">
               {footer}
             </div>
           )}
