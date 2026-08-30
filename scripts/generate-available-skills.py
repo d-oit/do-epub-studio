@@ -6,7 +6,6 @@ This script scans the skills directory and creates a markdown file
 listing all available skills with their descriptions.
 """
 
-import os
 import sys
 from pathlib import Path
 from typing import Optional
@@ -145,8 +144,8 @@ def get_skill_category(skill_path: Path) -> Optional[str]:
             cat = frontmatter.get("category")
             if isinstance(cat, str) and cat.strip():
                 return cat.strip()
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"Warning: Could not parse category from {skill_file}: {e}")
 
     return "general"
 
