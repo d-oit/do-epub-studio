@@ -1,6 +1,6 @@
-import { useState, useCallback, useMemo, useRef } from 'react';
+import { useState, useCallback, useMemo, useRef, Fragment } from 'react';
 import { useKeyboardShortcut } from '../../../../hooks/useKeyboardShortcut';
-import { useFocusTrap } from '@do-epub-studio/ui';
+import { Tabs, type TabItem, useFocusTrap } from '@do-epub-studio/ui';
 import { IconButton } from '../../../../components/ui';
 import type { Comment, Highlight } from '../../../../stores';
 import { useTranslation } from '../../../../hooks/useTranslation';
@@ -161,59 +161,12 @@ export function CommentsPanel({
     ],
   );
 
-  if (!isOpen) return null;
-
-  return (
-    <aside
-      ref={panelRef}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="comments-title"
-      className="fixed inset-y-0 right-0 w-80 bg-background border-l border-border z-40 flex flex-col shadow-xl"
-    >
-      <div className="p-4 border-b border-border flex justify-between items-center">
-        <h2 id="comments-title" className="font-semibold">{t('comment.plural')}</h2>
-        <IconButton
-          onClick={onClose}
-          variant="ghost"
-          aria-label={t('reader.settings.close')}
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M6 18L18 6M6 6l12 12"
-            />
-          </svg>
-        </IconButton>
-      </div>
-
-      <div className="flex border-b border-border">
-        <button
-          onClick={() => setActiveTab('comments')}
-          className={`flex-1 py-2 px-4 text-sm font-medium transition-colors ${
-            activeTab === 'comments'
-              ? 'border-b-2 border-accent text-accent'
-              : 'text-foreground-muted hover:text-foreground'
-          }`}
-        >
-          {t('annotation.comment')} ({openComments.length})
-        </button>
-        <button
-          onClick={() => setActiveTab('highlights')}
-          className={`flex-1 py-2 px-4 text-sm font-medium transition-colors ${
-            activeTab === 'highlights'
-              ? 'border-b-2 border-accent text-accent'
-              : 'text-foreground-muted hover:text-foreground'
-          }`}
-        >
-          {t('annotation.highlight')} ({highlights.length})
-        </button>
-      </div>
-
-      <div className="flex-1 overflow-y-auto p-4">
-        {activeTab === 'comments' && (
+  const tabItems: TabItem[] = useMemo(
+    () => [
+      {
+        id: 'comments',
+        label: `${t('annotation.comment')} (${openComments.length})`,
+        content: (
           <div className="space-y-4">
             {openComments.length === 0 && resolvedComments.length === 0 && (
               <p className="text-sm text-foreground-muted text-center py-8">
@@ -224,7 +177,9 @@ export function CommentsPanel({
               <div>
                 <h3 className="text-xs font-semibold text-foreground-muted uppercase mb-3">{t('comment.status.open')}</h3>
                 <div className="space-y-3">
-                  {openComments.map(renderComment)}
+                  {openComments.map((comment) => (
+                    <Fragment key={comment.id}>{renderComment(comment)}</Fragment>
+                  ))}
                 </div>
               </div>
             )}
@@ -232,14 +187,19 @@ export function CommentsPanel({
               <div className="mt-6">
                 <h3 className="text-xs font-semibold text-foreground-muted uppercase mb-3">{t('comment.status.resolved')}</h3>
                 <div className="space-y-3">
-                  {resolvedComments.map(renderComment)}
+                  {resolvedComments.map((comment) => (
+                    <Fragment key={comment.id}>{renderComment(comment)}</Fragment>
+                  ))}
                 </div>
               </div>
             )}
           </div>
-        )}
-
-        {activeTab === 'highlights' && (
+        ),
+      },
+      {
+        id: 'highlights',
+        label: `${t('annotation.highlight')} (${highlights.length})`,
+        content: (
           <div className="space-y-3">
             {highlights.length === 0 && (
               <p className="text-sm text-foreground-muted text-center py-8">
@@ -258,11 +218,53 @@ export function CommentsPanel({
                   ariaLabel="Highlights"
                 />
               ) : (
-                highlights.map(renderHighlight)
+                highlights.map((highlight) => (
+                  <Fragment key={highlight.id}>{renderHighlight(highlight)}</Fragment>
+                ))
               ))}
           </div>
-        )}
+        ),
+      },
+    ],
+    [openComments, resolvedComments, highlights, t, renderComment, renderHighlight],
+  );
+
+  if (!isOpen) return null;
+
+  return (
+    <aside
+      ref={panelRef}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="comments-title"
+      className="fixed inset-y-0 right-0 w-80 bg-background border-l border-border z-40 flex flex-col shadow-xl"
+    >
+      <div className="p-4 border-b border-border flex justify-between items-center shrink-0">
+        <h2 id="comments-title" className="font-semibold">{t('comment.plural')}</h2>
+        <IconButton
+          onClick={onClose}
+          variant="ghost"
+          aria-label={t('a11y.close')}
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
+        </IconButton>
       </div>
+
+      <Tabs
+        items={tabItems}
+        activeId={activeTab}
+        onChange={(id) => setActiveTab(id as 'comments' | 'highlights')}
+        ariaLabel={t('comment.plural')}
+        className="flex-1 flex flex-col min-h-0"
+        tabpanelClassName="flex-1 overflow-y-auto p-4 pt-4" /* eslint-disable-line i18next/no-literal-string -- Tailwind CSS class string */
+      />
     </aside>
   );
 }
