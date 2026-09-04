@@ -266,3 +266,33 @@ class TestMinContentThreshold:
         # This tests the pattern used in providers
         good_content = "x" * 500  # Above MIN_CHARS
         assert len(good_content) >= MIN_CHARS
+
+
+class TestDoclingAndOCR:
+    """Tests for resolve_with_docling and resolve_with_ocr error logging."""
+
+    @patch("scripts.providers_impl.subprocess.run")
+    @patch("scripts.providers_impl.logger")
+    def test_docling_logs_exception(self, mock_logger, mock_subprocess):
+        from scripts.providers_impl import resolve_with_docling
+
+        mock_subprocess.side_effect = RuntimeError("docling binary not found")
+        result = resolve_with_docling("https://example.com/doc.pdf", 1000)
+
+        assert result is None
+        mock_logger.debug.assert_called_once()
+        args, _ = mock_logger.debug.call_args
+        assert "resolve_with_docling failed for %s: %s" in args[0]
+
+    @patch("scripts.providers_impl.subprocess.run")
+    @patch("scripts.providers_impl.logger")
+    def test_ocr_logs_exception(self, mock_logger, mock_subprocess):
+        from scripts.providers_impl import resolve_with_ocr
+
+        mock_subprocess.side_effect = RuntimeError("tesseract execution failed")
+        result = resolve_with_ocr("https://example.com/image.png", 1000)
+
+        assert result is None
+        mock_logger.debug.assert_called_once()
+        args, _ = mock_logger.debug.call_args
+        assert "resolve_with_ocr failed for %s: %s" in args[0]
