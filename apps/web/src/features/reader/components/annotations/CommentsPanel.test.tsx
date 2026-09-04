@@ -117,14 +117,14 @@ describe('CommentsPanel', () => {
     it('renders close button', () => {
       render(<CommentsPanel {...defaultProps} />);
 
-      expect(screen.getByRole('button', { name: 'reader.settings.close' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'a11y.close' })).toBeInTheDocument();
     });
 
     it('renders tabs for comments and highlights', () => {
       render(<CommentsPanel {...defaultProps} />);
 
-      expect(screen.getByRole('button', { name: /annotation.comment/ })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /annotation.highlight/ })).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: /annotation.comment/ })).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: /annotation.highlight/ })).toBeInTheDocument();
     });
   });
 
@@ -140,9 +140,19 @@ describe('CommentsPanel', () => {
       const user = userEvent.setup();
       render(<CommentsPanel {...defaultProps} />);
 
-      await user.click(screen.getByRole('button', { name: /annotation.highlight/ }));
+      await user.click(screen.getByRole('tab', { name: /annotation.highlight/ }));
 
       // Should show highlight items
+      expect(screen.getByText('Highlighted text')).toBeInTheDocument();
+    });
+
+    it('navigates between tabs using keyboard arrow keys', () => {
+      render(<CommentsPanel {...defaultProps} />);
+      const commentsTab = screen.getByRole('tab', { name: /annotation.comment/ });
+
+      // ArrowRight switches to highlights tab
+      fireEvent.keyDown(commentsTab, { key: 'ArrowRight' });
+      expect(screen.getByRole('tab', { name: /annotation.highlight/ })).toHaveAttribute('aria-selected', 'true');
       expect(screen.getByText('Highlighted text')).toBeInTheDocument();
     });
 
@@ -150,13 +160,13 @@ describe('CommentsPanel', () => {
       render(<CommentsPanel {...defaultProps} />);
 
       // One open comment
-      expect(screen.getByRole('button', { name: /annotation.comment \(1\)/ })).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: /annotation.comment \(1\)/ })).toBeInTheDocument();
     });
 
     it('shows highlight count in tab', () => {
       render(<CommentsPanel {...defaultProps} />);
 
-      expect(screen.getByRole('button', { name: /annotation.highlight \(2\)/ })).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: /annotation.highlight \(2\)/ })).toBeInTheDocument();
     });
   });
 
@@ -191,7 +201,7 @@ describe('CommentsPanel', () => {
       render(<CommentsPanel {...defaultProps} />);
 
       // Find the close button (SVG icon button in header)
-      const closeButton = screen.getAllByRole('button')[0];
+      const closeButton = screen.getByRole('button', { name: 'a11y.close' });
       await user.click(closeButton);
 
       expect(mockOnClose).toHaveBeenCalled();
@@ -203,7 +213,7 @@ describe('CommentsPanel', () => {
       const user = userEvent.setup();
       render(<CommentsPanel {...defaultProps} />);
 
-      await user.click(screen.getByRole('button', { name: /annotation.highlight/ }));
+      await user.click(screen.getByRole('tab', { name: /annotation.highlight/ }));
 
       expect(screen.getByText('Highlighted text')).toBeInTheDocument();
       expect(screen.getByText('Another highlight')).toBeInTheDocument();
@@ -213,7 +223,7 @@ describe('CommentsPanel', () => {
       const user = userEvent.setup();
       render(<CommentsPanel {...defaultProps} highlights={[]} />);
 
-      await user.click(screen.getByRole('button', { name: /annotation.highlight/ }));
+      await user.click(screen.getByRole('tab', { name: /annotation.highlight/ }));
 
       expect(screen.getByText('highlight.noHighlights')).toBeInTheDocument();
     });
@@ -222,7 +232,7 @@ describe('CommentsPanel', () => {
       const user = userEvent.setup();
       render(<CommentsPanel {...defaultProps} />);
 
-      await user.click(screen.getByRole('button', { name: /annotation.highlight/ }));
+      await user.click(screen.getByRole('tab', { name: /annotation.highlight/ }));
 
       expect(screen.getByText('A note')).toBeInTheDocument();
     });
@@ -242,7 +252,7 @@ describe('CommentsPanel', () => {
       const user = userEvent.setup();
       render(<CommentsPanel {...defaultProps} />);
 
-      await user.click(screen.getByRole('button', { name: /annotation.highlight/ }));
+      await user.click(screen.getByRole('tab', { name: /annotation.highlight/ }));
       await user.click(screen.getByText('Highlighted text'));
 
       expect(mockOnNavigateToAnnotation).toHaveBeenCalledWith('chapter-1', 'epubcfi(/6/4!/2/2)');

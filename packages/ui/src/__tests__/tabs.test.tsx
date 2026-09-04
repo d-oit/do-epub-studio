@@ -6,6 +6,7 @@ describe('Tabs', () => {
   const items = [
     { id: 'tab1', label: 'Tab 1', content: <div>Content 1</div> },
     { id: 'tab2', label: 'Tab 2', content: <div>Content 2</div> },
+    { id: 'tab3', label: 'Tab 3', content: <div>Content 3</div> },
   ];
 
   it('renders all tab labels', () => {
@@ -25,11 +26,59 @@ describe('Tabs', () => {
     expect(screen.getByText('Content 2')).toBeInTheDocument();
   });
 
-  it('marks selected tab with aria-selected', () => {
+  it('marks selected tab with aria-selected and sets roving tabIndex', () => {
     render(<Tabs items={items} />);
-    expect(screen.getByRole('tab', { name: 'Tab 1' })).toHaveAttribute('aria-selected', 'true');
-    fireEvent.click(screen.getByRole('tab', { name: 'Tab 2' }));
+    const tab1 = screen.getByRole('tab', { name: 'Tab 1' });
+    const tab2 = screen.getByRole('tab', { name: 'Tab 2' });
+
+    expect(tab1).toHaveAttribute('aria-selected', 'true');
+    expect(tab1).toHaveAttribute('tabindex', '0');
+    expect(tab2).toHaveAttribute('aria-selected', 'false');
+    expect(tab2).toHaveAttribute('tabindex', '-1');
+
+    fireEvent.click(tab2);
+    expect(tab2).toHaveAttribute('aria-selected', 'true');
+    expect(tab2).toHaveAttribute('tabindex', '0');
+    expect(tab1).toHaveAttribute('aria-selected', 'false');
+    expect(tab1).toHaveAttribute('tabindex', '-1');
+  });
+
+  it('navigates tabs using ArrowRight, ArrowLeft, Home, and End keys', () => {
+    render(<Tabs items={items} />);
+    const tab1 = screen.getByRole('tab', { name: 'Tab 1' });
+
+    // ArrowRight -> Tab 2
+    fireEvent.keyDown(tab1, { key: 'ArrowRight' });
     expect(screen.getByRole('tab', { name: 'Tab 2' })).toHaveAttribute('aria-selected', 'true');
+
+    const tab2 = screen.getByRole('tab', { name: 'Tab 2' });
+    // ArrowRight -> Tab 3
+    fireEvent.keyDown(tab2, { key: 'ArrowRight' });
+    expect(screen.getByRole('tab', { name: 'Tab 3' })).toHaveAttribute('aria-selected', 'true');
+
+    const tab3 = screen.getByRole('tab', { name: 'Tab 3' });
+    // ArrowRight wraps to Tab 1
+    fireEvent.keyDown(tab3, { key: 'ArrowRight' });
+    expect(screen.getByRole('tab', { name: 'Tab 1' })).toHaveAttribute('aria-selected', 'true');
+
+    // ArrowLeft wraps to Tab 3
+    fireEvent.keyDown(tab1, { key: 'ArrowLeft' });
+    expect(screen.getByRole('tab', { name: 'Tab 3' })).toHaveAttribute('aria-selected', 'true');
+
+    // Home -> Tab 1
+    fireEvent.keyDown(tab3, { key: 'Home' });
+    expect(screen.getByRole('tab', { name: 'Tab 1' })).toHaveAttribute('aria-selected', 'true');
+
+    // End -> Tab 3
+    fireEvent.keyDown(tab1, { key: 'End' });
+    expect(screen.getByRole('tab', { name: 'Tab 3' })).toHaveAttribute('aria-selected', 'true');
+  });
+
+  it('renders focusable tabpanel with aria-labelledby', () => {
+    render(<Tabs items={items} />);
+    const panel = screen.getByRole('tabpanel');
+    expect(panel).toHaveAttribute('tabindex', '0');
+    expect(panel).toHaveAttribute('aria-labelledby', 'tab-tab1');
   });
 
   it('calls onChange when tab is clicked', () => {
