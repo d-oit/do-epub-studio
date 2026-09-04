@@ -37,7 +37,7 @@ class TestDetectDocPlatform:
         ],
     )
     def test_detect_doc_platform(self, url, expected):
-        assert detect_doc_platform(url) == expected
+        assert detect_doc_platform(url) == expected  # nosec B101
 
 
 class TestRoutingMemoryInit:
