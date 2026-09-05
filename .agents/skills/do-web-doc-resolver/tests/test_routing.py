@@ -4,7 +4,40 @@ Tests for routing memory module.
 
 import pytest
 
+from scripts.routing import detect_doc_platform
 from scripts.routing_memory import RoutingMemory
+
+
+class TestDetectDocPlatform:
+    """Tests for detect_doc_platform function."""
+
+    @pytest.mark.parametrize(
+        ("url", "expected"),
+        [
+            ("https://docs.gitbook.io/welcome", "gitbook"),
+            ("https://gitbook.io", "gitbook"),
+            ("https://my-docs.gitbook.com/guide", "gitbook"),
+            ("https://gitbook.com", "gitbook"),
+            ("https://docs.readthedocs.io/en/stable/", "sphinx"),
+            ("https://readthedocs.io", "sphinx"),
+            ("https://project.rtfd.io", "sphinx"),
+            ("https://rtfd.io", "sphinx"),
+            ("https://www.mkdocs.org/user-guide/", "mkdocs"),
+            ("https://mkdocs.org", "mkdocs"),
+            ("https://workspace.notion.so/page", "notion"),
+            ("https://notion.so", "notion"),
+            ("https://site.notion.site/doc", "notion"),
+            ("https://notion.site", "notion"),
+            ("https://company.atlassian.net/wiki/spaces", "confluence"),
+            ("https://confluence.example.com/pages", "confluence"),
+            ("https://example.com/confluence/doc", "confluence"),
+            ("https://example.com/docs", None),
+            ("https://github.com/repo", None),
+            ("not a url", None),
+        ],
+    )
+    def test_detect_doc_platform(self, url, expected):
+        assert detect_doc_platform(url) == expected  # nosec B101
 
 
 class TestRoutingMemoryInit:

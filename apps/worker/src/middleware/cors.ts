@@ -9,6 +9,18 @@ export const corsMiddleware: MiddlewareHandler<{ Bindings: Env }> = async (c, ne
   const origin = c.req.header('Origin');
   const allowedOrigin = origin === c.env.APP_BASE_URL ? origin : c.env.APP_BASE_URL;
 
+  c.header('Access-Control-Allow-Origin', allowedOrigin);
+  c.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+  c.header(
+    'Access-Control-Allow-Headers',
+    `Content-Type, Authorization, ${TRACE_HEADER}, ${SPAN_HEADER}, traceparent`,
+  );
+  c.header(
+    'Access-Control-Expose-Headers',
+    `${TRACE_HEADER}, ${SPAN_HEADER}, traceparent`,
+  );
+  c.header('Vary', 'Origin, Access-Control-Request-Headers');
+
   await next();
 
   c.res.headers.set('Access-Control-Allow-Origin', allowedOrigin);
