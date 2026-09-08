@@ -77,6 +77,21 @@ def extract_domain(url: str) -> str | None:
         return None
 
 
+PLATFORM_DOMAINS: tuple[tuple[str, str], ...] = (
+    ("gitbook.io", "gitbook"),
+    ("gitbook.com", "gitbook"),
+    ("readthedocs.io", "sphinx"),
+    ("rtfd.io", "sphinx"),
+    ("notion.so", "notion"),
+    ("notion.site", "notion"),
+)
+
+PLATFORM_EXACT_HOSTS: dict[str, str] = {
+    "mkdocs.org": "mkdocs",
+    "www.mkdocs.org": "mkdocs",
+}
+
+
 def detect_doc_platform(url: str) -> str | None:
     """Detect common documentation platforms from URL."""
     try:
@@ -87,24 +102,17 @@ def detect_doc_platform(url: str) -> str | None:
     hostname = (parsed.hostname or "").lower()
     path = (parsed.path or "").lower()
 
-    if hostname == "gitbook.io" or hostname.endswith(".gitbook.io"):
-        return "gitbook"
-    if hostname == "gitbook.com" or hostname.endswith(".gitbook.com"):
-        return "gitbook"
-    if hostname == "readthedocs.io" or hostname.endswith(".readthedocs.io"):
-        return "sphinx"
-    if hostname == "rtfd.io" or hostname.endswith(".rtfd.io"):
-        return "sphinx"
-    if hostname == "www.mkdocs.org" or hostname == "mkdocs.org":
-        return "mkdocs"
-    if hostname == "notion.so" or hostname.endswith(".notion.so"):
-        return "notion"
-    if hostname == "notion.site" or hostname.endswith(".notion.site"):
-        return "notion"
+    if platform := PLATFORM_EXACT_HOSTS.get(hostname):
+        return platform
+
+    for domain, platform in PLATFORM_DOMAINS:
+        if hostname == domain or hostname.endswith(f".{domain}"):
+            return platform
+
     if (
-        (hostname.endswith(".atlassian.net") and path.startswith("/wiki"))
-        or "confluence" in hostname
+        "confluence" in hostname
         or "confluence" in path
+        or (hostname.endswith(".atlassian.net") and path.startswith("/wiki"))
     ):
         return "confluence"
 
