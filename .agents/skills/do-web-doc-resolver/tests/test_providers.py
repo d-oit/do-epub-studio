@@ -277,10 +277,10 @@ class TestDoclingAndOCR:
         mock_subprocess.side_effect = RuntimeError("docling binary not found")
         result = resolve_with_docling("https://example.com/doc.pdf", 1000)
 
-        assert result is None
+        assert result is None  # nosec B101 — pytest idiom; suite never runs under python -O
         mock_logger.debug.assert_called_once()
         args, _ = mock_logger.debug.call_args
-        assert "resolve_with_docling failed for %s: %s" in args[0]
+        assert "resolve_with_docling failed for %s: %s" in args[0]  # nosec B101 — pytest idiom; suite never runs under python -O
 
     @patch("scripts.providers_impl.subprocess.run")
     @patch("scripts.providers_impl.logger")
@@ -290,7 +290,7 @@ class TestDoclingAndOCR:
         mock_subprocess.side_effect = RuntimeError("tesseract execution failed")
         result = resolve_with_ocr("https://example.com/image.png", 1000)
 
-        assert result is None
+        assert result is None  # nosec B101 — pytest idiom; suite never runs under python -O
         mock_logger.debug.assert_called_once()
         args, _ = mock_logger.debug.call_args
-        assert "resolve_with_ocr failed for %s: %s" in args[0]
+        assert "resolve_with_ocr failed for %s: %s" in args[0]  # nosec B101 — pytest idiom; suite never runs under python -O
