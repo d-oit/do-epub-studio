@@ -81,8 +81,8 @@ importers:
         specifier: ^17.11.0
         version: 17.11.0
       impeccable:
-        specifier: ^3.6.0
-        version: 3.6.0
+        specifier: ^4.0.1
+        version: 4.0.1
       js-yaml:
         specifier: ^5.4.0
         version: 5.4.1
@@ -1683,6 +1683,36 @@ packages:
     engines: {node: '>=20.9.0'}
     cpu: [x64]
     os: [win32]
+
+  '@impeccable/cli-darwin-arm64@0.1.0':
+    resolution: {integrity: sha512-epOS3qkitZETKzOW1CkpCOAlOyJYkeZQj3XcIRVZty/Gyf7i4BBe5g+uH9gHX2G8kQPqojZ64JxMaa+KmkU5Rg==}
+    cpu: [arm64]
+    os: [darwin]
+    hasBin: true
+
+  '@impeccable/cli-darwin-x64@0.1.0':
+    resolution: {integrity: sha512-5BqM4svaZJaxSeDKOpYtwcBfA7eG8Np/5qPUeeJE0C7UzNfwLgCkqVH05FWZW+dEXCdNDDyhD4zuplgAOGL1Hw==}
+    cpu: [x64]
+    os: [darwin]
+    hasBin: true
+
+  '@impeccable/cli-linux-arm64@0.1.0':
+    resolution: {integrity: sha512-BORbdrmUOHSwM7BPLLe9+F+G1TbzqNFaY1+bwWojKdnmVnX1YR2zblasq7zd96Hl4qLEq5kw3Jv0Y3NpLPDZMQ==}
+    cpu: [arm64]
+    os: [linux]
+    hasBin: true
+
+  '@impeccable/cli-linux-x64@0.1.0':
+    resolution: {integrity: sha512-dyAF+/gvaWyiDuGZm/KCoIaCzeshMqEJFGdgwe1KbpHss74XC29Jewh6OsyatRMpsJaSj/VLjvkS/NrzFoqohQ==}
+    cpu: [x64]
+    os: [linux]
+    hasBin: true
+
+  '@impeccable/cli-windows-x64@0.1.0':
+    resolution: {integrity: sha512-SnG+y5naFQk/5ibXDAjLq0P4njUitKZK1mUeL0hEUycx5ueXyUcz+ldRXicccACoHIPnnNtG3Xq86Cs3L7KAUg==}
+    cpu: [x64]
+    os: [win32]
+    hasBin: true
 
   '@intity/epub-js@0.3.96':
     resolution: {integrity: sha512-e3s65p/P4mkH9qLJfZ4Ri2nYdcQk/RfLQzme+J6dqZee1vxPxb8s31a5hsddXls6pr6TFvyyz+uUuGvaxGC7fQ==}
@@ -4460,8 +4490,8 @@ packages:
   immediate@3.0.6:
     resolution: {integrity: sha512-XXOFtyqDjNDAQxVfYxuF7g9Il/IbWmmlQg2MYKOH8ExIT1qg6xc4zyS3HaEEATgs1btfzxq15ciUiY7gjSXRGQ==}
 
-  impeccable@3.6.0:
-    resolution: {integrity: sha512-nysc6/2OHTWqLrcSxTxZk4r4QMufhU8NTIuG2ic6p5zzyZe45AWBX3/18OA5S88pCWq+4z8pKsjUxhAM990RKg==}
+  impeccable@4.0.1:
+    resolution: {integrity: sha512-gip60/B+BOTwVyCMA0PxgDyqw7gwWavoig2+qtDhwD2Fn8+Q8tIuMU7tGwwYBORCWZgo5UJC03YuWOCIQM4zdQ==}
     engines: {node: '>=22.18.0'}
     hasBin: true
 
@@ -7753,6 +7783,21 @@ snapshots:
   '@img/sharp-win32-x64@0.35.3':
     optional: true
 
+  '@impeccable/cli-darwin-arm64@0.1.0':
+    optional: true
+
+  '@impeccable/cli-darwin-x64@0.1.0':
+    optional: true
+
+  '@impeccable/cli-linux-arm64@0.1.0':
+    optional: true
+
+  '@impeccable/cli-linux-x64@0.1.0':
+    optional: true
+
+  '@impeccable/cli-windows-x64@0.1.0':
+    optional: true
+
   '@intity/epub-js@0.3.96':
     dependencies:
       assert: 2.1.0
@@ -10515,21 +10560,13 @@ snapshots:
 
   immediate@3.0.6: {}
 
-  impeccable@3.6.0:
-    dependencies:
-      css-select: 7.0.0
-      css-tree: 3.2.1
-      domutils: 4.0.2
-      fflate: 0.8.3
-      htmlparser2: 12.0.0
-      marked: 18.0.10
+  impeccable@4.0.1:
     optionalDependencies:
-      puppeteer: 25.8.0
-    transitivePeerDependencies:
-      - bufferutil
-      - proxy-agent
-      - utf-8-validate
-      - yauzl
+      '@impeccable/cli-darwin-arm64': 0.1.0
+      '@impeccable/cli-darwin-x64': 0.1.0
+      '@impeccable/cli-linux-arm64': 0.1.0
+      '@impeccable/cli-linux-x64': 0.1.0
+      '@impeccable/cli-windows-x64': 0.1.0
 
   import-fresh@3.3.1:
     dependencies:
