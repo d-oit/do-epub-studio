@@ -4,7 +4,8 @@ import { useTranslation } from '../../hooks/useTranslation';
 import { apiRequest } from '../../lib/api';
 import { useAuthStore } from '../../stores/auth';
 import type { BookResponse } from '@do-epub-studio/shared';
-import { validateEpub } from '@do-epub-studio/shared';
+// EPUB validator (jszip) is lazy-loaded: only needed at book-upload time,
+// keeps it out of the admin-route entry chunk (bundle budget ADR-107 §3).
 import { LocaleSwitcher } from '../../components/LocaleSwitcher';
 import { Button, ConfirmDialog } from '../../components/ui';
 import { Spinner } from '@do-epub-studio/ui';
@@ -176,6 +177,7 @@ export function AdminBookResponsesPage() {
   const validateEpubLocal = async (file: File) => {
     try {
       const data = await file.arrayBuffer();
+      const { validateEpub } = await import('@do-epub-studio/shared/src/epub-validator');
       const result = await validateEpub(data);
 
       const localizedErrors = result.errors.map(err => {
