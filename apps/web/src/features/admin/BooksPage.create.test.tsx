@@ -3,7 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { AdminBookResponsesPage } from './BooksPage';
 import { MemoryRouter } from 'react-router-dom';
 import { apiRequest } from '../../lib/api';
-import { validateEpub } from '@do-epub-studio/shared';
+import { validateEpub } from '@do-epub-studio/shared/src/epub-validator';
 
 vi.mock('../../hooks/useTranslation', () => ({
   useTranslation: () => ({ t: (k: string) => k }),
@@ -13,7 +13,7 @@ vi.mock('../../lib/api', () => ({
   apiRequest: vi.fn(),
 }));
 
-vi.mock('@do-epub-studio/shared', () => ({
+vi.mock('@do-epub-studio/shared/src/epub-validator', () => ({
   validateEpub: vi.fn(),
 }));
 
