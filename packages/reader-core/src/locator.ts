@@ -25,15 +25,15 @@ const FAST_MID_HREF_LEN = FAST_MID_HREF.length;
 const FAST_SUFFIX_LEN = FAST_SUFFIX.length;
 
 /**
- * Returns true if the string contains any ASCII control characters (code points < 32).
- * This avoids calling regular expressions with control characters, preventing ESLint no-control-regex issues.
+ * Returns true if the string is safe for direct JSON fast-path extraction
+ * (i.e. contains no quotes, backslashes, or control characters < 32).
  */
-function hasControlCharacter(str: string): boolean {
+function isCleanJsonValue(str: string): boolean {
   for (let i = 0; i < str.length; i++) {
     const code = str.charCodeAt(i);
-    if (code < 32) return true;
+    if (code < 32 || code === 34 || code === 92) return false;
   }
-  return false;
+  return true;
 }
 
 /**
@@ -54,25 +54,13 @@ export function parseLocator(locatorString: string): LocatorResult | null {
         const textExcerpt = locatorString.substring(textExcerptKeyIdx + FAST_MID_EXCERPT_LEN, chapterHrefKeyIdx);
         const chapterHref = locatorString.substring(chapterHrefKeyIdx + FAST_MID_HREF_LEN, locatorString.length - FAST_SUFFIX_LEN);
 
-        // Verify that none of the values contain double quotes or backslashes.
-        // Also guard against control characters, null bytes, or other pathological content (code < 32)
-        // to guarantee that standard JSON.parse behavior is identical.
+        // Verify that none of the values contain double quotes, backslashes, or control characters.
         if (
-          cfi.indexOf('"') === -1 &&
-          cfi.indexOf('\\') === -1 &&
-          textExcerpt.indexOf('"') === -1 &&
-          textExcerpt.indexOf('\\') === -1 &&
-          chapterHref.indexOf('"') === -1 &&
-          chapterHref.indexOf('\\') === -1 &&
-          !hasControlCharacter(cfi) &&
-          !hasControlCharacter(textExcerpt) &&
-          !hasControlCharacter(chapterHref)
+          isCleanJsonValue(cfi) &&
+          isCleanJsonValue(textExcerpt) &&
+          isCleanJsonValue(chapterHref)
         ) {
-          // Reconstruct to make absolutely sure the exact characters and structure match
-          const reconstructed = `${FAST_PREFIX}${cfi}${FAST_MID_EXCERPT}${textExcerpt}${FAST_MID_HREF}${chapterHref}${FAST_SUFFIX}`;
-          if (reconstructed === locatorString) {
-            return { cfi, textExcerpt, chapterHref };
-          }
+          return { cfi, textExcerpt, chapterHref };
         }
       }
     }
@@ -98,15 +86,9 @@ export function locatorToString(locator: LocatorResult): string {
   // Optimize for the common case where fields do not contain characters that need JSON escaping.
   // This avoids JSON.stringify overhead during repetitive locator operations while maintaining correctness.
   if (
-    cfi.indexOf('"') === -1 &&
-    cfi.indexOf('\\') === -1 &&
-    textExcerpt.indexOf('"') === -1 &&
-    textExcerpt.indexOf('\\') === -1 &&
-    chapterHref.indexOf('"') === -1 &&
-    chapterHref.indexOf('\\') === -1 &&
-    !hasControlCharacter(cfi) &&
-    !hasControlCharacter(textExcerpt) &&
-    !hasControlCharacter(chapterHref)
+    isCleanJsonValue(cfi) &&
+    isCleanJsonValue(textExcerpt) &&
+    isCleanJsonValue(chapterHref)
   ) {
     return `${FAST_PREFIX}${cfi}${FAST_MID_EXCERPT}${textExcerpt}${FAST_MID_HREF}${chapterHref}${FAST_SUFFIX}`;
   }
