@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { validateEpub } from '@do-epub-studio/shared';
+import { validateEpub } from '@do-epub-studio/shared/src/epub-validator';
 import JSZip from 'jszip';
 
 describe('epub-validator', () => {
