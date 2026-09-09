@@ -4,6 +4,7 @@ import {
   ExportQuerySchema,
   NotificationsQuerySchema,
   AdminInsightsQuerySchema,
+  AuditQuerySchema,
 } from '../schemas';
 
 describe('SearchQuerySchema', () => {
@@ -135,5 +136,16 @@ describe('AdminInsightsQuerySchema', () => {
 
   it('rejects offset > 100000', () => {
     expect(() => AdminInsightsQuerySchema.parse({ offset: 100001 })).toThrow();
+  });
+});
+
+describe('AuditQuerySchema datetime precision (zod 4.5+)', () => {
+  it('accepts second-precision datetimes', () => {
+    const result = AuditQuerySchema.parse({ from: '2020-01-01T06:15:00Z', to: '2020-01-02T06:15:00.000Z' });
+    expect(result.from).toBe('2020-01-01T06:15:00Z');
+  });
+
+  it('rejects minute-precision datetimes (zod 4.5 requires seconds)', () => {
+    expect(() => AuditQuerySchema.parse({ from: '2020-01-01T06:15Z' })).toThrow();
   });
 });
