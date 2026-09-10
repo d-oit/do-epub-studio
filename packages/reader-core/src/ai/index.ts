@@ -5,7 +5,7 @@
  * pipeline extension point), the opt-in consent gate, and the local
  * summarization proof-of-concept plugin.
  *
- * @see plans/262-goap-issue-318.md (ADR)
+ * @see plans/archive/262-goap-issue-318.md (ADR)
  */
 
 export {
