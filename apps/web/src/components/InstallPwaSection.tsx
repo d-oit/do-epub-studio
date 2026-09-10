@@ -33,7 +33,7 @@ export function InstallPwaSection() {
       <p className="text-sm text-foreground-muted mb-4">
         {t('settings.install.description', { app: APP_NAME })}
       </p>
-      <Button variant="secondary" onClick={handleInstall}>
+      <Button variant="secondary" onClick={() => { void handleInstall(); }}>
         {t('settings.install.action')}
       </Button>
     </section>

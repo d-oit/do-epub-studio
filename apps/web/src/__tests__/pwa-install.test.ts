@@ -21,7 +21,7 @@ function stubMatchMedia(isMatch: (query: string) => boolean): void {
     addEventListener: vi.fn(),
     removeEventListener: vi.fn(),
     dispatchEvent: vi.fn(),
-  })) as unknown as typeof window.matchMedia;
+  }));
 }
 
 /** Build a cancelable event carrying the Chromium install-prompt members. */
@@ -33,8 +33,8 @@ function installEvent(outcome: Outcome = 'accepted'): {
   const event = Object.assign(new Event('beforeinstallprompt', { cancelable: true }), {
     prompt,
     userChoice: Promise.resolve({ outcome }),
-  });
-  return { event: event as unknown as BeforeInstallPromptEvent, prompt };
+  }) as BeforeInstallPromptEvent;
+  return { event, prompt };
 }
 
 let cleanup: (() => void) | null = null;
