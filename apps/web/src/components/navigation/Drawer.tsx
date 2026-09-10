@@ -46,13 +46,13 @@ export function Drawer({ isOpen, onClose }: DrawerProps) {
     <>
       {/* Scrim */}
       <div
-        className={`fixed inset-0 z-50 bg-black/40 md:hidden ${isExiting ? 'animate-fade-out' : 'animate-fade-in'}`}
+        className={`fixed inset-0 z-50 bg-black/40 lg:hidden ${isExiting ? 'animate-fade-out' : 'animate-fade-in'}`}
         onClick={onClose}
         aria-hidden="true"
       />
       {/* Drawer panel */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-background-secondary border-r border-border shadow-lg md:hidden flex flex-col ${isExiting ? 'animate-slide-out-left' : 'animate-slide-in-left'}`}
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-background-secondary border-r border-border shadow-lg lg:hidden flex flex-col ${isExiting ? 'animate-slide-out-left' : 'animate-slide-in-left'}`}
         role="dialog"
         aria-label={t('nav.catalog')}
       >
@@ -75,7 +75,10 @@ export function Drawer({ isOpen, onClose }: DrawerProps) {
             </svg>
           </button>
         </div>
-        <nav className="flex-1 py-3" aria-label={t('nav.catalog')}>
+        {/* GOAP-268: no duplicate group label — the dialog aside above is
+            already labelled, so this inner nav stays unnamed to keep the
+            landmark tree unique when the drawer overlays the tab bar. */}
+        <nav className="flex-1 py-3">
           {NAV_ITEMS.map(({ key, icon, href }) => (
             <NavLink
               key={key}

@@ -82,6 +82,28 @@ describe('BottomTabBar', () => {
     expect(nav).toHaveClass('fixed', 'bottom-0', 'z-40');
   });
 
+  // GOAP-268 UX-01: the tab bar owns widths below lg, where the sidebar
+  // takes over — the drawer uses the same breakpoint so no width is
+  // left without a primary navigation mechanism.
+  it('hides at the lg breakpoint where the sidebar takes over', () => {
+    render(
+      <MemoryRouter>
+        <BottomTabBar />
+      </MemoryRouter>,
+    );
+    expect(screen.getByRole('navigation', { name: 'Catalog' })).toHaveClass('lg:hidden');
+  });
+
+  it('marks the active tab with aria-current="page"', () => {
+    render(
+      <MemoryRouter initialEntries={['/library']}>
+        <BottomTabBar />
+      </MemoryRouter>,
+    );
+    expect(screen.getByRole('link', { name: 'My Library' })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('link', { name: 'Catalog' })).not.toHaveAttribute('aria-current', 'page');
+  });
+
   it('has correct structural classes for tab layout', () => {
     render(
       <MemoryRouter>

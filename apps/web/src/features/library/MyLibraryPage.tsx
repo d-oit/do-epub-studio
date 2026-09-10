@@ -2,9 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { apiRequest } from '../../lib/api';
 import { useAuthStore } from '../../stores/auth';
 import { useTranslation } from '../../hooks/useTranslation';
-import { AppLogo } from '../../components/ui';
 import { Spinner, Skeleton } from '@do-epub-studio/ui';
-import { APP_NAME, APP_VERSION_LABEL } from '../../config/app-identity';
 import type { LibraryBookResponse, PaginatedResponse } from '@do-epub-studio/shared';
 import { BookCard } from './BookCard';
 
@@ -70,20 +68,14 @@ export function MyLibraryPage() {
   const notStarted = books.filter((b) => b.progressPercent === 0);
   const completed = books.filter((b) => b.progressPercent >= 100);
 
+  // GOAP-268 UX-01: nested under AppShell, which owns the single
+  // `main#main-content` landmark and the product identity header.
   return (
-    <main
-      id="main-content"
-      className="min-h-dvh bg-[var(--color-background)] px-4 py-6 text-[var(--color-foreground)] sm:px-6 md:py-10 lg:px-8 2xl:px-12"
+    <div
+      className="bg-[var(--color-background)] px-4 py-6 text-[var(--color-foreground)] sm:px-6 md:py-10 lg:px-8 2xl:px-12"
     >
       <div className="mx-auto max-w-7xl">
         <header className="mb-8 flex flex-col gap-6 border-b border-[var(--color-rule)] pb-6">
-          <div className="mb-4 flex items-center gap-3">
-            <AppLogo size={32} className="text-[var(--color-accent)]" />
-            <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-[var(--color-foreground)]">{APP_NAME}</p>
-              <p className="text-xs text-[var(--color-muted-foreground)]">{APP_VERSION_LABEL}</p>
-            </div>
-          </div>
           <h1 className="text-balance text-3xl font-bold tracking-tight md:text-4xl">{t('library.title')}</h1>
           <p className="mt-2 max-w-2xl text-[var(--color-muted-foreground)]">{t('library.subtitle')}</p>
         </header>
@@ -158,6 +150,6 @@ export function MyLibraryPage() {
           </div>
         )}
       </div>
-    </main>
+    </div>
   );
 }
