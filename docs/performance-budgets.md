@@ -6,7 +6,7 @@
 ## Budget Model
 
 One authoritative model, defined in `.performance-budgets.json` under
-`gzipBudgets` (main JS 180 KB, main CSS 30 KB, lazy chunks 90 KB), enforced by
+`gzipBudgets` (main JS 180 KB, main CSS 30 KB, lazy chunks 100 KB), enforced by
 `scripts/check-bundle-budget.mjs`. There is **no** separate raw-byte budget —
 gzip is the single source of truth (ADR-218 D4).
 

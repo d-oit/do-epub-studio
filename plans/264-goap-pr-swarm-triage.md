@@ -76,7 +76,7 @@ budget check 0 violations. See plans/266 for vuln-scan follow-ups
 (fast-uri→3.1.6, sharp cleared by #1082, js-yaml transitive 4.3.1→4.3.2).
 
 Remaining queue after #1094 lands: #1086 → #1083 → #1087 → #1084 → #1082 →
-#1085 → #1091 (all rebased, all CI re-verified, manual squash merges).
+\#1085 → #1091 (all rebased, all CI re-verified, manual squash merges).
 
 ## 7. FINAL OUTCOME (2026-09-09 ~18:05 UTC) — zero open PRs
 
@@ -95,6 +95,6 @@ queue after the #1094 unblock:
 | #1094 budget fix | MERGED as `dc1f648` |
 
 Main merge train (12 commits): zod 4.5.2 → #1081 → #1077 → #1088 → hono 4.13.5 →
-#1094 → js-yaml 5.4.0 → #1091-tests → #1086 → #1087 → #1084 → #1085. All merges
+\#1094 → js-yaml 5.4.0 → #1091-tests → #1086 → #1087 → #1084 → #1085. All merges
 manual `--squash` (never `--auto`/`--admin`), CLEAN + green + 0 threads each.
 "Close no-impact PRs": #1082/#1083 closed unmerged (owner executed the verdict).

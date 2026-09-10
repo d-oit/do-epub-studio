@@ -357,3 +357,9 @@
 - **Rolldown defeats naive web code-splitting two ways**: single-use `manualChunks` get inlined into the importer, and dynamic `import()` of a module statically re-exported by an in-chunk barrel warns `INEFFECTIVE_DYNAMIC_IMPORT` and stays put. Splitting a heavy dep (jszip) out of a route chunk required removing it from the shared barrel + deep-path imports.
 - **Dependabot lockfile rebase conflicts**: resolve with `git checkout --theirs -- <pkg.json + lockfile>` then `pnpm install --lockfile-only`, and verify `git diff` shows version bumps only (no source files) before continuing the rebase.
 - **Dead CI logs**: `gh run view --job <id> --log` returns empty for aged/superseded runs; fetch via `gh api repos/<o>/<r>/actions/jobs/<id>/logs` instead (grep for the failing assertion).
+
+### GOAP-267 — main dep-scan fix (2026-09-09)
+
+- **`pnpm update <pkg>` is a no-op for transitive-only packages**: `fast-uri`/`sharp` live behind `ajv`/`miniflare` + `pnpm.overrides` — bumping the override floor in `package.json` then `pnpm install --lockfile-only` is the mechanism that re-resolves the lock.
+- **`build` was skipped on every `main` push by the mirror of the GOAP-264 cascade**: `fast-check` is PR-only, so default `needs`-semantics skipped `build` (and downstream `e2e-smoke`) on `main`. Fail-closed guard: `if: always() && !contains(needs.*.result,'failure') && !contains(needs.*.result,'cancelled')`.
+- **Container gaps (no pip/gh, glibc predates zizmor/workerd binaries)**: `validate-workflows.sh` cannot pass locally here — `actionlint` (already installed) is the local syntax gate and CI is source of truth for `zizmor`; don't `curl` a zizmor binary, it can't execute on this glibc.

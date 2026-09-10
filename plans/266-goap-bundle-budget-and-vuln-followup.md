@@ -85,7 +85,7 @@ Resolve two tracked findings without silent budget erosion:
 
 - Upstream: libheif heap-OOB write (Critical,
   <https://github.com/strukturag/libheif/security/advisories/GHSA-g89c-p67h-r497>)
-  + companion GHSA-2jg2-4ch7-h545, surfaced for npm as sharp
+  and companion GHSA-2jg2-4ch7-h545, surfaced for npm as sharp
   GHSA-rgj7-g3m4-5g8c (→ <https://github.com/lovell/sharp/releases/tag/v0.35.4>).
   **Fixed: sharp 0.35.4 (libheif 1.23.2)**; affected is everything < 0.35.4.
 - **#1082 clears it**: verified in the PR lock diff — wrangler

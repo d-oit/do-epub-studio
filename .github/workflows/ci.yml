@@ -329,6 +329,8 @@ jobs:
         with:
           directory: .
           flags: unittests
+          # Coverage upload is informational; a Codecov outage must not red main.
+          fail_ci_if_error: false
 
   # GOAP-224 Step 7: the repo's full quality gate (knip dead-code, madge
   # circular deps, Impeccable design, markdownlint, agent-adapter sync,
@@ -390,6 +392,9 @@ jobs:
   build:
     name: Build (Node ${{ matrix.node-version }})
     needs: [pre-commit, lint, typecheck, test, fast-check]
+    # fast-check is PR-only (skipped on main pushes); without this guard the
+    # default needs-semantics would skip build on every main push.
+    if: ${{ always() && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     strategy:
