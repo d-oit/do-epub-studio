@@ -19,14 +19,14 @@ interface AdminStats {
 
 function StatCard({ label, value, icon }: { label: string; value: string | number; icon: string }) {
   return (
-    <div className="bg-background-secondary rounded-xl border border-border p-6 shadow-sm">
+    <div className="rounded-sm border border-border bg-surface p-6 shadow-page">
       <div className="flex items-center justify-between mb-2">
         <span className="text-sm font-medium text-foreground-muted">{label}</span>
         <svg className="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={icon} />
         </svg>
       </div>
-      <p className="text-2xl font-bold text-foreground">{value}</p>
+      <p className="font-display text-3xl text-foreground">{value}</p>
     </div>
   );
 }
@@ -86,20 +86,20 @@ export function AdminDashboardPage() {
   return (
     <main id="main-content" className="min-h-dvh bg-background p-4 sm:p-6 lg:p-8">
       <Breadcrumb items={[{ labelKey: 'admin.breadcrumb.home' }]} />
-      <header className="flex justify-between flex-wrap gap-4 items-center mb-8">
+      <header className="mb-8 flex flex-wrap items-center justify-between gap-4 border-b border-[var(--color-rule)] pb-6">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">{t('admin.dashboardTitle')}</h1>
-          <div className="flex gap-3 mt-2 text-sm">
-            <button type="button" onClick={handleBooksNav} className="text-accent hover:opacity-80">
+          <h1 className="text-balance-tight font-display text-3xl leading-tight text-foreground md:text-4xl">{t('admin.dashboardTitle')}</h1>
+          <div className="mt-2 flex flex-wrap gap-3 text-sm">
+            <button type="button" onClick={handleBooksNav} className="touch-target inline-flex items-center text-accent hover:opacity-80">
               {t('admin.books.title')} &rarr;
             </button>
-            <button type="button" onClick={handleGrantsNav} className="text-accent hover:opacity-80">
+            <button type="button" onClick={handleGrantsNav} className="touch-target inline-flex items-center text-accent hover:opacity-80">
               {t('admin.grants.title')} &rarr;
             </button>
-            <button type="button" onClick={handleAuditNav} className="text-accent hover:opacity-80">
+            <button type="button" onClick={handleAuditNav} className="touch-target inline-flex items-center text-accent hover:opacity-80">
               {t('admin.audit.title')} &rarr;
             </button>
-            <button type="button" onClick={handleAccountNav} className="text-accent hover:opacity-80">
+            <button type="button" onClick={handleAccountNav} className="touch-target inline-flex items-center text-accent hover:opacity-80">
               {t('admin.account.title')} &rarr;
             </button>
           </div>
@@ -108,7 +108,7 @@ export function AdminDashboardPage() {
       </header>
 
       {error && (
-        <div role="alert" className="mb-6 p-4 bg-semantic-error/10 border border-semantic-error/30 rounded-lg text-semantic-error">
+        <div role="alert" className="mb-6 p-4 bg-semantic-error/10 border border-semantic-error/30 rounded-sm text-semantic-error">
           {error}
         </div>
       )}
@@ -125,8 +125,8 @@ export function AdminDashboardPage() {
           </div>
 
           {stats.recentActivity.length > 0 && (
-            <section className="bg-background-secondary rounded-xl border border-border p-6 shadow-sm">
-              <h2 className="text-lg font-semibold text-foreground mb-4">{t('admin.stats.recentActivity')}</h2>
+            <section className="rounded-sm border border-border bg-surface p-6 shadow-page">
+              <h2 className="mb-4 font-display text-lg leading-snug text-foreground">{t('admin.stats.recentActivity')}</h2>
               <ul className="space-y-2">
                 {stats.recentActivity.map((item) => {
                   const actionKey = `admin.stats.action.${item.action}` as TranslationKeys;

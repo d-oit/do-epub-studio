@@ -15,7 +15,7 @@ export function BookCard({ book }: { book: LibraryBookResponse }) {
       <Link
         to={`/read/${slug}`}
         aria-label={title}
-        className="relative block w-24 shrink-0 overflow-hidden rounded-[3px] bg-muted"
+        className="relative block w-16 shrink-0 overflow-hidden rounded-[3px] bg-muted sm:w-24"
         style={{ aspectRatio: '2 / 3' }}
       >
         {coverImageUrl ? (
@@ -41,11 +41,11 @@ export function BookCard({ book }: { book: LibraryBookResponse }) {
       </Link>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <h3 className="min-w-0 font-display text-base font-semibold leading-snug tracking-tight">
+        <h3 className="min-w-0 text-pretty break-words font-display text-base font-semibold leading-snug tracking-tight">
           <Link to={`/read/${slug}`} className="hover:text-accent">{title}</Link>
         </h3>
         {authorName && (
-          <p className="mt-0.5 truncate text-sm text-foreground-muted">{authorName}</p>
+          <p className="mt-0.5 text-pretty break-words text-sm text-foreground-muted">{authorName}</p>
         )}
 
         {reading && (

@@ -84,7 +84,7 @@ export function InfoPanel({ isOpen, onClose, metadata, bookId, progressPercent, 
         ) : (
           <>
             <section>
-              <h3 className="text-xs font-semibold text-foreground-muted uppercase tracking-wider mb-2">
+              <h3 className="eyebrow mb-2">
                 {t('reader.details')}
               </h3>
               <dl className="space-y-2">
@@ -117,7 +117,7 @@ export function InfoPanel({ isOpen, onClose, metadata, bookId, progressPercent, 
 
             {metadata.description && (
               <section>
-                <h3 className="text-xs font-semibold text-foreground-muted uppercase tracking-wider mb-2">
+                <h3 className="eyebrow mb-2">
                   {t('reader.description')}
                 </h3>
                 <p className="text-sm text-foreground leading-relaxed">{metadata.description}</p>

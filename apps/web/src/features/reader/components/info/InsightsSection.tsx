@@ -20,7 +20,7 @@ function formatMinutes(minutes: number): string {
 export function InsightsSection({ insights, t }: { insights: InsightSummary; t: TFn }) {
   return (
     <section>
-      <h3 className="text-xs font-semibold text-foreground-muted uppercase tracking-wider mb-2">
+      <h3 className="eyebrow mb-2">
         {t('reader.readingInsights')}
       </h3>
       <dl className="space-y-2">

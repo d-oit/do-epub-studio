@@ -150,11 +150,13 @@ export function LoginPage() {
           <LoginHero />
         </aside>
 
-        <section className="flex flex-col items-center justify-center px-4 py-10 sm:px-6">
+        {/* Gutters tighten at lg: with 44px form controls the card needs the
+            full 900px budget (geometry guard: login-responsive-controls). */}
+        <section className="flex flex-col items-center justify-center px-4 py-10 sm:px-6 lg:py-4">
           <div className="w-full max-w-md">
             <LoginMobileInfo />
 
-            <section data-testid="login-card" className="glass-card w-full p-5 sm:p-7">
+            <section data-testid="login-card" className="glass-card w-full p-5 sm:p-6">
               <LoginCardHeader isRecoveryMode={isRecoveryMode} bookSlug={bookSlug} />
 
               {formError && (

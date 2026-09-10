@@ -39,7 +39,7 @@ function HazardBadge({ hazard }: { hazard: string }) {
 export function AccessibilitySection({ a11y, t }: { a11y: AccessibilityMetadata; t: TFn }) {
   return (
     <section>
-      <h3 className="text-xs font-semibold text-foreground-muted uppercase tracking-wider mb-2">
+      <h3 className="eyebrow mb-2">
         {t('reader.accessibility')}
       </h3>
       <div className="space-y-3">

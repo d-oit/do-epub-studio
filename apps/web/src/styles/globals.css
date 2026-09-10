@@ -109,6 +109,8 @@
 
     /* Display font */
     --font-display: 'Instrument Serif', Georgia, serif;
+    /* Mono font (labels, technical metadata) */
+    --font-mono: ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, Consolas, monospace;
 
     /* Spacing scale (4px base) */
     --space-1: 0.25rem;

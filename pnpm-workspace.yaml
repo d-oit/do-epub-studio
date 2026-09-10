@@ -1,6 +1,18 @@
 packages:
   - 'apps/*'
   - 'packages/*'
+overrides:
+  serialize-javascript: ^7.0.0
+  esbuild: '>=0.28.1'
+  ws: '>=8.21.0'
+  undici: '>=7.28.0 <8.0.0'
+  '@babel/core': '>=7.29.6'
+  brace-expansion: '>=5.0.9'
+  fast-uri: ^3.1.6
+  sharp: ^0.35.4
+  cosmiconfig>js-yaml: 4.3.2
+  react-router: 8.3.0
+  dompurify: ^3.4.13
 allowBuilds:
   core-js: true
   es5-ext: true

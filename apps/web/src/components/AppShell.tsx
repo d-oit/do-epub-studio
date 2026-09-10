@@ -4,6 +4,8 @@ import { useTranslation } from '../hooks/useTranslation';
 import { AppLogo } from './ui';
 import { BottomTabBar, Sidebar, Drawer } from './navigation';
 import { APP_NAME, APP_VERSION_LABEL } from '../config/app-identity';
+import { useAuthStore } from '../stores/auth';
+import { useReaderStore } from '../stores/reader';
 
 // GOAP-268 UX-01: AppShell is a pure persistent layout. Root session routing
 // lives in the index route (App.tsx `RootIndexRoute`) and runs immediately —
@@ -12,7 +14,8 @@ import { APP_NAME, APP_VERSION_LABEL } from '../config/app-identity';
 export function AppShell() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const { t } = useTranslation();
-
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const pendingSyncCount = useReaderStore((s) => s.pendingSyncCount);
   const toggleDrawer = useCallback(() => { setDrawerOpen((prev) => !prev); }, []);
 
   return (
@@ -44,6 +47,16 @@ export function AppShell() {
           tabIndex={-1}
           className="flex-1 overflow-y-auto overscroll-behavior-contain p-4 pb-20 lg:p-6 scroll-pt-14 scroll-pb-14"
         >
+          {isAuthenticated && pendingSyncCount > 0 && (
+            <div
+              role="status"
+              aria-live="polite"
+              aria-atomic="true"
+              className="mb-4 rounded-sm border border-border bg-background-secondary px-3 py-2 text-sm text-foreground-muted"
+            >
+              {t('offline.pendingSync', { count: pendingSyncCount })}
+            </div>
+          )}
           <Outlet />
         </main>
       </div>

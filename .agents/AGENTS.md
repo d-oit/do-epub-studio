@@ -19,12 +19,24 @@ Always use **latest stable versions** with security patches:
 | Vite | 8.2.2 | 8.x | `@vitejs/plugin-react` ^6 |
 | PWA | vite-plugin-pwa ^1.3.0 | latest | Replaces raw Workbox config; SW classic format per ADR-251 |
 | DOMPurify | 3.4.14 | 3.4+ | Implemented in `packages/reader-core/src/sanitizer.ts` |
+| @intity/epub-js | 0.3.96 | ⛔ 0.3.97/0.3.98 uninstallable | Published tarballs declare `main: lib/index.js` + `module: src/index.js` but ship neither (only `dist/` + `types/`) — runtime import in `epub-loader.ts` fails `MODULE_NOT_FOUND`; 0.3.98 also repackages deps (marked 15→18). Retain 0.3.96 until upstream fixes packaging. |
 
 ### Before Any Implementation
 
 1. **Check package versions**: Run `pnpm outdated` before adding dependencies
 2. **Security audit**: Never use packages with known CVEs
 3. **Minimal dependencies**: Only add what's necessary
+
+### Dependency Overrides — they live in `pnpm-workspace.yaml`
+
+pnpm 10 **ignores `pnpm.overrides` in `package.json`** ("pnpm field no longer
+read" warning) — the pins (fast-uri ^3.1.6, sharp ^0.35.4,
+cosmiconfig>js-yaml 4.3.2, dompurify ^3.4.13, react-router 8.3.0, plus the
+serialize-javascript/esbuild/ws/undici/@babel/core/brace-expansion floors)
+are maintained **verbatim under `overrides:` in `pnpm-workspace.yaml`**
+(migrated 2026-09-10). Never re-add the `package.json` `pnpm` field. After
+any override change: `pnpm install --frozen-lockfile`, resolved-version
+probes into `node_modules/.pnpm`, and `pnpm audit --audit-level=high`.
 
 ### OWASP Top 10 Adaptations for EPUB
 
@@ -111,6 +123,33 @@ test: {
    - Test files use `autoFocus` to test the prop
    - **Why not fix**: Testing prop behavior is intentional
    - **Workaround**: `// eslint-disable-next-line jsx-a11y/no-autofocus`
+
+3. **rolldown `EMPTY_IMPORT_META` build warnings (client-logger.ts)**
+   - The telemetry guard `typeof import.meta !== 'undefined'` emits 2
+     `[EMPTY_IMPORT_META]` warnings under the IIFE web build — **identically
+     on clean `origin/main`** (verified via control-worktree build,
+     2026-09-10). Grep for `[EMPTY_IMPORT_META]`, not the older
+     `will be replaced` phrasing, when attributing.
+   - **Why not fix**: suppressing via `transform.define: { 'import.meta': {} }`
+     is behavior-identical (the guard evaluates falsy either way) but changes
+     build transform semantics; leave documented unless a dedicated build
+     change is wanted.
+
+4. **`pnpm.overrides` in package.json is ignored by pnpm 10 — MIGRATED (2026-09-10)**
+   - pnpm 10.33 prints "pnpm field no longer read" and silently drops the
+     block, which deactivated the #1097 security pins. The block now lives
+     **verbatim in `pnpm-workspace.yaml` under `overrides:`**.
+   - Do not re-add `pnpm.overrides` to `package.json`; add new overrides to
+     `pnpm-workspace.yaml` and verify with `pnpm install --frozen-lockfile` +
+     resolved-version probes + `pnpm audit --audit-level=high`.
+
+5. **Cloudflare-login e2e tests require a live backend**
+   - `apps/tests/cloudflare-login.spec.ts` hits `/api/access/request` for real
+     (dev server has no worker); without `CLOUDFLARE_PREVIEW_URL` + seeded
+     credentials, the login tests fail `Failed to fetch` and two strict-mode
+     duplicate-hero-copy assertions fail — **identically on main**
+     (control-verified 2026-09-10). Prerequisite, not a regression; don't
+     edit those tests to pass.
 
 ### Security Issues (Must Fix)
 

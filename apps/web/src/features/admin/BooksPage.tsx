@@ -314,14 +314,14 @@ export function AdminBookResponsesPage() {
         { labelKey: 'admin.breadcrumb.home', href: ADMIN_ROUTES.admin },
         { labelKey: 'admin.breadcrumb.books' },
       ]} />
-      <header className="flex justify-between flex-wrap gap-4 items-center mb-8">
+      <header className="mb-8 flex flex-wrap items-center justify-between gap-4 border-b border-[var(--color-rule)] pb-6">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">
+          <h1 className="text-balance-tight font-display text-3xl leading-tight text-foreground md:text-4xl">
             {t('admin.books.title')}
           </h1>
           <button
             onClick={handleBackToReader}
-            className="text-sm text-accent hover:opacity-80 mt-1 min-h-[24px] px-2 py-0.5"
+            className="touch-target mt-1 inline-flex items-center px-2 py-0.5 text-sm text-accent hover:opacity-80"
           >
             &larr; {t('admin.books.backToReader')}
           </button>
@@ -341,13 +341,13 @@ export function AdminBookResponsesPage() {
       </header>
 
       {error && (
-        <div className="mb-6 p-4 bg-semantic-error/10 border border-semantic-error/30 rounded-lg text-semantic-error">
+        <div className="mb-6 p-4 bg-semantic-error/10 border border-semantic-error/30 rounded-sm text-semantic-error">
           {error}
         </div>
       )}
 
       {successMessage && (
-        <div className="mb-6 p-4 bg-semantic-success/10 border border-semantic-success/30 rounded-lg text-semantic-success">
+        <div className="mb-6 p-4 bg-semantic-success/10 border border-semantic-success/30 rounded-sm text-semantic-success">
           {successMessage}
         </div>
       )}
@@ -364,9 +364,9 @@ export function AdminBookResponsesPage() {
           books.map((book) => (
             <div
               key={book.id}
-              className="cq-admin-book-card bg-background-secondary p-6 rounded-xl shadow-sm border border-border hover:shadow-md transition-shadow"
+              className="cq-admin-book-card rounded-sm border border-border bg-surface p-4 shadow-page transition-colors hover:border-accent/40"
             >
-              <h3 className="text-lg font-semibold text-foreground mb-2">
+              <h3 className="mb-2 font-display text-lg leading-snug text-foreground">
                 {book.title}
               </h3>
               {book.authorName && (
@@ -407,7 +407,7 @@ export function AdminBookResponsesPage() {
           ))
         )}
         {!isLoading && books.length === 0 && (
-          <div className="col-span-full py-12 text-center text-foreground-muted">
+          <div className="paper-grain col-span-full rounded-sm border border-dashed border-border px-6 py-16 text-center text-foreground-muted">
             {t('admin.books.noBookResponses')}
           </div>
         )}

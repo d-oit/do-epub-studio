@@ -11,7 +11,7 @@ test.describe('Accessibility audit (axe-core)', () => {
     await page.goto(`/login`);
 
     const accessibilityScanResults = await new AxeBuilder({ page })
-      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
       .analyze();
 
     if (accessibilityScanResults.violations.length > 0) {
@@ -31,7 +31,7 @@ test.describe('Accessibility audit (axe-core)', () => {
     await loginAsReader(page);
 
     const accessibilityScanResults = await new AxeBuilder({ page })
-      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
       .analyze();
 
     if (accessibilityScanResults.violations.length > 0) {
@@ -54,7 +54,7 @@ test.describe('Accessibility audit (axe-core)', () => {
     await expect(page.getByRole('dialog').getByText('Settings', { exact: true })).toBeVisible();
 
     const accessibilityScanResults = await new AxeBuilder({ page })
-      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
       .analyze();
 
     expect(accessibilityScanResults.violations).toHaveLength(0);
@@ -68,7 +68,7 @@ test.describe('Accessibility audit (axe-core)', () => {
     await expect(page.getByRole('heading', { name: 'Contents' })).toBeVisible();
 
     const accessibilityScanResults = await new AxeBuilder({ page })
-      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
       .analyze();
 
     expect(accessibilityScanResults.violations).toHaveLength(0);
@@ -100,7 +100,7 @@ test.describe('Accessibility audit (axe-core)', () => {
     await page.goto(`/admin/login`);
 
     const accessibilityScanResults = await new AxeBuilder({ page })
-      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
       .analyze();
 
     if (accessibilityScanResults.violations.length > 0) {
@@ -123,7 +123,7 @@ test.describe('Accessibility audit (axe-core)', () => {
     await loginAsAdmin(page);
 
     const accessibilityScanResults = await new AxeBuilder({ page })
-      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
       .analyze();
 
     if (accessibilityScanResults.violations.length > 0) {
@@ -148,7 +148,7 @@ test.describe('Accessibility audit (axe-core)', () => {
     await page.waitForTimeout(200);
 
     const accessibilityScanResults = await new AxeBuilder({ page })
-      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
       .analyze();
 
     if (accessibilityScanResults.violations.length > 0) {
@@ -167,7 +167,7 @@ test.describe('Accessibility audit (axe-core)', () => {
     await page.goto('/admin/audit');
 
     const accessibilityScanResults = await new AxeBuilder({ page })
-      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
       .analyze();
 
     if (accessibilityScanResults.violations.length > 0) {

@@ -114,22 +114,22 @@ export function AccountSettingsPage() {
           { labelKey: 'admin.account.title' },
         ]}
       />
-      <header className="mb-8">
-        <h1 className="text-2xl font-bold text-foreground">{t('admin.account.title')}</h1>
+      <header className="mb-8 border-b border-[var(--color-rule)] pb-6">
+        <h1 className="text-balance-tight font-display text-3xl leading-tight text-foreground md:text-4xl">{t('admin.account.title')}</h1>
       </header>
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Change password */}
-        <section className="rounded-xl border border-border bg-background-secondary p-6 shadow-sm">
-          <h2 className="mb-4 text-lg font-semibold text-foreground">{t('admin.account.changePassword')}</h2>
+        <section className="rounded-sm border border-border bg-surface p-6 shadow-page">
+          <h2 className="mb-4 font-display text-lg leading-snug text-foreground">{t('admin.account.changePassword')}</h2>
 
           {passwordInfo && (
-            <p role="status" className="mb-4 rounded bg-accent/10 border border-accent/20 p-3 text-sm text-accent">
+            <p role="status" className="mb-4 rounded-sm bg-accent/10 border border-accent/20 p-3 text-sm text-accent">
               {passwordInfo}
             </p>
           )}
           {passwordError && (
-            <p role="alert" className="mb-4 rounded bg-accent-error/10 border border-accent-error/20 p-3 text-sm text-accent-error">
+            <p role="alert" className="mb-4 rounded-sm bg-accent-error/10 border border-accent-error/20 p-3 text-sm text-accent-error">
               {passwordError}
             </p>
           )}
@@ -171,9 +171,9 @@ export function AccountSettingsPage() {
         </section>
 
         {/* Active sessions */}
-        <section className="rounded-xl border border-border bg-background-secondary p-6 shadow-sm">
+        <section className="rounded-sm border border-border bg-surface p-6 shadow-page">
           <div className="mb-4 flex items-center justify-between gap-4 flex-wrap">
-            <h2 className="text-lg font-semibold text-foreground">{t('admin.sessions.title')}</h2>
+            <h2 className="font-display text-lg leading-snug text-foreground">{t('admin.sessions.title')}</h2>
             <Button
               variant="danger"
               size="sm"
@@ -186,18 +186,18 @@ export function AccountSettingsPage() {
           </div>
 
           {logoutAllInfo && (
-            <p role="status" className="mb-4 rounded bg-accent/10 border border-accent/20 p-3 text-sm text-accent">
+            <p role="status" className="mb-4 rounded-sm bg-accent/10 border border-accent/20 p-3 text-sm text-accent">
               {logoutAllInfo}
             </p>
           )}
           {logoutAllError && (
-            <p role="alert" className="mb-4 rounded bg-accent-error/10 border border-accent-error/20 p-3 text-sm text-accent-error">
+            <p role="alert" className="mb-4 rounded-sm bg-accent-error/10 border border-accent-error/20 p-3 text-sm text-accent-error">
               {logoutAllError}
             </p>
           )}
 
           {sessionsError && (
-            <p role="alert" className="mb-4 rounded bg-accent-error/10 border border-accent-error/20 p-3 text-sm text-accent-error">
+            <p role="alert" className="mb-4 rounded-sm bg-accent-error/10 border border-accent-error/20 p-3 text-sm text-accent-error">
               {sessionsError}
             </p>
           )}
@@ -208,7 +208,7 @@ export function AccountSettingsPage() {
 
           <ul className="space-y-3">
             {sessions?.map((session) => (
-              <li key={session.id} className="rounded-lg border border-border bg-surface p-4 text-sm">
+              <li key={session.id} className="rounded-sm border border-border bg-surface p-4 text-sm">
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-medium text-foreground">
                     {session.current
@@ -221,7 +221,7 @@ export function AccountSettingsPage() {
                     </span>
                   )}
                 </div>
-                <div className="mt-1 space-y-0.5 text-xs text-foreground-muted">
+                <div className="mt-1 space-y-0.5 font-mono text-xs text-foreground-muted">
                   {/* eslint-disable-next-line i18next/no-literal-string -- technical metadata labels */}
                   <p>ID: {session.id.slice(0, 8)}</p>
                   {/* eslint-disable-next-line i18next/no-literal-string -- technical metadata labels */}

@@ -64,3 +64,43 @@ await queueSync('progress', {
 const cleanup = setupOnlineListener();
 return () => cleanup(); // also calls cancelPendingRetry()
 ```
+
+### Auth-Gated Queue Reads (shell surfacing)
+
+Sync-queue payloads are encrypted with the session token — an
+unauthenticated poll is not just wasteful, it reads the wrong owner's data
+path. Any hook that surfaces sync state app-wide (`useSyncStatus` mounted in
+`App()`) MUST:
+
+- Reset `pendingSyncCount` to 0 and skip IndexedDB entirely when logged out;
+- Re-run the effect on the auth flip so the count refreshes on login and
+  clears on logout;
+- Keep the offline barrel (`lib/offline` — IndexedDB + crypto + sync) behind
+  a **dynamic import** in shell-level hooks so it stays out of the eager
+  bundle (ADR-107 §3 route totals); feature code inside the reader may import
+  it statically;
+- Mirror connectivity + count into `useReaderStore` so every route (not just
+  the reader) renders offline/pending state; the reader route renders outside
+  `AppShell`, so shell status elements don't duplicate the reader's own
+  indicator.
+
+Reuse the existing plural key (`offline.pendingSync` one/other) — never add a
+second count key for the same noun.
+
+### PWA Install Lifecycle (progressive enhancement)
+
+Per web.dev customize-install / MDN `beforeinstallprompt`:
+
+- `beforeinstallprompt`: always `preventDefault()` (suppress the mini-infobar),
+  retain only the latest event, expose `canPrompt` unless already standalone;
+- `promptInstall()` consumes the retained event **exactly once**, returns
+  `'accepted' | 'dismissed' | 'unavailable'`, clears `canPrompt` before
+  prompting; a later event re-arms;
+- `isStandalone()` uses `display-mode` media queries + iOS
+  `navigator.standalone` — no UA sniffing;
+- Install UI renders **nothing** when unsupported/installed/dismissed — never
+  a disabled button or fake prompt; dismissal is session-only in memory;
+- Listeners wire in `main.tsx` inside the `typeof window` block before SW
+  registration, cleanup retained in module scope for HMR/tests;
+- Synthetic-event tests prove UI lifecycle only — never claim native OS
+  installation from them.

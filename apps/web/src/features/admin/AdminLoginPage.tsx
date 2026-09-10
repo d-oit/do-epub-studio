@@ -61,11 +61,11 @@ function AdminLoginHeader() {
   return (
     <div className="text-center mb-8">
       <AppLogo size={44} className="mx-auto mb-3 text-accent" />
-      <h2 className="font-display text-xl font-bold text-foreground">
+      <h2 className="font-display text-2xl leading-tight text-foreground">
         {t('admin.login.title')}
       </h2>
       <div className="mt-2 h-0.5 w-8 mx-auto rounded-full bg-accent/40" />
-      <p className="text-foreground-muted mt-3 text-sm">
+      <p className="eyebrow mt-3">
         {APP_NAME} {t('admin.login.managementLabel')}
       </p>
     </div>
@@ -145,7 +145,7 @@ function AdminDemoBlock({
     <div className="mt-5">
       <div className="flex items-center gap-3" aria-hidden="true">
         <span className="h-px flex-1 bg-border" />
-        <span className="text-xs uppercase tracking-wide text-foreground-muted">{t('admin.login.demoOr')}</span>
+        <span className="eyebrow">{t('admin.login.demoOr')}</span>
         <span className="h-px flex-1 bg-border" />
       </div>
 
@@ -153,7 +153,7 @@ function AdminDemoBlock({
         <div
           role="alert"
           aria-live="polite"
-          className="mt-4 p-3 bg-accent-error/10 border border-accent-error/20 rounded text-sm text-accent-error"
+          className="mt-4 p-3 bg-accent-error/10 border border-accent-error/20 rounded-sm text-sm text-accent-error"
         >
           {error}
         </div>
@@ -338,7 +338,7 @@ export function AdminLoginPage() {
           <div
             role="alert"
             aria-live="polite"
-            className="mb-6 p-3 bg-accent-error/10 border border-accent-error/20 rounded text-sm text-accent-error"
+            className="mb-6 p-3 bg-accent-error/10 border border-accent-error/20 rounded-sm text-sm text-accent-error"
           >
             {error}
           </div>
