@@ -7,7 +7,7 @@
  * runs on-device and book text never leaves the device (the only network
  * traffic is a one-time model download, browser-cached).
  *
- * @see plans/262-goap-issue-318.md (ADR)
+ * @see plans/archive/262-goap-issue-318.md (ADR)
  */
 
 /** Base error for all AI plugin failures. */
