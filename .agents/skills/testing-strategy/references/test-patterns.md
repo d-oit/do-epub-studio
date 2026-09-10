@@ -95,6 +95,36 @@ await waitFor(() => expect(screen.getByText('Empty')).toBeInTheDocument());
 1. Set mock FIRST with `mockResolvedValueOnce()`
 2. Render component
 3. Wait with `waitFor` for expected state
+4. **Retrying clients**: one-shot 5xx/network failure mocks are absorbed by
+   `apiRequest`'s automatic retry — hold all attempts failing until the
+   error UI is asserted (see next section)
+
+### Retrying API Client vs One-Shot Failure Mocks (CRITICAL)
+
+`apps/web/src/lib/api/core.ts` (`apiRequest`) automatically retries network
+errors and 5xx responses (with backoff). A one-shot `mockRejectedValueOnce`
+or single-attempt 500 fixture gets **absorbed by the retry loop** — the UI
+recovers, the error alert never renders, and the test fails confusingly or,
+worse, you weaken the assertion.
+
+```typescript
+// BAD — the client's automatic retry absorbs the failure
+vi.mocked(fetch).mockRejectedValueOnce(new TypeError('Failed to fetch'));
+
+// GOOD — hold EVERY attempt in the failure state until the assertion
+// observes the error UI, then allow the retry to succeed
+const failAll = () => vi.mocked(fetch).mockRejectedValue(new TypeError('Failed to fetch'));
+failAll();
+render(<PaginatedPage />);
+await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument());
+vi.mocked(fetch).mockResolvedValue(okResponse(secondPage)); // retry now succeeds
+await user.click(screen.getByRole('button', { name: /retry/i }));
+```
+
+Applies to Playwright fixtures too: keep every automatic attempt in the
+failure state (`page.route` rejecting continuously) until the alert is
+visible, then release. Never disable the client's retries to make a test
+pass — the retry behavior is the contract.
 
 ### Async Tests
 

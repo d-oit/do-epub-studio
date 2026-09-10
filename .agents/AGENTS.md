@@ -19,12 +19,24 @@ Always use **latest stable versions** with security patches:
 | Vite | 8.2.2 | 8.x | `@vitejs/plugin-react` ^6 |
 | PWA | vite-plugin-pwa ^1.3.0 | latest | Replaces raw Workbox config; SW classic format per ADR-251 |
 | DOMPurify | 3.4.14 | 3.4+ | Implemented in `packages/reader-core/src/sanitizer.ts` |
+| @intity/epub-js | 0.3.96 | ⛔ 0.3.97/0.3.98 uninstallable | Published tarballs declare `main: lib/index.js` + `module: src/index.js` but ship neither (only `dist/` + `types/`) — runtime import in `epub-loader.ts` fails `MODULE_NOT_FOUND`; 0.3.98 also repackages deps (marked 15→18). Retain 0.3.96 until upstream fixes packaging. |
 
 ### Before Any Implementation
 
 1. **Check package versions**: Run `pnpm outdated` before adding dependencies
 2. **Security audit**: Never use packages with known CVEs
 3. **Minimal dependencies**: Only add what's necessary
+
+### Dependency Overrides — they live in `pnpm-workspace.yaml`
+
+pnpm 10 **ignores `pnpm.overrides` in `package.json`** ("pnpm field no longer
+read" warning) — the pins (fast-uri ^3.1.6, sharp ^0.35.4,
+cosmiconfig>js-yaml 4.3.2, dompurify ^3.4.13, react-router 8.3.0, plus the
+serialize-javascript/esbuild/ws/undici/@babel/core/brace-expansion floors)
+are maintained **verbatim under `overrides:` in `pnpm-workspace.yaml`**
+(migrated 2026-09-10). Never re-add the `package.json` `pnpm` field. After
+any override change: `pnpm install --frozen-lockfile`, resolved-version
+probes into `node_modules/.pnpm`, and `pnpm audit --audit-level=high`.
 
 ### OWASP Top 10 Adaptations for EPUB
 
