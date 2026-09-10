@@ -3,7 +3,6 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { apiRequest } from '../../lib/api';
 import { useTranslation } from '../../hooks/useTranslation';
 import { AppLogo, Pagination, SearchInput } from '../../components/ui';
-import { APP_NAME, APP_VERSION_LABEL } from '../../config/app-identity';
 import type { PaginatedResponse } from '@do-epub-studio/shared';
 
 interface CatalogBook {
@@ -71,21 +70,14 @@ export function CatalogPage() {
   const totalPages = data ? Math.max(1, Math.ceil(data.total / data.pageSize)) : 1;
   const books = data?.items ?? [];
 
+  // GOAP-268 UX-01: nested under AppShell, which owns the single
+  // `main#main-content` landmark and the product identity header.
   return (
-    <main
-      id="main-content"
-      className="min-h-dvh bg-background px-4 py-6 text-foreground sm:px-6 md:py-10 lg:px-8 2xl:px-12"
+    <div className="bg-background px-4 py-6 text-foreground sm:px-6 md:py-10 lg:px-8 2xl:px-12"
     >
       <div className="mx-auto max-w-7xl">
         <header className="mb-8 flex flex-col gap-6 border-b border-border pb-6 md:mb-10 md:flex-row md:items-end md:justify-between">
           <div className="min-w-0">
-            <div className="mb-4 flex items-center gap-3">
-              <AppLogo size={32} className="text-accent" />
-              <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-foreground">{APP_NAME}</p>
-                <p className="text-xs text-foreground-muted">{APP_VERSION_LABEL}</p>
-              </div>
-            </div>
             <h1 className="text-balance text-3xl font-bold tracking-tight md:text-4xl">{t('catalog.title')}</h1>
             <p className="mt-2 max-w-2xl text-foreground-muted">{t('catalog.subtitle')}</p>
           </div>
@@ -198,6 +190,6 @@ export function CatalogPage() {
           </>
         )}
       </div>
-    </main>
+    </div>
   );
 }

@@ -1,67 +1,19 @@
-import { useEffect, useState, useCallback } from 'react';
-import { useNavigate, Outlet } from 'react-router-dom';
-import { useAuthStore } from '../stores/auth';
+import { useState, useCallback } from 'react';
+import { Outlet } from 'react-router-dom';
 import { useTranslation } from '../hooks/useTranslation';
 import { AppLogo } from './ui';
 import { BottomTabBar, Sidebar, Drawer } from './navigation';
 import { APP_NAME, APP_VERSION_LABEL } from '../config/app-identity';
 
+// GOAP-268 UX-01: AppShell is a pure persistent layout. Root session routing
+// lives in the index route (App.tsx `RootIndexRoute`) and runs immediately —
+// the shell never redirects and owns the single `main#main-content` landmark;
+// nested pages own presentation only.
 export function AppShell() {
-  const navigate = useNavigate();
-  const { isAuthenticated, bookSlug, isAdmin } = useAuthStore();
-  const [isResolving, setIsResolving] = useState(true);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const { t } = useTranslation();
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsResolving(false);
-    }, 1200);
-    return () => clearTimeout(timer);
-  }, []);
-
-  useEffect(() => {
-    if (!isResolving) {
-      const options = { replace: true };
-      if (isAuthenticated) {
-        if (isAdmin) {
-          void navigate('/admin', options);
-        } else if (bookSlug) {
-          void navigate(`/read/${bookSlug}`, options);
-        } else {
-          void navigate('/login', options);
-        }
-      } else {
-        void navigate('/login', options);
-      }
-    }
-  }, [isResolving, isAuthenticated, bookSlug, isAdmin, navigate]);
-
   const toggleDrawer = useCallback(() => { setDrawerOpen((prev) => !prev); }, []);
-
-  if (isResolving) {
-    return (
-      <div className="min-h-dvh bg-background flex flex-col items-center justify-center p-6">
-        <div
-          className="flex flex-col items-center gap-8 w-full max-w-md animate-scale-in"
-          role="status"
-          aria-live="polite"
-          aria-label={t('a11y.loading_app')}
-        >
-          <AppLogo size={64} className="text-accent animate-pulse" />
-          <div className="space-y-4 w-full">
-            <div className="h-8 w-3/4 mx-auto rounded-lg skeleton" />
-            <div className="h-4 w-1/2 mx-auto rounded-md skeleton" />
-          </div>
-          <div className="flex gap-2 mt-4" aria-hidden="true">
-            <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
-            <div className="w-2 h-2 rounded-full bg-accent/60 animate-pulse" style={{ animationDelay: '0.2s' }} />
-            <div className="w-2 h-2 rounded-full bg-accent/30 animate-pulse" style={{ animationDelay: '0.4s' }} />
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="flex h-dvh overflow-hidden bg-background">

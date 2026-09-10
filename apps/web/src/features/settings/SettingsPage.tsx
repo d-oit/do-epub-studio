@@ -80,8 +80,10 @@ export function SettingsPage() {
   const directions: readonly PageDirection[] = ['default', 'ltr', 'rtl'];
   const writingModes: readonly WritingMode[] = ['horizontal-tb', 'vertical-rl', 'vertical-lr'];
 
+  // GOAP-268 UX-01: nested under AppShell, which owns the single
+  // `main#main-content` landmark.
   return (
-    <main id="main-content" className="min-h-dvh bg-background p-4 sm:p-6 lg:p-8">
+    <div className="bg-background p-4 sm:p-6 lg:p-8">
       <header className="flex justify-between flex-wrap gap-4 items-center mb-8">
         <div>
           <h1 className="text-2xl font-bold text-foreground">{t('settings.title')}</h1>
@@ -176,6 +178,6 @@ export function SettingsPage() {
           )}
         </section>
       </div>
-    </main>
+    </div>
   );
 }

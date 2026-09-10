@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { ComponentType } from 'react';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { App } from '../App';
@@ -55,6 +56,14 @@ vi.mock('../features/catalog/CatalogPage', () => ({
   CatalogPage: () => <div>Catalog Page</div>,
 }));
 
+vi.mock('../features/library/MyLibraryPage', () => ({
+  MyLibraryPage: () => <div>Library Page</div>,
+}));
+
+vi.mock('../features/settings/SettingsPage', () => ({
+  SettingsPage: () => <div>Settings Page</div>,
+}));
+
 vi.mock('../features/errors/NotFoundPage', () => ({
   NotFoundPage: () => <div>Not Found</div>,
 }));
@@ -63,9 +72,20 @@ vi.mock('../features/reader/ReaderPage', () => ({
   ReaderPage: () => <div>Reader Page</div>,
 }));
 
-vi.mock('../components/AppShell', () => ({
-  AppShell: () => <div>App Shell</div>,
-}));
+vi.mock('../components/AppShell', async () => {
+  const { Outlet } = await vi.importActual<{ Outlet: ComponentType }>('react-router-dom');
+  // Keep real layout behavior (Outlet passthrough) so nested routes render.
+  return {
+    AppShell: () => (
+      <div>
+        <div>App Shell</div>
+        <main id="main-content">
+          <Outlet />
+        </main>
+      </div>
+    ),
+  };
+});
 
 describe('App routes', () => {
   beforeEach(() => {
@@ -133,14 +153,59 @@ describe('App routes', () => {
   });
 
   // Static hosts (Render, GitHub Pages) serve the SPA at /index.html; it must
-  // behave like the root (reach the login) instead of hitting the 404 catch-all.
-  it('redirects /index.html to the root shell', () => {
+  // behave like the root (reach the login when unauthenticated) instead of
+  // hitting the 404 catch-all.
+  it('redirects /index.html to the login when unauthenticated', () => {
     render(
       <MemoryRouter initialEntries={['/index.html']}>
         <App />
       </MemoryRouter>,
     );
+    expect(screen.getByText('Login Page')).toBeInTheDocument();
+  });
+
+  // GOAP-268 UX-01: core routes nest under the persistent shell.
+  it('renders catalog inside the shell with a single main landmark', async () => {
+    render(
+      <MemoryRouter initialEntries={['/catalog']}>
+        <App />
+      </MemoryRouter>,
+    );
+    expect(await screen.findByText('Catalog Page')).toBeInTheDocument();
     expect(screen.getByText('App Shell')).toBeInTheDocument();
+    expect(document.querySelectorAll('main#main-content')).toHaveLength(1);
+  });
+
+  it('redirects unauthenticated library and settings visits to login', () => {
+    for (const entry of ['/library', '/settings']) {
+      const { unmount } = render(
+        <MemoryRouter initialEntries={[entry]}>
+          <App />
+        </MemoryRouter>,
+      );
+      expect(screen.getByText('Login Page')).toBeInTheDocument();
+      unmount();
+    }
+  });
+
+  it('renders protected library content inside the shell when authenticated', async () => {
+    useAuthStore.setState({ isAuthenticated: true, isAdmin: false, bookSlug: null });
+    render(
+      <MemoryRouter initialEntries={['/library']}>
+        <App />
+      </MemoryRouter>,
+    );
+    expect(await screen.findByText('Library Page')).toBeInTheDocument();
+    expect(screen.getByText('App Shell')).toBeInTheDocument();
+  });
+
+  it('routes the shell index to login when unauthenticated', () => {
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <App />
+      </MemoryRouter>,
+    );
+    expect(screen.getByText('Login Page')).toBeInTheDocument();
   });
 
   it('still renders 404 for genuinely unknown paths via the app route table', () => {

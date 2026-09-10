@@ -363,3 +363,10 @@
 - **`pnpm update <pkg>` is a no-op for transitive-only packages**: `fast-uri`/`sharp` live behind `ajv`/`miniflare` + `pnpm.overrides` — bumping the override floor in `package.json` then `pnpm install --lockfile-only` is the mechanism that re-resolves the lock.
 - **`build` was skipped on every `main` push by the mirror of the GOAP-264 cascade**: `fast-check` is PR-only, so default `needs`-semantics skipped `build` (and downstream `e2e-smoke`) on `main`. Fail-closed guard: `if: always() && !contains(needs.*.result,'failure') && !contains(needs.*.result,'cancelled')`.
 - **Container gaps (no pip/gh, glibc predates zizmor/workerd binaries)**: `validate-workflows.sh` cannot pass locally here — `actionlint` (already installed) is the local syntax gate and CI is source of truth for `zizmor`; don't `curl` a zizmor binary, it can't execute on this glibc.
+
+### GOAP-268 — UX-01 persistent navigation (2026-09-10)
+
+- **Mocked layout shells must passthrough `Outlet` or nested routes silently vanish**: mocking `AppShell` as `<div>App Shell</div>` makes `/catalog` render the shell with empty content and no error. Mock with a real `<Outlet/>` inside the single `<main>` to keep route-table tests meaningful.
+- **`vi.importActual` generic beats `typeof import()`**: `await vi.importActual<{ Outlet: ComponentType }>('react-router-dom')` satisfies `@typescript-eslint/consistent-type-imports`; the `typeof import('...')` annotation trips it.
+- **Duplicate landmark labels only conflict when co-visible**: `display:none` navs leave the a11y tree, so sidebar/tabbar sharing `nav.catalog` is fine once breakpoints unify at `lg` — the real conflict was drawer-open state, fixed by leaving the drawer's inner `<nav>` unnamed (dialog already labelled).
+- **Shell-nesting flips skeleton/page contracts**: full-page skeletons with header bars and pages with `<main id="main-content">` + brand lockups double up once nested — nested routes need a header-less `role=status` fallback and `<div>` page roots; only the 3 shell-nested routes changed, reader/admin/auth/404 kept own layouts.

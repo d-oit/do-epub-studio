@@ -4,17 +4,15 @@ import { ViewTransitionRoutes } from './components/ViewTransitionRoutes';
 import { useAuthStore } from './stores/auth';
 import { useThemeSync } from './hooks/useThemeSync';
 import { useSessionExpiry } from './hooks/useSessionExpiry';
+import { useTranslation } from './hooks/useTranslation';
 import { useDocumentLocale } from './hooks/useDocumentLocale';
 import { AppShell } from './components/AppShell';
 import { SwUpdateNotification } from './components/SwUpdateNotification';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { NotFoundPage } from './features/errors/NotFoundPage';
 import {
-  LibrarySkeleton,
-  CatalogSkeleton,
   AdminSkeleton,
   ReaderSkeleton,
-  SettingsSkeleton,
   AuthSkeleton,
 } from './components/skeletons';
 
@@ -98,6 +96,42 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+// GOAP-268 UX-01: root session routing is immediate (no timer) and separate
+// from the persistent layout. Preserves the pre-shell destinations exactly:
+// admin → /admin, book session → /read/:slug, everything else → /login.
+function RootIndexRoute() {
+  const { isAuthenticated, isAdmin, bookSlug } = useAuthStore();
+
+  if (isAuthenticated) {
+    if (isAdmin) {
+      return <Navigate to="/admin" replace />;
+    }
+    if (bookSlug) {
+      return <Navigate to={`/read/${bookSlug}`} replace />;
+    }
+  }
+
+  return <Navigate to="/login" replace />;
+}
+
+// GOAP-268 UX-01: minimal loading fallback for routes nested inside AppShell.
+// The full-page skeletons render their own header bar, which would duplicate
+// the shell header while the lazy chunk loads.
+function ShellRouteFallback() {
+  const { t } = useTranslation();
+
+  return (
+    <div
+      className="flex items-center justify-center py-16"
+      role="status"
+      aria-live="polite"
+      aria-label={t('a11y.loading_page')}
+    >
+      <div className="h-8 w-8 animate-spin rounded-full border-2 border-border border-t-accent" aria-hidden="true" />
+    </div>
+  );
+}
+
 // App is exported as a named export (no default) to avoid a duplicate
 // export knip warning. main.tsx imports { App }.
 export function App() {
@@ -117,8 +151,23 @@ export function App() {
       <SwUpdateNotification />
       <OfflineIndicator />
       <ViewTransitionRoutes>
-        <Route path="/" element={<AppShell />} />
-        <Route path="/catalog" element={<Suspense fallback={<CatalogSkeleton />}><CatalogPage /></Suspense>} />
+        {/* GOAP-268 UX-01: `/` is a layout parent. Core routes nest inside so
+            AppShell (nav + single main landmark) renders persistently.
+            Auth, reader, admin, help, and 404 stay outside the shell. */}
+        <Route path="/" element={<AppShell />}>
+          <Route index element={<RootIndexRoute />} />
+          <Route path="catalog" element={<Suspense fallback={<ShellRouteFallback />}><CatalogPage /></Suspense>} />
+          <Route path="library" element={
+            <ProtectedRoute>
+              <Suspense fallback={<ShellRouteFallback />}><MyLibraryPage /></Suspense>
+            </ProtectedRoute>
+          } />
+          <Route path="settings" element={
+            <ProtectedRoute>
+              <Suspense fallback={<ShellRouteFallback />}><SettingsPage /></Suspense>
+            </ProtectedRoute>
+          } />
+        </Route>
         <Route path="/help" element={<Suspense fallback={<AuthSkeleton />}><HelpPage /></Suspense>} />
         <Route path="/login" element={<Suspense fallback={<AuthSkeleton />}><LoginPage /></Suspense>} />
         <Route path="/admin/login" element={<Suspense fallback={<AuthSkeleton />}><AdminLoginPage /></Suspense>} />
@@ -128,20 +177,10 @@ export function App() {
             <Suspense fallback={<ReaderSkeleton />}><ReaderPage /></Suspense>
           </ProtectedRoute>
         } />
-        <Route path="/library" element={
-          <ProtectedRoute>
-            <Suspense fallback={<LibrarySkeleton />}><MyLibraryPage /></Suspense>
-          </ProtectedRoute>
-        } />
         <Route path="/admin" element={
           <AdminRoute>
             <Suspense fallback={<AdminSkeleton />}><AdminDashboard /></Suspense>
           </AdminRoute>
-        } />
-        <Route path="/settings" element={
-          <ProtectedRoute>
-            <Suspense fallback={<SettingsSkeleton />}><SettingsPage /></Suspense>
-          </ProtectedRoute>
         } />
         <Route path="/admin/books" element={
           <AdminRoute>
