@@ -147,7 +147,7 @@ None.
 | 259    | Issue #339 ZIP Bomb Defense (GOAP) | `plans/259-goap-issue-339.md` | COMPLETED (verified 2026-08-29; issue closed 2026-05-26) |
 | 260    | Issue #312 Dependency Scanning (GOAP) | `plans/260-goap-issue-312.md` | COMPLETED (verified 2026-08-29; issue closed 2026-05-26) |
 | 261    | Issue #314 Schema Consolidation (GOAP) | `plans/261-goap-issue-314.md` | COMPLETED (verified 2026-08-29; issue closed 2026-05-26) |
-| 262    | Issue #318 AI Plugin Architecture (GOAP + ADR) | `plans/262-goap-issue-318.md` | IN PROGRESS (impl on `feat/issue-318-goap-plan`) |
+| 262    | Issue #318 AI Plugin Architecture (GOAP + ADR) | `plans/262-goap-issue-318.md` | COMPLETED (verified 2026-09-10: `packages/reader-core/src/ai/` registry+consent+local-summarization PoC, `apps/web/src/lib/ai-plugins.ts` wiring, opt-in `reader.aiEnabled` default off) |
 | 263    | Issue #316 OKLCH Color System (GOAP) | `plans/263-goap-issue-316.md` | COMPLETED (verified 2026-08-29; issue closed 2026-05-26) |
 | 264    | Issue #315 View Transitions (GOAP) | `plans/264-goap-issue-315.md` | COMPLETED (verified 2026-08-29; issue closed 2026-05-26) |
 | 265    | Issue #317 Offline E2E (GOAP) | `plans/265-goap-issue-317.md` | COMPLETED (verified 2026-08-29; issue closed 2026-05-26) |

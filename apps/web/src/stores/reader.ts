@@ -1,6 +1,5 @@
 import { create } from 'zustand';
-import type { ConflictRecord, ConflictResolutionResult } from '../lib/offline/conflict-resolution';
-import { ConflictResolutionStrategy } from '../lib/offline/conflict-resolution';
+import type { ConflictRecord, ConflictResolutionResult, ConflictResolutionStrategy } from '../lib/offline/conflict-resolution';
 import type { AnnotationLocator } from '@do-epub-studio/shared';
 
 export type PageDirection = 'ltr' | 'rtl' | 'default';
@@ -184,7 +183,11 @@ export const useReaderStore = create<ReaderState>((set) => ({
 
     const result: ConflictResolutionResult = {
       resolved: true,
-      strategy: ConflictResolutionStrategy.Manual,
+      // Literal (not the enum value) so this shell-loaded store never pulls
+      // the conflict-resolution runtime + IndexedDB layer into the initial
+      // bundle (ADR-107 §3). 'resolves conflict' in reader-store.test.ts pins
+      // the value against the real enum and fails on drift.
+      strategy: 'manual' as ConflictResolutionStrategy,
       winner: resolution,
       merged: resolution === 'local' ? conflict.localVersion : conflict.remoteVersion,
     };

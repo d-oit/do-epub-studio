@@ -5,7 +5,6 @@ import { createSpanId, createTraceId } from '@do-epub-studio/shared';
 import { useTranslation } from '../../hooks/useTranslation';
 import { apiRequest } from '../../lib/api/index';
 import { logClientEvent } from '../../lib/client-logger';
-import { setupOnlineListener, getSyncQueue } from '../../lib/offline';
 import { setupZombieDetection } from '../../lib/offline/permissions';
 import { AnnotationToolbar, extractSelectionData, CommentsPanel } from './components/annotations';
 import {
@@ -66,8 +65,6 @@ export function ReaderPage() {
 
   const setError = useReaderStore((s) => s.setError);
   const error = useReaderStore((s) => s.error);
-  const setOffline = useReaderStore((s) => s.setOffline);
-  const setPendingSyncCount = useReaderStore((s) => s.setPendingSyncCount);
   const setPermissionStatus = useReaderStore((s) => s.setPermissionStatus);
   const progress = useReaderStore((s) => s.progress);
   const setProgress = useReaderStore((s) => s.setProgress);
@@ -183,34 +180,6 @@ export function ReaderPage() {
     document.addEventListener('mouseup', onMouseUp);
     return () => document.removeEventListener('mouseup', onMouseUp);
   }, [isCommentMode, setSelection]);
-
-  useEffect(() => {
-    const handleOnline = () => setOffline(false);
-    const handleOffline = () => setOffline(true);
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-    setOffline(!navigator.onLine);
-    const cleanup = setupOnlineListener();
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-      cleanup();
-    };
-  }, [setOffline]);
-
-  useEffect(() => {
-    let cancelled = false;
-    // biome-ignore lint/correctness/useQwikValidLexicalScope: React project, not Qwik — false positive
-    const updateCount = async () => {
-      try {
-        const queue = await getSyncQueue();
-        if (!cancelled) setPendingSyncCount(queue.length);
-      } catch { /* IndexedDB may be unavailable */ }
-    };
-    void updateCount();
-    const interval = setInterval(() => void updateCount(), 5000);
-    return () => { cancelled = true; clearInterval(interval); };
-  }, [setPendingSyncCount]);
 
   useEffect(() => {
     if (!bookId) return;

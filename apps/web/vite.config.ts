@@ -151,6 +151,17 @@ export default defineConfig({
           if (id.includes('packages/reader-core')) {
             return 'reader-core';
           }
+          // Shell-shared stores (imported statically by App/AppShell AND lazy
+          // routes): pin to a neutral chunk so Rolldown never places them
+          // inside reader-route — a single static index→reader-route edge would
+          // drag the whole reader-core chunk (~90KB gzip) into every route
+          // total (ADR-107 §3). Must precede the features/reader rule.
+          // NOTE: src/lib/offline is deliberately NOT pinned: the shell reads
+          // it only through a dynamic import (useSyncStatus), so its IndexedDB
+          // machinery must stay in lazy chunks, not the static closure.
+          if (id.includes('src/stores/')) {
+            return 'app-shared';
+          }
           if (id.includes('packages/shared')) {
             return 'shared-lib';
           }

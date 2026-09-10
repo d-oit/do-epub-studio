@@ -73,7 +73,7 @@ function ToolbarIconButton({ label, svgPath, onClick, isExpanded, badge, badgeLa
           ))}
         </svg>
         {badge != null && badge > 0 && (
-          <span className="absolute -top-1 -right-1 w-4 h-4 bg-accent text-white text-[10px] rounded-full flex items-center justify-center font-bold" aria-hidden="true">
+          <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary-700 text-background text-[10px] rounded-full flex items-center justify-center font-bold" aria-hidden="true">
             {badge}
           </span>
         )}
@@ -120,7 +120,7 @@ function ToolbarLeft({
         </IconButton>
       </Tooltip>
       <div className="flex flex-col">
-        <h1 className="text-sm font-semibold text-foreground truncate max-w-[150px] sm:max-w-[300px]">
+        <h1 className="font-display tracking-tight text-sm font-semibold text-foreground truncate max-w-[150px] sm:max-w-[300px]">
           {bookTitle || t('reader.untitledBook')}
         </h1>
         <div className="flex items-center gap-2">
@@ -321,7 +321,7 @@ function OverflowMenu({
                   <span aria-hidden="true">{t('annotation.comment')}</span>
                 </div>
                 {openCommentsCount > 0 && (
-                  <span className="w-5 h-5 bg-accent text-white text-[10px] rounded-full flex items-center justify-center font-bold" aria-hidden="true">{openCommentsCount}</span>
+                  <span className="w-5 h-5 bg-primary-700 text-background text-[10px] rounded-full flex items-center justify-center font-bold" aria-hidden="true">{openCommentsCount}</span>
                 )}
               </button>
             )}
@@ -338,7 +338,7 @@ function OverflowMenu({
                 <span aria-hidden="true">{t('reader.bookmarks')}</span>
               </div>
               {bookmarkCount > 0 && (
-                <span className="w-5 h-5 bg-accent text-white text-[10px] rounded-full flex items-center justify-center font-bold" aria-hidden="true">{bookmarkCount}</span>
+                <span className="w-5 h-5 bg-primary-700 text-background text-[10px] rounded-full flex items-center justify-center font-bold" aria-hidden="true">{bookmarkCount}</span>
               )}
             </button>
             <button role="menuitem" onClick={close(onToggleInfo)} className="flex items-center gap-3 px-3 py-2 text-sm text-foreground hover:bg-background-secondary rounded-lg transition-colors text-left">

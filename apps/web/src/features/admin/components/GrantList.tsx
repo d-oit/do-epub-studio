@@ -63,7 +63,7 @@ export function GrantList({
   // Empty prompt when no book is selected
   if (!selectedBookId && !isLoadingGrants) {
     return (
-      <div className="text-center py-12">
+      <div className="paper-grain rounded-sm border border-dashed border-border px-6 py-16 text-center">
         <p className="text-foreground-muted">
           {t('grants.selectBookPrompt')}
         </p>
@@ -83,7 +83,7 @@ export function GrantList({
   // Empty grant list
   if (selectedBookId && !isLoadingGrants && grants.length === 0) {
     return (
-      <div className="text-center py-12">
+      <div className="paper-grain rounded-sm border border-dashed border-border px-6 py-16 text-center">
         <p className="text-foreground-muted">{t('grants.noGrants')}</p>
       </div>
     );
@@ -91,30 +91,30 @@ export function GrantList({
 
   return (
     <>
-      <div className="bg-background rounded-lg shadow overflow-hidden">
+      <div className="overflow-hidden rounded-sm border border-border bg-surface shadow-page">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-border">
             <thead className="bg-background-secondary">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-foreground-muted uppercase tracking-wider">
+                <th className="eyebrow px-4 py-3 text-left">
                   {t('grants.table.email')}
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-foreground-muted uppercase tracking-wider">
+                <th className="eyebrow px-4 py-3 text-left">
                   {t('grants.table.mode')}
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-foreground-muted uppercase tracking-wider">
+                <th className="eyebrow px-4 py-3 text-left">
                   {t('grants.table.capabilities')}
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-foreground-muted uppercase tracking-wider">
+                <th className="eyebrow px-4 py-3 text-left">
                   {t('grants.table.status')}
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-foreground-muted uppercase tracking-wider">
+                <th className="eyebrow px-4 py-3 text-left">
                   {t('grants.table.expiry')}
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-foreground-muted uppercase tracking-wider">
+                <th className="eyebrow px-4 py-3 text-left">
                   {t('grants.table.created')}
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-foreground-muted uppercase tracking-wider">
+                <th className="eyebrow px-4 py-3 text-right">
                   {t('grants.table.actions')}
                 </th>
               </tr>
@@ -178,13 +178,13 @@ export function GrantList({
                         <>
                           <button
                             onClick={() => onEdit(grant)}
-                            className="text-semantic-info hover:opacity-80 min-h-[24px] px-2 py-0.5"
+                            className="touch-target px-2 py-0.5 text-semantic-info hover:opacity-80"
                           >
                             {t('grants.actions.edit')}
                           </button>
                           <button
                             onClick={() => setRevokingGrant(grant)}
-                            className="text-semantic-error hover:opacity-80 min-h-[24px] px-2 py-0.5"
+                            className="touch-target px-2 py-0.5 text-semantic-error hover:opacity-80"
                           >
                             {t('grants.actions.revoke')}
                           </button>

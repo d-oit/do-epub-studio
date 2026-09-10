@@ -1,3 +1,4 @@
+import { InstallPwaSection } from '../../components/InstallPwaSection';
 import type { ReactNode } from 'react';
 import { useTranslation } from '../../hooks/useTranslation';
 import type { TranslationKeys } from '../../i18n';
@@ -15,12 +16,10 @@ import { useAuthStore } from '../../stores/auth';
 
 function SettingRow({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div className="py-4 border-b border-border last:border-0">
-      <span className="block text-xs font-medium text-foreground-muted uppercase tracking-wider mb-3" id={`setting-${label.replace(/\s+/g, '-').toLowerCase()}`}>
-        {label}
-      </span>
+    <fieldset className="min-w-0 border-b border-border py-4 last:border-0">
+      <legend className="eyebrow mb-3 block">{label}</legend>
       {children}
-    </div>
+    </fieldset>
   );
 }
 
@@ -44,10 +43,10 @@ function SegmentedButton<T extends string | number>({
           onClick={() => { onChange(opt); }}
           aria-pressed={value === opt}
           className={`
-            px-4 py-2 text-sm rounded-lg border transition-all duration-150 outline-none
+            min-h-11 min-w-11 max-w-full whitespace-normal px-4 py-2 text-sm rounded-lg border transition-all duration-150 outline-none
             focus-visible:ring-2 focus-visible:ring-accent
             ${value === opt
-              ? 'bg-accent text-white border-accent font-medium shadow-sm'
+              ? 'bg-background-tertiary text-foreground border-accent font-semibold shadow-sm'
               : 'bg-background text-foreground border-border hover:border-foreground-muted'
             }
           `}
@@ -83,7 +82,7 @@ export function SettingsPage() {
   // GOAP-268 UX-01: nested under AppShell, which owns the single
   // `main#main-content` landmark.
   return (
-    <div className="bg-background p-4 sm:p-6 lg:p-8">
+    <div className="bg-background py-6">
       <header className="flex justify-between flex-wrap gap-4 items-center mb-8">
         <div>
           <h1 className="text-2xl font-bold text-foreground">{t('settings.title')}</h1>
@@ -92,9 +91,9 @@ export function SettingsPage() {
         <LocaleSwitcher />
       </header>
 
-      <div className="max-w-2xl mx-auto space-y-6">
+      <div className="mx-auto w-full max-w-2xl min-w-0 space-y-6">
         {/* Reader preferences */}
-        <section className="bg-background-secondary rounded-xl border border-border p-6 shadow-sm">
+        <section className="bg-background-secondary rounded-xl border border-border p-4 sm:p-6 shadow-sm min-w-0">
           <h2 className="text-lg font-semibold text-foreground mb-2">{t('settings.readerPreferences')}</h2>
           <p className="text-sm text-foreground-muted mb-4">{t('settings.readerPreferencesHint')}</p>
 
@@ -164,9 +163,10 @@ export function SettingsPage() {
 
         {/* Storage management */}
         <StorageQuota />
-
+        {/* PWA install (renders nothing when unsupported/installed/dismissed) */}
+        <InstallPwaSection />
         {/* Account info */}
-        <section className="bg-background-secondary rounded-xl border border-border p-6 shadow-sm">
+        <section className="bg-background-secondary rounded-xl border border-border p-4 sm:p-6 shadow-sm min-w-0">
           <h2 className="text-lg font-semibold text-foreground mb-4">{t('settings.account')}</h2>
           {isAdmin && (
             <div className="flex items-center gap-3 text-sm text-foreground-muted">

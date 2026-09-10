@@ -52,8 +52,8 @@ function AuditTable({ data, page, total, onPrev, onNext }: AuditTableProps) {
 
   if (data.entries.length === 0) {
     return (
-      <section className="bg-background-secondary shadow-sm rounded-lg border border-border overflow-x-auto" aria-label={t('admin.audit.tableLabel')}>
-        <p className="px-6 py-12 text-center text-foreground-muted">
+      <section className="overflow-x-auto rounded-sm border border-border bg-surface shadow-page" aria-label={t('admin.audit.tableLabel')}>
+        <p className="paper-grain border-b border-dashed border-border px-6 py-16 text-center text-foreground-muted">
           {t('admin.audit.noLogs')}
         </p>
         <div className="flex items-center justify-between px-6 py-4 border-t border-border">
@@ -64,20 +64,20 @@ function AuditTable({ data, page, total, onPrev, onNext }: AuditTableProps) {
   }
 
   return (
-    <section className="bg-background-secondary shadow-sm rounded-lg border border-border overflow-x-auto" aria-label={t('admin.audit.tableLabel')}>
+    <section className="overflow-x-auto rounded-sm border border-border bg-surface shadow-page" aria-label={t('admin.audit.tableLabel')}>
       <table className="min-w-full divide-y divide-border">
         <thead className="bg-background-secondary">
           <tr>
-            <th className="px-6 py-3 text-left text-xs font-medium text-foreground-muted uppercase tracking-wider">
+            <th className="eyebrow px-6 py-3 text-left">
               {t('admin.audit.timestamp')}
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-foreground-muted uppercase tracking-wider">
+            <th className="eyebrow px-6 py-3 text-left">
               {t('admin.audit.actor')}
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-foreground-muted uppercase tracking-wider">
+            <th className="eyebrow px-6 py-3 text-left">
               {t('admin.audit.action')}
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-foreground-muted uppercase tracking-wider">
+            <th className="eyebrow px-6 py-3 text-left">
               {t('admin.audit.entity')}
             </th>
           </tr>
@@ -154,7 +154,7 @@ function AuditBody({ token, onPrev, onNext, ...filters }: AuditBodyProps) {
 function AuditSkeleton() {
   return (
     <div
-      className="bg-background-secondary shadow-sm rounded-lg border border-border p-12 flex justify-center"
+      className="flex justify-center rounded-sm border border-border bg-surface p-12 shadow-page"
       aria-busy="true"
       aria-live="polite"
     >
@@ -187,7 +187,7 @@ class AuditErrorBoundary extends Component<AuditErrorBoundaryProps, AuditErrorBo
       return (
         <div
           role="alert"
-          className="mb-6 p-4 bg-semantic-error/10 border border-semantic-error/30 rounded-lg text-semantic-error"
+          className="mb-6 p-4 bg-semantic-error/10 border border-semantic-error/30 rounded-sm text-semantic-error"
         >
           {this.state.error.message}
         </div>
@@ -266,14 +266,14 @@ export function AdminAuditPage() {
         { labelKey: 'admin.breadcrumb.books', href: AUDIT_ROUTES.books },
         { labelKey: 'admin.breadcrumb.audit' },
       ]} />
-      <header className="flex justify-between items-center mb-8">
+      <header className="mb-8 flex flex-wrap items-center justify-between gap-4 border-b border-[var(--color-rule)] pb-6">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">
+          <h1 className="text-balance-tight font-display text-3xl leading-tight text-foreground md:text-4xl">
             {t('admin.audit.title')}
           </h1>
           <button
             onClick={handleBack}
-            className="text-sm text-accent hover:opacity-80 mt-1 min-h-[24px] px-2 py-0.5"
+            className="touch-target mt-1 inline-flex items-center px-2 py-0.5 text-sm text-accent hover:opacity-80"
           >
             &larr; {t('admin.audit.backToBooks')}
           </button>
@@ -297,10 +297,11 @@ export function AdminAuditPage() {
 
       <div className="mb-6 flex flex-wrap items-end gap-4">
         <div>
-          <label className="block text-xs font-medium text-foreground-muted mb-1">
+          <label htmlFor="audit-filter-entity-type" className="eyebrow block mb-1">
             {t('admin.audit.entityType')}
           </label>
           <select
+            id="audit-filter-entity-type"
             aria-label={t('admin.audit.entityType')}
             value={entityType}
             onChange={(e) => { setEntityType(e.target.value); setPage(1); }}
@@ -312,10 +313,11 @@ export function AdminAuditPage() {
           </select>
         </div>
         <div>
-          <label className="block text-xs font-medium text-foreground-muted mb-1">
+          <label htmlFor="audit-filter-entity-id" className="eyebrow block mb-1">
             {t('admin.audit.entityId')}
           </label>
           <input
+            id="audit-filter-entity-id"
             type="text"
             value={entityId}
             onChange={(e) => { setEntityId(e.target.value); setPage(1); }}
@@ -324,10 +326,11 @@ export function AdminAuditPage() {
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-foreground-muted mb-1">
+          <label htmlFor="audit-filter-date-from" className="eyebrow block mb-1">
             {t('admin.audit.dateFrom')}
           </label>
           <input
+            id="audit-filter-date-from"
             type="date"
             aria-label={t('admin.audit.dateFrom')}
             value={dateFrom}
@@ -336,10 +339,11 @@ export function AdminAuditPage() {
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-foreground-muted mb-1">
+          <label htmlFor="audit-filter-date-to" className="eyebrow block mb-1">
             {t('admin.audit.dateTo')}
           </label>
           <input
+            id="audit-filter-date-to"
             type="date"
             aria-label={t('admin.audit.dateTo')}
             value={dateTo}

@@ -42,18 +42,19 @@ All colors use OKLCH for perceptually uniform lightness and P3 wide-gamut suppor
 - No rounded-square icon tile above every heading
 
 ## Accessibility
-- WCAG 2.1 AA minimum (ADR-063a)
+- WCAG 2.2 AA minimum (ADR-063a); the project additionally targets 44×44 CSS px for interactive controls — stricter than WCAG 2.2 SC 2.5.8 (24×24 CSS px minimum), so a 24px pass does not satisfy this project's control target
 - Semantic design tokens for all colors
-- axe-core assertions in component tests
-- Keyboard navigation for all interactive elements
+- axe-core assertions in component tests (WCAG 2.0/2.1/2.2 tags retained)
+- Keyboard navigation for all interactive elements, with focus visibility and no wholly obscured focused control (SC 2.4.11)
+- Reflow without loss of content or function down to 320 CSS px (SC 1.4.10)
 - Screen reader compatibility (LiveRegion component)
 
 ### Password visibility controls
-- The show/hide password control is anchored to the **left/leading edge** of the field by product direction.
-- Use logical start positioning and matching start-side input padding so the control never overlays typed text and remains correct in RTL locales.
+- The show/hide password control is anchored to the **right/trailing edge** of the field (logical inline-end) per ADR-249, so it does not interfere with the text insertion start position.
+- Use logical trailing-side positioning (`inset-inline-end`) and matching trailing-side input padding (`padding-inline-end`) so the control never overlays typed text and remains correct in RTL locales.
 - Keep the localized action label alongside the eye icon at `sm+`; icon-only presentation is permitted below `sm` only when the localized label remains the button's accessible name.
 - Preserve a minimum 44px touch target, visible focus ring, `type="button"`, and `aria-controls` linking the control to its input.
-- Test both the semantic toggle behavior and its rendered placement; a password toggle is not considered complete if it only works functionally but drifts to the trailing edge.
+- Test both the semantic toggle behavior and its rendered placement; a password toggle is not considered complete if it only works functionally but drifts to the leading edge.
 
 ## Platform APIs (ADR-105)
 - Native Popover API for tooltips/menus (with `@supports` fallback)

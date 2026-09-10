@@ -23,6 +23,10 @@ import { registerSW } from 'virtual:pwa-register';
 import { useSwUpdateStore } from './stores/sw-update';
 import { useTranslation } from './hooks/useTranslation';
 import type { TranslationKeys } from './i18n';
+import { setupInstallListeners } from './lib/pwa-install';
+
+/** Cleanup handle for the PWA install listeners; retained for HMR/tests. */
+export let removeInstallListeners: (() => void) | null = null;
 
 let _addToast: ((type: 'success' | 'error' | 'info' | 'warning', message: string) => void) | null = null;
 let _t: ((key: TranslationKeys) => string) | null = null;
@@ -142,6 +146,9 @@ if (rootElement) {
 if (typeof window !== 'undefined') {
   window.addEventListener('error', handleError);
   window.addEventListener('unhandledrejection', handleRejection);
+  // beforeinstallprompt/appinstalled listeners; the cleanup is kept in module
+  // scope (mirrors the global-listener convention) for HMR and tests.
+  removeInstallListeners = setupInstallListeners();
 }
 
 if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {

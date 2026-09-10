@@ -6,6 +6,7 @@ import { useThemeSync } from './hooks/useThemeSync';
 import { useSessionExpiry } from './hooks/useSessionExpiry';
 import { useTranslation } from './hooks/useTranslation';
 import { useDocumentLocale } from './hooks/useDocumentLocale';
+import { useSyncStatus } from './hooks/useSyncStatus';
 import { AppShell } from './components/AppShell';
 import { SwUpdateNotification } from './components/SwUpdateNotification';
 import { OfflineIndicator } from './components/OfflineIndicator';
@@ -138,7 +139,7 @@ export function App() {
   useThemeSync();
   useSessionExpiry();
   useDocumentLocale();
-
+  useSyncStatus();
   return (
     <Suspense fallback={null}>
       {/* Skip-to-content link — WCAG 2.4.1: first focusable element in the page */}

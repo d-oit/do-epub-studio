@@ -76,10 +76,10 @@ export function CatalogPage() {
     <div className="bg-background px-4 py-6 text-foreground sm:px-6 md:py-10 lg:px-8 2xl:px-12"
     >
       <div className="mx-auto max-w-7xl">
-        <header className="mb-8 flex flex-col gap-6 border-b border-border pb-6 md:mb-10 md:flex-row md:items-end md:justify-between">
+        <header className="mb-8 flex flex-col gap-6 border-b border-[var(--color-rule)] pb-6 md:mb-10 md:flex-row md:items-end md:justify-between">
           <div className="min-w-0">
-            <h1 className="text-balance text-3xl font-bold tracking-tight md:text-4xl">{t('catalog.title')}</h1>
-            <p className="mt-2 max-w-2xl text-foreground-muted">{t('catalog.subtitle')}</p>
+            <h1 className="text-balance-tight font-display text-3xl leading-tight md:text-4xl">{t('catalog.title')}</h1>
+            <p className="mt-2 max-w-2xl text-pretty text-foreground-muted">{t('catalog.subtitle')}</p>
           </div>
         </header>
 
@@ -116,7 +116,7 @@ export function CatalogPage() {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4" aria-busy="true">
             {/* eslint-disable-next-line i18next/no-literal-string -- skeleton loader React keys */}
             {['sk-1', 'sk-2', 'sk-3', 'sk-4', 'sk-5', 'sk-6'].map((id) => (
-              <div key={id} className="h-72 rounded-lg bg-background-secondary animate-pulse" />
+              <div key={id} className="h-72 rounded-sm shadow-page skeleton" />
             ))}
           </div>
         )}
@@ -126,7 +126,9 @@ export function CatalogPage() {
         )}
 
         {!isLoading && !error && books.length === 0 && (
-          <p className="text-center text-foreground-muted">{t('catalog.empty')}</p>
+          <div className="paper-grain rounded-sm border border-dashed border-border px-6 py-16 text-center">
+            <p className="text-foreground-muted">{t('catalog.empty')}</p>
+          </div>
         )}
 
         {!isLoading && books.length > 0 && (
@@ -136,7 +138,7 @@ export function CatalogPage() {
                 <li key={book.id}>
                   <Link
                     to={`/login?book=${book.slug}`}
-                    className="group block h-full rounded-lg border border-border bg-background-secondary p-4 shadow-sm transition-[box-shadow,transform] hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-2 focus-visible:outline-accent"
+                    className="group block h-full rounded-sm border border-border bg-surface p-4 shadow-page transition-colors hover:border-accent/40 focus-visible:outline-2 focus-visible:outline-accent"
                   >
                     {book.coverImageUrl ? (
                       <picture>
@@ -157,7 +159,7 @@ export function CatalogPage() {
                         <AppLogo size={40} className="text-accent" />
                       </div>
                     )}
-                    <h2 className="line-clamp-2 text-lg font-semibold leading-snug group-hover:text-accent">{book.title}</h2>
+                    <h2 className="line-clamp-2 font-display text-lg leading-snug group-hover:text-accent">{book.title}</h2>
                     {book.authorName && (
                       <p className="text-sm text-foreground-muted mt-1">{book.authorName}</p>
                     )}

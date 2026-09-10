@@ -205,17 +205,17 @@ function GrantsView({ data, bookId, token }: { data: GrantsBodyData; bookId: str
         { labelKey: 'admin.breadcrumb.books', href: GRANT_ROUTES.books },
         { labelKey: 'admin.breadcrumb.grants' },
       ]} />
-      <header className="flex justify-between items-center mb-8">
+      <header className="mb-8 flex items-center justify-between border-b border-[var(--color-rule)] pb-6">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">
+          <h1 className="text-balance-tight font-display text-3xl leading-tight text-foreground md:text-4xl">
             {t('admin.grants.title')}
           </h1>
-          <p className="text-sm text-foreground-muted mt-1">
+          <p className="mt-1 text-pretty text-sm text-foreground-muted">
             {currentBookTitle ?? (bookId ? `${t('admin.books.title')} ID: ${bookId}` : t('admin.grants.selectBook'))}
           </p>
           <button
             onClick={() => void navigate('/admin/books')}
-            className="text-sm text-accent hover:opacity-80 mt-1"
+            className="touch-target mt-1 inline-flex items-center px-2 py-0.5 text-sm text-accent hover:opacity-80"
           >
             &larr; {t('admin.grants.backToBooks')}
           </button>

@@ -100,7 +100,7 @@ test.describe('Advanced accessibility — focus management', () => {
     await clickToolbarButton(page, /Settings/i);
     await expect(page.getByRole('dialog').getByText('Settings', { exact: true })).toBeVisible();
     const results = await new AxeBuilder({ page })
-      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
       .analyze();
     const critical = results.violations.filter((v) => v.impact === 'critical' || v.impact === 'serious');
     expect(critical).toHaveLength(0);
