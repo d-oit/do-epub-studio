@@ -2,10 +2,12 @@ import { NavLink } from 'react-router-dom';
 import { useTranslation } from '../../hooks/useTranslation';
 import { AppLogo } from '../../components/ui';
 import { NAV_ITEMS, NavIcon } from './shared';
+import { useCreatorNavItem } from './useCreatorNavItem';
 import { APP_NAME, APP_VERSION_LABEL } from '../../config/app-identity';
 
 export function Sidebar() {
   const { t } = useTranslation();
+  const { show: showCreatorEntry } = useCreatorNavItem();
 
   return (
     <aside className="sidebar-nav hidden lg:flex flex-col w-60 bg-background-secondary border-r border-border h-full overflow-y-auto">
@@ -38,6 +40,26 @@ export function Sidebar() {
             )}
           </NavLink>
         ))}
+        {showCreatorEntry && (
+          <NavLink
+            to={'/creator'} /* eslint-disable-line i18next/no-literal-string -- route path constant */
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-5 py-2.5 text-sm transition-colors ${
+                isActive
+                  ? 'text-accent bg-accent/10 border-r-2 border-accent'
+                  : 'text-foreground-muted hover:text-foreground hover:bg-background-tertiary'
+              }`
+            }
+            aria-label={t('creator.title')}
+          >
+            {({ isActive }) => (
+              <>
+                <NavIcon icon={'book-open'} /* eslint-disable-line i18next/no-literal-string -- icon key constant */ className={`w-5 h-5 shrink-0 ${isActive ? 'text-accent' : ''}`} />
+                <span>{t('creator.title')}</span>
+              </>
+            )}
+          </NavLink>
+        )}
       </nav>
     </aside>
   );

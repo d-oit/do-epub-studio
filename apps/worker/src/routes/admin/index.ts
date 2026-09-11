@@ -3,6 +3,7 @@ import type { Env } from '../../lib/env';
 import { authRouter } from './auth';
 import { booksRouter } from './books';
 import { grantsRouter } from './grants';
+import { creatorsAdminRouter } from './creators';
 import { auditRouter } from './audit';
 import { statsRouter } from './stats';
 import { adminInsightsRouter } from './insights';
@@ -12,6 +13,7 @@ export const adminRouter = new Hono<{ Bindings: Env; Variables: { adminUser: { e
 adminRouter.route('/', authRouter);
 adminRouter.route('/books', booksRouter);
 adminRouter.route('/', grantsRouter);
+adminRouter.route('/', creatorsAdminRouter);
 adminRouter.route('/', auditRouter);
 adminRouter.route('/', statsRouter);
 adminRouter.route('/', adminInsightsRouter);

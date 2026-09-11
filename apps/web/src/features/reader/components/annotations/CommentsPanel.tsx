@@ -8,12 +8,20 @@ import type { SupportedLocale } from '../../../../stores/locale';
 import { CommentItem } from './CommentItem';
 import { HighlightItem } from './HighlightItem';
 import { VirtualList } from '../../../../components/VirtualList';
+import type { FeedbackItem } from '../../../../lib/api/feedback';
+import { FeedbackPanel } from './FeedbackPanel';
 
 interface CommentsPanelProps {
   isOpen: boolean;
   onClose: () => void;
   comments: Comment[];
   highlights: Highlight[];
+  feedbackItems?: FeedbackItem[];
+  feedbackLoadError?: boolean;
+  canContribute?: boolean;
+  onWithdrawFeedback?: (id: string) => void;
+  onRetryFeedback?: (draftItemId: string) => void;
+  onReplyFeedback?: (id: string, text: string) => void;
   onResolveComment: (commentId: string) => void;
   onReplyToComment: (commentId: string, text: string) => void;
   onEditComment: (commentId: string, text: string) => void;
@@ -45,14 +53,20 @@ export function CommentsPanel({
   onDeleteHighlight,
   onNavigateToAnnotation,
   currentChapter,
+  feedbackItems = [],
+  feedbackLoadError = false,
+  canContribute = false,
+  onWithdrawFeedback,
+  onRetryFeedback,
+  onReplyFeedback,
 }: CommentsPanelProps) {
   const panelRef = useRef<HTMLElement>(null);
   useFocusTrap(isOpen, panelRef);
-
   useKeyboardShortcut('Escape', onClose, { enabled: isOpen });
 
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState<'comments' | 'highlights'>('comments');
+
+  const [activeTab, setActiveTab] = useState<'comments' | 'highlights' | 'feedback'>('comments');
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyText, setReplyText] = useState('');
   const [editingComment, setEditingComment] = useState<string | null>(null);
@@ -225,8 +239,40 @@ export function CommentsPanel({
           </div>
         ),
       },
+      ...(canContribute
+        ? [
+            {
+              id: 'feedback',
+              label: `${t('feedback.myFeedback')} (${feedbackItems.length})`,
+              content: (
+                <FeedbackPanel
+                  items={feedbackItems}
+                  loadError={feedbackLoadError}
+                  onWithdraw={(id) => void onWithdrawFeedback?.(id)}
+                  onRetry={(draftItemId) => void onRetryFeedback?.(draftItemId)}
+                  onReply={(id, text) => void onReplyFeedback?.(id, text)}
+                  onNavigateToAnchor={onNavigateToAnnotation}
+                />
+              ),
+            },
+          ]
+        : []),
     ],
-    [openComments, resolvedComments, highlights, t, renderComment, renderHighlight],
+    [
+      openComments,
+      resolvedComments,
+      highlights,
+      t,
+      renderComment,
+      renderHighlight,
+      canContribute,
+      feedbackItems,
+      feedbackLoadError,
+      onWithdrawFeedback,
+      onRetryFeedback,
+      onReplyFeedback,
+      onNavigateToAnnotation,
+    ],
   );
 
   if (!isOpen) return null;
@@ -260,7 +306,7 @@ export function CommentsPanel({
       <Tabs
         items={tabItems}
         activeId={activeTab}
-        onChange={(id) => setActiveTab(id as 'comments' | 'highlights')}
+        onChange={(id) => setActiveTab(id as 'comments' | 'highlights' | 'feedback')}
         ariaLabel={t('comment.plural')}
         className="flex-1 flex flex-col min-h-0"
         tabpanelClassName="flex-1 overflow-y-auto p-4 pt-4" /* eslint-disable-line i18next/no-literal-string -- Tailwind CSS class string */

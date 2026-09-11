@@ -4,6 +4,8 @@ export { booksRouter } from './books';
 export { catalogRouter } from './catalog';
 export { readerStateRouter } from './reader/index';
 export { commentsRouter } from './comments';
+export { feedbackRouter } from './feedback';
+export { creatorRouter } from './creator';
 export { filesRouter } from './files';
 export { adminRouter } from './admin/index';
 export { securityRouter } from './security';

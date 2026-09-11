@@ -60,6 +60,12 @@ const AdminDashboard = React.lazy(() =>
 const SettingsPage = React.lazy(() =>
   import('./features/settings/SettingsPage').then((m) => ({ default: m.SettingsPage }))
 );
+const CreatorPage = React.lazy(() =>
+  import('./features/creator/CreatorPage').then((m) => ({ default: m.CreatorPage }))
+);
+const FeedbackWorkspacePage = React.lazy(() =>
+  import('./features/creator/FeedbackWorkspacePage').then((m) => ({ default: m.FeedbackWorkspacePage }))
+);
 
 // Premium glassmorphism loading fallback spinner
 // GOAP-224 B12: `LoadingFallback` was unreachable — every lazy route is wrapped
@@ -169,6 +175,16 @@ export function App() {
             </ProtectedRoute>
           } />
         </Route>
+        <Route path="/creator" element={
+          <ProtectedRoute>
+            <Suspense fallback={<ShellRouteFallback />}><CreatorPage /></Suspense>
+          </ProtectedRoute>
+        } />
+        <Route path="/creator/books/:bookId/feedback" element={
+          <ProtectedRoute>
+            <Suspense fallback={<ShellRouteFallback />}><FeedbackWorkspacePage /></Suspense>
+          </ProtectedRoute>
+        } />
         <Route path="/help" element={<Suspense fallback={<AuthSkeleton />}><HelpPage /></Suspense>} />
         <Route path="/login" element={<Suspense fallback={<AuthSkeleton />}><LoginPage /></Suspense>} />
         <Route path="/admin/login" element={<Suspense fallback={<AuthSkeleton />}><AdminLoginPage /></Suspense>} />

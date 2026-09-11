@@ -41,7 +41,7 @@ const mockGrants = [{
 }];
 
 async function renderAndFlush(initialPath: string) {
-  await act(() => {
+  await act(async () => {
     render(
       <MemoryRouter initialEntries={[initialPath]}>
         <Routes>
@@ -50,7 +50,11 @@ async function renderAndFlush(initialPath: string) {
         </Routes>
       </MemoryRouter>,
     );
-    return Promise.resolve();
+    // CreatorAssignmentsSection fetches on mount; flush its promise so no
+    // in-flight continuation survives the test environment (the source of
+    // the CI-only EnvironmentTeardownError unhandled rejection).
+    await Promise.resolve();
+    await Promise.resolve();
   });
 }
 
@@ -63,6 +67,7 @@ describe('AdminGrantResponsesPage', () => {
     vi.mocked(api.apiRequest).mockImplementation((url: string) => {
       if (url === '/api/admin/books') return Promise.resolve(mockBooks);
       if (url.includes('/grants')) return Promise.resolve(mockGrants);
+      if (url.includes('/creators')) return Promise.resolve([]);
       return Promise.resolve([]);
     });
 
@@ -121,6 +126,7 @@ describe('AdminGrantResponsesPage', () => {
     vi.mocked(api.apiRequest).mockImplementation((url: string) => {
       if (url === '/api/admin/books') return Promise.resolve(mockBooks);
       if (url.includes('/grants')) return Promise.resolve(mockGrants);
+      if (url.includes('/creators')) return Promise.resolve([]);
       return Promise.resolve({ ok: true });
     });
 
@@ -158,6 +164,7 @@ describe('AdminGrantResponsesPage', () => {
     vi.mocked(api.apiRequest).mockImplementation((url: string) => {
       if (url === '/api/admin/books') return Promise.resolve(mockBooks);
       if (url.includes('/grants')) return Promise.resolve(mockGrants);
+      if (url.includes('/creators')) return Promise.resolve([]);
       return Promise.resolve({ ok: true });
     });
 

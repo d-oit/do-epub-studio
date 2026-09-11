@@ -14,6 +14,8 @@ import {
   catalogRouter,
   readerStateRouter,
   commentsRouter,
+  feedbackRouter,
+  creatorRouter,
   filesRouter,
   adminRouter,
   securityRouter,
@@ -72,6 +74,8 @@ app.route('/api/books', booksRouter);
 app.route('/api/catalog', catalogRouter);
 app.route('/api/books', readerStateRouter);
 app.route('/api', commentsRouter);
+app.route('/api', feedbackRouter);
+app.route('/api', creatorRouter);
 app.route('/api/files', filesRouter);
 app.route('/api/admin', adminRouter);
 app.route('/api', securityRouter);

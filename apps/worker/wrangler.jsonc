@@ -28,7 +28,7 @@
       "binding": "DB",
       "database_name": "do-epub-studio",
       "database_id": "dd47f3de-9ea0-4a00-898d-c49cc0dd271f",
-      // The schema package owns all D1 migrations (0001-0012). Point wrangler
+      // The schema package owns all D1 migrations (0001-0013). Point wrangler
       // at it so `wrangler d1 migrations apply` and `wrangler deploy` pick up
       // pending migrations automatically (GOAP-252). Resolved relative to this
       // file (apps/worker/), so it must go up two levels to the repo root.

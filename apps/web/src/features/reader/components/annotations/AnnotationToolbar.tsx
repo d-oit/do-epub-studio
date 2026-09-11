@@ -17,6 +17,7 @@ interface AnnotationToolbarProps {
   selection: SelectionData;
   onHighlight: (color: string) => void;
   onComment: () => void;
+  onFeedback?: (kind: 'comment' | 'suggestion') => void;
   onClose: () => void;
   locale: SupportedLocale;
   canHighlight: boolean;
@@ -37,6 +38,7 @@ export function AnnotationToolbar({
   selection,
   onHighlight,
   onComment,
+  onFeedback,
   onClose,
   canHighlight,
   canComment,
@@ -222,6 +224,55 @@ export function AnnotationToolbar({
           </button>
         </Tooltip>
       )}
+      {canComment && onFeedback && (
+        <>
+          <Tooltip content={t('feedback.commentAction')}>
+            <button
+              onClick={() => onFeedback('comment')}
+              className="flex items-center gap-2 px-3 py-1.5 hover:bg-background-secondary rounded-lg text-sm font-medium transition-colors"
+              aria-label={t('feedback.commentAction')}
+            >
+              <svg
+                className="w-4 h-4 text-accent"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M7 8h10M7 12h4m1 8-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
+                />
+              </svg>
+              <span className="cq-annotation-label">{t('feedback.commentAction')}</span>
+            </button>
+          </Tooltip>
+          <Tooltip content={t('feedback.suggestAction')}>
+            <button
+              onClick={() => onFeedback('suggestion')}
+              className="flex items-center gap-2 px-3 py-1.5 hover:bg-background-secondary rounded-lg text-sm font-medium transition-colors"
+              aria-label={t('feedback.suggestAction')}
+            >
+              <svg
+                className="w-4 h-4 text-accent"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                />
+              </svg>
+              <span className="cq-annotation-label">{t('feedback.suggestAction')}</span>
+            </button>
+          </Tooltip>
+        </>
+      )}
+
 
       <div className="h-6 w-px bg-border mx-1" />
 

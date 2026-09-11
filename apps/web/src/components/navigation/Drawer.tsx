@@ -3,8 +3,9 @@ import { NavLink } from 'react-router-dom';
 import { useFocusTrap } from '@do-epub-studio/ui';
 import { useTranslation } from '../../hooks/useTranslation';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
-import { AppLogo } from '../../components/ui';
 import { NAV_ITEMS, NavIcon } from './shared';
+import { useCreatorNavItem } from './useCreatorNavItem';
+import { AppLogo } from '../../components/ui';
 import { APP_NAME, APP_VERSION_LABEL } from '../../config/app-identity';
 
 interface DrawerProps {
@@ -15,6 +16,7 @@ interface DrawerProps {
 export function Drawer({ isOpen, onClose }: DrawerProps) {
   const { t, locale } = useTranslation();
   const prefersReducedMotion = useReducedMotion();
+  const { show: showCreatorEntry } = useCreatorNavItem();
   const contentRef = useRef<HTMLElement | null>(null);
   const triggerRef = useRef<HTMLElement | null>(null);
   const [shouldRender, setShouldRender] = useState(isOpen);
@@ -192,6 +194,27 @@ export function Drawer({ isOpen, onClose }: DrawerProps) {
               )}
             </NavLink>
           ))}
+          {showCreatorEntry && (
+            <NavLink
+              to={'/creator'} /* eslint-disable-line i18next/no-literal-string -- route path constant */
+              onClick={onClose}
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-5 py-3 text-sm transition-colors ${
+                  isActive
+                    ? 'text-accent bg-accent/10 border-e-2 border-accent'
+                    : 'text-foreground-muted hover:text-foreground hover:bg-background-tertiary'
+                }`
+              }
+              aria-label={t('creator.title')}
+            >
+              {({ isActive }) => (
+                <>
+                  <NavIcon icon={'book-open'} /* eslint-disable-line i18next/no-literal-string -- icon key constant */ className={`w-5 h-5 shrink-0 ${isActive ? 'text-accent' : ''}`} />
+                  <span>{t('creator.title')}</span>
+                </>
+              )}
+            </NavLink>
+          )}
         </nav>
       </aside>
     </>
