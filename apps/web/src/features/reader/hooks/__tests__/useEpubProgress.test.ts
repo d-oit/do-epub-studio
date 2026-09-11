@@ -34,7 +34,14 @@ function makeHandler() {
     onChapterChange,
     markPageRead,
   );
-  return { setProgress, setCurrentChapter, onChapterChange, markPageRead, currentChapterRef, handler };
+  return {
+    setProgress,
+    setCurrentChapter,
+    onChapterChange,
+    markPageRead,
+    currentChapterRef,
+    handler,
+  };
 }
 
 function setOnline(value: boolean): void {
@@ -69,9 +76,15 @@ describe('createRelocatedHandler — progress PUT debounce (GOAP-224 B6)', () =>
   it('coalesces rapid page flips to exactly one PUT carrying the latest position', async () => {
     const { handler } = makeHandler();
 
-    await handler.onRelocated({ start: { cfi: 'epubcfi(/6/4)', percentage: 0.1, href: 'ch1.xhtml' } });
-    await handler.onRelocated({ start: { cfi: 'epubcfi(/6/8)', percentage: 0.2, href: 'ch1.xhtml' } });
-    await handler.onRelocated({ start: { cfi: 'epubcfi(/6/12)', percentage: 0.3, href: 'ch1.xhtml' } });
+    await handler.onRelocated({
+      start: { cfi: 'epubcfi(/6/4)', percentage: 0.1, href: 'ch1.xhtml' },
+    });
+    await handler.onRelocated({
+      start: { cfi: 'epubcfi(/6/8)', percentage: 0.2, href: 'ch1.xhtml' },
+    });
+    await handler.onRelocated({
+      start: { cfi: 'epubcfi(/6/12)', percentage: 0.3, href: 'ch1.xhtml' },
+    });
 
     // Within the window no network call is made…
     await vi.advanceTimersByTimeAsync(PROGRESS_PUT_DEBOUNCE_MS - 1);
@@ -86,7 +99,9 @@ describe('createRelocatedHandler — progress PUT debounce (GOAP-224 B6)', () =>
   it('flush() persists the pending position immediately (unmount/reader close)', async () => {
     const { handler } = makeHandler();
 
-    await handler.onRelocated({ start: { cfi: 'epubcfi(/6/20)', percentage: 0.5, href: 'ch2.xhtml' } });
+    await handler.onRelocated({
+      start: { cfi: 'epubcfi(/6/20)', percentage: 0.5, href: 'ch2.xhtml' },
+    });
     expect(apiRequest).not.toHaveBeenCalled();
 
     await handler.flush();
@@ -103,8 +118,12 @@ describe('createRelocatedHandler — progress PUT debounce (GOAP-224 B6)', () =>
     setOnline(false);
     const { handler } = makeHandler();
 
-    await handler.onRelocated({ start: { cfi: 'epubcfi(/6/4)', percentage: 0.1, href: 'ch1.xhtml' } });
-    await handler.onRelocated({ start: { cfi: 'epubcfi(/6/8)', percentage: 0.2, href: 'ch1.xhtml' } });
+    await handler.onRelocated({
+      start: { cfi: 'epubcfi(/6/4)', percentage: 0.1, href: 'ch1.xhtml' },
+    });
+    await handler.onRelocated({
+      start: { cfi: 'epubcfi(/6/8)', percentage: 0.2, href: 'ch1.xhtml' },
+    });
 
     expect(saveProgress).toHaveBeenCalledTimes(2);
     expect(apiRequest).not.toHaveBeenCalled();
@@ -113,7 +132,9 @@ describe('createRelocatedHandler — progress PUT debounce (GOAP-224 B6)', () =>
   it('keeps the pending debounce window from firing after flush() grabbed it', async () => {
     const { handler } = makeHandler();
 
-    await handler.onRelocated({ start: { cfi: 'epubcfi(/6/4)', percentage: 0.1, href: 'ch1.xhtml' } });
+    await handler.onRelocated({
+      start: { cfi: 'epubcfi(/6/4)', percentage: 0.1, href: 'ch1.xhtml' },
+    });
     await handler.flush();
 
     // The original timer was cleared by flush — advancing the window must not
@@ -124,7 +145,9 @@ describe('createRelocatedHandler — progress PUT debounce (GOAP-224 B6)', () =>
   it('converts the rendition 0–1 fraction to the 0–100 store/server contract', async () => {
     const { handler, setProgress } = makeHandler();
 
-    await handler.onRelocated({ start: { cfi: 'epubcfi(/6/4)', percentage: 0.5, href: 'ch1.xhtml' } });
+    await handler.onRelocated({
+      start: { cfi: 'epubcfi(/6/4)', percentage: 0.5, href: 'ch1.xhtml' },
+    });
 
     expect(setProgress).toHaveBeenCalledWith(expect.objectContaining({ progressPercent: 50 }));
     await handler.flush();
@@ -144,4 +167,3 @@ describe('createRelocatedHandler — progress PUT debounce (GOAP-224 B6)', () =>
     expect(lastPutBody().progressPercent).toBe(42);
   });
 });
-
