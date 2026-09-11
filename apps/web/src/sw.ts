@@ -207,10 +207,14 @@ self.addEventListener('sync', (event: Event) => {
           swLogEvent('info', 'sw.sync.start', { traceId, tag: syncEvent.tag });
         }
         try {
-          const { syncAll } = await import('./lib/offline/sync');
-          await syncAll();
+          // Notify available window clients so the authenticated foreground page can drain the queue.
+          // SW does not receive or persist session tokens.
+          const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+          for (const client of clients) {
+            client.postMessage({ type: 'SYNC_REQUESTED', tag: syncEvent.tag });
+          }
           if (DEBUG) {
-            swLogEvent('info', 'sw.sync.complete', { traceId, tag: syncEvent.tag });
+            swLogEvent('info', 'sw.sync.complete', { traceId, tag: syncEvent.tag, notifiedClients: clients.length });
           }
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error);

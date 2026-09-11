@@ -1,8 +1,8 @@
 # GOAP-254: UI/UX & Concept Modernization Master Plan
 
-**Status:** IN PROGRESS
-**Date:** 2026-08-23
-**Strategy:** Hybrid — sequential solo execution (subagent provider weekly quota exhausted 2026-08-23, resets ~2026-08-24; swarm fan-out deferred to next session)
+**Status:** IN PROGRESS — implementation present; remaining verification and follow-ups tracked by GOAP-999
+**Date:** 2026-08-23 (reconciled 2026-09-10; dated history below preserved as historical)
+**Strategy:** Independent read-only audit slices converge into the GOAP-999 backlog; future implementation follows GOAP-999 waves (see `plans/999-goap-codebase-improvements-uiux-e2e-audit.md` §7–§8)
 **Related:** ADR-082b (editorial minimalist), ADR-105a (2026 UI platform), ADR-063a (OKLCH tokens), ADR-104 (product identity), DESIGN.md, PRODUCT.md
 
 ## Context
@@ -48,12 +48,11 @@ Repo guidance contradicts reality and would steer agents into regressions:
 **Acceptance:** AGENTS.md tables match installed versions; README tree complete;
 no new claims without file evidence.
 
-### W2 — Accessibility 2.2 AA elevation
-ADR-063a targets WCAG 2.1 AA. Elevate target to 2.2 AA (focus-not-obscured,
-target-size minimum, drag alternatives) using the accessibility-auditor skill;
-produce gap list keyed to components, then fix.
-
-**Quality gate:** axe-core suite green; auditor report filed under `analysis/`.
+### W2 — Accessibility 2.2 AA coverage (remaining gaps)
+The WCAG 2.2 target is already in DESIGN.md and prior evidence exists at
+`analysis/goap-254-audit-evidence.md` (historical, not a fresh pass). Remaining work
+is current gaps and broader coverage per GOAP-999 (UI-03 drawer keyboard/RTL, UI-01
+sepia contrast verification, route/viewport matrix §6), not elevating the target again.
 
 ### W3 — Editorial-minimalist consistency pass (reader-first)
 Run Impeccable critique/polish across reader, catalog, library, admin surfaces;
@@ -63,12 +62,11 @@ list. No new dependencies; tokens only.
 **Quality gate:** `npx impeccable detect --json .` unchanged-or-better; visual
 verification on real pages.
 
-### W4 — Offline/PWA UX surfacing
-Sync-queue state, offline indicator, install affordance surfaced consistently
-(PRODUCT.md core flow 5) without touching worker API contracts.
-
-**Quality gate:** E2E smoke (`pnpm test:e2e:smoke`) green.
-
+### W4 — Offline/PWA UX surfacing (remaining runtime gaps)
+Global sync status and capability-driven install UI are present in source
+(`App.tsx:138–215`, `useSyncStatus`); runtime/real-device gaps remain per GOAP-999
+(REL-01/REL-02 offline queues, §6 viewport matrix). Link the current audit rather than
+declaring every wave verified.
 ## Constraints
 
 - DO NOT MODIFY: `apps/worker/**` route handlers/contracts, `packages/schema`
@@ -81,4 +79,6 @@ Sync-queue state, offline indicator, install affordance surfaced consistently
 
 Waves are sequential by dependency (docs → a11y baseline → visual → offline),
 but within W3/W4 individual surface fixes parallelize once agent capacity
-returns (resume swarm per goap-agent skill Phase 6).
+returns (resume swarm per goap-agent skill Phase 6). [Historical 2026-08-23 note.]
+Current execution follows GOAP-999 waves; see
+`plans/999-goap-codebase-improvements-uiux-e2e-audit.md` §7.

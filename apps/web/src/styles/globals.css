@@ -7,6 +7,7 @@
 @import "@fontsource/instrument-serif/400.css";
 @import "@fontsource/instrument-serif/400-italic.css";
 @import "tailwindcss";
+@source "../../../../packages/ui/src";
 
 /* ============================================
    2026 Modern Design System - Global Styles
@@ -232,7 +233,7 @@
     --color-primary-900: oklch(36% 0.1 75);
 
     /* Surface & muted */
-    --color-surface: oklch(25% 0.05 85);
+    --color-surface: var(--color-background-secondary);
     --color-muted: oklch(93% 0.04 85);
     --color-muted-foreground: oklch(50% 0.05 85);
 

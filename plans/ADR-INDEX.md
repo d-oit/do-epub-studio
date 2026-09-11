@@ -99,7 +99,9 @@
 
 ## Proposed
 
-None.
+| Number | Title | File | Status |
+| ------ | ----- | ---- | ------ |
+| 999 | Reader–Creator Editorial Contract | `plans/999-adr-reader-creator-editorial-contract.md` | Proposed — user-directed product contract |
 
 ## Cross-referenced (archived GOAP execution records)
 
@@ -140,8 +142,8 @@ None.
 | 251    | Fix Service Worker Registration Failure in Production (GOAP)     | `plans/archive/251-goap-service-worker-registration-fix.md` | COMPLETED                                                       |
 | 252    | Serve the API on the same origin as the deployed frontend (GOAP) | `plans/archive/252-goap-worker-api-deployment.md`           | Code complete — operator dashboard setup + data seeding pending |
 | 253    | Login No-Book Guard & UI Modernization (ADR + GOAP) | `plans/253-adr-login-no-book-guard-modernization.md`, `plans/archive/253-goap-login-no-book-guard-modernization.md` | ACCEPTED (PR #1028) |
-| 254    | UI/UX & Concept Modernization Master Plan (GOAP) | `plans/254-goap-uiux-modernization-master-plan.md` | IN PROGRESS (W1 complete) |
-| 255    | epub-sparkle UI/UX Port — Editorial Alignment (GOAP) | `plans/255-goap-epub-sparkle-uiux-port.md` | IN PROGRESS (W1) |
+| 254    | UI/UX & Concept Modernization Master Plan (GOAP) | `plans/254-goap-uiux-modernization-master-plan.md` | IN PROGRESS — implementation present; remaining verification and follow-ups tracked by GOAP-999 |
+| 255    | epub-sparkle UI/UX Port — Editorial Alignment (GOAP) | `plans/255-goap-epub-sparkle-uiux-port.md` | IN PROGRESS — W1 present in source; remaining UX and verification tracked by GOAP-999 |
 | 257    | Open-Issues Sprint (GOAP) | `plans/257-goap-sprint-open-issues.md` | COMPLETED (sprint record; per-issue docs 258-265) |
 | 258    | Issue #345 CI Failure on Main (GOAP) | `plans/258-goap-issue-345.md` | COMPLETED (verified 2026-08-29; issue closed 2026-05-26) |
 | 259    | Issue #339 ZIP Bomb Defense (GOAP) | `plans/259-goap-issue-339.md` | COMPLETED (verified 2026-08-29; issue closed 2026-05-26) |
@@ -151,6 +153,7 @@ None.
 | 263    | Issue #316 OKLCH Color System (GOAP) | `plans/263-goap-issue-316.md` | COMPLETED (verified 2026-08-29; issue closed 2026-05-26) |
 | 264    | Issue #315 View Transitions (GOAP) | `plans/264-goap-issue-315.md` | COMPLETED (verified 2026-08-29; issue closed 2026-05-26) |
 | 265    | Issue #317 Offline E2E (GOAP) | `plans/265-goap-issue-317.md` | COMPLETED (verified 2026-08-29; issue closed 2026-05-26) |
+| 999    | Reader–Creator Collaboration, Editorial Assistance, Responsive UX and E2E (GOAP) | `plans/999-goap-codebase-improvements-uiux-e2e-audit.md` | STATIC AUDIT COMPLETE — implementation pending |
 
 ## Pending
 

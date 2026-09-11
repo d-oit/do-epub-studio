@@ -1,10 +1,10 @@
 # GOAP-255: epub-sparkle UI/UX Port — Editorial Alignment
 
-**Status:** IN PROGRESS (W1 executing)
-**Date:** 2026-08-23
-**Strategy:** Swarm (task-tier agents; scout tier quota-exhausted 2026-08-23) — 3 parallel implementation tasks + solo orchestration/integration
+**Status:** IN PROGRESS — W1 present in source; remaining UX and verification tracked by GOAP-999
+**Date:** 2026-08-23 (reconciled 2026-09-10; provider/branch/reference-check notes below are historical, not current execution instructions)
+**Strategy:** [Historical 2026-08-23 swarm note.] Future implementation follows GOAP-999 waves; see `plans/999-goap-codebase-improvements-uiux-e2e-audit.md` §7–§8
 **Orchestrates:** GOAP-254 W3 (editorial-minimalist consistency pass), now anchored to a live reference
-**Reference:** `github.com/d-oit/epub-sparkle` (local: `/home/doit/git/epub-sparkle`) — TanStack Start app, branch `feat/w1-cf-scaffold` (PR #2 open)
+**Reference:** `github.com/d-oit/epub-sparkle` — TanStack Start app [historical branch/PR notes below preserved as history]
 
 ## Context correction to GOAP-254
 
@@ -59,13 +59,18 @@ Integration owner: orchestrator (branch `feat/goap-255-sparkle-uiux`).
 4. `pnpm build` exit 0 AND `pnpm bundle:budget:enforce` within budget (mainCss 30KB gz)
 5. Browser visual verification: `/login` + `/library` screenshots on dev server
 
-### W2 — deferred (next session, needs route-pin decisions)
+### W2 — deferred items (reconciled 2026-09-10)
 
-Public landing at `/` (currently auth-resolution splash; touches `app-routes.test`
-contract), nav consolidation (Sidebar/BottomTabBar orphaned by self-contained pages),
-reader chrome alignment, upload/share/admin surface parity.
+Supersedes the earlier W2 text: current root is an immediate role-aware redirect
+(not an auth-resolution splash), and core navigation is wired via AppShell per
+GOAP-268 — the orphaned-nav claim no longer holds. Public landing at `/` remains a
+product/route decision, not an executable defect; it is separated from reader/admin
+surface verification and W2 is not bulk-cleared.
 
-## Non-goals
+### Reconciliation with GOAP-999 (current)
 
-No worker/schema/wrangler changes (GOAP-254 keep-set). No new runtime deps. No font
-changes. Reader internals untouched in W1.
+- W1 editorial-alignment items are present in source; remaining UX and verification
+  are tracked by GOAP-999 (`plans/999-goap-codebase-improvements-uiux-e2e-audit.md` §8).
+- Deferred reader chrome alignment and upload/share/admin surface parity belong to
+  the GOAP-999 backlog (COL/UX/E2E items) and route/viewport matrix (§6).
+- No incomplete work is claimed as done by this reconciliation.

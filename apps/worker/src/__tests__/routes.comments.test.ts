@@ -89,10 +89,13 @@ describe('Comments Routes', () => {
 
   describe('PATCH /api/comments/:commentId', () => {
     it('updates comment when owned by user', async () => {
-      mockRequireAuth.mockResolvedValue({ email: 'user@example.com' });
+      mockRequireAuth.mockResolvedValue({
+        email: 'user@example.com',
+        bookId: 'book-1',
+        capabilities: { canComment: true },
+      });
 
-      mockQueryFirst.mockResolvedValue({ user_email: 'user@example.com' });
-      mockExecute.mockResolvedValue({ rows: [] });
+      mockQueryFirst.mockResolvedValue({ user_email: 'user@example.com', book_id: 'book-1' });
 
       const res = await app.fetch(new Request('http://localhost/api/comments/1', {
         method: 'PATCH',
@@ -105,13 +108,38 @@ describe('Comments Routes', () => {
 
       expect(res.status).toBe(200);
     });
+
+    it('rejects update from read-only session', async () => {
+      mockRequireAuth.mockResolvedValue({
+        email: 'user@example.com',
+        bookId: 'book-1',
+        capabilities: { canComment: false },
+      });
+
+      mockQueryFirst.mockResolvedValue({ user_email: 'user@example.com', book_id: 'book-1' });
+
+      const res = await app.fetch(new Request('http://localhost/api/comments/1', {
+        method: 'PATCH',
+        body: JSON.stringify({ body: 'updated body' }),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer valid'
+        },
+      }), env, makePassThroughContext());
+
+      expect(res.status).toBe(403);
+    });
   });
 
   describe('DELETE /api/comments/:commentId', () => {
     it('deletes comment when owned by user', async () => {
-      mockRequireAuth.mockResolvedValue({ email: 'user@example.com' });
+      mockRequireAuth.mockResolvedValue({
+        email: 'user@example.com',
+        bookId: 'book-1',
+        capabilities: { canComment: true },
+      });
 
-      mockQueryFirst.mockResolvedValue({ user_email: 'user@example.com' });
+      mockQueryFirst.mockResolvedValue({ user_email: 'user@example.com', book_id: 'book-1' });
       mockExecute.mockResolvedValue({ rows: [] });
 
       const res = await app.fetch(new Request('http://localhost/api/comments/1', {
@@ -120,6 +148,23 @@ describe('Comments Routes', () => {
       }), env, makePassThroughContext());
 
       expect(res.status).toBe(200);
+    });
+
+    it('rejects delete from read-only session', async () => {
+      mockRequireAuth.mockResolvedValue({
+        email: 'user@example.com',
+        bookId: 'book-1',
+        capabilities: { canComment: false },
+      });
+
+      mockQueryFirst.mockResolvedValue({ user_email: 'user@example.com', book_id: 'book-1' });
+
+      const res = await app.fetch(new Request('http://localhost/api/comments/1', {
+        method: 'DELETE',
+        headers: { 'Authorization': 'Bearer valid' },
+      }), env, makePassThroughContext());
+
+      expect(res.status).toBe(403);
     });
   });
 });

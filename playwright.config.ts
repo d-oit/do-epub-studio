@@ -6,9 +6,17 @@ const mode = process.env.PLAYWRIGHT_MODE || 'dev';
 const isPreview = mode === 'preview';
 const port = isPreview ? 4173 : 5173;
 
+const isLiveLane = Boolean(
+  process.env.CLOUDFLARE_PREVIEW_URL ||
+    process.env.PLAYWRIGHT_PROJECT === 'live-cloudflare' ||
+    process.argv.some((arg) => arg.includes('live-cloudflare')),
+);
+
+const LOCAL_MOCK_TEST_IGNORE = ['**/cloudflare-login.spec.ts'];
 export default defineConfig({
   testDir: './apps',
   testMatch: ['**/*.spec.ts'],
+  testIgnore: LOCAL_MOCK_TEST_IGNORE,
   timeout: 60_000,
   expect: {
     timeout: 10_000,
@@ -52,28 +60,38 @@ export default defineConfig({
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
+      testIgnore: LOCAL_MOCK_TEST_IGNORE,
+      grepInvert: /@pwa/,
     },
     {
       name: 'firefox',
       use: { ...devices['Desktop Firefox'] },
+      testIgnore: LOCAL_MOCK_TEST_IGNORE,
+      grepInvert: /@pwa/,
     },
     ...(includeWebkit
       ? [
           {
             name: 'webkit',
             use: { ...devices['Desktop Safari'] },
+            testIgnore: LOCAL_MOCK_TEST_IGNORE,
+            grepInvert: /@pwa/,
           },
         ]
       : []),
     {
       name: 'iphone',
       use: { ...devices['iPhone 15'] },
+      testIgnore: LOCAL_MOCK_TEST_IGNORE,
       grep: /@mobile/,
+      grepInvert: /@pwa/,
     },
     {
       name: 'pixel',
       use: { ...devices['Pixel 7'] },
+      testIgnore: LOCAL_MOCK_TEST_IGNORE,
       grep: /@mobile/,
+      grepInvert: /@pwa/,
     },
     {
       name: 'pwa-chromium',
@@ -81,7 +99,21 @@ export default defineConfig({
         ...devices['Desktop Chrome'],
         serviceWorkers: 'allow',
       },
+      testIgnore: LOCAL_MOCK_TEST_IGNORE,
       grep: /@pwa/,
     },
+    ...(isLiveLane
+      ? [
+          {
+            name: 'live-cloudflare',
+            use: {
+              ...devices['Desktop Chrome'],
+              baseURL: process.env.CLOUDFLARE_PREVIEW_URL || 'http://127.0.0.1:5173',
+            },
+            testMatch: ['**/cloudflare-login.spec.ts'],
+            testIgnore: [],
+          },
+        ]
+      : []),
   ],
 });
