@@ -63,6 +63,7 @@ describe('AdminGrantResponsesPage', () => {
     vi.mocked(api.apiRequest).mockImplementation((url: string) => {
       if (url === '/api/admin/books') return Promise.resolve(mockBooks);
       if (url.includes('/grants')) return Promise.resolve(mockGrants);
+      if (url.includes('/creators')) return Promise.resolve([]);
       return Promise.resolve([]);
     });
 
@@ -121,6 +122,7 @@ describe('AdminGrantResponsesPage', () => {
     vi.mocked(api.apiRequest).mockImplementation((url: string) => {
       if (url === '/api/admin/books') return Promise.resolve(mockBooks);
       if (url.includes('/grants')) return Promise.resolve(mockGrants);
+      if (url.includes('/creators')) return Promise.resolve([]);
       return Promise.resolve({ ok: true });
     });
 
@@ -158,6 +160,7 @@ describe('AdminGrantResponsesPage', () => {
     vi.mocked(api.apiRequest).mockImplementation((url: string) => {
       if (url === '/api/admin/books') return Promise.resolve(mockBooks);
       if (url.includes('/grants')) return Promise.resolve(mockGrants);
+      if (url.includes('/creators')) return Promise.resolve([]);
       return Promise.resolve({ ok: true });
     });
 
