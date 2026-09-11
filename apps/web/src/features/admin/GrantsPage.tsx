@@ -20,6 +20,7 @@ import {
   GrantList,
   emptyFormData,
 } from './components';
+import { CreatorAssignmentsSection } from './CreatorAssignmentsSection';
 import { useAdminStepUp } from './step-up';
 import type { Grant, GrantFormData } from './components';
 
@@ -240,6 +241,12 @@ function GrantsView({ data, bookId, token }: { data: GrantsBodyData; bookId: str
           selectedBookId={bookId ?? ''}
           onEdit={handleEditGrant}
           onRevoke={(grant) => { void handleRevokeGrant(grant); }}
+        />
+
+        <CreatorAssignmentsSection
+          bookId={bookId}
+          token={token}
+          executeWithStepUp={executeWithStepUp}
         />
       </div>
 

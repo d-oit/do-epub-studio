@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { ConflictRecord, ConflictResolutionResult, ConflictResolutionStrategy } from '../lib/offline/conflict-resolution';
 import type { AnnotationLocator } from '@do-epub-studio/shared';
+import type { FeedbackItem } from '../lib/api/feedback';
 
 export type PageDirection = 'ltr' | 'rtl' | 'default';
 export type WritingMode = 'horizontal-tb' | 'vertical-rl' | 'vertical-lr';
@@ -55,6 +56,7 @@ interface ReaderState {
   bookmarks: Bookmark[];
   highlights: Highlight[];
   comments: Comment[];
+  feedbackItems: FeedbackItem[];
   currentChapter: string | null;
   isLoading: boolean;
   error: string | null;
@@ -78,6 +80,9 @@ interface ReaderState {
   addComment: (comment: Comment) => void;
   updateComment: (id: string, updates: Partial<Comment>) => void;
   setComments: (comments: Comment[]) => void;
+  setFeedbackItems: (items: FeedbackItem[]) => void;
+  upsertFeedbackItem: (item: FeedbackItem) => void;
+  removeFeedbackItem: (id: string) => void;
   setCurrentChapter: (chapter: string | null) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
@@ -156,6 +161,7 @@ export const useReaderStore = create<ReaderState>((set) => ({
   bookmarks: [],
   highlights: [],
   comments: [],
+  feedbackItems: [],
   currentChapter: null,
   isLoading: false,
   error: null,
@@ -231,6 +237,14 @@ export const useReaderStore = create<ReaderState>((set) => ({
       return { comments: allComments };
     }),
   setComments: (comments) => set({ comments }),
+  setFeedbackItems: (items) => set({ feedbackItems: items }),
+  upsertFeedbackItem: (item) =>
+    set((state) => {
+      const rest = state.feedbackItems.filter((f) => f.id !== item.id);
+      return { feedbackItems: [...rest, item] };
+    }),
+  removeFeedbackItem: (id) =>
+    set((state) => ({ feedbackItems: state.feedbackItems.filter((f) => f.id !== id) })),
   setCurrentChapter: (chapter) => set({ currentChapter: chapter }),
   setLoading: (loading) => set({ isLoading: loading }),
   setError: (error) => set({ error }),

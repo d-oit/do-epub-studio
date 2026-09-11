@@ -33,7 +33,7 @@ export interface AnnotationEntry {
 
 export interface SyncQueueItem {
   id: string;
-  type: 'progress' | 'annotation' | 'reading-insight';
+  type: 'progress' | 'annotation' | 'reading-insight' | 'feedback';
   payload: unknown;
   mutationId: string;
   createdAt: number;
@@ -98,7 +98,7 @@ export interface ConflictRecord {
 }
 
 const DB_NAME = 'do-epub-studio';
-const DB_VERSION = 3;
+const DB_VERSION = 4;
 
 let dbInstance: IDBPDatabase | null = null;
 let tokenOverride: string | null = null;
@@ -112,7 +112,7 @@ export function setTokenOverride(mockToken: string | null): void {
   tokenOverride = mockToken;
 }
 
-async function encryptEntry<T extends object>(
+export async function encryptEntry<T extends object>(
   entry: T,
   plaintextKeys: readonly (keyof T)[],
 ): Promise<Record<string, unknown>> {
@@ -136,7 +136,7 @@ async function encryptEntry<T extends object>(
   };
 }
 
-async function decryptEntry<T>(stored: Record<string, unknown>, plaintextKeys: readonly (keyof T)[]): Promise<T | null> {
+export async function decryptEntry<T>(stored: Record<string, unknown>, plaintextKeys: readonly (keyof T)[]): Promise<T | null> {
   const t = token();
   const payload = stored.encryptedPayload;
 
@@ -228,6 +228,16 @@ export async function getDB(): Promise<IDBPDatabase> {
       if (oldVersion < 3) {
         if (!db.objectStoreNames.contains('conflicts')) {
           db.createObjectStore('conflicts', { keyPath: 'id' });
+        }
+      }
+
+      // v3→v4: durable private-feedback drafts (GOAP-999 Wave 2, REL-02).
+      // Owner-scoped compound index keeps one account's drafts invisible
+      // to every other account sharing the device.
+      if (oldVersion < 4) {
+        if (!db.objectStoreNames.contains('feedbackDrafts')) {
+          const draftsStore = db.createObjectStore('feedbackDrafts', { keyPath: 'id' });
+          draftsStore.createIndex('ownerBook', ['ownerEmail', 'bookId']);
         }
       }
     },

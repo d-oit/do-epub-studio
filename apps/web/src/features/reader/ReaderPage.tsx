@@ -7,6 +7,7 @@ import { apiRequest } from '../../lib/api/index';
 import { logClientEvent } from '../../lib/client-logger';
 import { setupZombieDetection } from '../../lib/offline/permissions';
 import { AnnotationToolbar, extractSelectionData, CommentsPanel } from './components/annotations';
+import { FeedbackComposerModal } from './components/annotations/FeedbackComposerModal';
 import {
   useReaderUI,
   useReaderEpub,
@@ -17,6 +18,7 @@ import {
   useOptimisticAnnotationStore,
   useReaderDataLoader,
 } from './hooks';
+import { useFeedbackComposer } from './hooks/useFeedbackComposer';
 import {
   ReaderToolbar,
   ReaderSettingsPanel,
@@ -110,6 +112,7 @@ export function ReaderPage() {
     handleDeleteHighlight,
   } = useAnnotationHandlers();
   const { handleCreateBookmark, handleDeleteBookmark } = useBookmarkHandlers();
+  const feedback = useFeedbackComposer(bookId);
   const { handleExportNotes } = useExportNotes();
   const {
     markLoaded: markInsightsLoaded,
@@ -380,6 +383,9 @@ export function ReaderPage() {
             setShowCommentInput(true);
             setIsCommentMode(true);
           }}
+          onFeedback={(kind) => {
+            feedback.openComposer(kind, selection);
+          }}
           onClose={() => {
             setSelection(null);
             setShowCommentInput(false);
@@ -407,6 +413,29 @@ export function ReaderPage() {
         placeholder={t('comment.placeholder')}
         submitLabel={t('annotation.comment')}
       />
+      <FeedbackComposerModal
+        isOpen={feedback.composerOpen && !!feedback.composerSelection}
+        kind={feedback.composerKind}
+        selection={feedback.composerSelection}
+        submitting={feedback.submitting}
+        serverError={feedback.composerError}
+        onKindChange={(kind) => {
+          if (feedback.composerSelection) feedback.openComposer(kind, feedback.composerSelection);
+        }}
+        onSubmit={(input) => {
+          if (!feedback.composerSelection) return;
+          void feedback
+            .submit({ ...input, selection: feedback.composerSelection })
+            .then(() => {
+              feedback.closeComposer();
+              setSelection(null);
+            })
+            .catch(() => undefined);
+        }}
+        onClose={() => {
+          feedback.closeComposer();
+        }}
+      />
       {activePanel === 'bookmarks' && (
         <BookmarksPanel
           isOpen
@@ -426,6 +455,11 @@ export function ReaderPage() {
           onClose={() => setActivePanel(null)}
           comments={optimisticState.comments}
           highlights={optimisticState.highlights}
+          feedbackItems={feedback.items}
+          canContribute={capabilities?.canComment ?? false}
+          onWithdrawFeedback={(id) => void feedback.withdraw(id)}
+          onRetryFeedback={(draftItemId) => void feedback.retryDraft(draftItemId)}
+          onReplyFeedback={(id, text) => void feedback.reply(id, text)}
           currentChapter={currentChapter}
           locale={locale}
           onResolveComment={(id) => void handleResolveComment(id)}

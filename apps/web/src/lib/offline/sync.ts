@@ -12,6 +12,10 @@ import {
 } from './db';
 import { api, apiRequest } from '../api';
 import type { AnnotationEntry } from './db';
+import { useAuthStore } from '../../stores/auth';
+import { createFeedback } from '../api/feedback';
+import type { FeedbackAnchor, FeedbackCategory, FeedbackKind } from '../api/feedback';
+import { deleteFeedbackDraftByMutation, markFeedbackDraft } from './feedback-drafts';
 import { clearAllPermissions } from './permissions';
 import { createTraceId, createSpanId } from '@do-epub-studio/shared';
 import { logClientEvent } from '../client-logger';
@@ -24,8 +28,9 @@ const MAX_DELAY_MS = 30000;
 interface SyncResult {
   success: boolean;
   error?: string;
+  /** Human-actionable detail for terminal states (e.g. blocked delivery). */
+  detail?: string;
 }
-
 // Callback for permission revocation
 let onPermissionRevoked: ((bookId: string) => void) | null = null;
 
@@ -66,7 +71,7 @@ function calculateDelay(attempt: number): number {
 }
 
 export async function queueSync(
-  type: 'progress' | 'annotation' | 'reading-insight',
+  type: 'progress' | 'annotation' | 'reading-insight' | 'feedback',
   payload: unknown,
   mutationId: string,
 ): Promise<void> {
@@ -155,6 +160,24 @@ async function attemptSync(): Promise<void> {
         event: 'sync.item.success',
         metadata: { itemId: item.id, type: item.type },
       });
+    } else if (result.error === 'feedback_blocked') {
+      // Server-decided rejection (lost contribution rights or invalid
+      // payload): the write will never succeed by retrying. Keep the
+      // human draft with a visible blocked state — do NOT clear session
+      // permissions (the session itself may be perfectly valid for reading).
+      const payload = item.payload as { draftId?: string; bookId?: string };
+      if (payload?.draftId) {
+        await markFeedbackDraft(payload.draftId, 'blocked', result.detail);
+      }
+      logClientEvent({
+        level: 'warn',
+        traceId,
+        spanId,
+        event: 'sync.feedback_blocked',
+        metadata: { itemId: item.id, type: item.type },
+      });
+      await removeSyncQueueItem(item.id);
+      processed.add(item.id);
     } else if (result.error === 'permission_revoked') {
       logClientEvent({
         level: 'error',
@@ -319,6 +342,40 @@ async function syncReadingInsight(item: SyncQueueItem): Promise<void> {
   });
 }
 
+/** Private editorial-feedback payload synced from the offline queue. */
+export interface FeedbackSyncPayload {
+  bookId: string;
+  draftId: string;
+  kind: FeedbackKind;
+  category: FeedbackCategory;
+  body: string;
+  proposedText?: string;
+  anchor: FeedbackAnchor;
+  mutationId: string;
+}
+
+async function syncFeedback(item: SyncQueueItem): Promise<void> {
+  const payload = item.payload as FeedbackSyncPayload;
+  const token = useAuthStore.getState().sessionToken ?? '';
+  await createFeedback(
+    payload.bookId,
+    {
+      kind: payload.kind,
+      category: payload.category,
+      body: payload.body,
+      proposedText: payload.proposedText,
+      anchor: payload.anchor,
+      mutationId: payload.mutationId,
+    },
+    token,
+  );
+}
+
+/** Queue a private-feedback submission for replay (REL-02). */
+export async function queueFeedbackSubmission(payload: FeedbackSyncPayload): Promise<void> {
+  await queueSync('feedback', payload, payload.mutationId);
+}
+
 async function syncItem(item: SyncQueueItem, traceId: string, spanId: string): Promise<SyncResult> {
   try {
     if (item.type === 'progress') {
@@ -327,6 +384,8 @@ async function syncItem(item: SyncQueueItem, traceId: string, spanId: string): P
       await syncAnnotation(item);
     } else if (item.type === 'reading-insight') {
       await syncReadingInsight(item);
+    } else if (item.type === 'feedback') {
+      await syncFeedback(item);
     } else {
       const raw: unknown = item;
       const label = typeof raw === 'object' && raw !== null && 'type' in raw && typeof raw.type === 'string' ? raw.type : 'unknown';
@@ -336,6 +395,23 @@ async function syncItem(item: SyncQueueItem, traceId: string, spanId: string): P
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown sync error';
     const status = (error as { status?: number }).status;
+
+    // Feedback writes rejected by the server (lost contribution rights or
+    // invalid payload) will never succeed by retrying — and the session
+    // itself may still be valid for reading, so this must NOT take the
+    // permission_revoked path (no permission-cache clear, no revoked
+    // callback). 401 (dead session) keeps the generic revoked handling.
+    if (item.type === 'feedback' && (status === 403 || status === 422 || status === 400)) {
+      logClientEvent({
+        level: 'warn',
+        traceId,
+        spanId,
+        event: 'sync.item.feedback_rejected',
+        metadata: { itemId: item.id, type: item.type, status },
+        error: { name: 'FeedbackRejected', message },
+      });
+      return { success: false, error: 'feedback_blocked', detail: message };
+    }
 
     // Check for permission revocation (401/403)
     if (status === 401 || status === 403) {
@@ -412,7 +488,7 @@ async function syncItem(item: SyncQueueItem, traceId: string, spanId: string): P
   }
 }
 
-async function markAsSynced(type: 'progress' | 'annotation' | 'reading-insight', mutationId: string): Promise<void> {
+async function markAsSynced(type: 'progress' | 'annotation' | 'reading-insight' | 'feedback', mutationId: string): Promise<void> {
   if (type === 'progress') {
     const unsynced = await getUnsyncedProgress();
     const entry = unsynced.find((e) => e.mutationId === mutationId);
@@ -425,6 +501,10 @@ async function markAsSynced(type: 'progress' | 'annotation' | 'reading-insight',
     if (entry) {
       await saveAnnotation({ ...entry, synced: true });
     }
+  } else if (type === 'feedback') {
+    // Successful replay removes the local draft: the server row (deduplicated
+    // by mutationId) is now the source of truth for this submission.
+    await deleteFeedbackDraftByMutation(mutationId);
   }
   // 'reading-insight' items are server-side only; the local IndexedDB
   // store is the source of truth and the server sync is append-only (UPSERT).
