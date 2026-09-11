@@ -3,8 +3,9 @@ import { ADMIN_USER, mockReaderApi, mockAdminApi, loginAsReader, clickToolbarBut
 
 test.describe('Edge Cases & Error Handling', () => {
   test('@mobile should handle invalid login credentials gracefully', async ({ page }) => {
-    // Navigate to login
-    await page.goto('/login');
+    // The login form intentionally disables submit without a book context
+    // (login no-book guard); exercise the invalid-credentials path with one.
+    await page.goto('/login?book=test-book');
 
     // Mock a 401 response before filling in credentials
     await page.route('**/api/access/request', route => route.fulfill({
@@ -58,15 +59,25 @@ test.describe('Edge Cases & Error Handling', () => {
   });
 
   test('@mobile should show offline indicator when network is disconnected', async ({ page, context }) => {
-    await page.goto('/');
+    await page.goto('/login');
+    await expect(page.getByLabel('Email Address')).toBeVisible();
+
+    // Offline alert banner is absent while online
+    await expect(page.getByRole('alert')).not.toBeVisible();
+
+    // Disconnect network
     await context.setOffline(true);
 
-    // PWA should still load basic shell
-    const title = await page.title();
-    expect(title).toBeTruthy();
+    // Offline alert banner must be visible and communicate offline status
+    const offlineAlert = page.getByRole('alert');
+    await expect(offlineAlert).toBeVisible({ timeout: 10000 });
+    await expect(offlineAlert).toContainText(/offline/i);
 
-    // If there's an offline UI, verify it here. For now, we'll just verify the page didn't crash.
+    // Reconnect network
     await context.setOffline(false);
+
+    // Offline banner should dismiss upon reconnection
+    await expect(offlineAlert).not.toBeVisible({ timeout: 10000 });
   });
 
   test('@mobile handles network failure during annotation save gracefully', async ({ page }) => {

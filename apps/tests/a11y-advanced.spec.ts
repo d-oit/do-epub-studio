@@ -46,12 +46,43 @@ test.describe('Advanced accessibility — keyboard navigation', () => {
   test('@mobile focus returns to trigger after panel close', async ({ page }) => {
     suppressWorkboxErrors(page);
     await loginAsReader(page);
-    await clickToolbarButton(page, /Settings/i);
-    await expect(page.getByRole('dialog').getByText('Settings', { exact: true })).toBeVisible();
+
+    const isNarrow = (page.viewportSize()?.width ?? 1280) < 640;
+    if (isNarrow) {
+      const moreBtn = page.getByRole('button', { name: /More [Oo]ptions/i });
+      await expect(moreBtn).toBeVisible({ timeout: 20000 });
+      await moreBtn.focus();
+      await expect(moreBtn).toBeFocused();
+      await moreBtn.click();
+      const settingsMenuItem = page.locator('.cq-reader-toolbar-overflow').getByRole('menuitem', { name: /Settings/i });
+      await expect(settingsMenuItem).toBeVisible();
+      await settingsMenuItem.focus();
+      await expect(settingsMenuItem).toBeFocused();
+      await settingsMenuItem.click();
+    } else {
+      const settingsBtn = page.getByRole('button', { name: /Settings/i });
+      await expect(settingsBtn).toBeVisible({ timeout: 20000 });
+      await settingsBtn.focus();
+      await expect(settingsBtn).toBeFocused();
+      await settingsBtn.click();
+    }
+
+    const dialog = page.getByRole('dialog').getByText('Settings', { exact: true });
+    await expect(dialog).toBeVisible();
     await page.keyboard.press('Escape');
-    await page.waitForTimeout(500);
-    const activeElement = await page.evaluate(() => document.activeElement?.tagName.toLowerCase() ?? null);
-    expect(activeElement).not.toBeNull();
+    await expect(dialog).not.toBeVisible();
+
+    // Focus must return to an interactive trigger element inside the toolbar
+    const focusedInfo = await page.evaluate(() => {
+      const el = document.activeElement;
+      return {
+        tag: el?.tagName.toLowerCase(),
+        role: el?.getAttribute('role'),
+        isInsideToolbar: Boolean(el?.closest('[data-container-name="reader-toolbar"]')),
+      };
+    });
+    expect(focusedInfo.isInsideToolbar, 'Focus must return to the toolbar trigger').toBe(true);
+    expect(['button', 'menuitem']).toContain(focusedInfo.role ?? focusedInfo.tag);
   });
 });
 
@@ -92,6 +123,29 @@ test.describe('Advanced accessibility — focus management', () => {
     await clickToolbarButton(page, /Settings/i);
     const dialog = page.getByRole('dialog').getByText('Settings', { exact: true });
     await expect(dialog).toBeVisible();
+
+    // Verify initial focus is placed inside the dialog
+    const initialFocusInside = await page.evaluate(() => {
+      const dialogEl = document.querySelector('[role="dialog"]');
+      return Boolean(dialogEl?.contains(document.activeElement));
+    });
+    expect(initialFocusInside, 'Initial focus must be placed inside the dialog').toBe(true);
+
+    // Shift+Tab from the first focusable element must wrap and stay inside the dialog
+    await page.keyboard.press('Shift+Tab');
+    const wrappedToLast = await page.evaluate(() => {
+      const dialogEl = document.querySelector('[role="dialog"]');
+      return Boolean(dialogEl?.contains(document.activeElement));
+    });
+    expect(wrappedToLast, 'Shift+Tab must keep focus trapped inside the dialog').toBe(true);
+
+    // Tab forward must wrap back and stay inside the dialog
+    await page.keyboard.press('Tab');
+    const wrappedToFirst = await page.evaluate(() => {
+      const dialogEl = document.querySelector('[role="dialog"]');
+      return Boolean(dialogEl?.contains(document.activeElement));
+    });
+    expect(wrappedToFirst, 'Tab must keep focus trapped inside the dialog').toBe(true);
   });
 
   test('@mobile settings panel has axe-core violations audit', async ({ page }) => {

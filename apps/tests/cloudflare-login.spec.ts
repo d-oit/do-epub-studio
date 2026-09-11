@@ -31,6 +31,18 @@ const ADMIN = {
 // ---------------------------------------------------------------------------
 // Reader login tests (Cloudflare)
 // ---------------------------------------------------------------------------
+test.beforeAll(() => {
+  if (!process.env.CLOUDFLARE_PREVIEW_URL) {
+    throw new Error(
+      'Missing prerequisite: CLOUDFLARE_PREVIEW_URL environment variable is required for live Cloudflare E2E tests. (e.g. CLOUDFLARE_PREVIEW_URL=https://<hash>.do-epub-studio.pages.dev)',
+    );
+  }
+  if (!process.env.E2E_READER_PASSWORD || !process.env.E2E_ADMIN_PASSWORD) {
+    throw new Error(
+      'Missing prerequisite: Seeded credentials E2E_READER_PASSWORD and E2E_ADMIN_PASSWORD are required for live Cloudflare E2E tests.',
+    );
+  }
+});
 
 test.describe('Cloudflare reader login', () => {
   test.use({ baseURL: BASE_URL });

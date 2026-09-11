@@ -101,17 +101,15 @@ const DB_NAME = 'do-epub-studio';
 const DB_VERSION = 3;
 
 let dbInstance: IDBPDatabase | null = null;
-let cachedToken: string | null = null;
+let tokenOverride: string | null = null;
 
 function token(): string | null {
-  if (cachedToken) return cachedToken;
-  const t = useAuthStore.getState().sessionToken;
-  cachedToken = t;
-  return t;
+  if (tokenOverride) return tokenOverride;
+  return useAuthStore.getState().sessionToken ?? null;
 }
 
 export function setTokenOverride(mockToken: string | null): void {
-  cachedToken = mockToken;
+  tokenOverride = mockToken;
 }
 
 async function encryptEntry<T extends object>(
@@ -142,7 +140,8 @@ async function decryptEntry<T>(stored: Record<string, unknown>, plaintextKeys: r
   const t = token();
   const payload = stored.encryptedPayload;
 
-  if (typeof payload === 'string' && t) {
+  if (typeof payload === 'string') {
+    if (!t) return null;
     try {
       const decrypted = await decryptJSON<Record<string, unknown>>(payload, t);
       const result: Record<string, unknown> = {};

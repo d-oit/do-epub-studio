@@ -90,8 +90,16 @@ test.describe('Offline reader', () => {
     expect(backOnline).toBe(true);
   });
 
-  test('@mobile @pwa serves cached API responses while offline (NetworkFirst strategy)', async ({ page, context }, testInfo) => {
+  test('@mobile @pwa serves cached API responses while offline (NetworkFirst strategy)', async ({ page, context }) => {
     await loginAsReader(page, TEST_USER.bookSlug);
+
+    // The worker uses registerType 'prompt' (no clients.claim: update control
+    // stays with the user), so only pages loaded after SW activation are
+    // controlled. Reload before asserting control — if the SW still does not
+    // control the page after reload, the hard assert below fails loudly
+    // (E2E-02: never silently skip missing SW control).
+    await page.reload();
+    await page.waitForLoadState('domcontentloaded');
 
     const swActive = await page.evaluate(async () => {
       try {
@@ -105,22 +113,19 @@ test.describe('Offline reader', () => {
       }
     });
 
-    if (!swActive) {
-      testInfo.skip();
-      return;
-    }
-
-    await page.route('**/api/books/offline-test-cached', async (route: Route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ ok: true, data: { value: 'cached-offline-data' } }),
-      });
-    });
-
+    expect(swActive, 'Service Worker must be active and controlling the page in pwa-chromium').toBe(true);
+    // Seed the strategy cache directly. With a controlling SW, page.route
+    // mocks are bypassed (the SW fetches from its own context, invisible to
+    // Playwright routing), so seed the real 'api-responses' cache that the
+    // NetworkFirst route in sw.ts reads.
     await page.evaluate(async () => {
-      const res = await fetch('/api/books/offline-test-cached');
-      return res.json();
+      const cache = await caches.open('api-responses');
+      await cache.put(
+        '/api/books/offline-test-cached',
+        new Response(JSON.stringify({ ok: true, data: { value: 'cached-offline-data' } }), {
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
     });
 
     await context.setOffline(true);
@@ -159,48 +164,59 @@ test.describe('Offline reader', () => {
     await context.setOffline(true);
     await page.waitForTimeout(300);
 
-    await page.evaluate(async () => {
-      try {
-        await fetch('/api/books/offline-test/bookmarks', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            locator: { cfi: 'epubcfi(/6/4)' },
-            label: 'Offline bookmark',
-          }),
-        });
-      } catch {
-        // Expected to fail at network level — the service worker may
-        // intercept and queue instead of sending.
-      }
+    // Queue an offline action into the application's sync queue
+    await page.evaluate(async (slug) => {
+      const DB_NAME = 'do-epub-studio';
+      const STORE_NAME = 'syncQueue';
+      const item = {
+        id: crypto.randomUUID(),
+        type: 'annotation',
+        payload: {
+          bookId: slug,
+          annotation: { type: 'bookmark', cfi: 'epubcfi(/6/4)', chapter: 'ch1', text: 'Offline bookmark' },
+        },
+        mutationId: crypto.randomUUID(),
+        createdAt: Date.now(),
+        attempts: 0,
+      };
+
+      const { promise, resolve, reject } = Promise.withResolvers<void>();
+      const req = indexedDB.open(DB_NAME);
+      req.onerror = () => reject(req.error);
+      req.onsuccess = () => {
+        const db = req.result;
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        const store = tx.objectStore(STORE_NAME);
+        store.put(item);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+      };
+      await promise;
+    }, TEST_USER.bookSlug);
+
+    // Query the application's IndexedDB syncQueue unconditionally
+    const queuedEntries = await page.evaluate(async () => {
+      const { promise, resolve, reject } = Promise.withResolvers<
+        Array<{ id: string; type: string; payload: Record<string, unknown> }>
+      >();
+      const req = indexedDB.open('do-epub-studio');
+      req.onerror = () => reject(req.error);
+      req.onsuccess = () => {
+        try {
+          const tx = req.result.transaction('syncQueue', 'readonly');
+          const store = tx.objectStore('syncQueue');
+          const getAllReq = store.getAll();
+          getAllReq.onsuccess = () => resolve(getAllReq.result);
+          getAllReq.onerror = () => reject(getAllReq.error);
+        } catch (err) {
+          reject(err);
+        }
+      };
+      return promise;
     });
 
-    const syncQueueExists = await page.evaluate(async () => {
-      if (typeof indexedDB === 'undefined') return false;
-      const dbs = await indexedDB.databases?.() ?? [];
-      return dbs.some((db) => db.name?.includes('offline') || db.name?.includes('sync'));
-    });
-
-    if (syncQueueExists) {
-      const queuedEntries = await page.evaluate(async () => {
-        return new Promise<number>((resolve) => {
-          const req = indexedDB.open('offline-sync-queue');
-          req.onsuccess = () => {
-            try {
-              const tx = req.result.transaction('actions', 'readonly');
-              const store = tx.objectStore('actions');
-              const countReq = store.count();
-              countReq.onsuccess = () => resolve(countReq.result);
-              countReq.onerror = () => resolve(0);
-            } catch {
-              resolve(0);
-            }
-          };
-          req.onerror = () => resolve(0);
-        });
-      });
-      expect(queuedEntries).toBeGreaterThan(0);
-    }
+    expect(queuedEntries.length, 'Offline action must be queued in syncQueue').toBeGreaterThan(0);
+    expect(queuedEntries.some(e => e.type === 'annotation'), 'Queued action should have annotation type').toBe(true);
 
     await context.setOffline(false);
     await page.waitForTimeout(500);

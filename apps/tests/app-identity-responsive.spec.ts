@@ -54,8 +54,18 @@ test.describe('App identity and responsive shell', () => {
       await page.setViewportSize({ width: viewport.width, height: viewport.height });
       await page.goto('/login');
 
-      await expect(page.getByRole('heading', { name: appIdentity.name })).toBeVisible();
-      await expect(page.getByText(`Version v${appVersion}`)).toBeVisible();
+      // Brand lockup is an h1 in the mobile header below lg and a paragraph
+      // in the hero aside at lg+ — assert whichever the viewport shows.
+      const brandName = viewport.width >= 1024
+        ? page.locator('aside').getByText(appIdentity.name, { exact: true })
+        : page.getByRole('heading', { name: appIdentity.name });
+      await expect(brandName).toBeVisible();
+      // The version label lives in the hero aside at lg+ and in the mobile
+      // brand header below lg — exactly one is visible per viewport.
+      const versionLabel = viewport.width >= 1024
+        ? page.locator('aside').getByText(`v${appVersion}`)
+        : page.getByTestId('login-brand').getByText(`v${appVersion}`);
+      await expect(versionLabel).toBeVisible();
       await expect(page.getByLabel('Email Address')).toBeVisible();
       await expect(page.getByRole('textbox', { name: 'Password' })).toBeVisible();
       await expect(page.getByRole('button', { name: 'Sign In', exact: true })).toBeVisible();

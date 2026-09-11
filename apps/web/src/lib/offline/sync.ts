@@ -327,6 +327,10 @@ async function syncItem(item: SyncQueueItem, traceId: string, spanId: string): P
       await syncAnnotation(item);
     } else if (item.type === 'reading-insight') {
       await syncReadingInsight(item);
+    } else {
+      const raw: unknown = item;
+      const label = typeof raw === 'object' && raw !== null && 'type' in raw && typeof raw.type === 'string' ? raw.type : 'unknown';
+      throw new Error(`Unrecognized sync queue item type: ${label}`);
     }
     return { success: true };
   } catch (error) {
@@ -440,12 +444,29 @@ export function setupOnlineListener(): () => void {
     }
   };
 
+  const swMessageHandler = (event: MessageEvent<{ type?: unknown }>) => {
+    const data: unknown = event.data;
+    if (typeof data === 'object' && data !== null && 'type' in data && data.type === 'SYNC_REQUESTED') {
+      if (navigator.onLine) {
+        void ensureDrain();
+      }
+    }
+  };
+
   window.addEventListener('online', handler);
   window.addEventListener('offline', handler);
+
+  const sw = typeof navigator !== 'undefined' && 'serviceWorker' in navigator ? navigator.serviceWorker : null;
+  if (sw && typeof sw.addEventListener === 'function') {
+    sw.addEventListener('message', swMessageHandler);
+  }
 
   return () => {
     window.removeEventListener('online', handler);
     window.removeEventListener('offline', handler);
+    if (sw && typeof sw.removeEventListener === 'function') {
+      sw.removeEventListener('message', swMessageHandler);
+    }
     // Also cancel any pending retry to avoid leaks when the listener is torn down
     cancelPendingRetry();
   };

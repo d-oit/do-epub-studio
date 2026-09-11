@@ -3,13 +3,17 @@ import { createSpanId, createTraceId } from '@do-epub-studio/shared';
 import { logClientEvent } from '../../../lib/client-logger';
 import { apiRequest } from '../../../lib/api';
 import { saveProgress, queueSync, generateMutationId } from '../../../lib/offline';
-import type { useReaderStore } from '../../../stores';
+import { useReaderStore } from '../../../stores';
 
 /** Milliseconds to coalesce online progress PUTs (GOAP-224 B6). */
 export const PROGRESS_PUT_DEBOUNCE_MS = 500;
-
 interface RelocatedLocation {
-  start: { cfi: string; progress: number; href: string };
+  // Matches the real epub.js relocated payload: `percentage` is a 0–1
+  // fraction, present only after book.locations is generated (which this app
+  // does not do). There is no `progress` field — reading one yields
+  // undefined, which previously poisoned the store (NaN bar) and dropped
+  // progressPercent from PUT bodies (server 400s).
+  start: { cfi: string; href: string; percentage?: number };
 }
 
 export interface RelocatedHandler {
@@ -104,7 +108,12 @@ export function createRelocatedHandler(
   };
 
   const onRelocated = async (location: RelocatedLocation): Promise<void> => {
-    const { cfi, progress: progressPercent, href } = location.start;
+    const { cfi, href, percentage } = location.start;
+    // Store/server contract is 0–100; rendition fraction is 0–1. Without a
+    // usable fraction, retain the current value instead of clobbering it.
+    const current = useReaderStore.getState().progress.progressPercent;
+    const progressPercent =
+      typeof percentage === 'number' && Number.isFinite(percentage) ? percentage * 100 : current;
     setProgress({ locator: { cfi }, progressPercent, updatedAt: new Date().toISOString() });
 
     const tocItem = tocItems.find((item) => item.href === href);

@@ -75,7 +75,7 @@ describe('createRelocatedHandler', () => {
 
     Object.defineProperty(navigator, 'onLine', { value: true, writable: true });
 
-    await handler.onRelocated({ start: { cfi: 'epubcfi(/6/4)', progress: 50, href: 'ch1.xhtml' } });
+    await handler.onRelocated({ start: { cfi: 'epubcfi(/6/4)', percentage: 0.5, href: 'ch1.xhtml' } });
     // GOAP-224 B6: online PUTs are debounced; flush to force the save.
     await handler.flush();
 
@@ -104,7 +104,7 @@ describe('createRelocatedHandler', () => {
 
     Object.defineProperty(navigator, 'onLine', { value: false, writable: true });
 
-    await handler.onRelocated({ start: { cfi: 'epubcfi(/6/4)', progress: 50, href: 'ch1.xhtml' } });
+    await handler.onRelocated({ start: { cfi: 'epubcfi(/6/4)', percentage: 0.5, href: 'ch1.xhtml' } });
 
     expect(saveProgress).toHaveBeenCalled();
     expect(queueSync).toHaveBeenCalled();
@@ -131,7 +131,7 @@ describe('createRelocatedHandler', () => {
 
     Object.defineProperty(navigator, 'onLine', { value: true, writable: true });
 
-    await handler.onRelocated({ start: { cfi: 'epubcfi(/6/4)', progress: 50, href: 'ch1.xhtml' } });
+    await handler.onRelocated({ start: { cfi: 'epubcfi(/6/4)', percentage: 0.5, href: 'ch1.xhtml' } });
     // GOAP-224 B6: online PUTs are debounced; flush to force the save.
     await handler.flush();
 
@@ -158,7 +158,7 @@ describe('createRelocatedHandler', () => {
 
     Object.defineProperty(navigator, 'onLine', { value: true, writable: true });
 
-    await handler.onRelocated({ start: { cfi: 'epubcfi(/6/4)', progress: 50, href: 'ch2.xhtml' } });
+    await handler.onRelocated({ start: { cfi: 'epubcfi(/6/4)', percentage: 0.5, href: 'ch2.xhtml' } });
 
     expect(setCurrentChapter).toHaveBeenCalledWith('ch2.xhtml');
     expect(currentChapterRef.current).toBe('ch2.xhtml');

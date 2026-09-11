@@ -93,8 +93,10 @@ async function assertTraceIdInResponse(page: Page) {
 test.describe('traceId header assertions', () => {
   test('@mobile all API requests include X-Trace-Id header', async ({ page }) => {
     const seen = await assertTraceIdOnRequest(page);
+    // The reader addresses file-url by book id, not slug (see ReaderPage
+    // file-url comment); match the endpoint, not the slug-specific URL.
     const fileUrlResponse = page.waitForResponse((response) =>
-      response.url().includes('/api/books/test-book/file-url'),
+      response.url().includes('/api/books/') && response.url().includes('/file-url'),
     );
 
     await page.goto('/login?book=test-book');

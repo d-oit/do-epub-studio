@@ -1,5 +1,5 @@
 import { AppLogo } from '../../components/ui';
-import { APP_NAME, APP_DESCRIPTION } from '../../config/app-identity';
+import { APP_NAME, APP_DESCRIPTION, APP_VERSION_LABEL } from '../../config/app-identity';
 
 /**
  * Slim brand header shown directly on the login page (all viewports, no side
@@ -13,6 +13,7 @@ export function LoginMobileInfo() {
       <div className="min-w-0">
         <h1 className="font-display text-xl font-bold leading-tight text-foreground">{APP_NAME}</h1>
         <p className="mt-0.5 truncate text-xs text-foreground-muted">{APP_DESCRIPTION}</p>
+        <p className="mt-1 font-mono text-[0.68rem] uppercase tracking-[0.18em] text-foreground-muted">{APP_VERSION_LABEL}</p>
       </div>
     </div>
   );

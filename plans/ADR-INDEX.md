@@ -99,7 +99,9 @@
 
 ## Proposed
 
-None.
+| Number | Title | File | Status |
+| ------ | ----- | ---- | ------ |
+| 999 | Reader–Creator Editorial Contract | `plans/999-adr-reader-creator-editorial-contract.md` | Proposed — user-directed product contract |
 
 ## Cross-referenced (archived GOAP execution records)
 
@@ -140,8 +142,8 @@ None.
 | 251    | Fix Service Worker Registration Failure in Production (GOAP)     | `plans/archive/251-goap-service-worker-registration-fix.md` | COMPLETED                                                       |
 | 252    | Serve the API on the same origin as the deployed frontend (GOAP) | `plans/archive/252-goap-worker-api-deployment.md`           | Code complete — operator dashboard setup + data seeding pending |
 | 253    | Login No-Book Guard & UI Modernization (ADR + GOAP) | `plans/253-adr-login-no-book-guard-modernization.md`, `plans/archive/253-goap-login-no-book-guard-modernization.md` | ACCEPTED (PR #1028) |
-| 254    | UI/UX & Concept Modernization Master Plan (GOAP) | `plans/254-goap-uiux-modernization-master-plan.md` | IN PROGRESS (W1 complete; executable slices landed via #1099 nav + #1100 backlog; W2 route-pin items deferred) |
-| 255    | epub-sparkle UI/UX Port — Editorial Alignment (GOAP) | `plans/255-goap-epub-sparkle-uiux-port.md` | IN PROGRESS (W1 + backlog editorial/PWA slices landed via #1100; public / landing deferred pending route decision) |
+| 254    | UI/UX & Concept Modernization Master Plan (GOAP) | `plans/254-goap-uiux-modernization-master-plan.md` | IN PROGRESS — implementation present; remaining verification and follow-ups tracked by GOAP-999 |
+| 255    | epub-sparkle UI/UX Port — Editorial Alignment (GOAP) | `plans/255-goap-epub-sparkle-uiux-port.md` | IN PROGRESS — W1 present in source; remaining UX and verification tracked by GOAP-999 |
 | 257    | Open-Issues Sprint (GOAP) | `plans/archive/257-goap-sprint-open-issues.md` | COMPLETED (sprint record; per-issue docs 258-265) |
 | 258    | Issue #345 CI Failure on Main (GOAP) | `plans/archive/258-goap-issue-345.md` | COMPLETED (verified 2026-08-29; issue closed 2026-05-26) |
 | 259    | Issue #339 ZIP Bomb Defense (GOAP) | `plans/archive/259-goap-issue-339.md` | COMPLETED (verified 2026-08-29; issue closed 2026-05-26) |
@@ -155,6 +157,7 @@ None.
 | 266    | Admin Bundle-Budget Breach + Vuln Follow-Up (GOAP) | `plans/archive/266-goap-bundle-budget-and-vuln-followup.md` | COMPLETED (budget breach fixed #1094; audit HIGHs fixed #1097) |
 | 267    | Main CI Dep-Scan HIGHs Hardening (GOAP) | `plans/archive/267-goap-main-ci-dep-scan-fix.md` | COMPLETED (PR #1097; shares number with untracked user plan `plans/267-goap-preexisting-sweep.md`, which stays in place and is never staged) |
 | 268    | UX-01 Persistent Responsive Core Navigation (GOAP) | `plans/archive/268-goap-ux01-persistent-nav.md` | COMPLETED (PR #1099) |
+| 999    | Reader–Creator Collaboration, Editorial Assistance, Responsive UX and E2E (GOAP) | `plans/999-goap-codebase-improvements-uiux-e2e-audit.md` | STATIC AUDIT COMPLETE — implementation pending |
 
 ## Pending
 

@@ -80,6 +80,7 @@ describe('App identity and version governance (ADR-104)', () => {
     expect(loginHeroSource).toContain('APP_NAME');
     expect(loginHeroSource).toContain('APP_VERSION_LABEL');
     expect(loginMobileInfoSource).toContain('APP_NAME');
+    expect(loginMobileInfoSource).toContain('APP_VERSION_LABEL');
   });
 
   it('Storybook header fixture uses the canonical brand', () => {

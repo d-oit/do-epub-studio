@@ -34,17 +34,17 @@ test.describe('Viewport regression matrix', () => {
   test('@mobile catalog page has no overflow across all viewports', async ({ page }) => {
     await assertViewportMatrix(page, '/', {
       assertAtEachViewport: async (page, viewport) => {
-        // Verify focus indicators are visible
-        const firstInteractive = page.locator('a, button, [tabindex="0"]').first();
-        if (await firstInteractive.isVisible({ timeout: 3000 }).catch(() => false)) {
-          await firstInteractive.focus();
-          // Focus ring should be visible (not clipped)
-          const box = await firstInteractive.boundingBox();
-          if (box) {
-            expect(box.x).toBeGreaterThanOrEqual(0);
-            expect(box.x + box.width).toBeLessThanOrEqual(viewport.width + 1);
-          }
-        }
+        // Verify focus indicators are visible and contained within the viewport
+        const firstInteractive = page.locator('a, button, input:not([type="hidden"]), select, textarea, [tabindex="0"]').first();
+        await expect(firstInteractive, `${viewport.label}: interactive element should be visible`).toBeVisible({ timeout: 5000 });
+        await firstInteractive.focus();
+        await expect(firstInteractive, `${viewport.label}: interactive element should be focused`).toBeFocused();
+
+        // Focus ring / interactive box must be within viewport boundaries (not clipped or overflowing)
+        const box = await firstInteractive.boundingBox();
+        expect(box, `${viewport.label}: interactive element should have bounding box`).not.toBeNull();
+        expect(box!.x, `${viewport.label}: interactive element stays within left boundary`).toBeGreaterThanOrEqual(-1);
+        expect(box!.x + box!.width, `${viewport.label}: interactive element does not horizontally overflow viewport`).toBeLessThanOrEqual(viewport.width + 1);
       },
     });
   });

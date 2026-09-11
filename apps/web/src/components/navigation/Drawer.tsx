@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
-import { useKeyboardShortcut } from '../../hooks/useKeyboardShortcut';
+import { useEffect, useRef, useState } from 'react';
 import { NavLink } from 'react-router-dom';
+import { useFocusTrap } from '@do-epub-studio/ui';
 import { useTranslation } from '../../hooks/useTranslation';
+import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { AppLogo } from '../../components/ui';
 import { NAV_ITEMS, NavIcon } from './shared';
 import { APP_NAME, APP_VERSION_LABEL } from '../../config/app-identity';
@@ -12,25 +13,71 @@ interface DrawerProps {
 }
 
 export function Drawer({ isOpen, onClose }: DrawerProps) {
-  const { t } = useTranslation();
-  const [shouldRender, setShouldRender] = useState(false);
+  const { t, locale } = useTranslation();
+  const prefersReducedMotion = useReducedMotion();
+  const contentRef = useRef<HTMLElement | null>(null);
+  const triggerRef = useRef<HTMLElement | null>(null);
+  const [shouldRender, setShouldRender] = useState(isOpen);
   const [isExiting, setIsExiting] = useState(false);
 
-  useKeyboardShortcut('Escape', onClose, { enabled: isOpen });
+  useFocusTrap(isOpen && shouldRender && !isExiting, contentRef, triggerRef);
 
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = 'hidden';
+      const activeElement = document.activeElement;
+      if (activeElement instanceof HTMLElement) {
+        triggerRef.current = activeElement;
+      }
       setShouldRender(true);
       setIsExiting(false);
     }
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [isOpen]);
 
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscape);
+      document.body.style.overflow = 'hidden';
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+      document.body.style.overflow = '';
+      if (triggerRef.current) {
+        triggerRef.current.focus();
+      }
+    };
+  }, [isOpen, onClose]);
+
+  // Initial focus move into the drawer when mounted
+  useEffect(() => {
+    if (isOpen && shouldRender && !isExiting && contentRef.current) {
+      if (!contentRef.current.contains(document.activeElement)) {
+        const firstFocusable = contentRef.current.querySelector<HTMLElement>(
+          'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        );
+        if (firstFocusable) {
+          firstFocusable.focus();
+        } else {
+          contentRef.current.focus();
+        }
+      }
+    }
+  }, [isOpen, shouldRender, isExiting]);
+
+  // Exit animation handling respecting reduced motion preference
   useEffect(() => {
     if (!isOpen && shouldRender) {
+      if (prefersReducedMotion) {
+        setShouldRender(false);
+        setIsExiting(false);
+        return;
+      }
+
       setIsExiting(true);
       const timer = setTimeout(() => {
         setShouldRender(false);
@@ -38,23 +85,67 @@ export function Drawer({ isOpen, onClose }: DrawerProps) {
       }, 250);
       return () => clearTimeout(timer);
     }
-  }, [isOpen, shouldRender]);
+  }, [isOpen, shouldRender, prefersReducedMotion]);
+
+  // Resizing into desktop closes and unlocks the hidden drawer
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleDesktopCheck = () => {
+      const mqlMatches =
+        typeof window.matchMedia === 'function' && window.matchMedia('(min-width: 1024px)').matches;
+      const widthMatches = window.innerWidth >= 1024;
+      if (mqlMatches || widthMatches) {
+        onClose();
+      }
+    };
+
+    const mql =
+      typeof window.matchMedia === 'function' ? window.matchMedia('(min-width: 1024px)') : null;
+    const handleMediaChange = (e: MediaQueryListEvent) => {
+      if (e.matches) {
+        onClose();
+      }
+    };
+
+    mql?.addEventListener('change', handleMediaChange);
+    window.addEventListener('resize', handleDesktopCheck);
+
+    return () => {
+      mql?.removeEventListener('change', handleMediaChange);
+      window.removeEventListener('resize', handleDesktopCheck);
+    };
+  }, [isOpen, onClose]);
 
   if (!shouldRender) return null;
+
+  const isRtl =
+    locale === 'ar' || (typeof document !== 'undefined' && document.documentElement.dir === 'rtl');
+  const slideInClass = isRtl ? 'animate-slide-in-right' : 'animate-slide-in-left';
+  const slideOutClass = isRtl ? 'animate-slide-out-right' : 'animate-slide-out-left';
+  const animationClass = prefersReducedMotion ? '' : isExiting ? slideOutClass : slideInClass;
+  const scrimAnimationClass = prefersReducedMotion
+    ? ''
+    : isExiting
+      ? 'animate-fade-out'
+      : 'animate-fade-in';
 
   return (
     <>
       {/* Scrim */}
       <div
-        className={`fixed inset-0 z-50 bg-black/40 lg:hidden ${isExiting ? 'animate-fade-out' : 'animate-fade-in'}`}
+        className={`fixed inset-0 z-50 bg-black/40 lg:hidden ${scrimAnimationClass}`}
         onClick={onClose}
         aria-hidden="true"
       />
       {/* Drawer panel */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-background-secondary border-r border-border shadow-lg lg:hidden flex flex-col ${isExiting ? 'animate-slide-out-left' : 'animate-slide-in-left'}`}
+        ref={contentRef}
+        className={`fixed inset-y-0 start-0 z-50 w-64 bg-background-secondary border-e border-border shadow-lg lg:hidden flex flex-col ${animationClass}`}
         role="dialog"
+        aria-modal="true"
         aria-label={t('nav.catalog')}
+        tabIndex={-1}
       >
         <div className="flex items-center justify-between px-5 py-4 border-b border-border">
           <div className="flex items-center gap-3">
@@ -87,7 +178,7 @@ export function Drawer({ isOpen, onClose }: DrawerProps) {
               className={({ isActive }) =>
                 `flex items-center gap-3 px-5 py-3 text-sm transition-colors ${
                   isActive
-                    ? 'text-accent bg-accent/10 border-r-2 border-accent'
+                    ? 'text-accent bg-accent/10 border-e-2 border-accent'
                     : 'text-foreground-muted hover:text-foreground hover:bg-background-tertiary'
                 }`
               }

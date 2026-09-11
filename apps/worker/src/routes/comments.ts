@@ -185,6 +185,21 @@ commentsRouter.patch('/comments/:commentId', readerAuth, zValidator('json', Comm
     throw new ForbiddenError('Cannot edit others comments');
   }
 
+  // Use session capabilities if bookId matches session, otherwise re-fetch
+  let canComment = auth.capabilities?.canComment;
+  if (auth.bookId !== comment.book_id) {
+    const grant = await getGrantByBookAndSession(c.env, comment.book_id, auth.email);
+    if (grant) {
+      canComment = computeCapabilities(grant).canComment;
+    } else {
+      canComment = false;
+    }
+  }
+
+  if (!canComment) {
+    throw new ForbiddenError('Access denied');
+  }
+
   const body = c.req.valid('json');
   const now = new Date().toISOString();
   const updates: string[] = ['updated_at = ?'];
@@ -238,6 +253,21 @@ commentsRouter.delete('/comments/:commentId', readerAuth, async (c) => {
 
   if (comment.user_email !== auth.email) {
     throw new ForbiddenError('Cannot delete others comments');
+  }
+
+  // Use session capabilities if bookId matches session, otherwise re-fetch
+  let canComment = auth.capabilities?.canComment;
+  if (auth.bookId !== comment.book_id) {
+    const grant = await getGrantByBookAndSession(c.env, comment.book_id, auth.email);
+    if (grant) {
+      canComment = computeCapabilities(grant).canComment;
+    } else {
+      canComment = false;
+    }
+  }
+
+  if (!canComment) {
+    throw new ForbiddenError('Access denied');
   }
 
   await execute(c.env, `UPDATE comments SET status = 'deleted', updated_at = ? WHERE id = ?`, [
