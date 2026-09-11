@@ -10,6 +10,11 @@ import {
   FeedbackDispositionSchema,
   FeedbackExportSchema,
   FeedbackListQuerySchema,
+  ReferenceCreateSchema,
+  ReferenceUpdateSchema,
+  ReferenceVerifySchema,
+  ReferenceListQuerySchema,
+  StyleProfileSchema,
 } from '@do-epub-studio/schema';
 import { assertBookAccess } from '../lib/tenant-isolation';
 import { getRequestTraceId } from '../lib/api-error';
@@ -413,5 +418,393 @@ creatorRouter.post(
     }, c.executionCtx);
 
     return c.json({ ok: true, data: { items } });
+  },
+);
+
+// ── Wave 3 (COL-03): references & style profile ─────────────────────────
+
+interface ReferenceRow extends JsonRow {
+  id: string;
+  book_id: string;
+  kind: string;
+  title: string | null;
+  content: string;
+  attribution: string | null;
+  source_url: string | null;
+  origin: string;
+  verified: number;
+  revision: number;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+function toReferenceDTO(row: ReferenceRow): Record<string, unknown> {
+  return {
+    id: row.id,
+    kind: row.kind,
+    title: row.title,
+    content: row.content,
+    attribution: row.attribution,
+    sourceUrl: row.source_url,
+    origin: row.origin,
+    verified: row.verified === 1,
+    revision: row.revision,
+    createdBy: row.created_by,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+creatorRouter.get(
+  '/creator/books/:bookId/references',
+  readerAuth,
+  zValidator('query', ReferenceListQuerySchema),
+  async (c) => {
+    const bookId = c.req.param('bookId');
+    const auth = c.get('auth');
+
+    const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx, getRequestTraceId(c));
+    if (mismatch) return mismatch.response;
+    await requireCreator(c.env, auth, bookId);
+
+    const { kind, limit, offset } = c.req.valid('query');
+    const args: (string | number)[] = [bookId];
+    let sql = `SELECT * FROM book_references WHERE book_id = ?`;
+    if (kind) {
+      sql += ` AND kind = ?`;
+      args.push(kind);
+    }
+    sql += ` ORDER BY created_at DESC LIMIT ? OFFSET ?`;
+    args.push(limit, offset);
+
+    const rows = await queryAll<ReferenceRow>(c.env, sql, args);
+    return c.json({ ok: true, data: rows.map(toReferenceDTO) });
+  },
+);
+
+creatorRouter.post(
+  '/creator/books/:bookId/references',
+  readerAuth,
+  zValidator('json', ReferenceCreateSchema),
+  async (c) => {
+    const bookId = c.req.param('bookId');
+    const auth = c.get('auth');
+
+    const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx, getRequestTraceId(c));
+    if (mismatch) return mismatch.response;
+    await requireCreator(c.env, auth, bookId);
+
+    const body = c.req.valid('json');
+    const id = crypto.randomUUID();
+    const now = new Date().toISOString();
+
+    // External citations are born unverified; book/creator origins are
+    // creator-curated by definition and start verified.
+    const verified = body.origin === 'external' ? 0 : 1;
+
+    await execute(
+      c.env,
+      `INSERT INTO book_references
+        (id, book_id, kind, title, content, attribution, source_url, origin, verified, revision, created_by, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?)`,
+      [
+        id,
+        bookId,
+        body.kind,
+        body.title ?? null,
+        body.content,
+        auth.email,
+        body.sourceUrl ?? null,
+        body.origin,
+        verified,
+        auth.email,
+        now,
+        now,
+      ],
+    );
+
+    await logAudit(c.env, {
+      entityType: 'book-reference',
+      entityId: id,
+      action: 'created',
+      actorEmail: auth.email,
+      payload: { bookId, kind: body.kind, origin: body.origin },
+    }, c.executionCtx);
+
+    const row = await queryFirst<ReferenceRow>(
+      c.env,
+      `SELECT * FROM book_references WHERE id = ?`,
+      [id],
+    );
+    if (!row) {
+      throw new NotFoundError('Reference');
+    }
+    return c.json({ ok: true, data: toReferenceDTO(row) }, 201);
+  },
+);
+
+creatorRouter.patch(
+  '/creator/books/:bookId/references/:id',
+  readerAuth,
+  zValidator('json', ReferenceUpdateSchema),
+  async (c) => {
+    const bookId = c.req.param('bookId');
+    const id = c.req.param('id');
+    const auth = c.get('auth');
+
+    const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx, getRequestTraceId(c));
+    if (mismatch) return mismatch.response;
+    await requireCreator(c.env, auth, bookId);
+
+    const row = await queryFirst<ReferenceRow>(
+      c.env,
+      `SELECT * FROM book_references WHERE id = ? AND book_id = ?`,
+      [id, bookId],
+    );
+    if (!row) {
+      throw new NotFoundError('Reference');
+    }
+
+    const body = c.req.valid('json');
+    const now = new Date().toISOString();
+    // Any edit bumps the revision: feedback that pinned the old revision
+    // then shows the honest "reference updated since" drift marker.
+    await execute(
+      c.env,
+      `UPDATE book_references
+       SET title = ?, content = ?, revision = revision + 1, updated_at = ?
+       WHERE id = ? AND book_id = ?`,
+      [
+        body.title ?? row.title,
+        body.content ?? row.content,
+        now,
+        id,
+        bookId,
+      ],
+    );
+
+    await logAudit(c.env, {
+      entityType: 'book-reference',
+      entityId: id,
+      action: 'updated',
+      actorEmail: auth.email,
+      payload: { bookId },
+    }, c.executionCtx);
+
+    const updated = await queryFirst<ReferenceRow>(
+      c.env,
+      `SELECT * FROM book_references WHERE id = ?`,
+      [id],
+    );
+    if (!updated) {
+      throw new NotFoundError('Reference');
+    }
+    return c.json({ ok: true, data: toReferenceDTO(updated) });
+  },
+);
+
+creatorRouter.delete(
+  '/creator/books/:bookId/references/:id',
+  readerAuth,
+  async (c) => {
+    const bookId = c.req.param('bookId');
+    const id = c.req.param('id');
+    const auth = c.get('auth');
+
+    const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx, getRequestTraceId(c));
+    if (mismatch) return mismatch.response;
+    await requireCreator(c.env, auth, bookId);
+
+    const row = await queryFirst<ReferenceRow>(
+      c.env,
+      `SELECT * FROM book_references WHERE id = ? AND book_id = ?`,
+      [id, bookId],
+    );
+    if (!row) {
+      throw new NotFoundError('Reference');
+    }
+
+    await execute(
+      c.env,
+      `DELETE FROM book_references WHERE id = ? AND book_id = ?`,
+      [id, bookId],
+    );
+    await logAudit(c.env, {
+      entityType: 'book-reference',
+      entityId: id,
+      action: 'deleted',
+      actorEmail: auth.email,
+      payload: { bookId, kind: row.kind },
+    }, c.executionCtx);
+
+    return c.json({ ok: true, data: { id } });
+  },
+);
+
+creatorRouter.post(
+  '/creator/books/:bookId/references/:id/verify',
+  readerAuth,
+  zValidator('json', ReferenceVerifySchema),
+  async (c) => {
+    const bookId = c.req.param('bookId');
+    const id = c.req.param('id');
+    const auth = c.get('auth');
+
+    const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx, getRequestTraceId(c));
+    if (mismatch) return mismatch.response;
+    await requireCreator(c.env, auth, bookId);
+
+    const row = await queryFirst<ReferenceRow>(
+      c.env,
+      `SELECT * FROM book_references WHERE id = ? AND book_id = ?`,
+      [id, bookId],
+    );
+    if (!row) {
+      throw new NotFoundError('Reference');
+    }
+    if (row.origin !== 'external') {
+      throw new AppError('Only external citations carry verification state', 'NOT_EXTERNAL', 422);
+    }
+
+    const body = c.req.valid('json');
+    const now = new Date().toISOString();
+    // Verification state changes always append the evidence note to the
+    // content — the record shows WHY it was (un)verified, not just that.
+    const stamp = body.verified ? 'verified' : 'unverified';
+    const appended = `${row.content}\n[${stamp} ${now.slice(0, 10)}: ${body.evidenceNote}]`;
+
+    await execute(
+      c.env,
+      `UPDATE book_references SET verified = ?, content = ?, updated_at = ? WHERE id = ? AND book_id = ?`,
+      [body.verified ? 1 : 0, appended, now, id, bookId],
+    );
+    await logAudit(c.env, {
+      entityType: 'book-reference',
+      entityId: id,
+      action: body.verified ? 'verified' : 'unverified',
+      actorEmail: auth.email,
+      payload: { bookId },
+    }, c.executionCtx);
+
+    const updated = await queryFirst<ReferenceRow>(
+      c.env,
+      `SELECT * FROM book_references WHERE id = ?`,
+      [id],
+    );
+    if (!updated) {
+      throw new NotFoundError('Reference');
+    }
+    return c.json({ ok: true, data: toReferenceDTO(updated) });
+  },
+);
+
+creatorRouter.get('/creator/books/:bookId/style', readerAuth, async (c) => {
+  const bookId = c.req.param('bookId');
+  const auth = c.get('auth');
+
+  const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx, getRequestTraceId(c));
+  if (mismatch) return mismatch.response;
+  await requireCreator(c.env, auth, bookId);
+
+  const row = await queryFirst<JsonRow>(
+    c.env,
+    `SELECT * FROM style_profile WHERE book_id = ?`,
+    [bookId],
+  );
+  if (!row) {
+    return c.json({ ok: true, data: null });
+  }
+  return c.json({
+    ok: true,
+    data: {
+      language: row.language ?? null,
+      narrativePerson: row.narrative_person ?? null,
+      tense: row.tense ?? null,
+      dialogueConventions: row.dialogue_conventions ?? null,
+      dialectNotes: row.dialect_notes ?? null,
+      terminology: row.terminology ?? null,
+      intentionalExceptions: row.intentional_exceptions ?? null,
+      status: row.status,
+      approvedBy: row.approved_by ?? null,
+      approvedAt: row.approved_at ?? null,
+      revision: row.revision,
+    },
+  });
+});
+
+creatorRouter.put(
+  '/creator/books/:bookId/style',
+  readerAuth,
+  zValidator('json', StyleProfileSchema),
+  async (c) => {
+    const bookId = c.req.param('bookId');
+    const auth = c.get('auth');
+
+    const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx, getRequestTraceId(c));
+    if (mismatch) return mismatch.response;
+    await requireCreator(c.env, auth, bookId);
+
+    const body = c.req.valid('json');
+    const now = new Date().toISOString();
+    const existing = await queryFirst<JsonRow>(
+      c.env,
+      `SELECT revision FROM style_profile WHERE book_id = ?`,
+      [bookId],
+    );
+
+    const approved = body.status === 'approved';
+    await execute(
+      c.env,
+      `INSERT INTO style_profile
+        (book_id, language, narrative_person, tense, dialogue_conventions, dialect_notes, terminology, intentional_exceptions, status, approved_by, approved_at, revision, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)
+       ON CONFLICT(book_id) DO UPDATE SET
+         language = excluded.language,
+         narrative_person = excluded.narrative_person,
+         tense = excluded.tense,
+         dialogue_conventions = excluded.dialogue_conventions,
+         dialect_notes = excluded.dialect_notes,
+         terminology = excluded.terminology,
+         intentional_exceptions = excluded.intentional_exceptions,
+         status = excluded.status,
+         approved_by = excluded.approved_by,
+         approved_at = excluded.approved_at,
+         revision = style_profile.revision + 1,
+         updated_at = excluded.updated_at`,
+      [
+        bookId,
+        body.language ?? null,
+        body.narrativePerson ?? null,
+        body.tense ?? null,
+        body.dialogueConventions ?? null,
+        body.dialectNotes ?? null,
+        body.terminology ?? null,
+        body.intentionalExceptions ?? null,
+        body.status,
+        approved ? auth.email : null,
+        approved ? now : null,
+        now,
+      ],
+    );
+
+    await logAudit(c.env, {
+      entityType: 'style-profile',
+      entityId: bookId,
+      action: approved ? 'approved' : 'updated',
+      actorEmail: auth.email,
+      payload: { bookId, revision: (existing?.revision as number | undefined ?? 0) + 1 },
+    }, c.executionCtx);
+
+    return c.json({
+      ok: true,
+      data: {
+        bookId,
+        status: body.status,
+        approvedBy: approved ? auth.email : null,
+        approvedAt: approved ? now : null,
+        revision: (existing?.revision as number | undefined ?? 0) + 1,
+      },
+    });
   },
 );

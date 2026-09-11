@@ -1,7 +1,8 @@
 import type { Env } from '../lib/env';
 
 type EntityType = 'book' | 'grant' | 'session' | 'comment' | 'user' | 'bookmark' | 'highlight'
-  | 'editorial-feedback' | 'editorial-feedback-export' | 'book-creator';
+  | 'editorial-feedback' | 'editorial-feedback-export' | 'book-creator'
+  | 'book-reference' | 'style-profile';
 
 interface AuditEntry {
   entityType: EntityType;
