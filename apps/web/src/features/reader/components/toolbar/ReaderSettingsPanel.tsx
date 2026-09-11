@@ -93,7 +93,7 @@ export function ReaderSettingsPanel({
                   focus-visible:ring-2 focus-visible:ring-accent
                   ${
                     theme === themeOption
-                      ? 'bg-accent text-white border-accent font-medium shadow-sm'
+                      ? 'bg-primary-700 text-background border-primary-700 font-medium shadow-sm'
                       : 'bg-background-secondary text-foreground border-border hover:border-foreground-muted'
                   }
                 `}
@@ -160,7 +160,7 @@ export function ReaderSettingsPanel({
                     focus-visible:ring-2 focus-visible:ring-accent
                     ${
                       fontFamily === family
-                        ? 'bg-accent text-white font-medium shadow-sm'
+                      ? 'bg-primary-700 text-background font-medium shadow-sm'
                         : 'text-foreground hover:bg-background-secondary border border-transparent'
                     }
                   `}
@@ -197,7 +197,7 @@ export function ReaderSettingsPanel({
                     focus-visible:ring-2 focus-visible:ring-accent
                     ${
                       direction === d
-                        ? 'bg-accent text-white border-accent font-medium shadow-sm'
+                      ? 'bg-primary-700 text-background border-primary-700 font-medium shadow-sm'
                         : 'bg-background-secondary text-foreground border-border hover:border-foreground-muted'
                     }
                   `}
@@ -226,7 +226,7 @@ export function ReaderSettingsPanel({
                     focus-visible:ring-2 focus-visible:ring-accent
                     ${
                       writingMode === mode
-                        ? 'bg-accent text-white font-medium shadow-sm'
+                      ? 'bg-primary-700 text-background font-medium shadow-sm'
                         : 'text-foreground hover:bg-background-secondary border border-transparent'
                     }
                   `}

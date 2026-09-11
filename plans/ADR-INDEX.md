@@ -136,7 +136,7 @@
 | 243    | Web `as unknown as` Cast Cleanup (GOAP) | `plans/archive/243-goap-web-cast-cleanup.md`                                        | COMPLETED: PR #989 |
 | 244    | Demo Login and Help Entry Points (GOAP) | `plans/archive/244-goap-demo-login-help-entrypoints.md`                              | COMPLETED |
 | 246    | Login Page UX Redesign (GOAP)     | `plans/archive/246-goap-login-ux-redesign.md`                 | COMPLETED (ADR-245) |
-| 247    | Open PR Review, CI Remediation & Issues (GOAP) | `plans/247-goap-swarm-pr-review-ci-issues.md` | IN PROGRESS |
+| 247    | Open PR Review, CI Remediation & Issues (GOAP) | `plans/archive/247-goap-swarm-pr-review-ci-issues.md` | COMPLETED (synthesis 2026-08-19; auth remainders landed via GOAP-244/245/246) |
 | 249    | Password Toggle Placement Regression Fix (GOAP)                  | `plans/archive/249-goap-password-toggle-placement.md`       | COMPLETED                                                       |
 | 250    | Restore Atomic Commit CI Check Detection (GOAP)                  | `plans/archive/250-goap-atomic-commit-check-detection.md`   | COMPLETED                                                       |
 | 251    | Fix Service Worker Registration Failure in Production (GOAP)     | `plans/archive/251-goap-service-worker-registration-fix.md` | COMPLETED                                                       |
@@ -144,15 +144,19 @@
 | 253    | Login No-Book Guard & UI Modernization (ADR + GOAP) | `plans/253-adr-login-no-book-guard-modernization.md`, `plans/archive/253-goap-login-no-book-guard-modernization.md` | ACCEPTED (PR #1028) |
 | 254    | UI/UX & Concept Modernization Master Plan (GOAP) | `plans/254-goap-uiux-modernization-master-plan.md` | IN PROGRESS — implementation present; remaining verification and follow-ups tracked by GOAP-999 |
 | 255    | epub-sparkle UI/UX Port — Editorial Alignment (GOAP) | `plans/255-goap-epub-sparkle-uiux-port.md` | IN PROGRESS — W1 present in source; remaining UX and verification tracked by GOAP-999 |
-| 257    | Open-Issues Sprint (GOAP) | `plans/257-goap-sprint-open-issues.md` | COMPLETED (sprint record; per-issue docs 258-265) |
-| 258    | Issue #345 CI Failure on Main (GOAP) | `plans/258-goap-issue-345.md` | COMPLETED (verified 2026-08-29; issue closed 2026-05-26) |
-| 259    | Issue #339 ZIP Bomb Defense (GOAP) | `plans/259-goap-issue-339.md` | COMPLETED (verified 2026-08-29; issue closed 2026-05-26) |
-| 260    | Issue #312 Dependency Scanning (GOAP) | `plans/260-goap-issue-312.md` | COMPLETED (verified 2026-08-29; issue closed 2026-05-26) |
-| 261    | Issue #314 Schema Consolidation (GOAP) | `plans/261-goap-issue-314.md` | COMPLETED (verified 2026-08-29; issue closed 2026-05-26) |
-| 262    | Issue #318 AI Plugin Architecture (GOAP + ADR) | `plans/262-goap-issue-318.md` | COMPLETED (verified 2026-09-10: `packages/reader-core/src/ai/` registry+consent+local-summarization PoC, `apps/web/src/lib/ai-plugins.ts` wiring, opt-in `reader.aiEnabled` default off) |
-| 263    | Issue #316 OKLCH Color System (GOAP) | `plans/263-goap-issue-316.md` | COMPLETED (verified 2026-08-29; issue closed 2026-05-26) |
-| 264    | Issue #315 View Transitions (GOAP) | `plans/264-goap-issue-315.md` | COMPLETED (verified 2026-08-29; issue closed 2026-05-26) |
-| 265    | Issue #317 Offline E2E (GOAP) | `plans/265-goap-issue-317.md` | COMPLETED (verified 2026-08-29; issue closed 2026-05-26) |
+| 257    | Open-Issues Sprint (GOAP) | `plans/archive/257-goap-sprint-open-issues.md` | COMPLETED (sprint record; per-issue docs 258-265) |
+| 258    | Issue #345 CI Failure on Main (GOAP) | `plans/archive/258-goap-issue-345.md` | COMPLETED (verified 2026-08-29; issue closed 2026-05-26) |
+| 259    | Issue #339 ZIP Bomb Defense (GOAP) | `plans/archive/259-goap-issue-339.md` | COMPLETED (verified 2026-08-29; issue closed 2026-05-26) |
+| 260    | Issue #312 Dependency Scanning (GOAP) | `plans/archive/260-goap-issue-312.md` | COMPLETED (verified 2026-08-29; issue closed 2026-05-26) |
+| 261    | Issue #314 Schema Consolidation (GOAP) | `plans/archive/261-goap-issue-314.md` | COMPLETED (verified 2026-08-29; issue closed 2026-05-26) |
+| 262    | Issue #318 AI Plugin Architecture (GOAP + ADR) | `plans/archive/262-goap-issue-318.md` | COMPLETED (verified 2026-09-10: `packages/reader-core/src/ai/` registry+consent+local-summarization PoC, `apps/web/src/lib/ai-plugins.ts` wiring, opt-in `reader.aiEnabled` default off) |
+| 263    | Issue #316 OKLCH Color System (GOAP) | `plans/archive/263-goap-issue-316.md` | COMPLETED (verified 2026-08-29; issue closed 2026-05-26) |
+| 264    | Issue #315 View Transitions (GOAP) | `plans/archive/264-goap-issue-315.md` | COMPLETED (verified 2026-08-29; issue closed 2026-05-26) |
+| 265    | Issue #317 Offline E2E (GOAP) | `plans/archive/265-goap-issue-317.md` | COMPLETED (verified 2026-08-29; issue closed 2026-05-26) |
+| 264b   | PR Swarm Triage — Review, Roast, Close-or-Merge (GOAP) | `plans/archive/264-goap-pr-swarm-triage.md` | COMPLETED (zero open PRs 2026-09-09; queue merged/closed after #1094 unblock; shares number with GOAP-315, pre-existing collision) |
+| 266    | Admin Bundle-Budget Breach + Vuln Follow-Up (GOAP) | `plans/archive/266-goap-bundle-budget-and-vuln-followup.md` | COMPLETED (budget breach fixed #1094; audit HIGHs fixed #1097) |
+| 267    | Main CI Dep-Scan HIGHs Hardening (GOAP) | `plans/archive/267-goap-main-ci-dep-scan-fix.md` | COMPLETED (PR #1097; shares number with untracked user plan `plans/267-goap-preexisting-sweep.md`, which stays in place and is never staged) |
+| 268    | UX-01 Persistent Responsive Core Navigation (GOAP) | `plans/archive/268-goap-ux01-persistent-nav.md` | COMPLETED (PR #1099) |
 | 999    | Reader–Creator Collaboration, Editorial Assistance, Responsive UX and E2E (GOAP) | `plans/999-goap-codebase-improvements-uiux-e2e-audit.md` | STATIC AUDIT COMPLETE — implementation pending |
 
 ## Pending

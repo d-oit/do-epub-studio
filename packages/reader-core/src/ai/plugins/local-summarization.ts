@@ -13,7 +13,7 @@
  * `AiProviderUnavailableError` — it never silently skips or falls back to
  * a network service.
  *
- * @see plans/262-goap-issue-318.md (ADR — rejected-alternatives section)
+ * @see plans/archive/262-goap-issue-318.md (ADR — rejected-alternatives section)
  */
 
 import { isAiEnabled } from '../consent';

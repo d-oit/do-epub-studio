@@ -180,7 +180,7 @@ export function FixedLayoutControls({
                   focus-visible:ring-2 focus-visible:ring-accent
                   ${
                     spread === mode
-                      ? 'bg-accent text-white shadow-sm'
+                      ? 'bg-primary-700 text-background shadow-sm'
                       : 'text-foreground hover:bg-background-secondary border border-border'
                   }
                 `}
