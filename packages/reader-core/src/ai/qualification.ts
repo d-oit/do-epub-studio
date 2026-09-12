@@ -34,6 +34,20 @@ export interface QualificationMilestone {
  * Shipped state: no local inference engine is bundled and no cloud provider has
  * been qualified (no vendor is selected by this work). Both entries stay unmet
  * until the documented evidence exists.
+ *
+ * WHAT FLIPPING A MILESTONE DOES: changes only the *reporting* inputs consumed
+ * by `effectiveCategoryAvailability` — nothing dispatches, nothing infers.
+ *
+ * WHAT IT DOES NOT DO (all separate implementation work):
+ *  - `plugins/local-editorial.ts` still returns `engine_missing` and
+ *    `hasEngine() === false` until a real engine implements the `editorial`
+ *    capability seam;
+ *  - `POST /api/creator/books/:bookId/assistance/dispatch` still answers 501
+ *    until a provider, its allowlist entry and the per-dispatch confirmation
+ *    flow exist server-side.
+ *
+ * Because availability requires `hasEngine()` as well, a premature flip cannot
+ * make the product claim a capability it does not have.
  */
 export const QUALIFICATION_MILESTONES: readonly QualificationMilestone[] = [
   {
@@ -57,8 +71,9 @@ export const QUALIFICATION_MILESTONES: readonly QualificationMilestone[] = [
 /** Availability of one category, derived strictly from the milestones above. */
 export function categoryAvailability(
   category: EditorialCategory,
+  milestones: readonly QualificationMilestone[] = QUALIFICATION_MILESTONES,
 ): 'available' | EditorialUnavailableReason {
-  const qualifying = QUALIFICATION_MILESTONES.filter(
+  const qualifying = milestones.filter(
     (milestone) => milestone.status === 'met' && milestone.categories.includes(category),
   );
   if (qualifying.length > 0) {
@@ -69,9 +84,34 @@ export function categoryAvailability(
   return 'engine_missing';
 }
 
-/** True when at least one milestone claims the category — used by the UI badge. */
-export function isCategoryAvailable(category: EditorialCategory): boolean {
-  return categoryAvailability(category) === 'available';
+/**
+ * What the product may actually claim right now.
+ *
+ * Qualification records that a category was *measured* to work; `enginePresent`
+ * records that something can run at all. Both are required, because reporting a
+ * category as available on the strength of a milestone while no engine is wired
+ * would be exactly the false capability claim ADR-999 D4/D5 forbids. A milestone
+ * flip alone therefore changes reporting inputs, not reality.
+ */
+export function effectiveCategoryAvailability(
+  category: EditorialCategory,
+  options: {
+    enginePresent: boolean;
+    milestones?: readonly QualificationMilestone[];
+  },
+): 'available' | EditorialUnavailableReason {
+  if (!options.enginePresent) {
+    return 'engine_missing';
+  }
+  return categoryAvailability(category, options.milestones ?? QUALIFICATION_MILESTONES);
+}
+
+/** True when the category may be presented as working — qualification AND engine. */
+export function isCategoryAvailable(
+  category: EditorialCategory,
+  enginePresent: boolean,
+): boolean {
+  return effectiveCategoryAvailability(category, { enginePresent }) === 'available';
 }
 
 /** Milestone lookup for the qualification report shown in the workspace. */

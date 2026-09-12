@@ -5,7 +5,7 @@ import { useAuthStore } from '../../stores/auth';
 import {
   createLocalEditorialPlugin,
   EDITORIAL_PLUGIN_CATEGORIES,
-  categoryAvailability,
+  effectiveCategoryAvailability,
   milestone,
   QUALIFICATION_MILESTONES,
   type EditorialCategory,
@@ -25,6 +25,16 @@ const CATEGORY_LABELS: Record<EditorialCategory, TranslationKeys> = {
 
 /** The engine-less plugin is the only implementation that ships. */
 const editorialPlugin = createLocalEditorialPlugin();
+
+/**
+ * Engine presence is probed from the capability rather than inferred: a
+ * qualification milestone records that a category was measured to work, and
+ * only a present engine can act on that. Without this the panel would advertise
+ * a category the moment someone flipped a milestone.
+ */
+function enginePresent(): boolean {
+  return editorialPlugin.capabilities.editorial?.hasEngine() ?? false;
+}
 
 interface AssistancePanelProps {
   bookId: string;
@@ -115,7 +125,9 @@ export function AssistancePanel({ bookId }: AssistancePanelProps): React.JSX.Ele
 
       <ul className="mt-3 space-y-1">
         {EDITORIAL_PLUGIN_CATEGORIES.map((category) => {
-          const availability = categoryAvailability(category);
+          const availability = effectiveCategoryAvailability(category, {
+            enginePresent: enginePresent(),
+          });
           return (
             <li key={category} className="flex items-center justify-between gap-2 text-sm">
               <span>{t(CATEGORY_LABELS[category])}</span>

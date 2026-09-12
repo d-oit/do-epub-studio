@@ -101,6 +101,15 @@ export interface AudioProcessingCapability {
 export interface EditorialReviewCapability {
   readonly kind: 'editorial';
   review(request: EditorialReviewRequest): Promise<EditorialReviewOutcome>;
+  /**
+   * Whether a usable engine is actually present behind this capability.
+   *
+   * Availability reporting MUST require this in addition to a qualification
+   * milestone: a milestone records that a category was *measured* to work,
+   * while this records that something can run at all. Flipping a milestone
+   * alone therefore cannot make a category read as available.
+   */
+  hasEngine(): boolean;
 }
 
 /** What a caller asks for. `categories` are checked against the qualification gate. */

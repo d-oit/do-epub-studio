@@ -37,6 +37,10 @@ export function createLocalEditorialPlugin(
 ): AiPlugin {
   const capability: EditorialReviewCapability = {
     kind: 'editorial',
+    // Nothing to run: the qualification gate may only report a category as
+    // available when this is true, so a milestone flip cannot masquerade as a
+    // working engine.
+    hasEngine: () => false,
     review(_request: EditorialReviewRequest): Promise<EditorialReviewOutcome> {
       // No engine is bundled. Say so — never a fabricated finding, never a
       // bare "no findings" that would read as a successful clean run.
