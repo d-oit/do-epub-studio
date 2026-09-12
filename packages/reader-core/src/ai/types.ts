@@ -10,6 +10,10 @@
  * @see plans/archive/262-goap-issue-318.md (ADR)
  */
 
+import type { EditorialCategory, EditorialReviewOutcome } from './editorial-findings';
+
+export type { EditorialCategory, EditorialReviewOutcome };
+
 /** Base error for all AI plugin failures. */
 export class AiPluginError extends Error {
   constructor(message: string) {
@@ -87,11 +91,39 @@ export interface AudioProcessingCapability {
   synthesize(text: string): Promise<ArrayBuffer>;
 }
 
+/**
+ * Grounded editorial review (GOAP-999 Wave 4).
+ *
+ * Implementations return an `EditorialReviewOutcome`; findings are validated
+ * against source material before a reviewer ever sees them, and an unavailable
+ * engine must say so rather than emit schema-shaped guesses.
+ */
+export interface EditorialReviewCapability {
+  readonly kind: 'editorial';
+  review(request: EditorialReviewRequest): Promise<EditorialReviewOutcome>;
+}
+
+/** What a caller asks for. `categories` are checked against the qualification gate. */
+export interface EditorialReviewRequest {
+  categories: readonly EditorialCategory[];
+  /** Chapter text keyed by `chapterRef`; the only text an engine may read. */
+  chapterText: Record<string, string>;
+  /** Current source identity per chapter, for staleness checks. */
+  chapterSha256: Record<string, string | null>;
+  /** Retained references the review may rely on: id → { revision, content }. */
+  references: Record<string, { revision: number; content: string }>;
+  styleRevision: number | null;
+  /** BCP-47 language of the book, when known. */
+  language: string | null;
+}
+
 /** The set of capabilities a plugin provides (all optional — a plugin may offer any subset). */
 export interface AiPluginCapabilities {
   readonly text?: TextProcessingCapability;
   readonly image?: ImageProcessingCapability;
   readonly audio?: AudioProcessingCapability;
+  /** Grounded editorial review (GOAP-999 Wave 4) — see `editorial-findings.ts`. */
+  readonly editorial?: EditorialReviewCapability;
 }
 
 /**

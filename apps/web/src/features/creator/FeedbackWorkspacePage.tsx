@@ -19,6 +19,7 @@ import { createTraceId } from '@do-epub-studio/shared';
 import { logClientEvent } from '../../lib/client-logger';
 import type { TFunction } from '../../hooks/useTranslation';
 import { ReferencesPanel } from './ReferencesPanel';
+import { AssistancePanel } from './AssistancePanel';
 
 const STATUSES: FeedbackStatus[] = ['open', 'accepted', 'declined', 'resolved'];
 const CATEGORIES: FeedbackCategory[] = ['general', 'grammar', 'spelling', 'story', 'logic', 'style'];
@@ -341,6 +342,8 @@ export function FeedbackWorkspacePage(): React.JSX.Element {
       )}
 
       <ReferencesPanel bookId={bookId ?? ''} />
+
+      <AssistancePanel bookId={bookId ?? ''} />
     </div>
   );
 }

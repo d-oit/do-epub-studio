@@ -168,3 +168,15 @@ export type StyleProfile = z.infer<typeof StyleProfileSchema>;
 export const AnchorStateSchema = z.enum(['unresolved', 'resolved', 'source_changed']);
 
 export type AnchorState = z.infer<typeof AnchorStateSchema>;
+
+// ── Wave 4 (AI-02): cloud assistance consent ─────────────────────────────
+//
+// Consent-only: recording permission never enables dispatch. Dispatch stays
+// refused while no cloud provider is qualified (see the reader-core
+// qualification milestones), so this flag models intent, not capability.
+
+export const AssistanceConsentSchema = z.object({
+  allowed: z.boolean(),
+});
+
+export type AssistanceConsent = z.infer<typeof AssistanceConsentSchema>;

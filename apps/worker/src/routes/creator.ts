@@ -15,6 +15,7 @@ import {
   ReferenceVerifySchema,
   ReferenceListQuerySchema,
   StyleProfileSchema,
+  AssistanceConsentSchema,
 } from '@do-epub-studio/schema';
 import { assertBookAccess } from '../lib/tenant-isolation';
 import { getRequestTraceId } from '../lib/api-error';
@@ -806,5 +807,111 @@ creatorRouter.put(
         revision: (existing?.revision as number | undefined ?? 0) + 1,
       },
     });
+  },
+);
+
+// ── Wave 4 (AI-02): cloud assistance consent & dispatch gate ─────────────
+//
+// Consent is recorded per book + creator and defaults to OFF. Recording it must
+// never enable dispatch: `cloudQualified` is hard-false until a provider
+// qualification milestone is met (ADR-999 D5), and the dispatch endpoint
+// refuses without reading a single character of book text.
+
+creatorRouter.get(
+  '/creator/books/:bookId/assistance-consent',
+  readerAuth,
+  async (c) => {
+    const bookId = c.req.param('bookId');
+    const auth = c.get('auth');
+
+    const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx, getRequestTraceId(c));
+    if (mismatch) return mismatch.response;
+    await requireCreator(c.env, auth, bookId);
+
+    const row = await queryFirst<{ cloud_assistance_allowed: number }>(
+      c.env,
+      `SELECT bc.cloud_assistance_allowed AS cloud_assistance_allowed
+       FROM book_creators bc JOIN users u ON u.id = bc.user_id
+       WHERE bc.book_id = ? AND u.email = ?`,
+      [bookId, auth.email],
+    );
+
+    return c.json({
+      ok: true,
+      data: {
+        allowed: row?.cloud_assistance_allowed === 1,
+        // Never configurable: the qualification gate owns this fact.
+        cloudQualified: false,
+      },
+    });
+  },
+);
+
+creatorRouter.put(
+  '/creator/books/:bookId/assistance-consent',
+  readerAuth,
+  zValidator('json', AssistanceConsentSchema),
+  async (c) => {
+    const bookId = c.req.param('bookId');
+    const auth = c.get('auth');
+
+    const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx, getRequestTraceId(c));
+    if (mismatch) return mismatch.response;
+    const { userId } = await requireCreator(c.env, auth, bookId);
+
+    const body = c.req.valid('json');
+    await execute(
+      c.env,
+      `UPDATE book_creators SET cloud_assistance_allowed = ? WHERE book_id = ? AND user_id = ?`,
+      [body.allowed ? 1 : 0, bookId, userId],
+    );
+    await logAudit(c.env, {
+      entityType: 'book-creator',
+      entityId: `${bookId}:${userId}`,
+      action: body.allowed ? 'cloud-assistance-allowed' : 'cloud-assistance-denied',
+      actorEmail: auth.email,
+      payload: { bookId },
+    }, c.executionCtx);
+
+    return c.json({
+      ok: true,
+      data: { allowed: body.allowed, cloudQualified: false },
+    });
+  },
+);
+
+creatorRouter.post(
+  '/creator/books/:bookId/assistance/dispatch',
+  readerAuth,
+  async (c) => {
+    const bookId = c.req.param('bookId');
+    const auth = c.get('auth');
+
+    const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx, getRequestTraceId(c));
+    if (mismatch) return mismatch.response;
+    await requireCreator(c.env, auth, bookId);
+
+    // No provider is qualified. Refuse without touching book text: reading the
+    // manuscript to build a request we must reject would violate the very
+    // scope we are protecting. Consent state is irrelevant here by design —
+    // permission cannot substitute for a qualified provider.
+    await logAudit(c.env, {
+      entityType: 'editorial-feedback',
+      entityId: bookId,
+      action: 'assistance-dispatch-refused',
+      actorEmail: auth.email,
+      payload: { bookId, reason: 'cloud_not_qualified' },
+    }, c.executionCtx);
+
+    return c.json(
+      {
+        ok: false,
+        error: {
+          code: 'ASSISTANCE_NOT_CONFIGURED',
+          message: 'No cloud provider is qualified; dispatch is disabled.',
+        },
+      },
+      501,
+    );
   },
 );
