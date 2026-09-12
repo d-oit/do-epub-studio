@@ -57,6 +57,7 @@ export type {
 } from './editorial-findings';
 export {
   categoryAvailability,
+  effectiveCategoryAvailability,
   isCategoryAvailable,
   milestone,
   QUALIFICATION_MILESTONES,
