@@ -28,6 +28,16 @@ vi.mock('../../lib/api', () => ({
   apiRequest: vi.fn(),
 }));
 
+// `lib/api/creator.ts` imports `./core` directly, so mocking `../../lib/api`
+// does NOT intercept it: CreatorAssignmentsSection would fall through to a real
+// fetch, retry past teardown and surface as an EnvironmentTeardownError. Mock
+// the module the component actually imports.
+vi.mock('../../lib/api/creator', () => ({
+  fetchCreatorAssignments: vi.fn().mockResolvedValue([]),
+  assignCreator: vi.fn().mockResolvedValue({ bookId: 'b1', email: 'x@ex.com', alreadyAssigned: false }),
+  revokeCreator: vi.fn().mockResolvedValue({ bookId: 'b1', email: 'x@ex.com' }),
+}));
+
 const mockBooks = [{ id: 'b1', title: 'Book 1', slug: 'b1' }, { id: 'b2', title: 'Book 2', slug: 'b2' }];
 const mockGrants = [{
   id: 'g1',
@@ -50,9 +60,8 @@ async function renderAndFlush(initialPath: string) {
         </Routes>
       </MemoryRouter>,
     );
-    // CreatorAssignmentsSection fetches on mount; flush its promise so no
-    // in-flight continuation survives the test environment (the source of
-    // the CI-only EnvironmentTeardownError unhandled rejection).
+    // CreatorAssignmentsSection resolves on mount (mocked above); flush its
+    // continuation so nothing survives the test environment.
     await Promise.resolve();
     await Promise.resolve();
   });
@@ -67,7 +76,6 @@ describe('AdminGrantResponsesPage', () => {
     vi.mocked(api.apiRequest).mockImplementation((url: string) => {
       if (url === '/api/admin/books') return Promise.resolve(mockBooks);
       if (url.includes('/grants')) return Promise.resolve(mockGrants);
-      if (url.includes('/creators')) return Promise.resolve([]);
       return Promise.resolve([]);
     });
 
@@ -126,7 +134,6 @@ describe('AdminGrantResponsesPage', () => {
     vi.mocked(api.apiRequest).mockImplementation((url: string) => {
       if (url === '/api/admin/books') return Promise.resolve(mockBooks);
       if (url.includes('/grants')) return Promise.resolve(mockGrants);
-      if (url.includes('/creators')) return Promise.resolve([]);
       return Promise.resolve({ ok: true });
     });
 
@@ -164,7 +171,6 @@ describe('AdminGrantResponsesPage', () => {
     vi.mocked(api.apiRequest).mockImplementation((url: string) => {
       if (url === '/api/admin/books') return Promise.resolve(mockBooks);
       if (url.includes('/grants')) return Promise.resolve(mockGrants);
-      if (url.includes('/creators')) return Promise.resolve([]);
       return Promise.resolve({ ok: true });
     });
 
