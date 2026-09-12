@@ -43,7 +43,11 @@ describe('Notifications Routes', () => {
     mockQueryFirst.mockResolvedValueOnce({ id: 'n1', user_email: 'user@example.com' });
     const res = await app.fetch(new Request('http://localhost/api/notifications/n1/read', { method: 'POST', headers: { Authorization: 'Bearer valid' } }), env, makePassThroughContext());
     expect(res.status).toBe(200);
-    expect(mockExecute).toHaveBeenCalled();
+    expect(mockExecute).toHaveBeenCalledWith(
+      env,
+      'UPDATE notifications SET read_at = ? WHERE id = ? AND user_email = ?',
+      [expect.any(String), 'n1', 'user@example.com'],
+    );
   });
 
   it('POST /api/notifications/:id/read returns 404 for missing', async () => {
