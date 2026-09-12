@@ -81,6 +81,136 @@ export async function exportFeedback(
   );
 }
 
+// ── Wave 3 (COL-03): references & style profile ─────────────────────────
+
+export type ReferenceKind =
+  | 'style_excerpt'
+  | 'glossary_term'
+  | 'character_note'
+  | 'fact_note'
+  | 'chronology_note'
+  | 'external_citation';
+export type ReferenceOrigin = 'book' | 'creator' | 'external';
+
+export interface BookReference {
+  id: string;
+  kind: ReferenceKind;
+  title: string | null;
+  content: string;
+  attribution: string | null;
+  sourceUrl: string | null;
+  origin: ReferenceOrigin;
+  verified: boolean;
+  revision: number;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ReferenceCreateInput {
+  kind: ReferenceKind;
+  title?: string;
+  content: string;
+  sourceUrl?: string;
+  origin: ReferenceOrigin;
+}
+
+export interface StyleProfileData {
+  language: string | null;
+  narrativePerson: string | null;
+  tense: string | null;
+  dialogueConventions: string | null;
+  dialectNotes: string | null;
+  terminology: string | null;
+  intentionalExceptions: string | null;
+  status: 'draft' | 'approved';
+  approvedBy: string | null;
+  approvedAt: string | null;
+  revision: number;
+}
+
+export async function fetchReferences(
+  bookId: string,
+  token: string,
+  kind?: ReferenceKind,
+): Promise<BookReference[]> {
+  const suffix = kind ? `?kind=${kind}` : '';
+  return apiRequest<BookReference[]>(
+    `/api/creator/books/${bookId}/references${suffix}`,
+    { method: 'GET', token },
+  );
+}
+
+export async function createReference(
+  bookId: string,
+  data: ReferenceCreateInput,
+  token: string,
+): Promise<BookReference> {
+  return apiRequest<BookReference>(`/api/creator/books/${bookId}/references`, {
+    method: 'POST',
+    token,
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateReference(
+  bookId: string,
+  id: string,
+  data: { title?: string; content?: string },
+  token: string,
+): Promise<BookReference> {
+  return apiRequest<BookReference>(
+    `/api/creator/books/${bookId}/references/${id}`,
+    { method: 'PATCH', token, body: JSON.stringify(data) },
+  );
+}
+
+export async function deleteReference(
+  bookId: string,
+  id: string,
+  token: string,
+): Promise<{ id: string }> {
+  return apiRequest<{ id: string }>(
+    `/api/creator/books/${bookId}/references/${id}`,
+    { method: 'DELETE', token },
+  );
+}
+
+export async function verifyReference(
+  bookId: string,
+  id: string,
+  verified: boolean,
+  evidenceNote: string,
+  token: string,
+): Promise<BookReference> {
+  return apiRequest<BookReference>(
+    `/api/creator/books/${bookId}/references/${id}/verify`,
+    { method: 'POST', token, body: JSON.stringify({ verified, evidenceNote }) },
+  );
+}
+
+export async function fetchStyleProfile(
+  bookId: string,
+  token: string,
+): Promise<StyleProfileData | null> {
+  return apiRequest<StyleProfileData | null>(`/api/creator/books/${bookId}/style`, {
+    method: 'GET',
+    token,
+  });
+}
+
+export async function saveStyleProfile(
+  bookId: string,
+  data: Omit<StyleProfileData, 'approvedBy' | 'approvedAt' | 'revision'>,
+  token: string,
+): Promise<{ bookId: string; status: string; approvedBy: string | null; approvedAt: string | null; revision: number }> {
+  return apiRequest(`/api/creator/books/${bookId}/style`, {
+    method: 'PUT',
+    token,
+    body: JSON.stringify(data),
+  });
+}
+
 export function downloadExport(bookSlug: string, items: FeedbackItem[]): void {
   const lines: string[] = [
     `# Editorial feedback export — ${bookSlug}`,
@@ -117,6 +247,7 @@ export function downloadExport(bookSlug: string, items: FeedbackItem[]): void {
   link.remove();
   URL.revokeObjectURL(url);
 }
+
 
 export interface CreatorAssignment {
   email: string;
