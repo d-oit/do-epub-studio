@@ -211,6 +211,38 @@ export async function saveStyleProfile(
   });
 }
 
+// ── Wave 4 (AI-02): cloud assistance consent ─────────────────────────────
+//
+// `cloudQualified` is server-owned and always false while no provider is
+// qualified. Consent is intent only — the UI must never present it as
+// enabling anything.
+
+export interface AssistanceConsent {
+  allowed: boolean;
+  cloudQualified: boolean;
+}
+
+export async function fetchAssistanceConsent(
+  bookId: string,
+  token: string,
+): Promise<AssistanceConsent> {
+  return apiRequest<AssistanceConsent>(
+    `/api/creator/books/${bookId}/assistance-consent`,
+    { method: 'GET', token },
+  );
+}
+
+export async function setAssistanceConsent(
+  bookId: string,
+  allowed: boolean,
+  token: string,
+): Promise<AssistanceConsent> {
+  return apiRequest<AssistanceConsent>(
+    `/api/creator/books/${bookId}/assistance-consent`,
+    { method: 'PUT', token, body: JSON.stringify({ allowed }) },
+  );
+}
+
 export function downloadExport(bookSlug: string, items: FeedbackItem[]): void {
   const lines: string[] = [
     `# Editorial feedback export — ${bookSlug}`,
