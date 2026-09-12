@@ -130,8 +130,8 @@ notificationsRouter.post('/notifications/:id/read', readerAuth, async (c) => {
 
   await execute(
     c.env,
-    `UPDATE notifications SET read_at = ? WHERE id = ?`,
-    [now, notificationId],
+    `UPDATE notifications SET read_at = ? WHERE id = ? AND user_email = ?`,
+    [now, notificationId, auth.email],
   );
 
   return c.json({ ok: true });
