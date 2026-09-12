@@ -21,9 +21,11 @@ import {
 } from '../editorial-findings';
 import {
   categoryAvailability,
+  effectiveCategoryAvailability,
   isCategoryAvailable,
   milestone,
   QUALIFICATION_MILESTONES,
+  type QualificationMilestone,
 } from '../qualification';
 import {
   createLocalEditorialPlugin,
@@ -219,8 +221,48 @@ describe('qualification gate (honest availability)', () => {
   it('reports engine_missing for all four categories while unqualified', () => {
     for (const category of EDITORIAL_PLUGIN_CATEGORIES) {
       expect(categoryAvailability(category)).toBe('engine_missing');
-      expect(isCategoryAvailable(category)).toBe(false);
+      expect(isCategoryAvailable(category, false)).toBe(false);
     }
+  });
+
+  it('does not report availability when a milestone is met but no engine exists', () => {
+    // Guards the handoff claim that flipping a milestone is merely bookkeeping:
+    // with the engine-less plugin still registered, availability must NOT follow
+    // the milestone. Real integration (an engine behind the capability seam, and
+    // a configured dispatch path) remains implementation work.
+    const qualified: readonly QualificationMilestone[] = [
+      {
+        id: 'local-engine',
+        status: 'met',
+        qualifiedAt: '2026-01-01',
+        categories: ['grammar'],
+        notes: 'synthetic milestone used only to prove the composition rule',
+      },
+    ];
+
+    expect(categoryAvailability('grammar', qualified)).toBe('available');
+    // …but the product still may not claim it, because nothing can run.
+    expect(effectiveCategoryAvailability('grammar', { enginePresent: false, milestones: qualified }))
+      .toBe('engine_missing');
+    expect(isCategoryAvailable('grammar', false)).toBe(false);
+  });
+
+  it('reports availability only when the milestone and the engine agree', () => {
+    const qualified: readonly QualificationMilestone[] = [
+      {
+        id: 'local-engine',
+        status: 'met',
+        qualifiedAt: '2026-01-01',
+        categories: ['grammar'],
+        notes: 'synthetic milestone used only to prove the composition rule',
+      },
+    ];
+
+    expect(effectiveCategoryAvailability('grammar', { enginePresent: true, milestones: qualified }))
+      .toBe('available');
+    // A present engine without a qualification for that category is still not a claim.
+    expect(effectiveCategoryAvailability('story', { enginePresent: true, milestones: qualified }))
+      .toBe('engine_missing');
   });
 
   it('exposes the milestone record for the workspace report', () => {
@@ -230,6 +272,11 @@ describe('qualification gate (honest availability)', () => {
 });
 
 describe('engine-less editorial plugin', () => {
+  it('reports no engine present, so availability cannot follow a milestone flip', () => {
+    const capability = createLocalEditorialPlugin().capabilities.editorial;
+    expect(capability?.hasEngine()).toBe(false);
+  });
+
   it('reports engine_missing for every category and never fabricates findings', async () => {
     const plugin = createLocalEditorialPlugin();
     const capability = plugin.capabilities.editorial;
