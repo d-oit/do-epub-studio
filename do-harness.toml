@@ -1,0 +1,73 @@
+# do-harness.toml — sensor pack for this workspace.
+#
+# Policy (ADR-246 / GOAP-269): sensors wrap the SAME pnpm scripts that
+# `scripts/quality_gate.sh` and CI run, so local evidence and CI cannot
+# drift. do-harness owns the agent loop + evidence freshness; the CI Full
+# Quality Gate remains the merge-blocking source of truth. Git hooks are
+# intentionally NOT managed here (repo hooks live in `scripts/hooks/`).
+language = "generic"
+
+[hooks]
+pre-commit = []
+pre-push = []
+
+[signal-sets]
+feedback = ["verify-fast"]
+verification = ["typecheck", "lint", "test-unit", "skills"]
+
+[[sensors]]
+name = "verify-fast"
+argv = ["pnpm", "verify:fast"]
+when-changed = [
+  "**/*.ts",
+  "**/*.tsx",
+  "**/package.json",
+  "pnpm-lock.yaml",
+]
+
+[[sensors]]
+name = "typecheck"
+argv = ["pnpm", "typecheck"]
+when-changed = [
+  "**/*.ts",
+  "**/*.tsx",
+  "**/tsconfig.json",
+  "**/package.json",
+  "pnpm-lock.yaml",
+]
+
+[[sensors]]
+name = "lint"
+argv = ["pnpm", "lint"]
+when-changed = [
+  "**/*.ts",
+  "**/*.tsx",
+  "eslint.config.js",
+  "packages/*/eslint.config.mjs",
+  ".github/workflows/**",
+  "scripts/**",
+]
+
+[[sensors]]
+name = "test-unit"
+argv = ["pnpm", "test:unit"]
+when-changed = [
+  "**/*.ts",
+  "**/*.tsx",
+  "**/package.json",
+  "pnpm-lock.yaml",
+  "packages/*/vitest.config.*",
+  "apps/*/vitest.config.*",
+]
+
+# Encodes the GOAP-256 lesson locally: new .agents/skills/<name> entries
+# require the .claude/skills/<name> mirror symlink, which only the CI Full
+# Quality Gate validated before this sensor existed.
+[[sensors]]
+name = "skills"
+argv = ["bash", "scripts/validate-skills.sh"]
+when-changed = [
+  ".agents/skills/**",
+  ".claude/skills/**",
+  "scripts/validate-skills.sh",
+]
