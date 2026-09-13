@@ -1,6 +1,6 @@
 # GOAP-269: do-harness adoption + web-ui sensor pack
 
-**Status:** IN PROGRESS (Phase 1–2 complete; Phase 3–4 pending)
+**Status:** IN PROGRESS (Phase 1–3 complete; Phase 4 pending)
 **Date:** 2026-09-13
 **ADR:** ADR-246 (`plans/246-adr-do-harness-completion-contract.md`)
 
@@ -35,7 +35,7 @@ Key verified findings:
 |---|-------|---------------|--------|
 | 1 | CLI analysis (hands-on) | findings recorded (this plan + ADR-246) | DONE |
 | 2 | Upstream fixes: POSIX installer + `sh -s` pipeline test in `test-install.sh` + template newline | PR merged to d-o-hub/do-harness; `sh < install.sh` installs v0.1.0 under dash | DONE locally (pipeline-under-dash verified against the real release); PR: d-o-hub/do-harness#64 |
-| 3 | Adopt generic pack here: `do-harness init --language generic`, sensor toml wrapping the same scripts as `quality_gate.sh`, hooks beside atomic-commit, AGENTS.md loop note | `do-harness verify --set verification --changed --strict` green pre-push; `status` consulted before claiming completion | PENDING |
+| 3 | Adopt generic pack here: `do-harness init --language generic`, sensor toml wrapping the same scripts as `quality_gate.sh`, hooks beside atomic-commit, AGENTS.md loop note | `do-harness verify --set verification --changed --strict` green pre-push; `status` consulted before claiming completion | DONE (PR #1120; sensors wrap `pnpm verify:fast`/`typecheck`/`lint`/`test:unit`/`validate-skills.sh`; hooks intentionally not installed — `scripts/hooks/` stays authoritative; upstream-scaffolded python fixed for pyflakes + pre-commit EOF) |
 | 4 | Upstream `web-ui` pack (ADR-246 §3–4): audit library (visibility → occlusion → overlap → overflow → focus/target-size), `init --language web`, evidence matrix manifest, ratchet + strikes | dogfood on this repo's Playwright lanes; ratchet baseline = zero new findings on main | PENDING |
 
 ## Verification
