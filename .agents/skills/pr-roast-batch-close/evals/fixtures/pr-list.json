@@ -1,0 +1,52 @@
+{
+  "repo": "acme/ts-platform",
+  "generated_at": "2026-08-28T12:00:00Z",
+  "exclusions": {
+    "exclude_drafts": true,
+    "authors": [],
+    "labels": []
+  },
+  "candidates": [
+    {
+      "number": 418,
+      "title": "Refactor HTTP client layer",
+      "author": "octo-dev",
+      "createdAt": "2026-07-14T09:15:00Z",
+      "age_days": 45,
+      "additions": 600,
+      "deletions": 380,
+      "changedFiles": 22,
+      "baseRefName": "main",
+      "headRefName": "refactor/http-client",
+      "isDraft": false,
+      "mergeable": "MERGEABLE",
+      "reviewDecision": "",
+      "labels": ["typescript"],
+      "url": "https://github.com/acme/ts-platform/pull/418"
+    },
+    {
+      "number": 421,
+      "title": "Add retry with backoff to webhook delivery",
+      "author": "octo-infra",
+      "createdAt": "2026-08-26T16:40:00Z",
+      "age_days": 2,
+      "additions": 240,
+      "deletions": 12,
+      "changedFiles": 6,
+      "baseRefName": "main",
+      "headRefName": "feat/webhook-retry",
+      "isDraft": false,
+      "mergeable": "MERGEABLE",
+      "reviewDecision": "",
+      "labels": ["typescript", "tests"],
+      "url": "https://github.com/acme/ts-platform/pull/421"
+    }
+  ],
+  "excluded": [
+    {
+      "number": 423,
+      "title": "Draft: explore worker pool ideas",
+      "reason": "draft"
+    }
+  ]
+}

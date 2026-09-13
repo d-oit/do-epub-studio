@@ -93,3 +93,6 @@ packages/ui/storybook-static/
 
 # Generated test corpus
 packages/reader-core/src/__fixtures__/corpus/
+
+# Local agent session artifacts (scratch reports, workdirs)
+.session/
