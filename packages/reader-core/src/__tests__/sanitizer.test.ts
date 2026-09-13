@@ -649,6 +649,47 @@ describe('createEpubSanitizerHook', () => {
     expect(docB.querySelector('script')).toBeNull();
   });
 
+  // epub.js tracks host-injected nodes (`epubjs-injected-*` ids) in internal
+  // Maps and removes them later via `document.head.removeChild(node)`. The
+  // splice in the sanitizer must preserve those nodes BY IDENTITY, or the
+  // next theme/stylesheet pass throws NotFoundError (observed as an
+  // unhandled removeChild rejection + error-boundary storm on re-display).
+  it('preserves host-injected epubjs nodes by identity on cache MISS', () => {
+    const { hook } = createEpubSanitizerHook();
+    const doc = new DOMParser().parseFromString(
+      '<html><head><style id="epubjs-injected-css-images">img{max-width:100%}</style></head><body><script>alert(1)</script></body></html>',
+      'text/html',
+    );
+    const hostNode = doc.getElementById('epubjs-injected-css-images') as HTMLElement;
+    hook({ document: doc, href: 'chapter1.xhtml' });
+    // Node identity preserved and still a child of the live head, so a later
+    // `head.removeChild(hostNode)` (epub.js createStyle/clearStylesheets) works.
+    expect(doc.head.contains(hostNode)).toBe(true);
+    expect(() => doc.head.removeChild(hostNode)).not.toThrow();
+    // EPUB content is still sanitized.
+    expect(doc.querySelector('script')).toBeNull();
+  });
+
+  it('preserves host-injected epubjs nodes by identity on cache HIT', () => {
+    const { hook } = createEpubSanitizerHook();
+    const doc1 = new DOMParser().parseFromString(
+      '<html><head><style id="epubjs-injected-css-images">img{max-width:100%}</style></head><body><p>clean</p></body></html>',
+      'text/html',
+    );
+    hook({ document: doc1, href: 'chapter1.xhtml' });
+
+    // Second document for the same href -> cache HIT path.
+    const doc2 = new DOMParser().parseFromString(
+      '<html><head><style id="epubjs-injected-css-images">img{max-width:100%}</style></head><body><script>alert(2)</script></body></html>',
+      'text/html',
+    );
+    const hostNode2 = doc2.getElementById('epubjs-injected-css-images') as HTMLElement;
+    hook({ document: doc2, href: 'chapter1.xhtml' });
+    expect(doc2.head.contains(hostNode2)).toBe(true);
+    expect(() => doc2.head.removeChild(hostNode2)).not.toThrow();
+    expect(doc2.querySelector('script')).toBeNull();
+  });
+
   it('evicts least-recently-used entries when the cache exceeds the max size', () => {
     const { hook } = createEpubSanitizerHook();
     const sanitizeSpy = vi.spyOn(DOMPurify, 'sanitize');

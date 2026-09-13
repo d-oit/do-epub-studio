@@ -21,7 +21,7 @@ verification (issue body AC → code + tests on main) is recorded in
 | #316 OKLCH | Yes | `apps/web/src/styles/globals.css`: zero hex/rgb token literals; P3 overrides at `:142-158`; `design-tokens.test.ts` asserts `oklch(` |
 | #315 View Transitions | Yes | `apps/web/src/components/ViewTransitionRoutes.tsx` (+ fallback test); `globals.css:538-563` `@layer view-transitions` + reduced-motion block |
 | #317 offline E2E | Yes | `apps/tests/offline-reader.spec.ts`: 5 tests — offline reload, status transitions, cached API, queued actions, flush after reconnect |
-| #318 AI plugins | **No** | Closed with comment "Plugin architecture design deferred". No interfaces, no registry, no extension points, no PoC, no doc. **Implemented this sprint: `262-goap-issue-318.md`** |
+| #318 AI plugins | **No** | Closed with comment "Plugin architecture design deferred". No interfaces, no registry, no extension points, no PoC, no doc. **Implemented this sprint: `262-goap-issue-318.md`, merged as PR #1058** |
 
 ## Baseline (2026-08-29)
 
@@ -34,11 +34,18 @@ verification (issue body AC → code + tests on main) is recorded in
 - CI on current main: CI/CodeQL/Scorecard runs conclude `success`
   (`c2c54d77`).
 
-## Remaining work
+## Closeout (2026-08-29)
 
-1. Implement #318 (branch `feat/issue-318-goap-plan`, PR references the issue).
-2. Closeout: full `pnpm test && pnpm test:e2e` on synced main; per-issue notes
-   finalized here.
+- #318 implemented and merged via PR #1058 (squash → `f223b39e`): registry +
+  consent gate + engine-slot PoC plugin + settings toggle + 13 locales;
+  ADR in `262-goap-issue-318.md`. All required PR checks green, including
+  Full Quality Gate; the CI bundle-budget check caught an entry-graph
+  boundary regression (init in `main.tsx` pulled reader-core into every
+  route), fixed in-PR by scoping init to the reader route.
+- Final verification on merged main (Node 22.22.2): `pnpm run typecheck` ✓,
+  `pnpm test` ✓ (all packages), `pnpm test:e2e` ✓ (see below for e2e run
+  record).
+- `gh issue list --state open` remains empty — sprint end state met.
 
 ## Notes
 
