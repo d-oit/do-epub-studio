@@ -90,6 +90,7 @@
 | 234    | Session and Admin Auth Hardening   | `plans/234-adr-session-and-admin-auth-hardening.md`    | Accepted (GOAP-230; items 5+6 passkeys/recovery merged via GOAP-236 with migration 0011; item 7 risk-event handling merged via GOAP-237/PR #977) |
 | 244    | Demo Login and Help Entry Points   | `plans/244-adr-demo-login-help-entrypoints.md`        | Accepted (GOAP-244) |
 | 245    | Login Page UX Redesign             | `plans/245-adr-login-ux-redesign.md`                  | Accepted (GOAP-246; supersedes ADR-244 Amendment C decision 2) |
+| 246    | do-harness Agent Completion Contract + web-ui Sensor Pack | `plans/246-adr-do-harness-completion-contract.md` | Accepted (GOAP-269) |
 | 248    | Swarm Audit Findings Prioritization Policy | `plans/248-adr-swarm-audit-improvements-policy.md`    | Accepted (GOAP-248) |
 | 249    | Password Toggle Placement and Visual Regression Policy | `plans/249-adr-password-toggle-placement.md` | Accepted |
 | 250    | Atomic Commit Check Detection | `plans/250-adr-atomic-commit-check-detection.md` | Accepted |
@@ -158,6 +159,7 @@
 | 267    | Main CI Dep-Scan HIGHs Hardening (GOAP) | `plans/archive/267-goap-main-ci-dep-scan-fix.md` | COMPLETED (PR #1097; shares number with untracked user plan `plans/267-goap-preexisting-sweep.md`, which stays in place and is never staged) |
 | 268    | UX-01 Persistent Responsive Core Navigation (GOAP) | `plans/archive/268-goap-ux01-persistent-nav.md` | COMPLETED (PR #1099) |
 | 999    | Reader–Creator Collaboration, Editorial Assistance, Responsive UX and E2E (GOAP) | `plans/999-goap-codebase-improvements-uiux-e2e-audit.md` | STATIC AUDIT COMPLETE — implementation pending |
+| 269    | do-harness Adoption + web-ui Sensor Pack (GOAP) | `plans/269-goap-do-harness-adoption-web-ui-pack.md`, `plans/246-adr-do-harness-completion-contract.md` | IN PROGRESS (Phase 1–2 done: upstream PR d-o-hub/do-harness#64; adoption + web-ui pack pending) |
 
 ## Pending
 
