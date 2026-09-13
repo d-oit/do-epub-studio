@@ -156,4 +156,18 @@ codacy pull-request gh d-oit do-epub-studio <PR> --output json
 
 ---
 
+## Agent Completion Contract (do-harness)
+
+Computational agent-loop verification runs via do-harness (generic pack; ADR-246 / GOAP-269). Sensors wrap the same pnpm scripts as the gates. Repo git hooks are NOT managed by do-harness (they live in `scripts/hooks/`).
+
+```bash
+do-harness verify --set feedback --changed             # during edits
+do-harness verify --set verification --changed --strict  # before claiming done
+do-harness status --set verification                   # evidence freshness (no run)
+```
+
+Never weaken a sensor to obtain a passing result; fix the underlying cause.
+
+---
+
 _See `agents-docs/` for detailed documentation on workflow, hooks, context management, and troubleshooting. See `llms.txt` and `llms-full.txt` for structured LLM context._

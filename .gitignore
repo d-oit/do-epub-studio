@@ -96,3 +96,5 @@ packages/reader-core/src/__fixtures__/corpus/
 
 # Local agent session artifacts (scratch reports, workdirs)
 .session/
+.do-harness/
+.agents/events/
