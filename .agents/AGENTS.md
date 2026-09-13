@@ -49,6 +49,15 @@ Key guardrails:
 
 ## Test Guardrails
 
+### Validate with demo accounts
+
+- For demo-login changes, validate end-to-end against the real local stack, not
+  just route mocks: seed via `DEMO_ACCOUNTS_ENABLED=1 DEMO_ADMIN_PASSWORD=demo-admin-password node scripts/seed-demo-accounts.mjs` (local D1 needs
+  `TURSO_DATABASE_URL=file:<apps/worker/.wrangler/state/v3/d1/miniflare-D1DatabaseObject/<hash>.sqlite>`), then run the
+  opt-in live e2e: `E2E_LIVE_DEMO=1 pnpm exec playwright test apps/tests/demo-login-live.spec.ts --project=chromium`
+  (requires worker on :8787 + `VITE_DEMO_LOGIN_ENABLED=1` web dev; see
+  `plans/256-goap-demo-login-e2e-vertical.md`).
+
 ### Vitest Configuration
 
 ```typescript
@@ -184,3 +193,5 @@ test: {
 | Schema changes | `turso-schema-migrations` | DB migrations |
 | Security audit | `security-code-auditor` | Code review |
 | PR review | `code-review-assistant` | Pull requests |
+| Batch PR hygiene sweep / roast + auto-close | `pr-roast-batch-close` | Repo-wide PR backlog review |
+| e2e browser flows / demo-login live validation | `agent-browser` | Real-browser e2e exploration (`E2E_LIVE_DEMO=1` flow, `plans/256-goap-demo-login-e2e-vertical.md`) |

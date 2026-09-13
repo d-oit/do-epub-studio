@@ -180,5 +180,15 @@ export default defineConfig({
   },
   server: {
     port: 5173,
+    // Dev only: the Worker builds signed file URLs against APP_BASE_URL (the
+    // web origin in dev), so `/api/files/...` must resolve same-origin. Proxy
+    // them to the local Wrangler worker. Preview/CI preview mode (mocked API)
+    // and production (Pages same-origin function) are unaffected.
+    proxy: {
+      '/api': {
+        target: process.env.VITE_API_PROXY_TARGET || 'http://127.0.0.1:8787',
+        changeOrigin: false,
+      },
+    },
   },
 });

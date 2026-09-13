@@ -1,0 +1,49 @@
+{
+  "skill_name": "pr-roast-batch-close",
+  "evals": [
+    {
+      "id": "pr-hygiene-sweep-report",
+      "prompt": "Do a PR hygiene sweep on d-oit/do-epub-studio",
+      "expected_output": "Agent runs the collect subcommand of scripts/roast-batch-close.sh (dry-run-safe), fetches each candidate diff with 'gh pr diff', scores every candidate with the 0-10 impact rubric in SKILL.md, and produces the single markdown report per references/report-format.md with a per-PR decision. No PR is closed or reviewed without explicit user approval; the --execute flag is never used during the sweep.",
+      "assertions": [
+        "ran the collect subcommand and used its JSON dossier (candidates + excluded)",
+        "report has an impact score for every candidate",
+        "no --execute flag was used without user approval"
+      ],
+      "files": ["fixtures/pr-list.json"]
+    },
+    {
+      "id": "close-zero-impact-prs",
+      "prompt": "Close the zero-impact PRs from the report",
+      "expected_output": "Only score <= 2 candidates that survived exclusion rules are closed, each with the close-comment template from references/report-format.md filled with the reason and impact score, invoked as 'close -R <repo> --pr N --comment-file <file>'. Excluded and draft PRs are not closed.",
+      "assertions": [
+        "uses 'close --pr N --comment-file' for each zero-impact PR",
+        "close comments include the reason and impact score",
+        "did not close excluded/draft PRs"
+      ],
+      "files": ["fixtures/pr-list.json"]
+    },
+    {
+      "id": "request-changes-mid-tier",
+      "prompt": "Review the mid-tier PRs (3-5) with change requests",
+      "expected_output": "One 'review --decision request-changes' per PR scored 3-5, with the review body built from the request-changes template in references/report-format.md and listing the specific required changes taken from the roast report.",
+      "assertions": [
+        "uses 'review --decision request-changes' for each mid-tier PR",
+        "review bodies reference the specific blocking issues"
+      ],
+      "files": ["fixtures/pr-list.json"]
+    },
+    {
+      "id": "merge-approved-prs-in-order",
+      "prompt": "Merge the approved PRs whose report recommendations are all addressed",
+      "expected_output": "Only APPROVE PRs with every report recommendation addressed are passed to the merge subcommand; the merge plan orders file-independent PRs first then smallest/oldest, and each merge is preceded by the latest origin/main sync and a green-CI gate; --execute only after the user approves the merge plan.",
+      "assertions": [
+        "uses merge --pr N with only approved, recommendations-addressed PRs",
+        "merge plan orders file-independent PRs before overlapping ones",
+        "each merge is preceded by syncing the PR branch to the latest origin/main",
+        "no --execute without user approval of the merge plan"
+      ],
+      "files": ["fixtures/pr-list.json"]
+    }
+  ]
+}

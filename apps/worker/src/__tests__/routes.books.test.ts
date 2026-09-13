@@ -85,11 +85,12 @@ describe('Books Routes', () => {
     it('returns signed URL when book and file exist', async () => {
       mockRequireAuth.mockResolvedValue({
         email: 'user@example.com',
+        bookId: '1',
         capabilities: { canRead: true }
       });
 
       mockQueryFirst
-        .mockResolvedValueOnce({ id: '1', slug: 'book-1' }) // Book check
+        .mockResolvedValueOnce({ id: '1', slug: 'book-1' }) // Book resolution
         .mockResolvedValueOnce({ storage_key: 'key.epub' }); // File check
 
       mockGenerateSignedUrl.mockResolvedValue({ url: 'https://signed.url' });
@@ -100,8 +101,33 @@ describe('Books Routes', () => {
       }), env, makePassThroughContext());
 
       expect(res.status).toBe(200);
+      // Guard must receive the resolved canonical book id, never the raw
+      // URL param (which may be a slug).
+      expect(mockAssertBookAccess).toHaveBeenCalledWith(env, expect.objectContaining({ email: 'user@example.com' }), '1', expect.anything(), expect.any(String));
       const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } = await res.json();
       expect(body.data.url).toBe('https://signed.url');
+    });
+
+    it('resolves a slug param to the book id before the access guard', async () => {
+      mockRequireAuth.mockResolvedValue({
+        email: 'user@example.com',
+        bookId: 'uuid-1',
+        capabilities: { canRead: true }
+      });
+
+      mockQueryFirst
+        .mockResolvedValueOnce({ id: 'uuid-1', slug: 'demo' }) // Slug resolution
+        .mockResolvedValueOnce({ storage_key: 'key.epub' }); // File check
+
+      mockGenerateSignedUrl.mockResolvedValue({ url: 'https://signed.url' });
+
+      const res = await app.fetch(new Request('http://localhost/api/books/demo/file-url', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer valid' }
+      }), env, makePassThroughContext());
+
+      expect(res.status).toBe(200);
+      expect(mockAssertBookAccess).toHaveBeenCalledWith(env, expect.anything(), 'uuid-1', expect.anything(), expect.any(String));
     });
   });
 });

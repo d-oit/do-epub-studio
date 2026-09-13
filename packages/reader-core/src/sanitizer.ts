@@ -618,6 +618,37 @@ export function sanitizeDom(
   }
 }
 
+/**
+ * epub.js tracks its own host-side injections — theme/style/script nodes with
+ * ids like `epubjs-injected-css-*` / `epubjs-injected-src-*` — in per-Contents
+ * Maps and later removes them via `document.head.removeChild(node)`. Replacing
+ * the live `<head>` element wholesale (the splice below) detaches those nodes
+ * while the Map still references them, so the next theme/stylesheet pass
+ * throws NotFoundError (removeChild on a non-child). StrictMode's double
+ * reader mount and any resize/re-display hit this immediately.
+ *
+ * These nodes are created by the host (theme applier, CSP guard), never by
+ * EPUB content, so preserving them BY IDENTITY across the splice does not
+ * weaken sanitization: EPUB-controlled markup is still fully rebuilt from the
+ * sanitized clone; only trusted host nodes are re-homed.
+ */
+function collectHostInjectedNodes(doc: Document): Element[] {
+  return doc.head
+    ? Array.from(doc.head.querySelectorAll('[id^="epubjs-injected-"]'))
+    : [];
+}
+
+function rehomeHostInjectedNodes(doc: Document, hostNodes: Element[]): void {
+  const head = doc.head;
+  if (!head) return;
+  for (const node of hostNodes) {
+    // Drop the sanitized clone carrying the same id, then re-home the live
+    // node so epub.js's `head.removeChild(node)` keeps working.
+    if (node.id) doc.getElementById(node.id)?.remove();
+    head.appendChild(node);
+  }
+}
+
 export function sanitizeEpubDocument(
   doc: Document,
   options?: { timeoutMs?: number; traceId?: string; externalUrlPolicy?: ExternalUrlPolicy },
@@ -642,8 +673,13 @@ export function sanitizeEpubDocument(
   checkDeadline(deadline, 'epub-sanitize', timeoutMs, traceId);
 
   // Pass (b): Sync sanitized state back to live document
-  // We replace children of <html> with sanitized <head> and <body>
+  // We replace children of <html> with sanitized <head> and <body>.
+  // Host-injected epub.js nodes (theme/stylesheet/script elements referenced
+  // by epub.js's internal Maps) are preserved by identity — see
+  // collectHostInjectedNodes — so the next `head.removeChild(node)` from
+  // epub.js still finds them under the (re-created) live head.
   if (sanitized.tagName.toLowerCase() === 'html') {
+    const hostNodes = collectHostInjectedNodes(doc);
     root.replaceChildren(...Array.from(sanitized.childNodes));
     // Also sync attributes of <html> (like lang, dir)
     for (const attr of Array.from(root.attributes)) {
@@ -652,6 +688,7 @@ export function sanitizeEpubDocument(
     for (const attr of Array.from(sanitized.attributes)) {
       root.setAttribute(attr.name, attr.value);
     }
+    rehomeHostInjectedNodes(doc, hostNodes);
   } else {
     // If DOMPurify returned something else, just replace everything
     root.replaceChildren(sanitized);
@@ -733,8 +770,12 @@ export function createEpubSanitizerHook(
         const parser = new DOMParser();
         const cachedDoc = parser.parseFromString(cached, 'text/html');
         const cachedRoot = cachedDoc.documentElement;
+        // Preserve host-injected epub.js nodes across the splice (see
+        // collectHostInjectedNodes) — same contract as the MISS path.
+        const hostNodes = collectHostInjectedNodes(doc);
         root.replaceChildren(...Array.from(cachedRoot.childNodes));
         copyHtmlAttributesWhenChanged(root, cachedRoot);
+        rehomeHostInjectedNodes(doc, hostNodes);
         const timeoutMs = options?.timeoutMs ?? SANITIZE_TIMEOUT_MS;
         const deadline = createDeadline(timeoutMs);
         sanitizeDom(doc, deadline, timeoutMs, options?.traceId, policy);

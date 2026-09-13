@@ -5,6 +5,7 @@ import { queryFirst, queryAll } from '../db/client';
 import type { AuthContext } from '../auth/middleware';
 import { readerAuth } from '../middleware/auth';
 import { assertBookAccess } from '../lib/tenant-isolation';
+import { generateSignedUrl } from '../storage/signed-url';
 import { getRequestTraceId } from '../lib/api-error';
 import { NotFoundError, ForbiddenError } from '../lib/http-errors';
 import { LibraryQuerySchema } from '@do-epub-studio/schema';
@@ -110,15 +111,16 @@ booksRouter.get('/:id', readerAuth, async (c) => {
 booksRouter.post('/:id/file-url', readerAuth, async (c) => {
   const id = c.req.param('id');
   const auth = c.get('auth');
-  const { generateSignedUrl } = await import('../storage/signed-url');
-
-  const mismatch = await assertBookAccess(c.env, auth, id, c.executionCtx, getRequestTraceId(c));
-  if (mismatch) return mismatch.response;
 
   if (!auth.capabilities.canRead) {
     throw new ForbiddenError('Read access denied');
   }
 
+  // Resolve the URL param (id OR slug — the lookup below accepts both) to the
+  // canonical book id BEFORE the tenant-isolation guard: assertBookAccess
+  // compares against the session's UUID (auth.bookId) and queries
+  // book_access_grants.book_id with the raw param, so a slug would never
+  // match. Resolving first keeps assertBookAccess strictly UUID-based.
   const book = await queryFirst(
     c.env,
     `SELECT b.id, b.slug FROM books b
@@ -134,6 +136,9 @@ booksRouter.post('/:id/file-url', readerAuth, async (c) => {
   if (!book) {
     throw new NotFoundError('Book');
   }
+
+  const mismatch = await assertBookAccess(c.env, auth, book.id as string, c.executionCtx, getRequestTraceId(c));
+  if (mismatch) return mismatch.response;
 
   const file = await queryFirst(
     c.env,
