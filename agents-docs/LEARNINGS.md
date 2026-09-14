@@ -408,3 +408,8 @@
 - **`do-harness init --language generic` is cleanly additive**: it adds the `harness` skill, fills only *missing* `skill-creator` helper files, refuses to touch an existing AGENTS.md, and gitignores `.do-harness/` + `.agents/events/` — but a new `harness` skill still needs the `.claude/skills/harness` mirror symlink force-added, or the skills validation fails in CI (same trap as GOAP-256).
 - **Never run `do-harness hook install` in this repo**: `.git/hooks/{pre-commit,commit-msg,pre-push}` are symlinks into `scripts/hooks/`; installing would clobber them. Enforcement stays with the quality gates + atomic-commit (ADR-246); do-harness is the agent-loop layer only.
 - **Sensor↔gate parity is the drift guard**: each do-harness sensor wraps the identical pnpm script the gate runs (`pnpm typecheck`, `pnpm lint`, `pnpm test:unit`, `validate-skills.sh`, and `pnpm verify:fast` for the affected-only feedback lane) with `when-changed` globs — evidence means the same thing locally as in CI by construction.
+
+### Dependabot actions bumps and the SHA allowlist (2026-09-14)
+
+- **Every Dependabot actions bump fails CI until its new SHAs are appended to `scripts/validate-shas.sh`**: `validate-workflows.sh` rejects unverified SHAs ("Disallowed or unverified SHA"), and the same check breaks `pnpm lint` because `lint:workflows` runs the validator — chase the allowlist first, not lint rules. Automated follow-up: GOAP-270 / ADR-247.
+- **Verify a pinned SHA against the upstream annotated tag with `git ls-remote <upstream> refs/tags/<tag>^{}`**: the tags API (`git/ref/tags/<tag>`) returns the tag object, not the commit; the `^{}` suffix dereferences to the commit that `uses:` must pin.
