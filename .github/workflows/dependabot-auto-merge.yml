@@ -24,6 +24,41 @@ jobs:
     if: github.event.pull_request.user.login == 'dependabot[bot]'
 
     steps:
+      - name: Checkout base context (trusted script source)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+
+      # ADR-247 / GOAP-270: verify every SHA a Dependabot bump re-pins against
+      # the action's own upstream tag, then commit the allowlist entry onto the
+      # PR branch so CI goes green without manual edits. Fail closed: an
+      # unverifiable SHA fails the step and leaves the allowlist untouched.
+      # Runs from the BASE checkout so the verification logic cannot be altered
+      # by the PR under test, and never merges — GOAP-224 no-automerge stands.
+      - name: Verify and allowlist bumped action SHAs
+        if: github.event.pull_request.user.login == 'dependabot[bot]'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        run: |
+          gh pr diff "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" > /tmp/pr.diff
+          git fetch origin "$HEAD_REF"
+          git worktree add --detach /tmp/pr-branch FETCH_HEAD
+          scripts/allowlist-dependabot-shas.sh \
+            --diff /tmp/pr.diff \
+            --allowlist /tmp/pr-branch/scripts/validate-shas.sh
+          if git -C /tmp/pr-branch diff --quiet -- scripts/validate-shas.sh; then
+            echo "No new SHAs to allowlist."
+            exit 0
+          fi
+          git -C /tmp/pr-branch config user.name "github-actions[bot]"
+          git -C /tmp/pr-branch config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git -C /tmp/pr-branch add scripts/validate-shas.sh
+          git -C /tmp/pr-branch commit -m "ci: allowlist verified SHAs from this dependabot bump"
+          gh auth setup-git
+          git -C /tmp/pr-branch push origin "HEAD:refs/heads/$HEAD_REF"
+
       - name: Fetch Dependabot PR metadata
         id: metadata
         uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98  # v3.1.0
