@@ -58,7 +58,7 @@ export function LoginForm({ action, onRecovery, emailRef, passwordRef, noBookCon
           <button
             type="button"
             onClick={onRecovery}
-            className="mt-1 text-xs text-accent hover:opacity-80 underline underline-offset-2 transition-colors"
+            className="mt-1 inline-flex min-h-6 items-center text-xs text-accent hover:opacity-80 underline underline-offset-2 transition-colors"
           >
             {t('login.forgotPassword')}
           </button>

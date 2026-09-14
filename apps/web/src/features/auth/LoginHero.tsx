@@ -88,7 +88,7 @@ export function LoginHero() {
               href={helpLink.href}
               target={helpLink.isExternal ? '_blank' : undefined}
               rel={helpLink.isExternal ? 'noopener noreferrer' : undefined}
-              className="text-sm font-medium text-accent underline underline-offset-4 transition-opacity hover:opacity-80"
+              className="inline-flex min-h-6 items-center text-sm font-medium text-accent underline underline-offset-4 transition-opacity hover:opacity-80"
             >
               {t('login.hero.learnMore')}
             </a>
