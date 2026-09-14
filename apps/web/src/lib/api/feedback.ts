@@ -96,17 +96,6 @@ export async function fetchOwnFeedback(
   });
 }
 
-export async function fetchFeedbackDetail(
-  bookId: string,
-  id: string,
-  token: string,
-): Promise<FeedbackItem> {
-  return apiRequest<FeedbackItem>(`/api/books/${bookId}/feedback/${id}`, {
-    method: 'GET',
-    token,
-  });
-}
-
 export async function withdrawFeedback(
   bookId: string,
   id: string,

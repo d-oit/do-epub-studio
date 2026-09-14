@@ -17,7 +17,6 @@ vi.mock('../../lib/api/creator', () => ({
   fetchReferences: vi.fn().mockResolvedValue([]),
   fetchStyleProfile: vi.fn().mockResolvedValue(null),
   createReference: vi.fn(),
-  updateReference: vi.fn(),
   deleteReference: vi.fn(),
   verifyReference: vi.fn(),
   saveStyleProfile: vi.fn(),

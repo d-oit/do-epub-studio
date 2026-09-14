@@ -1,8 +1,5 @@
 import { create } from 'zustand';
-import type {
-  CreatorBook,
-  Disposition,
-} from '../lib/api/creator';
+import type { CreatorBook } from '../lib/api/creator';
 import type { FeedbackCategory, FeedbackItem, FeedbackStatus } from '../lib/api/feedback';
 
 interface CreatorState {
@@ -26,8 +23,6 @@ interface CreatorState {
   setError: (error: string | null) => void;
   resetWorkspace: () => void;
 }
-
-export type { Disposition };
 
 export const useCreatorStore = create<CreatorState>()((set) => ({
   books: [],
