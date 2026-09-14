@@ -75,7 +75,7 @@ export function AdminLoginHero() {
           href={helpLink.href}
           target={helpLink.isExternal ? '_blank' : undefined}
           rel={helpLink.isExternal ? 'noopener noreferrer' : undefined}
-          className="mt-4 inline-block text-sm font-medium text-accent underline underline-offset-4 transition-opacity hover:opacity-80"
+          className="mt-4 inline-flex min-h-6 items-center text-sm font-medium text-accent underline underline-offset-4 transition-opacity hover:opacity-80"
         >
           {t('admin.login.hero.learnMore')}
         </a>

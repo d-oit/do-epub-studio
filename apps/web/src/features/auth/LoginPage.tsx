@@ -213,7 +213,7 @@ export function LoginPage() {
                     href={helpLink.href}
                     target={helpLink.isExternal ? '_blank' : undefined}
                     rel={helpLink.isExternal ? 'noopener noreferrer' : undefined}
-                    className="text-sm text-accent hover:opacity-80 underline underline-offset-2 transition-colors font-medium"
+                    className="inline-flex min-h-6 items-center text-sm text-accent hover:opacity-80 underline underline-offset-2 transition-colors font-medium"
                   >
                     {t('login.helpLink')}
                   </a>
