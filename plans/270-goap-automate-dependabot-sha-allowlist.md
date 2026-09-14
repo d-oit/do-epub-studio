@@ -1,6 +1,6 @@
 # GOAP-270: Automate verified-SHA allowlisting for Dependabot actions bumps
 
-**Status:** PENDING (proposed; implementation not started)
+**Status:** IN PROGRESS (Phase 1–2 done; Phase 3 dogfood pending)
 **Date:** 2026-09-14
 **ADR:** ADR-247 (`plans/247-adr-dependabot-sha-allowlist-automation.md`)
 
@@ -27,8 +27,8 @@ friction on every bump and leaves CI red in the interim.
 
 | # | Phase | Exit criteria | Status |
 |---|-------|---------------|--------|
-| 1 | Script `scripts/allowlist-dependabot-shas.sh`: parse the PR diff for `action@sha` pairs, dereference each against the action's upstream (tag from the trailing `# vX.Y.Z` comment), append verified entries with a provenance comment | Script refuses unresolvable or ambiguous SHAs (exit non-zero, no append); exercised on synthetic diffs incl. negative cases | PENDING |
-| 2 | Wire the script into `.github/workflows/dependabot-auto-merge.yml` before the approve step (or a dedicated dependabot-only workflow), committing the append to the PR branch | The next Dependabot actions bump turns green with no manual allowlist edit; `bot-repush-guard` permits the bot commit | PENDING |
+| 1 | Script `scripts/allowlist-dependabot-shas.sh`: parse the PR diff for `action@sha` pairs, dereference each against the action's upstream (tag from the trailing `# vX.Y.Z` comment), append verified entries with a provenance comment | Script refuses unresolvable or ambiguous SHAs (exit non-zero, no append); exercised on synthetic diffs incl. negative cases | DONE (this PR: `scripts/tests/allowlist-dependabot-shas.bats`; real-network smoke proves a genuine lightweight-tag SHA verifies and a mutated SHA fails closed; lightweight tags need a plain-ref fallback because servers do not advertise peeled refs for them) |
+| 2 | Wire the script into `.github/workflows/dependabot-auto-merge.yml` before the approve step (or a dedicated dependabot-only workflow), committing the append to the PR branch | The next Dependabot actions bump turns green with no manual allowlist edit; `bot-repush-guard` permits the bot commit | DONE (this PR: checkout base + verify/allowlist step; runs from the base checkout so PR content cannot alter verification; pushes via `gh auth setup-git` with `persist-credentials: false`; no-automerge rule untouched) |
 | 3 | Dogfood and record: observe one live bump; update this plan and ADR-247 status | Phase 2 observed end-to-end on a real Dependabot PR; learnings captured via the `learn` skill | PENDING |
 
 ## Related

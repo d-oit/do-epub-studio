@@ -153,18 +153,6 @@ export async function createReference(
   });
 }
 
-export async function updateReference(
-  bookId: string,
-  id: string,
-  data: { title?: string; content?: string },
-  token: string,
-): Promise<BookReference> {
-  return apiRequest<BookReference>(
-    `/api/creator/books/${bookId}/references/${id}`,
-    { method: 'PATCH', token, body: JSON.stringify(data) },
-  );
-}
-
 export async function deleteReference(
   bookId: string,
   id: string,
