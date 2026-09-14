@@ -87,6 +87,10 @@ ALLOWED_SHAS=(
     "chromaui/action@4cc98810d00b34b8f9e89d454d64a8ac3d088340"
     "softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64"
     "chromaui/action@2a0b63f30233c48591844a46d451b9cf68128186"
+    "github/codeql-action/init@b96794f015dfd88f77b49b1c93e0fa7110f94c63"
+    "github/codeql-action/analyze@b96794f015dfd88f77b49b1c93e0fa7110f94c63"
+    "github/codeql-action/upload-sarif@b96794f015dfd88f77b49b1c93e0fa7110f94c63"
+    "chromaui/action@259eda5f0e44c0c1eab38b672f1c4c967cc969b7"
 )
 
 # Function to check if an action@sha is allowed
