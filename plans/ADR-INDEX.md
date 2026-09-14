@@ -159,7 +159,7 @@
 | 267    | Main CI Dep-Scan HIGHs Hardening (GOAP) | `plans/archive/267-goap-main-ci-dep-scan-fix.md` | COMPLETED (PR #1097; shares number with untracked user plan `plans/267-goap-preexisting-sweep.md`, which stays in place and is never staged) |
 | 268    | UX-01 Persistent Responsive Core Navigation (GOAP) | `plans/archive/268-goap-ux01-persistent-nav.md` | COMPLETED (PR #1099) |
 | 999    | Reader–Creator Collaboration, Editorial Assistance, Responsive UX and E2E (GOAP) | `plans/999-goap-codebase-improvements-uiux-e2e-audit.md` | STATIC AUDIT COMPLETE — implementation pending |
-| 269    | do-harness Adoption + web-ui Sensor Pack (GOAP) | `plans/269-goap-do-harness-adoption-web-ui-pack.md`, `plans/246-adr-do-harness-completion-contract.md` | IN PROGRESS (Phase 1–3 done: upstream fixes PR d-o-hub/do-harness#64, adoption PR #1120; Phase 4 web-ui pack pending — upstream issues #65–#71 filed) |
+| 269    | do-harness Adoption + web-ui Sensor Pack (GOAP) | `plans/269-goap-do-harness-adoption-web-ui-pack.md`, `plans/246-adr-do-harness-completion-contract.md` | IN PROGRESS (Phase 1–3 done: upstream #64 + adoption PR #1120 merged; Phase 4 audit library merged upstream #75 and dogfooded to zero findings with 4 WCAG 2.5.8 fixes in #1122; remaining: init scaffold + severity #66 + evidence #67) |
 
 ## Pending
 
