@@ -18,13 +18,13 @@
   "dependencies": {
     "@do-epub-studio/schema": "workspace:*",
     "@do-epub-studio/shared": "workspace:*",
-    "@hono/zod-validator": "^0.9.0",
+    "@hono/zod-validator": "^0.9.1",
     "@libsql/client": "^0.18.0",
     "@sentry/cloudflare": "^10.73.0",
     "@simplewebauthn/server": "^14.0.1",
     "argon2-wasm-edge": "^1.0.23",
     "hono": "^4.13.5",
-    "zod": "^4.5.2"
+    "zod": "^4.6.2"
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.22.0",
@@ -33,7 +33,7 @@
     "@types/node": "^26",
     "@vitest/coverage-v8": "4.1.11",
     "eslint": "^10.10.0",
-    "jszip": "^3.10.1",
+    "jszip": "^3.10.2",
     "typescript": "^6.0.3",
     "vitest": "4.1.11",
     "wrangler": "^4.131.1"
