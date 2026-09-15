@@ -16,6 +16,7 @@ vi.mock('../lib/offline/db', () => ({
 // Mock the api module
 const mockPut = vi.fn();
 const mockPost = vi.fn();
+const mockApiRequest = vi.hoisted(() => vi.fn());
 vi.mock('../lib/api', () => ({
   api: {
     put: (...args: unknown[]) => mockPut(...args),
@@ -23,7 +24,7 @@ vi.mock('../lib/api', () => ({
     patch: vi.fn(),
     delete: vi.fn(),
   },
-  apiRequest: vi.fn(),
+  apiRequest: mockApiRequest,
 }));
 
 // Mock the permissions module
@@ -69,7 +70,7 @@ describe('Sync Conflict Integration', () => {
   });
 
   describe('syncItem with 409 conflict for progress', () => {
-    it('should call resolveConflict when progress PUT returns 409', async () => {
+    it('should call resolveConflict with the real remote progress when PUT returns 409', async () => {
       const { getSyncQueue } = await import('../lib/offline/db');
       const { resolveConflict } = await import('../lib/offline/conflict-resolution');
 
@@ -89,6 +90,15 @@ describe('Sync Conflict Integration', () => {
 
       (getSyncQueue as ReturnType<typeof vi.fn>).mockResolvedValue([syncQueueItem]);
 
+      // REL-03: the sync engine fetches the ACTUAL remote progress before
+      // resolving a 409 so the conflict reflects real server state instead
+      // of a fabricated copy of the local payload.
+      mockApiRequest.mockResolvedValue({
+        locator: { cfi: 'remote-cfi', selectedText: 'remote text', chapterRef: 'ch1' },
+        progressPercent: 90,
+        updatedAt: new Date(syncQueueItem.createdAt + 5000).toISOString(),
+      });
+
       // Mock resolveConflict to return local wins
       (resolveConflict as ReturnType<typeof vi.fn>).mockReturnValue({
         resolved: true,
@@ -104,14 +114,17 @@ describe('Sync Conflict Integration', () => {
       const { syncAll } = await import('../lib/offline/sync');
       await syncAll();
 
-      // Verify resolveConflict was called with equal timestamps (manual resolution path)
-      expect(resolveConflict).toHaveBeenCalled();
+      // The remote progress was fetched before resolving
+      expect(mockApiRequest).toHaveBeenCalledWith('/api/books/book-1/progress');
+
+      // Verify resolveConflict was called with the REAL remote version and
+      // the remote timestamp — not a fabricated copy of the local payload.
       expect(resolveConflict).toHaveBeenCalledWith(
         'progress_update',
         syncQueueItem.payload,
-        syncQueueItem.payload,
+        { bookId: 'book-1', cfi: 'remote-cfi', percentage: 90 },
         syncQueueItem.createdAt,
-        syncQueueItem.createdAt,
+        syncQueueItem.createdAt + 5000,
         'book-1',
         'book-1',
       );
