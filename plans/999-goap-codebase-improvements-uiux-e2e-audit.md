@@ -61,6 +61,25 @@ Repository Git history is inspected for decisions only. No manuscript revision b
 
 Evidence classes: **confirmed defect** (source-verified) · **confirmed gap** (source-verified absence) · **static token defect** (computation, rendered check pending) · **source-backed fragility** (source-verified, reproduction pending) · **static source risk** (source-verified path, runtime reproduction pending).
 
+### Status reconciliation (2026-09-15, source-verified)
+
+Several Wave 1 findings were closed by later PRs without updating this plan. Verified against the current `main` tree:
+
+| Item | Status | Evidence |
+|------|--------|----------|
+| UI-01 | **DONE** | `globals.css` sepia section now sets `--color-surface: var(--color-background-secondary)` (the prescribed change) |
+| UI-02 | **DONE** | `globals.css` registers `@source "../../../../packages/ui/src";` after the Tailwind import |
+| SEC-01 | **DONE** | `apps/worker/src/routes/comments.ts` checks `canComment` in POST, PATCH and DELETE (three gate sites) |
+| UI-03 | **DONE** | `components/navigation/Drawer.tsx` uses `useFocusTrap` from `@do-epub-studio/ui` with trigger-ref restore and initial-focus move |
+| E2E-01 | **PARTIALLY DONE** | `reader-progress.spec.ts` no longer contains the empty test; it now runs a real reload journey asserting the restored progressbar value. The other false-pass clusters named below were not re-verified yet |
+| UX-01 | **DONE** (2026-09-15) | Refresh now invalidates the cache and remounts `AuditBody` via a `refreshKey` key so `use(fetchAuditLogs(...))` creates a fresh promise; `setPage(p => p)` was a no-op that never re-rendered. Regression test asserts a new row appears after refresh without changing filters |
+| UX-02 | **OPEN** | `HelpPage.tsx` still renders fixed physical-right theme/locale controls with compensating top padding |
+| REL-01 | **DONE** | `sw.ts` sync handler only notifies window clients via `postMessage`; the SW does not receive or persist session tokens |
+| REL-02 | **OPEN** (Wave 2) | `useAnnotationHandlers.ts` still has no offline comment/draft creation path; depends on COL-01/02 |
+| REL-03 | **OPEN** | `offline/sync.ts` still resolves a 409 with the local payload as both versions and equal timestamps (comment documents the limitation) |
+
+Remaining backlog below is kept as written; items marked DONE above are historical.
+
 ### UI-01 — P1: Correct sepia card contrast at the shared token
 
 - **Evidence:** static token defect; rendered browser check pending. `apps/web/src/styles/globals.css:208–248` defines sepia surface `oklch(25% 0.05 85)` with dark foreground; `apps/web/src/features/library/BookCard.tsx:14–64` consumes `bg-surface`, default foreground, author `text-foreground-muted` and eyebrow metadata. Static OKLCH-to-linear-sRGB calculations this audit: primary/surface 1.09:1, secondary/surface 1.60:1, muted/surface 2.67:1. Token calculations, not rendered axe results.

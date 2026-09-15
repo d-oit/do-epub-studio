@@ -207,6 +207,10 @@ export function AdminAuditPage() {
   const [entityId, setEntityId] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+  // Refresh needs a real state change: setPage(p => p) is a no-op that never
+  // re-renders, and the cleared data cache is only consulted on the next
+  // render. AuditBody remounts via key and re-runs use(fetchAuditLogs(...)).
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const filtersRef = useRef({ page, entityType, entityId, dateFrom, dateTo });
   filtersRef.current = { page, entityType, entityId, dateFrom, dateTo };
@@ -217,8 +221,7 @@ export function AdminAuditPage() {
 
   const handleRefresh = useCallback(() => {
     invalidateAuditLogCache();
-    // Re-fetch by toggling a state to trigger re-render
-    setPage((p) => p);
+    setRefreshKey((k) => k + 1);
   }, []);
 
   const handleResetFilters = useCallback(() => {
@@ -362,6 +365,7 @@ export function AdminAuditPage() {
       <Suspense fallback={<AuditSkeleton />}>
         <AuditErrorBoundary>
           <AuditBody
+            key={refreshKey}
             token={sessionToken ?? ''}
             page={page}
             pageSize={PAGE_SIZE}
