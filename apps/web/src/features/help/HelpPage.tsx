@@ -1,8 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from '../../hooks/useTranslation';
 import { AppLogo, Button } from '../../components/ui';
-import { ThemeToggle } from '../../components/ThemeToggle';
-import { LocaleSwitcher } from '../../components/LocaleSwitcher';
+import { LoginHeader } from '../../components/LoginHeader';
 import { APP_NAME, APP_VERSION_LABEL } from '../../config/app-identity';
 import { DEMO_READER_EMAIL, DEMO_READER_PASSWORD, DEMO_ADMIN_EMAIL, DEMO_ADMIN_PASSWORD, DEMO_BOOK_SLUG } from '../../config/demo-config';
 
@@ -10,15 +9,12 @@ export function HelpPage() {
   const { t } = useTranslation();
 
   return (
-    <div className="relative min-h-dvh overflow-x-clip bg-background px-4 py-6 sm:px-6 lg:px-8">
-      <div className="fixed right-3 top-3 z-20 flex items-center gap-2 sm:right-4 sm:top-4">
-        <ThemeToggle />
-        <LocaleSwitcher />
-      </div>
+    <div className="flex min-h-dvh flex-col overflow-x-clip bg-background px-4 py-6 sm:px-6 lg:px-8">
+      <LoginHeader />
 
       <main
         id="main-content"
-        className="mx-auto w-full max-w-2xl pt-16 pb-8"
+        className="mx-auto w-full max-w-2xl pt-6 pb-8"
       >
         <div className="flex flex-col items-center text-center">
           <AppLogo size={64} className="mb-4 text-accent" />
