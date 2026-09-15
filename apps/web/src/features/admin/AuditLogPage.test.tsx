@@ -44,6 +44,31 @@ describe('AdminAuditPage', () => {
     expect(await screen.findByText('a@ex.com', undefined, { timeout: 5000 })).toBeInTheDocument();
   });
 
+  it('refresh refetches and renders new audit entries without changing filters', async () => {
+    vi.mocked(apiRequest).mockResolvedValue({
+      entries: [{ id: '1', actorEmail: 'a@ex.com', entityType: 'book', entityId: 'b1', action: 'create', payload: null, createdAt: new Date().toISOString() }],
+      total: 1,
+    });
+
+    await renderAndFlush();
+    expect(await screen.findByText('a@ex.com', undefined, { timeout: 5000 })).toBeInTheDocument();
+
+    // Backend records a new row after the initial load.
+    vi.mocked(apiRequest).mockResolvedValue({
+      entries: [{ id: '2', actorEmail: 'new@ex.com', entityType: 'user', entityId: 'u1', action: 'login', payload: null, createdAt: new Date().toISOString() }],
+      total: 1,
+    });
+
+    const callsBeforeRefresh = vi.mocked(apiRequest).mock.calls.length;
+    await act(async () => {
+      fireEvent.click(screen.getByText('admin.audit.refresh'));
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    });
+
+    expect(vi.mocked(apiRequest).mock.calls.length).toBeGreaterThan(callsBeforeRefresh);
+    expect(await screen.findByText('new@ex.com', undefined, { timeout: 5000 })).toBeInTheDocument();
+  });
+
   it('renders error message on fetch failure', async () => {
     vi.mocked(apiRequest).mockRejectedValue(new Error('Failed to fetch'));
 
