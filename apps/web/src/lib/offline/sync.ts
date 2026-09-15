@@ -197,6 +197,19 @@ async function attemptSync(): Promise<void> {
 
       await removeSyncQueueItem(item.id);
       processed.add(item.id);
+    } else if (result.error === 'conflict_remote_unavailable') {
+      // Remote fetch unavailable: retain pending state — do NOT fabricate a
+      // conflict, do NOT count toward the retry cap, do NOT remove the queue
+      // item. The item is retried on the next natural sync trigger (online
+      // event, next queueSync, SW sync request).
+      logClientEvent({
+        level: 'warn',
+        traceId,
+        spanId,
+        event: 'sync.conflict_remote_unavailable',
+        metadata: { itemId: item.id, type: item.type },
+      });
+      processed.add(item.id);
     } else if (result.error === 'conflict_requires_manual_resolution') {
       // Conflict cannot be auto-resolved — remove from queue to prevent infinite retries
       logClientEvent({
@@ -244,6 +257,13 @@ interface ProgressSyncPayload {
   cfi: string;
   percentage: number;
   mutationId: string;
+}
+
+/** Remote progress shape returned by GET /api/books/:bookId/progress. */
+interface RemoteProgressResponse {
+  locator?: unknown;
+  progressPercent?: number;
+  updatedAt?: string;
 }
 
 /** Annotation payload synced from the offline queue. */
@@ -439,15 +459,62 @@ async function syncItem(item: SyncQueueItem, traceId: string, spanId: string): P
     if (status === 409 && item.type === 'progress') {
       const payload = item.payload as ProgressSyncPayload;
 
-      // We don't have the remote version from a 409. Use equal timestamps
-      // to force the manual resolution path — the user must decide which
-      // version to keep since we can't determine the remote state.
+      // Fetch the ACTUAL remote progress so the conflict reflects real server
+      // state instead of a fabricated copy (REL-03 / ADR-246 GOAP-270).
+      let remoteData: RemoteProgressResponse | undefined;
+      try {
+        remoteData = await apiRequest<RemoteProgressResponse>(
+          `/api/books/${payload.bookId}/progress`,
+        );
+      } catch (remoteError) {
+        // 401 keeps the normal permission-revocation handling in the outer
+        // switch instead of being swallowed as "remote unavailable".
+        if ((remoteError as { status?: number }).status === 401) {
+          throw remoteError;
+        }
+        // Unavailable remote fetch retains pending state: do NOT fabricate a
+        // conflict and do NOT remove the queue item — it is retried on the
+        // next natural sync trigger (online event, next queueSync, SW sync
+        // request) and never counts toward the retry cap.
+        logClientEvent({
+          level: 'warn',
+          traceId,
+          spanId,
+          event: 'sync.item.conflict_remote_unavailable',
+          metadata: { itemId: item.id, type: item.type },
+          error: {
+            name: remoteError instanceof Error ? remoteError.name : 'Error',
+            message: remoteError instanceof Error ? remoteError.message : 'Unknown error',
+          },
+        });
+        return { success: false, error: 'conflict_remote_unavailable' };
+      }
+
+      const remoteLocator = remoteData?.locator as { cfi?: unknown } | null | undefined;
+      // Shape mirrors ProgressSyncPayload minus mutationId: the server's GET
+      // progress does not return one.
+      const remoteVersion: Omit<ProgressSyncPayload, 'mutationId'> = {
+        bookId: payload.bookId,
+        cfi: typeof remoteLocator?.cfi === 'string' ? remoteLocator.cfi : '',
+        percentage:
+          typeof remoteData?.progressPercent === 'number' ? remoteData.progressPercent : 0,
+      };
+      const parsedRemoteTs = remoteData?.updatedAt
+        ? Date.parse(remoteData.updatedAt)
+        : NaN;
+      // Unusable remote timestamp: keep equal timestamps (forces the manual
+      // resolution path with the existing user-choice semantics) but pair it
+      // with the REAL remote version content instead of a fabricated copy.
+      const remoteTimestamp = Number.isFinite(parsedRemoteTs)
+        ? parsedRemoteTs
+        : item.createdAt;
+
       const resolution = resolveConflict(
         ConflictType.ProgressUpdate,
         item.payload,
-        item.payload,
+        remoteVersion,
         item.createdAt,
-        item.createdAt,
+        remoteTimestamp,
         payload.bookId,
         payload.bookId,
       );
@@ -463,6 +530,7 @@ async function syncItem(item: SyncQueueItem, traceId: string, spanId: string): P
           resolved: resolution.resolved,
           strategy: resolution.strategy,
           winner: resolution.winner,
+          remoteFetched: true,
         },
       });
 
@@ -471,7 +539,8 @@ async function syncItem(item: SyncQueueItem, traceId: string, spanId: string): P
         return { success: true };
       }
 
-      // Remote wins or manual resolution needed — cannot auto-resolve without remote version
+      // Remote wins (server state supersedes the local write) or manual
+      // resolution needed — the conflict record keeps both versions durably.
       return { success: false, error: 'conflict_requires_manual_resolution' };
     }
 
