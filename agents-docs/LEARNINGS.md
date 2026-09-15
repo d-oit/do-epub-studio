@@ -413,3 +413,7 @@
 
 - **Every Dependabot actions bump fails CI until its new SHAs are appended to `scripts/validate-shas.sh`**: `validate-workflows.sh` rejects unverified SHAs ("Disallowed or unverified SHA"), and the same check breaks `pnpm lint` because `lint:workflows` runs the validator — chase the allowlist first, not lint rules. Automated follow-up: GOAP-270 / ADR-247.
 - **Verify a pinned SHA against the upstream annotated tag with `git ls-remote <upstream> refs/tags/<tag>^{}`**: the tags API (`git/ref/tags/<tag>`) returns the tag object, not the commit; the `^{}` suffix dereferences to the commit that `uses:` must pin.
+
+### Dependabot does not re-scan the actions ecosystem on manifest push (2026-09-15)
+
+- **Downgrading a pinned action to force a Dependabot re-bump does not fire on manifest push for `github-actions`**: a chromaui/action downgrade sat on main ~14.5 h with no Dependabot reaction even though the dependency graph (SBOM) updated immediately. The next certain scan is the scheduled weekly slot (`dependabot.yml` Monday 09:00 UTC). Plan GOAP-270 Phase 3 dogfood around the schedule (or accept a multi-day bait) and set a fallback: if no PR by the next scheduled run, restore the pin manually.
