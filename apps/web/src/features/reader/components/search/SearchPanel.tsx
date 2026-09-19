@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useFocusTrap, Spinner } from '@do-epub-studio/ui';
 import { IconButton } from '../../../../components/ui';
 import { useReaderSearch, highlightRanges } from '../../hooks/useReaderSearch';
+import { useKeyboardShortcut } from '../../../../hooks/useKeyboardShortcut';
 import type { Book } from '@intity/epub-js';
 
 interface SearchPanelProps {
@@ -85,6 +86,7 @@ export function SearchPanel({ isOpen, book, onClose, onNavigate, t }: SearchPane
   const inputRef = useRef<HTMLInputElement>(null);
 
   useFocusTrap(isOpen, panelRef);
+  useKeyboardShortcut('Escape', onClose, { enabled: isOpen });
 
   useEffect(() => {
     if (!isOpen) {

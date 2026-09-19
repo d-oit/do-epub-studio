@@ -171,6 +171,21 @@ describe('SearchPanel', () => {
     expect(mockOnClose).toHaveBeenCalled();
   });
 
+  it('calls onClose on Escape key press when open', () => {
+    mockUseReaderSearch.mockReturnValue({ results: [], isSearching: false, error: null });
+    render(
+      <SearchPanel
+        isOpen
+        book={mockBook}
+        onClose={mockOnClose}
+        onNavigate={mockOnNavigate}
+        t={mockT}
+      />
+    );
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(mockOnClose).toHaveBeenCalledTimes(1);
+  });
+
   it('does not render when isOpen is false', () => {
     mockUseReaderSearch.mockReturnValue({ results: [], isSearching: false, error: null });
     render(
