@@ -10,8 +10,7 @@ import {
   saveAnnotation,
   type SyncQueueItem,
 } from './db';
-import { api, apiRequest } from '../api';
-import type { AnnotationEntry } from './db';
+import { api } from '../api';
 import { useAuthStore } from '../../stores/auth';
 import { createFeedback } from '../api/feedback';
 import type { FeedbackAnchor, FeedbackCategory, FeedbackKind } from '../api/feedback';
@@ -19,18 +18,19 @@ import { deleteFeedbackDraftByMutation, markFeedbackDraft } from './feedback-dra
 import { clearAllPermissions } from './permissions';
 import { createTraceId, createSpanId } from '@do-epub-studio/shared';
 import { logClientEvent } from '../client-logger';
-import { resolveConflict, ConflictType, getPendingConflicts, clearResolvedConflicts } from './conflict-resolution';
+import {
+  ConflictType,
+  getPendingConflicts,
+  clearResolvedConflicts,
+  type ConflictRecord,
+} from './conflict-resolution';
+import { syncAnnotation } from './annotation-sync';
+import { handleProgressConflict, syncProgress, type SyncResult, type ProgressSyncPayload } from './progress-conflict';
 
 const MAX_RETRY_ATTEMPTS = 5;
 const BASE_DELAY_MS = 1000;
 const MAX_DELAY_MS = 30000;
 
-interface SyncResult {
-  success: boolean;
-  error?: string;
-  /** Human-actionable detail for terminal states (e.g. blocked delivery). */
-  detail?: string;
-}
 // Callback for permission revocation
 let onPermissionRevoked: ((bookId: string) => void) | null = null;
 
@@ -251,106 +251,11 @@ async function attemptSync(): Promise<void> {
   }
 }
 
-/** Progress payload synced from the offline queue. */
-interface ProgressSyncPayload {
-  bookId: string;
-  cfi: string;
-  percentage: number;
-  mutationId: string;
-}
-
-/** Remote progress shape returned by GET /api/books/:bookId/progress. */
-interface RemoteProgressResponse {
-  locator?: unknown;
-  progressPercent?: number;
-  updatedAt?: string;
-}
-
-/** Annotation payload synced from the offline queue. */
-interface AnnotationSyncPayload {
-  bookId: string;
-  annotation: Omit<AnnotationEntry, 'synced' | 'mutationId'> & { id?: string; status?: string };
-  action?: string;
-}
-
 /** Reading-insight payload synced from the offline queue. */
 interface ReadingInsightSyncPayload {
   bookId: string;
   buckets: { date: string; activeMinutes: number; activePages: number }[];
   mutationId: string;
-}
-
-async function syncProgress(item: SyncQueueItem): Promise<void> {
-  const payload = item.payload as ProgressSyncPayload;
-  await api.put(`/api/books/${payload.bookId}/progress`, {
-    locator: {
-      cfi: payload.cfi,
-    },
-    progressPercent: payload.percentage,
-    mutationId: payload.mutationId,
-  });
-}
-
-async function syncAnnotationResolve(payload: AnnotationSyncPayload): Promise<void> {
-  await apiRequest(`/api/comments/${payload.annotation.id}`, {
-    method: 'PATCH',
-    body: JSON.stringify({ status: payload.annotation.status }),
-  });
-}
-
-async function syncAnnotationHighlight(payload: AnnotationSyncPayload): Promise<void> {
-  await api.post(`/api/books/${payload.bookId}/highlights`, {
-    locator: {
-      cfi: payload.annotation.cfi,
-      selectedText: payload.annotation.text ?? '',
-      chapterRef: payload.annotation.chapter ?? '',
-    },
-    color: payload.annotation.color ?? '#ffff00',
-    note: payload.annotation.comment ?? '',
-  });
-}
-
-async function syncAnnotationBookmark(payload: AnnotationSyncPayload): Promise<void> {
-  await api.post(`/api/books/${payload.bookId}/bookmarks`, {
-    locator: {
-      cfi: payload.annotation.cfi,
-      selectedText: payload.annotation.text ?? payload.annotation.cfi,
-      chapterRef: payload.annotation.chapter ?? '',
-    },
-    label: payload.annotation.text ?? '',
-  });
-}
-
-async function syncAnnotationComment(payload: AnnotationSyncPayload): Promise<void> {
-  await api.post(`/api/books/${payload.bookId}/comments`, {
-    locator: {
-      cfi: payload.annotation.cfi,
-      selectedText: payload.annotation.text ?? '',
-      chapterRef: payload.annotation.chapter ?? '',
-    },
-    body: payload.annotation.comment ?? '',
-    visibility: 'shared' as const,
-  });
-}
-
-async function syncAnnotation(item: SyncQueueItem): Promise<void> {
-  const payload = item.payload as AnnotationSyncPayload;
-
-  if (payload.action === 'resolve') {
-    await syncAnnotationResolve(payload);
-    return;
-  }
-
-  switch (payload.annotation.type) {
-    case 'highlight':
-      await syncAnnotationHighlight(payload);
-      return;
-    case 'bookmark':
-      await syncAnnotationBookmark(payload);
-      return;
-    default:
-      await syncAnnotationComment(payload);
-  }
 }
 
 async function syncReadingInsight(item: SyncQueueItem): Promise<void> {
@@ -455,93 +360,10 @@ async function syncItem(item: SyncQueueItem, traceId: string, spanId: string): P
       return { success: false, error: 'permission_revoked' };
     }
 
-    // Check for conflict (409) — only for progress type
+    // Check for conflict (409) — only for progress type. The real-remote
+    // fetch, resolver call and outcome mapping live in progress-conflict.ts.
     if (status === 409 && item.type === 'progress') {
-      const payload = item.payload as ProgressSyncPayload;
-
-      // Fetch the ACTUAL remote progress so the conflict reflects real server
-      // state instead of a fabricated copy (REL-03 / ADR-246 GOAP-270).
-      let remoteData: RemoteProgressResponse | undefined;
-      try {
-        remoteData = await apiRequest<RemoteProgressResponse>(
-          `/api/books/${payload.bookId}/progress`,
-        );
-      } catch (remoteError) {
-        // 401 keeps the normal permission-revocation handling in the outer
-        // switch instead of being swallowed as "remote unavailable".
-        if ((remoteError as { status?: number }).status === 401) {
-          throw remoteError;
-        }
-        // Unavailable remote fetch retains pending state: do NOT fabricate a
-        // conflict and do NOT remove the queue item — it is retried on the
-        // next natural sync trigger (online event, next queueSync, SW sync
-        // request) and never counts toward the retry cap.
-        logClientEvent({
-          level: 'warn',
-          traceId,
-          spanId,
-          event: 'sync.item.conflict_remote_unavailable',
-          metadata: { itemId: item.id, type: item.type },
-          error: {
-            name: remoteError instanceof Error ? remoteError.name : 'Error',
-            message: remoteError instanceof Error ? remoteError.message : 'Unknown error',
-          },
-        });
-        return { success: false, error: 'conflict_remote_unavailable' };
-      }
-
-      const remoteLocator = remoteData?.locator as { cfi?: unknown } | null | undefined;
-      // Shape mirrors ProgressSyncPayload minus mutationId: the server's GET
-      // progress does not return one.
-      const remoteVersion: Omit<ProgressSyncPayload, 'mutationId'> = {
-        bookId: payload.bookId,
-        cfi: typeof remoteLocator?.cfi === 'string' ? remoteLocator.cfi : '',
-        percentage:
-          typeof remoteData?.progressPercent === 'number' ? remoteData.progressPercent : 0,
-      };
-      const parsedRemoteTs = remoteData?.updatedAt
-        ? Date.parse(remoteData.updatedAt)
-        : NaN;
-      // Unusable remote timestamp: keep equal timestamps (forces the manual
-      // resolution path with the existing user-choice semantics) but pair it
-      // with the REAL remote version content instead of a fabricated copy.
-      const remoteTimestamp = Number.isFinite(parsedRemoteTs)
-        ? parsedRemoteTs
-        : item.createdAt;
-
-      const resolution = resolveConflict(
-        ConflictType.ProgressUpdate,
-        item.payload,
-        remoteVersion,
-        item.createdAt,
-        remoteTimestamp,
-        payload.bookId,
-        payload.bookId,
-      );
-
-      logClientEvent({
-        level: 'warn',
-        traceId,
-        spanId,
-        event: 'sync.item.conflict',
-        metadata: {
-          itemId: item.id,
-          type: item.type,
-          resolved: resolution.resolved,
-          strategy: resolution.strategy,
-          winner: resolution.winner,
-          remoteFetched: true,
-        },
-      });
-
-      if (resolution.resolved && resolution.winner === 'local') {
-        // Local wins LWW — sync is successful, no need to re-send
-        return { success: true };
-      }
-
-      // Remote wins (server state supersedes the local write) or manual
-      // resolution needed — the conflict record keeps both versions durably.
-      return { success: false, error: 'conflict_requires_manual_resolution' };
+      return handleProgressConflict(item, traceId, spanId);
     }
 
     logClientEvent({
@@ -579,6 +401,52 @@ async function markAsSynced(type: 'progress' | 'annotation' | 'reading-insight' 
   // store is the source of truth and the server sync is append-only (UPSERT).
   // No local mark-as-synced is needed — the queue item itself is removed
   // on success, and the local insight entry persists for the InfoPanel.
+}
+
+/**
+ * Re-queue the local progress version after a manual "keep local" conflict
+ * resolution (REL-03): the losing write was removed from the sync queue when
+ * the conflict was recorded, so choosing local must explicitly re-send it or
+ * the server never learns of the chosen position. The original mutationId is
+ * reused — the resend is the same logical write retried after resolution,
+ * which also lets markAsSynced settle the original local progress entry.
+ */
+export async function resendProgressFromConflict(conflict: ConflictRecord): Promise<void> {
+  if (conflict.type !== ConflictType.ProgressUpdate) return;
+
+  const local = conflict.localVersion as Partial<ProgressSyncPayload> | null;
+  const mutationId = typeof local?.mutationId === 'string' ? local.mutationId : '';
+  if (
+    !local ||
+    mutationId === '' ||
+    typeof local.bookId !== 'string' ||
+    typeof local.cfi !== 'string' ||
+    typeof local.percentage !== 'number'
+  ) {
+    logClientEvent({
+      level: 'warn',
+      traceId: createTraceId(),
+      spanId: createSpanId(),
+      event: 'sync.conflict_resend.skipped_malformed',
+      metadata: { conflictId: conflict.id, type: conflict.type },
+    });
+    return;
+  }
+
+  const payload: ProgressSyncPayload = {
+    bookId: local.bookId,
+    cfi: local.cfi,
+    percentage: local.percentage,
+    mutationId,
+  };
+  logClientEvent({
+    level: 'info',
+    traceId: createTraceId(),
+    spanId: createSpanId(),
+    event: 'sync.conflict_resend.queued',
+    metadata: { conflictId: conflict.id, bookId: payload.bookId },
+  });
+  await queueSync('progress', payload, mutationId);
 }
 
 export async function syncAll(): Promise<void> {

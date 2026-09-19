@@ -11,6 +11,7 @@ import {
   type ConflictRecord,
   type ConflictType,
 } from '../../../../lib/offline/conflict-resolution';
+import { resendProgressFromConflict } from '../../../../lib/offline/sync';
 
 const CONFLICT_TYPE_LABELS: Record<ConflictType, TranslationKeys> = {
   progress_update: 'reader.conflicts.type.progress_update',
@@ -117,20 +118,26 @@ export function ConflictResolutionPanel() {
       resolveManualConflict(conflictId, resolution);
       if (bookId) clearResolvedConflicts(bookId);
       storeResolveConflict(conflictId, resolution);
+      // REL-03: "keep local" must re-send the losing write — the sync queue
+      // item was removed when the conflict was recorded, so without an
+      // explicit resend the server never learns of the chosen position.
+      // Dismiss resolves as local (existing semantics) and resends for the
+      // same reason.
+      if (resolution === 'local') {
+        const conflict = conflicts.find((c) => c.id === conflictId);
+        if (conflict) void resendProgressFromConflict(conflict);
+      }
     },
-    [storeResolveConflict, bookId],
+    [storeResolveConflict, bookId, conflicts],
   );
 
   const handleDismiss = useCallback(
     (conflictId: string) => {
-      // Dismissal must mark the conflict resolved in the module Map so
-      // clearResolvedConflicts purges it (Map + IndexedDB); otherwise it
-      // resurfaces on reload (Plan 228 F2).
-      resolveManualConflict(conflictId, 'local');
-      if (bookId) clearResolvedConflicts(bookId);
-      storeResolveConflict(conflictId, 'local');
+      // Dismissal keeps the local version (existing semantics) — identical to
+      // an explicit keep-local, including the REL-03 resend.
+      handleResolve(conflictId, 'local');
     },
-    [storeResolveConflict, bookId],
+    [handleResolve],
   );
 
   if (unresolved.length === 0) return null;

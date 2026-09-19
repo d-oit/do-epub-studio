@@ -1,9 +1,14 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ConflictResolutionPanel } from './ConflictResolutionPanel';
 import { clearAllConflicts, detectConflict, ConflictType } from '../../../../lib/offline/conflict-resolution';
+import { resendProgressFromConflict } from '../../../../lib/offline/sync';
 import { useReaderStore } from '../../../../stores/reader';
 import { useAuthStore } from '../../../../stores';
+
+vi.mock('../../../../lib/offline/sync', () => ({
+  resendProgressFromConflict: vi.fn(),
+}));
 
 vi.mock('../../../../hooks/useTranslation', () => ({
   useTranslation: () => ({
@@ -54,6 +59,7 @@ beforeEach(() => {
   clearAllConflicts();
   useReaderStore.getState().clearConflicts();
   useAuthStore.setState({ bookId: BOOK_ID });
+  vi.mocked(resendProgressFromConflict).mockClear();
 });
 
 describe('ConflictResolutionPanel', () => {
@@ -102,5 +108,46 @@ describe('ConflictResolutionPanel', () => {
     fireEvent.click(dismissBtn);
     const updated = useReaderStore.getState().conflicts.find((c) => c.id === conflictId);
     expect(updated?.resolved).toBe(true);
+  });
+
+  describe('REL-03 resend on keep-local', () => {
+    it('keep-local re-sends the local progress version', async () => {
+      const conflictId = seedConflict({
+        localVersion: { bookId: BOOK_ID, cfi: 'cfi-1', percentage: 50, mutationId: 'm-1' },
+        remoteVersion: { bookId: BOOK_ID, cfi: 'remote-cfi', percentage: 90 },
+      });
+      render(<ConflictResolutionPanel />);
+      const keepLocalBtn = await screen.findByRole('button', {
+        name: /reader\.conflicts\.keepLocal/i,
+      });
+      fireEvent.click(keepLocalBtn);
+      expect(resendProgressFromConflict).toHaveBeenCalledTimes(1);
+      expect(resendProgressFromConflict).toHaveBeenCalledWith(
+        expect.objectContaining({ id: conflictId, type: ConflictType.ProgressUpdate }),
+      );
+    });
+
+    it('keep-remote does not re-send', async () => {
+      seedConflict();
+      render(<ConflictResolutionPanel />);
+      const keepRemoteBtn = await screen.findByRole('button', {
+        name: /reader\.conflicts\.keepRemote/i,
+      });
+      fireEvent.click(keepRemoteBtn);
+      expect(resendProgressFromConflict).not.toHaveBeenCalled();
+    });
+
+    it('dismiss re-sends like keep-local (identical resolution semantics)', async () => {
+      const conflictId = seedConflict({
+        localVersion: { bookId: BOOK_ID, cfi: 'cfi-2', percentage: 40, mutationId: 'm-2' },
+      });
+      render(<ConflictResolutionPanel />);
+      const dismissBtn = await screen.findByRole('button', { name: /reader\.conflicts\.dismiss/i });
+      fireEvent.click(dismissBtn);
+      expect(resendProgressFromConflict).toHaveBeenCalledTimes(1);
+      expect(resendProgressFromConflict).toHaveBeenCalledWith(
+        expect.objectContaining({ id: conflictId }),
+      );
+    });
   });
 });
