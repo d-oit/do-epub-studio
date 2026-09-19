@@ -8,6 +8,13 @@ export default defineConfig({
       'virtual:pwa-register': path.resolve(import.meta.dirname, './src/__mocks__/virtual-pwa-register.ts'),
     },
   },
+  // Vite-level server option (Vitest 4: `test.watch` is only a boolean);
+  // usePolling is needed for reliable file watching on WSL2.
+  server: {
+    watch: {
+      usePolling: true,
+    },
+  },
   test: {
     globals: true,
     environment: 'jsdom',
@@ -27,9 +34,6 @@ export default defineConfig({
     isolate: true,
     testTimeout: 30000,
     hookTimeout: 30000,
-    watch: {
-      usePolling: true,
-    },
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html', 'lcov', 'clover'],

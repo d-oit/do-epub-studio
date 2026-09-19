@@ -417,3 +417,8 @@
 ### Dependabot does not re-scan the actions ecosystem on manifest push (2026-09-15)
 
 - **Downgrading a pinned action to force a Dependabot re-bump does not fire on manifest push for `github-actions`**: a chromaui/action downgrade sat on main ~14.5 h with no Dependabot reaction even though the dependency graph (SBOM) updated immediately. The next certain scan is the scheduled weekly slot (`dependabot.yml` Monday 09:00 UTC). Plan GOAP-270 Phase 3 dogfood around the schedule (or accept a multi-day bait) and set a fallback: if no PR by the next scheduled run, restore the pin manually.
+
+### Playwright lane selection must be env-only, never argv-based (2026-09-19)
+
+- **Playwright workers re-evaluate `playwright.config.ts` without the CLI argv**, so any config branch keyed on `process.argv` (e.g. `argv.some(a => a.includes('live-cloudflare'))`) produces a different project set in workers than in the dispatcher — tests fail with the misleading `Project "..." not found in the worker process. Make sure project name does not change.` Select lanes via environment variables (inherited by workers) and keep the config deterministic per environment (GOAP-999 E2E-02).
+- **A dedicated remote test lane must also opt out of the global `webServer`**: Playwright starts the configured local server for every run, including lanes that target a remote deployment — leaving it on wastes a spawn and gives misrouted navigation a real localhost to hit.

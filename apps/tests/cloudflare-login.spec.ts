@@ -4,11 +4,15 @@ import { test, expect } from '@playwright/test';
 // Cloudflare Pages E2E login tests
 //
 // These tests run against the LIVE Cloudflare Pages deployment (not mocked).
-// Set CLOUDFLARE_PREVIEW_URL to the Pages preview URL to test against a
-// specific deployment. Falls back to the local dev server.
+// They belong to the dedicated `live-cloudflare` Playwright project and are
+// excluded by file from every local/mock project (E2E-02 lane separation).
+// Selecting the lane without prerequisites fails setup via the beforeAll
+// guard below — it never silently skips.
 //
 // Usage:
-//   CLOUDFLARE_PREVIEW_URL=https://<hash>.do-epub-studio.pages.dev npx playwright test apps/tests/cloudflare-login.spec.ts
+//   CLOUDFLARE_PREVIEW_URL=https://<hash>.do-epub-studio.pages.dev \
+//   E2E_READER_PASSWORD=... E2E_ADMIN_PASSWORD=... \
+//   npx playwright test --project=live-cloudflare
 // ---------------------------------------------------------------------------
 
 const CF_PREVIEW_URL = process.env.CLOUDFLARE_PREVIEW_URL;
@@ -47,7 +51,7 @@ test.beforeAll(() => {
 test.describe('Cloudflare reader login', () => {
   test.use({ baseURL: BASE_URL });
 
-  test('@smoke renders the login page with glass morphism card', async ({ page }) => {
+  test('renders the login page with glass morphism card', async ({ page }) => {
     await page.goto(`/login?book=${READER.bookSlug}`);
 
     // The login card should have the glass-card class (glassmorphism)
@@ -60,7 +64,7 @@ test.describe('Cloudflare reader login', () => {
     await expect(page.getByRole('button', { name: 'Sign In', exact: true })).toBeVisible();
   });
 
-  test('@smoke password toggle works on the right side', async ({ page }) => {
+  test('password toggle works on the right side', async ({ page }) => {
     await page.goto(`/login?book=${READER.bookSlug}`);
 
     const passwordInput = page.getByRole('textbox', { name: 'Password' });
@@ -84,7 +88,7 @@ test.describe('Cloudflare reader login', () => {
     await expect(passwordInput).toHaveAttribute('type', 'password');
   });
 
-  test('@smoke logs in successfully against Cloudflare backend', async ({ page }) => {
+  test('logs in successfully against Cloudflare backend', async ({ page }) => {
     await page.goto(`/login?book=${READER.bookSlug}`);
 
     await page.getByLabel('Email Address').fill(READER.email);
@@ -160,7 +164,7 @@ test.describe('Cloudflare reader login', () => {
 test.describe('Cloudflare admin login', () => {
   test.use({ baseURL: BASE_URL });
 
-  test('@smoke renders the admin login page with glass morphism', async ({ page }) => {
+  test('renders the admin login page with glass morphism', async ({ page }) => {
     await page.goto('/admin/login');
 
     const loginCard = page.getByTestId('admin-login-card');
@@ -170,7 +174,7 @@ test.describe('Cloudflare admin login', () => {
     await expect(page.getByRole('textbox', { name: 'Password' })).toBeVisible();
   });
 
-  test('@smoke password toggle works on admin login', async ({ page }) => {
+  test('password toggle works on admin login', async ({ page }) => {
     await page.goto('/admin/login');
 
     const passwordInput = page.getByRole('textbox', { name: 'Password' });
@@ -184,7 +188,7 @@ test.describe('Cloudflare admin login', () => {
     await expect(passwordInput).toHaveAttribute('type', 'password');
   });
 
-  test('@smoke logs in as admin against Cloudflare backend', async ({ page }) => {
+  test('logs in as admin against Cloudflare backend', async ({ page }) => {
     await page.goto('/admin/login');
 
     await page.getByLabel('Email Address').fill(ADMIN.email);

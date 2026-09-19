@@ -61,7 +61,6 @@ export default defineConfig({
         name: appIdentity.name,
         short_name: appIdentity.shortName,
         description: appIdentity.description,
-        version: appVersion,
         theme_color: '#ffffff',
         background_color: '#ffffff',
         display: 'standalone',
