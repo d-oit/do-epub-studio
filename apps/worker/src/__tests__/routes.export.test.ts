@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { makeEnv, makeAuthContext, makePassThroughContext, mockQueryAll, mockRequireAuth, parseBody } from './fixtures';
+import { makeEnv, makeAuthContext, makePassThroughContext, mockQueryAll, mockQueryFirst, mockRequireAuth, parseBody } from './fixtures';
 import { app } from '../app';
 import { assertBookAccess } from '../lib/tenant-isolation';
 
@@ -18,8 +18,7 @@ describe('Export Routes', () => {
 
   /** Stub the book-title lookup the export route performs after the row queries. */
   function mockBookTitle(title: string) {
-    const mockFirst = vi.fn().mockResolvedValue({ title });
-    (env.DB as unknown as { first: ReturnType<typeof vi.fn> }).first = mockFirst;
+    mockQueryFirst.mockResolvedValueOnce({ title });
   }
 
   /** Build a highlight row fixture with per-test overrides. */
