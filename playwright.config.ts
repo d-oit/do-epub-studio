@@ -6,11 +6,15 @@ const mode = process.env.PLAYWRIGHT_MODE || 'dev';
 const isPreview = mode === 'preview';
 const port = isPreview ? 4173 : 5173;
 
-const isLiveLane = Boolean(
-  process.env.CLOUDFLARE_PREVIEW_URL ||
-    process.env.PLAYWRIGHT_PROJECT === 'live-cloudflare' ||
-    process.argv.some((arg) => arg.includes('live-cloudflare')),
-);
+// Live-lane selection is env-only and MUST NOT consult process.argv: worker
+// processes re-evaluate this config without the CLI argv, so argv-based
+// detection makes the project set differ between dispatcher and workers
+// ("Project not found in the worker process"). Environment is inherited and
+// therefore deterministic. In the live lane only the live project is defined,
+// so selecting the lane is implicit (E2E-02).
+const isLiveLane =
+  Boolean(process.env.CLOUDFLARE_PREVIEW_URL) ||
+  process.env.PLAYWRIGHT_PROJECT === 'live-cloudflare';
 
 const LOCAL_MOCK_TEST_IGNORE = ['**/cloudflare-login.spec.ts'];
 export default defineConfig({
@@ -42,78 +46,81 @@ export default defineConfig({
     // WebKit all handle SW interception differently; this normalizes).
     serviceWorkers: 'block',
   },
-  webServer: {
-    command: isPreview
-      ? `pnpm --filter @do-epub-studio/web preview --host 127.0.0.1 --port ${port}`
-      : `pnpm --filter @do-epub-studio/web dev --host 127.0.0.1 --port ${port}`,
-    url: `http://127.0.0.1:${port}`,
-    reuseExistingServer: !isCI,
-    timeout: 120_000,
-    env: {
-      // Enable client telemetry at info level so E2E tests can wait for
-      // `reader.progress_loaded` and similar events. Production deploys
-      // keep the default warn level via VITE_LOG_LEVEL.
-      VITE_LOG_LEVEL: 'info',
-    },
-  },
-  projects: [
-    {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
-      testIgnore: LOCAL_MOCK_TEST_IGNORE,
-      grepInvert: /@pwa/,
-    },
-    {
-      name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
-      testIgnore: LOCAL_MOCK_TEST_IGNORE,
-      grepInvert: /@pwa/,
-    },
-    ...(includeWebkit
-      ? [
-          {
-            name: 'webkit',
-            use: { ...devices['Desktop Safari'] },
-            testIgnore: LOCAL_MOCK_TEST_IGNORE,
-            grepInvert: /@pwa/,
-          },
-        ]
-      : []),
-    {
-      name: 'iphone',
-      use: { ...devices['iPhone 15'] },
-      testIgnore: LOCAL_MOCK_TEST_IGNORE,
-      grep: /@mobile/,
-      grepInvert: /@pwa/,
-    },
-    {
-      name: 'pixel',
-      use: { ...devices['Pixel 7'] },
-      testIgnore: LOCAL_MOCK_TEST_IGNORE,
-      grep: /@mobile/,
-      grepInvert: /@pwa/,
-    },
-    {
-      name: 'pwa-chromium',
-      use: {
-        ...devices['Desktop Chrome'],
-        serviceWorkers: 'allow',
+  // The live lane targets a remote deployment; never start (or accidentally
+  // receive traffic on) a local dev server there (E2E-02).
+  webServer: isLiveLane
+    ? undefined
+    : {
+        command: isPreview
+          ? `pnpm --filter @do-epub-studio/web preview --host 127.0.0.1 --port ${port}`
+          : `pnpm --filter @do-epub-studio/web dev --host 127.0.0.1 --port ${port}`,
+        url: `http://127.0.0.1:${port}`,
+        reuseExistingServer: !isCI,
+        timeout: 120_000,
+        env: {
+          // Enable client telemetry at info level so E2E tests can wait for
+          // `reader.progress_loaded` and similar events. Production deploys
+          // keep the default warn level via VITE_LOG_LEVEL.
+          VITE_LOG_LEVEL: 'info',
+        },
       },
-      testIgnore: LOCAL_MOCK_TEST_IGNORE,
-      grep: /@pwa/,
-    },
-    ...(isLiveLane
-      ? [
-          {
-            name: 'live-cloudflare',
-            use: {
-              ...devices['Desktop Chrome'],
-              baseURL: process.env.CLOUDFLARE_PREVIEW_URL || 'http://127.0.0.1:5173',
-            },
-            testMatch: ['**/cloudflare-login.spec.ts'],
-            testIgnore: [],
+  projects: (isLiveLane
+    ? [
+        {
+          name: 'live-cloudflare',
+          use: {
+            ...devices['Desktop Chrome'],
+            baseURL: process.env.CLOUDFLARE_PREVIEW_URL || 'http://127.0.0.1:5173',
           },
-        ]
-      : []),
-  ],
+          testMatch: ['**/cloudflare-login.spec.ts'],
+          testIgnore: [],
+        },
+      ]
+    : [
+        {
+          name: 'chromium',
+          use: { ...devices['Desktop Chrome'] },
+          testIgnore: LOCAL_MOCK_TEST_IGNORE,
+          grepInvert: /@pwa/,
+        },
+        {
+          name: 'firefox',
+          use: { ...devices['Desktop Firefox'] },
+          testIgnore: LOCAL_MOCK_TEST_IGNORE,
+          grepInvert: /@pwa/,
+        },
+        ...(includeWebkit
+          ? [
+              {
+                name: 'webkit',
+                use: { ...devices['Desktop Safari'] },
+                testIgnore: LOCAL_MOCK_TEST_IGNORE,
+                grepInvert: /@pwa/,
+              },
+            ]
+          : []),
+        {
+          name: 'iphone',
+          use: { ...devices['iPhone 15'] },
+          testIgnore: LOCAL_MOCK_TEST_IGNORE,
+          grep: /@mobile/,
+          grepInvert: /@pwa/,
+        },
+        {
+          name: 'pixel',
+          use: { ...devices['Pixel 7'] },
+          testIgnore: LOCAL_MOCK_TEST_IGNORE,
+          grep: /@mobile/,
+          grepInvert: /@pwa/,
+        },
+        {
+          name: 'pwa-chromium',
+          use: {
+            ...devices['Desktop Chrome'],
+            serviceWorkers: 'allow' as const,
+          },
+          testIgnore: LOCAL_MOCK_TEST_IGNORE,
+          grep: /@pwa/,
+        },
+      ]),
 });

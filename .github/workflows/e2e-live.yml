@@ -1,0 +1,76 @@
+name: E2E Live Backend
+
+# E2E-02 (GOAP-999): dedicated lane for the live Cloudflare E2E spec. The
+# `cloudflare-login.spec.ts` file is excluded from every local/mock Playwright
+# project; it runs only in the `live-cloudflare` project, dispatched here with
+# a seeded preview deployment. Missing prerequisites fail the prerequisite
+# step loudly — this lane never silently skips, and its results are recorded
+# independently from the mocked lanes. Not a required check: it needs
+# deployment-specific secrets that PR CI does not have.
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment_url:
+        description: 'Cloudflare Pages preview URL (defaults to the CLOUDFLARE_PREVIEW_URL secret)'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: e2e-live-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  live-cloudflare:
+    name: Live Cloudflare E2E (live-cloudflare project)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Verify live prerequisites
+        env:
+          LIVE_URL: ${{ inputs.environment_url || secrets.CLOUDFLARE_PREVIEW_URL }}
+          READER_PASSWORD: ${{ secrets.E2E_READER_PASSWORD }}
+          ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
+        run: |
+          missing=0
+          for var in LIVE_URL READER_PASSWORD ADMIN_PASSWORD; do
+            if [[ -z "${!var}" ]]; then
+              echo "::error::Missing prerequisite: ${var} (from CLOUDFLARE_PREVIEW_URL / E2E_READER_PASSWORD / E2E_ADMIN_PASSWORD) is required for the live-backend E2E lane."
+              missing=1
+            fi
+          done
+          exit "$missing"
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+          submodules: recursive
+
+      - uses: ./.github/actions/setup-pnpm
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run live-backend E2E tests
+        env:
+          # Env-only lane selector: PLAYWRIGHT_PROJECT defines (and, as the
+          # only project, selects) the live-cloudflare project in dispatcher
+          # AND worker config evaluation — CLI argv is not visible to workers.
+          PLAYWRIGHT_PROJECT: live-cloudflare
+          CLOUDFLARE_PREVIEW_URL: ${{ inputs.environment_url || secrets.CLOUDFLARE_PREVIEW_URL }}
+          E2E_READER_EMAIL: ${{ secrets.E2E_READER_EMAIL }}
+          E2E_READER_PASSWORD: ${{ secrets.E2E_READER_PASSWORD }}
+          E2E_ADMIN_EMAIL: ${{ secrets.E2E_ADMIN_EMAIL }}
+          E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
+        run: pnpm exec playwright test --project=live-cloudflare
+
+      - name: Upload Playwright report (live lane)
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
+        with:
+          name: playwright-report-live
+          path: playwright-report/
+          retention-days: 7
