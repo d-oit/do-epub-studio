@@ -7,11 +7,13 @@ import {
   setPermissionRevokedCallback,
   generateMutationId,
   resetDrainPromise,
+  resendProgressFromConflict,
 } from './sync';
 import * as db from './db';
 import type { SyncQueueItem } from './db';
 import { api, apiRequest } from '../api';
 import { clearAllPermissions } from './permissions';
+import { ConflictType, type ConflictRecord } from './conflict-resolution';
 
 vi.mock('uuid', () => ({
   v4: () => 'test-uuid-1234',
@@ -26,6 +28,14 @@ vi.mock('./db', () => ({
   getUnsyncedAnnotations: vi.fn(),
   saveProgress: vi.fn(),
   saveAnnotation: vi.fn(),
+  // conflict-resolution re-exports this const from ./db; the mock replaces
+  // the whole module, so the values must be mirrored here for the resend tests.
+  ConflictType: {
+    ProgressUpdate: 'progress_update',
+    AnnotationEdit: 'annotation_edit',
+    BookmarkChange: 'bookmark_change',
+    CommentUpdate: 'comment_update',
+  },
 }));
 
 vi.mock('../api', () => ({
@@ -331,6 +341,48 @@ describe('sync', () => {
       await vi.waitFor(() => {
         expect(db.updateSyncQueueItem).toHaveBeenCalled();
       });
+    });
+  });
+
+  describe('resendProgressFromConflict', () => {
+    function progressConflict(overrides?: Partial<ConflictRecord>): ConflictRecord {
+      return {
+        id: 'conflict-1',
+        type: ConflictType.ProgressUpdate,
+        localVersion: { bookId: 'b1', cfi: 'cfi-9', percentage: 42, mutationId: 'm9' },
+        remoteVersion: { bookId: 'b1', cfi: 'remote-cfi', percentage: 90 },
+        localTimestamp: 1000,
+        remoteTimestamp: 1000,
+        resolved: false,
+        resolution: null,
+        resolvedAt: null,
+        bookId: 'b1',
+        entityId: 'b1',
+        createdAt: 900,
+        ...overrides,
+      };
+    }
+
+    it('re-queues the local progress version with its original mutationId', async () => {
+      vi.mocked(db.getSyncQueue).mockResolvedValue([]);
+      await resendProgressFromConflict(progressConflict());
+      expect(db.addToSyncQueue).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'progress',
+          mutationId: 'm9',
+          payload: { bookId: 'b1', cfi: 'cfi-9', percentage: 42, mutationId: 'm9' },
+        }),
+      );
+    });
+
+    it('skips non-progress conflict types', async () => {
+      await resendProgressFromConflict(progressConflict({ type: ConflictType.CommentUpdate }));
+      expect(db.addToSyncQueue).not.toHaveBeenCalled();
+    });
+
+    it('skips a malformed local version without queueing', async () => {
+      await resendProgressFromConflict(progressConflict({ localVersion: { bookId: 'b1' } }));
+      expect(db.addToSyncQueue).not.toHaveBeenCalled();
     });
   });
 
