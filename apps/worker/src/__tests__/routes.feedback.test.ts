@@ -67,6 +67,10 @@ describe('Editorial Feedback Routes (reader)', () => {
       String(args[1]).includes('INSERT INTO editorial_feedback'));
     expect(insert?.[1]).toMatch(/'private'/);
     expect(insert?.[2]).toContain('user@example.com');
+    // Bound values must cover every placeholder: a missing column value fails
+    // only at runtime as a 500.
+    const placeholders = (String(insert?.[1]).match(/\?/g) ?? []).length;
+    expect(insert?.[2]).toHaveLength(placeholders);
   });
 
   it('rejects submission from a read-only session (403)', async () => {
@@ -126,12 +130,14 @@ describe('Editorial Feedback Routes (reader)', () => {
     expect(mockExecute).not.toHaveBeenCalled();
   });
 
-  it('lists only the caller’s own items', async () => {
+  it('lists only the caller’s own items, with their replies', async () => {
     mockRequireAuth.mockResolvedValue(makeAuthContext());
     mockQueryAll.mockResolvedValueOnce([
-      { id: 'fb-1', book_id: 'book-1', submitter_email: 'user@example.com', status: 'open' },
+      { id: 'fb-1', book_id: 'book-1', submitter_email: 'user@example.com', status: 'accepted' },
     ]);
-    mockQueryFirst.mockResolvedValueOnce({ n: 0 }); // reply count
+    mockQueryAll.mockResolvedValueOnce([
+      { id: 'reply-1', feedback_id: 'fb-1', author_email: 'creator@example.com', author_role: 'creator', body: 'Accepted.', created_at: 'now' },
+    ]);
 
     const res = await app.fetch(new Request('http://localhost/api/books/book-1/feedback', {
       headers: { Authorization: 'Bearer valid' },
@@ -140,6 +146,11 @@ describe('Editorial Feedback Routes (reader)', () => {
     const sql = String(mockQueryAll.mock.calls[0][1]);
     expect(sql).toMatch(/submitter_email = \?/);
     expect(mockQueryAll.mock.calls[0][2]).toContain('user@example.com');
+    // The reader list renders replies inline, so the creator's answer must
+    // travel with the list rather than waiting for a detail fetch.
+    const payload: { data: Array<{ replies: Array<{ body: string }>; replyCount: number }> } = await res.json();
+    expect(payload.data[0].replies.map((r) => r.body)).toEqual(['Accepted.']);
+    expect(payload.data[0].replyCount).toBe(1);
   });
 
   it('returns 404 (not 403) for another reader’s item', async () => {

@@ -27,6 +27,21 @@ export interface ComposerSelection {
   text: string;
   cfiRange: string;
   chapterRef: string;
+  bookFileId?: string;
+  prefix?: string;
+  suffix?: string;
+}
+
+/** Anchor fields carried through draft, offline replay and server submit. */
+function anchorFromSelection(selection: ComposerSelection) {
+  return {
+    bookFileId: selection.bookFileId || undefined,
+    chapterRef: selection.chapterRef || undefined,
+    cfi: selection.cfiRange || undefined,
+    selectedText: selection.text,
+    prefix: selection.prefix || undefined,
+    suffix: selection.suffix || undefined,
+  };
 }
 
 export interface ComposerInput {
@@ -78,11 +93,7 @@ function toDraft(
     category: input.category,
     body: input.body,
     proposedText: input.proposedText,
-    anchor: {
-      chapterRef: input.selection.chapterRef || undefined,
-      cfi: input.selection.cfiRange || undefined,
-      selectedText: input.selection.text,
-    },
+    anchor: anchorFromSelection(input.selection),
     mutationId: generateMutationId(),
     delivery,
     error,
@@ -170,11 +181,9 @@ export function useFeedbackComposer(bookId: string | null): {
 
   const openComposer = useCallback((kind: FeedbackKind, selection: ComposerSelection) => {
     setComposerKind(kind);
-    setComposerSelection({
-      text: selection.text,
-      cfiRange: selection.cfiRange,
-      chapterRef: selection.chapterRef,
-    });
+    // Copy the whole selection: dropping fields here silently removes the
+    // source file identity and surrounding text from the submitted anchor.
+    setComposerSelection({ ...selection });
     setComposerError(null);
     setComposerOpen(true);
   }, []);
@@ -227,11 +236,7 @@ export function useFeedbackComposer(bookId: string | null): {
               category: input.category,
               body: input.body,
               proposedText: input.proposedText,
-              anchor: {
-                chapterRef: input.selection.chapterRef || undefined,
-                cfi: input.selection.cfiRange || undefined,
-                selectedText: input.selection.text,
-              },
+              anchor: anchorFromSelection(input.selection),
               mutationId: draft.mutationId,
             },
             sessionToken,
@@ -275,6 +280,9 @@ export function useFeedbackComposer(bookId: string | null): {
           text: draft.anchor.selectedText,
           cfiRange: draft.anchor.cfi ?? '',
           chapterRef: draft.anchor.chapterRef ?? '',
+          bookFileId: draft.anchor.bookFileId,
+          prefix: draft.anchor.prefix,
+          suffix: draft.anchor.suffix,
         },
       });
     },

@@ -91,7 +91,7 @@ describe('Books Routes', () => {
 
       mockQueryFirst
         .mockResolvedValueOnce({ id: '1', slug: 'book-1' }) // Book resolution
-        .mockResolvedValueOnce({ storage_key: 'key.epub' }); // File check
+        .mockResolvedValueOnce({ id: 'file-1', storage_key: 'key.epub' }); // File check
 
       mockGenerateSignedUrl.mockResolvedValue({ url: 'https://signed.url' });
 
@@ -106,6 +106,8 @@ describe('Books Routes', () => {
       expect(mockAssertBookAccess).toHaveBeenCalledWith(env, expect.objectContaining({ email: 'user@example.com' }), '1', expect.anything(), expect.any(String));
       const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } = await res.json();
       expect(body.data.url).toBe('https://signed.url');
+      // Readers anchor feedback to this file, so the id must reach the client.
+      expect(body.data.fileId).toBe('file-1');
     });
 
     it('resolves a slug param to the book id before the access guard', async () => {

@@ -239,10 +239,11 @@ describe('AnnotationToolbar', () => {
   });
 
   describe('positioning', () => {
-    it('positions toolbar based on selection rect', () => {
+    it('positions the toolbar above the selected passage', () => {
+      const selection: SelectionData = { ...mockSelection, rect: new DOMRect(300, 400, 200, 30) };
       render(
         <AnnotationToolbar
-          selection={mockSelection}
+          selection={selection}
           onHighlight={mockOnHighlight}
           onComment={mockOnComment}
           onClose={mockOnClose}
@@ -252,9 +253,28 @@ describe('AnnotationToolbar', () => {
         />,
       );
 
-      const toolbar = screen.getByLabelText('annotation.highlight').closest('.fixed');
+      const toolbar = document.querySelector('[data-container-name="annotation-toolbar"]') as HTMLElement;
       expect(toolbar).toBeInTheDocument();
-      expect(toolbar).toHaveClass('fixed');
+      expect(toolbar.style.top).toBe('340px');
+      expect(toolbar.style.left).toBe('280px');
+    });
+
+    it('keeps the toolbar on screen for a passage near the top edge', () => {
+      const selection: SelectionData = { ...mockSelection, rect: new DOMRect(300, 20, 200, 30) };
+      render(
+        <AnnotationToolbar
+          selection={selection}
+          onHighlight={mockOnHighlight}
+          onComment={mockOnComment}
+          onClose={mockOnClose}
+          locale="en"
+          canHighlight={true}
+          canComment={true}
+        />,
+      );
+
+      const toolbar = document.querySelector('[data-container-name="annotation-toolbar"]') as HTMLElement;
+      expect(toolbar.style.top).toBe('8px');
     });
 
     it('clamps position to left edge when near left', () => {

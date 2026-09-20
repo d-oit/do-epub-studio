@@ -1,8 +1,26 @@
 import type { Env } from '../lib/env';
 
-type EntityType = 'book' | 'grant' | 'session' | 'comment' | 'user' | 'bookmark' | 'highlight'
-  | 'editorial-feedback' | 'editorial-feedback-export' | 'book-creator'
-  | 'book-reference' | 'style-profile';
+/**
+ * Entity types written to `audit_log`. Kept in sync with the CHECK constraint
+ * on `audit_log.entity_type` (migrations 0001 + 0016) — adding a value here
+ * without a migration makes every audit write for that type fail.
+ */
+export const AUDIT_ENTITY_TYPES = [
+  'book',
+  'grant',
+  'session',
+  'comment',
+  'user',
+  'bookmark',
+  'highlight',
+  'editorial-feedback',
+  'editorial-feedback-export',
+  'book-creator',
+  'book-reference',
+  'style-profile',
+] as const;
+
+type EntityType = (typeof AUDIT_ENTITY_TYPES)[number];
 
 interface AuditEntry {
   entityType: EntityType;

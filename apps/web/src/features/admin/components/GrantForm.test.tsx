@@ -134,12 +134,17 @@ describe('GrantForm', () => {
     expect(defaultProps.onClose).toHaveBeenCalled();
   });
 
-  it('calls onSubmit when submit button clicked', () => {
+  it('wires the save button to the form action', () => {
     render(<GrantForm {...defaultProps} />);
-    // React 19 form actions fire on form submit. Clicking the submit button
-    // in jsdom should submit the form, but to be safe we submit directly.
+    const submit = screen.getByRole('button', { name: 'grants.createGrant' });
     const form = document.querySelector('form');
-    expect(form).toBeInTheDocument();
+    // Browsers run implicit submission when an owned submit button is
+    // activated; jsdom skips that step for synthetic clicks. Assert both
+    // halves of the user path separately: the button must own the form (a
+    // Modal-footer sibling owns nothing and clicks dead-end), and submitting
+    // that form must reach the handler.
+    expect(form).toContainElement(submit);
+    expect(submit).toHaveProperty('form', form);
     if (form) fireEvent.submit(form);
     expect(defaultProps.onSubmit).toHaveBeenCalled();
   });

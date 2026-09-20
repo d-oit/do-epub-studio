@@ -122,6 +122,53 @@ describe('Admin Routes', () => {
     });
   });
 
+  describe('GET /api/admin/books', () => {
+    it('lists active books using the admin BookResponse shape', async () => {
+      mockAdminAuth();
+      mockQueryAll.mockResolvedValue([{
+        id: 'book-1',
+        slug: 'demo',
+        title: 'Demo Book',
+        author_name: 'Demo Author',
+        description: null,
+        language: 'en',
+        visibility: 'private',
+        cover_image_url: null,
+        published_at: null,
+        archived_at: null,
+      }]);
+
+      const res = await app.fetch(new Request('http://localhost/api/admin/books', {
+        headers: { 'Authorization': 'Bearer admin-token' },
+      }), env, makePassThroughContext());
+
+      expect(res.status).toBe(200);
+      const body: { ok: boolean; data: Array<Record<string, unknown>> } = await res.json();
+      expect(body.ok).toBe(true);
+      expect(body.data).toEqual([{
+        id: 'book-1',
+        slug: 'demo',
+        title: 'Demo Book',
+        authorName: 'Demo Author',
+        description: null,
+        language: 'en',
+        visibility: 'private',
+        coverImageUrl: null,
+        publishedAt: null,
+      }]);
+      expect(mockQueryAll.mock.calls[0][1] as string).toContain('archived_at IS NULL');
+    });
+
+    it('requires an admin session', async () => {
+      mockRequireAdminAuth.mockResolvedValue({ ok: false, status: 401, error: 'Unauthorized' });
+
+      const res = await app.fetch(new Request('http://localhost/api/admin/books'), env, makePassThroughContext());
+
+      expect(res.status).toBe(401);
+      expect(mockQueryAll).not.toHaveBeenCalled();
+    });
+  });
+
   describe('PUT /api/admin/books/:id/upload', () => {
     it('uploads file to bucket', async () => {
       mockAdminAuth();

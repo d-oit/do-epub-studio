@@ -66,16 +66,6 @@ export function GrantForm({
           ? t('grants.editGrantTitle')
           : t('grants.createGrantTitle')
       }
-      footer={
-        <div className="flex justify-end space-x-3">
-          <Button variant="secondary" onClick={onClose} disabled={isSubmitting}>
-            {t('annotation.cancel')}
-          </Button>
-          <SubmitButton isEdit={editingGrant !== null}>
-            {editingGrant ? t('grants.actions.save') : t('grants.createGrant')}
-          </SubmitButton>
-        </div>
-      }
     >
       <form action={handleFormAction} className="space-y-4">
         <Input
@@ -188,6 +178,17 @@ export function GrantForm({
             {formErrors.submit}
           </div>
         )}
+
+        {/* Action row lives inside the <form>: a submit button rendered as a
+            Modal sibling has no form owner and a click would not submit. */}
+        <div className="pt-4 border-t border-[var(--color-rule)] flex justify-end space-x-3">
+          <Button type="button" variant="secondary" onClick={onClose} disabled={isSubmitting}>
+            {t('annotation.cancel')}
+          </Button>
+          <SubmitButton isEdit={editingGrant !== null}>
+            {editingGrant ? t('grants.actions.save') : t('grants.createGrant')}
+          </SubmitButton>
+        </div>
       </form>
     </Modal>
   );

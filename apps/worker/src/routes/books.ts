@@ -142,7 +142,7 @@ booksRouter.post('/:id/file-url', readerAuth, async (c) => {
 
   const file = await queryFirst(
     c.env,
-    `SELECT storage_key FROM book_files WHERE book_id = ? ORDER BY created_at DESC LIMIT 1`,
+    `SELECT id, storage_key FROM book_files WHERE book_id = ? ORDER BY created_at DESC LIMIT 1`,
     [book.id as string],
   );
 
@@ -155,6 +155,10 @@ booksRouter.post('/:id/file-url', readerAuth, async (c) => {
   return c.json({
     ok: true,
     data: {
+      // Readers need the file identity to anchor editorial feedback to the
+      // exact source (COL-03): the id is validated server-side on submit and
+      // its stored SHA-256 becomes the retained source identity.
+      fileId: file.id as string,
       url: signedResponse.url,
       expiresAt: signedResponse.expiresAt,
       fileSize: signedResponse.fileSize,

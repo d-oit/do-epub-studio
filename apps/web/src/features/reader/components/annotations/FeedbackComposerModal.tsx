@@ -56,7 +56,10 @@ export function FeedbackComposerModal({
       setBody('');
       setProposedText('');
     }
-  }, [isOpen, kind, selection]);
+    // `selection` is intentionally not a dependency: it is a fresh object on
+    // every open/kind change, so depending on it re-ran this reset while the
+    // reader typed and discarded their text (REL-02 preserves human text).
+  }, [isOpen, kind]);
 
   if (!selection) return null;
 

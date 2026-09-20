@@ -3,16 +3,18 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { useSyncStatus } from '../useSyncStatus';
 import { useAuthStore } from '../../stores/auth';
 import { useReaderStore } from '../../stores/reader';
-import { getSyncQueue, setupOnlineListener } from '../../lib/offline';
+import { getSyncQueue, setupOnlineListener, syncAll } from '../../lib/offline';
 import type { SyncQueueItem } from '../../lib/offline/db';
 
 vi.mock('../../lib/offline', () => ({
   getSyncQueue: vi.fn(),
   setupOnlineListener: vi.fn(() => vi.fn()),
+  syncAll: vi.fn().mockResolvedValue(undefined),
 }));
 
 const getSyncQueueMock = vi.mocked(getSyncQueue);
 const setupOnlineListenerMock = vi.mocked(setupOnlineListener);
+const syncAllMock = vi.mocked(syncAll);
 
 describe('useSyncStatus', () => {
   beforeEach(() => {
@@ -35,6 +37,7 @@ describe('useSyncStatus', () => {
     expect(useReaderStore.getState().pendingSyncCount).toBe(0);
     expect(getSyncQueueMock).not.toHaveBeenCalled();
     expect(setupOnlineListenerMock).not.toHaveBeenCalled();
+    expect(syncAllMock).not.toHaveBeenCalled();
   });
 
   it('polls the queue and stores the pending count when authenticated', async () => {
@@ -49,6 +52,8 @@ describe('useSyncStatus', () => {
 
     await waitFor(() => expect(useReaderStore.getState().pendingSyncCount).toBe(2));
     expect(setupOnlineListenerMock).toHaveBeenCalledTimes(1);
+    // Contributions queued offline in an earlier session are replayed on start.
+    await waitFor(() => expect(syncAllMock).toHaveBeenCalledTimes(1));
   });
 
   it('mirrors connectivity events into reader state', async () => {
