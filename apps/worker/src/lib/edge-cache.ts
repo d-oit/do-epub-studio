@@ -78,7 +78,13 @@ export async function buildCacheKey(request: Request, env?: EdgeCacheEnv, prefix
     const value = request.headers.get(name);
     if (value) filtered.set(name, value);
   }
-  const key = `${resolvedPrefix}:${keyUrl.toString()}`;
+  // The Cache API only accepts http(s) keys and throws on any other scheme, so
+  // the version/prefix rides in the path of a synthetic origin instead of
+  // forming a `edge-cache:v1:...` URL. That scheme made every catalog request
+  // fail with a 500 wherever `caches.default` exists (wrangler dev and
+  // production), while unit tests — which have no Cache API — passed.
+  const keyPath = `${keyUrl.pathname}${keyUrl.search}`;
+  const key = `https://edge-cache.invalid/${encodeURIComponent(resolvedPrefix)}${keyPath}`;
   return new Request(key, { method: 'GET', headers: filtered });
 }
 
