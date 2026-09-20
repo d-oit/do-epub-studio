@@ -1,5 +1,6 @@
 import type { Env, JsonRow } from '../lib/env';
 import { queryFirst, execute } from '../db/client';
+import { AppError } from '../lib/http-errors';
 import { argon2id, argon2Verify } from 'argon2-wasm-edge';
 
 interface GrantRow extends JsonRow {
@@ -120,8 +121,46 @@ export async function createGrant(
     invitedByUserId?: string;
   },
 ): Promise<string> {
-  const id = crypto.randomUUID();
+  const normalizedEmail = email.toLowerCase();
   const passwordHash = options?.password ? await hashPassword(options.password) : null;
+
+  // (book_id, email) is UNIQUE, so re-granting to a previously revoked reader
+  // must revive that row rather than insert a second one — a bare INSERT
+  // surfaced as an unhandled SQLITE_CONSTRAINT (500) in the admin UI.
+  const existing = await queryFirst<{ id: string; revoked_at: string | null }>(
+    env,
+    `SELECT id, revoked_at FROM book_access_grants WHERE book_id = ? AND email = ?`,
+    [bookId, normalizedEmail],
+  );
+
+  if (existing) {
+    if (!existing.revoked_at) {
+      throw new AppError('This email already has access to this book', 'GRANT_EXISTS', 409);
+    }
+
+    await execute(
+      env,
+      `UPDATE book_access_grants
+       SET password_hash = ?, mode = ?, comments_allowed = ?, offline_allowed = ?,
+           expires_at = ?, invited_by_user_id = ?, allowed = 1, revoked_at = NULL,
+           updated_at = ?
+       WHERE id = ?`,
+      [
+        passwordHash,
+        options?.mode ?? 'private',
+        options?.commentsAllowed ? 1 : 0,
+        options?.offlineAllowed ? 1 : 0,
+        options?.expiresAt ?? null,
+        options?.invitedByUserId ?? null,
+        new Date().toISOString(),
+        existing.id,
+      ],
+    );
+
+    return existing.id;
+  }
+
+  const id = crypto.randomUUID();
 
   await execute(
     env,
@@ -132,7 +171,7 @@ export async function createGrant(
     [
       id,
       bookId,
-      email.toLowerCase(),
+      normalizedEmail,
       passwordHash,
       options?.mode ?? 'private',
       options?.commentsAllowed ? 1 : 0,

@@ -34,6 +34,8 @@ interface LocationState {
 interface GrantsBodyProps {
   bookId: string | undefined;
   token: string;
+  /** Bumps the page's refresh key so the table re-fetches after a mutation. */
+  onMutated: () => void;
 }
 
 function timingSafeEqual(a: string, b: string): boolean {
@@ -50,14 +52,14 @@ interface GrantsBodyData {
   grants: GrantResponse[];
 }
 
-function GrantsBody({ bookId, token }: GrantsBodyProps) {
+function GrantsBody({ bookId, token, onMutated }: GrantsBodyProps) {
   const books = use(fetchAdminBooks(token));
   const grants = use(bookId ? fetchGrantsForBook(bookId, token) : Promise.resolve([]));
   const data: GrantsBodyData = { books, grants };
-  return <GrantsView data={data} bookId={bookId} token={token} />;
+  return <GrantsView data={data} bookId={bookId} token={token} onMutated={onMutated} />;
 }
 
-function GrantsView({ data, bookId, token }: { data: GrantsBodyData; bookId: string | undefined; token: string }) {
+function GrantsView({ data, bookId, token, onMutated }: { data: GrantsBodyData; bookId: string | undefined; token: string; onMutated: () => void }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
@@ -141,6 +143,10 @@ function GrantsView({ data, bookId, token }: { data: GrantsBodyData; bookId: str
           );
         }
         if (bookId) invalidateGrantsCache(bookId);
+        // The table's rows come from a cached promise captured by `use()`;
+        // dropping the cache alone leaves the rendered rows stale until some
+        // unrelated re-render replaces the promise. Remount the body instead.
+        onMutated();
         setIsModalOpen(false);
         return { success: 'true' };
       } catch (err) {
@@ -190,11 +196,12 @@ function GrantsView({ data, bookId, token }: { data: GrantsBodyData; bookId: str
           token,
         );
         if (bookId) invalidateGrantsCache(bookId);
+        onMutated();
       } catch (err) {
         alert((err as Error).message);
       }
     },
-    [executeWithStepUp, token, bookId],
+    [executeWithStepUp, token, bookId, onMutated],
   );
 
   const currentBookTitle = locationState?.bookTitle ?? (bookId ? books.find((b) => b.id === bookId)?.title : undefined);
@@ -281,13 +288,18 @@ function GrantsSkeleton() {
 export function AdminGrantResponsesPage() {
   const { bookId } = useParams<{ bookId: string }>();
   const sessionToken = useAuthStore((state) => state.sessionToken);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   return (
     <Suspense
-      key={bookId ?? 'all'}
+      key={`${bookId ?? 'all'}:${refreshKey}`}
       fallback={<GrantsSkeleton />}
     >
-      <GrantsBody bookId={bookId} token={sessionToken ?? ''} />
+      <GrantsBody
+        bookId={bookId}
+        token={sessionToken ?? ''}
+        onMutated={() => setRefreshKey((key) => key + 1)}
+      />
     </Suspense>
   );
 }
