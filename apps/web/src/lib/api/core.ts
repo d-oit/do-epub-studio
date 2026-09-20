@@ -38,11 +38,16 @@ const DEFAULT_TIMEOUT_MS = 15000;
 const MAX_RETRIES = 3;
 const INITIAL_BACKOFF_MS = 200;
 
-/** Retries on network errors (TypeError) and 5xx; not on 4xx or timeouts. */
+/**
+ * Retries on network errors (TypeError) and 5xx; never on 4xx or timeouts.
+ * A timeout aborts with a DOMException named `TimeoutError`, and a caller
+ * cancellation with `AbortError` — neither is a network failure.
+ */
 function isRetryable(error: unknown, status?: number): boolean {
   if (status && status >= 500) return true;
-  if (error instanceof TypeError && error.message !== 'Request timeout') return true;
-  return false;
+  const name = (error as Error | undefined)?.name;
+  if (name === 'TimeoutError' || name === 'AbortError') return false;
+  return error instanceof TypeError;
 }
 
 /** Exponential backoff: 200ms, 400ms, 800ms. */
@@ -68,8 +73,14 @@ export async function apiRequest<T>(endpoint: string, options: ApiRequestOptions
     }
 
     const controller = new AbortController();
+    let timedOut = false;
     const timeout = setTimeout(
-      () => controller.abort(new DOMException('Request timeout')),
+      () => {
+        timedOut = true;
+        // Named so the catch below can distinguish our deadline from a caller
+        // cancellation: an unnamed DOMException reports name === 'Error'.
+        controller.abort(new DOMException('Request timeout', 'TimeoutError'));
+      },
       timeoutMs ?? DEFAULT_TIMEOUT_MS,
     );
 
@@ -129,8 +140,15 @@ export async function apiRequest<T>(endpoint: string, options: ApiRequestOptions
       return data.data as T;
     } catch (error) {
       clearTimeout(timeout);
-      if ((error as Error).name === 'AbortError') {
-        logClientEvent({ level: 'error', event: 'api.timeout', traceId, spanId, metadata: { endpoint }, error: { name: (error as Error).name, message: (error as Error).message } });
+      const errorName = (error as Error).name;
+      // Caller cancellation (unmount, superseded request) is not a failure and
+      // must not be reported as one; only our own deadline is a timeout.
+      if (!timedOut && (errorName === 'AbortError' || requestInit.signal?.aborted)) {
+        logClientEvent({ level: 'info', event: 'api.cancelled', traceId, spanId, metadata: { endpoint }, error: { name: errorName, message: (error as Error).message } });
+        throw error;
+      }
+      if (timedOut || errorName === 'TimeoutError') {
+        logClientEvent({ level: 'error', event: 'api.timeout', traceId, spanId, metadata: { endpoint }, error: { name: errorName, message: (error as Error).message } });
         throw error;
       }
       if (!isRetryable(error, responseStatus) || attempt >= MAX_RETRIES) {
