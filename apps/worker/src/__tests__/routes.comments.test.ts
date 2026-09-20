@@ -58,6 +58,34 @@ describe('Comments Routes', () => {
       expect('userEmail' in comment).toBe(false);
       expect('user_email' in comment).toBe(false);
     });
+
+    it('maps the locator columns onto the flat client fields', async () => {
+      // `comments` stores the locator as chapter_ref/cfi_range/selected_text and
+      // the client's Comment type reads those flat names; returning a nested
+      // `locator` left the reader with no quoted passage.
+      mockRequireAuth.mockResolvedValue(makeAuthContext());
+      mockGetGrantByBookAndSession.mockResolvedValue({ id: 'grant-1' });
+      mockQueryAll.mockResolvedValue([
+        {
+          id: 'c1', body: 'quoted', user_email: 'user@example.com', status: 'open', visibility: 'shared',
+          chapter_ref: 'ch1.xhtml', cfi_range: 'epubcfi(/6/2!/4/4[p1])', selected_text: 'A passage',
+          parent_comment_id: null, resolved_at: '2026-01-01T00:00:00Z', created_at: 'now', updated_at: 'now',
+        },
+      ]);
+
+      const res = await app.fetch(new Request('http://localhost/api/books/book-1/comments', {
+        headers: { Authorization: 'Bearer valid' },
+      }), env, makePassThroughContext());
+
+      const body: { data: Array<Record<string, unknown>> } = await res.json();
+      expect(body.data[0]).toMatchObject({
+        chapterRef: 'ch1.xhtml',
+        cfiRange: 'epubcfi(/6/2!/4/4[p1])',
+        selectedText: 'A passage',
+        resolvedAt: '2026-01-01T00:00:00Z',
+      });
+      expect(body.data[0]).not.toHaveProperty('locator');
+    });
   });
 
   describe('POST /api/books/:bookId/comments', () => {
@@ -76,6 +104,7 @@ describe('Comments Routes', () => {
         body: JSON.stringify({
           body: 'new comment',
           visibility: 'shared',
+          locator: { cfi: 'epubcfi(/6/2!/4/4[p1])', chapterRef: 'ch1.xhtml', selectedText: 'A passage' },
         }),
         headers: {
           'Content-Type': 'application/json',
@@ -84,6 +113,21 @@ describe('Comments Routes', () => {
       }), env, makePassThroughContext());
 
       expect(res.status).toBe(201);
+      const payload: { data: Record<string, unknown> } = await res.json();
+      // The response speaks the same flat shape as the list.
+      expect(payload.data).toMatchObject({ cfiRange: 'epubcfi(/6/2!/4/4[p1])', chapterRef: 'ch1.xhtml', selectedText: 'A passage' });
+
+      const insert = mockExecute.mock.calls.find((args) => String(args[1]).includes('INSERT INTO comments'));
+      const sql = String(insert?.[1]);
+      // Only columns the comments table actually has: the previous INSERT named
+      // `locator_json`, which no migration defines, so every create 500ed.
+      expect(sql).toContain('chapter_ref');
+      expect(sql).toContain('cfi_range');
+      expect(sql).toContain('selected_text');
+      expect(sql).not.toContain('locator_json');
+      const placeholders = (sql.match(/\?/g) ?? []).length;
+      expect(insert?.[2]).toHaveLength(placeholders);
+      expect(insert?.[2]).toContain('epubcfi(/6/2!/4/4[p1])');
     });
   });
 

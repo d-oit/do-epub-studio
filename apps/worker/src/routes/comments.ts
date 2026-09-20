@@ -9,7 +9,7 @@ import {
   CommentCreateSchema,
   CommentUpdateSchema,
 } from '@do-epub-studio/shared';
-import { parseLocatorRow, assertBookAccess } from '../lib/tenant-isolation';
+import { assertBookAccess } from '../lib/tenant-isolation';
 import { getRequestTraceId } from '../lib/api-error';
 import { readerAuth } from '../middleware/auth';
 import { createReplyNotification } from './notifications';
@@ -22,13 +22,41 @@ interface CommentRow {
   id: string;
   book_id: string;
   user_email: string;
-  locator_json: string | null;
+  chapter_ref: string | null;
+  cfi_range: string | null;
+  selected_text: string | null;
   body: string;
   visibility: string;
   status: string;
   parent_comment_id: string | null;
+  resolved_at: string | null;
   created_at: string;
   updated_at: string;
+}
+
+/**
+ * Comment DTO. The client's `Comment` type reads flat locator fields, and
+ * `comments` stores them as `chapter_ref` / `cfi_range` / `selected_text` —
+ * this mapper is the single place that keeps the two in step. (The route
+ * previously wrote a `locator_json` column that no migration defines, so
+ * creating a comment failed with a D1 error.)
+ */
+function toCommentDTO(row: CommentRow, viewerEmail: string) {
+  return {
+    id: row.id,
+    displayName: row.user_email.slice(0, 2) + '***',
+    isOwn: row.user_email === viewerEmail,
+    chapterRef: row.chapter_ref ?? null,
+    cfiRange: row.cfi_range ?? null,
+    selectedText: row.selected_text ?? null,
+    body: row.body,
+    visibility: row.visibility,
+    status: row.status,
+    parentCommentId: row.parent_comment_id,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    resolvedAt: row.resolved_at ?? null,
+  };
 }
 
 commentsRouter.get('/books/:bookId/comments', readerAuth, async (c) => {
@@ -44,29 +72,9 @@ commentsRouter.get('/books/:bookId/comments', readerAuth, async (c) => {
     [bookId, auth.email],
   );
 
-  const parsedComments = await Promise.all(
-    comments.map(async (cm) => ({
-      id: cm.id,
-      displayName: cm.user_email.slice(0, 2) + '***',
-      isOwn: cm.user_email === auth.email,
-      locator: await parseLocatorRow(
-        c.env,
-        cm.locator_json,
-        { entityType: 'comment', entityId: cm.id, bookId: cm.book_id },
-        c.executionCtx,
-      ),
-      body: cm.body,
-      visibility: cm.visibility,
-      status: cm.status,
-      parentCommentId: cm.parent_comment_id,
-      createdAt: cm.created_at,
-      updatedAt: cm.updated_at,
-    })),
-  );
-
   return c.json({
     ok: true,
-    data: parsedComments,
+    data: comments.map((cm) => toCommentDTO(cm, auth.email)),
   });
 });
 
@@ -111,13 +119,15 @@ commentsRouter.post('/books/:bookId/comments', readerAuth, zValidator('json', Co
 
   await execute(
     c.env,
-    `INSERT INTO comments (id, book_id, user_email, locator_json, body, visibility, status, parent_comment_id, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, 'open', ?, ?, ?)`,
+    `INSERT INTO comments (id, book_id, user_email, chapter_ref, cfi_range, selected_text, body, visibility, status, parent_comment_id, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'open', ?, ?, ?)`,
     [
       id,
       bookId,
       auth.email,
-      body.locator ? JSON.stringify(body.locator) : null,
+      body.locator?.chapterRef ?? null,
+      body.locator?.cfi ?? null,
+      body.locator?.selectedText ?? null,
       body.body,
       body.visibility ?? 'shared',
       body.parentCommentId ?? null,
@@ -149,18 +159,24 @@ commentsRouter.post('/books/:bookId/comments', readerAuth, zValidator('json', Co
   return c.json(
     {
       ok: true,
-      data: {
-        id,
-        displayName: auth.email.slice(0, 2) + '***',
-        isOwn: true,
-        locator: body.locator,
-        body: body.body,
-        visibility: body.visibility,
-        status: 'open',
-        parentCommentId: body.parentCommentId,
-        createdAt: now,
-        updatedAt: now,
-      },
+      data: toCommentDTO(
+        {
+          id,
+          book_id: bookId,
+          user_email: auth.email,
+          chapter_ref: body.locator?.chapterRef ?? null,
+          cfi_range: body.locator?.cfi ?? null,
+          selected_text: body.locator?.selectedText ?? null,
+          body: body.body,
+          visibility: body.visibility ?? 'shared',
+          status: 'open',
+          parent_comment_id: body.parentCommentId ?? null,
+          resolved_at: null,
+          created_at: now,
+          updated_at: now,
+        },
+        auth.email,
+      ),
     },
     201,
   );
