@@ -56,6 +56,18 @@ describe('Enum Schemas', () => {
       expect(EntityTypeSchema.parse('user')).toBe('user');
       expect(EntityTypeSchema.parse('bookmark')).toBe('bookmark');
       expect(EntityTypeSchema.parse('highlight')).toBe('highlight');
+      // Collaboration, reference and progress entities: the audit and admin
+      // filter boundary must know the types the Worker actually writes.
+      expect(EntityTypeSchema.parse('progress')).toBe('progress');
+      expect(EntityTypeSchema.parse('editorial-feedback')).toBe('editorial-feedback');
+      expect(EntityTypeSchema.parse('editorial-feedback-export')).toBe('editorial-feedback-export');
+      expect(EntityTypeSchema.parse('book-creator')).toBe('book-creator');
+      expect(EntityTypeSchema.parse('book-reference')).toBe('book-reference');
+      expect(EntityTypeSchema.parse('style-profile')).toBe('style-profile');
+    });
+
+    it('rejects an unknown entity type', () => {
+      expect(EntityTypeSchema.safeParse('not-a-type').success).toBe(false);
     });
   });
 });

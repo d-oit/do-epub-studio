@@ -348,6 +348,26 @@ describe('Admin Routes', () => {
       expect(body.data.entries).toHaveLength(1);
     });
 
+    it('accepts collaboration entity types in the audit filter', async () => {
+      mockAdminAuth();
+
+      mockQueryAll
+        .mockResolvedValueOnce([{ cnt: 0 }]) // count query
+        .mockResolvedValueOnce([]); // rows query
+
+      // The filter enum must cover what the Worker writes, otherwise Wave-2
+      // audit entries cannot be queried at all.
+      const res = await app.fetch(
+        new Request('http://localhost/api/admin/audit?entityType=editorial-feedback&limit=10'),
+        env,
+        makePassThroughContext(),
+      );
+
+      expect(res.status).toBe(200);
+      const rowsCall = mockQueryAll.mock.calls.find((args) => String(args[1]).includes('entity_type = ?'));
+      expect(rowsCall?.[2]).toContain('editorial-feedback');
+    });
+
     it('rejects offset > 100_000 at schema validation', async () => {
       mockAdminAuth();
 

@@ -1,29 +1,21 @@
 import type { Env } from '../lib/env';
+import { execute } from '../db/client';
+import { logAppError } from '../lib/observability';
+import { EntityTypeSchema } from '@do-epub-studio/schema';
 
 /**
- * Entity types written to `audit_log`. Kept in sync with the CHECK constraint
- * on `audit_log.entity_type` (migrations 0001 + 0016) — adding a value here
- * without a migration makes every audit write for that type fail.
+ * Entity types written to `audit_log`, derived from the canonical
+ * `EntityTypeSchema`. `audit_log.entity_type`'s CHECK constraint must accept
+ * every value here — `audit-entity-types.test.ts` applies the real migrations
+ * to SQLite and proves it, so a new value needs a migration too.
  */
-export const AUDIT_ENTITY_TYPES = [
-  'book',
-  'grant',
-  'session',
-  'comment',
-  'user',
-  'bookmark',
-  'highlight',
-  'editorial-feedback',
-  'editorial-feedback-export',
-  'book-creator',
-  'book-reference',
-  'style-profile',
-] as const;
+export const AUDIT_ENTITY_TYPES = EntityTypeSchema.options;
 
-type EntityType = (typeof AUDIT_ENTITY_TYPES)[number];
+/** Union of every entity type accepted by `audit_log.entity_type`. */
+export type AuditEntityType = (typeof AUDIT_ENTITY_TYPES)[number];
 
 interface AuditEntry {
-  entityType: EntityType;
+  entityType: AuditEntityType;
   entityId: string;
   action: string;
   actorEmail?: string;
@@ -109,13 +101,24 @@ export async function logAudit(
       ? JSON.stringify(sanitizeAuditPayload(entry.payload))
       : null;
 
-    const { execute } = await import('../db/client');
-    await execute(
-      env,
-      `INSERT INTO audit_log (id, actor_email, entity_type, entity_id, action, payload_json)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [crypto.randomUUID(), entry.actorEmail ?? null, entry.entityType, entry.entityId, entry.action, payloadJson]
-    );
+    try {
+      await execute(
+        env,
+        `INSERT INTO audit_log (id, actor_email, entity_type, entity_id, action, payload_json)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [crypto.randomUUID(), entry.actorEmail ?? null, entry.entityType, entry.entityId, entry.action, payloadJson]
+      );
+    } catch (error) {
+      // D1 reports a CHECK rejection without naming the offending value, so
+      // record the entity type and action that the schema refused. The error is
+      // re-thrown: a dropped audit entry must stay visible, never silent.
+      logAppError('audit.insert_failed', error, {
+        entityType: entry.entityType,
+        entityId: entry.entityId,
+        action: entry.action,
+      });
+      throw error;
+    }
   })();
 
   if (ctx) {

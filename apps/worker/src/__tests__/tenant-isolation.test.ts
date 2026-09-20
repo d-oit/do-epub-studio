@@ -22,6 +22,28 @@ describe('Tenant Isolation', () => {
       expect(mockLogAudit).not.toHaveBeenCalled();
     });
 
+    it('parses a CFI-only progress locator without flagging it corrupt', async () => {
+      // ProgressLocatorSchema (the writer for reading_progress.locator_json)
+      // treats text and chapter as optional, so a CFI-only locator is valid
+      // progress data. Validating it as an annotation made every reader load
+      // log a spurious corrupt_locator entry — and that entry's 'progress'
+      // entity type then failed the audit CHECK constraint.
+      const locatorJson = JSON.stringify({ cfi: 'epubcfi(/6/2!/4/2[ch1]/1:0)' });
+      const result = await parseLocatorRow(env, locatorJson, { entityType: 'progress', entityId: 'p1', bookId: 'book-1' });
+      expect(result).toEqual({ cfi: 'epubcfi(/6/2!/4/2[ch1]/1:0)' });
+      expect(mockLogAudit).not.toHaveBeenCalled();
+    });
+
+    it('audits a corrupt progress locator under the progress entity type', async () => {
+      const result = await parseLocatorRow(env, 'not-json', { entityType: 'progress', entityId: 'p1', bookId: 'book-1' });
+      expect(result).toBeNull();
+      expect(mockLogAudit).toHaveBeenCalledWith(
+        env,
+        expect.objectContaining({ entityType: 'progress', action: 'corrupt_locator' }),
+        undefined,
+      );
+    });
+
     it('returns null and logs audit for invalid JSON', async () => {
       const result = await parseLocatorRow(env, 'not-json', { entityType: 'bookmark', entityId: 'b1', bookId: 'book-1' });
       expect(result).toBeNull();
