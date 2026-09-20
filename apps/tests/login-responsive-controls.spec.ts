@@ -224,6 +224,11 @@ test.describe('Responsive Login Controls & Layout Matrix', () => {
         const themeToggle = page.locator('[data-testid="login-header-controls"] button').first();
         await themeToggle.click();
 
+        // Confirm the click actually produced dark mode before measuring: the
+        // label alone asserted nothing, and reading geometry immediately after
+        // the theme flip raced the resulting layout change (flaky at 812x375).
+        await expect(page.locator('html'), `${errorCtx}: dark mode applied`).toHaveAttribute('data-theme', 'dark');
+
         const passwordInput = page.getByRole('textbox', { name: /Password/i });
         const toggle = page.locator('button[aria-controls="password"]');
 
@@ -247,9 +252,10 @@ test.describe('Responsive Login Controls & Layout Matrix', () => {
         const localeSelector = page.getByRole('combobox');
         await localeSelector.selectOption('ar');
 
-        await page.evaluate(() => {
-          document.documentElement.dir = 'rtl';
-        });
+        // Assert the application applied RTL rather than forcing the attribute:
+        // a manual override measures a DOM the app never produced and would pass
+        // even if locale handling regressed.
+        await expect(page.locator('html'), `${errorCtx}: RTL applied by the app`).toHaveAttribute('dir', 'rtl');
 
         const passwordInput = page.getByRole('textbox', { name: /كلمة المرور|Password/i });
         await expect(passwordInput, `${errorCtx}: password input visible in RTL`).toBeVisible();
