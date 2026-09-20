@@ -287,6 +287,19 @@ export function useReaderEpub(
         });
       } catch (err) {
         const error = err instanceof Error ? err : new Error(String(err));
+        // Cleanup (unmount, dependency change) destroys the loader and rejects
+        // the in-flight load: that is a cancellation, not an init failure.
+        if (!active) {
+          logClientEvent({
+            level: 'info',
+            event: 'reader.epub_init_aborted',
+            traceId: createTraceId(),
+            spanId: createSpanId(),
+            error: { name: error.name, message: error.message },
+            metadata: { bookId },
+          });
+          return;
+        }
         logClientEvent({
           level: 'error',
           event: 'reader.epub_init_failed',
@@ -295,11 +308,7 @@ export function useReaderEpub(
           error: { name: error.name, message: error.message, stack: error.stack },
           metadata: { bookId },
         });
-        // GOAP-224 A9: the component may have unmounted while initEpub was
-        // awaiting (cleanup sets `active = false` and destroys the loader,
-        // which rejects the in-flight load). Only surface the error to the
-        // reader store while this effect is still active.
-        if (active) setError(t('reader.loadError'));
+        setError(t('reader.loadError'));
       }
     };
 
