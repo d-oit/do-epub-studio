@@ -124,7 +124,7 @@ export function ReaderPage() {
 
   const rootRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<HTMLDivElement>(null);
-  const iframeRef = useRef<HTMLIFrameElement | null>(null);
+  const bookFileIdRef = useRef<string | null>(null);
 
   const [epubUrl, setEpubUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -174,15 +174,89 @@ export function ReaderPage() {
   });
 
   useEffect(() => {
+    // The viewer (and its frames) mount after the EPUB URL resolves, so bind
+    // from the page root and resolve the container lazily rather than bailing
+    // out when the ref is still empty.
+    const viewer = viewerRef;
+    const bindingRoot = rootRef.current ?? document.body;
+    if (!bindingRoot) return;
+
+    // epub.js renders the book into its own same-origin <iframe> inside the
+    // viewer, and mouse/selection events inside a frame never reach the parent
+    // document — so selection must be observed on each content document.
+    // Frames mount and unmount as sections display, hence the observer.
+    const attached = new WeakSet<Document>();
+    let settleTimer: number | undefined;
+
+    const readSelection = () => {
+      if (isCommentMode) return;
+      const container = viewer.current;
+      if (!container) return;
+      let frame: HTMLIFrameElement | null = null;
+      for (const candidate of container.querySelectorAll('iframe')) {
+        const live = candidate.contentWindow?.getSelection();
+        if (live && !live.isCollapsed && live.rangeCount > 0) {
+          frame = candidate;
+          break;
+        }
+      }
+      const sel = frame ? extractSelectionData(frame) : null;
+      if (sel && frame) {
+        // Anchor evidence the DOM alone cannot supply: the source file, the
+        // chapter the passage sits in, and a CFI for the exact range (browser
+        // selections carry no epub.js `cfiRange`).
+        sel.bookFileId = bookFileIdRef.current ?? undefined;
+        sel.chapterRef = currentChapterRef.current || sel.chapterRef;
+        const contents = renditionRef.current?.getContents()
+          .find((entry) => entry.document === frame?.contentDocument);
+        const range = frame.contentWindow?.getSelection()?.getRangeAt(0);
+        if (contents && range) {
+          try {
+            sel.cfiRange = contents.cfiFromRange(range);
+          } catch {
+            // Range outside the rendition's mapping: keep the anchor partial.
+          }
+        }
+      }
+      setSelection(sel && sel.text.length >= 3 ? sel : null);
+    };
+
+    // `selectionchange` fires per character while dragging, so settle first;
+    // mouseup ends a mouse selection immediately.
+    const onSelectionChange = () => {
+      window.clearTimeout(settleTimer);
+      settleTimer = window.setTimeout(readSelection, 150);
+    };
     const onMouseUp = () => {
-      if (iframeRef.current && !isCommentMode) {
-        const sel = extractSelectionData(iframeRef.current);
-        setSelection(sel && sel.text.length >= 3 ? sel : null);
+      window.clearTimeout(settleTimer);
+      readSelection();
+    };
+
+    const attachToFrames = () => {
+      const container = viewer.current;
+      if (!container) return;
+      for (const frame of container.querySelectorAll('iframe')) {
+        const doc = frame.contentDocument;
+        if (!doc || attached.has(doc)) continue;
+        attached.add(doc);
+        doc.addEventListener('selectionchange', onSelectionChange);
+        doc.addEventListener('mouseup', onMouseUp);
       }
     };
-    document.addEventListener('mouseup', onMouseUp);
-    return () => document.removeEventListener('mouseup', onMouseUp);
-  }, [isCommentMode, setSelection]);
+
+    attachToFrames();
+    const observer = new MutationObserver(attachToFrames);
+    observer.observe(bindingRoot, { childList: true, subtree: true });
+
+    return () => {
+      window.clearTimeout(settleTimer);
+      observer.disconnect();
+      for (const frame of viewer.current?.querySelectorAll('iframe') ?? []) {
+        frame.contentDocument?.removeEventListener('selectionchange', onSelectionChange);
+        frame.contentDocument?.removeEventListener('mouseup', onMouseUp);
+      }
+    };
+  }, [epubUrl, isCommentMode, setSelection, currentChapterRef, renditionRef, rootRef, viewerRef]);
 
   useEffect(() => {
     if (!bookId) return;
@@ -209,12 +283,13 @@ export function ReaderPage() {
         // Sessions are bound to the book UUID; assertBookAccess compares the
         // URL param against auth.bookId with no slug fallback, so file-url
         // must be addressed by id like every other reader API call.
-        const data = await apiRequest<{ url: string }>(`/api/books/${bookId}/file-url`, {
+        const data = await apiRequest<{ url: string; fileId?: string }>(`/api/books/${bookId}/file-url`, {
           method: 'POST',
           token: sessionToken,
           body: JSON.stringify({}),
           signal: controller.signal,
         });
+        bookFileIdRef.current = data.fileId ?? null;
         setEpubUrl(data.url);
         markInsightsLoaded();
       } catch (err) {

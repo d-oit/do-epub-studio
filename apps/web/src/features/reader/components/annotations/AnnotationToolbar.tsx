@@ -11,6 +11,11 @@ export interface SelectionData {
   cfiRange: string;
   chapterRef: string;
   rect: DOMRect;
+  /** Source file the passage came from (COL-03 evidence identity). */
+  bookFileId?: string;
+  /** Bounded text immediately before/after the passage, for re-anchoring. */
+  prefix?: string;
+  suffix?: string;
 }
 
 interface AnnotationToolbarProps {
@@ -72,7 +77,10 @@ export function AnnotationToolbar({
       const toolbarWidth = 240;
       let left = rect.left + rect.width / 2 - toolbarWidth / 2;
       left = Math.max(8, Math.min(left, window.innerWidth - toolbarWidth - 8));
-      const top = rect.top - 60 + window.scrollY;
+      // selection.rect is already in this document's viewport coordinates and
+      // the toolbar is position: fixed, so no scroll offset is added here; the
+      // clamp keeps it visible when the passage sits near the top edge.
+      const top = Math.max(8, rect.top - 60);
       setPosition({ top, left });
     };
 
@@ -312,9 +320,12 @@ export function extractSelectionData(iframe: HTMLIFrameElement): SelectionData |
   const rect = rects.length > 0 ? rects[0] : range.getBoundingClientRect();
 
   const iframeRect = iframe.getBoundingClientRect();
+  // The toolbar is position: fixed in the reader document, so report the
+  // passage in that document's viewport coordinates: range rects are relative
+  // to the frame's own viewport, so the frame's offset must be added.
   const adjustedRect = new DOMRect(
-    rect.left - iframeRect.left,
-    rect.top - iframeRect.top,
+    rect.left + iframeRect.left,
+    rect.top + iframeRect.top,
     rect.width,
     rect.height,
   );
@@ -326,11 +337,28 @@ export function extractSelectionData(iframe: HTMLIFrameElement): SelectionData |
     cfiRange = range.cfiRange;
   }
 
+  // Bounded surrounding text lets the passage be re-found if the source moves;
+  // browser-created ranges have no text-node boundary helpers, so read the
+  // containing text nodes.
+  const CONTEXT_CHARS = 32;
+  const startNode = range.startContainer;
+  const endNode = range.endContainer;
+  const prefix =
+    startNode?.nodeType === Node.TEXT_NODE
+      ? (startNode.textContent ?? '').slice(Math.max(0, range.startOffset - CONTEXT_CHARS), range.startOffset)
+      : '';
+  const suffix =
+    endNode?.nodeType === Node.TEXT_NODE
+      ? (endNode.textContent ?? '').slice(range.endOffset, range.endOffset + CONTEXT_CHARS)
+      : '';
+
   return {
     text,
     cfiRange,
     chapterRef,
     rect: adjustedRect,
+    prefix: prefix || undefined,
+    suffix: suffix || undefined,
   };
 }
 

@@ -32,10 +32,14 @@ export function ReaderViewer({
         </div>
       ) : epubUrl ? (
         <div className={`mx-auto px-4 py-8 ${pageWidthClass}`}>
-          <div
-            ref={viewerRef}
-            className="h-[calc(100dvh-8rem)] bg-background-secondary rounded-lg overflow-hidden"
-          />
+          {/* epub.js takes ownership of the render target: Viewport.updateFlow
+              assigns `target.className = flow` and sizing reads the target's
+              clientWidth/clientHeight. Classes are therefore unusable for
+              layout here — the surface lives on this wrapper and the host is
+              sized with inline style, which epub.js does not overwrite. */}
+          <div className="h-[calc(100dvh-8rem)] bg-background-secondary rounded-lg overflow-hidden">
+            <div ref={viewerRef} style={{ width: '100%', height: '100%' }} />
+          </div>
         </div>
       ) : (
         <div className="flex items-center justify-center h-96">

@@ -36,9 +36,13 @@ export function useSyncStatus(): void {
     let cleanupOnline: (() => void) | undefined;
     let interval: ReturnType<typeof setInterval> | undefined;
     void import('../lib/offline')
-      .then(({ getSyncQueue, setupOnlineListener }) => {
+      .then(({ getSyncQueue, setupOnlineListener, syncAll }) => {
         if (cancelled) return;
         cleanupOnline = setupOnlineListener();
+        // Replay anything left queued by an earlier session: without this a
+        // contribution captured offline only reaches the server when the
+        // browser emits another `online` event.
+        void syncAll();
         const updateCount = async () => {
           try {
             const queue = await getSyncQueue();

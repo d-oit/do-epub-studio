@@ -152,15 +152,6 @@ async function resolveCanComment(
   return canComment === true;
 }
 
-async function replyCountFor(env: Env, feedbackId: string): Promise<number> {
-  const row = await queryFirst<{ n: number }>(
-    env,
-    `SELECT COUNT(*) AS n FROM feedback_replies WHERE feedback_id = ?`,
-    [feedbackId],
-  );
-  return row?.n ?? 0;
-}
-
 async function repliesFor(env: Env, feedbackId: string): Promise<ReplyRow[]> {
   return queryAll<ReplyRow>(
     env,
@@ -260,6 +251,7 @@ feedbackRouter.post(
         body.mutationId,
         body.referenceRevisions ? JSON.stringify(body.referenceRevisions) : null,
         now,
+        now,
       ],
     );
 
@@ -317,8 +309,30 @@ feedbackRouter.get(
     args.push(limit, offset);
 
     const rows = await queryAll<FeedbackRow>(c.env, sql, args);
+
+    // Replies are shown inline in the reader's own list, so load them in one
+    // batched query instead of leaving every reader without the creator's
+    // answer until they open the item.
+    const repliesByFeedback = new Map<string, ReplyRow[]>();
+    if (rows.length > 0) {
+      const placeholders = rows.map(() => '?').join(', ');
+      const allReplies = await queryAll<ReplyRow>(
+        c.env,
+        `SELECT * FROM feedback_replies WHERE feedback_id IN (${placeholders}) ORDER BY created_at ASC LIMIT 500`,
+        rows.map((row) => row.id),
+      );
+      for (const reply of allReplies) {
+        const bucket = repliesByFeedback.get(reply.feedback_id) ?? [];
+        bucket.push(reply);
+        repliesByFeedback.set(reply.feedback_id, bucket);
+      }
+    }
+
     const data = await Promise.all(
-      rows.map(async (row) => toReaderDTO(row, [], await replyCountFor(c.env, row.id), await computeAnchorState(c.env, row))),
+      rows.map(async (row) => {
+        const replies = repliesByFeedback.get(row.id) ?? [];
+        return toReaderDTO(row, replies, replies.length, await computeAnchorState(c.env, row));
+      }),
     );
 
     return c.json({ ok: true, data });

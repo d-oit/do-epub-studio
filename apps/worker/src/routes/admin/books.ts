@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { CreateBookSchema, UpdateBookSchema } from '@do-epub-studio/shared';
 import { validateEpub } from '@do-epub-studio/shared/src/epub-validator';
-import type { Env } from '../../lib/env';
+import type { Env, JsonRow } from '../../lib/env';
 import { execute, queryFirst, queryAll, transaction } from '../../db/client';
 import { logAudit } from '../../audit';
 import { UploadCompleteSchema } from '@do-epub-studio/schema';
@@ -14,6 +14,50 @@ import { NotFoundError, ValidationError, AppError } from '../../lib/http-errors'
 import { createRequestContext, logRequestError } from '../../lib/observability';
 
 export const booksRouter = new Hono<{ Bindings: Env; Variables: { adminUser: { email: string; id: string; role: string } } }>();
+
+interface AdminBookRow extends JsonRow {
+  id: string;
+  slug: string;
+  title: string;
+  author_name: string | null;
+  description: string | null;
+  language: string;
+  visibility: string;
+  cover_image_url: string | null;
+  published_at: string | null;
+}
+
+/**
+ * Admin book inventory consumed by `AdminBookResponsesPage` and the grants
+ * book selector (`fetchAdminBooks`). Archived books are excluded: archive is a
+ * soft delete, so a book removed here must not reappear in either surface.
+ */
+booksRouter.get('/', adminAuth, async (c) => {
+  const rows = await queryAll<AdminBookRow>(
+    c.env,
+    `SELECT id, slug, title, author_name, description, language, visibility,
+            cover_image_url, published_at
+     FROM books
+     WHERE archived_at IS NULL
+     ORDER BY created_at DESC`,
+    [],
+  );
+
+  return c.json({
+    ok: true,
+    data: rows.map((row) => ({
+      id: row.id,
+      slug: row.slug,
+      title: row.title,
+      authorName: row.author_name ?? null,
+      description: row.description ?? null,
+      language: row.language,
+      visibility: row.visibility,
+      coverImageUrl: row.cover_image_url ?? null,
+      publishedAt: row.published_at ?? null,
+    })),
+  });
+});
 
 booksRouter.post('/', adminAuth, zValidator('json', CreateBookSchema), async (c) => {
   const body = c.req.valid('json');
