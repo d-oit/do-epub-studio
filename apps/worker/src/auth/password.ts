@@ -122,22 +122,24 @@ export async function createGrant(
   },
 ): Promise<string> {
   const normalizedEmail = email.toLowerCase();
-  const passwordHash = options?.password ? await hashPassword(options.password) : null;
 
   // (book_id, email) is UNIQUE, so re-granting to a previously revoked reader
   // must revive that row rather than insert a second one — a bare INSERT
-  // surfaced as an unhandled SQLITE_CONSTRAINT (500) in the admin UI.
+  // surfaced as an unhandled SQLITE_CONSTRAINT (500) in the admin UI. The
+  // lookup runs before hashing: a duplicate request must not pay for Argon2id.
   const existing = await queryFirst<{ id: string; revoked_at: string | null }>(
     env,
     `SELECT id, revoked_at FROM book_access_grants WHERE book_id = ? AND email = ?`,
     [bookId, normalizedEmail],
   );
 
-  if (existing) {
-    if (!existing.revoked_at) {
-      throw new AppError('This email already has access to this book', 'GRANT_EXISTS', 409);
-    }
+  if (existing && !existing.revoked_at) {
+    throw new AppError('This email already has access to this book', 'GRANT_EXISTS', 409);
+  }
 
+  const passwordHash = options?.password ? await hashPassword(options.password) : null;
+
+  if (existing) {
     await execute(
       env,
       `UPDATE book_access_grants

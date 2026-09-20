@@ -6,14 +6,23 @@
  * ("An unexpected error occurred") with no way to restore the reader.
  *
  * Applies the real migration set to in-memory SQLite and exercises the real
- * `createGrant`, so the UNIQUE constraint is the production one.
+ * `createGrant`, so the UNIQUE constraint is the production one. Argon2id is
+ * mocked (as in `password-coverage.test.ts`): the real hasher runs 64 MiB × 3
+ * per call, which pushed two hashes past the default 5 s test timeout on CI
+ * runners and has nothing to do with the SQL contract under test.
  */
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { readdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
-import { createGrant, verifyPassword } from '../auth/password';
+import { createGrant } from '../auth/password';
 import type { Env } from '../lib/env';
+
+vi.mock('argon2-wasm-edge', () => ({
+  argon2id: vi.fn(({ password }: { password: string }) => Promise.resolve(`argon2id:${password}`)),
+  argon2Verify: vi.fn(({ password, hash }: { password: string; hash: string }) =>
+    Promise.resolve(hash === `argon2id:${password}`)),
+}));
 
 const MIGRATIONS_DIR = resolve(import.meta.dirname, '../../../../packages/schema/migrations');
 const BOOK_ID = 'book-grants-reissue';
@@ -47,10 +56,10 @@ afterAll(() => {
   db?.close();
 });
 
-function grantRows(): Record<string, unknown>[] {
+function grantRows(email = EMAIL): Record<string, unknown>[] {
   return db
     .prepare('SELECT * FROM book_access_grants WHERE book_id = ? AND email = ?')
-    .all(BOOK_ID, EMAIL);
+    .all(BOOK_ID, email);
 }
 
 describe('createGrant re-issue', () => {
@@ -77,18 +86,20 @@ describe('createGrant re-issue', () => {
     expect(rows[0].revoked_at).toBeNull();
     expect(rows[0].allowed).toBe(1);
     expect(rows[0].comments_allowed).toBe(0);
-    expect(await verifyPassword('second-password', String(rows[0].password_hash))).toBe(true);
-    expect(await verifyPassword('first-password', String(rows[0].password_hash))).toBe(false);
+    expect(rows[0].password_hash).toBe('argon2id:second-password');
   });
 
   it('rejects a second active grant for the same email as a conflict', async () => {
+    const email = 'conflict@example.com';
+    await createGrant(env, BOOK_ID, email, { password: 'kept-password' });
+
     await expect(
-      createGrant(env, BOOK_ID, EMAIL, { password: 'another-password' }),
+      createGrant(env, BOOK_ID, email, { password: 'another-password' }),
     ).rejects.toMatchObject({ code: 'GRANT_EXISTS', statusCode: 409 });
 
-    const rows = grantRows();
+    const rows = grantRows(email);
     expect(rows).toHaveLength(1);
     expect(rows[0].revoked_at).toBeNull();
-    expect(await verifyPassword('another-password', String(rows[0].password_hash))).toBe(false);
+    expect(rows[0].password_hash).toBe('argon2id:kept-password');
   });
 });
