@@ -61,7 +61,7 @@ Repository Git history is inspected for decisions only. No manuscript revision b
 
 Evidence classes: **confirmed defect** (source-verified) · **confirmed gap** (source-verified absence) · **static token defect** (computation, rendered check pending) · **source-backed fragility** (source-verified, reproduction pending) · **static source risk** (source-verified path, runtime reproduction pending).
 
-### Status reconciliation (2026-09-15, source-verified)
+### Status reconciliation (2026-09-15, source-verified; Wave 2 rows added 2026-09-20 in PR #1152)
 
 Several Wave 1 findings were closed by later PRs without updating this plan. Verified against the current `main` tree:
 
@@ -241,7 +241,7 @@ No application test passes, server readiness, browser execution, accessibility c
 
 ### 9.2 Future implementation acceptance checks
 
-Items 1–4 were executed against the real local stack on 2026-09-20 (worker + web dev + seeded demo accounts + local D1 at migrations 0001–0016, driven through the browser with API-level checks for the denial paths). Each item lists what was observed; the defects the run uncovered are tabulated in §5.
+Items 1–4 were executed against the real local stack on 2026-09-20 (worker + web dev + seeded demo accounts + local D1 at migrations 0001–0016, driven through the browser with API-level checks for the denial paths), delivered in PR #1152. Each item lists what was observed; the defects the run uncovered are tabulated in §5.
 
 1. **Ordinary reader boundary (COL-01 / SEC-01) — verified 2026-09-20.** reader with `commentsAllowed: false` opens a book — reading, TOC, search, font/theme controls, bookmarks work; selection exposes no comment/suggestion actions; `POST /api/books/:id/comments` returns 403; no unread feedback banner.
    *Observed:* with the demo reader's grant flipped to `comments_allowed = 0` through the grants UI (step-up flow), the session reports `canComment: false` and `POST /api/books/:id/feedback` returns **403**; the reader rendered the EPUB (TOC panel opening, chapter chrome, bookmarks/settings reachable) and a real drag-selection produced no toolbar and no `feedback`/`comment`/`suggest` string anywhere in the reader DOM.
