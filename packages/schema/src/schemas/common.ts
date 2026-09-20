@@ -20,6 +20,14 @@ export const CommentStatusSchema = z.enum(['open', 'resolved', 'deleted']);
 
 export const CommentVisibilitySchema = z.enum(['shared', 'internal', 'resolved']);
 
+/**
+ * Entity types recorded in `audit_log.entity_type`.
+ *
+ * This is the single source of truth: the Worker's audit module derives its
+ * `EntityType` union from here, and `audit_log.entity_type`'s CHECK constraint
+ * (migrations 0001, 0016, 0017) must accept exactly these values. Adding a
+ * value here without a migration makes every audit write for that type fail.
+ */
 export const EntityTypeSchema = z.enum([
   'book',
   'grant',
@@ -28,6 +36,12 @@ export const EntityTypeSchema = z.enum([
   'user',
   'bookmark',
   'highlight',
+  'progress',
+  'editorial-feedback',
+  'editorial-feedback-export',
+  'book-creator',
+  'book-reference',
+  'style-profile',
 ]);
 
 /** Flexible locator type for export/import (no Zod validation — use MultiSignalLocatorSchema for API boundaries) */

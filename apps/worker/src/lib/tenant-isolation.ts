@@ -1,5 +1,5 @@
-import { MultiSignalLocatorSchema } from '@do-epub-studio/shared';
-import { logAudit } from '../audit';
+import { MultiSignalLocatorSchema, ProgressLocatorSchema } from '@do-epub-studio/shared';
+import { logAudit, type AuditEntityType } from '../audit';
 import { queryFirst } from '../db/client';
 import type { Env, JsonRow } from './env';
 import type { AuthContext } from '../auth/middleware';
@@ -14,20 +14,26 @@ interface GrantRow extends JsonRow {
 export async function parseLocatorRow(
   env: Env,
   locatorJson: string | null,
-  context: { entityType: string; entityId: string; bookId: string },
+  context: { entityType: AuditEntityType; entityId: string; bookId: string },
   ctx?: { waitUntil: (p: Promise<unknown>) => void },
 ): Promise<Record<string, unknown> | null> {
   if (!locatorJson) return null;
 
+  // Reading progress legitimately stores a CFI-only locator (its writer,
+  // ProgressLocatorSchema, treats text and chapter as optional); annotations
+  // require the full multi-signal locator. Validating progress rows against
+  // the annotation schema marked every progress row corrupt.
+  const schema = context.entityType === 'progress' ? ProgressLocatorSchema : MultiSignalLocatorSchema;
+
   try {
     const parsed: unknown = JSON.parse(locatorJson);
-    const result = MultiSignalLocatorSchema.safeParse(parsed);
+    const result = schema.safeParse(parsed);
 
     if (!result.success) {
       await logAudit(
         env,
         {
-          entityType: context.entityType as 'comment' | 'bookmark' | 'highlight',
+          entityType: context.entityType,
           entityId: context.entityId,
           action: 'corrupt_locator',
           payload: {
@@ -45,7 +51,7 @@ export async function parseLocatorRow(
     await logAudit(
       env,
       {
-        entityType: context.entityType as 'comment' | 'bookmark' | 'highlight',
+        entityType: context.entityType,
         entityId: context.entityId,
         action: 'corrupt_locator',
         payload: {
