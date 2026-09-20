@@ -75,6 +75,31 @@ describe('Rate Limiting Middleware', () => {
       expect(response?.headers.get('X-RateLimit-Remaining')).toBe('0');
     });
 
+    it('does not meter or reject CORS preflights', async () => {
+      // Browsers send one preflight per cross-origin API call. Metering them
+      // doubles quota usage and, when the budget is spent, rejects the
+      // preflight — which the browser reports as a CORS error, hiding the 429.
+      const preflight = new Request('http://localhost/api/books', {
+        method: 'OPTIONS',
+        headers: {
+          'cf-connecting-ip': '1.2.3.4',
+          Origin: 'https://app.example.com',
+          'Access-Control-Request-Method': 'POST',
+        },
+      });
+      vi.mocked(checkRateLimitDO).mockResolvedValue({
+        allowed: false,
+        remaining: 0,
+        resetAt: Date.now() + 30000,
+      });
+
+      const { response, metadata } = await applyRateLimit(preflight, env);
+
+      expect(response).toBeUndefined();
+      expect(metadata).toBeUndefined();
+      expect(checkRateLimitDO).not.toHaveBeenCalled();
+    });
+
     it('checks both IP and token when token is present', async () => {
       const request = new Request('http://localhost/api/books', {
         headers: {

@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { isAppError, toApiError, ValidationError } from '@do-epub-studio/shared';
 import type { Env } from './lib/env';
-import type { RequestContext } from './lib/observability';
+import { logAppError, type RequestContext } from './lib/observability';
 import { observabilityMiddleware } from './middleware/observability';
 import { securityHeadersMiddleware } from './middleware/security-headers';
 import { corsMiddleware } from './middleware/cors';
@@ -90,5 +90,16 @@ app.onError((err, c) => {
   const apiError = toApiError(err, ctx.traceId);
   const status = isAppError(err) ? err.statusCode : 500;
   const details = err instanceof ValidationError && err.issues?.length ? { details: err.issues } : {};
+  // Unexpected failures are otherwise reported only as a generic 500 with a
+  // trace id, leaving nothing in the logs to diagnose (see the catalog cache-key
+  // regression: the response carried a traceId while the worker logged nothing).
+  if (status >= 500) {
+    logAppError(
+      'request.unhandled_error',
+      err,
+      { method: c.req.method, path: c.req.path, status },
+      { traceId: ctx.traceId, spanId: ctx.spanId },
+    );
+  }
   return c.json({ ok: false, error: { ...apiError, ...details }, status } as never, status as 400 | 401 | 403 | 404 | 409 | 413 | 423 | 429 | 500 | 504);
 });

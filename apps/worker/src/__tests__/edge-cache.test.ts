@@ -42,14 +42,27 @@ describe('edge-cache helpers', () => {
   });
 
   describe('buildCacheKey', () => {
-    it('builds a stable key for the same URL', async () => {
+    it('builds a stable, http(s) key for the same URL', async () => {
       const request = new Request('https://example.com/api/catalog?q=a&limit=10', {
         headers: { 'Accept-Language': 'en' },
       });
       const k1 = await buildCacheKey(request);
       const k2 = await buildCacheKey(request);
       expect(k1.url).toBe(k2.url);
-      expect(k1.url).toContain('edge-cache:v1');
+      // The Cache API rejects any scheme but http(s): a `edge-cache:v1:...` key
+      // made every catalog request 500 wherever caches.default exists.
+      expect(new URL(k1.url).protocol).toBe('https:');
+      expect(decodeURIComponent(k1.url)).toContain('edge-cache:v1');
+    });
+
+    it('scopes the key to the cache version', async () => {
+      const request = new Request('https://example.com/api/catalog');
+      const defaultKey = await buildCacheKey(request);
+      const bumpedKey = await buildCacheKey(request, {
+        CACHE_KV: { get: () => Promise.resolve('v9') } as unknown as KVNamespace,
+      });
+      expect(bumpedKey.url).not.toBe(defaultKey.url);
+      expect(decodeURIComponent(bumpedKey.url)).toContain('edge-cache:v9');
     });
 
     it('orders query params for stability', async () => {

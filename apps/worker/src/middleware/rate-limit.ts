@@ -40,6 +40,15 @@ export async function applyRateLimit(
   env: Env,
   traceId?: string,
 ): Promise<{ response?: Response; metadata?: RateLimitMetadata }> {
+  // CORS preflights do no work, and a browser issues one for every
+  // cross-origin API call — metering them doubles the client's quota usage
+  // (30 reader calls per page load exhaust a 60/min budget) and, once the
+  // budget is gone, rejects the preflight itself. The browser then reports a
+  // CORS failure and the app never sees the 429 that explains it.
+  if (request.method === 'OPTIONS') {
+    return {};
+  }
+
   const url = new URL(request.url);
   const path = url.pathname;
   const { config, category } = getRateLimitConfig(path);
