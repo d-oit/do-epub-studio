@@ -8,9 +8,12 @@ import type { AuthContext } from '../auth/middleware';
 // ---------------------------------------------------------------------------
 
 vi.mock('../db/client', () => ({
-  queryFirst: vi.fn(),
-  queryAll: vi.fn(),
-  execute: vi.fn(),
+  // Defaults mirror the real client's contract (queryAll always yields an
+  // array, queryFirst null, execute a result envelope): a bare vi.fn() returns
+  // undefined, which only fails deep inside a caller that iterates the result.
+  queryFirst: vi.fn().mockResolvedValue(null),
+  queryAll: vi.fn().mockResolvedValue([]),
+  execute: vi.fn().mockResolvedValue({ rows: [] }),
   transaction: vi.fn(),
 }));
 

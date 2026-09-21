@@ -14,7 +14,7 @@ import {
   type CreatorBook,
   type Disposition,
 } from '../../lib/api/creator';
-import type { FeedbackCategory, FeedbackItem, FeedbackStatus } from '../../lib/api/feedback';
+import type { FeedbackCategory, FeedbackItem, FeedbackStatus, FeedbackAnchorState } from '../../lib/api/feedback';
 import { createTraceId } from '@do-epub-studio/shared';
 import { logClientEvent } from '../../lib/client-logger';
 import type { TFunction } from '../../hooks/useTranslation';
@@ -23,6 +23,13 @@ import { AssistancePanel } from './AssistancePanel';
 
 const STATUSES: FeedbackStatus[] = ['open', 'accepted', 'declined', 'resolved'];
 const CATEGORIES: FeedbackCategory[] = ['general', 'grammar', 'spelling', 'story', 'logic', 'style'];
+
+/** Read-time anchor states, labelled for the reviewer looking at provenance. */
+const ANCHOR_STATE_LABEL: Record<FeedbackAnchorState, 'ref.anchorResolved' | 'ref.anchorSourceChanged' | 'ref.anchorUnresolved'> = {
+  resolved: 'ref.anchorResolved',
+  source_changed: 'ref.anchorSourceChanged',
+  unresolved: 'ref.anchorUnresolved',
+};
 
 function statusLabel(t: TFunction, status: string): string {
   switch (status) {
@@ -267,6 +274,19 @@ export function FeedbackWorkspacePage(): React.JSX.Element {
                   {selected2.kind} · {selected2.category} · {statusLabel(t, selected2.status)}
                 </h2>
                 <section aria-label={t('creator.referencesLabel')} className="mt-2 rounded-lg bg-background-secondary p-3 text-sm">
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-foreground-muted">
+                    <span
+                      aria-label={t(ANCHOR_STATE_LABEL[selected2.anchorState ?? 'unresolved'])}
+                      className={`rounded-full px-2 py-0.5 ${selected2.anchorState === 'resolved' ? 'bg-background-tertiary' : 'bg-amber-500/15 text-amber-700 dark:text-amber-300'}`}
+                    >
+                      {t(ANCHOR_STATE_LABEL[selected2.anchorState ?? 'unresolved'])}
+                    </span>
+                    {selected2.referencesDrifted && (
+                      <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-amber-700 dark:text-amber-300">
+                        {t('ref.revisionDrifted')}
+                      </span>
+                    )}
+                  </div>
                   {selected2.anchor.chapterRef && <p>{`${t('creator.referencesLabel')}: ${selected2.anchor.chapterRef}`}</p>}
                   {selected2.anchor.cfi && <p className="break-all font-mono text-xs">{selected2.anchor.cfi}</p>}
                   {selected2.anchor.selectedText && (

@@ -49,6 +49,21 @@ export function FeedbackPanel({ items, loadError, onWithdraw, onRetry, onReply, 
                 {item.delivery === 'pending' ? t('feedback.pendingBadge') : item.delivery}
               </span>
             )}
+            {item.anchorState === 'source_changed' && (
+              <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-amber-700 dark:text-amber-300">
+                {t('ref.anchorSourceChanged')}
+              </span>
+            )}
+            {item.anchorState === 'unresolved' && (
+              <span className="rounded-full bg-background-tertiary px-2 py-0.5">
+                {t('ref.anchorUnresolved')}
+              </span>
+            )}
+            {item.referencesDrifted && (
+              <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-amber-700 dark:text-amber-300">
+                {t('ref.revisionDrifted')}
+              </span>
+            )}
           </div>
 
           {item.anchor.selectedText && (
