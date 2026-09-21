@@ -32,6 +32,15 @@ vi.mock('../../lib/api/creator', async () => {
 
 import { fetchCreatorFeedback, fetchCreatorFeedbackDetail } from '../../lib/api/creator';
 
+vi.mock('./hooks/useCreatorBooks', () => ({
+  useCreatorBooks: () => ({
+    books: [{ id: 'b1', slug: 'demo', title: 'Demo Book' }],
+    isLoading: false,
+    error: null,
+    refresh: vi.fn(),
+  }),
+}));
+
 function item(overrides: Partial<FeedbackItem> = {}): FeedbackItem {
   return {
     id: 'f1',
@@ -59,6 +68,26 @@ async function renderWorkspace(): Promise<void> {
   );
   await waitFor(() => expect(useCreatorStore.getState().items.length).toBe(1));
 }
+
+describe('FeedbackWorkspacePage heading', () => {
+  it('names the book instead of its id when the route is opened directly', async () => {
+    // Direct navigation leaves the creator store's book list empty; the
+    // session-cached assigned books supply the title.
+    useCreatorStore.setState({ books: [], items: [], selectedId: null, isLoading: false, error: null });
+    vi.mocked(fetchCreatorFeedback).mockResolvedValue([]);
+
+    render(
+      <MemoryRouter initialEntries={['/creator/books/b1/feedback']}>
+        <Routes>
+          <Route path="/creator/books/:bookId/feedback" element={<FeedbackWorkspacePage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByRole('heading', { name: 'Demo Book' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'b1' })).not.toBeInTheDocument();
+  });
+});
 
 describe('FeedbackWorkspacePage provenance', () => {
   beforeEach(() => {

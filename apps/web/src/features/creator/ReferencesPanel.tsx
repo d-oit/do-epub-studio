@@ -213,24 +213,24 @@ export function ReferencesPanel({ bookId }: ReferencesPanelProps): React.JSX.Ele
           <input
             value={newTitle}
             onChange={(e) => setNewTitle(e.target.value)}
-            placeholder={t('ref.kindLabel')}
-            aria-label={t('ref.kindLabel')}
+            placeholder={t('ref.titleLabel')}
+            aria-label={t('ref.titleLabel')}
             className="w-full rounded-lg border border-border bg-background p-2 text-sm"
           />
           <textarea
             value={newContent}
             onChange={(e) => setNewContent(e.target.value)}
             rows={3}
-            placeholder={t('ref.evidenceNote')}
-            aria-label={t('ref.evidenceNote')}
+            placeholder={t('ref.contentLabel')}
+            aria-label={t('ref.contentLabel')}
             className="w-full rounded-lg border border-border bg-background p-2 text-sm"
           />
           {newKind === 'external_citation' && (
             <input
               value={newUrl}
               onChange={(e) => setNewUrl(e.target.value)}
-              placeholder={'https://' /* eslint-disable-line i18next/no-literal-string -- URL scheme placeholder */}
-              aria-label={'https://' /* eslint-disable-line i18next/no-literal-string -- URL scheme label */}
+              placeholder={'https://' /* eslint-disable-line i18next/no-literal-string -- URL scheme example */}
+              aria-label={t('ref.sourceUrlLabel')}
               className="w-full rounded-lg border border-border bg-background p-2 text-sm"
             />
           )}

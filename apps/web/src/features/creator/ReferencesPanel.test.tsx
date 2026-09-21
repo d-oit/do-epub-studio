@@ -66,6 +66,24 @@ describe('ReferencesPanel (Wave 3)', () => {
     expect(screen.getByText('https://example.com/a')).toBeInTheDocument();
   });
 
+  it('gives the reference fields their own accessible names', async () => {
+    vi.mocked(fetchReferences).mockResolvedValue([]);
+    vi.mocked(fetchStyleProfile).mockResolvedValue(null);
+
+    render(
+      <MemoryRouter>
+        <ReferencesPanel bookId="book-1" />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(await screen.findByRole('button', { name: 'ref.add' }));
+
+    // The title, content and source-URL inputs must not all answer to the
+    // generic "Kind"/"Evidence note" labels a screen reader would mis-announce.
+    expect(await screen.findByLabelText('ref.titleLabel')).toBeInTheDocument();
+    expect(screen.getByLabelText('ref.contentLabel')).toBeInTheDocument();
+  });
+
   it('saves the first style profile for a book that has none yet', async () => {
     const { saveStyleProfile } = await import('../../lib/api/creator');
     vi.mocked(fetchReferences).mockResolvedValue([]);
