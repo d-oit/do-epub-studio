@@ -167,6 +167,45 @@ describe('AdminGrantResponsesPage', () => {
     );
   });
 
+  it('refreshes the row capabilities after a successful edit', async () => {
+    const updatedGrant = { ...mockGrants[0], commentsAllowed: false };
+    let grantsFetches = 0;
+    vi.mocked(api.apiRequest).mockImplementation((url: string) => {
+      if (url === '/api/admin/books') return Promise.resolve(mockBooks);
+      if (url.includes('/grants')) {
+        grantsFetches += 1;
+        return Promise.resolve(grantsFetches === 1 ? mockGrants : [updatedGrant]);
+      }
+      return Promise.resolve({ ok: true });
+    });
+
+    await renderAndFlush('/admin/books/b1/grants');
+
+    expect(screen.getByText('grants.capabilities.comments')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('grants.actions.edit'));
+
+    const modal = screen.getByRole('dialog');
+    fireEvent.click(within(modal).getByLabelText('grants.capabilities.comments'));
+
+    const modalForm = modal.querySelector('form');
+    expect(modalForm).toBeInTheDocument();
+    await act(async () => {
+      (modalForm as HTMLFormElement).requestSubmit();
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    });
+
+    // The edit succeeded without rotating the session token, so nothing else
+    // re-renders the loader: the table must refresh from the mutation itself.
+    await waitFor(
+      () => {
+        expect(screen.queryByText('grants.capabilities.comments')).not.toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
+    expect(grantsFetches).toBeGreaterThan(1);
+  });
+
   it('revokes a grant', async () => {
     vi.mocked(api.apiRequest).mockImplementation((url: string) => {
       if (url === '/api/admin/books') return Promise.resolve(mockBooks);
