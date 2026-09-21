@@ -18,6 +18,11 @@ import {
   AssistanceConsentSchema,
 } from '@do-epub-studio/schema';
 import { assertBookAccess } from '../lib/tenant-isolation';
+import {
+  currentReferenceRevisions,
+  resolveProvenance,
+  type ItemProvenance,
+} from '../lib/feedback-provenance';
 import { getRequestTraceId } from '../lib/api-error';
 import { readerAuth } from '../middleware/auth';
 import { NotFoundError, ForbiddenError, AppError } from '../lib/http-errors';
@@ -46,6 +51,7 @@ interface FeedbackRow extends JsonRow {
   category: string;
   body: string;
   proposed_text: string | null;
+  reference_revisions: string | null;
   submitter_email: string;
   status: string;
   mutation_id: string;
@@ -103,6 +109,7 @@ function toCreatorDTO(
   replies: ReplyRow[] = [],
   events: EventRow[] = [],
   replyCount = 0,
+  provenance: ItemProvenance = { anchorState: 'unresolved', referencesDrifted: false, pinnedReferences: {} },
 ): Record<string, unknown> {
   const email = row.submitter_email;
   return {
@@ -120,6 +127,9 @@ function toCreatorDTO(
       prefix: row.prefix,
       suffix: row.suffix,
     },
+    anchorState: provenance.anchorState,
+    referenceRevisions: provenance.pinnedReferences,
+    referencesDrifted: provenance.referencesDrifted,
     status: row.status,
     submitterEmail: email,
     displayName: email.slice(0, 2) + '***',
@@ -139,6 +149,18 @@ function toCreatorDTO(
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
+}
+
+/** A creator-facing item with its read-time provenance resolved. */
+async function creatorItem(
+  env: Env,
+  row: FeedbackRow,
+  replies: ReplyRow[] = [],
+  events: EventRow[] = [],
+  replyCount = 0,
+  baseline?: Record<string, number>,
+): Promise<Record<string, unknown>> {
+  return toCreatorDTO(row, replies, events, replyCount, await resolveProvenance(env, row, baseline));
 }
 
 async function replyCountFor(env: Env, feedbackId: string): Promise<number> {
@@ -219,8 +241,11 @@ creatorRouter.get(
     args.push(limit, offset);
 
     const rows = await queryAll<FeedbackRow>(c.env, sql, args);
+    // One baseline query per request: every item's pinned revisions are
+    // compared against the book's current references.
+    const baseline = await currentReferenceRevisions(c.env, bookId);
     const data = await Promise.all(
-      rows.map(async (row) => toCreatorDTO(row, [], [], await replyCountFor(c.env, row.id))),
+      rows.map(async (row) => creatorItem(c.env, row, [], [], await replyCountFor(c.env, row.id), baseline)),
     );
 
     return c.json({ ok: true, data });
@@ -245,7 +270,7 @@ creatorRouter.get('/creator/books/:bookId/feedback/:id', readerAuth, async (c) =
     throw new NotFoundError('Feedback');
   }
   const { replies, events } = await threadFor(c.env, id);
-  return c.json({ ok: true, data: toCreatorDTO(row, replies, events) });
+  return c.json({ ok: true, data: await creatorItem(c.env, row, replies, events) });
 });
 
 creatorRouter.post(
@@ -305,7 +330,7 @@ creatorRouter.post(
     if (!updated) {
       throw new NotFoundError('Feedback');
     }
-    return c.json({ ok: true, data: toCreatorDTO(updated, replies, events) }, 201);
+    return c.json({ ok: true, data: await creatorItem(c.env, updated, replies, events) }, 201);
   },
 );
 
@@ -373,7 +398,7 @@ creatorRouter.post(
     if (!updated) {
       throw new NotFoundError('Feedback');
     }
-    return c.json({ ok: true, data: toCreatorDTO(updated, replies, events) });
+    return c.json({ ok: true, data: await creatorItem(c.env, updated, replies, events) });
   },
 );
 
@@ -401,7 +426,7 @@ creatorRouter.post(
       );
       if (!row) continue;
       const { replies, events } = await threadFor(c.env, id);
-      items.push(toCreatorDTO(row, replies, events));
+      items.push(await creatorItem(c.env, row, replies, events));
       await execute(
         c.env,
         `INSERT INTO feedback_events (id, feedback_id, actor_email, event, created_at)

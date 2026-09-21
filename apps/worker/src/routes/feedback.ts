@@ -12,6 +12,11 @@ import {
 } from '@do-epub-studio/schema';
 import { assertBookAccess } from '../lib/tenant-isolation';
 import { getRequestTraceId } from '../lib/api-error';
+import {
+  currentReferenceRevisions,
+  resolveProvenance,
+  type ItemProvenance,
+} from '../lib/feedback-provenance';
 import { readerAuth } from '../middleware/auth';
 import { NotFoundError, ForbiddenError, AppError } from '../lib/http-errors';
 
@@ -35,53 +40,6 @@ interface FeedbackRow extends JsonRow {
   anchor_state: string;
   created_at: string;
   updated_at: string;
-}
-
-/**
- * Compute the anchor state at READ time (Wave 3, COL-03):
- * - `resolved`      — stored source sha matches the current book_files sha.
- * - `source_changed`— the book file's sha no longer matches the stored
- *                     evidence sha; the item stays readable but the source
- *                     moved. Never auto-applied.
- * - `unresolved`    — no source identity to match (book-level feedback or
- *                     missing anchor). Honest absence, never a guess.
- * Never accepted from clients; always derived.
- */
-async function computeAnchorState(env: Env, row: FeedbackRow): Promise<string> {
-  if (!row.book_file_id) {
-    return 'unresolved';
-  }
-  const file = await queryFirst<{ sha256: string | null }>(
-    env,
-    `SELECT sha256 FROM book_files WHERE id = ?`,
-    [row.book_file_id],
-  );
-  if (!file) {
-    return 'source_changed';
-  }
-  if (file.sha256 && row.source_sha256 && file.sha256 === row.source_sha256) {
-    return 'resolved';
-  }
-  return 'source_changed';
-}
-
-function parseReferenceRevisions(row: FeedbackRow): Record<string, number> {
-  if (typeof row.reference_revisions !== 'string' || row.reference_revisions.length === 0) {
-    return {};
-  }
-  try {
-    const parsed: unknown = JSON.parse(row.reference_revisions);
-    if (typeof parsed === 'object' && parsed !== null) {
-      const out: Record<string, number> = {};
-      for (const [key, value] of Object.entries(parsed as Record<string, unknown>)) {
-        if (typeof value === 'number') out[key] = value;
-      }
-      return out;
-    }
-    return {};
-  } catch {
-    return {};
-  }
 }
 
 interface ReplyRow extends JsonRow {
@@ -108,7 +66,7 @@ function toReaderDTO(
   row: FeedbackRow,
   replies: ReplyRow[] = [],
   replyCount = 0,
-  anchorState = 'unresolved',
+  provenance: ItemProvenance,
 ): Record<string, unknown> {
   return {
     id: row.id,
@@ -117,8 +75,9 @@ function toReaderDTO(
     body: row.body,
     proposedText: row.proposed_text,
     anchor: toAnchor(row),
-    anchorState,
-    referenceRevisions: parseReferenceRevisions(row),
+    anchorState: provenance.anchorState,
+    referenceRevisions: provenance.pinnedReferences,
+    referencesDrifted: provenance.referencesDrifted,
     status: row.status,
     isOwn: true,
     replyCount,
@@ -132,6 +91,17 @@ function toReaderDTO(
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
+}
+
+/** A reader-facing item with its read-time provenance resolved. */
+async function readerItem(
+  env: Env,
+  row: FeedbackRow,
+  replies: ReplyRow[] = [],
+  replyCount = 0,
+  baseline?: Record<string, number>,
+): Promise<Record<string, unknown>> {
+  return toReaderDTO(row, replies, replyCount, await resolveProvenance(env, row, baseline));
 }
 
 async function resolveCanComment(
@@ -206,7 +176,7 @@ feedbackRouter.post(
       if (existing.book_id !== bookId || existing.submitter_email !== auth.email) {
         throw new ForbiddenError('Access denied');
       }
-      return c.json({ ok: true, data: toReaderDTO(existing, await repliesFor(c.env, existing.id), 0, await computeAnchorState(c.env, existing)) });
+      return c.json({ ok: true, data: await readerItem(c.env, existing, await repliesFor(c.env, existing.id)) });
     }
 
     // Anchor provenance server-side: a supplied book file must belong to this
@@ -226,6 +196,14 @@ feedbackRouter.post(
 
     const id = crypto.randomUUID();
     const now = new Date().toISOString();
+
+    // Evidence pinning (COL-03): a reader cannot read the book's references,
+    // so when the client sends no pins the server records the revision of
+    // every reference the book has at acceptance time. A later reference edit
+    // then shows the honest "reference updated since" marker instead of
+    // pretending the evidence never moved.
+    const pins = body.referenceRevisions ?? await currentReferenceRevisions(c.env, bookId);
+    const pinnedJson = Object.keys(pins).length > 0 ? JSON.stringify(pins) : null;
 
     await execute(
       c.env,
@@ -249,7 +227,7 @@ feedbackRouter.post(
         body.proposedText ?? null,
         auth.email,
         body.mutationId,
-        body.referenceRevisions ? JSON.stringify(body.referenceRevisions) : null,
+        pinnedJson,
         now,
         now,
       ],
@@ -279,7 +257,7 @@ feedbackRouter.post(
       throw new NotFoundError('Feedback');
     }
 
-    return c.json({ ok: true, data: toReaderDTO(row, [], 0, await computeAnchorState(c.env, row)) }, 201);
+    return c.json({ ok: true, data: await readerItem(c.env, row) }, 201);
   },
 );
 
@@ -328,10 +306,14 @@ feedbackRouter.get(
       }
     }
 
+    // One baseline query per request: every item's pinned revisions are
+    // compared against the book's current references.
+    const baseline = await currentReferenceRevisions(c.env, bookId);
+
     const data = await Promise.all(
       rows.map(async (row) => {
         const replies = repliesByFeedback.get(row.id) ?? [];
-        return toReaderDTO(row, replies, replies.length, await computeAnchorState(c.env, row));
+        return readerItem(c.env, row, replies, replies.length, baseline);
       }),
     );
 
@@ -348,7 +330,7 @@ feedbackRouter.get('/books/:bookId/feedback/:id', readerAuth, async (c) => {
   if (mismatch) return mismatch.response;
 
   const row = await ownFeedbackOr404(c.env, id, bookId, auth.email);
-  return c.json({ ok: true, data: toReaderDTO(row, await repliesFor(c.env, id), 0, await computeAnchorState(c.env, row)) });
+  return c.json({ ok: true, data: await readerItem(c.env, row, await repliesFor(c.env, id)) });
 });
 
 feedbackRouter.post('/books/:bookId/feedback/:id/withdraw', readerAuth, async (c) => {
@@ -384,7 +366,7 @@ feedbackRouter.post('/books/:bookId/feedback/:id/withdraw', readerAuth, async (c
   }
 
   const updated = await ownFeedbackOr404(c.env, id, bookId, auth.email);
-  return c.json({ ok: true, data: toReaderDTO(updated, await repliesFor(c.env, id), 0, await computeAnchorState(c.env, updated)) });
+  return c.json({ ok: true, data: await readerItem(c.env, updated, await repliesFor(c.env, id)) });
 });
 
 feedbackRouter.post(
@@ -426,6 +408,6 @@ feedbackRouter.post(
     );
 
     const updated = await ownFeedbackOr404(c.env, id, bookId, auth.email);
-    return c.json({ ok: true, data: toReaderDTO(updated, await repliesFor(c.env, id), 0, await computeAnchorState(c.env, updated)) }, 201);
+    return c.json({ ok: true, data: await readerItem(c.env, updated, await repliesFor(c.env, id)) }, 201);
   },
 );

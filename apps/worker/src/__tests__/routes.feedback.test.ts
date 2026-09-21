@@ -153,6 +153,60 @@ describe('Editorial Feedback Routes (reader)', () => {
     expect(payload.data[0].replyCount).toBe(1);
   });
 
+  it('pins the book’s reference revisions at submit, so a later edit is detectable', async () => {
+    mockRequireAuth.mockResolvedValue(makeAuthContext());
+    mockQueryFirst.mockResolvedValueOnce(null); // no existing mutation
+    mockQueryAll.mockResolvedValue([{ id: 'ref-1', revision: 3 }]); // current references
+    mockQueryFirst.mockResolvedValueOnce({ // re-read after insert
+      id: 'fb-1', book_id: 'book-1', kind: 'suggestion', category: 'grammar',
+      body: FEEDBACK_BODY.body, proposed_text: FEEDBACK_BODY.proposedText,
+      book_file_id: null, source_sha256: null, chapter_ref: null, cfi: null,
+      selected_text: 'Consider a comma here.', prefix: null, suffix: null,
+      reference_revisions: JSON.stringify({ 'ref-1': 3 }),
+      submitter_email: 'user@example.com', status: 'open',
+      created_at: 'now', updated_at: 'now',
+    });
+
+    const res = await postFeedback();
+    expect(res.status).toBe(201);
+
+    // The reader cannot read the book's references, so the server records what
+    // the evidence set was when the submission was accepted.
+    const insert = mockExecute.mock.calls.find((args) =>
+      String(args[1]).includes('INSERT INTO editorial_feedback'));
+    expect(insert?.[2]).toContain('{"ref-1":3}');
+
+    const payload: { data: Record<string, unknown> } = await res.json();
+    expect(payload.data.referenceRevisions).toEqual({ 'ref-1': 3 });
+    expect(payload.data.referencesDrifted).toBe(false);
+    expect(payload.data.anchorState).toBe('unresolved');
+  });
+
+  it('flags an item whose pinned reference was edited since submission', async () => {
+    mockRequireAuth.mockResolvedValue(makeAuthContext());
+    mockQueryAll.mockImplementation(((_env: unknown, sql: string) => {
+      if (String(sql).includes('FROM book_references')) return Promise.resolve([{ id: 'ref-1', revision: 4 }]);
+      if (String(sql).includes('FROM feedback_replies')) return Promise.resolve([]);
+      return Promise.resolve([{
+        id: 'fb-1', book_id: 'book-1', submitter_email: 'user@example.com', status: 'open',
+        kind: 'suggestion', category: 'grammar', body: 'x', proposed_text: null,
+        book_file_id: null, source_sha256: null, chapter_ref: null, cfi: null,
+        selected_text: 'x', prefix: null, suffix: null,
+        reference_revisions: JSON.stringify({ 'ref-1': 2 }),
+        created_at: 'now', updated_at: 'now',
+      }]);
+    }) as never);
+
+    const res = await app.fetch(new Request('http://localhost/api/books/book-1/feedback', {
+      headers: { Authorization: 'Bearer valid' },
+    }), env, makePassThroughContext());
+    expect(res.status).toBe(200);
+
+    const payload: { data: Array<{ referencesDrifted: boolean; referenceRevisions: Record<string, number> }> } = await res.json();
+    expect(payload.data[0].referenceRevisions).toEqual({ 'ref-1': 2 });
+    expect(payload.data[0].referencesDrifted).toBe(true);
+  });
+
   it('returns 404 (not 403) for another reader’s item', async () => {
     mockRequireAuth.mockResolvedValue(makeAuthContext());
     mockQueryFirst.mockResolvedValueOnce(null); // no own row

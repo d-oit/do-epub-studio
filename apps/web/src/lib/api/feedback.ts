@@ -16,6 +16,9 @@ export type FeedbackStatus =
   | 'withdrawn';
 export type FeedbackDelivery = 'draft' | 'pending' | 'sent' | 'failed' | 'blocked';
 
+/** Read-time provenance the server derives; never sent by a client. */
+export type FeedbackAnchorState = 'unresolved' | 'resolved' | 'source_changed';
+
 export interface FeedbackAnchor {
   bookFileId?: string;
   chapterRef?: string;
@@ -47,6 +50,10 @@ export interface FeedbackItem {
   body: string;
   proposedText: string | null;
   anchor: FeedbackAnchor;
+  /** Derived at read time: whether the passage still matches its source file. */
+  anchorState?: FeedbackAnchorState;
+  /** Derived at read time: whether the evidence pinned at submission still matches. */
+  referencesDrifted?: boolean;
   status: FeedbackStatus;
   submitterEmail?: string;
   displayName?: string;
