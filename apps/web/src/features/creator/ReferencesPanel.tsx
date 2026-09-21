@@ -30,6 +30,23 @@ function kindLabel(t: TFunction, kind: string): string {
   return t(KINDS.find((k) => k.id === kind)?.label ?? 'ref.kindStyle');
 }
 
+/** Editable stand-in for a book that has no style-profile row yet. */
+function emptyStyleDraft(): StyleProfileData {
+  return {
+    language: null,
+    narrativePerson: null,
+    tense: null,
+    dialogueConventions: null,
+    dialectNotes: null,
+    terminology: null,
+    intentionalExceptions: null,
+    status: 'draft',
+    approvedBy: null,
+    approvedAt: null,
+    revision: 0,
+  };
+}
+
 interface ReferencesPanelProps {
   bookId: string;
 }
@@ -66,7 +83,9 @@ export function ReferencesPanel({ bookId }: ReferencesPanelProps): React.JSX.Ele
         fetchStyleProfile(bookId, token),
       ]);
       setReferences(refs);
-      setStyle(profile);
+      // A book with no profile row yet returns null; keep an empty draft so the
+      // fields are editable and the first approval can actually be saved.
+      setStyle(profile ?? emptyStyleDraft());
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -343,7 +362,7 @@ export function ReferencesPanel({ bookId }: ReferencesPanelProps): React.JSX.Ele
         {style?.status !== 'approved' && (
           <button
             type="button"
-            disabled={styleSaving}
+            disabled={styleSaving || style === null}
             onClick={() => void handleApproveStyle()}
             className="mt-3 rounded-lg bg-accent px-3 py-1.5 text-sm text-white hover:opacity-90 disabled:opacity-50"
           >
