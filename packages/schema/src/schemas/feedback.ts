@@ -153,13 +153,16 @@ export const ReferenceListQuerySchema = z.object({
 export type ReferenceListQuery = z.infer<typeof ReferenceListQuerySchema>;
 
 export const StyleProfileSchema = z.object({
-  language: z.string().max(50).optional(),
-  narrativePerson: z.string().max(100).optional(),
-  tense: z.string().max(100).optional(),
-  dialogueConventions: z.string().max(2000).optional(),
-  dialectNotes: z.string().max(2000).optional(),
-  terminology: z.string().max(5000).optional(),
-  intentionalExceptions: z.string().max(5000).optional(),
+  // `nullish`, not `optional`: GET /style answers null for unset fields, so a
+  // client that round-trips the resource it just read sends null — rejecting
+  // that made the first approval of a partially-filled profile fail 400.
+  language: z.string().max(50).nullish(),
+  narrativePerson: z.string().max(100).nullish(),
+  tense: z.string().max(100).nullish(),
+  dialogueConventions: z.string().max(2000).nullish(),
+  dialectNotes: z.string().max(2000).nullish(),
+  terminology: z.string().max(5000).nullish(),
+  intentionalExceptions: z.string().max(5000).nullish(),
   status: z.enum(['draft', 'approved']),
 });
 

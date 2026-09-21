@@ -218,6 +218,23 @@ describe('StyleProfileSchema', () => {
     expect(StyleProfileSchema.safeParse({ status: 'approved', language: 'en' }).success).toBe(true);
   });
 
+  it('accepts the nulls its own GET response returns', () => {
+    // The creator panel sends back the profile it read, whose unset fields are
+    // null; a partially-filled approval must not be rejected as invalid.
+    const roundTrip = {
+      status: 'approved',
+      language: 'English (British)',
+      narrativePerson: null,
+      tense: null,
+      dialogueConventions: null,
+      dialectNotes: null,
+      terminology: null,
+      intentionalExceptions: null,
+    };
+    const parsed = StyleProfileSchema.safeParse(roundTrip);
+    expect(parsed.success).toBe(true);
+  });
+
   it('rejects an unknown status', () => {
     expect(StyleProfileSchema.safeParse({ status: 'reviewed' }).success).toBe(false);
   });

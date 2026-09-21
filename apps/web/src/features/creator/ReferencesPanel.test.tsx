@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { ReferencesPanel } from './ReferencesPanel';
 import { fetchReferences, fetchStyleProfile } from '../../lib/api/creator';
@@ -64,5 +64,39 @@ describe('ReferencesPanel (Wave 3)', () => {
     expect(await screen.findByText('ref.unverified')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'ref.verify' })).toBeInTheDocument();
     expect(screen.getByText('https://example.com/a')).toBeInTheDocument();
+  });
+
+  it('saves the first style profile for a book that has none yet', async () => {
+    const { saveStyleProfile } = await import('../../lib/api/creator');
+    vi.mocked(fetchReferences).mockResolvedValue([]);
+    vi.mocked(fetchStyleProfile).mockResolvedValue(null);
+    vi.mocked(saveStyleProfile).mockResolvedValue({
+      bookId: 'book-1',
+      status: 'approved',
+      approvedBy: 'creator@example.com',
+      approvedAt: 'now',
+      revision: 1,
+    });
+
+    render(
+      <MemoryRouter>
+        <ReferencesPanel bookId="book-1" />
+      </MemoryRouter>,
+    );
+
+    const language = await screen.findByLabelText('ref.styleLanguage');
+    fireEvent.change(language, { target: { value: 'English (British)' } });
+    // The typed value must survive the controlled re-render, not just the DOM.
+    expect(language).toHaveValue('English (British)');
+
+    fireEvent.click(screen.getByRole('button', { name: 'ref.styleApprove' }));
+
+    await waitFor(() => {
+      expect(saveStyleProfile).toHaveBeenCalledWith(
+        'book-1',
+        expect.objectContaining({ language: 'English (British)', status: 'approved' }),
+        'token',
+      );
+    });
   });
 });
