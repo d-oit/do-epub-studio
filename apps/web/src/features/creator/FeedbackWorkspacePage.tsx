@@ -20,6 +20,7 @@ import { logClientEvent } from '../../lib/client-logger';
 import type { TFunction } from '../../hooks/useTranslation';
 import { ReferencesPanel } from './ReferencesPanel';
 import { AssistancePanel } from './AssistancePanel';
+import { useCreatorBooks } from './hooks/useCreatorBooks';
 
 const STATUSES: FeedbackStatus[] = ['open', 'accepted', 'declined', 'resolved'];
 const CATEGORIES: FeedbackCategory[] = ['general', 'grammar', 'spelling', 'story', 'logic', 'style'];
@@ -52,12 +53,17 @@ export function FeedbackWorkspacePage(): React.JSX.Element {
   const selectedId = useCreatorStore((s) => s.selectedId);
   const isLoading = useCreatorStore((s) => s.isLoading);
   const error = useCreatorStore((s) => s.error);
+  // Session-cached assigned books: opening this route directly leaves the
+  // store's list empty, and the heading (and the export filename) must not fall
+  // back to a raw book id.
+  const { books: assignedBooks } = useCreatorBooks();
 
   const [replyText, setReplyText] = useState('');
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [actionError, setActionError] = useState<string | null>(null);
 
-  const book: CreatorBook | undefined = books.find((b) => b.id === bookId);
+  const book: CreatorBook | undefined =
+    books.find((b) => b.id === bookId) ?? assignedBooks.find((b) => b.id === bookId);
 
   const load = useCallback(async () => {
     if (!bookId || !sessionToken) return;
