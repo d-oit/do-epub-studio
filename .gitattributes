@@ -73,13 +73,15 @@ Makefile            text eol=lf
 .tool-versions  text eol=lf
 
 # ---------------------------------------------------------------------------
-# Lock files — text, LF, no diff, merge with ours to avoid conflicts
-# ---------------------------------------------------------------------------
-*.lock              text eol=lf -diff merge=ours
-package-lock.json   text eol=lf -diff merge=ours
-yarn.lock           text eol=lf -diff merge=ours
-pnpm-lock.yaml      text eol=lf -diff merge=ours
-Cargo.lock          text eol=lf -diff merge=ours
+# Lock files — text, LF, no diff. (merge=ours was removed: no merge.ours.driver
+# is registered, so the attribute was inert, and "ours" would drop the other
+# side's dependency changes — regenerate the lockfile instead, per
+# .agents/skills/migration-refactoring/SKILL.md.)
+*.lock              text eol=lf -diff
+package-lock.json   text eol=lf -diff
+yarn.lock           text eol=lf -diff
+pnpm-lock.yaml      text eol=lf -diff
+Cargo.lock          text eol=lf -diff
 
 # ---------------------------------------------------------------------------
 # Markup / docs — text, LF
