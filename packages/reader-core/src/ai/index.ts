@@ -72,6 +72,15 @@ export {
   localEditorialProvenance,
 } from './plugins/local-editorial';
 export type { LocalEditorialPluginOptions } from './plugins/local-editorial';
+export {
+  createLanguageToolEditorialPlugin,
+  LANGUAGE_TOOL_EDITORIAL_CATEGORIES,
+} from './plugins/languagetool-editorial';
+export type {
+  LanguageToolEditorialCapability,
+  LanguageToolEditorialPlugin,
+  LanguageToolEditorialPluginOptions,
+} from './plugins/languagetool-editorial';
 export type {
   EditorialReviewCapability,
   EditorialReviewRequest,
