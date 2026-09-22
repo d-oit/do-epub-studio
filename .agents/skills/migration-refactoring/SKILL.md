@@ -222,6 +222,20 @@ npm test
 - **code-quality**: Ensure code quality after migration
 - **testing-strategy**: Validate with tests
 
+## pnpm Lockfile Conflict Recipe
+
+1. Take main's side: `git checkout origin/main -- pnpm-lock.yaml`.
+2. Re-pin the PR's declared target explicitly with
+   `pnpm add --save-exact --lockfile-only <pkg>@<declared-version>` — a plain
+   `pnpm install --lockfile-only` resolves `^x.y.z` to the *newest* patch and
+   silently changes what the PR claims to do.
+3. Restore the manifest, then `pnpm install --lockfile-only` to re-sync the
+   importer specifiers.
+4. Verify the delta with `diff <(git show origin/main:pnpm-lock.yaml)
+   pnpm-lock.yaml)`: `.gitattributes` marks lockfiles `-diff`, so `git diff`
+   only prints `Bin`. `merge=ours` is inert (no `merge.ours.driver` is
+   registered) — conflicts still occur; never resolve them by keeping one side.
+
 ## Quality Checklist
 
 - [ ] Breaking changes identified

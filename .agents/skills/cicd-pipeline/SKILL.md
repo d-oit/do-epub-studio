@@ -231,6 +231,14 @@ Define route-specific budgets in `.performance-budgets.json` under `routeBudgets
 
 Reference `.lighthouserc.json` for per-route URL configuration.
 
+## Devcontainer Must Track the CI Toolchain
+
+- **Node ≥22 is mandatory**: wrangler requires it and the CI matrix is 22/24 —
+  a Node 20 base image dies at `worker#build`, far from the actual cause.
+- **Playwright needs a matching distro for WebKit**: 1.63 ships no WebKit build
+  for debian11 (only debian12/13), so base images must be bookworm+; the
+  failure surfaces as a browser *download* error, not an image problem.
+
 ## Summary
 
 CI/CD pipelines automate the path from code to production.

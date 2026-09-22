@@ -1,6 +1,6 @@
 # ADR-247: Dependabot actions bumps get automated verified-SHA allowlisting
 
-**Status:** Accepted (2026-09-14)
+**Status:** Accepted (2026-09-14) — implemented, dogfood-verified 2026-09-22 (GOAP-270 Phase 3; run `35582701376`, bot commit `cad3fc66`, PR #1164 merged without a manual allowlist edit)
 **Date:** 2026-09-14
 **Related:** GOAP-270, `scripts/validate-shas.sh`, `scripts/validate-workflows.sh`, `.github/workflows/dependabot-auto-merge.yml`
 

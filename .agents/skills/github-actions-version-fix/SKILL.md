@@ -76,6 +76,25 @@ gh api repos/{owner}/{repo}/commits/{sha}
 | `Reference does not exist` | Verify SHA exists |
 | `Tag not found` | Use different tag or SHA |
 
+## Pin-Comment & zizmor Rules
+
+`validate-workflows.sh` runs zizmor, which rejects a `uses: …@<sha>` whose
+trailing version comment doesn't match the tag GitHub actually has
+(audit `ref-version-mismatch`):
+
+- **Tag names are not uniformly `v`-prefixed**: `treosh/lighthouse-ci-action`
+  is tagged `12.6.2`, so a `# v12.6.2` comment fails. Verify before editing
+  either side: `gh api repos/<owner>/<repo>/matching-refs/tags/<prefix> --jq '.[].ref'`.
+- **The failure surfaces as `pnpm lint failed`**, not a workflow error: the
+  root lint script chains `turbo run lint && pnpm lint:workflows`, so read the
+  *tail* of the output — the ESLint header is a red herring.
+- **Verify tags with `git ls-remote <upstream> "refs/tags/<tag>^{}"`**
+  (annotated) and fall back to the plain ref for lightweight tags. The GitHub
+  tags API returns the tag *object*, so its SHA is wrong for a `uses:` pin.
+- **Local zizmor on pip-less images**: the validator's pip fallbacks fail
+  silently (`No module named pip`); `uv tool install zizmor` works but lands in
+  `~/.local/bin`, which must be exported on `PATH` or the validator finds nothing.
+
 ## Best Practices
 
 1. **Prefer releases over tags** - More stable
