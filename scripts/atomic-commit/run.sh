@@ -19,6 +19,8 @@ BASE_BRANCH="${ATOMIC_COMMIT_BASE_BRANCH:-main}"
 source "$REPO_ROOT/scripts/lib/colors.sh"
 # shellcheck source=scripts/lib/logging.sh
 source "$REPO_ROOT/scripts/lib/logging.sh" "atomic-commit"
+# shellcheck source=scripts/lib/verify-outcome.sh
+source "$REPO_ROOT/scripts/lib/verify-outcome.sh"
 
 readonly E_SUCCESS=0
 readonly E_QUALITY_GATE=2
@@ -262,12 +264,31 @@ main() {
 
     success "Created PR: $PR_URL"
 
-    if ! run_phase "VERIFY" "$SCRIPT_DIR/verify.sh" "$PR_NUMBER" "$TIMEOUT"; then
-        rollback_pr
-        rollback_push
-        rollback_commit
-        exit $E_CHECKS
-    fi
+    # verify.sh distinguishes a real failure (1) from an inconclusive run (2:
+    # deadline reached, no checks, or GitHub unreachable). Only a real failure
+    # may destroy work — closing a healthy PR and force-pushing its branch back
+    # cost two PRs their review state before this split.
+    set_phase "VERIFY"
+    VERIFY_EXIT=0
+    "$SCRIPT_DIR/verify.sh" "$PR_NUMBER" "$TIMEOUT" || VERIFY_EXIT=$?
+
+    case "$(decide_verify_action "$VERIFY_EXIT")" in
+        passed)
+            ;;
+        rollback)
+            error "CI checks failed"
+            rollback_pr
+            rollback_push
+            rollback_commit
+            exit $E_CHECKS
+            ;;
+        *)
+            warn "CI verification was INCONCLUSIVE (verify exit $VERIFY_EXIT)"
+            warn "The commit and PR are left in place; nothing was rolled back."
+            warn "Check the PR and merge manually when its checks settle."
+            exit $E_CHECKS
+            ;;
+    esac
 
     set_phase "REPORT"
 

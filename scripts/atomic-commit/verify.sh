@@ -2,6 +2,14 @@
 # Phase 6: VERIFY - Wait for CI checks
 # Polls GitHub checks with timeout using structured JSON output.
 # Usage: verify.sh [pr-number] [timeout-seconds]
+#
+# Exit codes (the orchestrator branches on these; only 1 may destroy work):
+#   0  every check passed
+#   1  at least one check failed
+#   2  inconclusive — the deadline passed, no checks ever appeared, or GitHub
+#      could not be queried. The PR and branch are left untouched; the operator
+#      decides. Treating these as failures closed healthy PRs and force-pushed
+#      their branches back.
 
 set -euo pipefail
 
@@ -17,6 +25,9 @@ MAX_POLL_INTERVAL=60
 # exceed 60s on a freshly created PR — a hardcoded 60s here rolled back good
 # PRs. Override with ATOMIC_COMMIT_NO_CHECKS_GRACE (seconds).
 NO_CHECKS_GRACE="${ATOMIC_COMMIT_NO_CHECKS_GRACE:-300}"
+# A hung `gh` call must not stall the poll loop indefinitely; treat a slow API
+# as "no data this round" instead.
+GH_CALL_TIMEOUT="${ATOMIC_COMMIT_GH_TIMEOUT:-60}"
 
 # Source shared libs
 # shellcheck source=scripts/lib/colors.sh
@@ -42,23 +53,35 @@ echo ""
 
 START_TIME=$(date +%s)
 POLL_INTERVAL=$BASE_POLL_INTERVAL
+SLEPT_TOTAL=0
+CLOCK_WARNED=0
 
 while true; do
     CURRENT_TIME=$(date +%s)
     ELAPSED=$((CURRENT_TIME - START_TIME))
 
+    # A wall-clock jump (host suspend/resume under WSL, NTP step) inflates
+    # ELAPSED past what the loop actually waited; surface it instead of blaming
+    # the PR.
+    if [[ $CLOCK_WARNED -eq 0 ]] && [[ $((ELAPSED - SLEPT_TOTAL)) -gt 300 ]]; then
+        warn "Wall clock advanced $((ELAPSED - SLEPT_TOTAL))s beyond the polled time — clock jump?"
+        CLOCK_WARNED=1
+    fi
+
     if [[ $ELAPSED -gt $TIMEOUT ]]; then
-        error "Timeout waiting for checks (${TIMEOUT}s)"
-        error "PR may still be processing - check manually:"
-        gh pr view "$PR_NUMBER" --json url --jq '.url' 2>/dev/null || true
-        exit 1
+        error "Deadline reached while checks were still pending (${TIMEOUT}s budget)"
+        error "This is INCONCLUSIVE, not a failure: the PR and branch are left as they are."
+        error "Check manually:"
+        timeout "$GH_CALL_TIMEOUT" gh pr checks "$PR_NUMBER" 2>&1 || true
+        timeout "$GH_CALL_TIMEOUT" gh pr view "$PR_NUMBER" --json url --jq '.url' 2>/dev/null || true
+        exit 2
     fi
 
     # Use fields supported by the installed GitHub CLI. `conclusion` and
     # `status` are GraphQL fields exposed by `gh pr view`, but are not valid
     # `gh pr checks --json` fields; `bucket` is the stable pass/fail/pending/
     # skipping classification for this command.
-    CHECKS_JSON=$(gh pr checks "$PR_NUMBER" --json name,state,bucket 2>/dev/null || echo "[]")
+    CHECKS_JSON=$(timeout "$GH_CALL_TIMEOUT" gh pr checks "$PR_NUMBER" --json name,state,bucket 2>/dev/null || echo "[]")
 
     # Parse check states
     PENDING_COUNT=0
@@ -105,7 +128,7 @@ while true; do
     if [[ $FAILED_COUNT -gt 0 ]]; then
         error "Checks failed!"
         echo ""
-        gh pr checks "$PR_NUMBER" 2>&1 || true
+        timeout "$GH_CALL_TIMEOUT" gh pr checks "$PR_NUMBER" 2>&1 || true
         exit 1
     fi
 
@@ -120,11 +143,13 @@ while true; do
         error "This PR has no CI status — cannot verify checks passed"
         error "Ensure CI is configured for this repository and branch"
         error "Override the grace window with ATOMIC_COMMIT_NO_CHECKS_GRACE (seconds)"
-        exit 1
+        error "INCONCLUSIVE: the PR and branch are left as they are."
+        exit 2
     fi
 
     # Exponential backoff with max cap
     sleep "$POLL_INTERVAL"
+    SLEPT_TOTAL=$((SLEPT_TOTAL + POLL_INTERVAL))
     POLL_INTERVAL=$((POLL_INTERVAL * 2))
     if [[ $POLL_INTERVAL -gt $MAX_POLL_INTERVAL ]]; then
         POLL_INTERVAL=$MAX_POLL_INTERVAL
@@ -137,7 +162,7 @@ success "  All CI Checks PASSED"
 success "═════════════════════════════════════════════════════════════════"
 echo ""
 
-PR_URL=$(gh pr view "$PR_NUMBER" --json url --jq '.url' 2>/dev/null || echo "")
+PR_URL=$(timeout "$GH_CALL_TIMEOUT" gh pr view "$PR_NUMBER" --json url --jq '.url' 2>/dev/null || echo "")
 success "PR ready: $PR_URL"
 
 exit 0
