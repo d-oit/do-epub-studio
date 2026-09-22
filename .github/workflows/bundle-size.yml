@@ -10,6 +10,11 @@ on:
       - 'packages/ui/**'
       - 'packages/reader-core/**'
       - 'packages/shared/**'
+      # Lockfile-only dependency bumps change bundle output without touching
+      # any path above (e.g. the react 19.2→19.3 bump, #1176, edited only
+      # pnpm-lock.yaml) — without this trigger the budget gate silently skips
+      # them and the baseline drifts until the next source PR fails.
+      - 'pnpm-lock.yaml'
       - 'scripts/check-bundle-budget.mjs'
       - 'apps/web/vite.config.ts'
       - '.github/workflows/bundle-size.yml'

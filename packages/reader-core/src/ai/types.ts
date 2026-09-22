@@ -124,6 +124,15 @@ export interface EditorialReviewRequest {
   styleRevision: number | null;
   /** BCP-47 language of the book, when known. */
   language: string | null;
+  /**
+   * Creator-approved terms an engine must never flag or standardize:
+   * glossary names, invented terms and dialect spellings (ADR-999 D4/D6;
+   * ADR-274 D6). Suppression is per-book and adapter-side — engine matches
+   * overlapping an occurrence are dropped before validation, never surfaced
+   * as findings. No server dictionary or rule suppression is involved, so
+   * global spell-checking keeps working for everyone else.
+   */
+  approvedTerms?: readonly string[];
 }
 
 /** The set of capabilities a plugin provides (all optional — a plugin may offer any subset). */
