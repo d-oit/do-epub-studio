@@ -1,14 +1,30 @@
 {
   "name": "do-epub-studio",
-  "image": "mcr.microsoft.com/devcontainers/typescript-node:20-bullseye",
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:22-bookworm",
   "features": {
-    "ghcr.io/devcontainers/features/node:1": {}
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "none",
+      "pnpmVersion": "10.13.0"
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {}
   },
   "customizations": {
     "vscode": {
-      "extensions": ["ms-vscode.vscode-typescript-next", "esbenp.prettier-vscode", "mhutchie.git-graph"]
+      "extensions": [
+        "ms-vscode.vscode-typescript-next",
+        "esbenp.prettier-vscode",
+        "mhutchie.git-graph"
+      ]
+    },
+    "codespaces": {
+      "customizations": {
+        "permissions": {
+          "contents": "write",
+          "pull-requests": "write",
+          "issues": "write"
+        }
+      }
     }
   },
-  "postCreateCommand": "npm install -g corepack@latest && COREPACK_ENABLE_DOWNLOAD_PROMPT=0 corepack enable && corepack prepare pnpm@10.13.0 --activate && pnpm install --frozen-lockfile && npm i -g opencode-ai",
-  "remoteEnv": { "PNPM_HOME": "/pnpm" }
+  "postCreateCommand": "pnpm install --frozen-lockfile && npm install -g @opencode/cli"
 }
