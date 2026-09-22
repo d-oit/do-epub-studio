@@ -16,8 +16,8 @@
     "zod": "^4.6.2"
   },
   "devDependencies": {
-    "@types/node": "^26.5.1",
-    "fast-check": "^4.10.0",
+    "@types/node": "^26.6.2",
+    "fast-check": "^4.10.1",
     "typescript": "^6.0.3",
     "vitest": "4.1.11"
   }
