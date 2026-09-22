@@ -97,6 +97,7 @@
 | 251    | Service Worker Build Format Matches Classic Registration | `plans/251-adr-service-worker-build-format.md` | Accepted |
 | 252    | Serve the API on the same origin as the deployed frontend | `plans/252-adr-worker-api-deployment.md` | Accepted |
 | 256    | Login Header Layout Modernization and Responsive Flex Contract | `plans/256-adr-login-header-layout-modernization.md` | Accepted |
+| 274    | LanguageTool Self-Hosted Server as Wave 4 Spelling/Grammar Engine | `plans/274-adr-languagetool-local-editorial-engine.md` | Accepted (GOAP-273 A1) |
 
 ## Proposed
 
