@@ -37,6 +37,17 @@ updates:
     commit-message:
       prefix: "chore"
     groups:
+      # react + types must move as one unit: a lone react-dom bump (e.g. #1171)
+      # leaves a skewed pairing that ADR-250/GOAP-271 then has to close. Defined
+      # FIRST because a dependency matching multiple groups lands in the first
+      # matching group, and the groups below would otherwise claim react-dom
+      # (production, patch-only) and @types/react (development) on their own.
+      react:
+        patterns:
+          - "react"
+          - "react-dom"
+          - "@types/react"
+          - "@types/react-dom"
       dev-dependencies:
         dependency-type: "development"
         update-types:
