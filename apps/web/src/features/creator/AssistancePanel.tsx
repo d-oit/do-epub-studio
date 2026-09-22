@@ -23,7 +23,10 @@ const CATEGORY_LABELS: Record<EditorialCategory, TranslationKeys> = {
   logic: 'asst.catLogic',
 };
 
-/** The engine-less plugin is the only implementation that ships. */
+/**
+ * The panel wires only the engine-less plugin; the LanguageTool adapter (A2)
+ * is exported from reader-core but not registered here.
+ */
 const editorialPlugin = createLocalEditorialPlugin();
 
 /**
