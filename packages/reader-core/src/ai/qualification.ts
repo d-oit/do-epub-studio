@@ -3,8 +3,11 @@
  *
  * Availability is *evidence-gated*, not configured: a category may only be
  * reported available once a qualification milestone has been met against the
- * ADR-999 §3 corpus. Both milestones ship UNMET, so every category reports
- * `engine_missing` and no UI or endpoint may claim otherwise.
+ * ADR-999 §3 corpus. `local-engine` is met for spelling+grammar (GOAP-273 A3;
+ * evidence in plans/273-goap-wave4-local-editorial-engines.md) and
+ * `cloud-provider` ships UNMET — and a met milestone still reports
+ * `engine_missing` unless `hasEngine()` confirms a present engine, so no UI or
+ * endpoint claims more than the system can do.
  *
  * Flipping a milestone requires the recorded evidence named in ADR-999 D5 —
  * corpus results, supported languages/devices, latency, memory, model download
@@ -31,17 +34,18 @@ export interface QualificationMilestone {
 }
 
 /**
- * Shipped state: no local inference engine is bundled and no cloud provider has
- * been qualified (no vendor is selected by this work). Both entries stay unmet
- * until the documented evidence exists.
+ * Current state: `local-engine` is met for spelling+grammar (GOAP-273 A3,
+ * evidence recorded below and in plans/273); `cloud-provider` stays unmet — no
+ * vendor is selected by this work — and story/logic stay unqualified until the
+ * B-track corpus run (GOAP-273 B2).
  *
- * WHAT FLIPPING A MILESTONE DOES: changes only the *reporting* inputs consumed
+ * WHAT A MET MILESTONE DOES: changes only the *reporting* inputs consumed
  * by `effectiveCategoryAvailability` — nothing dispatches, nothing infers.
  *
  * WHAT IT DOES NOT DO (all separate implementation work):
- *  - `plugins/local-editorial.ts` still returns `engine_missing` and
- *    `hasEngine() === false` until a real engine implements the `editorial`
- *    capability seam;
+ *  - the workspace panel still wires only `plugins/local-editorial.ts`, which
+ *    returns `engine_missing` with `hasEngine() === false`; the LanguageTool
+ *    adapter (A2) is exported but not registered in the app;
  *  - `POST /api/creator/books/:bookId/assistance/dispatch` still answers 501
  *    until a provider, its allowlist entry and the per-dispatch confirmation
  *    flow exist server-side.
@@ -52,11 +56,11 @@ export interface QualificationMilestone {
 export const QUALIFICATION_MILESTONES: readonly QualificationMilestone[] = [
   {
     id: 'local-engine',
-    status: 'unmet',
-    qualifiedAt: null,
-    categories: [],
+    status: 'met',
+    qualifiedAt: '2026-09-22',
+    categories: ['spelling', 'grammar'],
     notes:
-      'No on-device engine is bundled. Meeting this requires the ADR-999 §3 corpus run on a real engine with recorded languages, devices, latency, memory, model size/licence and no-egress observations.',
+      'GOAP-273 A3: LanguageTool 6.9-SNAPSHOT (sha256-pinned, ADR-274 D3) passed ADR-999 §3 corpus items 1/2/4/6/7/8 — harness 6/6 and adapter live suite 6/6 (E2E_LIVE=1). en-US qualified (60 tags advertised; untested languages unclaimed). Host: Debian 11 x86_64 devcontainer, Temurin 17, deployment-local (no browser device); latency 49–287ms corpus / 74ms avg warm; RSS 878MB under traffic (heap -Xmx1g); download 251MB zip + 406MB unpacked + 136MB JRE; LGPL-2.1; loopback-only bind, zero non-loopback sockets observed. Full evidence: plans/273-goap-wave4-local-editorial-engines.md.',
   },
   {
     id: 'cloud-provider',

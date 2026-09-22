@@ -9,8 +9,10 @@
  *    missing spans, honest unavailable/no-finding states). These fail the build.
  * 2. **Engine-quality** — properties that can only be judged by running a real
  *    engine against the corpus (minimal edits, preserved voice, reasoned
- *    questions). Those are recorded as unverifiable until the qualification
- *    milestone is met; they are NOT asserted here and MUST NOT be faked.
+ *    questions). Spelling/grammar were judged by the opt-in live corpus once
+ *    `local-engine` was met (`languagetool-editorial.live.test.ts`,
+ *    E2E_LIVE=1); the story/logic remainder stays recorded as unverifiable.
+ *    Never assert these against stubs here, and NEVER fake them.
  */
 
 import { describe, it, expect } from 'vitest';
@@ -31,6 +33,7 @@ import {
   createLocalEditorialPlugin,
   EDITORIAL_PLUGIN_CATEGORIES,
 } from '../plugins/local-editorial';
+import { createLanguageToolEditorialPlugin } from '../plugins/languagetool-editorial';
 
 const SHA = 'sha256:current';
 
@@ -209,20 +212,63 @@ describe('editorial grounding validator (deterministic)', () => {
 });
 
 describe('qualification gate (honest availability)', () => {
-  it('ships every milestone unmet with no qualified categories', () => {
-    for (const entry of QUALIFICATION_MILESTONES) {
-      expect(entry.status).toBe('unmet');
-      expect(entry.qualifiedAt).toBeNull();
-      expect(entry.categories).toHaveLength(0);
-      expect(entry.notes.length).toBeGreaterThan(20);
+  it('records local-engine met for spelling+grammar and cloud-provider still unmet', () => {
+    const local = milestone('local-engine');
+    expect(local.status).toBe('met');
+    expect(local.qualifiedAt).not.toBeNull();
+    expect(local.categories).toEqual(['spelling', 'grammar']);
+    expect(local.notes.length).toBeGreaterThan(20);
+
+    const cloud = milestone('cloud-provider');
+    expect(cloud.status).toBe('unmet');
+    expect(cloud.qualifiedAt).toBeNull();
+    expect(cloud.categories).toHaveLength(0);
+    expect(cloud.notes.length).toBeGreaterThan(20);
+  });
+
+  it('qualifies only spelling+grammar via the milestone, and never without an engine', () => {
+    expect(categoryAvailability('spelling')).toBe('available');
+    expect(categoryAvailability('grammar')).toBe('available');
+    expect(categoryAvailability('story')).toBe('engine_missing');
+    expect(categoryAvailability('logic')).toBe('engine_missing');
+    // A met milestone is not a claim: with no engine present nothing may be
+    // reported available, for any category.
+    for (const category of EDITORIAL_PLUGIN_CATEGORIES) {
+      expect(isCategoryAvailable(category, false)).toBe(false);
     }
   });
 
-  it('reports engine_missing for all four categories while unqualified', () => {
-    for (const category of EDITORIAL_PLUGIN_CATEGORIES) {
-      expect(categoryAvailability(category)).toBe('engine_missing');
-      expect(isCategoryAvailable(category, false)).toBe(false);
-    }
+  it('composes the real milestone with the real adapter hasEngine() (A3 flip evidence)', async () => {
+    // Same-diff hasEngine() evidence required by plan 273's risk note: the
+    // flipped milestone may only read available when the LanguageTool adapter
+    // actually answers, and must fall back to engine_missing when it does not.
+    const answered = createLanguageToolEditorialPlugin({
+      fetchImpl: () => Promise.resolve(new Response(
+        JSON.stringify({
+          software: { name: 'LanguageTool', version: '6.9-SNAPSHOT' },
+          matches: [],
+          sentenceRanges: [],
+        }),
+        { status: 200 },
+      )),
+    }).capabilities.editorial;
+    expect(await answered.probe()).toBe(true);
+    expect(answered.hasEngine()).toBe(true);
+    expect(effectiveCategoryAvailability('spelling', { enginePresent: answered.hasEngine() }))
+      .toBe('available');
+    expect(effectiveCategoryAvailability('grammar', { enginePresent: answered.hasEngine() }))
+      .toBe('available');
+    expect(effectiveCategoryAvailability('story', { enginePresent: answered.hasEngine() }))
+      .toBe('engine_missing');
+
+    const down = createLanguageToolEditorialPlugin({
+      fetchImpl: () => Promise.reject(new TypeError('fetch failed')),
+    }).capabilities.editorial;
+    expect(await down.probe()).toBe(false);
+    expect(down.hasEngine()).toBe(false);
+    expect(effectiveCategoryAvailability('spelling', { enginePresent: down.hasEngine() }))
+      .toBe('engine_missing');
+    expect(isCategoryAvailable('grammar', down.hasEngine())).toBe(false);
   });
 
   it('does not report availability when a milestone is met but no engine exists', () => {
@@ -302,24 +348,26 @@ describe('engine-less editorial plugin', () => {
   });
 });
 
-describe('engine-quality properties await the qualification milestone', () => {
-  // ADR-999 §3 properties that only a real engine run can judge. Recorded here
-  // so they are visible debt, not silently skipped: each would be asserted
-  // against real engine output once a milestone is met.
+describe('engine-quality properties after the local-engine flip', () => {
+  // ADR-999 §3 properties that only a real engine run can judge. Properties
+  // 1/2/4/8 now have real-engine evidence on the pinned corpus: harness
+  // `scripts/dev/languagetool.sh corpus` 6/6 PASS plus the adapter live suite
+  // (`languagetool-editorial.live.test.ts`, E2E_LIVE=1) 6/6 — items 1/2/4/8
+  // respectively, recorded in plans/273 (A1/A2/A3). Property 5 belongs to
+  // corpus item 5 (story/logic, B-track): no real engine has judged it, so it
+  // stays visible debt until GOAP-273 B2.
   const deferred = [
-    'minimal edit preserves all unrelated text (property 1)',
-    'intentional dialect and approved glossary terms are not standardized (property 2)',
-    'terse first-person present-tense voice is preserved (property 4)',
-    'insufficient context yields a question, not a verdict (property 5)',
-    'user-edited text is preserved byte-for-byte (property 8)',
+    'insufficient context yields a question, not a verdict (property 5, corpus item 5 — B-track)',
   ];
 
-  it('is not claimed: no milestone is met', () => {
-    const anyMet = QUALIFICATION_MILESTONES.some((entry) => entry.status === 'met');
-    expect(anyMet).toBe(false);
+  it('keeps story/logic out of every milestone', () => {
+    for (const entry of QUALIFICATION_MILESTONES) {
+      expect(entry.categories).not.toContain('story');
+      expect(entry.categories).not.toContain('logic');
+    }
   });
 
-  it('lists the deferred properties explicitly', () => {
-    expect(deferred).toHaveLength(5);
+  it('defers exactly the story/logic-scoped property until the B-track run', () => {
+    expect(deferred).toHaveLength(1);
   });
 });
