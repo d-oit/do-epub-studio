@@ -157,8 +157,8 @@ importers:
         specifier: ^19
         version: 19.2.8(react@19.2.8)
       react-router-dom:
-        specifier: ^7.18.3
-        version: 7.18.3(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        specifier: ^7.18.4
+        version: 7.18.4(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       uuid:
         specifier: ^14.0.2
         version: 14.0.2
@@ -187,8 +187,8 @@ importers:
         specifier: ^7.4.1
         version: 7.4.1
       zod:
-        specifier: ^4.6.2
-        version: 4.6.2
+        specifier: ^4.6.5
+        version: 4.6.5
       zustand:
         specifier: ^5
         version: 5.0.15(@types/react@19.2.18)(react@19.2.8)(use-sync-external-store@1.6.0(react@19.2.8))
@@ -261,7 +261,7 @@ importers:
         version: link:../../packages/shared
       '@hono/zod-validator':
         specifier: ^0.9.1
-        version: 0.9.1(hono@4.13.7)(zod@4.6.2)
+        version: 0.9.1(hono@4.13.8)(zod@4.6.5)
       '@libsql/client':
         specifier: ^0.18.0
         version: 0.18.0
@@ -269,17 +269,17 @@ importers:
         specifier: ^10.73.0
         version: 10.74.0(@cloudflare/workers-types@5.20260919.1)(wrangler@4.135.0(@cloudflare/workers-types@5.20260919.1)(@types/node@26.6.2))
       '@simplewebauthn/server':
-        specifier: ^14.0.1
-        version: 14.0.1
+        specifier: ^14.0.2
+        version: 14.0.2
       argon2-wasm-edge:
         specifier: ^1.0.23
         version: 1.0.23
       hono:
-        specifier: ^4.13.5
-        version: 4.13.7
+        specifier: ^4.13.8
+        version: 4.13.8
       zod:
-        specifier: ^4.6.2
-        version: 4.6.2
+        specifier: ^4.6.5
+        version: 4.6.5
     devDependencies:
       '@cloudflare/vitest-pool-workers':
         specifier: ^0.22.0
@@ -346,8 +346,8 @@ importers:
   packages/schema:
     dependencies:
       zod:
-        specifier: ^4.6.2
-        version: 4.6.2
+        specifier: ^4.6.5
+        version: 4.6.5
     devDependencies:
       typescript:
         specifier: ^6.0.3
@@ -365,8 +365,8 @@ importers:
         specifier: ^3.10.2
         version: 3.10.2
       zod:
-        specifier: ^4.6.2
-        version: 4.6.2
+        specifier: ^4.6.5
+        version: 4.6.5
     devDependencies:
       '@types/node':
         specifier: ^26.6.2
@@ -2802,8 +2802,8 @@ packages:
   '@simplewebauthn/browser@14.0.0':
     resolution: {integrity: sha512-1odWVqeEBTl7lJ9zMKLEsmTlnyrDO5iRcTvfMKKk1WThUnp/i8JJdffdj2icP+tty159s4PgwE3BiMoEW9NFow==}
 
-  '@simplewebauthn/server@14.0.1':
-    resolution: {integrity: sha512-kjWgcm9NdSv+Tobo4Swxd1WnEawsBogpYFMjg9pKsVLPN3FdCmR6BipkL+DcPDgmQ7UKbbBZqRqn3E3YaA7NBw==}
+  '@simplewebauthn/server@14.0.2':
+    resolution: {integrity: sha512-g+m/xv9/8FRWsDY22CwsTYRzt3WwS9fJrR3P7eY3Ti01FXH5FQ36Xn55v6D+5tb6VajlqOj4hywP/Vxsb6a3Sg==}
     engines: {node: '>=20.0.0'}
 
   '@sindresorhus/is@7.2.0':
@@ -4528,8 +4528,8 @@ packages:
   hermes-parser@0.25.1:
     resolution: {integrity: sha512-6pEjquH3rqaI6cYAXYPcz9MS4rY6R4ngRgrgfDshRptUZIc3lw0MCIJIGDj9++mfySOuPTHB4nrSW99BCvOPIA==}
 
-  hono@4.13.7:
-    resolution: {integrity: sha512-c8/gF9ac8Y78/agExVocyLevgR+JlpNB444Py0FSX8pJoPdYUfUzRcXtYEYGwt6l19qIlVZPN5Mfsw9jFShmQQ==}
+  hono@4.13.8:
+    resolution: {integrity: sha512-/Gng7NfoykZl2pjukW5Z6+8Yxm3BPRf86GTbQnt0SbySkvax4fyL4H3HhY1cCpBGmiW9XDRFzRV+CXK2W8QudQ==}
     engines: {node: '>=16.9.0'}
 
   hookified@1.15.1:
@@ -5534,8 +5534,8 @@ packages:
   react-is@17.0.2:
     resolution: {integrity: sha512-w2GsyukL62IJnlaff/nRegPQR94C/XXamvMWmSHRJ4y7Ts/4ocGRmTHvOs8PSE6pB3dWOrD/nueuU5sduBsQ4w==}
 
-  react-router-dom@7.18.3:
-    resolution: {integrity: sha512-ytVbyBBM7vMfRCam25r0WMhSVSom909A8p+8m0/f1w853dz/xfFu6etAT2SEbVoSnI+ZoPRDqIsQXVT89gp7kg==}
+  react-router-dom@7.18.4:
+    resolution: {integrity: sha512-yrfmJHIpDG7taCpqKjT1G5B6q3O2K+RN8/fgNf0lTjCwiPbQ0ei6vXX9ZjQR+7ld8Tr7Z5xmyMnZ8YJrphWQUw==}
     engines: {node: '>=20.0.0'}
     peerDependencies:
       react: '>=18'
@@ -6541,9 +6541,6 @@ packages:
 
   zod@4.4.3:
     resolution: {integrity: sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ==}
-
-  zod@4.6.2:
-    resolution: {integrity: sha512-lh5RCAGFa1Cm2hjtNwLQhSs/AsqdWnTQaBER9fEwN/88pSh7KOtJavtBx/0VlkN/uFd61SwYmljLMDAsHlvzBQ==}
 
   zod@4.6.5:
     resolution: {integrity: sha512-v5l/aFXZQeai4awLbOpSoHecE9UiMrnfx75tEXLjNonXVARxQ5mOeipTjROUchszUNCqnE+hqAMujRsRHsut2Q==}
@@ -7893,10 +7890,10 @@ snapshots:
 
   '@hexagon/base64@1.1.28': {}
 
-  '@hono/zod-validator@0.9.1(hono@4.13.7)(zod@4.6.2)':
+  '@hono/zod-validator@0.9.1(hono@4.13.8)(zod@4.6.5)':
     dependencies:
-      hono: 4.13.7
-      zod: 4.6.2
+      hono: 4.13.8
+      zod: 4.6.5
 
   '@humanfs/core@0.19.2':
     dependencies:
@@ -8817,7 +8814,7 @@ snapshots:
 
   '@simplewebauthn/browser@14.0.0': {}
 
-  '@simplewebauthn/server@14.0.1':
+  '@simplewebauthn/server@14.0.2':
     dependencies:
       '@hexagon/base64': 1.1.28
       '@levischuck/tiny-cbor': 0.2.11
@@ -10406,8 +10403,8 @@ snapshots:
       '@babel/parser': 7.29.8
       eslint: 10.11.0(jiti@2.7.0)
       hermes-parser: 0.25.1
-      zod: 4.6.2
-      zod-validation-error: 4.0.2(zod@4.6.2)
+      zod: 4.6.5
+      zod-validation-error: 4.0.2(zod@4.6.5)
 
   eslint-plugin-react@7.37.5(eslint@10.11.0(jiti@2.7.0)):
     dependencies:
@@ -10771,7 +10768,7 @@ snapshots:
     dependencies:
       hermes-estree: 0.25.1
 
-  hono@4.13.7: {}
+  hono@4.13.8: {}
 
   hookified@1.15.1: {}
 
@@ -11841,7 +11838,7 @@ snapshots:
 
   react-is@17.0.2: {}
 
-  react-router-dom@7.18.3(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
+  react-router-dom@7.18.4(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
     dependencies:
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
@@ -13072,15 +13069,13 @@ snapshots:
     dependencies:
       zod: 3.25.76
 
-  zod-validation-error@4.0.2(zod@4.6.2):
+  zod-validation-error@4.0.2(zod@4.6.5):
     dependencies:
-      zod: 4.6.2
+      zod: 4.6.5
 
   zod@3.25.76: {}
 
   zod@4.4.3: {}
-
-  zod@4.6.2: {}
 
   zod@4.6.5: {}
 
