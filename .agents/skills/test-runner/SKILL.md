@@ -220,6 +220,20 @@ npm test -- --bail
 - **testdata-builders**: Create test fixtures
 - **cicd-pipeline**: CI/CD test configuration
 
+## Running the Repo Quality Gate
+
+- **Never run two `scripts/quality_gate.sh` instances concurrently**: they
+  share `<pkg>/coverage/.tmp`, so vitest dies with `ENOENT coverage-*.json` /
+  "Something removed the coverage directory" — the message blames a deleted
+  directory, the cause is a second gate. The script now holds an exclusive
+  `flock` and refuses concurrent runs; `pgrep -f quality_gate` shows any live one.
+- **`Terminated` / exit 143 means the task was signalled, not linted or
+  tested**: treat it as environmental (competing processes, memory pressure)
+  and check for other gate processes before debugging the code.
+- **The gate aggregates failures instead of stopping at the first one** — a
+  tail showing `✗ Workflow validation FAILED` is *not* proof the run ended.
+  Wait for the process to exit (final summary banner) before starting another.
+
 ## Quality Checklist
 
 - [ ] Tests are deterministic (no flakiness)

@@ -128,6 +128,24 @@ it will halt automation and **post a "Autopilot Handoff" comment on the PR.**
 - [ ] No secrets or tokens in changes
 - [ ] Branch protection rules respected (PR + CI passing for `main`)
 
+### Waiting for checks (never `gh pr checks --watch`)
+
+- **Don't wait for "all checks green."** Non-required checks can sit pending
+  indefinitely (e.g. Chromatic `UI Tests` until baselines are accepted), and
+  `gh pr checks --watch` then hangs forever. Attempt `gh pr merge <N> --squash`
+  and let branch protection decide server-side; `mergeStateStatus: UNSTABLE`
+  can still be mergeable. `--auto` is forbidden by repo policy — retry the
+  merge attempt in a loop instead.
+- **A `cancelled` conclusion with no replacement run** is what a
+  `concurrency: cancel-in-progress` workflow leaves behind; the integration
+  token cannot rerun it (`Resource not accessible by integration`). Detect it
+  via the check-runs API and push an **empty commit** to the PR branch to fire
+  a fresh `synchronize` run.
+- **`BEHIND` → `gh pr update-branch`, then wait for the new checks** before
+  retrying; never merge a BEHIND or DIRTY PR.
+- **Lockfile conflict on a dependabot PR** → regenerate `pnpm-lock.yaml` per
+  the recipe in the `migration-refactoring` skill (never keep one side whole).
+
 ### When NOT to Use Autopilot
 
 - PRs with `release:cut` or `release` labels (defer to `release-management`)

@@ -12,6 +12,20 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT" || exit 1
 
+# Serialize gate runs: concurrent instances share <pkg>/coverage/.tmp and
+# corrupt each other (vitest ENOENT on coverage-*.json; sibling tasks killed
+# with SIGTERM / exit 143 — failures that read as lint/test errors). flock(1)
+# is util-linux; skip the guard silently where it is unavailable (e.g. macOS).
+GATE_LOCK="${TMPDIR:-/tmp}/do-epub-studio-quality-gate.lock"
+if command -v flock >/dev/null 2>&1; then
+  exec 9>"$GATE_LOCK"
+  if ! flock -n 9; then
+    echo "✗ Another quality_gate.sh instance is already running (lock: $GATE_LOCK)." >&2
+    echo "  Concurrent gates corrupt shared coverage/.tmp — wait for it to finish." >&2
+    exit 2
+  fi
+fi
+
 # Source shared libs
 # shellcheck source=scripts/lib/colors.sh
 source "$REPO_ROOT/scripts/lib/colors.sh"
