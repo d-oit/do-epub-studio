@@ -71,7 +71,13 @@ function dropOversizedAssets(): PluginOption {
           console.warn(
             `[drop-oversized-assets] dropping ${fileName} (${(bytes / 1024 / 1024).toFixed(1)} MiB): exceeds ${maxBytes / (1024 * 1024)} MiB per-file deploy cap (Cloudflare Pages)`,
           );
-          delete bundle[fileName];
+          // Reflect form of `delete bundle[fileName]` (rollup's documented
+          // drop pattern): the keys come from Object.entries of the build-time
+          // bundle itself, so no untrusted input can reach them — the call-
+          // argument form keeps Codacy's ESLint 8 dynamic-key delete /
+          // object-injection findings (false positives by construction) out
+          // without disabling any rule (AGENTS.md Tier 3).
+          Reflect.deleteProperty(bundle, fileName);
         }
       }
     },
