@@ -469,7 +469,15 @@ jobs:
 
   e2e-smoke:
     name: E2E Smoke Tests
-    if: ${{ github.event_name != 'schedule' && (needs.changes.outputs.src == 'true' || needs.changes.outputs.reader-core == 'true') }}
+    # ADR-277 / GOAP-277 A1: fail-closed guard, mirroring `build` (GOAP-267).
+    # Without it this job was skipped in 7/7 sampled runs even while its scope
+    # filter matched — it needs `build`, which only runs on PRs thanks to its
+    # own always() guard, so the cascade stopped one level downstream. This job
+    # is the ONLY PR-path Playwright coverage (#928/#944 keeps `quality-gate`
+    # on QUALITY_GATE_NO_SMOKE=1) and carries ADR-201's per-PR WebKit lane, so
+    # a silent skip leaves both unenforced. Scope/event conditions below are
+    # unchanged: a docs-only PR still skips, and schedule stays on `e2e-full`.
+    if: ${{ always() && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') && github.event_name != 'schedule' && (needs.changes.outputs.src == 'true' || needs.changes.outputs.reader-core == 'true') }}
     needs: [changes, build]
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -586,8 +594,13 @@ jobs:
 
   bench:
     name: Benchmark
+    # ADR-277 / GOAP-277 A1: same fail-closed guard as `e2e-smoke` and
+    # `build`. ADR-218's blocking ">20% ops/s regression fails CI" check runs
+    # in this job, and it was skipped in 7/7 sampled runs while the scope
+    # filter matched — i.e. the gate has never blocked anything. Scope filter
+    # unchanged: docs-only PRs still skip.
     needs: [changes, build]
-    if: ${{ needs.changes.outputs.src == 'true' || needs.changes.outputs.reader-core == 'true' }}
+    if: ${{ always() && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') && (needs.changes.outputs.src == 'true' || needs.changes.outputs.reader-core == 'true') }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
