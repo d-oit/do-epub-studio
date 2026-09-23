@@ -1,6 +1,6 @@
 # GOAP-275: React `act(...)` warning inventory (web test suite)
 
-**Status:** IN PROGRESS (Phase 1 partially landed: #1175's three warning classes fixed; remaining inventory tracked here)
+**Status:** IN PROGRESS (Phases 1–2 landed: #1175's warning classes fixed in PR #1186, warning sensor live; remaining inventory tracked here)
 **Date:** 2026-09-23
 **ADR:** `plans/275-adr-react-act-warning-policy.md`
 **Issue:** #1185 (tracking) — discovered while fixing #1175
@@ -47,16 +47,29 @@ monotonically and may never grow; suppression is not a fix.
 
 | # | Phase | Exit criteria | Status |
 |---|-------|---------------|--------|
-| 1 | Fix the #1175 classes | The four touched files emit zero `stderr` blocks under `--reporter=verbose --silent=false`; suite green | DONE (this PR) |
-| 2 | CI-visible warning sensor | A script/reporter compares the `act(...)`/`key`/unknown-prop warning count against a committed baseline and fails when it grows; wired into `ci.yml` + `quality_gate.sh` | NOT STARTED |
-| 3 | Drain the inventory, worst file first | `ReaderPage.test.tsx` (82) → `useReaderSearch` (8) → `storage-quota` (7) → the six ≤4-warning files; each file emits zero warnings and keeps its assertions' intent | NOT STARTED |
-| 4 | Synthesis | Baseline reaches zero and is then removed; issue #1185 closed; learnings recorded (Tier 2 #12) | NOT STARTED |
+| 1 | Fix the #1175 classes | The four touched files emit zero `stderr` blocks under `--reporter=verbose --silent=false`; suite green | DONE (PR #1186) |
+| 2 | CI-visible warning sensor | A committed file inventory plus a guard that fails any file emitting a tracked warning outside it; wired into `test:unit` so the quality gate and CI both enforce it; fail-closed when the emitting file cannot be attributed | DONE (this PR: `apps/web/src/test-utils/react-warning-guard.ts` + 11-entry inventory + unit tests; guard verified non-vacuous and green across default ×2 and `--coverage` run shapes) |
+| 3 | Drain the inventory, worst file first | `ReaderPage.test.tsx` → `useReaderSearch` → `storage-quota` → the remaining eight files; each file emits zero warnings, its inventory entry is deleted, and its assertions keep their intent | NOT STARTED |
+| 4 | Synthesis | The inventory is empty and then removed; issue #1185 closed; learnings recorded (Tier 2 #12) | NOT STARTED |
+
+## Why the sensor is file-level, not a count baseline
+
+The plan originally called for a numeric baseline. Measurement killed that idea:
+one revision reported **13**, **34** and **82** `act(...)` warnings depending on
+run shape (single file vs full suite) and reporter (custom vs verbose) — the
+count depends on how much async work lands after a test body under load, so a
+numeric baseline would flake. *Which files* warn is stable, so the guard keys on
+file identity: 11 inventoried files are tolerated, anything else fails.
 
 ## Acceptance
 
 - Phase 1 is verifiable today: `cd apps/web && pnpm exec vitest run <file>
   --reporter=verbose --silent=false` prints no `stderr` block for the touched files.
-- Phase 2 must fail closed: an unreadable count is a failure, not a pass.
+- Phase 2 is verifiable today: deleting an entry from `KNOWN_WARNING_FILES`
+  fails that file with an actionable message (checked for
+  `src/hooks/useSessionExpiry.test.ts`, exit 1); a warning whose file cannot be
+  attributed fails as `<unknown file>`; and the guard never suppresses output —
+  every `console.error` call is forwarded to the original.
 - Phase 3 must not weaken assertions to silence a warning (no `act` wrapping of
   an assertion that no longer asserts, no `console.error` stubs).
 
