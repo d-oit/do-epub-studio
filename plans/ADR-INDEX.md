@@ -162,6 +162,7 @@
 | 999    | Reader–Creator Collaboration, Editorial Assistance, Responsive UX and E2E (GOAP) | `plans/999-goap-codebase-improvements-uiux-e2e-audit.md` | IN PROGRESS (backlog reconciled 2026-09-15 against source: UI-01/02, SEC-01, UI-03, REL-01, UX-01, UX-02, E2E-01 done; remaining: REL-02 (blocked on COL-01/02), REL-03, E2E-02, COL/AI waves) |
 | 269    | do-harness Adoption + web-ui Sensor Pack (GOAP) | `plans/269-goap-do-harness-adoption-web-ui-pack.md`, `plans/246-adr-do-harness-completion-contract.md` | IN PROGRESS (Phase 1–3 done: upstream #64 + adoption PR #1120 merged; Phase 4 audit library merged upstream #75 and dogfooded to zero findings with 4 WCAG 2.5.8 fixes in #1122; remaining: init scaffold + severity #66 + evidence #67) |
 | 270    | Automate Verified-SHA Allowlisting for Dependabot Bumps (GOAP + ADR) | `plans/270-goap-automate-dependabot-sha-allowlist.md`, `plans/247-adr-dependabot-sha-allowlist-automation.md` | IN PROGRESS (Phase 1–2 done: `scripts/allowlist-dependabot-shas.sh` + dependabot-auto-merge wiring; Phase 3: no-op path observed live on 5 real dependabot[bot] PRs 2026-09-15; SHA-append path awaits the chromaui bait re-bump, latest 2026-09-22 scheduled run) |
+| 275    | React `act(...)` Warning Inventory (GOAP + ADR) | `plans/275-goap-react-act-warning-inventory.md`, `plans/275-adr-react-act-warning-policy.md` | IN PROGRESS (Phase 1 landed with the #1175 fix: four files warning-free; ~114 warnings in 12 files tracked by issue #1185; Phase 2 CI sensor + Phase 3 drain pending) |
 
 ## Pending
 

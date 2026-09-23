@@ -113,10 +113,12 @@ describe('AdminBookResponsesPage — rendering & navigation', () => {
     expect(document.querySelector('.animate-spin')).toBeInTheDocument();
   });
 
-  it('renders locale switcher', () => {
+  it('renders locale switcher', async () => {
     vi.mocked(apiRequest).mockResolvedValue([]);
     render(<MemoryRouter><AdminBookResponsesPage /></MemoryRouter>);
-    expect(screen.getByTestId('locale-switcher')).toBeInTheDocument();
+    // waitFor flushes the post-fetch state update inside act() — a synchronous
+    // assertion let it land after the test and React warned.
+    await waitFor(() => { expect(screen.getByTestId('locale-switcher')).toBeInTheDocument(); });
   });
 
   it('sets fetch error when book list fails', async () => {

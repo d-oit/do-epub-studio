@@ -27,7 +27,9 @@ vi.mock('../components/ui', () => ({
   Modal: ({ isOpen, children, title }: Record<string, unknown>) => isOpen ? (
     <div data-testid="modal"><h2>{title as string}</h2>{children as React.ReactNode}</div>
   ) : null,
-  Button: ({ children, onClick, ...props }: Record<string, unknown>) => (
+  // Mirror the real Button: consume the loading props instead of forwarding
+  // them to the DOM (React warns about `isLoading` on a <button>).
+  Button: ({ children, onClick, isLoading: _isLoading, loadingLabel: _loadingLabel, ...props }: Record<string, unknown>) => (
     <button onClick={onClick as React.MouseEventHandler<HTMLButtonElement>} {...props}>{children as React.ReactNode}</button>
   ),
   Input: ({ label, id, ...props }: Record<string, unknown>) => (
