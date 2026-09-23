@@ -36,8 +36,10 @@ function clickArchiveConfirm() {
   const btn = screen.getAllByText('admin.books.archive').find(
     (el) => el.tagName === 'BUTTON' && el.closest('[role="dialog"]'),
   );
-  expect(btn).toBeTruthy();
-  btn?.click();
+  if (!btn) throw new Error('Archive confirm button not found in dialog');
+  // fireEvent.click wraps the update in act(); a raw `.click()` left the
+  // archive request's state updates unwrapped and React warned afterwards.
+  fireEvent.click(btn);
 }
 
 describe('AdminBookResponsesPage — archive', () => {

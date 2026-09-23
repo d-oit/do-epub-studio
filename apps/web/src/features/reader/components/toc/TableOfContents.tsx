@@ -1,4 +1,4 @@
-import { useRef, useEffect, useCallback } from 'react';
+import { useRef, useEffect, useCallback, Fragment } from 'react';
 import { useFocusTrap } from '@do-epub-studio/ui';
 import { IconButton } from '../../../../components/ui';
 import { VirtualList } from '../../../../components/VirtualList';
@@ -140,7 +140,12 @@ export function TableOfContents({
             />
           ) : (
             <nav className="overflow-y-auto h-full" data-testid="toc-list">
-              {toc.map((item, index) => renderTocItem(item, index))}
+              {toc.map((item, index) => (
+                // renderTocItem returns the element itself (VirtualList keys its
+                // own <li>), so the map site owns the key for the non-virtualized
+                // list. Index disambiguates duplicate hrefs.
+                <Fragment key={`${item.href}-${index}`}>{renderTocItem(item, index)}</Fragment>
+              ))}
             </nav>
           )
         ) : (
