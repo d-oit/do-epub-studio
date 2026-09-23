@@ -426,12 +426,39 @@ export function buildMessages(chapters: readonly NumberedChapter[]): PromptMessa
  * engine retries such draws instead of surfacing them (a silent pass would
  * otherwise let empty-skeleton echoes count as findings).
  *
- * `includes` only — no regex over model output (ADR-034). The verbatim
- * check carries a length floor: short strings collide with prose by chance,
- * while real authoring questions are fresh phrasing that never appears in
- * the prompt whole.
+ * `includes` over normalized text — no regex over model output (ADR-034).
+ * Normalization lowercases and collapses whitespace runs: item 6's live
+ * diagnosis (2026-09-23) showed the model slipping a verbatim chapter
+ * sentence past the exact-match check by re-casing its first letter alone,
+ * so an un-normalized comparison is one character away from blind. The
+ * verbatim check carries a length floor: short strings collide with prose by
+ * chance, while real authoring questions are fresh phrasing that never
+ * appears in the prompt whole (normalization cannot invent a match, only
+ * reveal one that was already there modulo case/space).
  */
 const MIN_ECHO_QUESTION_CHARS = 40;
+
+/**
+ * Lowercase + collapse whitespace runs without touching a regex over
+ * untrusted model output (ADR-034): a hand-rolled scan over the four ASCII
+ * whitespace code points is linear, bounded, and cannot backtrack.
+ */
+function normalizeEchoText(value: string): string {
+  let out = '';
+  let pendingSpace = false;
+  for (const ch of value.toLowerCase()) {
+    if (ch === ' ' || ch === '\t' || ch === '\n' || ch === '\r') {
+      pendingSpace = out.length > 0;
+      continue;
+    }
+    if (pendingSpace) {
+      out += ' ';
+      pendingSpace = false;
+    }
+    out += ch;
+  }
+  return out;
+}
 
 export function isPromptEcho(
   question: string,
@@ -443,8 +470,10 @@ export function isPromptEcho(
     return true;
   }
   if (q.length < MIN_ECHO_QUESTION_CHARS) return false;
+  const nq = normalizeEchoText(q);
+  if (nq.length < MIN_ECHO_QUESTION_CHARS) return false;
   for (const message of messages) {
-    if (message.content.includes(q)) return true;
+    if (normalizeEchoText(message.content).includes(nq)) return true;
   }
   return false;
 }
