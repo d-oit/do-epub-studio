@@ -429,6 +429,28 @@ describe('sanitizeDom', () => {
     sanitizeEpubDocument(doc);
     expect(doc.querySelector('feImage')?.getAttribute('href')).toBeNull();
   });
+
+  it('strips feImage hrefs in XML-parsed documents for every casing (GOAP-229)', () => {
+    // epubjs parses XHTML sections as XML (application/xhtml+xml), where SVG
+    // local names keep their authored case — the HTML-mode adjustment table
+    // (feimage -> feImage) only runs on HTML re-parse. Matching must therefore
+    // stay case-insensitive instead of enumerating canonical casings.
+    for (const tag of ['feImage', 'FeImage', 'FEIMAGE', 'feimage']) {
+      const doc = new DOMParser().parseFromString(
+        '<?xml version="1.0" encoding="utf-8"?>' +
+          '<html xmlns="http://www.w3.org/1999/xhtml"><head><title>t</title></head><body>' +
+          '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">' +
+          `<filter id="f"><${tag} href="https://evil.example/track.gif" xlink:href="https://evil.example/track2.gif"/></filter>` +
+          '</svg></body></html>',
+        'application/xhtml+xml',
+      );
+      sanitizeEpubDocument(doc);
+      const el = doc.getElementsByTagNameNS('http://www.w3.org/2000/svg', tag)[0];
+      expect(el, `${tag} element survives sanitization`).toBeTruthy();
+      expect(el?.getAttribute('href'), `${tag} href`).toBeNull();
+      expect(el?.getAttributeNS('http://www.w3.org/1999/xlink', 'href'), `${tag} xlink:href`).toBeNull();
+    }
+  });
 });
 
 describe('sanitizeEpubDocument', () => {
