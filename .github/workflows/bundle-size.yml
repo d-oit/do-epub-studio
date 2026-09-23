@@ -17,6 +17,11 @@ on:
       - 'pnpm-lock.yaml'
       - 'scripts/check-bundle-budget.mjs'
       - 'apps/web/vite.config.ts'
+      # The gate's own inputs: a PR that only edits the budget thresholds or
+      # the committed baseline must still be validated, otherwise a budget
+      # change bypasses enforcement entirely.
+      - '.performance-budgets.json'
+      - 'bundle-baseline.json'
       - '.github/workflows/bundle-size.yml'
   workflow_dispatch:
 
