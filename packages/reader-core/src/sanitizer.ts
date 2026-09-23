@@ -361,6 +361,26 @@ function isSchemeCharCode(code: number): boolean {
 }
 
 /**
+ * Case-insensitive ASCII comparison against an all-lowercase target, without
+ * allocating a lowercased copy of `value` (`value.toLowerCase()` allocated a
+ * string per element in the DOM traversal).
+ *
+ * SVG local names preserve the authored case in XML parse mode (`feImage`,
+ * `FeImage`, `FEIMAGE`, …) — the HTML-mode adjustment table only runs when the
+ * document is parsed as HTML — so linkable-name matching must stay
+ * case-insensitive (GOAP-229).
+ */
+function equalsIgnoreCase(value: string, lower: string): boolean {
+  if (value.length !== lower.length) return false;
+  for (let i = 0; i < value.length; i++) {
+    // `| 32` lowercases A-Z. It can only land on a lowercase-letter code for
+    // actual letters, so non-letters cannot match an all-lowercase target.
+    if ((value.charCodeAt(i) | 32) !== lower.charCodeAt(i)) return false;
+  }
+  return true;
+}
+
+/**
  * Safely extracts the scheme part from a URI string (e.g. "https" from "https://example.com").
  * Returns the lowercase scheme, or null if no valid scheme is present.
  * This avoids the considerable overhead of regular expressions and matchBounded, improving sanitization performance.
@@ -568,13 +588,13 @@ function shouldStripHref(val: string, policy: ExternalUrlPolicy): boolean {
 function sanitizeElementAttributes(el: Element, policy: ExternalUrlPolicy): void {
   const localName = el.localName;
   // SVG local names preserve case (feImage) in both HTML and XHTML/XML parse
-  // modes, so compare exact case representations rather than calling .toLowerCase()
-  // to avoid per-element string allocations during DOM traversal.
+  // modes, so compare case-insensitively rather than relying on one casing.
+  // The comparison is allocation-free: this runs for every element with
+  // attributes in the traversal.
   const isLinkable =
     localName === 'use' ||
     localName === 'image' ||
-    localName === 'feImage' ||
-    localName === 'feimage';
+    equalsIgnoreCase(localName, 'feimage');
   const attrs = el.attributes;
 
   for (let i = attrs.length - 1; i >= 0; i--) {
