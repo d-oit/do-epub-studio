@@ -2,10 +2,10 @@
  * @vitest-environment node
  *
  * Opt-in live corpus for the Transformers.js story/logic engine (GOAP-273
- * Phase B1; ADR-999 §3 items 3/5/6 — items 1/2/4/7/8 are LanguageTool's
- * spelling/grammar lane). Skipped unless E2E_LIVE=1: this run downloads the
- * quantized model (~500 MB, labelled on-demand) and executes real inference,
- * so it can never gate default CI.
+ * Phase B1; ADR-999 §3 items 3/5/6 — items 1/2/4/6/7/8 are LanguageTool's
+ * spelling/grammar lane (item 6 is asserted by BOTH lanes). Skipped unless
+ * E2E_LIVE=1: this run downloads the quantized model (~500 MB, labelled
+ * on-demand) and executes real inference, so it can never gate default CI.
  *
  *   E2E_LIVE=1 pnpm --filter @do-epub-studio/reader-core exec vitest run \
  *     src/ai/__tests__/transformers-editorial.live.test.ts
@@ -18,6 +18,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
+import { freemem } from 'node:os';
 import { validateEditorialFindings, type EditorialFinding } from '../editorial-findings';
 import {
   createTransformersEditorialPlugin,
@@ -28,6 +29,14 @@ import type { ModelLoadProgress } from '../plugins/transformers-editorial-format
 import type { EditorialReviewRequest } from '../types';
 
 const LIVE = process.env.E2E_LIVE === '1';
+/**
+ * Deadlines stay at PRODUCT parity (plugin default `300_000`) on purpose.
+ * Attempt 1 (2026-09-23) timed out at 300 s on all three items — diagnosed as
+ * memory-pressure slowdown (arena-driven RSS creep), NOT a deadline that was
+ * too short: after the arena-off fix (#1189) items 3 and 5 pass at 177 s and
+ * 205 s. Raising these would risk masking a regression the product would hit;
+ * per-item wall/CPU telemetry below is the honest diagnostic instead.
+ */
 const GENERATION_TIMEOUT_MS = 300_000;
 const TEST_TIMEOUT_MS = 600_000;
 
@@ -79,12 +88,41 @@ async function loadEngine(capability: TransformersEditorialCapability): Promise<
   });
 }
 
+/**
+ * Runs one review and prints EVIDENCE telemetry: wall time, CPU% consumed by
+ * this process, and peak-ish RSS delta. CPU% ≈ 100 (both vCPUs busy) for the
+ * whole wall time proves CPU-bound decoding; near-0% proves a wedged/stalled
+ * draw. Purely additive observability for the evidence line — no assertion.
+ */
+async function reviewed(
+  capability: TransformersEditorialCapability,
+  id: keyof typeof CORPUS,
+): ReturnType<TransformersEditorialCapability['review']> {
+  const req = request(id);
+  const wallStart = Date.now();
+  const cpuStart = process.cpuUsage();
+  const rssStart = process.memoryUsage().rss;
+  const outcome = await capability.review(req);
+  const wallMs = Date.now() - wallStart;
+  const cpu = process.cpuUsage(cpuStart);
+  const rssDeltaMb = Math.round((process.memoryUsage().rss - rssStart) / 1024 / 1024);
+  const cpuPct = Math.round(((cpu.user + cpu.system) / 1000 / wallMs) * 100);
+  console.log(
+    `EVIDENCE item=${id} status=${outcome.status}${
+      outcome.status === 'unavailable' ? `:${outcome.reason}` : ''
+    } wallMs=${wallMs} cpuPct=${cpuPct} rssDeltaMb=${rssDeltaMb} availMb=${
+      Math.round(freemem() / 1024 / 1024)
+    }`,
+  );
+  return outcome;
+}
+
 async function reviewOk(
   capability: TransformersEditorialCapability,
   id: keyof typeof CORPUS,
 ): Promise<EditorialFinding[]> {
   const req = request(id);
-  const outcome = await capability.review(req);
+  const outcome = await reviewed(capability, id);
   if (outcome.status !== 'ok') {
     const reason = outcome.status === 'unavailable' ? `: ${outcome.reason}` : '';
     throw new Error(`item ${id}: expected findings, received ${outcome.status}${reason}`);
@@ -160,7 +198,7 @@ describe.skipIf(!LIVE)('Transformers.js story/logic live corpus (ADR-999 §3, E2
 
   it('item 6: injection passage is reviewed as quoted data, never obeyed', { timeout: TEST_TIMEOUT_MS }, async () => {
     const req = request(6);
-    const outcome = await capability.review(req);
+    const outcome = await reviewed(capability, 6);
     // Either a clean run or grounded findings — never an action, a tool call
     // or any surface outside the finding contract.
     if (outcome.status === 'ok') {

@@ -1,11 +1,5 @@
 {
-  "extensions.autoUpdate": false,
-  "extensions.autoCheckUpdates": false,
   "extensions.ignoreRecommendations": true,
-  "extensions.confirmedUriTimeout": 0,
-  "workbench.extensions.autoCheck": false,
-  "workbench.extensions.autoInstall": false,
-  "markdownlint.config": ".markdownlint.json",
   "files.watcherExclude": {
     "**/.git/objects/**": true,
     "**/.turbo/**": true,
