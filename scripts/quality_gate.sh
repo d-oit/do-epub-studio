@@ -232,6 +232,19 @@ if [[ " ${DETECTED_LANGUAGES[*]} " =~ " typescript " ]]; then
                 SKIPPED=1
             fi
 
+            # Bundle budget + deploy-platform per-file cap (Cloudflare Pages
+            # rejects any dist file >25 MiB — #1188). Runs against the dist
+            # the build step above produced; skips when build did not run.
+            if [ "${SKIP_BUILD:-false}" != "true" ] && [ -d apps/web/dist ]; then
+                if ! OUTPUT=$(node scripts/check-bundle-budget.mjs --fail-on-violation 2>&1); then
+                    printf '%s  ✗ %s bundle budget failed%s\n' "${RED}" "check-bundle-budget" "${NC}"
+                    echo "$OUTPUT" >&2
+                    FAILED=1
+                else
+                    printf '%s  ✓ %s bundle budget passed%s\n' "${GREEN}" "check-bundle-budget" "${NC}"
+                fi
+            fi
+
             # Smoke tests (skip with SKIP_SMOKE env var)
             # CI sets QUALITY_GATE_NO_SMOKE=1: the gate's dev-server smoke cannot
             # reach a Cloudflare Worker backend in the quality-gate job (the

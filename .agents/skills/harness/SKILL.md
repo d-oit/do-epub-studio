@@ -52,6 +52,7 @@ Two modes:
 | deps | `do-harness verify --only deps` | pre-push + CI |
 | migrate | `cargo run -p do-harness-db --bin init_db` | on schema change |
 | seed | `cargo run -p do-harness-db --bin seed_invariants` | when `plans/invariants.json` changes |
+| bundle | `node scripts/check-bundle-budget.mjs --fail-on-violation` | quality gate (post-build) + CI (bundle-size) |
 
 ## Self-Correction Protocol
 
@@ -101,3 +102,4 @@ Using the harness in another codebase is proven, never assumed:
 - Never trust LLM self-assessment over a computational sensor's exit code.
 - Fix the sensor that fired; do not refactor unrelated code in the same pass.
 - An empty sensor suite passes vacuously; that is not evidence.
+- **Deploy-platform limits are not bundler limits**: vite will happily emit a 25.6 MiB wasm that Cloudflare Pages rejects at upload (>25 MiB/file) *after* every local gate is green — SW `globIgnores` excludes the precache, never the upload. The sensor is `check-bundle-budget.mjs`'s all-files platform-cap walk (quality gate + bundle-size CI); fix at emit time (vite `generateBundle` drop), never by weakening the sensor.

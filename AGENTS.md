@@ -49,6 +49,7 @@ readonly MAX_PR_TITLE_LENGTH=72
 - **MUST test security headers (HSTS, CSP defaults) on all responses.** CSP must not be overridden on static file responses.
 - **MUST apply parser timeouts to EPUB content parsing** to prevent infinite loops on malformed input.
 - **NEVER approve pnpm build scripts without review.** `onnxruntime-node` (Transformers.js engine) must stay in pnpm's ignored-builds — its Linux/x64 binding ships in the tarball and no postinstall needs to execute; approving runs arbitrary install-time code.
+- **NEVER let a file larger than 25 MiB reach `apps/web/dist` — Cloudflare Pages rejects the upload of any single file >25 MiB** (asset validation fails *after* install/tsc/vite/SW all pass and every gzip budget is green; the SW `globIgnores` precache exclusion does NOT exempt a file from the upload). `scripts/check-bundle-budget.mjs` enforces the per-file cap from `.performance-budgets.json → platformLimits` in the quality gate (post-build) and bundle-size CI, and `apps/web/vite.config.ts` drops oversize emitted assets at build time (onnxruntime-web's 25.6 MiB wasm is fetched from ORT's version-pinned CDN at runtime per transformers.js defaults — GOAP-273/#1188).
 
 ---
 
