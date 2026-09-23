@@ -177,4 +177,4 @@ Never weaken a sensor to obtain a passing result; fix the underlying cause.
 
 ---
 
-_See `agents-docs/` for detailed documentation on workflow, hooks, context management, and troubleshooting. See `llms.txt` and `llms-full.txt` for structured LLM context._
+*See `agents-docs/` for detailed documentation on workflow, hooks, context management, and troubleshooting. See `llms.txt` and `llms-full.txt` for structured LLM context.*
