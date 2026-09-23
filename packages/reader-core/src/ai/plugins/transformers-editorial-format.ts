@@ -26,6 +26,11 @@
  * silently dropping the download label.
  */
 
+// CANARY — GOAP-277 A1 verification only (issue #1193): this packages/** touch
+// makes dorny/paths-filter report src=true, which is the condition under which
+// e2e-smoke and bench must finally execute under the new always() guard. This
+// branch is closed unmerged; the change must never land on main.
+
 import type { EditorialCategory } from '../editorial-findings';
 import type { EditorialReviewRequest } from '../types';
 import { extractJson, isRecord } from './transformers-editorial-output';
