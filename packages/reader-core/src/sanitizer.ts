@@ -366,7 +366,14 @@ function isSchemeCharCode(code: number): boolean {
  * This avoids the considerable overhead of regular expressions and matchBounded, improving sanitization performance.
  */
 function getScheme(val: string): string | null {
-  const colonIdx = val.indexOf(':');
+  // Fast skip leading whitespace without calling .trim() which allocates a substring
+  let start = 0;
+  const len = val.length;
+  while (start < len && val.charCodeAt(start) <= 32) {
+    start++;
+  }
+
+  const colonIdx = val.indexOf(':', start);
   // A valid scheme must have at least one character before the first colon.
   // Cap the scan at 2048 to preserve the old matchBounded(w, 2048) rejection
   // window (ADR-034): a value whose first ':' sits beyond that bound had its
@@ -375,16 +382,16 @@ function getScheme(val: string): string | null {
   // (keep) cannot introduce a javascript:/data:/vbscript: vector — and keeps
   // per-attribute work constant-bounded. Schemes of 33..2048 chars that the old
   // 32-char assumption would have kept are still matched and removed.
-  if (colonIdx <= 0 || colonIdx > 2048) return null;
+  if (colonIdx <= start || colonIdx - start > 2048) return null;
 
   // The first character must be a letter (A-Z or a-z); the rest must be
   // scheme characters (letters/digits/"+"/"."/"-").
-  if (!isAlphaCode(val.charCodeAt(0))) return null;
-  for (let i = 1; i < colonIdx; i++) {
+  if (!isAlphaCode(val.charCodeAt(start))) return null;
+  for (let i = start + 1; i < colonIdx; i++) {
     if (!isSchemeCharCode(val.charCodeAt(i))) return null;
   }
 
-  return val.substring(0, colonIdx).toLowerCase();
+  return val.substring(start, colonIdx).toLowerCase();
 }
 
 /** Schemes that are kept on linkable (`use`/`image`) href attributes. */
@@ -538,7 +545,7 @@ export function isAllowedExternalHost(urlValue: string, policy: ExternalUrlPolic
  * other scheme (data:/javascript:/ftp:/…).
  */
 function shouldStripHref(val: string, policy: ExternalUrlPolicy): boolean {
-  const scheme = getScheme(val.trim());
+  const scheme = getScheme(val);
   if (scheme === null) return false; // relative / fragment — keep
   if (scheme === 'http' || scheme === 'https') {
     // Host allowlist (Layer 1 of the external-URL guard): default-deny.
@@ -561,11 +568,13 @@ function shouldStripHref(val: string, policy: ExternalUrlPolicy): boolean {
 function sanitizeElementAttributes(el: Element, policy: ExternalUrlPolicy): void {
   const localName = el.localName;
   // SVG local names preserve case (feImage) in both HTML and XHTML/XML parse
-  // modes, so compare case-insensitively rather than relying on one casing.
+  // modes, so compare exact case representations rather than calling .toLowerCase()
+  // to avoid per-element string allocations during DOM traversal.
   const isLinkable =
     localName === 'use' ||
     localName === 'image' ||
-    localName.toLowerCase() === 'feimage';
+    localName === 'feImage' ||
+    localName === 'feimage';
   const attrs = el.attributes;
 
   for (let i = attrs.length - 1; i >= 0; i--) {
