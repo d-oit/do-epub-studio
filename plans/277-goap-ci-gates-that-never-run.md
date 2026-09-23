@@ -52,7 +52,7 @@ Observations, all API-verified against `.github/workflows/ci.yml` at the run's
    §502 ("let `e2e-smoke` cover it: that job runs on `pull_request`").
    The evidence supports §261.
 
-## Hypothesis (not yet proven)
+## Hypothesis (proven 2026-09-23)
 
 `build` only runs at all because of its own fail-closed guard added after
 GOAP-267 (`if: always() && !contains(needs.*.result,'failure') && !contains
@@ -64,6 +64,16 @@ GitHub exposes no skip reason through the API (`annotations_count: 0`, no logs
 for skipped jobs), so the mechanism is inferred from the correlation in (3),
 not read from the platform. A1 is what turns the hypothesis into evidence.
 
+**A1 did exactly that — the hypothesis is confirmed.** With the guard added
+(#1196) and `dorny/paths-filter` reporting the matching scope, both jobs
+executed for the first time in sampled history (run
+`35912896951`): `E2E Smoke Tests` → `success`, 15 steps; `Benchmark` →
+`success`, 11 steps. The paired control is PR #1196 itself (run
+`35911442657`), workflow-only: `Filter src = false`, `reader-core = false`,
+both jobs `skipped`, `steps=0` — i.e. the guard removed the cascade while
+the scope filter kept its designed power to skip. A future regression to
+the old state is what A4's sensor exists to catch.
+
 ## Decomposition
 
 | ID | Action | Exit criteria |
@@ -73,6 +83,16 @@ not read from the platform. A1 is what turns the hypothesis into evidence.
 | A3 | Run `bench` and confirm ADR-218's blocking `compare-benchmarks.mjs` actually executes and passes on an unchanged PR. | `Benchmark` job shows the three steps (baseline/head/compare) with conclusion `success`. |
 | A4 | Sensor per ADR-277: a check that fails when a scoped gating job is skipped while its filter matched, so this class of gap cannot silently recur. | New check green on a matching PR, red in a deliberate canary where the job is skipped. |
 | A5 | Correct the false claim in `agents-docs/LEARNINGS.md` §502 and record the verified finding; reconcile §261 with the post-`build`-guard world. | One consistent statement in LEARNINGS, citing run ids. |
+
+## Status (2026-09-23)
+
+| ID | State | Evidence |
+| --- | --- | --- |
+| A1 | **DONE** | Guard in #1196 (`319daa9`). Canary PR #1198 (branched off the guard, one labeled `packages/**` comment, closed unmerged) run `35912896951`: `Filter src = true`, `reader-core = true`, then `E2E Smoke Tests` job `107359758176` → `success`/15 steps and `Benchmark` job `107359758129` → `success`/11 steps. Control: workflow-only PR #1196 run `35911442657` → `Filter src = false`, both jobs `skipped`/`steps=0`, so the scope filter is intact. |
+| A2 | **DONE — nothing to fix** | The lane is green on its first ever execution: `playwright install --with-deps chromium webkit` (ADR-201's per-PR WebKit lane ran for the first time), then Dev Smoke → Preview Smoke → Startup Performance → PWA smoke, all `success`. No findings, so no CI-only fix loop was needed. |
+| A3 | **DONE** | `Benchmark` ran baseline → head → `node scripts/compare-benchmarks.mjs baseline.json head.json` in both `Compare benchmarks` and the blocking `Check for regression` step (ADR-218), plus `Post benchmark comment` — all `success` on an unchanged PR. |
+| A4 | TODO | The only remaining action: a check that fails when a scoped gating job is skipped while its filter matched. |
+| A5 | **DONE** | §502 corrected and reconciled with §261, plus a dated entry citing run ids — merged in #1194. |
 
 ## Exit criteria (plan done when)
 
