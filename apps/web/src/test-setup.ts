@@ -2,8 +2,13 @@ import 'fake-indexeddb/auto';
 import * as matchers from '@testing-library/jest-dom/matchers';
 import { expect, vi, afterEach, afterAll, beforeEach } from 'vitest';
 import { cleanup } from '@testing-library/react';
+import { installReactWarningGuard } from './test-utils/react-warning-guard';
 
 expect.extend(matchers);
+
+// React warnings are invisible under the default reporter (ADR-275): fail any
+// file that emits a tracked warning and is not on the GOAP-275 inventory.
+installReactWarningGuard();
 
 // Mock matchMedia
 Object.defineProperty(window, 'matchMedia', {
