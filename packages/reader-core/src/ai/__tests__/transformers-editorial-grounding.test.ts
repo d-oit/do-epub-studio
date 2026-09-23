@@ -247,6 +247,21 @@ describe('degenerate-echo backstop and output salvage (probe #4)', () => {
     ).toBe(false);
   });
 
+  it('catches echoes re-cased or whitespace-mangled by the model (item 6, 2026-09-23)', () => {
+    const messages = buildPrompt();
+    // Draw 1 of the live diagnosis: only the first letter re-cased …
+    const recased = S_C1_1.charAt(0).toLowerCase() + S_C1_1.slice(1);
+    expect(recased).not.toBe(S_C1_1);
+    expect(isPromptEcho(recased, messages)).toBe(true);
+    // … and internal whitespace runs collapsed to single spaces.
+    const mangled = `${S_C1_1.slice(0, 10)}   ${S_C1_1.slice(10).replace(/ /g, '\t')}`;
+    expect(isPromptEcho(mangled, messages)).toBe(true);
+    // Normalization must not invent matches: fresh phrasing stays clean.
+    expect(
+      isPromptEcho('Did Mara turn thirty the same year the histories date the peace?', messages),
+    ).toBe(false);
+  });
+
   it('retries a draw whose question is a verbatim chapter echo', async () => {
     const payload = JSON.stringify([
       {
