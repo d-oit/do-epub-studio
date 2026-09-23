@@ -243,6 +243,13 @@ const defaultLoader: TransformersLoader = async (spec) => {
   const pipe = await mod.pipeline('text-generation', spec.model, {
     dtype: spec.dtype,
     device: spec.device,
+    // ORT's CPU memory arena caches allocation across token steps. Measured
+    // cost of keeping it: +1486 MB RSS spike per review vs +460 MB without,
+    // which drove `available` into the container kill band on 8 GB/no-swap
+    // hosts mid-corpus-run (live corpus worker death, LEARNINGS #546). The
+    // arena only amortizes per-step allocator reuse — noise at 0.5B scale;
+    // surviving the run is not.
+    session_options: { enableCpuMemArena: false },
     progress_callback: (event: unknown) => {
       const mapped = mapProgressEvent(event);
       if (mapped) spec.onProgress(mapped);

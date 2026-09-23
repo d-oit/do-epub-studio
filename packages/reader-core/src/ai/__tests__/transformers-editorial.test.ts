@@ -235,6 +235,9 @@ describe('default loader (mocked @huggingface/transformers)', () => {
     expect(call.model).toBe('onnx-community/Qwen2.5-0.5B-Instruct');
     expect(call.opts.device).toBe('cpu'); // node runtime resolves native cpu
     expect(call.opts.dtype).toBe('q8');
+    // Memory-pressure survival pin: arena-off keeps the review RSS spike at
+    // ~460 MB instead of ~1486 MB (see defaultLoader comment).
+    expect(call.opts.session_options).toEqual({ enableCpuMemArena: false });
     expect(loaderState.env.remoteHost).toBe('https://mirror.test/');
     expect(seen[0]?.phase).toBe('code');
     expect(seen).toContainEqual({
