@@ -367,6 +367,10 @@ export const zh: Record<TranslationKeys, TranslationValue> = {
   'asst.engineMissing': '缺少本地引擎',
   'asst.optInRequired': '需要辅助同意',
   'asst.runLabel': '开始检查',
+  'asst.enginePrepare': '准备故事与逻辑引擎',
+  'asst.engineDownloading': '正在准备引擎：{percent}%',
+  'asst.engineReady': '故事与逻辑引擎已就绪',
+  'asst.engineNote': '一次性下载约500 MB。模型在本设备上运行，您的稿件绝不会被上传。',
 
   'highlight.colors.yellow': '黄色',
   'highlight.colors.green': '绿色',

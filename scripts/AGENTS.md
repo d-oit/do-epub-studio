@@ -21,3 +21,8 @@ Guidance specific to authoring and testing scripts in `scripts/`.
 
 - **Dependabot version updates re-bump a downgraded pin to the *latest* upstream release, not the previously pinned one.** A downgrade bait (e.g. chromaui/action v18.7.2 on main) therefore exercises `scripts/allowlist-dependabot-shas.sh`'s append path only when the latest release's SHA is absent from `ALLOWED_SHAS` — if the expected re-bump version is already allowlisted, the live run is a no-op regardless (GOAP-270 Phase 3: v18.9.0 exists upstream and is un-allowlisted, so the re-bump verifies + appends; the earlier fallback plan assumed a no-op re-bump to the allowlisted v18.8.1).
 - **Check the bait's expected target SHA against the allowlist before scheduling a live append observation** — `git ls-remote <upstream> "refs/tags/<tag>^{}"` for the latest release vs `scripts/validate-shas.sh`.
+
+## Fresh-container recovery (hooks + do-harness)
+
+- **`.git/hooks` is not versioned — a fresh container ships with NO pre-commit/commit-msg/pre-push**, so every hook-based gate is silently inert. Run `./scripts/install-hooks.sh` (symlinks from `scripts/hooks/`) and verify with `./scripts/validate-git-hooks.sh` before trusting hook enforcement.
+- **The `do-harness` binary is container-local too**: reinstall pinned via `curl -fsSL https://raw.githubusercontent.com/d-o-hub/do-harness/main/scripts/install.sh | sh -s -- --version <tag>` (SHA-256 verified, lands in `~/.local/bin`), then `do-harness init-db` + `do-harness explain --set verification --changed`. NEVER run `do-harness hook install` here — it would clobber the scripts/hooks symlinks (ADR-246: repo hooks stay authoritative; its doctor WARNs about unmanaged hooks are expected).

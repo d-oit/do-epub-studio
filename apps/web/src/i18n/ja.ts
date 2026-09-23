@@ -367,6 +367,10 @@ export const ja: Record<TranslationKeys, TranslationValue> = {
   'asst.engineMissing': 'ローカルエンジンなし',
   'asst.optInRequired': '支援の同意が必要',
   'asst.runLabel': 'チェックを実行',
+  'asst.enginePrepare': 'ストーリー・論理エンジンの準備',
+  'asst.engineDownloading': 'エンジンを準備中: {percent}%',
+  'asst.engineReady': 'ストーリー・論理エンジンの準備完了',
+  'asst.engineNote': '約500MBを一度だけダウンロードします。モデルはこの端末で動作し、原稿がアップロードされることはありません。',
 
   'highlight.colors.yellow': '黄色',
   'highlight.colors.green': '緑',

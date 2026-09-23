@@ -81,6 +81,28 @@ export type {
   LanguageToolEditorialPlugin,
   LanguageToolEditorialPluginOptions,
 } from './plugins/languagetool-editorial';
+export {
+  createTransformersEditorialPlugin,
+  resolveInferenceDevice,
+  TRANSFORMERS_EDITORIAL_CATEGORIES,
+} from './plugins/transformers-editorial';
+export type {
+  ChatMessage,
+  DeviceSelectionDeps,
+  GenerationOptions,
+  ModelLoadState,
+  TextGenerationPipe,
+  TransformersEditorialCapability,
+  TransformersEditorialPlugin,
+  TransformersEditorialPluginOptions,
+  TransformersLoader,
+  TransformersLoaderSpec,
+} from './plugins/transformers-editorial';
+export type {
+  ModelLoadProgress,
+  TransformersDevice,
+  TransformersDtype,
+} from './plugins/transformers-editorial-format';
 export type {
   EditorialReviewCapability,
   EditorialReviewRequest,

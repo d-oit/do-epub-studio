@@ -84,7 +84,14 @@ export default defineConfig({
       // bundles that contain dynamic imports — a parse error in classic workers:
       // "Cannot use 'import.meta' outside a module" → sw.registration_failed.
       // IIFE output has no `import.meta` and evaluates fine as a classic worker.
-      injectManifest: { rollupFormat: 'iife' },
+      // GOAP-273 B1: the .wasm/.onnx engine artifacts are labelled, on-demand
+      // downloads (never precached — GOAP-262 bundle rejection stands), so
+      // exclude them from the precache glob even if a dependency drops them
+      // into dist/ where the default glob would silently swallow them.
+      injectManifest: {
+        rollupFormat: 'iife',
+        globIgnores: ['**/*.wasm', '**/*.onnx'],
+      },
       srcDir: 'src',
       filename: 'sw.ts',
     }),

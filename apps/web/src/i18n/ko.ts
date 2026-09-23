@@ -367,6 +367,10 @@ export const ko: Record<TranslationKeys, TranslationValue> = {
   'asst.engineMissing': '로컬 엔진 없음',
   'asst.optInRequired': '지원 동의 필요',
   'asst.runLabel': '검사 실행',
+  'asst.enginePrepare': '스토리·논리 엔진 준비',
+  'asst.engineDownloading': '엔진 준비 중: {percent}%',
+  'asst.engineReady': '스토리·논리 엔진 준비 완료',
+  'asst.engineNote': '약 500MB를 한 번 내려받습니다. 모델은 이 기기에서 실행되며 원고는 업로드되지 않습니다.',
 
   'highlight.colors.yellow': '노란색',
   'highlight.colors.green': '초록색',

@@ -367,6 +367,10 @@ export const it: Record<TranslationKeys, TranslationValue> = {
   'asst.engineMissing': 'Motore locale assente',
   'asst.optInRequired': 'Consenso all’assistenza necessario',
   'asst.runLabel': 'Avvia verifica',
+  'asst.enginePrepare': 'Prepara motore di trama e logica',
+  'asst.engineDownloading': 'Preparazione del motore: {percent} %',
+  'asst.engineReady': 'Motore di trama e logica pronto',
+  'asst.engineNote': 'Download unico di circa 500 MB. Il modello gira su questo dispositivo: il manoscritto non viene mai caricato.',
 
   'highlight.colors.yellow': 'Giallo',
   'highlight.colors.green': 'Verde',
