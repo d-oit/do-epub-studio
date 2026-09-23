@@ -367,6 +367,10 @@ export const de: Record<TranslationKeys, TranslationValue> = {
   'asst.engineMissing': 'Lokale Engine fehlt',
   'asst.optInRequired': 'Zustimmung zur Assistenz erforderlich',
   'asst.runLabel': 'Prüfung starten',
+  'asst.enginePrepare': 'Story- und Logik-Engine vorbereiten',
+  'asst.engineDownloading': 'Engine wird vorbereitet: {percent} %',
+  'asst.engineReady': 'Story- und Logik-Engine bereit',
+  'asst.engineNote': 'Einmaliger Download von etwa 500 MB. Das Modell läuft auf diesem Gerät – Ihr Manuskript wird nie hochgeladen.',
 
   'highlight.colors.yellow': 'Gelb',
   'highlight.colors.green': 'Grün',

@@ -4,12 +4,16 @@ import type { TranslationKeys } from '../../i18n/en';
 import { useAuthStore } from '../../stores/auth';
 import {
   createLocalEditorialPlugin,
+  createTransformersEditorialPlugin,
   EDITORIAL_PLUGIN_CATEGORIES,
   effectiveCategoryAvailability,
   milestone,
   QUALIFICATION_MILESTONES,
+  TRANSFORMERS_EDITORIAL_CATEGORIES,
   type EditorialCategory,
   type EditorialReviewOutcome,
+  type ModelLoadProgress,
+  type ModelLoadState,
 } from '@do-epub-studio/reader-core';
 import {
   fetchAssistanceConsent,
@@ -24,19 +28,22 @@ const CATEGORY_LABELS: Record<EditorialCategory, TranslationKeys> = {
 };
 
 /**
- * The panel wires only the engine-less plugin; the LanguageTool adapter (A2)
- * is exported from reader-core but not registered here.
+ * Two plugins, probed per category (GOAP-273 B1): the engine-less plugin
+ * answers spelling/grammar, the quantized Transformers.js engine answers
+ * story/logic — and only once it has been explicitly prepared below. The
+ * LanguageTool adapter (A2) is exported from reader-core but not registered
+ * here. Presence is always read from the capability, never inferred: a
+ * qualification milestone records that a category was *measured* to work, and
+ * only a present engine can act on that.
  */
 const editorialPlugin = createLocalEditorialPlugin();
+const transformersPlugin = createTransformersEditorialPlugin();
 
-/**
- * Engine presence is probed from the capability rather than inferred: a
- * qualification milestone records that a category was measured to work, and
- * only a present engine can act on that. Without this the panel would advertise
- * a category the moment someone flipped a milestone.
- */
-function enginePresent(): boolean {
-  return editorialPlugin.capabilities.editorial?.hasEngine() ?? false;
+function enginePresent(category: EditorialCategory): boolean {
+  const plugin = TRANSFORMERS_EDITORIAL_CATEGORIES.includes(category)
+    ? transformersPlugin
+    : editorialPlugin;
+  return plugin.capabilities.editorial?.hasEngine() ?? false;
 }
 
 interface AssistancePanelProps {
@@ -62,6 +69,34 @@ export function AssistancePanel({ bookId }: AssistancePanelProps): React.JSX.Ele
   const [running, setRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [engineLoad, setEngineLoad] = useState<ModelLoadState | null>(null);
+  const [engineProgress, setEngineProgress] = useState<ModelLoadProgress | null>(null);
+  const [preparing, setPreparing] = useState(false);
+
+  // Stable identity: the plugin's progress-listener Set dedupes by reference,
+  // so a re-render must not register a second listener.
+  const onEngineProgress = useCallback((progress: ModelLoadProgress) => {
+    setEngineProgress(progress);
+  }, []);
+
+  /**
+   * Labelled download: the ~500 MB model fetch happens only here, behind a
+   * visible button with progress — never implicitly inside a review run
+   * (the B1 load contract).
+   */
+  const prepareEngine = async () => {
+    setPreparing(true);
+    setError(null);
+    try {
+      setEngineLoad(
+        await transformersPlugin.capabilities.editorial.load(onEngineProgress),
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setPreparing(false);
+    }
+  };
 
   const load = useCallback(async () => {
     if (!token) return;
@@ -129,7 +164,7 @@ export function AssistancePanel({ bookId }: AssistancePanelProps): React.JSX.Ele
       <ul className="mt-3 space-y-1">
         {EDITORIAL_PLUGIN_CATEGORIES.map((category) => {
           const availability = effectiveCategoryAvailability(category, {
-            enginePresent: enginePresent(),
+            enginePresent: enginePresent(category),
           });
           return (
             <li key={category} className="flex items-center justify-between gap-2 text-sm">
@@ -141,6 +176,47 @@ export function AssistancePanel({ bookId }: AssistancePanelProps): React.JSX.Ele
           );
         })}
       </ul>
+
+      {/* Story/logic engine: a labelled, user-initiated download with visible
+          progress; review never triggers it (no implicit ~500 MB fetch). */}
+      <div className="mt-3 flex flex-col gap-2 rounded-lg border border-border p-3">
+        {engineLoad?.loaded ? (
+          <span
+            role="status"
+            className="self-start rounded-full bg-background-tertiary px-2 py-0.5 text-xs text-foreground-muted"
+          >
+            {t('asst.engineReady')}
+          </span>
+        ) : preparing ? (
+          <>
+            <span className="text-sm">
+              {t('asst.engineDownloading', { percent: engineProgress?.percent ?? 0 })}
+            </span>
+            <div
+              role="progressbar"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={engineProgress?.percent ?? 0}
+              aria-label={t('asst.engineDownloading', { percent: engineProgress?.percent ?? 0 })}
+              className="h-1.5 w-full overflow-hidden rounded-full bg-background-tertiary"
+            >
+              <div
+                className="h-full rounded-full bg-accent"
+                style={{ width: `${engineProgress?.percent ?? 0}%` }}
+              />
+            </div>
+          </>
+        ) : (
+          <button
+            type="button"
+            onClick={() => void prepareEngine()}
+            className="self-start rounded-lg border border-border px-3 py-1.5 text-sm hover:bg-background-secondary disabled:opacity-50"
+          >
+            {t('asst.enginePrepare')}
+          </button>
+        )}
+        <p className="text-xs text-foreground-muted">{t('asst.engineNote')}</p>
+      </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <button

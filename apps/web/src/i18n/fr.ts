@@ -367,6 +367,10 @@ export const fr: Record<TranslationKeys, TranslationValue> = {
   'asst.engineMissing': 'Moteur local manquant',
   'asst.optInRequired': 'Consentement requis pour l’assistance',
   'asst.runLabel': 'Lancer la vérification',
+  'asst.enginePrepare': 'Préparer le moteur d’intrigue et de logique',
+  'asst.engineDownloading': 'Préparation du moteur : {percent} %',
+  'asst.engineReady': 'Moteur d’intrigue et de logique prêt',
+  'asst.engineNote': 'Téléchargement unique d’environ 500 Mo. Le modèle s’exécute sur cet appareil : votre manuscrit n’est jamais envoyé.',
 
   'highlight.colors.yellow': 'Jaune',
   'highlight.colors.green': 'Vert',

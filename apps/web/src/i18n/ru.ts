@@ -367,6 +367,10 @@ export const ru: Record<TranslationKeys, TranslationValue> = {
   'asst.engineMissing': 'Локальный движок отсутствует',
   'asst.optInRequired': 'Требуется согласие на помощь',
   'asst.runLabel': 'Запустить проверку',
+  'asst.enginePrepare': 'Подготовить движок сюжета и логики',
+  'asst.engineDownloading': 'Подготовка движка: {percent} %',
+  'asst.engineReady': 'Движок сюжета и логики готов',
+  'asst.engineNote': 'Единоразовая загрузка около 500 МБ. Модель работает на этом устройстве — рукопись никогда не отправляется.',
 
   'highlight.colors.yellow': 'Жёлтый',
   'highlight.colors.green': 'Зелёный',

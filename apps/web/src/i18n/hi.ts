@@ -367,6 +367,10 @@ export const hi: Record<TranslationKeys, TranslationValue> = {
   'asst.engineMissing': 'स्थानीय इंजन अनुपलब्ध',
   'asst.optInRequired': 'सहायता के लिए सहमति आवश्यक',
   'asst.runLabel': 'जाँच शुरू करें',
+  'asst.enginePrepare': 'कहानी और तर्क इंजन तैयार करें',
+  'asst.engineDownloading': 'इंजन तैयार हो रहा है: {percent}%',
+  'asst.engineReady': 'कहानी और तर्क इंजन तैयार है',
+  'asst.engineNote': 'लगभग 500 MB का एक बार का डाउनलोड। मॉडल इसी डिवाइस पर चलता है — आपका मसौदा कभी अपलोड नहीं होता।',
 
   'highlight.colors.yellow': 'पीला',
   'highlight.colors.green': 'हरा',

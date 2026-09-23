@@ -2,8 +2,12 @@
   "gzipBudgets": {
     "mainJs": 180,
     "mainCss": 30,
-    "lazyChunkJs": 100,
-    "description": "Gzipped (zlib level 9) budgets in KB enforced by scripts/check-bundle-budget.mjs. Values aligned with ADR-107 §3 (180/30/80 KB) with admin-route exception. lazyChunkJs 90 -> 95 by GOAP-230 (shared admin chunk: step-up reauth modal + account-settings nav), 95 -> 100 by the ADR-234 items 5+6 passkey MFA feature (MfaSection + @simplewebauthn/browser land in the admin route); no other lazy chunk exceeds 55 KB."
+    "lazyChunkJs": 165,
+    "description": "Gzipped (zlib level 9) budgets in KB enforced by scripts/check-bundle-budget.mjs. Values aligned with ADR-107 §3 (180/30/80 KB) with admin-route exception. lazyChunkJs 90 -> 95 by GOAP-230 (shared admin chunk: step-up reauth modal + account-settings nav), 95 -> 100 by the ADR-234 items 5+6 passkey MFA feature (MfaSection + @simplewebauthn/browser land in the admin route), 100 -> 165 by GOAP-273 B1 (transformers.web on-device editorial engine chunk: 157.82 KB gz measured; it is a dynamic import fetched only on a user-initiated engine prepare, never on route entry — the next-largest lazy chunk stays <= 98 KB)."
+  },
+  "platformLimits": {
+    "cloudflarePagesMaxFileBytes": 26214400,
+    "description": "Hard per-file cap for anything deployed to Cloudflare Pages (25 MiB): Pages rejects a larger file at asset-validation time — after install, tsc, vite build and SW generation all pass and every gzip budget is green. Enforced over ALL dist files by scripts/check-bundle-budget.mjs (quality gate post-build + bundle-size CI) and pre-emptively by the oversize-asset drop in apps/web/vite.config.ts. #1188: onnxruntime-web's ort-wasm-simd-threaded.asyncify.wasm (25.6 MiB) shipped because injectManifest.globIgnores excludes files from the SW precache only, never from the upload."
   },
   "routeBudgets": {
     "reader": {

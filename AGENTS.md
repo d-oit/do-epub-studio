@@ -48,6 +48,8 @@ readonly MAX_PR_TITLE_LENGTH=72
 - **MUST use static imports over `readFileSync` for repo-bundled assets.** When a Vite/webpack/rollup config or a Node-bundled source needs a JSON file or a static text file (e.g. `VERSION`), prefer `import x from './file.json'` (Vite) or `path.join(__dirname, 'literal')` (Node) over `readFileSync(new URL(..., import.meta.url))`. The `new URL` pattern trips Codacy's `security/detect-non-literal-fs-filename` rule (OWASP path-traversal guard) because the URL is non-literal at the call site. See `.agents/skills/security-code-auditor/SKILL.md` § "File-System Path Patterns".
 - **MUST test security headers (HSTS, CSP defaults) on all responses.** CSP must not be overridden on static file responses.
 - **MUST apply parser timeouts to EPUB content parsing** to prevent infinite loops on malformed input.
+- **NEVER approve pnpm build scripts without review.** `onnxruntime-node` (Transformers.js engine) must stay in pnpm's ignored-builds — its Linux/x64 binding ships in the tarball and no postinstall needs to execute; approving runs arbitrary install-time code.
+- **NEVER let a file larger than 25 MiB reach `apps/web/dist` — Cloudflare Pages rejects the upload of any single file >25 MiB** (asset validation fails *after* install/tsc/vite/SW all pass and every gzip budget is green; the SW `globIgnores` precache exclusion does NOT exempt a file from the upload). `scripts/check-bundle-budget.mjs` enforces the per-file cap from `.performance-budgets.json → platformLimits` in the quality gate (post-build) and bundle-size CI, and `apps/web/vite.config.ts` drops oversize emitted assets at build time (onnxruntime-web's 25.6 MiB wasm is fetched from ORT's version-pinned CDN at runtime per transformers.js defaults — GOAP-273/#1188).
 
 ---
 
@@ -73,6 +75,7 @@ readonly MAX_PR_TITLE_LENGTH=72
 10. **Releases MUST be cut via the `release-management` skill — no manual tags, no direct CHANGELOG edits.** Tags are pushed exclusively via `scripts/release/create-release-tag.sh <version>`; the pre-push hook blocks all other `v*` tag pushes.
 11. **CI MUST enforce Lighthouse mobile preset with route-specific performance budgets** for catalog, admin, auth, and offline routes.
 12. **MUST run the `learn` skill after every non-trivial change.** Capture non-obvious learnings in the same PR that produced them, using the scoping rules in `agents-docs/LEARNINGS.md` (project-wide → `agents-docs/LEARNINGS.md`, script → `scripts/AGENTS.md`, skill → `.agents/skills/<name>/AGENTS.md`). A PR is not complete until its learnings are recorded or explicitly none exist.
+13. **NEVER run heavy test suites concurrently.** Two simultaneous vitest runs (e.g. an `E2E_LIVE`/`E2E_DIAG` inference suite plus another package's suite) crash worker forks under memory contention — reported as a phantom `Worker exited unexpectedly`, not as the real cause. Serialize runs (one shell at a time); `quality_gate.sh` already self-locks via the same reason. Before an inference-heavy run, check `free -m` shows **≥ ~2.8 GB available**: serialization alone is not enough — the biggest-RSS process is SIGKILLed at pipeline init even in isolation when the baseline is inflated (symptom: death at a repeatable ~10–12 s; see `agents-docs/LEARNINGS.md`). Mid-run, keep instantaneous `available` ≳ 1.5 GB at generation spikes — a ≥2.8 GB precheck does NOT prevent death (measured SIGTERM at available=908: kill-set + 15 s reaper + one fresh process per item + per-item guard, recipe in `agents-docs/LEARNINGS.md`).
 
 ---
 
@@ -89,6 +92,7 @@ readonly MAX_PR_TITLE_LENGTH=72
 - **Use OKLCH for color tokens** to ensure perceptually uniform lightness and wide-gamut P3 support.
 - **Enable View Transitions** for all page-to-page navigations.
 - **Enforce mutual exclusivity** for reader side-panels (TOC, Settings, etc.).
+- **New UI strings must land in all locales together**: add the key to `apps/web/src/i18n/en.ts` **and** the 13 locale files in the same change — each locale is typed `Record<TranslationKeys, …>`, so typecheck fails until every file has it; parity tests gate key-set equality, non-empty values, and `{count}` interpolation (`{other}` params are free).
 
 ---
 
@@ -136,6 +140,9 @@ Run this before finalizing ANY response:
 ## Key Commands
 
 ```bash
+# Environment: node 22 required (system node 20 crashes eslint-plugin-unicorn)
+export PATH=/home/node/.local/bin:$PATH   # persistent ~/.local/node22 symlink
+
 # Quality gates
 ./scripts/quality_gate.sh              # Full gate (lint + typecheck + test + design)
 SKIP_DESIGN=1 ./scripts/quality_gate.sh  # Skip impeccable detector
@@ -170,4 +177,4 @@ Never weaken a sensor to obtain a passing result; fix the underlying cause.
 
 ---
 
-_See `agents-docs/` for detailed documentation on workflow, hooks, context management, and troubleshooting. See `llms.txt` and `llms-full.txt` for structured LLM context._
+*See `agents-docs/` for detailed documentation on workflow, hooks, context management, and troubleshooting. See `llms.txt` and `llms-full.txt` for structured LLM context.*

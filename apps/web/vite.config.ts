@@ -9,6 +9,10 @@ import appIdentity from './src/config/app-identity.json' with { type: 'json' };
 // scripts/check-app-identity.mjs asserts VERSION === root package.json
 // version, so the package version is the authoritative static source.
 import rootPackage from '../../package.json' with { type: 'json' };
+// Static JSON import (AGENTS.md Tier 1): the Cloudflare Pages per-file cap —
+// single source of truth in .performance-budgets.json (Plan 214 R5), shared
+// with scripts/check-bundle-budget.mjs.
+import performanceBudgets from '../../.performance-budgets.json' with { type: 'json' };
 
 const isAnalyze = process.env.ANALYZE === 'true';
 const appVersion = rootPackage.version;
@@ -38,6 +42,48 @@ function restoreStandardBackdropFilter(): PluginOption {
   };
 }
 
+/**
+ * GOAP-273 B1 / #1188: Cloudflare Pages rejects any single deployed file
+ * larger than 25 MiB at asset-validation time — after install, tsc, vite and
+ * the service-worker build all pass. The offender is onnxruntime-web's
+ * `ort-wasm-simd-threaded.asyncify.wasm` (25.6 MiB), which vite emits through
+ * the bundled ORT module's `new URL(..., import.meta.url)` reference — dead
+ * weight at runtime, because transformers.js sets
+ * `env.backends.onnx.wasm.wasmPaths` to ORT's version-pinned jsdelivr CDN at
+ * module init (browser, only when wasmPaths is unset), so the engine never
+ * fetches the local copy (ADR-262's local-first contract holds: a static GET
+ * for a public binary, same class as the on-demand model download). Dropping
+ * oversize assets here fails fast at build time instead of at deploy;
+ * scripts/check-bundle-budget.mjs enforces the same cap from
+ * .performance-budgets.json as the sensor of record.
+ */
+function dropOversizedAssets(): PluginOption {
+  const maxBytes = performanceBudgets.platformLimits.cloudflarePagesMaxFileBytes;
+  return {
+    name: 'drop-oversized-assets',
+    apply: 'build',
+    generateBundle(_, bundle) {
+      for (const [fileName, file] of Object.entries(bundle)) {
+        if (file.type !== 'asset') continue;
+        const bytes =
+          typeof file.source === 'string' ? Buffer.byteLength(file.source) : file.source.byteLength;
+        if (bytes > maxBytes) {
+          console.warn(
+            `[drop-oversized-assets] dropping ${fileName} (${(bytes / 1024 / 1024).toFixed(1)} MiB): exceeds ${maxBytes / (1024 * 1024)} MiB per-file deploy cap (Cloudflare Pages)`,
+          );
+          // Reflect form of `delete bundle[fileName]` (rollup's documented
+          // drop pattern): the keys come from Object.entries of the build-time
+          // bundle itself, so no untrusted input can reach them — the call-
+          // argument form keeps Codacy's ESLint 8 dynamic-key delete /
+          // object-injection findings (false positives by construction) out
+          // without disabling any rule (AGENTS.md Tier 3).
+          Reflect.deleteProperty(bundle, fileName);
+        }
+      }
+    },
+  };
+}
+
 export default defineConfig({
   plugins: [
     {
@@ -52,6 +98,7 @@ export default defineConfig({
     react(),
     tailwindcss(),
     restoreStandardBackdropFilter(),
+    dropOversizedAssets(),
     VitePWA({
       registerType: 'prompt',
       // Only precache assets that actually ship from public/. favicon.ico has no
@@ -84,7 +131,14 @@ export default defineConfig({
       // bundles that contain dynamic imports — a parse error in classic workers:
       // "Cannot use 'import.meta' outside a module" → sw.registration_failed.
       // IIFE output has no `import.meta` and evaluates fine as a classic worker.
-      injectManifest: { rollupFormat: 'iife' },
+      // GOAP-273 B1: the .wasm/.onnx engine artifacts are labelled, on-demand
+      // downloads (never precached — GOAP-262 bundle rejection stands), so
+      // exclude them from the precache glob even if a dependency drops them
+      // into dist/ where the default glob would silently swallow them.
+      injectManifest: {
+        rollupFormat: 'iife',
+        globIgnores: ['**/*.wasm', '**/*.onnx'],
+      },
       srcDir: 'src',
       filename: 'sw.ts',
     }),

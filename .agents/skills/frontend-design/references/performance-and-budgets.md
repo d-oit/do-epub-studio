@@ -7,6 +7,7 @@ Frontend changes must conform to the defined performance thresholds:
 - **`.performance-budgets.json`**: Specifies maximum allowable asset sizes and bundle metrics per route/chunk.
 - **`bundle-baseline.json`**: Tracks baseline bundle sizes across builds.
 - **Lighthouse CI**: Enforces route-specific performance budgets (catalog, admin, auth, offline routes).
+- **Platform per-file cap**: `.performance-budgets.json → platformLimits.cloudflarePagesMaxFileBytes` (26214400 = 25 MiB) — Cloudflare Pages rejects ANY deployed file larger than this at asset-validation time, regardless of gzip. Enforced over all dist files (not just js/css) by `scripts/check-bundle-budget.mjs` in the quality gate + bundle-size CI; `apps/web/vite.config.ts` drops oversize emitted assets at `generateBundle` time. SW `globIgnores` precache exclusion never exempts a file from the upload (#1188: a 25.6 MiB onnxruntime wasm passed every gzip budget, then failed deploy).
 
 ## Validation Rules
 
@@ -14,6 +15,7 @@ Frontend changes must conform to the defined performance thresholds:
 2. **Virtualization**: Any dynamic list rendering more than 50 items must use list virtualization (`VirtualList`).
 3. **Optimized Traversal**: Perform DOM traversals and text scanning with native TreeWalker / String methods to avoid runtime overhead.
 4. **Verification**: After significant UI changes, run `./scripts/check-bundle-budget.mjs` or `pnpm build` to ensure bundle baselines remain within budget limits.
+5. **Deploy-cap gate**: after any build that may emit binary assets, run `node scripts/check-bundle-budget.mjs --fail-on-violation` — it enforces the Cloudflare Pages 25 MiB per-file limit across ALL dist files (`walkAllFiles`), not just the js/css the budget table measures.
 
 ### Route-total deltas: attribute before touching anything
 

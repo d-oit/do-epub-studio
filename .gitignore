@@ -35,6 +35,11 @@ target/
 temp/
 *.tmp
 
+# GOAP-273 B1 diagnostic probe + its esbuild bundle (TEMP, never committed;
+# bundle is regenerated from transformers-editorial-format.ts as needed)
+packages/reader-core/b1-diag-probe.mjs
+packages/reader-core/.b1-fmt.bundle.mjs
+
 # Reports
 reports/
 

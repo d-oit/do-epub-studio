@@ -5,5 +5,19 @@
   "extensions.confirmedUriTimeout": 0,
   "workbench.extensions.autoCheck": false,
   "workbench.extensions.autoInstall": false,
-  "markdownlint.config": ".markdownlint.json"
+  "markdownlint.config": ".markdownlint.json",
+  "files.watcherExclude": {
+    "**/.git/objects/**": true,
+    "**/.turbo/**": true,
+    "**/coverage/**": true,
+    "**/dist/**": true,
+    "**/node_modules/**": true
+  },
+  "search.exclude": {
+    "**/.git": true,
+    "**/.turbo": true,
+    "**/coverage": true,
+    "**/dist": true,
+    "**/node_modules": true
+  }
 }

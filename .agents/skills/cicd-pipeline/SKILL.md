@@ -239,6 +239,12 @@ Reference `.lighthouserc.json` for per-route URL configuration.
   for debian11 (only debian12/13), so base images must be bookworm+; the
   failure surfaces as a browser *download* error, not an image problem.
 
+## Deploy-Platform File Cap (Cloudflare Pages)
+
+- **Pages rejects any file >25 MiB at asset validation — after build passes.**
+  Enforced by `scripts/check-bundle-budget.mjs` (`platformLimits`); SW
+  `globIgnores` excludes precache only, never the upload (GOAP-273/#1188).
+
 ## Summary
 
 CI/CD pipelines automate the path from code to production.

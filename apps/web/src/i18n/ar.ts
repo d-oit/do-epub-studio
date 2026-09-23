@@ -367,6 +367,10 @@ export const ar: Record<TranslationKeys, TranslationValue> = {
   'asst.engineMissing': 'المحرك المحلي مفقود',
   'asst.optInRequired': 'يلزم الموافقة على المساعدة',
   'asst.runLabel': 'بدء الفحص',
+  'asst.enginePrepare': 'تجهيز محرك القصة والمنطق',
+  'asst.engineDownloading': 'جارٍ تجهيز المحرك: {percent}٪',
+  'asst.engineReady': 'محرك القصة والمنطق جاهز',
+  'asst.engineNote': 'تنزيل واحد بحجم حوالي 500 ميغابايت. يعمل النموذج على هذا الجهاز — لا تُرفع مخطوطتك أبدًا.',
 
   'highlight.colors.yellow': 'أصفر',
   'highlight.colors.green': 'أخضر',

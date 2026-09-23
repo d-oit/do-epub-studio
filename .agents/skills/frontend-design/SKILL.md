@@ -53,6 +53,7 @@ To prevent duplication across skills, delegate domain-specific concerns as follo
 | UI Component Library | `packages/ui/` |
 | Performance Budgets | `.performance-budgets.json` |
 | Bundle Baseline | `bundle-baseline.json` |
+| Deploy Per-file Cap | `.performance-budgets.json` → `platformLimits.cloudflarePagesMaxFileBytes` (25 MiB, Cloudflare Pages) |
 
 ## Reference Guides
 

@@ -367,6 +367,10 @@ export const nl: Record<TranslationKeys, TranslationValue> = {
   'asst.engineMissing': 'Lokale engine ontbreekt',
   'asst.optInRequired': 'Toestemming voor ondersteuning vereist',
   'asst.runLabel': 'Controle starten',
+  'asst.enginePrepare': 'Verhaal- en logica-engine voorbereiden',
+  'asst.engineDownloading': 'Engine wordt voorbereid: {percent} %',
+  'asst.engineReady': 'Verhaal- en logica-engine gereed',
+  'asst.engineNote': 'Eenmalige download van ongeveer 500 MB. Het model draait op dit apparaat — uw manuscript wordt nooit geüpload.',
 
   'highlight.colors.yellow': 'Geel',
   'highlight.colors.green': 'Groen',

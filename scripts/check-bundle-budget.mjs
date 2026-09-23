@@ -33,10 +33,14 @@ function loadBudgets() {
   }
   const raw = JSON.parse(fs.readFileSync(budgetsPath, 'utf8'));
   const gzip = raw.gzipBudgets || {};
+  const platform = raw.platformLimits || {};
   return Object.freeze({
     mainJs: gzip.mainJs,
     mainCss: gzip.mainCss,
     lazyChunkJs: gzip.lazyChunkJs,
+    // Deploy-platform per-file cap (Cloudflare Pages rejects >25 MiB per file
+    // at upload — #1188). Same budgets file, per Plan 214 R5 single source.
+    maxFileBytes: platform.cloudflarePagesMaxFileBytes ?? 25 * 1024 * 1024,
   });
 }
 
@@ -147,6 +151,20 @@ function walk(dir) {
   return out;
 }
 
+// walk() only sees .js/.css — the deploy-platform per-file cap must cover
+// EVERY dist file (wasm/models/fonts), which is why this second walk exists
+// (scripts/AGENTS.md documents the distinction; #1188).
+function walkAllFiles(dir) {
+  const out = [];
+  if (!fs.existsSync(dir)) return out;
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) out.push(...walkAllFiles(full));
+    else out.push(full);
+  }
+  return out;
+}
+
 function formatKb(bytes) {
   return (bytes / 1024).toFixed(2);
 }
@@ -202,6 +220,19 @@ function main() {
   const rows = [];
   let violations = 0;
 
+  // Deploy-platform per-file cap: walk() only collects .js/.css, so this
+  // all-files walk catches binary assets (wasm/models/fonts) that Cloudflare
+  // Pages rejects at upload (>25 MiB per file — #1188).
+  const maxFileMiB = BUDGETS.maxFileBytes / (1024 * 1024);
+  const oversize = [];
+  for (const file of walkAllFiles(distDir)) {
+    const bytes = fs.statSync(file).size;
+    if (bytes > BUDGETS.maxFileBytes) {
+      oversize.push({ relPath: path.relative(distDir, file), bytes });
+    }
+  }
+  violations += oversize.length;
+
   for (const file of files) {
     const buf = fs.readFileSync(file);
     const gzSize = gzippedSize(buf);
@@ -243,7 +274,10 @@ function main() {
     '',
     table,
     '',
-    `Budgets: main JS ${BUDGETS.mainJs} KB · main CSS ${BUDGETS.mainCss} KB · lazy chunk ${BUDGETS.lazyChunkJs} KB`,
+    `Budgets: main JS ${BUDGETS.mainJs} KB · main CSS ${BUDGETS.mainCss} KB · lazy chunk ${BUDGETS.lazyChunkJs} KB · any file <= ${maxFileMiB} MiB (deploy cap)`,
+    ...(oversize.length
+      ? ['', `**${oversize.length} file(s) exceed the per-file deploy cap:**`, ...oversize.map((f) => `- \`${f.relPath}\` is ${(f.bytes / (1024 * 1024)).toFixed(2)} MiB — Cloudflare Pages rejects files > ${maxFileMiB} MiB at upload`)]
+      : []),
     `Files measured: ${rows.filter((r) => r.budget !== null).length} · Violations: ${violations}`,
   ].join('\n');
 
