@@ -45,3 +45,11 @@ Guidance specific to authoring and testing scripts in `scripts/`.
 ## check-adr-index.mjs counts ADR rows only
 
 - **`Numbers tracked: N` is not the number of index rows, and cannot prove every plan is indexed**: `addNumber()` is gated on `filePath.includes('-adr-')` (ADR-083 §2 shares one numeric space between `*-goap-*` and `*-adr-*`), so adding a GOAP-only row leaves the count unchanged — row 276 was added and the count stayed at 92. A plan with no row at all is invisible to the validator: `plans/276-goap-external-harness-benchmark-adoption.md` sat unindexed while rows 279–283 all pointed back at it, and CI stayed green. Audit index coverage by row prefix (`^\| [0-9]`), never by this count.
+
+## gh resolves the repository from your cwd
+
+- **A deleted cwd makes `gh` return empty rather than fail loudly**: `gh` shells out to `git` to discover the repo, so from a removed directory it prints `failed to run git: fatal: Unable to read current working directory` and yields nothing — and a caller that swallows stderr (`2>/dev/null || echo "[]"`) sees a legitimate empty list. `atomic-commit`'s `verify.sh` does exactly that, so removing a worktree out from under a still-running `verify.sh` walks the 300 s "No CI checks detected" grace window and exits 2 (`atomic-commit` exit 6, INCONCLUSIVE) **while the PR is in fact fully green** — precisely what happened to #1208 (36/36 checks passing, reported as unverifiable). Never delete a worktree — or otherwise remove a process's cwd — before its background commands have finished; when a query must survive an unknown cwd, pass `--repo <owner>/<name>`, which works from anywhere.
+
+## Chromatic posts two checks with confusable names
+
+- **The workflow run can be green while the check that matters is pending**: `visual-regression.yml`'s job `Chromatic visual regression` finishes `SUCCESS` (`exitZeroOnChanges: true`), yet Chromatic's *separate* external check `UI Tests` — the one `verify.sh` counts — stays `PENDING` until a human accepts baselines. "All workflow runs succeeded" is therefore not "all checks passed"; read the two apart, and expect `gh run list` to show a passing run next to a permanently pending check.
