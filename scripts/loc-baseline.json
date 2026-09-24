@@ -1,0 +1,9 @@
+{
+  "apps/worker/src/auth/admin-middleware.ts": 507,
+  "apps/worker/src/routes/creator.ts": 942,
+  "apps/web/src/features/reader/ReaderPage.tsx": 551,
+  "apps/web/src/features/reader/components/toolbar/ReaderToolbar.tsx": 519,
+  "packages/reader-core/src/ai/plugins/transformers-editorial-format.ts": 513,
+  "packages/reader-core/src/ai/plugins/transformers-editorial.ts": 502,
+  "packages/reader-core/src/sanitizer.ts": 931
+}
