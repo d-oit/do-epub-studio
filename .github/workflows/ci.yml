@@ -477,12 +477,10 @@ jobs:
     # on QUALITY_GATE_NO_SMOKE=1) and carries ADR-201's per-PR WebKit lane, so
     # a silent skip leaves both unenforced. Scope/event conditions below are
     # unchanged: a docs-only PR still skips, and schedule stays on `e2e-full`.
-    if: >-
-      always()
-      && !contains(needs.*.result, 'failure')
-      && !contains(needs.*.result, 'cancelled')
-      && github.event_name != 'schedule'
-      && (needs.changes.outputs.src == 'true' || needs.changes.outputs.reader-core == 'true')
+    # CANARY NEGATIVE (GOAP-277 A4, throwaway — closed unmerged): force-skip
+    # the gate while the scope filter matches, the exact #1193 state. The Gate
+    # Visibility Sensor must fail; everything else stays as-is.
+    if: ${{ false }}
     needs: [changes, build]
     runs-on: ubuntu-latest
     timeout-minutes: 20

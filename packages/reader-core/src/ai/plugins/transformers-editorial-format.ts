@@ -26,6 +26,10 @@
  * silently dropping the download label.
  */
 
+// CANARY NEGATIVE (GOAP-277 A4, throwaway — closed unmerged): packages/** touch
+// makes src=true while e2e-smoke is force-skipped; the Gate Visibility Sensor
+// must fail with 'e2e-smoke was skipped although its scope filter matched'.
+
 import type { EditorialCategory } from '../editorial-findings';
 import type { EditorialReviewRequest } from '../types';
 import { extractJson, isRecord } from './transformers-editorial-output';
