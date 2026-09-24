@@ -1,17 +1,23 @@
 #!/usr/bin/env node
 // scripts/check-agent-sync.mjs
 // Drift guard for per-model agent config files. Per issue #445.
+// Extended to the nested `.agents/AGENTS.md` by GOAP-280 (GOAP-276
+// Phase 0 item 7) — see plans/280-adr-nested-agents-thin-adapter.md.
 //
-// Fails CI if any per-agent "thin adapter" file (CLAUDE.md, GEMINI.md,
-// .gemini/README.md, .jules/README.md, .windsurf/README.md) has drifted
-// into a near-copy of AGENTS.md. Thin adapters must stay short and
-// point back to AGENTS.md for shared rules.
+// Fails CI if any per-agent "thin adapter" file listed in ADAPTERS has
+// drifted into a near-copy of AGENTS.md. Thin adapters must stay short
+// and point back to AGENTS.md for shared rules.
 //
-// Also enforces a soft LOC cap on adapter files so they cannot grow
-// silently.
+// ADAPTERS IS the enforcement list: every entry is read and validated
+// against all four rules (soft LOC cap, forbidden section headings,
+// verbatim head copy, explicit AGENTS.md reference). Adding a new
+// adapter costs one array entry — no new function.
+//
+// Also enforces a soft LOC cap on adapter files and a 200-LOC cap on
+// the canonical AGENTS.md so neither can grow silently.
 //
 // Usage:  node scripts/check-agent-sync.mjs
-// Exit:   0 = clean, 1 = drift detected, 2 = missing file
+// Exit:   0 = clean, 1 = drift detected, 2 = missing canonical file
 
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -22,17 +28,23 @@ const REPO_ROOT = resolve(__dirname, '..');
 
 const AGENTS_MD = resolve(REPO_ROOT, 'AGENTS.md');
 
-// Adapters that must stay thin.
+// Adapters that must stay thin. THIS ARRAY IS ENFORCED — the loop below
+// checks every entry; listing a path here is the only step needed to
+// bring a new adapter under the guard.
 const ADAPTERS = [
   'CLAUDE.md',
   'GEMINI.md',
   '.gemini/README.md',
   '.jules/README.md',
   '.windsurf/README.md',
+  '.agents/AGENTS.md',
 ];
 
 // Per-adapter soft LOC cap.
 const SOFT_LOC_CAP = 80;
+
+// Canonical AGENTS.md LOC cap (AGENTS.md "max 200 LOC" rule).
+const CANONICAL_LOC_CAP = 200;
 
 // Sections from AGENTS.md that must NOT appear (verbatim) in adapters.
 const FORBIDDEN_SECTION_HEADINGS = [
@@ -68,22 +80,6 @@ function readCanonicalAgentsFile() {
   }
 }
 
-function readAdapterFile(relPath, content) {
-  validateAdapterContent(relPath, content);
-}
-
-function handleMissingAdapter(relPath) {
-  err(relPath, 'adapter file missing (delete the rule, not the file)');
-}
-
-const agentsContent = readCanonicalAgentsFile();
-const agentsLines = agentsContent.split('\n').length;
-
-// 2. AGENTS.md LOC guard (enforce the AGENTS.md "max 200 LOC" rule).
-if (agentsLines > 200) {
-  err('AGENTS.md', `exceeds 200 LOC cap (currently ${agentsLines})`);
-}
-
 function validateAdapterContent(relPath, content) {
   const lines = content.split('\n').length;
 
@@ -117,78 +113,30 @@ function validateAdapterContent(relPath, content) {
   }
 }
 
-function checkAdapterFile(relPath, content) {
-  readAdapterFile(relPath, content);
-}
-
-function checkClaudeAdapter() {
+function checkAdapter(relPath) {
   try {
-    checkAdapterFile('CLAUDE.md', readFileSync(resolve(REPO_ROOT, 'CLAUDE.md'), 'utf8'));
+    validateAdapterContent(relPath, readFileSync(resolve(REPO_ROOT, relPath), 'utf8'));
   } catch (error) {
     if (!(error instanceof Error) || error.code !== 'ENOENT') {
       throw error;
     }
 
-    handleMissingAdapter('CLAUDE.md');
+    err(relPath, 'adapter file missing (delete the rule, not the file)');
   }
 }
 
-function checkGeminiAdapter() {
-  try {
-    checkAdapterFile('GEMINI.md', readFileSync(resolve(REPO_ROOT, 'GEMINI.md'), 'utf8'));
-  } catch (error) {
-    if (!(error instanceof Error) || error.code !== 'ENOENT') {
-      throw error;
-    }
+const agentsContent = readCanonicalAgentsFile();
+const agentsLines = agentsContent.split('\n').length;
 
-    handleMissingAdapter('GEMINI.md');
-  }
+// 2. AGENTS.md LOC guard (enforce the AGENTS.md "max 200 LOC" rule).
+if (agentsLines > CANONICAL_LOC_CAP) {
+  err('AGENTS.md', `exceeds ${CANONICAL_LOC_CAP} LOC cap (currently ${agentsLines})`);
 }
 
-function checkGeminiDirAdapter() {
-  try {
-    checkAdapterFile('.gemini/README.md', readFileSync(resolve(REPO_ROOT, '.gemini/README.md'), 'utf8'));
-  } catch (error) {
-    if (!(error instanceof Error) || error.code !== 'ENOENT') {
-      throw error;
-    }
-
-    handleMissingAdapter('.gemini/README.md');
-  }
+// 1. Adapter drift guard — ADAPTERS is the single source of enforcement.
+for (const relPath of ADAPTERS) {
+  checkAdapter(relPath);
 }
-
-function checkJulesAdapter() {
-  try {
-    checkAdapterFile('.jules/README.md', readFileSync(resolve(REPO_ROOT, '.jules/README.md'), 'utf8'));
-  } catch (error) {
-    if (!(error instanceof Error) || error.code !== 'ENOENT') {
-      throw error;
-    }
-
-    handleMissingAdapter('.jules/README.md');
-  }
-}
-
-function checkWindsurfAdapter() {
-  try {
-    checkAdapterFile(
-      '.windsurf/README.md',
-      readFileSync(resolve(REPO_ROOT, '.windsurf/README.md'), 'utf8'),
-    );
-  } catch (error) {
-    if (!(error instanceof Error) || error.code !== 'ENOENT') {
-      throw error;
-    }
-
-    handleMissingAdapter('.windsurf/README.md');
-  }
-}
-
-checkClaudeAdapter();
-checkGeminiAdapter();
-checkGeminiDirAdapter();
-checkJulesAdapter();
-checkWindsurfAdapter();
 
 if (failed > 0) {
   console.error('✗ Agent-adapter drift detected:');
@@ -197,5 +145,5 @@ if (failed > 0) {
 }
 
 console.log('✓ All agent adapters are thin and reference AGENTS.md.');
-console.log(`  AGENTS.md: ${agentsLines} LOC (cap 200)`);
+console.log(`  AGENTS.md: ${agentsLines} LOC (cap ${CANONICAL_LOC_CAP})`);
 console.log(`  ${ADAPTERS.length} adapter files checked (cap ${SOFT_LOC_CAP} LOC each)`);

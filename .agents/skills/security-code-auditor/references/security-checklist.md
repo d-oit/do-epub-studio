@@ -12,6 +12,12 @@
 
 **Before adding dependencies**: Run `pnpm outdated` and check for CVEs.
 
+**These rows are security floors, not current pins.** Machine-readable truth
+for current versions lives in each workspace `package.json` and the
+`pnpm-workspace.yaml` `overrides:` block — never copy versions into docs
+(they drift; see `plans/279-adr-nested-agents-thin-adapter.md`). Bump a floor
+only when an older version becomes insecure.
+
 ## Authentication & Authorization
 
 - [ ] Password hashing uses strong KDF (Argon2, bcrypt)
