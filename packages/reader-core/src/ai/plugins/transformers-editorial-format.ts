@@ -26,6 +26,10 @@
  * silently dropping the download label.
  */
 
+// CANARY POSITIVE (GOAP-277 A4, throwaway — closed unmerged): packages/** touch
+// flips src=true so e2e-smoke/bench must run; the Gate Visibility Sensor must
+// then report smoke=success bench=success scope=true and stay green.
+
 import type { EditorialCategory } from '../editorial-findings';
 import type { EditorialReviewRequest } from '../types';
 import { extractJson, isRecord } from './transformers-editorial-output';
