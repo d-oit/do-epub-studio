@@ -73,8 +73,8 @@ executed for the first time in sampled history (run
 both jobs `skipped`, `steps=0` — i.e. the guard removed the cascade while
 the scope filter kept its designed power to skip. A future regression to
 the old state is caught by A4's `Gate Visibility Sensor`, which fails on
-exactly that one state and was proven both ways (green on #1200, red on
-#1201 — both throwaway, closed unmerged).
+exactly that one state — proven both ways by throwaway PRs that were
+closed unmerged: green on #1200, red on #1201.
 
 ## Decomposition
 
