@@ -817,3 +817,54 @@ jobs:
                 state: 'closed'
               });
             }
+
+  gate-visibility:
+    name: Gate Visibility Sensor
+    # ADR-277 sensor (GOAP-277 A4, issue #1193): turns a silently skipped
+    # gate into a red check. It asserts nothing about failures or
+    # cancellations — those are already visible — and stays silent when a
+    # skip is legitimate: scope filter false, the schedule lane (owned by
+    # e2e-full), or a build that did not succeed. What it refuses to accept
+    # is the #1193 state exactly: scope matched, build green, gate never ran.
+    if: ${{ always() }}
+    needs: [changes, build, e2e-smoke, bench]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: Assert scoped gates were not silently skipped
+        env:
+          EVENT: ${{ github.event_name }}
+          SRC: ${{ needs.changes.outputs.src }}
+          READER_CORE: ${{ needs.changes.outputs.reader-core }}
+          BUILD: ${{ needs.build.result }}
+          SMOKE: ${{ needs.e2e-smoke.result }}
+          BENCH: ${{ needs.bench.result }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          scope=false
+          if [ "${SRC:-}" = "true" ] || [ "${READER_CORE:-}" = "true" ]; then
+            scope=true
+          fi
+          event="${EVENT:-}"
+          build="${BUILD:-}"
+          smoke="${SMOKE:-}"
+          bench="${BENCH:-}"
+          if [ "$event" = "schedule" ] || [ "$scope" != "true" ] || [ "$build" != "success" ]; then
+            echo "Not applicable: event=$event scope=$scope build=$build"
+            echo "smoke=$smoke bench=$bench"
+            exit 0
+          fi
+          status=0
+          if [ "$smoke" = "skipped" ]; then
+            echo "::error::e2e-smoke was skipped although its scope filter matched (ADR-277, #1193)"
+            status=1
+          fi
+          if [ "$bench" = "skipped" ]; then
+            echo "::error::bench was skipped although its scope filter matched (ADR-277, #1193)"
+            status=1
+          fi
+          echo "smoke=$smoke bench=$bench scope=$scope"
+          exit "$status"
