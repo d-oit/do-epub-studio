@@ -67,7 +67,7 @@ export const HighlightItem = memo(function HighlightItem({
             className="w-full p-2 text-sm border border-border rounded bg-background"
             rows={2}
             placeholder={t('annotation.notePlaceholder')}
-            // eslint-disable-next-line jsx-a11y/no-autofocus
+            // eslint-disable-next-line jsx-a11y/no-autofocus -- Intentional: note editor renders on user edit action, auto-focusing matches the comment workflow (AGENTS.md Tier 2 #7)
             autoFocus
           />
           <div className="flex gap-2">
