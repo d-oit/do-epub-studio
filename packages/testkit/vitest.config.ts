@@ -1,4 +1,8 @@
 import { defineConfig } from 'vitest/config';
+// Coverage floors' single source of truth is /coverage-thresholds.json
+// (ADR-282). Never restate the numbers here — scripts/validate-coverage-parity.sh
+// fails the gate if this config stops deriving thresholds from that JSON.
+import coverageThresholds from '../../coverage-thresholds.json';
 
 export default defineConfig({
   test: {
@@ -11,10 +15,10 @@ export default defineConfig({
       include: ['src/**/*.ts'],
       exclude: ['src/**/*.test.ts'],
       thresholds: {
-        lines: 25,
-        functions: 20,
-        branches: 15,
-        statements: 20,
+        lines: coverageThresholds['testkit'].lines,
+        functions: coverageThresholds['testkit'].functions,
+        branches: coverageThresholds['testkit'].branches,
+        statements: coverageThresholds['testkit'].statements,
       },
     },
   },

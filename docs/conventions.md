@@ -128,11 +128,11 @@ Cover:
 - `vitest --run` (non-watch) in CI
 - Playwright keeps trace/video/screenshot artefacts on failure
 - Use test data builders from `packages/testkit/src/` for grants, books, comments, sessions
-- Coverage thresholds (enforced by `test:coverage`):
-  - `web`: 55% Lines / 48% Functions
-  - `worker`: 55% Lines / 50% Functions
-  - `shared`: 40% Lines / 50% Functions
-  - `reader-core`: 72% Lines / 70% Functions
+- Coverage thresholds: single source of truth is `coverage-thresholds.json`
+  (per-package `lines` / `functions` / `branches` / `statements` floors,
+  enforced by `test:coverage` and mirrored by `codecov.yml`;
+  `scripts/validate-coverage-parity.sh` fails the quality gate on any drift —
+  never restate the numbers in prose).
 
 ---
 

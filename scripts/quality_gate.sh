@@ -99,6 +99,11 @@ printf '%sValidating source line counts...%s\n' "${BLUE}" "${NC}"
 if ! node "$REPO_ROOT/scripts/check-loc.mjs"; then FAILED=1; fi
 echo ""
 
+# --- Coverage threshold parity (ADR-282) ---
+printf '%sValidating coverage threshold parity...%s\n' "${BLUE}" "${NC}"
+if ! "$REPO_ROOT/scripts/validate-coverage-parity.sh"; then FAILED=1; fi
+echo ""
+
 # --- Validate SKILL.md format ---
 printf '%sValidating SKILL.md format...%s\n' "${BLUE}" "${NC}"
 if [ -f "$REPO_ROOT/scripts/validate-skill-format.sh" ]; then

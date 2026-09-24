@@ -1,5 +1,9 @@
 import { defineConfig } from 'vitest/config';
 import path from 'path';
+// Coverage floors' single source of truth is /coverage-thresholds.json
+// (ADR-282). Never restate the numbers here — scripts/validate-coverage-parity.sh
+// fails the gate if this config stops deriving thresholds from that JSON.
+import coverageThresholds from '../../coverage-thresholds.json';
 
 export default defineConfig({
   resolve: {
@@ -39,10 +43,10 @@ export default defineConfig({
       reporter: ['text', 'json', 'html', 'lcov', 'clover'],
       reportsDirectory: './coverage',
       thresholds: {
-        lines: 55,
-        functions: 48,
-        branches: 40,
-        statements: 55,
+        lines: coverageThresholds['web'].lines,
+        functions: coverageThresholds['web'].functions,
+        branches: coverageThresholds['web'].branches,
+        statements: coverageThresholds['web'].statements,
       },
       include: ['src/**/*.ts', 'src/**/*.tsx'],
       exclude: [
