@@ -83,6 +83,7 @@ vi.mock('../auth/session', () => ({
   createSession: vi.fn(),
   validateSession: vi.fn(),
   revokeSession: vi.fn(),
+  hashToken: vi.fn().mockResolvedValue('hashed-token'),
   parseAuthHeader: vi.fn((h) => h?.replace('Bearer ', '')),
 }));
 
@@ -126,6 +127,7 @@ import {
   createSession,
   validateSession as validateSessionMod,
   revokeSession,
+  hashToken as _hashToken,
 } from '../auth/session';
 import { generateSignedUrl } from '../storage/signed-url';
 import { logAudit } from '../audit';
@@ -159,6 +161,7 @@ export const mockGetGrantsBySession = getGrantsBySession as Mock;
 export const mockCreateSession = createSession as Mock;
 export const mockValidateSessionMod = validateSessionMod as Mock;
 export const mockRevokeSession = revokeSession as Mock;
+export const mockHashToken = _hashToken as Mock;
 export const mockGenerateSignedUrl = generateSignedUrl as Mock;
 export const mockLogAudit = logAudit as Mock;
 export const mockCreateResetToken = (resetMod.createResetToken as Mock);

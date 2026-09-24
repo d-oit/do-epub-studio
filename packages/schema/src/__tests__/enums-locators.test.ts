@@ -64,6 +64,7 @@ describe('Enum Schemas', () => {
       expect(EntityTypeSchema.parse('book-creator')).toBe('book-creator');
       expect(EntityTypeSchema.parse('book-reference')).toBe('book-reference');
       expect(EntityTypeSchema.parse('style-profile')).toBe('style-profile');
+      expect(EntityTypeSchema.parse('book-invitation')).toBe('book-invitation');
     });
 
     it('rejects an unknown entity type', () => {

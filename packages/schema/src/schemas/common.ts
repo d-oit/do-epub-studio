@@ -42,6 +42,7 @@ export const EntityTypeSchema = z.enum([
   'book-creator',
   'book-reference',
   'style-profile',
+  'book-invitation',
 ]);
 
 /** Flexible locator type for export/import (no Zod validation — use MultiSignalLocatorSchema for API boundaries) */
