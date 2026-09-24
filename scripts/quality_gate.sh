@@ -94,6 +94,11 @@ else
 fi
 echo ""
 
+# --- Enforce 500-line source cap (ADR-278) ---
+printf '%sValidating source line counts...%s\n' "${BLUE}" "${NC}"
+if ! node "$REPO_ROOT/scripts/check-loc.mjs"; then FAILED=1; fi
+echo ""
+
 # --- Validate SKILL.md format ---
 printf '%sValidating SKILL.md format...%s\n' "${BLUE}" "${NC}"
 if [ -f "$REPO_ROOT/scripts/validate-skill-format.sh" ]; then

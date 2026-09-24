@@ -13,7 +13,7 @@ pre-push = []
 
 [signal-sets]
 feedback = ["verify-fast"]
-verification = ["typecheck", "lint", "test-unit", "skills"]
+verification = ["typecheck", "lint", "test-unit", "skills", "loc"]
 
 [[sensors]]
 name = "verify-fast"
@@ -70,4 +70,22 @@ when-changed = [
   ".agents/skills/**",
   ".claude/skills/**",
   "scripts/validate-skills.sh",
+]
+
+# GOAP-276 P0 #4: 500-line source cap with a shrink-only ratchet baseline
+# (ADR-278). Same command as the quality-gate phase — ADR-246 parity.
+[[sensors]]
+name = "loc"
+argv = ["node", "scripts/check-loc.mjs"]
+when-changed = [
+  "**/*.ts",
+  "**/*.tsx",
+  "**/*.js",
+  "**/*.jsx",
+  "**/*.mjs",
+  "**/*.cjs",
+  "**/*.py",
+  "**/*.sh",
+  "scripts/loc-baseline.json",
+  "scripts/check-loc.mjs",
 ]

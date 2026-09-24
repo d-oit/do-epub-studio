@@ -164,6 +164,8 @@
 | 270    | Automate Verified-SHA Allowlisting for Dependabot Bumps (GOAP + ADR) | `plans/270-goap-automate-dependabot-sha-allowlist.md`, `plans/247-adr-dependabot-sha-allowlist-automation.md` | IN PROGRESS (Phase 1–2 done: `scripts/allowlist-dependabot-shas.sh` + dependabot-auto-merge wiring; Phase 3: no-op path observed live on 5 real dependabot[bot] PRs 2026-09-15; SHA-append path awaits the chromaui bait re-bump, latest 2026-09-22 scheduled run) |
 | 275    | React `act(...)` Warning Inventory (GOAP + ADR) | `plans/275-goap-react-act-warning-inventory.md`, `plans/275-adr-react-act-warning-policy.md` | IN PROGRESS (Phase 1 PR #1186: the #1175 classes fixed, four files warning-free; Phase 2 sensor live — file-inventory guard in the web test setup, enforced by `test:unit` so gate + CI both fail on new warnings; Phase 3: drain the 11 inventoried files, issue #1185) |
 | 277    | CI gates that silently skip (GOAP + ADR) | `plans/277-goap-ci-gates-that-never-run.md`, `plans/277-adr-ci-gate-skip-visibility.md` | IN PROGRESS (surfaced 2026-09-23 in PR #1192: `e2e-smoke` + `bench` skipped in 7/7 sampled runs while their filter matched ⇒ ADR-201 and ADR-218 unenforced; A1–A5 open, tracking issue #1193) |
+| 278    | LOC Ratchet — 500-line source cap enforcement | `plans/278-adr-loc-ratchet-policy.md` | Accepted |
+| 281    | Local gate on webkit-unsupported hosts (GOAP-276 surfacing) | `plans/281-adr-local-gate-playwright-platform.md` | Accepted (environment-specific: Debian 11 has no Playwright webkit build and cannot reach a Worker backend — #928/#944 — so local runs use `QUALITY_GATE_NO_SMOKE=1`; CI `e2e-smoke` stays fail-closed per ADR-277; no sensor weakened) |
 
 ## Pending
 
