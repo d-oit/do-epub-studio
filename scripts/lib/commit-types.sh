@@ -7,9 +7,19 @@
 #   - scripts/atomic-commit/commit.sh
 #   - scripts/hooks/commit-msg
 #   - scripts/validate-commit-message.sh
+#
+# ADR-279: this file is the ONLY canonical type list. commitlint.config.cjs is
+# a mirror kept in parity by scripts/__tests__/commit-validator-parity.test.mjs
+# (which runs in CI), and .github/workflows/validate-commit-title.yml enforces
+# commits and PR titles with scripts/hooks/commit-msg itself — CI can never be
+# stricter than the local hook.
 
 # Valid conventional commit types
 # Must match across all validators — parity tests enforce this.
+# security/a11y/plans were added by ADR-279: real history uses them
+# (5x `security(...)` and 1x `plans:` commits exist on main) and the old
+# commitlint type-enum already listed them — the union lives HERE, not in
+# commitlint.
 COMMIT_TYPES=(
     "feat"
     "fix"
@@ -22,9 +32,18 @@ COMMIT_TYPES=(
     "chore"
     "build"
     "revert"
+    "security"
+    "a11y"
+    "plans"
 )
 
-# Valid scopes (optional, lowercase alphanumeric + hyphens/underscores)
+# Advisory scope vocabulary (optional, lowercase alphanumeric + hyphens/underscores).
+# ADR-279: NOT enforced anywhere — validators accept any [a-z0-9_-]+ scope because
+# scopes are genuinely dynamic (plan IDs like `goap-277`, `plan-121`, PR numbers,
+# wave/batch labels). 74 distinct scopes appear in the last 500 commits vs. the 26
+# listed here, and `is_valid_commit_scope` exists only to WARN. Never wire an enum
+# of this list into CI: it would be stricter than scripts/hooks/commit-msg and red
+# on live main history.
 COMMIT_SCOPES=(
     "web"
     "worker"

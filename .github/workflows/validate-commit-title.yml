@@ -1,0 +1,115 @@
+# ADR-279 / GOAP-276 Phase 0 #6: enforce commit-message and PR-title
+# validation in CI, with the local commit-msg hook as the single enforcer.
+#
+# Why this exists: this repo squash-merges PRs and its squash setting is
+# COMMIT_OR_PR_TITLE — the subject that lands on `main` is the PR title for
+# single-commit PRs and a commit subject otherwise. Neither was ever validated
+# by CI (only by the local git hook), so the actual history hole was the
+# squash title. Running scripts/hooks/commit-msg itself gives
+# local/CI parity by construction: CI can be neither stricter nor looser than
+# the hook, and no third-party action or duplicated rule list can drift.
+#
+# Deliberately `pull_request` (NOT `pull_request_target`): the read-only token
+# is all this needs, checkout-of-head under pull_request_target is the "pwn
+# request" pattern, and a default policy blocking pull_request_target on
+# public repos begins enforcement 2026-11-02. `edited` is listed so retitling
+# a PR re-runs validation.
+name: Validate Commit & PR Title
+run-name: Validate Commit & PR Title — ${{ github.event.pull_request.title || github.event_name }}
+
+on:
+  pull_request:
+    types: [opened, reopened, edited, synchronize]
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pr-title:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+
+      # The title is passed via env, never interpolated into `run:`
+      # (zizmor template-injection). `--subject-only` enforces the hook's
+      # subject rules — skip patterns, type/scope format, <=72 chars — while
+      # acknowledging that a PR title cannot carry a body (ADR-279); the body
+      # requirement stays fully enforced for commits in the commit-range job
+      # and locally.
+      - name: Validate PR title with the local commit-msg hook
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          ACTOR: ${{ github.actor }}
+        run: |
+          set -euo pipefail
+          # ADR-279: Dependabot titles are machine-generated from package and
+          # group names and can exceed 72 chars (e.g. PR #1167, 79 chars);
+          # dependabot.yml prefixes (chore/ci) keep them conventional, and a
+          # human who edits the title has a non-bot actor, so the edit is
+          # validated like any other PR title.
+          if [ "$ACTOR" = "dependabot[bot]" ]; then
+            echo "Dependabot-authored title skipped (machine-generated; ADR-279)."
+            exit 0
+          fi
+          printf '%s\n' "$PR_TITLE" > "$RUNNER_TEMP/pr-title.txt"
+          bash scripts/hooks/commit-msg --subject-only "$RUNNER_TEMP/pr-title.txt"
+          echo "PR title validated against scripts/hooks/commit-msg."
+
+  commit-range:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0  # full history so merge-base works (no 250-commit API cap either)
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      # Runs the FULL hook (subject + body rules) on every commit in the PR
+      # range — exactly what a developer's local commit-msg hook enforced
+      # (ADR-279). SHAs arrive via env, never interpolated into `run:`.
+      - name: Validate every PR commit with the local commit-msg hook
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          DEPENDABOT_EMAIL: 49699333+dependabot[bot]@users.noreply.github.com
+        run: |
+          set -euo pipefail
+          START="$(git merge-base "$BASE_SHA" "$HEAD_SHA")"
+          failed=0
+          checked=0
+          skipped=0
+          while IFS= read -r sha; do
+            [ -n "$sha" ] || continue
+            # ADR-279: Dependabot-authored commits are exempt (exact email
+            # match — machine-authored, and their group subjects can exceed
+            # 72 chars). Under squash-merge their subjects never reach main
+            # unvalidated anyway: the PR title always does, and it is
+            # validated by the pr-title job.
+            if [ "$(git log --format=%ae -1 "$sha")" = "$DEPENDABOT_EMAIL" ]; then
+              echo "skip (dependabot-authored): $sha"
+              skipped=$((skipped + 1))
+              continue
+            fi
+            git log --format=%B -1 "$sha" > "$RUNNER_TEMP/commit-msg.txt"
+            if bash scripts/hooks/commit-msg "$RUNNER_TEMP/commit-msg.txt"; then
+              checked=$((checked + 1))
+            else
+              echo "::error::Invalid commit message: $sha (see hook output above)"
+              failed=1
+            fi
+          done < <(git rev-list --reverse "$START..$HEAD_SHA")
+          echo "checked=$checked skipped=$skipped failed=$failed"
+          exit "$failed"
