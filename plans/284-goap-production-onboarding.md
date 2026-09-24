@@ -111,8 +111,11 @@ frozen schemas after Phase 2. Phase 5 is integration-only and runs serially.
   implemented and covered by route/service/migration tests.
 - `/accept-invite`, admin invitation management, and all 13 locale catalogs
   are implemented and covered by component/route/parity tests.
-- The mocked admin E2E is added; browser execution is pending because this
-  workspace does not yet have the Playwright Chromium binary installed.
+- The mocked admin E2E is green in CI; local browser execution remains
+  unavailable in this Debian 11 workspace.
+- A real Node SQLite integration test applies migrations 0001–0018 and verifies
+  creator provisioning, token replay rejection, Argon2id-shaped grant creation,
+  and revocation of creator/session access.
 - The full local quality gate passes with the documented
   `QUALITY_GATE_NO_SMOKE=1` Debian 11/ADR-281 path; a controlled live-stack
   invite journey remains before this plan can be marked complete.
