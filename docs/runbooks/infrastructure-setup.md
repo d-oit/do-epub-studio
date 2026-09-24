@@ -36,18 +36,20 @@ dashboard. The Worker's `wrangler.jsonc` is still used for **local dev**
 
 ## 1. Cloudflare Email Sending Binding
 
-> Email Sending is **not** a supported Pages Function binding. Recovery email
-> falls back to `LoggingEmailTransport` (logged, not delivered) — login is
-> unaffected. If email delivery is required later, deploy the Worker
-> standalone (see `apps/worker/wrangler.jsonc`) and point the frontend at it
-> via `VITE_API_BASE_URL`.
+> Email Sending is **not** a supported Pages Function binding. Invitation
+> delivery therefore uses the hybrid ADR-284 path: when `EMAIL_SEND` is
+> unavailable, the admin sees `manual_copy_required` and copies a one-time link.
+> Recovery email still falls back to `LoggingEmailTransport` (logged, not
+> delivered); do not present that path as delivered email. If automated email
+> is required, deploy the Worker standalone (see `apps/worker/wrangler.jsonc`)
+> and point the frontend at it via `VITE_API_BASE_URL`.
 
 ---
 
 ## 2. D1 Database (runtime DB)
 
 The API's runtime database is **D1** (`env.DB`, see
-`apps/worker/src/db/client.ts`). The 12 migrations live in
+`apps/worker/src/db/client.ts`). The 18 migrations live in
 `packages/schema/migrations/` (wired via `migrations_dir` in
 `apps/worker/wrangler.jsonc` for local use).
 
@@ -140,9 +142,10 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 
 > The `RATE_LIMITER` Durable Object cannot be created inside a Pages project,
-> so rate limiting fails open (documented in
-> `apps/worker/src/lib/rate-limit-client.ts`) — acceptable; the API still
-> works without it.
+> so general API rate limiting fails open (documented in
+> `apps/worker/src/lib/rate-limit-client.ts`). Invitation acceptance uses the
+> additive D1 bucket fallback in migration 0018; the rest of the API still
+> works without the Durable Object.
 
 ---
 
@@ -175,8 +178,9 @@ After all infrastructure is configured, run through this checklist:
 
 ### Database
 - [ ] `wrangler d1 execute do-epub-studio --remote --command="SELECT COUNT(*) FROM books"` returns successfully
-- [ ] All 12 migrations applied (`wrangler d1 migrations list do-epub-studio`)
+- [ ] All 18 migrations applied (`wrangler d1 migrations list do-epub-studio`)
 - [ ] Admin login works (validates Argon2id password hash)
+- [ ] A reader or creator invitation can be created; manual copy-link delivery works when `EMAIL_SEND` is absent
 
 ### R2
 - [ ] `wrangler r2 object list do-epub-studio-books` shows EPUB files

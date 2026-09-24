@@ -77,6 +77,22 @@ async function mockAdminApi(page: Page) {
   await page.route('**/api/admin/books/*/grants', async (route: Route) => {
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(GRANTS_RESPONSE) });
   });
+  await page.route('**/api/admin/books/*/invitations', async (route: Route) => {
+    const body = route.request().method() === 'POST'
+      ? {
+        ok: true,
+        data: {
+          invitation: { id: 'invite-new', bookId: 'book-1', email: 'invited@example.com', role: 'reader', status: 'pending', deliveryStatus: 'manual_copy_required', deliveryErrorCode: null, grantMode: 'private', commentsAllowed: false, offlineAllowed: false, grantExpiresAt: null, expiresAt: '2099-01-01T00:00:00.000Z', createdAt: '2026-01-01T00:00:00.000Z', acceptedAt: null, revokedAt: null },
+          delivery: 'manual_copy_required',
+          copyUrl: 'https://app.example.com/accept-invite#token=fixture',
+        },
+      }
+      : { ok: true, data: [] };
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(body) });
+  });
+  await page.route('**/api/admin/books/*/creators', async (route: Route) => {
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: [] }) });
+  });
   await page.route('**/api/admin/books/*/grants', async (route: Route) => {
     if (route.request().method() === 'POST') {
       await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(GRANT_CREATE_RESPONSE) });
@@ -210,6 +226,19 @@ test.describe('Admin grants management', () => {
       await revokeButton.click();
       await page.waitForTimeout(500);
     }
+  });
+
+  test('@smoke @mobile can create an invitation with manual delivery', async ({ page }) => {
+    await loginAsAdmin(page);
+    await page.getByRole('button', { name: /Manage Access/i }).first().click();
+    await expect(page).toHaveURL(/\/admin\/books\/book-1\/grants/);
+
+    await page.getByRole('button', { name: 'Invite person' }).click();
+    await page.getByLabel('Email address').fill('invited@example.com');
+    await page.getByRole('button', { name: 'Send invitation' }).click();
+
+    await expect(page.getByText('Email delivery is unavailable. Copy this one-time link and send it through an approved channel.')).toBeVisible();
+    await expect(page.getByLabel('Invitation link')).toHaveValue('https://app.example.com/accept-invite#token=fixture');
   });
 });
 

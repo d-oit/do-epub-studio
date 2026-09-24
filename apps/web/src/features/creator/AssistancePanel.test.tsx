@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
+import type * as ReaderCore from '@do-epub-studio/reader-core';
 import { AssistancePanel } from './AssistancePanel';
 import { fetchAssistanceConsent, setAssistanceConsent } from '../../lib/api/creator';
 
@@ -29,7 +30,7 @@ const transformersStub = vi.hoisted(() => ({
 }));
 
 vi.mock('@do-epub-studio/reader-core', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@do-epub-studio/reader-core')>();
+  const actual = await importOriginal<typeof ReaderCore>();
   return {
     ...actual,
     createTransformersEditorialPlugin: () => ({

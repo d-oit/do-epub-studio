@@ -24,6 +24,9 @@ import {
 const LoginPage = React.lazy(() =>
   import('./features/auth/LoginPage').then((m) => ({ default: m.LoginPage }))
 );
+const AcceptInvitePage = React.lazy(() =>
+  import('./features/invitations/AcceptInvitePage').then((m) => ({ default: m.AcceptInvitePage }))
+);
 const AdminLoginPage = React.lazy(() =>
   import('./features/admin/AdminLoginPage').then((m) => ({ default: m.AdminLoginPage }))
 );
@@ -187,6 +190,7 @@ export function App() {
         } />
         <Route path="/help" element={<Suspense fallback={<AuthSkeleton />}><HelpPage /></Suspense>} />
         <Route path="/login" element={<Suspense fallback={<AuthSkeleton />}><LoginPage /></Suspense>} />
+        <Route path="/accept-invite" element={<Suspense fallback={<AuthSkeleton />}><AcceptInvitePage /></Suspense>} />
         <Route path="/admin/login" element={<Suspense fallback={<AuthSkeleton />}><AdminLoginPage /></Suspense>} />
         <Route path="/admin/recover" element={<Suspense fallback={<AuthSkeleton />}><AdminRecoverPage /></Suspense>} />
         <Route path="/read/:bookSlug" element={

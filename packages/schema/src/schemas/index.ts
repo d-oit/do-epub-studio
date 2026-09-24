@@ -9,3 +9,4 @@ export * from './queries';
 export * from './insights';
 export * from './telemetry';
 export * from './feedback';
+export * from './invitations';

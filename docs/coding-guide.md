@@ -44,15 +44,15 @@ Roles (`admin`, `editor`, `reader`), access modes, and capability flags: see [`d
 
 ## 5. End-to-end user flows
 
-**Admin:** login → create book → upload EPUB to R2 → create access grant → invite email sent → audit log updated.
+**Admin:** login → create book → upload EPUB to R2 → create a book invitation → email or secure copy-link delivery → audit log updated.
 
-**Reader:** open invite URL → email + optional password → session issued → signed EPUB URL → app reads EPUB → state stored locally → syncs online.
+**Reader:** open invite URL → choose a grant password → session issued → signed EPUB URL → app reads EPUB → state stored locally → syncs online.
 
 **Editorial:** select passage → anchor created → add comment → queued if offline → syncs online → others see thread → resolved or moderated.
 
 ## 6. Data model
 
-Core tables: `users`, `books`, `book_files`, `book_access_grants`, `reader_sessions`, `reading_progress`, `bookmarks`, `highlights`, `comments`, `audit_log`. Full SQL: [`docs/architecture.md` — Core Database Schema](./architecture.md#core-database-schema). Locator strategy: EPUB CFI + selected text + chapter reference (not raw DOM offsets).
+Core tables: `users`, `books`, `book_files`, `book_access_grants`, `book_invitations`, `reader_sessions`, `reading_progress`, `bookmarks`, `highlights`, `comments`, `audit_log`. Full SQL: [`docs/architecture.md` — Core Database Schema](./architecture.md#core-database-schema). Locator strategy: EPUB CFI + selected text + chapter reference (not raw DOM offsets).
 
 ## 7. API design
 

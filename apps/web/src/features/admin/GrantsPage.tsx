@@ -21,6 +21,7 @@ import {
   emptyFormData,
 } from './components';
 import { CreatorAssignmentsSection } from './CreatorAssignmentsSection';
+import { InvitationsPanel } from './InvitationsPanel';
 import { useAdminStepUp } from './step-up';
 import type { Grant, GrantFormData } from './components';
 
@@ -253,6 +254,11 @@ function GrantsView({ data, bookId, token, onMutated }: { data: GrantsBodyData; 
         <CreatorAssignmentsSection
           bookId={bookId}
           token={token}
+          executeWithStepUp={executeWithStepUp}
+        />
+
+        <InvitationsPanel
+          bookId={bookId}
           executeWithStepUp={executeWithStepUp}
         />
       </div>
