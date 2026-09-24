@@ -11,6 +11,7 @@ Guidance specific to authoring and testing scripts in `scripts/`.
 ## atomic-commit never stages files
 
 - **`scripts/atomic-commit/run.sh` requires a pre-staged tree**: `validate.sh` runs the full quality gate (lint/typecheck/coverage/build/smoke, plus knip/madge/impeccable) and only then lists the modified/untracked paths it will not commit, and `commit.sh` exits with `No staged changes to commit — Run 'git add <files>' first (this script does NOT auto-stage)`. An unstaged tree therefore costs a complete gate run before it stops. `git add` the intended files first, then run the orchestrator; it also refuses to start on `main`/`master`, so branch before invoking it.
+- **`atomic-commit` can *never* finish green on a PR that touches `packages/ui/**`** — that path trips `visual-regression.yml`, whose Chromatic app check `UI Tests` stays `pending` until a human accepts baselines, while `verify.sh` counts *every* pending check and exits 2 at the deadline. The exit is deliberate (`"INCONCLUSIVE, not a failure: the PR and branch are left as they are"`), so read a non-zero `atomic-commit` on such a PR as "go look", not as a red gate: confirm the GitHub-native checks yourself, then `gh pr merge` and let branch protection decide server-side — `mergeStateStatus: UNSTABLE` is still mergeable when the pending check is not required. `Visual Regression` is path-filtered to `packages/ui/**`, `apps/web/src/**/*.css`, `apps/web/tailwind.config.*` and `apps/web/src/index.css`, so editing even a `vitest.config.ts` under `packages/ui/` is enough to trigger it.
 
 ## Quality-gate runs must be serialized
 
@@ -35,3 +36,12 @@ Guidance specific to authoring and testing scripts in `scripts/`.
 ## Break-testing a guard before its rewrite is committed
 
 - **Restoring with `git checkout -- <file>` after a break-test restores the *committed* version, silently clobbering the uncommitted rewrite** — the guard then keeps failing against the pre-change file (symptom: obsolete errors, e.g. the old LOC cap or missing literal, reappear after the restore "succeeded"). Take a `cp` backup of the rewritten file before breaking a rule and restore from that, never from the index (GOAP-279).
+
+## gate-manifest.json documents, it does not control
+
+- **Nothing in `.github/workflows/` reads `scripts/gate-manifest.json`** — only `validate-gate-parity.sh` (parity) and `validate-coverage-parity.sh` (asserts `local.checks` contains `coverage-parity`) consume it, and matching is `grep -qi` of normalized text over the whole workflow file, not job identity. It is therefore documentation-with-a-linter: renaming an entry is safe (no workflow effect), which is also how it drifted — 6/8 `release.checks` strings had zero hits in `release.yml` (3 naming drift, 3 genuinely absent; GOAP-283 / ADR-283 / issue #1207).
+- **Never delete an unmet manifest claim just to quiet the `⚠`.** Removing it converts a true warning into a false green — "weakening a sensor to obtain a passing result" — so the warning stays until the gate is actually implemented or the claim retired by an explicit ADR decision.
+
+## check-adr-index.mjs counts ADR rows only
+
+- **`Numbers tracked: N` is not the number of index rows, and cannot prove every plan is indexed**: `addNumber()` is gated on `filePath.includes('-adr-')` (ADR-083 §2 shares one numeric space between `*-goap-*` and `*-adr-*`), so adding a GOAP-only row leaves the count unchanged — row 276 was added and the count stayed at 92. A plan with no row at all is invisible to the validator: `plans/276-goap-external-harness-benchmark-adoption.md` sat unindexed while rows 279–283 all pointed back at it, and CI stayed green. Audit index coverage by row prefix (`^\| [0-9]`), never by this count.

@@ -1,6 +1,6 @@
 # GOAP-276: Benchmark adoption — github-template-ai-agents + do-harness
 
-**Status:** PROPOSED
+**Status:** PROPOSED — Phase 0 complete 2026-09-24, Phases 1–2 open
 **Date:** 2026-09-23
 
 Benchmark analysis of `d-o-hub/github-template-ai-agents` (template) and
@@ -55,6 +55,30 @@ surfaces where this repo already exceeds both benchmarks.
    Adopt: commit-range lint (base...head) + PR-title check.
 7. **`.agents/AGENTS.md` escapes `check-agent-sync.mjs`** — add it to the
    adapter/guard list or reconcile its content with root AGENTS.md.
+
+### Phase 0 resolution status (2026-09-24)
+
+| # | Item | PR | Outcome |
+| - | ---- | -- | ------- |
+| 1 | `release-management` skill → non-existent `scripts/release/sync-changelog.sh` | #1197 | **Closed** — skill rewritten to the real flow: release PR + `scripts/release/create-release-tag.sh`; its commit recipe also fixed to satisfy the body-required `commit-msg` hook |
+| 2 | `release:cut` label + release-drafter promotion claims | #1197 | **Closed** — claims removed (no workflow consumes the label; no drafter *workflow* exists). Drafter adoption stays a separate ADR decision, listed under "Skipped" |
+| 3 | `harness` skill stale (4 phantom skills, Rust-only sensors, `.agents/events/`) | #1197 | **Closed** — sensors sourced from `do-harness.toml`, distillation via `skill-creator` / `distill --from-trace`; the same change fixed hook repo-root resolution (`git rev-parse --show-toplevel`), which had been gating the wrong checkout from worktrees |
+| 4 | 500-line source cap unenforced | #1203 | **Closed** — `scripts/check-loc.mjs` + `scripts/loc-baseline.json` shrink-only ratchet (7 grandfathered files), quality-gate phase, `do-harness` `loc` sensor; **ADR-278** |
+| 5 | Coverage threshold mismatch (three diverging copies) | #1208 | **Closed** — `coverage-thresholds.json` SSOT feeding all 7 `vitest.config.ts` (static import) + `codecov.yml`, enforced by the new `coverage-parity` gate phase; AGENTS.md/CONTRIBUTING/docs prose reduced to pointers; **ADR-282** |
+| 6 | Commit messages / PR titles unchecked in CI | #1205 | **Closed** — `validate-commit-title.yml` runs `scripts/hooks/commit-msg` itself (PR title in subject-only mode, commit range over `fetch-depth: 0`), so CI cannot be stricter or looser than the local hook; `scripts/lib/commit-types.sh` is SSOT, `type-enum` reconciled, `scope-enum` dropped (dynamic scopes); **ADR-279**. Follow-up #1206: register `pr-title` + `commit-range` as required checks |
+| 7 | `.agents/AGENTS.md` escapes `check-agent-sync.mjs` | #1204 | **Closed** — 197-LOC parallel document rewritten as a 22-LOC pointer; the `ADAPTERS` array is now the real enforcement loop (5 → 6 adapters checked); **ADR-280** |
+
+**Surfaced en route, each with its own record:** **ADR-281** — the local gate
+requires `QUALITY_GATE_NO_SMOKE=1` on webkit-unsupported hosts (Debian 11), with
+CI `e2e-smoke` left fail-closed per ADR-277 and no sensor weakened;
+**GOAP-283 + ADR-283 + issue #1207** — 6 of the 8
+`gate-manifest.json → release.checks` strings occur zero times in `release.yml`
+(3 naming drift, 3 genuinely absent: `Coverage Gate`, `Cross-Browser E2E`,
+`Security Checks`), deliberately *not* deleted to avoid weakening the sensor.
+
+Plan IDs used by this phase: **278** LOC ratchet · **279** commit/PR-title CI ·
+**280** nested `.agents/AGENTS.md` · **281** local-gate platform · **282**
+coverage SSOT · **283** release-gate manifest truth.
 
 Each fix: feature branch + PR per Tier 1; ADR only where a decision is
 required (drafter adoption, coverage source of truth).
