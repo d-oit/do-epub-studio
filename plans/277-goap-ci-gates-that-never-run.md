@@ -1,6 +1,6 @@
 # GOAP-277: `e2e-smoke` and `bench` never execute — close the silent-skip gate gap
 
-**Status:** IN PROGRESS
+**Status:** DONE (this PR — A1–A5 all met; sensor lands here, issue #1193 closes)
 **Date:** 2026-09-23
 **Related:** ADR-277, ADR-201 (WebKit smoke on every PR), ADR-218 (blocking
 benchmark regression gate), ADR-083 (number space), GOAP-267 (the `build`
@@ -72,7 +72,9 @@ executed for the first time in sampled history (run
 `35911442657`), workflow-only: `Filter src = false`, `reader-core = false`,
 both jobs `skipped`, `steps=0` — i.e. the guard removed the cascade while
 the scope filter kept its designed power to skip. A future regression to
-the old state is what A4's sensor exists to catch.
+the old state is caught by A4's `Gate Visibility Sensor`, which fails on
+exactly that one state — proven both ways by throwaway PRs that were
+closed unmerged: green on #1200, red on #1201.
 
 ## Decomposition
 
@@ -91,7 +93,7 @@ the old state is what A4's sensor exists to catch.
 | A1 | **DONE** | Guard in #1196 (`319daa9`). Canary PR #1198 (branched off the guard, one labeled `packages/**` comment, closed unmerged) run `35912896951`: `Filter src = true`, `reader-core = true`, then `E2E Smoke Tests` job `107359758176` → `success`/15 steps and `Benchmark` job `107359758129` → `success`/11 steps. Control: workflow-only PR #1196 run `35911442657` → `Filter src = false`, both jobs `skipped`/`steps=0`, so the scope filter is intact. |
 | A2 | **DONE — nothing to fix** | The lane is green on its first ever execution: `playwright install --with-deps chromium webkit` (ADR-201's per-PR WebKit lane ran for the first time), then Dev Smoke → Preview Smoke → Startup Performance → PWA smoke, all `success`. No findings, so no CI-only fix loop was needed. |
 | A3 | **DONE** | `Benchmark` ran baseline → head → `node scripts/compare-benchmarks.mjs baseline.json head.json` in both `Compare benchmarks` and the blocking `Check for regression` step (ADR-218), plus `Post benchmark comment` — all `success` on an unchanged PR. |
-| A4 | TODO | The only remaining action: a check that fails when a scoped gating job is skipped while its filter matched. |
+| A4 | **DONE** | Sensor `Gate Visibility Sensor` in #1199 (`2e7735cf`), asserted on `[changes, build, e2e-smoke, bench]` with `always()`. Positive canary PR #1200 (run `35969509241`): `Filter src = true`, both gates `pass`, sensor `pass` on its applicable path — `smoke=success bench=success scope=true`. Negative canary PR #1201 (run `35969514199`): `e2e-smoke` force-skipped with `if: ${{ false }}`, `Benchmark` still `pass`, sensor `fail` (exit 1) — `::error::e2e-smoke was skipped although its scope filter matched (ADR-277, #1193)` with `smoke=skipped bench=success scope=true`. Both canaries closed unmerged; eight local scenarios (A–H) cover the truth table. Caveat: per LEARNINGS §263 the `main` ruleset requires only Codacy as a hard status check, so the sensor delivers visibility on every run but only blocks merges if it is added to the ruleset. |
 | A5 | **DONE** | §502 corrected and reconciled with §261, plus a dated entry citing run ids — merged in #1194. |
 
 ## Exit criteria (plan done when)
@@ -99,7 +101,12 @@ the old state is what A4's sensor exists to catch.
 - A1–A5 all met, and
 - the next PR touching `src`/`reader-core` shows `E2E Smoke Tests` **success**
   and `Benchmark` **success** in `gh pr checks`, and
-- ADR-277's sensor (A4) is live so a future regression to this state fails CI.
+- A4's sensor (ADR-277) is live so a future regression to this state fails CI.
+
+All three are met by this PR: A1–A5 per the Status table; the `src`-matching
+PRs were the throwaway canaries #1198 and #1200 (both gates `success` there,
+and `Benchmark` ran ADR-218's blocking comparator); the sensor lands here and
+was proven red on #1201.
 
 ## Non-goals
 
