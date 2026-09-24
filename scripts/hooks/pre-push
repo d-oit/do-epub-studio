@@ -8,15 +8,21 @@ set -euo pipefail
 
 # Source shared libs
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+# GOAP-276: .git/hooks are shared across worktrees — resolve the root from
+# git so the push guard runs against the tree being pushed.
+if ! REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)"; then
+    REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+fi
 # shellcheck source=scripts/lib/colors.sh
 source "$REPO_ROOT/scripts/lib/colors.sh"
 
 # Protected branches — direct pushes to these are blocked
 PROTECTED_BRANCHES="^(main|master)$"
 
-# Read stdin from git (format: <local-ref> <local-sha> <remote-ref> <remote-sha>)
-while read -r local_ref local_sha remote_ref remote_sha; do
+# Read stdin from git (format: <local-ref> <local-sha> <remote-ref> <remote-sha>).
+# The pre-push protocol always supplies 4 fields; only remote_ref is consumed
+# below (branch/tag guards), so the rest are underscore-prefixed (SC2034).
+while read -r _local_ref _local_sha remote_ref _remote_sha; do
     # Extract branch name from remote ref
     remote_branch="${remote_ref#refs/heads/}"
     remote_tag="${remote_ref#refs/tags/}"

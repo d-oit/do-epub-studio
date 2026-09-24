@@ -4,7 +4,13 @@
 # Runs the quality gate on staged changes only.
 set -euo pipefail
 
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+# GOAP-276: .git/hooks are shared across worktrees (symlinks into one
+# checkout), so this script's path can belong to a different tree than the
+# one committing. Resolve the root from git first; keep the path-derived
+# root as a fallback for non-repo contexts (tests, bare shells).
+if ! REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)"; then
+    REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+fi
 
 # Source shared libs
 # shellcheck source=scripts/lib/colors.sh

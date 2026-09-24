@@ -7,7 +7,11 @@ set -euo pipefail
 
 # Source shared libs
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+# GOAP-276: .git/hooks are shared across worktrees — resolve the root from
+# git so validation sources this worktree's libs, not the linking checkout's.
+if ! REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)"; then
+    REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+fi
 # shellcheck source=scripts/lib/colors.sh
 source "$REPO_ROOT/scripts/lib/colors.sh"
 # shellcheck source=scripts/lib/commit-types.sh
