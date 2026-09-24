@@ -6,9 +6,9 @@
     "category": "verification"
   },
   {
-    "invariant": "Conventional commits with lowercase subject lines",
+    "invariant": "Conventional commits: lowercase type(scope) prefix, subject <=72 chars, body explaining WHY",
     "rationale": "Machine-parseable history for the distillation loop",
-    "sensor": "scripts/check-commitlint.sh (commitlint sensor)",
+    "sensor": "scripts/hooks/commit-msg (local git hook) + .github/workflows/validate-commit-title.yml pr-title/commit-range jobs (CI) + scripts/__tests__/commit-validator-parity.test.mjs (list parity) - ADR-279; the previously cited scripts/check-commitlint.sh never existed",
     "category": "workflow"
   }
 ]

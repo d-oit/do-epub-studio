@@ -3,6 +3,15 @@
 # Installed by: scripts/install-hooks.sh
 # Validates conventional commit format.
 # Exit 0 = valid, Exit 1 = invalid format.
+#
+# Usage:
+#   commit-msg <file>              full validation (git invokes this form)
+#   commit-msg --subject-only <file>
+#       enforce only the subject rules (skip patterns, type/scope format,
+#       <=72 chars). Used by .github/workflows/validate-commit-title.yml for
+#       PR titles, which are single-line and therefore cannot carry a body
+#       (ADR-279). The body requirement itself is NOT relaxed for commits:
+#       the commit-range job and the local hook both run full mode.
 set -euo pipefail
 
 # Source shared libs
@@ -16,6 +25,12 @@ fi
 source "$REPO_ROOT/scripts/lib/colors.sh"
 # shellcheck source=scripts/lib/commit-types.sh
 source "$REPO_ROOT/scripts/lib/commit-types.sh"
+
+SUBJECT_ONLY=false
+if [[ "${1:-}" == "--subject-only" ]]; then
+    SUBJECT_ONLY=true
+    shift
+fi
 
 COMMIT_MSG_FILE="$1"
 COMMIT_MSG="$(head -1 "$COMMIT_MSG_FILE")"
@@ -63,13 +78,17 @@ if [[ $SUBJECT_LEN -gt 72 ]]; then
     exit 1
 fi
 
-# Error if body is empty (required by AGENTS.md workflow)
-LINE_COUNT=$(wc -l < "$COMMIT_MSG_FILE" | tr -d ' ')
-if [[ $LINE_COUNT -lt 3 ]]; then
-    echo -e "${RED}✗ Commit has no body${NC}" >&2
-    echo "  Add a body explaining WHY this change is needed." >&2
-    echo "  Usage: ./scripts/atomic-commit/run.sh --message \"type(scope): description\" --body \"Why this change matters\"" >&2
-    exit 1
+# Error if body is empty (required by AGENTS.md workflow).
+# Skipped only in --subject-only mode (PR titles; ADR-279) — commits are
+# always held to the body requirement, locally and in the CI commit-range job.
+if [[ "$SUBJECT_ONLY" != "true" ]]; then
+    LINE_COUNT=$(wc -l < "$COMMIT_MSG_FILE" | tr -d ' ')
+    if [[ $LINE_COUNT -lt 3 ]]; then
+        echo -e "${RED}✗ Commit has no body${NC}" >&2
+        echo "  Add a body explaining WHY this change is needed." >&2
+        echo "  Usage: ./scripts/atomic-commit/run.sh --message \"type(scope): description\" --body \"Why this change matters\"" >&2
+        exit 1
+    fi
 fi
 
 exit 0

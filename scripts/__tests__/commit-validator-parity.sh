@@ -4,6 +4,8 @@
 # agree on which messages are valid or invalid.
 #
 # Run: bash scripts/__tests__/commit-validator-parity.sh
+# CI: invoked by scripts/__tests__/commit-validator-parity.test.mjs via
+#     `pnpm vitest run scripts/__tests__` (was unwired before ADR-279).
 # Exit 0 = all validators agree, Exit 1 = drift detected.
 
 set -euo pipefail

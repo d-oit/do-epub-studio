@@ -98,6 +98,7 @@
 | 252    | Serve the API on the same origin as the deployed frontend | `plans/252-adr-worker-api-deployment.md` | Accepted |
 | 256    | Login Header Layout Modernization and Responsive Flex Contract | `plans/256-adr-login-header-layout-modernization.md` | Accepted |
 | 274    | LanguageTool Self-Hosted Server as Wave 4 Spelling/Grammar Engine | `plans/274-adr-languagetool-local-editorial-engine.md` | Accepted (GOAP-273 A1) |
+| 279    | Commit Message and PR Title Validation in CI (One Canonical Rule Set) | `plans/279-adr-commit-title-ci-enforcement.md` | Accepted (GOAP-276 Phase 0 #6; 278 reserved for the concurrent loc-ratchet ADR) |
 
 ## Proposed
 
