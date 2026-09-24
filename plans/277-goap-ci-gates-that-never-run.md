@@ -1,6 +1,6 @@
 # GOAP-277: `e2e-smoke` and `bench` never execute — close the silent-skip gate gap
 
-**Status:** IN PROGRESS
+**Status:** DONE (this PR — A1–A5 all met; sensor lands here, issue #1193 closes)
 **Date:** 2026-09-23
 **Related:** ADR-277, ADR-201 (WebKit smoke on every PR), ADR-218 (blocking
 benchmark regression gate), ADR-083 (number space), GOAP-267 (the `build`
@@ -101,7 +101,12 @@ exactly that one state and was proven both ways (green on #1200, red on
 - A1–A5 all met, and
 - the next PR touching `src`/`reader-core` shows `E2E Smoke Tests` **success**
   and `Benchmark` **success** in `gh pr checks`, and
-- ADR-277's sensor (A4) is live so a future regression to this state fails CI.
+- A4's sensor (ADR-277) is live so a future regression to this state fails CI.
+
+All three are met by this PR: A1–A5 per the Status table; the `src`-matching
+PRs were the throwaway canaries #1198 and #1200 (both gates `success` there,
+and `Benchmark` ran ADR-218's blocking comparator); the sensor lands here and
+was proven red on #1201.
 
 ## Non-goals
 
