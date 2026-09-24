@@ -10,6 +10,7 @@ import { bodySizeLimit } from './middleware/body-size-limit';
 import {
   healthRouter,
   accessRouter,
+  invitationsRouter,
   booksRouter,
   catalogRouter,
   readerStateRouter,
@@ -70,6 +71,7 @@ app.use('*', validationErrorFormatter);
 
 app.route('/api', healthRouter);
 app.route('/api/access', accessRouter);
+app.route('/api', invitationsRouter);
 app.route('/api/books', booksRouter);
 app.route('/api/catalog', catalogRouter);
 app.route('/api/books', readerStateRouter);

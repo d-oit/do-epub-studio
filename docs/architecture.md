@@ -246,6 +246,32 @@ CREATE TABLE book_access_grants (
     FOREIGN KEY (invited_by_user_id) REFERENCES users(id)
 );
 
+CREATE TABLE book_invitations (
+    id TEXT PRIMARY KEY,
+    book_id TEXT NOT NULL REFERENCES books(id) ON DELETE CASCADE,
+    email TEXT NOT NULL,
+    role TEXT NOT NULL CHECK(role IN ('reader', 'creator')),
+    token_hash TEXT NOT NULL UNIQUE,
+    status TEXT NOT NULL DEFAULT 'pending'
+        CHECK(status IN ('pending', 'processing', 'accepted', 'revoked', 'expired', 'failed')),
+    delivery_status TEXT NOT NULL DEFAULT 'pending'
+        CHECK(delivery_status IN ('pending', 'sent', 'manual_copy_required', 'failed')),
+    delivery_attempted_at TEXT,
+    delivery_error_code TEXT,
+    user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+    grant_id TEXT REFERENCES book_access_grants(id) ON DELETE SET NULL,
+    grant_mode TEXT NOT NULL DEFAULT 'private',
+    comments_allowed INTEGER NOT NULL DEFAULT 0,
+    offline_allowed INTEGER NOT NULL DEFAULT 0,
+    grant_expires_at TEXT,
+    expires_at TEXT NOT NULL,
+    created_by_user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    accepted_at TEXT,
+    revoked_at TEXT
+);
+
 CREATE TABLE reader_sessions (
     id TEXT PRIMARY KEY,
     book_id TEXT NOT NULL,

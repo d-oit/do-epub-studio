@@ -48,6 +48,13 @@ Request account recovery (per-email + per-IP rate limited, ADR-232).
 
 Verify a recovery code.
 
+### POST `/api/access/accept-invite`
+
+Accept a book-scoped reader or creator invitation. The token is submitted in the
+request body from the `/accept-invite#token=...` page; it is never placed in a
+query string. On success the response contains a reader session, the book
+metadata, and the capabilities granted by the accepted invitation.
+
 ## Catalog Endpoints
 
 ### GET `/api/catalog`
@@ -263,6 +270,26 @@ Update a grant (step-up required).
 ### POST `/api/admin/grants/:id/revoke`
 
 Revoke an access grant (step-up required).
+
+### POST `/api/admin/books/:bookId/invitations`
+
+Create a pending reader or creator invitation (step-up required). When email
+transport is unavailable, the response reports `manual_copy_required` and
+returns a one-time copy link for the administrator.
+
+### GET `/api/admin/books/:bookId/invitations`
+
+List invitation lifecycle and delivery states. Raw tokens are never returned.
+
+### POST `/api/admin/books/:bookId/invitations/:invitationId/resend`
+
+Replace a pending, failed, or expired token and attempt delivery again
+(step-up required).
+
+### POST `/api/admin/books/:bookId/invitations/:invitationId/revoke`
+
+Revoke an invitation, its grant, active reader sessions, and any creator
+assignment (step-up required).
 
 ## Admin Analytics Endpoints
 
