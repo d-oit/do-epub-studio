@@ -36,6 +36,10 @@ vi.mock('../features/auth/LoginPage', () => ({
   LoginPage: () => <div>Login Page</div>,
 }));
 
+vi.mock('../features/invitations/AcceptInvitePage', () => ({
+  AcceptInvitePage: () => <div>Accept Invite Page</div>,
+}));
+
 vi.mock('../features/admin/AdminLoginPage', () => ({
   AdminLoginPage: () => <div>Admin Login Page</div>,
 }));
@@ -151,6 +155,16 @@ describe('App routes', () => {
     );
     expect(await screen.findByText('Login Page')).toBeInTheDocument();
   });
+
+  it('renders the public invite acceptance route', async () => {
+    render(
+      <MemoryRouter initialEntries={['/accept-invite']}>
+        <App />
+      </MemoryRouter>,
+    );
+    expect(await screen.findByText('Accept Invite Page')).toBeInTheDocument();
+  });
+
 
   // Static hosts (Render, GitHub Pages) serve the SPA at /index.html; it must
   // behave like the root (reach the login when unauthenticated) instead of

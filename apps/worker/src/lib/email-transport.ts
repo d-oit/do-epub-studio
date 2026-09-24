@@ -20,13 +20,12 @@ export interface EmailTransport {
 
 class LoggingEmailTransport implements EmailTransport {
   send(message: EmailMessage): Promise<void> {
+    // Never log message bodies or URLs: recovery/invitation bodies contain
+    // bearer tokens. The scrubber is a second line of defence, not permission
+    // to put a secret into a log call.
     logAppInfo(
-      'email.send',
-      {
-        to: message.to,
-        subject: message.subject,
-        textPreview: message.text.slice(0, 200),
-      },
+      'email.transport.fallback',
+      { delivery: 'logged', subject: message.subject },
       message.context,
     );
     return Promise.resolve();
@@ -51,6 +50,10 @@ class SendEmailTransport implements EmailTransport {
       html: message.html,
     });
   }
+}
+
+export function emailDeliveryConfigured(env: Env): boolean {
+  return Boolean(env.EMAIL_SEND);
 }
 
 export function createEmailTransport(env: Env): EmailTransport {

@@ -1,5 +1,6 @@
 export { healthRouter } from './health';
 export { accessRouter } from './access';
+export { invitationsRouter } from './invitations';
 export { booksRouter } from './books';
 export { catalogRouter } from './catalog';
 export { readerStateRouter } from './reader/index';

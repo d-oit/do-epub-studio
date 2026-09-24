@@ -31,6 +31,12 @@ export {
   SearchQuerySchema,
   ExportQuerySchema,
   NotificationsQuerySchema,
+  CreateBookInvitationSchema,
+  AcceptBookInvitationSchema,
+  InvitationsListQuerySchema,
+  InvitationRoleSchema,
+  InvitationStatusSchema,
+  InvitationDeliveryStatusSchema,
   formatZodError,
 } from '@do-epub-studio/schema';
 
@@ -62,4 +68,10 @@ export type {
   SearchQuery,
   ExportQuery,
   NotificationsQuery,
+  CreateBookInvitation,
+  AcceptBookInvitation,
+  InvitationsListQuery,
+  InvitationRole,
+  InvitationStatus,
+  InvitationDeliveryStatus,
 } from '@do-epub-studio/schema';

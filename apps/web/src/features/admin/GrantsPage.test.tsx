@@ -38,6 +38,13 @@ vi.mock('../../lib/api/creator', () => ({
   revokeCreator: vi.fn().mockResolvedValue({ bookId: 'b1', email: 'x@ex.com' }),
 }));
 
+vi.mock('../../lib/api/invitations', () => ({
+  fetchBookInvitations: vi.fn().mockResolvedValue([]),
+  createBookInvitation: vi.fn(),
+  resendBookInvitation: vi.fn(),
+  revokeBookInvitation: vi.fn(),
+}));
+
 const mockBooks = [{ id: 'b1', title: 'Book 1', slug: 'b1' }, { id: 'b2', title: 'Book 2', slug: 'b2' }];
 const mockGrants = [{
   id: 'g1',
