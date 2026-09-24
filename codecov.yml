@@ -1,15 +1,65 @@
+# codecov.yml — rewritten by ADR-282 (GOAP-276 P0 #5).
+#
+# Single source of truth for the numbers is coverage-thresholds.json at the
+# repo root; this file mirrors each package's `lines` floor and is verified
+# byte-for-byte by `scripts/validate-coverage-parity.sh` (quality-gate phase
+# `coverage-parity`). Do not edit a target here without editing that JSON.
+#
+# Design notes (ADR-282):
+# - `target:` = absolute line-coverage floor copied from coverage-thresholds.json;
+#   `threshold: 2%` = allowed drop, so the effective pass line is target - 2%.
+# - Codecov statuses measure LINE coverage only — Codecov has no functions
+#   metric, so the `functions` floors in coverage-thresholds.json are enforced
+#   exclusively by vitest (`test:coverage` / CI), never by Codecov.
+# - `paths:` (per-package statuses computed from the single merged report) was
+#   chosen over `flags:` (requires split per-package uploads — zero CI change).
+# - `project.default: false` disables the whole-repo status so only the
+#   seven explicit per-package statuses are posted.
+# - `patch` is the diff-coverage ratchet: target 80%, threshold 0%,
+#   informational (non-blocking) — see ADR-282 for the promotion criteria.
+# - `base:` is deprecated (July 2020) and must not be reintroduced.
+
 coverage:
   status:
     project:
+      default: false
       web:
-        target: 40%
-        threshold: 2%
-      worker:
+        paths:
+          - "apps/web/"
         target: 55%
         threshold: 2%
+      worker:
+        paths:
+          - "apps/worker/"
+        target: 65%
+        threshold: 2%
       shared:
-        target: 25%
+        paths:
+          - "packages/shared/"
+        target: 40%
         threshold: 2%
       reader-core:
-        target: 75%
+        paths:
+          - "packages/reader-core/"
+        target: 72%
         threshold: 2%
+      schema:
+        paths:
+          - "packages/schema/"
+        target: 90%
+        threshold: 2%
+      testkit:
+        paths:
+          - "packages/testkit/"
+        target: 25%
+        threshold: 2%
+      ui:
+        paths:
+          - "packages/ui/"
+        target: 40%
+        threshold: 2%
+    patch:
+      default:
+        target: 80%
+        threshold: 0%
+        informational: true

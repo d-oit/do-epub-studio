@@ -168,6 +168,8 @@
 | 278    | LOC Ratchet — 500-line source cap enforcement | `plans/278-adr-loc-ratchet-policy.md` | Accepted |
 | 280    | `.agents/AGENTS.md` Thin Pointer + Real Adapter Enforcement (GOAP + ADR) | `plans/280-goap-nested-agents-thin-adapter.md`, `plans/280-adr-nested-agents-thin-adapter.md` | IN PROGRESS (GOAP-276 Phase 0 item #7: 197-LOC nested AGENTS.md rewritten as a 22-LOC thin pointer; `ADAPTERS` is now the enforced loop so nested adapters cannot escape `check-agent-sync.mjs`; full content-disposition table in the ADR; pending gate + PR) |
 | 281    | Local gate on webkit-unsupported hosts (GOAP-276 surfacing) | `plans/281-adr-local-gate-playwright-platform.md` | Accepted (environment-specific: Debian 11 has no Playwright webkit build and cannot reach a Worker backend — #928/#944 — so local runs use `QUALITY_GATE_NO_SMOKE=1`; CI `e2e-smoke` stays fail-closed per ADR-277; no sensor weakened) |
+| 282    | Coverage thresholds single source of truth (GOAP-276 P0 #5) | `plans/282-adr-coverage-thresholds-source-of-truth.md` | Accepted |
+| 283    | Release-gate manifest truth (GOAP + ADR) | `plans/283-goap-release-gate-manifest-truth.md`, `plans/283-adr-release-gate-manifest-truth.md` | PROPOSED (surfaced 2026-09-24 by GOAP-276 P0 #5: 6/8 `release.checks` strings occur zero times in `release.yml` — 3 are naming drift, 3 (`Coverage Gate`, `Cross-Browser E2E`, `Security Checks`) genuinely absent; claims deliberately NOT deleted to avoid weakening the sensor) |
 
 ## Pending
 

@@ -10,7 +10,8 @@
       "build",
       "smoke",
       "design",
-      "check-loc"
+      "check-loc",
+      "coverage-parity"
     ]
   },
   "pr": {

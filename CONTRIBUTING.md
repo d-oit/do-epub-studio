@@ -39,14 +39,8 @@ Run the full quality gate:
 
 This runs lint, typecheck, test with coverage, build, and e2e smoke tests. Fix all failures before committing.
 
-Coverage thresholds are enforced (canonical source: `AGENTS.md`):
-- web: 55% lines, 48% functions
-- worker: 55% lines, 50% functions
-- shared: 40% lines, 50% functions
-- reader-core: 72% lines, 70% functions
-- schema: 15% lines, 5% functions
-- testkit: 25% lines, 20% functions
-- ui: 10% lines, 5% functions
+Coverage thresholds (per-package `lines`/`functions`/`branches`/`statements` floors) have a single source of truth: `coverage-thresholds.json`.
+Every `vitest.config.ts` imports it, `codecov.yml` mirrors the `lines` floors, and `bash scripts/validate-coverage-parity.sh` fails the quality gate on any drift between them. Never hand-type threshold numbers here — this doc points at the JSON instead of restating values (policy: `plans/282-adr-coverage-thresholds-source-of-truth.md`).
 
 ## Running Tests
 

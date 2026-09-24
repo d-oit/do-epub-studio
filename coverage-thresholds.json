@@ -1,0 +1,9 @@
+{
+  "web": { "lines": 55, "functions": 48, "branches": 40, "statements": 55 },
+  "worker": { "lines": 65, "functions": 60, "branches": 55, "statements": 65 },
+  "shared": { "lines": 40, "functions": 50, "branches": 35, "statements": 35 },
+  "reader-core": { "lines": 72, "functions": 70, "branches": 69, "statements": 72 },
+  "schema": { "lines": 90, "functions": 90, "branches": 90, "statements": 90 },
+  "testkit": { "lines": 25, "functions": 20, "branches": 15, "statements": 20 },
+  "ui": { "lines": 40, "functions": 30, "branches": 30, "statements": 40 }
+}
