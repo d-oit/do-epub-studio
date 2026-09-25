@@ -280,7 +280,6 @@ if [[ " ${DETECTED_LANGUAGES[*]} " =~ " typescript " ]]; then
                 fi
             fi
 
->>> theirs
             # Smoke tests (skip with SKIP_SMOKE env var)
             # CI sets QUALITY_GATE_NO_SMOKE=1: the gate's dev-server smoke cannot
             # reach a Cloudflare Worker backend in the quality-gate job (the
