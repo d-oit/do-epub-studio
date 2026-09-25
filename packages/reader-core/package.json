@@ -8,7 +8,7 @@
   "scripts": {
     "test:unit": "node src/__tests__/fixtures/generate.mjs && vitest --run",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint src --ext .ts",
+    "lint": "eslint src --ext .ts --max-warnings 0",
     "bench": "vitest bench"
   },
   "dependencies": {
