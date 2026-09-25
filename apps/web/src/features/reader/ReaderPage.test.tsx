@@ -1,9 +1,48 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, act } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, act, fireEvent } from '@testing-library/react';
 import { ReaderPage } from './ReaderPage';
 import { App } from '../../App';
 import { BrowserRouter, MemoryRouter } from 'react-router-dom';
 import { useAuthStore, useReaderStore, usePreferencesStore } from '../../stores';
+
+/**
+ * Renders the reader and lets its async loaders settle inside `act()`.
+ * A synchronous `act(() => render(...))` left the data-loader and file-url
+ * promises resolving after the test body, which React reported as `act(...)`
+ * warnings (ADR-275). The trailing `await Promise.resolve()` keeps the callback
+ * genuinely async for `@typescript-eslint/require-await` *and* flushes the
+ * render's microtasks inside the act scope rather than after it.
+ */
+async function renderReaderPage() {
+  await act(async () => {
+    render(
+      <BrowserRouter>
+        <ReaderPage />
+      </BrowserRouter>,
+    );
+    await Promise.resolve();
+  });
+}
+
+/** Clicks, then flushes the resulting state update inside `act()`. */
+async function clickAndSettle(element: HTMLElement) {
+  await act(async () => {
+    fireEvent.click(element);
+    await Promise.resolve();
+  });
+}
+
+/** Renders the whole app on the reader route and awaits its async work. */
+async function renderReaderApp() {
+  await act(async () => {
+    render(
+      <MemoryRouter initialEntries={['/read/test-book']}>
+        <App />
+      </MemoryRouter>,
+    );
+    await Promise.resolve();
+  });
+}
 
 vi.mock('../../lib/api', () => ({
   apiRequest: vi.fn((url: string) => {
@@ -60,85 +99,59 @@ describe('ReaderPage Panels', () => {
     });
   });
 
-  it('enforces panel mutual exclusivity', () => {
-    act(() => {
-      render(
-        <BrowserRouter>
-          <ReaderPage />
-        </BrowserRouter>,
-      );
-    });
+  it('enforces panel mutual exclusivity', async () => {
+    await renderReaderPage();
 
-    const tocButton = screen.getByLabelText('Contents');
-    act(() => { tocButton.click(); });
+    await clickAndSettle(screen.getByLabelText('Contents'));
     expect(screen.getByText('Contents')).toBeInTheDocument();
 
-    const bookmarksButton = screen.getByLabelText('Bookmarks');
-    act(() => { bookmarksButton.click(); });
+    await clickAndSettle(screen.getByLabelText('Bookmarks'));
 
     expect(screen.queryByText('Contents')).not.toBeInTheDocument();
     expect(screen.getByText('Bookmarks')).toBeInTheDocument();
   });
 
-  it('toggles search panel', () => {
-    act(() => {
-      render(<BrowserRouter><ReaderPage /></BrowserRouter>);
-    });
-    const searchButton = screen.getByLabelText('Search');
-    act(() => { searchButton.click(); });
+  it('toggles search panel', async () => {
+    await renderReaderPage();
+    await clickAndSettle(screen.getByLabelText('Search'));
     expect(screen.getByPlaceholderText(/search/i)).toBeInTheDocument();
   });
 
-  it('toggles settings panel', () => {
-    act(() => {
-      render(<BrowserRouter><ReaderPage /></BrowserRouter>);
-    });
-    const settingsButton = screen.getByLabelText('Settings');
-    act(() => { settingsButton.click(); });
+  it('toggles settings panel', async () => {
+    await renderReaderPage();
+    await clickAndSettle(screen.getByLabelText('Settings'));
     expect(screen.getByText('Settings')).toBeInTheDocument();
   });
 
-  it('toggles comments panel', () => {
-    act(() => {
-      render(<BrowserRouter><ReaderPage /></BrowserRouter>);
-    });
-    const commentsButton = screen.getByLabelText('Comment');
-    act(() => { commentsButton.click(); });
+  it('toggles comments panel', async () => {
+    await renderReaderPage();
+    await clickAndSettle(screen.getByLabelText('Comment'));
     expect(screen.getByText('Comments')).toBeInTheDocument();
   });
 
-  it('displays error from store', () => {
+  it('displays error from store', async () => {
     useReaderStore.setState({ error: 'Access revoked' });
-    act(() => {
-      render(<BrowserRouter><ReaderPage /></BrowserRouter>);
-    });
+    await renderReaderPage();
     expect(screen.getByText('Access revoked')).toBeInTheDocument();
   });
 
-  it('toggles info panel', () => {
-    act(() => {
-      render(<BrowserRouter><ReaderPage /></BrowserRouter>);
-    });
-    const infoButton = screen.getByLabelText('About This Book');
-    act(() => { infoButton.click(); });
+  it('toggles info panel', async () => {
+    await renderReaderPage();
+    await clickAndSettle(screen.getByLabelText('About This Book'));
     expect(screen.getByText('About This Book')).toBeInTheDocument();
   });
 
-  it('renders page content', () => {
-    act(() => {
-      render(<BrowserRouter><ReaderPage /></BrowserRouter>);
-    });
+  it('renders page content', async () => {
+    await renderReaderPage();
     const root = document.querySelector('.min-h-dvh');
     expect(root).toBeInTheDocument();
   });
 
-  it('renders with different page width classes', () => {
+  it('renders with different page width classes', async () => {
     usePreferencesStore.setState({
       reader: { ...usePreferencesStore.getState().reader, pageWidth: 'narrow' },
     });
-    act(() => {
-      render(<BrowserRouter><ReaderPage /></BrowserRouter>);
-    });
+    await renderReaderPage();
     const root = document.querySelector('.min-h-dvh');
     expect(root).toBeInTheDocument();
   });
@@ -204,65 +217,47 @@ describe('ReaderPage theme', () => {
     });
   });
 
-  it('sets data-theme to light when theme is light', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('sets data-theme to light when theme is light', async () => {
     usePreferencesStore.setState({ reader: { ...usePreferencesStore.getState().reader, theme: 'light' } });
-    render(
-      <MemoryRouter initialEntries={['/read/test-book']}>
-        <App />
-      </MemoryRouter>,
-    );
+    await renderReaderApp();
     expect(document.documentElement).toHaveAttribute('data-theme', 'light');
   });
 
-  it('sets data-theme to dark when theme is dark', () => {
+  it('sets data-theme to dark when theme is dark', async () => {
     usePreferencesStore.setState({ reader: { ...usePreferencesStore.getState().reader, theme: 'dark' } });
-    render(
-      <MemoryRouter initialEntries={['/read/test-book']}>
-        <App />
-      </MemoryRouter>,
-    );
+    await renderReaderApp();
     expect(document.documentElement).toHaveAttribute('data-theme', 'dark');
   });
 
-  it('sets data-theme to sepia when theme is sepia', () => {
+  it('sets data-theme to sepia when theme is sepia', async () => {
     usePreferencesStore.setState({ reader: { ...usePreferencesStore.getState().reader, theme: 'sepia' } });
-    render(
-      <MemoryRouter initialEntries={['/read/test-book']}>
-        <App />
-      </MemoryRouter>,
-    );
+    await renderReaderApp();
     expect(document.documentElement).toHaveAttribute('data-theme', 'sepia');
   });
 
-  it('resolves system theme to light when OS prefers light', () => {
+  it('resolves system theme to light when OS prefers light', async () => {
     usePreferencesStore.setState({ reader: { ...usePreferencesStore.getState().reader, theme: 'system' } });
     vi.stubGlobal('matchMedia', vi.fn().mockReturnValue({
       matches: false, media: '', onchange: null,
       addListener: vi.fn(), removeListener: vi.fn(),
       addEventListener: vi.fn(), removeEventListener: vi.fn(), dispatchEvent: vi.fn(),
     }));
-    render(
-      <MemoryRouter initialEntries={['/read/test-book']}>
-        <App />
-      </MemoryRouter>,
-    );
+    await renderReaderApp();
     expect(document.documentElement).toHaveAttribute('data-theme', 'light');
-    vi.unstubAllGlobals();
   });
 
-  it('resolves system theme to dark when OS prefers dark', () => {
+  it('resolves system theme to dark when OS prefers dark', async () => {
     usePreferencesStore.setState({ reader: { ...usePreferencesStore.getState().reader, theme: 'system' } });
     vi.stubGlobal('matchMedia', vi.fn().mockReturnValue({
       matches: true, media: '', onchange: null,
       addListener: vi.fn(), removeListener: vi.fn(),
       addEventListener: vi.fn(), removeEventListener: vi.fn(), dispatchEvent: vi.fn(),
     }));
-    render(
-      <MemoryRouter initialEntries={['/read/test-book']}>
-        <App />
-      </MemoryRouter>,
-    );
+    await renderReaderApp();
     expect(document.documentElement).toHaveAttribute('data-theme', 'dark');
-    vi.unstubAllGlobals();
   });
 });

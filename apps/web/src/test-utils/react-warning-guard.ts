@@ -19,40 +19,36 @@ import { afterAll, beforeEach, expect } from 'vitest';
  * them.
  */
 
-export type ReactWarningKind = 'act' | 'key' | 'unknown-prop';
+export type ReactWarningKind = 'act' | 'key' | 'unknown-prop' | 'suspended-resource';
 
 export interface ReactWarningCounts {
   act: number;
   key: number;
   'unknown-prop': number;
+  'suspended-resource': number;
 }
 
 /** Warning text → tracked kind. Order matters only for overlapping patterns. */
 const WARNING_PATTERNS: ReadonlyArray<readonly [ReactWarningKind, RegExp]> = [
+  // Order matters: the suspended-resource warning also contains
+  // "not wrapped in act(...)", so the more specific class must be tried first.
+  ['suspended-resource', /suspended resource finished loading/],
   ['act', /not wrapped in act\(/],
   ['key', /unique "key" prop/],
   ['unknown-prop', /does not recognize the `[A-Za-z]+` prop/],
 ];
 
 /**
- * Files that still emit tracked React warnings. This is the GOAP-275 Phase 3
- * inventory (issue #1185): each entry is removed as that file is drained, and
- * any file *not* listed here must emit none. Paths are relative to `apps/web`
- * with POSIX separators.
+ * Files that still emit tracked React warnings — the GOAP-275 Phase 3 inventory
+ * (issue #1185), now **empty**: every inventoried file has been drained, so
+ * any file that emits a tracked React warning now fails its own test file.
+ *
+ * The list is deliberately kept (rather than deleted with its consumers) so a
+ * regression is fixed at its source instead of re-tolerated, and so the
+ * ratchet has an obvious place to record newly-found debt. Paths are relative
+ * to `apps/web` with POSIX separators.
  */
-export const KNOWN_WARNING_FILES: readonly string[] = [
-  'src/__tests__/account-settings-page.test.tsx',
-  'src/__tests__/admin-recover-page.test.tsx',
-  'src/__tests__/notification-panel.test.tsx',
-  'src/__tests__/storage-quota.test.tsx',
-  'src/__tests__/useTranslation.test.ts',
-  'src/components/__tests__/SwUpdateNotification.test.tsx',
-  'src/features/admin/AuditLogPage.test.tsx',
-  'src/features/reader/ReaderPage.test.tsx',
-  'src/features/reader/components/toolbar/ReaderToolbar.test.tsx',
-  'src/features/reader/hooks/useReaderSearch.test.ts',
-  'src/hooks/useSessionExpiry.test.ts',
-];
+export const KNOWN_WARNING_FILES: readonly string[] = [];
 
 /** `true` when `text` is one of the tracked React warning classes. */
 export function classifyReactWarning(text: string): ReactWarningKind | null {
@@ -82,7 +78,8 @@ export function assertNoNewWarnings(input: {
 }): void {
   const { testFile, counts } = input;
   const known = new Set(input.knownFiles ?? KNOWN_WARNING_FILES);
-  const total = counts.act + counts.key + counts['unknown-prop'];
+  const total =
+    counts.act + counts.key + counts['unknown-prop'] + counts['suspended-resource'];
   if (total === 0) return;
 
   const file = testFile ? normalizeTestPath(testFile) : '<unknown file>';
@@ -90,7 +87,8 @@ export function assertNoNewWarnings(input: {
 
   throw new Error(
     `React warning(s) emitted in ${file}: act=${counts.act} key=${counts.key} ` +
-      `unknown-prop=${counts['unknown-prop']}. New React warnings are defects (ADR-275): ` +
+      `unknown-prop=${counts['unknown-prop']} ` +
+      `suspended-resource=${counts['suspended-resource']}. New React warnings are defects (ADR-275): ` +
       `fix them, or add the file to KNOWN_WARNING_FILES with a GOAP-275 inventory entry. ` +
       `Reproduce with: pnpm --filter @do-epub-studio/web exec vitest run <file> --reporter=verbose --silent=false`,
   );
@@ -102,7 +100,7 @@ export function assertNoNewWarnings(input: {
  * inventory.
  */
 export function installReactWarningGuard(options: { knownFiles?: readonly string[] } = {}): void {
-  const counts: ReactWarningCounts = { act: 0, key: 0, 'unknown-prop': 0 };
+  const counts: ReactWarningCounts = { act: 0, key: 0, 'unknown-prop': 0, 'suspended-resource': 0 };
   const originalError = console.error;
   let testFile: string | undefined;
 

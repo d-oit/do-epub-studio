@@ -1,12 +1,15 @@
 import type React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { StorageQuota } from '../components/StorageQuota';
 
+// A fresh `t` per render would change `refresh`'s identity every render, so
+// `useEffect([refresh])` would re-trigger the estimate fetch in a loop and
+// `act` could never drain. Hoist one stable translator for every render.
+const { translate } = vi.hoisted(() => ({ translate: (key: string) => key }));
+
 vi.mock('../hooks/useTranslation', () => ({
-  useTranslation: () => ({
-    t: (key: string) => key,
-  }),
+  useTranslation: () => ({ t: translate }),
 }));
 
 vi.mock('../components/ui', () => ({
@@ -244,46 +247,53 @@ describe('StorageQuota', () => {
 
   it('sets up auto-dismiss timer for cleared message', async () => {
     const setTimeoutSpy = vi.spyOn(globalThis, 'setTimeout');
-
     mockEstimate.mockResolvedValue({ usage: 50 * 1024 * 1024, quota: 100 * 1024 * 1024 });
     mockCacheKeys.mockResolvedValue(['cache-1']);
     mockCacheDelete.mockResolvedValue(true);
 
     render(<StorageQuota />);
 
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'storage.clearButton' })).not.toBeDisabled();
-    });
+    try {
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: 'storage.clearButton' })).not.toBeDisabled();
+      });
 
-    fireEvent.click(screen.getByRole('button', { name: 'storage.clearButton' }));
-    await waitFor(() => {
-      expect(screen.getByRole('dialog')).toBeInTheDocument();
-    });
+      fireEvent.click(screen.getByRole('button', { name: 'storage.clearButton' }));
+      await waitFor(() => {
+        expect(screen.getByRole('dialog')).toBeInTheDocument();
+      });
 
-    const dialog = screen.getByRole('dialog');
-    const confirmBtn = dialog.querySelectorAll('button')[1];
-    fireEvent.click(confirmBtn);
+      const dialog = screen.getByRole('dialog');
+      const confirmBtn = dialog.querySelectorAll('button')[1];
+      fireEvent.click(confirmBtn);
+      // Let the clear flow's continuations land inside act() (cleared message +
+      // auto-dismiss timer + post-clear refresh); they otherwise resolve after
+      // the click's act scope.
+      await act(async () => {
+        await Promise.resolve();
+      });
 
-    await waitFor(() => {
-      expect(screen.getByText('storage.cleared')).toBeInTheDocument();
-    });
+      await waitFor(() => {
+        expect(screen.getByText('storage.cleared')).toBeInTheDocument();
+      });
 
-    // Verify that a setTimeout was registered with the 3-second auto-dismiss delay
-    const timeoutCall = setTimeoutSpy.mock.calls.find(
-      ([, ms]) => ms === 3000,
-    );
-    expect(timeoutCall).toBeDefined();
+      // Verify that a setTimeout was registered with the 3-second auto-dismiss delay
+      const timeoutCall = setTimeoutSpy.mock.calls.find(
+        ([, ms]) => ms === 3000,
+      );
+      expect(timeoutCall).toBeDefined();
 
-    // Execute the auto-dismiss callback to verify it clears the message
-    const dismissCallback = (timeoutCall as unknown as [() => void])[0];
-    dismissCallback();
+      // Execute the auto-dismiss callback to verify it clears the message
+      const dismissCallback = (timeoutCall as unknown as [() => void])[0];
+      act(() => {
+        dismissCallback();
+      });
 
-    // After executing the timeout callback, the cleared message should be gone
-    await waitFor(() => {
+      // After executing the timeout callback, the cleared message should be gone
       expect(screen.queryByText('storage.cleared')).not.toBeInTheDocument();
-    });
-
-    setTimeoutSpy.mockRestore();
+    } finally {
+      setTimeoutSpy.mockRestore();
+    }
   });
 
   it('shows clearing text on button while clearing', async () => {
@@ -313,7 +323,13 @@ describe('StorageQuota', () => {
       expect(screen.getByRole('button', { name: 'storage.clearing' })).toBeInTheDocument();
     });
 
-    resolver.resolve();
+    // Let the in-flight clear settle inside act(): the follow-up updates
+    // (cleared message + auto-dismiss timer) otherwise land after the test.
+    await act(async () => {
+      resolver.resolve();
+      await Promise.resolve();
+    });
+    expect(await screen.findByText('storage.cleared')).toBeInTheDocument();
   });
 
   it('shows clear error when cache clear throws', async () => {

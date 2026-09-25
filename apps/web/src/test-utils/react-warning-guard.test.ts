@@ -7,13 +7,16 @@ import {
   type ReactWarningCounts,
 } from './react-warning-guard';
 
-const none: ReactWarningCounts = { act: 0, key: 0, 'unknown-prop': 0 };
+const none: ReactWarningCounts = { act: 0, key: 0, 'unknown-prop': 0, 'suspended-resource': 0 };
 
 describe('classifyReactWarning', () => {
-  it('classifies the three tracked React warning classes', () => {
+  it('classifies the tracked React warning classes', () => {
     expect(
       classifyReactWarning('An update to ReaderPage inside a test was not wrapped in act(...).'),
     ).toBe('act');
+    expect(
+      classifyReactWarning('A suspended resource finished loading inside a test, but the event was not wrapped in act(...).'),
+    ).toBe('suspended-resource');
     expect(
       classifyReactWarning('Each child in a list should have a unique "key" prop.'),
     ).toBe('key');
@@ -28,6 +31,7 @@ describe('classifyReactWarning', () => {
     expect(classifyReactWarning('')).toBeNull();
   });
 });
+
 
 describe('normalizeTestPath', () => {
   it('reduces absolute paths to the package-relative form', () => {
@@ -47,13 +51,16 @@ describe('assertNoNewWarnings', () => {
     ).not.toThrow();
   });
 
-  it('stays silent for files still on the inventory', () => {
-    const tracked = KNOWN_WARNING_FILES[0];
-    expect(tracked).toBeDefined();
+  it('tolerates no file: the GOAP-275 inventory is empty', () => {
+    expect(KNOWN_WARNING_FILES).toEqual([]);
+  });
+
+  it('honours an explicit inventory override', () => {
     expect(() =>
       assertNoNewWarnings({
-        testFile: `/repo/apps/web/${tracked}`,
-        counts: { ...none, act: 3 },
+        testFile: '/repo/apps/web/src/x.test.tsx',
+        counts: { ...none, 'unknown-prop': 2 },
+        knownFiles: ['src/x.test.tsx'],
       }),
     ).not.toThrow();
   });
@@ -73,13 +80,12 @@ describe('assertNoNewWarnings', () => {
     ).toThrow(/<unknown file>/);
   });
 
-  it('honours an explicit inventory override', () => {
+  it('counts a suspended-resource warning as a tracked defect', () => {
     expect(() =>
       assertNoNewWarnings({
-        testFile: '/repo/apps/web/src/x.test.tsx',
-        counts: { ...none, 'unknown-prop': 2 },
-        knownFiles: ['src/x.test.tsx'],
+        testFile: '/repo/apps/web/src/suspends.test.tsx',
+        counts: { ...none, 'suspended-resource': 1 },
       }),
-    ).not.toThrow();
+    ).toThrow(/suspended-resource=1/);
   });
 });

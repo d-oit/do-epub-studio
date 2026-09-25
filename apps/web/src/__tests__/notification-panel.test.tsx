@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { NotificationPanel } from '../features/reader/components/notifications/NotificationPanel';
 
@@ -33,8 +33,14 @@ describe('NotificationPanel', () => {
     });
   });
 
-  it('renders dialog with accessible label', () => {
-    render(<NotificationPanel t={t} onNavigateToComment={onNavigateToComment} onClose={onClose} />);
+  it('renders dialog with accessible label', async () => {
+    // The panel fetches notifications on mount; drain that load inside act()
+    // so its state update doesn't land after the test body. The explicit flush
+    // keeps the callback async (require-await) and inside the act scope.
+    await act(async () => {
+      render(<NotificationPanel t={t} onNavigateToComment={onNavigateToComment} onClose={onClose} />);
+      await Promise.resolve();
+    });
     expect(screen.getByRole('dialog', { name: 'notifications.title' })).toBeInTheDocument();
   });
 

@@ -107,7 +107,7 @@ describe('useSessionExpiry', () => {
     expect(result.current.state).toBe('expiring');
   });
 
-  it('logs expiring telemetry once', () => {
+  it('logs expiring telemetry once', async () => {
     act(() => {
       useAuthStore.setState({
         sessionToken: 't',
@@ -115,10 +115,24 @@ describe('useSessionExpiry', () => {
         isAuthenticated: true,
       });
     });
-    renderHook(() => useSessionExpiry());
+    // Entering the expiring window also kicks off the auto-refresh effect, so
+    // drain that request's settlement inside act() — otherwise its `setError`
+    // lands after the test body and React warns.
+    mockApiRequest.mockResolvedValue({
+      sessionToken: 'new-token',
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+    });
+    const { result } = renderHook(() => useSessionExpiry());
+    await act(async () => {
+      await Promise.resolve();
+    });
+
     expect(mockLogClientEvent).toHaveBeenCalledWith(
       expect.objectContaining({ event: 'session-expiring' }),
     );
+    // A successful refresh moves expiry out of the window, so the hook settles
+    // in a non-expiring state after the drain.
+    expect(result.current.state).not.toBe('expiring');
   });
 
   it('auto-refreshes when expiring and logs success', async () => {

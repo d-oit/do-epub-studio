@@ -51,8 +51,8 @@ describe('useReaderSearch', () => {
     });
     const { result } = renderHook(() => useReaderSearch(mockBook, 'fox'));
 
-    act(() => {
-      vi.advanceTimersByTime(300);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(300);
     });
 
     vi.useRealTimers();
@@ -83,8 +83,8 @@ describe('useReaderSearch', () => {
       navigation: { toc: [] },
     } as unknown as Book;
     const { result } = renderHook(() => useReaderSearch(mockBook, 'fox'));
-    act(() => {
-      vi.advanceTimersByTime(300);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(300);
     });
     vi.useRealTimers();
     await waitFor(() => expect(result.current.isSearching).toBe(false), { timeout: 5000 });
@@ -123,7 +123,9 @@ describe('bounded concurrency', () => {
 
     vi.useFakeTimers();
     const { result } = renderHook(() => useReaderSearch(book, 'hello'));
-    await vi.advanceTimersByTimeAsync(300);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(300);
+    });
 
     // Workers start synchronously inside the debounce callback; 4 workers each call load()
     expect(peakConcurrent).toBeLessThanOrEqual(4);
@@ -157,7 +159,9 @@ describe('bounded concurrency', () => {
 
     vi.useFakeTimers();
     const { result } = renderHook(() => useReaderSearch(book, 'match'));
-    await vi.advanceTimersByTimeAsync(300);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(300);
+    });
 
     vi.useRealTimers();
     await waitFor(() => expect(result.current.isSearching).toBe(false), { timeout: 5000 });
@@ -194,12 +198,19 @@ describe('bounded concurrency', () => {
     );
 
     // Start first search — 4 workers begin loading
-    await vi.advanceTimersByTimeAsync(300);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(300);
+    });
     const firstSearchLoads = loadCount;
 
     // Start a new search while old one is in-flight — old search gets cancelled
-    act(() => { rerender({ q: 'second' }); });
-    await vi.advanceTimersByTimeAsync(300);
+    await act(async () => {
+      rerender({ q: 'second' });
+      await Promise.resolve();
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(300);
+    });
 
     vi.useRealTimers();
     await waitFor(() => expect(result.current.isSearching).toBe(false), { timeout: 5000 });
@@ -226,21 +237,40 @@ describe('bounded concurrency', () => {
     } as unknown as Book;
 
     vi.useFakeTimers();
-    renderHook(() => useReaderSearch(book, 'test'));
-    await vi.advanceTimersByTimeAsync(300);
+    const { result } = renderHook(() => useReaderSearch(book, 'test'));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(300);
+    });
 
-    // 4 of 6 sections loaded (MAX_CONCURRENT=4); release them so workers finish
-    for (let i = 0; i < 4; i++) {
-      const resolve = resolvers.get(i);
-      if (resolve) resolve();
-    }
+    // The first four workers are parked on a pending `load` (MAX_CONCURRENT=4);
+    // sections 5 and 6 are only reached once those loads resolve.
+    expect(resolvers.size).toBe(4);
+
+    // Release the first four loads inside act() so the workers' continuations —
+    // `find`, `unload`, and picking up the next section — settle within React's
+    // act scope. Each released worker then parks on section 5 or 6.
+    await act(async () => {
+      for (const resolve of resolvers.values()) resolve();
+      await Promise.resolve();
+    });
+
+    // The freed workers started the remaining two sections.
+    expect(resolvers.size).toBe(6);
+
+    // Release the last two loads and let the search reach its terminal state.
+    await act(async () => {
+      for (const resolve of resolvers.values()) resolve();
+      await Promise.resolve();
+    });
+
     vi.useRealTimers();
     await waitFor(() => {
-      // At least the 4 loaded sections should have unload called
-      sections.slice(0, 4).forEach((section) => {
-        expect(section.unload).toHaveBeenCalled();
-      });
+      expect(result.current.isSearching).toBe(false);
     }, { timeout: 5000 });
+
+    sections.forEach((section) => {
+      expect(section.unload).toHaveBeenCalled();
+    });
   });
 });
 

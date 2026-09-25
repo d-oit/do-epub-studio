@@ -1,6 +1,6 @@
 /* biome-ignore-all lint/correctness/useQwikValidLexicalScope: this project uses React, not Qwik */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { AccountSettingsPage } from '../features/admin/AccountSettingsPage';
@@ -20,8 +20,13 @@ vi.mock('../stores/auth', () => ({
   ),
 }));
 
+// A fresh `t` per render would change `loadSessions`'s identity every render,
+// so `useEffect([loadSessions])` would re-fire the sessions fetch in a loop and
+// `act` could never drain. Hoist one stable translator for every render.
+const { translate } = vi.hoisted(() => ({ translate: (key: string) => key }));
+
 vi.mock('../hooks/useTranslation', () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
+  useTranslation: () => ({ t: translate }),
 }));
 
 vi.mock('../components/navigation', () => ({
@@ -110,12 +115,19 @@ describe('AccountSettingsPage', () => {
     });
   });
 
-  it('renders the change password form and sessions section', () => {
-    render(
-      <MemoryRouter>
-        <AccountSettingsPage />
-      </MemoryRouter>,
-    );
+  it('renders the change password form and sessions section', async () => {
+    // The page loads sessions and the MFA status on mount; both must land
+    // inside act() or their state updates warn after the test body. The explicit
+    // flush keeps the callback async (require-await) *and* inside the act scope
+    // — dropping it reintroduces the two act() warnings.
+    await act(async () => {
+      render(
+        <MemoryRouter>
+          <AccountSettingsPage />
+        </MemoryRouter>,
+      );
+      await Promise.resolve();
+    });
 
     expect(screen.getByRole('heading', { name: 'admin.account.title' })).toBeInTheDocument();
     expect(screen.getByLabelText('admin.account.currentPassword')).toBeInTheDocument();
