@@ -10,7 +10,7 @@
     "check:deploy-config": "wrangler deploy --config wrangler.jsonc --dry-run",
     "build": "wrangler deploy --dry-run --outdir=dist",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint src --ext .ts",
+    "lint": "eslint src --ext .ts --max-warnings 0",
     "test:unit": "vitest --run",
     "test": "echo \"Use test:unit\"",
     "test:coverage": "pnpm test:unit --coverage"

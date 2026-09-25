@@ -9,7 +9,7 @@
     "build:analyze": "ANALYZE=true tsc && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint src --ext .ts,.tsx",
+    "lint": "eslint src --ext .ts,.tsx --max-warnings 0",
     "test:bundle": "node ../../scripts/check-bundle-budget.mjs",
     "bundle:budget": "node ../../scripts/check-bundle-budget.mjs",
     "bundle:budget:enforce": "BUNDLE_BUDGET_FAIL_ON_VIOLATION=1 node ../../scripts/check-bundle-budget.mjs",
