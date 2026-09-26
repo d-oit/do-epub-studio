@@ -25,23 +25,67 @@ Two things had changed by the time this ran:
 
 1. The integration token now has **admin** on the repository
    (`gh api repos/d-oit/do-epub-studio --jq .permissions` → `"admin": true`).
-2. `main` was **not protected at all** — `GET /branches/main/protection`
-   returned `404 Branch not protected`, not 403.
+2. `GET /branches/main/protection` returned `404 Branch not protected` — but
+   that endpoint only reports **classic** branch protection. A **repository
+   ruleset** was already active and untouched by it (see the correction below).
 
-So the fix was not "add two contexts to an existing ruleset". It was "there is no
-protection", which also means every Tier-1 rule in `AGENTS.md` about not merging
-red PRs was resting on developer discipline rather than on an enforced control.
+## Correction: classic protection was absent, enforcement was not
+
+An earlier draft of this plan concluded that "`main` was **not protected at
+all**" and that "every Tier-1 rule … was resting on developer discipline". Both
+statements were wrong, and the 404 was the reason.
+
+`GET /repos/d-oit/do-epub-studio/rulesets` returns an **active** ruleset on the
+default branch:
+
+| | |
+| --- | --- |
+| id / name | `15669639` / `main` |
+| enforcement | `active` |
+| conditions | `ref_name` includes `~DEFAULT_BRANCH` |
+| required status checks | `Codacy Static Code Analysis` (integration 56611), `strict: true` |
+| code scanning | CodeQL, `errors` / `high_or_higher` |
+| pull request | `required_review_thread_resolution: true`, `required_approving_review_count: 0` |
+| other | `deletion` blocked, `require_extra_approval_for_unattributed_changes: true` |
+
+This is exactly what `agents-docs/LEARNINGS.md` already recorded ("The `main`
+ruleset requires only Codacy (strict, up-to-date) as a hard status check …
+plus CodeQL alerts and PR-thread resolution"). The lesson was in the repo and was
+not consulted, because a `404` on the protection endpoint was read as "no
+enforcement" rather than "not *this* kind of enforcement".
+
+Two GitHub mechanisms coexist and both apply, so the effective requirement is
+their **union**:
+
+- ruleset: `Codacy Static Code Analysis` (strict)
+- classic (added here): `pr-title`, `commit-range`, `Pre-commit Hooks`,
+  `Full Quality Gate`, `Fast Check (Changed Packages)`,
+  `Gate Visibility Sensor`, `Setup & Diagnostics`, `CodeQL Alert Check`
+
+The classic set is therefore **additive, not a replacement** — Codacy was
+already enforced and stays enforced, and the eight new contexts are the
+Issue 1206 ask plus the PR-side gates that had none. The `CodeQL Alert Check`
+overlaps the ruleset's code-scanning rule; keeping both is deliberate and
+harmless (the alert-count rule and the check run are different signals), and it
+is recorded here so a future reader does not "deduplicate" it without checking
+that the alert-count enforcement still exists.
+
+**Process lesson:** before adding a new enforcement mechanism, enumerate the
+existing ones. `GET /repos/{owner}/{repo}/rulesets` is the endpoint the
+protection API does not cover, and its absence from the original #1206
+diagnosis is the reason this correction was needed.
 
 ## Decomposition
 
-- **A — enable protection on `main`.** Without it there is nothing to add
-  contexts to, and every other Tier-1 guarantee is unenforced.
+- **A — enumerate existing enforcement before adding any.** Classic protection
+  was absent *and* a ruleset was active; only the first is visible on the
+  endpoint #1206 used.
 - **B — register `pr-title` + `commit-range`** (the #1206 ask).
 - **C — pick the rest of the required set from jobs that actually run on a PR.**
   This is where #1206's framing was incomplete, and the reason is recorded in
   ADR-286: three jobs that look like the obvious candidates are push-only.
 - **D — audit for a self-approval deadlock.** This repo is single-maintainer
-  (`@d-oit` is the author of both open PRs *and* the authenticated identity),
+  (`@d-oit` is the author of every open PR *and* the authenticated identity),
   and every `CODEOWNERS` entry resolves to `@d-oit`.
 
 ## What was applied
@@ -99,6 +143,15 @@ approvals, so an approval can never be carried across unreviewed changes.
 ## Verification
 
 - `GET /branches/main/protection` → `200`, with the context list above.
+- `GET /repos/d-oit/do-epub-studio/rulesets` → the pre-existing `main`
+  ruleset (`15669639`) is `active` and untouched; its `Codacy Static Code
+  Analysis` requirement is satisfied on all four open PRs
+  (`completed/success`), so the union of both mechanisms is green.
+- `UI Tests` (Chromatic, 70 unaccepted baselines on #1218) is **not** in either
+  required set, so it does not block. It is a Chromatic GitHub App check rather
+  than a workflow job, which is why the workflow's `exitZeroOnChanges: true`
+  cannot turn it green — that flag governs the `Chromatic visual regression`
+  job, which does pass.
 - Both open PRs report `mergeStateStatus: BLOCKED` with
   `reviewDecision: REVIEW_REQUIRED` — the rules are live, not inert.
 - `pr-title` and `commit-range` were both red on #1218 and #1220 before this

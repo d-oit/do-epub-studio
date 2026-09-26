@@ -11,6 +11,16 @@ Issue 1206 asked for two specific contexts — `pr-title` and `commit-range` —
 registered as required on `main`. Applying it surfaced a fact that changes the
 shape of the task, and that a context list alone does not express.
 
+One more fact shapes the mechanics, and it is not visible from the endpoint the
+issue used. `GET /branches/main/protection` reports **classic** branch
+protection only, and returned `404 Branch not protected` here. A **repository
+ruleset** (`15669639`, name `main`, `enforcement: active`) was already in place
+and untouched by that 404, requiring `Codacy Static Code Analysis` (strict),
+CodeQL alert thresholds, and PR-thread resolution. GitHub applies **both**
+mechanisms, so the effective requirement is their union. The contexts added
+here are therefore additive to an enforcement layer that already existed, not a
+substitute for it.
+
 Branch protection's required-context list is matched by **name against the check
 runs attached to the PR's head commit**. A job that is `skipped` still produces a
 check run. A job that is **never scheduled for that event** produces nothing.

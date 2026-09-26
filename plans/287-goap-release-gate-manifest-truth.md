@@ -49,6 +49,38 @@ only treated `conclusion == "failure"` as red, so `cancelled` / `timed_out` /
 
 The security gate likewise fails closed if it cannot read the alert count.
 
+### B3 — the rewritten step had two bugs, found by executing it
+
+Rewriting the step to be context-driven is not the same as it working. The
+logic was **extracted from the workflow and run against real check-run data**,
+which is the only way to catch these — `actionlint` validates the shell, and
+`validate-gate-parity.sh` only greps names, so both passed while the step was
+broken.
+
+**1. Every required check reported "missing" — every release would fail.**
+`gh api --jq` emits **one JSON object per line (JSONL)**, and
+`gh api --paginate` without `--jq` emits **one object per page**. Neither is a
+single JSON array, so `map(select(.name == $n))` failed on every input with
+`Cannot index string with string "name"`, returned empty for every context, and
+the step failed closed for the wrong reason. `--slurp` is not available here —
+this `gh` rejects it alongside `--jq` — so the fix is to take gh's raw pages
+and let `jq -s` do the slurping. The output shape is now validated once
+(`jq -e 'type == "array"'`) before any judgement, so a parser error can never be
+reported as a missing check.
+
+**2. A check that both succeeded and failed passed.** The verdict was a joined
+string, and the test was `grep -qvE '(success|neutral)(,|$)'` over the whole
+string — which only proves that *one* element matched.
+`completed/success,completed/cancelled` contains `success,` and therefore
+**passed**, letting a required check through on the strength of a superseded
+cancelled run. Re-runs are exactly what a tagged commit accumulates, so this was
+not hypothetical. Each run is now matched individually against
+`^(completed)/(success|neutral)$`.
+
+Both were invisible to every existing check, which is why the plan's own
+verification standard for this step is "execute it against real data", not
+"the name resolves in the file".
+
 ### C — the validator now fails instead of warning
 
 `validate-gate-parity.sh` sets `FAILED=1` on any unmet release claim, and the
@@ -72,6 +104,20 @@ identically and matched as whole phrases.
   `⚠`**.
 - Fail-closed proven by injection: adding a bogus claim (`Nonexistent Gate XYZ`)
   to `gate-manifest.json` makes the validator exit 1; removing it returns exit 0.
+- **The readiness step was executed against real check-run data**, extracted
+  from the workflow body rather than eyeballed:
+  - a known-green commit → all 8 contexts reported `completed/success`, exit 0;
+  - an unknown commit → clean `::error::No check runs found`, exit 1, no jq
+    noise;
+  - the mixed-verdict fix was proven against a synthetic
+    `completed/success,completed/cancelled`, which the **old** regex passed and
+    the new per-run check rejects.
+- The three new gates are real jobs, not name matches: `coverage-gate` (1 run
+  step, calls `scripts/validate-coverage-parity.sh`), `security-gate` (4 steps,
+  3 pinned CodeQL actions), `cross-browser-gate` (6 steps, runs
+  `--project=chromium --project=firefox --project=webkit`, all three confirmed
+  defined in `playwright.config.ts`). `actionlint` — which shellchecks `run:`
+  blocks — passes on the file.
 
 ## Follow-ups (deliberately not done here)
 
