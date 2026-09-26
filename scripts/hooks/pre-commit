@@ -23,6 +23,64 @@ if ! "$REPO_ROOT/scripts/validate-git-hooks.sh" 2>&1; then
     echo -e "${YELLOW}⚠ Git hooks configuration warning (non-blocking)${NC}"
 fi
 
+# --- Framework hook parity (issue #1213) -------------------------------
+#
+# The CI "Pre-commit Hooks" job runs `pre-commit run --all-files` from
+# .pre-commit-config.yaml (trailing-whitespace, end-of-file-fixer,
+# markdownlint, yamllint, shellcheck, gitleaks, ...). The local hook ran
+# only quality_gate.sh, which contains no whitespace or format check — so
+# every file-level hook fired *first* in CI. Evidence: issue #1212 / run
+# 35984985785, where `trailing-whitespace` fixed plans/ADR-INDEX.md on
+# `main` after green locally.
+#
+# ADR-285 resolves the maintainer question #1213 left open. Decision:
+# run the framework locally and FAIL CLOSED, with a single named opt-out.
+#
+# Why fail-closed rather than #1213's proposed warn-and-continue: a
+# warn-and-continue hook is indistinguishable from no hook at all for the
+# one thing it exists to prevent — a commit that is green locally and red
+# in CI. It converts a fast local signal into a slow CI signal, which is
+# the exact failure #1212 recorded.
+#
+# Why not a hard requirement: `pre-commit` needs pip, and a fresh
+# devcontainer has neither it nor the hook environments cached. Requiring
+# it would make the hook unrunnable — and an unrunnable hook is worse than
+# a missing one, because it blocks all commits with a confusing error.
+if command -v pre-commit >/dev/null 2>&1; then
+  # Re-stage whatever the framework hooks rewrote, otherwise the commit
+  # records the pre-fix content and the hook silently "passes" on a tree
+  # that CI will reject.
+  STAGED_FILES=()
+  while IFS= read -r -d '' _staged; do
+    STAGED_FILES+=("$_staged")
+  done < <(git diff --cached --name-only --diff-filter=ACMR -z)
+
+  if [[ ${#STAGED_FILES[@]} -gt 0 ]]; then
+    echo -e "${BLUE}Running framework hooks on staged files...${NC}"
+    if ! pre-commit run --files "${STAGED_FILES[@]}"; then
+      if [[ "${SKIP_PRE_COMMIT_FRAMEWORK:-false}" == "true" ]]; then
+        echo -e "${YELLOW}⚠ SKIP_PRE_COMMIT_FRAMEWORK=true — framework hooks did not pass${NC}"
+        echo -e "${YELLOW}  CI runs them as required checks, so this commit will fail there.${NC}"
+      else
+        echo ""
+        echo -e "${RED}✗ Framework hooks FAILED${NC}"
+        echo "Fix the reported issues and re-stage, or re-run with:"
+        echo "  SKIP_PRE_COMMIT_FRAMEWORK=true git commit   # CI will still enforce them"
+        exit 1
+      fi
+    elif ! git diff --quiet -- "${STAGED_FILES[@]}"; then
+      # Hooks rewrote staged content (the usual `fixing` outcome of
+      # trailing-whitespace / end-of-file-fixer). Re-stage so the commit
+      # matches the tree CI will check.
+      git add -u -- "${STAGED_FILES[@]}"
+      echo -e "${YELLOW}⚠ Framework hooks modified staged files — re-staged${NC}"
+    fi
+  fi
+else
+  echo -e "${YELLOW}⚠ pre-commit not installed — file-level hooks run in CI only${NC}"
+  echo -e "${YELLOW}  Install for local parity: pip install pre-commit && pre-commit install${NC}"
+fi
+
 # Run the full quality gate (always runs tests, no escape hatches)
 if ! "$REPO_ROOT/scripts/quality_gate.sh"; then
     echo ""
