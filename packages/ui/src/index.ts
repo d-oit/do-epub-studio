@@ -13,7 +13,7 @@ export { PageContainer } from './page-container';
 export { Header } from './header';
 export { IconButton } from './icon-button';
 export { AppLogo } from './AppLogo';
-export { EyeIcon, EyeOffIcon } from './icons';
+export { EyeIcon, EyeOffIcon, ChevronLeftIcon, ChevronRightIcon } from './icons';
 export type { IconProps } from './icons';
 export { Pagination } from './pagination';
 export { ConfirmDialog } from './confirm-dialog';

@@ -29,13 +29,26 @@ describe('Pagination', () => {
     expect(screen.getByLabelText('Page 3')).toHaveAttribute('aria-current', 'page');
   });
 
-  it('disables previous on first page', () => {
-    render(<Pagination currentPage={1} totalPages={5} onPageChange={() => {}} />);
-    expect(screen.getByLabelText('Previous page')).toBeDisabled();
+  it.each([
+    { edge: 'Previous', currentPage: 1, totalPages: 5 },
+    { edge: 'Next', currentPage: 5, totalPages: 5 },
+  ])('disables $edge at the $currentPage boundary', ({ edge, currentPage, totalPages }) => {
+    render(
+      <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={() => {}} />,
+    );
+    expect(screen.getByLabelText(`${edge} page`)).toBeDisabled();
   });
 
-  it('disables next on last page', () => {
-    render(<Pagination currentPage={5} totalPages={5} onPageChange={() => {}} />);
-    expect(screen.getByLabelText('Next page')).toBeDisabled();
-  });
+  it.each([{ edge: 'Previous' }, { edge: 'Next' }])(
+    'gives the $edge control an aria-hidden icon',
+    ({ edge }) => {
+      render(<Pagination currentPage={3} totalPages={5} onPageChange={() => {}} />);
+      const control = screen.getByLabelText(`${edge} page`);
+      // The icon is decorative: the control's aria-label is the accessible name,
+      // so the svg must stay out of the accessibility tree or it is announced
+      // as an unlabelled graphic (regression guard for the icon swap).
+      expect(control.querySelector('svg')).toHaveAttribute('aria-hidden', 'true');
+      expect(control).toHaveAccessibleName(`${edge} page`);
+    },
+  );
 });

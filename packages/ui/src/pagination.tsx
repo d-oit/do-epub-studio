@@ -1,3 +1,5 @@
+import { ChevronLeftIcon, ChevronRightIcon } from './icons';
+
 export interface PaginationProps {
   currentPage: number;
   totalPages: number;
@@ -20,7 +22,7 @@ function getPageRange(current: number, total: number): (number | 'ellipsis')[] {
 }
 
 const baseBtn =
-  'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent px-3 py-1.5 text-sm';
+  'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent touch-target px-3 py-1.5 text-sm';
 const ghostBtn = 'text-foreground hover:bg-background-secondary';
 const primaryBtn = 'bg-accent text-white hover:bg-accent/90';
 
@@ -36,7 +38,7 @@ export function Pagination({ currentPage, totalPages, onPageChange, className = 
         onClick={() => { onPageChange(currentPage - 1); }}
         aria-label="Previous page"
       >
-        ‹
+        <ChevronLeftIcon />
       </button>
       {pages.map((p, idx) => {
         if (p === 'ellipsis') {
@@ -62,7 +64,7 @@ export function Pagination({ currentPage, totalPages, onPageChange, className = 
         onClick={() => { onPageChange(currentPage + 1); }}
         aria-label="Next page"
       >
-        ›
+        <ChevronRightIcon />
       </button>
     </nav>
   );
