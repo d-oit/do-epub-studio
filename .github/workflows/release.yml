@@ -81,12 +81,23 @@ jobs:
           # main (ADR-286), which is the whole point of `Verify CI checks
           # passed`: prove the tagged commit satisfied the gate, by name.
           #
-          # The allowlist is read from the branch-protection ruleset so the two
-          # cannot drift. A context that is required on main but absent here
-          # is a release-blocking error, not a warning.
-          REQUIRED=("pr-title" "commit-range" "Pre-commit Hooks" "Full Quality Gate" \
-                    "Fast Check (Changed Packages)" "Gate Visibility Sensor" \
-                    "Setup & Diagnostics" "CodeQL Alert Check")
+          # Release-time required contexts.
+          #
+          # NOT the branch-protection list: `pr-title` and `commit-range` only
+          # run on pull_request, and `Fast Check (Changed Packages)` is
+          # PR-only too (it reports `skipped` on a push to main). Requiring
+          # them here made the gate unsatisfiable for a tag on a main commit --
+          # verified against main: both were ABSENT and Fast Check was
+          # `skipped`. That assurance is not lost: a release can only be tagged
+          # from a merged PR, and ADR-279 already gates the title and every
+          # commit at PR time.
+          #
+          # The contexts below all run on a push to main, so a tag on a main
+          # commit can satisfy every one of them. `skipped` is treated as NOT
+          # green below, so a context that was skipped can never be read as a
+          # pass.
+          REQUIRED=("Pre-commit Hooks" "Full Quality Gate" \
+                    "Gate Visibility Sensor" "Setup & Diagnostics" "CodeQL Alert Check")
 
           echo "Checking required CI checks for ${TAG_SHA:0:8}..."
 
