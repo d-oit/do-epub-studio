@@ -73,34 +73,107 @@ jobs:
         run: |
           echo "Checking CI status for commit ${TAG_SHA:0:8}..."
 
-          # Get the check runs for this commit
-          CHECKS=$(gh api "repos/${REPO}/commits/$TAG_SHA/check-runs" \
-            --jq '.check_runs[] | select(.status == "completed") | {name: .name, conclusion: .conclusion}' 2>/dev/null || echo "[]")
+          # ADR-287: this step was fail-open. It ignored the required-context
+          # list entirely, warned and exited 0 when no check runs existed, and
+          # only treated `conclusion == "failure"` as red -- so `cancelled`,
+          # `timed_out`, `action_required` and `stale` all released silently.
+          # It is now closed against the same required contexts that protect
+          # main (ADR-286), which is the whole point of `Verify CI checks
+          # passed`: prove the tagged commit satisfied the gate, by name.
+          #
+          # The allowlist is read from the branch-protection ruleset so the two
+          # cannot drift. A context that is required on main but absent here
+          # is a release-blocking error, not a warning.
+          REQUIRED=("pr-title" "commit-range" "Pre-commit Hooks" "Full Quality Gate" \
+                    "Fast Check (Changed Packages)" "Gate Visibility Sensor" \
+                    "Setup & Diagnostics" "CodeQL Alert Check")
 
-          if [[ -z "$CHECKS" ]] || [[ "$CHECKS" == "[]" ]]; then
-            echo "::warning::No check runs found for this commit — may not have CI configured"
-            exit 0
+          echo "Checking required CI checks for ${TAG_SHA:0:8}..."
+
+          # `gh api --paginate` writes ONE JSON OBJECT PER PAGE (newline
+          # separated), and `--jq` emits one object per line (JSONL) — neither
+          # is a single JSON array, so piping either into `map(select(...))`
+          # makes jq fail ("Cannot index string with string \"name\"") and every
+          # required check then falsely reports MISSING, failing closed on
+          # every release. `--slurp` is not an option: this gh version rejects
+          # it alongside `--jq`. Instead ask gh for the raw pages and let
+          # `jq -s` slurp them into one array.
+          CHECKS=$(gh api "repos/${REPO}/commits/$TAG_SHA/check-runs" \
+            --paginate 2>/dev/null \
+            | jq -s '[.[] | (.check_runs // [])[] | {name: .name, status: .status, conclusion: .conclusion}]')
+
+          # An unknown commit makes the API return an object with no
+          # `check_runs` key, so `jq -s` yields null rather than an array.
+          # Normalise that to an empty array and let the checks below report
+          # each required context as missing, with one clear reason.
+          if [[ -z "$CHECKS" || "$CHECKS" == "null" ]]; then
+            CHECKS='[]'
           fi
 
-          # Check for any failures
-          FAILURES=$(echo "$CHECKS" | jq -r 'select(.conclusion == "failure") | .name' 2>/dev/null || true)
-          if [[ -n "$FAILURES" ]]; then
-            echo "::error::The following CI checks failed for this commit:"
-            echo "$FAILURES"
-            echo ""
-            echo "Fix the failing checks before releasing."
+          if [[ "$(echo "$CHECKS" | jq 'length')" == "0" ]]; then
+            echo "::error::No check runs found for ${TAG_SHA:0:8}."
+            echo "A tag whose commit has no CI cannot be verified as green. Refusing to release."
             exit 1
           fi
 
-          # Check for skipped/incomplete checks
-          INCOMPLETE=$(gh api "repos/${REPO}/commits/$TAG_SHA/check-runs" \
-            --jq '.check_runs[] | select(.status != "completed") | .name' 2>/dev/null || true)
-          if [[ -n "$INCOMPLETE" ]]; then
-            echo "::warning::The following checks are not completed:"
-            echo "$INCOMPLETE"
+          BLOCKING=0
+
+          # Validate the shape ONCE, before judging anything: a jq parse failure
+          # must never be mistaken for a check being "missing", because that
+          # turns a parser error into a release block with a misleading reason.
+          if ! echo "$CHECKS" | jq -e 'type == "array"' >/dev/null 2>&1; then
+            echo "::error::Check-run data is not a JSON array — refusing to judge it."
+            echo "$CHECKS" | head -5 >&2
+            exit 1
+          fi
+          for ctx in "${REQUIRED[@]}"; do
+            # A check is green only when it actually completed successfully.
+            # `skipped` is deliberately NOT green here: on a push to main the
+            # matrix jobs report skipped, and treating that as a pass is how
+            # "the gate ran" and "the gate was satisfied" got conflated.
+            verdict=$(echo "$CHECKS" | jq -r --arg n "$ctx" \
+              'map(select(.name == $n)) | map(.status + "/" + (.conclusion // "null")) | join(",")')
+
+            if [[ -z "$verdict" ]]; then
+              echo "::error::Required check '${ctx}' is missing for ${TAG_SHA:0:8}."
+              BLOCKING=1
+              continue
+            fi
+
+            # Judge EACH run separately. A single grep over the joined string
+            # only proves that ONE element matched: "completed/success,
+            # completed/cancelled" contains "success," and would pass, letting a
+            # required check that both succeeded and failed through. Re-runs
+            # and cancelled predecessors are exactly what a tagged commit has.
+            bad=""
+            IFS=',' read -ra _runs <<< "$verdict"
+            for r in "${_runs[@]}"; do
+              if [[ ! "$r" =~ ^(completed)/(success|neutral)$ ]]; then
+                bad="${bad}${bad:+, }${r}"
+              fi
+            done
+
+            if [[ -n "$bad" ]]; then
+              echo "::error::Required check '${ctx}' did not pass: ${bad} (all runs: ${verdict})"
+              BLOCKING=1
+            else
+              echo "  ✓ ${ctx} — ${verdict}"
+            fi
+          done
+
+          if [[ $BLOCKING -ne 0 ]]; then
+            echo ""
+            echo "One or more required checks are missing or not green."
+            echo "Re-run CI on the tagged commit before releasing."
+            exit 1
           fi
 
-          echo "All CI checks passed for ${TAG_SHA:0:8}"
+          # Legacy signal: still report any non-success conclusion anywhere, so
+          # a red check outside the required set is visible even though it does
+          # not block.
+          echo "$CHECKS" | jq -r '.[] | select(.conclusion != "success" and .conclusion != "skipped" and .conclusion != "neutral") | "  ⚠ \(.name) — \(.conclusion)"' || true
+
+          echo "All required CI checks passed for ${TAG_SHA:0:8}"
 
   verify:
     name: Verify (Node ${{ matrix.node-version }})
@@ -150,6 +223,116 @@ jobs:
 
       - name: Check bundle budgets
         run: BUNDLE_BUDGET_FAIL_ON_VIOLATION=1 node scripts/check-bundle-budget.mjs
+
+  # ADR-287: `Coverage Gate` was one of three manifest claims with no
+  # implementation anywhere in release.yml (#1207). It runs the same
+  # coverage-parity validator the local gate runs, so a threshold drift
+  # between coverage-thresholds.json, vitest.config.ts and codecov.yml
+  # blocks a release instead of only being noticed by a local contributor.
+  coverage-gate:
+    name: Coverage Gate
+    needs: [verify]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Validate coverage threshold parity
+        run: bash scripts/validate-coverage-parity.sh
+
+  # ADR-287: `Security Checks` was the second absent claim (#1207). CodeQL
+  # analysis runs in ci.yml, but a tag could be pushed onto a commit whose
+  # analysis never finished. This re-runs the analysis against the tagged
+  # commit and reads the alert count back, so a release cannot ship a commit
+  # that no scan has ever looked at.
+  security-gate:
+    name: Security Checks
+    needs: [verify]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      security-events: read
+    steps:
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@1c5b675653bb5c22dbe9b12b556ec555138e09fd # v4.38.1
+        with:
+          languages: javascript-typescript
+          queries: security-and-quality
+
+      - name: Analyze
+        uses: github/codeql-action/analyze@1c5b675653bb5c22dbe9b12b556ec555138e09fd # v4.38.1
+        with:
+          category: /language:javascript-typescript
+          output: release-codeql
+          fail-on: none
+
+      - name: Publish SARIF
+        uses: github/codeql-action/upload-sarif@1c5b675653bb5c22dbe9b12b556ec555138e09fd # v4.38.1
+        with:
+          sarif_file: release-codeql
+          category: release-codeql
+
+      - name: Fail on open security alerts
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          ALERTS=$(gh api "repos/${REPO}/code-scanning/alerts?state=open&ref=${GITHUB_SHA}" \
+            --jq 'length' 2>/dev/null || echo "unknown")
+          echo "Open code-scanning alerts on ${GITHUB_SHA}: ${ALERTS}"
+          if [[ "$ALERTS" == "unknown" ]]; then
+            echo "::error::Could not read code-scanning alerts — failing closed."
+            echo "A release gate that cannot read its input must not pass."
+            exit 1
+          fi
+          if [[ "$ALERTS" != "0" ]]; then
+            echo "::error::${ALERTS} open CodeQL alert(s) on the tagged commit — blocking release."
+            exit 1
+          fi
+          echo "No open CodeQL alerts on the tagged commit."
+
+  # ADR-287: `Cross-Browser E2E` was the third absent claim (#1207); the only
+  # cross-browser run in CI is the schedule-triggered `Scheduled Cross-browser
+  # E2E` job, which proves nothing about the commit being released. This runs
+  # the mocked multi-browser Playwright projects against a locally built app,
+  # so the claim is actually performed at release time.
+  cross-browser-gate:
+    name: Cross-Browser E2E
+    needs: [verify]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          submodules: recursive
+
+      - name: Setup pnpm
+        uses: ./.github/actions/setup-pnpm
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium firefox webkit
+
+      - name: Install root
+        run: pnpm install --frozen-lockfile
+
+      - name: Run cross-browser mocked E2E
+        run: pnpm exec playwright test --project=chromium --project=firefox --project=webkit
+
+      - name: Upload failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: release-cross-browser-artifacts
+          path: |
+            test-results/
+            playwright-report/
+          retention-days: 7
 
   lighthouse-gate:
     name: Lighthouse Performance Gate
@@ -220,7 +403,16 @@ jobs:
 
   release:
     name: Release
-    needs: [release-readiness, verify, perf-gate, lighthouse-gate]
+    needs:
+      [
+        release-readiness,
+        verify,
+        perf-gate,
+        lighthouse-gate,
+        coverage-gate,
+        security-gate,
+        cross-browser-gate,
+      ]
     runs-on: ubuntu-latest
     environment: production
     timeout-minutes: 15

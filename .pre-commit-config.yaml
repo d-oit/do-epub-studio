@@ -43,7 +43,11 @@ repos:
     hooks:
       - id: shellcheck
         args: ['--severity=warning']
-        files: \.(sh|bash)$
+        # git names hooks by their role, not extension: scripts/hooks/pre-commit
+        # has no suffix, so a \.(sh|bash)$ filter matches none of them and every
+        # hook script shipped unreviewed. Match the extension OR the extensionless
+        # names in scripts/hooks/ and .githooks/.
+        files: '(\.(sh|bash)$|^scripts/hooks/[^.]+$|^.githooks/[^.]+$)'
 
   # Markdown linting
   - repo: https://github.com/igorshubovych/markdownlint-cli

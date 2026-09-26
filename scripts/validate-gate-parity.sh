@@ -82,15 +82,35 @@ done <<< "$PR_CHECKS"
 RELEASE_CHECKS=$(jq -r '.release.checks[]' "$MANIFEST" 2>/dev/null)
 RELEASE_FILE="$REPO_ROOT/.github/workflows/release.yml"
 printf '\n%s▸ Release gate checks:%s\n' "$BLUE" "$NC"
+RELEASE_FAILURES=0
+# The haystack is built once: the workflow text is normalised the same way as
+# the manifest entry, so a hyphenated claim matches its own job name.
+RELEASE_HAYSTACK=$(sed 's/[^a-zA-Z0-9]\+/ /g; s/^ *//; s/ *$//' "$RELEASE_FILE" 2>/dev/null | tr '[:upper:]' '[:lower:]')
 while IFS= read -r check; do
   [[ -z "$check" ]] && continue
-  NORMALIZED=$(echo "$check" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9 ]//g')
-  if [[ -f "$RELEASE_FILE" ]] && grep -qi "$NORMALIZED" "$RELEASE_FILE" 2>/dev/null; then
+  # Normalise the manifest entry the same way the workflow text is normalised:
+  # lowercase, and every non-alphanumeric run collapsed to a single space. The
+  # previous version deleted hyphens outright on the manifest side but not on
+  # the file side, so a hyphenated claim ("Cross-Browser E2E" -> "crossbrowser
+  # e2e") could never match its own job name ("Cross-Browser E2E" in the file)
+  # and reported a permanent false ⚠.
+  NORMALIZED=$(echo "$check" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]\+/ /g; s/^ *//; s/ *$//')
+  if [[ -n "$NORMALIZED" ]] && grep -qF "$NORMALIZED" <<< "$RELEASE_HAYSTACK"; then
     printf '  %s✓%s %s\n' "$GREEN" "$NC" "$check"
   else
     printf '  %s⚠%s %s (not found in release.yml — may use different naming)\n' "$YELLOW" "$NC" "$check"
+    RELEASE_FAILURES=1
   fi
 done <<< "$RELEASE_CHECKS"
+
+# ADR-287 / #1207: these claims were permanently ⚠ and the script still exited 0.
+# A warning nobody resolves is the repo's known anti-pattern, so an unmet
+# release claim now fails the validator instead of scrolling past. The claims
+# themselves were implemented rather than deleted — deleting a claim to silence
+# the sensor is forbidden.
+if [[ $RELEASE_FAILURES -ne 0 ]]; then
+  FAILED=1
+fi
 
 echo ""
 if [[ $FAILED -ne 0 ]]; then
