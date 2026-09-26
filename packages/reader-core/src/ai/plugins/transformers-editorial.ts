@@ -60,14 +60,14 @@ import type {
 } from './transformers-editorial-format';
 import {
   buildChapters,
-  buildMessages,
   extractAssistantText,
   isPromptEcho,
   mapProgressEvent,
-  MAX_FINDINGS,
   parseCandidates,
   resolveCitation,
 } from './transformers-editorial-format';
+// Prompt construction is its own module (ADR-278 LOC cap); MAX_FINDINGS lives there.
+import { buildMessages, MAX_FINDINGS } from './transformers-editorial-prompt';
 
 /** Categories this engine answers (ADR-999 D4 story/logic scope). */
 export const TRANSFORMERS_EDITORIAL_CATEGORIES: readonly EditorialCategory[] = [

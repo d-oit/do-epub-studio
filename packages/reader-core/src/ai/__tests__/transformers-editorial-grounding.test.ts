@@ -18,9 +18,9 @@ import { describe, expect, it } from 'vitest';
 import { validateEditorialFindings } from '../editorial-findings';
 import {
   buildChapters,
-  buildMessages,
   isPromptEcho,
 } from '../plugins/transformers-editorial-format';
+import { buildMessages } from '../plugins/transformers-editorial-prompt';
 import {
   CHAPTER_SHA,
   S_C1_1,
