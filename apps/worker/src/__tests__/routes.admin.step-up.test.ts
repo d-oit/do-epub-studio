@@ -31,9 +31,7 @@ describe('Admin Step-Up Reauthentication (ADR-234)', () => {
   /** Arrange a session at the given assurance level (or unknown when null). */
   const mockStepUpSession = (assurance: AdminAssuranceLevel | null) => {
     mockHashAdminToken.mockResolvedValue('hash-of-token');
-    mockQueryFirst.mockResolvedValue(
-      assurance === null ? null : { assurance_level: assurance },
-    );
+    mockQueryFirst.mockResolvedValue(assurance === null ? null : { assurance_level: assurance });
   };
 
   beforeEach(() => {

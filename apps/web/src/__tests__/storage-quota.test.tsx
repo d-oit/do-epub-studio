@@ -24,16 +24,10 @@ vi.mock('../components/ui', () => ({
     isOpen ? (
       <div role="dialog">
         <h2>{title as string}</h2>
-        <button
-          type="button"
-          onClick={onCancel as React.MouseEventHandler<HTMLButtonElement>}
-        >
+        <button type="button" onClick={onCancel as React.MouseEventHandler<HTMLButtonElement>}>
           {(cancelLabel as string) || 'cancel'}
         </button>
-        <button
-          type="button"
-          onClick={onConfirm as React.MouseEventHandler<HTMLButtonElement>}
-        >
+        <button type="button" onClick={onConfirm as React.MouseEventHandler<HTMLButtonElement>}>
           {(confirmLabel as string) || 'confirm'}
         </button>
       </div>
@@ -81,9 +75,9 @@ describe('StorageQuota', () => {
     render(<StorageQuota />);
     // Loading state shows skeleton animation, no title text
     expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
-    expect(screen.getByText((_, element) =>
-      element?.className?.includes('animate-pulse') === true,
-    )).toBeInTheDocument();
+    expect(
+      screen.getByText((_, element) => element?.className?.includes('animate-pulse') === true),
+    ).toBeInTheDocument();
   });
 
   it('renders used and available bytes', async () => {
@@ -95,7 +89,9 @@ describe('StorageQuota', () => {
     await waitFor(() => {
       expect(screen.getByText((content) => content.includes('storage.used'))).toBeInTheDocument();
     });
-    expect(screen.getByText((content) => content.includes('storage.available'))).toBeInTheDocument();
+    expect(
+      screen.getByText((content) => content.includes('storage.available')),
+    ).toBeInTheDocument();
     expect(screen.getByText((content) => content.includes('50.0 MB'))).toBeInTheDocument();
     expect(screen.getByText((content) => content.includes('100.0 MB'))).toBeInTheDocument();
   });
@@ -278,9 +274,7 @@ describe('StorageQuota', () => {
       });
 
       // Verify that a setTimeout was registered with the 3-second auto-dismiss delay
-      const timeoutCall = setTimeoutSpy.mock.calls.find(
-        ([, ms]) => ms === 3000,
-      );
+      const timeoutCall = setTimeoutSpy.mock.calls.find(([, ms]) => ms === 3000);
       expect(timeoutCall).toBeDefined();
 
       // Execute the auto-dismiss callback to verify it clears the message
@@ -300,7 +294,12 @@ describe('StorageQuota', () => {
     mockEstimate.mockResolvedValue({ usage: 50 * 1024 * 1024, quota: 100 * 1024 * 1024 });
     const resolver: { resolve: () => void } = { resolve: () => {} };
     mockCacheKeys.mockImplementation(
-      () => new Promise<string[]>((resolve) => { resolver.resolve = () => { resolve(['cache-1']); }; }),
+      () =>
+        new Promise<string[]>((resolve) => {
+          resolver.resolve = () => {
+            resolve(['cache-1']);
+          };
+        }),
     );
     mockCacheDelete.mockResolvedValue(true);
 
@@ -357,11 +356,13 @@ describe('StorageQuota', () => {
   });
 
   it('calls indexedDB.databases and deletes non-auth databases', async () => {
-    const mockDatabases = vi.fn().mockResolvedValue([
-      { name: 'do-epub-books' },
-      { name: 'do-epub-auth' },
-      { name: 'do-epub-annotations' },
-    ]);
+    const mockDatabases = vi
+      .fn()
+      .mockResolvedValue([
+        { name: 'do-epub-books' },
+        { name: 'do-epub-auth' },
+        { name: 'do-epub-annotations' },
+      ]);
     const mockDeleteDatabase = vi.fn().mockReturnValue({
       onsuccess: null,
       onerror: null,

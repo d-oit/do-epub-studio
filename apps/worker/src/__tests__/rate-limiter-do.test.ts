@@ -8,9 +8,15 @@ vi.mock('cloudflare:workers', () => ({
     ctx = {
       storage: {
         get: vi.fn((key: string) => mockStorage.get(key)),
-        put: vi.fn((key: string, value: unknown) => { mockStorage.set(key, value); }),
-        delete: vi.fn((key: string) => { mockStorage.delete(key); }),
-        deleteAll: vi.fn(() => { mockStorage.clear(); }),
+        put: vi.fn((key: string, value: unknown) => {
+          mockStorage.set(key, value);
+        }),
+        delete: vi.fn((key: string) => {
+          mockStorage.delete(key);
+        }),
+        deleteAll: vi.fn(() => {
+          mockStorage.clear();
+        }),
         list: vi.fn((opts?: { prefix?: string }) => {
           const entries = new Map<string, unknown>();
           for (const [k, v] of mockStorage) {
@@ -102,7 +108,9 @@ describe('RateLimiterDO', () => {
     mockStorage.clear();
     vi.clearAllMocks();
     // Create instance with minimal DurableObjectState stub
-    doInstance = new (RateLimiterDO as unknown as new (...args: unknown[]) => InstanceType<typeof RateLimiterDO>)(
+    doInstance = new (
+      RateLimiterDO as unknown as new (...args: unknown[]) => InstanceType<typeof RateLimiterDO>
+    )(
       // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion -- minimal stub
       { id: 'test-id', storage: null, blockConcurrencyWhile: vi.fn() } as never,
       // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion -- minimal stub
@@ -188,30 +196,42 @@ describe('RateLimiterDO', () => {
   describe('fetch - DELETE /key', () => {
     it('deletes a specific key and returns 204', async () => {
       // Write an entry via /check (consumes one slot: remaining goes to 4)
-      const checkReq = new Request('http://localhost/check/auth_failures/user%40example.com?maxRequests=5&windowMs=900000');
+      const checkReq = new Request(
+        'http://localhost/check/auth_failures/user%40example.com?maxRequests=5&windowMs=900000',
+      );
       const firstRes = await doInstance.fetch(checkReq);
       const first: { remaining: number } = await firstRes.json();
       expect(first.remaining).toBe(4); // consumed 1 of 5
 
       // Delete the key
-      const delReq = new Request('http://localhost/key/auth_failures/user%40example.com', { method: 'DELETE' });
+      const delReq = new Request('http://localhost/key/auth_failures/user%40example.com', {
+        method: 'DELETE',
+      });
       const delRes = await doInstance.fetch(delReq);
       expect(delRes.status).toBe(204);
 
       // After delete the entry is gone; next check starts a fresh window (remaining = 4)
-      const afterRes = await doInstance.fetch(new Request('http://localhost/check/auth_failures/user%40example.com?maxRequests=5&windowMs=900000'));
+      const afterRes = await doInstance.fetch(
+        new Request(
+          'http://localhost/check/auth_failures/user%40example.com?maxRequests=5&windowMs=900000',
+        ),
+      );
       const after: { remaining: number } = await afterRes.json();
       expect(after.remaining).toBe(4); // fresh window: maxRequests - 1
     });
 
     it('returns 204 even when key does not exist', async () => {
-      const delReq = new Request('http://localhost/key/auth_lockout/nobody%40example.com', { method: 'DELETE' });
+      const delReq = new Request('http://localhost/key/auth_lockout/nobody%40example.com', {
+        method: 'DELETE',
+      });
       const res = await doInstance.fetch(delReq);
       expect(res.status).toBe(204);
     });
 
     it('returns 400 when namespace or key is missing', async () => {
-      const res = await doInstance.fetch(new Request('http://localhost/key/only-namespace', { method: 'DELETE' }));
+      const res = await doInstance.fetch(
+        new Request('http://localhost/key/only-namespace', { method: 'DELETE' }),
+      );
       expect(res.status).toBe(400);
     });
   });

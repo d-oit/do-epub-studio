@@ -18,11 +18,17 @@ function PoliteExample() {
   const [message, setMessage] = useState('');
   return (
     <div className="flex flex-col items-center gap-4">
-      <Button onClick={() => { setMessage('Update complete: 3 items synced.'); }}>
+      <Button
+        onClick={() => {
+          setMessage('Update complete: 3 items synced.');
+        }}
+      >
         Simulate update
       </Button>
       <LiveRegion polite>{message}</LiveRegion>
-      <p className="text-sm text-foreground-muted">Message will be announced to screen readers politely.</p>
+      <p className="text-sm text-foreground-muted">
+        Message will be announced to screen readers politely.
+      </p>
     </div>
   );
 }
@@ -31,7 +37,12 @@ function AssertiveExample() {
   const [message, setMessage] = useState('');
   return (
     <div className="flex flex-col items-center gap-4">
-      <Button onClick={() => { setMessage('Error: Connection lost.'); }} variant="danger">
+      <Button
+        onClick={() => {
+          setMessage('Error: Connection lost.');
+        }}
+        variant="danger"
+      >
         Simulate error
       </Button>
       <LiveRegion polite={false}>{message}</LiveRegion>

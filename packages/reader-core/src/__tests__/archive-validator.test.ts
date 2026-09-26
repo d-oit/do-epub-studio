@@ -1,10 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { zipSync, strToU8 } from 'fflate';
-import {
-  validateArchive,
-  ArchiveValidationError,
-  MAX_COMPRESSED_SIZE,
-} from '../archive-validator';
+import { validateArchive, ArchiveValidationError, MAX_COMPRESSED_SIZE } from '../archive-validator';
 
 describe('ArchiveValidator', () => {
   it('accepts a valid ZIP archive', async () => {

@@ -10,26 +10,29 @@
 ## Phase 1: ANALYZE
 
 ### Primary Goal
+
 Eliminate the class of failures where translation catalog changes break E2E tests undetected for days/weeks because:
+
 - E2E tests hard-code locale strings instead of importing from the catalog
 - i18n E2E tests only run in nightly scheduled CI, not PR smoke
 - No unit-level drift detection catches rendered translation mismatches
 
 ### Constraints
+
 - Must not break existing test infrastructure
 - Must follow existing patterns (vitest for unit, playwright for E2E)
 - Must work across 13 locales (en, de, fr, es, pt, it, ja, zh, ko, ar, ru, hi, nl)
 
 ### Root Causes Identified
 
-| # | Issue | Severity | Fix Type |
-|---|-------|----------|----------|
-| 1 | E2E asserts stale German 'Melde dich an' vs current 'Melde Sie sich an' | P0 | Immediate fix |
-| 2 | waitForFunction checks `!== null` instead of `=== 'de'` | P1 | Immediate fix |
-| 3 | login-and-book-load.spec.ts:138 expects `button` role but LocaleSwitcher is `<select>` | P1 | Immediate fix |
-| 4 | No drift detection unit test for rendered i18n text | P2 | New test |
-| 5 | i18n E2E tests not tagged `@smoke`, so they skip PR CI | P2 | Tag update |
-| 6 | No documentation preventing hard-coded test strings | P3 | Documentation |
+| #   | Issue                                                                                  | Severity | Fix Type      |
+| --- | -------------------------------------------------------------------------------------- | -------- | ------------- |
+| 1   | E2E asserts stale German 'Melde dich an' vs current 'Melde Sie sich an'                | P0       | Immediate fix |
+| 2   | waitForFunction checks `!== null` instead of `=== 'de'`                                | P1       | Immediate fix |
+| 3   | login-and-book-load.spec.ts:138 expects `button` role but LocaleSwitcher is `<select>` | P1       | Immediate fix |
+| 4   | No drift detection unit test for rendered i18n text                                    | P2       | New test      |
+| 5   | i18n E2E tests not tagged `@smoke`, so they skip PR CI                                 | P2       | Tag update    |
+| 6   | No documentation preventing hard-coded test strings                                    | P3       | Documentation |
 
 ---
 
@@ -37,14 +40,14 @@ Eliminate the class of failures where translation catalog changes break E2E test
 
 ### Tasks
 
-| ID | Task | Priority | Dependencies | Strategy |
-|----|------|----------|--------------|----------|
-| T1 | Fix stale German assertions in reader-annotations-and-admin.spec.ts | P0 | none | Sequential |
-| T2 | Fix defective waitForFunction localStorage check | P1 | none | Sequential |
-| T3 | Fix login-and-book-load.spec.ts button→combobox role assertion | P1 | none | Sequential |
-| T4 | Create i18n translation-drift unit test | P2 | none | New test |
-| T5 | Tag i18n E2E tests with @smoke for PR CI | P2 | none | Sequential |
-| T6 | Add i18n key-value constants file for E2E tests | P2 | none | New file |
+| ID  | Task                                                                | Priority | Dependencies | Strategy   |
+| --- | ------------------------------------------------------------------- | -------- | ------------ | ---------- |
+| T1  | Fix stale German assertions in reader-annotations-and-admin.spec.ts | P0       | none         | Sequential |
+| T2  | Fix defective waitForFunction localStorage check                    | P1       | none         | Sequential |
+| T3  | Fix login-and-book-load.spec.ts button→combobox role assertion      | P1       | none         | Sequential |
+| T4  | Create i18n translation-drift unit test                             | P2       | none         | New test   |
+| T5  | Tag i18n E2E tests with @smoke for PR CI                            | P2       | none         | Sequential |
+| T6  | Add i18n key-value constants file for E2E tests                     | P2       | none         | New file   |
 
 ### Execution Strategy: Parallel where independent, sequential within phases
 
@@ -55,11 +58,13 @@ Eliminate the class of failures where translation catalog changes break E2E test
 **Chosen approach**: Snapshot-based drift detection (C) + Data-driven E2E strings (A)
 
 ### Why this combination:
+
 1. **Snapshot drift detection (C)** — A vitest unit test that imports the translation catalogs directly and asserts the exact values for key login-page strings. This catches drift on every PR via the existing `test` CI job. Zero E2E overhead.
 2. **Data-driven E2E strings (A)** — A shared constants file (`apps/tests/i18n-fixtures.ts`) that E2E tests import. Single source of truth for test assertions. When translations change, updating this file is the only test change needed.
 3. **Tagging i18n tests @smoke** — Ensures the E2E i18n tests run on every PR, not just nightly.
 
 ### Why NOT approach B (data-testid):
+
 - Requires changing component markup (adding testid attributes)
 - Higher blast radius for a test-infrastructure fix
 - The existing getByLabel/getByText selectors work fine
@@ -69,6 +74,7 @@ Eliminate the class of failures where translation catalog changes break E2E test
 ## Phase 4: COORDINATE — File Changes
 
 ### T1: Fix stale German assertions
+
 **File**: `apps/tests/reader-annotations-and-admin.spec.ts`
 
 ```diff
@@ -79,6 +85,7 @@ Eliminate the class of failures where translation catalog changes break E2E test
 Lines 281 and 298.
 
 ### T2: Fix waitForFunction
+
 **File**: `apps/tests/reader-annotations-and-admin.spec.ts`
 
 ```diff
@@ -89,6 +96,7 @@ Lines 281 and 298.
 Line 294.
 
 ### T3: Fix button→combobox assertion
+
 **File**: `apps/tests/login-and-book-load.spec.ts`
 
 ```diff
@@ -101,6 +109,7 @@ Line 294.
 Line 137-138. Note: The `a11y.select_locale` key is used in the component, so the accessible label depends on the locale. The regex covers EN/DE/FR defaults.
 
 ### T4: Create i18n drift detection unit test
+
 **File**: `apps/web/src/__tests__/i18n-login-page-drift.test.ts` (new)
 
 This test imports the actual translation catalogs and asserts that key login-page strings are non-empty and match expected patterns. It runs as part of the `pnpm test:coverage` job on every PR.
@@ -149,13 +158,16 @@ describe('i18n login-page drift detection', () => {
 ```
 
 ### T5: Tag i18n E2E tests with @smoke
+
 **File**: `apps/tests/reader-annotations-and-admin.spec.ts`
 
 Change test names to include `@smoke`:
+
 - Line 272: `'@mobile can switch locale on login page'` → `'@mobile @smoke can switch locale on login page'`
 - Line 287: `'@mobile locale persists after page reload'` → `'@mobile @smoke locale persists after page reload'`
 
 ### T6: Create shared i18n constants for E2E tests
+
 **File**: `apps/tests/i18n-fixtures.ts` (new)
 
 ```typescript
@@ -212,21 +224,22 @@ And for the locale switcher label:
 
 ## Phase 5: EXECUTE — Implementation Order
 
-| Step | Action | Verification |
-|------|--------|--------------|
-| 1 | Create `apps/tests/i18n-fixtures.ts` | File exists, imports resolve |
-| 2 | Fix T1+T2: Update reader-annotations-and-admin.spec.ts | `pnpm vitest run` passes for drift test |
-| 3 | Fix T3: Update login-and-book-load.spec.ts | No type errors |
-| 4 | Create T4: i18n-login-page-drift.test.ts | `pnpm --filter @do-epub-studio/web vitest run i18n-login-page-drift` passes |
-| 5 | Fix T5: Add @smoke tags to i18n E2E tests | `grep -c @smoke apps/tests/reader-annotations-and-admin.spec.ts` shows new count |
-| 6 | Run quality gate | `./scripts/quality_gate.sh` passes |
-| 7 | Run full unit tests | `pnpm test` all green |
+| Step | Action                                                 | Verification                                                                     |
+| ---- | ------------------------------------------------------ | -------------------------------------------------------------------------------- |
+| 1    | Create `apps/tests/i18n-fixtures.ts`                   | File exists, imports resolve                                                     |
+| 2    | Fix T1+T2: Update reader-annotations-and-admin.spec.ts | `pnpm vitest run` passes for drift test                                          |
+| 3    | Fix T3: Update login-and-book-load.spec.ts             | No type errors                                                                   |
+| 4    | Create T4: i18n-login-page-drift.test.ts               | `pnpm --filter @do-epub-studio/web vitest run i18n-login-page-drift` passes      |
+| 5    | Fix T5: Add @smoke tags to i18n E2E tests              | `grep -c @smoke apps/tests/reader-annotations-and-admin.spec.ts` shows new count |
+| 6    | Run quality gate                                       | `./scripts/quality_gate.sh` passes                                               |
+| 7    | Run full unit tests                                    | `pnpm test` all green                                                            |
 
 ---
 
 ## Phase 6: SYNTHESIZE — Verification
 
 ### Quality Gates
+
 - [x] `pnpm --filter @do-epub-studio/web vitest run i18n-rendered-text` — passes (snapshot drift detection; replaced the originally-planned `i18n-login-page-drift.test.ts`)
 - [x] `pnpm --filter @do-epub-studio/web vitest run i18n-parity` — passes (existing)
 - [x] `pnpm lint` — no new errors
@@ -237,19 +250,21 @@ And for the locale switcher label:
 
 ### How This Prevents Future Failures
 
-| Failure Mode | Prevention Mechanism |
-|-------------|---------------------|
-| Translation string changes | `i18n-login-page-drift.test.ts` fails on PR (runs in unit test CI job) |
-| New locale added without E2E coverage | `i18n-parity.test.ts` catches missing keys (existing) |
-| E2E test forgets to update assertion | `i18n-fixtures.ts` imports directly from catalogs — if catalog changes, fixture auto-updates |
-| i18n E2E test skips on PR | `@smoke` tag ensures it runs in e2e-smoke job |
+| Failure Mode                          | Prevention Mechanism                                                                         |
+| ------------------------------------- | -------------------------------------------------------------------------------------------- |
+| Translation string changes            | `i18n-login-page-drift.test.ts` fails on PR (runs in unit test CI job)                       |
+| New locale added without E2E coverage | `i18n-parity.test.ts` catches missing keys (existing)                                        |
+| E2E test forgets to update assertion  | `i18n-fixtures.ts` imports directly from catalogs — if catalog changes, fixture auto-updates |
+| i18n E2E test skips on PR             | `@smoke` tag ensures it runs in e2e-smoke job                                                |
 
 ### Documentation Addendum
+
 Add to AGENTS.md Tier 2 or coding-guide.md:
 
 > **i18n Test String Policy**: Never hard-code locale strings in E2E tests.
 > Always import from `apps/tests/i18n-fixtures.ts` (which imports from the catalogs).
 > When adding new translation keys that are visible on tested pages, add them to:
+>
 > 1. `apps/tests/i18n-fixtures.ts` (for E2E)
 > 2. `apps/web/src/__tests__/i18n-login-page-drift.test.ts` (for drift detection)
 > 3. Both files import from `apps/web/src/i18n/` catalogs, so they auto-update when catalogs change.

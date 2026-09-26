@@ -1,8 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  CreateBookSchema,
-  UpdateBookSchema,
-} from '../schemas';
+import { CreateBookSchema, UpdateBookSchema } from '../schemas';
 
 describe('CreateBookSchema', () => {
   it('accepts valid book', () => {

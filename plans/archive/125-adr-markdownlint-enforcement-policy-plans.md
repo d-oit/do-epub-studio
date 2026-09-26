@@ -8,9 +8,9 @@
 
 ## Context
 
-AGENTS.md Tier 1 mandates: *“MUST always fix pre-existing issues when encountered.
+AGENTS.md Tier 1 mandates: _“MUST always fix pre-existing issues when encountered.
 Deferral is not allowed. If a pre-existing issue is too large for the current
-change, open a follow-up GOAP plan + ADR + tracking issue.”*
+change, open a follow-up GOAP plan + ADR + tracking issue.”_
 
 During the SE2/SE3 PR (#748) work, `markdownlint-cli2` enumerated **13 pre-existing
 MD058 (blanks around tables) violations** across `plans/028`, `plans/045`,
@@ -39,7 +39,7 @@ The enforcement mechanism is therefore:
 3. **GitHub Actions markdownlint step** (in `ci.yml`) already runs repo-wide.
    A failure there blocks merge per branch protection.
 4. **Plan authors** are responsible for running `npx markdownlint-cli2
-   'plans/**/*.md' --config .markdownlint.json` locally before pushing.
+'plans/**/*.md' --config .markdownlint.json` locally before pushing.
 5. **In-block disables** are allowed but require an inline justification
    comment above the disable directive. Common legitimate use: tables preceded
    by YAML frontmatter or `---` rules.

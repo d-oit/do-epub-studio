@@ -25,6 +25,7 @@ do-epub-studio/
 ```
 
 ## Core Stack
+
 - **Frontend**: React 19 + Vite 8 + Tailwind 4 + Zustand 5
 - **Backend**: Cloudflare Workers + D1 (production; local dev uses a libSQL/Turso-compatible runtime via `apps/worker/wrangler.jsonc`) + R2
 - **Language**: TypeScript 6 (Strict Mode)
@@ -32,6 +33,7 @@ do-epub-studio/
 - **Tooling**: Turborepo 2.9 + pnpm 10
 
 ## Key Features
+
 - **Agentic Native**: Repository structure and docs optimized for AI coding agents.
 - **Security First**: Argon2id password hashing, DOMPurify sanitization, bearer-token auth with session revocation, signed URL file access, CSP headers, and login rate limiting (5 attempts / 15 min lockout).
 - **Offline Capable**: PWA with IndexedDB sync queue, Background Sync API, and conflict detection.
@@ -40,6 +42,7 @@ do-epub-studio/
 ## Quick Start
 
 ### Prerequisites
+
 - Node.js v22+ LTS
 - pnpm 10+
 - Git
@@ -47,6 +50,7 @@ do-epub-studio/
 - Turso CLI (optional, for local DB management)
 
 ### Setup
+
 ```bash
 git clone <repo-url> do-epub-studio
 cd do-epub-studio
@@ -64,21 +68,22 @@ See [docs/setup-local.md](docs/setup-local.md) for detailed development environm
 
 ## Commands
 
-| Command | Description |
-|---------|-------------|
-| `pnpm dev` | Start all dev servers |
-| `pnpm build` | Production build |
-| `pnpm lint` | Lint all packages + workflow validation |
-| `pnpm typecheck` | Type-check all packages |
-| `pnpm test` | Run all unit tests |
-| `pnpm test:coverage` | Run tests with coverage |
-| `pnpm test:e2e:smoke` | Run E2E smoke suite (Chromium + WebKit) |
+| Command                     | Description                                          |
+| --------------------------- | ---------------------------------------------------- |
+| `pnpm dev`                  | Start all dev servers                                |
+| `pnpm build`                | Production build                                     |
+| `pnpm lint`                 | Lint all packages + workflow validation              |
+| `pnpm typecheck`            | Type-check all packages                              |
+| `pnpm test`                 | Run all unit tests                                   |
+| `pnpm test:coverage`        | Run tests with coverage                              |
+| `pnpm test:e2e:smoke`       | Run E2E smoke suite (Chromium + WebKit)              |
 | `./scripts/quality_gate.sh` | Full quality gate (lint + typecheck + test + design) |
-| `./scripts/health-check.sh` | Verify dev environment |
+| `./scripts/health-check.sh` | Verify dev environment                               |
 
 ## Quality Gates
 
 Every commit must pass:
+
 1. ESLint (all packages via `turbo run lint`)
 2. TypeScript strict mode (`turbo run typecheck`)
 3. Vitest unit tests with coverage thresholds
@@ -87,6 +92,7 @@ Every commit must pass:
 6. Bundle budget enforcement
 
 ## Documentation
+
 - [Coding Guide](docs/coding-guide.md): Architectural patterns and conventions.
 - [Agent Config](AGENTS.md): Instructions and guardrails for AI agents.
 - [Agent Workflow](agents-docs/WORKFLOW.md): Step-by-step verification, commit, and mandatory post-task learning flow.
@@ -97,4 +103,5 @@ Every commit must pass:
 - [Performance Budgets](docs/performance-budgets.md): Bundle budget model and baseline regeneration.
 
 ## License
+
 [MIT](LICENSE)

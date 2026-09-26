@@ -69,7 +69,11 @@ function resolveInboundId(
 
 export function createRequestContext(request: Request): RequestContext {
   const url = new URL(request.url);
-  const trace = resolveInboundId(request.headers.get(TRACE_HEADER), MAX_TRACE_ID_LENGTH, createTraceId);
+  const trace = resolveInboundId(
+    request.headers.get(TRACE_HEADER),
+    MAX_TRACE_ID_LENGTH,
+    createTraceId,
+  );
   const span = resolveInboundId(request.headers.get(SPAN_HEADER), MAX_SPAN_ID_LENGTH, createSpanId);
   return {
     traceId: trace.id,

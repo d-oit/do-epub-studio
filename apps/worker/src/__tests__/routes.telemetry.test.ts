@@ -9,7 +9,9 @@ function assertOk(body: unknown): asserts body is { ok: true } {
   expect(body).toHaveProperty('ok', true);
 }
 
-function assertError(body: unknown): asserts body is { ok: false; error: { code: string; message: string } } {
+function assertError(
+  body: unknown,
+): asserts body is { ok: false; error: { code: string; message: string } } {
   expect(body).toHaveProperty('ok', false);
 }
 
@@ -64,22 +66,30 @@ describe('Telemetry API', () => {
     expect(console.log).toHaveBeenCalled();
 
     // info-level telemetry routes through logAppInfo → console.log
-    const consoleLogs = vi.mocked(console.log).mock.calls
-      .map((call: unknown[]) => call[0] as string);
+    const consoleLogs = vi
+      .mocked(console.log)
+      .mock.calls.map((call: unknown[]) => call[0] as string);
     const infoTelemetryLogs = consoleLogs.filter((msg) => {
-      try { return (JSON.parse(msg) as Record<string, unknown>).event === 'telemetry.received'; }
-      catch { return false; }
+      try {
+        return (JSON.parse(msg) as Record<string, unknown>).event === 'telemetry.received';
+      } catch {
+        return false;
+      }
     });
     expect(infoTelemetryLogs.length).toBe(1);
     expect(infoTelemetryLogs[0]).toContain('test_event');
 
     // error-level telemetry routes through logAppError → console.error
     expect(console.error).toHaveBeenCalled();
-    const consoleErrors = vi.mocked(console.error).mock.calls
-      .map((call: unknown[]) => call[0] as string);
+    const consoleErrors = vi
+      .mocked(console.error)
+      .mock.calls.map((call: unknown[]) => call[0] as string);
     const errorTelemetryLogs = consoleErrors.filter((msg) => {
-      try { return (JSON.parse(msg) as Record<string, unknown>).event === 'telemetry.received'; }
-      catch { return false; }
+      try {
+        return (JSON.parse(msg) as Record<string, unknown>).event === 'telemetry.received';
+      } catch {
+        return false;
+      }
     });
     expect(errorTelemetryLogs.length).toBe(1);
     expect(errorTelemetryLogs[0]).toContain('error_event');
@@ -155,7 +165,8 @@ describe('Telemetry API', () => {
           },
           error: {
             name: 'Error',
-            message: 'Failed for user user@example.com with password secretpwd_but_with_a_very_long_string_of_characters_to_trigger_long_token_pattern',
+            message:
+              'Failed for user user@example.com with password secretpwd_but_with_a_very_long_string_of_characters_to_trigger_long_token_pattern',
           },
         },
       ],
@@ -180,11 +191,13 @@ describe('Telemetry API', () => {
 
     // warn-level telemetry routes through logAppWarn → console.warn
     expect(console.warn).toHaveBeenCalled();
-    const warnLogs = vi.mocked(console.warn).mock.calls
-      .map((call: unknown[]) => call[0] as string);
+    const warnLogs = vi.mocked(console.warn).mock.calls.map((call: unknown[]) => call[0] as string);
     const telemetryLog = warnLogs.find((msg) => {
-      try { return (JSON.parse(msg) as Record<string, unknown>).event === 'telemetry.received'; }
-      catch { return false; }
+      try {
+        return (JSON.parse(msg) as Record<string, unknown>).event === 'telemetry.received';
+      } catch {
+        return false;
+      }
     });
     expect(telemetryLog).toBeDefined();
     if (!telemetryLog) return;
@@ -197,7 +210,9 @@ describe('Telemetry API', () => {
     expect(logString).not.toContain('admin@example.com');
     expect(logString).not.toContain('abcdef1234567890abcdef1234567890');
     expect(logString).not.toContain('user@example.com');
-    expect(logString).not.toContain('secretpwd_but_with_a_very_long_string_of_characters_to_trigger_long_token_pattern');
+    expect(logString).not.toContain(
+      'secretpwd_but_with_a_very_long_string_of_characters_to_trigger_long_token_pattern',
+    );
     expect(logString).toContain('[REDACTED]');
   });
 
@@ -205,7 +220,12 @@ describe('Telemetry API', () => {
     const payload = {
       dropped: 7,
       logs: [
-        { level: 'info', traceId: 'trace-drop', event: 'buffer_overflow', metadata: { key: 'val' } },
+        {
+          level: 'info',
+          traceId: 'trace-drop',
+          event: 'buffer_overflow',
+          metadata: { key: 'val' },
+        },
       ],
     };
 
@@ -227,11 +247,13 @@ describe('Telemetry API', () => {
 
     // drop pressure routes through logAppWarn → console.warn
     expect(console.warn).toHaveBeenCalled();
-    const warnLogs = vi.mocked(console.warn).mock.calls
-      .map((call: unknown[]) => call[0] as string);
+    const warnLogs = vi.mocked(console.warn).mock.calls.map((call: unknown[]) => call[0] as string);
     const dropLog = warnLogs.find((msg) => {
-      try { return (JSON.parse(msg) as Record<string, unknown>).event === 'telemetry.dropped'; }
-      catch { return false; }
+      try {
+        return (JSON.parse(msg) as Record<string, unknown>).event === 'telemetry.dropped';
+      } catch {
+        return false;
+      }
     });
     expect(dropLog).toBeDefined();
     const parsed = JSON.parse(dropLog ?? '{}') as Record<string, unknown>;
@@ -246,7 +268,12 @@ describe('Telemetry API', () => {
 
     const payload = {
       logs: [
-        { level: 'info', traceId: 'trace-db-fail', event: 'test_persist_fail', metadata: { key: 'val' } },
+        {
+          level: 'info',
+          traceId: 'trace-db-fail',
+          event: 'test_persist_fail',
+          metadata: { key: 'val' },
+        },
       ],
     };
 
@@ -267,11 +294,15 @@ describe('Telemetry API', () => {
     await new Promise((r) => setTimeout(r, 10));
 
     expect(console.warn).toHaveBeenCalled();
-    const warnLogs = vi.mocked(console.warn).mock.calls
-      .map((call: unknown[]) => call[0] as string);
+    const warnLogs = vi.mocked(console.warn).mock.calls.map((call: unknown[]) => call[0] as string);
     const failureLog = warnLogs.find((msg) => {
-      try { return (JSON.parse(msg) as Record<string, unknown>).event === 'telemetry.persistence.failed'; }
-      catch { return false; }
+      try {
+        return (
+          (JSON.parse(msg) as Record<string, unknown>).event === 'telemetry.persistence.failed'
+        );
+      } catch {
+        return false;
+      }
     });
     expect(failureLog).toBeDefined();
 
@@ -287,10 +318,12 @@ describe('Telemetry API', () => {
     // Re-import the app after vi.doMock('<db/client>') to exercise the module
     // loading boundary, mirroring the persistence-failure test above.
     const insertArgs: unknown[][] = [];
-    const mockExecute = vi.fn().mockImplementation((_env: unknown, _sql: unknown, args: unknown[]) => {
-      insertArgs.push(args);
-      return Promise.resolve();
-    });
+    const mockExecute = vi
+      .fn()
+      .mockImplementation((_env: unknown, _sql: unknown, args: unknown[]) => {
+        insertArgs.push(args);
+        return Promise.resolve();
+      });
     vi.doMock('../db/client', () => ({ execute: mockExecute }));
 
     const { app: freshApp } = await import('../app');

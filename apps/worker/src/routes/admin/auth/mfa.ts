@@ -72,27 +72,37 @@ async function mfaStatus(c: RouteContext): Promise<Response> {
       mfaEnrolled: state.method === 'passkey',
       method: state.method,
       enrolledAt: state.enrolledAt,
-      passkeys: passkeys.map((p) => ({ id: p.id, displayName: p.display_name, createdAt: p.created_at })),
+      passkeys: passkeys.map((p) => ({
+        id: p.id,
+        displayName: p.display_name,
+        createdAt: p.created_at,
+      })),
       recoveryCodesPresent,
     },
   });
 }
 
 async function mfaRegisterStart(c: RouteContext): Promise<Response> {
-  const { currentPassword, displayName } = c.req.valid('json') as z.infer<typeof MfaRegisterStartSchema>;
+  const { currentPassword, displayName } = c.req.valid('json') as z.infer<
+    typeof MfaRegisterStartSchema
+  >;
   const admin = c.get('adminUser');
 
   // Re-verify the current password (recent step-up + current password, per the
   // ADR-234 matrix) before beginning the ceremony.
   const validCurrent = await verifyAccountPassword(c.env, admin.id, currentPassword);
   if (!validCurrent) {
-    await logAudit(c.env, {
-      entityType: 'user',
-      entityId: admin.id,
-      action: 'mfa_enroll_failure',
-      actorEmail: admin.email,
-      payload: { reason: 'invalid_current_password' },
-    }, c.executionCtx);
+    await logAudit(
+      c.env,
+      {
+        entityType: 'user',
+        entityId: admin.id,
+        action: 'mfa_enroll_failure',
+        actorEmail: admin.email,
+        payload: { reason: 'invalid_current_password' },
+      },
+      c.executionCtx,
+    );
     return apiError(c, 401, 'INVALID_CREDENTIALS', 'Current password is incorrect');
   }
 
@@ -117,18 +127,24 @@ async function mfaRegisterStart(c: RouteContext): Promise<Response> {
     expiresAt: new Date(Date.now() + MFA_CEREMONY_TIMEOUT_MS).toISOString(),
   });
 
-  await logAudit(c.env, {
-    entityType: 'user',
-    entityId: admin.id,
-    action: 'mfa_enroll_started',
-    actorEmail: admin.email,
-  }, c.executionCtx);
+  await logAudit(
+    c.env,
+    {
+      entityType: 'user',
+      entityId: admin.id,
+      action: 'mfa_enroll_started',
+      actorEmail: admin.email,
+    },
+    c.executionCtx,
+  );
 
   return c.json({ ok: true, data: { options } });
 }
 
 async function mfaRegisterVerify(c: RouteContext): Promise<Response> {
-  const { registrationResponse, deviceName } = c.req.valid('json') as z.infer<typeof MfaRegisterVerifySchema>;
+  const { registrationResponse, deviceName } = c.req.valid('json') as z.infer<
+    typeof MfaRegisterVerifySchema
+  >;
   const admin = c.get('adminUser');
   const response = registrationResponse as unknown as RegistrationResponseJSON;
   const challengeId = decodeClientDataChallenge(response.response.clientDataJSON ?? '');
@@ -157,24 +173,32 @@ async function mfaRegisterVerify(c: RouteContext): Promise<Response> {
       expectedRPID: c.env.WEBAUTHN_RP_ID,
     });
   } catch {
-    await logAudit(c.env, {
-      entityType: 'user',
-      entityId: admin.id,
-      action: 'mfa_enroll_failure',
-      actorEmail: admin.email,
-      payload: { reason: 'verification_error' },
-    }, c.executionCtx);
+    await logAudit(
+      c.env,
+      {
+        entityType: 'user',
+        entityId: admin.id,
+        action: 'mfa_enroll_failure',
+        actorEmail: admin.email,
+        payload: { reason: 'verification_error' },
+      },
+      c.executionCtx,
+    );
     return apiError(c, 400, 'INVALID_REGISTRATION', 'Passkey verification failed');
   }
 
   if (!verification.verified || !verification.registrationInfo) {
-    await logAudit(c.env, {
-      entityType: 'user',
-      entityId: admin.id,
-      action: 'mfa_enroll_failure',
-      actorEmail: admin.email,
-      payload: { reason: 'not_verified' },
-    }, c.executionCtx);
+    await logAudit(
+      c.env,
+      {
+        entityType: 'user',
+        entityId: admin.id,
+        action: 'mfa_enroll_failure',
+        actorEmail: admin.email,
+        payload: { reason: 'not_verified' },
+      },
+      c.executionCtx,
+    );
     return apiError(c, 400, 'INVALID_REGISTRATION', 'Passkey verification failed');
   }
 
@@ -198,12 +222,16 @@ async function mfaRegisterVerify(c: RouteContext): Promise<Response> {
     const generated = await createRecoveryCodes(10);
     await writeRecoveryHashes(c.env, admin.id, generated.hashes);
     recoveryCodes = generated.codes;
-    await logAudit(c.env, {
-      entityType: 'user',
-      entityId: admin.id,
-      action: 'recovery_codes_generated',
-      actorEmail: admin.email,
-    }, c.executionCtx);
+    await logAudit(
+      c.env,
+      {
+        entityType: 'user',
+        entityId: admin.id,
+        action: 'recovery_codes_generated',
+        actorEmail: admin.email,
+      },
+      c.executionCtx,
+    );
   }
 
   const authHeader = c.req.header('Authorization') ?? '';
@@ -215,13 +243,17 @@ async function mfaRegisterVerify(c: RouteContext): Promise<Response> {
   const newHash = await hashAdminToken(raised.token);
   await revokeAllAdminSessionsForUser(c.env, admin.id, { exceptTokenHash: newHash });
 
-  await logAudit(c.env, {
-    entityType: 'user',
-    entityId: admin.id,
-    action: 'mfa_enroll',
-    actorEmail: admin.email,
-    payload: { deviceName: deviceName ?? null },
-  }, c.executionCtx);
+  await logAudit(
+    c.env,
+    {
+      entityType: 'user',
+      entityId: admin.id,
+      action: 'mfa_enroll',
+      actorEmail: admin.email,
+      payload: { deviceName: deviceName ?? null },
+    },
+    c.executionCtx,
+  );
 
   return c.json({
     ok: true,
@@ -248,18 +280,24 @@ async function mfaAuthenticateStart(c: RouteContext): Promise<Response> {
     expiresAt: new Date(Date.now() + MFA_CEREMONY_TIMEOUT_MS).toISOString(),
   });
 
-  await logAudit(c.env, {
-    entityType: 'session',
-    entityId: admin.id,
-    action: 'mfa_auth_started',
-    actorEmail: admin.email,
-  }, c.executionCtx);
+  await logAudit(
+    c.env,
+    {
+      entityType: 'session',
+      entityId: admin.id,
+      action: 'mfa_auth_started',
+      actorEmail: admin.email,
+    },
+    c.executionCtx,
+  );
 
   return c.json({ ok: true, data: { options } });
 }
 
 async function mfaAuthenticateVerify(c: RouteContext): Promise<Response> {
-  const { authenticationResponse } = c.req.valid('json') as z.infer<typeof MfaAuthenticateVerifySchema>;
+  const { authenticationResponse } = c.req.valid('json') as z.infer<
+    typeof MfaAuthenticateVerifySchema
+  >;
   const admin = c.get('adminUser');
   const response = authenticationResponse as unknown as AuthenticationResponseJSON;
   const result = await verifyPasskeyAuthentication(c.env, response, admin.id);
@@ -270,13 +308,17 @@ async function mfaAuthenticateVerify(c: RouteContext): Promise<Response> {
     if (result.reason === 'invalid_challenge') {
       return apiError(c, 400, 'INVALID_CHALLENGE', 'Invalid, used, or expired challenge');
     }
-    await logAudit(c.env, {
-      entityType: 'user',
-      entityId: admin.id,
-      action: 'mfa_auth_failure',
-      actorEmail: admin.email,
-      payload: { reason: result.reason },
-    }, c.executionCtx);
+    await logAudit(
+      c.env,
+      {
+        entityType: 'user',
+        entityId: admin.id,
+        action: 'mfa_auth_failure',
+        actorEmail: admin.email,
+        payload: { reason: result.reason },
+      },
+      c.executionCtx,
+    );
     return apiError(c, 401, 'MFA_FAILED', 'MFA authentication failed');
   }
 
@@ -291,12 +333,16 @@ async function mfaAuthenticateVerify(c: RouteContext): Promise<Response> {
   const newHash = await hashAdminToken(raised.token);
   await revokeAllAdminSessionsForUser(c.env, admin.id, { exceptTokenHash: newHash });
 
-  await logAudit(c.env, {
-    entityType: 'user',
-    entityId: admin.id,
-    action: 'mfa_auth_success',
-    actorEmail: admin.email,
-  }, c.executionCtx);
+  await logAudit(
+    c.env,
+    {
+      entityType: 'user',
+      entityId: admin.id,
+      action: 'mfa_auth_success',
+      actorEmail: admin.email,
+    },
+    c.executionCtx,
+  );
 
   return c.json({ ok: true, data: { token: raised.token } });
 }
@@ -308,13 +354,17 @@ async function mfaRemovePasskey(c: RouteContext): Promise<Response> {
 
   const validCurrent = await verifyAccountPassword(c.env, admin.id, currentPassword);
   if (!validCurrent) {
-    await logAudit(c.env, {
-      entityType: 'user',
-      entityId: admin.id,
-      action: 'mfa_remove_failure',
-      actorEmail: admin.email,
-      payload: { reason: 'invalid_current_password' },
-    }, c.executionCtx);
+    await logAudit(
+      c.env,
+      {
+        entityType: 'user',
+        entityId: admin.id,
+        action: 'mfa_remove_failure',
+        actorEmail: admin.email,
+        payload: { reason: 'invalid_current_password' },
+      },
+      c.executionCtx,
+    );
     return apiError(c, 401, 'INVALID_CREDENTIALS', 'Current password is incorrect');
   }
 
@@ -343,12 +393,16 @@ async function mfaRemovePasskey(c: RouteContext): Promise<Response> {
   const newHash = await hashAdminToken(raised.token);
   await revokeAllAdminSessionsForUser(c.env, admin.id, { exceptTokenHash: newHash });
 
-  await logAudit(c.env, {
-    entityType: 'user',
-    entityId: admin.id,
-    action: 'mfa_remove',
-    actorEmail: admin.email,
-  }, c.executionCtx);
+  await logAudit(
+    c.env,
+    {
+      entityType: 'user',
+      entityId: admin.id,
+      action: 'mfa_remove',
+      actorEmail: admin.email,
+    },
+    c.executionCtx,
+  );
 
   return c.json({ ok: true, data: { mfaEnrolled } });
 }
@@ -359,35 +413,72 @@ async function mfaRecoveryCodesRegenerate(c: RouteContext): Promise<Response> {
 
   const validCurrent = await verifyAccountPassword(c.env, admin.id, currentPassword);
   if (!validCurrent) {
-    await logAudit(c.env, {
-      entityType: 'user',
-      entityId: admin.id,
-      action: 'recovery_code_regenerated_denied',
-      actorEmail: admin.email,
-      payload: { reason: 'invalid_current_password' },
-    }, c.executionCtx);
+    await logAudit(
+      c.env,
+      {
+        entityType: 'user',
+        entityId: admin.id,
+        action: 'recovery_code_regenerated_denied',
+        actorEmail: admin.email,
+        payload: { reason: 'invalid_current_password' },
+      },
+      c.executionCtx,
+    );
     return apiError(c, 401, 'INVALID_CREDENTIALS', 'Current password is incorrect');
   }
 
   const generated = await createRecoveryCodes(10);
   await writeRecoveryHashes(c.env, admin.id, generated.hashes);
 
-  await logAudit(c.env, {
-    entityType: 'user',
-    entityId: admin.id,
-    action: 'recovery_code_regenerated',
-    actorEmail: admin.email,
-  }, c.executionCtx);
+  await logAudit(
+    c.env,
+    {
+      entityType: 'user',
+      entityId: admin.id,
+      action: 'recovery_code_regenerated',
+      actorEmail: admin.email,
+    },
+    c.executionCtx,
+  );
 
   return c.json({ ok: true, data: { recoveryCodes: generated.codes } });
 }
 
 export function registerMfa(router: AuthApp): void {
   router.get('/account/mfa/status', adminAuth, mfaStatus);
-  router.post('/account/mfa/register-start', adminAuth, requireStepUp, zValidator('json', MfaRegisterStartSchema), mfaRegisterStart);
-  router.post('/account/mfa/register-verify', adminAuth, requireStepUp, zValidator('json', MfaRegisterVerifySchema), mfaRegisterVerify);
+  router.post(
+    '/account/mfa/register-start',
+    adminAuth,
+    requireStepUp,
+    zValidator('json', MfaRegisterStartSchema),
+    mfaRegisterStart,
+  );
+  router.post(
+    '/account/mfa/register-verify',
+    adminAuth,
+    requireStepUp,
+    zValidator('json', MfaRegisterVerifySchema),
+    mfaRegisterVerify,
+  );
   router.post('/account/mfa/authenticate-start', adminAuth, mfaAuthenticateStart);
-  router.post('/account/mfa/authenticate-verify', adminAuth, zValidator('json', MfaAuthenticateVerifySchema), mfaAuthenticateVerify);
-  router.delete('/account/mfa/passkey/:id', adminAuth, requireMfa, zValidator('json', MfaRemoveSchema), mfaRemovePasskey);
-  router.post('/account/mfa/recovery-codes/regenerate', adminAuth, requireMfa, zValidator('json', RecoveryCodeRegenSchema), mfaRecoveryCodesRegenerate);
+  router.post(
+    '/account/mfa/authenticate-verify',
+    adminAuth,
+    zValidator('json', MfaAuthenticateVerifySchema),
+    mfaAuthenticateVerify,
+  );
+  router.delete(
+    '/account/mfa/passkey/:id',
+    adminAuth,
+    requireMfa,
+    zValidator('json', MfaRemoveSchema),
+    mfaRemovePasskey,
+  );
+  router.post(
+    '/account/mfa/recovery-codes/regenerate',
+    adminAuth,
+    requireMfa,
+    zValidator('json', RecoveryCodeRegenSchema),
+    mfaRecoveryCodesRegenerate,
+  );
 }

@@ -10,17 +10,17 @@ Count every discrete directive (MUST, NEVER, numbered step, or actionable rule).
 
 ## Count by Section
 
-| Section | Instructions | Notes |
-|---------|-------------|-------|
-| Named Constants | — | Data declarations, not instructions |
-| Tier 1 — CRITICAL | 11 | Lines 26-37 (MUST/NEVER directives) |
-| Tier 2 — QUALITY GATES | 10 | Lines 45-58 (numbered items 1-10) |
-| Tier 3 — STYLE | 10 | Lines 66-75 (bullet items) |
-| Tier 4 — REFERENCE | — | Informational links only |
-| Compliance Self-Check | 10 | Lines 94-102 (checklist items) |
-| Skills Reference | — | Data table |
-| Key Commands | — | Code examples, not directives |
-| **Total** | **41** | |
+| Section                | Instructions | Notes                               |
+| ---------------------- | ------------ | ----------------------------------- |
+| Named Constants        | —            | Data declarations, not instructions |
+| Tier 1 — CRITICAL      | 11           | Lines 26-37 (MUST/NEVER directives) |
+| Tier 2 — QUALITY GATES | 10           | Lines 45-58 (numbered items 1-10)   |
+| Tier 3 — STYLE         | 10           | Lines 66-75 (bullet items)          |
+| Tier 4 — REFERENCE     | —            | Informational links only            |
+| Compliance Self-Check  | 10           | Lines 94-102 (checklist items)      |
+| Skills Reference       | —            | Data table                          |
+| Key Commands           | —            | Code examples, not directives       |
+| **Total**              | **41**       |                                     |
 
 ## Assessment
 

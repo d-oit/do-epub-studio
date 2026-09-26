@@ -314,11 +314,17 @@ describe('AdminLoginPage', () => {
       await waitFor(() => {
         expect(mockApi).toHaveBeenCalledWith('/api/admin/login/mfa/verify', {
           method: 'POST',
-          body: JSON.stringify({ loginTicket: 'ticket-1', authenticationResponse: { id: 'cred-1' } }),
+          body: JSON.stringify({
+            loginTicket: 'ticket-1',
+            authenticationResponse: { id: 'cred-1' },
+          }),
         });
       });
       await waitFor(() => {
-        expect(mockSetAdminAuth).toHaveBeenCalledWith({ sessionToken: 'mfa-token', email: 'admin@example.com' });
+        expect(mockSetAdminAuth).toHaveBeenCalledWith({
+          sessionToken: 'mfa-token',
+          email: 'admin@example.com',
+        });
       });
     });
 
@@ -335,7 +341,9 @@ describe('AdminLoginPage', () => {
       await user.type(screen.getByLabelText('admin.login.password'), 'password123');
       await user.click(screen.getByRole('button', { name: 'admin.login.signIn' }));
 
-      await waitFor(() => expect(screen.getByText('admin.login.useRecoveryCode')).toBeInTheDocument());
+      await waitFor(() =>
+        expect(screen.getByText('admin.login.useRecoveryCode')).toBeInTheDocument(),
+      );
       await user.click(screen.getByText('admin.login.useRecoveryCode'));
 
       const codeInput = screen.getByLabelText('admin.login.recoveryCode');
@@ -345,11 +353,18 @@ describe('AdminLoginPage', () => {
       await waitFor(() => {
         expect(mockApi).toHaveBeenCalledWith('/api/admin/login/mfa/recovery-verify', {
           method: 'POST',
-          body: JSON.stringify({ email: 'admin@example.com', password: 'password123', recoveryCode: '0123456789abcdef' }),
+          body: JSON.stringify({
+            email: 'admin@example.com',
+            password: 'password123',
+            recoveryCode: '0123456789abcdef',
+          }),
         });
       });
       await waitFor(() => {
-        expect(mockSetAdminAuth).toHaveBeenCalledWith({ sessionToken: 'recovery-token', email: 'admin@example.com' });
+        expect(mockSetAdminAuth).toHaveBeenCalledWith({
+          sessionToken: 'recovery-token',
+          email: 'admin@example.com',
+        });
       });
     });
   });

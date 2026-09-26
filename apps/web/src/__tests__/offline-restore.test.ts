@@ -2,12 +2,12 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import 'fake-indexeddb/auto';
 
 vi.mock('../lib/offline/crypto', () => ({
-  encryptJSON: vi.fn().mockImplementation((_data: unknown, _token: string) =>
-    Promise.resolve(JSON.stringify(_data)),
-  ),
-  decryptJSON: vi.fn().mockImplementation((payload: string) =>
-    Promise.resolve(JSON.parse(payload)),
-  ),
+  encryptJSON: vi
+    .fn()
+    .mockImplementation((_data: unknown, _token: string) => Promise.resolve(JSON.stringify(_data))),
+  decryptJSON: vi
+    .fn()
+    .mockImplementation((payload: string) => Promise.resolve(JSON.parse(payload))),
 }));
 
 vi.mock('@/stores/auth', () => ({
@@ -229,50 +229,90 @@ describe('Offline restore — annotations (M4 from Plan 118)', () => {
 
     // Seed all annotation types
     await saveAnnotation({
-      id: 'fr-h', bookId, type: 'highlight', cfi: 'epubcfi(/1)',
-      text: 'Key insight', color: 'yellow', chapter: 'Ch 1',
-      createdAt: Date.now(), synced: false, mutationId: 'fr-mh',
+      id: 'fr-h',
+      bookId,
+      type: 'highlight',
+      cfi: 'epubcfi(/1)',
+      text: 'Key insight',
+      color: 'yellow',
+      chapter: 'Ch 1',
+      createdAt: Date.now(),
+      synced: false,
+      mutationId: 'fr-mh',
     });
     await saveAnnotation({
-      id: 'fr-c', bookId, type: 'comment', cfi: 'epubcfi(/2)',
+      id: 'fr-c',
+      bookId,
+      type: 'comment',
+      cfi: 'epubcfi(/2)',
       comment: 'Great passage',
-      createdAt: Date.now() - 500, synced: false, mutationId: 'fr-mc',
+      createdAt: Date.now() - 500,
+      synced: false,
+      mutationId: 'fr-mc',
     });
     await saveAnnotation({
-      id: 'fr-b', bookId, type: 'bookmark', cfi: 'epubcfi(/3)',
+      id: 'fr-b',
+      bookId,
+      type: 'bookmark',
+      cfi: 'epubcfi(/3)',
       chapter: 'Ch 2',
-      createdAt: Date.now() - 1000, synced: false, mutationId: 'fr-mb',
+      createdAt: Date.now() - 1000,
+      synced: false,
+      mutationId: 'fr-mb',
     });
 
     // Seed progress
     await saveProgress({
-      id: `fr-prog-${bookId}`, bookId, cfi: 'epubcfi(/3)',
-      percentage: 65, lastRead: Date.now(), synced: false, mutationId: 'fr-mp',
+      id: `fr-prog-${bookId}`,
+      bookId,
+      cfi: 'epubcfi(/3)',
+      percentage: 65,
+      lastRead: Date.now(),
+      synced: false,
+      mutationId: 'fr-mp',
     });
 
     // Seed reading insights
     await saveReadingInsight({
-      bookId, date: '2026-07-07', activeMinutes: 20, activePages: 5, lastUpdated: Date.now(),
+      bookId,
+      date: '2026-07-07',
+      activeMinutes: 20,
+      activePages: 5,
+      lastUpdated: Date.now(),
     });
 
     // Seed sync queue with all types
     await addToSyncQueue({
-      id: 'fr-sq-1', type: 'progress', payload: { bookId, cfi: 'epubcfi(/3)', percentage: 65 },
-      mutationId: 'fr-mp', createdAt: Date.now(), attempts: 0,
+      id: 'fr-sq-1',
+      type: 'progress',
+      payload: { bookId, cfi: 'epubcfi(/3)', percentage: 65 },
+      mutationId: 'fr-mp',
+      createdAt: Date.now(),
+      attempts: 0,
     });
     await addToSyncQueue({
-      id: 'fr-sq-2', type: 'annotation', payload: { bookId, annotation: { type: 'highlight' } },
-      mutationId: 'fr-mh', createdAt: Date.now() - 100, attempts: 0,
+      id: 'fr-sq-2',
+      type: 'annotation',
+      payload: { bookId, annotation: { type: 'highlight' } },
+      mutationId: 'fr-mh',
+      createdAt: Date.now() - 100,
+      attempts: 0,
     });
     await addToSyncQueue({
-      id: 'fr-sq-3', type: 'annotation',
+      id: 'fr-sq-3',
+      type: 'annotation',
       payload: { bookId, annotation: { type: 'bookmark', cfi: 'epubcfi(/3)' } },
-      mutationId: 'fr-mb', createdAt: Date.now() - 200, attempts: 0,
+      mutationId: 'fr-mb',
+      createdAt: Date.now() - 200,
+      attempts: 0,
     });
     await addToSyncQueue({
-      id: 'fr-sq-4', type: 'reading-insight',
+      id: 'fr-sq-4',
+      type: 'reading-insight',
       payload: { bookId, buckets: [{ date: '2026-07-07', activeMinutes: 20, activePages: 5 }] },
-      mutationId: 'fr-mri', createdAt: Date.now() - 300, attempts: 0,
+      mutationId: 'fr-mri',
+      createdAt: Date.now() - 300,
+      attempts: 0,
     });
 
     // Verify all annotations restored

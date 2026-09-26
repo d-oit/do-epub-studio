@@ -18,7 +18,13 @@ function DefaultModal() {
   const [isOpen, setIsOpen] = useState(false);
   return (
     <div>
-      <Button onClick={() => { setIsOpen(true); }}>Open Modal</Button>
+      <Button
+        onClick={() => {
+          setIsOpen(true);
+        }}
+      >
+        Open Modal
+      </Button>
       <Modal
         isOpen={isOpen}
         onClose={() => setIsOpen(false)}
@@ -27,7 +33,9 @@ function DefaultModal() {
       >
         <p className="text-foreground-muted text-sm">This action cannot be undone.</p>
         <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-border">
-          <Button variant="ghost" size="sm">Cancel</Button>
+          <Button variant="ghost" size="sm">
+            Cancel
+          </Button>
           <Button size="sm">Confirm</Button>
         </div>
       </Modal>
@@ -40,11 +48,7 @@ function SuccessModal() {
   return (
     <div>
       <Button onClick={() => setIsOpen(true)}>Open Modal</Button>
-      <Modal
-        isOpen={isOpen}
-        onClose={() => setIsOpen(false)}
-        title="Success"
-      >
+      <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} title="Success">
         <p className="text-foreground-muted text-sm">Your changes have been saved.</p>
       </Modal>
     </div>

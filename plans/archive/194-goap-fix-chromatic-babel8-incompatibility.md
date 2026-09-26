@@ -33,6 +33,7 @@ typescript: {
 ```
 
 This approach:
+
 - Keeps `@babel/core >= 7.29.6` (no version cap needed)
 - Avoids visual baseline changes in Chromatic
 - Maintains prop documentation via TypeScript types
@@ -47,9 +48,9 @@ This approach:
 
 ## Evidence
 
-| Check | Status | Evidence |
-|-------|--------|----------|
-| Storybook build | ✅ | `pnpm --filter @do-epub-studio/ui build:storybook` — completed successfully |
-| Web build | ✅ | `pnpm build` — 2 tasks successful |
-| Typecheck | ✅ | `pnpm typecheck` — 7/7 packages |
-| Config fix | ✅ | `packages/ui/.storybook/main.ts` — `reactDocgen: 'react-docgen-typescript'` |
+| Check           | Status | Evidence                                                                    |
+| --------------- | ------ | --------------------------------------------------------------------------- |
+| Storybook build | ✅     | `pnpm --filter @do-epub-studio/ui build:storybook` — completed successfully |
+| Web build       | ✅     | `pnpm build` — 2 tasks successful                                           |
+| Typecheck       | ✅     | `pnpm typecheck` — 7/7 packages                                             |
+| Config fix      | ✅     | `packages/ui/.storybook/main.ts` — `reactDocgen: 'react-docgen-typescript'` |

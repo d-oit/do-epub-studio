@@ -1,14 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import {
-  buildCacheKey,
-  withEdgeCache,
-  PUBLIC_CACHE_CONTROL,
-} from '../lib/edge-cache';
-import {
-  makeEnv,
-  makePassThroughContext,
-  mockQueryAll,
-} from './fixtures';
+import { buildCacheKey, withEdgeCache, PUBLIC_CACHE_CONTROL } from '../lib/edge-cache';
+import { makeEnv, makePassThroughContext, mockQueryAll } from './fixtures';
 import { app } from '../app';
 
 interface MockCache {
@@ -91,25 +83,34 @@ describe('edge-cache helpers', () => {
   describe('withEdgeCache', () => {
     it('returns MISS on first call and HIT on second', async () => {
       const cache = installMockCache();
-      const handler = vi.fn(
-        (): Promise<Response> =>
-          Promise.resolve(
-            new Response(JSON.stringify({ ok: true, data: { items: [], total: 0 } }), {
-              status: 200,
-              headers: { 'Content-Type': 'application/json' },
-            }),
-          ),
+      const handler = vi.fn((): Promise<Response> =>
+        Promise.resolve(
+          new Response(JSON.stringify({ ok: true, data: { items: [], total: 0 } }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        ),
       );
       const ctx = { waitUntil: vi.fn() };
       const request = new Request('https://example.com/api/catalog');
 
-      const first = await withEdgeCache(request, handler, { cacheControl: PUBLIC_CACHE_CONTROL }, ctx);
+      const first = await withEdgeCache(
+        request,
+        handler,
+        { cacheControl: PUBLIC_CACHE_CONTROL },
+        ctx,
+      );
       expect(first.status).toBe(200);
       expect(first.headers.get('x-cache')).toBe('MISS');
       expect(first.headers.get('Cache-Control')).toBe(PUBLIC_CACHE_CONTROL);
       expect(handler).toHaveBeenCalledTimes(1);
 
-      const second = await withEdgeCache(request, handler, { cacheControl: PUBLIC_CACHE_CONTROL }, ctx);
+      const second = await withEdgeCache(
+        request,
+        handler,
+        { cacheControl: PUBLIC_CACHE_CONTROL },
+        ctx,
+      );
       expect(second.headers.get('x-cache')).toBe('HIT');
       expect(handler).toHaveBeenCalledTimes(1);
 
@@ -120,13 +121,18 @@ describe('edge-cache helpers', () => {
 
     it('does not cache non-200 responses', async () => {
       const cache = installMockCache();
-      const handler = vi.fn(
-        (): Promise<Response> => Promise.resolve(new Response('boom', { status: 500 })),
+      const handler = vi.fn((): Promise<Response> =>
+        Promise.resolve(new Response('boom', { status: 500 })),
       );
       const ctx = { waitUntil: vi.fn() };
       const request = new Request('https://example.com/api/catalog');
 
-      const res = await withEdgeCache(request, handler, { cacheControl: PUBLIC_CACHE_CONTROL }, ctx);
+      const res = await withEdgeCache(
+        request,
+        handler,
+        { cacheControl: PUBLIC_CACHE_CONTROL },
+        ctx,
+      );
       expect(res.status).toBe(500);
       expect(cache.put).not.toHaveBeenCalled();
     });
@@ -134,12 +140,17 @@ describe('edge-cache helpers', () => {
     it('no-ops when caches.default is unavailable', async () => {
       // No installMockCache — caches may be the worker-pool default.
       // Either way, the handler must always run.
-      const handler = vi.fn(
-        (): Promise<Response> => Promise.resolve(new Response('{}', { status: 200 })),
+      const handler = vi.fn((): Promise<Response> =>
+        Promise.resolve(new Response('{}', { status: 200 })),
       );
       const ctx = { waitUntil: vi.fn() };
       const request = new Request('https://example.com/api/catalog');
-      const res = await withEdgeCache(request, handler, { cacheControl: PUBLIC_CACHE_CONTROL }, ctx);
+      const res = await withEdgeCache(
+        request,
+        handler,
+        { cacheControl: PUBLIC_CACHE_CONTROL },
+        ctx,
+      );
       expect(res.status).toBe(200);
       // x-cache may be MISS or absent depending on the test pool; both
       // are acceptable as long as the handler ran.

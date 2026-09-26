@@ -173,7 +173,9 @@ function main() {
     const entrySrc = String(config.entry);
     const entryChunk = resolveEntryChunk(routeName, entrySrc, manifest);
     if (!entryChunk) {
-      console.warn(`Warning: Could not find manifest entry for route "${routeName}" (entry: ${entrySrc})`);
+      console.warn(
+        `Warning: Could not find manifest entry for route "${routeName}" (entry: ${entrySrc})`,
+      );
       continue;
     }
 
@@ -209,7 +211,9 @@ function main() {
       },
     };
 
-    console.log(`  ${routeName}: entry gzip=${(entryGzip / 1024).toFixed(1)}KB brotli=${(entryBrotli / 1024).toFixed(1)}KB | total gzip=${(totalGzip / 1024).toFixed(1)}KB brotli=${(totalBrotli / 1024).toFixed(1)}KB`);
+    console.log(
+      `  ${routeName}: entry gzip=${(entryGzip / 1024).toFixed(1)}KB brotli=${(entryBrotli / 1024).toFixed(1)}KB | total gzip=${(totalGzip / 1024).toFixed(1)}KB brotli=${(totalBrotli / 1024).toFixed(1)}KB`,
+    );
   }
 
   fs.writeFileSync(outputPath, JSON.stringify(baseline, null, 2) + '\n');

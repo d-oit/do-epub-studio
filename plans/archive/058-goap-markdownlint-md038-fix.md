@@ -19,17 +19,17 @@ Rephrased line 135 of `agents-docs/LEARNINGS.md` to remove the problematic backt
 
 ## Tasks
 
-| ID | Priority | Task | Skill | Status |
-|----|----------|------|-------|--------|
-| T1 | P0 | Fix markdownlint MD038 in LEARNINGS.md:135 | `code-quality` | ✅ Done |
-| T2 | P0 | Verify pre-commit passes locally | `cicd-pipeline` | ✅ Pre-commit markdownlint passes |
-| T3 | P0 | Verify quality gate (lint + typecheck + tests) | `code-quality` | ✅ All pass |
-| T4 | P0 | Create PR, wait for CI, address comments, merge | `github-workflow` | ✅ PR #379 merged, main CI ✅ |
+| ID  | Priority | Task                                            | Skill             | Status                            |
+| --- | -------- | ----------------------------------------------- | ----------------- | --------------------------------- |
+| T1  | P0       | Fix markdownlint MD038 in LEARNINGS.md:135      | `code-quality`    | ✅ Done                           |
+| T2  | P0       | Verify pre-commit passes locally                | `cicd-pipeline`   | ✅ Pre-commit markdownlint passes |
+| T3  | P0       | Verify quality gate (lint + typecheck + tests)  | `code-quality`    | ✅ All pass                       |
+| T4  | P0       | Create PR, wait for CI, address comments, merge | `github-workflow` | ✅ PR #379 merged, main CI ✅     |
 
 ## Files Changed
 
-| File | Change |
-|------|--------|
+| File                       | Change                                                    |
+| -------------------------- | --------------------------------------------------------- |
 | `agents-docs/LEARNINGS.md` | Removed confusing backtick/backslash sequence in line 135 |
 
 ## Quality Gates

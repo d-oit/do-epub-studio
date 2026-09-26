@@ -1,8 +1,4 @@
-import {
-  saveReadingInsight,
-  getReadingInsight,
-  getReadingInsightsForBook,
-} from './db';
+import { saveReadingInsight, getReadingInsight, getReadingInsightsForBook } from './db';
 import type { ReadingInsightEntry } from './db';
 
 const IDLE_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
@@ -31,7 +27,8 @@ export class ReadingTimer {
   private idleTimer: ReturnType<typeof setTimeout> | null = null;
   private pollTimer: ReturnType<typeof setInterval> | null = null;
   private isIdle = false;
-  private isVisible = typeof document !== 'undefined' ? document.visibilityState === 'visible' : true;
+  private isVisible =
+    typeof document !== 'undefined' ? document.visibilityState === 'visible' : true;
   private isFocused = typeof document !== 'undefined' ? document.hasFocus() : true;
   private isLoaded = false;
   private chapterHref: string | null = null;

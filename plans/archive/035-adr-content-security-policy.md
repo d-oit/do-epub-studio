@@ -1,12 +1,15 @@
 # ADR-035: Content Security Policy (CSP) Implementation
 
 ## Status
+
 Accepted
 
 ## Context
+
 EPUB.js renders book content in sandboxed iframes. Without a strict Content Security Policy (CSP) on the Worker response headers, a malicious EPUB file could potentially inject scripts or exfiltrate reader data if the sandbox is bypassed or misconfigured.
 
 ## Decision
+
 We will implement a defense-in-depth security model using strict CSP headers at multiple levels:
 
 1. **Global Worker Responses**: All API and application responses will include a strict CSP that defaults to `'self'` and disables framing via `frame-ancestors 'none'`.
@@ -17,6 +20,7 @@ We will implement a defense-in-depth security model using strict CSP headers at 
 ## Policy Details
 
 ### Global CSP (`securityHeaders`)
+
 ```
 default-src 'self';
 script-src 'self';
@@ -31,6 +35,7 @@ report-uri /api/csp-report
 ```
 
 ### EPUB Content CSP (`handleDownloadBookFile`)
+
 ```
 default-src 'self';
 script-src 'none';
@@ -43,6 +48,7 @@ report-uri /api/csp-report
 ```
 
 ## Consequences
+
 - **Security**: Significantly reduced risk of XSS and data exfiltration from malicious EPUB files.
 - **Functionality**: Some highly interactive EPUBs that rely on external scripts or complex framing might be restricted.
 - **Observability**: CSP violation reports provide visibility into potential attacks or policy over-restriction.

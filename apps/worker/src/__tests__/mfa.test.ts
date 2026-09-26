@@ -108,7 +108,8 @@ vi.mock('../auth/mfa', () => ({
   createLoginTicket: mockCreateLoginTicket,
   findLoginTicket: mockFindLoginTicket,
   consumeLoginTicket: mockConsumeLoginTicket,
-  isLoginTicketUsable: (t: { expires_at: string; used_at: string | null } | null) => Boolean(t && !t?.used_at),
+  isLoginTicketUsable: (t: { expires_at: string; used_at: string | null } | null) =>
+    Boolean(t && !t?.used_at),
   bufferToBase64Url: (bytes: { length: number }) => `pk-${bytes.length}`,
   decodeBase64UrlToBytes: () => new Uint8Array(8),
 }));
@@ -172,10 +173,11 @@ describe('Admin MFA (ADR-234 items 5+6)', () => {
 
   describe('GET /account/mfa/status', () => {
     it('returns enrolled state without leaking codes or credentials', async () => {
-      mockGetMfaState.mockResolvedValue({ method: 'passkey', enrolledAt: '2026-08-13T00:00:00.000Z' });
-      mockListPasskeys.mockResolvedValue([
-        { id: 'pk-1', created_at: '2026-08-13T00:00:00.000Z' },
-      ]);
+      mockGetMfaState.mockResolvedValue({
+        method: 'passkey',
+        enrolledAt: '2026-08-13T00:00:00.000Z',
+      });
+      mockListPasskeys.mockResolvedValue([{ id: 'pk-1', created_at: '2026-08-13T00:00:00.000Z' }]);
       mockHasRecoveryCodes.mockResolvedValue(true);
 
       const res = await app.fetch(
@@ -243,7 +245,11 @@ describe('Admin MFA (ADR-234 items 5+6)', () => {
       expect(body.data.options.challenge).toBe('chal-xx');
       expect(mockStoreChallenge).toHaveBeenCalledWith(
         expect.anything(),
-        expect.objectContaining({ id: 'chal-xx', purpose: 'registration', rawChallenge: 'chal-xx' }),
+        expect.objectContaining({
+          id: 'chal-xx',
+          purpose: 'registration',
+          rawChallenge: 'chal-xx',
+        }),
       );
     });
   });
@@ -411,7 +417,15 @@ describe('Admin MFA (ADR-234 items 5+6)', () => {
       });
       mockVerifyAuthenticationResponse.mockResolvedValue({
         verified: true,
-        authenticationInfo: { credentialID: 'cred-1', newCounter: 6, userVerified: true, credentialDeviceType: 'singleDevice', credentialBackedUp: false, origin: 'x', rpID: 'localhost' },
+        authenticationInfo: {
+          credentialID: 'cred-1',
+          newCounter: 6,
+          userVerified: true,
+          credentialDeviceType: 'singleDevice',
+          credentialBackedUp: false,
+          origin: 'x',
+          rpID: 'localhost',
+        },
       });
     });
 
@@ -606,7 +620,11 @@ describe('Admin MFA (ADR-234 items 5+6)', () => {
     });
 
     it('authenticate-verify rejects a challenge not owned by the caller', async () => {
-      mockFindChallenge.mockResolvedValue({ ...usableChallenge, user_id: 'other-user', purpose: 'authentication' });
+      mockFindChallenge.mockResolvedValue({
+        ...usableChallenge,
+        user_id: 'other-user',
+        purpose: 'authentication',
+      });
       mockIsChallengeUsable.mockReturnValue(false);
 
       const res = await app.fetch(
@@ -657,7 +675,10 @@ describe('Admin MFA (ADR-234 items 5+6)', () => {
       expect(mockVerifyAuthenticationResponse).not.toHaveBeenCalled();
       expect(mockLogAudit).toHaveBeenCalledWith(
         expect.anything(),
-        expect.objectContaining({ action: 'mfa_auth_failure', payload: expect.objectContaining({ reason: 'credential_not_owned' }) }),
+        expect.objectContaining({
+          action: 'mfa_auth_failure',
+          payload: expect.objectContaining({ reason: 'credential_not_owned' }),
+        }),
         expect.anything(),
       );
     });
@@ -665,7 +686,13 @@ describe('Admin MFA (ADR-234 items 5+6)', () => {
 
   describe('POST /login/mfa/start (public login second factor)', () => {
     const LOGIN = 'http://localhost/api/admin/login/mfa/start';
-    const userRow = { id: 'admin-1', email: 'admin@example.com', global_role: 'admin', disabled_at: null, compromised_at: null };
+    const userRow = {
+      id: 'admin-1',
+      email: 'admin@example.com',
+      global_role: 'admin',
+      disabled_at: null,
+      compromised_at: null,
+    };
 
     it('returns authentication options bound to the email-resolved user', async () => {
       mockQueryFirst.mockResolvedValue(userRow);
@@ -688,7 +715,11 @@ describe('Admin MFA (ADR-234 items 5+6)', () => {
       expect(body.data.options.challenge).toBe('chal-login');
       expect(mockStoreChallenge).toHaveBeenCalledWith(
         expect.anything(),
-        expect.objectContaining({ userId: 'admin-1', purpose: 'authentication', rawChallenge: 'chal-login' }),
+        expect.objectContaining({
+          userId: 'admin-1',
+          purpose: 'authentication',
+          rawChallenge: 'chal-login',
+        }),
       );
       expect(mockLogAudit).toHaveBeenCalledWith(
         expect.anything(),
@@ -720,7 +751,11 @@ describe('Admin MFA (ADR-234 items 5+6)', () => {
     it('refuses to start when the login ticket is absent, consumed, or expired (password factor required)', async () => {
       // A consumed/expired ticket means the password was never (or no longer
       // freshly) verified — the passkey ceremony must not proceed alone.
-      mockFindLoginTicket.mockResolvedValue({ user_id: 'admin-1', expires_at: '2099-01-01T00:00:00.000Z', used_at: '2026-08-13T00:00:00.000Z' });
+      mockFindLoginTicket.mockResolvedValue({
+        user_id: 'admin-1',
+        expires_at: '2099-01-01T00:00:00.000Z',
+        used_at: '2026-08-13T00:00:00.000Z',
+      });
 
       const res = await app.fetch(
         new Request(LOGIN, {
@@ -743,7 +778,13 @@ describe('Admin MFA (ADR-234 items 5+6)', () => {
   describe('POST /login/mfa/verify (public passkey completion)', () => {
     const VERIFY = 'http://localhost/api/admin/login/mfa/verify';
     const response = { id: 'cred-1', response: { clientDataJSON: 'Y2g' } };
-    const userRow = { id: 'admin-1', email: 'admin@example.com', global_role: 'admin', disabled_at: null, compromised_at: null };
+    const userRow = {
+      id: 'admin-1',
+      email: 'admin@example.com',
+      global_role: 'admin',
+      disabled_at: null,
+      compromised_at: null,
+    };
 
     beforeEach(() => {
       mockQueryFirst.mockResolvedValue(userRow);
@@ -764,7 +805,15 @@ describe('Admin MFA (ADR-234 items 5+6)', () => {
       });
       mockVerifyAuthenticationResponse.mockResolvedValue({
         verified: true,
-        authenticationInfo: { credentialID: 'cred-1', newCounter: 6, userVerified: true, credentialDeviceType: 'singleDevice', credentialBackedUp: false, origin: 'x', rpID: 'localhost' },
+        authenticationInfo: {
+          credentialID: 'cred-1',
+          newCounter: 6,
+          userVerified: true,
+          credentialDeviceType: 'singleDevice',
+          credentialBackedUp: false,
+          origin: 'x',
+          rpID: 'localhost',
+        },
       });
       mockCreateAdminSessionMfa.mockResolvedValue({
         ok: true,
@@ -792,7 +841,10 @@ describe('Admin MFA (ADR-234 items 5+6)', () => {
       expect(mockCreateAdminSessionMfa).toHaveBeenCalledWith(
         expect.anything(),
         { id: 'admin-1', email: 'admin@example.com', role: 'admin' },
-        expect.objectContaining({ ipHash: expect.any(String), deviceLabelHash: expect.any(String) }),
+        expect.objectContaining({
+          ipHash: expect.any(String),
+          deviceLabelHash: expect.any(String),
+        }),
       );
       expect(mockLogAudit).toHaveBeenCalledWith(
         expect.anything(),
@@ -863,7 +915,13 @@ describe('Admin MFA (ADR-234 items 5+6)', () => {
 
   describe('POST /login/mfa/recovery-verify (public recovery redeem)', () => {
     const VERIFY = 'http://localhost/api/admin/login/mfa/recovery-verify';
-    const userRow = { id: 'admin-1', email: 'admin@example.com', global_role: 'admin', disabled_at: null, compromised_at: null };
+    const userRow = {
+      id: 'admin-1',
+      email: 'admin@example.com',
+      global_role: 'admin',
+      disabled_at: null,
+      compromised_at: null,
+    };
 
     beforeEach(() => {
       mockQueryFirst.mockResolvedValue(userRow);
@@ -882,7 +940,11 @@ describe('Admin MFA (ADR-234 items 5+6)', () => {
         new Request(VERIFY, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: 'admin@example.com', password: 'password', recoveryCode: '0123456789abcdef' }),
+          body: JSON.stringify({
+            email: 'admin@example.com',
+            password: 'password',
+            recoveryCode: '0123456789abcdef',
+          }),
         }),
         env,
         makePassThroughContext(),
@@ -892,8 +954,16 @@ describe('Admin MFA (ADR-234 items 5+6)', () => {
       const body: any = await res.json();
       expect(body.data.token).toBe('recovery-token');
       expect(body.data.user.email).toBe('admin@example.com');
-      expect(mockVerifyAccountPassword).toHaveBeenCalledWith(expect.anything(), 'admin-1', 'password');
-      expect(mockVerifyRecoveryCode).toHaveBeenCalledWith(expect.anything(), 'admin-1', '0123456789abcdef');
+      expect(mockVerifyAccountPassword).toHaveBeenCalledWith(
+        expect.anything(),
+        'admin-1',
+        'password',
+      );
+      expect(mockVerifyRecoveryCode).toHaveBeenCalledWith(
+        expect.anything(),
+        'admin-1',
+        '0123456789abcdef',
+      );
       expect(mockLogAudit).toHaveBeenCalledWith(
         expect.anything(),
         expect.objectContaining({ action: 'mfa_recovery_success' }),
@@ -908,7 +978,11 @@ describe('Admin MFA (ADR-234 items 5+6)', () => {
         new Request(VERIFY, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: 'admin@example.com', password: 'password', recoveryCode: '0123456789abcdef' }),
+          body: JSON.stringify({
+            email: 'admin@example.com',
+            password: 'password',
+            recoveryCode: '0123456789abcdef',
+          }),
         }),
         env,
         makePassThroughContext(),
@@ -932,7 +1006,11 @@ describe('Admin MFA (ADR-234 items 5+6)', () => {
         new Request(VERIFY, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: 'admin@example.com', password: 'password', recoveryCode: '0123456789abcdef' }),
+          body: JSON.stringify({
+            email: 'admin@example.com',
+            password: 'password',
+            recoveryCode: '0123456789abcdef',
+          }),
         }),
         env,
         makePassThroughContext(),

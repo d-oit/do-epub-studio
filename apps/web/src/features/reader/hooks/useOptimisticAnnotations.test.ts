@@ -141,9 +141,7 @@ describe('useOptimisticAnnotationStore', () => {
       await Promise.resolve();
     });
     // After both transitions complete, the base state (empty) is shown.
-    expect(
-      result.current.state.highlights.find((h) => h.id === 'temp-h-2'),
-    ).toBeUndefined();
+    expect(result.current.state.highlights.find((h) => h.id === 'temp-h-2')).toBeUndefined();
   });
 
   it('auto-syncs when the underlying store changes (commits real highlight)', async () => {
@@ -156,9 +154,7 @@ describe('useOptimisticAnnotationStore', () => {
     });
 
     await waitFor(() => {
-      expect(
-        result.current.state.highlights.find((h) => h.id === 'real-h-3'),
-      ).toBeDefined();
+      expect(result.current.state.highlights.find((h) => h.id === 'real-h-3')).toBeDefined();
     });
   });
 

@@ -151,7 +151,7 @@ export class PrefetchManager {
     }
 
     // Check storage quota
-    if (!await this.canPrefetchOnStorage()) {
+    if (!(await this.canPrefetchOnStorage())) {
       return;
     }
 

@@ -76,7 +76,10 @@ function performReanchor(
   const matchedWords = normalizedTargetGeneral.match(/[\p{L}\p{N}]{4,}/gu) || [];
   const words = [...new Set(matchedWords)];
 
-  const cache = new Map<string, { lower: string; general: string | undefined; wordSet: Set<string> | undefined }>();
+  const cache = new Map<
+    string,
+    { lower: string; general: string | undefined; wordSet: Set<string> | undefined }
+  >();
 
   function getCachedData(href: string) {
     const base = href.split('#')[0] ?? '';
@@ -86,11 +89,12 @@ function performReanchor(
     const content = chapterContents[base];
     if (!content) return null;
 
-    const result: { lower: string; general: string | undefined; wordSet: Set<string> | undefined } = {
-      lower: content.toLowerCase(),
-      general: undefined,
-      wordSet: undefined,
-    };
+    const result: { lower: string; general: string | undefined; wordSet: Set<string> | undefined } =
+      {
+        lower: content.toLowerCase(),
+        general: undefined,
+        wordSet: undefined,
+      };
     cache.set(base, result);
     return result;
   }
@@ -202,12 +206,10 @@ self.onmessage = (event: MessageEvent<ReanchorRequest>) => {
   const data = event.data;
 
   if (data.type === 'reanchor') {
-    const result = performReanchor(
-      data.targetText,
-      data.toc,
-      data.chapterContents,
-      { fuzzyThreshold: data.fuzzyThreshold, preferChapter: data.preferChapter },
-    );
+    const result = performReanchor(data.targetText, data.toc, data.chapterContents, {
+      fuzzyThreshold: data.fuzzyThreshold,
+      preferChapter: data.preferChapter,
+    });
 
     const msg: ResultMessage = {
       type: 'result',

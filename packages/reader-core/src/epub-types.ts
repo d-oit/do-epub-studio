@@ -13,7 +13,8 @@ export interface SpineItem {
 
 export type PageDirection = 'ltr' | 'rtl' | 'default';
 
-export type WritingMode = 'horizontal-tb' | 'vertical-rl' | 'vertical-lr' | 'sideways-rl' | 'sideways-lr';
+export type WritingMode =
+  'horizontal-tb' | 'vertical-rl' | 'vertical-lr' | 'sideways-rl' | 'sideways-lr';
 
 export interface FixedLayoutInfo {
   layout?: 'reflowable' | 'pre-paginated';

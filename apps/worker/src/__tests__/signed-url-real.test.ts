@@ -1,10 +1,14 @@
 import { describe, it, expect } from 'vitest';
-import { generateSignedUrl, verifySignedUrlExpiry, verifySignedUrlSignature } from '../storage/signed-url';
+import {
+  generateSignedUrl,
+  verifySignedUrlExpiry,
+  verifySignedUrlSignature,
+} from '../storage/signed-url';
 
 describe('signed-url utilities (real implementation)', () => {
   const env = {
     APP_BASE_URL: 'https://test.example.com',
-    SESSION_SIGNING_SECRET: process.env.TEST_SESSION_SIGNING_SECRET || 'test-secret'
+    SESSION_SIGNING_SECRET: process.env.TEST_SESSION_SIGNING_SECRET || 'test-secret',
   } as unknown as Parameters<typeof generateSignedUrl>[0];
   const bookId = 'book-123';
   const fileKey = 'books/book-123/content.epub';
@@ -50,23 +54,35 @@ describe('signed-url utilities (real implementation)', () => {
     });
 
     it('returns false for tampered bookId', async () => {
-        const { url } = await generateSignedUrl(env, bookId, fileKey);
-        const urlObj = new URL(url);
-        const expires = urlObj.searchParams.get('expires') as string;
-        const signature = urlObj.searchParams.get('signature') as string;
+      const { url } = await generateSignedUrl(env, bookId, fileKey);
+      const urlObj = new URL(url);
+      const expires = urlObj.searchParams.get('expires') as string;
+      const signature = urlObj.searchParams.get('signature') as string;
 
-        const isValid = await verifySignedUrlSignature(env, 'other-book', fileKey, expires, signature);
-        expect(isValid).toBe(false);
-      });
+      const isValid = await verifySignedUrlSignature(
+        env,
+        'other-book',
+        fileKey,
+        expires,
+        signature,
+      );
+      expect(isValid).toBe(false);
+    });
 
     it('returns false for invalid signature format', async () => {
-        const isValid = await verifySignedUrlSignature(env, bookId, fileKey, '1234567890', 'invalid');
-        expect(isValid).toBe(false);
+      const isValid = await verifySignedUrlSignature(env, bookId, fileKey, '1234567890', 'invalid');
+      expect(isValid).toBe(false);
     });
 
     it('returns false for NaN expires', async () => {
-        const isValid = await verifySignedUrlSignature(env, bookId, fileKey, 'invalid', 'a'.repeat(64));
-        expect(isValid).toBe(false);
+      const isValid = await verifySignedUrlSignature(
+        env,
+        bookId,
+        fileKey,
+        'invalid',
+        'a'.repeat(64),
+      );
+      expect(isValid).toBe(false);
     });
   });
 });

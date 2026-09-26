@@ -39,29 +39,29 @@ In `ReaderPage.tsx`, the EPUB is rendered into a `div` via `book.renderTo(viewer
 
 ### Blank Reader (White Screen)
 
-| Cause | Symptom | Fix |
-|-------|---------|-----|
-| Missing/expired signed URL | `epubUrl` is null, viewer shows "not available" | Re-fetch file-url |
-| EPUB file corrupt | `book.opened` rejects | Re-upload EPUB |
-| iframe sandbox too restrictive | iframe loads but content blank | Ensure `allow-same-origin` in `sandbox` array |
-| CORS on R2/signed URL | `No 'Access-Control-Allow-Origin'` in console | Check worker CORS config |
-| JS error in epub-js | Uncaught TypeError in epub-js internals | Check @intity/epub-js version compatibility |
+| Cause                          | Symptom                                         | Fix                                           |
+| ------------------------------ | ----------------------------------------------- | --------------------------------------------- |
+| Missing/expired signed URL     | `epubUrl` is null, viewer shows "not available" | Re-fetch file-url                             |
+| EPUB file corrupt              | `book.opened` rejects                           | Re-upload EPUB                                |
+| iframe sandbox too restrictive | iframe loads but content blank                  | Ensure `allow-same-origin` in `sandbox` array |
+| CORS on R2/signed URL          | `No 'Access-Control-Allow-Origin'` in console   | Check worker CORS config                      |
+| JS error in epub-js            | Uncaught TypeError in epub-js internals         | Check @intity/epub-js version compatibility   |
 
 ### Missing Chapters in TOC
 
-| Cause | Fix |
-|-------|-----|
-| EPUB has no TOC (navigation.toc empty) | Not fixable — EPUB malformed |
-| `book.loaded.navigation` fails | Check EPUB structure with validator |
-| TocItem parsing error | Look for `nav.toc.map(...)` errors in console |
+| Cause                                  | Fix                                           |
+| -------------------------------------- | --------------------------------------------- |
+| EPUB has no TOC (navigation.toc empty) | Not fixable — EPUB malformed                  |
+| `book.loaded.navigation` fails         | Check EPUB structure with validator           |
+| TocItem parsing error                  | Look for `nav.toc.map(...)` errors in console |
 
 ### Broken Pagination
 
-| Cause | Fix |
-|-------|-----|
-| rendition `spread` config misaligned | Check `spread: 'auto'` in renderTo options |
-| Viewer div has zero height | Verify viewerRef container has CSS height |
-| Locator CFI navigation fails | `rendition.display(cfi)` throws — CFI may be stale |
+| Cause                                | Fix                                                |
+| ------------------------------------ | -------------------------------------------------- |
+| rendition `spread` config misaligned | Check `spread: 'auto'` in renderTo options         |
+| Viewer div has zero height           | Verify viewerRef container has CSS height          |
+| Locator CFI navigation fails         | `rendition.display(cfi)` throws — CFI may be stale |
 
 ## Console Pattern Reference
 

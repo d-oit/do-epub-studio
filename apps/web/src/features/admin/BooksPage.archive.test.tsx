@@ -30,12 +30,20 @@ vi.mock('react-router-dom', async () => {
   return { ...actual, useNavigate: () => vi.fn() };
 });
 
-const BOOK = { id: '1', slug: 'test', title: 'Test Book', authorName: 'Author', description: 'Desc', visibility: 'public', coverImageUrl: null };
+const BOOK = {
+  id: '1',
+  slug: 'test',
+  title: 'Test Book',
+  authorName: 'Author',
+  description: 'Desc',
+  visibility: 'public',
+  coverImageUrl: null,
+};
 
 function clickArchiveConfirm() {
-  const btn = screen.getAllByText('admin.books.archive').find(
-    (el) => el.tagName === 'BUTTON' && el.closest('[role="dialog"]'),
-  );
+  const btn = screen
+    .getAllByText('admin.books.archive')
+    .find((el) => el.tagName === 'BUTTON' && el.closest('[role="dialog"]'));
   if (!btn) throw new Error('Archive confirm button not found in dialog');
   // fireEvent.click wraps the update in act(); a raw `.click()` left the
   // archive request's state updates unwrapped and React warned afterwards.
@@ -49,14 +57,20 @@ describe('AdminBookResponsesPage — archive', () => {
 
   it('handles archive confirmation denied', async () => {
     vi.mocked(apiRequest).mockResolvedValue([BOOK]);
-    render(<MemoryRouter><AdminBookResponsesPage /></MemoryRouter>);
-    await waitFor(() => { expect(screen.getByText('Test Book')).toBeInTheDocument(); });
+    render(
+      <MemoryRouter>
+        <AdminBookResponsesPage />
+      </MemoryRouter>,
+    );
+    await waitFor(() => {
+      expect(screen.getByText('Test Book')).toBeInTheDocument();
+    });
     fireEvent.click(screen.getByText('admin.books.archive'));
     // ConfirmDialog opens — click cancel
     fireEvent.click(screen.getByText('annotation.cancel'));
     expect(apiRequest).not.toHaveBeenCalledWith(
       expect.stringContaining('/api/admin/books/1'),
-      expect.objectContaining({ method: 'DELETE' })
+      expect.objectContaining({ method: 'DELETE' }),
     );
   });
 
@@ -65,15 +79,21 @@ describe('AdminBookResponsesPage — archive', () => {
       .mockResolvedValueOnce([BOOK])
       .mockResolvedValueOnce({})
       .mockResolvedValueOnce([]);
-    render(<MemoryRouter><AdminBookResponsesPage /></MemoryRouter>);
-    await waitFor(() => { expect(screen.getByText('Test Book')).toBeInTheDocument(); });
+    render(
+      <MemoryRouter>
+        <AdminBookResponsesPage />
+      </MemoryRouter>,
+    );
+    await waitFor(() => {
+      expect(screen.getByText('Test Book')).toBeInTheDocument();
+    });
     fireEvent.click(screen.getByText('admin.books.archive'));
     // ConfirmDialog opens — click confirm
     clickArchiveConfirm();
     await waitFor(() => {
       expect(apiRequest).toHaveBeenCalledWith(
         expect.stringContaining('/api/admin/books/1'),
-        expect.objectContaining({ method: 'DELETE' })
+        expect.objectContaining({ method: 'DELETE' }),
       );
     });
   });
@@ -82,8 +102,14 @@ describe('AdminBookResponsesPage — archive', () => {
     vi.mocked(apiRequest)
       .mockResolvedValueOnce([BOOK])
       .mockImplementationOnce(() => new Promise(() => {}));
-    render(<MemoryRouter><AdminBookResponsesPage /></MemoryRouter>);
-    await waitFor(() => { expect(screen.getByText('Test Book')).toBeInTheDocument(); });
+    render(
+      <MemoryRouter>
+        <AdminBookResponsesPage />
+      </MemoryRouter>,
+    );
+    await waitFor(() => {
+      expect(screen.getByText('Test Book')).toBeInTheDocument();
+    });
     fireEvent.click(screen.getByText('admin.books.archive'));
     clickArchiveConfirm();
     await waitFor(() => {
@@ -95,8 +121,14 @@ describe('AdminBookResponsesPage — archive', () => {
     vi.mocked(apiRequest)
       .mockResolvedValueOnce([BOOK])
       .mockRejectedValueOnce(new Error('Archive failed'));
-    render(<MemoryRouter><AdminBookResponsesPage /></MemoryRouter>);
-    await waitFor(() => { expect(screen.getByText('Test Book')).toBeInTheDocument(); });
+    render(
+      <MemoryRouter>
+        <AdminBookResponsesPage />
+      </MemoryRouter>,
+    );
+    await waitFor(() => {
+      expect(screen.getByText('Test Book')).toBeInTheDocument();
+    });
     fireEvent.click(screen.getByText('admin.books.archive'));
     clickArchiveConfirm();
     await waitFor(() => {
@@ -108,8 +140,14 @@ describe('AdminBookResponsesPage — archive', () => {
     vi.mocked(apiRequest)
       .mockResolvedValueOnce([BOOK])
       .mockImplementationOnce(() => new Promise(() => {}));
-    render(<MemoryRouter><AdminBookResponsesPage /></MemoryRouter>);
-    await waitFor(() => { expect(screen.getByText('Test Book')).toBeInTheDocument(); });
+    render(
+      <MemoryRouter>
+        <AdminBookResponsesPage />
+      </MemoryRouter>,
+    );
+    await waitFor(() => {
+      expect(screen.getByText('Test Book')).toBeInTheDocument();
+    });
     fireEvent.click(screen.getByText('admin.books.archive'));
     clickArchiveConfirm();
     await waitFor(() => {
@@ -123,8 +161,14 @@ describe('AdminBookResponsesPage — archive', () => {
       .mockResolvedValueOnce([BOOK])
       .mockResolvedValueOnce({})
       .mockResolvedValueOnce([]);
-    render(<MemoryRouter><AdminBookResponsesPage /></MemoryRouter>);
-    await waitFor(() => { expect(screen.getByText('Test Book')).toBeInTheDocument(); });
+    render(
+      <MemoryRouter>
+        <AdminBookResponsesPage />
+      </MemoryRouter>,
+    );
+    await waitFor(() => {
+      expect(screen.getByText('Test Book')).toBeInTheDocument();
+    });
     fireEvent.click(screen.getByText('admin.books.archive'));
     clickArchiveConfirm();
     await waitFor(() => {

@@ -14,7 +14,7 @@ describe('ReaderViewer', () => {
         pageWidthClass="max-w-3xl"
         viewerRef={{ current: null }}
         notAvailableText="No book selected"
-      />
+      />,
     );
     expect(screen.getByRole('main')).toBeTruthy();
   });
@@ -28,7 +28,7 @@ describe('ReaderViewer', () => {
         pageWidthClass="max-w-3xl"
         viewerRef={{ current: null }}
         notAvailableText="No book selected"
-      />
+      />,
     );
     expect(screen.getByText('Failed to load book')).toBeTruthy();
   });
@@ -42,7 +42,7 @@ describe('ReaderViewer', () => {
         pageWidthClass="max-w-3xl"
         viewerRef={{ current: null }}
         notAvailableText="No book selected"
-      />
+      />,
     );
     expect(screen.getByText('No book selected')).toBeTruthy();
   });
@@ -56,7 +56,7 @@ describe('ReaderViewer', () => {
         pageWidthClass="max-w-3xl"
         viewerRef={mockRef}
         notAvailableText="No book selected"
-      />
+      />,
     );
     expect(screen.getByRole('main')).toBeTruthy();
   });
@@ -71,7 +71,7 @@ describe('ReaderViewer', () => {
         pageWidthClass="max-w-3xl"
         viewerRef={ref}
         notAvailableText="No book selected"
-      />
+      />,
     );
 
     // epub.js Viewport.updateFlow runs `target.className = flow` on the render
@@ -94,7 +94,7 @@ describe('ReaderViewer', () => {
         pageWidthClass="max-w-3xl"
         viewerRef={mockRef}
         notAvailableText="No book selected"
-      />
+      />,
     );
     expect(screen.getByRole('main')).toHaveAttribute('id', 'main-content');
   });

@@ -70,10 +70,7 @@ import {
 import { buildMessages, MAX_FINDINGS } from './transformers-editorial-prompt';
 
 /** Categories this engine answers (ADR-999 D4 story/logic scope). */
-export const TRANSFORMERS_EDITORIAL_CATEGORIES: readonly EditorialCategory[] = [
-  'story',
-  'logic',
-];
+export const TRANSFORMERS_EDITORIAL_CATEGORIES: readonly EditorialCategory[] = ['story', 'logic'];
 
 const DEFAULT_MODEL = 'onnx-community/Qwen2.5-0.5B-Instruct';
 const DEFAULT_DTYPE: TransformersDtype = 'q8';
@@ -208,9 +205,10 @@ export async function resolveInferenceDevice(
 
 async function defaultGpuProbe(): Promise<unknown> {
   const nav: unknown = typeof navigator === 'object' ? navigator : null;
-  const gpu = nav && typeof nav === 'object' && 'gpu' in nav
-    ? (nav as { gpu?: { requestAdapter?: () => Promise<unknown> } }).gpu
-    : undefined;
+  const gpu =
+    nav && typeof nav === 'object' && 'gpu' in nav
+      ? (nav as { gpu?: { requestAdapter?: () => Promise<unknown> } }).gpu
+      : undefined;
   if (!gpu?.requestAdapter) return null;
   return gpu.requestAdapter();
 }
@@ -288,9 +286,7 @@ export function createTransformersEditorialPlugin(
     for (const listener of progressListeners) listener(progress);
   };
 
-  async function load(
-    onProgress?: (progress: ModelLoadProgress) => void,
-  ): Promise<ModelLoadState> {
+  async function load(onProgress?: (progress: ModelLoadProgress) => void): Promise<ModelLoadState> {
     if (onProgress) progressListeners.add(onProgress);
     if (pipe) return { loaded: true, device, model };
     loadAttempt ??= (async () => {
@@ -327,10 +323,9 @@ export function createTransformersEditorialPlugin(
 
   async function review(request: EditorialReviewRequest): Promise<EditorialReviewOutcome> {
     // This adapter answers story/logic only (A2's selection rule, mirrored).
-    const wantsUnanswerable = request.categories.length === 0
-      || request.categories.some(
-        (category) => !TRANSFORMERS_EDITORIAL_CATEGORIES.includes(category),
-      );
+    const wantsUnanswerable =
+      request.categories.length === 0 ||
+      request.categories.some((category) => !TRANSFORMERS_EDITORIAL_CATEGORIES.includes(category));
     if (wantsUnanswerable) {
       return { status: 'unavailable', reason: 'incomplete_analysis' };
     }

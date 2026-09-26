@@ -49,7 +49,11 @@ export async function validateEpub(data: ArrayBuffer): Promise<ValidationResult>
       result.isValid = false;
     } else {
       const containerXml = await containerFile.async('string');
-      const fullPathMatch = matchBounded(/full-path="([^"]+)"/, containerXml, CONTAINER_XML_MAX_LEN);
+      const fullPathMatch = matchBounded(
+        /full-path="([^"]+)"/,
+        containerXml,
+        CONTAINER_XML_MAX_LEN,
+      );
 
       if (!fullPathMatch) {
         result.errors.push('Could not find rootfile path in "META-INF/container.xml".');
@@ -65,11 +69,17 @@ export async function validateEpub(data: ArrayBuffer): Promise<ValidationResult>
           const opfXml = await opfFile.async('string');
 
           // Basic version check
-          const versionMatch = matchBounded(/<package[^>]+version="([^"]+)"/, opfXml, OPF_XML_MAX_LEN);
+          const versionMatch = matchBounded(
+            /<package[^>]+version="([^"]+)"/,
+            opfXml,
+            OPF_XML_MAX_LEN,
+          );
           if (versionMatch) {
             result.epubVersion = versionMatch[1];
             if (!result.epubVersion?.startsWith('3.')) {
-              result.warnings.push(`EPUB version is ${result.epubVersion}. Only EPUB 3.x is officially supported.`);
+              result.warnings.push(
+                `EPUB version is ${result.epubVersion}. Only EPUB 3.x is officially supported.`,
+              );
             }
           } else {
             result.warnings.push('Could not determine EPUB version from OPF file.');

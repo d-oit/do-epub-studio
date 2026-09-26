@@ -2,10 +2,7 @@ import { useEffect, useState } from 'react';
 import { Modal } from '@do-epub-studio/ui';
 import { useTranslation } from '../../../../hooks/useTranslation';
 import type { TranslationKeys } from '../../../../i18n/en';
-import type {
-  FeedbackCategory,
-  FeedbackKind,
-} from '../../../../lib/api/feedback';
+import type { FeedbackCategory, FeedbackKind } from '../../../../lib/api/feedback';
 import type { ComposerSelection } from '../../hooks/useFeedbackComposer';
 
 const CATEGORIES: Array<{ id: FeedbackCategory; label: TranslationKeys }> = [
@@ -123,7 +120,9 @@ export function FeedbackComposerModal({
           <figcaption className="text-xs font-medium uppercase tracking-wide text-foreground-muted">
             {t('feedback.quoteLabel')}
           </figcaption>
-          <blockquote className="mt-1 text-sm text-foreground line-clamp-4">{selection.text}</blockquote>
+          <blockquote className="mt-1 text-sm text-foreground line-clamp-4">
+            {selection.text}
+          </blockquote>
         </figure>
 
         <label className="block">

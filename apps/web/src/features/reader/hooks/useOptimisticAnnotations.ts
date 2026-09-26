@@ -17,10 +17,7 @@ export interface OptimisticState {
   bookmarks: Bookmark[];
 }
 
-function applyOptimistic(
-  state: OptimisticState,
-  action: OptimisticAction,
-): OptimisticState {
+function applyOptimistic(state: OptimisticState, action: OptimisticAction): OptimisticState {
   switch (action.kind) {
     case 'add-highlight':
       return { ...state, highlights: [action.highlight, ...state.highlights] };

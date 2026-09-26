@@ -8,63 +8,63 @@ engines:
   eslint-8:
     enabled: true
     exclude_paths:
-      - "**/*.test.ts"
-      - "**/*.test.tsx"
-      - "**/*.spec.ts"
-      - "**/*.spec.tsx"
-      - "**/__tests__/**"
-      - "**/tests/**"
-      - "scripts/**"
-      - "apps/web/src/**"
-      - "apps/worker/src/**"
-      - "packages/**"
+      - '**/*.test.ts'
+      - '**/*.test.tsx'
+      - '**/*.spec.ts'
+      - '**/*.spec.tsx'
+      - '**/__tests__/**'
+      - '**/tests/**'
+      - 'scripts/**'
+      - 'apps/web/src/**'
+      - 'apps/worker/src/**'
+      - 'packages/**'
   opengrep:
     enabled: true
     exclude_paths:
-      - "**/*.test.ts"
-      - "**/*.test.tsx"
-      - "**/*.spec.ts"
-      - "**/*.spec.tsx"
-      - "**/__tests__/**"
-      - "**/tests/**"
-      - "apps/web/src/lib/api/index.ts"
-      - "apps/web/src/lib/api/core.ts"
-      - "apps/worker/src/__tests__/routes.export.test.ts"
-      - "apps/worker/src/__tests__/routes.search.test.ts"
-      - "packages/**"
+      - '**/*.test.ts'
+      - '**/*.test.tsx'
+      - '**/*.spec.ts'
+      - '**/*.spec.tsx'
+      - '**/__tests__/**'
+      - '**/tests/**'
+      - 'apps/web/src/lib/api/index.ts'
+      - 'apps/web/src/lib/api/core.ts'
+      - 'apps/worker/src/__tests__/routes.export.test.ts'
+      - 'apps/worker/src/__tests__/routes.search.test.ts'
+      - 'packages/**'
   biome:
     enabled: false
     exclude_paths:
-      - "apps/web/src/**"
-      - "apps/worker/src/**"
-      - "packages/**"
+      - 'apps/web/src/**'
+      - 'apps/worker/src/**'
+      - 'packages/**'
   owlwatch:
     enabled: true
     exclude_paths:
-      - "**/*.test.ts"
-      - "**/*.test.tsx"
-      - "**/*.spec.ts"
-      - "**/*.spec.tsx"
-      - "**/__tests__/**"
-      - "**/tests/**"
-      - "scripts/**"
-      - "apps/web/src/**"
-      - "apps/worker/src/**"
-      - "packages/**"
+      - '**/*.test.ts'
+      - '**/*.test.tsx'
+      - '**/*.spec.ts'
+      - '**/*.spec.tsx'
+      - '**/__tests__/**'
+      - '**/tests/**'
+      - 'scripts/**'
+      - 'apps/web/src/**'
+      - 'apps/worker/src/**'
+      - 'packages/**'
   tsqlint:
     enabled: false
   tsql:
     enabled: false
 exclude_paths:
-  - "coverage/**"
-  - "dist/**"
-  - "node_modules/**"
-  - ".turbo/**"
-  - "playwright-report/**"
-  - "test-results/**"
-  - "**/*.sql"
-  - "scripts/**"
-  - ".opencode/skills/impeccable/**"
-  - ".agents/skills/impeccable/**"
-  - ".github/skills/impeccable/**"
-  - ".impeccable/**"
+  - 'coverage/**'
+  - 'dist/**'
+  - 'node_modules/**'
+  - '.turbo/**'
+  - 'playwright-report/**'
+  - 'test-results/**'
+  - '**/*.sql'
+  - 'scripts/**'
+  - '.opencode/skills/impeccable/**'
+  - '.agents/skills/impeccable/**'
+  - '.github/skills/impeccable/**'
+  - '.impeccable/**'

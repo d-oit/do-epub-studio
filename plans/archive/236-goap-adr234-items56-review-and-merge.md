@@ -17,28 +17,33 @@ Working tree (uncommitted, on `main`) contains the ADR-234 items 5+6 feature:
 
 ### Phase 1 — Review swarm (parallel, read-only)
 
-| Slice | Agent | Target |
-|---|---|---|
-| A Security | security-reviewer | worker auth/mfa.ts, middleware/mfa.ts, routes/admin/auth.ts, admin-middleware.ts, migration 0010 |
-| B Worker correctness | reviewer | worker auth/mfa.ts, routes/admin/auth.ts, middleware/mfa.ts |
-| C Web UI + i18n | designer + reviewer | MfaSection.tsx, mfa.ts, step-up.tsx, AccountSettings/AdminLogin, i18n |
-| D Schema + tests | reviewer | schemas.ts, migration 0010, test files |
+| Slice                | Agent               | Target                                                                                           |
+| -------------------- | ------------------- | ------------------------------------------------------------------------------------------------ |
+| A Security           | security-reviewer   | worker auth/mfa.ts, middleware/mfa.ts, routes/admin/auth.ts, admin-middleware.ts, migration 0010 |
+| B Worker correctness | reviewer            | worker auth/mfa.ts, routes/admin/auth.ts, middleware/mfa.ts                                      |
+| C Web UI + i18n      | designer + reviewer | MfaSection.tsx, mfa.ts, step-up.tsx, AccountSettings/AdminLogin, i18n                            |
+| D Schema + tests     | reviewer            | schemas.ts, migration 0010, test files                                                           |
 
 Quality gate: each slice returns concrete, evidence-backed findings.
 
 ### Phase 2 — Synthesize
+
 Collate findings into a ranked backlog.
 
 ### Phase 3 — Implementation swarm (by area)
+
 Worker/security, web/UI, schema/tests. Quality gate: re-run worker + web unit suites and typecheck.
 
 ### Phase 4 — Verification
+
 `/home/doit/git/do-epub-studio/scripts/quality_gate.sh` → exit 0.
 
 ### Phase 5 — PR
+
 Commit on feature branch, open PR, address reviewer comments until CI green.
 
 ## Notes
+
 - No cron/architecture changes (prune handled inline in `storeChallenge`).
 - Baseline: prior quality gate passed on essentially this tree.
 

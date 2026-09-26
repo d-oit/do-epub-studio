@@ -29,12 +29,12 @@ A GOAP plan's status MUST be updated to COMPLETED when ALL of the following hold
 
 Status transitions:
 
-| From | To | Condition |
-|------|----|-----------|
-| IN PROGRESS / ACTIVE | COMPLETED | All acceptance criteria verified on `main` |
-| IN PROGRESS / ACTIVE | CLOSED | Scope superseded by another plan (link it) |
-| PROPOSED | ACCEPTED | Decision recorded with rationale |
-| COMPLETED | SUPERSEDED | A newer plan replaces this one's scope |
+| From                 | To         | Condition                                  |
+| -------------------- | ---------- | ------------------------------------------ |
+| IN PROGRESS / ACTIVE | COMPLETED  | All acceptance criteria verified on `main` |
+| IN PROGRESS / ACTIVE | CLOSED     | Scope superseded by another plan (link it) |
+| PROPOSED             | ACCEPTED   | Decision recorded with rationale           |
+| COMPLETED            | SUPERSEDED | A newer plan replaces this one's scope     |
 
 ## Consequences
 

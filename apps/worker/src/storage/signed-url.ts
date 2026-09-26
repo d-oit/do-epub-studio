@@ -67,13 +67,10 @@ async function readObjectMetadata(
 async function getHmacKey(secret: string): Promise<CryptoKey> {
   const encoder = new TextEncoder();
   const keyData = encoder.encode(secret);
-  return crypto.subtle.importKey(
-    'raw',
-    keyData,
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign', 'verify'],
-  );
+  return crypto.subtle.importKey('raw', keyData, { name: 'HMAC', hash: 'SHA-256' }, false, [
+    'sign',
+    'verify',
+  ]);
 }
 
 function hexToUint8Array(hex: string): Uint8Array {

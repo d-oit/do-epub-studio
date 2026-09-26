@@ -1,5 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { createRecoveryCodes, hashRecoveryCode, verifyRecoveryCode, consumeChallenge, isChallengeUsable, storeChallenge } from '../auth/mfa';
+import {
+  createRecoveryCodes,
+  hashRecoveryCode,
+  verifyRecoveryCode,
+  consumeChallenge,
+  isChallengeUsable,
+  storeChallenge,
+} from '../auth/mfa';
 import type { Env } from '../lib/env';
 
 // ---------------------------------------------------------------------------
@@ -18,7 +25,9 @@ vi.mock('../auth/admin-middleware', () => ({
   hashToken: vi.fn(async (token: string) => {
     const buf = await crypto.subtle?.digest?.('SHA-256', new TextEncoder().encode(token));
     if (!buf) return `hash:${token}`;
-    return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, '0')).join('');
+    return Array.from(new Uint8Array(buf))
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('');
   }),
 }));
 
@@ -52,7 +61,9 @@ describe('recovery codes (real helpers)', () => {
     const { codes, hashes } = await createRecoveryCodes(10);
 
     // First verification round: hashes are stored and returned from DB.
-    (queryFirst as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ recovery_codes_hash_json: JSON.stringify(hashes) });
+    (queryFirst as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      recovery_codes_hash_json: JSON.stringify(hashes),
+    });
 
     const ok = await verifyRecoveryCode(env(), 'user-1', codes[0]);
     expect(ok).toBe(true);
@@ -71,7 +82,9 @@ describe('recovery codes (real helpers)', () => {
   });
 
   it('returns false when no stored codes match', async () => {
-    (queryFirst as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ recovery_codes_hash_json: JSON.stringify(['abc']) });
+    (queryFirst as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      recovery_codes_hash_json: JSON.stringify(['abc']),
+    });
     const ok = await verifyRecoveryCode(env(), 'user-1', 'nope');
     expect(ok).toBe(false);
   });
@@ -88,7 +101,7 @@ describe('consumeChallenge (real helper)', () => {
             }),
           }),
         },
-      } as unknown as Env);
+      }) as unknown as Env;
 
     expect(await consumeChallenge(makeEnvWithChanges(1), 'chal-1')).toBe(true);
     expect(await consumeChallenge(makeEnvWithChanges(0), 'chal-1')).toBe(false);
@@ -117,7 +130,14 @@ describe('storeChallenge (real helper — opportunistic prune of webauthn_challe
 });
 
 describe('isChallengeUsable (real helper — ownership + purpose binding)', () => {
-  const chal = (over: { user_id?: string; purpose?: 'registration' | 'authentication'; used_at?: string | null; expires_at?: string } = {}) => ({
+  const chal = (
+    over: {
+      user_id?: string;
+      purpose?: 'registration' | 'authentication';
+      used_at?: string | null;
+      expires_at?: string;
+    } = {},
+  ) => ({
     user_id: 'user-1',
     purpose: 'authentication' as const,
     raw_challenge: 'chal',
@@ -131,16 +151,36 @@ describe('isChallengeUsable (real helper — ownership + purpose binding)', () =
   });
 
   it('rejects a challenge owned by a different user', () => {
-    expect(isChallengeUsable(chal({ user_id: 'user-2' }), { userId: 'user-1', purpose: 'authentication' })).toBe(false);
+    expect(
+      isChallengeUsable(chal({ user_id: 'user-2' }), {
+        userId: 'user-1',
+        purpose: 'authentication',
+      }),
+    ).toBe(false);
   });
 
   it('rejects a challenge minted for a different purpose', () => {
-    expect(isChallengeUsable(chal({ purpose: 'registration' }), { userId: 'user-1', purpose: 'authentication' })).toBe(false);
+    expect(
+      isChallengeUsable(chal({ purpose: 'registration' }), {
+        userId: 'user-1',
+        purpose: 'authentication',
+      }),
+    ).toBe(false);
   });
 
   it('rejects used or expired challenges', () => {
-    expect(isChallengeUsable(chal({ used_at: '2026-08-13T00:00:00.000Z' }), { userId: 'user-1', purpose: 'authentication' })).toBe(false);
-    expect(isChallengeUsable(chal({ expires_at: '2000-01-01T00:00:00.000Z' }), { userId: 'user-1', purpose: 'authentication' })).toBe(false);
+    expect(
+      isChallengeUsable(chal({ used_at: '2026-08-13T00:00:00.000Z' }), {
+        userId: 'user-1',
+        purpose: 'authentication',
+      }),
+    ).toBe(false);
+    expect(
+      isChallengeUsable(chal({ expires_at: '2000-01-01T00:00:00.000Z' }), {
+        userId: 'user-1',
+        purpose: 'authentication',
+      }),
+    ).toBe(false);
   });
 
   it('rejects a missing challenge', () => {

@@ -104,7 +104,7 @@ describe('Rate Limiting Middleware', () => {
       const request = new Request('http://localhost/api/books', {
         headers: {
           'cf-connecting-ip': '1.2.3.4',
-          'Authorization': 'Bearer test-token',
+          Authorization: 'Bearer test-token',
         },
       });
 
@@ -123,8 +123,20 @@ describe('Rate Limiting Middleware', () => {
       const { metadata } = await applyRateLimit(request, env);
 
       expect(checkRateLimitDO).toHaveBeenCalledTimes(2);
-      expect(checkRateLimitDO).toHaveBeenNthCalledWith(1, env, 'ip:api', '1.2.3.4', expect.any(Object));
-      expect(checkRateLimitDO).toHaveBeenNthCalledWith(2, env, 'token:api', 'test-token', expect.any(Object));
+      expect(checkRateLimitDO).toHaveBeenNthCalledWith(
+        1,
+        env,
+        'ip:api',
+        '1.2.3.4',
+        expect.any(Object),
+      );
+      expect(checkRateLimitDO).toHaveBeenNthCalledWith(
+        2,
+        env,
+        'token:api',
+        'test-token',
+        expect.any(Object),
+      );
       expect(metadata?.remaining).toBe(40);
     });
 
@@ -132,7 +144,7 @@ describe('Rate Limiting Middleware', () => {
       const request = new Request('http://localhost/api/books', {
         headers: {
           'cf-connecting-ip': '1.2.3.4',
-          'Authorization': 'Bearer test-token',
+          Authorization: 'Bearer test-token',
         },
       });
 

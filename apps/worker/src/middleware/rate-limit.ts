@@ -27,7 +27,10 @@ export function getRateLimitConfig(path: string): { config: RateLimitConfig; cat
   }
 
   // File endpoints: /api/files/* and /api/books/:id/file-url
-  if (path.startsWith('/api/files/') || (path.startsWith('/api/books/') && path.endsWith('/file-url'))) {
+  if (
+    path.startsWith('/api/files/') ||
+    (path.startsWith('/api/books/') && path.endsWith('/file-url'))
+  ) {
     return { config: FILE_LIMIT, category: 'files' };
   }
 

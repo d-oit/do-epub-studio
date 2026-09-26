@@ -1,4 +1,12 @@
-import { type ReactNode, createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
+import {
+  type ReactNode,
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useRef,
+  useEffect,
+} from 'react';
 
 export type ToastType = 'success' | 'error' | 'info' | 'warning';
 
@@ -106,8 +114,19 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: () => void }
         aria-label="Dismiss"
         className="inline-flex items-center justify-center min-w-[28px] min-h-[28px] p-1 rounded-md text-white/80 hover:text-white hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white transition-colors"
       >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+        <svg
+          className="w-4 h-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M6 18L18 6M6 6l12 12"
+          />
         </svg>
       </button>
     </div>

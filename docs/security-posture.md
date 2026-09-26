@@ -75,18 +75,18 @@ sessions — which triggers the CSRF reversal above.
 `apps/web/public/_headers` is the single source of truth and is
 shipped to Cloudflare Pages. Current enforced values:
 
-| Header | Value |
-|--------|-------|
-| `Content-Security-Policy` | `default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; style-src-attr 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob:; connect-src 'self' https://*.cloudflare.com; frame-ancestors 'none'; upgrade-insecure-requests` |
-| `X-Frame-Options` | `DENY` |
-| `X-Content-Type-Options` | `nosniff` |
-| `Referrer-Policy` | `strict-origin-when-cross-origin` |
-| `Permissions-Policy` | `camera=(), microphone=(), geolocation=()` |
-| `Cross-Origin-Opener-Policy` | `same-origin` |
+| Header                       | Value                                                                                                                                                                                                                                                     |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Content-Security-Policy`    | `default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; style-src-attr 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob:; connect-src 'self' https://*.cloudflare.com; frame-ancestors 'none'; upgrade-insecure-requests` |
+| `X-Frame-Options`            | `DENY`                                                                                                                                                                                                                                                    |
+| `X-Content-Type-Options`     | `nosniff`                                                                                                                                                                                                                                                 |
+| `Referrer-Policy`            | `strict-origin-when-cross-origin`                                                                                                                                                                                                                         |
+| `Permissions-Policy`         | `camera=(), microphone=(), geolocation=()`                                                                                                                                                                                                                |
+| `Cross-Origin-Opener-Policy` | `same-origin`                                                                                                                                                                                                                                             |
 
 The only `'unsafe-inline'` permitted is in `style-src-attr` (CSP Level 3),
 which governs React component inline `style={…}` attributes (e.g.
-progress-bar widths, virtualization offsets). `<style>` *elements* and
+progress-bar widths, virtualization offsets). `<style>` _elements_ and
 external stylesheets (`style-src`) are restricted to `'self'` only,
 which is sufficient because:
 

@@ -107,9 +107,7 @@ export function NotificationPanel({ onNavigateToComment, t, onClose }: Notificat
 
       <div className="max-h-80 overflow-y-auto">
         {loading ? (
-          <div className="p-4 text-center text-foreground/60 text-sm">
-            {t('common.loading')}
-          </div>
+          <div className="p-4 text-center text-foreground/60 text-sm">{t('common.loading')}</div>
         ) : notifications.length === 0 ? (
           <div className="p-4 text-center text-foreground/60 text-sm">
             {t('notifications.empty')}

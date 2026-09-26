@@ -17,6 +17,7 @@ Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`, `ci`, `build
 Scopes: `web`, `worker`, `reader-core`, `shared`, `schema`, `testkit`, `ui`, `infra`, `ci`, `security`, `ux`, `a11y`, `deps`, `plans`, `reader`, `api`, `auth`, `offline`, `sync`, `admin`, `catalog`, `epub`, `hooks`, `scripts`, `release`, `quality`
 
 Examples:
+
 - `feat(reader-core): add fuzzy text reanchoring fallback`
 - `fix(ui): resolve Input focus ring conflict`
 - `ci(quality): add coverage thresholds to verify script`

@@ -4,7 +4,9 @@ import { Modal } from '../index';
 
 beforeAll(() => {
   Object.defineProperty(HTMLElement.prototype, 'offsetParent', {
-    get() { return this.parentElement || document.body; },
+    get() {
+      return this.parentElement || document.body;
+    },
   });
 });
 
@@ -104,8 +106,12 @@ describe('Modal', () => {
   it('traps focus within the modal', () => {
     render(
       <Modal isOpen={true} onClose={() => {}} title="Focus Trap">
-        <button type="button" data-testid="button1">Button 1</button>
-        <button type="button" data-testid="button2">Button 2</button>
+        <button type="button" data-testid="button1">
+          Button 1
+        </button>
+        <button type="button" data-testid="button2">
+          Button 2
+        </button>
       </Modal>,
     );
 

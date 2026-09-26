@@ -64,7 +64,7 @@ export default defineConfig({
           VITE_LOG_LEVEL: 'info',
         },
       },
-  projects: (isLiveLane
+  projects: isLiveLane
     ? [
         {
           name: 'live-cloudflare',
@@ -122,5 +122,5 @@ export default defineConfig({
           testIgnore: LOCAL_MOCK_TEST_IGNORE,
           grep: /@pwa/,
         },
-      ]),
+      ],
 });

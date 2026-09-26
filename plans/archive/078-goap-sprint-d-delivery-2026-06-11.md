@@ -14,19 +14,20 @@
 
 ## 2. Goals (Decompose)
 
-| # | Task | Status | Notes |
-|---|------|--------|-------|
-| 1 | Fix `z.any()` in UploadCompleteSchema | ✅ Already done | Proper schema in admin/books.ts |
-| 2 | Fix comment store O(n²) nesting | ✅ Already done | Map-based O(n) `rebuildTree` |
-| 3 | Add `useShallow` to reader hooks | ✅ Implemented | 3 hooks updated |
-| 4 | Public book catalog route + page | ✅ Implemented | Worker + Web |
-| 5 | Reading progress bar in toolbar | ✅ Already done | Inline + full-width bar |
+| #   | Task                                  | Status          | Notes                           |
+| --- | ------------------------------------- | --------------- | ------------------------------- |
+| 1   | Fix `z.any()` in UploadCompleteSchema | ✅ Already done | Proper schema in admin/books.ts |
+| 2   | Fix comment store O(n²) nesting       | ✅ Already done | Map-based O(n) `rebuildTree`    |
+| 3   | Add `useShallow` to reader hooks      | ✅ Implemented  | 3 hooks updated                 |
+| 4   | Public book catalog route + page      | ✅ Implemented  | Worker + Web                    |
+| 5   | Reading progress bar in toolbar       | ✅ Already done | Inline + full-width bar         |
 
 ## 3. Actions Taken
 
 ### useShallow optimization (P3 quality)
 
 Applied `useShallow` from `zustand/react/shallow` to data selectors in:
+
 - `useExportNotes.ts` — grouped highlights + comments into single shallow selector
 - `useAnnotationHandlers.ts` — comments array via useShallow
 - `useReaderHandlers.ts` — comments array via useShallow
@@ -44,11 +45,11 @@ Benefit: prevents unnecessary re-renders when unrelated store slices change.
 
 ## 4. Deferred Items (Require External Dependencies)
 
-| # | Feature | Blocker |
-|---|---------|---------|
-| 1 | Email invite dispatch | CF SendEmail binding not configured |
-| 2 | In-book full-text search | Needs search index infrastructure |
-| 3 | Reviewer activity dashboard | New admin route (low priority) |
+| #   | Feature                     | Blocker                             |
+| --- | --------------------------- | ----------------------------------- |
+| 1   | Email invite dispatch       | CF SendEmail binding not configured |
+| 2   | In-book full-text search    | Needs search index infrastructure   |
+| 3   | Reviewer activity dashboard | New admin route (low priority)      |
 
 ## 5. Quality Gates
 
@@ -61,13 +62,13 @@ Benefit: prevents unnecessary re-renders when unrelated store slices change.
 
 ## 6. CI Fix: Codacy Findings (7 → 0)
 
-| Issue | Fix |
-|-------|-----|
-| Array index as key (skeleton loader) | Use stable string keys `sk-1`..`sk-6` |
-| Missing img width/height | Added `width={320} height={160}` |
-| Don't use `<img>` element | Wrapped in `<picture>` element |
-| 4× unnecessary `??` conditional | Cast to `string \| null` instead of `string` |
-| Invalid eslint-disable comment | Removed non-existent rule reference |
+| Issue                                | Fix                                          |
+| ------------------------------------ | -------------------------------------------- |
+| Array index as key (skeleton loader) | Use stable string keys `sk-1`..`sk-6`        |
+| Missing img width/height             | Added `width={320} height={160}`             |
+| Don't use `<img>` element            | Wrapped in `<picture>` element               |
+| 4× unnecessary `??` conditional      | Cast to `string \| null` instead of `string` |
+| Invalid eslint-disable comment       | Removed non-existent rule reference          |
 
 ## 7. References
 

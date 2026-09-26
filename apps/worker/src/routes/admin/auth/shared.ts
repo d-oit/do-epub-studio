@@ -1,5 +1,9 @@
 export function getClientIp(c: { req: { header(name: string): string | undefined } }): string {
-  return c.req.header('CF-Connecting-IP') ?? c.req.header('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
+  return (
+    c.req.header('CF-Connecting-IP') ??
+    c.req.header('x-forwarded-for')?.split(',')[0]?.trim() ??
+    'unknown'
+  );
 }
 
 export async function hashString(value: string): Promise<string> {

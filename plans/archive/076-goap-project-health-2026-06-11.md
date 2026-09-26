@@ -8,34 +8,34 @@
 
 ### CI Status on Main
 
-| Job | Status |
-|-----|--------|
-| Path-based change detection | ✅ Pass |
-| Setup & Diagnostics | ✅ Pass |
-| Typecheck | ✅ Pass |
-| Lint | ✅ Pass |
-| Unit Tests | ✅ Pass |
-| Pre-commit Hooks | ✅ Pass |
-| Dependency Vulnerability Scan | ✅ Pass |
-| CodeQL Alert Check | ✅ Pass |
-| Build | ✅ Pass |
-| Benchmark | ✅ Pass |
+| Job                             | Status                           |
+| ------------------------------- | -------------------------------- |
+| Path-based change detection     | ✅ Pass                          |
+| Setup & Diagnostics             | ✅ Pass                          |
+| Typecheck                       | ✅ Pass                          |
+| Lint                            | ✅ Pass                          |
+| Unit Tests                      | ✅ Pass                          |
+| Pre-commit Hooks                | ✅ Pass                          |
+| Dependency Vulnerability Scan   | ✅ Pass                          |
+| CodeQL Alert Check              | ✅ Pass                          |
+| Build                           | ✅ Pass                          |
+| Benchmark                       | ✅ Pass                          |
 | **Scheduled Cross-browser E2E** | ❌ Fail (5 tests, 3 root causes) |
 
 **Verdict**: Core CI is green. Only the scheduled (non-blocking) E2E job fails.
 
 ### Open Issues (9)
 
-| # | Category | Action Required |
-|---|----------|-----------------|
-| 473 | CI failure | Fix needed (plan 074) |
-| 452 | DX | Close (already on main) |
-| 451 | DX | Close (already on main) |
-| 449 | DX | Close (already on main) |
-| 448 | DX | Close (already on main) |
-| 447 | Security/DX | Close (already on main) |
-| 446 | DX | Close (already on main) |
-| 445 | Optimization | Close (already on main) |
+| #   | Category        | Action Required         |
+| --- | --------------- | ----------------------- |
+| 473 | CI failure      | Fix needed (plan 074)   |
+| 452 | DX              | Close (already on main) |
+| 451 | DX              | Close (already on main) |
+| 449 | DX              | Close (already on main) |
+| 448 | DX              | Close (already on main) |
+| 447 | Security/DX     | Close (already on main) |
+| 446 | DX              | Close (already on main) |
+| 445 | Optimization    | Close (already on main) |
 | 442 | CI optimization | Close (already on main) |
 
 ### Open PRs
@@ -72,15 +72,15 @@ None. All PRs have been merged.
 
 ## 3. Codebase Maturity Assessment
 
-| Area | Status | Evidence |
-|------|--------|----------|
-| Stack currency | Current | React 19, Vite 8, TS 6, Vitest 4, Playwright 1.59+ |
-| Security | Strong | Argon2id, CSP, signed URLs, DOMPurify, rate-limit |
-| Observability | Good | Server traceId/spanId, client logClientEvent adopted |
-| Testing | Good | 84 test files, coverage gates enforced |
-| Accessibility | Needs fix | 1 page (AuditLog) has unlabeled inputs |
-| CI/CD | Stable | All core gates pass; only scheduled E2E flaky |
-| Documentation | Comprehensive | 70+ plans, ADRs, coding guide, agent config |
+| Area           | Status        | Evidence                                             |
+| -------------- | ------------- | ---------------------------------------------------- |
+| Stack currency | Current       | React 19, Vite 8, TS 6, Vitest 4, Playwright 1.59+   |
+| Security       | Strong        | Argon2id, CSP, signed URLs, DOMPurify, rate-limit    |
+| Observability  | Good          | Server traceId/spanId, client logClientEvent adopted |
+| Testing        | Good          | 84 test files, coverage gates enforced               |
+| Accessibility  | Needs fix     | 1 page (AuditLog) has unlabeled inputs               |
+| CI/CD          | Stable        | All core gates pass; only scheduled E2E flaky        |
+| Documentation  | Comprehensive | 70+ plans, ADRs, coding guide, agent config          |
 
 ## 4. Recommended Immediate Actions
 

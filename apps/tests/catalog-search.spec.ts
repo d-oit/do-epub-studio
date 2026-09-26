@@ -26,7 +26,10 @@ test.describe('Catalog search and filtering', () => {
 
   test('@mobile can navigate to grants from book list', async ({ page }) => {
     await loginAsAdmin(page);
-    await page.getByRole('button', { name: /Manage Access/i }).first().click();
+    await page
+      .getByRole('button', { name: /Manage Access/i })
+      .first()
+      .click();
     await expect(page).toHaveURL(/\/admin\/books\/book-1\/grants/);
   });
 });

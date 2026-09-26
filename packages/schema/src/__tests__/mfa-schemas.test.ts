@@ -21,19 +21,26 @@ describe('MFA schemas (ADR-234 items 5+6)', () => {
 
   it('MfaRegisterStartSchema requires a password and allows an optional displayName', () => {
     expect(() => MfaRegisterStartSchema.parse({})).toThrow();
-    expect(MfaRegisterStartSchema.parse({ currentPassword: 'p' })).toEqual({ currentPassword: 'p' });
+    expect(MfaRegisterStartSchema.parse({ currentPassword: 'p' })).toEqual({
+      currentPassword: 'p',
+    });
     expect(MfaRegisterStartSchema.parse({ currentPassword: 'p', displayName: 'Laptop' })).toEqual({
       currentPassword: 'p',
       displayName: 'Laptop',
     });
     expect(() => MfaRegisterStartSchema.parse({ currentPassword: '', displayName: 'x' })).toThrow();
-    expect(() => MfaRegisterStartSchema.parse({ currentPassword: 'p', displayName: 'x'.repeat(121) })).toThrow();
+    expect(() =>
+      MfaRegisterStartSchema.parse({ currentPassword: 'p', displayName: 'x'.repeat(121) }),
+    ).toThrow();
   });
 
   it('MfaRegisterVerifySchema requires a structurally valid WebAuthn response (id + response.clientDataJSON)', () => {
     expect(() => MfaRegisterVerifySchema.parse({})).toThrow();
-    expect(MfaRegisterVerifySchema.parse({ registrationResponse: { id: 'a', response: { clientDataJSON: 'b' } } }))
-      .toEqual({ registrationResponse: { id: 'a', response: { clientDataJSON: 'b' } } });
+    expect(
+      MfaRegisterVerifySchema.parse({
+        registrationResponse: { id: 'a', response: { clientDataJSON: 'b' } },
+      }),
+    ).toEqual({ registrationResponse: { id: 'a', response: { clientDataJSON: 'b' } } });
     // Structurally-invalid responses (missing response or clientDataJSON) must
     // be rejected rather than crash the handler with a 500 on the verify path.
     expect(() => MfaRegisterVerifySchema.parse({ registrationResponse: { id: 'a' } })).toThrow();
@@ -43,10 +50,17 @@ describe('MFA schemas (ADR-234 items 5+6)', () => {
 
   it('MfaAuthenticateVerifySchema requires a structurally valid WebAuthn response', () => {
     expect(() => MfaAuthenticateVerifySchema.parse({})).toThrow();
-    expect(MfaAuthenticateVerifySchema.parse({ authenticationResponse: { id: 'a', response: { clientDataJSON: 'b' } } }))
-      .toEqual({ authenticationResponse: { id: 'a', response: { clientDataJSON: 'b' } } });
-    expect(() => MfaAuthenticateVerifySchema.parse({ authenticationResponse: { id: 'a' } })).toThrow();
-    expect(() => MfaAuthenticateVerifySchema.parse({ authenticationResponse: 'not-an-object' })).toThrow();
+    expect(
+      MfaAuthenticateVerifySchema.parse({
+        authenticationResponse: { id: 'a', response: { clientDataJSON: 'b' } },
+      }),
+    ).toEqual({ authenticationResponse: { id: 'a', response: { clientDataJSON: 'b' } } });
+    expect(() =>
+      MfaAuthenticateVerifySchema.parse({ authenticationResponse: { id: 'a' } }),
+    ).toThrow();
+    expect(() =>
+      MfaAuthenticateVerifySchema.parse({ authenticationResponse: 'not-an-object' }),
+    ).toThrow();
   });
 
   it('MfaAuthenticateVerifySchema preserves extra browser fields (passthrough) for simplewebauthn', () => {
@@ -73,22 +87,47 @@ describe('MFA schemas (ADR-234 items 5+6)', () => {
 
   it('RecoveryCodeRegenSchema requires a current password and rejects blank/overlong values', () => {
     expect(() => RecoveryCodeRegenSchema.parse({})).toThrow();
-    expect(RecoveryCodeRegenSchema.parse({ currentPassword: 'p' })).toEqual({ currentPassword: 'p' });
+    expect(RecoveryCodeRegenSchema.parse({ currentPassword: 'p' })).toEqual({
+      currentPassword: 'p',
+    });
     expect(() => RecoveryCodeRegenSchema.parse({ currentPassword: '' })).toThrow();
   });
 
   it('RecoveryVerifyLoginSchema requires email + password + recovery code and rejects invalid values', () => {
-    expect(RecoveryVerifyLoginSchema.parse({ email: 'a@b.com', password: 'pw', recoveryCode: '1234567890123456' }))
-      .toEqual({ email: 'a@b.com', password: 'pw', recoveryCode: '1234567890123456' });
+    expect(
+      RecoveryVerifyLoginSchema.parse({
+        email: 'a@b.com',
+        password: 'pw',
+        recoveryCode: '1234567890123456',
+      }),
+    ).toEqual({ email: 'a@b.com', password: 'pw', recoveryCode: '1234567890123456' });
     // Invalid email.
-    expect(() => RecoveryVerifyLoginSchema.parse({ email: 'not-an-email', password: 'pw', recoveryCode: '1234567890123456' })).toThrow();
+    expect(() =>
+      RecoveryVerifyLoginSchema.parse({
+        email: 'not-an-email',
+        password: 'pw',
+        recoveryCode: '1234567890123456',
+      }),
+    ).toThrow();
     // Blank / too-short recovery code.
-    expect(() => RecoveryVerifyLoginSchema.parse({ email: 'a@b.com', password: 'pw', recoveryCode: '' })).toThrow();
-    expect(() => RecoveryVerifyLoginSchema.parse({ email: 'a@b.com', password: 'pw', recoveryCode: '123' })).toThrow();
+    expect(() =>
+      RecoveryVerifyLoginSchema.parse({ email: 'a@b.com', password: 'pw', recoveryCode: '' }),
+    ).toThrow();
+    expect(() =>
+      RecoveryVerifyLoginSchema.parse({ email: 'a@b.com', password: 'pw', recoveryCode: '123' }),
+    ).toThrow();
     // Overlong recovery code.
-    expect(() => RecoveryVerifyLoginSchema.parse({ email: 'a@b.com', password: 'pw', recoveryCode: '1'.repeat(65) })).toThrow();
+    expect(() =>
+      RecoveryVerifyLoginSchema.parse({
+        email: 'a@b.com',
+        password: 'pw',
+        recoveryCode: '1'.repeat(65),
+      }),
+    ).toThrow();
     // Missing fields.
-    expect(() => RecoveryVerifyLoginSchema.parse({ email: 'a@b.com', recoveryCode: '1234567890123456' })).toThrow();
+    expect(() =>
+      RecoveryVerifyLoginSchema.parse({ email: 'a@b.com', recoveryCode: '1234567890123456' }),
+    ).toThrow();
   });
 
   it('LoginMfaStartSchema requires a login ticket', () => {
@@ -99,17 +138,37 @@ describe('MFA schemas (ADR-234 items 5+6)', () => {
   });
 
   it('LoginMfaVerifySchema requires a login ticket + structurally valid WebAuthn response', () => {
-    expect(LoginMfaVerifySchema.parse({ loginTicket: 't-1', authenticationResponse: { id: 'a', response: { clientDataJSON: 'b' } } }))
-      .toEqual({ loginTicket: 't-1', authenticationResponse: { id: 'a', response: { clientDataJSON: 'b' } } });
-    expect(() => LoginMfaVerifySchema.parse({ authenticationResponse: { id: 'a', response: { clientDataJSON: 'b' } } })).toThrow();
-    expect(() => LoginMfaVerifySchema.parse({ loginTicket: 't-1', authenticationResponse: {} })).toThrow();
-    expect(() => LoginMfaVerifySchema.parse({ loginTicket: 't-1', authenticationResponse: 'nope' })).toThrow();
+    expect(
+      LoginMfaVerifySchema.parse({
+        loginTicket: 't-1',
+        authenticationResponse: { id: 'a', response: { clientDataJSON: 'b' } },
+      }),
+    ).toEqual({
+      loginTicket: 't-1',
+      authenticationResponse: { id: 'a', response: { clientDataJSON: 'b' } },
+    });
+    expect(() =>
+      LoginMfaVerifySchema.parse({
+        authenticationResponse: { id: 'a', response: { clientDataJSON: 'b' } },
+      }),
+    ).toThrow();
+    expect(() =>
+      LoginMfaVerifySchema.parse({ loginTicket: 't-1', authenticationResponse: {} }),
+    ).toThrow();
+    expect(() =>
+      LoginMfaVerifySchema.parse({ loginTicket: 't-1', authenticationResponse: 'nope' }),
+    ).toThrow();
   });
 
   it('SetPasswordSchema requires matching new passwords', () => {
-    expect(SetPasswordSchema.parse({ newPassword: 'password-123', newPasswordConfirm: 'password-123' }))
-      .toEqual({ newPassword: 'password-123', newPasswordConfirm: 'password-123' });
-    expect(() => SetPasswordSchema.parse({ newPassword: 'password-123', newPasswordConfirm: 'password-124' })).toThrow();
-    expect(() => SetPasswordSchema.parse({ newPassword: 'short', newPasswordConfirm: 'short' })).toThrow();
+    expect(
+      SetPasswordSchema.parse({ newPassword: 'password-123', newPasswordConfirm: 'password-123' }),
+    ).toEqual({ newPassword: 'password-123', newPasswordConfirm: 'password-123' });
+    expect(() =>
+      SetPasswordSchema.parse({ newPassword: 'password-123', newPasswordConfirm: 'password-124' }),
+    ).toThrow();
+    expect(() =>
+      SetPasswordSchema.parse({ newPassword: 'short', newPasswordConfirm: 'short' }),
+    ).toThrow();
   });
 });

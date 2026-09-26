@@ -20,22 +20,22 @@ build/CI consumers.
 `packages/ui/package.json` declares **16** direct dependencies + devDependencies
 as of `main @ 2c5cb03`:
 
-| Package | Declared as | Source refs (`packages/ui/src`) | Build/CI consumer | Verdict |
-|---------|-------------|---------------------------------|--------------------|---------|
-| `framer-motion` | dependencies | 8 | (runtime) | **KEEP** |
-| `@storybook/react-vite` | devDependencies | 0 (used in `.storybook/main.ts`) | `storybook dev`/`build:storybook` scripts; `visual-regression.yml` calls `build:storybook` | **KEEP** |
-| `storybook` | devDependencies | 0 | CLI: `pnpm storybook`, `pnpm build:storybook` | **KEEP** |
-| `chromatic` | devDependencies | 0 | **0** — `npx chromatic` script is dead, CI uses `chromaui/action` | **REMOVE** |
-| `@tailwindcss/vite` | devDependencies | 0 | Vite plugin referenced in `packages/ui/vite.config.ts` | **KEEP** |
-| `@testing-library/jest-dom` | devDependencies | 0 (used in `src/test-setup.ts:1`) | Vitest setup file | **KEEP** |
-| `@testing-library/react` | devDependencies | 8 | (test runtime) | **KEEP** |
-| `@testing-library/user-event` | devDependencies | **0** | **0** | **REMOVE** |
-| `jsdom` | devDependencies | 0 (used in `vitest.config.ts:4`) | Test environment | **KEEP** |
-| `react`, `react-dom` | devDependencies | 16 / 1 | (peer + runtime) | **KEEP** |
-| `@types/node` | devDependencies | 0 (used by tsc) | Typecheck | **KEEP** |
-| `@types/react`, `@types/react-dom` | devDependencies | 0 (used by tsc) | Typecheck | **KEEP** |
-| `typescript` | devDependencies | 0 | `tsc` binary | **KEEP** |
-| `vitest` | devDependencies | 9 | Test runner | **KEEP** |
+| Package                            | Declared as     | Source refs (`packages/ui/src`)   | Build/CI consumer                                                                          | Verdict    |
+| ---------------------------------- | --------------- | --------------------------------- | ------------------------------------------------------------------------------------------ | ---------- |
+| `framer-motion`                    | dependencies    | 8                                 | (runtime)                                                                                  | **KEEP**   |
+| `@storybook/react-vite`            | devDependencies | 0 (used in `.storybook/main.ts`)  | `storybook dev`/`build:storybook` scripts; `visual-regression.yml` calls `build:storybook` | **KEEP**   |
+| `storybook`                        | devDependencies | 0                                 | CLI: `pnpm storybook`, `pnpm build:storybook`                                              | **KEEP**   |
+| `chromatic`                        | devDependencies | 0                                 | **0** — `npx chromatic` script is dead, CI uses `chromaui/action`                          | **REMOVE** |
+| `@tailwindcss/vite`                | devDependencies | 0                                 | Vite plugin referenced in `packages/ui/vite.config.ts`                                     | **KEEP**   |
+| `@testing-library/jest-dom`        | devDependencies | 0 (used in `src/test-setup.ts:1`) | Vitest setup file                                                                          | **KEEP**   |
+| `@testing-library/react`           | devDependencies | 8                                 | (test runtime)                                                                             | **KEEP**   |
+| `@testing-library/user-event`      | devDependencies | **0**                             | **0**                                                                                      | **REMOVE** |
+| `jsdom`                            | devDependencies | 0 (used in `vitest.config.ts:4`)  | Test environment                                                                           | **KEEP**   |
+| `react`, `react-dom`               | devDependencies | 16 / 1                            | (peer + runtime)                                                                           | **KEEP**   |
+| `@types/node`                      | devDependencies | 0 (used by tsc)                   | Typecheck                                                                                  | **KEEP**   |
+| `@types/react`, `@types/react-dom` | devDependencies | 0 (used by tsc)                   | Typecheck                                                                                  | **KEEP**   |
+| `typescript`                       | devDependencies | 0                                 | `tsc` binary                                                                               | **KEEP**   |
+| `vitest`                           | devDependencies | 9                                 | Test runner                                                                                | **KEEP**   |
 
 ### Removal candidates (2)
 
@@ -69,16 +69,16 @@ as of `main @ 2c5cb03`:
 
 ## Decomposition (tasks)
 
-| ID | Task | Status |
-|----|------|--------|
-| T1 | Enumerate direct deps with `pnpm ls --depth=0` | ✅ |
-| T2 | Cross-reference each dep with `grep -rn` in `packages/ui/src` and CI workflows | ✅ |
-| T3 | Author this audit plan | ✅ (this file) |
-| T4 | Remove `chromatic` from `devDependencies` and drop the `npx chromatic` script | ✅ |
-| T5 | Remove `@testing-library/user-event` from `devDependencies` | ✅ |
-| T6 | Run `pnpm install` to refresh `pnpm-lock.yaml` | ✅ |
-| T7 | Run `./scripts/minimal_quality_gate.sh` and `pnpm --filter @do-epub-studio/ui build` | ✅ |
-| T8 | Open PR with the audit doc + package.json + lockfile | pending |
+| ID  | Task                                                                                 | Status         |
+| --- | ------------------------------------------------------------------------------------ | -------------- |
+| T1  | Enumerate direct deps with `pnpm ls --depth=0`                                       | ✅             |
+| T2  | Cross-reference each dep with `grep -rn` in `packages/ui/src` and CI workflows       | ✅             |
+| T3  | Author this audit plan                                                               | ✅ (this file) |
+| T4  | Remove `chromatic` from `devDependencies` and drop the `npx chromatic` script        | ✅             |
+| T5  | Remove `@testing-library/user-event` from `devDependencies`                          | ✅             |
+| T6  | Run `pnpm install` to refresh `pnpm-lock.yaml`                                       | ✅             |
+| T7  | Run `./scripts/minimal_quality_gate.sh` and `pnpm --filter @do-epub-studio/ui build` | ✅             |
+| T8  | Open PR with the audit doc + package.json + lockfile                                 | pending        |
 
 ## Strategy (Strategize)
 
@@ -121,17 +121,17 @@ as of `main @ 2c5cb03`:
 
 ## Synthesis (Results)
 
-| Metric | Value |
-|--------|-------|
-| Direct deps before | 16 (1 dep + 15 devDep) |
-| Direct deps after | 14 (1 dep + 13 devDep) |
-| Packages removed | 2 (`chromatic`, `@testing-library/user-event`) |
-| Scripts removed | 1 (`chromatic: "npx chromatic"`) |
-| Source references affected | 0 |
-| Tests affected | 0 |
-| Build artefacts affected | 0 (storybook-static is gitignored) |
-| Lockfile size delta | ~-30 lines (chromatic + transitive, user-event + transitive) |
-| Post-merge main CI | expected green |
+| Metric                     | Value                                                        |
+| -------------------------- | ------------------------------------------------------------ |
+| Direct deps before         | 16 (1 dep + 15 devDep)                                       |
+| Direct deps after          | 14 (1 dep + 13 devDep)                                       |
+| Packages removed           | 2 (`chromatic`, `@testing-library/user-event`)               |
+| Scripts removed            | 1 (`chromatic: "npx chromatic"`)                             |
+| Source references affected | 0                                                            |
+| Tests affected             | 0                                                            |
+| Build artefacts affected   | 0 (storybook-static is gitignored)                           |
+| Lockfile size delta        | ~-30 lines (chromatic + transitive, user-event + transitive) |
+| Post-merge main CI         | expected green                                               |
 
 ## Cross-references
 

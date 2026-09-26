@@ -13,11 +13,11 @@ Supported by: Claude Code, OpenCode.
 
 ## Common Use Cases
 
-| Hook type | Purpose |
-|---|---|
-| Stop hook | Typecheck + lint + format after every agent action |
-| Pre-tool hook | Approve/deny specific tool calls (e.g. block destructive ops) |
-| Post-tool hook | Send notification, create PR, set up preview env |
+| Hook type      | Purpose                                                       |
+| -------------- | ------------------------------------------------------------- |
+| Stop hook      | Typecheck + lint + format after every agent action            |
+| Pre-tool hook  | Approve/deny specific tool calls (e.g. block destructive ops) |
+| Post-tool hook | Send notification, create PR, set up preview env              |
 
 ## Stop Hook Template
 

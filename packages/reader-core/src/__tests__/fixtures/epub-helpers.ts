@@ -117,8 +117,7 @@ export function readZipEntries(buf: Buffer): Map<string, Buffer> {
 
   let eocdPos = -1;
   for (let i = buf.length - 22; i >= 0; i--) {
-    if (buf[i] === 0x50 && buf[i + 1] === 0x4b &&
-        buf[i + 2] === 0x05 && buf[i + 3] === 0x06) {
+    if (buf[i] === 0x50 && buf[i + 1] === 0x4b && buf[i + 2] === 0x05 && buf[i + 3] === 0x06) {
       eocdPos = i;
       break;
     }
@@ -190,15 +189,23 @@ export function contentOpf(opts: {
     opts.author ? `<dc:creator>${escapeXml(opts.author)}</dc:creator>` : '',
     opts.language ? `<dc:language>${escapeXml(opts.language)}</dc:language>` : '',
     opts.identifier ? `<dc:identifier>${escapeXml(opts.identifier)}</dc:identifier>` : '',
-  ].filter(Boolean).join('\n    ');
+  ]
+    .filter(Boolean)
+    .join('\n    ');
 
-  const manifest = opts.manifest.map((item) =>
-    `    <item id="${escapeXml(item.id)}" href="${escapeXml(item.href)}" media-type="${escapeXml(item.mediaType)}"/>`
-  ).join('\n');
+  const manifest = opts.manifest
+    .map(
+      (item) =>
+        `    <item id="${escapeXml(item.id)}" href="${escapeXml(item.href)}" media-type="${escapeXml(item.mediaType)}"/>`,
+    )
+    .join('\n');
 
-  const spine = opts.spine.map((item) =>
-    `    <itemref idref="${escapeXml(item.idref)}"${item.properties ? ` properties="${escapeXml(item.properties)}"` : ''}/>`
-  ).join('\n');
+  const spine = opts.spine
+    .map(
+      (item) =>
+        `    <itemref idref="${escapeXml(item.idref)}"${item.properties ? ` properties="${escapeXml(item.properties)}"` : ''}/>`,
+    )
+    .join('\n');
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="book-id">
@@ -215,9 +222,9 @@ ${spine}
 }
 
 export function navXhtml(items: Array<{ label: string; href: string }>): string {
-  const links = items.map((item) =>
-    `      <li><a href="${escapeXml(item.href)}">${escapeXml(item.label)}</a></li>`
-  ).join('\n');
+  const links = items
+    .map((item) => `      <li><a href="${escapeXml(item.href)}">${escapeXml(item.label)}</a></li>`)
+    .join('\n');
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html>
@@ -248,8 +255,12 @@ export function sectionXhtml(id: string, content: string): string {
 }
 
 function escapeXml(s: string): string {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
 }
 
 // ---- EPUB Parsing Helpers ----

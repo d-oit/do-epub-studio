@@ -35,7 +35,14 @@ interface InfoPanelProps {
   t: (key: string) => string;
 }
 
-export function InfoPanel({ isOpen, onClose, metadata, bookId, progressPercent, t }: InfoPanelProps) {
+export function InfoPanel({
+  isOpen,
+  onClose,
+  metadata,
+  bookId,
+  progressPercent,
+  t,
+}: InfoPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const [insights, setInsights] = useState<InsightSummary | null>(null);
 
@@ -46,16 +53,23 @@ export function InfoPanel({ isOpen, onClose, metadata, bookId, progressPercent, 
     if (!isOpen || !bookId) return;
     let cancelled = false;
     computeInsightSummary(bookId, progressPercent)
-      .then((summary) => { if (!cancelled) setInsights(summary); })
-      .catch(() => { if (!cancelled) setInsights(null); });
-    return () => { cancelled = true; };
+      .then((summary) => {
+        if (!cancelled) setInsights(summary);
+      })
+      .catch(() => {
+        if (!cancelled) setInsights(null);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [isOpen, bookId, progressPercent]);
 
   if (!isOpen) return null;
 
   const a11y = metadata?.accessibility;
   const hasA11y = a11y && (a11y.summary || a11y.features.length > 0 || a11y.hazards.length > 0);
-  const hasInsights = insights && (insights.totalActiveMinutes > 0 || insights.totalActivePages > 0);
+  const hasInsights =
+    insights && (insights.totalActiveMinutes > 0 || insights.totalActivePages > 0);
 
   return (
     <aside
@@ -70,8 +84,19 @@ export function InfoPanel({ isOpen, onClose, metadata, bookId, progressPercent, 
           {t('reader.aboutBook')}
         </h2>
         <IconButton onClick={onClose} variant="ghost" aria-label={t('a11y.close')}>
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M6 18L18 6M6 6l12 12"
+            />
           </svg>
         </IconButton>
       </div>
@@ -84,9 +109,7 @@ export function InfoPanel({ isOpen, onClose, metadata, bookId, progressPercent, 
         ) : (
           <>
             <section>
-              <h3 className="eyebrow mb-2">
-                {t('reader.details')}
-              </h3>
+              <h3 className="eyebrow mb-2">{t('reader.details')}</h3>
               <dl className="space-y-2">
                 {metadata.title && (
                   <div>
@@ -117,9 +140,7 @@ export function InfoPanel({ isOpen, onClose, metadata, bookId, progressPercent, 
 
             {metadata.description && (
               <section>
-                <h3 className="eyebrow mb-2">
-                  {t('reader.description')}
-                </h3>
+                <h3 className="eyebrow mb-2">{t('reader.description')}</h3>
                 <p className="text-sm text-foreground leading-relaxed">{metadata.description}</p>
               </section>
             )}

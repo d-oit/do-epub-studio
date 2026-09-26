@@ -66,11 +66,13 @@ export async function assertBookAccess(
   if (auth.bookId !== bookId) {
     throw new AppError('FORBIDDEN', 'BOOK_SESSION_MISMATCH', 403);
   }
-  const grant = await queryFirst(env,
+  const grant = await queryFirst(
+    env,
     `SELECT 1 FROM book_access_grants
      WHERE book_id = ? AND email = ? AND revoked_at IS NULL
      LIMIT 1`,
-    [bookId, auth.email]);
+    [bookId, auth.email],
+  );
   if (!grant) {
     throw new AppError('FORBIDDEN', 'NO_GRANT_FOR_BOOK', 403);
   }

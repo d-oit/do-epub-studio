@@ -108,7 +108,11 @@ export async function listPasskeys(env: Env, userId: string): Promise<PasskeyCre
   );
 }
 
-export async function getPasskeyById(env: Env, id: string, userId: string): Promise<PasskeyCredential | null> {
+export async function getPasskeyById(
+  env: Env,
+  id: string,
+  userId: string,
+): Promise<PasskeyCredential | null> {
   return queryFirst<PasskeyCredential>(
     env,
     `SELECT id, user_id, credential_id, public_key, counter, credential_device_type,
@@ -119,7 +123,10 @@ export async function getPasskeyById(env: Env, id: string, userId: string): Prom
   );
 }
 
-export async function getPasskeyByCredentialId(env: Env, credentialId: string): Promise<PasskeyCredential | null> {
+export async function getPasskeyByCredentialId(
+  env: Env,
+  credentialId: string,
+): Promise<PasskeyCredential | null> {
   return queryFirst<PasskeyCredential>(
     env,
     `SELECT id, user_id, credential_id, public_key, counter, credential_device_type,
@@ -157,7 +164,11 @@ export async function insertPasskey(
   );
 }
 
-export async function updatePasskeyCounter(env: Env, credentialId: string, counter: number): Promise<void> {
+export async function updatePasskeyCounter(
+  env: Env,
+  credentialId: string,
+  counter: number,
+): Promise<void> {
   await execute(
     env,
     `UPDATE passkey_credentials
@@ -168,11 +179,7 @@ export async function updatePasskeyCounter(env: Env, credentialId: string, count
 }
 
 export async function deletePasskey(env: Env, id: string, userId: string): Promise<void> {
-  await execute(
-    env,
-    `DELETE FROM passkey_credentials WHERE id = ? AND user_id = ?`,
-    [id, userId],
-  );
+  await execute(env, `DELETE FROM passkey_credentials WHERE id = ? AND user_id = ?`, [id, userId]);
 }
 
 // ---------------------------------------------------------------------------
@@ -191,7 +198,13 @@ export async function findChallenge(env: Env, id: string): Promise<ChallengeReco
 
 export async function storeChallenge(
   env: Env,
-  args: { id: string; userId: string; purpose: 'registration' | 'authentication'; rawChallenge: string; expiresAt: string },
+  args: {
+    id: string;
+    userId: string;
+    purpose: 'registration' | 'authentication';
+    rawChallenge: string;
+    expiresAt: string;
+  },
 ): Promise<void> {
   await execute(
     env,
@@ -221,7 +234,9 @@ export async function consumeChallenge(env: Env, id: string): Promise<boolean> {
     `UPDATE webauthn_challenges
      SET used_at = datetime('now')
      WHERE id = ? AND used_at IS NULL AND datetime(expires_at) > datetime('now')`,
-  ).bind(id).run();
+  )
+    .bind(id)
+    .run();
   return (res.meta?.changes ?? 0) > 0;
 }
 
@@ -258,7 +273,9 @@ export async function userHasMfa(env: Env, userId: string): Promise<boolean> {
 // Recovery codes (SHA-256 hashed at rest, single-use)
 // ---------------------------------------------------------------------------
 
-export async function createRecoveryCodes(count = 10): Promise<{ codes: string[]; hashes: string[] }> {
+export async function createRecoveryCodes(
+  count = 10,
+): Promise<{ codes: string[]; hashes: string[] }> {
   const codes: string[] = [];
   const hashes: string[] = [];
   for (let i = 0; i < count; i++) {
@@ -273,19 +290,25 @@ export async function hashRecoveryCode(code: string): Promise<string> {
   return hashToken(code);
 }
 
-export async function writeRecoveryHashes(env: Env, userId: string, hashes: string[]): Promise<void> {
-  await execute(
-    env,
-    `UPDATE users SET recovery_codes_hash_json = ? WHERE id = ?`,
-    [JSON.stringify(hashes), userId],
-  );
+export async function writeRecoveryHashes(
+  env: Env,
+  userId: string,
+  hashes: string[],
+): Promise<void> {
+  await execute(env, `UPDATE users SET recovery_codes_hash_json = ? WHERE id = ?`, [
+    JSON.stringify(hashes),
+    userId,
+  ]);
 }
 
 export async function clearRecoveryHashes(env: Env, userId: string): Promise<void> {
   await execute(env, `UPDATE users SET recovery_codes_hash_json = NULL WHERE id = ?`, [userId]);
 }
 
-export async function getMfaState(env: Env, userId: string): Promise<{ method: string | null; enrolledAt: string | null }> {
+export async function getMfaState(
+  env: Env,
+  userId: string,
+): Promise<{ method: string | null; enrolledAt: string | null }> {
   const row = await queryFirst<{ mfa_method: string | null; mfa_enrolled_at: string | null }>(
     env,
     `SELECT mfa_method, mfa_enrolled_at FROM users WHERE id = ?`,
@@ -312,11 +335,9 @@ export async function setMfaEnrolled(env: Env, userId: string, method: string): 
 }
 
 export async function clearMfaEnrolled(env: Env, userId: string): Promise<void> {
-  await execute(
-    env,
-    `UPDATE users SET mfa_method = NULL, mfa_enrolled_at = NULL WHERE id = ?`,
-    [userId],
-  );
+  await execute(env, `UPDATE users SET mfa_method = NULL, mfa_enrolled_at = NULL WHERE id = ?`, [
+    userId,
+  ]);
 }
 
 /**
@@ -380,11 +401,11 @@ export type LoginTicketRecord = {
 export async function createLoginTicket(env: Env, userId: string): Promise<string> {
   const id = generateChallenge();
   const expiresAt = new Date(Date.now() + MFA_LOGIN_TICKET_TTL_MS).toISOString();
-  await execute(
-    env,
-    `INSERT INTO mfa_login_tickets (id, user_id, expires_at) VALUES (?, ?, ?)`,
-    [id, userId, expiresAt],
-  );
+  await execute(env, `INSERT INTO mfa_login_tickets (id, user_id, expires_at) VALUES (?, ?, ?)`, [
+    id,
+    userId,
+    expiresAt,
+  ]);
   return id;
 }
 
@@ -414,6 +435,8 @@ export async function consumeLoginTicket(env: Env, id: string): Promise<boolean>
     `UPDATE mfa_login_tickets
      SET used_at = datetime('now')
      WHERE id = ? AND used_at IS NULL AND datetime(expires_at) > datetime('now')`,
-  ).bind(id).run();
+  )
+    .bind(id)
+    .run();
   return (res.meta?.changes ?? 0) > 0;
 }

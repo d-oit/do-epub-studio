@@ -70,15 +70,15 @@ When quality gate fails:
 
 Match the issue type to the correct skill:
 
-| Issue | Skill | Action |
-|-------|-------|--------|
-| Lint/style errors | Manual fix | Direct code edit |
-| Code smells | `code-quality` | Refactor at file level |
-| Cross-file issues | `code-review-assistant` | PR-level analysis |
-| Shell errors | `shell-script-quality` | ShellCheck + BATS |
-| Security flaws | `security-code-auditor` | Read-only audit |
-| Architecture trade-offs | `triz-analysis` → `triz-solver` | Design resolution |
-| Generic UI text | `anti-ai-slop` | Humanize copy |
+| Issue                   | Skill                           | Action                 |
+| ----------------------- | ------------------------------- | ---------------------- |
+| Lint/style errors       | Manual fix                      | Direct code edit       |
+| Code smells             | `code-quality`                  | Refactor at file level |
+| Cross-file issues       | `code-review-assistant`         | PR-level analysis      |
+| Shell errors            | `shell-script-quality`          | ShellCheck + BATS      |
+| Security flaws          | `security-code-auditor`         | Read-only audit        |
+| Architecture trade-offs | `triz-analysis` → `triz-solver` | Design resolution      |
+| Generic UI text         | `anti-ai-slop`                  | Humanize copy          |
 
 ### 5. Document Unfixable Issues
 
@@ -154,14 +154,14 @@ git push -u origin HEAD
 
 **Atomic commit phases:**
 
-| Phase | Script | Purpose |
-|-------|--------|---------|
-| PRE_COMMIT | `validate.sh` | Quality gate + secret scan + branch check |
-| COMMIT | `commit.sh` | Conventional commit creation |
-| PRE_PUSH | `push.sh --check-only` | Conflict detection |
-| PUSH | `push.sh` | Push to origin |
-| PR_CREATE | `create-pr.sh` | GitHub PR creation |
-| VERIFY | `verify.sh` | CI check wait with timeout |
+| Phase      | Script                 | Purpose                                   |
+| ---------- | ---------------------- | ----------------------------------------- |
+| PRE_COMMIT | `validate.sh`          | Quality gate + secret scan + branch check |
+| COMMIT     | `commit.sh`            | Conventional commit creation              |
+| PRE_PUSH   | `push.sh --check-only` | Conflict detection                        |
+| PUSH       | `push.sh`              | Push to origin                            |
+| PR_CREATE  | `create-pr.sh`         | GitHub PR creation                        |
+| VERIFY     | `verify.sh`            | CI check wait with timeout                |
 
 **Rollback on failure:**
 
@@ -189,13 +189,13 @@ After non-trivial work, capture non-obvious discoveries:
 
 This project enforces **zero bypass** of quality gates:
 
-| Variable/Flag | Status | Note |
-|---------------|--------|------|
-| `SKIP_TESTS` | Does not exist | Tests always run |
-| `--skip-ci` | Does not exist | CI always verified |
-| `ATOMIC_COMMIT_SKIP_QUALITY_GATE` | Does not exist | Quality gate mandatory |
-| `--no-rollback` | Does not exist | Rollback always executes |
-| `SKIP_GLOBAL_HOOKS_CHECK` | Does not exist | Git hooks always checked |
-| `--no-verify` | Forbidden | Never use this |
+| Variable/Flag                     | Status         | Note                     |
+| --------------------------------- | -------------- | ------------------------ |
+| `SKIP_TESTS`                      | Does not exist | Tests always run         |
+| `--skip-ci`                       | Does not exist | CI always verified       |
+| `ATOMIC_COMMIT_SKIP_QUALITY_GATE` | Does not exist | Quality gate mandatory   |
+| `--no-rollback`                   | Does not exist | Rollback always executes |
+| `SKIP_GLOBAL_HOOKS_CHECK`         | Does not exist | Git hooks always checked |
+| `--no-verify`                     | Forbidden      | Never use this           |
 
 If a check fails, fix the root cause. Do not silence it.

@@ -10,8 +10,7 @@ const FIXTURES = resolve(import.meta.dirname, 'fixtures');
 
 function findEocd(buf: Buffer): number {
   for (let i = buf.length - 22; i >= 0; i--) {
-    if (buf[i] === 0x50 && buf[i + 1] === 0x4b &&
-        buf[i + 2] === 0x05 && buf[i + 3] === 0x06) {
+    if (buf[i] === 0x50 && buf[i + 1] === 0x4b && buf[i + 2] === 0x05 && buf[i + 3] === 0x06) {
       return i;
     }
   }
@@ -82,7 +81,9 @@ describe('parseAccessibilityFromOpf', () => {
     const opfXml = getOpfXml(buf);
     const result = parseAccessibilityFromOpf(opfXml);
 
-    expect(result.summary).toBe('This book is fully accessible with structural navigation and alternative text.');
+    expect(result.summary).toBe(
+      'This book is fully accessible with structural navigation and alternative text.',
+    );
     expect(result.features).toEqual(
       expect.arrayContaining(['structuralNavigation', 'tableOfContents', 'alternativeText']),
     );
@@ -168,7 +169,9 @@ describe('parseAccessibilityFromOpf', () => {
 </package>`;
     const result = parseAccessibilityFromOpf(opfXml);
     expect(result.features).toHaveLength(2);
-    expect(result.features).toEqual(expect.arrayContaining(['structuralNavigation', 'tableOfContents']));
+    expect(result.features).toEqual(
+      expect.arrayContaining(['structuralNavigation', 'tableOfContents']),
+    );
   });
 
   it('extracts certification metadata', () => {

@@ -47,14 +47,14 @@ No unresolved contradictions allowed before system design.
 
 From patterns reference:
 
-| Strategy     | Example                                            |
-| ------------ | -------------------------------------------------- |
-| Time         | Cache with TTL - fast at read, consistent after    |
-|              | expiry                                             |
-| Space        | Strong auth for admin, lightweight for public      |
-| Condition    | Eager loading for small datasets, lazy for large   |
-| System-Level | Service mesh resolves coupling vs communication    |
-|              | overhead                                           |
+| Strategy     | Example                                          |
+| ------------ | ------------------------------------------------ |
+| Time         | Cache with TTL - fast at read, consistent after  |
+|              | expiry                                           |
+| Space        | Strong auth for admin, lightweight for public    |
+| Condition    | Eager loading for small datasets, lazy for large |
+| System-Level | Service mesh resolves coupling vs communication  |
+|              | overhead                                         |
 
 ---
 

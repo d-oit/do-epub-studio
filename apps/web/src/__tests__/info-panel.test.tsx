@@ -45,40 +45,108 @@ describe('InfoPanel', () => {
   });
 
   it('renders nothing when isOpen is false', () => {
-    render(<InfoPanel isOpen={false} onClose={onClose} metadata={null} bookId={mockBookId} progressPercent={mockProgressPercent} t={mockT} />);
+    render(
+      <InfoPanel
+        isOpen={false}
+        onClose={onClose}
+        metadata={null}
+        bookId={mockBookId}
+        progressPercent={mockProgressPercent}
+        t={mockT}
+      />,
+    );
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
   it('renders dialog when isOpen is true', () => {
-    render(<InfoPanel isOpen={true} onClose={onClose} metadata={null} bookId={mockBookId} progressPercent={mockProgressPercent} t={mockT} />);
+    render(
+      <InfoPanel
+        isOpen={true}
+        onClose={onClose}
+        metadata={null}
+        bookId={mockBookId}
+        progressPercent={mockProgressPercent}
+        t={mockT}
+      />,
+    );
     expect(screen.getByRole('dialog')).toBeInTheDocument();
   });
 
   it('shows no metadata message when metadata is null', () => {
-    render(<InfoPanel isOpen={true} onClose={onClose} metadata={null} bookId={mockBookId} progressPercent={mockProgressPercent} t={mockT} />);
+    render(
+      <InfoPanel
+        isOpen={true}
+        onClose={onClose}
+        metadata={null}
+        bookId={mockBookId}
+        progressPercent={mockProgressPercent}
+        t={mockT}
+      />,
+    );
     expect(screen.getByText('No metadata available')).toBeInTheDocument();
   });
 
   it('shows book details when metadata provided', () => {
-    const metadata = { title: 'My Book', creator: 'Author Name', publisher: 'Publisher', language: 'en' };
-    render(<InfoPanel isOpen={true} onClose={onClose} metadata={metadata} bookId={mockBookId} progressPercent={mockProgressPercent} t={mockT} />);
+    const metadata = {
+      title: 'My Book',
+      creator: 'Author Name',
+      publisher: 'Publisher',
+      language: 'en',
+    };
+    render(
+      <InfoPanel
+        isOpen={true}
+        onClose={onClose}
+        metadata={metadata}
+        bookId={mockBookId}
+        progressPercent={mockProgressPercent}
+        t={mockT}
+      />,
+    );
     expect(screen.getByText('My Book')).toBeInTheDocument();
   });
 
   it('shows description when provided', () => {
     const metadata = { title: 'Book', description: 'A great book' };
-    render(<InfoPanel isOpen={true} onClose={onClose} metadata={metadata} bookId={mockBookId} progressPercent={mockProgressPercent} t={mockT} />);
+    render(
+      <InfoPanel
+        isOpen={true}
+        onClose={onClose}
+        metadata={metadata}
+        bookId={mockBookId}
+        progressPercent={mockProgressPercent}
+        t={mockT}
+      />,
+    );
     expect(screen.getByText('A great book')).toBeInTheDocument();
   });
 
   it('calls onClose when clicking close button', () => {
-    render(<InfoPanel isOpen={true} onClose={onClose} metadata={null} bookId={mockBookId} progressPercent={mockProgressPercent} t={mockT} />);
+    render(
+      <InfoPanel
+        isOpen={true}
+        onClose={onClose}
+        metadata={null}
+        bookId={mockBookId}
+        progressPercent={mockProgressPercent}
+        t={mockT}
+      />,
+    );
     fireEvent.click(screen.getByLabelText('Close'));
     expect(onClose).toHaveBeenCalled();
   });
 
   it('calls onClose when pressing Escape', () => {
-    render(<InfoPanel isOpen={true} onClose={onClose} metadata={null} bookId={mockBookId} progressPercent={mockProgressPercent} t={mockT} />);
+    render(
+      <InfoPanel
+        isOpen={true}
+        onClose={onClose}
+        metadata={null}
+        bookId={mockBookId}
+        progressPercent={mockProgressPercent}
+        t={mockT}
+      />,
+    );
     fireEvent.keyDown(window, { key: 'Escape' });
     expect(onClose).toHaveBeenCalled();
   });
@@ -98,7 +166,16 @@ describe('InfoPanel', () => {
         certifierReport: 'https://example.com/report',
       },
     };
-    render(<InfoPanel isOpen={true} onClose={onClose} metadata={metadata} bookId={mockBookId} progressPercent={mockProgressPercent} t={mockT} />);
+    render(
+      <InfoPanel
+        isOpen={true}
+        onClose={onClose}
+        metadata={metadata}
+        bookId={mockBookId}
+        progressPercent={mockProgressPercent}
+        t={mockT}
+      />,
+    );
     expect(screen.getByText('Fully accessible')).toBeInTheDocument();
     expect(screen.getByText('WCAG 2.1 AA')).toBeInTheDocument();
   });
@@ -118,7 +195,16 @@ describe('InfoPanel', () => {
         certifierReport: undefined,
       },
     };
-    render(<InfoPanel isOpen={true} onClose={onClose} metadata={metadata} bookId={mockBookId} progressPercent={mockProgressPercent} t={mockT} />);
+    render(
+      <InfoPanel
+        isOpen={true}
+        onClose={onClose}
+        metadata={metadata}
+        bookId={mockBookId}
+        progressPercent={mockProgressPercent}
+        t={mockT}
+      />,
+    );
     expect(screen.getByText('Flashing')).toBeInTheDocument();
   });
 
@@ -137,7 +223,16 @@ describe('InfoPanel', () => {
         certifierReport: 'https://example.com/report',
       },
     };
-    render(<InfoPanel isOpen={true} onClose={onClose} metadata={metadata} bookId={mockBookId} progressPercent={mockProgressPercent} t={mockT} />);
+    render(
+      <InfoPanel
+        isOpen={true}
+        onClose={onClose}
+        metadata={metadata}
+        bookId={mockBookId}
+        progressPercent={mockProgressPercent}
+        t={mockT}
+      />,
+    );
     expect(screen.getByText('Book')).toBeInTheDocument();
   });
 });

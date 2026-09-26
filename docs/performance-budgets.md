@@ -55,8 +55,8 @@ are not baselined** — tracked as a follow-up in
 
 ## Troubleshooting
 
-| Symptom | Fix |
-| --- | --- |
-| `bundle:budget:enforce` fails on entry chunk / total delta | Rebuild the route that grew, confirm the growth is intentional, then regenerate and commit the baseline |
-| Absolute budget exceeded (not a delta) | Refactor or code-split the offending chunk; do **not** raise `gzipBudgets` without an ADR |
-| `bundle-sizes` differ between local and CI | Confirm both used the same lockfile and dependency set; the generator reads the Vite build manifest, so first run `pnpm install --frozen-lockfile` and rebuild |
+| Symptom                                                    | Fix                                                                                                                                                            |
+| ---------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bundle:budget:enforce` fails on entry chunk / total delta | Rebuild the route that grew, confirm the growth is intentional, then regenerate and commit the baseline                                                        |
+| Absolute budget exceeded (not a delta)                     | Refactor or code-split the offending chunk; do **not** raise `gzipBudgets` without an ADR                                                                      |
+| `bundle-sizes` differ between local and CI                 | Confirm both used the same lockfile and dependency set; the generator reads the Vite build manifest, so first run `pnpm install --frozen-lockfile` and rebuild |

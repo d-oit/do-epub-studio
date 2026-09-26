@@ -50,9 +50,7 @@ export function CommentInput({
   };
 
   return (
-    <div
-      className={`space-y-2 ${isReply ? 'pl-4 border-l-2 border-border' : ''}`}
-    >
+    <div className={`space-y-2 ${isReply ? 'pl-4 border-l-2 border-border' : ''}`}>
       <textarea
         ref={textareaRef}
         value={text}

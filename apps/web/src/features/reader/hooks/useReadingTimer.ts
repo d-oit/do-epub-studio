@@ -82,15 +82,19 @@ export function useReadingTimer(bookId: string | null) {
       });
       // Enqueue retry instead of silently dropping
       const mutationId = generateMutationId();
-      await queueSync('reading-insight', {
-        bookId,
-        buckets: bookEntries.map((e) => ({
-          date: e.date,
-          activeMinutes: e.activeMinutes,
-          activePages: e.activePages,
-        })),
+      await queueSync(
+        'reading-insight',
+        {
+          bookId,
+          buckets: bookEntries.map((e) => ({
+            date: e.date,
+            activeMinutes: e.activeMinutes,
+            activePages: e.activePages,
+          })),
+          mutationId,
+        },
         mutationId,
-      }, mutationId);
+      );
     }
   }, [bookId, sessionToken]);
 

@@ -29,16 +29,16 @@ already archived) and classified each as:
 
 ## Status Totals
 
-| Status | Count |
-|--------|-------|
-| DONE | 77 |
-| IN_PROGRESS | 4 |
-| OPEN | 0 |
-| META | 32 |
-| BLOCKED | 0 |
-| ARCHIVED | 0 |
-| UNCLEAR | 0 |
-| **Total** | **112** (plus 101 closed pre-existing audit = 113 minus 1 already in `plans/`) |
+| Status      | Count                                                                          |
+| ----------- | ------------------------------------------------------------------------------ |
+| DONE        | 77                                                                             |
+| IN_PROGRESS | 4                                                                              |
+| OPEN        | 0                                                                              |
+| META        | 32                                                                             |
+| BLOCKED     | 0                                                                              |
+| ARCHIVED    | 0                                                                              |
+| UNCLEAR     | 0                                                                              |
+| **Total**   | **112** (plus 101 closed pre-existing audit = 113 minus 1 already in `plans/`) |
 
 Note: 73 of 113 plans are already DONE. 32 are META (ADRs/policy, not
 implementation work). 7 are IN_PROGRESS, 0 are OPEN (all actionable items
@@ -46,16 +46,16 @@ have a plan owner).
 
 ## IN_PROGRESS Inventory
 
-| # | Plan | Status | Blocker / Next step |
-|---|------|--------|---------------------|
-| 063 | Comprehensive codebase audit (Wave 2) | IN_PROGRESS | Wave 2 P1 items (search/export/delete/ARIA/perf budgets) |
-| 065 | Reader perf + Turborepo cache | IN_PROGRESS | Stream B PR-2/PR-3 + 4 reader hot-path wins |
-| 075 | 2026-06-15 swarm master plan | IN_PROGRESS | Waves B/C/D; 5 of 12 gaps still open |
-| 076 | Admin recovery + book CRUD | IN_PROGRESS | Blocked on G15 (magic-link email transport) |
-| 077 | Reader progress + search load (G19) | DONE | Shipped in PR #566 (commit `?`); progress_loaded telemetry + offline fallback present in `ReaderPage.tsx` |
-| 079 | Admin grants PATCH UI (G21) | DONE | Shipped in PR #560 (commit `74b63be`); GrantForm + GrantList wired into GrantsPage.tsx; semantic-token migration PR #603 |
-| 084 | CHANGELOG + CONTRIBUTING sync (G27) | DONE | CHANGELOG already lists PRs #525, #527, #560, #566; CONTRIBUTING already has all 7 coverage thresholds matching AGENTS.md |
-| 100 | Coverage improvement progress | IN_PROGRESS | Phase 2 in flight; web at 76.58% vs 80% target |
+| #   | Plan                                  | Status      | Blocker / Next step                                                                                                       |
+| --- | ------------------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------- |
+| 063 | Comprehensive codebase audit (Wave 2) | IN_PROGRESS | Wave 2 P1 items (search/export/delete/ARIA/perf budgets)                                                                  |
+| 065 | Reader perf + Turborepo cache         | IN_PROGRESS | Stream B PR-2/PR-3 + 4 reader hot-path wins                                                                               |
+| 075 | 2026-06-15 swarm master plan          | IN_PROGRESS | Waves B/C/D; 5 of 12 gaps still open                                                                                      |
+| 076 | Admin recovery + book CRUD            | IN_PROGRESS | Blocked on G15 (magic-link email transport)                                                                               |
+| 077 | Reader progress + search load (G19)   | DONE        | Shipped in PR #566 (commit `?`); progress_loaded telemetry + offline fallback present in `ReaderPage.tsx`                 |
+| 079 | Admin grants PATCH UI (G21)           | DONE        | Shipped in PR #560 (commit `74b63be`); GrantForm + GrantList wired into GrantsPage.tsx; semantic-token migration PR #603  |
+| 084 | CHANGELOG + CONTRIBUTING sync (G27)   | DONE        | CHANGELOG already lists PRs #525, #527, #560, #566; CONTRIBUTING already has all 7 coverage thresholds matching AGENTS.md |
+| 100 | Coverage improvement progress         | IN_PROGRESS | Phase 2 in flight; web at 76.58% vs 80% target                                                                            |
 
 ## Recommended Execution Order
 
@@ -196,7 +196,7 @@ three items were already shipped in earlier PRs:
   `ReaderPage.tsx` includes the `progress_loaded` telemetry event
   (line 190), the offline-DB fallback (line 173), and the CFI display
   path. CHANGELOG already records `fix(reader): wire initial progress
-  load on reader open (#566)`.
+load on reader open (#566)`.
 - **Plan 079 (G21 — admin grants PATCH UI)** — shipped in PR
   [#560](https://github.com/d-oit/do-epub-studio/pull/560) (commit
   `74b63be`). `<GrantList>` and `<GrantForm>` are wired into

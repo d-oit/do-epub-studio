@@ -39,12 +39,17 @@ describe('Access Recovery Routes', () => {
 
     it('returns success even if book not found (to prevent enumeration)', async () => {
       mockQueryFirst.mockResolvedValue(null);
-      const res = await app.fetch(new Request('http://localhost/api/access/recovery-request', {
-        method: 'POST',
-        body: JSON.stringify(validPayload),
-        headers: { 'Content-Type': 'application/json' }
-      }), env, makePassThroughContext());
-      const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } = await res.json();
+      const res = await app.fetch(
+        new Request('http://localhost/api/access/recovery-request', {
+          method: 'POST',
+          body: JSON.stringify(validPayload),
+          headers: { 'Content-Type': 'application/json' },
+        }),
+        env,
+        makePassThroughContext(),
+      );
+      const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } =
+        await res.json();
       expect(res.status).toBe(200);
       expect(body.ok).toBe(true);
       expect(mockCreateResetToken).not.toHaveBeenCalled();
@@ -61,13 +66,18 @@ describe('Access Recovery Routes', () => {
       });
       mockCreateResetToken.mockResolvedValue('raw-magic-token');
 
-      const res = await app.fetch(new Request('http://localhost/api/access/recovery-request', {
-        method: 'POST',
-        body: JSON.stringify(validPayload),
-        headers: { 'Content-Type': 'application/json' }
-      }), env, makePassThroughContext());
+      const res = await app.fetch(
+        new Request('http://localhost/api/access/recovery-request', {
+          method: 'POST',
+          body: JSON.stringify(validPayload),
+          headers: { 'Content-Type': 'application/json' },
+        }),
+        env,
+        makePassThroughContext(),
+      );
 
-      const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } = await res.json();
+      const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } =
+        await res.json();
       expect(res.status).toBe(200);
       expect(body.ok).toBe(true);
       expect(mockCreateResetToken).toHaveBeenCalledWith(
@@ -90,15 +100,21 @@ describe('Access Recovery Routes', () => {
       const captureSend = vi.fn().mockResolvedValue(undefined);
       vi.mocked(createEmailTransport).mockReturnValue({ send: captureSend });
 
-      const res = await app.fetch(new Request('http://localhost/api/access/recovery-request', {
-        method: 'POST',
-        body: JSON.stringify(validPayload),
-        headers: { 'Content-Type': 'application/json', [TRACE_HEADER]: 'deadbeef-1234' },
-      }), env, makePassThroughContext());
+      const res = await app.fetch(
+        new Request('http://localhost/api/access/recovery-request', {
+          method: 'POST',
+          body: JSON.stringify(validPayload),
+          headers: { 'Content-Type': 'application/json', [TRACE_HEADER]: 'deadbeef-1234' },
+        }),
+        env,
+        makePassThroughContext(),
+      );
 
       expect(res.status).toBe(200);
       expect(captureSend).toHaveBeenCalledTimes(1);
-      const message = captureSend.mock.calls[0][0] as { context?: { traceId: string; spanId?: string } };
+      const message = captureSend.mock.calls[0][0] as {
+        context?: { traceId: string; spanId?: string };
+      };
       expect(message.context).toBeDefined();
       expect(message.context?.traceId).toBe('deadbeef-1234');
     });
@@ -107,24 +123,33 @@ describe('Access Recovery Routes', () => {
   describe('POST /api/access/verify-recovery', () => {
     it('returns 401 for unknown token', async () => {
       mockVerifyResetToken.mockResolvedValue({ ok: false, reason: 'invalid' });
-      const res = await app.fetch(new Request('http://localhost/api/access/verify-recovery', {
-        method: 'POST',
-        body: JSON.stringify({ token: 'unknown-token' }),
-        headers: { 'Content-Type': 'application/json' }
-      }), env, makePassThroughContext());
+      const res = await app.fetch(
+        new Request('http://localhost/api/access/verify-recovery', {
+          method: 'POST',
+          body: JSON.stringify({ token: 'unknown-token' }),
+          headers: { 'Content-Type': 'application/json' },
+        }),
+        env,
+        makePassThroughContext(),
+      );
       expect(res.status).toBe(401);
-      const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } = await res.json();
+      const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } =
+        await res.json();
       expect(body.error.code).toBe('INVALID_TOKEN');
       expect(mockCreateSession).not.toHaveBeenCalled();
     });
 
     it('returns 401 and logs a replay audit for a reused token', async () => {
       mockVerifyResetToken.mockResolvedValue({ ok: false, reason: 'used' });
-      const res = await app.fetch(new Request('http://localhost/api/access/verify-recovery', {
-        method: 'POST',
-        body: JSON.stringify({ token: 'reused-token' }),
-        headers: { 'Content-Type': 'application/json' }
-      }), env, makePassThroughContext());
+      const res = await app.fetch(
+        new Request('http://localhost/api/access/verify-recovery', {
+          method: 'POST',
+          body: JSON.stringify({ token: 'reused-token' }),
+          headers: { 'Content-Type': 'application/json' },
+        }),
+        env,
+        makePassThroughContext(),
+      );
       expect(res.status).toBe(401);
       const body: { ok: boolean; error: { code: string } } = await res.json();
       expect(body.error.code).toBe('INVALID_TOKEN');
@@ -133,11 +158,15 @@ describe('Access Recovery Routes', () => {
 
     it('returns 401 for an expired token', async () => {
       mockVerifyResetToken.mockResolvedValue({ ok: false, reason: 'expired' });
-      const res = await app.fetch(new Request('http://localhost/api/access/verify-recovery', {
-        method: 'POST',
-        body: JSON.stringify({ token: 'expired-token' }),
-        headers: { 'Content-Type': 'application/json' }
-      }), env, makePassThroughContext());
+      const res = await app.fetch(
+        new Request('http://localhost/api/access/verify-recovery', {
+          method: 'POST',
+          body: JSON.stringify({ token: 'expired-token' }),
+          headers: { 'Content-Type': 'application/json' },
+        }),
+        env,
+        makePassThroughContext(),
+      );
       expect(res.status).toBe(401);
       const body: { ok: boolean; error: { code: string } } = await res.json();
       expect(body.error.code).toBe('INVALID_TOKEN');
@@ -177,16 +206,24 @@ describe('Access Recovery Routes', () => {
         canExportNotes: false,
         canManageAccess: false,
       });
-      mockCreateSession.mockResolvedValue({ token: 'new-session-token', expiresAt: '2030-01-01T00:00:00.000Z' });
+      mockCreateSession.mockResolvedValue({
+        token: 'new-session-token',
+        expiresAt: '2030-01-01T00:00:00.000Z',
+      });
       mockClaimResetToken.mockResolvedValue(true);
 
-      const res = await app.fetch(new Request('http://localhost/api/access/verify-recovery', {
-        method: 'POST',
-        body: JSON.stringify({ token: 'valid-token' }),
-        headers: { 'Content-Type': 'application/json' }
-      }), env, makePassThroughContext());
+      const res = await app.fetch(
+        new Request('http://localhost/api/access/verify-recovery', {
+          method: 'POST',
+          body: JSON.stringify({ token: 'valid-token' }),
+          headers: { 'Content-Type': 'application/json' },
+        }),
+        env,
+        makePassThroughContext(),
+      );
 
-      const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } = await res.json();
+      const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } =
+        await res.json();
       expect(res.status).toBe(200);
       expect(body.ok).toBe(true);
       expect(body.data.sessionToken).toBe('new-session-token');

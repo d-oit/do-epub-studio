@@ -60,10 +60,10 @@ describe('createEpubAnnotationAdapter', () => {
   describe('renderHighlights', () => {
     it('clears existing highlight annotations before rendering', () => {
       const mock = rendition.annotations as unknown as AnnotationsMock;
-      mock._set(
-        'highlight-epubcfi(/6/4!/4/2/1:0,/1:10)',
-        { type: 'highlight', cfiRange: 'epubcfi(/6/4!/4/2/1:0,/1:10)' },
-      );
+      mock._set('highlight-epubcfi(/6/4!/4/2/1:0,/1:10)', {
+        type: 'highlight',
+        cfiRange: 'epubcfi(/6/4!/4/2/1:0,/1:10)',
+      });
 
       adapter.renderHighlights('chapter1.html', []);
 
@@ -72,7 +72,12 @@ describe('createEpubAnnotationAdapter', () => {
 
     it('does not append when chapterHref is null', () => {
       const highlights: HighlightRecord[] = [
-        { id: 'h1', chapterRef: 'chapter1.html', cfiRange: 'epubcfi(/6/4!/4/2/1:0,/1:10)', color: '#ffff00' },
+        {
+          id: 'h1',
+          chapterRef: 'chapter1.html',
+          cfiRange: 'epubcfi(/6/4!/4/2/1:0,/1:10)',
+          color: '#ffff00',
+        },
       ];
 
       adapter.renderHighlights(null, highlights);
@@ -83,22 +88,28 @@ describe('createEpubAnnotationAdapter', () => {
 
     it('renders only highlights matching the current chapter', () => {
       const highlights: HighlightRecord[] = [
-        { id: 'h1', chapterRef: 'chapter1.html', cfiRange: 'epubcfi(/6/4!/4/2/1:0,/1:10)', color: '#ffff00' },
-        { id: 'h2', chapterRef: 'chapter2.html', cfiRange: 'epubcfi(/6/6!/4/2/1:0,/1:5)', color: '#ff0000' },
+        {
+          id: 'h1',
+          chapterRef: 'chapter1.html',
+          cfiRange: 'epubcfi(/6/4!/4/2/1:0,/1:10)',
+          color: '#ffff00',
+        },
+        {
+          id: 'h2',
+          chapterRef: 'chapter2.html',
+          cfiRange: 'epubcfi(/6/6!/4/2/1:0,/1:5)',
+          color: '#ff0000',
+        },
       ];
 
       adapter.renderHighlights('chapter1.html', highlights);
 
       const mock = rendition.annotations as unknown as AnnotationsMock;
       expect(mock.append).toHaveBeenCalledTimes(1);
-      expect(mock.append).toHaveBeenCalledWith(
-        'highlight',
-        'epubcfi(/6/4!/4/2/1:0,/1:10)',
-        {
-          data: highlights[0],
-          styles: { fill: '#ffff00', 'fill-opacity': '0.3' },
-        },
-      );
+      expect(mock.append).toHaveBeenCalledWith('highlight', 'epubcfi(/6/4!/4/2/1:0,/1:10)', {
+        data: highlights[0],
+        styles: { fill: '#ffff00', 'fill-opacity': '0.3' },
+      });
     });
 
     it('skips highlights with no cfiRange', () => {
@@ -114,8 +125,18 @@ describe('createEpubAnnotationAdapter', () => {
 
     it('renders multiple highlights for the same chapter', () => {
       const highlights: HighlightRecord[] = [
-        { id: 'h1', chapterRef: 'ch1.html', cfiRange: 'epubcfi(/6/4!/4/2/1:0,/1:5)', color: '#ffff00' },
-        { id: 'h2', chapterRef: 'ch1.html', cfiRange: 'epubcfi(/6/4!/4/2/1:6,/1:12)', color: '#00ff00' },
+        {
+          id: 'h1',
+          chapterRef: 'ch1.html',
+          cfiRange: 'epubcfi(/6/4!/4/2/1:0,/1:5)',
+          color: '#ffff00',
+        },
+        {
+          id: 'h2',
+          chapterRef: 'ch1.html',
+          cfiRange: 'epubcfi(/6/4!/4/2/1:6,/1:12)',
+          color: '#00ff00',
+        },
       ];
 
       adapter.renderHighlights('ch1.html', highlights);
@@ -134,10 +155,10 @@ describe('createEpubAnnotationAdapter', () => {
 
     it('clears existing underline annotations before rendering', () => {
       const mock = rendition.annotations as unknown as AnnotationsMock;
-      mock._set(
-        'underline-epubcfi(/6/4!/4/2/1:0,/1:10)',
-        { type: 'underline', cfiRange: 'epubcfi(/6/4!/4/2/1:0,/1:10)' },
-      );
+      mock._set('underline-epubcfi(/6/4!/4/2/1:0,/1:10)', {
+        type: 'underline',
+        cfiRange: 'epubcfi(/6/4!/4/2/1:0,/1:10)',
+      });
 
       adapter.renderCommentMarkers('chapter1.html', [], onNavigate);
 
@@ -146,7 +167,12 @@ describe('createEpubAnnotationAdapter', () => {
 
     it('does not append when chapterHref is null', () => {
       const comments: CommentRecord[] = [
-        { id: 'c1', chapterRef: 'chapter1.html', cfiRange: 'epubcfi(/6/4!/4/2/1:0,/1:10)', status: 'open' },
+        {
+          id: 'c1',
+          chapterRef: 'chapter1.html',
+          cfiRange: 'epubcfi(/6/4!/4/2/1:0,/1:10)',
+          status: 'open',
+        },
       ];
 
       adapter.renderCommentMarkers(null, comments, onNavigate);
@@ -157,7 +183,12 @@ describe('createEpubAnnotationAdapter', () => {
 
     it('skips deleted comments', () => {
       const comments: CommentRecord[] = [
-        { id: 'c1', chapterRef: 'ch1.html', cfiRange: 'epubcfi(/6/4!/4/2/1:0,/1:10)', status: 'deleted' },
+        {
+          id: 'c1',
+          chapterRef: 'ch1.html',
+          cfiRange: 'epubcfi(/6/4!/4/2/1:0,/1:10)',
+          status: 'deleted',
+        },
       ];
 
       adapter.renderCommentMarkers('ch1.html', comments, onNavigate);
@@ -168,28 +199,39 @@ describe('createEpubAnnotationAdapter', () => {
 
     it('renders only comments matching the current chapter', () => {
       const comments: CommentRecord[] = [
-        { id: 'c1', chapterRef: 'ch1.html', cfiRange: 'epubcfi(/6/4!/4/2/1:0,/1:10)', status: 'open' },
-        { id: 'c2', chapterRef: 'ch2.html', cfiRange: 'epubcfi(/6/6!/4/2/1:0,/1:5)', status: 'open' },
+        {
+          id: 'c1',
+          chapterRef: 'ch1.html',
+          cfiRange: 'epubcfi(/6/4!/4/2/1:0,/1:10)',
+          status: 'open',
+        },
+        {
+          id: 'c2',
+          chapterRef: 'ch2.html',
+          cfiRange: 'epubcfi(/6/6!/4/2/1:0,/1:5)',
+          status: 'open',
+        },
       ];
 
       adapter.renderCommentMarkers('ch1.html', comments, onNavigate);
 
       const mock = rendition.annotations as unknown as AnnotationsMock;
       expect(mock.append).toHaveBeenCalledTimes(1);
-      expect(mock.append).toHaveBeenCalledWith(
-        'underline',
-        'epubcfi(/6/4!/4/2/1:0,/1:10)',
-        {
-          data: comments[0],
-          cb: expect.any(Function),
-          styles: { stroke: '#3b82f6', 'stroke-width': '2px', 'stroke-opacity': '0.7' },
-        },
-      );
+      expect(mock.append).toHaveBeenCalledWith('underline', 'epubcfi(/6/4!/4/2/1:0,/1:10)', {
+        data: comments[0],
+        cb: expect.any(Function),
+        styles: { stroke: '#3b82f6', 'stroke-width': '2px', 'stroke-opacity': '0.7' },
+      });
     });
 
     it('uses muted styles for resolved comments', () => {
       const comments: CommentRecord[] = [
-        { id: 'c1', chapterRef: 'ch1.html', cfiRange: 'epubcfi(/6/4!/4/2/1:0,/1:10)', status: 'resolved' },
+        {
+          id: 'c1',
+          chapterRef: 'ch1.html',
+          cfiRange: 'epubcfi(/6/4!/4/2/1:0,/1:10)',
+          status: 'resolved',
+        },
       ];
 
       adapter.renderCommentMarkers('ch1.html', comments, onNavigate);
@@ -206,7 +248,12 @@ describe('createEpubAnnotationAdapter', () => {
 
     it('click callback invokes onNavigate with chapterRef and cfiRange', () => {
       const comments: CommentRecord[] = [
-        { id: 'c1', chapterRef: 'ch1.html', cfiRange: 'epubcfi(/6/4!/4/2/1:0,/1:10)', status: 'open' },
+        {
+          id: 'c1',
+          chapterRef: 'ch1.html',
+          cfiRange: 'epubcfi(/6/4!/4/2/1:0,/1:10)',
+          status: 'open',
+        },
       ];
 
       adapter.renderCommentMarkers('ch1.html', comments, onNavigate);
@@ -223,14 +270,14 @@ describe('createEpubAnnotationAdapter', () => {
   describe('clearAnnotations', () => {
     it('removes all annotations', () => {
       const mock = rendition.annotations as unknown as AnnotationsMock;
-      mock._set(
-        'highlight-epubcfi(/6/4!/4/2/1:0,/1:10)',
-        { type: 'highlight', cfiRange: 'epubcfi(/6/4!/4/2/1:0,/1:10)' },
-      );
-      mock._set(
-        'underline-epubcfi(/6/4!/4/2/1:6,/1:12)',
-        { type: 'underline', cfiRange: 'epubcfi(/6/4!/4/2/1:6,/1:12)' },
-      );
+      mock._set('highlight-epubcfi(/6/4!/4/2/1:0,/1:10)', {
+        type: 'highlight',
+        cfiRange: 'epubcfi(/6/4!/4/2/1:0,/1:10)',
+      });
+      mock._set('underline-epubcfi(/6/4!/4/2/1:6,/1:12)', {
+        type: 'underline',
+        cfiRange: 'epubcfi(/6/4!/4/2/1:6,/1:12)',
+      });
 
       adapter.clearAnnotations();
 
@@ -256,7 +303,12 @@ describe('createEpubAnnotationAdapter', () => {
 
     it('batches multiple scheduleRender calls into a single rAF', () => {
       const highlights: HighlightRecord[] = [
-        { id: 'h1', chapterRef: 'ch1.html', cfiRange: 'epubcfi(/6/4!/4/2/1:0,/1:5)', color: '#ffff00' },
+        {
+          id: 'h1',
+          chapterRef: 'ch1.html',
+          cfiRange: 'epubcfi(/6/4!/4/2/1:0,/1:5)',
+          color: '#ffff00',
+        },
       ];
       const comments: CommentRecord[] = [];
       const onNavigate = vi.fn();
@@ -274,7 +326,12 @@ describe('createEpubAnnotationAdapter', () => {
 
     it('does not render when cancelScheduledRender is called', () => {
       const highlights: HighlightRecord[] = [
-        { id: 'h1', chapterRef: 'ch1.html', cfiRange: 'epubcfi(/6/4!/4/2/1:0,/1:5)', color: '#ffff00' },
+        {
+          id: 'h1',
+          chapterRef: 'ch1.html',
+          cfiRange: 'epubcfi(/6/4!/4/2/1:0,/1:5)',
+          color: '#ffff00',
+        },
       ];
       const onNavigate = vi.fn();
 
@@ -289,10 +346,20 @@ describe('createEpubAnnotationAdapter', () => {
 
     it('renders both highlights and comments when rAF fires', () => {
       const highlights: HighlightRecord[] = [
-        { id: 'h1', chapterRef: 'ch1.html', cfiRange: 'epubcfi(/6/4!/4/2/1:0,/1:5)', color: '#ffff00' },
+        {
+          id: 'h1',
+          chapterRef: 'ch1.html',
+          cfiRange: 'epubcfi(/6/4!/4/2/1:0,/1:5)',
+          color: '#ffff00',
+        },
       ];
       const comments: CommentRecord[] = [
-        { id: 'c1', chapterRef: 'ch1.html', cfiRange: 'epubcfi(/6/4!/4/2/1:6,/1:12)', status: 'open' },
+        {
+          id: 'c1',
+          chapterRef: 'ch1.html',
+          cfiRange: 'epubcfi(/6/4!/4/2/1:6,/1:12)',
+          status: 'open',
+        },
       ];
       const onNavigate = vi.fn();
 
@@ -305,10 +372,20 @@ describe('createEpubAnnotationAdapter', () => {
 
     it('coalesces rapid scheduleRender calls into one paint', () => {
       const highlights: HighlightRecord[] = [
-        { id: 'h1', chapterRef: 'ch1.html', cfiRange: 'epubcfi(/6/4!/4/2/1:0,/1:5)', color: '#ffff00' },
+        {
+          id: 'h1',
+          chapterRef: 'ch1.html',
+          cfiRange: 'epubcfi(/6/4!/4/2/1:0,/1:5)',
+          color: '#ffff00',
+        },
       ];
       const comments: CommentRecord[] = [
-        { id: 'c1', chapterRef: 'ch1.html', cfiRange: 'epubcfi(/6/4!/4/2/1:6,/1:12)', status: 'open' },
+        {
+          id: 'c1',
+          chapterRef: 'ch1.html',
+          cfiRange: 'epubcfi(/6/4!/4/2/1:6,/1:12)',
+          status: 'open',
+        },
       ];
       const onNavigate = vi.fn();
 

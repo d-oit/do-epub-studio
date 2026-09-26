@@ -35,7 +35,7 @@ failures, no warnings, no skipped-but-expected jobs becoming failed).
 - **PR 514** "Skip performance report on main branch pushes" — 2 commits,
   21/21 CI checks green. Adds one line to `.github/workflows/ci.yml`:
   `if: github.event_name == 'pull_request'` on the `performance-report` job.
-  Its second commit also includes a *duplicate* esbuild override.
+  Its second commit also includes a _duplicate_ esbuild override.
 
 ### Cross-PR conflict
 
@@ -51,23 +51,24 @@ the workflow gate change.
 
 ## Decomposition (Strategy)
 
-| Step | Action | Skill/Path |
-|------|--------|------------|
-| 1 | Review PR 512 diff (redaction + esbuild) | code-review-assistant |
-| 2 | Review PR 514 diff (perf-report gate) | code-review-assistant |
-| 3 | Merge PR 512 (squash) into main | github-pr-autopilot |
-| 4 | Rebase PR 514 onto new main, drop duplicate esbuild | github-workflow |
-| 5 | Re-run CI on rebased PR 514 head | github-workflow |
-| 6 | Merge PR 514 (squash) into main | github-pr-autopilot |
-| 7 | Verify main CI is green | test-runner |
-| 8 | Open follow-up issue for scheduled E2E failures | github-workflow |
-| 9 | Create this plan + capture learnings | goap-agent, learn |
+| Step | Action                                              | Skill/Path            |
+| ---- | --------------------------------------------------- | --------------------- |
+| 1    | Review PR 512 diff (redaction + esbuild)            | code-review-assistant |
+| 2    | Review PR 514 diff (perf-report gate)               | code-review-assistant |
+| 3    | Merge PR 512 (squash) into main                     | github-pr-autopilot   |
+| 4    | Rebase PR 514 onto new main, drop duplicate esbuild | github-workflow       |
+| 5    | Re-run CI on rebased PR 514 head                    | github-workflow       |
+| 6    | Merge PR 514 (squash) into main                     | github-pr-autopilot   |
+| 7    | Verify main CI is green                             | test-runner           |
+| 8    | Open follow-up issue for scheduled E2E failures     | github-workflow       |
+| 9    | Create this plan + capture learnings                | goap-agent, learn     |
 
 ## Coordination (Execution)
 
 ### Review findings
 
 **PR 512** — Approved.
+
 - `sanitizeAuditPayload` in `apps/worker/src/audit/index.ts:25` adds a
   `SENSITIVE_KEYS` set (token, password, secret, magiclink, signature,
   sessiontoken, passwordhash, key, apikey, auth, credential) and normalizes
@@ -87,6 +88,7 @@ the workflow gate change.
   based change detection, Setup & Diagnostics).
 
 **PR 514** — Approved, with one rebase-driven simplification.
+
 - Surgical one-line change: `if: github.event_name == 'pull_request'` on
   the `performance-report` job in `.github/workflows/ci.yml:522`. The job
   only renders PR feedback, so excluding `push` events (which lack
@@ -158,11 +160,11 @@ gh issue view 513 --json state
 
 ## Follow-ups (Open Work)
 
-| Item | Owner | Tracking |
-|------|-------|----------|
-| Fix scheduled cross-browser E2E failures (13 tests) | TBD | #515 |
-| Consider whether perf-report should be deleted vs gated | Future ADR | TBD |
-| Consider automating esbuild override via Renovate | Future | TBD |
+| Item                                                    | Owner      | Tracking |
+| ------------------------------------------------------- | ---------- | -------- |
+| Fix scheduled cross-browser E2E failures (13 tests)     | TBD        | #515     |
+| Consider whether perf-report should be deleted vs gated | Future ADR | TBD      |
+| Consider automating esbuild override via Renovate       | Future     | TBD      |
 
 ## Cross-references
 

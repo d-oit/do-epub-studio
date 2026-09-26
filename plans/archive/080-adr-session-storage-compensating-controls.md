@@ -75,18 +75,12 @@ describe('ADR-080: session storage compensating controls', () => {
   });
 
   it('client-logger does not export sessionToken', () => {
-    const src = fs.readFileSync(
-      new URL('../lib/client-logger.ts', import.meta.url),
-      'utf8',
-    );
+    const src = fs.readFileSync(new URL('../lib/client-logger.ts', import.meta.url), 'utf8');
     expect(src).not.toMatch(/sessionToken/);
   });
 
   it('AGENTS.md references docs/security-posture.md', () => {
-    const agents = fs.readFileSync(
-      new URL('../../../../AGENTS.md', import.meta.url),
-      'utf8',
-    );
+    const agents = fs.readFileSync(new URL('../../../../AGENTS.md', import.meta.url), 'utf8');
     expect(agents).toContain('docs/security-posture.md');
   });
 });
@@ -99,26 +93,17 @@ import fs from 'node:fs';
 
 describe('ADR-080: Worker security posture', () => {
   it('CSP excludes unsafe-eval', () => {
-    const src = fs.readFileSync(
-      new URL('../lib/security-headers.ts', import.meta.url),
-      'utf8',
-    );
+    const src = fs.readFileSync(new URL('../lib/security-headers.ts', import.meta.url), 'utf8');
     expect(src).not.toMatch(/'unsafe-eval'/);
   });
 
   it('CSP includes report-uri', () => {
-    const src = fs.readFileSync(
-      new URL('../lib/security-headers.ts', import.meta.url),
-      'utf8',
-    );
+    const src = fs.readFileSync(new URL('../lib/security-headers.ts', import.meta.url), 'utf8');
     expect(src).toContain('/api/csp-report');
   });
 
   it('CSP report route persists via logAudit', async () => {
-    const src = fs.readFileSync(
-      new URL('../routes/security.ts', import.meta.url),
-      'utf8',
-    );
+    const src = fs.readFileSync(new URL('../routes/security.ts', import.meta.url), 'utf8');
     expect(src).toContain('logAudit');
   });
 });

@@ -23,11 +23,11 @@ clean up Proposed ADRs.
 
 34 failing tests across 3 root causes:
 
-| # | Root Cause | Scope | Severity |
-|---|-----------|-------|----------|
+| #       | Root Cause                                                                      | Scope                        | Severity            |
+| ------- | ------------------------------------------------------------------------------- | ---------------------------- | ------------------- |
 | **RC1** | Sync queue flush race condition — bookmarks not incrementing after reconnection | `offline-reader.spec.ts:212` | P0 — blocks release |
-| **RC2** | Mobile viewport visibility failures — 3 pixel tests failing `toBeVisible()` | Mobile E2E suite | P1 — flaky |
-| **RC3** | Workbox SW crash — `Cannot read properties of undefined (reading 'waiting')` | Workbox bundle | P0 — blocks release |
+| **RC2** | Mobile viewport visibility failures — 3 pixel tests failing `toBeVisible()`     | Mobile E2E suite             | P1 — flaky          |
+| **RC3** | Workbox SW crash — `Cannot read properties of undefined (reading 'waiting')`    | Workbox bundle               | P0 — blocks release |
 
 ### Root Cause Analysis
 
@@ -35,6 +35,7 @@ clean up Proposed ADRs.
 path. The E2E test at line 212 disconnects, creates a bookmark, reconnects, and
 expects the bookmark count to increment. The race is between the sync queue flush
 and the UI re-render. The fix likely needs either:
+
 - A `waitFor` on the sync queue flush completion signal before asserting count
 - An explicit `syncQueue.flush()` call in the test setup
 - A server-side confirmation event that the client awaits
@@ -50,21 +51,21 @@ workbox config update.
 
 ### Backlog State
 
-| Item | Status | Notes |
-|------|--------|-------|
-| A6 | ✅ RESOLVED | Per Plan 121 — IndexedDB restore in ReaderPage.tsx catch block |
-| N3 | ⏳ OPEN | Server-side full-text search for large EPUBs |
-| N6 | ⏳ OPEN | EPUB re-export / packager |
-| N7 | ⏳ OPEN | Comment reply notifications |
-| F3 | ⏳ OPEN | Cross-isolate cache invalidation via DO/KV |
+| Item | Status      | Notes                                                          |
+| ---- | ----------- | -------------------------------------------------------------- |
+| A6   | ✅ RESOLVED | Per Plan 121 — IndexedDB restore in ReaderPage.tsx catch block |
+| N3   | ⏳ OPEN     | Server-side full-text search for large EPUBs                   |
+| N6   | ⏳ OPEN     | EPUB re-export / packager                                      |
+| N7   | ⏳ OPEN     | Comment reply notifications                                    |
+| F3   | ⏳ OPEN     | Cross-isolate cache invalidation via DO/KV                     |
 
 ### ADR State
 
-| ADR | Status | Action Needed |
-|-----|--------|---------------|
+| ADR | Status   | Action Needed                                               |
+| --- | -------- | ----------------------------------------------------------- |
 | 065 | Proposed | Accept — all open PRs/issues were resolved in Plans 114–128 |
-| 074 | Proposed | Accept — E2E resilience improvements shipped in PR #756 |
-| 115 | Proposed | Accept — verified-audit policy followed in Plans 116–128 |
+| 074 | Proposed | Accept — E2E resilience improvements shipped in PR #756     |
+| 115 | Proposed | Accept — verified-audit policy followed in Plans 116–128    |
 
 ### CHANGELOG
 
@@ -77,6 +78,7 @@ tenant isolation), and infrastructure (sync consolidation, coverage improvements
 ## Decompose — Tasks
 
 ### T1: Fix Sync Queue Flush Race (RC1) — P0
+
 - **Branch:** `fix/sync-queue-flush-race`
 - **Scope:** `offline-reader.spec.ts`, possibly sync queue module
 - **Approach:** Add explicit flush/await in E2E test; if race is in production
@@ -86,6 +88,7 @@ tenant isolation), and infrastructure (sync consolidation, coverage improvements
 - **Agent:** `testing-strategy` + `pwa-offline-sync`
 
 ### T2: Fix Mobile Viewport Visibility (RC2) — P1
+
 - **Branch:** `fix/mobile-viewport-e2e-visibility`
 - **Scope:** 3 failing pixel tests in mobile E2E suite
 - **Approach:** Add `scrollIntoViewIfNeeded()` or use `getByRole` with
@@ -94,6 +97,7 @@ tenant isolation), and infrastructure (sync consolidation, coverage improvements
 - **Agent:** `testing-strategy`
 
 ### T3: Fix Workbox SW Crash (RC3) — P0
+
 - **Branch:** `fix/workbox-sw-waiting-crash`
 - **Scope:** Workbox config or SW lifecycle code
 - **Approach:** Guard `self.registration` access; check workbox version
@@ -102,6 +106,7 @@ tenant isolation), and infrastructure (sync consolidation, coverage improvements
 - **Agent:** `pwa-offline-sync`
 
 ### T4: Update P3 Backlog — P2
+
 - **Branch:** `docs/p3-backlog-update-129`
 - **Scope:** Plan 121, Plan 128 remaining items table
 - **Approach:** Strike A6 (resolved), confirm N3/N6/N7/F3 status, add M6
@@ -109,6 +114,7 @@ tenant isolation), and infrastructure (sync consolidation, coverage improvements
 - **Agent:** None (doc update)
 
 ### T5: Accept Proposed ADRs — P2
+
 - **Branch:** `docs/accept-proposed-adrs`
 - **Scope:** ADR-065, ADR-074, ADR-115, ADR-INDEX.md
 - **Approach:** Update status to Accepted in each ADR file; update ADR-INDEX
@@ -116,6 +122,7 @@ tenant isolation), and infrastructure (sync consolidation, coverage improvements
 - **Agent:** None (doc update)
 
 ### T6: Skills & Harness Check — P3
+
 - **Branch:** `chore/skills-harness-audit`
 - **Scope:** `.agents/skills/`, `.claude/skills/`
 - **Approach:** Verify all 40 skills are tracked in git; check pr-review-fix
@@ -124,6 +131,7 @@ tenant isolation), and infrastructure (sync consolidation, coverage improvements
 - **Agent:** None
 
 ### T7: Prepare 0.1.2 Release — P1
+
 - **Branch:** `release/0.1.2`
 - **Scope:** CHANGELOG.md, package.json versions
 - **Approach:** Use `release-management` skill to cut release
@@ -151,26 +159,26 @@ Phase 2 (Sequential) — Release
 
 ### Quality Gates
 
-| Gate | Criteria | When |
-|------|----------|------|
-| QG1 | `./scripts/quality_gate.sh` passes | After each of T1–T3 |
-| QG2 | `gh pr checks` all green | After each PR merge |
-| QG3 | All 34 E2E tests pass (run count: 0 failures) | After T1+T2+T3 merged |
-| QG4 | CHANGELOG clean, versions bumped | Before T7 |
+| Gate | Criteria                                      | When                  |
+| ---- | --------------------------------------------- | --------------------- |
+| QG1  | `./scripts/quality_gate.sh` passes            | After each of T1–T3   |
+| QG2  | `gh pr checks` all green                      | After each PR merge   |
+| QG3  | All 34 E2E tests pass (run count: 0 failures) | After T1+T2+T3 merged |
+| QG4  | CHANGELOG clean, versions bumped              | Before T7             |
 
 ---
 
 ## Coordinate — Agent Assignments
 
-| Task | Primary Agent | Support Agent | Strategy |
-|------|--------------|---------------|----------|
-| T1 | `testing-strategy` | `pwa-offline-sync` | Sequential (diagnose → fix → verify) |
-| T2 | `testing-strategy` | — | Sequential |
-| T3 | `pwa-offline-sync` | — | Sequential |
-| T4 | — (manual doc) | — | Direct edit |
-| T5 | — (manual doc) | — | Direct edit |
-| T6 | — (manual audit) | — | Direct edit |
-| T7 | `release-management` | — | Skill-driven |
+| Task | Primary Agent        | Support Agent      | Strategy                             |
+| ---- | -------------------- | ------------------ | ------------------------------------ |
+| T1   | `testing-strategy`   | `pwa-offline-sync` | Sequential (diagnose → fix → verify) |
+| T2   | `testing-strategy`   | —                  | Sequential                           |
+| T3   | `pwa-offline-sync`   | —                  | Sequential                           |
+| T4   | — (manual doc)       | —                  | Direct edit                          |
+| T5   | — (manual doc)       | —                  | Direct edit                          |
+| T6   | — (manual audit)     | —                  | Direct edit                          |
+| T7   | `release-management` | —                  | Skill-driven                         |
 
 ---
 
@@ -266,24 +274,24 @@ git status .claude/skills/pr-review-fix/
 
 ## Synthesize — Success Criteria
 
-| Criteria | Verification |
-|----------|-------------|
-| Issue #771 resolved | 0 E2E failures in scheduled run |
-| All CI green on main | `gh pr checks` shows all pass |
-| 0.1.2 released | Git tag `v0.1.2` exists, CHANGELOG updated |
-| P3 backlog current | Plan 121 table reflects reality |
-| Proposed ADRs resolved | ADR-INDEX shows 0 Proposed entries |
-| Skills tracked | All 40 skills in git |
+| Criteria               | Verification                               |
+| ---------------------- | ------------------------------------------ |
+| Issue #771 resolved    | 0 E2E failures in scheduled run            |
+| All CI green on main   | `gh pr checks` shows all pass              |
+| 0.1.2 released         | Git tag `v0.1.2` exists, CHANGELOG updated |
+| P3 backlog current     | Plan 121 table reflects reality            |
+| Proposed ADRs resolved | ADR-INDEX shows 0 Proposed entries         |
+| Skills tracked         | All 40 skills in git                       |
 
 ---
 
 ## Risk Register
 
-| Risk | Likelihood | Impact | Mitigation |
-|------|-----------|--------|------------|
-| Sync race is deeper than test timing | Medium | High | May need production sync queue fix; escalate to T1.1 subtask |
-| Workbox crash is upstream bug | Low | High | Pin workbox version or add polyfill guard |
-| Release blocked by Codacy | Low | Medium | Pre-check with `codacy pull-request` before merge |
+| Risk                                 | Likelihood | Impact | Mitigation                                                   |
+| ------------------------------------ | ---------- | ------ | ------------------------------------------------------------ |
+| Sync race is deeper than test timing | Medium     | High   | May need production sync queue fix; escalate to T1.1 subtask |
+| Workbox crash is upstream bug        | Low        | High   | Pin workbox version or add polyfill guard                    |
+| Release blocked by Codacy            | Low        | Medium | Pre-check with `codacy pull-request` before merge            |
 
 ---
 
@@ -298,7 +306,7 @@ git status .claude/skills/pr-review-fix/
 
 ## Corrections (per ADR-115)
 
-| ID | Prior Claim | Verified Reality |
-|----|------------|------------------|
-| A6 | "OPEN — offline reader fallback annotation restore" | ✅ RESOLVED — `ReaderPage.tsx` catch block restores highlights, comments, bookmarks from IndexedDB (Plan 121 evidence) |
-| M3 | "OPEN — redundant sync queue paths" | ✅ RESOLVED — PR #757 consolidated bookmark sync into annotation queue |
+| ID  | Prior Claim                                         | Verified Reality                                                                                                       |
+| --- | --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| A6  | "OPEN — offline reader fallback annotation restore" | ✅ RESOLVED — `ReaderPage.tsx` catch block restores highlights, comments, bookmarks from IndexedDB (Plan 121 evidence) |
+| M3  | "OPEN — redundant sync queue paths"                 | ✅ RESOLVED — PR #757 consolidated bookmark sync into annotation queue                                                 |

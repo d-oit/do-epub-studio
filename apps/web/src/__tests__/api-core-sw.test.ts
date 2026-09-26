@@ -18,8 +18,16 @@ describe('api/core API_BASE_URL (service-worker context)', () => {
   });
 
   it('does not throw and yields a relative base when window and self are undefined', async () => {
-    Object.defineProperty(globalThis, 'window', { value: undefined, configurable: true, writable: true });
-    Object.defineProperty(globalThis, 'self', { value: undefined, configurable: true, writable: true });
+    Object.defineProperty(globalThis, 'window', {
+      value: undefined,
+      configurable: true,
+      writable: true,
+    });
+    Object.defineProperty(globalThis, 'self', {
+      value: undefined,
+      configurable: true,
+      writable: true,
+    });
     vi.stubEnv('VITE_API_BASE_URL', '');
     vi.stubEnv('PROD', true);
     // test-setup.ts's beforeEach imports lib/data-cache -> lib/api -> core at

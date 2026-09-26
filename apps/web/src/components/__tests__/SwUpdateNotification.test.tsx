@@ -108,7 +108,9 @@ describe('SwUpdateNotification', () => {
       const exitAnimationDone = new Promise<void>((resolve) => {
         setTimeout(resolve, 250);
       });
-      await act(async () => { await exitAnimationDone; });
+      await act(async () => {
+        await exitAnimationDone;
+      });
 
       expect(container.querySelector('.animate-slide-out-bottom')).not.toBeInTheDocument();
       expect(dismissSpy).toHaveBeenCalled();

@@ -1,14 +1,14 @@
 import { useEffect } from 'react';
 import { createSpanId, createTraceId } from '@do-epub-studio/shared';
 import { apiRequest, fetchHighlights, fetchComments, fetchProgress } from '../../../lib/api/index';
-import { logClientEvent, createPerformanceMark, measurePerformance } from '../../../lib/client-logger';
+import {
+  logClientEvent,
+  createPerformanceMark,
+  measurePerformance,
+} from '../../../lib/client-logger';
 import { getProgress, getAnnotations } from '../../../lib/offline';
 import type { Highlight, Comment, Bookmark, ReadingProgress } from '../../../stores';
-import {
-  mapOfflineHighlight,
-  mapOfflineComment,
-  mapOfflineBookmark,
-} from './mapOfflineAnnotation';
+import { mapOfflineHighlight, mapOfflineComment, mapOfflineBookmark } from './mapOfflineAnnotation';
 
 interface UseReaderDataLoaderOptions {
   sessionToken: string | null;
@@ -107,7 +107,11 @@ export function useReaderDataLoader({
             });
           }
           createPerformanceMark('rehydrate-offline-end');
-          const rehydrateMs = measurePerformance('rehydrate-offline', 'rehydrate-offline-start', 'rehydrate-offline-end');
+          const rehydrateMs = measurePerformance(
+            'rehydrate-offline',
+            'rehydrate-offline-start',
+            'rehydrate-offline-end',
+          );
           if (rehydrateMs !== undefined) {
             logClientEvent({
               level: 'info',

@@ -37,12 +37,12 @@ future contributors know it is intentional and expected.
 
 ### How the control narrows the threat surface
 
-| Threat | ADR-092 controls | Wave 4 lockout control |
-|---|---|---|
-| XSS token exfiltration | CSP blocks inline scripts; DOMPurify strips EPUB XSS vectors | N/A (lockout does not prevent exfiltration) |
-| Session brute-force via stolen token | Token is 256-bit random; infeasible to guess | N/A (token itself is not guessed) |
-| Credential brute-force after partial pivot | — | **Lockout after 5 attempts / 15 min** blocks enumeration of new sessions |
-| Token replay after expiry | 7-day expiry + grant revocation | — |
+| Threat                                     | ADR-092 controls                                             | Wave 4 lockout control                                                   |
+| ------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------------------ |
+| XSS token exfiltration                     | CSP blocks inline scripts; DOMPurify strips EPUB XSS vectors | N/A (lockout does not prevent exfiltration)                              |
+| Session brute-force via stolen token       | Token is 256-bit random; infeasible to guess                 | N/A (token itself is not guessed)                                        |
+| Credential brute-force after partial pivot | —                                                            | **Lockout after 5 attempts / 15 min** blocks enumeration of new sessions |
+| Token replay after expiry                  | 7-day expiry + grant revocation                              | —                                                                        |
 
 The lockout does not directly prevent XSS-based token theft (that is the CSP
 and sanitizer's job). It narrows the blast radius when an attacker uses a

@@ -178,7 +178,8 @@ export default defineConfig({
     // that chunk but well below a genuinely oversized new one, so the advisory
     // — and the quality gate's zero-warning rail on it — still bites.
     chunkSizeWarningLimit: 600,
-    rolldownOptions: { output: {
+    rolldownOptions: {
+      output: {
         // Vite 8 Rolldown uses codeSplitting or function manualChunks
         manualChunks: (id) => {
           if (id.includes('node_modules')) {

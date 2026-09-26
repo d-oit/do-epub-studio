@@ -37,7 +37,7 @@ told future agents that `e2e-smoke` covers PR smoke, which is false.
 1. **A gating job must be fail-closed against being skipped.** Any job whose
    absence weakens an accepted ADR carries an explicit guard on its `if`:
    `always() && !contains(needs.*.result, 'failure') &&
-   !contains(needs.*.result, 'cancelled')` ANDed with — never replacing —
+!contains(needs.*.result, 'cancelled')` ANDed with — never replacing —
    its existing scope/event condition. This is the pattern `build` already
    uses for the same cascade (GOAP-267). Scope filters stay: a guard must not
    turn a docs-only PR into a 20-minute Playwright run.

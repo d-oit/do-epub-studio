@@ -26,16 +26,56 @@
         ["resource-summary:stylesheet:size", ["error", { "maxNumericValue": 100000 }]],
         ["first-contentful-paint", ["error", { "maxNumericValue": 2000 }]],
         ["interactive", ["error", { "maxNumericValue": 5000 }]],
-        ["categories:performance", ["error", { "minScore": 0.6 }], { "matchingUrlPattern": ".*\\/catalog.*" }],
-        ["categories:performance", ["error", { "minScore": 0.6 }], { "matchingUrlPattern": ".*\\/admin.*" }],
-        ["categories:performance", ["error", { "minScore": 0.6 }], { "matchingUrlPattern": ".*\\/login.*" }],
-        ["categories:performance", ["error", { "minScore": 0.6 }], { "matchingUrlPattern": ".*\\/read\\/.*" }],
-        ["first-contentful-paint", ["error", { "maxNumericValue": 1800 }], { "matchingUrlPattern": ".*\\/catalog.*" }],
-        ["first-contentful-paint", ["error", { "maxNumericValue": 1800 }], { "matchingUrlPattern": ".*\\/login.*" }],
-        ["first-contentful-paint", ["error", { "maxNumericValue": 1200 }], { "matchingUrlPattern": ".*\\/read\\/.*" }],
-        ["interactive", ["error", { "maxNumericValue": 4000 }], { "matchingUrlPattern": ".*\\/catalog.*" }],
-        ["interactive", ["error", { "maxNumericValue": 4000 }], { "matchingUrlPattern": ".*\\/admin.*" }],
-        ["interactive", ["error", { "maxNumericValue": 4000 }], { "matchingUrlPattern": ".*\\/read\\/.*" }]
+        [
+          "categories:performance",
+          ["error", { "minScore": 0.6 }],
+          { "matchingUrlPattern": ".*\\/catalog.*" }
+        ],
+        [
+          "categories:performance",
+          ["error", { "minScore": 0.6 }],
+          { "matchingUrlPattern": ".*\\/admin.*" }
+        ],
+        [
+          "categories:performance",
+          ["error", { "minScore": 0.6 }],
+          { "matchingUrlPattern": ".*\\/login.*" }
+        ],
+        [
+          "categories:performance",
+          ["error", { "minScore": 0.6 }],
+          { "matchingUrlPattern": ".*\\/read\\/.*" }
+        ],
+        [
+          "first-contentful-paint",
+          ["error", { "maxNumericValue": 1800 }],
+          { "matchingUrlPattern": ".*\\/catalog.*" }
+        ],
+        [
+          "first-contentful-paint",
+          ["error", { "maxNumericValue": 1800 }],
+          { "matchingUrlPattern": ".*\\/login.*" }
+        ],
+        [
+          "first-contentful-paint",
+          ["error", { "maxNumericValue": 1200 }],
+          { "matchingUrlPattern": ".*\\/read\\/.*" }
+        ],
+        [
+          "interactive",
+          ["error", { "maxNumericValue": 4000 }],
+          { "matchingUrlPattern": ".*\\/catalog.*" }
+        ],
+        [
+          "interactive",
+          ["error", { "maxNumericValue": 4000 }],
+          { "matchingUrlPattern": ".*\\/admin.*" }
+        ],
+        [
+          "interactive",
+          ["error", { "maxNumericValue": 4000 }],
+          { "matchingUrlPattern": ".*\\/read\\/.*" }
+        ]
       ]
     },
     "upload": {

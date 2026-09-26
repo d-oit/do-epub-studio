@@ -42,11 +42,12 @@ forces every catalog fetch to hit Turso.
    share the same streaming R2 writer.
 
 4. **EPUB validation is best-effort for very large files.** For uploads
+
    > 25 MB, validation is skipped on the streaming path and recorded as
-   a warning in the response. Small files (≤ 25 MB) are still fully
-   validated with `validateEpub(arrayBuffer)` to keep the existing
-   contract intact. This preserves memory safety while keeping fast
-   feedback for the common small-file case.
+   > a warning in the response. Small files (≤ 25 MB) are still fully
+   > validated with `validateEpub(arrayBuffer)` to keep the existing
+   > contract intact. This preserves memory safety while keeping fast
+   > feedback for the common small-file case.
 
 5. **Edge cache the public catalog.** The catalog handler is wrapped in
    a helper that:
@@ -60,7 +61,7 @@ forces every catalog fetch to hit Turso.
 6. **Cache headers per route, not a global default.** Keep
    `responses.ts` `no-store` for auth and admin paths. The catalog
    explicitly opts in to `public, max-age=60, s-maxage=300,
-   stale-while-revalidate=86400`. This avoids accidentally caching
+stale-while-revalidate=86400`. This avoids accidentally caching
    user-specific or admin responses.
 
 ## Consequences

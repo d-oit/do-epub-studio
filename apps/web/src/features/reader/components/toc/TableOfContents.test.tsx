@@ -6,7 +6,15 @@ import { TableOfContents } from './TableOfContents';
 // Mock focus trap and components
 vi.mock('@do-epub-studio/ui', () => ({
   useFocusTrap: vi.fn(),
-  IconButton: ({ children, onClick, 'aria-label': ariaLabel }: { children: ReactNode; onClick: () => void; 'aria-label': string }) => (
+  IconButton: ({
+    children,
+    onClick,
+    'aria-label': ariaLabel,
+  }: {
+    children: ReactNode;
+    onClick: () => void;
+    'aria-label': string;
+  }) => (
     <button type="button" onClick={onClick} aria-label={ariaLabel}>
       {children}
     </button>
@@ -87,9 +95,7 @@ describe('TableOfContents', () => {
       label: `Chapter ${i + 1}`,
       href: `chapter${i + 1}.xhtml`,
     }));
-    const { container } = render(
-      <TableOfContents {...mockProps} toc={longToc} />,
-    );
+    const { container } = render(<TableOfContents {...mockProps} toc={longToc} />);
     // VirtualList renders a <ul> for the scroll container (semantic list).
     // The short-list path uses <nav> + plain <button> children.
     const list = container.querySelector('ul');
@@ -107,11 +113,7 @@ describe('TableOfContents', () => {
     }));
     // Active chapter is at index 55 — outside the initial visible window
     const { container } = render(
-      <TableOfContents
-        {...mockProps}
-        toc={longToc}
-        currentChapter="chapter56.xhtml"
-      />,
+      <TableOfContents {...mockProps} toc={longToc} currentChapter="chapter56.xhtml" />,
     );
     // VirtualList should be rendered (long TOC triggers virtualization)
     const list = container.querySelector('ul');

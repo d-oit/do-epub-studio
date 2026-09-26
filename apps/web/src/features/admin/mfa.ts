@@ -48,7 +48,10 @@ export async function fetchMfaStatus(): Promise<AdminMfaStatus> {
  * challenge. Returns the rotated token, any newly issued recovery codes, and
  * the enrolled credential id.
  */
-export async function performPasskeyEnroll(currentPassword: string, displayName?: string): Promise<PasskeyEnrollResult> {
+export async function performPasskeyEnroll(
+  currentPassword: string,
+  displayName?: string,
+): Promise<PasskeyEnrollResult> {
   const token = currentToken();
   const start = await apiRequest<{ options: PublicKeyCredentialCreationOptionsJSON }>(
     '/api/admin/account/mfa/register-start',
@@ -93,16 +96,24 @@ export async function performPasskeyAuth(): Promise<string> {
 }
 
 /** Remove an enrolled passkey (requires current password + `mfa` assurance). */
-export async function removePasskey(id: string, currentPassword: string): Promise<{ mfaEnrolled: boolean }> {
-  return apiRequest<{ mfaEnrolled: boolean }>(`/api/admin/account/mfa/passkey/${encodeURIComponent(id)}`, {
-    method: 'DELETE',
-    token: currentToken(),
-    body: JSON.stringify({ currentPassword }),
-  });
+export async function removePasskey(
+  id: string,
+  currentPassword: string,
+): Promise<{ mfaEnrolled: boolean }> {
+  return apiRequest<{ mfaEnrolled: boolean }>(
+    `/api/admin/account/mfa/passkey/${encodeURIComponent(id)}`,
+    {
+      method: 'DELETE',
+      token: currentToken(),
+      body: JSON.stringify({ currentPassword }),
+    },
+  );
 }
 
 /** Regenerate single-use recovery codes (requires current password + `mfa` assurance). */
-export async function regenerateRecoveryCodes(currentPassword: string): Promise<{ recoveryCodes: string[]; token?: string }> {
+export async function regenerateRecoveryCodes(
+  currentPassword: string,
+): Promise<{ recoveryCodes: string[]; token?: string }> {
   const data = await apiRequest<{ recoveryCodes: string[]; token?: string }>(
     '/api/admin/account/mfa/recovery-codes/regenerate',
     {

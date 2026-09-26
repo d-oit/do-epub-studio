@@ -107,8 +107,12 @@ async function createZip(entries) {
 }
 
 function escapeXml(s) {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
 }
 
 function containerXml(opfPath) {
@@ -126,15 +130,23 @@ function contentOpf(opts) {
     opts.author ? `<dc:creator>${escapeXml(opts.author)}</dc:creator>` : '',
     opts.language ? `<dc:language>${escapeXml(opts.language)}</dc:language>` : '',
     opts.identifier ? `<dc:identifier>${escapeXml(opts.identifier)}</dc:identifier>` : '',
-  ].filter(Boolean).join('\n    ');
+  ]
+    .filter(Boolean)
+    .join('\n    ');
 
-  const manifest = opts.manifest.map((item) =>
-    `    <item id="${escapeXml(item.id)}" href="${escapeXml(item.href)}" media-type="${escapeXml(item.mediaType)}"/>`
-  ).join('\n');
+  const manifest = opts.manifest
+    .map(
+      (item) =>
+        `    <item id="${escapeXml(item.id)}" href="${escapeXml(item.href)}" media-type="${escapeXml(item.mediaType)}"/>`,
+    )
+    .join('\n');
 
-  const spine = opts.spine.map((item) =>
-    `    <itemref idref="${escapeXml(item.idref)}"${item.properties ? ` properties="${escapeXml(item.properties)}"` : ''}/>`
-  ).join('\n');
+  const spine = opts.spine
+    .map(
+      (item) =>
+        `    <itemref idref="${escapeXml(item.idref)}"${item.properties ? ` properties="${escapeXml(item.properties)}"` : ''}/>`,
+    )
+    .join('\n');
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="book-id">
@@ -151,9 +163,9 @@ ${spine}
 }
 
 function navXhtml(items) {
-  const links = items.map((item) =>
-    `      <li><a href="${escapeXml(item.href)}">${escapeXml(item.label)}</a></li>`
-  ).join('\n');
+  const links = items
+    .map((item) => `      <li><a href="${escapeXml(item.href)}">${escapeXml(item.label)}</a></li>`)
+    .join('\n');
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html>
@@ -196,20 +208,20 @@ async function generateMinimalEpub() {
     },
     {
       name: 'OEBPS/content.opf',
-      data: Buffer.from(contentOpf({
-        title: 'Minimal Test Book',
-        author: 'Test Author',
-        language: 'en',
-        identifier: 'urn:uuid:test-001',
-        manifest: [
-          { id: 'nav', href: 'nav.xhtml', mediaType: 'application/xhtml+xml' },
-          { id: 'section0001', href: 'section0001.xhtml', mediaType: 'application/xhtml+xml' },
-        ],
-        spine: [
-          { idref: 'nav', properties: 'nav' },
-          { idref: 'section0001' },
-        ],
-      }), 'utf-8'),
+      data: Buffer.from(
+        contentOpf({
+          title: 'Minimal Test Book',
+          author: 'Test Author',
+          language: 'en',
+          identifier: 'urn:uuid:test-001',
+          manifest: [
+            { id: 'nav', href: 'nav.xhtml', mediaType: 'application/xhtml+xml' },
+            { id: 'section0001', href: 'section0001.xhtml', mediaType: 'application/xhtml+xml' },
+          ],
+          spine: [{ idref: 'nav', properties: 'nav' }, { idref: 'section0001' }],
+        }),
+        'utf-8',
+      ),
     },
     {
       name: 'OEBPS/nav.xhtml',
@@ -225,30 +237,46 @@ async function generateMinimalEpub() {
 async function generateNoMetadataEpub() {
   return createZip([
     { name: 'mimetype', data: Buffer.from('application/epub+zip', 'utf-8'), store: true },
-    { name: 'META-INF/container.xml', data: Buffer.from(containerXml('OEBPS/content.opf'), 'utf-8') },
-    { name: 'OEBPS/content.opf', data: Buffer.from(contentOpf({
-      title: '',
-      manifest: [
-        { id: 'nav', href: 'nav.xhtml', mediaType: 'application/xhtml+xml' },
-        { id: 'section0001', href: 'section0001.xhtml', mediaType: 'application/xhtml+xml' },
-      ],
-      spine: [
-        { idref: 'nav', properties: 'nav' },
-        { idref: 'section0001' },
-      ],
-    }), 'utf-8') },
-    { name: 'OEBPS/nav.xhtml', data: Buffer.from(navXhtml([{ label: 'Start', href: 'section0001.xhtml' }]), 'utf-8') },
-    { name: 'OEBPS/section0001.xhtml', data: Buffer.from(sectionXhtml('section0001', '<p>No metadata here</p>'), 'utf-8') },
+    {
+      name: 'META-INF/container.xml',
+      data: Buffer.from(containerXml('OEBPS/content.opf'), 'utf-8'),
+    },
+    {
+      name: 'OEBPS/content.opf',
+      data: Buffer.from(
+        contentOpf({
+          title: '',
+          manifest: [
+            { id: 'nav', href: 'nav.xhtml', mediaType: 'application/xhtml+xml' },
+            { id: 'section0001', href: 'section0001.xhtml', mediaType: 'application/xhtml+xml' },
+          ],
+          spine: [{ idref: 'nav', properties: 'nav' }, { idref: 'section0001' }],
+        }),
+        'utf-8',
+      ),
+    },
+    {
+      name: 'OEBPS/nav.xhtml',
+      data: Buffer.from(navXhtml([{ label: 'Start', href: 'section0001.xhtml' }]), 'utf-8'),
+    },
+    {
+      name: 'OEBPS/section0001.xhtml',
+      data: Buffer.from(sectionXhtml('section0001', '<p>No metadata here</p>'), 'utf-8'),
+    },
   ]);
 }
 
 async function generateNoSpineEpub() {
   return createZip([
     { name: 'mimetype', data: Buffer.from('application/epub+zip', 'utf-8'), store: true },
-    { name: 'META-INF/container.xml', data: Buffer.from(containerXml('OEBPS/content.opf'), 'utf-8') },
+    {
+      name: 'META-INF/container.xml',
+      data: Buffer.from(containerXml('OEBPS/content.opf'), 'utf-8'),
+    },
     {
       name: 'OEBPS/content.opf',
-      data: Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
+      data: Buffer.from(
+        `<?xml version="1.0" encoding="UTF-8"?>
 <package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="book-id">
   <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
     <dc:title>No Spine Book</dc:title>
@@ -260,73 +288,113 @@ async function generateNoSpineEpub() {
   </manifest>
   <spine>
   </spine>
-</package>`, 'utf-8'),
+</package>`,
+        'utf-8',
+      ),
     },
-    { name: 'OEBPS/nav.xhtml', data: Buffer.from(sectionXhtml('empty', '<p>No spine</p>'), 'utf-8') },
-    { name: 'OEBPS/section0001.xhtml', data: Buffer.from(sectionXhtml('section0001', '<p>Not in spine</p>'), 'utf-8') },
+    {
+      name: 'OEBPS/nav.xhtml',
+      data: Buffer.from(sectionXhtml('empty', '<p>No spine</p>'), 'utf-8'),
+    },
+    {
+      name: 'OEBPS/section0001.xhtml',
+      data: Buffer.from(sectionXhtml('section0001', '<p>Not in spine</p>'), 'utf-8'),
+    },
   ]);
 }
 
 async function generateMultiNavEpub() {
   return createZip([
     { name: 'mimetype', data: Buffer.from('application/epub+zip', 'utf-8'), store: true },
-    { name: 'META-INF/container.xml', data: Buffer.from(containerXml('OEBPS/content.opf'), 'utf-8') },
+    {
+      name: 'META-INF/container.xml',
+      data: Buffer.from(containerXml('OEBPS/content.opf'), 'utf-8'),
+    },
     {
       name: 'OEBPS/content.opf',
-      data: Buffer.from(contentOpf({
-        title: 'Multi-Nav Book',
-        author: 'Author',
-        language: 'en',
-        identifier: 'urn:uuid:multi-nav',
-        manifest: [
-          { id: 'nav1', href: 'nav1.xhtml', mediaType: 'application/xhtml+xml' },
-          { id: 'nav2', href: 'nav2.xhtml', mediaType: 'application/xhtml+xml' },
-          { id: 'content', href: 'content.xhtml', mediaType: 'application/xhtml+xml' },
-        ],
-        spine: [
-          { idref: 'nav1' },
-          { idref: 'nav2' },
-          { idref: 'content' },
-        ],
-      }), 'utf-8'),
+      data: Buffer.from(
+        contentOpf({
+          title: 'Multi-Nav Book',
+          author: 'Author',
+          language: 'en',
+          identifier: 'urn:uuid:multi-nav',
+          manifest: [
+            { id: 'nav1', href: 'nav1.xhtml', mediaType: 'application/xhtml+xml' },
+            { id: 'nav2', href: 'nav2.xhtml', mediaType: 'application/xhtml+xml' },
+            { id: 'content', href: 'content.xhtml', mediaType: 'application/xhtml+xml' },
+          ],
+          spine: [{ idref: 'nav1' }, { idref: 'nav2' }, { idref: 'content' }],
+        }),
+        'utf-8',
+      ),
     },
-    { name: 'OEBPS/nav1.xhtml', data: Buffer.from(navXhtml([{ label: 'Chapter A', href: 'content.xhtml' }]), 'utf-8') },
-    { name: 'OEBPS/nav2.xhtml', data: Buffer.from(navXhtml([{ label: 'Chapter B', href: 'content.xhtml' }]), 'utf-8') },
-    { name: 'OEBPS/content.xhtml', data: Buffer.from(sectionXhtml('content', '<p>Multiple navs</p>'), 'utf-8') },
+    {
+      name: 'OEBPS/nav1.xhtml',
+      data: Buffer.from(navXhtml([{ label: 'Chapter A', href: 'content.xhtml' }]), 'utf-8'),
+    },
+    {
+      name: 'OEBPS/nav2.xhtml',
+      data: Buffer.from(navXhtml([{ label: 'Chapter B', href: 'content.xhtml' }]), 'utf-8'),
+    },
+    {
+      name: 'OEBPS/content.xhtml',
+      data: Buffer.from(sectionXhtml('content', '<p>Multiple navs</p>'), 'utf-8'),
+    },
   ]);
 }
 
 async function generateInvalidMimetypeEpub() {
   return createZip([
     { name: 'mimetype', data: Buffer.from('application/octet-stream', 'utf-8'), store: true },
-    { name: 'META-INF/container.xml', data: Buffer.from(containerXml('OEBPS/content.opf'), 'utf-8') },
-    { name: 'OEBPS/content.opf', data: Buffer.from(contentOpf({
-      title: 'Bad MIME',
-      manifest: [
-        { id: 'nav', href: 'nav.xhtml', mediaType: 'application/xhtml+xml' },
-        { id: 'section0001', href: 'section0001.xhtml', mediaType: 'application/xhtml+xml' },
-      ],
-      spine: [
-        { idref: 'nav', properties: 'nav' },
-        { idref: 'section0001' },
-      ],
-    }), 'utf-8') },
-    { name: 'OEBPS/nav.xhtml', data: Buffer.from(navXhtml([{ label: 'Start', href: 'section0001.xhtml' }]), 'utf-8') },
-    { name: 'OEBPS/section0001.xhtml', data: Buffer.from(sectionXhtml('section0001', '<p>Bad MIME</p>'), 'utf-8') },
+    {
+      name: 'META-INF/container.xml',
+      data: Buffer.from(containerXml('OEBPS/content.opf'), 'utf-8'),
+    },
+    {
+      name: 'OEBPS/content.opf',
+      data: Buffer.from(
+        contentOpf({
+          title: 'Bad MIME',
+          manifest: [
+            { id: 'nav', href: 'nav.xhtml', mediaType: 'application/xhtml+xml' },
+            { id: 'section0001', href: 'section0001.xhtml', mediaType: 'application/xhtml+xml' },
+          ],
+          spine: [{ idref: 'nav', properties: 'nav' }, { idref: 'section0001' }],
+        }),
+        'utf-8',
+      ),
+    },
+    {
+      name: 'OEBPS/nav.xhtml',
+      data: Buffer.from(navXhtml([{ label: 'Start', href: 'section0001.xhtml' }]), 'utf-8'),
+    },
+    {
+      name: 'OEBPS/section0001.xhtml',
+      data: Buffer.from(sectionXhtml('section0001', '<p>Bad MIME</p>'), 'utf-8'),
+    },
   ]);
 }
 
 async function generateMissingContainerEpub() {
   return createZip([
     { name: 'mimetype', data: Buffer.from('application/epub+zip', 'utf-8'), store: true },
-    { name: 'OEBPS/content.opf', data: Buffer.from(contentOpf({
-      title: 'No Container',
-      manifest: [
-        { id: 'section0001', href: 'section0001.xhtml', mediaType: 'application/xhtml+xml' },
-      ],
-      spine: [{ idref: 'section0001' }],
-    }), 'utf-8') },
-    { name: 'OEBPS/section0001.xhtml', data: Buffer.from(sectionXhtml('section0001', '<p>No container.xml</p>'), 'utf-8') },
+    {
+      name: 'OEBPS/content.opf',
+      data: Buffer.from(
+        contentOpf({
+          title: 'No Container',
+          manifest: [
+            { id: 'section0001', href: 'section0001.xhtml', mediaType: 'application/xhtml+xml' },
+          ],
+          spine: [{ idref: 'section0001' }],
+        }),
+        'utf-8',
+      ),
+    },
+    {
+      name: 'OEBPS/section0001.xhtml',
+      data: Buffer.from(sectionXhtml('section0001', '<p>No container.xml</p>'), 'utf-8'),
+    },
   ]);
 }
 
@@ -381,20 +449,38 @@ function accessibilityOpfMinimal() {
 async function generateAccessibilityEpub() {
   return createZip([
     { name: 'mimetype', data: Buffer.from('application/epub+zip', 'utf-8'), store: true },
-    { name: 'META-INF/container.xml', data: Buffer.from(containerXml('OEBPS/content.opf'), 'utf-8') },
+    {
+      name: 'META-INF/container.xml',
+      data: Buffer.from(containerXml('OEBPS/content.opf'), 'utf-8'),
+    },
     { name: 'OEBPS/content.opf', data: Buffer.from(accessibilityOpf(), 'utf-8') },
-    { name: 'OEBPS/nav.xhtml', data: Buffer.from(navXhtml([{ label: 'Start', href: 'section0001.xhtml' }]), 'utf-8') },
-    { name: 'OEBPS/section0001.xhtml', data: Buffer.from(sectionXhtml('section0001', '<p>Accessible content</p>'), 'utf-8') },
+    {
+      name: 'OEBPS/nav.xhtml',
+      data: Buffer.from(navXhtml([{ label: 'Start', href: 'section0001.xhtml' }]), 'utf-8'),
+    },
+    {
+      name: 'OEBPS/section0001.xhtml',
+      data: Buffer.from(sectionXhtml('section0001', '<p>Accessible content</p>'), 'utf-8'),
+    },
   ]);
 }
 
 async function generateAccessibilityMinimalEpub() {
   return createZip([
     { name: 'mimetype', data: Buffer.from('application/epub+zip', 'utf-8'), store: true },
-    { name: 'META-INF/container.xml', data: Buffer.from(containerXml('OEBPS/content.opf'), 'utf-8') },
+    {
+      name: 'META-INF/container.xml',
+      data: Buffer.from(containerXml('OEBPS/content.opf'), 'utf-8'),
+    },
     { name: 'OEBPS/content.opf', data: Buffer.from(accessibilityOpfMinimal(), 'utf-8') },
-    { name: 'OEBPS/nav.xhtml', data: Buffer.from(navXhtml([{ label: 'Start', href: 'section0001.xhtml' }]), 'utf-8') },
-    { name: 'OEBPS/section0001.xhtml', data: Buffer.from(sectionXhtml('section0001', '<p>Minimal a11y</p>'), 'utf-8') },
+    {
+      name: 'OEBPS/nav.xhtml',
+      data: Buffer.from(navXhtml([{ label: 'Start', href: 'section0001.xhtml' }]), 'utf-8'),
+    },
+    {
+      name: 'OEBPS/section0001.xhtml',
+      data: Buffer.from(sectionXhtml('section0001', '<p>Minimal a11y</p>'), 'utf-8'),
+    },
   ]);
 }
 

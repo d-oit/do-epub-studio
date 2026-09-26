@@ -78,8 +78,7 @@ export function assertNoNewWarnings(input: {
 }): void {
   const { testFile, counts } = input;
   const known = new Set(input.knownFiles ?? KNOWN_WARNING_FILES);
-  const total =
-    counts.act + counts.key + counts['unknown-prop'] + counts['suspended-resource'];
+  const total = counts.act + counts.key + counts['unknown-prop'] + counts['suspended-resource'];
   if (total === 0) return;
 
   const file = testFile ? normalizeTestPath(testFile) : '<unknown file>';

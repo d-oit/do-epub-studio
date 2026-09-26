@@ -153,7 +153,9 @@ export function Drawer({ isOpen, onClose }: DrawerProps) {
           <div className="flex items-center gap-3">
             <AppLogo size={28} className="text-accent shrink-0" />
             <div className="min-w-0">
-              <span className="block truncate font-semibold text-foreground text-sm">{APP_NAME}</span>
+              <span className="block truncate font-semibold text-foreground text-sm">
+                {APP_NAME}
+              </span>
               <span className="block text-xs text-foreground-muted">{APP_VERSION_LABEL}</span>
             </div>
           </div>
@@ -163,8 +165,19 @@ export function Drawer({ isOpen, onClose }: DrawerProps) {
             className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-foreground-muted hover:text-foreground hover:bg-background-tertiary transition-colors"
             aria-label={t('reader.settings.close')}
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
@@ -188,7 +201,10 @@ export function Drawer({ isOpen, onClose }: DrawerProps) {
             >
               {({ isActive }) => (
                 <>
-                  <NavIcon icon={icon} className={`w-5 h-5 shrink-0 ${isActive ? 'text-accent' : ''}`} />
+                  <NavIcon
+                    icon={icon}
+                    className={`w-5 h-5 shrink-0 ${isActive ? 'text-accent' : ''}`}
+                  />
                   <span>{t(key)}</span>
                 </>
               )}
@@ -196,7 +212,10 @@ export function Drawer({ isOpen, onClose }: DrawerProps) {
           ))}
           {showCreatorEntry && (
             <NavLink
-              to={'/creator'} /* eslint-disable-line i18next/no-literal-string -- route path constant */
+              to={
+                // eslint-disable-next-line i18next/no-literal-string -- route path constant; disable sits on the literal because prettier splits `to={'/creator'}` across lines
+                '/creator'
+              }
               onClick={onClose}
               className={({ isActive }) =>
                 `flex items-center gap-3 px-5 py-3 text-sm transition-colors ${
@@ -209,7 +228,13 @@ export function Drawer({ isOpen, onClose }: DrawerProps) {
             >
               {({ isActive }) => (
                 <>
-                  <NavIcon icon={'book-open'} /* eslint-disable-line i18next/no-literal-string -- icon key constant */ className={`w-5 h-5 shrink-0 ${isActive ? 'text-accent' : ''}`} />
+                  <NavIcon
+                    icon={
+                      // eslint-disable-next-line i18next/no-literal-string -- icon key constant
+                      'book-open'
+                    }
+                    className={`w-5 h-5 shrink-0 ${isActive ? 'text-accent' : ''}`}
+                  />
                   <span>{t('creator.title')}</span>
                 </>
               )}

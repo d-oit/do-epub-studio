@@ -26,7 +26,7 @@ describe('Security Posture (Worker)', () => {
     const routerPath = path.resolve(__dirname, '../routes/security.ts');
     const content = fs.readFileSync(routerPath, 'utf-8');
 
-    expect(content).toContain('import { logAudit } from \'../audit\'');
+    expect(content).toContain("import { logAudit } from '../audit'");
     expect(content).toContain('await logAudit(');
     expect(content).toContain("action: 'csp_violation'");
     expect(content).not.toContain('console.warn');

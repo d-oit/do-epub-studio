@@ -42,7 +42,7 @@ jobs:
 
       - name: Checkout
         if: steps.secrets.outputs.available == 'true'
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
@@ -60,7 +60,7 @@ jobs:
 
       - name: Deploy preview to Cloudflare Pages
         if: steps.secrets.outputs.available == 'true'
-        uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0  # v4.0.0
+        uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0 # v4.0.0
         id: deploy
         continue-on-error: true
         env:
@@ -87,7 +87,7 @@ jobs:
       - name: Run Lighthouse CI
         if: steps.secrets.outputs.available == 'true' && steps.deploy.outcome == 'success'
         id: lhci
-        uses: treosh/lighthouse-ci-action@3e7e23fb74242897f95c0ba9cabad3d0227b9b18  # 12.6.2
+        uses: treosh/lighthouse-ci-action@3e7e23fb74242897f95c0ba9cabad3d0227b9b18 # 12.6.2
         with:
           urls: |
             ${{ steps.deploy.outputs.url }}/
@@ -116,7 +116,7 @@ jobs:
 
       - name: Comment PR with scores
         if: github.event_name == 'pull_request' && steps.lhci.outcome != 'skipped'
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
             const fs = require('fs');
@@ -159,7 +159,7 @@ jobs:
             fs.writeFileSync('lighthouse-metrics.json', JSON.stringify(lighthouseMetrics, null, 2));
 
       - name: Upload Lighthouse metrics
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: lighthouse-metrics
           path: lighthouse-metrics.json

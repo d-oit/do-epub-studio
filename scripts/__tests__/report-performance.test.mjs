@@ -25,22 +25,21 @@ describe('report-performance.mjs', () => {
 
   it('correctly calculates percentage change against baseline', () => {
     const currentBundle = {
-      bundleSize: [
-        { file: 'assets/index.js', size: 110, limit: 1000, passed: true }
-      ]
+      bundleSize: [{ file: 'assets/index.js', size: 110, limit: 1000, passed: true }],
     };
     const baselineBundle = {
-      bundleSize: [
-        { file: 'assets/index.js', size: 100, limit: 1000, passed: true }
-      ]
+      bundleSize: [{ file: 'assets/index.js', size: 100, limit: 1000, passed: true }],
     };
 
     fs.writeFileSync(path.join(tempMetrics, 'bundle-metrics.json'), JSON.stringify(currentBundle));
-    fs.writeFileSync(path.join(tempBaseline, 'bundle-metrics.json'), JSON.stringify(baselineBundle));
+    fs.writeFileSync(
+      path.join(tempBaseline, 'bundle-metrics.json'),
+      JSON.stringify(baselineBundle),
+    );
 
     const result = spawnSync('node', [scriptPath, tempMetrics, tempBaseline], {
       cwd: rootDir,
-      encoding: 'utf8'
+      encoding: 'utf8',
     });
 
     expect(result.stdout).toContain('+10.00%');
@@ -49,15 +48,13 @@ describe('report-performance.mjs', () => {
 
   it('handles missing baseline gracefully', () => {
     const currentBundle = {
-      bundleSize: [
-        { file: 'assets/index.js', size: 100, limit: 1000, passed: true }
-      ]
+      bundleSize: [{ file: 'assets/index.js', size: 100, limit: 1000, passed: true }],
     };
     fs.writeFileSync(path.join(tempMetrics, 'bundle-metrics.json'), JSON.stringify(currentBundle));
 
     const result = spawnSync('node', [scriptPath, tempMetrics], {
       cwd: rootDir,
-      encoding: 'utf8'
+      encoding: 'utf8',
     });
 
     expect(result.stdout).toContain('NEW');
@@ -67,13 +64,13 @@ describe('report-performance.mjs', () => {
   it('includes Lighthouse scores when available', () => {
     const lighthouse = {
       performance: 0.95,
-      accessibility: 0.85
+      accessibility: 0.85,
     };
     fs.writeFileSync(path.join(tempMetrics, 'lighthouse-metrics.json'), JSON.stringify(lighthouse));
 
     const result = spawnSync('node', [scriptPath, tempMetrics], {
       cwd: rootDir,
-      encoding: 'utf8'
+      encoding: 'utf8',
     });
 
     expect(result.stdout).toContain('Lighthouse Scores');
@@ -86,22 +83,38 @@ describe('report-performance.mjs', () => {
     const turboMetrics = {
       timestamp: new Date().toISOString(),
       tasks: [
-        { taskId: 'web#build', task: 'build', package: 'web', cacheStatus: 'HIT', duration: 1000, local: true, remote: false },
-        { taskId: 'shared#build', task: 'build', package: 'shared', cacheStatus: 'MISS', duration: 2000, local: false, remote: false }
+        {
+          taskId: 'web#build',
+          task: 'build',
+          package: 'web',
+          cacheStatus: 'HIT',
+          duration: 1000,
+          local: true,
+          remote: false,
+        },
+        {
+          taskId: 'shared#build',
+          task: 'build',
+          package: 'shared',
+          cacheStatus: 'MISS',
+          duration: 2000,
+          local: false,
+          remote: false,
+        },
       ],
       cacheSummary: {
         hits: 1,
         misses: 1,
         total: 2,
-        hitRatio: 50
-      }
+        hitRatio: 50,
+      },
     };
 
     fs.writeFileSync(path.join(tempMetrics, 'turbo-metrics.json'), JSON.stringify(turboMetrics));
 
     const result = spawnSync('node', [scriptPath, tempMetrics], {
       cwd: rootDir,
-      encoding: 'utf8'
+      encoding: 'utf8',
     });
 
     expect(result.stdout).toContain('Turbo Task Performance');
@@ -120,17 +133,17 @@ describe('report-performance.mjs', () => {
       passedTests: 98,
       flakyTests: [
         { name: 'flaky test 1', suite: 'test-suite', type: 'vitest' },
-        { name: 'flaky test 2', suite: 'test-suite', type: 'vitest' }
+        { name: 'flaky test 2', suite: 'test-suite', type: 'vitest' },
       ],
       flakyRate: 2.0,
-      suites: []
+      suites: [],
     };
 
     fs.writeFileSync(path.join(tempMetrics, 'test-metrics.json'), JSON.stringify(testMetrics));
 
     const result = spawnSync('node', [scriptPath, tempMetrics], {
       cwd: rootDir,
-      encoding: 'utf8'
+      encoding: 'utf8',
     });
 
     expect(result.stdout).toContain('Test Stability');
@@ -148,27 +161,43 @@ describe('report-performance.mjs', () => {
     const currentTurbo = {
       timestamp: new Date().toISOString(),
       tasks: [
-        { taskId: 'web#build', task: 'build', package: 'web', cacheStatus: 'HIT', duration: 1000, local: true, remote: false }
+        {
+          taskId: 'web#build',
+          task: 'build',
+          package: 'web',
+          cacheStatus: 'HIT',
+          duration: 1000,
+          local: true,
+          remote: false,
+        },
       ],
       cacheSummary: {
         hits: 1,
         misses: 0,
         total: 1,
-        hitRatio: 100
-      }
+        hitRatio: 100,
+      },
     };
 
     const baselineTurbo = {
       timestamp: new Date().toISOString(),
       tasks: [
-        { taskId: 'web#build', task: 'build', package: 'web', cacheStatus: 'MISS', duration: 2000, local: false, remote: false }
+        {
+          taskId: 'web#build',
+          task: 'build',
+          package: 'web',
+          cacheStatus: 'MISS',
+          duration: 2000,
+          local: false,
+          remote: false,
+        },
       ],
       cacheSummary: {
         hits: 0,
         misses: 1,
         total: 1,
-        hitRatio: 0
-      }
+        hitRatio: 0,
+      },
     };
 
     fs.writeFileSync(path.join(tempMetrics, 'turbo-metrics.json'), JSON.stringify(currentTurbo));
@@ -176,7 +205,7 @@ describe('report-performance.mjs', () => {
 
     const result = spawnSync('node', [scriptPath, tempMetrics, tempBaseline], {
       cwd: rootDir,
-      encoding: 'utf8'
+      encoding: 'utf8',
     });
 
     expect(result.stdout).toContain('Turbo Task Performance');
@@ -190,11 +219,9 @@ describe('report-performance.mjs', () => {
       totalTests: 100,
       failedTests: 1,
       passedTests: 99,
-      flakyTests: [
-        { name: 'flaky test 1', suite: 'test-suite', type: 'vitest' }
-      ],
+      flakyTests: [{ name: 'flaky test 1', suite: 'test-suite', type: 'vitest' }],
       flakyRate: 1.0,
-      suites: []
+      suites: [],
     };
 
     const baselineTest = {
@@ -207,10 +234,10 @@ describe('report-performance.mjs', () => {
         { name: 'flaky test 2', suite: 'test-suite', type: 'vitest' },
         { name: 'flaky test 3', suite: 'test-suite', type: 'vitest' },
         { name: 'flaky test 4', suite: 'test-suite', type: 'vitest' },
-        { name: 'flaky test 5', suite: 'test-suite', type: 'vitest' }
+        { name: 'flaky test 5', suite: 'test-suite', type: 'vitest' },
       ],
       flakyRate: 5.56,
-      suites: []
+      suites: [],
     };
 
     fs.writeFileSync(path.join(tempMetrics, 'test-metrics.json'), JSON.stringify(currentTest));
@@ -218,7 +245,7 @@ describe('report-performance.mjs', () => {
 
     const result = spawnSync('node', [scriptPath, tempMetrics, tempBaseline], {
       cwd: rootDir,
-      encoding: 'utf8'
+      encoding: 'utf8',
     });
 
     expect(result.stdout).toContain('Test Stability');

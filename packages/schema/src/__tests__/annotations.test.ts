@@ -18,17 +18,21 @@ describe('ProgressUpdateSchema', () => {
   });
 
   it('rejects progressPercent > 100', () => {
-    expect(() => ProgressUpdateSchema.parse({
-      locator: { cfi: 'cfi', selectedText: 'text', chapterRef: 'ch' },
-      progressPercent: 101,
-    })).toThrow();
+    expect(() =>
+      ProgressUpdateSchema.parse({
+        locator: { cfi: 'cfi', selectedText: 'text', chapterRef: 'ch' },
+        progressPercent: 101,
+      }),
+    ).toThrow();
   });
 
   it('rejects negative progressPercent', () => {
-    expect(() => ProgressUpdateSchema.parse({
-      locator: { cfi: 'cfi', selectedText: 'text', chapterRef: 'ch' },
-      progressPercent: -1,
-    })).toThrow();
+    expect(() =>
+      ProgressUpdateSchema.parse({
+        locator: { cfi: 'cfi', selectedText: 'text', chapterRef: 'ch' },
+        progressPercent: -1,
+      }),
+    ).toThrow();
   });
 });
 
@@ -66,17 +70,21 @@ describe('HighlightCreateSchema', () => {
   });
 
   it('rejects invalid color format', () => {
-    expect(() => HighlightCreateSchema.parse({
-      locator: { cfi: 'cfi', selectedText: 'text', chapterRef: 'ch' },
-      color: 'red',
-    })).toThrow();
+    expect(() =>
+      HighlightCreateSchema.parse({
+        locator: { cfi: 'cfi', selectedText: 'text', chapterRef: 'ch' },
+        color: 'red',
+      }),
+    ).toThrow();
   });
 
   it('rejects color without # prefix', () => {
-    expect(() => HighlightCreateSchema.parse({
-      locator: { cfi: 'cfi', selectedText: 'text', chapterRef: 'ch' },
-      color: 'ff0000',
-    })).toThrow();
+    expect(() =>
+      HighlightCreateSchema.parse({
+        locator: { cfi: 'cfi', selectedText: 'text', chapterRef: 'ch' },
+        color: 'ff0000',
+      }),
+    ).toThrow();
   });
 });
 

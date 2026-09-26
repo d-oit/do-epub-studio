@@ -13,7 +13,15 @@ export interface ModalProps {
   size?: 'sm' | 'md' | 'lg';
 }
 
-export function Modal({ isOpen, onClose, title, description, children, footer, size = 'md' }: ModalProps) {
+export function Modal({
+  isOpen,
+  onClose,
+  title,
+  description,
+  children,
+  footer,
+  size = 'md',
+}: ModalProps) {
   const titleId = useId();
   const descriptionId = useId();
   const contentRef = useRef<HTMLDivElement>(null);
@@ -86,27 +94,34 @@ export function Modal({ isOpen, onClose, title, description, children, footer, s
         <div className="bg-[var(--color-paper)] text-[var(--color-ink)] border border-[var(--color-rule)] shadow-[var(--elevation-2)] rounded-[var(--radius-paper)] p-6 m-4">
           {title && (
             <div className="flex items-center justify-between mb-4">
-              <h2 id={titleId} className="text-lg font-semibold text-[var(--color-foreground)]">{title}</h2>
-              <IconButton
-                onClick={onClose}
-                label="Close"
-                variant="ghost"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <h2 id={titleId} className="text-lg font-semibold text-[var(--color-foreground)]">
+                {title}
+              </h2>
+              <IconButton onClick={onClose} label="Close" variant="ghost">
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </IconButton>
             </div>
           )}
           {description && (
-            <p id={descriptionId} className="text-sm text-[var(--color-muted-foreground)] mb-4">{description}</p>
+            <p id={descriptionId} className="text-sm text-[var(--color-muted-foreground)] mb-4">
+              {description}
+            </p>
           )}
           {children}
-          {footer && (
-            <div className="mt-4 pt-4 border-t border-[var(--color-rule)]">
-              {footer}
-            </div>
-          )}
+          {footer && <div className="mt-4 pt-4 border-t border-[var(--color-rule)]">{footer}</div>}
         </div>
       </div>
     </>,

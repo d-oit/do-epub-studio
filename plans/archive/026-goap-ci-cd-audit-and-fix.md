@@ -228,32 +228,32 @@ run-name: ${{ github.event_name == 'pull_request' && format('PR #{0}: {1}', gith
 
 ### Phase 1: Emergency Fixes (P0)
 
-| #   | Task                                                                                        | Agent       | Est   | Deps     |
+| # | Task | Agent | Est | Deps |
 | --- | ------------------------------------------------------------------------------------------- | ----------- | ----- | -------- | ------------ |
-| 1.1 | Fix `__proto__` prototype pollution test in `packages/shared/src/__tests__/schemas.test.ts` | general     | 15min | none     | ✅ COMPLETED |
-| 1.2 | Fix `e2e.yml` — change `pnpm test:e2e:prod` to correct script                               | general     | 5min  | none     | ✅ COMPLETED |
-| 1.3 | Run quality gate to verify fixes                                                            | test-runner | 10min | 1.1, 1.2 | ✅ COMPLETED |
+| 1.1 | Fix `__proto__` prototype pollution test in `packages/shared/src/__tests__/schemas.test.ts` | general | 15min | none | ✅ COMPLETED |
+| 1.2 | Fix `e2e.yml` — change `pnpm test:e2e:prod` to correct script | general | 5min | none | ✅ COMPLETED |
+| 1.3 | Run quality gate to verify fixes | test-runner | 10min | 1.1, 1.2 | ✅ COMPLETED |
 
 ### Phase 2: Structural Improvements (P1)
 
-| #   | Task                                                                  | Agent                 | Est   | Deps |
+| # | Task | Agent | Est | Deps |
 | --- | --------------------------------------------------------------------- | --------------------- | ----- | ---- | ------------ |
-| 2.1 | Create `.github/actions/setup-pnpm/action.yml` composite action       | cloudflare-worker-api | 30min | none |
-| 2.2 | Refactor `ci.yml` to use composite action                             | cloudflare-worker-api | 20min | 2.1  | ✅ COMPLETED |
-| 2.3 | Add `concurrency` groups to all workflows                             | cloudflare-worker-api | 15min | none | ✅ COMPLETED |
-| 2.4 | Add `paths-ignore` filters to ci.yml                                  | cloudflare-worker-api | 10min | none | ✅ COMPLETED |
-| 2.5 | Add `timeout-minutes` to all jobs                                     | cloudflare-worker-api | 10min | none | ✅ COMPLETED |
-| 2.6 | Standardize `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24` across all workflows | cloudflare-worker-api | 5min  | none | ✅ COMPLETED |
-| 2.7 | Add `run-name` to all workflows                                       | cloudflare-worker-api | 10min | none | ✅ COMPLETED |
+| 2.1 | Create `.github/actions/setup-pnpm/action.yml` composite action | cloudflare-worker-api | 30min | none |
+| 2.2 | Refactor `ci.yml` to use composite action | cloudflare-worker-api | 20min | 2.1 | ✅ COMPLETED |
+| 2.3 | Add `concurrency` groups to all workflows | cloudflare-worker-api | 15min | none | ✅ COMPLETED |
+| 2.4 | Add `paths-ignore` filters to ci.yml | cloudflare-worker-api | 10min | none | ✅ COMPLETED |
+| 2.5 | Add `timeout-minutes` to all jobs | cloudflare-worker-api | 10min | none | ✅ COMPLETED |
+| 2.6 | Standardize `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24` across all workflows | cloudflare-worker-api | 5min | none | ✅ COMPLETED |
+| 2.7 | Add `run-name` to all workflows | cloudflare-worker-api | 10min | none | ✅ COMPLETED |
 
 ### Phase 3: Security Hardening (P1)
 
-| #   | Task                                                                 | Agent                    | Est   | Deps |
+| # | Task | Agent | Est | Deps |
 | --- | -------------------------------------------------------------------- | ------------------------ | ----- | ---- | ------------ |
-| 3.1 | Add CodeQL analysis workflow                                         | security-code-auditor    | 20min | none |
-| 3.2 | Fix `smart-update-pr.yml` permissions and add rate limiting          | secure-invite-and-access | 20min | none | ✅ COMPLETED |
-| 3.3 | Fix `dependabot-auto-merge.yml` to use `GITHUB_TOKEN`                | secure-invite-and-access | 10min | none | ✅ COMPLETED |
-| 3.4 | Remove unnecessary `gitHubToken` from wrangler-action in release.yml | cloudflare-worker-api    | 5min  | none | ✅ COMPLETED |
+| 3.1 | Add CodeQL analysis workflow | security-code-auditor | 20min | none |
+| 3.2 | Fix `smart-update-pr.yml` permissions and add rate limiting | secure-invite-and-access | 20min | none | ✅ COMPLETED |
+| 3.3 | Fix `dependabot-auto-merge.yml` to use `GITHUB_TOKEN` | secure-invite-and-access | 10min | none | ✅ COMPLETED |
+| 3.4 | Remove unnecessary `gitHubToken` from wrangler-action in release.yml | cloudflare-worker-api | 5min | none | ✅ COMPLETED |
 
 ### Phase 4: Reliability & Observability (P2)
 
@@ -266,10 +266,10 @@ run-name: ${{ github.event_name == 'pull_request' && format('PR #{0}: {1}', gith
 
 ### Phase 5: Minor Cleanup (P3)
 
-| #   | Task                                          | Agent                 | Est   | Deps |
+| # | Task | Agent | Est | Deps |
 | --- | --------------------------------------------- | --------------------- | ----- | ---- | ------------ |
-| 5.1 | Standardize artifact retention-days           | cloudflare-worker-api | 5min  | none | ✅ COMPLETED |
-| 5.2 | Increase build artifact retention to 3 days   | cloudflare-worker-api | 5min  | none | ✅ COMPLETED |
+| 5.1 | Standardize artifact retention-days | cloudflare-worker-api | 5min | none | ✅ COMPLETED |
+| 5.2 | Increase build artifact retention to 3 days | cloudflare-worker-api | 5min | none | ✅ COMPLETED |
 | 5.3 | Add `needs` chain verification to release.yml | cloudflare-worker-api | 10min | none | ✅ COMPLETED |
 
 ---

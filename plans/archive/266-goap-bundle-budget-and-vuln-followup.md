@@ -14,7 +14,7 @@ Resolve two tracked findings without silent budget erosion:
    trivially after regen) after the direct-merged zod 4.4.3 → 4.5.2 bump
    (commit `1fbf52a`).
 2. Main-branch `Dependency Vulnerability Scan` (`pnpm audit
-   --audit-level=high`) fails on fast-uri < 3.1.6 (via ajv ← commitlint dev
+--audit-level=high`) fails on fast-uri < 3.1.6 (via ajv ← commitlint dev
    chain), sharp libheif (via miniflare ← wrangler 4.125), and the js-yaml
    `maxTotalMergeKeys` bypass. Assess whether open PR #1082 (dev-deps group,
    16 updates) clears each item and recommend the minimal fix per item.
@@ -34,7 +34,7 @@ Resolve two tracked findings without silent budget erosion:
     `z.creditCard()`, `z.properties()`, `z.deepPartial()/.exactPartial()`,
     `z.validate()` fast-path, **9× schema memory-footprint reduction**,
     8 new locales (`bn ckb hi kn nn pt-BR sk tk`). Direction is runtime
-    memory *down* via method memoization
+    memory _down_ via method memoization
     (<https://zod.dev/blog/reducing-memory-footprint>).
   - v4.5.2 (2026-08-29,
     <https://github.com/colinhacks/zod/releases/tag/v4.5.2>): docs-only +

@@ -34,7 +34,9 @@ vi.mock('../../lib/api', () => ({
 // the module the component actually imports.
 vi.mock('../../lib/api/creator', () => ({
   fetchCreatorAssignments: vi.fn().mockResolvedValue([]),
-  assignCreator: vi.fn().mockResolvedValue({ bookId: 'b1', email: 'x@ex.com', alreadyAssigned: false }),
+  assignCreator: vi
+    .fn()
+    .mockResolvedValue({ bookId: 'b1', email: 'x@ex.com', alreadyAssigned: false }),
   revokeCreator: vi.fn().mockResolvedValue({ bookId: 'b1', email: 'x@ex.com' }),
 }));
 
@@ -45,17 +47,22 @@ vi.mock('../../lib/api/invitations', () => ({
   revokeBookInvitation: vi.fn(),
 }));
 
-const mockBooks = [{ id: 'b1', title: 'Book 1', slug: 'b1' }, { id: 'b2', title: 'Book 2', slug: 'b2' }];
-const mockGrants = [{
-  id: 'g1',
-  email: 'u1@ex.com',
-  mode: 'reader_only',
-  offlineAllowed: true,
-  commentsAllowed: true,
-  createdAt: new Date().toISOString(),
-  expiresAt: new Date(Date.now() + 86400000).toISOString(),
-  revokedAt: null,
-}];
+const mockBooks = [
+  { id: 'b1', title: 'Book 1', slug: 'b1' },
+  { id: 'b2', title: 'Book 2', slug: 'b2' },
+];
+const mockGrants = [
+  {
+    id: 'g1',
+    email: 'u1@ex.com',
+    mode: 'reader_only',
+    offlineAllowed: true,
+    commentsAllowed: true,
+    createdAt: new Date().toISOString(),
+    expiresAt: new Date(Date.now() + 86400000).toISOString(),
+    revokedAt: null,
+  },
+];
 
 async function renderAndFlush(initialPath: string) {
   await act(async () => {
@@ -117,9 +124,15 @@ describe('AdminGrantResponsesPage', () => {
     expect(screen.getByText('grants.createGrantTitle')).toBeInTheDocument();
 
     const modal = screen.getByRole('dialog');
-    fireEvent.change(within(modal).getByLabelText('grants.form.email'), { target: { value: 'new@ex.com' } });
-    fireEvent.change(within(modal).getByLabelText('grants.form.password'), { target: { value: 'password123' } });
-    fireEvent.change(within(modal).getByLabelText('grants.form.passwordConfirm'), { target: { value: 'password123' } });
+    fireEvent.change(within(modal).getByLabelText('grants.form.email'), {
+      target: { value: 'new@ex.com' },
+    });
+    fireEvent.change(within(modal).getByLabelText('grants.form.password'), {
+      target: { value: 'password123' },
+    });
+    fireEvent.change(within(modal).getByLabelText('grants.form.passwordConfirm'), {
+      target: { value: 'password123' },
+    });
 
     // React 19 form actions fire on form submit, not button click in jsdom.
     const modalForm = modal.querySelector('form');
@@ -131,9 +144,12 @@ describe('AdminGrantResponsesPage', () => {
     }
 
     await waitFor(() => {
-      expect(api.apiRequest).toHaveBeenCalledWith('/api/admin/books/b1/grants', expect.objectContaining({
-        method: 'POST',
-      }));
+      expect(api.apiRequest).toHaveBeenCalledWith(
+        '/api/admin/books/b1/grants',
+        expect.objectContaining({
+          method: 'POST',
+        }),
+      );
     });
   });
 
@@ -231,9 +247,12 @@ describe('AdminGrantResponsesPage', () => {
     fireEvent.click(within(modal).getByRole('button', { name: 'grants.actions.revoke' }));
 
     await waitFor(() => {
-      expect(api.apiRequest).toHaveBeenCalledWith('/api/admin/grants/g1/revoke', expect.objectContaining({
-        method: 'POST',
-      }));
+      expect(api.apiRequest).toHaveBeenCalledWith(
+        '/api/admin/grants/g1/revoke',
+        expect.objectContaining({
+          method: 'POST',
+        }),
+      );
     });
   });
 });

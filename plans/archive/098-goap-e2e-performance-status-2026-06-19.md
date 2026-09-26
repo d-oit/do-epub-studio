@@ -22,11 +22,11 @@ re-discover the same context.
 Three branches and one PR touch "e2e performance" in the recent history
 (2026-05 through 2026-06):
 
-| Ref | Status | What it is |
-|-----|--------|------------|
-| `origin/feat/e2e-performance` @ `9668aff` | **WIP, not merged** | Adds `plans/101-e2e-performance-improvements.md` (analysis only) + 3 mimocode plan stubs. No code execution. |
-| `origin/feature/e2e-performance-improvements` @ `a13807b` | **Merged (PR #599)** | TOC virtualisation tuning, `SwUpdateNotification` opacity, error-boundary & useSessionExpiry test expansion. Bundle size and Lighthouse signals are the rationale. **Already on `main` (via merge `e2d65c3`).** |
-| `origin/fix/ci-scheduled-e2e-failures-516-515` @ `df663c5` | **Merged (PR per plan #090)** | CI fix for scheduled cross-browser E2E jobs (516/515). Distinct concern (CI reliability, not test perf). |
+| Ref                                                        | Status                        | What it is                                                                                                                                                                                                      |
+| ---------------------------------------------------------- | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `origin/feat/e2e-performance` @ `9668aff`                  | **WIP, not merged**           | Adds `plans/101-e2e-performance-improvements.md` (analysis only) + 3 mimocode plan stubs. No code execution.                                                                                                    |
+| `origin/feature/e2e-performance-improvements` @ `a13807b`  | **Merged (PR #599)**          | TOC virtualisation tuning, `SwUpdateNotification` opacity, error-boundary & useSessionExpiry test expansion. Bundle size and Lighthouse signals are the rationale. **Already on `main` (via merge `e2d65c3`).** |
+| `origin/fix/ci-scheduled-e2e-failures-516-515` @ `df663c5` | **Merged (PR per plan #090)** | CI fix for scheduled cross-browser E2E jobs (516/515). Distinct concern (CI reliability, not test perf).                                                                                                        |
 
 PR #599 is the only merged code change carrying an "e2e performance"
 label in this window. PR #599's title is "R2 multipart upload" but the
@@ -50,14 +50,14 @@ graph to find PR #599. Plan 098 is the authoritative record of:
 
 ## Decomposition (tasks)
 
-| ID | Task | Status |
-|----|------|--------|
-| T1 | Audit recent e2e-perf branches via `git for-each-ref` + `git log --all` | ✅ |
-| T2 | Identify which are merged vs. WIP/abandoned | ✅ |
-| T3 | Read the e2e perf-related PRs to enumerate concrete shipped code | ✅ |
-| T4 | Confirm the iframe-timeout gap has been resolved by PR #599 | ✅ |
-| T5 | Author this plan with cross-references to the executed work | ✅ |
-| T6 | Open PR; merge to `main` | pending |
+| ID  | Task                                                                    | Status  |
+| --- | ----------------------------------------------------------------------- | ------- |
+| T1  | Audit recent e2e-perf branches via `git for-each-ref` + `git log --all` | ✅      |
+| T2  | Identify which are merged vs. WIP/abandoned                             | ✅      |
+| T3  | Read the e2e perf-related PRs to enumerate concrete shipped code        | ✅      |
+| T4  | Confirm the iframe-timeout gap has been resolved by PR #599             | ✅      |
+| T5  | Author this plan with cross-references to the executed work             | ✅      |
+| T6  | Open PR; merge to `main`                                                | pending |
 
 ## Strategy (Strategize)
 
@@ -76,13 +76,13 @@ graph to find PR #599. Plan 098 is the authoritative record of:
 
 ### Shipped work referenced
 
-| Shipped in | What | Evidence |
-|------------|------|----------|
-| PR #599 (commit `e2d65c3`) | R2 multipart upload for files > 100 MB (10 MB chunks) | `apps/worker/src/routes/admin/books.ts:40+51` |
-| PR #599 branch history | TOC virtualisation threshold (200 chapters), `TOC_ITEM_HEIGHT` 44→36 px | `apps/web/src/features/reader/components/toc/TableOfContents.tsx:26,82` |
-| PR #599 branch history | `SwUpdateNotification` opacity fade on enter/exit | `apps/web/src/components/SwUpdateNotification.tsx:58-60` |
-| PR #599 branch history | Expanded web package test coverage +78% to +86% (+145 tests) | commit `a13807b` "test(web): expand test coverage from 78% to 86%" |
-| Plan #090 (PR per `090-goap-ci-516-515-resolution.md`) | CI fix for scheduled cross-browser E2E failures | `.github/workflows/ci.yml` E2E job |
+| Shipped in                                             | What                                                                    | Evidence                                                                |
+| ------------------------------------------------------ | ----------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| PR #599 (commit `e2d65c3`)                             | R2 multipart upload for files > 100 MB (10 MB chunks)                   | `apps/worker/src/routes/admin/books.ts:40+51`                           |
+| PR #599 branch history                                 | TOC virtualisation threshold (200 chapters), `TOC_ITEM_HEIGHT` 44→36 px | `apps/web/src/features/reader/components/toc/TableOfContents.tsx:26,82` |
+| PR #599 branch history                                 | `SwUpdateNotification` opacity fade on enter/exit                       | `apps/web/src/components/SwUpdateNotification.tsx:58-60`                |
+| PR #599 branch history                                 | Expanded web package test coverage +78% to +86% (+145 tests)            | commit `a13807b` "test(web): expand test coverage from 78% to 86%"      |
+| Plan #090 (PR per `090-goap-ci-516-515-resolution.md`) | CI fix for scheduled cross-browser E2E failures                         | `.github/workflows/ci.yml` E2E job                                      |
 
 ### Iframe-timeout status
 
@@ -122,15 +122,15 @@ work is revived.
 
 ## Synthesis (Results)
 
-| Metric | Value |
-|--------|-------|
-| New code | 0 |
-| Plan files added | 1 (`plans/098-…md`) |
-| Open issues from swarm report | 1 closed (e2e perf recorded) |
-| Cross-references added | 4 (PR #599, plan 101, SWARM_COMPLETION_REPORT, ADR-096) |
-| Branches deleted | 0 (reflog preserves `feat/e2e-performance`) |
-| Codecov delta | 0 |
-| Post-merge main CI | expected green |
+| Metric                        | Value                                                   |
+| ----------------------------- | ------------------------------------------------------- |
+| New code                      | 0                                                       |
+| Plan files added              | 1 (`plans/098-…md`)                                     |
+| Open issues from swarm report | 1 closed (e2e perf recorded)                            |
+| Cross-references added        | 4 (PR #599, plan 101, SWARM_COMPLETION_REPORT, ADR-096) |
+| Branches deleted              | 0 (reflog preserves `feat/e2e-performance`)             |
+| Codecov delta                 | 0                                                       |
+| Post-merge main CI            | expected green                                          |
 
 ## Cross-references
 

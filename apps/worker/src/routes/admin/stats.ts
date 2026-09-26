@@ -3,11 +3,18 @@ import type { Env } from '../../lib/env';
 import { queryAll, queryFirst } from '../../db/client';
 import { adminAuth } from '../../middleware/auth';
 
-export const statsRouter = new Hono<{ Bindings: Env; Variables: { adminUser: { email: string; id: string; role: string } } }>();
+export const statsRouter = new Hono<{
+  Bindings: Env;
+  Variables: { adminUser: { email: string; id: string; role: string } };
+}>();
 
 statsRouter.get('/stats', adminAuth, async (c) => {
   const [bookCountRow, activeGrantsRow, activeSessionsRow, archivedBooksRow] = await Promise.all([
-    queryFirst<{ cnt: number }>(c.env, "SELECT COUNT(*) as cnt FROM books WHERE archived_at IS NULL", []),
+    queryFirst<{ cnt: number }>(
+      c.env,
+      'SELECT COUNT(*) as cnt FROM books WHERE archived_at IS NULL',
+      [],
+    ),
     queryFirst<{ cnt: number }>(
       c.env,
       "SELECT COUNT(*) as cnt FROM book_access_grants WHERE revoked_at IS NULL AND (expires_at IS NULL OR expires_at > datetime('now'))",
@@ -18,7 +25,11 @@ statsRouter.get('/stats', adminAuth, async (c) => {
       "SELECT COUNT(*) as cnt FROM reader_sessions WHERE revoked_at IS NULL AND expires_at > datetime('now')",
       [],
     ),
-    queryFirst<{ cnt: number }>(c.env, "SELECT COUNT(*) as cnt FROM books WHERE archived_at IS NOT NULL", []),
+    queryFirst<{ cnt: number }>(
+      c.env,
+      'SELECT COUNT(*) as cnt FROM books WHERE archived_at IS NOT NULL',
+      [],
+    ),
   ]);
 
   // Storage usage from book_files

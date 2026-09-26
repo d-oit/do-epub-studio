@@ -31,10 +31,7 @@ export function BookSelector({
   return (
     <div className="mb-6 flex flex-wrap justify-between items-center gap-4">
       <div className="flex items-center space-x-3">
-        <label
-          htmlFor="book-selector"
-          className="text-sm font-medium text-foreground-muted"
-        >
+        <label htmlFor="book-selector" className="text-sm font-medium text-foreground-muted">
           {t('grants.selectBook')}
         </label>
         <select

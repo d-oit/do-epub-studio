@@ -35,11 +35,11 @@ regeneration and an ADR-107 note in the same PR.
 
 ## Phases
 
-| # | Phase | Exit criteria | Status |
-|---|-------|---------------|--------|
-| 1 | Verify interim state: consistent 19.2.8 pair passes fresh-install vitest | 13 packages/ui files pass without the test cache | DONE 2026-09-19 |
-| 2 | Document decision as GOAP plan + ADR-250 | Plan + ADR merged to main | DONE (this PR) |
-| 3 | Close #1134 (not planned) and #1143/#1144 with rationale + re-proposal criteria | All three closed, cross-linked | DONE |
+| #   | Phase                                                                           | Exit criteria                                    | Status          |
+| --- | ------------------------------------------------------------------------------- | ------------------------------------------------ | --------------- |
+| 1   | Verify interim state: consistent 19.2.8 pair passes fresh-install vitest        | 13 packages/ui files pass without the test cache | DONE 2026-09-19 |
+| 2   | Document decision as GOAP plan + ADR-250                                        | Plan + ADR merged to main                        | DONE (this PR)  |
+| 3   | Close #1134 (not planned) and #1143/#1144 with rationale + re-proposal criteria | All three closed, cross-linked                   | DONE            |
 
 ## Related
 

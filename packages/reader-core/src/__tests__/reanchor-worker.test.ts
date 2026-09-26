@@ -8,11 +8,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import {
-  reanchorByText,
-  tryReanchor,
-  terminateWorker,
-} from '../reanchor-worker';
+import { reanchorByText, tryReanchor, terminateWorker } from '../reanchor-worker';
 import type { TocItem } from '../epub-types';
 
 // ---------------------------------------------------------------------------
@@ -30,9 +26,7 @@ const TOC: TocItem[] = [
   },
 ];
 
-function makeLoader(
-  map: Record<string, string>,
-): (href: string) => Promise<string> {
+function makeLoader(map: Record<string, string>): (href: string) => Promise<string> {
   const lookup = new Map(Object.entries(map));
   return (href: string) => {
     const value = lookup.get(href);
@@ -91,8 +85,7 @@ describe('reanchorByText (pool fallback)', () => {
 
   it('falls back to fuzzy match when exact/partial not found', async () => {
     const loader = makeLoader({
-      'chapter1.xhtml':
-        'The chapter discusses important concepts and key ideas about the topic.',
+      'chapter1.xhtml': 'The chapter discusses important concepts and key ideas about the topic.',
       'chapter2.xhtml': 'nothing',
       'chapter3.xhtml': 'nothing',
       'section3a.xhtml': 'nothing',
@@ -126,11 +119,7 @@ describe('reanchorByText (pool fallback)', () => {
       'chapter3.xhtml': 'completely different content',
       'section3a.xhtml': 'completely different content',
     });
-    const result = await reanchorByText(
-      'text that cannot be found anywhere',
-      TOC,
-      loader,
-    );
+    const result = await reanchorByText('text that cannot be found anywhere', TOC, loader);
     expect(result.success).toBe(false);
     expect(result.fallback).toBe(true);
   });
@@ -149,12 +138,9 @@ describe('reanchorByText (pool fallback)', () => {
       'section3a.xhtml': 'nothing',
     });
     // With a low threshold (0.5) two matching words out of two should pass.
-    const result = await reanchorByText(
-      'optimization performance',
-      TOC,
-      loader,
-      { fuzzyThreshold: 0.5 },
-    );
+    const result = await reanchorByText('optimization performance', TOC, loader, {
+      fuzzyThreshold: 0.5,
+    });
     expect(result.success).toBe(true);
     expect(result.matchType).toBe('fuzzy');
   });
@@ -230,7 +216,9 @@ describe('tryReanchor (pool fallback)', () => {
 
 describe('terminateWorker', () => {
   it('can be called safely when no pool has been created', () => {
-    expect(() => { terminateWorker(); }).not.toThrow();
+    expect(() => {
+      terminateWorker();
+    }).not.toThrow();
   });
 
   it('can be called multiple times without error', () => {

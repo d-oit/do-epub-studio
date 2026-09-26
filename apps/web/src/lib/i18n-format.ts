@@ -11,7 +11,9 @@ import { getCurrentLocale } from '../stores/locale';
  */
 
 export function formatDate(date: Date, options?: Intl.DateTimeFormatOptions): string {
-  return new Intl.DateTimeFormat(getCurrentLocale(), options ?? { dateStyle: 'medium' }).format(date);
+  return new Intl.DateTimeFormat(getCurrentLocale(), options ?? { dateStyle: 'medium' }).format(
+    date,
+  );
 }
 
 export function formatDateTime(date: Date, options?: Intl.DateTimeFormatOptions): string {

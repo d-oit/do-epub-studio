@@ -30,7 +30,15 @@ vi.mock('react-router-dom', async () => {
   return { ...actual, useNavigate: () => vi.fn() };
 });
 
-const BOOK = { id: '1', slug: 'test', title: 'Test Book', authorName: 'Author', description: 'Desc', visibility: 'public', coverImageUrl: null };
+const BOOK = {
+  id: '1',
+  slug: 'test',
+  title: 'Test Book',
+  authorName: 'Author',
+  description: 'Desc',
+  visibility: 'public',
+  coverImageUrl: null,
+};
 
 describe('AdminBookResponsesPage — edit modal', () => {
   beforeEach(() => {
@@ -39,16 +47,28 @@ describe('AdminBookResponsesPage — edit modal', () => {
 
   it('opens edit modal', async () => {
     vi.mocked(apiRequest).mockResolvedValue([BOOK]);
-    render(<MemoryRouter><AdminBookResponsesPage /></MemoryRouter>);
-    await waitFor(() => { expect(screen.getByText('Test Book')).toBeInTheDocument(); });
+    render(
+      <MemoryRouter>
+        <AdminBookResponsesPage />
+      </MemoryRouter>,
+    );
+    await waitFor(() => {
+      expect(screen.getByText('Test Book')).toBeInTheDocument();
+    });
     fireEvent.click(screen.getByText('admin.books.edit'));
     expect(screen.getByText('admin.books.editTitle')).toBeInTheDocument();
   });
 
   it('closes edit modal on cancel', async () => {
     vi.mocked(apiRequest).mockResolvedValue([BOOK]);
-    render(<MemoryRouter><AdminBookResponsesPage /></MemoryRouter>);
-    await waitFor(() => { expect(screen.getByText('Test Book')).toBeInTheDocument(); });
+    render(
+      <MemoryRouter>
+        <AdminBookResponsesPage />
+      </MemoryRouter>,
+    );
+    await waitFor(() => {
+      expect(screen.getByText('Test Book')).toBeInTheDocument();
+    });
     fireEvent.click(screen.getByText('admin.books.edit'));
     expect(screen.getByText('admin.books.editTitle')).toBeInTheDocument();
     const closeButtons = screen.getAllByText('admin.createBookModal.close');
@@ -59,8 +79,14 @@ describe('AdminBookResponsesPage — edit modal', () => {
 
   it('closes edit modal on Escape key', async () => {
     vi.mocked(apiRequest).mockResolvedValue([BOOK]);
-    render(<MemoryRouter><AdminBookResponsesPage /></MemoryRouter>);
-    await waitFor(() => { expect(screen.getByText('Test Book')).toBeInTheDocument(); });
+    render(
+      <MemoryRouter>
+        <AdminBookResponsesPage />
+      </MemoryRouter>,
+    );
+    await waitFor(() => {
+      expect(screen.getByText('Test Book')).toBeInTheDocument();
+    });
     fireEvent.click(screen.getByText('admin.books.edit'));
     expect(screen.getByText('admin.books.editTitle')).toBeInTheDocument();
     fireEvent.keyDown(document, { key: 'Escape' });
@@ -71,8 +97,14 @@ describe('AdminBookResponsesPage — edit modal', () => {
 
   it('allows editing author with empty string', async () => {
     vi.mocked(apiRequest).mockResolvedValue([BOOK]);
-    render(<MemoryRouter><AdminBookResponsesPage /></MemoryRouter>);
-    await waitFor(() => { expect(screen.getByText('Test Book')).toBeInTheDocument(); });
+    render(
+      <MemoryRouter>
+        <AdminBookResponsesPage />
+      </MemoryRouter>,
+    );
+    await waitFor(() => {
+      expect(screen.getByText('Test Book')).toBeInTheDocument();
+    });
     fireEvent.click(screen.getByText('admin.books.edit'));
     const authorInput = screen.getAllByRole('textbox')[1];
     fireEvent.change(authorInput, { target: { value: '' } });
@@ -81,8 +113,14 @@ describe('AdminBookResponsesPage — edit modal', () => {
 
   it('allows editing description with empty string', async () => {
     vi.mocked(apiRequest).mockResolvedValue([BOOK]);
-    render(<MemoryRouter><AdminBookResponsesPage /></MemoryRouter>);
-    await waitFor(() => { expect(screen.getByText('Test Book')).toBeInTheDocument(); });
+    render(
+      <MemoryRouter>
+        <AdminBookResponsesPage />
+      </MemoryRouter>,
+    );
+    await waitFor(() => {
+      expect(screen.getByText('Test Book')).toBeInTheDocument();
+    });
     fireEvent.click(screen.getByText('admin.books.edit'));
     const descInput = screen.getAllByRole('textbox')[2];
     fireEvent.change(descInput, { target: { value: '' } });
@@ -91,8 +129,14 @@ describe('AdminBookResponsesPage — edit modal', () => {
 
   it('allows editing title in edit modal', async () => {
     vi.mocked(apiRequest).mockResolvedValue([BOOK]);
-    render(<MemoryRouter><AdminBookResponsesPage /></MemoryRouter>);
-    await waitFor(() => { expect(screen.getByText('Test Book')).toBeInTheDocument(); });
+    render(
+      <MemoryRouter>
+        <AdminBookResponsesPage />
+      </MemoryRouter>,
+    );
+    await waitFor(() => {
+      expect(screen.getByText('Test Book')).toBeInTheDocument();
+    });
     fireEvent.click(screen.getByText('admin.books.edit'));
     const titleInput = screen.getAllByRole('textbox')[0];
     fireEvent.change(titleInput, { target: { value: 'Updated Title' } });
@@ -101,8 +145,14 @@ describe('AdminBookResponsesPage — edit modal', () => {
 
   it('allows editing author in edit modal', async () => {
     vi.mocked(apiRequest).mockResolvedValue([BOOK]);
-    render(<MemoryRouter><AdminBookResponsesPage /></MemoryRouter>);
-    await waitFor(() => { expect(screen.getByText('Test Book')).toBeInTheDocument(); });
+    render(
+      <MemoryRouter>
+        <AdminBookResponsesPage />
+      </MemoryRouter>,
+    );
+    await waitFor(() => {
+      expect(screen.getByText('Test Book')).toBeInTheDocument();
+    });
     fireEvent.click(screen.getByText('admin.books.edit'));
     const authorInput = screen.getAllByRole('textbox')[1];
     fireEvent.change(authorInput, { target: { value: 'New Author' } });
@@ -111,8 +161,14 @@ describe('AdminBookResponsesPage — edit modal', () => {
 
   it('allows editing description in edit modal', async () => {
     vi.mocked(apiRequest).mockResolvedValue([BOOK]);
-    render(<MemoryRouter><AdminBookResponsesPage /></MemoryRouter>);
-    await waitFor(() => { expect(screen.getByText('Test Book')).toBeInTheDocument(); });
+    render(
+      <MemoryRouter>
+        <AdminBookResponsesPage />
+      </MemoryRouter>,
+    );
+    await waitFor(() => {
+      expect(screen.getByText('Test Book')).toBeInTheDocument();
+    });
     fireEvent.click(screen.getByText('admin.books.edit'));
     const descInput = screen.getAllByRole('textbox')[2];
     fireEvent.change(descInput, { target: { value: 'New Description' } });
@@ -121,8 +177,14 @@ describe('AdminBookResponsesPage — edit modal', () => {
 
   it('allows editing visibility in edit modal', async () => {
     vi.mocked(apiRequest).mockResolvedValue([BOOK]);
-    render(<MemoryRouter><AdminBookResponsesPage /></MemoryRouter>);
-    await waitFor(() => { expect(screen.getByText('Test Book')).toBeInTheDocument(); });
+    render(
+      <MemoryRouter>
+        <AdminBookResponsesPage />
+      </MemoryRouter>,
+    );
+    await waitFor(() => {
+      expect(screen.getByText('Test Book')).toBeInTheDocument();
+    });
     fireEvent.click(screen.getByText('admin.books.edit'));
     const select = screen.getAllByRole('combobox')[0];
     fireEvent.change(select, { target: { value: 'private' } });
@@ -134,8 +196,14 @@ describe('AdminBookResponsesPage — edit modal', () => {
       .mockResolvedValueOnce([BOOK])
       .mockResolvedValueOnce({})
       .mockResolvedValueOnce([BOOK]);
-    render(<MemoryRouter><AdminBookResponsesPage /></MemoryRouter>);
-    await waitFor(() => { expect(screen.getByText('Test Book')).toBeInTheDocument(); });
+    render(
+      <MemoryRouter>
+        <AdminBookResponsesPage />
+      </MemoryRouter>,
+    );
+    await waitFor(() => {
+      expect(screen.getByText('Test Book')).toBeInTheDocument();
+    });
     fireEvent.click(screen.getByText('admin.books.edit'));
     expect(screen.getByText('admin.books.editTitle')).toBeInTheDocument();
     fireEvent.click(screen.getByText('admin.books.saveChanges'));
@@ -148,8 +216,14 @@ describe('AdminBookResponsesPage — edit modal', () => {
     vi.mocked(apiRequest)
       .mockResolvedValueOnce([BOOK])
       .mockRejectedValueOnce(new Error('Update failed'));
-    render(<MemoryRouter><AdminBookResponsesPage /></MemoryRouter>);
-    await waitFor(() => { expect(screen.getByText('Test Book')).toBeInTheDocument(); });
+    render(
+      <MemoryRouter>
+        <AdminBookResponsesPage />
+      </MemoryRouter>,
+    );
+    await waitFor(() => {
+      expect(screen.getByText('Test Book')).toBeInTheDocument();
+    });
     fireEvent.click(screen.getByText('admin.books.edit'));
     fireEvent.click(screen.getByText('admin.books.saveChanges'));
     await waitFor(() => {
@@ -162,8 +236,14 @@ describe('AdminBookResponsesPage — edit modal', () => {
       .mockResolvedValueOnce([BOOK])
       .mockResolvedValueOnce({})
       .mockResolvedValueOnce([]);
-    render(<MemoryRouter><AdminBookResponsesPage /></MemoryRouter>);
-    await waitFor(() => { expect(screen.getByText('Test Book')).toBeInTheDocument(); });
+    render(
+      <MemoryRouter>
+        <AdminBookResponsesPage />
+      </MemoryRouter>,
+    );
+    await waitFor(() => {
+      expect(screen.getByText('Test Book')).toBeInTheDocument();
+    });
     fireEvent.click(screen.getByText('admin.books.edit'));
     fireEvent.click(screen.getByText('admin.books.saveChanges'));
     await waitFor(() => {

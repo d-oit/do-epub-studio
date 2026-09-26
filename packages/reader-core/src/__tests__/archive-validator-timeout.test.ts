@@ -6,7 +6,7 @@ import { validateArchive, ArchiveValidationError } from '../archive-validator';
 describe('ArchiveValidator timeout integration', () => {
   it('passes through with default timeout on valid archive', async () => {
     const data = zipSync({
-      'mimetype': strToU8('application/epub+zip'),
+      mimetype: strToU8('application/epub+zip'),
       'content.txt': strToU8('Hello EPUB'),
     });
     await expect(validateArchive(data)).resolves.toBeUndefined();
@@ -14,7 +14,7 @@ describe('ArchiveValidator timeout integration', () => {
 
   it('respects custom timeoutMs option', async () => {
     const data = zipSync({
-      'mimetype': strToU8('application/epub+zip'),
+      mimetype: strToU8('application/epub+zip'),
       'content.txt': strToU8('Hello EPUB'),
     });
     await expect(validateArchive(data, { timeoutMs: 5000 })).resolves.toBeUndefined();
@@ -22,7 +22,7 @@ describe('ArchiveValidator timeout integration', () => {
 
   it('accepts traceId option without error', async () => {
     const data = zipSync({
-      'mimetype': strToU8('application/epub+zip'),
+      mimetype: strToU8('application/epub+zip'),
     });
     await expect(
       validateArchive(data, { timeoutMs: 5000, traceId: 'test-trace' }),

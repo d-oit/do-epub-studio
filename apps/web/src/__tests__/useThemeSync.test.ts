@@ -51,7 +51,9 @@ describe('useThemeSync', () => {
     vi.spyOn(window, 'matchMedia').mockReturnValue(mockMq as unknown as MediaQueryList);
 
     usePreferencesStore.getState().setTheme('dark');
-    renderHook(() => { useThemeSync(); });
+    renderHook(() => {
+      useThemeSync();
+    });
 
     expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
   });
@@ -61,7 +63,9 @@ describe('useThemeSync', () => {
     vi.spyOn(window, 'matchMedia').mockReturnValue(mockMq as unknown as MediaQueryList);
 
     usePreferencesStore.getState().setTheme('dark');
-    renderHook(() => { useThemeSync(); });
+    renderHook(() => {
+      useThemeSync();
+    });
 
     expect(document.documentElement.classList.contains('dark')).toBe(true);
     expect(document.documentElement.classList.contains('sepia')).toBe(false);
@@ -72,7 +76,9 @@ describe('useThemeSync', () => {
     vi.spyOn(window, 'matchMedia').mockReturnValue(mockMq as unknown as MediaQueryList);
 
     usePreferencesStore.getState().setTheme('sepia');
-    renderHook(() => { useThemeSync(); });
+    renderHook(() => {
+      useThemeSync();
+    });
 
     expect(document.documentElement.classList.contains('sepia')).toBe(true);
     expect(document.documentElement.classList.contains('dark')).toBe(false);
@@ -84,7 +90,9 @@ describe('useThemeSync', () => {
     vi.spyOn(window, 'matchMedia').mockReturnValue(mockMq as unknown as MediaQueryList);
 
     usePreferencesStore.getState().setTheme('light');
-    renderHook(() => { useThemeSync(); });
+    renderHook(() => {
+      useThemeSync();
+    });
 
     expect(document.documentElement.getAttribute('data-theme')).toBe('light');
     expect(document.documentElement.classList.contains('dark')).toBe(false);
@@ -96,7 +104,9 @@ describe('useThemeSync', () => {
     vi.spyOn(window, 'matchMedia').mockReturnValue(mockMq as unknown as MediaQueryList);
 
     // theme stays 'system' (default from beforeEach)
-    renderHook(() => { useThemeSync(); });
+    renderHook(() => {
+      useThemeSync();
+    });
 
     expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
     expect(document.documentElement.classList.contains('dark')).toBe(true);
@@ -106,7 +116,9 @@ describe('useThemeSync', () => {
     const mockMq = createMockMediaQuery(false);
     vi.spyOn(window, 'matchMedia').mockReturnValue(mockMq as unknown as MediaQueryList);
 
-    renderHook(() => { useThemeSync(); });
+    renderHook(() => {
+      useThemeSync();
+    });
 
     expect(document.documentElement.getAttribute('data-theme')).toBe('light');
   });
@@ -115,7 +127,9 @@ describe('useThemeSync', () => {
     const mockMq = createMockMediaQuery(false);
     vi.spyOn(window, 'matchMedia').mockReturnValue(mockMq as unknown as MediaQueryList);
 
-    renderHook(() => { useThemeSync(); });
+    renderHook(() => {
+      useThemeSync();
+    });
 
     expect(mockMq.addEventListener).toHaveBeenCalledWith('change', expect.any(Function));
   });
@@ -125,7 +139,9 @@ describe('useThemeSync', () => {
     vi.spyOn(window, 'matchMedia').mockReturnValue(mockMq as unknown as MediaQueryList);
 
     usePreferencesStore.getState().setTheme('dark');
-    renderHook(() => { useThemeSync(); });
+    renderHook(() => {
+      useThemeSync();
+    });
 
     expect(mockMq.addEventListener).not.toHaveBeenCalled();
   });

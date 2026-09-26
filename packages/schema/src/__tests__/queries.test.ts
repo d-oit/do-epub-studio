@@ -141,7 +141,10 @@ describe('AdminInsightsQuerySchema', () => {
 
 describe('AuditQuerySchema datetime precision (zod 4.5+)', () => {
   it('accepts second-precision datetimes', () => {
-    const result = AuditQuerySchema.parse({ from: '2020-01-01T06:15:00Z', to: '2020-01-02T06:15:00.000Z' });
+    const result = AuditQuerySchema.parse({
+      from: '2020-01-01T06:15:00Z',
+      to: '2020-01-02T06:15:00.000Z',
+    });
     expect(result.from).toBe('2020-01-01T06:15:00Z');
   });
 

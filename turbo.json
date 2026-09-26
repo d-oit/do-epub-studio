@@ -57,13 +57,7 @@
       "outputs": []
     },
     "typecheck": {
-      "inputs": [
-        "src/**",
-        "tsconfig.json",
-        "tsconfig*.json",
-        "package.json",
-        "src/**/*.d.ts"
-      ],
+      "inputs": ["src/**", "tsconfig.json", "tsconfig*.json", "package.json", "src/**/*.d.ts"],
       "outputs": []
     },
     "test:unit": {
@@ -86,11 +80,7 @@
     "test:e2e": {
       "dependsOn": ["^build"],
       "env": ["PLAYWRIGHT_MODE", "BASE_URL", "PLAYWRIGHT_BASE_URL"],
-      "inputs": [
-        "tests/**",
-        "playwright.config.ts",
-        "tsconfig.json"
-      ],
+      "inputs": ["tests/**", "playwright.config.ts", "tsconfig.json"],
       "outputs": ["playwright-report/**", "test-results/**"]
     },
     "test:coverage": {

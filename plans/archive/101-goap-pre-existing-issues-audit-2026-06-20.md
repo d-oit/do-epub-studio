@@ -20,36 +20,36 @@ implementation record.
 `main @ d2139bc` (2026-06-19) was surveyed for pre-existing issues across
 these categories:
 
-| Category | Tool | Initial result |
-|----------|------|----------------|
-| Typecheck | `pnpm typecheck` (7 packages) | All 7 PASS |
-| Lint | `eslint` (apps + packages) | 1 warning (React Compiler on `// eslint-disable-next-line`) |
-| Tests (web) | `vitest run` | **7 tests FAIL** (`src/__tests__/main.test.tsx` — `ReferenceError: document is not defined`) |
-| Tests (worker) | `vitest run` | 155/155 PASS |
-| Tests (reader-core) | `vitest run` (without fixture pre-gen) | **22 tests FAIL** (missing `.epub` fixtures in worktree) |
-| Tests (reader-core) | `pnpm test:unit` (with fixture pre-gen) | 288/288 PASS |
-| Tests (schema) | `vitest run` | 108/108 PASS |
-| Tests (shared) | `vitest run` | 114/114 PASS |
-| Tests (testkit) | `vitest run` | 33/33 PASS |
-| Tests (ui) | `vitest run` | 105/105 PASS |
-| Workflow validation | `validate-workflows.sh` | PASS (zizmor + actionlint) |
-| TODO/FIXME markers | `grep -rn` | 0 (only the test string `'TODO'` in `i18n-parity.test.ts:34`) |
-| Unsafe regex (ADR-034) | `grep -rn "new RegExp"` (production code) | 0 — all in `reader-core` use `matchBounded` (Plan #091) |
-| Secrets | `git diff` | 0 |
+| Category               | Tool                                      | Initial result                                                                               |
+| ---------------------- | ----------------------------------------- | -------------------------------------------------------------------------------------------- |
+| Typecheck              | `pnpm typecheck` (7 packages)             | All 7 PASS                                                                                   |
+| Lint                   | `eslint` (apps + packages)                | 1 warning (React Compiler on `// eslint-disable-next-line`)                                  |
+| Tests (web)            | `vitest run`                              | **7 tests FAIL** (`src/__tests__/main.test.tsx` — `ReferenceError: document is not defined`) |
+| Tests (worker)         | `vitest run`                              | 155/155 PASS                                                                                 |
+| Tests (reader-core)    | `vitest run` (without fixture pre-gen)    | **22 tests FAIL** (missing `.epub` fixtures in worktree)                                     |
+| Tests (reader-core)    | `pnpm test:unit` (with fixture pre-gen)   | 288/288 PASS                                                                                 |
+| Tests (schema)         | `vitest run`                              | 108/108 PASS                                                                                 |
+| Tests (shared)         | `vitest run`                              | 114/114 PASS                                                                                 |
+| Tests (testkit)        | `vitest run`                              | 33/33 PASS                                                                                   |
+| Tests (ui)             | `vitest run`                              | 105/105 PASS                                                                                 |
+| Workflow validation    | `validate-workflows.sh`                   | PASS (zizmor + actionlint)                                                                   |
+| TODO/FIXME markers     | `grep -rn`                                | 0 (only the test string `'TODO'` in `i18n-parity.test.ts:34`)                                |
+| Unsafe regex (ADR-034) | `grep -rn "new RegExp"` (production code) | 0 — all in `reader-core` use `matchBounded` (Plan #091)                                      |
+| Secrets                | `git diff`                                | 0                                                                                            |
 
 ## Decomposition (tasks)
 
-| ID | Task | Status |
-|----|------|--------|
-| T1 | Update `AGENTS.md` to TIER 1: "MUST always fix pre-existing issues when encountered" | ✅ |
-| T2 | Fix `apps/web/package.json`: add `jsdom` to devDependencies (root cause of 7 failing web tests) | ✅ |
-| T3 | Fix `apps/web/src/main.tsx`: drop 2 unsuppressed `// eslint-disable-next-line @typescript-eslint/no-explicit-any` (replace `any` with `TranslationKeys`) | ✅ |
-| T4 | Fix `apps/web/src/__tests__/main.test.tsx`:190: add explanation to `// eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors` (AGENTS.md TIER 2 #6 violation) | ✅ |
-| T5 | Fix `apps/web/src/features/reader/ReaderPage.tsx`:119: drop unsuppressed `// eslint-disable-next-line` by refactoring `handleNavigateToAnnotation` to use a stable useRef + useCallback pattern (eliminates React Compiler warning) | ✅ |
-| T6 | Verify all 762 web tests pass after fixes | ✅ |
-| T7 | Verify ESLint clean on all packages | ✅ |
-| T8 | Author this plan | ✅ (this file) |
-| T9 | Open PR | pending |
+| ID  | Task                                                                                                                                                                                                                                | Status         |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------- |
+| T1  | Update `AGENTS.md` to TIER 1: "MUST always fix pre-existing issues when encountered"                                                                                                                                                | ✅             |
+| T2  | Fix `apps/web/package.json`: add `jsdom` to devDependencies (root cause of 7 failing web tests)                                                                                                                                     | ✅             |
+| T3  | Fix `apps/web/src/main.tsx`: drop 2 unsuppressed `// eslint-disable-next-line @typescript-eslint/no-explicit-any` (replace `any` with `TranslationKeys`)                                                                            | ✅             |
+| T4  | Fix `apps/web/src/__tests__/main.test.tsx`:190: add explanation to `// eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors` (AGENTS.md TIER 2 #6 violation)                                                    | ✅             |
+| T5  | Fix `apps/web/src/features/reader/ReaderPage.tsx`:119: drop unsuppressed `// eslint-disable-next-line` by refactoring `handleNavigateToAnnotation` to use a stable useRef + useCallback pattern (eliminates React Compiler warning) | ✅             |
+| T6  | Verify all 762 web tests pass after fixes                                                                                                                                                                                           | ✅             |
+| T7  | Verify ESLint clean on all packages                                                                                                                                                                                                 | ✅             |
+| T8  | Author this plan                                                                                                                                                                                                                    | ✅ (this file) |
+| T9  | Open PR                                                                                                                                                                                                                             | pending        |
 
 ## Strategy (Strategize)
 
@@ -70,7 +70,7 @@ these categories:
 
 **T2 — `apps/web/package.json`:** added `jsdom: ^29.1.1` to
 `devDependencies`. Root cause: vitest 4.1.7 declares `jsdom` as an
-*optional* peer dep. The `vitest.config.ts` says
+_optional_ peer dep. The `vitest.config.ts` says
 `environment: 'jsdom'` but `jsdom` was unresolvable from
 `apps/web/node_modules`, so vitest silently fell back to the default
 `node` env. With `node` env, `document` is undefined, breaking 7 tests
@@ -96,6 +96,7 @@ specified), triggering the React Compiler warning. Refactored the
 callback is then read via `ref.current` so it can be passed to
 `useReaderEpub` (which is declared after the callback) without a
 temporal-dead-zone error. The new pattern:
+
 - Declares `handleNavigateToAnnotationRef` before `useReaderEpub`
 - Passes `handleNavigateToAnnotationRef.current` to `useReaderEpub`
 - Defines the `useCallback` after `useReaderEpub` (so `renditionRef` is in scope)
@@ -134,19 +135,19 @@ temporal-dead-zone error. The new pattern:
 
 ## Synthesis (Results)
 
-| Metric | Value |
-|--------|-------|
-| Pre-existing issues surfaced | 5 |
-| Pre-existing issues fixed in this PR | 5 |
-| Pre-existing issues deferred to follow-up | 0 |
-| Test pass rate before | 1,558/1,565 (99.5%) |
-| Test pass rate after | **1,565/1,565 (100%)** |
-| Lint warnings before | 1 (React Compiler on bare `eslint-disable`) |
-| Lint warnings after | **0** |
-| Files changed | 6 |
-| Lines added | +11 |
-| Lines removed | −8 |
-| Lockfile lines changed | +1 (jsdom resolution) |
+| Metric                                    | Value                                       |
+| ----------------------------------------- | ------------------------------------------- |
+| Pre-existing issues surfaced              | 5                                           |
+| Pre-existing issues fixed in this PR      | 5                                           |
+| Pre-existing issues deferred to follow-up | 0                                           |
+| Test pass rate before                     | 1,558/1,565 (99.5%)                         |
+| Test pass rate after                      | **1,565/1,565 (100%)**                      |
+| Lint warnings before                      | 1 (React Compiler on bare `eslint-disable`) |
+| Lint warnings after                       | **0**                                       |
+| Files changed                             | 6                                           |
+| Lines added                               | +11                                         |
+| Lines removed                             | −8                                          |
+| Lockfile lines changed                    | +1 (jsdom resolution)                       |
 
 ## Cross-references
 

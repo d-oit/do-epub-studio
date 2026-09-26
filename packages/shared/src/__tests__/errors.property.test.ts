@@ -55,14 +55,11 @@ describe('AppError creation', () => {
 
   it('handles unicode and special characters in message', () => {
     fc.assert(
-      fc.property(
-        fc.string({ minLength: 1 }),
-        (message) => {
-          const error = new AppError(message, 'UNICODE_TEST', 418);
-          expect(error.message).toBe(message);
-          expect(error.code).toBe('UNICODE_TEST');
-        },
-      ),
+      fc.property(fc.string({ minLength: 1 }), (message) => {
+        const error = new AppError(message, 'UNICODE_TEST', 418);
+        expect(error.message).toBe(message);
+        expect(error.code).toBe('UNICODE_TEST');
+      }),
     );
   });
 });
@@ -90,15 +87,12 @@ describe('isAppError type guard', () => {
 
   it('returns false for non-AppError values', () => {
     fc.assert(
-      fc.property(
-        fc.anything(),
-        (value) => {
-          if (value instanceof AppError) {
-            return;
-          }
-          expect(isAppError(value)).toBe(false);
-        },
-      ),
+      fc.property(fc.anything(), (value) => {
+        if (value instanceof AppError) {
+          return;
+        }
+        expect(isAppError(value)).toBe(false);
+      }),
     );
   });
 });
@@ -136,7 +130,10 @@ describe('toApiError conversion', () => {
       fc.property(anyString, (message) => {
         const error = new Error(message);
         const apiError = toApiError(error);
-        expect(apiError).toEqual({ code: 'INTERNAL_ERROR', message: 'An unexpected error occurred' });
+        expect(apiError).toEqual({
+          code: 'INTERNAL_ERROR',
+          message: 'An unexpected error occurred',
+        });
       }),
     );
   });
@@ -144,10 +141,19 @@ describe('toApiError conversion', () => {
   it('returns INTERNAL_ERROR for non-Error values', () => {
     fc.assert(
       fc.property(
-        fc.oneof(fc.integer(), fc.boolean(), fc.constant(null), fc.constant(undefined), fc.object()),
+        fc.oneof(
+          fc.integer(),
+          fc.boolean(),
+          fc.constant(null),
+          fc.constant(undefined),
+          fc.object(),
+        ),
         (value) => {
           const apiError = toApiError(value);
-          expect(apiError).toEqual({ code: 'INTERNAL_ERROR', message: 'An unexpected error occurred' });
+          expect(apiError).toEqual({
+            code: 'INTERNAL_ERROR',
+            message: 'An unexpected error occurred',
+          });
         },
       ),
     );
@@ -183,16 +189,13 @@ describe('ValidationError specific behavior', () => {
 describe('RateLimitError specific behavior', () => {
   it('stores retryAfter', () => {
     fc.assert(
-      fc.property(
-        fc.integer({ min: 0, max: 3600 }),
-        (retryAfter) => {
-          const error = new RateLimitError(retryAfter);
-          expect(error.retryAfter).toBe(retryAfter);
-          expect(error.code).toBe('RATE_LIMIT');
-          expect(error.statusCode).toBe(429);
-          expect(error.message).toBe('Too many requests');
-        },
-      ),
+      fc.property(fc.integer({ min: 0, max: 3600 }), (retryAfter) => {
+        const error = new RateLimitError(retryAfter);
+        expect(error.retryAfter).toBe(retryAfter);
+        expect(error.code).toBe('RATE_LIMIT');
+        expect(error.statusCode).toBe(429);
+        expect(error.message).toBe('Too many requests');
+      }),
     );
   });
 });

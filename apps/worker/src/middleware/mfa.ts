@@ -18,12 +18,17 @@ import { apiError } from '../lib/api-error';
 
 const MFA_ASSURED: Record<string, true> = { mfa: true };
 
-export const requireMfa: MiddlewareHandler<{ Bindings: Env; Variables: { adminUser: { email: string; id: string; role: string } } }> = async (c, next) => {
+export const requireMfa: MiddlewareHandler<{
+  Bindings: Env;
+  Variables: { adminUser: { email: string; id: string; role: string } };
+}> = async (c, next) => {
   const authHeader = c.req.header('Authorization') ?? '';
   const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
 
   if (!token) {
-    return apiError(c, 428, 'MFA_REQUIRED', 'MFA authentication required', { 'X-Mfa-Required': 'true' });
+    return apiError(c, 428, 'MFA_REQUIRED', 'MFA authentication required', {
+      'X-Mfa-Required': 'true',
+    });
   }
 
   const tokenHash = await hashToken(token);
@@ -39,7 +44,9 @@ export const requireMfa: MiddlewareHandler<{ Bindings: Env; Variables: { adminUs
   }
 
   if (!MFA_ASSURED[session.assurance_level]) {
-    return apiError(c, 428, 'MFA_REQUIRED', 'MFA authentication required', { 'X-Mfa-Required': 'true' });
+    return apiError(c, 428, 'MFA_REQUIRED', 'MFA authentication required', {
+      'X-Mfa-Required': 'true',
+    });
   }
 
   await next();

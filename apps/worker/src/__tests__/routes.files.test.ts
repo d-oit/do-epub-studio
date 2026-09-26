@@ -1,8 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import {
-  makeEnv,
-  mockQueryFirst,
-} from './fixtures';
+import { makeEnv, mockQueryFirst } from './fixtures';
 import { app } from '../app';
 
 describe('Files Routes', () => {
@@ -12,8 +9,15 @@ describe('Files Routes', () => {
     vi.clearAllMocks();
   });
 
-  function makeFileUrlRequest(bookId: string, remainder: string, expires: string, signature: string): Request {
-    return new Request(`http://localhost/api/files/${bookId}/${remainder}?expires=${expires}&signature=${signature}`);
+  function makeFileUrlRequest(
+    bookId: string,
+    remainder: string,
+    expires: string,
+    signature: string,
+  ): Request {
+    return new Request(
+      `http://localhost/api/files/${bookId}/${remainder}?expires=${expires}&signature=${signature}`,
+    );
   }
 
   describe('GET /api/files/:bookId/:remainder', () => {
@@ -26,7 +30,8 @@ describe('Files Routes', () => {
     });
 
     it('returns 404 when file not found in DB', async () => {
-      const { verifySignedUrlSignature, verifySignedUrlExpiry } = await import('../storage/signed-url');
+      const { verifySignedUrlSignature, verifySignedUrlExpiry } =
+        await import('../storage/signed-url');
       vi.mocked(verifySignedUrlSignature).mockResolvedValue(true);
       vi.mocked(verifySignedUrlExpiry).mockReturnValue(true);
 
@@ -36,7 +41,8 @@ describe('Files Routes', () => {
     });
 
     it('returns file body with correct headers when valid', async () => {
-      const { verifySignedUrlSignature, verifySignedUrlExpiry } = await import('../storage/signed-url');
+      const { verifySignedUrlSignature, verifySignedUrlExpiry } =
+        await import('../storage/signed-url');
       vi.mocked(verifySignedUrlSignature).mockResolvedValue(true);
       vi.mocked(verifySignedUrlExpiry).mockReturnValue(true);
 
@@ -63,7 +69,8 @@ describe('Files Routes', () => {
     // EPUB chapter responses. A regression here would break EPUB rendering.
     // (Plan 122 § Compatibility constraints.)
     it('uses the EPUB carve-out CSP, not the global Worker CSP', async () => {
-      const { verifySignedUrlSignature, verifySignedUrlExpiry } = await import('../storage/signed-url');
+      const { verifySignedUrlSignature, verifySignedUrlExpiry } =
+        await import('../storage/signed-url');
       vi.mocked(verifySignedUrlSignature).mockResolvedValue(true);
       vi.mocked(verifySignedUrlExpiry).mockReturnValue(true);
 

@@ -10,36 +10,36 @@
 
 ### Open Issues (14)
 
-| # | Title | Labels | Priority | Status |
-|---|-------|--------|----------|--------|
-| 469 | CI failure on main: 27250740801 | ci-failure | P0 | Scheduled E2E failure (non-blocking) |
-| 454 | Add .gemini/ and missing per-model agent config dirs | dx, ai | P2 | Open, addressed by PR #458 |
-| 453 | Add .actrc for local GitHub Actions via act | dx, area:ci | P2 | Open, addressed by PR #458 |
-| 452 | Add llms.txt and llms-full.txt | docs, dx, ai | P2 | Open, addressed by PR #458 |
-| 451 | Add commitlint.config.cjs | dx, area:ci | P2 | Open, addressed by PR #458 |
-| 450 | Add .github/labeler.yml | dx, area:ci | P2 | Open, addressed by PR #458 |
-| 449 | Add PR_VERIFICATION_CHECKLIST.md + GUIDE.md | docs, dx | P2 | Open, addressed by PR #458 |
-| 448 | Extend PULL_REQUEST_TEMPLATE.md | docs, dx | P2 | Open, addressed by PR #458 |
-| 447 | Add .gitleaks.toml | dx, security | P2 | Open, addressed by PR #458 |
-| 446 | Extend .pre-commit-config.yaml | dx, optimization | P2 | Open, addressed by PR #458 |
-| 445 | Keep agent files thin + AGENTS.md guards | docs, optimization | P1 | Open, addressed by PR #458 |
-| 444 | Split build job baseline into composite action | ci, optimization | P1 | Open, addressed by PR #458 |
-| 443 | Add Turbo remote cache verification | ci, optimization | P1 | Open, addressed by PR #458 |
-| 442 | Add path-based CI job filters | ci, optimization | P1 | Open, addressed by PR #458 |
+| #   | Title                                                | Labels             | Priority | Status                               |
+| --- | ---------------------------------------------------- | ------------------ | -------- | ------------------------------------ |
+| 469 | CI failure on main: 27250740801                      | ci-failure         | P0       | Scheduled E2E failure (non-blocking) |
+| 454 | Add .gemini/ and missing per-model agent config dirs | dx, ai             | P2       | Open, addressed by PR #458           |
+| 453 | Add .actrc for local GitHub Actions via act          | dx, area:ci        | P2       | Open, addressed by PR #458           |
+| 452 | Add llms.txt and llms-full.txt                       | docs, dx, ai       | P2       | Open, addressed by PR #458           |
+| 451 | Add commitlint.config.cjs                            | dx, area:ci        | P2       | Open, addressed by PR #458           |
+| 450 | Add .github/labeler.yml                              | dx, area:ci        | P2       | Open, addressed by PR #458           |
+| 449 | Add PR_VERIFICATION_CHECKLIST.md + GUIDE.md          | docs, dx           | P2       | Open, addressed by PR #458           |
+| 448 | Extend PULL_REQUEST_TEMPLATE.md                      | docs, dx           | P2       | Open, addressed by PR #458           |
+| 447 | Add .gitleaks.toml                                   | dx, security       | P2       | Open, addressed by PR #458           |
+| 446 | Extend .pre-commit-config.yaml                       | dx, optimization   | P2       | Open, addressed by PR #458           |
+| 445 | Keep agent files thin + AGENTS.md guards             | docs, optimization | P1       | Open, addressed by PR #458           |
+| 444 | Split build job baseline into composite action       | ci, optimization   | P1       | Open, addressed by PR #458           |
+| 443 | Add Turbo remote cache verification                  | ci, optimization   | P1       | Open, addressed by PR #458           |
+| 442 | Add path-based CI job filters                        | ci, optimization   | P1       | Open, addressed by PR #458           |
 
 ### Open PRs (10)
 
-| # | Title | Branch | Merge Status | CI Failures | Action |
-|---|-------|--------|-------------|-------------|--------|
-| **470** | Optimize sanitizer DOM traversal | perf-optimize-sanitizer-jules-* | **CLEAN** | None | **Ready to merge** |
-| **468** | Bump dev-dependencies (16 updates) | dependabot/... | UNSTABLE | Chromatic visual regression | Needs Chromatic approval/re-run |
-| **466** | Bump eslint-plugin-unicorn 64→65 | dependabot/... | UNSTABLE | Pre-commit + Lint | Rebase on main, fix lint |
-| **465** | Bump production-dependencies (5) | dependabot/... | UNSTABLE | Setup, Lighthouse, Cloudflare | Rebase on main |
-| **462** | Bump codecov-action 6→7 | dependabot/... | BEHIND | Pre-commit | Rebase on main |
-| **461** | Bump codeql-action 3.28→4.36 | dependabot/... | BEHIND | Pre-commit | Rebase on main |
-| **460** | Bump chromaui/action | dependabot/... | BEHIND | Pre-commit | Rebase on main |
-| **458** | DX scaffolding (Phases 2+3) | feat/goap-068-* | **BLOCKED** | Pre-commit, Codacy | Fix pre-commit failures, rebase |
-| **440** | EPUB Content Sanitization | fix/epub-sanitization-* | **BLOCKED** | Codacy only | Merge #470 first, then rebase |
+| #       | Title                              | Branch                          | Merge Status | CI Failures                   | Action                          |
+| ------- | ---------------------------------- | ------------------------------- | ------------ | ----------------------------- | ------------------------------- |
+| **470** | Optimize sanitizer DOM traversal   | perf-optimize-sanitizer-jules-* | **CLEAN**    | None                          | **Ready to merge**              |
+| **468** | Bump dev-dependencies (16 updates) | dependabot/...                  | UNSTABLE     | Chromatic visual regression   | Needs Chromatic approval/re-run |
+| **466** | Bump eslint-plugin-unicorn 64→65   | dependabot/...                  | UNSTABLE     | Pre-commit + Lint             | Rebase on main, fix lint        |
+| **465** | Bump production-dependencies (5)   | dependabot/...                  | UNSTABLE     | Setup, Lighthouse, Cloudflare | Rebase on main                  |
+| **462** | Bump codecov-action 6→7            | dependabot/...                  | BEHIND       | Pre-commit                    | Rebase on main                  |
+| **461** | Bump codeql-action 3.28→4.36       | dependabot/...                  | BEHIND       | Pre-commit                    | Rebase on main                  |
+| **460** | Bump chromaui/action               | dependabot/...                  | BEHIND       | Pre-commit                    | Rebase on main                  |
+| **458** | DX scaffolding (Phases 2+3)        | feat/goap-068-*                 | **BLOCKED**  | Pre-commit, Codacy            | Fix pre-commit failures, rebase |
+| **440** | EPUB Content Sanitization          | fix/epub-sanitization-*         | **BLOCKED**  | Codacy only                   | Merge #470 first, then rebase   |
 
 ### CI Failure on Main (#469)
 
@@ -108,13 +108,13 @@
 
 ## Phase 4: COORDINATE — Agent Assignments
 
-| Task | Agent/Skill | Notes |
-|------|------------|-------|
-| Merge PR #470 | github-pr-autopilot | CLEAN, auto-merge ready |
-| Fix pre-commit | shell-script-quality | Check hooks config |
-| Rebase Dependabot PRs | github-workflow | Parallel rebase |
-| Review Codacy | code-quality | Analyze findings |
-| Chromatic review | dogfood | Visual regression check |
+| Task                  | Agent/Skill          | Notes                   |
+| --------------------- | -------------------- | ----------------------- |
+| Merge PR #470         | github-pr-autopilot  | CLEAN, auto-merge ready |
+| Fix pre-commit        | shell-script-quality | Check hooks config      |
+| Rebase Dependabot PRs | github-workflow      | Parallel rebase         |
+| Review Codacy         | code-quality         | Analyze findings        |
+| Chromatic review      | dogfood              | Visual regression check |
 
 ---
 
@@ -129,6 +129,7 @@ PR #470 (Optimize sanitizer DOM traversal) has all CI green and merge status CLE
 #### Root Cause 1: `eslint-plugin-unicorn` 64→65 breaking change (PR #466)
 
 **Error:**
+
 ```
 Directory name `__tests__` is not in camel case, pascal case, or kebab case.
 Rename it to `__tests` or `__Tests`  unicorn/filename-case
@@ -137,6 +138,7 @@ Rename it to `__tests` or `__Tests`  unicorn/filename-case
 **Cause:** `eslint-plugin-unicorn` v65 changed `unicorn/filename-case` to reject `__tests__` directories. This is a breaking change from v64 which accepted `__tests__` as a valid convention.
 
 **Fix options:**
+
 1. Add override in eslint config: `"unicorn/filename-case": ["error", { "ignore": ["__tests__"] }]`
 2. Keep eslint-plugin-unicorn at v64 (pin version)
 3. Rename `__tests__` → `__tests` (invasive, affects all packages)
@@ -146,6 +148,7 @@ Rename it to `__tests` or `__Tests`  unicorn/filename-case
 #### Root Cause 2: `yamllint` strict mode failures (PR #458)
 
 **Error:**
+
 ```
 yamllint.................................................................Failed
 ```
@@ -179,28 +182,35 @@ This file serves as the comprehensive triage document.
 ## Phase 6: SYNTHESIS — Results
 
 ### Ready to Merge
+
 - **PR #470** — Optimize sanitizer DOM traversal ✅
 
 ### Needs Rebase (BEHIND main)
+
 - **PR #460** — chromaui/action bump
 - **PR #461** — codeql-action bump
 - **PR #462** — codecov-action bump
 
 ### Needs Fix + Rebase
+
 - **PR #458** — DX scaffolding (pre-commit + Codacy failures)
 - **PR #466** — eslint-plugin-unicorn bump (pre-commit + lint)
 
 ### Needs Review
+
 - **PR #468** — dev-dependencies bump (Chromatic visual regression)
 - **PR #465** — production-dependencies bump (Setup + Lighthouse failures)
 
 ### Needs Rebase After #470
+
 - **PR #440** — EPUB Content Sanitization (Codacy only)
 
 ### Issues Addressed by PRs
+
 - Issues #444–#454 → Addressed by PR #458 (pending fix)
 
 ### Issues to Document
+
 - Issue #469 → Scheduled E2E flake (non-blocking)
 
 ---
@@ -222,12 +232,12 @@ This file serves as the comprehensive triage document.
 
 ## Risk Assessment
 
-| Risk | Impact | Mitigation |
-|------|--------|-----------|
-| `__tests__` directory convention conflict with unicorn/filename-case | High | Add eslint override to allow `__tests__` |
-| yamllint strict mode blocks PR #458 | Medium | Fix YAML files or relax config |
-| Chromatic false positive on #468 | Low | Visual review by maintainer |
-| PR #458 scope creep (11 issues in one PR) | Medium | Split if needed, but currently manageable |
-| Scheduled E2E flakiness continues (#469) | Low | Document and add retry |
-| Dependabot PRs bitrot (behind main) | Medium | Rebase promptly after main stabilizes |
-| Codacy findings block PR merges | Low | Review and address specific issues |
+| Risk                                                                 | Impact | Mitigation                                |
+| -------------------------------------------------------------------- | ------ | ----------------------------------------- |
+| `__tests__` directory convention conflict with unicorn/filename-case | High   | Add eslint override to allow `__tests__`  |
+| yamllint strict mode blocks PR #458                                  | Medium | Fix YAML files or relax config            |
+| Chromatic false positive on #468                                     | Low    | Visual review by maintainer               |
+| PR #458 scope creep (11 issues in one PR)                            | Medium | Split if needed, but currently manageable |
+| Scheduled E2E flakiness continues (#469)                             | Low    | Document and add retry                    |
+| Dependabot PRs bitrot (behind main)                                  | Medium | Rebase promptly after main stabilizes     |
+| Codacy findings block PR merges                                      | Low    | Review and address specific issues        |

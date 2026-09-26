@@ -62,25 +62,36 @@ describe('admin invitation routes', () => {
       ok: true,
       context: { userId: 'admin-1', email: 'admin@example.com', globalRole: 'admin' },
     });
-    invitationMocks.createBookInvitation.mockResolvedValue({ invitation, rawToken: 'a'.repeat(64) });
+    invitationMocks.createBookInvitation.mockResolvedValue({
+      invitation,
+      rawToken: 'a'.repeat(64),
+    });
     invitationMocks.listBookInvitations.mockResolvedValue([invitation]);
-    invitationMocks.resendBookInvitation.mockResolvedValue({ invitation, rawToken: 'b'.repeat(64) });
+    invitationMocks.resendBookInvitation.mockResolvedValue({
+      invitation,
+      rawToken: 'b'.repeat(64),
+    });
     invitationMocks.revokeBookInvitation.mockResolvedValue(undefined);
   });
 
   it('returns a manual copy link when email delivery is not configured', async () => {
     mockStepUpAssured();
-    const response = await app.fetch(adminRequest(`/api/admin/books/${bookId}/invitations`, {
-      bookId,
-      email: 'reader@example.com',
-      role: 'reader',
-      mode: 'private',
-      commentsAllowed: false,
-      offlineAllowed: false,
-    }), env, ctx);
+    const response = await app.fetch(
+      adminRequest(`/api/admin/books/${bookId}/invitations`, {
+        bookId,
+        email: 'reader@example.com',
+        role: 'reader',
+        mode: 'private',
+        commentsAllowed: false,
+        offlineAllowed: false,
+      }),
+      env,
+      ctx,
+    );
 
     expect(response.status).toBe(201);
-    const body: { ok: boolean; data: { delivery: string; copyUrl: string | null } } = await response.json();
+    const body: { ok: boolean; data: { delivery: string; copyUrl: string | null } } =
+      await response.json();
     expect(body.data.delivery).toBe('manual_copy_required');
     expect(body.data.copyUrl).toContain('/accept-invite#token=');
     expect(mockLogAudit).toHaveBeenCalledWith(
@@ -92,12 +103,20 @@ describe('admin invitation routes', () => {
 
   it('requires an elevated admin session for resend and revoke', async () => {
     mockStepUpAssured();
-    const response = await app.fetch(adminRequest(`/api/admin/books/${bookId}/invitations/invite-1/resend`), env, ctx);
+    const response = await app.fetch(
+      adminRequest(`/api/admin/books/${bookId}/invitations/invite-1/resend`),
+      env,
+      ctx,
+    );
     expect(response.status).toBe(200);
     expect(invitationMocks.resendBookInvitation).toHaveBeenCalled();
 
     mockStepUpAssured();
-    const revoke = await app.fetch(adminRequest(`/api/admin/books/${bookId}/invitations/invite-1/revoke`), env, ctx);
+    const revoke = await app.fetch(
+      adminRequest(`/api/admin/books/${bookId}/invitations/invite-1/revoke`),
+      env,
+      ctx,
+    );
     expect(revoke.status).toBe(200);
     expect(invitationMocks.revokeBookInvitation).toHaveBeenCalled();
   });
@@ -107,9 +126,13 @@ describe('admin invitation routes', () => {
       ok: true,
       context: { userId: 'admin-1', email: 'admin@example.com', globalRole: 'admin' },
     });
-    const response = await app.fetch(new Request(`http://localhost/api/admin/books/${bookId}/invitations`, {
-      headers: { Authorization: 'Bearer admin-token' },
-    }), env, ctx);
+    const response = await app.fetch(
+      new Request(`http://localhost/api/admin/books/${bookId}/invitations`, {
+        headers: { Authorization: 'Bearer admin-token' },
+      }),
+      env,
+      ctx,
+    );
     expect(response.status).toBe(200);
     const text = await response.text();
     expect(text).not.toContain('token');

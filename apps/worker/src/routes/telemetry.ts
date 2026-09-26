@@ -7,7 +7,10 @@ import { scrub } from '../lib/redact';
 import { logAppError, logAppInfo, logAppWarn } from '../lib/observability';
 import { apiError } from '../lib/api-error';
 
-export const telemetryRouter = new Hono<{ Bindings: Env; Variables: { requestContext: RequestContext } }>();
+export const telemetryRouter = new Hono<{
+  Bindings: Env;
+  Variables: { requestContext: RequestContext };
+}>();
 
 telemetryRouter.post(
   '/telemetry',
@@ -63,7 +66,12 @@ telemetryRouter.post(
         clientSpanId: sanitizeTraceId(log.spanId ?? null),
       };
       if (log.level === 'error') {
-        logAppError('telemetry.received', scrubbedLog.error ?? new Error('client telemetry error'), metadata, ingestCtx);
+        logAppError(
+          'telemetry.received',
+          scrubbedLog.error ?? new Error('client telemetry error'),
+          metadata,
+          ingestCtx,
+        );
       } else if (log.level === 'warn') {
         logAppWarn('telemetry.received', metadata, ingestCtx);
       } else {
@@ -114,7 +122,11 @@ async function persistTelemetry(
     } catch (err) {
       logAppWarn(
         'telemetry.persistence.failed',
-        { event: log.event, level: log.level, errorMessage: err instanceof Error ? err.message : String(err) },
+        {
+          event: log.event,
+          level: log.level,
+          errorMessage: err instanceof Error ? err.message : String(err),
+        },
         ctx,
       );
     }

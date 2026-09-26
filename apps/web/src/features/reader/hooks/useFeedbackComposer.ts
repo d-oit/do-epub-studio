@@ -109,7 +109,6 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
-
 function isNetworkFailure(error: unknown): boolean {
   if (error instanceof Error && error.name === 'AbortError') return true;
   if (typeof error !== 'object' || error === null) return true;
@@ -165,7 +164,8 @@ export function useFeedbackComposer(bookId: string | null): {
       useReaderStore.getState().setFeedbackItems(merged);
     } catch (err) {
       logClientEvent({
-        level: 'error', traceId: createTraceId(),
+        level: 'error',
+        traceId: createTraceId(),
         event: 'feedback.refresh.failed',
         error: { name: errorName(err), message: errorMessage(err) },
       });
@@ -194,23 +194,20 @@ export function useFeedbackComposer(bookId: string | null): {
     setComposerError(null);
   }, []);
 
-  const persistOffline = useCallback(
-    async (draft: FeedbackDraft) => {
-      await saveFeedbackDraft(draft);
-      await queueFeedbackSubmission({
-        bookId: draft.bookId,
-        draftId: draft.id,
-        kind: draft.kind,
-        category: draft.category as FeedbackItem['category'],
-        body: draft.body,
-        proposedText: draft.proposedText,
-        anchor: draft.anchor,
-        mutationId: draft.mutationId,
-      });
-      useReaderStore.getState().upsertFeedbackItem(draftToItem(draft));
-    },
-    [],
-  );
+  const persistOffline = useCallback(async (draft: FeedbackDraft) => {
+    await saveFeedbackDraft(draft);
+    await queueFeedbackSubmission({
+      bookId: draft.bookId,
+      draftId: draft.id,
+      kind: draft.kind,
+      category: draft.category as FeedbackItem['category'],
+      body: draft.body,
+      proposedText: draft.proposedText,
+      anchor: draft.anchor,
+      mutationId: draft.mutationId,
+    });
+    useReaderStore.getState().upsertFeedbackItem(draftToItem(draft));
+  }, []);
 
   const submit = useCallback(
     async (input: ComposerInput): Promise<FeedbackItem> => {
@@ -264,7 +261,9 @@ export function useFeedbackComposer(bookId: string | null): {
 
   const retryDraft = useCallback(
     async (draftItemId: string) => {
-      const id = draftItemId.startsWith('draft:') ? draftItemId.slice('draft:'.length) : draftItemId;
+      const id = draftItemId.startsWith('draft:')
+        ? draftItemId.slice('draft:'.length)
+        : draftItemId;
       if (!bookId || !sessionToken || !email) return;
       const drafts = await loadFeedbackDrafts(bookId, email);
       const draft = drafts.find((d) => d.id === id);

@@ -15,10 +15,7 @@ import {
   type ModelLoadProgress,
   type ModelLoadState,
 } from '@do-epub-studio/reader-core';
-import {
-  fetchAssistanceConsent,
-  setAssistanceConsent,
-} from '../../lib/api/creator';
+import { fetchAssistanceConsent, setAssistanceConsent } from '../../lib/api/creator';
 
 const CATEGORY_LABELS: Record<EditorialCategory, TranslationKeys> = {
   spelling: 'asst.catSpelling',
@@ -64,7 +61,9 @@ export function AssistancePanel({ bookId }: AssistancePanelProps): React.JSX.Ele
   const sessionToken = useAuthStore((s) => s.sessionToken);
   const token = sessionToken ?? '';
 
-  const [consent, setConsent] = useState<{ allowed: boolean; cloudQualified: boolean } | null>(null);
+  const [consent, setConsent] = useState<{ allowed: boolean; cloudQualified: boolean } | null>(
+    null,
+  );
   const [outcome, setOutcome] = useState<EditorialReviewOutcome | null>(null);
   const [running, setRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -88,9 +87,7 @@ export function AssistancePanel({ bookId }: AssistancePanelProps): React.JSX.Ele
     setPreparing(true);
     setError(null);
     try {
-      setEngineLoad(
-        await transformersPlugin.capabilities.editorial.load(onEngineProgress),
-      );
+      setEngineLoad(await transformersPlugin.capabilities.editorial.load(onEngineProgress));
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -157,9 +154,15 @@ export function AssistancePanel({ bookId }: AssistancePanelProps): React.JSX.Ele
 
   return (
     <section aria-label={t('asst.title')} className="mt-6 rounded-lg border border-border p-4">
-      <h2 className="text-sm font-semibold uppercase tracking-wide text-foreground-muted">{t('asst.title')}</h2>
+      <h2 className="text-sm font-semibold uppercase tracking-wide text-foreground-muted">
+        {t('asst.title')}
+      </h2>
 
-      {error && <p role="alert" className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
+      {error && (
+        <p role="alert" className="mt-2 text-sm text-red-600 dark:text-red-400">
+          {error}
+        </p>
+      )}
 
       <ul className="mt-3 space-y-1">
         {EDITORIAL_PLUGIN_CATEGORIES.map((category) => {
@@ -233,12 +236,17 @@ export function AssistancePanel({ bookId }: AssistancePanelProps): React.JSX.Ele
           </span>
         )}
         {outcome?.status === 'no_supported_findings' && (
-          <span role="status" className="text-sm text-foreground-muted">{t('asst.noFindings')}</span>
+          <span role="status" className="text-sm text-foreground-muted">
+            {t('asst.noFindings')}
+          </span>
         )}
         {outcome?.status === 'ok' && (
           <ul className="w-full space-y-2">
             {outcome.findings.map((finding, index) => (
-              <li key={`${finding.category}-${index}`} className="rounded-lg border border-border p-3 text-sm">
+              <li
+                key={`${finding.category}-${index}`}
+                className="rounded-lg border border-border p-3 text-sm"
+              >
                 <div className="flex items-center gap-2 text-xs text-foreground-muted">
                   <span className="font-medium">{t(CATEGORY_LABELS[finding.category])}</span>
                   <span>
@@ -252,7 +260,10 @@ export function AssistancePanel({ bookId }: AssistancePanelProps): React.JSX.Ele
                 {/* Untrusted text: rendered as text nodes, never HTML. */}
                 <p className="mt-1">{finding.explanation}</p>
                 {finding.spans.map((span, spanIndex) => (
-                  <blockquote key={spanIndex} className="mt-1 border-l-2 border-accent pl-2 text-foreground-muted">
+                  <blockquote
+                    key={spanIndex}
+                    className="mt-1 border-l-2 border-accent pl-2 text-foreground-muted"
+                  >
                     {span.quote}
                   </blockquote>
                 ))}

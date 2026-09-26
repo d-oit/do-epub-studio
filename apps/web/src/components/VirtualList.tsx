@@ -81,10 +81,7 @@ export function VirtualList<T>({
   const totalHeight = items.length * itemHeight;
   const startIndex = Math.max(0, Math.floor(scrollTop / itemHeight) - overscan);
   const visibleCount = containerHeight > 0 ? Math.ceil(containerHeight / itemHeight) : 0;
-  const endIndex = Math.min(
-    items.length,
-    startIndex + visibleCount + overscan * 2,
-  );
+  const endIndex = Math.min(items.length, startIndex + visibleCount + overscan * 2);
 
   useEffect(() => {
     if (onVisibleRangeChange) {

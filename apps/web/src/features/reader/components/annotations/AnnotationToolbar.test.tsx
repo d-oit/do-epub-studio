@@ -253,7 +253,9 @@ describe('AnnotationToolbar', () => {
         />,
       );
 
-      const toolbar = document.querySelector('[data-container-name="annotation-toolbar"]') as HTMLElement;
+      const toolbar = document.querySelector(
+        '[data-container-name="annotation-toolbar"]',
+      ) as HTMLElement;
       expect(toolbar).toBeInTheDocument();
       expect(toolbar.style.top).toBe('340px');
       expect(toolbar.style.left).toBe('280px');
@@ -273,7 +275,9 @@ describe('AnnotationToolbar', () => {
         />,
       );
 
-      const toolbar = document.querySelector('[data-container-name="annotation-toolbar"]') as HTMLElement;
+      const toolbar = document.querySelector(
+        '[data-container-name="annotation-toolbar"]',
+      ) as HTMLElement;
       expect(toolbar.style.top).toBe('8px');
     });
 

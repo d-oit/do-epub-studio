@@ -63,21 +63,21 @@ When CFI fails (content changed):
 
 ```typescript
 interface AnnotationLocator {
-  cfi?: string;           // Primary: EPUB CFI
-  selectedText?: string;  // Secondary: text snapshot
-  chapterRef?: string;    // Tertiary: TOC path
-  elementIndex?: number;  // Fallback: DOM position
-  charOffset?: number;    // Fallback: character offset
+  cfi?: string; // Primary: EPUB CFI
+  selectedText?: string; // Secondary: text snapshot
+  chapterRef?: string; // Tertiary: TOC path
+  elementIndex?: number; // Fallback: DOM position
+  charOffset?: number; // Fallback: character offset
 }
 ```
 
 ### Highlight vs Comment Anchors
 
-| Type | Required Fields | Optional |
-|------|-----------------|----------|
-| Highlight | CFI or text | note, color |
-| Comment | CFI or text | chapter, body, parent |
-| Bookmark | CFI or chapter | label |
+| Type      | Required Fields | Optional              |
+| --------- | --------------- | --------------------- |
+| Highlight | CFI or text     | note, color           |
+| Comment   | CFI or text     | chapter, body, parent |
+| Bookmark  | CFI or chapter  | label                 |
 
 ## Consequences
 

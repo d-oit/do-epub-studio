@@ -7,20 +7,20 @@ Detailed topics live in focused sub-documents linked in the table below.
 
 ## Document map
 
-| Topic | File |
-|---|---|
-| Project overview + architecture decisions | [`docs/architecture.md`](./architecture.md) |
-| Coding conventions, naming, TypeScript patterns | [`docs/conventions.md`](./conventions.md) |
-| Banned patterns (raw regex, `any`, unsafe EPUB rendering…) | [`docs/banned-patterns.md`](./banned-patterns.md) |
-| Security model (session tokens, signed URLs, CSP) | [`docs/security.md`](./security.md) |
-| Offline architecture (IndexedDB, Cache Storage, sync queue) | [`docs/offline.md`](./offline.md) |
-| API reference (all Hono routes) | [`docs/api.md`](./api.md) |
-| Accessibility requirements | [`docs/accessibility.md`](./accessibility.md) |
-| Local dev setup | [`docs/setup-local.md`](./setup-local.md) |
-| Cloudflare setup | [`docs/setup-cloudflare.md`](./setup-cloudflare.md) |
-| Turso setup | [`docs/setup-turso.md`](./setup-turso.md) |
-| ADR index | [`plans/ADR-INDEX.md`](../plans/ADR-INDEX.md) |
-| Agent rules, quality gates, compliance self-check | [`AGENTS.md`](../AGENTS.md) |
+| Topic                                                       | File                                                |
+| ----------------------------------------------------------- | --------------------------------------------------- |
+| Project overview + architecture decisions                   | [`docs/architecture.md`](./architecture.md)         |
+| Coding conventions, naming, TypeScript patterns             | [`docs/conventions.md`](./conventions.md)           |
+| Banned patterns (raw regex, `any`, unsafe EPUB rendering…)  | [`docs/banned-patterns.md`](./banned-patterns.md)   |
+| Security model (session tokens, signed URLs, CSP)           | [`docs/security.md`](./security.md)                 |
+| Offline architecture (IndexedDB, Cache Storage, sync queue) | [`docs/offline.md`](./offline.md)                   |
+| API reference (all Hono routes)                             | [`docs/api.md`](./api.md)                           |
+| Accessibility requirements                                  | [`docs/accessibility.md`](./accessibility.md)       |
+| Local dev setup                                             | [`docs/setup-local.md`](./setup-local.md)           |
+| Cloudflare setup                                            | [`docs/setup-cloudflare.md`](./setup-cloudflare.md) |
+| Turso setup                                                 | [`docs/setup-turso.md`](./setup-turso.md)           |
+| ADR index                                                   | [`plans/ADR-INDEX.md`](../plans/ADR-INDEX.md)       |
+| Agent rules, quality gates, compliance self-check           | [`AGENTS.md`](../AGENTS.md)                         |
 
 ---
 
@@ -77,13 +77,13 @@ Package content rules: [`docs/architecture.md` — Package Boundaries](./archite
 
 Do not use a single root `.env`. Split:
 
-| Config kind | Location |
-|---|---|
-| Worker runtime | `apps/worker/wrangler.jsonc` |
-| Worker deployed secrets | `wrangler secret put <KEY>` |
-| Worker local dev | `apps/worker/.dev.vars` (gitignored) |
-| Frontend public config | `apps/web/.env.local` (VITE_ prefixed, gitignored) |
-| DB provisioning | Turso CLI |
+| Config kind             | Location                                           |
+| ----------------------- | -------------------------------------------------- |
+| Worker runtime          | `apps/worker/wrangler.jsonc`                       |
+| Worker deployed secrets | `wrangler secret put <KEY>`                        |
+| Worker local dev        | `apps/worker/.dev.vars` (gitignored)               |
+| Frontend public config  | `apps/web/.env.local` (VITE_ prefixed, gitignored) |
+| DB provisioning         | Turso CLI                                          |
 
 Secrets: `TURSO_AUTH_TOKEN`, `SESSION_SIGNING_SECRET`, `INVITE_TOKEN_SECRET`. Full setup: [`docs/setup-cloudflare.md`](./setup-cloudflare.md) + [`docs/setup-turso.md`](./setup-turso.md).
 

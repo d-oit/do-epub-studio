@@ -26,7 +26,9 @@ export function CreatorPage(): React.JSX.Element {
 
       {error && books.length === 0 && (
         <div className="mt-8 rounded-lg border border-border p-4">
-          <p role="alert" className="text-sm text-foreground-muted">{t('creator.loadError')}</p>
+          <p role="alert" className="text-sm text-foreground-muted">
+            {t('creator.loadError')}
+          </p>
           <button
             type="button"
             onClick={() => void refresh()}

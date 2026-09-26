@@ -11,15 +11,15 @@ Implement all remaining missing tasks identified across plans/ analysis.
 
 ## Remaining Tasks
 
-| ID | Priority | Task | Skill | Files |
-|---|----------|------|-------|-------|
-| T1 | P0 | Raise coverage thresholds for shared and web | `code-quality` | `packages/shared/vitest.config.ts`, `apps/web/vitest.config.ts` |
-| T2 | P1 | Add pre-commit hooks execution to CI workflow | `cicd-pipeline` | `.github/workflows/ci.yml` |
-| T3 | P1 | Add WebKit and mobile viewport to Playwright config | `test-runner` / `testing-strategy` | `playwright.config.ts` |
-| T4 | P1 | Add traceId assertion tests for Worker API | `testing-strategy` | `apps/tests/` |
-| T5 | P1 | Finalize CSP ADR from Proposed→Accepted | `security-code-auditor` | `plans/035-adr-content-security-policy.md` |
-| T6 | P1 | Update CI composite actions for Node.js 24 compatibility | `cicd-pipeline` | `.github/actions/` |
-| T7 | P2 | Plan 007 Phase 8 pointer / plan status sync | `agents-md` | `plans/` |
+| ID  | Priority | Task                                                     | Skill                              | Files                                                           |
+| --- | -------- | -------------------------------------------------------- | ---------------------------------- | --------------------------------------------------------------- |
+| T1  | P0       | Raise coverage thresholds for shared and web             | `code-quality`                     | `packages/shared/vitest.config.ts`, `apps/web/vitest.config.ts` |
+| T2  | P1       | Add pre-commit hooks execution to CI workflow            | `cicd-pipeline`                    | `.github/workflows/ci.yml`                                      |
+| T3  | P1       | Add WebKit and mobile viewport to Playwright config      | `test-runner` / `testing-strategy` | `playwright.config.ts`                                          |
+| T4  | P1       | Add traceId assertion tests for Worker API               | `testing-strategy`                 | `apps/tests/`                                                   |
+| T5  | P1       | Finalize CSP ADR from Proposed→Accepted                  | `security-code-auditor`            | `plans/035-adr-content-security-policy.md`                      |
+| T6  | P1       | Update CI composite actions for Node.js 24 compatibility | `cicd-pipeline`                    | `.github/actions/`                                              |
+| T7  | P2       | Plan 007 Phase 8 pointer / plan status sync              | `agents-md`                        | `plans/`                                                        |
 
 ## Strategy
 
@@ -27,15 +27,15 @@ Implement all remaining missing tasks identified across plans/ analysis.
 
 ## Execution Summary
 
-| ID | Priority | Task | Skill | Status |
-|---|----------|------|-------|--------|
-| T1 | P0 | Raise coverage thresholds for shared and web | `code-quality` | ✅ Merged — shared: 25→40(L),30→50(F),20→35(B),25→35(S); web: 50→55(L),40→48(F),29→40(B),35→55(S) |
-| T2 | P1 | Add pre-commit hooks execution to CI workflow | `cicd-pipeline` | ✅ Already existed in CI workflow (lines 97-112) |
-| T3 | P1 | Add WebKit and mobile viewport to Playwright config | `test-runner` | ✅ Already configured — WebKit conditionally enabled, iPhone/Pixel projects present |
-| T4 | P1 | Add traceId assertion tests for Worker API | `testing-strategy` | ✅ Already implemented — `apps/tests/traceid-header.spec.ts` |
-| T5 | P1 | Finalize CSP ADR from Proposed→Accepted | `security-code-auditor` | ✅ Merged — status updated in `plans/035-adr-content-security-policy.md` |
-| T6 | P1 | Update CI for Node.js 24 compatibility | `cicd-pipeline` | ✅ Already set — `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true` in CI workflow |
-| T7 | P2 | Plan status sync across all plans | `agents-md` | ✅ Updated 3 plan files, created 1 new plan |
+| ID  | Priority | Task                                                | Skill                   | Status                                                                                            |
+| --- | -------- | --------------------------------------------------- | ----------------------- | ------------------------------------------------------------------------------------------------- |
+| T1  | P0       | Raise coverage thresholds for shared and web        | `code-quality`          | ✅ Merged — shared: 25→40(L),30→50(F),20→35(B),25→35(S); web: 50→55(L),40→48(F),29→40(B),35→55(S) |
+| T2  | P1       | Add pre-commit hooks execution to CI workflow       | `cicd-pipeline`         | ✅ Already existed in CI workflow (lines 97-112)                                                  |
+| T3  | P1       | Add WebKit and mobile viewport to Playwright config | `test-runner`           | ✅ Already configured — WebKit conditionally enabled, iPhone/Pixel projects present               |
+| T4  | P1       | Add traceId assertion tests for Worker API          | `testing-strategy`      | ✅ Already implemented — `apps/tests/traceid-header.spec.ts`                                      |
+| T5  | P1       | Finalize CSP ADR from Proposed→Accepted             | `security-code-auditor` | ✅ Merged — status updated in `plans/035-adr-content-security-policy.md`                          |
+| T6  | P1       | Update CI for Node.js 24 compatibility              | `cicd-pipeline`         | ✅ Already set — `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true` in CI workflow                        |
+| T7  | P2       | Plan status sync across all plans                   | `agents-md`             | ✅ Updated 3 plan files, created 1 new plan                                                       |
 
 ## Post-Merge Validation
 

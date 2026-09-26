@@ -64,9 +64,7 @@ export function GrantList({
   if (!selectedBookId && !isLoadingGrants) {
     return (
       <div className="paper-grain rounded-sm border border-dashed border-border px-6 py-16 text-center">
-        <p className="text-foreground-muted">
-          {t('grants.selectBookPrompt')}
-        </p>
+        <p className="text-foreground-muted">{t('grants.selectBookPrompt')}</p>
       </div>
     );
   }
@@ -96,27 +94,13 @@ export function GrantList({
           <table className="min-w-full divide-y divide-border">
             <thead className="bg-background-secondary">
               <tr>
-                <th className="eyebrow px-4 py-3 text-left">
-                  {t('grants.table.email')}
-                </th>
-                <th className="eyebrow px-4 py-3 text-left">
-                  {t('grants.table.mode')}
-                </th>
-                <th className="eyebrow px-4 py-3 text-left">
-                  {t('grants.table.capabilities')}
-                </th>
-                <th className="eyebrow px-4 py-3 text-left">
-                  {t('grants.table.status')}
-                </th>
-                <th className="eyebrow px-4 py-3 text-left">
-                  {t('grants.table.expiry')}
-                </th>
-                <th className="eyebrow px-4 py-3 text-left">
-                  {t('grants.table.created')}
-                </th>
-                <th className="eyebrow px-4 py-3 text-right">
-                  {t('grants.table.actions')}
-                </th>
+                <th className="eyebrow px-4 py-3 text-left">{t('grants.table.email')}</th>
+                <th className="eyebrow px-4 py-3 text-left">{t('grants.table.mode')}</th>
+                <th className="eyebrow px-4 py-3 text-left">{t('grants.table.capabilities')}</th>
+                <th className="eyebrow px-4 py-3 text-left">{t('grants.table.status')}</th>
+                <th className="eyebrow px-4 py-3 text-left">{t('grants.table.expiry')}</th>
+                <th className="eyebrow px-4 py-3 text-left">{t('grants.table.created')}</th>
+                <th className="eyebrow px-4 py-3 text-right">{t('grants.table.actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -124,14 +108,10 @@ export function GrantList({
                 <tr
                   key={grant.id}
                   className={
-                    isExpired(grant)
-                      ? 'bg-semantic-error/10'
-                      : 'hover:bg-background-secondary'
+                    isExpired(grant) ? 'bg-semantic-error/10' : 'hover:bg-background-secondary'
                   }
                 >
-                  <td className="px-4 py-3 text-sm text-foreground">
-                    {grant.email}
-                  </td>
+                  <td className="px-4 py-3 text-sm text-foreground">{grant.email}</td>
                   <td className="px-4 py-3 text-sm">
                     <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-semantic-info/20 text-semantic-info">
                       {modeLabel(grant.mode)}

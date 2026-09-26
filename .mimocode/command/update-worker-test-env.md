@@ -10,7 +10,7 @@ triggers:
   - test fixture env
 params:
   - name: action
-    description: "regenerate (regenerate types + update mocks) or mocks-only (just update test files)"
+    description: 'regenerate (regenerate types + update mocks) or mocks-only (just update test files)'
     default: regenerate
 ---
 
@@ -50,6 +50,7 @@ grep -A 20 '"vars"' apps/worker/wrangler.jsonc
 ```
 
 Required vars (always present):
+
 - `TURSO_DATABASE_URL` — use `'file::memory:'` for tests
 - `TURSO_AUTH_TOKEN` — use `''` or `'test-token'`
 
@@ -93,12 +94,13 @@ grep -n "makePassThroughContext" apps/worker/src/__tests__/fixtures.ts
 ```
 
 If `tracing` is now required:
+
 ```typescript
 export function makePassThroughContext() {
   return {
     waitUntil: () => {},
     passThroughOnException: () => {},
-    tracing: {} as Tracing,  // Added after types regeneration
+    tracing: {} as Tracing, // Added after types regeneration
   };
 }
 ```

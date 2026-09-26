@@ -34,7 +34,10 @@ export function Sidebar() {
           >
             {({ isActive }) => (
               <>
-                <NavIcon icon={icon} className={`w-5 h-5 shrink-0 ${isActive ? 'text-accent' : ''}`} />
+                <NavIcon
+                  icon={icon}
+                  className={`w-5 h-5 shrink-0 ${isActive ? 'text-accent' : ''}`}
+                />
                 <span>{t(key)}</span>
               </>
             )}
@@ -42,7 +45,10 @@ export function Sidebar() {
         ))}
         {showCreatorEntry && (
           <NavLink
-            to={'/creator'} /* eslint-disable-line i18next/no-literal-string -- route path constant */
+            to={
+              // eslint-disable-next-line i18next/no-literal-string -- route path constant; disable sits on the literal because prettier splits `to={'/creator'}` across lines
+              '/creator'
+            }
             className={({ isActive }) =>
               `flex items-center gap-3 px-5 py-2.5 text-sm transition-colors ${
                 isActive
@@ -54,7 +60,13 @@ export function Sidebar() {
           >
             {({ isActive }) => (
               <>
-                <NavIcon icon={'book-open'} /* eslint-disable-line i18next/no-literal-string -- icon key constant */ className={`w-5 h-5 shrink-0 ${isActive ? 'text-accent' : ''}`} />
+                <NavIcon
+                  icon={
+                    // eslint-disable-next-line i18next/no-literal-string -- icon key constant
+                    'book-open'
+                  }
+                  className={`w-5 h-5 shrink-0 ${isActive ? 'text-accent' : ''}`}
+                />
                 <span>{t('creator.title')}</span>
               </>
             )}

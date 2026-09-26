@@ -14,8 +14,7 @@ const FIXTURES = resolve(import.meta.dirname, 'fixtures');
 
 function findEocd(buf: Buffer): number {
   for (let i = buf.length - 22; i >= 0; i--) {
-    if (buf[i] === 0x50 && buf[i + 1] === 0x4b &&
-        buf[i + 2] === 0x05 && buf[i + 3] === 0x06) {
+    if (buf[i] === 0x50 && buf[i + 1] === 0x4b && buf[i + 2] === 0x05 && buf[i + 3] === 0x06) {
       return i;
     }
   }
@@ -109,29 +108,59 @@ function validateEpubStructure(buf: Buffer): {
 
   const mimetypeEntry = entries.get('mimetype');
   if (!mimetypeEntry) {
-    return { valid: false, mimetype: null, hasContainerXml: false, opfPath: null, error: 'Missing mimetype file' };
+    return {
+      valid: false,
+      mimetype: null,
+      hasContainerXml: false,
+      opfPath: null,
+      error: 'Missing mimetype file',
+    };
   }
 
   const mimetype = mimetypeEntry.toString('utf-8').trim();
   if (mimetype !== 'application/epub+zip') {
-    return { valid: false, mimetype, hasContainerXml: false, opfPath: null, error: 'Invalid mimetype' };
+    return {
+      valid: false,
+      mimetype,
+      hasContainerXml: false,
+      opfPath: null,
+      error: 'Invalid mimetype',
+    };
   }
 
   const containerXml = entries.get('META-INF/container.xml');
   if (!containerXml) {
-    return { valid: false, mimetype, hasContainerXml: false, opfPath: null, error: 'Missing META-INF/container.xml' };
+    return {
+      valid: false,
+      mimetype,
+      hasContainerXml: false,
+      opfPath: null,
+      error: 'Missing META-INF/container.xml',
+    };
   }
 
   const containerStr = containerXml.toString('utf-8');
   const opfPath = extractAttrs(containerStr, 'rootfile', 'full-path')[0] ?? null;
 
   if (!opfPath) {
-    return { valid: false, mimetype, hasContainerXml: true, opfPath: null, error: 'No rootfile in container.xml' };
+    return {
+      valid: false,
+      mimetype,
+      hasContainerXml: true,
+      opfPath: null,
+      error: 'No rootfile in container.xml',
+    };
   }
 
   const opfEntry = entries.get(opfPath);
   if (!opfEntry) {
-    return { valid: false, mimetype, hasContainerXml: true, opfPath, error: `OPF not found: ${opfPath}` };
+    return {
+      valid: false,
+      mimetype,
+      hasContainerXml: true,
+      opfPath,
+      error: `OPF not found: ${opfPath}`,
+    };
   }
 
   return { valid: true, mimetype, hasContainerXml: true, opfPath };
@@ -249,7 +278,9 @@ describe('EPUB file structure validation', () => {
     const eocdPos = findEocd(buf);
     const cdOffset = buf.readUInt32LE(eocdPos + 16);
     const firstEntryNameLen = buf.readUInt16LE(cdOffset + 28);
-    const firstEntryName = buf.subarray(cdOffset + 46, cdOffset + 46 + firstEntryNameLen).toString();
+    const firstEntryName = buf
+      .subarray(cdOffset + 46, cdOffset + 46 + firstEntryNameLen)
+      .toString();
     expect(firstEntryName).toBe('mimetype');
   });
 });
@@ -338,11 +369,7 @@ describe('CFI generation for spine items', () => {
     const buf = readEpubFixture('multi-nav.epub');
     const spine = parseSpineItems(buf);
     const cfis = spine.map((_, i) => generateSpineCfi(i));
-    expect(cfis).toEqual([
-      'epubcfi(/6/2)',
-      'epubcfi(/6/3)',
-      'epubcfi(/6/4)',
-    ]);
+    expect(cfis).toEqual(['epubcfi(/6/2)', 'epubcfi(/6/3)', 'epubcfi(/6/4)']);
   });
 });
 

@@ -22,13 +22,7 @@ filesRouter.get('/:bookId/:remainder{.+}', zValidator('query', SignedUrlSchema),
     throw new ForbiddenError('URL has expired');
   }
 
-  const isValid = await verifySignedUrlSignature(
-    c.env,
-    bookId,
-    fileKey,
-    expires,
-    signature
-  );
+  const isValid = await verifySignedUrlSignature(c.env, bookId, fileKey, expires, signature);
 
   if (!isValid) {
     throw new ForbiddenError('Invalid signature');
@@ -62,7 +56,10 @@ filesRouter.get('/:bookId/:remainder{.+}', zValidator('query', SignedUrlSchema),
     cacheStatus: 'MISS', // R2 does not expose cache status directly on the object
   });
 
-  return withTraceHeaders(new Response(object.body, {
-    headers,
-  }), ctx);
+  return withTraceHeaders(
+    new Response(object.body, {
+      headers,
+    }),
+    ctx,
+  );
 });

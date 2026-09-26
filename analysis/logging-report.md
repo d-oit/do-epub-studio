@@ -15,25 +15,25 @@ The codebase has a **partial implementation** of centralized logging with teleme
 
 ### 1.1 Centralized Logging Utilities
 
-| File | Purpose | Direct Console Usage |
-|------|---------|---------------------|
-| `packages/shared/src/telemetry.ts` | Core ID generation + error serialization | No |
-| `apps/web/src/lib/telemetry.ts` | Client-side event logging | Yes (lines 40-45) |
-| `apps/worker/src/lib/observability.ts` | Server-side request logging | Yes (lines 45-50) |
-| `packages/reader-core/src/epub-loader.ts` | EPUB loading with trace context | Yes (line 143-149) |
+| File                                      | Purpose                                  | Direct Console Usage |
+| ----------------------------------------- | ---------------------------------------- | -------------------- |
+| `packages/shared/src/telemetry.ts`        | Core ID generation + error serialization | No                   |
+| `apps/web/src/lib/telemetry.ts`           | Client-side event logging                | Yes (lines 40-45)    |
+| `apps/worker/src/lib/observability.ts`    | Server-side request logging              | Yes (lines 45-50)    |
+| `packages/reader-core/src/epub-loader.ts` | EPUB loading with trace context          | Yes (line 143-149)   |
 
 ### 1.2 Direct Console Statements (Not Using Centralized Logging)
 
-| File | Line | Type | Description |
-|------|------|------|-------------|
-| `apps/web/src/lib/offline/sync.ts` | 65-69 | `console.warn` | Max retry exceeded |
-| `apps/web/src/lib/offline/sync.ts` | 76-86 | `console.error` | Permission revoked |
-| `apps/web/src/sw.ts` | 94-96 | `console.error` | Sync failed |
-| `apps/web/src/sw.ts` | 106-108 | `console.log` | Cache deleted |
-| `apps/tests/accessibility-audit.spec.ts` | 65-67 | `console.log` | Axe violations (test) |
-| `apps/tests/accessibility-audit.spec.ts` | 95-97 | `console.log` | Axe violations (test) |
-| `apps/tests/accessibility-audit.spec.ts` | 113-115 | `console.log` | Axe violations (test) |
-| `packages/reader-core/src/epub-loader.ts` | 143-149 | `console.error` | EPUB load failure |
+| File                                      | Line    | Type            | Description           |
+| ----------------------------------------- | ------- | --------------- | --------------------- |
+| `apps/web/src/lib/offline/sync.ts`        | 65-69   | `console.warn`  | Max retry exceeded    |
+| `apps/web/src/lib/offline/sync.ts`        | 76-86   | `console.error` | Permission revoked    |
+| `apps/web/src/sw.ts`                      | 94-96   | `console.error` | Sync failed           |
+| `apps/web/src/sw.ts`                      | 106-108 | `console.log`   | Cache deleted         |
+| `apps/tests/accessibility-audit.spec.ts`  | 65-67   | `console.log`   | Axe violations (test) |
+| `apps/tests/accessibility-audit.spec.ts`  | 95-97   | `console.log`   | Axe violations (test) |
+| `apps/tests/accessibility-audit.spec.ts`  | 113-115 | `console.log`   | Axe violations (test) |
+| `packages/reader-core/src/epub-loader.ts` | 143-149 | `console.error` | EPUB load failure     |
 
 ---
 
@@ -41,20 +41,20 @@ The codebase has a **partial implementation** of centralized logging with teleme
 
 ### 2.1 Where TraceId is Properly Used
 
-| Location | Implementation | Notes |
-|----------|---------------|-------|
-| `apps/web/src/lib/api.ts` | Uses `createTraceId()` from telemetry | ✅ Full implementation |
-| `apps/worker/src/lib/observability.ts` | Uses `createTraceId()` from shared | ✅ Full implementation |
-| `apps/worker/src/index.ts` | Uses `createRequestContext()` | ✅ Full implementation |
-| `packages/reader-core/src/epub-loader.ts` | Has local `generateTraceId()` | ⚠️ Duplicated code |
+| Location                                  | Implementation                        | Notes                  |
+| ----------------------------------------- | ------------------------------------- | ---------------------- |
+| `apps/web/src/lib/api.ts`                 | Uses `createTraceId()` from telemetry | ✅ Full implementation |
+| `apps/worker/src/lib/observability.ts`    | Uses `createTraceId()` from shared    | ✅ Full implementation |
+| `apps/worker/src/index.ts`                | Uses `createRequestContext()`         | ✅ Full implementation |
+| `packages/reader-core/src/epub-loader.ts` | Has local `generateTraceId()`         | ⚠️ Duplicated code     |
 
 ### 2.2 Where TraceId is Missing
 
-| File | Gap | Severity |
-|------|-----|----------|
-| `apps/web/src/lib/offline/sync.ts` | No traceId in any log statements | Medium |
-| `apps/web/src/sw.ts` | No traceId in sync/cache logs | Medium |
-| `apps/worker/src/index.ts` | Handled correctly | N/A |
+| File                               | Gap                              | Severity |
+| ---------------------------------- | -------------------------------- | -------- |
+| `apps/web/src/lib/offline/sync.ts` | No traceId in any log statements | Medium   |
+| `apps/web/src/sw.ts`               | No traceId in sync/cache logs    | Medium   |
+| `apps/worker/src/index.ts`         | Handled correctly                | N/A      |
 
 ---
 
@@ -193,15 +193,15 @@ Missing levels: `warn`, `debug`, `trace`
 
 ## 6. Action Items Summary
 
-| Priority | Item | Files Affected |
-|----------|------|----------------|
-| P0 | Import shared traceId in reader-core | `packages/reader-core/src/epub-loader.ts` |
-| P0 | Remove web/telemetry duplicate | `apps/web/src/lib/telemetry.ts` |
-| P0 | Add traceId to sync.ts logs | `apps/web/src/lib/offline/sync.ts` |
-| P0 | Add traceId to sw.ts logs | `apps/web/src/sw.ts` |
-| P1 | Add warn/debug log levels | `packages/shared/src/telemetry.ts` |
-| P1 | Add production log forwarding | `apps/web/src/lib/telemetry.ts` |
-| P2 | Add structured metadata | All telemetry files |
+| Priority | Item                                 | Files Affected                            |
+| -------- | ------------------------------------ | ----------------------------------------- |
+| P0       | Import shared traceId in reader-core | `packages/reader-core/src/epub-loader.ts` |
+| P0       | Remove web/telemetry duplicate       | `apps/web/src/lib/telemetry.ts`           |
+| P0       | Add traceId to sync.ts logs          | `apps/web/src/lib/offline/sync.ts`        |
+| P0       | Add traceId to sw.ts logs            | `apps/web/src/sw.ts`                      |
+| P1       | Add warn/debug log levels            | `packages/shared/src/telemetry.ts`        |
+| P1       | Add production log forwarding        | `apps/web/src/lib/telemetry.ts`           |
+| P2       | Add structured metadata              | All telemetry files                       |
 
 ---
 

@@ -21,12 +21,8 @@ import appIdentityJson from '../config/app-identity.json';
 
 const repoRoot = resolve(__dirname, '../../../..');
 const versionFile = readFileSync(resolve(repoRoot, 'VERSION'), 'utf8').trim();
-const rootPkg = JSON.parse(
-  readFileSync(resolve(repoRoot, 'package.json'), 'utf8'),
-);
-const webPkg = JSON.parse(
-  readFileSync(resolve(repoRoot, 'apps/web/package.json'), 'utf8'),
-);
+const rootPkg = JSON.parse(readFileSync(resolve(repoRoot, 'package.json'), 'utf8'));
+const webPkg = JSON.parse(readFileSync(resolve(repoRoot, 'apps/web/package.json'), 'utf8'));
 const workerAuthSource = readFileSync(
   resolve(repoRoot, 'apps/worker/src/routes/admin/auth/recovery.ts'),
   'utf8',
@@ -62,15 +58,11 @@ describe('App identity and version governance (ADR-104)', () => {
 
   it('AppLogo aria-label uses the canonical brand', () => {
     render(<AppLogo size={24} />);
-    expect(
-      screen.getByLabelText('d.o.EPUB Studio logo'),
-    ).toBeInTheDocument();
+    expect(screen.getByLabelText('d.o.EPUB Studio logo')).toBeInTheDocument();
   });
 
   it('Worker recovery email subject uses the canonical Admin brand', () => {
-    expect(workerAuthSource).toContain(
-      "subject: 'Reset your d.o.EPUB Studio Admin password'",
-    );
+    expect(workerAuthSource).toContain("subject: 'Reset your d.o.EPUB Studio Admin password'");
   });
 
   it('LoginPage renders the canonical name and version', () => {
@@ -96,15 +88,11 @@ describe('App identity and version governance (ADR-104)', () => {
       // form is "d.o.EPUB Studio" with the dot).
       const dotIdx = line.lastIndexOf('EPUB Studio');
       if (dotIdx >= 0 && line[dotIdx - 1] !== '.') {
-        throw new Error(
-          `forbidden bare "EPUB Studio" at: ${line.trim()}`,
-        );
+        throw new Error(`forbidden bare "EPUB Studio" at: ${line.trim()}`);
       }
       // "do EPUB Studio" (lowercase, with space) is also forbidden.
       if (line.includes('do ' + 'EPUB Studio')) {
-        throw new Error(
-          `forbidden "do EPUB Studio" at: ${line.trim()}`,
-        );
+        throw new Error(`forbidden "do EPUB Studio" at: ${line.trim()}`);
       }
     }
   });

@@ -9,13 +9,7 @@ import { type ReactNode, useEffect, useState } from 'react';
  *                 If false, uses aria-live="assertive" (interrupting).
  * @param children - The message to announce.
  */
-export function LiveRegion({
-  polite = true,
-  children,
-}: {
-  polite?: boolean;
-  children: ReactNode;
-}) {
+export function LiveRegion({ polite = true, children }: { polite?: boolean; children: ReactNode }) {
   // Key-based re-announcement: changing the key forces screen readers
   // to re-announce the content even if the text hasn't changed.
   const [key, setKey] = useState(0);

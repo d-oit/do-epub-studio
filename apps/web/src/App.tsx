@@ -11,63 +11,61 @@ import { AppShell } from './components/AppShell';
 import { SwUpdateNotification } from './components/SwUpdateNotification';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { NotFoundPage } from './features/errors/NotFoundPage';
-import {
-  AdminSkeleton,
-  ReaderSkeleton,
-  AuthSkeleton,
-} from './components/skeletons';
+import { AdminSkeleton, ReaderSkeleton, AuthSkeleton } from './components/skeletons';
 
 // Lazy load route components (named exports). GOAP-224 C5: auth pages
 // (/login, /admin/login, /admin/recover) were eagerly imported into the main
 // bundle although they render only on auth routes — same treatment as all other
 // route pages below.
 const LoginPage = React.lazy(() =>
-  import('./features/auth/LoginPage').then((m) => ({ default: m.LoginPage }))
+  import('./features/auth/LoginPage').then((m) => ({ default: m.LoginPage })),
 );
 const AcceptInvitePage = React.lazy(() =>
-  import('./features/invitations/AcceptInvitePage').then((m) => ({ default: m.AcceptInvitePage }))
+  import('./features/invitations/AcceptInvitePage').then((m) => ({ default: m.AcceptInvitePage })),
 );
 const AdminLoginPage = React.lazy(() =>
-  import('./features/admin/AdminLoginPage').then((m) => ({ default: m.AdminLoginPage }))
+  import('./features/admin/AdminLoginPage').then((m) => ({ default: m.AdminLoginPage })),
 );
 const AdminRecoverPage = React.lazy(() =>
-  import('./features/admin/AdminRecoverPage').then((m) => ({ default: m.AdminRecoverPage }))
+  import('./features/admin/AdminRecoverPage').then((m) => ({ default: m.AdminRecoverPage })),
 );
 const ReaderPage = React.lazy(() =>
-  import('./features/reader/ReaderPage').then((m) => ({ default: m.ReaderPage }))
+  import('./features/reader/ReaderPage').then((m) => ({ default: m.ReaderPage })),
 );
 const AdminBookResponsesPage = React.lazy(() =>
-  import('./features/admin/BooksPage').then((m) => ({ default: m.AdminBookResponsesPage }))
+  import('./features/admin/BooksPage').then((m) => ({ default: m.AdminBookResponsesPage })),
 );
 const AdminGrantResponsesPage = React.lazy(() =>
-  import('./features/admin/GrantsPage').then((m) => ({ default: m.AdminGrantResponsesPage }))
+  import('./features/admin/GrantsPage').then((m) => ({ default: m.AdminGrantResponsesPage })),
 );
 const AdminAuditPage = React.lazy(() =>
-  import('./features/admin/AuditLogPage').then((m) => ({ default: m.AdminAuditPage }))
+  import('./features/admin/AuditLogPage').then((m) => ({ default: m.AdminAuditPage })),
 );
 const AccountSettingsPage = React.lazy(() =>
-  import('./features/admin/AccountSettingsPage').then((m) => ({ default: m.AccountSettingsPage }))
+  import('./features/admin/AccountSettingsPage').then((m) => ({ default: m.AccountSettingsPage })),
 );
 const CatalogPage = React.lazy(() =>
-  import('./features/catalog/CatalogPage').then((m) => ({ default: m.CatalogPage }))
+  import('./features/catalog/CatalogPage').then((m) => ({ default: m.CatalogPage })),
 );
 const HelpPage = React.lazy(() =>
-  import('./features/help/HelpPage').then((m) => ({ default: m.HelpPage }))
+  import('./features/help/HelpPage').then((m) => ({ default: m.HelpPage })),
 );
 const MyLibraryPage = React.lazy(() =>
-  import('./features/library/MyLibraryPage').then((m) => ({ default: m.MyLibraryPage }))
+  import('./features/library/MyLibraryPage').then((m) => ({ default: m.MyLibraryPage })),
 );
 const AdminDashboard = React.lazy(() =>
-  import('./features/admin/AdminDashboardPage').then((m) => ({ default: m.AdminDashboardPage }))
+  import('./features/admin/AdminDashboardPage').then((m) => ({ default: m.AdminDashboardPage })),
 );
 const SettingsPage = React.lazy(() =>
-  import('./features/settings/SettingsPage').then((m) => ({ default: m.SettingsPage }))
+  import('./features/settings/SettingsPage').then((m) => ({ default: m.SettingsPage })),
 );
 const CreatorPage = React.lazy(() =>
-  import('./features/creator/CreatorPage').then((m) => ({ default: m.CreatorPage }))
+  import('./features/creator/CreatorPage').then((m) => ({ default: m.CreatorPage })),
 );
 const FeedbackWorkspacePage = React.lazy(() =>
-  import('./features/creator/FeedbackWorkspacePage').then((m) => ({ default: m.FeedbackWorkspacePage }))
+  import('./features/creator/FeedbackWorkspacePage').then((m) => ({
+    default: m.FeedbackWorkspacePage,
+  })),
 );
 
 // Premium glassmorphism loading fallback spinner
@@ -80,9 +78,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const sessionExpired = useAuthStore((state) => state.sessionExpired);
 
   if (!isAuthenticated) {
-    const target = sessionExpired
-      ? '/login?error=session_expired'
-      : '/login';
+    const target = sessionExpired ? '/login?error=session_expired' : '/login';
     return <Navigate to={target} replace />;
   }
 
@@ -97,9 +93,7 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
     // handling), route to the reader login with a query param so the
     // UI can show "Session expired" copy. The admin login page would
     // loop because AdminRoute guards it on the same predicate.
-    const target = sessionExpired
-      ? '/login?error=session_expired'
-      : '/admin/login';
+    const target = sessionExpired ? '/login?error=session_expired' : '/admin/login';
     return <Navigate to={target} replace />;
   }
 
@@ -137,7 +131,10 @@ function ShellRouteFallback() {
       aria-live="polite"
       aria-label={t('a11y.loading_page')}
     >
-      <div className="h-8 w-8 animate-spin rounded-full border-2 border-border border-t-accent" aria-hidden="true" />
+      <div
+        className="h-8 w-8 animate-spin rounded-full border-2 border-border border-t-accent"
+        aria-hidden="true"
+      />
     </div>
   );
 }
@@ -166,68 +163,165 @@ export function App() {
             Auth, reader, admin, help, and 404 stay outside the shell. */}
         <Route path="/" element={<AppShell />}>
           <Route index element={<RootIndexRoute />} />
-          <Route path="catalog" element={<Suspense fallback={<ShellRouteFallback />}><CatalogPage /></Suspense>} />
-          <Route path="library" element={
-            <ProtectedRoute>
-              <Suspense fallback={<ShellRouteFallback />}><MyLibraryPage /></Suspense>
-            </ProtectedRoute>
-          } />
-          <Route path="settings" element={
-            <ProtectedRoute>
-              <Suspense fallback={<ShellRouteFallback />}><SettingsPage /></Suspense>
-            </ProtectedRoute>
-          } />
+          <Route
+            path="catalog"
+            element={
+              <Suspense fallback={<ShellRouteFallback />}>
+                <CatalogPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="library"
+            element={
+              <ProtectedRoute>
+                <Suspense fallback={<ShellRouteFallback />}>
+                  <MyLibraryPage />
+                </Suspense>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="settings"
+            element={
+              <ProtectedRoute>
+                <Suspense fallback={<ShellRouteFallback />}>
+                  <SettingsPage />
+                </Suspense>
+              </ProtectedRoute>
+            }
+          />
         </Route>
-        <Route path="/creator" element={
-          <ProtectedRoute>
-            <Suspense fallback={<ShellRouteFallback />}><CreatorPage /></Suspense>
-          </ProtectedRoute>
-        } />
-        <Route path="/creator/books/:bookId/feedback" element={
-          <ProtectedRoute>
-            <Suspense fallback={<ShellRouteFallback />}><FeedbackWorkspacePage /></Suspense>
-          </ProtectedRoute>
-        } />
-        <Route path="/help" element={<Suspense fallback={<AuthSkeleton />}><HelpPage /></Suspense>} />
-        <Route path="/login" element={<Suspense fallback={<AuthSkeleton />}><LoginPage /></Suspense>} />
-        <Route path="/accept-invite" element={<Suspense fallback={<AuthSkeleton />}><AcceptInvitePage /></Suspense>} />
-        <Route path="/admin/login" element={<Suspense fallback={<AuthSkeleton />}><AdminLoginPage /></Suspense>} />
-        <Route path="/admin/recover" element={<Suspense fallback={<AuthSkeleton />}><AdminRecoverPage /></Suspense>} />
-        <Route path="/read/:bookSlug" element={
-          <ProtectedRoute>
-            <Suspense fallback={<ReaderSkeleton />}><ReaderPage /></Suspense>
-          </ProtectedRoute>
-        } />
-        <Route path="/admin" element={
-          <AdminRoute>
-            <Suspense fallback={<AdminSkeleton />}><AdminDashboard /></Suspense>
-          </AdminRoute>
-        } />
-        <Route path="/admin/books" element={
-          <AdminRoute>
-            <Suspense fallback={<AdminSkeleton />}><AdminBookResponsesPage /></Suspense>
-          </AdminRoute>
-        } />
-        <Route path="/admin/grants" element={
-          <AdminRoute>
-            <Suspense fallback={<AdminSkeleton />}><AdminGrantResponsesPage /></Suspense>
-          </AdminRoute>
-        } />
-        <Route path="/admin/books/:bookId/grants" element={
-          <AdminRoute>
-            <Suspense fallback={<AdminSkeleton />}><AdminGrantResponsesPage /></Suspense>
-          </AdminRoute>
-        } />
-        <Route path="/admin/audit" element={
-          <AdminRoute>
-            <Suspense fallback={<AdminSkeleton />}><AdminAuditPage /></Suspense>
-          </AdminRoute>
-        } />
-        <Route path="/admin/account" element={
-          <AdminRoute>
-            <Suspense fallback={<AdminSkeleton />}><AccountSettingsPage /></Suspense>
-          </AdminRoute>
-        } />
+        <Route
+          path="/creator"
+          element={
+            <ProtectedRoute>
+              <Suspense fallback={<ShellRouteFallback />}>
+                <CreatorPage />
+              </Suspense>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/creator/books/:bookId/feedback"
+          element={
+            <ProtectedRoute>
+              <Suspense fallback={<ShellRouteFallback />}>
+                <FeedbackWorkspacePage />
+              </Suspense>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/help"
+          element={
+            <Suspense fallback={<AuthSkeleton />}>
+              <HelpPage />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/login"
+          element={
+            <Suspense fallback={<AuthSkeleton />}>
+              <LoginPage />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/accept-invite"
+          element={
+            <Suspense fallback={<AuthSkeleton />}>
+              <AcceptInvitePage />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/admin/login"
+          element={
+            <Suspense fallback={<AuthSkeleton />}>
+              <AdminLoginPage />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/admin/recover"
+          element={
+            <Suspense fallback={<AuthSkeleton />}>
+              <AdminRecoverPage />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/read/:bookSlug"
+          element={
+            <ProtectedRoute>
+              <Suspense fallback={<ReaderSkeleton />}>
+                <ReaderPage />
+              </Suspense>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <AdminRoute>
+              <Suspense fallback={<AdminSkeleton />}>
+                <AdminDashboard />
+              </Suspense>
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/books"
+          element={
+            <AdminRoute>
+              <Suspense fallback={<AdminSkeleton />}>
+                <AdminBookResponsesPage />
+              </Suspense>
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/grants"
+          element={
+            <AdminRoute>
+              <Suspense fallback={<AdminSkeleton />}>
+                <AdminGrantResponsesPage />
+              </Suspense>
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/books/:bookId/grants"
+          element={
+            <AdminRoute>
+              <Suspense fallback={<AdminSkeleton />}>
+                <AdminGrantResponsesPage />
+              </Suspense>
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/audit"
+          element={
+            <AdminRoute>
+              <Suspense fallback={<AdminSkeleton />}>
+                <AdminAuditPage />
+              </Suspense>
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/account"
+          element={
+            <AdminRoute>
+              <Suspense fallback={<AdminSkeleton />}>
+                <AccountSettingsPage />
+              </Suspense>
+            </AdminRoute>
+          }
+        />
         {/* Static hosts serve /index.html as the SPA entry; treat it as the
             root so it reaches the login instead of the catch-all 404. */}
         <Route path="/index.html" element={<Navigate to="/" replace />} />

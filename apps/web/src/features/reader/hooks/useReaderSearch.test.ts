@@ -10,7 +10,9 @@ interface MockSection {
   href: string;
 }
 
-function makeMockBook(overrides?: { findResult?: (q: string) => Array<{ cfi: string; excerpt: string }> }) {
+function makeMockBook(overrides?: {
+  findResult?: (q: string) => Array<{ cfi: string; excerpt: string }>;
+}) {
   const findResult = overrides?.findResult ?? (() => []);
   const section: MockSection = {
     load: vi.fn().mockResolvedValue(undefined),
@@ -105,7 +107,9 @@ describe('bounded concurrency', () => {
       load: vi.fn(() => {
         concurrentLoads++;
         peakConcurrent = Math.max(peakConcurrent, concurrentLoads);
-        return Promise.resolve().then(() => { concurrentLoads--; });
+        return Promise.resolve().then(() => {
+          concurrentLoads--;
+        });
       }),
       find: vi.fn(() => []),
       unload: vi.fn(),
@@ -114,7 +118,9 @@ describe('bounded concurrency', () => {
 
     const book = {
       spine: {
-        each: vi.fn((cb: (item: MockSection) => void) => { sections.forEach(cb); }),
+        each: vi.fn((cb: (item: MockSection) => void) => {
+          sections.forEach(cb);
+        }),
         get: vi.fn(),
       },
       load: vi.fn(),
@@ -150,7 +156,9 @@ describe('bounded concurrency', () => {
 
     const book = {
       spine: {
-        each: vi.fn((cb: (item: MockSection) => void) => { sections.forEach(cb); }),
+        each: vi.fn((cb: (item: MockSection) => void) => {
+          sections.forEach(cb);
+        }),
         get: vi.fn(),
       },
       load: vi.fn(),
@@ -184,7 +192,9 @@ describe('bounded concurrency', () => {
 
     const book = {
       spine: {
-        each: vi.fn((cb: (item: MockSection) => void) => { sections.forEach(cb); }),
+        each: vi.fn((cb: (item: MockSection) => void) => {
+          sections.forEach(cb);
+        }),
         get: vi.fn(),
       },
       load: vi.fn(),
@@ -192,10 +202,9 @@ describe('bounded concurrency', () => {
     } as unknown as Book;
 
     vi.useFakeTimers();
-    const { result, rerender } = renderHook(
-      ({ q }) => useReaderSearch(book, q),
-      { initialProps: { q: 'first' } },
-    );
+    const { result, rerender } = renderHook(({ q }) => useReaderSearch(book, q), {
+      initialProps: { q: 'first' },
+    });
 
     // Start first search — 4 workers begin loading
     await act(async () => {
@@ -221,7 +230,12 @@ describe('bounded concurrency', () => {
   it('always calls unload on every loaded section (finally block)', async () => {
     const resolvers = new Map<number, () => void>();
     const sections: MockSection[] = Array.from({ length: 6 }, (_, i) => ({
-      load: vi.fn(() => new Promise<void>((r) => { resolvers.set(i, r); })),
+      load: vi.fn(
+        () =>
+          new Promise<void>((r) => {
+            resolvers.set(i, r);
+          }),
+      ),
       find: vi.fn(() => []),
       unload: vi.fn(),
       href: `ch${i}.xhtml`,
@@ -229,7 +243,9 @@ describe('bounded concurrency', () => {
 
     const book = {
       spine: {
-        each: vi.fn((cb: (item: MockSection) => void) => { sections.forEach(cb); }),
+        each: vi.fn((cb: (item: MockSection) => void) => {
+          sections.forEach(cb);
+        }),
         get: vi.fn(),
       },
       load: vi.fn(),
@@ -264,9 +280,12 @@ describe('bounded concurrency', () => {
     });
 
     vi.useRealTimers();
-    await waitFor(() => {
-      expect(result.current.isSearching).toBe(false);
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(result.current.isSearching).toBe(false);
+      },
+      { timeout: 5000 },
+    );
 
     sections.forEach((section) => {
       expect(section.unload).toHaveBeenCalled();

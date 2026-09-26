@@ -16,13 +16,13 @@ Set up your local environment by following **[`docs/setup-local.md`](./setup-loc
 
 Read these files in order before making any changes:
 
-| File | What it contains |
-|---|---|
-| [`CLAUDE.md`](../CLAUDE.md) | Claude-specific adapter: project summary, security invariants, skill invocation rules |
-| [`AGENTS.md`](../AGENTS.md) | Single source of truth for AI agents: Tier 1 critical rules, quality gates, compliance self-check |
-| [`llms.txt`](../llms.txt) / [`llms-full.txt`](../llms-full.txt) | Machine-readable project summary for LLM context windows |
-| [`docs/coding-guide.md`](./coding-guide.md) | Authoritative architecture, configuration, and user-flow reference with links to split files |
-| [`plans/ADR-INDEX.md`](../plans/ADR-INDEX.md) | Index of all Architecture Decision Records; start here for "why" questions |
+| File                                                            | What it contains                                                                                  |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| [`CLAUDE.md`](../CLAUDE.md)                                     | Claude-specific adapter: project summary, security invariants, skill invocation rules             |
+| [`AGENTS.md`](../AGENTS.md)                                     | Single source of truth for AI agents: Tier 1 critical rules, quality gates, compliance self-check |
+| [`llms.txt`](../llms.txt) / [`llms-full.txt`](../llms-full.txt) | Machine-readable project summary for LLM context windows                                          |
+| [`docs/coding-guide.md`](./coding-guide.md)                     | Authoritative architecture, configuration, and user-flow reference with links to split files      |
+| [`plans/ADR-INDEX.md`](../plans/ADR-INDEX.md)                   | Index of all Architecture Decision Records; start here for "why" questions                        |
 
 ---
 

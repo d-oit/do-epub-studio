@@ -18,13 +18,13 @@ Pre-commit Hooks, Dependency Vulnerability Scan, CodeQL Alert Check, Build, Benc
 
 ### Root-Cause Breakdown (5 failures, 3 distinct issues)
 
-| # | Spec | Test | Root Cause | Category |
-|---|------|------|-----------|----------|
-| 1 | `accessibility-audit.spec.ts:264` | admin audit log page has no critical a11y violations | 2 date `<input type="date">` + 1 `<select>` lack programmatic label association | **A11y (real bug)** |
-| 2 | `edge-cases.spec.ts:25` | should redirect to login on 401 | `handleUnauthorized()` sets `window.location.href` but the E2E mock only intercepts `**/api/books`; the admin BooksPage may call a different endpoint first, or the reload triggers client-side fetch before the route mock applies | **Test/App logic gap** |
-| 3 | `login-and-book-load.spec.ts:167` | shows loading spinner while book URL is fetched | Vite dev server intermittent module fetch failure (`ReaderPage.tsx` dynamic import fails); spinner never renders because error boundary catches first | **CI environment flake** |
-| 4 | `login-and-book-load.spec.ts:274` | @mobile settings panel accessible | Same dynamic import failure — ErrorBoundary renders instead of reader; Settings button never appears | **CI environment flake** |
-| 5 | `login-and-book-load.spec.ts:259` | @mobile reader header fits on mobile | Same root cause — Sign Out button not found due to ErrorBoundary replacing reader | **CI environment flake** |
+| #   | Spec                              | Test                                                 | Root Cause                                                                                                                                                                                                                          | Category                 |
+| --- | --------------------------------- | ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
+| 1   | `accessibility-audit.spec.ts:264` | admin audit log page has no critical a11y violations | 2 date `<input type="date">` + 1 `<select>` lack programmatic label association                                                                                                                                                     | **A11y (real bug)**      |
+| 2   | `edge-cases.spec.ts:25`           | should redirect to login on 401                      | `handleUnauthorized()` sets `window.location.href` but the E2E mock only intercepts `**/api/books`; the admin BooksPage may call a different endpoint first, or the reload triggers client-side fetch before the route mock applies | **Test/App logic gap**   |
+| 3   | `login-and-book-load.spec.ts:167` | shows loading spinner while book URL is fetched      | Vite dev server intermittent module fetch failure (`ReaderPage.tsx` dynamic import fails); spinner never renders because error boundary catches first                                                                               | **CI environment flake** |
+| 4   | `login-and-book-load.spec.ts:274` | @mobile settings panel accessible                    | Same dynamic import failure — ErrorBoundary renders instead of reader; Settings button never appears                                                                                                                                | **CI environment flake** |
+| 5   | `login-and-book-load.spec.ts:259` | @mobile reader header fits on mobile                 | Same root cause — Sign Out button not found due to ErrorBoundary replacing reader                                                                                                                                                   | **CI environment flake** |
 
 ### Evidence
 
@@ -40,13 +40,13 @@ Pre-commit Hooks, Dependency Vulnerability Scan, CodeQL Alert Check, Build, Benc
 
 ## 3. Decomposition
 
-| ID | Task | Priority | Effort |
-|----|------|----------|--------|
-| 1 | Add `aria-label` to date inputs and entity-type select in `AuditLogPage.tsx` | P0 | S |
-| 2 | Fix 401 E2E test: mock `**/api/admin/books**` (the actual endpoint hit on `/admin/books` page load) or use `page.route('**/*')` with conditional 401 | P0 | S |
-| 3 | Investigate E2E webServer config: ensure cross-browser E2E uses `pnpm preview` (production build) not `pnpm dev` (Vite HMR) | P1 | M |
-| 4 | Add retry/waitFor guard in mobile reader tests for dynamic import recovery | P2 | S |
-| 5 | Close issue #473 after CI passes | P0 | — |
+| ID  | Task                                                                                                                                                 | Priority | Effort |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------ |
+| 1   | Add `aria-label` to date inputs and entity-type select in `AuditLogPage.tsx`                                                                         | P0       | S      |
+| 2   | Fix 401 E2E test: mock `**/api/admin/books**` (the actual endpoint hit on `/admin/books` page load) or use `page.route('**/*')` with conditional 401 | P0       | S      |
+| 3   | Investigate E2E webServer config: ensure cross-browser E2E uses `pnpm preview` (production build) not `pnpm dev` (Vite HMR)                          | P1       | M      |
+| 4   | Add retry/waitFor guard in mobile reader tests for dynamic import recovery                                                                           | P2       | S      |
+| 5   | Close issue #473 after CI passes                                                                                                                     | P0       | —      |
 
 ## 4. Strategy
 
@@ -76,13 +76,13 @@ to avoid Vite module-graph instability under parallel test load.
 
 ## 5. Quality Gates
 
-| Gate | Command |
-|------|---------|
+| Gate                     | Command                                                           |
+| ------------------------ | ----------------------------------------------------------------- |
 | A11y test passes locally | `pnpm --filter @do-epub-studio/tests test -- accessibility-audit` |
-| Edge-cases test passes | `pnpm --filter @do-epub-studio/tests test -- edge-cases` |
-| Full E2E smoke | `pnpm e2e:smoke` |
-| Web typecheck | `pnpm --filter @do-epub-studio/web typecheck` |
-| Lint | `pnpm lint` |
+| Edge-cases test passes   | `pnpm --filter @do-epub-studio/tests test -- edge-cases`          |
+| Full E2E smoke           | `pnpm e2e:smoke`                                                  |
+| Web typecheck            | `pnpm --filter @do-epub-studio/web typecheck`                     |
+| Lint                     | `pnpm lint`                                                       |
 
 ## 6. Execution Status
 

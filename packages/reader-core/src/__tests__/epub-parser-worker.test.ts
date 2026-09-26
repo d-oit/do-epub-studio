@@ -103,7 +103,8 @@ describe('terminateParserWorker', () => {
 class FakeWorker {
   static instances: FakeWorker[] = [];
   onmessage: ((event: { data: WorkerToMainMessage }) => void) | null = null;
-  onerror: ((event: { message?: string; filename?: string; lineno?: number }) => void) | null = null;
+  onerror: ((event: { message?: string; filename?: string; lineno?: number }) => void) | null =
+    null;
   terminated = false;
   posted: unknown[] = [];
 
@@ -252,7 +253,13 @@ describe('worker LOAD failure (GOAP-226 — issue #957)', () => {
 
     // Worker started and answered one parse...
     const settled = expect(p1).resolves.toMatchObject({ valid: true });
-    worker.onmessage?.({ data: { type: 'result', id: (worker.posted[0] as { id: string }).id, result: { valid: true, data: new ArrayBuffer(4) } } as unknown as WorkerToMainMessage });
+    worker.onmessage?.({
+      data: {
+        type: 'result',
+        id: (worker.posted[0] as { id: string }).id,
+        result: { valid: true, data: new ArrayBuffer(4) },
+      } as unknown as WorkerToMainMessage,
+    });
     await settled;
 
     // ...but then a second parse finds the worker had never sent 'ready' (the

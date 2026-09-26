@@ -24,12 +24,17 @@ import { apiError } from '../lib/api-error';
 // reauthentication threshold has been met (assurance is monotonically raised).
 const STEP_UP_ASSURED: Record<string, true> = { step_up: true, mfa: true };
 
-export const requireStepUp: MiddlewareHandler<{ Bindings: Env; Variables: { adminUser: { email: string; id: string; role: string } } }> = async (c, next) => {
+export const requireStepUp: MiddlewareHandler<{
+  Bindings: Env;
+  Variables: { adminUser: { email: string; id: string; role: string } };
+}> = async (c, next) => {
   const authHeader = c.req.header('Authorization') ?? '';
   const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
 
   if (!token) {
-    return apiError(c, 428, 'STEP_UP_REQUIRED', 'Step-up authentication required', { 'X-Step-Up-Required': 'true' });
+    return apiError(c, 428, 'STEP_UP_REQUIRED', 'Step-up authentication required', {
+      'X-Step-Up-Required': 'true',
+    });
   }
 
   const tokenHash = await hashToken(token);
@@ -44,7 +49,9 @@ export const requireStepUp: MiddlewareHandler<{ Bindings: Env; Variables: { admi
   }
 
   if (!STEP_UP_ASSURED[session.assurance_level]) {
-    return apiError(c, 428, 'STEP_UP_REQUIRED', 'Step-up authentication required', { 'X-Step-Up-Required': 'true' });
+    return apiError(c, 428, 'STEP_UP_REQUIRED', 'Step-up authentication required', {
+      'X-Step-Up-Required': 'true',
+    });
   }
 
   await next();

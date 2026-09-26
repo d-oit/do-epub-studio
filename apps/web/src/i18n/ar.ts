@@ -4,8 +4,8 @@ import { APP_NAME } from '../config/app-identity';
 export const ar: Record<TranslationKeys, TranslationValue> = {
   'app.title': APP_NAME,
   'app.versionLabel': 'الإصدار',
-  'ui.showPassword': "إظهار كلمة المرور",
-  'ui.hidePassword': "إخفاء كلمة المرور",
+  'ui.showPassword': 'إظهار كلمة المرور',
+  'ui.hidePassword': 'إخفاء كلمة المرور',
   'login.subtitle': 'سجّل الدخول للوصول إلى كتبك',
   'login.bookSlugLabel': 'معرّف الكتاب',
   'login.emailLabel': 'البريد الإلكتروني',
@@ -14,16 +14,19 @@ export const ar: Record<TranslationKeys, TranslationValue> = {
   'login.bookSlugPlaceholder': 'my-book-slug',
   'login.emailPlaceholder': 'reader@example.com',
   'login.passwordPlaceholder': 'أدخل كلمة المرور',
-  'login.noBookContext': 'هذا الرابط لا يتضمن كتابًا. افتح رابطًا خاصًا بالكتاب لتسجيل الدخول، أو جرّب العرض التوضيحي أدناه.',
+  'login.noBookContext':
+    'هذا الرابط لا يتضمن كتابًا. افتح رابطًا خاصًا بالكتاب لتسجيل الدخول، أو جرّب العرض التوضيحي أدناه.',
   'login.submit': 'تسجيل الدخول',
   'login.signingIn': 'جاري تسجيل الدخول...',
   'login.forgotPassword': 'نسيت كلمة المرور؟',
   'login.adminLink': 'الذهاب إلى تسجيل دخول المسؤول',
   'login.adminDescription': 'هل أنت مؤلف أو مدير؟ سجّل الدخول هنا لرفع وإدارة كتبك.',
   'login.recoveryTitle': 'استعادة الوصول',
-  'login.recoveryInstructions': 'أدخل بريدك الإلكتروني وسنرسل لك رابطاً آمناً لتسجيل الدخول بدون كلمة مرور.',
+  'login.recoveryInstructions':
+    'أدخل بريدك الإلكتروني وسنرسل لك رابطاً آمناً لتسجيل الدخول بدون كلمة مرور.',
   'login.sendMagicLink': 'إرسال الرابط السحري',
-  'login.recoverySuccess': 'تم إرسال رابط سحري إلى بريدك الإلكتروني (إذا كان هناك حساب لهذا الكتاب). يرجى التحقق من البريد الوارد.',
+  'login.recoverySuccess':
+    'تم إرسال رابط سحري إلى بريدك الإلكتروني (إذا كان هناك حساب لهذا الكتاب). يرجى التحقق من البريد الوارد.',
   'login.backToLogin': 'العودة إلى تسجيل الدخول',
   'login.verifyingToken': 'جاري التحقق من رابط الاستعادة...',
   'login.error.network': 'خطأ في الشبكة. حاول مرة أخرى.',
@@ -40,13 +43,16 @@ export const ar: Record<TranslationKeys, TranslationValue> = {
   'login.hero.howAccessWorks': 'لا حاجة للتسجيل — يُمنح الوصول من مؤلف أو مدير.',
   'login.hero.learnMore': 'اعرف المزيد',
   'login.heroTitle': 'موطن هادئ ومدروس لمكتبتك.',
-  'login.heroBody': 'ارفع ملفات EPUB، واقرأ بعناية تيبوغرافية، واحتفظ بكل تعليق مزامَناً — حتى دون اتصال.',
+  'login.heroBody':
+    'ارفع ملفات EPUB، واقرأ بعناية تيبوغرافية، واحتفظ بكل تعليق مزامَناً — حتى دون اتصال.',
   'help.title': 'المساعدة وطريقة الاستخدام',
-  'help.intro': '{app} هو مساحة عمل لقراءة ملفات EPUB وتحريرها. سجّل الدخول لقراءة الكتب، أو كمؤلف أو مدير، ارفع كتبك وأدرها.',
+  'help.intro':
+    '{app} هو مساحة عمل لقراءة ملفات EPUB وتحريرها. سجّل الدخول لقراءة الكتب، أو كمؤلف أو مدير، ارفع كتبك وأدرها.',
   'help.demoTitle': 'جرّب النسخة التجريبية',
   'help.demoReader': 'نسخة القارئ التجريبية: {email} · كلمة المرور: {password} · الكتاب: {slug}',
   'help.demoAdmin': 'نسخة المدير التجريبية: {email} · كلمة المرور: {password}',
-  'help.demoBody': 'سجّل الدخول ببيانات النسخة التجريبية في شاشات تسجيل الدخول، أو استخدم زر النسخة التجريبية بنقرة واحدة. لا حاجة لإنشاء حساب.',
+  'help.demoBody':
+    'سجّل الدخول ببيانات النسخة التجريبية في شاشات تسجيل الدخول، أو استخدم زر النسخة التجريبية بنقرة واحدة. لا حاجة لإنشاء حساب.',
   'help.backToLogin': 'العودة إلى تسجيل الدخول',
   'reader.untitledBook': 'كتاب بدون عنوان',
   'reader.signOut': 'تسجيل الخروج',
@@ -84,7 +90,8 @@ export const ar: Record<TranslationKeys, TranslationValue> = {
   'reader.settings.fontSize.large': 'كبير',
   'reader.settings.fontSize.xlarge': 'كبير جداً',
   'reader.settings.ai.title': 'المساعدة بالذكاء الاصطناعي',
-  'reader.settings.ai.description': 'مساعدات الذكاء الاصطناعي على الجهاز (ملخصات الفصول). متوقفة افتراضيًا؛ نصوصك لا تغادر جهازك أبدًا.',
+  'reader.settings.ai.description':
+    'مساعدات الذكاء الاصطناعي على الجهاز (ملخصات الفصول). متوقفة افتراضيًا؛ نصوصك لا تغادر جهازك أبدًا.',
   'reader.settings.fontFamily.serif': 'Serif',
   'reader.settings.fontFamily.sans-serif': 'Sans Serif',
   'reader.settings.fontFamily.monospace': 'Monospace',
@@ -167,7 +174,8 @@ export const ar: Record<TranslationKeys, TranslationValue> = {
   'admin.createBookModal.validationErrors': 'أخطاء التحقق',
   'admin.createBookModal.validationWarnings': 'تحذيرات التحقق',
   'admin.createBookModal.error.missingMimetype': 'ملف "mimetype" مفقود',
-  'admin.createBookModal.error.invalidMimetype': 'نوع MIME غير صالح: يجب أن يكون "application/epub+zip"',
+  'admin.createBookModal.error.invalidMimetype':
+    'نوع MIME غير صالح: يجب أن يكون "application/epub+zip"',
   'admin.createBookModal.error.missingContainer': '"META-INF/container.xml" مفقود',
   'admin.createBookModal.error.corruptZip': 'الملف ليس أرشيف ZIP صالحاً أو تالف',
   'admin.manageGrants': 'إدارة الوصول',
@@ -218,7 +226,8 @@ export const ar: Record<TranslationKeys, TranslationValue> = {
   'common.error.generic': 'حدث خطأ ما',
   'errors.generic': 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.',
   'errors.boundary.title': 'حدث خطأ ما',
-  'errors.boundary.description': 'حدث خطأ غير متوقع. يمكنك محاولة إعادة تحميل المكون أو الاتصال بالدعم بالمعرف أدناه.',
+  'errors.boundary.description':
+    'حدث خطأ غير متوقع. يمكنك محاولة إعادة تحميل المكون أو الاتصال بالدعم بالمعرف أدناه.',
   'errors.boundary.home': 'إعادة تحميل الصفحة',
   'errors.boundary.retrying': 'إعادة المحاولة...',
   'errors.boundary.traceId': 'معرف التتبع',
@@ -243,7 +252,14 @@ export const ar: Record<TranslationKeys, TranslationValue> = {
   'comment.delete': 'حذف',
   'comment.placeholder': 'اكتب تعليقاً...',
   'comment.resolved': 'تم الحل',
-  'comment.replies': { zero: 'لا ردود', one: 'رد واحد', two: 'ردّان', few: '{count} ردود', many: '{count} ردًّا', other: '{count} رد' },
+  'comment.replies': {
+    zero: 'لا ردود',
+    one: 'رد واحد',
+    two: 'ردّان',
+    few: '{count} ردود',
+    many: '{count} ردًّا',
+    other: '{count} رد',
+  },
   'comment.noComments': 'لا تعليقات بعد',
   'comment.status.open': 'مفتوح',
   'comment.status.resolved': 'تم الحل',
@@ -301,7 +317,8 @@ export const ar: Record<TranslationKeys, TranslationValue> = {
   'creator.assigned': 'المنشئون المعينون',
   'creator.noUser': 'لا يوجد حساب لهذا البريد الإلكتروني.',
   'invitations.title': 'قبول الدعوة',
-  'invitations.description': 'اختر كلمة مرور لتفعيل الوصول إلى الكتاب. يمكن استخدام هذه الدعوة مرة واحدة فقط.',
+  'invitations.description':
+    'اختر كلمة مرور لتفعيل الوصول إلى الكتاب. يمكن استخدام هذه الدعوة مرة واحدة فقط.',
   'invitations.passwordLabel': 'كلمة المرور',
   'invitations.passwordConfirmLabel': 'تأكيد كلمة المرور',
   'invitations.accept': 'قبول الدعوة',
@@ -328,7 +345,8 @@ export const ar: Record<TranslationKeys, TranslationValue> = {
   'invitations.expiryLabel': 'انتهاء الوصول (اختياري)',
   'invitations.sendInvite': 'إرسال الدعوة',
   'invitations.sending': 'جارٍ إرسال الدعوة…',
-  'invitations.manualDelivery': 'إرسال البريد الإلكتروني غير متاح. انسخ هذا الرابط لمرّة واحدة وأرسله عبر قناة معتمدة.',
+  'invitations.manualDelivery':
+    'إرسال البريد الإلكتروني غير متاح. انسخ هذا الرابط لمرّة واحدة وأرسله عبر قناة معتمدة.',
   'invitations.copyLinkLabel': 'رابط الدعوة',
   'invitations.copyLink': 'نسخ الرابط',
   'invitations.copied': 'تم النسخ',
@@ -417,7 +435,8 @@ export const ar: Record<TranslationKeys, TranslationValue> = {
   'asst.enginePrepare': 'تجهيز محرك القصة والمنطق',
   'asst.engineDownloading': 'جارٍ تجهيز المحرك: {percent}٪',
   'asst.engineReady': 'محرك القصة والمنطق جاهز',
-  'asst.engineNote': 'تنزيل واحد بحجم حوالي 500 ميغابايت. يعمل النموذج على هذا الجهاز — لا تُرفع مخطوطتك أبدًا.',
+  'asst.engineNote':
+    'تنزيل واحد بحجم حوالي 500 ميغابايت. يعمل النموذج على هذا الجهاز — لا تُرفع مخطوطتك أبدًا.',
 
   'highlight.colors.yellow': 'أصفر',
   'highlight.colors.green': 'أخضر',
@@ -444,10 +463,13 @@ export const ar: Record<TranslationKeys, TranslationValue> = {
   'admin.login.invalidCredentials': 'بريد إلكتروني أو كلمة مرور غير صالحة',
   'admin.login.forgotPassword': 'نسيت كلمة المرور؟',
   'admin.login.backToReader': 'العودة إلى تسجيل دخول القارئ',
-  'admin.login.readerDescription': 'تبحث عن كتبك؟ اذهب إلى تسجيل دخول القارئ للوصول إلى مكتبتك المعتمدة.',
+  'admin.login.readerDescription':
+    'تبحث عن كتبك؟ اذهب إلى تسجيل دخول القارئ للوصول إلى مكتبتك المعتمدة.',
   'admin.login.recoveryTitle': 'استعادة وصول المسؤول',
-  'admin.login.recoveryInstructions': 'أدخل بريدك الإلكتروني للمسؤول وسنرسل لك رابطاً آمناً لتسجيل الدخول بدون كلمة مرور.',
-  'admin.login.recoverySuccess': 'تم إرسال رابط سحري إلى بريدك الإلكتروني (إذا كان هناك حساب مسؤول). يرجى التحقق من البريد الوارد.',
+  'admin.login.recoveryInstructions':
+    'أدخل بريدك الإلكتروني للمسؤول وسنرسل لك رابطاً آمناً لتسجيل الدخول بدون كلمة مرور.',
+  'admin.login.recoverySuccess':
+    'تم إرسال رابط سحري إلى بريدك الإلكتروني (إذا كان هناك حساب مسؤول). يرجى التحقق من البريد الوارد.',
   'admin.login.backToAdminLogin': 'العودة إلى تسجيل دخول المسؤول',
   'admin.login.demoTry': 'تجربة عرض الأدمن التجريبي',
   'admin.login.demoFillCredentials': 'تعبئة بيانات الأدمن',
@@ -509,11 +531,13 @@ export const ar: Record<TranslationKeys, TranslationValue> = {
   'admin.grants.selectBook': 'يرجى اختيار كتاب من صفحة الكتب لإدارة أذونات الوصول.',
   'admin.recover.titleRequest': 'استعادة وصول المسؤول',
   'admin.recover.titleVerify': 'تعيين كلمة مرور جديدة',
-  'admin.recover.requestDescription': 'أدخل بريدك الإلكتروني للمسؤول. سنرسل رابط استعادة إذا كان الحساب موجوداً.',
+  'admin.recover.requestDescription':
+    'أدخل بريدك الإلكتروني للمسؤول. سنرسل رابط استعادة إذا كان الحساب موجوداً.',
   'admin.recover.verifyDescription': 'اختر كلمة مرور جديدة لاستعادة وصول المسؤول.',
   'admin.recover.sendLink': 'إرسال رابط الاستعادة',
   'admin.recover.sending': 'جاري الإرسال...',
-  'admin.recover.requestSent': 'إذا كان هذا البريد الإلكتروني يطابق حساب مسؤول، فقد تم إرسال رابط الاستعادة.',
+  'admin.recover.requestSent':
+    'إذا كان هذا البريد الإلكتروني يطابق حساب مسؤول، فقد تم إرسال رابط الاستعادة.',
   'admin.recover.requestFailed': 'تعذر إرسال بريد الاستعادة. يرجى المحاولة مرة أخرى.',
   'admin.recover.newPassword': 'كلمة المرور الجديدة',
   'admin.recover.resetPassword': 'إعادة تعيين كلمة المرور',
@@ -522,7 +546,8 @@ export const ar: Record<TranslationKeys, TranslationValue> = {
   'admin.recover.backToLogin': 'العودة إلى تسجيل الدخول',
   'admin.recover.newPasswordConfirm': 'تأكيد كلمة المرور الجديدة',
   'admin.recover.successTitle': 'تم إعادة تعيين كلمة المرور بنجاح',
-  'admin.recover.successMessage': 'تم إعادة تعيين كلمة المرور. سجّل الدخول بكلمة المرور الجديدة للمتابعة.',
+  'admin.recover.successMessage':
+    'تم إعادة تعيين كلمة المرور. سجّل الدخول بكلمة المرور الجديدة للمتابعة.',
   'admin.recover.signInNow': 'انتقل إلى تسجيل الدخول',
   'admin.account.title': 'إعدادات الحساب',
   'admin.account.backToDashboard': 'العودة إلى لوحة التحكم',
@@ -531,7 +556,8 @@ export const ar: Record<TranslationKeys, TranslationValue> = {
   'admin.account.currentPassword': 'كلمة المرور الحالية',
   'admin.account.newPassword': 'كلمة المرور الجديدة',
   'admin.account.newPasswordConfirm': 'تأكيد كلمة المرور الجديدة',
-  'admin.account.passwordChangeFailed': 'تعذر تحديث كلمة المرور. تحقق من كلمة المرور الحالية وحاول مرة أخرى.',
+  'admin.account.passwordChangeFailed':
+    'تعذر تحديث كلمة المرور. تحقق من كلمة المرور الحالية وحاول مرة أخرى.',
   'admin.account.passwordChangeSuccess': 'تم تحديث كلمة المرور بنجاح.',
   'admin.sessions.title': 'الجلسات النشطة',
   'admin.sessions.loadFailed': 'تعذر تحميل جلساتك النشطة.',
@@ -551,36 +577,58 @@ export const ar: Record<TranslationKeys, TranslationValue> = {
   'admin.stepUp.error': 'فشل التحقق. تحقق من كلمة المرور وحاول مرة أخرى.',
 
   // ADR-234 MFA passkeys + recovery codes
-  "security.mfa.title": "\u0627\u0644\u0623\u0645\u0627\u0646 / MFA",
-  "security.mfa.description": "\u0627\u062d\u0645\u0650 \u062d\u0633\u0627\u0628\u0643 \u0627\u0644\u0625\u062f\u0627\u0631\u064a \u0628\u0645\u0641\u062a\u0627\u062d \u0627\u0644\u0645\u0631\u0648\u0631. \u064a\u0631\u0641\u0639 \u0627\u0644\u0645\u0635\u0627\u062f\u0642\u0629 \u062c\u0644\u0633\u062a\u0643 \u0625\u0644\u0649 \u062d\u0645\u0627\u064a\u0629 MFA.",
-  "security.mfa.passkeys": "\u0645\u0641\u0627\u062a\u064a\u062d \u0627\u0644\u0645\u0631\u0648\u0631",
-  "security.mfa.noEnrolled": "\u0644\u0627 \u062a\u0648\u062c\u062f \u0645\u0641\u0627\u062a\u064a\u062d \u0645\u0631\u0648\u0631 \u0645\u0633\u062c\u0644\u0629 \u0628\u0639\u062f.",
-  "security.mfa.remove": "\u0625\u0632\u0627\u0644\u0629",
-  "security.mfa.enroll": "\u062a\u0633\u062c\u064a\u0644 \u0645\u0641\u062a\u0627\u062d \u0645\u0631\u0648\u0631",
-  "security.mfa.addAnother": "\u0625\u0636\u0627\u0641\u0629 \u0645\u0641\u062a\u0627\u062d \u0645\u0631\u0648\u0631 \u0622\u062e\u0631",
-  "security.mfa.authenticate": "\u0627\u0644\u062a\u062d\u0642\u0642 \u0628\u0645\u0641\u062a\u0627\u062d \u0627\u0644\u0645\u0631\u0648\u0631",
-  "security.mfa.authenticating": "\u062c\u0627\u0631\u064d \u0627\u0644\u062a\u062d\u0642\u0642...",
-  "security.mfa.regenerate": "\u0625\u0639\u0627\u062f\u0629 \u0625\u0646\u0634\u0627\u0621 \u0631\u0645\u0648\u0632 \u0627\u0644\u0627\u0633\u062a\u0631\u062f\u0627\u062f",
-  "security.mfa.regenerating": "\u062c\u0627\u0631\u064d \u0625\u0639\u0627\u062f\u0629 \u0627\u0644\u0625\u0646\u0634\u0627\u0621...",
-  "security.mfa.loadFailed": "\u062a\u0639\u0630\u0631 \u062a\u062d\u0645\u064a\u0644 \u062d\u0627\u0644\u0629 MFA.",
-  "security.mfa.actionFailed": "\u0641\u0634\u0644 \u0625\u062c\u0631\u0627\u0621 MFA. \u062d\u0627\u0648\u0644 \u0645\u0631\u0629 \u0623\u062e\u0631\u0649.",
-  "security.mfa.enrollSuccess": "\u062a\u0645 \u062a\u0633\u062c\u064a\u0644 \u0645\u0641\u062a\u0627\u062d \u0627\u0644\u0645\u0631\u0648\u0631 \u0628\u0646\u062c\u0627\u062d.",
-  "security.mfa.removeSuccess": "\u062a\u0645\u062a \u0625\u0632\u0627\u0644\u0629 \u0645\u0641\u062a\u0627\u062d \u0627\u0644\u0645\u0631\u0648\u0631.",
-  "security.mfa.authSuccess": "\u062a\u0645 \u0627\u0644\u062a\u062d\u0642\u0642 \u0645\u0646 \u0645\u0641\u062a\u0627\u062d \u0627\u0644\u0645\u0631\u0648\u0631. \u062c\u0644\u0633\u062a\u0643 \u0627\u0644\u0622\u0646 \u0645\u062d\u0645\u064a\u0629 \u0628\u0640 MFA.",
-  "security.mfa.authFailed": "\u0641\u0634\u0644 \u0627\u0644\u062a\u062d\u0642\u0642 \u0645\u0646 \u0645\u0641\u062a\u0627\u062d \u0627\u0644\u0645\u0631\u0648\u0631.",
-  "security.mfa.stepUpNeeded": "\u062a\u062a\u0637\u0644\u0628 \u0628\u0639\u0636 \u0625\u062c\u0631\u0627\u0621\u0627\u062a \u0627\u0644\u0625\u062f\u0627\u0631\u0629 \u0627\u0644\u062d\u0633\u0627\u0633\u0629 \u062a\u0623\u0643\u064a\u062f\u064b\u0627 \u0628\u0645\u0641\u062a\u0627\u062d \u0627\u0644\u0645\u0631\u0648\u0631 \u0642\u0628\u0644 \u0627\u0644\u0645\u062a\u0627\u0628\u0639\u0629.",
-  "security.mfa.loading": "\u062c\u0627\u0631\u064a \u062a\u062d\u0645\u064a\u0644 \u062d\u0627\u0644\u0629 MFA...",
-  "security.mfa.passkeyName": "\u0627\u0633\u0645 \u0645\u0641\u062a\u0627\u062d \u0627\u0644\u0645\u0631\u0648\u0631",
-  "security.mfa.removeConfirmTitle": "\u0625\u0632\u0627\u0644\u0629 \u0645\u0641\u062a\u0627\u062d \u0627\u0644\u0645\u0631\u0648\u0631\u061f",
-  "security.mfa.removeConfirmMessage": "\u0625\u0632\u0627\u0644\u0629 \u0645\u0641\u062a\u0627\u062d \u0627\u0644\u0645\u0631\u0648\u0631 \u0022{name}\u0022\u061f \u0628\u0639\u062f \u0625\u0632\u0627\u0644\u062a\u0647\u060c \u0644\u0646 \u062a\u062a\u0645\u0643\u0646 \u0628\u0639\u062f \u0627\u0644\u0622\u0646 \u0645\u0646 \u062a\u0633\u062c\u064a\u0644 \u0627\u0644\u062f\u062e\u0648\u0644 \u0628\u0627\u0633\u062a\u062e\u062f\u0627\u0645 \u0647\u0630\u0627 \u0627\u0644\u062c\u0647\u0627\u0632.",
-  "security.recovery.recoveryCodes": "\u0631\u0645\u0648\u0632 \u0627\u0644\u0627\u0633\u062a\u0631\u062f\u0627\u062f",
-  "security.recovery.copyAll": "\u0646\u0633\u062e \u0627\u0644\u0643\u0644",
-  "security.recovery.copied": "\u062a\u0645 \u0627\u0644\u0646\u0633\u062e",
-  "security.recovery.codeCopied": "\u062a\u0645 \u0627\u0644\u0646\u0633\u062e",
-  "security.recovery.close": "\u0625\u063a\u0644\u0627\u0642",
-  "security.recovery.recoveryCodesWarning": "\u0627\u062d\u062a\u0641\u0638 \u0628\u0631\u0645\u0648\u0632 \u0627\u0644\u0627\u0633\u062a\u0631\u062f\u0627\u062f \u0647\u0630\u0647 \u0641\u064a \u0645\u0643\u0627\u0646 \u0622\u0645\u0646. \u062a\u0638\u0647\u0631 \u0645\u0631\u0629 \u0648\u0627\u062d\u062f\u0629 \u0641\u0642\u0637 \u0648\u064a\u0645\u0643\u0646 \u0627\u0633\u062a\u062e\u062f\u0627\u0645 \u0643\u0644 \u0631\u0645\u0632 \u0645\u0631\u0629 \u0648\u0627\u062d\u062f\u0629 \u0641\u0642\u0637.",
-  "security.recovery.codesShownOnce": "\u0625\u0630\u0627 \u0641\u0642\u062f\u062a \u0627\u0644\u0648\u0635\u0648\u0644 \u0625\u0644\u0649 \u0645\u0641\u062a\u0627\u062d \u0627\u0644\u0645\u0631\u0648\u0631\u060c \u0627\u0633\u062a\u062e\u062f\u0645 \u0623\u062d\u062f \u0647\u0630\u0647 \u0627\u0644\u0631\u0645\u0648\u0632 \u0644\u0627\u0633\u062a\u0631\u062f\u0627\u062f \u062d\u0633\u0627\u0628\u0643.",
-  "security.recovery.copy": "\u0646\u0633\u062e",
+  'security.mfa.title': '\u0627\u0644\u0623\u0645\u0627\u0646 / MFA',
+  'security.mfa.description':
+    '\u0627\u062d\u0645\u0650 \u062d\u0633\u0627\u0628\u0643 \u0627\u0644\u0625\u062f\u0627\u0631\u064a \u0628\u0645\u0641\u062a\u0627\u062d \u0627\u0644\u0645\u0631\u0648\u0631. \u064a\u0631\u0641\u0639 \u0627\u0644\u0645\u0635\u0627\u062f\u0642\u0629 \u062c\u0644\u0633\u062a\u0643 \u0625\u0644\u0649 \u062d\u0645\u0627\u064a\u0629 MFA.',
+  'security.mfa.passkeys':
+    '\u0645\u0641\u0627\u062a\u064a\u062d \u0627\u0644\u0645\u0631\u0648\u0631',
+  'security.mfa.noEnrolled':
+    '\u0644\u0627 \u062a\u0648\u062c\u062f \u0645\u0641\u0627\u062a\u064a\u062d \u0645\u0631\u0648\u0631 \u0645\u0633\u062c\u0644\u0629 \u0628\u0639\u062f.',
+  'security.mfa.remove': '\u0625\u0632\u0627\u0644\u0629',
+  'security.mfa.enroll':
+    '\u062a\u0633\u062c\u064a\u0644 \u0645\u0641\u062a\u0627\u062d \u0645\u0631\u0648\u0631',
+  'security.mfa.addAnother':
+    '\u0625\u0636\u0627\u0641\u0629 \u0645\u0641\u062a\u0627\u062d \u0645\u0631\u0648\u0631 \u0622\u062e\u0631',
+  'security.mfa.authenticate':
+    '\u0627\u0644\u062a\u062d\u0642\u0642 \u0628\u0645\u0641\u062a\u0627\u062d \u0627\u0644\u0645\u0631\u0648\u0631',
+  'security.mfa.authenticating': '\u062c\u0627\u0631\u064d \u0627\u0644\u062a\u062d\u0642\u0642...',
+  'security.mfa.regenerate':
+    '\u0625\u0639\u0627\u062f\u0629 \u0625\u0646\u0634\u0627\u0621 \u0631\u0645\u0648\u0632 \u0627\u0644\u0627\u0633\u062a\u0631\u062f\u0627\u062f',
+  'security.mfa.regenerating':
+    '\u062c\u0627\u0631\u064d \u0625\u0639\u0627\u062f\u0629 \u0627\u0644\u0625\u0646\u0634\u0627\u0621...',
+  'security.mfa.loadFailed':
+    '\u062a\u0639\u0630\u0631 \u062a\u062d\u0645\u064a\u0644 \u062d\u0627\u0644\u0629 MFA.',
+  'security.mfa.actionFailed':
+    '\u0641\u0634\u0644 \u0625\u062c\u0631\u0627\u0621 MFA. \u062d\u0627\u0648\u0644 \u0645\u0631\u0629 \u0623\u062e\u0631\u0649.',
+  'security.mfa.enrollSuccess':
+    '\u062a\u0645 \u062a\u0633\u062c\u064a\u0644 \u0645\u0641\u062a\u0627\u062d \u0627\u0644\u0645\u0631\u0648\u0631 \u0628\u0646\u062c\u0627\u062d.',
+  'security.mfa.removeSuccess':
+    '\u062a\u0645\u062a \u0625\u0632\u0627\u0644\u0629 \u0645\u0641\u062a\u0627\u062d \u0627\u0644\u0645\u0631\u0648\u0631.',
+  'security.mfa.authSuccess':
+    '\u062a\u0645 \u0627\u0644\u062a\u062d\u0642\u0642 \u0645\u0646 \u0645\u0641\u062a\u0627\u062d \u0627\u0644\u0645\u0631\u0648\u0631. \u062c\u0644\u0633\u062a\u0643 \u0627\u0644\u0622\u0646 \u0645\u062d\u0645\u064a\u0629 \u0628\u0640 MFA.',
+  'security.mfa.authFailed':
+    '\u0641\u0634\u0644 \u0627\u0644\u062a\u062d\u0642\u0642 \u0645\u0646 \u0645\u0641\u062a\u0627\u062d \u0627\u0644\u0645\u0631\u0648\u0631.',
+  'security.mfa.stepUpNeeded':
+    '\u062a\u062a\u0637\u0644\u0628 \u0628\u0639\u0636 \u0625\u062c\u0631\u0627\u0621\u0627\u062a \u0627\u0644\u0625\u062f\u0627\u0631\u0629 \u0627\u0644\u062d\u0633\u0627\u0633\u0629 \u062a\u0623\u0643\u064a\u062f\u064b\u0627 \u0628\u0645\u0641\u062a\u0627\u062d \u0627\u0644\u0645\u0631\u0648\u0631 \u0642\u0628\u0644 \u0627\u0644\u0645\u062a\u0627\u0628\u0639\u0629.',
+  'security.mfa.loading':
+    '\u062c\u0627\u0631\u064a \u062a\u062d\u0645\u064a\u0644 \u062d\u0627\u0644\u0629 MFA...',
+  'security.mfa.passkeyName':
+    '\u0627\u0633\u0645 \u0645\u0641\u062a\u0627\u062d \u0627\u0644\u0645\u0631\u0648\u0631',
+  'security.mfa.removeConfirmTitle':
+    '\u0625\u0632\u0627\u0644\u0629 \u0645\u0641\u062a\u0627\u062d \u0627\u0644\u0645\u0631\u0648\u0631\u061f',
+  'security.mfa.removeConfirmMessage':
+    '\u0625\u0632\u0627\u0644\u0629 \u0645\u0641\u062a\u0627\u062d \u0627\u0644\u0645\u0631\u0648\u0631 \u0022{name}\u0022\u061f \u0628\u0639\u062f \u0625\u0632\u0627\u0644\u062a\u0647\u060c \u0644\u0646 \u062a\u062a\u0645\u0643\u0646 \u0628\u0639\u062f \u0627\u0644\u0622\u0646 \u0645\u0646 \u062a\u0633\u062c\u064a\u0644 \u0627\u0644\u062f\u062e\u0648\u0644 \u0628\u0627\u0633\u062a\u062e\u062f\u0627\u0645 \u0647\u0630\u0627 \u0627\u0644\u062c\u0647\u0627\u0632.',
+  'security.recovery.recoveryCodes':
+    '\u0631\u0645\u0648\u0632 \u0627\u0644\u0627\u0633\u062a\u0631\u062f\u0627\u062f',
+  'security.recovery.copyAll': '\u0646\u0633\u062e \u0627\u0644\u0643\u0644',
+  'security.recovery.copied': '\u062a\u0645 \u0627\u0644\u0646\u0633\u062e',
+  'security.recovery.codeCopied': '\u062a\u0645 \u0627\u0644\u0646\u0633\u062e',
+  'security.recovery.close': '\u0625\u063a\u0644\u0627\u0642',
+  'security.recovery.recoveryCodesWarning':
+    '\u0627\u062d\u062a\u0641\u0638 \u0628\u0631\u0645\u0648\u0632 \u0627\u0644\u0627\u0633\u062a\u0631\u062f\u0627\u062f \u0647\u0630\u0647 \u0641\u064a \u0645\u0643\u0627\u0646 \u0622\u0645\u0646. \u062a\u0638\u0647\u0631 \u0645\u0631\u0629 \u0648\u0627\u062d\u062f\u0629 \u0641\u0642\u0637 \u0648\u064a\u0645\u0643\u0646 \u0627\u0633\u062a\u062e\u062f\u0627\u0645 \u0643\u0644 \u0631\u0645\u0632 \u0645\u0631\u0629 \u0648\u0627\u062d\u062f\u0629 \u0641\u0642\u0637.',
+  'security.recovery.codesShownOnce':
+    '\u0625\u0630\u0627 \u0641\u0642\u062f\u062a \u0627\u0644\u0648\u0635\u0648\u0644 \u0625\u0644\u0649 \u0645\u0641\u062a\u0627\u062d \u0627\u0644\u0645\u0631\u0648\u0631\u060c \u0627\u0633\u062a\u062e\u062f\u0645 \u0623\u062d\u062f \u0647\u0630\u0647 \u0627\u0644\u0631\u0645\u0648\u0632 \u0644\u0627\u0633\u062a\u0631\u062f\u0627\u062f \u062d\u0633\u0627\u0628\u0643.',
+  'security.recovery.copy': '\u0646\u0633\u062e',
   'a11y.menu_open': 'فتح قائمة التنقل',
   'a11y.menu_close': 'إغلاق قائمة التنقل',
   'a11y.select_locale': 'اختيار اللغة',
@@ -603,10 +651,18 @@ export const ar: Record<TranslationKeys, TranslationValue> = {
   'catalog.pagination.info': 'عرض {from}–{to} من {total}',
   'offline.banner': 'أنت غير متصل. ستتم مزامنة التغييرات عند إعادة الاتصال.',
   'offline.indicator': 'غير متصل',
-  'offline.pendingSync': { zero: 'لا مزامنة معلقة', one: '{count} مزامنة معلقة', two: '{count} مزامنتان معلقتان', few: '{count} مزامنات معلقة', many: '{count} مزامنة معلقة', other: '{count} مزامنة معلقة' },
+  'offline.pendingSync': {
+    zero: 'لا مزامنة معلقة',
+    one: '{count} مزامنة معلقة',
+    two: '{count} مزامنتان معلقتان',
+    few: '{count} مزامنات معلقة',
+    many: '{count} مزامنة معلقة',
+    other: '{count} مزامنة معلقة',
+  },
   'reader.bookmarks.title': 'الإشارات المرجعية',
   'reader.bookmarks.addTitle': 'إضافة إشارة مرجعية في الموضع الحالي',
-  'reader.bookmarks.empty': 'لا توجد إشارات مرجعية بعد. انقر على أيقونة الإشارة المرجعية لحفظ الموضع.',
+  'reader.bookmarks.empty':
+    'لا توجد إشارات مرجعية بعد. انقر على أيقونة الإشارة المرجعية لحفظ الموضع.',
   'reader.bookmarks.untitled': 'بدون عنوان',
   'admin.audit.exportCsv': 'تصدير CSV',
   'admin.audit.entityType': 'نوع الكيان',
@@ -693,7 +749,8 @@ export const ar: Record<TranslationKeys, TranslationValue> = {
   'storage.cleared': 'تم مسح الذاكرة المؤقتة بنجاح',
   'storage.clearError': 'فشل مسح الذاكرة المؤقتة',
   'storage.unsupported': 'معلومات التخزين غير متاحة في هذا المتصفح',
-  'storage.confirmClear': 'سيؤدي هذا إلى حذف جميع الكتب والتعليقات وتقدم القراءة المخزنة على هذا الجهاز. ستفقد البيانات غير المتزامنة. هل أنت متأكد؟',
+  'storage.confirmClear':
+    'سيؤدي هذا إلى حذف جميع الكتب والتعليقات وتقدم القراءة المخزنة على هذا الجهاز. ستفقد البيانات غير المتزامنة. هل أنت متأكد؟',
   'notifications.title': 'الإشعارات',
   'notifications.empty': 'لا توجد إشعارات بعد',
   'notifications.markAllRead': 'تعليم الكل كمقروء',
@@ -713,16 +770,16 @@ export const ar: Record<TranslationKeys, TranslationValue> = {
   'relativeTime.minutesAgo': 'منذ {count}د',
   'relativeTime.hoursAgo': 'منذ {count}س',
   'relativeTime.daysAgo': 'منذ {count}ي',
-  'reader.conflicts.title': "تعارضات المزامنة",
-  'reader.conflicts.summary': "تحتاج {n} تعارضًا إلى حل",
-  'reader.conflicts.keepLocal': "الاحتفاظ بالنسخة المحلية",
-  'reader.conflicts.keepRemote': "الاحتفاظ بالنسخة البعيدة",
-  'reader.conflicts.dismiss': "تجاهل",
-  'reader.conflicts.localLabel': "محلي:",
-  'reader.conflicts.remoteLabel': "بعيد:",
-  'reader.conflicts.type.progress_update': "تحديث التقدم",
-  'reader.conflicts.type.annotation_edit': "تعديل تعليق توضيحي",
-  'reader.conflicts.type.bookmark_change': "تغيير علامة مرجعية",
-  'reader.conflicts.type.comment_update': "تحديث تعليق",
-  'reader.conflicts.noConflicts': "لا توجد تعارضات معلقة",
+  'reader.conflicts.title': 'تعارضات المزامنة',
+  'reader.conflicts.summary': 'تحتاج {n} تعارضًا إلى حل',
+  'reader.conflicts.keepLocal': 'الاحتفاظ بالنسخة المحلية',
+  'reader.conflicts.keepRemote': 'الاحتفاظ بالنسخة البعيدة',
+  'reader.conflicts.dismiss': 'تجاهل',
+  'reader.conflicts.localLabel': 'محلي:',
+  'reader.conflicts.remoteLabel': 'بعيد:',
+  'reader.conflicts.type.progress_update': 'تحديث التقدم',
+  'reader.conflicts.type.annotation_edit': 'تعديل تعليق توضيحي',
+  'reader.conflicts.type.bookmark_change': 'تغيير علامة مرجعية',
+  'reader.conflicts.type.comment_update': 'تحديث تعليق',
+  'reader.conflicts.noConflicts': 'لا توجد تعارضات معلقة',
 };

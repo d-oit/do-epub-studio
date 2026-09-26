@@ -12,12 +12,18 @@ function FeatureBadge({ label }: { label: string }) {
 
 function formatHazard(hazard: string): string {
   switch (hazard) {
-    case 'none': return 'None';
-    case 'flashing': return 'Flashing';
-    case 'motionSimulation': return 'Motion Simulation';
-    case 'sound': return 'Sound';
-    case 'unknown': return 'Unknown';
-    default: return hazard;
+    case 'none':
+      return 'None';
+    case 'flashing':
+      return 'Flashing';
+    case 'motionSimulation':
+      return 'Motion Simulation';
+    case 'sound':
+      return 'Sound';
+    case 'unknown':
+      return 'Unknown';
+    default:
+      return hazard;
   }
 }
 
@@ -39,13 +45,9 @@ function HazardBadge({ hazard }: { hazard: string }) {
 export function AccessibilitySection({ a11y, t }: { a11y: AccessibilityMetadata; t: TFn }) {
   return (
     <section>
-      <h3 className="eyebrow mb-2">
-        {t('reader.accessibility')}
-      </h3>
+      <h3 className="eyebrow mb-2">{t('reader.accessibility')}</h3>
       <div className="space-y-3">
-        {a11y.summary && (
-          <p className="text-sm text-foreground leading-relaxed">{a11y.summary}</p>
-        )}
+        {a11y.summary && <p className="text-sm text-foreground leading-relaxed">{a11y.summary}</p>}
         <dl className="space-y-2">
           {a11y.conformsTo && (
             <div>
@@ -75,7 +77,9 @@ export function AccessibilitySection({ a11y, t }: { a11y: AccessibilityMetadata;
           <div>
             <p className="text-xs text-foreground-muted mb-1.5">{t('reader.features')}</p>
             <div className="flex flex-wrap gap-1.5">
-              {a11y.features.map((f) => <FeatureBadge key={f} label={f} />)}
+              {a11y.features.map((f) => (
+                <FeatureBadge key={f} label={f} />
+              ))}
             </div>
           </div>
         )}
@@ -83,7 +87,9 @@ export function AccessibilitySection({ a11y, t }: { a11y: AccessibilityMetadata;
           <div>
             <p className="text-xs text-foreground-muted mb-1.5">{t('reader.hazards')}</p>
             <div className="flex flex-wrap gap-1.5">
-              {a11y.hazards.map((h) => <HazardBadge key={h} hazard={h} />)}
+              {a11y.hazards.map((h) => (
+                <HazardBadge key={h} hazard={h} />
+              ))}
             </div>
           </div>
         )}
@@ -91,7 +97,9 @@ export function AccessibilitySection({ a11y, t }: { a11y: AccessibilityMetadata;
           <div>
             <p className="text-xs text-foreground-muted mb-1.5">{t('reader.controls')}</p>
             <div className="flex flex-wrap gap-1.5">
-              {a11y.controls.map((c) => <FeatureBadge key={c} label={c} />)}
+              {a11y.controls.map((c) => (
+                <FeatureBadge key={c} label={c} />
+              ))}
             </div>
           </div>
         )}

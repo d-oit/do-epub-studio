@@ -13,16 +13,16 @@ gaps. Plan 095 sequenced them into 4 waves, codified the merge
 order in ADR-096, and shipped them as 7 PRs. All 7 PRs merged
 to `main` on 2026-06-15.
 
-| Wave | PR | Gap | Title | Merge commit | Status |
-|------|----|-----|-------|--------------|--------|
-| A | #547 | G14 | Comments IDOR | 6bec457 | MERGED |
-| B | #549 | G19 | Initial progress load | 80f7c95 | MERGED |
-| C | #548 | G20 | Zod centralization | 5fc19cd | MERGED |
-| C | #542 | G24 | Catalog route test | 66345f2 | MERGED |
-| C | #560 | G21 | Admin grants UI | 74b63be | MERGED |
-| C | #559 | G23 | Compensating-controls test | d6d33e3 | MERGED |
-| D | #552 | G28 | Reader panel mutual exclusivity | 13be0da | MERGED |
-| — | #530 | — | Swarm governance (plan 095 + ADR-096) | fd4c45a | MERGED |
+| Wave | PR   | Gap | Title                                 | Merge commit | Status |
+| ---- | ---- | --- | ------------------------------------- | ------------ | ------ |
+| A    | #547 | G14 | Comments IDOR                         | 6bec457      | MERGED |
+| B    | #549 | G19 | Initial progress load                 | 80f7c95      | MERGED |
+| C    | #548 | G20 | Zod centralization                    | 5fc19cd      | MERGED |
+| C    | #542 | G24 | Catalog route test                    | 66345f2      | MERGED |
+| C    | #560 | G21 | Admin grants UI                       | 74b63be      | MERGED |
+| C    | #559 | G23 | Compensating-controls test            | d6d33e3      | MERGED |
+| D    | #552 | G28 | Reader panel mutual exclusivity       | 13be0da      | MERGED |
+| —    | #530 | —   | Swarm governance (plan 095 + ADR-096) | fd4c45a      | MERGED |
 
 ## PRs closed as duplicates or empty
 

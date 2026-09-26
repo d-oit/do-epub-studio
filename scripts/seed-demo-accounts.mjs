@@ -65,7 +65,11 @@ export const BATCH_LIMIT = 2000;
 export function isProductionLike(env = {}) {
   if (String(env.ENVIRONMENT || '').toLowerCase() === 'production') return true;
   if (env.CF_PAGES === '1' && !env.DEMO_ACCOUNTS_PROD_ALLOWLIST) return true;
-  if (String(env.TURSO_DATABASE_URL || '').toLowerCase().includes('production')) {
+  if (
+    String(env.TURSO_DATABASE_URL || '')
+      .toLowerCase()
+      .includes('production')
+  ) {
     return true;
   }
   return false;
@@ -177,13 +181,13 @@ export async function seedDemoAccounts({
 
   // Reseed: revoke any prior demo sessions so previously-issued tokens die.
   await db(
-    'UPDATE admin_sessions SET revoked_at = datetime(\'now\') '
-      + 'WHERE user_id = ? AND revoked_at IS NULL',
+    "UPDATE admin_sessions SET revoked_at = datetime('now') " +
+      'WHERE user_id = ? AND revoked_at IS NULL',
     [adminUserId],
   );
   await db(
-    'UPDATE reader_sessions SET revoked_at = datetime(\'now\') '
-      + 'WHERE (email = ? OR user_id = ?) AND revoked_at IS NULL',
+    "UPDATE reader_sessions SET revoked_at = datetime('now') " +
+      'WHERE (email = ? OR user_id = ?) AND revoked_at IS NULL',
     [RESERVED.reader.email, readerUserId],
   );
   const revoked = 2;
@@ -227,7 +231,9 @@ export async function seedDemoAccounts({
     log.warn(`⚠ Demo book "${bookSlug}" could not be provisioned; reader demo grant skipped.`);
   }
 
-  log.log(`✓ Seeded demo accounts (reader=${RESERVED.reader.email}, admin=${RESERVED.admin.email}).`);
+  log.log(
+    `✓ Seeded demo accounts (reader=${RESERVED.reader.email}, admin=${RESERVED.admin.email}).`,
+  );
   return { ok: true, readerUserId, adminUserId, revoked };
 }
 
@@ -241,11 +247,12 @@ async function findBook(db, slug) {
   return res?.rows?.[0] ?? null;
 }
 
-const upsertBookSql = 'INSERT INTO books '
-  + '(id, slug, title, author_name, description, language, visibility, '
-  + 'created_at, updated_at) '
-  + 'VALUES (?, ?, ?, ?, ?, ?, ?, datetime(\'now\'), datetime(\'now\')) '
-  + 'ON CONFLICT(slug) DO NOTHING';
+const upsertBookSql =
+  'INSERT INTO books ' +
+  '(id, slug, title, author_name, description, language, visibility, ' +
+  'created_at, updated_at) ' +
+  "VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now')) " +
+  'ON CONFLICT(slug) DO NOTHING';
 
 /**
  * Create a minimal placeholder demo book so the reader demo grant is not an
@@ -254,9 +261,7 @@ const upsertBookSql = 'INSERT INTO books '
  */
 async function provisionDemoBook(db, slug) {
   try {
-    await db(upsertBookSql, [
-      randomUUID(), slug, 'Demo Book', 'Demo Author', null, 'en', 'public',
-    ]);
+    await db(upsertBookSql, [randomUUID(), slug, 'Demo Book', 'Demo Author', null, 'en', 'public']);
     const row = await findBook(db, slug);
     return row?.id ?? null;
   } catch (err) {
@@ -267,50 +272,45 @@ async function provisionDemoBook(db, slug) {
   }
 }
 
-const upsertUserSql = 'INSERT INTO users '
-  + '(id, email, display_name, global_role, password_hash, created_by_demo, '
-  + 'password_version, last_password_change_at, disabled_at, created_at, updated_at) '
-  + 'VALUES (?, ?, ?, ?, ?, 1, 1, datetime(\'now\'), ?, datetime(\'now\'), datetime(\'now\')) '
-  + 'ON CONFLICT(email) DO UPDATE SET '
-  + 'password_hash = excluded.password_hash, '
-  + 'global_role = excluded.global_role, '
-  + 'created_by_demo = 1, '
-  + 'password_version = 1, '
-  + 'last_password_change_at = datetime(\'now\'), '
-  + 'disabled_at = excluded.disabled_at, '
-  + 'updated_at = datetime(\'now\')';
+const upsertUserSql =
+  'INSERT INTO users ' +
+  '(id, email, display_name, global_role, password_hash, created_by_demo, ' +
+  'password_version, last_password_change_at, disabled_at, created_at, updated_at) ' +
+  "VALUES (?, ?, ?, ?, ?, 1, 1, datetime('now'), ?, datetime('now'), datetime('now')) " +
+  'ON CONFLICT(email) DO UPDATE SET ' +
+  'password_hash = excluded.password_hash, ' +
+  'global_role = excluded.global_role, ' +
+  'created_by_demo = 1, ' +
+  'password_version = 1, ' +
+  "last_password_change_at = datetime('now'), " +
+  'disabled_at = excluded.disabled_at, ' +
+  "updated_at = datetime('now')";
 
 async function upsertUser(db, { id, email, displayName, globalRole, passwordHash, disabledAt }) {
-  await db(upsertUserSql, [
-    id, email, displayName, globalRole, passwordHash, disabledAt,
-  ]);
+  await db(upsertUserSql, [id, email, displayName, globalRole, passwordHash, disabledAt]);
 }
 
-const upsertGrantSql = 'INSERT INTO book_access_grants '
-  + '(id, book_id, email, password_hash, mode, allowed, comments_allowed, '
-  + 'offline_allowed, invited_by_user_id, created_at, updated_at) '
-  + 'VALUES (?, ?, ?, ?, ?, 1, 1, 1, ?, datetime(\'now\'), datetime(\'now\')) '
-  + 'ON CONFLICT(book_id, email) DO UPDATE SET '
-  + 'password_hash = excluded.password_hash, '
-  + 'mode = excluded.mode, '
-  + 'allowed = 1, '
-  + 'comments_allowed = 1, '
-  + 'offline_allowed = 1, '
-  + 'invited_by_user_id = excluded.invited_by_user_id, '
-  + 'revoked_at = NULL, '
-  + 'updated_at = datetime(\'now\')';
+const upsertGrantSql =
+  'INSERT INTO book_access_grants ' +
+  '(id, book_id, email, password_hash, mode, allowed, comments_allowed, ' +
+  'offline_allowed, invited_by_user_id, created_at, updated_at) ' +
+  "VALUES (?, ?, ?, ?, ?, 1, 1, 1, ?, datetime('now'), datetime('now')) " +
+  'ON CONFLICT(book_id, email) DO UPDATE SET ' +
+  'password_hash = excluded.password_hash, ' +
+  'mode = excluded.mode, ' +
+  'allowed = 1, ' +
+  'comments_allowed = 1, ' +
+  'offline_allowed = 1, ' +
+  'invited_by_user_id = excluded.invited_by_user_id, ' +
+  'revoked_at = NULL, ' +
+  "updated_at = datetime('now')";
 
-async function upsertGrant(db, {
-  adminUserId, bookId, email, passwordHash, mode,
-}) {
-  await db(upsertGrantSql, [
-    randomUUID(), bookId, email, passwordHash, mode, adminUserId,
-  ]);
+async function upsertGrant(db, { adminUserId, bookId, email, passwordHash, mode }) {
+  await db(upsertGrantSql, [randomUUID(), bookId, email, passwordHash, mode, adminUserId]);
 }
 
 // Standalone entry point.
-const isMain =
-  process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+const isMain = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 
 if (isMain) {
   const db = buildCliDb(process.env);

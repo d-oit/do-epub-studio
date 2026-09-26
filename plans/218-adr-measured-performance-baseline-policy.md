@@ -48,13 +48,13 @@ Performance targets are p50/p95/p99 per book-size bucket, not single-number
 ceilings. Existing `startupTime` values become the **p95 targets**; p50 targets
 are 60% of p95.
 
-| Metric | p50 target | p95 target | Book-size bucket |
-|---|---|---|---|
-| reader-fcp | 720ms | 1200ms | all |
-| chapter-switch | 180ms | 300ms | text-only (<5MB) |
-| chapter-switch | 240ms | 300ms | image-heavy (>5MB) |
-| offline-rehydrate | 480ms | 800ms | all |
-| sanitize-chapter | 600ms | 1000ms | all (single spine item) |
+| Metric            | p50 target | p95 target | Book-size bucket        |
+| ----------------- | ---------- | ---------- | ----------------------- |
+| reader-fcp        | 720ms      | 1200ms     | all                     |
+| chapter-switch    | 180ms      | 300ms      | text-only (<5MB)        |
+| chapter-switch    | 240ms      | 300ms      | image-heavy (>5MB)      |
+| offline-rehydrate | 480ms      | 800ms      | all                     |
+| sanitize-chapter  | 600ms      | 1000ms     | all (single spine item) |
 
 ### 3. Benchmarks are blocking in CI
 

@@ -104,11 +104,7 @@ async function readerItem(
   return toReaderDTO(row, replies, replyCount, await resolveProvenance(env, row, baseline));
 }
 
-async function resolveCanComment(
-  env: Env,
-  auth: AuthContext,
-  bookId: string,
-): Promise<boolean> {
+async function resolveCanComment(env: Env, auth: AuthContext, bookId: string): Promise<boolean> {
   // Use session capabilities if bookId matches session, otherwise re-fetch
   let canComment = auth.capabilities?.canComment;
   if (auth.bookId !== bookId) {
@@ -156,7 +152,13 @@ feedbackRouter.post(
     const bookId = c.req.param('bookId');
     const auth = c.get('auth');
 
-    const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx, getRequestTraceId(c));
+    const mismatch = await assertBookAccess(
+      c.env,
+      auth,
+      bookId,
+      c.executionCtx,
+      getRequestTraceId(c),
+    );
     if (mismatch) return mismatch.response;
 
     if (!(await resolveCanComment(c.env, auth, bookId))) {
@@ -176,7 +178,10 @@ feedbackRouter.post(
       if (existing.book_id !== bookId || existing.submitter_email !== auth.email) {
         throw new ForbiddenError('Access denied');
       }
-      return c.json({ ok: true, data: await readerItem(c.env, existing, await repliesFor(c.env, existing.id)) });
+      return c.json({
+        ok: true,
+        data: await readerItem(c.env, existing, await repliesFor(c.env, existing.id)),
+      });
     }
 
     // Anchor provenance server-side: a supplied book file must belong to this
@@ -202,7 +207,7 @@ feedbackRouter.post(
     // every reference the book has at acceptance time. A later reference edit
     // then shows the honest "reference updated since" marker instead of
     // pretending the evidence never moved.
-    const pins = body.referenceRevisions ?? await currentReferenceRevisions(c.env, bookId);
+    const pins = body.referenceRevisions ?? (await currentReferenceRevisions(c.env, bookId));
     const pinnedJson = Object.keys(pins).length > 0 ? JSON.stringify(pins) : null;
 
     await execute(
@@ -240,13 +245,17 @@ feedbackRouter.post(
       [crypto.randomUUID(), id, auth.email, now],
     );
 
-    await logAudit(c.env, {
-      entityType: 'editorial-feedback',
-      entityId: id,
-      action: 'create',
-      actorEmail: auth.email,
-      payload: { bookId, kind: body.kind, category: body.category },
-    }, c.executionCtx);
+    await logAudit(
+      c.env,
+      {
+        entityType: 'editorial-feedback',
+        entityId: id,
+        action: 'create',
+        actorEmail: auth.email,
+        payload: { bookId, kind: body.kind, category: body.category },
+      },
+      c.executionCtx,
+    );
 
     const row = await queryFirst<FeedbackRow>(
       c.env,
@@ -269,7 +278,13 @@ feedbackRouter.get(
     const bookId = c.req.param('bookId');
     const auth = c.get('auth');
 
-    const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx, getRequestTraceId(c));
+    const mismatch = await assertBookAccess(
+      c.env,
+      auth,
+      bookId,
+      c.executionCtx,
+      getRequestTraceId(c),
+    );
     if (mismatch) return mismatch.response;
 
     const { status, category, limit, offset } = c.req.valid('query');
@@ -326,7 +341,13 @@ feedbackRouter.get('/books/:bookId/feedback/:id', readerAuth, async (c) => {
   const id = c.req.param('id');
   const auth = c.get('auth');
 
-  const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx, getRequestTraceId(c));
+  const mismatch = await assertBookAccess(
+    c.env,
+    auth,
+    bookId,
+    c.executionCtx,
+    getRequestTraceId(c),
+  );
   if (mismatch) return mismatch.response;
 
   const row = await ownFeedbackOr404(c.env, id, bookId, auth.email);
@@ -338,7 +359,13 @@ feedbackRouter.post('/books/:bookId/feedback/:id/withdraw', readerAuth, async (c
   const id = c.req.param('id');
   const auth = c.get('auth');
 
-  const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx, getRequestTraceId(c));
+  const mismatch = await assertBookAccess(
+    c.env,
+    auth,
+    bookId,
+    c.executionCtx,
+    getRequestTraceId(c),
+  );
   if (mismatch) return mismatch.response;
 
   const row = await ownFeedbackOr404(c.env, id, bookId, auth.email);
@@ -356,13 +383,17 @@ feedbackRouter.post('/books/:bookId/feedback/:id/withdraw', readerAuth, async (c
        VALUES (?, ?, ?, 'withdrawn', ?)`,
       [crypto.randomUUID(), id, auth.email, now],
     );
-    await logAudit(c.env, {
-      entityType: 'editorial-feedback',
-      entityId: id,
-      action: 'withdraw',
-      actorEmail: auth.email,
-      payload: { bookId },
-    }, c.executionCtx);
+    await logAudit(
+      c.env,
+      {
+        entityType: 'editorial-feedback',
+        entityId: id,
+        action: 'withdraw',
+        actorEmail: auth.email,
+        payload: { bookId },
+      },
+      c.executionCtx,
+    );
   }
 
   const updated = await ownFeedbackOr404(c.env, id, bookId, auth.email);
@@ -378,7 +409,13 @@ feedbackRouter.post(
     const id = c.req.param('id');
     const auth = c.get('auth');
 
-    const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx, getRequestTraceId(c));
+    const mismatch = await assertBookAccess(
+      c.env,
+      auth,
+      bookId,
+      c.executionCtx,
+      getRequestTraceId(c),
+    );
     if (mismatch) return mismatch.response;
 
     if (!(await resolveCanComment(c.env, auth, bookId))) {
@@ -408,6 +445,9 @@ feedbackRouter.post(
     );
 
     const updated = await ownFeedbackOr404(c.env, id, bookId, auth.email);
-    return c.json({ ok: true, data: await readerItem(c.env, updated, await repliesFor(c.env, id)) }, 201);
+    return c.json(
+      { ok: true, data: await readerItem(c.env, updated, await repliesFor(c.env, id)) },
+      201,
+    );
   },
 );

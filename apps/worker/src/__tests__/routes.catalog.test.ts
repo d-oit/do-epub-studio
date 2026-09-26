@@ -1,9 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import {
-  makeEnv,
-  makePassThroughContext,
-  mockQueryAll,
-} from './fixtures';
+import { makeEnv, makePassThroughContext, mockQueryAll } from './fixtures';
 import { app } from '../app';
 
 describe('Catalog Routes', () => {
@@ -98,7 +94,7 @@ describe('Catalog Routes', () => {
       );
       expect(mockQueryAll).toHaveBeenCalledWith(
         env,
-        expect.stringContaining("AND archived_at IS NULL"),
+        expect.stringContaining('AND archived_at IS NULL'),
         [],
       );
     });
@@ -118,7 +114,9 @@ describe('Catalog Routes', () => {
       ]);
 
       const res = await app.fetch(
-        new Request('http://localhost/api/catalog?q=orwell&author=Orwell&language=en&limit=10&offset=0'),
+        new Request(
+          'http://localhost/api/catalog?q=orwell&author=Orwell&language=en&limit=10&offset=0',
+        ),
         env,
         makePassThroughContext(),
       );

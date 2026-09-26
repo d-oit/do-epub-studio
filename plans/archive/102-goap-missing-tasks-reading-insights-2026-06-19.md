@@ -19,25 +19,25 @@ future implementation PR.
 
 Repository state checked on 2026-06-19:
 
-| Signal | Result |
-|---|---|
-| Main sync | `git fetch origin main` and `git merge origin/main` completed; already up to date |
-| Current branch | `docs-goap-missing-feature-tasks` |
-| Open GitHub issues | 0 |
-| Open GitHub PRs | 1 (`#609`, adds `plans/101-e2e-performance-improvements.md`) |
-| Scope of this change | `plans/` only |
+| Signal               | Result                                                                            |
+| -------------------- | --------------------------------------------------------------------------------- |
+| Main sync            | `git fetch origin main` and `git merge origin/main` completed; already up to date |
+| Current branch       | `docs-goap-missing-feature-tasks`                                                 |
+| Open GitHub issues   | 0                                                                                 |
+| Open GitHub PRs      | 1 (`#609`, adds `plans/101-e2e-performance-improvements.md`)                      |
+| Scope of this change | `plans/` only                                                                     |
 
 ## Stale Missing Tasks Re-checked
 
 Several gaps from earlier plans are now closed and should not be reopened:
 
-| Earlier gap | Current evidence | Status |
-|---|---|---|
-| In-book search | `apps/web/src/features/reader/components/search/SearchPanel.tsx` and `useReaderSearch.ts` exist; `ReaderPage.tsx` mounts the search panel | Closed |
-| Reader offline status | `ReaderToolbar.tsx:57-60` reads `isOffline` and `pendingSyncCount`; `ReaderToolbar.tsx:130-136` renders offline status | Closed |
-| App-wide offline banner | `App.tsx` mounts `OfflineIndicator`; `OfflineIndicator.tsx` listens to `online` and `offline` events | Closed |
-| Pending sync count display | `ReaderPage.tsx:212-223` polls `getSyncQueue()` and calls `setPendingSyncCount`; toolbar renders the count | Closed |
-| Client session refresh | `useSessionExpiry.ts` calls the refresh route and updates `sessionExpiresAt` | Closed |
+| Earlier gap                | Current evidence                                                                                                                          | Status |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| In-book search             | `apps/web/src/features/reader/components/search/SearchPanel.tsx` and `useReaderSearch.ts` exist; `ReaderPage.tsx` mounts the search panel | Closed |
+| Reader offline status      | `ReaderToolbar.tsx:57-60` reads `isOffline` and `pendingSyncCount`; `ReaderToolbar.tsx:130-136` renders offline status                    | Closed |
+| App-wide offline banner    | `App.tsx` mounts `OfflineIndicator`; `OfflineIndicator.tsx` listens to `online` and `offline` events                                      | Closed |
+| Pending sync count display | `ReaderPage.tsx:212-223` polls `getSyncQueue()` and calls `setPendingSyncCount`; toolbar renders the count                                | Closed |
+| Client session refresh     | `useSessionExpiry.ts` calls the refresh route and updates `sessionExpiresAt`                                                              | Closed |
 
 ## Verified Missing Feature
 
@@ -72,13 +72,13 @@ This aligns with prior backlog references:
 Build a reader-facing "Reading Insights" feature that answers a small set of
 useful questions without introducing surveillance-style analytics:
 
-| Insight | Source | Notes |
-|---|---|---|
-| Current session active reading time | Client clock, page visibility, reader focus | Pause while hidden, blurred, idle, or loading |
-| Total active time for this book | Local IndexedDB first, optional server aggregate | Round to minutes before sync |
-| Estimated time remaining | Recent active time plus progress delta | Display only when confidence is sufficient |
-| Reading streak | Local daily buckets | Optional; no public/social sharing |
-| Recent activity | Per-book local summary | Do not include raw CFI or selected text |
+| Insight                             | Source                                           | Notes                                         |
+| ----------------------------------- | ------------------------------------------------ | --------------------------------------------- |
+| Current session active reading time | Client clock, page visibility, reader focus      | Pause while hidden, blurred, idle, or loading |
+| Total active time for this book     | Local IndexedDB first, optional server aggregate | Round to minutes before sync                  |
+| Estimated time remaining            | Recent active time plus progress delta           | Display only when confidence is sufficient    |
+| Reading streak                      | Local daily buckets                              | Optional; no public/social sharing            |
+| Recent activity                     | Per-book local summary                           | Do not include raw CFI or selected text       |
 
 Non-goals:
 
@@ -89,17 +89,17 @@ Non-goals:
 
 ## Decomposition
 
-| ID | Task | Priority | Dependencies | Skill |
-|---|---|---:|---|---|
-| T1 | Adopt ADR-102 privacy boundaries before implementation | P0 | none | privacy-first |
-| T2 | Design local reading-insights store and daily bucket shape | P1 | T1 | pwa-offline-sync |
-| T3 | Add shared DTO/Zod contracts for insight summaries | P1 | T1 | testdata-builders |
-| T4 | Add Worker route for optional coarse insight sync | P1 | T2, T3 | cloudflare-worker-api |
-| T5 | Add Turso migration for coarse per-book insight aggregates | P1 | T2, T3 | turso-schema-migrations |
-| T6 | Track active reading time in the reader | P1 | T2 | reader-ui-ux |
-| T7 | Surface insights in reader UI | P1 | T6 | reader-ui-ux |
-| T8 | Add unit, integration, and Playwright coverage | P1 | T3-T7 | testing-strategy |
-| T9 | Add documentation and runbook notes | P2 | T4-T8 | code-quality |
+| ID  | Task                                                       | Priority | Dependencies | Skill                   |
+| --- | ---------------------------------------------------------- | -------: | ------------ | ----------------------- |
+| T1  | Adopt ADR-102 privacy boundaries before implementation     |       P0 | none         | privacy-first           |
+| T2  | Design local reading-insights store and daily bucket shape |       P1 | T1           | pwa-offline-sync        |
+| T3  | Add shared DTO/Zod contracts for insight summaries         |       P1 | T1           | testdata-builders       |
+| T4  | Add Worker route for optional coarse insight sync          |       P1 | T2, T3       | cloudflare-worker-api   |
+| T5  | Add Turso migration for coarse per-book insight aggregates |       P1 | T2, T3       | turso-schema-migrations |
+| T6  | Track active reading time in the reader                    |       P1 | T2           | reader-ui-ux            |
+| T7  | Surface insights in reader UI                              |       P1 | T6           | reader-ui-ux            |
+| T8  | Add unit, integration, and Playwright coverage             |       P1 | T3-T7        | testing-strategy        |
+| T9  | Add documentation and runbook notes                        |       P2 | T4-T8        | code-quality            |
 
 ## Strategy
 

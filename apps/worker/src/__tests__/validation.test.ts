@@ -1,10 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import {
-  makeEnv,
-  makePassThroughContext,
-  mockRequireAuth,
-  mockRequireAdminAuth,
-} from './fixtures';
+import { makeEnv, makePassThroughContext, mockRequireAuth, mockRequireAdminAuth } from './fixtures';
 import { app } from '../app';
 
 describe('API Validation Integration', () => {
@@ -16,7 +11,12 @@ describe('API Validation Integration', () => {
     // Default mock for admin auth
     mockRequireAdminAuth.mockResolvedValue({
       ok: true,
-      context: { userId: 'admin-1', email: 'admin@example.com', globalRole: 'admin', token: 'admin-token' },
+      context: {
+        userId: 'admin-1',
+        email: 'admin@example.com',
+        globalRole: 'admin',
+        token: 'admin-token',
+      },
     });
 
     // Default mock for reader auth
@@ -31,8 +31,8 @@ describe('API Validation Integration', () => {
         canBookmark: true,
         canDownloadOffline: true,
         canExportNotes: true,
-        canManageAccess: false
-      }
+        canManageAccess: false,
+      },
     });
   });
 
@@ -44,7 +44,7 @@ describe('API Validation Integration', () => {
         headers: { 'Content-Type': 'application/json' },
       }),
       env,
-      makePassThroughContext()
+      makePassThroughContext(),
     );
 
     expect(res.status).toBe(400);
@@ -61,7 +61,7 @@ describe('API Validation Integration', () => {
         headers: { 'Content-Type': 'application/json' },
       }),
       env,
-      makePassThroughContext()
+      makePassThroughContext(),
     );
 
     expect(res.status).toBe(400);
@@ -78,11 +78,11 @@ describe('API Validation Integration', () => {
         }),
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer admin-token'
+          Authorization: 'Bearer admin-token',
         },
       }),
       env,
-makePassThroughContext()
+      makePassThroughContext(),
     );
 
     expect(res.status).toBe(400);
@@ -96,7 +96,7 @@ makePassThroughContext()
         headers: { 'Content-Type': 'application/json' },
       }),
       env,
-makePassThroughContext()
+      makePassThroughContext(),
     );
 
     expect(res.status).toBe(400);
@@ -108,15 +108,15 @@ makePassThroughContext()
         method: 'PUT',
         body: JSON.stringify({
           locator: { cfi: 'cfi', selectedText: 'text', chapterRef: 'chap1' },
-          progressPercent: 150
+          progressPercent: 150,
         }), // Invalid percent (> 100)
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer valid-token'
+          Authorization: 'Bearer valid-token',
         },
       }),
       env,
-makePassThroughContext()
+      makePassThroughContext(),
     );
 
     // Should be 400 (validation) because authentication succeeded
@@ -133,11 +133,11 @@ makePassThroughContext()
         body: JSON.stringify({ progressPercent: 150 }), // Invalid payload
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer invalid-token'
+          Authorization: 'Bearer invalid-token',
         },
       }),
       env,
-makePassThroughContext()
+      makePassThroughContext(),
     );
 
     // Should be 401 (unauthorized) because authorization now happens first

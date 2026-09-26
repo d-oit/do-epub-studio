@@ -28,7 +28,8 @@ import { setupInstallListeners } from './lib/pwa-install';
 /** Cleanup handle for the PWA install listeners; retained for HMR/tests. */
 export let removeInstallListeners: (() => void) | null = null;
 
-let _addToast: ((type: 'success' | 'error' | 'info' | 'warning', message: string) => void) | null = null;
+let _addToast: ((type: 'success' | 'error' | 'info' | 'warning', message: string) => void) | null =
+  null;
 let _t: ((key: TranslationKeys) => string) | null = null;
 
 export function setErrorToastProvider(
@@ -136,7 +137,6 @@ export const Root = () => {
     </React.StrictMode>
   );
 };
-
 
 const rootElement = document.getElementById('root');
 if (rootElement) {

@@ -17,11 +17,11 @@ branches were rolled back because CI was merely slow or absent.
 
 `verify.sh` now reports three states, and only one may destroy work:
 
-| Exit | Meaning | Orchestrator action |
-|------|---------|---------------------|
-| 0 | every check passed | proceed |
-| 1 | at least one check failed | rollback (close PR, restore branch, reset commit) |
-| 2 | inconclusive: deadline reached, no checks ever appeared, or GitHub unreachable | keep the PR and branch; the operator decides |
+| Exit | Meaning                                                                        | Orchestrator action                               |
+| ---- | ------------------------------------------------------------------------------ | ------------------------------------------------- |
+| 0    | every check passed                                                             | proceed                                           |
+| 1    | at least one check failed                                                      | rollback (close PR, restore branch, reset commit) |
+| 2    | inconclusive: deadline reached, no checks ever appeared, or GitHub unreachable | keep the PR and branch; the operator decides      |
 
 The mapping lives in `scripts/lib/verify-outcome.sh`
 (`decide_verify_action`) so the destructive branch is test-covered rather
@@ -34,10 +34,10 @@ instead of silently inflating the elapsed-time budget.
 
 ## Phases
 
-| # | Phase | Exit criteria | Status |
-|---|-------|---------------|--------|
-| 1 | Outcome split: verify exit codes, `decide_verify_action`, orchestrator branching | bats covers pass, fail, both inconclusive paths, and the mapping including unknown codes; only exit 1 reaches the rollback branch | DONE (this PR: `scripts/tests/atomic-commit-verify.bats`, 5 specs green) |
-| 2 | Poll-loop hardening: per-call `gh` timeout, clock-jump warning, fail-branch timeout | stubbed-`gh` bats tests pass with no real network; `shellcheck --severity=error` clean on all touched scripts | DONE (this PR) |
+| #   | Phase                                                                               | Exit criteria                                                                                                                     | Status                                                                   |
+| --- | ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| 1   | Outcome split: verify exit codes, `decide_verify_action`, orchestrator branching    | bats covers pass, fail, both inconclusive paths, and the mapping including unknown codes; only exit 1 reaches the rollback branch | DONE (this PR: `scripts/tests/atomic-commit-verify.bats`, 5 specs green) |
+| 2   | Poll-loop hardening: per-call `gh` timeout, clock-jump warning, fail-branch timeout | stubbed-`gh` bats tests pass with no real network; `shellcheck --severity=error` clean on all touched scripts                     | DONE (this PR)                                                           |
 
 ## Related
 

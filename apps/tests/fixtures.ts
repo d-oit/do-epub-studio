@@ -11,7 +11,7 @@ function crc32(buf: Buffer): number {
   for (let i = 0; i < 256; i++) {
     let c = i;
     for (let j = 0; j < 8; j++) {
-      c = (c & 1) ? (0xedb88320 ^ (c >>> 1)) : (c >>> 1);
+      c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
     }
     table[i] = c;
   }
@@ -33,11 +33,24 @@ export interface EpubChapter {
 }
 
 const DEFAULT_CHAPTERS: EpubChapter[] = [
-  { id: 'c1', href: 'chapter1.xhtml', title: 'Chapter 1', body: '<p>CHAPTER ONE CONTENT for the smoke test reader.</p>' },
-  { id: 'c2', href: 'chapter2.xhtml', title: 'Chapter 2', body: '<p>CHAPTER TWO CONTENT here, different from chapter one.</p>' },
+  {
+    id: 'c1',
+    href: 'chapter1.xhtml',
+    title: 'Chapter 1',
+    body: '<p>CHAPTER ONE CONTENT for the smoke test reader.</p>',
+  },
+  {
+    id: 'c2',
+    href: 'chapter2.xhtml',
+    title: 'Chapter 2',
+    body: '<p>CHAPTER TWO CONTENT here, different from chapter one.</p>',
+  },
 ];
 
-export function createMinimalEpub(chapters: EpubChapter[] = DEFAULT_CHAPTERS, opts?: { title?: string; identifier?: string }): Buffer {
+export function createMinimalEpub(
+  chapters: EpubChapter[] = DEFAULT_CHAPTERS,
+  opts?: { title?: string; identifier?: string },
+): Buffer {
   const title = opts?.title ?? 'Test Book';
   const identifier = opts?.identifier ?? 'urn:uuid:test-book';
 
@@ -47,30 +60,40 @@ export function createMinimalEpub(chapters: EpubChapter[] = DEFAULT_CHAPTERS, op
 
   files.push({
     name: 'META-INF/container.xml',
-    data: Buffer.from('<?xml version="1.0"?><container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container"><rootfiles><rootfile full-path="content.opf" media-type="application/oebps-package+xml"/></rootfiles></container>'),
+    data: Buffer.from(
+      '<?xml version="1.0"?><container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container"><rootfiles><rootfile full-path="content.opf" media-type="application/oebps-package+xml"/></rootfiles></container>',
+    ),
     method: 8,
   });
 
-  const manifest = chapters.map((c) => `<item id="${c.id}" href="${c.href}" media-type="application/xhtml+xml"/>`).join('\n');
+  const manifest = chapters
+    .map((c) => `<item id="${c.id}" href="${c.href}" media-type="application/xhtml+xml"/>`)
+    .join('\n');
   const spine = chapters.map((c) => `<itemref idref="${c.id}"/>`).join('\n');
 
   files.push({
     name: 'content.opf',
-    data: Buffer.from(`<?xml version="1.0"?><package xmlns="http://www.idpf.org/2007/opf" unique-identifier="bookid" version="3.0"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:identifier id="bookid">${identifier}</dc:identifier><dc:title>${title}</dc:title><dc:language>en</dc:language></metadata><manifest><item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>${manifest}</manifest><spine>${spine}</spine></package>`),
+    data: Buffer.from(
+      `<?xml version="1.0"?><package xmlns="http://www.idpf.org/2007/opf" unique-identifier="bookid" version="3.0"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:identifier id="bookid">${identifier}</dc:identifier><dc:title>${title}</dc:title><dc:language>en</dc:language></metadata><manifest><item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>${manifest}</manifest><spine>${spine}</spine></package>`,
+    ),
     method: 8,
   });
 
   const tocEntries = chapters.map((c) => `<li><a href="${c.href}">${c.title}</a></li>`).join('\n');
   files.push({
     name: 'nav.xhtml',
-    data: Buffer.from(`<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops"><head><title>Navigation</title></head><body><nav epub:type="toc"><h1>Table of Contents</h1><ol>${tocEntries}</ol></nav></body></html>`),
+    data: Buffer.from(
+      `<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops"><head><title>Navigation</title></head><body><nav epub:type="toc"><h1>Table of Contents</h1><ol>${tocEntries}</ol></nav></body></html>`,
+    ),
     method: 8,
   });
 
   for (const ch of chapters) {
     files.push({
       name: ch.href,
-      data: Buffer.from(`<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml"><head><title>${ch.title}</title></head><body>${ch.body}</body></html>`),
+      data: Buffer.from(
+        `<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml"><head><title>${ch.title}</title></head><body>${ch.body}</body></html>`,
+      ),
       method: 8,
     });
   }
@@ -260,18 +283,30 @@ export async function mockReaderApi(page: Page, opts: MockRouteOptions = {}) {
   const loginResp = opts.loginResponse ?? LOGIN_RESPONSE;
 
   await page.route('**/api/access/request', async (route: Route) => {
-    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(loginResp) });
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(loginResp),
+    });
   });
 
   // ADR-244: demo reader session entry point. Same DTO shape as /api/access/request.
   if (opts.demoLoginResponse) {
     await page.route('**/api/demo/reader-login', async (route: Route) => {
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(opts.demoLoginResponse) });
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(opts.demoLoginResponse),
+      });
     });
   }
 
   await page.route('**/api/books/*/file-url', async (route: Route) => {
-    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { url: epubUrl } }) });
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ ok: true, data: { url: epubUrl } }),
+    });
   });
 
   // Always intercept the DEFAULT EPUB URL. The default mock URL
@@ -283,37 +318,65 @@ export async function mockReaderApi(page: Page, opts: MockRouteOptions = {}) {
   if (opts.epubBuffer || !hasCustomEpubUrl) {
     const epubPattern = epubUrl.startsWith('http') ? `**/${bookSlug}.epub` : `**${epubUrl}`;
     await page.route(epubPattern, async (route: Route) => {
-      await route.fulfill({ status: 200, contentType: 'application/epub+zip', body: opts.epubBuffer ?? MOCK_EPUB });
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/epub+zip',
+        body: opts.epubBuffer ?? MOCK_EPUB,
+      });
     });
   }
 
   await page.route('**/api/books/*/progress', async (route: Route) => {
-    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(PROGRESS_RESPONSE) });
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(PROGRESS_RESPONSE),
+    });
   });
 
   await page.route('**/api/books/*/highlights', async (route: Route) => {
-    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: [] }) });
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ ok: true, data: [] }),
+    });
   });
 
   await page.route('**/api/books/*/comments', async (route: Route) => {
-    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: [] }) });
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ ok: true, data: [] }),
+    });
   });
 
   if (opts.includeBookmarks !== false) {
     await page.route('**/api/books/*/bookmarks', async (route: Route) => {
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: [] }) });
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ ok: true, data: [] }),
+      });
     });
   }
 
   if (opts.includeInsights) {
     await page.route('**/api/books/*/insights', async (route: Route) => {
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: null }) });
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ ok: true, data: null }),
+      });
     });
   }
 
   if (opts.includeLogout !== false) {
     await page.route('**/api/access/logout', async (route: Route) => {
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: {} }) });
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ ok: true, data: {} }),
+      });
     });
   }
 }
@@ -325,22 +388,49 @@ export async function mockReaderApi(page: Page, opts: MockRouteOptions = {}) {
  */
 export async function mockDemoAdminApi(page: Page) {
   await page.route('**/api/demo/admin-login', async (route: Route) => {
-    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(DEMO_ADMIN_RESPONSE) });
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(DEMO_ADMIN_RESPONSE),
+    });
   });
 }
 
-export async function mockAdminApi(page: Page, opts: { adminLoginResponse?: { ok: true; data: { token: string; user: { id: string; email: string; role: string } } } } = {}) {
+export async function mockAdminApi(
+  page: Page,
+  opts: {
+    adminLoginResponse?: {
+      ok: true;
+      data: { token: string; user: { id: string; email: string; role: string } };
+    };
+  } = {},
+) {
   await page.route('**/api/admin/login', async (route: Route) => {
-    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(opts.adminLoginResponse ?? ADMIN_LOGIN_RESPONSE) });
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(opts.adminLoginResponse ?? ADMIN_LOGIN_RESPONSE),
+    });
   });
 
   await mockDemoAdminApi(page);
 
   await page.route('**/api/admin/books**', async (route: Route) => {
     const books = [
-      { id: 'book-1', slug: 'my-test-book', title: 'My Test Book', authorName: 'Test Author', visibility: 'private', createdAt: '2025-01-01T00:00:00Z' },
+      {
+        id: 'book-1',
+        slug: 'my-test-book',
+        title: 'My Test Book',
+        authorName: 'Test Author',
+        visibility: 'private',
+        createdAt: '2025-01-01T00:00:00Z',
+      },
     ];
-    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: books }) });
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ ok: true, data: books }),
+    });
   });
 
   await page.route('**/api/admin/books/*/grants', async (route: Route) => {
@@ -351,24 +441,47 @@ export async function mockAdminApi(page: Page, opts: { adminLoginResponse?: { ok
         contentType: 'application/json',
         body: JSON.stringify({
           ok: true,
-          data: { id: 'grant-1', bookId: 'book-1', email: body?.email ?? 'user@example.com', status: 'active', expiresAt: null, createdAt: new Date().toISOString() },
+          data: {
+            id: 'grant-1',
+            bookId: 'book-1',
+            email: body?.email ?? 'user@example.com',
+            status: 'active',
+            expiresAt: null,
+            createdAt: new Date().toISOString(),
+          },
         }),
       });
     } else {
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: [] }) });
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ ok: true, data: [] }),
+      });
     }
   });
 
   await page.route('**/api/admin/grants/*', async (route: Route) => {
-    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: {} }) });
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ ok: true, data: {} }),
+    });
   });
 
   await page.route('**/api/admin/grants/*/revoke', async (route: Route) => {
-    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: {} }) });
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ ok: true, data: {} }),
+    });
   });
 
   await page.route('**/api/admin/audit**', async (route: Route) => {
-    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: [] }) });
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ ok: true, data: [] }),
+    });
   });
 }
 
@@ -441,7 +554,11 @@ export function suppressWorkboxErrors(page: Page) {
     // page errors that are NOT app bugs. Treat network-level failures as noise
     // (they kept killing reader tests mid-axe-scan on the scheduled lane —
     // issue #957); rethrow anything that looks like an app-logic error.
-    if (/Failed to load resource|ERR_CONNECTION_REFUSED|access control checks|Failed to fetch|AbortError|net::ERR_|Worker initialization failed/i.test(msg)) {
+    if (
+      /Failed to load resource|ERR_CONNECTION_REFUSED|access control checks|Failed to fetch|AbortError|net::ERR_|Worker initialization failed/i.test(
+        msg,
+      )
+    ) {
       return;
     }
     throw error;
@@ -460,7 +577,9 @@ export async function loginAsReader(page: Page, bookSlug?: string) {
   // test passes includeBookmarks: false) hit the absent Worker at
   // localhost:8787, and under parallel load the network never settles within
   // the timeout — the root cause of nightly scheduled E2E flakiness (#957).
-  await expect(page.locator('[data-container-name="reader-toolbar"]')).toBeVisible({ timeout: 20000 });
+  await expect(page.locator('[data-container-name="reader-toolbar"]')).toBeVisible({
+    timeout: 20000,
+  });
 }
 
 export async function loginAsAdmin(page: Page) {

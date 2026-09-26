@@ -74,9 +74,7 @@ describe('local-summarization plugin', () => {
   it('reports the missing-engine reason for the engine-less plugin', async () => {
     setAiEnabled(true);
     const plugin = createLocalSummarizationPlugin({});
-    await expect(summarizeText(plugin, TEXT)).rejects.toThrowError(
-      /no on-device inference engine/,
-    );
+    await expect(summarizeText(plugin, TEXT)).rejects.toThrowError(/no on-device inference engine/);
   });
 
   it('returns engine output with plugin metadata', async () => {

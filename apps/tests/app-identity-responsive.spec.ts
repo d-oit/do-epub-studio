@@ -23,11 +23,16 @@ const viewports = [
 ] as const;
 
 test.describe('App identity and responsive shell', () => {
-  test('@mobile uses the shared app identity in document metadata and manifest', async ({ page }) => {
+  test('@mobile uses the shared app identity in document metadata and manifest', async ({
+    page,
+  }) => {
     await page.goto('/login');
 
     await expect(page).toHaveTitle(appIdentity.name);
-    await expect(page.locator('meta[name="application-name"]')).toHaveAttribute('content', appIdentity.name);
+    await expect(page.locator('meta[name="application-name"]')).toHaveAttribute(
+      'content',
+      appIdentity.name,
+    );
     await expect(page.locator('meta[name="app-version"]')).toHaveAttribute('content', appVersion);
 
     const manifestResponse = await page.request.get('/manifest.webmanifest');
@@ -49,28 +54,34 @@ test.describe('App identity and responsive shell', () => {
     }
   });
 
-  test('@mobile keeps the login experience usable from mobile to wide screens', async ({ page }) => {
+  test('@mobile keeps the login experience usable from mobile to wide screens', async ({
+    page,
+  }) => {
     for (const viewport of viewports) {
       await page.setViewportSize({ width: viewport.width, height: viewport.height });
       await page.goto('/login');
 
       // Brand lockup is an h1 in the mobile header below lg and a paragraph
       // in the hero aside at lg+ — assert whichever the viewport shows.
-      const brandName = viewport.width >= 1024
-        ? page.locator('aside').getByText(appIdentity.name, { exact: true })
-        : page.getByRole('heading', { name: appIdentity.name });
+      const brandName =
+        viewport.width >= 1024
+          ? page.locator('aside').getByText(appIdentity.name, { exact: true })
+          : page.getByRole('heading', { name: appIdentity.name });
       await expect(brandName).toBeVisible();
       // The version label lives in the hero aside at lg+ and in the mobile
       // brand header below lg — exactly one is visible per viewport.
-      const versionLabel = viewport.width >= 1024
-        ? page.locator('aside').getByText(`v${appVersion}`)
-        : page.getByTestId('login-brand').getByText(`v${appVersion}`);
+      const versionLabel =
+        viewport.width >= 1024
+          ? page.locator('aside').getByText(`v${appVersion}`)
+          : page.getByTestId('login-brand').getByText(`v${appVersion}`);
       await expect(versionLabel).toBeVisible();
       await expect(page.getByLabel('Email Address')).toBeVisible();
       await expect(page.getByRole('textbox', { name: 'Password' })).toBeVisible();
       await expect(page.getByRole('button', { name: 'Sign In', exact: true })).toBeVisible();
 
-      const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
+      const overflow = await page.evaluate(
+        () => document.documentElement.scrollWidth > window.innerWidth + 1,
+      );
       expect(overflow, `${viewport.label} viewport should not scroll horizontally`).toBe(false);
     }
   });

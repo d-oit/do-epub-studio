@@ -54,7 +54,7 @@ EPUB content is rendered inside an iframe with restricted sandbox attributes:
 ```typescript
 // apps/web/src/features/reader/ReaderPage.tsx (via reader-core)
 // apps/web/src/features/reader/components/ReaderViewer.tsx (iframe directly)
-sandbox: ['allow-same-origin']
+sandbox: ['allow-same-origin'];
 ```
 
 - `allow-same-origin` only — no `allow-scripts`, no `allow-popups`, no `allow-forms`
@@ -67,11 +67,11 @@ Annotation anchoring uses a fallback hierarchy to prevent data loss and injectio
 
 ```typescript
 interface AnnotationLocator {
-  cfi?: string;           // Primary: EPUB Canonical Fragment ID
-  selectedText?: string;  // Secondary: text snapshot (50+ chars)
-  chapterRef?: string;    // Tertiary: TOC path
-  elementIndex?: number;  // Fallback: DOM position
-  charOffset?: number;    // Fallback: character offset
+  cfi?: string; // Primary: EPUB Canonical Fragment ID
+  selectedText?: string; // Secondary: text snapshot (50+ chars)
+  chapterRef?: string; // Tertiary: TOC path
+  elementIndex?: number; // Fallback: DOM position
+  charOffset?: number; // Fallback: character offset
 }
 ```
 
@@ -90,11 +90,13 @@ This prevents anchor injection: even if a CFI is malformed, the text and chapter
 - **Security headers**: Applied via `applySecurityHeaders()` (CSP, X-Frame-Options, etc.)
 - **Rate limiting**: `RateLimiterDO` durable object per IP
 - **Audit logging**: All grant/session changes logged to `audit_log` table
+
 ## ReDoS Hardening (ADR-034)
 
 All regex patterns processing untrusted input (CFI locators, annotation text, URLs) MUST use the `matchBounded` / `testBounded` helpers from `@do-epub-studio/shared` (see `packages/shared/src/safe-regex.ts`).
 
 Three-layer defense:
+
 1. **Length guard** — reject input exceeding fixed cap before regex runs
 2. **Unambiguous pattern** — bounded quantifiers, no overlapping alternations
 3. **Property-based fuzz** — `fast-check` assertions for adversarial inputs

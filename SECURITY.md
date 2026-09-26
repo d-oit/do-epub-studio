@@ -5,7 +5,7 @@
 Only the latest release in the 0.1.x series is actively supported.
 
 | Version | Supported |
-|---------|-----------|
+| ------- | --------- |
 | 0.1.x   | ✅        |
 | < 0.1   | ❌        |
 
@@ -19,11 +19,11 @@ Do **not** open a public issue or discussion for a vulnerability.
 
 ## Response SLA
 
-| Severity | Triage       | Fix / Mitigation Plan |
-|----------|--------------|-----------------------|
-| HIGH+    | 5 business days | 30 calendar days    |
-| MEDIUM   | 5 business days | 90 calendar days    |
-| LOW      | 5 business days | Best effort       |
+| Severity | Triage          | Fix / Mitigation Plan |
+| -------- | --------------- | --------------------- |
+| HIGH+    | 5 business days | 30 calendar days      |
+| MEDIUM   | 5 business days | 90 calendar days      |
+| LOW      | 5 business days | Best effort           |
 
 ## Rate Limiting Policy
 

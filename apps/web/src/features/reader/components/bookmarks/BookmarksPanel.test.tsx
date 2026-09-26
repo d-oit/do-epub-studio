@@ -8,7 +8,12 @@ vi.mock('../../../../hooks/useTranslation', () => ({
 }));
 
 const mockBookmarks: Bookmark[] = [
-  { id: 'bm-1', label: 'Chapter 1 Start', locator: { cfi: 'epubcfi(/6/2)' }, createdAt: '2026-01-01T00:00:00Z' },
+  {
+    id: 'bm-1',
+    label: 'Chapter 1 Start',
+    locator: { cfi: 'epubcfi(/6/2)' },
+    createdAt: '2026-01-01T00:00:00Z',
+  },
   { id: 'bm-2', label: null, locator: { cfi: 'epubcfi(/6/4)' }, createdAt: '2026-01-02T00:00:00Z' },
 ];
 
@@ -64,7 +69,7 @@ describe('BookmarksPanel', () => {
   it('calls onClose when close button clicked', () => {
     render(<BookmarksPanel {...defaultProps} />);
     const buttons = screen.getAllByRole('button');
-    const closeButton = buttons.find(b => b.querySelector('svg path[d*="18L18 6"]'));
+    const closeButton = buttons.find((b) => b.querySelector('svg path[d*="18L18 6"]'));
     if (closeButton) fireEvent.click(closeButton);
     expect(defaultProps.onClose).toHaveBeenCalled();
   });

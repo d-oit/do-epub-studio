@@ -15,10 +15,7 @@ export const corsMiddleware: MiddlewareHandler<{ Bindings: Env }> = async (c, ne
     'Access-Control-Allow-Headers',
     `Content-Type, Authorization, ${TRACE_HEADER}, ${SPAN_HEADER}, traceparent`,
   );
-  c.header(
-    'Access-Control-Expose-Headers',
-    `${TRACE_HEADER}, ${SPAN_HEADER}, traceparent`,
-  );
+  c.header('Access-Control-Expose-Headers', `${TRACE_HEADER}, ${SPAN_HEADER}, traceparent`);
   c.header('Vary', 'Origin, Access-Control-Request-Headers');
 
   await next();

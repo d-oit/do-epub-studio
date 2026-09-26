@@ -20,13 +20,24 @@ interface FeedbackPanelProps {
   onNavigateToAnchor?: (chapterRef: string, cfi?: string) => void;
 }
 
-export function FeedbackPanel({ items, loadError, onWithdraw, onRetry, onReply, onNavigateToAnchor }: FeedbackPanelProps): React.JSX.Element {
+export function FeedbackPanel({
+  items,
+  loadError,
+  onWithdraw,
+  onRetry,
+  onReply,
+  onNavigateToAnchor,
+}: FeedbackPanelProps): React.JSX.Element {
   const { t } = useTranslation();
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyText, setReplyText] = useState('');
 
   if (loadError && items.length === 0) {
-    return <p role="alert" className="p-4 text-sm text-foreground-muted">{t('feedback.loadError')}</p>;
+    return (
+      <p role="alert" className="p-4 text-sm text-foreground-muted">
+        {t('feedback.loadError')}
+      </p>
+    );
   }
 
   if (items.length === 0) {
@@ -41,7 +52,10 @@ export function FeedbackPanel({ items, loadError, onWithdraw, onRetry, onReply, 
             <span className="font-medium">
               {t(item.kind === 'comment' ? 'feedback.kindComment' : 'feedback.kindSuggestion')}
             </span>
-            <span aria-label={t(STATUS_LABEL[item.status])} className="rounded-full bg-background-secondary px-2 py-0.5">
+            <span
+              aria-label={t(STATUS_LABEL[item.status])}
+              className="rounded-full bg-background-secondary px-2 py-0.5"
+            >
               {t(STATUS_LABEL[item.status])}
             </span>
             {item.delivery && item.delivery !== 'sent' && (
@@ -84,7 +98,10 @@ export function FeedbackPanel({ items, loadError, onWithdraw, onRetry, onReply, 
               {item.replies.map((reply) => (
                 <li key={reply.id} className="text-sm">
                   <span className="text-xs text-foreground-muted">
-                    {reply.authorRole === 'creator' ? t('creator.title') : t('feedback.kindComment')} ·{' '}
+                    {reply.authorRole === 'creator'
+                      ? t('creator.title')
+                      : t('feedback.kindComment')}{' '}
+                    ·{' '}
                   </span>
                   {reply.body}
                 </li>
@@ -96,7 +113,9 @@ export function FeedbackPanel({ items, loadError, onWithdraw, onRetry, onReply, 
             {item.anchor.chapterRef && onNavigateToAnchor && (
               <button
                 type="button"
-                onClick={() => onNavigateToAnchor(item.anchor.chapterRef as string, item.anchor.cfi ?? undefined)}
+                onClick={() =>
+                  onNavigateToAnchor(item.anchor.chapterRef as string, item.anchor.cfi ?? undefined)
+                }
                 className="text-xs text-accent underline underline-offset-2"
               >
                 {item.anchor.chapterRef}
@@ -120,8 +139,9 @@ export function FeedbackPanel({ items, loadError, onWithdraw, onRetry, onReply, 
                 {t('feedback.withdraw')}
               </button>
             )}
-            {!item.id.startsWith('draft:') && item.status !== 'withdrawn' && (
-              replyingTo === item.id ? (
+            {!item.id.startsWith('draft:') &&
+              item.status !== 'withdrawn' &&
+              (replyingTo === item.id ? (
                 <span className="flex w-full gap-2">
                   <input
                     value={replyText}
@@ -152,8 +172,7 @@ export function FeedbackPanel({ items, loadError, onWithdraw, onRetry, onReply, 
                 >
                   {t('comment.reply')}
                 </button>
-              )
-            )}
+              ))}
           </div>
         </li>
       ))}

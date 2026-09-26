@@ -38,16 +38,28 @@ describe('AdminBookResponsesPage — create modal', () => {
 
   it('opens create modal', async () => {
     vi.mocked(apiRequest).mockResolvedValue([]);
-    render(<MemoryRouter><AdminBookResponsesPage /></MemoryRouter>);
-    await waitFor(() => { expect(apiRequest).toHaveBeenCalled(); });
+    render(
+      <MemoryRouter>
+        <AdminBookResponsesPage />
+      </MemoryRouter>,
+    );
+    await waitFor(() => {
+      expect(apiRequest).toHaveBeenCalled();
+    });
     fireEvent.click(screen.getByText('admin.createBook'));
     expect(screen.getByText('admin.createBookModal.title')).toBeInTheDocument();
   });
 
   it('closes create modal on cancel', async () => {
     vi.mocked(apiRequest).mockResolvedValue([]);
-    render(<MemoryRouter><AdminBookResponsesPage /></MemoryRouter>);
-    await waitFor(() => { expect(apiRequest).toHaveBeenCalled(); });
+    render(
+      <MemoryRouter>
+        <AdminBookResponsesPage />
+      </MemoryRouter>,
+    );
+    await waitFor(() => {
+      expect(apiRequest).toHaveBeenCalled();
+    });
     fireEvent.click(screen.getByText('admin.createBook'));
     expect(screen.getByText('admin.createBookModal.title')).toBeInTheDocument();
     fireEvent.click(screen.getByText('admin.createBookModal.close'));
@@ -55,8 +67,14 @@ describe('AdminBookResponsesPage — create modal', () => {
 
   it('closes create modal on Escape key', async () => {
     vi.mocked(apiRequest).mockResolvedValue([]);
-    render(<MemoryRouter><AdminBookResponsesPage /></MemoryRouter>);
-    await waitFor(() => { expect(apiRequest).toHaveBeenCalled(); });
+    render(
+      <MemoryRouter>
+        <AdminBookResponsesPage />
+      </MemoryRouter>,
+    );
+    await waitFor(() => {
+      expect(apiRequest).toHaveBeenCalled();
+    });
     fireEvent.click(screen.getByText('admin.createBook'));
     expect(screen.getByText('admin.createBookModal.title')).toBeInTheDocument();
     fireEvent.keyDown(document, { key: 'Escape' });
@@ -68,8 +86,14 @@ describe('AdminBookResponsesPage — create modal', () => {
   it('shows validation error when title is empty', async () => {
     vi.mocked(apiRequest).mockResolvedValue([]);
     vi.mocked(validateEpub).mockResolvedValue({ isValid: true, errors: [], warnings: [] });
-    render(<MemoryRouter><AdminBookResponsesPage /></MemoryRouter>);
-    await waitFor(() => { expect(apiRequest).toHaveBeenCalled(); });
+    render(
+      <MemoryRouter>
+        <AdminBookResponsesPage />
+      </MemoryRouter>,
+    );
+    await waitFor(() => {
+      expect(apiRequest).toHaveBeenCalled();
+    });
     fireEvent.click(screen.getByText('admin.createBook'));
     fireEvent.click(screen.getByText('admin.createBookModal.submit'));
     await waitFor(() => {
@@ -79,8 +103,14 @@ describe('AdminBookResponsesPage — create modal', () => {
 
   it('shows validation error when no epub file selected', async () => {
     vi.mocked(apiRequest).mockResolvedValue([]);
-    render(<MemoryRouter><AdminBookResponsesPage /></MemoryRouter>);
-    await waitFor(() => { expect(apiRequest).toHaveBeenCalled(); });
+    render(
+      <MemoryRouter>
+        <AdminBookResponsesPage />
+      </MemoryRouter>,
+    );
+    await waitFor(() => {
+      expect(apiRequest).toHaveBeenCalled();
+    });
     fireEvent.click(screen.getByText('admin.createBook'));
     const titleInput = screen.getByPlaceholderText('admin.createBookModal.titlePlaceholder');
     fireEvent.change(titleInput, { target: { value: 'Test Book' } });
@@ -92,8 +122,14 @@ describe('AdminBookResponsesPage — create modal', () => {
 
   it('allows entering author name in create modal', async () => {
     vi.mocked(apiRequest).mockResolvedValue([]);
-    render(<MemoryRouter><AdminBookResponsesPage /></MemoryRouter>);
-    await waitFor(() => { expect(apiRequest).toHaveBeenCalled(); });
+    render(
+      <MemoryRouter>
+        <AdminBookResponsesPage />
+      </MemoryRouter>,
+    );
+    await waitFor(() => {
+      expect(apiRequest).toHaveBeenCalled();
+    });
     fireEvent.click(screen.getByText('admin.createBook'));
     const authorInput = screen.getAllByRole('textbox')[1];
     fireEvent.change(authorInput, { target: { value: 'New Author' } });
@@ -102,8 +138,14 @@ describe('AdminBookResponsesPage — create modal', () => {
 
   it('allows selecting visibility in create modal', async () => {
     vi.mocked(apiRequest).mockResolvedValue([]);
-    render(<MemoryRouter><AdminBookResponsesPage /></MemoryRouter>);
-    await waitFor(() => { expect(apiRequest).toHaveBeenCalled(); });
+    render(
+      <MemoryRouter>
+        <AdminBookResponsesPage />
+      </MemoryRouter>,
+    );
+    await waitFor(() => {
+      expect(apiRequest).toHaveBeenCalled();
+    });
     fireEvent.click(screen.getByText('admin.createBook'));
     const select = screen.getAllByRole('combobox')[0];
     fireEvent.change(select, { target: { value: 'public' } });
@@ -117,8 +159,14 @@ describe('AdminBookResponsesPage — create modal', () => {
       errors: ['Error one', 'Error two'],
       warnings: [],
     });
-    render(<MemoryRouter><AdminBookResponsesPage /></MemoryRouter>);
-    await waitFor(() => { expect(apiRequest).toHaveBeenCalled(); });
+    render(
+      <MemoryRouter>
+        <AdminBookResponsesPage />
+      </MemoryRouter>,
+    );
+    await waitFor(() => {
+      expect(apiRequest).toHaveBeenCalled();
+    });
     fireEvent.click(screen.getByText('admin.createBook'));
     const titleInput = screen.getByPlaceholderText('admin.createBookModal.titlePlaceholder');
     fireEvent.change(titleInput, { target: { value: 'Test Book' } });
@@ -143,8 +191,14 @@ describe('AdminBookResponsesPage — create modal', () => {
       errors: [],
       warnings: ['Warning one', 'Warning two'],
     });
-    render(<MemoryRouter><AdminBookResponsesPage /></MemoryRouter>);
-    await waitFor(() => { expect(apiRequest).toHaveBeenCalled(); });
+    render(
+      <MemoryRouter>
+        <AdminBookResponsesPage />
+      </MemoryRouter>,
+    );
+    await waitFor(() => {
+      expect(apiRequest).toHaveBeenCalled();
+    });
     fireEvent.click(screen.getByText('admin.createBook'));
     const titleInput = screen.getByPlaceholderText('admin.createBookModal.titlePlaceholder');
     fireEvent.change(titleInput, { target: { value: 'Test Book' } });
@@ -172,12 +226,21 @@ describe('AdminBookResponsesPage — create modal', () => {
 
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({ data: { storageKey: 'abc123', validation: { isValid: true, errors: [], warnings: [] } } }),
+      json: () =>
+        Promise.resolve({
+          data: { storageKey: 'abc123', validation: { isValid: true, errors: [], warnings: [] } },
+        }),
     });
     vi.stubGlobal('fetch', mockFetch);
 
-    render(<MemoryRouter><AdminBookResponsesPage /></MemoryRouter>);
-    await waitFor(() => { expect(apiRequest).toHaveBeenCalled(); });
+    render(
+      <MemoryRouter>
+        <AdminBookResponsesPage />
+      </MemoryRouter>,
+    );
+    await waitFor(() => {
+      expect(apiRequest).toHaveBeenCalled();
+    });
 
     fireEvent.click(screen.getByText('admin.createBook'));
     const titleInput = screen.getByPlaceholderText('admin.createBookModal.titlePlaceholder');
@@ -193,11 +256,11 @@ describe('AdminBookResponsesPage — create modal', () => {
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalledWith(
         'https://upload.example.com',
-        expect.objectContaining({ method: 'PUT' })
+        expect.objectContaining({ method: 'PUT' }),
       );
       expect(apiRequest).toHaveBeenCalledWith(
         '/api/admin/books/new-id/upload-complete',
-        expect.objectContaining({ method: 'POST' })
+        expect.objectContaining({ method: 'POST' }),
       );
     });
 
@@ -219,8 +282,14 @@ describe('AdminBookResponsesPage — create modal', () => {
     });
     vi.stubGlobal('fetch', mockFetch);
 
-    render(<MemoryRouter><AdminBookResponsesPage /></MemoryRouter>);
-    await waitFor(() => { expect(apiRequest).toHaveBeenCalled(); });
+    render(
+      <MemoryRouter>
+        <AdminBookResponsesPage />
+      </MemoryRouter>,
+    );
+    await waitFor(() => {
+      expect(apiRequest).toHaveBeenCalled();
+    });
 
     fireEvent.click(screen.getByText('admin.createBook'));
     const titleInput = screen.getByPlaceholderText('admin.createBookModal.titlePlaceholder');
@@ -249,14 +318,25 @@ describe('AdminBookResponsesPage — create modal', () => {
 
     const mockFetch = vi.fn().mockResolvedValue({
       ok: false,
-      json: () => Promise.resolve({
-        error: { code: 'VALIDATION_ERROR', message: 'Server validation failed', details: ['Bad mimetype', 'Missing content'] },
-      }),
+      json: () =>
+        Promise.resolve({
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: 'Server validation failed',
+            details: ['Bad mimetype', 'Missing content'],
+          },
+        }),
     });
     vi.stubGlobal('fetch', mockFetch);
 
-    render(<MemoryRouter><AdminBookResponsesPage /></MemoryRouter>);
-    await waitFor(() => { expect(apiRequest).toHaveBeenCalled(); });
+    render(
+      <MemoryRouter>
+        <AdminBookResponsesPage />
+      </MemoryRouter>,
+    );
+    await waitFor(() => {
+      expect(apiRequest).toHaveBeenCalled();
+    });
 
     fireEvent.click(screen.getByText('admin.createBook'));
     const titleInput = screen.getByPlaceholderText('admin.createBookModal.titlePlaceholder');
@@ -291,8 +371,14 @@ describe('AdminBookResponsesPage — create modal', () => {
     });
     vi.stubGlobal('fetch', mockFetch);
 
-    render(<MemoryRouter><AdminBookResponsesPage /></MemoryRouter>);
-    await waitFor(() => { expect(apiRequest).toHaveBeenCalled(); });
+    render(
+      <MemoryRouter>
+        <AdminBookResponsesPage />
+      </MemoryRouter>,
+    );
+    await waitFor(() => {
+      expect(apiRequest).toHaveBeenCalled();
+    });
 
     fireEvent.click(screen.getByText('admin.createBook'));
     const titleInput = screen.getByPlaceholderText('admin.createBookModal.titlePlaceholder');
@@ -322,8 +408,14 @@ describe('AdminBookResponsesPage — create modal', () => {
     const mockFetch = vi.fn().mockImplementation(() => new Promise(() => {}));
     vi.stubGlobal('fetch', mockFetch);
 
-    render(<MemoryRouter><AdminBookResponsesPage /></MemoryRouter>);
-    await waitFor(() => { expect(apiRequest).toHaveBeenCalled(); });
+    render(
+      <MemoryRouter>
+        <AdminBookResponsesPage />
+      </MemoryRouter>,
+    );
+    await waitFor(() => {
+      expect(apiRequest).toHaveBeenCalled();
+    });
 
     fireEvent.click(screen.getByText('admin.createBook'));
     const titleInput = screen.getByPlaceholderText('admin.createBookModal.titlePlaceholder');
@@ -352,8 +444,14 @@ describe('AdminBookResponsesPage — create modal', () => {
       errors: ['Invalid mimetype: expected "application/epub+zip"'],
       warnings: [],
     });
-    render(<MemoryRouter><AdminBookResponsesPage /></MemoryRouter>);
-    await waitFor(() => { expect(apiRequest).toHaveBeenCalled(); });
+    render(
+      <MemoryRouter>
+        <AdminBookResponsesPage />
+      </MemoryRouter>,
+    );
+    await waitFor(() => {
+      expect(apiRequest).toHaveBeenCalled();
+    });
     fireEvent.click(screen.getByText('admin.createBook'));
     const titleInput = screen.getByPlaceholderText('admin.createBookModal.titlePlaceholder');
     fireEvent.change(titleInput, { target: { value: 'Test Book' } });
@@ -377,8 +475,14 @@ describe('AdminBookResponsesPage — create modal', () => {
       errors: ['Missing META-INF/container.xml'],
       warnings: [],
     });
-    render(<MemoryRouter><AdminBookResponsesPage /></MemoryRouter>);
-    await waitFor(() => { expect(apiRequest).toHaveBeenCalled(); });
+    render(
+      <MemoryRouter>
+        <AdminBookResponsesPage />
+      </MemoryRouter>,
+    );
+    await waitFor(() => {
+      expect(apiRequest).toHaveBeenCalled();
+    });
     fireEvent.click(screen.getByText('admin.createBook'));
     const titleInput = screen.getByPlaceholderText('admin.createBookModal.titlePlaceholder');
     fireEvent.change(titleInput, { target: { value: 'Test Book' } });
@@ -399,8 +503,14 @@ describe('AdminBookResponsesPage — create modal', () => {
     vi.mocked(apiRequest).mockResolvedValue([]);
     vi.mocked(validateEpub).mockRejectedValue(new Error('Corrupt'));
 
-    render(<MemoryRouter><AdminBookResponsesPage /></MemoryRouter>);
-    await waitFor(() => { expect(apiRequest).toHaveBeenCalled(); });
+    render(
+      <MemoryRouter>
+        <AdminBookResponsesPage />
+      </MemoryRouter>,
+    );
+    await waitFor(() => {
+      expect(apiRequest).toHaveBeenCalled();
+    });
     fireEvent.click(screen.getByText('admin.createBook'));
     const titleInput = screen.getByPlaceholderText('admin.createBookModal.titlePlaceholder');
     fireEvent.change(titleInput, { target: { value: 'Test Book' } });

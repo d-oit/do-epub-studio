@@ -11,6 +11,7 @@
       "smoke",
       "design",
       "check-loc",
+      "format:check",
       "coverage-parity"
     ]
   },

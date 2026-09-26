@@ -25,10 +25,10 @@ daily, so the fix is user-visible hygiene.
 
 ## Implementation (2 files)
 
-| File | Change |
-| --- | --- |
+| File                        | Change                                                                                                                            |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
 | `apps/web/vitest.config.ts` | `__dirname` → `import.meta.dirname`; drop `poolOptions.forks.singleFork`; comment documents Vitest-4 removal + ADR-216 compliance |
-| `apps/web/vite.config.ts` | `__dirname` → `import.meta.dirname`; add `with { type: 'json' }` to both JSON imports |
+| `apps/web/vite.config.ts`   | `__dirname` → `import.meta.dirname`; add `with { type: 'json' }` to both JSON imports                                             |
 
 Out of scope (deferred): `inlineDynamicImports` deprecation — emitted by a rolldown/plugin
 default, not set in any tracked config; Vite/rolldown internal, tracked separately.

@@ -19,19 +19,19 @@ state updates that land after the test body ends. They do not fail any check
 today, and they mask real state-timing bugs (the warning fires exactly when a
 component updates outside the test's awaited boundary).
 
-| File | Warnings | Pattern |
-|------|---------:|---------|
-| `src/features/reader/ReaderPage.test.tsx` | 82 | 9 per panel/theme test: the reader hook's async load settles after the test body |
-| `src/features/reader/hooks/useReaderSearch.test.ts` | 8 | 2-4 per concurrency test: the search promise resolves after assertions |
-| `src/__tests__/storage-quota.test.tsx` | 7 | 6 in "shows clearing text…", 1 auto-dismiss timer |
-| `src/features/reader/components/toolbar/ReaderToolbar.test.tsx` | 4 | focus-management tests update state outside `act` |
-| `src/__tests__/notification-panel.test.tsx` | 3 | dialog render updates |
-| `src/hooks/useSessionExpiry.test.ts` | 2 | telemetry logging |
-| `src/__tests__/useTranslation.test.ts` | 2 | locale change |
-| `src/__tests__/admin-recover-page.test.tsx` | 2 | loading state during verify submit |
-| `src/__tests__/account-settings-page.test.tsx` | 2 | change-password form render |
-| `src/features/admin/AuditLogPage.test.tsx` | 1 | filter controls render |
-| `src/components/__tests__/SwUpdateNotification.test.tsx` | 1 | exit animation |
+| File                                                            | Warnings | Pattern                                                                          |
+| --------------------------------------------------------------- | -------: | -------------------------------------------------------------------------------- |
+| `src/features/reader/ReaderPage.test.tsx`                       |       82 | 9 per panel/theme test: the reader hook's async load settles after the test body |
+| `src/features/reader/hooks/useReaderSearch.test.ts`             |        8 | 2-4 per concurrency test: the search promise resolves after assertions           |
+| `src/__tests__/storage-quota.test.tsx`                          |        7 | 6 in "shows clearing text…", 1 auto-dismiss timer                                |
+| `src/features/reader/components/toolbar/ReaderToolbar.test.tsx` |        4 | focus-management tests update state outside `act`                                |
+| `src/__tests__/notification-panel.test.tsx`                     |        3 | dialog render updates                                                            |
+| `src/hooks/useSessionExpiry.test.ts`                            |        2 | telemetry logging                                                                |
+| `src/__tests__/useTranslation.test.ts`                          |        2 | locale change                                                                    |
+| `src/__tests__/admin-recover-page.test.tsx`                     |        2 | loading state during verify submit                                               |
+| `src/__tests__/account-settings-page.test.tsx`                  |        2 | change-password form render                                                      |
+| `src/features/admin/AuditLogPage.test.tsx`                      |        1 | filter controls render                                                           |
+| `src/components/__tests__/SwUpdateNotification.test.tsx`        |        1 | exit animation                                                                   |
 
 All eleven inventoried files have been drained — every inventory entry deleted,
 each file emitting zero tracked warnings under `--reporter=verbose
@@ -49,12 +49,12 @@ monotonically and may never grow; suppression is not a fix.
 
 ## Phases
 
-| # | Phase | Exit criteria | Status |
-|---|-------|---------------|--------|
-| 1 | Fix the #1175 classes | The four touched files emit zero `stderr` blocks under `--reporter=verbose --silent=false`; suite green | DONE (PR #1186) |
-| 2 | CI-visible warning sensor | A committed file inventory plus a guard that fails any file emitting a tracked warning outside it; wired into `test:unit` so the quality gate and CI both enforce it; fail-closed when the emitting file cannot be attributed | DONE (this PR: `apps/web/src/test-utils/react-warning-guard.ts` + 11-entry inventory + unit tests; guard verified non-vacuous and green across default ×2 and `--coverage` run shapes) |
-| 3 | Drain the inventory, worst file first | `ReaderPage.test.tsx` → `useReaderSearch` → `storage-quota` → the remaining eight files; each file emits zero warnings, its inventory entry is deleted, and its assertions keep their intent | DONE (2026-09-25: all 11 files drained over two tranches; `KNOWN_WARNING_FILES` is now empty and the guard also learned a 4th class — see "Phase 3 evidence") |
-| 4 | Synthesis | The inventory is empty and then removed; issue #1185 closed; learnings recorded (Tier 2 #12) | DONE (2026-09-25: inventory empty, not deleted — the array is kept so a regression is fixed at source rather than re-tolerated; a 4th warning class (`suspended-resource`) added to the guard; #1185 closed; learnings recorded in `agents-docs/LEARNINGS.md` §Core Pitfalls. Every test file and the guard itself now fail on any tracked React warning.) |
+| #   | Phase                                 | Exit criteria                                                                                                                                                                                                                 | Status                                                                                                                                                                                                                                                                                                                                                     |
+| --- | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Fix the #1175 classes                 | The four touched files emit zero `stderr` blocks under `--reporter=verbose --silent=false`; suite green                                                                                                                       | DONE (PR #1186)                                                                                                                                                                                                                                                                                                                                            |
+| 2   | CI-visible warning sensor             | A committed file inventory plus a guard that fails any file emitting a tracked warning outside it; wired into `test:unit` so the quality gate and CI both enforce it; fail-closed when the emitting file cannot be attributed | DONE (this PR: `apps/web/src/test-utils/react-warning-guard.ts` + 11-entry inventory + unit tests; guard verified non-vacuous and green across default ×2 and `--coverage` run shapes)                                                                                                                                                                     |
+| 3   | Drain the inventory, worst file first | `ReaderPage.test.tsx` → `useReaderSearch` → `storage-quota` → the remaining eight files; each file emits zero warnings, its inventory entry is deleted, and its assertions keep their intent                                  | DONE (2026-09-25: all 11 files drained over two tranches; `KNOWN_WARNING_FILES` is now empty and the guard also learned a 4th class — see "Phase 3 evidence")                                                                                                                                                                                              |
+| 4   | Synthesis                             | The inventory is empty and then removed; issue #1185 closed; learnings recorded (Tier 2 #12)                                                                                                                                  | DONE (2026-09-25: inventory empty, not deleted — the array is kept so a regression is fixed at source rather than re-tolerated; a 4th warning class (`suspended-resource`) added to the guard; #1185 closed; learnings recorded in `agents-docs/LEARNINGS.md` §Core Pitfalls. Every test file and the guard itself now fail on any tracked React warning.) |
 
 ## Why the sensor is file-level, not a count baseline
 
@@ -62,7 +62,7 @@ The plan originally called for a numeric baseline. Measurement killed that idea:
 one revision reported **13**, **34** and **82** `act(...)` warnings depending on
 run shape (single file vs full suite) and reporter (custom vs verbose) — the
 count depends on how much async work lands after a test body under load, so a
-numeric baseline would flake. *Which files* warn is stable, so the guard keys on
+numeric baseline would flake. _Which files_ warn is stable, so the guard keys on
 file identity: 11 inventoried files were tolerated at Phase 2, and Phase 3
 drained all of them, so the inventory is now **empty** and every tracked React
 warning fails its own test file.
@@ -75,11 +75,11 @@ All three files emit zero tracked warnings individually, together, and under ful
 suite load, and each is off `KNOWN_WARNING_FILES`. No component was mocked away
 and no `console.error` was stubbed.
 
-| File | What the warnings actually were | Fix |
-|------|-------------------------------|-----|
-| `ReaderPage.test.tsx` | 82 — the reader's async file-url fetch and `useReaderDataLoader` annotation load settled after each test body | kept the async `renderReaderPage` / `clickAndSettle` / `renderReaderApp` boundaries, so the render and every panel/theme interaction is awaited inside `act`; the A6 offline-restoration render is awaited the same way |
-| `useReaderSearch.test.ts` | 8 — the debounce-advancing timers and the search promise resolving after assertions | debounce advancement moved inside `await act(async …)`, and the six-section `unload` test now releases the first four loads inside `act`, lets the freed workers start sections 5–6, releases those too, then asserts `isSearching === false` **and** all six `unload` calls (it previously asserted only four and left two promises pending) |
-| `storage-quota.test.tsx` | 7 — the clear flow's continuations (`setCleared`, the 3000 ms dismiss timer, the post-clear refresh) landing outside `act` | the clear flow is settled inside async `act`; the in-flight test asserts the clearing state while pending *and* the cleared state after; the auto-dismiss test keeps its 3000 ms registration + callback-invocation + visible-then-dismissed assertions, with the spy restored in `finally` |
+| File                      | What the warnings actually were                                                                                            | Fix                                                                                                                                                                                                                                                                                                                                           |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ReaderPage.test.tsx`     | 82 — the reader's async file-url fetch and `useReaderDataLoader` annotation load settled after each test body              | kept the async `renderReaderPage` / `clickAndSettle` / `renderReaderApp` boundaries, so the render and every panel/theme interaction is awaited inside `act`; the A6 offline-restoration render is awaited the same way                                                                                                                       |
+| `useReaderSearch.test.ts` | 8 — the debounce-advancing timers and the search promise resolving after assertions                                        | debounce advancement moved inside `await act(async …)`, and the six-section `unload` test now releases the first four loads inside `act`, lets the freed workers start sections 5–6, releases those too, then asserts `isSearching === false` **and** all six `unload` calls (it previously asserted only four and left two promises pending) |
+| `storage-quota.test.tsx`  | 7 — the clear flow's continuations (`setCleared`, the 3000 ms dismiss timer, the post-clear refresh) landing outside `act` | the clear flow is settled inside async `act`; the in-flight test asserts the clearing state while pending _and_ the cleared state after; the auto-dismiss test keeps its 3000 ms registration + callback-invocation + visible-then-dismissed assertions, with the spy restored in `finally`                                                   |
 
 The `storage-quota` fix also had to repair the test's own mock: `useTranslation`
 returned a **new `t` per render**, so `refresh` changed identity every render,
@@ -107,20 +107,20 @@ user work and was left exactly as found.
 
 ### Tranche 2 — the remaining eight files
 
-| File | What the warnings actually were | Fix |
-|------|-------------------------------|-----|
-| `account-settings-page.test.tsx` | 2 (`AccountSettingsPage`, `MfaSection`) — the sessions + MFA loads landing after a synchronous `render` | render settled inside `act`; **and** the same unstable-`t` mock loop as `storage-quota` (`useEffect([loadSessions])` refetching forever) was repaired with a hoisted `translate` — without it the `act` version hung to the 30 s timeout |
-| `admin-recover-page.test.tsx` | 2 — the verify request's continuation after the loading-state assertions | the test's in-flight `resolveVerify()` moved inside `act`; the disabled-button assertion is unchanged |
-| `notification-panel.test.tsx` | 3 — the mount fetch resolving after the dialog assertion | render settled inside `act` |
-| `useTranslation.test.ts` | 2 — `setLocale` re-rendering, then the effect resetting `loadedLocale` and re-setting it once `ensureLocale` resolves | both `act(() => setLocale(…))` calls became `await act(async …)` |
-| `useSessionExpiry.test.ts` | 1 — entering the expiring window also fires the auto-refresh, whose rejected `apiRequest` set `error` after the test body | the test now mocks a *successful* refresh and awaits its settlement inside `act` (matching the working sibling test), then asserts a settled non-expiring state. Mocking a failure here would pin an unrelated `error` transition as expected behaviour |
-| `SwUpdateNotification.test.tsx` | 1 — the exit animation's 200 ms unmount, plus a **second** warning from the test's own `finally` calling `useSwUpdateStore.setState` while the component was still mounted | render settled inside `act`; the 200 ms timer awaited inside `act` (asserting the banner is then gone and `dismiss` ran); the store restore moved inside `act` |
-| `ReaderToolbar.test.tsx` | 4 (`Tooltip`) — `Tooltip`'s mount effect `setSupportsNative(...)` after opening the overflow menu | render, menu-open click and each keydown wrapped in `act`; see the rAF note below |
-| `AuditLogPage.test.tsx` | 1 — a *fourth* warning class the guard did not represent (see below) | the one test using a bare synchronous `render` switched to the file's existing `renderAndFlush()` helper |
+| File                             | What the warnings actually were                                                                                                                                            | Fix                                                                                                                                                                                                                                                     |
+| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `account-settings-page.test.tsx` | 2 (`AccountSettingsPage`, `MfaSection`) — the sessions + MFA loads landing after a synchronous `render`                                                                    | render settled inside `act`; **and** the same unstable-`t` mock loop as `storage-quota` (`useEffect([loadSessions])` refetching forever) was repaired with a hoisted `translate` — without it the `act` version hung to the 30 s timeout                |
+| `admin-recover-page.test.tsx`    | 2 — the verify request's continuation after the loading-state assertions                                                                                                   | the test's in-flight `resolveVerify()` moved inside `act`; the disabled-button assertion is unchanged                                                                                                                                                   |
+| `notification-panel.test.tsx`    | 3 — the mount fetch resolving after the dialog assertion                                                                                                                   | render settled inside `act`                                                                                                                                                                                                                             |
+| `useTranslation.test.ts`         | 2 — `setLocale` re-rendering, then the effect resetting `loadedLocale` and re-setting it once `ensureLocale` resolves                                                      | both `act(() => setLocale(…))` calls became `await act(async …)`                                                                                                                                                                                        |
+| `useSessionExpiry.test.ts`       | 1 — entering the expiring window also fires the auto-refresh, whose rejected `apiRequest` set `error` after the test body                                                  | the test now mocks a _successful_ refresh and awaits its settlement inside `act` (matching the working sibling test), then asserts a settled non-expiring state. Mocking a failure here would pin an unrelated `error` transition as expected behaviour |
+| `SwUpdateNotification.test.tsx`  | 1 — the exit animation's 200 ms unmount, plus a **second** warning from the test's own `finally` calling `useSwUpdateStore.setState` while the component was still mounted | render settled inside `act`; the 200 ms timer awaited inside `act` (asserting the banner is then gone and `dismiss` ran); the store restore moved inside `act`                                                                                          |
+| `ReaderToolbar.test.tsx`         | 4 (`Tooltip`) — `Tooltip`'s mount effect `setSupportsNative(...)` after opening the overflow menu                                                                          | render, menu-open click and each keydown wrapped in `act`; see the rAF note below                                                                                                                                                                       |
+| `AuditLogPage.test.tsx`          | 1 — a _fourth_ warning class the guard did not represent (see below)                                                                                                       | the one test using a bare synchronous `render` switched to the file's existing `renderAndFlush()` helper                                                                                                                                                |
 
 **A fourth warning class, and a blind spot in the sensor.** `AuditLogPage`'s
-warning reads *"A suspended resource finished loading inside a test, but the
-event was not wrapped in act(...)."* — the `act` pattern matched it, so it was
+warning reads _"A suspended resource finished loading inside a test, but the
+event was not wrapped in act(...)."_ — the `act` pattern matched it, so it was
 still counted, but the dedicated `use()`/Suspense class had no `ReactWarningKind`
 of its own. `suspended-resource` is now tracked explicitly. Because its text also
 contains "not wrapped in act(", the pattern list is **ordered**
@@ -130,7 +130,7 @@ entry looked already-drained while the file was still warning.
 
 **A latent rAF race the warnings were masking.** `ReaderToolbar` autofocuses the
 overflow menu's first item inside a `requestAnimationFrame` after opening. The
-old tests captured `menuitem` nodes *before* that frame ran and never awaited
+old tests captured `menuitem` nodes _before_ that frame ran and never awaited
 it, so `handleMenuKeyDown` measured `idx === -1` and moved focus to the wrong
 item — while still passing, because the autofocused item happened to sit exactly
 where the off-by-one index pointed. Draining the act scope exposed it: `ArrowUp`
@@ -158,7 +158,7 @@ Tranche 2 verification (2026-09-25, `apps/web`):
 ## Acceptance
 
 - Phase 1 is verifiable today: `cd apps/web && pnpm exec vitest run <file>
-  --reporter=verbose --silent=false` prints no `stderr` block for the touched files.
+--reporter=verbose --silent=false` prints no `stderr` block for the touched files.
 - Phase 2 is verifiable today: deleting an entry from `KNOWN_WARNING_FILES`
   fails that file with an actionable message (checked for
   `src/hooks/useSessionExpiry.test.ts`, exit 1); a warning whose file cannot be
@@ -166,7 +166,7 @@ Tranche 2 verification (2026-09-25, `apps/web`):
   every `console.error` call is forwarded to the original.
 - Phase 3 must not weaken assertions to silence a warning (no `act` wrapping of
   an assertion that no longer asserts, no `console.error` stubs). All eleven
-  files satisfy this: each keeps its assertions, three of them *strengthen*
+  files satisfy this: each keeps its assertions, three of them _strengthen_
   them (six `unload` calls instead of four; clearing-then-cleared states in the
   in-flight quota test; a post-dismiss unmount assertion in the SW-update
   test), and no component or console API is stubbed anywhere.

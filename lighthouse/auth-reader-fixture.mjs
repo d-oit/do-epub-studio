@@ -90,34 +90,37 @@ export default async function main(page, { url }) {
   });
 
   // 2. Seed localStorage auth state before navigation
-  await page.evaluateOnNewDocument((args) => {
-    const authState = {
-      state: {
-        sessionToken: args.token,
-        bookId: args.slug,
-        bookSlug: args.slug,
-        bookTitle: 'Lighthouse Test Book',
-        email: args.email,
-        capabilities: {
-          canRead: true,
-          canComment: true,
-          canHighlight: true,
-          canBookmark: true,
-          canDownloadOffline: true,
-          canExportNotes: true,
-          canManageAccess: false,
+  await page.evaluateOnNewDocument(
+    (args) => {
+      const authState = {
+        state: {
+          sessionToken: args.token,
+          bookId: args.slug,
+          bookSlug: args.slug,
+          bookTitle: 'Lighthouse Test Book',
+          email: args.email,
+          capabilities: {
+            canRead: true,
+            canComment: true,
+            canHighlight: true,
+            canBookmark: true,
+            canDownloadOffline: true,
+            canExportNotes: true,
+            canManageAccess: false,
+          },
+          isAuthenticated: true,
+          isAdmin: false,
         },
-        isAuthenticated: true,
-        isAdmin: false,
-      },
-      version: 0,
-    };
-    window.localStorage.setItem('do-epub-auth', JSON.stringify(authState));
-  }, {
-    token: MOCK_SESSION_TOKEN,
-    slug: TEST_BOOK_SLUG,
-    email: MOCK_EMAIL,
-  });
+        version: 0,
+      };
+      window.localStorage.setItem('do-epub-auth', JSON.stringify(authState));
+    },
+    {
+      token: MOCK_SESSION_TOKEN,
+      slug: TEST_BOOK_SLUG,
+      email: MOCK_EMAIL,
+    },
+  );
 
   // 3. Navigate to the reader route
   await page.goto(url, {

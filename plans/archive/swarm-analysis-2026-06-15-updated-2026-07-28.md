@@ -16,12 +16,12 @@
 
 ## Executive Summary
 
-| Severity | Open Gaps | Closed (G1–G13) | Closed (G14–G28) |
-|---|---|---|---|
-| Critical | 0 | 3 (G2, G4, G13) | 3 (G14, G15, G16) |
-| High | 0 | 3 (G3, G5, G9) | 7 (G17, G18, G19, G20, G21, G22, G23) |
-| Medium | 0 | 2 (G7, G8) | 5 (G24, G25, G26, G27, G28) |
-| Low (informational) | 0 | 5 (G1, G10, G11, G12) | 0 |
+| Severity            | Open Gaps | Closed (G1–G13)       | Closed (G14–G28)                      |
+| ------------------- | --------- | --------------------- | ------------------------------------- |
+| Critical            | 0         | 3 (G2, G4, G13)       | 3 (G14, G15, G16)                     |
+| High                | 0         | 3 (G3, G5, G9)        | 7 (G17, G18, G19, G20, G21, G22, G23) |
+| Medium              | 0         | 2 (G7, G8)            | 5 (G24, G25, G26, G27, G28)           |
+| Low (informational) | 0         | 5 (G1, G10, G11, G12) | 0                                     |
 
 **ALL 28 GAPS ARE CLOSED.** The 2026-Q2 work has fully matured the platform: signed
 URLs, Argon2id, Zod-based boundary validation, multi-signal
@@ -51,21 +51,21 @@ The remaining gaps cluster around three themes:
 
 ## Closed Gaps (G1–G13) — Resolution Evidence
 
-| ID | Topic | Resolution | Evidence |
-|---|---|---|---|
-| **G1** | Reader UI placeholder | **Closed 2026-04.** Search side-panel (PR #525), TOC, highlights, comments, bookmarks, info, settings, locale, theme all wired. | `apps/web/src/features/reader/components/`, `ReaderPage.test.tsx`, `useEpubProgress.ts` |
-| **G2** | Slug/id mismatch in file-url route | **Closed 2026-04.** Frontend and worker both use `bookId`. | `routes/books.ts:38-104`, `ReaderPage.tsx:38-44`, `routes.books.test.ts:21-34` |
-| **G3** | Signed download route | **Closed 2026-05.** HMAC-SHA256 round-trip; expiry verification; metadata. | `apps/worker/src/storage/signed-url.ts:1-180`, `signed-url-real.test.ts` |
-| **G4** | Admin APIs unauthenticated | **Closed 2026-04.** `adminAuth` middleware on every admin handler (audit, books, grants). | `apps/worker/src/auth/admin-middleware.ts:49-121`, `routes/admin/{audit,books,grants}.ts` |
-| **G5** | Password hashing fake Argon2id | **Closed 2026-04.** `argon2-wasm-edge` with per-grant salts; round-trip tested. | `apps/worker/src/auth/password.ts:1-200`, `password.test.ts:17-43, 130-135` |
-| **G6** | Admin UI incomplete | **Partial — see G18 / G21.** Create + upload + grant create/revoke work; edit/delete and patch UI remain. | `apps/web/src/features/admin/{BooksPage,GrantsPage,AuditLogPage}.tsx` |
-| **G7** | Missing setup/architecture docs | **Closed 2026-04–06.** `docs/{setup-local,architecture,security,security-posture,coding-guide,offline,observability-telemetry}.md` all exist and were updated June 2026. | `docs/` |
-| **G8** | Swarm deliverable missing | **Closed 2026-04.** Resolved by the 2026-04-08 report; re-affirmed by this re-run. | `analysis/SWARM_ANALYSIS.md` |
-| **G9** | Placeholder test | **Closed 2026-04.** 12 web test files, 24 worker test files, 17 reader-core test files. | `apps/web/src/__tests__/`, `apps/worker/src/__tests__/`, `packages/reader-core/src/__tests__/` |
-| **G10** | Worker route tests missing | **Mostly closed 2026-04–05.** All routers except `catalog` have at least one test; see G24. | `apps/worker/src/__tests__/routes.*.test.ts` |
-| **G11** | Playwright E2E missing | **Closed 2026-04–06.** 8 spec files in `apps/tests/` (login, offline, PWA, annotations, accessibility, in-book search, migration smoke, traceid). | `apps/tests/*.spec.ts` |
-| **G12** | Hand-rolled Zod in worker | **Mostly closed 2026-04–05.** All route payloads use `@do-epub-studio/schema`; five residual inline Zod schemas remain — see G20. | `routes/admin/{auth,books}.ts`, `routes/{access,files}.ts` |
-| **G13** | Multi-signal locators not enforced | **Partially closed.** Enforced on **write** via `MultiSignalLocatorSchema`; **read-side validation missing — see G16.** | `packages/schema/src/schemas.ts:52-64`, `routes/reader/{progress,bookmarks,highlights}.ts` |
+| ID      | Topic                              | Resolution                                                                                                                                                               | Evidence                                                                                       |
+| ------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------- |
+| **G1**  | Reader UI placeholder              | **Closed 2026-04.** Search side-panel (PR #525), TOC, highlights, comments, bookmarks, info, settings, locale, theme all wired.                                          | `apps/web/src/features/reader/components/`, `ReaderPage.test.tsx`, `useEpubProgress.ts`        |
+| **G2**  | Slug/id mismatch in file-url route | **Closed 2026-04.** Frontend and worker both use `bookId`.                                                                                                               | `routes/books.ts:38-104`, `ReaderPage.tsx:38-44`, `routes.books.test.ts:21-34`                 |
+| **G3**  | Signed download route              | **Closed 2026-05.** HMAC-SHA256 round-trip; expiry verification; metadata.                                                                                               | `apps/worker/src/storage/signed-url.ts:1-180`, `signed-url-real.test.ts`                       |
+| **G4**  | Admin APIs unauthenticated         | **Closed 2026-04.** `adminAuth` middleware on every admin handler (audit, books, grants).                                                                                | `apps/worker/src/auth/admin-middleware.ts:49-121`, `routes/admin/{audit,books,grants}.ts`      |
+| **G5**  | Password hashing fake Argon2id     | **Closed 2026-04.** `argon2-wasm-edge` with per-grant salts; round-trip tested.                                                                                          | `apps/worker/src/auth/password.ts:1-200`, `password.test.ts:17-43, 130-135`                    |
+| **G6**  | Admin UI incomplete                | **Partial — see G18 / G21.** Create + upload + grant create/revoke work; edit/delete and patch UI remain.                                                                | `apps/web/src/features/admin/{BooksPage,GrantsPage,AuditLogPage}.tsx`                          |
+| **G7**  | Missing setup/architecture docs    | **Closed 2026-04–06.** `docs/{setup-local,architecture,security,security-posture,coding-guide,offline,observability-telemetry}.md` all exist and were updated June 2026. | `docs/`                                                                                        |
+| **G8**  | Swarm deliverable missing          | **Closed 2026-04.** Resolved by the 2026-04-08 report; re-affirmed by this re-run.                                                                                       | `analysis/SWARM_ANALYSIS.md`                                                                   |
+| **G9**  | Placeholder test                   | **Closed 2026-04.** 12 web test files, 24 worker test files, 17 reader-core test files.                                                                                  | `apps/web/src/__tests__/`, `apps/worker/src/__tests__/`, `packages/reader-core/src/__tests__/` |
+| **G10** | Worker route tests missing         | **Mostly closed 2026-04–05.** All routers except `catalog` have at least one test; see G24.                                                                              | `apps/worker/src/__tests__/routes.*.test.ts`                                                   |
+| **G11** | Playwright E2E missing             | **Closed 2026-04–06.** 8 spec files in `apps/tests/` (login, offline, PWA, annotations, accessibility, in-book search, migration smoke, traceid).                        | `apps/tests/*.spec.ts`                                                                         |
+| **G12** | Hand-rolled Zod in worker          | **Mostly closed 2026-04–05.** All route payloads use `@do-epub-studio/schema`; five residual inline Zod schemas remain — see G20.                                        | `routes/admin/{auth,books}.ts`, `routes/{access,files}.ts`                                     |
+| **G13** | Multi-signal locators not enforced | **Partially closed.** Enforced on **write** via `MultiSignalLocatorSchema`; **read-side validation missing — see G16.**                                                  | `packages/schema/src/schemas.ts:52-64`, `routes/reader/{progress,bookmarks,highlights}.ts`     |
 
 ---
 
@@ -284,7 +284,7 @@ See the closure evidence table at the end of this section.
   `plans/068-adr-open-issues-swarm-policy.md` is referenced in
   `llms-full.txt:97` and
   `plans/068-goap-swarm-open-issues-2026-06-06.md:6, 93, 166,
-  222, 234`. Neither file exists.
+222, 234`. Neither file exists.
 - **Why it matters:** Broken cross-references violate
   AGENTS.md "single source of truth" rule (TIER-2 rule 8).
 - **Fix:** Create both ADR files with the policy content cited
@@ -346,38 +346,38 @@ See the closure evidence table at the end of this section.
 
 ### Gap Closure Evidence (Verified 2026-07-28)
 
-| Gap | Topic | Status | Evidence |
-|-----|-------|--------|----------|
-| G14 | Comments IDOR | **CLOSED** | `comments.ts:37-38` calls `assertBookAccess()` before every query |
-| G15 | Magic-link email | **CLOSED** | `access.ts:53-59` dispatches email via `createEmailTransport()` |
-| G16 | Locator read validation | **CLOSED** | `tenant-isolation.ts:14-60` `parseLocatorRow()` wraps JSON.parse with schema validation |
-| G17 | Admin recovery | **CLOSED** | `admin/auth.ts:79-187` full recovery-request + recovery-verify flow |
-| G18 | Book edit/delete | **CLOSED** | `admin/books.ts:258-356` PATCH + DELETE with cascade |
-| G19 | Progress load | **CLOSED** | `useReaderDataLoader.ts:37-46` fetches progress on mount |
-| G20 | Zod centralization | **CLOSED** | All 5 schemas moved to `@do-epub-studio/schema` |
-| G21 | Orphan admin UI | **CLOSED** | `GrantsPage.tsx:214-231` mounts BookSelector, GrantList, GrantForm |
-| G22 | URL bookId guard | **CLOSED** | `tenant-isolation.ts:62-113` `assertBookAccess()` on all reader routes |
-| G23 | Security posture test | **CLOSED** | `security-posture.test.ts` exists in both web and worker |
-| G24 | Catalog route test | **CLOSED** | `routes.catalog.test.ts` covers public books, filters, limits |
-| G25 | Missing ADR files | **CLOSED** | `068-adr-open-issues-swarm-policy.md` and `092-adr-token-storage-and-feature-gap-policy.md` exist |
-| G26 | ADR index | **CLOSED** | `plans/ADR-INDEX.md` maps all ADR numbers |
-| G27 | CHANGELOG/CONTRIBUTING | **CLOSED** | Both updated with current entries and thresholds |
-| G28 | Panel mutual exclusivity | **CLOSED** | `reader.ts:242` single `activePanel` state drives all panels |
+| Gap | Topic                    | Status     | Evidence                                                                                          |
+| --- | ------------------------ | ---------- | ------------------------------------------------------------------------------------------------- |
+| G14 | Comments IDOR            | **CLOSED** | `comments.ts:37-38` calls `assertBookAccess()` before every query                                 |
+| G15 | Magic-link email         | **CLOSED** | `access.ts:53-59` dispatches email via `createEmailTransport()`                                   |
+| G16 | Locator read validation  | **CLOSED** | `tenant-isolation.ts:14-60` `parseLocatorRow()` wraps JSON.parse with schema validation           |
+| G17 | Admin recovery           | **CLOSED** | `admin/auth.ts:79-187` full recovery-request + recovery-verify flow                               |
+| G18 | Book edit/delete         | **CLOSED** | `admin/books.ts:258-356` PATCH + DELETE with cascade                                              |
+| G19 | Progress load            | **CLOSED** | `useReaderDataLoader.ts:37-46` fetches progress on mount                                          |
+| G20 | Zod centralization       | **CLOSED** | All 5 schemas moved to `@do-epub-studio/schema`                                                   |
+| G21 | Orphan admin UI          | **CLOSED** | `GrantsPage.tsx:214-231` mounts BookSelector, GrantList, GrantForm                                |
+| G22 | URL bookId guard         | **CLOSED** | `tenant-isolation.ts:62-113` `assertBookAccess()` on all reader routes                            |
+| G23 | Security posture test    | **CLOSED** | `security-posture.test.ts` exists in both web and worker                                          |
+| G24 | Catalog route test       | **CLOSED** | `routes.catalog.test.ts` covers public books, filters, limits                                     |
+| G25 | Missing ADR files        | **CLOSED** | `068-adr-open-issues-swarm-policy.md` and `092-adr-token-storage-and-feature-gap-policy.md` exist |
+| G26 | ADR index                | **CLOSED** | `plans/ADR-INDEX.md` maps all ADR numbers                                                         |
+| G27 | CHANGELOG/CONTRIBUTING   | **CLOSED** | Both updated with current entries and thresholds                                                  |
+| G28 | Panel mutual exclusivity | **CLOSED** | `reader.ts:242` single `activePanel` state drives all panels                                      |
 
 ---
 
 ## Cross-Cutting Observations (Confirmed by Multiple Lenses)
 
-| Issue | Security | Architecture | Implementation | Feature | Test | Docs |
-|---|---|---|---|---|---|---|
-| G14 Comments IDOR | ✓ | ✓ | ✓ | | | |
-| G15 Magic-link email | ✓ | | ✓ | ✓ | | |
-| G16 Locator read validation | ✓ | ✓ | ✓ | | ✓ | |
-| G17 Admin recovery | | | ✓ | ✓ | | ✓ |
-| G20 Hand-rolled Zod | | ✓ | ✓ | | | |
-| G21 Orphan admin UI | | ✓ | ✓ | ✓ | | |
-| G22 URL bookId vs session | ✓ | | ✓ | | ✓ | |
-| G25–G26 ADR hygiene | | ✓ | | | | ✓ |
+| Issue                       | Security | Architecture | Implementation | Feature | Test | Docs |
+| --------------------------- | -------- | ------------ | -------------- | ------- | ---- | ---- |
+| G14 Comments IDOR           | ✓        | ✓            | ✓              |         |      |      |
+| G15 Magic-link email        | ✓        |              | ✓              | ✓       |      |      |
+| G16 Locator read validation | ✓        | ✓            | ✓              |         | ✓    |      |
+| G17 Admin recovery          |          |              | ✓              | ✓       |      | ✓    |
+| G20 Hand-rolled Zod         |          | ✓            | ✓              |         |      |      |
+| G21 Orphan admin UI         |          | ✓            | ✓              | ✓       |      |      |
+| G22 URL bookId vs session   | ✓        |              | ✓              |         | ✓    |      |
+| G25–G26 ADR hygiene         |          | ✓            |                |         |      | ✓    |
 
 **Strongest consensus:** G14 (3 lenses) and G16 (3 lenses).
 These are the most defensible Critical/High priorities.
@@ -457,19 +457,19 @@ These are the most defensible Critical/High priorities.
 
 ## Companion Files (created in this PR)
 
-| File | Purpose | Closes |
-|---|---|---|
-| `plans/075-goap-swarm-2026-06-15.md` | Master GOAP plan for the 2026-06-15 swarm | — |
-| `plans/075-adr-tenant-isolation-2026-06-15.md` | ADR: URL bookId must equal session bookId; locator re-validation on read | G14, G16, G22 |
-| `plans/076-goap-admin-recovery-and-book-crud.md` | GOAP: admin recovery + book edit/delete | G17, G18 |
-| `plans/077-goap-reader-progress-and-search-load.md` | GOAP: initial progress load on reader open | G19 |
-| `plans/078-adr-zod-schema-centralization.md` | ADR: move all inline Zod schemas to `@do-epub-studio/schema` | G20 |
-| `plans/079-goap-admin-grants-patch-ui.md` | GOAP: wire orphan GrantForm/GrantList or delete them | G21 |
-| `plans/080-adr-session-storage-compensating-controls.md` | ADR: standing regression test for the localStorage trade-off | G23 |
-| `plans/081-adr-magic-link-email-transport.md` | ADR: real email transport for magic links | G15 |
-| `plans/082-adr-reader-side-panel-mutual-exclusivity.md` | ADR: enforce single active side-panel | G28 |
-| `plans/068-adr-open-issues-swarm-policy.md` | ADR: closes the missing-file cross-reference | G25 |
-| `plans/092-adr-token-storage-and-feature-gap-policy.md` | ADR: closes the missing-file cross-reference | G25 |
-| `plans/ADR-INDEX.md` | Single source of truth for ADR numbers | G26 |
-| `plans/083-adr-adr-numbering-policy.md` | ADR: numbering rule + how to handle collisions | G26 |
-| `plans/084-goap-changelog-and-contributing-sync.md` | GOAP: refresh CHANGELOG + CONTRIBUTING | G27 |
+| File                                                     | Purpose                                                                  | Closes        |
+| -------------------------------------------------------- | ------------------------------------------------------------------------ | ------------- |
+| `plans/075-goap-swarm-2026-06-15.md`                     | Master GOAP plan for the 2026-06-15 swarm                                | —             |
+| `plans/075-adr-tenant-isolation-2026-06-15.md`           | ADR: URL bookId must equal session bookId; locator re-validation on read | G14, G16, G22 |
+| `plans/076-goap-admin-recovery-and-book-crud.md`         | GOAP: admin recovery + book edit/delete                                  | G17, G18      |
+| `plans/077-goap-reader-progress-and-search-load.md`      | GOAP: initial progress load on reader open                               | G19           |
+| `plans/078-adr-zod-schema-centralization.md`             | ADR: move all inline Zod schemas to `@do-epub-studio/schema`             | G20           |
+| `plans/079-goap-admin-grants-patch-ui.md`                | GOAP: wire orphan GrantForm/GrantList or delete them                     | G21           |
+| `plans/080-adr-session-storage-compensating-controls.md` | ADR: standing regression test for the localStorage trade-off             | G23           |
+| `plans/081-adr-magic-link-email-transport.md`            | ADR: real email transport for magic links                                | G15           |
+| `plans/082-adr-reader-side-panel-mutual-exclusivity.md`  | ADR: enforce single active side-panel                                    | G28           |
+| `plans/068-adr-open-issues-swarm-policy.md`              | ADR: closes the missing-file cross-reference                             | G25           |
+| `plans/092-adr-token-storage-and-feature-gap-policy.md`  | ADR: closes the missing-file cross-reference                             | G25           |
+| `plans/ADR-INDEX.md`                                     | Single source of truth for ADR numbers                                   | G26           |
+| `plans/083-adr-adr-numbering-policy.md`                  | ADR: numbering rule + how to handle collisions                           | G26           |
+| `plans/084-goap-changelog-and-contributing-sync.md`      | GOAP: refresh CHANGELOG + CONTRIBUTING                                   | G27           |

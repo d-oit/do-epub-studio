@@ -15,14 +15,35 @@ const LOGIN_RESPONSE = {
   ok: true,
   data: {
     sessionToken: 'offline-session-token',
-    book: { id: 'book-offline', slug: TEST_USER.bookSlug, title: 'Offline Test Book', authorName: 'Test Author' },
-    capabilities: { canRead: true, canComment: true, canHighlight: true, canBookmark: true, canDownloadOffline: true, canExportNotes: false, canManageAccess: false },
+    book: {
+      id: 'book-offline',
+      slug: TEST_USER.bookSlug,
+      title: 'Offline Test Book',
+      authorName: 'Test Author',
+    },
+    capabilities: {
+      canRead: true,
+      canComment: true,
+      canHighlight: true,
+      canBookmark: true,
+      canDownloadOffline: true,
+      canExportNotes: false,
+      canManageAccess: false,
+    },
   },
 };
 
-const EPUB_BUFFER = createMinimalEpub([
-  { id: 'c1', href: 'chapter1.xhtml', title: 'Chapter 1', body: '<p>OFFLINE TEST CONTENT for the offline reader test.</p>' },
-], { title: 'Offline Test Book', identifier: 'urn:uuid:offline-test-book' });
+const EPUB_BUFFER = createMinimalEpub(
+  [
+    {
+      id: 'c1',
+      href: 'chapter1.xhtml',
+      title: 'Chapter 1',
+      body: '<p>OFFLINE TEST CONTENT for the offline reader test.</p>',
+    },
+  ],
+  { title: 'Offline Test Book', identifier: 'urn:uuid:offline-test-book' },
+);
 
 const EPUB_URL = 'http://127.0.0.1:0/test/offline-test.epub';
 
@@ -38,7 +59,12 @@ test.describe('Offline reader', () => {
     page.on('pageerror', (err) => {
       console.log(`PAGE UNCAUGHT ERROR: ${err.message}`);
     });
-    await mockReaderApi(page, { bookSlug: TEST_USER.bookSlug, epubUrl: EPUB_URL, epubBuffer: EPUB_BUFFER, loginResponse: LOGIN_RESPONSE });
+    await mockReaderApi(page, {
+      bookSlug: TEST_USER.bookSlug,
+      epubUrl: EPUB_URL,
+      epubBuffer: EPUB_BUFFER,
+      loginResponse: LOGIN_RESPONSE,
+    });
   });
 
   test('@mobile @pwa loads reader page online then survives offline reload', async ({ page }) => {
@@ -54,7 +80,10 @@ test.describe('Offline reader', () => {
     await page.reload();
     await page.waitForTimeout(3000);
 
-    const bodyVisible = await page.locator('body').isVisible().catch(() => false);
+    const bodyVisible = await page
+      .locator('body')
+      .isVisible()
+      .catch(() => false);
     expect(bodyVisible).toBe(true);
 
     await page.unroute('**/api/**');
@@ -64,7 +93,10 @@ test.describe('Offline reader', () => {
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(2000);
 
-    const bodyStillVisible = await page.locator('body').isVisible().catch(() => false);
+    const bodyStillVisible = await page
+      .locator('body')
+      .isVisible()
+      .catch(() => false);
     expect(bodyStillVisible).toBe(true);
   });
 
@@ -80,7 +112,10 @@ test.describe('Offline reader', () => {
     const isOffline = await page.evaluate(() => navigator.onLine);
     expect(isOffline).toBe(false);
 
-    const bodyOk = await page.locator('body').isVisible().catch(() => false);
+    const bodyOk = await page
+      .locator('body')
+      .isVisible()
+      .catch(() => false);
     expect(bodyOk).toBe(true);
 
     await context.setOffline(false);
@@ -90,7 +125,10 @@ test.describe('Offline reader', () => {
     expect(backOnline).toBe(true);
   });
 
-  test('@mobile @pwa serves cached API responses while offline (NetworkFirst strategy)', async ({ page, context }) => {
+  test('@mobile @pwa serves cached API responses while offline (NetworkFirst strategy)', async ({
+    page,
+    context,
+  }) => {
     await loginAsReader(page, TEST_USER.bookSlug);
 
     // The worker uses registerType 'prompt' (no clients.claim: update control
@@ -105,7 +143,7 @@ test.describe('Offline reader', () => {
       try {
         const _registration = await Promise.race([
           navigator.serviceWorker.ready,
-          new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 10000))
+          new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 10000)),
         ]);
         return !!navigator.serviceWorker.controller;
       } catch {
@@ -113,7 +151,9 @@ test.describe('Offline reader', () => {
       }
     });
 
-    expect(swActive, 'Service Worker must be active and controlling the page in pwa-chromium').toBe(true);
+    expect(swActive, 'Service Worker must be active and controlling the page in pwa-chromium').toBe(
+      true,
+    );
     // Seed the strategy cache directly. With a controlling SW, page.route
     // mocks are bypassed (the SW fetches from its own context, invisible to
     // Playwright routing), so seed the real 'api-responses' cache that the
@@ -158,7 +198,10 @@ test.describe('Offline reader', () => {
     await context.setOffline(false);
   });
 
-  test('@mobile @pwa queues offline actions for sync when network is unavailable', async ({ page, context }) => {
+  test('@mobile @pwa queues offline actions for sync when network is unavailable', async ({
+    page,
+    context,
+  }) => {
     await loginAsReader(page, TEST_USER.bookSlug);
 
     await context.setOffline(true);
@@ -173,7 +216,12 @@ test.describe('Offline reader', () => {
         type: 'annotation',
         payload: {
           bookId: slug,
-          annotation: { type: 'bookmark', cfi: 'epubcfi(/6/4)', chapter: 'ch1', text: 'Offline bookmark' },
+          annotation: {
+            type: 'bookmark',
+            cfi: 'epubcfi(/6/4)',
+            chapter: 'ch1',
+            text: 'Offline bookmark',
+          },
         },
         mutationId: crypto.randomUUID(),
         createdAt: Date.now(),
@@ -196,9 +244,10 @@ test.describe('Offline reader', () => {
 
     // Query the application's IndexedDB syncQueue unconditionally
     const queuedEntries = await page.evaluate(async () => {
-      const { promise, resolve, reject } = Promise.withResolvers<
-        Array<{ id: string; type: string; payload: Record<string, unknown> }>
-      >();
+      const { promise, resolve, reject } =
+        Promise.withResolvers<
+          Array<{ id: string; type: string; payload: Record<string, unknown> }>
+        >();
       const req = indexedDB.open('do-epub-studio');
       req.onerror = () => reject(req.error);
       req.onsuccess = () => {
@@ -216,12 +265,18 @@ test.describe('Offline reader', () => {
     });
 
     expect(queuedEntries.length, 'Offline action must be queued in syncQueue').toBeGreaterThan(0);
-    expect(queuedEntries.some(e => e.type === 'annotation'), 'Queued action should have annotation type').toBe(true);
+    expect(
+      queuedEntries.some((e) => e.type === 'annotation'),
+      'Queued action should have annotation type',
+    ).toBe(true);
 
     await context.setOffline(false);
     await page.waitForTimeout(500);
 
-    const bodyOk = await page.locator('body').isVisible().catch(() => false);
+    const bodyOk = await page
+      .locator('body')
+      .isVisible()
+      .catch(() => false);
     expect(bodyOk).toBe(true);
   });
 
@@ -276,7 +331,12 @@ test.describe('Offline reader', () => {
           type: 'annotation',
           payload: {
             bookId: 'offline-test',
-            annotation: { type: 'bookmark', cfi: 'epubcfi(/6/4)', chapter: 'ch1', text: 'Offline bookmark' },
+            annotation: {
+              type: 'bookmark',
+              cfi: 'epubcfi(/6/4)',
+              chapter: 'ch1',
+              text: 'Offline bookmark',
+            },
           },
           mutationId: crypto.randomUUID(),
           createdAt: Date.now(),
@@ -287,7 +347,13 @@ test.describe('Offline reader', () => {
           type: 'annotation',
           payload: {
             bookId: 'offline-test',
-            annotation: { type: 'highlight', cfi: 'epubcfi(/6/6)', chapter: 'ch1', text: 'Offline highlight', color: '#ffff00' },
+            annotation: {
+              type: 'highlight',
+              cfi: 'epubcfi(/6/6)',
+              chapter: 'ch1',
+              text: 'Offline highlight',
+              color: '#ffff00',
+            },
           },
           mutationId: crypto.randomUUID(),
           createdAt: Date.now() + 1,
@@ -335,7 +401,10 @@ test.describe('Offline reader', () => {
       })
       .toBeGreaterThan(queuedBeforeReconnect);
 
-    const bodyOk = await page.locator('body').isVisible().catch(() => false);
+    const bodyOk = await page
+      .locator('body')
+      .isVisible()
+      .catch(() => false);
     expect(bodyOk).toBe(true);
   });
 });

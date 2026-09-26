@@ -19,12 +19,7 @@ export const FeedbackStatusSchema = z.enum([
   'withdrawn',
 ]);
 
-export const FeedbackDispositionSchema = z.enum([
-  'accepted',
-  'declined',
-  'resolved',
-  'open',
-]);
+export const FeedbackDispositionSchema = z.enum(['accepted', 'declined', 'resolved', 'open']);
 
 export const FeedbackAnchorSchema = z.object({
   bookFileId: z.string().uuid().optional(),

@@ -101,8 +101,7 @@ function buildCliDb(env = {}) {
   return (sql, args = []) => client.execute({ sql, args });
 }
 
-const isMain =
-  process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+const isMain = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 
 if (isMain) {
   const db = buildCliDb(process.env);

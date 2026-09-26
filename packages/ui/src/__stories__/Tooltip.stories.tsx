@@ -60,9 +60,8 @@ function FocusManagementDemo() {
   return (
     <div className="p-8 space-y-4">
       <p className="text-sm text-foreground-muted">
-        Tab to focus the button — the tooltip should open via focus. Tab away to
-        close. In a native popover browser, `aria-describedby` is set on the
-        focusable wrapper.
+        Tab to focus the button — the tooltip should open via focus. Tab away to close. In a native
+        popover browser, `aria-describedby` is set on the focusable wrapper.
       </p>
       <Tooltip content="Opens on focus">
         <button

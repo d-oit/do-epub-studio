@@ -23,7 +23,10 @@ export function useImportNotes(): UseImportNotesReturn {
     async (file: File): Promise<NotesImportResult> => {
       const text = await file.text();
       const result = importNotesFromMarkdown(text);
-      if (!result.ok && result.highlights.length + result.comments.length + result.bookmarks.length === 0) {
+      if (
+        !result.ok &&
+        result.highlights.length + result.comments.length + result.bookmarks.length === 0
+      ) {
         return result;
       }
 

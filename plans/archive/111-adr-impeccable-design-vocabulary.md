@@ -28,17 +28,20 @@ The project already has `anti-ai-slop` and `reader-ui-ux` skills that cover some
 ## Consequences
 
 ### Positive
+
 - Machine-checkable design quality (44 rules, no LLM needed)
 - Shared vocabulary across all AI agents working on the project
 - CI gate catches anti-patterns before merge
 - Deterministic, fast, no API key required
 
 ### Negative / costs
+
 - Submodule adds a vendored dependency to maintain
 - OpenCode lacks hook support (manual quality gate step)
 - 44 rules may over-flag existing UI (mitigated by `ignoreValues`/`ignoreFiles` in config)
 
 ## Compliance
+
 - AGENTS.md TIER-1: No secrets or tokens exposed (Impeccable runs locally)
 - AGENTS.md TIER-2: Quality gate integration
 - ADR-083 numbering: `111` is the next free number after `110`

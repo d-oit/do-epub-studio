@@ -106,11 +106,7 @@ export async function decrypt(ciphertext: string, token: string): Promise<string
 
   const key = await deriveKey(token, salt);
 
-  const decrypted = await subtle.decrypt(
-    { name: ALGORITHM, iv },
-    key,
-    data,
-  );
+  const decrypted = await subtle.decrypt({ name: ALGORITHM, iv }, key, data);
 
   return new TextDecoder().decode(decrypted);
 }

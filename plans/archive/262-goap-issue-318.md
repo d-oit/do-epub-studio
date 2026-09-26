@@ -68,12 +68,12 @@ path, and no network fallback when the engine is unavailable.
 
 ## Acceptance → Evidence
 
-| Acceptance (issue body) | Test / artifact |
-|---|---|
-| AI features can be added as plugins | `ai-registry.test.ts` (register/lookup/list/unregister) |
-| User must opt-in | `ai-consent.test.ts` (default off, gate enforced) + `ai-local-summarization.test.ts` (refusal before consent) |
-| Processing is local-first | ADR local-first contract; no network path in capability code |
-| Architecture documented | This doc + ADR section; ADR-INDEX cross-reference |
+| Acceptance (issue body)             | Test / artifact                                                                                               |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| AI features can be added as plugins | `ai-registry.test.ts` (register/lookup/list/unregister)                                                       |
+| User must opt-in                    | `ai-consent.test.ts` (default off, gate enforced) + `ai-local-summarization.test.ts` (refusal before consent) |
+| Processing is local-first           | ADR local-first contract; no network path in capability code                                                  |
+| Architecture documented             | This doc + ADR section; ADR-INDEX cross-reference                                                             |
 
 ## Effort
 

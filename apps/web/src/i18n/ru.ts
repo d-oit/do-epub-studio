@@ -4,8 +4,8 @@ import { APP_NAME } from '../config/app-identity';
 export const ru: Record<TranslationKeys, TranslationValue> = {
   'app.title': APP_NAME,
   'app.versionLabel': 'Версия',
-  'ui.showPassword': "Показать пароль",
-  'ui.hidePassword': "Скрыть пароль",
+  'ui.showPassword': 'Показать пароль',
+  'ui.hidePassword': 'Скрыть пароль',
   'login.subtitle': 'Войдите для доступа к книгам',
   'login.bookSlugLabel': 'Идентификатор книги',
   'login.emailLabel': 'Адрес электронной почты',
@@ -14,16 +14,20 @@ export const ru: Record<TranslationKeys, TranslationValue> = {
   'login.bookSlugPlaceholder': 'my-book-slug',
   'login.emailPlaceholder': 'reader@example.com',
   'login.passwordPlaceholder': 'Введите пароль',
-  'login.noBookContext': 'Эта ссылка не содержит книги. Откройте ссылку для конкретной книги, чтобы войти, или попробуйте демо ниже.',
+  'login.noBookContext':
+    'Эта ссылка не содержит книги. Откройте ссылку для конкретной книги, чтобы войти, или попробуйте демо ниже.',
   'login.submit': 'Войти',
   'login.signingIn': 'Вход...',
   'login.forgotPassword': 'Забыли пароль?',
   'login.adminLink': 'Перейти к входу администратора',
-  'login.adminDescription': 'Вы автор или менеджер? Войдите здесь, чтобы загружать и управлять своими книгами.',
+  'login.adminDescription':
+    'Вы автор или менеджер? Войдите здесь, чтобы загружать и управлять своими книгами.',
   'login.recoveryTitle': 'Восстановление доступа',
-  'login.recoveryInstructions': 'Введите адрес электронной почты, и мы отправим вам безопасную ссылку для входа без пароля.',
+  'login.recoveryInstructions':
+    'Введите адрес электронной почты, и мы отправим вам безопасную ссылку для входа без пароля.',
   'login.sendMagicLink': 'Отправить магическую ссылку',
-  'login.recoverySuccess': 'Магическая ссылка отправлена на вашу почту (если аккаунт существует для этой книги). Проверьте входящие.',
+  'login.recoverySuccess':
+    'Магическая ссылка отправлена на вашу почту (если аккаунт существует для этой книги). Проверьте входящие.',
   'login.backToLogin': 'Вернуться к входу',
   'login.verifyingToken': 'Проверка ссылки восстановления...',
   'login.error.network': 'Ошибка сети. Попробуйте снова.',
@@ -40,13 +44,16 @@ export const ru: Record<TranslationKeys, TranslationValue> = {
   'login.hero.howAccessWorks': 'Регистрация не нужна — доступ выдаёт автор или менеджер.',
   'login.hero.learnMore': 'Подробнее',
   'login.heroTitle': 'Тихое и продуманное место для вашей библиотеки.',
-  'login.heroBody': 'Загружайте EPUB, читайте с типографской заботой и держите все заметки в синхронизации — даже офлайн.',
+  'login.heroBody':
+    'Загружайте EPUB, читайте с типографской заботой и держите все заметки в синхронизации — даже офлайн.',
   'help.title': 'Справка и руководство',
-  'help.intro': '{app} — это рабочее пространство для чтения EPUB и редакторской работы. Войдите, чтобы читать книги, или, как автор или менеджер, загружайте свои книги и управляйте ими.',
+  'help.intro':
+    '{app} — это рабочее пространство для чтения EPUB и редакторской работы. Войдите, чтобы читать книги, или, как автор или менеджер, загружайте свои книги и управляйте ими.',
   'help.demoTitle': 'Попробовать демо',
   'help.demoReader': 'Демо читателя: {email} · Пароль: {password} · Книга: {slug}',
   'help.demoAdmin': 'Демо администратора: {email} · Пароль: {password}',
-  'help.demoBody': 'Войдите с демо-учётными данными на экранах входа, или используйте демо-кнопку в один клик. Регистрация не требуется.',
+  'help.demoBody':
+    'Войдите с демо-учётными данными на экранах входа, или используйте демо-кнопку в один клик. Регистрация не требуется.',
   'help.backToLogin': 'Вернуться ко входу',
   'reader.untitledBook': 'Книга без названия',
   'reader.signOut': 'Выйти',
@@ -84,7 +91,8 @@ export const ru: Record<TranslationKeys, TranslationValue> = {
   'reader.settings.fontSize.large': 'Большой',
   'reader.settings.fontSize.xlarge': 'Очень большой',
   'reader.settings.ai.title': 'AI-помощник',
-  'reader.settings.ai.description': 'Возможности ИИ на устройстве (краткие содержания глав). По умолчанию выключено; ваш текст никогда не покидает устройство.',
+  'reader.settings.ai.description':
+    'Возможности ИИ на устройстве (краткие содержания глав). По умолчанию выключено; ваш текст никогда не покидает устройство.',
   'reader.settings.fontFamily.serif': 'Serif',
   'reader.settings.fontFamily.sans-serif': 'Sans Serif',
   'reader.settings.fontFamily.monospace': 'Monospace',
@@ -167,7 +175,8 @@ export const ru: Record<TranslationKeys, TranslationValue> = {
   'admin.createBookModal.validationErrors': 'Ошибки валидации',
   'admin.createBookModal.validationWarnings': 'Предупреждения валидации',
   'admin.createBookModal.error.missingMimetype': 'Отсутствует файл "mimetype"',
-  'admin.createBookModal.error.invalidMimetype': 'Неверный тип MIME: должен быть "application/epub+zip"',
+  'admin.createBookModal.error.invalidMimetype':
+    'Неверный тип MIME: должен быть "application/epub+zip"',
   'admin.createBookModal.error.missingContainer': 'Отсутствует "META-INF/container.xml"',
   'admin.createBookModal.error.corruptZip': 'Файл не является допустимым архивом ZIP или повреждён',
   'admin.manageGrants': 'Управление доступом',
@@ -182,7 +191,8 @@ export const ru: Record<TranslationKeys, TranslationValue> = {
   'grants.error.loadGrants': 'Ошибка загрузки разрешений',
   'grants.error.revoke': 'Ошибка отзыва разрешения',
   'grants.revokeTitle': 'Отозвать доступ',
-  'grants.revokeMessage': 'Вы уверены, что хотите отозвать доступ для {email}? Это немедленно завершит сессию.',
+  'grants.revokeMessage':
+    'Вы уверены, что хотите отозвать доступ для {email}? Это немедленно завершит сессию.',
   'grants.never': 'Никогда',
   'grants.table.email': 'Электронная почта',
   'grants.table.mode': 'Режим',
@@ -218,7 +228,8 @@ export const ru: Record<TranslationKeys, TranslationValue> = {
   'common.error.generic': 'Что-то пошло не так',
   'errors.generic': 'Произошла непредвиденная ошибка. Попробуйте снова.',
   'errors.boundary.title': 'Что-то пошло не так',
-  'errors.boundary.description': 'Произошла непредвиденная ошибка. Вы можете перезагрузить компонент или обратиться в поддержку с идентификатором ниже.',
+  'errors.boundary.description':
+    'Произошла непредвиденная ошибка. Вы можете перезагрузить компонент или обратиться в поддержку с идентификатором ниже.',
   'errors.boundary.home': 'Перезагрузить страницу',
   'errors.boundary.retrying': 'Повторная попытка...',
   'errors.boundary.traceId': 'ID отслеживания',
@@ -243,7 +254,12 @@ export const ru: Record<TranslationKeys, TranslationValue> = {
   'comment.delete': 'Удалить',
   'comment.placeholder': 'Написать комментарий...',
   'comment.resolved': 'Решено',
-  'comment.replies': { one: '{count} ответ', few: '{count} ответа', many: '{count} ответов', other: '{count} ответов' },
+  'comment.replies': {
+    one: '{count} ответ',
+    few: '{count} ответа',
+    many: '{count} ответов',
+    other: '{count} ответов',
+  },
   'comment.noComments': 'Пока нет комментариев',
   'comment.status.open': 'Открыт',
   'comment.status.resolved': 'Решено',
@@ -280,8 +296,10 @@ export const ru: Record<TranslationKeys, TranslationValue> = {
   'feedback.loadError': 'Не удалось загрузить приватные отзывы.',
   'creator.title': 'Проверка создателя',
   'creator.assignedBooks': 'Назначенные книги',
-  'creator.emptyUnassigned': 'Нет назначенных книг. Создателей приглашает администратор для каждой книги.',
-  'creator.emptyNoFeedback': 'Отзывов пока нет. Они появятся здесь после отправки приглашёнными читателями.',
+  'creator.emptyUnassigned':
+    'Нет назначенных книг. Создателей приглашает администратор для каждой книги.',
+  'creator.emptyNoFeedback':
+    'Отзывов пока нет. Они появятся здесь после отправки приглашёнными читателями.',
   'creator.filterStatus': 'Статус',
   'creator.filterCategory': 'Категория',
   'creator.replyPlaceholder': 'Написать ответ…',
@@ -301,7 +319,8 @@ export const ru: Record<TranslationKeys, TranslationValue> = {
   'creator.assigned': 'Назначенные создатели',
   'creator.noUser': 'Учётной записи с таким email нет.',
   'invitations.title': 'Принять приглашение',
-  'invitations.description': 'Задайте пароль, чтобы активировать доступ к книге. Приглашение можно использовать только один раз.',
+  'invitations.description':
+    'Задайте пароль, чтобы активировать доступ к книге. Приглашение можно использовать только один раз.',
   'invitations.passwordLabel': 'Пароль',
   'invitations.passwordConfirmLabel': 'Подтвердите пароль',
   'invitations.accept': 'Принять приглашение',
@@ -309,10 +328,12 @@ export const ru: Record<TranslationKeys, TranslationValue> = {
   'invitations.passwordMismatch': 'Пароли не совпадают.',
   'invitations.acceptError': 'Не удалось принять это приглашение.',
   'invitations.invalidTitle': 'Приглашение недоступно',
-  'invitations.invalidDescription': 'Это приглашение недействительно, истекло или уже использовано.',
+  'invitations.invalidDescription':
+    'Это приглашение недействительно, истекло или уже использовано.',
   'invitations.backToLogin': 'Вернуться ко входу',
   'invitations.adminTitle': 'Приглашения к книге',
-  'invitations.adminDescription': 'Приглашайте читателей или авторов и выбирайте способ доставки доступа.',
+  'invitations.adminDescription':
+    'Приглашайте читателей или авторов и выбирайте способ доставки доступа.',
   'invitations.invitePerson': 'Пригласить человека',
   'invitations.closeForm': 'Закрыть форму',
   'invitations.emailLabel': 'Адрес электронной почты',
@@ -328,7 +349,8 @@ export const ru: Record<TranslationKeys, TranslationValue> = {
   'invitations.expiryLabel': 'Срок доступа (необязательно)',
   'invitations.sendInvite': 'Отправить приглашение',
   'invitations.sending': 'Отправка приглашения…',
-  'invitations.manualDelivery': 'Отправка электронной почты недоступна. Скопируйте эту одноразовую ссылку и передайте её по одобренному каналу.',
+  'invitations.manualDelivery':
+    'Отправка электронной почты недоступна. Скопируйте эту одноразовую ссылку и передайте её по одобренному каналу.',
   'invitations.copyLinkLabel': 'Ссылка приглашения',
   'invitations.copyLink': 'Копировать ссылку',
   'invitations.copied': 'Скопировано',
@@ -405,7 +427,8 @@ export const ru: Record<TranslationKeys, TranslationValue> = {
   'asst.cloudTitle': 'Облачная помощь',
   'asst.cloudConsent': 'Разрешить облачную обработку для этой книги',
   'asst.cloudConsentOff': 'Облачная обработка выключена',
-  'asst.cloudNotQualified': 'Квалифицированного облачного провайдера пока нет — отправка отключена.',
+  'asst.cloudNotQualified':
+    'Квалифицированного облачного провайдера пока нет — отправка отключена.',
   'asst.dispatch': 'Проверить фрагменты',
   'asst.rejected': 'Отклонено как необоснованное',
   'asst.staleCitation': 'Источник изменился после цитаты',
@@ -417,7 +440,8 @@ export const ru: Record<TranslationKeys, TranslationValue> = {
   'asst.enginePrepare': 'Подготовить движок сюжета и логики',
   'asst.engineDownloading': 'Подготовка движка: {percent} %',
   'asst.engineReady': 'Движок сюжета и логики готов',
-  'asst.engineNote': 'Единоразовая загрузка около 500 МБ. Модель работает на этом устройстве — рукопись никогда не отправляется.',
+  'asst.engineNote':
+    'Единоразовая загрузка около 500 МБ. Модель работает на этом устройстве — рукопись никогда не отправляется.',
 
   'highlight.colors.yellow': 'Жёлтый',
   'highlight.colors.green': 'Зелёный',
@@ -444,10 +468,13 @@ export const ru: Record<TranslationKeys, TranslationValue> = {
   'admin.login.invalidCredentials': 'Неверная почта или пароль',
   'admin.login.forgotPassword': 'Забыли пароль?',
   'admin.login.backToReader': 'Вернуться к входу читателя',
-  'admin.login.readerDescription': 'Ищете свои книги? Перейдите к входу читателя для доступа к авторизованной библиотеке.',
+  'admin.login.readerDescription':
+    'Ищете свои книги? Перейдите к входу читателя для доступа к авторизованной библиотеке.',
   'admin.login.recoveryTitle': 'Восстановление доступа администратора',
-  'admin.login.recoveryInstructions': 'Введите почту администратора, и мы отправим безопасную ссылку для входа без пароля.',
-  'admin.login.recoverySuccess': 'Магическая ссылка отправлена на вашу почту (если существует аккаунт администратора). Проверьте входящие.',
+  'admin.login.recoveryInstructions':
+    'Введите почту администратора, и мы отправим безопасную ссылку для входа без пароля.',
+  'admin.login.recoverySuccess':
+    'Магическая ссылка отправлена на вашу почту (если существует аккаунт администратора). Проверьте входящие.',
   'admin.login.backToAdminLogin': 'Вернуться к входу администратора',
   'admin.login.demoTry': 'Попробовать демо админа',
   'admin.login.demoFillCredentials': 'Заполнить данные админа',
@@ -475,7 +502,8 @@ export const ru: Record<TranslationKeys, TranslationValue> = {
   'admin.books.edit': 'Редактировать',
   'admin.books.archive': 'Архивировать',
   'admin.books.confirmArchiveTitle': 'Архивировать книгу',
-  'admin.books.confirmArchive': 'Вы уверены, что хотите архивировать эту книгу? Это действие нельзя отменить.',
+  'admin.books.confirmArchive':
+    'Вы уверены, что хотите архивировать эту книгу? Это действие нельзя отменить.',
   'admin.books.noBookResponses': 'Книги не найдены',
   'admin.books.editTitle': 'Редактировать книгу',
   'admin.books.saveChanges': 'Сохранить изменения',
@@ -509,11 +537,14 @@ export const ru: Record<TranslationKeys, TranslationValue> = {
   'admin.grants.selectBook': 'Выберите книгу на странице книг для управления правами доступа.',
   'admin.recover.titleRequest': 'Восстановление доступа администратора',
   'admin.recover.titleVerify': 'Установить новый пароль',
-  'admin.recover.requestDescription': 'Введите почту администратора. Мы отправим ссылку восстановления, если аккаунт существует.',
-  'admin.recover.verifyDescription': 'Выберите новый пароль для восстановления доступа администратора.',
+  'admin.recover.requestDescription':
+    'Введите почту администратора. Мы отправим ссылку восстановления, если аккаунт существует.',
+  'admin.recover.verifyDescription':
+    'Выберите новый пароль для восстановления доступа администратора.',
   'admin.recover.sendLink': 'Отправить ссылку восстановления',
   'admin.recover.sending': 'Отправка...',
-  'admin.recover.requestSent': 'Если эта почта совпадает с аккаунтом администратора, ссылка восстановления отправлена.',
+  'admin.recover.requestSent':
+    'Если эта почта совпадает с аккаунтом администратора, ссылка восстановления отправлена.',
   'admin.recover.requestFailed': 'Не удалось отправить письмо восстановления. Попробуйте снова.',
   'admin.recover.newPassword': 'Новый пароль',
   'admin.recover.resetPassword': 'Сбросить пароль',
@@ -522,7 +553,8 @@ export const ru: Record<TranslationKeys, TranslationValue> = {
   'admin.recover.backToLogin': 'Вернуться к входу',
   'admin.recover.newPasswordConfirm': 'Подтвердите новый пароль',
   'admin.recover.successTitle': 'Сброс пароля завершён',
-  'admin.recover.successMessage': 'Ваш пароль был сброшен. Войдите с новым паролем, чтобы продолжить.',
+  'admin.recover.successMessage':
+    'Ваш пароль был сброшен. Войдите с новым паролем, чтобы продолжить.',
   'admin.recover.signInNow': 'Перейти к входу',
   'admin.account.title': 'Настройки аккаунта',
   'admin.account.backToDashboard': 'Назад к панели управления',
@@ -531,7 +563,8 @@ export const ru: Record<TranslationKeys, TranslationValue> = {
   'admin.account.currentPassword': 'Текущий пароль',
   'admin.account.newPassword': 'Новый пароль',
   'admin.account.newPasswordConfirm': 'Подтвердите новый пароль',
-  'admin.account.passwordChangeFailed': 'Не удалось обновить пароль. Проверьте текущий пароль и попробуйте снова.',
+  'admin.account.passwordChangeFailed':
+    'Не удалось обновить пароль. Проверьте текущий пароль и попробуйте снова.',
   'admin.account.passwordChangeSuccess': 'Пароль успешно обновлён.',
   'admin.sessions.title': 'Активные сессии',
   'admin.sessions.loadFailed': 'Не удалось загрузить активные сессии.',
@@ -551,36 +584,57 @@ export const ru: Record<TranslationKeys, TranslationValue> = {
   'admin.stepUp.error': 'Проверка не удалась. Проверьте пароль и попробуйте снова.',
 
   // ADR-234 MFA passkeys + recovery codes
-  "security.mfa.title": "\u0411\u0435\u0437\u043e\u043f\u0430\u0441\u043d\u043e\u0441\u0442\u044c / MFA",
-  "security.mfa.description": "\u0417\u0430\u0449\u0438\u0442\u0438\u0442\u0435 \u0441\u0432\u043e\u044e \u0443\u0447\u0451\u0442\u043d\u0443\u044e \u0437\u0430\u043f\u0438\u0441\u044c \u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440\u0430 \u0441 \u043f\u043e\u043c\u043e\u0449\u044c\u044e passkey. \u0410\u0443\u0442\u0435\u043d\u0442\u0438\u0444\u0438\u043a\u0430\u0446\u0438\u044f \u043f\u043e\u0432\u044b\u0448\u0430\u0435\u0442 \u0432\u0430\u0448\u0443 \u0441\u0435\u0441\u0441\u0438\u044e \u0434\u043e \u0437\u0430\u0449\u0438\u0442\u044b MFA.",
-  "security.mfa.passkeys": "Passkey",
-  "security.mfa.noEnrolled": "Passkey \u0435\u0449\u0451 \u043d\u0435 \u0437\u0430\u0440\u0435\u0433\u0438\u0441\u0442\u0440\u0438\u0440\u043e\u0432\u0430\u043d\u044b.",
-  "security.mfa.remove": "\u0423\u0434\u0430\u043b\u0438\u0442\u044c",
-  "security.mfa.enroll": "\u0417\u0430\u0440\u0435\u0433\u0438\u0441\u0442\u0440\u0438\u0440\u043e\u0432\u0430\u0442\u044c passkey",
-  "security.mfa.addAnother": "\u0414\u043e\u0431\u0430\u0432\u0438\u0442\u044c \u0435\u0449\u0451 \u043e\u0434\u0438\u043d passkey",
-  "security.mfa.authenticate": "\u041f\u043e\u0434\u0442\u0432\u0435\u0440\u0434\u0438\u0442\u044c passkey",
-  "security.mfa.authenticating": "\u041f\u0440\u043e\u0432\u0435\u0440\u043a\u0430...",
-  "security.mfa.regenerate": "\u041f\u0435\u0440\u0435\u0433\u0435\u043d\u0435\u0440\u0438\u0440\u043e\u0432\u0430\u0442\u044c \u043a\u043e\u0434\u044b \u0432\u043e\u0441\u0441\u0442\u0430\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u044f",
-  "security.mfa.regenerating": "\u041f\u0435\u0440\u0435\u0433\u0435\u043d\u0435\u0440\u0430\u0446\u0438\u044f...",
-  "security.mfa.loadFailed": "\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044c \u0441\u0442\u0430\u0442\u0443\u0441 MFA.",
-  "security.mfa.actionFailed": "\u0414\u0435\u0439\u0441\u0442\u0432\u0438\u0435 MFA \u043d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c. \u041f\u043e\u043f\u0440\u043e\u0431\u0443\u0439\u0442\u0435 \u0435\u0449\u0451 \u0440\u0430\u0437.",
-  "security.mfa.enrollSuccess": "Passkey \u0443\u0441\u043f\u0435\u0448\u043d\u043e \u0437\u0430\u0440\u0435\u0433\u0438\u0441\u0442\u0440\u0438\u0440\u043e\u0432\u0430\u043d.",
-  "security.mfa.removeSuccess": "Passkey \u0443\u0434\u0430\u043b\u0451\u043d.",
-  "security.mfa.authSuccess": "Passkey \u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0451\u043d. \u0412\u0430\u0448\u0430 \u0441\u0435\u0441\u0441\u0438\u044f \u0442\u0435\u043f\u0435\u0440\u044c \u0437\u0430\u0449\u0438\u0449\u0435\u043d\u0430 MFA.",
-  "security.mfa.authFailed": "\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0434\u0438\u0442\u044c passkey.",
-  "security.mfa.stepUpNeeded": "\u041d\u0435\u043a\u043e\u0442\u043e\u0440\u044b\u0435 \u0447\u0443\u0432\u0441\u0442\u0432\u0438\u0442\u0435\u043b\u044c\u043d\u044b\u0435 \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u044f \u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440\u0430 \u0442\u0440\u0435\u0431\u0443\u044e\u0442 \u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043d\u0438\u044f passkey \u043f\u0435\u0440\u0435\u0434 \u043f\u0440\u043e\u0434\u043e\u043b\u0436\u0435\u043d\u0438\u0435\u043c.",
-  "security.mfa.loading": "\u0417\u0430\u0433\u0440\u0443\u0437\u043a\u0430 \u0441\u0442\u0430\u0442\u0443\u0441\u0430 MFA...",
-  "security.mfa.passkeyName": "\u041d\u0430\u0437\u0432\u0430\u043d\u0438\u0435 passkey",
-  "security.mfa.removeConfirmTitle": "\u0423\u0434\u0430\u043b\u0438\u0442\u044c passkey?",
-  "security.mfa.removeConfirmMessage": "\u0423\u0434\u0430\u043b\u0438\u0442\u044c passkey \u00ab{name}\u00bb? \u041f\u043e\u0441\u043b\u0435 \u0443\u0434\u0430\u043b\u0435\u043d\u0438\u044f \u0432\u044b \u0431\u043e\u043b\u044c\u0448\u0435 \u043d\u0435 \u0441\u043c\u043e\u0436\u0435\u0442\u0435 \u0432\u0445\u043e\u0434\u0438\u0442\u044c \u0441 \u044d\u0442\u043e\u0433\u043e \u0443\u0441\u0442\u0440\u043e\u0439\u0441\u0442\u0432\u0430.",
-  "security.recovery.recoveryCodes": "\u041a\u043e\u0434\u044b \u0432\u043e\u0441\u0441\u0442\u0430\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u044f",
-  "security.recovery.copyAll": "\u041a\u043e\u043f\u0438\u0440\u043e\u0432\u0430\u0442\u044c \u0432\u0441\u0435",
-  "security.recovery.copied": "\u0421\u043a\u043e\u043f\u0438\u0440\u043e\u0432\u0430\u043d\u043e",
-  "security.recovery.codeCopied": "\u0421\u043a\u043e\u043f\u0438\u0440\u043e\u0432\u0430\u043d\u043e",
-  "security.recovery.close": "\u0417\u0430\u043a\u0440\u044b\u0442\u044c",
-  "security.recovery.recoveryCodesWarning": "\u0425\u0440\u0430\u043d\u0438\u0442\u0435 \u044d\u0442\u0438 \u043a\u043e\u0434\u044b \u0432\u043e\u0441\u0441\u0442\u0430\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u044f \u0432 \u043d\u0430\u0434\u0451\u0436\u043d\u043e\u043c \u043c\u0435\u0441\u0442\u0435. \u041e\u043d\u0438 \u043e\u0442\u043e\u0431\u0440\u0430\u0436\u0430\u044e\u0442\u0441\u044f \u0442\u043e\u043b\u044c\u043a\u043e \u043e\u0434\u0438\u043d \u0440\u0430\u0437, \u0438 \u043a\u0430\u0436\u0434\u044b\u0439 \u043a\u043e\u0434 \u043c\u043e\u0436\u043d\u043e \u0438\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u044c \u0442\u043e\u043b\u044c\u043a\u043e \u043e\u0434\u0438\u043d \u0440\u0430\u0437.",
-  "security.recovery.codesShownOnce": "\u0415\u0441\u043b\u0438 \u0432\u044b \u043f\u043e\u0442\u0435\u0440\u044f\u0435\u0442\u0435 \u0434\u043e\u0441\u0442\u0443\u043f \u043a passkey, \u0438\u0441\u043f\u043e\u043b\u044c\u0437\u0443\u0439\u0442\u0435 \u043e\u0434\u0438\u043d \u0438\u0437 \u044d\u0442\u0438\u0445 \u043a\u043e\u0434\u043e\u0432 \u0434\u043b\u044f \u0432\u043e\u0441\u0441\u0442\u0430\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u044f \u0443\u0447\u0451\u0442\u043d\u043e\u0439 \u0437\u0430\u043f\u0438\u0441\u0438.",
-  "security.recovery.copy": "\u041a\u043e\u043f\u0438\u0440\u043e\u0432\u0430\u0442\u044c",
+  'security.mfa.title':
+    '\u0411\u0435\u0437\u043e\u043f\u0430\u0441\u043d\u043e\u0441\u0442\u044c / MFA',
+  'security.mfa.description':
+    '\u0417\u0430\u0449\u0438\u0442\u0438\u0442\u0435 \u0441\u0432\u043e\u044e \u0443\u0447\u0451\u0442\u043d\u0443\u044e \u0437\u0430\u043f\u0438\u0441\u044c \u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440\u0430 \u0441 \u043f\u043e\u043c\u043e\u0449\u044c\u044e passkey. \u0410\u0443\u0442\u0435\u043d\u0442\u0438\u0444\u0438\u043a\u0430\u0446\u0438\u044f \u043f\u043e\u0432\u044b\u0448\u0430\u0435\u0442 \u0432\u0430\u0448\u0443 \u0441\u0435\u0441\u0441\u0438\u044e \u0434\u043e \u0437\u0430\u0449\u0438\u0442\u044b MFA.',
+  'security.mfa.passkeys': 'Passkey',
+  'security.mfa.noEnrolled':
+    'Passkey \u0435\u0449\u0451 \u043d\u0435 \u0437\u0430\u0440\u0435\u0433\u0438\u0441\u0442\u0440\u0438\u0440\u043e\u0432\u0430\u043d\u044b.',
+  'security.mfa.remove': '\u0423\u0434\u0430\u043b\u0438\u0442\u044c',
+  'security.mfa.enroll':
+    '\u0417\u0430\u0440\u0435\u0433\u0438\u0441\u0442\u0440\u0438\u0440\u043e\u0432\u0430\u0442\u044c passkey',
+  'security.mfa.addAnother':
+    '\u0414\u043e\u0431\u0430\u0432\u0438\u0442\u044c \u0435\u0449\u0451 \u043e\u0434\u0438\u043d passkey',
+  'security.mfa.authenticate':
+    '\u041f\u043e\u0434\u0442\u0432\u0435\u0440\u0434\u0438\u0442\u044c passkey',
+  'security.mfa.authenticating': '\u041f\u0440\u043e\u0432\u0435\u0440\u043a\u0430...',
+  'security.mfa.regenerate':
+    '\u041f\u0435\u0440\u0435\u0433\u0435\u043d\u0435\u0440\u0438\u0440\u043e\u0432\u0430\u0442\u044c \u043a\u043e\u0434\u044b \u0432\u043e\u0441\u0441\u0442\u0430\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u044f',
+  'security.mfa.regenerating':
+    '\u041f\u0435\u0440\u0435\u0433\u0435\u043d\u0435\u0440\u0430\u0446\u0438\u044f...',
+  'security.mfa.loadFailed':
+    '\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044c \u0441\u0442\u0430\u0442\u0443\u0441 MFA.',
+  'security.mfa.actionFailed':
+    '\u0414\u0435\u0439\u0441\u0442\u0432\u0438\u0435 MFA \u043d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c. \u041f\u043e\u043f\u0440\u043e\u0431\u0443\u0439\u0442\u0435 \u0435\u0449\u0451 \u0440\u0430\u0437.',
+  'security.mfa.enrollSuccess':
+    'Passkey \u0443\u0441\u043f\u0435\u0448\u043d\u043e \u0437\u0430\u0440\u0435\u0433\u0438\u0441\u0442\u0440\u0438\u0440\u043e\u0432\u0430\u043d.',
+  'security.mfa.removeSuccess': 'Passkey \u0443\u0434\u0430\u043b\u0451\u043d.',
+  'security.mfa.authSuccess':
+    'Passkey \u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0451\u043d. \u0412\u0430\u0448\u0430 \u0441\u0435\u0441\u0441\u0438\u044f \u0442\u0435\u043f\u0435\u0440\u044c \u0437\u0430\u0449\u0438\u0449\u0435\u043d\u0430 MFA.',
+  'security.mfa.authFailed':
+    '\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0434\u0438\u0442\u044c passkey.',
+  'security.mfa.stepUpNeeded':
+    '\u041d\u0435\u043a\u043e\u0442\u043e\u0440\u044b\u0435 \u0447\u0443\u0432\u0441\u0442\u0432\u0438\u0442\u0435\u043b\u044c\u043d\u044b\u0435 \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u044f \u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440\u0430 \u0442\u0440\u0435\u0431\u0443\u044e\u0442 \u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043d\u0438\u044f passkey \u043f\u0435\u0440\u0435\u0434 \u043f\u0440\u043e\u0434\u043e\u043b\u0436\u0435\u043d\u0438\u0435\u043c.',
+  'security.mfa.loading':
+    '\u0417\u0430\u0433\u0440\u0443\u0437\u043a\u0430 \u0441\u0442\u0430\u0442\u0443\u0441\u0430 MFA...',
+  'security.mfa.passkeyName': '\u041d\u0430\u0437\u0432\u0430\u043d\u0438\u0435 passkey',
+  'security.mfa.removeConfirmTitle': '\u0423\u0434\u0430\u043b\u0438\u0442\u044c passkey?',
+  'security.mfa.removeConfirmMessage':
+    '\u0423\u0434\u0430\u043b\u0438\u0442\u044c passkey \u00ab{name}\u00bb? \u041f\u043e\u0441\u043b\u0435 \u0443\u0434\u0430\u043b\u0435\u043d\u0438\u044f \u0432\u044b \u0431\u043e\u043b\u044c\u0448\u0435 \u043d\u0435 \u0441\u043c\u043e\u0436\u0435\u0442\u0435 \u0432\u0445\u043e\u0434\u0438\u0442\u044c \u0441 \u044d\u0442\u043e\u0433\u043e \u0443\u0441\u0442\u0440\u043e\u0439\u0441\u0442\u0432\u0430.',
+  'security.recovery.recoveryCodes':
+    '\u041a\u043e\u0434\u044b \u0432\u043e\u0441\u0441\u0442\u0430\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u044f',
+  'security.recovery.copyAll':
+    '\u041a\u043e\u043f\u0438\u0440\u043e\u0432\u0430\u0442\u044c \u0432\u0441\u0435',
+  'security.recovery.copied': '\u0421\u043a\u043e\u043f\u0438\u0440\u043e\u0432\u0430\u043d\u043e',
+  'security.recovery.codeCopied':
+    '\u0421\u043a\u043e\u043f\u0438\u0440\u043e\u0432\u0430\u043d\u043e',
+  'security.recovery.close': '\u0417\u0430\u043a\u0440\u044b\u0442\u044c',
+  'security.recovery.recoveryCodesWarning':
+    '\u0425\u0440\u0430\u043d\u0438\u0442\u0435 \u044d\u0442\u0438 \u043a\u043e\u0434\u044b \u0432\u043e\u0441\u0441\u0442\u0430\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u044f \u0432 \u043d\u0430\u0434\u0451\u0436\u043d\u043e\u043c \u043c\u0435\u0441\u0442\u0435. \u041e\u043d\u0438 \u043e\u0442\u043e\u0431\u0440\u0430\u0436\u0430\u044e\u0442\u0441\u044f \u0442\u043e\u043b\u044c\u043a\u043e \u043e\u0434\u0438\u043d \u0440\u0430\u0437, \u0438 \u043a\u0430\u0436\u0434\u044b\u0439 \u043a\u043e\u0434 \u043c\u043e\u0436\u043d\u043e \u0438\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u044c \u0442\u043e\u043b\u044c\u043a\u043e \u043e\u0434\u0438\u043d \u0440\u0430\u0437.',
+  'security.recovery.codesShownOnce':
+    '\u0415\u0441\u043b\u0438 \u0432\u044b \u043f\u043e\u0442\u0435\u0440\u044f\u0435\u0442\u0435 \u0434\u043e\u0441\u0442\u0443\u043f \u043a passkey, \u0438\u0441\u043f\u043e\u043b\u044c\u0437\u0443\u0439\u0442\u0435 \u043e\u0434\u0438\u043d \u0438\u0437 \u044d\u0442\u0438\u0445 \u043a\u043e\u0434\u043e\u0432 \u0434\u043b\u044f \u0432\u043e\u0441\u0441\u0442\u0430\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u044f \u0443\u0447\u0451\u0442\u043d\u043e\u0439 \u0437\u0430\u043f\u0438\u0441\u0438.',
+  'security.recovery.copy': '\u041a\u043e\u043f\u0438\u0440\u043e\u0432\u0430\u0442\u044c',
   'a11y.menu_open': 'Открыть меню навигации',
   'a11y.menu_close': 'Закрыть меню навигации',
   'a11y.select_locale': 'Выбрать язык',
@@ -603,7 +657,12 @@ export const ru: Record<TranslationKeys, TranslationValue> = {
   'catalog.pagination.info': 'Показано {from}–{to} из {total}',
   'offline.banner': 'Вы не в сети. Изменения будут синхронизированы при подключении.',
   'offline.indicator': 'Офлайн',
-  'offline.pendingSync': { one: '{count} синхронизация ожидает', few: '{count} синхронизации ожидают', many: '{count} синхронизаций ожидают', other: '{count} синхронизаций ожидают' },
+  'offline.pendingSync': {
+    one: '{count} синхронизация ожидает',
+    few: '{count} синхронизации ожидают',
+    many: '{count} синхронизаций ожидают',
+    other: '{count} синхронизаций ожидают',
+  },
   'reader.bookmarks.title': 'Закладки',
   'reader.bookmarks.addTitle': 'Добавить закладку в текущей позиции',
   'reader.bookmarks.empty': 'Пока нет закладок. Нажмите на значок закладки, чтобы сохранить место.',
@@ -680,7 +739,8 @@ export const ru: Record<TranslationKeys, TranslationValue> = {
   'settings.account': 'Аккаунт',
   'settings.adminBadge': 'Включен доступ администратора',
   'settings.install.title': 'Установить приложение',
-  'settings.install.description': 'Добавьте {app} на главный экран или рабочий стол, чтобы читать офлайн.',
+  'settings.install.description':
+    'Добавьте {app} на главный экран или рабочий стол, чтобы читать офлайн.',
   'settings.install.action': 'Установить приложение',
   'settings.install.installed': 'Приложение установлено',
   'storage.title': 'Хранилище',
@@ -693,7 +753,8 @@ export const ru: Record<TranslationKeys, TranslationValue> = {
   'storage.cleared': 'Кэш успешно очищен',
   'storage.clearError': 'Не удалось очистить кэш',
   'storage.unsupported': 'Информация о хранилище недоступна в этом браузере',
-  'storage.confirmClear': 'Это удалит все кэшированные книги, аннотации и прогресс чтения на этом устройстве. Несинхронизированные данные будут потеряны. Вы уверены?',
+  'storage.confirmClear':
+    'Это удалит все кэшированные книги, аннотации и прогресс чтения на этом устройстве. Несинхронизированные данные будут потеряны. Вы уверены?',
   'notifications.title': 'Уведомления',
   'notifications.empty': 'Уведомлений пока нет',
   'notifications.markAllRead': 'Отметить всё как прочитанное',
@@ -713,16 +774,16 @@ export const ru: Record<TranslationKeys, TranslationValue> = {
   'relativeTime.minutesAgo': '{count}м. назад',
   'relativeTime.hoursAgo': '{count}ч. назад',
   'relativeTime.daysAgo': '{count}д. назад',
-  'reader.conflicts.title': "Конфликты синхронизации",
-  'reader.conflicts.summary': "{n} конфликт(ов) требуют решения",
-  'reader.conflicts.keepLocal': "Сохранить локальные",
-  'reader.conflicts.keepRemote': "Сохранить удалённые",
-  'reader.conflicts.dismiss': "Отклонить",
-  'reader.conflicts.localLabel': "Локально:",
-  'reader.conflicts.remoteLabel': "Удалённо:",
-  'reader.conflicts.type.progress_update': "Обновление прогресса",
-  'reader.conflicts.type.annotation_edit': "Редактирование аннотации",
-  'reader.conflicts.type.bookmark_change': "Изменение закладки",
-  'reader.conflicts.type.comment_update': "Обновление комментария",
-  'reader.conflicts.noConflicts': "Нет ожидающих конфликтов",
+  'reader.conflicts.title': 'Конфликты синхронизации',
+  'reader.conflicts.summary': '{n} конфликт(ов) требуют решения',
+  'reader.conflicts.keepLocal': 'Сохранить локальные',
+  'reader.conflicts.keepRemote': 'Сохранить удалённые',
+  'reader.conflicts.dismiss': 'Отклонить',
+  'reader.conflicts.localLabel': 'Локально:',
+  'reader.conflicts.remoteLabel': 'Удалённо:',
+  'reader.conflicts.type.progress_update': 'Обновление прогресса',
+  'reader.conflicts.type.annotation_edit': 'Редактирование аннотации',
+  'reader.conflicts.type.bookmark_change': 'Изменение закладки',
+  'reader.conflicts.type.comment_update': 'Обновление комментария',
+  'reader.conflicts.noConflicts': 'Нет ожидающих конфликтов',
 };

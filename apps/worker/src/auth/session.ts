@@ -21,7 +21,7 @@ export interface CreatedSession {
 export async function createSession(
   env: Env,
   bookId: string,
-  email: string
+  email: string,
 ): Promise<CreatedSession> {
   const token = generateToken();
   const tokenHash = await hashToken(token);
@@ -32,7 +32,7 @@ export async function createSession(
     env,
     `INSERT INTO reader_sessions (id, book_id, email, session_token_hash, expires_at)
      VALUES (?, ?, ?, ?, ?)`,
-    [id, bookId, email.toLowerCase(), tokenHash, expiresAt]
+    [id, bookId, email.toLowerCase(), tokenHash, expiresAt],
   );
 
   return { token, expiresAt };
@@ -40,17 +40,17 @@ export async function createSession(
 
 export async function validateSession(
   env: Env,
-  token: string
+  token: string,
 ): Promise<{ valid: boolean; session?: SessionRow; bookId?: string }> {
   const tokenHash = await hashToken(token);
 
-  const session = await queryFirst(
+  const session = (await queryFirst(
     env,
     `SELECT id, book_id, email, session_token_hash, expires_at, revoked_at
      FROM reader_sessions
      WHERE session_token_hash = ? AND revoked_at IS NULL`,
-    [tokenHash]
-  ) as SessionRow | null;
+    [tokenHash],
+  )) as SessionRow | null;
 
   if (!session) {
     return { valid: false };
@@ -63,16 +63,13 @@ export async function validateSession(
   return { valid: true, session, bookId: session.book_id };
 }
 
-export async function revokeSession(
-  env: Env,
-  token: string
-): Promise<void> {
+export async function revokeSession(env: Env, token: string): Promise<void> {
   const tokenHash = await hashToken(token);
 
   await execute(
     env,
     `UPDATE reader_sessions SET revoked_at = datetime('now') WHERE session_token_hash = ?`,
-    [tokenHash]
+    [tokenHash],
   );
 }
 
@@ -81,13 +78,15 @@ export async function hashToken(token: string): Promise<string> {
   const data = encoder.encode(token);
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
 function generateToken(): string {
   const array = new Uint8Array(SESSION_TOKEN_BYTES);
   crypto.getRandomValues(array);
-  return Array.from(array).map(b => b.toString(16).padStart(2, '0')).join('');
+  return Array.from(array)
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
 }
 
 export function parseAuthHeader(header: string | null): string | null {

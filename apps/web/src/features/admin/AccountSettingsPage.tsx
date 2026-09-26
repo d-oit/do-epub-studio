@@ -115,32 +115,49 @@ export function AccountSettingsPage() {
         ]}
       />
       <header className="mb-8 border-b border-[var(--color-rule)] pb-6">
-        <h1 className="text-balance-tight font-display text-3xl leading-tight text-foreground md:text-4xl">{t('admin.account.title')}</h1>
+        <h1 className="text-balance-tight font-display text-3xl leading-tight text-foreground md:text-4xl">
+          {t('admin.account.title')}
+        </h1>
       </header>
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Change password */}
         <section className="rounded-sm border border-border bg-surface p-6 shadow-page">
-          <h2 className="mb-4 font-display text-lg leading-snug text-foreground">{t('admin.account.changePassword')}</h2>
+          <h2 className="mb-4 font-display text-lg leading-snug text-foreground">
+            {t('admin.account.changePassword')}
+          </h2>
 
           {passwordInfo && (
-            <p role="status" className="mb-4 rounded-sm bg-accent/10 border border-accent/20 p-3 text-sm text-accent">
+            <p
+              role="status"
+              className="mb-4 rounded-sm bg-accent/10 border border-accent/20 p-3 text-sm text-accent"
+            >
               {passwordInfo}
             </p>
           )}
           {passwordError && (
-            <p role="alert" className="mb-4 rounded-sm bg-accent-error/10 border border-accent-error/20 p-3 text-sm text-accent-error">
+            <p
+              role="alert"
+              className="mb-4 rounded-sm bg-accent-error/10 border border-accent-error/20 p-3 text-sm text-accent-error"
+            >
               {passwordError}
             </p>
           )}
 
-          <form onSubmit={(e) => { void handlePasswordChange(e); }} className="space-y-4">
+          <form
+            onSubmit={(e) => {
+              void handlePasswordChange(e);
+            }}
+            className="space-y-4"
+          >
             <Input
               id="current-password"
               type="password"
               label={t('admin.account.currentPassword')}
               value={currentPassword}
-              onChange={(e) => { setCurrentPassword(e.target.value); }}
+              onChange={(e) => {
+                setCurrentPassword(e.target.value);
+              }}
               required
               autoComplete="current-password"
             />
@@ -149,7 +166,9 @@ export function AccountSettingsPage() {
               type="password"
               label={t('admin.account.newPassword')}
               value={newPassword}
-              onChange={(e) => { setNewPassword(e.target.value); }}
+              onChange={(e) => {
+                setNewPassword(e.target.value);
+              }}
               required
               autoComplete="new-password"
               minLength={8}
@@ -159,12 +178,18 @@ export function AccountSettingsPage() {
               type="password"
               label={t('admin.account.newPasswordConfirm')}
               value={newPasswordConfirm}
-              onChange={(e) => { setNewPasswordConfirm(e.target.value); }}
+              onChange={(e) => {
+                setNewPasswordConfirm(e.target.value);
+              }}
               required
               autoComplete="new-password"
               minLength={8}
             />
-            <Button type="submit" isLoading={isChangingPassword} loadingLabel={t('admin.account.changingPassword')}>
+            <Button
+              type="submit"
+              isLoading={isChangingPassword}
+              loadingLabel={t('admin.account.changingPassword')}
+            >
               {t('admin.account.changePassword')}
             </Button>
           </form>
@@ -173,31 +198,44 @@ export function AccountSettingsPage() {
         {/* Active sessions */}
         <section className="rounded-sm border border-border bg-surface p-6 shadow-page">
           <div className="mb-4 flex items-center justify-between gap-4 flex-wrap">
-            <h2 className="font-display text-lg leading-snug text-foreground">{t('admin.sessions.title')}</h2>
+            <h2 className="font-display text-lg leading-snug text-foreground">
+              {t('admin.sessions.title')}
+            </h2>
             <Button
               variant="danger"
               size="sm"
               isLoading={isLoggingOutAll}
               loadingLabel={t('admin.sessions.loggingOutAll')}
-              onClick={() => { void handleLogoutAll(); }}
+              onClick={() => {
+                void handleLogoutAll();
+              }}
             >
               {t('admin.sessions.logoutAll')}
             </Button>
           </div>
 
           {logoutAllInfo && (
-            <p role="status" className="mb-4 rounded-sm bg-accent/10 border border-accent/20 p-3 text-sm text-accent">
+            <p
+              role="status"
+              className="mb-4 rounded-sm bg-accent/10 border border-accent/20 p-3 text-sm text-accent"
+            >
               {logoutAllInfo}
             </p>
           )}
           {logoutAllError && (
-            <p role="alert" className="mb-4 rounded-sm bg-accent-error/10 border border-accent-error/20 p-3 text-sm text-accent-error">
+            <p
+              role="alert"
+              className="mb-4 rounded-sm bg-accent-error/10 border border-accent-error/20 p-3 text-sm text-accent-error"
+            >
               {logoutAllError}
             </p>
           )}
 
           {sessionsError && (
-            <p role="alert" className="mb-4 rounded-sm bg-accent-error/10 border border-accent-error/20 p-3 text-sm text-accent-error">
+            <p
+              role="alert"
+              className="mb-4 rounded-sm bg-accent-error/10 border border-accent-error/20 p-3 text-sm text-accent-error"
+            >
               {sessionsError}
             </p>
           )}
@@ -208,7 +246,10 @@ export function AccountSettingsPage() {
 
           <ul className="space-y-3">
             {sessions?.map((session) => (
-              <li key={session.id} className="rounded-sm border border-border bg-surface p-4 text-sm">
+              <li
+                key={session.id}
+                className="rounded-sm border border-border bg-surface p-4 text-sm"
+              >
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-medium text-foreground">
                     {session.current

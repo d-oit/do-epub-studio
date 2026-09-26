@@ -8,7 +8,10 @@ import { adminAuth } from '../../middleware/auth';
 import { requireStepUp } from '../../middleware/step-up';
 import { NotFoundError, AppError } from '../../lib/http-errors';
 
-export const creatorsAdminRouter = new Hono<{ Bindings: Env; Variables: { adminUser: { email: string; id: string; role: string } } }>();
+export const creatorsAdminRouter = new Hono<{
+  Bindings: Env;
+  Variables: { adminUser: { email: string; id: string; role: string } };
+}>();
 
 interface CreatorRow extends JsonRow {
   email: string;
@@ -26,21 +29,17 @@ creatorsAdminRouter.post(
     const body = c.req.valid('json');
     const adminUser = c.get('adminUser');
 
-    const book = await queryFirst<{ id: string }>(
-      c.env,
-      `SELECT id FROM books WHERE id = ?`,
-      [bookId],
-    );
+    const book = await queryFirst<{ id: string }>(c.env, `SELECT id FROM books WHERE id = ?`, [
+      bookId,
+    ]);
     if (!book) {
       throw new NotFoundError('Book');
     }
 
     // Creators are team members with accounts — never auto-create users.
-    const user = await queryFirst<{ id: string }>(
-      c.env,
-      `SELECT id FROM users WHERE email = ?`,
-      [body.email],
-    );
+    const user = await queryFirst<{ id: string }>(c.env, `SELECT id FROM users WHERE email = ?`, [
+      body.email,
+    ]);
     if (!user) {
       throw new AppError('No user account for this email', 'NO_USER', 404);
     }
@@ -58,16 +57,23 @@ creatorsAdminRouter.post(
          VALUES (?, ?, ?, ?, ?)`,
         [crypto.randomUUID(), bookId, user.id, adminUser.id, now],
       );
-      await logAudit(c.env, {
-        entityType: 'book-creator',
-        entityId: `${bookId}:${user.id}`,
-        action: 'assigned',
-        actorEmail: adminUser.email,
-        payload: { bookId, email: body.email },
-      }, c.executionCtx);
+      await logAudit(
+        c.env,
+        {
+          entityType: 'book-creator',
+          entityId: `${bookId}:${user.id}`,
+          action: 'assigned',
+          actorEmail: adminUser.email,
+          payload: { bookId, email: body.email },
+        },
+        c.executionCtx,
+      );
     }
 
-    return c.json({ ok: true, data: { bookId, email: body.email, alreadyAssigned: Boolean(existing) } }, 201);
+    return c.json(
+      { ok: true, data: { bookId, email: body.email, alreadyAssigned: Boolean(existing) } },
+      201,
+    );
   },
 );
 
@@ -81,25 +87,26 @@ creatorsAdminRouter.delete(
     const body = c.req.valid('json');
     const adminUser = c.get('adminUser');
 
-    const user = await queryFirst<{ id: string }>(
-      c.env,
-      `SELECT id FROM users WHERE email = ?`,
-      [body.email],
-    );
+    const user = await queryFirst<{ id: string }>(c.env, `SELECT id FROM users WHERE email = ?`, [
+      body.email,
+    ]);
     if (user) {
       // Revocation is a hard delete; the audit entry preserves the history.
-      await execute(
+      await execute(c.env, `DELETE FROM book_creators WHERE book_id = ? AND user_id = ?`, [
+        bookId,
+        user.id,
+      ]);
+      await logAudit(
         c.env,
-        `DELETE FROM book_creators WHERE book_id = ? AND user_id = ?`,
-        [bookId, user.id],
+        {
+          entityType: 'book-creator',
+          entityId: `${bookId}:${user.id}`,
+          action: 'revoked',
+          actorEmail: adminUser.email,
+          payload: { bookId, email: body.email },
+        },
+        c.executionCtx,
       );
-      await logAudit(c.env, {
-        entityType: 'book-creator',
-        entityId: `${bookId}:${user.id}`,
-        action: 'revoked',
-        actorEmail: adminUser.email,
-        payload: { bookId, email: body.email },
-      }, c.executionCtx);
     }
 
     return c.json({ ok: true, data: { bookId, email: body.email } });
@@ -109,11 +116,9 @@ creatorsAdminRouter.delete(
 creatorsAdminRouter.get('/books/:id/creators', adminAuth, async (c) => {
   const bookId = c.req.param('id');
 
-  const book = await queryFirst<{ id: string }>(
-    c.env,
-    `SELECT id FROM books WHERE id = ?`,
-    [bookId],
-  );
+  const book = await queryFirst<{ id: string }>(c.env, `SELECT id FROM books WHERE id = ?`, [
+    bookId,
+  ]);
   if (!book) {
     throw new NotFoundError('Book');
   }

@@ -66,7 +66,16 @@ export function useHighlightHandlers(): HighlightHandlersReturn {
       } catch (err) {
         // Roll back the optimistic placeholder on error.
         removeOptimistic(tempId, 'highlight');
-        logClientEvent({ level: 'error', traceId: createTraceId(), event: 'annotation.create-highlight.failed', error: { name: (err as Error).name, message: (err as Error).message, stack: (err as Error).stack } });
+        logClientEvent({
+          level: 'error',
+          traceId: createTraceId(),
+          event: 'annotation.create-highlight.failed',
+          error: {
+            name: (err as Error).name,
+            message: (err as Error).message,
+            stack: (err as Error).stack,
+          },
+        });
         throw err;
       }
     },
@@ -80,7 +89,12 @@ export function useHighlightHandlers(): HighlightHandlersReturn {
         await updateHighlight(bookId, highlightId, { note }, sessionToken);
         updateHighlightInStore(highlightId, { note, updatedAt: new Date().toISOString() });
       } catch (err) {
-        logClientEvent({ level: 'error', traceId: createTraceId(), event: 'annotation.edit-highlight.failed', error: { name: (err as Error).name, message: (err as Error).message } });
+        logClientEvent({
+          level: 'error',
+          traceId: createTraceId(),
+          event: 'annotation.edit-highlight.failed',
+          error: { name: (err as Error).name, message: (err as Error).message },
+        });
       }
     },
     [sessionToken, bookId, updateHighlightInStore],
@@ -93,7 +107,12 @@ export function useHighlightHandlers(): HighlightHandlersReturn {
         await deleteHighlight(bookId, highlightId, sessionToken);
         removeHighlight(highlightId);
       } catch (err) {
-        logClientEvent({ level: 'error', traceId: createTraceId(), event: 'annotation.delete-highlight.failed', error: { name: (err as Error).name, message: (err as Error).message } });
+        logClientEvent({
+          level: 'error',
+          traceId: createTraceId(),
+          event: 'annotation.delete-highlight.failed',
+          error: { name: (err as Error).name, message: (err as Error).message },
+        });
       }
     },
     [sessionToken, bookId, removeHighlight],
@@ -158,7 +177,16 @@ export function useCommentHandlers(): CommentHandlersReturn {
         addComment(comment);
       } catch (err) {
         removeOptimistic(tempId, 'comment');
-        logClientEvent({ level: 'error', traceId: createTraceId(), event: 'annotation.create-comment.failed', error: { name: (err as Error).name, message: (err as Error).message, stack: (err as Error).stack } });
+        logClientEvent({
+          level: 'error',
+          traceId: createTraceId(),
+          event: 'annotation.create-comment.failed',
+          error: {
+            name: (err as Error).name,
+            message: (err as Error).message,
+            stack: (err as Error).stack,
+          },
+        });
         throw err;
       }
     },
@@ -201,7 +229,12 @@ export function useCommentHandlers(): CommentHandlersReturn {
           resolvedAt: newStatus === 'resolved' ? new Date().toISOString() : null,
         });
       } catch (err) {
-        logClientEvent({ level: 'error', traceId: createTraceId(), event: 'annotation.resolve-comment.failed', error: { name: (err as Error).name, message: (err as Error).message } });
+        logClientEvent({
+          level: 'error',
+          traceId: createTraceId(),
+          event: 'annotation.resolve-comment.failed',
+          error: { name: (err as Error).name, message: (err as Error).message },
+        });
       }
     },
     [sessionToken, bookId, comments, updateCommentInStore],
@@ -237,7 +270,16 @@ export function useCommentHandlers(): CommentHandlersReturn {
         addComment(comment);
       } catch (err) {
         removeOptimistic(tempId, 'comment');
-        logClientEvent({ level: 'error', traceId: createTraceId(), event: 'annotation.reply-comment.failed', error: { name: (err as Error).name, message: (err as Error).message, stack: (err as Error).stack } });
+        logClientEvent({
+          level: 'error',
+          traceId: createTraceId(),
+          event: 'annotation.reply-comment.failed',
+          error: {
+            name: (err as Error).name,
+            message: (err as Error).message,
+            stack: (err as Error).stack,
+          },
+        });
         throw err;
       }
     },
@@ -251,7 +293,12 @@ export function useCommentHandlers(): CommentHandlersReturn {
         await updateComment(commentId, { body: text }, sessionToken);
         updateCommentInStore(commentId, { body: text, updatedAt: new Date().toISOString() });
       } catch (err) {
-        logClientEvent({ level: 'error', traceId: createTraceId(), event: 'annotation.edit-comment.failed', error: { name: (err as Error).name, message: (err as Error).message } });
+        logClientEvent({
+          level: 'error',
+          traceId: createTraceId(),
+          event: 'annotation.edit-comment.failed',
+          error: { name: (err as Error).name, message: (err as Error).message },
+        });
       }
     },
     [sessionToken, updateCommentInStore],
@@ -264,7 +311,12 @@ export function useCommentHandlers(): CommentHandlersReturn {
         await updateComment(commentId, { status: 'deleted' }, sessionToken);
         updateCommentInStore(commentId, { status: 'deleted' });
       } catch (err) {
-        logClientEvent({ level: 'error', traceId: createTraceId(), event: 'annotation.delete-comment.failed', error: { name: (err as Error).name, message: (err as Error).message } });
+        logClientEvent({
+          level: 'error',
+          traceId: createTraceId(),
+          event: 'annotation.delete-comment.failed',
+          error: { name: (err as Error).name, message: (err as Error).message },
+        });
       }
     },
     [sessionToken, updateCommentInStore],

@@ -17,8 +17,7 @@ const FAIL_ON_VIOLATION =
   process.argv.includes('--fail-on-violation');
 
 const NO_BASELINE =
-  process.env.BUNDLE_BUDGET_NO_BASELINE === '1' ||
-  process.argv.includes('--no-baseline');
+  process.env.BUNDLE_BUDGET_NO_BASELINE === '1' || process.argv.includes('--no-baseline');
 
 // ADR-107 §3 — gzipped thresholds in KB, sourced from the single budget
 // file .performance-budgets.json (Plan 214 R5: one authoritative budget
@@ -47,7 +46,9 @@ function loadBudgets() {
 const BUDGETS = loadBudgets();
 
 function distDirArg() {
-  const input = String(process.argv.slice(2).filter((a) => !a.startsWith('--'))[0] || 'apps/web/dist');
+  const input = String(
+    process.argv.slice(2).filter((a) => !a.startsWith('--'))[0] || 'apps/web/dist',
+  );
   return path.isAbsolute(input) ? input : path.resolve(rootDir, input);
 }
 
@@ -59,7 +60,13 @@ function classify(name) {
 }
 
 function budgetFor(kind) {
-  return kind === 'mainJs' ? BUDGETS.mainJs : kind === 'mainCss' ? BUDGETS.mainCss : kind === 'lazyChunkJs' ? BUDGETS.lazyChunkJs : null;
+  return kind === 'mainJs'
+    ? BUDGETS.mainJs
+    : kind === 'mainCss'
+      ? BUDGETS.mainCss
+      : kind === 'lazyChunkJs'
+        ? BUDGETS.lazyChunkJs
+        : null;
 }
 
 function gzippedSize(buffer) {
@@ -87,13 +94,15 @@ function loadBaseline() {
 // Check baseline deltas for all routes, return { sections, violations }
 function checkBaselineDelta(distDir, baseline) {
   if (!baseline?.routes) return { sections: [], violations: 0 };
-  const routeBudgetsConfig = JSON.parse(
-    fs.readFileSync(path.resolve(rootDir, '.performance-budgets.json'), 'utf8'),
-  ).routeBudgets || {};
+  const routeBudgetsConfig =
+    JSON.parse(fs.readFileSync(path.resolve(rootDir, '.performance-budgets.json'), 'utf8'))
+      .routeBudgets || {};
 
   // Load manifest once
-  const mp = [path.join(distDir, '.vite', 'manifest.json'), path.join(distDir, 'manifest.json')]
-    .find((p) => fs.existsSync(p));
+  const mp = [
+    path.join(distDir, '.vite', 'manifest.json'),
+    path.join(distDir, 'manifest.json'),
+  ].find((p) => fs.existsSync(p));
   if (!mp) return { sections: [], violations: 0 };
   const manifest = new Map(Object.entries(JSON.parse(fs.readFileSync(mp, 'utf8'))));
 
@@ -103,35 +112,66 @@ function checkBaselineDelta(distDir, baseline) {
 
   const resolveEntry = (routeName, src) => {
     if (manifest.has(src)) return manifest.get(src);
-    for (const c of manifest.values()) { if (c.src === src || c.name === routeName + '-route') return c; }
+    for (const c of manifest.values()) {
+      if (c.src === src || c.name === routeName + '-route') return c;
+    }
     return null;
   };
 
   const collectTransitive = (entry) => {
-    const ids = new Set(); const visited = new Set(); const q = [entry, ...[...manifest.values()].filter((c) => c.isEntry)];
+    const ids = new Set();
+    const visited = new Set();
+    const q = [entry, ...[...manifest.values()].filter((c) => c.isEntry)];
     while (q.length) {
-      const ch = q.shift(); if (!ch?.file) continue; const f = String(ch.file);
-      if (visited.has(f)) continue; visited.add(f); ids.add(f);
+      const ch = q.shift();
+      if (!ch?.file) continue;
+      const f = String(ch.file);
+      if (visited.has(f)) continue;
+      visited.add(f);
+      ids.add(f);
       if (ch.css?.forEach) ch.css.forEach((c) => ids.add(String(c)));
-      if (ch.imports?.forEach) ch.imports.forEach((i) => { if (manifest.has(String(i))) q.push(manifest.get(String(i))); });
+      if (ch.imports?.forEach)
+        ch.imports.forEach((i) => {
+          if (manifest.has(String(i))) q.push(manifest.get(String(i)));
+        });
     }
     return ids;
   };
 
-  const sections = [], violations = [];
+  const sections = [],
+    violations = [];
   for (const [routeName, br] of Object.entries(baseline.routes)) {
-    const cfg = routeBudgetsConfig[routeName]; if (!cfg) continue;
-    const entry = resolveEntry(routeName, String(cfg.entry)); if (!entry?.file) continue;
-    const entryBuf = bufs.get(String(entry.file)); if (!entryBuf) continue;
+    const cfg = routeBudgetsConfig[routeName];
+    if (!cfg) continue;
+    const entry = resolveEntry(routeName, String(cfg.entry));
+    if (!entry?.file) continue;
+    const entryBuf = bufs.get(String(entry.file));
+    if (!entryBuf) continue;
     const entryGz = gzippedSize(entryBuf);
     let totalGz = 0;
-    for (const fid of collectTransitive(entry)) { const b = bufs.get(String(fid)); if (b) totalGz += gzippedSize(b); }
-    const baseEntry = br.gzip || 0, baseTotal = br.totalTransitive?.gzip || 0;
-    const entryDelta = entryGz - baseEntry, totalDelta = totalGz - baseTotal;
+    for (const fid of collectTransitive(entry)) {
+      const b = bufs.get(String(fid));
+      if (b) totalGz += gzippedSize(b);
+    }
+    const baseEntry = br.gzip || 0,
+      baseTotal = br.totalTransitive?.gzip || 0;
+    const entryDelta = entryGz - baseEntry,
+      totalDelta = totalGz - baseTotal;
     const totalPct = baseTotal > 0 ? ((totalGz - baseTotal) / baseTotal) * 100 : 0;
-    const entryFail = entryDelta > 10 * 1024, totalFail = totalPct > 3, passed = !entryFail && !totalFail;
-    if (!passed) violations.push({ route: routeName, entryDelta, totalDelta, totalPct, entryFail, totalFail });
-    sections.push({ route: routeName, entryDelta, totalDelta, totalPct, entryFail, totalFail, passed });
+    const entryFail = entryDelta > 10 * 1024,
+      totalFail = totalPct > 3,
+      passed = !entryFail && !totalFail;
+    if (!passed)
+      violations.push({ route: routeName, entryDelta, totalDelta, totalPct, entryFail, totalFail });
+    sections.push({
+      route: routeName,
+      entryDelta,
+      totalDelta,
+      totalPct,
+      entryFail,
+      totalFail,
+      passed,
+    });
   }
   return { sections, violations };
 }
@@ -204,15 +244,11 @@ function buildBaselineDeltaTable(sections) {
 function main() {
   const distDir = distDirArg();
   if (!distDir.startsWith(rootDir)) {
-    console.error(
-      `Error: dist directory must be within repository (${rootDir})`,
-    );
+    console.error(`Error: dist directory must be within repository (${rootDir})`);
     process.exit(2);
   }
   if (!fs.existsSync(distDir)) {
-    console.error(
-      `Error: dist directory not found at ${distDir}. Run 'pnpm build' first.`,
-    );
+    console.error(`Error: dist directory not found at ${distDir}. Run 'pnpm build' first.`);
     process.exit(2);
   }
 
@@ -276,7 +312,14 @@ function main() {
     '',
     `Budgets: main JS ${BUDGETS.mainJs} KB · main CSS ${BUDGETS.mainCss} KB · lazy chunk ${BUDGETS.lazyChunkJs} KB · any file <= ${maxFileMiB} MiB (deploy cap)`,
     ...(oversize.length
-      ? ['', `**${oversize.length} file(s) exceed the per-file deploy cap:**`, ...oversize.map((f) => `- \`${f.relPath}\` is ${(f.bytes / (1024 * 1024)).toFixed(2)} MiB — Cloudflare Pages rejects files > ${maxFileMiB} MiB at upload`)]
+      ? [
+          '',
+          `**${oversize.length} file(s) exceed the per-file deploy cap:**`,
+          ...oversize.map(
+            (f) =>
+              `- \`${f.relPath}\` is ${(f.bytes / (1024 * 1024)).toFixed(2)} MiB — Cloudflare Pages rejects files > ${maxFileMiB} MiB at upload`,
+          ),
+        ]
       : []),
     `Files measured: ${rows.filter((r) => r.budget !== null).length} · Violations: ${violations}`,
   ].join('\n');
@@ -304,9 +347,7 @@ function main() {
   }
 
   if (violations > 0 && FAIL_ON_VIOLATION) {
-    console.error(
-      `\n❌ Bundle budget exceeded (${violations} file(s)). See ADR-107 §3.`,
-    );
+    console.error(`\n❌ Bundle budget exceeded (${violations} file(s)). See ADR-107 §3.`);
     process.exit(1);
   } else if (violations > 0) {
     console.warn(

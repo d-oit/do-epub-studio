@@ -15,11 +15,7 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
     ].join(' ');
 
     return (
-      <div
-        ref={ref}
-        className={`${paperClasses} ${className}`}
-        {...props}
-      >
+      <div ref={ref} className={`${paperClasses} ${className}`} {...props}>
         {children}
       </div>
     );

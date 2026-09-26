@@ -1,6 +1,16 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import DOMPurify from 'dompurify';
-import { sanitizeSvg, sanitizeDom, sanitizeEpubDocument, createSvgSanitizerHook, createEpubSanitizerHook, SANITIZER_POLICY_VERSION, buildExternalUrlCsp, createExternalUrlGuardHook, isAllowedExternalHost } from '../sanitizer';
+import {
+  sanitizeSvg,
+  sanitizeDom,
+  sanitizeEpubDocument,
+  createSvgSanitizerHook,
+  createEpubSanitizerHook,
+  SANITIZER_POLICY_VERSION,
+  buildExternalUrlCsp,
+  createExternalUrlGuardHook,
+  isAllowedExternalHost,
+} from '../sanitizer';
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -8,7 +18,8 @@ afterEach(() => {
 
 describe('sanitizeSvg', () => {
   it('allows safe SVG tags', () => {
-    const html = '<svg xmlns="http://www.w3.org/2000/svg"><path d="M0 0h100v100H0z"/><rect x="10" y="10" width="50" height="50"/><circle cx="50" cy="50" r="40"/></svg>';
+    const html =
+      '<svg xmlns="http://www.w3.org/2000/svg"><path d="M0 0h100v100H0z"/><rect x="10" y="10" width="50" height="50"/><circle cx="50" cy="50" r="40"/></svg>';
     const result = sanitizeSvg(html);
     expect(result).toContain('<svg');
     expect(result).toContain('</svg>');
@@ -18,7 +29,8 @@ describe('sanitizeSvg', () => {
   });
 
   it('removes event handlers from SVG elements', () => {
-    const html = '<svg xmlns="http://www.w3.org/2000/svg"><rect x="10" y="10" width="100" height="100" onclick="alert(1)" onload="alert(2)" onmouseover="evil()"/></svg>';
+    const html =
+      '<svg xmlns="http://www.w3.org/2000/svg"><rect x="10" y="10" width="100" height="100" onclick="alert(1)" onload="alert(2)" onmouseover="evil()"/></svg>';
     const result = sanitizeSvg(html);
     expect(result).not.toContain('onclick');
     expect(result).not.toContain('onload');
@@ -27,7 +39,8 @@ describe('sanitizeSvg', () => {
   });
 
   it('removes foreignObject elements', () => {
-    const html = '<svg xmlns="http://www.w3.org/2000/svg"><foreignObject><iframe src="evil.com"></iframe></foreignObject><rect width="100" height="100"/></svg>';
+    const html =
+      '<svg xmlns="http://www.w3.org/2000/svg"><foreignObject><iframe src="evil.com"></iframe></foreignObject><rect width="100" height="100"/></svg>';
     const result = sanitizeSvg(html);
     expect(result).not.toContain('foreignObject');
     expect(result).not.toContain('foreignobject');
@@ -37,7 +50,8 @@ describe('sanitizeSvg', () => {
   });
 
   it('strips script injection via SVG', () => {
-    const html = '<svg xmlns="http://www.w3.org/2000/svg"><script>alert("xss")</script><rect width="100" height="100"/></svg>';
+    const html =
+      '<svg xmlns="http://www.w3.org/2000/svg"><script>alert("xss")</script><rect width="100" height="100"/></svg>';
     const result = sanitizeSvg(html);
     expect(result).not.toContain('<script');
     expect(result).not.toContain('alert');
@@ -64,7 +78,8 @@ describe('sanitizeSvg', () => {
   });
 
   it('blocks javascript: URLs in href attributes', () => {
-    const html = '<svg xmlns="http://www.w3.org/2000/svg"><use href="javascript:alert(1)"/><image xlink:href="javascript:alert(2)"/></svg>';
+    const html =
+      '<svg xmlns="http://www.w3.org/2000/svg"><use href="javascript:alert(1)"/><image xlink:href="javascript:alert(2)"/></svg>';
     const result = sanitizeSvg(html);
     expect(result).not.toContain('javascript:');
   });
@@ -72,7 +87,8 @@ describe('sanitizeSvg', () => {
   it('strips all href and xlink:href attributes (SSRF prevention)', () => {
     // sanitizeSvg is for standalone SVG snippets — href is forbidden to block
     // feImage SSRF (external resource loading via <feImage href="https://..."/>)
-    const html = '<svg xmlns="http://www.w3.org/2000/svg"><use href="#mySymbol"/><image href="image.png"/><feImage href="https://evil.com/track.gif"/></svg>';
+    const html =
+      '<svg xmlns="http://www.w3.org/2000/svg"><use href="#mySymbol"/><image href="image.png"/><feImage href="https://evil.com/track.gif"/></svg>';
     const result = sanitizeSvg(html);
     expect(result).not.toContain('href');
     expect(result).not.toContain('xlink:href');
@@ -83,7 +99,8 @@ describe('sanitizeSvg', () => {
   });
 
   it('removes style elements from SVG', () => {
-    const html = '<svg xmlns="http://www.w3.org/2000/svg"><style>body { background: red; }</style><rect width="100" height="100"/></svg>';
+    const html =
+      '<svg xmlns="http://www.w3.org/2000/svg"><style>body { background: red; }</style><rect width="100" height="100"/></svg>';
     const result = sanitizeSvg(html);
     expect(result).not.toContain('<style>');
     expect(result).not.toContain('background: red');
@@ -91,14 +108,16 @@ describe('sanitizeSvg', () => {
   });
 
   it('preserves inline style attributes', () => {
-    const html = '<svg xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" style="fill: red; stroke: black;"/></svg>';
+    const html =
+      '<svg xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" style="fill: red; stroke: black;"/></svg>';
     const result = sanitizeSvg(html);
     expect(result).toContain('fill: red');
     expect(result).toContain('stroke: black');
   });
 
   it('allows gradient and filter definitions', () => {
-    const html = '<svg xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="grad"><stop offset="0%" stop-color="red"/><stop offset="100%" stop-color="blue"/></linearGradient><filter id="blur"><feGaussianBlur stdDeviation="3"/></filter></defs><rect width="100" height="100" fill="url(#grad)" filter="url(#blur)"/></svg>';
+    const html =
+      '<svg xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="grad"><stop offset="0%" stop-color="red"/><stop offset="100%" stop-color="blue"/></linearGradient><filter id="blur"><feGaussianBlur stdDeviation="3"/></filter></defs><rect width="100" height="100" fill="url(#grad)" filter="url(#blur)"/></svg>';
     const result = sanitizeSvg(html);
     expect(result).toContain('<linearGradient');
     expect(result).toContain('<filter');
@@ -112,7 +131,8 @@ describe('sanitizeSvg', () => {
   });
 
   it('blocks feImage href to prevent SSRF', () => {
-    const html = '<svg xmlns="http://www.w3.org/2000/svg"><filter id="f1"><feImage href="https://evil.com/track.gif" result="img"/></filter><rect width="100" height="100" filter="url(#f1)"/></svg>';
+    const html =
+      '<svg xmlns="http://www.w3.org/2000/svg"><filter id="f1"><feImage href="https://evil.com/track.gif" result="img"/></filter><rect width="100" height="100" filter="url(#f1)"/></svg>';
     const result = sanitizeSvg(html);
     expect(result).not.toContain('href');
     expect(result).not.toContain('evil.com');
@@ -121,14 +141,16 @@ describe('sanitizeSvg', () => {
   });
 
   it('sanitizes XSS via SVG animate elements', () => {
-    const html = '<svg xmlns="http://www.w3.org/2000/svg"><animate onbegin="alert(1)" attributeName="x" values="0;100" dur="1s"/></svg>';
+    const html =
+      '<svg xmlns="http://www.w3.org/2000/svg"><animate onbegin="alert(1)" attributeName="x" values="0;100" dur="1s"/></svg>';
     const result = sanitizeSvg(html);
     expect(result).not.toContain('onbegin');
     expect(result).not.toContain('alert');
   });
 
   it('removes iframe from SVG', () => {
-    const html = '<svg xmlns="http://www.w3.org/2000/svg"><iframe src="https://evil.com"></iframe><rect width="100" height="100"/></svg>';
+    const html =
+      '<svg xmlns="http://www.w3.org/2000/svg"><iframe src="https://evil.com"></iframe><rect width="100" height="100"/></svg>';
     const result = sanitizeSvg(html);
     expect(result).not.toContain('iframe');
     expect(result).not.toContain('evil');
@@ -144,22 +166,30 @@ describe('isAllowedExternalHost', () => {
   });
 
   it('matches strict subdomains of an allowlist entry', () => {
-    expect(isAllowedExternalHost('https://cdn.example.com/a.svg', allow(['example.com']))).toBe(true);
+    expect(isAllowedExternalHost('https://cdn.example.com/a.svg', allow(['example.com']))).toBe(
+      true,
+    );
     expect(isAllowedExternalHost('https://a.b.example.com/x', allow(['example.com']))).toBe(true);
   });
 
   it('rejects a host that only contains the entry as a suffix of its own label', () => {
     // `example.com.evil.org` ends with neither `.example.com` nor `example.com`.
-    expect(isAllowedExternalHost('https://example.com.evil.org/x', allow(['example.com']))).toBe(false);
+    expect(isAllowedExternalHost('https://example.com.evil.org/x', allow(['example.com']))).toBe(
+      false,
+    );
     expect(isAllowedExternalHost('https://notexample.com/x', allow(['example.com']))).toBe(false);
   });
 
   it('normalizes a trailing dot on both host and entry', () => {
-    expect(isAllowedExternalHost('https://example.com.:8443/a', allow(['example.com.']))).toBe(true);
+    expect(isAllowedExternalHost('https://example.com.:8443/a', allow(['example.com.']))).toBe(
+      true,
+    );
   });
 
   it('normalizes port, userinfo and host case', () => {
-    expect(isAllowedExternalHost('https://user:pass@EXAMPLE.COM:8443/a.svg', allow(['example.com']))).toBe(true);
+    expect(
+      isAllowedExternalHost('https://user:pass@EXAMPLE.COM:8443/a.svg', allow(['example.com'])),
+    ).toBe(true);
   });
 
   it('denies the whole allowlist under block-all', () => {
@@ -184,7 +214,8 @@ describe('sanitizeDom', () => {
   }
 
   it('preserves foreignObject in SVG in DOM (handled by DOMPurify config instead)', () => {
-    const html = '<svg xmlns="http://www.w3.org/2000/svg"><foreignObject><div>test</div></foreignObject><rect width="100" height="100"/></svg>';
+    const html =
+      '<svg xmlns="http://www.w3.org/2000/svg"><foreignObject><div>test</div></foreignObject><rect width="100" height="100"/></svg>';
     const doc = createDoc(html);
     const svg = doc.querySelector('svg') as Element;
     expect(svg).not.toBeNull();
@@ -194,7 +225,8 @@ describe('sanitizeDom', () => {
   });
 
   it('removes event handlers from SVG elements in DOM', () => {
-    const html = '<svg xmlns="http://www.w3.org/2000/svg"><rect onclick="alert(1)" onload="evil()"/></svg>';
+    const html =
+      '<svg xmlns="http://www.w3.org/2000/svg"><rect onclick="alert(1)" onload="evil()"/></svg>';
     const doc = createDoc(html);
     const svg = doc.querySelector('svg') as Element;
     expect(svg).not.toBeNull();
@@ -347,9 +379,7 @@ describe('sanitizeDom', () => {
     // and must be removed — not kept via an arbitrary short cap.
     const longScheme = 'a'.repeat(64);
     const html =
-      `<svg xmlns="http://www.w3.org/2000/svg">` +
-      `<use href="${longScheme}:evil"/>` +
-      `</svg>`;
+      `<svg xmlns="http://www.w3.org/2000/svg">` + `<use href="${longScheme}:evil"/>` + `</svg>`;
     const doc = createDoc(html);
     sanitizeDom(doc);
     expect(doc.querySelector('use')?.getAttribute('href')).toBeNull();
@@ -362,9 +392,7 @@ describe('sanitizeDom', () => {
     // it is not a javascript:/data:/vbscript: vector and matches OLD behavior.
     const hugePrefix = 'b'.repeat(5000);
     const html =
-      `<svg xmlns="http://www.w3.org/2000/svg">` +
-      `<use href="${hugePrefix}:evil"/>` +
-      `</svg>`;
+      `<svg xmlns="http://www.w3.org/2000/svg">` + `<use href="${hugePrefix}:evil"/>` + `</svg>`;
     const doc = createDoc(html);
     sanitizeDom(doc);
     expect(doc.querySelector('use')?.getAttribute('href')).not.toBeNull();
@@ -414,8 +442,13 @@ describe('sanitizeDom', () => {
 
     // allowlisted host → kept
     const allowDoc = createDoc(html);
-    sanitizeDom(allowDoc, undefined, undefined, undefined, { mode: 'allowlist', hosts: ['example.com'] });
-    expect(allowDoc.querySelector('feImage')?.getAttribute('href')).toBe('https://example.com/filter.svg');
+    sanitizeDom(allowDoc, undefined, undefined, undefined, {
+      mode: 'allowlist',
+      hosts: ['example.com'],
+    });
+    expect(allowDoc.querySelector('feImage')?.getAttribute('href')).toBe(
+      'https://example.com/filter.svg',
+    );
   });
 
   it('strips non-whitelisted-scheme feImage hrefs through the EPUB document pipeline', () => {
@@ -448,7 +481,10 @@ describe('sanitizeDom', () => {
       const el = doc.getElementsByTagNameNS('http://www.w3.org/2000/svg', tag)[0];
       expect(el, `${tag} element survives sanitization`).toBeTruthy();
       expect(el?.getAttribute('href'), `${tag} href`).toBeNull();
-      expect(el?.getAttributeNS('http://www.w3.org/1999/xlink', 'href'), `${tag} xlink:href`).toBeNull();
+      expect(
+        el?.getAttributeNS('http://www.w3.org/1999/xlink', 'href'),
+        `${tag} xlink:href`,
+      ).toBeNull();
     }
   });
 });
@@ -467,7 +503,8 @@ describe('sanitizeEpubDocument', () => {
   });
 
   it('preserves allowed styling tags', () => {
-    const html = '<html><head><style>body { color: red; }</style><link rel="stylesheet" href="style.css"/><meta name="viewport" content="width=device-width"/></head><body><p>Hello</p></body></html>';
+    const html =
+      '<html><head><style>body { color: red; }</style><link rel="stylesheet" href="style.css"/><meta name="viewport" content="width=device-width"/></head><body><p>Hello</p></body></html>';
     const doc = createDoc(html);
     sanitizeEpubDocument(doc);
     expect(doc.querySelector('style')).not.toBeNull();
@@ -476,7 +513,8 @@ describe('sanitizeEpubDocument', () => {
   });
 
   it('removes dangerous tags', () => {
-    const html = '<html><body><iframe src="evil.com"></iframe><object data="flash.swf"></object><embed src="plugin.exe"/></body></html>';
+    const html =
+      '<html><body><iframe src="evil.com"></iframe><object data="flash.swf"></object><embed src="plugin.exe"/></body></html>';
     const doc = createDoc(html);
     sanitizeEpubDocument(doc);
     expect(doc.querySelector('iframe')).toBeNull();
@@ -502,7 +540,8 @@ describe('sanitizeEpubDocument', () => {
   });
 
   it('removes form elements (prevents phishing)', () => {
-    const html = '<html><body><form action="http://evil.com"><input type="text" name="user"/><button type="submit">Login</button></form></body></html>';
+    const html =
+      '<html><body><form action="http://evil.com"><input type="text" name="user"/><button type="submit">Login</button></form></body></html>';
     const doc = createDoc(html);
     sanitizeEpubDocument(doc);
     expect(doc.querySelector('form')).toBeNull();
@@ -545,8 +584,12 @@ describe('sanitizeEpubDocument', () => {
 
     // allowlist permits example.com (exact + subdomain), strips others
     const allowDoc = createDoc(externalImg);
-    sanitizeEpubDocument(allowDoc, { externalUrlPolicy: { mode: 'allowlist', hosts: ['example.com'] } });
-    expect(allowDoc.querySelector('image')?.getAttribute('href')).toBe('https://cdn.example.com/cover.jpg');
+    sanitizeEpubDocument(allowDoc, {
+      externalUrlPolicy: { mode: 'allowlist', hosts: ['example.com'] },
+    });
+    expect(allowDoc.querySelector('image')?.getAttribute('href')).toBe(
+      'https://cdn.example.com/cover.jpg',
+    );
     expect(allowDoc.querySelector('use')?.getAttribute('href')).toBeNull();
   });
 
@@ -578,23 +621,35 @@ describe('createEpubSanitizerHook', () => {
 
   it('sanitizes the document passed to the hook', () => {
     const { hook } = createEpubSanitizerHook();
-    const doc = new DOMParser().parseFromString('<html><body><script>alert(1)</script></body></html>', 'text/html');
+    const doc = new DOMParser().parseFromString(
+      '<html><body><script>alert(1)</script></body></html>',
+      'text/html',
+    );
     hook({ document: doc });
     expect(doc.querySelector('script')).toBeNull();
   });
 
   it('sanitizes chapter with href (cache miss path)', () => {
     const { hook } = createEpubSanitizerHook();
-    const doc = new DOMParser().parseFromString('<html><body><script>alert(1)</script></body></html>', 'text/html');
+    const doc = new DOMParser().parseFromString(
+      '<html><body><script>alert(1)</script></body></html>',
+      'text/html',
+    );
     hook({ document: doc, href: 'chapter1.xhtml' });
     expect(doc.querySelector('script')).toBeNull();
   });
 
   it('uses cache on second call with same href', () => {
     const { hook } = createEpubSanitizerHook();
-    const doc1 = new DOMParser().parseFromString('<html><body><p>clean</p></body></html>', 'text/html');
+    const doc1 = new DOMParser().parseFromString(
+      '<html><body><p>clean</p></body></html>',
+      'text/html',
+    );
     hook({ document: doc1, href: 'chapter1.xhtml' });
-    const doc2 = new DOMParser().parseFromString('<html><body><script>alert(1)</script></body></html>', 'text/html');
+    const doc2 = new DOMParser().parseFromString(
+      '<html><body><script>alert(1)</script></body></html>',
+      'text/html',
+    );
     hook({ document: doc2, href: 'chapter1.xhtml' });
     expect(doc2.querySelector('script')).toBeNull();
   });
@@ -602,14 +657,20 @@ describe('createEpubSanitizerHook', () => {
   it('serves cached output without re-running the DOMPurify 3-pass pipeline on a hit', () => {
     const { hook } = createEpubSanitizerHook();
     const sanitizeSpy = vi.spyOn(DOMPurify, 'sanitize');
-    const doc = new DOMParser().parseFromString('<html><body><p>clean</p></body></html>', 'text/html');
+    const doc = new DOMParser().parseFromString(
+      '<html><body><p>clean</p></body></html>',
+      'text/html',
+    );
     hook({ document: doc, href: 'chapter1.xhtml' });
     const hitCount = sanitizeSpy.mock.calls.length;
     expect(hitCount).toBeGreaterThan(0);
 
     // A later document for the same href is REPLACED by the cached sanitized
     // output and never re-sanitized by DOMPurify — but must remain script-free.
-    const doc2 = new DOMParser().parseFromString('<html><body><script>alert(1)</script></body></html>', 'text/html');
+    const doc2 = new DOMParser().parseFromString(
+      '<html><body><script>alert(1)</script></body></html>',
+      'text/html',
+    );
     hook({ document: doc2, href: 'chapter1.xhtml' });
     expect(sanitizeSpy.mock.calls.length).toBe(hitCount);
     expect(doc2.querySelector('script')).toBeNull();
@@ -622,7 +683,8 @@ describe('createEpubSanitizerHook', () => {
     const { hook } = createEpubSanitizerHook();
     const sanitizeSpy = vi.spyOn(DOMPurify, 'sanitize');
 
-    const input = '<html lang="ar" dir="rtl"><head><script>alert(1)</script><title>Ch</title></head><body><p onclick="x()">Hello</p></body></html>';
+    const input =
+      '<html lang="ar" dir="rtl"><head><script>alert(1)</script><title>Ch</title></head><body><p onclick="x()">Hello</p></body></html>';
 
     const missDoc = new DOMParser().parseFromString(input, 'text/html');
     hook({ document: missDoc, href: 'chapter1.xhtml' });
@@ -655,17 +717,26 @@ describe('createEpubSanitizerHook', () => {
     const { hook: hookA } = createEpubSanitizerHook({ policyVersion: 1 });
     const { hook: hookB } = createEpubSanitizerHook({ policyVersion: 2 });
 
-    const docA1 = new DOMParser().parseFromString('<html><body><script>alert(1)</script></body></html>', 'text/html');
+    const docA1 = new DOMParser().parseFromString(
+      '<html><body><script>alert(1)</script></body></html>',
+      'text/html',
+    );
     hookA({ document: docA1, href: 'chapter1.xhtml' });
     const countAfterA = sanitizeSpy.mock.calls.length;
     expect(countAfterA).toBeGreaterThan(0);
 
     // B has a different policy version and does not share A's primitive cache.
-    const docA2 = new DOMParser().parseFromString('<html><body><script>alert(2)</script></body></html>', 'text/html');
+    const docA2 = new DOMParser().parseFromString(
+      '<html><body><script>alert(2)</script></body></html>',
+      'text/html',
+    );
     hookA({ document: docA2, href: 'chapter1.xhtml' });
     expect(sanitizeSpy.mock.calls.length).toBe(countAfterA);
 
-    const docB = new DOMParser().parseFromString('<html><body><script>alert(3)</script></body></html>', 'text/html');
+    const docB = new DOMParser().parseFromString(
+      '<html><body><script>alert(3)</script></body></html>',
+      'text/html',
+    );
     hookB({ document: docB, href: 'chapter1.xhtml' });
     expect(sanitizeSpy.mock.calls.length).toBeGreaterThan(countAfterA);
     expect(docB.querySelector('script')).toBeNull();
@@ -718,14 +789,20 @@ describe('createEpubSanitizerHook', () => {
 
     // Fill exactly SANITIZE_CACHE_MAX distinct chapters plus one to force eviction.
     for (let i = 0; i < 11; i++) {
-      const doc = new DOMParser().parseFromString(`<html><body><p>c${i}</p></body></html>`, 'text/html');
+      const doc = new DOMParser().parseFromString(
+        `<html><body><p>c${i}</p></body></html>`,
+        'text/html',
+      );
       hook({ document: doc, href: `c${i}.xhtml` });
     }
     const countAfterFill = sanitizeSpy.mock.calls.length;
     expect(countAfterFill).toBeGreaterThan(0);
 
     // Re-visiting the first chapter (least recently used, evicted) re-sanitizes.
-    const rehit = new DOMParser().parseFromString('<html><body><script>alert(1)</script></body></html>', 'text/html');
+    const rehit = new DOMParser().parseFromString(
+      '<html><body><script>alert(1)</script></body></html>',
+      'text/html',
+    );
     hook({ document: rehit, href: 'c0.xhtml' });
     expect(sanitizeSpy.mock.calls.length).toBeGreaterThan(countAfterFill);
     expect(rehit.querySelector('script')).toBeNull();
@@ -748,7 +825,9 @@ describe('createSvgSanitizerHook', () => {
   });
 
   it('applies externalUrlPolicy to nested svg use/image hrefs', () => {
-    const hook = createSvgSanitizerHook({ externalUrlPolicy: { mode: 'allowlist', hosts: ['example.com'] } });
+    const hook = createSvgSanitizerHook({
+      externalUrlPolicy: { mode: 'allowlist', hosts: ['example.com'] },
+    });
     const doc = new DOMParser().parseFromString(
       '<html><body>' +
         '<svg xmlns="http://www.w3.org/2000/svg">' +
@@ -789,7 +868,10 @@ describe('buildExternalUrlCsp', () => {
   });
 
   it('allowlist policy adds https origins to subresource directives', () => {
-    const csp = buildExternalUrlCsp({ mode: 'allowlist', hosts: ['example.com', 'cdn.example.com'] });
+    const csp = buildExternalUrlCsp({
+      mode: 'allowlist',
+      hosts: ['example.com', 'cdn.example.com'],
+    });
     const directives = new Map(
       csp.split(';').map((d) => {
         const [k, ...rest] = d.trim().split(' ');
@@ -828,7 +910,9 @@ describe('createExternalUrlGuardHook', () => {
     const doc = docFrom('<html><head></head><body></body></html>');
     hook({ document: doc });
     hook({ document: doc });
-    expect(doc.head?.querySelectorAll('meta[http-equiv="Content-Security-Policy"]')).toHaveLength(1);
+    expect(doc.head?.querySelectorAll('meta[http-equiv="Content-Security-Policy"]')).toHaveLength(
+      1,
+    );
   });
 
   it('does not throw when the document has no head', () => {

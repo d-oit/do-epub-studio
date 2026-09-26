@@ -35,7 +35,11 @@ function findPartialMatches(
 ): { match: string; position: number } | null {
   if (normalizedTarget.length < minLength || normalizedContent.length < minLength) return null;
 
-  for (let len = Math.min(normalizedTarget.length, normalizedContent.length); len >= minLength; len -= 5) {
+  for (
+    let len = Math.min(normalizedTarget.length, normalizedContent.length);
+    len >= minLength;
+    len -= 5
+  ) {
     for (let i = 0; i <= normalizedTarget.length - len; i += Math.max(1, Math.floor(len / 4))) {
       const segment = normalizedTarget.slice(i, i + len);
       const pos = normalizedContent.indexOf(segment);
@@ -52,7 +56,12 @@ export async function reanchorByText(
   targetText: string,
   toc: TocItem[],
   loadChapterContent: (href: string) => Promise<string>,
-  options: { fuzzyThreshold?: number; preferChapter?: string; timeoutMs?: number; traceId?: string } = {},
+  options: {
+    fuzzyThreshold?: number;
+    preferChapter?: string;
+    timeoutMs?: number;
+    traceId?: string;
+  } = {},
 ): Promise<ReanchorResult> {
   const { preferChapter } = options;
   const timeoutMs = options.timeoutMs ?? REANCHOR_TIMEOUT_MS;
@@ -179,9 +188,10 @@ export async function reanchorByText(
     if (normalizedTargetGeneral === undefined) {
       normalizedTargetGeneral = normalizeText(targetText);
     }
-    const targetToProcess = normalizedTargetGeneral.length <= TARGET_TEXT_MAX_LEN
-      ? normalizedTargetGeneral
-      : normalizedTargetGeneral.slice(0, TARGET_TEXT_MAX_LEN);
+    const targetToProcess =
+      normalizedTargetGeneral.length <= TARGET_TEXT_MAX_LEN
+        ? normalizedTargetGeneral
+        : normalizedTargetGeneral.slice(0, TARGET_TEXT_MAX_LEN);
     // Use match() instead of matchAll() to reduce object allocations and deduplicate
     const matchedWords = targetToProcess.match(/[\p{L}\p{N}]{4,}/gu) || [];
     words = [...new Set(matchedWords)];
@@ -197,9 +207,10 @@ export async function reanchorByText(
         const cached = await getCachedData(href);
         if (cached.wordSet === undefined) {
           cached.wordSet = new Set();
-          const contentToProcess = cached.lower.length <= CHAPTER_CONTENT_MAX_LEN
-            ? cached.lower
-            : cached.lower.slice(0, CHAPTER_CONTENT_MAX_LEN);
+          const contentToProcess =
+            cached.lower.length <= CHAPTER_CONTENT_MAX_LEN
+              ? cached.lower
+              : cached.lower.slice(0, CHAPTER_CONTENT_MAX_LEN);
           // Use match() instead of matchAll() to reduce object allocations
           const matches = contentToProcess.match(/[\p{L}\p{N}]{4,}/gu);
           if (matches) {

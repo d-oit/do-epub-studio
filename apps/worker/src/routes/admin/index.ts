@@ -10,7 +10,13 @@ import { statsRouter } from './stats';
 import { adminInsightsRouter } from './insights';
 import { invitationsAdminRouter } from './invitations';
 
-export const adminRouter = new Hono<{ Bindings: Env; Variables: { adminUser: { email: string; id: string; role: string }; requestContext: RequestContext } }>();
+export const adminRouter = new Hono<{
+  Bindings: Env;
+  Variables: {
+    adminUser: { email: string; id: string; role: string };
+    requestContext: RequestContext;
+  };
+}>();
 
 adminRouter.route('/', authRouter);
 adminRouter.route('/books', booksRouter);

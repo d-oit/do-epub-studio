@@ -24,14 +24,14 @@ or responsive identity presentation across viewport classes.
 
 ## Decomposition
 
-| ID | Task | Status |
-|----|------|--------|
-| T1 | Create a typed app identity module and JSON metadata source | done |
-| T2 | Read `VERSION` into the web app and generated PWA metadata | done |
-| T3 | Replace visible hardcoded app-name strings | done |
-| T4 | Modernize login, admin login, and catalog responsive layout | done |
-| T5 | Add Playwright app identity and viewport coverage | done |
-| T6 | Run focused and repo quality gates | done |
+| ID  | Task                                                        | Status |
+| --- | ----------------------------------------------------------- | ------ |
+| T1  | Create a typed app identity module and JSON metadata source | done   |
+| T2  | Read `VERSION` into the web app and generated PWA metadata  | done   |
+| T3  | Replace visible hardcoded app-name strings                  | done   |
+| T4  | Modernize login, admin login, and catalog responsive layout | done   |
+| T5  | Add Playwright app identity and viewport coverage           | done   |
+| T6  | Run focused and repo quality gates                          | done   |
 
 ## Strategy
 

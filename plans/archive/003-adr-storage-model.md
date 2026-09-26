@@ -18,13 +18,13 @@ We need to decide where to store:
 
 ### Storage Assignment
 
-| Data Type | Storage | Reason |
-|-----------|---------|--------|
-| EPUB files | R2 | Large binaries, streaming, cost-effective |
-| Book metadata | Turso | Relational queries, schema validation |
-| User/grants | Turso | Permissions, audit trail |
-| Progress/annotations | Turso | Syncable, queryable |
-| Offline cache | IndexedDB + Cache Storage | Browser-local, fast |
+| Data Type            | Storage                   | Reason                                    |
+| -------------------- | ------------------------- | ----------------------------------------- |
+| EPUB files           | R2                        | Large binaries, streaming, cost-effective |
+| Book metadata        | Turso                     | Relational queries, schema validation     |
+| User/grants          | Turso                     | Permissions, audit trail                  |
+| Progress/annotations | Turso                     | Syncable, queryable                       |
+| Offline cache        | IndexedDB + Cache Storage | Browser-local, fast                       |
 
 ### R2 for EPUB Files
 

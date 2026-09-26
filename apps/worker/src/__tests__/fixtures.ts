@@ -164,16 +164,17 @@ export const mockRevokeSession = revokeSession as Mock;
 export const mockHashToken = _hashToken as Mock;
 export const mockGenerateSignedUrl = generateSignedUrl as Mock;
 export const mockLogAudit = logAudit as Mock;
-export const mockCreateResetToken = (resetMod.createResetToken as Mock);
-export const mockVerifyResetToken = (resetMod.verifyResetToken as Mock);
-export const mockBumpResetTokenAttempt = (resetMod.bumpResetTokenAttempt as Mock);
-export const mockClaimResetToken = (resetMod.claimResetToken as Mock);
-export const mockGetAccountByEmail = (accountMod.getAccountByEmail as Mock);
-export const mockAccountIsLocked = (accountMod.accountIsLocked as Mock);
-export const mockIsPasswordDerivative = (accountMod.isPasswordDerivative as Mock);
-export const mockVerifyAccountPassword = (accountMod.verifyAccountPassword as Mock);
-export const mockChangePassword = (accountMod.changePassword as Mock);
-export const mockChangePasswordAndConsumeResetToken = (accountMod.changePasswordAndConsumeResetToken as Mock);
+export const mockCreateResetToken = resetMod.createResetToken as Mock;
+export const mockVerifyResetToken = resetMod.verifyResetToken as Mock;
+export const mockBumpResetTokenAttempt = resetMod.bumpResetTokenAttempt as Mock;
+export const mockClaimResetToken = resetMod.claimResetToken as Mock;
+export const mockGetAccountByEmail = accountMod.getAccountByEmail as Mock;
+export const mockAccountIsLocked = accountMod.accountIsLocked as Mock;
+export const mockIsPasswordDerivative = accountMod.isPasswordDerivative as Mock;
+export const mockVerifyAccountPassword = accountMod.verifyAccountPassword as Mock;
+export const mockChangePassword = accountMod.changePassword as Mock;
+export const mockChangePasswordAndConsumeResetToken =
+  accountMod.changePasswordAndConsumeResetToken as Mock;
 
 // ---------------------------------------------------------------------------
 // Test helper functions
@@ -212,7 +213,8 @@ export function makeEnv(): Env {
       get: vi.fn().mockReturnValue({
         fetch: vi.fn().mockResolvedValue({
           ok: true,
-          json: () => Promise.resolve({ allowed: true, remaining: 99, resetAt: Date.now() + 60000 }),
+          json: () =>
+            Promise.resolve({ allowed: true, remaining: 99, resetAt: Date.now() + 60000 }),
         }),
       }),
     } as unknown as DurableObjectNamespace<RateLimiterDO>,
@@ -227,12 +229,12 @@ function makeMockBucket(): R2Bucket {
     createMultipartUpload: () => Promise.resolve({} as R2MultipartUpload),
     resumeMultipartUpload: () => ({}) as R2MultipartUpload,
     delete: () => Promise.resolve(undefined),
-    list: () =>
-      Promise.resolve({ objects: [], truncated: false, delimitedPrefixes: [] }),
+    list: () => Promise.resolve({ objects: [], truncated: false, delimitedPrefixes: [] }),
   };
 }
 
-export function makeAuthContext(overrides: Partial<AuthContext> = {}): AuthContext {  return {
+export function makeAuthContext(overrides: Partial<AuthContext> = {}): AuthContext {
+  return {
     sessionId: 'session-1',
     email: 'user@example.com',
     bookId: 'book-1',
@@ -271,7 +273,9 @@ export function makePassThroughContext(): ExecutionContext {
 }
 
 /** Parse a fetch Response JSON body with known API shape. Avoids `as` cast at each call site. */
-export async function parseBody(res: Response): Promise<{ ok: boolean; data: Record<string, unknown>; error?: { code: string } }> {
+export async function parseBody(
+  res: Response,
+): Promise<{ ok: boolean; data: Record<string, unknown>; error?: { code: string } }> {
   const json: unknown = await res.json();
   return json as { ok: boolean; data: Record<string, unknown>; error?: { code: string } };
 }

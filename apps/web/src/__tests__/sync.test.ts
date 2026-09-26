@@ -1,5 +1,9 @@
 import { describe, it, expect, vi } from 'vitest';
-import { generateMutationId, setPermissionRevokedCallback, cancelPendingRetry } from '../lib/offline/sync';
+import {
+  generateMutationId,
+  setPermissionRevokedCallback,
+  cancelPendingRetry,
+} from '../lib/offline/sync';
 
 vi.mock('../lib/offline/db', () => ({
   addToSyncQueue: vi.fn(),

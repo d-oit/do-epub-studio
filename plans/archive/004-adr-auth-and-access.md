@@ -25,13 +25,13 @@ Email + Optional Password → Grant → Session → Signed URL
 
 ### Grant Types
 
-| Mode                 | Description              | Password | Comments |
-| -------------------- | ------------------------ | -------- | -------- |
-| `private`            | Admin-approved access    | Optional | Optional |
-| `password_protected` | Password-gated           | Required | Optional |
-| `reader_only`        | Read-only, no interaction| Optional | No       |
-| `editorial_review`   | Full commenting          | Optional | Yes      |
-| `public`             | Anyone with link         | No       | Optional |
+| Mode                 | Description               | Password | Comments |
+| -------------------- | ------------------------- | -------- | -------- |
+| `private`            | Admin-approved access     | Optional | Optional |
+| `password_protected` | Password-gated            | Required | Optional |
+| `reader_only`        | Read-only, no interaction | Optional | No       |
+| `editorial_review`   | Full commenting           | Optional | Yes      |
+| `public`             | Anyone with link          | No       | Optional |
 
 ### Session Tokens
 

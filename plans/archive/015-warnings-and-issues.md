@@ -10,17 +10,17 @@ This document tracks all warnings and known issues in the codebase as of the cur
 
 ### ESLint Warnings
 
-| File | Line | Warning | Severity |
-|------|------|---------|----------|
-| `apps/web/src/components/ui/index.tsx` | 224 | `Unexpected any. Specify a different type` | Low |
-| `apps/worker/src/__tests__/cors.test.ts` | 8 | `Unexpected any. Specify a different type` | Low |
+| File                                     | Line | Warning                                    | Severity |
+| ---------------------------------------- | ---- | ------------------------------------------ | -------- |
+| `apps/web/src/components/ui/index.tsx`   | 224  | `Unexpected any. Specify a different type` | Low      |
+| `apps/worker/src/__tests__/cors.test.ts` | 8    | `Unexpected any. Specify a different type` | Low      |
 
 ### Tailwind CSS Warnings
 
-| File | Line | Issue | Suggestion |
-|------|------|-------|------------|
-| `apps/web/src/features/reader/ReaderPage.tsx` | 766 | `max-w-[200px]` | Use `max-w-50` |
-| `packages/ui/src/toast.tsx` | 84 | `min-w-[300px]` | Use `min-w-75` |
+| File                                          | Line | Issue           | Suggestion     |
+| --------------------------------------------- | ---- | --------------- | -------------- |
+| `apps/web/src/features/reader/ReaderPage.tsx` | 766  | `max-w-[200px]` | Use `max-w-50` |
+| `packages/ui/src/toast.tsx`                   | 84   | `min-w-[300px]` | Use `min-w-75` |
 
 ---
 
@@ -46,11 +46,11 @@ This document tracks all warnings and known issues in the codebase as of the cur
 
 Per `AGENTS.md` (`MAX_LINES_PER_SOURCE_FILE=500`):
 
-| File | Current LOC | Status |
-|------|-------------|--------|
-| `apps/web/src/features/reader/ReaderPage.tsx` | 341 | ✅ Refactored via useReaderEpub hook |
-| `apps/web/src/features/admin/GrantsPage.tsx` | 311 | ✅ Resolved |
-| `apps/web/src/components/ui/index.tsx` | 525 | ⚠️ Near limit |
+| File                                          | Current LOC | Status                               |
+| --------------------------------------------- | ----------- | ------------------------------------ |
+| `apps/web/src/features/reader/ReaderPage.tsx` | 341         | ✅ Refactored via useReaderEpub hook |
+| `apps/web/src/features/admin/GrantsPage.tsx`  | 311         | ✅ Resolved                          |
+| `apps/web/src/components/ui/index.tsx`        | 525         | ⚠️ Near limit                        |
 
 ---
 
@@ -58,11 +58,11 @@ Per `AGENTS.md` (`MAX_LINES_PER_SOURCE_FILE=500`):
 
 Three stricter rules enabled as `warn` in PR #189. See `plans/040-goap-warnings-and-issues-2026-05-19.md` for full breakdown.
 
-| Rule | Violations | Target |
-|------|-----------|--------|
-| `@typescript-eslint/no-non-null-assertion` | ~15 | `error` |
-| `@typescript-eslint/require-await` | ~40 | `error` |
-| `@typescript-eslint/consistent-type-imports` | ~13 | `error` |
+| Rule                                         | Violations | Target  |
+| -------------------------------------------- | ---------- | ------- |
+| `@typescript-eslint/no-non-null-assertion`   | ~15        | `error` |
+| `@typescript-eslint/require-await`           | ~40        | `error` |
+| `@typescript-eslint/consistent-type-imports` | ~13        | `error` |
 
 ## CI Infrastructure Issue (New — Monitor)
 

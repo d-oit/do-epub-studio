@@ -15,11 +15,13 @@ describe('classifyReactWarning', () => {
       classifyReactWarning('An update to ReaderPage inside a test was not wrapped in act(...).'),
     ).toBe('act');
     expect(
-      classifyReactWarning('A suspended resource finished loading inside a test, but the event was not wrapped in act(...).'),
+      classifyReactWarning(
+        'A suspended resource finished loading inside a test, but the event was not wrapped in act(...).',
+      ),
     ).toBe('suspended-resource');
-    expect(
-      classifyReactWarning('Each child in a list should have a unique "key" prop.'),
-    ).toBe('key');
+    expect(classifyReactWarning('Each child in a list should have a unique "key" prop.')).toBe(
+      'key',
+    );
     expect(
       classifyReactWarning('React does not recognize the `isLoading` prop on a DOM element.'),
     ).toBe('unknown-prop');
@@ -31,7 +33,6 @@ describe('classifyReactWarning', () => {
     expect(classifyReactWarning('')).toBeNull();
   });
 });
-
 
 describe('normalizeTestPath', () => {
   it('reduces absolute paths to the package-relative form', () => {
@@ -75,9 +76,9 @@ describe('assertNoNewWarnings', () => {
   });
 
   it('fails closed when the test file cannot be attributed', () => {
-    expect(() =>
-      assertNoNewWarnings({ testFile: undefined, counts: { ...none, key: 1 } }),
-    ).toThrow(/<unknown file>/);
+    expect(() => assertNoNewWarnings({ testFile: undefined, counts: { ...none, key: 1 } })).toThrow(
+      /<unknown file>/,
+    );
   });
 
   it('counts a suspended-resource warning as a tracked defect', () => {

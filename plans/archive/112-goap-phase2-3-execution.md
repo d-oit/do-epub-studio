@@ -19,34 +19,34 @@ plans stay as the detailed evidence record.
 
 ## Execution status (live 2026-06-24)
 
-| # | Task | Plan ref | Status | Branch | PR | CI |
-|---|------|----------|--------|--------|----|----|
-| 1 | V11 annotation import + locator-rich export | 110 V11 | ✅ MERGED | feat/v11-annotation-import-export-roundtrip | #643 | ✅ all green |
-| 2 | Pagination DTO + CatalogQuerySchema | 110 V7-prep | ✅ MERGED | feat/v7-prep-pagination-dto | #644 | ✅ all green |
-| 3 | V7 catalog pagination/search/filter backend+UI | 110 V7 | ✅ MERGED | feat/v7-catalog-pagination | #645 | ✅ all green |
-| 4 | V9 native popover for tooltips/menus | 110 V9 | ✅ MERGED | feat/v9-native-popover | #646 | ✅ all green |
-| 5 | V8 container queries for panels/tables | 110 V8 | ✅ MERGED | feat/v8-container-queries | #648 | ✅ all green |
-| 6 | V10 React 19 patterns | 110 V10 | ✅ MERGED | feat/v10-react-19-patterns | #647 | ✅ all green |
-| 7 | V12 stream upload + edge cache | 110 V12 | ✅ MERGED | feat/v12-stream-upload-edge-cache | #649 | ✅ all green |
-| 8 | Logical properties + scroll-snap + view-transition + anchor | 105-ui | ⏳ queued | — | — | — |
-| 9 | B2/B4 ReDoS sweep | 105 B2/B4 | ⏳ queued | — | — | — |
-| 10 | B3/B5 file-response security headers + HSTS | 105 B3/B5 | ⏳ queued | — | — | — |
-| 11 | C1 path-length guard traceId | 105 C1 | ⏳ queued | — | — | — |
-| 12 | C4 dedupe ErrorBoundary logging | 105 C4 | ⏳ queued | — | — | — |
-| 13 | D2b/D2c route console → logger migration | 105 D2b/D2c | ⏳ queued | — | — | — |
-| 14 | D3/D4 real trace IDs + apiRaw telemetry | 105 D3/D4 | ⏳ queued | — | — | — |
-| 15 | E3/E4/E5 reanchor/parser/search perf | 105 E3/E4/E5 | ⏳ queued | — | — | — |
-| 16 | E6/E7 Lighthouse mobile + per-route budgets | 105 E6/E7 | ⏳ queued | — | — | — |
-| 17 | F1/F2 root-config lint + no-floating-promises | 105 F1/F2 | ⏳ queued | — | — | — |
-| 18 | G1/G2 turbo build:analyze + e2e dependsOn | 105 G1/G2 | ⏳ queued | — | — | — |
-| 19 | E2E specs (admin-book-crud, catalog-search, offline-conflict, reading-insights, a11y) | 107 P4 | ⏳ queued | — | — | — |
-| 20 | Storybook stories (AppLogo, PageContainer, useFocusTrap) | 107 P1 | ⏳ queued | — | — | — |
-| 21 | Coverage threshold raises (ui 40/30, worker 65/60) | 107 P1/P2 | ⏳ queued | — | — | — |
-| 22 | B7 static imports for bundled assets | 105 B7 | ⏳ queued | — | — | — |
-| 23 | Wire run-impeccable.sh into quality gate | 111 → 112 P4 | ✅ MERGED | feat/phase4-ci-hardening | #650 | ✅ all green |
-| 24 | Bundle-size CI budget enforcement | 107 P5 | ✅ MERGED | feat/phase4-ci-hardening | #650 | ✅ all green (non-blocking) |
-| 25 | Markdownlint + zizmor in default gate | 107 P5 | ✅ MERGED | feat/phase4-ci-hardening | #650 | ✅ all green |
-| 26 | Update KNOWN-ISSUES.md monitor-tier only | AGENTS.md T2.8 | ⏳ queued | — | — | — |
+| #   | Task                                                                                  | Plan ref       | Status    | Branch                                      | PR   | CI                          |
+| --- | ------------------------------------------------------------------------------------- | -------------- | --------- | ------------------------------------------- | ---- | --------------------------- |
+| 1   | V11 annotation import + locator-rich export                                           | 110 V11        | ✅ MERGED | feat/v11-annotation-import-export-roundtrip | #643 | ✅ all green                |
+| 2   | Pagination DTO + CatalogQuerySchema                                                   | 110 V7-prep    | ✅ MERGED | feat/v7-prep-pagination-dto                 | #644 | ✅ all green                |
+| 3   | V7 catalog pagination/search/filter backend+UI                                        | 110 V7         | ✅ MERGED | feat/v7-catalog-pagination                  | #645 | ✅ all green                |
+| 4   | V9 native popover for tooltips/menus                                                  | 110 V9         | ✅ MERGED | feat/v9-native-popover                      | #646 | ✅ all green                |
+| 5   | V8 container queries for panels/tables                                                | 110 V8         | ✅ MERGED | feat/v8-container-queries                   | #648 | ✅ all green                |
+| 6   | V10 React 19 patterns                                                                 | 110 V10        | ✅ MERGED | feat/v10-react-19-patterns                  | #647 | ✅ all green                |
+| 7   | V12 stream upload + edge cache                                                        | 110 V12        | ✅ MERGED | feat/v12-stream-upload-edge-cache           | #649 | ✅ all green                |
+| 8   | Logical properties + scroll-snap + view-transition + anchor                           | 105-ui         | ⏳ queued | —                                           | —    | —                           |
+| 9   | B2/B4 ReDoS sweep                                                                     | 105 B2/B4      | ⏳ queued | —                                           | —    | —                           |
+| 10  | B3/B5 file-response security headers + HSTS                                           | 105 B3/B5      | ⏳ queued | —                                           | —    | —                           |
+| 11  | C1 path-length guard traceId                                                          | 105 C1         | ⏳ queued | —                                           | —    | —                           |
+| 12  | C4 dedupe ErrorBoundary logging                                                       | 105 C4         | ⏳ queued | —                                           | —    | —                           |
+| 13  | D2b/D2c route console → logger migration                                              | 105 D2b/D2c    | ⏳ queued | —                                           | —    | —                           |
+| 14  | D3/D4 real trace IDs + apiRaw telemetry                                               | 105 D3/D4      | ⏳ queued | —                                           | —    | —                           |
+| 15  | E3/E4/E5 reanchor/parser/search perf                                                  | 105 E3/E4/E5   | ⏳ queued | —                                           | —    | —                           |
+| 16  | E6/E7 Lighthouse mobile + per-route budgets                                           | 105 E6/E7      | ⏳ queued | —                                           | —    | —                           |
+| 17  | F1/F2 root-config lint + no-floating-promises                                         | 105 F1/F2      | ⏳ queued | —                                           | —    | —                           |
+| 18  | G1/G2 turbo build:analyze + e2e dependsOn                                             | 105 G1/G2      | ⏳ queued | —                                           | —    | —                           |
+| 19  | E2E specs (admin-book-crud, catalog-search, offline-conflict, reading-insights, a11y) | 107 P4         | ⏳ queued | —                                           | —    | —                           |
+| 20  | Storybook stories (AppLogo, PageContainer, useFocusTrap)                              | 107 P1         | ⏳ queued | —                                           | —    | —                           |
+| 21  | Coverage threshold raises (ui 40/30, worker 65/60)                                    | 107 P1/P2      | ⏳ queued | —                                           | —    | —                           |
+| 22  | B7 static imports for bundled assets                                                  | 105 B7         | ⏳ queued | —                                           | —    | —                           |
+| 23  | Wire run-impeccable.sh into quality gate                                              | 111 → 112 P4   | ✅ MERGED | feat/phase4-ci-hardening                    | #650 | ✅ all green                |
+| 24  | Bundle-size CI budget enforcement                                                     | 107 P5         | ✅ MERGED | feat/phase4-ci-hardening                    | #650 | ✅ all green (non-blocking) |
+| 25  | Markdownlint + zizmor in default gate                                                 | 107 P5         | ✅ MERGED | feat/phase4-ci-hardening                    | #650 | ✅ all green                |
+| 26  | Update KNOWN-ISSUES.md monitor-tier only                                              | AGENTS.md T2.8 | ⏳ queued | —                                           | —    | —                           |
 
 ## Swarm coordination
 

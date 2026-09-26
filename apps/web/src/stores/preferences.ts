@@ -47,9 +47,7 @@ const LINE_HEIGHTS: Record<number, string> = {
 const cookieStorage: StateStorage = {
   getItem: (name: string): string | null => {
     if (typeof document === 'undefined') return null;
-    const cookie = document.cookie
-        .split('; ')
-        .find((row) => row.startsWith(`${name}=`));
+    const cookie = document.cookie.split('; ').find((row) => row.startsWith(`${name}=`));
     if (!cookie) return null;
     const value = cookie.split('=')[1];
     return value ? decodeURIComponent(value) : null;
@@ -85,30 +83,36 @@ export const usePreferencesStore = create<PreferencesState>()(
         if (get().reader.theme === theme) return;
         set((state) => ({ reader: { ...state.reader, theme } }));
       },
-      setFontFamily: (fontFamily) => set((state) => {
-        if (state.reader.fontFamily === fontFamily) return state;
-        return { reader: { ...state.reader, fontFamily } };
-      }),
-      setFontSize: (fontSize) => set((state) => {
-        if (state.reader.fontSize === fontSize) return state;
-        return { reader: { ...state.reader, fontSize } };
-      }),
-      setLineHeight: (lineHeight) => set((state) => {
-        if (state.reader.lineHeight === lineHeight) return state;
-        return { reader: { ...state.reader, lineHeight } };
-      }),
-      setPageWidth: (pageWidth) => set((state) => {
-        if (state.reader.pageWidth === pageWidth) return state;
-        return { reader: { ...state.reader, pageWidth } };
-      }),
-      setDirection: (direction) => set((state) => {
-        if (state.reader.direction === direction) return state;
-        return { reader: { ...state.reader, direction } };
-      }),
-      setWritingMode: (writingMode) => set((state) => {
-        if (state.reader.writingMode === writingMode) return state;
-        return { reader: { ...state.reader, writingMode } };
-      }),
+      setFontFamily: (fontFamily) =>
+        set((state) => {
+          if (state.reader.fontFamily === fontFamily) return state;
+          return { reader: { ...state.reader, fontFamily } };
+        }),
+      setFontSize: (fontSize) =>
+        set((state) => {
+          if (state.reader.fontSize === fontSize) return state;
+          return { reader: { ...state.reader, fontSize } };
+        }),
+      setLineHeight: (lineHeight) =>
+        set((state) => {
+          if (state.reader.lineHeight === lineHeight) return state;
+          return { reader: { ...state.reader, lineHeight } };
+        }),
+      setPageWidth: (pageWidth) =>
+        set((state) => {
+          if (state.reader.pageWidth === pageWidth) return state;
+          return { reader: { ...state.reader, pageWidth } };
+        }),
+      setDirection: (direction) =>
+        set((state) => {
+          if (state.reader.direction === direction) return state;
+          return { reader: { ...state.reader, direction } };
+        }),
+      setWritingMode: (writingMode) =>
+        set((state) => {
+          if (state.reader.writingMode === writingMode) return state;
+          return { reader: { ...state.reader, writingMode } };
+        }),
       setAiEnabled: (enabled) => {
         if (get().reader.aiEnabled === enabled) return;
         set((state) => ({ reader: { ...state.reader, aiEnabled: enabled } }));

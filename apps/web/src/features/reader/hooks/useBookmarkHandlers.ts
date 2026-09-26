@@ -60,15 +60,19 @@ export function useBookmarkHandlers(): UseBookmarkHandlersReturn {
             synced: false,
             mutationId,
           });
-          await queueSync('annotation', {
-            bookId,
-            annotation: {
-              type: 'bookmark',
-              cfi: currentProgress.locator.cfi,
-              chapter: currentChapterRef.current ?? undefined,
-              text: chapterName,
+          await queueSync(
+            'annotation',
+            {
+              bookId,
+              annotation: {
+                type: 'bookmark',
+                cfi: currentProgress.locator.cfi,
+                chapter: currentChapterRef.current ?? undefined,
+                text: chapterName,
+              },
             },
-          }, mutationId);
+            mutationId,
+          );
         }
       } catch (err) {
         removeOptimistic(bookmark.id, 'bookmark');

@@ -25,7 +25,7 @@ describe('PrefetchManager', () => {
       }
       return document.createElement.call(document, tag);
     });
-    vi.spyOn(document.head, 'appendChild').mockImplementation(() => ({} as Node));
+    vi.spyOn(document.head, 'appendChild').mockImplementation(() => ({}) as Node);
   });
 
   afterEach(() => {
@@ -45,10 +45,7 @@ describe('PrefetchManager', () => {
     });
 
     it('should track current index after chapter change', () => {
-      manager.setSpine([
-        { href: 'chapter1.html' },
-        { href: 'chapter2.html' },
-      ]);
+      manager.setSpine([{ href: 'chapter1.html' }, { href: 'chapter2.html' }]);
       manager.onChapterChange('chapter2.html');
       expect(manager.getState().currentIndex).toBe(1);
     });
@@ -61,10 +58,7 @@ describe('PrefetchManager', () => {
         writable: true,
         configurable: true,
       });
-      manager.setSpine([
-        { href: 'chapter1.html' },
-        { href: 'chapter2.html' },
-      ]);
+      manager.setSpine([{ href: 'chapter1.html' }, { href: 'chapter2.html' }]);
       manager.onChapterChange('chapter1.html');
       await vi.advanceTimersByTimeAsync(600);
       expect(manager.getState().hasPrefetchLink).toBe(false);
@@ -77,10 +71,7 @@ describe('PrefetchManager', () => {
         writable: true,
         configurable: true,
       });
-      manager.setSpine([
-        { href: 'chapter1.html' },
-        { href: 'chapter2.html' },
-      ]);
+      manager.setSpine([{ href: 'chapter1.html' }, { href: 'chapter2.html' }]);
       manager.onChapterChange('chapter1.html');
       await vi.advanceTimersByTimeAsync(600);
       expect(manager.getState().hasPrefetchLink).toBe(false);
@@ -93,10 +84,7 @@ describe('PrefetchManager', () => {
         writable: true,
         configurable: true,
       });
-      manager.setSpine([
-        { href: 'chapter1.html' },
-        { href: 'chapter2.html' },
-      ]);
+      manager.setSpine([{ href: 'chapter1.html' }, { href: 'chapter2.html' }]);
       manager.onChapterChange('chapter1.html');
       await vi.advanceTimersByTimeAsync(600);
       expect(manager.getState().hasPrefetchLink).toBe(false);
@@ -109,10 +97,7 @@ describe('PrefetchManager', () => {
         writable: true,
         configurable: true,
       });
-      manager.setSpine([
-        { href: 'chapter1.html' },
-        { href: 'chapter2.html' },
-      ]);
+      manager.setSpine([{ href: 'chapter1.html' }, { href: 'chapter2.html' }]);
       manager.onChapterChange('chapter1.html');
       await vi.advanceTimersByTimeAsync(500);
       expect(manager.getState().hasPrefetchLink).toBe(true);
@@ -134,10 +119,7 @@ describe('PrefetchManager', () => {
         writable: true,
         configurable: true,
       });
-      manager.setSpine([
-        { href: 'chapter1.html' },
-        { href: 'chapter2.html' },
-      ]);
+      manager.setSpine([{ href: 'chapter1.html' }, { href: 'chapter2.html' }]);
       manager.onChapterChange('chapter1.html');
       await vi.advanceTimersByTimeAsync(500);
       expect(manager.getState().hasPrefetchLink).toBe(false);
@@ -157,10 +139,7 @@ describe('PrefetchManager', () => {
         writable: true,
         configurable: true,
       });
-      manager.setSpine([
-        { href: 'chapter1.html' },
-        { href: 'chapter2.html' },
-      ]);
+      manager.setSpine([{ href: 'chapter1.html' }, { href: 'chapter2.html' }]);
       manager.onChapterChange('chapter1.html');
       await vi.advanceTimersByTimeAsync(500);
       expect(manager.getState().hasPrefetchLink).toBe(true);
@@ -178,10 +157,7 @@ describe('PrefetchManager', () => {
         writable: true,
         configurable: true,
       });
-      manager.setSpine([
-        { href: 'chapter1.html' },
-        { href: 'chapter2.html' },
-      ]);
+      manager.setSpine([{ href: 'chapter1.html' }, { href: 'chapter2.html' }]);
       manager.onChapterChange('chapter1.html');
       await vi.advanceTimersByTimeAsync(500);
       expect(manager.getState().hasPrefetchLink).toBe(true);
@@ -196,10 +172,7 @@ describe('PrefetchManager', () => {
         writable: true,
         configurable: true,
       });
-      manager.setSpine([
-        { href: 'chapter1.html' },
-        { href: 'chapter2.html' },
-      ]);
+      manager.setSpine([{ href: 'chapter1.html' }, { href: 'chapter2.html' }]);
       manager.onChapterChange('chapter1.html');
       expect(manager.getState().hasPendingPrefetch).toBe(true);
       expect(manager.getState().hasPrefetchLink).toBe(false);
@@ -212,10 +185,7 @@ describe('PrefetchManager', () => {
         writable: true,
         configurable: true,
       });
-      manager.setSpine([
-        { href: 'chapter1.html' },
-        { href: 'chapter2.html' },
-      ]);
+      manager.setSpine([{ href: 'chapter1.html' }, { href: 'chapter2.html' }]);
       manager.onChapterChange('chapter1.html');
       await vi.advanceTimersByTimeAsync(500);
       expect(manager.getState().hasPrefetchLink).toBe(true);
@@ -249,10 +219,7 @@ describe('PrefetchManager', () => {
         writable: true,
         configurable: true,
       });
-      manager.setSpine([
-        { href: 'chapter1.html' },
-        { href: 'chapter2.html' },
-      ]);
+      manager.setSpine([{ href: 'chapter1.html' }, { href: 'chapter2.html' }]);
       manager.onChapterChange('chapter1.html');
       await vi.advanceTimersByTimeAsync(500);
       expect(createdLinks.length).toBe(1);
@@ -265,10 +232,7 @@ describe('PrefetchManager', () => {
         writable: true,
         configurable: true,
       });
-      manager.setSpine([
-        { href: 'chapter1.html' },
-        { href: 'chapter2.html' },
-      ]);
+      manager.setSpine([{ href: 'chapter1.html' }, { href: 'chapter2.html' }]);
       manager.onChapterChange('chapter1.html');
       await vi.advanceTimersByTimeAsync(500);
       expect(createdLinks.length).toBe(1);
@@ -281,10 +245,7 @@ describe('PrefetchManager', () => {
         writable: true,
         configurable: true,
       });
-      manager.setSpine([
-        { href: 'chapter1.html' },
-        { href: 'chapter2.html' },
-      ]);
+      manager.setSpine([{ href: 'chapter1.html' }, { href: 'chapter2.html' }]);
       manager.onChapterChange('chapter1.html');
       await vi.advanceTimersByTimeAsync(500);
       expect(createdLinks.length).toBe(1);
@@ -299,10 +260,7 @@ describe('PrefetchManager', () => {
         writable: true,
         configurable: true,
       });
-      manager.setSpine([
-        { href: 'chapter1.html' },
-        { href: 'chapter2.html' },
-      ]);
+      manager.setSpine([{ href: 'chapter1.html' }, { href: 'chapter2.html' }]);
       manager.onChapterChange('chapter2.html');
       await vi.advanceTimersByTimeAsync(500);
       expect(manager.getState().hasPrefetchLink).toBe(false);
@@ -315,10 +273,7 @@ describe('PrefetchManager', () => {
         writable: true,
         configurable: true,
       });
-      manager.setSpine([
-        { href: 'chapter1.html' },
-        { href: 'chapter2.html' },
-      ]);
+      manager.setSpine([{ href: 'chapter1.html' }, { href: 'chapter2.html' }]);
       manager.onChapterChange('unknown.html');
       expect(manager.getState().currentIndex).toBe(-1);
       expect(createdLinks.length).toBe(0);
@@ -330,10 +285,7 @@ describe('PrefetchManager', () => {
         writable: true,
         configurable: true,
       });
-      manager.setSpine([
-        { href: 'chapter1.html' },
-        { href: 'chapter2.html' },
-      ]);
+      manager.setSpine([{ href: 'chapter1.html' }, { href: 'chapter2.html' }]);
       manager.onChapterChange('chapter1.html');
       manager.destroy();
       expect(manager.getState().spineLength).toBe(0);
@@ -350,10 +302,7 @@ describe('PrefetchManager', () => {
         writable: true,
         configurable: true,
       });
-      customManager.setSpine([
-        { href: 'chapter1.html' },
-        { href: 'chapter2.html' },
-      ]);
+      customManager.setSpine([{ href: 'chapter1.html' }, { href: 'chapter2.html' }]);
       customManager.onChapterChange('chapter1.html');
       await vi.advanceTimersByTimeAsync(500);
       expect(customManager.getState().hasPrefetchLink).toBe(false);
@@ -371,10 +320,7 @@ describe('PrefetchManager', () => {
         writable: true,
         configurable: true,
       });
-      customManager.setSpine([
-        { href: 'chapter1.html' },
-        { href: 'chapter2.html' },
-      ]);
+      customManager.setSpine([{ href: 'chapter1.html' }, { href: 'chapter2.html' }]);
       customManager.onChapterChange('chapter1.html');
       await vi.advanceTimersByTimeAsync(500);
       expect(customManager.getState().hasPrefetchLink).toBe(false);
@@ -396,10 +342,7 @@ describe('PrefetchManager', () => {
         writable: true,
         configurable: true,
       });
-      customManager.setSpine([
-        { href: 'chapter1.html' },
-        { href: 'chapter2.html' },
-      ]);
+      customManager.setSpine([{ href: 'chapter1.html' }, { href: 'chapter2.html' }]);
       customManager.onChapterChange('chapter1.html');
       await vi.advanceTimersByTimeAsync(500);
       expect(customManager.getState().hasPrefetchLink).toBe(false);

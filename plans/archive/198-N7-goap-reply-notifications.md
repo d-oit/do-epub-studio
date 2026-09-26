@@ -19,15 +19,15 @@ there is no notification mechanism. Users must manually check for replies.
 
 ## Decompose
 
-| ID | Task | Effort | Deps |
-|----|------|--------|------|
-| T1 | Design notification schema (D1 `notifications` table) | S | — |
-| T2 | Add notification trigger on comment reply (Worker route) | M | T1 |
-| T3 | Create `GET /api/notifications` endpoint with pagination | M | T1 |
-| T4 | Add notification badge to ReaderToolbar | S | T3 |
-| T5 | Create NotificationPanel component | M | T3 |
-| T6 | Add i18n keys for notification types | S | T5 |
-| T7 | Add tests (Worker + web component) | M | T5 |
+| ID  | Task                                                     | Effort | Deps |
+| --- | -------------------------------------------------------- | ------ | ---- |
+| T1  | Design notification schema (D1 `notifications` table)    | S      | —    |
+| T2  | Add notification trigger on comment reply (Worker route) | M      | T1   |
+| T3  | Create `GET /api/notifications` endpoint with pagination | M      | T1   |
+| T4  | Add notification badge to ReaderToolbar                  | S      | T3   |
+| T5  | Create NotificationPanel component                       | M      | T3   |
+| T6  | Add i18n keys for notification types                     | S      | T5   |
+| T7  | Add tests (Worker + web component)                       | M      | T5   |
 
 ## Risks
 

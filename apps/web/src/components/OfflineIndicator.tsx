@@ -8,9 +8,14 @@ export function OfflineIndicator() {
 
   useEffect(() => {
     // biome-ignore lint/correctness/useQwikValidLexicalScope: React project, not Qwik — false positive
-    const goOffline = () => { setShouldRender(true); setIsExiting(false); };
+    const goOffline = () => {
+      setShouldRender(true);
+      setIsExiting(false);
+    };
     // biome-ignore lint/correctness/useQwikValidLexicalScope: React project, not Qwik — false positive
-    const goOnline = () => { setIsExiting(true); };
+    const goOnline = () => {
+      setIsExiting(true);
+    };
     window.addEventListener('offline', goOffline);
     window.addEventListener('online', goOnline);
     return () => {
@@ -34,8 +39,19 @@ export function OfflineIndicator() {
       role="alert"
       aria-live="assertive"
     >
-      <svg className="w-4 h-4 mr-2 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636a9 9 0 11-12.728 0M12 9v4m0 4h.01" />
+      <svg
+        className="w-4 h-4 mr-2 shrink-0"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M18.364 5.636a9 9 0 11-12.728 0M12 9v4m0 4h.01"
+        />
       </svg>
       {t('offline.banner')}
     </div>

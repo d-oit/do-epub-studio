@@ -5,12 +5,12 @@
 
 ## Results
 
-| Severity | Gaps | Status |
-|----------|------|--------|
-| Critical | G14, G15, G16 | CLOSED |
-| High | G17–G23 | CLOSED |
-| Medium | G24–G28 | CLOSED |
-| Low | G1–G13 | CLOSED (prior wave) |
+| Severity | Gaps          | Status              |
+| -------- | ------------- | ------------------- |
+| Critical | G14, G15, G16 | CLOSED              |
+| High     | G17–G23       | CLOSED              |
+| Medium   | G24–G28       | CLOSED              |
+| Low      | G1–G13        | CLOSED (prior wave) |
 
 ## Key Fixes (G14–G28)
 

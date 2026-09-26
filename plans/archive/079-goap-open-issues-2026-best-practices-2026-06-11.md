@@ -10,18 +10,18 @@
 
 ### Issue Clusters (by dependency order)
 
-| Cluster | Issues | Theme | Depends On |
-|---------|--------|-------|-----------|
-| A | #489, #497 | Design Token System (OKLCH, fluid, dark mode) | — |
-| B | #490, #485 | i18n Infrastructure (persistence, RTL readiness) | — |
-| C | #491 | Error Handling (structured errors, boundary, toast) | — |
-| D | #492 | Logging & Tracing (structured, sendBeacon, Cloudflare) | C |
-| E | #493 | Security Hardening (CSP, cookies, auth, OWASP) | — |
-| F | #494 | Responsive App Shell (bottom bar, drawer, sidebar) | A |
-| G | #495 | PWA Banner Redesign (toast component, a11y) | A, B |
-| H | #480–#484, #486–#488 | Login Fixes (a11y, UX, branding, dark toggle) | A, B, C |
-| I | #496 | Login Page Full Redesign | A, B, C, F, G, H |
-| J | #483 | Forgot Password / Magic Link Flow | H, E |
+| Cluster | Issues               | Theme                                                  | Depends On       |
+| ------- | -------------------- | ------------------------------------------------------ | ---------------- |
+| A       | #489, #497           | Design Token System (OKLCH, fluid, dark mode)          | —                |
+| B       | #490, #485           | i18n Infrastructure (persistence, RTL readiness)       | —                |
+| C       | #491                 | Error Handling (structured errors, boundary, toast)    | —                |
+| D       | #492                 | Logging & Tracing (structured, sendBeacon, Cloudflare) | C                |
+| E       | #493                 | Security Hardening (CSP, cookies, auth, OWASP)         | —                |
+| F       | #494                 | Responsive App Shell (bottom bar, drawer, sidebar)     | A                |
+| G       | #495                 | PWA Banner Redesign (toast component, a11y)            | A, B             |
+| H       | #480–#484, #486–#488 | Login Fixes (a11y, UX, branding, dark toggle)          | A, B, C          |
+| I       | #496                 | Login Page Full Redesign                               | A, B, C, F, G, H |
+| J       | #483                 | Forgot Password / Magic Link Flow                      | H, E             |
 
 ### Codebase State (existing assets)
 
@@ -48,6 +48,7 @@ Execute clusters A, B, C, E in parallel.
 **Goal:** Migrate `globals.css` from HSL → OKLCH with 3-tier architecture.
 
 **Tasks:**
+
 1. Create `packages/ui/src/styles/tokens.css` — OKLCH primitives
 2. Create `packages/ui/src/styles/base.css` — CSS reset + base styles
 3. Upgrade `apps/web/src/styles/globals.css` — semantic token layer using OKLCH
@@ -60,6 +61,7 @@ Execute clusters A, B, C, E in parallel.
 10. Update `.agents/skills/anti-ai-slop/SKILL.md`
 
 **2026 Standards Applied:**
+
 - OKLCH for all colors (perceptually uniform, P3 gamut)
 - `color-mix(in oklch)` for derived states (hover, active)
 - `contrast-color()` with `@supports` fallback
@@ -69,6 +71,7 @@ Execute clusters A, B, C, E in parallel.
 - Minimum 4.5:1 contrast ratio (WCAG 2.2 AA)
 
 **Files touched:**
+
 - `packages/ui/src/styles/tokens.css` (new)
 - `packages/ui/src/styles/base.css` (new)
 - `apps/web/src/styles/globals.css` (upgrade)
@@ -83,6 +86,7 @@ Execute clusters A, B, C, E in parallel.
 **Goal:** Complete i18n with cookie persistence, typed keys, RTL readiness.
 
 **Tasks:**
+
 1. Add cookie-based locale persistence (`do-epub-locale`, SameSite=Lax, 1yr)
 2. Update locale store to read from cookie → `navigator.language` → `'en'`
 3. Set `document.documentElement.lang` on locale change
@@ -93,12 +97,14 @@ Execute clusters A, B, C, E in parallel.
 8. Add E2E test for locale persistence across page reload
 
 **2026 Standards Applied:**
+
 - Cookie storage (not localStorage) for Cloudflare Pages edge compatibility
 - `Intl` API usage for all date/number formatting
 - Typed translation keys (compile-time safety)
 - `dir` attribute on `<html>` for future RTL
 
 **Files touched:**
+
 - `apps/web/src/stores/locale.ts` (upgrade)
 - `apps/web/src/i18n/index.ts` (upgrade)
 - `apps/web/src/i18n/types.ts` (new — typed keys)
@@ -112,6 +118,7 @@ Execute clusters A, B, C, E in parallel.
 **Goal:** Structured error types, global handlers, toast system, error routes.
 
 **Tasks:**
+
 1. Enhance `packages/shared/src/errors.ts` with typed `ErrorCode` enum
 2. Add `toUserMessage(t)` method using i18n keys
 3. Enhance `ErrorBoundary.tsx` — graceful full-page error state with retry
@@ -122,12 +129,14 @@ Execute clusters A, B, C, E in parallel.
 8. Add Vitest tests for `AppError.toUserMessage()`
 
 **2026 Standards Applied:**
+
 - `role="alert"` + `aria-live="assertive"` for errors, `"polite"` for info
 - No raw error codes shown to users
 - Error messages use i18n keys
 - Toast position respects safe-area-inset-bottom
 
 **Files touched:**
+
 - `packages/shared/src/errors.ts` (enhance)
 - `apps/web/src/components/ErrorBoundary.tsx` (enhance)
 - `apps/web/src/main.tsx` (add global handlers)
@@ -142,6 +151,7 @@ Execute clusters A, B, C, E in parallel.
 **Goal:** Harden CSP, cookie policy, session storage, input sanitization.
 
 **Tasks:**
+
 1. Audit and upgrade `apps/web/public/_headers` CSP directives
 2. Verify worker CSP in `apps/worker/src/lib/security-headers.ts`
 3. Ensure auth tokens use HttpOnly cookies or in-memory only (never localStorage)
@@ -153,6 +163,7 @@ Execute clusters A, B, C, E in parallel.
 9. Update `.agents/skills/security-code-auditor/SKILL.md`
 
 **2026 Standards Applied:**
+
 - OWASP Top 10 2025 compliance
 - `SameSite=Strict` + `Secure` + `HttpOnly` cookie attributes
 - `Permissions-Policy: camera=(), microphone=(), geolocation=()`
@@ -161,6 +172,7 @@ Execute clusters A, B, C, E in parallel.
 - WebAuthn/passkeys readiness (WCAG 3.3.8 Accessible Auth)
 
 **Files touched:**
+
 - `apps/web/public/_headers` (upgrade)
 - `apps/worker/src/lib/security-headers.ts` (verify/upgrade)
 - `.github/workflows/ci.yml` (add audit + gitleaks)
@@ -175,6 +187,7 @@ Execute clusters A, B, C, E in parallel.
 **Depends on:** 1C (error types)
 
 **Tasks:**
+
 1. Create `Logger` interface in packages with 4 levels + `withTrace()`
 2. Create console logger (dev) — colored, structured
 3. Create remote logger — `sendBeacon` to Cloudflare Analytics Engine
@@ -185,6 +198,7 @@ Execute clusters A, B, C, E in parallel.
 8. Unit tests for batching and trace propagation
 
 **2026 Standards Applied:**
+
 - `navigator.sendBeacon()` for reliable non-blocking delivery
 - `crypto.randomUUID()` for trace IDs
 - `Performance.mark()` / `Performance.measure()` for Web Vitals attribution
@@ -192,6 +206,7 @@ Execute clusters A, B, C, E in parallel.
 - Privacy-preserving: no email, password, tokens in logs
 
 **Files touched:**
+
 - `packages/shared/src/logger.ts` (new — interface)
 - `apps/web/src/lib/loggers/console.ts` (new)
 - `apps/web/src/lib/loggers/remote.ts` (new)
@@ -205,6 +220,7 @@ Execute clusters A, B, C, E in parallel.
 **Depends on:** 1A (design tokens)
 
 **Tasks:**
+
 1. Create `packages/ui/src/components/AppShell.tsx` — grid layout
 2. Create `packages/ui/src/components/BottomTabBar.tsx` — mobile (<768px)
 3. Create `packages/ui/src/components/TopBar.tsx` — sticky, backdrop blur
@@ -217,6 +233,7 @@ Execute clusters A, B, C, E in parallel.
 10. Handle `env(safe-area-inset-bottom)` for iOS
 
 **2026 Standards Applied:**
+
 - CSS Grid + `100dvh` for app shell
 - Container queries for component-level breakpoints
 - `overscroll-behavior: contain` for scroll isolation
@@ -226,6 +243,7 @@ Execute clusters A, B, C, E in parallel.
 - `backdrop-filter: blur(12px)` on top bar scroll
 
 **Files touched:**
+
 - `packages/ui/src/components/AppShell.tsx` (new)
 - `packages/ui/src/components/BottomTabBar.tsx` (new)
 - `packages/ui/src/components/TopBar.tsx` (new)
@@ -240,6 +258,7 @@ Execute clusters A, B, C, E in parallel.
 **Depends on:** 1A (tokens), 1B (i18n)
 
 **Tasks:**
+
 1. Create `packages/ui/src/components/PwaBanner.tsx` — 3 variants
 2. Fixed pill at bottom, above bottom nav, `z-index: 200`
 3. `role="status"` + `aria-live="polite"`, dismiss with full `aria-label`
@@ -251,6 +270,7 @@ Execute clusters A, B, C, E in parallel.
 9. Update `.agents/skills/pwa-offline-sync/SKILL.md`
 
 **Files touched:**
+
 - `packages/ui/src/components/PwaBanner.tsx` (new)
 - `apps/web/src/components/SwUpdateNotification.tsx` (replace with PwaBanner)
 - `.agents/skills/pwa-offline-sync/SKILL.md` (update)
@@ -265,17 +285,18 @@ Execute clusters A, B, C, E in parallel.
 
 Execute in parallel as atomic fixes:
 
-| Sub | Issue | Fix |
-|-----|-------|-----|
-| H1 | #481 | Change label to "Password" + helper text for optional |
-| H2 | #482 | Style "Back to Reader Login" as visible link with context |
-| H3 | #484 | Add `<label for>` elements, `autocomplete` attributes |
-| H4 | #487 | Move `id="main-content"` to `<main>`, add `tabindex="-1"` |
-| H5 | #480 | Add dark mode toggle (sun/moon icon, 44px target) |
-| H6 | #486 | Add inline SVG logo with `aria-label` + `role="img"` |
-| H7 | #488 | Loading state (already partially exists — verify completeness) |
+| Sub | Issue | Fix                                                            |
+| --- | ----- | -------------------------------------------------------------- |
+| H1  | #481  | Change label to "Password" + helper text for optional          |
+| H2  | #482  | Style "Back to Reader Login" as visible link with context      |
+| H3  | #484  | Add `<label for>` elements, `autocomplete` attributes          |
+| H4  | #487  | Move `id="main-content"` to `<main>`, add `tabindex="-1"`      |
+| H5  | #480  | Add dark mode toggle (sun/moon icon, 44px target)              |
+| H6  | #486  | Add inline SVG logo with `aria-label` + `role="img"`           |
+| H7  | #488  | Loading state (already partially exists — verify completeness) |
 
 **2026 Standards Applied:**
+
 - WCAG 2.2 SC 2.5.8: All targets ≥ 24px (44px recommended)
 - WCAG 2.2 SC 2.4.11: Focus never obscured by sticky elements
 - WCAG 2.2 SC 3.3.8: Support paste + password managers (accessible auth)
@@ -283,6 +304,7 @@ Execute in parallel as atomic fixes:
 - Skip link is first focusable element, visible on `:focus-visible`
 
 **Files touched:**
+
 - `apps/web/src/features/auth/LoginPage.tsx` (upgrade)
 - `apps/web/src/components/ThemeToggle.tsx` (new)
 - `apps/web/src/components/AppLogo.tsx` (new)
@@ -296,6 +318,7 @@ Execute in parallel as atomic fixes:
 **Depends on:** All of Phase 1, 2F (shell), 2G (PWA banner), 3H (fixes)
 
 **Tasks:**
+
 1. Rebuild `LoginPage.tsx` using component structure from issue spec
 2. Top utility bar: `<LocaleSelect />` + `<ThemeToggle />`
 3. Auth card: logo, heading, form fields, error state, submit button
@@ -313,6 +336,7 @@ Execute in parallel as atomic fixes:
 **Depends on:** 3H, 1E (security)
 
 **Tasks:**
+
 1. Add "Forgot password?" link below password field
 2. Inline panel/modal asking for email
 3. Pre-fill email from main form
@@ -325,6 +349,7 @@ Execute in parallel as atomic fixes:
 ## Phase 5: Skill Updates & Documentation
 
 ### Tasks:
+
 1. Update `.agents/skills/design-tokens/SKILL.md` — OKLCH rules, 3-tier architecture
 2. Update `.agents/skills/anti-ai-slop/SKILL.md` — expanded pattern blacklist
 3. Update `.agents/skills/security-code-auditor/SKILL.md` — 2026 OWASP checklist
@@ -388,6 +413,7 @@ Phase 5  ─── Skills & Docs ───── PARALLEL
 ## GitHub Issues Updated (2026-06-11)
 
 All 18 issues (#480–#497) received analysis comments with:
+
 - Current codebase state (what exists vs what's missing)
 - Specific plan/cluster/task references
 - No issues closed (all partially addressed, none fully resolved)

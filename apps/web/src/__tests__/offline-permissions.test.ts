@@ -1,4 +1,3 @@
-
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   validatePermission,
@@ -77,7 +76,7 @@ describe('Offline Permissions', () => {
           canComment: true,
           canDownloadOffline: true,
         }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } }
+        { status: 200, headers: { 'Content-Type': 'application/json' } },
       );
       vi.mocked(api.get).mockResolvedValue(mockResponse);
 
@@ -180,17 +179,19 @@ describe('Offline Permissions', () => {
           grantIds: ['grant-2'],
           revokedBookIds: ['book-1'],
         }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } }
+        { status: 200, headers: { 'Content-Type': 'application/json' } },
       );
       vi.mocked(api.get).mockResolvedValue(mockResponse);
-      vi.mocked(db.getAllCachedPermissions).mockResolvedValue([{
-        bookId: 'book-1',
-        grantId: 'grant-1',
-        canComment: true,
-        canDownloadOffline: true,
-        cachedAt: Date.now(),
-        expiresAt: Date.now() + 86400000,
-      }]);
+      vi.mocked(db.getAllCachedPermissions).mockResolvedValue([
+        {
+          bookId: 'book-1',
+          grantId: 'grant-1',
+          canComment: true,
+          canDownloadOffline: true,
+          cachedAt: Date.now(),
+          expiresAt: Date.now() + 86400000,
+        },
+      ]);
 
       setupZombieDetection(mockOnRevoked);
 

@@ -1,7 +1,13 @@
 import { useTranslation } from '../../hooks/useTranslation';
 import { AppLogo } from '../../components/ui';
 
-export function LoginCardHeader({ isRecoveryMode, bookSlug }: { isRecoveryMode: boolean; bookSlug: string }) {
+export function LoginCardHeader({
+  isRecoveryMode,
+  bookSlug,
+}: {
+  isRecoveryMode: boolean;
+  bookSlug: string;
+}) {
   const { t } = useTranslation();
   return (
     <>
@@ -15,7 +21,8 @@ export function LoginCardHeader({ isRecoveryMode, bookSlug }: { isRecoveryMode: 
 
       {bookSlug && (
         <p className="text-foreground-muted text-xs text-center mb-4">
-          {t('login.bookSlugLabel')}: <span className="font-semibold text-foreground">{bookSlug}</span>
+          {t('login.bookSlugLabel')}:{' '}
+          <span className="font-semibold text-foreground">{bookSlug}</span>
         </p>
       )}
     </>

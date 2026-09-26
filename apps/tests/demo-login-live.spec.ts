@@ -46,7 +46,6 @@ test.describe('Demo login against live Worker stack (GOAP-256)', () => {
   // 423 ACCOUNT_LOCKED lockout mid-suite.
   test.describe.configure({ mode: 'serial' });
 
-
   test('reader demo button signs in via live demo endpoint', async ({ page }) => {
     await page.goto('/login?book=demo');
 
@@ -57,10 +56,14 @@ test.describe('Demo login against live Worker stack (GOAP-256)', () => {
 
     // Live Worker mints a session for the demo book and the SPA navigates.
     await expect(page).toHaveURL(/\/read\/demo$/, { timeout: 15000 });
-    await expect(page.locator('[data-container-name="reader-toolbar"]')).toBeVisible({ timeout: 20000 });
+    await expect(page.locator('[data-container-name="reader-toolbar"]')).toBeVisible({
+      timeout: 20000,
+    });
   });
 
-  test('demo reader signs in with email + password through the live credential form', async ({ page }) => {
+  test('demo reader signs in with email + password through the live credential form', async ({
+    page,
+  }) => {
     await page.goto(`/login?book=${DEMO_READER.bookSlug}`);
 
     // "Fill demo credentials" autofills the documented demo account into the
@@ -73,7 +76,9 @@ test.describe('Demo login against live Worker stack (GOAP-256)', () => {
     await page.getByRole('button', { name: 'Sign In', exact: true }).click();
 
     await expect(page).toHaveURL(/\/read\/demo$/, { timeout: 15000 });
-    await expect(page.locator('[data-container-name="reader-toolbar"]')).toBeVisible({ timeout: 20000 });
+    await expect(page.locator('[data-container-name="reader-toolbar"]')).toBeVisible({
+      timeout: 20000,
+    });
   });
 
   test('wrong password shows an inline error and stays on the login page', async ({ page }) => {

@@ -55,16 +55,13 @@ export function TableOfContents({
     }
   }, [isOpen, shouldVirtualize]);
 
-  const onVisibleRangeChange = useCallback(
-    (start: number, end: number) => {
-      // Attach activeItemRef to the first active item in the visible range.
-      // (Only used as a fallback when not virtualized; the ref is the
-      // direct-attached active button.)
-      void start;
-      void end;
-    },
-    [],
-  );
+  const onVisibleRangeChange = useCallback((start: number, end: number) => {
+    // Attach activeItemRef to the first active item in the visible range.
+    // (Only used as a fallback when not virtualized; the ref is the
+    // direct-attached active button.)
+    void start;
+    void end;
+  }, []);
 
   const renderTocItem = useCallback(
     (item: TocItem, index: number) => {
@@ -110,12 +107,10 @@ export function TableOfContents({
       }`}
     >
       <div className="p-4 border-b border-border flex justify-between items-center">
-        <h2 id="toc-title" className="font-semibold">{t('reader.tableOfContents')}</h2>
-        <IconButton
-          onClick={onClose}
-          variant="ghost"
-          aria-label={t('a11y.close')}
-        >
+        <h2 id="toc-title" className="font-semibold">
+          {t('reader.tableOfContents')}
+        </h2>
+        <IconButton onClick={onClose} variant="ghost" aria-label={t('a11y.close')}>
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
               strokeLinecap="round"

@@ -12,22 +12,22 @@ future visual regression with unit and browser geometry assertions.
 
 ## Evidence
 
-| Surface | Evidence | Finding |
-| --- | --- | --- |
-| Live login page | `https://do-epub-studio.pages.dev/login` inspected with `agent-browser` | The password field exposes a `Show password` button inside the field; placement was not governed by a documented geometry contract. |
-| Shared component | `packages/ui/src/input.tsx` | Toggle uses trailing/right positioning and trailing padding. |
-| Unit tests | `packages/ui/src/__tests__/Input.test.tsx` | Toggle semantics are covered, but rendered left-side placement is not. |
-| Browser tests | `apps/tests/viewport-regression.spec.ts`, `apps/tests/viewport-matrix.ts` | The shared viewport matrix now verifies geometry and the show/hide round trip at every standard size. |
+| Surface          | Evidence                                                                  | Finding                                                                                                                             |
+| ---------------- | ------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Live login page  | `https://do-epub-studio.pages.dev/login` inspected with `agent-browser`   | The password field exposes a `Show password` button inside the field; placement was not governed by a documented geometry contract. |
+| Shared component | `packages/ui/src/input.tsx`                                               | Toggle uses trailing/right positioning and trailing padding.                                                                        |
+| Unit tests       | `packages/ui/src/__tests__/Input.test.tsx`                                | Toggle semantics are covered, but rendered left-side placement is not.                                                              |
+| Browser tests    | `apps/tests/viewport-regression.spec.ts`, `apps/tests/viewport-matrix.ts` | The shared viewport matrix now verifies geometry and the show/hide round trip at every standard size.                               |
 
 ## Execution order
 
-| Phase | Task | Dependency | Gate |
-| --- | --- | --- | --- |
-| 1. Contract | Update `DESIGN.md`, ADR-249, this plan, reader UI regression guidance, and browser-skill verification guidance. | None | Placement, spacing, RTL, a11y, and geometry requirements are explicit. |
-| 2. Tests first | Add unit and Playwright assertions for start/left placement before changing the component. | Phase 1 | New tests fail against the current trailing/right implementation. |
-| 3. Implementation | Move the shared toggle to the logical start edge and swap reserved padding to the start side. | Phase 2 | Existing toggle behavior and all auth consumers remain intact. |
-| 4. Verification | Run focused UI/web tests, typecheck/lint, quality gates, then inspect the deployed/local page with `agent-browser`. | Phase 3 | Tests pass and browser bounding boxes prove the control is left/leading. |
-| 5. Synthesis | Record non-obvious learnings and update this plan to COMPLETED with evidence. | Phase 4 | No undocumented runtime or test constraint remains. |
+| Phase             | Task                                                                                                                | Dependency | Gate                                                                     |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------- | ---------- | ------------------------------------------------------------------------ |
+| 1. Contract       | Update `DESIGN.md`, ADR-249, this plan, reader UI regression guidance, and browser-skill verification guidance.     | None       | Placement, spacing, RTL, a11y, and geometry requirements are explicit.   |
+| 2. Tests first    | Add unit and Playwright assertions for start/left placement before changing the component.                          | Phase 1    | New tests fail against the current trailing/right implementation.        |
+| 3. Implementation | Move the shared toggle to the logical start edge and swap reserved padding to the start side.                       | Phase 2    | Existing toggle behavior and all auth consumers remain intact.           |
+| 4. Verification   | Run focused UI/web tests, typecheck/lint, quality gates, then inspect the deployed/local page with `agent-browser`. | Phase 3    | Tests pass and browser bounding boxes prove the control is left/leading. |
+| 5. Synthesis      | Record non-obvious learnings and update this plan to COMPLETED with evidence.                                       | Phase 4    | No undocumented runtime or test constraint remains.                      |
 
 ## Verification
 

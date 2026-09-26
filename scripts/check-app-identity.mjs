@@ -32,10 +32,7 @@ import { dirname, resolve, relative, join, extname } from 'node:path';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, '..');
 
-const APP_IDENTITY_PATH = resolve(
-  REPO_ROOT,
-  'apps/web/src/config/app-identity.json',
-);
+const APP_IDENTITY_PATH = resolve(REPO_ROOT, 'apps/web/src/config/app-identity.json');
 const VERSION_PATH = resolve(REPO_ROOT, 'VERSION');
 const ROOT_PKG_PATH = resolve(REPO_ROOT, 'package.json');
 const CHANGELOG_PATH = resolve(REPO_ROOT, 'CHANGELOG.md');
@@ -145,7 +142,11 @@ function walk(dir, out = []) {
   for (const entry of readdirSync(dir)) {
     const full = join(dir, entry);
     const rel = relative(REPO_ROOT, full).split('\\').join('/');
-    if (SCAN_EXCLUDE_DIR_PREFIXES.some((p) => rel === p.slice(0, -1) || rel.startsWith(p) || rel.includes(`/${p}`))) {
+    if (
+      SCAN_EXCLUDE_DIR_PREFIXES.some(
+        (p) => rel === p.slice(0, -1) || rel.startsWith(p) || rel.includes(`/${p}`),
+      )
+    ) {
       continue;
     }
     if (SCAN_EXCLUDE_PATHS.has(rel)) {
@@ -188,10 +189,7 @@ function getCanonicalIdentity() {
 
 function assertCanonicalIdentity(identity) {
   if (identity.name !== CANONICAL_NAME) {
-    err(
-      'app-identity.json',
-      `name must be "${CANONICAL_NAME}" (got "${identity.name}")`,
-    );
+    err('app-identity.json', `name must be "${CANONICAL_NAME}" (got "${identity.name}")`);
   }
   if (identity.shortName !== CANONICAL_SHORT) {
     err(
@@ -256,10 +254,7 @@ function getHighestReleasedVersion(changelogText) {
 function assertVersionParity(version) {
   const rootPkg = JSON.parse(requireFile(ROOT_PKG_PATH, 'root package.json'));
   if (rootPkg.version !== version.raw) {
-    err(
-      'package.json',
-      `root version "${rootPkg.version}" must equal VERSION "${version.raw}"`,
-    );
+    err('package.json', `root version "${rootPkg.version}" must equal VERSION "${version.raw}"`);
   }
 }
 
@@ -320,9 +315,7 @@ if (failed > 0) {
   process.exit(1);
 }
 
-console.log(
-  `✓ App identity and version governance clean (ADR-104).`,
-);
+console.log(`✓ App identity and version governance clean (ADR-104).`);
 console.log(`  Canonical name:   ${identity.name} (${identity.shortName})`);
 console.log(`  VERSION:          ${version?.raw ?? '(invalid)'}`);
 console.log(`  Files scanned:    ${files.length}`);

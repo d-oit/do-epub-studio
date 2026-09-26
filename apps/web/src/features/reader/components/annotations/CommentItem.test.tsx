@@ -172,8 +172,36 @@ describe('CommentItem', () => {
     const commentWithReplies = {
       ...baseComment,
       replies: [
-        { id: 'r1', body: 'Reply one', displayName: 'reply', isOwn: false, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), chapterRef: null, cfiRange: null, selectedText: null, status: 'open' as const, visibility: 'shared' as const, parentCommentId: 'c1', resolvedAt: null },
-        { id: 'r2', body: 'Reply two', displayName: 'reply2', isOwn: false, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), chapterRef: null, cfiRange: null, selectedText: null, status: 'open' as const, visibility: 'shared' as const, parentCommentId: 'c1', resolvedAt: null },
+        {
+          id: 'r1',
+          body: 'Reply one',
+          displayName: 'reply',
+          isOwn: false,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          chapterRef: null,
+          cfiRange: null,
+          selectedText: null,
+          status: 'open' as const,
+          visibility: 'shared' as const,
+          parentCommentId: 'c1',
+          resolvedAt: null,
+        },
+        {
+          id: 'r2',
+          body: 'Reply two',
+          displayName: 'reply2',
+          isOwn: false,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          chapterRef: null,
+          cfiRange: null,
+          selectedText: null,
+          status: 'open' as const,
+          visibility: 'shared' as const,
+          parentCommentId: 'c1',
+          resolvedAt: null,
+        },
       ] as Comment[],
     };
     render(<CommentItem {...defaultProps} comment={commentWithReplies} />);

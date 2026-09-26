@@ -15,12 +15,12 @@
 
 ## Executive Summary
 
-| Category | Count |
-|----------|-------|
-| Total Outdated Packages | 12 |
-| Security Vulnerabilities | 10 (2 low, 2 moderate, 6 high) |
-| Critical Security Updates | 6 |
-| Routine Updates | 12 |
+| Category                  | Count                          |
+| ------------------------- | ------------------------------ |
+| Total Outdated Packages   | 12                             |
+| Security Vulnerabilities  | 10 (2 low, 2 moderate, 6 high) |
+| Critical Security Updates | 6                              |
+| Routine Updates           | 12                             |
 
 ---
 
@@ -28,112 +28,112 @@
 
 ### Root Package (package.json)
 
-| Package | Current Version | Type |
-|---------|-----------------|------|
-| pnpm | 10.33.0 | Package Manager |
-| turbo | 2.9.6 | DevDependency |
-| typescript | ^6.0.2 | DevDependency |
-| eslint | ^9.0.0 | DevDependency |
-| @eslint/js | ^9.0.0 | DevDependency |
-| vitest | 4.1.4 | DevDependency |
-| @vitest/coverage-v8 | 4.1.4 | DevDependency |
-| prettier | ^3.4.2 | DevDependency |
-| @playwright/test | ^1.59.1 | DevDependency |
-| @axe-core/playwright | ^4.11.1 | DevDependency |
-| @lhci/cli | ^0.15.1 | DevDependency |
-| eslint-config-prettier | ^10.1.8 | DevDependency |
-| eslint-plugin-react | ^7.34.1 | DevDependency |
-| eslint-plugin-react-hooks | ^7.0.1 | DevDependency |
-| eslint-plugin-import | ^2.29.1 | DevDependency |
-| eslint-import-resolver-typescript | ^4.4.4 | DevDependency |
-| eslint-plugin-promise | ^7.1.0 | DevDependency |
-| eslint-plugin-security | ^3.0.1 | DevDependency |
-| eslint-plugin-unicorn | ^64.0.0 | DevDependency |
-| globals | ^15.0.0 | DevDependency |
-| jsdom | ^29.0.2 | DevDependency |
-| rollup-plugin-visualizer | ^7.0.1 | DevDependency |
-| typescript-eslint | ^8.24.1 | DevDependency |
-| @types/node | ^25 | DevDependency |
+| Package                           | Current Version | Type            |
+| --------------------------------- | --------------- | --------------- |
+| pnpm                              | 10.33.0         | Package Manager |
+| turbo                             | 2.9.6           | DevDependency   |
+| typescript                        | ^6.0.2          | DevDependency   |
+| eslint                            | ^9.0.0          | DevDependency   |
+| @eslint/js                        | ^9.0.0          | DevDependency   |
+| vitest                            | 4.1.4           | DevDependency   |
+| @vitest/coverage-v8               | 4.1.4           | DevDependency   |
+| prettier                          | ^3.4.2          | DevDependency   |
+| @playwright/test                  | ^1.59.1         | DevDependency   |
+| @axe-core/playwright              | ^4.11.1         | DevDependency   |
+| @lhci/cli                         | ^0.15.1         | DevDependency   |
+| eslint-config-prettier            | ^10.1.8         | DevDependency   |
+| eslint-plugin-react               | ^7.34.1         | DevDependency   |
+| eslint-plugin-react-hooks         | ^7.0.1          | DevDependency   |
+| eslint-plugin-import              | ^2.29.1         | DevDependency   |
+| eslint-import-resolver-typescript | ^4.4.4          | DevDependency   |
+| eslint-plugin-promise             | ^7.1.0          | DevDependency   |
+| eslint-plugin-security            | ^3.0.1          | DevDependency   |
+| eslint-plugin-unicorn             | ^64.0.0         | DevDependency   |
+| globals                           | ^15.0.0         | DevDependency   |
+| jsdom                             | ^29.0.2         | DevDependency   |
+| rollup-plugin-visualizer          | ^7.0.1          | DevDependency   |
+| typescript-eslint                 | ^8.24.1         | DevDependency   |
+| @types/node                       | ^25             | DevDependency   |
 
 ### apps/web/package.json
 
-| Package | Current Version | Type |
-|---------|-----------------|------|
-| react | ^18 | Dependency |
-| react-dom | ^18 | Dependency |
-| react-router-dom | ^6 | Dependency |
-| zod | ^3.25.76 | Dependency |
-| zustand | ^5 | Dependency |
-| framer-motion | ^12 | Dependency |
-| epubjs | ^0.3.93 | Dependency |
-| idb | ^8.0.3 | Dependency |
-| uuid | ^14.0.0 | Dependency |
-| workbox-precaching | ^7.4.0 | Dependency |
-| workbox-routing | ^7.4.0 | Dependency |
-| workbox-strategies | ^7.4.0 | Dependency |
-| workbox-cacheable-response | ^7.4.0 | Dependency |
-| workbox-expiration | ^7.4.0 | Dependency |
-| vite | 8.0.9 | DevDependency |
-| @vitejs/plugin-react | ^4 | DevDependency |
-| tailwindcss | ^4.2.2 | DevDependency |
-| @tailwindcss/vite | ^4.2.2 | DevDependency |
-| postcss | ^8 | DevDependency |
-| autoprefixer | ^10 | DevDependency |
-| vitest | 4.1.4 | DevDependency |
-| @vitest/coverage-v8 | 4.1.4 | DevDependency |
-| @testing-library/react | ^16.3.2 | DevDependency |
-| @testing-library/jest-dom | ^6.9.1 | DevDependency |
-| @testing-library/user-event | ^14.6.1 | DevDependency |
-| playwright | ^1.59.1 | DevDependency |
-| vite-plugin-pwa | ^1.2.0 | DevDependency |
-| fake-indexeddb | ^6.2.5 | DevDependency |
-| cross-env | ^10.1.0 | DevDependency |
+| Package                     | Current Version | Type          |
+| --------------------------- | --------------- | ------------- |
+| react                       | ^18             | Dependency    |
+| react-dom                   | ^18             | Dependency    |
+| react-router-dom            | ^6              | Dependency    |
+| zod                         | ^3.25.76        | Dependency    |
+| zustand                     | ^5              | Dependency    |
+| framer-motion               | ^12             | Dependency    |
+| epubjs                      | ^0.3.93         | Dependency    |
+| idb                         | ^8.0.3          | Dependency    |
+| uuid                        | ^14.0.0         | Dependency    |
+| workbox-precaching          | ^7.4.0          | Dependency    |
+| workbox-routing             | ^7.4.0          | Dependency    |
+| workbox-strategies          | ^7.4.0          | Dependency    |
+| workbox-cacheable-response  | ^7.4.0          | Dependency    |
+| workbox-expiration          | ^7.4.0          | Dependency    |
+| vite                        | 8.0.9           | DevDependency |
+| @vitejs/plugin-react        | ^4              | DevDependency |
+| tailwindcss                 | ^4.2.2          | DevDependency |
+| @tailwindcss/vite           | ^4.2.2          | DevDependency |
+| postcss                     | ^8              | DevDependency |
+| autoprefixer                | ^10             | DevDependency |
+| vitest                      | 4.1.4           | DevDependency |
+| @vitest/coverage-v8         | 4.1.4           | DevDependency |
+| @testing-library/react      | ^16.3.2         | DevDependency |
+| @testing-library/jest-dom   | ^6.9.1          | DevDependency |
+| @testing-library/user-event | ^14.6.1         | DevDependency |
+| playwright                  | ^1.59.1         | DevDependency |
+| vite-plugin-pwa             | ^1.2.0          | DevDependency |
+| fake-indexeddb              | ^6.2.5          | DevDependency |
+| cross-env                   | ^10.1.0         | DevDependency |
 
 ### apps/worker/package.json
 
-| Package | Current Version | Type |
-|---------|-----------------|------|
-| @do-epub-studio/schema | workspace:* | Dependency |
-| @do-epub-studio/shared | workspace:* | Dependency |
-| @libsql/client | ^0.17.3 | Dependency |
-| argon2-wasm-edge | ^1.0.23 | Dependency |
-| zod | ^3.25.76 | Dependency |
-| wrangler | ^4.86.0 | DevDependency |
-| @cloudflare/workers-types | ^4.20250415.0 | DevDependency |
-| vitest | 4.1.4 | DevDependency |
+| Package                   | Current Version | Type          |
+| ------------------------- | --------------- | ------------- |
+| @do-epub-studio/schema    | workspace:*     | Dependency    |
+| @do-epub-studio/shared    | workspace:*     | Dependency    |
+| @libsql/client            | ^0.17.3         | Dependency    |
+| argon2-wasm-edge          | ^1.0.23         | Dependency    |
+| zod                       | ^3.25.76        | Dependency    |
+| wrangler                  | ^4.86.0         | DevDependency |
+| @cloudflare/workers-types | ^4.20250415.0   | DevDependency |
+| vitest                    | 4.1.4           | DevDependency |
 
 ### packages/reader-core/package.json
 
-| Package | Current Version | Type |
-|---------|-----------------|------|
-| epubjs | ^0.3.93 | Dependency |
-| vitest | 4.1.4 | DevDependency |
+| Package | Current Version | Type          |
+| ------- | --------------- | ------------- |
+| epubjs  | ^0.3.93         | Dependency    |
+| vitest  | 4.1.4           | DevDependency |
 
 ### packages/schema/package.json
 
-| Package | Current Version | Type |
-|---------|-----------------|------|
-| (no production deps) | - | - |
+| Package              | Current Version | Type |
+| -------------------- | --------------- | ---- |
+| (no production deps) | -               | -    |
 
 ### packages/shared/package.json
 
-| Package | Current Version | Type |
-|---------|-----------------|------|
-| zod | ^3.25.76 | Dependency |
-| vitest | 4.1.4 | DevDependency |
+| Package | Current Version | Type          |
+| ------- | --------------- | ------------- |
+| zod     | ^3.25.76        | Dependency    |
+| vitest  | 4.1.4           | DevDependency |
 
 ### packages/testkit/package.json
 
-| Package | Current Version | Type |
-|---------|-----------------|------|
-| (no production deps) | - | - |
+| Package              | Current Version | Type |
+| -------------------- | --------------- | ---- |
+| (no production deps) | -               | -    |
 
 ### packages/ui/package.json
 
-| Package | Current Version | Type |
-|---------|-----------------|------|
-| react | ^18 | PeerDependency |
-| react-dom | ^18 | PeerDependency |
+| Package   | Current Version | Type           |
+| --------- | --------------- | -------------- |
+| react     | ^18             | PeerDependency |
+| react-dom | ^18             | PeerDependency |
 
 ---
 
@@ -141,25 +141,25 @@
 
 ### Critical Priority (Should Update Soon)
 
-| Package | Current | Latest | Location | Priority |
-|---------|---------|--------|----------|----------|
-| eslint | 9.39.4 | 10.2.1 | Root | HIGH |
-| @eslint/js | 9.39.4 | 10.0.1 | Root | HIGH |
-| eslint-plugin-security | 3.0.1 | 4.0.0 | Root | HIGH |
-| globals | 15.15.0 | 17.5.0 | Root | HIGH |
+| Package                | Current | Latest | Location | Priority |
+| ---------------------- | ------- | ------ | -------- | -------- |
+| eslint                 | 9.39.4  | 10.2.1 | Root     | HIGH     |
+| @eslint/js             | 9.39.4  | 10.0.1 | Root     | HIGH     |
+| eslint-plugin-security | 3.0.1   | 4.0.0  | Root     | HIGH     |
+| globals                | 15.15.0 | 17.5.0 | Root     | HIGH     |
 
 ### Medium Priority (Routine Updates)
 
-| Package | Current | Latest | Location | Priority |
-|---------|---------|--------|----------|----------|
-| typescript | 6.0.2 | 6.0.3 | All packages | MEDIUM |
-| vitest | 4.1.4 | 4.1.5 | Root, web, worker, reader-core, shared | MEDIUM |
-| @vitest/coverage-v8 | 4.1.4 | 4.1.5 | Root, web | MEDIUM |
-| prettier | 3.8.1 | 3.8.3 | Root | MEDIUM |
-| typescript-eslint | 8.58.1 | 8.59.1 | Root | MEDIUM |
-| jsdom | 29.0.2 | 29.1.0 | Root | MEDIUM |
-| eslint-plugin-promise | 7.2.1 | 7.3.0 | Root | MEDIUM |
-| @axe-core/playwright | 4.11.1 | 4.11.2 | Root | LOW |
+| Package               | Current | Latest | Location                               | Priority |
+| --------------------- | ------- | ------ | -------------------------------------- | -------- |
+| typescript            | 6.0.2   | 6.0.3  | All packages                           | MEDIUM   |
+| vitest                | 4.1.4   | 4.1.5  | Root, web, worker, reader-core, shared | MEDIUM   |
+| @vitest/coverage-v8   | 4.1.4   | 4.1.5  | Root, web                              | MEDIUM   |
+| prettier              | 3.8.1   | 3.8.3  | Root                                   | MEDIUM   |
+| typescript-eslint     | 8.58.1  | 8.59.1 | Root                                   | MEDIUM   |
+| jsdom                 | 29.0.2  | 29.1.0 | Root                                   | MEDIUM   |
+| eslint-plugin-promise | 7.2.1   | 7.3.0  | Root                                   | MEDIUM   |
+| @axe-core/playwright  | 4.11.1  | 4.11.2 | Root                                   | LOW      |
 
 ---
 
@@ -168,6 +168,7 @@
 ### High Severity (6 vulnerabilities)
 
 #### CVE-2025-54798 - tmp (Arbitrary File write via symlink)
+
 - **Severity:** Low
 - **Package:** tmp
 - **Vulnerable versions:** <=0.2.3
@@ -177,6 +178,7 @@
 - **Risk:** Local privilege escalation via symlink attack
 
 #### CVE-2020-7660 / GHSA-5c6j-r48x-rmvq - serialize-javascript (RCE via RegExp.flags)
+
 - **Severity:** High
 - **Package:** serialize-javascript
 - **Vulnerable versions:** <=7.0.2
@@ -186,6 +188,7 @@
 - **Risk:** Remote Code Execution
 
 #### CVE-2026-34043 - serialize-javascript (CPU Exhaustion DoS)
+
 - **Severity:** Moderate
 - **Package:** serialize-javascript
 - **Vulnerable versions:** <7.0.5
@@ -195,6 +198,7 @@
 - **Risk:** Denial of Service
 
 #### GHSA-wh4c-j3r5-mjhp - @xmldom/xmldom (XML Injection)
+
 - **Severity:** High
 - **Package:** @xmldom/xmldom
 - **Vulnerable versions:** <0.8.12
@@ -204,6 +208,7 @@
 - **Risk:** XML injection via unsafe CDATA serialization
 
 #### GHSA-w5hq-g745-h8pq - uuid (Buffer Bounds Check)
+
 - **Severity:** Moderate
 - **Package:** uuid
 - **Vulnerable versions:** <14.0.0
@@ -213,6 +218,7 @@
 - **Risk:** Buffer overflow when buf is provided
 
 #### Additional serialize-javascript vulnerabilities
+
 - **Severity:** High (6 total high)
 - **Package:** serialize-javascript
 - **Recommendation:** Update vite-plugin-pwa
@@ -241,6 +247,7 @@
 ### High Priority Updates
 
 4. **Update ESLint ecosystem**
+
    ```
    eslint: 9.39.4 → 10.2.1
    @eslint/js: 9.39.4 → 10.0.1
@@ -257,6 +264,7 @@
 ### Routine Updates (Next Sprint)
 
 6. **Update testing ecosystem**
+
    ```
    vitest: 4.1.4 → 4.1.5
    @vitest/coverage-v8: 4.1.4 → 4.1.5
@@ -285,6 +293,7 @@
 ## 5. Update Commands
 
 ### Security Updates (Recommended First)
+
 ```bash
 # Update vite-plugin-pwa for serialize-javascript fixes
 pnpm add -w vite-plugin-pwa@latest
@@ -297,6 +306,7 @@ pnpm remove -w @lhci/cli
 ```
 
 ### Major Updates (May Require Breaking Changes)
+
 ```bash
 # ESLint 10 requires careful migration
 pnpm add -w eslint@latest @eslint/js@latest typescript-eslint@latest
@@ -304,6 +314,7 @@ pnpm add -w eslint-plugin-security@latest globals@latest
 ```
 
 ### Routine Updates
+
 ```bash
 # All outdated packages at once
 pnpm add -w vitest@latest @vitest/coverage-v8@latest
@@ -324,4 +335,4 @@ pnpm add -w eslint-plugin-promise@latest
 
 ---
 
-*Report generated by analyzing package.json files and pnpm audit/outdated output*
+_Report generated by analyzing package.json files and pnpm audit/outdated output_

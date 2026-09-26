@@ -36,7 +36,7 @@ describe('quotaGuardPlugin – source-level invariants', () => {
     expect(swContent).toContain('await evictLargestCache()');
     // The direct delete inside cacheWillUpdate should be gone
     expect(swContent).not.toMatch(
-      /cacheWillUpdate[\s\S]*?await caches\.delete\('external-assets'\)/
+      /cacheWillUpdate[\s\S]*?await caches\.delete\('external-assets'\)/,
     );
   });
 
@@ -72,9 +72,7 @@ describe('quotaGuardPlugin – source-level invariants', () => {
 
   it('returns original response on error path (never blocks fetch)', () => {
     // The plugin body must end with `return response` as the last statement
-    const pluginMatch = swContent.match(
-      /const quotaGuardPlugin\s*=\s*\{[\s\S]*?\};/
-    );
+    const pluginMatch = swContent.match(/const quotaGuardPlugin\s*=\s*\{[\s\S]*?\};/);
     if (!pluginMatch) throw new Error('quotaGuardPlugin definition not found');
     const pluginBody = pluginMatch[0];
     // Last return before closing brace
@@ -222,7 +220,7 @@ describe('quotaGuardPlugin – eviction logic (unit)', () => {
 
     const cacheEntries: Record<string, number> = {
       'workbox-precache-v2': 5,
-      'images': 42,
+      images: 42,
       'external-assets': 10,
       'book-content': 25,
       'api-responses': 8,
@@ -249,7 +247,7 @@ describe('quotaGuardPlugin – eviction logic (unit)', () => {
     const EVICTABLE_PREFIXES = ['images', 'external-assets'] as const;
     const cacheEntries: Record<string, number> = {
       'workbox-precache-v2': 100,
-      'images': 5,
+      images: 5,
     };
 
     let targetName: string | null = null;

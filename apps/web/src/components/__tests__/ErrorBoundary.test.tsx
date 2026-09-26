@@ -89,7 +89,9 @@ describe('ErrorBoundary', () => {
     expect(screen.getByText('Something went wrong')).toBeInTheDocument();
 
     const retryBtn = screen.getByText('Try Again');
-    act(() => { fireEvent.click(retryBtn); });
+    act(() => {
+      fireEvent.click(retryBtn);
+    });
     expect(screen.getByText('Retrying...')).toBeInTheDocument();
     expect(retryBtn).toBeDisabled();
   });
@@ -145,7 +147,9 @@ describe('ErrorBoundary', () => {
     expect(screen.getByText('Something went wrong')).toBeInTheDocument();
 
     const retryBtn = screen.getByText('Try Again');
-    act(() => { fireEvent.click(retryBtn); });
+    act(() => {
+      fireEvent.click(retryBtn);
+    });
     expect(screen.getByText('Retrying...')).toBeInTheDocument();
 
     act(() => {

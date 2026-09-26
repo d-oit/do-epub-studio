@@ -77,9 +77,7 @@ export interface SwLogOptions {
 }
 
 /** Resolves the header source from an optional request/headers option. */
-function resolveHeaderSource(
-  options: SwLogOptions,
-): TraceHeaderSource | undefined {
+function resolveHeaderSource(options: SwLogOptions): TraceHeaderSource | undefined {
   const source = options.request;
   if (!source) return undefined;
   return 'headers' in source ? source.headers : source;

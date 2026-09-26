@@ -52,12 +52,8 @@ describe('epub-parser.worker.ts – security validation via archive-validator', 
   });
 
   it('rejects a zip-bomb (compression ratio too high)', async () => {
-    vi.mocked(validateArchive).mockRejectedValueOnce(
-      new Error('Compression ratio too high'),
-    );
-    await expect(validateArchive(makeBytes(512))).rejects.toThrow(
-      'Compression ratio too high',
-    );
+    vi.mocked(validateArchive).mockRejectedValueOnce(new Error('Compression ratio too high'));
+    await expect(validateArchive(makeBytes(512))).rejects.toThrow('Compression ratio too high');
   });
 
   it('rejects path-traversal entries (../ in name)', async () => {
@@ -88,9 +84,7 @@ describe('epub-parser.worker.ts – security validation via archive-validator', 
   });
 
   it('rejects an empty archive (no entries)', async () => {
-    vi.mocked(validateArchive).mockRejectedValueOnce(
-      new Error('No entries found'),
-    );
+    vi.mocked(validateArchive).mockRejectedValueOnce(new Error('No entries found'));
     await expect(validateArchive(makeBytes(22))).rejects.toThrow('No entries found');
   });
 });
@@ -144,9 +138,7 @@ describe('parseEpubInWorker – fallback parse (no Worker in jsdom)', () => {
   });
 
   it('returns valid:false when fetch throws a network error', async () => {
-    vi.mocked(fetch as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
-      new Error('Network error'),
-    );
+    vi.mocked(fetch as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new Error('Network error'));
     const result = await parseEpubInWorker('https://example.com/book.epub');
     expect(result.valid).toBe(false);
     expect(result.error).toContain('Network error');
@@ -217,7 +209,9 @@ describe('parseEpubInWorker – malformed / XSS inputs', () => {
 describe('terminateParserWorker', () => {
   it('can be called safely when no pool exists', () => {
     terminateParserWorker();
-    expect(() => { terminateParserWorker(); }).not.toThrow();
+    expect(() => {
+      terminateParserWorker();
+    }).not.toThrow();
   });
 
   it('can be called multiple times without error', () => {

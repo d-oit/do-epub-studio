@@ -1,11 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion -- property test assertions */
 import { describe, expect, it } from 'vitest';
 import fc from 'fast-check';
-import {
-  shouldShowDriftWarning,
-  findBestChapterMatch,
-  type ReanchorResult,
-} from '../reanchor';
+import { shouldShowDriftWarning, findBestChapterMatch, type ReanchorResult } from '../reanchor';
 import type { TocItem } from '../epub-types';
 import type { LocatorResult } from '../locator';
 
@@ -17,18 +13,25 @@ const tocItemArb: fc.Arbitrary<TocItem> = fc.record({
   label: nonEmptyString,
   href: nonEmptyString,
   subitems: fc.option(
-    fc.array(fc.record({
-      id: nonEmptyString,
-      label: nonEmptyString,
-      href: nonEmptyString,
-    })),
+    fc.array(
+      fc.record({
+        id: nonEmptyString,
+        label: nonEmptyString,
+        href: nonEmptyString,
+      }),
+    ),
     { nil: undefined },
   ),
 });
 
 const tocArb: fc.Arbitrary<TocItem[]> = fc.array(tocItemArb, { minLength: 0, maxLength: 10 });
 
-const matchTypeArb = fc.constantFrom(undefined, 'exact' as const, 'fuzzy' as const, 'partial' as const);
+const matchTypeArb = fc.constantFrom(
+  undefined,
+  'exact' as const,
+  'fuzzy' as const,
+  'partial' as const,
+);
 
 const reanchorResultArb: fc.Arbitrary<ReanchorResult> = fc.record({
   success: fc.boolean(),
@@ -81,20 +84,16 @@ describe('shouldShowDriftWarning invariants', () => {
 
   it('shows warning when chapter changed', () => {
     fc.assert(
-      fc.property(
-        nonEmptyString,
-        nonEmptyString,
-        (originalChapter, differentChapter) => {
-          fc.pre(originalChapter !== differentChapter);
-          const result: ReanchorResult = {
-            success: true,
-            fallback: false,
-            matchType: 'exact',
-            chapterHref: differentChapter,
-          };
-          expect(shouldShowDriftWarning(result, originalChapter)).toBe(true);
-        },
-      ),
+      fc.property(nonEmptyString, nonEmptyString, (originalChapter, differentChapter) => {
+        fc.pre(originalChapter !== differentChapter);
+        const result: ReanchorResult = {
+          success: true,
+          fallback: false,
+          matchType: 'exact',
+          chapterHref: differentChapter,
+        };
+        expect(shouldShowDriftWarning(result, originalChapter)).toBe(true);
+      }),
     );
   });
 
@@ -114,17 +113,14 @@ describe('shouldShowDriftWarning invariants', () => {
 
   it('no warning for exact match when original chapter is undefined', () => {
     fc.assert(
-      fc.property(
-        fc.boolean(),
-        (fallback) => {
-          const result: ReanchorResult = {
-            success: true,
-            fallback,
-            matchType: 'exact',
-          };
-          expect(shouldShowDriftWarning(result, undefined)).toBe(false);
-        },
-      ),
+      fc.property(fc.boolean(), (fallback) => {
+        const result: ReanchorResult = {
+          success: true,
+          fallback,
+          matchType: 'exact',
+        };
+        expect(shouldShowDriftWarning(result, undefined)).toBe(false);
+      }),
     );
   });
 
@@ -184,27 +180,25 @@ describe('findBestChapterMatch', () => {
 
   it('returns a TocItem for subitem match', () => {
     fc.assert(
-      fc.property(
-        nonEmptyString,
-        nonEmptyString,
-        (parentHref, subHref) => {
-          fc.pre(parentHref !== subHref);
-          const toc: TocItem[] = [{
+      fc.property(nonEmptyString, nonEmptyString, (parentHref, subHref) => {
+        fc.pre(parentHref !== subHref);
+        const toc: TocItem[] = [
+          {
             id: 'parent',
             label: 'Parent',
             href: parentHref,
             subitems: [{ id: 'sub', label: 'Sub', href: subHref }],
-          }];
-          const locator: LocatorResult = {
-            cfi: 'epubcfi(/6/4)',
-            textExcerpt: 'text',
-            chapterHref: subHref,
-          };
-          const result = findBestChapterMatch(locator, toc);
-          expect(result).not.toBeNull();
-          expect(result!.href).toBe(subHref);
-        },
-      ),
+          },
+        ];
+        const locator: LocatorResult = {
+          cfi: 'epubcfi(/6/4)',
+          textExcerpt: 'text',
+          chapterHref: subHref,
+        };
+        const result = findBestChapterMatch(locator, toc);
+        expect(result).not.toBeNull();
+        expect(result!.href).toBe(subHref);
+      }),
     );
   });
 

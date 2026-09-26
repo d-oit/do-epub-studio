@@ -99,15 +99,17 @@ export async function assertViewportMatrix(
     const overflow = await page.evaluate(
       () => document.documentElement.scrollWidth > window.innerWidth + 1,
     );
-    expect(overflow, `${viewport.label} (${viewport.width}x${viewport.height}): no horizontal overflow`).toBe(false);
+    expect(
+      overflow,
+      `${viewport.label} (${viewport.width}x${viewport.height}): no horizontal overflow`,
+    ).toBe(false);
 
     // Required elements visible
     for (const selector of opts.required ?? []) {
       const el = page.locator(selector).first();
-      await expect(
-        el,
-        `${viewport.label}: ${selector} should be visible`,
-      ).toBeVisible({ timeout: 5000 });
+      await expect(el, `${viewport.label}: ${selector} should be visible`).toBeVisible({
+        timeout: 5000,
+      });
     }
 
     // Custom per-viewport assertions

@@ -37,16 +37,16 @@ Canonical name is `d.o.EPUB Studio` / `d.o.EPUB`
 (`apps/web/src/config/app-identity.json`), but the repo carries at least
 five divergent spellings (see ADR-104 table). Concrete offenders:
 
-| File | Current | Should be |
-|---|---|---|
-| `README.md:1` | `# d.o. ePUB Studio` | `# d.o.EPUB Studio` |
-| `packages/ui/src/AppLogo.tsx:15` | `aria-label="do EPUB Studio logo"` | `d.o.EPUB Studio logo` |
-| `packages/ui/src/__tests__/components.test.tsx:35` | `do EPUB Studio logo` | `d.o.EPUB Studio logo` |
-| `packages/ui/src/__stories__/Header.stories.tsx:20,35` | `EPUB Studio` | `d.o.EPUB Studio` |
-| `apps/worker/src/routes/admin/auth.ts:112` | `Recover access to EPUB Studio Admin` | `…to d.o.EPUB Studio Admin` |
-| `apps/web/README.md:3`, `apps/worker/README.md:3`, `packages/testkit/README.md:3` | `EPUB Studio` | `d.o.EPUB Studio` |
-| `docs/coding-guide.md` (≈6 hits incl. `VITE_APP_NAME=do EPUB Studio`) | `do EPUB Studio` | `d.o.EPUB Studio` |
-| `docs/setup-local.md:3`, `docs/reading-insights.md:31` | `EPUB Studio` | `d.o.EPUB Studio` |
+| File                                                                              | Current                               | Should be                   |
+| --------------------------------------------------------------------------------- | ------------------------------------- | --------------------------- |
+| `README.md:1`                                                                     | `# d.o. ePUB Studio`                  | `# d.o.EPUB Studio`         |
+| `packages/ui/src/AppLogo.tsx:15`                                                  | `aria-label="do EPUB Studio logo"`    | `d.o.EPUB Studio logo`      |
+| `packages/ui/src/__tests__/components.test.tsx:35`                                | `do EPUB Studio logo`                 | `d.o.EPUB Studio logo`      |
+| `packages/ui/src/__stories__/Header.stories.tsx:20,35`                            | `EPUB Studio`                         | `d.o.EPUB Studio`           |
+| `apps/worker/src/routes/admin/auth.ts:112`                                        | `Recover access to EPUB Studio Admin` | `…to d.o.EPUB Studio Admin` |
+| `apps/web/README.md:3`, `apps/worker/README.md:3`, `packages/testkit/README.md:3` | `EPUB Studio`                         | `d.o.EPUB Studio`           |
+| `docs/coding-guide.md` (≈6 hits incl. `VITE_APP_NAME=do EPUB Studio`)             | `do EPUB Studio`                      | `d.o.EPUB Studio`           |
+| `docs/setup-local.md:3`, `docs/reading-insights.md:31`                            | `EPUB Studio`                         | `d.o.EPUB Studio`           |
 
 No lint guard prevents regressions. (Generic "EPUB file/reader" usage is
 fine — see ADR-104 §5.)
@@ -97,18 +97,18 @@ From plan 103 IN_PROGRESS inventory (still open):
 
 ## Decomposition
 
-| ID | Task | Cluster | Priority | Deps | Owner skill |
-|----|------|---------|----------|------|-------------|
-| T1 | Normalize all product-name spellings to `d.o.EPUB Studio` per ADR-104 | 1 | P0 | ADR-104 | reader-ui-ux + code-quality |
-| T2 | Add `scripts/check-app-identity.mjs` (name + version parity guard); wire into `quality_gate.sh` | 5,6 | P0 | T1 | shell-script-quality + agents-md |
-| T3 | Reconcile `VERSION`/`package.json`/CHANGELOG; bump to released `0.1.1` (or cut next) via `release-management` skill | 2 | P0 | ADR-104 | release-management |
-| T4 | Fix docs: `coding-guide.md` name + drop stale `VITE_APP_NAME`; reconcile `release-process.md`; update per-package READMEs | 4 | P1 | T1,T3 | agents-md |
-| T5 | Add parity tests (UI logo, Worker email, Storybook ↔ `app-identity.json`; `VERSION` ↔ `package.json`) | 6 | P1 | T1,T2 | testing-strategy |
-| T6 | Plan 100 — raise web coverage to 80% (BooksPage, CommentItem, ReaderToolbar) | 6 | P1 | none | testing-strategy + testdata-builders |
-| T7 | Plan 076 / G15 — magic-link email transport → unblock admin recovery + book CRUD | 3 | P1 | ADR-081 | secure-invite-and-access |
-| T8 | Plan 063 Wave 2 — 26 P1 feature items (decompose into sub-plan) | 3 | P2 | T7 | goap-agent (sub-plan) |
-| T9 | Plan 065 — reader hot-path perf + Turborepo cache | 3 | P2 | none | epub-rendering-and-cfi |
-| T10 | Plan 075 Waves C/D — close #532/#533/#534/#535/#539 | 3 | P2 | T7 | goap-agent |
+| ID  | Task                                                                                                                      | Cluster | Priority | Deps    | Owner skill                          |
+| --- | ------------------------------------------------------------------------------------------------------------------------- | ------- | -------- | ------- | ------------------------------------ |
+| T1  | Normalize all product-name spellings to `d.o.EPUB Studio` per ADR-104                                                     | 1       | P0       | ADR-104 | reader-ui-ux + code-quality          |
+| T2  | Add `scripts/check-app-identity.mjs` (name + version parity guard); wire into `quality_gate.sh`                           | 5,6     | P0       | T1      | shell-script-quality + agents-md     |
+| T3  | Reconcile `VERSION`/`package.json`/CHANGELOG; bump to released `0.1.1` (or cut next) via `release-management` skill       | 2       | P0       | ADR-104 | release-management                   |
+| T4  | Fix docs: `coding-guide.md` name + drop stale `VITE_APP_NAME`; reconcile `release-process.md`; update per-package READMEs | 4       | P1       | T1,T3   | agents-md                            |
+| T5  | Add parity tests (UI logo, Worker email, Storybook ↔ `app-identity.json`; `VERSION` ↔ `package.json`)                     | 6       | P1       | T1,T2   | testing-strategy                     |
+| T6  | Plan 100 — raise web coverage to 80% (BooksPage, CommentItem, ReaderToolbar)                                              | 6       | P1       | none    | testing-strategy + testdata-builders |
+| T7  | Plan 076 / G15 — magic-link email transport → unblock admin recovery + book CRUD                                          | 3       | P1       | ADR-081 | secure-invite-and-access             |
+| T8  | Plan 063 Wave 2 — 26 P1 feature items (decompose into sub-plan)                                                           | 3       | P2       | T7      | goap-agent (sub-plan)                |
+| T9  | Plan 065 — reader hot-path perf + Turborepo cache                                                                         | 3       | P2       | none    | epub-rendering-and-cfi               |
+| T10 | Plan 075 Waves C/D — close #532/#533/#534/#535/#539                                                                       | 3       | P2       | T7      | goap-agent                           |
 
 **Principles:** each task is atomic, testable, and shippable as its own
 PR with passing Tier-2 gates. T1–T5 are the identity/versioning/harness

@@ -19,12 +19,14 @@ You are a GOAP (Goal-Oriented Action Planning) orchestrator specializing in soft
 ## Phase 2: DECOMPOSE – Break Down into Units
 
 For each issue, produce:
+
 - **GOAP plan** in `plans/` with unique ID (format: `NNN-goap-issue-<number>.md`)
 - **ADR** (Architecture Decision Record) within the plan document
 - **Implementation steps** with estimated effort
 - **Acceptance criteria** mapped to tests
 
 Group issues by:
+
 - **Security-critical**: #339 (ZIP bomb), #312 (dependency scanning)
 - **Architecture**: #318 (AI plugins), #314 (schema consolidation)
 - **UI/UX**: #316 (OKLCH), #315 (View Transitions)
@@ -47,6 +49,7 @@ Group issues by:
 ## Phase 5: EXECUTE – Implementation
 
 For each implementation unit:
+
 1. Create feature branch: `feat/issue-NNN-goap-plan`
 2. Implement following AGENTS.md Tier 1–4 rules
 3. Run `./scripts/quality_gate.sh` before commit

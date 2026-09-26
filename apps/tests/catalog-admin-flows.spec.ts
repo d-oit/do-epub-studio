@@ -4,44 +4,128 @@ import { ADMIN_LOGIN_RESPONSE, loginAsAdmin } from './fixtures';
 const BOOKS_LIST_RESPONSE = {
   ok: true,
   data: [
-    { id: 'book-1', slug: 'my-test-book', title: 'My Test Book', authorName: 'Test Author', visibility: 'public' },
-    { id: 'book-2', slug: 'another-book', title: 'Another Book', authorName: 'Another Author', visibility: 'private' },
-    { id: 'book-3', slug: 'third-book', title: 'Third Book', authorName: 'Third Author', visibility: 'public' },
+    {
+      id: 'book-1',
+      slug: 'my-test-book',
+      title: 'My Test Book',
+      authorName: 'Test Author',
+      visibility: 'public',
+    },
+    {
+      id: 'book-2',
+      slug: 'another-book',
+      title: 'Another Book',
+      authorName: 'Another Author',
+      visibility: 'private',
+    },
+    {
+      id: 'book-3',
+      slug: 'third-book',
+      title: 'Third Book',
+      authorName: 'Third Author',
+      visibility: 'public',
+    },
   ],
 };
 
 const BOOKS_SEARCH_RESPONSE = {
   ok: true,
   data: [
-    { id: 'book-1', slug: 'my-test-book', title: 'My Test Book', authorName: 'Test Author', visibility: 'public' },
+    {
+      id: 'book-1',
+      slug: 'my-test-book',
+      title: 'My Test Book',
+      authorName: 'Test Author',
+      visibility: 'public',
+    },
   ],
 };
 
 const GRANTS_RESPONSE = {
   ok: true,
   data: [
-    { id: 'grant-1', email: 'reader@example.com', mode: 'reader', commentsAllowed: true, offlineAllowed: true, expiresAt: null, createdAt: '2025-01-01T00:00:00Z', status: 'active' },
-    { id: 'grant-2', email: 'reader2@example.com', mode: 'reader', commentsAllowed: false, offlineAllowed: false, expiresAt: '2025-12-31T00:00:00Z', createdAt: '2025-01-02T00:00:00Z', status: 'active' },
+    {
+      id: 'grant-1',
+      email: 'reader@example.com',
+      mode: 'reader',
+      commentsAllowed: true,
+      offlineAllowed: true,
+      expiresAt: null,
+      createdAt: '2025-01-01T00:00:00Z',
+      status: 'active',
+    },
+    {
+      id: 'grant-2',
+      email: 'reader2@example.com',
+      mode: 'reader',
+      commentsAllowed: false,
+      offlineAllowed: false,
+      expiresAt: '2025-12-31T00:00:00Z',
+      createdAt: '2025-01-02T00:00:00Z',
+      status: 'active',
+    },
   ],
 };
 
 const GRANT_CREATE_RESPONSE = {
   ok: true,
-  data: { id: 'grant-3', email: 'newuser@example.com', mode: 'reader', commentsAllowed: true, offlineAllowed: true, expiresAt: null, createdAt: '2025-01-03T00:00:00Z', status: 'active' },
+  data: {
+    id: 'grant-3',
+    email: 'newuser@example.com',
+    mode: 'reader',
+    commentsAllowed: true,
+    offlineAllowed: true,
+    expiresAt: null,
+    createdAt: '2025-01-03T00:00:00Z',
+    status: 'active',
+  },
 };
 
 const GRANT_UPDATE_RESPONSE = {
   ok: true,
-  data: { id: 'grant-1', email: 'reader@example.com', mode: 'reader', commentsAllowed: false, offlineAllowed: false, expiresAt: '2025-12-31T00:00:00Z', createdAt: '2025-01-01T00:00:00Z', status: 'active' },
+  data: {
+    id: 'grant-1',
+    email: 'reader@example.com',
+    mode: 'reader',
+    commentsAllowed: false,
+    offlineAllowed: false,
+    expiresAt: '2025-12-31T00:00:00Z',
+    createdAt: '2025-01-01T00:00:00Z',
+    status: 'active',
+  },
 };
 
 const AUDIT_LOG_RESPONSE = {
   ok: true,
   data: {
     entries: [
-      { id: 'audit-1', actorEmail: 'admin@example.com', entityType: 'grant', entityId: 'grant-1', action: 'create', createdAt: '2025-01-01T00:00:00Z', payload: { email: 'reader@example.com' } },
-      { id: 'audit-2', actorEmail: 'admin@example.com', entityType: 'book', entityId: 'book-1', action: 'update', createdAt: '2025-01-02T00:00:00Z', payload: { title: 'My Test Book' } },
-      { id: 'audit-3', actorEmail: 'admin@example.com', entityType: 'grant', entityId: 'grant-2', action: 'revoke', createdAt: '2025-01-03T00:00:00Z', payload: { email: 'reader2@example.com' } },
+      {
+        id: 'audit-1',
+        actorEmail: 'admin@example.com',
+        entityType: 'grant',
+        entityId: 'grant-1',
+        action: 'create',
+        createdAt: '2025-01-01T00:00:00Z',
+        payload: { email: 'reader@example.com' },
+      },
+      {
+        id: 'audit-2',
+        actorEmail: 'admin@example.com',
+        entityType: 'book',
+        entityId: 'book-1',
+        action: 'update',
+        createdAt: '2025-01-02T00:00:00Z',
+        payload: { title: 'My Test Book' },
+      },
+      {
+        id: 'audit-3',
+        actorEmail: 'admin@example.com',
+        entityType: 'grant',
+        entityId: 'grant-2',
+        action: 'revoke',
+        createdAt: '2025-01-03T00:00:00Z',
+        payload: { email: 'reader2@example.com' },
+      },
     ],
     total: 3,
   },
@@ -51,7 +135,15 @@ const AUDIT_LOG_FILTERED_RESPONSE = {
   ok: true,
   data: {
     entries: [
-      { id: 'audit-1', actorEmail: 'admin@example.com', entityType: 'grant', entityId: 'grant-1', action: 'create', createdAt: '2025-01-01T00:00:00Z', payload: { email: 'reader@example.com' } },
+      {
+        id: 'audit-1',
+        actorEmail: 'admin@example.com',
+        entityType: 'grant',
+        entityId: 'grant-1',
+        action: 'create',
+        createdAt: '2025-01-01T00:00:00Z',
+        payload: { email: 'reader@example.com' },
+      },
     ],
     total: 1,
   },
@@ -63,60 +155,129 @@ const AUDIT_LOG_FILTERED_RESPONSE = {
 
 async function mockAdminApi(page: Page) {
   await page.route('**/api/admin/login', async (route: Route) => {
-    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(ADMIN_LOGIN_RESPONSE) });
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(ADMIN_LOGIN_RESPONSE),
+    });
   });
   await page.route('**/api/admin/books', async (route) => {
     const url = new URL(route.request().url());
     const search = url.searchParams.get('search');
     if (search) {
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(BOOKS_SEARCH_RESPONSE) });
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(BOOKS_SEARCH_RESPONSE),
+      });
     } else {
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(BOOKS_LIST_RESPONSE) });
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(BOOKS_LIST_RESPONSE),
+      });
     }
   });
   await page.route('**/api/admin/books/*/grants', async (route: Route) => {
-    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(GRANTS_RESPONSE) });
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(GRANTS_RESPONSE),
+    });
   });
   await page.route('**/api/admin/books/*/invitations', async (route: Route) => {
-    const body = route.request().method() === 'POST'
-      ? {
-        ok: true,
-        data: {
-          invitation: { id: 'invite-new', bookId: 'book-1', email: 'invited@example.com', role: 'reader', status: 'pending', deliveryStatus: 'manual_copy_required', deliveryErrorCode: null, grantMode: 'private', commentsAllowed: false, offlineAllowed: false, grantExpiresAt: null, expiresAt: '2099-01-01T00:00:00.000Z', createdAt: '2026-01-01T00:00:00.000Z', acceptedAt: null, revokedAt: null },
-          delivery: 'manual_copy_required',
-          copyUrl: 'https://app.example.com/accept-invite#token=fixture',
-        },
-      }
-      : { ok: true, data: [] };
-    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(body) });
+    const body =
+      route.request().method() === 'POST'
+        ? {
+            ok: true,
+            data: {
+              invitation: {
+                id: 'invite-new',
+                bookId: 'book-1',
+                email: 'invited@example.com',
+                role: 'reader',
+                status: 'pending',
+                deliveryStatus: 'manual_copy_required',
+                deliveryErrorCode: null,
+                grantMode: 'private',
+                commentsAllowed: false,
+                offlineAllowed: false,
+                grantExpiresAt: null,
+                expiresAt: '2099-01-01T00:00:00.000Z',
+                createdAt: '2026-01-01T00:00:00.000Z',
+                acceptedAt: null,
+                revokedAt: null,
+              },
+              delivery: 'manual_copy_required',
+              copyUrl: 'https://app.example.com/accept-invite#token=fixture',
+            },
+          }
+        : { ok: true, data: [] };
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(body),
+    });
   });
   await page.route('**/api/admin/books/*/creators', async (route: Route) => {
-    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: [] }) });
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ ok: true, data: [] }),
+    });
   });
   await page.route('**/api/admin/books/*/grants', async (route: Route) => {
     if (route.request().method() === 'POST') {
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(GRANT_CREATE_RESPONSE) });
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(GRANT_CREATE_RESPONSE),
+      });
     } else {
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(GRANTS_RESPONSE) });
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(GRANTS_RESPONSE),
+      });
     }
   });
   await page.route('**/api/admin/grants/*', async (route: Route) => {
     if (route.request().method() === 'PATCH') {
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(GRANT_UPDATE_RESPONSE) });
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(GRANT_UPDATE_RESPONSE),
+      });
     } else {
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: {} }) });
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ ok: true, data: {} }),
+      });
     }
   });
   await page.route('**/api/admin/grants/*/revoke', async (route: Route) => {
-    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: {} }) });
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ ok: true, data: {} }),
+    });
   });
   await page.route('**/api/admin/audit*', async (route: Route) => {
     const url = new URL(route.request().url());
     const entityType = url.searchParams.get('entityType');
     if (entityType) {
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(AUDIT_LOG_FILTERED_RESPONSE) });
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(AUDIT_LOG_FILTERED_RESPONSE),
+      });
     } else {
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(AUDIT_LOG_RESPONSE) });
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(AUDIT_LOG_RESPONSE),
+      });
     }
   });
 }
@@ -147,7 +308,10 @@ test.describe('Catalog browsing flow', () => {
   test('@mobile can navigate to book details', async ({ page }) => {
     await loginAsAdmin(page);
 
-    await page.getByRole('button', { name: /Manage Access/i }).first().click();
+    await page
+      .getByRole('button', { name: /Manage Access/i })
+      .first()
+      .click();
     await expect(page).toHaveURL(/\/admin\/books\/book-1\/grants/);
   });
 });
@@ -170,7 +334,11 @@ test.describe('Book upload flow', () => {
           }),
         });
       } else {
-        await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(BOOKS_LIST_RESPONSE) });
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify(BOOKS_LIST_RESPONSE),
+        });
       }
     });
   });
@@ -200,7 +368,10 @@ test.describe('Admin grants management', () => {
   test('@smoke @mobile can view grants for a book', async ({ page }) => {
     await loginAsAdmin(page);
 
-    await page.getByRole('button', { name: /Manage Access/i }).first().click();
+    await page
+      .getByRole('button', { name: /Manage Access/i })
+      .first()
+      .click();
     await expect(page).toHaveURL(/\/admin\/books\/book-1\/grants/);
 
     await expect(page.getByText('reader@example.com')).toBeVisible();
@@ -209,7 +380,10 @@ test.describe('Admin grants management', () => {
   test('@mobile grants table shows email and mode columns', async ({ page }) => {
     await loginAsAdmin(page);
 
-    await page.getByRole('button', { name: /Manage Access/i }).first().click();
+    await page
+      .getByRole('button', { name: /Manage Access/i })
+      .first()
+      .click();
     await expect(page).toHaveURL(/\/admin\/books\/book-1\/grants/);
 
     await expect(page.getByText('reader@example.com')).toBeVisible();
@@ -218,7 +392,10 @@ test.describe('Admin grants management', () => {
   test('@mobile can revoke a grant', async ({ page }) => {
     await loginAsAdmin(page);
 
-    await page.getByRole('button', { name: /Manage Access/i }).first().click();
+    await page
+      .getByRole('button', { name: /Manage Access/i })
+      .first()
+      .click();
     await expect(page).toHaveURL(/\/admin\/books\/book-1\/grants/);
 
     const revokeButton = page.getByRole('button', { name: /Revoke/i }).first();
@@ -230,15 +407,24 @@ test.describe('Admin grants management', () => {
 
   test('@smoke @mobile can create an invitation with manual delivery', async ({ page }) => {
     await loginAsAdmin(page);
-    await page.getByRole('button', { name: /Manage Access/i }).first().click();
+    await page
+      .getByRole('button', { name: /Manage Access/i })
+      .first()
+      .click();
     await expect(page).toHaveURL(/\/admin\/books\/book-1\/grants/);
 
     await page.getByRole('button', { name: 'Invite person' }).click();
     await page.getByLabel('Email address').fill('invited@example.com');
     await page.getByRole('button', { name: 'Send invitation' }).click();
 
-    await expect(page.getByText('Email delivery is unavailable. Copy this one-time link and send it through an approved channel.')).toBeVisible();
-    await expect(page.getByLabel('Invitation link')).toHaveValue('https://app.example.com/accept-invite#token=fixture');
+    await expect(
+      page.getByText(
+        'Email delivery is unavailable. Copy this one-time link and send it through an approved channel.',
+      ),
+    ).toBeVisible();
+    await expect(page.getByLabel('Invitation link')).toHaveValue(
+      'https://app.example.com/accept-invite#token=fixture',
+    );
   });
 });
 

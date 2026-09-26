@@ -94,19 +94,24 @@ export function sanitizeAuditPayload(
 export async function logAudit(
   env: Env,
   entry: AuditEntry,
-  ctx?: { waitUntil: (promise: Promise<unknown>) => void }
+  ctx?: { waitUntil: (promise: Promise<unknown>) => void },
 ): Promise<void> {
   const promise = (async () => {
-    const payloadJson = entry.payload
-      ? JSON.stringify(sanitizeAuditPayload(entry.payload))
-      : null;
+    const payloadJson = entry.payload ? JSON.stringify(sanitizeAuditPayload(entry.payload)) : null;
 
     try {
       await execute(
         env,
         `INSERT INTO audit_log (id, actor_email, entity_type, entity_id, action, payload_json)
          VALUES (?, ?, ?, ?, ?, ?)`,
-        [crypto.randomUUID(), entry.actorEmail ?? null, entry.entityType, entry.entityId, entry.action, payloadJson]
+        [
+          crypto.randomUUID(),
+          entry.actorEmail ?? null,
+          entry.entityType,
+          entry.entityId,
+          entry.action,
+          payloadJson,
+        ],
       );
     } catch (error) {
       // D1 reports a CHECK rejection without naming the offending value, so

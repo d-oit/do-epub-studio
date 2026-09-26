@@ -35,7 +35,6 @@ tools:
   glob: true
   grep: true
 ---
-
 [Agent system prompt here]
 ```
 

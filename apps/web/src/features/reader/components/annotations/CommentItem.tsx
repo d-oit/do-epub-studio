@@ -48,9 +48,7 @@ export const CommentItem = memo(function CommentItem({
   return (
     <div
       className={`p-3 rounded-lg border transition-colors ${
-        isCurrentChapter
-          ? 'border-accent/30 bg-accent/5'
-          : 'border-border'
+        isCurrentChapter ? 'border-accent/30 bg-accent/5' : 'border-border'
       }`}
       onMouseEnter={() => setShowActions(true)}
       onMouseLeave={() => setShowActions(false)}
@@ -62,7 +60,12 @@ export const CommentItem = memo(function CommentItem({
         <div
           className="text-xs text-foreground-muted italic mb-2 cursor-pointer hover:text-accent"
           onClick={onNavigate}
-          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onNavigate(); } }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              onNavigate();
+            }
+          }}
           tabIndex={0}
           role="button"
         >

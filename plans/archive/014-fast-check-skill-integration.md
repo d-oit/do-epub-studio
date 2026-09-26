@@ -14,6 +14,7 @@ The fast-check repository includes a comprehensive skill at:
 `https://github.com/dubzzz/fast-check/blob/main/skills/javascript-testing-expert/SKILL.md`
 
 **Key features (402 lines):**
+
 - AAA pattern guidelines
 - Property-based testing when to use
 - `@fast-check/vitest` integration
@@ -23,10 +24,10 @@ The fast-check repository includes a comprehensive skill at:
 
 ### Our Current Testing Skills
 
-| Skill | Focus | Status |
-|-------|-------|--------|
-| `testing-strategy` | Test planning, pyramid, coverage goals | Existing |
-| `testdata-builders` | Test data factories | Existing |
+| Skill               | Focus                                  | Status   |
+| ------------------- | -------------------------------------- | -------- |
+| `testing-strategy`  | Test planning, pyramid, coverage goals | Existing |
+| `testdata-builders` | Test data factories                    | Existing |
 
 **Gap:** Neither skill covers property-based testing (PBT) with fast-check.
 
@@ -36,23 +37,23 @@ The fast-check repository includes a comprehensive skill at:
 
 ### What fast-check Skill Provides
 
-| Area | Coverage |
-|------|----------|
-| Test structure | ✅ AAA pattern, naming conventions |
-| Property-based testing | ✅ When/how to use |
-| Fast-check integration | ✅ @fast-check/vitest |
-| Race conditions | ✅ fc.scheduler() |
-| Faker integration | ✅ Code snippet provided |
-| Edge cases | ✅ Detailed examples |
+| Area                   | Coverage                           |
+| ---------------------- | ---------------------------------- |
+| Test structure         | ✅ AAA pattern, naming conventions |
+| Property-based testing | ✅ When/how to use                 |
+| Fast-check integration | ✅ @fast-check/vitest              |
+| Race conditions        | ✅ fc.scheduler()                  |
+| Faker integration      | ✅ Code snippet provided           |
+| Edge cases             | ✅ Detailed examples               |
 
 ### What Our Project Needs
 
-| Need | Source |
-|------|--------|
-| PBT for auth security | Plan 013 - create new tests |
-| Schema edge case testing | Plan 013 - create new tests |
-| Locator parsing tests | Plan 013 - create new tests |
-| Integration with our testkit | Custom adaptation needed |
+| Need                         | Source                      |
+| ---------------------------- | --------------------------- |
+| PBT for auth security        | Plan 013 - create new tests |
+| Schema edge case testing     | Plan 013 - create new tests |
+| Locator parsing tests        | Plan 013 - create new tests |
+| Integration with our testkit | Custom adaptation needed    |
 
 ---
 
@@ -61,12 +62,14 @@ The fast-check repository includes a comprehensive skill at:
 ### Option A: Create Adapted Skill (Recommended) ✅
 
 Create a new skill `.agents/skills/property-based-testing/SKILL.md` that:
+
 1. Imports best practices from fast-check skill
 2. Adds project-specific examples (our auth, schemas, locator)
 3. References our existing test structure
 4. Integrates with `testdata-builders` skill
 
 **Implementation:**
+
 ```bash
 # Create skill directory
 mkdir -p .agents/skills/property-based-testing
@@ -80,10 +83,12 @@ mkdir -p .agents/skills/property-based-testing
 ### Option B: Update Existing Skills
 
 Add PBT section to `testing-strategy` skill:
+
 - Reference fast-check skill
 - Add our project-specific examples
 
 **Changes needed:**
+
 - Update `.agents/skills/testing-strategy/SKILL.md`
 - Add PBT coverage examples
 
@@ -101,6 +106,7 @@ Add PBT section to `testing-strategy` skill:
 ### Phase 2: Tooling Setup
 
 From Plan 013:
+
 - [ ] Install fast-check in packages
 - [ ] Install @fast-check/vitest for better integration
 - [ ] Create shared arbitraries file
@@ -168,12 +174,14 @@ export const CapabilityArbitrary = fc.record({
 ### When to Use Property-Based Testing
 
 Use PBT for:
+
 - ✅ Security boundary functions (auth, validation)
 - ✅ String parsing (locator, CFI)
 - ✅ Schema edge cases
 - ✅ "Should always/never" properties
 
 Use Example-Based Testing for:
+
 - ✅ Specific important scenarios (documentation)
 - ✅ Complex integration flows
 - ✅ E2E user journeys
@@ -193,8 +201,8 @@ fc.assert(
       const grants = Array.from({ length: count }, () => makeGrant());
       // Test bulk operations
       expect(grants.length).toBe(count);
-    }
-  )
+    },
+  ),
 );
 ```
 

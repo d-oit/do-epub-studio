@@ -44,7 +44,9 @@ describe('CommentInputModal', () => {
   });
 
   it('returns null when both isOpen is false and selection is null', () => {
-    const { container } = render(<CommentInputModal {...defaultProps} isOpen={false} selection={null} />);
+    const { container } = render(
+      <CommentInputModal {...defaultProps} isOpen={false} selection={null} />,
+    );
     expect(container.innerHTML).toBe('');
   });
 

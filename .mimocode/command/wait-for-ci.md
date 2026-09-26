@@ -10,10 +10,10 @@ triggers:
   - are checks passing
 params:
   - name: timeout
-    description: "Max seconds to wait (default: 1800 = 30min)"
+    description: 'Max seconds to wait (default: 1800 = 30min)'
     default: 1800
   - name: interval
-    description: "Seconds between polls (default: 60)"
+    description: 'Seconds between polls (default: 60)'
     default: 60
 ---
 
@@ -93,13 +93,13 @@ gh run view "$RUN_ID" --log-failed 2>/dev/null | tail -50
 
 ## Step 5 — Common Failure Patterns
 
-| Check | Likely Cause | Fix |
-|-------|-------------|-----|
-| Pre-commit Hooks | lint/commitlint/format | Run `./scripts/quality_gate.sh` locally |
-| Unit Tests | test failure | Run `pnpm run test` locally |
-| Build (Node 22) | TypeScript/bundle error | Run `pnpm --filter web build` |
-| Codacy | code quality issue | Check `codacy pull-request gh <org> <repo> <pr>` |
-| Lint PR title | commitlint format | Fix PR title to `type(scope): description` |
+| Check            | Likely Cause            | Fix                                              |
+| ---------------- | ----------------------- | ------------------------------------------------ |
+| Pre-commit Hooks | lint/commitlint/format  | Run `./scripts/quality_gate.sh` locally          |
+| Unit Tests       | test failure            | Run `pnpm run test` locally                      |
+| Build (Node 22)  | TypeScript/bundle error | Run `pnpm --filter web build`                    |
+| Codacy           | code quality issue      | Check `codacy pull-request gh <org> <repo> <pr>` |
+| Lint PR title    | commitlint format       | Fix PR title to `type(scope): description`       |
 
 ## Step 6 — After Fixes
 

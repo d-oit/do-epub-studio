@@ -46,13 +46,21 @@ export const ValidateQuerySchema = z.object({
 });
 
 export const SignedUrlSchema = z.object({
-  expires: z.coerce.number().int().positive().max(2 ** 32),
+  expires: z.coerce
+    .number()
+    .int()
+    .positive()
+    .max(2 ** 32),
   signature: z.string().min(16).max(256),
 });
 
 export const UploadCompleteSchema = z.object({
   fileKey: z.string().min(1).max(256),
-  size: z.number().int().positive().max(200 * 1024 * 1024),
+  size: z
+    .number()
+    .int()
+    .positive()
+    .max(200 * 1024 * 1024),
   sha256: z.string().regex(/^[a-f0-9]{64}$/),
   // ... existing fields
 });
@@ -62,7 +70,7 @@ export function formatZodError(err: z.ZodError): {
   code: 'VALIDATION_ERROR';
   message: string;
   details: Array<{ path: string; message: string }>;
-}
+};
 ```
 
 ### Migration

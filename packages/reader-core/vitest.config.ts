@@ -20,7 +20,13 @@ export default defineConfig({
         statements: coverageThresholds['reader-core'].statements,
       },
       include: ['src/**/*.ts'],
-      exclude: ['src/**/*.test.ts', 'src/**/*.spec.ts', 'src/**/*.bench.ts', 'src/**/*.worker.ts', 'src/__tests__/fixtures/**'],
+      exclude: [
+        'src/**/*.test.ts',
+        'src/**/*.spec.ts',
+        'src/**/*.bench.ts',
+        'src/**/*.worker.ts',
+        'src/__tests__/fixtures/**',
+      ],
     },
   },
 });

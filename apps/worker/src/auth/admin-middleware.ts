@@ -77,7 +77,13 @@ export async function requireAdminAuth(
     return { ok: false, status: 401, error: 'Token expired' };
   }
 
-  const user = await queryFirst<{ id: string; email: string; global_role: 'admin' | 'editor' | 'reader'; disabled_at: string | null; compromised_at: string | null }>(
+  const user = await queryFirst<{
+    id: string;
+    email: string;
+    global_role: 'admin' | 'editor' | 'reader';
+    disabled_at: string | null;
+    compromised_at: string | null;
+  }>(
     env,
     `SELECT id, email, global_role, disabled_at, compromised_at
      FROM users
@@ -100,11 +106,9 @@ export async function requireAdminAuth(
   }
 
   // Update last used time (non-blocking)
-  execute(
-    env,
-    `UPDATE admin_sessions SET last_used_at = datetime('now') WHERE id = ?`,
-    [session.id],
-  ).catch((err: unknown) => {
+  execute(env, `UPDATE admin_sessions SET last_used_at = datetime('now') WHERE id = ?`, [
+    session.id,
+  ]).catch((err: unknown) => {
     logAppError('admin_session.last_used_update_failed', err, { sessionId: session.id });
   });
 
@@ -135,7 +139,11 @@ export interface AdminSessionClientHints {
  * truth, mirrored by auth/mfa#userHasMfa.
  */
 async function accountRequiresMfa(env: Env, userId: string): Promise<boolean> {
-  const row = await queryFirst<{ mfa_method: string | null }>(env, `SELECT mfa_method FROM users WHERE id = ?`, [userId]);
+  const row = await queryFirst<{ mfa_method: string | null }>(
+    env,
+    `SELECT mfa_method FROM users WHERE id = ?`,
+    [userId],
+  );
   return row?.mfa_method === 'passkey';
 }
 
@@ -165,7 +173,10 @@ async function emitSuspiciousDeviceChangeIfNovel(
   if (prior.length === 0) return;
 
   const matchesDevice = prior.some(
-    (s) => s.device_label_hash && clientHints.deviceLabelHash && s.device_label_hash === clientHints.deviceLabelHash,
+    (s) =>
+      s.device_label_hash &&
+      clientHints.deviceLabelHash &&
+      s.device_label_hash === clientHints.deviceLabelHash,
   );
   const matchesIp = prior.some(
     (s) => s.ip_hash && clientHints.ipHash && s.ip_hash === clientHints.ipHash,
@@ -257,11 +268,14 @@ export async function createAdminDemoSession(
   user: AdminSessionUser,
   clientHints?: AdminSessionClientHints,
 ): Promise<
-  | { ok: true; token: string; user: AdminSessionUser }
-  | { ok: false; status: 403; error: string }
+  { ok: true; token: string; user: AdminSessionUser } | { ok: false; status: 403; error: string }
 > {
   if (await accountRequiresMfa(env, user.id)) {
-    return { ok: false, status: 403, error: 'Demo admin must complete multi-factor authentication.' };
+    return {
+      ok: false,
+      status: 403,
+      error: 'Demo admin must complete multi-factor authentication.',
+    };
   }
   const inserted = await insertAdminSession(env, user.id, 'password', clientHints);
   await emitSuspiciousDeviceChangeIfNovel(env, user, inserted.sessionId, clientHints);
@@ -323,13 +337,11 @@ export async function createAdminSession(
   await emitSuspiciousDeviceChangeIfNovel(env, publicUser, inserted.sessionId, clientHints);
 
   // Record the authenticated login timestamp (non-critical update).
-  execute(
-    env,
-    `UPDATE users SET last_login_at = datetime('now') WHERE id = ?`,
-    [user.id],
-  ).catch((err: unknown) => {
-    logAppError('admin_session.login_timestamp_update_failed', err, { userId: user.id });
-  });
+  execute(env, `UPDATE users SET last_login_at = datetime('now') WHERE id = ?`, [user.id]).catch(
+    (err: unknown) => {
+      logAppError('admin_session.login_timestamp_update_failed', err, { userId: user.id });
+    },
+  );
 
   return {
     ok: true,
@@ -338,10 +350,7 @@ export async function createAdminSession(
   };
 }
 
-export async function revokeAdminSession(
-  env: Env,
-  token: string,
-): Promise<{ ok: boolean }> {
+export async function revokeAdminSession(env: Env, token: string): Promise<{ ok: boolean }> {
   const tokenHash = await hashToken(token);
 
   await execute(
@@ -419,11 +428,11 @@ export async function raiseAdminAssurance(
   level: Exclude<AdminAssuranceLevel, 'none'>,
 ): Promise<{ ok: true; token: string } | { ok: false; error: string }> {
   const tokenHash = await hashToken(currentToken);
-  const session = (await queryFirst<{ id: string; user_id: string }>(
+  const session = await queryFirst<{ id: string; user_id: string }>(
     env,
     `SELECT id, user_id FROM admin_sessions WHERE token_hash = ? AND revoked_at IS NULL`,
     [tokenHash],
-  ));
+  );
 
   if (!session) {
     return { ok: false, error: 'Invalid session' };

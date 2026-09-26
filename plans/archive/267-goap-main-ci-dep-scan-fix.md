@@ -27,7 +27,7 @@ Bundle absolute budget CLEAR post-#1094 (admin 76.7 KB vs 100 KB).
   needs-semantics skipped `build` (and downstream `e2e-smoke`) on every
   `main` push. Added fail-closed guard:
   `if: always() && !contains(needs.*.result,'failure') &&
-  !contains(needs.*.result,'cancelled')` — skipped deps allowed,
+!contains(needs.*.result,'cancelled')` — skipped deps allowed,
   failures still block.
 - **D5 — codecov non-blocking:** `fail_ci_if_error: false` (coverage upload
   is informational; must not red `main` on outage).

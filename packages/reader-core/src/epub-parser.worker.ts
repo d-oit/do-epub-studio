@@ -21,10 +21,7 @@ interface ResultMessage {
   };
 }
 
-async function fallbackParse(
-  data: Uint8Array,
-  traceId: string,
-): Promise<void> {
+async function fallbackParse(data: Uint8Array, traceId: string): Promise<void> {
   await validateArchive(data, {
     timeoutMs: PARSE_VALIDATION_TIMEOUT_MS,
     traceId,

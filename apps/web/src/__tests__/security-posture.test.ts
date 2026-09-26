@@ -11,7 +11,13 @@ describe('Security Posture (Web)', () => {
     // We don't need to instantiate the store to check the persist options
     // but the store is already exported.
 
-    const persistOptions = (useAuthStore as unknown as { persist?: { getOptions: () => { name: string, storage: { getItem: () => unknown } | null } } }).persist?.getOptions();
+    const persistOptions = (
+      useAuthStore as unknown as {
+        persist?: {
+          getOptions: () => { name: string; storage: { getItem: () => unknown } | null };
+        };
+      }
+    ).persist?.getOptions();
     expect(persistOptions?.name).toBe('do-epub-auth');
     expect(persistOptions?.storage?.getItem).toBeDefined();
     // Default storage is localStorage if not specified otherwise
@@ -20,7 +26,9 @@ describe('Security Posture (Web)', () => {
 
   it('asserts no other stores use localStorage for sensitive data', () => {
     // locale is fine in localStorage
-    const localePersist = (useLocaleStore as unknown as { persist?: { getOptions: () => { name: string } } }).persist?.getOptions();
+    const localePersist = (
+      useLocaleStore as unknown as { persist?: { getOptions: () => { name: string } } }
+    ).persist?.getOptions();
     expect(localePersist?.name).toBe('do-epub-locale');
 
     // preferences MUST use cookieStorage, not localStorage (per memory/ADR-092)
@@ -112,7 +120,15 @@ describe('Security Posture (Web)', () => {
       bookSlug: 'slug-1',
       bookTitle: 'Test Book',
       email: 'test@example.com',
-      capabilities: { canRead: true, canComment: false, canHighlight: false, canBookmark: false, canDownloadOffline: false, canExportNotes: false, canManageAccess: false },
+      capabilities: {
+        canRead: true,
+        canComment: false,
+        canHighlight: false,
+        canBookmark: false,
+        canDownloadOffline: false,
+        canExportNotes: false,
+        canManageAccess: false,
+      },
     });
     expect(useAuthStore.getState().sessionToken).toBe('a'.repeat(64));
     expect(useAuthStore.getState().isAuthenticated).toBe(true);
@@ -127,7 +143,13 @@ describe('Security Posture (Web)', () => {
   });
 
   it('session token matches expected format (256-bit hex string)', () => {
-    const persistOptions = (useAuthStore as unknown as { persist?: { getOptions: () => { name: string, storage: { getItem: () => unknown } | null } } }).persist?.getOptions();
+    const persistOptions = (
+      useAuthStore as unknown as {
+        persist?: {
+          getOptions: () => { name: string; storage: { getItem: () => unknown } | null };
+        };
+      }
+    ).persist?.getOptions();
     expect(persistOptions?.name).toBe('do-epub-auth');
 
     // ADR-092: tokens are 256-bit random = 64 hex chars
@@ -139,10 +161,7 @@ describe('Security Posture (Web)', () => {
   });
 
   it('preferences cookie uses Secure flag on HTTPS (B9 from Plan 118)', () => {
-    const content = fs.readFileSync(
-      path.resolve(__dirname, '../stores/preferences.ts'),
-      'utf-8',
-    );
+    const content = fs.readFileSync(path.resolve(__dirname, '../stores/preferences.ts'), 'utf-8');
     // Should conditionally add Secure flag when location.protocol is 'https:'
     expect(content).toContain("location.protocol === 'https:'");
     expect(content).toContain('; Secure');

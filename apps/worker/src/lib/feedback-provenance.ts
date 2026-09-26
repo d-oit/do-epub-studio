@@ -67,7 +67,10 @@ export function parseReferenceRevisions(row: ProvenanceRow): Record<string, numb
 }
 
 /** Current revision of every reference on the book: the baseline a pin is compared against. */
-export async function currentReferenceRevisions(env: Env, bookId: string): Promise<Record<string, number>> {
+export async function currentReferenceRevisions(
+  env: Env,
+  bookId: string,
+): Promise<Record<string, number>> {
   const rows = await queryAll<{ id: string; revision: number }>(
     env,
     `SELECT id, revision FROM book_references WHERE book_id = ?`,

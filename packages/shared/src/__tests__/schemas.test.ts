@@ -1,9 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  AccessRequestSchema,
-  CreateBookSchema,
-  CreateGrantSchema,
-} from '../schemas';
+import { AccessRequestSchema, CreateBookSchema, CreateGrantSchema } from '../schemas';
 
 describe('AccessRequestSchema', () => {
   it('accepts valid input', () => {

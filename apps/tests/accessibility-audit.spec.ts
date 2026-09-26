@@ -1,6 +1,13 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
-import { mockReaderApi, mockAdminApi, loginAsReader, loginAsAdmin, clickToolbarButton, suppressWorkboxErrors } from './fixtures';
+import {
+  mockReaderApi,
+  mockAdminApi,
+  loginAsReader,
+  loginAsAdmin,
+  clickToolbarButton,
+  suppressWorkboxErrors,
+} from './fixtures';
 
 // ---------------------------------------------------------------------------
 // Axe-core accessibility audit tests
@@ -118,7 +125,9 @@ test.describe('Accessibility audit (axe-core)', () => {
   // Admin pages (C2 — axe-core audits for admin pages)
   // -------------------------------------------------------------------------
 
-  test('@mobile admin books list page has no critical accessibility violations', async ({ page }) => {
+  test('@mobile admin books list page has no critical accessibility violations', async ({
+    page,
+  }) => {
     await mockAdminApi(page);
     await loginAsAdmin(page);
 
@@ -127,7 +136,10 @@ test.describe('Accessibility audit (axe-core)', () => {
       .analyze();
 
     if (accessibilityScanResults.violations.length > 0) {
-      console.log('Axe violations (admin books):', JSON.stringify(accessibilityScanResults.violations, null, 2));
+      console.log(
+        'Axe violations (admin books):',
+        JSON.stringify(accessibilityScanResults.violations, null, 2),
+      );
     }
 
     const criticalViolations = accessibilityScanResults.violations.filter(
@@ -152,7 +164,10 @@ test.describe('Accessibility audit (axe-core)', () => {
       .analyze();
 
     if (accessibilityScanResults.violations.length > 0) {
-      console.log('Axe violations (admin grants):', JSON.stringify(accessibilityScanResults.violations, null, 2));
+      console.log(
+        'Axe violations (admin grants):',
+        JSON.stringify(accessibilityScanResults.violations, null, 2),
+      );
     }
 
     const criticalViolations = accessibilityScanResults.violations.filter(
@@ -161,7 +176,9 @@ test.describe('Accessibility audit (axe-core)', () => {
     expect(criticalViolations).toHaveLength(0);
   });
 
-  test('@mobile admin audit log page has no critical accessibility violations', async ({ page }) => {
+  test('@mobile admin audit log page has no critical accessibility violations', async ({
+    page,
+  }) => {
     await mockAdminApi(page);
     await loginAsAdmin(page);
     await page.goto('/admin/audit');
@@ -171,7 +188,10 @@ test.describe('Accessibility audit (axe-core)', () => {
       .analyze();
 
     if (accessibilityScanResults.violations.length > 0) {
-      console.log('Axe violations (admin audit):', JSON.stringify(accessibilityScanResults.violations, null, 2));
+      console.log(
+        'Axe violations (admin audit):',
+        JSON.stringify(accessibilityScanResults.violations, null, 2),
+      );
     }
 
     const criticalViolations = accessibilityScanResults.violations.filter(

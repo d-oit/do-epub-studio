@@ -27,23 +27,21 @@ const ACCOUNT_SELECT = `id, email, display_name, global_role, password_hash,
   disabled_at, compromised_at, email_verified_at`;
 
 export async function getAccountByEmail(env: Env, email: string): Promise<AccountRow | null> {
-  return queryFirst(
-    env,
-    `SELECT ${ACCOUNT_SELECT} FROM users WHERE email = ?`,
-    [email.toLowerCase()],
-  ) as Promise<AccountRow | null>;
+  return queryFirst(env, `SELECT ${ACCOUNT_SELECT} FROM users WHERE email = ?`, [
+    email.toLowerCase(),
+  ]) as Promise<AccountRow | null>;
 }
 
 export async function getAccountById(env: Env, userId: string): Promise<AccountRow | null> {
-  return queryFirst(
-    env,
-    `SELECT ${ACCOUNT_SELECT} FROM users WHERE id = ?`,
-    [userId],
-  ) as Promise<AccountRow | null>;
+  return queryFirst(env, `SELECT ${ACCOUNT_SELECT} FROM users WHERE id = ?`, [
+    userId,
+  ]) as Promise<AccountRow | null>;
 }
 
 /** Fail-closed disabled/compromised check for any credential path. */
-export function accountIsLocked(account: Pick<AccountRow, 'disabled_at' | 'compromised_at'>): boolean {
+export function accountIsLocked(
+  account: Pick<AccountRow, 'disabled_at' | 'compromised_at'>,
+): boolean {
   return Boolean(account.disabled_at) || Boolean(account.compromised_at);
 }
 
@@ -63,11 +61,7 @@ export function isPasswordDerivative(password: string, email: string): boolean {
   return markers.some((m) => p.includes(m));
 }
 
-export async function changePassword(
-  env: Env,
-  userId: string,
-  newPassword: string,
-): Promise<void> {
+export async function changePassword(env: Env, userId: string, newPassword: string): Promise<void> {
   const hash = await hashPassword(newPassword);
   await execute(
     env,

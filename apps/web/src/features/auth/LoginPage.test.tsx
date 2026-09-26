@@ -36,12 +36,46 @@ vi.mock('../../components/ThemeToggle', () => ({
 }));
 
 vi.mock('../../components/ui', () => ({
-  Button: ({ children, type, onClick, isLoading, loadingLabel, className, disabled }: React.ButtonHTMLAttributes<HTMLButtonElement> & { isLoading?: boolean; loadingLabel?: React.ReactNode; children?: React.ReactNode }) => (
-    <button type={type || 'button'} onClick={onClick} disabled={disabled || isLoading} className={className}>
+  Button: ({
+    children,
+    type,
+    onClick,
+    isLoading,
+    loadingLabel,
+    className,
+    disabled,
+  }: React.ButtonHTMLAttributes<HTMLButtonElement> & {
+    isLoading?: boolean;
+    loadingLabel?: React.ReactNode;
+    children?: React.ReactNode;
+  }) => (
+    <button
+      type={type || 'button'}
+      onClick={onClick}
+      disabled={disabled || isLoading}
+      className={className}
+    >
       {isLoading ? loadingLabel : children}
     </button>
   ),
-  Input: ({ id, label, type, value, onChange, placeholder, required, name, autoComplete, inputMode, ref, showPasswordLabel }: React.InputHTMLAttributes<HTMLInputElement> & { label?: React.ReactNode; ref?: React.Ref<HTMLInputElement>; showPasswordLabel?: string }) => (
+  Input: ({
+    id,
+    label,
+    type,
+    value,
+    onChange,
+    placeholder,
+    required,
+    name,
+    autoComplete,
+    inputMode,
+    ref,
+    showPasswordLabel,
+  }: React.InputHTMLAttributes<HTMLInputElement> & {
+    label?: React.ReactNode;
+    ref?: React.Ref<HTMLInputElement>;
+    showPasswordLabel?: string;
+  }) => (
     <div>
       <label htmlFor={id}>{label}</label>
       <input
@@ -57,7 +91,9 @@ vi.mock('../../components/ui', () => ({
         inputMode={inputMode}
       />
       {type === 'password' && showPasswordLabel && (
-        <button type="button" aria-expanded={false}>{showPasswordLabel}</button>
+        <button type="button" aria-expanded={false}>
+          {showPasswordLabel}
+        </button>
       )}
     </div>
   ),
@@ -90,44 +126,72 @@ describe('LoginPage', () => {
   });
 
   it('renders login form', () => {
-    render(<MemoryRouter><LoginPage /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <LoginPage />
+      </MemoryRouter>,
+    );
     expect(screen.getByLabelText('login.emailLabel')).toBeInTheDocument();
     expect(screen.getByLabelText('login.passwordLabel')).toBeInTheDocument();
     expect(screen.getByText('login.submit')).toBeInTheDocument();
   });
 
   it('shows no-book notice and disables submit without book param', () => {
-    render(<MemoryRouter><LoginPage /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <LoginPage />
+      </MemoryRouter>,
+    );
     expect(screen.getByRole('status')).toHaveTextContent('login.noBookContext');
     expect(screen.getByText('login.submit')).toBeDisabled();
   });
 
   it('keeps demo entry available when book context is missing', () => {
     mockIsDemoLoginEnabled.mockReturnValue(true);
-    render(<MemoryRouter><LoginPage /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <LoginPage />
+      </MemoryRouter>,
+    );
     expect(screen.getByText('login.demoTry')).toBeEnabled();
   });
 
   it('hides no-book notice and enables submit with book param', () => {
     mockUseSearchParams.mockReturnValue([new URLSearchParams('book=my-book'), vi.fn()]);
-    render(<MemoryRouter><LoginPage /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <LoginPage />
+      </MemoryRouter>,
+    );
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
     expect(screen.getByText('login.submit')).toBeEnabled();
   });
 
   it('renders branding', () => {
-    render(<MemoryRouter><LoginPage /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <LoginPage />
+      </MemoryRouter>,
+    );
     expect(screen.getAllByText('d.o.EPUB Studio').length).toBeGreaterThan(0);
     expect(screen.getAllByTestId('app-logo').length).toBeGreaterThan(0);
   });
 
   it('renders admin link', () => {
-    render(<MemoryRouter><LoginPage /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <LoginPage />
+      </MemoryRouter>,
+    );
     expect(screen.getByText('login.adminLink')).toBeInTheDocument();
   });
 
   it('navigates to admin login', () => {
-    render(<MemoryRouter><LoginPage /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <LoginPage />
+      </MemoryRouter>,
+    );
     fireEvent.click(screen.getByText('login.adminLink'));
     expect(mockNavigate).toHaveBeenCalledWith('/admin/login');
   });
@@ -138,17 +202,34 @@ describe('LoginPage', () => {
       sessionToken: 'test-token',
       expiresAt: '2026-12-31T00:00:00Z',
       book: { id: 'book-1', slug: 'my-book', title: 'My Book', authorName: 'Author' },
-      capabilities: { canRead: true, canComment: true, canHighlight: true, canBookmark: true, canDownloadOffline: false, canExportNotes: false, canManageAccess: false },
+      capabilities: {
+        canRead: true,
+        canComment: true,
+        canHighlight: true,
+        canBookmark: true,
+        canDownloadOffline: false,
+        canExportNotes: false,
+        canManageAccess: false,
+      },
     });
 
-    render(<MemoryRouter><LoginPage /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <LoginPage />
+      </MemoryRouter>,
+    );
 
-    fireEvent.change(screen.getByLabelText('login.emailLabel'), { target: { value: 'user@test.com' } });
+    fireEvent.change(screen.getByLabelText('login.emailLabel'), {
+      target: { value: 'user@test.com' },
+    });
     fireEvent.change(screen.getByLabelText('login.passwordLabel'), { target: { value: 'secret' } });
     fireEvent.click(screen.getByText('login.submit'));
 
     await waitFor(() => {
-      expect(apiRequest).toHaveBeenCalledWith('/api/access/request', expect.objectContaining({ method: 'POST' }));
+      expect(apiRequest).toHaveBeenCalledWith(
+        '/api/access/request',
+        expect.objectContaining({ method: 'POST' }),
+      );
       expect(mockNavigate).toHaveBeenCalledWith('/read/my-book');
     });
   });
@@ -157,9 +238,15 @@ describe('LoginPage', () => {
     mockUseSearchParams.mockReturnValue([new URLSearchParams('book=my-book'), vi.fn()]);
     vi.mocked(apiRequest).mockRejectedValue(new Error('Invalid credentials'));
 
-    render(<MemoryRouter><LoginPage /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <LoginPage />
+      </MemoryRouter>,
+    );
 
-    fireEvent.change(screen.getByLabelText('login.emailLabel'), { target: { value: 'user@test.com' } });
+    fireEvent.change(screen.getByLabelText('login.emailLabel'), {
+      target: { value: 'user@test.com' },
+    });
     fireEvent.change(screen.getByLabelText('login.passwordLabel'), { target: { value: 'wrong' } });
     fireEvent.click(screen.getByText('login.submit'));
 
@@ -169,7 +256,11 @@ describe('LoginPage', () => {
   });
 
   it('shows recovery mode', () => {
-    render(<MemoryRouter><LoginPage /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <LoginPage />
+      </MemoryRouter>,
+    );
 
     fireEvent.click(screen.getByText('login.forgotPassword'));
     expect(screen.getByText('login.recoveryTitle')).toBeInTheDocument();
@@ -180,14 +271,23 @@ describe('LoginPage', () => {
   it('handles recovery request', async () => {
     vi.mocked(apiRequest).mockResolvedValue({});
 
-    render(<MemoryRouter><LoginPage /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <LoginPage />
+      </MemoryRouter>,
+    );
 
     fireEvent.click(screen.getByText('login.forgotPassword'));
-    fireEvent.change(screen.getByLabelText('login.emailLabel'), { target: { value: 'user@test.com' } });
+    fireEvent.change(screen.getByLabelText('login.emailLabel'), {
+      target: { value: 'user@test.com' },
+    });
     fireEvent.click(screen.getByText('login.sendMagicLink'));
 
     await waitFor(() => {
-      expect(apiRequest).toHaveBeenCalledWith('/api/access/recovery-request', expect.objectContaining({ method: 'POST' }));
+      expect(apiRequest).toHaveBeenCalledWith(
+        '/api/access/recovery-request',
+        expect.objectContaining({ method: 'POST' }),
+      );
       expect(screen.getByText('login.recoverySuccess')).toBeInTheDocument();
     });
   });
@@ -195,10 +295,16 @@ describe('LoginPage', () => {
   it('handles recovery request error', async () => {
     vi.mocked(apiRequest).mockRejectedValue(new Error('Email not found'));
 
-    render(<MemoryRouter><LoginPage /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <LoginPage />
+      </MemoryRouter>,
+    );
 
     fireEvent.click(screen.getByText('login.forgotPassword'));
-    fireEvent.change(screen.getByLabelText('login.emailLabel'), { target: { value: 'bad@test.com' } });
+    fireEvent.change(screen.getByLabelText('login.emailLabel'), {
+      target: { value: 'bad@test.com' },
+    });
     fireEvent.click(screen.getByText('login.sendMagicLink'));
 
     await waitFor(() => {
@@ -207,7 +313,11 @@ describe('LoginPage', () => {
   });
 
   it('back to login from recovery mode', () => {
-    render(<MemoryRouter><LoginPage /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <LoginPage />
+      </MemoryRouter>,
+    );
 
     fireEvent.click(screen.getByText('login.forgotPassword'));
     expect(screen.getByText('login.recoveryTitle')).toBeInTheDocument();
@@ -219,10 +329,16 @@ describe('LoginPage', () => {
   it('shows recovery success and back to login', async () => {
     vi.mocked(apiRequest).mockResolvedValue({});
 
-    render(<MemoryRouter><LoginPage /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <LoginPage />
+      </MemoryRouter>,
+    );
 
     fireEvent.click(screen.getByText('login.forgotPassword'));
-    fireEvent.change(screen.getByLabelText('login.emailLabel'), { target: { value: 'user@test.com' } });
+    fireEvent.change(screen.getByLabelText('login.emailLabel'), {
+      target: { value: 'user@test.com' },
+    });
     fireEvent.click(screen.getByText('login.sendMagicLink'));
 
     await waitFor(() => {
@@ -234,13 +350,21 @@ describe('LoginPage', () => {
   });
 
   it('renders theme toggle and locale switcher', () => {
-    render(<MemoryRouter><LoginPage /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <LoginPage />
+      </MemoryRouter>,
+    );
     expect(screen.getByTestId('theme-toggle')).toBeInTheDocument();
     expect(screen.getByTestId('locale-switcher')).toBeInTheDocument();
   });
 
   it('renders admin description', () => {
-    render(<MemoryRouter><LoginPage /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <LoginPage />
+      </MemoryRouter>,
+    );
     expect(screen.getByText('login.adminDescription')).toBeInTheDocument();
   });
 
@@ -249,7 +373,15 @@ describe('LoginPage', () => {
       sessionToken: 'recovery-token',
       expiresAt: null,
       book: { id: 'book-1', slug: 'recovered-book', title: 'Recovered', authorName: 'A' },
-      capabilities: { canRead: true, canComment: false, canHighlight: false, canBookmark: false, canDownloadOffline: false, canExportNotes: false, canManageAccess: false },
+      capabilities: {
+        canRead: true,
+        canComment: false,
+        canHighlight: false,
+        canBookmark: false,
+        canDownloadOffline: false,
+        canExportNotes: false,
+        canManageAccess: false,
+      },
     });
 
     const realSearchParams = new URLSearchParams();
@@ -257,10 +389,17 @@ describe('LoginPage', () => {
 
     mockUseSearchParams.mockReturnValue([realSearchParams, vi.fn()]);
 
-    render(<MemoryRouter><LoginPage /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <LoginPage />
+      </MemoryRouter>,
+    );
 
     await waitFor(() => {
-      expect(apiRequest).toHaveBeenCalledWith('/api/access/verify-recovery', expect.objectContaining({ method: 'POST' }));
+      expect(apiRequest).toHaveBeenCalledWith(
+        '/api/access/verify-recovery',
+        expect.objectContaining({ method: 'POST' }),
+      );
       expect(mockNavigate).toHaveBeenCalledWith('/read/recovered-book');
     });
   });
@@ -273,7 +412,11 @@ describe('LoginPage', () => {
 
     mockUseSearchParams.mockReturnValue([realSearchParams, vi.fn()]);
 
-    render(<MemoryRouter><LoginPage /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <LoginPage />
+      </MemoryRouter>,
+    );
 
     await waitFor(() => {
       expect(screen.getByText('Invalid token')).toBeInTheDocument();
@@ -288,7 +431,11 @@ describe('LoginPage', () => {
 
     mockUseSearchParams.mockReturnValue([realSearchParams, vi.fn()]);
 
-    render(<MemoryRouter><LoginPage /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <LoginPage />
+      </MemoryRouter>,
+    );
 
     await waitFor(() => {
       expect(screen.getByText('login.verifyingToken')).toBeInTheDocument();
@@ -303,9 +450,15 @@ describe('LoginPage', () => {
       capabilities: null,
     });
 
-    render(<MemoryRouter><LoginPage /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <LoginPage />
+      </MemoryRouter>,
+    );
 
-    fireEvent.change(screen.getByLabelText('login.emailLabel'), { target: { value: 'user@test.com' } });
+    fireEvent.change(screen.getByLabelText('login.emailLabel'), {
+      target: { value: 'user@test.com' },
+    });
     fireEvent.change(screen.getByLabelText('login.passwordLabel'), { target: { value: 'pass' } });
     fireEvent.click(screen.getByText('login.submit'));
 
@@ -317,7 +470,11 @@ describe('LoginPage', () => {
   describe('demo login', () => {
     it('shows the demo button directly on the login page', () => {
       mockIsDemoLoginEnabled.mockReturnValue(false);
-      render(<MemoryRouter><LoginPage /></MemoryRouter>);
+      render(
+        <MemoryRouter>
+          <LoginPage />
+        </MemoryRouter>,
+      );
       expect(screen.getByText('login.demoTry')).toBeInTheDocument();
       expect(screen.getByText('login.demoOr')).toBeInTheDocument();
       expect(screen.getByText('login.demoFillCredentials')).toBeInTheDocument();
@@ -325,7 +482,11 @@ describe('LoginPage', () => {
 
     it('fills demo credentials into the form fields', () => {
       mockIsDemoLoginEnabled.mockReturnValue(true);
-      render(<MemoryRouter><LoginPage /></MemoryRouter>);
+      render(
+        <MemoryRouter>
+          <LoginPage />
+        </MemoryRouter>,
+      );
 
       fireEvent.click(screen.getByText('login.demoFillCredentials'));
 
@@ -341,7 +502,11 @@ describe('LoginPage', () => {
         capabilities: null,
       });
 
-      render(<MemoryRouter><LoginPage /></MemoryRouter>);
+      render(
+        <MemoryRouter>
+          <LoginPage />
+        </MemoryRouter>,
+      );
       fireEvent.click(screen.getByText('login.demoTry'));
 
       await waitFor(() => {
@@ -353,7 +518,11 @@ describe('LoginPage', () => {
       mockIsDemoLoginEnabled.mockReturnValue(true);
       vi.mocked(apiRequest).mockRejectedValueOnce(new Error('Demo disabled'));
 
-      render(<MemoryRouter><LoginPage /></MemoryRouter>);
+      render(
+        <MemoryRouter>
+          <LoginPage />
+        </MemoryRouter>,
+      );
       fireEvent.click(screen.getByText('login.demoTry'));
 
       await waitFor(() => {
@@ -364,7 +533,11 @@ describe('LoginPage', () => {
 
   describe('hero and app info', () => {
     it('renders the four feature bullets', () => {
-      render(<MemoryRouter><LoginPage /></MemoryRouter>);
+      render(
+        <MemoryRouter>
+          <LoginPage />
+        </MemoryRouter>,
+      );
       // Hero (desktop) and mobile info both render the shared feature list.
       expect(screen.getAllByText('login.hero.feature.reading').length).toBeGreaterThan(0);
       expect(screen.getAllByText('login.hero.feature.annotations').length).toBeGreaterThan(0);
@@ -374,14 +547,22 @@ describe('LoginPage', () => {
 
     it('renders the access note and hero help link', () => {
       mockResolveHelpUrl.mockReturnValue({ href: '/help', isExternal: false });
-      render(<MemoryRouter><LoginPage /></MemoryRouter>);
+      render(
+        <MemoryRouter>
+          <LoginPage />
+        </MemoryRouter>,
+      );
       expect(screen.getAllByText('login.hero.howAccessWorks').length).toBeGreaterThan(0);
       const heroLink = screen.getByText('login.hero.learnMore').closest('a');
       expect(heroLink).toHaveAttribute('href', '/help');
     });
 
     it('renders the show/hide password toggle', () => {
-      render(<MemoryRouter><LoginPage /></MemoryRouter>);
+      render(
+        <MemoryRouter>
+          <LoginPage />
+        </MemoryRouter>,
+      );
       expect(screen.getByText('ui.showPassword')).toBeInTheDocument();
     });
   });
@@ -389,13 +570,21 @@ describe('LoginPage', () => {
   describe('help link', () => {
     it('hides help link when no help URL configured', () => {
       mockResolveHelpUrl.mockReturnValue(null);
-      render(<MemoryRouter><LoginPage /></MemoryRouter>);
+      render(
+        <MemoryRouter>
+          <LoginPage />
+        </MemoryRouter>,
+      );
       expect(screen.queryByText('login.helpLink')).not.toBeInTheDocument();
     });
 
     it('renders help link with correct href for external URL', () => {
       mockResolveHelpUrl.mockReturnValue({ href: 'https://help.example.com', isExternal: true });
-      render(<MemoryRouter><LoginPage /></MemoryRouter>);
+      render(
+        <MemoryRouter>
+          <LoginPage />
+        </MemoryRouter>,
+      );
       const link = screen.getByText('login.helpLink').closest('a');
       expect(link).toHaveAttribute('href', 'https://help.example.com');
       expect(link).toHaveAttribute('target', '_blank');
@@ -404,7 +593,11 @@ describe('LoginPage', () => {
 
     it('renders help link without external attrs for internal URL', () => {
       mockResolveHelpUrl.mockReturnValue({ href: 'http://localhost/help', isExternal: false });
-      render(<MemoryRouter><LoginPage /></MemoryRouter>);
+      render(
+        <MemoryRouter>
+          <LoginPage />
+        </MemoryRouter>,
+      );
       const link = screen.getByText('login.helpLink').closest('a');
       expect(link).toHaveAttribute('href', 'http://localhost/help');
       expect(link).not.toHaveAttribute('target', '_blank');

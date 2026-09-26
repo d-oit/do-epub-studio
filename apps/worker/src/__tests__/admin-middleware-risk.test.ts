@@ -62,9 +62,11 @@ describe('admin-middleware suspicious-device-change risk (ADR-234 item 7)', () =
       ipHash: 'ip-a',
     });
 
-    const insertCall = vi.mocked(db.execute).mock.calls.find(
-      (c) => typeof c[1] === 'string' && c[1].includes('INSERT INTO admin_sessions'),
-    );
+    const insertCall = vi
+      .mocked(db.execute)
+      .mock.calls.find(
+        (c) => typeof c[1] === 'string' && c[1].includes('INSERT INTO admin_sessions'),
+      );
     expect(insertCall).toBeDefined();
     expect(insertCall?.[2]).toContain('dev-a');
     expect(insertCall?.[2]).toContain('ip-a');
@@ -159,10 +161,14 @@ describe('admin-middleware suspicious-device-change risk (ADR-234 item 7)', () =
       { device_label_hash: 'dev-other', ip_hash: 'ip-other' },
     ]);
 
-    await createAdminSessionMfa(env, { id: 'user-1', email: 'admin@example.com', role: 'admin' }, {
-      deviceLabelHash: 'dev-new',
-      ipHash: 'ip-new',
-    });
+    await createAdminSessionMfa(
+      env,
+      { id: 'user-1', email: 'admin@example.com', role: 'admin' },
+      {
+        deviceLabelHash: 'dev-new',
+        ipHash: 'ip-new',
+      },
+    );
 
     const calls = findRiskCalls('risk_suspicious_device_change');
     expect(calls).toHaveLength(1);

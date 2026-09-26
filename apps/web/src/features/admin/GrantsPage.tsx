@@ -14,12 +14,7 @@ import { LocaleSwitcher } from '../../components/LocaleSwitcher';
 import { Spinner } from '@do-epub-studio/ui';
 import { PageContainer } from '../../components/ui';
 import { Breadcrumb } from '../../components/navigation';
-import {
-  BookSelector,
-  GrantForm,
-  GrantList,
-  emptyFormData,
-} from './components';
+import { BookSelector, GrantForm, GrantList, emptyFormData } from './components';
 import { CreatorAssignmentsSection } from './CreatorAssignmentsSection';
 import { InvitationsPanel } from './InvitationsPanel';
 import { useAdminStepUp } from './step-up';
@@ -60,7 +55,17 @@ function GrantsBody({ bookId, token, onMutated }: GrantsBodyProps) {
   return <GrantsView data={data} bookId={bookId} token={token} onMutated={onMutated} />;
 }
 
-function GrantsView({ data, bookId, token, onMutated }: { data: GrantsBodyData; bookId: string | undefined; token: string; onMutated: () => void }) {
+function GrantsView({
+  data,
+  bookId,
+  token,
+  onMutated,
+}: {
+  data: GrantsBodyData;
+  bookId: string | undefined;
+  token: string;
+  onMutated: () => void;
+}) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
@@ -100,7 +105,8 @@ function GrantsView({ data, bookId, token, onMutated }: { data: GrantsBodyData; 
         const passwordConfirm = getString('passwordConfirm', '');
         if (!password) errors.password = t('grants.form.error.passwordRequired');
         else if (password.length < 8) errors.password = t('grants.form.error.passwordMinLength');
-        if (!timingSafeEqual(password, passwordConfirm)) errors.passwordConfirm = t('grants.form.error.passwordMismatch');
+        if (!timingSafeEqual(password, passwordConfirm))
+          errors.passwordConfirm = t('grants.form.error.passwordMismatch');
       }
 
       if (Object.keys(errors).length > 0) {
@@ -205,22 +211,26 @@ function GrantsView({ data, bookId, token, onMutated }: { data: GrantsBodyData; 
     [executeWithStepUp, token, bookId, onMutated],
   );
 
-  const currentBookTitle = locationState?.bookTitle ?? (bookId ? books.find((b) => b.id === bookId)?.title : undefined);
+  const currentBookTitle =
+    locationState?.bookTitle ?? (bookId ? books.find((b) => b.id === bookId)?.title : undefined);
 
   return (
     <PageContainer className="p-8">
-      <Breadcrumb items={[
-        { labelKey: 'admin.breadcrumb.home', href: GRANT_ROUTES.admin },
-        { labelKey: 'admin.breadcrumb.books', href: GRANT_ROUTES.books },
-        { labelKey: 'admin.breadcrumb.grants' },
-      ]} />
+      <Breadcrumb
+        items={[
+          { labelKey: 'admin.breadcrumb.home', href: GRANT_ROUTES.admin },
+          { labelKey: 'admin.breadcrumb.books', href: GRANT_ROUTES.books },
+          { labelKey: 'admin.breadcrumb.grants' },
+        ]}
+      />
       <header className="mb-8 flex items-center justify-between border-b border-[var(--color-rule)] pb-6">
         <div>
           <h1 className="text-balance-tight font-display text-3xl leading-tight text-foreground md:text-4xl">
             {t('admin.grants.title')}
           </h1>
           <p className="mt-1 text-pretty text-sm text-foreground-muted">
-            {currentBookTitle ?? (bookId ? `${t('admin.books.title')} ID: ${bookId}` : t('admin.grants.selectBook'))}
+            {currentBookTitle ??
+              (bookId ? `${t('admin.books.title')} ID: ${bookId}` : t('admin.grants.selectBook'))}
           </p>
           <button
             onClick={() => void navigate('/admin/books')}
@@ -248,7 +258,9 @@ function GrantsView({ data, bookId, token, onMutated }: { data: GrantsBodyData; 
           isLoadingGrants={false}
           selectedBookId={bookId ?? ''}
           onEdit={handleEditGrant}
-          onRevoke={(grant) => { void handleRevokeGrant(grant); }}
+          onRevoke={(grant) => {
+            void handleRevokeGrant(grant);
+          }}
         />
 
         <CreatorAssignmentsSection
@@ -257,10 +269,7 @@ function GrantsView({ data, bookId, token, onMutated }: { data: GrantsBodyData; 
           executeWithStepUp={executeWithStepUp}
         />
 
-        <InvitationsPanel
-          bookId={bookId}
-          executeWithStepUp={executeWithStepUp}
-        />
+        <InvitationsPanel bookId={bookId} executeWithStepUp={executeWithStepUp} />
       </div>
 
       <GrantForm
@@ -281,11 +290,7 @@ function GrantsView({ data, bookId, token, onMutated }: { data: GrantsBodyData; 
 
 function GrantsSkeleton() {
   return (
-    <div
-      className="p-12 flex justify-center"
-      aria-busy="true"
-      aria-live="polite"
-    >
+    <div className="p-12 flex justify-center" aria-busy="true" aria-live="polite">
       <Spinner />
     </div>
   );
@@ -297,10 +302,7 @@ export function AdminGrantResponsesPage() {
   const [refreshKey, setRefreshKey] = useState(0);
 
   return (
-    <Suspense
-      key={`${bookId ?? 'all'}:${refreshKey}`}
-      fallback={<GrantsSkeleton />}
-    >
+    <Suspense key={`${bookId ?? 'all'}:${refreshKey}`} fallback={<GrantsSkeleton />}>
       <GrantsBody
         bookId={bookId}
         token={sessionToken ?? ''}

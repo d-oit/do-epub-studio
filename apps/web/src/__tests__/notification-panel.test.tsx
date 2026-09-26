@@ -15,8 +15,26 @@ const onNavigateToComment = vi.fn();
 const onClose = vi.fn();
 
 const mockNotifications = [
-  { id: 'n1', bookId: 'b1', commentId: 'c1', parentCommentId: null, type: 'reply', message: 'Alice replied to your comment', readAt: null, createdAt: '2026-07-20T10:00:00Z' },
-  { id: 'n2', bookId: 'b1', commentId: 'c2', parentCommentId: null, type: 'reply', message: 'Bob replied', readAt: '2026-07-21T10:00:00Z', createdAt: '2026-07-19T10:00:00Z' },
+  {
+    id: 'n1',
+    bookId: 'b1',
+    commentId: 'c1',
+    parentCommentId: null,
+    type: 'reply',
+    message: 'Alice replied to your comment',
+    readAt: null,
+    createdAt: '2026-07-20T10:00:00Z',
+  },
+  {
+    id: 'n2',
+    bookId: 'b1',
+    commentId: 'c2',
+    parentCommentId: null,
+    type: 'reply',
+    message: 'Bob replied',
+    readAt: '2026-07-21T10:00:00Z',
+    createdAt: '2026-07-19T10:00:00Z',
+  },
 ];
 
 describe('NotificationPanel', () => {
@@ -26,7 +44,11 @@ describe('NotificationPanel', () => {
       if (url.includes('/api/notifications?limit=20')) {
         return Promise.resolve({
           ok: true,
-          json: () => Promise.resolve({ ok: true, data: { notifications: mockNotifications, total: 2, limit: 20, offset: 0 } }),
+          json: () =>
+            Promise.resolve({
+              ok: true,
+              data: { notifications: mockNotifications, total: 2, limit: 20, offset: 0 },
+            }),
         });
       }
       return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
@@ -38,7 +60,9 @@ describe('NotificationPanel', () => {
     // so its state update doesn't land after the test body. The explicit flush
     // keeps the callback async (require-await) and inside the act scope.
     await act(async () => {
-      render(<NotificationPanel t={t} onNavigateToComment={onNavigateToComment} onClose={onClose} />);
+      render(
+        <NotificationPanel t={t} onNavigateToComment={onNavigateToComment} onClose={onClose} />,
+      );
       await Promise.resolve();
     });
     expect(screen.getByRole('dialog', { name: 'notifications.title' })).toBeInTheDocument();
@@ -55,7 +79,11 @@ describe('NotificationPanel', () => {
       if (url.includes('/api/notifications?limit=20')) {
         return Promise.resolve({
           ok: true,
-          json: () => Promise.resolve({ ok: true, data: { notifications: [], total: 0, limit: 20, offset: 0 } }),
+          json: () =>
+            Promise.resolve({
+              ok: true,
+              data: { notifications: [], total: 0, limit: 20, offset: 0 },
+            }),
         });
       }
       return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });

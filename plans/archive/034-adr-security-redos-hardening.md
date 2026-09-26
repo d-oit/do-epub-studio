@@ -11,13 +11,13 @@
 
 CodeQL flagged **5 open high-severity** Regular-expression Denial of Service (ReDoS) findings on `main @ 5cc1475`:
 
-| # | Rule | File | Surface |
-|---|---|---|---|
-| 5 | `js/redos` (error) | `packages/reader-core/src/epub-loader.ts:301` | `isValidCfi` — exponential backtracking on `epubcfi(/9/...)` |
-| 4 | `js/polynomial-redos` | `packages/schema/src/locator.ts:44` | `cfiToRange` — polynomial on `!\]!` repetition |
-| 3 | `js/polynomial-redos` | `packages/reader-core/src/epub-loader.ts:301` | duplicate of #5, different path class |
-| 2 | `js/polynomial-redos` | `packages/reader-core/src/epub-loader.ts:296` | `extractCfi` — polynomial on `epubcfi(/` repeats |
-| 1 | `js/polynomial-redos` | `apps/worker/src/routes/admin.ts:91` | `/\/+$/` trailing-slash trim on `APP_BASE_URL` (low risk but flagged) |
+| #   | Rule                  | File                                          | Surface                                                               |
+| --- | --------------------- | --------------------------------------------- | --------------------------------------------------------------------- |
+| 5   | `js/redos` (error)    | `packages/reader-core/src/epub-loader.ts:301` | `isValidCfi` — exponential backtracking on `epubcfi(/9/...)`          |
+| 4   | `js/polynomial-redos` | `packages/schema/src/locator.ts:44`           | `cfiToRange` — polynomial on `!\]!` repetition                        |
+| 3   | `js/polynomial-redos` | `packages/reader-core/src/epub-loader.ts:301` | duplicate of #5, different path class                                 |
+| 2   | `js/polynomial-redos` | `packages/reader-core/src/epub-loader.ts:296` | `extractCfi` — polynomial on `epubcfi(/` repeats                      |
+| 1   | `js/polynomial-redos` | `apps/worker/src/routes/admin.ts:91`          | `/\/+$/` trailing-slash trim on `APP_BASE_URL` (low risk but flagged) |
 
 All five regexes consume **untrusted input**: client-supplied annotation locators, EPUB CFI strings extracted from book content, and admin-configured base URLs. A malicious EPUB or annotation payload can cause Worker CPU exhaustion (Cloudflare Worker CPU time hard-limit = 30s wall, but billable and budget-impacting), and on the web client can freeze the rendering thread.
 
@@ -51,8 +51,8 @@ For every regex that touches untrusted input:
 Introduce `packages/shared/src/safe-regex.ts` exposing:
 
 ```ts
-export function matchBounded(re: RegExp, input: string, maxLen: number): RegExpExecArray | null
-export function testBounded(re: RegExp, input: string, maxLen: number): boolean
+export function matchBounded(re: RegExp, input: string, maxLen: number): RegExpExecArray | null;
+export function testBounded(re: RegExp, input: string, maxLen: number): boolean;
 ```
 
 Every call site in `packages/reader-core`, `packages/schema`, and `apps/worker` MUST go through this helper for inputs whose provenance is not internal.

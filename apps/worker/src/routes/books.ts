@@ -137,7 +137,13 @@ booksRouter.post('/:id/file-url', readerAuth, async (c) => {
     throw new NotFoundError('Book');
   }
 
-  const mismatch = await assertBookAccess(c.env, auth, book.id as string, c.executionCtx, getRequestTraceId(c));
+  const mismatch = await assertBookAccess(
+    c.env,
+    auth,
+    book.id as string,
+    c.executionCtx,
+    getRequestTraceId(c),
+  );
   if (mismatch) return mismatch.response;
 
   const file = await queryFirst(
@@ -150,7 +156,11 @@ booksRouter.post('/:id/file-url', readerAuth, async (c) => {
     throw new NotFoundError('BookFile');
   }
 
-  const signedResponse = await generateSignedUrl(c.env, book.id as string, file.storage_key as string);
+  const signedResponse = await generateSignedUrl(
+    c.env,
+    book.id as string,
+    file.storage_key as string,
+  );
 
   return c.json({
     ok: true,

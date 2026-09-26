@@ -52,13 +52,13 @@ Live evidence that CI must not simply adopt the old commitlint config:
   `a11y` ×0 as a type — kept because it is already declared on the commitlint
   side and mirrors the existing `a11y` scope).
 - Dependabot PR titles in this repo (sample, `gh pr list --author
-  app/dependabot`): `chore: bump eslint-plugin-unicorn from 75.0.0 to
-  76.0.0`, `chore: bump the react group with 4 updates`,
+app/dependabot`): `chore: bump eslint-plugin-unicorn from 75.0.0 to
+76.0.0`, `chore: bump the react group with 4 updates`,
   `chore: bump @sentry/react from 10.74.0 to 10.75.0`,
   `chore: bump the eslint group …` — conventional thanks to
   `.github/dependabot.yml` `commit-message.prefix` (`chore` for npm, `ci` for
   github-actions), **but** grouped titles can exceed 72 chars: `chore: bump
-  the production-dependencies group across 1 directory with 4 updates` is 79
+the production-dependencies group across 1 directory with 4 updates` is 79
   chars and did land on `main` (PR #1167).
 
 ## Decisions
@@ -75,8 +75,8 @@ types**. Nothing may define a type list anywhere else:
   `type-enum === COMMIT_TYPES` (set equality), so editing one list without the
   other fails CI. commitlint is **demoted to a mirror, not a gate**: CI never
   runs it — `.github/workflows/validate-commit-title.yml` runs
-  `scripts/hooks/commit-msg` itself, so local-hook/CI parity holds *by
-  construction* rather than by configuration similarity.
+  `scripts/hooks/commit-msg` itself, so local-hook/CI parity holds _by
+  construction_ rather than by configuration similarity.
 
 ### 2. Type union goes into the SSOT
 
@@ -112,7 +112,7 @@ caller). The parity test asserts `scope-enum` is **absent** from
 
 config-conventional enables `subject-case`, `subject-full-stop`,
 `body-max-line-length`, `footer-max-line-length` and `header-trim` at error
-level; the hook enforces none of them (it only *warns* on a trailing period in
+level; the hook enforces none of them (it only _warns_ on a trailing period in
 `validate-commit-message.sh`). These are explicitly disabled at level 0 in
 `commitlint.config.cjs` — merely omitting them would leave the stricter
 `extends` value active. The parity test computes the **effective** rule set
@@ -144,10 +144,10 @@ which does enforce bodies — is what CI runs.
 - **PR titles (`pr-title` job): a new `--subject-only` mode of
   `scripts/hooks/commit-msg`.** A PR title is a single line and structurally
   cannot carry a body; requiring 3 lines of a title field would be nonsense.
-  The mode skips *only* the body check — skip patterns, format regex and the
+  The mode skips _only_ the body check — skip patterns, format regex and the
   72-char cap stay enforced — and is opt-in: git still invokes the hook with
   just the file path, so local commits are untouched. The mode exists because
-  the title *is* a subject, not as a loophole for commits (the `commit-range`
+  the title _is_ a subject, not as a loophole for commits (the `commit-range`
   job and the parity test both pin full mode's body check to exit 1).
 
 ### 6. Dependabot: exempt by machine authorship, validated on human edit
@@ -169,13 +169,13 @@ which does enforce bodies — is what CI runs.
 
 **Rejected alternatives:**
 
-- *`ignoreLabels`* — only exists as an option of
+- _`ignoreLabels`_ — only exists as an option of
   `amannn/action-semantic-pull-request`; adopting a third-party action for
   this contradicts the zero-new-dependency decision below (ADR-247 pin/allowlist
   cost for one skip rule).
-- *`chore(deps)` scope via `prefix`+`include: scope`* — fixes neither the
+- _`chore(deps)` scope via `prefix`+`include: scope`_ — fixes neither the
   79-char length nor authorship; title would still fail the cap.
-- *Enforce everything on Dependabot* — red PRs pile up against auto-merge on a
+- _Enforce everything on Dependabot_ — red PRs pile up against auto-merge on a
   schedule nobody can fix retroactively; a machine must be able to open a PR
   its own generator cannot format perfectly.
 
@@ -224,7 +224,7 @@ so it happens in the same maintenance window as the merge.
   `ci(goap-277): gate-visibility sensor for silently skipped gates` is 62
   chars and valid; no other open PR at time of writing).
 - History containing subjects >72 chars (`chore: bump the
-  production-dependencies group across 1 directory with 4 updates`, #1167) is
+production-dependencies group across 1 directory with 4 updates`, #1167) is
   not retroactively validated: `commit-range` only sees the PR's own commits.
 - The `security`/`a11y`/`plans` types are now locally committable again; no
   existing commit changes meaning.
@@ -252,7 +252,7 @@ so it happens in the same maintenance window as the merge.
   ADR closes.
 - **Adopt `amannn/action-semantic-pull-request` for titles:** a third-party
   action needing a new allowlisted SHA (ADR-247) and its own ruleset that can
-  drift from the hook; the hook already *is* the ruleset.
+  drift from the hook; the hook already _is_ the ruleset.
 - **Only lint commits, skip titles:** leaves the squash-title hole — the
   string that actually lands on `main` — wide open.
 - **Generate commitlint config from `commit-types.sh` at runtime:** makes the

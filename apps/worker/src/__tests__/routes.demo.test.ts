@@ -14,7 +14,9 @@ import { app } from '../app';
 
 // Mock rate-limit-client so tests can control rate-limit behaviour.
 vi.mock('../lib/rate-limit-client', () => ({
-  checkRateLimitDO: vi.fn().mockResolvedValue({ allowed: true, remaining: 9, resetAt: Date.now() + 60_000 }),
+  checkRateLimitDO: vi
+    .fn()
+    .mockResolvedValue({ allowed: true, remaining: 9, resetAt: Date.now() + 60_000 }),
   deleteRateLimitKey: vi.fn().mockResolvedValue(undefined),
 }));
 
@@ -78,7 +80,11 @@ describe('Demo Routes — POST /api/demo/reader-login', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockCheckRateLimitDO.mockResolvedValue({ allowed: true, remaining: 9, resetAt: Date.now() + 60_000 });
+    mockCheckRateLimitDO.mockResolvedValue({
+      allowed: true,
+      remaining: 9,
+      resetAt: Date.now() + 60_000,
+    });
     mockAccountIsLocked.mockReturnValue(false);
     mockComputeCapabilities.mockReturnValue({
       canRead: true,
@@ -101,7 +107,11 @@ describe('Demo Routes — POST /api/demo/reader-login', () => {
       makePassThroughContext(),
     );
     expect(res.status).toBe(403);
-    const body: { ok: boolean; data: Record<string, unknown>; error: { code: string; message?: string } } = await res.json();
+    const body: {
+      ok: boolean;
+      data: Record<string, unknown>;
+      error: { code: string; message?: string };
+    } = await res.json();
     expect(body.error.code).toBe('DEMO_DISABLED');
   });
 
@@ -114,7 +124,11 @@ describe('Demo Routes — POST /api/demo/reader-login', () => {
       makePassThroughContext(),
     );
     expect(res.status).toBe(403);
-    const body: { ok: boolean; data: Record<string, unknown>; error: { code: string; message?: string } } = await res.json();
+    const body: {
+      ok: boolean;
+      data: Record<string, unknown>;
+      error: { code: string; message?: string };
+    } = await res.json();
     expect(body.error.code).toBe('DEMO_DISABLED');
   });
 
@@ -127,7 +141,11 @@ describe('Demo Routes — POST /api/demo/reader-login', () => {
       makePassThroughContext(),
     );
     expect(res.status).toBe(403);
-    const body: { ok: boolean; data: Record<string, unknown>; error: { code: string; message?: string } } = await res.json();
+    const body: {
+      ok: boolean;
+      data: Record<string, unknown>;
+      error: { code: string; message?: string };
+    } = await res.json();
     expect(body.error.code).toBe('DEMO_DISABLED');
   });
 
@@ -146,7 +164,11 @@ describe('Demo Routes — POST /api/demo/reader-login', () => {
       makePassThroughContext(),
     );
     expect(res.status).toBe(403);
-    const body: { ok: boolean; data: Record<string, unknown>; error: { code: string; message?: string } } = await res.json();
+    const body: {
+      ok: boolean;
+      data: Record<string, unknown>;
+      error: { code: string; message?: string };
+    } = await res.json();
     expect(body.error.code).toBe('DEMO_DISABLED');
     // App-level middleware (middleware/rate-limit.ts) calls checkRateLimitDO once
     // per request before route gates run; a second call would mean checkDemoGates
@@ -168,7 +190,11 @@ describe('Demo Routes — POST /api/demo/reader-login', () => {
       makePassThroughContext(),
     );
     expect(res.status).toBe(403);
-    const body: { ok: boolean; data: Record<string, unknown>; error: { code: string; message?: string } } = await res.json();
+    const body: {
+      ok: boolean;
+      data: Record<string, unknown>;
+      error: { code: string; message?: string };
+    } = await res.json();
     expect(body.error.code).toBe('DEMO_DISABLED');
     expect(mockQueryFirst).not.toHaveBeenCalled();
     expect(mockCreateSession).not.toHaveBeenCalled();
@@ -180,7 +206,10 @@ describe('Demo Routes — POST /api/demo/reader-login', () => {
     mockQueryFirst.mockResolvedValueOnce(DEMO_READER_USER); // user lookup
     mockQueryFirst.mockResolvedValueOnce(DEMO_BOOK); // book lookup
     mockGetGrantByBookAndSession.mockResolvedValue(DEMO_GRANT);
-    mockCreateSession.mockResolvedValue({ token: 'demo-session-token', expiresAt: '2030-01-01T00:00:00.000Z' });
+    mockCreateSession.mockResolvedValue({
+      token: 'demo-session-token',
+      expiresAt: '2030-01-01T00:00:00.000Z',
+    });
 
     const res = await app.fetch(
       new Request('http://localhost/api/demo/reader-login', { method: 'POST' }),
@@ -209,7 +238,11 @@ describe('Demo Routes — POST /api/demo/reader-login', () => {
       makePassThroughContext(),
     );
     expect(res.status).toBe(403);
-    const body: { ok: boolean; data: Record<string, unknown>; error: { code: string; message?: string } } = await res.json();
+    const body: {
+      ok: boolean;
+      data: Record<string, unknown>;
+      error: { code: string; message?: string };
+    } = await res.json();
     expect(body.error.code).toBe('DEMO_DISABLED');
   });
 
@@ -222,7 +255,11 @@ describe('Demo Routes — POST /api/demo/reader-login', () => {
       makePassThroughContext(),
     );
     expect(res.status).toBe(403);
-    const body: { ok: boolean; data: Record<string, unknown>; error: { code: string; message?: string } } = await res.json();
+    const body: {
+      ok: boolean;
+      data: Record<string, unknown>;
+      error: { code: string; message?: string };
+    } = await res.json();
     expect(body.error.code).toBe('DEMO_DISABLED');
   });
 
@@ -239,7 +276,11 @@ describe('Demo Routes — POST /api/demo/reader-login', () => {
       makePassThroughContext(),
     );
     expect(res.status).toBe(403);
-    const body: { ok: boolean; data: Record<string, unknown>; error: { code: string; message?: string } } = await res.json();
+    const body: {
+      ok: boolean;
+      data: Record<string, unknown>;
+      error: { code: string; message?: string };
+    } = await res.json();
     expect(body.error.code).toBe('DEMO_DISABLED');
   });
 
@@ -253,7 +294,11 @@ describe('Demo Routes — POST /api/demo/reader-login', () => {
       makePassThroughContext(),
     );
     expect(res.status).toBe(403);
-    const body: { ok: boolean; data: Record<string, unknown>; error: { code: string; message?: string } } = await res.json();
+    const body: {
+      ok: boolean;
+      data: Record<string, unknown>;
+      error: { code: string; message?: string };
+    } = await res.json();
     expect(body.error.code).toBe('DEMO_DISABLED');
   });
 
@@ -268,7 +313,11 @@ describe('Demo Routes — POST /api/demo/reader-login', () => {
       makePassThroughContext(),
     );
     expect(res.status).toBe(403);
-    const body: { ok: boolean; data: Record<string, unknown>; error: { code: string; message?: string } } = await res.json();
+    const body: {
+      ok: boolean;
+      data: Record<string, unknown>;
+      error: { code: string; message?: string };
+    } = await res.json();
     expect(body.error.code).toBe('DEMO_DISABLED');
   });
 
@@ -277,8 +326,15 @@ describe('Demo Routes — POST /api/demo/reader-login', () => {
     mockQueryFirst.mockResolvedValueOnce(DEMO_BOOK); // book lookup
     // Password-protected demo grant (ADR-233 seeds a reader password) — the demo
     // login must still mint a session without the operator password (server-minted).
-    mockGetGrantByBookAndSession.mockResolvedValue({ ...DEMO_GRANT, password_hash: 'argon2-hash', mode: 'password_protected' });
-    mockCreateSession.mockResolvedValue({ token: 'demo-session-token', expiresAt: '2030-01-01T00:00:00.000Z' });
+    mockGetGrantByBookAndSession.mockResolvedValue({
+      ...DEMO_GRANT,
+      password_hash: 'argon2-hash',
+      mode: 'password_protected',
+    });
+    mockCreateSession.mockResolvedValue({
+      token: 'demo-session-token',
+      expiresAt: '2030-01-01T00:00:00.000Z',
+    });
 
     const res = await app.fetch(
       new Request('http://localhost/api/demo/reader-login', { method: 'POST' }),
@@ -312,7 +368,11 @@ describe('Demo Routes — POST /api/demo/reader-login', () => {
   });
 
   it('returns 429 when rate-limited', async () => {
-    mockCheckRateLimitDO.mockResolvedValue({ allowed: false, remaining: 0, resetAt: Date.now() + 60_000 });
+    mockCheckRateLimitDO.mockResolvedValue({
+      allowed: false,
+      remaining: 0,
+      resetAt: Date.now() + 60_000,
+    });
 
     const res = await app.fetch(
       new Request('http://localhost/api/demo/reader-login', { method: 'POST' }),
@@ -320,7 +380,11 @@ describe('Demo Routes — POST /api/demo/reader-login', () => {
       makePassThroughContext(),
     );
     expect(res.status).toBe(429);
-    const body: { ok: boolean; data: Record<string, unknown>; error: { code: string; message?: string } } = await res.json();
+    const body: {
+      ok: boolean;
+      data: Record<string, unknown>;
+      error: { code: string; message?: string };
+    } = await res.json();
     expect(body.error.code).toBe('TOO_MANY_REQUESTS');
   });
 });
@@ -330,7 +394,11 @@ describe('Demo Routes — POST /api/demo/admin-login', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockCheckRateLimitDO.mockResolvedValue({ allowed: true, remaining: 9, resetAt: Date.now() + 60_000 });
+    mockCheckRateLimitDO.mockResolvedValue({
+      allowed: true,
+      remaining: 9,
+      resetAt: Date.now() + 60_000,
+    });
     mockAccountIsLocked.mockReturnValue(false);
     env = makeDemoEnv();
   });
@@ -344,7 +412,11 @@ describe('Demo Routes — POST /api/demo/admin-login', () => {
       makePassThroughContext(),
     );
     expect(res.status).toBe(403);
-    const body: { ok: boolean; data: Record<string, unknown>; error: { code: string; message?: string } } = await res.json();
+    const body: {
+      ok: boolean;
+      data: Record<string, unknown>;
+      error: { code: string; message?: string };
+    } = await res.json();
     expect(body.error.code).toBe('DEMO_DISABLED');
   });
 
@@ -357,7 +429,11 @@ describe('Demo Routes — POST /api/demo/admin-login', () => {
       makePassThroughContext(),
     );
     expect(res.status).toBe(403);
-    const body: { ok: boolean; data: Record<string, unknown>; error: { code: string; message?: string } } = await res.json();
+    const body: {
+      ok: boolean;
+      data: Record<string, unknown>;
+      error: { code: string; message?: string };
+    } = await res.json();
     expect(body.error.code).toBe('DEMO_DISABLED');
   });
 
@@ -371,7 +447,11 @@ describe('Demo Routes — POST /api/demo/admin-login', () => {
       makePassThroughContext(),
     );
     expect(res.status).toBe(403);
-    const body: { ok: boolean; data: Record<string, unknown>; error: { code: string; message?: string } } = await res.json();
+    const body: {
+      ok: boolean;
+      data: Record<string, unknown>;
+      error: { code: string; message?: string };
+    } = await res.json();
     expect(body.error.code).toBe('DEMO_DISABLED');
     // App-level middleware (middleware/rate-limit.ts) calls checkRateLimitDO once
     // per request before route gates run; a second call would mean checkDemoGates
@@ -391,7 +471,11 @@ describe('Demo Routes — POST /api/demo/admin-login', () => {
       makePassThroughContext(),
     );
     expect(res.status).toBe(403);
-    const body: { ok: boolean; data: Record<string, unknown>; error: { code: string; message?: string } } = await res.json();
+    const body: {
+      ok: boolean;
+      data: Record<string, unknown>;
+      error: { code: string; message?: string };
+    } = await res.json();
     expect(body.error.code).toBe('DEMO_DISABLED');
   });
 
@@ -404,7 +488,11 @@ describe('Demo Routes — POST /api/demo/admin-login', () => {
       makePassThroughContext(),
     );
     expect(res.status).toBe(403);
-    const body: { ok: boolean; data: Record<string, unknown>; error: { code: string; message?: string } } = await res.json();
+    const body: {
+      ok: boolean;
+      data: Record<string, unknown>;
+      error: { code: string; message?: string };
+    } = await res.json();
     expect(body.error.code).toBe('DEMO_DISABLED');
   });
 
@@ -421,7 +509,11 @@ describe('Demo Routes — POST /api/demo/admin-login', () => {
       makePassThroughContext(),
     );
     expect(res.status).toBe(403);
-    const body: { ok: boolean; data: Record<string, unknown>; error: { code: string; message?: string } } = await res.json();
+    const body: {
+      ok: boolean;
+      data: Record<string, unknown>;
+      error: { code: string; message?: string };
+    } = await res.json();
     expect(body.error.code).toBe('DEMO_DISABLED');
   });
 
@@ -434,7 +526,11 @@ describe('Demo Routes — POST /api/demo/admin-login', () => {
       makePassThroughContext(),
     );
     expect(res.status).toBe(403);
-    const body: { ok: boolean; data: Record<string, unknown>; error: { code: string; message?: string } } = await res.json();
+    const body: {
+      ok: boolean;
+      data: Record<string, unknown>;
+      error: { code: string; message?: string };
+    } = await res.json();
     expect(body.error.code).toBe('DEMO_DISABLED');
   });
 
@@ -466,7 +562,11 @@ describe('Demo Routes — POST /api/demo/admin-login', () => {
 
     expect(mockCreateAdminDemoSession).toHaveBeenCalledWith(
       expect.anything(),
-      expect.objectContaining({ id: DEMO_ADMIN_USER.id, email: DEMO_ADMIN_USER.email, role: 'admin' }),
+      expect.objectContaining({
+        id: DEMO_ADMIN_USER.id,
+        email: DEMO_ADMIN_USER.email,
+        role: 'admin',
+      }),
       expect.objectContaining({ ipHash: expect.any(String) }),
     );
 
@@ -481,7 +581,11 @@ describe('Demo Routes — POST /api/demo/admin-login', () => {
   });
 
   it('returns 429 when rate-limited', async () => {
-    mockCheckRateLimitDO.mockResolvedValue({ allowed: false, remaining: 0, resetAt: Date.now() + 60_000 });
+    mockCheckRateLimitDO.mockResolvedValue({
+      allowed: false,
+      remaining: 0,
+      resetAt: Date.now() + 60_000,
+    });
 
     const res = await app.fetch(
       new Request('http://localhost/api/demo/admin-login', { method: 'POST' }),
@@ -489,14 +593,22 @@ describe('Demo Routes — POST /api/demo/admin-login', () => {
       makePassThroughContext(),
     );
     expect(res.status).toBe(429);
-    const body: { ok: boolean; data: Record<string, unknown>; error: { code: string; message?: string } } = await res.json();
+    const body: {
+      ok: boolean;
+      data: Record<string, unknown>;
+      error: { code: string; message?: string };
+    } = await res.json();
     expect(body.error.code).toBe('TOO_MANY_REQUESTS');
   });
 
   it('returns 403 DEMO_DISABLED when a demo admin is MFA-enrolled (no password-assurance bypass)', async () => {
     mockQueryFirst.mockResolvedValueOnce(DEMO_ADMIN_USER); // user lookup
     // createAdminDemoSession refuses when the account is MFA-enrolled.
-    mockCreateAdminDemoSession.mockResolvedValue({ ok: false, status: 403, error: 'Demo admin must complete multi-factor authentication.' });
+    mockCreateAdminDemoSession.mockResolvedValue({
+      ok: false,
+      status: 403,
+      error: 'Demo admin must complete multi-factor authentication.',
+    });
 
     const res = await app.fetch(
       new Request('http://localhost/api/demo/admin-login', { method: 'POST' }),
@@ -504,7 +616,11 @@ describe('Demo Routes — POST /api/demo/admin-login', () => {
       makePassThroughContext(),
     );
     expect(res.status).toBe(403);
-    const body: { ok: boolean; data: Record<string, unknown>; error: { code: string; message?: string } } = await res.json();
+    const body: {
+      ok: boolean;
+      data: Record<string, unknown>;
+      error: { code: string; message?: string };
+    } = await res.json();
     expect(body.error.code).toBe('DEMO_DISABLED');
   });
 });

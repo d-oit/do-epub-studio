@@ -78,9 +78,11 @@ vi.mock('@do-epub-studio/shared', () => ({
 }));
 
 vi.mock('../lib/offline/db', () => ({
-  getAllReadingInsights: vi.fn().mockResolvedValue([
-    { bookId: 'book-1', date: '2026-06-24', activeMinutes: 5, activePages: 2 },
-  ]),
+  getAllReadingInsights: vi
+    .fn()
+    .mockResolvedValue([
+      { bookId: 'book-1', date: '2026-06-24', activeMinutes: 5, activePages: 2 },
+    ]),
 }));
 
 import { useReadingTimer } from '../features/reader/hooks/useReadingTimer';
@@ -210,8 +212,20 @@ describe('useReadingTimer', () => {
   it('syncToServer filters entries by bookId', async () => {
     vi.mocked(apiRequest).mockResolvedValue({ ok: true });
     vi.mocked(getAllReadingInsights).mockResolvedValue([
-      { bookId: 'book-1', date: '2026-06-24', activeMinutes: 5, activePages: 2, lastUpdated: Date.now() },
-      { bookId: 'other-book', date: '2026-06-24', activeMinutes: 3, activePages: 1, lastUpdated: Date.now() },
+      {
+        bookId: 'book-1',
+        date: '2026-06-24',
+        activeMinutes: 5,
+        activePages: 2,
+        lastUpdated: Date.now(),
+      },
+      {
+        bookId: 'other-book',
+        date: '2026-06-24',
+        activeMinutes: 3,
+        activePages: 1,
+        lastUpdated: Date.now(),
+      },
     ]);
     const { result } = renderHook(() => useReadingTimer('book-1'));
     await act(async () => {
@@ -229,7 +243,13 @@ describe('useReadingTimer', () => {
 
   it('syncToServer skips when no entries for book', async () => {
     vi.mocked(getAllReadingInsights).mockResolvedValue([
-      { bookId: 'other-book', date: '2026-06-24', activeMinutes: 3, activePages: 1, lastUpdated: Date.now() },
+      {
+        bookId: 'other-book',
+        date: '2026-06-24',
+        activeMinutes: 3,
+        activePages: 1,
+        lastUpdated: Date.now(),
+      },
     ]);
     const { result } = renderHook(() => useReadingTimer('book-1'));
     await act(async () => {

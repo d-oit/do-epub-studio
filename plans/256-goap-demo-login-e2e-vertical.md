@@ -24,7 +24,7 @@ Diagnosed via a wrangler-probe: argon2 under workerd throws the embedder error
 unless `setWASMModules()` receives pre-compiled modules. Fix: both export paths of
 the Worker entry now funnel through one `handle()` that awaits the idempotent
 `registerArgon2Wasm()` before `app.fetch` (mirrors the Pages Function entry).
-Without the fix, live credential logins (reader *and* admin password login) fail
+Without the fix, live credential logins (reader _and_ admin password login) fail
 everywhere the Worker entry serves traffic — including production `wrangler deploy`.
 
 ## Steps
@@ -33,7 +33,7 @@ everywhere the Worker entry serves traffic — including production `wrangler de
 2. **Live stack** — added demo vars to `apps/worker/.dev.vars` (gitignored):
    `DEMO_LOGIN_ENABLED=1`, `DEMO_BOOK_SLUG=demo`, documented demo passwords.
    Applied local D1 migrations (`wrangler d1 migrations apply do-epub-studio
-   --local`, 0001-0012), then seeded via the seed script with
+--local`, 0001-0012), then seeded via the seed script with
    `TURSO_DATABASE_URL=file:<miniflare D1 sqlite>` (seed is idempotent,
    fail-closed in production-like envs). Start order note: apply migrations and
    seed **before** `wrangler dev` to avoid any sqlite contention.
@@ -62,20 +62,20 @@ everywhere the Worker entry serves traffic — including production `wrangler de
 
 ## Verification (all executed)
 
-| Check | Result |
-| --- | --- |
-| `git log -1` main == origin/main | `b169c46` both |
-| `POST /api/demo/reader-login` live | `ok:true` + sessionToken |
-| `POST /api/demo/admin-login` live | `ok:true` + token/role=admin |
-| `POST /api/access/request` correct demo reader password (post-fix) | `ok:true` + sessionToken |
-| `POST /api/admin/login` correct demo admin password (post-fix) | `ok:true` + token |
-| `POST /api/access/request` wrong password | 401 `ACCESS_DENIED` |
+| Check                                                                                                                       | Result                               |
+| --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| `git log -1` main == origin/main                                                                                            | `b169c46` both                       |
+| `POST /api/demo/reader-login` live                                                                                          | `ok:true` + sessionToken             |
+| `POST /api/demo/admin-login` live                                                                                           | `ok:true` + token/role=admin         |
+| `POST /api/access/request` correct demo reader password (post-fix)                                                          | `ok:true` + sessionToken             |
+| `POST /api/admin/login` correct demo admin password (post-fix)                                                              | `ok:true` + token                    |
+| `POST /api/access/request` wrong password                                                                                   | 401 `ACCESS_DENIED`                  |
 | agent-browser: reader demo → toolbar, credential login → `/read/demo`, wrong pw → inline error, admin demo → `/admin/books` | screenshots captured, session closed |
-| `E2E_LIVE_DEMO=1 pnpm exec playwright test apps/tests/demo-login-live.spec.ts --project=chromium` | **4 passed** |
-| Same without `E2E_LIVE_DEMO` | **4 skipped** (gate proven) |
-| `pnpm --filter @do-epub-studio/worker test:unit` | 56 files / **442 passed** |
-| `pnpm --filter @do-epub-studio/worker exec tsc --noEmit` | exit 0 |
-| Existing tests modified to pass | **none** |
+| `E2E_LIVE_DEMO=1 pnpm exec playwright test apps/tests/demo-login-live.spec.ts --project=chromium`                           | **4 passed**                         |
+| Same without `E2E_LIVE_DEMO`                                                                                                | **4 skipped** (gate proven)          |
+| `pnpm --filter @do-epub-studio/worker test:unit`                                                                            | 56 files / **442 passed**            |
+| `pnpm --filter @do-epub-studio/worker exec tsc --noEmit`                                                                    | exit 0                               |
+| Existing tests modified to pass                                                                                             | **none**                             |
 
 ## Files
 

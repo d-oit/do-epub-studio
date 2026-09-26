@@ -33,9 +33,7 @@ export const HighlightItem = memo(function HighlightItem({
   return (
     <div
       className={`p-3 rounded-lg border transition-colors ${
-        isCurrentChapter
-          ? 'border-accent/30 bg-accent/5'
-          : 'border-border'
+        isCurrentChapter ? 'border-accent/30 bg-accent/5' : 'border-border'
       }`}
       onMouseEnter={() => setShowActions(true)}
       onMouseLeave={() => setShowActions(false)}
@@ -46,7 +44,12 @@ export const HighlightItem = memo(function HighlightItem({
       <div
         className="text-sm text-foreground cursor-pointer hover:text-accent p-0.5 px-1 rounded-sm"
         onClick={onNavigate}
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onNavigate(); } }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onNavigate();
+          }
+        }}
         tabIndex={0}
         role="button"
         style={{ backgroundColor: highlight.color + '60' }}

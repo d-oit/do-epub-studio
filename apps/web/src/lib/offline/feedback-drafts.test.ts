@@ -34,15 +34,17 @@ describe('feedback drafts (REL-02 durable layer)', () => {
     closeDb();
     // Fresh database per test: delete all known databases.
     const dbs = (await indexedDB.databases?.()) ?? [];
-    await Promise.all(dbs.map((db) => {
-      if (!db.name) return Promise.resolve();
-      const dbName: string = db.name;
-      return new Promise<void>((resolve, reject) => {
-        const req = indexedDB.deleteDatabase(dbName);
-        req.onsuccess = () => resolve();
-        req.onerror = () => reject(new Error(`Failed to delete database ${db.name}`));
-      });
-    }));
+    await Promise.all(
+      dbs.map((db) => {
+        if (!db.name) return Promise.resolve();
+        const dbName: string = db.name;
+        return new Promise<void>((resolve, reject) => {
+          const req = indexedDB.deleteDatabase(dbName);
+          req.onsuccess = () => resolve();
+          req.onerror = () => reject(new Error(`Failed to delete database ${db.name}`));
+        });
+      }),
+    );
   });
 
   it('round-trips a draft with human text and provenance intact', async () => {

@@ -30,10 +30,7 @@ export function ProgressBar({
         aria-label={label ?? 'Progress'}
         className="h-2 w-full overflow-hidden rounded-full bg-border"
       >
-        <div
-          className="h-full bg-accent transition-all"
-          style={{ width: `${percentage}%` }}
-        />
+        <div className="h-full bg-accent transition-all" style={{ width: `${percentage}%` }} />
       </div>
     </div>
   );

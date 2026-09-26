@@ -1,5 +1,13 @@
 import { test, expect } from '@playwright/test';
-import { mockReaderApi, mockAdminApi, suppressWorkboxErrors, DEMO_READER, DEMO_ADMIN, DEMO_READER_RESPONSE, DEMO_ADMIN_RESPONSE } from './fixtures';
+import {
+  mockReaderApi,
+  mockAdminApi,
+  suppressWorkboxErrors,
+  DEMO_READER,
+  DEMO_ADMIN,
+  DEMO_READER_RESPONSE,
+  DEMO_ADMIN_RESPONSE,
+} from './fixtures';
 
 // ---------------------------------------------------------------------------
 // ADR-244 / GOAP-244: demo login entry points + help links.
@@ -23,7 +31,9 @@ test.describe('Demo login entry points (ADR-244)', () => {
   // Reader demo
   // ---------------------------------------------------------------------
 
-  test('@mobile @smoke shows the reader demo button and logs in via demo endpoint', async ({ page }) => {
+  test('@mobile @smoke shows the reader demo button and logs in via demo endpoint', async ({
+    page,
+  }) => {
     await mockReaderApi(page, { demoLoginResponse: DEMO_READER_RESPONSE });
     await page.goto('/login?book=demo');
 
@@ -32,10 +42,11 @@ test.describe('Demo login entry points (ADR-244)', () => {
 
     await demoButton.click();
 
-
     // Reader demo mints a session for the configured demo book and navigates into it.
     await expect(page).toHaveURL(/\/read\/demo$/, { timeout: 15000 });
-    await expect(page.locator('[data-container-name="reader-toolbar"]')).toBeVisible({ timeout: 20000 });
+    await expect(page.locator('[data-container-name="reader-toolbar"]')).toBeVisible({
+      timeout: 20000,
+    });
   });
 
   test('@mobile shows a reader demo error when the demo endpoint is disabled', async ({ page }) => {
@@ -43,7 +54,10 @@ test.describe('Demo login entry points (ADR-244)', () => {
       await route.fulfill({
         status: 403,
         contentType: 'application/json',
-        body: JSON.stringify({ ok: false, error: { code: 'DEMO_DISABLED', message: 'Demo login is not available.' } }),
+        body: JSON.stringify({
+          ok: false,
+          error: { code: 'DEMO_DISABLED', message: 'Demo login is not available.' },
+        }),
       });
     });
     await page.goto('/login?book=demo');
@@ -58,7 +72,10 @@ test.describe('Demo login entry points (ADR-244)', () => {
   test('@mobile @smoke signs in as the demo reader with email + password', async ({ page }) => {
     // The demo reader account has a documented password; the normal
     // /api/access/request flow authenticates it against the seeded hash.
-    await mockReaderApi(page, { bookSlug: DEMO_READER.bookSlug, loginResponse: DEMO_READER_RESPONSE });
+    await mockReaderApi(page, {
+      bookSlug: DEMO_READER.bookSlug,
+      loginResponse: DEMO_READER_RESPONSE,
+    });
     await page.goto(`/login?book=${DEMO_READER.bookSlug}`);
 
     // "Fill demo credentials" autofills the documented demo account into the
@@ -71,7 +88,9 @@ test.describe('Demo login entry points (ADR-244)', () => {
     await page.getByRole('button', { name: 'Sign In', exact: true }).click();
 
     await expect(page).toHaveURL(/\/read\/demo$/, { timeout: 15000 });
-    await expect(page.locator('[data-container-name="reader-toolbar"]')).toBeVisible({ timeout: 20000 });
+    await expect(page.locator('[data-container-name="reader-toolbar"]')).toBeVisible({
+      timeout: 20000,
+    });
   });
 
   // ---------------------------------------------------------------------

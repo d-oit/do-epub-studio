@@ -63,7 +63,9 @@ export function useReaderSearch(book: Book | null, query: string) {
       void (async (): Promise<void> => {
         try {
           const items: SpineSection[] = [];
-          spine.each((item) => { items.push(item); });
+          spine.each((item) => {
+            items.push(item);
+          });
 
           const collected: Array<{ cfi: string; excerpt: string; href: string }> = [];
           let index = 0;
@@ -137,7 +139,9 @@ export function useReaderSearch(book: Book | null, query: string) {
       })();
     }, DEBOUNCE_MS);
 
-    return () => { clearTimeout(timeoutId); };
+    return () => {
+      clearTimeout(timeoutId);
+    };
   }, [book, query]);
 
   return { results, isSearching, error };
@@ -154,7 +158,8 @@ export function highlightRanges(
   // RegExp constructed from the user's query. The query is untrusted input;
   // we cap the scan to SNIPPET_EXCERPT_MAX characters as a DoS guard
   // (per ADR-034 bounded-input policy).
-  const bounded = excerpt.length > SNIPPET_EXCERPT_MAX ? excerpt.slice(0, SNIPPET_EXCERPT_MAX) : excerpt;
+  const bounded =
+    excerpt.length > SNIPPET_EXCERPT_MAX ? excerpt.slice(0, SNIPPET_EXCERPT_MAX) : excerpt;
   const needle = query.length > SNIPPET_EXCERPT_MAX ? query.slice(0, SNIPPET_EXCERPT_MAX) : query;
   const lowerHaystack = bounded.toLowerCase();
   const lowerNeedle = needle.toLowerCase();

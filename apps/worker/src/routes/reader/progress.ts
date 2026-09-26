@@ -25,7 +25,13 @@ progressRouter.get('/:bookId/progress', readerAuth, async (c) => {
   const bookId = c.req.param('bookId');
   const auth = c.get('auth');
 
-  const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx, getRequestTraceId(c));
+  const mismatch = await assertBookAccess(
+    c.env,
+    auth,
+    bookId,
+    c.executionCtx,
+    getRequestTraceId(c),
+  );
   if (mismatch) return mismatch.response;
 
   const progress = await queryFirst<ProgressRow>(
@@ -58,35 +64,46 @@ progressRouter.get('/:bookId/progress', readerAuth, async (c) => {
   });
 });
 
-progressRouter.put('/:bookId/progress', readerAuth, zValidator('json', ProgressUpdateSchema), async (c) => {
-  const bookId = c.req.param('bookId');
-  const auth = c.get('auth');
-  const body = c.req.valid('json');
+progressRouter.put(
+  '/:bookId/progress',
+  readerAuth,
+  zValidator('json', ProgressUpdateSchema),
+  async (c) => {
+    const bookId = c.req.param('bookId');
+    const auth = c.get('auth');
+    const body = c.req.valid('json');
 
-  const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx, getRequestTraceId(c));
-  if (mismatch) return mismatch.response;
+    const mismatch = await assertBookAccess(
+      c.env,
+      auth,
+      bookId,
+      c.executionCtx,
+      getRequestTraceId(c),
+    );
+    if (mismatch) return mismatch.response;
 
-  if (!auth.capabilities.canRead) {
-    throw new ForbiddenError('Access denied');
-  }
+    if (!auth.capabilities.canRead) {
+      throw new ForbiddenError('Access denied');
+    }
 
-  const locatorJson = JSON.stringify(body.locator);
-  const id = crypto.randomUUID();
-  const now = new Date().toISOString();
+    const locatorJson = JSON.stringify(body.locator);
+    const id = crypto.randomUUID();
+    const now = new Date().toISOString();
 
-  await execute(
-    c.env,
-    `INSERT INTO reading_progress (id, book_id, user_email, locator_json, progress_percent, updated_at)
+    await execute(
+      c.env,
+      `INSERT INTO reading_progress (id, book_id, user_email, locator_json, progress_percent, updated_at)
      VALUES (?, ?, ?, ?, ?, ?)
      ON CONFLICT(book_id, user_email) DO UPDATE SET
        locator_json = excluded.locator_json,
        progress_percent = excluded.progress_percent,
        updated_at = excluded.updated_at`,
-    [id, bookId, auth.email, locatorJson, body.progressPercent, now],
-  );
+      [id, bookId, auth.email, locatorJson, body.progressPercent, now],
+    );
 
-  return c.json({
-    ok: true,
-    data: { locator: body.locator, progressPercent: body.progressPercent, updatedAt: now },
-  });
-});
+    return c.json({
+      ok: true,
+      data: { locator: body.locator, progressPercent: body.progressPercent, updatedAt: now },
+    });
+  },
+);

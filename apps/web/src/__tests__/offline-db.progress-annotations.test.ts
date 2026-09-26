@@ -67,7 +67,7 @@ describe('Offline Database — Progress & Annotations', () => {
 
       await saveProgress(entry);
       const db = await getDB();
-      const stored = await db.get('progress', 'test-progress-enc') as Record<string, unknown>;
+      const stored = (await db.get('progress', 'test-progress-enc')) as Record<string, unknown>;
 
       expect(stored.encryptedPayload).toBeDefined();
       expect(typeof stored.encryptedPayload).toBe('string');
@@ -192,7 +192,7 @@ describe('Offline Database — Progress & Annotations', () => {
       await saveAnnotation(annotation);
 
       const db = await getDB();
-      const stored = await db.get('annotations', 'annotation-1') as Record<string, unknown>;
+      const stored = (await db.get('annotations', 'annotation-1')) as Record<string, unknown>;
       expect(stored.encryptedPayload).toBeDefined();
       expect(stored.text).toBeUndefined();
 

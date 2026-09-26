@@ -183,7 +183,13 @@ describe('Conflict Resolution', () => {
 
     it('should not return resolved conflicts', () => {
       const conflict = detectConflict(
-        ConflictType.AnnotationEdit, {}, {}, 1000, 1000, 'book-1', 'ann-1',
+        ConflictType.AnnotationEdit,
+        {},
+        {},
+        1000,
+        1000,
+        'book-1',
+        'ann-1',
       );
 
       resolveManualConflict(conflict!.id, 'local');
@@ -256,7 +262,13 @@ describe('Conflict Resolution', () => {
 
     it('should return null for already resolved conflict', () => {
       const conflict = detectConflict(
-        ConflictType.AnnotationEdit, {}, {}, 1000, 1000, 'book-1', 'ann-1',
+        ConflictType.AnnotationEdit,
+        {},
+        {},
+        1000,
+        1000,
+        'book-1',
+        'ann-1',
       );
 
       resolveManualConflict(conflict!.id, 'local');
@@ -268,7 +280,15 @@ describe('Conflict Resolution', () => {
   describe('clearResolvedConflicts', () => {
     it('should remove only resolved conflicts', () => {
       const c1 = detectConflict(ConflictType.AnnotationEdit, {}, {}, 1000, 1000, 'book-1', 'ann-1');
-      const c2 = detectConflict(ConflictType.ProgressUpdate, {}, {}, 2000, 2000, 'book-2', 'prog-1');
+      const c2 = detectConflict(
+        ConflictType.ProgressUpdate,
+        {},
+        {},
+        2000,
+        2000,
+        'book-2',
+        'prog-1',
+      );
       resolveManualConflict(c1!.id, 'local');
 
       clearResolvedConflicts();

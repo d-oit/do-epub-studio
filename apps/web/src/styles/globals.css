@@ -3,10 +3,10 @@
    index.html, removing fonts.googleapis.com +
    fonts.gstatic.com from the CSP allowlist.
    font-display: swap (default in @fontsource) avoids FOIT. */
-@import "@fontsource-variable/geist";
-@import "@fontsource/instrument-serif/400.css";
-@import "@fontsource/instrument-serif/400-italic.css";
-@import "tailwindcss";
+@import '@fontsource-variable/geist';
+@import '@fontsource/instrument-serif/400.css';
+@import '@fontsource/instrument-serif/400-italic.css';
+@import 'tailwindcss';
 @source "../../../../packages/ui/src";
 
 /* ============================================
@@ -14,7 +14,9 @@
    ============================================ */
 
 @layer base {
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
@@ -61,7 +63,7 @@
     --color-muted-foreground: oklch(48% 0.02 68);
 
     /* Semantic & secondary accents */
-    --color-accent-secondary: oklch(54.1% 0.247 293.0);
+    --color-accent-secondary: oklch(54.1% 0.247 293);
     --color-semantic-success: oklch(69.6% 0.149 162.5);
     --color-semantic-warning: oklch(76.9% 0.165 70.1);
     --color-semantic-error: oklch(53% 0.208 25.3);
@@ -92,7 +94,15 @@
     --content-max-width: 48rem;
 
     /* Typography */
-    font-family: 'Geist', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family:
+      'Geist',
+      'Inter',
+      system-ui,
+      -apple-system,
+      BlinkMacSystemFont,
+      'Segoe UI',
+      Roboto,
+      sans-serif;
     line-height: 1.6;
     font-weight: 400;
     color-scheme: light dark;
@@ -102,11 +112,11 @@
     -moz-osx-font-smoothing: grayscale;
 
     /* Fluid type scale */
-    --text-xs:   clamp(0.75rem,  0.7rem  + 0.25vw, 0.875rem);
-    --text-sm:   clamp(0.875rem, 0.8rem  + 0.35vw, 1rem);
-    --text-base: clamp(1rem,     0.95rem + 0.25vw, 1.125rem);
-    --text-lg:   clamp(1.125rem, 1rem    + 0.75vw, 1.5rem);
-    --text-xl:   clamp(1.5rem,   1.2rem  + 1.25vw, 2.25rem);
+    --text-xs: clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
+    --text-sm: clamp(0.875rem, 0.8rem + 0.35vw, 1rem);
+    --text-base: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
+    --text-lg: clamp(1.125rem, 1rem + 0.75vw, 1.5rem);
+    --text-xl: clamp(1.5rem, 1.2rem + 1.25vw, 2.25rem);
 
     /* Display font */
     --font-display: 'Instrument Serif', Georgia, serif;
@@ -148,7 +158,7 @@
       --color-accent-success: oklch(70% 0.2 150);
       --color-accent-warning: oklch(75% 0.2 80);
       --color-accent-error: oklch(52% 0.25 25);
-      --color-accent-secondary: oklch(54.1% 0.28 293.0);
+      --color-accent-secondary: oklch(54.1% 0.28 293);
       --color-primary-500: oklch(57% 0.17 52);
       --color-primary-600: oklch(49% 0.16 55);
       --color-primary-700: oklch(42% 0.145 58);
@@ -161,7 +171,7 @@
   }
 
   .dark,
-  [data-theme="dark"] {
+  [data-theme='dark'] {
     --color-paper: oklch(0.22 0.015 85);
     --elevation-1: 0 1px 2px oklch(0.1 0.02 85 / 0.4);
     --elevation-2: 0 10px 28px oklch(0.08 0.02 85 / 0.55);
@@ -195,7 +205,7 @@
     --color-muted-foreground: oklch(72% 0.014 80);
 
     /* Semantic & secondary accents */
-    --color-accent-secondary: oklch(65% 0.25 293.0);
+    --color-accent-secondary: oklch(65% 0.25 293);
     --color-semantic-success: oklch(75% 0.18 162.5);
     --color-semantic-warning: oklch(80% 0.18 70.1);
     --color-semantic-error: oklch(70% 0.22 25.3);
@@ -206,7 +216,7 @@
     --color-border-dark: oklch(36% 0.014 70);
   }
 
-  [data-theme="sepia"] {
+  [data-theme='sepia'] {
     --color-paper: oklch(0.94 0.04 80);
     --color-background: oklch(0.91 0.045 78);
     --color-foreground: oklch(0.28 0.04 55);
@@ -238,7 +248,7 @@
     --color-muted-foreground: oklch(50% 0.05 85);
 
     /* Semantic & secondary accents */
-    --color-accent-secondary: oklch(55% 0.2 293.0);
+    --color-accent-secondary: oklch(55% 0.2 293);
     --color-semantic-success: oklch(65% 0.15 150);
     --color-semantic-warning: oklch(70% 0.15 85);
     --color-semantic-error: oklch(60% 0.2 25);
@@ -262,7 +272,9 @@
     height: 100%;
     background-color: var(--color-background);
     color: var(--color-foreground);
-    transition: background-color 0.3s ease, color 0.3s ease;
+    transition:
+      background-color 0.3s ease,
+      color 0.3s ease;
     margin: 0;
     padding: 0;
   }
@@ -348,7 +360,7 @@
   }
 
   .paper-grain::after {
-    content: "";
+    content: '';
     position: absolute;
     inset: 0;
     pointer-events: none;
@@ -395,37 +407,63 @@
 
   .focus-ring {
     outline: none;
-    box-shadow: 0 0 0 2px var(--color-background), 0 0 0 4px var(--color-accent);
+    box-shadow:
+      0 0 0 2px var(--color-background),
+      0 0 0 4px var(--color-accent);
   }
 
   /* Annotation toolbar container-query utilities (ADR-105)
      Default = labels hidden (icon-only). Once the toolbar container
      is roomy we expose the labels. */
-  .cq-annotation-label { display: none; }
+  .cq-annotation-label {
+    display: none;
+  }
   @container annotation-toolbar (min-width: 480px) {
-    .cq-annotation-label { display: inline; }
+    .cq-annotation-label {
+      display: inline;
+    }
   }
 
   /* Reader toolbar container-query utilities (ADR-105)
      Default = narrow container (icons collapsed, overflow menu shown).
      Once the toolbar container is roomy we promote the action row. */
-  .cq-reader-toolbar-actions { display: none; }
-  .cq-reader-toolbar-overflow { display: block; }
-  .cq-reader-toolbar-divider { display: none; }
+  .cq-reader-toolbar-actions {
+    display: none;
+  }
+  .cq-reader-toolbar-overflow {
+    display: block;
+  }
+  .cq-reader-toolbar-divider {
+    display: none;
+  }
   @container reader-toolbar (min-width: 640px) {
-    .cq-reader-toolbar-actions { display: flex; }
-    .cq-reader-toolbar-overflow { display: none; }
-    .cq-reader-toolbar-divider { display: block; }
+    .cq-reader-toolbar-actions {
+      display: flex;
+    }
+    .cq-reader-toolbar-overflow {
+      display: none;
+    }
+    .cq-reader-toolbar-divider {
+      display: block;
+    }
   }
 
   /* Admin audit-log container-query utilities (ADR-105)
      Default = actor/entity columns hidden. Once the table container
      is roomy we expose them. */
-  .cq-admin-audit-actor { display: none; }
-  .cq-admin-audit-entity { display: none; }
+  .cq-admin-audit-actor {
+    display: none;
+  }
+  .cq-admin-audit-entity {
+    display: none;
+  }
   @container admin-audit-table (min-width: 900px) {
-    .cq-admin-audit-actor { display: table-cell; }
-    .cq-admin-audit-entity { display: table-cell; }
+    .cq-admin-audit-actor {
+      display: table-cell;
+    }
+    .cq-admin-audit-entity {
+      display: table-cell;
+    }
   }
 }
 
@@ -434,13 +472,23 @@
    ============================================ */
 
 @keyframes shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 @keyframes slideUp {
-  from { transform: translateY(10px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 /* ============================================
@@ -502,35 +550,64 @@
   .cq {
     container-type: inline-size;
   }
-  .cq--toc-panel          { container-name: toc-panel; }
-  .cq--search-panel       { container-name: search-panel; }
-  .cq--bookmarks-panel    { container-name: bookmarks-panel; }
-  .cq--annotation-toolbar { container-name: annotation-toolbar; }
-  .cq--reader-toolbar     { container-name: reader-toolbar; }
-  .cq--catalog-grid       { container-name: catalog-grid; }
-  .cq--admin-books-grid   { container-name: admin-books-grid; }
-  .cq--admin-audit-table  { container-name: admin-audit-table; }
+  .cq--toc-panel {
+    container-name: toc-panel;
+  }
+  .cq--search-panel {
+    container-name: search-panel;
+  }
+  .cq--bookmarks-panel {
+    container-name: bookmarks-panel;
+  }
+  .cq--annotation-toolbar {
+    container-name: annotation-toolbar;
+  }
+  .cq--reader-toolbar {
+    container-name: reader-toolbar;
+  }
+  .cq--catalog-grid {
+    container-name: catalog-grid;
+  }
+  .cq--admin-books-grid {
+    container-name: admin-books-grid;
+  }
+  .cq--admin-audit-table {
+    container-name: admin-audit-table;
+  }
 
   /* Hide the label until the toolbar container is wide enough
      to fit icon + label side-by-side. The default for narrow
      viewports is label-hidden. */
   @container reader-toolbar (min-width: 640px) {
-    .cq-reader-toolbar-label { display: inline; }
+    .cq-reader-toolbar-label {
+      display: inline;
+    }
   }
   @container toc-panel (min-width: 320px) {
-    .cq-toc-density { padding-inline: 1rem; }
+    .cq-toc-density {
+      padding-inline: 1rem;
+    }
   }
   @container bookmarks-panel (min-width: 360px) {
-    .cq-bookmark-row { flex-direction: row; align-items: center; }
+    .cq-bookmark-row {
+      flex-direction: row;
+      align-items: center;
+    }
   }
   @container search-panel (min-width: 420px) {
-    .cq-search-result-meta { display: flex; }
+    .cq-search-result-meta {
+      display: flex;
+    }
   }
   @container catalog-grid (min-width: 480px) {
-    .cq-catalog-cover { aspect-ratio: 3 / 4; }
+    .cq-catalog-cover {
+      aspect-ratio: 3 / 4;
+    }
   }
   @container admin-books-grid (min-width: 720px) {
-    .cq-admin-book-card { padding: 1.5rem; }
+    .cq-admin-book-card {
+      padding: 1.5rem;
+    }
   }
 }
 
@@ -593,13 +670,21 @@
 }
 
 @keyframes exit-fade {
-  from { opacity: 1; }
-  to { opacity: 0; }
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
 }
 
 @keyframes enter-fade {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @theme {
@@ -675,112 +760,236 @@
 
 /* Fade animations */
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes fadeOut {
-  from { opacity: 1; }
-  to { opacity: 0; }
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
 }
 
 /* Slide animations */
 @keyframes slideInFromTop {
-  from { transform: translateY(-100%); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 @keyframes slideOutToTop {
-  from { transform: translateY(0); opacity: 1; }
-  to { transform: translateY(-100%); opacity: 0; }
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
 }
 
 @keyframes slideInFromBottom {
-  from { transform: translateY(100%); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 @keyframes slideOutToBottom {
-  from { transform: translateY(0); opacity: 1; }
-  to { transform: translateY(100%); opacity: 0; }
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(100%);
+    opacity: 0;
+  }
 }
 
 @keyframes slideInFromRight {
-  from { transform: translateX(100%); }
-  to { transform: translateX(0); }
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
 }
 
 @keyframes slideOutToRight {
-  from { transform: translateX(0); }
-  to { transform: translateX(100%); }
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(100%);
+  }
 }
 
 @keyframes slideInFromLeft {
-  from { transform: translateX(-100%); }
-  to { transform: translateX(0); }
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
 }
 
 @keyframes slideOutToLeft {
-  from { transform: translateX(0); }
-  to { transform: translateX(-100%); }
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-100%);
+  }
 }
 
 /* Scale animations */
 @keyframes scaleIn {
-  from { transform: scale(0.95); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 @keyframes scaleOut {
-  from { transform: scale(1); opacity: 1; }
-  to { transform: scale(0.95); opacity: 0; }
+  from {
+    transform: scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: scale(0.95);
+    opacity: 0;
+  }
 }
 
 /* Combined animations */
 @keyframes slideUpFadeIn {
-  from { transform: translateY(8px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(8px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 @keyframes slideUpFadeOut {
-  from { transform: translateY(0); opacity: 1; }
-  to { transform: translateY(8px); opacity: 0; }
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(8px);
+    opacity: 0;
+  }
 }
 
 @keyframes slideDownFadeIn {
-  from { transform: translateY(-8px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(-8px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 @keyframes slideDownFadeOut {
-  from { transform: translateY(0); opacity: 1; }
-  to { transform: translateY(-8px); opacity: 0; }
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-8px);
+    opacity: 0;
+  }
 }
 
 /* Animation utility classes */
-.animate-slide-in-top { animation: slideInFromTop 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-.animate-slide-out-top { animation: slideOutToTop 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-.animate-slide-in-bottom { animation: slideInFromBottom 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-.animate-slide-out-bottom { animation: slideOutToBottom 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-.animate-slide-in-right { animation: slideInFromRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-.animate-slide-out-right { animation: slideOutToRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-.animate-slide-in-left { animation: slideInFromLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-.animate-slide-out-left { animation: slideOutToLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-.animate-fade-in { animation: fadeIn 0.2s ease-out forwards; }
-.animate-fade-out { animation: fadeOut 0.2s ease-in forwards; }
-.animate-scale-in { animation: scaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-.animate-scale-out { animation: scaleOut 0.2s ease-in forwards; }
-.animate-slide-up-fade { animation: slideUpFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-.animate-slide-down-fade { animation: slideDownFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.animate-slide-in-top {
+  animation: slideInFromTop 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.animate-slide-out-top {
+  animation: slideOutToTop 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.animate-slide-in-bottom {
+  animation: slideInFromBottom 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.animate-slide-out-bottom {
+  animation: slideOutToBottom 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.animate-slide-in-right {
+  animation: slideInFromRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.animate-slide-out-right {
+  animation: slideOutToRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.animate-slide-in-left {
+  animation: slideInFromLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.animate-slide-out-left {
+  animation: slideOutToLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out forwards;
+}
+.animate-fade-out {
+  animation: fadeOut 0.2s ease-in forwards;
+}
+.animate-scale-in {
+  animation: scaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.animate-scale-out {
+  animation: scaleOut 0.2s ease-in forwards;
+}
+.animate-slide-up-fade {
+  animation: slideUpFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.animate-slide-down-fade {
+  animation: slideDownFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
 
 /* @starting-style support for exit animations */
 @supports (animation-timing-function: linear) {
-  .animate-exit-top { animation: slideOutToTop 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-  .animate-exit-top:where(:not([data-entering])) { animation: slideOutToTop 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-  .animate-exit-bottom { animation: slideOutToBottom 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-  .animate-exit-right { animation: slideOutToRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-  .animate-exit-left { animation: slideOutToLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-  .animate-exit-scale { animation: scaleOut 0.2s ease-in forwards; }
+  .animate-exit-top {
+    animation: slideOutToTop 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  .animate-exit-top:where(:not([data-entering])) {
+    animation: slideOutToTop 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  .animate-exit-bottom {
+    animation: slideOutToBottom 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  .animate-exit-right {
+    animation: slideOutToRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  .animate-exit-left {
+    animation: slideOutToLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  .animate-exit-scale {
+    animation: scaleOut 0.2s ease-in forwards;
+  }
 }
 
 /* Scroll-driven progress bar — Plan 198 S2 (ADR-105 §4).
@@ -803,8 +1012,12 @@
   }
 
   @keyframes scroll-progress-grow {
-    from { transform: scaleX(0); }
-    to { transform: scaleX(1); }
+    from {
+      transform: scaleX(0);
+    }
+    to {
+      transform: scaleX(1);
+    }
   }
 }
 
@@ -813,7 +1026,6 @@
     display: none;
   }
 }
-
 
 /* Password visibility toggle (packages/ui Input). Plain CSS, not Tailwind
    utilities: the design-system package lives outside the app's Tailwind scan

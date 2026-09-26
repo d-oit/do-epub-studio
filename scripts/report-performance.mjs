@@ -28,7 +28,7 @@ const budgets = readJson(budgetsPath) || {
   bundleSize: {},
   routeBudgets: {},
   startupTime: { fcp: 1500, 'chapter-switch': 300, 'offline-rehydrate': 800 },
-  ciDuration: { total: 900 }
+  ciDuration: { total: 900 },
 };
 
 const bundleMetrics = readJson(path.join(metricsPath, 'bundle-metrics.json'));
@@ -38,10 +38,18 @@ const lighthouseMetrics = readJson(path.join(metricsPath, 'lighthouse-metrics.js
 const turboMetricsRaw = readJson(path.join(metricsPath, 'turbo-metrics.json'));
 const testMetricsRaw = readJson(path.join(metricsPath, 'test-metrics.json'));
 
-const baselineBundle = baselinePath ? readJson(path.join(baselinePath, 'bundle-metrics.json')) : null;
-const baselineStartup = baselinePath ? readJson(path.join(baselinePath, 'startup-metrics.json')) : null;
-const baselineTurboRaw = baselinePath ? readJson(path.join(baselinePath, 'turbo-metrics.json')) : null;
-const baselineTestRaw = baselinePath ? readJson(path.join(baselinePath, 'test-metrics.json')) : null;
+const baselineBundle = baselinePath
+  ? readJson(path.join(baselinePath, 'bundle-metrics.json'))
+  : null;
+const baselineStartup = baselinePath
+  ? readJson(path.join(baselinePath, 'startup-metrics.json'))
+  : null;
+const baselineTurboRaw = baselinePath
+  ? readJson(path.join(baselinePath, 'turbo-metrics.json'))
+  : null;
+const baselineTestRaw = baselinePath
+  ? readJson(path.join(baselinePath, 'test-metrics.json'))
+  : null;
 
 // Handle nested structure from collect-turbo-metrics.mjs
 const turboMetrics = turboMetricsRaw?.turbo || turboMetricsRaw;
@@ -56,7 +64,7 @@ function getChange(current, baseline) {
   if (baseline === null || baseline === undefined || baseline === 0) return null;
   const change = ((current - baseline) / baseline) * 100;
   const sign = change > 0 ? '+' : '';
-  const statusIcon = change > 5 ? ' ⚠️' : (change < -5 ? ' ✅' : '');
+  const statusIcon = change > 5 ? ' ⚠️' : change < -5 ? ' ✅' : '';
   return `${sign}${change.toFixed(2)}%${statusIcon}`;
 }
 
@@ -66,12 +74,16 @@ if (bundleMetrics && bundleMetrics.bundleSize) {
   markdown += '| :--- | :--- | :--- | :--- | :--- |\n';
 
   for (const res of bundleMetrics.bundleSize) {
-    const limit = res.limit || budgets.bundleSize?.[res.file] || budgets.bundleSize?.[path.basename(res.file)] || 0;
+    const limit =
+      res.limit ||
+      budgets.bundleSize?.[res.file] ||
+      budgets.bundleSize?.[path.basename(res.file)] ||
+      0;
     const status = res.passed ? '✅' : '❌';
 
     let trend = 'NEW';
     if (baselineBundle && baselineBundle.bundleSize) {
-      const baseRes = baselineBundle.bundleSize.find(b => b.file === res.file);
+      const baseRes = baselineBundle.bundleSize.find((b) => b.file === res.file);
       if (baseRes) {
         trend = getChange(res.size, baseRes.size) || '0%';
       }
@@ -93,7 +105,7 @@ if (bundleMetrics && bundleMetrics.bundleSize) {
 
       let trend = 'NEW';
       if (baselineBundle && baselineBundle.routeBudgets) {
-        const baseRes = baselineBundle.routeBudgets.find(b => b.route === res.route);
+        const baseRes = baselineBundle.routeBudgets.find((b) => b.route === res.route);
         if (baseRes) {
           trend = getChange(res.size, baseRes.size) || '0%';
         }
@@ -123,7 +135,7 @@ if (startupMetrics && startupMetrics.startupTime) {
     if (val === undefined || val === null) continue;
 
     const limit = budgets.startupTime[m.key];
-    const status = m.noLimit ? '-' : (val <= limit ? '✅' : '⚠️');
+    const status = m.noLimit ? '-' : val <= limit ? '✅' : '⚠️';
 
     let trend = '-';
     if (baselineStartup && baselineStartup.startupTime && baselineStartup.startupTime[m.key]) {
@@ -146,7 +158,7 @@ if (lighthouseMetrics) {
 
     const score = (numericVal <= 1 ? numericVal * 100 : numericVal).toFixed(0);
     const normalizedVal = numericVal <= 1 ? numericVal : numericVal / 100;
-    const status = normalizedVal >= 0.9 ? '✅' : (normalizedVal >= 0.5 ? '⚠️' : '❌');
+    const status = normalizedVal >= 0.9 ? '✅' : normalizedVal >= 0.5 ? '⚠️' : '❌';
     markdown += `| ${cat} | ${score} | ${status} |\n`;
   }
   markdown += '\n';
@@ -173,7 +185,7 @@ if (ciMetrics) {
     if (baselineTurbo && baselineTurbo.pnpmCacheHit !== undefined) {
       const baselineHit = baselineTurbo.pnpmCacheHit === 'true';
       const currentHit = ciMetrics.cacheHit === 'true';
-      trend = baselineHit === currentHit ? '0%' : (currentHit ? '✅ Improved' : '🔄 Regressed');
+      trend = baselineHit === currentHit ? '0%' : currentHit ? '✅ Improved' : '🔄 Regressed';
     }
     markdown += `| Pnpm Cache Hit | ${ciMetrics.cacheHit === 'true' ? 'Hit' : 'Miss'} | - | ${trend} | ${status} |\n`;
   }
@@ -193,7 +205,7 @@ if (turboMetrics) {
 
     let trend = '-';
     if (baselineTurbo && baselineTurbo.tasks) {
-      const baselineTask = baselineTurbo.tasks.find(t => t.taskId === task.taskId);
+      const baselineTask = baselineTurbo.tasks.find((t) => t.taskId === task.taskId);
       if (baselineTask) {
         trend = getChange(task.duration, baselineTask.duration) || '0%';
       }
@@ -246,7 +258,7 @@ if (testMetrics) {
     if (baselineTest && baselineTest.flakyRate !== undefined) {
       trend = getChange(testMetrics.flakyRate, baselineTest.flakyRate) || '0%';
     }
-    const status = testMetrics.flakyRate <= 1 ? '✅' : (testMetrics.flakyRate <= 5 ? '⚠️' : '❌');
+    const status = testMetrics.flakyRate <= 1 ? '✅' : testMetrics.flakyRate <= 5 ? '⚠️' : '❌';
     markdown += `| Flaky Rate | ${testMetrics.flakyRate.toFixed(2)}% | ${trend} | ${status} |\n`;
   }
   markdown += '\n';

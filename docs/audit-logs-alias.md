@@ -22,11 +22,11 @@ by re-introducing the path or wiring up a redirect.
 > **`GET /api/admin/audit` is the active route. `GET /api/admin/audit-logs`
 > returns 404 by design. There is no 301 redirect.**
 
-| Path                         | Status | Source                                          |
-|------------------------------|--------|-------------------------------------------------|
-| `GET /api/admin/audit`       | 200    | `apps/worker/src/routes/admin/audit.ts`        |
-| `GET /api/admin/audit-logs`  | 404    | (no route handler; pinned by `routes.admin.test.ts`) |
-| Underlying SQL table         | —      | `audit_log` (queried in `audit.ts` + `stats.ts`) |
+| Path                        | Status | Source                                               |
+| --------------------------- | ------ | ---------------------------------------------------- |
+| `GET /api/admin/audit`      | 200    | `apps/worker/src/routes/admin/audit.ts`              |
+| `GET /api/admin/audit-logs` | 404    | (no route handler; pinned by `routes.admin.test.ts`) |
+| Underlying SQL table        | —      | `audit_log` (queried in `audit.ts` + `stats.ts`)     |
 
 ## Why 404 (not 301)
 
@@ -38,7 +38,7 @@ by re-introducing the path or wiring up a redirect.
   A 404 forces the caller to update their code path.
 - **The test pins the behavior.** The dedicated test
   `routes.admin.test.ts > GET /api/admin/audit-logs > returns 404 — redirect
-  removed, frontend calls /audit directly` makes the 404 a load-bearing
+removed, frontend calls /audit directly` makes the 404 a load-bearing
   invariant. Removing the test would be a regression; the test passes today
   and is in the standard CI matrix.
 - **Cleaner router surface.** A router with no dead route handlers is
@@ -47,7 +47,7 @@ by re-introducing the path or wiring up a redirect.
 
 ## What this doc replaces
 
-The Plan 115 description used the phrase *"301 alias"*; that was the design
+The Plan 115 description used the phrase _"301 alias"_; that was the design
 intent at planning time. The implementation chose 404 (cleaner). Plan 121's
 M5 row was therefore phrased against a stale intent; the row is now struck
 through as **RESOLVED** with this document as the canonical artifact.
@@ -56,7 +56,7 @@ through as **RESOLVED** with this document as the canonical artifact.
 
 - A new caller surfaces that genuinely needs the legacy path
   (e.g., an external system that integrates with the project). In that case
-  the answer is *not* a 301 redirect, but rather a new top-level
+  the answer is _not_ a 301 redirect, but rather a new top-level
   `/api/admin/audit-logs` route handler that returns the same shape as
   `/api/admin/audit` (so the legacy client gets full functionality, not
   silent forwarding).

@@ -30,7 +30,7 @@ function SubmitButton({ isEdit, children }: SubmitButtonProps) {
     <Button type="submit" variant="primary" disabled={pending}>
       {pending
         ? t('grants.form.submitting')
-        : children ?? (isEdit ? t('grants.actions.save') : t('grants.createGrant'))}
+        : (children ?? (isEdit ? t('grants.actions.save') : t('grants.createGrant')))}
     </Button>
   );
 }
@@ -61,11 +61,7 @@ export function GrantForm({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={
-        editingGrant
-          ? t('grants.editGrantTitle')
-          : t('grants.createGrantTitle')
-      }
+      title={editingGrant ? t('grants.editGrantTitle') : t('grants.createGrantTitle')}
     >
       <form action={handleFormAction} className="space-y-4">
         <Input
@@ -95,9 +91,7 @@ export function GrantForm({
               type="password"
               name="passwordConfirm" /* eslint-disable-line i18next/no-literal-string -- form field name */
               value={formData.passwordConfirm}
-              onChange={(e) =>
-                onChange({ ...formData, passwordConfirm: e.target.value })
-              }
+              onChange={(e) => onChange({ ...formData, passwordConfirm: e.target.value })}
               error={formErrors.passwordConfirm}
               required
             />
@@ -105,7 +99,10 @@ export function GrantForm({
         )}
 
         <div>
-          <label htmlFor="grant-mode" className="block text-sm font-medium text-foreground-muted mb-1">
+          <label
+            htmlFor="grant-mode"
+            className="block text-sm font-medium text-foreground-muted mb-1"
+          >
             {t('grants.form.mode')}
           </label>
           <select
@@ -157,7 +154,10 @@ export function GrantForm({
         </div>
 
         <div>
-          <label htmlFor="grant-expires" className="block text-sm font-medium text-foreground-muted mb-1">
+          <label
+            htmlFor="grant-expires"
+            className="block text-sm font-medium text-foreground-muted mb-1"
+          >
             {t('grants.form.expiry')}
           </label>
           <input
@@ -168,9 +168,7 @@ export function GrantForm({
             onChange={(e) => onChange({ ...formData, expiresAt: e.target.value })}
             className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm focus:ring-2 focus:ring-accent focus:border-accent"
           />
-          <p className="mt-1 text-xs text-foreground-muted">
-            {t('grants.form.expiryHint')}
-          </p>
+          <p className="mt-1 text-xs text-foreground-muted">{t('grants.form.expiryHint')}</p>
         </div>
 
         {formErrors.submit && (

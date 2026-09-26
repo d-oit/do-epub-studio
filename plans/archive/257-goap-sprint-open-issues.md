@@ -12,16 +12,16 @@ synced with `git merge origin/main --ff-only` (15 commits). Per-issue
 verification (issue body AC → code + tests on main) is recorded in
 `258-goap-issue-345.md` … `265-goap-issue-317.md`.
 
-| Issue | Body AC on main? | Evidence (grounded 2026-08-29) |
-|---|---|---|
-| #345 CI failure | Yes (historical) | Run 26446431433 failed 10:20:23Z 2026-05-26; issue closed COMPLETED 11:49Z same day; current main CI green (CodeQL + CI runs success on `c2c54d77`) |
-| #339 ZIP bomb | Yes | `packages/reader-core/src/archive-validator.ts` (max compressed size, entry count, total uncompressed, ratio, path traversal); wired in `epub-parser.worker.ts` + `epub-parser-worker.ts`; `archive-validator.test.ts` + timeout test |
-| #312 dep scanning | Yes | `ci.yml:161` `pnpm audit --audit-level=high`; SBOM `cyclonedx-npm` (`ci.yml:448`, `release.yml:242`); `.github/dependabot.yml`; `.github/workflows/scorecard.yml` |
-| #314 schema consolidation | Yes | `packages/schema/src/schemas/*` is the Zod source of truth; `packages/shared/src/schemas.ts` re-exports from schema; worker routes import `@do-epub-studio/schema`; no `schema/src/locator.ts` |
-| #316 OKLCH | Yes | `apps/web/src/styles/globals.css`: zero hex/rgb token literals; P3 overrides at `:142-158`; `design-tokens.test.ts` asserts `oklch(` |
-| #315 View Transitions | Yes | `apps/web/src/components/ViewTransitionRoutes.tsx` (+ fallback test); `globals.css:538-563` `@layer view-transitions` + reduced-motion block |
-| #317 offline E2E | Yes | `apps/tests/offline-reader.spec.ts`: 5 tests — offline reload, status transitions, cached API, queued actions, flush after reconnect |
-| #318 AI plugins | **No** | Closed with comment "Plugin architecture design deferred". No interfaces, no registry, no extension points, no PoC, no doc. **Implemented this sprint: `262-goap-issue-318.md`, merged as PR #1058** |
+| Issue                     | Body AC on main? | Evidence (grounded 2026-08-29)                                                                                                                                                                                                        |
+| ------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| #345 CI failure           | Yes (historical) | Run 26446431433 failed 10:20:23Z 2026-05-26; issue closed COMPLETED 11:49Z same day; current main CI green (CodeQL + CI runs success on `c2c54d77`)                                                                                   |
+| #339 ZIP bomb             | Yes              | `packages/reader-core/src/archive-validator.ts` (max compressed size, entry count, total uncompressed, ratio, path traversal); wired in `epub-parser.worker.ts` + `epub-parser-worker.ts`; `archive-validator.test.ts` + timeout test |
+| #312 dep scanning         | Yes              | `ci.yml:161` `pnpm audit --audit-level=high`; SBOM `cyclonedx-npm` (`ci.yml:448`, `release.yml:242`); `.github/dependabot.yml`; `.github/workflows/scorecard.yml`                                                                     |
+| #314 schema consolidation | Yes              | `packages/schema/src/schemas/*` is the Zod source of truth; `packages/shared/src/schemas.ts` re-exports from schema; worker routes import `@do-epub-studio/schema`; no `schema/src/locator.ts`                                        |
+| #316 OKLCH                | Yes              | `apps/web/src/styles/globals.css`: zero hex/rgb token literals; P3 overrides at `:142-158`; `design-tokens.test.ts` asserts `oklch(`                                                                                                  |
+| #315 View Transitions     | Yes              | `apps/web/src/components/ViewTransitionRoutes.tsx` (+ fallback test); `globals.css:538-563` `@layer view-transitions` + reduced-motion block                                                                                          |
+| #317 offline E2E          | Yes              | `apps/tests/offline-reader.spec.ts`: 5 tests — offline reload, status transitions, cached API, queued actions, flush after reconnect                                                                                                  |
+| #318 AI plugins           | **No**           | Closed with comment "Plugin architecture design deferred". No interfaces, no registry, no extension points, no PoC, no doc. **Implemented this sprint: `262-goap-issue-318.md`, merged as PR #1058**                                  |
 
 ## Baseline (2026-08-29)
 

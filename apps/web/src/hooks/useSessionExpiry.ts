@@ -46,8 +46,12 @@ export function useSessionExpiry(): UseSessionExpiryReturn {
 
   // Tick once per minute; cheap.
   useEffect(() => {
-    const id = setInterval(() => { setNow(Date.now()); }, 30_000);
-    return () => { clearInterval(id); };
+    const id = setInterval(() => {
+      setNow(Date.now());
+    }, 30_000);
+    return () => {
+      clearInterval(id);
+    };
   }, []);
 
   // Reset transient flags when expiry moves (i.e. after a successful refresh).

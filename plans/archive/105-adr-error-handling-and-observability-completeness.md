@@ -21,7 +21,7 @@ observability foundation is in place but **not uniformly enforced**:
    and web production code never use them; routes return ad-hoc JSON and the
    central catch (`apps/worker/src/middleware/observability.ts:18-32`) maps
    everything to a generic `500`, losing the typed status/code/message.
-2. **traceId is not on *every* response.** The path-length guard
+2. **traceId is not on _every_ response.** The path-length guard
    (`apps/worker/src/app.ts:21-27`) returns `414` before the observability
    middleware runs, and a route-level catch
    (`apps/worker/src/routes/reader/insights.ts:86-89`) returns `500` without
@@ -34,14 +34,14 @@ observability foundation is in place but **not uniformly enforced**:
    in several places, and some critical UI events use static pseudo
    trace IDs (`'session'`, `'reader-search'`) instead of generated ones.
 
-There was no written policy stating *how* errors and logs must flow, so
+There was no written policy stating _how_ errors and logs must flow, so
 each new route/component made an independent (and divergent) choice.
 
 ## Decision
 
 ### 1. Typed errors are the contract
 
-- Worker route handlers that fail in a *known* way MUST throw a
+- Worker route handlers that fail in a _known_ way MUST throw a
   `packages/shared/src/errors.ts` subclass (`ValidationError`,
   `NotFoundError`, `UnauthorizedError`, `ForbiddenError`, `ConflictError`,
   `RateLimitError`). The central observability catch MUST call
@@ -56,7 +56,7 @@ each new route/component made an independent (and divergent) choice.
 - Every Worker response, **including pre-route guards** (path-length, CORS
   preflight rejection, rate-limit 429), MUST carry `x-trace-id`/`x-span-id`
   headers and, for error bodies, `error.traceId`.
-- Practically: guards that can short-circuit MUST run *after*
+- Practically: guards that can short-circuit MUST run _after_
   `createRequestContext`, or attach trace headers themselves. The 414
   path-length guard is the canonical case to fix.
 - Critical UI actions (per AGENTS.md TIER-1) MUST use a **generated**
@@ -109,7 +109,7 @@ each new route/component made an independent (and divergent) choice.
 ### Neutral
 
 - The shared `errors.ts` / `telemetry.ts` modules already exist; this ADR
-  mandates *use*, not new infrastructure.
+  mandates _use_, not new infrastructure.
 
 ## Compliance
 

@@ -58,7 +58,8 @@ export function createEpubAnnotationAdapter(rendition: Rendition): AnnotationAda
   let pendingChapterHref: string | null = null;
   let pendingHighlights: HighlightRecord[] = [];
   let pendingComments: CommentRecord[] = [];
-  let pendingOnNavigate: ((chapterRef: string, cfiRange?: string) => void | Promise<void>) | null = null;
+  let pendingOnNavigate: ((chapterRef: string, cfiRange?: string) => void | Promise<void>) | null =
+    null;
 
   function executePendingRender(): void {
     pendingRafId = null;
@@ -82,9 +83,7 @@ export function createEpubAnnotationAdapter(rendition: Rendition): AnnotationAda
 
     if (!chapterHref) return;
 
-    const chapterHighlights = highlights.filter(
-      (h) => h.chapterRef === chapterHref && h.cfiRange,
-    );
+    const chapterHighlights = highlights.filter((h) => h.chapterRef === chapterHref && h.cfiRange);
 
     for (const highlight of chapterHighlights) {
       rendition.annotations.append('highlight', highlight.cfiRange as string, {

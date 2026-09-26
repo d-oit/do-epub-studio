@@ -12,8 +12,18 @@ vi.mock('../../../../lib/offline/reading-insights', async (importOriginal) => {
 const mockUseFocusTrap = vi.fn();
 vi.mock('@do-epub-studio/ui', () => ({
   useFocusTrap: (...args: unknown[]) => mockUseFocusTrap(...args),
-  IconButton: ({ children, onClick, 'aria-label': ariaLabel }: { children: ReactNode; onClick: () => void; 'aria-label': string }) => (
-    <button type="button" onClick={onClick} aria-label={ariaLabel}>{children}</button>
+  IconButton: ({
+    children,
+    onClick,
+    'aria-label': ariaLabel,
+  }: {
+    children: ReactNode;
+    onClick: () => void;
+    'aria-label': string;
+  }) => (
+    <button type="button" onClick={onClick} aria-label={ariaLabel}>
+      {children}
+    </button>
   ),
 }));
 
@@ -46,13 +56,19 @@ describe('InfoPanel', () => {
   it('calls useFocusTrap with isOpen and the panel ref when open', () => {
     mockCompute.mockResolvedValue(null);
     render(<InfoPanel {...baseProps} isOpen={true} />);
-    expect(mockUseFocusTrap).toHaveBeenCalledWith(true, expect.objectContaining({ current: expect.any(HTMLElement) }));
+    expect(mockUseFocusTrap).toHaveBeenCalledWith(
+      true,
+      expect.objectContaining({ current: expect.any(HTMLElement) }),
+    );
   });
 
   it('calls useFocusTrap with false when closed', () => {
     mockCompute.mockResolvedValue(null);
     render(<InfoPanel {...baseProps} isOpen={false} />);
-    expect(mockUseFocusTrap).toHaveBeenCalledWith(false, expect.objectContaining({ current: null }));
+    expect(mockUseFocusTrap).toHaveBeenCalledWith(
+      false,
+      expect.objectContaining({ current: null }),
+    );
   });
 
   it('renders insights once computeInsightSummary resolves', async () => {
@@ -66,7 +82,11 @@ describe('InfoPanel', () => {
 
   it('does not set state after unmount when the promise resolves late', async () => {
     let resolveCompute!: (value: typeof summary) => void;
-    mockCompute.mockReturnValue(new Promise<typeof summary>((resolve) => { resolveCompute = resolve; }));
+    mockCompute.mockReturnValue(
+      new Promise<typeof summary>((resolve) => {
+        resolveCompute = resolve;
+      }),
+    );
 
     const onClose = vi.fn();
     const { unmount } = render(<InfoPanel {...baseProps} onClose={onClose} />);
@@ -82,7 +102,11 @@ describe('InfoPanel', () => {
 
   it('does not set state after unmount when the promise rejects late', async () => {
     let rejectCompute!: (err: Error) => void;
-    mockCompute.mockReturnValue(new Promise<typeof summary>((_, reject) => { rejectCompute = reject; }));
+    mockCompute.mockReturnValue(
+      new Promise<typeof summary>((_, reject) => {
+        rejectCompute = reject;
+      }),
+    );
 
     const { unmount } = render(<InfoPanel {...baseProps} />);
 

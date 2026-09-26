@@ -180,23 +180,39 @@ describe('IconButton', () => {
   });
 
   it('renders with ghost variant', () => {
-    render(<IconButton variant="ghost" label="Click">Click</IconButton>);
+    render(
+      <IconButton variant="ghost" label="Click">
+        Click
+      </IconButton>,
+    );
     expect(screen.getByRole('button')).toHaveClass('bg-transparent');
   });
 
   it('renders with primary variant', () => {
-    render(<IconButton variant="primary" label="Click">Click</IconButton>);
+    render(
+      <IconButton variant="primary" label="Click">
+        Click
+      </IconButton>,
+    );
     expect(screen.getByRole('button')).toHaveClass('bg-[var(--color-foreground)]');
   });
 
   it('applies custom className', () => {
-    render(<IconButton className="custom" label="Click">Click</IconButton>);
+    render(
+      <IconButton className="custom" label="Click">
+        Click
+      </IconButton>,
+    );
     expect(screen.getByRole('button')).toHaveClass('custom');
   });
 
   it('forwards ref', () => {
     const ref = { current: null };
-    render(<IconButton ref={ref} label="Click">Click</IconButton>);
+    render(
+      <IconButton ref={ref} label="Click">
+        Click
+      </IconButton>,
+    );
     expect(ref.current).toBeInstanceOf(HTMLButtonElement);
   });
 });

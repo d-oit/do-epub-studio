@@ -24,7 +24,10 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { createStoryLogicEditorialPlugin, type TransformersPipelineLike } from '../plugins/story-logic-editorial';
+import {
+  createStoryLogicEditorialPlugin,
+  type TransformersPipelineLike,
+} from '../plugins/story-logic-editorial';
 
 const live = process.env.SL_LIVE === '1';
 const device = process.env.SL_DEVICE === 'cpu' ? 'cpu' : 'webgpu';
@@ -39,7 +42,10 @@ async function loadRealPipeline(): Promise<TransformersPipelineLike> {
   // output shapes, so TypeScript cannot narrow it from the literal arguments
   // here. The adapter re-derives the answer from `generated_text` at runtime and
   // treats anything else as unparseable, so an over-broad type is not trusted.
-  return (await pipeline('text-generation', model, { device, dtype })) as unknown as TransformersPipelineLike;
+  return (await pipeline('text-generation', model, {
+    device,
+    dtype,
+  })) as unknown as TransformersPipelineLike;
 }
 
 const plugin = createStoryLogicEditorialPlugin({

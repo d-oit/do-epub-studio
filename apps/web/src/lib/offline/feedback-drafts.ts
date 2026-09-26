@@ -68,7 +68,8 @@ export async function loadFeedbackDrafts(
   const entries = await db.getAllFromIndex('feedbackDrafts', 'ownerBook', [ownerEmail, bookId]);
   const decrypted = await Promise.all(
     (entries as Record<string, unknown>[]).map((e) =>
-      decryptEntry<FeedbackDraft>(e, FEEDBACK_DRAFT_PLAINTEXT)),
+      decryptEntry<FeedbackDraft>(e, FEEDBACK_DRAFT_PLAINTEXT),
+    ),
   );
   const valid = decrypted.filter((e): e is FeedbackDraft => e !== null);
   valid.sort((a, b) => b.updatedAt - a.updatedAt);
@@ -86,7 +87,8 @@ export async function deleteFeedbackDraftByMutation(mutationId: string): Promise
   const all = await db.getAll('feedbackDrafts');
   const decrypted = await Promise.all(
     (all as Record<string, unknown>[]).map((e) =>
-      decryptEntry<FeedbackDraft>(e, FEEDBACK_DRAFT_PLAINTEXT)),
+      decryptEntry<FeedbackDraft>(e, FEEDBACK_DRAFT_PLAINTEXT),
+    ),
   );
   const match = decrypted.find((e) => e !== null && e.mutationId === mutationId);
   if (match) {

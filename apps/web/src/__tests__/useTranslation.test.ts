@@ -56,7 +56,9 @@ describe('useTranslation', () => {
 
   it('returns key as fallback for unknown key', () => {
     const { result } = renderHook(() => useTranslation());
-    expect(result.current.t('nonexistent.key' as Parameters<typeof result.current.t>[0])).toBe('nonexistent.key');
+    expect(result.current.t('nonexistent.key' as Parameters<typeof result.current.t>[0])).toBe(
+      'nonexistent.key',
+    );
   });
 
   it('replaces params in translation', () => {

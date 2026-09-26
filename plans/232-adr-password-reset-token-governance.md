@@ -15,7 +15,7 @@ passwords, and there is no persistent single-use token record.
 One concrete contract mismatch also exists:
 
 - `apps/web/src/features/admin/AdminRecoverPage.tsx` posts `{ token,
-  newPassword }` and expects `{ sessionToken, email }`.
+newPassword }` and expects `{ sessionToken, email }`.
 - `apps/worker/src/routes/admin/auth.ts` validates `RecoveryVerifySchema`,
   which accepts only `{ token }`, and returns `{ token, user }`.
 

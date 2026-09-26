@@ -26,7 +26,12 @@ const baseBtn =
 const ghostBtn = 'text-foreground hover:bg-background-secondary';
 const primaryBtn = 'bg-accent text-white hover:bg-accent/90';
 
-export function Pagination({ currentPage, totalPages, onPageChange, className = '' }: PaginationProps) {
+export function Pagination({
+  currentPage,
+  totalPages,
+  onPageChange,
+  className = '',
+}: PaginationProps) {
   if (totalPages <= 1) return null;
   const pages = getPageRange(currentPage, totalPages);
   return (
@@ -35,21 +40,33 @@ export function Pagination({ currentPage, totalPages, onPageChange, className = 
         type="button"
         className={`${baseBtn} ${ghostBtn} disabled:opacity-50`}
         disabled={currentPage <= 1}
-        onClick={() => { onPageChange(currentPage - 1); }}
+        onClick={() => {
+          onPageChange(currentPage - 1);
+        }}
         aria-label="Previous page"
       >
         <ChevronLeftIcon />
       </button>
       {pages.map((p, idx) => {
         if (p === 'ellipsis') {
-          return <span key={`e-${pages.length}-${idx}`} className="px-2 text-foreground-muted" aria-hidden="true">…</span>;
+          return (
+            <span
+              key={`e-${pages.length}-${idx}`}
+              className="px-2 text-foreground-muted"
+              aria-hidden="true"
+            >
+              …
+            </span>
+          );
         }
         return (
           <button
             key={p}
             type="button"
             className={`${baseBtn} ${p === currentPage ? primaryBtn : ghostBtn}`}
-            onClick={() => { onPageChange(p); }}
+            onClick={() => {
+              onPageChange(p);
+            }}
             aria-label={`Page ${p}`}
             aria-current={p === currentPage ? 'page' : undefined}
           >
@@ -61,7 +78,9 @@ export function Pagination({ currentPage, totalPages, onPageChange, className = 
         type="button"
         className={`${baseBtn} ${ghostBtn} disabled:opacity-50`}
         disabled={currentPage >= totalPages}
-        onClick={() => { onPageChange(currentPage + 1); }}
+        onClick={() => {
+          onPageChange(currentPage + 1);
+        }}
         aria-label="Next page"
       >
         <ChevronRightIcon />

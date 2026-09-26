@@ -15,16 +15,16 @@ them and they are effectively unverifiable claims about what protects a release.
 
 ## Evidence (2026-09-24, `grep -c` against `release.yml`)
 
-| Manifest claim | Hits | Reality |
-| --- | --- | --- |
-| `Release Readiness` | >0 | ✅ job `Release Readiness Gate` |
-| `Performance Budgets` | >0 | ✅ job `Performance Budgets` |
-| `Tag/Version Agreement` | **0** | ✅ enforced by step `Verify tag matches VERSION file` — mis-named in manifest |
-| `Main Ancestry` | **0** | ✅ enforced by step `Verify tag is on main branch` — mis-named in manifest |
-| `Required PR Checks` | **0** | ✅ enforced by step `Verify CI checks passed` — mis-named in manifest |
-| `Coverage Gate` | **0** | ❌ **no coverage gate exists in `release.yml`** |
-| `Cross-Browser E2E` | **0** | ❌ **absent**; `ci.yml` only has `Scheduled Cross-browser E2E` (schedule-triggered) |
-| `Security Checks` | **0** | ❌ **absent**; CodeQL / dep-scan run in `ci.yml`, not at release time |
+| Manifest claim          | Hits  | Reality                                                                             |
+| ----------------------- | ----- | ----------------------------------------------------------------------------------- |
+| `Release Readiness`     | >0    | ✅ job `Release Readiness Gate`                                                     |
+| `Performance Budgets`   | >0    | ✅ job `Performance Budgets`                                                        |
+| `Tag/Version Agreement` | **0** | ✅ enforced by step `Verify tag matches VERSION file` — mis-named in manifest       |
+| `Main Ancestry`         | **0** | ✅ enforced by step `Verify tag is on main branch` — mis-named in manifest          |
+| `Required PR Checks`    | **0** | ✅ enforced by step `Verify CI checks passed` — mis-named in manifest               |
+| `Coverage Gate`         | **0** | ❌ **no coverage gate exists in `release.yml`**                                     |
+| `Cross-Browser E2E`     | **0** | ❌ **absent**; `ci.yml` only has `Scheduled Cross-browser E2E` (schedule-triggered) |
+| `Security Checks`       | **0** | ❌ **absent**; CodeQL / dep-scan run in `ci.yml`, not at release time               |
 
 Consumer audit: `gate-manifest.json` is read **only** by
 `scripts/validate-gate-parity.sh` (parity) and

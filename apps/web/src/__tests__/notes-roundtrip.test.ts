@@ -139,12 +139,9 @@ describe('notes round-trip', () => {
   });
 
   it('skips bookmark without locator', () => {
-    const malformed = [
-      '<!-- format: do-epub-studio-notes v1 -->',
-      '## Bookmarks',
-      '- ',
-      '',
-    ].join('\n');
+    const malformed = ['<!-- format: do-epub-studio-notes v1 -->', '## Bookmarks', '- ', ''].join(
+      '\n',
+    );
     const result = importNotesFromMarkdown(malformed);
     expect(result.bookmarks).toHaveLength(0);
   });

@@ -9,6 +9,7 @@
 ## Cluster A: Design Token System (#489, #497)
 
 ### Pre-conditions
+
 - Read existing `apps/web/src/styles/globals.css`
 - Read existing `packages/ui/.storybook/preview.css`
 - Verify font availability (Cabinet Grotesk, Satoshi, Source Serif 4)
@@ -55,6 +56,7 @@ A6. Update .agents/skills/anti-ai-slop/SKILL.md
 ```
 
 ### Validation
+
 - `./scripts/quality_gate.sh` passes
 - No hardcoded hex remaining in component files
 - Both themes verified at WCAG AA contrast
@@ -390,28 +392,28 @@ J3. Success/error states
 
 ## Quality Gates Between Phases
 
-| Gate | Check | Blocks |
-|------|-------|--------|
-| G1 | `./scripts/quality_gate.sh` | Every phase |
-| G2 | WCAG contrast audit (axe-core) | Phase 1A, 2G, 3H |
-| G3 | Responsive test (375/768/1280/1920) | Phase 2F, 4I |
-| G4 | E2E login flow | Phase 3H, 4I |
-| G5 | Security headers scan | Phase 1E |
-| G6 | i18n parity test | Phase 1B |
+| Gate | Check                               | Blocks           |
+| ---- | ----------------------------------- | ---------------- |
+| G1   | `./scripts/quality_gate.sh`         | Every phase      |
+| G2   | WCAG contrast audit (axe-core)      | Phase 1A, 2G, 3H |
+| G3   | Responsive test (375/768/1280/1920) | Phase 2F, 4I     |
+| G4   | E2E login flow                      | Phase 3H, 4I     |
+| G5   | Security headers scan               | Phase 1E         |
+| G6   | i18n parity test                    | Phase 1B         |
 
 ---
 
 ## Token Economy (Agent Skills)
 
-| Skill | When Loaded | Est. Tokens |
-|-------|-------------|-------------|
-| design-tokens | Cluster A, F, G, H, I | ~800 |
-| anti-ai-slop | Cluster A, I | ~500 |
-| accessibility-auditor | Cluster H, I, F | ~600 |
-| security-code-auditor | Cluster E, J | ~700 |
-| pwa-offline-sync | Cluster G | ~400 |
-| reader-ui-ux | Cluster F, I | ~500 |
-| goap-agent | Plan creation (this) | ~600 |
+| Skill                 | When Loaded           | Est. Tokens |
+| --------------------- | --------------------- | ----------- |
+| design-tokens         | Cluster A, F, G, H, I | ~800        |
+| anti-ai-slop          | Cluster A, I          | ~500        |
+| accessibility-auditor | Cluster H, I, F       | ~600        |
+| security-code-auditor | Cluster E, J          | ~700        |
+| pwa-offline-sync      | Cluster G             | ~400        |
+| reader-ui-ux          | Cluster F, I          | ~500        |
+| goap-agent            | Plan creation (this)  | ~600        |
 
 Total on-demand budget: ~4,100 tokens (vs ~28,000 if all loaded at once)
 Savings: **85% token reduction** via progressive skill loading

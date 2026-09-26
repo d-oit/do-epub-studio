@@ -42,7 +42,9 @@ function makeSqliteEnv(database: DatabaseSync): Env {
 
 beforeAll(() => {
   db = new DatabaseSync(':memory:');
-  for (const file of readdirSync(MIGRATIONS_DIR).filter((f) => f.endsWith('.sql')).sort()) {
+  for (const file of readdirSync(MIGRATIONS_DIR)
+    .filter((f) => f.endsWith('.sql'))
+    .sort()) {
     db.exec(readFileSync(resolve(MIGRATIONS_DIR, file), 'utf8'));
   }
   env = makeSqliteEnv(db);
@@ -65,24 +67,44 @@ afterAll(() => {
 
 describe('computeAnchorState', () => {
   it('resolves when the stored evidence sha still matches the book file', async () => {
-    await expect(computeAnchorState(env, {
-      book_id: BOOK_ID, book_file_id: FILE_ID, source_sha256: SHA, reference_revisions: null,
-    })).resolves.toBe('resolved');
+    await expect(
+      computeAnchorState(env, {
+        book_id: BOOK_ID,
+        book_file_id: FILE_ID,
+        source_sha256: SHA,
+        reference_revisions: null,
+      }),
+    ).resolves.toBe('resolved');
   });
 
   it('reports source_changed when the file was replaced, and when it is gone', async () => {
-    await expect(computeAnchorState(env, {
-      book_id: BOOK_ID, book_file_id: FILE_ID, source_sha256: 'b'.repeat(64), reference_revisions: null,
-    })).resolves.toBe('source_changed');
-    await expect(computeAnchorState(env, {
-      book_id: BOOK_ID, book_file_id: 'file-gone', source_sha256: SHA, reference_revisions: null,
-    })).resolves.toBe('source_changed');
+    await expect(
+      computeAnchorState(env, {
+        book_id: BOOK_ID,
+        book_file_id: FILE_ID,
+        source_sha256: 'b'.repeat(64),
+        reference_revisions: null,
+      }),
+    ).resolves.toBe('source_changed');
+    await expect(
+      computeAnchorState(env, {
+        book_id: BOOK_ID,
+        book_file_id: 'file-gone',
+        source_sha256: SHA,
+        reference_revisions: null,
+      }),
+    ).resolves.toBe('source_changed');
   });
 
   it('reports unresolved when the item has no source identity', async () => {
-    await expect(computeAnchorState(env, {
-      book_id: BOOK_ID, book_file_id: null, source_sha256: null, reference_revisions: null,
-    })).resolves.toBe('unresolved');
+    await expect(
+      computeAnchorState(env, {
+        book_id: BOOK_ID,
+        book_file_id: null,
+        source_sha256: null,
+        reference_revisions: null,
+      }),
+    ).resolves.toBe('unresolved');
   });
 });
 
@@ -99,16 +121,30 @@ describe('reference revision pins', () => {
   });
 
   it('parses stored pins and ignores malformed payloads', () => {
-    expect(parseReferenceRevisions({
-      book_id: BOOK_ID, book_file_id: null, source_sha256: null,
-      reference_revisions: JSON.stringify({ 'ref-1': 2 }),
-    })).toEqual({ 'ref-1': 2 });
-    expect(parseReferenceRevisions({
-      book_id: BOOK_ID, book_file_id: null, source_sha256: null, reference_revisions: 'not json',
-    })).toEqual({});
-    expect(parseReferenceRevisions({
-      book_id: BOOK_ID, book_file_id: null, source_sha256: null, reference_revisions: null,
-    })).toEqual({});
+    expect(
+      parseReferenceRevisions({
+        book_id: BOOK_ID,
+        book_file_id: null,
+        source_sha256: null,
+        reference_revisions: JSON.stringify({ 'ref-1': 2 }),
+      }),
+    ).toEqual({ 'ref-1': 2 });
+    expect(
+      parseReferenceRevisions({
+        book_id: BOOK_ID,
+        book_file_id: null,
+        source_sha256: null,
+        reference_revisions: 'not json',
+      }),
+    ).toEqual({});
+    expect(
+      parseReferenceRevisions({
+        book_id: BOOK_ID,
+        book_file_id: null,
+        source_sha256: null,
+        reference_revisions: null,
+      }),
+    ).toEqual({});
   });
 
   it('resolves both facts in one pass for a pinned item', async () => {

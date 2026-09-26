@@ -36,8 +36,12 @@ export function NotificationBadge({ t, onClick }: NotificationBadgeProps) {
   useEffect(() => {
     void fetchCount();
     // Poll every 30 seconds
-    const interval = setInterval(() => { fetchCount().catch(() => undefined); }, 30_000);
-    return () => { clearInterval(interval); };
+    const interval = setInterval(() => {
+      fetchCount().catch(() => undefined);
+    }, 30_000);
+    return () => {
+      clearInterval(interval);
+    };
   }, [fetchCount]);
 
   return (

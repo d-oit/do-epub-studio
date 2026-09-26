@@ -41,13 +41,13 @@ Implementation must add:
 
 ## Admin Assurance Levels
 
-| Operation | Required assurance |
-| --- | --- |
-| Admin read-only pages | Valid admin session. |
-| Book/grant mutations | Fresh admin session or recent step-up. |
-| Role/account changes | Recent step-up plus MFA when MFA is enrolled. |
-| MFA enrollment/removal | Recent step-up and current-password verification. |
-| Demo admin enablement | Recent step-up and non-production environment gate. |
+| Operation              | Required assurance                                  |
+| ---------------------- | --------------------------------------------------- |
+| Admin read-only pages  | Valid admin session.                                |
+| Book/grant mutations   | Fresh admin session or recent step-up.              |
+| Role/account changes   | Recent step-up plus MFA when MFA is enrolled.       |
+| MFA enrollment/removal | Recent step-up and current-password verification.   |
+| Demo admin enablement  | Recent step-up and non-production environment gate. |
 
 ## Alternatives Considered
 

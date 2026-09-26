@@ -31,7 +31,18 @@ describe('data-cache — catalog', () => {
   });
 
   it('fetchCatalogBooks returns cached result on second call', async () => {
-    const books = [{ id: '1', slug: 'a', title: 'Book A', authorName: null, description: null, language: 'en', coverImageUrl: null, publishedAt: null }];
+    const books = [
+      {
+        id: '1',
+        slug: 'a',
+        title: 'Book A',
+        authorName: null,
+        description: null,
+        language: 'en',
+        coverImageUrl: null,
+        publishedAt: null,
+      },
+    ];
     mockApiRequest.mockResolvedValueOnce(books);
 
     const first = await fetchCatalogBooks();
@@ -43,7 +54,18 @@ describe('data-cache — catalog', () => {
   });
 
   it('invalidateCatalogCache clears cache', async () => {
-    const books = [{ id: '1', slug: 'a', title: 'Book A', authorName: null, description: null, language: 'en', coverImageUrl: null, publishedAt: null }];
+    const books = [
+      {
+        id: '1',
+        slug: 'a',
+        title: 'Book A',
+        authorName: null,
+        description: null,
+        language: 'en',
+        coverImageUrl: null,
+        publishedAt: null,
+      },
+    ];
     mockApiRequest.mockResolvedValue(books);
 
     await fetchCatalogBooks();
@@ -64,7 +86,14 @@ describe('data-cache — audit logs', () => {
     const response = { entries: [], total: 0 };
     mockApiRequest.mockResolvedValueOnce(response);
 
-    const filters = { page: 1, entityType: 'book', entityId: 'b1', dateFrom: '2026-01-01', dateTo: '2026-12-31', pageSize: 10 };
+    const filters = {
+      page: 1,
+      entityType: 'book',
+      entityId: 'b1',
+      dateFrom: '2026-01-01',
+      dateTo: '2026-12-31',
+      pageSize: 10,
+    };
     await fetchAuditLogs(filters, 'token-1');
 
     expect(mockApiRequest).toHaveBeenCalledWith(
@@ -76,7 +105,14 @@ describe('data-cache — audit logs', () => {
   it('fetchAuditLogs omits empty filters from query', async () => {
     mockApiRequest.mockResolvedValueOnce({ entries: [], total: 0 });
 
-    const filters = { page: 1, entityType: '', entityId: '', dateFrom: '', dateTo: '', pageSize: 25 };
+    const filters = {
+      page: 1,
+      entityType: '',
+      entityId: '',
+      dateFrom: '',
+      dateTo: '',
+      pageSize: 25,
+    };
     await fetchAuditLogs(filters, null);
 
     const url = mockApiRequest.mock.calls[0][0] as string;
@@ -89,7 +125,14 @@ describe('data-cache — audit logs', () => {
   it('fetchAuditLogs caches by filter key', async () => {
     mockApiRequest.mockResolvedValue({ entries: [], total: 0 });
 
-    const filters = { page: 1, entityType: '', entityId: '', dateFrom: '', dateTo: '', pageSize: 10 };
+    const filters = {
+      page: 1,
+      entityType: '',
+      entityId: '',
+      dateFrom: '',
+      dateTo: '',
+      pageSize: 10,
+    };
     await fetchAuditLogs(filters, 'tok');
     await fetchAuditLogs(filters, 'tok');
 
@@ -99,7 +142,14 @@ describe('data-cache — audit logs', () => {
   it('invalidateAuditLogCache clears cache', async () => {
     mockApiRequest.mockResolvedValue({ entries: [], total: 0 });
 
-    const filters = { page: 1, entityType: '', entityId: '', dateFrom: '', dateTo: '', pageSize: 10 };
+    const filters = {
+      page: 1,
+      entityType: '',
+      entityId: '',
+      dateFrom: '',
+      dateTo: '',
+      pageSize: 10,
+    };
     await fetchAuditLogs(filters, 'tok');
     invalidateAuditLogCache();
     await fetchAuditLogs(filters, 'tok');
@@ -114,7 +164,19 @@ describe('data-cache — admin books', () => {
   });
 
   it('fetchAdminBooks maps response to BookOption', async () => {
-    const books = [{ id: '1', slug: 'a', title: 'Book A', authorName: null, description: null, language: 'en', visibility: 'private', coverImageUrl: null, publishedAt: null }];
+    const books = [
+      {
+        id: '1',
+        slug: 'a',
+        title: 'Book A',
+        authorName: null,
+        description: null,
+        language: 'en',
+        visibility: 'private',
+        coverImageUrl: null,
+        publishedAt: null,
+      },
+    ];
     mockApiRequest.mockResolvedValueOnce(books);
 
     const result = await fetchAdminBooks('admin-token');
@@ -123,7 +185,19 @@ describe('data-cache — admin books', () => {
   });
 
   it('fetchAdminBooks caches by token', async () => {
-    mockApiRequest.mockResolvedValue([{ id: '1', slug: 'a', title: 'A', authorName: null, description: null, language: 'en', visibility: 'private', coverImageUrl: null, publishedAt: null }]);
+    mockApiRequest.mockResolvedValue([
+      {
+        id: '1',
+        slug: 'a',
+        title: 'A',
+        authorName: null,
+        description: null,
+        language: 'en',
+        visibility: 'private',
+        coverImageUrl: null,
+        publishedAt: null,
+      },
+    ]);
 
     await fetchAdminBooks('tok');
     await fetchAdminBooks('tok');
@@ -138,20 +212,41 @@ describe('data-cache — grants', () => {
   });
 
   it('fetchGrantsForBook returns grants', async () => {
-    const grants = [{ id: 'g1', email: 'a@b.com', mode: 'reader_only', commentsAllowed: false, offlineAllowed: false, expiresAt: null, createdAt: 'now', revokedAt: null }];
+    const grants = [
+      {
+        id: 'g1',
+        email: 'a@b.com',
+        mode: 'reader_only',
+        commentsAllowed: false,
+        offlineAllowed: false,
+        expiresAt: null,
+        createdAt: 'now',
+        revokedAt: null,
+      },
+    ];
     mockApiRequest.mockResolvedValueOnce(grants);
 
     const result = await fetchGrantsForBook('book-1', 'admin-token');
 
     expect(result).toEqual(grants);
-    expect(mockApiRequest).toHaveBeenCalledWith(
-      '/api/admin/books/book-1/grants',
-      { token: 'admin-token' },
-    );
+    expect(mockApiRequest).toHaveBeenCalledWith('/api/admin/books/book-1/grants', {
+      token: 'admin-token',
+    });
   });
 
   it('invalidateGrantsCache clears specific book grants', async () => {
-    const grants = [{ id: 'g1', email: 'a@b.com', mode: 'reader_only', commentsAllowed: false, offlineAllowed: false, expiresAt: null, createdAt: 'now', revokedAt: null }];
+    const grants = [
+      {
+        id: 'g1',
+        email: 'a@b.com',
+        mode: 'reader_only',
+        commentsAllowed: false,
+        offlineAllowed: false,
+        expiresAt: null,
+        createdAt: 'now',
+        revokedAt: null,
+      },
+    ];
     mockApiRequest.mockResolvedValue(grants);
 
     await fetchGrantsForBook('book-1', 'tok');
@@ -183,7 +278,10 @@ describe('data-cache — _resetAllCaches', () => {
     mockApiRequest.mockResolvedValue([]);
 
     await fetchCatalogBooks();
-    await fetchAuditLogs({ page: 1, entityType: '', entityId: '', dateFrom: '', dateTo: '', pageSize: 10 }, 'tok');
+    await fetchAuditLogs(
+      { page: 1, entityType: '', entityId: '', dateFrom: '', dateTo: '', pageSize: 10 },
+      'tok',
+    );
     _resetAllCaches();
     await fetchCatalogBooks();
 
@@ -216,7 +314,10 @@ describe('data-cache — error handling', () => {
     mockApiRequest.mockRejectedValueOnce(new Error('unauthorized'));
 
     await expect(
-      fetchAuditLogs({ page: 1, entityType: '', entityId: '', dateFrom: '', dateTo: '', pageSize: 10 }, 'tok'),
+      fetchAuditLogs(
+        { page: 1, entityType: '', entityId: '', dateFrom: '', dateTo: '', pageSize: 10 },
+        'tok',
+      ),
     ).rejects.toThrow('unauthorized');
   });
 
@@ -237,7 +338,18 @@ describe('data-cache — error handling', () => {
     await expect(fetchCatalogBooks()).rejects.toThrow('transient');
 
     invalidateCatalogCache();
-    mockApiRequest.mockResolvedValueOnce([{ id: '2', slug: 'b', title: 'B', authorName: null, description: null, language: 'en', coverImageUrl: null, publishedAt: null }]);
+    mockApiRequest.mockResolvedValueOnce([
+      {
+        id: '2',
+        slug: 'b',
+        title: 'B',
+        authorName: null,
+        description: null,
+        language: 'en',
+        coverImageUrl: null,
+        publishedAt: null,
+      },
+    ]);
     const result = await fetchCatalogBooks();
 
     expect(result).toHaveLength(1);

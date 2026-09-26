@@ -111,7 +111,9 @@ describe('measurePerformance', () => {
 
   it('returns undefined on error', () => {
     vi.stubGlobal('performance', {
-      measure: vi.fn().mockImplementation(() => { throw new Error('fail'); }),
+      measure: vi.fn().mockImplementation(() => {
+        throw new Error('fail');
+      }),
       getEntriesByName: vi.fn(),
     });
     const result = measurePerformance('test', 'start', 'end');

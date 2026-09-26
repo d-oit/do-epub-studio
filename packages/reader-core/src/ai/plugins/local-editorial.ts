@@ -32,9 +32,7 @@ export const EDITORIAL_PLUGIN_CATEGORIES: readonly EditorialCategory[] = [
   'logic',
 ];
 
-export function createLocalEditorialPlugin(
-  options: LocalEditorialPluginOptions = {},
-): AiPlugin {
+export function createLocalEditorialPlugin(options: LocalEditorialPluginOptions = {}): AiPlugin {
   const capability: EditorialReviewCapability = {
     kind: 'editorial',
     // Nothing to run: the qualification gate may only report a category as

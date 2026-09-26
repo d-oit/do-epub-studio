@@ -23,7 +23,8 @@ export const securityHeaders: Readonly<Record<string, string>> = Object.freeze({
   'Referrer-Policy': 'strict-origin-when-cross-origin',
 
   // Restrict browser features (no camera, mic, payment, etc.)
-  'Permissions-Policy': 'camera=(), microphone=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()',
+  'Permissions-Policy':
+    'camera=(), microphone=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()',
 
   // Content Security Policy — restrict resource loading for API responses
   // API endpoints should not render content; this is a defense-in-depth measure.
@@ -51,7 +52,8 @@ export const minimalSecurityHeaders: Readonly<Record<string, string>> = Object.f
     'camera=(), microphone=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()',
 
   // Minimal CSP for file responses — restrict framing and default loading
-  'Content-Security-Policy': "default-src 'none'; frame-ancestors 'none'; report-uri /api/csp-report",
+  'Content-Security-Policy':
+    "default-src 'none'; frame-ancestors 'none'; report-uri /api/csp-report",
 
   'Cross-Origin-Opener-Policy': 'same-origin',
   'Cross-Origin-Resource-Policy': 'same-origin',
@@ -60,9 +62,16 @@ export const minimalSecurityHeaders: Readonly<Record<string, string>> = Object.f
 /**
  * Apply security headers to a response (mutates in place, returns for chaining).
  */
-export function applySecurityHeaders(response: Response, options: { skipCspIfPresent?: boolean } = {}): Response {
+export function applySecurityHeaders(
+  response: Response,
+  options: { skipCspIfPresent?: boolean } = {},
+): Response {
   Object.entries(securityHeaders).forEach(([key, value]) => {
-    if (key === 'Content-Security-Policy' && options.skipCspIfPresent && response.headers.has(key)) {
+    if (
+      key === 'Content-Security-Policy' &&
+      options.skipCspIfPresent &&
+      response.headers.has(key)
+    ) {
       return;
     }
     response.headers.set(key, value);
@@ -74,9 +83,16 @@ export function applySecurityHeaders(response: Response, options: { skipCspIfPre
  * Apply minimal security headers to a response.
  * Use for file downloads or responses that may serve non-JSON content.
  */
-export function applyMinimalSecurityHeaders(response: Response, options: { skipCspIfPresent?: boolean } = {}): Response {
+export function applyMinimalSecurityHeaders(
+  response: Response,
+  options: { skipCspIfPresent?: boolean } = {},
+): Response {
   Object.entries(minimalSecurityHeaders).forEach(([key, value]) => {
-    if (key === 'Content-Security-Policy' && options.skipCspIfPresent && response.headers.has(key)) {
+    if (
+      key === 'Content-Security-Policy' &&
+      options.skipCspIfPresent &&
+      response.headers.has(key)
+    ) {
       return;
     }
     response.headers.set(key, value);

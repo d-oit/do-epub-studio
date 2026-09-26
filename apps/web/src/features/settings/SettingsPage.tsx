@@ -40,14 +40,17 @@ function SegmentedButton<T extends string | number>({
         <button
           key={opt}
           type="button"
-          onClick={() => { onChange(opt); }}
+          onClick={() => {
+            onChange(opt);
+          }}
           aria-pressed={value === opt}
           className={`
             min-h-11 min-w-11 max-w-full whitespace-normal px-4 py-2 text-sm rounded-lg border transition-all duration-150 outline-none
             focus-visible:ring-2 focus-visible:ring-accent
-            ${value === opt
-              ? 'bg-background-tertiary text-foreground border-accent font-semibold shadow-sm'
-              : 'bg-background text-foreground border-border hover:border-foreground-muted'
+            ${
+              value === opt
+                ? 'bg-background-tertiary text-foreground border-accent font-semibold shadow-sm'
+                : 'bg-background text-foreground border-border hover:border-foreground-muted'
             }
           `}
         >
@@ -94,8 +97,12 @@ export function SettingsPage() {
       <div className="mx-auto w-full max-w-2xl min-w-0 space-y-6">
         {/* Reader preferences */}
         <section className="bg-background-secondary rounded-xl border border-border p-4 sm:p-6 shadow-sm min-w-0">
-          <h2 className="text-lg font-semibold text-foreground mb-2">{t('settings.readerPreferences')}</h2>
-          <p className="text-sm text-foreground-muted mb-4">{t('settings.readerPreferencesHint')}</p>
+          <h2 className="text-lg font-semibold text-foreground mb-2">
+            {t('settings.readerPreferences')}
+          </h2>
+          <p className="text-sm text-foreground-muted mb-4">
+            {t('settings.readerPreferencesHint')}
+          </p>
 
           <SettingRow label={t('reader.theme')}>
             <SegmentedButton
@@ -170,8 +177,19 @@ export function SettingsPage() {
           <h2 className="text-lg font-semibold text-foreground mb-4">{t('settings.account')}</h2>
           {isAdmin && (
             <div className="flex items-center gap-3 text-sm text-foreground-muted">
-              <svg className="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              <svg
+                className="w-5 h-5 text-accent"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                />
               </svg>
               <span>{t('settings.adminBadge')}</span>
             </div>

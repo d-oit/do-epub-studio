@@ -4,7 +4,10 @@ import type { RequestContext } from '../../../lib/observability';
 
 export type AuthApp = Hono<{
   Bindings: Env;
-  Variables: { requestContext: RequestContext; adminUser: { email: string; id: string; role: string } };
+  Variables: {
+    requestContext: RequestContext;
+    adminUser: { email: string; id: string; role: string };
+  };
 }>;
 
 /**

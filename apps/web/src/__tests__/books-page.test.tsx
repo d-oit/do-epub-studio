@@ -24,20 +24,43 @@ vi.mock('../components/LocaleSwitcher', () => ({
 }));
 
 vi.mock('../components/ui', () => ({
-  Modal: ({ isOpen, children, title }: Record<string, unknown>) => isOpen ? (
-    <div data-testid="modal"><h2>{title as string}</h2>{children as React.ReactNode}</div>
-  ) : null,
+  Modal: ({ isOpen, children, title }: Record<string, unknown>) =>
+    isOpen ? (
+      <div data-testid="modal">
+        <h2>{title as string}</h2>
+        {children as React.ReactNode}
+      </div>
+    ) : null,
   // Mirror the real Button: consume the loading props instead of forwarding
   // them to the DOM (React warns about `isLoading` on a <button>).
-  Button: ({ children, onClick, isLoading: _isLoading, loadingLabel: _loadingLabel, ...props }: Record<string, unknown>) => (
-    <button onClick={onClick as React.MouseEventHandler<HTMLButtonElement>} {...props}>{children as React.ReactNode}</button>
+  Button: ({
+    children,
+    onClick,
+    isLoading: _isLoading,
+    loadingLabel: _loadingLabel,
+    ...props
+  }: Record<string, unknown>) => (
+    <button onClick={onClick as React.MouseEventHandler<HTMLButtonElement>} {...props}>
+      {children as React.ReactNode}
+    </button>
   ),
   Input: ({ label, id, ...props }: Record<string, unknown>) => (
-    <div>{label ? <label htmlFor={id as string}>{label as string}</label> : null}<input id={id as string} {...props} /></div>
+    <div>
+      {label ? <label htmlFor={id as string}>{label as string}</label> : null}
+      <input id={id as string} {...props} />
+    </div>
   ),
-  ConfirmDialog: ({ isOpen, onCancel, onConfirm }: Record<string, unknown>) => isOpen ? (
-    <div role="dialog"><button type="button" onClick={onCancel as React.MouseEventHandler<HTMLButtonElement>}>cancel</button><button type="button" onClick={onConfirm as React.MouseEventHandler<HTMLButtonElement>}>confirm</button></div>
-  ) : null,
+  ConfirmDialog: ({ isOpen, onCancel, onConfirm }: Record<string, unknown>) =>
+    isOpen ? (
+      <div role="dialog">
+        <button type="button" onClick={onCancel as React.MouseEventHandler<HTMLButtonElement>}>
+          cancel
+        </button>
+        <button type="button" onClick={onConfirm as React.MouseEventHandler<HTMLButtonElement>}>
+          confirm
+        </button>
+      </div>
+    ) : null,
 }));
 
 import { apiRequest } from '../lib/api';
@@ -67,7 +90,14 @@ describe('AdminBookResponsesPage', () => {
 
   it('renders books after loading', async () => {
     mockApiRequest.mockResolvedValue([
-      { id: '1', title: 'Book 1', slug: 'book-1', authorName: 'Author 1', visibility: 'private', description: 'Desc' },
+      {
+        id: '1',
+        title: 'Book 1',
+        slug: 'book-1',
+        authorName: 'Author 1',
+        visibility: 'private',
+        description: 'Desc',
+      },
     ]);
     renderBooksPage();
     await waitFor(() => {

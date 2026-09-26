@@ -23,12 +23,12 @@ behavior under test).
 
 ## Acceptance → Evidence
 
-| Acceptance | Test (`apps/tests/offline-reader.spec.ts`) |
-|---|---|
-| E2E covers offline reading | "loads reader page online then survives offline reload" |
-| E2E covers background sync | "queues offline actions for sync when network is unavailable" + "flushes sync queue after reconnection" |
-| E2E covers cache invalidation | "serves cached API responses while offline (NetworkFirst strategy)" |
-| Tests pass in CI | spec included in `pnpm test:e2e` (sprint closeout run, 2026-08-29) |
+| Acceptance                    | Test (`apps/tests/offline-reader.spec.ts`)                                                              |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------- |
+| E2E covers offline reading    | "loads reader page online then survives offline reload"                                                 |
+| E2E covers background sync    | "queues offline actions for sync when network is unavailable" + "flushes sync queue after reconnection" |
+| E2E covers cache invalidation | "serves cached API responses while offline (NetworkFirst strategy)"                                     |
+| Tests pass in CI              | spec included in `pnpm test:e2e` (sprint closeout run, 2026-08-29)                                      |
 
 ## Effort
 

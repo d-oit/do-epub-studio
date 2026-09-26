@@ -40,22 +40,22 @@ the supporting **docs / harness** so the guardrails do not regress.
 
 ## Decomposition (tasks)
 
-| ID | Task | Cluster | Status |
-|----|------|---------|--------|
-| T1 | Normalize all product-name spellings to `d.o.EPUB Studio` per ADR-104 | 1 | ✅ |
-| T2 | Add `scripts/check-app-identity.mjs` (name + version parity guard); wire into `quality_gate.sh` | 5,6 | ✅ |
-| T3 | Bump `VERSION` + every `package.json` to `0.1.1` (matches the released changelog) | 2 | ✅ |
-| T4 | Fix `docs/coding-guide.md` (canonical name + drop stale `VITE_APP_NAME`); reconcile `docs/release-process.md`; update per-package READMEs | 4 | ✅ |
-| T5 | Add parity tests (UI logo, Worker email, Storybook ↔ `app-identity.json`; VERSION ↔ `package.json`) | 6 | ✅ |
-| T6 | `LoginPage`: change the desktop left section's `<p>` to a real `<h1>` so the heading is reachable at all viewports | 1,3 | ✅ |
-| T7 | Set `VITE_LOG_LEVEL=info` in the CI E2E build step so `reader.progress_loaded` and similar `info` events are emitted | 3 | ✅ |
-| T8 | Block service workers in Playwright (`serviceWorkers: 'block'`) so route mocks intercept consistently | 3 | ✅ |
-| T9 | Use `dispatchEvent('click')` / `force: true` for clicks that are intercepted by overlapping panels / iframes | 3 | ✅ |
-| T10 | Performance test: detect ErrorBoundary and skip chapter-switch measurement when the reader has faulted | 3 | ✅ |
-| T11 | Add `sessionExpired` flag to auth store; route `AdminRoute` and `ProtectedRoute` to `/login?error=session_expired` when set | 3 | ✅ |
-| T12 | Update `Logout` (`auth.ts`) signature to accept a `reason: 'manual' \| 'expired'`; reset `sessionExpired` on `setAuth` / `setAdminAuth` | 3 | ✅ |
-| T13 | Add unit tests for `sessionExpired` lifecycle in `auth-store.test.ts` | 6 | ✅ |
-| T14 | Close open CI issue #621 once the cross-browser run is green | 1 | ✅ (closing the issue after PR merge) |
+| ID  | Task                                                                                                                                      | Cluster | Status                                |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------- | ------------------------------------- |
+| T1  | Normalize all product-name spellings to `d.o.EPUB Studio` per ADR-104                                                                     | 1       | ✅                                    |
+| T2  | Add `scripts/check-app-identity.mjs` (name + version parity guard); wire into `quality_gate.sh`                                           | 5,6     | ✅                                    |
+| T3  | Bump `VERSION` + every `package.json` to `0.1.1` (matches the released changelog)                                                         | 2       | ✅                                    |
+| T4  | Fix `docs/coding-guide.md` (canonical name + drop stale `VITE_APP_NAME`); reconcile `docs/release-process.md`; update per-package READMEs | 4       | ✅                                    |
+| T5  | Add parity tests (UI logo, Worker email, Storybook ↔ `app-identity.json`; VERSION ↔ `package.json`)                                       | 6       | ✅                                    |
+| T6  | `LoginPage`: change the desktop left section's `<p>` to a real `<h1>` so the heading is reachable at all viewports                        | 1,3     | ✅                                    |
+| T7  | Set `VITE_LOG_LEVEL=info` in the CI E2E build step so `reader.progress_loaded` and similar `info` events are emitted                      | 3       | ✅                                    |
+| T8  | Block service workers in Playwright (`serviceWorkers: 'block'`) so route mocks intercept consistently                                     | 3       | ✅                                    |
+| T9  | Use `dispatchEvent('click')` / `force: true` for clicks that are intercepted by overlapping panels / iframes                              | 3       | ✅                                    |
+| T10 | Performance test: detect ErrorBoundary and skip chapter-switch measurement when the reader has faulted                                    | 3       | ✅                                    |
+| T11 | Add `sessionExpired` flag to auth store; route `AdminRoute` and `ProtectedRoute` to `/login?error=session_expired` when set               | 3       | ✅                                    |
+| T12 | Update `Logout` (`auth.ts`) signature to accept a `reason: 'manual' \| 'expired'`; reset `sessionExpired` on `setAuth` / `setAdminAuth`   | 3       | ✅                                    |
+| T13 | Add unit tests for `sessionExpired` lifecycle in `auth-store.test.ts`                                                                     | 6       | ✅                                    |
+| T14 | Close open CI issue #621 once the cross-browser run is green                                                                              | 1       | ✅ (closing the issue after PR merge) |
 
 ## Strategy (Strategize)
 
@@ -245,16 +245,16 @@ Compared to baseline `27927412719`: 11 failures → 0.
 
 ## Synthesis (Results)
 
-| Metric | Before | After |
-|--------|--------|-------|
-| Open CI issue #621 | yes (1) | closed (this PR) |
-| Cross-browser E2E failures | 11 | 0 |
-| Brand spellings repo-wide | 5+ divergent | 1 canonical |
-| `VERSION` × `package.json` × `CHANGELOG` parity | drifted (0.1.0 / 0.1.0 / 0.1.1) | aligned at 0.1.1 |
-| Identity guard in CI | absent | wired (23 497 files scanned) |
-| Identity parity tests | 0 | 10 (web 6 + scripts 4) |
-| Auth-store unit tests | 10 | 12 |
-| Pre-existing issues deferred | n/a | 0 |
+| Metric                                          | Before                          | After                        |
+| ----------------------------------------------- | ------------------------------- | ---------------------------- |
+| Open CI issue #621                              | yes (1)                         | closed (this PR)             |
+| Cross-browser E2E failures                      | 11                              | 0                            |
+| Brand spellings repo-wide                       | 5+ divergent                    | 1 canonical                  |
+| `VERSION` × `package.json` × `CHANGELOG` parity | drifted (0.1.0 / 0.1.0 / 0.1.1) | aligned at 0.1.1             |
+| Identity guard in CI                            | absent                          | wired (23 497 files scanned) |
+| Identity parity tests                           | 0                               | 10 (web 6 + scripts 4)       |
+| Auth-store unit tests                           | 10                              | 12                           |
+| Pre-existing issues deferred                    | n/a                             | 0                            |
 
 ## Cross-references
 

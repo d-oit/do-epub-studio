@@ -61,7 +61,9 @@ export function AdminBookResponsesPage() {
   const fetchBookResponses = useCallback(async () => {
     setIsLoading(true);
     try {
-      const data = await apiRequest<BookResponse[]>('/api/admin/books', { token: sessionToken ?? undefined });
+      const data = await apiRequest<BookResponse[]>('/api/admin/books', {
+        token: sessionToken ?? undefined,
+      });
       setBookResponses(data);
     } catch (err) {
       setError((err as Error).message);
@@ -180,9 +182,10 @@ export function AdminBookResponsesPage() {
       const { validateEpub } = await import('@do-epub-studio/shared/src/epub-validator');
       const result = await validateEpub(data);
 
-      const localizedErrors = result.errors.map(err => {
+      const localizedErrors = result.errors.map((err) => {
         if (err.includes('mimetype')) return t('admin.createBookModal.error.missingMimetype');
-        if (err.includes('META-INF/container.xml')) return t('admin.createBookModal.error.missingContainer');
+        if (err.includes('META-INF/container.xml'))
+          return t('admin.createBookModal.error.missingContainer');
         return err;
       });
 
@@ -216,13 +219,15 @@ export function AdminBookResponsesPage() {
       return;
     }
 
-    const slug = bookTitle.trim()
-      .toLowerCase()
-      .replace(/[^a-z0-9\s_-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-')
-      .replace(/^-+|-+$/g, '')
-      .substring(0, 255) || 'untitled';
+    const slug =
+      bookTitle
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9\s_-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .substring(0, 255) || 'untitled';
 
     setIsSubmitting(true);
 
@@ -247,11 +252,16 @@ export function AdminBookResponsesPage() {
       const uploadResponse = await fetch(uploadUrl, {
         method: 'PUT',
         body: epubFile,
-        headers: { 'Authorization': `Bearer ${uploadToken}`, 'Content-Type': 'application/octet-stream' },
+        headers: {
+          Authorization: `Bearer ${uploadToken}`,
+          'Content-Type': 'application/octet-stream',
+        },
       });
 
       if (!uploadResponse.ok) {
-        const errorData = await uploadResponse.json() as { error?: { code?: string, message: string, details?: string[] } };
+        const errorData = (await uploadResponse.json()) as {
+          error?: { code?: string; message: string; details?: string[] };
+        };
         if (errorData.error?.code === 'VALIDATION_ERROR' && errorData.error.details) {
           setValidationResult({
             isValid: false,
@@ -263,11 +273,11 @@ export function AdminBookResponsesPage() {
         throw new Error(t('admin.createBookModal.error.upload'));
       }
 
-      const uploadResult = await uploadResponse.json() as {
+      const uploadResult = (await uploadResponse.json()) as {
         data: {
-          storageKey: string,
-          validation?: { isValid: boolean, errors: string[], warnings: string[] }
-        }
+          storageKey: string;
+          validation?: { isValid: boolean; errors: string[]; warnings: string[] };
+        };
       };
 
       await executeWithStepUp(
@@ -310,10 +320,12 @@ export function AdminBookResponsesPage() {
 
   return (
     <main id="main-content" className="min-dvh bg-background p-4 sm:p-6 lg:p-8">
-      <Breadcrumb items={[
-        { labelKey: 'admin.breadcrumb.home', href: ADMIN_ROUTES.admin },
-        { labelKey: 'admin.breadcrumb.books' },
-      ]} />
+      <Breadcrumb
+        items={[
+          { labelKey: 'admin.breadcrumb.home', href: ADMIN_ROUTES.admin },
+          { labelKey: 'admin.breadcrumb.books' },
+        ]}
+      />
       <header className="mb-8 flex flex-wrap items-center justify-between gap-4 border-b border-[var(--color-rule)] pb-6">
         <div>
           <h1 className="text-balance-tight font-display text-3xl leading-tight text-foreground md:text-4xl">
@@ -327,9 +339,7 @@ export function AdminBookResponsesPage() {
           </button>
         </div>
         <div className="flex items-center gap-4">
-          <Button onClick={() => setIsCreateModalOpen(true)}>
-            {t('admin.createBook')}
-          </Button>
+          <Button onClick={() => setIsCreateModalOpen(true)}>{t('admin.createBook')}</Button>
           <button
             onClick={handleAuditNav}
             className="px-4 py-2 bg-background border border-border rounded-md text-sm font-medium text-foreground-muted hover:bg-background-secondary"
@@ -370,9 +380,7 @@ export function AdminBookResponsesPage() {
                 {book.title}
               </h3>
               {book.authorName && (
-                <p className="text-sm text-foreground-muted mb-1">
-                  {book.authorName}
-                </p>
+                <p className="text-sm text-foreground-muted mb-1">{book.authorName}</p>
               )}
               <p className="text-sm text-foreground-muted mb-4 line-clamp-2">
                 {book.description || t('admin.books.noDescription')}
@@ -389,7 +397,9 @@ export function AdminBookResponsesPage() {
                     {t('admin.books.edit')}
                   </button>
                   <button
-                    onClick={() => { setArchiveConfirmBook(book); }}
+                    onClick={() => {
+                      setArchiveConfirmBook(book);
+                    }}
                     disabled={archivingBookId === book.id}
                     className="touch-target inline-flex items-center text-xs font-medium text-semantic-error hover:opacity-80 disabled:opacity-50"
                   >
@@ -415,7 +425,10 @@ export function AdminBookResponsesPage() {
 
       <BookCreateModal
         isOpen={isCreateModalOpen}
-        onClose={() => { setIsCreateModalOpen(false); resetCreateForm(); }}
+        onClose={() => {
+          setIsCreateModalOpen(false);
+          resetCreateForm();
+        }}
         onSubmit={handleCreateBook}
         bookTitle={bookTitle}
         setBookTitle={setBookTitle}
@@ -456,8 +469,12 @@ export function AdminBookResponsesPage() {
         cancelLabel={t('annotation.cancel')}
         variant="danger"
         isLoading={archivingBookId !== null}
-        onConfirm={() => { if (archiveConfirmBook) void handleArchiveBook(archiveConfirmBook.id); }}
-        onCancel={() => { setArchiveConfirmBook(null); }}
+        onConfirm={() => {
+          if (archiveConfirmBook) void handleArchiveBook(archiveConfirmBook.id);
+        }}
+        onCancel={() => {
+          setArchiveConfirmBook(null);
+        }}
       />
 
       {stepUpModal}

@@ -40,6 +40,7 @@ function fromApiResponse(raw: unknown): BookAccessGrant {
 ```
 
 If `any` is truly unavoidable (e.g., third-party library boundary), add an inline comment:
+
 ```typescript
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- epub-js v3 event payload is untyped
 const payload = event.data as any;
@@ -119,8 +120,8 @@ const API = 'https://do-epub-studio.workers.dev';
 const BASE = 'http://localhost:8787';
 
 // REQUIRED — use env variables
-const API = env.APP_BASE_URL;          // Worker
-const API = import.meta.env.VITE_API_BASE_URL;  // Frontend
+const API = env.APP_BASE_URL; // Worker
+const API = import.meta.env.VITE_API_BASE_URL; // Frontend
 ```
 
 ---
@@ -135,7 +136,7 @@ import bcrypt from 'bcrypt';
 const hash = await bcrypt.hash(password, 10);
 
 // REQUIRED
-import { hashPassword } from '../auth/password';  // uses argon2-wasm-edge internally
+import { hashPassword } from '../auth/password'; // uses argon2-wasm-edge internally
 const hash = await hashPassword(password);
 ```
 
@@ -144,6 +145,7 @@ const hash = await hashPassword(password);
 ## Bypassing the quality gate
 
 Never skip the quality gate script:
+
 ```bash
 # BANNED
 git commit --no-verify

@@ -64,28 +64,31 @@ export function useAdminStepUp(): AdminStepUp {
   const [error, setError] = useState<string | null>(null);
   const pendingRef = useRef<PendingAction<unknown> | null>(null);
 
-  const execute = useCallback(<T,>(fn: (token: string) => Promise<T>, currentToken?: string): Promise<T> => {
-    const token = currentToken ?? useAuthStore.getState().sessionToken ?? '';
-    return fn(token).catch((err: unknown) => {
-      // 428 MFA_REQUIRED: the guarded mutation needs `mfa` assurance, so run
-      // the passkey ceremony (native browser prompt) and retry with the
-      // rotated token. No password modal is needed for this path.
-      if (isMfaRequired(err)) {
-        return performPasskeyAuth().then((newToken) => fn(newToken));
-      }
-      if (!isStepUpRequired(err)) throw err;
-      return new Promise<T>((resolve, reject) => {
-        pendingRef.current = {
-          execute: fn,
-          resolve: resolve as (value: unknown) => void,
-          reject,
-        };
-        setPassword('');
-        setError(null);
-        setIsOpen(true);
+  const execute = useCallback(
+    <T,>(fn: (token: string) => Promise<T>, currentToken?: string): Promise<T> => {
+      const token = currentToken ?? useAuthStore.getState().sessionToken ?? '';
+      return fn(token).catch((err: unknown) => {
+        // 428 MFA_REQUIRED: the guarded mutation needs `mfa` assurance, so run
+        // the passkey ceremony (native browser prompt) and retry with the
+        // rotated token. No password modal is needed for this path.
+        if (isMfaRequired(err)) {
+          return performPasskeyAuth().then((newToken) => fn(newToken));
+        }
+        if (!isStepUpRequired(err)) throw err;
+        return new Promise<T>((resolve, reject) => {
+          pendingRef.current = {
+            execute: fn,
+            resolve: resolve as (value: unknown) => void,
+            reject,
+          };
+          setPassword('');
+          setError(null);
+          setIsOpen(true);
+        });
       });
-    });
-  }, []);
+    },
+    [],
+  );
 
   const handleConfirm = async () => {
     const pending = pendingRef.current;
@@ -122,25 +125,38 @@ export function useAdminStepUp(): AdminStepUp {
           <Button variant="secondary" onClick={handleCancel} disabled={isSubmitting}>
             {t('admin.stepUp.cancel')}
           </Button>
-          <Button onClick={() => { void handleConfirm(); }} isLoading={isSubmitting} loadingLabel={t('admin.stepUp.submitting')}>
+          <Button
+            onClick={() => {
+              void handleConfirm();
+            }}
+            isLoading={isSubmitting}
+            loadingLabel={t('admin.stepUp.submitting')}
+          >
             {t('admin.stepUp.confirm')}
           </Button>
         </div>
       }
     >
       <form
-        onSubmit={(e) => { e.preventDefault(); void handleConfirm(); }}
+        onSubmit={(e) => {
+          e.preventDefault();
+          void handleConfirm();
+        }}
         className="space-y-4"
       >
         {error && (
-          <p role="alert" className="text-sm text-destructive">{error}</p>
+          <p role="alert" className="text-sm text-destructive">
+            {error}
+          </p>
         )}
         <Input
           id="step-up-password"
           type="password"
           label={t('admin.stepUp.currentPassword')}
           value={password}
-          onChange={(e) => { setPassword(e.target.value); }}
+          onChange={(e) => {
+            setPassword(e.target.value);
+          }}
           autoComplete="current-password"
           required
         />

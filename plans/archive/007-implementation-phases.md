@@ -1,10 +1,12 @@
 # Phase 1: Core Infrastructure & P0 Features
 
 ## See Also
+
 - **Plan 011**: Coding Workflow Improvements — AGENTS.md compliance, security scripts, quality gate enhancements
 - **Plan 012**: Comprehensive Analysis Findings — Security audit, code quality, testing gaps
 
 ### Completed
+
 - [x] Initial monorepo setup (Vite, PWA, Worker)
 - [x] Turso / libSQL schema & migrations
 - [x] EPUB.js basic integration
@@ -23,9 +25,11 @@
 - [x] Consolidate telemetry.ts to use @do-epub-studio/shared
 
 ### In Progress
+
 (none — all sprint items complete)
 
 ### Completed Sprint #140 Items
+
 - [x] Multi-signal locators enforced (G13) — ProgressUpdateSchema + BookmarkCreateSchema use MultiSignalLocatorSchema
 - [x] Reader annotation anchor engine (ADR-006) — epub-loader exposes hooks + typed Contents for injection
 - [x] G1: ReaderPage progress hydration, offline fallback, annotation restore on displayed events
@@ -42,6 +46,7 @@
 - [x] Dependency audit + Lighthouse documentation
 
 ### Completed (Sprint Completion Swarm)
+
 - [x] Add EPUB parsing tests (T-2) — 21 tests with in-memory EPUB fixture files
 - [x] Move shared UI components to packages/ui (#140 §7.2) — 11 components migrated, apps/web/index.tsx 615→31 LOC
 - [x] ESLint 10 migration (#140 §7.1) — eslint ^9→^10.3.0, @eslint/js ^9→^10.0.1
@@ -51,6 +56,7 @@
 ## Phase 2: Reader Enablement
 
 See Plan 012 for detailed gap analysis:
+
 - [x] G2: Fix slug/id mismatch — RESOLVED
 - [x] G3: Implement signed download route — RESOLVED
 - [x] G1: Wire Reader UI fully to EPUB.js backend — RESOLVED

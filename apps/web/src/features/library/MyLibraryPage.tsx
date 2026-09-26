@@ -32,13 +32,16 @@ export function MyLibraryPage() {
     tRef.current = t;
   }, [t]);
 
-  const fetchBooks = useCallback(async (offset: number) => {
-    const url = `/api/books?limit=${PAGE_SIZE}&offset=${offset}`;
-    const data = await apiRequest<PaginatedResponse<LibraryBookResponse>>(url, {
-      token: sessionToken ?? undefined,
-    });
-    return data;
-  }, [sessionToken]);
+  const fetchBooks = useCallback(
+    async (offset: number) => {
+      const url = `/api/books?limit=${PAGE_SIZE}&offset=${offset}`;
+      const data = await apiRequest<PaginatedResponse<LibraryBookResponse>>(url, {
+        token: sessionToken ?? undefined,
+      });
+      return data;
+    },
+    [sessionToken],
+  );
 
   useEffect(() => {
     const generation = ++generationRef.current;
@@ -113,8 +116,12 @@ export function MyLibraryPage() {
           the grids below are its descendants. */}
       <div className="mx-auto max-w-7xl @container/shelf">
         <header className="mb-8 flex flex-col gap-6 border-b border-[var(--color-rule)] pb-6">
-          <h1 className="text-balance-tight font-display text-3xl leading-tight md:text-4xl">{t('library.title')}</h1>
-          <p className="mt-2 max-w-2xl text-pretty text-foreground-muted">{t('library.subtitle')}</p>
+          <h1 className="text-balance-tight font-display text-3xl leading-tight md:text-4xl">
+            {t('library.title')}
+          </h1>
+          <p className="mt-2 max-w-2xl text-pretty text-foreground-muted">
+            {t('library.subtitle')}
+          </p>
         </header>
 
         {isLoading ? (
@@ -125,7 +132,10 @@ export function MyLibraryPage() {
             className="grid grid-cols-1 gap-4 @3xl/shelf:grid-cols-2"
           >
             {SKELETON_ROWS.map((i) => (
-              <div key={i} className="flex gap-4 rounded-sm border border-border bg-surface p-4 shadow-page">
+              <div
+                key={i}
+                className="flex gap-4 rounded-sm border border-border bg-surface p-4 shadow-page"
+              >
                 <Skeleton className="aspect-[2/3] w-16 shrink-0 sm:w-24" />
                 <div className="flex min-w-0 flex-1 flex-col justify-center gap-3">
                   <Skeleton className="h-5 w-3/4" />
@@ -135,14 +145,21 @@ export function MyLibraryPage() {
             ))}
           </div>
         ) : error ? (
-          <p role="alert" className="text-center text-[var(--color-accent-error)]">{error}</p>
+          <p role="alert" className="text-center text-[var(--color-accent-error)]">
+            {error}
+          </p>
         ) : books.length === 0 ? (
           <p className="text-center text-foreground-muted">{t('library.empty')}</p>
         ) : (
           <div className="space-y-12">
             {inProgress.length > 0 && (
               <section aria-labelledby="heading-in-progress">
-                <h2 id="heading-in-progress" className="mb-6 font-[family-name:var(--font-display)] text-xl font-bold text-foreground">{t('library.inProgress')}</h2>
+                <h2
+                  id="heading-in-progress"
+                  className="mb-6 font-[family-name:var(--font-display)] text-xl font-bold text-foreground"
+                >
+                  {t('library.inProgress')}
+                </h2>
                 <ul className="grid list-none grid-cols-1 gap-4 p-0 @3xl/shelf:grid-cols-2">
                   {inProgress.map((book) => (
                     <li key={book.id}>
@@ -155,7 +172,12 @@ export function MyLibraryPage() {
 
             {notStarted.length > 0 && (
               <section aria-labelledby="heading-not-started">
-                <h2 id="heading-not-started" className="mb-6 font-[family-name:var(--font-display)] text-xl font-bold text-foreground">{t('library.notStarted')}</h2>
+                <h2
+                  id="heading-not-started"
+                  className="mb-6 font-[family-name:var(--font-display)] text-xl font-bold text-foreground"
+                >
+                  {t('library.notStarted')}
+                </h2>
                 <ul className="grid list-none grid-cols-1 gap-4 p-0 @3xl/shelf:grid-cols-2">
                   {notStarted.map((book) => (
                     <li key={book.id}>
@@ -168,7 +190,12 @@ export function MyLibraryPage() {
 
             {completed.length > 0 && (
               <section aria-labelledby="heading-completed">
-                <h2 id="heading-completed" className="mb-6 font-[family-name:var(--font-display)] text-xl font-bold text-foreground">{t('library.completed')}</h2>
+                <h2
+                  id="heading-completed"
+                  className="mb-6 font-[family-name:var(--font-display)] text-xl font-bold text-foreground"
+                >
+                  {t('library.completed')}
+                </h2>
                 <ul className="grid list-none grid-cols-1 gap-4 p-0 @3xl/shelf:grid-cols-2">
                   {completed.map((book) => (
                     <li key={book.id}>
@@ -190,7 +217,9 @@ export function MyLibraryPage() {
             )}
             <button
               type="button"
-              onClick={() => { void loadMore(); }}
+              onClick={() => {
+                void loadMore();
+              }}
               disabled={isLoadingMore}
               className="inline-flex items-center gap-2 rounded-[var(--radius-paper)] border border-[var(--color-rule)] bg-[var(--color-paper)] px-6 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-[color-mix(in_oklch,var(--color-paper)_90%,var(--color-foreground)_10%)] disabled:opacity-50"
             >

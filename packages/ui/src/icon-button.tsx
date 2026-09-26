@@ -7,7 +7,8 @@ export interface IconButtonProps extends ComponentPropsWithoutRef<'button'> {
 
 export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
   ({ variant = 'ghost', label, children, className = '', ...props }, ref) => {
-    const computedLabel = label || props['aria-label'] || (typeof children === 'string' ? children : undefined);
+    const computedLabel =
+      label || props['aria-label'] || (typeof children === 'string' ? children : undefined);
 
     const baseClasses = [
       'inline-flex items-center justify-center gap-2',
@@ -23,8 +24,10 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
     ].join(' ');
 
     const variantClasses = {
-      default: 'bg-transparent text-[var(--color-foreground)] hover:bg-[color-mix(in_oklch,var(--color-paper)_90%,var(--color-foreground)_10%)]',
-      ghost: 'bg-transparent text-[var(--color-foreground)] hover:bg-[color-mix(in_oklch,var(--color-paper)_90%,var(--color-foreground)_10%)]',
+      default:
+        'bg-transparent text-[var(--color-foreground)] hover:bg-[color-mix(in_oklch,var(--color-paper)_90%,var(--color-foreground)_10%)]',
+      ghost:
+        'bg-transparent text-[var(--color-foreground)] hover:bg-[color-mix(in_oklch,var(--color-paper)_90%,var(--color-foreground)_10%)]',
       primary: 'bg-[var(--color-foreground)] text-[var(--color-paper)] hover:opacity-90',
     };
 

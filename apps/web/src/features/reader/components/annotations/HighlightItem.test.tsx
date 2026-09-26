@@ -113,7 +113,9 @@ describe('HighlightItem', () => {
   });
 
   it('calls onEdit with id on save', () => {
-    render(<HighlightItem {...defaultProps} editingHighlight="hl-1" highlightNote="Updated note" />);
+    render(
+      <HighlightItem {...defaultProps} editingHighlight="hl-1" highlightNote="Updated note" />,
+    );
     fireEvent.click(screen.getByText('annotation.save'));
     expect(defaultProps.onEdit).toHaveBeenCalledWith('hl-1');
   });

@@ -60,7 +60,8 @@ export function parseFixedLayoutFromOpf(
 
   const result: FixedLayoutInfo = {};
   if (layout && VALID_LAYOUTS.has(layout)) result.layout = layout as FixedLayoutInfo['layout'];
-  if (orientation && VALID_ORIENTATIONS.has(orientation)) result.orientation = orientation as FixedLayoutInfo['orientation'];
+  if (orientation && VALID_ORIENTATIONS.has(orientation))
+    result.orientation = orientation as FixedLayoutInfo['orientation'];
   if (spread && VALID_SPREADS.has(spread)) result.spread = spread as FixedLayoutInfo['spread'];
   if (viewport) result.viewport = viewport;
 

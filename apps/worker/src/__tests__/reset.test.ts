@@ -41,7 +41,13 @@ describe('reset token governance (ADR-232)', () => {
   });
 
   it('createResetToken returns a raw token and persists only its SHA-256 hash', async () => {
-    const token = await createResetToken(env, { purpose: 'admin_reset', userId: 'u1', email: 'a@b.com', ipHash: 'ip', traceId: 't' });
+    const token = await createResetToken(env, {
+      purpose: 'admin_reset',
+      userId: 'u1',
+      email: 'a@b.com',
+      ipHash: 'ip',
+      traceId: 't',
+    });
     expect(token).toMatch(/^[0-9a-f]{64}$/);
     const [, sql, args] = mockExecute.mock.calls[0];
     expect(sql).toContain('INSERT INTO password_reset_tokens');
@@ -49,36 +55,91 @@ describe('reset token governance (ADR-232)', () => {
     expect(args).not.toContain(token);
     const storedHash = args?.[3];
     expect(storedHash).toBeDefined();
-    expect((storedHash as string)).not.toBe(token);
+    expect(storedHash as string).not.toBe(token);
   });
 
   it('verifyResetToken returns invalid for an unknown token', async () => {
     mockQueryFirst.mockResolvedValue(null);
-    await expect(verifyResetToken(env, 'x', 'admin_reset')).resolves.toEqual({ ok: false, reason: 'invalid' });
+    await expect(verifyResetToken(env, 'x', 'admin_reset')).resolves.toEqual({
+      ok: false,
+      reason: 'invalid',
+    });
   });
 
   it('verifyResetToken rejects a wrong purpose', async () => {
-    mockQueryFirst.mockResolvedValue({ id: 'rt-1', email: null, user_id: 'u1', purpose: 'reader_magic_link', expires_at: '2099-01-01T00:00:00Z', used_at: null, attempt_count: 0 });
-    await expect(verifyResetToken(env, 'x', 'admin_reset')).resolves.toEqual({ ok: false, reason: 'purpose' });
+    mockQueryFirst.mockResolvedValue({
+      id: 'rt-1',
+      email: null,
+      user_id: 'u1',
+      purpose: 'reader_magic_link',
+      expires_at: '2099-01-01T00:00:00Z',
+      used_at: null,
+      attempt_count: 0,
+    });
+    await expect(verifyResetToken(env, 'x', 'admin_reset')).resolves.toEqual({
+      ok: false,
+      reason: 'purpose',
+    });
   });
 
   it('verifyResetToken rejects a used (replayed) token', async () => {
-    mockQueryFirst.mockResolvedValue({ id: 'rt-1', email: null, user_id: 'u1', purpose: 'admin_reset', expires_at: '2099-01-01T00:00:00Z', used_at: '2026-01-01T00:00:00Z', attempt_count: 0 });
-    await expect(verifyResetToken(env, 'x', 'admin_reset')).resolves.toEqual({ ok: false, reason: 'used' });
+    mockQueryFirst.mockResolvedValue({
+      id: 'rt-1',
+      email: null,
+      user_id: 'u1',
+      purpose: 'admin_reset',
+      expires_at: '2099-01-01T00:00:00Z',
+      used_at: '2026-01-01T00:00:00Z',
+      attempt_count: 0,
+    });
+    await expect(verifyResetToken(env, 'x', 'admin_reset')).resolves.toEqual({
+      ok: false,
+      reason: 'used',
+    });
   });
 
   it('verifyResetToken rejects an expired token', async () => {
-    mockQueryFirst.mockResolvedValue({ id: 'rt-1', email: null, user_id: 'u1', purpose: 'admin_reset', expires_at: '2020-01-01T00:00:00Z', used_at: null, attempt_count: 0 });
-    await expect(verifyResetToken(env, 'x', 'admin_reset')).resolves.toEqual({ ok: false, reason: 'expired' });
+    mockQueryFirst.mockResolvedValue({
+      id: 'rt-1',
+      email: null,
+      user_id: 'u1',
+      purpose: 'admin_reset',
+      expires_at: '2020-01-01T00:00:00Z',
+      used_at: null,
+      attempt_count: 0,
+    });
+    await expect(verifyResetToken(env, 'x', 'admin_reset')).resolves.toEqual({
+      ok: false,
+      reason: 'expired',
+    });
   });
 
   it('verifyResetToken rejects a token that exhausted its attempt budget', async () => {
-    mockQueryFirst.mockResolvedValue({ id: 'rt-1', email: null, user_id: 'u1', purpose: 'admin_reset', expires_at: '2099-01-01T00:00:00Z', used_at: null, attempt_count: MAX_TOKEN_ATTEMPTS });
-    await expect(verifyResetToken(env, 'x', 'admin_reset')).resolves.toEqual({ ok: false, reason: 'invalid' });
+    mockQueryFirst.mockResolvedValue({
+      id: 'rt-1',
+      email: null,
+      user_id: 'u1',
+      purpose: 'admin_reset',
+      expires_at: '2099-01-01T00:00:00Z',
+      used_at: null,
+      attempt_count: MAX_TOKEN_ATTEMPTS,
+    });
+    await expect(verifyResetToken(env, 'x', 'admin_reset')).resolves.toEqual({
+      ok: false,
+      reason: 'invalid',
+    });
   });
 
   it('verifyResetToken accepts a valid, unused, unexpired token', async () => {
-    mockQueryFirst.mockResolvedValue({ id: 'rt-1', email: 'a@b.com', user_id: 'u1', purpose: 'admin_reset', expires_at: '2099-01-01T00:00:00Z', used_at: null, attempt_count: 0 });
+    mockQueryFirst.mockResolvedValue({
+      id: 'rt-1',
+      email: 'a@b.com',
+      user_id: 'u1',
+      purpose: 'admin_reset',
+      expires_at: '2099-01-01T00:00:00Z',
+      used_at: null,
+      attempt_count: 0,
+    });
     await expect(verifyResetToken(env, 'x', 'admin_reset')).resolves.toEqual({
       ok: true,
       record: { id: 'rt-1', email: 'a@b.com', userId: 'u1', purpose: 'admin_reset' },
@@ -87,7 +148,11 @@ describe('reset token governance (ADR-232)', () => {
 
   it('bumpResetTokenAttempt / claimResetToken / revokeTokensForAccount issue the right SQL', async () => {
     await bumpResetTokenAttempt(env, 'rt-1');
-    expect(mockExecute).toHaveBeenCalledWith(expect.anything(), expect.stringContaining('attempt_count = attempt_count + 1'), ['rt-1']);
+    expect(mockExecute).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.stringContaining('attempt_count = attempt_count + 1'),
+      ['rt-1'],
+    );
   });
 
   it('claimResetToken returns true only when the row transitioned (single-use atomicity)', async () => {
@@ -99,14 +164,30 @@ describe('reset token governance (ADR-232)', () => {
 
   it('revokeTokensForAccount invalidates outstanding tokens by userId and email', async () => {
     await revokeTokensForAccount(env, { userId: 'u1', email: 'A@B.com' });
-    expect(mockExecute).toHaveBeenCalledWith(expect.anything(), expect.stringContaining('WHERE user_id = ?'), ['u1']);
-    expect(mockExecute).toHaveBeenCalledWith(expect.anything(), expect.stringContaining('WHERE email = ?'), ['a@b.com']);
+    expect(mockExecute).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.stringContaining('WHERE user_id = ?'),
+      ['u1'],
+    );
+    expect(mockExecute).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.stringContaining('WHERE email = ?'),
+      ['a@b.com'],
+    );
   });
 
   it('purgeExpiredTokensForAccount deletes expired unused tokens for an account', async () => {
     await purgeExpiredTokensForAccount(env, { userId: 'u1', email: 'a@b.com' });
     const purgeQueries = mockExecute.mock.calls.map((c) => c[1]);
-    expect(purgeQueries.some((q) => q.includes('DELETE FROM password_reset_tokens') && q.includes('user_id = ?'))).toBe(true);
-    expect(purgeQueries.some((q) => q.includes('DELETE FROM password_reset_tokens') && q.includes('email = ?'))).toBe(true);
+    expect(
+      purgeQueries.some(
+        (q) => q.includes('DELETE FROM password_reset_tokens') && q.includes('user_id = ?'),
+      ),
+    ).toBe(true);
+    expect(
+      purgeQueries.some(
+        (q) => q.includes('DELETE FROM password_reset_tokens') && q.includes('email = ?'),
+      ),
+    ).toBe(true);
   });
 });

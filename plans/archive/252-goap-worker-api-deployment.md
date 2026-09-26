@@ -15,17 +15,20 @@ separate Worker deployment, no `VITE_API_BASE_URL`, no CORS.
 ## Completed work
 
 ### PR #1018
+
 - Added `GET /api/health` — the ADR-252 acceptance contract referenced a
   health endpoint that did not exist in the worker. New route + unit test.
 - Post-deploy health check is fail-closed — asserts `GET /api/health` returns
   `200` + `{"ok":true}` and exits 1 otherwise (ADR-187).
 
 ### PR #1019
+
 - Wired D1 `migrations_dir` → `packages/schema/migrations` (the 12 migrations
   were unreachable, so a fresh DB would deploy empty).
 - Corrected the infrastructure runbook (D1 is the runtime DB, not Turso).
 
 ### PR #1021 (this change)
+
 - Added `apps/web/functions/api/[[path]].ts` — a Cloudflare Pages Function
   catch-all that serves the Worker's Hono app on `/api/*` same-origin.
   **Location matters:** the Pages Git integration only detects `functions/`

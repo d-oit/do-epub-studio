@@ -26,52 +26,57 @@ interface NotificationRow {
  * GET /api/notifications
  * List notifications for the authenticated user with pagination.
  */
-notificationsRouter.get('/notifications', readerAuth, zValidator('query', NotificationsQuerySchema), async (c) => {
-  const auth = c.get('auth');
-  const { limit, offset, unread } = c.req.valid('query');
-  const unreadOnly = unread === 'true';
+notificationsRouter.get(
+  '/notifications',
+  readerAuth,
+  zValidator('query', NotificationsQuerySchema),
+  async (c) => {
+    const auth = c.get('auth');
+    const { limit, offset, unread } = c.req.valid('query');
+    const unreadOnly = unread === 'true';
 
-  const conditions = ['user_email = ?'];
-  const args: (string | number)[] = [auth.email];
+    const conditions = ['user_email = ?'];
+    const args: (string | number)[] = [auth.email];
 
-  if (unreadOnly) {
-    conditions.push('read_at IS NULL');
-  }
+    if (unreadOnly) {
+      conditions.push('read_at IS NULL');
+    }
 
-  const whereClause = ` WHERE ${conditions.join(' AND ')}`;
+    const whereClause = ` WHERE ${conditions.join(' AND ')}`;
 
-  const countResult = await queryFirst<{ cnt: number }>(
-    c.env,
-    `SELECT COUNT(*) as cnt FROM notifications${whereClause}`,
-    args,
-  );
-  const total = countResult?.cnt ?? 0;
+    const countResult = await queryFirst<{ cnt: number }>(
+      c.env,
+      `SELECT COUNT(*) as cnt FROM notifications${whereClause}`,
+      args,
+    );
+    const total = countResult?.cnt ?? 0;
 
-  const notifications = await queryAll<NotificationRow>(
-    c.env,
-    `SELECT * FROM notifications${whereClause} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
-    [...args, limit, offset],
-  );
+    const notifications = await queryAll<NotificationRow>(
+      c.env,
+      `SELECT * FROM notifications${whereClause} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
+      [...args, limit, offset],
+    );
 
-  return c.json({
-    ok: true,
-    data: {
-      notifications: notifications.map((n) => ({
-        id: n.id,
-        bookId: n.book_id,
-        commentId: n.comment_id,
-        parentCommentId: n.parent_comment_id,
-        type: n.type,
-        message: n.message,
-        readAt: n.read_at,
-        createdAt: n.created_at,
-      })),
-      total,
-      limit,
-      offset,
-    },
-  });
-});
+    return c.json({
+      ok: true,
+      data: {
+        notifications: notifications.map((n) => ({
+          id: n.id,
+          bookId: n.book_id,
+          commentId: n.comment_id,
+          parentCommentId: n.parent_comment_id,
+          type: n.type,
+          message: n.message,
+          readAt: n.read_at,
+          createdAt: n.created_at,
+        })),
+        total,
+        limit,
+        offset,
+      },
+    });
+  },
+);
 
 /**
  * GET /api/notifications/unread-count
@@ -128,11 +133,11 @@ notificationsRouter.post('/notifications/:id/read', readerAuth, async (c) => {
     throw new NotFoundError('Notification');
   }
 
-  await execute(
-    c.env,
-    `UPDATE notifications SET read_at = ? WHERE id = ? AND user_email = ?`,
-    [now, notificationId, auth.email],
-  );
+  await execute(c.env, `UPDATE notifications SET read_at = ? WHERE id = ? AND user_email = ?`, [
+    now,
+    notificationId,
+    auth.email,
+  ]);
 
   return c.json({ ok: true });
 });

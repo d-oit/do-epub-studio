@@ -11,16 +11,16 @@
 
 ### Design Direction (2026 Editorial Minimalist)
 
-| Principle | Current State | Target |
-|-----------|--------------|--------|
-| Typography hierarchy | Single font (Inter), fixed sizes | 3 fonts, fluid clamp() scale |
-| Surfaces | Glass-panel (backdrop-blur heavy) | Warm monochrome, flat cards, precise 1px borders |
-| Spacing | Ad-hoc (--header-height only) | Full T-shirt scale (--space-1 to --space-24) |
-| Color | OKLCH ✅ but generic blue primary | Warm teal primary, warm neutrals, restrained accent |
-| Motion | Framer Motion (good) | Keep, add spring physics for interactions |
-| Layout | No responsive shell | Grid + dvh + container queries |
-| Shadows | Inline rgba() values | Tokenized elevation layers (--shadow-sm/md/lg) |
-| Content | Generic copy, empty states | Product-specific, contextual empty states |
+| Principle            | Current State                     | Target                                              |
+| -------------------- | --------------------------------- | --------------------------------------------------- |
+| Typography hierarchy | Single font (Inter), fixed sizes  | 3 fonts, fluid clamp() scale                        |
+| Surfaces             | Glass-panel (backdrop-blur heavy) | Warm monochrome, flat cards, precise 1px borders    |
+| Spacing              | Ad-hoc (--header-height only)     | Full T-shirt scale (--space-1 to --space-24)        |
+| Color                | OKLCH ✅ but generic blue primary | Warm teal primary, warm neutrals, restrained accent |
+| Motion               | Framer Motion (good)              | Keep, add spring physics for interactions           |
+| Layout               | No responsive shell               | Grid + dvh + container queries                      |
+| Shadows              | Inline rgba() values              | Tokenized elevation layers (--shadow-sm/md/lg)      |
+| Content              | Generic copy, empty states        | Product-specific, contextual empty states           |
 
 ### Anti-Patterns to Remove
 
@@ -39,30 +39,37 @@
 
 ```css
 /* Fluid scale (Utopia-based, 320px→1280px) */
---text-xs:   clamp(0.75rem,  0.71rem + 0.18vi, 0.875rem);
---text-sm:   clamp(0.875rem, 0.83rem + 0.22vi, 1rem);
---text-base: clamp(1rem,     0.95rem + 0.25vi, 1.125rem);
---text-lg:   clamp(1.125rem, 1.05rem + 0.38vi, 1.375rem);
---text-xl:   clamp(1.5rem,   1.32rem + 0.89vi, 2rem);
---text-2xl:  clamp(2rem,     1.64rem + 1.79vi, 3rem);
+--text-xs: clamp(0.75rem, 0.71rem + 0.18vi, 0.875rem);
+--text-sm: clamp(0.875rem, 0.83rem + 0.22vi, 1rem);
+--text-base: clamp(1rem, 0.95rem + 0.25vi, 1.125rem);
+--text-lg: clamp(1.125rem, 1.05rem + 0.38vi, 1.375rem);
+--text-xl: clamp(1.5rem, 1.32rem + 0.89vi, 2rem);
+--text-2xl: clamp(2rem, 1.64rem + 1.79vi, 3rem);
 
 /* Font stacks — distinctive, branded */
 --font-display: 'Cabinet Grotesk', sans-serif;
---font-body:    'Satoshi', 'Inter', sans-serif;
---font-reader:  'Source Serif 4', Georgia, serif;
---font-mono:    'JetBrains Mono', monospace;
+--font-body: 'Satoshi', 'Inter', sans-serif;
+--font-reader: 'Source Serif 4', Georgia, serif;
+--font-mono: 'JetBrains Mono', monospace;
 ```
 
 ### 1.2 Spacing Scale
 
 ```css
---space-0: 0;        --space-px: 1px;
---space-1: 0.25rem;  --space-2: 0.5rem;
---space-3: 0.75rem;  --space-4: 1rem;
---space-5: 1.25rem;  --space-6: 1.5rem;
---space-8: 2rem;     --space-10: 2.5rem;
---space-12: 3rem;    --space-16: 4rem;
---space-20: 5rem;    --space-24: 6rem;
+--space-0: 0;
+--space-px: 1px;
+--space-1: 0.25rem;
+--space-2: 0.5rem;
+--space-3: 0.75rem;
+--space-4: 1rem;
+--space-5: 1.25rem;
+--space-6: 1.5rem;
+--space-8: 2rem;
+--space-10: 2.5rem;
+--space-12: 3rem;
+--space-16: 4rem;
+--space-20: 5rem;
+--space-24: 6rem;
 ```
 
 ### 1.3 Elevation System
@@ -71,7 +78,7 @@
 --shadow-xs: 0 1px 2px oklch(0 0 0 / 0.04);
 --shadow-sm: 0 2px 4px oklch(0 0 0 / 0.06);
 --shadow-md: 0 4px 12px oklch(0 0 0 / 0.08);
---shadow-lg: 0 8px 24px oklch(0 0 0 / 0.10);
+--shadow-lg: 0 8px 24px oklch(0 0 0 / 0.1);
 --shadow-xl: 0 16px 48px oklch(0 0 0 / 0.12);
 ```
 
@@ -82,6 +89,7 @@
 - Warm up neutrals (add subtle warm hue to grays)
 
 ### Files:
+
 - `apps/web/src/styles/globals.css` — token additions
 - `packages/ui/src/styles/tokens.css` — new canonical source
 - `packages/ui/src/styles/base.css` — reset + base
@@ -93,12 +101,12 @@
 
 ### 2.1 Replace Glassmorphism with Editorial Surfaces
 
-| Before (glassmorphism) | After (editorial minimalist) |
-|--------|-------|
-| `backdrop-blur(24px)` | `background: var(--color-surface)` |
-| `color-mix transparency` | Solid surface tokens |
-| Frosted glass borders | 1px `var(--color-border)` |
-| `shadow-glass-lg` | `var(--shadow-md)` |
+| Before (glassmorphism)   | After (editorial minimalist)       |
+| ------------------------ | ---------------------------------- |
+| `backdrop-blur(24px)`    | `background: var(--color-surface)` |
+| `color-mix transparency` | Solid surface tokens               |
+| Frosted glass borders    | 1px `var(--color-border)`          |
+| `shadow-glass-lg`        | `var(--shadow-md)`                 |
 
 **Keep** glass-panel for ONE element only: the reader toolbar (functional use).
 
@@ -111,7 +119,9 @@
   border-radius: var(--radius-lg);
   padding: var(--space-6);
   box-shadow: var(--shadow-xs);
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  transition:
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
 }
 .card:hover {
   box-shadow: var(--shadow-md);
@@ -139,6 +149,7 @@
 - Remove `glass-card` in favor of editorial card
 
 ### Files:
+
 - All page components
 - `packages/ui/src/card.tsx`
 - `.agents/skills/anti-ai-slop/SKILL.md`
@@ -175,6 +186,7 @@
 ### 3.2 Search UI (HIGH)
 
 **Pattern:** Command palette (⌘K / Ctrl+K)
+
 - Search books by title/author
 - Search annotations/bookmarks
 - Quick navigation commands
@@ -218,15 +230,25 @@
 ### 4.1 Add Container Query Declarations
 
 ```css
-.book-grid { container: book-grid / inline-size; }
-.reader-panel { container: panel / inline-size; }
-.card-wrapper { container: card / inline-size; }
+.book-grid {
+  container: book-grid / inline-size;
+}
+.reader-panel {
+  container: panel / inline-size;
+}
+.card-wrapper {
+  container: card / inline-size;
+}
 
 @container book-grid (width < 480px) {
-  .book-card { grid-template-columns: 1fr; }
+  .book-card {
+    grid-template-columns: 1fr;
+  }
 }
 @container panel (width < 320px) {
-  .panel-content { font-size: var(--text-sm); }
+  .panel-content {
+    font-size: var(--text-sm);
+  }
 }
 ```
 
@@ -239,9 +261,15 @@ Replace with subtle `translateY(-2px)` + shadow elevation change.
 
 ```css
 @media (forced-colors: active) {
-  .card { border: 2px solid ButtonText; }
-  .btn-primary { border: 2px solid ButtonText; }
-  :focus-visible { outline: 3px solid Highlight; }
+  .card {
+    border: 2px solid ButtonText;
+  }
+  .btn-primary {
+    border: 2px solid ButtonText;
+  }
+  :focus-visible {
+    outline: 3px solid Highlight;
+  }
 }
 ```
 
@@ -260,6 +288,7 @@ Replace with subtle `translateY(-2px)` + shadow elevation change.
 ### `.agents/skills/anti-ai-slop/SKILL.md` (update)
 
 Add to blacklist:
+
 - Glassmorphism as primary surface (keep for ONE functional use only)
 - Purple/violet accents
 - translateY(-4px) hover transforms
@@ -267,6 +296,7 @@ Add to blacklist:
 - Generic "Unlock the power of..." copy
 
 Add to approved list:
+
 - Editorial flat cards with 1px borders
 - Warm monochrome surfaces
 - Subtle shadow elevation (translateY(-2px) max)

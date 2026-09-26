@@ -1,9 +1,5 @@
 import { apiRequest } from './core';
-import type {
-  FeedbackCategory,
-  FeedbackItem,
-  FeedbackStatus,
-} from './feedback';
+import type { FeedbackCategory, FeedbackItem, FeedbackStatus } from './feedback';
 
 export interface CreatorBook {
   id: string;
@@ -29,10 +25,10 @@ export async function fetchCreatorFeedback(
   if (query.status) params.set('status', query.status);
   if (query.category) params.set('category', query.category);
   const suffix = params.size > 0 ? `?${params.toString()}` : '';
-  return apiRequest<FeedbackItem[]>(
-    `/api/creator/books/${bookId}/feedback${suffix}`,
-    { method: 'GET', token },
-  );
+  return apiRequest<FeedbackItem[]>(`/api/creator/books/${bookId}/feedback${suffix}`, {
+    method: 'GET',
+    token,
+  });
 }
 
 export async function fetchCreatorFeedbackDetail(
@@ -40,10 +36,10 @@ export async function fetchCreatorFeedbackDetail(
   id: string,
   token: string,
 ): Promise<FeedbackItem> {
-  return apiRequest<FeedbackItem>(
-    `/api/creator/books/${bookId}/feedback/${id}`,
-    { method: 'GET', token },
-  );
+  return apiRequest<FeedbackItem>(`/api/creator/books/${bookId}/feedback/${id}`, {
+    method: 'GET',
+    token,
+  });
 }
 
 export async function replyAsCreator(
@@ -52,10 +48,11 @@ export async function replyAsCreator(
   body: string,
   token: string,
 ): Promise<FeedbackItem> {
-  return apiRequest<FeedbackItem>(
-    `/api/creator/books/${bookId}/feedback/${id}/replies`,
-    { method: 'POST', token, body: JSON.stringify({ body }) },
-  );
+  return apiRequest<FeedbackItem>(`/api/creator/books/${bookId}/feedback/${id}/replies`, {
+    method: 'POST',
+    token,
+    body: JSON.stringify({ body }),
+  });
 }
 
 export async function setDisposition(
@@ -64,10 +61,11 @@ export async function setDisposition(
   disposition: Disposition,
   token: string,
 ): Promise<FeedbackItem> {
-  return apiRequest<FeedbackItem>(
-    `/api/creator/books/${bookId}/feedback/${id}/disposition`,
-    { method: 'POST', token, body: JSON.stringify({ disposition }) },
-  );
+  return apiRequest<FeedbackItem>(`/api/creator/books/${bookId}/feedback/${id}/disposition`, {
+    method: 'POST',
+    token,
+    body: JSON.stringify({ disposition }),
+  });
 }
 
 export async function exportFeedback(
@@ -75,10 +73,11 @@ export async function exportFeedback(
   ids: string[],
   token: string,
 ): Promise<{ items: FeedbackItem[] }> {
-  return apiRequest<{ items: FeedbackItem[] }>(
-    `/api/creator/books/${bookId}/export`,
-    { method: 'POST', token, body: JSON.stringify({ ids }) },
-  );
+  return apiRequest<{ items: FeedbackItem[] }>(`/api/creator/books/${bookId}/export`, {
+    method: 'POST',
+    token,
+    body: JSON.stringify({ ids }),
+  });
 }
 
 // ── Wave 3 (COL-03): references & style profile ─────────────────────────
@@ -135,10 +134,10 @@ export async function fetchReferences(
   kind?: ReferenceKind,
 ): Promise<BookReference[]> {
   const suffix = kind ? `?kind=${kind}` : '';
-  return apiRequest<BookReference[]>(
-    `/api/creator/books/${bookId}/references${suffix}`,
-    { method: 'GET', token },
-  );
+  return apiRequest<BookReference[]>(`/api/creator/books/${bookId}/references${suffix}`, {
+    method: 'GET',
+    token,
+  });
 }
 
 export async function createReference(
@@ -158,10 +157,10 @@ export async function deleteReference(
   id: string,
   token: string,
 ): Promise<{ id: string }> {
-  return apiRequest<{ id: string }>(
-    `/api/creator/books/${bookId}/references/${id}`,
-    { method: 'DELETE', token },
-  );
+  return apiRequest<{ id: string }>(`/api/creator/books/${bookId}/references/${id}`, {
+    method: 'DELETE',
+    token,
+  });
 }
 
 export async function verifyReference(
@@ -171,10 +170,11 @@ export async function verifyReference(
   evidenceNote: string,
   token: string,
 ): Promise<BookReference> {
-  return apiRequest<BookReference>(
-    `/api/creator/books/${bookId}/references/${id}/verify`,
-    { method: 'POST', token, body: JSON.stringify({ verified, evidenceNote }) },
-  );
+  return apiRequest<BookReference>(`/api/creator/books/${bookId}/references/${id}/verify`, {
+    method: 'POST',
+    token,
+    body: JSON.stringify({ verified, evidenceNote }),
+  });
 }
 
 export async function fetchStyleProfile(
@@ -191,7 +191,13 @@ export async function saveStyleProfile(
   bookId: string,
   data: Omit<StyleProfileData, 'approvedBy' | 'approvedAt' | 'revision'>,
   token: string,
-): Promise<{ bookId: string; status: string; approvedBy: string | null; approvedAt: string | null; revision: number }> {
+): Promise<{
+  bookId: string;
+  status: string;
+  approvedBy: string | null;
+  approvedAt: string | null;
+  revision: number;
+}> {
   return apiRequest(`/api/creator/books/${bookId}/style`, {
     method: 'PUT',
     token,
@@ -214,10 +220,10 @@ export async function fetchAssistanceConsent(
   bookId: string,
   token: string,
 ): Promise<AssistanceConsent> {
-  return apiRequest<AssistanceConsent>(
-    `/api/creator/books/${bookId}/assistance-consent`,
-    { method: 'GET', token },
-  );
+  return apiRequest<AssistanceConsent>(`/api/creator/books/${bookId}/assistance-consent`, {
+    method: 'GET',
+    token,
+  });
 }
 
 export async function setAssistanceConsent(
@@ -225,10 +231,11 @@ export async function setAssistanceConsent(
   allowed: boolean,
   token: string,
 ): Promise<AssistanceConsent> {
-  return apiRequest<AssistanceConsent>(
-    `/api/creator/books/${bookId}/assistance-consent`,
-    { method: 'PUT', token, body: JSON.stringify({ allowed }) },
-  );
+  return apiRequest<AssistanceConsent>(`/api/creator/books/${bookId}/assistance-consent`, {
+    method: 'PUT',
+    token,
+    body: JSON.stringify({ allowed }),
+  });
 }
 
 export function downloadExport(bookSlug: string, items: FeedbackItem[]): void {
@@ -267,7 +274,6 @@ export function downloadExport(bookSlug: string, items: FeedbackItem[]): void {
   link.remove();
   URL.revokeObjectURL(url);
 }
-
 
 export interface CreatorAssignment {
   email: string;

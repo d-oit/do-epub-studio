@@ -21,7 +21,9 @@ let db: DatabaseSync;
 
 beforeAll(() => {
   db = new DatabaseSync(':memory:');
-  const files = readdirSync(MIGRATIONS_DIR).filter((f) => f.endsWith('.sql')).sort();
+  const files = readdirSync(MIGRATIONS_DIR)
+    .filter((f) => f.endsWith('.sql'))
+    .sort();
   expect(files.length).toBeGreaterThan(0);
   for (const file of files) {
     db.exec(readFileSync(resolve(MIGRATIONS_DIR, file), 'utf8'));

@@ -110,17 +110,17 @@ This is a test downgrade. Reject.
 
 ## When to request changes vs. approve
 
-| Situation | Action |
-|-----------|--------|
-| Tests don't actually test the behavior | Request changes |
-| Security regression (sandbox, CSP, hashing, sanitization) | Request changes, tag `security` |
-| New `any`, `// @ts-ignore`, or `eslint-disable` | Request changes |
-| Hardcoded URL/date/env | Request changes |
-| Lockfile change without a Dependabot or renovate trail | Request changes |
-| New dependency without license/security review | Request changes |
-| Comment-only change that has no functional impact | Ask: is this necessary? |
-| Minor style nit | Comment, do not block |
-| Question for the author | Comment, mark as "question" not "request changes" |
+| Situation                                                 | Action                                            |
+| --------------------------------------------------------- | ------------------------------------------------- |
+| Tests don't actually test the behavior                    | Request changes                                   |
+| Security regression (sandbox, CSP, hashing, sanitization) | Request changes, tag `security`                   |
+| New `any`, `// @ts-ignore`, or `eslint-disable`           | Request changes                                   |
+| Hardcoded URL/date/env                                    | Request changes                                   |
+| Lockfile change without a Dependabot or renovate trail    | Request changes                                   |
+| New dependency without license/security review            | Request changes                                   |
+| Comment-only change that has no functional impact         | Ask: is this necessary?                           |
+| Minor style nit                                           | Comment, do not block                             |
+| Question for the author                                   | Comment, mark as "question" not "request changes" |
 
 ## Approving a PR
 

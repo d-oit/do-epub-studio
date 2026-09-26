@@ -35,7 +35,9 @@ export interface LocalSummarizationPluginOptions {
   };
 }
 
-export function createLocalSummarizationPlugin(options?: LocalSummarizationPluginOptions): AiPlugin {
+export function createLocalSummarizationPlugin(
+  options?: LocalSummarizationPluginOptions,
+): AiPlugin {
   const engine = options?.engine;
 
   const text: TextProcessingCapability = {

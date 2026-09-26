@@ -14,8 +14,8 @@ The per-package coverage floors were recorded in four places that disagreed thre
    `coverage.thresholds`, so CI cannot be green below them. This layer also
    enforces `branches` and `statements` floors that no document mentioned.
 2. **`codecov.yml`** — a fossil. `plans/archive/022-adr-coverage-and-benchmarking.md`
-   recorded web 40 / worker 55 / shared 25 / reader-core 75 as *the AGENTS.md
-   values of that day* and instructed "create `codecov.yml` matching AGENTS.md";
+   recorded web 40 / worker 55 / shared 25 / reader-core 75 as _the AGENTS.md
+   values of that day_ and instructed "create `codecov.yml` matching AGENTS.md";
    `plans/archive/223-*` later corrected worker upward in AGENTS.md, but
    `codecov.yml` was never updated. It also had no schema/testkit/ui statuses,
    no `patch` status, no `flags:`/`paths:` — meaning its four named statuses
@@ -59,7 +59,7 @@ codecov's loose numbers gate nothing.
 2. **Vitest is the enforcing layer** for absolute per-package floors on all
    four metrics, including **functions** (which Codecov structurally cannot
    gate). All seven `vitest.config.ts` files `import … from
-   '../../coverage-thresholds.json'` (static import — per AGENTS.md Tier 1
+'../../coverage-thresholds.json'` (static import — per AGENTS.md Tier 1
    never `readFileSync(new URL(…))`, which trips Codacy's
    `security/detect-non-literal-fs-filename`) and feed
    `coverage.thresholds`. **No value changed**: behavior is bit-identical to
@@ -82,19 +82,19 @@ codecov's loose numbers gate nothing.
    one-shot upload is "one report, many flags", documented as technically
    incorrect) and a CI change this ADR does not need.
 6. **Patch status (the diff-coverage ratchet): `target: 80%`,
-   `threshold: 0%`, `informational: true`.** Explicitly *informational*, not
+   `threshold: 0%`, `informational: true`.** Explicitly _informational_, not
    blocking, because: (a) branch protection could not be read (HTTP 403, see
    Open questions) so we cannot confirm which contexts are required;
    (b) an 80% absolute diff floor has no track record in this repo and a
    ratchet must be observed before it gates — promotion is a one-line flip
    (`informational: true` → remove) **after** a follow-up ADR confirms the
-   rate at which recent PRs would have failed *and* the required-check list.
+   rate at which recent PRs would have failed _and_ the required-check list.
    The repo's stated posture (codecov upload `fail_ci_if_error: false`, "a
    Codecov outage must not red main") supports starting informational.
 7. **`autoUpdate` ratchet: rejected.** Vitest's `coverage.thresholds.autoUpdate`
    rewrites threshold values from inside test runs; that (a) mutates gate
    configuration without human review, and (b) has no meaningful semantics now
-   that configs hold *references* into the SSOT JSON rather than literal
+   that configs hold _references_ into the SSOT JSON rather than literal
    numbers. Floors rise only via a reviewed PR touching
    `coverage-thresholds.json`.
 8. **Docs hold pointers, never values.** AGENTS.md Tier 2 #4 and
@@ -148,7 +148,7 @@ proves every arrow). Provenance of the fossil this closes: `plans/archive/022-ad
   `gh api repos/d-oit/do-epub-studio/branches/main/protection` → **HTTP 403
   "Resource not accessible by integration"**; GraphQL
   `repository.branchProtectionRules` → **FORBIDDEN** with the same message.
-  Unresolved with this token. Risk if `codecov/project` *was* required:
+  Unresolved with this token. Risk if `codecov/project` _was_ required:
   `project.default: false` stops posting it, leaving a required check pending
   forever — confirm the required-context list (needs `administration:read`)
   before/at merge.

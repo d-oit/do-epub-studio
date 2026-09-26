@@ -79,9 +79,7 @@ describe('backfill-user-ids.mjs (ADR-231)', () => {
 
     it('fills matches, leaves orphans NULL, and is safe to re-run', async () => {
       const { client, db } = setup();
-      await client.execute(
-        'CREATE TABLE users (id TEXT PRIMARY KEY, email TEXT NOT NULL UNIQUE);',
-      );
+      await client.execute('CREATE TABLE users (id TEXT PRIMARY KEY, email TEXT NOT NULL UNIQUE);');
       for (const { table, identityColumn } of USER_LINK_TABLES) {
         await client.execute(
           `CREATE TABLE ${table} (id TEXT PRIMARY KEY, ${identityColumn} TEXT, user_id TEXT);`,
@@ -98,8 +96,7 @@ describe('backfill-user-ids.mjs (ADR-231)', () => {
       const first = await backfillUserIds({ db });
       expect(first.ok).toBe(true);
 
-      const rows = (await client.execute('SELECT id, user_id FROM highlights ORDER BY id'))
-        .rows;
+      const rows = (await client.execute('SELECT id, user_id FROM highlights ORDER BY id')).rows;
       const byId = Object.fromEntries(rows.map((r) => [r.id, r.user_id]));
       // Matched (case-insensitively) got the user id; orphan stayed NULL.
       expect(byId['h-match']).toBe('u1');
@@ -108,8 +105,7 @@ describe('backfill-user-ids.mjs (ADR-231)', () => {
       // Re-run is idempotent: nothing else changes, no errors, zero rows touched.
       const second = await backfillUserIds({ db });
       expect(second.ok).toBe(true);
-      const rows2 = (await client.execute('SELECT id, user_id FROM highlights ORDER BY id'))
-        .rows;
+      const rows2 = (await client.execute('SELECT id, user_id FROM highlights ORDER BY id')).rows;
       const byId2 = Object.fromEntries(rows2.map((r) => [r.id, r.user_id]));
       expect(byId2['h-match']).toBe('u1');
       expect(byId2['h-orphan']).toBeNull();
@@ -118,22 +114,17 @@ describe('backfill-user-ids.mjs (ADR-231)', () => {
 
     it('only touches rows with a NULL user_id (never overwrites existing)', async () => {
       const { client, db } = setup();
-      await client.execute(
-        'CREATE TABLE users (id TEXT PRIMARY KEY, email TEXT NOT NULL UNIQUE);',
-      );
+      await client.execute('CREATE TABLE users (id TEXT PRIMARY KEY, email TEXT NOT NULL UNIQUE);');
       for (const { table, identityColumn } of USER_LINK_TABLES) {
         await client.execute(
           `CREATE TABLE ${table} (id TEXT PRIMARY KEY, ${identityColumn} TEXT, user_id TEXT);`,
         );
       }
       await client.execute("INSERT INTO users VALUES ('u9', 'keep@example.com');");
-      await client.execute(
-        "INSERT INTO bookmarks VALUES ('b-keep', 'keep@example.com', 'u9');",
-      );
+      await client.execute("INSERT INTO bookmarks VALUES ('b-keep', 'keep@example.com', 'u9');");
       await backfillUserIds({ db });
-      const row = (
-        await client.execute("SELECT user_id FROM bookmarks WHERE id = 'b-keep'")
-      ).rows[0];
+      const row = (await client.execute("SELECT user_id FROM bookmarks WHERE id = 'b-keep'"))
+        .rows[0];
       // Existing link is preserved and not rewritten.
       expect(row.user_id).toBe('u9');
     });

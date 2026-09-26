@@ -9,7 +9,9 @@ test.describe('PWA Caching Strategies', () => {
       try {
         await Promise.race([
           navigator.serviceWorker.ready.then(() => undefined),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('SW ready timeout')), 60000)),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('SW ready timeout')), 60000),
+          ),
         ]);
         return true;
       } catch {
@@ -25,10 +27,16 @@ test.describe('PWA Caching Strategies', () => {
     await page.reload();
     await page.waitForLoadState('domcontentloaded');
     const controlled = await page.evaluate(() => !!navigator.serviceWorker.controller);
-    expect(controlled, 'Service Worker must be active and controlling the page in pwa-chromium').toBe(true);
+    expect(
+      controlled,
+      'Service Worker must be active and controlling the page in pwa-chromium',
+    ).toBe(true);
   });
 
-  test('@mobile @pwa @pwa Navigation requests return index.html from cache when offline', async ({ page, context }) => {
+  test('@mobile @pwa @pwa Navigation requests return index.html from cache when offline', async ({
+    page,
+    context,
+  }) => {
     // Go offline, then navigate to a public route: the SW navigation route
     // must serve the cached app shell instead of a browser error page.
     // (/read/* would redirect a guest to /login via the auth guard — that
@@ -47,11 +55,16 @@ test.describe('PWA Caching Strategies', () => {
     await context.setOffline(false);
   });
 
-  test('@mobile @pwa @pwa Sensitive API routes use NetworkOnly and are never cached', async ({ page, context }) => {
+  test('@mobile @pwa @pwa Sensitive API routes use NetworkOnly and are never cached', async ({
+    page,
+    context,
+  }) => {
     // 1. Fetch sensitive route while online (this would normally succeed or return 401/403)
     // For the test, we don't care about the result, just that it happened.
     await page.evaluate(async () => {
-      try { await fetch('/api/access/validate?bookId=test'); } catch {}
+      try {
+        await fetch('/api/access/validate?bookId=test');
+      } catch {}
     });
 
     // 2. Go offline
@@ -83,7 +96,10 @@ test.describe('PWA Caching Strategies', () => {
     await context.setOffline(false);
   });
 
-  test('@mobile @pwa Generic API requests use NetworkFirst (cached for offline)', async ({ page, context }) => {
+  test('@mobile @pwa Generic API requests use NetworkFirst (cached for offline)', async ({
+    page,
+    context,
+  }) => {
     // Seed the strategy cache directly: with a controlling SW, page.route
     // mocks are bypassed (the SW fetches from its own context), so seed the
     // real 'api-responses' cache that the NetworkFirst route in sw.ts reads.

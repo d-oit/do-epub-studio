@@ -33,7 +33,13 @@ searchRouter.get(
     const auth = c.get('auth');
 
     // Verify book access
-    const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx, getRequestTraceId(c));
+    const mismatch = await assertBookAccess(
+      c.env,
+      auth,
+      bookId,
+      c.executionCtx,
+      getRequestTraceId(c),
+    );
     if (mismatch) return mismatch.response;
 
     // Check if book is indexed
@@ -70,7 +76,13 @@ searchRouter.get(
     if (!ftsQuery) {
       return c.json({
         ok: true,
-        data: { results: [], total: 0, indexed: true, indexedAt: indexStatus.indexed_at, chapterCount: indexStatus.chapter_count },
+        data: {
+          results: [],
+          total: 0,
+          indexed: true,
+          indexedAt: indexStatus.indexed_at,
+          chapterCount: indexStatus.chapter_count,
+        },
       });
     }
 

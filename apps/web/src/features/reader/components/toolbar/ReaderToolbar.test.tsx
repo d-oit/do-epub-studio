@@ -40,7 +40,10 @@ describe('ReaderToolbar', () => {
     bookmarks: [],
     capabilities: { canComment: true },
     activePanel: null,
-    toc: [{ label: 'Chapter 1', href: 'ch1.xhtml' }, { label: 'Chapter 2', href: 'ch2.xhtml' }],
+    toc: [
+      { label: 'Chapter 1', href: 'ch1.xhtml' },
+      { label: 'Chapter 2', href: 'ch2.xhtml' },
+    ],
     currentChapter: 'ch1.xhtml',
     onToggleToc: vi.fn(),
     onToggleSearch: vi.fn(),
@@ -201,8 +204,36 @@ describe('ReaderToolbar', () => {
 
   it('shows open comments count', () => {
     const comments = [
-      { id: '1', status: 'open' as const, body: 'Comment 1', displayName: 'a', isOwn: false, chapterRef: null, cfiRange: null, selectedText: null, visibility: 'shared' as const, parentCommentId: null, createdAt: '', updatedAt: '', resolvedAt: null },
-      { id: '2', status: 'resolved' as const, body: 'Comment 2', displayName: 'a', isOwn: false, chapterRef: null, cfiRange: null, selectedText: null, visibility: 'shared' as const, parentCommentId: null, createdAt: '', updatedAt: '', resolvedAt: null },
+      {
+        id: '1',
+        status: 'open' as const,
+        body: 'Comment 1',
+        displayName: 'a',
+        isOwn: false,
+        chapterRef: null,
+        cfiRange: null,
+        selectedText: null,
+        visibility: 'shared' as const,
+        parentCommentId: null,
+        createdAt: '',
+        updatedAt: '',
+        resolvedAt: null,
+      },
+      {
+        id: '2',
+        status: 'resolved' as const,
+        body: 'Comment 2',
+        displayName: 'a',
+        isOwn: false,
+        chapterRef: null,
+        cfiRange: null,
+        selectedText: null,
+        visibility: 'shared' as const,
+        parentCommentId: null,
+        createdAt: '',
+        updatedAt: '',
+        resolvedAt: null,
+      },
     ];
     render(<ReaderToolbar {...mockProps} comments={comments} />);
     expect(screen.getByText('1')).toBeInTheDocument();
@@ -415,7 +446,21 @@ describe('ReaderToolbar', () => {
 
   it('shows comments count in mobile menu', () => {
     const comments = [
-      { id: '1', status: 'open' as const, body: 'Comment 1', displayName: 'a', isOwn: false, chapterRef: null, cfiRange: null, selectedText: null, visibility: 'shared' as const, parentCommentId: null, createdAt: '', updatedAt: '', resolvedAt: null },
+      {
+        id: '1',
+        status: 'open' as const,
+        body: 'Comment 1',
+        displayName: 'a',
+        isOwn: false,
+        chapterRef: null,
+        cfiRange: null,
+        selectedText: null,
+        visibility: 'shared' as const,
+        parentCommentId: null,
+        createdAt: '',
+        updatedAt: '',
+        resolvedAt: null,
+      },
     ];
     render(<ReaderToolbar {...mockProps} comments={comments} />);
     const menuButton = screen.getByLabelText('More Options');
@@ -425,9 +470,7 @@ describe('ReaderToolbar', () => {
   });
 
   it('shows bookmarks count in mobile menu', () => {
-    const bookmarks = [
-      { id: '1', locator: { cfi: 'cfi' }, label: null, createdAt: '' },
-    ];
+    const bookmarks = [{ id: '1', locator: { cfi: 'cfi' }, label: null, createdAt: '' }];
     render(<ReaderToolbar {...mockProps} bookmarks={bookmarks} />);
     const menuButton = screen.getByLabelText('More Options');
     fireEvent.click(menuButton);

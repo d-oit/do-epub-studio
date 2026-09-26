@@ -42,17 +42,12 @@ describe('property-based tests', () => {
 
   it('locatorToString always produces parseable output', () => {
     fc.assert(
-      fc.property(
-        fc.string(),
-        fc.string(),
-        fc.string(),
-        (cfi, text, chapter) => {
-          const loc = createLocator(cfi, text, chapter);
-          const str = locatorToString(loc);
-          const parsed = parseLocator(str);
-          expect(parsed).toEqual(loc);
-        },
-      ),
+      fc.property(fc.string(), fc.string(), fc.string(), (cfi, text, chapter) => {
+        const loc = createLocator(cfi, text, chapter);
+        const str = locatorToString(loc);
+        const parsed = parseLocator(str);
+        expect(parsed).toEqual(loc);
+      }),
     );
   });
 });
