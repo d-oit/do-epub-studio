@@ -10,9 +10,9 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   createStoryLogicEditorialPlugin,
-  extractJsonObject,
   type TransformersPipelineLike,
 } from '../plugins/story-logic-editorial';
+import { extractJsonObject } from '../plugins/story-logic-json';
 import type { EditorialFinding, EditorialReviewOutcome } from '../editorial-findings';
 import type { EditorialReviewRequest } from '../types';
 

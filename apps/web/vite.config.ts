@@ -170,7 +170,14 @@ export default defineConfig({
     outDir: 'dist',
     manifest: true,
     sourcemap: false,
-    chunkSizeWarningLimit: 500,
+    // Raw (pre-gzip) advisory limit only. The enforced budgets are gzipped and
+    // live in .performance-budgets.json (lazyChunkJs 165 KB). The on-device
+    // editorial engine chunk (transformers.web, GOAP-273 B1) is 158 KB gzipped
+    // and is fetched only on a user-initiated engine prepare, never on route
+    // entry, so it legitimately exceeds Vite's 500 KB raw default. Set above
+    // that chunk but well below a genuinely oversized new one, so the advisory
+    // — and the quality gate's zero-warning rail on it — still bites.
+    chunkSizeWarningLimit: 600,
     rolldownOptions: { output: {
         // Vite 8 Rolldown uses codeSplitting or function manualChunks
         manualChunks: (id) => {

@@ -108,10 +108,10 @@ export type {
 } from './plugins/transformers-editorial-format';
 export {
   createStoryLogicEditorialPlugin,
-  extractJsonObject,
   STORY_LOGIC_DTYPES,
   STORY_LOGIC_EDITORIAL_CATEGORIES,
 } from './plugins/story-logic-editorial';
+export { extractJsonObject } from './plugins/story-logic-json';
 export type {
   StoryLogicEditorialCapability,
   StoryLogicEditorialPlugin,
