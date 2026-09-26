@@ -15,6 +15,7 @@ import { requireStepUp } from '../../middleware/step-up';
 import { logAudit } from '../../audit';
 import { logAppWarn, type RequestContext } from '../../lib/observability';
 import { AppError } from '../../lib/http-errors';
+import { queryFirst } from '../../db/client';
 
 export const invitationsAdminRouter = new Hono<{
   Bindings: Env;
@@ -76,9 +77,11 @@ invitationsAdminRouter.post(
       throw new AppError('Book id does not match route', 'BOOK_ID_MISMATCH', 400);
     }
     const created = await createBookInvitation(c.env, body, c.get('adminUser').id);
-    const book = await c.env.DB.prepare(`SELECT title FROM books WHERE id = ? LIMIT 1`)
-      .bind(bookId)
-      .first<{ title: string }>();
+    const book = await queryFirst<{ title: string }>(
+      c.env,
+      `SELECT title FROM books WHERE id = ? LIMIT 1`,
+      [bookId],
+    );
     const delivery = await deliver(
       c.env,
       created.invitation.id,
@@ -133,9 +136,11 @@ invitationsAdminRouter.post(
     const bookId = c.req.param('bookId');
     const invitationId = c.req.param('invitationId');
     const resent = await resendBookInvitation(c.env, bookId, invitationId);
-    const book = await c.env.DB.prepare(`SELECT title FROM books WHERE id = ? LIMIT 1`)
-      .bind(bookId)
-      .first<{ title: string }>();
+    const book = await queryFirst<{ title: string }>(
+      c.env,
+      `SELECT title FROM books WHERE id = ? LIMIT 1`,
+      [bookId],
+    );
     const delivery = await deliver(
       c.env,
       invitationId,
