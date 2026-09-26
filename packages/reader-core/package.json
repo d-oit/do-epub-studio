@@ -15,7 +15,7 @@
     "@do-epub-studio/shared": "workspace:*",
     "@huggingface/transformers": "^4.3.0",
     "@intity/epub-js": "^0.3.96",
-    "dompurify": "^3.4.15",
+    "dompurify": "^3.4.16",
     "fflate": "^0.8.3"
   },
   "devDependencies": {
