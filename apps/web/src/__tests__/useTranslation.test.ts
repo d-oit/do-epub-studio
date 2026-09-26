@@ -64,22 +64,27 @@ describe('useTranslation', () => {
     expect(result.current.t('app.title')).toBe('d.o.EPUB Studio');
   });
 
-  it('updates t function when locale changes', () => {
+  it('updates t function when locale changes', async () => {
     const { result } = renderHook(() => useTranslation());
     expect(result.current.locale).toBe('en');
 
-    act(() => {
+    // `setLocale` re-renders with the new locale, then `useTranslation`'s effect
+    // resets `loadedLocale` to null and re-sets it once `ensureLocale` resolves.
+    // Both continuations must land inside act() or React warns.
+    await act(async () => {
       useLocaleStore.getState().setLocale('de');
+      await Promise.resolve();
     });
 
     expect(result.current.locale).toBe('de');
   });
 
-  it('calls setLocale to change locale', () => {
+  it('calls setLocale to change locale', async () => {
     const { result } = renderHook(() => useTranslation());
 
-    act(() => {
+    await act(async () => {
       result.current.setLocale('fr');
+      await Promise.resolve();
     });
 
     expect(useLocaleStore.getState().locale).toBe('fr');

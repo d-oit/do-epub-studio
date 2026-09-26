@@ -189,14 +189,28 @@ if [[ " ${DETECTED_LANGUAGES[*]} " =~ " typescript " ]]; then
             RUN="npm run"
         fi
 
-        # Lint (respect SKIP_LINT env var)
+        # Lint (respect SKIP_LINT env var).
+        # Every package lints with `--max-warnings 0`, so a warning already fails
+        # here. The explicit scan below is the belt-and-braces rail: a tool whose
+        # exit code is 0 despite printing warnings (or a future package that
+        # drops the flag) must still not pass silently. "No failings and no
+        # warnings" is the policy; this enforces it rather than trusting it.
         if [ "${SKIP_LINT:-false}" != "true" ]; then
             if ! OUTPUT=$($RUN lint 2>&1); then
                 printf '%s  ✗ %s lint failed%s\n' "${RED}" "$PM" "${NC}"
                 echo "$OUTPUT" >&2
                 FAILED=1
+            # ESLint's own diagnostic line is `  <line>:<col>  warning  <msg>`
+            # (and `  <line>:<col>  error  <msg>`). Anchor on that shape, not
+            # on a filename: a single-file run prints no path at all, which a
+            # filename-anchored pattern silently misses.
+            elif echo "$OUTPUT" | grep -qE '^[[:space:]]+[0-9]+:[0-9]+[[:space:]]+warning[[:space:]]'; then
+                printf '%s  ✗ %s lint emitted warnings (zero-warning policy)%s\n' "${RED}" "$PM" "${NC}"
+                echo "$OUTPUT" | grep -E '^[[:space:]]+[0-9]+:[0-9]+[[:space:]]+warning[[:space:]]' | sort -u >&2
+                printf '%s  (fix them, or drop --max-warnings 0 only with a recorded reason)%s\n' "${YELLOW}" "${NC}" >&2
+                FAILED=1
             else
-                printf '%s  ✓ %s lint passed%s\n' "${GREEN}" "$PM" "${NC}"
+                printf '%s  ✓ %s lint passed (0 errors, 0 warnings)%s\n' "${GREEN}" "$PM" "${NC}"
             fi
         else
             printf '%s  ⊘ %s lint skipped (SKIP_LINT=true)%s\n' "${YELLOW}" "$PM" "${NC}"
@@ -228,14 +242,25 @@ if [[ " ${DETECTED_LANGUAGES[*]} " =~ " typescript " ]]; then
                 printf '%s  ✓ %s test:coverage passed%s\n' "${GREEN}" "$PM" "${NC}"
             fi
 
-            # Build (skip with SKIP_BUILD env var)
+            # Build (skip with SKIP_BUILD env var). Same zero-warning policy as
+            # lint: bundlers and compilers routinely print diagnostics while
+            # still exiting 0, so a clean exit code alone is not a clean build.
+            # The pattern is anchored on tool-specific markers — Vite/Rolldown's
+            # `(!)`, `[rolldown: …]`, `[plugin:…]`, `EMPTY_IMPORT_META`, and an
+            # explicit `warning:`/`deprecated:` prefix — NOT the bare word
+            # "warning", which also appears in benign output like "Built with 0
+            # warnings" and would fail every healthy build.
             if [ "${SKIP_BUILD:-false}" != "true" ]; then
                 if ! OUTPUT=$($PM run build 2>&1); then
                     printf '%s  ✗ %s build failed%s\n' "${RED}" "$PM" "${NC}"
                     echo "$OUTPUT" >&2
                     FAILED=1
+                elif echo "$OUTPUT" | grep -qiE '\(!\)|\[rolldown|\[plugin:|EMPTY_IMPORT_META|(^|[^[:alpha:]])warning:|deprecated:'; then
+                    printf '%s  ✗ %s build emitted warnings (zero-warning policy)%s\n' "${RED}" "$PM" "${NC}"
+                    echo "$OUTPUT" | grep -iE '\(!\)|\[rolldown|\[plugin:|EMPTY_IMPORT_META|(^|[^[:alpha:]])warning:|deprecated:' | sort -u | head -40 >&2
+                    FAILED=1
                 else
-                    printf '%s  ✓ %s build passed%s\n' "${GREEN}" "$PM" "${NC}"
+                    printf '%s  ✓ %s build passed (no warnings)%s\n' "${GREEN}" "$PM" "${NC}"
                 fi
             else
                 printf '%s  ⊘ %s build skipped (SKIP_BUILD=true)%s\n' "${YELLOW}" "$PM" "${NC}"
@@ -303,106 +328,50 @@ if [[ " ${DETECTED_LANGUAGES[*]} " =~ " typescript " ]]; then
             printf '%s  ⊘ %s tests skipped (SKIP_TESTS=true)%s\n' "${YELLOW}" "$PM" "${NC}"
             SKIPPED=1
         fi
-    fi
-    echo ""
-fi
 
-# Python checks
-if [[ " ${DETECTED_LANGUAGES[*]} " =~ " python " ]]; then
-    printf '%sRunning Python checks...%s\n' "${BLUE}" "${NC}"
-
-    if command -v ruff &> /dev/null; then
-        if ! OUTPUT=$(ruff check . 2>&1); then
-            printf '%s  ✗ ruff check failed%s\n' "${RED}" "${NC}"
-            echo "$OUTPUT" >&2
-            FAILED=1
-        else
-            printf '%s  ✓ ruff check passed%s\n' "${GREEN}" "${NC}"
-        fi
-    else
-        printf '%s  ⚠ ruff not installed - skipping Python lint%s\n' "${YELLOW}" "${NC}"
-    fi
-
-    if command -v black &> /dev/null; then
-        if ! OUTPUT=$(black --check . 2>&1); then
-            printf '%s  ✗ black check failed%s\n' "${RED}" "${NC}"
-            echo "$OUTPUT" >&2
-            FAILED=1
-        else
-            printf '%s  ✓ black check passed%s\n' "${GREEN}" "${NC}"
-        fi
-    else
-        printf '%s  ⚠ black not installed - skipping Python format%s\n' "${YELLOW}" "${NC}"
-    fi
-
-    # pytest — always run if tests/ directory exists
-    if [ -d "tests" ]; then
-        if command -v pytest &> /dev/null; then
-            if ! OUTPUT=$(pytest tests/ -q 2>&1); then
-                printf '%s  ✗ pytest failed%s\n' "${RED}" "${NC}"
+        # Build is a SIBLING of the tests block, not nested inside it: with
+        # build inside `SKIP_TESTS`, `SKIP_TESTS=true` silently skipped the build
+        # even when SKIP_BUILD was unset, so the "mandatory" build was optional
+        # in exactly the fast local-dev path that sets it. Each phase is now
+        # gated only by its own SKIP_* flag.
+        #
+        # Same zero-warning policy as lint: bundlers and compilers routinely
+        # print diagnostics while still exiting 0, so a clean exit code alone is
+        # not a clean build. The pattern is anchored on tool-specific diagnostic
+        # markers — Vite/Rolldown's leading `(!)`, `[rolldown: …]`,
+        # `[plugin:…]`, and an explicit `warning:`/`deprecated:` prefix — NOT the
+        # bare word "warning", which also appears in benign output like
+        # "Built with 0 warnings" and would fail every healthy build.
+        if [ "${SKIP_BUILD:-false}" != "true" ]; then
+            if ! OUTPUT=$($PM run build 2>&1); then
+                printf '%s  ✗ %s build failed%s\n' "${RED}" "$PM" "${NC}"
                 echo "$OUTPUT" >&2
                 FAILED=1
+            # `EMPTY_IMPORT_META` is matched literally as well as via
+            # `[rolldown:`, so the diagnostic is caught whatever prefix the
+            # bundler prints — AGENTS.md records it as the authoritative marker
+            # for a warning that once appeared on an otherwise clean build.
+            elif echo "$OUTPUT" | grep -qiE '\(!\)|\[rolldown|\[plugin:|EMPTY_IMPORT_META|(^|[^[:alpha:]])warning:|deprecated:'; then
+                printf '%s  ✗ %s build emitted warnings (zero-warning policy)%s\n' "${RED}" "$PM" "${NC}"
+                echo "$OUTPUT" | grep -iE '\(!\)|\[rolldown|\[plugin:|EMPTY_IMPORT_META|(^|[^[:alpha:]])warning:|deprecated:' | sort -u | head -40 >&2
+                FAILED=1
             else
-                printf '%s  ✓ pytest passed%s\n' "${GREEN}" "${NC}"
+                printf '%s  ✓ %s build passed (no warnings)%s\n' "${GREEN}" "$PM" "${NC}"
             fi
         else
-            printf '%s  ⚠ pytest not installed - skipping Python tests%s\n' "${YELLOW}" "${NC}"
+            printf '%s  ⊘ %s build skipped (SKIP_BUILD=true)%s\n' "${YELLOW}" "$PM" "${NC}"
+            SKIPPED=1
         fi
     fi
     echo ""
 fi
 
-# Guard: prevent .gitignore deletions
-if ! "$REPO_ROOT/scripts/guard-gitignore.sh"; then
-    FAILED=1
-fi
-echo ""
-
-# Shell script checks
-if [[ " ${DETECTED_LANGUAGES[*]} " =~ " shell " ]]; then
-    printf '%sRunning Shell script checks...%s\n' "${BLUE}" "${NC}"
-
-    if command -v shellcheck &> /dev/null; then
-        SHELL_SCRIPTS=$(find . -path "./.git" -prune -o -path "./node_modules" -prune -o -path "./target" -prune -o -name "*.sh" -print 2>/dev/null || true)
-        if [ -n "$SHELL_SCRIPTS" ]; then
-            sc_failed=0
-            while IFS= read -r script; do
-                [ -n "$script" ] || continue
-                if ! shellcheck --severity=error -f quiet "$script" 2>/dev/null; then
-                    printf '%s  ✗ shellcheck failed: %s%s\n' "${RED}" "$script" "${NC}"
-                    sc_failed=1
-                fi
-            done <<< "$SHELL_SCRIPTS"
-
-            if [ $sc_failed -eq 0 ]; then
-                printf '%s  ✓ shellcheck passed%s\n' "${GREEN}" "${NC}"
-            else
-                FAILED=1
-            fi
-        fi
-    else
-        printf '%s  ⚠ shellcheck not installed - skipping shell checks%s\n' "${YELLOW}" "${NC}"
-    fi
-
-    # BATS tests — always run if tests/ or scripts/tests/ directory exists
-    if { [ -d "tests" ] || [ -d "scripts/tests" ]; } && [ -z "${BATS_TEST_FILENAME:-}" ]; then
-        if command -v bats &> /dev/null; then
-            BATS_DIRS=()
-            [ -d "tests" ] && BATS_DIRS+=("tests/")
-            [ -d "scripts/tests" ] && BATS_DIRS+=("scripts/tests/")
-            if ! OUTPUT=$(bats "${BATS_DIRS[@]}" 2>&1); then
-                printf '%s  ✗ bats tests failed%s\n' "${RED}" "${NC}"
-                echo "$OUTPUT" >&2
-                FAILED=1
-            else
-                printf '%s  ✓ bats tests passed%s\n' "${GREEN}" "${NC}"
-            fi
-        else
-            printf '%s  ⚠ bats not installed - skipping shell tests%s\n' "${YELLOW}" "${NC}"
-        fi
-    fi
-    echo ""
-fi
+# Python and shell phases live in scripts/lib/quality_gate_secondary.sh so this
+# file stays under the 500-line cap (ADR-278) — the gate is itself a live demo
+# of the shrink-only ratchet. They share FAILED/SKIPPED, DETECTED_LANGUAGES and
+# the colour vars with the rest of the gate.
+# shellcheck source=scripts/lib/quality_gate_secondary.sh
+source "$REPO_ROOT/scripts/lib/quality_gate_secondary.sh"
 
 # Markdown checks (markdownlint, runs by default when installed — no env gate)
 # Per ADR-112: markdownlint is part of the default quality gate.

@@ -212,11 +212,11 @@ describe('editorial grounding validator (deterministic)', () => {
 });
 
 describe('qualification gate (honest availability)', () => {
-  it('records local-engine met for spelling+grammar and cloud-provider still unmet', () => {
+  it('records local-engine met for all four categories and cloud still unmet', () => {
     const local = milestone('local-engine');
     expect(local.status).toBe('met');
     expect(local.qualifiedAt).not.toBeNull();
-    expect(local.categories).toEqual(['spelling', 'grammar']);
+    expect(local.categories).toEqual(['spelling', 'grammar', 'story', 'logic']);
     expect(local.notes.length).toBeGreaterThan(20);
 
     const cloud = milestone('cloud-provider');
@@ -226,22 +226,19 @@ describe('qualification gate (honest availability)', () => {
     expect(cloud.notes.length).toBeGreaterThan(20);
   });
 
-  it('qualifies only spelling+grammar via the milestone, and never without an engine', () => {
-    expect(categoryAvailability('spelling')).toBe('available');
-    expect(categoryAvailability('grammar')).toBe('available');
-    expect(categoryAvailability('story')).toBe('engine_missing');
-    expect(categoryAvailability('logic')).toBe('engine_missing');
-    // A met milestone is not a claim: with no engine present nothing may be
-    // reported available, for any category.
+  it('qualifies all four categories via the milestone, and never without an engine', () => {
     for (const category of EDITORIAL_PLUGIN_CATEGORIES) {
+      expect(categoryAvailability(category)).toBe('available');
+      // A met milestone is not a claim: with no engine present nothing may be
+      // reported available, for any category.
       expect(isCategoryAvailable(category, false)).toBe(false);
     }
   });
 
-  it('composes the real milestone with the real adapter hasEngine() (A3 flip evidence)', async () => {
-    // Same-diff hasEngine() evidence required by plan 273's risk note: the
-    // flipped milestone may only read available when the LanguageTool adapter
-    // actually answers, and must fall back to engine_missing when it does not.
+  it('composes the real milestone with per-category hasEngine() (A3/B2 flip evidence)', async () => {
+    // Same-diff hasEngine() evidence required by plan 273's risk note: a
+    // qualified category may only read available when an engine that *serves
+    // that category* actually answers.
     const answered = createLanguageToolEditorialPlugin({
       fetchImpl: () => Promise.resolve(new Response(
         JSON.stringify({
@@ -254,12 +251,16 @@ describe('qualification gate (honest availability)', () => {
     }).capabilities.editorial;
     expect(await answered.probe()).toBe(true);
     expect(answered.hasEngine()).toBe(true);
-    expect(effectiveCategoryAvailability('spelling', { enginePresent: answered.hasEngine() }))
-      .toBe('available');
-    expect(effectiveCategoryAvailability('grammar', { enginePresent: answered.hasEngine() }))
-      .toBe('available');
-    expect(effectiveCategoryAvailability('story', { enginePresent: answered.hasEngine() }))
-      .toBe('engine_missing');
+
+    // LanguageTool serves spelling+grammar only, so it is offered as the engine
+    // for exactly those two categories.
+    const perCategory = { spelling: true, grammar: true, story: false, logic: false };
+    expect(effectiveCategoryAvailability('spelling', { enginePresent: perCategory })).toBe('available');
+    expect(effectiveCategoryAvailability('grammar', { enginePresent: perCategory })).toBe('available');
+    // The B2 trap: the milestone now qualifies story/logic, but LanguageTool
+    // cannot answer them, so they must still read engine_missing.
+    expect(effectiveCategoryAvailability('story', { enginePresent: perCategory })).toBe('engine_missing');
+    expect(effectiveCategoryAvailability('logic', { enginePresent: perCategory })).toBe('engine_missing');
 
     const down = createLanguageToolEditorialPlugin({
       fetchImpl: () => Promise.reject(new TypeError('fetch failed')),
@@ -348,26 +349,43 @@ describe('engine-less editorial plugin', () => {
   });
 });
 
-describe('engine-quality properties after the local-engine flip', () => {
+describe('engine-quality properties after the local-engine flips', () => {
   // ADR-999 §3 properties that only a real engine run can judge. Properties
-  // 1/2/4/8 now have real-engine evidence on the pinned corpus: harness
-  // `scripts/dev/languagetool.sh corpus` 6/6 PASS plus the adapter live suite
-  // (`languagetool-editorial.live.test.ts`, E2E_LIVE=1) 6/6 — items 1/2/4/8
-  // respectively, recorded in plans/273 (A1/A2/A3). Property 5 belongs to
-  // corpus item 5 (story/logic, B-track): no real engine has judged it, so it
-  // stays visible debt until GOAP-273 B2.
-  const deferred = [
-    'insufficient context yields a question, not a verdict (property 5, corpus item 5 — B-track)',
-  ];
+  // 1/2/4/8 have real-engine evidence from A1/A2/A3 (LanguageTool, pinned
+  // corpus, 6/6). Property 5 (corpus item 5, story/logic) was deferred until
+  // the B-track run and is now satisfied: GOAP-273 B2 ran items 3/5 4/4 live on
+  // a quantized model, recorded in plans/273. `deferred` is therefore empty,
+  // and asserting that keeps the debt visibly closed rather than forgotten.
+  const deferred: string[] = [];
 
-  it('keeps story/logic out of every milestone', () => {
-    for (const entry of QUALIFICATION_MILESTONES) {
-      expect(entry.categories).not.toContain('story');
-      expect(entry.categories).not.toContain('logic');
+  it('qualifies story/logic locally only with B2 evidence on the milestone', () => {
+    const storyLogic = QUALIFICATION_MILESTONES.filter(
+      (entry) => entry.categories.includes('story') || entry.categories.includes('logic'),
+    );
+    expect(storyLogic).toHaveLength(1);
+    const [entry] = storyLogic;
+    expect(entry?.id).toBe('local-engine');
+    expect(entry?.status).toBe('met');
+    // The flip is reporting-only, so it must carry evidence, not just a flag.
+    expect(entry?.notes).toContain('B2');
+    expect(entry?.notes).toMatch(/corpus items 3\/5/);
+    // And it must not claim more coverage than was actually measured.
+    expect(entry?.notes).toContain('NOT WebGPU-measured');
+  });
+
+  it('keeps cloud unqualified — no provider is selected', () => {
+    expect(milestone('cloud-provider').status).toBe('unmet');
+    expect(milestone('cloud-provider').categories).toEqual([]);
+  });
+
+  it('still refuses every category when no engine is present', () => {
+    // The flip must not make availability follow from the milestone alone.
+    for (const category of ['spelling', 'grammar', 'story', 'logic'] as const) {
+      expect(effectiveCategoryAvailability(category, { enginePresent: false })).toBe('engine_missing');
     }
   });
 
-  it('defers exactly the story/logic-scoped property until the B-track run', () => {
-    expect(deferred).toHaveLength(1);
+  it('defers nothing now that the B-track run has happened', () => {
+    expect(deferred).toHaveLength(0);
   });
 });

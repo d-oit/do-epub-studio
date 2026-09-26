@@ -391,11 +391,15 @@ describe('qualification composition (milestone + hasEngine)', () => {
         milestones: [localMilestone(['story']), CLOUD_UNMET],
       }),
     ).toBe('available');
-    // The real milestone record lists only spelling+grammar (A3): a loaded
-    // story engine alone keeps story/logic at engine_missing until B2.
+    // The engine alone is not a claim: against a milestone that does NOT cover
+    // story, a loaded story engine still reports engine_missing. (B2 now records
+    // a real story/logic milestone, so "the real record does not cover story" is
+    // no longer true — the rule is pinned with an explicit unmet milestone
+    // instead, which is what this assertion is actually about.)
     expect(
       effectiveCategoryAvailability('story', {
         enginePresent: plugin.capabilities.editorial.hasEngine(),
+        milestones: [localMilestone(['spelling', 'grammar']), CLOUD_UNMET],
       }),
     ).toBe('engine_missing');
   });

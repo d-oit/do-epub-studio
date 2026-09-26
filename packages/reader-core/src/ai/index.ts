@@ -82,6 +82,9 @@ export type {
   LanguageToolEditorialPluginOptions,
 } from './plugins/languagetool-editorial';
 export {
+// Upstream's `transformers-editorial` (device/dtype resolution, load progress)
+// and this branch's `story-logic-editorial` (grounded finding mapping, trust
+// boundary) are additive, so both export surfaces are kept.
   createTransformersEditorialPlugin,
   resolveInferenceDevice,
   TRANSFORMERS_EDITORIAL_CATEGORIES,
@@ -103,6 +106,19 @@ export type {
   TransformersDevice,
   TransformersDtype,
 } from './plugins/transformers-editorial-format';
+export {
+  createStoryLogicEditorialPlugin,
+  STORY_LOGIC_DTYPES,
+  STORY_LOGIC_EDITORIAL_CATEGORIES,
+} from './plugins/story-logic-editorial';
+export { extractJsonObject } from './plugins/story-logic-json';
+export type {
+  StoryLogicEditorialCapability,
+  StoryLogicEditorialPlugin,
+  StoryLogicEditorialPluginOptions,
+  StoryLogicEvidence,
+  TransformersPipelineLike,
+} from './plugins/story-logic-editorial';
 export type {
   EditorialReviewCapability,
   EditorialReviewRequest,

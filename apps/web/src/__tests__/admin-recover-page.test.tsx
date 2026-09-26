@@ -1,6 +1,6 @@
 /* biome-ignore-all lint/correctness/useQwikValidLexicalScope: this project uses React, not Qwik */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { AdminRecoverPage } from '../features/admin/AdminRecoverPage';
@@ -390,7 +390,12 @@ describe('AdminRecoverPage', () => {
       const button = screen.getByRole('button', { name: 'Resetting...' });
       expect(button).toBeDisabled();
 
-      resolveVerify();
+      // Let the verify request's continuation (state + navigation) settle
+      // inside act(); otherwise it lands after the test body and React warns.
+      await act(async () => {
+        resolveVerify();
+        await Promise.resolve();
+      });
     });
   });
 

@@ -443,54 +443,75 @@ describe('ReaderToolbar', () => {
     expect(screen.getAllByText('Sign Out').length).toBeGreaterThanOrEqual(1);
   });
 
-  it('ArrowDown moves focus to next menuitem in overflow menu', () => {
-    render(<ReaderToolbar {...mockProps} />);
+  // The overflow menu autofocuses its first item in a `requestAnimationFrame`
+  // after opening, so every test here re-queries `menuitem`s *after* the act
+  // flush. Capturing them earlier yields node references from a tree React has
+  // already replaced — the keydown handler then measures `idx === -1` and moves
+  // focus one position off the intended target.
+  const openOverflowMenu = async () => {
+    await act(async () => {
+      render(<ReaderToolbar {...mockProps} />);
+      await Promise.resolve();
+    });
     const menuButton = screen.getByLabelText('More Options');
-    fireEvent.click(menuButton);
+    await act(async () => {
+      fireEvent.click(menuButton);
+      // Opening schedules a `requestAnimationFrame` that autofocuses the first
+      // menuitem. Await a real frame so that focus is settled *before* each
+      // test picks an item — otherwise it lands mid-test and the keydown
+      // handler measures the wrong index.
+      await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
+    });
+    return screen.getByRole('menu');
+  };
 
-    const menuItems = screen.getAllByRole('menuitem');
-    expect(menuItems.length).toBeGreaterThan(1);
+  const menuItemsOf = (menu: HTMLElement) =>
+    Array.from(menu.querySelectorAll<HTMLElement>('[role="menuitem"]'));
+
+  it('ArrowDown moves focus to next menuitem in overflow menu', async () => {
+    const menu = await openOverflowMenu();
+    const items = menuItemsOf(menu);
+    expect(items.length).toBeGreaterThan(1);
 
     // Focus first menuitem, fire ArrowDown → should move to second
-    menuItems[0].focus();
-    const menuContainer = menuItems[0].closest('[role="menu"]') as HTMLElement;
-    fireEvent.keyDown(menuContainer, { key: 'ArrowDown' });
-    expect(document.activeElement).toBe(menuItems[1]);
+    items[0].focus();
+    await act(async () => {
+      fireEvent.keyDown(menu, { key: 'ArrowDown' });
+      await Promise.resolve();
+    });
+    expect(document.activeElement).toBe(items[1]);
   });
 
-  it('ArrowUp wraps to last menuitem from first', () => {
-    render(<ReaderToolbar {...mockProps} />);
-    const menuButton = screen.getByLabelText('More Options');
-    fireEvent.click(menuButton);
-
-    const menuItems = screen.getAllByRole('menuitem');
-    menuItems[0].focus();
-    const menuContainer = menuItems[0].closest('[role="menu"]') as HTMLElement;
-    fireEvent.keyDown(menuContainer, { key: 'ArrowUp' });
-    expect(document.activeElement).toBe(menuItems[menuItems.length - 1]);
+  it('ArrowUp wraps to last menuitem from first', async () => {
+    const menu = await openOverflowMenu();
+    const items = menuItemsOf(menu);
+    items[0].focus();
+    await act(async () => {
+      fireEvent.keyDown(menu, { key: 'ArrowUp' });
+      await Promise.resolve();
+    });
+    expect(document.activeElement).toBe(items[items.length - 1]);
   });
 
-  it('Home moves focus to first menuitem', () => {
-    render(<ReaderToolbar {...mockProps} />);
-    const menuButton = screen.getByLabelText('More Options');
-    fireEvent.click(menuButton);
-
-    const menuItems = screen.getAllByRole('menuitem');
-    menuItems[menuItems.length - 1].focus();
-    const menuContainer = menuItems[0].closest('[role="menu"]') as HTMLElement;
-    fireEvent.keyDown(menuContainer, { key: 'Home' });
-    expect(document.activeElement).toBe(menuItems[0]);
+  it('Home moves focus to first menuitem', async () => {
+    const menu = await openOverflowMenu();
+    const items = menuItemsOf(menu);
+    items[items.length - 1].focus();
+    await act(async () => {
+      fireEvent.keyDown(menu, { key: 'Home' });
+      await Promise.resolve();
+    });
+    expect(document.activeElement).toBe(items[0]);
   });
 
-  it('End moves focus to last menuitem', () => {
-    render(<ReaderToolbar {...mockProps} />);
-    const menuButton = screen.getByLabelText('More Options');
-    fireEvent.click(menuButton);
-
-    const menuItems = screen.getAllByRole('menuitem');
-    menuItems[0].focus();
-    const menuContainer = menuItems[0].closest('[role="menu"]') as HTMLElement;
-    fireEvent.keyDown(menuContainer, { key: 'End' });
-    expect(document.activeElement).toBe(menuItems[menuItems.length - 1]);
+  it('End moves focus to last menuitem', async () => {
+    const menu = await openOverflowMenu();
+    const items = menuItemsOf(menu);
+    items[0].focus();
+    await act(async () => {
+      fireEvent.keyDown(menu, { key: 'End' });
+      await Promise.resolve();
+    });
+    expect(document.activeElement).toBe(items[items.length - 1]);
   });
 });

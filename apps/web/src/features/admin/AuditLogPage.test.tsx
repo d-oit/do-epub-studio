@@ -94,10 +94,12 @@ describe('AdminAuditPage', () => {
     expect(screen.getByText('admin.audit.paginationInfo')).toBeInTheDocument();
   });
 
-  it('renders filter controls', () => {
+  it('renders filter controls', async () => {
     vi.mocked(apiRequest).mockResolvedValue({ entries: [], total: 0 });
 
-    render(<MemoryRouter><AdminAuditPage /></MemoryRouter>);
+    // The page suspends on its first fetch; a synchronous `render` leaves that
+    // resolution outside act, so use the shared settling helper.
+    await renderAndFlush();
     expect(screen.getByLabelText('admin.audit.entityType')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('admin.audit.filterByEntityId')).toBeInTheDocument();
     expect(screen.getByLabelText('admin.audit.dateFrom')).toBeInTheDocument();
