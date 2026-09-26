@@ -97,6 +97,9 @@ ALLOWED_SHAS=(
     "github/codeql-action/analyze@1c5b675653bb5c22dbe9b12b556ec555138e09fd"
     "github/codeql-action/upload-sarif@1c5b675653bb5c22dbe9b12b556ec555138e09fd"
     "chromaui/action@bb3b582719a93c1828c5e520e62992b2937d7889"
+# Appended 2026-09-26 by scripts/allowlist-dependabot-shas.sh — verified against upstream annotated tags (ADR-247)
+    "cloudflare/wrangler-action@25853364521e0d392ece9b0c1e97a4b37b638087"
+    "chromaui/action@6b3c2820222d23bad770d57a4ad5e2d1c91f92e9"
 )
 
 # Function to check if an action@sha is allowed
