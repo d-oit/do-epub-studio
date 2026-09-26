@@ -95,7 +95,15 @@ export async function verifyResetToken(
   | { ok: false; reason: 'invalid' | 'expired' | 'used' | 'purpose' }
 > {
   const tokenHash = await hashToken(rawToken);
-  const row = await queryFirst<{ id: string; email: string | null; user_id: string | null; purpose: string; expires_at: string; used_at: string | null; attempt_count: number }>(
+  const row = await queryFirst<{
+    id: string;
+    email: string | null;
+    user_id: string | null;
+    purpose: string;
+    expires_at: string;
+    used_at: string | null;
+    attempt_count: number;
+  }>(
     env,
     `SELECT id, email, user_id, purpose, expires_at, used_at, attempt_count
      FROM password_reset_tokens
@@ -137,7 +145,9 @@ export async function bumpResetTokenAttempt(env: Env, tokenId: string): Promise<
 export async function claimResetToken(env: Env, tokenId: string): Promise<boolean> {
   const res = await env.DB.prepare(
     `UPDATE password_reset_tokens SET used_at = datetime('now') WHERE id = ? AND used_at IS NULL`,
-  ).bind(tokenId).run();
+  )
+    .bind(tokenId)
+    .run();
   return (res.meta?.changes ?? 0) > 0;
 }
 

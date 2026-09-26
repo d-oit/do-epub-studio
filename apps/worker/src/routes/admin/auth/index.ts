@@ -7,7 +7,13 @@ import { registerAccount } from './account';
 import { registerMfa } from './mfa';
 import type { AuthApp } from './types';
 
-const authRouter: AuthApp = new Hono<{ Bindings: Env; Variables: { requestContext: RequestContext; adminUser: { email: string; id: string; role: string } } }>();
+const authRouter: AuthApp = new Hono<{
+  Bindings: Env;
+  Variables: {
+    requestContext: RequestContext;
+    adminUser: { email: string; id: string; role: string };
+  };
+}>();
 
 registerLogin(authRouter);
 registerRecovery(authRouter);

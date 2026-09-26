@@ -19,7 +19,14 @@ import type { Env } from '../lib/env';
 import type { RateLimiterDO } from '../lib/rate-limiter-do';
 
 // Mirrors the private SessionRow shape in auth/session.ts
-type SessionLike = { id: string; book_id: string; email: string; session_token_hash: string; expires_at: string; revoked_at: string | null };
+type SessionLike = {
+  id: string;
+  book_id: string;
+  email: string;
+  session_token_hash: string;
+  expires_at: string;
+  revoked_at: string | null;
+};
 
 function makeEnv(): Env {
   return {
@@ -32,9 +39,16 @@ function makeEnv(): Env {
       delete: () => Promise.resolve(undefined),
       list: () => Promise.resolve({ objects: [], truncated: false, delimitedPrefixes: [] }),
     },
-    DB: { prepare: vi.fn().mockReturnThis(), bind: vi.fn().mockReturnThis(), all: vi.fn().mockResolvedValue({ results: [] }) } as unknown as D1Database,
+    DB: {
+      prepare: vi.fn().mockReturnThis(),
+      bind: vi.fn().mockReturnThis(),
+      all: vi.fn().mockResolvedValue({ results: [] }),
+    } as unknown as D1Database,
     SENDER_EMAIL: {} as unknown as SendEmail,
-    CACHE_KV: { get: vi.fn().mockResolvedValue(null), put: vi.fn().mockResolvedValue(undefined) } as unknown as KVNamespace,
+    CACHE_KV: {
+      get: vi.fn().mockResolvedValue(null),
+      put: vi.fn().mockResolvedValue(undefined),
+    } as unknown as KVNamespace,
     TURSO_DATABASE_URL: 'file::memory:',
     TURSO_AUTH_TOKEN: 'test-token',
     SESSION_SIGNING_SECRET: 'test-secret',
@@ -47,7 +61,8 @@ function makeEnv(): Env {
       get: vi.fn().mockReturnValue({
         fetch: vi.fn().mockResolvedValue({
           ok: true,
-          json: () => Promise.resolve({ allowed: true, remaining: 99, resetAt: Date.now() + 60000 }),
+          json: () =>
+            Promise.resolve({ allowed: true, remaining: 99, resetAt: Date.now() + 60000 }),
         }),
       }),
     } as unknown as DurableObjectNamespace<RateLimiterDO>,

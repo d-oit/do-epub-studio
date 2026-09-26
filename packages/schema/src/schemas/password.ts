@@ -33,10 +33,7 @@ export const PasswordSchema = z
   .max(128, 'Password must be at most 128 characters')
   .refine((pw) => pw.trim().length > 0, 'Password cannot be blank')
   .refine((pw) => !/^(.)\1{7,}$/.test(pw), 'Password is too simple')
-  .refine(
-    (pw) => KNOWN_WEAK_PASSWORDS[pw.toLowerCase()] !== true,
-    'Password is too common/weak',
-  );
+  .refine((pw) => KNOWN_WEAK_PASSWORDS[pw.toLowerCase()] !== true, 'Password is too common/weak');
 
 export type Password = z.infer<typeof PasswordSchema>;
 

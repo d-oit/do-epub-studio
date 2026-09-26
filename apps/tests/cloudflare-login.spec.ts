@@ -76,7 +76,9 @@ test.describe('Cloudflare reader login', () => {
     const toggleBox = await toggle.boundingBox();
     expect(passwordBox).not.toBeNull();
     expect(toggleBox).not.toBeNull();
-    expect(toggleBox!.x + toggleBox!.width / 2).toBeGreaterThan(passwordBox!.x + passwordBox!.width / 2);
+    expect(toggleBox!.x + toggleBox!.width / 2).toBeGreaterThan(
+      passwordBox!.x + passwordBox!.width / 2,
+    );
 
     // Click toggle — should show password
     await toggle.click();
@@ -99,7 +101,9 @@ test.describe('Cloudflare reader login', () => {
     await expect(page).toHaveURL(new RegExp(`/read/${READER.bookSlug}`), { timeout: 20000 });
 
     // Reader should be visible
-    await expect(page.locator('[data-container-name="reader-toolbar"]')).toBeVisible({ timeout: 30000 });
+    await expect(page.locator('[data-container-name="reader-toolbar"]')).toBeVisible({
+      timeout: 30000,
+    });
   });
 
   test('shows error for invalid credentials against Cloudflare', async ({ page }) => {

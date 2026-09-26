@@ -118,8 +118,18 @@ for file in "${WORKFLOW_FILES[@]}"; do
 
     # 1. Check YAML syntax
     if [ "$YAML_VALIDATOR" == "yamllint" ]; then
-        # Disable 'truthy' rule because 'on:' is incorrectly flagged as a boolean
-        if ! yamllint -d "{extends: default, rules: {line-length: disable, document-start: disable, truthy: disable}}" "$file"; then
+        # Disabled rules, each for a stated reason:
+        #  - truthy: 'on:' is a YAML 1.1 boolean, not a mistake.
+        #  - line-length / document-start: cosmetic; ADR-247 pins long `uses:` lines.
+        #  - comments: requires TWO spaces before an inline `#`. Prettier's YAML
+        #    printer always emits exactly one, so on a formatted repo this rule
+        #    warns on all 74 `uses: <action>@<sha> # vX.Y.Z` version comments
+        #    across 14 workflows, and quality_gate.sh's zero-warning policy then
+        #    fails the build. The two tools cannot both be satisfied — verified
+        #    that prettier rewrites a two-space comment back to one — so the
+        #    rule is off here and prettier owns YAML formatting. Spelling and
+        #    structural checks stay on.
+        if ! yamllint -d "{extends: default, rules: {line-length: disable, document-start: disable, truthy: disable, comments: disable}}" "$file"; then
             printf '%s  ✗ YAML syntax errors (yamllint): %s%s\n' "${RED}" "$file" "${NC}"
             FILE_FAILED=1
         fi

@@ -28,7 +28,7 @@ VitePWA({
   strategies: 'injectManifest',
   injectManifest: { rollupFormat: 'iife' },
   // ...
-})
+});
 ```
 
 Rationale:

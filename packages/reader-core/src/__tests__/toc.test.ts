@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  flattenToc,
-  findTocItemByHref,
-  getTocPath,
-  buildTocHierarchy,
-} from '../toc';
+import { flattenToc, findTocItemByHref, getTocPath, buildTocHierarchy } from '../toc';
 import type { TocItem } from '../epub-types';
 
 describe('flattenToc', () => {
@@ -34,12 +29,7 @@ describe('flattenToc', () => {
     ];
     const result = flattenToc(toc);
     expect(result).toHaveLength(4);
-    expect(result.map((i) => i.label)).toEqual([
-      'Part 1',
-      'Chapter 1A',
-      'Chapter 1B',
-      'Part 2',
-    ]);
+    expect(result.map((i) => i.label)).toEqual(['Part 1', 'Chapter 1A', 'Chapter 1B', 'Part 2']);
   });
 
   it('handles deeply nested toc', () => {
@@ -53,20 +43,14 @@ describe('flattenToc', () => {
             id: '1a',
             label: 'Chapter 1A',
             href: 'chap1a.xhtml',
-            subitems: [
-              { id: '1a-1', label: 'Section 1A-1', href: 'sec1a1.xhtml' },
-            ],
+            subitems: [{ id: '1a-1', label: 'Section 1A-1', href: 'sec1a1.xhtml' }],
           },
         ],
       },
     ];
     const result = flattenToc(toc);
     expect(result).toHaveLength(3);
-    expect(result.map((i) => i.label)).toEqual([
-      'Part 1',
-      'Chapter 1A',
-      'Section 1A-1',
-    ]);
+    expect(result.map((i) => i.label)).toEqual(['Part 1', 'Chapter 1A', 'Section 1A-1']);
   });
 
   it('returns empty array for empty toc', () => {
@@ -91,9 +75,7 @@ describe('findTocItemByHref', () => {
         id: '1',
         label: 'Part 1',
         href: 'part1.xhtml',
-        subitems: [
-          { id: '1a', label: 'Chapter 1A', href: 'chap1a.xhtml' },
-        ],
+        subitems: [{ id: '1a', label: 'Chapter 1A', href: 'chap1a.xhtml' }],
       },
     ];
     const result = findTocItemByHref(toc, 'chap1a.xhtml');
@@ -102,9 +84,7 @@ describe('findTocItemByHref', () => {
   });
 
   it('returns null for non-existent href', () => {
-    const toc: TocItem[] = [
-      { id: '1', label: 'Chapter 1', href: 'chap1.xhtml' },
-    ];
+    const toc: TocItem[] = [{ id: '1', label: 'Chapter 1', href: 'chap1.xhtml' }];
     const result = findTocItemByHref(toc, 'nonexistent.xhtml');
     expect(result).toBeNull();
   });
@@ -119,9 +99,7 @@ describe('findTocItemByHref', () => {
         id: '1',
         label: 'Part 1',
         href: 'part1.xhtml',
-        subitems: [
-          { id: '1a', label: 'Chapter 1A', href: 'chap1a.xhtml' },
-        ],
+        subitems: [{ id: '1a', label: 'Chapter 1A', href: 'chap1a.xhtml' }],
       },
     ];
     const result = findTocItemByHref(toc, 'part1.xhtml');
@@ -147,9 +125,7 @@ describe('getTocPath', () => {
         id: '1',
         label: 'Part 1',
         href: 'part1.xhtml',
-        subitems: [
-          { id: '1a', label: 'Chapter 1A', href: 'chap1a.xhtml' },
-        ],
+        subitems: [{ id: '1a', label: 'Chapter 1A', href: 'chap1a.xhtml' }],
       },
     ];
     const path = getTocPath(toc, 'chap1a.xhtml');
@@ -159,9 +135,7 @@ describe('getTocPath', () => {
   });
 
   it('returns empty path for non-existent href', () => {
-    const toc: TocItem[] = [
-      { id: '1', label: 'Chapter 1', href: 'chap1.xhtml' },
-    ];
+    const toc: TocItem[] = [{ id: '1', label: 'Chapter 1', href: 'chap1.xhtml' }];
     const path = getTocPath(toc, 'nonexistent.xhtml');
     expect(path).toHaveLength(0);
   });
@@ -181,20 +155,14 @@ describe('getTocPath', () => {
             id: '1a',
             label: 'Chapter 1A',
             href: 'chap1a.xhtml',
-            subitems: [
-              { id: '1a-1', label: 'Section 1A-1', href: 'sec1a1.xhtml' },
-            ],
+            subitems: [{ id: '1a-1', label: 'Section 1A-1', href: 'sec1a1.xhtml' }],
           },
         ],
       },
     ];
     const path = getTocPath(toc, 'sec1a1.xhtml');
     expect(path).toHaveLength(3);
-    expect(path.map((i) => i.label)).toEqual([
-      'Part 1',
-      'Chapter 1A',
-      'Section 1A-1',
-    ]);
+    expect(path.map((i) => i.label)).toEqual(['Part 1', 'Chapter 1A', 'Section 1A-1']);
   });
 });
 
@@ -238,9 +206,7 @@ describe('buildTocHierarchy', () => {
   });
 
   it('defaults level to 0', () => {
-    const items = [
-      { label: 'Chapter 1', href: 'chap1.xhtml' },
-    ];
+    const items = [{ label: 'Chapter 1', href: 'chap1.xhtml' }];
     const result = buildTocHierarchy(items);
     expect(result).toHaveLength(1);
     expect(result[0]?.label).toBe('Chapter 1');

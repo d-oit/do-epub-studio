@@ -30,14 +30,14 @@ entry-count limit, compression-ratio check, path-traversal rejection.
 
 ## Acceptance → Evidence
 
-| Acceptance (issue body) | Test / file |
-|---|---|
-| ZIP bombs rejected before decompression | `archive-validator.test.ts` — "rejects high compression ratios (potential ZIP bomb)" |
-| Path traversal entries rejected | same — "rejects … `../` …", "rejects absolute paths starting with /" |
-| Unreasonable compression ratios rejected | same — ratio test |
-| File size limits enforced | same — "rejects an archive that exceeds max compressed size" |
-| Entry count / total size | `epub-parser.worker.test.ts` — "too many entries", "total uncompressed size exceeds limit", "No entries found" |
-| Timeout | `archive-validator-timeout.test.ts` |
+| Acceptance (issue body)                  | Test / file                                                                                                    |
+| ---------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| ZIP bombs rejected before decompression  | `archive-validator.test.ts` — "rejects high compression ratios (potential ZIP bomb)"                           |
+| Path traversal entries rejected          | same — "rejects … `../` …", "rejects absolute paths starting with /"                                           |
+| Unreasonable compression ratios rejected | same — ratio test                                                                                              |
+| File size limits enforced                | same — "rejects an archive that exceeds max compressed size"                                                   |
+| Entry count / total size                 | `epub-parser.worker.test.ts` — "too many entries", "total uncompressed size exceeds limit", "No entries found" |
+| Timeout                                  | `archive-validator-timeout.test.ts`                                                                            |
 
 Verification run: `pnpm exec vitest run packages/reader-core` (sprint baseline, 2026-08-29).
 

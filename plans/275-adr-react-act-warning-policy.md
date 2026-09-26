@@ -11,10 +11,10 @@ Vitest's default reporter prints no `stderr` blocks for passing test files, so
 React's development warnings (`act(...)`, missing `key`, unknown DOM props) are
 invisible in the gate and in CI. Measured on one revision of `apps/web`:
 
-| Invocation | `stderr` blocks |
-|------------|----------------:|
-| `pnpm exec vitest run` (default reporter) | 0 |
-| `pnpm exec vitest run --reporter=verbose --silent=false` | 61 |
+| Invocation                                               | `stderr` blocks |
+| -------------------------------------------------------- | --------------: |
+| `pnpm exec vitest run` (default reporter)                |               0 |
+| `pnpm exec vitest run --reporter=verbose --silent=false` |              61 |
 
 That gap let ~114 `act(...)` warnings accumulate across 12 files while every
 check stayed green. Each warning is a real signal: React emits it when a
@@ -58,7 +58,7 @@ asserts before the behaviour it claims to verify has settled.
   loop; the Phase-2 guard gives the same coverage without the noise, and it runs
   in every `test:unit` invocation (local, gate, CI) because it is wired through
   the web test setup rather than a separate CI step.
-- A file that emits a tracked warning *only* under load fails when it does — the
+- A file that emits a tracked warning _only_ under load fails when it does — the
   strictness is intentional, and the remedy is a GOAP-275 inventory entry, not a
   retry. Three run shapes (default ×2, `--coverage`) were green when the sensor
   landed, so the current inventory is complete for this revision.

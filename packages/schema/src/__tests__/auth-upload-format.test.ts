@@ -60,25 +60,23 @@ describe('UploadCompleteSchema', () => {
   });
 
   it('rejects empty storageKey', () => {
-    expect(() => UploadCompleteSchema.parse({ storageKey: '', originalFilename: 'file.epub' })).toThrow();
+    expect(() =>
+      UploadCompleteSchema.parse({ storageKey: '', originalFilename: 'file.epub' }),
+    ).toThrow();
   });
 });
 
 describe('formatZodError', () => {
   it('formats error with path', () => {
     const error = {
-      issues: [
-        { path: ['email'], message: 'Invalid email' },
-      ],
+      issues: [{ path: ['email'], message: 'Invalid email' }],
     };
     expect(formatZodError(error)).toBe('email: Invalid email');
   });
 
   it('formats error without path', () => {
     const error = {
-      issues: [
-        { path: [], message: 'Required' },
-      ],
+      issues: [{ path: [], message: 'Required' }],
     };
     expect(formatZodError(error)).toBe('Required');
   });
@@ -95,9 +93,7 @@ describe('formatZodError', () => {
 
   it('formats nested path', () => {
     const error = {
-      issues: [
-        { path: ['user', 'email'], message: 'Invalid' },
-      ],
+      issues: [{ path: ['user', 'email'], message: 'Invalid' }],
     };
     expect(formatZodError(error)).toBe('user.email: Invalid');
   });

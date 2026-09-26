@@ -26,7 +26,7 @@ interface ErrorBoundaryState {
 export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   public state: ErrorBoundaryState = {
     hasError: false,
-    isRetrying: false
+    isRetrying: false,
   };
 
   public static getDerivedStateFromError(error: Error): Partial<ErrorBoundaryState> {
@@ -43,7 +43,9 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       error: { name: error.name, message: error.message, stack: error.stack },
       metadata: { componentStack: errorInfo.componentStack },
     });
-    Sentry.captureException(error, { extra: { componentStack: errorInfo.componentStack, traceId } });
+    Sentry.captureException(error, {
+      extra: { componentStack: errorInfo.componentStack, traceId },
+    });
     this.props.onCatch?.(error, errorInfo, traceId);
   }
 
@@ -67,7 +69,12 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
             <Card className="glass-panel p-8 space-y-6 shadow-glass-lg border-accent-error/20">
               <div className="w-16 h-16 bg-accent-error/10 text-accent-error rounded-full flex items-center justify-center mx-auto mb-2">
                 <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                  />
                 </svg>
               </div>
 
@@ -77,14 +84,21 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                   {this.props.translations?.heading ?? 'Something went wrong'}
                 </h1>
                 <p className="text-sm text-foreground-muted leading-relaxed">
-                  {/* eslint-disable-next-line i18next/no-literal-string -- class component fallback; parent passes translations prop */}
-                  {this.props.translations?.description ?? 'An unexpected error occurred. You can try to reload the component or contact support with the ID below.'}
+                  {/* eslint-disable i18next/no-literal-string -- class component fallback; parent passes translations prop. Block form: prettier decides where the `??` fallback wraps, so a per-line disable cannot survive a reformat. */}
+                  {this.props.translations?.description ??
+                    'An unexpected error occurred. You can try to reload the component or contact support with the ID below.'}
+                  {/* eslint-enable i18next/no-literal-string */}
                 </p>
               </div>
 
               <div className="bg-background-secondary rounded-lg p-3 border border-border">
-                <p className="text-[10px] font-mono text-foreground-muted uppercase tracking-wider mb-1">{/* eslint-disable-line i18next/no-literal-string -- technical label, not user-facing prose */}Trace ID</p>
-                <code className="text-xs font-mono text-accent select-all">{this.state.traceId}</code>
+                <p className="text-[10px] font-mono text-foreground-muted uppercase tracking-wider mb-1">
+                  {/* eslint-disable-line i18next/no-literal-string -- technical label, not user-facing prose */}
+                  Trace ID
+                </p>
+                <code className="text-xs font-mono text-accent select-all">
+                  {this.state.traceId}
+                </code>
               </div>
 
               <div className="pt-4 flex flex-col gap-3">
@@ -93,8 +107,11 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                   disabled={this.state.isRetrying}
                   className="w-full"
                 >
-                  {/* eslint-disable-next-line i18next/no-literal-string -- class component fallback; parent passes translations prop */}
-                  {this.state.isRetrying ? 'Retrying...' : (this.props.translations?.retry ?? 'Try Again')}
+                  {/* eslint-disable i18next/no-literal-string -- class component fallback; parent passes translations prop. Block form: the three literals sit on different lines of one ternary, and prettier chooses where the line breaks, so per-line disables cannot survive a reformat. */}
+                  {this.state.isRetrying
+                    ? 'Retrying...'
+                    : (this.props.translations?.retry ?? 'Try Again')}
+                  {/* eslint-enable i18next/no-literal-string */}
                 </Button>
                 <Button
                   variant="ghost"

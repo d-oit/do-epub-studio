@@ -11,24 +11,25 @@ Close all 12 gaps (G1-G12) identified in `plans/052-goap-codebase-gap-analysis.m
 
 ## Execution Summary
 
-| Gap | Priority | Area | Status | Fix |
-|-----|----------|------|--------|-----|
-| G1 | P0 | Admin auth token propagation | ✅ Merged | Added `sessionToken` from auth store to all `apiRequest` calls in BooksPage, GrantsPage, AuditLogPage |
-| G2 | P0 | Book create slug | ✅ Merged | Generate slug from title client-side before sending to Worker |
-| G3 | P0 | Grant contracts | ✅ Merged | Fixed mode values to match schema (`reader_only`/`editorial_review`/`private`); fixed revoke endpoint to `POST .../revoke`; added `bookId` to body |
-| G4 | P1 | Admin SPA routes | ✅ Merged | Fixed audit nav to `/admin/audit`; added no-bookId guard in GrantsPage |
-| G5 | P0 | CodeQL URL scheme | ✅ Merged | Replaced incomplete `startsWith` check with comprehensive URI scheme validator |
-| G6 | P0 | Dependency audit | ✅ Merged | Added `pnpm.overrides` for `serialize-javascript@^7.0.0`; updated lockfile |
-| G7 | P1 | Workflow validation hermetic | ✅ Merged | Removed system Python dependency; zizmor install via pip with break-system-packages fallback |
-| G8 | P1 | Scorecard pinning | ✅ Merged | Disabled `publish_results` until SHA verified from upstream repo |
-| G9 | P1 | Release metadata | ✅ Merged | Reconciled all workspace `package.json` versions to `0.1.0`; i18n key added |
-| G10 | P2 | README/SECURITY drift | ✅ Merged | Fixed "encrypted audit trails"→"auditable trails"; updated ADR links; fixed CSP sandbox description |
-| G11 | P2 | AGENTS.md formatting | ✅ Merged | Fixed duplicate numbered item (3→3.1); fixed malformed bold disclosure bullet |
-| G12 | P2 | Scripts docs drift | ✅ Merged | Fixed `validate-github-actions-shas.sh`→`validate-shas.sh` references |
+| Gap | Priority | Area                         | Status    | Fix                                                                                                                                                |
+| --- | -------- | ---------------------------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| G1  | P0       | Admin auth token propagation | ✅ Merged | Added `sessionToken` from auth store to all `apiRequest` calls in BooksPage, GrantsPage, AuditLogPage                                              |
+| G2  | P0       | Book create slug             | ✅ Merged | Generate slug from title client-side before sending to Worker                                                                                      |
+| G3  | P0       | Grant contracts              | ✅ Merged | Fixed mode values to match schema (`reader_only`/`editorial_review`/`private`); fixed revoke endpoint to `POST .../revoke`; added `bookId` to body |
+| G4  | P1       | Admin SPA routes             | ✅ Merged | Fixed audit nav to `/admin/audit`; added no-bookId guard in GrantsPage                                                                             |
+| G5  | P0       | CodeQL URL scheme            | ✅ Merged | Replaced incomplete `startsWith` check with comprehensive URI scheme validator                                                                     |
+| G6  | P0       | Dependency audit             | ✅ Merged | Added `pnpm.overrides` for `serialize-javascript@^7.0.0`; updated lockfile                                                                         |
+| G7  | P1       | Workflow validation hermetic | ✅ Merged | Removed system Python dependency; zizmor install via pip with break-system-packages fallback                                                       |
+| G8  | P1       | Scorecard pinning            | ✅ Merged | Disabled `publish_results` until SHA verified from upstream repo                                                                                   |
+| G9  | P1       | Release metadata             | ✅ Merged | Reconciled all workspace `package.json` versions to `0.1.0`; i18n key added                                                                        |
+| G10 | P2       | README/SECURITY drift        | ✅ Merged | Fixed "encrypted audit trails"→"auditable trails"; updated ADR links; fixed CSP sandbox description                                                |
+| G11 | P2       | AGENTS.md formatting         | ✅ Merged | Fixed duplicate numbered item (3→3.1); fixed malformed bold disclosure bullet                                                                      |
+| G12 | P2       | Scripts docs drift           | ✅ Merged | Fixed `validate-github-actions-shas.sh`→`validate-shas.sh` references                                                                              |
 
 ## Pre-existing CI Failures (Not Fixed, Not Caused by This PR)
 
 ### CI-1: SBOM Generation Fails
+
 - **File**: `.github/workflows/ci.yml:259`, `.github/workflows/release.yml:91`
 - **Error**: `@cyclonedx/cyclonedx-npm@4.2.1` detects dependency tree inconsistencies (extraneous/invalid/missing packages)
 - **Root Cause**: Dependency tree drift — pnpm workspace has extraneous packages in node_modules that weren't properly pruned. The cyclonedx-npm tool validates the full tree and fails on inconsistencies.
@@ -37,6 +38,7 @@ Close all 12 gaps (G1-G12) identified in `plans/052-goap-codebase-gap-analysis.m
 - **Severity**: Pre-existing (main branch also fails)
 
 ### CI-2: Visual Regression / Chromatic Fails Intermittently
+
 - **File**: `.github/workflows/visual-regression.yml`
 - **Error**: "Failed to publish your built Storybook" — TurboSnap disabled due to missing `preview-stats.json`
 - **Root Cause**: Chromatic action configuration missing `--webpack-stats-json` build flag. The `chromaui/action` expects stats file for TurboSnap optimization.
@@ -45,6 +47,7 @@ Close all 12 gaps (G1-G12) identified in `plans/052-goap-codebase-gap-analysis.m
 - **Severity**: Pre-existing (intermittent failure on main branch also)
 
 ### CI-3: OpenSSF Scorecard Publish Failure
+
 - **File**: `.github/workflows/scorecard.yml`
 - **Error**: `ossf/scorecard-action` SHA not recognized as belonging to the action repository
 - **Status**: Mitigated by disabling `publish_results` (G8 fix)
@@ -56,27 +59,27 @@ Close all 12 gaps (G1-G12) identified in `plans/052-goap-codebase-gap-analysis.m
 
 During CI debugging, the following pre-existing issues were also fixed:
 
-| File | Issue | Fix |
-|------|-------|-----|
-| `apps/web/tsconfig.json` | Trailing comma in JSON | Removed trailing comma |
-| `opencode.json` | Trailing comma in JSON | Removed trailing comma |
-| `scripts/lib/colors.sh` | Shellcheck SC2034 warnings | Added `export` to color variables |
-| `scripts/smart-update-pr.sh` | Shellcheck SC2221/SC2222 | Reordered glob patterns |
-| `plans/028-*.md` | Table column count mismatch | Added missing column header |
-| `plans/035-adr-content-security-policy.md` | List marker spacing | Fixed double space after markers |
-| `plans/033-*.md` | Table missing trailing pipe | Added trailing pipe |
-| `agents-docs/KNOWN-ISSUES-RESOLVED.md` | Heading increment | `###`→`##` |
-| `agents-docs/KNOWN-ISSUES.md` | Multiple blank lines | Removed extra blank line |
-| `agents-docs/LEARNINGS.md` | Multiple blank lines | Removed extra blank line |
-| `agents-docs/AVAILABLE_SKILLS.md` | Heading increment + blank lines | Fixed heading level, removed extra blank lines |
-| `plans/archive/011-*.md` | Multiple blank lines | Removed extra blank line |
-| `.agents/skills/github-pr-autopilot/scripts/autopilot.sh` | SC2034 unused var | Added shellcheck disable comment |
-| `apps/web/public/generate-icons.sh` | SC2034 unused var | Added shellcheck disable comment |
-| `scripts/atomic-commit/run.sh` | SC2034 unused var | Added shellcheck disable comment |
-| `scripts/atomic-commit/verify.sh` | SC2034 unused var | Added shellcheck disable comment |
-| `scripts/validate-commit-message.sh` | SC2034 unused var | Added shellcheck disable comment |
-| Various files | Trailing whitespace | 77 files fixed by pre-commit hook |
-| Various files | Missing EOF newlines | Auto-fixed by pre-commit hook |
+| File                                                      | Issue                           | Fix                                            |
+| --------------------------------------------------------- | ------------------------------- | ---------------------------------------------- |
+| `apps/web/tsconfig.json`                                  | Trailing comma in JSON          | Removed trailing comma                         |
+| `opencode.json`                                           | Trailing comma in JSON          | Removed trailing comma                         |
+| `scripts/lib/colors.sh`                                   | Shellcheck SC2034 warnings      | Added `export` to color variables              |
+| `scripts/smart-update-pr.sh`                              | Shellcheck SC2221/SC2222        | Reordered glob patterns                        |
+| `plans/028-*.md`                                          | Table column count mismatch     | Added missing column header                    |
+| `plans/035-adr-content-security-policy.md`                | List marker spacing             | Fixed double space after markers               |
+| `plans/033-*.md`                                          | Table missing trailing pipe     | Added trailing pipe                            |
+| `agents-docs/KNOWN-ISSUES-RESOLVED.md`                    | Heading increment               | `###`→`##`                                     |
+| `agents-docs/KNOWN-ISSUES.md`                             | Multiple blank lines            | Removed extra blank line                       |
+| `agents-docs/LEARNINGS.md`                                | Multiple blank lines            | Removed extra blank line                       |
+| `agents-docs/AVAILABLE_SKILLS.md`                         | Heading increment + blank lines | Fixed heading level, removed extra blank lines |
+| `plans/archive/011-*.md`                                  | Multiple blank lines            | Removed extra blank line                       |
+| `.agents/skills/github-pr-autopilot/scripts/autopilot.sh` | SC2034 unused var               | Added shellcheck disable comment               |
+| `apps/web/public/generate-icons.sh`                       | SC2034 unused var               | Added shellcheck disable comment               |
+| `scripts/atomic-commit/run.sh`                            | SC2034 unused var               | Added shellcheck disable comment               |
+| `scripts/atomic-commit/verify.sh`                         | SC2034 unused var               | Added shellcheck disable comment               |
+| `scripts/validate-commit-message.sh`                      | SC2034 unused var               | Added shellcheck disable comment               |
+| Various files                                             | Trailing whitespace             | 77 files fixed by pre-commit hook              |
+| Various files                                             | Missing EOF newlines            | Auto-fixed by pre-commit hook                  |
 
 ## Quality Gate Results
 

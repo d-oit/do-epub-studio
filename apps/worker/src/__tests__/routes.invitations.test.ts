@@ -42,7 +42,11 @@ function request(body: unknown = validBody): Request {
 describe('POST /api/access/accept-invite', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    checkRateLimitMock.mockResolvedValue({ allowed: true, remaining: 9, resetAt: Date.now() + 60_000 });
+    checkRateLimitMock.mockResolvedValue({
+      allowed: true,
+      remaining: 9,
+      resetAt: Date.now() + 60_000,
+    });
     mockHashToken.mockResolvedValue('hashed-token');
     acceptMock.mockResolvedValue({
       invitationId: 'invite-1',
@@ -81,7 +85,10 @@ describe('POST /api/access/accept-invite', () => {
       canExportNotes: true,
       canManageAccess: false,
     });
-    mockCreateSession.mockResolvedValue({ token: 'session-token', expiresAt: '2099-01-01T00:00:00.000Z' });
+    mockCreateSession.mockResolvedValue({
+      token: 'session-token',
+      expiresAt: '2099-01-01T00:00:00.000Z',
+    });
   });
 
   it('returns a reader session and book metadata after acceptance', async () => {
@@ -103,7 +110,9 @@ describe('POST /api/access/accept-invite', () => {
   });
 
   it('audits a denied acceptance without returning the token', async () => {
-    acceptMock.mockRejectedValue(new AppError('This invitation is invalid or expired', 'INVITATION_INVALID', 410));
+    acceptMock.mockRejectedValue(
+      new AppError('This invitation is invalid or expired', 'INVITATION_INVALID', 410),
+    );
     const response = await app.fetch(request(), env, ctx);
     expect(response.status).toBe(410);
     const text = await response.text();
@@ -116,7 +125,11 @@ describe('POST /api/access/accept-invite', () => {
   });
 
   it('fails closed when the acceptance rate limit denies the request', async () => {
-    checkRateLimitMock.mockResolvedValueOnce({ allowed: false, remaining: 0, resetAt: Date.now() + 60_000 });
+    checkRateLimitMock.mockResolvedValueOnce({
+      allowed: false,
+      remaining: 0,
+      resetAt: Date.now() + 60_000,
+    });
     const response = await app.fetch(request(), env, ctx);
     expect(response.status).toBe(429);
     expect(acceptMock).not.toHaveBeenCalled();

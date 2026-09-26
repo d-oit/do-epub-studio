@@ -9,7 +9,10 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(import.meta.dirname, './src'),
-      'virtual:pwa-register': path.resolve(import.meta.dirname, './src/__mocks__/virtual-pwa-register.ts'),
+      'virtual:pwa-register': path.resolve(
+        import.meta.dirname,
+        './src/__mocks__/virtual-pwa-register.ts',
+      ),
     },
   },
   // Vite-level server option (Vitest 4: `test.watch` is only a boolean);

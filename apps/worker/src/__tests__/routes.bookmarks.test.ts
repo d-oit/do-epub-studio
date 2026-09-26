@@ -63,16 +63,26 @@ describe('Bookmark Routes', () => {
     it('returns bookmarks when authenticated', async () => {
       mockRequireAuth.mockResolvedValue(authCtx);
       mockQueryAll.mockResolvedValue([
-        { id: 'bm-1', book_id: 'book-1', user_email: 'user@example.com', locator_json: '{"cfi":"epubcfi(/6/4)","selectedText":"test","chapterRef":"Ch1"}', label: 'Chapter 1', created_at: '2025-01-01T00:00:00Z' },
+        {
+          id: 'bm-1',
+          book_id: 'book-1',
+          user_email: 'user@example.com',
+          locator_json: '{"cfi":"epubcfi(/6/4)","selectedText":"test","chapterRef":"Ch1"}',
+          label: 'Chapter 1',
+          created_at: '2025-01-01T00:00:00Z',
+        },
       ]);
 
       const res = await app.fetch(
-        new Request('http://localhost/api/books/book-1/bookmarks', { headers: { Authorization: 'Bearer valid' } }),
+        new Request('http://localhost/api/books/book-1/bookmarks', {
+          headers: { Authorization: 'Bearer valid' },
+        }),
         env,
         makePassThroughContext(),
       );
       expect(res.status).toBe(200);
-      const body: { data: { id: string; locator: { cfi: string }; label: string }[] } = await res.json();
+      const body: { data: { id: string; locator: { cfi: string }; label: string }[] } =
+        await res.json();
       expect(body.data).toHaveLength(1);
       expect(body.data[0].id).toBe('bm-1');
       expect(body.data[0].locator.cfi).toBe('epubcfi(/6/4)');
@@ -89,7 +99,10 @@ describe('Bookmark Routes', () => {
         new Request('http://localhost/api/books/book-1/bookmarks', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: 'Bearer valid' },
-          body: JSON.stringify({ locator: { cfi: 'epubcfi(/6/8)', selectedText: 'test', chapterRef: 'chapter1.xhtml' }, label: 'My Bookmark' }),
+          body: JSON.stringify({
+            locator: { cfi: 'epubcfi(/6/8)', selectedText: 'test', chapterRef: 'chapter1.xhtml' },
+            label: 'My Bookmark',
+          }),
         }),
         env,
         makePassThroughContext(),
@@ -101,12 +114,17 @@ describe('Bookmark Routes', () => {
     });
 
     it('returns 403 when canBookmark is false', async () => {
-      mockRequireAuth.mockResolvedValue({ ...authCtx, capabilities: { ...authCtx.capabilities, canBookmark: false } });
+      mockRequireAuth.mockResolvedValue({
+        ...authCtx,
+        capabilities: { ...authCtx.capabilities, canBookmark: false },
+      });
       const res = await app.fetch(
         new Request('http://localhost/api/books/book-1/bookmarks', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: 'Bearer valid' },
-          body: JSON.stringify({ locator: { cfi: 'epubcfi(/6/8)', selectedText: 'test', chapterRef: 'chapter1.xhtml' } }),
+          body: JSON.stringify({
+            locator: { cfi: 'epubcfi(/6/8)', selectedText: 'test', chapterRef: 'chapter1.xhtml' },
+          }),
         }),
         env,
         makePassThroughContext(),

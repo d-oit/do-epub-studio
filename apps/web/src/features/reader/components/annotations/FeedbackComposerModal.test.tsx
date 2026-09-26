@@ -6,7 +6,11 @@ vi.mock('../../../../hooks/useTranslation', () => ({
   useTranslation: () => ({ t: (k: string) => k }),
 }));
 
-const selection = { text: 'the first boat was late', cfiRange: 'epubcfi(/6/2!/4/8,/1:2,/1:53)', chapterRef: 'ch1.xhtml' };
+const selection = {
+  text: 'the first boat was late',
+  cfiRange: 'epubcfi(/6/2!/4/8,/1:2,/1:53)',
+  chapterRef: 'ch1.xhtml',
+};
 
 const baseProps = {
   isOpen: true,

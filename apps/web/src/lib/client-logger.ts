@@ -126,7 +126,11 @@ export function createPerformanceMark(name: string): void {
   }
 }
 
-export function measurePerformance(name: string, startMark: string, endMark: string): number | undefined {
+export function measurePerformance(
+  name: string,
+  startMark: string,
+  endMark: string,
+): number | undefined {
   if (typeof performance === 'undefined' || !performance.measure) return undefined;
   try {
     performance.measure(name, startMark, endMark);
@@ -139,7 +143,9 @@ export function measurePerformance(name: string, startMark: string, endMark: str
 
 export type PerformanceEntryCallback = (entry: PerformanceEntry) => void;
 
-export function observePerformance(callback: PerformanceEntryCallback): PerformanceObserver | undefined {
+export function observePerformance(
+  callback: PerformanceEntryCallback,
+): PerformanceObserver | undefined {
   if (typeof PerformanceObserver === 'undefined') return undefined;
   try {
     const observer = new PerformanceObserver((list) => {

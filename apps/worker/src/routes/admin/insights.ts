@@ -29,12 +29,16 @@ interface InsightAggRow {
  *   limit  (default 20, max 100)
  *   offset (default 0)
  */
-adminInsightsRouter.get('/insights', adminAuth, zValidator('query', AdminInsightsQuerySchema), async (c) => {
-  const { limit, offset } = c.req.valid('query');
+adminInsightsRouter.get(
+  '/insights',
+  adminAuth,
+  zValidator('query', AdminInsightsQuerySchema),
+  async (c) => {
+    const { limit, offset } = c.req.valid('query');
 
-  const rows = await queryAll<InsightAggRow>(
-    c.env,
-    `SELECT
+    const rows = await queryAll<InsightAggRow>(
+      c.env,
+      `SELECT
        book_id,
        SUM(active_minutes) AS total_active_minutes,
        SUM(active_pages)   AS total_active_pages,
@@ -44,18 +48,19 @@ adminInsightsRouter.get('/insights', adminAuth, zValidator('query', AdminInsight
      GROUP BY book_id
      ORDER BY last_activity DESC
      LIMIT ? OFFSET ?`,
-    [limit, offset],
-  );
+      [limit, offset],
+    );
 
-  return c.json({
-    ok: true,
-    data: rows.map((r) => ({
-      bookId: r.book_id,
-      totalActiveMinutes: r.total_active_minutes,
-      totalActivePages: r.total_active_pages,
-      readerCount: r.reader_count,
-      lastActivity: r.last_activity,
-    })),
-    pagination: { limit, offset },
-  });
-});
+    return c.json({
+      ok: true,
+      data: rows.map((r) => ({
+        bookId: r.book_id,
+        totalActiveMinutes: r.total_active_minutes,
+        totalActivePages: r.total_active_pages,
+        readerCount: r.reader_count,
+        lastActivity: r.last_activity,
+      })),
+      pagination: { limit, offset },
+    });
+  },
+);

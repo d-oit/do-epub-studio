@@ -23,12 +23,12 @@ Tier 3), with wide-gamut P3 overrides and sRGB fallback.
 
 ## Acceptance → Evidence
 
-| Acceptance | Evidence |
-|---|---|
-| All theme colors use OKLCH | `globals.css` — 0 hex/rgb matches; `design-tokens.test.ts` asserts `oklch(` literals (e.g. `--color-background: oklch(97.6% 0.011 84)`) |
-| P3 displays show wider gamut | `globals.css:142-158` `@media (color-gamut: p3)` overrides |
-| sRGB fallback works | base `:root` block with sRGB-safe OKLCH values |
-| All existing colors have OKLCH equivalents | token test + full-file grep |
+| Acceptance                                 | Evidence                                                                                                                                |
+| ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------- |
+| All theme colors use OKLCH                 | `globals.css` — 0 hex/rgb matches; `design-tokens.test.ts` asserts `oklch(` literals (e.g. `--color-background: oklch(97.6% 0.011 84)`) |
+| P3 displays show wider gamut               | `globals.css:142-158` `@media (color-gamut: p3)` overrides                                                                              |
+| sRGB fallback works                        | base `:root` block with sRGB-safe OKLCH values                                                                                          |
+| All existing colors have OKLCH equivalents | token test + full-file grep                                                                                                             |
 
 ## Effort
 

@@ -11,16 +11,16 @@ Fix markdownlint MD038 on LEARNINGS.md (CI failure #381), update ESLint TODO com
 
 ## Tasks
 
-| ID | Priority | Task | Skill | Status |
-|----|----------|------|-------|--------|
-| T1 | P0 | Fix MD038 markdownlint issue on LEARNINGS.md:135 (CI failure #381) | `code-quality` | ✅ Done |
-| T2 | P0 | Update ESLint TODO(#163) comment with accurate violation count | `code-quality` | ✅ Done |
-| T3 | P0 | Verify quality gate (lint + typecheck + tests) passes | `code-quality` | ✅ Passed (4 pre-existing react-hooks warnings) |
-| T4 | P0 | Create feature branch, push, PR with CI verification | `github-workflow` | ✅ PR #382 created |
-| T5 | P0 | Address PR comments, merge to main | `github-pr-autopilot` | ✅ PR #382 merged |
-| T6 | P1 | Merge safe dependabot PRs | `github-workflow` | ✅ None open; cleaned 26 stale refs |
-| T7 | P1 | Sync plans status across all active plans | `agents-md` | ✅ Updated plan 059 |
-| T8 | P1 | Compact learnings with session impact | `learn` | ✅ Added session learning |
+| ID  | Priority | Task                                                               | Skill                 | Status                                          |
+| --- | -------- | ------------------------------------------------------------------ | --------------------- | ----------------------------------------------- |
+| T1  | P0       | Fix MD038 markdownlint issue on LEARNINGS.md:135 (CI failure #381) | `code-quality`        | ✅ Done                                         |
+| T2  | P0       | Update ESLint TODO(#163) comment with accurate violation count     | `code-quality`        | ✅ Done                                         |
+| T3  | P0       | Verify quality gate (lint + typecheck + tests) passes              | `code-quality`        | ✅ Passed (4 pre-existing react-hooks warnings) |
+| T4  | P0       | Create feature branch, push, PR with CI verification               | `github-workflow`     | ✅ PR #382 created                              |
+| T5  | P0       | Address PR comments, merge to main                                 | `github-pr-autopilot` | ✅ PR #382 merged                               |
+| T6  | P1       | Merge safe dependabot PRs                                          | `github-workflow`     | ✅ None open; cleaned 26 stale refs             |
+| T7  | P1       | Sync plans status across all active plans                          | `agents-md`           | ✅ Updated plan 059                             |
+| T8  | P1       | Compact learnings with session impact                              | `learn`               | ✅ Added session learning                       |
 
 ## Strategy
 
@@ -31,32 +31,32 @@ T1 and T2 are already applied to working tree. T3 must pass before creating the 
 
 ## Execution Summary
 
-| ID | Priority | Task | Skill | Status |
-|----|----------|------|-------|--------|
-| T1 | P0 | Fix MD038 in LEARNINGS.md:135 (confusing backtick/backslash sequence) | `code-quality` | ✅ Done — rephrased line 135 |
-| T2 | P0 | Update ESLint TODO(#163) with count (~60 in web package) | `code-quality` | ✅ Done — `eslint.config.js:91` |
-| T3 | P0 | Verify quality gate (lint + typecheck + tests) | `code-quality` | ✅ Passed |
-| T4 | P0 | Create feature branch, push, PR with CI | `github-workflow` | ✅ Done — PR #382 |
-| T5 | P0 | Address PR comments, merge to main | `github-pr-autopilot` | ✅ Merged |
-| T6 | P1 | Merge safe dependabot PRs | `github-workflow` | ✅ Done (none open; stale refs cleaned) |
-| T7 | P1 | Sync plans status across all active plans | `agents-md` | ✅ Done |
-| T8 | P1 | Compact learnings with session impact | `learn` | ✅ Done |
+| ID  | Priority | Task                                                                  | Skill                 | Status                                  |
+| --- | -------- | --------------------------------------------------------------------- | --------------------- | --------------------------------------- |
+| T1  | P0       | Fix MD038 in LEARNINGS.md:135 (confusing backtick/backslash sequence) | `code-quality`        | ✅ Done — rephrased line 135            |
+| T2  | P0       | Update ESLint TODO(#163) with count (~60 in web package)              | `code-quality`        | ✅ Done — `eslint.config.js:91`         |
+| T3  | P0       | Verify quality gate (lint + typecheck + tests)                        | `code-quality`        | ✅ Passed                               |
+| T4  | P0       | Create feature branch, push, PR with CI                               | `github-workflow`     | ✅ Done — PR #382                       |
+| T5  | P0       | Address PR comments, merge to main                                    | `github-pr-autopilot` | ✅ Merged                               |
+| T6  | P1       | Merge safe dependabot PRs                                             | `github-workflow`     | ✅ Done (none open; stale refs cleaned) |
+| T7  | P1       | Sync plans status across all active plans                             | `agents-md`           | ✅ Done                                 |
+| T8  | P1       | Compact learnings with session impact                                 | `learn`               | ✅ Done                                 |
 
 ## Files Changed
 
-| File | Change |
-|------|--------|
-| `agents-docs/LEARNINGS.md:135` | Rephrased MD038-triggering backtick sequence |
-| `eslint.config.js:91` | Added `~60 in web package` count to TODO(#163) |
-| `apps/worker/src/__tests__/*.ts` (4 files) | Fixed non-null assertions, eslint-disable comments |
-| `apps/worker/src/auth/middleware.ts` | Added guard for `result.bookId` |
-| `apps/worker/src/routes/access.ts` | Fixed non-null assertions |
-| `apps/worker/src/routes/comments.ts` | Type-safe JSON.parse |
-| `apps/web/src/*.tsx` (7 files) | Fixed non-null assertions, type imports |
-| `apps/web/src/lib/api.ts` | Fixed non-null signal guard |
-| `packages/shared/src/epub-validator.ts` | Fixed non-null assertion |
-| `packages/reader-core/src/__tests__/*.test.ts` (2 files) | Fixed non-null assertions, type imports |
-| `packages/ui/src/*.tsx` (3 files) | Fixed non-null assertions |
+| File                                                     | Change                                             |
+| -------------------------------------------------------- | -------------------------------------------------- |
+| `agents-docs/LEARNINGS.md:135`                           | Rephrased MD038-triggering backtick sequence       |
+| `eslint.config.js:91`                                    | Added `~60 in web package` count to TODO(#163)     |
+| `apps/worker/src/__tests__/*.ts` (4 files)               | Fixed non-null assertions, eslint-disable comments |
+| `apps/worker/src/auth/middleware.ts`                     | Added guard for `result.bookId`                    |
+| `apps/worker/src/routes/access.ts`                       | Fixed non-null assertions                          |
+| `apps/worker/src/routes/comments.ts`                     | Type-safe JSON.parse                               |
+| `apps/web/src/*.tsx` (7 files)                           | Fixed non-null assertions, type imports            |
+| `apps/web/src/lib/api.ts`                                | Fixed non-null signal guard                        |
+| `packages/shared/src/epub-validator.ts`                  | Fixed non-null assertion                           |
+| `packages/reader-core/src/__tests__/*.test.ts` (2 files) | Fixed non-null assertions, type imports            |
+| `packages/ui/src/*.tsx` (3 files)                        | Fixed non-null assertions                          |
 
 ## Quality Gates
 

@@ -3,19 +3,7 @@ import { pluralize } from '../lib/i18n-plural';
 
 /** Locale key type — union of all supported locale codes. */
 export type LocaleKey =
-  | 'en'
-  | 'de'
-  | 'fr'
-  | 'es'
-  | 'pt'
-  | 'it'
-  | 'ja'
-  | 'zh'
-  | 'ko'
-  | 'ar'
-  | 'ru'
-  | 'hi'
-  | 'nl';
+  'en' | 'de' | 'fr' | 'es' | 'pt' | 'it' | 'ja' | 'zh' | 'ko' | 'ar' | 'ru' | 'hi' | 'nl';
 
 /** Lazy-loaded dictionaries. Starts with English (the synchronous fallback). */
 const loadedDictionaries: Record<string, Record<string, TranslationValue>> = { en };
@@ -32,21 +20,36 @@ export async function ensureLocale(locale: LocaleKey): Promise<void> {
   if (mod) loadedDictionaries[locale] = mod;
 }
 
-async function loadLocaleModule(locale: LocaleKey): Promise<Record<string, TranslationValue> | undefined> {
+async function loadLocaleModule(
+  locale: LocaleKey,
+): Promise<Record<string, TranslationValue> | undefined> {
   switch (locale) {
-    case 'de': return (await import('./de')).de;
-    case 'fr': return (await import('./fr')).fr;
-    case 'es': return (await import('./es')).es;
-    case 'pt': return (await import('./pt')).pt;
-    case 'it': return (await import('./it')).it;
-    case 'ja': return (await import('./ja')).ja;
-    case 'zh': return (await import('./zh')).zh;
-    case 'ko': return (await import('./ko')).ko;
-    case 'ar': return (await import('./ar')).ar;
-    case 'ru': return (await import('./ru')).ru;
-    case 'hi': return (await import('./hi')).hi;
-    case 'nl': return (await import('./nl')).nl;
-    default: return undefined;
+    case 'de':
+      return (await import('./de')).de;
+    case 'fr':
+      return (await import('./fr')).fr;
+    case 'es':
+      return (await import('./es')).es;
+    case 'pt':
+      return (await import('./pt')).pt;
+    case 'it':
+      return (await import('./it')).it;
+    case 'ja':
+      return (await import('./ja')).ja;
+    case 'zh':
+      return (await import('./zh')).zh;
+    case 'ko':
+      return (await import('./ko')).ko;
+    case 'ar':
+      return (await import('./ar')).ar;
+    case 'ru':
+      return (await import('./ru')).ru;
+    case 'hi':
+      return (await import('./hi')).hi;
+    case 'nl':
+      return (await import('./nl')).nl;
+    default:
+      return undefined;
   }
 }
 

@@ -21,7 +21,7 @@ Root cause chain:
    contain dynamic imports — `sw.ts` has `import('./lib/offline/sync')`.
 3. The plugin's registration client hardcodes `type: 'classic'` in production
    (`__TYPE__` is replaced with `devOptions.enabled ? devOptions.type :
-   "classic"`), so the browser parses the module bundle as a classic script →
+"classic"`), so the browser parses the module bundle as a classic script →
    `SyntaxError: Cannot use 'import.meta' outside a module` → registration
    fails and no offline support ever activates.
 
@@ -43,7 +43,7 @@ Root cause chain:
    deferral-path test.
 5. **Verify:** `vite build` emits zero `import.meta` in `sw.js`; the SW
    registers and becomes ACTIVE in a fresh browser session against `vite
-   preview` with a clean console (no `sw.registration_failed`, no
+preview` with a clean console (no `sw.registration_failed`, no
    `sw.background_sync_register_failed`); full quality gate passes.
 
 ## Acceptance criteria

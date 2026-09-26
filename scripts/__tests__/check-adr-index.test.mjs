@@ -34,30 +34,23 @@ describe('check-adr-index.mjs (ADR-083)', () => {
     return rel;
   }
 
-  it(
-    'passes on the current working tree',
-    () => {
-      const result = spawnSync('node', [scriptPath], {
-        encoding: 'utf8',
-        timeout: 30_000,
-      });
-      if (result.status !== 0) {
-        console.error('STDOUT:', result.stdout);
-        console.error('STDERR:', result.stderr);
-      }
-      expect(result.status).toBe(0);
-    },
-    30_000,
-  );
+  it('passes on the current working tree', () => {
+    const result = spawnSync('node', [scriptPath], {
+      encoding: 'utf8',
+      timeout: 30_000,
+    });
+    if (result.status !== 0) {
+      console.error('STDOUT:', result.stdout);
+      console.error('STDERR:', result.stderr);
+    }
+    expect(result.status).toBe(0);
+  }, 30_000);
 
   // The real index contains both ADR-244 and GOAP-244 sharing a number.
   // ADR-083 §2 says plan numbers and ADR numbers are siblings — this must
   // NOT be reported as a collision.
   it('accepts a matching GOAP plan + ADR sibling pair (ADR-083 §2)', () => {
-    const realIndex = readFileSync(
-      resolve(repoRoot, 'plans', 'ADR-INDEX.md'),
-      'utf8',
-    );
+    const realIndex = readFileSync(resolve(repoRoot, 'plans', 'ADR-INDEX.md'), 'utf8');
     const path = writeIndex(realIndex);
 
     const result = runScript(path);

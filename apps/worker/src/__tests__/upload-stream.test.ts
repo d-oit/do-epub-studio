@@ -1,11 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import JSZip from 'jszip';
-import {
-  makeEnv,
-  makePassThroughContext,
-  mockQueryFirst,
-  mockRequireAdminAuth,
-} from './fixtures';
+import { makeEnv, makePassThroughContext, mockQueryFirst, mockRequireAdminAuth } from './fixtures';
 import { app } from '../app';
 import { withByteCap, MaxBodySizeError, DEFAULT_MAX_BODY_BYTES } from '../lib/stream-body';
 
@@ -125,7 +120,7 @@ describe('Admin Upload Route — streaming path (V12)', () => {
         headers: {
           'Content-Type': 'application/epub+zip',
           'Content-Length': String(epubBuffer.byteLength),
-          'Authorization': 'Bearer admin-token',
+          Authorization: 'Bearer admin-token',
         },
       }),
       env,
@@ -151,7 +146,9 @@ describe('Admin Upload Route — streaming path (V12)', () => {
     // test-pool environments where the runtime auto-buffers. Both are
     // acceptable so long as the upload succeeded.
     expect(['ReadableStream', 'ArrayBuffer']).toContain(
-      bodyArg instanceof ReadableStream || bodyArg instanceof ArrayBuffer ? bodyArg.constructor.name : 'unknown',
+      bodyArg instanceof ReadableStream || bodyArg instanceof ArrayBuffer
+        ? bodyArg.constructor.name
+        : 'unknown',
     );
   });
 
@@ -162,7 +159,7 @@ describe('Admin Upload Route — streaming path (V12)', () => {
         body: 'whatever',
         headers: {
           'Content-Type': 'application/epub+zip',
-          'Authorization': 'Bearer admin-token',
+          Authorization: 'Bearer admin-token',
         },
       }),
       env,
@@ -179,7 +176,7 @@ describe('Admin Upload Route — streaming path (V12)', () => {
         headers: {
           'Content-Type': 'application/epub+zip',
           'Content-Length': String(DEFAULT_MAX_BODY_BYTES + 1),
-          'Authorization': 'Bearer admin-token',
+          Authorization: 'Bearer admin-token',
         },
       }),
       env,
@@ -196,7 +193,7 @@ describe('Admin Upload Route — streaming path (V12)', () => {
         headers: {
           'Content-Type': 'application/epub+zip',
           'Content-Length': '0',
-          'Authorization': 'Bearer admin-token',
+          Authorization: 'Bearer admin-token',
         },
       }),
       env,
@@ -220,7 +217,7 @@ describe('Admin Upload Route — streaming path (V12)', () => {
         headers: {
           'Content-Type': 'application/epub+zip',
           'Content-Length': String(declaredSize),
-          'Authorization': 'Bearer admin-token',
+          Authorization: 'Bearer admin-token',
         },
       }),
       env,

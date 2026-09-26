@@ -47,11 +47,19 @@ export function Breadcrumb({ items }: BreadcrumbProps) {
                   viewBox="0 0 24 24"
                   aria-hidden="true"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5l7 7-7 7"
+                  />
                 </svg>
               )}
               {isLast || !item.href ? (
-                <span className="font-medium text-foreground" aria-current={isLast ? 'page' : undefined}>
+                <span
+                  className="font-medium text-foreground"
+                  aria-current={isLast ? 'page' : undefined}
+                >
                   {t(item.labelKey)}
                 </span>
               ) : (

@@ -4,12 +4,12 @@ import { EntityTypeSchema } from './common';
 export const CspReportSchema = z.object({
   'csp-report': z.object({
     'document-uri': z.string().url(),
-    'referrer': z.string().optional(),
+    referrer: z.string().optional(),
     'blocked-uri': z.string().optional(),
     'violated-directive': z.string(),
     'effective-directive': z.string().optional(),
     'original-policy': z.string().optional(),
-    'disposition': z.enum(['enforce', 'report']).optional(),
+    disposition: z.enum(['enforce', 'report']).optional(),
     'status-code': z.number().optional(),
     'script-sample': z.string().optional(),
   }),

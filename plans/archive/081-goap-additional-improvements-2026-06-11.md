@@ -102,18 +102,18 @@ Grotesk (display) + Satoshi (body) + Source Serif 4 (reader) per issues #489/#49
 These improvements are NOT separate work items — they're embedded into existing
 clusters from plan 079. Priority is inherited from parent cluster:
 
-| Improvement | Parent Cluster | Phase | Priority |
-|-------------|---------------|-------|----------|
-| #1 localStorage→cookie | B (i18n) | 1 | High |
-| #2 CSP enforcing | E (Security) | 1 | High |
-| #5 forced-colors | A (Tokens) | 1 | Medium |
-| #6 autocomplete | H (Login fixes) | 3 | Medium |
-| #7 i18n in ErrorBoundary | C (Errors) | 1 | Medium |
-| #10 font stack | A (Tokens) | 1 | Medium |
-| #3 AppShell rebuild | F (Navigation) | 2 | High |
-| #8 banner position | G (PWA Banner) | 2 | Medium |
-| #9 scroll-padding | F (Navigation) | 2 | Low |
-| #4 container queries | A (Tokens) | 2 | Low |
+| Improvement              | Parent Cluster  | Phase | Priority |
+| ------------------------ | --------------- | ----- | -------- |
+| #1 localStorage→cookie   | B (i18n)        | 1     | High     |
+| #2 CSP enforcing         | E (Security)    | 1     | High     |
+| #5 forced-colors         | A (Tokens)      | 1     | Medium   |
+| #6 autocomplete          | H (Login fixes) | 3     | Medium   |
+| #7 i18n in ErrorBoundary | C (Errors)      | 1     | Medium   |
+| #10 font stack           | A (Tokens)      | 1     | Medium   |
+| #3 AppShell rebuild      | F (Navigation)  | 2     | High     |
+| #8 banner position       | G (PWA Banner)  | 2     | Medium   |
+| #9 scroll-padding        | F (Navigation)  | 2     | Low      |
+| #4 container queries     | A (Tokens)      | 2     | Low      |
 
 ---
 

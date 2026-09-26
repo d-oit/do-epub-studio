@@ -165,11 +165,17 @@ export function ReferencesPanel({ bookId }: ReferencesPanelProps): React.JSX.Ele
     }
   };
 
-  const patchStyle = (field: keyof StyleProfileData) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setStyle((prev) => (prev ? { ...prev, [field]: e.target.value } : prev));
-  };
+  const patchStyle =
+    (field: keyof StyleProfileData) =>
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      setStyle((prev) => (prev ? { ...prev, [field]: e.target.value } : prev));
+    };
 
-  const styleField = (field: keyof StyleProfileData, label: string, rows = 2): React.JSX.Element => (
+  const styleField = (
+    field: keyof StyleProfileData,
+    label: string,
+    rows = 2,
+  ): React.JSX.Element => (
     <label className="block">
       <span className="mb-1 block text-sm font-medium">{label}</span>
       <textarea
@@ -184,7 +190,9 @@ export function ReferencesPanel({ bookId }: ReferencesPanelProps): React.JSX.Ele
   return (
     <section aria-label={t('ref.title')} className="mt-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-foreground-muted">{t('ref.title')}</h2>
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-foreground-muted">
+          {t('ref.title')}
+        </h2>
         <button
           type="button"
           onClick={() => setAdding((v) => !v)}
@@ -194,7 +202,11 @@ export function ReferencesPanel({ bookId }: ReferencesPanelProps): React.JSX.Ele
         </button>
       </div>
 
-      {error && <p role="alert" className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
+      {error && (
+        <p role="alert" className="mt-2 text-sm text-red-600 dark:text-red-400">
+          {error}
+        </p>
+      )}
 
       {adding && (
         <div className="mt-3 space-y-2 rounded-lg border border-border p-3">
@@ -206,7 +218,9 @@ export function ReferencesPanel({ bookId }: ReferencesPanelProps): React.JSX.Ele
               className="w-full rounded-lg border border-border bg-background p-2 text-sm"
             >
               {KINDS.map((k) => (
-                <option key={k.id} value={k.id}>{t(k.label)}</option>
+                <option key={k.id} value={k.id}>
+                  {t(k.label)}
+                </option>
               ))}
             </select>
           </label>
@@ -229,7 +243,9 @@ export function ReferencesPanel({ bookId }: ReferencesPanelProps): React.JSX.Ele
             <input
               value={newUrl}
               onChange={(e) => setNewUrl(e.target.value)}
-              placeholder={'https://' /* eslint-disable-line i18next/no-literal-string -- URL scheme example */}
+              placeholder={
+                'https://' /* eslint-disable-line i18next/no-literal-string -- URL scheme example */
+              }
               aria-label={t('ref.sourceUrlLabel')}
               className="w-full rounded-lg border border-border bg-background p-2 text-sm"
             />
@@ -264,7 +280,9 @@ export function ReferencesPanel({ bookId }: ReferencesPanelProps): React.JSX.Ele
           >
             <option value="">—</option>
             {KINDS.map((k) => (
-              <option key={k.id} value={k.id}>{t(k.label)}</option>
+              <option key={k.id} value={k.id}>
+                {t(k.label)}
+              </option>
             ))}
           </select>
         </label>
@@ -287,7 +305,9 @@ export function ReferencesPanel({ bookId }: ReferencesPanelProps): React.JSX.Ele
               <span>·</span>
               <span>{`${t('ref.revisionPinned')} ${ref.revision}`}</span>
               {ref.origin === 'external' && (
-                <span className={`rounded-full px-2 py-0.5 ${ref.verified ? 'bg-green-500/15 text-green-700 dark:text-green-300' : 'bg-amber-500/15 text-amber-700 dark:text-amber-300'}`}>
+                <span
+                  className={`rounded-full px-2 py-0.5 ${ref.verified ? 'bg-green-500/15 text-green-700 dark:text-green-300' : 'bg-amber-500/15 text-amber-700 dark:text-amber-300'}`}
+                >
                   {ref.verified ? t('ref.verified') : t('ref.unverified')}
                 </span>
               )}
@@ -295,13 +315,18 @@ export function ReferencesPanel({ bookId }: ReferencesPanelProps): React.JSX.Ele
             {ref.title && <p className="mt-1 text-sm font-medium">{ref.title}</p>}
             <p className="mt-1 whitespace-pre-wrap text-sm">{ref.content}</p>
             {ref.sourceUrl && (
-              <a href={ref.sourceUrl} target="_blank" rel="noopener noreferrer" className="mt-1 block break-all text-xs text-accent underline underline-offset-2">
+              <a
+                href={ref.sourceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-1 block break-all text-xs text-accent underline underline-offset-2"
+              >
                 {ref.sourceUrl}
               </a>
             )}
             <div className="mt-2 flex gap-2">
-              {ref.origin === 'external' && (
-                evidenceFor === ref.id ? (
+              {ref.origin === 'external' &&
+                (evidenceFor === ref.id ? (
                   <span className="flex w-full gap-2">
                     <input
                       value={evidenceNote}
@@ -322,13 +347,15 @@ export function ReferencesPanel({ bookId }: ReferencesPanelProps): React.JSX.Ele
                 ) : (
                   <button
                     type="button"
-                    onClick={() => { setEvidenceFor(ref.id); setEvidenceNote(''); }}
+                    onClick={() => {
+                      setEvidenceFor(ref.id);
+                      setEvidenceNote('');
+                    }}
                     className="text-xs text-foreground-muted underline underline-offset-2"
                   >
                     {ref.verified ? t('ref.unverify') : t('ref.verify')}
                   </button>
-                )
-              )}
+                ))}
               <button
                 type="button"
                 onClick={() => void handleDelete(ref.id)}
@@ -343,9 +370,13 @@ export function ReferencesPanel({ bookId }: ReferencesPanelProps): React.JSX.Ele
 
       <div className="mt-6 rounded-lg border border-border p-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-foreground-muted">{t('ref.styleTitle')}</h3>
+          <h3 className="text-sm font-semibold uppercase tracking-wide text-foreground-muted">
+            {t('ref.styleTitle')}
+          </h3>
           {style && (
-            <span className={`rounded-full px-2 py-0.5 text-xs ${style.status === 'approved' ? 'bg-green-500/15 text-green-700 dark:text-green-300' : 'bg-background-tertiary text-foreground-muted'}`}>
+            <span
+              className={`rounded-full px-2 py-0.5 text-xs ${style.status === 'approved' ? 'bg-green-500/15 text-green-700 dark:text-green-300' : 'bg-background-tertiary text-foreground-muted'}`}
+            >
               {style.status === 'approved' ? t('ref.styleApproved') : t('ref.styleDraft')}
             </span>
           )}

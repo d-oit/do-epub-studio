@@ -152,7 +152,10 @@ describe('CommentsPanel', () => {
 
       // ArrowRight switches to highlights tab
       fireEvent.keyDown(commentsTab, { key: 'ArrowRight' });
-      expect(screen.getByRole('tab', { name: /annotation.highlight/ })).toHaveAttribute('aria-selected', 'true');
+      expect(screen.getByRole('tab', { name: /annotation.highlight/ })).toHaveAttribute(
+        'aria-selected',
+        'true',
+      );
       expect(screen.getByText('Highlighted text')).toBeInTheDocument();
     });
 
@@ -292,7 +295,9 @@ describe('CommentsPanel', () => {
 
     it('replies to a comment', () => {
       render(<CommentsPanel {...defaultProps} />);
-      const commentEl = screen.getByText('First comment').closest('div[class*="rounded-lg"]') as HTMLElement;
+      const commentEl = screen
+        .getByText('First comment')
+        .closest('div[class*="rounded-lg"]') as HTMLElement;
       fireEvent.mouseEnter(commentEl);
 
       const replyBtns = screen.getAllByText('comment.reply');
@@ -311,7 +316,9 @@ describe('CommentsPanel', () => {
 
     it('edits a comment', () => {
       render(<CommentsPanel {...defaultProps} />);
-      const commentEl = screen.getByText('First comment').closest('div[class*="rounded-lg"]') as HTMLElement;
+      const commentEl = screen
+        .getByText('First comment')
+        .closest('div[class*="rounded-lg"]') as HTMLElement;
       fireEvent.mouseEnter(commentEl);
 
       fireEvent.click(screen.getByText('comment.edit'));
@@ -327,7 +334,9 @@ describe('CommentsPanel', () => {
 
     it('resolves a comment', () => {
       render(<CommentsPanel {...defaultProps} />);
-      const commentEl = screen.getByText('First comment').closest('div[class*="rounded-lg"]') as HTMLElement;
+      const commentEl = screen
+        .getByText('First comment')
+        .closest('div[class*="rounded-lg"]') as HTMLElement;
       fireEvent.mouseEnter(commentEl);
 
       fireEvent.click(screen.getByText('comment.resolve'));
@@ -336,7 +345,9 @@ describe('CommentsPanel', () => {
 
     it('deletes a comment', () => {
       render(<CommentsPanel {...defaultProps} />);
-      const commentEl = screen.getByText('First comment').closest('div[class*="rounded-lg"]') as HTMLElement;
+      const commentEl = screen
+        .getByText('First comment')
+        .closest('div[class*="rounded-lg"]') as HTMLElement;
       fireEvent.mouseEnter(commentEl);
 
       fireEvent.click(screen.getByText('comment.delete'));

@@ -32,23 +32,23 @@ tracking issue for every wave.
 
 ## 2. Decomposition
 
-| Wave | Slice | Issue | Branch | Companion plan / ADR | Owner skill |
-|------|-------|-------|--------|----------------------|-------------|
-| A | G14 Comments IDOR | #531 | `wave-a-tenant-isolation` | 075-adr-tenant-isolation | cloudflare-worker-api + testing-strategy |
-| A | G16 Locator re-validate | #533 | `wave-a-tenant-isolation` | 075-adr-tenant-isolation | cloudflare-worker-api + testing-strategy |
-| A | G22 URL bookId guard | #539 | `wave-a-tenant-isolation` | 075-adr-tenant-isolation | cloudflare-worker-api + testing-strategy |
-| B | G15 Magic-link email | #532 | `wave-b-admin-reader` | 081-adr-magic-link-email-transport | cloudflare-worker-api |
-| B | G17 Admin recovery | #534 | `wave-b-admin-reader` | 076-goap-admin-recovery-and-book-crud | cloudflare-worker-api + reader-ui-ux |
-| B | G18 Book edit/delete | #535 | `wave-b-admin-reader` | 076-goap-admin-recovery-and-book-crud | cloudflare-worker-api + reader-ui-ux |
-| B | G19 Progress load | #536 | `wave-b-admin-reader` | 077-goap-reader-progress-and-search-load | reader-ui-ux |
-| C | G20 Zod centralize | #537 | `wave-c-centralization` | 078-adr-zod-schema-centralization | cloudflare-worker-api + testing-strategy |
-| C | G21 Grants UI | #538 | `wave-c-centralization` | 079-goap-admin-grants-patch-ui | reader-ui-ux |
-| C | G23 Compensating test | #540 | `wave-c-centralization` | 080-adr-session-storage-compensating-controls | testing-strategy |
-| C | G24 Catalog test | #541 | `wave-c-centralization` | (issue only) | testing-strategy |
-| D | G25 ADR-068/092 files | (docs PR) | `wave-d-ux-docs` | 068-adr, 092-adr | docs |
-| D | G26 ADR-INDEX | (docs PR) | `wave-d-ux-docs` | 083-adr-adr-numbering | docs |
-| D | G27 CHANGELOG + CONTRIBUTING | (docs PR) | `wave-d-ux-docs` | 084-goap-changelog-and-contributing-sync | docs |
-| D | G28 Panel mutual exclusivity | #546 | `wave-d-ux-docs` | 082-adr-reader-side-panel-mutual-exclusivity | reader-ui-ux |
+| Wave | Slice                        | Issue     | Branch                    | Companion plan / ADR                          | Owner skill                              |
+| ---- | ---------------------------- | --------- | ------------------------- | --------------------------------------------- | ---------------------------------------- |
+| A    | G14 Comments IDOR            | #531      | `wave-a-tenant-isolation` | 075-adr-tenant-isolation                      | cloudflare-worker-api + testing-strategy |
+| A    | G16 Locator re-validate      | #533      | `wave-a-tenant-isolation` | 075-adr-tenant-isolation                      | cloudflare-worker-api + testing-strategy |
+| A    | G22 URL bookId guard         | #539      | `wave-a-tenant-isolation` | 075-adr-tenant-isolation                      | cloudflare-worker-api + testing-strategy |
+| B    | G15 Magic-link email         | #532      | `wave-b-admin-reader`     | 081-adr-magic-link-email-transport            | cloudflare-worker-api                    |
+| B    | G17 Admin recovery           | #534      | `wave-b-admin-reader`     | 076-goap-admin-recovery-and-book-crud         | cloudflare-worker-api + reader-ui-ux     |
+| B    | G18 Book edit/delete         | #535      | `wave-b-admin-reader`     | 076-goap-admin-recovery-and-book-crud         | cloudflare-worker-api + reader-ui-ux     |
+| B    | G19 Progress load            | #536      | `wave-b-admin-reader`     | 077-goap-reader-progress-and-search-load      | reader-ui-ux                             |
+| C    | G20 Zod centralize           | #537      | `wave-c-centralization`   | 078-adr-zod-schema-centralization             | cloudflare-worker-api + testing-strategy |
+| C    | G21 Grants UI                | #538      | `wave-c-centralization`   | 079-goap-admin-grants-patch-ui                | reader-ui-ux                             |
+| C    | G23 Compensating test        | #540      | `wave-c-centralization`   | 080-adr-session-storage-compensating-controls | testing-strategy                         |
+| C    | G24 Catalog test             | #541      | `wave-c-centralization`   | (issue only)                                  | testing-strategy                         |
+| D    | G25 ADR-068/092 files        | (docs PR) | `wave-d-ux-docs`          | 068-adr, 092-adr                              | docs                                     |
+| D    | G26 ADR-INDEX                | (docs PR) | `wave-d-ux-docs`          | 083-adr-adr-numbering                         | docs                                     |
+| D    | G27 CHANGELOG + CONTRIBUTING | (docs PR) | `wave-d-ux-docs`          | 084-goap-changelog-and-contributing-sync      | docs                                     |
+| D    | G28 Panel mutual exclusivity | #546      | `wave-d-ux-docs`          | 082-adr-reader-side-panel-mutual-exclusivity  | reader-ui-ux                             |
 
 ## 3. Strategy
 
@@ -104,12 +104,12 @@ tracking issue for every wave.
 
 ## 4. Agent Assignment
 
-| Wave | Primary agent | Secondary agent |
-|------|---------------|-----------------|
-| A | cloudflare-worker-api | testing-strategy, testdata-builders |
-| B | cloudflare-worker-api | reader-ui-ux, i18n-key-author |
-| C | cloudflare-worker-api | reader-ui-ux, testing-strategy |
-| D | reader-ui-ux | docs-writer |
+| Wave | Primary agent         | Secondary agent                     |
+| ---- | --------------------- | ----------------------------------- |
+| A    | cloudflare-worker-api | testing-strategy, testdata-builders |
+| B    | cloudflare-worker-api | reader-ui-ux, i18n-key-author       |
+| C    | cloudflare-worker-api | reader-ui-ux, testing-strategy      |
+| D    | reader-ui-ux          | docs-writer                         |
 
 `triz-analysis` is invoked before Wave A and Wave B (architectural
 changes). `release-management` is invoked once at the end of Wave D
@@ -170,12 +170,12 @@ project. Each tracking issue contains a checklist of the gaps it
 closes, the wave's quality gate, and the wave's atomic commit
 list. The tracking issues are closed when the wave PR merges.
 
-| Wave | Tracking issue title |
-|------|----------------------|
-| A | `[Wave A] Tenant isolation — G14, G16, G22 (Critical)` |
-| B | `[Wave B] Admin enablement + email + reader progress — G15, G17, G18, G19` |
-| C | `[Wave C] Centralization + governance — G20, G21, G23, G24` |
-| D | `[Wave D] UX + docs — G25, G26, G27, G28` |
+| Wave | Tracking issue title                                                       |
+| ---- | -------------------------------------------------------------------------- |
+| A    | `[Wave A] Tenant isolation — G14, G16, G22 (Critical)`                     |
+| B    | `[Wave B] Admin enablement + email + reader progress — G15, G17, G18, G19` |
+| C    | `[Wave C] Centralization + governance — G20, G21, G23, G24`                |
+| D    | `[Wave D] UX + docs — G25, G26, G27, G28`                                  |
 
 ## 8. Risk & Rollback
 

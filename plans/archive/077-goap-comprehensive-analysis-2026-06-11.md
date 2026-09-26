@@ -17,58 +17,58 @@
 
 ### G1: Complete Missing Implementations (9 items)
 
-| # | Feature | Location | Priority |
-|---|---------|----------|----------|
-| 1 | Email invite sending | `worker/routes/admin/grants.ts` | P1 |
-| 2 | Bookmark sync from server on load | `web/features/reader/ReaderPage.tsx` | P1 |
-| 3 | In-book full-text search | Missing from reader entirely | P2 |
-| 4 | Public book catalog | Missing route + page | P2 |
-| 5 | Reviewer activity dashboard | Missing admin page | P2 |
-| 6 | Threaded comments resolution UI | `CommentsPanel.tsx` (basic) | P3 |
-| 7 | Compare editions | Not present | P3 |
-| 8 | Versioned manuscript releases | Schema lacks version fields | P3 |
-| 9 | AI editorial workflows | Not present | P4 |
+| #   | Feature                           | Location                             | Priority |
+| --- | --------------------------------- | ------------------------------------ | -------- |
+| 1   | Email invite sending              | `worker/routes/admin/grants.ts`      | P1       |
+| 2   | Bookmark sync from server on load | `web/features/reader/ReaderPage.tsx` | P1       |
+| 3   | In-book full-text search          | Missing from reader entirely         | P2       |
+| 4   | Public book catalog               | Missing route + page                 | P2       |
+| 5   | Reviewer activity dashboard       | Missing admin page                   | P2       |
+| 6   | Threaded comments resolution UI   | `CommentsPanel.tsx` (basic)          | P3       |
+| 7   | Compare editions                  | Not present                          | P3       |
+| 8   | Versioned manuscript releases     | Schema lacks version fields          | P3       |
+| 9   | AI editorial workflows            | Not present                          | P4       |
 
 ### G2: Fix Stubs/Incomplete Code (6 items)
 
-| # | Issue | Location | Priority |
-|---|-------|----------|----------|
-| 1 | `SignedUrlResponse` DTO mismatch | `worker/routes/books.ts` vs `shared/dtos.ts` | P1 |
-| 2 | `Locator` schema vs store type mismatch | `schema/locator.ts` vs `stores/reader.ts` | P1 |
-| 3 | API index re-export bare minimum | `web/lib/api/index.ts` | P2 |
-| 4 | Admin books page missing archive/delete | `BooksPage.tsx` | P2 |
-| 5 | Fixed layout rendering minimal | `reader-core/fixed-layout.ts` | P3 |
-| 6 | Missing bookmark API test | `worker/routes/reader/` | P2 |
+| #   | Issue                                   | Location                                     | Priority |
+| --- | --------------------------------------- | -------------------------------------------- | -------- |
+| 1   | `SignedUrlResponse` DTO mismatch        | `worker/routes/books.ts` vs `shared/dtos.ts` | P1       |
+| 2   | `Locator` schema vs store type mismatch | `schema/locator.ts` vs `stores/reader.ts`    | P1       |
+| 3   | API index re-export bare minimum        | `web/lib/api/index.ts`                       | P2       |
+| 4   | Admin books page missing archive/delete | `BooksPage.tsx`                              | P2       |
+| 5   | Fixed layout rendering minimal          | `reader-core/fixed-layout.ts`                | P3       |
+| 6   | Missing bookmark API test               | `worker/routes/reader/`                      | P2       |
 
 ### G3: Apply Improvements (10 items)
 
-| # | Category | Issue | Priority |
-|---|----------|-------|----------|
-| 1 | Security | Grant revocation needs transaction | P0 |
-| 2 | Security | Missing PATCH validation on highlight ownership (cross-book) | P0 |
-| 3 | Security | Rate limit on admin login | P1 |
-| 4 | Quality | `BooksPage.tsx` exceeds 500 LOC | P1 |
-| 5 | Quality | `useReaderEpub.ts` exceeds 500 LOC (18KB) | P1 |
-| 6 | Quality | `ReaderToolbar.tsx` exceeds 500 LOC (18KB) | P1 |
-| 7 | Performance | Comment store O(n²) nesting rebuild | P2 |
-| 8 | Quality | `z.any()` in `UploadCompleteSchema` | P2 |
-| 9 | Quality | `AuditLogPage.tsx` missing aria-labels | P0 (plan 074) |
-| 10 | Quality | Grouped `useReaderStore` selectors with `useShallow` | P3 |
+| #   | Category    | Issue                                                        | Priority      |
+| --- | ----------- | ------------------------------------------------------------ | ------------- |
+| 1   | Security    | Grant revocation needs transaction                           | P0            |
+| 2   | Security    | Missing PATCH validation on highlight ownership (cross-book) | P0            |
+| 3   | Security    | Rate limit on admin login                                    | P1            |
+| 4   | Quality     | `BooksPage.tsx` exceeds 500 LOC                              | P1            |
+| 5   | Quality     | `useReaderEpub.ts` exceeds 500 LOC (18KB)                    | P1            |
+| 6   | Quality     | `ReaderToolbar.tsx` exceeds 500 LOC (18KB)                   | P1            |
+| 7   | Performance | Comment store O(n²) nesting rebuild                          | P2            |
+| 8   | Quality     | `z.any()` in `UploadCompleteSchema`                          | P2            |
+| 9   | Quality     | `AuditLogPage.tsx` missing aria-labels                       | P0 (plan 074) |
+| 10  | Quality     | Grouped `useReaderStore` selectors with `useShallow`         | P3            |
 
 ### G4: New Features (backlog)
 
-| # | Feature | Effort | Value |
-|---|---------|--------|-------|
-| 1 | In-book full-text search | M | High |
-| 2 | Email notifications (CF Email Workers) | S | High |
-| 3 | Public book catalog | S | Medium |
-| 4 | Admin dashboard analytics | M | Medium |
-| 5 | Reading progress bar | S | Medium |
-| 6 | Export annotations as PDF/DOCX | M | Medium |
-| 7 | Multi-user highlight visibility | M | Medium |
-| 8 | Book archive/delete admin UI | S | Low |
-| 9 | Session expiry warning | S | Low |
-| 10 | Batch grant operations (CSV import) | S | Low |
+| #   | Feature                                | Effort | Value  |
+| --- | -------------------------------------- | ------ | ------ |
+| 1   | In-book full-text search               | M      | High   |
+| 2   | Email notifications (CF Email Workers) | S      | High   |
+| 3   | Public book catalog                    | S      | Medium |
+| 4   | Admin dashboard analytics              | M      | Medium |
+| 5   | Reading progress bar                   | S      | Medium |
+| 6   | Export annotations as PDF/DOCX         | M      | Medium |
+| 7   | Multi-user highlight visibility        | M      | Medium |
+| 8   | Book archive/delete admin UI           | S      | Low    |
+| 9   | Session expiry warning                 | S      | Low    |
+| 10  | Batch grant operations (CSV import)    | S      | Low    |
 
 ## 3. Action Plan (Strategize)
 

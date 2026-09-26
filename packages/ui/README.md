@@ -4,21 +4,21 @@ Shared React component library. Built on React 19 + Framer Motion 12. Each compo
 
 ## Component Catalog
 
-| Component | File | Description |
-|-----------|------|-------------|
-| `Button` | `button.tsx` | Variants: primary, secondary, ghost, danger. Supports `asChild` via Slot |
-| `Input` | `input.tsx` | Styled text input with error state, focus ring, label support |
-| `Modal` | `modal.tsx` | Accessible dialog (`role="dialog"`, focus trap, `Escape` dismiss, `aria-modal`) |
-| `Tooltip` | `tooltip.tsx` | Hover/focus tooltip with delay, arrow, and keyboard support |
-| `Toast` | `toast.tsx` | Toast notification system via `ToastProvider` context |
-| `Spinner` | `spinner.tsx` | Loading spinner with configurable size and color |
-| `Badge` | `badge.tsx` | Status badge (variants: default, success, warning, error, info) |
-| `Card` | `card.tsx` | Container card with optional padding and shadow controls |
-| `Skeleton` | `skeleton.tsx` | Loading skeleton placeholder |
-| `LiveRegion` | `LiveRegion.tsx` | Screen reader live region for dynamic announcements |
-| `IconButton` | `icon-button.tsx` | Icon-only button with accessible label |
-| `Header` | `header.tsx` | Page header with title and actions slot |
-| `PageContainer` | `page-container.tsx` | Layout wrapper with max-width and padding |
+| Component       | File                 | Description                                                                     |
+| --------------- | -------------------- | ------------------------------------------------------------------------------- |
+| `Button`        | `button.tsx`         | Variants: primary, secondary, ghost, danger. Supports `asChild` via Slot        |
+| `Input`         | `input.tsx`          | Styled text input with error state, focus ring, label support                   |
+| `Modal`         | `modal.tsx`          | Accessible dialog (`role="dialog"`, focus trap, `Escape` dismiss, `aria-modal`) |
+| `Tooltip`       | `tooltip.tsx`        | Hover/focus tooltip with delay, arrow, and keyboard support                     |
+| `Toast`         | `toast.tsx`          | Toast notification system via `ToastProvider` context                           |
+| `Spinner`       | `spinner.tsx`        | Loading spinner with configurable size and color                                |
+| `Badge`         | `badge.tsx`          | Status badge (variants: default, success, warning, error, info)                 |
+| `Card`          | `card.tsx`           | Container card with optional padding and shadow controls                        |
+| `Skeleton`      | `skeleton.tsx`       | Loading skeleton placeholder                                                    |
+| `LiveRegion`    | `LiveRegion.tsx`     | Screen reader live region for dynamic announcements                             |
+| `IconButton`    | `icon-button.tsx`    | Icon-only button with accessible label                                          |
+| `Header`        | `header.tsx`         | Page header with title and actions slot                                         |
+| `PageContainer` | `page-container.tsx` | Layout wrapper with max-width and padding                                       |
 
 ## Animations
 
@@ -26,12 +26,12 @@ Reusable Framer Motion variants in `variants.ts`: `fadeVariants`, `slideUpVarian
 
 ## Scripts
 
-| Command | Description |
-|---------|-------------|
-| `pnpm typecheck` | `tsc --noEmit` |
-| `pnpm lint` | ESLint |
-| `pnpm test:unit` | Vitest (jsdom, passWithNoTests) |
-| `pnpm storybook` | Start Storybook dev server on port 6006 |
+| Command                | Description                                   |
+| ---------------------- | --------------------------------------------- |
+| `pnpm typecheck`       | `tsc --noEmit`                                |
+| `pnpm lint`            | ESLint                                        |
+| `pnpm test:unit`       | Vitest (jsdom, passWithNoTests)               |
+| `pnpm storybook`       | Start Storybook dev server on port 6006       |
 | `pnpm build:storybook` | Build static Storybook to `storybook-static/` |
 
 ## Storybook
@@ -40,20 +40,20 @@ Interactive component documentation runs at `http://localhost:6006`.
 
 ### Available Stories
 
-| Component | Story File |
-|-----------|-----------|
-| Badge | `Badge.stories.tsx` |
-| Button | `Button.stories.tsx` |
-| Card | `Card.stories.tsx` |
-| Header | `Header.stories.tsx` |
-| IconButton | `IconButton.stories.tsx` |
-| Input | `Input.stories.tsx` |
-| LiveRegion | `LiveRegion.stories.tsx` |
-| Modal | `Modal.stories.tsx` |
+| Component     | Story File                  |
+| ------------- | --------------------------- |
+| Badge         | `Badge.stories.tsx`         |
+| Button        | `Button.stories.tsx`        |
+| Card          | `Card.stories.tsx`          |
+| Header        | `Header.stories.tsx`        |
+| IconButton    | `IconButton.stories.tsx`    |
+| Input         | `Input.stories.tsx`         |
+| LiveRegion    | `LiveRegion.stories.tsx`    |
+| Modal         | `Modal.stories.tsx`         |
 | PageContainer | `PageContainer.stories.tsx` |
-| Skeleton | `Skeleton.stories.tsx` |
-| Toast | `Toast.stories.tsx` |
-| Tooltip | `Tooltip.stories.tsx` |
+| Skeleton      | `Skeleton.stories.tsx`      |
+| Toast         | `Toast.stories.tsx`         |
+| Tooltip       | `Tooltip.stories.tsx`       |
 
 ### Writing Stories
 
@@ -88,6 +88,7 @@ export const Default: Story = {
 ### CI Integration
 
 Stories are tested in CI via:
+
 1. **Visual regression** — Chromatic snapshots (`visual-regression.yml`)
 2. **Accessibility** — axe-core checks via the a11y addon
 3. **Storybook build** — verified in the `Build` CI job

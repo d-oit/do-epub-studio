@@ -66,10 +66,9 @@ export function fetchAuditLogs(
 
   const cached = auditLogCache.get(key);
   if (cached) return cached;
-  const promise = apiRequest<AuditLogPageResponse>(
-    `/api/admin/audit?${params.toString()}`,
-    { token: token ?? undefined },
-  );
+  const promise = apiRequest<AuditLogPageResponse>(`/api/admin/audit?${params.toString()}`, {
+    token: token ?? undefined,
+  });
   auditLogCache.set(key, promise);
   return promise;
 }
@@ -86,17 +85,16 @@ export function fetchAdminBooks(token: string | null): Promise<BookOption[]> {
   if (cached) return cached;
   const promise = apiRequest<BookResponse[]>('/api/admin/books', {
     token: token ?? undefined,
-  }).then((data: BookResponse[]) => data.map((b: BookResponse) => ({ id: b.id, title: b.title, slug: b.slug })));
+  }).then((data: BookResponse[]) =>
+    data.map((b: BookResponse) => ({ id: b.id, title: b.title, slug: b.slug })),
+  );
   booksCache.set(key, promise);
   return promise;
 }
 
 const grantsCache = new Map<string, Promise<GrantResponse[]>>();
 
-export function fetchGrantsForBook(
-  bookId: string,
-  token: string | null,
-): Promise<GrantResponse[]> {
+export function fetchGrantsForBook(bookId: string, token: string | null): Promise<GrantResponse[]> {
   const key = `${bookId}:${token ?? ''}`;
   const cached = grantsCache.get(key);
   if (cached) return cached;

@@ -67,7 +67,11 @@ export interface EdgeCacheOptions {
  * subset of headers that affect content negotiation (Accept-Language,
  * Accept).
  */
-export async function buildCacheKey(request: Request, env?: EdgeCacheEnv, prefix?: string): Promise<Request> {
+export async function buildCacheKey(
+  request: Request,
+  env?: EdgeCacheEnv,
+  prefix?: string,
+): Promise<Request> {
   const version = await getCacheVersion(env);
   const resolvedPrefix = prefix ?? `edge-cache:${version}`;
   const url = new URL(request.url);
@@ -163,4 +167,5 @@ export async function withEdgeCache(
 }
 
 /** Default public-cache directive for read-mostly endpoints. */
-export const PUBLIC_CACHE_CONTROL = 'public, max-age=60, s-maxage=300, stale-while-revalidate=86400';
+export const PUBLIC_CACHE_CONTROL =
+  'public, max-age=60, s-maxage=300, stale-while-revalidate=86400';

@@ -9,17 +9,13 @@ import {
 } from './fixtures';
 import { app } from '../app';
 
-const {
-  mockLogRiskEvent,
-  mockDeviceFingerprint,
-  mockCheckRateLimitDO,
-  mockFindLoginTicket,
-} = vi.hoisted(() => ({
-  mockLogRiskEvent: vi.fn(),
-  mockDeviceFingerprint: vi.fn(),
-  mockCheckRateLimitDO: vi.fn(),
-  mockFindLoginTicket: vi.fn(),
-}));
+const { mockLogRiskEvent, mockDeviceFingerprint, mockCheckRateLimitDO, mockFindLoginTicket } =
+  vi.hoisted(() => ({
+    mockLogRiskEvent: vi.fn(),
+    mockDeviceFingerprint: vi.fn(),
+    mockCheckRateLimitDO: vi.fn(),
+    mockFindLoginTicket: vi.fn(),
+  }));
 
 vi.mock('../audit/risk', () => ({
   logRiskEvent: mockLogRiskEvent,
@@ -55,12 +51,20 @@ describe('risk events (ADR-234 item 7)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockDeviceFingerprint.mockResolvedValue('device-hash');
-    mockCheckRateLimitDO.mockResolvedValue({ allowed: true, remaining: 99, resetAt: Date.now() + 60000 });
+    mockCheckRateLimitDO.mockResolvedValue({
+      allowed: true,
+      remaining: 99,
+      resetAt: Date.now() + 60000,
+    });
   });
 
   describe('loginLocked', () => {
     it('admin /login emits loginLocked when the account is locked', async () => {
-      mockCreateAdminSession.mockResolvedValue({ ok: false, status: 401, error: 'Invalid credentials' });
+      mockCreateAdminSession.mockResolvedValue({
+        ok: false,
+        status: 401,
+        error: 'Invalid credentials',
+      });
       mockGetAccountByEmail.mockResolvedValue({
         id: 'admin-1',
         email: 'admin@example.com',
@@ -69,11 +73,15 @@ describe('risk events (ADR-234 item 7)', () => {
       });
       mockAccountIsLocked.mockReturnValue(true);
 
-      const res = await app.fetch(new Request('http://localhost/api/admin/login', {
-        method: 'POST',
-        body: JSON.stringify({ email: 'admin@example.com', password: 'wrong' }),
-        headers: { 'Content-Type': 'application/json' },
-      }), env, ctx);
+      const res = await app.fetch(
+        new Request('http://localhost/api/admin/login', {
+          method: 'POST',
+          body: JSON.stringify({ email: 'admin@example.com', password: 'wrong' }),
+          headers: { 'Content-Type': 'application/json' },
+        }),
+        env,
+        ctx,
+      );
 
       expect(res.status).toBe(401);
       const call = riskCalls('risk_login_locked')[0];
@@ -83,7 +91,11 @@ describe('risk events (ADR-234 item 7)', () => {
     });
 
     it('admin /login does not emit loginLocked when the account is not locked', async () => {
-      mockCreateAdminSession.mockResolvedValue({ ok: false, status: 401, error: 'Invalid credentials' });
+      mockCreateAdminSession.mockResolvedValue({
+        ok: false,
+        status: 401,
+        error: 'Invalid credentials',
+      });
       mockGetAccountByEmail.mockResolvedValue({
         id: 'admin-1',
         email: 'admin@example.com',
@@ -92,11 +104,15 @@ describe('risk events (ADR-234 item 7)', () => {
       });
       mockAccountIsLocked.mockReturnValue(false);
 
-      await app.fetch(new Request('http://localhost/api/admin/login', {
-        method: 'POST',
-        body: JSON.stringify({ email: 'admin@example.com', password: 'wrong' }),
-        headers: { 'Content-Type': 'application/json' },
-      }), env, ctx);
+      await app.fetch(
+        new Request('http://localhost/api/admin/login', {
+          method: 'POST',
+          body: JSON.stringify({ email: 'admin@example.com', password: 'wrong' }),
+          headers: { 'Content-Type': 'application/json' },
+        }),
+        env,
+        ctx,
+      );
 
       expect(riskCalls('risk_login_locked')).toHaveLength(0);
     });
@@ -106,13 +122,17 @@ describe('risk events (ADR-234 item 7)', () => {
       mockCheckRateLimitDO
         .mockResolvedValueOnce({ allowed: true, remaining: 9, resetAt: Date.now() + 60000 }) // ip middleware
         .mockResolvedValueOnce({ allowed: true, remaining: 4, resetAt: Date.now() + 60000 }) // auth_access
-        .mockResolvedValueOnce({ allowed: false, remaining: 0, resetAt });                    // auth_lockout blocked
+        .mockResolvedValueOnce({ allowed: false, remaining: 0, resetAt }); // auth_lockout blocked
 
-      const res = await app.fetch(new Request('http://localhost/api/access/request', {
-        method: 'POST',
-        body: JSON.stringify({ bookSlug: 'book-1', email: 'user@example.com', password: 'pw' }),
-        headers: { 'Content-Type': 'application/json' },
-      }), env, ctx);
+      const res = await app.fetch(
+        new Request('http://localhost/api/access/request', {
+          method: 'POST',
+          body: JSON.stringify({ bookSlug: 'book-1', email: 'user@example.com', password: 'pw' }),
+          headers: { 'Content-Type': 'application/json' },
+        }),
+        env,
+        ctx,
+      );
 
       expect(res.status).toBe(423);
       const call = riskCalls('risk_login_locked')[0];
@@ -126,15 +146,19 @@ describe('risk events (ADR-234 item 7)', () => {
     it('admin /recovery-verify emits tokenReplay password_reset on reset reason "used"', async () => {
       mockVerifyResetToken.mockResolvedValue({ ok: false, reason: 'used' });
 
-      const res = await app.fetch(new Request('http://localhost/api/admin/recovery-verify', {
-        method: 'POST',
-        body: JSON.stringify({
-          token: 'reused-token',
-          newPassword: 'Str0ng-Pass!',
-          newPasswordConfirm: 'Str0ng-Pass!',
+      const res = await app.fetch(
+        new Request('http://localhost/api/admin/recovery-verify', {
+          method: 'POST',
+          body: JSON.stringify({
+            token: 'reused-token',
+            newPassword: 'Str0ng-Pass!',
+            newPasswordConfirm: 'Str0ng-Pass!',
+          }),
+          headers: { 'Content-Type': 'application/json' },
         }),
-        headers: { 'Content-Type': 'application/json' },
-      }), env, ctx);
+        env,
+        ctx,
+      );
 
       expect(res.status).toBe(401);
       expect(riskCalls('risk_token_replay')[0].payload).toMatchObject({
@@ -145,15 +169,19 @@ describe('risk events (ADR-234 item 7)', () => {
     it('admin /recovery-verify does not emit tokenReplay on a non-`used` failure', async () => {
       mockVerifyResetToken.mockResolvedValue({ ok: false, reason: 'invalid' });
 
-      await app.fetch(new Request('http://localhost/api/admin/recovery-verify', {
-        method: 'POST',
-        body: JSON.stringify({
-          token: 't',
-          newPassword: 'Str0ng-Pass!',
-          newPasswordConfirm: 'Str0ng-Pass!',
+      await app.fetch(
+        new Request('http://localhost/api/admin/recovery-verify', {
+          method: 'POST',
+          body: JSON.stringify({
+            token: 't',
+            newPassword: 'Str0ng-Pass!',
+            newPasswordConfirm: 'Str0ng-Pass!',
+          }),
+          headers: { 'Content-Type': 'application/json' },
         }),
-        headers: { 'Content-Type': 'application/json' },
-      }), env, ctx);
+        env,
+        ctx,
+      );
 
       expect(riskCalls('risk_token_replay')).toHaveLength(0);
     });
@@ -161,11 +189,15 @@ describe('risk events (ADR-234 item 7)', () => {
     it('reader /verify-recovery emits tokenReplay password_reset on reset reason "used"', async () => {
       mockVerifyResetToken.mockResolvedValue({ ok: false, reason: 'used' });
 
-      const res = await app.fetch(new Request('http://localhost/api/access/verify-recovery', {
-        method: 'POST',
-        body: JSON.stringify({ token: 'reused-token' }),
-        headers: { 'Content-Type': 'application/json' },
-      }), env, ctx);
+      const res = await app.fetch(
+        new Request('http://localhost/api/access/verify-recovery', {
+          method: 'POST',
+          body: JSON.stringify({ token: 'reused-token' }),
+          headers: { 'Content-Type': 'application/json' },
+        }),
+        env,
+        ctx,
+      );
 
       expect(res.status).toBe(401);
       expect(riskCalls('risk_token_replay')[0].payload).toMatchObject({
@@ -180,14 +212,18 @@ describe('risk events (ADR-234 item 7)', () => {
         used_at: '2026-01-01T00:00:00.000Z',
       });
 
-      const res = await app.fetch(new Request('http://localhost/api/admin/login/mfa/verify', {
-        method: 'POST',
-        body: JSON.stringify({
-          loginTicket: 'ticket-1',
-          authenticationResponse: { id: 'cred-1', response: { clientDataJSON: 'Y2g' } },
+      const res = await app.fetch(
+        new Request('http://localhost/api/admin/login/mfa/verify', {
+          method: 'POST',
+          body: JSON.stringify({
+            loginTicket: 'ticket-1',
+            authenticationResponse: { id: 'cred-1', response: { clientDataJSON: 'Y2g' } },
+          }),
+          headers: { 'Content-Type': 'application/json' },
         }),
-        headers: { 'Content-Type': 'application/json' },
-      }), env, ctx);
+        env,
+        ctx,
+      );
 
       expect(res.status).toBe(401);
       expect(riskCalls('risk_token_replay')[0].payload).toMatchObject({

@@ -13,14 +13,14 @@ follows the privacy boundaries defined in ADR-102.
 
 ## What Is Tracked
 
-| Insight | Source | Notes |
-|---|---|---|
-| Total active reading time | Client timer | Pauses while hidden, blurred, or idle |
-| Estimated time remaining | Active time + progress | Shown only when confidence is sufficient |
-| Current reading streak | Local daily buckets | Consecutive days with reading activity |
-| Recent activity | Per-book local summary | Last 7 days of activity |
-| Chapter duration | Per-chapter active deltas | Time spent on each chapter (local only) |
-| Reading speed | Word count / active time | Book-level estimate in words-per-minute (local only) |
+| Insight                   | Source                    | Notes                                                |
+| ------------------------- | ------------------------- | ---------------------------------------------------- |
+| Total active reading time | Client timer              | Pauses while hidden, blurred, or idle                |
+| Estimated time remaining  | Active time + progress    | Shown only when confidence is sufficient             |
+| Current reading streak    | Local daily buckets       | Consecutive days with reading activity               |
+| Recent activity           | Per-book local summary    | Last 7 days of activity                              |
+| Chapter duration          | Per-chapter active deltas | Time spent on each chapter (local only)              |
+| Reading speed             | Word count / active time  | Book-level estimate in words-per-minute (local only) |
 
 ## Privacy Boundaries
 
@@ -101,12 +101,11 @@ CREATE TABLE reading_insights (
 Syncs local reading insight buckets to the server.
 
 **Request body:**
+
 ```json
 {
   "bookId": "uuid",
-  "buckets": [
-    { "date": "2026-06-19", "activeMinutes": 15, "activePages": 8 }
-  ],
+  "buckets": [{ "date": "2026-06-19", "activeMinutes": 15, "activePages": 8 }],
   "mutationId": "client-generated-id"
 }
 ```
@@ -118,6 +117,7 @@ Syncs local reading insight buckets to the server.
 Retrieves the user's reading insights for a book.
 
 **Response:**
+
 ```json
 {
   "ok": true,
@@ -125,9 +125,7 @@ Retrieves the user's reading insights for a book.
     "totalActiveMinutes": 120,
     "totalActivePages": 60,
     "currentStreakDays": 3,
-    "recentActivity": [
-      { "date": "2026-06-19", "activeMinutes": 15, "activePages": 8 }
-    ]
+    "recentActivity": [{ "date": "2026-06-19", "activeMinutes": 15, "activePages": 8 }]
   }
 }
 ```

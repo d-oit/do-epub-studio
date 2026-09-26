@@ -20,24 +20,24 @@ following the Wave 1 P0 fixes from Plan 063.
 After `pnpm install` completed (packages were previously not installed),
 running `pnpm typecheck` and `pnpm lint` revealed:
 
-| Category | Count | Root Cause |
-|----------|-------|------------|
-| Typecheck errors | 0 (all resolved by install) | Missing `node_modules` — packages like `fflate`, `hono`, `jszip`, `@intity/epub-js`, `framer-motion` were not installed |
-| Lint warnings | 5 | `react-hooks/exhaustive-deps` (4) + unused `eslint-disable` directive (1) |
-| `lint:workflows` failure | 1 | `scripts/validate-workflows.sh` called without `bash` prefix — fails in Windows cmd |
+| Category                 | Count                       | Root Cause                                                                                                              |
+| ------------------------ | --------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Typecheck errors         | 0 (all resolved by install) | Missing `node_modules` — packages like `fflate`, `hono`, `jszip`, `@intity/epub-js`, `framer-motion` were not installed |
+| Lint warnings            | 5                           | `react-hooks/exhaustive-deps` (4) + unused `eslint-disable` directive (1)                                               |
+| `lint:workflows` failure | 1                           | `scripts/validate-workflows.sh` called without `bash` prefix — fails in Windows cmd                                     |
 
 ---
 
 ## Tasks
 
-| ID | Priority | File | Issue | Fix | Status |
-|----|----------|------|-------|-----|--------|
-| W1 | P0 | `package.json` | `lint:workflows` fails on Windows — `.sh` called without `bash` | Prefix with `bash` | ✅ Done |
-| W2 | P1 | `packages/reader-core/src/__tests__/sanitizer.test.ts` | Unused `eslint-disable security/detect-non-literal-fs-filename` directive | Remove directive | ✅ Done |
-| W3 | P1 | `apps/web/src/features/admin/BooksPage.tsx` | `fetchBookResponses` defined inline, missing from `useEffect` deps | Wrap in `useCallback([sessionToken])`, add to `useEffect` deps | ✅ Done |
-| W4 | P1 | `apps/web/src/features/admin/AuditLogPage.tsx` | `fetchAuditLogs` defined inline, missing from `useEffect` deps | Wrap in `useCallback([sessionToken])`, add to `useEffect` deps | ✅ Done |
-| W5 | P1 | `apps/web/src/features/admin/GrantsPage.tsx` | `fetchGrantResponses` `useCallback` missing `sessionToken` dep | Add `sessionToken` to `useCallback` deps array | ✅ Done |
-| W6 | P1 | `apps/web/src/features/reader/ReaderPage.tsx` | `handleNavigateToAnnotation` `useCallback` flagged for `renditionRef` | Add `eslint-disable-next-line` with explanation (ref identity is stable) | ✅ Done |
+| ID  | Priority | File                                                   | Issue                                                                     | Fix                                                                      | Status  |
+| --- | -------- | ------------------------------------------------------ | ------------------------------------------------------------------------- | ------------------------------------------------------------------------ | ------- |
+| W1  | P0       | `package.json`                                         | `lint:workflows` fails on Windows — `.sh` called without `bash`           | Prefix with `bash`                                                       | ✅ Done |
+| W2  | P1       | `packages/reader-core/src/__tests__/sanitizer.test.ts` | Unused `eslint-disable security/detect-non-literal-fs-filename` directive | Remove directive                                                         | ✅ Done |
+| W3  | P1       | `apps/web/src/features/admin/BooksPage.tsx`            | `fetchBookResponses` defined inline, missing from `useEffect` deps        | Wrap in `useCallback([sessionToken])`, add to `useEffect` deps           | ✅ Done |
+| W4  | P1       | `apps/web/src/features/admin/AuditLogPage.tsx`         | `fetchAuditLogs` defined inline, missing from `useEffect` deps            | Wrap in `useCallback([sessionToken])`, add to `useEffect` deps           | ✅ Done |
+| W5  | P1       | `apps/web/src/features/admin/GrantsPage.tsx`           | `fetchGrantResponses` `useCallback` missing `sessionToken` dep            | Add `sessionToken` to `useCallback` deps array                           | ✅ Done |
+| W6  | P1       | `apps/web/src/features/reader/ReaderPage.tsx`          | `handleNavigateToAnnotation` `useCallback` flagged for `renditionRef`     | Add `eslint-disable-next-line` with explanation (ref identity is stable) | ✅ Done |
 
 ---
 
@@ -46,13 +46,17 @@ running `pnpm typecheck` and `pnpm lint` revealed:
 ### W1 — `lint:workflows` Windows fix
 
 `package.json` `lint:workflows` script changed from:
+
 ```
 "lint:workflows": "scripts/validate-workflows.sh"
 ```
+
 to:
+
 ```
 "lint:workflows": "bash scripts/validate-workflows.sh"
 ```
+
 `bash` is available on this machine (Git Bash / WSL). The script now runs
 correctly on Windows and validates all 9 workflows successfully.
 
@@ -95,26 +99,26 @@ at the bottom of that hook).
 
 ## Quality Gates
 
-| Gate | Result |
-|------|--------|
-| `pnpm typecheck` (7 packages) | ✅ 7/7 passed |
-| `pnpm lint` (7 packages) | ✅ 0 errors, 0 warnings |
-| `pnpm lint:workflows` (9 workflows) | ✅ 9/9 validated |
+| Gate                                                  | Result                       |
+| ----------------------------------------------------- | ---------------------------- |
+| `pnpm typecheck` (7 packages)                         | ✅ 7/7 passed                |
+| `pnpm lint` (7 packages)                              | ✅ 0 errors, 0 warnings      |
+| `pnpm lint:workflows` (9 workflows)                   | ✅ 9/9 validated             |
 | `pnpm --filter @do-epub-studio/reader-core test:unit` | ✅ 277/277 passed (17 files) |
-| `pnpm --filter @do-epub-studio/web test:unit` | ✅ 262/262 passed (32 files) |
+| `pnpm --filter @do-epub-studio/web test:unit`         | ✅ 262/262 passed (32 files) |
 
 ---
 
 ## Files Changed
 
-| File | Change |
-|------|--------|
-| `package.json` | `lint:workflows`: added `bash` prefix |
-| `packages/reader-core/src/__tests__/sanitizer.test.ts` | Removed unused `eslint-disable` directive |
-| `apps/web/src/features/admin/BooksPage.tsx` | Added `useCallback` import; wrapped `fetchBookResponses` in `useCallback([sessionToken])`; updated `useEffect` deps |
-| `apps/web/src/features/admin/AuditLogPage.tsx` | Added `useCallback` import; wrapped `fetchAuditLogs` in `useCallback([sessionToken])`; updated `useEffect` deps |
-| `apps/web/src/features/admin/GrantsPage.tsx` | Added `sessionToken` to `fetchGrantResponses` `useCallback` deps |
-| `apps/web/src/features/reader/ReaderPage.tsx` | Added `eslint-disable-next-line` with rationale for stable ref pattern |
+| File                                                   | Change                                                                                                              |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- |
+| `package.json`                                         | `lint:workflows`: added `bash` prefix                                                                               |
+| `packages/reader-core/src/__tests__/sanitizer.test.ts` | Removed unused `eslint-disable` directive                                                                           |
+| `apps/web/src/features/admin/BooksPage.tsx`            | Added `useCallback` import; wrapped `fetchBookResponses` in `useCallback([sessionToken])`; updated `useEffect` deps |
+| `apps/web/src/features/admin/AuditLogPage.tsx`         | Added `useCallback` import; wrapped `fetchAuditLogs` in `useCallback([sessionToken])`; updated `useEffect` deps     |
+| `apps/web/src/features/admin/GrantsPage.tsx`           | Added `sessionToken` to `fetchGrantResponses` `useCallback` deps                                                    |
+| `apps/web/src/features/reader/ReaderPage.tsx`          | Added `eslint-disable-next-line` with rationale for stable ref pattern                                              |
 
 ---
 
@@ -122,13 +126,13 @@ at the bottom of that hook).
 
 All Wave 1 P0 items from Plan 063 are now complete:
 
-| ID | Task | Status |
-|----|------|--------|
-| F1 | 404 catch-all route + `NotFoundPage` | ✅ Done (previous session) |
-| T1 | `epub-parser.worker.test.ts` | ✅ Done (previous session) |
-| T2 | `reanchor-worker.test.ts` | ✅ Done (previous session) |
-| E1 | Fix empty catch in `admin-middleware.ts` | ✅ Done (previous session) |
-| N1 | Skip-to-content link (WCAG 2.4.1) | ✅ Done (previous session) |
-| C2 | axe-core audits for admin pages | ✅ Done (previous session) |
+| ID  | Task                                     | Status                     |
+| --- | ---------------------------------------- | -------------------------- |
+| F1  | 404 catch-all route + `NotFoundPage`     | ✅ Done (previous session) |
+| T1  | `epub-parser.worker.test.ts`             | ✅ Done (previous session) |
+| T2  | `reanchor-worker.test.ts`                | ✅ Done (previous session) |
+| E1  | Fix empty catch in `admin-middleware.ts` | ✅ Done (previous session) |
+| N1  | Skip-to-content link (WCAG 2.4.1)        | ✅ Done (previous session) |
+| C2  | axe-core audits for admin pages          | ✅ Done (previous session) |
 
 Wave 1 quality gates all pass. Wave 2 (P1 items) is next per Plan 063 §3.

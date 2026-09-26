@@ -80,7 +80,11 @@ describe('ProgressLocatorSchema', () => {
   });
 
   it('accepts locator with cfi and optional fields', () => {
-    const result = ProgressLocatorSchema.parse({ cfi: 'cfi', selectedText: 'text', chapterRef: 'ch1' });
+    const result = ProgressLocatorSchema.parse({
+      cfi: 'cfi',
+      selectedText: 'text',
+      chapterRef: 'ch1',
+    });
     expect(result.cfi).toBe('cfi');
     expect(result.selectedText).toBe('text');
     expect(result.chapterRef).toBe('ch1');
@@ -108,7 +112,9 @@ describe('MultiSignalLocatorSchema', () => {
   });
 
   it('rejects missing cfi', () => {
-    expect(() => MultiSignalLocatorSchema.parse({ selectedText: 'text', chapterRef: 'ch1' })).toThrow();
+    expect(() =>
+      MultiSignalLocatorSchema.parse({ selectedText: 'text', chapterRef: 'ch1' }),
+    ).toThrow();
   });
 
   it('rejects missing selectedText', () => {
@@ -120,10 +126,19 @@ describe('MultiSignalLocatorSchema', () => {
   });
 
   it('rejects empty cfi', () => {
-    expect(() => MultiSignalLocatorSchema.parse({ cfi: '', selectedText: 'text', chapterRef: 'ch' })).toThrow();
+    expect(() =>
+      MultiSignalLocatorSchema.parse({ cfi: '', selectedText: 'text', chapterRef: 'ch' }),
+    ).toThrow();
   });
 
   it('rejects extra fields (strict mode)', () => {
-    expect(() => MultiSignalLocatorSchema.parse({ cfi: 'cfi', selectedText: 'text', chapterRef: 'ch', extra: true })).toThrow();
+    expect(() =>
+      MultiSignalLocatorSchema.parse({
+        cfi: 'cfi',
+        selectedText: 'text',
+        chapterRef: 'ch',
+        extra: true,
+      }),
+    ).toThrow();
   });
 });

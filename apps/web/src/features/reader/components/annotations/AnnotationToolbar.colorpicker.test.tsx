@@ -236,7 +236,9 @@ describe('AnnotationToolbar — color picker & popover', () => {
           canComment={true}
         />,
       );
-      const toolbar = screen.getByLabelText('annotation.highlight').closest('[data-container-name="annotation-toolbar"]');
+      const toolbar = screen
+        .getByLabelText('annotation.highlight')
+        .closest('[data-container-name="annotation-toolbar"]');
       expect(toolbar).toBeInTheDocument();
       expect(toolbar).toHaveClass('cq');
       expect(toolbar).toHaveClass('cq--annotation-toolbar');

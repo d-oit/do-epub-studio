@@ -10,11 +10,26 @@ function FocusTrapDemo() {
 
   return (
     <div style={{ padding: '2rem', maxWidth: '400px' }}>
-      <button ref={triggerRef} type="button" onClick={() => { setActive(!active); }}>
+      <button
+        ref={triggerRef}
+        type="button"
+        onClick={() => {
+          setActive(!active);
+        }}
+      >
         {active ? 'Deactivate Trap' : 'Activate Trap'}
       </button>
-      <div ref={containerRef} role="dialog" aria-label="Focus trap demo"
-        style={{ marginTop: '1rem', padding: '1rem', border: '1px solid #ccc', borderRadius: '8px' }}>
+      <div
+        ref={containerRef}
+        role="dialog"
+        aria-label="Focus trap demo"
+        style={{
+          marginTop: '1rem',
+          padding: '1rem',
+          border: '1px solid #ccc',
+          borderRadius: '8px',
+        }}
+      >
         <p>Tab cycles through these elements:</p>
         <button type="button">Button 1</button>
         <input placeholder="Text input" style={{ margin: '0 0.5rem' }} />

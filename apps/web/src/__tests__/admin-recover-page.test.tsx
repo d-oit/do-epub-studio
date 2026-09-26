@@ -83,7 +83,10 @@ vi.mock('../components/ui', () => ({
   Button: ({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
     <button {...props}>{children}</button>
   ),
-  Input: ({ label, ...props }: React.InputHTMLAttributes<HTMLInputElement> & { label?: string }) => {
+  Input: ({
+    label,
+    ...props
+  }: React.InputHTMLAttributes<HTMLInputElement> & { label?: string }) => {
     const id = props.id ?? `input-${label}`;
     return (
       <div>
@@ -349,7 +352,10 @@ describe('AdminRecoverPage', () => {
       const user = userEvent.setup();
       let resolveRequest: (value?: void | PromiseLike<void>) => void = () => {};
       vi.mocked(apiRequest).mockImplementation(
-        () => new Promise<void>((resolve) => { resolveRequest = resolve; }),
+        () =>
+          new Promise<void>((resolve) => {
+            resolveRequest = resolve;
+          }),
       );
 
       render(
@@ -374,7 +380,10 @@ describe('AdminRecoverPage', () => {
       const user = userEvent.setup();
       let resolveVerify: (value?: void | PromiseLike<void>) => void = () => {};
       vi.mocked(apiRequest).mockImplementation(
-        () => new Promise<void>((resolve) => { resolveVerify = resolve; }),
+        () =>
+          new Promise<void>((resolve) => {
+            resolveVerify = resolve;
+          }),
       );
 
       render(

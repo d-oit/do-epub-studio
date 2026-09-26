@@ -51,9 +51,7 @@ const config: KnipConfig = {
     // ---- apps/web --------------------------------------------------------
     'apps/web': {
       // jszip is listed in web deps but only used in worker tests (baseline).
-      ignoreDependencies: [
-        'jszip',
-      ],
+      ignoreDependencies: ['jszip'],
       // Barrel index not imported by any consumer — pre-existing baseline
       ignoreFiles: ['src/lib/index.ts'],
       // Pages Function entry point — bundled by Cloudflare at deploy time,
@@ -69,11 +67,7 @@ const config: KnipConfig = {
       // @libsql/client is imported in src/db/ which is a barrel not traced
       // from the worker entry point (pre-existing baseline).
       // @cloudflare/vitest-pool-workers is consumed by vitest config only.
-      ignoreDependencies: [
-        'cloudflare',
-        '@libsql/client',
-        '@cloudflare/vitest-pool-workers',
-      ],
+      ignoreDependencies: ['cloudflare', '@libsql/client', '@cloudflare/vitest-pool-workers'],
     },
 
     // ---- packages/reader-core --------------------------------------------
@@ -89,9 +83,7 @@ const config: KnipConfig = {
     'packages/shared': {
       // zod is used in shared source but knip doesn't trace it via re-exports
       // in the barrel (pre-existing baseline).
-      ignoreDependencies: [
-        'zod',
-      ],
+      ignoreDependencies: ['zod'],
     },
 
     // ---- packages/testkit ------------------------------------------------
@@ -101,9 +93,7 @@ const config: KnipConfig = {
     'packages/ui': {
       // @storybook/react is an unlisted transitive peer used in stories;
       // the actual listed package is @storybook/react-vite.
-      ignoreDependencies: [
-        '@storybook/react',
-      ],
+      ignoreDependencies: ['@storybook/react'],
     },
   },
 };

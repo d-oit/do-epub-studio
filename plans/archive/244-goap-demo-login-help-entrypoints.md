@@ -12,15 +12,15 @@ This plan has been fully implemented.
 
 ## Current Evidence
 
-| Area | Evidence | Finding |
-| --- | --- | --- |
-| Reader login UI | `apps/web/src/features/auth/LoginPage.tsx:62`, `apps/web/src/features/auth/LoginPage.tsx:74`, `apps/web/src/features/auth/LoginPage.tsx:282` | Reader login already posts `{ email, password, bookSlug }` to `/api/access/request`; it has no demo shortcut. |
-| Admin login UI | `apps/web/src/features/admin/AdminLoginPage.tsx:55`, `apps/web/src/features/admin/AdminLoginPage.tsx:185` | Admin login already posts credentials to `/api/admin/login`; it has no demo shortcut and may branch into MFA. |
-| Route surface | `apps/web/src/App.tsx:119`, `apps/web/src/App.tsx:120` | Reader and admin login pages are separate lazy routes, so role-specific demo affordances can be added without changing guarded app routes. |
-| Demo seed | `scripts/seed-demo-accounts.mjs:38`, `scripts/seed-demo-accounts.mjs:74`, `scripts/seed-demo-accounts.mjs:138`, `scripts/seed-demo-accounts.mjs:197` | ADR-233 is implemented as a fail-closed seed with separate reserved reader/admin accounts and a demo-book grant. |
-| Demo policy | `plans/233-adr-demo-account-sandbox-policy.md` | Existing policy covers safe seeding, but not user-visible one-click login entry points. |
-| Help docs | `docs/ONBOARDING.md`, `docs/setup-local.md`, `docs/coding-guide.md` | Existing docs are contributor/setup oriented; there is no stable end-user help URL exposed on auth screens. |
-| Frontend config | `apps/web/src/config/app-identity.ts`, `apps/web/src/vite-env.d.ts` | Public Vite config exists for runtime URLs, but there is no `VITE_HELP_URL` or demo-login feature flag contract. |
+| Area            | Evidence                                                                                                                                             | Finding                                                                                                                                    |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Reader login UI | `apps/web/src/features/auth/LoginPage.tsx:62`, `apps/web/src/features/auth/LoginPage.tsx:74`, `apps/web/src/features/auth/LoginPage.tsx:282`         | Reader login already posts `{ email, password, bookSlug }` to `/api/access/request`; it has no demo shortcut.                              |
+| Admin login UI  | `apps/web/src/features/admin/AdminLoginPage.tsx:55`, `apps/web/src/features/admin/AdminLoginPage.tsx:185`                                            | Admin login already posts credentials to `/api/admin/login`; it has no demo shortcut and may branch into MFA.                              |
+| Route surface   | `apps/web/src/App.tsx:119`, `apps/web/src/App.tsx:120`                                                                                               | Reader and admin login pages are separate lazy routes, so role-specific demo affordances can be added without changing guarded app routes. |
+| Demo seed       | `scripts/seed-demo-accounts.mjs:38`, `scripts/seed-demo-accounts.mjs:74`, `scripts/seed-demo-accounts.mjs:138`, `scripts/seed-demo-accounts.mjs:197` | ADR-233 is implemented as a fail-closed seed with separate reserved reader/admin accounts and a demo-book grant.                           |
+| Demo policy     | `plans/233-adr-demo-account-sandbox-policy.md`                                                                                                       | Existing policy covers safe seeding, but not user-visible one-click login entry points.                                                    |
+| Help docs       | `docs/ONBOARDING.md`, `docs/setup-local.md`, `docs/coding-guide.md`                                                                                  | Existing docs are contributor/setup oriented; there is no stable end-user help URL exposed on auth screens.                                |
+| Frontend config | `apps/web/src/config/app-identity.ts`, `apps/web/src/vite-env.d.ts`                                                                                  | Public Vite config exists for runtime URLs, but there is no `VITE_HELP_URL` or demo-login feature flag contract.                           |
 
 ## Improvement Summary
 
@@ -69,14 +69,14 @@ with tests, and render it as a normal external or internal link.
 
 ## Decomposition
 
-| Phase | Priority | Tasks | Dependencies | Gate |
-| --- | --- | --- | --- | --- |
-| 1. Contract | P0 | Define `DEMO_LOGIN_ENABLED`, optional preview allowlist, `DEMO_BOOK_SLUG`, and `VITE_HELP_URL`/`VITE_DEMO_LOGIN_ENABLED` contracts. | ADR-244 | Config is documented without secrets or hardcoded deployment URLs. |
-| 2. Worker demo sessions | P0 | Add separate reader/admin demo session endpoints returning the existing login response shapes. Validate `created_by_demo=1`, demo book grant, disabled/compromised state, production-like env, and audit logging. | Phase 1, ADR-233 | Worker tests prove production fail-closed and no password disclosure. |
-| 3. Web login UI | P0 | Add role-specific demo buttons to `LoginPage` and `AdminLoginPage`; call the new endpoints, reuse existing `setAuth`/`setAdminAuth`, and navigate to `/read/:slug` or `/admin/books`. | Phase 2 | Web tests cover button visibility, loading/error states, and navigation. |
-| 4. Help link | P1 | Add a validated public help URL helper and render "Help / how to use" links on both auth screens. | Phase 1 | Tests cover `href`, `target`, and `rel` behavior; invalid URL hides the link. |
-| 5. i18n and docs | P1 | Add translation keys for all locale catalogs and document local/demo setup plus the help URL contract. | Phases 3-4 | i18n tests pass; docs contain placeholders only. |
-| 6. Verification | P0 | Run targeted web/worker tests, lint/typecheck, `./scripts/quality_gate.sh`, and Codacy PR check before merge. | All phases | All required checks pass. |
+| Phase                   | Priority | Tasks                                                                                                                                                                                                             | Dependencies     | Gate                                                                          |
+| ----------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- | ----------------------------------------------------------------------------- |
+| 1. Contract             | P0       | Define `DEMO_LOGIN_ENABLED`, optional preview allowlist, `DEMO_BOOK_SLUG`, and `VITE_HELP_URL`/`VITE_DEMO_LOGIN_ENABLED` contracts.                                                                               | ADR-244          | Config is documented without secrets or hardcoded deployment URLs.            |
+| 2. Worker demo sessions | P0       | Add separate reader/admin demo session endpoints returning the existing login response shapes. Validate `created_by_demo=1`, demo book grant, disabled/compromised state, production-like env, and audit logging. | Phase 1, ADR-233 | Worker tests prove production fail-closed and no password disclosure.         |
+| 3. Web login UI         | P0       | Add role-specific demo buttons to `LoginPage` and `AdminLoginPage`; call the new endpoints, reuse existing `setAuth`/`setAdminAuth`, and navigate to `/read/:slug` or `/admin/books`.                             | Phase 2          | Web tests cover button visibility, loading/error states, and navigation.      |
+| 4. Help link            | P1       | Add a validated public help URL helper and render "Help / how to use" links on both auth screens.                                                                                                                 | Phase 1          | Tests cover `href`, `target`, and `rel` behavior; invalid URL hides the link. |
+| 5. i18n and docs        | P1       | Add translation keys for all locale catalogs and document local/demo setup plus the help URL contract.                                                                                                            | Phases 3-4       | i18n tests pass; docs contain placeholders only.                              |
+| 6. Verification         | P0       | Run targeted web/worker tests, lint/typecheck, `./scripts/quality_gate.sh`, and Codacy PR check before merge.                                                                                                     | All phases       | All required checks pass.                                                     |
 
 ## Recommended Design
 

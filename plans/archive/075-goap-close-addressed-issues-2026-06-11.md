@@ -7,17 +7,17 @@
 
 ### Open Issues Still on Board
 
-| # | Title | Addressed By | Evidence |
-|---|-------|-------------|----------|
-| 473 | CI failure on main: 27321424995 | Plan 074 (pending fix) | E2E failures, needs code fix |
-| 452 | docs(ai): add llms.txt and llms-full.txt | PR #458 (merged via bf01bc0) | Files exist in repo |
-| 451 | dx: add commitlint.config.cjs | PR #458 (merged via bf01bc0) | File exists at `commitlint.config.cjs` |
-| 449 | dx: add PR_VERIFICATION_CHECKLIST.md and GUIDE.md | PR #458 (merged via bf01bc0) | Files exist in `.github/` |
-| 448 | dx: extend PULL_REQUEST_TEMPLATE.md | PR #458 (merged via bf01bc0) | File is 142+ lines in `.github/` |
-| 447 | security: add .gitleaks.toml | PR #458 (merged via bf01bc0) | File exists at `.gitleaks.toml` |
-| 446 | fix(dx): extend .pre-commit-config.yaml | PR #458 (merged via bf01bc0) | File exists with gitleaks+yamllint hooks |
-| 445 | perf: keep agent files thin + AGENTS.md guards | PR #458 (merged via bf01bc0) | `scripts/check-agent-sync.mjs` exists |
-| 442 | perf: add path-based CI job filters | PR #458 (merged via bf01bc0) | `dorny/paths-filter` in ci.yml |
+| #   | Title                                             | Addressed By                 | Evidence                                 |
+| --- | ------------------------------------------------- | ---------------------------- | ---------------------------------------- |
+| 473 | CI failure on main: 27321424995                   | Plan 074 (pending fix)       | E2E failures, needs code fix             |
+| 452 | docs(ai): add llms.txt and llms-full.txt          | PR #458 (merged via bf01bc0) | Files exist in repo                      |
+| 451 | dx: add commitlint.config.cjs                     | PR #458 (merged via bf01bc0) | File exists at `commitlint.config.cjs`   |
+| 449 | dx: add PR_VERIFICATION_CHECKLIST.md and GUIDE.md | PR #458 (merged via bf01bc0) | Files exist in `.github/`                |
+| 448 | dx: extend PULL_REQUEST_TEMPLATE.md               | PR #458 (merged via bf01bc0) | File is 142+ lines in `.github/`         |
+| 447 | security: add .gitleaks.toml                      | PR #458 (merged via bf01bc0) | File exists at `.gitleaks.toml`          |
+| 446 | fix(dx): extend .pre-commit-config.yaml           | PR #458 (merged via bf01bc0) | File exists with gitleaks+yamllint hooks |
+| 445 | perf: keep agent files thin + AGENTS.md guards    | PR #458 (merged via bf01bc0) | `scripts/check-agent-sync.mjs` exists    |
+| 442 | perf: add path-based CI job filters               | PR #458 (merged via bf01bc0) | `dorny/paths-filter` in ci.yml           |
 
 ### Merged PRs Addressing These Issues
 
@@ -40,17 +40,17 @@ Their corresponding files/features are verified present in the current codebase.
 
 ## 3. Actions
 
-| ID | Action | Command |
-|----|--------|---------|
-| 1 | Close #442 | `gh issue close 442 --comment "Implemented in bf01bc0 (PR #458) — dorny/paths-filter added to CI"` |
-| 2 | Close #445 | `gh issue close 445 --comment "Implemented in bf01bc0 (PR #458) — check-agent-sync.mjs + size guards"` |
-| 3 | Close #446 | `gh issue close 446 --comment "Implemented in bf01bc0 (PR #458) — gitleaks + yamllint hooks added"` |
-| 4 | Close #447 | `gh issue close 447 --comment "Implemented in bf01bc0 (PR #458) — .gitleaks.toml added"` |
-| 5 | Close #448 | `gh issue close 448 --comment "Implemented in bf01bc0 (PR #458) — PR template extended"` |
-| 6 | Close #449 | `gh issue close 449 --comment "Implemented in bf01bc0 (PR #458) — checklist + guide added"` |
-| 7 | Close #451 | `gh issue close 451 --comment "Implemented in bf01bc0 (PR #458) — commitlint.config.cjs added"` |
-| 8 | Close #452 | `gh issue close 452 --comment "Implemented in bf01bc0 (PR #458) — llms.txt + llms-full.txt added"` |
-| 9 | Keep #473 open | Tracked by plan 074 |
+| ID  | Action         | Command                                                                                                |
+| --- | -------------- | ------------------------------------------------------------------------------------------------------ |
+| 1   | Close #442     | `gh issue close 442 --comment "Implemented in bf01bc0 (PR #458) — dorny/paths-filter added to CI"`     |
+| 2   | Close #445     | `gh issue close 445 --comment "Implemented in bf01bc0 (PR #458) — check-agent-sync.mjs + size guards"` |
+| 3   | Close #446     | `gh issue close 446 --comment "Implemented in bf01bc0 (PR #458) — gitleaks + yamllint hooks added"`    |
+| 4   | Close #447     | `gh issue close 447 --comment "Implemented in bf01bc0 (PR #458) — .gitleaks.toml added"`               |
+| 5   | Close #448     | `gh issue close 448 --comment "Implemented in bf01bc0 (PR #458) — PR template extended"`               |
+| 6   | Close #449     | `gh issue close 449 --comment "Implemented in bf01bc0 (PR #458) — checklist + guide added"`            |
+| 7   | Close #451     | `gh issue close 451 --comment "Implemented in bf01bc0 (PR #458) — commitlint.config.cjs added"`        |
+| 8   | Close #452     | `gh issue close 452 --comment "Implemented in bf01bc0 (PR #458) — llms.txt + llms-full.txt added"`     |
+| 9   | Keep #473 open | Tracked by plan 074                                                                                    |
 
 ## 4. Execution Status
 

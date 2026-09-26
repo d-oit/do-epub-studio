@@ -8,9 +8,10 @@ const scriptDir = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(scriptDir, '..');
 
 const fileIdx = process.argv.indexOf('--file');
-const indexPath = fileIdx !== -1
-  ? join(repoRoot, process.argv[fileIdx + 1])
-  : join(repoRoot, 'plans', 'ADR-INDEX.md');
+const indexPath =
+  fileIdx !== -1
+    ? join(repoRoot, process.argv[fileIdx + 1])
+    : join(repoRoot, 'plans', 'ADR-INDEX.md');
 
 let content;
 try {
@@ -32,16 +33,19 @@ function addNumber(baseNum, entry) {
   }
 }
 
-const sections = content.split(/^## /m).filter(s => s.trim());
+const sections = content.split(/^## /m).filter((s) => s.trim());
 
 for (const section of sections) {
   const lines = section.split('\n');
   const sectionName = lines[0]?.trim() || 'Unknown';
-  const tableLines = lines.filter(l => l.startsWith('|') && !l.startsWith('|---'));
+  const tableLines = lines.filter((l) => l.startsWith('|') && !l.startsWith('|---'));
   if (tableLines.length < 2) continue;
 
   for (const line of tableLines.slice(1)) {
-    const cells = line.split('|').map(c => c.trim()).filter(Boolean);
+    const cells = line
+      .split('|')
+      .map((c) => c.trim())
+      .filter(Boolean);
     if (cells.length < 2) continue;
 
     const numStr = cells[0];
@@ -72,7 +76,7 @@ for (const section of sections) {
 
 for (const [base, entries] of numbers) {
   if (entries.length > 2) {
-    errors.push(`Duplicate ADR ${base}: ${entries.map(e => e.num).join(', ')}`);
+    errors.push(`Duplicate ADR ${base}: ${entries.map((e) => e.num).join(', ')}`);
   }
   const seen = new Set();
   for (const e of entries) {

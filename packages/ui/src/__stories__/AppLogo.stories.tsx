@@ -17,9 +17,11 @@ export const Small: Story = { args: { size: 24 } };
 export const Large: Story = { args: { size: 80 } };
 export const DarkBackground: Story = {
   args: { size: 64 },
-  decorators: [(Story) => (
-    <div style={{ backgroundColor: '#1a1a2e', padding: '2rem', borderRadius: '8px' }}>
-      <Story />
-    </div>
-  )],
+  decorators: [
+    (Story) => (
+      <div style={{ backgroundColor: '#1a1a2e', padding: '2rem', borderRadius: '8px' }}>
+        <Story />
+      </div>
+    ),
+  ],
 };

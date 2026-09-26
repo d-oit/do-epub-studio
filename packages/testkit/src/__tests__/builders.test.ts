@@ -1,8 +1,16 @@
 import { describe, it, expect } from 'vitest';
 import { createBookBuilder, createBookFileBuilder } from '../book-builder';
 import { createGrantBuilder } from '../grant-builder';
-import { createSessionBuilder, createExpiredSession, createRevokedSession } from '../session-builder';
-import { createCommentBuilder, createHighlightBuilder, createBookmarkBuilder } from '../annotation-builder';
+import {
+  createSessionBuilder,
+  createExpiredSession,
+  createRevokedSession,
+} from '../session-builder';
+import {
+  createCommentBuilder,
+  createHighlightBuilder,
+  createBookmarkBuilder,
+} from '../annotation-builder';
 import { createProgressBuilder } from '../progress-builder';
 
 describe('BookBuilder', () => {

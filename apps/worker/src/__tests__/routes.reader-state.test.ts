@@ -28,25 +28,42 @@ describe('Reader State Routes', () => {
   describe('GET /api/books/:bookId/progress', () => {
     it('returns 401 when unauthenticated', async () => {
       mockRequireAuth.mockResolvedValue(null);
-      const res = await app.fetch(new Request('http://localhost/api/books/book-1/progress'), env, makePassThroughContext());
+      const res = await app.fetch(
+        new Request('http://localhost/api/books/book-1/progress'),
+        env,
+        makePassThroughContext(),
+      );
       expect(res.status).toBe(401);
     });
 
     it('returns progress when authenticated', async () => {
-      mockRequireAuth.mockResolvedValue({ email: 'user@example.com', bookId: 'book-1', sessionId: 'session-1' });
+      mockRequireAuth.mockResolvedValue({
+        email: 'user@example.com',
+        bookId: 'book-1',
+        sessionId: 'session-1',
+      });
 
       mockQueryFirst.mockResolvedValue({
         id: 'progress-1',
-        locator_json: JSON.stringify({ cfi: 'epubcfi(/6/4)', selectedText: 'test', chapterRef: 'Ch1' }),
+        locator_json: JSON.stringify({
+          cfi: 'epubcfi(/6/4)',
+          selectedText: 'test',
+          chapterRef: 'Ch1',
+        }),
         progress_percent: 50,
         updated_at: '2023-01-01T00:00:00Z',
       });
 
-      const res = await app.fetch(new Request('http://localhost/api/books/book-1/progress', {
-        headers: { 'Authorization': 'Bearer valid' }
-      }), env, makePassThroughContext());
+      const res = await app.fetch(
+        new Request('http://localhost/api/books/book-1/progress', {
+          headers: { Authorization: 'Bearer valid' },
+        }),
+        env,
+        makePassThroughContext(),
+      );
       expect(res.status).toBe(200);
-      const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } = await res.json();
+      const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } =
+        await res.json();
       expect(body.data.progressPercent).toBe(50);
     });
   });
@@ -59,20 +76,25 @@ describe('Reader State Routes', () => {
       });
       mockExecute.mockResolvedValue({ rows: [] });
 
-      const res = await app.fetch(new Request('http://localhost/api/books/book-1/progress', {
-        method: 'PUT',
-        body: JSON.stringify({
-          locator: { cfi: 'epubcfi(/6/4)', selectedText: 'text', chapterRef: 'chap1' },
-          progressPercent: 60,
+      const res = await app.fetch(
+        new Request('http://localhost/api/books/book-1/progress', {
+          method: 'PUT',
+          body: JSON.stringify({
+            locator: { cfi: 'epubcfi(/6/4)', selectedText: 'text', chapterRef: 'chap1' },
+            progressPercent: 60,
+          }),
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer valid',
+          },
         }),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer valid'
-        },
-      }), env, makePassThroughContext());
+        env,
+        makePassThroughContext(),
+      );
 
       expect(res.status).toBe(200);
-      const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } = await res.json();
+      const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } =
+        await res.json();
       expect(body.ok).toBe(true);
     });
   });
@@ -81,14 +103,19 @@ describe('Reader State Routes', () => {
     it('returns list of bookmarks', async () => {
       mockRequireAuth.mockResolvedValue({ email: 'user@example.com' });
       mockQueryAll.mockResolvedValue([
-        { id: '1', locator_json: JSON.stringify({ cfi: 'cfi' }), label: 'bm1', created_at: 'now' }
+        { id: '1', locator_json: JSON.stringify({ cfi: 'cfi' }), label: 'bm1', created_at: 'now' },
       ]);
 
-      const res = await app.fetch(new Request('http://localhost/api/books/book-1/bookmarks', {
-        headers: { 'Authorization': 'Bearer valid' }
-      }), env, makePassThroughContext());
+      const res = await app.fetch(
+        new Request('http://localhost/api/books/book-1/bookmarks', {
+          headers: { Authorization: 'Bearer valid' },
+        }),
+        env,
+        makePassThroughContext(),
+      );
       expect(res.status).toBe(200);
-      const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } = await res.json();
+      const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } =
+        await res.json();
       expect(body.data).toHaveLength(1);
     });
   });
@@ -101,17 +128,21 @@ describe('Reader State Routes', () => {
       });
       mockExecute.mockResolvedValue({ rows: [] });
 
-      const res = await app.fetch(new Request('http://localhost/api/books/book-1/bookmarks', {
-        method: 'POST',
-        body: JSON.stringify({
-          locator: { cfi: 'cfi', selectedText: 'text', chapterRef: 'chap1' },
-          label: 'My Bookmark',
+      const res = await app.fetch(
+        new Request('http://localhost/api/books/book-1/bookmarks', {
+          method: 'POST',
+          body: JSON.stringify({
+            locator: { cfi: 'cfi', selectedText: 'text', chapterRef: 'chap1' },
+            label: 'My Bookmark',
+          }),
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer valid',
+          },
         }),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer valid'
-        },
-      }), env, makePassThroughContext());
+        env,
+        makePassThroughContext(),
+      );
 
       expect(res.status).toBe(201);
     });
@@ -122,10 +153,14 @@ describe('Reader State Routes', () => {
       mockRequireAuth.mockResolvedValue({ email: 'user@example.com' });
       mockExecute.mockResolvedValue({ rows: [] });
 
-      const res = await app.fetch(new Request('http://localhost/api/books/book-1/bookmarks/bookmark-1', {
-        method: 'DELETE',
-        headers: { 'Authorization': 'Bearer valid' },
-      }), env, makePassThroughContext());
+      const res = await app.fetch(
+        new Request('http://localhost/api/books/book-1/bookmarks/bookmark-1', {
+          method: 'DELETE',
+          headers: { Authorization: 'Bearer valid' },
+        }),
+        env,
+        makePassThroughContext(),
+      );
 
       expect(res.status).toBe(200);
     });
@@ -135,14 +170,26 @@ describe('Reader State Routes', () => {
     it('returns list of highlights', async () => {
       mockRequireAuth.mockResolvedValue({ email: 'user@example.com' });
       mockQueryAll.mockResolvedValue([
-        { id: '1', chapter_ref: 'c1', cfi_range: 'r1', selected_text: 't', color: '#ff0', created_at: 'now' }
+        {
+          id: '1',
+          chapter_ref: 'c1',
+          cfi_range: 'r1',
+          selected_text: 't',
+          color: '#ff0',
+          created_at: 'now',
+        },
       ]);
 
-      const res = await app.fetch(new Request('http://localhost/api/books/book-1/highlights', {
-        headers: { 'Authorization': 'Bearer valid' }
-      }), env, makePassThroughContext());
+      const res = await app.fetch(
+        new Request('http://localhost/api/books/book-1/highlights', {
+          headers: { Authorization: 'Bearer valid' },
+        }),
+        env,
+        makePassThroughContext(),
+      );
       expect(res.status).toBe(200);
-      const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } = await res.json();
+      const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } =
+        await res.json();
       expect(body.data).toHaveLength(1);
     });
   });
@@ -155,18 +202,22 @@ describe('Reader State Routes', () => {
       });
       mockExecute.mockResolvedValue({ rows: [] });
 
-      const res = await app.fetch(new Request('http://localhost/api/books/book-1/highlights', {
-        method: 'POST',
-        body: JSON.stringify({
-          locator: { cfi: 'cfi', selectedText: 'text', chapterRef: 'chap1' },
-          note: 'nice',
-          color: '#ff0000',
+      const res = await app.fetch(
+        new Request('http://localhost/api/books/book-1/highlights', {
+          method: 'POST',
+          body: JSON.stringify({
+            locator: { cfi: 'cfi', selectedText: 'text', chapterRef: 'chap1' },
+            note: 'nice',
+            color: '#ff0000',
+          }),
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer valid',
+          },
         }),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer valid'
-        },
-      }), env, makePassThroughContext());
+        env,
+        makePassThroughContext(),
+      );
 
       expect(res.status).toBe(201);
     });
@@ -178,14 +229,18 @@ describe('Reader State Routes', () => {
       mockQueryFirst.mockResolvedValue({ user_email: 'user@example.com' });
       mockExecute.mockResolvedValue({ rows: [] });
 
-      const res = await app.fetch(new Request('http://localhost/api/books/book-1/highlights/highlight-1', {
-        method: 'PATCH',
-        body: JSON.stringify({ note: 'updated', color: '#00ff00' }),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer valid'
-        },
-      }), env, makePassThroughContext());
+      const res = await app.fetch(
+        new Request('http://localhost/api/books/book-1/highlights/highlight-1', {
+          method: 'PATCH',
+          body: JSON.stringify({ note: 'updated', color: '#00ff00' }),
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer valid',
+          },
+        }),
+        env,
+        makePassThroughContext(),
+      );
 
       expect(res.status).toBe(200);
     });
@@ -196,10 +251,14 @@ describe('Reader State Routes', () => {
       mockRequireAuth.mockResolvedValue({ email: 'user@example.com' });
       mockExecute.mockResolvedValue({ rows: [] });
 
-      const res = await app.fetch(new Request('http://localhost/api/books/book-1/highlights/highlight-1', {
-        method: 'DELETE',
-        headers: { 'Authorization': 'Bearer valid' },
-      }), env, makePassThroughContext());
+      const res = await app.fetch(
+        new Request('http://localhost/api/books/book-1/highlights/highlight-1', {
+          method: 'DELETE',
+          headers: { Authorization: 'Bearer valid' },
+        }),
+        env,
+        makePassThroughContext(),
+      );
 
       expect(res.status).toBe(200);
     });

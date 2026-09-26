@@ -33,7 +33,10 @@ test.describe('Responsive Login Controls & Layout Matrix', () => {
 
         const passwordInput = page.getByRole('textbox', { name: /Password/i });
         await expect(passwordInput, `${errorCtx}: password input visible`).toBeVisible();
-        await expect(passwordInput, `${errorCtx}: initial type is password`).toHaveAttribute('type', 'password');
+        await expect(passwordInput, `${errorCtx}: initial type is password`).toHaveAttribute(
+          'type',
+          'password',
+        );
 
         const toggle = page.locator('button[aria-controls="password"]');
         await expect(toggle, `${errorCtx}: password toggle button visible`).toBeVisible();
@@ -68,10 +71,16 @@ test.describe('Responsive Login Controls & Layout Matrix', () => {
 
         // Interaction behavior: password -> text -> password
         await toggle.click();
-        await expect(passwordInput, `${errorCtx}: input type changed to text`).toHaveAttribute('type', 'text');
+        await expect(passwordInput, `${errorCtx}: input type changed to text`).toHaveAttribute(
+          'type',
+          'text',
+        );
 
         await toggle.click();
-        await expect(passwordInput, `${errorCtx}: input type restored to password`).toHaveAttribute('type', 'password');
+        await expect(passwordInput, `${errorCtx}: input type restored to password`).toHaveAttribute(
+          'type',
+          'password',
+        );
       });
 
       test('Header controls layout, collision, & keyboard navigation', async ({ page }) => {
@@ -111,30 +120,43 @@ test.describe('Responsive Login Controls & Layout Matrix', () => {
         ).toBe(true);
 
         // No horizontal overflow
-        const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
+        const overflow = await page.evaluate(
+          () => document.documentElement.scrollWidth > window.innerWidth + 1,
+        );
         expect(overflow, `${errorCtx}: document must not have horizontal overflow`).toBe(false);
 
         // Keyboard navigation predictability
         await themeToggle.focus();
         await expect(themeToggle, `${errorCtx}: theme toggle focused`).toBeFocused();
         await page.keyboard.press('Tab');
-        await expect(localeSelector, `${errorCtx}: locale selector focused after Tab`).toBeFocused();
+        await expect(
+          localeSelector,
+          `${errorCtx}: locale selector focused after Tab`,
+        ).toBeFocused();
       });
 
-      test('Login card containment, header relationship, & no-book-context guard', async ({ page }) => {
+      test('Login card containment, header relationship, & no-book-context guard', async ({
+        page,
+      }) => {
         const errorCtx = `Viewport ${viewport.label} (${viewport.width}x${viewport.height})`;
 
         await page.goto('/login');
 
         const noBookNotice = page.locator('p[role="status"]');
-        await expect(noBookNotice, `${errorCtx}: no-book-context guard notice visible`).toBeVisible();
+        await expect(
+          noBookNotice,
+          `${errorCtx}: no-book-context guard notice visible`,
+        ).toBeVisible();
 
         const loginCard = page.locator('[data-testid="login-card"]');
         await expect(loginCard, `${errorCtx}: login card visible`).toBeVisible();
 
         const cardBox = await loginCard.boundingBox();
         const passwordInput = page.getByRole('textbox', { name: /Password/i });
-        const submitBtn = page.getByRole('button', { name: I18N_E2E_STRINGS.en.loginSubmit, exact: true });
+        const submitBtn = page.getByRole('button', {
+          name: I18N_E2E_STRINGS.en.loginSubmit,
+          exact: true,
+        });
 
         await expect(passwordInput, `${errorCtx}: password field visible`).toBeVisible();
         await expect(submitBtn, `${errorCtx}: sign-in button visible`).toBeVisible();
@@ -187,7 +209,10 @@ test.describe('Responsive Login Controls & Layout Matrix', () => {
         const localeSelector = page.getByRole('combobox');
         await localeSelector.selectOption('fr');
 
-        const submitBtn = page.getByRole('button', { name: I18N_E2E_STRINGS.fr.loginSubmit, exact: true });
+        const submitBtn = page.getByRole('button', {
+          name: I18N_E2E_STRINGS.fr.loginSubmit,
+          exact: true,
+        });
         await expect(submitBtn, `${errorCtx}: French submit button visible`).toBeVisible();
 
         const passwordInput = page.getByRole('textbox', { name: /Mot de passe/i });
@@ -213,7 +238,9 @@ test.describe('Responsive Login Controls & Layout Matrix', () => {
           `${errorCtx}: toggle fits horizontally in viewport under long locale`,
         ).toBe(true);
 
-        const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
+        const overflow = await page.evaluate(
+          () => document.documentElement.scrollWidth > window.innerWidth + 1,
+        );
         expect(overflow, `${errorCtx}: no horizontal overflow under French locale`).toBe(false);
       });
 
@@ -227,7 +254,10 @@ test.describe('Responsive Login Controls & Layout Matrix', () => {
         // Confirm the click actually produced dark mode before measuring: the
         // label alone asserted nothing, and reading geometry immediately after
         // the theme flip raced the resulting layout change (flaky at 812x375).
-        await expect(page.locator('html'), `${errorCtx}: dark mode applied`).toHaveAttribute('data-theme', 'dark');
+        await expect(page.locator('html'), `${errorCtx}: dark mode applied`).toHaveAttribute(
+          'data-theme',
+          'dark',
+        );
 
         const passwordInput = page.getByRole('textbox', { name: /Password/i });
         const toggle = page.locator('button[aria-controls="password"]');
@@ -241,11 +271,15 @@ test.describe('Responsive Login Controls & Layout Matrix', () => {
           `${errorCtx}: toggle contained in password field in dark mode`,
         ).toBe(true);
 
-        const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
+        const overflow = await page.evaluate(
+          () => document.documentElement.scrollWidth > window.innerWidth + 1,
+        );
         expect(overflow, `${errorCtx}: no horizontal overflow in dark mode`).toBe(false);
       });
 
-      test('RTL direction (Arabic) geometry & trailing/leading toggle placement', async ({ page }) => {
+      test('RTL direction (Arabic) geometry & trailing/leading toggle placement', async ({
+        page,
+      }) => {
         const errorCtx = `Viewport ${viewport.label} (${viewport.width}x${viewport.height}) [RTL]`;
         await page.goto(`/login?book=${TEST_USER.bookSlug}`);
 
@@ -255,7 +289,10 @@ test.describe('Responsive Login Controls & Layout Matrix', () => {
         // Assert the application applied RTL rather than forcing the attribute:
         // a manual override measures a DOM the app never produced and would pass
         // even if locale handling regressed.
-        await expect(page.locator('html'), `${errorCtx}: RTL applied by the app`).toHaveAttribute('dir', 'rtl');
+        await expect(page.locator('html'), `${errorCtx}: RTL applied by the app`).toHaveAttribute(
+          'dir',
+          'rtl',
+        );
 
         const passwordInput = page.getByRole('textbox', { name: /كلمة المرور|Password/i });
         await expect(passwordInput, `${errorCtx}: password input visible in RTL`).toBeVisible();
@@ -281,7 +318,9 @@ test.describe('Responsive Login Controls & Layout Matrix', () => {
           `${errorCtx}: RTL toggle is on leading half of password input`,
         ).toBeLessThan(passwordBox!.x + passwordBox!.width / 2);
 
-        const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
+        const overflow = await page.evaluate(
+          () => document.documentElement.scrollWidth > window.innerWidth + 1,
+        );
         expect(overflow, `${errorCtx}: no horizontal overflow in RTL mode`).toBe(false);
       });
     });
@@ -297,15 +336,22 @@ test.describe('Responsive Login Controls & Layout Matrix', () => {
     await expect(page).toHaveURL(new RegExp(`/read/${TEST_USER.bookSlug}$`), { timeout: 15000 });
   });
 
-  test('Demo reader account login via credential autofill preserves submission flow', async ({ page }) => {
-    await mockReaderApi(page, { bookSlug: DEMO_READER.bookSlug, loginResponse: DEMO_READER_RESPONSE });
+  test('Demo reader account login via credential autofill preserves submission flow', async ({
+    page,
+  }) => {
+    await mockReaderApi(page, {
+      bookSlug: DEMO_READER.bookSlug,
+      loginResponse: DEMO_READER_RESPONSE,
+    });
     await page.goto(`/login?book=${DEMO_READER.bookSlug}`);
 
     const fillDemoBtn = page.getByRole('button', { name: /Fill demo credentials/i });
     if (await fillDemoBtn.isVisible().catch(() => false)) {
       await fillDemoBtn.click();
       await expect(page.getByLabel(/Email/i)).toHaveValue(DEMO_READER.email);
-      await expect(page.getByRole('textbox', { name: /Password/i })).toHaveValue(DEMO_READER.password);
+      await expect(page.getByRole('textbox', { name: /Password/i })).toHaveValue(
+        DEMO_READER.password,
+      );
     } else {
       await page.getByLabel(/Email/i).fill(DEMO_READER.email);
       await page.getByRole('textbox', { name: /Password/i }).fill(DEMO_READER.password);
@@ -315,13 +361,17 @@ test.describe('Responsive Login Controls & Layout Matrix', () => {
     await expect(page).toHaveURL(new RegExp(`/read/${DEMO_READER.bookSlug}$`), { timeout: 15000 });
   });
 
-  test('Login page vertical geometry: desktop fits viewport, mobile has no horizontal overflow', async ({ page }) => {
+  test('Login page vertical geometry: desktop fits viewport, mobile has no horizontal overflow', async ({
+    page,
+  }) => {
     // Desktop (1440x900): the login page must fit the viewport height.
     // Regression guard for PR #1045 (in-flow header + lg:min-h-dvh on main
     // would otherwise force a permanent vertical scrollbar at >=lg).
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto(`/login?book=${TEST_USER.bookSlug}`);
-    await expect(page.getByRole('button', { name: I18N_E2E_STRINGS.en.loginSubmit, exact: true })).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: I18N_E2E_STRINGS.en.loginSubmit, exact: true }),
+    ).toBeVisible();
     const desktop = await page.evaluate(() => ({
       scrollHeight: document.body.scrollHeight,
       innerHeight: window.innerHeight,
@@ -334,8 +384,12 @@ test.describe('Responsive Login Controls & Layout Matrix', () => {
     // Mobile (320px): vertical stacking is allowed; horizontal overflow is not.
     await page.setViewportSize({ width: 320, height: 568 });
     await page.reload();
-    await expect(page.getByRole('button', { name: I18N_E2E_STRINGS.en.loginSubmit, exact: true })).toBeVisible();
-    const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
+    await expect(
+      page.getByRole('button', { name: I18N_E2E_STRINGS.en.loginSubmit, exact: true }),
+    ).toBeVisible();
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth > window.innerWidth + 1,
+    );
     expect(overflow, 'mobile 320px: no horizontal overflow on /login').toBe(false);
   });
 });

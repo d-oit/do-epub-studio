@@ -1,9 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import {
-  TRACE_HEADER,
-  SPAN_HEADER,
-  TRACEPARENT_HEADER,
-} from '@do-epub-studio/shared';
+import { TRACE_HEADER, SPAN_HEADER, TRACEPARENT_HEADER } from '@do-epub-studio/shared';
 import {
   createRequestContext,
   logAppError,
@@ -49,16 +45,21 @@ describe('createRequestContext (Plan 214 R2)', () => {
   });
 
   it('mints a server id for an invalid-charset trace header', () => {
-    const xssPayload = String.fromCharCode(60) + 'script' + String.fromCharCode(62) + 'alert(1)' + String.fromCharCode(60) + '/script' + String.fromCharCode(62);
+    const xssPayload =
+      String.fromCharCode(60) +
+      'script' +
+      String.fromCharCode(62) +
+      'alert(1)' +
+      String.fromCharCode(60) +
+      '/script' +
+      String.fromCharCode(62);
     const ctx = createRequestContext(makeRequest({ [TRACE_HEADER]: xssPayload }));
     expect(ctx.traceId).not.toBe(xssPayload);
     expect(ctx.traceId).toMatch(/^[0-9a-fA-F-]+$/);
   });
 
   it('never echoes an invalid client span id into the response headers', () => {
-    const ctx = createRequestContext(
-      makeRequest({ [SPAN_HEADER]: '!!!not-a-span!!!' }),
-    );
+    const ctx = createRequestContext(makeRequest({ [SPAN_HEADER]: '!!!not-a-span!!!' }));
     const res = withTraceHeaders(new Response('ok', { status: 200 }), ctx);
     const echoed = res.headers.get(TRACE_HEADER);
     const parent = res.headers.get(TRACEPARENT_HEADER);

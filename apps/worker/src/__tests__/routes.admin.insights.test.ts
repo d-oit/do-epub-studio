@@ -1,10 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import {
-  makeEnv,
-  makePassThroughContext,
-  mockQueryAll,
-  mockRequireAdminAuth,
-} from './fixtures';
+import { makeEnv, makePassThroughContext, mockQueryAll, mockRequireAdminAuth } from './fixtures';
 import { app } from '../app';
 
 describe('Admin Routes — GET /api/admin/insights', () => {

@@ -45,15 +45,15 @@ Readers need to:
 
 ### Cache Strategy
 
-| Content | Storage | TTL | Strategy |
-|---------|---------|-----|----------|
-| App shell | Cache Storage | Permanent | Cache-first |
-| Static assets | Cache Storage | 7 days | Stale-while-revalidate |
-| EPUB assets | Cache Storage | 30 days | Network-first |
-| Cover images | Cache Storage | 30 days | Cache-first |
-| Book metadata | IndexedDB | 24 hours | Network-first |
-| Progress | IndexedDB | Immediate | Local-first |
-| Annotations | IndexedDB | Immediate | Local-first |
+| Content       | Storage       | TTL       | Strategy               |
+| ------------- | ------------- | --------- | ---------------------- |
+| App shell     | Cache Storage | Permanent | Cache-first            |
+| Static assets | Cache Storage | 7 days    | Stale-while-revalidate |
+| EPUB assets   | Cache Storage | 30 days   | Network-first          |
+| Cover images  | Cache Storage | 30 days   | Cache-first            |
+| Book metadata | IndexedDB     | 24 hours  | Network-first          |
+| Progress      | IndexedDB     | Immediate | Local-first            |
+| Annotations   | IndexedDB     | Immediate | Local-first            |
 
 ### Sync Rules
 
@@ -80,13 +80,13 @@ Readers need to:
 
 ### Offline-First Entities
 
-| Entity | Write | Conflict Strategy |
-|--------|-------|-------------------|
-| Progress | Local-first | Last-write-wins |
-| Bookmarks | Local-first | Last-write-wins |
-| Highlights | Local-first | CRDT merge |
-| Comments | Local-first | Append + manual |
-| Preferences | Local-first | Last-write-wins |
+| Entity      | Write       | Conflict Strategy |
+| ----------- | ----------- | ----------------- |
+| Progress    | Local-first | Last-write-wins   |
+| Bookmarks   | Local-first | Last-write-wins   |
+| Highlights  | Local-first | CRDT merge        |
+| Comments    | Local-first | Append + manual   |
+| Preferences | Local-first | Last-write-wins   |
 
 ## Consequences
 

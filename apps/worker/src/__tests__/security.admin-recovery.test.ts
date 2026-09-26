@@ -31,7 +31,13 @@ describe('Security: Admin Recovery Flow', () => {
   });
 
   it('POST /api/admin/recovery-request succeeds for a valid admin email and mints a reset token', async () => {
-    mockQueryFirst.mockResolvedValue({ id: 'admin-1', email: 'admin@example.com', global_role: 'admin', disabled_at: null, compromised_at: null });
+    mockQueryFirst.mockResolvedValue({
+      id: 'admin-1',
+      email: 'admin@example.com',
+      global_role: 'admin',
+      disabled_at: null,
+      compromised_at: null,
+    });
     mockCreateResetToken.mockResolvedValue('raw-reset-token');
 
     const res = await app.fetch(
@@ -73,14 +79,27 @@ describe('Security: Admin Recovery Flow', () => {
   });
 
   it('POST /api/admin/recovery-verify accepts newPassword+confirm, resets, revokes sessions, returns reset-complete (no login)', async () => {
-    mockVerifyResetToken.mockResolvedValue({ ok: true, record: { id: 'rt-1', userId: 'admin-1', purpose: 'admin_reset' } });
-    mockQueryFirst.mockResolvedValue({ id: 'admin-1', email: 'admin@example.com', disabled_at: null, compromised_at: null, global_role: 'admin' });
+    mockVerifyResetToken.mockResolvedValue({
+      ok: true,
+      record: { id: 'rt-1', userId: 'admin-1', purpose: 'admin_reset' },
+    });
+    mockQueryFirst.mockResolvedValue({
+      id: 'admin-1',
+      email: 'admin@example.com',
+      disabled_at: null,
+      compromised_at: null,
+      global_role: 'admin',
+    });
 
     const res = await app.fetch(
       new Request('http://localhost/api/admin/recovery-verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: 'reset-token', newPassword: STRONG, newPasswordConfirm: STRONG }),
+        body: JSON.stringify({
+          token: 'reset-token',
+          newPassword: STRONG,
+          newPasswordConfirm: STRONG,
+        }),
       }),
       env,
       makePassThroughContext(),
@@ -91,10 +110,18 @@ describe('Security: Admin Recovery Flow', () => {
     expect(body.ok).toBe(true);
     expect(body.data).toEqual({ reset: true });
     expect(mockBumpResetTokenAttempt).toHaveBeenCalledWith(expect.anything(), 'rt-1');
-    expect(mockChangePasswordAndConsumeResetToken).toHaveBeenCalledWith(expect.anything(), 'admin-1', STRONG, 'rt-1');
+    expect(mockChangePasswordAndConsumeResetToken).toHaveBeenCalledWith(
+      expect.anything(),
+      'admin-1',
+      STRONG,
+      'rt-1',
+    );
     expect(mockRevokeAllAdminSessionsForUser).toHaveBeenCalledWith(expect.anything(), 'admin-1');
     // Non-backfilled reader_sessions (user_id NULL) must be revoked by email too (CWE-613).
-    expect(mockRevokeAllReaderSessionsForEmail).toHaveBeenCalledWith(expect.anything(), 'admin@example.com');
+    expect(mockRevokeAllReaderSessionsForEmail).toHaveBeenCalledWith(
+      expect.anything(),
+      'admin@example.com',
+    );
   });
 
   it('rejects a reused (replayed) reset token as generic INVALID_TOKEN', async () => {
@@ -136,13 +163,20 @@ describe('Security: Admin Recovery Flow', () => {
   });
 
   it('rejects mismatched password confirmation (schema-level)', async () => {
-    mockVerifyResetToken.mockResolvedValue({ ok: true, record: { id: 'rt-1', userId: 'admin-1', purpose: 'admin_reset' } });
+    mockVerifyResetToken.mockResolvedValue({
+      ok: true,
+      record: { id: 'rt-1', userId: 'admin-1', purpose: 'admin_reset' },
+    });
 
     const res = await app.fetch(
       new Request('http://localhost/api/admin/recovery-verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: 't', newPassword: STRONG, newPasswordConfirm: 'Different123!' }),
+        body: JSON.stringify({
+          token: 't',
+          newPassword: STRONG,
+          newPasswordConfirm: 'Different123!',
+        }),
       }),
       env,
       makePassThroughContext(),
@@ -154,15 +188,28 @@ describe('Security: Admin Recovery Flow', () => {
   });
 
   it('rejects a weak/service-derivative password', async () => {
-    mockVerifyResetToken.mockResolvedValue({ ok: true, record: { id: 'rt-1', userId: 'admin-1', purpose: 'admin_reset' } });
-    mockQueryFirst.mockResolvedValue({ id: 'admin-1', email: 'admin@example.com', disabled_at: null, compromised_at: null, global_role: 'admin' });
+    mockVerifyResetToken.mockResolvedValue({
+      ok: true,
+      record: { id: 'rt-1', userId: 'admin-1', purpose: 'admin_reset' },
+    });
+    mockQueryFirst.mockResolvedValue({
+      id: 'admin-1',
+      email: 'admin@example.com',
+      disabled_at: null,
+      compromised_at: null,
+      global_role: 'admin',
+    });
     mockIsPasswordDerivative.mockReturnValue(true);
 
     const res = await app.fetch(
       new Request('http://localhost/api/admin/recovery-verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: 't', newPassword: 'admin@example.com12345', newPasswordConfirm: 'admin@example.com12345' }),
+        body: JSON.stringify({
+          token: 't',
+          newPassword: 'admin@example.com12345',
+          newPasswordConfirm: 'admin@example.com12345',
+        }),
       }),
       env,
       makePassThroughContext(),
@@ -175,8 +222,17 @@ describe('Security: Admin Recovery Flow', () => {
   });
 
   it('returns generic INVALID_TOKEN for a lock-disabled account', async () => {
-    mockVerifyResetToken.mockResolvedValue({ ok: true, record: { id: 'rt-1', userId: 'admin-1', purpose: 'admin_reset' } });
-    mockQueryFirst.mockResolvedValue({ id: 'admin-1', email: 'admin@example.com', disabled_at: '2026-01-01T00:00:00Z', compromised_at: null, global_role: 'admin' });
+    mockVerifyResetToken.mockResolvedValue({
+      ok: true,
+      record: { id: 'rt-1', userId: 'admin-1', purpose: 'admin_reset' },
+    });
+    mockQueryFirst.mockResolvedValue({
+      id: 'admin-1',
+      email: 'admin@example.com',
+      disabled_at: '2026-01-01T00:00:00Z',
+      compromised_at: null,
+      global_role: 'admin',
+    });
     mockAccountIsLocked.mockReturnValue(true);
 
     const res = await app.fetch(

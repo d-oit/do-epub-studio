@@ -11,16 +11,17 @@ The system has migrated to **OKLCH** for perceptually uniform color mixing and *
 
 ### Semantic Tokens (Light Mode)
 
-| Token | OKLCH Value | HEX Fallback | Usage |
-|-------|-------------|--------------|-------|
-| `background` | `oklch(100% 0 0)` | `#ffffff` | Main background |
-| `background-secondary` | `oklch(97% 0 0)` | `#f5f5f5` | Panels, cards |
-| `foreground` | `oklch(15% 0 0)` | `#171717` | Main text |
-| `accent` | `oklch(60% 0.15 250)` | `#2563eb` | Primary actions |
+| Token                  | OKLCH Value           | HEX Fallback | Usage           |
+| ---------------------- | --------------------- | ------------ | --------------- |
+| `background`           | `oklch(100% 0 0)`     | `#ffffff`    | Main background |
+| `background-secondary` | `oklch(97% 0 0)`      | `#f5f5f5`    | Panels, cards   |
+| `foreground`           | `oklch(15% 0 0)`      | `#171717`    | Main text       |
+| `accent`               | `oklch(60% 0.15 250)` | `#2563eb`    | Primary actions |
 
 ### Wide Gamut P3 (Conditional)
 
 Supported devices receive richer colors via `@media (color-gamut: p3)`:
+
 - `accent`: `oklch(60% 0.2 250)`
 - `accent-error`: `oklch(65% 0.25 25)`
 
@@ -48,4 +49,5 @@ Tokens are defined in `apps/web/src/styles/globals.css` using CSS variables and 
 ```
 
 ---
-*Updated for 2026 UI/UX Modernization.*
+
+_Updated for 2026 UI/UX Modernization._

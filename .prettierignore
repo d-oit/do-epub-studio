@@ -1,0 +1,31 @@
+# Prettier ignore list — see issue #1182.
+#
+# Format with: pnpm format      Check with: pnpm format:check
+#
+# Two directories are excluded, and the reasons are not interchangeable:
+
+# 1. Agent skills are a size-capped document class, not prose.
+#    AGENTS.md sets MAX_LINES_SKILL_MD=250, enforced by
+#    scripts/validate-skill-format.sh. Prettier's markdown formatter is
+#    net-line-positive on these files: it pads every table to the widest cell
+#    and inserts a blank line around each list, which pushed
+#    pr-review-fix/SKILL.md from 245 to 251 lines and broke the cap on a
+#    formatting-only commit. A gate that punishes correct formatting is a
+#    gate that gets disabled, so the two tools are kept disjoint: prettier
+#    owns source and docs, the cap owns skills.
+#    .pre-commit-config.yaml excludes the same paths, so the two stay in sync.
+.agents/skills/
+.opencode/skills/
+.github/skills/
+
+# 2. Third-party Impeccable skill files are vendored via a submodule/symlink.
+#    Reformatting vendored content makes future upstream syncs conflict.
+.impeccable/
+
+# Generated output. Not source; a diff here is noise.
+packages/ui/storybook-static/
+packages/ui/coverage/
+apps/web/dist/
+apps/web/coverage/
+apps/worker/dist/
+coverage/

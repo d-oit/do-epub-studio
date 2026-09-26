@@ -31,11 +31,7 @@ export type PluralCategories = {
  * never returns `undefined`. Pass an explicit `locale`; it does not read the
  * locale store.
  */
-export function pluralize(
-  locale: string,
-  count: number,
-  categories: PluralCategories,
-): string {
+export function pluralize(locale: string, count: number, categories: PluralCategories): string {
   const category = new Intl.PluralRules(locale).select(count);
   return categories[category] ?? categories.other;
 }

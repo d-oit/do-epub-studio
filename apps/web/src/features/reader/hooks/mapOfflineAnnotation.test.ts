@@ -1,9 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  mapOfflineHighlight,
-  mapOfflineComment,
-  mapOfflineBookmark,
-} from './mapOfflineAnnotation';
+import { mapOfflineHighlight, mapOfflineComment, mapOfflineBookmark } from './mapOfflineAnnotation';
 import type { AnnotationEntry } from '../../../lib/offline';
 
 const base: AnnotationEntry = {
@@ -36,7 +32,13 @@ describe('mapOfflineHighlight', () => {
   });
 
   it('defaults missing optional fields', () => {
-    const minimal: AnnotationEntry = { ...base, text: undefined, comment: undefined, color: undefined, chapter: undefined };
+    const minimal: AnnotationEntry = {
+      ...base,
+      text: undefined,
+      comment: undefined,
+      color: undefined,
+      chapter: undefined,
+    };
     const result = mapOfflineHighlight(minimal);
     expect(result.selectedText).toBe('');
     expect(result.note).toBeNull();
@@ -47,7 +49,12 @@ describe('mapOfflineHighlight', () => {
 
 describe('mapOfflineComment', () => {
   it('maps all fields correctly', () => {
-    const entry: AnnotationEntry = { ...base, type: 'comment', text: 'context', comment: 'body text' };
+    const entry: AnnotationEntry = {
+      ...base,
+      type: 'comment',
+      text: 'context',
+      comment: 'body text',
+    };
     const result = mapOfflineComment(entry);
     expect(result).toEqual({
       id: 'a1',
@@ -67,7 +74,13 @@ describe('mapOfflineComment', () => {
   });
 
   it('defaults missing optional fields', () => {
-    const minimal: AnnotationEntry = { ...base, type: 'comment', text: undefined, comment: undefined, chapter: undefined };
+    const minimal: AnnotationEntry = {
+      ...base,
+      type: 'comment',
+      text: undefined,
+      comment: undefined,
+      chapter: undefined,
+    };
     const result = mapOfflineComment(minimal);
     expect(result.selectedText).toBeNull();
     expect(result.body).toBe('');

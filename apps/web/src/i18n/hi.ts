@@ -4,8 +4,8 @@ import { APP_NAME } from '../config/app-identity';
 export const hi: Record<TranslationKeys, TranslationValue> = {
   'app.title': APP_NAME,
   'app.versionLabel': 'संस्करण',
-  'ui.showPassword': "पासवर्ड दिखाएं",
-  'ui.hidePassword': "पासवर्ड छिपाएं",
+  'ui.showPassword': 'पासवर्ड दिखाएं',
+  'ui.hidePassword': 'पासवर्ड छिपाएं',
   'login.subtitle': 'अपनी पुस्तकों तक पहुँचने के लिए लॉग इन करें',
   'login.bookSlugLabel': 'पुस्तक स्लग',
   'login.emailLabel': 'ईमेल पता',
@@ -14,16 +14,20 @@ export const hi: Record<TranslationKeys, TranslationValue> = {
   'login.bookSlugPlaceholder': 'my-book-slug',
   'login.emailPlaceholder': 'reader@example.com',
   'login.passwordPlaceholder': 'पासवर्ड दर्ज करें',
-  'login.noBookContext': 'इस लिंक में कोई पुस्तक शामिल नहीं है। साइन इन करने के लिए किसी पुस्तक-विशिष्ट लिंक को खोलें, या नीचे डेमो आज़माएँ।',
+  'login.noBookContext':
+    'इस लिंक में कोई पुस्तक शामिल नहीं है। साइन इन करने के लिए किसी पुस्तक-विशिष्ट लिंक को खोलें, या नीचे डेमो आज़माएँ।',
   'login.submit': 'लॉग इन',
   'login.signingIn': 'लॉग इन हो रहा है...',
   'login.forgotPassword': 'पासवर्ड भूल गए?',
   'login.adminLink': 'एडमिन लॉगिन पर जाएं',
-  'login.adminDescription': 'क्या आप लेखक या प्रबंधक हैं? अपनी पुस्तकें अपलोड और प्रबंधित करने के लिए यहां लॉग इन करें।',
+  'login.adminDescription':
+    'क्या आप लेखक या प्रबंधक हैं? अपनी पुस्तकें अपलोड और प्रबंधित करने के लिए यहां लॉग इन करें।',
   'login.recoveryTitle': 'पहुँच पुनर्प्राप्त करें',
-  'login.recoveryInstructions': 'अपना ईमेल पता दर्ज करें और हम आपको बिना पासवर्ड के लॉग इन करने के लिए एक सुरक्षित लिंक भेजेंगे।',
+  'login.recoveryInstructions':
+    'अपना ईमेल पता दर्ज करें और हम आपको बिना पासवर्ड के लॉग इन करने के लिए एक सुरक्षित लिंक भेजेंगे।',
   'login.sendMagicLink': 'मैजिक लिंक भेजें',
-  'login.recoverySuccess': 'आपके ईमेल पर एक मैजिक लिंक भेजा गया है (यदि इस पुस्तक के लिए खाता मौजूद है)। कृपया अपना इनबॉक्स जांचें।',
+  'login.recoverySuccess':
+    'आपके ईमेल पर एक मैजिक लिंक भेजा गया है (यदि इस पुस्तक के लिए खाता मौजूद है)। कृपया अपना इनबॉक्स जांचें।',
   'login.backToLogin': 'लॉगिन पर वापस जाएं',
   'login.verifyingToken': 'पुनर्प्राप्ति लिंक सत्यापित हो रहा है...',
   'login.error.network': 'नेटवर्क त्रुटि। कृपया पुनः प्रयास करें।',
@@ -40,13 +44,16 @@ export const hi: Record<TranslationKeys, TranslationValue> = {
   'login.hero.howAccessWorks': 'साइनअप की ज़रूरत नहीं — पहुँच लेखक या प्रबंधक द्वारा दी जाती है।',
   'login.hero.learnMore': 'और जानें',
   'login.heroTitle': 'आपकी लाइब्रेरी के लिए एक शांत और विचारशील घर।',
-  'login.heroBody': 'EPUB अपलोड करें, सुव्यवस्थित टाइपोग्राफ़ी के साथ पढ़ें और हर टिप्पणी को सिंक में रखें — ऑफ़लाइन भी।',
+  'login.heroBody':
+    'EPUB अपलोड करें, सुव्यवस्थित टाइपोग्राफ़ी के साथ पढ़ें और हर टिप्पणी को सिंक में रखें — ऑफ़लाइन भी।',
   'help.title': 'सहायता और उपयोग कैसे करें',
-  'help.intro': '{app} एक EPUB पढ़ने और संपादन का कार्यक्षेत्र है। किताबें पढ़ने के लिए साइन इन करें, या लेखक या प्रबंधक के रूप में अपनी किताबें अपलोड करें और प्रबंधित करें।',
+  'help.intro':
+    '{app} एक EPUB पढ़ने और संपादन का कार्यक्षेत्र है। किताबें पढ़ने के लिए साइन इन करें, या लेखक या प्रबंधक के रूप में अपनी किताबें अपलोड करें और प्रबंधित करें।',
   'help.demoTitle': 'डेमो आज़माएं',
   'help.demoReader': 'पाठक डेमो: {email} · पासवर्ड: {password} · पुस्तक: {slug}',
   'help.demoAdmin': 'प्रशासक डेमो: {email} · पासवर्ड: {password}',
-  'help.demoBody': 'लॉगिन स्क्रीन पर डेमो क्रेडेंशियल से साइन इन करें, या एक-क्लिक डेमो बटन का उपयोग करें। खाता बनाने की आवश्यकता नहीं है।',
+  'help.demoBody':
+    'लॉगिन स्क्रीन पर डेमो क्रेडेंशियल से साइन इन करें, या एक-क्लिक डेमो बटन का उपयोग करें। खाता बनाने की आवश्यकता नहीं है।',
   'help.backToLogin': 'साइन इन पर वापस जाएं',
   'reader.untitledBook': 'शीर्षकहीन पुस्तक',
   'reader.signOut': 'लॉग आउट',
@@ -84,7 +91,8 @@ export const hi: Record<TranslationKeys, TranslationValue> = {
   'reader.settings.fontSize.large': 'बड़ा',
   'reader.settings.fontSize.xlarge': 'अति बड़ा',
   'reader.settings.ai.title': 'AI सहायता',
-  'reader.settings.ai.description': 'डिवाइस-पर AI सुविधाएँ (अध्याय सारांश)। डिफ़ॉल्ट में बंद; आपका पाठ कभी आपके डिवाइस से बाहर नहीं जाता।',
+  'reader.settings.ai.description':
+    'डिवाइस-पर AI सुविधाएँ (अध्याय सारांश)। डिफ़ॉल्ट में बंद; आपका पाठ कभी आपके डिवाइस से बाहर नहीं जाता।',
   'reader.settings.fontFamily.serif': 'Serif',
   'reader.settings.fontFamily.sans-serif': 'Sans Serif',
   'reader.settings.fontFamily.monospace': 'Monospace',
@@ -167,7 +175,8 @@ export const hi: Record<TranslationKeys, TranslationValue> = {
   'admin.createBookModal.validationErrors': 'सत्यापन त्रुटियां',
   'admin.createBookModal.validationWarnings': 'सत्यापन चेतावनियां',
   'admin.createBookModal.error.missingMimetype': '"mimetype" फ़ाइल गायब',
-  'admin.createBookModal.error.invalidMimetype': 'अमान्य MIME प्रकार: "application/epub+zip" होना चाहिए',
+  'admin.createBookModal.error.invalidMimetype':
+    'अमान्य MIME प्रकार: "application/epub+zip" होना चाहिए',
   'admin.createBookModal.error.missingContainer': '"META-INF/container.xml" गायब',
   'admin.createBookModal.error.corruptZip': 'फ़ाइल मान्य ZIP संग्रह नहीं है या दूषित है',
   'admin.manageGrants': 'पहुँच प्रबंधित करें',
@@ -182,7 +191,8 @@ export const hi: Record<TranslationKeys, TranslationValue> = {
   'grants.error.loadGrants': 'अनुमतियां लोड करने में विफल',
   'grants.error.revoke': 'अनुमति रद्द करने में विफल',
   'grants.revokeTitle': 'पहुँच रद्द करें',
-  'grants.revokeMessage': 'क्या आप {email} की पहुँच रद्द करना चाहते हैं? यह तुरंत उनका सत्र समाप्त कर देगा।',
+  'grants.revokeMessage':
+    'क्या आप {email} की पहुँच रद्द करना चाहते हैं? यह तुरंत उनका सत्र समाप्त कर देगा।',
   'grants.never': 'कभी नहीं',
   'grants.table.email': 'ईमेल',
   'grants.table.mode': 'मोड',
@@ -218,7 +228,8 @@ export const hi: Record<TranslationKeys, TranslationValue> = {
   'common.error.generic': 'कुछ गलत हो गया',
   'errors.generic': 'एक अप्रत्याशित त्रुटि हुई। कृपया पुनः प्रयास करें।',
   'errors.boundary.title': 'कुछ गलत हो गया',
-  'errors.boundary.description': 'एक अप्रत्याशित त्रुटि हुई। आप कंपोनेंट को पुनः लोड कर सकते हैं या नीचे दिए गए ID के साथ सहायता से संपर्क कर सकते हैं।',
+  'errors.boundary.description':
+    'एक अप्रत्याशित त्रुटि हुई। आप कंपोनेंट को पुनः लोड कर सकते हैं या नीचे दिए गए ID के साथ सहायता से संपर्क कर सकते हैं।',
   'errors.boundary.home': 'पेज पुनः लोड करें',
   'errors.boundary.retrying': 'पुनः प्रयास हो रहा है...',
   'errors.boundary.traceId': 'ट्रेस आईडी',
@@ -280,8 +291,10 @@ export const hi: Record<TranslationKeys, TranslationValue> = {
   'feedback.loadError': 'निजी फ़ीडबैक लोड नहीं हो सका।',
   'creator.title': 'निर्माता समीक्षा',
   'creator.assignedBooks': 'सौंपी गई पुस्तकें',
-  'creator.emptyUnassigned': 'कोई पुस्तक नहीं सौंपी गई। निर्माताओं को प्रति पुस्तक व्यवस्थापक द्वारा आमंत्रित किया जाता है।',
-  'creator.emptyNoFeedback': 'अभी कोई फ़ीडबैक नहीं। आमंत्रित पाठकों के भेजने के बाद यह यहाँ दिखेगा।',
+  'creator.emptyUnassigned':
+    'कोई पुस्तक नहीं सौंपी गई। निर्माताओं को प्रति पुस्तक व्यवस्थापक द्वारा आमंत्रित किया जाता है।',
+  'creator.emptyNoFeedback':
+    'अभी कोई फ़ीडबैक नहीं। आमंत्रित पाठकों के भेजने के बाद यह यहाँ दिखेगा।',
   'creator.filterStatus': 'स्थिति',
   'creator.filterCategory': 'श्रेणी',
   'creator.replyPlaceholder': 'उत्तर लिखें…',
@@ -301,7 +314,8 @@ export const hi: Record<TranslationKeys, TranslationValue> = {
   'creator.assigned': 'सौंपे गए निर्माता',
   'creator.noUser': 'इस ईमेल के लिए कोई खाता नहीं है।',
   'invitations.title': 'आमंत्रण स्वीकारें',
-  'invitations.description': 'किताब तक पहुँच सक्रिय करने के लिए पासवर्ड चुनें। यह आमंत्रण केवल एक बार उपयोग किया जा सकता है।',
+  'invitations.description':
+    'किताब तक पहुँच सक्रिय करने के लिए पासवर्ड चुनें। यह आमंत्रण केवल एक बार उपयोग किया जा सकता है।',
   'invitations.passwordLabel': 'पासवर्ड',
   'invitations.passwordConfirmLabel': 'पासवर्ड की पुष्टि करें',
   'invitations.accept': 'आमंत्रण स्वीकारें',
@@ -312,7 +326,8 @@ export const hi: Record<TranslationKeys, TranslationValue> = {
   'invitations.invalidDescription': 'यह आमंत्रण अमान्य, समाप्त या पहले ही उपयोग किया जा चुका है।',
   'invitations.backToLogin': 'लॉगिन पर वापस जाएँ',
   'invitations.adminTitle': 'किताब के आमंत्रण',
-  'invitations.adminDescription': 'पाठकों या रचनाओं को आमंत्रित करें और पहुँच भेजने का तरीका चुनें।',
+  'invitations.adminDescription':
+    'पाठकों या रचनाओं को आमंत्रित करें और पहुँच भेजने का तरीका चुनें।',
   'invitations.invitePerson': 'व्यक्ति को आमंत्रित करें',
   'invitations.closeForm': 'आमंत्रण फ़ॉर्म बंद करें',
   'invitations.emailLabel': 'ईमेल पता',
@@ -328,7 +343,8 @@ export const hi: Record<TranslationKeys, TranslationValue> = {
   'invitations.expiryLabel': 'पहुँच की समाप्ति (वैकल्पिक)',
   'invitations.sendInvite': 'आमंत्रण भेजें',
   'invitations.sending': 'आमंत्रण भेजा जा रहा है…',
-  'invitations.manualDelivery': 'ईमेल भेजना उपलब्ध नहीं है। यह एक बार का लिंक कॉपी करें और स्वीकृत माध्यम से भेजें।',
+  'invitations.manualDelivery':
+    'ईमेल भेजना उपलब्ध नहीं है। यह एक बार का लिंक कॉपी करें और स्वीकृत माध्यम से भेजें।',
   'invitations.copyLinkLabel': 'आमंत्रण लिंक',
   'invitations.copyLink': 'लिंक कॉपी करें',
   'invitations.copied': 'कॉपी हो गया',
@@ -417,7 +433,8 @@ export const hi: Record<TranslationKeys, TranslationValue> = {
   'asst.enginePrepare': 'कहानी और तर्क इंजन तैयार करें',
   'asst.engineDownloading': 'इंजन तैयार हो रहा है: {percent}%',
   'asst.engineReady': 'कहानी और तर्क इंजन तैयार है',
-  'asst.engineNote': 'लगभग 500 MB का एक बार का डाउनलोड। मॉडल इसी डिवाइस पर चलता है — आपका मसौदा कभी अपलोड नहीं होता।',
+  'asst.engineNote':
+    'लगभग 500 MB का एक बार का डाउनलोड। मॉडल इसी डिवाइस पर चलता है — आपका मसौदा कभी अपलोड नहीं होता।',
 
   'highlight.colors.yellow': 'पीला',
   'highlight.colors.green': 'हरा',
@@ -444,10 +461,13 @@ export const hi: Record<TranslationKeys, TranslationValue> = {
   'admin.login.invalidCredentials': 'अमान्य ईमेल या पासवर्ड',
   'admin.login.forgotPassword': 'पासवर्ड भूल गए?',
   'admin.login.backToReader': 'रीडर लॉगिन पर वापस जाएं',
-  'admin.login.readerDescription': 'अपनी पुस्तकें खोज रहे हैं? अपनी अधिकृत लाइब्रेरी तक पहुँचने के लिए रीडर लॉगिन पर जाएं।',
+  'admin.login.readerDescription':
+    'अपनी पुस्तकें खोज रहे हैं? अपनी अधिकृत लाइब्रेरी तक पहुँचने के लिए रीडर लॉगिन पर जाएं।',
   'admin.login.recoveryTitle': 'एडमिन पहुँच पुनर्प्राप्त करें',
-  'admin.login.recoveryInstructions': 'अपना एडमिन ईमेल दर्ज करें और हम आपको बिना पासवर्ड के लॉग इन करने के लिए एक सुरक्षित लिंक भेजेंगे।',
-  'admin.login.recoverySuccess': 'आपके ईमेल पर एक मैजिक लिंक भेजा गया है (यदि एडमिन खाता मौजूद है)। कृपया अपना इनबॉक्स जांचें।',
+  'admin.login.recoveryInstructions':
+    'अपना एडमिन ईमेल दर्ज करें और हम आपको बिना पासवर्ड के लॉग इन करने के लिए एक सुरक्षित लिंक भेजेंगे।',
+  'admin.login.recoverySuccess':
+    'आपके ईमेल पर एक मैजिक लिंक भेजा गया है (यदि एडमिन खाता मौजूद है)। कृपया अपना इनबॉक्स जांचें।',
   'admin.login.backToAdminLogin': 'एडमिन लॉगिन पर वापस जाएं',
   'admin.login.demoTry': 'एडमिन डेमो आज़माएँ',
   'admin.login.demoFillCredentials': 'एडमिन क्रेडेंशियल भरें',
@@ -475,7 +495,8 @@ export const hi: Record<TranslationKeys, TranslationValue> = {
   'admin.books.edit': 'संपादित करें',
   'admin.books.archive': 'संग्रह',
   'admin.books.confirmArchiveTitle': 'पुस्तक संग्रहित करें',
-  'admin.books.confirmArchive': 'क्या आप वाकई इस पुस्तक को संग्रहित करना चाहते हैं? यह कार्रवाई पूर्ववत नहीं की जा सकती।',
+  'admin.books.confirmArchive':
+    'क्या आप वाकई इस पुस्तक को संग्रहित करना चाहते हैं? यह कार्रवाई पूर्ववत नहीं की जा सकती।',
   'admin.books.noBookResponses': 'कोई पुस्तक नहीं मिली',
   'admin.books.editTitle': 'पुस्तक संपादित करें',
   'admin.books.saveChanges': 'परिवर्तन सहेजें',
@@ -506,14 +527,17 @@ export const hi: Record<TranslationKeys, TranslationValue> = {
   'admin.grants.createGrantModal.close': 'बंद करें',
   'admin.grants.createGrantModal.submit': 'अनुमति बनाएं',
   'admin.grants.createGrantModal.submitting': 'बनाया जा रहा है...',
-  'admin.grants.selectBook': 'पहुँच अनुमतियां प्रबंधित करने के लिए कृपया पुस्तक पृष्ठ से एक पुस्तक चुनें।',
+  'admin.grants.selectBook':
+    'पहुँच अनुमतियां प्रबंधित करने के लिए कृपया पुस्तक पृष्ठ से एक पुस्तक चुनें।',
   'admin.recover.titleRequest': 'एडमिन पहुँच पुनर्प्राप्त करें',
   'admin.recover.titleVerify': 'नया पासवर्ड सेट करें',
-  'admin.recover.requestDescription': 'अपना एडमिन ईमेल दर्ज करें। यदि खाता मौजूद है तो हम एक पुनर्प्राप्ति लिंक भेजेंगे।',
+  'admin.recover.requestDescription':
+    'अपना एडमिन ईमेल दर्ज करें। यदि खाता मौजूद है तो हम एक पुनर्प्राप्ति लिंक भेजेंगे।',
   'admin.recover.verifyDescription': 'एडमिन पहुँच पुनर्प्राप्त करने के लिए एक नया पासवर्ड चुनें।',
   'admin.recover.sendLink': 'पुनर्प्राप्ति लिंक भेजें',
   'admin.recover.sending': 'भेजा जा रहा है...',
-  'admin.recover.requestSent': 'यदि वह ईमेल एडमिन खाते से मेल खाता है, तो पुनर्प्राप्ति लिंक भेजा गया है।',
+  'admin.recover.requestSent':
+    'यदि वह ईमेल एडमिन खाते से मेल खाता है, तो पुनर्प्राप्ति लिंक भेजा गया है।',
   'admin.recover.requestFailed': 'पुनर्प्राप्ति ईमेल नहीं भेजा जा सका। कृपया पुनः प्रयास करें।',
   'admin.recover.newPassword': 'नया पासवर्ड',
   'admin.recover.resetPassword': 'पासवर्ड रीसेट करें',
@@ -522,7 +546,8 @@ export const hi: Record<TranslationKeys, TranslationValue> = {
   'admin.recover.backToLogin': 'लॉगिन पर वापस जाएं',
   'admin.recover.newPasswordConfirm': 'नया पासवर्ड पुष्टि करें',
   'admin.recover.successTitle': 'पासवर्ड रीसेट पूर्ण हुआ',
-  'admin.recover.successMessage': 'आपका पासवर्ड रीसेट कर दिया गया है। जारी रखने के लिए अपने नए पासवर्ड से साइन इन करें।',
+  'admin.recover.successMessage':
+    'आपका पासवर्ड रीसेट कर दिया गया है। जारी रखने के लिए अपने नए पासवर्ड से साइन इन करें।',
   'admin.recover.signInNow': 'साइन इन पर जाएं',
   'admin.account.title': 'खाता सेटिंग्स',
   'admin.account.backToDashboard': 'डैशबोर्ड पर वापस जाएं',
@@ -531,7 +556,8 @@ export const hi: Record<TranslationKeys, TranslationValue> = {
   'admin.account.currentPassword': 'वर्तमान पासवर्ड',
   'admin.account.newPassword': 'नया पासवर्ड',
   'admin.account.newPasswordConfirm': 'नया पासवर्ड पुष्टि करें',
-  'admin.account.passwordChangeFailed': 'आपका पासवर्ड अपडेट नहीं हो सका। अपना वर्तमान पासवर्ड जांचें और पुनः प्रयास करें।',
+  'admin.account.passwordChangeFailed':
+    'आपका पासवर्ड अपडेट नहीं हो सका। अपना वर्तमान पासवर्ड जांचें और पुनः प्रयास करें।',
   'admin.account.passwordChangeSuccess': 'पासवर्ड सफलतापूर्वक अपडेट हो गया।',
   'admin.sessions.title': 'सक्रिय सत्र',
   'admin.sessions.loadFailed': 'आपके सक्रिय सत्र लोड नहीं हो सके।',
@@ -551,36 +577,60 @@ export const hi: Record<TranslationKeys, TranslationValue> = {
   'admin.stepUp.error': 'सत्यापन विफल रहा। अपना पासवर्ड जाँचें और पुनः प्रयास करें।',
 
   // ADR-234 MFA passkeys + recovery codes
-  "security.mfa.title": "\u0938\u0941\u0930\u0915\u094d\u0937\u093e / MFA",
-  "security.mfa.description": "\u0905\u092a\u0928\u0947 \u090f\u0921\u092e\u093f\u0928 \u0916\u093e\u0924\u0947 \u0915\u094b \u092a\u093e\u0938\u0915\u0940 \u0938\u0947 \u0938\u0941\u0930\u0915\u094d\u0937\u093f\u0924 \u0915\u0930\u0947\u0902\u0964 \u092a\u094d\u0930\u092e\u093e\u0923\u0940\u0915\u0930\u0923 \u0906\u092a\u0915\u0947 \u0938\u0924\u094d\u0930 \u0915\u094b MFA \u0938\u0941\u0930\u0915\u094d\u0937\u093e \u0924\u0915 \u092c\u0922\u093c\u093e \u0926\u0947\u0924\u093e \u0939\u0948\u0964",
-  "security.mfa.passkeys": "\u092a\u093e\u0938\u0915\u0940",
-  "security.mfa.noEnrolled": "\u0905\u092d\u0940 \u0924\u0915 \u0915\u094b\u0908 \u092a\u093e\u0938\u0915\u0940 \u092a\u0902\u091c\u0940\u0915\u0943\u0924 \u0928\u0939\u0940\u0902 \u0939\u0948\u0964",
-  "security.mfa.remove": "\u0939\u091f\u093e\u090f\u0901",
-  "security.mfa.enroll": "\u092a\u093e\u0938\u0915\u0940 \u092a\u0902\u091c\u0940\u0915\u0943\u0924 \u0915\u0930\u0947\u0902",
-  "security.mfa.addAnother": "\u090f\u0915 \u0914\u0930 \u092a\u093e\u0938\u0915\u0940 \u091c\u094b\u0921\u093c\u0947\u0902",
-  "security.mfa.authenticate": "\u092a\u093e\u0938\u0915\u0940 \u0938\u0947 \u0938\u0924\u094d\u092f\u093e\u092a\u093f\u0924 \u0915\u0930\u0947\u0902",
-  "security.mfa.authenticating": "\u0938\u0924\u094d\u092f\u093e\u092a\u093f\u0924 \u0915\u093f\u092f\u093e \u091c\u093e \u0930\u0939\u093e \u0939\u0948...",
-  "security.mfa.regenerate": "\u092a\u0941\u0928\u0930\u094d\u092a\u094d\u0930\u093e\u092a\u094d\u0924\u093f \u0915\u094b\u0921 \u092b\u093f\u0930 \u0938\u0947 \u092c\u0928\u093e\u090f\u0901",
-  "security.mfa.regenerating": "\u092b\u093f\u0930 \u0938\u0947 \u092c\u0928\u093e\u092f\u093e \u091c\u093e \u0930\u0939\u093e \u0939\u0948...",
-  "security.mfa.loadFailed": "MFA \u0938\u094d\u0925\u093f\u0924\u093f \u0932\u094b\u0921 \u0928\u0939\u0940\u0902 \u0939\u094b \u0938\u0915\u0940\u0964",
-  "security.mfa.actionFailed": "MFA \u0915\u094d\u0930\u093f\u092f\u093e \u0935\u093f\u092b\u0932 \u0930\u0939\u0940\u0964 \u092a\u0941\u0928\u0903 \u092a\u094d\u0930\u092f\u093e\u0938 \u0915\u0930\u0947\u0902\u0964",
-  "security.mfa.enrollSuccess": "\u092a\u093e\u0938\u0915\u0940 \u0938\u092b\u0932\u0924\u093e\u092a\u0942\u0930\u094d\u0935\u0915 \u092a\u0902\u091c\u0940\u0915\u0943\u0924 \u0939\u0941\u0908\u0964",
-  "security.mfa.removeSuccess": "\u092a\u093e\u0938\u0915\u0940 \u0939\u091f\u093e \u0926\u0940 \u0917\u0908\u0964",
-  "security.mfa.authSuccess": "\u092a\u093e\u0938\u0915\u0940 \u0938\u0924\u094d\u092f\u093e\u092a\u093f\u0924 \u0939\u0941\u0908\u0964 \u0906\u092a\u0915\u093e \u0938\u0924\u094d\u0930 \u0905\u092c MFA-\u0938\u0941\u0930\u0915\u094d\u0937\u093f\u0924 \u0939\u0948\u0964",
-  "security.mfa.authFailed": "\u092a\u093e\u0938\u0915\u0940 \u0938\u0924\u094d\u092f\u093e\u092a\u0928 \u0935\u093f\u092b\u0932 \u0930\u0939\u093e\u0964",
-  "security.mfa.stepUpNeeded": "\u0915\u0941\u091b \u0938\u0902\u0935\u0947\u0926\u0928\u0936\u0940\u0932 \u090f\u0921\u092e\u093f\u0928 \u0915\u094d\u0930\u093f\u092f\u093e\u0913\u0902 \u0915\u0947 \u0932\u093f\u090f \u0906\u0917\u0947 \u092c\u0922\u093c\u0928\u0947 \u0938\u0947 \u092a\u0939\u0932\u0947 \u0905\u092a\u0928\u0940 \u092a\u093e\u0938\u0915\u0940 \u0938\u0947 \u092a\u0941\u0937\u094d\u091f\u093f \u0906\u0935\u0936\u094d\u092f\u0915 \u0939\u0948\u0964",
-  "security.mfa.loading": "\u090f\u092e\u090f\u092b\u090f \u0938\u094d\u0925\u093f\u0924\u093f \u0932\u094b\u0921 \u0939\u094b \u0930\u0939\u0940 \u0939\u0948...",
-  "security.mfa.passkeyName": "\u092a\u093e\u0938\u0915\u0940 \u0915\u093e \u0928\u093e\u092e",
-  "security.mfa.removeConfirmTitle": "\u092a\u093e\u0938\u0915\u0940 \u0939\u091f\u093e\u090f\u0902?",
-  "security.mfa.removeConfirmMessage": "\u0915\u094d\u092f\u093e \u092a\u093e\u0938\u0915\u0940 \"{name}\" \u0939\u091f\u093e\u090f\u0902? \u0907\u0938\u0947 \u0939\u091f\u093e\u0928\u0947 \u0915\u0947 \u092c\u093e\u0926, \u0906\u092a \u0909\u0938 \u0921\u093f\u0935\u093e\u0907\u0938 \u0938\u0947 \u0938\u093e\u0907\u0928 \u0907\u0928 \u0928\u0939\u0940\u0902 \u0915\u0930 \u092a\u093e\u090f\u0902\u0917\u0947\u0964",
-  "security.recovery.recoveryCodes": "\u092a\u0941\u0928\u0930\u094d\u092a\u094d\u0930\u093e\u092a\u094d\u0924\u093f \u0915\u094b\u0921",
-  "security.recovery.copyAll": "\u0938\u092d\u0940 \u0915\u0949\u092a\u0940 \u0915\u0930\u0947\u0902",
-  "security.recovery.copied": "\u0915\u0949\u092a\u0940 \u0915\u093f\u092f\u093e \u0917\u092f\u093e",
-  "security.recovery.codeCopied": "\u0915\u0949\u092a\u0940 \u0915\u093f\u092f\u093e \u0917\u092f\u093e",
-  "security.recovery.close": "\u092c\u0902\u0926 \u0915\u0930\u0947\u0902",
-  "security.recovery.recoveryCodesWarning": "\u0907\u0928 \u092a\u0941\u0928\u0930\u094d\u092a\u094d\u0930\u093e\u092a\u094d\u0924\u093f \u0915\u094b\u0921\u094b\u0902 \u0915\u094b \u0915\u093f\u0938\u0940 \u0938\u0941\u0930\u0915\u094d\u0937\u093f\u0924 \u0938\u094d\u0925\u093e\u0928 \u092a\u0930 \u0930\u0916\u0947\u0902\u0964 \u092f\u0947 \u0915\u0947\u0935\u0932 \u090f\u0915 \u092c\u093e\u0930 \u0926\u093f\u0916\u093e\u090f \u091c\u093e\u0924\u0947 \u0939\u0948\u0902 \u0914\u0930 \u092a\u094d\u0930\u0924\u094d\u092f\u0947\u0915 \u0915\u093e \u0909\u092a\u092f\u094b\u0917 \u0915\u0947\u0935\u0932 \u090f\u0915 \u092c\u093e\u0930 \u0915\u093f\u092f\u093e \u091c\u093e \u0938\u0915\u0924\u093e \u0939\u0948\u0964",
-  "security.recovery.codesShownOnce": "\u092f\u0926\u093f \u0906\u092a \u0905\u092a\u0928\u0940 \u092a\u093e\u0938\u0915\u0940 \u0924\u0915 \u092a\u0939\u0941\u0901\u091a \u0916\u094b \u0926\u0947\u0924\u0947 \u0939\u0948\u0902, \u0924\u094b \u0905\u092a\u0928\u093e \u0916\u093e\u0924\u093e \u092a\u0941\u0928\u0930\u094d\u092a\u094d\u0930\u093e\u092a\u094d\u0924 \u0915\u0930\u0928\u0947 \u0915\u0947 \u0932\u093f\u090f \u0907\u0928 \u0915\u094b\u0921\u094b\u0902 \u092e\u0947\u0902 \u0938\u0947 \u090f\u0915 \u0915\u093e \u0909\u092a\u092f\u094b\u0917 \u0915\u0930\u0947\u0902\u0964",
-  "security.recovery.copy": "\u0915\u0949\u092a\u0940 \u0915\u0930\u0947\u0902",
+  'security.mfa.title': '\u0938\u0941\u0930\u0915\u094d\u0937\u093e / MFA',
+  'security.mfa.description':
+    '\u0905\u092a\u0928\u0947 \u090f\u0921\u092e\u093f\u0928 \u0916\u093e\u0924\u0947 \u0915\u094b \u092a\u093e\u0938\u0915\u0940 \u0938\u0947 \u0938\u0941\u0930\u0915\u094d\u0937\u093f\u0924 \u0915\u0930\u0947\u0902\u0964 \u092a\u094d\u0930\u092e\u093e\u0923\u0940\u0915\u0930\u0923 \u0906\u092a\u0915\u0947 \u0938\u0924\u094d\u0930 \u0915\u094b MFA \u0938\u0941\u0930\u0915\u094d\u0937\u093e \u0924\u0915 \u092c\u0922\u093c\u093e \u0926\u0947\u0924\u093e \u0939\u0948\u0964',
+  'security.mfa.passkeys': '\u092a\u093e\u0938\u0915\u0940',
+  'security.mfa.noEnrolled':
+    '\u0905\u092d\u0940 \u0924\u0915 \u0915\u094b\u0908 \u092a\u093e\u0938\u0915\u0940 \u092a\u0902\u091c\u0940\u0915\u0943\u0924 \u0928\u0939\u0940\u0902 \u0939\u0948\u0964',
+  'security.mfa.remove': '\u0939\u091f\u093e\u090f\u0901',
+  'security.mfa.enroll':
+    '\u092a\u093e\u0938\u0915\u0940 \u092a\u0902\u091c\u0940\u0915\u0943\u0924 \u0915\u0930\u0947\u0902',
+  'security.mfa.addAnother':
+    '\u090f\u0915 \u0914\u0930 \u092a\u093e\u0938\u0915\u0940 \u091c\u094b\u0921\u093c\u0947\u0902',
+  'security.mfa.authenticate':
+    '\u092a\u093e\u0938\u0915\u0940 \u0938\u0947 \u0938\u0924\u094d\u092f\u093e\u092a\u093f\u0924 \u0915\u0930\u0947\u0902',
+  'security.mfa.authenticating':
+    '\u0938\u0924\u094d\u092f\u093e\u092a\u093f\u0924 \u0915\u093f\u092f\u093e \u091c\u093e \u0930\u0939\u093e \u0939\u0948...',
+  'security.mfa.regenerate':
+    '\u092a\u0941\u0928\u0930\u094d\u092a\u094d\u0930\u093e\u092a\u094d\u0924\u093f \u0915\u094b\u0921 \u092b\u093f\u0930 \u0938\u0947 \u092c\u0928\u093e\u090f\u0901',
+  'security.mfa.regenerating':
+    '\u092b\u093f\u0930 \u0938\u0947 \u092c\u0928\u093e\u092f\u093e \u091c\u093e \u0930\u0939\u093e \u0939\u0948...',
+  'security.mfa.loadFailed':
+    'MFA \u0938\u094d\u0925\u093f\u0924\u093f \u0932\u094b\u0921 \u0928\u0939\u0940\u0902 \u0939\u094b \u0938\u0915\u0940\u0964',
+  'security.mfa.actionFailed':
+    'MFA \u0915\u094d\u0930\u093f\u092f\u093e \u0935\u093f\u092b\u0932 \u0930\u0939\u0940\u0964 \u092a\u0941\u0928\u0903 \u092a\u094d\u0930\u092f\u093e\u0938 \u0915\u0930\u0947\u0902\u0964',
+  'security.mfa.enrollSuccess':
+    '\u092a\u093e\u0938\u0915\u0940 \u0938\u092b\u0932\u0924\u093e\u092a\u0942\u0930\u094d\u0935\u0915 \u092a\u0902\u091c\u0940\u0915\u0943\u0924 \u0939\u0941\u0908\u0964',
+  'security.mfa.removeSuccess':
+    '\u092a\u093e\u0938\u0915\u0940 \u0939\u091f\u093e \u0926\u0940 \u0917\u0908\u0964',
+  'security.mfa.authSuccess':
+    '\u092a\u093e\u0938\u0915\u0940 \u0938\u0924\u094d\u092f\u093e\u092a\u093f\u0924 \u0939\u0941\u0908\u0964 \u0906\u092a\u0915\u093e \u0938\u0924\u094d\u0930 \u0905\u092c MFA-\u0938\u0941\u0930\u0915\u094d\u0937\u093f\u0924 \u0939\u0948\u0964',
+  'security.mfa.authFailed':
+    '\u092a\u093e\u0938\u0915\u0940 \u0938\u0924\u094d\u092f\u093e\u092a\u0928 \u0935\u093f\u092b\u0932 \u0930\u0939\u093e\u0964',
+  'security.mfa.stepUpNeeded':
+    '\u0915\u0941\u091b \u0938\u0902\u0935\u0947\u0926\u0928\u0936\u0940\u0932 \u090f\u0921\u092e\u093f\u0928 \u0915\u094d\u0930\u093f\u092f\u093e\u0913\u0902 \u0915\u0947 \u0932\u093f\u090f \u0906\u0917\u0947 \u092c\u0922\u093c\u0928\u0947 \u0938\u0947 \u092a\u0939\u0932\u0947 \u0905\u092a\u0928\u0940 \u092a\u093e\u0938\u0915\u0940 \u0938\u0947 \u092a\u0941\u0937\u094d\u091f\u093f \u0906\u0935\u0936\u094d\u092f\u0915 \u0939\u0948\u0964',
+  'security.mfa.loading':
+    '\u090f\u092e\u090f\u092b\u090f \u0938\u094d\u0925\u093f\u0924\u093f \u0932\u094b\u0921 \u0939\u094b \u0930\u0939\u0940 \u0939\u0948...',
+  'security.mfa.passkeyName': '\u092a\u093e\u0938\u0915\u0940 \u0915\u093e \u0928\u093e\u092e',
+  'security.mfa.removeConfirmTitle':
+    '\u092a\u093e\u0938\u0915\u0940 \u0939\u091f\u093e\u090f\u0902?',
+  'security.mfa.removeConfirmMessage':
+    '\u0915\u094d\u092f\u093e \u092a\u093e\u0938\u0915\u0940 "{name}" \u0939\u091f\u093e\u090f\u0902? \u0907\u0938\u0947 \u0939\u091f\u093e\u0928\u0947 \u0915\u0947 \u092c\u093e\u0926, \u0906\u092a \u0909\u0938 \u0921\u093f\u0935\u093e\u0907\u0938 \u0938\u0947 \u0938\u093e\u0907\u0928 \u0907\u0928 \u0928\u0939\u0940\u0902 \u0915\u0930 \u092a\u093e\u090f\u0902\u0917\u0947\u0964',
+  'security.recovery.recoveryCodes':
+    '\u092a\u0941\u0928\u0930\u094d\u092a\u094d\u0930\u093e\u092a\u094d\u0924\u093f \u0915\u094b\u0921',
+  'security.recovery.copyAll':
+    '\u0938\u092d\u0940 \u0915\u0949\u092a\u0940 \u0915\u0930\u0947\u0902',
+  'security.recovery.copied':
+    '\u0915\u0949\u092a\u0940 \u0915\u093f\u092f\u093e \u0917\u092f\u093e',
+  'security.recovery.codeCopied':
+    '\u0915\u0949\u092a\u0940 \u0915\u093f\u092f\u093e \u0917\u092f\u093e',
+  'security.recovery.close': '\u092c\u0902\u0926 \u0915\u0930\u0947\u0902',
+  'security.recovery.recoveryCodesWarning':
+    '\u0907\u0928 \u092a\u0941\u0928\u0930\u094d\u092a\u094d\u0930\u093e\u092a\u094d\u0924\u093f \u0915\u094b\u0921\u094b\u0902 \u0915\u094b \u0915\u093f\u0938\u0940 \u0938\u0941\u0930\u0915\u094d\u0937\u093f\u0924 \u0938\u094d\u0925\u093e\u0928 \u092a\u0930 \u0930\u0916\u0947\u0902\u0964 \u092f\u0947 \u0915\u0947\u0935\u0932 \u090f\u0915 \u092c\u093e\u0930 \u0926\u093f\u0916\u093e\u090f \u091c\u093e\u0924\u0947 \u0939\u0948\u0902 \u0914\u0930 \u092a\u094d\u0930\u0924\u094d\u092f\u0947\u0915 \u0915\u093e \u0909\u092a\u092f\u094b\u0917 \u0915\u0947\u0935\u0932 \u090f\u0915 \u092c\u093e\u0930 \u0915\u093f\u092f\u093e \u091c\u093e \u0938\u0915\u0924\u093e \u0939\u0948\u0964',
+  'security.recovery.codesShownOnce':
+    '\u092f\u0926\u093f \u0906\u092a \u0905\u092a\u0928\u0940 \u092a\u093e\u0938\u0915\u0940 \u0924\u0915 \u092a\u0939\u0941\u0901\u091a \u0916\u094b \u0926\u0947\u0924\u0947 \u0939\u0948\u0902, \u0924\u094b \u0905\u092a\u0928\u093e \u0916\u093e\u0924\u093e \u092a\u0941\u0928\u0930\u094d\u092a\u094d\u0930\u093e\u092a\u094d\u0924 \u0915\u0930\u0928\u0947 \u0915\u0947 \u0932\u093f\u090f \u0907\u0928 \u0915\u094b\u0921\u094b\u0902 \u092e\u0947\u0902 \u0938\u0947 \u090f\u0915 \u0915\u093e \u0909\u092a\u092f\u094b\u0917 \u0915\u0930\u0947\u0902\u0964',
+  'security.recovery.copy': '\u0915\u0949\u092a\u0940 \u0915\u0930\u0947\u0902',
   'a11y.menu_open': 'नेविगेशन मेनू खोलें',
   'a11y.menu_close': 'नेविगेशन मेनू बंद करें',
   'a11y.select_locale': 'भाषा चुनें',
@@ -606,7 +656,8 @@ export const hi: Record<TranslationKeys, TranslationValue> = {
   'offline.pendingSync': { one: '{count} सिंक लंबित', other: '{count} सिंक लंबित' },
   'reader.bookmarks.title': 'बुकमार्क',
   'reader.bookmarks.addTitle': 'वर्तमान स्थिति पर बुकमार्क जोड़ें',
-  'reader.bookmarks.empty': 'अभी तक कोई बुकमार्क नहीं। अपना स्थान सहेजने के लिए बुकमार्क आइकन पर क्लिक करें।',
+  'reader.bookmarks.empty':
+    'अभी तक कोई बुकमार्क नहीं। अपना स्थान सहेजने के लिए बुकमार्क आइकन पर क्लिक करें।',
   'reader.bookmarks.untitled': 'शीर्षकहीन',
   'admin.audit.exportCsv': 'CSV निर्यात',
   'admin.audit.entityType': 'इकाई प्रकार',
@@ -631,7 +682,8 @@ export const hi: Record<TranslationKeys, TranslationValue> = {
   'admin.audit.tableLabel': 'ऑडिट लॉग तालिका',
   'admin.audit.systemActor': 'सिस्टम',
   'errors.notFound.title': 'पेज नहीं मिला',
-  'errors.notFound.description': 'आप जिस पेज को खोज रहे हैं वह मौजूद नहीं है या स्थानांतरित कर दिया गया है।',
+  'errors.notFound.description':
+    'आप जिस पेज को खोज रहे हैं वह मौजूद नहीं है या स्थानांतरित कर दिया गया है।',
   'errors.notFound.backToHome': 'होम पर वापस जाएं',
   'comment.input.placeholder': 'टिप्पणी लिखें...',
   'comment.input.submitLabel': 'टिप्पणी',
@@ -680,7 +732,8 @@ export const hi: Record<TranslationKeys, TranslationValue> = {
   'settings.account': 'खाता',
   'settings.adminBadge': 'व्यवस्थापक पहुंच सक्षम',
   'settings.install.title': 'ऐप इंस्टॉल करें',
-  'settings.install.description': 'ऑफ़लाइन पढ़ने के लिए {app} को होम स्क्रीन या डेस्कटॉप पर जोड़ें।',
+  'settings.install.description':
+    'ऑफ़लाइन पढ़ने के लिए {app} को होम स्क्रीन या डेस्कटॉप पर जोड़ें।',
   'settings.install.action': 'ऐप इंस्टॉल करें',
   'settings.install.installed': 'ऐप इंस्टॉल हो गया',
   'storage.title': 'स्टोरेज',
@@ -693,7 +746,8 @@ export const hi: Record<TranslationKeys, TranslationValue> = {
   'storage.cleared': 'कैशे सफलतापूर्वक साफ़ हुआ',
   'storage.clearError': 'कैशे साफ़ करने में विफल',
   'storage.unsupported': 'इस ब्राउज़र में स्टोरेज जानकारी उपलब्ध नहीं है',
-  'storage.confirmClear': 'यह इस उपकरण पर संग्रहीत सभी पुस्तकें, टिप्पणियाँ और पठन प्रगति हटा देगा। सिंक न हुआ डेटा खो जाएगा। क्या आप सुनिश्चित हैं?',
+  'storage.confirmClear':
+    'यह इस उपकरण पर संग्रहीत सभी पुस्तकें, टिप्पणियाँ और पठन प्रगति हटा देगा। सिंक न हुआ डेटा खो जाएगा। क्या आप सुनिश्चित हैं?',
   'notifications.title': 'सूचनाएँ',
   'notifications.empty': 'अभी तक कोई सूचना नहीं',
   'notifications.markAllRead': 'सभी पढ़ा हुआ चिन्हित करें',
@@ -713,16 +767,16 @@ export const hi: Record<TranslationKeys, TranslationValue> = {
   'relativeTime.minutesAgo': '{count}मि. पहले',
   'relativeTime.hoursAgo': '{count}घं. पहले',
   'relativeTime.daysAgo': '{count}दि. पहले',
-  'reader.conflicts.title': "सिंक विरोध",
-  'reader.conflicts.summary': "{n} विरोध (-ों) को हल करने की आवश्यकता है",
-  'reader.conflicts.keepLocal': "स्थानीय रखें",
-  'reader.conflicts.keepRemote': "रिमोट रखें",
-  'reader.conflicts.dismiss': "खारिज करें",
-  'reader.conflicts.localLabel': "स्थानीय:",
-  'reader.conflicts.remoteLabel': "रिमोट:",
-  'reader.conflicts.type.progress_update': "प्रगति अद्यतन",
-  'reader.conflicts.type.annotation_edit': "एनोटेशन संपादन",
-  'reader.conflicts.type.bookmark_change': "बुकमार्क परिवर्तन",
-  'reader.conflicts.type.comment_update': "टिप्पणी अद्यतन",
-  'reader.conflicts.noConflicts': "कोई लंबित विरोध नहीं",
+  'reader.conflicts.title': 'सिंक विरोध',
+  'reader.conflicts.summary': '{n} विरोध (-ों) को हल करने की आवश्यकता है',
+  'reader.conflicts.keepLocal': 'स्थानीय रखें',
+  'reader.conflicts.keepRemote': 'रिमोट रखें',
+  'reader.conflicts.dismiss': 'खारिज करें',
+  'reader.conflicts.localLabel': 'स्थानीय:',
+  'reader.conflicts.remoteLabel': 'रिमोट:',
+  'reader.conflicts.type.progress_update': 'प्रगति अद्यतन',
+  'reader.conflicts.type.annotation_edit': 'एनोटेशन संपादन',
+  'reader.conflicts.type.bookmark_change': 'बुकमार्क परिवर्तन',
+  'reader.conflicts.type.comment_update': 'टिप्पणी अद्यतन',
+  'reader.conflicts.noConflicts': 'कोई लंबित विरोध नहीं',
 };

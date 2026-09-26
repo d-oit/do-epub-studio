@@ -1,8 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  CreateGrantSchema,
-  UpdateGrantSchema,
-} from '../schemas';
+import { CreateGrantSchema, UpdateGrantSchema } from '../schemas';
 
 describe('CreateGrantSchema', () => {
   it('accepts valid grant', () => {
@@ -34,11 +31,13 @@ describe('CreateGrantSchema', () => {
   });
 
   it('rejects password shorter than 8 chars', () => {
-    expect(() => CreateGrantSchema.parse({
-      bookId: '550e8400-e29b-41d4-a716-446655440000',
-      email: 'a@b.com',
-      password: 'short',
-    })).toThrow();
+    expect(() =>
+      CreateGrantSchema.parse({
+        bookId: '550e8400-e29b-41d4-a716-446655440000',
+        email: 'a@b.com',
+        password: 'short',
+      }),
+    ).toThrow();
   });
 });
 

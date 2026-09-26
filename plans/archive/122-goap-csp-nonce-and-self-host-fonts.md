@@ -25,13 +25,13 @@ Resolves Plan 116 items **SE2** (CSP `style-src 'unsafe-inline'`) and
 
 ### Current state (from Plan 116 § SE2/SE3)
 
-| Surface | Directive | Current value |
-|---------|-----------|---------------|
-| `apps/web/public/_headers` | `style-src` | `'self' 'unsafe-inline' https://fonts.googleapis.com` |
-| `apps/web/public/_headers` | `font-src` | `'self' https://fonts.gstatic.com https://api.fontshare.com` |
-| `apps/web/public/_headers` | `script-src` | `'self' 'wasm-unsafe-eval'` (already strict; no change) |
-| `apps/worker/src/lib/security-headers.ts` | `style-src` | `'self' 'unsafe-inline'` |
-| `apps/web/index.html` | font load | `<link href="https://fonts.googleapis.com/css2?family=Geist…&family=Instrument+Serif…">` |
+| Surface                                   | Directive    | Current value                                                                            |
+| ----------------------------------------- | ------------ | ---------------------------------------------------------------------------------------- |
+| `apps/web/public/_headers`                | `style-src`  | `'self' 'unsafe-inline' https://fonts.googleapis.com`                                    |
+| `apps/web/public/_headers`                | `font-src`   | `'self' https://fonts.gstatic.com https://api.fontshare.com`                             |
+| `apps/web/public/_headers`                | `script-src` | `'self' 'wasm-unsafe-eval'` (already strict; no change)                                  |
+| `apps/worker/src/lib/security-headers.ts` | `style-src`  | `'self' 'unsafe-inline'`                                                                 |
+| `apps/web/index.html`                     | font load    | `<link href="https://fonts.googleapis.com/css2?family=Geist…&family=Instrument+Serif…">` |
 
 ### Why the gap exists
 
@@ -58,18 +58,18 @@ party dependency for normal browsing.
 
 ## Decompose
 
-| # | Component | Atomic | Shippable |
-|---|-----------|--------|-----------|
-| 1 | Install `@fontsource-variable/geist` + `@fontsource/instrument-serif` | yes | yes |
-| 2 | Import self-hosted fonts in `apps/web/src/styles/globals.css` | yes | yes |
-| 3 | Remove external `<link>` from `apps/web/index.html` | yes | yes |
-| 4 | Tighten `apps/web/public/_headers` (`style-src-attr`, drop origins) | yes | yes |
-| 5 | Tighten `apps/worker/src/lib/security-headers.ts` (drop unsafe-inline) | yes | yes |
-| 6 | Update `docs/security-posture.md` (CSP table + explanatory paragraph) | yes | yes |
-| 7 | Add test assertions (web `security-posture.test.ts`, worker `security-headers.test.ts`) | yes | yes |
-| 8 | Run quality gate (typecheck + lint + unit tests) | yes | yes |
-| 9 | Validate Codacy + bundle budget + HSTS/CSP smoke test | yes | yes |
-| 10 | Open PR (no auto-merge) | yes | yes |
+| #   | Component                                                                               | Atomic | Shippable |
+| --- | --------------------------------------------------------------------------------------- | ------ | --------- |
+| 1   | Install `@fontsource-variable/geist` + `@fontsource/instrument-serif`                   | yes    | yes       |
+| 2   | Import self-hosted fonts in `apps/web/src/styles/globals.css`                           | yes    | yes       |
+| 3   | Remove external `<link>` from `apps/web/index.html`                                     | yes    | yes       |
+| 4   | Tighten `apps/web/public/_headers` (`style-src-attr`, drop origins)                     | yes    | yes       |
+| 5   | Tighten `apps/worker/src/lib/security-headers.ts` (drop unsafe-inline)                  | yes    | yes       |
+| 6   | Update `docs/security-posture.md` (CSP table + explanatory paragraph)                   | yes    | yes       |
+| 7   | Add test assertions (web `security-posture.test.ts`, worker `security-headers.test.ts`) | yes    | yes       |
+| 8   | Run quality gate (typecheck + lint + unit tests)                                        | yes    | yes       |
+| 9   | Validate Codacy + bundle budget + HSTS/CSP smoke test                                   | yes    | yes       |
+| 10  | Open PR (no auto-merge)                                                                 | yes    | yes       |
 
 Dependencies: 1 → 2 → 3 → 4 → 5; 4 + 5 → 6; 4 + 5 → 7; 1–7 → 8 → 9 → 10.
 
@@ -81,9 +81,9 @@ Dependencies: 1 → 2 → 3 → 4 → 5; 4 + 5 → 6; 4 + 5 → 7; 1–7 → 8 �
 
 CSP Level 3 separates the two style sources:
 
-- `style-src` governs `<style>` *elements* and external stylesheets
+- `style-src` governs `<style>` _elements_ and external stylesheets
   (`<link rel="stylesheet">`). Strict: `'self'`.
-- `style-src-attr` governs inline `style="…"` *attributes* on DOM
+- `style-src-attr` governs inline `style="…"` _attributes_ on DOM
   nodes (React's `style={{ ... }}` props land here). Permitted:
   `'unsafe-inline'` because there is no static hash-set and Pages
   cannot dynamically nonce each request.
@@ -106,6 +106,7 @@ Compare to alternatives:
    too much overhead for two families.
 
 Chosen: **option 2**. We import:
+
 - `@fontsource-variable/geist` (one CSS file, Latin subset, weight
   axis 100-900 — sufficient for `Geist` weights 300..700)
 - `@fontsource/instrument-serif/400.css` (regular)
@@ -144,13 +145,13 @@ keeps the bundle to Latin-ext subset only.
 
 ### Bundle impact
 
-| Asset | Approx. size |
-|-------|-------------|
+| Asset                                | Approx. size |
+| ------------------------------------ | ------------ |
 | Geist variable (wght 100–900, Latin) | ~50 KB woff2 |
-| Instrument Serif 400 | ~22 KB woff2 |
-| Instrument Serif 400-italic | ~24 KB woff2 |
-| `@fontsource` CSS overhead | ~3 KB |
-| **Total** | **~99 KB** |
+| Instrument Serif 400                 | ~22 KB woff2 |
+| Instrument Serif 400-italic          | ~24 KB woff2 |
+| `@fontsource` CSS overhead           | ~3 KB        |
+| **Total**                            | **~99 KB**   |
 
 Compared to Google Fonts: ~140 KB uncompressed + 2 RTTs to Google.
 Self-hosting wins on LCP (no DNS/TCP/TLS to third party) while
@@ -161,13 +162,13 @@ reader bundle budget per Plan 121).
 
 ## Coordinate
 
-| Agent | Task |
-|-------|------|
-| file-picker | Locate all inline `style={…}` style usages (19 found) |
-| code-searcher | Search for Google Fonts references + unsafe-inline variants |
-| basher | Install pnpm packages; create branch; run typecheck/lint/test |
-| researcher-docs (Gemini) | CSP Level 3 nonce-vs-attribute rationale |
-| code-reviewer-minimax-m3 | Final review pass on the PR |
+| Agent                    | Task                                                          |
+| ------------------------ | ------------------------------------------------------------- |
+| file-picker              | Locate all inline `style={…}` style usages (19 found)         |
+| code-searcher            | Search for Google Fonts references + unsafe-inline variants   |
+| basher                   | Install pnpm packages; create branch; run typecheck/lint/test |
+| researcher-docs (Gemini) | CSP Level 3 nonce-vs-attribute rationale                      |
+| code-reviewer-minimax-m3 | Final review pass on the PR                                   |
 
 ---
 
@@ -202,13 +203,13 @@ reader bundle budget per Plan 121).
 
 ### Risks
 
-| Risk | Likelihood | Mitigation |
-|------|------------|------------|
-| FOUT / CLS regression | Low | Geist woff2 imports are tiny; `font-display: swap` is default |
-| Bundle budget exceed | Low | Combined ~99 KB fits within 1.15 MB reader budget |
-| Vite HMR dev errors | None | Dev server ignores `_headers` strict CSP |
-| External CDN removal breaks login | None | Fonts are bundled, not loaded externally |
-| Dev tools / DevTools inline styles | None | Only enforced in prod at Pages edge |
+| Risk                               | Likelihood | Mitigation                                                    |
+| ---------------------------------- | ---------- | ------------------------------------------------------------- |
+| FOUT / CLS regression              | Low        | Geist woff2 imports are tiny; `font-display: swap` is default |
+| Bundle budget exceed               | Low        | Combined ~99 KB fits within 1.15 MB reader budget             |
+| Vite HMR dev errors                | None       | Dev server ignores `_headers` strict CSP                      |
+| External CDN removal breaks login  | None       | Fonts are bundled, not loaded externally                      |
+| Dev tools / DevTools inline styles | None       | Only enforced in prod at Pages edge                           |
 
 ### Rollback
 

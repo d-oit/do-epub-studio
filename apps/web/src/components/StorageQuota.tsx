@@ -63,19 +63,31 @@ export function StorageQuota() {
         await Promise.all(
           dbs
             .filter((db) => db.name && db.name !== 'do-epub-auth')
-            .map((db) => new Promise<void>((resolve) => {
-              const dbName = db.name;
-              if (!dbName) { resolve(); return; }
-              const req = indexedDB.deleteDatabase(dbName);
-              req.onsuccess = () => { resolve(); };
-              req.onerror = () => { resolve(); };
-            })),
+            .map(
+              (db) =>
+                new Promise<void>((resolve) => {
+                  const dbName = db.name;
+                  if (!dbName) {
+                    resolve();
+                    return;
+                  }
+                  const req = indexedDB.deleteDatabase(dbName);
+                  req.onsuccess = () => {
+                    resolve();
+                  };
+                  req.onerror = () => {
+                    resolve();
+                  };
+                }),
+            ),
         );
       }
       setCleared(true);
       // Auto-dismiss the cleared message after 3 seconds
       if (clearTimerRef.current) clearTimeout(clearTimerRef.current);
-      clearTimerRef.current = setTimeout(() => { setCleared(false); }, 3000);
+      clearTimerRef.current = setTimeout(() => {
+        setCleared(false);
+      }, 3000);
       // Refresh estimate after clearing
       await refresh();
     } catch {
@@ -94,9 +106,8 @@ export function StorageQuota() {
     void executeClear();
   }, [executeClear]);
 
-  const usagePercent = estimate && estimate.quota > 0
-    ? Math.min(100, (estimate.usage / estimate.quota) * 100)
-    : 0;
+  const usagePercent =
+    estimate && estimate.quota > 0 ? Math.min(100, (estimate.usage / estimate.quota) * 100) : 0;
   const isHighUsage = usagePercent > 80;
 
   if (isLoading) {
@@ -136,10 +147,12 @@ export function StorageQuota() {
         <>
           <div className="flex justify-between text-sm mb-2">
             <span className="text-foreground-muted">
-              {t('storage.used')}: <span className="font-medium text-foreground">{formatBytes(estimate.usage)}</span>
+              {t('storage.used')}:{' '}
+              <span className="font-medium text-foreground">{formatBytes(estimate.usage)}</span>
             </span>
             <span className="text-foreground-muted">
-              {t('storage.available')}: <span className="font-medium text-foreground">{formatBytes(estimate.quota)}</span>
+              {t('storage.available')}:{' '}
+              <span className="font-medium text-foreground">{formatBytes(estimate.quota)}</span>
             </span>
           </div>
 
@@ -154,9 +167,7 @@ export function StorageQuota() {
           >
             <div
               className={`h-full rounded-full transition-all duration-500 ${
-                isHighUsage
-                  ? 'bg-semantic-warning'
-                  : 'bg-accent'
+                isHighUsage ? 'bg-semantic-warning' : 'bg-accent'
               }`}
               style={{ width: `${usagePercent}%` }}
             />
@@ -164,8 +175,19 @@ export function StorageQuota() {
 
           {isHighUsage && (
             <p className="mt-2 text-xs text-semantic-warning flex items-center gap-1.5">
-              <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              <svg
+                className="w-4 h-4 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                />
               </svg>
               {t('storage.highUsage')}
             </p>
@@ -173,8 +195,19 @@ export function StorageQuota() {
 
           {cleared && (
             <p className="mt-3 text-xs text-semantic-success flex items-center gap-1.5">
-              <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              <svg
+                className="w-4 h-4 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 13l4 4L19 7"
+                />
               </svg>
               {t('storage.cleared')}
             </p>
@@ -197,7 +230,9 @@ export function StorageQuota() {
             confirmLabel={t('storage.clearButton')}
             cancelLabel={t('annotation.cancel')}
             onConfirm={handleConfirmClear}
-            onCancel={() => { setShowConfirm(false); }}
+            onCancel={() => {
+              setShowConfirm(false);
+            }}
           />
         </>
       ) : null}

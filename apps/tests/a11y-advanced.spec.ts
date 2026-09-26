@@ -25,7 +25,9 @@ test.describe('Advanced accessibility — keyboard navigation', () => {
       await moreBtn.focus();
       await page.keyboard.press('Enter');
       // Menu items use role="menuitem" after GOAP-224 a11y fix (B8)
-      await expect(page.locator('.cq-reader-toolbar-overflow').getByRole('menuitem', { name: 'Settings' })).toBeVisible();
+      await expect(
+        page.locator('.cq-reader-toolbar-overflow').getByRole('menuitem', { name: 'Settings' }),
+      ).toBeVisible();
     } else {
       const contentsBtn = page.getByRole('button', { name: 'Contents' });
       await expect(contentsBtn).toBeVisible({ timeout: 60000 });
@@ -54,7 +56,9 @@ test.describe('Advanced accessibility — keyboard navigation', () => {
       await moreBtn.focus();
       await expect(moreBtn).toBeFocused();
       await moreBtn.click();
-      const settingsMenuItem = page.locator('.cq-reader-toolbar-overflow').getByRole('menuitem', { name: /Settings/i });
+      const settingsMenuItem = page
+        .locator('.cq-reader-toolbar-overflow')
+        .getByRole('menuitem', { name: /Settings/i });
       await expect(settingsMenuItem).toBeVisible();
       await settingsMenuItem.focus();
       await expect(settingsMenuItem).toBeFocused();
@@ -156,7 +160,9 @@ test.describe('Advanced accessibility — focus management', () => {
     const results = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
       .analyze();
-    const critical = results.violations.filter((v) => v.impact === 'critical' || v.impact === 'serious');
+    const critical = results.violations.filter(
+      (v) => v.impact === 'critical' || v.impact === 'serious',
+    );
     expect(critical).toHaveLength(0);
   });
 });

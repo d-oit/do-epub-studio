@@ -72,7 +72,9 @@ describe('FeedbackAnchorSchema', () => {
   });
 
   it('validates bookFileId as uuid', () => {
-    expect(FeedbackAnchorSchema.safeParse({ selectedText: 'x', bookFileId: 'nope' }).success).toBe(false);
+    expect(FeedbackAnchorSchema.safeParse({ selectedText: 'x', bookFileId: 'nope' }).success).toBe(
+      false,
+    );
   });
 });
 
@@ -95,7 +97,9 @@ describe('FeedbackCreateSchema', () => {
   });
 
   it('accepts a suggestion with proposedText', () => {
-    expect(FeedbackCreateSchema.safeParse({ ...base, kind: 'suggestion', proposedText: 'y' }).success).toBe(true);
+    expect(
+      FeedbackCreateSchema.safeParse({ ...base, kind: 'suggestion', proposedText: 'y' }).success,
+    ).toBe(true);
   });
 
   it('rejects an empty body', () => {
@@ -117,8 +121,14 @@ describe('FeedbackReplySchema', () => {
 describe('FeedbackExportSchema', () => {
   it('bounds ids at 1..200', () => {
     expect(FeedbackExportSchema.safeParse({ ids: [] }).success).toBe(false);
-    expect(FeedbackExportSchema.safeParse({ ids: ['11111111-1111-4111-8111-111111111111'] }).success).toBe(true);
-    expect(FeedbackExportSchema.safeParse({ ids: Array.from({ length: 201 }, () => '11111111-1111-4111-8111-111111111111') }).success).toBe(false);
+    expect(
+      FeedbackExportSchema.safeParse({ ids: ['11111111-1111-4111-8111-111111111111'] }).success,
+    ).toBe(true);
+    expect(
+      FeedbackExportSchema.safeParse({
+        ids: Array.from({ length: 201 }, () => '11111111-1111-4111-8111-111111111111'),
+      }).success,
+    ).toBe(false);
   });
 });
 
@@ -185,16 +195,26 @@ describe('ReferenceCreateSchema', () => {
 
   it('bounds title and content lengths', () => {
     expect(ReferenceCreateSchema.safeParse({ ...base, title: 'a'.repeat(255) }).success).toBe(true);
-    expect(ReferenceCreateSchema.safeParse({ ...base, title: 'a'.repeat(256) }).success).toBe(false);
-    expect(ReferenceCreateSchema.safeParse({ ...base, content: 'a'.repeat(5001) }).success).toBe(false);
+    expect(ReferenceCreateSchema.safeParse({ ...base, title: 'a'.repeat(256) }).success).toBe(
+      false,
+    );
+    expect(ReferenceCreateSchema.safeParse({ ...base, content: 'a'.repeat(5001) }).success).toBe(
+      false,
+    );
   });
 });
 
 describe('ReferenceVerifySchema', () => {
   it('requires a non-empty evidence note', () => {
-    expect(ReferenceVerifySchema.safeParse({ verified: true, evidenceNote: '' }).success).toBe(false);
-    expect(ReferenceVerifySchema.safeParse({ verified: true, evidenceNote: 'archive 1889' }).success).toBe(true);
-    expect(ReferenceVerifySchema.safeParse({ verified: false, evidenceNote: 'disputed' }).success).toBe(true);
+    expect(ReferenceVerifySchema.safeParse({ verified: true, evidenceNote: '' }).success).toBe(
+      false,
+    );
+    expect(
+      ReferenceVerifySchema.safeParse({ verified: true, evidenceNote: 'archive 1889' }).success,
+    ).toBe(true);
+    expect(
+      ReferenceVerifySchema.safeParse({ verified: false, evidenceNote: 'disputed' }).success,
+    ).toBe(true);
   });
 });
 
@@ -240,8 +260,12 @@ describe('StyleProfileSchema', () => {
   });
 
   it('bounds free-text fields', () => {
-    expect(StyleProfileSchema.safeParse({ status: 'draft', terminology: 'a'.repeat(5000) }).success).toBe(true);
-    expect(StyleProfileSchema.safeParse({ status: 'draft', terminology: 'a'.repeat(5001) }).success).toBe(false);
+    expect(
+      StyleProfileSchema.safeParse({ status: 'draft', terminology: 'a'.repeat(5000) }).success,
+    ).toBe(true);
+    expect(
+      StyleProfileSchema.safeParse({ status: 'draft', terminology: 'a'.repeat(5001) }).success,
+    ).toBe(false);
   });
 });
 
@@ -272,9 +296,11 @@ describe('FeedbackCreateSchema reference pins', () => {
   });
 
   it('rejects non-positive revisions', () => {
-    expect(FeedbackCreateSchema.safeParse({
-      ...base,
-      referenceRevisions: { 'ref-1': 0 },
-    }).success).toBe(false);
+    expect(
+      FeedbackCreateSchema.safeParse({
+        ...base,
+        referenceRevisions: { 'ref-1': 0 },
+      }).success,
+    ).toBe(false);
   });
 });

@@ -22,14 +22,14 @@ until the TTL expires (60s max-age, 300s s-maxage).
 
 ## Decompose
 
-| ID | Task | Effort | Deps |
-|----|------|--------|------|
-| T1 | Design cache-version DO or KV schema | M | — |
-| T2 | Implement CacheVersionDO with `getVersion()` and `bump()` | M | T1 |
-| T3 | Update `edge-cache.ts` to read version from DO/KV | M | T2 |
-| T4 | Update `books.ts` upload-complete to bump DO/KV version | S | T2 |
-| T5 | Add tests for cross-isolate invalidation | M | T3 |
-| T6 | Update `wrangler.toml` with DO binding | S | T2 |
+| ID  | Task                                                      | Effort | Deps |
+| --- | --------------------------------------------------------- | ------ | ---- |
+| T1  | Design cache-version DO or KV schema                      | M      | —    |
+| T2  | Implement CacheVersionDO with `getVersion()` and `bump()` | M      | T1   |
+| T3  | Update `edge-cache.ts` to read version from DO/KV         | M      | T2   |
+| T4  | Update `books.ts` upload-complete to bump DO/KV version   | S      | T2   |
+| T5  | Add tests for cross-isolate invalidation                  | M      | T3   |
+| T6  | Update `wrangler.toml` with DO binding                    | S      | T2   |
 
 ## Risks
 

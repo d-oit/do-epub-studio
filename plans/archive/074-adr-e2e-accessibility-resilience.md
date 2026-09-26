@@ -7,6 +7,7 @@
 ## Context
 
 The scheduled cross-browser E2E job on main fails with 5 test failures across 3 root causes:
+
 1. Real accessibility bug (unlabeled form controls in AuditLogPage)
 2. Incorrect mock endpoint in 401 redirect test
 3. Vite dev server dynamic import flakiness under CI load
@@ -16,6 +17,7 @@ The scheduled cross-browser E2E job on main fails with 5 test failures across 3 
 ### 1. Accessibility: All form elements MUST have programmatic labels
 
 Every `<input>`, `<select>`, and `<textarea>` in the app MUST have either:
+
 - A wrapping `<label>` element
 - An associated `<label htmlFor="id">` with matching `id`
 - An `aria-label` attribute

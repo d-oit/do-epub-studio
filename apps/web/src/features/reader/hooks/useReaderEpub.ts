@@ -10,16 +10,30 @@ import {
   createExternalUrlGuardHook,
 } from '@do-epub-studio/reader-core';
 import { createSpanId, createTraceId } from '@do-epub-studio/shared';
-import { logClientEvent, createPerformanceMark, measurePerformance, observePerformance, reportPerformanceMetrics } from '../../../lib/client-logger';
-import { getPrefersReducedMotion } from '../../../lib/reduced-motion';
 import {
-  useAuthStore,
-  useReaderStore,
-  usePreferencesStore,
-} from '../../../stores';
+  logClientEvent,
+  createPerformanceMark,
+  measurePerformance,
+  observePerformance,
+  reportPerformanceMetrics,
+} from '../../../lib/client-logger';
+import { getPrefersReducedMotion } from '../../../lib/reduced-motion';
+import { useAuthStore, useReaderStore, usePreferencesStore } from '../../../stores';
 import { useTranslation } from '../../../hooks/useTranslation';
-import { createEpubAnnotationAdapter, type AnnotationAdapter, type HighlightRecord, type CommentRecord } from '@do-epub-studio/reader-core';
-import { applyFixedLayoutZoomStyle, createFixedLayoutContentHooks, createFixedLayoutZoomHook, createRelocatedSetup, createThemeApplier, isSystemDark } from './useReaderEpub.helpers';
+import {
+  createEpubAnnotationAdapter,
+  type AnnotationAdapter,
+  type HighlightRecord,
+  type CommentRecord,
+} from '@do-epub-studio/reader-core';
+import {
+  applyFixedLayoutZoomStyle,
+  createFixedLayoutContentHooks,
+  createFixedLayoutZoomHook,
+  createRelocatedSetup,
+  createThemeApplier,
+  isSystemDark,
+} from './useReaderEpub.helpers';
 import { applyDirectionAndWritingMode, type TocItem, type BookInfo } from '../lib/epub-init';
 import { PrefetchManager, type SpineItem } from '../../../lib/prefetch-manager';
 
@@ -72,7 +86,9 @@ export function useReaderEpub(
   const resolvedTheme =
     readerTheme === 'system' ? (isSystemDark() ? 'dark' : 'light') : readerTheme;
 
-  const applyThemesRef = useRef<(rendition: Rendition) => void>(() => { /* noop */ });
+  const applyThemesRef = useRef<(rendition: Rendition) => void>(() => {
+    /* noop */
+  });
   applyThemesRef.current = createThemeApplier({
     rootRef,
     readerTheme,
@@ -97,7 +113,10 @@ export function useReaderEpub(
         bookRef.current = book;
         await book.ready;
         if (!active) return;
-        const [navigation, meta] = await Promise.all([book.loaded.navigation, book.loaded.metadata]);
+        const [navigation, meta] = await Promise.all([
+          book.loaded.navigation,
+          book.loaded.metadata,
+        ]);
         const tocItems: TocItem[] = navigation.toc
           ? navigation.toc.map((item: NavItem) => ({ label: item.label, href: item.href }))
           : [];
@@ -431,15 +450,24 @@ export function useReaderEpub(
   useEffect(() => {
     const observer = observePerformance((entry) => {
       if (entry.entryType === 'measure') {
-        logClientEvent({ level: 'info', traceId: createTraceId(), spanId: createSpanId(),
-          event: entry.name, metadata: { durationMs: Math.round(entry.duration) } });
+        logClientEvent({
+          level: 'info',
+          traceId: createTraceId(),
+          spanId: createSpanId(),
+          event: entry.name,
+          metadata: { durationMs: Math.round(entry.duration) },
+        });
       }
     });
     return () => {
       reportPerformanceMetrics('reader:load', (m) => {
-        logClientEvent({ level: 'info', traceId: createTraceId(), spanId: createSpanId(),
+        logClientEvent({
+          level: 'info',
+          traceId: createTraceId(),
+          spanId: createSpanId(),
           event: 'reader:perf_summary',
-          metadata: { p50: m.p50, p95: m.p95, p99: m.p99, count: m.count } });
+          metadata: { p50: m.p50, p95: m.p95, p99: m.p99, count: m.count },
+        });
       });
       observer?.disconnect();
     };

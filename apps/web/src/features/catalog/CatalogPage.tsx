@@ -31,7 +31,10 @@ export function CatalogPage() {
   const q = searchParams.get('q') ?? '';
   const author = searchParams.get('author') ?? '';
   const language = searchParams.get('language') ?? '';
-  const page = Math.max(DEFAULT_PAGE, parseInt(searchParams.get('page') ?? '1', 10) || DEFAULT_PAGE);
+  const page = Math.max(
+    DEFAULT_PAGE,
+    parseInt(searchParams.get('page') ?? '1', 10) || DEFAULT_PAGE,
+  );
   const offset = (page - 1) * PAGE_SIZE;
 
   useEffect(() => {
@@ -56,7 +59,9 @@ export function CatalogPage() {
       }
     }
     void load();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [q, author, language, offset]);
 
   function setParam(key: 'q' | 'author' | 'language' | 'page', value: string | null) {
@@ -73,13 +78,16 @@ export function CatalogPage() {
   // GOAP-268 UX-01: nested under AppShell, which owns the single
   // `main#main-content` landmark and the product identity header.
   return (
-    <div className="bg-background px-4 py-6 text-foreground sm:px-6 md:py-10 lg:px-8 2xl:px-12"
-    >
+    <div className="bg-background px-4 py-6 text-foreground sm:px-6 md:py-10 lg:px-8 2xl:px-12">
       <div className="mx-auto max-w-7xl">
         <header className="mb-8 flex flex-col gap-6 border-b border-[var(--color-rule)] pb-6 md:mb-10 md:flex-row md:items-end md:justify-between">
           <div className="min-w-0">
-            <h1 className="text-balance-tight font-display text-3xl leading-tight md:text-4xl">{t('catalog.title')}</h1>
-            <p className="mt-2 max-w-2xl text-pretty text-foreground-muted">{t('catalog.subtitle')}</p>
+            <h1 className="text-balance-tight font-display text-3xl leading-tight md:text-4xl">
+              {t('catalog.title')}
+            </h1>
+            <p className="mt-2 max-w-2xl text-pretty text-foreground-muted">
+              {t('catalog.subtitle')}
+            </p>
           </div>
         </header>
 
@@ -89,7 +97,9 @@ export function CatalogPage() {
               ariaLabel={t('catalog.search.placeholder')}
               placeholder={t('catalog.search.placeholder')}
               value={q}
-              onChange={(value: string) => { setParam('q', value); }}
+              onChange={(value: string) => {
+                setParam('q', value);
+              }}
               debounceMs={300}
               className="w-full"
             />
@@ -97,7 +107,9 @@ export function CatalogPage() {
               ariaLabel={t('catalog.filter.author')}
               placeholder={t('catalog.filter.author')}
               value={author}
-              onChange={(value: string) => { setParam('author', value); }}
+              onChange={(value: string) => {
+                setParam('author', value);
+              }}
               debounceMs={300}
               className="w-full"
             />
@@ -105,7 +117,9 @@ export function CatalogPage() {
               ariaLabel={t('catalog.filter.language')}
               placeholder={t('catalog.filter.language')}
               value={language}
-              onChange={(value: string) => { setParam('language', value); }}
+              onChange={(value: string) => {
+                setParam('language', value);
+              }}
               debounceMs={300}
               className="w-full"
             />
@@ -113,7 +127,10 @@ export function CatalogPage() {
         </div>
 
         {isLoading && (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4" aria-busy="true">
+          <div
+            className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4"
+            aria-busy="true"
+          >
             {/* eslint-disable-next-line i18next/no-literal-string -- skeleton loader React keys */}
             {['sk-1', 'sk-2', 'sk-3', 'sk-4', 'sk-5', 'sk-6'].map((id) => (
               <div key={id} className="h-72 rounded-sm shadow-page skeleton" />
@@ -122,7 +139,9 @@ export function CatalogPage() {
         )}
 
         {error && (
-          <p role="alert" className="text-center text-accent-error">{error}</p>
+          <p role="alert" className="text-center text-accent-error">
+            {error}
+          </p>
         )}
 
         {!isLoading && !error && books.length === 0 && (
@@ -159,7 +178,9 @@ export function CatalogPage() {
                         <AppLogo size={40} className="text-accent" />
                       </div>
                     )}
-                    <h2 className="line-clamp-2 font-display text-lg leading-snug group-hover:text-accent">{book.title}</h2>
+                    <h2 className="line-clamp-2 font-display text-lg leading-snug group-hover:text-accent">
+                      {book.title}
+                    </h2>
                     {book.authorName && (
                       <p className="text-sm text-foreground-muted mt-1">{book.authorName}</p>
                     )}
@@ -185,7 +206,9 @@ export function CatalogPage() {
                 <Pagination
                   currentPage={page}
                   totalPages={totalPages}
-                  onPageChange={(p: number) => { setParam('page', String(p)); }}
+                  onPageChange={(p: number) => {
+                    setParam('page', String(p));
+                  }}
                 />
               </div>
             )}

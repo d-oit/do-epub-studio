@@ -35,7 +35,13 @@ const bookResponseArb: fc.Arbitrary<BookResponse> = fc.record({
   authorName: optionalString,
   description: optionalString,
   language: fc.string({ minLength: 2, maxLength: 10 }),
-  visibility: fc.constantFrom('private', 'public', 'password_protected', 'reader_only', 'editorial_review'),
+  visibility: fc.constantFrom(
+    'private',
+    'public',
+    'password_protected',
+    'reader_only',
+    'editorial_review',
+  ),
   coverImageUrl: optionalString,
   publishedAt: optionalString,
 });
@@ -67,7 +73,13 @@ const highlightResponseArb: fc.Arbitrary<HighlightResponse> = fc.record({
 const grantResponseArb: fc.Arbitrary<GrantResponse> = fc.record({
   id: nonEmptyString,
   email: fc.string({ minLength: 3 }),
-  mode: fc.constantFrom('private', 'public', 'password_protected', 'reader_only', 'editorial_review'),
+  mode: fc.constantFrom(
+    'private',
+    'public',
+    'password_protected',
+    'reader_only',
+    'editorial_review',
+  ),
   commentsAllowed: fc.boolean(),
   offlineAllowed: fc.boolean(),
   expiresAt: optionalString,
@@ -147,24 +159,20 @@ describe('DTO JSON round-trip', () => {
 describe('ApiResponse invariants', () => {
   it('ok:true has data, ok:false has error', () => {
     fc.assert(
-      fc.property(
-        fc.boolean(),
-        fc.integer(),
-        (ok, value) => {
-          const response: ApiResponse<number> = ok
-            ? { ok, data: value }
-            : { ok, error: { code: 'ERR', message: 'fail' } };
-          expect(response.ok).toBe(ok);
-          if (ok) {
-            expect(response.data).toBe(value);
-            expect(response.error).toBeUndefined();
-          } else {
-            expect(response.error).toBeDefined();
-            expect(response.error).toHaveProperty('code', 'ERR');
-            expect(response.data).toBeUndefined();
-          }
-        },
-      ),
+      fc.property(fc.boolean(), fc.integer(), (ok, value) => {
+        const response: ApiResponse<number> = ok
+          ? { ok, data: value }
+          : { ok, error: { code: 'ERR', message: 'fail' } };
+        expect(response.ok).toBe(ok);
+        if (ok) {
+          expect(response.data).toBe(value);
+          expect(response.error).toBeUndefined();
+        } else {
+          expect(response.error).toBeDefined();
+          expect(response.error).toHaveProperty('code', 'ERR');
+          expect(response.data).toBeUndefined();
+        }
+      }),
     );
   });
 

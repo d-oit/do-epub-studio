@@ -7,6 +7,7 @@
 ---
 
 ## Resolved: Contradiction 1 — Observability vs Reading Performance
+
 **Status:** ✅ ALREADY IMPLEMENTED — No code changes needed.
 
 **Problem:** Synchronous traceId emission, audit logging, and
@@ -114,7 +115,7 @@ contributor goals) + Space (layered information)
    - Prerequisites (Node, pnpm, Docker)
    - `make setup && make dev` (standard dev loop)
    - "I want to fix a bug" → workflow: branch → edit → `pnpm
-     lint && pnpm typecheck` → commit via script → PR
+lint && pnpm typecheck` → commit via script → PR
    - "I want to understand the architecture" → link to
      `docs/coding-guide.md`
    - "I want to know why a decision was made" → link to
@@ -234,13 +235,13 @@ workflow is disrupted.
 
 ## Summary of Resolutions
 
-| # | Contradiction | Separation | Key Solution | New Contradictions |
-|---|---|---|---|---|
-| 1 | Observability vs Performance | Time + Condition | `waitUntil` for audit writes, `requestIdleCallback` for telemetry batch | NONE |
-| 2 | CSP vs WASM | Space + System-level | Current CSP sufficient; use `instantiateStreaming` for future WASM | NONE |
-| 3 | Maturity vs Onboarding | Condition + Space | CONTRIBUTING.md quickstart, CODEOWNERS, make dev-setup | NONE |
-| 4 | Infrastructure vs Deployment | System-level + Condition | CF Email Workers, `/api/telemetry` route, feature flags for EPUB export | NONE |
-| 5 | Local Dev vs Production Parity | Space + Condition | Turso local replica, staging CI workflow, documented gap | NONE |
+| #   | Contradiction                  | Separation               | Key Solution                                                            | New Contradictions |
+| --- | ------------------------------ | ------------------------ | ----------------------------------------------------------------------- | ------------------ |
+| 1   | Observability vs Performance   | Time + Condition         | `waitUntil` for audit writes, `requestIdleCallback` for telemetry batch | NONE               |
+| 2   | CSP vs WASM                    | Space + System-level     | Current CSP sufficient; use `instantiateStreaming` for future WASM      | NONE               |
+| 3   | Maturity vs Onboarding         | Condition + Space        | CONTRIBUTING.md quickstart, CODEOWNERS, make dev-setup                  | NONE               |
+| 4   | Infrastructure vs Deployment   | System-level + Condition | CF Email Workers, `/api/telemetry` route, feature flags for EPUB export | NONE               |
+| 5   | Local Dev vs Production Parity | Space + Condition        | Turso local replica, staging CI workflow, documented gap                | NONE               |
 
 ---
 

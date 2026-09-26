@@ -1,7 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useImportNotes } from '../features/reader/hooks/useImportNotes';
-import { importNotesFromMarkdown, type NotesImportResult } from '../features/reader/hooks/useExportNotes';
+import {
+  importNotesFromMarkdown,
+  type NotesImportResult,
+} from '../features/reader/hooks/useExportNotes';
 
 vi.mock('../features/reader/hooks/useExportNotes', () => ({
   importNotesFromMarkdown: vi.fn(),
@@ -14,8 +17,29 @@ const mockSetBookmarks = vi.fn();
 vi.mock('../stores', () => ({
   useReaderStore: vi.fn((selector) => {
     const state = {
-      highlights: [{ id: 'h1', selectedText: 'existing', chapterRef: 'ch1', cfiRange: 'cfi1', color: '#ff0', note: null, createdAt: '2026-01-01', updatedAt: '2026-01-01' }],
-      comments: [{ id: 'c1', text: 'existing comment', chapterRef: 'ch1', status: 'open', createdAt: '2026-01-01', displayName: 'user', isOwn: true }],
+      highlights: [
+        {
+          id: 'h1',
+          selectedText: 'existing',
+          chapterRef: 'ch1',
+          cfiRange: 'cfi1',
+          color: '#ff0',
+          note: null,
+          createdAt: '2026-01-01',
+          updatedAt: '2026-01-01',
+        },
+      ],
+      comments: [
+        {
+          id: 'c1',
+          text: 'existing comment',
+          chapterRef: 'ch1',
+          status: 'open',
+          createdAt: '2026-01-01',
+          displayName: 'user',
+          isOwn: true,
+        },
+      ],
       bookmarks: [{ id: 'b1', label: 'existing bookmark', chapterRef: 'ch1', cfi: 'cfi1' }],
       setHighlights: mockSetHighlights,
       setComments: mockSetComments,
@@ -40,7 +64,18 @@ describe('useImportNotes', () => {
   it('merges imported highlights with existing', async () => {
     vi.mocked(importNotesFromMarkdown).mockReturnValue({
       ok: true,
-      highlights: [{ id: 'h2', selectedText: 'imported', chapterRef: 'ch2', cfiRange: 'cfi2', color: '#0f0', note: null, createdAt: '2026-01-01', updatedAt: '2026-01-01' }],
+      highlights: [
+        {
+          id: 'h2',
+          selectedText: 'imported',
+          chapterRef: 'ch2',
+          cfiRange: 'cfi2',
+          color: '#0f0',
+          note: null,
+          createdAt: '2026-01-01',
+          updatedAt: '2026-01-01',
+        },
+      ],
       comments: [],
       bookmarks: [],
       skipped: 0,
@@ -55,15 +90,44 @@ describe('useImportNotes', () => {
     });
 
     expect(mockSetHighlights).toHaveBeenCalledWith([
-      { id: 'h1', selectedText: 'existing', chapterRef: 'ch1', cfiRange: 'cfi1', color: '#ff0', note: null, createdAt: '2026-01-01', updatedAt: '2026-01-01' },
-      { id: 'h2', selectedText: 'imported', chapterRef: 'ch2', cfiRange: 'cfi2', color: '#0f0', note: null, createdAt: '2026-01-01', updatedAt: '2026-01-01' },
+      {
+        id: 'h1',
+        selectedText: 'existing',
+        chapterRef: 'ch1',
+        cfiRange: 'cfi1',
+        color: '#ff0',
+        note: null,
+        createdAt: '2026-01-01',
+        updatedAt: '2026-01-01',
+      },
+      {
+        id: 'h2',
+        selectedText: 'imported',
+        chapterRef: 'ch2',
+        cfiRange: 'cfi2',
+        color: '#0f0',
+        note: null,
+        createdAt: '2026-01-01',
+        updatedAt: '2026-01-01',
+      },
     ]);
   });
 
   it('overwrites existing items with same ID', async () => {
     vi.mocked(importNotesFromMarkdown).mockReturnValue({
       ok: true,
-      highlights: [{ id: 'h1', selectedText: 'updated', chapterRef: 'ch1', cfiRange: 'cfi1', color: '#f00', note: null, createdAt: '2026-01-01', updatedAt: '2026-01-01' }],
+      highlights: [
+        {
+          id: 'h1',
+          selectedText: 'updated',
+          chapterRef: 'ch1',
+          cfiRange: 'cfi1',
+          color: '#f00',
+          note: null,
+          createdAt: '2026-01-01',
+          updatedAt: '2026-01-01',
+        },
+      ],
       comments: [],
       bookmarks: [],
       skipped: 0,
@@ -78,7 +142,16 @@ describe('useImportNotes', () => {
     });
 
     expect(mockSetHighlights).toHaveBeenCalledWith([
-      { id: 'h1', selectedText: 'updated', chapterRef: 'ch1', cfiRange: 'cfi1', color: '#f00', note: null, createdAt: '2026-01-01', updatedAt: '2026-01-01' },
+      {
+        id: 'h1',
+        selectedText: 'updated',
+        chapterRef: 'ch1',
+        cfiRange: 'cfi1',
+        color: '#f00',
+        note: null,
+        createdAt: '2026-01-01',
+        updatedAt: '2026-01-01',
+      },
     ]);
   });
 

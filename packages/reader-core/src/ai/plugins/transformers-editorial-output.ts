@@ -147,9 +147,7 @@ export function extractJson(output: string): unknown[] | null {
   // prompt — models escape to them, probe #3); the buried-slice paths below
   // recover the rest of any wrapper.
   const firstNl = bounded.indexOf('\n');
-  const unfenced = bounded.startsWith('`') && firstNl !== -1
-    ? bounded.slice(firstNl + 1)
-    : bounded;
+  const unfenced = bounded.startsWith('`') && firstNl !== -1 ? bounded.slice(firstNl + 1) : bounded;
   const trimmed = unfenced.trim();
   // Starts with an object → the model answered with one finding, not an array.
   if (trimmed.startsWith('{')) {

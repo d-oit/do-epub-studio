@@ -18,50 +18,50 @@ quality patterns that reduce regression risk as features from plans
 
 ### Test Coverage Status (from coverage thresholds)
 
-| Package | Threshold (L/F) | Observed | Gap |
-|---------|-----------------|----------|-----|
-| `web` | 55% / 48% | ~76% | Above threshold but admin components below 50% |
-| `worker` | 55% / 50% | Passing | Missing tests for insights, highlights routes |
-| `shared` | 40% / 50% | Passing | Minimal — only schemas and validators tested |
-| `reader-core` | 72% / 70% | Passing | Well-tested (property tests + fixtures) |
-| `schema` | 15% / 5% | Passing | Very low bar; migrations untested |
-| `ui` | 10% / 5% | Passing | Very low bar; only basic render tests |
+| Package       | Threshold (L/F) | Observed | Gap                                            |
+| ------------- | --------------- | -------- | ---------------------------------------------- |
+| `web`         | 55% / 48%       | ~76%     | Above threshold but admin components below 50% |
+| `worker`      | 55% / 50%       | Passing  | Missing tests for insights, highlights routes  |
+| `shared`      | 40% / 50%       | Passing  | Minimal — only schemas and validators tested   |
+| `reader-core` | 72% / 70%       | Passing  | Well-tested (property tests + fixtures)        |
+| `schema`      | 15% / 5%        | Passing  | Very low bar; migrations untested              |
+| `ui`          | 10% / 5%        | Passing  | Very low bar; only basic render tests          |
 
 ### Missing Test Coverage (specific gaps)
 
-| Area | File/Feature | What's Missing |
-|------|-------------|----------------|
-| Worker routes | `routes/reader/insights.ts` | No dedicated route test beyond integration |
-| Worker routes | `routes/reader/highlights.ts` | Partial test (`routes.bookmarks.test.ts` covers similar) |
-| Web features | `features/catalog/CatalogPage.tsx` | Only 1 basic test in `__tests__/catalog-page.test.tsx` |
-| Web features | `features/reader/components/info/InfoPanel.tsx` | Test exists but no keyboard nav testing |
-| Web features | `features/admin/AuditLogPage.tsx` | Has test but no pagination/filter testing |
-| Web hooks | `hooks/useThemeSync.ts` | No dedicated test file |
-| UI package | Most components | Render-only tests; no interaction/a11y testing |
-| Shared | `dtos.ts`, `errors.ts`, `telemetry.ts` | Property tests exist but no edge-case unit tests |
+| Area          | File/Feature                                    | What's Missing                                           |
+| ------------- | ----------------------------------------------- | -------------------------------------------------------- |
+| Worker routes | `routes/reader/insights.ts`                     | No dedicated route test beyond integration               |
+| Worker routes | `routes/reader/highlights.ts`                   | Partial test (`routes.bookmarks.test.ts` covers similar) |
+| Web features  | `features/catalog/CatalogPage.tsx`              | Only 1 basic test in `__tests__/catalog-page.test.tsx`   |
+| Web features  | `features/reader/components/info/InfoPanel.tsx` | Test exists but no keyboard nav testing                  |
+| Web features  | `features/admin/AuditLogPage.tsx`               | Has test but no pagination/filter testing                |
+| Web hooks     | `hooks/useThemeSync.ts`                         | No dedicated test file                                   |
+| UI package    | Most components                                 | Render-only tests; no interaction/a11y testing           |
+| Shared        | `dtos.ts`, `errors.ts`, `telemetry.ts`          | Property tests exist but no edge-case unit tests         |
 
 ### Missing E2E Test Flows
 
-| User Flow | Existing Coverage | Gap |
-|-----------|------------------|-----|
-| Book upload + read | `login-and-book-load.spec.ts` | No upload flow tested |
-| Annotation lifecycle | `reader-annotations-and-admin.spec.ts` | No export/delete |
-| Offline → online sync | `offline-reader.spec.ts` | No conflict resolution e2e |
-| Admin book CRUD | None | No e2e for create/edit/delete book |
-| Catalog browsing | None | No e2e for search/filter/paginate |
-| Reading insights | None | No e2e for viewing insights |
+| User Flow             | Existing Coverage                      | Gap                                |
+| --------------------- | -------------------------------------- | ---------------------------------- |
+| Book upload + read    | `login-and-book-load.spec.ts`          | No upload flow tested              |
+| Annotation lifecycle  | `reader-annotations-and-admin.spec.ts` | No export/delete                   |
+| Offline → online sync | `offline-reader.spec.ts`               | No conflict resolution e2e         |
+| Admin book CRUD       | None                                   | No e2e for create/edit/delete book |
+| Catalog browsing      | None                                   | No e2e for search/filter/paginate  |
+| Reading insights      | None                                   | No e2e for viewing insights        |
 
 ### DX Improvements Needed
 
-| Area | Current State | Improvement |
-|------|---------------|-------------|
-| **Storybook** | 12 stories in `packages/ui` | Missing stories for app-level components (Drawer, AppShell, ThemeToggle) |
-| **Type generation** | Manual DTO types | No auto-generated API client types from worker routes |
-| **Dev error overlay** | Vite default | No custom error boundary with stack trace + quick links |
-| **Hot module state** | Standard HMR | Zustand stores lose state on HMR in some cases |
-| **Visual regression** | `visual-regression.yml` workflow exists | No baseline snapshots committed |
-| **Bundle analysis** | `check-bundle-size.mjs` exists | No CI budget enforcement (only script) |
-| **Monorepo linking** | Turborepo | No `turbo gen` for scaffolding new packages/features |
+| Area                  | Current State                           | Improvement                                                              |
+| --------------------- | --------------------------------------- | ------------------------------------------------------------------------ |
+| **Storybook**         | 12 stories in `packages/ui`             | Missing stories for app-level components (Drawer, AppShell, ThemeToggle) |
+| **Type generation**   | Manual DTO types                        | No auto-generated API client types from worker routes                    |
+| **Dev error overlay** | Vite default                            | No custom error boundary with stack trace + quick links                  |
+| **Hot module state**  | Standard HMR                            | Zustand stores lose state on HMR in some cases                           |
+| **Visual regression** | `visual-regression.yml` workflow exists | No baseline snapshots committed                                          |
+| **Bundle analysis**   | `check-bundle-size.mjs` exists          | No CI budget enforcement (only script)                                   |
+| **Monorepo linking**  | Turborepo                               | No `turbo gen` for scaffolding new packages/features                     |
 
 ## Decomposed Tasks
 

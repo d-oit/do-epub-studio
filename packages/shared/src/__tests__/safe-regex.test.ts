@@ -57,14 +57,10 @@ describe('matchBounded (property-based)', () => {
   it('returns null when input length exceeds maxLen for any regex', () => {
     const patterns = [/a/, /hello/, /\d+/, /[a-z]/, /test/];
     fc.assert(
-      fc.property(
-        fc.constantFrom(...patterns),
-        fc.integer({ min: 1, max: 100 }),
-        (re, maxLen) => {
-          const input = 'x'.repeat(maxLen + 1);
-          return matchBounded(re, input, maxLen) === null;
-        },
-      ),
+      fc.property(fc.constantFrom(...patterns), fc.integer({ min: 1, max: 100 }), (re, maxLen) => {
+        const input = 'x'.repeat(maxLen + 1);
+        return matchBounded(re, input, maxLen) === null;
+      }),
     );
   });
 
@@ -87,14 +83,10 @@ describe('testBounded (property-based)', () => {
   it('returns false when input length exceeds maxLen', () => {
     const patterns = [/a/, /hello/, /\d+/, /[a-z]/, /test/];
     fc.assert(
-      fc.property(
-        fc.constantFrom(...patterns),
-        fc.integer({ min: 1, max: 100 }),
-        (re, maxLen) => {
-          const input = 'a'.repeat(maxLen + 1);
-          return testBounded(re, input, maxLen) === false;
-        },
-      ),
+      fc.property(fc.constantFrom(...patterns), fc.integer({ min: 1, max: 100 }), (re, maxLen) => {
+        const input = 'a'.repeat(maxLen + 1);
+        return testBounded(re, input, maxLen) === false;
+      }),
     );
   });
 });
@@ -103,14 +95,10 @@ describe('matchAllBounded (property-based)', () => {
   it('returns empty array when input length exceeds maxLen', () => {
     const patterns = [/a/g, /hello/g, /\d+/g, /[a-z]/g, /test/g];
     fc.assert(
-      fc.property(
-        fc.constantFrom(...patterns),
-        fc.integer({ min: 1, max: 100 }),
-        (re, maxLen) => {
-          const input = 'a'.repeat(maxLen + 1);
-          return matchAllBounded(re, input, maxLen).length === 0;
-        },
-      ),
+      fc.property(fc.constantFrom(...patterns), fc.integer({ min: 1, max: 100 }), (re, maxLen) => {
+        const input = 'a'.repeat(maxLen + 1);
+        return matchAllBounded(re, input, maxLen).length === 0;
+      }),
     );
   });
 

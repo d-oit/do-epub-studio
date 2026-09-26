@@ -95,7 +95,7 @@ describe('Security: Comments Visibility', () => {
       // Mock query result
       mockQueryAll.mockImplementation((_env, _sql, args) => {
         if (args && args.includes('userA@example.com')) {
-           return Promise.resolve([internalCommentA]);
+          return Promise.resolve([internalCommentA]);
         }
         return Promise.resolve([]);
       });

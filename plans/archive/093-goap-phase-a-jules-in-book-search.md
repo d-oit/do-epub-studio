@@ -29,13 +29,13 @@ skill, ship via PR, and remediate Codacy findings to a clean gate.
 
 ## Decomposition (tasks)
 
-| ID | Task | Status |
-|----|------|--------|
-| T1 | Install `jules-delegator` skill locally | ✅ done in PR #524 |
-| T2 | Launch Jules session for search panel + toolbar trigger | ✅ done in session `8766686736332398138` |
-| T3 | Pull, normalize commits, quality gate | ✅ done |
-| T4 | Open PR, watch CI to green, merge | ✅ done in PR #525 |
-| T5 | Remediate Codacy findings (2 critical → 0, 13 high → 0, 4 medium → 0) | ✅ done in 2 fix commits |
+| ID  | Task                                                                  | Status                                   |
+| --- | --------------------------------------------------------------------- | ---------------------------------------- |
+| T1  | Install `jules-delegator` skill locally                               | ✅ done in PR #524                       |
+| T2  | Launch Jules session for search panel + toolbar trigger               | ✅ done in session `8766686736332398138` |
+| T3  | Pull, normalize commits, quality gate                                 | ✅ done                                  |
+| T4  | Open PR, watch CI to green, merge                                     | ✅ done in PR #525                       |
+| T5  | Remediate Codacy findings (2 critical → 0, 13 high → 0, 4 medium → 0) | ✅ done in 2 fix commits                 |
 
 ## Strategy (Strategize)
 
@@ -72,11 +72,11 @@ skill, ship via PR, and remediate Codacy findings to a clean gate.
 
 ### Codacy remediation (2 fix commits on the PR branch)
 
-| Round | Commit | Issues before | Issues after | Strategy |
-|-------|--------|---------------|--------------|----------|
-| 1 | `c9e9837` | 5 critical + 16 high + 3 medium = 24 | 2 critical + 14 high + 4 medium = 20 | Replace `dangerouslySetInnerHTML` (XSS), `console.error`→`logClientEvent`, drop `@ts-expect-error`, type `as any` in tests |
-| 2 | `21f2635` | 2 critical + 13 high + 4 medium | 1 high | Drop redundant `??` on `Error.name`/`Error.message`, replace `new RegExp(escapedQuery)` with `String.indexOf` loop (eliminates 2 critical + 1 high non-literal-regex), drop `role="searchbox"` for `type="search"`, use content-position keys, wrap void arrows in braces, fix `isOpen` redundancy in conditional |
-| 3 | `a568e26` | 1 high | **0** | Inline the `runSearch` async arrow as an IIFE (silences Codacy's `non-serializable-expr` check) |
+| Round | Commit    | Issues before                        | Issues after                         | Strategy                                                                                                                                                                                                                                                                                                          |
+| ----- | --------- | ------------------------------------ | ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1     | `c9e9837` | 5 critical + 16 high + 3 medium = 24 | 2 critical + 14 high + 4 medium = 20 | Replace `dangerouslySetInnerHTML` (XSS), `console.error`→`logClientEvent`, drop `@ts-expect-error`, type `as any` in tests                                                                                                                                                                                        |
+| 2     | `21f2635` | 2 critical + 13 high + 4 medium      | 1 high                               | Drop redundant `??` on `Error.name`/`Error.message`, replace `new RegExp(escapedQuery)` with `String.indexOf` loop (eliminates 2 critical + 1 high non-literal-regex), drop `role="searchbox"` for `type="search"`, use content-position keys, wrap void arrows in braces, fix `isOpen` redundancy in conditional |
+| 3     | `a568e26` | 1 high                               | **0**                                | Inline the `runSearch` async arrow as an IIFE (silences Codacy's `non-serializable-expr` check)                                                                                                                                                                                                                   |
 
 ## Risks and how they were resolved
 
@@ -92,7 +92,7 @@ skill, ship via PR, and remediate Codacy findings to a clean gate.
   had empty diffs, the third (head) had the real implementation. We
   adopted the branch head directly.
 - **Skill frontmatter validator caught the skill itself**: `category:
-  agent` and missing `allowed-tools` were flagged by the
+agent` and missing `allowed-tools` were flagged by the
   `validate-skill-format.sh` pre-commit check. Fixed on the same branch
   as part of round 1.
 
@@ -110,17 +110,17 @@ skill, ship via PR, and remediate Codacy findings to a clean gate.
 
 ## Synthesis (Results)
 
-| Metric | Value |
-|--------|-------|
-| PRs opened | 1 (PR #525) |
-| PRs merged | 1 (squash-merge to `main` at `f2c0998`) |
-| Branches deleted | 1 (`feat-reader-search-panel-8766686736332398138`) |
-| Files changed | 14 (3 new search, 1 new hook test, 1 new e2e spec, 9 modifications) |
-| Lines changed (cumulative across 3 commits) | +626/-63 |
-| Codacy findings | 24 → 0 across 3 fix commits |
-| Local quality gate | PASS at every commit |
-| PR CI run | 16/16 active checks green (5 expected skips) |
-| Post-merge main CI | SUCCESS |
+| Metric                                      | Value                                                               |
+| ------------------------------------------- | ------------------------------------------------------------------- |
+| PRs opened                                  | 1 (PR #525)                                                         |
+| PRs merged                                  | 1 (squash-merge to `main` at `f2c0998`)                             |
+| Branches deleted                            | 1 (`feat-reader-search-panel-8766686736332398138`)                  |
+| Files changed                               | 14 (3 new search, 1 new hook test, 1 new e2e spec, 9 modifications) |
+| Lines changed (cumulative across 3 commits) | +626/-63                                                            |
+| Codacy findings                             | 24 → 0 across 3 fix commits                                         |
+| Local quality gate                          | PASS at every commit                                                |
+| PR CI run                                   | 16/16 active checks green (5 expected skips)                        |
+| Post-merge main CI                          | SUCCESS                                                             |
 
 ### CI checks that passed on the merged commit (f2c0998)
 
@@ -130,22 +130,22 @@ All checks in `.github/workflows/ci.yml`, plus the dedicated
 
 ### Verification matrix
 
-| Capability | Verified |
-|------------|----------|
-| Search panel renders in DOM (`role="search"`, `aria-label`) | ✅ SearchPanel.test.tsx |
-| Empty query shows zero results | ✅ SearchPanel.test.tsx |
-| Loading indicator on `isSearching` | ✅ SearchPanel.test.tsx |
-| Result click invokes `onNavigate(cfi)` | ✅ SearchPanel.test.tsx |
-| Hook returns results after debounce | ✅ useReaderSearch.test.ts |
-| Section load failure doesn't crash | ✅ useReaderSearch.test.ts |
-| `highlightRanges` literal-substring highlighting (no RegExp) | ✅ useReaderSearch.test.ts |
-| Toolbar trigger button present with `aria-label` and `aria-expanded` | ✅ ReaderToolbar.test.tsx |
-| Mobile overflow menu includes search entry | ✅ ReaderToolbar.tsx |
-| i18n parity (EN/DE/FR) for 4 new keys | ✅ i18n-parity.test.ts |
-| Mutual exclusivity with other reader panels | ✅ useReaderUI toggle pattern |
-| `prefers-reduced-motion` honored | ✅ framer-motion (used in BookmarksPanel/InfoPanel identically) |
-| DOMPurify sanitizer untouched (snippet text is post-extraction) | ✅ n/a — text-only rendering |
-| CSP unchanged | ✅ apps/web/public/_headers |
+| Capability                                                           | Verified                                                        |
+| -------------------------------------------------------------------- | --------------------------------------------------------------- |
+| Search panel renders in DOM (`role="search"`, `aria-label`)          | ✅ SearchPanel.test.tsx                                         |
+| Empty query shows zero results                                       | ✅ SearchPanel.test.tsx                                         |
+| Loading indicator on `isSearching`                                   | ✅ SearchPanel.test.tsx                                         |
+| Result click invokes `onNavigate(cfi)`                               | ✅ SearchPanel.test.tsx                                         |
+| Hook returns results after debounce                                  | ✅ useReaderSearch.test.ts                                      |
+| Section load failure doesn't crash                                   | ✅ useReaderSearch.test.ts                                      |
+| `highlightRanges` literal-substring highlighting (no RegExp)         | ✅ useReaderSearch.test.ts                                      |
+| Toolbar trigger button present with `aria-label` and `aria-expanded` | ✅ ReaderToolbar.test.tsx                                       |
+| Mobile overflow menu includes search entry                           | ✅ ReaderToolbar.tsx                                            |
+| i18n parity (EN/DE/FR) for 4 new keys                                | ✅ i18n-parity.test.ts                                          |
+| Mutual exclusivity with other reader panels                          | ✅ useReaderUI toggle pattern                                   |
+| `prefers-reduced-motion` honored                                     | ✅ framer-motion (used in BookmarksPanel/InfoPanel identically) |
+| DOMPurify sanitizer untouched (snippet text is post-extraction)      | ✅ n/a — text-only rendering                                    |
+| CSP unchanged                                                        | ✅ apps/web/public/_headers                                     |
 
 ## Cross-references
 

@@ -58,9 +58,7 @@ export function AdminLoginHero() {
         {APP_NAME}
       </h1>
       <div className="mt-4 h-1 w-16 rounded-full bg-accent" />
-      <p className="mt-5 max-w-lg text-lg text-foreground-muted">
-        {APP_DESCRIPTION}
-      </p>
+      <p className="mt-5 max-w-lg text-lg text-foreground-muted">{APP_DESCRIPTION}</p>
 
       <div className="mt-8">
         <AdminFeatureList />
@@ -95,9 +93,7 @@ export function AdminMobileInfo() {
           <h1 className="font-display text-xl font-bold leading-tight text-foreground">
             {APP_NAME}
           </h1>
-          <p className="mt-0.5 truncate text-xs text-foreground-muted">
-            {APP_DESCRIPTION}
-          </p>
+          <p className="mt-0.5 truncate text-xs text-foreground-muted">{APP_DESCRIPTION}</p>
         </div>
       </div>
       <div className="mt-4 border-t border-border pt-4">

@@ -30,7 +30,13 @@ highlightsRouter.get('/:bookId/highlights', readerAuth, async (c) => {
   const bookId = c.req.param('bookId');
   const auth = c.get('auth');
 
-  const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx, getRequestTraceId(c));
+  const mismatch = await assertBookAccess(
+    c.env,
+    auth,
+    bookId,
+    c.executionCtx,
+    getRequestTraceId(c),
+  );
   if (mismatch) return mismatch.response;
 
   const highlights = await queryAll<HighlightRow>(
@@ -54,71 +60,92 @@ highlightsRouter.get('/:bookId/highlights', readerAuth, async (c) => {
   });
 });
 
-highlightsRouter.post('/:bookId/highlights', readerAuth, zValidator('json', HighlightCreateSchema), async (c) => {
-  const bookId = c.req.param('bookId');
-  const auth = c.get('auth');
-  const body = c.req.valid('json');
+highlightsRouter.post(
+  '/:bookId/highlights',
+  readerAuth,
+  zValidator('json', HighlightCreateSchema),
+  async (c) => {
+    const bookId = c.req.param('bookId');
+    const auth = c.get('auth');
+    const body = c.req.valid('json');
 
-  const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx, getRequestTraceId(c));
-  if (mismatch) return mismatch.response;
-
-  if (!auth.capabilities.canHighlight) {
-    throw new ForbiddenError('Access denied');
-  }
-
-  const id = crypto.randomUUID();
-  const now = new Date().toISOString();
-  const { locator } = body;
-
-  await execute(
-    c.env,
-    `INSERT INTO highlights (id, book_id, user_email, chapter_ref, cfi_range, selected_text, note, color, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [
-      id,
+    const mismatch = await assertBookAccess(
+      c.env,
+      auth,
       bookId,
-      auth.email,
-      locator.chapterRef,
-      locator.cfi,
-      locator.selectedText,
-      body.note ?? null,
-      body.color ?? '#ffff00',
-      now,
-      now,
-    ],
-  );
+      c.executionCtx,
+      getRequestTraceId(c),
+    );
+    if (mismatch) return mismatch.response;
 
-  await logAudit(c.env, {
-    entityType: 'highlight',
-    entityId: id,
-    action: 'create',
-    actorEmail: auth.email,
-    payload: { bookId, chapterRef: locator.chapterRef, color: body.color },
-  }, c.executionCtx);
+    if (!auth.capabilities.canHighlight) {
+      throw new ForbiddenError('Access denied');
+    }
 
-  return c.json(
-    {
-      ok: true,
-      data: {
+    const id = crypto.randomUUID();
+    const now = new Date().toISOString();
+    const { locator } = body;
+
+    await execute(
+      c.env,
+      `INSERT INTO highlights (id, book_id, user_email, chapter_ref, cfi_range, selected_text, note, color, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
         id,
-        chapterRef: locator.chapterRef,
-        cfiRange: locator.cfi,
-        selectedText: locator.selectedText,
-        note: body.note,
-        color: body.color ?? '#ffff00',
-        createdAt: now,
-        updatedAt: now,
+        bookId,
+        auth.email,
+        locator.chapterRef,
+        locator.cfi,
+        locator.selectedText,
+        body.note ?? null,
+        body.color ?? '#ffff00',
+        now,
+        now,
+      ],
+    );
+
+    await logAudit(
+      c.env,
+      {
+        entityType: 'highlight',
+        entityId: id,
+        action: 'create',
+        actorEmail: auth.email,
+        payload: { bookId, chapterRef: locator.chapterRef, color: body.color },
       },
-    },
-    201,
-  );
-});
+      c.executionCtx,
+    );
+
+    return c.json(
+      {
+        ok: true,
+        data: {
+          id,
+          chapterRef: locator.chapterRef,
+          cfiRange: locator.cfi,
+          selectedText: locator.selectedText,
+          note: body.note,
+          color: body.color ?? '#ffff00',
+          createdAt: now,
+          updatedAt: now,
+        },
+      },
+      201,
+    );
+  },
+);
 
 highlightsRouter.delete('/:bookId/highlights/:highlightId', readerAuth, async (c) => {
   const { bookId, highlightId } = c.req.param();
   const auth = c.get('auth');
 
-  const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx, getRequestTraceId(c));
+  const mismatch = await assertBookAccess(
+    c.env,
+    auth,
+    bookId,
+    c.executionCtx,
+    getRequestTraceId(c),
+  );
   if (mismatch) return mismatch.response;
 
   await execute(c.env, `DELETE FROM highlights WHERE id = ? AND book_id = ? AND user_email = ?`, [
@@ -127,65 +154,85 @@ highlightsRouter.delete('/:bookId/highlights/:highlightId', readerAuth, async (c
     auth.email,
   ]);
 
-  await logAudit(c.env, {
-    entityType: 'highlight',
-    entityId: highlightId,
-    action: 'delete',
-    actorEmail: auth.email,
-    payload: { bookId },
-  }, c.executionCtx);
+  await logAudit(
+    c.env,
+    {
+      entityType: 'highlight',
+      entityId: highlightId,
+      action: 'delete',
+      actorEmail: auth.email,
+      payload: { bookId },
+    },
+    c.executionCtx,
+  );
 
   return c.json({ ok: true });
 });
 
-highlightsRouter.patch('/:bookId/highlights/:highlightId', readerAuth, zValidator('json', HighlightUpdateSchema), async (c) => {
-  const { bookId, highlightId } = c.req.param();
-  const auth = c.get('auth');
-  const body = c.req.valid('json');
+highlightsRouter.patch(
+  '/:bookId/highlights/:highlightId',
+  readerAuth,
+  zValidator('json', HighlightUpdateSchema),
+  async (c) => {
+    const { bookId, highlightId } = c.req.param();
+    const auth = c.get('auth');
+    const body = c.req.valid('json');
 
-  const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx, getRequestTraceId(c));
-  if (mismatch) return mismatch.response;
+    const mismatch = await assertBookAccess(
+      c.env,
+      auth,
+      bookId,
+      c.executionCtx,
+      getRequestTraceId(c),
+    );
+    if (mismatch) return mismatch.response;
 
-  const highlight = await queryFirst<HighlightRow>(c.env, `SELECT * FROM highlights WHERE id = ? AND book_id = ?`, [
-    highlightId,
-    bookId,
-  ]);
+    const highlight = await queryFirst<HighlightRow>(
+      c.env,
+      `SELECT * FROM highlights WHERE id = ? AND book_id = ?`,
+      [highlightId, bookId],
+    );
 
-  if (!highlight) {
-    throw new NotFoundError('Highlight');
-  }
+    if (!highlight) {
+      throw new NotFoundError('Highlight');
+    }
 
-  if (highlight.user_email !== auth.email) {
-    throw new ForbiddenError('Cannot edit others highlights');
-  }
+    if (highlight.user_email !== auth.email) {
+      throw new ForbiddenError('Cannot edit others highlights');
+    }
 
-  const now = new Date().toISOString();
-  const updates: string[] = ['updated_at = ?'];
-  const args: (string | number | null)[] = [now];
+    const now = new Date().toISOString();
+    const updates: string[] = ['updated_at = ?'];
+    const args: (string | number | null)[] = [now];
 
-  if (body.note !== undefined) {
-    updates.push('note = ?');
-    args.push(body.note);
-  }
-  if (body.color !== undefined) {
-    updates.push('color = ?');
-    args.push(body.color);
-  }
+    if (body.note !== undefined) {
+      updates.push('note = ?');
+      args.push(body.note);
+    }
+    if (body.color !== undefined) {
+      updates.push('color = ?');
+      args.push(body.color);
+    }
 
-  args.push(highlightId);
+    args.push(highlightId);
 
-  await execute(c.env, `UPDATE highlights SET ${updates.join(', ')} WHERE id = ?`, args);
+    await execute(c.env, `UPDATE highlights SET ${updates.join(', ')} WHERE id = ?`, args);
 
-  await logAudit(c.env, {
-    entityType: 'highlight',
-    entityId: highlightId,
-    action: 'update',
-    actorEmail: auth.email,
-    payload: body,
-  }, c.executionCtx);
+    await logAudit(
+      c.env,
+      {
+        entityType: 'highlight',
+        entityId: highlightId,
+        action: 'update',
+        actorEmail: auth.email,
+        payload: body,
+      },
+      c.executionCtx,
+    );
 
-  return c.json({
-    ok: true,
-    data: { id: highlightId, ...body },
-  });
-});
+    return c.json({
+      ok: true,
+      data: { id: highlightId, ...body },
+    });
+  },
+);

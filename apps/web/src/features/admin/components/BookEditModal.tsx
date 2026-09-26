@@ -36,58 +36,85 @@ export function BookEditModal({
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={t('admin.books.editTitle')}>
-      <form onSubmit={(e) => { void onSubmit(e); }} className="space-y-4">
+      <form
+        onSubmit={(e) => {
+          void onSubmit(e);
+        }}
+        className="space-y-4"
+      >
         <div>
-          <label htmlFor="edit-title" className="block text-sm font-medium text-foreground-muted mb-1">
+          <label
+            htmlFor="edit-title"
+            className="block text-sm font-medium text-foreground-muted mb-1"
+          >
             {t('admin.createBookModal.titleLabel')}
           </label>
           <input
             id="edit-title"
             type="text"
             value={editTitle}
-            onChange={(e) => { setEditTitle(e.target.value); }}
+            onChange={(e) => {
+              setEditTitle(e.target.value);
+            }}
             className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none transition-all"
           />
         </div>
 
         <div>
-          <label htmlFor="edit-author" className="block text-sm font-medium text-foreground-muted mb-1">
+          <label
+            htmlFor="edit-author"
+            className="block text-sm font-medium text-foreground-muted mb-1"
+          >
             {t('admin.createBookModal.authorLabel')}
           </label>
           <input
             id="edit-author"
             type="text"
             value={editAuthor}
-            onChange={(e) => { setEditAuthor(e.target.value); }}
+            onChange={(e) => {
+              setEditAuthor(e.target.value);
+            }}
             className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none transition-all"
           />
         </div>
 
         <div>
-          <label htmlFor="edit-description" className="block text-sm font-medium text-foreground-muted mb-1">
+          <label
+            htmlFor="edit-description"
+            className="block text-sm font-medium text-foreground-muted mb-1"
+          >
             {t('admin.createBookModal.descriptionLabel')}
           </label>
           <textarea
             id="edit-description"
             value={editDescription}
-            onChange={(e) => { setEditDescription(e.target.value); }}
+            onChange={(e) => {
+              setEditDescription(e.target.value);
+            }}
             rows={3}
             className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none transition-all resize-none"
           />
         </div>
 
         <div>
-          <label htmlFor="edit-visibility" className="block text-sm font-medium text-foreground-muted mb-1">
+          <label
+            htmlFor="edit-visibility"
+            className="block text-sm font-medium text-foreground-muted mb-1"
+          >
             {t('admin.createBookModal.visibilityLabel')}
           </label>
           <select
             id="edit-visibility"
             value={editVisibility}
-            onChange={(e) => { setEditVisibility(e.target.value); }}
+            onChange={(e) => {
+              setEditVisibility(e.target.value);
+            }}
             className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none transition-all"
           >
-            <option value="private">{t('admin.createBookModal.visibilityPrivate')}</option> {/* eslint-disable-line i18next/no-literal-string -- form option value */}
-            <option value="public">{t('admin.createBookModal.visibilityPublic')}</option> {/* eslint-disable-line i18next/no-literal-string -- form option value */}
+            {/* eslint-disable-next-line i18next/no-literal-string -- form option value */}
+            <option value="private">{t('admin.createBookModal.visibilityPrivate')}</option>{' '}
+            {/* eslint-disable-next-line i18next/no-literal-string -- form option value; see note in BookCreateModal.tsx */}
+            <option value="public">{t('admin.createBookModal.visibilityPublic')}</option>
           </select>
         </div>
 
@@ -102,7 +129,9 @@ export function BookEditModal({
             {t('admin.createBookModal.close')}
           </Button>
           <Button type="submit" isLoading={isEditSubmitting}>
-            {isEditSubmitting ? t('admin.createBookModal.submitting') : t('admin.books.saveChanges')}
+            {isEditSubmitting
+              ? t('admin.createBookModal.submitting')
+              : t('admin.books.saveChanges')}
           </Button>
         </div>
       </form>

@@ -207,7 +207,8 @@ export function ReaderPage() {
         // selections carry no epub.js `cfiRange`).
         sel.bookFileId = bookFileIdRef.current ?? undefined;
         sel.chapterRef = currentChapterRef.current || sel.chapterRef;
-        const contents = renditionRef.current?.getContents()
+        const contents = renditionRef.current
+          ?.getContents()
           .find((entry) => entry.document === frame?.contentDocument);
         const range = frame.contentWindow?.getSelection()?.getRangeAt(0);
         if (contents && range) {
@@ -283,12 +284,15 @@ export function ReaderPage() {
         // Sessions are bound to the book UUID; assertBookAccess compares the
         // URL param against auth.bookId with no slug fallback, so file-url
         // must be addressed by id like every other reader API call.
-        const data = await apiRequest<{ url: string; fileId?: string }>(`/api/books/${bookId}/file-url`, {
-          method: 'POST',
-          token: sessionToken,
-          body: JSON.stringify({}),
-          signal: controller.signal,
-        });
+        const data = await apiRequest<{ url: string; fileId?: string }>(
+          `/api/books/${bookId}/file-url`,
+          {
+            method: 'POST',
+            token: sessionToken,
+            body: JSON.stringify({}),
+            signal: controller.signal,
+          },
+        );
         bookFileIdRef.current = data.fileId ?? null;
         setEpubUrl(data.url);
         markInsightsLoaded();
@@ -347,10 +351,7 @@ export function ReaderPage() {
   const tFn = t as (key: string) => string;
 
   return (
-    <div
-      ref={rootRef}
-      className="min-h-dvh bg-background text-foreground"
-    >
+    <div ref={rootRef} className="min-h-dvh bg-background text-foreground">
       <ScrollProgressBar />
       <ReaderToolbar
         bookTitle={bookTitle}
@@ -362,7 +363,9 @@ export function ReaderPage() {
         toc={toc}
         currentChapter={currentChapter}
         onToggleToc={() => togglePanel('toc')}
-        onToggleSearch={() => { togglePanel('search'); }}
+        onToggleSearch={() => {
+          togglePanel('search');
+        }}
         onToggleComments={() => togglePanel('comments')}
         onToggleBookmarks={() => togglePanel('bookmarks')}
         onToggleSettings={() => togglePanel('settings')}
@@ -417,16 +420,18 @@ export function ReaderPage() {
         />
       )}
       {activePanel === 'search' && (
-          <SearchPanel
-            isOpen
-            book={bookRef.current}
-            onClose={() => { setActivePanel(null); }}
-            onNavigate={(cfi) => {
-              if (renditionRef.current) void renditionRef.current.display(cfi);
-            }}
-            t={tFn}
-          />
-        )}
+        <SearchPanel
+          isOpen
+          book={bookRef.current}
+          onClose={() => {
+            setActivePanel(null);
+          }}
+          onNavigate={(cfi) => {
+            if (renditionRef.current) void renditionRef.current.display(cfi);
+          }}
+          t={tFn}
+        />
+      )}
       <ReaderViewer
         isLoading={isLoading}
         epubUrl={epubUrl}

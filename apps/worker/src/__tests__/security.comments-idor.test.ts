@@ -50,7 +50,10 @@ describe('Security: Comments IDOR Reproduction', () => {
       if (bookId === 'book-B') {
         return Promise.resolve({
           ok: false,
-          response: Response.json({ ok: false, error: { code: 'BOOK_SESSION_MISMATCH' } }, { status: 403 }),
+          response: Response.json(
+            { ok: false, error: { code: 'BOOK_SESSION_MISMATCH' } },
+            { status: 403 },
+          ),
         });
       }
       return Promise.resolve(null);
@@ -60,7 +63,7 @@ describe('Security: Comments IDOR Reproduction', () => {
       new Request('http://localhost/api/comments/comment-B', {
         method: 'PATCH',
         headers: {
-          'Authorization': 'Bearer valid-token-for-A',
+          Authorization: 'Bearer valid-token-for-A',
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ body: 'new body' }),
@@ -89,7 +92,10 @@ describe('Security: Comments IDOR Reproduction', () => {
       if (bookId === 'book-B') {
         return Promise.resolve({
           ok: false,
-          response: Response.json({ ok: false, error: { code: 'BOOK_SESSION_MISMATCH' } }, { status: 403 }),
+          response: Response.json(
+            { ok: false, error: { code: 'BOOK_SESSION_MISMATCH' } },
+            { status: 403 },
+          ),
         });
       }
       return Promise.resolve(null);
@@ -98,7 +104,7 @@ describe('Security: Comments IDOR Reproduction', () => {
     const res = await app.fetch(
       new Request('http://localhost/api/comments/comment-B', {
         method: 'DELETE',
-        headers: { 'Authorization': 'Bearer valid-token-for-A' },
+        headers: { Authorization: 'Bearer valid-token-for-A' },
       }),
       env,
       makePassThroughContext(),
@@ -124,7 +130,7 @@ describe('Security: Comments IDOR Reproduction', () => {
         new Request('http://localhost/api/books/book-A/comments', {
           method: 'POST',
           headers: {
-            'Authorization': 'Bearer valid-token',
+            Authorization: 'Bearer valid-token',
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
@@ -154,7 +160,7 @@ describe('Security: Comments IDOR Reproduction', () => {
         new Request('http://localhost/api/books/book-A/comments', {
           method: 'POST',
           headers: {
-            'Authorization': 'Bearer valid-token',
+            Authorization: 'Bearer valid-token',
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
@@ -184,7 +190,7 @@ describe('Security: Comments IDOR Reproduction', () => {
         new Request('http://localhost/api/books/book-A/comments', {
           method: 'POST',
           headers: {
-            'Authorization': 'Bearer valid-token',
+            Authorization: 'Bearer valid-token',
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
@@ -214,7 +220,7 @@ describe('Security: Comments IDOR Reproduction', () => {
         new Request('http://localhost/api/books/book-A/comments', {
           method: 'POST',
           headers: {
-            'Authorization': 'Bearer valid-token',
+            Authorization: 'Bearer valid-token',
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
@@ -244,7 +250,7 @@ describe('Security: Comments IDOR Reproduction', () => {
         new Request('http://localhost/api/books/book-A/comments', {
           method: 'POST',
           headers: {
-            'Authorization': 'Bearer valid-token',
+            Authorization: 'Bearer valid-token',
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({

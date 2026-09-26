@@ -44,7 +44,7 @@ the `ar`/`ru`/`hi` locale share exceeds 5% of active users:
 
 1. ~~Choose a plural-aware message format~~ **Done (GOAP-227, 2026-08-11):**
    structured plural-category values (`{ zero?, one?, two?, few?, many?,
-   other }`) in the existing catalogs, resolved via `Intl.PluralRules` through
+other }`) in the existing catalogs, resolved via `Intl.PluralRules` through
    `apps/web/src/lib/i18n-format.ts` `pluralize()` and `translate()` in
    `apps/web/src/i18n/index.ts`. ICU MessageFormat via `@formatjs/...` remains
    the fallback option if the plural-key surface outgrows the structured form.

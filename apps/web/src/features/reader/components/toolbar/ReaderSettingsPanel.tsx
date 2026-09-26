@@ -58,12 +58,10 @@ export function ReaderSettingsPanel({
       className="fixed top-14 right-4 glass-panel rounded-sm shadow-xl border border-border p-4 z-50 w-72 max-h-[calc(100dvh-4rem)] overflow-y-auto animate-scale-in"
     >
       <div className="flex items-center justify-between mb-4">
-        <h2 id="settings-title" className="text-sm font-semibold text-foreground">{t('reader.settings')}</h2>
-        <IconButton
-          onClick={onClose}
-          variant="ghost"
-          aria-label={t('a11y.close')}
-        >
+        <h2 id="settings-title" className="text-sm font-semibold text-foreground">
+          {t('reader.settings')}
+        </h2>
+        <IconButton onClick={onClose} variant="ghost" aria-label={t('a11y.close')}>
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
               strokeLinecap="round"
@@ -77,9 +75,7 @@ export function ReaderSettingsPanel({
 
       <div className="space-y-6">
         <fieldset className="min-w-0">
-          <legend className="eyebrow block mb-2">
-            {t('reader.theme')}
-          </legend>
+          <legend className="eyebrow block mb-2">{t('reader.theme')}</legend>
           <div className="grid grid-cols-2 gap-2">
             {/* eslint-disable-next-line i18next/no-literal-string -- option keys passed to t() */}
             {(['light', 'dark', 'sepia', 'system'] as const).map((themeOption) => (
@@ -106,9 +102,7 @@ export function ReaderSettingsPanel({
 
         {!isFixedLayout && (
           <fieldset className="min-w-0">
-            <legend className="eyebrow block mb-2">
-              {t('reader.fontSize')}
-            </legend>
+            <legend className="eyebrow block mb-2">{t('reader.fontSize')}</legend>
             <div className="flex gap-1.5 p-1 bg-background-secondary rounded-lg">
               {/* eslint-disable-next-line i18next/no-literal-string -- option keys passed to t() */}
               {(['small', 'medium', 'large', 'xlarge'] as const).map((size) => (
@@ -144,9 +138,7 @@ export function ReaderSettingsPanel({
 
         {!isFixedLayout && (
           <fieldset className="min-w-0">
-            <legend className="eyebrow block mb-2">
-              {t('reader.fontFamily')}
-            </legend>
+            <legend className="eyebrow block mb-2">{t('reader.fontFamily')}</legend>
             <div className="flex flex-col gap-1">
               {/* eslint-disable-next-line i18next/no-literal-string -- option keys passed to t() */}
               {(['serif', 'sans-serif', 'monospace'] as const).map((family) => (
@@ -160,7 +152,7 @@ export function ReaderSettingsPanel({
                     focus-visible:ring-2 focus-visible:ring-accent
                     ${
                       fontFamily === family
-                      ? 'bg-primary-700 text-background font-medium shadow-sm'
+                        ? 'bg-primary-700 text-background font-medium shadow-sm'
                         : 'text-foreground hover:bg-background-secondary border border-transparent'
                     }
                   `}
@@ -182,9 +174,7 @@ export function ReaderSettingsPanel({
 
         {onSetDirection && (
           <fieldset className="min-w-0">
-            <legend className="eyebrow block mb-2">
-              {t('reader.settings.direction')}
-            </legend>
+            <legend className="eyebrow block mb-2">{t('reader.settings.direction')}</legend>
             <div className="grid grid-cols-3 gap-1.5">
               {/* eslint-disable-next-line i18next/no-literal-string -- option keys passed to t() */}
               {(['default', 'ltr', 'rtl'] as const).map((d) => (
@@ -197,7 +187,7 @@ export function ReaderSettingsPanel({
                     focus-visible:ring-2 focus-visible:ring-accent
                     ${
                       direction === d
-                      ? 'bg-primary-700 text-background border-primary-700 font-medium shadow-sm'
+                        ? 'bg-primary-700 text-background border-primary-700 font-medium shadow-sm'
                         : 'bg-background-secondary text-foreground border-border hover:border-foreground-muted'
                     }
                   `}
@@ -211,9 +201,7 @@ export function ReaderSettingsPanel({
 
         {onSetWritingMode && (
           <fieldset className="min-w-0">
-            <legend className="eyebrow block mb-2">
-              {t('reader.settings.writingMode')}
-            </legend>
+            <legend className="eyebrow block mb-2">{t('reader.settings.writingMode')}</legend>
             <div className="grid grid-cols-1 gap-1">
               {/* eslint-disable-next-line i18next/no-literal-string -- option keys passed to t() */}
               {(['horizontal-tb', 'vertical-rl', 'vertical-lr'] as const).map((mode) => (
@@ -226,7 +214,7 @@ export function ReaderSettingsPanel({
                     focus-visible:ring-2 focus-visible:ring-accent
                     ${
                       writingMode === mode
-                      ? 'bg-primary-700 text-background font-medium shadow-sm'
+                        ? 'bg-primary-700 text-background font-medium shadow-sm'
                         : 'text-foreground hover:bg-background-secondary border border-transparent'
                     }
                   `}
@@ -240,9 +228,7 @@ export function ReaderSettingsPanel({
 
         {onSetAiEnabled && (
           <fieldset className="min-w-0">
-            <legend className="eyebrow block mb-2">
-              {t('reader.settings.ai.title')}
-            </legend>
+            <legend className="eyebrow block mb-2">{t('reader.settings.ai.title')}</legend>
             <label className="flex items-start gap-2 cursor-pointer">
               <input
                 type="checkbox"

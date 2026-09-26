@@ -10,17 +10,20 @@ export interface InputProps extends ComponentPropsWithoutRef<'input'> {
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({
-    label,
-    error,
-    helperText,
-    className = '',
-    id,
-    type = 'text',
-    showPasswordLabel,
-    hidePasswordLabel,
-    ...props
-  }, ref) => {
+  (
+    {
+      label,
+      error,
+      helperText,
+      className = '',
+      id,
+      type = 'text',
+      showPasswordLabel,
+      hidePasswordLabel,
+      ...props
+    },
+    ref,
+  ) => {
     const generatedId = useId();
     const inputId = id || generatedId;
     const errorId = `${inputId}-error`;
@@ -32,13 +35,18 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     const inputType = showToggle ? (passwordVisible ? 'text' : 'password') : type;
 
     const toggleLabel = showToggle
-      ? (passwordVisible ? hidePasswordLabel : showPasswordLabel)
+      ? passwordVisible
+        ? hidePasswordLabel
+        : showPasswordLabel
       : undefined;
 
     return (
       <div className="w-full">
         {label && (
-          <label htmlFor={inputId} className="block text-sm font-medium text-[var(--color-foreground)] mb-1.5">
+          <label
+            htmlFor={inputId}
+            className="block text-sm font-medium text-[var(--color-foreground)] mb-1.5"
+          >
             {label}
           </label>
         )}
@@ -58,7 +66,9 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]',
               error ? 'border-[var(--color-accent-error)]' : '',
               className,
-            ].filter(Boolean).join(' ')}
+            ]
+              .filter(Boolean)
+              .join(' ')}
             {...props}
           />
           {showToggle && (

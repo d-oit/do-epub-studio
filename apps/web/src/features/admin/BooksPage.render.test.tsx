@@ -37,53 +37,115 @@ describe('AdminBookResponsesPage — rendering & navigation', () => {
 
   it('renders loading state initially', () => {
     vi.mocked(apiRequest).mockImplementation(() => new Promise(() => {}));
-    render(<MemoryRouter><AdminBookResponsesPage /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <AdminBookResponsesPage />
+      </MemoryRouter>,
+    );
     expect(screen.getByText('admin.books.title')).toBeInTheDocument();
   });
 
   it('renders books when loaded', async () => {
     vi.mocked(apiRequest).mockResolvedValue([
-      { id: '1', slug: 'test', title: 'Test Book', authorName: 'Author', description: 'Desc', visibility: 'public', coverImageUrl: null },
+      {
+        id: '1',
+        slug: 'test',
+        title: 'Test Book',
+        authorName: 'Author',
+        description: 'Desc',
+        visibility: 'public',
+        coverImageUrl: null,
+      },
     ]);
-    render(<MemoryRouter><AdminBookResponsesPage /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <AdminBookResponsesPage />
+      </MemoryRouter>,
+    );
     expect(await screen.findByText('Test Book')).toBeInTheDocument();
     expect(screen.getByText('Desc')).toBeInTheDocument();
   });
 
   it('renders empty state when no books', async () => {
     vi.mocked(apiRequest).mockResolvedValue([]);
-    render(<MemoryRouter><AdminBookResponsesPage /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <AdminBookResponsesPage />
+      </MemoryRouter>,
+    );
     expect(await screen.findByText('admin.books.noBookResponses')).toBeInTheDocument();
   });
 
   it('renders error message on fetch failure', async () => {
     vi.mocked(apiRequest).mockRejectedValue(new Error('Failed to fetch'));
-    render(<MemoryRouter><AdminBookResponsesPage /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <AdminBookResponsesPage />
+      </MemoryRouter>,
+    );
     expect(await screen.findByText('Failed to fetch')).toBeInTheDocument();
   });
 
   it('shows description fallback when no description', async () => {
     vi.mocked(apiRequest).mockResolvedValue([
-      { id: '1', slug: 'test', title: 'Test Book', authorName: 'Author', description: null, visibility: 'public', coverImageUrl: null },
+      {
+        id: '1',
+        slug: 'test',
+        title: 'Test Book',
+        authorName: 'Author',
+        description: null,
+        visibility: 'public',
+        coverImageUrl: null,
+      },
     ]);
-    render(<MemoryRouter><AdminBookResponsesPage /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <AdminBookResponsesPage />
+      </MemoryRouter>,
+    );
     expect(await screen.findByText('admin.books.noDescription')).toBeInTheDocument();
   });
 
   it('shows book visibility badge', async () => {
     vi.mocked(apiRequest).mockResolvedValue([
-      { id: '1', slug: 'test', title: 'Test Book', authorName: 'Author', description: 'Desc', visibility: 'public', coverImageUrl: null },
+      {
+        id: '1',
+        slug: 'test',
+        title: 'Test Book',
+        authorName: 'Author',
+        description: 'Desc',
+        visibility: 'public',
+        coverImageUrl: null,
+      },
     ]);
-    render(<MemoryRouter><AdminBookResponsesPage /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <AdminBookResponsesPage />
+      </MemoryRouter>,
+    );
     expect(await screen.findByText('public')).toBeInTheDocument();
   });
 
   it('navigates to grants page', async () => {
     vi.mocked(apiRequest).mockResolvedValue([
-      { id: '1', slug: 'test', title: 'Test Book', authorName: 'Author', description: 'Desc', visibility: 'public', coverImageUrl: null },
+      {
+        id: '1',
+        slug: 'test',
+        title: 'Test Book',
+        authorName: 'Author',
+        description: 'Desc',
+        visibility: 'public',
+        coverImageUrl: null,
+      },
     ]);
-    render(<MemoryRouter><AdminBookResponsesPage /></MemoryRouter>);
-    await waitFor(() => { expect(screen.getByText('Test Book')).toBeInTheDocument(); });
+    render(
+      <MemoryRouter>
+        <AdminBookResponsesPage />
+      </MemoryRouter>,
+    );
+    await waitFor(() => {
+      expect(screen.getByText('Test Book')).toBeInTheDocument();
+    });
     const manageButtons = screen.getAllByText(/manageAccess/);
     if (manageButtons.length > 0) {
       fireEvent.click(manageButtons[0]);
@@ -92,8 +154,14 @@ describe('AdminBookResponsesPage — rendering & navigation', () => {
 
   it('navigates back to reader', async () => {
     vi.mocked(apiRequest).mockResolvedValue([]);
-    render(<MemoryRouter><AdminBookResponsesPage /></MemoryRouter>);
-    await waitFor(() => { expect(apiRequest).toHaveBeenCalled(); });
+    render(
+      <MemoryRouter>
+        <AdminBookResponsesPage />
+      </MemoryRouter>,
+    );
+    await waitFor(() => {
+      expect(apiRequest).toHaveBeenCalled();
+    });
     const backButtons = screen.getAllByText(/backToReader/);
     if (backButtons.length > 0) {
       fireEvent.click(backButtons[0]);
@@ -102,28 +170,48 @@ describe('AdminBookResponsesPage — rendering & navigation', () => {
 
   it('navigates to audit logs', async () => {
     vi.mocked(apiRequest).mockResolvedValue([]);
-    render(<MemoryRouter><AdminBookResponsesPage /></MemoryRouter>);
-    await waitFor(() => { expect(apiRequest).toHaveBeenCalled(); });
+    render(
+      <MemoryRouter>
+        <AdminBookResponsesPage />
+      </MemoryRouter>,
+    );
+    await waitFor(() => {
+      expect(apiRequest).toHaveBeenCalled();
+    });
     fireEvent.click(screen.getByText('admin.books.viewAuditLogs'));
   });
 
   it('displays loading spinner while fetching', () => {
     vi.mocked(apiRequest).mockImplementation(() => new Promise(() => {}));
-    render(<MemoryRouter><AdminBookResponsesPage /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <AdminBookResponsesPage />
+      </MemoryRouter>,
+    );
     expect(document.querySelector('.animate-spin')).toBeInTheDocument();
   });
 
   it('renders locale switcher', async () => {
     vi.mocked(apiRequest).mockResolvedValue([]);
-    render(<MemoryRouter><AdminBookResponsesPage /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <AdminBookResponsesPage />
+      </MemoryRouter>,
+    );
     // waitFor flushes the post-fetch state update inside act() — a synchronous
     // assertion let it land after the test and React warned.
-    await waitFor(() => { expect(screen.getByTestId('locale-switcher')).toBeInTheDocument(); });
+    await waitFor(() => {
+      expect(screen.getByTestId('locale-switcher')).toBeInTheDocument();
+    });
   });
 
   it('sets fetch error when book list fails', async () => {
     vi.mocked(apiRequest).mockRejectedValue(new Error('Network error'));
-    render(<MemoryRouter><AdminBookResponsesPage /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <AdminBookResponsesPage />
+      </MemoryRouter>,
+    );
     await waitFor(() => {
       expect(screen.getByText('Network error')).toBeInTheDocument();
     });
@@ -131,19 +219,51 @@ describe('AdminBookResponsesPage — rendering & navigation', () => {
 
   it('renders book without description', async () => {
     vi.mocked(apiRequest).mockResolvedValue([
-      { id: '1', slug: 'test', title: 'Test Book', authorName: 'Author', description: null, visibility: 'private', coverImageUrl: null },
+      {
+        id: '1',
+        slug: 'test',
+        title: 'Test Book',
+        authorName: 'Author',
+        description: null,
+        visibility: 'private',
+        coverImageUrl: null,
+      },
     ]);
-    render(<MemoryRouter><AdminBookResponsesPage /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <AdminBookResponsesPage />
+      </MemoryRouter>,
+    );
     expect(await screen.findByText('Test Book')).toBeInTheDocument();
     expect(screen.getByText('private')).toBeInTheDocument();
   });
 
   it('shows multiple books with different visibilities', async () => {
     vi.mocked(apiRequest).mockResolvedValue([
-      { id: '1', slug: 'test1', title: 'Book One', authorName: 'A', description: 'D1', visibility: 'public', coverImageUrl: null },
-      { id: '2', slug: 'test2', title: 'Book Two', authorName: 'B', description: 'D2', visibility: 'private', coverImageUrl: null },
+      {
+        id: '1',
+        slug: 'test1',
+        title: 'Book One',
+        authorName: 'A',
+        description: 'D1',
+        visibility: 'public',
+        coverImageUrl: null,
+      },
+      {
+        id: '2',
+        slug: 'test2',
+        title: 'Book Two',
+        authorName: 'B',
+        description: 'D2',
+        visibility: 'private',
+        coverImageUrl: null,
+      },
     ]);
-    render(<MemoryRouter><AdminBookResponsesPage /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <AdminBookResponsesPage />
+      </MemoryRouter>,
+    );
     expect(await screen.findByText('Book One')).toBeInTheDocument();
     expect(screen.getByText('Book Two')).toBeInTheDocument();
     const publicBadges = screen.getAllByText('public');

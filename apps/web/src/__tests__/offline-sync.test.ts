@@ -1,4 +1,3 @@
-
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   generateMutationId,
@@ -78,9 +77,7 @@ describe('Offline Sync', () => {
   describe('generateMutationId', () => {
     it('should generate a valid UUID', () => {
       const id = generateMutationId();
-      expect(id).toMatch(
-        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
-      );
+      expect(id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
     });
 
     it('should generate unique IDs', () => {
@@ -174,7 +171,7 @@ describe('Offline Sync', () => {
       await vi.advanceTimersByTimeAsync(1000);
 
       // The callback should be registered (actual invocation depends on async timing)
-       expect(mockCallback).toHaveBeenCalled();
+      expect(mockCallback).toHaveBeenCalled();
     });
   });
 

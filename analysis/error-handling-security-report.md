@@ -24,18 +24,19 @@ This report analyzes the do-epub-studio codebase for error handling patterns and
 
 #### ✅ Positive Patterns
 
-| Pattern | Location | Description |
-|---------|----------|-------------|
-| **Global Error Boundary** | `apps/web/src/components/ErrorBoundary.tsx:1-45` | React ErrorBoundary with traceId tracking |
-| **Global Unhandled Rejection Handler** | `apps/web/src/main.tsx:59-69` | Catches unhandled promise rejections |
-| **Global Error Handler** | `apps/web/src/main.tsx:43-57` | Catches uncaught JavaScript errors |
-| **Standardized API Responses** | `apps/worker/src/lib/responses.ts` | Consistent `{ ok, data/error }` format |
-| **Zod Validation** | `packages/shared/src/schemas.ts:1-93` | Strong input validation with Zod |
-| **Worker Try-Catch** | `apps/worker/src/index.ts:233-250` | Global error handler in Worker fetch |
+| Pattern                                | Location                                         | Description                               |
+| -------------------------------------- | ------------------------------------------------ | ----------------------------------------- |
+| **Global Error Boundary**              | `apps/web/src/components/ErrorBoundary.tsx:1-45` | React ErrorBoundary with traceId tracking |
+| **Global Unhandled Rejection Handler** | `apps/web/src/main.tsx:59-69`                    | Catches unhandled promise rejections      |
+| **Global Error Handler**               | `apps/web/src/main.tsx:43-57`                    | Catches uncaught JavaScript errors        |
+| **Standardized API Responses**         | `apps/worker/src/lib/responses.ts`               | Consistent `{ ok, data/error }` format    |
+| **Zod Validation**                     | `packages/shared/src/schemas.ts:1-93`            | Strong input validation with Zod          |
+| **Worker Try-Catch**                   | `apps/worker/src/index.ts:233-250`               | Global error handler in Worker fetch      |
 
 #### Pattern Details
 
 **Worker API Response Pattern:**
+
 ```do-epub-studio/apps/worker/src/routes/access.ts#L1-25
 return jsonResponse(
   {
@@ -51,6 +52,7 @@ return jsonResponse(
 ```
 
 **Client API Error Handling:**
+
 ```do-epub-studio/apps/web/src/lib/api.ts#L88-103
 if (!data.ok) {
   const errorMessage = data.error?.message ?? 'Request failed';
@@ -73,6 +75,7 @@ if (!data.ok) {
 **Problem:** Using `(err as Error).message` pattern without checking if err is actually an Error.
 
 **Evidence:**
+
 ```do-epub-studio/apps/web/src/features/admin/BooksPage.tsx#L55-64
 } catch (err) {
   setError((err as Error).message || t('admin.error.loadBooks'));
@@ -128,8 +131,11 @@ if (!response.ok) {
 ```
 
 **Recommendation:** Include more context in error messages:
+
 ```typescript
-throw new Error(`Database query failed: ${response.statusText} for query: ${sql.substring(0, 50)}...`);
+throw new Error(
+  `Database query failed: ${response.statusText} for query: ${sql.substring(0, 50)}...`,
+);
 ```
 
 ---
@@ -139,9 +145,13 @@ throw new Error(`Database query failed: ${response.statusText} for query: ${sql.
 **Problem:** The codebase uses generic `new Error()` instead of custom error classes.
 
 **Recommendation:** Consider creating custom error classes:
+
 ```typescript
 class ValidationError extends Error {
-  constructor(message: string, public details: string[]) {
+  constructor(
+    message: string,
+    public details: string[],
+  ) {
     super(message);
     this.name = 'ValidationError';
   }
@@ -161,17 +171,17 @@ class AuthenticationError extends Error {
 
 ### 2.1 Current Security Measures ✅
 
-| Security Feature | Implementation | Location |
-|------------------|----------------|----------|
-| **Password Hashing** | Argon2id | `apps/worker/src/auth/password.ts:21-35` |
-| **Session Management** | Token-based with expiry | `apps/worker/src/auth/session.ts` |
-| **Input Validation** | Zod schemas | `packages/shared/src/schemas.ts` |
-| **SQL Parameterization** | Prepared statements | `apps/worker/src/db/client.ts` |
-| **CORS Protection** | Origin validation | `apps/worker/src/index.ts:263-280` |
-| **Security Headers** | CSP, HSTS, etc. | `apps/worker/src/lib/security-headers.ts` |
-| **Admin Authorization** | Role-based | `apps/worker/src/auth/admin-middleware.ts` |
-| **Capability-based Access** | Granular permissions | `apps/worker/src/auth/middleware.ts:1-100` |
-| **Trace IDs** | Request tracking | Throughout |
+| Security Feature            | Implementation          | Location                                   |
+| --------------------------- | ----------------------- | ------------------------------------------ |
+| **Password Hashing**        | Argon2id                | `apps/worker/src/auth/password.ts:21-35`   |
+| **Session Management**      | Token-based with expiry | `apps/worker/src/auth/session.ts`          |
+| **Input Validation**        | Zod schemas             | `packages/shared/src/schemas.ts`           |
+| **SQL Parameterization**    | Prepared statements     | `apps/worker/src/db/client.ts`             |
+| **CORS Protection**         | Origin validation       | `apps/worker/src/index.ts:263-280`         |
+| **Security Headers**        | CSP, HSTS, etc.         | `apps/worker/src/lib/security-headers.ts`  |
+| **Admin Authorization**     | Role-based              | `apps/worker/src/auth/admin-middleware.ts` |
+| **Capability-based Access** | Granular permissions    | `apps/worker/src/auth/middleware.ts:1-100` |
+| **Trace IDs**               | Request tracking        | Throughout                                 |
 
 ### 2.2 Issues Identified
 
@@ -190,6 +200,7 @@ const READER_USER = {
 ```
 
 **Recommendation:** Use environment variables or test secrets injection:
+
 ```typescript
 const READER_USER = {
   email: process.env.TEST_READER_EMAIL || 'reader@example.com',
@@ -205,6 +216,7 @@ const READER_USER = {
 **Problem:** No rate limiting observed on login or API endpoints.
 
 **Recommendation:** Implement rate limiting at the Cloudflare Worker level using:
+
 - `cf-namespace` for DDoS protection
 - Custom rate limiting middleware
 - API Gateway rate limiting if available
@@ -270,11 +282,11 @@ response.headers.set('Access-Control-Allow-Origin', allowedOrigin);
 
 ### 3.1 Current State
 
-| Pattern | Count | Location |
-|---------|-------|----------|
-| `Promise.all` | 1 | `apps/web/src/features/reader/ReaderPage.tsx:117` |
-| `Promise.allSettled` | 0 | N/A |
-| `Promise.race` | 0 | N/A |
+| Pattern              | Count | Location                                          |
+| -------------------- | ----- | ------------------------------------------------- |
+| `Promise.all`        | 1     | `apps/web/src/features/reader/ReaderPage.tsx:117` |
+| `Promise.allSettled` | 0     | N/A                                               |
+| `Promise.race`       | 0     | N/A                                               |
 
 ### 3.2 Issues
 
@@ -319,13 +331,13 @@ execute(
 
 ### 4.1 Findings
 
-| File | Line | Context | Severity |
-|------|------|---------|----------|
-| `apps/web/src/components/ui/index.tsx` | 222-226 | Input component props | Medium |
-| `apps/web/vite.config.ts` | 42-49 | Plugin config | Low |
-| `apps/worker/src/__tests__/cors.test.ts` | 6-13 | Test fixtures | Low |
-| `packages/reader-core/src/epub-loader.ts` | 212-216 | epubjs callbacks | Medium (justified) |
-| `packages/reader-core/src/epub-loader.ts` | 217-221 | epubjs callbacks | Medium (justified) |
+| File                                      | Line    | Context               | Severity           |
+| ----------------------------------------- | ------- | --------------------- | ------------------ |
+| `apps/web/src/components/ui/index.tsx`    | 222-226 | Input component props | Medium             |
+| `apps/web/vite.config.ts`                 | 42-49   | Plugin config         | Low                |
+| `apps/worker/src/__tests__/cors.test.ts`  | 6-13    | Test fixtures         | Low                |
+| `packages/reader-core/src/epub-loader.ts` | 212-216 | epubjs callbacks      | Medium (justified) |
+| `packages/reader-core/src/epub-loader.ts` | 217-221 | epubjs callbacks      | Medium (justified) |
 
 ### 4.2 Issue #13: Props Type Assertion in UI Component (Medium Priority)
 
@@ -356,17 +368,17 @@ rendition.on(event, callback as any);
 
 ### Priority Matrix
 
-| Priority | Issue | Action |
-|----------|-------|--------|
-| **High** | #5 | Move test credentials to environment variables |
-| **High** | #6 | Implement rate limiting — **RESOLVED** (Durable-Object `RateLimiterDO` + auth lockout 5/15min; see `apps/worker/src/lib/rate-limiter-do.ts` and ADR-200/232) |
-| **High** | #3 | Add database error context |
-| **Medium** | #1 | Create error message utility function |
-| **Medium** | #2 | Add user-facing error states |
-| **Medium** | #11 | Use Promise.allSettled for partial failures |
-| **Medium** | #13 | Define proper prop types for UI components |
-| **Low** | #4 | Create custom error classes |
-| **Low** | #12 | Add logging to fire-and-forget promises |
+| Priority   | Issue | Action                                                                                                                                                       |
+| ---------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **High**   | #5    | Move test credentials to environment variables                                                                                                               |
+| **High**   | #6    | Implement rate limiting — **RESOLVED** (Durable-Object `RateLimiterDO` + auth lockout 5/15min; see `apps/worker/src/lib/rate-limiter-do.ts` and ADR-200/232) |
+| **High**   | #3    | Add database error context                                                                                                                                   |
+| **Medium** | #1    | Create error message utility function                                                                                                                        |
+| **Medium** | #2    | Add user-facing error states                                                                                                                                 |
+| **Medium** | #11   | Use Promise.allSettled for partial failures                                                                                                                  |
+| **Medium** | #13   | Define proper prop types for UI components                                                                                                                   |
+| **Low**    | #4    | Create custom error classes                                                                                                                                  |
+| **Low**    | #12   | Add logging to fire-and-forget promises                                                                                                                      |
 
 ---
 
@@ -388,6 +400,7 @@ rendition.on(event, callback as any);
 ## 7. Appendix: File References
 
 ### Error Handling Files
+
 - `apps/web/src/components/ErrorBoundary.tsx` - React ErrorBoundary
 - `apps/web/src/main.tsx` - Global error handlers
 - `apps/web/src/lib/api.ts` - API error handling
@@ -396,6 +409,7 @@ rendition.on(event, callback as any);
 - `apps/worker/src/index.ts` - Worker error catching
 
 ### Security Files
+
 - `apps/worker/src/auth/middleware.ts` - Reader authentication
 - `apps/worker/src/auth/admin-middleware.ts` - Admin authentication
 - `apps/worker/src/auth/password.ts` - Password hashing
@@ -404,6 +418,7 @@ rendition.on(event, callback as any);
 - `apps/worker/src/db/client.ts` - Database client
 
 ### Validation Files
+
 - `packages/shared/src/schemas.ts` - Zod schemas
 - `apps/worker/src/routes/access.ts` - Input validation usage
 - `apps/worker/src/routes/admin.ts` - Input validation usage
@@ -411,4 +426,4 @@ rendition.on(event, callback as any);
 
 ---
 
-*Report generated from static code analysis*
+_Report generated from static code analysis_

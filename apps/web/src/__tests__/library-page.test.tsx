@@ -14,13 +14,17 @@ vi.mock('../hooks/useTranslation', () => ({
 vi.mock('../components/ui', () => ({
   AppLogo: () => <div data-testid="app-logo" />,
   ProgressBar: ({ value, label }: { value?: number; label?: string }) => (
-    <div data-testid="progress-bar" data-value={value}>{label}</div>
+    <div data-testid="progress-bar" data-value={value}>
+      {label}
+    </div>
   ),
 }));
 
 vi.mock('@do-epub-studio/ui', () => ({
   Spinner: () => <div data-testid="spinner" />,
-  Skeleton: ({ className }: { className?: string }) => <div data-testid="skeleton" className={className} />,
+  Skeleton: ({ className }: { className?: string }) => (
+    <div data-testid="skeleton" className={className} />
+  ),
 }));
 
 vi.mock('../config/app-identity', () => ({
@@ -33,9 +37,30 @@ const mockApiRequest = vi.mocked(apiRequest);
 
 const mockPaginatedResponse = {
   items: [
-    { id: '1', slug: 'book-1', title: 'In Progress Book', authorName: 'Author A', progressPercent: 45, progressUpdatedAt: '2026-07-20T00:00:00Z' },
-    { id: '2', slug: 'book-2', title: 'Not Started Book', authorName: 'Author B', progressPercent: 0, progressUpdatedAt: null },
-    { id: '3', slug: 'book-3', title: 'Completed Book', authorName: 'Author C', progressPercent: 100, progressUpdatedAt: '2026-07-15T00:00:00Z' },
+    {
+      id: '1',
+      slug: 'book-1',
+      title: 'In Progress Book',
+      authorName: 'Author A',
+      progressPercent: 45,
+      progressUpdatedAt: '2026-07-20T00:00:00Z',
+    },
+    {
+      id: '2',
+      slug: 'book-2',
+      title: 'Not Started Book',
+      authorName: 'Author B',
+      progressPercent: 0,
+      progressUpdatedAt: null,
+    },
+    {
+      id: '3',
+      slug: 'book-3',
+      title: 'Completed Book',
+      authorName: 'Author C',
+      progressPercent: 100,
+      progressUpdatedAt: '2026-07-15T00:00:00Z',
+    },
   ],
   total: 3,
   page: 1,
@@ -71,7 +96,13 @@ describe('MyLibraryPage', () => {
   });
 
   it('shows empty state when no books', async () => {
-    mockApiRequest.mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 50, hasMore: false });
+    mockApiRequest.mockResolvedValue({
+      items: [],
+      total: 0,
+      page: 1,
+      pageSize: 50,
+      hasMore: false,
+    });
     renderLibrary();
     await waitFor(() => {
       expect(screen.getByText('library.empty')).toBeInTheDocument();
@@ -102,7 +133,13 @@ describe('MyLibraryPage', () => {
   });
 
   it('renders page title', async () => {
-    mockApiRequest.mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 50, hasMore: false });
+    mockApiRequest.mockResolvedValue({
+      items: [],
+      total: 0,
+      page: 1,
+      pageSize: 50,
+      hasMore: false,
+    });
     renderLibrary();
     await waitFor(() => {
       expect(screen.getByText('library.title')).toBeInTheDocument();
@@ -123,20 +160,37 @@ describe('MyLibraryPage', () => {
     mockApiRequest.mockResolvedValue(mockPaginatedResponse);
     renderLibrary();
     await waitFor(() => {
-      const inProgressBars = screen.getByText('library.inProgress').closest('section')?.querySelectorAll('[data-testid="progress-bar"]');
+      const inProgressBars = screen
+        .getByText('library.inProgress')
+        .closest('section')
+        ?.querySelectorAll('[data-testid="progress-bar"]');
       expect(inProgressBars).toHaveLength(1);
-      const notStartedBars = screen.getByText('library.notStarted').closest('section')?.querySelectorAll('[data-testid="progress-bar"]');
+      const notStartedBars = screen
+        .getByText('library.notStarted')
+        .closest('section')
+        ?.querySelectorAll('[data-testid="progress-bar"]');
       expect(notStartedBars).toHaveLength(0);
-      const completedBars = screen.getByText('library.completed').closest('section')?.querySelectorAll('[data-testid="progress-bar"]');
+      const completedBars = screen
+        .getByText('library.completed')
+        .closest('section')
+        ?.querySelectorAll('[data-testid="progress-bar"]');
       expect(completedBars).toHaveLength(0);
     });
   });
 
   it('calls apiRequest with pagination params', async () => {
-    mockApiRequest.mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 50, hasMore: false });
+    mockApiRequest.mockResolvedValue({
+      items: [],
+      total: 0,
+      page: 1,
+      pageSize: 50,
+      hasMore: false,
+    });
     renderLibrary();
     await waitFor(() => {
-      expect(mockApiRequest).toHaveBeenCalledWith('/api/books?limit=50&offset=0', { token: undefined });
+      expect(mockApiRequest).toHaveBeenCalledWith('/api/books?limit=50&offset=0', {
+        token: undefined,
+      });
     });
   });
 

@@ -23,15 +23,15 @@ Phase 7 (Workflow) ─────┘    Quality Gate → PR
 
 ## Phase 1: CI/CD Bug Fixes (P0-P1)
 
-| ID  | Task                                                                                                                         | Priority | Status | Skills Used            |
-| --- | ---------------------------------------------------------------------------------------------------------------------------- | -------- | ------ | ---------------------- |
-| 1.1 | Fix `test:e2e:prod` — add missing script to root `package.json`                                                              | P0       | ✅     | `cicd-pipeline`        |
-| 1.2 | Standardize `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24` env var across all workflows (was inconsistent: ci.yml used `FORCE_JAVASCRIPT_ACTIONS_TO_NODE20` implied default, others used `NODE24`) | P0 | ✅ | `cicd-pipeline` |
-| 1.3 | Fix `quality_gate.sh` — add `-e` to `set -uo pipefail` → `set -euo pipefail`                                                 | P0       | ✅     | `shell-script-quality` |
-| 1.4 | Fix `dependabot-auto-merge.yml` — replace `uniq` with `unique` (jq function)                                                 | P0       | ✅     | `cicd-pipeline`        |
-| 1.5 | Fix `eslint.config.js` — remove non-existent rules (`no-unassigned-vars`, `preserve-caught-error`)                            | P1       | ✅     | `code-quality`         |
-| 1.6 | Add inline comments to all 5 disabled ESLint rules (AGENTS.md Tier 2 rule 5)                                                 | P1       | ✅     | `code-quality`         |
-| 1.7 | Add ESLint stricter rules: `no-non-null-assertion`, `require-await`, `consistent-type-imports`, `strict-boolean-expressions` | P2       | ⏳     | `code-quality`         |
+| ID  | Task                                                                                                                                                                                     | Priority | Status | Skills Used            |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------ | ---------------------- |
+| 1.1 | Fix `test:e2e:prod` — add missing script to root `package.json`                                                                                                                          | P0       | ✅     | `cicd-pipeline`        |
+| 1.2 | Standardize `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24` env var across all workflows (was inconsistent: ci.yml used `FORCE_JAVASCRIPT_ACTIONS_TO_NODE20` implied default, others used `NODE24`) | P0       | ✅     | `cicd-pipeline`        |
+| 1.3 | Fix `quality_gate.sh` — add `-e` to `set -uo pipefail` → `set -euo pipefail`                                                                                                             | P0       | ✅     | `shell-script-quality` |
+| 1.4 | Fix `dependabot-auto-merge.yml` — replace `uniq` with `unique` (jq function)                                                                                                             | P0       | ✅     | `cicd-pipeline`        |
+| 1.5 | Fix `eslint.config.js` — remove non-existent rules (`no-unassigned-vars`, `preserve-caught-error`)                                                                                       | P1       | ✅     | `code-quality`         |
+| 1.6 | Add inline comments to all 5 disabled ESLint rules (AGENTS.md Tier 2 rule 5)                                                                                                             | P1       | ✅     | `code-quality`         |
+| 1.7 | Add ESLint stricter rules: `no-non-null-assertion`, `require-await`, `consistent-type-imports`, `strict-boolean-expressions`                                                             | P2       | ⏳     | `code-quality`         |
 
 ## Phase 2: Test Infrastructure Standardization (P0-P2)
 

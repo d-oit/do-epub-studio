@@ -81,16 +81,17 @@ export function mapProgressEvent(event: unknown): ModelLoadProgress | null {
       file: asStringOrNull(raw.file),
       loadedBytes: loaded,
       totalBytes: total,
-      percent: total !== null && total > 0 && loaded !== null
-        ? Math.round((loaded / total) * 100)
-        : asNumberOrNull(raw.progress),
+      percent:
+        total !== null && total > 0 && loaded !== null
+          ? Math.round((loaded / total) * 100)
+          : asNumberOrNull(raw.progress),
     };
   }
   if (
-    status === 'initiate'
-    || status === 'download'
-    || status === 'progress_total'
-    || status === 'done'
+    status === 'initiate' ||
+    status === 'download' ||
+    status === 'progress_total' ||
+    status === 'done'
   ) {
     return {
       phase: 'download',
@@ -135,9 +136,10 @@ export function splitSentences(text: string): string[] {
     // A segment fully wrapped in quotes is embedded speech, not a boundary
     // ("Done?" she asked) — defer so closing-quote sentences still terminate
     // at their own terminator while quoted exclamations stay attached.
-    const wrapped = sentence.length >= 2
-      && (sentence.startsWith('"') || sentence.startsWith('“') || sentence.startsWith('‘'))
-      && closers.includes(sentence[sentence.length - 1] ?? '');
+    const wrapped =
+      sentence.length >= 2 &&
+      (sentence.startsWith('"') || sentence.startsWith('“') || sentence.startsWith('‘')) &&
+      closers.includes(sentence[sentence.length - 1] ?? '');
     if (wrapped) continue;
     if (sentence.trim().length > 0) sentences.push(sentence);
     start = end + 1;
@@ -267,9 +269,10 @@ export function parseCandidates(
       spans.push({ chapterRef, sentenceIndex: null, quote: copied });
     }
     const question = asStringOrNull(entry.question) ?? '';
-    const uncertainty = asStringOrNull(entry.uncertainty) === 'insufficient_context'
-      ? 'insufficient_context'
-      : 'review_needed';
+    const uncertainty =
+      asStringOrNull(entry.uncertainty) === 'insufficient_context'
+        ? 'insufficient_context'
+        : 'review_needed';
     candidates.push({ category, spans, question, uncertainty });
   }
   return { candidates, parseable: true };
@@ -305,10 +308,7 @@ function normalizeEchoText(value: string): string {
   return out;
 }
 
-export function isPromptEcho(
-  question: string,
-  messages: readonly PromptMessage[],
-): boolean {
+export function isPromptEcho(question: string, messages: readonly PromptMessage[]): boolean {
   const q = question.trim();
   if (q.includes('<question') || q.includes('<chapter id') || q.includes('<copied sentence>')) {
     // Unfilled schema slot copied as the question (observed probes #2/#4).

@@ -48,7 +48,11 @@ function commentToExported(c: Comment): ExportedComment {
     createdAt: c.createdAt,
     updatedAt: c.updatedAt,
     locator: c.cfiRange
-      ? { cfi: c.cfiRange, selectedText: c.selectedText ?? undefined, chapterRef: c.chapterRef ?? undefined }
+      ? {
+          cfi: c.cfiRange,
+          selectedText: c.selectedText ?? undefined,
+          chapterRef: c.chapterRef ?? undefined,
+        }
       : null,
   };
 }
@@ -97,7 +101,9 @@ export function notesExportToMarkdown(payload: NotesExport): string {
   ].filter(Boolean);
 
   const sections: string[] = [];
-  const highlights = payload.annotations.filter((a): a is ExportedHighlight => a.type === 'highlight');
+  const highlights = payload.annotations.filter(
+    (a): a is ExportedHighlight => a.type === 'highlight',
+  );
   const comments = payload.annotations.filter((a): a is ExportedComment => a.type === 'comment');
   const bookmarks = payload.annotations.filter((a): a is ExportedBookmark => a.type === 'bookmark');
 
@@ -132,7 +138,9 @@ export function notesExportToMarkdown(payload: NotesExport): string {
     sections.push(
       ...comments.map((c) => {
         const cfi = c.locator?.cfi ? ` [${c.locator.cfi}]` : '';
-        const quote = c.selectedText ? ` — "${c.selectedText.slice(0, 80)}${c.selectedText.length > 80 ? '...' : ''}"` : '';
+        const quote = c.selectedText
+          ? ` — "${c.selectedText.slice(0, 80)}${c.selectedText.length > 80 ? '...' : ''}"`
+          : '';
         return `- ${c.body}${cfi}${quote}`;
       }),
       '',
@@ -233,7 +241,9 @@ export function importNotesFromMarkdown(markdown: string): NotesImportResult {
       comments: [],
       bookmarks: [],
       skipped: 0,
-      errors: ['Unrecognized notes format — expected `<!-- format: do-epub-studio-notes v1 -->` header.'],
+      errors: [
+        'Unrecognized notes format — expected `<!-- format: do-epub-studio-notes v1 -->` header.',
+      ],
     };
   }
   const entities = exportedToEntities(payload);

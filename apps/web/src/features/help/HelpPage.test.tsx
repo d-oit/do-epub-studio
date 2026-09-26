@@ -14,8 +14,17 @@ vi.mock('../../components/ThemeToggle', () => ({
 }));
 vi.mock('../../components/ui', () => ({
   AppLogo: () => <div data-testid="app-logo" />,
-  Button: ({ children, className }: { children?: React.ReactNode; variant?: string; className?: string }) => (
-    <button type="button" className={className}>{children}</button>
+  Button: ({
+    children,
+    className,
+  }: {
+    children?: React.ReactNode;
+    variant?: string;
+    className?: string;
+  }) => (
+    <button type="button" className={className}>
+      {children}
+    </button>
   ),
 }));
 
@@ -25,35 +34,49 @@ describe('HelpPage', () => {
   });
 
   it('renders app intro', () => {
-    render(<MemoryRouter><HelpPage /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <HelpPage />
+      </MemoryRouter>,
+    );
     expect(screen.getByRole('heading', { name: /help.title/ })).toBeInTheDocument();
     expect(screen.getByText(/help.intro/)).toBeInTheDocument();
   });
 
   it('shows demo accounts on the info page regardless of demo flag', () => {
-    render(<MemoryRouter><HelpPage /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <HelpPage />
+      </MemoryRouter>,
+    );
     expect(screen.getByText(/help.demoTitle/)).toBeInTheDocument();
     expect(screen.getByText(/help.demoReader/)).toBeInTheDocument();
     expect(screen.getByText(/help.demoAdmin/)).toBeInTheDocument();
   });
 
   it('links back to login', () => {
-    render(<MemoryRouter><HelpPage /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <HelpPage />
+      </MemoryRouter>,
+    );
     const link = screen.getByText('help.backToLogin').closest('a');
     expect(link).toHaveAttribute('href', '/login');
   });
 
   it('renders theme toggle and locale switcher in the shared header flow', () => {
-    render(<MemoryRouter><HelpPage /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <HelpPage />
+      </MemoryRouter>,
+    );
     const header = screen.getByTestId('login-header-controls');
     expect(header).toBeInTheDocument();
     // Controls live in the normal-flow header, not a fixed overlay: the
     // header must not be position-fixed and must precede the main content.
     expect(header).not.toHaveClass('fixed');
     const main = screen.getByRole('main');
-    expect(
-      header.compareDocumentPosition(main) & Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
+    expect(header.compareDocumentPosition(main) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(screen.getByTestId('theme-toggle')).toBeInTheDocument();
     expect(screen.getByTestId('locale-switcher')).toBeInTheDocument();
   });

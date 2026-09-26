@@ -16,7 +16,11 @@ async function mockReaderApiWithInsights(page: Page, opts: { empty?: boolean } =
   await page.route('**/api/books/*/insights', async (route: Route) => {
     if (route.request().method() === 'GET') {
       const resp = opts.empty ? { ok: true, data: null } : INSIGHTS_RESPONSE;
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(resp) });
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(resp),
+      });
     } else {
       await route.continue();
     }
@@ -24,7 +28,9 @@ async function mockReaderApiWithInsights(page: Page, opts: { empty?: boolean } =
 }
 
 test.describe('Reading insights', () => {
-  test.beforeEach(async ({ page }) => { await mockReaderApiWithInsights(page); });
+  test.beforeEach(async ({ page }) => {
+    await mockReaderApiWithInsights(page);
+  });
 
   test('@smoke @mobile reader page loads successfully', async ({ page }) => {
     suppressWorkboxErrors(page);

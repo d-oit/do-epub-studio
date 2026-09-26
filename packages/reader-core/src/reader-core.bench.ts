@@ -73,12 +73,18 @@ describe('reader-core performance', () => {
     const targetText = 'The quick brown fox jumps over the lazy dog.';
     const toc = [
       { id: '1', label: 'Chapter 1', href: 'ch1.xhtml' },
-      { id: '2', label: 'Chapter 2', href: 'ch2.xhtml', subitems: [{ id: '2.1', label: 'Section 2.1', href: 'ch2-1.xhtml' }] },
+      {
+        id: '2',
+        label: 'Chapter 2',
+        href: 'ch2.xhtml',
+        subitems: [{ id: '2.1', label: 'Section 2.1', href: 'ch2-1.xhtml' }],
+      },
       { id: '3', label: 'Chapter 3', href: 'ch3.xhtml' },
     ];
     function mockLoadContent(href: string): Promise<string> {
       if (href === 'ch3.xhtml') return Promise.resolve('Some other content here.');
-      if (href === 'ch2-1.xhtml') return Promise.resolve('The quick brown fox jumps over the lazy dog.');
+      if (href === 'ch2-1.xhtml')
+        return Promise.resolve('The quick brown fox jumps over the lazy dog.');
       return Promise.resolve('Nothing interesting here.');
     }
 
@@ -94,8 +100,11 @@ describe('reader-core performance', () => {
     describe('stress tests', () => {
       const LARGE_TEXT = 'The quick brown fox jumps over the lazy dog. '.repeat(4000);
       const stressToc = [{ id: '1', label: 'Large Chapter', href: 'large.xhtml' }];
-      function stressLoadContent(): Promise<string> { return Promise.resolve(LARGE_TEXT); }
-      const stressTarget = 'The fast brown fox leaps over a sleepy dog but it is quite long and has many words to check overlap with.';
+      function stressLoadContent(): Promise<string> {
+        return Promise.resolve(LARGE_TEXT);
+      }
+      const stressTarget =
+        'The fast brown fox leaps over a sleepy dog but it is quite long and has many words to check overlap with.';
 
       bench('reanchor: Pass 2 Stress (200KB, many words)', async () => {
         await reanchorByText(stressTarget, stressToc, stressLoadContent);
@@ -104,7 +113,7 @@ describe('reader-core performance', () => {
       const TOC_WITH_ANCHORS = Array.from({ length: 50 }, (_, i) => ({
         id: i.toString(),
         label: `Section ${i}`,
-        href: `large.xhtml#sec${i}`
+        href: `large.xhtml#sec${i}`,
       }));
 
       bench('reanchor: 50 anchors in 1 chapter (caching test)', async () => {
@@ -173,7 +182,7 @@ describe('reader-core performance', () => {
       const navXhtml = `<!DOCTYPE html><html><head><title>Nav</title></head><body><nav epub:type="toc"><ol><li><a href="ch1.xhtml">Chapter 1</a></li><li><a href="ch2.xhtml">Chapter 2</a></li></ol></nav></body></html>`;
 
       const epubZip = zipSync({
-        'mimetype': new Uint8Array([]),
+        mimetype: new Uint8Array([]),
         'META-INF/container.xml': new TextEncoder().encode(containerXml),
         'OEBPS/content.opf': new TextEncoder().encode(contentOpf),
         'OEBPS/ch1.xhtml': new TextEncoder().encode(chapter1),

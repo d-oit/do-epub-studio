@@ -1,11 +1,16 @@
 import { create } from 'zustand';
-import type { ConflictRecord, ConflictResolutionResult, ConflictResolutionStrategy } from '../lib/offline/conflict-resolution';
+import type {
+  ConflictRecord,
+  ConflictResolutionResult,
+  ConflictResolutionStrategy,
+} from '../lib/offline/conflict-resolution';
 import type { AnnotationLocator } from '@do-epub-studio/shared';
 import type { FeedbackItem } from '../lib/api/feedback';
 
 export type PageDirection = 'ltr' | 'rtl' | 'default';
 export type WritingMode = 'horizontal-tb' | 'vertical-rl' | 'vertical-lr';
-export type ReaderPanel = 'toc' | 'settings' | 'comments' | 'bookmarks' | 'info' | 'search' | 'fl-controls' | null;
+export type ReaderPanel =
+  'toc' | 'settings' | 'comments' | 'bookmarks' | 'info' | 'search' | 'fl-controls' | null;
 export type ReaderSpread = 'auto' | 'none' | 'both';
 /** Discrete zoom steps for fixed-layout EPUBs. 1.0 = 100%. */
 export type ReaderZoom = 0.5 | 0.75 | 1.0 | 1.25 | 1.5 | 2.0;
@@ -92,7 +97,10 @@ interface ReaderState {
   conflicts: ConflictRecord[];
   setConflicts: (conflicts: ConflictRecord[]) => void;
   addConflict: (conflict: ConflictRecord) => void;
-  resolveConflict: (conflictId: string, resolution: 'local' | 'remote') => ConflictResolutionResult | null;
+  resolveConflict: (
+    conflictId: string,
+    resolution: 'local' | 'remote',
+  ) => ConflictResolutionResult | null;
   clearConflicts: () => void;
   setBookDirection: (direction: PageDirection) => void;
   setBookWritingMode: (writingMode: WritingMode) => void;
@@ -134,7 +142,8 @@ function rebuildTree(
   const roots: Comment[] = [];
 
   for (const c of flat) {
-    const copy: Comment = c.id === updateId ? { ...c, ...updates, replies: [] } : { ...c, replies: [] };
+    const copy: Comment =
+      c.id === updateId ? { ...c, ...updates, replies: [] } : { ...c, replies: [] };
     map.set(copy.id, copy);
   }
 
@@ -200,9 +209,7 @@ export const useReaderStore = create<ReaderState>((set) => ({
 
     set((s) => ({
       conflicts: s.conflicts.map((c) =>
-        c.id === conflictId
-          ? { ...c, resolved: true, resolution, resolvedAt: Date.now() }
-          : c,
+        c.id === conflictId ? { ...c, resolved: true, resolution, resolvedAt: Date.now() } : c,
       ),
     }));
 
@@ -257,5 +264,6 @@ export const useReaderStore = create<ReaderState>((set) => ({
   setReaderSpread: (readerSpread) => set({ readerSpread }),
   setReaderZoom: (readerZoom) => set({ readerZoom }),
   setActivePanel: (panel) => set({ activePanel: panel }),
-  togglePanel: (panel) => set((state) => ({ activePanel: state.activePanel === panel ? null : panel })),
+  togglePanel: (panel) =>
+    set((state) => ({ activePanel: state.activePanel === panel ? null : panel })),
 }));

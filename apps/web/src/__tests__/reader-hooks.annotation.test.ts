@@ -20,7 +20,13 @@ vi.mock('../lib/client-logger', () => ({
   measurePerformance: vi.fn(() => undefined),
 }));
 
-import { createHighlight, createComment, updateComment, deleteHighlight, updateHighlight } from '../lib/api/annotations';
+import {
+  createHighlight,
+  createComment,
+  updateComment,
+  deleteHighlight,
+  updateHighlight,
+} from '../lib/api/annotations';
 
 describe('useBookmarkHandlers', () => {
   beforeEach(() => {
@@ -143,7 +149,11 @@ describe('useAnnotationHandlers', () => {
       await result.current.handleReplyToComment('parent-1', 'Reply text');
     });
 
-    expect(createComment).toHaveBeenCalledWith('book-1', { body: 'Reply text', parentCommentId: 'parent-1' }, 'token-123');
+    expect(createComment).toHaveBeenCalledWith(
+      'book-1',
+      { body: 'Reply text', parentCommentId: 'parent-1' },
+      'token-123',
+    );
   });
 
   it('edits comment', async () => {
@@ -173,7 +183,12 @@ describe('useAnnotationHandlers', () => {
       await result.current.handleEditHighlight('h1', 'Updated note');
     });
 
-    expect(updateHighlight).toHaveBeenCalledWith('book-1', 'h1', { note: 'Updated note' }, 'token-123');
+    expect(updateHighlight).toHaveBeenCalledWith(
+      'book-1',
+      'h1',
+      { note: 'Updated note' },
+      'token-123',
+    );
   });
 
   it('deletes highlight', async () => {

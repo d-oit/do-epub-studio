@@ -21,13 +21,13 @@ original EPUB) and improves the export format with chapter navigation.
 
 ## Decompose
 
-| ID | Task | Effort | Deps |
-|----|------|--------|------|
-| T1 | Design EPUB annotation injection format (CFI-based insertion points) | M | — |
-| T2 | Implement EPUB copy + annotation injection pipeline | L | T1 |
-| T3 | Add `POST /api/books/:id/export` endpoint | M | T2 |
-| T4 | Create client-side export dialog (format selection: EPUB, Markdown, HTML) | M | T3 |
-| T5 | Add tests for export round-trip | M | T4 |
+| ID  | Task                                                                      | Effort | Deps |
+| --- | ------------------------------------------------------------------------- | ------ | ---- |
+| T1  | Design EPUB annotation injection format (CFI-based insertion points)      | M      | —    |
+| T2  | Implement EPUB copy + annotation injection pipeline                       | L      | T1   |
+| T3  | Add `POST /api/books/:id/export` endpoint                                 | M      | T2   |
+| T4  | Create client-side export dialog (format selection: EPUB, Markdown, HTML) | M      | T3   |
+| T5  | Add tests for export round-trip                                           | M      | T4   |
 
 ## Risks
 

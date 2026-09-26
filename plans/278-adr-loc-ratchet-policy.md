@@ -38,7 +38,7 @@ mode this ADR closes.
      the ratchet, or a stale entry that must be tightened (and deleted if
      the file dropped to ≤500),
    - a baseline entry whose file is gone or out of scope.
-   Baselines only ever shrink; there is no "raise the baseline" path.
+     Baselines only ever shrink; there is no "raise the baseline" path.
 4. **450–500 warns** without failing — the extract-now zone, matching
    GOAP-276's 450 warn threshold.
 

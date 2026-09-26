@@ -31,7 +31,11 @@ describe('Comments Routes', () => {
   describe('GET /api/books/:bookId/comments', () => {
     it('returns 401 when unauthenticated', async () => {
       mockRequireAuth.mockResolvedValue(null);
-      const res = await app.fetch(new Request('http://localhost/api/books/book-1/comments'), env, makePassThroughContext());
+      const res = await app.fetch(
+        new Request('http://localhost/api/books/book-1/comments'),
+        env,
+        makePassThroughContext(),
+      );
       expect(res.status).toBe(401);
     });
 
@@ -40,12 +44,24 @@ describe('Comments Routes', () => {
       mockGetGrantByBookAndSession.mockResolvedValue({ id: 'grant-1' });
 
       mockQueryAll.mockResolvedValue([
-        { id: '1', body: 'cool', user_email: 'other@ex.com', status: 'open', visibility: 'shared', created_at: 'now', updated_at: 'now' }
+        {
+          id: '1',
+          body: 'cool',
+          user_email: 'other@ex.com',
+          status: 'open',
+          visibility: 'shared',
+          created_at: 'now',
+          updated_at: 'now',
+        },
       ]);
 
-      const res = await app.fetch(new Request('http://localhost/api/books/book-1/comments', {
-        headers: { 'Authorization': 'Bearer valid' }
-      }), env, makePassThroughContext());
+      const res = await app.fetch(
+        new Request('http://localhost/api/books/book-1/comments', {
+          headers: { Authorization: 'Bearer valid' },
+        }),
+        env,
+        makePassThroughContext(),
+      );
       expect(res.status).toBe(200);
       const body: Record<string, unknown> = await res.json();
       expect(body.data).toHaveLength(1);
@@ -67,15 +83,28 @@ describe('Comments Routes', () => {
       mockGetGrantByBookAndSession.mockResolvedValue({ id: 'grant-1' });
       mockQueryAll.mockResolvedValue([
         {
-          id: 'c1', body: 'quoted', user_email: 'user@example.com', status: 'open', visibility: 'shared',
-          chapter_ref: 'ch1.xhtml', cfi_range: 'epubcfi(/6/2!/4/4[p1])', selected_text: 'A passage',
-          parent_comment_id: null, resolved_at: '2026-01-01T00:00:00Z', created_at: 'now', updated_at: 'now',
+          id: 'c1',
+          body: 'quoted',
+          user_email: 'user@example.com',
+          status: 'open',
+          visibility: 'shared',
+          chapter_ref: 'ch1.xhtml',
+          cfi_range: 'epubcfi(/6/2!/4/4[p1])',
+          selected_text: 'A passage',
+          parent_comment_id: null,
+          resolved_at: '2026-01-01T00:00:00Z',
+          created_at: 'now',
+          updated_at: 'now',
         },
       ]);
 
-      const res = await app.fetch(new Request('http://localhost/api/books/book-1/comments', {
-        headers: { Authorization: 'Bearer valid' },
-      }), env, makePassThroughContext());
+      const res = await app.fetch(
+        new Request('http://localhost/api/books/book-1/comments', {
+          headers: { Authorization: 'Bearer valid' },
+        }),
+        env,
+        makePassThroughContext(),
+      );
 
       const body: { data: Array<Record<string, unknown>> } = await res.json();
       expect(body.data[0]).toMatchObject({
@@ -99,25 +128,39 @@ describe('Comments Routes', () => {
       mockComputeCapabilities.mockReturnValue({ canComment: true });
       mockExecute.mockResolvedValue({ rows: [] });
 
-      const res = await app.fetch(new Request('http://localhost/api/books/book-1/comments', {
-        method: 'POST',
-        body: JSON.stringify({
-          body: 'new comment',
-          visibility: 'shared',
-          locator: { cfi: 'epubcfi(/6/2!/4/4[p1])', chapterRef: 'ch1.xhtml', selectedText: 'A passage' },
+      const res = await app.fetch(
+        new Request('http://localhost/api/books/book-1/comments', {
+          method: 'POST',
+          body: JSON.stringify({
+            body: 'new comment',
+            visibility: 'shared',
+            locator: {
+              cfi: 'epubcfi(/6/2!/4/4[p1])',
+              chapterRef: 'ch1.xhtml',
+              selectedText: 'A passage',
+            },
+          }),
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer valid',
+          },
         }),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer valid'
-        },
-      }), env, makePassThroughContext());
+        env,
+        makePassThroughContext(),
+      );
 
       expect(res.status).toBe(201);
       const payload: { data: Record<string, unknown> } = await res.json();
       // The response speaks the same flat shape as the list.
-      expect(payload.data).toMatchObject({ cfiRange: 'epubcfi(/6/2!/4/4[p1])', chapterRef: 'ch1.xhtml', selectedText: 'A passage' });
+      expect(payload.data).toMatchObject({
+        cfiRange: 'epubcfi(/6/2!/4/4[p1])',
+        chapterRef: 'ch1.xhtml',
+        selectedText: 'A passage',
+      });
 
-      const insert = mockExecute.mock.calls.find((args) => String(args[1]).includes('INSERT INTO comments'));
+      const insert = mockExecute.mock.calls.find((args) =>
+        String(args[1]).includes('INSERT INTO comments'),
+      );
       const sql = String(insert?.[1]);
       // Only columns the comments table actually has: the previous INSERT named
       // `locator_json`, which no migration defines, so every create 500ed.
@@ -141,14 +184,18 @@ describe('Comments Routes', () => {
 
       mockQueryFirst.mockResolvedValue({ user_email: 'user@example.com', book_id: 'book-1' });
 
-      const res = await app.fetch(new Request('http://localhost/api/comments/1', {
-        method: 'PATCH',
-        body: JSON.stringify({ body: 'updated body' }),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer valid'
-        },
-      }), env, makePassThroughContext());
+      const res = await app.fetch(
+        new Request('http://localhost/api/comments/1', {
+          method: 'PATCH',
+          body: JSON.stringify({ body: 'updated body' }),
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer valid',
+          },
+        }),
+        env,
+        makePassThroughContext(),
+      );
 
       expect(res.status).toBe(200);
     });
@@ -162,14 +209,18 @@ describe('Comments Routes', () => {
 
       mockQueryFirst.mockResolvedValue({ user_email: 'user@example.com', book_id: 'book-1' });
 
-      const res = await app.fetch(new Request('http://localhost/api/comments/1', {
-        method: 'PATCH',
-        body: JSON.stringify({ body: 'updated body' }),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer valid'
-        },
-      }), env, makePassThroughContext());
+      const res = await app.fetch(
+        new Request('http://localhost/api/comments/1', {
+          method: 'PATCH',
+          body: JSON.stringify({ body: 'updated body' }),
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer valid',
+          },
+        }),
+        env,
+        makePassThroughContext(),
+      );
 
       expect(res.status).toBe(403);
     });
@@ -186,10 +237,14 @@ describe('Comments Routes', () => {
       mockQueryFirst.mockResolvedValue({ user_email: 'user@example.com', book_id: 'book-1' });
       mockExecute.mockResolvedValue({ rows: [] });
 
-      const res = await app.fetch(new Request('http://localhost/api/comments/1', {
-        method: 'DELETE',
-        headers: { 'Authorization': 'Bearer valid' },
-      }), env, makePassThroughContext());
+      const res = await app.fetch(
+        new Request('http://localhost/api/comments/1', {
+          method: 'DELETE',
+          headers: { Authorization: 'Bearer valid' },
+        }),
+        env,
+        makePassThroughContext(),
+      );
 
       expect(res.status).toBe(200);
     });
@@ -203,10 +258,14 @@ describe('Comments Routes', () => {
 
       mockQueryFirst.mockResolvedValue({ user_email: 'user@example.com', book_id: 'book-1' });
 
-      const res = await app.fetch(new Request('http://localhost/api/comments/1', {
-        method: 'DELETE',
-        headers: { 'Authorization': 'Bearer valid' },
-      }), env, makePassThroughContext());
+      const res = await app.fetch(
+        new Request('http://localhost/api/comments/1', {
+          method: 'DELETE',
+          headers: { Authorization: 'Bearer valid' },
+        }),
+        env,
+        makePassThroughContext(),
+      );
 
       expect(res.status).toBe(403);
     });

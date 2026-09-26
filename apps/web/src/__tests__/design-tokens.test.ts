@@ -69,6 +69,10 @@ describe('Design Tokens', () => {
   it('keeps the sepia theme block intact', () => {
     const cssContent = fs.readFileSync(CSS_PATH, 'utf-8');
 
-    expect(cssContent).toContain('[data-theme="sepia"]');
+    // Quote-agnostic on purpose: `prettier --write` normalises CSS attribute
+    // selectors from [data-theme="sepia"] to [data-theme='sepia'], so pinning
+    // the exact quoting made this assertion a formatting canary rather than a
+    // test of the theme block. What matters is that a sepia block exists.
+    expect(cssContent).toMatch(/\[data-theme=["']?sepia["']?\]/);
   });
 });

@@ -18,7 +18,7 @@ but under-serve three user needs:
 2. **Demo access is one-dimensional.** ADR-244 Amendment C added a one-click
    demo button plus a plaintext `email · password · slug` line under it. The
    line is dense, untranslated-looking, and does not help a reviewer who
-   wants to *see* the credentials flow through the real form.
+   wants to _see_ the credentials flow through the real form.
 3. **The screens explain nothing.** The desktop hero shows the app name and
    one description line; below `lg` there is no app context at all. New
    visitors cannot tell what the app does, how access is granted, or where
@@ -116,7 +116,7 @@ pattern; refs are simpler and the credentials are public anyway.
 
 - Password entry meets WCAG 3.3.8 on all auth forms (login, recovery, admin
   credentials, admin MFA recovery).
-- Reviewers can experience the demo one-click *or* watch credentials flow
+- Reviewers can experience the demo one-click _or_ watch credentials flow
   through the real form.
 - Both screens explain the product and access model on every viewport.
 - Pre-existing 500-line violation fixed; duplicate login test suite

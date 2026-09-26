@@ -26,8 +26,19 @@ export function BookCard({ book }: { book: LibraryBookResponse }) {
             className="size-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
           />
         ) : (
-          <span className="flex size-full items-center justify-center text-muted-foreground" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-6">
+          <span
+            className="flex size-full items-center justify-center text-muted-foreground"
+            aria-hidden="true"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="size-6"
+            >
               <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
               <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
             </svg>
@@ -42,10 +53,14 @@ export function BookCard({ book }: { book: LibraryBookResponse }) {
 
       <div className="flex min-w-0 flex-1 flex-col">
         <h3 className="min-w-0 text-pretty break-words font-display text-base font-semibold leading-snug tracking-tight">
-          <Link to={`/read/${slug}`} className="hover:text-accent">{title}</Link>
+          <Link to={`/read/${slug}`} className="hover:text-accent">
+            {title}
+          </Link>
         </h3>
         {authorName && (
-          <p className="mt-0.5 text-pretty break-words text-sm text-foreground-muted">{authorName}</p>
+          <p className="mt-0.5 text-pretty break-words text-sm text-foreground-muted">
+            {authorName}
+          </p>
         )}
 
         {reading && (
@@ -59,7 +74,9 @@ export function BookCard({ book }: { book: LibraryBookResponse }) {
         <div className="eyebrow mt-3 flex flex-wrap items-center gap-x-3 gap-y-1">
           {finished && <span>{t('library.finished')}</span>}
           {progressUpdatedAt && (
-            <span>{t('library.lastRead')} {formatDate(new Date(progressUpdatedAt))}</span>
+            <span>
+              {t('library.lastRead')} {formatDate(new Date(progressUpdatedAt))}
+            </span>
           )}
         </div>
       </div>

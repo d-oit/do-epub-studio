@@ -63,7 +63,9 @@ test.describe('Login and book load (desktop)', () => {
     const toggleBox = await toggle.boundingBox();
     expect(passwordBox).not.toBeNull();
     expect(toggleBox).not.toBeNull();
-    expect(toggleBox!.x + toggleBox!.width / 2).toBeGreaterThan(passwordBox!.x + passwordBox!.width / 2);
+    expect(toggleBox!.x + toggleBox!.width / 2).toBeGreaterThan(
+      passwordBox!.x + passwordBox!.width / 2,
+    );
 
     await toggle.click();
     await expect(passwordInput).toHaveAttribute('type', 'text');
@@ -93,7 +95,9 @@ test.describe('Login and book load (desktop)', () => {
     await expect(page).toHaveURL(/\/read\/my-test-book/, { timeout: 15000 });
 
     // Reader header shows the book title
-    await expect(page.getByRole("heading", { name: "My Test Book" })).toBeVisible({ timeout: 60000 });
+    await expect(page.getByRole('heading', { name: 'My Test Book' })).toBeVisible({
+      timeout: 60000,
+    });
 
     // Reader controls are visible (Contents is always visible)
     await expect(page.getByRole('button', { name: /Contents/i })).toBeVisible({ timeout: 60000 });
@@ -107,8 +111,12 @@ test.describe('Login and book load (desktop)', () => {
     const isSettingsVisible = await settingsButton.isVisible().catch(() => false);
     if (!isSettingsVisible) {
       await page.getByRole('button', { name: 'More options' }).click();
-      await expect(page.getByRole('menuitem', { name: /Settings/i })).toBeVisible({ timeout: 60000 });
-      await expect(page.getByRole('menuitem', { name: /Sign Out/i })).toBeVisible({ timeout: 60000 });
+      await expect(page.getByRole('menuitem', { name: /Settings/i })).toBeVisible({
+        timeout: 60000,
+      });
+      await expect(page.getByRole('menuitem', { name: /Sign Out/i })).toBeVisible({
+        timeout: 60000,
+      });
     } else {
       await expect(page.getByRole('button', { name: /Settings/i })).toBeVisible({ timeout: 60000 });
       await expect(page.getByRole('button', { name: /Sign Out/i })).toBeVisible({ timeout: 60000 });
@@ -117,7 +125,9 @@ test.describe('Login and book load (desktop)', () => {
 
   test('@mobile shows loading spinner while book URL is being fetched', async ({ page }) => {
     let resolveFileUrl: (value: unknown) => void;
-    const fileUrlPromise = new Promise((resolve) => { resolveFileUrl = resolve; });
+    const fileUrlPromise = new Promise((resolve) => {
+      resolveFileUrl = resolve;
+    });
 
     await page.route('**/api/books/*/file-url', async (route: Route) => {
       await fileUrlPromise;
@@ -133,8 +143,14 @@ test.describe('Login and book load (desktop)', () => {
     await expect(page).toHaveURL(/\/read\/my-test-book$/);
     await page.waitForTimeout(500);
 
-    const spinnerVisible = await page.locator('[class*="animate-spin"], [class*="spinner"]').isVisible().catch(() => false);
-    const loadingVisible = await page.getByText(/loading/i).isVisible().catch(() => false);
+    const spinnerVisible = await page
+      .locator('[class*="animate-spin"], [class*="spinner"]')
+      .isVisible()
+      .catch(() => false);
+    const loadingVisible = await page
+      .getByText(/loading/i)
+      .isVisible()
+      .catch(() => false);
 
     resolveFileUrl!(undefined);
     await page.waitForLoadState('networkidle').catch(() => undefined);
@@ -144,7 +160,6 @@ test.describe('Login and book load (desktop)', () => {
 
   test('@mobile opens the table of contents sidebar', async ({ page }) => {
     await login(page);
-
 
     await expect(page).toHaveURL(/\/read\/my-test-book$/);
 
@@ -169,7 +184,9 @@ test.describe('Login and book load (desktop)', () => {
     // Settings panel should contain theme, font size, and font family controls
     await expect(page.getByText('Theme')).toBeVisible({ timeout: SETTINGS_PANEL_TIMEOUT });
     await expect(page.getByText('Font Size')).toBeVisible({ timeout: SETTINGS_PANEL_TIMEOUT });
-    await expect(page.getByText('Font', { exact: true })).toBeVisible({ timeout: SETTINGS_PANEL_TIMEOUT });
+    await expect(page.getByText('Font', { exact: true })).toBeVisible({
+      timeout: SETTINGS_PANEL_TIMEOUT,
+    });
   });
 
   test('@mobile displays a locale switcher on the login page', async ({ page }) => {
@@ -209,13 +226,11 @@ test.describe('Login and book load (mobile)', () => {
 
     await login(page);
 
-
     await expect(page).toHaveURL(/\/read\/my-test-book$/);
   });
 
   test('@mobile reader header fits on mobile', async ({ page }) => {
     await login(page);
-
 
     await expect(page).toHaveURL(/\/read\/my-test-book$/);
 
@@ -262,8 +277,6 @@ test.describe('Error handling', () => {
 
     await login(page);
 
-
-
     // Error banner should appear
     await expect(page.locator('div:has-text("Access denied")').first()).toBeVisible();
   });
@@ -281,7 +294,6 @@ test.describe('Error handling', () => {
     });
 
     await login(page);
-
 
     await expect(page).toHaveURL(/\/read\/my-test-book$/);
 

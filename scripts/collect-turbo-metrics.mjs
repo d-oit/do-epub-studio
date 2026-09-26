@@ -23,8 +23,8 @@ async function collectTurboMetrics() {
       hits: 0,
       misses: 0,
       total: 0,
-      hitRatio: 0
-    }
+      hitRatio: 0,
+    },
   };
 
   try {
@@ -32,7 +32,7 @@ async function collectTurboMetrics() {
     const dryRunOutput = execSync('pnpm turbo run build --dry-run=json 2>/dev/null', {
       cwd: rootDir,
       encoding: 'utf8',
-      timeout: 60000
+      timeout: 60000,
     });
 
     const dryRunData = JSON.parse(dryRunOutput);
@@ -46,7 +46,7 @@ async function collectTurboMetrics() {
           cacheStatus: task.cache?.status || 'MISS',
           duration: task.cache?.timeSaved || 0,
           local: task.cache?.local || false,
-          remote: task.cache?.remote || false
+          remote: task.cache?.remote || false,
         };
 
         metrics.tasks.push(taskMetric);
@@ -59,9 +59,10 @@ async function collectTurboMetrics() {
       }
 
       metrics.cacheSummary.total = metrics.tasks.length;
-      metrics.cacheSummary.hitRatio = metrics.cacheSummary.total > 0
-        ? Math.round((metrics.cacheSummary.hits / metrics.cacheSummary.total) * 100)
-        : 0;
+      metrics.cacheSummary.hitRatio =
+        metrics.cacheSummary.total > 0
+          ? Math.round((metrics.cacheSummary.hits / metrics.cacheSummary.total) * 100)
+          : 0;
     }
   } catch (error) {
     console.error(`Error collecting turbo metrics: ${error.message}`);
@@ -79,7 +80,7 @@ async function collectTestMetrics() {
     passedTests: 0,
     flakyTests: [],
     flakyRate: 0,
-    suites: []
+    suites: [],
   };
 
   try {
@@ -87,7 +88,7 @@ async function collectTestMetrics() {
     const vitestOutputFiles = [
       path.join(rootDir, 'test-results.json'),
       path.join(rootDir, 'vitest-results.json'),
-      path.join(rootDir, 'coverage/coverage-summary.json')
+      path.join(rootDir, 'coverage/coverage-summary.json'),
     ];
 
     let vitestData = null;
@@ -110,7 +111,7 @@ async function collectTestMetrics() {
           metrics.flakyTests.push({
             name: failedTest.title || 'Unknown test',
             suite: failedTest.file || 'Unknown suite',
-            type: 'playwright'
+            type: 'playwright',
           });
         }
       }
@@ -130,7 +131,7 @@ async function collectTestMetrics() {
               metrics.flakyTests.push({
                 name: assertion.fullName || assertion.title,
                 suite: testResult.name,
-                type: 'vitest'
+                type: 'vitest',
               });
             }
           }
@@ -155,11 +156,14 @@ async function collectTestMetrics() {
       const flakyIndicators = verificationOutput.match(/flaky|retry|rerun/gi);
       if (flakyIndicators && flakyIndicators.length > 0) {
         // Extract flaky test names from output
-        const flakyLines = verificationOutput.split('\n').filter(line =>
-          line.toLowerCase().includes('flaky') ||
-          line.toLowerCase().includes('retry') ||
-          line.toLowerCase().includes('rerun')
-        );
+        const flakyLines = verificationOutput
+          .split('\n')
+          .filter(
+            (line) =>
+              line.toLowerCase().includes('flaky') ||
+              line.toLowerCase().includes('retry') ||
+              line.toLowerCase().includes('rerun'),
+          );
 
         for (const line of flakyLines.slice(0, 10)) {
           const testMatch = line.match(/['"]([^'"]+)['"]/);
@@ -167,7 +171,7 @@ async function collectTestMetrics() {
             metrics.flakyTests.push({
               name: testMatch[1],
               suite: 'unknown',
-              type: 'vitest'
+              type: 'vitest',
             });
           }
         }
@@ -176,7 +180,8 @@ async function collectTestMetrics() {
 
     // Calculate flaky rate
     if (metrics.totalTests > 0) {
-      metrics.flakyRate = Math.round((metrics.flakyTests.length / metrics.totalTests) * 100 * 100) / 100;
+      metrics.flakyRate =
+        Math.round((metrics.flakyTests.length / metrics.totalTests) * 100 * 100) / 100;
     }
   } catch (error) {
     console.error(`Error collecting test metrics: ${error.message}`);
@@ -189,7 +194,7 @@ async function collectTestMetrics() {
 async function main() {
   const [turboMetrics, testMetrics] = await Promise.all([
     collectTurboMetrics(),
-    collectTestMetrics()
+    collectTestMetrics(),
   ]);
 
   // Write turbo metrics to the output file
@@ -210,7 +215,7 @@ async function main() {
   console.log(`Metrics collected and written to ${outputPath} and ${testOutputPath}`);
 }
 
-main().catch(error => {
+main().catch((error) => {
   console.error(`Fatal error: ${error.message}`);
   process.exit(1);
 });

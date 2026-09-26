@@ -43,22 +43,22 @@ as untrusted: each "completed" claim was confirmed against source files.
 
 ## 2. Remaining Items
 
-| ID | Pri | Source | Item | Evidence |
-| --- | --- | --- | --- | --- |
-| 221-A1 | P2 | 218-T1.4 | Commit `bundle-baseline.json` artifact and wire CI delta enforcement (>10 KB gzip entry chunk, >3% route growth per ADR-218 D5) | `scripts/bundle-baseline.mjs` exists; no artifact, no CI consumer |
-| 221-A2 | P2 | 218-T2.1 | Resolve `createEpubLoader` dead abstraction: wire it into `useReaderEpub.ts` or remove the wrapper (keep `parseEpubInWorker` path) | `packages/reader-core/src/epub-loader.ts:136-137`; only tests/bench import it |
-| 221-A3 | P2 | 218-T2.2 | Complete sanitizer cache: LRU max 10 keyed by `sanitizerPolicyVersion + spineItemHref` (scoped per book load via hook construction); re-run XSS sanitizer suite | `packages/reader-core/src/sanitizer.ts:272,407-428` (partial in-module cache only) |
-| 221-A4 | P3 | 215-N6 | UI polish bundle: page-level skeletons (spinner-only today), centralized keyboard shortcuts module, app-level Storybook decision | `apps/web/src/components/PageLoadingFallback.tsx:9-32`; scattered `keydown` handlers; Storybook only in `packages/ui` |
-| 221-A5 | P2 | 215-R10 | Admin reading-insights aggregation after privacy review (ADR-102b); paginated, no raw reader timelines | `apps/worker/src/routes/reader/insights.ts:25` per-book only; admin `stats.ts` has no insights aggregation |
-| 221-A6 | P3 | 215-N7 / ADR-217 | OpenTelemetry evaluation writeup: accept, reject, or scope OTel vs custom traceparent | `packages/shared/src/telemetry.ts`; ADR-217 defers the decision |
+| ID     | Pri | Source           | Item                                                                                                                                                            | Evidence                                                                                                              |
+| ------ | --- | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| 221-A1 | P2  | 218-T1.4         | Commit `bundle-baseline.json` artifact and wire CI delta enforcement (>10 KB gzip entry chunk, >3% route growth per ADR-218 D5)                                 | `scripts/bundle-baseline.mjs` exists; no artifact, no CI consumer                                                     |
+| 221-A2 | P2  | 218-T2.1         | Resolve `createEpubLoader` dead abstraction: wire it into `useReaderEpub.ts` or remove the wrapper (keep `parseEpubInWorker` path)                              | `packages/reader-core/src/epub-loader.ts:136-137`; only tests/bench import it                                         |
+| 221-A3 | P2  | 218-T2.2         | Complete sanitizer cache: LRU max 10 keyed by `sanitizerPolicyVersion + spineItemHref` (scoped per book load via hook construction); re-run XSS sanitizer suite | `packages/reader-core/src/sanitizer.ts:272,407-428` (partial in-module cache only)                                    |
+| 221-A4 | P3  | 215-N6           | UI polish bundle: page-level skeletons (spinner-only today), centralized keyboard shortcuts module, app-level Storybook decision                                | `apps/web/src/components/PageLoadingFallback.tsx:9-32`; scattered `keydown` handlers; Storybook only in `packages/ui` |
+| 221-A5 | P2  | 215-R10          | Admin reading-insights aggregation after privacy review (ADR-102b); paginated, no raw reader timelines                                                          | `apps/worker/src/routes/reader/insights.ts:25` per-book only; admin `stats.ts` has no insights aggregation            |
+| 221-A6 | P3  | 215-N7 / ADR-217 | OpenTelemetry evaluation writeup: accept, reject, or scope OTel vs custom traceparent                                                                           | `packages/shared/src/telemetry.ts`; ADR-217 defers the decision                                                       |
 
 ### Gated (no public work until private triage closes)
 
-| ID | Item | Gate |
-| --- | --- | --- |
-| R1 | Private email transport/token triage (T0.1) | ADR-214 D4, ADR-215 D4 |
-| R12 | Email delivery health/retry/bounce observability | R1 |
-| N3 | Invite emails + transactional templates in `createGrant` | R1, R12 |
+| ID  | Item                                                     | Gate                   |
+| --- | -------------------------------------------------------- | ---------------------- |
+| R1  | Private email transport/token triage (T0.1)              | ADR-214 D4, ADR-215 D4 |
+| R12 | Email delivery health/retry/bounce observability         | R1                     |
+| N3  | Invite emails + transactional templates in `createGrant` | R1, R12                |
 
 ### Explicitly deferred (no action scheduled)
 
@@ -69,15 +69,15 @@ as untrusted: each "completed" claim was confirmed against source files.
 
 ### Wave 1: Bundle/loader infrastructure (parallel, small)
 
-| Task | Item | Key files |
-| --- | --- | --- |
-| W1.1 | 221-A1 baseline artifact + CI delta check | `scripts/bundle-baseline.mjs`, `.github/workflows/ci.yml`, new `bundle-baseline.json` |
-| W1.2 | 221-A2 wire-or-remove `createEpubLoader` | `apps/web/src/features/reader/hooks/useReaderEpub.ts`, `packages/reader-core/src/epub-loader.ts` |
+| Task | Item                                      | Key files                                                                                        |
+| ---- | ----------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| W1.1 | 221-A1 baseline artifact + CI delta check | `scripts/bundle-baseline.mjs`, `.github/workflows/ci.yml`, new `bundle-baseline.json`            |
+| W1.2 | 221-A2 wire-or-remove `createEpubLoader`  | `apps/web/src/features/reader/hooks/useReaderEpub.ts`, `packages/reader-core/src/epub-loader.ts` |
 
 ### Wave 2: Sanitizer cache (after Wave 1, security-adjacent)
 
-| Task | Item | Key files |
-| --- | --- | --- |
+| Task | Item                                          | Key files                                                         |
+| ---- | --------------------------------------------- | ----------------------------------------------------------------- |
 | W2.1 | 221-A3 LRU sanitizer cache + XSS suite re-run | `packages/reader-core/src/sanitizer.ts`, new `sanitizer-cache.ts` |
 
 ### Backlog (unscheduled)
@@ -100,9 +100,9 @@ invariant tests re-run on the cache path.
   - **Note (2026-08-10 verify):** the AC wording was corrected from "revision/policy
     change invalidates" — there is no `revision` component in the cache key. The
     table entry above originally stated the cache key was `bookRevision +
-    spineItemHref + sanitizerPolicyVersion`, also stale. The shipped cache
+spineItemHref + sanitizerPolicyVersion`, also stale. The shipped cache
     (`createEpubSanitizerHook`) keys entries by `SANITIZER_POLICY_VERSION +
-    href` only, because the hook — and its in-memory LRU `Map` — is constructed
+href` only, because the hook — and its in-memory LRU `Map` — is constructed
     fresh per book load (`useReaderEpub.ts` / `epub-loader.ts`), which is what
     scopes the cache to a single book and revision. Adding `bookRevision` to the
     key would be redundant (the map is never shared across books) and would add a

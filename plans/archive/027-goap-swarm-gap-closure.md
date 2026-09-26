@@ -22,7 +22,7 @@ Group F (Plans & Learnings) ──── independent ──→ after all code ch
 | ID  | File                                                | Fix                                                        | Status |
 | --- | --------------------------------------------------- | ---------------------------------------------------------- | ------ |
 | A1  | `packages/shared/src/__tests__/schemas.test.ts:488` | Add `__proto__` guard to skip proto key in fast-check test | ✅     |
-| A2  | `.github/workflows/e2e.yml:38`                      | `pnpm test:e2e:prod` → `pnpm test:e2e:smoke`              | ✅     |
+| A2  | `.github/workflows/e2e.yml:38`                      | `pnpm test:e2e:prod` → `pnpm test:e2e:smoke`               | ✅     |
 | A3  | `scripts/quality_gate.sh:5`                         | `set -uo pipefail` → `set -euo pipefail`                   | ✅     |
 
 ## Group B: Warning Resolution (Plan 025)
@@ -95,11 +95,11 @@ All Groups A–F have been completed. This plan is fully resolved as of 2026-05-
 
 ### Final Status Per Group
 
-| Group | Scope                         | Items | Status |
-| ----- | ----------------------------- | ----- | ------ |
-| A     | CI/CD Critical Fixes (P0)     | 3     | ✅ ALL |
-| B     | Warning Resolution            | 5     | ✅ ALL |
-| C     | CI/CD Structure Gaps          | 6     | ✅ ALL |
-| D     | Test Infra Configs            | 7     | ✅ ALL |
-| E     | Lint & Config                 | 2     | ✅ ALL |
-| F     | Plans & Learnings             | 2     | ✅ ALL |
+| Group | Scope                     | Items | Status |
+| ----- | ------------------------- | ----- | ------ |
+| A     | CI/CD Critical Fixes (P0) | 3     | ✅ ALL |
+| B     | Warning Resolution        | 5     | ✅ ALL |
+| C     | CI/CD Structure Gaps      | 6     | ✅ ALL |
+| D     | Test Infra Configs        | 7     | ✅ ALL |
+| E     | Lint & Config             | 2     | ✅ ALL |
+| F     | Plans & Learnings         | 2     | ✅ ALL |

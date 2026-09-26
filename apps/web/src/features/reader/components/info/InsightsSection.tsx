@@ -20,14 +20,14 @@ function formatMinutes(minutes: number): string {
 export function InsightsSection({ insights, t }: { insights: InsightSummary; t: TFn }) {
   return (
     <section>
-      <h3 className="eyebrow mb-2">
-        {t('reader.readingInsights')}
-      </h3>
+      <h3 className="eyebrow mb-2">{t('reader.readingInsights')}</h3>
       <dl className="space-y-2">
         {insights.totalActiveMinutes > 0 && (
           <div>
             <dt className="text-xs text-foreground-muted">{t('reader.totalActiveTime')}</dt>
-            <dd className="text-sm text-foreground">{formatMinutes(insights.totalActiveMinutes)}</dd>
+            <dd className="text-sm text-foreground">
+              {formatMinutes(insights.totalActiveMinutes)}
+            </dd>
           </div>
         )}
         {insights.totalActivePages > 0 && (
@@ -39,7 +39,9 @@ export function InsightsSection({ insights, t }: { insights: InsightSummary; t: 
         {insights.estimatedMinutesRemaining !== null && (
           <div>
             <dt className="text-xs text-foreground-muted">{t('reader.estimatedRemaining')}</dt>
-            <dd className="text-sm text-foreground">{formatMinutes(insights.estimatedMinutesRemaining)}</dd>
+            <dd className="text-sm text-foreground">
+              {formatMinutes(insights.estimatedMinutesRemaining)}
+            </dd>
           </div>
         )}
         {insights.currentStreakDays > 0 && (
@@ -54,7 +56,9 @@ export function InsightsSection({ insights, t }: { insights: InsightSummary; t: 
           <div>
             <dt className="text-xs text-foreground-muted">{t('reader.chapterTime')}</dt>
             <dd className="text-sm text-foreground">
-              {t('reader.chapterTimeValue', { minutes: insights.chapterDurations[0].activeMinutes })}
+              {t('reader.chapterTimeValue', {
+                minutes: insights.chapterDurations[0].activeMinutes,
+              })}
             </dd>
           </div>
         )}
@@ -74,7 +78,10 @@ export function InsightsSection({ insights, t }: { insights: InsightSummary; t: 
                 {[...insights.recentActivity].reverse().map((a) => (
                   <li key={a.date} className="flex justify-between">
                     <span>{a.date}</span>
-                    <span className="text-foreground-muted">{formatMinutes(a.activeMinutes)} · {a.activePages}{t('reader.pages_abbr')}</span>
+                    <span className="text-foreground-muted">
+                      {formatMinutes(a.activeMinutes)} · {a.activePages}
+                      {t('reader.pages_abbr')}
+                    </span>
                   </li>
                 ))}
               </ul>

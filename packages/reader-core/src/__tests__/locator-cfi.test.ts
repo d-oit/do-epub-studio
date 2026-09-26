@@ -110,7 +110,11 @@ describe('parseLocator - edge cases', () => {
     expect(parseLocator(loc)).toBeNull();
   });
   it('returns null for boolean textExcerpt', () => {
-    const loc = JSON.stringify({ cfi: 'epubcfi(/6/4)', textExcerpt: true, chapterHref: 'ch.xhtml' });
+    const loc = JSON.stringify({
+      cfi: 'epubcfi(/6/4)',
+      textExcerpt: true,
+      chapterHref: 'ch.xhtml',
+    });
     expect(parseLocator(loc)).toBeNull();
   });
   it('returns null for numeric chapterHref', () => {

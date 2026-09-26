@@ -1,5 +1,12 @@
 import { test, expect } from '@playwright/test';
-import { TEST_USER, LOGIN_RESPONSE, mockReaderApi, loginAsReader, clickToolbarButton, suppressWorkboxErrors } from './fixtures';
+import {
+  TEST_USER,
+  LOGIN_RESPONSE,
+  mockReaderApi,
+  loginAsReader,
+  clickToolbarButton,
+  suppressWorkboxErrors,
+} from './fixtures';
 
 const SEARCH_BOOK_USER = { ...TEST_USER, bookSlug: 'search-test-book' };
 

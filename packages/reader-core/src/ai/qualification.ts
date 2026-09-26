@@ -130,9 +130,10 @@ export function effectiveCategoryAvailability(
     milestones?: readonly QualificationMilestone[];
   },
 ): 'available' | EditorialUnavailableReason {
-  const present = typeof options.enginePresent === 'boolean'
-    ? options.enginePresent
-    : options.enginePresent[category] ?? false;
+  const present =
+    typeof options.enginePresent === 'boolean'
+      ? options.enginePresent
+      : (options.enginePresent[category] ?? false);
   if (!present) {
     return 'engine_missing';
   }
@@ -166,7 +167,8 @@ export function milestone(id: QualificationId): QualificationMilestone {
   }
   return {
     ...first,
-    qualifiedAt: first.qualifiedAt ?? rest.map((entry) => entry.qualifiedAt).find((at) => at !== null) ?? null,
+    qualifiedAt:
+      first.qualifiedAt ?? rest.map((entry) => entry.qualifiedAt).find((at) => at !== null) ?? null,
     categories: [...new Set(found.flatMap((entry) => entry.categories))],
     notes: found.map((entry) => entry.notes).join(' '),
   };

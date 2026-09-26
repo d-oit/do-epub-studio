@@ -33,18 +33,18 @@ do-epub-studio/
 
 ## Stack Components
 
-| Layer | Choice | Rationale |
-|-------|--------|-----------|
-| Package manager | pnpm + workspaces | Fast, strict, monorepo-native |
-| Build system | Turbo | Caching, parallel builds |
-| Frontend | TypeScript + Vite + PWA | Fast dev, offline support |
-| Backend | Cloudflare Workers | Edge runtime, R2/Turso bindings |
-| Database | Turso (libsql) | Syncable SQLite, edge-compatible |
-| Object storage | Cloudflare R2 | EPUB file storage |
-| Styling | Tailwind CSS | Utility-first, responsive |
-| State | Zustand | Lightweight, TypeScript-native |
-| Validation | Zod | Runtime validation at boundaries |
-| Testing | Vitest + Playwright | Unit/integration + E2E |
+| Layer           | Choice                  | Rationale                        |
+| --------------- | ----------------------- | -------------------------------- |
+| Package manager | pnpm + workspaces       | Fast, strict, monorepo-native    |
+| Build system    | Turbo                   | Caching, parallel builds         |
+| Frontend        | TypeScript + Vite + PWA | Fast dev, offline support        |
+| Backend         | Cloudflare Workers      | Edge runtime, R2/Turso bindings  |
+| Database        | Turso (libsql)          | Syncable SQLite, edge-compatible |
+| Object storage  | Cloudflare R2           | EPUB file storage                |
+| Styling         | Tailwind CSS            | Utility-first, responsive        |
+| State           | Zustand                 | Lightweight, TypeScript-native   |
+| Validation      | Zod                     | Runtime validation at boundaries |
+| Testing         | Vitest + Playwright     | Unit/integration + E2E           |
 
 ## Consequences
 

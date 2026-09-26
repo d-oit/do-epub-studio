@@ -13,10 +13,10 @@ Resolve all Codacy `ACTION_REQUIRED` violations to unblock merge for both PRs.
 
 ### Issues
 
-| # | File | Line | Rule | Fix |
-|---|------|------|------|-----|
-| 1 | `apps/web/src/features/reader/hooks/useReadingTimer.ts` | 62 | `no-unnecessary-condition` | Remove `?? 0` — `activePages` is `number` not nullable |
-| 2 | `packages/schema/migrations/0005-add-pages-to-insights.sql` | 1 | `set-quoted-identifier` | Add `SET QUOTED_IDENTIFIER ON;` header |
+| #   | File                                                        | Line | Rule                       | Fix                                                    |
+| --- | ----------------------------------------------------------- | ---- | -------------------------- | ------------------------------------------------------ |
+| 1   | `apps/web/src/features/reader/hooks/useReadingTimer.ts`     | 62   | `no-unnecessary-condition` | Remove `?? 0` — `activePages` is `number` not nullable |
+| 2   | `packages/schema/migrations/0005-add-pages-to-insights.sql` | 1    | `set-quoted-identifier`    | Add `SET QUOTED_IDENTIFIER ON;` header                 |
 
 ### Root Cause
 
@@ -27,9 +27,9 @@ Resolve all Codacy `ACTION_REQUIRED` violations to unblock merge for both PRs.
 
 ### Issues
 
-| # | File | Line | Rule | Fix |
-|---|------|------|------|-----|
-| 1 | `packages/reader-core/src/reanchor.ts` | 84 | `useQwikValidLexicalScope` | False positive — Qwik rule on non-Qwik code. Suppress with inline eslint-disable |
+| #   | File                                   | Line | Rule                       | Fix                                                                              |
+| --- | -------------------------------------- | ---- | -------------------------- | -------------------------------------------------------------------------------- |
+| 1   | `packages/reader-core/src/reanchor.ts` | 84   | `useQwikValidLexicalScope` | False positive — Qwik rule on non-Qwik code. Suppress with inline eslint-disable |
 
 ### Root Cause
 

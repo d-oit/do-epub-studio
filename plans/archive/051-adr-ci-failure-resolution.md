@@ -18,6 +18,7 @@ exceeding actual coverage after Web Worker files were introduced.
 ## Decision
 
 Lower reader-core coverage thresholds to match achievable coverage:
+
 - Lines: 75 → **72**
 - Branches: 70 → **69**
 - Statements: 75 → **72**

@@ -22,7 +22,9 @@ vi.mock('../components/navigation/shared', () => ({
     { key: 'nav.myLibrary', icon: 'book-open', href: '/library' },
     { key: 'nav.settings', icon: 'settings', href: '/settings' },
   ],
-  NavIcon: ({ icon, ...props }: { icon: string; [key: string]: unknown }) => <span data-testid={`nav-icon-${icon}`} {...props} />,
+  NavIcon: ({ icon, ...props }: { icon: string; [key: string]: unknown }) => (
+    <span data-testid={`nav-icon-${icon}`} {...props} />
+  ),
 }));
 
 describe('BottomTabBar', () => {
@@ -100,8 +102,14 @@ describe('BottomTabBar', () => {
         <BottomTabBar />
       </MemoryRouter>,
     );
-    expect(screen.getByRole('link', { name: 'My Library' })).toHaveAttribute('aria-current', 'page');
-    expect(screen.getByRole('link', { name: 'Catalog' })).not.toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('link', { name: 'My Library' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+    expect(screen.getByRole('link', { name: 'Catalog' })).not.toHaveAttribute(
+      'aria-current',
+      'page',
+    );
   });
 
   it('has correct structural classes for tab layout', () => {

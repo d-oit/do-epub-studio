@@ -9,9 +9,9 @@ Cloudflare dashboard.
 The app is served entirely by **Cloudflare Pages** — the build runs on
 Cloudflare directly (Pages Git integration, see root `wrangler.toml`):
 
-| Surface | How it's served |
-|---|---|
-| Frontend (SPA) | Pages Git integration builds `apps/web/dist` |
+| Surface        | How it's served                                                                                                        |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Frontend (SPA) | Pages Git integration builds `apps/web/dist`                                                                           |
 | API (`/api/*`) | Pages Functions (`apps/web/functions/api/[[path]].ts`) re-serves the existing Worker's Hono app on the **same origin** |
 
 Because the API shares the frontend's origin, production needs **no separate
@@ -68,6 +68,7 @@ pnpm exec wrangler d1 migrations apply do-epub-studio --remote
 
 In the Cloudflare dashboard → your Pages project → **Settings → Bindings →
 Add → D1 database**:
+
 - Variable name: `DB`
 - D1 database: `do-epub-studio`
 
@@ -98,6 +99,7 @@ pnpm exec wrangler r2 bucket create do-epub-studio-books
 ### Bind to the Pages project
 
 Dashboard → Pages project → **Settings → Bindings → Add → R2 bucket**:
+
 - Variable name: `BOOKS_BUCKET`
 - R2 bucket: `do-epub-studio-books`
 
@@ -115,6 +117,7 @@ pnpm exec wrangler kv namespace create CACHE_KV
 ### Bind to the Pages project
 
 Dashboard → Pages project → **Settings → Bindings → Add → KV namespace**:
+
 - Variable name: `CACHE_KV`
 - KV namespace: the created namespace
 
@@ -177,27 +180,32 @@ curl -s https://do-epub-studio.pages.dev/api/health
 After all infrastructure is configured, run through this checklist:
 
 ### Database
+
 - [ ] `wrangler d1 execute do-epub-studio --remote --command="SELECT COUNT(*) FROM books"` returns successfully
 - [ ] All 18 migrations applied (`wrangler d1 migrations list do-epub-studio`)
 - [ ] Admin login works (validates Argon2id password hash)
 - [ ] A reader or creator invitation can be created; manual copy-link delivery works when `EMAIL_SEND` is absent
 
 ### R2
+
 - [ ] `wrangler r2 object list do-epub-studio-books` shows EPUB files
 - [ ] Signed URL flow works: request → signed URL → file stream
 
 ### Health & API contract (GOAP-252)
+
 - [ ] `GET https://do-epub-studio.pages.dev/api/health` returns `200` + `{"ok":true}`
 - [ ] `GET https://do-epub-studio.pages.dev/api/catalog?limit=1` returns JSON, NOT HTML
 - [ ] Login submit from the site returns a session, not "Invalid server response"
 - [ ] A static path (e.g. `/robots.txt`) still serves the asset, not the API
 
 ### Security Headers
+
 - [ ] All API responses include CSP, HSTS, and X-Content-Type-Options headers
 - [ ] CSP does not contain `unsafe-inline` for scripts
 - [ ] traceId is present in all error responses
 
 ### Telemetry
+
 - [ ] `POST /api/telemetry` returns 202
 - [ ] Telemetry events are persisted to `telemetry_events` table
 - [ ] Admin audit view shows telemetry entries

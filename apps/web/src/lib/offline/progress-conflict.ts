@@ -64,9 +64,7 @@ export async function handleProgressConflict(
 
   let remoteData: RemoteProgressResponse | undefined;
   try {
-    remoteData = await apiRequest<RemoteProgressResponse>(
-      `/api/books/${payload.bookId}/progress`,
-    );
+    remoteData = await apiRequest<RemoteProgressResponse>(`/api/books/${payload.bookId}/progress`);
   } catch (remoteError) {
     // 401 keeps the normal permission-revocation handling in the outer
     // switch instead of being swallowed as "remote unavailable".

@@ -34,11 +34,7 @@ interface SnippetPart extends RangePart {
 
 type RangePart = { text: string; hit: boolean };
 
-function renderSnippet(
-  excerpt: string,
-  query: string,
-  keyPrefix: string,
-): React.ReactNode {
+function renderSnippet(excerpt: string, query: string, keyPrefix: string): React.ReactNode {
   const safeExcerpt = excerpt;
   const safeQuery = query.trim();
   if (!safeQuery) {
@@ -106,7 +102,10 @@ export function SearchPanel({ isOpen, book, onClose, onNavigate, t }: SearchPane
     const scrollTop = el.scrollTop;
     const viewportHeight = el.clientHeight;
     const start = Math.max(0, Math.floor(scrollTop / itemHeight) - VISIBLE_BUFFER);
-    const end = Math.min(results.length, Math.ceil((scrollTop + viewportHeight) / itemHeight) + VISIBLE_BUFFER);
+    const end = Math.min(
+      results.length,
+      Math.ceil((scrollTop + viewportHeight) / itemHeight) + VISIBLE_BUFFER,
+    );
     setVisibleRange({ start, end });
   }, [results.length]);
 
@@ -126,11 +125,7 @@ export function SearchPanel({ isOpen, book, onClose, onNavigate, t }: SearchPane
     >
       <div className="p-4 border-b border-border flex items-center justify-between">
         <h2 className="text-lg font-semibold text-foreground">{t('reader.search')}</h2>
-        <IconButton
-          onClick={onClose}
-          variant="ghost"
-          aria-label={t('a11y.close')}
-        >
+        <IconButton onClick={onClose} variant="ghost" aria-label={t('a11y.close')}>
           <svg
             className="w-5 h-5"
             fill="none"
@@ -138,7 +133,12 @@ export function SearchPanel({ isOpen, book, onClose, onNavigate, t }: SearchPane
             viewBox="0 0 24 24"
             aria-hidden="true"
           >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M6 18L18 6M6 6l12 12"
+            />
           </svg>
         </IconButton>
       </div>
@@ -149,7 +149,9 @@ export function SearchPanel({ isOpen, book, onClose, onNavigate, t }: SearchPane
             ref={inputRef}
             type="search"
             value={query}
-            onChange={(e) => { setQuery(e.target.value); }}
+            onChange={(e) => {
+              setQuery(e.target.value);
+            }}
             placeholder={t('reader.searchPlaceholder')}
             className="w-full bg-background border border-border rounded-lg px-4 py-2 pr-10 text-foreground focus:outline-none focus:ring-2 focus:ring-accent transition-all"
             maxLength={120}
@@ -172,7 +174,12 @@ export function SearchPanel({ isOpen, book, onClose, onNavigate, t }: SearchPane
           </p>
         )}
 
-        <div ref={scrollRef} onScroll={handleScroll} className="flex-1 overflow-y-auto space-y-2 scrollbar-thin" aria-live="polite">
+        <div
+          ref={scrollRef}
+          onScroll={handleScroll}
+          className="flex-1 overflow-y-auto space-y-2 scrollbar-thin"
+          aria-live="polite"
+        >
           {query.trim().length >= 2 ? (
             results.length > 0 ? (
               <>
@@ -186,13 +193,23 @@ export function SearchPanel({ isOpen, book, onClose, onNavigate, t }: SearchPane
                   {results.slice(visibleRange.start, visibleRange.end).map((result, i) => (
                     <li
                       key={result.cfi}
-                      style={{ position: 'absolute', top: (visibleRange.start + i) * 80, left: 0, right: 0 }}
+                      style={{
+                        position: 'absolute',
+                        top: (visibleRange.start + i) * 80,
+                        left: 0,
+                        right: 0,
+                      }}
                     >
                       <button
                         type="button"
-                        onClick={() => { onNavigate(result.cfi); }}
+                        onClick={() => {
+                          onNavigate(result.cfi);
+                        }}
                         className="w-full text-left p-3 rounded-lg hover:bg-background-secondary transition-colors border border-transparent hover:border-border group focus-visible:ring-2 focus-visible:ring-accent outline-none"
-                        aria-label={t('reader.searchResultLabel', { index: visibleRange.start + i + 1, chapter: result.chapterTitle ?? t('reader.untitledBook') })}
+                        aria-label={t('reader.searchResultLabel', {
+                          index: visibleRange.start + i + 1,
+                          chapter: result.chapterTitle ?? t('reader.untitledBook'),
+                        })}
                       >
                         {result.chapterTitle && (
                           <span className="block text-[10px] uppercase tracking-wider font-bold text-accent mb-1">

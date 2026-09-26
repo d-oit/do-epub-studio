@@ -20,7 +20,12 @@ export const validationErrorFormatter: MiddlewareHandler<{ Bindings: Env }> = as
     // Hono's zValidator returns { success: false, error: ZodError }
     // We check this BEFORE checking content-type or other things, because zValidator
     // might have already set the response.
-    if (body.success === false && body.error && typeof body.error === 'object' && 'issues' in (body.error as Record<string, unknown>)) {
+    if (
+      body.success === false &&
+      body.error &&
+      typeof body.error === 'object' &&
+      'issues' in (body.error as Record<string, unknown>)
+    ) {
       const err = body.error as { issues: Array<{ path: (string | number)[]; message: string }> };
       c.res = apiError(c, 400, 'VALIDATION_ERROR', formatZodError(err));
       return;
@@ -33,7 +38,12 @@ export const validationErrorFormatter: MiddlewareHandler<{ Bindings: Env }> = as
 
     const err = body.error;
     if (err && typeof err === 'object' && 'issues' in err && Array.isArray(err.issues)) {
-      c.res = apiError(c, 400, 'VALIDATION_ERROR', formatZodError(err as { issues: Array<{ path: (string | number)[]; message: string }> }));
+      c.res = apiError(
+        c,
+        400,
+        'VALIDATION_ERROR',
+        formatZodError(err as { issues: Array<{ path: (string | number)[]; message: string }> }),
+      );
     }
   } catch {
     // Response body is not parseable JSON — leave it as-is

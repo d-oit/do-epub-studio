@@ -17,18 +17,18 @@ branch health via quality gate.
 
 ## PRs Delivered
 
-| PR | Title | Key Changes | Status |
-|----|-------|-------------|--------|
-| **#758** | docs(plan 121): mark M3 sync queue dedup as resolved | Plan 121 M3 row struck through | ✅ Merged |
-| **#759** | docs(plans): update Plan 121 with session PRs; add Plan 126 | Plan 121 PR table + headline update; new Plan 126 session summary | ✅ Merged `413779c` |
-| **#760** | test(e2e): tag remaining 3 tests @mobile, close R2 coverage gap | 3 tests tagged `@mobile`; Plan 121 R2 row struck through | ✅ Merged `a5068ff` |
+| PR       | Title                                                           | Key Changes                                                       | Status              |
+| -------- | --------------------------------------------------------------- | ----------------------------------------------------------------- | ------------------- |
+| **#758** | docs(plan 121): mark M3 sync queue dedup as resolved            | Plan 121 M3 row struck through                                    | ✅ Merged           |
+| **#759** | docs(plans): update Plan 121 with session PRs; add Plan 126     | Plan 121 PR table + headline update; new Plan 126 session summary | ✅ Merged `413779c` |
+| **#760** | test(e2e): tag remaining 3 tests @mobile, close R2 coverage gap | 3 tests tagged `@mobile`; Plan 121 R2 row struck through          | ✅ Merged `a5068ff` |
 
 ---
 
 ## P3 Items Resolved
 
-| ID | Description | PR |
-|----|-------------|-----|
+| ID     | Description                                 | PR                                                                      |
+| ------ | ------------------------------------------- | ----------------------------------------------------------------------- |
 | **R2** | Mobile-viewport e2e coverage for core flows | #760 — last 3 untagged e2e tests now run on `iphone` + `pixel` projects |
 
 ### R2 Analysis
@@ -62,26 +62,26 @@ All checks passed on main after PR #760 merge:
 
 ## Remaining P3 Backlog (5 items)
 
-| ID | Description | Ships as |
-|----|-------------|----------|
+| ID  | Description                                                  | Ships as                                 |
+| --- | ------------------------------------------------------------ | ---------------------------------------- |
 | LC2 | `no-literal-string` lint — 66 violations, promote to `error` | `chore/fix-no-literal-string-violations` |
-| A6 | Offline reader fallback annotation restore | `fix/offline-annotation-restore` |
-| N3 | Server-side full-text search for large EPUBs | `feat/server-side-epub-search` |
-| N6 | EPUB re-export / packager | `feat/epub-re-export-packager` |
-| N7 | Comment reply notifications | `feat/comment-reply-notifications` |
-| F3 | Cross-isolate cache invalidation | `perf/cross-isolate-cache-invalidation` |
+| A6  | Offline reader fallback annotation restore                   | `fix/offline-annotation-restore`         |
+| N3  | Server-side full-text search for large EPUBs                 | `feat/server-side-epub-search`           |
+| N6  | EPUB re-export / packager                                    | `feat/epub-re-export-packager`           |
+| N7  | Comment reply notifications                                  | `feat/comment-reply-notifications`       |
+| F3  | Cross-isolate cache invalidation                             | `perf/cross-isolate-cache-invalidation`  |
 
 ---
 
 ## Post-Session Baseline
 
-| Signal | Result |
-|--------|--------|
-| Open PRs | 0 |
-| Open Issues | 0 |
-| Quality gate | ✅ All checks pass |
-| AGENTS.md | 151 lines (MAX_LINES_AGENTS_MD=200) |
-| CI on main | All green |
-| Codacy | All checks pass |
-| P3 items closed (cumulative) | M3 (sync dedup), R2 (mobile e2e) |
-| P3 items remaining | 6 (LC2, A6, N3, N6, N7, F3) |
+| Signal                       | Result                              |
+| ---------------------------- | ----------------------------------- |
+| Open PRs                     | 0                                   |
+| Open Issues                  | 0                                   |
+| Quality gate                 | ✅ All checks pass                  |
+| AGENTS.md                    | 151 lines (MAX_LINES_AGENTS_MD=200) |
+| CI on main                   | All green                           |
+| Codacy                       | All checks pass                     |
+| P3 items closed (cumulative) | M3 (sync dedup), R2 (mobile e2e)    |
+| P3 items remaining           | 6 (LC2, A6, N3, N6, N7, F3)         |

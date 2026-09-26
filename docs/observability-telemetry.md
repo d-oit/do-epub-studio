@@ -49,6 +49,7 @@ The endpoint uses `LoggingEmailTransport` semantics — it also logs
 each event to `console.log/warn/error` for observability in `wrangler tail`.
 
 **When to configure `VITE_TELEMETRY_ENDPOINT` to the worker:**
+
 - You want correlated client-server traces (the client sends
   `X-Trace-Id` headers on API calls and the same traceId in
   telemetry events).

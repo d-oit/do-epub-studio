@@ -7,7 +7,11 @@ vi.mock('../LocaleSwitcher', () => ({
 }));
 
 vi.mock('../ThemeToggle', () => ({
-  ThemeToggle: () => <button data-testid="theme-toggle" type="button">Theme</button>,
+  ThemeToggle: () => (
+    <button data-testid="theme-toggle" type="button">
+      Theme
+    </button>
+  ),
 }));
 
 describe('LoginHeader', () => {

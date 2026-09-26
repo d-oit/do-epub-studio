@@ -53,7 +53,9 @@ vi.mock('../../lib/api', () => ({
   }),
   fetchHighlights: vi.fn(() => Promise.resolve([])),
   fetchComments: vi.fn(() => Promise.resolve([])),
-  fetchProgress: vi.fn(() => Promise.resolve({ locator: null, progressPercent: 0, updatedAt: null })),
+  fetchProgress: vi.fn(() =>
+    Promise.resolve({ locator: null, progressPercent: 0, updatedAt: null }),
+  ),
 }));
 
 vi.mock('@intity/epub-js', () => ({
@@ -88,7 +90,15 @@ describe('ReaderPage Panels', () => {
       bookId: 'test-book-id',
       bookSlug: 'test-book',
       isAuthenticated: true,
-      capabilities: { canRead: true, canComment: true, canHighlight: true, canBookmark: false, canDownloadOffline: false, canExportNotes: false, canManageAccess: false },
+      capabilities: {
+        canRead: true,
+        canComment: true,
+        canHighlight: true,
+        canBookmark: false,
+        canDownloadOffline: false,
+        canExportNotes: false,
+        canManageAccess: false,
+      },
     });
     useReaderStore.setState({
       highlights: [],
@@ -157,7 +167,8 @@ describe('ReaderPage Panels', () => {
   });
 
   it('restores annotations from offline cache when server fetch fails (A6)', async () => {
-    const { apiRequest, fetchHighlights, fetchComments, fetchProgress } = await import('../../lib/api');
+    const { apiRequest, fetchHighlights, fetchComments, fetchProgress } =
+      await import('../../lib/api');
     const { getProgress, getAnnotations } = await import('../../lib/offline');
 
     // Server fetches fail
@@ -182,13 +193,47 @@ describe('ReaderPage Panels', () => {
       mutationId: 'm-1',
     });
     vi.mocked(getAnnotations).mockResolvedValueOnce([
-      { id: 'h-1', bookId: 'test-book-id', type: 'highlight', cfi: 'epubcfi(/6/14!/4/2)', text: 'saved passage', color: 'yellow', chapter: 'Ch 1', createdAt: Date.now(), synced: false, mutationId: 'm-h1' },
-      { id: 'c-1', bookId: 'test-book-id', type: 'comment', cfi: 'epubcfi(/6/14!/4/3)', text: 'selected', comment: 'offline comment', createdAt: Date.now(), synced: false, mutationId: 'm-c1' },
-      { id: 'b-1', bookId: 'test-book-id', type: 'bookmark', cfi: 'epubcfi(/6/14!/4/4)', text: 'Chapter 1', createdAt: Date.now(), synced: false, mutationId: 'm-b1' },
+      {
+        id: 'h-1',
+        bookId: 'test-book-id',
+        type: 'highlight',
+        cfi: 'epubcfi(/6/14!/4/2)',
+        text: 'saved passage',
+        color: 'yellow',
+        chapter: 'Ch 1',
+        createdAt: Date.now(),
+        synced: false,
+        mutationId: 'm-h1',
+      },
+      {
+        id: 'c-1',
+        bookId: 'test-book-id',
+        type: 'comment',
+        cfi: 'epubcfi(/6/14!/4/3)',
+        text: 'selected',
+        comment: 'offline comment',
+        createdAt: Date.now(),
+        synced: false,
+        mutationId: 'm-c1',
+      },
+      {
+        id: 'b-1',
+        bookId: 'test-book-id',
+        type: 'bookmark',
+        cfi: 'epubcfi(/6/14!/4/4)',
+        text: 'Chapter 1',
+        createdAt: Date.now(),
+        synced: false,
+        mutationId: 'm-b1',
+      },
     ]);
 
     await act(async () => {
-      render(<BrowserRouter><ReaderPage /></BrowserRouter>);
+      render(
+        <BrowserRouter>
+          <ReaderPage />
+        </BrowserRouter>,
+      );
       await Promise.resolve();
     });
 
@@ -222,41 +267,67 @@ describe('ReaderPage theme', () => {
   });
 
   it('sets data-theme to light when theme is light', async () => {
-    usePreferencesStore.setState({ reader: { ...usePreferencesStore.getState().reader, theme: 'light' } });
+    usePreferencesStore.setState({
+      reader: { ...usePreferencesStore.getState().reader, theme: 'light' },
+    });
     await renderReaderApp();
     expect(document.documentElement).toHaveAttribute('data-theme', 'light');
   });
 
   it('sets data-theme to dark when theme is dark', async () => {
-    usePreferencesStore.setState({ reader: { ...usePreferencesStore.getState().reader, theme: 'dark' } });
+    usePreferencesStore.setState({
+      reader: { ...usePreferencesStore.getState().reader, theme: 'dark' },
+    });
     await renderReaderApp();
     expect(document.documentElement).toHaveAttribute('data-theme', 'dark');
   });
 
   it('sets data-theme to sepia when theme is sepia', async () => {
-    usePreferencesStore.setState({ reader: { ...usePreferencesStore.getState().reader, theme: 'sepia' } });
+    usePreferencesStore.setState({
+      reader: { ...usePreferencesStore.getState().reader, theme: 'sepia' },
+    });
     await renderReaderApp();
     expect(document.documentElement).toHaveAttribute('data-theme', 'sepia');
   });
 
   it('resolves system theme to light when OS prefers light', async () => {
-    usePreferencesStore.setState({ reader: { ...usePreferencesStore.getState().reader, theme: 'system' } });
-    vi.stubGlobal('matchMedia', vi.fn().mockReturnValue({
-      matches: false, media: '', onchange: null,
-      addListener: vi.fn(), removeListener: vi.fn(),
-      addEventListener: vi.fn(), removeEventListener: vi.fn(), dispatchEvent: vi.fn(),
-    }));
+    usePreferencesStore.setState({
+      reader: { ...usePreferencesStore.getState().reader, theme: 'system' },
+    });
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn().mockReturnValue({
+        matches: false,
+        media: '',
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      }),
+    );
     await renderReaderApp();
     expect(document.documentElement).toHaveAttribute('data-theme', 'light');
   });
 
   it('resolves system theme to dark when OS prefers dark', async () => {
-    usePreferencesStore.setState({ reader: { ...usePreferencesStore.getState().reader, theme: 'system' } });
-    vi.stubGlobal('matchMedia', vi.fn().mockReturnValue({
-      matches: true, media: '', onchange: null,
-      addListener: vi.fn(), removeListener: vi.fn(),
-      addEventListener: vi.fn(), removeEventListener: vi.fn(), dispatchEvent: vi.fn(),
-    }));
+    usePreferencesStore.setState({
+      reader: { ...usePreferencesStore.getState().reader, theme: 'system' },
+    });
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn().mockReturnValue({
+        matches: true,
+        media: '',
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      }),
+    );
     await renderReaderApp();
     expect(document.documentElement).toHaveAttribute('data-theme', 'dark');
   });

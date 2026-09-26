@@ -62,7 +62,15 @@ describe('ReaderPage Progress Loading', () => {
       bookId: 'test-book-id',
       bookSlug: 'test-book',
       isAuthenticated: true,
-      capabilities: { canRead: true, canComment: true, canHighlight: true, canBookmark: false, canDownloadOffline: false, canExportNotes: false, canManageAccess: false },
+      capabilities: {
+        canRead: true,
+        canComment: true,
+        canHighlight: true,
+        canBookmark: false,
+        canDownloadOffline: false,
+        canExportNotes: false,
+        canManageAccess: false,
+      },
     });
     useReaderStore.setState({
       highlights: [],
@@ -92,10 +100,12 @@ describe('ReaderPage Progress Loading', () => {
       expect(useReaderStore.getState().progress).toEqual(mockProgress);
     });
 
-    expect(logClientEvent).toHaveBeenCalledWith(expect.objectContaining({
-      event: 'reader.progress_loaded',
-      metadata: expect.objectContaining({ source: 'server' }),
-    }));
+    expect(logClientEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: 'reader.progress_loaded',
+        metadata: expect.objectContaining({ source: 'server' }),
+      }),
+    );
   });
 
   it('falls back to offline progress if server fetch fails', async () => {
@@ -117,9 +127,11 @@ describe('ReaderPage Progress Loading', () => {
       expect(useReaderStore.getState().progress.locator?.cfi).toBe(mockOfflineProgress.cfi);
     });
 
-    expect(logClientEvent).toHaveBeenCalledWith(expect.objectContaining({
-      event: 'reader.progress_loaded',
-      metadata: expect.objectContaining({ source: 'offline' }),
-    }));
+    expect(logClientEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: 'reader.progress_loaded',
+        metadata: expect.objectContaining({ source: 'offline' }),
+      }),
+    );
   });
 });

@@ -13,7 +13,11 @@ export function ReaderToolbar({ children }: { children: React.ReactNode }) {
 }
 
 ReaderToolbar.Group = function Group({ children }: { children: React.ReactNode }) {
-  return <div role="group" className="flex items-center gap-1">{children}</div>;
+  return (
+    <div role="group" className="flex items-center gap-1">
+      {children}
+    </div>
+  );
 };
 
 ReaderToolbar.Separator = function Separator() {

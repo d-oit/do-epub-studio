@@ -7,7 +7,9 @@ describe('translate', () => {
   it('replaces all occurrences of a placeholder', () => {
     // Find a key with a placeholder to verify replaceAll behavior
     const keyWithParam = Object.keys(en).find(
-      (k) => typeof en[k as keyof typeof en] === 'string' && (en[k as keyof typeof en] as string).includes('{'),
+      (k) =>
+        typeof en[k as keyof typeof en] === 'string' &&
+        (en[k as keyof typeof en] as string).includes('{'),
     );
     if (keyWithParam) {
       const result = translate(keyWithParam as never, 'en', { 0: 'TEST' });

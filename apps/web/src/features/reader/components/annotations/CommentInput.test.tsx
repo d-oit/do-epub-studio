@@ -17,9 +17,7 @@ describe('CommentInput', () => {
 
   describe('rendering', () => {
     it('renders textarea with placeholder', () => {
-      render(
-        <CommentInput onSubmit={mockOnSubmit} placeholder="Write a comment..." />,
-      );
+      render(<CommentInput onSubmit={mockOnSubmit} placeholder="Write a comment..." />);
 
       expect(screen.getByPlaceholderText('Write a comment...')).toBeInTheDocument();
     });
@@ -45,7 +43,9 @@ describe('CommentInput', () => {
     it('does not render cancel button when onCancel is not provided', () => {
       render(<CommentInput onSubmit={mockOnSubmit} />);
 
-      expect(screen.queryByRole('button', { name: 'comment.input.cancel' })).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole('button', { name: 'comment.input.cancel' }),
+      ).not.toBeInTheDocument();
     });
 
     it('renders keyboard hint', () => {
@@ -65,9 +65,7 @@ describe('CommentInput', () => {
 
   describe('initial text', () => {
     it('displays initial text when provided', () => {
-      render(
-        <CommentInput onSubmit={mockOnSubmit} initialText="Existing comment" />,
-      );
+      render(<CommentInput onSubmit={mockOnSubmit} initialText="Existing comment" />);
 
       expect(screen.getByDisplayValue('Existing comment')).toBeInTheDocument();
     });

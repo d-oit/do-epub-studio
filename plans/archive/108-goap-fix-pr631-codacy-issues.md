@@ -20,23 +20,23 @@ Resolve 3 Codacy `no-explicit-any` violations in `apps/worker/src/__tests__/rout
 
 ### Failing Checks
 
-| Check | Status | Notes |
-|-------|--------|-------|
+| Check                       | Status   | Notes                          |
+| --------------------------- | -------- | ------------------------------ |
 | Codacy Static Code Analysis | **FAIL** | 3 new `no-explicit-any` issues |
-| Build (CI) | PASS | — |
-| Typecheck | PASS | — |
-| Lint | PASS | — |
-| Unit Tests | PASS | — |
-| CodeQL | PASS | — |
-| Lighthouse | PASS | — |
+| Build (CI)                  | PASS     | —                              |
+| Typecheck                   | PASS     | —                              |
+| Lint                        | PASS     | —                              |
+| Unit Tests                  | PASS     | —                              |
+| CodeQL                      | PASS     | —                              |
+| Lighthouse                  | PASS     | —                              |
 
 ### Codacy Issues (all in `routes.telemetry.test.ts`)
 
-| # | Line | Pattern | Severity | Fix |
-|---|------|---------|----------|-----|
-| 1 | 47 | `no-explicit-any` | High | Replace `as any` with typed interface |
-| 2 | 55 | `no-explicit-any` | High | Use `vi.mocked()` instead of `as any` |
-| 3 | 56 | `no-explicit-any` | High | Type mock call args as `unknown[]` |
+| #   | Line | Pattern           | Severity | Fix                                   |
+| --- | ---- | ----------------- | -------- | ------------------------------------- |
+| 1   | 47   | `no-explicit-any` | High     | Replace `as any` with typed interface |
+| 2   | 55   | `no-explicit-any` | High     | Use `vi.mocked()` instead of `as any` |
+| 3   | 56   | `no-explicit-any` | High     | Type mock call args as `unknown[]`    |
 
 ### Root Cause
 

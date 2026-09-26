@@ -35,8 +35,7 @@ export const useCreatorStore = create<CreatorState>()((set) => ({
   isLoading: false,
   error: null,
   setBooks: (books) => set({ books, booksLoaded: true }),
-  selectBook: (bookId) =>
-    set({ selectedBookId: bookId, items: [], selectedId: null, error: null }),
+  selectBook: (bookId) => set({ selectedBookId: bookId, items: [], selectedId: null, error: null }),
   setItems: (items) => set({ items }),
   upsertItem: (item) =>
     set((state) => {

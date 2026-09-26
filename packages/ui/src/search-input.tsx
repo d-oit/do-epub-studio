@@ -27,7 +27,9 @@ export function SearchInput({
     const timer = setTimeout(() => {
       if (local !== value) onChange(local);
     }, debounceMs);
-    return () => { clearTimeout(timer); };
+    return () => {
+      clearTimeout(timer);
+    };
   }, [local, debounceMs, onChange, value]);
 
   const handleClear = () => {
@@ -45,7 +47,9 @@ export function SearchInput({
 
   return (
     <div className={`relative ${className}`}>
-      <label htmlFor={id} className="sr-only">{ariaLabel}</label>
+      <label htmlFor={id} className="sr-only">
+        {ariaLabel}
+      </label>
       <input
         id={id}
         type="search"
@@ -66,8 +70,19 @@ export function SearchInput({
           aria-label="Clear search"
           className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center rounded-md min-w-[28px] min-h-[28px] p-1 text-foreground-muted hover:text-foreground hover:bg-background-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent transition-colors"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M6 18L18 6M6 6l12 12"
+            />
           </svg>
         </button>
       )}

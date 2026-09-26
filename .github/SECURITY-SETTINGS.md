@@ -22,15 +22,15 @@ This document outlines the 2026 best practice security settings for the reposito
 
 Enable in Repository Settings → Code security and analysis:
 
-| Feature | Status | Notes |
-|---------|--------|-------|
-| Dependency graph | ✅ On | Free |
-| Dependabot alerts | ✅ On | Free |
-| Dependabot security updates | ✅ On | Free |
-| Secret scanning | ✅ On | Requires Secret Protection (Team) |
-| Push protection | ✅ On | Block secrets on push |
-| Code scanning | ✅ On | Default CodeQL setup |
-| Dependency review action | ✅ On | Reviews PR dependencies |
+| Feature                     | Status | Notes                             |
+| --------------------------- | ------ | --------------------------------- |
+| Dependency graph            | ✅ On  | Free                              |
+| Dependabot alerts           | ✅ On  | Free                              |
+| Dependabot security updates | ✅ On  | Free                              |
+| Secret scanning             | ✅ On  | Requires Secret Protection (Team) |
+| Push protection             | ✅ On  | Block secrets on push             |
+| Code scanning               | ✅ On  | Default CodeQL setup              |
+| Dependency review action    | ✅ On  | Reviews PR dependencies           |
 
 ### Access Control
 

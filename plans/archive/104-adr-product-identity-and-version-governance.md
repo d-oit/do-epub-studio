@@ -23,13 +23,13 @@ The canonical brand string in `app-identity.json` is **`d.o.EPUB Studio`**
 (short name `d.o.EPUB`). A repo scan on 2026-06-21 found at least five
 divergent spellings outside the web runtime:
 
-| Spelling | Locations (representative) |
-|---|---|
-| `d.o.EPUB Studio` (canonical) | `apps/web/src/config/app-identity.json`, `LoginPage.test.tsx` |
-| `d.o. ePUB Studio` | `README.md:1` (title) |
-| `do EPUB Studio` | `packages/ui/src/AppLogo.tsx` (`aria-label`), `components.test.tsx`, `docs/coding-guide.md` (incl. `VITE_APP_NAME=do EPUB Studio`) |
-| `EPUB Studio` | `packages/ui/src/__stories__/Header.stories.tsx`, `apps/worker/src/routes/admin/auth.ts:112` (email subject), `apps/web/README.md`, `apps/worker/README.md`, `packages/testkit/README.md`, `docs/setup-local.md`, `docs/reading-insights.md` |
-| `do EPUB Studio` | stale build artifact `apps/web/dist/manifest.json` |
+| Spelling                      | Locations (representative)                                                                                                                                                                                                                   |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `d.o.EPUB Studio` (canonical) | `apps/web/src/config/app-identity.json`, `LoginPage.test.tsx`                                                                                                                                                                                |
+| `d.o. ePUB Studio`            | `README.md:1` (title)                                                                                                                                                                                                                        |
+| `do EPUB Studio`              | `packages/ui/src/AppLogo.tsx` (`aria-label`), `components.test.tsx`, `docs/coding-guide.md` (incl. `VITE_APP_NAME=do EPUB Studio`)                                                                                                           |
+| `EPUB Studio`                 | `packages/ui/src/__stories__/Header.stories.tsx`, `apps/worker/src/routes/admin/auth.ts:112` (email subject), `apps/web/README.md`, `apps/worker/README.md`, `packages/testkit/README.md`, `docs/setup-local.md`, `docs/reading-insights.md` |
+| `do EPUB Studio`              | stale build artifact `apps/web/dist/manifest.json`                                                                                                                                                                                           |
 
 There is no written rule defining the canonical string, its allowed
 short/ASCII forms, or where each may appear. This produces accessibility
@@ -61,8 +61,8 @@ governance described in the doc is not the governance in practice.
    - Full brand in prose and titles: `d.o.EPUB Studio`.
    - Admin surface qualifier: `d.o.EPUB Studio Admin`.
    - Never: `d.o. ePUB Studio`, `do EPUB Studio`, bare `EPUB Studio`.
-   The lowercase-e `ePUB` and the space-separated `d.o.` forms are
-   **disallowed**.
+     The lowercase-e `ePUB` and the space-separated `d.o.` forms are
+     **disallowed**.
 4. **Accessibility strings** (`aria-label`, alt text) MUST use the
    canonical name: `d.o.EPUB Studio logo`.
 5. **Generic noun usage is fine.** "an EPUB file", "the EPUB reader",

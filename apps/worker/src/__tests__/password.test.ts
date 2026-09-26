@@ -19,14 +19,12 @@ vi.mock('argon2-wasm-edge', () => ({
    * Encode salt as hex and password as base64 so the output is unique per
    * call (random salt) yet still verifiable by our mock `argon2Verify`.
    */
-  argon2id: vi.fn(
-    ({ password, salt }: { password: string; salt: Uint8Array }): Promise<string> => {
-      const saltHex = Array.from(salt)
-        .map((b: number) => b.toString(16).padStart(2, '0'))
-        .join('');
-      return Promise.resolve(`$argon2id$v=19$m=65536,t=3,p=4$${saltHex}$${btoa(password)}`);
-    },
-  ),
+  argon2id: vi.fn(({ password, salt }: { password: string; salt: Uint8Array }): Promise<string> => {
+    const saltHex = Array.from(salt)
+      .map((b: number) => b.toString(16).padStart(2, '0'))
+      .join('');
+    return Promise.resolve(`$argon2id$v=19$m=65536,t=3,p=4$${saltHex}$${btoa(password)}`);
+  }),
   /**
    * Reverse the encoding: extract the base64 password segment and compare.
    * Returns false (not throw) for hashes that do not match the expected
@@ -89,10 +87,10 @@ describe('hashPassword', () => {
 
     expect(callArg).toMatchObject({
       password: process.env.TEST_PASSWORD || 'test-password',
-      iterations: 3,      // ITERATIONS = 3
-      parallelism: 4,     // PARALLELISM = 4
-      memorySize: 65536,  // MEMORY_COST_KIB = 64 MiB
-      hashLength: 32,     // HASH_LENGTH = 32
+      iterations: 3, // ITERATIONS = 3
+      parallelism: 4, // PARALLELISM = 4
+      memorySize: 65536, // MEMORY_COST_KIB = 64 MiB
+      hashLength: 32, // HASH_LENGTH = 32
       outputType: 'encoded',
     });
 

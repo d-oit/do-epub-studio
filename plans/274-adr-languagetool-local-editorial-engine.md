@@ -8,7 +8,7 @@
 
 ## Context
 
-ADR-999 D5 names a self-hosted LanguageTool service as a *candidate* (not yet an
+ADR-999 D5 names a self-hosted LanguageTool service as a _candidate_ (not yet an
 authorized dependency) for deterministic spelling/grammar, noting two hard
 constraints from official documentation: the public free API prohibits
 automated use, and the official local server ships without the cloud AI rules.
@@ -76,7 +76,7 @@ Corpus probes: dialect dialogue received **no** standardizing matches (item 2's
 target behaviour held at engine level for the probed dialect), but the invented
 glossary name `Mariselleth` **was** flagged (`MORFOLOGIK_RULE_EN_US` →
 "Marielle") — same for the invented citation author `Thornfield` (item 7).
-`disabledRules=MORFOLOGIK_RULE_EN_US` reaches zero matches but disables *all*
+`disabledRules=MORFOLOGIK_RULE_EN_US` reaches zero matches but disables _all_
 spelling checks. Mechanism options for Phase A2 (choice made there;
 acceptance = corpus item 2): server `lang-xx-dictPath` merged dictionary,
 per-style rule suppression, or adapter-side masking of glossary terms.
@@ -92,16 +92,16 @@ invalid/stale citations remains the adapter's validator, not the engine.
 
 ## Corpus evidence (ADR-999 §3 items 1/2/4/6/7/8 — `scripts/dev/languagetool.sh corpus`)
 
-| # | Property | Observed | Result |
-|---|----------|----------|--------|
-| 1 | Agreement flagged; only `was` → `were` | exactly 1 match, `AGREEMENT_SENT_START/7` offset 10 len 3 → `were` | PASS |
-| 2 | Dialect not standardized; glossary term suppressible | dialect span untouched; `Mariselleth` flagged at baseline, clean under `disabledRules=MORFOLOGIK_RULE_EN_US` (hazard + mechanism recorded, D6) | PASS |
-| 4 | Terse first-person untouched (no person/tense/lyrical change) | 0 matches baseline; 0 with `disabledCategories=STYLE` (intended adapter config) | PASS |
-| 5 | *(story/logic — B-track, not LanguageTool)* | — | n/a |
-| 6 | Injection passage quoted, never obeyed | 0 matches; response/match keys within allowlists; all offsets in range | PASS |
-| 7 | Engine cannot attest citations | only match is author-name spelling flag; no attestation keys/messages — rejection stays in `validateEditorialFindings` (D7) | PASS |
-| 8 | Exact minimal substring swap | span `[10,13)` swapped to exactly `"The doors were locked."`, byte-identical outside the span | PASS |
-| 3 | *(story/logic — B-track, not LanguageTool)* | — | n/a |
+| #   | Property                                                      | Observed                                                                                                                                       | Result |
+| --- | ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| 1   | Agreement flagged; only `was` → `were`                        | exactly 1 match, `AGREEMENT_SENT_START/7` offset 10 len 3 → `were`                                                                             | PASS   |
+| 2   | Dialect not standardized; glossary term suppressible          | dialect span untouched; `Mariselleth` flagged at baseline, clean under `disabledRules=MORFOLOGIK_RULE_EN_US` (hazard + mechanism recorded, D6) | PASS   |
+| 4   | Terse first-person untouched (no person/tense/lyrical change) | 0 matches baseline; 0 with `disabledCategories=STYLE` (intended adapter config)                                                                | PASS   |
+| 5   | _(story/logic — B-track, not LanguageTool)_                   | —                                                                                                                                              | n/a    |
+| 6   | Injection passage quoted, never obeyed                        | 0 matches; response/match keys within allowlists; all offsets in range                                                                         | PASS   |
+| 7   | Engine cannot attest citations                                | only match is author-name spelling flag; no attestation keys/messages — rejection stays in `validateEditorialFindings` (D7)                    | PASS   |
+| 8   | Exact minimal substring swap                                  | span `[10,13)` swapped to exactly `"The doors were locked."`, byte-identical outside the span                                                  | PASS   |
+| 3   | _(story/logic — B-track, not LanguageTool)_                   | —                                                                                                                                              | n/a    |
 
 Run: 6/6 PASS, latencies 83/99/256/54/110/119/75ms against
 `http://127.0.0.1:8081`, engine `LanguageTool 6.9-SNAPSHOT (build

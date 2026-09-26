@@ -1,10 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { extractSelectionData, clearSelection } from './AnnotationToolbar';
 
-function buildFrameStub(
-  getSelection: ReturnType<typeof vi.fn>,
-  extras?: Record<string, unknown>,
-) {
+function buildFrameStub(getSelection: ReturnType<typeof vi.fn>, extras?: Record<string, unknown>) {
   const win = { getSelection };
   return { contentWindow: win, ...extras };
 }
@@ -183,6 +180,8 @@ describe('clearSelection', () => {
     const frame = buildFrameStub(vi.fn(() => null)) as unknown as HTMLIFrameElement;
 
     // clearSelection is imported at top level
-    expect(() => { clearSelection(frame); }).not.toThrow();
+    expect(() => {
+      clearSelection(frame);
+    }).not.toThrow();
   });
 });

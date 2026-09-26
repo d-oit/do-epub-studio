@@ -95,11 +95,7 @@ export function createThemeApplier({
  * zoom effect in `useReaderEpub` (re-apply on zoom change) — one
  * implementation so the transform/transition contract cannot drift.
  */
-export function applyFixedLayoutZoomStyle(
-  doc: Document,
-  scale: string,
-  transition: string,
-): void {
+export function applyFixedLayoutZoomStyle(doc: Document, scale: string, transition: string): void {
   let styleEl = doc.getElementById('__fl_zoom_style__');
   if (!(styleEl instanceof HTMLStyleElement)) {
     styleEl = doc.createElement('style');
@@ -116,9 +112,7 @@ export function applyFixedLayoutZoomStyle(
  * Lives here (not inline in `useReaderEpub`) so all fixed-layout DOM
  * injection is in one module with `applyFixedLayoutZoomStyle`.
  */
-export function createFixedLayoutContentHooks(
-  fixedLayoutViewport: string | null | undefined,
-): {
+export function createFixedLayoutContentHooks(fixedLayoutViewport: string | null | undefined): {
   applyViewportMeta: (contents: Contents) => void;
   lockOverflow: (contents: Contents) => void;
 } {
@@ -200,7 +194,10 @@ export function createRelocatedSetup({
   setChapter?: (href: string | null, wordCount?: number) => void;
   markPageRead?: () => void;
 }) {
-  if (!sessionToken || !bookId) return () => { /* noop */ };
+  if (!sessionToken || !bookId)
+    return () => {
+      /* noop */
+    };
   const renderAnnotations = () => {
     adapter.scheduleRender(
       currentChapterRef.current,

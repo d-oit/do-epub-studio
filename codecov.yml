@@ -25,37 +25,37 @@ coverage:
       default: false
       web:
         paths:
-          - "apps/web/"
+          - 'apps/web/'
         target: 55%
         threshold: 2%
       worker:
         paths:
-          - "apps/worker/"
+          - 'apps/worker/'
         target: 65%
         threshold: 2%
       shared:
         paths:
-          - "packages/shared/"
+          - 'packages/shared/'
         target: 40%
         threshold: 2%
       reader-core:
         paths:
-          - "packages/reader-core/"
+          - 'packages/reader-core/'
         target: 72%
         threshold: 2%
       schema:
         paths:
-          - "packages/schema/"
+          - 'packages/schema/'
         target: 90%
         threshold: 2%
       testkit:
         paths:
-          - "packages/testkit/"
+          - 'packages/testkit/'
         target: 25%
         threshold: 2%
       ui:
         paths:
-          - "packages/ui/"
+          - 'packages/ui/'
         target: 40%
         threshold: 2%
     patch:

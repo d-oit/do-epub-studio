@@ -21,7 +21,8 @@ import type { Env } from '../lib/env';
 vi.mock('argon2-wasm-edge', () => ({
   argon2id: vi.fn(({ password }: { password: string }) => Promise.resolve(`argon2id:${password}`)),
   argon2Verify: vi.fn(({ password, hash }: { password: string; hash: string }) =>
-    Promise.resolve(hash === `argon2id:${password}`)),
+    Promise.resolve(hash === `argon2id:${password}`),
+  ),
 }));
 
 const MIGRATIONS_DIR = resolve(import.meta.dirname, '../../../../packages/schema/migrations');
@@ -43,7 +44,9 @@ function makeSqliteEnv(database: DatabaseSync): Env {
 
 beforeAll(() => {
   db = new DatabaseSync(':memory:');
-  for (const file of readdirSync(MIGRATIONS_DIR).filter((f) => f.endsWith('.sql')).sort()) {
+  for (const file of readdirSync(MIGRATIONS_DIR)
+    .filter((f) => f.endsWith('.sql'))
+    .sort()) {
     db.exec(readFileSync(resolve(MIGRATIONS_DIR, file), 'utf8'));
   }
   env = makeSqliteEnv(db);

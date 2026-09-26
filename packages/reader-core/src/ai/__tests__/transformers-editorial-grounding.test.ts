@@ -16,10 +16,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { validateEditorialFindings } from '../editorial-findings';
-import {
-  buildChapters,
-  isPromptEcho,
-} from '../plugins/transformers-editorial-format';
+import { buildChapters, isPromptEcho } from '../plugins/transformers-editorial-format';
 import { buildMessages } from '../plugins/transformers-editorial-prompt';
 import {
   CHAPTER_SHA,
@@ -292,21 +289,21 @@ describe('degenerate-echo backstop and output salvage (probe #4)', () => {
 
   it('salvages a trailing comma before the closing bracket (observed drift)', async () => {
     const payload =
-      '[{"category":"logic","spans":[{"chapter":"c1","sentence":1}],'
-      + '"question":"Does the thirty/thirty-two age gap reconcile across chapters?",'
-      + '"uncertainty":"review_needed"},]';
+      '[{"category":"logic","spans":[{"chapter":"c1","sentence":1}],' +
+      '"question":"Does the thirty/thirty-two age gap reconcile across chapters?",' +
+      '"uncertainty":"review_needed"},]';
     const findings = await runOk(fakeLoader(payload));
     expect(findings).toHaveLength(1);
   });
 
   it('salvages complete objects from an unclosed array (observed drift)', async () => {
     const payload =
-      '[{"category":"logic","spans":[{"chapter":"c1","sentence":1}],'
-      + '"question":"Why does the narrator hedge the peace year in this chapter?",'
-      + '"uncertainty":"review_needed"},'
-      + '{"category":"story","spans":[{"chapter":"c2","sentence":2}],'
-      + '"question":"Should the winter reflection land earlier in the scene?",'
-      + '"uncertainty":"review_needed"}';
+      '[{"category":"logic","spans":[{"chapter":"c1","sentence":1}],' +
+      '"question":"Why does the narrator hedge the peace year in this chapter?",' +
+      '"uncertainty":"review_needed"},' +
+      '{"category":"story","spans":[{"chapter":"c2","sentence":2}],' +
+      '"question":"Should the winter reflection land earlier in the scene?",' +
+      '"uncertainty":"review_needed"}';
     const findings = await runOk(fakeLoader(payload));
     expect(findings).toHaveLength(2);
   });
@@ -316,9 +313,9 @@ describe('degenerate-echo backstop and output salvage (probe #4)', () => {
     // path must fall through to the slices on junk tail instead of failing
     // the whole draw (probe #6: valid JSON, then a degeneration loop).
     const payload =
-      '{"category":"logic","question":"Does the thirty/thirty-two age gap reconcile across chapters?",'
-      + '"uncertainty":"review_needed","spans":[{"chapter":"c1","sentence":1}]}'
-      + '\n\nQuestion: what happened next?\nResponse: pure noise after the close.';
+      '{"category":"logic","question":"Does the thirty/thirty-two age gap reconcile across chapters?",' +
+      '"uncertainty":"review_needed","spans":[{"chapter":"c1","sentence":1}]}' +
+      '\n\nQuestion: what happened next?\nResponse: pure noise after the close.';
     const findings = await runOk(fakeLoader(payload));
     expect(findings).toHaveLength(1);
   });

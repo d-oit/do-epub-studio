@@ -16,9 +16,14 @@ vi.mock('../components/ui', () => ({
 vi.mock('../components/navigation', () => ({
   BottomTabBar: () => <nav aria-label="tabs" />,
   Sidebar: () => <aside className="sidebar-nav" />,
-  Drawer: ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => (
-    isOpen ? <aside role="dialog" aria-label="drawer"><button type="button" onClick={onClose}>close</button></aside> : null
-  ),
+  Drawer: ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) =>
+    isOpen ? (
+      <aside role="dialog" aria-label="drawer">
+        <button type="button" onClick={onClose}>
+          close
+        </button>
+      </aside>
+    ) : null,
 }));
 
 vi.mock('../config/app-identity', () => ({

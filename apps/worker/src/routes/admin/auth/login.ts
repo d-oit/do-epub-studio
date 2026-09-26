@@ -16,11 +16,7 @@ import {
   createAdminSessionMfa,
   revokeAdminSession,
 } from '../../../auth/admin-middleware';
-import {
-  getAccountByEmail,
-  accountIsLocked,
-  verifyAccountPassword,
-} from '../../../auth/account';
+import { getAccountByEmail, accountIsLocked, verifyAccountPassword } from '../../../auth/account';
 import {
   storeChallenge,
   createLoginTicket,
@@ -56,7 +52,12 @@ async function login(c: RouteContext): Promise<Response> {
   });
 
   if (!rateLimit.allowed) {
-    return apiError(c, 429, 'TOO_MANY_REQUESTS', 'Too many login attempts. Please try again later.');
+    return apiError(
+      c,
+      429,
+      'TOO_MANY_REQUESTS',
+      'Too many login attempts. Please try again later.',
+    );
   }
 
   const clientHints = {
@@ -86,13 +87,17 @@ async function login(c: RouteContext): Promise<Response> {
   // ADR-234 MFA enforcement: an enrolled admin must complete a second factor
   // (passkey or recovery code) before a usable session is issued.
   if (!('token' in result)) {
-    await logAudit(c.env, {
-      entityType: 'user',
-      entityId: result.user.id,
-      action: 'admin_login_mfa_pending',
-      actorEmail: result.user.email,
-      payload: { role: result.user.role },
-    }, c.executionCtx);
+    await logAudit(
+      c.env,
+      {
+        entityType: 'user',
+        entityId: result.user.id,
+        action: 'admin_login_mfa_pending',
+        actorEmail: result.user.email,
+        payload: { role: result.user.role },
+      },
+      c.executionCtx,
+    );
 
     // Prove factor 1 (password) was verified: issue a short-lived single-use
     // ticket the /login/mfa/* ceremony must present to mint an `mfa` session.
@@ -112,13 +117,17 @@ async function login(c: RouteContext): Promise<Response> {
     });
   }
 
-  await logAudit(c.env, {
-    entityType: 'user',
-    entityId: result.user.id,
-    action: 'admin_login',
-    actorEmail: result.user.email,
-    payload: { role: result.user.role },
-  }, c.executionCtx);
+  await logAudit(
+    c.env,
+    {
+      entityType: 'user',
+      entityId: result.user.id,
+      action: 'admin_login',
+      actorEmail: result.user.email,
+      payload: { role: result.user.role },
+    },
+    c.executionCtx,
+  );
 
   return c.json({
     ok: true,
@@ -149,18 +158,33 @@ async function loginMfaStart(c: RouteContext): Promise<Response> {
   // enrollment disclosure so an unauthenticated caller learns nothing.
   const ticket = await findLoginTicket(c.env, loginTicket);
   if (!isLoginTicketUsable(ticket)) {
-    return apiError(c, 401, 'INVALID_LOGIN_TICKET', 'Complete password sign-in before passkey login');
+    return apiError(
+      c,
+      401,
+      'INVALID_LOGIN_TICKET',
+      'Complete password sign-in before passkey login',
+    );
   }
 
-  const user = await queryFirst<{ id: string; email: string; global_role: string; disabled_at: string | null; compromised_at: string | null }>(
-    c.env,
-    `SELECT id, email, global_role, disabled_at, compromised_at FROM users WHERE id = ?`,
-    [ticket.user_id],
-  );
+  const user = await queryFirst<{
+    id: string;
+    email: string;
+    global_role: string;
+    disabled_at: string | null;
+    compromised_at: string | null;
+  }>(c.env, `SELECT id, email, global_role, disabled_at, compromised_at FROM users WHERE id = ?`, [
+    ticket.user_id,
+  ]);
 
   // Uniform 401: do not reveal whether the account exists, is non-admin, or is
   // not MFA-enrolled (CWE-204). MFA must be required to proceed.
-  if (!user || user.global_role !== 'admin' || user.disabled_at || user.compromised_at || !(await userHasMfa(c.env, user.id))) {
+  if (
+    !user ||
+    user.global_role !== 'admin' ||
+    user.disabled_at ||
+    user.compromised_at ||
+    !(await userHasMfa(c.env, user.id))
+  ) {
     return apiError(c, 401, 'MFA_REQUIRED', 'MFA is required to complete sign-in');
   }
 
@@ -180,18 +204,24 @@ async function loginMfaStart(c: RouteContext): Promise<Response> {
     expiresAt: new Date(Date.now() + MFA_CEREMONY_TIMEOUT_MS).toISOString(),
   });
 
-  await logAudit(c.env, {
-    entityType: 'user',
-    entityId: user.id,
-    action: 'mfa_auth_started',
-    actorEmail: user.email,
-  }, c.executionCtx);
+  await logAudit(
+    c.env,
+    {
+      entityType: 'user',
+      entityId: user.id,
+      action: 'mfa_auth_started',
+      actorEmail: user.email,
+    },
+    c.executionCtx,
+  );
 
   return c.json({ ok: true, data: { options } });
 }
 
 async function loginMfaVerify(c: RouteContext): Promise<Response> {
-  const { loginTicket, authenticationResponse } = c.req.valid('json') as z.infer<typeof LoginMfaVerifySchema>;
+  const { loginTicket, authenticationResponse } = c.req.valid('json') as z.infer<
+    typeof LoginMfaVerifySchema
+  >;
   const response = authenticationResponse as unknown as AuthenticationResponseJSON;
 
   const rateLimit = await checkRateLimitDO(c.env, 'auth_admin_mfa_verify', loginTicket, {
@@ -216,16 +246,31 @@ async function loginMfaVerify(c: RouteContext): Promise<Response> {
         payload: { kind: 'login_ticket', account: 'unknown' },
       });
     }
-    return apiError(c, 401, 'INVALID_LOGIN_TICKET', 'Complete password sign-in before passkey login');
+    return apiError(
+      c,
+      401,
+      'INVALID_LOGIN_TICKET',
+      'Complete password sign-in before passkey login',
+    );
   }
 
-  const user = await queryFirst<{ id: string; email: string; global_role: string; disabled_at: string | null; compromised_at: string | null }>(
-    c.env,
-    `SELECT id, email, global_role, disabled_at, compromised_at FROM users WHERE id = ?`,
-    [ticket.user_id],
-  );
+  const user = await queryFirst<{
+    id: string;
+    email: string;
+    global_role: string;
+    disabled_at: string | null;
+    compromised_at: string | null;
+  }>(c.env, `SELECT id, email, global_role, disabled_at, compromised_at FROM users WHERE id = ?`, [
+    ticket.user_id,
+  ]);
 
-  if (!user || user.global_role !== 'admin' || user.disabled_at || user.compromised_at || !(await userHasMfa(c.env, user.id))) {
+  if (
+    !user ||
+    user.global_role !== 'admin' ||
+    user.disabled_at ||
+    user.compromised_at ||
+    !(await userHasMfa(c.env, user.id))
+  ) {
     return apiError(c, 401, 'MFA_REQUIRED', 'MFA is required to complete sign-in');
   }
 
@@ -242,7 +287,12 @@ async function loginMfaVerify(c: RouteContext): Promise<Response> {
     // Failed single-use claim -> the ticket was already consumed or expired.
     // Emit an observational login-ticket replay risk event (ADR-234 item 7).
     await logLoginTicketReplay(c, user);
-    return apiError(c, 401, 'INVALID_LOGIN_TICKET', 'Complete password sign-in before passkey login');
+    return apiError(
+      c,
+      401,
+      'INVALID_LOGIN_TICKET',
+      'Complete password sign-in before passkey login',
+    );
   }
 
   // Update the passkey counter only after the login ticket is successfully
@@ -250,21 +300,29 @@ async function loginMfaVerify(c: RouteContext): Promise<Response> {
   // mutating the counter, keeping the credential state consistent.
   await updatePasskeyCounter(c.env, factor.credential.credential_id, factor.newCounter);
 
-  const session = await createAdminSessionMfa(c.env, {
-    id: user.id,
-    email: user.email,
-    role: user.global_role,
-  }, {
-    ipHash: await hashString(getClientIp(c)),
-    deviceLabelHash: await deviceFingerprint(c.req.header('User-Agent')),
-  });
+  const session = await createAdminSessionMfa(
+    c.env,
+    {
+      id: user.id,
+      email: user.email,
+      role: user.global_role,
+    },
+    {
+      ipHash: await hashString(getClientIp(c)),
+      deviceLabelHash: await deviceFingerprint(c.req.header('User-Agent')),
+    },
+  );
 
-  await logAudit(c.env, {
-    entityType: 'user',
-    entityId: user.id,
-    action: 'mfa_auth_success',
-    actorEmail: user.email,
-  }, c.executionCtx);
+  await logAudit(
+    c.env,
+    {
+      entityType: 'user',
+      entityId: user.id,
+      action: 'mfa_auth_success',
+      actorEmail: user.email,
+    },
+    c.executionCtx,
+  );
 
   return c.json({
     ok: true,
@@ -280,7 +338,9 @@ async function loginMfaVerify(c: RouteContext): Promise<Response> {
 }
 
 async function loginMfaRecoveryVerify(c: RouteContext): Promise<Response> {
-  const { email, password, recoveryCode } = c.req.valid('json') as z.infer<typeof RecoveryVerifyLoginSchema>;
+  const { email, password, recoveryCode } = c.req.valid('json') as z.infer<
+    typeof RecoveryVerifyLoginSchema
+  >;
 
   const rateLimit = await checkRateLimitDO(c.env, 'auth_admin_mfa_recovery', email.toLowerCase(), {
     maxRequests: 5,
@@ -290,13 +350,25 @@ async function loginMfaRecoveryVerify(c: RouteContext): Promise<Response> {
     return apiError(c, 429, 'TOO_MANY_REQUESTS', 'Too many attempts. Please try again later.');
   }
 
-  const user = await queryFirst<{ id: string; email: string; global_role: string; disabled_at: string | null; compromised_at: string | null }>(
+  const user = await queryFirst<{
+    id: string;
+    email: string;
+    global_role: string;
+    disabled_at: string | null;
+    compromised_at: string | null;
+  }>(
     c.env,
     `SELECT id, email, global_role, disabled_at, compromised_at FROM users WHERE email = ?`,
     [email.toLowerCase()],
   );
 
-  if (!user || user.global_role !== 'admin' || user.disabled_at || user.compromised_at || !(await userHasMfa(c.env, user.id))) {
+  if (
+    !user ||
+    user.global_role !== 'admin' ||
+    user.disabled_at ||
+    user.compromised_at ||
+    !(await userHasMfa(c.env, user.id))
+  ) {
     return apiError(c, 401, 'MFA_REQUIRED', 'MFA is required to complete sign-in');
   }
 
@@ -307,12 +379,16 @@ async function loginMfaRecoveryVerify(c: RouteContext): Promise<Response> {
   const validCode = validPassword && (await verifyRecoveryCode(c.env, user.id, recoveryCode));
 
   if (!validPassword || !validCode) {
-    await logAudit(c.env, {
-      entityType: 'user',
-      entityId: user.id,
-      action: 'mfa_recovery_failure',
-      actorEmail: user.email,
-    }, c.executionCtx);
+    await logAudit(
+      c.env,
+      {
+        entityType: 'user',
+        entityId: user.id,
+        action: 'mfa_recovery_failure',
+        actorEmail: user.email,
+      },
+      c.executionCtx,
+    );
     // A valid password with an unverifiable single-use recovery code is a
     // replay/tamper signal on the recovery code (ADR-234 item 7). Observational.
     if (validPassword && !validCode) {
@@ -327,21 +403,29 @@ async function loginMfaRecoveryVerify(c: RouteContext): Promise<Response> {
     return apiError(c, 401, 'INVALID_CREDENTIALS', 'Recovery verification failed');
   }
 
-  const session = await createAdminSessionMfa(c.env, {
-    id: user.id,
-    email: user.email,
-    role: user.global_role,
-  }, {
-    ipHash: await hashString(getClientIp(c)),
-    deviceLabelHash: await deviceFingerprint(c.req.header('User-Agent')),
-  });
+  const session = await createAdminSessionMfa(
+    c.env,
+    {
+      id: user.id,
+      email: user.email,
+      role: user.global_role,
+    },
+    {
+      ipHash: await hashString(getClientIp(c)),
+      deviceLabelHash: await deviceFingerprint(c.req.header('User-Agent')),
+    },
+  );
 
-  await logAudit(c.env, {
-    entityType: 'user',
-    entityId: user.id,
-    action: 'mfa_recovery_success',
-    actorEmail: user.email,
-  }, c.executionCtx);
+  await logAudit(
+    c.env,
+    {
+      entityType: 'user',
+      entityId: user.id,
+      action: 'mfa_recovery_success',
+      actorEmail: user.email,
+    },
+    c.executionCtx,
+  );
 
   return c.json({
     ok: true,
@@ -380,6 +464,10 @@ export function registerLogin(router: AuthApp): void {
   router.post('/login', zValidator('json', LoginSchema), login);
   router.post('/login/mfa/start', zValidator('json', LoginMfaStartSchema), loginMfaStart);
   router.post('/login/mfa/verify', zValidator('json', LoginMfaVerifySchema), loginMfaVerify);
-  router.post('/login/mfa/recovery-verify', zValidator('json', RecoveryVerifyLoginSchema), loginMfaRecoveryVerify);
+  router.post(
+    '/login/mfa/recovery-verify',
+    zValidator('json', RecoveryVerifyLoginSchema),
+    loginMfaRecoveryVerify,
+  );
   router.post('/logout', logout);
 }

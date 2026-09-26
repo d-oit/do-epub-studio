@@ -332,17 +332,20 @@ to flush locally-captured reading data when back online.
 All endpoints return standard error shapes:
 
 ```json
-{ "ok": false, "error": { "code": "UNAUTHORIZED", "message": "Invalid or expired session", "traceId": "trc_..." } }
+{
+  "ok": false,
+  "error": { "code": "UNAUTHORIZED", "message": "Invalid or expired session", "traceId": "trc_..." }
+}
 ```
 
-| Status | Meaning |
-|--------|---------|
-| 400 | Bad request — invalid input |
-| 401 | Unauthorized — missing or invalid token |
-| 403 | Forbidden — insufficient permissions |
-| 404 | Not found |
-| 429 | Rate limited — retry after `Retry-After` header |
-| 500 | Internal server error — check `traceId` |
+| Status | Meaning                                         |
+| ------ | ----------------------------------------------- |
+| 400    | Bad request — invalid input                     |
+| 401    | Unauthorized — missing or invalid token         |
+| 403    | Forbidden — insufficient permissions            |
+| 404    | Not found                                       |
+| 429    | Rate limited — retry after `Retry-After` header |
+| 500    | Internal server error — check `traceId`         |
 
 ## Rate Limiting
 

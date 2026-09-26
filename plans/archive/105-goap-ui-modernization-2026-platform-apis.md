@@ -31,33 +31,33 @@ experience while maintaining the editorial minimalist design direction.
 
 ### Missing — 2026 Platform APIs (zero usage found)
 
-| Feature | Benefit | Effort |
-|---------|---------|--------|
-| **Container Queries** (`@container`) | Component-intrinsic responsiveness for reader panels, cards, admin tables | M |
-| **Scroll-Driven Animations** (`animation-timeline: scroll()`) | Reading progress bar, parallax headers, chapter-enter animations | S |
-| **Popover API** (`popover` attribute) | Native tooltips, annotation menus, settings dropdowns — no JS needed | S |
-| **Anchor Positioning** (`anchor-name`, `position-anchor`) | Annotation toolbar anchored to text selection | M |
-| **CSS Subgrid** | Admin tables, catalog grid, TOC hierarchy | S |
-| **Logical Properties** (`padding-inline`, `margin-block`) | RTL/i18n readiness | S |
+| Feature                                                       | Benefit                                                                   | Effort |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------- | ------ |
+| **Container Queries** (`@container`)                          | Component-intrinsic responsiveness for reader panels, cards, admin tables | M      |
+| **Scroll-Driven Animations** (`animation-timeline: scroll()`) | Reading progress bar, parallax headers, chapter-enter animations          | S      |
+| **Popover API** (`popover` attribute)                         | Native tooltips, annotation menus, settings dropdowns — no JS needed      | S      |
+| **Anchor Positioning** (`anchor-name`, `position-anchor`)     | Annotation toolbar anchored to text selection                             | M      |
+| **CSS Subgrid**                                               | Admin tables, catalog grid, TOC hierarchy                                 | S      |
+| **Logical Properties** (`padding-inline`, `margin-block`)     | RTL/i18n readiness                                                        | S      |
 
 ### Missing — React 19 Patterns
 
-| Pattern | Current Approach | Benefit |
-|---------|-----------------|---------|
-| `use()` hook for data fetching | `useEffect` + `useState` | Suspense-native, eliminates loading state boilerplate |
-| `useOptimistic` | Manual optimistic state in reader store | Native optimistic UI for annotations/bookmarks |
-| `useFormStatus` | Custom `isSubmitting` state | Built-in form pending states for admin pages |
-| `useActionState` | Manual form handling | Declarative form actions for login, grants |
+| Pattern                        | Current Approach                        | Benefit                                               |
+| ------------------------------ | --------------------------------------- | ----------------------------------------------------- |
+| `use()` hook for data fetching | `useEffect` + `useState`                | Suspense-native, eliminates loading state boilerplate |
+| `useOptimistic`                | Manual optimistic state in reader store | Native optimistic UI for annotations/bookmarks        |
+| `useFormStatus`                | Custom `isSubmitting` state             | Built-in form pending states for admin pages          |
+| `useActionState`               | Manual form handling                    | Declarative form actions for login, grants            |
 
 ### Missing — Modern UI Patterns
 
-| Pattern | Where needed | Status |
-|---------|-------------|--------|
-| Skeleton loading with content-visibility | CatalogPage, BooksPage | Has skeleton class, not using `content-visibility` |
-| Scroll-snap for reader pagination | ReaderPage horizontal swipe | Not implemented |
-| `view-transition-name` per-element | Book cards → reader transition | Only root transition |
-| `interpolate-size: allow-keywords` | Collapsible panels (TOC, settings) | Not using |
-| `field-sizing: content` | Comment/annotation text inputs | Not using |
+| Pattern                                  | Where needed                       | Status                                             |
+| ---------------------------------------- | ---------------------------------- | -------------------------------------------------- |
+| Skeleton loading with content-visibility | CatalogPage, BooksPage             | Has skeleton class, not using `content-visibility` |
+| Scroll-snap for reader pagination        | ReaderPage horizontal swipe        | Not implemented                                    |
+| `view-transition-name` per-element       | Book cards → reader transition     | Only root transition                               |
+| `interpolate-size: allow-keywords`       | Collapsible panels (TOC, settings) | Not using                                          |
+| `field-sizing: content`                  | Comment/annotation text inputs     | Not using                                          |
 
 ## Decomposed Tasks
 

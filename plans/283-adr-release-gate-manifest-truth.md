@@ -23,7 +23,7 @@ While gating GOAP-276 Phase 0 #5, `scripts/validate-gate-parity.sh` printed:
 
 A live grep established two distinct causes behind the same symptom:
 
-1. **Three are naming drift** — the guard *is* implemented, just under a
+1. **Three are naming drift** — the guard _is_ implemented, just under a
    different `name:` (`Verify tag matches VERSION file`,
    `Verify tag is on main branch`, `Verify CI checks passed`).
 2. **Three are genuinely absent** — no `Coverage Gate`, `Cross-Browser E2E` or
@@ -50,7 +50,7 @@ through a different sensor.
    review; bundling release-gate semantics into a coverage PR would obscure both.
 3. **Deferral is legitimate only while the follow-up exists and is linked.**
    AGENTS.md Tier 1 permits a surfaced pre-existing issue to move to a follow-up
-   GOAP + ADR + tracking issue *linked from the current PR*; the PR is not
+   GOAP + ADR + tracking issue _linked from the current PR_; the PR is not
    mergeable until that link exists. This ADR plus GOAP-283 and the tracking
    issue are that link.
 4. **The `⚠`-forever state is accepted only as an interim**, with a named owner

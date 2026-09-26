@@ -9,9 +9,9 @@
 ## Context
 
 [`DESIGN.md`](../DESIGN.md) declares the project's editorial direction as
-**editorial minimalist** — *“inspired by book design, not SaaS dashboards;
+**editorial minimalist** — _“inspired by book design, not SaaS dashboards;
 clean typography, generous whitespace; muted palette with intentional color
-accents.”* Typography is at the heart of that direction.
+accents.”_ Typography is at the heart of that direction.
 
 Plan 115 surfaced item **U4 (typography decision)** asking whether to
 “commit to serif/sans pairing or document Geist as intentional.” Both options
@@ -30,11 +30,11 @@ intent behind that choice so future contributors do not relitigate it.
 > `Instrument Serif` for headings and editorial accents, `Geist` for body,
 > with monospace reserved for code and technical content.**
 
-| Role              | Family           | Token            | Fallback chain                                            | Source                              |
-|-------------------|------------------|------------------|-----------------------------------------------------------|--------------------------------------|
-| Display / heading | `Instrument Serif`| `--font-display` | `Georgia, 'Times New Roman', serif`                       | `@fontsource/instrument-serif`       |
-| Body              | `Geist` (variable)| `--font-sans`    | `Inter, system-ui, -apple-system, sans-serif`             | `@fontsource-variable/geist`         |
-| Monospace         | (system mono)    | `--font-mono`    | `ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, monospace` | (no self-host — uses platform mono)  |
+| Role              | Family             | Token            | Fallback chain                                                       | Source                              |
+| ----------------- | ------------------ | ---------------- | -------------------------------------------------------------------- | ----------------------------------- |
+| Display / heading | `Instrument Serif` | `--font-display` | `Georgia, 'Times New Roman', serif`                                  | `@fontsource/instrument-serif`      |
+| Body              | `Geist` (variable) | `--font-sans`    | `Inter, system-ui, -apple-system, sans-serif`                        | `@fontsource-variable/geist`        |
+| Monospace         | (system mono)      | `--font-mono`    | `ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, monospace` | (no self-host — uses platform mono) |
 
 ## Rationale
 
@@ -56,13 +56,13 @@ intent behind that choice so future contributors do not relitigate it.
 
 ## Implementation references
 
-| Concern                     | Location                                                                          |
-|-----------------------------|-----------------------------------------------------------------------------------|
-| Token definitions           | `apps/web/src/styles/globals.css` (`@font-face` blocks + `--font-display`, etc.)  |
-| Self-hosted font imports    | `apps/web/src/styles/globals.css` (top-of-file `@import "@fontsource-variable/geist";` + `@import "@fontsource/instrument-serif";`) |
-| Tailwind v4 wiring          | `@theme inline { --font-display: var(--font-display); ... }` in `globals.css`     |
-| CSP allow-list (post-#748)  | `apps/web/public/_headers` (`font-src 'self'` only)                               |
-| Used in                     | AppShell headings, Reader toolbar, Account pages, Auth screen                     |
+| Concern                    | Location                                                                                                                            |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Token definitions          | `apps/web/src/styles/globals.css` (`@font-face` blocks + `--font-display`, etc.)                                                    |
+| Self-hosted font imports   | `apps/web/src/styles/globals.css` (top-of-file `@import "@fontsource-variable/geist";` + `@import "@fontsource/instrument-serif";`) |
+| Tailwind v4 wiring         | `@theme inline { --font-display: var(--font-display); ... }` in `globals.css`                                                       |
+| CSP allow-list (post-#748) | `apps/web/public/_headers` (`font-src 'self'` only)                                                                                 |
+| Used in                    | AppShell headings, Reader toolbar, Account pages, Auth screen                                                                       |
 
 ## Consequences
 

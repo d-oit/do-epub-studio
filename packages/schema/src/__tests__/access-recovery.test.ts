@@ -1,9 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  AccessRequestSchema,
-  RecoveryRequestSchema,
-  RecoveryVerifySchema,
-} from '../schemas';
+import { AccessRequestSchema, RecoveryRequestSchema, RecoveryVerifySchema } from '../schemas';
 
 describe('AccessRequestSchema', () => {
   it('accepts valid request', () => {
@@ -13,7 +9,11 @@ describe('AccessRequestSchema', () => {
   });
 
   it('accepts request with password', () => {
-    const result = AccessRequestSchema.parse({ bookSlug: 'book', email: 'a@b.com', password: 'pass123' });
+    const result = AccessRequestSchema.parse({
+      bookSlug: 'book',
+      email: 'a@b.com',
+      password: 'pass123',
+    });
     expect(result.password).toBe('pass123');
   });
 

@@ -82,9 +82,7 @@ test.describe('Reader annotations', () => {
           body: JSON.stringify({
             ok: true,
             data: {
-              buckets: [
-                { bucketDate: '2026-07-01', activeMinutes: 25, activePages: 12 },
-              ],
+              buckets: [{ bucketDate: '2026-07-01', activeMinutes: 25, activePages: 12 }],
             },
           }),
         });
@@ -103,7 +101,10 @@ test.describe('Reader annotations', () => {
     if (await infoButton.isVisible().catch(() => false)) {
       await infoButton.click();
       await page.waitForTimeout(1000);
-      const insightsVisible = await page.getByText(/Reading Insights|Total Active Time|Pages Read/i).isVisible().catch(() => false);
+      const insightsVisible = await page
+        .getByText(/Reading Insights|Total Active Time|Pages Read/i)
+        .isVisible()
+        .catch(() => false);
       expect(insightsVisible || true).toBe(true);
     }
   });
@@ -135,7 +136,10 @@ test.describe('Admin console', () => {
   test('@mobile can view grants for a book', async ({ page }) => {
     await loginAsAdmin(page);
 
-    await page.getByRole('button', { name: /Manage Access/i }).first().click();
+    await page
+      .getByRole('button', { name: /Manage Access/i })
+      .first()
+      .click();
     await expect(page).toHaveURL(/\/admin\/books\/book-1\/grants/);
 
     await expect(page).toHaveURL(/\/admin\/books\/book-1\/grants/);
@@ -148,7 +152,9 @@ test.describe('Admin console', () => {
     await expect(page).toHaveURL(/\/admin\/audit/);
   });
 
-  test('@mobile admin pages are protected — redirect to login when unauthenticated', async ({ page }) => {
+  test('@mobile admin pages are protected — redirect to login when unauthenticated', async ({
+    page,
+  }) => {
     await page.goto(`/admin/books`);
     await expect(page).toHaveURL(/\/admin\/login$/);
 
@@ -168,7 +174,10 @@ test.describe('Admin console', () => {
       await route.fulfill({
         status: 401,
         contentType: 'application/json',
-        body: JSON.stringify({ ok: false, error: { code: 'SESSION_EXPIRED', message: 'Session expired' } }),
+        body: JSON.stringify({
+          ok: false,
+          error: { code: 'SESSION_EXPIRED', message: 'Session expired' },
+        }),
       });
     });
 
@@ -208,12 +217,20 @@ test.describe('Accessibility', () => {
     const isNarrow = (page.viewportSize()?.width ?? 1280) < 640;
     if (isNarrow) {
       // On mobile, toolbar buttons collapse into an overflow menu
-      await expect(page.getByRole('button', { name: 'More options' })).toBeVisible({ timeout: 60000 });
+      await expect(page.getByRole('button', { name: 'More options' })).toBeVisible({
+        timeout: 60000,
+      });
       await page.getByRole('button', { name: 'More options' }).click();
       // Menu items use role="menuitem" after GOAP-224 a11y fix (B8)
-      await expect(page.locator('.cq-reader-toolbar-overflow').getByRole('menuitem', { name: 'Settings' })).toBeVisible();
-      await expect(page.locator('.cq-reader-toolbar-overflow').getByRole('menuitem', { name: 'Bookmarks' })).toBeVisible();
-      await expect(page.locator('.cq-reader-toolbar-overflow').getByRole('menuitem', { name: 'Sign Out' })).toBeVisible();
+      await expect(
+        page.locator('.cq-reader-toolbar-overflow').getByRole('menuitem', { name: 'Settings' }),
+      ).toBeVisible();
+      await expect(
+        page.locator('.cq-reader-toolbar-overflow').getByRole('menuitem', { name: 'Bookmarks' }),
+      ).toBeVisible();
+      await expect(
+        page.locator('.cq-reader-toolbar-overflow').getByRole('menuitem', { name: 'Sign Out' }),
+      ).toBeVisible();
     } else {
       await expect(page.getByRole('button', { name: 'Contents' })).toBeVisible({ timeout: 60000 });
       await expect(page.getByRole('button', { name: 'Settings' })).toBeVisible({ timeout: 60000 });
@@ -240,7 +257,10 @@ test.describe('Accessibility', () => {
       await route.fulfill({
         status: 403,
         contentType: 'application/json',
-        body: JSON.stringify({ ok: false, error: { code: 'ACCESS_DENIED', message: 'Access denied' } }),
+        body: JSON.stringify({
+          ok: false,
+          error: { code: 'ACCESS_DENIED', message: 'Access denied' },
+        }),
       });
     });
 
@@ -253,18 +273,16 @@ test.describe('Accessibility', () => {
     const errorElement = page.getByText('Access denied');
     await expect(errorElement).toBeVisible();
 
-    const hasAlertRole = await errorElement.evaluate(
-      (el) => {
-        const check = (node: HTMLElement | null): boolean => {
-          if (!node) return false;
-          const role = node.getAttribute('role');
-          const live = node.getAttribute('aria-live');
-          if (role === 'alert' || live === 'assertive' || live === 'polite') return true;
-          return check(node.parentElement);
-        };
-        return check(el as HTMLElement);
-      }
-    );
+    const hasAlertRole = await errorElement.evaluate((el) => {
+      const check = (node: HTMLElement | null): boolean => {
+        if (!node) return false;
+        const role = node.getAttribute('role');
+        const live = node.getAttribute('aria-live');
+        if (role === 'alert' || live === 'assertive' || live === 'polite') return true;
+        return check(node.parentElement);
+      };
+      return check(el as HTMLElement);
+    });
     expect(hasAlertRole || true).toBe(true);
   });
 });

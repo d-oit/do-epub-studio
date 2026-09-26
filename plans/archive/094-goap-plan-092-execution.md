@@ -23,23 +23,23 @@ At the start of Phase B, main was at `f280ecd` (post Phase A).
 The plan-092 backlog contained 6 items (T1–T6); T4 was done in
 Phase A, leaving T1, T2, T3, T5, T6.
 
-| Item | Type | Source | Status at start |
-|------|------|--------|------------------|
-| T1 | CSP audit + record | plan #092 | Open (verify) |
-| T2 | CSRF-N/A policy record | plan #092 | Open (doc) |
-| T3 | Proactive session expiry | plan #092 | Open (impl) |
-| T5 | External telemetry contract | plan #092 | Open (doc) |
-| T6 | Signed-URL `fileSize`/`mimeType` | plan #092 | Open (impl) |
+| Item | Type                             | Source    | Status at start |
+| ---- | -------------------------------- | --------- | --------------- |
+| T1   | CSP audit + record               | plan #092 | Open (verify)   |
+| T2   | CSRF-N/A policy record           | plan #092 | Open (doc)      |
+| T3   | Proactive session expiry         | plan #092 | Open (impl)     |
+| T5   | External telemetry contract      | plan #092 | Open (doc)      |
+| T6   | Signed-URL `fileSize`/`mimeType` | plan #092 | Open (impl)     |
 
 ## Decomposition (tasks)
 
-| ID | Task | Type | Status |
-|----|------|------|--------|
-| T1 | Audit `apps/web/public/_headers` against ADR-035; record result | Security/doc | ✅ |
-| T2 | Document CSRF-N/A decision in `docs/security-posture.md` | Doc | ✅ |
-| T3 | Worker: extend `createSession` to return `expiresAt`; client: add `sessionExpiresAt` to auth store; add `useSessionExpiry` hook | Impl | ✅ |
-| T5 | Add `docs/observability-telemetry.md` capturing the `VITE_TELEMETRY_ENDPOINT` contract | Doc | ✅ |
-| T6 | Add R2 `head` to `generateSignedUrl`; in-process LRU cache; populate real `fileSize`/`mimeType` | Impl | ✅ |
+| ID  | Task                                                                                                                            | Type         | Status |
+| --- | ------------------------------------------------------------------------------------------------------------------------------- | ------------ | ------ |
+| T1  | Audit `apps/web/public/_headers` against ADR-035; record result                                                                 | Security/doc | ✅     |
+| T2  | Document CSRF-N/A decision in `docs/security-posture.md`                                                                        | Doc          | ✅     |
+| T3  | Worker: extend `createSession` to return `expiresAt`; client: add `sessionExpiresAt` to auth store; add `useSessionExpiry` hook | Impl         | ✅     |
+| T5  | Add `docs/observability-telemetry.md` capturing the `VITE_TELEMETRY_ENDPOINT` contract                                          | Doc          | ✅     |
+| T6  | Add R2 `head` to `generateSignedUrl`; in-process LRU cache; populate real `fileSize`/`mimeType`                                 | Impl         | ✅     |
 
 ## Strategy (Strategize)
 
@@ -72,9 +72,9 @@ Phase A, leaving T1, T2, T3, T5, T6.
 
 ### Commit plan
 
-| Commit | Purpose |
-|--------|---------|
-| `d153907` | Main change: T1 + T2 + T3 + T5 + T6 + new docs |
+| Commit    | Purpose                                                                   |
+| --------- | ------------------------------------------------------------------------- |
+| `d153907` | Main change: T1 + T2 + T3 + T5 + T6 + new docs                            |
 | `f8ffc38` | Codacy remediation: 3 findings (2 medium + 1 high) on session-expiry hook |
 
 ### Files changed
@@ -96,11 +96,11 @@ Phase A, leaving T1, T2, T3, T5, T6.
 
 ### Codacy remediation (round 1)
 
-| Finding | Severity | Fix |
-|---------|----------|-----|
-| `setInterval(() => setNow(...))` | Medium | Wrap arrow in braces |
-| `return () => clearInterval(id)` | Medium | Wrap arrow in braces |
-| `if (res?.sessionToken)` on non-nullish | High | Drop `?.` |
+| Finding                                 | Severity | Fix                  |
+| --------------------------------------- | -------- | -------------------- |
+| `setInterval(() => setNow(...))`        | Medium   | Wrap arrow in braces |
+| `return () => clearInterval(id)`        | Medium   | Wrap arrow in braces |
+| `if (res?.sessionToken)` on non-nullish | High     | Drop `?.`            |
 
 After the 3-line fix in commit `f8ffc38`, Codacy re-ran the
 analysis: **0 new issues** on the PR diff.
@@ -143,19 +143,19 @@ analysis: **0 new issues** on the PR diff.
 
 ## Synthesis (Results)
 
-| Metric | Value |
-|--------|-------|
-| PRs opened | 1 (PR #527) |
-| PRs merged | 1 (squash-merge to `main` at `e62a2cb`) |
-| Branches deleted | 1 (`feat/plan-092-resolution`) |
-| Files changed | 18 (4 new, 14 modifications) |
-| Lines changed (cumulative across 2 commits) | +728/-160 |
-| New unit tests | 9 (5 hook, 4 signed-url) |
-| Codacy findings | 3 → 0 across 1 fix commit |
-| Plan-092 items closed | 5 of 6 (T1, T2, T3, T5, T6) |
-| Local quality gate | PASS at every commit |
-| PR CI run | 16/16 active checks green |
-| Post-merge main CI | SUCCESS |
+| Metric                                      | Value                                   |
+| ------------------------------------------- | --------------------------------------- |
+| PRs opened                                  | 1 (PR #527)                             |
+| PRs merged                                  | 1 (squash-merge to `main` at `e62a2cb`) |
+| Branches deleted                            | 1 (`feat/plan-092-resolution`)          |
+| Files changed                               | 18 (4 new, 14 modifications)            |
+| Lines changed (cumulative across 2 commits) | +728/-160                               |
+| New unit tests                              | 9 (5 hook, 4 signed-url)                |
+| Codacy findings                             | 3 → 0 across 1 fix commit               |
+| Plan-092 items closed                       | 5 of 6 (T1, T2, T3, T5, T6)             |
+| Local quality gate                          | PASS at every commit                    |
+| PR CI run                                   | 16/16 active checks green               |
+| Post-merge main CI                          | SUCCESS                                 |
 
 ### CI checks that passed on the merged commit (e62a2cb)
 
@@ -172,18 +172,18 @@ analysis: **0 new issues** on the PR diff.
 
 ### Verification matrix
 
-| Capability | Verified by |
-|------------|-------------|
+| Capability                                            | Verified by                             |
+| ----------------------------------------------------- | --------------------------------------- |
 | Worker `createSession` returns `{ token, expiresAt }` | routes.access.test.ts, recovery.test.ts |
-| Refresh route returns `expiresAt` | routes.access.test.ts |
-| Web auth store persists `sessionExpiresAt` | stores.test.ts (unchanged) |
-| `useSessionExpiry` state machine | useSessionExpiry.test.ts (5 tests) |
-| R2 `head` populates `fileSize`/`mimeType` | signed-url.test.ts (4 tests) |
-| LRU cache hits on second call | signed-url.test.ts |
-| R2-down fallback | signed-url.test.ts |
-| CSP `script-src` strict (no `unsafe-inline`) | docs/security-posture.md (recorded) |
-| CSRF-N/A decision recorded | docs/security-posture.md |
-| Telemetry external-by-default contract | docs/observability-telemetry.md |
+| Refresh route returns `expiresAt`                     | routes.access.test.ts                   |
+| Web auth store persists `sessionExpiresAt`            | stores.test.ts (unchanged)              |
+| `useSessionExpiry` state machine                      | useSessionExpiry.test.ts (5 tests)      |
+| R2 `head` populates `fileSize`/`mimeType`             | signed-url.test.ts (4 tests)            |
+| LRU cache hits on second call                         | signed-url.test.ts                      |
+| R2-down fallback                                      | signed-url.test.ts                      |
+| CSP `script-src` strict (no `unsafe-inline`)          | docs/security-posture.md (recorded)     |
+| CSRF-N/A decision recorded                            | docs/security-posture.md                |
+| Telemetry external-by-default contract                | docs/observability-telemetry.md         |
 
 ## Cross-references
 

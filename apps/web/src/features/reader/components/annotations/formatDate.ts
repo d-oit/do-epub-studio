@@ -12,8 +12,10 @@ export function formatDate(dateString: string, t?: TranslateFn): string {
   const diffDays = Math.floor(diffMs / 86400000);
 
   if (diffMins < 1) return t ? t('relativeTime.justNow') : 'just now';
-  if (diffMins < 60) return t ? t('relativeTime.minutesAgo', { count: diffMins }) : `${diffMins}m ago`;
-  if (diffHours < 24) return t ? t('relativeTime.hoursAgo', { count: diffHours }) : `${diffHours}h ago`;
+  if (diffMins < 60)
+    return t ? t('relativeTime.minutesAgo', { count: diffMins }) : `${diffMins}m ago`;
+  if (diffHours < 24)
+    return t ? t('relativeTime.hoursAgo', { count: diffHours }) : `${diffHours}h ago`;
   if (diffDays < 7) return t ? t('relativeTime.daysAgo', { count: diffDays }) : `${diffDays}d ago`;
 
   return formatLocaleDate(date);

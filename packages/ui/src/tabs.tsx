@@ -78,7 +78,9 @@ export function Tabs({
               aria-controls={`tabpanel-${item.id}`}
               id={`tab-${item.id}`}
               tabIndex={isActive ? 0 : -1}
-              onClick={() => { handleSelect(item.id); }}
+              onClick={() => {
+                handleSelect(item.id);
+              }}
               onKeyDown={(e) => handleKeyDown(e, index)}
               className={`flex-1 sm:flex-initial px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
                 isActive

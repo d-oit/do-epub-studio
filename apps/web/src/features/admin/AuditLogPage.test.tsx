@@ -24,7 +24,11 @@ async function renderAndFlush() {
   // Use async act so React 19's use() + Suspense can settle
   // synchronously inside the act scope.
   await act(() => {
-    render(<MemoryRouter><AdminAuditPage /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <AdminAuditPage />
+      </MemoryRouter>,
+    );
     return Promise.resolve();
   });
 }
@@ -36,7 +40,17 @@ describe('AdminAuditPage', () => {
 
   it('renders audit entries', async () => {
     vi.mocked(apiRequest).mockResolvedValue({
-      entries: [{ id: '1', actorEmail: 'a@ex.com', entityType: 'book', entityId: 'b1', action: 'create', payload: null, createdAt: new Date().toISOString() }],
+      entries: [
+        {
+          id: '1',
+          actorEmail: 'a@ex.com',
+          entityType: 'book',
+          entityId: 'b1',
+          action: 'create',
+          payload: null,
+          createdAt: new Date().toISOString(),
+        },
+      ],
       total: 1,
     });
 
@@ -46,7 +60,17 @@ describe('AdminAuditPage', () => {
 
   it('refresh refetches and renders new audit entries without changing filters', async () => {
     vi.mocked(apiRequest).mockResolvedValue({
-      entries: [{ id: '1', actorEmail: 'a@ex.com', entityType: 'book', entityId: 'b1', action: 'create', payload: null, createdAt: new Date().toISOString() }],
+      entries: [
+        {
+          id: '1',
+          actorEmail: 'a@ex.com',
+          entityType: 'book',
+          entityId: 'b1',
+          action: 'create',
+          payload: null,
+          createdAt: new Date().toISOString(),
+        },
+      ],
       total: 1,
     });
 
@@ -55,7 +79,17 @@ describe('AdminAuditPage', () => {
 
     // Backend records a new row after the initial load.
     vi.mocked(apiRequest).mockResolvedValue({
-      entries: [{ id: '2', actorEmail: 'new@ex.com', entityType: 'user', entityId: 'u1', action: 'login', payload: null, createdAt: new Date().toISOString() }],
+      entries: [
+        {
+          id: '2',
+          actorEmail: 'new@ex.com',
+          entityType: 'user',
+          entityId: 'u1',
+          action: 'login',
+          payload: null,
+          createdAt: new Date().toISOString(),
+        },
+      ],
       total: 1,
     });
 
@@ -85,7 +119,17 @@ describe('AdminAuditPage', () => {
 
   it('renders pagination info', async () => {
     vi.mocked(apiRequest).mockResolvedValue({
-      entries: [{ id: '1', actorEmail: 'a@ex.com', entityType: 'book', entityId: 'b1', action: 'create', payload: null, createdAt: new Date().toISOString() }],
+      entries: [
+        {
+          id: '1',
+          actorEmail: 'a@ex.com',
+          entityType: 'book',
+          entityId: 'b1',
+          action: 'create',
+          payload: null,
+          createdAt: new Date().toISOString(),
+        },
+      ],
       total: 1,
     });
 
@@ -112,7 +156,9 @@ describe('AdminAuditPage', () => {
     await renderAndFlush();
     expect(apiRequest).toHaveBeenCalled();
 
-    fireEvent.change(screen.getByLabelText('admin.audit.entityType'), { target: { value: 'book' } });
+    fireEvent.change(screen.getByLabelText('admin.audit.entityType'), {
+      target: { value: 'book' },
+    });
 
     await act(async () => {
       await new Promise((resolve) => setTimeout(resolve, 50));
@@ -130,7 +176,9 @@ describe('AdminAuditPage', () => {
     await renderAndFlush();
     expect(apiRequest).toHaveBeenCalled();
 
-    fireEvent.change(screen.getByPlaceholderText('admin.audit.filterByEntityId'), { target: { value: 'b1' } });
+    fireEvent.change(screen.getByPlaceholderText('admin.audit.filterByEntityId'), {
+      target: { value: 'b1' },
+    });
 
     await act(async () => {
       await new Promise((resolve) => setTimeout(resolve, 50));
@@ -148,7 +196,9 @@ describe('AdminAuditPage', () => {
     await renderAndFlush();
     expect(apiRequest).toHaveBeenCalled();
 
-    fireEvent.change(screen.getByLabelText('admin.audit.dateFrom'), { target: { value: '2024-01-01' } });
+    fireEvent.change(screen.getByLabelText('admin.audit.dateFrom'), {
+      target: { value: '2024-01-01' },
+    });
 
     await act(async () => {
       await new Promise((resolve) => setTimeout(resolve, 50));
@@ -166,7 +216,9 @@ describe('AdminAuditPage', () => {
     await renderAndFlush();
     expect(apiRequest).toHaveBeenCalled();
 
-    fireEvent.change(screen.getByLabelText('admin.audit.entityType'), { target: { value: 'book' } });
+    fireEvent.change(screen.getByLabelText('admin.audit.entityType'), {
+      target: { value: 'book' },
+    });
     fireEvent.click(screen.getByText('admin.audit.resetFilters'));
 
     await act(async () => {
@@ -182,7 +234,13 @@ describe('AdminAuditPage', () => {
   it('navigates to previous page', async () => {
     vi.mocked(apiRequest).mockResolvedValue({
       entries: Array.from({ length: 50 }, (_, i) => ({
-        id: String(i), actorEmail: 'a@ex.com', entityType: 'book', entityId: 'b1', action: 'create', payload: null, createdAt: new Date().toISOString()
+        id: String(i),
+        actorEmail: 'a@ex.com',
+        entityType: 'book',
+        entityId: 'b1',
+        action: 'create',
+        payload: null,
+        createdAt: new Date().toISOString(),
       })),
       total: 100,
     });
@@ -198,7 +256,13 @@ describe('AdminAuditPage', () => {
   it('navigates to next page', async () => {
     vi.mocked(apiRequest).mockResolvedValue({
       entries: Array.from({ length: 50 }, (_, i) => ({
-        id: String(i), actorEmail: 'a@ex.com', entityType: 'book', entityId: 'b1', action: 'create', payload: null, createdAt: new Date().toISOString()
+        id: String(i),
+        actorEmail: 'a@ex.com',
+        entityType: 'book',
+        entityId: 'b1',
+        action: 'create',
+        payload: null,
+        createdAt: new Date().toISOString(),
       })),
       total: 100,
     });

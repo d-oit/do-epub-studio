@@ -37,7 +37,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
@@ -71,10 +71,10 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Checkout full history
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          fetch-depth: 0  # full history so merge-base works (no 250-commit API cap either)
+          fetch-depth: 0 # full history so merge-base works (no 250-commit API cap either)
           ref: ${{ github.event.pull_request.head.sha }}
 
       # Runs the FULL hook (subject + body rules) on every commit in the PR

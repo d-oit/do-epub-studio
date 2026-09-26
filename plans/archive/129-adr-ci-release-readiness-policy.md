@@ -40,12 +40,12 @@ the failures are triaged and fixed.
 
 Extends ADR-087 with a fourth category:
 
-| Category | Definition | Action |
-|----------|-----------|--------|
-| **Current `main`** | Reproducible on latest `origin/main` | Fix before release |
-| **Stale PR** | From a merge commit that no longer applies | Document; do not fix unless reproducible |
-| **Workflow hygiene** | Lockfile drift, stale imports, missing setup | Prevent by policy |
-| **Scheduled-only** | Fails in scheduled runs but passes in PR checks | **New:** Treat as Current `main` — scheduled runs exercise production builds and cross-browser matrices that PR checks do not |
+| Category             | Definition                                      | Action                                                                                                                        |
+| -------------------- | ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| **Current `main`**   | Reproducible on latest `origin/main`            | Fix before release                                                                                                            |
+| **Stale PR**         | From a merge commit that no longer applies      | Document; do not fix unless reproducible                                                                                      |
+| **Workflow hygiene** | Lockfile drift, stale imports, missing setup    | Prevent by policy                                                                                                             |
+| **Scheduled-only**   | Fails in scheduled runs but passes in PR checks | **New:** Treat as Current `main` — scheduled runs exercise production builds and cross-browser matrices that PR checks do not |
 
 ### 3. Scheduled E2E Failure Escalation
 

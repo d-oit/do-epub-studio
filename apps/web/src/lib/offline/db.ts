@@ -136,7 +136,10 @@ export async function encryptEntry<T extends object>(
   };
 }
 
-export async function decryptEntry<T>(stored: Record<string, unknown>, plaintextKeys: readonly (keyof T)[]): Promise<T | null> {
+export async function decryptEntry<T>(
+  stored: Record<string, unknown>,
+  plaintextKeys: readonly (keyof T)[],
+): Promise<T | null> {
   const t = token();
   const payload = stored.encryptedPayload;
 
@@ -212,7 +215,9 @@ export async function getDB(): Promise<IDBPDatabase> {
         }
 
         if (!db.objectStoreNames.contains('readingInsights')) {
-          const insightsStore = db.createObjectStore('readingInsights', { keyPath: ['bookId', 'date'] });
+          const insightsStore = db.createObjectStore('readingInsights', {
+            keyPath: ['bookId', 'date'],
+          });
           insightsStore.createIndex('bookId', 'bookId');
         }
       }
@@ -256,7 +261,9 @@ export async function getProgress(bookId: string): Promise<ProgressEntry | undef
   const db = await getDB();
   const entries = await db.getAllFromIndex('progress', 'bookId', bookId);
   const decrypted = await Promise.all(
-    (entries as Record<string, unknown>[]).map((e) => decryptEntry<ProgressEntry>(e, PROGRESS_PLAINTEXT)),
+    (entries as Record<string, unknown>[]).map((e) =>
+      decryptEntry<ProgressEntry>(e, PROGRESS_PLAINTEXT),
+    ),
   );
   const valid = decrypted.filter((e): e is ProgressEntry => e !== null);
   return valid.sort((a, b) => b.lastRead - a.lastRead)[0];
@@ -266,9 +273,13 @@ export async function getUnsyncedProgress(): Promise<ProgressEntry[]> {
   const db = await getDB();
   const all = await db.getAll('progress');
   const decrypted = await Promise.all(
-    (all as Record<string, unknown>[]).map((e) => decryptEntry<ProgressEntry>(e, PROGRESS_PLAINTEXT)),
+    (all as Record<string, unknown>[]).map((e) =>
+      decryptEntry<ProgressEntry>(e, PROGRESS_PLAINTEXT),
+    ),
   );
-  return decrypted.filter((entry): entry is ProgressEntry => entry !== null && entry.synced === false);
+  return decrypted.filter(
+    (entry): entry is ProgressEntry => entry !== null && entry.synced === false,
+  );
 }
 
 export async function saveAnnotation(entry: AnnotationEntry): Promise<void> {
@@ -281,7 +292,9 @@ export async function getAnnotations(bookId: string): Promise<AnnotationEntry[]>
   const db = await getDB();
   const all = await db.getAllFromIndex('annotations', 'bookId', bookId);
   const decrypted = await Promise.all(
-    (all as Record<string, unknown>[]).map((e) => decryptEntry<AnnotationEntry>(e, ANNOTATION_PLAINTEXT)),
+    (all as Record<string, unknown>[]).map((e) =>
+      decryptEntry<AnnotationEntry>(e, ANNOTATION_PLAINTEXT),
+    ),
   );
   return decrypted.filter((e): e is AnnotationEntry => e !== null);
 }
@@ -290,9 +303,13 @@ export async function getUnsyncedAnnotations(): Promise<AnnotationEntry[]> {
   const db = await getDB();
   const all = await db.getAll('annotations');
   const decrypted = await Promise.all(
-    (all as Record<string, unknown>[]).map((e) => decryptEntry<AnnotationEntry>(e, ANNOTATION_PLAINTEXT)),
+    (all as Record<string, unknown>[]).map((e) =>
+      decryptEntry<AnnotationEntry>(e, ANNOTATION_PLAINTEXT),
+    ),
   );
-  return decrypted.filter((entry): entry is AnnotationEntry => entry !== null && entry.synced === false);
+  return decrypted.filter(
+    (entry): entry is AnnotationEntry => entry !== null && entry.synced === false,
+  );
 }
 
 export async function addToSyncQueue(item: SyncQueueItem): Promise<void> {
@@ -305,7 +322,9 @@ export async function getSyncQueue(): Promise<SyncQueueItem[]> {
   const db = await getDB();
   const all = await db.getAll('syncQueue');
   const decrypted = await Promise.all(
-    (all as Record<string, unknown>[]).map((e) => decryptEntry<SyncQueueItem>(e, SYNC_QUEUE_PLAINTEXT)),
+    (all as Record<string, unknown>[]).map((e) =>
+      decryptEntry<SyncQueueItem>(e, SYNC_QUEUE_PLAINTEXT),
+    ),
   );
   return decrypted.filter((e): e is SyncQueueItem => e !== null);
 }
@@ -345,7 +364,10 @@ export async function getAllCachedPermissions(): Promise<PermissionCache[]> {
   const all = await db.getAll('permissions');
   const results: PermissionCache[] = [];
   for (const stored of all) {
-    const entry = await decryptEntry<PermissionCache>(stored as Record<string, unknown>, PERMISSION_PLAINTEXT);
+    const entry = await decryptEntry<PermissionCache>(
+      stored as Record<string, unknown>,
+      PERMISSION_PLAINTEXT,
+    );
     if (entry) results.push(entry);
   }
   return results;
@@ -360,7 +382,14 @@ export async function clearAllPermissionCache(): Promise<void> {
 
 export async function clearAllEncryptedData(): Promise<void> {
   const db = await getDB();
-  const stores = ['progress', 'annotations', 'syncQueue', 'permissions', 'readingInsights', 'conflicts'];
+  const stores = [
+    'progress',
+    'annotations',
+    'syncQueue',
+    'permissions',
+    'readingInsights',
+    'conflicts',
+  ];
   const tx = db.transaction(stores, 'readwrite');
   await Promise.all(stores.map((name) => tx.objectStore(name).clear()));
   await tx.done;
@@ -372,9 +401,13 @@ export async function saveReadingInsight(entry: ReadingInsightEntry): Promise<vo
   await db.put('readingInsights', stored);
 }
 
-export async function getReadingInsight(bookId: string, date: string): Promise<ReadingInsightEntry | undefined> {
+export async function getReadingInsight(
+  bookId: string,
+  date: string,
+): Promise<ReadingInsightEntry | undefined> {
   const db = await getDB();
-  const stored = (await db.get('readingInsights', [bookId, date])) as Record<string, unknown> | undefined;
+  const stored = (await db.get('readingInsights', [bookId, date])) as
+    Record<string, unknown> | undefined;
   if (!stored) return undefined;
   const entry = await decryptEntry<ReadingInsightEntry>(stored, READING_INSIGHT_PLAINTEXT);
   return entry ?? undefined;
@@ -384,7 +417,9 @@ export async function getReadingInsightsForBook(bookId: string): Promise<Reading
   const db = await getDB();
   const all = await db.getAllFromIndex('readingInsights', 'bookId', bookId);
   const decrypted = await Promise.all(
-    (all as Record<string, unknown>[]).map((e) => decryptEntry<ReadingInsightEntry>(e, READING_INSIGHT_PLAINTEXT)),
+    (all as Record<string, unknown>[]).map((e) =>
+      decryptEntry<ReadingInsightEntry>(e, READING_INSIGHT_PLAINTEXT),
+    ),
   );
   return decrypted.filter((e): e is ReadingInsightEntry => e !== null);
 }
@@ -393,7 +428,9 @@ export async function getAllReadingInsights(): Promise<ReadingInsightEntry[]> {
   const db = await getDB();
   const all = await db.getAll('readingInsights');
   const decrypted = await Promise.all(
-    (all as Record<string, unknown>[]).map((e) => decryptEntry<ReadingInsightEntry>(e, READING_INSIGHT_PLAINTEXT)),
+    (all as Record<string, unknown>[]).map((e) =>
+      decryptEntry<ReadingInsightEntry>(e, READING_INSIGHT_PLAINTEXT),
+    ),
   );
   return decrypted.filter((e): e is ReadingInsightEntry => e !== null);
 }

@@ -14,6 +14,7 @@ However, repeated audits re-scheduled items that were already shipped, wasting a
 cycles and creating noise in the backlog.
 
 A July 2026 re-verification against the current working tree found that:
+
 - Plan 117's two "remaining gaps" (GrantList spinner, AuditLogPage/CommentInput i18n)
   are **already fixed** in the current tree.
 - Several items from Plan 106 (catalog search, book editing, export notes, reading
@@ -31,12 +32,12 @@ re-open already-closed work.
 
 ### 2. Prioritization matrix
 
-| Priority | Definition | Examples |
-|----------|-----------|----------|
-| **P0** | Data loss, security breach, or TIER-1 violation | Orphaned R2 objects, un-revoked sessions |
-| **P1** | Core user flow broken or missing | No cascade delete, no library view |
-| **P2** | Significant UX or governance gap | No admin stats, no cache invalidation |
-| **P3** | Enhancement, hardening, or test coverage | Server-side search, offline test gaps |
+| Priority | Definition                                      | Examples                                 |
+| -------- | ----------------------------------------------- | ---------------------------------------- |
+| **P0**   | Data loss, security breach, or TIER-1 violation | Orphaned R2 objects, un-revoked sessions |
+| **P1**   | Core user flow broken or missing                | No cascade delete, no library view       |
+| **P2**   | Significant UX or governance gap                | No admin stats, no cache invalidation    |
+| **P3**   | Enhancement, hardening, or test coverage        | Server-side search, offline test gaps    |
 
 ### 3. Cascade-delete requirement
 

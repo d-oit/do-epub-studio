@@ -13,10 +13,7 @@ export function PageContainer({
   ...props
 }: PageContainerProps) {
   return (
-    <div
-      className={`min-h-dvh ${animate ? 'animate-fade-in' : ''} ${className}`}
-      {...props}
-    >
+    <div className={`min-h-dvh ${animate ? 'animate-fade-in' : ''} ${className}`} {...props}>
       {children}
     </div>
   );

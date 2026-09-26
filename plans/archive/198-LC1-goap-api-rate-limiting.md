@@ -20,15 +20,15 @@ exhaust D1 query quotas or R2 bandwidth.
 
 ## Decompose
 
-| ID | Task | Effort | Deps |
-|----|------|--------|------|
-| T1 | Design rate-limit strategy (Durable Object counter or CF Rate Limiting API) | M | — |
-| T2 | Implement rate-limit middleware for Hono | M | T1 |
-| T3 | Configure per-route limits (read: 100/min, write: 30/min, admin: 60/min) | S | T2 |
-| T4 | Add `RateLimitError` response with `Retry-After` header | S | T2 |
-| T5 | Add rate-limit headers to responses (`X-RateLimit-*`) | S | T2 |
-| T6 | Add tests for rate-limit enforcement and header correctness | M | T4 |
-| T7 | Update `docs/api.md` with rate-limit documentation | S | T4 |
+| ID  | Task                                                                        | Effort | Deps |
+| --- | --------------------------------------------------------------------------- | ------ | ---- |
+| T1  | Design rate-limit strategy (Durable Object counter or CF Rate Limiting API) | M      | —    |
+| T2  | Implement rate-limit middleware for Hono                                    | M      | T1   |
+| T3  | Configure per-route limits (read: 100/min, write: 30/min, admin: 60/min)    | S      | T2   |
+| T4  | Add `RateLimitError` response with `Retry-After` header                     | S      | T2   |
+| T5  | Add rate-limit headers to responses (`X-RateLimit-*`)                       | S      | T2   |
+| T6  | Add tests for rate-limit enforcement and header correctness                 | M      | T4   |
+| T7  | Update `docs/api.md` with rate-limit documentation                          | S      | T4   |
 
 ## Risks
 

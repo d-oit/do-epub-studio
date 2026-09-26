@@ -44,7 +44,9 @@ function makeContext(overrides: Record<string, unknown> = {}) {
       });
     }),
     next: vi.fn().mockResolvedValue(undefined),
-    set: vi.fn((key: string, value: unknown) => { store.set(key, value); }),
+    set: vi.fn((key: string, value: unknown) => {
+      store.set(key, value);
+    }),
     get: vi.fn((key: string) => store.get(key)),
     ...overrides,
   };
@@ -79,7 +81,10 @@ describe('observabilityMiddleware', () => {
     const ctx = makeContext();
     await observabilityMiddleware(ctx as unknown as Context, ctx.next as Next);
 
-    expect(withTraceHeaders).toHaveBeenCalledWith(ctx.res, expect.objectContaining({ traceId: 'trace-123' }));
+    expect(withTraceHeaders).toHaveBeenCalledWith(
+      ctx.res,
+      expect.objectContaining({ traceId: 'trace-123' }),
+    );
   });
 
   it('catches errors and returns 500 JSON response', async () => {

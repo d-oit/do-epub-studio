@@ -66,13 +66,10 @@ export function AdminRecoverPage() {
     setError(null);
 
     try {
-      await apiRequest<{ ok: boolean; data: { reset: boolean } }>(
-        '/api/admin/recovery-verify',
-        {
-          method: 'POST',
-          body: JSON.stringify({ token, newPassword, newPasswordConfirm }),
-        },
-      );
+      await apiRequest<{ ok: boolean; data: { reset: boolean } }>('/api/admin/recovery-verify', {
+        method: 'POST',
+        body: JSON.stringify({ token, newPassword, newPasswordConfirm }),
+      });
       setResetComplete(true);
     } catch (err) {
       setError((err as Error).message || t('admin.recover.verifyFailed'));
@@ -88,7 +85,9 @@ export function AdminRecoverPage() {
       <main className="mx-auto flex flex-1 w-full max-w-md flex-col items-center justify-center gap-8 px-4 py-6 sm:px-6 lg:px-8">
         <header className="flex flex-col items-center gap-3">
           <AppLogo />
-          <p className="text-sm text-foreground-muted">{APP_NAME} · {APP_VERSION_LABEL}</p>
+          <p className="text-sm text-foreground-muted">
+            {APP_NAME} · {APP_VERSION_LABEL}
+          </p>
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">
             {mode === 'request' ? t('admin.recover.titleRequest') : t('admin.recover.titleVerify')}
           </h1>
@@ -96,7 +95,12 @@ export function AdminRecoverPage() {
 
         <section className="w-full rounded-lg border border-border bg-surface p-6 shadow-sm">
           {mode === 'request' ? (
-            <form onSubmit={(e) => { void handleRequest(e); }} className="space-y-4">
+            <form
+              onSubmit={(e) => {
+                void handleRequest(e);
+              }}
+              className="space-y-4"
+            >
               <p className="text-sm text-foreground-muted">
                 {t('admin.recover.requestDescription')}
               </p>
@@ -104,16 +108,22 @@ export function AdminRecoverPage() {
                 type="email"
                 label={t('admin.login.email')}
                 value={email}
-                onChange={(e) => { setEmail(e.target.value); }}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                }}
                 required
                 autoComplete="email"
                 placeholder="admin@example.com" /* eslint-disable-line i18next/no-literal-string -- example placeholder, not user-facing */
               />
               {error && (
-                <p role="alert" className="text-sm text-destructive">{error}</p>
+                <p role="alert" className="text-sm text-destructive">
+                  {error}
+                </p>
               )}
               {info && (
-                <p role="status" className="text-sm text-accent">{info}</p>
+                <p role="status" className="text-sm text-accent">
+                  {info}
+                </p>
               )}
               <Button type="submit" disabled={isLoading} className="w-full">
                 {isLoading ? t('admin.recover.sending') : t('admin.recover.sendLink')}
@@ -122,16 +132,25 @@ export function AdminRecoverPage() {
           ) : resetComplete ? (
             <div className="space-y-4 text-center" role="status">
               <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-accent/10">
-                <svg className="h-6 w-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                <svg
+                  className="h-6 w-6 text-accent"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
                 </svg>
               </div>
               <h2 className="text-xl font-semibold text-foreground">
                 {t('admin.recover.successTitle')}
               </h2>
-              <p className="text-sm text-foreground-muted">
-                {t('admin.recover.successMessage')}
-              </p>
+              <p className="text-sm text-foreground-muted">{t('admin.recover.successMessage')}</p>
               <Button
                 type="button"
                 className="w-full"
@@ -143,7 +162,12 @@ export function AdminRecoverPage() {
               </Button>
             </div>
           ) : (
-            <form onSubmit={(e) => { void handleVerify(e); }} className="space-y-4">
+            <form
+              onSubmit={(e) => {
+                void handleVerify(e);
+              }}
+              className="space-y-4"
+            >
               <p className="text-sm text-foreground-muted">
                 {t('admin.recover.verifyDescription')}
               </p>
@@ -151,7 +175,9 @@ export function AdminRecoverPage() {
                 type="password"
                 label={t('admin.recover.newPassword')}
                 value={newPassword}
-                onChange={(e) => { setNewPassword(e.target.value); }}
+                onChange={(e) => {
+                  setNewPassword(e.target.value);
+                }}
                 required
                 autoComplete="new-password"
                 minLength={12}
@@ -160,13 +186,17 @@ export function AdminRecoverPage() {
                 type="password"
                 label={t('admin.recover.newPasswordConfirm')}
                 value={newPasswordConfirm}
-                onChange={(e) => { setNewPasswordConfirm(e.target.value); }}
+                onChange={(e) => {
+                  setNewPasswordConfirm(e.target.value);
+                }}
                 required
                 autoComplete="new-password"
                 minLength={12}
               />
               {error && (
-                <p role="alert" className="text-sm text-destructive">{error}</p>
+                <p role="alert" className="text-sm text-destructive">
+                  {error}
+                </p>
               )}
               <Button type="submit" disabled={isLoading} className="w-full">
                 {isLoading ? t('admin.recover.resetting') : t('admin.recover.resetPassword')}
@@ -178,8 +208,10 @@ export function AdminRecoverPage() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => {      // eslint-disable-next-line i18next/no-literal-string -- route path
-      handleNavigate('/admin/login'); }}
+              onClick={() => {
+                // eslint-disable-next-line i18next/no-literal-string -- route path
+                handleNavigate('/admin/login');
+              }}
               className="text-sm text-foreground-muted hover:text-foreground underline decoration-accent/30 hover:decoration-accent focus-visible:ring-2 focus-visible:ring-accent"
             >
               {t('admin.recover.backToLogin')}

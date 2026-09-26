@@ -10,7 +10,7 @@
 ## Context
 
 The project has matured through multiple gap-closure sweeps (Plans 033, 052) and
-targeted fixes, but no standing policy governs *when* and *how* comprehensive
+targeted fixes, but no standing policy governs _when_ and _how_ comprehensive
 audits should be repeated. Per AGENTS.md Tier 2 rule 8 ("Document ALL issues as
 GOAP plans + ADRs"), the audit process itself needs governance to prevent:
 
@@ -43,36 +43,36 @@ In addition, a **triggered audit** runs whenever:
 
 Every comprehensive audit MUST cover all 10 dimensions:
 
-| # | Category | Coverage |
-|---|----------|----------|
-| A | Missing Implementation & Features | Code vs. docs/ADRs — what's referenced but not built |
-| B | Missing Documentation | Docs vs. code — what's referenced but doesn't exist |
-| C | Missing UI Components & Patterns | Component library vs. app usage — what's built but not wired |
-| D | Missing Tests | Source vs. test files — what's excluded from coverage |
-| E | Missing Logging & Observability | Console calls, traceId coverage, structured logging gaps |
-| F | Missing Error Handling | Empty catches, missing retry, missing user recovery |
-| G | Missing Navigation Patterns | WCAG nav requirements, deep linking, history state |
-| H | Missing Contrast & Accessibility | Color contrast, ARIA, focus management, reduced motion |
-| I | Missing Performance & Bundle Monitoring | CI-enforced budgets, RUM, image optimization |
-| J | Missing Internationalization | Locale coverage, formatting, RTL support |
+| #   | Category                                | Coverage                                                     |
+| --- | --------------------------------------- | ------------------------------------------------------------ |
+| A   | Missing Implementation & Features       | Code vs. docs/ADRs — what's referenced but not built         |
+| B   | Missing Documentation                   | Docs vs. code — what's referenced but doesn't exist          |
+| C   | Missing UI Components & Patterns        | Component library vs. app usage — what's built but not wired |
+| D   | Missing Tests                           | Source vs. test files — what's excluded from coverage        |
+| E   | Missing Logging & Observability         | Console calls, traceId coverage, structured logging gaps     |
+| F   | Missing Error Handling                  | Empty catches, missing retry, missing user recovery          |
+| G   | Missing Navigation Patterns             | WCAG nav requirements, deep linking, history state           |
+| H   | Missing Contrast & Accessibility        | Color contrast, ARIA, focus management, reduced motion       |
+| I   | Missing Performance & Bundle Monitoring | CI-enforced budgets, RUM, image optimization                 |
+| J   | Missing Internationalization            | Locale coverage, formatting, RTL support                     |
 
 ### 3. Methodology
 
 Every comprehensive audit follows the swarm pattern established in Plan 063:
 skill-loading → parallel agent swarm → deep-dive → GOAP plan synthesis. See
-Plan 063 §2–§5 for the operational playbook. This ADR governs the *policy* (when
+Plan 063 §2–§5 for the operational playbook. This ADR governs the _policy_ (when
 and what), not the mechanics (how).
 
 ### 4. Priority system
 
 All findings are assigned one of four priority levels:
 
-| Priority | Definition | Examples |
-|----------|------------|----------|
-| **P0** | Security risk, data loss, WCAG Level A violation, or production crash | Empty catch swallowing session errors, no 404 route, missing skip-to-content |
-| **P1** | Degraded UX, missing documented feature, test gap on critical path, high-value quick win | Toast not wired, safe-regex untested, docs referenced but missing |
-| **P2** | Polish, enhancement, moderate scope with clear value | Content skeletons, chapter progress indicator, property-based test expansion |
-| **P3** | Future-phase or speculative — deferred to a future plan | AI-assisted workflows, features from roadmap not yet in scope |
+| Priority | Definition                                                                               | Examples                                                                     |
+| -------- | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| **P0**   | Security risk, data loss, WCAG Level A violation, or production crash                    | Empty catch swallowing session errors, no 404 route, missing skip-to-content |
+| **P1**   | Degraded UX, missing documented feature, test gap on critical path, high-value quick win | Toast not wired, safe-regex untested, docs referenced but missing            |
+| **P2**   | Polish, enhancement, moderate scope with clear value                                     | Content skeletons, chapter progress indicator, property-based test expansion |
+| **P3**   | Future-phase or speculative — deferred to a future plan                                  | AI-assisted workflows, features from roadmap not yet in scope                |
 
 ### 5. Wave-based execution
 

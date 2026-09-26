@@ -8,9 +8,19 @@ import type {
   ProgressPosition,
   PageDirection,
 } from './epub-types';
-import { createTraceId, createSpanId, serializeError, testBounded, withTimeout } from '@do-epub-studio/shared';
+import {
+  createTraceId,
+  createSpanId,
+  serializeError,
+  testBounded,
+  withTimeout,
+} from '@do-epub-studio/shared';
 import { parseEpubInWorker, terminateParserWorker } from './epub-parser-worker';
-import { createEpubSanitizerHook, createExternalUrlGuardHook, type ExternalUrlPolicy } from './sanitizer';
+import {
+  createEpubSanitizerHook,
+  createExternalUrlGuardHook,
+  type ExternalUrlPolicy,
+} from './sanitizer';
 
 type EventCallback = (data: unknown) => void;
 
@@ -155,7 +165,9 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
     }
   }
 
-  function resolveFixedLayout(pkgMeta: Map<string, string> | undefined): BookMetadata['fixedLayout'] {
+  function resolveFixedLayout(
+    pkgMeta: Map<string, string> | undefined,
+  ): BookMetadata['fixedLayout'] {
     const layout = pkgMeta?.get('layout');
     if (!layout) return undefined;
     return {
@@ -198,13 +210,22 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
     const totalTimeout = options?.loadTimeoutMs ?? 30_000;
 
     try {
-      await withTimeout(
-        (signal) => loadInner(url, signal),
-        { timeoutMs: totalTimeout, operation: 'epub-load', traceId },
-      );
+      await withTimeout((signal) => loadInner(url, signal), {
+        timeoutMs: totalTimeout,
+        operation: 'epub-load',
+        traceId,
+      });
     } catch (error) {
       const formatted = serializeError(error);
-      console.error(JSON.stringify({ level: 'error', event: 'epub-loader.error', traceId, spanId, error: formatted }));
+      console.error(
+        JSON.stringify({
+          level: 'error',
+          event: 'epub-loader.error',
+          traceId,
+          spanId,
+          error: formatted,
+        }),
+      );
       throw new Error(`Failed to load EPUB: ${formatted.message}`, { cause: error });
     }
   }
@@ -236,10 +257,7 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
     // Fetch navigation, spine, and metadata in parallel — they are
     // independent and already-resolved by the time `opened` fires.
     // Sequential awaits add 20-60ms each on large EPUBs (per plan 065).
-    const [nav, meta] = await Promise.all([
-      book.loaded.navigation,
-      book.loaded.metadata,
-    ]);
+    const [nav, meta] = await Promise.all([book.loaded.navigation, book.loaded.metadata]);
     const spine = await book.loaded.spine;
     if (destroyed) return;
 
@@ -269,7 +287,9 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
     // Security: ADR-035 Mandatory sanitization + external-URL hardening.
     // Layer 1 strips disallowed external http(s) hrefs at content-ingestion;
     // Layer 2 (CSP) is the fetch-level egress guard backstop.
-    rendition.hooks.content.register(createEpubSanitizerHook({ externalUrlPolicy: options?.externalUrlPolicy }).hook);
+    rendition.hooks.content.register(
+      createEpubSanitizerHook({ externalUrlPolicy: options?.externalUrlPolicy }).hook,
+    );
     rendition.hooks.content.register(createExternalUrlGuardHook(options?.externalUrlPolicy).hook);
 
     // Bridge rendition events to the loader's event system

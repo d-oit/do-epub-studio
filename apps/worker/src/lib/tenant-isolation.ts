@@ -23,7 +23,8 @@ export async function parseLocatorRow(
   // ProgressLocatorSchema, treats text and chapter as optional); annotations
   // require the full multi-signal locator. Validating progress rows against
   // the annotation schema marked every progress row corrupt.
-  const schema = context.entityType === 'progress' ? ProgressLocatorSchema : MultiSignalLocatorSchema;
+  const schema =
+    context.entityType === 'progress' ? ProgressLocatorSchema : MultiSignalLocatorSchema;
 
   try {
     const parsed: unknown = JSON.parse(locatorJson);

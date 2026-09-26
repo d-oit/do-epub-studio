@@ -205,15 +205,13 @@ describe('apiRequest', () => {
 
   it('respects external AbortSignal', async () => {
     const controller = new AbortController();
-    global.fetch = vi.fn().mockImplementation(
-      (_url: string, options: { signal?: AbortSignal }) => {
-        return new Promise((_resolve, reject) => {
-          options.signal?.addEventListener('abort', () => {
-            reject(new DOMException('Aborted', 'AbortError'));
-          });
+    global.fetch = vi.fn().mockImplementation((_url: string, options: { signal?: AbortSignal }) => {
+      return new Promise((_resolve, reject) => {
+        options.signal?.addEventListener('abort', () => {
+          reject(new DOMException('Aborted', 'AbortError'));
         });
-      },
-    );
+      });
+    });
 
     const promise = apiRequest('/api/test', { signal: controller.signal });
     controller.abort();

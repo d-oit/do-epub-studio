@@ -164,7 +164,15 @@ export function resolveConflict(
   const timeDiff = Math.abs(localTimestamp - remoteTimestamp);
 
   if (timeDiff > MANUAL_CONFLICT_THRESHOLD_MS || localTimestamp === remoteTimestamp) {
-    const conflict = detectConflict(type, localVersion, remoteVersion, localTimestamp, remoteTimestamp, bookId, entityId);
+    const conflict = detectConflict(
+      type,
+      localVersion,
+      remoteVersion,
+      localTimestamp,
+      remoteTimestamp,
+      bookId,
+      entityId,
+    );
     if (conflict && localTimestamp === remoteTimestamp) {
       return {
         resolved: false,
@@ -202,7 +210,8 @@ export function resolveManualConflict(
   }
 
   const winner = resolution;
-  const merged = mergedVersion ?? (resolution === 'local' ? conflict.localVersion : conflict.remoteVersion);
+  const merged =
+    mergedVersion ?? (resolution === 'local' ? conflict.localVersion : conflict.remoteVersion);
 
   pendingConflicts.set(conflictId, conflict);
 

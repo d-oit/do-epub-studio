@@ -36,11 +36,7 @@ export function testBounded(re: RegExp, input: string, maxLen: number): boolean 
  * @param maxLen - Maximum allowed input length
  * @returns Array of all matches, or empty array if input exceeds maxLen
  */
-export function matchAllBounded(
-  re: RegExp,
-  input: string,
-  maxLen: number,
-): RegExpExecArray[] {
+export function matchAllBounded(re: RegExp, input: string, maxLen: number): RegExpExecArray[] {
   if (input.length > maxLen) return [];
   return Array.from(input.matchAll(re));
 }

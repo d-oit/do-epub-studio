@@ -28,15 +28,15 @@ glass blur.
 
 ## 3. Actions
 
-| # | Action | Files | Gate |
-|---|--------|-------|------|
-| A1 | Add no-book notice + disabled submit on `/login` when `bookSlug === ''` (demo login untouched; recovery untouched) | `LoginForm.tsx`, `LoginPage.tsx` | Unit tests green |
-| A2 | Localize notice + aria label (en/de/fr) | `i18n/en.ts`, `i18n/de.ts`, `i18n/fr.ts` | i18n parity test |
-| A3 | `data-testid` anchors on 6 structural regions | `LoginPage.tsx`, `LoginHero.tsx`, `LoginMobileInfo.tsx`, `AdminLoginPage.tsx`, `AdminLoginHero.tsx` | E2E spec green locally |
-| A4 | Migrate `cloudflare-login.spec.ts` to testid/role anchors | `cloudflare-login.spec.ts` | tsc/lint |
-| A5 | Blur audit: `pnpm build` + preview; remove 6 redundant `backdrop-blur-lg` iff blur visually persists | `LoginPage.tsx`, `AdminLoginPage.tsx`, `LoginHero.tsx`, `LoginMobileInfo.tsx`, `AdminLoginHero.tsx`, `AdminMobileInfo` | Visual browser check |
-| A6 | Unit coverage: no-book state (notice visible, submit disabled, demo enabled, book present → enabled) | `LoginPage.test.tsx` | Coverage ≥ threshold |
-| A7 | Quality gate + visual verification + push + merge #1028 | repo | All CI checks pass |
+| #   | Action                                                                                                             | Files                                                                                                                  | Gate                   |
+| --- | ------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- | ---------------------- |
+| A1  | Add no-book notice + disabled submit on `/login` when `bookSlug === ''` (demo login untouched; recovery untouched) | `LoginForm.tsx`, `LoginPage.tsx`                                                                                       | Unit tests green       |
+| A2  | Localize notice + aria label (en/de/fr)                                                                            | `i18n/en.ts`, `i18n/de.ts`, `i18n/fr.ts`                                                                               | i18n parity test       |
+| A3  | `data-testid` anchors on 6 structural regions                                                                      | `LoginPage.tsx`, `LoginHero.tsx`, `LoginMobileInfo.tsx`, `AdminLoginPage.tsx`, `AdminLoginHero.tsx`                    | E2E spec green locally |
+| A4  | Migrate `cloudflare-login.spec.ts` to testid/role anchors                                                          | `cloudflare-login.spec.ts`                                                                                             | tsc/lint               |
+| A5  | Blur audit: `pnpm build` + preview; remove 6 redundant `backdrop-blur-lg` iff blur visually persists               | `LoginPage.tsx`, `AdminLoginPage.tsx`, `LoginHero.tsx`, `LoginMobileInfo.tsx`, `AdminLoginHero.tsx`, `AdminMobileInfo` | Visual browser check   |
+| A6  | Unit coverage: no-book state (notice visible, submit disabled, demo enabled, book present → enabled)               | `LoginPage.test.tsx`                                                                                                   | Coverage ≥ threshold   |
+| A7  | Quality gate + visual verification + push + merge #1028                                                            | repo                                                                                                                   | All CI checks pass     |
 
 ## 4. Preconditions
 

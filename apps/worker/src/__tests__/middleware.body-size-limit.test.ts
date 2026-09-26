@@ -53,7 +53,8 @@ describe('bodySizeLimit middleware', () => {
     );
 
     expect(res.status).toBe(413);
-    const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } = await res.json();
+    const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } =
+      await res.json();
     expect(body.ok).toBe(false);
     expect(body.error.code).toBe('PAYLOAD_TOO_LARGE');
   });
@@ -93,7 +94,8 @@ describe('bodySizeLimit middleware', () => {
     const res = await app.fetch(reqWithoutCL, {}, ctx);
 
     expect(res.status).toBe(413);
-    const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } = await res.json();
+    const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } =
+      await res.json();
     expect(body.ok).toBe(false);
     expect(body.error.code).toBe('PAYLOAD_TOO_LARGE');
   });

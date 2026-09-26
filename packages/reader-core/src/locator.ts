@@ -42,17 +42,23 @@ function isCleanJsonValue(str: string): boolean {
  * falling back safely to standard JSON.parse for alternate formatting or keys.
  */
 export function parseLocator(locatorString: string): LocatorResult | null {
-  if (
-    locatorString.startsWith(FAST_PREFIX) &&
-    locatorString.endsWith(FAST_SUFFIX)
-  ) {
+  if (locatorString.startsWith(FAST_PREFIX) && locatorString.endsWith(FAST_SUFFIX)) {
     const textExcerptKeyIdx = locatorString.indexOf(FAST_MID_EXCERPT, FAST_PREFIX_LEN);
     if (textExcerptKeyIdx !== -1) {
-      const chapterHrefKeyIdx = locatorString.indexOf(FAST_MID_HREF, textExcerptKeyIdx + FAST_MID_EXCERPT_LEN);
+      const chapterHrefKeyIdx = locatorString.indexOf(
+        FAST_MID_HREF,
+        textExcerptKeyIdx + FAST_MID_EXCERPT_LEN,
+      );
       if (chapterHrefKeyIdx !== -1) {
         const cfi = locatorString.substring(FAST_PREFIX_LEN, textExcerptKeyIdx);
-        const textExcerpt = locatorString.substring(textExcerptKeyIdx + FAST_MID_EXCERPT_LEN, chapterHrefKeyIdx);
-        const chapterHref = locatorString.substring(chapterHrefKeyIdx + FAST_MID_HREF_LEN, locatorString.length - FAST_SUFFIX_LEN);
+        const textExcerpt = locatorString.substring(
+          textExcerptKeyIdx + FAST_MID_EXCERPT_LEN,
+          chapterHrefKeyIdx,
+        );
+        const chapterHref = locatorString.substring(
+          chapterHrefKeyIdx + FAST_MID_HREF_LEN,
+          locatorString.length - FAST_SUFFIX_LEN,
+        );
 
         // Verify that none of the values contain double quotes, backslashes, or control characters.
         if (
@@ -85,11 +91,7 @@ export function locatorToString(locator: LocatorResult): string {
   const { cfi, textExcerpt, chapterHref } = locator;
   // Optimize for the common case where fields do not contain characters that need JSON escaping.
   // This avoids JSON.stringify overhead during repetitive locator operations while maintaining correctness.
-  if (
-    isCleanJsonValue(cfi) &&
-    isCleanJsonValue(textExcerpt) &&
-    isCleanJsonValue(chapterHref)
-  ) {
+  if (isCleanJsonValue(cfi) && isCleanJsonValue(textExcerpt) && isCleanJsonValue(chapterHref)) {
     return `${FAST_PREFIX}${cfi}${FAST_MID_EXCERPT}${textExcerpt}${FAST_MID_HREF}${chapterHref}${FAST_SUFFIX}`;
   }
   return JSON.stringify(locator);

@@ -4,13 +4,13 @@ React 19 + Vite 8 frontend for d.o.EPUB Studio. Serves the admin panel and embed
 
 ## Scripts
 
-| Command | Description |
-|---------|-------------|
-| `pnpm dev` | Start Vite dev server |
-| `pnpm build` | Typecheck + production build |
-| `pnpm typecheck` | `tsc --noEmit` |
-| `pnpm lint` | ESLint on `src/` |
-| `pnpm test:unit` | Vitest unit tests |
+| Command          | Description                  |
+| ---------------- | ---------------------------- |
+| `pnpm dev`       | Start Vite dev server        |
+| `pnpm build`     | Typecheck + production build |
+| `pnpm typecheck` | `tsc --noEmit`               |
+| `pnpm lint`      | ESLint on `src/`             |
+| `pnpm test:unit` | Vitest unit tests            |
 
 ## Architecture
 

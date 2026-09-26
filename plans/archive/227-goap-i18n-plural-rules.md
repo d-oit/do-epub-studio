@@ -18,15 +18,15 @@ open.
 
 Seven keys carry a `{count}` placeholder per locale:
 
-| Key | Example (en) | Plural-sensitive? |
-| --- | --- | --- |
-| `comment.replies` | `{{count}} replies` | **Yes** — also has a `{{count}}` double-brace bug (renders literal `{N}`) |
-| `offline.pendingSync` | `{count} pending sync` | **Yes** — singular/plural agreement |
-| `reader.bookmarks_with_count` | `Bookmarks ({count})` | No — parenthetical badge, grammar-neutral |
-| `annotation.comment_with_count` | `Comments ({count} open)` | No — parenthetical badge |
-| `relativeTime.minutesAgo` | `{count}m ago` | No — abbreviated units don't inflect |
-| `relativeTime.hoursAgo` | `{count}h ago` | No |
-| `relativeTime.daysAgo` | `{count}d ago` | No |
+| Key                             | Example (en)              | Plural-sensitive?                                                         |
+| ------------------------------- | ------------------------- | ------------------------------------------------------------------------- |
+| `comment.replies`               | `{{count}} replies`       | **Yes** — also has a `{{count}}` double-brace bug (renders literal `{N}`) |
+| `offline.pendingSync`           | `{count} pending sync`    | **Yes** — singular/plural agreement                                       |
+| `reader.bookmarks_with_count`   | `Bookmarks ({count})`     | No — parenthetical badge, grammar-neutral                                 |
+| `annotation.comment_with_count` | `Comments ({count} open)` | No — parenthetical badge                                                  |
+| `relativeTime.minutesAgo`       | `{count}m ago`            | No — abbreviated units don't inflect                                      |
+| `relativeTime.hoursAgo`         | `{count}h ago`            | No                                                                        |
+| `relativeTime.daysAgo`          | `{count}d ago`            | No                                                                        |
 
 `comment.replies` and `offline.pendingSync` currently have **no production
 call sites** (dead keys), which is why the bug surface stayed invisible; they
@@ -44,13 +44,13 @@ the documented option if the plural-key surface grows (recorded in ADR-199).
 
 ## 2. Implementation
 
-| Task | Scope |
-| --- | --- |
-| T1 | `translate()` resolves object values: `pluralize(locale, count, categories)` for the `count` param, then substitute remaining params; type `TranslationValue = string \| PluralCategories` |
-| T2 | Migrate `comment.replies` + `offline.pendingSync` to plural variants in **all 13 locales** (fixing `{{count}}` → `{count}`) |
-| T3 | Parity test: value-shape parity per key across locales (string vs object; `other` always present; same category-key sets NOT required — ar needs zero/two, ru doesn't); **ADR-199 follow-up item 4**: reject new string keys containing `{count}` unless allowlisted (`relativeTime.*`, `*_with_count`) |
-| T4 | Plural-resolution unit tests (en one/other; ru one/few/many; ar zero/one/two/few/many; hi one/other) |
-| T5 | Docs: ADR-199 follow-up status, plan record, LEARNINGS |
+| Task | Scope                                                                                                                                                                                                                                                                                                   |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| T1   | `translate()` resolves object values: `pluralize(locale, count, categories)` for the `count` param, then substitute remaining params; type `TranslationValue = string \| PluralCategories`                                                                                                              |
+| T2   | Migrate `comment.replies` + `offline.pendingSync` to plural variants in **all 13 locales** (fixing `{{count}}` → `{count}`)                                                                                                                                                                             |
+| T3   | Parity test: value-shape parity per key across locales (string vs object; `other` always present; same category-key sets NOT required — ar needs zero/two, ru doesn't); **ADR-199 follow-up item 4**: reject new string keys containing `{count}` unless allowlisted (`relativeTime.*`, `*_with_count`) |
+| T4   | Plural-resolution unit tests (en one/other; ru one/few/many; ar zero/one/two/few/many; hi one/other)                                                                                                                                                                                                    |
+| T5   | Docs: ADR-199 follow-up status, plan record, LEARNINGS                                                                                                                                                                                                                                                  |
 
 ## 3. Acceptance Criteria
 

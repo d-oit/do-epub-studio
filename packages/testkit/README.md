@@ -5,14 +5,14 @@ Deterministic test data builders for d.o.EPUB Studio entities. Uses the builder 
 ## Exports
 
 ```ts
-createBookBuilder()       // Book builder
-createBookFileBuilder()   // BookFile builder
-createGrantBuilder()      // Grant builder
-createSessionBuilder()    // Session builder
-createCommentBuilder()    // Comment builder (withBody, withCfi, withParent, withResolved)
-createHighlightBuilder()  // Highlight builder (withText, withCfi, withColor, withNote)
-createBookmarkBuilder()   // Bookmark builder (withLabel, withLocator)
-createProgressBuilder()   // Progress builder
+createBookBuilder(); // Book builder
+createBookFileBuilder(); // BookFile builder
+createGrantBuilder(); // Grant builder
+createSessionBuilder(); // Session builder
+createCommentBuilder(); // Comment builder (withBody, withCfi, withParent, withResolved)
+createHighlightBuilder(); // Highlight builder (withText, withCfi, withColor, withNote)
+createBookmarkBuilder(); // Bookmark builder (withLabel, withLocator)
+createProgressBuilder(); // Progress builder
 ```
 
 ## Usage
@@ -36,8 +36,8 @@ Each builder generates a `crypto.randomUUID()` id by default so builders are rea
 
 ## Scripts
 
-| Command | Description |
-|---------|-------------|
-| `pnpm typecheck` | `tsc --noEmit` |
-| `pnpm lint` | ESLint |
+| Command          | Description              |
+| ---------------- | ------------------------ |
+| `pnpm typecheck` | `tsc --noEmit`           |
+| `pnpm lint`      | ESLint                   |
 | `pnpm test:unit` | Vitest (passWithNoTests) |

@@ -1,5 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { makeEnv, makeAuthContext, makePassThroughContext, mockQueryFirst, mockQueryAll, mockExecute, mockRequireAuth, parseBody } from './fixtures';
+import {
+  makeEnv,
+  makeAuthContext,
+  makePassThroughContext,
+  mockQueryFirst,
+  mockQueryAll,
+  mockExecute,
+  mockRequireAuth,
+  parseBody,
+} from './fixtures';
 import { app } from '../app';
 import { assertBookAccess } from '../lib/tenant-isolation';
 
@@ -8,11 +17,18 @@ const mockAssertBookAccess = assertBookAccess as ReturnType<typeof vi.fn>;
 
 describe('Notifications Routes', () => {
   const env = makeEnv();
-  beforeEach(() => { vi.clearAllMocks(); mockAssertBookAccess.mockResolvedValue(null); });
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockAssertBookAccess.mockResolvedValue(null);
+  });
 
   it('GET /api/notifications returns 401 when unauthenticated', async () => {
     mockRequireAuth.mockResolvedValue(null);
-    const res = await app.fetch(new Request('http://localhost/api/notifications'), env, makePassThroughContext());
+    const res = await app.fetch(
+      new Request('http://localhost/api/notifications'),
+      env,
+      makePassThroughContext(),
+    );
     expect(res.status).toBe(401);
   });
 
@@ -20,9 +36,25 @@ describe('Notifications Routes', () => {
     mockRequireAuth.mockResolvedValue(makeAuthContext());
     mockQueryFirst.mockResolvedValueOnce({ cnt: 1 });
     mockQueryAll.mockResolvedValueOnce([
-      { id: 'n1', user_email: 'user@example.com', book_id: 'b1', comment_id: 'c1', parent_comment_id: 'p1', type: 'reply', message: 'New reply', read_at: null, created_at: '2026-07-18T00:00:00Z' },
+      {
+        id: 'n1',
+        user_email: 'user@example.com',
+        book_id: 'b1',
+        comment_id: 'c1',
+        parent_comment_id: 'p1',
+        type: 'reply',
+        message: 'New reply',
+        read_at: null,
+        created_at: '2026-07-18T00:00:00Z',
+      },
     ]);
-    const res = await app.fetch(new Request('http://localhost/api/notifications', { headers: { Authorization: 'Bearer valid' } }), env, makePassThroughContext());
+    const res = await app.fetch(
+      new Request('http://localhost/api/notifications', {
+        headers: { Authorization: 'Bearer valid' },
+      }),
+      env,
+      makePassThroughContext(),
+    );
     expect(res.status).toBe(200);
     const body = await parseBody(res);
     expect(body.ok).toBe(true);
@@ -32,7 +64,13 @@ describe('Notifications Routes', () => {
   it('GET /api/notifications/unread-count returns count', async () => {
     mockRequireAuth.mockResolvedValue(makeAuthContext());
     mockQueryFirst.mockResolvedValueOnce({ cnt: 3 });
-    const res = await app.fetch(new Request('http://localhost/api/notifications/unread-count', { headers: { Authorization: 'Bearer valid' } }), env, makePassThroughContext());
+    const res = await app.fetch(
+      new Request('http://localhost/api/notifications/unread-count', {
+        headers: { Authorization: 'Bearer valid' },
+      }),
+      env,
+      makePassThroughContext(),
+    );
     expect(res.status).toBe(200);
     const body = await parseBody(res);
     expect(body.data.count).toBe(3);
@@ -41,7 +79,14 @@ describe('Notifications Routes', () => {
   it('POST /api/notifications/:id/read marks as read', async () => {
     mockRequireAuth.mockResolvedValue(makeAuthContext());
     mockQueryFirst.mockResolvedValueOnce({ id: 'n1', user_email: 'user@example.com' });
-    const res = await app.fetch(new Request('http://localhost/api/notifications/n1/read', { method: 'POST', headers: { Authorization: 'Bearer valid' } }), env, makePassThroughContext());
+    const res = await app.fetch(
+      new Request('http://localhost/api/notifications/n1/read', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer valid' },
+      }),
+      env,
+      makePassThroughContext(),
+    );
     expect(res.status).toBe(200);
     expect(mockExecute).toHaveBeenCalledWith(
       env,
@@ -53,13 +98,27 @@ describe('Notifications Routes', () => {
   it('POST /api/notifications/:id/read returns 404 for missing', async () => {
     mockRequireAuth.mockResolvedValue(makeAuthContext());
     mockQueryFirst.mockResolvedValueOnce(null);
-    const res = await app.fetch(new Request('http://localhost/api/notifications/nope/read', { method: 'POST', headers: { Authorization: 'Bearer valid' } }), env, makePassThroughContext());
+    const res = await app.fetch(
+      new Request('http://localhost/api/notifications/nope/read', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer valid' },
+      }),
+      env,
+      makePassThroughContext(),
+    );
     expect(res.status).toBe(404);
   });
 
   it('POST /api/notifications/read-all marks all as read', async () => {
     mockRequireAuth.mockResolvedValue(makeAuthContext());
-    const res = await app.fetch(new Request('http://localhost/api/notifications/read-all', { method: 'POST', headers: { Authorization: 'Bearer valid' } }), env, makePassThroughContext());
+    const res = await app.fetch(
+      new Request('http://localhost/api/notifications/read-all', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer valid' },
+      }),
+      env,
+      makePassThroughContext(),
+    );
     expect(res.status).toBe(200);
     expect(mockExecute).toHaveBeenCalled();
   });

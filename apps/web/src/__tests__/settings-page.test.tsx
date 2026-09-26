@@ -92,7 +92,10 @@ describe('SettingsPage', () => {
     render(<SettingsPage />);
     await user.click(screen.getByText('reader.settings.theme.dark'));
     expect(screen.getByText('reader.settings.theme.dark')).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.getByText('reader.settings.theme.light')).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByText('reader.settings.theme.light')).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    );
   });
 
   it('renders all three main sections', () => {

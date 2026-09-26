@@ -18,19 +18,23 @@ AdminRecoverPage 215L). C5 was already fixed (lint is a direct blocking step).
 ## Tasks
 
 ### T1: Lighthouse route-specific mobile budgets (C4)
+
 - Expand `.lighthouserc.json` with route-specific assertions for catalog, admin, auth, offline
 - Update `lighthouse.yml` to audit multiple routes from deployed preview
 - Add blocking mobile performance budgets per ADR-187
 
 ### T2: CodeQL API error handling (C6)
+
 - Fix `ci.yml:157-161` to treat API errors as failure/unavailable, not zero
 - Only report zero when the API call succeeds with an empty result
 
 ### T3: Scorecard SARIF upload (C7)
+
 - Add `upload-sarif` step to `scorecard.yml` with proper permissions
 - Ensure results are available for security dashboard
 
 ### T4: Worker build validation (I6)
+
 - Add `build:worker` script to `apps/worker/package.json`
 - Add CI job for Wrangler dry-run bundling validation
 
@@ -46,17 +50,17 @@ AdminRecoverPage 215L). C5 was already fixed (lint is a direct blocking step).
 
 ## Task Completion Evidence
 
-| Task | Status | Evidence |
-|------|--------|----------|
-| T1 | ✅ | `.lighthouserc.json` now has `matchingUrlPattern` per-route budgets for catalog, admin, auth, reader, offline |
-| T2 | ✅ | `ci.yml:159-163` — API errors exit 1; `ci.yml:165-168` — malformed response exits 1 (PR #799) |
-| T3 | ✅ | `scorecard.yml:45` — `upload-sarif` step with `security-events: write` permission (PR #799) |
-| T4 | ✅ | `apps/worker/package.json:11` — `build:worker` script; `ci.yml:293-320` — worker-build CI job (PR #799) |
+| Task | Status | Evidence                                                                                                      |
+| ---- | ------ | ------------------------------------------------------------------------------------------------------------- |
+| T1   | ✅     | `.lighthouserc.json` now has `matchingUrlPattern` per-route budgets for catalog, admin, auth, reader, offline |
+| T2   | ✅     | `ci.yml:159-163` — API errors exit 1; `ci.yml:165-168` — malformed response exits 1 (PR #799)                 |
+| T3   | ✅     | `scorecard.yml:45` — `upload-sarif` step with `security-events: write` permission (PR #799)                   |
+| T4   | ✅     | `apps/worker/package.json:11` — `build:worker` script; `ci.yml:293-320` — worker-build CI job (PR #799)       |
 
 ## Already Verified Resolved
 
-| ID | Status | Evidence |
-|----|--------|----------|
-| I4 | ✅ | 7 worker auth test files, 994 total lines |
-| I5 | ✅ | AdminRecoverPage.test.tsx (215L), notes-roundtrip.test.ts (4L) |
-| C5 | ✅ | CI lint job is direct `pnpm lint` (ci.yml:221-223), no advisory pattern |
+| ID  | Status | Evidence                                                                |
+| --- | ------ | ----------------------------------------------------------------------- |
+| I4  | ✅     | 7 worker auth test files, 994 total lines                               |
+| I5  | ✅     | AdminRecoverPage.test.tsx (215L), notes-roundtrip.test.ts (4L)          |
+| C5  | ✅     | CI lint job is direct `pnpm lint` (ci.yml:221-223), no advisory pattern |

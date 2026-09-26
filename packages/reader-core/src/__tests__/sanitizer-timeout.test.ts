@@ -23,9 +23,7 @@ describe('Sanitizer timeout integration', () => {
 
   it('throws TimeoutError when deadline is exceeded', () => {
     const doc = createDoc();
-    vi.spyOn(performance, 'now')
-      .mockReturnValueOnce(0)
-      .mockReturnValue(100_000);
+    vi.spyOn(performance, 'now').mockReturnValueOnce(0).mockReturnValue(100_000);
     expect(() => {
       sanitizeEpubDocument(doc, { timeoutMs: 5000 });
     }).toThrow(TimeoutError);
@@ -33,9 +31,7 @@ describe('Sanitizer timeout integration', () => {
 
   it('passes traceId through to TimeoutError', () => {
     const doc = createDoc();
-    vi.spyOn(performance, 'now')
-      .mockReturnValueOnce(0)
-      .mockReturnValue(100_000);
+    vi.spyOn(performance, 'now').mockReturnValueOnce(0).mockReturnValue(100_000);
     try {
       sanitizeEpubDocument(doc, { timeoutMs: 5000, traceId: 'trace-sanitize-1' });
       expect.fail('Expected TimeoutError to be thrown');
@@ -64,13 +60,9 @@ describe('Sanitizer timeout integration', () => {
     expect(resultP?.hasAttribute('onclick')).toBe(false);
     const links = doc.querySelectorAll('a');
     expect(links.length).toBe(2);
-    const resultBadLink = Array.from(links).find(
-      (a) => a.textContent === 'Bad link',
-    );
+    const resultBadLink = Array.from(links).find((a) => a.textContent === 'Bad link');
     expect(resultBadLink?.getAttribute('href')).toBeNull();
-    const resultGoodLink = Array.from(links).find(
-      (a) => a.textContent === 'Good link',
-    );
+    const resultGoodLink = Array.from(links).find((a) => a.textContent === 'Good link');
     expect(resultGoodLink?.getAttribute('href')).toBe('https://example.com');
   });
 });
@@ -83,9 +75,7 @@ describe('createEpubSanitizerHook timeout integration', () => {
   it('hook propagates traceId to TimeoutError', () => {
     const { hook } = createEpubSanitizerHook({ timeoutMs: 5000, traceId: 'hook-trace-42' });
     const doc = createDoc();
-    vi.spyOn(performance, 'now')
-      .mockReturnValueOnce(0)
-      .mockReturnValue(100_000);
+    vi.spyOn(performance, 'now').mockReturnValueOnce(0).mockReturnValue(100_000);
     try {
       hook({ document: doc });
       expect.fail('Expected TimeoutError to be thrown');

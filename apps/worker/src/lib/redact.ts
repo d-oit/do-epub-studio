@@ -60,8 +60,8 @@ function redactString(value: string): string {
     redacted = redacted.replace(LONG_TOKEN_PATTERN, (match, token: string) => {
       const hasPrefix = match.startsWith(token);
       const hasSuffix = match.endsWith(token);
-      const before = hasPrefix ? '' : (match.charAt(0) || '');
-      const after = hasSuffix ? '' : (match.charAt(match.length - 1) || '');
+      const before = hasPrefix ? '' : match.charAt(0) || '';
+      const after = hasSuffix ? '' : match.charAt(match.length - 1) || '';
       return before + REDACTED + after;
     });
   }

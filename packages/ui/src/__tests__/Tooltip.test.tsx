@@ -40,10 +40,7 @@ describe('Tooltip', () => {
   });
 
   it('uses native popover attribute when supported', () => {
-    const originalDescriptor = Object.getOwnPropertyDescriptor(
-      HTMLElement.prototype,
-      'popover',
-    );
+    const originalDescriptor = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'popover');
     Object.defineProperty(HTMLElement.prototype, 'popover', {
       configurable: true,
       get() {
@@ -74,9 +71,7 @@ describe('Tooltip', () => {
       } else {
         delete (HTMLElement.prototype as unknown as Record<string, unknown>)['popover'];
       }
-      delete (HTMLElement.prototype as unknown as Record<string, unknown>)[
-        'showPopover'
-      ];
+      delete (HTMLElement.prototype as unknown as Record<string, unknown>)['showPopover'];
     }
   });
 

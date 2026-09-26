@@ -21,7 +21,9 @@ vi.mock('../hooks/useTranslation', () => ({
 
 vi.mock('../components/ViewTransitionRoutes', () => ({
   // Keep route matching functional so the real route table in <App /> works.
-  ViewTransitionRoutes: ({ children }: { children: React.ReactNode }) => <Routes>{children}</Routes>,
+  ViewTransitionRoutes: ({ children }: { children: React.ReactNode }) => (
+    <Routes>{children}</Routes>
+  ),
 }));
 
 vi.mock('../components/SwUpdateNotification', () => ({
@@ -164,7 +166,6 @@ describe('App routes', () => {
     );
     expect(await screen.findByText('Accept Invite Page')).toBeInTheDocument();
   });
-
 
   // Static hosts (Render, GitHub Pages) serve the SPA at /index.html; it must
   // behave like the root (reach the login when unauthenticated) instead of

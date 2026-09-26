@@ -19,12 +19,9 @@ describe('parseNotesMarkdown', () => {
   });
 
   it('returns null for wrong version', () => {
-    const md = [
-      '# Book - Exported Notes',
-      '',
-      '<!-- format: do-epub-studio-notes v2 -->',
-      '',
-    ].join('\n');
+    const md = ['# Book - Exported Notes', '', '<!-- format: do-epub-studio-notes v2 -->', ''].join(
+      '\n',
+    );
     expect(parseNotesMarkdown(md)).toBeNull();
   });
 
@@ -32,7 +29,11 @@ describe('parseNotesMarkdown', () => {
     const md = header('Test Book');
     const result = parseNotesMarkdown(md);
     expect(result).not.toBeNull();
-    const r = result ?? (() => { throw new Error('expected defined'); })();
+    const r =
+      result ??
+      (() => {
+        throw new Error('expected defined');
+      })();
     expect(r.format).toBe('do-epub-studio-notes');
     expect(r.version).toBe(NOTES_FORMAT_VERSION);
     expect(r.bookTitle).toBe('Test Book');
@@ -50,7 +51,11 @@ describe('parseNotesMarkdown', () => {
     ].join('\n');
     const result = parseNotesMarkdown(md);
     expect(result).not.toBeNull();
-    const r = result ?? (() => { throw new Error('expected defined'); })();
+    const r =
+      result ??
+      (() => {
+        throw new Error('expected defined');
+      })();
     expect(r.annotations).toHaveLength(1);
     const h = r.annotations[0];
     expect(h.type).toBe('highlight');
@@ -59,7 +64,11 @@ describe('parseNotesMarkdown', () => {
       expect(h.color).toBe('#ff0000');
       expect(h.note).toBeNull();
       expect(h.locator).not.toBeNull();
-      const loc = h.locator ?? (() => { throw new Error('expected defined'); })();
+      const loc =
+        h.locator ??
+        (() => {
+          throw new Error('expected defined');
+        })();
       expect(loc.cfi).toBe('epubcfi(/6/4!/4/2/1:0)');
     }
   });
@@ -74,7 +83,11 @@ describe('parseNotesMarkdown', () => {
     ].join('\n');
     const result = parseNotesMarkdown(md);
     expect(result).not.toBeNull();
-    const r = result ?? (() => { throw new Error('expected defined'); })();
+    const r =
+      result ??
+      (() => {
+        throw new Error('expected defined');
+      })();
     const h = r.annotations[0];
     if (h.type === 'highlight') {
       expect(h.selectedText).toBe('Some text');
@@ -93,11 +106,19 @@ describe('parseNotesMarkdown', () => {
     ].join('\n');
     const result = parseNotesMarkdown(md);
     expect(result).not.toBeNull();
-    const r = result ?? (() => { throw new Error('expected defined'); })();
+    const r =
+      result ??
+      (() => {
+        throw new Error('expected defined');
+      })();
     const h = r.annotations[0];
     if (h.type === 'highlight') {
       expect(h.locator).not.toBeNull();
-      const loc = h.locator ?? (() => { throw new Error('expected defined'); })();
+      const loc =
+        h.locator ??
+        (() => {
+          throw new Error('expected defined');
+        })();
       expect(loc.cfi).toBe('epubcfi(/6/4!/4/2/1:0)');
       expect(loc.chapterRef).toBe('ch1.xhtml');
     }
@@ -113,7 +134,11 @@ describe('parseNotesMarkdown', () => {
     ].join('\n');
     const result = parseNotesMarkdown(md);
     expect(result).not.toBeNull();
-    const r = result ?? (() => { throw new Error('expected defined'); })();
+    const r =
+      result ??
+      (() => {
+        throw new Error('expected defined');
+      })();
     expect(r.annotations).toHaveLength(1);
     const b = r.annotations[0];
     expect(b.type).toBe('bookmark');
@@ -126,16 +151,14 @@ describe('parseNotesMarkdown', () => {
   });
 
   it('parses bookmarks without label', () => {
-    const md = [
-      header(),
-      '## Bookmarks',
-      '',
-      '- Some bookmark text',
-      '',
-    ].join('\n');
+    const md = [header(), '## Bookmarks', '', '- Some bookmark text', ''].join('\n');
     const result = parseNotesMarkdown(md);
     expect(result).not.toBeNull();
-    const r = result ?? (() => { throw new Error('expected defined'); })();
+    const r =
+      result ??
+      (() => {
+        throw new Error('expected defined');
+      })();
     const b = r.annotations[0];
     if (b.type === 'bookmark') {
       expect(b.locator.selectedText).toBe('Some bookmark text');
@@ -153,7 +176,11 @@ describe('parseNotesMarkdown', () => {
     ].join('\n');
     const result = parseNotesMarkdown(md);
     expect(result).not.toBeNull();
-    const r = result ?? (() => { throw new Error('expected defined'); })();
+    const r =
+      result ??
+      (() => {
+        throw new Error('expected defined');
+      })();
     expect(r.annotations).toHaveLength(1);
     const c = r.annotations[0];
     expect(c.type).toBe('comment');
@@ -161,7 +188,11 @@ describe('parseNotesMarkdown', () => {
       expect(c.body).toBe('Great point!');
       expect(c.selectedText).toBe('quoted text');
       expect(c.locator).not.toBeNull();
-      const loc = c.locator ?? (() => { throw new Error('expected defined'); })();
+      const loc =
+        c.locator ??
+        (() => {
+          throw new Error('expected defined');
+        })();
       expect(loc.cfi).toBe('epubcfi(/6/4!/4/2/3:0)');
       expect(c.status).toBe('open');
       expect(c.visibility).toBe('shared');
@@ -169,16 +200,14 @@ describe('parseNotesMarkdown', () => {
   });
 
   it('parses comments without quote', () => {
-    const md = [
-      header(),
-      '## Comments',
-      '',
-      '- Just a comment body',
-      '',
-    ].join('\n');
+    const md = [header(), '## Comments', '', '- Just a comment body', ''].join('\n');
     const result = parseNotesMarkdown(md);
     expect(result).not.toBeNull();
-    const r = result ?? (() => { throw new Error('expected defined'); })();
+    const r =
+      result ??
+      (() => {
+        throw new Error('expected defined');
+      })();
     const c = r.annotations[0];
     if (c.type === 'comment') {
       expect(c.body).toBe('Just a comment body');
@@ -204,7 +233,11 @@ describe('parseNotesMarkdown', () => {
     ].join('\n');
     const result = parseNotesMarkdown(md);
     expect(result).not.toBeNull();
-    const r = result ?? (() => { throw new Error('expected defined'); })();
+    const r =
+      result ??
+      (() => {
+        throw new Error('expected defined');
+      })();
     expect(r.annotations).toHaveLength(3);
     expect(r.annotations.filter((a: { type: string }) => a.type === 'highlight')).toHaveLength(1);
     expect(r.annotations.filter((a: { type: string }) => a.type === 'bookmark')).toHaveLength(1);
@@ -212,27 +245,26 @@ describe('parseNotesMarkdown', () => {
   });
 
   it('skips lines not starting with dash', () => {
-    const md = [
-      header(),
-      '## Highlights',
-      '',
-      'not a highlight line',
-      '',
-    ].join('\n');
+    const md = [header(), '## Highlights', '', 'not a highlight line', ''].join('\n');
     const result = parseNotesMarkdown(md);
     expect(result).not.toBeNull();
-    const r = result ?? (() => { throw new Error('expected defined'); })();
+    const r =
+      result ??
+      (() => {
+        throw new Error('expected defined');
+      })();
     expect(r.annotations).toHaveLength(0);
   });
 
   it('defaults bookTitle when title missing', () => {
-    const md = [
-      '<!-- format: do-epub-studio-notes v1 -->',
-      '',
-    ].join('\n');
+    const md = ['<!-- format: do-epub-studio-notes v1 -->', ''].join('\n');
     const result = parseNotesMarkdown(md);
     expect(result).not.toBeNull();
-    const r = result ?? (() => { throw new Error('expected defined'); })();
+    const r =
+      result ??
+      (() => {
+        throw new Error('expected defined');
+      })();
     expect(r.bookTitle).toBe('Imported Book');
   });
 
@@ -245,21 +277,25 @@ describe('parseNotesMarkdown', () => {
     ].join('\n');
     const result = parseNotesMarkdown(md);
     expect(result).not.toBeNull();
-    const r = result ?? (() => { throw new Error('expected defined'); })();
+    const r =
+      result ??
+      (() => {
+        throw new Error('expected defined');
+      })();
     expect(r.bookId).toBeNull();
   });
 
   it('falls back to default color when no color specified', () => {
-    const md = [
-      header(),
-      '## Highlights',
-      '',
-      '- "Some text" [epubcfi(/6/4!/4/2/1:0)]',
-      '',
-    ].join('\n');
+    const md = [header(), '## Highlights', '', '- "Some text" [epubcfi(/6/4!/4/2/1:0)]', ''].join(
+      '\n',
+    );
     const result = parseNotesMarkdown(md);
     expect(result).not.toBeNull();
-    const r = result ?? (() => { throw new Error('expected defined'); })();
+    const r =
+      result ??
+      (() => {
+        throw new Error('expected defined');
+      })();
     const h = r.annotations[0];
     if (h.type === 'highlight') {
       expect(h.color).toBe('#ffeb3b');
@@ -280,7 +316,11 @@ describe('parseNotesMarkdown', () => {
     ].join('\n');
     const result = parseNotesMarkdown(md);
     expect(result).not.toBeNull();
-    const r = result ?? (() => { throw new Error('expected defined'); })();
+    const r =
+      result ??
+      (() => {
+        throw new Error('expected defined');
+      })();
     expect(r.annotations).toHaveLength(1);
   });
 

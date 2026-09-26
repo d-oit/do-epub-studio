@@ -22,12 +22,12 @@ updates, and supply-chain score to CI.
 
 ## Acceptance → Evidence
 
-| Acceptance | Evidence |
-|---|---|
-| CI fails on high-severity vulnerabilities | `ci.yml:160-161` audit step in the build job |
-| SBOM generated on every build | `ci.yml:448-456` artifact upload; release path signs + publishes SBOM |
-| Dependencies automatically updated | `.github/dependabot.yml` + `dependabot-auto-merge.yml` |
-| Scorecard passes | `scorecard.yml`; Scorecard runs on current main conclude `success` (2026-08-29) |
+| Acceptance                                | Evidence                                                                        |
+| ----------------------------------------- | ------------------------------------------------------------------------------- |
+| CI fails on high-severity vulnerabilities | `ci.yml:160-161` audit step in the build job                                    |
+| SBOM generated on every build             | `ci.yml:448-456` artifact upload; release path signs + publishes SBOM           |
+| Dependencies automatically updated        | `.github/dependabot.yml` + `dependabot-auto-merge.yml`                          |
+| Scorecard passes                          | `scorecard.yml`; Scorecard runs on current main conclude `success` (2026-08-29) |
 
 ## Effort
 

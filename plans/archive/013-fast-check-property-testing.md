@@ -5,6 +5,7 @@
 This plan covers the integration of [fast-check](https://github.com/dubzzz/fast-check) property-based testing library into the do-epub-studio codebase. Property-based testing (PBT) generates thousands of test cases automatically, finding edge cases that example-based testing misses.
 
 **Why fast-check?**
+
 - 4.9k GitHub stars, trusted by jest, jasmine, fp-ts, ramda
 - Strong TypeScript support
 - Smart shrinking to minimal counterexamples
@@ -14,12 +15,12 @@ This plan covers the integration of [fast-check](https://github.com/dubzzz/fast-
 
 ## Current State
 
-| Area | Current Testing | Opportunity |
-|------|-----------------|-------------|
-| `apps/worker/src/auth/` | Basic example tests | **High** - Security critical |
-| `packages/shared/src/schemas.ts` | Limited validation | **High** - Edge cases |
-| `packages/reader-core/` | Minimal tests | **High** - Complex parsing |
-| API Routes | Example-based only | **Medium** - Input validation |
+| Area                             | Current Testing     | Opportunity                   |
+| -------------------------------- | ------------------- | ----------------------------- |
+| `apps/worker/src/auth/`          | Basic example tests | **High** - Security critical  |
+| `packages/shared/src/schemas.ts` | Limited validation  | **High** - Edge cases         |
+| `packages/reader-core/`          | Minimal tests       | **High** - Complex parsing    |
+| API Routes                       | Example-based only  | **Medium** - Input validation |
 
 ---
 
@@ -30,6 +31,7 @@ This plan covers the integration of [fast-check](https://github.com/dubzzz/fast-
 **Files:** `apps/worker/src/auth/password.ts`, `apps/worker/src/auth/middleware.ts`
 
 Property-based testing can expose:
+
 - Malformed auth header injection attempts
 - Token parsing edge cases
 - Password validation bypass attempts
@@ -53,6 +55,7 @@ fc.assert(
 **Files:** `packages/shared/src/schemas.ts`
 
 Zod schemas define security boundaries. PBT can:
+
 - Generate thousands of valid/invalid inputs
 - Verify regex patterns accept/reject correctly
 - Test edge cases in refinement logic
@@ -79,6 +82,7 @@ fc.assert(
 **Files:** `packages/reader-core/src/locator.ts`, `packages/reader-core/src/reanchor.ts`
 
 Complex string manipulation has many edge cases:
+
 - CFI parsing edge cases
 - Unicode normalization
 - Prototype pollution attempts
@@ -102,11 +106,13 @@ fc.assert(
 ### Phase 1: Infrastructure (Week 1)
 
 **Tasks:**
+
 - [ ] Install fast-check in packages
 - [ ] Create shared arbitraries file
 - [ ] Add to vitest config if needed
 
 **Installation:**
+
 ```bash
 cd packages/shared && pnpm add -D fast-check
 cd apps/worker && pnpm add -D fast-check
@@ -114,6 +120,7 @@ cd packages/reader-core && pnpm add -D fast-check
 ```
 
 **Shared arbitraries:**
+
 ```do-epub-studio/packages/shared/src/__tests__/arbitraries.ts
 import * as fc from 'fast-check';
 
@@ -133,22 +140,22 @@ export const CfiArbitrary = fc
 
 **Priority P0 - Must Have:**
 
-| Test | File | Property |
-|------|------|----------|
-| Password validation safety | `auth/password.ts` | Never throws, always returns boolean |
-| Token generation uniqueness | `auth/session.ts` | All tokens unique, correct format |
-| Auth header parsing | `auth/middleware.ts` | Handles all malformed input |
-| Schema validation | `schemas.ts` | Accepts valid, rejects invalid |
+| Test                        | File                 | Property                             |
+| --------------------------- | -------------------- | ------------------------------------ |
+| Password validation safety  | `auth/password.ts`   | Never throws, always returns boolean |
+| Token generation uniqueness | `auth/session.ts`    | All tokens unique, correct format    |
+| Auth header parsing         | `auth/middleware.ts` | Handles all malformed input          |
+| Schema validation           | `schemas.ts`         | Accepts valid, rejects invalid       |
 
 ### Phase 3: Core Logic Tests (Week 3)
 
 **Priority P1 - Should Have:**
 
-| Test | File | Property |
-|------|------|----------|
-| Locator round-trip | `locator.ts` | parse(stringify(x)) === x |
+| Test                 | File          | Property                                 |
+| -------------------- | ------------- | ---------------------------------------- |
+| Locator round-trip   | `locator.ts`  | parse(stringify(x)) === x                |
 | Reanchor idempotence | `reanchor.ts` | normalize(normalize(x)) === normalize(x) |
-| CFI parsing safety | `locator.ts` | Never throws |
+| CFI parsing safety   | `locator.ts`  | Never throws                             |
 
 ### Phase 4: Coverage Expansion (Week 4)
 
@@ -164,11 +171,11 @@ export const CfiArbitrary = fc
 
 ### Current Coverage (from Plan 012)
 
-| Type | Current | Target |
-|------|---------|--------|
-| Business Logic | ~70% | 90%+ |
-| Security Functions | ~60% | 100% |
-| Validation Logic | ~50% | 95% |
+| Type               | Current | Target |
+| ------------------ | ------- | ------ |
+| Business Logic     | ~70%    | 90%+   |
+| Security Functions | ~60%    | 100%   |
+| Validation Logic   | ~50%    | 95%    |
 
 ### Expected Improvement with PBT
 

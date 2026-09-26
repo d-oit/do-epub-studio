@@ -3,7 +3,10 @@ import { ensureLocale, type LocaleKey } from '../i18n';
 import { en } from '../i18n/en';
 import type { TranslationValue } from '../i18n/en';
 
-const localeModules: Record<string, () => Promise<Record<string, Record<string, TranslationValue>>>> = {
+const localeModules: Record<
+  string,
+  () => Promise<Record<string, Record<string, TranslationValue>>>
+> = {
   de: () => import('../i18n/de'),
   fr: () => import('../i18n/fr'),
   es: () => import('../i18n/es'),

@@ -28,5 +28,9 @@ export function apiError(
   message: string,
   headers?: Record<string, string>,
 ): Response {
-  return c.json({ ok: false, error: { code, message, traceId: getRequestTraceId(c) } }, status, headers);
+  return c.json(
+    { ok: false, error: { code, message, traceId: getRequestTraceId(c) } },
+    status,
+    headers,
+  );
 }

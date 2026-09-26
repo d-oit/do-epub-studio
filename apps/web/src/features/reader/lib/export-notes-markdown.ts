@@ -106,7 +106,10 @@ function parseHighlightLine(line: string, fallbackCfi: string | undefined): Pars
   }
 
   const note = findNoteAfterDash(rest);
-  const selectedText = (note ? rest.slice(0, rest.indexOf('— ')).trim() : rest.trim()).slice(0, 2048);
+  const selectedText = (note ? rest.slice(0, rest.indexOf('— ')).trim() : rest.trim()).slice(
+    0,
+    2048,
+  );
   if (selectedText.length === 0) return null;
 
   return {
@@ -137,7 +140,10 @@ function parseBookmarkLine(line: string, fallbackCfi: string | undefined): Parse
   rest = removeChapterFromText(rest, chapterRef);
 
   const label = findNoteAfterDash(rest);
-  const selectedText = (label ? rest.slice(0, rest.indexOf('— ')).trim() : rest.trim()).slice(0, 2048);
+  const selectedText = (label ? rest.slice(0, rest.indexOf('— ')).trim() : rest.trim()).slice(
+    0,
+    2048,
+  );
   if (selectedText.length === 0) return null;
 
   return {
@@ -191,21 +197,9 @@ export function parseNotesMarkdown(markdown: string): NotesExport | null {
   if (!formatMatch) return null;
   if (formatMatch[2] !== '1') return null;
 
-  const exportedAtMatch = matchBounded(
-    /<!--\s*exportedAt:\s*([^>]+?)\s*-->/,
-    markdown,
-    MAX_HEADER,
-  );
-  const bookIdMatch = matchBounded(
-    /<!--\s*bookId:\s*([^>]+?)\s*-->/,
-    markdown,
-    MAX_HEADER,
-  );
-  const titleMatch = matchBounded(
-    /^#\s+(.+?)\s+- Exported Notes\s*$/m,
-    markdown,
-    1024,
-  );
+  const exportedAtMatch = matchBounded(/<!--\s*exportedAt:\s*([^>]+?)\s*-->/, markdown, MAX_HEADER);
+  const bookIdMatch = matchBounded(/<!--\s*bookId:\s*([^>]+?)\s*-->/, markdown, MAX_HEADER);
+  const titleMatch = matchBounded(/^#\s+(.+?)\s+- Exported Notes\s*$/m, markdown, 1024);
 
   const annotations: ExportedAnnotation[] = [];
 
@@ -242,11 +236,7 @@ export function parseNotesMarkdown(markdown: string): NotesExport | null {
     if (!line.startsWith('- ')) continue;
     if (line.length > 4096) continue;
 
-    const cfiMatch = matchBounded(
-      /\[(epubcfi\([^)]{1,512}\))\]/,
-      line,
-      4096,
-    );
+    const cfiMatch = matchBounded(/\[(epubcfi\([^)]{1,512}\))\]/, line, 4096);
     const cfi = cfiMatch?.[1];
 
     if (inHighlights) {
@@ -294,9 +284,7 @@ export function parseNotesMarkdown(markdown: string): NotesExport | null {
           selectedText: parsed.quote ?? null,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
-          locator: parsed.cfi
-            ? { cfi: parsed.cfi, selectedText: parsed.quote ?? undefined }
-            : null,
+          locator: parsed.cfi ? { cfi: parsed.cfi, selectedText: parsed.quote ?? undefined } : null,
         });
       }
     }

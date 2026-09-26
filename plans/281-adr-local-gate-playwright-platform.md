@@ -29,14 +29,14 @@ supported and the install succeeds.
 Two further facts bound the problem:
 
 1. `scripts/quality_gate.sh` already ships `QUALITY_GATE_NO_SMOKE=1`,
-   and its own comment says *"CI sets QUALITY_GATE_NO_SMOKE=1: the
+   and its own comment says _"CI sets QUALITY_GATE_NO_SMOKE=1: the
    gate's dev-server smoke cannot reach a Cloudflare Worker backend in
    the quality-gate job (the documented #928/#944 environmental
    limitation), and CI covers smoke via the dedicated `e2e-smoke` /
-   `e2e-full` jobs."* The escape hatch documents the **CI** case only.
+   `e2e-full` jobs."_ The escape hatch documents the **CI** case only.
 2. Even with browsers installed, the smoke phase cannot pass here: the
    host cannot reach a Cloudflare Worker backend (#928/#944). Installing
-   webkit would move the failure from *install* to *run* without
+   webkit would move the failure from _install_ to _run_ without
    changing the outcome.
 
 ## Decision
@@ -72,7 +72,7 @@ Two further facts bound the problem:
 ## Alternatives rejected
 
 - **Make a failed browser install auto-skip smoke** — rejected: on a
-  host where webkit *is* supported, an install failure is a real
+  host where webkit _is_ supported, an install failure is a real
   environmental defect worth failing on. Silently converting that to a
   skip would weaken the gate exactly where it works today.
 - **Install only the browsers the `@smoke` project needs** — rejected as

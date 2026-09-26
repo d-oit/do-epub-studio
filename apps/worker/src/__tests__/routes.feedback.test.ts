@@ -32,11 +32,15 @@ const FEEDBACK_BODY = {
 };
 
 function postFeedback(overrides: Record<string, unknown> = {}) {
-  return app.fetch(new Request('http://localhost/api/books/book-1/feedback', {
-    method: 'POST',
-    body: JSON.stringify({ ...FEEDBACK_BODY, ...overrides }),
-    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer valid' },
-  }), env, makePassThroughContext());
+  return app.fetch(
+    new Request('http://localhost/api/books/book-1/feedback', {
+      method: 'POST',
+      body: JSON.stringify({ ...FEEDBACK_BODY, ...overrides }),
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer valid' },
+    }),
+    env,
+    makePassThroughContext(),
+  );
 }
 
 describe('Editorial Feedback Routes (reader)', () => {
@@ -48,13 +52,25 @@ describe('Editorial Feedback Routes (reader)', () => {
   it('creates private feedback for a contributor (201)', async () => {
     mockRequireAuth.mockResolvedValue(makeAuthContext());
     mockQueryFirst.mockResolvedValueOnce(null); // no existing mutation
-    mockQueryFirst.mockResolvedValueOnce({ // re-read after insert
-      id: 'fb-1', book_id: 'book-1', kind: 'suggestion', category: 'grammar',
-      body: FEEDBACK_BODY.body, proposed_text: FEEDBACK_BODY.proposedText,
-      book_file_id: null, source_sha256: null, chapter_ref: null, cfi: null,
-      selected_text: 'Consider a comma here.', prefix: null, suffix: null,
-      submitter_email: 'user@example.com', status: 'open',
-      created_at: 'now', updated_at: 'now',
+    mockQueryFirst.mockResolvedValueOnce({
+      // re-read after insert
+      id: 'fb-1',
+      book_id: 'book-1',
+      kind: 'suggestion',
+      category: 'grammar',
+      body: FEEDBACK_BODY.body,
+      proposed_text: FEEDBACK_BODY.proposedText,
+      book_file_id: null,
+      source_sha256: null,
+      chapter_ref: null,
+      cfi: null,
+      selected_text: 'Consider a comma here.',
+      prefix: null,
+      suffix: null,
+      submitter_email: 'user@example.com',
+      status: 'open',
+      created_at: 'now',
+      updated_at: 'now',
     });
 
     const res = await postFeedback();
@@ -64,7 +80,8 @@ describe('Editorial Feedback Routes (reader)', () => {
     expect(payload.data).not.toHaveProperty('submitterEmail');
     // Private channel: insert pins visibility to private for this submitter.
     const insert = mockExecute.mock.calls.find((args) =>
-      String(args[1]).includes('INSERT INTO editorial_feedback'));
+      String(args[1]).includes('INSERT INTO editorial_feedback'),
+    );
     expect(insert?.[1]).toMatch(/'private'/);
     expect(insert?.[2]).toContain('user@example.com');
     // Bound values must cover every placeholder: a missing column value fails
@@ -74,9 +91,11 @@ describe('Editorial Feedback Routes (reader)', () => {
   });
 
   it('rejects submission from a read-only session (403)', async () => {
-    mockRequireAuth.mockResolvedValue(makeAuthContext({
-      capabilities: { ...makeAuthContext().capabilities, canComment: false },
-    }));
+    mockRequireAuth.mockResolvedValue(
+      makeAuthContext({
+        capabilities: { ...makeAuthContext().capabilities, canComment: false },
+      }),
+    );
 
     const res = await postFeedback();
     expect(res.status).toBe(403);
@@ -85,26 +104,43 @@ describe('Editorial Feedback Routes (reader)', () => {
 
   it('replays the same mutationId to the existing item (no duplicate)', async () => {
     mockRequireAuth.mockResolvedValue(makeAuthContext());
-    mockQueryFirst.mockResolvedValueOnce({ // existing mutation row
-      id: 'fb-1', book_id: 'book-1', kind: 'comment', category: 'general',
-      body: 'x', proposed_text: null, book_file_id: null, source_sha256: null,
-      chapter_ref: null, cfi: null, selected_text: 'x', prefix: null, suffix: null,
-      submitter_email: 'user@example.com', status: 'open',
-      created_at: 'now', updated_at: 'now',
+    mockQueryFirst.mockResolvedValueOnce({
+      // existing mutation row
+      id: 'fb-1',
+      book_id: 'book-1',
+      kind: 'comment',
+      category: 'general',
+      body: 'x',
+      proposed_text: null,
+      book_file_id: null,
+      source_sha256: null,
+      chapter_ref: null,
+      cfi: null,
+      selected_text: 'x',
+      prefix: null,
+      suffix: null,
+      submitter_email: 'user@example.com',
+      status: 'open',
+      created_at: 'now',
+      updated_at: 'now',
     });
     mockQueryAll.mockResolvedValueOnce([]); // replies
 
     const res = await postFeedback({ kind: 'comment', proposedText: undefined });
     expect(res.status).toBe(200);
     const inserts = mockExecute.mock.calls.filter((args) =>
-      String(args[1]).includes('INSERT INTO editorial_feedback'));
+      String(args[1]).includes('INSERT INTO editorial_feedback'),
+    );
     expect(inserts).toHaveLength(0);
   });
 
   it('rejects a replay bound to another book or submitter (403)', async () => {
     mockRequireAuth.mockResolvedValue(makeAuthContext());
     mockQueryFirst.mockResolvedValueOnce({
-      id: 'fb-9', book_id: 'book-2', submitter_email: 'other@example.com', status: 'open',
+      id: 'fb-9',
+      book_id: 'book-2',
+      submitter_email: 'other@example.com',
+      status: 'open',
     });
 
     const res = await postFeedback();
@@ -136,19 +172,31 @@ describe('Editorial Feedback Routes (reader)', () => {
       { id: 'fb-1', book_id: 'book-1', submitter_email: 'user@example.com', status: 'accepted' },
     ]);
     mockQueryAll.mockResolvedValueOnce([
-      { id: 'reply-1', feedback_id: 'fb-1', author_email: 'creator@example.com', author_role: 'creator', body: 'Accepted.', created_at: 'now' },
+      {
+        id: 'reply-1',
+        feedback_id: 'fb-1',
+        author_email: 'creator@example.com',
+        author_role: 'creator',
+        body: 'Accepted.',
+        created_at: 'now',
+      },
     ]);
 
-    const res = await app.fetch(new Request('http://localhost/api/books/book-1/feedback', {
-      headers: { Authorization: 'Bearer valid' },
-    }), env, makePassThroughContext());
+    const res = await app.fetch(
+      new Request('http://localhost/api/books/book-1/feedback', {
+        headers: { Authorization: 'Bearer valid' },
+      }),
+      env,
+      makePassThroughContext(),
+    );
     expect(res.status).toBe(200);
     const sql = String(mockQueryAll.mock.calls[0][1]);
     expect(sql).toMatch(/submitter_email = \?/);
     expect(mockQueryAll.mock.calls[0][2]).toContain('user@example.com');
     // The reader list renders replies inline, so the creator's answer must
     // travel with the list rather than waiting for a detail fetch.
-    const payload: { data: Array<{ replies: Array<{ body: string }>; replyCount: number }> } = await res.json();
+    const payload: { data: Array<{ replies: Array<{ body: string }>; replyCount: number }> } =
+      await res.json();
     expect(payload.data[0].replies.map((r) => r.body)).toEqual(['Accepted.']);
     expect(payload.data[0].replyCount).toBe(1);
   });
@@ -157,14 +205,26 @@ describe('Editorial Feedback Routes (reader)', () => {
     mockRequireAuth.mockResolvedValue(makeAuthContext());
     mockQueryFirst.mockResolvedValueOnce(null); // no existing mutation
     mockQueryAll.mockResolvedValue([{ id: 'ref-1', revision: 3 }]); // current references
-    mockQueryFirst.mockResolvedValueOnce({ // re-read after insert
-      id: 'fb-1', book_id: 'book-1', kind: 'suggestion', category: 'grammar',
-      body: FEEDBACK_BODY.body, proposed_text: FEEDBACK_BODY.proposedText,
-      book_file_id: null, source_sha256: null, chapter_ref: null, cfi: null,
-      selected_text: 'Consider a comma here.', prefix: null, suffix: null,
+    mockQueryFirst.mockResolvedValueOnce({
+      // re-read after insert
+      id: 'fb-1',
+      book_id: 'book-1',
+      kind: 'suggestion',
+      category: 'grammar',
+      body: FEEDBACK_BODY.body,
+      proposed_text: FEEDBACK_BODY.proposedText,
+      book_file_id: null,
+      source_sha256: null,
+      chapter_ref: null,
+      cfi: null,
+      selected_text: 'Consider a comma here.',
+      prefix: null,
+      suffix: null,
       reference_revisions: JSON.stringify({ 'ref-1': 3 }),
-      submitter_email: 'user@example.com', status: 'open',
-      created_at: 'now', updated_at: 'now',
+      submitter_email: 'user@example.com',
+      status: 'open',
+      created_at: 'now',
+      updated_at: 'now',
     });
 
     const res = await postFeedback();
@@ -173,7 +233,8 @@ describe('Editorial Feedback Routes (reader)', () => {
     // The reader cannot read the book's references, so the server records what
     // the evidence set was when the submission was accepted.
     const insert = mockExecute.mock.calls.find((args) =>
-      String(args[1]).includes('INSERT INTO editorial_feedback'));
+      String(args[1]).includes('INSERT INTO editorial_feedback'),
+    );
     expect(insert?.[2]).toContain('{"ref-1":3}');
 
     const payload: { data: Record<string, unknown> } = await res.json();
@@ -185,24 +246,45 @@ describe('Editorial Feedback Routes (reader)', () => {
   it('flags an item whose pinned reference was edited since submission', async () => {
     mockRequireAuth.mockResolvedValue(makeAuthContext());
     mockQueryAll.mockImplementation(((_env: unknown, sql: string) => {
-      if (String(sql).includes('FROM book_references')) return Promise.resolve([{ id: 'ref-1', revision: 4 }]);
+      if (String(sql).includes('FROM book_references'))
+        return Promise.resolve([{ id: 'ref-1', revision: 4 }]);
       if (String(sql).includes('FROM feedback_replies')) return Promise.resolve([]);
-      return Promise.resolve([{
-        id: 'fb-1', book_id: 'book-1', submitter_email: 'user@example.com', status: 'open',
-        kind: 'suggestion', category: 'grammar', body: 'x', proposed_text: null,
-        book_file_id: null, source_sha256: null, chapter_ref: null, cfi: null,
-        selected_text: 'x', prefix: null, suffix: null,
-        reference_revisions: JSON.stringify({ 'ref-1': 2 }),
-        created_at: 'now', updated_at: 'now',
-      }]);
+      return Promise.resolve([
+        {
+          id: 'fb-1',
+          book_id: 'book-1',
+          submitter_email: 'user@example.com',
+          status: 'open',
+          kind: 'suggestion',
+          category: 'grammar',
+          body: 'x',
+          proposed_text: null,
+          book_file_id: null,
+          source_sha256: null,
+          chapter_ref: null,
+          cfi: null,
+          selected_text: 'x',
+          prefix: null,
+          suffix: null,
+          reference_revisions: JSON.stringify({ 'ref-1': 2 }),
+          created_at: 'now',
+          updated_at: 'now',
+        },
+      ]);
     }) as never);
 
-    const res = await app.fetch(new Request('http://localhost/api/books/book-1/feedback', {
-      headers: { Authorization: 'Bearer valid' },
-    }), env, makePassThroughContext());
+    const res = await app.fetch(
+      new Request('http://localhost/api/books/book-1/feedback', {
+        headers: { Authorization: 'Bearer valid' },
+      }),
+      env,
+      makePassThroughContext(),
+    );
     expect(res.status).toBe(200);
 
-    const payload: { data: Array<{ referencesDrifted: boolean; referenceRevisions: Record<string, number> }> } = await res.json();
+    const payload: {
+      data: Array<{ referencesDrifted: boolean; referenceRevisions: Record<string, number> }>;
+    } = await res.json();
     expect(payload.data[0].referenceRevisions).toEqual({ 'ref-1': 2 });
     expect(payload.data[0].referencesDrifted).toBe(true);
   });
@@ -211,30 +293,55 @@ describe('Editorial Feedback Routes (reader)', () => {
     mockRequireAuth.mockResolvedValue(makeAuthContext());
     mockQueryFirst.mockResolvedValueOnce(null); // no own row
 
-    const res = await app.fetch(new Request('http://localhost/api/books/book-1/feedback/fb-9', {
-      headers: { Authorization: 'Bearer valid' },
-    }), env, makePassThroughContext());
+    const res = await app.fetch(
+      new Request('http://localhost/api/books/book-1/feedback/fb-9', {
+        headers: { Authorization: 'Bearer valid' },
+      }),
+      env,
+      makePassThroughContext(),
+    );
     expect(res.status).toBe(404);
   });
 
   it('withdraws an own item (withdrawn is terminal for creators to touch)', async () => {
     mockRequireAuth.mockResolvedValue(makeAuthContext());
-    mockQueryFirst.mockResolvedValueOnce({ // own row
-      id: 'fb-1', book_id: 'book-1', submitter_email: 'user@example.com', status: 'open',
+    mockQueryFirst.mockResolvedValueOnce({
+      // own row
+      id: 'fb-1',
+      book_id: 'book-1',
+      submitter_email: 'user@example.com',
+      status: 'open',
     });
-    mockQueryFirst.mockResolvedValueOnce({ // re-read
-      id: 'fb-1', book_id: 'book-1', kind: 'comment', category: 'general', body: 'x',
-      proposed_text: null, book_file_id: null, source_sha256: null, chapter_ref: null,
-      cfi: null, selected_text: 'x', prefix: null, suffix: null,
-      submitter_email: 'user@example.com', status: 'withdrawn',
-      created_at: 'now', updated_at: 'now',
+    mockQueryFirst.mockResolvedValueOnce({
+      // re-read
+      id: 'fb-1',
+      book_id: 'book-1',
+      kind: 'comment',
+      category: 'general',
+      body: 'x',
+      proposed_text: null,
+      book_file_id: null,
+      source_sha256: null,
+      chapter_ref: null,
+      cfi: null,
+      selected_text: 'x',
+      prefix: null,
+      suffix: null,
+      submitter_email: 'user@example.com',
+      status: 'withdrawn',
+      created_at: 'now',
+      updated_at: 'now',
     });
     mockQueryAll.mockResolvedValueOnce([]);
 
-    const res = await app.fetch(new Request('http://localhost/api/books/book-1/feedback/fb-1/withdraw', {
-      method: 'POST',
-      headers: { Authorization: 'Bearer valid' },
-    }), env, makePassThroughContext());
+    const res = await app.fetch(
+      new Request('http://localhost/api/books/book-1/feedback/fb-1/withdraw', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer valid' },
+      }),
+      env,
+      makePassThroughContext(),
+    );
     expect(res.status).toBe(200);
     const payload: { data: { status: string } } = await res.json();
     expect(payload.data.status).toBe('withdrawn');
@@ -243,14 +350,21 @@ describe('Editorial Feedback Routes (reader)', () => {
   it('refuses replies on withdrawn items (422)', async () => {
     mockRequireAuth.mockResolvedValue(makeAuthContext());
     mockQueryFirst.mockResolvedValueOnce({
-      id: 'fb-1', book_id: 'book-1', submitter_email: 'user@example.com', status: 'withdrawn',
+      id: 'fb-1',
+      book_id: 'book-1',
+      submitter_email: 'user@example.com',
+      status: 'withdrawn',
     });
 
-    const res = await app.fetch(new Request('http://localhost/api/books/book-1/feedback/fb-1/replies', {
-      method: 'POST',
-      body: JSON.stringify({ body: 'follow-up' }),
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer valid' },
-    }), env, makePassThroughContext());
+    const res = await app.fetch(
+      new Request('http://localhost/api/books/book-1/feedback/fb-1/replies', {
+        method: 'POST',
+        body: JSON.stringify({ body: 'follow-up' }),
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer valid' },
+      }),
+      env,
+      makePassThroughContext(),
+    );
     expect(res.status).toBe(422);
   });
 
@@ -262,7 +376,9 @@ describe('Editorial Feedback Routes (reader)', () => {
     const res = await postFeedback();
     expect(res.status).toBe(403);
     expect(mockGetGrantByBookAndSession).toHaveBeenCalledWith(
-      expect.anything(), 'book-1', 'user@example.com',
+      expect.anything(),
+      'book-1',
+      'user@example.com',
     );
   });
 });

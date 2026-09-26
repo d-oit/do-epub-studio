@@ -41,14 +41,12 @@ export function BookmarksPanel({
       className="cq cq--bookmarks-panel fixed inset-y-0 right-0 w-80 bg-background border-l border-border z-40 flex flex-col shadow-xl"
     >
       <div className="p-4 border-b border-border flex justify-between items-center">
-        <h2 id="bookmarks-title" className="font-semibold">{t('reader.bookmarks.title')}</h2>
+        <h2 id="bookmarks-title" className="font-semibold">
+          {t('reader.bookmarks.title')}
+        </h2>
         <div className="flex items-center gap-2">
           <Tooltip content={t('reader.bookmarks.addTitle')}>
-            <IconButton
-              onClick={onAddBookmark}
-              variant="ghost"
-              aria-label={t('a11y.add_bookmark')}
-            >
+            <IconButton onClick={onAddBookmark} variant="ghost" aria-label={t('a11y.add_bookmark')}>
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
@@ -59,11 +57,7 @@ export function BookmarksPanel({
               </svg>
             </IconButton>
           </Tooltip>
-          <IconButton
-            onClick={onClose}
-            variant="ghost"
-            aria-label={t('a11y.close')}
-          >
+          <IconButton onClick={onClose} variant="ghost" aria-label={t('a11y.close')}>
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
@@ -89,7 +83,9 @@ export function BookmarksPanel({
               >
                 <div className="flex items-start justify-between">
                   <button
-                    onClick={() => { onNavigate(bookmark); }}
+                    onClick={() => {
+                      onNavigate(bookmark);
+                    }}
                     className="flex-1 text-left focus-visible:ring-2 focus-visible:ring-accent outline-none rounded-md px-1 -mx-1"
                   >
                     <p className="text-sm font-medium text-foreground">
@@ -101,12 +97,19 @@ export function BookmarksPanel({
                   </button>
                   <Tooltip content={t('a11y.delete_bookmark')}>
                     <IconButton
-                      onClick={() => { onDeleteBookmark(bookmark.id); }}
+                      onClick={() => {
+                        onDeleteBookmark(bookmark.id);
+                      }}
                       variant="ghost"
                       className="text-foreground-muted hover:text-accent-error transition-colors"
                       aria-label={t('a11y.delete_bookmark')}
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
                         <path
                           strokeLinecap="round"
                           strokeLinejoin="round"

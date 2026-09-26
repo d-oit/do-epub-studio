@@ -68,7 +68,8 @@ export function useCreatorBooks(): {
       // invalid does the global 401 handling redirect; keep the empty state.
       setError(message);
       logClientEvent({
-        level: 'error', traceId: createTraceId(),
+        level: 'error',
+        traceId: createTraceId(),
         event: 'creator.books.failed',
         error: { name: 'Error', message },
       });

@@ -203,9 +203,7 @@ function getPool(): EpubParserWorkerPool {
   return globalPool;
 }
 
-export async function parseEpubInWorker(
-  source: string | Uint8Array,
-): Promise<EpubParseResult> {
+export async function parseEpubInWorker(source: string | Uint8Array): Promise<EpubParseResult> {
   return getPool().parse(source);
 }
 

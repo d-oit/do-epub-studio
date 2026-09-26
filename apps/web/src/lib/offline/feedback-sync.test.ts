@@ -3,10 +3,7 @@ import { queueFeedbackSubmission, cancelPendingRetry, resetDrainPromise } from '
 import * as db from './db';
 import { createFeedback } from '../api/feedback';
 import { useAuthStore } from '../../stores/auth';
-import {
-  deleteFeedbackDraftByMutation,
-  markFeedbackDraft,
-} from './feedback-drafts';
+import { deleteFeedbackDraftByMutation, markFeedbackDraft } from './feedback-drafts';
 import { clearAllPermissions } from './permissions';
 
 vi.mock('uuid', () => ({

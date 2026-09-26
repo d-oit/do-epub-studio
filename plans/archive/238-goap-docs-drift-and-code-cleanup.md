@@ -19,12 +19,12 @@ each deferred item against `main`.
 
 **Plan closure status (verified against git history):**
 
-| Plan | Declared status | Verified reality | Edit |
-| --- | --- | --- | --- |
-| 237 risk-event handling | In Progress | MERGED as PR #977, commit `3bd190d`; all 9 ACs `[x]`, `audit/risk.ts` present | → `✅ COMPLETED (merged as PR #977, commit 3bd190d)` |
-| 236 items 5+6 review | Complete | MERGED as PR #975, commit `a3827d5` | → `✅ Complete (merged as PR #975, commit a3827d5)` |
-| 234 closure record | Item 7 "deferred" | Item 7 SHIPPED via #977 | Rewrite closure record |
-| ADR-INDEX | 234 row omits item 7; 226–229/236/237 absent from GOAP table | Missing | Update row 234; add 6 GOAP rows |
+| Plan                    | Declared status                                              | Verified reality                                                              | Edit                                                 |
+| ----------------------- | ------------------------------------------------------------ | ----------------------------------------------------------------------------- | ---------------------------------------------------- |
+| 237 risk-event handling | In Progress                                                  | MERGED as PR #977, commit `3bd190d`; all 9 ACs `[x]`, `audit/risk.ts` present | → `✅ COMPLETED (merged as PR #977, commit 3bd190d)` |
+| 236 items 5+6 review    | Complete                                                     | MERGED as PR #975, commit `a3827d5`                                           | → `✅ Complete (merged as PR #975, commit a3827d5)`  |
+| 234 closure record      | Item 7 "deferred"                                            | Item 7 SHIPPED via #977                                                       | Rewrite closure record                               |
+| ADR-INDEX               | 234 row omits item 7; 226–229/236/237 absent from GOAP table | Missing                                                                       | Update row 234; add 6 GOAP rows                      |
 
 **Deferred items (external input, correctly gated):** R1/R12/N3 email gate,
 S1–S9, O2, P5/P7 (private security triage per ADR-212/214) — NOT implementable in
@@ -33,6 +33,7 @@ reader-core public-API helper removal — verified consumers exist in `apps/web`
 removing the published surface is not safe to ship.
 
 **Pre-existing code issues (scout-verified):**
+
 - `apps/web/src/lib/offline/sync.ts` — over-broad `message.includes('permission')`
   fallback treats any generic "permission denied" (non-401/403) as revocation,
   spuriously clearing the local permission cache + dropping the sync item. The
@@ -42,6 +43,7 @@ removing the published surface is not safe to ship.
   (`eventListeners.get(event)!`) removable with a guarded local.
 
 **Docs drift (scout-verified):**
+
 - `docs/offline.md` retry-delay comment (actual 2s/4s/8s/16s/30s), missing
   `external-assets` cache row, permission-detection wording.
 - `docs/architecture.md` `audit_log` table name, EpubLoader interface members,
@@ -51,26 +53,26 @@ removing the published surface is not safe to ship.
 
 ## Implementation
 
-| Slice | Scope | Files |
-| --- | --- | --- |
-| A (swarm) | Docs drift | `docs/offline.md`, `docs/architecture.md`, `docs/security.md`, `docs/reading-insights.md` |
-| B (swarm) | Plan statuses + ADR index | `plans/237-*`, `plans/236-*`, `plans/234-*`, `plans/ADR-INDEX.md` |
-| C (swarm) | sync.ts error classification + tests | `apps/web/src/lib/offline/sync.ts`, `apps/web/src/lib/offline/sync.test.ts` |
-| D (coordinator) | epub-loader non-null cleanup; GOAP-238 record + index row | `packages/reader-core/src/epub-loader.ts`, `plans/238-*`, `plans/ADR-INDEX.md` |
+| Slice           | Scope                                                     | Files                                                                                     |
+| --------------- | --------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| A (swarm)       | Docs drift                                                | `docs/offline.md`, `docs/architecture.md`, `docs/security.md`, `docs/reading-insights.md` |
+| B (swarm)       | Plan statuses + ADR index                                 | `plans/237-*`, `plans/236-*`, `plans/234-*`, `plans/ADR-INDEX.md`                         |
+| C (swarm)       | sync.ts error classification + tests                      | `apps/web/src/lib/offline/sync.ts`, `apps/web/src/lib/offline/sync.test.ts`               |
+| D (coordinator) | epub-loader non-null cleanup; GOAP-238 record + index row | `packages/reader-core/src/epub-loader.ts`, `plans/238-*`, `plans/ADR-INDEX.md`            |
 
 ## Acceptance Criteria
 
 - [ ] All stale plan statuses corrected (237, 236, 234 closure record); ADR-INDEX
-  reflects 226–229/236/237/238 and item-7 closure.
+      reflects 226–229/236/237/238 and item-7 closure.
 - [ ] sync.ts no longer treats a generic `permission` substring as revocation;
-  unit tests cover both a non-status revoked message (clears permissions) and a
-  generic permission message (does NOT clear permissions).
+      unit tests cover both a non-status revoked message (clears permissions) and a
+      generic permission message (does NOT clear permissions).
 - [ ] epub-loader non-null assertion removed; behavior unchanged.
 - [ ] All documented drift corrected; markdownlint clean on edited files.
 - [ ] `pnpm lint`, `pnpm typecheck`, web/reader-core unit suites, `pnpm knip`,
-  `node scripts/check-adr-index.mjs` all green.
+      `node scripts/check-adr-index.mjs` all green.
 - [ ] Full CI green on the PR (fast-check, quality-gate, build, bundle, e2e-smoke,
-  bench, bundle-size, docs-validation); all PR review comments addressed.
+      bench, bundle-size, docs-validation); all PR review comments addressed.
 
 ## Out of Scope (verified, still tracked)
 

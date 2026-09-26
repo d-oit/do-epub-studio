@@ -16,10 +16,7 @@ export type EditorialCategory = 'spelling' | 'grammar' | 'story' | 'logic';
 /** How the finding should read to a reviewer. */
 export type EditorialSeverity = 'info' | 'question' | 'suggestion';
 
-export type EditorialUncertainty =
-  | 'none'
-  | 'review_needed'
-  | 'insufficient_context';
+export type EditorialUncertainty = 'none' | 'review_needed' | 'insufficient_context';
 
 /** A passage the finding relies on, with the source identity it came from. */
 export interface CitedSpan {

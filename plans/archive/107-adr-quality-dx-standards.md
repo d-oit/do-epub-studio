@@ -18,13 +18,13 @@ regression risk increases without proportional test coverage growth.
 
 Thresholds are raised in phases, gated by plan execution:
 
-| Package | Current | After Plan 107 Phase 1-2 | Target (0.2.0) |
-|---------|---------|--------------------------|----------------|
-| `ui` | 10% L / 5% F | 40% L / 30% F | 60% L / 50% F |
-| `worker` | 55% L / 50% F | 65% L / 60% F | 75% L / 70% F |
-| `web` | 55% L / 48% F | 60% L / 55% F | 70% L / 65% F |
-| `shared` | 40% L / 50% F | 50% L / 55% F | 60% L / 60% F |
-| `schema` | 15% L / 5% F | 30% L / 20% F | 50% L / 40% F |
+| Package  | Current       | After Plan 107 Phase 1-2 | Target (0.2.0) |
+| -------- | ------------- | ------------------------ | -------------- |
+| `ui`     | 10% L / 5% F  | 40% L / 30% F            | 60% L / 50% F  |
+| `worker` | 55% L / 50% F | 65% L / 60% F            | 75% L / 70% F  |
+| `web`    | 55% L / 48% F | 60% L / 55% F            | 70% L / 65% F  |
+| `shared` | 40% L / 50% F | 50% L / 55% F            | 60% L / 60% F  |
+| `schema` | 15% L / 5% F  | 30% L / 20% F            | 50% L / 40% F  |
 
 Threshold bumps are committed only AFTER the tests that meet them ship.
 

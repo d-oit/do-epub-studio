@@ -17,9 +17,7 @@ const mockToc: TocItem[] = [
     id: '3',
     label: 'Chapter 3',
     href: 'chapter3.xhtml',
-    subitems: [
-      { id: '3a', label: 'Section 3A', href: 'section3a.xhtml' },
-    ],
+    subitems: [{ id: '3a', label: 'Section 3A', href: 'section3a.xhtml' }],
   },
 ];
 
@@ -55,9 +53,9 @@ describe('reanchorByText', () => {
   });
 
   it('returns partial match when exact not found', async () => {
-    const loadContent = vi.fn().mockResolvedValue(
-      'This is content with words scattered throughout the paragraph.',
-    );
+    const loadContent = vi
+      .fn()
+      .mockResolvedValue('This is content with words scattered throughout the paragraph.');
     const result = await reanchorByText(
       'words scattered throughout paragraph',
       mockToc,
@@ -69,9 +67,9 @@ describe('reanchorByText', () => {
   });
 
   it('returns fuzzy match based on word overlap', async () => {
-    const loadContent = vi.fn().mockResolvedValue(
-      'The chapter discusses important concepts and key ideas about the topic.',
-    );
+    const loadContent = vi
+      .fn()
+      .mockResolvedValue('The chapter discusses important concepts and key ideas about the topic.');
     const result = await reanchorByText(
       'important concepts key ideas topic discussion',
       mockToc,
@@ -199,9 +197,7 @@ describe('findBestChapterMatch', () => {
       textExcerpt: 'text',
       chapterHref: 'nonexistent.xhtml',
     };
-    const tocWithSingle: TocItem[] = [
-      { id: 'only', label: 'Only Chapter', href: 'only.xhtml' },
-    ];
+    const tocWithSingle: TocItem[] = [{ id: 'only', label: 'Only Chapter', href: 'only.xhtml' }];
     const result = findBestChapterMatch(locator, tocWithSingle);
     expect(result?.label).toBe('Only Chapter');
   });
@@ -302,14 +298,21 @@ describe('performance-optimized logic correctness', () => {
   });
 
   it('reanchorByText handles target string with repeated duplicate words correctly', async () => {
-    const loadContent = vi.fn().mockResolvedValue('Literary content often has beautiful repetition.');
+    const loadContent = vi
+      .fn()
+      .mockResolvedValue('Literary content often has beautiful repetition.');
     // Target text has repeated/shuffled words with no long consecutive matching segment >= 20 chars
     // Shuffled words: "repetition content beautiful content literary repetition beautiful"
     // Matched/deduplicated unique words: "repetition", "content", "beautiful", "literary"
     // Deduplication prevents artificial matching inflation on duplicate words.
-    const result = await reanchorByText('repetition content beautiful content literary repetition beautiful', mockToc, loadContent, {
-      fuzzyThreshold: 0.5,
-    });
+    const result = await reanchorByText(
+      'repetition content beautiful content literary repetition beautiful',
+      mockToc,
+      loadContent,
+      {
+        fuzzyThreshold: 0.5,
+      },
+    );
     expect(result.success).toBe(true);
     expect(result.matchType).toBe('fuzzy');
   });

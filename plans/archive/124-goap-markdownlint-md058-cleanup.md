@@ -17,14 +17,14 @@ that was introduced into Plan 121 when the SE2/SE3 closure row was added.
 
 ## Analyze — Pre-existing violations surfaced
 
-| Rule | File:line | Origin |
-|------|----------|--------|
-| MD058 | `plans/028-goap-swarm-remaining-gaps.md` (×5: L92, L100, L107, L113, L120) | Pre-existing since 2026-05-15 plan authoring |
-| MD058 | `plans/045-goap-batch-resolve-issues-223-225-226-236-and-prs-232-235-237.md` (×3: L96, L104, L111) | Pre-existing since 2026-05-22 |
-| MD058 | `plans/083-goap-swarm-all-open-issues-2026-06-12.md` (×4: L14, L22, L58, L69) | Pre-existing since 2026-06-12 |
-| MD058 | `plans/025-goap-orchestrate-open-issues.md` (×1: L27) | Pre-existing since 2026-05-12 |
-| MD038 | `plans/121-goap-post-merge-summary-2026-07-09.md` L32 col 33 | **Introduced** by PR #748 closure row (trailing space inside `` `style-src-attr` `` code span) |
-| **TOTAL** | **14 violations** (13 pre-existing + 1 regression) | |
+| Rule      | File:line                                                                                          | Origin                                                                                         |
+| --------- | -------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| MD058     | `plans/028-goap-swarm-remaining-gaps.md` (×5: L92, L100, L107, L113, L120)                         | Pre-existing since 2026-05-15 plan authoring                                                   |
+| MD058     | `plans/045-goap-batch-resolve-issues-223-225-226-236-and-prs-232-235-237.md` (×3: L96, L104, L111) | Pre-existing since 2026-05-22                                                                  |
+| MD058     | `plans/083-goap-swarm-all-open-issues-2026-06-12.md` (×4: L14, L22, L58, L69)                      | Pre-existing since 2026-06-12                                                                  |
+| MD058     | `plans/025-goap-orchestrate-open-issues.md` (×1: L27)                                              | Pre-existing since 2026-05-12                                                                  |
+| MD038     | `plans/121-goap-post-merge-summary-2026-07-09.md` L32 col 33                                       | **Introduced** by PR #748 closure row (trailing space inside `` `style-src-attr` `` code span) |
+| **TOTAL** | **14 violations** (13 pre-existing + 1 regression)                                                 |                                                                                                |
 
 > All 13 MD058 violations were caught when `npx markdownlint-cli2` was run against
 > `plans/**/*.md` during the SE2/SE3 PR-work validation; the MD038 was caught
@@ -39,6 +39,7 @@ ship them all in one focused PR.
 
 **Decision:** Use the project's own linter as the fixer (`markdownlint-cli2 --fix`),
 which guarantees the fix output is parser-compatible with validation.
+
 - MD058 — auto-fixed by `markdownlint-cli2 --fix` (inserter inserts blank lines
   around tables; preserves all other content).
 - MD038 — manual edit on Plan 121 to remove the trailing space inside the
@@ -47,25 +48,25 @@ which guarantees the fix output is parser-compatible with validation.
 
 ## Tasks — Executed
 
-| ID | Task | Files affected | Result |
-|----|------|----------------|--------|
-| 1 | `markdownlint-cli2 --fix` the four files with MD058 | `plans/025`, `plans/028`, `plans/045`, `plans/083` | ✅ 0 violations in each |
-| 2 | Remove trailing space inside `` `style-src-attr` `` in Plan 121 (MD038) | `plans/121-goap-post-merge-summary-2026-07-09.md` | ✅ 0 violations |
-| 3 | Repo-wide `markdownlint-cli2 plans/**/*.md` | 123 plan files | ✅ 0 violations |
-| 4 | Update `plans/ADR-INDEX.md` to register ADR-125 | `plans/ADR-INDEX.md` | ✅ row inserted |
-| 5 | Write this plan (GOAP) + Plan 125 (ADR) | `plans/124-*`, `plans/125-*` | ✅ |
-| 6 | Run `pre-commit` + typecheck (sanity) | repo | ✅ green |
+| ID  | Task                                                                    | Files affected                                     | Result                  |
+| --- | ----------------------------------------------------------------------- | -------------------------------------------------- | ----------------------- |
+| 1   | `markdownlint-cli2 --fix` the four files with MD058                     | `plans/025`, `plans/028`, `plans/045`, `plans/083` | ✅ 0 violations in each |
+| 2   | Remove trailing space inside `` `style-src-attr` `` in Plan 121 (MD038) | `plans/121-goap-post-merge-summary-2026-07-09.md`  | ✅ 0 violations         |
+| 3   | Repo-wide `markdownlint-cli2 plans/**/*.md`                             | 123 plan files                                     | ✅ 0 violations         |
+| 4   | Update `plans/ADR-INDEX.md` to register ADR-125                         | `plans/ADR-INDEX.md`                               | ✅ row inserted         |
+| 5   | Write this plan (GOAP) + Plan 125 (ADR)                                 | `plans/124-*`, `plans/125-*`                       | ✅                      |
+| 6   | Run `pre-commit` + typecheck (sanity)                                   | repo                                               | ✅ green                |
 
 ## Verification — Final state
 
-| Signal | Result |
-|--------|--------|
-| `markdownlint-cli2 plans/**/*.md` | ✅ 0 violations |
-| `pre-commit run markdownlint-cli2 --all-files` | ✅ passes |
-| `pnpm typecheck` (web + worker + shared + reader-core) | ✅ passes |
-| Codacy `newIssues` | ✅ 0 |
-| Files touched | `plans/025`, `plans/028`, `plans/045`, `plans/083`, `plans/121`, `plans/124`, `plans/125`, `plans/ADR-INDEX.md` |
-| Net diff | ~30 added lines (mostly blanks around tables), 6 deletions in Plan 121 only |
+| Signal                                                 | Result                                                                                                          |
+| ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------- |
+| `markdownlint-cli2 plans/**/*.md`                      | ✅ 0 violations                                                                                                 |
+| `pre-commit run markdownlint-cli2 --all-files`         | ✅ passes                                                                                                       |
+| `pnpm typecheck` (web + worker + shared + reader-core) | ✅ passes                                                                                                       |
+| Codacy `newIssues`                                     | ✅ 0                                                                                                            |
+| Files touched                                          | `plans/025`, `plans/028`, `plans/045`, `plans/083`, `plans/121`, `plans/124`, `plans/125`, `plans/ADR-INDEX.md` |
+| Net diff                                               | ~30 added lines (mostly blanks around tables), 6 deletions in Plan 121 only                                     |
 
 ## Risks — None material
 

@@ -15,14 +15,37 @@ const LOGIN_RESPONSE = {
   ok: true,
   data: {
     sessionToken: process.env.TEST_SESSION_TOKEN || 'smoke-session-token',
-    book: { id: 'book-smoke', slug: TEST_USER.bookSlug, title: 'Smoke Test Book', authorName: 'Test Author' },
-    capabilities: { canRead: true, canComment: true, canHighlight: true, canBookmark: true, canDownloadOffline: false, canExportNotes: false, canManageAccess: false },
+    book: {
+      id: 'book-smoke',
+      slug: TEST_USER.bookSlug,
+      title: 'Smoke Test Book',
+      authorName: 'Test Author',
+    },
+    capabilities: {
+      canRead: true,
+      canComment: true,
+      canHighlight: true,
+      canBookmark: true,
+      canDownloadOffline: false,
+      canExportNotes: false,
+      canManageAccess: false,
+    },
   },
 };
 
 const EPUB_BUFFER = createMinimalEpub([
-  { id: 'c1', href: 'chapter1.xhtml', title: 'Chapter 1', body: '<p>CHAPTER ONE CONTENT for the smoke test reader.</p>' },
-  { id: 'c2', href: 'chapter2.xhtml', title: 'Chapter 2', body: '<p>CHAPTER TWO CONTENT here, different from chapter one.</p>' },
+  {
+    id: 'c1',
+    href: 'chapter1.xhtml',
+    title: 'Chapter 1',
+    body: '<p>CHAPTER ONE CONTENT for the smoke test reader.</p>',
+  },
+  {
+    id: 'c2',
+    href: 'chapter2.xhtml',
+    title: 'Chapter 2',
+    body: '<p>CHAPTER TWO CONTENT here, different from chapter one.</p>',
+  },
 ]);
 
 // ---------------------------------------------------------------------------
@@ -48,13 +71,17 @@ test.describe('Reader migration smoke', () => {
   test('@mobile opens reader and shows book title', async ({ page }) => {
     await loginAsReader(page, TEST_USER.bookSlug);
 
-    await expect(page.getByRole('heading', { name: 'Smoke Test Book' })).toBeVisible({ timeout: 30000 });
+    await expect(page.getByRole('heading', { name: 'Smoke Test Book' })).toBeVisible({
+      timeout: 30000,
+    });
   });
 
   test('@mobile navigates next chapter and asserts section changed', async ({ page }) => {
     await loginAsReader(page, TEST_USER.bookSlug);
 
-    await expect(page.getByRole('heading', { name: 'Smoke Test Book' })).toBeVisible({ timeout: 30000 });
+    await expect(page.getByRole('heading', { name: 'Smoke Test Book' })).toBeVisible({
+      timeout: 30000,
+    });
 
     await page.waitForTimeout(3000);
 

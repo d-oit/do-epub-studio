@@ -63,7 +63,8 @@ describe('AI plugin registry', () => {
       capabilities: {
         text: {
           kind: 'text',
-          summarize: () => Promise.resolve({ summary: 's', pluginId: 'cap', model: 'm', durationMs: 1 }),
+          summarize: () =>
+            Promise.resolve({ summary: 's', pluginId: 'cap', model: 'm', durationMs: 1 }),
         },
       },
     };

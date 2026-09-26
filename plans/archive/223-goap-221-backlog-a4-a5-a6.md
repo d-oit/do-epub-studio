@@ -12,6 +12,7 @@ aggregation, and mark the OTel evaluation as satisfied by ADR-217.
 ### 221-A4 — UI polish: skeletons + centralized keyboard shortcuts
 
 Current state:
+
 - `PageLoadingFallback` (spinner-only) used at app level in `App.tsx`; a
   glassmorphism spinner inlined in `App.tsx`'s `LoadingFallback` serves lazy routes.
 - `AuditLogPage` already has a `<AuditSkeleton />` local component.
@@ -20,6 +21,7 @@ Current state:
   for Escape handling — no shared abstraction.
 
 Plan:
+
 - **Keyboard shortcuts:** Create `apps/web/src/hooks/useKeyboardShortcut.ts` — a
   small `useEffect`-based hook that registers a single document-level listener per
   shortcut key, with mod-key support. Each component that currently hard-codes
@@ -34,8 +36,8 @@ Plan:
   - `CatalogSkeleton` — card-grid skeleton for `CatalogPage`
   - `AdminSkeleton` — table-row skeleton for admin pages
   - `ReaderSkeleton` — full-screen reader skeleton
-  App.tsx `LoadingFallback` uses `PageLoadingFallback`; route-specific Suspense
-  boundaries use the appropriate named skeleton.
+    App.tsx `LoadingFallback` uses `PageLoadingFallback`; route-specific Suspense
+    boundaries use the appropriate named skeleton.
 
 ### 221-A5 — Admin reading-insights aggregation
 
@@ -46,6 +48,7 @@ Per ADR-102b §7: admin must show aggregate book-level or grant-level summaries;
 must not expose individual reader behavior timelines.
 
 Plan: Add `GET /admin/insights` to `apps/worker/src/routes/admin/insights.ts`:
+
 - Aggregates `reading_insights` by `book_id` only — no `user_email` grouping.
 - Returns: `bookId`, `totalActiveMinutes`, `totalActivePages`, `readerCount`
   (COUNT DISTINCT user_email — a count, not the emails), `lastActivity` (max bucket_date).
@@ -63,13 +66,13 @@ satisfies this. Mark `[x]` in plan 221 with a note.
 
 ## 2. Decomposition
 
-| Task | Scope | Files |
-|------|-------|-------|
-| T1 | Create `useKeyboardShortcut` hook | `apps/web/src/hooks/useKeyboardShortcut.ts` + test |
-| T2 | Refactor Escape handlers in reader/panel components to use the hook | 8–10 component files |
-| T3 | Create page-level skeleton components + update Suspense fallbacks | `apps/web/src/components/skeletons/*.tsx`, `App.tsx` |
-| T4 | Admin insights aggregation endpoint + test | `apps/worker/src/routes/admin/insights.ts`, `index.ts`, test |
-| T5 | Mark 221-A6 `[x]` in plan 221 | `plans/221-goap-remaining-audit-items.md` |
+| Task | Scope                                                               | Files                                                        |
+| ---- | ------------------------------------------------------------------- | ------------------------------------------------------------ |
+| T1   | Create `useKeyboardShortcut` hook                                   | `apps/web/src/hooks/useKeyboardShortcut.ts` + test           |
+| T2   | Refactor Escape handlers in reader/panel components to use the hook | 8–10 component files                                         |
+| T3   | Create page-level skeleton components + update Suspense fallbacks   | `apps/web/src/components/skeletons/*.tsx`, `App.tsx`         |
+| T4   | Admin insights aggregation endpoint + test                          | `apps/worker/src/routes/admin/insights.ts`, `index.ts`, test |
+| T5   | Mark 221-A6 `[x]` in plan 221                                       | `plans/221-goap-remaining-audit-items.md`                    |
 
 ## 3. Strategy
 

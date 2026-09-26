@@ -34,7 +34,7 @@ surfaces where this repo already exceeds both benchmarks.
    `create-release-tag.sh`.
 2. **Release skill claims a `release:cut` label triggers `release.yml` and
    promotes a release-drafter draft** — `release.yml` triggers on tag push
-   `v*`; no release-drafter *workflow* exists (only
+   `v*`; no release-drafter _workflow_ exists (only
    `.github/release-drafter.yml` config). Rewrite the skill to the true
    flow; treat drafter adoption as a separate decision (ADR).
 3. **`harness` skill is stale** — references 4 non-existent skills
@@ -43,7 +43,7 @@ surfaces where this repo already exceeds both benchmarks.
    verify-fast/typecheck/lint/test-unit/skills), and writes metrics to
    non-existent `.agents/events/`. Rewrite against the real sensor pack;
    replace `skill-distiller` references with `do-harness distill
-   --from-strikes` where applicable.
+--from-strikes` where applicable.
 4. **500-line source cap unenforced** — `MAX_LINES_PER_SOURCE_FILE=500`
    has no check in `quality_gate.sh`, ESLint, or `do-harness.toml`.
    Fix via do-harness `loc` sensor (450 warn threshold) + ratchet.
@@ -58,15 +58,15 @@ surfaces where this repo already exceeds both benchmarks.
 
 ### Phase 0 resolution status (2026-09-24)
 
-| # | Item | PR | Outcome |
-| - | ---- | -- | ------- |
-| 1 | `release-management` skill → non-existent `scripts/release/sync-changelog.sh` | #1197 | **Closed** — skill rewritten to the real flow: release PR + `scripts/release/create-release-tag.sh`; its commit recipe also fixed to satisfy the body-required `commit-msg` hook |
-| 2 | `release:cut` label + release-drafter promotion claims | #1197 | **Closed** — claims removed (no workflow consumes the label; no drafter *workflow* exists). Drafter adoption stays a separate ADR decision, listed under "Skipped" |
-| 3 | `harness` skill stale (4 phantom skills, Rust-only sensors, `.agents/events/`) | #1197 | **Closed** — sensors sourced from `do-harness.toml`, distillation via `skill-creator` / `distill --from-trace`; the same change fixed hook repo-root resolution (`git rev-parse --show-toplevel`), which had been gating the wrong checkout from worktrees |
-| 4 | 500-line source cap unenforced | #1203 | **Closed** — `scripts/check-loc.mjs` + `scripts/loc-baseline.json` shrink-only ratchet (7 grandfathered files), quality-gate phase, `do-harness` `loc` sensor; **ADR-278** |
-| 5 | Coverage threshold mismatch (three diverging copies) | #1208 | **Closed** — `coverage-thresholds.json` SSOT feeding all 7 `vitest.config.ts` (static import) + `codecov.yml`, enforced by the new `coverage-parity` gate phase; AGENTS.md/CONTRIBUTING/docs prose reduced to pointers; **ADR-282** |
-| 6 | Commit messages / PR titles unchecked in CI | #1205 | **Closed** — `validate-commit-title.yml` runs `scripts/hooks/commit-msg` itself (PR title in subject-only mode, commit range over `fetch-depth: 0`), so CI cannot be stricter or looser than the local hook; `scripts/lib/commit-types.sh` is SSOT, `type-enum` reconciled, `scope-enum` dropped (dynamic scopes); **ADR-279**. Follow-up #1206: register `pr-title` + `commit-range` as required checks |
-| 7 | `.agents/AGENTS.md` escapes `check-agent-sync.mjs` | #1204 | **Closed** — 197-LOC parallel document rewritten as a 22-LOC pointer; the `ADAPTERS` array is now the real enforcement loop (5 → 6 adapters checked); **ADR-280** |
+| #   | Item                                                                           | PR    | Outcome                                                                                                                                                                                                                                                                                                                                                                                                  |
+| --- | ------------------------------------------------------------------------------ | ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | `release-management` skill → non-existent `scripts/release/sync-changelog.sh`  | #1197 | **Closed** — skill rewritten to the real flow: release PR + `scripts/release/create-release-tag.sh`; its commit recipe also fixed to satisfy the body-required `commit-msg` hook                                                                                                                                                                                                                         |
+| 2   | `release:cut` label + release-drafter promotion claims                         | #1197 | **Closed** — claims removed (no workflow consumes the label; no drafter _workflow_ exists). Drafter adoption stays a separate ADR decision, listed under "Skipped"                                                                                                                                                                                                                                       |
+| 3   | `harness` skill stale (4 phantom skills, Rust-only sensors, `.agents/events/`) | #1197 | **Closed** — sensors sourced from `do-harness.toml`, distillation via `skill-creator` / `distill --from-trace`; the same change fixed hook repo-root resolution (`git rev-parse --show-toplevel`), which had been gating the wrong checkout from worktrees                                                                                                                                               |
+| 4   | 500-line source cap unenforced                                                 | #1203 | **Closed** — `scripts/check-loc.mjs` + `scripts/loc-baseline.json` shrink-only ratchet (7 grandfathered files), quality-gate phase, `do-harness` `loc` sensor; **ADR-278**                                                                                                                                                                                                                               |
+| 5   | Coverage threshold mismatch (three diverging copies)                           | #1208 | **Closed** — `coverage-thresholds.json` SSOT feeding all 7 `vitest.config.ts` (static import) + `codecov.yml`, enforced by the new `coverage-parity` gate phase; AGENTS.md/CONTRIBUTING/docs prose reduced to pointers; **ADR-282**                                                                                                                                                                      |
+| 6   | Commit messages / PR titles unchecked in CI                                    | #1205 | **Closed** — `validate-commit-title.yml` runs `scripts/hooks/commit-msg` itself (PR title in subject-only mode, commit range over `fetch-depth: 0`), so CI cannot be stricter or looser than the local hook; `scripts/lib/commit-types.sh` is SSOT, `type-enum` reconciled, `scope-enum` dropped (dynamic scopes); **ADR-279**. Follow-up #1206: register `pr-title` + `commit-range` as required checks |
+| 7   | `.agents/AGENTS.md` escapes `check-agent-sync.mjs`                             | #1204 | **Closed** — 197-LOC parallel document rewritten as a 22-LOC pointer; the `ADAPTERS` array is now the real enforcement loop (5 → 6 adapters checked); **ADR-280**                                                                                                                                                                                                                                        |
 
 **Surfaced en route, each with its own record:** **ADR-281** — the local gate
 requires `QUALITY_GATE_NO_SMOKE=1` on webkit-unsupported hosts (Debian 11), with
@@ -74,7 +74,7 @@ CI `e2e-smoke` left fail-closed per ADR-277 and no sensor weakened;
 **GOAP-283 + ADR-283 + issue #1207** — 6 of the 8
 `gate-manifest.json → release.checks` strings occur zero times in `release.yml`
 (3 naming drift, 3 genuinely absent: `Coverage Gate`, `Cross-Browser E2E`,
-`Security Checks`), deliberately *not* deleted to avoid weakening the sensor.
+`Security Checks`), deliberately _not_ deleted to avoid weakening the sensor.
 
 Plan IDs used by this phase: **278** LOC ratchet · **279** commit/PR-title CI ·
 **280** nested `.agents/AGENTS.md` · **281** local-gate platform · **282**
@@ -107,9 +107,9 @@ required (drafter adoption, coverage source of truth).
   enforce in `validate-skill-format.sh` (currently 2/42; template requires
   both). Ship `.agents/skills/SKILL_TEMPLATE.md`.
 - **Release-notes shape enforcement**: port the compose/check pattern
-   (required sections incl. explicit `None.` breaking-changes, surviving
-   placeholders, dropped-PR detection, `--self-test` sensor). Group by
-   conventional-commit type, not labels.
+  (required sections incl. explicit `None.` breaking-changes, surviving
+  placeholders, dropped-PR detection, `--self-test` sensor). Group by
+  conventional-commit type, not labels.
 - **`untrusted-ingest` sink lint** for PR-text consumers
   (`pr-review-fix`, `pr-roast-batch-close`, `github-pr-autopilot`,
   `smart-update-pr.sh`, `bot-repush-guard.yml`): hermetic proof of no
@@ -127,7 +127,7 @@ required (drafter adoption, coverage source of truth).
 - Duplicate-PR pre-flight guard (scheduled detection workflow).
 - `version-propagation.sh` replacing sed recipes in release skill.
 - User-facing release verification recipe (checksums + `gh attestation
-  verify`) in release notes template.
+verify`) in release notes template.
 - Release skill troubleshooting additions: tag runs execute the workflow
   file from the tagged commit (delete release + re-point tag to fix);
   partial-rerun/idempotency semantics.

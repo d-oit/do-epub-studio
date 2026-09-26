@@ -3,7 +3,13 @@ import { useTranslation } from '../../hooks/useTranslation';
 import { AppLogo, Button } from '../../components/ui';
 import { LoginHeader } from '../../components/LoginHeader';
 import { APP_NAME, APP_VERSION_LABEL } from '../../config/app-identity';
-import { DEMO_READER_EMAIL, DEMO_READER_PASSWORD, DEMO_ADMIN_EMAIL, DEMO_ADMIN_PASSWORD, DEMO_BOOK_SLUG } from '../../config/demo-config';
+import {
+  DEMO_READER_EMAIL,
+  DEMO_READER_PASSWORD,
+  DEMO_ADMIN_EMAIL,
+  DEMO_ADMIN_PASSWORD,
+  DEMO_BOOK_SLUG,
+} from '../../config/demo-config';
 
 export function HelpPage() {
   const { t } = useTranslation();
@@ -12,10 +18,7 @@ export function HelpPage() {
     <div className="flex min-h-dvh flex-col overflow-x-clip bg-background px-4 py-6 sm:px-6 lg:px-8">
       <LoginHeader />
 
-      <main
-        id="main-content"
-        className="mx-auto w-full max-w-2xl pt-6 pb-8"
-      >
+      <main id="main-content" className="mx-auto w-full max-w-2xl pt-6 pb-8">
         <div className="flex flex-col items-center text-center">
           <AppLogo size={64} className="mb-4 text-accent" />
           <p className="mb-2 text-sm font-medium uppercase tracking-[0.12em] text-foreground-muted">
@@ -34,15 +37,15 @@ export function HelpPage() {
           </div>
 
           <div className="rounded-lg border border-border bg-background-secondary p-5 shadow-md sm:p-7">
-            <h2 className="text-lg font-semibold text-foreground">
-              {t('help.demoTitle')}
-            </h2>
-            <p className="mt-2 text-sm text-foreground-muted">
-              {t('help.demoBody')}
-            </p>
+            <h2 className="text-lg font-semibold text-foreground">{t('help.demoTitle')}</h2>
+            <p className="mt-2 text-sm text-foreground-muted">{t('help.demoBody')}</p>
             <ul className="mt-4 space-y-2 text-sm text-foreground">
               <li className="rounded-md bg-background p-3 font-medium">
-                {t('help.demoReader', { email: DEMO_READER_EMAIL, password: DEMO_READER_PASSWORD, slug: DEMO_BOOK_SLUG })}
+                {t('help.demoReader', {
+                  email: DEMO_READER_EMAIL,
+                  password: DEMO_READER_PASSWORD,
+                  slug: DEMO_BOOK_SLUG,
+                })}
               </li>
               <li className="rounded-md bg-background p-3 font-medium">
                 {t('help.demoAdmin', { email: DEMO_ADMIN_EMAIL, password: DEMO_ADMIN_PASSWORD })}

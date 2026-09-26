@@ -152,13 +152,13 @@ function sentenceWindow(
       const rangeStart = asNumber(pair[0]);
       const rangeEnd = asNumber(pair[1]);
       if (
-        rangeStart !== null
-        && rangeEnd !== null
-        && rangeStart >= 0
-        && rangeEnd <= text.length
-        && rangeStart < rangeEnd
-        && rangeStart <= offset
-        && offset + length <= rangeEnd
+        rangeStart !== null &&
+        rangeEnd !== null &&
+        rangeStart >= 0 &&
+        rangeEnd <= text.length &&
+        rangeStart < rangeEnd &&
+        rangeStart <= offset &&
+        offset + length <= rangeEnd
       ) {
         return {
           quote: text.slice(rangeStart, rangeEnd),
@@ -232,9 +232,12 @@ export function createLanguageToolEditorialPlugin(
 
   async function probe(): Promise<boolean> {
     try {
-      const res = await doFetch(`${checkUrl}?${new URLSearchParams({ language: 'en-US', text: 'hello' })}`, {
-        signal: AbortSignal.timeout(timeoutMs),
-      });
+      const res = await doFetch(
+        `${checkUrl}?${new URLSearchParams({ language: 'en-US', text: 'hello' })}`,
+        {
+          signal: AbortSignal.timeout(timeoutMs),
+        },
+      );
       answered = true;
       if (res.ok) {
         try {
@@ -294,10 +297,9 @@ export function createLanguageToolEditorialPlugin(
     // asks for story/logic cannot be completed here, and returning "no
     // findings" for it would read as a clean story review that never ran —
     // callers ask per category (AssistancePanel iterates categories one by one).
-    const wantsUnanswerable = request.categories.length === 0
-      || request.categories.some(
-        (category) => !LANGUAGE_TOOL_EDITORIAL_CATEGORIES.includes(category),
-      );
+    const wantsUnanswerable =
+      request.categories.length === 0 ||
+      request.categories.some((category) => !LANGUAGE_TOOL_EDITORIAL_CATEGORIES.includes(category));
     if (wantsUnanswerable) {
       return { status: 'unavailable', reason: 'incomplete_analysis' };
     }
@@ -322,9 +324,7 @@ export function createLanguageToolEditorialPlugin(
           return { status: 'unavailable', reason: 'incomplete_analysis' };
         }
         const rule = isRecord(raw.rule) ? raw.rule : null;
-        const categoryId = rule && isRecord(rule.category)
-          ? asString(rule.category.id)
-          : null;
+        const categoryId = rule && isRecord(rule.category) ? asString(rule.category.id) : null;
         const category = categoryId !== null ? LT_CATEGORY_MAP[categoryId] : undefined;
         // Selection, not rejection: out-of-scope categories and categories the
         // caller did not request are dropped before mapping, so a spelling run
@@ -335,17 +335,18 @@ export function createLanguageToolEditorialPlugin(
 
         const offset = asNumber(raw.offset);
         const length = asNumber(raw.length);
-        const span = offset !== null
-          && length !== null
-          && offset >= 0
-          && length > 0
-          && offset + length <= text.length
-          ? { offset, length }
-          : null;
+        const span =
+          offset !== null &&
+          length !== null &&
+          offset >= 0 &&
+          length > 0 &&
+          offset + length <= text.length
+            ? { offset, length }
+            : null;
 
         if (
-          span
-          && overlapsApprovedTerm(text, span.offset, span.offset + span.length, approvedTerms)
+          span &&
+          overlapsApprovedTerm(text, span.offset, span.offset + span.length, approvedTerms)
         ) {
           // ADR-274 D6: per-book approved-term suppression (glossary names,
           // invented terms, dialect spellings) instead of `disabledRules`
@@ -355,19 +356,18 @@ export function createLanguageToolEditorialPlugin(
 
         const window = span
           ? sentenceWindow(text, span.offset, span.length, checked.sentenceRanges)
-          // Unreadable offsets: cite an empty quote so the validator rejects
-          // this candidate (empty_quote) instead of the adapter slicing a
-          // wrong span — map faithfully, let the trust boundary decide.
-          : { quote: '', start: 0, end: 0 };
+          : // Unreadable offsets: cite an empty quote so the validator rejects
+            // this candidate (empty_quote) instead of the adapter slicing a
+            // wrong span — map faithfully, let the trust boundary decide.
+            { quote: '', start: 0, end: 0 };
         const matchedText = span ? text.slice(span.offset, span.offset + span.length) : '';
         const replacements: readonly unknown[] = Array.isArray(raw.replacements)
           ? raw.replacements
           : [];
         const first = replacements[0];
         const proposed = isRecord(first) ? asString(first.value) : null;
-        const replacement = proposed !== null && proposed.length > 0 && proposed !== matchedText
-          ? proposed
-          : null;
+        const replacement =
+          proposed !== null && proposed.length > 0 && proposed !== matchedText ? proposed : null;
 
         findings.push({
           category,
@@ -375,14 +375,16 @@ export function createLanguageToolEditorialPlugin(
           // Blank explanations are left for the validator to reject
           // (empty_explanation) rather than papered over here.
           explanation: asString(raw.message) ?? asString(raw.shortMessage) ?? '',
-          spans: [{
-            chapterRef,
-            cfi: null,
-            quote: window.quote,
-            sourceSha256,
-            start: window.start,
-            end: window.end,
-          }],
+          spans: [
+            {
+              chapterRef,
+              cfi: null,
+              quote: window.quote,
+              sourceSha256,
+              start: window.start,
+              end: window.end,
+            },
+          ],
           replacement,
           referenceIds: [],
           referenceRevisions: {},

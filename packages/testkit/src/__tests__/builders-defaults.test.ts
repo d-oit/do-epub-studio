@@ -2,7 +2,11 @@ import { describe, it, expect } from 'vitest';
 import { createBookBuilder, createBookFileBuilder } from '../book-builder';
 import { createGrantBuilder } from '../grant-builder';
 import { createSessionBuilder } from '../session-builder';
-import { createCommentBuilder, createHighlightBuilder, createBookmarkBuilder } from '../annotation-builder';
+import {
+  createCommentBuilder,
+  createHighlightBuilder,
+  createBookmarkBuilder,
+} from '../annotation-builder';
 import { createProgressBuilder } from '../progress-builder';
 
 // Exhaustive deterministic-default assertions for every field of every builder.

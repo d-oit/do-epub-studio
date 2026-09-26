@@ -41,7 +41,10 @@ export function createSessionBuilder(): SessionBuilder {
       return self;
     },
     withExpiry: (minutesFromNow: number) => {
-      state = { ...state, expiresAt: new Date(Date.now() + minutesFromNow * 60 * 1000).toISOString() };
+      state = {
+        ...state,
+        expiresAt: new Date(Date.now() + minutesFromNow * 60 * 1000).toISOString(),
+      };
       return self;
     },
     withRevoked: () => {

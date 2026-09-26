@@ -8,16 +8,16 @@
 
 Seven open PRs and one open issue were triaged:
 
-| PR | Title | CI | State | Action |
-|----|-------|----|-------|--------|
-| #998 | bump @sentry/react 10.69.0→10.70.0 | all green | CLEAN | merge (dependency, low risk) |
-| #997 | bump @sentry/cloudflare 10.69.0→10.70.0 | all green | CLEAN | merge (dependency, low risk) |
-| #996 | bump production-dependencies group (2) | all green | CLEAN | merge (dependency, low risk) |
-| #995 | bump dev-dependencies group (17) | all green | CLEAN | merge (dependency, low risk) |
-| #993 | login UX redesign (password toggle + autofill) | green except Chromatic "UI Tests pending" | UNSTABLE | fix-able only by human (baseline acceptance); stacked on #991 |
-| #992 | bump github-actions group (codeql 4.37.7) | Full Quality Gate + Pre-commit FAIL | UNSTABLE | **fix: add codeql-action v4.37.7 SHA to allowlist** |
-| #991 | demo login + help entry points (GOAP-244) | all green | BLOCKED | **fix: resolve stale OwlWatch review thread** |
-| issue #994 | CI failure on main (scheduled cross-browser E2E) | 2 E2E tests fail | open | **fix: diagnose + repair 2 failing E2E tests** |
+| PR         | Title                                            | CI                                        | State    | Action                                                        |
+| ---------- | ------------------------------------------------ | ----------------------------------------- | -------- | ------------------------------------------------------------- |
+| #998       | bump @sentry/react 10.69.0→10.70.0               | all green                                 | CLEAN    | merge (dependency, low risk)                                  |
+| #997       | bump @sentry/cloudflare 10.69.0→10.70.0          | all green                                 | CLEAN    | merge (dependency, low risk)                                  |
+| #996       | bump production-dependencies group (2)           | all green                                 | CLEAN    | merge (dependency, low risk)                                  |
+| #995       | bump dev-dependencies group (17)                 | all green                                 | CLEAN    | merge (dependency, low risk)                                  |
+| #993       | login UX redesign (password toggle + autofill)   | green except Chromatic "UI Tests pending" | UNSTABLE | fix-able only by human (baseline acceptance); stacked on #991 |
+| #992       | bump github-actions group (codeql 4.37.7)        | Full Quality Gate + Pre-commit FAIL       | UNSTABLE | **fix: add codeql-action v4.37.7 SHA to allowlist**           |
+| #991       | demo login + help entry points (GOAP-244)        | all green                                 | BLOCKED  | **fix: resolve stale OwlWatch review thread**                 |
+| issue #994 | CI failure on main (scheduled cross-browser E2E) | 2 E2E tests fail                          | open     | **fix: diagnose + repair 2 failing E2E tests**                |
 
 ## Phase 2 — Decomposition
 
@@ -42,17 +42,17 @@ See execution record for commits.
 
 ### Merged (non-auth, CI green incl. Codacy)
 
-| PR | What | Result |
-|----|------|--------|
-| #992 | github-actions bump (codeql 4.37.7) | allowlist fix → green → merged |
-| #998 | @sentry/react bump | merged |
-| #997 | @sentry/cloudflare bump | rebased (lockfile) → merged |
-| #996 | production-deps bump (2) | merged |
-| #995 | dev-deps bump (17) | rebased (lockfile) → merged |
-| #999 | fix #994: harden 2 flaky E2E + CI failure auto-close | merged |
-| #1000 | learnings doc (Dependabot force-push + Chromatic actor) | merged |
-| #1002 | de-flake ConflictResolutionPanel seed timestamp | merged |
-| #1004 | retry actionlint download (fix #1003) | merged |
+| PR    | What                                                    | Result                         |
+| ----- | ------------------------------------------------------- | ------------------------------ |
+| #992  | github-actions bump (codeql 4.37.7)                     | allowlist fix → green → merged |
+| #998  | @sentry/react bump                                      | merged                         |
+| #997  | @sentry/cloudflare bump                                 | rebased (lockfile) → merged    |
+| #996  | production-deps bump (2)                                | merged                         |
+| #995  | dev-deps bump (17)                                      | rebased (lockfile) → merged    |
+| #999  | fix #994: harden 2 flaky E2E + CI failure auto-close    | merged                         |
+| #1000 | learnings doc (Dependabot force-push + Chromatic actor) | merged                         |
+| #1002 | de-flake ConflictResolutionPanel seed timestamp         | merged                         |
+| #1004 | retry actionlint download (fix #1003)                   | merged                         |
 
 ### Issues resolved
 

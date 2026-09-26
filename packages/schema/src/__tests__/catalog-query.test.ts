@@ -15,7 +15,11 @@ describe('CatalogQuerySchema', () => {
   });
 
   it('accepts optional filters', () => {
-    const result = CatalogQuerySchema.parse({ q: 'orwell', author: 'George Orwell', language: 'en' });
+    const result = CatalogQuerySchema.parse({
+      q: 'orwell',
+      author: 'George Orwell',
+      language: 'en',
+    });
     expect(result.q).toBe('orwell');
     expect(result.author).toBe('George Orwell');
     expect(result.language).toBe('en');

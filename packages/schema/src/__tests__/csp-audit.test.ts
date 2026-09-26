@@ -1,8 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  CspReportSchema,
-  AuditQuerySchema,
-} from '../schemas';
+import { CspReportSchema, AuditQuerySchema } from '../schemas';
 
 describe('CspReportSchema', () => {
   it('accepts valid CSP report', () => {
@@ -19,12 +16,12 @@ describe('CspReportSchema', () => {
     const result = CspReportSchema.parse({
       'csp-report': {
         'document-uri': 'https://example.com',
-        'referrer': 'https://google.com',
+        referrer: 'https://google.com',
         'blocked-uri': 'https://evil.com/script.js',
         'violated-directive': "script-src 'self'",
-        'effective-directive': "script-src",
+        'effective-directive': 'script-src',
         'original-policy': "script-src 'self'",
-        'disposition': 'enforce',
+        disposition: 'enforce',
         'status-code': 200,
         'script-sample': 'alert(1)',
       },
@@ -33,12 +30,14 @@ describe('CspReportSchema', () => {
   });
 
   it('rejects invalid document-uri', () => {
-    expect(() => CspReportSchema.parse({
-      'csp-report': {
-        'document-uri': 'not-a-url',
-        'violated-directive': "script-src 'self'",
-      },
-    })).toThrow();
+    expect(() =>
+      CspReportSchema.parse({
+        'csp-report': {
+          'document-uri': 'not-a-url',
+          'violated-directive': "script-src 'self'",
+        },
+      }),
+    ).toThrow();
   });
 });
 

@@ -19,17 +19,45 @@ vi.mock('../../lib/api/invitations', () => ({
   revokeBookInvitation: vi.fn(),
 }));
 vi.mock('../../stores/auth', () => ({
-  useAuthStore: (selector: (state: { sessionToken: string | null }) => unknown) => selector({ sessionToken: 'admin-token' }),
+  useAuthStore: (selector: (state: { sessionToken: string | null }) => unknown) =>
+    selector({ sessionToken: 'admin-token' }),
 }));
 vi.mock('../../hooks/useTranslation', () => ({
   useTranslation: () => ({ t: (key: string) => key, locale: 'en' }),
 }));
 vi.mock('../../components/ui', () => ({
-  Button: ({ children, type, onClick, isLoading, loadingLabel, disabled, className }: React.ButtonHTMLAttributes<HTMLButtonElement> & { isLoading?: boolean; loadingLabel?: React.ReactNode }) => (
-    <button type={type || 'button'} onClick={onClick} disabled={disabled || isLoading} className={className}>{isLoading ? loadingLabel : children}</button>
+  Button: ({
+    children,
+    type,
+    onClick,
+    isLoading,
+    loadingLabel,
+    disabled,
+    className,
+  }: React.ButtonHTMLAttributes<HTMLButtonElement> & {
+    isLoading?: boolean;
+    loadingLabel?: React.ReactNode;
+  }) => (
+    <button
+      type={type || 'button'}
+      onClick={onClick}
+      disabled={disabled || isLoading}
+      className={className}
+    >
+      {isLoading ? loadingLabel : children}
+    </button>
   ),
-  Input: ({ label, type, value, onChange, required }: React.InputHTMLAttributes<HTMLInputElement> & { label?: React.ReactNode }) => (
-    <label>{label}<input type={type} value={value} onChange={onChange} required={required} /></label>
+  Input: ({
+    label,
+    type,
+    value,
+    onChange,
+    required,
+  }: React.InputHTMLAttributes<HTMLInputElement> & { label?: React.ReactNode }) => (
+    <label>
+      {label}
+      <input type={type} value={value} onChange={onChange} required={required} />
+    </label>
   ),
 }));
 vi.mock('@do-epub-studio/ui', () => ({
@@ -61,7 +89,9 @@ describe('InvitationsPanel', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(fetchBookInvitations).mockResolvedValue([]);
-    mockExecuteWithStepUp.mockImplementation((fn: (token: string) => Promise<unknown>) => fn('step-up-token'));
+    mockExecuteWithStepUp.mockImplementation((fn: (token: string) => Promise<unknown>) =>
+      fn('step-up-token'),
+    );
     vi.mocked(createBookInvitation).mockResolvedValue({
       invitation: invitation(),
       delivery: 'manual_copy_required',
@@ -78,16 +108,22 @@ describe('InvitationsPanel', () => {
   it('creates a reader invitation and exposes the manual delivery link', async () => {
     render(<InvitationsPanel bookId={bookId} executeWithStepUp={mockExecuteWithStepUp} />);
     fireEvent.click(screen.getByRole('button', { name: 'invitations.invitePerson' }));
-    fireEvent.change(screen.getByLabelText('invitations.emailLabel'), { target: { value: 'new-reader@example.com' } });
+    fireEvent.change(screen.getByLabelText('invitations.emailLabel'), {
+      target: { value: 'new-reader@example.com' },
+    });
     fireEvent.click(screen.getByRole('button', { name: 'invitations.sendInvite' }));
 
-    await waitFor(() => expect(createBookInvitation).toHaveBeenCalledWith(
-      bookId,
-      expect.objectContaining({ email: 'new-reader@example.com', role: 'reader' }),
-      'step-up-token',
-    ));
+    await waitFor(() =>
+      expect(createBookInvitation).toHaveBeenCalledWith(
+        bookId,
+        expect.objectContaining({ email: 'new-reader@example.com', role: 'reader' }),
+        'step-up-token',
+      ),
+    );
     expect(await screen.findByText('invitations.manualDelivery')).toBeInTheDocument();
-    expect(screen.getByDisplayValue('https://app.example.com/accept-invite#token=secret')).toBeInTheDocument();
+    expect(
+      screen.getByDisplayValue('https://app.example.com/accept-invite#token=secret'),
+    ).toBeInTheDocument();
   });
 
   it('resends and revokes a pending invitation through step-up', async () => {

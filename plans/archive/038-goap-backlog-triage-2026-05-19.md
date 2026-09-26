@@ -28,17 +28,18 @@ Plans 036 (agent-harness GOAP) and 037 (agent-harness ADR) are currently **untra
 
 ### F1. Open Pull Requests (7) — Wave 1 merged, Wave 2 in flight
 
-| # | Title | Type | Blocker | Status |
-|---|---|---|---|---|
-| #188 | feat(ci): multiple CI improvements (Playwright, retry, WebKit, notifications) | Agent | review pending | 🆕 Closes #170, #174, #173, #164 |
-| #189 | feat(lint): stricter ESLint rules | Agent | review pending | 🆕 Closes #163 |
-| #190 | chore(test): env-var test credentials | Agent | review pending | 🆕 Closes #169 |
-| #191 | chore(docs): lighthouse archive + AGENTS count | Agent | review pending | 🆕 Closes #172, #167 |
-| #186 | fix(ci): sync allowed SHAs | Agent | review: Codacy feedback addressed | Updated with dedup fix |
-| #184 | feat(ci): benchmark PR regression comments | Jules / fixes #157 | ⚠️ Benchmark CI fails (permissions) | Commented with fix guidance |
-| #183 | ci: bump cloudflare/wrangler-action 3.15→4.0 | Dependabot | ⚠️ Lint fails (needs SHA allowlist sync, blocked on #186) | Commented with guidance |
+| #    | Title                                                                         | Type               | Blocker                                                   | Status                           |
+| ---- | ----------------------------------------------------------------------------- | ------------------ | --------------------------------------------------------- | -------------------------------- |
+| #188 | feat(ci): multiple CI improvements (Playwright, retry, WebKit, notifications) | Agent              | review pending                                            | 🆕 Closes #170, #174, #173, #164 |
+| #189 | feat(lint): stricter ESLint rules                                             | Agent              | review pending                                            | 🆕 Closes #163                   |
+| #190 | chore(test): env-var test credentials                                         | Agent              | review pending                                            | 🆕 Closes #169                   |
+| #191 | chore(docs): lighthouse archive + AGENTS count                                | Agent              | review pending                                            | 🆕 Closes #172, #167             |
+| #186 | fix(ci): sync allowed SHAs                                                    | Agent              | review: Codacy feedback addressed                         | Updated with dedup fix           |
+| #184 | feat(ci): benchmark PR regression comments                                    | Jules / fixes #157 | ⚠️ Benchmark CI fails (permissions)                       | Commented with fix guidance      |
+| #183 | ci: bump cloudflare/wrangler-action 3.15→4.0                                  | Dependabot         | ⚠️ Lint fails (needs SHA allowlist sync, blocked on #186) | Commented with guidance          |
 
 **Merged since proposal:**
+
 - #182 (codecov v6) — merged into main ✅
 - #185 (node_modules caching) — merged into main ✅
 
@@ -61,32 +62,32 @@ Plans 036 (agent-harness GOAP) and 037 (agent-harness ADR) are currently **untra
 
 **Group B — UI / UX 2026 follow-ups (4 issues, P2)** — extends Plan 031/032
 
-| # | Title | Notes | Status |
-|---|---|---|---|
-| 171 | feat(ui): Storybook + visual regression for OKLCH tokens | listed as G5 in Plan 033 | ❌ Not implemented (complex setup) |
-| 161 | feat(ui): localized copy review via `anti-ai-slop` skill | uses installed skill | ✅ PR #196 — clean, no AI-slop patterns |
-| 160 | feat(ui): Lighthouse / CWV re-measurement post-2026 UI | refreshes `docs/lighthouse.md` | ❌ Depends on hosted preview URL |
-| 163 | feat(lint): stricter ESLint (no-non-null-assertion, require-await, consistent-type-imports) | quality gate | ✅ PR #189 (warn level, tracked for error promotion) |
+| #   | Title                                                                                       | Notes                          | Status                                               |
+| --- | ------------------------------------------------------------------------------------------- | ------------------------------ | ---------------------------------------------------- |
+| 171 | feat(ui): Storybook + visual regression for OKLCH tokens                                    | listed as G5 in Plan 033       | ❌ Not implemented (complex setup)                   |
+| 161 | feat(ui): localized copy review via `anti-ai-slop` skill                                    | uses installed skill           | ✅ PR #196 — clean, no AI-slop patterns              |
+| 160 | feat(ui): Lighthouse / CWV re-measurement post-2026 UI                                      | refreshes `docs/lighthouse.md` | ❌ Depends on hosted preview URL                     |
+| 163 | feat(lint): stricter ESLint (no-non-null-assertion, require-await, consistent-type-imports) | quality gate                   | ✅ PR #189 (warn level, tracked for error promotion) |
 
 **Group C — Docs (2 issues, P2)**
 
-| # | Title | Notes | Status |
-|---|---|---|---|
-| 172 | chore(docs): resolve `docs/lighthouse.md` status (restore or archive) | unblocks #160 | ✅ PR #191 (archived) |
-| 167 | chore(docs): AGENTS.md instruction count baseline + audit | aligns with plan 036 | ✅ PR #191 (analysis created) |
+| #   | Title                                                                 | Notes                | Status                        |
+| --- | --------------------------------------------------------------------- | -------------------- | ----------------------------- |
+| 172 | chore(docs): resolve `docs/lighthouse.md` status (restore or archive) | unblocks #160        | ✅ PR #191 (archived)         |
+| 167 | chore(docs): AGENTS.md instruction count baseline + audit             | aligns with plan 036 | ✅ PR #191 (analysis created) |
 
 **Group D — Testing / Cleanup (1 issue, P2)**
 
-| # | Title | Notes | Status |
-|---|---|---|---|
+| #   | Title                                                                 | Notes                          | Status     |
+| --- | --------------------------------------------------------------------- | ------------------------------ | ---------- |
 | 169 | chore(test): audit + env-var-ize remaining hardcoded test credentials | finishes plan 010 backlog item | ✅ PR #190 |
 
 ### F3. Missing implementations in code (P3)
 
-| Locator | Issue |
-|---|---|
-| `apps/worker/src/lib/rate-limiter.ts:35` | `TODO(#140)` — in-memory limiter still present alongside `rate-limiter-do.ts`; needs feature flag + cutover |
-| `apps/web/src/__tests__/i18n-parity.test.ts:34` | sentinel value `'TODO'` — keep as guard, not a TODO marker |
+| Locator                                         | Issue                                                                                                       |
+| ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `apps/worker/src/lib/rate-limiter.ts:35`        | `TODO(#140)` — in-memory limiter still present alongside `rate-limiter-do.ts`; needs feature flag + cutover |
+| `apps/web/src/__tests__/i18n-parity.test.ts:34` | sentinel value `'TODO'` — keep as guard, not a TODO marker                                                  |
 
 No other product-code TODO/FIXME/HACK markers exist outside `node_modules/.ignored/**`.
 
@@ -117,49 +118,49 @@ No other product-code TODO/FIXME/HACK markers exist outside `node_modules/.ignor
 
 ### Wave 1 — PR & release reconciliation (sequential, P0)
 
-| Task | Owner skill | Gate |
-|---|---|---|
-| W1.1 Rebase PR #185 on main, re-run quality gate | `github-workflow` | green checks |
-| W1.2 Review PR #184 (benchmark comparison) for security / scope | `code-review-assistant` | approve or request changes |
-| W1.3 Smoke-test PR #183 (`wrangler-action` v4) against `release.yml` | `cicd-pipeline` | dry-run deploy passes |
-| W1.4 Smoke-test PR #182 (`codecov-action` v6) — verify upload still parses lcov | `cicd-pipeline` | coverage uploaded on PR |
-| W1.5 Cut `v0.1.0` GitHub release | `release-management` skill (mandatory per AGENTS.md Tier 2 #10) | tag + Release page exists |
+| Task                                                                            | Owner skill                                                     | Gate                       |
+| ------------------------------------------------------------------------------- | --------------------------------------------------------------- | -------------------------- |
+| W1.1 Rebase PR #185 on main, re-run quality gate                                | `github-workflow`                                               | green checks               |
+| W1.2 Review PR #184 (benchmark comparison) for security / scope                 | `code-review-assistant`                                         | approve or request changes |
+| W1.3 Smoke-test PR #183 (`wrangler-action` v4) against `release.yml`            | `cicd-pipeline`                                                 | dry-run deploy passes      |
+| W1.4 Smoke-test PR #182 (`codecov-action` v6) — verify upload still parses lcov | `cicd-pipeline`                                                 | coverage uploaded on PR    |
+| W1.5 Cut `v0.1.0` GitHub release                                                | `release-management` skill (mandatory per AGENTS.md Tier 2 #10) | tag + Release page exists  |
 
 ### Wave 2 — Parallel groups (swarm, P1/P2) — Status: Mostly complete
 
 **Group A — CI/Release** (8 tasks — 5 done, 3 remaining)
 
-| Issue | Skill | Notes | Status |
-|---|---|---|---|
-| #175 SBOM/attestation | `cicd-pipeline` + `release-management` | follows Plan 035 ADR | ✅ PR #195 |
-| #174 E2E retry | `cicd-pipeline` | `nick-fields/retry@v3` SHA-pinned | ✅ PR #188 |
-| #173 WebKit verification | `test-runner` | resolves Playwright KNOWN-ISSUE entry | ✅ PR #188 |
-| #170 upload Playwright on pass | `cicd-pipeline` | `actions/upload-artifact@v4` | ✅ PR #188 |
-| #168 OIDC Cloudflare deploy | `cicd-pipeline` | requires Cloudflare config | ❌ Deferred — needs Cloudflare account-side setup |
-| #164 failure notifications | `cicd-pipeline` | Slack webhook + issue fallback | ✅ PR #188 |
-| #162 consolidate smoke jobs | `cicd-pipeline` + `migration-refactoring` | de-dup workflows | ✅ Already resolved (no duplicate remains) |
-| #159 stale workflow | `cicd-pipeline` | `actions/stale@v10` already pinned (#180) | ✅ Already exists (`stale-cleanup.yml`) |
+| Issue                          | Skill                                     | Notes                                     | Status                                            |
+| ------------------------------ | ----------------------------------------- | ----------------------------------------- | ------------------------------------------------- |
+| #175 SBOM/attestation          | `cicd-pipeline` + `release-management`    | follows Plan 035 ADR                      | ✅ PR #195                                        |
+| #174 E2E retry                 | `cicd-pipeline`                           | `nick-fields/retry@v3` SHA-pinned         | ✅ PR #188                                        |
+| #173 WebKit verification       | `test-runner`                             | resolves Playwright KNOWN-ISSUE entry     | ✅ PR #188                                        |
+| #170 upload Playwright on pass | `cicd-pipeline`                           | `actions/upload-artifact@v4`              | ✅ PR #188                                        |
+| #168 OIDC Cloudflare deploy    | `cicd-pipeline`                           | requires Cloudflare config                | ❌ Deferred — needs Cloudflare account-side setup |
+| #164 failure notifications     | `cicd-pipeline`                           | Slack webhook + issue fallback            | ✅ PR #188                                        |
+| #162 consolidate smoke jobs    | `cicd-pipeline` + `migration-refactoring` | de-dup workflows                          | ✅ Already resolved (no duplicate remains)        |
+| #159 stale workflow            | `cicd-pipeline`                           | `actions/stale@v10` already pinned (#180) | ✅ Already exists (`stale-cleanup.yml`)           |
 
 **Group B — UI / UX 2026 follow-ups** (4 — 1 done, 3 deferred)
 
-| Issue | Skill | Notes | Status |
-|---|---|---|---|
-| #171 Storybook + visual regression | `reader-ui-ux` | adds new dev workflow; scope to OKLCH tokens first | ❌ Deferred — complex setup |
-| #161 anti-ai-slop copy review | `anti-ai-slop` skill | scope to `apps/web/src/i18n/**` | ✅ PR #196 — no AI-slop found |
-| #160 Lighthouse re-measurement | `accessibility-auditor` | depends on #172 resolution | ❌ Deferred — needs hosted preview URL |
-| #163 stricter ESLint | `code-quality` | run report-only first, then make blocking | ✅ PR #189 (warn level) |
+| Issue                              | Skill                   | Notes                                              | Status                                 |
+| ---------------------------------- | ----------------------- | -------------------------------------------------- | -------------------------------------- |
+| #171 Storybook + visual regression | `reader-ui-ux`          | adds new dev workflow; scope to OKLCH tokens first | ❌ Deferred — complex setup            |
+| #161 anti-ai-slop copy review      | `anti-ai-slop` skill    | scope to `apps/web/src/i18n/**`                    | ✅ PR #196 — no AI-slop found          |
+| #160 Lighthouse re-measurement     | `accessibility-auditor` | depends on #172 resolution                         | ❌ Deferred — needs hosted preview URL |
+| #163 stricter ESLint               | `code-quality`          | run report-only first, then make blocking          | ✅ PR #189 (warn level)                |
 
 **Group C — Docs** (2 — both done)
 
-| Issue | Skill | Notes | Status |
-|---|---|---|---|
-| #172 lighthouse.md restore-or-archive | `do-web-doc-resolver` | archive approach chosen | ✅ PR #191 |
-| #167 AGENTS.md instruction count baseline | `agents-md` | aligns with Plan 036 §2 | ✅ PR #191 |
+| Issue                                     | Skill                 | Notes                   | Status     |
+| ----------------------------------------- | --------------------- | ----------------------- | ---------- |
+| #172 lighthouse.md restore-or-archive     | `do-web-doc-resolver` | archive approach chosen | ✅ PR #191 |
+| #167 AGENTS.md instruction count baseline | `agents-md`           | aligns with Plan 036 §2 | ✅ PR #191 |
 
 **Group D — Testing** (1 — done)
 
-| Issue | Skill | Notes | Status |
-|---|---|---|---|
+| Issue                         | Skill                                | Notes                        | Status     |
+| ----------------------------- | ------------------------------------ | ---------------------------- | ---------- |
 | #169 env-var test credentials | `testing-strategy` + `privacy-first` | audit + fix 3 critical files | ✅ PR #190 |
 
 ### Wave 3 — Cleanup (sequential)
@@ -182,13 +183,13 @@ No other product-code TODO/FIXME/HACK markers exist outside `node_modules/.ignor
 
 ## 5. Risks & Mitigations
 
-| Risk | Mitigation |
-|---|---|
-| PR #185 rebase introduces fresh CI flakes | run minimal_quality_gate locally before pushing rebase |
-| Dependabot major bumps (#182, #183) silently break release pipeline | gate behind manual workflow_dispatch dry-run first |
-| Storybook addition (#171) bloats CI time | report-only on PRs initially; promote to blocking after one green week |
-| Stricter ESLint (#163) surfaces large warning set | enable rules as `warn` first, file follow-up plans for cleanup |
-| OIDC deploy (#168) requires Cloudflare account-side config | document as prerequisite in `docs/release-process.md` |
+| Risk                                                                | Mitigation                                                             |
+| ------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| PR #185 rebase introduces fresh CI flakes                           | run minimal_quality_gate locally before pushing rebase                 |
+| Dependabot major bumps (#182, #183) silently break release pipeline | gate behind manual workflow_dispatch dry-run first                     |
+| Storybook addition (#171) bloats CI time                            | report-only on PRs initially; promote to blocking after one green week |
+| Stricter ESLint (#163) surfaces large warning set                   | enable rules as `warn` first, file follow-up plans for cleanup         |
+| OIDC deploy (#168) requires Cloudflare account-side config          | document as prerequisite in `docs/release-process.md`                  |
 
 ---
 

@@ -73,7 +73,13 @@ describe('FeedbackWorkspacePage heading', () => {
   it('names the book instead of its id when the route is opened directly', async () => {
     // Direct navigation leaves the creator store's book list empty; the
     // session-cached assigned books supply the title.
-    useCreatorStore.setState({ books: [], items: [], selectedId: null, isLoading: false, error: null });
+    useCreatorStore.setState({
+      books: [],
+      items: [],
+      selectedId: null,
+      isLoading: false,
+      error: null,
+    });
     vi.mocked(fetchCreatorFeedback).mockResolvedValue([]);
 
     render(

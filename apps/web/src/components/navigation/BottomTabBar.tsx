@@ -17,19 +17,14 @@ export function BottomTabBar() {
             to={href}
             className={({ isActive }) =>
               `flex flex-col items-center justify-center gap-0.5 min-w-[64px] min-h-[44px] transition-colors ${
-                isActive
-                  ? 'text-accent'
-                  : 'text-foreground-muted hover:text-foreground'
+                isActive ? 'text-accent' : 'text-foreground-muted hover:text-foreground'
               }`
             }
             aria-label={t(key)}
           >
             {({ isActive }) => (
               <>
-                <NavIcon
-                  icon={icon}
-                  className={`w-6 h-6 ${isActive ? 'text-accent' : ''}`}
-                />
+                <NavIcon icon={icon} className={`w-6 h-6 ${isActive ? 'text-accent' : ''}`} />
                 <span className="text-[10px] leading-tight">{t(key)}</span>
                 {isActive && (
                   <span

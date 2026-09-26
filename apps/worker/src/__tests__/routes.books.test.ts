@@ -31,15 +31,21 @@ describe('Books Routes', () => {
 
       mockQueryAll
         .mockResolvedValueOnce([{ cnt: 1 }]) // COUNT query
-        .mockResolvedValueOnce([             // SELECT query
-          { id: '1', slug: 'book-1', title: 'Book 1', visibility: 'public' }
+        .mockResolvedValueOnce([
+          // SELECT query
+          { id: '1', slug: 'book-1', title: 'Book 1', visibility: 'public' },
         ]);
 
-      const res = await app.fetch(new Request('http://localhost/api/books', {
-        headers: { 'Authorization': 'Bearer valid' }
-      }), env, makePassThroughContext());
+      const res = await app.fetch(
+        new Request('http://localhost/api/books', {
+          headers: { Authorization: 'Bearer valid' },
+        }),
+        env,
+        makePassThroughContext(),
+      );
       expect(res.status).toBe(200);
-      const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } = await res.json();
+      const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } =
+        await res.json();
       expect(body.ok).toBe(true);
       expect(body.data.items).toHaveLength(1);
       expect(body.data.total).toBe(1);
@@ -50,9 +56,13 @@ describe('Books Routes', () => {
       mockRequireAuth.mockResolvedValue({ email: 'user@example.com' });
       mockQueryAll.mockResolvedValue([{ cnt: 0 }]);
 
-      const res = await app.fetch(new Request('http://localhost/api/books', {
-        headers: { 'Authorization': 'Bearer valid' }
-      }), env, makePassThroughContext());
+      const res = await app.fetch(
+        new Request('http://localhost/api/books', {
+          headers: { Authorization: 'Bearer valid' },
+        }),
+        env,
+        makePassThroughContext(),
+      );
       expect(res.status).toBe(200);
     });
   });
@@ -62,21 +72,35 @@ describe('Books Routes', () => {
       mockRequireAuth.mockResolvedValue({ email: 'user@example.com' });
 
       mockQueryFirst.mockResolvedValue(null);
-      const res = await app.fetch(new Request('http://localhost/api/books/none', {
-        headers: { 'Authorization': 'Bearer valid' }
-      }), env, makePassThroughContext());
+      const res = await app.fetch(
+        new Request('http://localhost/api/books/none', {
+          headers: { Authorization: 'Bearer valid' },
+        }),
+        env,
+        makePassThroughContext(),
+      );
       expect(res.status).toBe(404);
     });
 
     it('returns book details when found', async () => {
       mockRequireAuth.mockResolvedValue({ email: 'user@example.com' });
 
-      mockQueryFirst.mockResolvedValue({ id: '1', slug: 'book-1', title: 'Book 1', visibility: 'public' });
-      const res = await app.fetch(new Request('http://localhost/api/books/1', {
-        headers: { 'Authorization': 'Bearer valid' }
-      }), env, makePassThroughContext());
+      mockQueryFirst.mockResolvedValue({
+        id: '1',
+        slug: 'book-1',
+        title: 'Book 1',
+        visibility: 'public',
+      });
+      const res = await app.fetch(
+        new Request('http://localhost/api/books/1', {
+          headers: { Authorization: 'Bearer valid' },
+        }),
+        env,
+        makePassThroughContext(),
+      );
       expect(res.status).toBe(200);
-      const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } = await res.json();
+      const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } =
+        await res.json();
       expect(body.data.id).toBe('1');
     });
   });
@@ -86,7 +110,7 @@ describe('Books Routes', () => {
       mockRequireAuth.mockResolvedValue({
         email: 'user@example.com',
         bookId: '1',
-        capabilities: { canRead: true }
+        capabilities: { canRead: true },
       });
 
       mockQueryFirst
@@ -95,16 +119,27 @@ describe('Books Routes', () => {
 
       mockGenerateSignedUrl.mockResolvedValue({ url: 'https://signed.url' });
 
-      const res = await app.fetch(new Request('http://localhost/api/books/1/file-url', {
-        method: 'POST',
-        headers: { 'Authorization': 'Bearer valid' }
-      }), env, makePassThroughContext());
+      const res = await app.fetch(
+        new Request('http://localhost/api/books/1/file-url', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer valid' },
+        }),
+        env,
+        makePassThroughContext(),
+      );
 
       expect(res.status).toBe(200);
       // Guard must receive the resolved canonical book id, never the raw
       // URL param (which may be a slug).
-      expect(mockAssertBookAccess).toHaveBeenCalledWith(env, expect.objectContaining({ email: 'user@example.com' }), '1', expect.anything(), expect.any(String));
-      const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } = await res.json();
+      expect(mockAssertBookAccess).toHaveBeenCalledWith(
+        env,
+        expect.objectContaining({ email: 'user@example.com' }),
+        '1',
+        expect.anything(),
+        expect.any(String),
+      );
+      const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } =
+        await res.json();
       expect(body.data.url).toBe('https://signed.url');
       // Readers anchor feedback to this file, so the id must reach the client.
       expect(body.data.fileId).toBe('file-1');
@@ -114,7 +149,7 @@ describe('Books Routes', () => {
       mockRequireAuth.mockResolvedValue({
         email: 'user@example.com',
         bookId: 'uuid-1',
-        capabilities: { canRead: true }
+        capabilities: { canRead: true },
       });
 
       mockQueryFirst
@@ -123,13 +158,23 @@ describe('Books Routes', () => {
 
       mockGenerateSignedUrl.mockResolvedValue({ url: 'https://signed.url' });
 
-      const res = await app.fetch(new Request('http://localhost/api/books/demo/file-url', {
-        method: 'POST',
-        headers: { 'Authorization': 'Bearer valid' }
-      }), env, makePassThroughContext());
+      const res = await app.fetch(
+        new Request('http://localhost/api/books/demo/file-url', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer valid' },
+        }),
+        env,
+        makePassThroughContext(),
+      );
 
       expect(res.status).toBe(200);
-      expect(mockAssertBookAccess).toHaveBeenCalledWith(env, expect.anything(), 'uuid-1', expect.anything(), expect.any(String));
+      expect(mockAssertBookAccess).toHaveBeenCalledWith(
+        env,
+        expect.anything(),
+        'uuid-1',
+        expect.anything(),
+        expect.any(String),
+      );
     });
   });
 });

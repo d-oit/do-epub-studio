@@ -22,7 +22,11 @@ import type { RequestContext } from '../lib/observability';
 import { getClientIp, hashString } from './admin/auth/shared';
 import { createSession } from '../auth/session';
 import { getGrantByBookAndSession, computeCapabilities } from '../auth/password';
-import { createAdminDemoSession, type AdminSessionUser, type AdminSessionClientHints } from '../auth/admin-middleware';
+import {
+  createAdminDemoSession,
+  type AdminSessionUser,
+  type AdminSessionClientHints,
+} from '../auth/admin-middleware';
 import { accountIsLocked } from '../auth/account';
 import { logAudit } from '../audit';
 import { logRiskEvent, RISK_EVENTS } from '../audit/risk';
@@ -30,7 +34,10 @@ import { queryFirst } from '../db/client';
 import { apiError } from '../lib/api-error';
 import { checkRateLimitDO } from '../lib/rate-limit-client';
 
-export const demoRouter = new Hono<{ Bindings: Env; Variables: { requestContext: RequestContext } }>();
+export const demoRouter = new Hono<{
+  Bindings: Env;
+  Variables: { requestContext: RequestContext };
+}>();
 
 type DemoContext = Context<{ Bindings: Env; Variables: { requestContext: RequestContext } }>;
 
@@ -54,7 +61,12 @@ interface DemoUserRow extends JsonRow {
 function isProductionLike(env: Env): boolean {
   if (String(env.ENVIRONMENT || '').toLowerCase() === 'production') return true;
   if (env.CF_PAGES === '1' && !env.DEMO_ACCOUNTS_PROD_ALLOWLIST) return true;
-  if (String(env.TURSO_DATABASE_URL || '').toLowerCase().includes('production')) return true;
+  if (
+    String(env.TURSO_DATABASE_URL || '')
+      .toLowerCase()
+      .includes('production')
+  )
+    return true;
   return false;
 }
 
@@ -84,7 +96,12 @@ async function checkDemoGates(
     windowMs: 60_000,
   });
   if (!rateLimit.allowed) {
-    return apiError(c, 429, 'TOO_MANY_REQUESTS', 'Too many demo login attempts. Please try again later.');
+    return apiError(
+      c,
+      429,
+      'TOO_MANY_REQUESTS',
+      'Too many demo login attempts. Please try again later.',
+    );
   }
 
   return { ipHash };
@@ -150,13 +167,17 @@ demoRouter.post('/reader-login', async (c) => {
   // Mint the session — same shape as /api/access/request
   const session = await createSession(c.env, book.id, DEMO_READER_EMAIL);
 
-  await logAudit(c.env, {
-    entityType: 'session',
-    entityId: book.id,
-    action: 'demo_reader_login',
-    actorEmail: DEMO_READER_EMAIL,
-    payload: { grantId: grant.id, ipHash },
-  }, c.executionCtx);
+  await logAudit(
+    c.env,
+    {
+      entityType: 'session',
+      entityId: book.id,
+      action: 'demo_reader_login',
+      actorEmail: DEMO_READER_EMAIL,
+      payload: { grantId: grant.id, ipHash },
+    },
+    c.executionCtx,
+  );
 
   return c.json({
     ok: true,
@@ -224,13 +245,17 @@ demoRouter.post('/admin-login', async (c) => {
     return demoDisabled(c);
   }
 
-  await logAudit(c.env, {
-    entityType: 'user',
-    entityId: user.id,
-    action: 'demo_admin_login',
-    actorEmail: DEMO_ADMIN_EMAIL,
-    payload: { role: user.global_role, ipHash },
-  }, c.executionCtx);
+  await logAudit(
+    c.env,
+    {
+      entityType: 'user',
+      entityId: user.id,
+      action: 'demo_admin_login',
+      actorEmail: DEMO_ADMIN_EMAIL,
+      payload: { role: user.global_role, ipHash },
+    },
+    c.executionCtx,
+  );
 
   return c.json({
     ok: true,

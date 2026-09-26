@@ -1,4 +1,13 @@
-import { Component, Suspense, use, useState, useCallback, useRef, type ErrorInfo, type ReactNode } from 'react';
+import {
+  Component,
+  Suspense,
+  use,
+  useState,
+  useCallback,
+  useRef,
+  type ErrorInfo,
+  type ReactNode,
+} from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createTraceId } from '@do-epub-studio/shared';
 import { useTranslation } from '../../hooks/useTranslation';
@@ -47,12 +56,18 @@ function AuditTable({ data, page, total, onPrev, onNext }: AuditTableProps) {
     if (total === 0) return t('admin.audit.paginationInfoZero');
     const start = (page - 1) * PAGE_SIZE + 1;
     const end = Math.min((page - 1) * PAGE_SIZE + data.entries.length, total);
-    return t('admin.audit.paginationInfo').replace('{start}', String(start)).replace('{end}', String(end)).replace('{total}', String(total));
+    return t('admin.audit.paginationInfo')
+      .replace('{start}', String(start))
+      .replace('{end}', String(end))
+      .replace('{total}', String(total));
   };
 
   if (data.entries.length === 0) {
     return (
-      <section className="overflow-x-auto rounded-sm border border-border bg-surface shadow-page" aria-label={t('admin.audit.tableLabel')}>
+      <section
+        className="overflow-x-auto rounded-sm border border-border bg-surface shadow-page"
+        aria-label={t('admin.audit.tableLabel')}
+      >
         <p className="paper-grain border-b border-dashed border-border px-6 py-16 text-center text-foreground-muted">
           {t('admin.audit.noLogs')}
         </p>
@@ -64,22 +79,17 @@ function AuditTable({ data, page, total, onPrev, onNext }: AuditTableProps) {
   }
 
   return (
-    <section className="overflow-x-auto rounded-sm border border-border bg-surface shadow-page" aria-label={t('admin.audit.tableLabel')}>
+    <section
+      className="overflow-x-auto rounded-sm border border-border bg-surface shadow-page"
+      aria-label={t('admin.audit.tableLabel')}
+    >
       <table className="min-w-full divide-y divide-border">
         <thead className="bg-background-secondary">
           <tr>
-            <th className="eyebrow px-6 py-3 text-left">
-              {t('admin.audit.timestamp')}
-            </th>
-            <th className="eyebrow px-6 py-3 text-left">
-              {t('admin.audit.actor')}
-            </th>
-            <th className="eyebrow px-6 py-3 text-left">
-              {t('admin.audit.action')}
-            </th>
-            <th className="eyebrow px-6 py-3 text-left">
-              {t('admin.audit.entity')}
-            </th>
+            <th className="eyebrow px-6 py-3 text-left">{t('admin.audit.timestamp')}</th>
+            <th className="eyebrow px-6 py-3 text-left">{t('admin.audit.actor')}</th>
+            <th className="eyebrow px-6 py-3 text-left">{t('admin.audit.action')}</th>
+            <th className="eyebrow px-6 py-3 text-left">{t('admin.audit.entity')}</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-border">
@@ -104,9 +114,7 @@ function AuditTable({ data, page, total, onPrev, onNext }: AuditTableProps) {
         </tbody>
       </table>
       <div className="flex items-center justify-between px-6 py-4 border-t border-border">
-        <span className="text-sm text-foreground-muted">
-          {renderPaginationInfo()}
-        </span>
+        <span className="text-sm text-foreground-muted">{renderPaginationInfo()}</span>
         <div className="flex items-center gap-2">
           <button
             onClick={onPrev}
@@ -116,8 +124,11 @@ function AuditTable({ data, page, total, onPrev, onNext }: AuditTableProps) {
             {t('admin.audit.previous')}
           </button>
           <span className="text-sm text-foreground-muted">
-            {/* eslint-disable-next-line i18next/no-literal-string -- template placeholders in .replace() */}
-            {t('admin.audit.pageOf').replace('{page}', String(page)).replace('{total}', String(totalPages))}
+            {/* eslint-disable i18next/no-literal-string -- block form on purpose: the flagged node is the JSX expression, but prettier re-wraps the chained .replace() calls onto their own lines, so a disable-next-line above the opening brace stops reaching the reported lines after any reformat */}
+            {t('admin.audit.pageOf')
+              .replace('{page}', String(page))
+              .replace('{total}', String(totalPages))}
+            {/* eslint-enable i18next/no-literal-string */}
           </span>
           <button
             onClick={onNext}
@@ -179,7 +190,12 @@ class AuditErrorBoundary extends Component<AuditErrorBoundaryProps, AuditErrorBo
   }
 
   public componentDidCatch(error: Error, _errorInfo: ErrorInfo): void {
-    logClientEvent({ level: 'error', traceId: createTraceId(), event: 'ui.audit-error-boundary', error: { name: error.name, message: error.message, stack: error.stack } });
+    logClientEvent({
+      level: 'error',
+      traceId: createTraceId(),
+      event: 'ui.audit-error-boundary',
+      error: { name: error.name, message: error.message, stack: error.stack },
+    });
   }
 
   public render(): ReactNode {
@@ -242,33 +258,34 @@ export function AdminAuditPage() {
 
   const handleExportCSV = useCallback(() => {
     const f = filtersRef.current;
-    void fetchAuditLogs(
-      { ...f, pageSize: PAGE_SIZE },
-      sessionToken,
-    ).then((d) => {
-      const header = 'ID,Timestamp,Actor Email,Entity Type,Entity ID,Action,Payload\n';
-      const rows = d.entries.map((log) => {
-        const payload = log.payload ? `"${JSON.stringify(log.payload).replace(/"/g, '""')}"` : '';
-        return `"${log.id}","${new Date(log.createdAt).toISOString()}","${(log.actorEmail || '').replace(/"/g, '""')}","${log.entityType.replace(/"/g, '""')}","${log.entityId.replace(/"/g, '""')}","${log.action.replace(/"/g, '""')}",${payload}`;
-      });
-      const csv = header + rows.join('\n');
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `audit-log-${new Date().toISOString().split('T')[0]}.csv`;
-      a.click();
-      URL.revokeObjectURL(url);
-    }).catch(() => undefined);
+    void fetchAuditLogs({ ...f, pageSize: PAGE_SIZE }, sessionToken)
+      .then((d) => {
+        const header = 'ID,Timestamp,Actor Email,Entity Type,Entity ID,Action,Payload\n';
+        const rows = d.entries.map((log) => {
+          const payload = log.payload ? `"${JSON.stringify(log.payload).replace(/"/g, '""')}"` : '';
+          return `"${log.id}","${new Date(log.createdAt).toISOString()}","${(log.actorEmail || '').replace(/"/g, '""')}","${log.entityType.replace(/"/g, '""')}","${log.entityId.replace(/"/g, '""')}","${log.action.replace(/"/g, '""')}",${payload}`;
+        });
+        const csv = header + rows.join('\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `audit-log-${new Date().toISOString().split('T')[0]}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+      })
+      .catch(() => undefined);
   }, [sessionToken]);
 
   return (
     <main id="main-content" className="min-h-dvh bg-background p-4 sm:p-6 lg:p-8">
-      <Breadcrumb items={[
-        { labelKey: 'admin.breadcrumb.home', href: AUDIT_ROUTES.admin },
-        { labelKey: 'admin.breadcrumb.books', href: AUDIT_ROUTES.books },
-        { labelKey: 'admin.breadcrumb.audit' },
-      ]} />
+      <Breadcrumb
+        items={[
+          { labelKey: 'admin.breadcrumb.home', href: AUDIT_ROUTES.admin },
+          { labelKey: 'admin.breadcrumb.books', href: AUDIT_ROUTES.books },
+          { labelKey: 'admin.breadcrumb.audit' },
+        ]}
+      />
       <header className="mb-8 flex flex-wrap items-center justify-between gap-4 border-b border-[var(--color-rule)] pb-6">
         <div>
           <h1 className="text-balance-tight font-display text-3xl leading-tight text-foreground md:text-4xl">
@@ -307,11 +324,16 @@ export function AdminAuditPage() {
             id="audit-filter-entity-type"
             aria-label={t('admin.audit.entityType')}
             value={entityType}
-            onChange={(e) => { setEntityType(e.target.value); setPage(1); }}
+            onChange={(e) => {
+              setEntityType(e.target.value);
+              setPage(1);
+            }}
             className="px-3 py-2 bg-background border border-border rounded-md text-sm text-foreground"
           >
             {ENTITY_TYPE_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>{t(opt.labelKey)}</option>
+              <option key={opt.value} value={opt.value}>
+                {t(opt.labelKey)}
+              </option>
             ))}
           </select>
         </div>
@@ -323,7 +345,10 @@ export function AdminAuditPage() {
             id="audit-filter-entity-id"
             type="text"
             value={entityId}
-            onChange={(e) => { setEntityId(e.target.value); setPage(1); }}
+            onChange={(e) => {
+              setEntityId(e.target.value);
+              setPage(1);
+            }}
             placeholder={t('admin.audit.filterByEntityId')}
             className="px-3 py-2 bg-background border border-border rounded-md text-sm text-foreground placeholder:text-foreground-muted"
           />
@@ -337,7 +362,10 @@ export function AdminAuditPage() {
             type="date"
             aria-label={t('admin.audit.dateFrom')}
             value={dateFrom}
-            onChange={(e) => { setDateFrom(e.target.value); setPage(1); }}
+            onChange={(e) => {
+              setDateFrom(e.target.value);
+              setPage(1);
+            }}
             className="px-3 py-2 bg-background border border-border rounded-md text-sm text-foreground"
           />
         </div>
@@ -350,7 +378,10 @@ export function AdminAuditPage() {
             type="date"
             aria-label={t('admin.audit.dateTo')}
             value={dateTo}
-            onChange={(e) => { setDateTo(e.target.value); setPage(1); }}
+            onChange={(e) => {
+              setDateTo(e.target.value);
+              setPage(1);
+            }}
             className="px-3 py-2 bg-background border border-border rounded-md text-sm text-foreground"
           />
         </div>

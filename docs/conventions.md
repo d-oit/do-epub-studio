@@ -26,16 +26,16 @@ testing strategy, frontend design rules, and agent workflow for `do-epub-studio`
 
 ## Naming
 
-| Kind | Convention | Example |
-|------|-----------|---------|
-| React components | PascalCase | `ReaderPage` |
-| Hooks | `use` prefix, camelCase | `useBookProgress` |
-| Stores (Zustand) | camelCase + `Store` suffix | `readerStore` |
-| Zod schemas | camelCase + `Schema` suffix | `accessRequestSchema` |
-| Types/interfaces | PascalCase | `BookMetadata` |
-| Enum values | SCREAMING_SNAKE | `ACCESS_MODE.PRIVATE` |
-| DB column names | snake_case | `session_token_hash` |
-| Route handlers | verb-noun pattern | `handleGetBook` |
+| Kind             | Convention                  | Example               |
+| ---------------- | --------------------------- | --------------------- |
+| React components | PascalCase                  | `ReaderPage`          |
+| Hooks            | `use` prefix, camelCase     | `useBookProgress`     |
+| Stores (Zustand) | camelCase + `Store` suffix  | `readerStore`         |
+| Zod schemas      | camelCase + `Schema` suffix | `accessRequestSchema` |
+| Types/interfaces | PascalCase                  | `BookMetadata`        |
+| Enum values      | SCREAMING_SNAKE             | `ACCESS_MODE.PRIVATE` |
+| DB column names  | snake_case                  | `session_token_hash`  |
+| Route handlers   | verb-noun pattern           | `handleGetBook`       |
 
 ---
 
@@ -44,15 +44,18 @@ testing strategy, frontend design rules, and agent workflow for `do-epub-studio`
 ### Layout behaviour
 
 **Mobile:**
+
 - top bar
 - full-width reading area
 - TOC as slide-over drawer
 - comments as bottom sheet or tab
 
 **Tablet:**
+
 - optional split view; TOC left, reader centre, comments side panel on demand
 
 **Desktop:**
+
 - TOC left, reader centre, comments/highlights right, collapsible sidebars
 
 ### Reader controls
@@ -71,10 +74,10 @@ testing strategy, frontend design rules, and agent workflow for `do-epub-studio`
 
 ### UI copy
 
-| Reader modes | `Read`, `Review`, `Public` |
-|---|---|
-| Admin labels | `Private access`, `Password required`, `Comments enabled`, `Offline reading allowed`, `Access expires` |
-| Editorial labels | `Editorial review`, `Review comments`, `Proofing access` |
+| Reader modes     | `Read`, `Review`, `Public`                                                                             |
+| ---------------- | ------------------------------------------------------------------------------------------------------ |
+| Admin labels     | `Private access`, `Password required`, `Comments enabled`, `Offline reading allowed`, `Access expires` |
+| Editorial labels | `Editorial review`, `Review comments`, `Proofing access`                                               |
 
 German locale keys (later): `Lektorat`, `Kommentare`, `Offline lesen`, `Zugriff`.
 
@@ -91,6 +94,7 @@ German locale keys (later): `Lektorat`, `Kommentare`, `Offline lesen`, `Zugriff`
 ### Unit tests (Vitest)
 
 Cover:
+
 - permission evaluation
 - password validation
 - session creation
@@ -101,6 +105,7 @@ Cover:
 ### Integration tests
 
 Cover:
+
 - Worker routes with test DB
 - signed URL issuance
 - grant revocation
@@ -109,6 +114,7 @@ Cover:
 ### Playwright E2E
 
 Cover:
+
 - admin creates book and grants access
 - reader authenticates and opens book
 - reader resumes position
@@ -198,15 +204,15 @@ A change is done only when:
 
 ### Specialist agents
 
-| Agent | Scope |
-|---|---|
-| Architecture | validates ADRs, checks module boundaries, prevents coupling drift |
-| Backend | Worker routes, Turso repositories, auth/session, R2 signed URLs |
-| Frontend | reader UI, admin UI, Zustand stores, responsive UX |
-| EPUB | EPUB.js integration, CFI anchors, TOC and locator logic |
-| Offline | service worker, IndexedDB, cache strategy, sync queue |
-| Test | Vitest, Playwright, test builders, regression coverage |
-| Security reviewer | auth leak checks, sanitisation, token expiry, audit logging |
+| Agent             | Scope                                                             |
+| ----------------- | ----------------------------------------------------------------- |
+| Architecture      | validates ADRs, checks module boundaries, prevents coupling drift |
+| Backend           | Worker routes, Turso repositories, auth/session, R2 signed URLs   |
+| Frontend          | reader UI, admin UI, Zustand stores, responsive UX                |
+| EPUB              | EPUB.js integration, CFI anchors, TOC and locator logic           |
+| Offline           | service worker, IndexedDB, cache strategy, sync queue             |
+| Test              | Vitest, Playwright, test builders, regression coverage            |
+| Security reviewer | auth leak checks, sanitisation, token expiry, audit logging       |
 
 ### Agent rules
 

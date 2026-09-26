@@ -22,12 +22,12 @@ Replace `futurepress/epub.js` with `intity/epub-js` across all packages, mediate
 
 ## Options Considered
 
-| Option | Pros | Cons |
-|--------|------|------|
-| Keep `futurepress/epub.js` | No migration effort | Unmaintained; known vulnerability; deprecated APIs |
-| Migrate to `intity/epub-js` | Actively maintained fork; same domain; API compatible at core | Introduces breaking API changes requiring adapter |
-| Switch to `foliate-js` | Modern, standards-based | Full architectural rewrite; different rendering model; out of scope for this sprint |
-| Switch to server-side EPUB render | Removes client dependency | Major UX change; loses offline reading |
+| Option                            | Pros                                                          | Cons                                                                                |
+| --------------------------------- | ------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Keep `futurepress/epub.js`        | No migration effort                                           | Unmaintained; known vulnerability; deprecated APIs                                  |
+| Migrate to `intity/epub-js`       | Actively maintained fork; same domain; API compatible at core | Introduces breaking API changes requiring adapter                                   |
+| Switch to `foliate-js`            | Modern, standards-based                                       | Full architectural rewrite; different rendering model; out of scope for this sprint |
+| Switch to server-side EPUB render | Removes client dependency                                     | Major UX change; loses offline reading                                              |
 
 **Decision:** Option 2 — `intity/epub-js` with adapter layer.
 
@@ -59,31 +59,34 @@ Application code must never import directly from `@intity/epub-js`. All access g
 
 ## Known API Incompatibilities
 
-| Area | futurepress behavior | intity/epub-js behavior |
-|------|---------------------|------------------------|
-| Render options | `method` param for flow | `flow` + `manager` params |
-| Spread | `spread: 'auto'` | Same, but requires explicit manager |
-| Contents access | `rendition.getContents()` single object | Same but typed differently |
-| Hook registration | `rendition.hooks.content.register()` | Same API, timing may differ |
-| Location format | `location.start.cfi` | Same structure |
-| Destroy | `book.destroy()` | Same; rendition must be destroyed first |
+| Area              | futurepress behavior                    | intity/epub-js behavior                 |
+| ----------------- | --------------------------------------- | --------------------------------------- |
+| Render options    | `method` param for flow                 | `flow` + `manager` params               |
+| Spread            | `spread: 'auto'`                        | Same, but requires explicit manager     |
+| Contents access   | `rendition.getContents()` single object | Same but typed differently              |
+| Hook registration | `rendition.hooks.content.register()`    | Same API, timing may differ             |
+| Location format   | `location.start.cfi`                    | Same structure                          |
+| Destroy           | `book.destroy()`                        | Same; rendition must be destroyed first |
 
 ---
 
 ## Consequences
 
 ### Positive
+
 - Removes `@xmldom/xmldom` CVE exposure in the old package version
 - Active maintenance means future bug fixes are available
 - Same core API reduces migration risk
 - Adapter layer future-proofs against further engine changes
 
 ### Negative / Risks
+
 - Annotation anchor timing may differ; content hook timing must be validated
 - Render lifecycle differences may affect highlight injection
 - `intity/epub-js` typings may be incomplete; requires `@ts-expect-error` or type augmentation in edge cases
 
 ### Follow-up Required (see issue #140)
+
 - Expose `flow` and `manager` options via adapter
 - Add `registerContentHook` and `registerRenderHook` to `EpubRenditionHandle`
 - Type `getContents()` with `Contents` type from library

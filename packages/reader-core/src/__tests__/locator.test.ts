@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  createLocator,
-  parseLocator,
-  locatorToString,
-  extractTextFromRange,
-} from '../locator';
+import { createLocator, parseLocator, locatorToString, extractTextFromRange } from '../locator';
 
 describe('createLocator', () => {
   it('creates a locator with all required fields', () => {
@@ -85,7 +80,8 @@ describe('parseLocator', () => {
   describe('fast-path behavior and fallback parsing', () => {
     it('uses the fast path for standard simple serialize strings', () => {
       // Re-create the exact string that would trigger fast path
-      const locatorString = '{"cfi":"epubcfi(/6/4)","textExcerpt":"Hello World","chapterHref":"chap1.xhtml"}';
+      const locatorString =
+        '{"cfi":"epubcfi(/6/4)","textExcerpt":"Hello World","chapterHref":"chap1.xhtml"}';
       const result = parseLocator(locatorString);
       expect(result).toEqual({
         cfi: 'epubcfi(/6/4)',
@@ -95,7 +91,8 @@ describe('parseLocator', () => {
     });
 
     it('falls back to JSON.parse when field order is different', () => {
-      const locatorString = '{"textExcerpt":"Hello","cfi":"epubcfi(/6/4)","chapterHref":"chap1.xhtml"}';
+      const locatorString =
+        '{"textExcerpt":"Hello","cfi":"epubcfi(/6/4)","chapterHref":"chap1.xhtml"}';
       const result = parseLocator(locatorString);
       expect(result).toEqual({
         cfi: 'epubcfi(/6/4)',
@@ -105,7 +102,8 @@ describe('parseLocator', () => {
     });
 
     it('falls back to JSON.parse when values contain quotes', () => {
-      const locatorString = '{"cfi":"epubcfi(\\"/6/4\\")","textExcerpt":"Hello","chapterHref":"chap1.xhtml"}';
+      const locatorString =
+        '{"cfi":"epubcfi(\\"/6/4\\")","textExcerpt":"Hello","chapterHref":"chap1.xhtml"}';
       const result = parseLocator(locatorString);
       expect(result).toEqual({
         cfi: 'epubcfi("/6/4")',
@@ -115,7 +113,8 @@ describe('parseLocator', () => {
     });
 
     it('falls back to JSON.parse when values contain backslashes', () => {
-      const locatorString = '{"cfi":"epubcfi(/6\\\\4)","textExcerpt":"Hello","chapterHref":"chap1.xhtml"}';
+      const locatorString =
+        '{"cfi":"epubcfi(/6\\\\4)","textExcerpt":"Hello","chapterHref":"chap1.xhtml"}';
       const result = parseLocator(locatorString);
       expect(result).toEqual({
         cfi: 'epubcfi(/6\\4)',
@@ -125,7 +124,8 @@ describe('parseLocator', () => {
     });
 
     it('falls back to JSON.parse when values contain control characters', () => {
-      const locatorString = '{"cfi":"epubcfi(/6/4)","textExcerpt":"Hello\\nWorld","chapterHref":"chap1.xhtml"}';
+      const locatorString =
+        '{"cfi":"epubcfi(/6/4)","textExcerpt":"Hello\\nWorld","chapterHref":"chap1.xhtml"}';
       const result = parseLocator(locatorString);
       expect(result).toEqual({
         cfi: 'epubcfi(/6/4)',
@@ -135,7 +135,8 @@ describe('parseLocator', () => {
     });
 
     it('correctly returns null if JSON is fundamentally invalid', () => {
-      const locatorString = '{"cfi":"epubcfi(/6/4)","textExcerpt":"Hello","chapterHref":"chap1.xhtml",}'; // Trailing comma
+      const locatorString =
+        '{"cfi":"epubcfi(/6/4)","textExcerpt":"Hello","chapterHref":"chap1.xhtml",}'; // Trailing comma
       const result = parseLocator(locatorString);
       expect(result).toBeNull();
     });

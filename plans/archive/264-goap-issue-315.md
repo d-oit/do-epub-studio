@@ -23,12 +23,12 @@ with graceful degradation.
 
 ## Acceptance → Evidence
 
-| Acceptance | Evidence |
-|---|---|
-| Page transitions use View Transitions API | `ViewTransitionRoutes.tsx:18-22` |
-| Graceful degradation | `ViewTransitionRoutes.test.tsx` — "uses startViewTransition when API is available" / "degrades gracefully when startViewTransition is not available" |
-| No layout shift during navigation | `prevent-flicker` named transition on persistent chrome (globals.css:549-556) |
-| Reduced-motion respected | globals.css:558-563 + global reduced-motion block (:570+) |
+| Acceptance                                | Evidence                                                                                                                                             |
+| ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Page transitions use View Transitions API | `ViewTransitionRoutes.tsx:18-22`                                                                                                                     |
+| Graceful degradation                      | `ViewTransitionRoutes.test.tsx` — "uses startViewTransition when API is available" / "degrades gracefully when startViewTransition is not available" |
+| No layout shift during navigation         | `prevent-flicker` named transition on persistent chrome (globals.css:549-556)                                                                        |
+| Reduced-motion respected                  | globals.css:558-563 + global reduced-motion block (:570+)                                                                                            |
 
 ## Effort
 

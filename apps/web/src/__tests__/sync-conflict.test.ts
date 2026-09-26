@@ -240,7 +240,8 @@ describe('Sync Conflict Integration', () => {
 
     it('should clear pending conflicts after successful progress sync', async () => {
       const { getSyncQueue, removeSyncQueueItem } = await import('../lib/offline/db');
-      const { getPendingConflicts, clearResolvedConflicts } = await import('../lib/offline/conflict-resolution');
+      const { getPendingConflicts, clearResolvedConflicts } =
+        await import('../lib/offline/conflict-resolution');
 
       const syncQueueItem = {
         id: 'item-5',

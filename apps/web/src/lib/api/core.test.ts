@@ -31,7 +31,8 @@ const abortableFetch = () =>
     });
   });
 
-const events = () => logClientEventMock.mock.calls.map(([entry]) => (entry as { event: string }).event);
+const events = () =>
+  logClientEventMock.mock.calls.map(([entry]) => (entry as { event: string }).event);
 
 describe('apiRequest abort handling', () => {
   beforeEach(() => {

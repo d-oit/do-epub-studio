@@ -14,7 +14,11 @@
 
 import { describe, expect, it } from 'vitest';
 import { testBounded } from '@do-epub-studio/shared';
-import { validateEditorialFindings, type EditorialCategory, type EditorialFinding } from '../editorial-findings';
+import {
+  validateEditorialFindings,
+  type EditorialCategory,
+  type EditorialFinding,
+} from '../editorial-findings';
 import { createLanguageToolEditorialPlugin } from '../plugins/languagetool-editorial';
 import type { EditorialReviewCapability, EditorialReviewRequest } from '../types';
 
@@ -83,7 +87,11 @@ async function expectFindings(
 }
 
 /** Does the finding's edited span overlap an occurrence of `needle`? */
-function spanOverlaps(text: string, span: EditorialFinding['spans'][number], needle: string): boolean {
+function spanOverlaps(
+  text: string,
+  span: EditorialFinding['spans'][number],
+  needle: string,
+): boolean {
   const quoteAt = text.indexOf(span.quote);
   const needleAt = text.indexOf(needle);
   if (quoteAt === -1 || needleAt === -1) {
@@ -129,9 +137,11 @@ describe.skipIf(!LIVE)('LanguageTool adapter live corpus (ADR-999 §3, E2E_LIVE=
     if (!flagged) throw new Error('missing span');
     expect(spanOverlaps(TEXTS[2], flagged, 'Mariselleth')).toBe(true);
     // Dialect in dialogue is never standardized: no finding touches "She were".
-    expect(baseline.some(
-      (finding) => finding.spans[0] && spanOverlaps(TEXTS[2], finding.spans[0], 'She were'),
-    )).toBe(false);
+    expect(
+      baseline.some(
+        (finding) => finding.spans[0] && spanOverlaps(TEXTS[2], finding.spans[0], 'She were'),
+      ),
+    ).toBe(false);
     // The same text with the approved term supplied runs clean (ADR-274 D6).
     await expectClean(capability, request(['spelling', 'grammar'], 2, ['Mariselleth']));
   });

@@ -75,7 +75,9 @@ describe('createRelocatedHandler', () => {
 
     Object.defineProperty(navigator, 'onLine', { value: true, writable: true });
 
-    await handler.onRelocated({ start: { cfi: 'epubcfi(/6/4)', percentage: 0.5, href: 'ch1.xhtml' } });
+    await handler.onRelocated({
+      start: { cfi: 'epubcfi(/6/4)', percentage: 0.5, href: 'ch1.xhtml' },
+    });
     // GOAP-224 B6: online PUTs are debounced; flush to force the save.
     await handler.flush();
 
@@ -104,7 +106,9 @@ describe('createRelocatedHandler', () => {
 
     Object.defineProperty(navigator, 'onLine', { value: false, writable: true });
 
-    await handler.onRelocated({ start: { cfi: 'epubcfi(/6/4)', percentage: 0.5, href: 'ch1.xhtml' } });
+    await handler.onRelocated({
+      start: { cfi: 'epubcfi(/6/4)', percentage: 0.5, href: 'ch1.xhtml' },
+    });
 
     expect(saveProgress).toHaveBeenCalled();
     expect(queueSync).toHaveBeenCalled();
@@ -131,7 +135,9 @@ describe('createRelocatedHandler', () => {
 
     Object.defineProperty(navigator, 'onLine', { value: true, writable: true });
 
-    await handler.onRelocated({ start: { cfi: 'epubcfi(/6/4)', percentage: 0.5, href: 'ch1.xhtml' } });
+    await handler.onRelocated({
+      start: { cfi: 'epubcfi(/6/4)', percentage: 0.5, href: 'ch1.xhtml' },
+    });
     // GOAP-224 B6: online PUTs are debounced; flush to force the save.
     await handler.flush();
 
@@ -158,7 +164,9 @@ describe('createRelocatedHandler', () => {
 
     Object.defineProperty(navigator, 'onLine', { value: true, writable: true });
 
-    await handler.onRelocated({ start: { cfi: 'epubcfi(/6/4)', percentage: 0.5, href: 'ch2.xhtml' } });
+    await handler.onRelocated({
+      start: { cfi: 'epubcfi(/6/4)', percentage: 0.5, href: 'ch2.xhtml' },
+    });
 
     expect(setCurrentChapter).toHaveBeenCalledWith('ch2.xhtml');
     expect(currentChapterRef.current).toBe('ch2.xhtml');
@@ -170,11 +178,48 @@ describe('useExportNotes', () => {
     vi.clearAllMocks();
     useReaderStore.setState({
       highlights: [
-        { id: 'h1', selectedText: 'highlighted text', color: '#ff0000', note: 'My note', chapterRef: null, cfiRange: null, createdAt: '', updatedAt: '' },
+        {
+          id: 'h1',
+          selectedText: 'highlighted text',
+          color: '#ff0000',
+          note: 'My note',
+          chapterRef: null,
+          cfiRange: null,
+          createdAt: '',
+          updatedAt: '',
+        },
       ],
       comments: [
-        { id: 'c1', body: 'Great point!', status: 'open', selectedText: 'some text', displayName: 'a', isOwn: false, chapterRef: null, cfiRange: null, visibility: 'shared', parentCommentId: null, createdAt: '', updatedAt: '', resolvedAt: null },
-        { id: 'c2', body: 'Deleted', status: 'deleted', selectedText: null, displayName: 'a', isOwn: false, chapterRef: null, cfiRange: null, visibility: 'shared', parentCommentId: null, createdAt: '', updatedAt: '', resolvedAt: null },
+        {
+          id: 'c1',
+          body: 'Great point!',
+          status: 'open',
+          selectedText: 'some text',
+          displayName: 'a',
+          isOwn: false,
+          chapterRef: null,
+          cfiRange: null,
+          visibility: 'shared',
+          parentCommentId: null,
+          createdAt: '',
+          updatedAt: '',
+          resolvedAt: null,
+        },
+        {
+          id: 'c2',
+          body: 'Deleted',
+          status: 'deleted',
+          selectedText: null,
+          displayName: 'a',
+          isOwn: false,
+          chapterRef: null,
+          cfiRange: null,
+          visibility: 'shared',
+          parentCommentId: null,
+          createdAt: '',
+          updatedAt: '',
+          resolvedAt: null,
+        },
       ],
     });
   });
@@ -188,7 +233,11 @@ describe('useExportNotes', () => {
     const { result } = renderHook(() => useExportNotes());
     const mockClick = vi.fn();
     const createElement = vi.spyOn(document, 'createElement');
-    createElement.mockReturnValue({ click: mockClick, href: '', download: '' } as unknown as ReturnType<typeof document.createElement>);
+    createElement.mockReturnValue({
+      click: mockClick,
+      href: '',
+      download: '',
+    } as unknown as ReturnType<typeof document.createElement>);
     vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:url');
     vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
 

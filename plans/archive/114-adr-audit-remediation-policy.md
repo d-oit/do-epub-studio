@@ -45,6 +45,7 @@ viewport calculations. These are per ADR-105 (container queries + modern CSS).
 ### 4. E2E Coverage Target
 
 Each user-facing route must have at least one e2e smoke test:
+
 - `/catalog` — browsing, search, filter
 - `/admin/books` — CRUD operations
 - `/admin/grants` — create, update, revoke

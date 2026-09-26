@@ -39,7 +39,10 @@ app.use('*', securityHeadersMiddleware);
 app.use('*', async (c, next) => {
   if (c.req.path.length > 2048) {
     const ctx = c.get('requestContext');
-    return c.json({ ok: false, error: { code: 'URI_TOO_LONG', message: 'URI too long', traceId: ctx.traceId } }, 414);
+    return c.json(
+      { ok: false, error: { code: 'URI_TOO_LONG', message: 'URI too long', traceId: ctx.traceId } },
+      414,
+    );
   }
   await next();
 });
@@ -49,7 +52,11 @@ app.use('*', bodySizeLimit());
 
 // Rate Limiting
 app.use('*', async (c, next) => {
-  const { response: rateLimitResponse, metadata } = await applyRateLimit(c.req.raw, c.env, c.get('requestContext').traceId);
+  const { response: rateLimitResponse, metadata } = await applyRateLimit(
+    c.req.raw,
+    c.env,
+    c.get('requestContext').traceId,
+  );
   if (rateLimitResponse) {
     return rateLimitResponse;
   }
@@ -91,7 +98,8 @@ app.onError((err, c) => {
   const ctx = c.get('requestContext');
   const apiError = toApiError(err, ctx.traceId);
   const status = isAppError(err) ? err.statusCode : 500;
-  const details = err instanceof ValidationError && err.issues?.length ? { details: err.issues } : {};
+  const details =
+    err instanceof ValidationError && err.issues?.length ? { details: err.issues } : {};
   // Unexpected failures are otherwise reported only as a generic 500 with a
   // trace id, leaving nothing in the logs to diagnose (see the catalog cache-key
   // regression: the response carried a traceId while the worker logged nothing).
@@ -103,5 +111,8 @@ app.onError((err, c) => {
       { traceId: ctx.traceId, spanId: ctx.spanId },
     );
   }
-  return c.json({ ok: false, error: { ...apiError, ...details }, status } as never, status as 400 | 401 | 403 | 404 | 409 | 413 | 423 | 429 | 500 | 504);
+  return c.json(
+    { ok: false, error: { ...apiError, ...details }, status } as never,
+    status as 400 | 401 | 403 | 404 | 409 | 413 | 423 | 429 | 500 | 504,
+  );
 });

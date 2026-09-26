@@ -57,7 +57,10 @@ vi.mock('../components/ui', () => ({
       {isLoading ? loadingLabel || 'Loading...' : children}
     </button>
   ),
-  Input: ({ label, ...props }: React.InputHTMLAttributes<HTMLInputElement> & { label?: string }) => {
+  Input: ({
+    label,
+    ...props
+  }: React.InputHTMLAttributes<HTMLInputElement> & { label?: string }) => {
     const id = props.id ?? `input-${label}`;
     return (
       <div>
@@ -66,14 +69,34 @@ vi.mock('../components/ui', () => ({
       </div>
     );
   },
-  Modal: ({ isOpen, children, footer }: { isOpen: boolean; children?: React.ReactNode; footer?: React.ReactNode }) =>
+  Modal: ({
+    isOpen,
+    children,
+    footer,
+  }: {
+    isOpen: boolean;
+    children?: React.ReactNode;
+    footer?: React.ReactNode;
+  }) =>
     isOpen ? (
       <div role="dialog">
         {children}
         {footer}
       </div>
     ) : null,
-  ConfirmDialog: ({ isOpen, description, confirmLabel, onConfirm, onCancel }: { isOpen: boolean; description?: string; confirmLabel?: string; onConfirm?: () => void; onCancel?: () => void }) =>
+  ConfirmDialog: ({
+    isOpen,
+    description,
+    confirmLabel,
+    onConfirm,
+    onCancel,
+  }: {
+    isOpen: boolean;
+    description?: string;
+    confirmLabel?: string;
+    onConfirm?: () => void;
+    onCancel?: () => void;
+  }) =>
     isOpen ? (
       <div role="alertdialog">
         {description && <p>{description}</p>}
@@ -134,7 +157,9 @@ describe('AccountSettingsPage', () => {
     expect(screen.getByLabelText('admin.account.newPassword')).toBeInTheDocument();
     expect(screen.getByLabelText('admin.account.newPasswordConfirm')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'admin.sessions.title' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'admin.account.changePassword' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'admin.account.changePassword' }),
+    ).toBeInTheDocument();
   });
 
   it('loads active sessions with the bearer token', async () => {
@@ -176,7 +201,9 @@ describe('AccountSettingsPage', () => {
       });
     });
 
-    expect(await screen.findByRole('status')).toHaveTextContent('admin.account.passwordChangeSuccess');
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      'admin.account.passwordChangeSuccess',
+    );
   });
 
   it('shows an error when the password change fails', async () => {
@@ -185,7 +212,13 @@ describe('AccountSettingsPage', () => {
       endpoint === '/api/admin/account/sessions'
         ? Promise.resolve(sessions)
         : endpoint === '/api/admin/account/mfa/status'
-          ? Promise.resolve({ mfaEnrolled: false, method: null, enrolledAt: null, passkeys: [], recoveryCodesPresent: false })
+          ? Promise.resolve({
+              mfaEnrolled: false,
+              method: null,
+              enrolledAt: null,
+              passkeys: [],
+              recoveryCodesPresent: false,
+            })
           : Promise.reject(new Error('bad current password')),
     );
 
@@ -200,7 +233,9 @@ describe('AccountSettingsPage', () => {
     await user.type(screen.getByLabelText('admin.account.newPasswordConfirm'), 'newpass123');
     await user.click(screen.getByRole('button', { name: 'admin.account.changePassword' }));
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('admin.account.passwordChangeFailed');
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'admin.account.passwordChangeFailed',
+    );
   });
 
   it('signs out all other sessions via POST logout-all', async () => {

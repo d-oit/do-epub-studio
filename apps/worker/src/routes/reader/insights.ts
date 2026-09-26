@@ -27,7 +27,13 @@ insightsRouter.get('/:bookId/insights', readerAuth, async (c) => {
   const bookId = c.req.param('bookId');
   const auth = c.get('auth');
 
-  const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx, getRequestTraceId(c));
+  const mismatch = await assertBookAccess(
+    c.env,
+    auth,
+    bookId,
+    c.executionCtx,
+    getRequestTraceId(c),
+  );
   if (mismatch) return mismatch.response;
 
   const rows = await queryAll<InsightRow>(
@@ -61,42 +67,53 @@ insightsRouter.get('/:bookId/insights', readerAuth, async (c) => {
   });
 });
 
-insightsRouter.post('/:bookId/insights/sync', readerAuth, zValidator('json', ReadingInsightSyncSchema), async (c) => {
-  const bookId = c.req.param('bookId');
-  const auth = c.get('auth');
-  const body = c.req.valid('json');
+insightsRouter.post(
+  '/:bookId/insights/sync',
+  readerAuth,
+  zValidator('json', ReadingInsightSyncSchema),
+  async (c) => {
+    const bookId = c.req.param('bookId');
+    const auth = c.get('auth');
+    const body = c.req.valid('json');
 
-  const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx, getRequestTraceId(c));
-  if (mismatch) return mismatch.response;
+    const mismatch = await assertBookAccess(
+      c.env,
+      auth,
+      bookId,
+      c.executionCtx,
+      getRequestTraceId(c),
+    );
+    if (mismatch) return mismatch.response;
 
-  if (!auth.capabilities.canRead) {
-    throw new ForbiddenError('Access denied');
-  }
+    if (!auth.capabilities.canRead) {
+      throw new ForbiddenError('Access denied');
+    }
 
-  try {
-    for (const bucket of body.buckets) {
-      const id = crypto.randomUUID();
-      const now = new Date().toISOString();
+    try {
+      for (const bucket of body.buckets) {
+        const id = crypto.randomUUID();
+        const now = new Date().toISOString();
 
-      await execute(
-        c.env,
-        `INSERT INTO reading_insights (id, book_id, user_email, bucket_date, active_minutes, active_pages, created_at, updated_at)
+        await execute(
+          c.env,
+          `INSERT INTO reading_insights (id, book_id, user_email, bucket_date, active_minutes, active_pages, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
          ON CONFLICT(book_id, user_email, bucket_date) DO UPDATE SET
            active_minutes = MAX(reading_insights.active_minutes, excluded.active_minutes),
            active_pages = MAX(reading_insights.active_pages, excluded.active_pages),
            updated_at = excluded.updated_at`,
-        [id, bookId, auth.email, bucket.date, bucket.activeMinutes, bucket.activePages, now, now],
-      );
-    }
+          [id, bookId, auth.email, bucket.date, bucket.activeMinutes, bucket.activePages, now, now],
+        );
+      }
 
-    return c.json({ ok: true });
-  } catch (e) {
-    const ctx = createRequestContext(c.req.raw);
-    logRequestError(ctx, e, { bookId });
-    throw new AppError('Failed to sync insights', 'SYNC_FAILED', 500);
-  }
-});
+      return c.json({ ok: true });
+    } catch (e) {
+      const ctx = createRequestContext(c.req.raw);
+      logRequestError(ctx, e, { bookId });
+      throw new AppError('Failed to sync insights', 'SYNC_FAILED', 500);
+    }
+  },
+);
 
 function computeStreak(dates: string[]): number {
   if (dates.length === 0) return 0;

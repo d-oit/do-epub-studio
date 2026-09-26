@@ -32,51 +32,39 @@ describe('serializeError with Error objects', () => {
 
   it('includes stack when present', () => {
     fc.assert(
-      fc.property(
-        fc.string(),
-        fc.oneof(fc.string(), fc.constant(undefined)),
-        (message, stack) => {
-          const error = new Error(message);
-          if (stack !== undefined) {
-            error.stack = stack;
-          }
-          const serialized = serializeError(error);
-          if (stack !== undefined && error.stack) {
-            expect(serialized.stack).toBe(error.stack);
-          }
-        },
-      ),
+      fc.property(fc.string(), fc.oneof(fc.string(), fc.constant(undefined)), (message, stack) => {
+        const error = new Error(message);
+        if (stack !== undefined) {
+          error.stack = stack;
+        }
+        const serialized = serializeError(error);
+        if (stack !== undefined && error.stack) {
+          expect(serialized.stack).toBe(error.stack);
+        }
+      }),
     );
   });
 
   it('handles nested Error causes', () => {
     fc.assert(
-      fc.property(
-        fc.string(),
-        fc.string(),
-        (outerMessage, innerMessage) => {
-          const inner = new Error(innerMessage);
-          const outer = new Error(outerMessage, { cause: inner });
-          const serialized = serializeError(outer);
-          expect(serialized.name).toBe('Error');
-          expect(serialized.message).toBe(outerMessage);
-          expect(serialized.cause).toBeDefined();
-        },
-      ),
+      fc.property(fc.string(), fc.string(), (outerMessage, innerMessage) => {
+        const inner = new Error(innerMessage);
+        const outer = new Error(outerMessage, { cause: inner });
+        const serialized = serializeError(outer);
+        expect(serialized.name).toBe('Error');
+        expect(serialized.message).toBe(outerMessage);
+        expect(serialized.cause).toBeDefined();
+      }),
     );
   });
 
   it('handles string cause', () => {
     fc.assert(
-      fc.property(
-        fc.string(),
-        fc.string(),
-        (message, causeMsg) => {
-          const error = new Error(message, { cause: causeMsg });
-          const serialized = serializeError(error);
-          expect(serialized.cause).toBe(causeMsg);
-        },
-      ),
+      fc.property(fc.string(), fc.string(), (message, causeMsg) => {
+        const error = new Error(message, { cause: causeMsg });
+        const serialized = serializeError(error);
+        expect(serialized.cause).toBe(causeMsg);
+      }),
     );
   });
 });
@@ -216,10 +204,7 @@ describe('telemetry constants', () => {
 
 describe('buildTraceparent', () => {
   it('produces the W3C format 00-<32hex>-<16hex>-01', () => {
-    const result = buildTraceparent(
-      '550e8400-e29b-41d4-a716-446655440000',
-      'abcd1234',
-    );
+    const result = buildTraceparent('550e8400-e29b-41d4-a716-446655440000', 'abcd1234');
     expect(result).toMatch(/^00-[0-9a-f]{32}-[0-9a-f]{16}-01$/);
   });
 

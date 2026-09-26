@@ -13,7 +13,10 @@ import { bumpCacheVersion } from '../../lib/edge-cache';
 import { NotFoundError, ValidationError, AppError } from '../../lib/http-errors';
 import { createRequestContext, logRequestError } from '../../lib/observability';
 
-export const booksRouter = new Hono<{ Bindings: Env; Variables: { adminUser: { email: string; id: string; role: string } } }>();
+export const booksRouter = new Hono<{
+  Bindings: Env;
+  Variables: { adminUser: { email: string; id: string; role: string } };
+}>();
 
 interface AdminBookRow extends JsonRow {
   id: string;
@@ -88,13 +91,17 @@ booksRouter.post('/', adminAuth, zValidator('json', CreateBookSchema), async (c)
   }
   const uploadUrl = `${baseUrl}/api/admin/books/${id}/upload`;
 
-  await logAudit(c.env, {
-    entityType: 'book',
-    entityId: id,
-    action: 'created',
-    actorEmail: adminUser.email,
-    payload: { slug: body.slug, title: body.title },
-  }, c.executionCtx);
+  await logAudit(
+    c.env,
+    {
+      entityType: 'book',
+      entityId: id,
+      action: 'created',
+      actorEmail: adminUser.email,
+      payload: { slug: body.slug, title: body.title },
+    },
+    c.executionCtx,
+  );
 
   return c.json(
     {
@@ -131,7 +138,11 @@ booksRouter.put('/:id/upload', adminAuth, requireStepUp, async (c) => {
     throw new ValidationError('Missing Content-Length header');
   }
   if (!isMultipart && contentLength > DEFAULT_MAX_BODY_BYTES) {
-    throw new AppError(`File too large. Max: ${DEFAULT_MAX_BODY_BYTES} bytes`, 'VALIDATION_ERROR', 413);
+    throw new AppError(
+      `File too large. Max: ${DEFAULT_MAX_BODY_BYTES} bytes`,
+      'VALIDATION_ERROR',
+      413,
+    );
   }
 
   const storageKey = `books/${book.id}/${crypto.randomUUID()}.epub`;
@@ -163,7 +174,11 @@ booksRouter.put('/:id/upload', adminAuth, requireStepUp, async (c) => {
         throw new ValidationError('Missing "file" part');
       }
       if (fileEntry.size > DEFAULT_MAX_BODY_BYTES) {
-        throw new AppError(`File too large. Max: ${DEFAULT_MAX_BODY_BYTES} bytes`, 'VALIDATION_ERROR', 413);
+        throw new AppError(
+          `File too large. Max: ${DEFAULT_MAX_BODY_BYTES} bytes`,
+          'VALIDATION_ERROR',
+          413,
+        );
       }
       declaredSize = fileEntry.size;
       uploadStream = fileEntry.stream();
@@ -198,7 +213,11 @@ booksRouter.put('/:id/upload', adminAuth, requireStepUp, async (c) => {
         } catch (err) {
           // Stream errored (likely the byte cap). Surface the right code.
           if (err instanceof MaxBodySizeError) {
-            throw new AppError(`File too large. Max: ${DEFAULT_MAX_BODY_BYTES} bytes`, 'VALIDATION_ERROR', 413);
+            throw new AppError(
+              `File too large. Max: ${DEFAULT_MAX_BODY_BYTES} bytes`,
+              'VALIDATION_ERROR',
+              413,
+            );
           }
           throw err;
         }
@@ -212,7 +231,10 @@ booksRouter.put('/:id/upload', adminAuth, requireStepUp, async (c) => {
         if (merged.byteLength === 0) {
           throw new ValidationError('Request body is empty');
         }
-        validationArrayBuffer = merged.buffer.slice(merged.byteOffset, merged.byteOffset + merged.byteLength);
+        validationArrayBuffer = merged.buffer.slice(
+          merged.byteOffset,
+          merged.byteOffset + merged.byteLength,
+        );
       } else {
         // Best-effort path for large uploads: skip validation to keep
         // memory bounded.
@@ -260,7 +282,11 @@ booksRouter.put('/:id/upload', adminAuth, requireStepUp, async (c) => {
     return c.json({ ok: true, data }, 200);
   } catch (err) {
     if (err instanceof MaxBodySizeError) {
-      throw new AppError(`File too large. Max: ${DEFAULT_MAX_BODY_BYTES} bytes`, 'VALIDATION_ERROR', 413);
+      throw new AppError(
+        `File too large. Max: ${DEFAULT_MAX_BODY_BYTES} bytes`,
+        'VALIDATION_ERROR',
+        413,
+      );
     }
     throw new AppError('Failed to upload file to storage', 'UPLOAD_FAILED', 500);
   }
@@ -268,42 +294,52 @@ booksRouter.put('/:id/upload', adminAuth, requireStepUp, async (c) => {
 
 // ADR-234 sensitive-action "book file upload" (finalize): records the uploaded
 // file row and invalidates the edge cache.
-booksRouter.post('/:id/upload-complete', adminAuth, requireStepUp, zValidator('json', UploadCompleteSchema), async (c) => {
-  const bookId = c.req.param('id');
-  const body = c.req.valid('json');
-  const fileId = crypto.randomUUID();
-  const now = new Date().toISOString();
+booksRouter.post(
+  '/:id/upload-complete',
+  adminAuth,
+  requireStepUp,
+  zValidator('json', UploadCompleteSchema),
+  async (c) => {
+    const bookId = c.req.param('id');
+    const body = c.req.valid('json');
+    const fileId = crypto.randomUUID();
+    const now = new Date().toISOString();
 
-  await execute(
-    c.env,
-    `INSERT INTO book_files (id, book_id, storage_provider, storage_key, original_filename, mime_type, file_size_bytes, sha256, epub_version, validation_results_json, created_at)
+    await execute(
+      c.env,
+      `INSERT INTO book_files (id, book_id, storage_provider, storage_key, original_filename, mime_type, file_size_bytes, sha256, epub_version, validation_results_json, created_at)
      VALUES (?, ?, 'r2', ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [
-      fileId,
-      bookId,
-      body.storageKey,
-      body.originalFilename,
-      body.mimeType ?? 'application/epub+zip',
-      body.fileSizeBytes ?? 0,
-      body.sha256 ?? null,
-      body.epubVersion ?? null,
-      body.validationResults ? JSON.stringify(body.validationResults) : null,
-      now,
-    ],
-  );
+      [
+        fileId,
+        bookId,
+        body.storageKey,
+        body.originalFilename,
+        body.mimeType ?? 'application/epub+zip',
+        body.fileSizeBytes ?? 0,
+        body.sha256 ?? null,
+        body.epubVersion ?? null,
+        body.validationResults ? JSON.stringify(body.validationResults) : null,
+        now,
+      ],
+    );
 
-  // Invalidate edge cache so readers get the fresh EPUB content
-  await bumpCacheVersion(c.env);
+    // Invalidate edge cache so readers get the fresh EPUB content
+    await bumpCacheVersion(c.env);
 
-  await logAudit(c.env, {
-    entityType: 'book',
-    entityId: bookId,
-    action: 'file_uploaded',
-    payload: { fileId, storageKey: body.storageKey },
-  }, c.executionCtx);
+    await logAudit(
+      c.env,
+      {
+        entityType: 'book',
+        entityId: bookId,
+        action: 'file_uploaded',
+        payload: { fileId, storageKey: body.storageKey },
+      },
+      c.executionCtx,
+    );
 
-  return c.json({ ok: true, data: { id: fileId, storageKey: body.storageKey } }, 201);
-});
+    return c.json({ ok: true, data: { id: fileId, storageKey: body.storageKey } }, 201);
+  },
+);
 
 booksRouter.patch('/:id', adminAuth, zValidator('json', UpdateBookSchema), async (c) => {
   const bookId = c.req.param('id');
@@ -323,11 +359,26 @@ booksRouter.patch('/:id', adminAuth, zValidator('json', UpdateBookSchema), async
   const updates: string[] = [];
   const values: unknown[] = [];
 
-  if (body.title !== undefined) { updates.push('title = ?'); values.push(body.title); }
-  if (body.authorName !== undefined) { updates.push('author_name = ?'); values.push(body.authorName); }
-  if (body.description !== undefined) { updates.push('description = ?'); values.push(body.description); }
-  if (body.visibility !== undefined) { updates.push('visibility = ?'); values.push(body.visibility); }
-  if (body.language !== undefined) { updates.push('language = ?'); values.push(body.language); }
+  if (body.title !== undefined) {
+    updates.push('title = ?');
+    values.push(body.title);
+  }
+  if (body.authorName !== undefined) {
+    updates.push('author_name = ?');
+    values.push(body.authorName);
+  }
+  if (body.description !== undefined) {
+    updates.push('description = ?');
+    values.push(body.description);
+  }
+  if (body.visibility !== undefined) {
+    updates.push('visibility = ?');
+    values.push(body.visibility);
+  }
+  if (body.language !== undefined) {
+    updates.push('language = ?');
+    values.push(body.language);
+  }
 
   if (updates.length === 0) {
     throw new AppError('No fields to update', 'NO_CHANGES', 400);
@@ -337,18 +388,26 @@ booksRouter.patch('/:id', adminAuth, zValidator('json', UpdateBookSchema), async
   values.push(new Date().toISOString());
   values.push(bookId);
 
-  await execute(c.env, `UPDATE books SET ${updates.join(', ')} WHERE id = ?`, values as (string | number | null)[]);
+  await execute(
+    c.env,
+    `UPDATE books SET ${updates.join(', ')} WHERE id = ?`,
+    values as (string | number | null)[],
+  );
 
   // Invalidate edge cache so the catalog reflects the updated metadata
   await bumpCacheVersion(c.env);
 
-  await logAudit(c.env, {
-    entityType: 'book',
-    entityId: bookId,
-    action: 'updated',
-    actorEmail: adminUser.email,
-    payload: body,
-  }, c.executionCtx);
+  await logAudit(
+    c.env,
+    {
+      entityType: 'book',
+      entityId: bookId,
+      action: 'updated',
+      actorEmail: adminUser.email,
+      payload: body,
+    },
+    c.executionCtx,
+  );
 
   return c.json({ ok: true });
 });
@@ -380,7 +439,11 @@ booksRouter.delete('/:id', adminAuth, requireStepUp, async (c) => {
   const r2DeletePromises = files.map((f) =>
     // R2 deletion failure during cascade should not block book archive — log and continue
     c.env.BOOKS_BUCKET.delete(f.storage_key).catch((err: unknown) => {
-      logRequestError(r2Ctx, err, { event: 'book.delete.r2_failure', bookId, storageKey: f.storage_key });
+      logRequestError(r2Ctx, err, {
+        event: 'book.delete.r2_failure',
+        bookId,
+        storageKey: f.storage_key,
+      });
     }),
   );
   // DB child rows (soft-delete the book row, hard-delete dependents)
@@ -400,13 +463,17 @@ booksRouter.delete('/:id', adminAuth, requireStepUp, async (c) => {
   c.executionCtx.waitUntil(Promise.all(r2DeletePromises));
   await transaction(c.env, cascadeStatements);
 
-  await logAudit(c.env, {
-    entityType: 'book',
-    entityId: bookId,
-    action: 'archived',
-    actorEmail: adminUser.email,
-    payload: { cascadeDeleted: true, r2Objects: files.length },
-  }, c.executionCtx);
+  await logAudit(
+    c.env,
+    {
+      entityType: 'book',
+      entityId: bookId,
+      action: 'archived',
+      actorEmail: adminUser.email,
+      payload: { cascadeDeleted: true, r2Objects: files.length },
+    },
+    c.executionCtx,
+  );
 
   return c.json({ ok: true, data: { r2ObjectsDeleted: files.length } });
 });

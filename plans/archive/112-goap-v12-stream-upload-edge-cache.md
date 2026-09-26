@@ -19,15 +19,15 @@ SELECT, even though the response is read-mostly.
 
 ## Decompose
 
-| ID | Part | Action | Owner |
-|----|------|--------|-------|
-| T-A1 | A | Replace `arrayBuffer()` in `PUT /api/admin/books/:id/upload` with a streaming transform that pipes the request body through a size-guarded `TransformStream` to R2. | this |
-| T-A2 | A | Optional `multipart/form-data` support for clients that need to bundle file + metadata. Plain `application/octet-stream` path remains. | this |
-| T-A3 | A | Add 200 MB max-size guard via a `ByteCounter` TransformStream that aborts when exceeded. | this |
-| T-A4 | A | Validate EPUB server-side by collecting the streamed body for small uploads (< 25 MB) and using a streaming hash for large ones; or skip post-R2 hash check on huge files and rely on `Content-Length` + size cap. | this |
-| T-B1 | B | Add `Cache-Control: public, max-age=60, s-maxage=300, stale-while-revalidate=86400` to `GET /api/catalog` via a header helper. | this |
-| T-B2 | B | Use `caches.default.match()` short-circuit before Turso; on miss, run the handler then `caches.default.put()`. Key derived from URL + `Accept-Language`. | this |
-| T-B3 | B | Add a `caches.default` mock + a test that proves the second call is served from cache. | this |
+| ID   | Part | Action                                                                                                                                                                                                             | Owner |
+| ---- | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----- |
+| T-A1 | A    | Replace `arrayBuffer()` in `PUT /api/admin/books/:id/upload` with a streaming transform that pipes the request body through a size-guarded `TransformStream` to R2.                                                | this  |
+| T-A2 | A    | Optional `multipart/form-data` support for clients that need to bundle file + metadata. Plain `application/octet-stream` path remains.                                                                             | this  |
+| T-A3 | A    | Add 200 MB max-size guard via a `ByteCounter` TransformStream that aborts when exceeded.                                                                                                                           | this  |
+| T-A4 | A    | Validate EPUB server-side by collecting the streamed body for small uploads (< 25 MB) and using a streaming hash for large ones; or skip post-R2 hash check on huge files and rely on `Content-Length` + size cap. | this  |
+| T-B1 | B    | Add `Cache-Control: public, max-age=60, s-maxage=300, stale-while-revalidate=86400` to `GET /api/catalog` via a header helper.                                                                                     | this  |
+| T-B2 | B    | Use `caches.default.match()` short-circuit before Turso; on miss, run the handler then `caches.default.put()`. Key derived from URL + `Accept-Language`.                                                           | this  |
+| T-B3 | B    | Add a `caches.default` mock + a test that proves the second call is served from cache.                                                                                                                             | this  |
 
 ## Strategize
 

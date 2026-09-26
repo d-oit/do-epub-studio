@@ -26,16 +26,16 @@ a swarm of 8 analysis tracks, with web research for latest stack docs.
 
 ## 3. Swarm Tracks — Results
 
-| # | Track | Verdict | Evidence |
-|---|-------|---------|----------|
-| T1 | Worker API | ✅ Complete | 13 routers in `routes/index.ts`; 122 handlers incl. auth (login/lockout/recovery/MFA+passkeys/step-up), books CRUD, grants, audit, stats, insights, search, notifications, export, demo, telemetry, csp-report. Rate limiting via `RateLimiterDO` (auth 10/min, files 30/min, api 60/min) + auth lockout 5/15min + per-email/IP recovery limits (ADR-232). |
-| T2 | Web UI | ✅ Complete | All PRODUCT.md flows present: login+help+recover, catalog, reader, library, settings, admin dashboard/books/grants/audit/account, offline. 14 locale catalogs with CI-enforced parity. All routes lazy-loaded with per-route skeletons; View Transitions; skip-link; semantic design tokens (ADR-063). |
-| T3 | Reader-core | ✅ Complete | `epub-loader`, DOMPurify `sanitizer`, CFI `reanchor`, `fixed-layout`, `epub-accessibility`, `archive-validator`, `epub-parser.worker.ts` (thread) + `epub-parser-worker.ts` (pool, ready-handshake + fallback, #957) — dash/dot naming is the intentional Vite worker pair, not duplication. |
-| T4 | Schema/shared | ✅ Complete | schema 100% lines/fns; shared 88.5%/90%; knip clean — 2026-06 backlog item "dead code in schema/shared" is resolved. |
-| T5 | Security | ✅ Strong | Argon2id, session revocation on grant change, signed URLs (R2), CSP 035a/123 (self-hosted fonts, `style-src-attr`), traceId before path-length guard, ReDoS guards (ADR-034), static imports over `readFileSync`, redaction, `pnpm audit --prod` = 0 vulns. |
-| T6 | Offline/PWA | ✅ Strong | SW: precache, navigation preload, quota guard + measured eviction, Background Sync, RangeRequests for EPUB, NetworkOnly for admin/access. |
-| T7 | Testing | ✅ Strong | web 86.8%/82.8%, worker 83.1%/76.3%, schema 100%, shared 88.5%/90%, reader-core 89.4%/86.5%, ui 86.7%/90.4%, testkit 97.6% — all ≥ AGENTS.md thresholds. 20 E2E specs (a11y, viewport matrix, offline, panel exclusivity, traceid). |
-| T8 | CI/Docs | ⚠️ Drift | 11 workflows healthy (ci, codeql, lighthouse, bundle-size, visual-regression, release, scorecard, stale-cleanup, dependabot-auto-merge, smart-update-pr, docs-validation). Several analysis/docs files are stale (F2–F6). |
+| #   | Track         | Verdict     | Evidence                                                                                                                                                                                                                                                                                                                                                   |
+| --- | ------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| T1  | Worker API    | ✅ Complete | 13 routers in `routes/index.ts`; 122 handlers incl. auth (login/lockout/recovery/MFA+passkeys/step-up), books CRUD, grants, audit, stats, insights, search, notifications, export, demo, telemetry, csp-report. Rate limiting via `RateLimiterDO` (auth 10/min, files 30/min, api 60/min) + auth lockout 5/15min + per-email/IP recovery limits (ADR-232). |
+| T2  | Web UI        | ✅ Complete | All PRODUCT.md flows present: login+help+recover, catalog, reader, library, settings, admin dashboard/books/grants/audit/account, offline. 14 locale catalogs with CI-enforced parity. All routes lazy-loaded with per-route skeletons; View Transitions; skip-link; semantic design tokens (ADR-063).                                                     |
+| T3  | Reader-core   | ✅ Complete | `epub-loader`, DOMPurify `sanitizer`, CFI `reanchor`, `fixed-layout`, `epub-accessibility`, `archive-validator`, `epub-parser.worker.ts` (thread) + `epub-parser-worker.ts` (pool, ready-handshake + fallback, #957) — dash/dot naming is the intentional Vite worker pair, not duplication.                                                               |
+| T4  | Schema/shared | ✅ Complete | schema 100% lines/fns; shared 88.5%/90%; knip clean — 2026-06 backlog item "dead code in schema/shared" is resolved.                                                                                                                                                                                                                                       |
+| T5  | Security      | ✅ Strong   | Argon2id, session revocation on grant change, signed URLs (R2), CSP 035a/123 (self-hosted fonts, `style-src-attr`), traceId before path-length guard, ReDoS guards (ADR-034), static imports over `readFileSync`, redaction, `pnpm audit --prod` = 0 vulns.                                                                                                |
+| T6  | Offline/PWA   | ✅ Strong   | SW: precache, navigation preload, quota guard + measured eviction, Background Sync, RangeRequests for EPUB, NetworkOnly for admin/access.                                                                                                                                                                                                                  |
+| T7  | Testing       | ✅ Strong   | web 86.8%/82.8%, worker 83.1%/76.3%, schema 100%, shared 88.5%/90%, reader-core 89.4%/86.5%, ui 86.7%/90.4%, testkit 97.6% — all ≥ AGENTS.md thresholds. 20 E2E specs (a11y, viewport matrix, offline, panel exclusivity, traceid).                                                                                                                        |
+| T8  | CI/Docs       | ⚠️ Drift    | 11 workflows healthy (ci, codeql, lighthouse, bundle-size, visual-regression, release, scorecard, stale-cleanup, dependabot-auto-merge, smart-update-pr, docs-validation). Several analysis/docs files are stale (F2–F6).                                                                                                                                  |
 
 ## 4. Findings
 
@@ -108,13 +108,13 @@ a swarm of 8 analysis tracks, with web research for latest stack docs.
 
 ## 5. Decomposition & Execution Plan
 
-| Phase | Priority | Tasks | Deps | Gate |
-|-------|----------|-------|------|------|
-| 1. SW drift fix | P0 | F1: remove Google-Fonts SW routes + evictable prefixes; add SW no-external-fonts test | none | Worker/web tests green; lint/typecheck |
-| 2. Docs freshness | P1 | F2–F6: update/archive stale reports, extend `docs/api.md` from route inventory, reconcile SWARM_ANALYSIS backlog, review KNOWN-ISSUES | Phase 1 | `scripts/check-adr-index.mjs`, markdownlint pass |
-| 3. Toolchain eval | P2 | F7 (TS 7) + F8 (React Compiler) each in isolated evaluation PRs with ADR-218 baselines | ADR-248 | Baseline before/after + full quality gate |
-| 4. Patch bumps | P2 | F9: dependabot-style grouped patch bump PR(s) | Phase 1–2 | CI green incl. Codacy + bundle budget |
-| 5. Verification | P0 | `./scripts/quality_gate.sh`, workflow validation, `pnpm audit`, knip | All phases | All checks pass before merge |
+| Phase             | Priority | Tasks                                                                                                                                 | Deps       | Gate                                             |
+| ----------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------- | ---------- | ------------------------------------------------ |
+| 1. SW drift fix   | P0       | F1: remove Google-Fonts SW routes + evictable prefixes; add SW no-external-fonts test                                                 | none       | Worker/web tests green; lint/typecheck           |
+| 2. Docs freshness | P1       | F2–F6: update/archive stale reports, extend `docs/api.md` from route inventory, reconcile SWARM_ANALYSIS backlog, review KNOWN-ISSUES | Phase 1    | `scripts/check-adr-index.mjs`, markdownlint pass |
+| 3. Toolchain eval | P2       | F7 (TS 7) + F8 (React Compiler) each in isolated evaluation PRs with ADR-218 baselines                                                | ADR-248    | Baseline before/after + full quality gate        |
+| 4. Patch bumps    | P2       | F9: dependabot-style grouped patch bump PR(s)                                                                                         | Phase 1–2  | CI green incl. Codacy + bundle budget            |
+| 5. Verification   | P0       | `./scripts/quality_gate.sh`, workflow validation, `pnpm audit`, knip                                                                  | All phases | All checks pass before merge                     |
 
 Strategy: **Hybrid** — Phase 1 is sequential (SW change first), Phases 3/4
 can run parallel after Phases 1–2 land. Swarm agents: `reader-ui-ux` /

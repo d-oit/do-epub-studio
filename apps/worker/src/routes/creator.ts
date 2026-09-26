@@ -93,11 +93,9 @@ async function requireCreator(
   if (!row) {
     throw new ForbiddenError('Access denied');
   }
-  const user = await queryFirst<{ id: string }>(
-    env,
-    `SELECT id FROM users WHERE email = ?`,
-    [auth.email],
-  );
+  const user = await queryFirst<{ id: string }>(env, `SELECT id FROM users WHERE email = ?`, [
+    auth.email,
+  ]);
   if (!user) {
     throw new ForbiddenError('Access denied');
   }
@@ -109,7 +107,11 @@ function toCreatorDTO(
   replies: ReplyRow[] = [],
   events: EventRow[] = [],
   replyCount = 0,
-  provenance: ItemProvenance = { anchorState: 'unresolved', referencesDrifted: false, pinnedReferences: {} },
+  provenance: ItemProvenance = {
+    anchorState: 'unresolved',
+    referencesDrifted: false,
+    pinnedReferences: {},
+  },
 ): Record<string, unknown> {
   const email = row.submitter_email;
   return {
@@ -160,7 +162,13 @@ async function creatorItem(
   replyCount = 0,
   baseline?: Record<string, number>,
 ): Promise<Record<string, unknown>> {
-  return toCreatorDTO(row, replies, events, replyCount, await resolveProvenance(env, row, baseline));
+  return toCreatorDTO(
+    row,
+    replies,
+    events,
+    replyCount,
+    await resolveProvenance(env, row, baseline),
+  );
 }
 
 async function replyCountFor(env: Env, feedbackId: string): Promise<number> {
@@ -172,7 +180,10 @@ async function replyCountFor(env: Env, feedbackId: string): Promise<number> {
   return row?.n ?? 0;
 }
 
-async function threadFor(env: Env, feedbackId: string): Promise<{ replies: ReplyRow[]; events: EventRow[] }> {
+async function threadFor(
+  env: Env,
+  feedbackId: string,
+): Promise<{ replies: ReplyRow[]; events: EventRow[] }> {
   const replies = await queryAll<ReplyRow>(
     env,
     `SELECT * FROM feedback_replies WHERE feedback_id = ? ORDER BY created_at ASC LIMIT 500`,
@@ -222,7 +233,13 @@ creatorRouter.get(
     const bookId = c.req.param('bookId');
     const auth = c.get('auth');
 
-    const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx, getRequestTraceId(c));
+    const mismatch = await assertBookAccess(
+      c.env,
+      auth,
+      bookId,
+      c.executionCtx,
+      getRequestTraceId(c),
+    );
     if (mismatch) return mismatch.response;
     await requireCreator(c.env, auth, bookId);
 
@@ -245,7 +262,9 @@ creatorRouter.get(
     // compared against the book's current references.
     const baseline = await currentReferenceRevisions(c.env, bookId);
     const data = await Promise.all(
-      rows.map(async (row) => creatorItem(c.env, row, [], [], await replyCountFor(c.env, row.id), baseline)),
+      rows.map(async (row) =>
+        creatorItem(c.env, row, [], [], await replyCountFor(c.env, row.id), baseline),
+      ),
     );
 
     return c.json({ ok: true, data });
@@ -257,7 +276,13 @@ creatorRouter.get('/creator/books/:bookId/feedback/:id', readerAuth, async (c) =
   const id = c.req.param('id');
   const auth = c.get('auth');
 
-  const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx, getRequestTraceId(c));
+  const mismatch = await assertBookAccess(
+    c.env,
+    auth,
+    bookId,
+    c.executionCtx,
+    getRequestTraceId(c),
+  );
   if (mismatch) return mismatch.response;
   await requireCreator(c.env, auth, bookId);
 
@@ -282,7 +307,13 @@ creatorRouter.post(
     const id = c.req.param('id');
     const auth = c.get('auth');
 
-    const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx, getRequestTraceId(c));
+    const mismatch = await assertBookAccess(
+      c.env,
+      auth,
+      bookId,
+      c.executionCtx,
+      getRequestTraceId(c),
+    );
     if (mismatch) return mismatch.response;
     await requireCreator(c.env, auth, bookId);
 
@@ -313,13 +344,17 @@ creatorRouter.post(
        VALUES (?, ?, ?, 'replied', ?)`,
       [crypto.randomUUID(), id, auth.email, now],
     );
-    await logAudit(c.env, {
-      entityType: 'editorial-feedback',
-      entityId: id,
-      action: 'creator-reply',
-      actorEmail: auth.email,
-      payload: { bookId },
-    }, c.executionCtx);
+    await logAudit(
+      c.env,
+      {
+        entityType: 'editorial-feedback',
+        entityId: id,
+        action: 'creator-reply',
+        actorEmail: auth.email,
+        payload: { bookId },
+      },
+      c.executionCtx,
+    );
 
     const { replies, events } = await threadFor(c.env, id);
     const updated = await queryFirst<FeedbackRow>(
@@ -343,7 +378,13 @@ creatorRouter.post(
     const id = c.req.param('id');
     const auth = c.get('auth');
 
-    const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx, getRequestTraceId(c));
+    const mismatch = await assertBookAccess(
+      c.env,
+      auth,
+      bookId,
+      c.executionCtx,
+      getRequestTraceId(c),
+    );
     if (mismatch) return mismatch.response;
     await requireCreator(c.env, auth, bookId);
 
@@ -369,24 +410,28 @@ creatorRouter.post(
     const now = new Date().toISOString();
     const event = body.disposition === 'open' ? 'reopened' : body.disposition;
 
-    await execute(
-      c.env,
-      `UPDATE editorial_feedback SET status = ?, updated_at = ? WHERE id = ?`,
-      [body.disposition, now, id],
-    );
+    await execute(c.env, `UPDATE editorial_feedback SET status = ?, updated_at = ? WHERE id = ?`, [
+      body.disposition,
+      now,
+      id,
+    ]);
     await execute(
       c.env,
       `INSERT INTO feedback_events (id, feedback_id, actor_email, event, created_at)
        VALUES (?, ?, ?, ?, ?)`,
       [crypto.randomUUID(), id, auth.email, event, now],
     );
-    await logAudit(c.env, {
-      entityType: 'editorial-feedback',
-      entityId: id,
-      action: `disposition-${event}`,
-      actorEmail: auth.email,
-      payload: { bookId, from: row.status, to: body.disposition },
-    }, c.executionCtx);
+    await logAudit(
+      c.env,
+      {
+        entityType: 'editorial-feedback',
+        entityId: id,
+        action: `disposition-${event}`,
+        actorEmail: auth.email,
+        payload: { bookId, from: row.status, to: body.disposition },
+      },
+      c.executionCtx,
+    );
 
     // `accepted` records editorial agreement only — it never modifies files.
     const { replies, events } = await threadFor(c.env, id);
@@ -410,7 +455,13 @@ creatorRouter.post(
     const bookId = c.req.param('bookId');
     const auth = c.get('auth');
 
-    const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx, getRequestTraceId(c));
+    const mismatch = await assertBookAccess(
+      c.env,
+      auth,
+      bookId,
+      c.executionCtx,
+      getRequestTraceId(c),
+    );
     if (mismatch) return mismatch.response;
     await requireCreator(c.env, auth, bookId);
 
@@ -435,13 +486,17 @@ creatorRouter.post(
       );
     }
 
-    await logAudit(c.env, {
-      entityType: 'editorial-feedback-export',
-      entityId: bookId,
-      action: 'export',
-      actorEmail: auth.email,
-      payload: { bookId, count: items.length },
-    }, c.executionCtx);
+    await logAudit(
+      c.env,
+      {
+        entityType: 'editorial-feedback-export',
+        entityId: bookId,
+        action: 'export',
+        actorEmail: auth.email,
+        payload: { bookId, count: items.length },
+      },
+      c.executionCtx,
+    );
 
     return c.json({ ok: true, data: { items } });
   },
@@ -490,7 +545,13 @@ creatorRouter.get(
     const bookId = c.req.param('bookId');
     const auth = c.get('auth');
 
-    const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx, getRequestTraceId(c));
+    const mismatch = await assertBookAccess(
+      c.env,
+      auth,
+      bookId,
+      c.executionCtx,
+      getRequestTraceId(c),
+    );
     if (mismatch) return mismatch.response;
     await requireCreator(c.env, auth, bookId);
 
@@ -517,7 +578,13 @@ creatorRouter.post(
     const bookId = c.req.param('bookId');
     const auth = c.get('auth');
 
-    const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx, getRequestTraceId(c));
+    const mismatch = await assertBookAccess(
+      c.env,
+      auth,
+      bookId,
+      c.executionCtx,
+      getRequestTraceId(c),
+    );
     if (mismatch) return mismatch.response;
     await requireCreator(c.env, auth, bookId);
 
@@ -550,13 +617,17 @@ creatorRouter.post(
       ],
     );
 
-    await logAudit(c.env, {
-      entityType: 'book-reference',
-      entityId: id,
-      action: 'created',
-      actorEmail: auth.email,
-      payload: { bookId, kind: body.kind, origin: body.origin },
-    }, c.executionCtx);
+    await logAudit(
+      c.env,
+      {
+        entityType: 'book-reference',
+        entityId: id,
+        action: 'created',
+        actorEmail: auth.email,
+        payload: { bookId, kind: body.kind, origin: body.origin },
+      },
+      c.executionCtx,
+    );
 
     const row = await queryFirst<ReferenceRow>(
       c.env,
@@ -579,7 +650,13 @@ creatorRouter.patch(
     const id = c.req.param('id');
     const auth = c.get('auth');
 
-    const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx, getRequestTraceId(c));
+    const mismatch = await assertBookAccess(
+      c.env,
+      auth,
+      bookId,
+      c.executionCtx,
+      getRequestTraceId(c),
+    );
     if (mismatch) return mismatch.response;
     await requireCreator(c.env, auth, bookId);
 
@@ -601,22 +678,20 @@ creatorRouter.patch(
       `UPDATE book_references
        SET title = ?, content = ?, revision = revision + 1, updated_at = ?
        WHERE id = ? AND book_id = ?`,
-      [
-        body.title ?? row.title,
-        body.content ?? row.content,
-        now,
-        id,
-        bookId,
-      ],
+      [body.title ?? row.title, body.content ?? row.content, now, id, bookId],
     );
 
-    await logAudit(c.env, {
-      entityType: 'book-reference',
-      entityId: id,
-      action: 'updated',
-      actorEmail: auth.email,
-      payload: { bookId },
-    }, c.executionCtx);
+    await logAudit(
+      c.env,
+      {
+        entityType: 'book-reference',
+        entityId: id,
+        action: 'updated',
+        actorEmail: auth.email,
+        payload: { bookId },
+      },
+      c.executionCtx,
+    );
 
     const updated = await queryFirst<ReferenceRow>(
       c.env,
@@ -630,43 +705,45 @@ creatorRouter.patch(
   },
 );
 
-creatorRouter.delete(
-  '/creator/books/:bookId/references/:id',
-  readerAuth,
-  async (c) => {
-    const bookId = c.req.param('bookId');
-    const id = c.req.param('id');
-    const auth = c.get('auth');
+creatorRouter.delete('/creator/books/:bookId/references/:id', readerAuth, async (c) => {
+  const bookId = c.req.param('bookId');
+  const id = c.req.param('id');
+  const auth = c.get('auth');
 
-    const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx, getRequestTraceId(c));
-    if (mismatch) return mismatch.response;
-    await requireCreator(c.env, auth, bookId);
+  const mismatch = await assertBookAccess(
+    c.env,
+    auth,
+    bookId,
+    c.executionCtx,
+    getRequestTraceId(c),
+  );
+  if (mismatch) return mismatch.response;
+  await requireCreator(c.env, auth, bookId);
 
-    const row = await queryFirst<ReferenceRow>(
-      c.env,
-      `SELECT * FROM book_references WHERE id = ? AND book_id = ?`,
-      [id, bookId],
-    );
-    if (!row) {
-      throw new NotFoundError('Reference');
-    }
+  const row = await queryFirst<ReferenceRow>(
+    c.env,
+    `SELECT * FROM book_references WHERE id = ? AND book_id = ?`,
+    [id, bookId],
+  );
+  if (!row) {
+    throw new NotFoundError('Reference');
+  }
 
-    await execute(
-      c.env,
-      `DELETE FROM book_references WHERE id = ? AND book_id = ?`,
-      [id, bookId],
-    );
-    await logAudit(c.env, {
+  await execute(c.env, `DELETE FROM book_references WHERE id = ? AND book_id = ?`, [id, bookId]);
+  await logAudit(
+    c.env,
+    {
       entityType: 'book-reference',
       entityId: id,
       action: 'deleted',
       actorEmail: auth.email,
       payload: { bookId, kind: row.kind },
-    }, c.executionCtx);
+    },
+    c.executionCtx,
+  );
 
-    return c.json({ ok: true, data: { id } });
-  },
-);
+  return c.json({ ok: true, data: { id } });
+});
 
 creatorRouter.post(
   '/creator/books/:bookId/references/:id/verify',
@@ -677,7 +754,13 @@ creatorRouter.post(
     const id = c.req.param('id');
     const auth = c.get('auth');
 
-    const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx, getRequestTraceId(c));
+    const mismatch = await assertBookAccess(
+      c.env,
+      auth,
+      bookId,
+      c.executionCtx,
+      getRequestTraceId(c),
+    );
     if (mismatch) return mismatch.response;
     await requireCreator(c.env, auth, bookId);
 
@@ -705,13 +788,17 @@ creatorRouter.post(
       `UPDATE book_references SET verified = ?, content = ?, updated_at = ? WHERE id = ? AND book_id = ?`,
       [body.verified ? 1 : 0, appended, now, id, bookId],
     );
-    await logAudit(c.env, {
-      entityType: 'book-reference',
-      entityId: id,
-      action: body.verified ? 'verified' : 'unverified',
-      actorEmail: auth.email,
-      payload: { bookId },
-    }, c.executionCtx);
+    await logAudit(
+      c.env,
+      {
+        entityType: 'book-reference',
+        entityId: id,
+        action: body.verified ? 'verified' : 'unverified',
+        actorEmail: auth.email,
+        payload: { bookId },
+      },
+      c.executionCtx,
+    );
 
     const updated = await queryFirst<ReferenceRow>(
       c.env,
@@ -729,15 +816,19 @@ creatorRouter.get('/creator/books/:bookId/style', readerAuth, async (c) => {
   const bookId = c.req.param('bookId');
   const auth = c.get('auth');
 
-  const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx, getRequestTraceId(c));
+  const mismatch = await assertBookAccess(
+    c.env,
+    auth,
+    bookId,
+    c.executionCtx,
+    getRequestTraceId(c),
+  );
   if (mismatch) return mismatch.response;
   await requireCreator(c.env, auth, bookId);
 
-  const row = await queryFirst<JsonRow>(
-    c.env,
-    `SELECT * FROM style_profile WHERE book_id = ?`,
-    [bookId],
-  );
+  const row = await queryFirst<JsonRow>(c.env, `SELECT * FROM style_profile WHERE book_id = ?`, [
+    bookId,
+  ]);
   if (!row) {
     return c.json({ ok: true, data: null });
   }
@@ -767,7 +858,13 @@ creatorRouter.put(
     const bookId = c.req.param('bookId');
     const auth = c.get('auth');
 
-    const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx, getRequestTraceId(c));
+    const mismatch = await assertBookAccess(
+      c.env,
+      auth,
+      bookId,
+      c.executionCtx,
+      getRequestTraceId(c),
+    );
     if (mismatch) return mismatch.response;
     await requireCreator(c.env, auth, bookId);
 
@@ -814,13 +911,17 @@ creatorRouter.put(
       ],
     );
 
-    await logAudit(c.env, {
-      entityType: 'style-profile',
-      entityId: bookId,
-      action: approved ? 'approved' : 'updated',
-      actorEmail: auth.email,
-      payload: { bookId, revision: (existing?.revision as number | undefined ?? 0) + 1 },
-    }, c.executionCtx);
+    await logAudit(
+      c.env,
+      {
+        entityType: 'style-profile',
+        entityId: bookId,
+        action: approved ? 'approved' : 'updated',
+        actorEmail: auth.email,
+        payload: { bookId, revision: ((existing?.revision as number | undefined) ?? 0) + 1 },
+      },
+      c.executionCtx,
+    );
 
     return c.json({
       ok: true,
@@ -829,7 +930,7 @@ creatorRouter.put(
         status: body.status,
         approvedBy: approved ? auth.email : null,
         approvedAt: approved ? now : null,
-        revision: (existing?.revision as number | undefined ?? 0) + 1,
+        revision: ((existing?.revision as number | undefined) ?? 0) + 1,
       },
     });
   },
@@ -842,35 +943,37 @@ creatorRouter.put(
 // qualification milestone is met (ADR-999 D5), and the dispatch endpoint
 // refuses without reading a single character of book text.
 
-creatorRouter.get(
-  '/creator/books/:bookId/assistance-consent',
-  readerAuth,
-  async (c) => {
-    const bookId = c.req.param('bookId');
-    const auth = c.get('auth');
+creatorRouter.get('/creator/books/:bookId/assistance-consent', readerAuth, async (c) => {
+  const bookId = c.req.param('bookId');
+  const auth = c.get('auth');
 
-    const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx, getRequestTraceId(c));
-    if (mismatch) return mismatch.response;
-    await requireCreator(c.env, auth, bookId);
+  const mismatch = await assertBookAccess(
+    c.env,
+    auth,
+    bookId,
+    c.executionCtx,
+    getRequestTraceId(c),
+  );
+  if (mismatch) return mismatch.response;
+  await requireCreator(c.env, auth, bookId);
 
-    const row = await queryFirst<{ cloud_assistance_allowed: number }>(
-      c.env,
-      `SELECT bc.cloud_assistance_allowed AS cloud_assistance_allowed
+  const row = await queryFirst<{ cloud_assistance_allowed: number }>(
+    c.env,
+    `SELECT bc.cloud_assistance_allowed AS cloud_assistance_allowed
        FROM book_creators bc JOIN users u ON u.id = bc.user_id
        WHERE bc.book_id = ? AND u.email = ?`,
-      [bookId, auth.email],
-    );
+    [bookId, auth.email],
+  );
 
-    return c.json({
-      ok: true,
-      data: {
-        allowed: row?.cloud_assistance_allowed === 1,
-        // Never configurable: the qualification gate owns this fact.
-        cloudQualified: false,
-      },
-    });
-  },
-);
+  return c.json({
+    ok: true,
+    data: {
+      allowed: row?.cloud_assistance_allowed === 1,
+      // Never configurable: the qualification gate owns this fact.
+      cloudQualified: false,
+    },
+  });
+});
 
 creatorRouter.put(
   '/creator/books/:bookId/assistance-consent',
@@ -880,7 +983,13 @@ creatorRouter.put(
     const bookId = c.req.param('bookId');
     const auth = c.get('auth');
 
-    const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx, getRequestTraceId(c));
+    const mismatch = await assertBookAccess(
+      c.env,
+      auth,
+      bookId,
+      c.executionCtx,
+      getRequestTraceId(c),
+    );
     if (mismatch) return mismatch.response;
     const { userId } = await requireCreator(c.env, auth, bookId);
 
@@ -890,13 +999,17 @@ creatorRouter.put(
       `UPDATE book_creators SET cloud_assistance_allowed = ? WHERE book_id = ? AND user_id = ?`,
       [body.allowed ? 1 : 0, bookId, userId],
     );
-    await logAudit(c.env, {
-      entityType: 'book-creator',
-      entityId: `${bookId}:${userId}`,
-      action: body.allowed ? 'cloud-assistance-allowed' : 'cloud-assistance-denied',
-      actorEmail: auth.email,
-      payload: { bookId },
-    }, c.executionCtx);
+    await logAudit(
+      c.env,
+      {
+        entityType: 'book-creator',
+        entityId: `${bookId}:${userId}`,
+        action: body.allowed ? 'cloud-assistance-allowed' : 'cloud-assistance-denied',
+        actorEmail: auth.email,
+        payload: { bookId },
+      },
+      c.executionCtx,
+    );
 
     return c.json({
       ok: true,
@@ -905,38 +1018,44 @@ creatorRouter.put(
   },
 );
 
-creatorRouter.post(
-  '/creator/books/:bookId/assistance/dispatch',
-  readerAuth,
-  async (c) => {
-    const bookId = c.req.param('bookId');
-    const auth = c.get('auth');
+creatorRouter.post('/creator/books/:bookId/assistance/dispatch', readerAuth, async (c) => {
+  const bookId = c.req.param('bookId');
+  const auth = c.get('auth');
 
-    const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx, getRequestTraceId(c));
-    if (mismatch) return mismatch.response;
-    await requireCreator(c.env, auth, bookId);
+  const mismatch = await assertBookAccess(
+    c.env,
+    auth,
+    bookId,
+    c.executionCtx,
+    getRequestTraceId(c),
+  );
+  if (mismatch) return mismatch.response;
+  await requireCreator(c.env, auth, bookId);
 
-    // No provider is qualified. Refuse without touching book text: reading the
-    // manuscript to build a request we must reject would violate the very
-    // scope we are protecting. Consent state is irrelevant here by design —
-    // permission cannot substitute for a qualified provider.
-    await logAudit(c.env, {
+  // No provider is qualified. Refuse without touching book text: reading the
+  // manuscript to build a request we must reject would violate the very
+  // scope we are protecting. Consent state is irrelevant here by design —
+  // permission cannot substitute for a qualified provider.
+  await logAudit(
+    c.env,
+    {
       entityType: 'editorial-feedback',
       entityId: bookId,
       action: 'assistance-dispatch-refused',
       actorEmail: auth.email,
       payload: { bookId, reason: 'cloud_not_qualified' },
-    }, c.executionCtx);
+    },
+    c.executionCtx,
+  );
 
-    return c.json(
-      {
-        ok: false,
-        error: {
-          code: 'ASSISTANCE_NOT_CONFIGURED',
-          message: 'No cloud provider is qualified; dispatch is disabled.',
-        },
+  return c.json(
+    {
+      ok: false,
+      error: {
+        code: 'ASSISTANCE_NOT_CONFIGURED',
+        message: 'No cloud provider is qualified; dispatch is disabled.',
       },
-      501,
-    );
-  },
-);
+    },
+    501,
+  );
+});

@@ -151,7 +151,14 @@ describe('useReaderEpub', () => {
     const onNavigate = vi.fn();
 
     renderHook(() =>
-      useReaderEpub('http://test.epub', refs.viewerRef, refs.rootRef, refs.highlightsRef, refs.commentsRef, onNavigate),
+      useReaderEpub(
+        'http://test.epub',
+        refs.viewerRef,
+        refs.rootRef,
+        refs.highlightsRef,
+        refs.commentsRef,
+        onNavigate,
+      ),
     );
 
     await waitFor(() => {
@@ -177,7 +184,14 @@ describe('useReaderEpub', () => {
     const onNavigate = vi.fn();
 
     renderHook(() =>
-      useReaderEpub(null, refs.viewerRef, refs.rootRef, refs.highlightsRef, refs.commentsRef, onNavigate),
+      useReaderEpub(
+        null,
+        refs.viewerRef,
+        refs.rootRef,
+        refs.highlightsRef,
+        refs.commentsRef,
+        onNavigate,
+      ),
     );
 
     await waitFor(() => {
@@ -195,7 +209,14 @@ describe('useReaderEpub', () => {
     };
 
     renderHook(() =>
-      useReaderEpub('http://test.epub', refs.viewerRef, refs.rootRef, refs.highlightsRef, refs.commentsRef, onNavigate),
+      useReaderEpub(
+        'http://test.epub',
+        refs.viewerRef,
+        refs.rootRef,
+        refs.highlightsRef,
+        refs.commentsRef,
+        onNavigate,
+      ),
     );
 
     await waitFor(() => {
@@ -208,7 +229,14 @@ describe('useReaderEpub', () => {
 
     const onNavigate = vi.fn();
     renderHook(() =>
-      useReaderEpub('http://test.epub', refs.viewerRef, refs.rootRef, refs.highlightsRef, refs.commentsRef, onNavigate),
+      useReaderEpub(
+        'http://test.epub',
+        refs.viewerRef,
+        refs.rootRef,
+        refs.highlightsRef,
+        refs.commentsRef,
+        onNavigate,
+      ),
     );
 
     await waitFor(() => {
@@ -224,7 +252,14 @@ describe('useReaderEpub', () => {
     const onNavigate = vi.fn();
 
     renderHook(() =>
-      useReaderEpub('http://test.epub', refs.viewerRef, refs.rootRef, refs.highlightsRef, refs.commentsRef, onNavigate),
+      useReaderEpub(
+        'http://test.epub',
+        refs.viewerRef,
+        refs.rootRef,
+        refs.highlightsRef,
+        refs.commentsRef,
+        onNavigate,
+      ),
     );
 
     await waitFor(() => {
@@ -241,7 +276,14 @@ describe('useReaderEpub', () => {
       const refs = createRefs();
       const onNavigate = vi.fn();
       const hook = renderHook(() =>
-        useReaderEpub('http://test.epub', refs.viewerRef, refs.rootRef, refs.highlightsRef, refs.commentsRef, onNavigate),
+        useReaderEpub(
+          'http://test.epub',
+          refs.viewerRef,
+          refs.rootRef,
+          refs.highlightsRef,
+          refs.commentsRef,
+          onNavigate,
+        ),
       );
       return hook;
     }

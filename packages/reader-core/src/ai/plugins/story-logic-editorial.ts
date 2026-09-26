@@ -44,10 +44,7 @@ import type {
 } from '../types';
 
 /** Categories this adapter can answer (ADR-999 D4: story/logic scope). */
-export const STORY_LOGIC_EDITORIAL_CATEGORIES: readonly EditorialCategory[] = [
-  'story',
-  'logic',
-];
+export const STORY_LOGIC_EDITORIAL_CATEGORIES: readonly EditorialCategory[] = ['story', 'logic'];
 
 /** Quantizations B1 allows; larger types are a download decision, not a default. */
 export const STORY_LOGIC_DTYPES: readonly ('q4' | 'q8')[] = ['q4', 'q8'];
@@ -78,9 +75,7 @@ export interface TransformersPipelineLike {
    * tests can pass a plain function. Input is the chat-message list an
    * instruct model needs; output is the whole conversation, assistant last.
    */
-  (input: unknown, options?: Record<string, unknown>): Promise<
-    Array<{ generated_text: unknown }>
-  >;
+  (input: unknown, options?: Record<string, unknown>): Promise<Array<{ generated_text: unknown }>>;
 }
 
 export interface StoryLogicEditorialPluginOptions {
@@ -156,7 +151,6 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 function asString(value: unknown): string | null {
   return typeof value === 'string' && value.trim().length > 0 ? value : null;
 }
-
 
 /**
  * Prompt as chat parts. An instruct model needs its system role set: a single
@@ -369,7 +363,7 @@ export function createStoryLogicEditorialPlugin(
           chapterRef,
           cfi: null,
           quote,
-          sourceSha256: chapterRef !== null ? request.chapterSha256[chapterRef] ?? null : null,
+          sourceSha256: chapterRef !== null ? (request.chapterSha256[chapterRef] ?? null) : null,
           // Locate the quote inside its chapter so the validator can check it;
           // a quote that isn't present verbatim yields -1 and is rejected.
           start: at >= 0 ? at : undefined,

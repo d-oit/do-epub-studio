@@ -29,13 +29,27 @@ const TEXTS = {
  * attestation) is a contract change requiring ADR review (ADR-274 D7).
  */
 const RESPONSE_KEYS = [
-  'software', 'warnings', 'language', 'matches',
-  'sentenceRanges', 'extendedSentenceRanges',
+  'software',
+  'warnings',
+  'language',
+  'matches',
+  'sentenceRanges',
+  'extendedSentenceRanges',
 ];
 const MATCH_KEYS = [
-  'message', 'shortMessage', 'replacements', 'offset', 'length', 'context',
-  'sentence', 'type', 'rule', 'ignoreForIncompleteSentence',
-  'contextForSureMatch', 'sentenceRanges', 'extendedSentenceRanges',
+  'message',
+  'shortMessage',
+  'replacements',
+  'offset',
+  'length',
+  'context',
+  'sentence',
+  'type',
+  'rule',
+  'ignoreForIncompleteSentence',
+  'contextForSureMatch',
+  'sentenceRanges',
+  'extendedSentenceRanges',
 ];
 
 const latenciesMs = [];
@@ -48,7 +62,10 @@ async function check(text, params = {}) {
   const body = await res.json();
   const latencyMs = Date.now() - started;
   latenciesMs.push(latencyMs);
-  if (!res.ok) throw new Error(`LanguageTool responded ${res.status} for ${JSON.stringify(text.slice(0, 40))}`);
+  if (!res.ok)
+    throw new Error(
+      `LanguageTool responded ${res.status} for ${JSON.stringify(text.slice(0, 40))}`,
+    );
   if (!Array.isArray(body.matches)) throw new Error('malformed response: no matches array');
   return { body, latencyMs };
 }
@@ -73,16 +90,17 @@ async function main() {
 
   // (1) Agreement: only "was" → "were", exactly one minimal edit.
   const m1 = r1.body.matches.find(
-    (m) => matchedText(TEXTS[1], m) === 'was'
-      && m.replacements.some((rep) => rep.value === 'were'),
+    (m) => matchedText(TEXTS[1], m) === 'was' && m.replacements.some((rep) => rep.value === 'were'),
   );
   record(
     1,
     'agreement flagged; only was→were',
     r1.body.matches.length === 1 && Boolean(m1),
-    `matches=${r1.body.matches.length}; ${m1
-      ? `${m1.rule.id}${m1.rule.subId ? `/${m1.rule.subId}` : ''} offset=${m1.offset} len=${m1.length} → ${m1.replacements[0]?.value}`
-      : 'no was→were match'}; ${r1.latencyMs}ms`,
+    `matches=${r1.body.matches.length}; ${
+      m1
+        ? `${m1.rule.id}${m1.rule.subId ? `/${m1.rule.subId}` : ''} offset=${m1.offset} len=${m1.length} → ${m1.replacements[0]?.value}`
+        : 'no was→were match'
+    }; ${r1.latencyMs}ms`,
   );
 
   // (2) Dialect + glossary: dialect must not be standardized; the invented
@@ -96,15 +114,21 @@ async function main() {
     check(t2),
     check(t2, { disabledRules: 'MORFOLOGIK_RULE_EN_US' }),
   ]);
-  const dialectStandardised = r2a.body.matches.some((m) => overlaps(m, dialectFrom, dialectFrom + dialect.length));
-  const termFlaggedBaseline = r2a.body.matches.some((m) => overlaps(m, approvedFrom, approvedFrom + approved.length));
-  const termFlaggedSuppressed = r2b.body.matches.some((m) => overlaps(m, approvedFrom, approvedFrom + approved.length));
+  const dialectStandardised = r2a.body.matches.some((m) =>
+    overlaps(m, dialectFrom, dialectFrom + dialect.length),
+  );
+  const termFlaggedBaseline = r2a.body.matches.some((m) =>
+    overlaps(m, approvedFrom, approvedFrom + approved.length),
+  );
+  const termFlaggedSuppressed = r2b.body.matches.some((m) =>
+    overlaps(m, approvedFrom, approvedFrom + approved.length),
+  );
   record(
     2,
     'dialect not standardized; glossary term suppressible',
     !dialectStandardised && !termFlaggedSuppressed,
-    `baseline rules=[${r2a.body.matches.map((m) => m.rule.id).join(', ')}] dialectStandardised=${dialectStandardised} termFlagged=${termFlaggedBaseline}; `
-    + `with disabledRules=MORFOLOGIK_RULE_EN_US termFlagged=${termFlaggedSuppressed} (${r2b.latencyMs}ms)`,
+    `baseline rules=[${r2a.body.matches.map((m) => m.rule.id).join(', ')}] dialectStandardised=${dialectStandardised} termFlagged=${termFlaggedBaseline}; ` +
+      `with disabledRules=MORFOLOGIK_RULE_EN_US termFlagged=${termFlaggedSuppressed} (${r2b.latencyMs}ms)`,
   );
 
   // (4) Terse first-person present: no person/tense change, no lyrical filler —
@@ -117,8 +141,8 @@ async function main() {
     4,
     'terse first-person passage untouched (no person/tense/lyrical change)',
     r4a.body.matches.length === 0 && r4b.body.matches.length === 0,
-    `baseline matches=${r4a.body.matches.length} ids=[${r4a.body.matches.map((m) => m.rule.id).join(', ')}]; `
-    + `disabledCategories=STYLE matches=${r4b.body.matches.length}`,
+    `baseline matches=${r4a.body.matches.length} ids=[${r4a.body.matches.map((m) => m.rule.id).join(', ')}]; ` +
+      `disabledCategories=STYLE matches=${r4b.body.matches.length}`,
   );
 
   // (6) Prompt injection: handled as quoted text only — response shape stays
@@ -127,7 +151,9 @@ async function main() {
   const r6 = await check(t6);
   const responseKeysOk = keysWithin(r6.body, RESPONSE_KEYS);
   const matchKeysOk = r6.body.matches.every((m) => keysWithin(m, MATCH_KEYS));
-  const offsetsInRange = r6.body.matches.every((m) => m.offset >= 0 && m.offset + m.length <= t6.length);
+  const offsetsInRange = r6.body.matches.every(
+    (m) => m.offset >= 0 && m.offset + m.length <= t6.length,
+  );
   record(
     6,
     'injection passage quoted, never obeyed (no tool/scope action surface)',
@@ -141,12 +167,17 @@ async function main() {
   const t7 = TEXTS[7];
   const r7 = await check(t7);
   const attests = r7.body.matches.some((m) =>
-    /\b(proven|citation|reference|source|valid|correct)\b/i.test(`${m.message ?? ''} ${m.shortMessage ?? ''}`));
+    /\b(proven|citation|reference|source|valid|correct)\b/i.test(
+      `${m.message ?? ''} ${m.shortMessage ?? ''}`,
+    ),
+  );
   const authorFlagged = r7.body.matches.some((m) => matchedText(t7, m) === 'Thornfield');
   record(
     7,
     'engine cannot attest citations (rejection stays in validateEditorialFindings)',
-    keysWithin(r7.body, RESPONSE_KEYS) && r7.body.matches.every((m) => keysWithin(m, MATCH_KEYS)) && !attests,
+    keysWithin(r7.body, RESPONSE_KEYS) &&
+      r7.body.matches.every((m) => keysWithin(m, MATCH_KEYS)) &&
+      !attests,
     `matches=[${r7.body.matches.map((m) => `${m.rule.id}@${m.offset}`).join(', ')}]; authorName spelling-flagged=${authorFlagged} (glossary mechanism, ADR-274 D6); attestation claim=${attests}`,
   );
 
@@ -159,8 +190,11 @@ async function main() {
   record(
     8,
     'acceptance applies an exact minimal substring swap (byte-for-byte outside the span)',
-    Boolean(m1) && m1.offset === 10 && m1.length === 3
-      && m1.replacements[0]?.value === 'were' && swapped === 'The doors were locked.',
+    Boolean(m1) &&
+      m1.offset === 10 &&
+      m1.length === 3 &&
+      m1.replacements[0]?.value === 'were' &&
+      swapped === 'The doors were locked.',
     m1
       ? `span=[${m1.offset},${m1.offset + m1.length}) replacement=${JSON.stringify(m1.replacements[0].value)} → ${JSON.stringify(swapped)}`
       : 'item 1 match missing — cannot exercise substitution',
@@ -179,15 +213,21 @@ async function main() {
     latenciesMs,
     ranAt: new Date().toISOString(),
   };
-  console.log(`\n${results.length - failed.length}/${results.length} corpus properties PASS`
-    + ` (latencies: ${latenciesMs.join('/')}ms)`);
+  console.log(
+    `\n${results.length - failed.length}/${results.length} corpus properties PASS` +
+      ` (latencies: ${latenciesMs.join('/')}ms)`,
+  );
   console.log(`EVIDENCE_JSON=${JSON.stringify(summary)}`);
   process.exit(failed.length > 0 ? 1 : 0);
 }
 
 main().catch((err) => {
   const cause = err?.cause;
-  if (err?.name === 'AbortError' || cause?.code === 'ECONNREFUSED' || /fetch failed/i.test(String(cause?.code ?? err?.message))) {
+  if (
+    err?.name === 'AbortError' ||
+    cause?.code === 'ECONNREFUSED' ||
+    /fetch failed/i.test(String(cause?.code ?? err?.message))
+  ) {
     console.error(`✗ LanguageTool not reachable at ${BASE} — run: scripts/dev/languagetool.sh up`);
     process.exit(2);
   }

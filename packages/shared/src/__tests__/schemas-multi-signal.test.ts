@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  MultiSignalLocatorSchema,
-  ProgressUpdateSchema,
-} from '../schemas';
+import { MultiSignalLocatorSchema, ProgressUpdateSchema } from '../schemas';
 
 describe('MultiSignalLocatorSchema', () => {
   it('accepts valid multi-signal locator with all fields', () => {

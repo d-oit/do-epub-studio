@@ -34,17 +34,22 @@ describe('Admin Routes', () => {
         ok: true,
         token: 'admin-token',
         user: { id: 'admin-1', email: 'admin@example.com', role: 'admin' },
-        status: 200
+        status: 200,
       });
 
-      const res = await app.fetch(new Request('http://localhost/api/admin/login', {
-        method: 'POST',
-        body: JSON.stringify({ email: 'admin@example.com', password: 'password' }),
-        headers: { 'Content-Type': 'application/json' },
-      }), env, makePassThroughContext());
+      const res = await app.fetch(
+        new Request('http://localhost/api/admin/login', {
+          method: 'POST',
+          body: JSON.stringify({ email: 'admin@example.com', password: 'password' }),
+          headers: { 'Content-Type': 'application/json' },
+        }),
+        env,
+        makePassThroughContext(),
+      );
 
       expect(res.status).toBe(200);
-      const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } = await res.json();
+      const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } =
+        await res.json();
       expect(body.data.token).toBe('admin-token');
     });
 
@@ -52,14 +57,18 @@ describe('Admin Routes', () => {
       mockCreateAdminSession.mockResolvedValue({
         ok: false,
         error: 'Invalid credentials',
-        status: 401
+        status: 401,
       });
 
-      const res = await app.fetch(new Request('http://localhost/api/admin/login', {
-        method: 'POST',
-        body: JSON.stringify({ email: 'admin@example.com', password: 'wrong' }),
-        headers: { 'Content-Type': 'application/json' },
-      }), env, makePassThroughContext());
+      const res = await app.fetch(
+        new Request('http://localhost/api/admin/login', {
+          method: 'POST',
+          body: JSON.stringify({ email: 'admin@example.com', password: 'wrong' }),
+          headers: { 'Content-Type': 'application/json' },
+        }),
+        env,
+        makePassThroughContext(),
+      );
 
       expect(res.status).toBe(401);
     });
@@ -71,14 +80,21 @@ describe('Admin Routes', () => {
         user: { id: 'admin-1', email: 'admin@example.com', role: 'admin' },
       });
 
-      const res = await app.fetch(new Request('http://localhost/api/admin/login', {
-        method: 'POST',
-        body: JSON.stringify({ email: 'admin@example.com', password: 'password' }),
-        headers: { 'Content-Type': 'application/json' },
-      }), env, makePassThroughContext());
+      const res = await app.fetch(
+        new Request('http://localhost/api/admin/login', {
+          method: 'POST',
+          body: JSON.stringify({ email: 'admin@example.com', password: 'password' }),
+          headers: { 'Content-Type': 'application/json' },
+        }),
+        env,
+        makePassThroughContext(),
+      );
 
       expect(res.status).toBe(200);
-      const body: { ok: boolean; data: { mfaRequired?: boolean; token?: string; loginTicket?: string } } = await res.json();
+      const body: {
+        ok: boolean;
+        data: { mfaRequired?: boolean; token?: string; loginTicket?: string };
+      } = await res.json();
       expect(body.data.mfaRequired).toBe(true);
       // Factor-1 (password) proof: a single-use login ticket is issued so the
       // later /login/mfa/* passkey ceremony can never mint a session alone.
@@ -90,10 +106,14 @@ describe('Admin Routes', () => {
   describe('POST /api/admin/logout', () => {
     it('returns success', async () => {
       mockRevokeAdminSession.mockResolvedValue(undefined);
-      const res = await app.fetch(new Request('http://localhost/api/admin/logout', {
-        method: 'POST',
-        headers: { 'Authorization': 'Bearer token' },
-      }), env, makePassThroughContext());
+      const res = await app.fetch(
+        new Request('http://localhost/api/admin/logout', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer token' },
+        }),
+        env,
+        makePassThroughContext(),
+      );
       expect(res.status).toBe(200);
     });
   });
@@ -104,20 +124,25 @@ describe('Admin Routes', () => {
 
       mockExecute.mockResolvedValue({ rows: [] });
 
-      const res = await app.fetch(new Request('http://localhost/api/admin/books', {
-        method: 'POST',
-        body: JSON.stringify({
-          title: 'New Book',
-          slug: 'new-book',
+      const res = await app.fetch(
+        new Request('http://localhost/api/admin/books', {
+          method: 'POST',
+          body: JSON.stringify({
+            title: 'New Book',
+            slug: 'new-book',
+          }),
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer admin-token',
+          },
         }),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer admin-token'
-        },
-      }), env, makePassThroughContext());
+        env,
+        makePassThroughContext(),
+      );
 
       expect(res.status).toBe(201);
-      const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } = await res.json();
+      const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } =
+        await res.json();
       expect(body.ok).toBe(true);
     });
   });
@@ -125,44 +150,56 @@ describe('Admin Routes', () => {
   describe('GET /api/admin/books', () => {
     it('lists active books using the admin BookResponse shape', async () => {
       mockAdminAuth();
-      mockQueryAll.mockResolvedValue([{
-        id: 'book-1',
-        slug: 'demo',
-        title: 'Demo Book',
-        author_name: 'Demo Author',
-        description: null,
-        language: 'en',
-        visibility: 'private',
-        cover_image_url: null,
-        published_at: null,
-        archived_at: null,
-      }]);
+      mockQueryAll.mockResolvedValue([
+        {
+          id: 'book-1',
+          slug: 'demo',
+          title: 'Demo Book',
+          author_name: 'Demo Author',
+          description: null,
+          language: 'en',
+          visibility: 'private',
+          cover_image_url: null,
+          published_at: null,
+          archived_at: null,
+        },
+      ]);
 
-      const res = await app.fetch(new Request('http://localhost/api/admin/books', {
-        headers: { 'Authorization': 'Bearer admin-token' },
-      }), env, makePassThroughContext());
+      const res = await app.fetch(
+        new Request('http://localhost/api/admin/books', {
+          headers: { Authorization: 'Bearer admin-token' },
+        }),
+        env,
+        makePassThroughContext(),
+      );
 
       expect(res.status).toBe(200);
       const body: { ok: boolean; data: Array<Record<string, unknown>> } = await res.json();
       expect(body.ok).toBe(true);
-      expect(body.data).toEqual([{
-        id: 'book-1',
-        slug: 'demo',
-        title: 'Demo Book',
-        authorName: 'Demo Author',
-        description: null,
-        language: 'en',
-        visibility: 'private',
-        coverImageUrl: null,
-        publishedAt: null,
-      }]);
+      expect(body.data).toEqual([
+        {
+          id: 'book-1',
+          slug: 'demo',
+          title: 'Demo Book',
+          authorName: 'Demo Author',
+          description: null,
+          language: 'en',
+          visibility: 'private',
+          coverImageUrl: null,
+          publishedAt: null,
+        },
+      ]);
       expect(mockQueryAll.mock.calls[0][1] as string).toContain('archived_at IS NULL');
     });
 
     it('requires an admin session', async () => {
       mockRequireAdminAuth.mockResolvedValue({ ok: false, status: 401, error: 'Unauthorized' });
 
-      const res = await app.fetch(new Request('http://localhost/api/admin/books'), env, makePassThroughContext());
+      const res = await app.fetch(
+        new Request('http://localhost/api/admin/books'),
+        env,
+        makePassThroughContext(),
+      );
 
       expect(res.status).toBe(401);
       expect(mockQueryAll).not.toHaveBeenCalled();
@@ -178,22 +215,33 @@ describe('Admin Routes', () => {
 
       const zip = new JSZip();
       zip.file('mimetype', 'application/epub+zip');
-      zip.file('META-INF/container.xml', '<?xml version="1.0"?><container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container"><rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/></rootfiles></container>');
-      zip.file('OEBPS/content.opf', '<?xml version="1.0"?><package version="3.0" xmlns="http://www.idpf.org/2007/opf"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>Test</dc:title></metadata><manifest><item id="nav" href="nav.xhtml" properties="nav" media-type="application/xhtml+xml"/></manifest><spine></spine></package>');
+      zip.file(
+        'META-INF/container.xml',
+        '<?xml version="1.0"?><container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container"><rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/></rootfiles></container>',
+      );
+      zip.file(
+        'OEBPS/content.opf',
+        '<?xml version="1.0"?><package version="3.0" xmlns="http://www.idpf.org/2007/opf"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>Test</dc:title></metadata><manifest><item id="nav" href="nav.xhtml" properties="nav" media-type="application/xhtml+xml"/></manifest><spine></spine></package>',
+      );
       const epubBuffer = await zip.generateAsync({ type: 'arraybuffer' });
 
-      const res = await app.fetch(new Request('http://localhost/api/admin/books/book-1/upload', {
-        method: 'PUT',
-        body: epubBuffer,
-        headers: {
-          'Content-Type': 'application/epub+zip',
-          'Content-Length': String(epubBuffer.byteLength),
-          'Authorization': 'Bearer admin-token'
-        },
-      }), env, makePassThroughContext());
+      const res = await app.fetch(
+        new Request('http://localhost/api/admin/books/book-1/upload', {
+          method: 'PUT',
+          body: epubBuffer,
+          headers: {
+            'Content-Type': 'application/epub+zip',
+            'Content-Length': String(epubBuffer.byteLength),
+            Authorization: 'Bearer admin-token',
+          },
+        }),
+        env,
+        makePassThroughContext(),
+      );
 
       expect(res.status).toBe(200);
-      const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } = await res.json();
+      const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } =
+        await res.json();
       expect(body.data.storageKey).toBeDefined();
     });
   });
@@ -205,17 +253,21 @@ describe('Admin Routes', () => {
 
       mockExecute.mockResolvedValue({ rows: [] });
 
-      const res = await app.fetch(new Request('http://localhost/api/admin/books/book-1/upload-complete', {
-        method: 'POST',
-        body: JSON.stringify({
-          storageKey: 'key',
-          originalFilename: 'test.epub',
+      const res = await app.fetch(
+        new Request('http://localhost/api/admin/books/book-1/upload-complete', {
+          method: 'POST',
+          body: JSON.stringify({
+            storageKey: 'key',
+            originalFilename: 'test.epub',
+          }),
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer admin-token',
+          },
         }),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer admin-token'
-        },
-      }), env, makePassThroughContext());
+        env,
+        makePassThroughContext(),
+      );
 
       expect(res.status).toBe(201);
     });
@@ -228,20 +280,27 @@ describe('Admin Routes', () => {
 
       mockCreateGrant.mockResolvedValue('grant-1');
 
-      const res = await app.fetch(new Request('http://localhost/api/admin/books/36069966-239f-431e-b83c-1d020d575791/grants', {
-        method: 'POST',
-        body: JSON.stringify({
-          bookId: '36069966-239f-431e-b83c-1d020d575791',
-          email: 'user@example.com',
-          mode: 'private',
-          commentsAllowed: true,
-          offlineAllowed: true
-        }),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer admin-token'
-        },
-      }), env, makePassThroughContext());
+      const res = await app.fetch(
+        new Request(
+          'http://localhost/api/admin/books/36069966-239f-431e-b83c-1d020d575791/grants',
+          {
+            method: 'POST',
+            body: JSON.stringify({
+              bookId: '36069966-239f-431e-b83c-1d020d575791',
+              email: 'user@example.com',
+              mode: 'private',
+              commentsAllowed: true,
+              offlineAllowed: true,
+            }),
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: 'Bearer admin-token',
+            },
+          },
+        ),
+        env,
+        makePassThroughContext(),
+      );
 
       expect(res.status).toBe(201);
     });
@@ -252,15 +311,20 @@ describe('Admin Routes', () => {
       mockAdminAuth();
 
       mockQueryAll.mockResolvedValue([
-        { id: 'grant-1', email: 'user@example.com', mode: 'private', allowed: 1 }
+        { id: 'grant-1', email: 'user@example.com', mode: 'private', allowed: 1 },
       ]);
 
-      const res = await app.fetch(new Request('http://localhost/api/admin/books/book-1/grants', {
-        headers: { 'Authorization': 'Bearer admin-token' }
-      }), env, makePassThroughContext());
+      const res = await app.fetch(
+        new Request('http://localhost/api/admin/books/book-1/grants', {
+          headers: { Authorization: 'Bearer admin-token' },
+        }),
+        env,
+        makePassThroughContext(),
+      );
 
       expect(res.status).toBe(200);
-      const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } = await res.json();
+      const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } =
+        await res.json();
       expect(body.data).toHaveLength(1);
       // B2 (GOAP-224 W1.4): grants SELECT must be an explicit column list —
       // no `SELECT *`, and the Argon2id `password_hash` must never be fetched
@@ -279,14 +343,18 @@ describe('Admin Routes', () => {
 
       mockTransaction.mockResolvedValue(undefined);
 
-      const res = await app.fetch(new Request('http://localhost/api/admin/grants/grant-1', {
-        method: 'PATCH',
-        body: JSON.stringify({ mode: 'public' }),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer admin-token'
-        },
-      }), env, makePassThroughContext());
+      const res = await app.fetch(
+        new Request('http://localhost/api/admin/grants/grant-1', {
+          method: 'PATCH',
+          body: JSON.stringify({ mode: 'public' }),
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer admin-token',
+          },
+        }),
+        env,
+        makePassThroughContext(),
+      );
 
       expect(res.status).toBe(200);
     });
@@ -297,14 +365,18 @@ describe('Admin Routes', () => {
 
       mockTransaction.mockResolvedValue(undefined);
 
-      const res = await app.fetch(new Request('http://localhost/api/admin/grants/grant-1', {
-        method: 'PATCH',
-        body: JSON.stringify({ mode: 'reader_only', commentsAllowed: false }),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer admin-token'
-        },
-      }), env, makePassThroughContext());
+      const res = await app.fetch(
+        new Request('http://localhost/api/admin/grants/grant-1', {
+          method: 'PATCH',
+          body: JSON.stringify({ mode: 'reader_only', commentsAllowed: false }),
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer admin-token',
+          },
+        }),
+        env,
+        makePassThroughContext(),
+      );
 
       expect(res.status).toBe(200);
       // TIER-1: must use transaction so UPDATE + session-revoke are atomic
@@ -325,10 +397,14 @@ describe('Admin Routes', () => {
 
       mockTransaction.mockResolvedValue(undefined);
 
-      const res = await app.fetch(new Request('http://localhost/api/admin/grants/grant-1/revoke', {
-        method: 'POST',
-        headers: { 'Authorization': 'Bearer admin-token' },
-      }), env, makePassThroughContext());
+      const res = await app.fetch(
+        new Request('http://localhost/api/admin/grants/grant-1/revoke', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer admin-token' },
+        }),
+        env,
+        makePassThroughContext(),
+      );
 
       expect(res.status).toBe(200);
     });
@@ -342,9 +418,14 @@ describe('Admin Routes', () => {
         .mockResolvedValueOnce([{ cnt: 1 }]) // count query
         .mockResolvedValueOnce([{ id: '1', actor_email: 'admin@ex.com', action: 'query' }]); // rows query
 
-      const res = await app.fetch(new Request('http://localhost/api/admin/audit?entityType=book&limit=10'), env, makePassThroughContext());
+      const res = await app.fetch(
+        new Request('http://localhost/api/admin/audit?entityType=book&limit=10'),
+        env,
+        makePassThroughContext(),
+      );
       expect(res.status).toBe(200);
-      const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } = await res.json();
+      const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } =
+        await res.json();
       expect(body.data.entries).toHaveLength(1);
     });
 
@@ -364,7 +445,9 @@ describe('Admin Routes', () => {
       );
 
       expect(res.status).toBe(200);
-      const rowsCall = mockQueryAll.mock.calls.find((args) => String(args[1]).includes('entity_type = ?'));
+      const rowsCall = mockQueryAll.mock.calls.find((args) =>
+        String(args[1]).includes('entity_type = ?'),
+      );
       expect(rowsCall?.[2]).toContain('editorial-feedback');
     });
 
@@ -401,13 +484,18 @@ describe('Admin Routes', () => {
       ]);
       mockTransaction.mockResolvedValue(undefined);
 
-      const res = await app.fetch(new Request('http://localhost/api/admin/books/book-1', {
-        method: 'DELETE',
-        headers: { 'Authorization': 'Bearer admin-token' },
-      }), env, makePassThroughContext());
+      const res = await app.fetch(
+        new Request('http://localhost/api/admin/books/book-1', {
+          method: 'DELETE',
+          headers: { Authorization: 'Bearer admin-token' },
+        }),
+        env,
+        makePassThroughContext(),
+      );
 
       expect(res.status).toBe(200);
-      const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } = await res.json();
+      const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } =
+        await res.json();
       expect(body.data.r2ObjectsDeleted).toBe(2);
 
       // Verify R2 delete called for each file
@@ -438,10 +526,14 @@ describe('Admin Routes', () => {
 
       mockQueryFirst.mockResolvedValue(null);
 
-      const res = await app.fetch(new Request('http://localhost/api/admin/books/nonexistent', {
-        method: 'DELETE',
-        headers: { 'Authorization': 'Bearer admin-token' },
-      }), env, makePassThroughContext());
+      const res = await app.fetch(
+        new Request('http://localhost/api/admin/books/nonexistent', {
+          method: 'DELETE',
+          headers: { Authorization: 'Bearer admin-token' },
+        }),
+        env,
+        makePassThroughContext(),
+      );
 
       expect(res.status).toBe(404);
     });
@@ -457,19 +549,22 @@ describe('Admin Routes', () => {
         delete: mockBucketDelete,
       };
 
-      mockQueryAll.mockResolvedValue([
-        { storage_key: 'books/book-1/file-a.epub' },
-      ]);
+      mockQueryAll.mockResolvedValue([{ storage_key: 'books/book-1/file-a.epub' }]);
       mockTransaction.mockResolvedValue(undefined);
 
-      const res = await app.fetch(new Request('http://localhost/api/admin/books/book-1', {
-        method: 'DELETE',
-        headers: { 'Authorization': 'Bearer admin-token' },
-      }), env, makePassThroughContext());
+      const res = await app.fetch(
+        new Request('http://localhost/api/admin/books/book-1', {
+          method: 'DELETE',
+          headers: { Authorization: 'Bearer admin-token' },
+        }),
+        env,
+        makePassThroughContext(),
+      );
 
       // DB cascade should still succeed even if R2 fails
       expect(res.status).toBe(200);
-      const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } = await res.json();
+      const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } =
+        await res.json();
       // r2ObjectsDeleted reports attempted count, not success count
       expect(body.data.r2ObjectsDeleted).toBe(1);
       expect(mockTransaction).toHaveBeenCalled();
@@ -490,13 +585,18 @@ describe('Admin Routes', () => {
       mockQueryAll.mockResolvedValue([]);
       mockTransaction.mockResolvedValue(undefined);
 
-      const res = await app.fetch(new Request('http://localhost/api/admin/books/book-1', {
-        method: 'DELETE',
-        headers: { 'Authorization': 'Bearer admin-token' },
-      }), env, makePassThroughContext());
+      const res = await app.fetch(
+        new Request('http://localhost/api/admin/books/book-1', {
+          method: 'DELETE',
+          headers: { Authorization: 'Bearer admin-token' },
+        }),
+        env,
+        makePassThroughContext(),
+      );
 
       expect(res.status).toBe(200);
-      const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } = await res.json();
+      const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } =
+        await res.json();
       expect(body.data.r2ObjectsDeleted).toBe(0);
       expect(mockBucketDelete).not.toHaveBeenCalled();
       expect(mockTransaction).toHaveBeenCalled();
@@ -513,17 +613,20 @@ describe('Admin Routes', () => {
         delete: mockBucketDelete,
       };
 
-      mockQueryAll.mockResolvedValue([
-        { storage_key: 'books/book-1/file-a.epub' },
-      ]);
+      mockQueryAll.mockResolvedValue([{ storage_key: 'books/book-1/file-a.epub' }]);
       mockTransaction.mockResolvedValue(undefined);
 
-      await app.fetch(new Request('http://localhost/api/admin/books/book-1', {
-        method: 'DELETE',
-        headers: { 'Authorization': 'Bearer admin-token' },
-      }), env, makePassThroughContext());
+      await app.fetch(
+        new Request('http://localhost/api/admin/books/book-1', {
+          method: 'DELETE',
+          headers: { Authorization: 'Bearer admin-token' },
+        }),
+        env,
+        makePassThroughContext(),
+      );
 
-      const txArgs = mockTransaction.mock.calls[0]?.[1] as Array<{ sql: string; args: unknown[] }> | undefined;
+      const txArgs = mockTransaction.mock.calls[0]?.[1] as
+        Array<{ sql: string; args: unknown[] }> | undefined;
       expect(txArgs).toBeDefined();
 
       // Each DELETE statement should bind the book ID as first argument
@@ -541,10 +644,10 @@ describe('Admin Routes', () => {
 
       // The stats endpoint runs 4 parallel queryFirst calls + 1 queryFirst + 1 queryAll
       mockQueryFirst
-        .mockResolvedValueOnce({ cnt: 5 })      // totalBooks
-        .mockResolvedValueOnce({ cnt: 12 })      // activeGrants
-        .mockResolvedValueOnce({ cnt: 3 })       // activeSessions
-        .mockResolvedValueOnce({ cnt: 2 })       // archivedBooks
+        .mockResolvedValueOnce({ cnt: 5 }) // totalBooks
+        .mockResolvedValueOnce({ cnt: 12 }) // activeGrants
+        .mockResolvedValueOnce({ cnt: 3 }) // activeSessions
+        .mockResolvedValueOnce({ cnt: 2 }) // archivedBooks
         .mockResolvedValueOnce({ total_bytes: 10485760 }); // storage (10 MB)
 
       mockQueryAll.mockResolvedValue([
@@ -552,12 +655,17 @@ describe('Admin Routes', () => {
         { action: 'file_uploaded', cnt: 2 },
       ]);
 
-      const res = await app.fetch(new Request('http://localhost/api/admin/stats', {
-        headers: { 'Authorization': 'Bearer admin-token' },
-      }), env, makePassThroughContext());
+      const res = await app.fetch(
+        new Request('http://localhost/api/admin/stats', {
+          headers: { Authorization: 'Bearer admin-token' },
+        }),
+        env,
+        makePassThroughContext(),
+      );
 
       expect(res.status).toBe(200);
-      const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } = await res.json();
+      const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } =
+        await res.json();
       expect(body.ok).toBe(true);
       expect(body.data.totalBooks).toBe(5);
       expect(body.data.activeGrants).toBe(12);
@@ -573,7 +681,11 @@ describe('Admin Routes', () => {
 
   describe('GET /api/admin/audit-logs', () => {
     it('returns 404 — redirect removed, frontend calls /audit directly', async () => {
-      const res = await app.fetch(new Request('http://localhost/api/admin/audit-logs'), env, makePassThroughContext());
+      const res = await app.fetch(
+        new Request('http://localhost/api/admin/audit-logs'),
+        env,
+        makePassThroughContext(),
+      );
       expect(res.status).toBe(404);
     });
   });

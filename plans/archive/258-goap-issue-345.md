@@ -14,10 +14,10 @@ Restore the CI pipeline on main after run 26446431433 failed on commit `b998b3b5
 
 ## Acceptance → Evidence
 
-| Acceptance | Evidence (grounded 2026-08-29) |
-|---|---|
-| CI green on main | `gh run list`: CI/CodeQL/Scorecard `success` on `c2c54d77`; historical failing run `26446431433` (conclusion `failure`, 2026-05-26T10:20:23Z) predates the fix commit merged before 11:49Z |
-| No skips/retries added | Current workflow set (`.github/workflows/`) contains no skip markers for the affected job |
+| Acceptance             | Evidence (grounded 2026-08-29)                                                                                                                                                             |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| CI green on main       | `gh run list`: CI/CodeQL/Scorecard `success` on `c2c54d77`; historical failing run `26446431433` (conclusion `failure`, 2026-05-26T10:20:23Z) predates the fix commit merged before 11:49Z |
+| No skips/retries added | Current workflow set (`.github/workflows/`) contains no skip markers for the affected job                                                                                                  |
 
 ## Effort
 

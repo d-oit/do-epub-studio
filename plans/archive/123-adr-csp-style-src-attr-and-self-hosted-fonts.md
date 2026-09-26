@@ -52,7 +52,7 @@ Worker `security-headers.ts` CSP tightens:
   blocks; Vite + Tailwind v4 inject styles at build output, producing
   a fragile allow-list.
 
-Inline *elements* (`<style>…</style>`) cannot escalate to script
+Inline _elements_ (`<style>…</style>`) cannot escalate to script
 execution in modern browsers, only visual attacks — the only XSS
 lever this residual `style-src-attr` opens is cosmetic, while the
 `<style>`-block path that an attacker actually needs is closed.
@@ -65,9 +65,9 @@ through the @fontsource packages imported at the top of
 `apps/web/src/styles/globals.css`:
 
 ```css
-@import "@fontsource-variable/geist";
-@import "@fontsource/instrument-serif/400.css";
-@import "@fontsource/instrument-serif/400-italic.css";
+@import '@fontsource-variable/geist';
+@import '@fontsource/instrument-serif/400.css';
+@import '@fontsource/instrument-serif/400-italic.css';
 ```
 
 Selection rationale:

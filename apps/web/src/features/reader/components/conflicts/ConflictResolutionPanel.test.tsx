@@ -1,7 +1,11 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ConflictResolutionPanel } from './ConflictResolutionPanel';
-import { clearAllConflicts, detectConflict, ConflictType } from '../../../../lib/offline/conflict-resolution';
+import {
+  clearAllConflicts,
+  detectConflict,
+  ConflictType,
+} from '../../../../lib/offline/conflict-resolution';
 import { resendProgressFromConflict } from '../../../../lib/offline/sync';
 import { useReaderStore } from '../../../../stores/reader';
 import { useAuthStore } from '../../../../stores';

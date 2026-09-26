@@ -22,7 +22,13 @@ function StatCard({ label, value, icon }: { label: string; value: string | numbe
     <div className="rounded-sm border border-border bg-surface p-6 shadow-page">
       <div className="flex items-center justify-between mb-2">
         <span className="text-sm font-medium text-foreground-muted">{label}</span>
-        <svg className="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <svg
+          className="w-5 h-5 text-accent"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={icon} />
         </svg>
       </div>
@@ -33,9 +39,12 @@ function StatCard({ label, value, icon }: { label: string; value: string | numbe
 
 const ICONS = {
   books: 'M4 19.5A2.5 2.5 0 016.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z',
-  grants: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z',
-  sessions: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z',
-  storage: 'M4 7v10a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2zm0 0V5a2 2 0 012-2h12a2 2 0 012 2v2',
+  grants:
+    'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z',
+  sessions:
+    'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z',
+  storage:
+    'M4 7v10a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2zm0 0V5a2 2 0 012-2h12a2 2 0 012 2v2',
 };
 
 import { Breadcrumb } from '../../components/navigation';
@@ -54,7 +63,9 @@ export function AdminDashboardPage() {
       setIsLoading(true);
       setError(null);
       try {
-        const data = await apiRequest<AdminStats>('/api/admin/stats', { token: sessionToken ?? undefined });
+        const data = await apiRequest<AdminStats>('/api/admin/stats', {
+          token: sessionToken ?? undefined,
+        });
         if (!cancelled) setStats(data);
       } catch (err) {
         if (!cancelled) setError(err instanceof Error ? err.message : 'Failed to load stats');
@@ -63,7 +74,9 @@ export function AdminDashboardPage() {
       }
     }
     void load();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [sessionToken]);
 
   // biome-ignore lint/correctness/useQwikValidLexicalScope: React app, not Qwik
@@ -88,18 +101,36 @@ export function AdminDashboardPage() {
       <Breadcrumb items={[{ labelKey: 'admin.breadcrumb.home' }]} />
       <header className="mb-8 flex flex-wrap items-center justify-between gap-4 border-b border-[var(--color-rule)] pb-6">
         <div>
-          <h1 className="text-balance-tight font-display text-3xl leading-tight text-foreground md:text-4xl">{t('admin.dashboardTitle')}</h1>
+          <h1 className="text-balance-tight font-display text-3xl leading-tight text-foreground md:text-4xl">
+            {t('admin.dashboardTitle')}
+          </h1>
           <div className="mt-2 flex flex-wrap gap-3 text-sm">
-            <button type="button" onClick={handleBooksNav} className="touch-target inline-flex items-center text-accent hover:opacity-80">
+            <button
+              type="button"
+              onClick={handleBooksNav}
+              className="touch-target inline-flex items-center text-accent hover:opacity-80"
+            >
               {t('admin.books.title')} &rarr;
             </button>
-            <button type="button" onClick={handleGrantsNav} className="touch-target inline-flex items-center text-accent hover:opacity-80">
+            <button
+              type="button"
+              onClick={handleGrantsNav}
+              className="touch-target inline-flex items-center text-accent hover:opacity-80"
+            >
               {t('admin.grants.title')} &rarr;
             </button>
-            <button type="button" onClick={handleAuditNav} className="touch-target inline-flex items-center text-accent hover:opacity-80">
+            <button
+              type="button"
+              onClick={handleAuditNav}
+              className="touch-target inline-flex items-center text-accent hover:opacity-80"
+            >
               {t('admin.audit.title')} &rarr;
             </button>
-            <button type="button" onClick={handleAccountNav} className="touch-target inline-flex items-center text-accent hover:opacity-80">
+            <button
+              type="button"
+              onClick={handleAccountNav}
+              className="touch-target inline-flex items-center text-accent hover:opacity-80"
+            >
               {t('admin.account.title')} &rarr;
             </button>
           </div>
@@ -108,25 +139,48 @@ export function AdminDashboardPage() {
       </header>
 
       {error && (
-        <div role="alert" className="mb-6 p-4 bg-semantic-error/10 border border-semantic-error/30 rounded-sm text-semantic-error">
+        <div
+          role="alert"
+          className="mb-6 p-4 bg-semantic-error/10 border border-semantic-error/30 rounded-sm text-semantic-error"
+        >
           {error}
         </div>
       )}
 
       {isLoading ? (
-        <div className="flex justify-center py-12"><Spinner /></div>
+        <div className="flex justify-center py-12">
+          <Spinner />
+        </div>
       ) : stats ? (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <StatCard label={t('admin.stats.totalBooks')} value={stats.totalBooks} icon={ICONS.books} />
-            <StatCard label={t('admin.stats.activeGrants')} value={stats.activeGrants} icon={ICONS.grants} />
-            <StatCard label={t('admin.stats.activeSessions')} value={stats.activeSessions} icon={ICONS.sessions} />
-            <StatCard label={t('admin.stats.storageUsed')} value={formatBytes(stats.storageBytes)} icon={ICONS.storage} />
+            <StatCard
+              label={t('admin.stats.totalBooks')}
+              value={stats.totalBooks}
+              icon={ICONS.books}
+            />
+            <StatCard
+              label={t('admin.stats.activeGrants')}
+              value={stats.activeGrants}
+              icon={ICONS.grants}
+            />
+            <StatCard
+              label={t('admin.stats.activeSessions')}
+              value={stats.activeSessions}
+              icon={ICONS.sessions}
+            />
+            <StatCard
+              label={t('admin.stats.storageUsed')}
+              value={formatBytes(stats.storageBytes)}
+              icon={ICONS.storage}
+            />
           </div>
 
           {stats.recentActivity.length > 0 && (
             <section className="rounded-sm border border-border bg-surface p-6 shadow-page">
-              <h2 className="mb-4 font-display text-lg leading-snug text-foreground">{t('admin.stats.recentActivity')}</h2>
+              <h2 className="mb-4 font-display text-lg leading-snug text-foreground">
+                {t('admin.stats.recentActivity')}
+              </h2>
               <ul className="space-y-2">
                 {stats.recentActivity.map((item) => {
                   const actionKey = `admin.stats.action.${item.action}` as TranslationKeys;

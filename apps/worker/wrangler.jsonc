@@ -21,7 +21,7 @@
     "DEMO_ACCOUNTS_PROD_ALLOWLIST": "",
     "WEBAUTHN_RP_ID": "do-epub-studio.pages.dev",
     "WEBAUTHN_RP_NAME": "d.o.EPUB Studio",
-    "WEBAUTHN_ORIGIN": "https://do-epub-studio.pages.dev"
+    "WEBAUTHN_ORIGIN": "https://do-epub-studio.pages.dev",
   },
   "d1_databases": [
     {
@@ -32,42 +32,42 @@
       // at it so `wrangler d1 migrations apply` and `wrangler deploy` pick up
       // pending migrations automatically (GOAP-252). Resolved relative to this
       // file (apps/worker/), so it must go up two levels to the repo root.
-      "migrations_dir": "../../packages/schema/migrations"
-    }
+      "migrations_dir": "../../packages/schema/migrations",
+    },
   ],
   "r2_buckets": [
     {
       "binding": "BOOKS_BUCKET",
-      "bucket_name": "do-epub-studio-books"
-    }
+      "bucket_name": "do-epub-studio-books",
+    },
   ],
   "kv_namespaces": [
     {
       "binding": "CACHE_KV",
-      "id": "5328daf8b5de4c0da83ac97ee4cc9ea4"
-    }
+      "id": "5328daf8b5de4c0da83ac97ee4cc9ea4",
+    },
   ],
   "durable_objects": {
     "bindings": [
       {
         "name": "RATE_LIMITER",
-        "class_name": "RateLimiterDO"
-      }
-    ]
+        "class_name": "RateLimiterDO",
+      },
+    ],
   },
   "send_email": [
     {
-      "name": "EMAIL_SEND"
-    }
+      "name": "EMAIL_SEND",
+    },
   ],
   "observability": {
     "enabled": true,
-    "head_sampling_rate": 1
+    "head_sampling_rate": 1,
   },
   "migrations": [
     {
       "tag": "v1",
-      "new_sqlite_classes": ["RateLimiterDO"]
-    }
-  ]
+      "new_sqlite_classes": ["RateLimiterDO"],
+    },
+  ],
 }

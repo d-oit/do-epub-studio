@@ -29,7 +29,11 @@ interface AuthState {
     email: string;
     capabilities: AuthState['capabilities'];
   }) => void;
-  setAdminAuth: (data: { sessionToken: string; email: string; sessionExpiresAt?: number | null }) => void;
+  setAdminAuth: (data: {
+    sessionToken: string;
+    email: string;
+    sessionExpiresAt?: number | null;
+  }) => void;
   refreshSession: (data: { sessionToken: string; sessionExpiresAt?: number | null }) => void;
   logout: (reason?: 'manual' | 'expired') => void;
 }
@@ -112,8 +116,8 @@ export const useAuthStore = create<AuthState>()(
         // 401. On page reload the user re-authenticates and the flag
         // resets via setAuth / setAdminAuth / logout('manual').
       }),
-    }
-  )
+    },
+  ),
 );
 
 export { parseExpiresAt };

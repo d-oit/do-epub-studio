@@ -1,5 +1,12 @@
 import { test, expect, type Route } from '@playwright/test';
-import { ADMIN_USER, mockReaderApi, mockAdminApi, loginAsReader, clickToolbarButton, suppressWorkboxErrors } from './fixtures';
+import {
+  ADMIN_USER,
+  mockReaderApi,
+  mockAdminApi,
+  loginAsReader,
+  clickToolbarButton,
+  suppressWorkboxErrors,
+} from './fixtures';
 
 test.describe('Edge Cases & Error Handling', () => {
   test('@mobile should handle invalid login credentials gracefully', async ({ page }) => {
@@ -8,11 +15,16 @@ test.describe('Edge Cases & Error Handling', () => {
     await page.goto('/login?book=test-book');
 
     // Mock a 401 response before filling in credentials
-    await page.route('**/api/access/request', route => route.fulfill({
-      status: 401,
-      contentType: 'application/json',
-      body: JSON.stringify({ ok: false, error: { code: 'UNAUTHORIZED', message: 'Invalid credentials' } }),
-    }));
+    await page.route('**/api/access/request', (route) =>
+      route.fulfill({
+        status: 401,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          ok: false,
+          error: { code: 'UNAUTHORIZED', message: 'Invalid credentials' },
+        }),
+      }),
+    );
 
     // Fill in values that should fail (mocked or handled by app)
     await page.getByLabel('Email Address').fill('wrong@example.com');
@@ -39,14 +51,17 @@ test.describe('Edge Cases & Error Handling', () => {
     // The 401 handler in api.ts excludes /api/admin/login so login mocks remain intact.
     await page.unroute('**/api/admin/books');
     await page.unroute('**/api/admin/**');
-    await page.route('**/api/admin/**', route => {
+    await page.route('**/api/admin/**', (route) => {
       if (route.request().url().includes('/api/admin/login')) {
         return route.continue();
       }
       return route.fulfill({
         status: 401,
         contentType: 'application/json',
-        body: JSON.stringify({ ok: false, error: { code: 'UNAUTHORIZED', message: 'Session expired' } }),
+        body: JSON.stringify({
+          ok: false,
+          error: { code: 'UNAUTHORIZED', message: 'Session expired' },
+        }),
       });
     });
 
@@ -58,7 +73,10 @@ test.describe('Edge Cases & Error Handling', () => {
     await expect(page).toHaveURL(/error=session_expired/);
   });
 
-  test('@mobile should show offline indicator when network is disconnected', async ({ page, context }) => {
+  test('@mobile should show offline indicator when network is disconnected', async ({
+    page,
+    context,
+  }) => {
     await page.goto('/login');
     await expect(page.getByLabel('Email Address')).toBeVisible();
 
@@ -119,15 +137,23 @@ test.describe('Edge Cases & Error Handling', () => {
     expect(highlightResult.ok).toBe(false);
 
     // App should still be functional (no crash)
-    const bodyVisible = await page.locator('body').isVisible().catch(() => false);
+    const bodyVisible = await page
+      .locator('body')
+      .isVisible()
+      .catch(() => false);
     expect(bodyVisible).toBe(true);
 
     // Verify the reader toolbar is still accessible (may need time to recover)
-    const toolbarVisible = await page.getByRole('button', { name: 'Contents' }).isVisible({ timeout: 10000 }).catch(() => false);
+    const toolbarVisible = await page
+      .getByRole('button', { name: 'Contents' })
+      .isVisible({ timeout: 10000 })
+      .catch(() => false);
     expect(toolbarVisible || bodyVisible).toBe(true);
   });
 
-  test('@mobile handles mid-read network failure gracefully — reader stays usable', async ({ page }) => {
+  test('@mobile handles mid-read network failure gracefully — reader stays usable', async ({
+    page,
+  }) => {
     suppressWorkboxErrors(page);
     await mockReaderApi(page, { epubUrl: 'https://example.com/test.epub' });
     await loginAsReader(page);
@@ -162,7 +188,11 @@ test.describe('Edge Cases & Error Handling', () => {
         const res = await fetch('/api/books/my-test-book/highlights', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ locator: { cfi: 'epubcfi(/6/4)' }, color: '#ffff00', text: 'note' }),
+          body: JSON.stringify({
+            locator: { cfi: 'epubcfi(/6/4)' },
+            color: '#ffff00',
+            text: 'note',
+          }),
         });
         outcomes.push({ action: 'highlight', ok: res.ok });
       } catch {
@@ -219,7 +249,10 @@ test.describe('Edge Cases & Error Handling', () => {
       await route.fulfill({
         status: 500,
         contentType: 'application/json',
-        body: JSON.stringify({ ok: false, error: { code: 'SERVER_ERROR', message: 'Book file unavailable' } }),
+        body: JSON.stringify({
+          ok: false,
+          error: { code: 'SERVER_ERROR', message: 'Book file unavailable' },
+        }),
       });
     });
 

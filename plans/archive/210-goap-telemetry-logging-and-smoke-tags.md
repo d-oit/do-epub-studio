@@ -9,11 +9,12 @@
 
 ## 1. Analysis
 
-| ID | Gap | File | Lines | Fix |
-|----|-----|------|-------|-----|
-| T1 | Raw console.error/warn/log in telemetry route | `apps/worker/src/routes/telemetry.ts` | 41,43,45 | Route through `logAppInfo` from observability.ts |
+| ID  | Gap                                           | File                                  | Lines    | Fix                                              |
+| --- | --------------------------------------------- | ------------------------------------- | -------- | ------------------------------------------------ |
+| T1  | Raw console.error/warn/log in telemetry route | `apps/worker/src/routes/telemetry.ts` | 41,43,45 | Route through `logAppInfo` from observability.ts |
 
 ### Out of Scope (Investigated, Not Actionable)
+
 - **Plan 098 T5 (i18n @smoke tag)**: The second i18n E2E test (`locale persists after page reload`) cannot be tagged `@smoke` because it requires a running backend (localhost:8787). The E2E smoke suite only starts the Vite dev server, not the worker. The test was intentionally left without `@smoke` for this reason. Plan 098's implementation landed via a different approach (i18n-e2e-helpers.ts + i18n-rendered-text.test.ts snapshot) and is functionally complete.
 - Stale unchecked boxes in archived plans 011/186 (historical, not actionable)
 - Plan 106 feature completeness (marked verified-completed, unchecked boxes are stale)
@@ -22,12 +23,12 @@
 
 ## 2. Decomposition
 
-| Task | Priority | Deps | Skill |
-|------|----------|------|-------|
-| T1: Fix telemetry.ts console.* calls | P1 | None | `code-quality` |
-| G1: Run quality gate | P1 | T1 | — |
-| G2: Create PR + address CI feedback | P1 | G1 | `github-workflow` |
-| G3: Review and roast PR | P1 | G2 | `code-review-assistant` |
+| Task                                 | Priority | Deps | Skill                   |
+| ------------------------------------ | -------- | ---- | ----------------------- |
+| T1: Fix telemetry.ts console.* calls | P1       | None | `code-quality`          |
+| G1: Run quality gate                 | P1       | T1   | —                       |
+| G2: Create PR + address CI feedback  | P1       | G1   | `github-workflow`       |
+| G3: Review and roast PR              | P1       | G2   | `code-review-assistant` |
 
 ## 3. Execution Strategy
 

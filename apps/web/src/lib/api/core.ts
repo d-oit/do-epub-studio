@@ -74,15 +74,12 @@ export async function apiRequest<T>(endpoint: string, options: ApiRequestOptions
 
     const controller = new AbortController();
     let timedOut = false;
-    const timeout = setTimeout(
-      () => {
-        timedOut = true;
-        // Named so the catch below can distinguish our deadline from a caller
-        // cancellation: an unnamed DOMException reports name === 'Error'.
-        controller.abort(new DOMException('Request timeout', 'TimeoutError'));
-      },
-      timeoutMs ?? DEFAULT_TIMEOUT_MS,
-    );
+    const timeout = setTimeout(() => {
+      timedOut = true;
+      // Named so the catch below can distinguish our deadline from a caller
+      // cancellation: an unnamed DOMException reports name === 'Error'.
+      controller.abort(new DOMException('Request timeout', 'TimeoutError'));
+    }, timeoutMs ?? DEFAULT_TIMEOUT_MS);
 
     if (requestInit.signal) {
       requestInit.signal.addEventListener(
@@ -111,19 +108,36 @@ export async function apiRequest<T>(endpoint: string, options: ApiRequestOptions
       });
       clearTimeout(timeout);
       responseStatus = response.status;
-      if (response.status === 401 && !endpoint.includes('/api/access/request') && !endpoint.includes('/api/admin/login')) {
+      if (
+        response.status === 401 &&
+        !endpoint.includes('/api/access/request') &&
+        !endpoint.includes('/api/admin/login')
+      ) {
         handleUnauthorized();
         throw new Error('Session expired');
       }
       if (response.status >= 500 && attempt < MAX_RETRIES) {
-        logClientEvent({ level: 'warn', event: 'api.retry', traceId, spanId, metadata: { endpoint, status: response.status, attempt: attempt + 1 } });
+        logClientEvent({
+          level: 'warn',
+          event: 'api.retry',
+          traceId,
+          spanId,
+          metadata: { endpoint, status: response.status, attempt: attempt + 1 },
+        });
         continue;
       }
       let data: ApiResponse<T> | undefined;
       try {
         data = (await response.json()) as ApiResponse<T>;
       } catch (error) {
-        logClientEvent({ level: 'error', event: 'api.parse-error', traceId, spanId, metadata: { endpoint, status: response.status }, error: { name: (error as Error).name, message: (error as Error).message } });
+        logClientEvent({
+          level: 'error',
+          event: 'api.parse-error',
+          traceId,
+          spanId,
+          metadata: { endpoint, status: response.status },
+          error: { name: (error as Error).name, message: (error as Error).message },
+        });
         throw new Error('Invalid server response', { cause: error });
       }
       if (!data.ok) {
@@ -133,10 +147,23 @@ export async function apiRequest<T>(endpoint: string, options: ApiRequestOptions
         annotated.code = data.error?.code;
         annotated.status = response.status;
         annotated.traceId = data.error?.traceId ?? response.headers.get('x-trace-id') ?? traceId;
-        logClientEvent({ level: 'error', event: 'api.error', traceId, spanId, metadata: { endpoint, status: response.status }, error: { name: apiError.name, message: apiError.message, stack: apiError.stack } });
+        logClientEvent({
+          level: 'error',
+          event: 'api.error',
+          traceId,
+          spanId,
+          metadata: { endpoint, status: response.status },
+          error: { name: apiError.name, message: apiError.message, stack: apiError.stack },
+        });
         throw apiError;
       }
-      logClientEvent({ level: 'info', event: 'api.success', traceId, spanId, metadata: { endpoint, status: response.status } });
+      logClientEvent({
+        level: 'info',
+        event: 'api.success',
+        traceId,
+        spanId,
+        metadata: { endpoint, status: response.status },
+      });
       return data.data as T;
     } catch (error) {
       clearTimeout(timeout);
@@ -144,26 +171,61 @@ export async function apiRequest<T>(endpoint: string, options: ApiRequestOptions
       // Caller cancellation (unmount, superseded request) is not a failure and
       // must not be reported as one; only our own deadline is a timeout.
       if (!timedOut && (errorName === 'AbortError' || requestInit.signal?.aborted)) {
-        logClientEvent({ level: 'info', event: 'api.cancelled', traceId, spanId, metadata: { endpoint }, error: { name: errorName, message: (error as Error).message } });
+        logClientEvent({
+          level: 'info',
+          event: 'api.cancelled',
+          traceId,
+          spanId,
+          metadata: { endpoint },
+          error: { name: errorName, message: (error as Error).message },
+        });
         throw error;
       }
       if (timedOut || errorName === 'TimeoutError') {
-        logClientEvent({ level: 'error', event: 'api.timeout', traceId, spanId, metadata: { endpoint }, error: { name: errorName, message: (error as Error).message } });
+        logClientEvent({
+          level: 'error',
+          event: 'api.timeout',
+          traceId,
+          spanId,
+          metadata: { endpoint },
+          error: { name: errorName, message: (error as Error).message },
+        });
         throw error;
       }
       if (!isRetryable(error, responseStatus) || attempt >= MAX_RETRIES) {
-        logClientEvent({ level: 'error', event: responseStatus && responseStatus >= 500 ? 'api.server-error' : 'api.network-error', traceId, spanId, metadata: { endpoint, attempt: attempt + 1 }, error: { name: (error as Error).name, message: (error as Error).message, stack: (error as Error).stack } });
+        logClientEvent({
+          level: 'error',
+          event: responseStatus && responseStatus >= 500 ? 'api.server-error' : 'api.network-error',
+          traceId,
+          spanId,
+          metadata: { endpoint, attempt: attempt + 1 },
+          error: {
+            name: (error as Error).name,
+            message: (error as Error).message,
+            stack: (error as Error).stack,
+          },
+        });
         throw error;
       }
-      logClientEvent({ level: 'warn', event: 'api.retry', traceId, spanId, metadata: { endpoint, attempt: attempt + 1, error: (error as Error).message } });
+      logClientEvent({
+        level: 'warn',
+        event: 'api.retry',
+        traceId,
+        spanId,
+        metadata: { endpoint, attempt: attempt + 1, error: (error as Error).message },
+      });
     }
   }
   throw new Error('Max retries exceeded');
 }
 
-
 /** Non-throwing API helper: returns raw Response w/ observability + 401 handling. */
-async function apiRaw(endpoint: string, method: string, data?: unknown, options?: ApiRequestOptions): Promise<Response> {
+async function apiRaw(
+  endpoint: string,
+  method: string,
+  data?: unknown,
+  options?: ApiRequestOptions,
+): Promise<Response> {
   const traceId = createTraceId();
   const spanId = createSpanId();
   // nosemgrep: node/ssrf — endpoint is always an internal path literal, never user-supplied
@@ -179,7 +241,11 @@ async function apiRaw(endpoint: string, method: string, data?: unknown, options?
     body: data ? JSON.stringify(data) : undefined,
     ...options,
   });
-  if (res.status === 401 && !endpoint.includes('/api/access/request') && !endpoint.includes('/api/admin/login')) {
+  if (
+    res.status === 401 &&
+    !endpoint.includes('/api/access/request') &&
+    !endpoint.includes('/api/admin/login')
+  ) {
     handleUnauthorized();
   }
   logClientEvent({
@@ -194,10 +260,14 @@ async function apiRaw(endpoint: string, method: string, data?: unknown, options?
 
 /** Convenience API helper methods for direct Response access. */
 export const api = {
-  get: (endpoint: string, options?: ApiRequestOptions) => apiRaw(endpoint, 'GET', undefined, options),
-  post: (endpoint: string, data?: unknown, options?: ApiRequestOptions) => apiRaw(endpoint, 'POST', data, options),
-  put: (endpoint: string, data?: unknown, options?: ApiRequestOptions) => apiRaw(endpoint, 'PUT', data, options),
-  delete: (endpoint: string, options?: ApiRequestOptions) => apiRaw(endpoint, 'DELETE', undefined, options),
+  get: (endpoint: string, options?: ApiRequestOptions) =>
+    apiRaw(endpoint, 'GET', undefined, options),
+  post: (endpoint: string, data?: unknown, options?: ApiRequestOptions) =>
+    apiRaw(endpoint, 'POST', data, options),
+  put: (endpoint: string, data?: unknown, options?: ApiRequestOptions) =>
+    apiRaw(endpoint, 'PUT', data, options),
+  delete: (endpoint: string, options?: ApiRequestOptions) =>
+    apiRaw(endpoint, 'DELETE', undefined, options),
 };
 
 export function getApiUrl(path: string): string {

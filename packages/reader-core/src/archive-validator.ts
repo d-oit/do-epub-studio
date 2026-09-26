@@ -21,16 +21,14 @@ export async function validateArchive(
   const timeoutMs = options?.timeoutMs ?? ARCHIVE_VALIDATION_TIMEOUT_MS;
   const traceId = options?.traceId ?? createTraceId();
 
-  await withTimeout(
-    (signal) => validateArchiveInner(data, signal),
-    { timeoutMs, operation: 'archive-validation', traceId },
-  );
+  await withTimeout((signal) => validateArchiveInner(data, signal), {
+    timeoutMs,
+    operation: 'archive-validation',
+    traceId,
+  });
 }
 
-function validateArchiveInner(
-  data: Uint8Array,
-  signal: AbortSignal,
-): Promise<void> {
+function validateArchiveInner(data: Uint8Array, signal: AbortSignal): Promise<void> {
   if (data.length > MAX_COMPRESSED_SIZE) {
     throw new ArchiveValidationError(
       `Archive exceeds maximum compressed size of ${MAX_COMPRESSED_SIZE} bytes`,
@@ -55,9 +53,7 @@ function validateArchiveInner(
       if (entryCount > MAX_ENTRY_COUNT) {
         finished = true;
         reject(
-          new ArchiveValidationError(
-            `Archive contains too many entries (max: ${MAX_ENTRY_COUNT})`,
-          ),
+          new ArchiveValidationError(`Archive contains too many entries (max: ${MAX_ENTRY_COUNT})`),
         );
         return;
       }
@@ -65,11 +61,7 @@ function validateArchiveInner(
       const name = file.name;
       if (name.includes('..') || name.startsWith('/') || name.startsWith('\\')) {
         finished = true;
-        reject(
-          new ArchiveValidationError(
-            `Potential path traversal detected in entry: ${name}`,
-          ),
-        );
+        reject(new ArchiveValidationError(`Potential path traversal detected in entry: ${name}`));
         return;
       }
 

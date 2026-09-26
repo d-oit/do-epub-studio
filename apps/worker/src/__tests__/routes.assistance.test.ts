@@ -40,9 +40,13 @@ describe('Assistance consent (Wave 4, AI-02)', () => {
     seedAssignment();
     mockQueryFirst.mockResolvedValueOnce({ cloud_assistance_allowed: 0 });
 
-    const res = await app.fetch(new Request('http://localhost/api/creator/books/book-1/assistance-consent', {
-      headers: { Authorization: 'Bearer valid' },
-    }), env, makePassThroughContext());
+    const res = await app.fetch(
+      new Request('http://localhost/api/creator/books/book-1/assistance-consent', {
+        headers: { Authorization: 'Bearer valid' },
+      }),
+      env,
+      makePassThroughContext(),
+    );
 
     expect(res.status).toBe(200);
     const payload: { data: { allowed: boolean; cloudQualified: boolean } } = await res.json();
@@ -54,11 +58,15 @@ describe('Assistance consent (Wave 4, AI-02)', () => {
     mockRequireAuth.mockResolvedValue(CREATOR_AUTH());
     seedAssignment();
 
-    const res = await app.fetch(new Request('http://localhost/api/creator/books/book-1/assistance-consent', {
-      method: 'PUT',
-      body: JSON.stringify({ allowed: true }),
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer valid' },
-    }), env, makePassThroughContext());
+    const res = await app.fetch(
+      new Request('http://localhost/api/creator/books/book-1/assistance-consent', {
+        method: 'PUT',
+        body: JSON.stringify({ allowed: true }),
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer valid' },
+      }),
+      env,
+      makePassThroughContext(),
+    );
 
     expect(res.status).toBe(200);
     const payload: { data: { allowed: boolean; cloudQualified: boolean } } = await res.json();
@@ -66,7 +74,8 @@ describe('Assistance consent (Wave 4, AI-02)', () => {
     // Consent can never imply capability.
     expect(payload.data.cloudQualified).toBe(false);
     const update = mockExecute.mock.calls.find((args) =>
-      String(args[1]).includes('cloud_assistance_allowed = ?'));
+      String(args[1]).includes('cloud_assistance_allowed = ?'),
+    );
     expect(update?.[2]).toEqual([1, 'book-1', 'user-creator']);
   });
 
@@ -74,11 +83,15 @@ describe('Assistance consent (Wave 4, AI-02)', () => {
     mockRequireAuth.mockResolvedValue(CREATOR_AUTH());
     mockQueryFirst.mockResolvedValueOnce(null); // no assignment
 
-    const res = await app.fetch(new Request('http://localhost/api/creator/books/book-1/assistance-consent', {
-      method: 'PUT',
-      body: JSON.stringify({ allowed: true }),
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer valid' },
-    }), env, makePassThroughContext());
+    const res = await app.fetch(
+      new Request('http://localhost/api/creator/books/book-1/assistance-consent', {
+        method: 'PUT',
+        body: JSON.stringify({ allowed: true }),
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer valid' },
+      }),
+      env,
+      makePassThroughContext(),
+    );
 
     expect(res.status).toBe(403);
     expect(mockExecute).not.toHaveBeenCalled();
@@ -88,10 +101,14 @@ describe('Assistance consent (Wave 4, AI-02)', () => {
     mockRequireAuth.mockResolvedValue(CREATOR_AUTH());
     seedAssignment();
 
-    const res = await app.fetch(new Request('http://localhost/api/creator/books/book-1/assistance/dispatch', {
-      method: 'POST',
-      headers: { Authorization: 'Bearer valid' },
-    }), env, makePassThroughContext());
+    const res = await app.fetch(
+      new Request('http://localhost/api/creator/books/book-1/assistance/dispatch', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer valid' },
+      }),
+      env,
+      makePassThroughContext(),
+    );
 
     expect(res.status).toBe(501);
     const payload: { ok: boolean; error: { code: string } } = await res.json();
@@ -109,10 +126,14 @@ describe('Assistance consent (Wave 4, AI-02)', () => {
     mockRequireAuth.mockResolvedValue(CREATOR_AUTH());
     mockQueryFirst.mockResolvedValueOnce(null);
 
-    const res = await app.fetch(new Request('http://localhost/api/creator/books/book-1/assistance/dispatch', {
-      method: 'POST',
-      headers: { Authorization: 'Bearer valid' },
-    }), env, makePassThroughContext());
+    const res = await app.fetch(
+      new Request('http://localhost/api/creator/books/book-1/assistance/dispatch', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer valid' },
+      }),
+      env,
+      makePassThroughContext(),
+    );
 
     expect(res.status).toBe(403);
   });

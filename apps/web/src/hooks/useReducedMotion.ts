@@ -38,10 +38,14 @@ export function useReducedMotion(): boolean {
     setPrefersReduced(mql.matches);
 
     // biome-ignore lint/correctness/useQwikValidLexicalScope: React project, not Qwik — false positive
-    const handler = (e: MediaQueryListEvent) => { setPrefersReduced(e.matches); };
+    const handler = (e: MediaQueryListEvent) => {
+      setPrefersReduced(e.matches);
+    };
     mql.addEventListener('change', handler);
     // biome-ignore lint/correctness/useQwikValidLexicalScope: React project, not Qwik — false positive
-    return () => { mql.removeEventListener('change', handler); };
+    return () => {
+      mql.removeEventListener('change', handler);
+    };
   }, []);
 
   return prefersReduced;

@@ -2,25 +2,26 @@
 
 ## Current Status
 
-| Area | Status | Notes |
-|------|--------|-------|
-| AGENTS.md compliance | 🔴 Needs Work | 79 instructions, needs tiering + reduction to ≤40 |
-| pre-commit hook | ✅ Done | `scripts/hooks/pre-commit` exists |
-| Gitleaks integration | ✅ Done | Via pre-commit-config.yaml |
-| commit-msg hook | ✅ Done | `scripts/hooks/commit-msg` exists |
-| validate-workflows.sh | ❌ Missing | Template has this, need to add |
-| pin-actions-to-sha.py | ✅ Done | SHAs already pinned in workflows |
-| Lint caching | ❌ Missing | Template has lint_cache.sh |
-| Language detection | ⚠️ Partial | TypeScript/Python/Shell/Markdown only |
-| Configurable skips | ❌ Missing | Need SKIP_TESTS, etc. |
-| Named constants | ❌ Missing | Need shell-parseable constants |
-| Compliance Self-Check | ❌ Missing | Need to add section to AGENTS.md |
+| Area                  | Status        | Notes                                             |
+| --------------------- | ------------- | ------------------------------------------------- |
+| AGENTS.md compliance  | 🔴 Needs Work | 79 instructions, needs tiering + reduction to ≤40 |
+| pre-commit hook       | ✅ Done       | `scripts/hooks/pre-commit` exists                 |
+| Gitleaks integration  | ✅ Done       | Via pre-commit-config.yaml                        |
+| commit-msg hook       | ✅ Done       | `scripts/hooks/commit-msg` exists                 |
+| validate-workflows.sh | ❌ Missing    | Template has this, need to add                    |
+| pin-actions-to-sha.py | ✅ Done       | SHAs already pinned in workflows                  |
+| Lint caching          | ❌ Missing    | Template has lint_cache.sh                        |
+| Language detection    | ⚠️ Partial    | TypeScript/Python/Shell/Markdown only             |
+| Configurable skips    | ❌ Missing    | Need SKIP_TESTS, etc.                             |
+| Named constants       | ❌ Missing    | Need shell-parseable constants                    |
+| Compliance Self-Check | ❌ Missing    | Need to add section to AGENTS.md                  |
 
 ---
 
 ## Executive Summary
 
 This plan consolidates improvements from:
+
 1. **Analysis of `d-o-hub/github-template-ai-agents`** - template features to adopt
 2. **Issue #234: AGENTS.md compliance ceiling** - instruction prioritization to overcome 68% agent compliance limit
 
@@ -38,12 +39,12 @@ Our current `AGENTS.md` has **245 lines** with **79 discrete bullet-point instru
 
 Reorder and restructure `AGENTS.md` using priority tiers:
 
-| Tier | Content | Placement | Examples |
-|------|---------|-----------|----------|
+| Tier       | Content                  | Placement            | Examples                                                |
+| ---------- | ------------------------ | -------------------- | ------------------------------------------------------- |
 | **TIER 1** | Critical safety/security | Top (first 20 lines) | Never commit to main, no secrets, permission boundaries |
-| **TIER 2** | Quality gates (blocking) | Near top | Pre-commit requirements, commit format, tests required |
-| **TIER 3** | Style preferences | Middle | Formatting, naming conventions |
-| **TIER 4** | Ceremonial/explanatory | Move to agents-docs/ | Links, historical notes, tutorials |
+| **TIER 2** | Quality gates (blocking) | Near top             | Pre-commit requirements, commit format, tests required  |
+| **TIER 3** | Style preferences        | Middle               | Formatting, naming conventions                          |
+| **TIER 4** | Ceremonial/explanatory   | Move to agents-docs/ | Links, historical notes, tutorials                      |
 
 ### Implementation Tasks
 
@@ -72,34 +73,34 @@ Reorder and restructure `AGENTS.md` using priority tiers:
 
 ### Priority 1: Critical Security
 
-| Script | Purpose | Template Source |
-|--------|---------|-----------------|
-| `pre-commit-hook.sh` | Integrate Gitleaks secret scanning before commits | `.githooks/` + template |
-| `.githooks/commit-msg` | Enforce conventional commit format | Template `.githooks/commit-msg` |
-| `validate-workflows.sh` | Validate GitHub Actions YAML syntax | Template `scripts/validate-workflows.sh` |
+| Script                  | Purpose                                           | Template Source                          |
+| ----------------------- | ------------------------------------------------- | ---------------------------------------- |
+| `pre-commit-hook.sh`    | Integrate Gitleaks secret scanning before commits | `.githooks/` + template                  |
+| `.githooks/commit-msg`  | Enforce conventional commit format                | Template `.githooks/commit-msg`          |
+| `validate-workflows.sh` | Validate GitHub Actions YAML syntax               | Template `scripts/validate-workflows.sh` |
 
 ### Priority 2: Supply Chain Security
 
-| Script | Purpose | Template Source |
-|--------|---------|-----------------|
+| Script                  | Purpose                                | Template Source                          |
+| ----------------------- | -------------------------------------- | ---------------------------------------- |
 | `pin-actions-to-sha.py` | Auto-pin GitHub Actions to secure SHAs | Template `scripts/pin-actions-to-sha.py` |
 
 ### Priority 3: Developer Experience
 
-| Script | Purpose | Template Source |
-|--------|---------|-----------------|
+| Script                    | Purpose                                 | Template Source                            |
+| ------------------------- | --------------------------------------- | ------------------------------------------ |
 | `minimal_quality_gate.sh` | Fast lint-only gate for rapid iteration | Template `scripts/minimal_quality_gate.sh` |
-| `health-check.sh` | Verify dev environment prerequisites | Template `scripts/health-check.sh` |
-| `ai-commit.sh` | AI-assisted commit message generation | Template `scripts/ai-commit.sh` |
-| `run_act_local.sh` | Run GitHub Actions locally with `act` | Template `scripts/run_act_local.sh` |
+| `health-check.sh`         | Verify dev environment prerequisites    | Template `scripts/health-check.sh`         |
+| `ai-commit.sh`            | AI-assisted commit message generation   | Template `scripts/ai-commit.sh`            |
+| `run_act_local.sh`        | Run GitHub Actions locally with `act`   | Template `scripts/run_act_local.sh`        |
 
 ### Priority 4: Quality Gate Enhancement
 
-| Feature | Purpose | Template Source |
-|---------|---------|-----------------|
+| Feature                         | Purpose                            | Template Source                      |
+| ------------------------------- | ---------------------------------- | ------------------------------------ |
 | Lint caching (`.lint_cache.sh`) | Cache lint results for performance | Template `scripts/lib/lint_cache.sh` |
-| Rust/Go detection | Expand language auto-detection | Template quality_gate.sh |
-| Configurable skips | SKIP_TESTS, SKIP_CLIPPY env vars | Template quality_gate.sh |
+| Rust/Go detection               | Expand language auto-detection     | Template quality_gate.sh             |
+| Configurable skips              | SKIP_TESTS, SKIP_CLIPPY env vars   | Template quality_gate.sh             |
 
 ---
 
@@ -107,7 +108,7 @@ Reorder and restructure `AGENTS.md` using priority tiers:
 
 Add shell-parseable constants to `AGENTS.md`:
 
-```markdown
+````markdown
 ## Named Constants
 
 ```bash
@@ -130,7 +131,9 @@ readonly MAX_PR_TITLE_LENGTH=72
 # Security configuration
 readonly GITLEAKS_VERSION="v8.27.2"
 ```
-```
+````
+
+````
 
 ---
 
@@ -144,17 +147,19 @@ Create `analysis/agents-md-instruction-count.md`:
 | Date | Instruction Count | Tier 1 | Tier 2 | Tier 3 | Tier 4 |
 |------|-------------------|--------|--------|--------|--------|
 | 2026-04-28 | 79 | TBD | TBD | TBD | TBD |
-```
+````
 
 ### Baseline Analysis (2026-04-28)
 
 Current state of `AGENTS.md`:
+
 - **Total lines**: 245 (exceeds `MAX_LINES_AGENTS_MD=150`)
 - **Discrete instructions**: ~79 bullet points
 - **Imperative phrasing**: 0 uses of "NEVER", "MUST", "ALWAYS", "DO NOT"
 - **Compliance risk**: HIGH - 79 instructions exceeds the ~40 reliable instruction limit
 
 **Instruction distribution**:
+
 - Core References section: 6 items (context only, not actionable)
 - Workflow (MANDATORY): 7 items
 - Verify Workflow: 20+ items
@@ -209,6 +214,7 @@ Current state of `AGENTS.md`:
 ## Acceptance Criteria
 
 ### Part A: AGENTS.md Compliance
+
 - [ ] AGENTS.md has ≤40 discrete instructions after restructure
 - [ ] All TIER 1 (critical safety) instructions in first 20 lines
 - [ ] All instructions use imperative phrasing (NEVER, MUST, ALWAYS)
@@ -217,20 +223,24 @@ Current state of `AGENTS.md`:
 - [ ] Named Constants section added with shell-parseable values
 
 ### Part B: Security Scripts
+
 - [x] `pre-commit-hook.sh` - already exists at `scripts/hooks/pre-commit`
 - [x] Gitleaks - already integrated via `.pre-commit-config.yaml`
 - [x] `commit-msg` hook - already exists at `scripts/hooks/commit-msg`
 - [ ] `validate-workflows.sh` validates YAML syntax
 
 ### Part C: Supply Chain Security
+
 - [x] GitHub Actions SHAs pinned - verified in `.github/workflows/`
 
 ### Part D: Quality Gate Enhancement
+
 - [ ] Add lint caching library (`scripts/lib/lint_cache.sh`)
 - [ ] Add configurable skips (SKIP_TESTS, SKIP_CLIPPY, etc.)
 - [ ] Expand language detection (Rust, Go)
 
 ### Part E: Developer Experience
+
 - [ ] Add `minimal_quality_gate.sh` for fast lint-only checks
 - [ ] Add `health-check.sh` for environment verification
 

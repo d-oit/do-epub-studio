@@ -62,9 +62,9 @@ describe('seed-demo-accounts.mjs (ADR-233)', () => {
     });
     it('flags CF_PAGES=1 without an explicit allowlist', () => {
       expect(isProductionLike({ CF_PAGES: '1' })).toBe(true);
-      expect(
-        isProductionLike({ CF_PAGES: '1', DEMO_ACCOUNTS_PROD_ALLOWLIST: 'staging' }),
-      ).toBe(false);
+      expect(isProductionLike({ CF_PAGES: '1', DEMO_ACCOUNTS_PROD_ALLOWLIST: 'staging' })).toBe(
+        false,
+      );
     });
     it('does not flag a local env', () => {
       expect(isProductionLike({ ENVIRONMENT: 'local' })).toBe(false);
@@ -224,9 +224,7 @@ describe('seed-demo-accounts.mjs (ADR-233)', () => {
         .filter(({ sql }) => sql.includes('INSERT INTO users'))
         .flatMap(({ args }) => args)
         .filter((a) => typeof a === 'string' && a.includes('example.local'));
-      expect(emails).toEqual(
-        expect.arrayContaining([RESERVED.reader.email, RESERVED.admin.email]),
-      );
+      expect(emails).toEqual(expect.arrayContaining([RESERVED.reader.email, RESERVED.admin.email]));
     });
 
     it('upserts a reader grant against the demo book', async () => {
@@ -262,8 +260,7 @@ describe('seed-demo-accounts.mjs (ADR-233)', () => {
         env: env({ ENVIRONMENT: 'staging' }),
       });
       const adminWrite = calls.find(
-        ({ sql, args }) =>
-          sql.includes('INSERT INTO users') && args.includes(RESERVED.admin.email),
+        ({ sql, args }) => sql.includes('INSERT INTO users') && args.includes(RESERVED.admin.email),
       );
       // disabled_at is passed as a real timestamp for the admin in non-local.
       expect(typeof adminWrite.args[5]).toBe('string');

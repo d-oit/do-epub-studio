@@ -189,7 +189,9 @@ export function CommentsPanel({
             )}
             {openComments.length > 0 && (
               <div>
-                <h3 className="text-xs font-semibold text-foreground-muted uppercase mb-3">{t('comment.status.open')}</h3>
+                <h3 className="text-xs font-semibold text-foreground-muted uppercase mb-3">
+                  {t('comment.status.open')}
+                </h3>
                 <div className="space-y-3">
                   {openComments.map((comment) => (
                     <Fragment key={comment.id}>{renderComment(comment)}</Fragment>
@@ -199,7 +201,9 @@ export function CommentsPanel({
             )}
             {resolvedComments.length > 0 && (
               <div className="mt-6">
-                <h3 className="text-xs font-semibold text-foreground-muted uppercase mb-3">{t('comment.status.resolved')}</h3>
+                <h3 className="text-xs font-semibold text-foreground-muted uppercase mb-3">
+                  {t('comment.status.resolved')}
+                </h3>
                 <div className="space-y-3">
                   {resolvedComments.map((comment) => (
                     <Fragment key={comment.id}>{renderComment(comment)}</Fragment>
@@ -286,13 +290,17 @@ export function CommentsPanel({
       className="fixed inset-y-0 right-0 w-80 bg-background border-l border-border z-40 flex flex-col shadow-xl"
     >
       <div className="p-4 border-b border-border flex justify-between items-center shrink-0">
-        <h2 id="comments-title" className="font-semibold">{t('comment.plural')}</h2>
-        <IconButton
-          onClick={onClose}
-          variant="ghost"
-          aria-label={t('a11y.close')}
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <h2 id="comments-title" className="font-semibold">
+          {t('comment.plural')}
+        </h2>
+        <IconButton onClick={onClose} variant="ghost" aria-label={t('a11y.close')}>
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
             <path
               strokeLinecap="round"
               strokeLinejoin="round"

@@ -1,13 +1,7 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { describe, it, expect, vi } from 'vitest';
-import {
-  redactLog,
-  swLogEvent,
-  REDACTED,
-  TRACEPARENT_HEADER,
-  TRACE_ID_HEADER,
-} from '../sw-logger';
+import { redactLog, swLogEvent, REDACTED, TRACEPARENT_HEADER, TRACE_ID_HEADER } from '../sw-logger';
 
 const swPath = join(__dirname, '../sw.ts');
 const swContent = readFileSync(swPath, 'utf-8');
@@ -117,8 +111,10 @@ describe('sw.ts – observability wiring (source-level invariants)', () => {
 
   it('replaces inline console/JSON.stringify logging with the redacted logger', () => {
     // The anonymous inline logs for sync/cache lifecycle are gone.
-    expect(swContent).not.toContain("console.log(\n            JSON.stringify({ level: 'info', traceId, event: 'sw.sync.start'");
-    expect(swContent).not.toContain("console.error(\n            JSON.stringify({");
+    expect(swContent).not.toContain(
+      "console.log(\n            JSON.stringify({ level: 'info', traceId, event: 'sw.sync.start'",
+    );
+    expect(swContent).not.toContain('console.error(\n            JSON.stringify({');
   });
 
   it('logs sw.sync.failed BEFORE rethrowing the retryable failure', () => {

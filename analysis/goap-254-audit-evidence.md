@@ -37,9 +37,9 @@ than SC 2.5.8's 24px minimum — the two numbers are documented as distinct).
    with all 44px targets intact.
 5. **Audit filter labels unbound** — filter inputs had `aria-label` but no
    `id`/`htmlFor` binding. Fixed: `audit-filter-entity-type/entity-id/
-   date-from/date-to` ids with matching labels; aria-labels retained.
+date-from/date-to` ids with matching labels; aria-labels retained.
 6. **`.eyebrow` resolved to no font** — utility set `font-family:
-   var(--font-mono)` but `--font-mono` was defined nowhere (silent fallback).
+var(--font-mono)` but `--font-mono` was defined nowhere (silent fallback).
    Fixed: token added to `:root` immediately after `--font-display`; no new
    font import. Verified single declaration.
 

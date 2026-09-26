@@ -11,13 +11,25 @@ describe('Tenant Isolation', () => {
 
   describe('parseLocatorRow', () => {
     it('returns parsed object for valid locator', async () => {
-      const locatorJson = JSON.stringify({ cfi: 'epubcfi(/6/4)', selectedText: 'test', chapterRef: 'Ch1' });
-      const result = await parseLocatorRow(env, locatorJson, { entityType: 'bookmark', entityId: 'b1', bookId: 'book-1' });
+      const locatorJson = JSON.stringify({
+        cfi: 'epubcfi(/6/4)',
+        selectedText: 'test',
+        chapterRef: 'Ch1',
+      });
+      const result = await parseLocatorRow(env, locatorJson, {
+        entityType: 'bookmark',
+        entityId: 'b1',
+        bookId: 'book-1',
+      });
       expect(result).toEqual({ cfi: 'epubcfi(/6/4)', selectedText: 'test', chapterRef: 'Ch1' });
     });
 
     it('returns null for null locator_json', async () => {
-      const result = await parseLocatorRow(env, null, { entityType: 'bookmark', entityId: 'b1', bookId: 'book-1' });
+      const result = await parseLocatorRow(env, null, {
+        entityType: 'bookmark',
+        entityId: 'b1',
+        bookId: 'book-1',
+      });
       expect(result).toBeNull();
       expect(mockLogAudit).not.toHaveBeenCalled();
     });
@@ -29,13 +41,21 @@ describe('Tenant Isolation', () => {
       // log a spurious corrupt_locator entry — and that entry's 'progress'
       // entity type then failed the audit CHECK constraint.
       const locatorJson = JSON.stringify({ cfi: 'epubcfi(/6/2!/4/2[ch1]/1:0)' });
-      const result = await parseLocatorRow(env, locatorJson, { entityType: 'progress', entityId: 'p1', bookId: 'book-1' });
+      const result = await parseLocatorRow(env, locatorJson, {
+        entityType: 'progress',
+        entityId: 'p1',
+        bookId: 'book-1',
+      });
       expect(result).toEqual({ cfi: 'epubcfi(/6/2!/4/2[ch1]/1:0)' });
       expect(mockLogAudit).not.toHaveBeenCalled();
     });
 
     it('audits a corrupt progress locator under the progress entity type', async () => {
-      const result = await parseLocatorRow(env, 'not-json', { entityType: 'progress', entityId: 'p1', bookId: 'book-1' });
+      const result = await parseLocatorRow(env, 'not-json', {
+        entityType: 'progress',
+        entityId: 'p1',
+        bookId: 'book-1',
+      });
       expect(result).toBeNull();
       expect(mockLogAudit).toHaveBeenCalledWith(
         env,
@@ -45,7 +65,11 @@ describe('Tenant Isolation', () => {
     });
 
     it('returns null and logs audit for invalid JSON', async () => {
-      const result = await parseLocatorRow(env, 'not-json', { entityType: 'bookmark', entityId: 'b1', bookId: 'book-1' });
+      const result = await parseLocatorRow(env, 'not-json', {
+        entityType: 'bookmark',
+        entityId: 'b1',
+        bookId: 'book-1',
+      });
       expect(result).toBeNull();
       expect(mockLogAudit).toHaveBeenCalledWith(
         env,
@@ -59,21 +83,36 @@ describe('Tenant Isolation', () => {
 
     it('returns null and logs audit for schema failure', async () => {
       const locatorJson = JSON.stringify({ cfi: 'epubcfi(/6/4)' }); // missing selectedText and chapterRef
-      const result = await parseLocatorRow(env, locatorJson, { entityType: 'bookmark', entityId: 'b1', bookId: 'book-1' });
+      const result = await parseLocatorRow(env, locatorJson, {
+        entityType: 'bookmark',
+        entityId: 'b1',
+        bookId: 'book-1',
+      });
       expect(result).toBeNull();
       expect(mockLogAudit).toHaveBeenCalledWith(
         env,
         expect.objectContaining({
           action: 'corrupt_locator',
-          payload: expect.objectContaining({ errors: expect.arrayContaining([expect.any(String)]) }),
+          payload: expect.objectContaining({
+            errors: expect.arrayContaining([expect.any(String)]),
+          }),
         }),
         undefined,
       );
     });
 
     it('returns null and logs audit for extra fields with strict schema', async () => {
-      const locatorJson = JSON.stringify({ cfi: 'epubcfi(/6/4)', selectedText: 'test', chapterRef: 'Ch1', extra: 'field' });
-      const result = await parseLocatorRow(env, locatorJson, { entityType: 'bookmark', entityId: 'b1', bookId: 'book-1' });
+      const locatorJson = JSON.stringify({
+        cfi: 'epubcfi(/6/4)',
+        selectedText: 'test',
+        chapterRef: 'Ch1',
+        extra: 'field',
+      });
+      const result = await parseLocatorRow(env, locatorJson, {
+        entityType: 'bookmark',
+        entityId: 'b1',
+        bookId: 'book-1',
+      });
       expect(result).toBeNull();
       expect(mockLogAudit).toHaveBeenCalled();
     });
@@ -89,7 +128,12 @@ describe('Tenant Isolation', () => {
 
     it('returns null when auth.bookId differs but grant exists', async () => {
       const auth = makeAuthContext({ bookId: 'book-1' });
-      mockQueryFirst.mockResolvedValue({ id: 'grant-2', book_id: 'book-2', email: auth.email, allowed: 1 });
+      mockQueryFirst.mockResolvedValue({
+        id: 'grant-2',
+        book_id: 'book-2',
+        email: auth.email,
+        allowed: 1,
+      });
       const result = await assertBookAccess(env, auth, 'book-2');
       expect(result).toBeNull();
     });
@@ -103,7 +147,7 @@ describe('Tenant Isolation', () => {
       expect(result?.ok).toBe(false);
       const response = result?.response;
       expect(response?.status).toBe(403);
-      const body = await response?.json() as { error: { code: string } };
+      const body = (await response?.json()) as { error: { code: string } };
       expect(body.error.code).toBe('BOOK_SESSION_MISMATCH');
     });
 

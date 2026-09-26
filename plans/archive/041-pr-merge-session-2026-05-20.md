@@ -9,28 +9,30 @@
 
 ## PRs Resolved
 
-| PR | Title | Type | Resolution |
-|---|---|---|---|
-| #205 | bump react-router-dom 7.15.0→7.15.1 | Dependabot | Squash merged ✅ |
-| #206 | bump chromatic 11.29.0→17.0.0 | Dependabot | Squash merged ✅ |
-| #207 | bump framer-motion 12.38.0→12.39.0 | Dependabot | Squash merged ✅ |
-| #208 | bump @types/node 22.19.18→25.9.1 | Dependabot | Squash merged ✅ |
-| #211 | bump ws 8.18.0→8.20.0 | Dependabot | Squash merged ✅ |
-| #212 | bump turbo 2.9.12→2.9.14 | Dependabot | Squash merged ✅ |
-| #213 | bump dev-dependencies group (10 updates) | Dependabot | Squash merged (lockfile regenerated) ✅ |
-| #203 | fix wrangler-action package manager and version mismatch | Manual fix | Closed — changes incorporated into main |
-| #215 | chore(skills): remove .gemini/skills and add github-pr-autopilot | Agent | In flight (created) 🔄 |
+| PR   | Title                                                            | Type       | Resolution                              |
+| ---- | ---------------------------------------------------------------- | ---------- | --------------------------------------- |
+| #205 | bump react-router-dom 7.15.0→7.15.1                              | Dependabot | Squash merged ✅                        |
+| #206 | bump chromatic 11.29.0→17.0.0                                    | Dependabot | Squash merged ✅                        |
+| #207 | bump framer-motion 12.38.0→12.39.0                               | Dependabot | Squash merged ✅                        |
+| #208 | bump @types/node 22.19.18→25.9.1                                 | Dependabot | Squash merged ✅                        |
+| #211 | bump ws 8.18.0→8.20.0                                            | Dependabot | Squash merged ✅                        |
+| #212 | bump turbo 2.9.12→2.9.14                                         | Dependabot | Squash merged ✅                        |
+| #213 | bump dev-dependencies group (10 updates)                         | Dependabot | Squash merged (lockfile regenerated) ✅ |
+| #203 | fix wrangler-action package manager and version mismatch         | Manual fix | Closed — changes incorporated into main |
+| #215 | chore(skills): remove .gemini/skills and add github-pr-autopilot | Agent      | In flight (created) 🔄                  |
 
 ---
 
 ## Conflict Resolution
 
 ### PR #213 — pnpm-lock.yaml conflict
+
 - **Cause:** Multiple merged PRs all modified lockfile
 - **Resolution:** Deleted lockfile, regenerated via `pnpm install --lockfile-only`
 - **Commit:** `chore: resolve pnpm-lock.yaml conflict - regenerated`
 
 ### PR #203 — Multi-file workflow conflicts
+
 - **Files:** lighthouse.yml, release.yml, visual-regression.yml, package.json
 - **Resolution strategy:**
   - lighthouse.yml: Removed `wranglerVersion: '4'` (PR's core fix), kept main's `accountId`

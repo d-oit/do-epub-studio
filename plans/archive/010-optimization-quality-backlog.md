@@ -11,16 +11,17 @@
 
 ## Dependency Audit (2026-05-14)
 
-| Dependency | Location | Version | Status |
-|---|---|---|---|
-| vite-plugin-pwa | `apps/web/package.json` | `^1.3.0` | Current stable |
-| @lhci/cli | `package.json` (root) | `^0.15.1` | Current stable |
+| Dependency      | Location                | Version   | Status         |
+| --------------- | ----------------------- | --------- | -------------- |
+| vite-plugin-pwa | `apps/web/package.json` | `^1.3.0`  | Current stable |
+| @lhci/cli       | `package.json` (root)   | `^0.15.1` | Current stable |
 
 ## epub-js Migration Follow-Up (May 2026)
 
 Issue #128 closed; all follow-up work tracked in **[issue #140](https://github.com/d-oit/do-epub-studio/issues/140)**, completed via PR #142.
 
 ### Reader Engine Hardening (Phase 1 of sprint)
+
 - [x] Remove duplicate telemetry helpers from epub-loader.ts → import from shared (#140 §1.1)
 - [x] Expose `flow` and `manager` options in EpubLoader API (#140 §1.2)
 - [x] Type `getContents()` with Contents type; expose DOM access (#140 §1.3)

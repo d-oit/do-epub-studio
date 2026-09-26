@@ -54,9 +54,13 @@ describe('References & style (Wave 3, COL-03)', () => {
     seedAssignment();
     mockQueryAll.mockResolvedValueOnce([REF_ROW]);
 
-    const res = await app.fetch(new Request('http://localhost/api/creator/books/book-1/references', {
-      headers: { Authorization: 'Bearer valid' },
-    }), env, makePassThroughContext());
+    const res = await app.fetch(
+      new Request('http://localhost/api/creator/books/book-1/references', {
+        headers: { Authorization: 'Bearer valid' },
+      }),
+      env,
+      makePassThroughContext(),
+    );
     expect(res.status).toBe(200);
     const payload: { data: Record<string, unknown>[] } = await res.json();
     expect(payload.data).toHaveLength(1);
@@ -68,9 +72,13 @@ describe('References & style (Wave 3, COL-03)', () => {
     mockRequireAuth.mockResolvedValue(CREATOR_AUTH());
     mockQueryFirst.mockResolvedValueOnce(null); // no assignment
 
-    const res = await app.fetch(new Request('http://localhost/api/creator/books/book-1/references', {
-      headers: { Authorization: 'Bearer valid' },
-    }), env, makePassThroughContext());
+    const res = await app.fetch(
+      new Request('http://localhost/api/creator/books/book-1/references', {
+        headers: { Authorization: 'Bearer valid' },
+      }),
+      env,
+      makePassThroughContext(),
+    );
     expect(res.status).toBe(403);
   });
 
@@ -79,21 +87,26 @@ describe('References & style (Wave 3, COL-03)', () => {
     seedAssignment();
     mockQueryFirst.mockResolvedValueOnce(REF_ROW); // re-read after insert
 
-    const res = await app.fetch(new Request('http://localhost/api/creator/books/book-1/references', {
-      method: 'POST',
-      body: JSON.stringify({
-        kind: 'external_citation',
-        content: 'The bridge was built in 1889.',
-        sourceUrl: 'https://example.com/source',
-        origin: 'external',
+    const res = await app.fetch(
+      new Request('http://localhost/api/creator/books/book-1/references', {
+        method: 'POST',
+        body: JSON.stringify({
+          kind: 'external_citation',
+          content: 'The bridge was built in 1889.',
+          sourceUrl: 'https://example.com/source',
+          origin: 'external',
+        }),
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer valid' },
       }),
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer valid' },
-    }), env, makePassThroughContext());
+      env,
+      makePassThroughContext(),
+    );
     expect(res.status).toBe(201);
     const payload: { data: Record<string, unknown> } = await res.json();
     expect(payload.data.verified).toBe(false);
     const insert = mockExecute.mock.calls.find((args) =>
-      String(args[1]).includes('INSERT INTO book_references'));
+      String(args[1]).includes('INSERT INTO book_references'),
+    );
     expect(String(insert?.[1])).toContain('verified');
   });
 
@@ -101,11 +114,15 @@ describe('References & style (Wave 3, COL-03)', () => {
     mockRequireAuth.mockResolvedValue(CREATOR_AUTH());
     seedAssignment();
 
-    const res = await app.fetch(new Request('http://localhost/api/creator/books/book-1/references', {
-      method: 'POST',
-      body: JSON.stringify({ kind: 'external_citation', content: 'x', origin: 'external' }),
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer valid' },
-    }), env, makePassThroughContext());
+    const res = await app.fetch(
+      new Request('http://localhost/api/creator/books/book-1/references', {
+        method: 'POST',
+        body: JSON.stringify({ kind: 'external_citation', content: 'x', origin: 'external' }),
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer valid' },
+      }),
+      env,
+      makePassThroughContext(),
+    );
     expect(res.status).toBe(400);
     expect(mockExecute).not.toHaveBeenCalled();
   });
@@ -114,16 +131,20 @@ describe('References & style (Wave 3, COL-03)', () => {
     mockRequireAuth.mockResolvedValue(CREATOR_AUTH());
     seedAssignment();
 
-    const res = await app.fetch(new Request('http://localhost/api/creator/books/book-1/references', {
-      method: 'POST',
-      body: JSON.stringify({
-        kind: 'glossary_term',
-        content: 'term meaning',
-        origin: 'book',
-        sourceUrl: 'https://example.com/x',
+    const res = await app.fetch(
+      new Request('http://localhost/api/creator/books/book-1/references', {
+        method: 'POST',
+        body: JSON.stringify({
+          kind: 'glossary_term',
+          content: 'term meaning',
+          origin: 'book',
+          sourceUrl: 'https://example.com/x',
+        }),
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer valid' },
       }),
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer valid' },
-    }), env, makePassThroughContext());
+      env,
+      makePassThroughContext(),
+    );
     expect(res.status).toBe(400);
   });
 
@@ -132,14 +153,19 @@ describe('References & style (Wave 3, COL-03)', () => {
     seedAssignment();
     mockQueryFirst.mockResolvedValueOnce({ ...REF_ROW, kind: 'glossary_term', origin: 'book' });
 
-    const res = await app.fetch(new Request('http://localhost/api/creator/books/book-1/references/ref-1', {
-      method: 'PATCH',
-      body: JSON.stringify({ content: 'Updated meaning.' }),
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer valid' },
-    }), env, makePassThroughContext());
+    const res = await app.fetch(
+      new Request('http://localhost/api/creator/books/book-1/references/ref-1', {
+        method: 'PATCH',
+        body: JSON.stringify({ content: 'Updated meaning.' }),
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer valid' },
+      }),
+      env,
+      makePassThroughContext(),
+    );
     expect(res.status).toBe(200);
     const update = mockExecute.mock.calls.find((args) =>
-      String(args[1]).includes('revision = revision + 1'));
+      String(args[1]).includes('revision = revision + 1'),
+    );
     expect(update).toBeDefined();
   });
 
@@ -148,13 +174,20 @@ describe('References & style (Wave 3, COL-03)', () => {
     seedAssignment();
     mockQueryFirst.mockResolvedValueOnce({ ...REF_ROW });
 
-    const res = await app.fetch(new Request('http://localhost/api/creator/books/book-1/references/ref-1', {
-      method: 'DELETE',
-      headers: { Authorization: 'Bearer valid' },
-    }), env, makePassThroughContext());
+    const res = await app.fetch(
+      new Request('http://localhost/api/creator/books/book-1/references/ref-1', {
+        method: 'DELETE',
+        headers: { Authorization: 'Bearer valid' },
+      }),
+      env,
+      makePassThroughContext(),
+    );
     expect(res.status).toBe(200);
-    expect(mockExecute.mock.calls.some((args) =>
-      String(args[1]).includes('DELETE FROM book_references'))).toBe(true);
+    expect(
+      mockExecute.mock.calls.some((args) =>
+        String(args[1]).includes('DELETE FROM book_references'),
+      ),
+    ).toBe(true);
   });
 
   it('verify requires an evidence note and appends it to content', async () => {
@@ -162,14 +195,19 @@ describe('References & style (Wave 3, COL-03)', () => {
     seedAssignment();
     mockQueryFirst.mockResolvedValueOnce({ ...REF_ROW });
 
-    const res = await app.fetch(new Request('http://localhost/api/creator/books/book-1/references/ref-1/verify', {
-      method: 'POST',
-      body: JSON.stringify({ verified: true, evidenceNote: 'County archive record 1889-12' }),
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer valid' },
-    }), env, makePassThroughContext());
+    const res = await app.fetch(
+      new Request('http://localhost/api/creator/books/book-1/references/ref-1/verify', {
+        method: 'POST',
+        body: JSON.stringify({ verified: true, evidenceNote: 'County archive record 1889-12' }),
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer valid' },
+      }),
+      env,
+      makePassThroughContext(),
+    );
     expect(res.status).toBe(200);
     const update = mockExecute.mock.calls.find((args) =>
-      String(args[1]).includes('UPDATE book_references'));
+      String(args[1]).includes('UPDATE book_references'),
+    );
     expect(String(update?.[2])).toContain('[verified');
     expect(String(update?.[2])).toContain('County archive record 1889-12');
   });
@@ -178,11 +216,15 @@ describe('References & style (Wave 3, COL-03)', () => {
     mockRequireAuth.mockResolvedValue(CREATOR_AUTH());
     seedAssignment();
 
-    const res = await app.fetch(new Request('http://localhost/api/creator/books/book-1/references/ref-1/verify', {
-      method: 'POST',
-      body: JSON.stringify({ verified: true, evidenceNote: '' }),
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer valid' },
-    }), env, makePassThroughContext());
+    const res = await app.fetch(
+      new Request('http://localhost/api/creator/books/book-1/references/ref-1/verify', {
+        method: 'POST',
+        body: JSON.stringify({ verified: true, evidenceNote: '' }),
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer valid' },
+      }),
+      env,
+      makePassThroughContext(),
+    );
     expect(res.status).toBe(400);
   });
 
@@ -191,11 +233,15 @@ describe('References & style (Wave 3, COL-03)', () => {
     seedAssignment();
     mockQueryFirst.mockResolvedValueOnce({ ...REF_ROW, origin: 'book' });
 
-    const res = await app.fetch(new Request('http://localhost/api/creator/books/book-1/references/ref-1/verify', {
-      method: 'POST',
-      body: JSON.stringify({ verified: true, evidenceNote: 'note' }),
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer valid' },
-    }), env, makePassThroughContext());
+    const res = await app.fetch(
+      new Request('http://localhost/api/creator/books/book-1/references/ref-1/verify', {
+        method: 'POST',
+        body: JSON.stringify({ verified: true, evidenceNote: 'note' }),
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer valid' },
+      }),
+      env,
+      makePassThroughContext(),
+    );
     expect(res.status).toBe(422);
   });
 
@@ -204,15 +250,19 @@ describe('References & style (Wave 3, COL-03)', () => {
     seedAssignment();
     mockQueryFirst.mockResolvedValueOnce(null); // no existing profile
 
-    const res = await app.fetch(new Request('http://localhost/api/creator/books/book-1/style', {
-      method: 'PUT',
-      body: JSON.stringify({
-        language: 'en',
-        narrativePerson: 'third-limited',
-        status: 'approved',
+    const res = await app.fetch(
+      new Request('http://localhost/api/creator/books/book-1/style', {
+        method: 'PUT',
+        body: JSON.stringify({
+          language: 'en',
+          narrativePerson: 'third-limited',
+          status: 'approved',
+        }),
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer valid' },
       }),
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer valid' },
-    }), env, makePassThroughContext());
+      env,
+      makePassThroughContext(),
+    );
     expect(res.status).toBe(200);
     const payload: { data: Record<string, unknown> } = await res.json();
     expect(payload.data.approvedBy).toBe('creator@example.com');
@@ -224,11 +274,15 @@ describe('References & style (Wave 3, COL-03)', () => {
     seedAssignment();
     mockQueryFirst.mockResolvedValueOnce(null); // no existing profile
 
-    const res = await app.fetch(new Request('http://localhost/api/creator/books/book-1/style', {
-      method: 'PUT',
-      body: JSON.stringify({ status: 'draft' }),
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer valid' },
-    }), env, makePassThroughContext());
+    const res = await app.fetch(
+      new Request('http://localhost/api/creator/books/book-1/style', {
+        method: 'PUT',
+        body: JSON.stringify({ status: 'draft' }),
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer valid' },
+      }),
+      env,
+      makePassThroughContext(),
+    );
     expect(res.status).toBe(200);
     const payload: { data: Record<string, unknown> } = await res.json();
     expect(payload.data.approvedBy).toBeNull();
@@ -247,37 +301,53 @@ describe('Anchor state computation (Wave 3)', () => {
 
   function feedbackRow(overrides: Record<string, unknown> = {}) {
     return {
-      id: 'fb-1', book_id: 'book-1', kind: 'comment', category: 'general',
-      body: 'x', proposed_text: null, book_file_id: 'file-1',
-      source_sha256: 'sha256:aaa', chapter_ref: null, cfi: null,
-      selected_text: 'x', prefix: null, suffix: null,
-      submitter_email: 'user@example.com', status: 'open',
-      mutation_id: 'm1', reference_revisions: null,
-      created_at: 'now', updated_at: 'now',
+      id: 'fb-1',
+      book_id: 'book-1',
+      kind: 'comment',
+      category: 'general',
+      body: 'x',
+      proposed_text: null,
+      book_file_id: 'file-1',
+      source_sha256: 'sha256:aaa',
+      chapter_ref: null,
+      cfi: null,
+      selected_text: 'x',
+      prefix: null,
+      suffix: null,
+      submitter_email: 'user@example.com',
+      status: 'open',
+      mutation_id: 'm1',
+      reference_revisions: null,
+      created_at: 'now',
+      updated_at: 'now',
       ...overrides,
     };
   }
 
   it('returns resolved when stored sha matches current file sha', async () => {
     mockRequireAuth.mockResolvedValue(makeAuthContext({ bookId: 'book-1' }));
-    const row = feedbackRow({"reference_revisions":null});
+    const row = feedbackRow({ reference_revisions: null });
     mockQueryFirst.mockImplementation((_env: unknown, sql: unknown) => {
       const q = String(sql);
-        if (q.includes('editorial_feedback')) return Promise.resolve(row);
+      if (q.includes('editorial_feedback')) return Promise.resolve(row);
       if (q.includes('book_files')) return Promise.resolve({ sha256: 'sha256:aaa' });
       if (q.includes('COUNT(*)')) return Promise.resolve({ n: 0 });
       return Promise.resolve(undefined as never);
     });
 
-    const res = await app.fetch(new Request('http://localhost/api/books/book-1/feedback/fb-1', {
-      headers: { Authorization: 'Bearer valid' },
-    }), env, makePassThroughContext());
+    const res = await app.fetch(
+      new Request('http://localhost/api/books/book-1/feedback/fb-1', {
+        headers: { Authorization: 'Bearer valid' },
+      }),
+      env,
+      makePassThroughContext(),
+    );
     const payload: { data: Record<string, unknown> } = await res.json();
     expect((payload.data as { anchorState: string } | null)?.anchorState).toBe('resolved');
   });
   it('returns source_changed when the file sha no longer matches', async () => {
     mockRequireAuth.mockResolvedValue(makeAuthContext({ bookId: 'book-1' }));
-    const row = feedbackRow({"reference_revisions":null});
+    const row = feedbackRow({ reference_revisions: null });
     mockQueryFirst.mockImplementation((_env: unknown, sql: unknown) => {
       const q = String(sql);
       if (q.includes('editorial_feedback')) return Promise.resolve(row);
@@ -286,15 +356,19 @@ describe('Anchor state computation (Wave 3)', () => {
       return Promise.resolve(undefined as never);
     });
 
-    const res = await app.fetch(new Request('http://localhost/api/books/book-1/feedback/fb-1', {
-      headers: { Authorization: 'Bearer valid' },
-    }), env, makePassThroughContext());
+    const res = await app.fetch(
+      new Request('http://localhost/api/books/book-1/feedback/fb-1', {
+        headers: { Authorization: 'Bearer valid' },
+      }),
+      env,
+      makePassThroughContext(),
+    );
     const payload: { data: Record<string, unknown> } = await res.json();
     expect((payload.data as { anchorState: string } | null)?.anchorState).toBe('source_changed');
   });
   it('returns source_changed when the file row is gone (re-upload replaced it)', async () => {
     mockRequireAuth.mockResolvedValue(makeAuthContext({ bookId: 'book-1' }));
-    const row = feedbackRow({"reference_revisions":null});
+    const row = feedbackRow({ reference_revisions: null });
     mockQueryFirst.mockImplementation((_env: unknown, sql: unknown) => {
       const q = String(sql);
       if (q.includes('editorial_feedback')) return Promise.resolve(row);
@@ -303,15 +377,19 @@ describe('Anchor state computation (Wave 3)', () => {
       return Promise.resolve(undefined as never);
     });
 
-    const res = await app.fetch(new Request('http://localhost/api/books/book-1/feedback/fb-1', {
-      headers: { Authorization: 'Bearer valid' },
-    }), env, makePassThroughContext());
+    const res = await app.fetch(
+      new Request('http://localhost/api/books/book-1/feedback/fb-1', {
+        headers: { Authorization: 'Bearer valid' },
+      }),
+      env,
+      makePassThroughContext(),
+    );
     const payload: { data: Record<string, unknown> } = await res.json();
     expect((payload.data as { anchorState: string } | null)?.anchorState).toBe('source_changed');
   });
   it('returns unresolved for book-level feedback with no anchor', async () => {
     mockRequireAuth.mockResolvedValue(makeAuthContext({ bookId: 'book-1' }));
-    const row = feedbackRow({"reference_revisions":null,"book_file_id":null,"source_sha256":null});
+    const row = feedbackRow({ reference_revisions: null, book_file_id: null, source_sha256: null });
     mockQueryFirst.mockImplementation((_env: unknown, sql: unknown) => {
       const q = String(sql);
       if (q.includes('editorial_feedback')) return Promise.resolve(row);
@@ -320,15 +398,19 @@ describe('Anchor state computation (Wave 3)', () => {
       return Promise.resolve(undefined as never);
     });
 
-    const res = await app.fetch(new Request('http://localhost/api/books/book-1/feedback/fb-1', {
-      headers: { Authorization: 'Bearer valid' },
-    }), env, makePassThroughContext());
+    const res = await app.fetch(
+      new Request('http://localhost/api/books/book-1/feedback/fb-1', {
+        headers: { Authorization: 'Bearer valid' },
+      }),
+      env,
+      makePassThroughContext(),
+    );
     const payload: { data: Record<string, unknown> } = await res.json();
     expect((payload.data as { anchorState: string } | null)?.anchorState).toBe('unresolved');
   });
   it('echoes pinned reference revisions on the DTO', async () => {
     mockRequireAuth.mockResolvedValue(makeAuthContext({ bookId: 'book-1' }));
-    const row = feedbackRow({"reference_revisions":"{\"ref-1\":2}"});
+    const row = feedbackRow({ reference_revisions: '{"ref-1":2}' });
     mockQueryFirst.mockImplementation((_env: unknown, sql: unknown) => {
       const q = String(sql);
       if (q.includes('editorial_feedback')) return Promise.resolve(row);
@@ -337,11 +419,17 @@ describe('Anchor state computation (Wave 3)', () => {
       return Promise.resolve(undefined as never);
     });
 
-    const res = await app.fetch(new Request('http://localhost/api/books/book-1/feedback/fb-1', {
-      headers: { Authorization: 'Bearer valid' },
-    }), env, makePassThroughContext());
+    const res = await app.fetch(
+      new Request('http://localhost/api/books/book-1/feedback/fb-1', {
+        headers: { Authorization: 'Bearer valid' },
+      }),
+      env,
+      makePassThroughContext(),
+    );
     const payload: { data: Record<string, unknown> } = await res.json();
     expect((payload.data as { anchorState: string } | null)?.anchorState).toBe('resolved');
-    expect((payload.data as { referenceRevisions: Record<string, number> } | null)?.referenceRevisions).toEqual({ 'ref-1': 2 });
+    expect(
+      (payload.data as { referenceRevisions: Record<string, number> } | null)?.referenceRevisions,
+    ).toEqual({ 'ref-1': 2 });
   });
 });

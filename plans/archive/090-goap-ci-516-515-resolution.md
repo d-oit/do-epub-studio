@@ -72,12 +72,12 @@ Failed tests cluster into **3 root causes**:
 
 ### File-level change list
 
-| Path | Change | Reason |
-|------|--------|--------|
-| `apps/tests/reader-annotations-and-admin.spec.ts` | Replace `'Select locale'` with a locale-aware regex (EN/DE/FR) | Fix 9 failures (A) |
-| `apps/tests/edge-cases.spec.ts` | Mock `**/api/admin/**` (broader) so `/api/admin/me` 401 also triggers logout | Fix 1 failure (B) |
-| `apps/web/src/styles/globals.css` (or wherever the accent token is defined) | Lower the `accent-500` lightness so `#ffffff` text reaches ≥ 4.5:1 | Fix 2 flaky (C) |
-| `apps/web/src/__tests__/a11y-axe.test.ts` (if any) | Re-snapshot axe results to confirm the new color is still AA | Regression guard |
+| Path                                                                        | Change                                                                       | Reason             |
+| --------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ------------------ |
+| `apps/tests/reader-annotations-and-admin.spec.ts`                           | Replace `'Select locale'` with a locale-aware regex (EN/DE/FR)               | Fix 9 failures (A) |
+| `apps/tests/edge-cases.spec.ts`                                             | Mock `**/api/admin/**` (broader) so `/api/admin/me` 401 also triggers logout | Fix 1 failure (B)  |
+| `apps/web/src/styles/globals.css` (or wherever the accent token is defined) | Lower the `accent-500` lightness so `#ffffff` text reaches ≥ 4.5:1           | Fix 2 flaky (C)    |
+| `apps/web/src/__tests__/a11y-axe.test.ts` (if any)                          | Re-snapshot axe results to confirm the new color is still AA                 | Regression guard   |
 
 ## Decomposition (Strategy)
 
@@ -121,24 +121,24 @@ Body covers A/B/C and links issues.
 - The C fix could affect visual regression / chromatic baselines. Capture a
   Chromatic PR (separate workflow, not on main CI) to ack any visual delta.
 - Local Playwright is environment-blocked on WebKit (sudo needed for `install-deps
-  webkit`). The cross-browser verification will be done in CI, not locally.
+webkit`). The cross-browser verification will be done in CI, not locally.
 
 ## Synthesis (Results)
 
 ### Final outcome
 
-| Metric | Value |
-|--------|-------|
-| Issues closed | #515 (auto on PR merge), #516 (auto by `close-failure-issues` job on post-merge main CI) |
-| Open issues remaining | 0 |
-| PRs opened | 1 (PR #517) |
-| PRs merged | 1 (squash merge to `main` at `7314728`) |
-| Branches deleted | 1 (`fix/ci-scheduled-e2e-failures-516-515`) |
-| Files changed | 7 (3 test files, 2 source, 1 test expectation, 2 plan docs) |
-| Lines changed | +343 / -18 |
-| Local quality gate | PASS (lint + typecheck + 265 unit tests + targeted playwright chromium) |
-| PR CI run | PASS (17/17 active checks; expected skips for `schedule` and PR-only jobs) |
-| Post-merge main CI | SUCCESS (12/12 active checks; expected skips) |
+| Metric                   | Value                                                                                                                                                                                |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Issues closed            | #515 (auto on PR merge), #516 (auto by `close-failure-issues` job on post-merge main CI)                                                                                             |
+| Open issues remaining    | 0                                                                                                                                                                                    |
+| PRs opened               | 1 (PR #517)                                                                                                                                                                          |
+| PRs merged               | 1 (squash merge to `main` at `7314728`)                                                                                                                                              |
+| Branches deleted         | 1 (`fix/ci-scheduled-e2e-failures-516-515`)                                                                                                                                          |
+| Files changed            | 7 (3 test files, 2 source, 1 test expectation, 2 plan docs)                                                                                                                          |
+| Lines changed            | +343 / -18                                                                                                                                                                           |
+| Local quality gate       | PASS (lint + typecheck + 265 unit tests + targeted playwright chromium)                                                                                                              |
+| PR CI run                | PASS (17/17 active checks; expected skips for `schedule` and PR-only jobs)                                                                                                           |
+| Post-merge main CI       | SUCCESS (12/12 active checks; expected skips)                                                                                                                                        |
 | CI failures during cycle | 1 transient: pre-commit hook MD056 on plan 090 line 74 (markdown table column count due to escaped pipe in regex literal). Fixed in-place via commit amend; second CI run was clean. |
 
 ### CI checks that passed on the merged commit (7314728)
@@ -171,20 +171,20 @@ Body covers A/B/C and links issues.
 
 ### Verification matrix (local chromium E2E)
 
-| Test | Before | After |
-|------|--------|-------|
-| `apps/tests/reader-annotations-and-admin.spec.ts:256` locale switcher is accessible | FAIL | PASS |
-| `apps/tests/reader-annotations-and-admin.spec.ts:313` can switch locale on login page | FAIL | PASS |
-| `apps/tests/reader-annotations-and-admin.spec.ts:332` locale persists after page reload | FAIL | PASS |
-| `apps/tests/edge-cases.spec.ts:25` should redirect to login when session expires (401) | webkit FAIL | PASS (chromium); webkit fix is a mock widening, CI confirms |
-| `apps/tests/accessibility-audit.spec.ts:56` login page has no critical accessibility violations | FLAKY | PASS |
-| `apps/tests/accessibility-audit.spec.ts:104` reader settings panel has no accessibility violations | FLAKY | PASS |
+| Test                                                                                               | Before      | After                                                       |
+| -------------------------------------------------------------------------------------------------- | ----------- | ----------------------------------------------------------- |
+| `apps/tests/reader-annotations-and-admin.spec.ts:256` locale switcher is accessible                | FAIL        | PASS                                                        |
+| `apps/tests/reader-annotations-and-admin.spec.ts:313` can switch locale on login page              | FAIL        | PASS                                                        |
+| `apps/tests/reader-annotations-and-admin.spec.ts:332` locale persists after page reload            | FAIL        | PASS                                                        |
+| `apps/tests/edge-cases.spec.ts:25` should redirect to login when session expires (401)             | webkit FAIL | PASS (chromium); webkit fix is a mock widening, CI confirms |
+| `apps/tests/accessibility-audit.spec.ts:56` login page has no critical accessibility violations    | FLAKY       | PASS                                                        |
+| `apps/tests/accessibility-audit.spec.ts:104` reader settings panel has no accessibility violations | FLAKY       | PASS                                                        |
 
 ## Lessons (carried to `learn` skill, if needed)
 
 - **Pre-commit markdownlint catches unescaped `|` inside table cells**: When documenting a regex that contains `|`, prefer code-block or HTML entity to avoid the MD056 false-positive column count.
 - **The "test rename" pattern needs all 3 locales at once**: When a PR renames an i18n value in `en.ts`, the test layer usually has a hard-coded literal. A single-line test that asserts on the literal cannot be re-discovered as locale-aware — update all 3 test sites in the same commit, not in a follow-up.
-- **Webkit races with chromium/firefox on auth-store hydration**: Network-mock width matters more than mock specificity when a global `handleUnauthorized` redirect depends on *any* admin call returning 401. The narrower `**/api/admin/books` mock passed in chromium/firefox because their first admin call happened to be that endpoint; webkit's order differed.
+- **Webkit races with chromium/firefox on auth-store hydration**: Network-mock width matters more than mock specificity when a global `handleUnauthorized` redirect depends on _any_ admin call returning 401. The narrower `**/api/admin/books` mock passed in chromium/firefox because their first admin call happened to be that endpoint; webkit's order differed.
 
 ## Follow-ups
 

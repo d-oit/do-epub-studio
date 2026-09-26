@@ -3,6 +3,7 @@
 ## Executive Summary
 
 This plan consolidates findings from multi-skill agent analysis including:
+
 - **Security Code Audit** (security-code-auditor skill)
 - **Code Quality Analysis** (code-quality skill)
 - **Testing Strategy Assessment** (testing-strategy skill)
@@ -22,11 +23,13 @@ Analysis conducted using: security-code-auditor, code-quality, testing-strategy,
 **Affected File:** `apps/worker/src/routes/admin.ts`
 
 **Vulnerability:** Any unauthenticated caller can:
+
 - Create books
 - Mint or revoke grants
 - View all audit logs
 
 **Evidence:**
+
 ```do-epub-studio/apps/worker/src/routes/admin.ts#L1-10
 // No import of requireAdminAuth!
 import type { Env } from '../lib/env';
@@ -34,6 +37,7 @@ import { execute, queryAll, queryFirst } from '../db/client';
 ```
 
 **Affected Handlers:**
+
 - `handleCreateBook` - Line ~46
 - `handleBookUpload` - Line ~90
 - `handleUploadComplete` - Line ~130
@@ -44,6 +48,7 @@ import { execute, queryAll, queryFirst } from '../db/client';
 - `handleGetAuditLog` - Line ~370
 
 **Contrast with correct implementation in `admin-middleware.ts`:**
+
 ```do-epub-studio/apps/worker/src/auth/admin-middleware.ts#L46-64
 export async function requireAdminAuth(
   env: Env,
@@ -54,6 +59,7 @@ export async function requireAdminAuth(
 ```
 
 **Recommendation:**
+
 ```do-epub-studio/apps/worker/src/routes/admin.ts
 import { requireAdminAuth } from '../auth/admin-middleware';
 
@@ -108,6 +114,7 @@ export async function hashPassword(password: string): Promise<string> {
 ```
 
 **Security Assessment:**
+
 - ✅ Uses Argon2id (per AGENTS.md requirement)
 - ✅ Cryptographically secure random 16-byte salt
 - ✅ Strong memory cost: 64 MiB
@@ -121,6 +128,7 @@ export async function hashPassword(password: string): Promise<string> {
 ### 🟢 Security: SQL Injection - SECURE
 
 **Searched Files:**
+
 - `apps/worker/src/routes/admin.ts`
 - `apps/worker/src/routes/books.ts`
 - `apps/worker/src/routes/access.ts`
@@ -195,16 +203,17 @@ async function computeSignature(
 
 **Per AGENTS.md:** `MAX_LINES_PER_SOURCE_FILE=500`
 
-| File | Lines | Severity | Recommendation |
-|------|-------|----------|----------------|
-| `apps/web/src/features/reader/ReaderPage.tsx` | **1123** | 🔴 Critical | Split into TocSidebar, AnnotationToolbar, ProgressIndicator |
-| `apps/web/src/features/admin/GrantsPage.tsx` | **740** | 🔴 High | Split into GrantForm, BookSelector, GrantList |
-| `apps/web/src/features/reader/components/annotations/CommentsPanel.tsx` | **544** | ⚠️ Medium | Consider splitting |
-| `apps/web/src/components/ui/index.tsx` | **525** | ⚠️ Medium | Could split design system |
-| `apps/worker/src/routes/reader-state.ts` | **482** | ⚠️ Near | Monitor |
-| `apps/worker/src/routes/admin.ts` | **465** | ⚠️ Near | Monitor |
+| File                                                                    | Lines    | Severity    | Recommendation                                              |
+| ----------------------------------------------------------------------- | -------- | ----------- | ----------------------------------------------------------- |
+| `apps/web/src/features/reader/ReaderPage.tsx`                           | **1123** | 🔴 Critical | Split into TocSidebar, AnnotationToolbar, ProgressIndicator |
+| `apps/web/src/features/admin/GrantsPage.tsx`                            | **740**  | 🔴 High     | Split into GrantForm, BookSelector, GrantList               |
+| `apps/web/src/features/reader/components/annotations/CommentsPanel.tsx` | **544**  | ⚠️ Medium   | Consider splitting                                          |
+| `apps/web/src/components/ui/index.tsx`                                  | **525**  | ⚠️ Medium   | Could split design system                                   |
+| `apps/worker/src/routes/reader-state.ts`                                | **482**  | ⚠️ Near     | Monitor                                                     |
+| `apps/worker/src/routes/admin.ts`                                       | **465**  | ⚠️ Near     | Monitor                                                     |
 
 **Recommended Refactor for ReaderPage.tsx:**
+
 ```
 apps/web/src/features/reader/
 ├── ReaderPage.tsx           # Main container (~200 LOC)
@@ -239,10 +248,10 @@ This is **justified** in test setup code - acceptable.
 
 **Finding:** ✅ Excellent centralized error handling
 
-| File | Status |
-|------|--------|
-| `apps/web/src/lib/api.ts` | ✅ Excellent - centralized with telemetry |
-| `apps/worker/src/lib/validation.ts` | ✅ Uses Zod with proper error details |
+| File                                | Status                                    |
+| ----------------------------------- | ----------------------------------------- |
+| `apps/web/src/lib/api.ts`           | ✅ Excellent - centralized with telemetry |
+| `apps/worker/src/lib/validation.ts` | ✅ Uses Zod with proper error details     |
 
 **Minor observation:** Telemetry has `console.log` for info-level events - could be removed in production.
 
@@ -346,27 +355,27 @@ See Part A: Admin API Has No Authorization
 
 ### T1 - Missing Critical Tests
 
-| Gap | Severity | Recommendation |
-|-----|----------|----------------|
-| CFI Navigation | High | Add unit tests for CFI parsing/navigation |
-| EPUB Parsing | High | Add integration tests for EPUB.js |
-| Password Hashing | High | Add test for Argon2id (security critical) |
-| Real API Integration | High | Add tests with actual backend, not just mocks |
-| Bookmark CRUD | Medium | Add tests for bookmark create/read/update/delete |
+| Gap                  | Severity | Recommendation                                   |
+| -------------------- | -------- | ------------------------------------------------ |
+| CFI Navigation       | High     | Add unit tests for CFI parsing/navigation        |
+| EPUB Parsing         | High     | Add integration tests for EPUB.js                |
+| Password Hashing     | High     | Add test for Argon2id (security critical)        |
+| Real API Integration | High     | Add tests with actual backend, not just mocks    |
+| Bookmark CRUD        | Medium   | Add tests for bookmark create/read/update/delete |
 
 ### T2 - Current Test Coverage
 
 **Vitest Unit/Integration Tests:**
 
-| Location | Files | Focus |
-|----------|-------|-------|
-| `apps/web/src/__tests__/` | 7 files | Frontend API client, stores, offline sync |
-| `apps/worker/src/__tests__/` | 9 files | Worker routes |
+| Location                     | Files   | Focus                                     |
+| ---------------------------- | ------- | ----------------------------------------- |
+| `apps/web/src/__tests__/`    | 7 files | Frontend API client, stores, offline sync |
+| `apps/worker/src/__tests__/` | 9 files | Worker routes                             |
 
 **Playwright E2E Tests:**
 
-| Location | Files | Focus |
-|----------|-------|-------|
+| Location      | Files   | Focus                                     |
+| ------------- | ------- | ----------------------------------------- |
 | `apps/tests/` | 4 files | Login, reader, annotations, accessibility |
 
 ### T2b - Property-Based Testing Opportunity (NEW)
@@ -374,23 +383,25 @@ See Part A: Admin API Has No Authorization
 **See Plan 013:** Fast-Check Property-Based Testing Integration
 
 Property-based testing with fast-check could significantly improve:
+
 - Security function edge case coverage
 - Schema validation robustness
 - Complex parsing (CFI, locators) reliability
 
 Key opportunity areas:
+
 - `apps/worker/src/auth/` - Auth header parsing, token generation
 - `packages/shared/src/schemas.ts` - All Zod schema edge cases
 - `packages/reader-core/src/` - Locator parsing, reanchoring
 
 ### T3 - Coverage Metrics
 
-| Type | Target | Current | Status |
-|------|--------|---------|--------|
-| Business Logic | > 90% | ~70% | ⚠️ Need more |
-| API Routes | > 80% | ~75% | ⚠️ Need more |
-| UI Components | > 70% | ~60% | ⚠️ Need more |
-| Overall | > 80% | ~65% | ⚠️ Need more |
+| Type           | Target | Current | Status       |
+| -------------- | ------ | ------- | ------------ |
+| Business Logic | > 90%  | ~70%    | ⚠️ Need more |
+| API Routes     | > 80%  | ~75%    | ⚠️ Need more |
+| UI Components  | > 70%  | ~60%    | ⚠️ Need more |
+| Overall        | > 80%  | ~65%    | ⚠️ Need more |
 
 **Status:** Open - Testing needs expansion
 
@@ -416,56 +427,59 @@ Key opportunity areas:
 
 ### From plans/007-implementation-phases.md
 
-| Item | Status |
-|------|--------|
-| Initial monorepo setup (Vite, PWA, Worker) | ✅ Complete |
-| Turso / libSQL schema & migrations | ✅ Complete |
-| EPUB.js basic integration | ✅ Complete |
+| Item                                            | Status      |
+| ----------------------------------------------- | ----------- |
+| Initial monorepo setup (Vite, PWA, Worker)      | ✅ Complete |
+| Turso / libSQL schema & migrations              | ✅ Complete |
+| EPUB.js basic integration                       | ✅ Complete |
 | Global error interceptors for 401/403 responses | ✅ Complete |
-| Unskip and fix Admin/Reader unit tests | ✅ Complete |
-| Reader annotation anchor engine (ADR-006) | 🔴 Open |
+| Unskip and fix Admin/Reader unit tests          | ✅ Complete |
+| Reader annotation anchor engine (ADR-006)       | 🔴 Open     |
 
 ---
 
 ## Part G: Comprehensive Gap Inventory
 
-| ID | Category | Issue | Severity | Status |
-|----|----------|-------|----------|--------|
-| G1 | Feature | Reader UI not wired to backend | High | Open |
-| G2 | Feature | slug/id mismatch for file URLs | Critical | ✅ Fixed |
-| G3 | Feature | Signed download route missing | High | ✅ Fixed |
-| G4 | Security | Admin APIs have no auth | Critical | ✅ Fixed |
-| G5 | Security | None - Argon2id properly implemented | - | ✅ Fixed |
-| G6 | Feature | Admin UI incomplete | Medium | Open |
-| G7 | Docs | Setup docs missing | Medium | Open |
-| G9 | Testing | Placeholder tests | High | ✅ Fixed |
-| G10 | Testing | Worker route tests | High | Partial |
-| G11 | Testing | Playwright E2E | High | Partial |
-| G12 | Architecture | Schema validation | Medium | ✅ Good |
-| G13 | Security | Multi-signal locators | High | Open |
-| CQ-1 | Quality | ReaderPage.tsx at 1123 LOC | High | ✅ Fixed (492 LOC) |
-| CQ-2 | Quality | GrantsPage.tsx at 740 LOC | Medium | ✅ Fixed (311 LOC) |
-| T-1 | Testing | CFI navigation tests | High | Partial |
-| T-2 | Testing | EPUB parsing tests | High | Open |
-| T-3 | Testing | Password hashing test | High | ✅ Fixed |
-| T-4 | Testing | Bookmark CRUD tests | Medium | ✅ Fixed |
+| ID   | Category     | Issue                                | Severity | Status             |
+| ---- | ------------ | ------------------------------------ | -------- | ------------------ |
+| G1   | Feature      | Reader UI not wired to backend       | High     | Open               |
+| G2   | Feature      | slug/id mismatch for file URLs       | Critical | ✅ Fixed           |
+| G3   | Feature      | Signed download route missing        | High     | ✅ Fixed           |
+| G4   | Security     | Admin APIs have no auth              | Critical | ✅ Fixed           |
+| G5   | Security     | None - Argon2id properly implemented | -        | ✅ Fixed           |
+| G6   | Feature      | Admin UI incomplete                  | Medium   | Open               |
+| G7   | Docs         | Setup docs missing                   | Medium   | Open               |
+| G9   | Testing      | Placeholder tests                    | High     | ✅ Fixed           |
+| G10  | Testing      | Worker route tests                   | High     | Partial            |
+| G11  | Testing      | Playwright E2E                       | High     | Partial            |
+| G12  | Architecture | Schema validation                    | Medium   | ✅ Good            |
+| G13  | Security     | Multi-signal locators                | High     | Open               |
+| CQ-1 | Quality      | ReaderPage.tsx at 1123 LOC           | High     | ✅ Fixed (492 LOC) |
+| CQ-2 | Quality      | GrantsPage.tsx at 740 LOC            | Medium   | ✅ Fixed (311 LOC) |
+| T-1  | Testing      | CFI navigation tests                 | High     | Partial            |
+| T-2  | Testing      | EPUB parsing tests                   | High     | Open               |
+| T-3  | Testing      | Password hashing test                | High     | ✅ Fixed           |
+| T-4  | Testing      | Bookmark CRUD tests                  | Medium   | ✅ Fixed           |
 
 ---
 
 ## Recommended Priority Order
 
 ### Immediate (This Sprint)
+
 1. **Fix G4** - Add admin auth middleware to all admin routes (Critical Security)
 2. **Fix G2** - Align slug/id between frontend and worker (Unblocks reading)
 3. **Fix G3** - Implement signed file download route (Unblocks downloads)
 
 ### Short Term (Next 2 Sprints)
+
 4. Wire Reader UI to EPUB.js backend
 5. Refactor ReaderPage.tsx (split into components)
 6. Refactor GrantsPage.tsx (split into components)
 7. Add missing tests (CFI, password hashing, bookmarks)
 
 ### Medium Term
+
 8. Complete Admin UI workflow (book creation, grants)
 9. Add Playwright E2E for real API flows
 10. Expand offline sync capabilities
@@ -476,25 +490,30 @@ Key opportunity areas:
 ## Acceptance Criteria
 
 ### Security (P0)
+
 - [x] Admin routes require authentication (G4) — requireAdminAuth in index.ts router
 - [ ] Multi-signal locators enforced (G13)
 
 ### Feature Gaps (P1)
+
 - [x] slug/id alignment between frontend and worker (G2) — books.ts resolves both
 - [x] Signed download route implemented (G3) — files.ts with HMAC + expiry
 - [ ] Reader UI wired to backend (G1)
 - [ ] Admin UI complete (G6)
 
 ### Code Quality (P1)
+
 - [x] ReaderPage.tsx split into components (CQ-1) — 492 LOC
 - [x] GrantsPage.tsx split into components (CQ-2) — 311 LOC
 
 ### Testing (P2)
+
 - [ ] CFI navigation tests added (T-1) — partial coverage in locator.test.ts
 - [x] Password hashing tests added (T-3)
 - [x] Bookmark CRUD tests added (T-4)
 
 ### Documentation (P2)
+
 - [ ] Setup documentation added (G7)
 
 ---

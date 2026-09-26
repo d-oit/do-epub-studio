@@ -76,21 +76,73 @@ const SAFE_SVG_TAGS = [
 ];
 
 const SVG_EVENT_ATTRS = [
-  'onload', 'onclick', 'ondblclick', 'onmousedown', 'onmouseup',
-  'onmouseover', 'onmousemove', 'onmouseout', 'onmouseenter', 'onmouseleave',
-  'onfocus', 'onblur', 'onkeydown', 'onkeyup', 'onkeypress',
-  'onsubmit', 'onreset', 'onchange', 'onselect', 'oninput',
-  'onscroll', 'onerror', 'onabort', 'onresize',
-  'ontouchstart', 'ontouchend', 'ontouchmove', 'ontouchcancel',
-  'onwheel', 'onpointerdown', 'onpointerup', 'onpointermove', 'onpointerover',
-  'onpointerout', 'onpointerenter', 'onpointerleave', 'onpointercancel',
-  'onanimationstart', 'onanimationend', 'onanimationiteration',
-  'ontransitionstart', 'ontransitionend', 'ontransitionrun', 'ontransitioncancel',
-  'oncut', 'oncopy', 'onpaste',
-  'onloadedmetadata', 'onloadeddata', 'onloadstart', 'ontimeupdate',
-  'onvolumechange', 'onplaying', 'onwaiting', 'onseeking', 'onseeked',
-  'oncanplay', 'oncanplaythrough', 'ondurationchange', 'onemptied',
-  'onended', 'onplay', 'onpause', 'onratechange', 'onstalled', 'onsuspend', 'onprogress',
+  'onload',
+  'onclick',
+  'ondblclick',
+  'onmousedown',
+  'onmouseup',
+  'onmouseover',
+  'onmousemove',
+  'onmouseout',
+  'onmouseenter',
+  'onmouseleave',
+  'onfocus',
+  'onblur',
+  'onkeydown',
+  'onkeyup',
+  'onkeypress',
+  'onsubmit',
+  'onreset',
+  'onchange',
+  'onselect',
+  'oninput',
+  'onscroll',
+  'onerror',
+  'onabort',
+  'onresize',
+  'ontouchstart',
+  'ontouchend',
+  'ontouchmove',
+  'ontouchcancel',
+  'onwheel',
+  'onpointerdown',
+  'onpointerup',
+  'onpointermove',
+  'onpointerover',
+  'onpointerout',
+  'onpointerenter',
+  'onpointerleave',
+  'onpointercancel',
+  'onanimationstart',
+  'onanimationend',
+  'onanimationiteration',
+  'ontransitionstart',
+  'ontransitionend',
+  'ontransitionrun',
+  'ontransitioncancel',
+  'oncut',
+  'oncopy',
+  'onpaste',
+  'onloadedmetadata',
+  'onloadeddata',
+  'onloadstart',
+  'ontimeupdate',
+  'onvolumechange',
+  'onplaying',
+  'onwaiting',
+  'onseeking',
+  'onseeked',
+  'oncanplay',
+  'oncanplaythrough',
+  'ondurationchange',
+  'onemptied',
+  'onended',
+  'onplay',
+  'onpause',
+  'onratechange',
+  'onstalled',
+  'onsuspend',
+  'onprogress',
 ];
 
 const STRUCTURAL_TAGS = ['html', 'head', 'body'];
@@ -169,7 +221,12 @@ const EPUB_BODY_TAGS = [
   'svg',
 ];
 
-const EPUB_ALLOWED_TAGS = [...STRUCTURAL_TAGS, ...EPUB_HEAD_TAGS, ...EPUB_BODY_TAGS, ...SAFE_SVG_TAGS];
+const EPUB_ALLOWED_TAGS = [
+  ...STRUCTURAL_TAGS,
+  ...EPUB_HEAD_TAGS,
+  ...EPUB_BODY_TAGS,
+  ...SAFE_SVG_TAGS,
+];
 
 const SVG_ALLOWED_ATTRS = [
   'id',
@@ -592,9 +649,7 @@ function sanitizeElementAttributes(el: Element, policy: ExternalUrlPolicy): void
   // The comparison is allocation-free: this runs for every element with
   // attributes in the traversal.
   const isLinkable =
-    localName === 'use' ||
-    localName === 'image' ||
-    equalsIgnoreCase(localName, 'feimage');
+    localName === 'use' || localName === 'image' || equalsIgnoreCase(localName, 'feimage');
   const attrs = el.attributes;
 
   for (let i = attrs.length - 1; i >= 0; i--) {
@@ -662,9 +717,7 @@ export function sanitizeDom(
  * sanitized clone; only trusted host nodes are re-homed.
  */
 function collectHostInjectedNodes(doc: Document): Element[] {
-  return doc.head
-    ? Array.from(doc.head.querySelectorAll('[id^="epubjs-injected-"]'))
-    : [];
+  return doc.head ? Array.from(doc.head.querySelectorAll('[id^="epubjs-injected-"]')) : [];
 }
 
 function rehomeHostInjectedNodes(doc: Document, hostNodes: Element[]): void {
@@ -732,14 +785,12 @@ export interface SanitizeHook {
   hook: (contents: { document?: Document; href?: string }) => void;
 }
 
-export function createEpubSanitizerHook(
-  options?: {
-    timeoutMs?: number;
-    traceId?: string;
-    policyVersion?: number;
-    externalUrlPolicy?: ExternalUrlPolicy;
-  },
-): SanitizeHook {
+export function createEpubSanitizerHook(options?: {
+  timeoutMs?: number;
+  traceId?: string;
+  policyVersion?: number;
+  externalUrlPolicy?: ExternalUrlPolicy;
+}): SanitizeHook {
   const policyVersion = options?.policyVersion ?? SANITIZER_POLICY_VERSION;
   const policy = options?.externalUrlPolicy ?? DEFAULT_EXTERNAL_URL_POLICY;
   const cache = new Map<string, string>();
@@ -823,13 +874,11 @@ export function createEpubSanitizerHook(
   };
 }
 
-export function createSvgSanitizerHook(
-  options?: {
-    timeoutMs?: number;
-    traceId?: string;
-    externalUrlPolicy?: ExternalUrlPolicy;
-  },
-): (contents: { document?: Document }) => void {
+export function createSvgSanitizerHook(options?: {
+  timeoutMs?: number;
+  traceId?: string;
+  externalUrlPolicy?: ExternalUrlPolicy;
+}): (contents: { document?: Document }) => void {
   return (contents: { document?: Document }) => {
     const doc = contents.document;
     if (!doc) return;
@@ -873,18 +922,18 @@ export function buildExternalUrlCsp(policy: ExternalUrlPolicy): string {
       if (host !== null) origins.push(`https://${host}`);
     }
   }
-  const src = ['\'self\'', 'blob:', 'data:', ...origins].join(' ');
-  const styleSrc = ['\'self\'', '\'unsafe-inline\'', 'blob:', 'data:', ...origins].join(' ');
+  const src = ["'self'", 'blob:', 'data:', ...origins].join(' ');
+  const styleSrc = ["'self'", "'unsafe-inline'", 'blob:', 'data:', ...origins].join(' ');
   return [
     `img-src ${src}`,
     `style-src ${styleSrc}`,
     `font-src ${src}`,
     `media-src ${src}`,
-    `connect-src ${'\'self\'' + (origins.length ? ` ${origins.join(' ')}` : '')}`,
-    'object-src \'none\'',
-    'frame-src \'none\'',
-    'base-uri \'none\'',
-    'form-action \'none\'',
+    `connect-src ${"'self'" + (origins.length ? ` ${origins.join(' ')}` : '')}`,
+    "object-src 'none'",
+    "frame-src 'none'",
+    "base-uri 'none'",
+    "form-action 'none'",
   ].join('; ');
 }
 

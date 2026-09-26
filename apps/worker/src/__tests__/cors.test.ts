@@ -85,6 +85,8 @@ describe('CORS', () => {
     });
 
     const response = await worker.fetch(request, env, makePassThroughContext());
-    expect(response.headers.get('Access-Control-Allow-Methods')).toBe('GET, POST, PUT, PATCH, DELETE, OPTIONS');
+    expect(response.headers.get('Access-Control-Allow-Methods')).toBe(
+      'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+    );
   });
 });

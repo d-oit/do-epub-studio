@@ -25,7 +25,13 @@ bookmarksRouter.get('/:bookId/bookmarks', readerAuth, async (c) => {
   const bookId = c.req.param('bookId');
   const auth = c.get('auth');
 
-  const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx, getRequestTraceId(c));
+  const mismatch = await assertBookAccess(
+    c.env,
+    auth,
+    bookId,
+    c.executionCtx,
+    getRequestTraceId(c),
+  );
   if (mismatch) return mismatch.response;
 
   const bookmarks = await queryAll<BookmarkRow>(
@@ -54,43 +60,60 @@ bookmarksRouter.get('/:bookId/bookmarks', readerAuth, async (c) => {
   });
 });
 
-bookmarksRouter.post('/:bookId/bookmarks', readerAuth, zValidator('json', BookmarkCreateSchema), async (c) => {
-  const bookId = c.req.param('bookId');
-  const auth = c.get('auth');
-  const body = c.req.valid('json');
+bookmarksRouter.post(
+  '/:bookId/bookmarks',
+  readerAuth,
+  zValidator('json', BookmarkCreateSchema),
+  async (c) => {
+    const bookId = c.req.param('bookId');
+    const auth = c.get('auth');
+    const body = c.req.valid('json');
 
-  const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx, getRequestTraceId(c));
-  if (mismatch) return mismatch.response;
+    const mismatch = await assertBookAccess(
+      c.env,
+      auth,
+      bookId,
+      c.executionCtx,
+      getRequestTraceId(c),
+    );
+    if (mismatch) return mismatch.response;
 
-  if (!auth.capabilities.canBookmark) {
-    throw new ForbiddenError('Access denied');
-  }
+    if (!auth.capabilities.canBookmark) {
+      throw new ForbiddenError('Access denied');
+    }
 
-  const id = crypto.randomUUID();
-  const locatorJson = JSON.stringify(body.locator);
-  const now = new Date().toISOString();
+    const id = crypto.randomUUID();
+    const locatorJson = JSON.stringify(body.locator);
+    const now = new Date().toISOString();
 
-  await execute(
-    c.env,
-    `INSERT INTO bookmarks (id, book_id, user_email, locator_json, label, created_at)
+    await execute(
+      c.env,
+      `INSERT INTO bookmarks (id, book_id, user_email, locator_json, label, created_at)
      VALUES (?, ?, ?, ?, ?, ?)`,
-    [id, bookId, auth.email, locatorJson, body.label ?? null, now],
-  );
+      [id, bookId, auth.email, locatorJson, body.label ?? null, now],
+    );
 
-  return c.json(
-    {
-      ok: true,
-      data: { id, locator: body.locator, label: body.label, createdAt: now },
-    },
-    201,
-  );
-});
+    return c.json(
+      {
+        ok: true,
+        data: { id, locator: body.locator, label: body.label, createdAt: now },
+      },
+      201,
+    );
+  },
+);
 
 bookmarksRouter.delete('/:bookId/bookmarks/:bookmarkId', readerAuth, async (c) => {
   const { bookId, bookmarkId } = c.req.param();
   const auth = c.get('auth');
 
-  const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx, getRequestTraceId(c));
+  const mismatch = await assertBookAccess(
+    c.env,
+    auth,
+    bookId,
+    c.executionCtx,
+    getRequestTraceId(c),
+  );
   if (mismatch) return mismatch.response;
 
   await execute(c.env, `DELETE FROM bookmarks WHERE id = ? AND book_id = ? AND user_email = ?`, [

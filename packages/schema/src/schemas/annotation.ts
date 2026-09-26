@@ -1,9 +1,5 @@
 import { z } from 'zod';
-import {
-  MultiSignalLocatorSchema,
-  CommentStatusSchema,
-  CommentVisibilitySchema,
-} from './common';
+import { MultiSignalLocatorSchema, CommentStatusSchema, CommentVisibilitySchema } from './common';
 
 export const ProgressLocatorSchema = z.object({
   cfi: z.string().min(1).max(2048),
@@ -38,7 +34,10 @@ export const HighlightCreateSchema = z.object({
 
 export type HighlightCreate = z.infer<typeof HighlightCreateSchema>;
 
-export const HighlightUpdateSchema = HighlightCreateSchema.pick({ note: true, color: true }).partial();
+export const HighlightUpdateSchema = HighlightCreateSchema.pick({
+  note: true,
+  color: true,
+}).partial();
 
 export type HighlightUpdate = z.infer<typeof HighlightUpdateSchema>;
 

@@ -9,18 +9,18 @@ in dependency-safe order with all CI green, zero unresolved threads, rebased ont
 10 open PRs, 0 unresolved review threads on all. All 9 dependabot PRs are `BEHIND` main
 (must rebase before merge per AGENTS.md Tier 1). CI snapshot:
 
-| # | Title | CI | Risk |
-|---|-------|----|------|
-| 1088 | sentry/cloudflare 10.72→10.73 (patch) | ✅ all green | low |
-| 1087 | libsql/client 0.17.4→0.18.0 (minor) | ⚠️ auto-merge workflow FAIL, rest green | medium — minor may carry API changes; only referenced in 1 test file |
-| 1086 | sentry/react 10.70→10.73 (minor) | ✅ all green | low |
-| 1085 | simplewebauthn/server 13.3.2→14.0.1 (MAJOR) | ✅ green on old base | HIGH — auth-critical (mfa.ts, login-mfa.ts, login.ts), breaking changes likely |
-| 1084 | impeccable 3.6.0→4.0.1 (MAJOR) | ✅ green on old base | medium — dev/design tooling, check CLI/API breaks |
-| 1083 | prod-deps group (3 updates) | ✅ all green | low-medium |
-| 1082 | dev-deps group (16 updates) | ✅ all green | medium — wide blast radius, needs test run post-rebase |
-| 1081 | GH Actions group (2 SHA bumps) | ❌ Full Quality Gate + Pre-commit FAIL | low code risk, CI must be diagnosed (likely stale base) |
-| 1077 | fix(web-doc-resolver): log exceptions (human/Jules) | ❌ Codacy 3×high, mergeState BLOCKED | low code risk (2-line log fix + tests), Codacy likely false-positive on `logger.debug(url, exc)` |
-| 1067 | zod 4.4.3→4.5.2 (minor) | ❌ bundle-budget FAIL, rest green | medium — schema package is 90/90 coverage boundary; budget baseline may need regen per docs/performance-budgets.md |
+| #    | Title                                               | CI                                      | Risk                                                                                                               |
+| ---- | --------------------------------------------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| 1088 | sentry/cloudflare 10.72→10.73 (patch)               | ✅ all green                            | low                                                                                                                |
+| 1087 | libsql/client 0.17.4→0.18.0 (minor)                 | ⚠️ auto-merge workflow FAIL, rest green | medium — minor may carry API changes; only referenced in 1 test file                                               |
+| 1086 | sentry/react 10.70→10.73 (minor)                    | ✅ all green                            | low                                                                                                                |
+| 1085 | simplewebauthn/server 13.3.2→14.0.1 (MAJOR)         | ✅ green on old base                    | HIGH — auth-critical (mfa.ts, login-mfa.ts, login.ts), breaking changes likely                                     |
+| 1084 | impeccable 3.6.0→4.0.1 (MAJOR)                      | ✅ green on old base                    | medium — dev/design tooling, check CLI/API breaks                                                                  |
+| 1083 | prod-deps group (3 updates)                         | ✅ all green                            | low-medium                                                                                                         |
+| 1082 | dev-deps group (16 updates)                         | ✅ all green                            | medium — wide blast radius, needs test run post-rebase                                                             |
+| 1081 | GH Actions group (2 SHA bumps)                      | ❌ Full Quality Gate + Pre-commit FAIL  | low code risk, CI must be diagnosed (likely stale base)                                                            |
+| 1077 | fix(web-doc-resolver): log exceptions (human/Jules) | ❌ Codacy 3×high, mergeState BLOCKED    | low code risk (2-line log fix + tests), Codacy likely false-positive on `logger.debug(url, exc)`                   |
+| 1067 | zod 4.4.3→4.5.2 (minor)                             | ❌ bundle-budget FAIL, rest green       | medium — schema package is 90/90 coverage boundary; budget baseline may need regen per docs/performance-budgets.md |
 
 No PR qualifies as "no impact" on paper — even SHA bumps touch release/visual-regression
 pipelines. Close verdicts may still emerge from swarm (e.g. superseded/duplicate).
@@ -83,16 +83,16 @@ Remaining queue after #1094 lands: #1086 → #1083 → #1087 → #1084 → #1082
 Second swarm (lanes A2–D2, autopilot skill, isolated worktrees) completed the
 queue after the #1094 unblock:
 
-| PR | Outcome |
-|----|---------|
-| #1086 sentry/react | MERGED `a8bd3ff` (lockfile-only rebase conflict, regen'd) |
+| PR                    | Outcome                                                                                                                           |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| #1086 sentry/react    | MERGED `a8bd3ff` (lockfile-only rebase conflict, regen'd)                                                                         |
 | #1083 prod-deps group | CLOSED unmerged by owner (key hunk hono 4.13.5 landed as `f5c491a`; group PR superseded = the no-impact verdict, owner-confirmed) |
-| #1087 libsql 0.18 | MERGED `aa91a43` |
-| #1084 impeccable 4 | MERGED `0c369f3` (smoke: 0 findings) |
-| #1082 dev-deps group | CLOSED unmerged by owner (key hunk js-yaml 5.4.0 landed as `568cc88`; superseded = owner-confirmed) |
-| #1085 webauthn v14 | MERGED `78fd2e5` LAST with auth proof (worker mfa+login suites 56 files/444 tests green, Node 22) |
-| #1091 schema tests | MERGED by owner as `151da4b` |
-| #1094 budget fix | MERGED as `dc1f648` |
+| #1087 libsql 0.18     | MERGED `aa91a43`                                                                                                                  |
+| #1084 impeccable 4    | MERGED `0c369f3` (smoke: 0 findings)                                                                                              |
+| #1082 dev-deps group  | CLOSED unmerged by owner (key hunk js-yaml 5.4.0 landed as `568cc88`; superseded = owner-confirmed)                               |
+| #1085 webauthn v14    | MERGED `78fd2e5` LAST with auth proof (worker mfa+login suites 56 files/444 tests green, Node 22)                                 |
+| #1091 schema tests    | MERGED by owner as `151da4b`                                                                                                      |
+| #1094 budget fix      | MERGED as `dc1f648`                                                                                                               |
 
 Main merge train (12 commits): zod 4.5.2 → #1081 → #1077 → #1088 → hono 4.13.5 →
 \#1094 → js-yaml 5.4.0 → #1091-tests → #1086 → #1087 → #1084 → #1085. All merges

@@ -37,7 +37,9 @@ describe('book invitation schemas', () => {
   });
 
   it('rejects an invalid role, book id, and email', () => {
-    expect(() => CreateBookInvitationSchema.parse({ bookId: 'bad', email: 'not-an-email', role: 'owner' })).toThrow();
+    expect(() =>
+      CreateBookInvitationSchema.parse({ bookId: 'bad', email: 'not-an-email', role: 'owner' }),
+    ).toThrow();
   });
 
   it('accepts a matching invitation password', () => {
@@ -50,16 +52,20 @@ describe('book invitation schemas', () => {
   });
 
   it('rejects mismatched passwords and short tokens', () => {
-    expect(() => AcceptBookInvitationSchema.parse({
-      token: TOKEN,
-      newPassword: PASSWORD,
-      newPasswordConfirm: 'Different-passphrase!',
-    })).toThrow();
-    expect(() => AcceptBookInvitationSchema.parse({
-      token: 'short',
-      newPassword: PASSWORD,
-      newPasswordConfirm: PASSWORD,
-    })).toThrow();
+    expect(() =>
+      AcceptBookInvitationSchema.parse({
+        token: TOKEN,
+        newPassword: PASSWORD,
+        newPasswordConfirm: 'Different-passphrase!',
+      }),
+    ).toThrow();
+    expect(() =>
+      AcceptBookInvitationSchema.parse({
+        token: 'short',
+        newPassword: PASSWORD,
+        newPasswordConfirm: PASSWORD,
+      }),
+    ).toThrow();
   });
 
   it('keeps lifecycle enums explicit', () => {

@@ -90,7 +90,10 @@ export class RateLimitError extends AppError {
 }
 
 export class DatabaseError extends AppError {
-  constructor(message: string, public readonly queryContext?: string) {
+  constructor(
+    message: string,
+    public readonly queryContext?: string,
+  ) {
     super(message, 'DATABASE_ERROR', 500);
     this.name = 'DatabaseError';
   }
@@ -112,11 +115,7 @@ export class TimeoutError extends AppError {
     public readonly timeoutMs: number,
     public readonly traceId?: string,
   ) {
-    super(
-      `Operation "${operation}" timed out after ${timeoutMs}ms`,
-      'TIMEOUT',
-      504,
-    );
+    super(`Operation "${operation}" timed out after ${timeoutMs}ms`, 'TIMEOUT', 504);
     this.name = 'TimeoutError';
   }
 }
@@ -125,7 +124,10 @@ export function isAppError(error: unknown): error is AppError {
   return error instanceof AppError;
 }
 
-export function toApiError(error: unknown, traceId?: string): { code: string; message: string; traceId?: string } {
+export function toApiError(
+  error: unknown,
+  traceId?: string,
+): { code: string; message: string; traceId?: string } {
   const base = isAppError(error)
     ? { code: error.code, message: error.message }
     : { code: 'INTERNAL_ERROR', message: 'An unexpected error occurred' };

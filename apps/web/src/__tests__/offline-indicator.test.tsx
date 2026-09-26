@@ -5,7 +5,9 @@ import { OfflineIndicator } from '../components/OfflineIndicator';
 vi.mock('../hooks/useTranslation', () => ({
   useTranslation: () => ({
     t: vi.fn((key: string) => {
-      const translations = new Map<string, string>([['offline.banner', 'You are currently offline']]);
+      const translations = new Map<string, string>([
+        ['offline.banner', 'You are currently offline'],
+      ]);
       return translations.get(key) ?? key;
     }),
   }),
@@ -22,7 +24,11 @@ describe('OfflineIndicator', () => {
 
   afterEach(() => {
     vi.useRealTimers();
-    Object.defineProperty(navigator, 'onLine', { value: originalOnLine, writable: true, configurable: true });
+    Object.defineProperty(navigator, 'onLine', {
+      value: originalOnLine,
+      writable: true,
+      configurable: true,
+    });
   });
 
   it('renders nothing when online', () => {
@@ -31,7 +37,11 @@ describe('OfflineIndicator', () => {
   });
 
   it('renders the banner when offline on mount', () => {
-    Object.defineProperty(navigator, 'onLine', { value: false, writable: true, configurable: true });
+    Object.defineProperty(navigator, 'onLine', {
+      value: false,
+      writable: true,
+      configurable: true,
+    });
     render(<OfflineIndicator />);
     expect(screen.getByRole('alert')).toBeInTheDocument();
     expect(screen.getByText('You are currently offline')).toBeInTheDocument();
@@ -50,7 +60,11 @@ describe('OfflineIndicator', () => {
   });
 
   it('removes banner after going back online', () => {
-    Object.defineProperty(navigator, 'onLine', { value: false, writable: true, configurable: true });
+    Object.defineProperty(navigator, 'onLine', {
+      value: false,
+      writable: true,
+      configurable: true,
+    });
     render(<OfflineIndicator />);
     expect(screen.getByRole('alert')).toBeInTheDocument();
 
@@ -67,7 +81,11 @@ describe('OfflineIndicator', () => {
   });
 
   it('renders the warning icon', () => {
-    Object.defineProperty(navigator, 'onLine', { value: false, writable: true, configurable: true });
+    Object.defineProperty(navigator, 'onLine', {
+      value: false,
+      writable: true,
+      configurable: true,
+    });
     render(<OfflineIndicator />);
     const alert = screen.getByRole('alert');
     const icon = alert.querySelector('svg[aria-hidden="true"]');
@@ -75,7 +93,11 @@ describe('OfflineIndicator', () => {
   });
 
   it('has accessible aria-live attribute', () => {
-    Object.defineProperty(navigator, 'onLine', { value: false, writable: true, configurable: true });
+    Object.defineProperty(navigator, 'onLine', {
+      value: false,
+      writable: true,
+      configurable: true,
+    });
     render(<OfflineIndicator />);
     expect(screen.getByRole('alert')).toHaveAttribute('aria-live', 'assertive');
   });

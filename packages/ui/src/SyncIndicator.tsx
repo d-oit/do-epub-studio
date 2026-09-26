@@ -26,13 +26,12 @@ export function SyncIndicator({
       type="button"
       onClick={status === 'conflict' ? onConflictClick : undefined}
       className={`min-h-11 inline-flex items-center touch-target rounded-[var(--radius-paper)] ${
-        status === 'conflict' ? 'cursor-pointer active:scale-95 transition-transform' : 'cursor-default'
+        status === 'conflict'
+          ? 'cursor-pointer active:scale-95 transition-transform'
+          : 'cursor-default'
       }`}
     >
-      <Badge
-        variant={status === 'conflict' ? 'warning' : 'info'}
-        aria-live="polite"
-      >
+      <Badge variant={status === 'conflict' ? 'warning' : 'info'} aria-live="polite">
         {copy}
       </Badge>
     </button>

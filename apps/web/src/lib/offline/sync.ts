@@ -25,7 +25,12 @@ import {
   type ConflictRecord,
 } from './conflict-resolution';
 import { syncAnnotation } from './annotation-sync';
-import { handleProgressConflict, syncProgress, type SyncResult, type ProgressSyncPayload } from './progress-conflict';
+import {
+  handleProgressConflict,
+  syncProgress,
+  type SyncResult,
+  type ProgressSyncPayload,
+} from './progress-conflict';
 
 const MAX_RETRY_ATTEMPTS = 5;
 const BASE_DELAY_MS = 1000;
@@ -313,7 +318,10 @@ async function syncItem(item: SyncQueueItem, traceId: string, spanId: string): P
       await syncFeedback(item);
     } else {
       const raw: unknown = item;
-      const label = typeof raw === 'object' && raw !== null && 'type' in raw && typeof raw.type === 'string' ? raw.type : 'unknown';
+      const label =
+        typeof raw === 'object' && raw !== null && 'type' in raw && typeof raw.type === 'string'
+          ? raw.type
+          : 'unknown';
       throw new Error(`Unrecognized sync queue item type: ${label}`);
     }
     return { success: true };
@@ -379,7 +387,10 @@ async function syncItem(item: SyncQueueItem, traceId: string, spanId: string): P
   }
 }
 
-async function markAsSynced(type: 'progress' | 'annotation' | 'reading-insight' | 'feedback', mutationId: string): Promise<void> {
+async function markAsSynced(
+  type: 'progress' | 'annotation' | 'reading-insight' | 'feedback',
+  mutationId: string,
+): Promise<void> {
   if (type === 'progress') {
     const unsynced = await getUnsyncedProgress();
     const entry = unsynced.find((e) => e.mutationId === mutationId);
@@ -463,7 +474,12 @@ export function setupOnlineListener(): () => void {
 
   const swMessageHandler = (event: MessageEvent<{ type?: unknown }>) => {
     const data: unknown = event.data;
-    if (typeof data === 'object' && data !== null && 'type' in data && data.type === 'SYNC_REQUESTED') {
+    if (
+      typeof data === 'object' &&
+      data !== null &&
+      'type' in data &&
+      data.type === 'SYNC_REQUESTED'
+    ) {
       if (navigator.onLine) {
         void ensureDrain();
       }
@@ -473,7 +489,10 @@ export function setupOnlineListener(): () => void {
   window.addEventListener('online', handler);
   window.addEventListener('offline', handler);
 
-  const sw = typeof navigator !== 'undefined' && 'serviceWorker' in navigator ? navigator.serviceWorker : null;
+  const sw =
+    typeof navigator !== 'undefined' && 'serviceWorker' in navigator
+      ? navigator.serviceWorker
+      : null;
   if (sw && typeof sw.addEventListener === 'function') {
     sw.addEventListener('message', swMessageHandler);
   }

@@ -53,13 +53,13 @@ cp apps/worker/.dev.vars.example apps/worker/.dev.vars
 
 Required variables in `apps/worker/.dev.vars`:
 
-| Variable | Description |
-|---|---|
-| `TURSO_DATABASE_URL` | Turso database URL (e.g. `libsql://do-epub-studio-your-org.turso.io`) |
-| `TURSO_AUTH_TOKEN` | Auth token for the Turso database |
-| `SESSION_SIGNING_SECRET` | Secret for signing session tokens |
-| `INVITE_TOKEN_SECRET` | Secret for signing invite tokens |
-| `APP_BASE_URL` | Base URL of the web app (default: `http://127.0.0.1:5173`) |
+| Variable                 | Description                                                           |
+| ------------------------ | --------------------------------------------------------------------- |
+| `TURSO_DATABASE_URL`     | Turso database URL (e.g. `libsql://do-epub-studio-your-org.turso.io`) |
+| `TURSO_AUTH_TOKEN`       | Auth token for the Turso database                                     |
+| `SESSION_SIGNING_SECRET` | Secret for signing session tokens                                     |
+| `INVITE_TOKEN_SECRET`    | Secret for signing invite tokens                                      |
+| `APP_BASE_URL`           | Base URL of the web app (default: `http://127.0.0.1:5173`)            |
 
 For production deployments, these values are set as Wrangler secrets (not committed to git).
 
@@ -148,16 +148,19 @@ pnpm test
 ### End-to-end tests (Playwright)
 
 Run E2E tests against the dev server:
+
 ```bash
 pnpm test:e2e
 ```
 
 Run only smoke tests (tagged `@smoke`):
+
 ```bash
 pnpm test:e2e:smoke
 ```
 
 Install Playwright browsers on first run:
+
 ```bash
 pnpm exec playwright install --with-deps
 ```

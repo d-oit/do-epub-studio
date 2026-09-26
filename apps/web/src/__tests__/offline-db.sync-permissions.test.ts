@@ -109,7 +109,7 @@ describe('Offline Database — Sync Queue & Permissions', () => {
       await addToSyncQueue(item);
 
       const db = await getDB();
-      const stored = await db.get('syncQueue', 'item-enc') as Record<string, unknown>;
+      const stored = (await db.get('syncQueue', 'item-enc')) as Record<string, unknown>;
       expect(stored.encryptedPayload).toBeDefined();
       expect(stored.payload).toBeUndefined();
 
@@ -153,7 +153,7 @@ describe('Offline Database — Sync Queue & Permissions', () => {
       await cachePermission(permission);
 
       const db = await getDB();
-      const stored = await db.get('permissions', 'book-enc') as Record<string, unknown>;
+      const stored = (await db.get('permissions', 'book-enc')) as Record<string, unknown>;
       expect(stored.encryptedPayload).toBeDefined();
       expect(stored.grantId).toBeUndefined();
 

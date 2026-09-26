@@ -11,22 +11,22 @@ Close out all remaining open CI issues and PRs by fixing the markdownlint failur
 
 ## Tasks Executed
 
-| ID | Priority | Task | Skill | Status |
-|----|----------|------|-------|--------|
-| T1 | P0 | Fix markdownlint MD056 in `plans/056-goap-ci-fix-main-e2e-a11y.md` (table `\|\|` inside inline code) | `code-quality` | ✅ PR #376 merged |
-| T2 | P0 | Main CI was blocking subsequent PRs | `cicd-pipeline` | ✅ CI passes on main |
-| T3 | P1 | Rebase PR #372 on fixed main | `github-workflow` | ✅ Rebased |
-| T4 | P1 | Fix Codacy non-null assertion in `reanchor.ts:178` | `code-quality` | ✅ `as string` |
-| T5 | P1 | Fix Codacy Generic Object Injection Sink | `safe-regex-authoring` | ✅ `String()` wrapper |
-| T6 | P1 | Merge PR #372 with all CI passing | `github-pr-autopilot` | ✅ Merged |
-| T7 | P2 | Close CI failure issues #370, #375 | `cicd-pipeline` | ✅ Auto-closed by CI job |
+| ID  | Priority | Task                                                                                                 | Skill                  | Status                   |
+| --- | -------- | ---------------------------------------------------------------------------------------------------- | ---------------------- | ------------------------ |
+| T1  | P0       | Fix markdownlint MD056 in `plans/056-goap-ci-fix-main-e2e-a11y.md` (table `\|\|` inside inline code) | `code-quality`         | ✅ PR #376 merged        |
+| T2  | P0       | Main CI was blocking subsequent PRs                                                                  | `cicd-pipeline`        | ✅ CI passes on main     |
+| T3  | P1       | Rebase PR #372 on fixed main                                                                         | `github-workflow`      | ✅ Rebased               |
+| T4  | P1       | Fix Codacy non-null assertion in `reanchor.ts:178`                                                   | `code-quality`         | ✅ `as string`           |
+| T5  | P1       | Fix Codacy Generic Object Injection Sink                                                             | `safe-regex-authoring` | ✅ `String()` wrapper    |
+| T6  | P1       | Merge PR #372 with all CI passing                                                                    | `github-pr-autopilot`  | ✅ Merged                |
+| T7  | P2       | Close CI failure issues #370, #375                                                                   | `cicd-pipeline`        | ✅ Auto-closed by CI job |
 
 ## Files Changed
 
-| File | Change |
-|------|--------|
-| `plans/056-goap-ci-fix-main-e2e-a11y.md` | Fixed table column count (escape pipes in inline code) |
-| `packages/reader-core/src/reanchor.ts` | Fixed non-null assertion, used `String()` wrapper per Codacy |
+| File                                     | Change                                                       |
+| ---------------------------------------- | ------------------------------------------------------------ |
+| `plans/056-goap-ci-fix-main-e2e-a11y.md` | Fixed table column count (escape pipes in inline code)       |
+| `packages/reader-core/src/reanchor.ts`   | Fixed non-null assertion, used `String()` wrapper per Codacy |
 
 ## Closed Items
 

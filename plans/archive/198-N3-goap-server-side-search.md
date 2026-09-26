@@ -22,14 +22,14 @@ search index would be significantly more useful.
 
 ## Decompose
 
-| ID | Task | Effort | Deps |
-|----|------|--------|------|
-| T1 | Design search index schema (D1 table or FTS5 virtual table) | M | — |
-| T2 | Add EPUB text extraction pipeline (on upload, extract and index text) | L | T1 |
-| T3 | Create `GET /api/books/:id/search?q=` endpoint | M | T2 |
-| T4 | Create client-side search integration (SearchPanel enhancement) | M | T3 |
-| T5 | Add i18n keys for search UI states | S | T4 |
-| T6 | Add tests (Worker integration + web component) | M | T4 |
+| ID  | Task                                                                  | Effort | Deps |
+| --- | --------------------------------------------------------------------- | ------ | ---- |
+| T1  | Design search index schema (D1 table or FTS5 virtual table)           | M      | —    |
+| T2  | Add EPUB text extraction pipeline (on upload, extract and index text) | L      | T1   |
+| T3  | Create `GET /api/books/:id/search?q=` endpoint                        | M      | T2   |
+| T4  | Create client-side search integration (SearchPanel enhancement)       | M      | T3   |
+| T5  | Add i18n keys for search UI states                                    | S      | T4   |
+| T6  | Add tests (Worker integration + web component)                        | M      | T4   |
 
 ## Risks
 

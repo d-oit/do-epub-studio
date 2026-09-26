@@ -17,23 +17,23 @@ existing quality gate.
 
 The repository is in excellent health. Signals gathered:
 
-| Signal | Result |
-|--------|--------|
-| Files over 500 LOC (Tier 3) | 0 (only `worker-configuration.d.ts`, auto-generated) |
-| `any` usage (non-test) | 0 |
-| `eslint-disable` / `biome-ignore` / `@ts-ignore` / `@ts-expect-error` | 0 |
-| `TODO` / `FIXME` / `HACK` markers | 0 |
-| Open GitHub issues / PRs | 0 / 0 |
-| Unit test files | 87 |
-| E2E spec files | 8 |
-| Main branch CI | green @ `b6c0737` |
+| Signal                                                                | Result                                               |
+| --------------------------------------------------------------------- | ---------------------------------------------------- |
+| Files over 500 LOC (Tier 3)                                           | 0 (only `worker-configuration.d.ts`, auto-generated) |
+| `any` usage (non-test)                                                | 0                                                    |
+| `eslint-disable` / `biome-ignore` / `@ts-ignore` / `@ts-expect-error` | 0                                                    |
+| `TODO` / `FIXME` / `HACK` markers                                     | 0                                                    |
+| Open GitHub issues / PRs                                              | 0 / 0                                                |
+| Unit test files                                                       | 87                                                   |
+| E2E spec files                                                        | 8                                                    |
+| Main branch CI                                                        | green @ `b6c0737`                                    |
 
 Because the obvious debt is already gone, the improvements below are
 **hygiene and hardening level** — none are urgent, all are safe, incremental wins.
 
 ## Findings (verified by reading source)
 
-### F1 — Remove deprecated, redundant `@types/uuid` devDependency  · P1 · trivial
+### F1 — Remove deprecated, redundant `@types/uuid` devDependency · P1 · trivial
 
 - `apps/web/package.json:49` pins `@types/uuid@^11.0.0`, which `pnpm outdated`
   reports as **Deprecated**.
@@ -44,7 +44,7 @@ Because the obvious debt is already gone, the improvements below are
   `apps/web/src/lib/offline/sync.ts:1`, `apps/web/src/lib/offline/conflict-resolution.ts:3`.
 - **Action:** delete the `@types/uuid` devDependency; run `pnpm install` + typecheck.
 
-### F2 — De-duplicate `SignedUrlResponse` DTO  · P1 · small
+### F2 — De-duplicate `SignedUrlResponse` DTO · P1 · small
 
 - Identical interface declared in two places:
   - `packages/shared/src/dtos.ts:40-45` (canonical, already exported)
@@ -54,7 +54,7 @@ Because the obvious debt is already gone, the improvements below are
 - **Action:** import `SignedUrlResponse` from `@do-epub-studio/shared` in the
   worker and delete the local declaration. (`apps/worker` already depends on shared.)
 
-### F3 — Bound untrusted-input regexes in reader-core (ADR-034)  · P1 · small
+### F3 — Bound untrusted-input regexes in reader-core (ADR-034) · P1 · small
 
 - `packages/reader-core/src/fixed-layout.ts:10` and
   `packages/reader-core/src/epub-accessibility.ts:20` build `new RegExp(...)`
@@ -68,7 +68,7 @@ Because the obvious debt is already gone, the improvements below are
   cap (reuse the existing bound constants/convention), preserving the global-flag
   loop semantics in `epub-accessibility.ts`.
 
-### F4 — Extract shared `escapeRegex` helper  · P2 · trivial
+### F4 — Extract shared `escapeRegex` helper · P2 · trivial
 
 - `escapeRegex` is copy-pasted in `packages/reader-core/src/fixed-layout.ts:3`
   and `packages/reader-core/src/epub-accessibility.ts:13`.
@@ -76,19 +76,19 @@ Because the obvious debt is already gone, the improvements below are
   (next to `matchBounded`/`testBounded`) and import it in both call sites. Naturally
   pairs with F3 since both files are already being touched.
 
-### F5 — Apply patch-level dependency updates  · P2 · small
+### F5 — Apply patch-level dependency updates · P2 · small
 
 `pnpm outdated -r` shows only patch/minor bumps (no majors):
 
-| Package | Current → Latest |
-|---------|------------------|
-| `dompurify` (reader-core) | 3.4.8 → 3.4.10 (security-sensitive sanitizer) |
-| `vite` | 8.0.14 → 8.0.16 |
-| `vitest` / `@vitest/coverage-istanbul` | 4.1.7 → 4.1.8 |
-| `turbo` | 2.9.14 → 2.9.18 |
-| `storybook` / `@storybook/react-vite` | 10.4.1 → 10.4.4 |
-| `tailwindcss` / `@tailwindcss/vite` | 4.3.0 → 4.3.1 |
-| `prettier`, `eslint-plugin-security`, `eslint-import-resolver-typescript`, `@types/node` | patch bumps |
+| Package                                                                                  | Current → Latest                              |
+| ---------------------------------------------------------------------------------------- | --------------------------------------------- |
+| `dompurify` (reader-core)                                                                | 3.4.8 → 3.4.10 (security-sensitive sanitizer) |
+| `vite`                                                                                   | 8.0.14 → 8.0.16                               |
+| `vitest` / `@vitest/coverage-istanbul`                                                   | 4.1.7 → 4.1.8                                 |
+| `turbo`                                                                                  | 2.9.14 → 2.9.18                               |
+| `storybook` / `@storybook/react-vite`                                                    | 10.4.1 → 10.4.4                               |
+| `tailwindcss` / `@tailwindcss/vite`                                                      | 4.3.0 → 4.3.1                                 |
+| `prettier`, `eslint-plugin-security`, `eslint-import-resolver-typescript`, `@types/node` | patch bumps                                   |
 
 - **Action:** prefer letting Dependabot batch these (auto-merge minor/patch is
   already configured). Prioritize `dompurify` (sanitizer hardening). No manual
@@ -96,13 +96,13 @@ Because the obvious debt is already gone, the improvements below are
 
 ## Decomposition (tasks)
 
-| ID | Task | Priority | Deps | Est. |
-|----|------|----------|------|------|
-| T1 | Remove `@types/uuid` devDep (F1) | P1 | none | trivial |
-| T2 | Import shared `SignedUrlResponse` in worker (F2) | P1 | none | small |
-| T3 | Bound OPF regexes via `matchBounded` (F3) | P1 | none | small |
-| T4 | Extract shared `escapeRegex` (F4) | P2 | T3 | trivial |
-| T5 | Patch dependency bumps incl. `dompurify` (F5) | P2 | none | small |
+| ID  | Task                                             | Priority | Deps | Est.    |
+| --- | ------------------------------------------------ | -------- | ---- | ------- |
+| T1  | Remove `@types/uuid` devDep (F1)                 | P1       | none | trivial |
+| T2  | Import shared `SignedUrlResponse` in worker (F2) | P1       | none | small   |
+| T3  | Bound OPF regexes via `matchBounded` (F3)        | P1       | none | small   |
+| T4  | Extract shared `escapeRegex` (F4)                | P2       | T3   | trivial |
+| T5  | Patch dependency bumps incl. `dompurify` (F5)    | P2       | none | small   |
 
 ## Strategy (Strategize)
 

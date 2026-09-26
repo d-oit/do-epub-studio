@@ -108,7 +108,10 @@ export default tseslint.config(
       '@typescript-eslint/consistent-type-imports': 'warn',
       '@typescript-eslint/no-floating-promises': 'error',
       '@typescript-eslint/no-misused-promises': 'error',
-      '@typescript-eslint/no-confusing-void-expression': ['error', { ignoreArrowShorthand: true, ignoreVoidOperator: true }],
+      '@typescript-eslint/no-confusing-void-expression': [
+        'error',
+        { ignoreArrowShorthand: true, ignoreVoidOperator: true },
+      ],
       '@typescript-eslint/no-unsafe-assignment': 'error',
       '@typescript-eslint/no-unsafe-member-access': 'error',
       '@typescript-eslint/no-unsafe-call': 'error',
@@ -139,9 +142,18 @@ export default tseslint.config(
   },
   {
     files: ['apps/web/src/features/**/*.tsx', 'apps/web/src/components/**/*.tsx'],
-    ignores: ['**/*.test.tsx', '**/*.spec.tsx', '**/*.stories.tsx', '**/tests/**', '**/__tests__/**'],
+    ignores: [
+      '**/*.test.tsx',
+      '**/*.spec.tsx',
+      '**/*.stories.tsx',
+      '**/tests/**',
+      '**/__tests__/**',
+    ],
     rules: {
-      'i18next/no-literal-string': ['error', { mode: 'jsx-only', ignoreAttribute: ['aria-label', 'role', 'type', 'tabIndex'] }],
+      'i18next/no-literal-string': [
+        'error',
+        { mode: 'jsx-only', ignoreAttribute: ['aria-label', 'role', 'type', 'tabIndex'] },
+      ],
     },
   },
   prettierConfig,

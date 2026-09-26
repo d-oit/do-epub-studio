@@ -53,10 +53,15 @@ describe('page skeleton components', () => {
     for (const [name, Skeleton] of SKELETONS) {
       const { container } = render(<Skeleton />);
       const hiddenEls = container.querySelectorAll('[aria-hidden="true"]');
-      expect(hiddenEls.length, `${name} must have aria-hidden decorative blocks`).toBeGreaterThan(0);
+      expect(hiddenEls.length, `${name} must have aria-hidden decorative blocks`).toBeGreaterThan(
+        0,
+      );
       // The root role="status" must NOT be aria-hidden
       const status = container.querySelector('[role="status"]');
-      expect(status?.getAttribute('aria-hidden'), `${name} status must not be aria-hidden`).toBeNull();
+      expect(
+        status?.getAttribute('aria-hidden'),
+        `${name} status must not be aria-hidden`,
+      ).toBeNull();
     }
   });
 

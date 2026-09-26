@@ -14,36 +14,36 @@ epub worker pipeline wiring in PR #936, and close all three Owlwatch issues
 Run 31293129632 on commit eb3e064 (`perf(reader): wire epub loader, add bundle
 baseline`) failed with two error classes:
 
-| Error | Root Cause |
-|-------|-----------|
-| `sw.registration_failed` — `Cannot read properties of undefined (reading 'waiting')` | Workbox update handler reads `.waiting` on an undefined registration; guard needed |
-| `epub-loader.error` — `Worker error: undefined` | `worker.onerror` fires with `event.message` undefined when worker load fails in E2E test environment; error propagation needed improvement |
+| Error                                                                                | Root Cause                                                                                                                                 |
+| ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `sw.registration_failed` — `Cannot read properties of undefined (reading 'waiting')` | Workbox update handler reads `.waiting` on an undefined registration; guard needed                                                         |
+| `epub-loader.error` — `Worker error: undefined`                                      | `worker.onerror` fires with `event.message` undefined when worker load fails in E2E test environment; error propagation needed improvement |
 
 ### Owlwatch Issues
 
-| Issue | File | Rule | Fix |
-|-------|------|------|-----|
-| #933 (high) | `.agents/skills/do-web-doc-resolver/scripts/providers_impl.py:248-250` | `ruff:S603` command injection | Validate URL scheme before subprocess; pass as list |
-| #934 (medium) | `.agents/skills/do-web-doc-resolver/scripts/resolve.py:159-315` | `lizard:long-function` (157 lines, ccn=34) | Extract `_run_hedged_requests()` helper |
-| #935 (low) | `.agents/skills/security-code-auditor/SKILL.md:80` | `gitleaks:generic-api-key` | Replace `sk-live-abc123` with `YOUR_API_KEY_HERE` |
+| Issue         | File                                                                   | Rule                                       | Fix                                                 |
+| ------------- | ---------------------------------------------------------------------- | ------------------------------------------ | --------------------------------------------------- |
+| #933 (high)   | `.agents/skills/do-web-doc-resolver/scripts/providers_impl.py:248-250` | `ruff:S603` command injection              | Validate URL scheme before subprocess; pass as list |
+| #934 (medium) | `.agents/skills/do-web-doc-resolver/scripts/resolve.py:159-315`        | `lizard:long-function` (157 lines, ccn=34) | Extract `_run_hedged_requests()` helper             |
+| #935 (low)    | `.agents/skills/security-code-auditor/SKILL.md:80`                     | `gitleaks:generic-api-key`                 | Replace `sk-live-abc123` with `YOUR_API_KEY_HERE`   |
 
 ## 2. Decomposition — Parallel Swarm
 
 ### Wave 1 (parallel, disjoint file sets)
 
-| Task | Files | Agent |
-|------|-------|-------|
-| T1 | Fix CI #938: epub worker error + SW `.waiting` guard | Worker 1 |
-| T2 | Fix Owlwatch #933+#934+#935: Python + SKILL.md | Worker 2 |
+| Task | Files                                                | Agent    |
+| ---- | ---------------------------------------------------- | -------- |
+| T1   | Fix CI #938: epub worker error + SW `.waiting` guard | Worker 1 |
+| T2   | Fix Owlwatch #933+#934+#935: Python + SKILL.md       | Worker 2 |
 
 ### Wave 2 (orchestrator, after Wave 1)
 
-| Task | Files |
-|------|-------|
+| Task                                                  | Files                                     |
+| ----------------------------------------------------- | ----------------------------------------- |
 | Update plan 221 acceptance criteria (`[x]` for A1–A3) | `plans/221-goap-remaining-audit-items.md` |
-| Write this plan doc | `plans/222-goap-ci-fix-and-owlwatch.md` |
-| LEARNINGS capture | `agents-docs/LEARNINGS.md` |
-| Commit + PR | PR template + AI verification section |
+| Write this plan doc                                   | `plans/222-goap-ci-fix-and-owlwatch.md`   |
+| LEARNINGS capture                                     | `agents-docs/LEARNINGS.md`                |
+| Commit + PR                                           | PR template + AI verification section     |
 
 ## 3. Acceptance Criteria
 

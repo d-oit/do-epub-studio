@@ -36,8 +36,7 @@ const HIGHLIGHT_COLORS: Array<{ id: string; hex: string; label: TranslationKeys 
   { id: 'pink', hex: '#FFB6C1', label: 'annotation.colors.pink' },
 ];
 
-const supportsPopover =
-  typeof HTMLElement !== 'undefined' && 'popover' in HTMLElement.prototype;
+const supportsPopover = typeof HTMLElement !== 'undefined' && 'popover' in HTMLElement.prototype;
 
 export function AnnotationToolbar({
   selection,
@@ -92,10 +91,10 @@ export function AnnotationToolbar({
   // The handler checks showColorPicker via handlerRef.current (always current):
   //   - picker open  → close picker (picker also closes via native dismiss; no-op)
   //   - picker closed → close toolbar
-  useKeyboardShortcut(
-    'Escape',
-    () => { if (showColorPicker) setShowColorPicker(false); else onClose(); },
-  );
+  useKeyboardShortcut('Escape', () => {
+    if (showColorPicker) setShowColorPicker(false);
+    else onClose();
+  });
 
   // B10: Focus trap for the non-native color picker fallback path only.
   // On the native popover path the browser manages focus for popover="auto".
@@ -281,7 +280,6 @@ export function AnnotationToolbar({
         </>
       )}
 
-
       <div className="h-6 w-px bg-border mx-1" />
 
       <IconButton
@@ -345,7 +343,10 @@ export function extractSelectionData(iframe: HTMLIFrameElement): SelectionData |
   const endNode = range.endContainer;
   const prefix =
     startNode?.nodeType === Node.TEXT_NODE
-      ? (startNode.textContent ?? '').slice(Math.max(0, range.startOffset - CONTEXT_CHARS), range.startOffset)
+      ? (startNode.textContent ?? '').slice(
+          Math.max(0, range.startOffset - CONTEXT_CHARS),
+          range.startOffset,
+        )
       : '';
   const suffix =
     endNode?.nodeType === Node.TEXT_NODE

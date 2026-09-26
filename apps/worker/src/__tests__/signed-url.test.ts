@@ -9,15 +9,15 @@ interface FakeR2Head {
 }
 
 function makeEnv(head: FakeR2Head): Env {
-    return {
-      BOOKS_BUCKET: {
-        head: vi.fn().mockImplementation(() => {
-          head.calls += 1;
-          if (head.throw) return Promise.reject(new Error('r2-down'));
-          return Promise.resolve(head.result);
-        }),
-      },
-    } as unknown as Env;
+  return {
+    BOOKS_BUCKET: {
+      head: vi.fn().mockImplementation(() => {
+        head.calls += 1;
+        if (head.throw) return Promise.reject(new Error('r2-down'));
+        return Promise.resolve(head.result);
+      }),
+    },
+  } as unknown as Env;
 }
 
 const SIGNING_SECRET = 'a'.repeat(64);

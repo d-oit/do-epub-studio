@@ -36,9 +36,10 @@ function jsonResponse(value: unknown, status = 200): Response {
 }
 
 /** Fetch seam that records every call; the handler may throw to simulate failure. */
-function stub(
-  handler: (call: FetchCall) => Response | Promise<Response>,
-): { fetchImpl: FetchLike; calls: FetchCall[] } {
+function stub(handler: (call: FetchCall) => Response | Promise<Response>): {
+  fetchImpl: FetchLike;
+  calls: FetchCall[];
+} {
   const calls: FetchCall[] = [];
   const fetchImpl: FetchLike = (input, init) => {
     const call: FetchCall = { input, init };
@@ -114,9 +115,9 @@ describe('LanguageTool adapter — mapping', () => {
     });
     // Deliberately noisy ranges: a junk entry and an out-of-range pair must
     // fall through to the valid [0, 21] sentence instead of breaking mapping.
-    const { fetchImpl, calls } = stub(() => jsonResponse(
-      ltBody([agreement], { sentenceRanges: ['junk', [999, 200], [0, 21]] }),
-    ));
+    const { fetchImpl, calls } = stub(() =>
+      jsonResponse(ltBody([agreement], { sentenceRanges: ['junk', [999, 200], [0, 21]] })),
+    );
     const capability = capabilityWith(fetchImpl);
     const findings = await runOk(capability, request({ categories: ['grammar'] }));
 
@@ -216,9 +217,16 @@ describe('LanguageTool adapter — mapping', () => {
       ltMatch({ offset: 0, length: 11, replacements: [{ value: 'Marielle' }] }),
       ltMatch({ offset: 20, length: 3, replacements: [{ value: 'The' }] }),
     ];
-    const { fetchImpl } = stub(() => jsonResponse(ltBody(matches, {
-      sentenceRanges: [[0, 19], [20, 32]],
-    })));
+    const { fetchImpl } = stub(() =>
+      jsonResponse(
+        ltBody(matches, {
+          sentenceRanges: [
+            [0, 19],
+            [20, 32],
+          ],
+        }),
+      ),
+    );
     const findings = await runOk(
       capabilityWith(fetchImpl),
       request({ chapterText: { c1: chapter }, approvedTerms: ['Mariselleth', ''] }),
@@ -290,35 +298,44 @@ describe('LanguageTool adapter — health probe', () => {
   });
 
   it('replaces engine_missing only where the engine truly answers (milestone composition)', async () => {
-    const qualified: QualificationMilestone[] = [{
-      id: 'local-engine',
-      status: 'met',
-      qualifiedAt: new Date().toISOString(),
-      categories: ['spelling', 'grammar'],
-      notes: 'synthetic milestone — composition test only',
-    }];
+    const qualified: QualificationMilestone[] = [
+      {
+        id: 'local-engine',
+        status: 'met',
+        qualifiedAt: new Date().toISOString(),
+        categories: ['spelling', 'grammar'],
+        notes: 'synthetic milestone — composition test only',
+      },
+    ];
 
     // Nobody has contacted the engine: a met milestone alone cannot claim availability.
     const fresh = capabilityWith(stub(() => jsonResponse(ltBody([]))).fetchImpl);
-    expect(effectiveCategoryAvailability('grammar', {
-      enginePresent: fresh.hasEngine(),
-      milestones: qualified,
-    })).toBe('engine_missing');
+    expect(
+      effectiveCategoryAvailability('grammar', {
+        enginePresent: fresh.hasEngine(),
+        milestones: qualified,
+      }),
+    ).toBe('engine_missing');
 
     // The engine truly answers: milestone AND engine together read available.
     const answered = capabilityWith(stub(() => jsonResponse(ltBody([]))).fetchImpl);
-    expect(await answered.review(request({ categories: ['grammar'] })))
-      .toEqual({ status: 'no_supported_findings' });
+    expect(await answered.review(request({ categories: ['grammar'] }))).toEqual({
+      status: 'no_supported_findings',
+    });
     expect(answered.hasEngine()).toBe(true);
-    expect(effectiveCategoryAvailability('grammar', {
-      enginePresent: answered.hasEngine(),
-      milestones: qualified,
-    })).toBe('available');
+    expect(
+      effectiveCategoryAvailability('grammar', {
+        enginePresent: answered.hasEngine(),
+        milestones: qualified,
+      }),
+    ).toBe('available');
     // With no recorded milestone, presence alone still reports engine_missing.
-    expect(effectiveCategoryAvailability('grammar', {
-      enginePresent: answered.hasEngine(),
-      milestones: [],
-    })).toBe('engine_missing');
+    expect(
+      effectiveCategoryAvailability('grammar', {
+        enginePresent: answered.hasEngine(),
+        milestones: [],
+      }),
+    ).toBe('engine_missing');
   });
 });
 
@@ -346,8 +363,12 @@ describe('LanguageTool adapter — request gating', () => {
     for (const language of ['en', 'en-GB', 'de-DE', 'fr']) {
       await capability.review(request({ language }));
     }
-    expect(calls.map((call) => (call.init?.body as URLSearchParams)?.get('language')))
-      .toEqual(['en-US', 'en-GB', 'de', 'fr']);
+    expect(calls.map((call) => (call.init?.body as URLSearchParams)?.get('language'))).toEqual([
+      'en-US',
+      'en-GB',
+      'de',
+      'fr',
+    ]);
   });
 
   it('maps a 400 language rejection to unsupported_language and counts it as an answer', async () => {
@@ -402,39 +423,51 @@ describe('LanguageTool adapter — honest unavailability', () => {
 
   it('maps unparseable and structurally broken bodies to incomplete_analysis', async () => {
     const notJson = stub(() => new Response('not json', { status: 200 }));
-    expect(await capabilityWith(notJson.fetchImpl).review(request()))
-      .toEqual({ status: 'unavailable', reason: 'incomplete_analysis' });
+    expect(await capabilityWith(notJson.fetchImpl).review(request())).toEqual({
+      status: 'unavailable',
+      reason: 'incomplete_analysis',
+    });
 
     const noMatchesArray = stub(() => jsonResponse({ software: {}, matches: 'nope' }));
-    expect(await capabilityWith(noMatchesArray.fetchImpl).review(request()))
-      .toEqual({ status: 'unavailable', reason: 'incomplete_analysis' });
+    expect(await capabilityWith(noMatchesArray.fetchImpl).review(request())).toEqual({
+      status: 'unavailable',
+      reason: 'incomplete_analysis',
+    });
 
     const nonObjectMatch = stub(() => jsonResponse(ltBody([null])));
-    expect(await capabilityWith(nonObjectMatch.fetchImpl).review(request()))
-      .toEqual({ status: 'unavailable', reason: 'incomplete_analysis' });
+    expect(await capabilityWith(nonObjectMatch.fetchImpl).review(request())).toEqual({
+      status: 'unavailable',
+      reason: 'incomplete_analysis',
+    });
   });
 
   it('fails the run when the engine answer mis-maps (validator rejects — never silent)', async () => {
     // Out-of-range offsets: the adapter cites an empty quote rather than
     // slicing a wrong span, and the validator's rejection fails the run.
     const badOffsets = stub(() => jsonResponse(ltBody([ltMatch({ offset: 999 })])));
-    expect(await capabilityWith(badOffsets.fetchImpl).review(request()))
-      .toEqual({ status: 'unavailable', reason: 'incomplete_analysis' });
+    expect(await capabilityWith(badOffsets.fetchImpl).review(request())).toEqual({
+      status: 'unavailable',
+      reason: 'incomplete_analysis',
+    });
 
     // A match without any explanation cannot be grounded honestly.
     const noExplanation = stub(() => jsonResponse(ltBody([ltMatch({ message: '' })])));
-    expect(await capabilityWith(noExplanation.fetchImpl).review(request()))
-      .toEqual({ status: 'unavailable', reason: 'incomplete_analysis' });
+    expect(await capabilityWith(noExplanation.fetchImpl).review(request())).toEqual({
+      status: 'unavailable',
+      reason: 'incomplete_analysis',
+    });
   });
 
   it('reports no_supported_findings for an empty or fully filtered analysis', async () => {
     const empty = stub(() => jsonResponse(ltBody([])));
-    expect(await capabilityWith(empty.fetchImpl).review(request()))
-      .toEqual({ status: 'no_supported_findings' });
+    expect(await capabilityWith(empty.fetchImpl).review(request())).toEqual({
+      status: 'no_supported_findings',
+    });
 
     // The only match overlaps an approved term — a clean run, not a failure.
     const filtered = stub(() => jsonResponse(ltBody([ltMatch({ offset: 0, length: 3 })])));
-    expect(await capabilityWith(filtered.fetchImpl).review(request({ approvedTerms: ['The'] })))
-      .toEqual({ status: 'no_supported_findings' });
+    expect(
+      await capabilityWith(filtered.fetchImpl).review(request({ approvedTerms: ['The'] })),
+    ).toEqual({ status: 'no_supported_findings' });
   });
 });

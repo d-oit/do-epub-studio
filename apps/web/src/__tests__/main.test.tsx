@@ -87,15 +87,15 @@ describe('main.tsx', () => {
     rejectionListeners = [];
     loadListeners = [];
 
-    addEventListenerSpy = vi.spyOn(window, 'addEventListener').mockImplementation(
-      (event: string, listener: EventListenerOrEventListenerObject) => {
+    addEventListenerSpy = vi
+      .spyOn(window, 'addEventListener')
+      .mockImplementation((event: string, listener: EventListenerOrEventListenerObject) => {
         const fn = typeof listener === 'function' ? listener : listener.handleEvent.bind(listener);
         if (event === 'error') errorListeners.push(fn);
         else if (event === 'unhandledrejection') rejectionListeners.push(fn);
         else if (event === 'load') loadListeners.push(fn);
         return undefined;
-      },
-    );
+      });
 
     originalNavigator = globalThis.navigator;
     mockServiceWorker = {

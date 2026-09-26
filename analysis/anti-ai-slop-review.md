@@ -10,24 +10,24 @@ All three locale files (en, de, fr) are **clean** — no AI-slop patterns detect
 
 ## Audit by Pattern
 
-| Pattern | Found? | Notes |
-|---------|--------|-------|
-| Purple gradient hero | ❌ | No hero sections in i18n |
-| Glassmorphism cards | ❌ | Not a copy concern |
-| Rounded everything | ❌ | Not a copy concern |
-| Inter / DM Sans | ❌ | Typography handled in CSS, not i18n |
-| Hero headline formula | ❌ | No marketing headlines. Login subtitle is functional: "Sign in to access your books" |
-| Three-column feature grid | ❌ | No feature grid in i18n |
-| CTA: "Get started for free" | ❌ | CTAs are functional: "Sign In", "Create Book", "Save" |
-| Empty states with illustration | ❌ | Empty states use text only |
-| Animated gradient text | ❌ | Not a copy concern |
-| Hollow affirmations | ❌ | No "Absolutely!", "Great question!", etc. |
-| AI Corporate Superlatives | ❌ | No "powerful", "seamless", "intuitive", "robust" |
-| Transition theater | ❌ | No "In conclusion", "To summarize" |
-| Emoji inflation | ❌ | Zero emojis across all 3 locales |
-| Generic error: blame user | ❌ | Errors are specific: "Failed to load grants", "Invalid email or password" |
-| CTA: describe UI action | ❌ | CTAs describe outcome: "Create Book", not "Click here" |
-| Placeholder as label | ❌ | All inputs have proper labels; placeholders supplement |
+| Pattern                        | Found? | Notes                                                                                |
+| ------------------------------ | ------ | ------------------------------------------------------------------------------------ |
+| Purple gradient hero           | ❌     | No hero sections in i18n                                                             |
+| Glassmorphism cards            | ❌     | Not a copy concern                                                                   |
+| Rounded everything             | ❌     | Not a copy concern                                                                   |
+| Inter / DM Sans                | ❌     | Typography handled in CSS, not i18n                                                  |
+| Hero headline formula          | ❌     | No marketing headlines. Login subtitle is functional: "Sign in to access your books" |
+| Three-column feature grid      | ❌     | No feature grid in i18n                                                              |
+| CTA: "Get started for free"    | ❌     | CTAs are functional: "Sign In", "Create Book", "Save"                                |
+| Empty states with illustration | ❌     | Empty states use text only                                                           |
+| Animated gradient text         | ❌     | Not a copy concern                                                                   |
+| Hollow affirmations            | ❌     | No "Absolutely!", "Great question!", etc.                                            |
+| AI Corporate Superlatives      | ❌     | No "powerful", "seamless", "intuitive", "robust"                                     |
+| Transition theater             | ❌     | No "In conclusion", "To summarize"                                                   |
+| Emoji inflation                | ❌     | Zero emojis across all 3 locales                                                     |
+| Generic error: blame user      | ❌     | Errors are specific: "Failed to load grants", "Invalid email or password"            |
+| CTA: describe UI action        | ❌     | CTAs describe outcome: "Create Book", not "Click here"                               |
+| Placeholder as label           | ❌     | All inputs have proper labels; placeholders supplement                               |
 
 ## One Minor Finding
 

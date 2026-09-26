@@ -1,11 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import {
-  configureAiConsentStorage,
-  isAiEnabled,
-  setAiEnabled,
-  type AiConsentStorage,
-} from '../ai';
+import { configureAiConsentStorage, isAiEnabled, setAiEnabled, type AiConsentStorage } from '../ai';
 
 interface FakeStorage extends AiConsentStorage {
   data: Map<string, string>;

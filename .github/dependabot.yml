@@ -1,41 +1,41 @@
 version: 2
 updates:
   # GitHub Actions
-  - package-ecosystem: "github-actions"
-    directory: "/"
+  - package-ecosystem: 'github-actions'
+    directory: '/'
     schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
-      timezone: "UTC"
+      interval: 'weekly'
+      day: 'monday'
+      time: '09:00'
+      timezone: 'UTC'
     open-pull-requests-limit: 10
     labels:
-      - "deps"
-      - "github-actions"
+      - 'deps'
+      - 'github-actions'
     commit-message:
-      prefix: "ci"
+      prefix: 'ci'
     groups:
       github-actions:
         patterns:
-          - "*"
+          - '*'
         update-types:
-          - "minor"
-          - "patch"
+          - 'minor'
+          - 'patch'
 
   # npm/pnpm dependencies
-  - package-ecosystem: "npm"
-    directory: "/"
+  - package-ecosystem: 'npm'
+    directory: '/'
     schedule:
-      interval: "weekly"
-      day: "tuesday"
-      time: "09:00"
-      timezone: "UTC"
+      interval: 'weekly'
+      day: 'tuesday'
+      time: '09:00'
+      timezone: 'UTC'
     open-pull-requests-limit: 10
     labels:
-      - "deps"
-      - "npm"
+      - 'deps'
+      - 'npm'
     commit-message:
-      prefix: "chore"
+      prefix: 'chore'
     groups:
       # react + types must move as one unit: a lone react-dom bump (e.g. #1171)
       # leaves a skewed pairing that ADR-250/GOAP-271 then has to close. Defined
@@ -44,38 +44,38 @@ updates:
       # (production, patch-only) and @types/react (development) on their own.
       react:
         patterns:
-          - "react"
-          - "react-dom"
-          - "@types/react"
-          - "@types/react-dom"
+          - 'react'
+          - 'react-dom'
+          - '@types/react'
+          - '@types/react-dom'
       dev-dependencies:
-        dependency-type: "development"
+        dependency-type: 'development'
         update-types:
-          - "minor"
-          - "patch"
+          - 'minor'
+          - 'patch'
       production-dependencies:
-        dependency-type: "production"
+        dependency-type: 'production'
         update-types:
-          - "patch"
+          - 'patch'
     ignore:
       # @intity/epub-js 0.3.97 is an un-importable npm publish (package.json
       # main/module point to lib/index.js + src/index.js that the tarball does
       # not ship; only dist/, types/ are published). Upgrading also drags
       # jsdom@29/resize-observer into the reader runtime bundle. Do not re-propose
       # it; retry only on a fixed release that ships a resolvable entry point.
-      - dependency-name: "@intity/epub-js"
-        versions: [">=0.3.97, <0.4.0"]
+      - dependency-name: '@intity/epub-js'
+        versions: ['>=0.3.97, <0.4.0']
 
   # Docker (if used)
-  - package-ecosystem: "docker"
-    directory: "/"
+  - package-ecosystem: 'docker'
+    directory: '/'
     schedule:
-      interval: "monthly"
-      time: "09:00"
-      timezone: "UTC"
+      interval: 'monthly'
+      time: '09:00'
+      timezone: 'UTC'
     open-pull-requests-limit: 3
     labels:
-      - "deps"
-      - "docker"
+      - 'deps'
+      - 'docker'
     commit-message:
-      prefix: "chore"
+      prefix: 'chore'

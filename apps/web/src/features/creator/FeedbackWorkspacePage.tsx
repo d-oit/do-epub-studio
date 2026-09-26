@@ -14,7 +14,12 @@ import {
   type CreatorBook,
   type Disposition,
 } from '../../lib/api/creator';
-import type { FeedbackCategory, FeedbackItem, FeedbackStatus, FeedbackAnchorState } from '../../lib/api/feedback';
+import type {
+  FeedbackCategory,
+  FeedbackItem,
+  FeedbackStatus,
+  FeedbackAnchorState,
+} from '../../lib/api/feedback';
 import { createTraceId } from '@do-epub-studio/shared';
 import { logClientEvent } from '../../lib/client-logger';
 import type { TFunction } from '../../hooks/useTranslation';
@@ -23,10 +28,20 @@ import { AssistancePanel } from './AssistancePanel';
 import { useCreatorBooks } from './hooks/useCreatorBooks';
 
 const STATUSES: FeedbackStatus[] = ['open', 'accepted', 'declined', 'resolved'];
-const CATEGORIES: FeedbackCategory[] = ['general', 'grammar', 'spelling', 'story', 'logic', 'style'];
+const CATEGORIES: FeedbackCategory[] = [
+  'general',
+  'grammar',
+  'spelling',
+  'story',
+  'logic',
+  'style',
+];
 
 /** Read-time anchor states, labelled for the reviewer looking at provenance. */
-const ANCHOR_STATE_LABEL: Record<FeedbackAnchorState, 'ref.anchorResolved' | 'ref.anchorSourceChanged' | 'ref.anchorUnresolved'> = {
+const ANCHOR_STATE_LABEL: Record<
+  FeedbackAnchorState,
+  'ref.anchorResolved' | 'ref.anchorSourceChanged' | 'ref.anchorUnresolved'
+> = {
   resolved: 'ref.anchorResolved',
   source_changed: 'ref.anchorSourceChanged',
   unresolved: 'ref.anchorUnresolved',
@@ -34,10 +49,14 @@ const ANCHOR_STATE_LABEL: Record<FeedbackAnchorState, 'ref.anchorResolved' | 're
 
 function statusLabel(t: TFunction, status: string): string {
   switch (status) {
-    case 'accepted': return t('feedback.statusAccepted');
-    case 'declined': return t('feedback.statusDeclined');
-    case 'resolved': return t('feedback.statusResolved');
-    default: return t('feedback.statusOpen');
+    case 'accepted':
+      return t('feedback.statusAccepted');
+    case 'declined':
+      return t('feedback.statusDeclined');
+    case 'resolved':
+      return t('feedback.statusResolved');
+    default:
+      return t('feedback.statusOpen');
   }
 }
 
@@ -80,7 +99,8 @@ export function FeedbackWorkspacePage(): React.JSX.Element {
       const message = err instanceof Error ? err.message : String(err);
       store.setError(message);
       logClientEvent({
-        level: 'error', traceId: createTraceId(),
+        level: 'error',
+        traceId: createTraceId(),
         event: 'creator.feedback.failed',
         error: { name: 'Error', message },
       });
@@ -95,7 +115,10 @@ export function FeedbackWorkspacePage(): React.JSX.Element {
     void load();
   }, [bookId, load]);
 
-  const selected2 = useMemo(() => items.find((f) => f.id === selectedId) ?? null, [items, selectedId]);
+  const selected2 = useMemo(
+    () => items.find((f) => f.id === selectedId) ?? null,
+    [items, selectedId],
+  );
 
   const openDetail = useCallback(
     async (item: FeedbackItem) => {
@@ -161,8 +184,18 @@ export function FeedbackWorkspacePage(): React.JSX.Element {
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-8">
-      <nav aria-label={'breadcrumb'} /* eslint-disable-line i18next/no-literal-string -- ARIA landmark label constant */ className="text-sm text-foreground-muted">
-        <Link to={'/creator'} /* eslint-disable-line i18next/no-literal-string -- route path constant */ className="underline underline-offset-2">{t('creator.title')}</Link>
+      <nav
+        // eslint-disable-next-line i18next/no-literal-string -- ARIA landmark label constant; disable sits above the literal because prettier splits the attribute onto its own line
+        aria-label={'breadcrumb'}
+        className="text-sm text-foreground-muted"
+      >
+        <Link
+          // eslint-disable-next-line i18next/no-literal-string -- route path constant; see note above
+          to={'/creator'}
+          className="underline underline-offset-2"
+        >
+          {t('creator.title')}
+        </Link>
       </nav>
       <h1 className="mt-1 font-display text-2xl font-semibold">{book?.title ?? bookId}</h1>
 
@@ -179,7 +212,9 @@ export function FeedbackWorkspacePage(): React.JSX.Element {
           >
             <option value="">—</option>
             {STATUSES.map((s) => (
-              <option key={s} value={s}>{statusLabel(t, s)}</option>
+              <option key={s} value={s}>
+                {statusLabel(t, s)}
+              </option>
             ))}
           </select>
         </label>
@@ -195,7 +230,9 @@ export function FeedbackWorkspacePage(): React.JSX.Element {
           >
             <option value="">—</option>
             {CATEGORIES.map((c) => (
-              <option key={c} value={c}>{c}</option>
+              <option key={c} value={c}>
+                {c}
+              </option>
             ))}
           </select>
         </label>
@@ -211,16 +248,22 @@ export function FeedbackWorkspacePage(): React.JSX.Element {
       </div>
 
       {actionError && (
-        <p role="alert" className="mt-3 text-sm text-red-600 dark:text-red-400">{actionError}</p>
+        <p role="alert" className="mt-3 text-sm text-red-600 dark:text-red-400">
+          {actionError}
+        </p>
       )}
 
       {isLoading && items.length === 0 && (
-        <div className="mt-8 flex justify-center"><Spinner /></div>
+        <div className="mt-8 flex justify-center">
+          <Spinner />
+        </div>
       )}
 
       {error && items.length === 0 && (
         <div className="mt-8 rounded-lg border border-border p-4">
-          <p role="alert" className="text-sm text-foreground-muted">{t('creator.loadError')}</p>
+          <p role="alert" className="text-sm text-foreground-muted">
+            {t('creator.loadError')}
+          </p>
           <button
             type="button"
             onClick={() => void load()}
@@ -242,7 +285,9 @@ export function FeedbackWorkspacePage(): React.JSX.Element {
           <ul className="space-y-2">
             {items.map((item) => (
               <li key={item.id}>
-                <div className={`flex items-start gap-2 rounded-lg border p-3 ${selectedId === item.id ? 'border-accent' : 'border-border'}`}>
+                <div
+                  className={`flex items-start gap-2 rounded-lg border p-3 ${selectedId === item.id ? 'border-accent' : 'border-border'}`}
+                >
                   <input
                     type="checkbox"
                     checked={selected.has(item.id)}
@@ -279,7 +324,10 @@ export function FeedbackWorkspacePage(): React.JSX.Element {
                 <h2 className="text-sm text-foreground-muted">
                   {selected2.kind} · {selected2.category} · {statusLabel(t, selected2.status)}
                 </h2>
-                <section aria-label={t('creator.referencesLabel')} className="mt-2 rounded-lg bg-background-secondary p-3 text-sm">
+                <section
+                  aria-label={t('creator.referencesLabel')}
+                  className="mt-2 rounded-lg bg-background-secondary p-3 text-sm"
+                >
                   <div className="flex flex-wrap items-center gap-2 text-xs text-foreground-muted">
                     <span
                       aria-label={t(ANCHOR_STATE_LABEL[selected2.anchorState ?? 'unresolved'])}
@@ -293,10 +341,16 @@ export function FeedbackWorkspacePage(): React.JSX.Element {
                       </span>
                     )}
                   </div>
-                  {selected2.anchor.chapterRef && <p>{`${t('creator.referencesLabel')}: ${selected2.anchor.chapterRef}`}</p>}
-                  {selected2.anchor.cfi && <p className="break-all font-mono text-xs">{selected2.anchor.cfi}</p>}
+                  {selected2.anchor.chapterRef && (
+                    <p>{`${t('creator.referencesLabel')}: ${selected2.anchor.chapterRef}`}</p>
+                  )}
+                  {selected2.anchor.cfi && (
+                    <p className="break-all font-mono text-xs">{selected2.anchor.cfi}</p>
+                  )}
                   {selected2.anchor.selectedText && (
-                    <blockquote className="mt-1 border-l-2 border-accent pl-2">{selected2.anchor.selectedText}</blockquote>
+                    <blockquote className="mt-1 border-l-2 border-accent pl-2">
+                      {selected2.anchor.selectedText}
+                    </blockquote>
                   )}
                 </section>
                 <p className="mt-3 text-sm">{selected2.body}</p>
@@ -340,21 +394,37 @@ export function FeedbackWorkspacePage(): React.JSX.Element {
                   <div className="mt-3 flex flex-wrap gap-2">
                     {selected2.kind === 'suggestion' && selected2.status === 'open' && (
                       <>
-                        <button type="button" onClick={() => void applyDisposition('accepted')} className="rounded-lg border border-border px-3 py-1 text-sm hover:bg-background-secondary">
+                        <button
+                          type="button"
+                          onClick={() => void applyDisposition('accepted')}
+                          className="rounded-lg border border-border px-3 py-1 text-sm hover:bg-background-secondary"
+                        >
                           {t('creator.accept')}
                         </button>
-                        <button type="button" onClick={() => void applyDisposition('declined')} className="rounded-lg border border-border px-3 py-1 text-sm hover:bg-background-secondary">
+                        <button
+                          type="button"
+                          onClick={() => void applyDisposition('declined')}
+                          className="rounded-lg border border-border px-3 py-1 text-sm hover:bg-background-secondary"
+                        >
                           {t('creator.decline')}
                         </button>
                       </>
                     )}
                     {selected2.kind === 'comment' && selected2.status === 'open' && (
-                      <button type="button" onClick={() => void applyDisposition('resolved')} className="rounded-lg border border-border px-3 py-1 text-sm hover:bg-background-secondary">
+                      <button
+                        type="button"
+                        onClick={() => void applyDisposition('resolved')}
+                        className="rounded-lg border border-border px-3 py-1 text-sm hover:bg-background-secondary"
+                      >
                         {t('creator.resolve')}
                       </button>
                     )}
                     {selected2.status !== 'open' && (
-                      <button type="button" onClick={() => void applyDisposition('open')} className="rounded-lg border border-border px-3 py-1 text-sm hover:bg-background-secondary">
+                      <button
+                        type="button"
+                        onClick={() => void applyDisposition('open')}
+                        className="rounded-lg border border-border px-3 py-1 text-sm hover:bg-background-secondary"
+                      >
                         {t('creator.reopen')}
                       </button>
                     )}
@@ -364,7 +434,6 @@ export function FeedbackWorkspacePage(): React.JSX.Element {
             )}
           </div>
         </div>
-
       )}
 
       <ReferencesPanel bookId={bookId ?? ''} />

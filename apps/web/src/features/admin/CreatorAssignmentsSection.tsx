@@ -14,7 +14,11 @@ interface CreatorAssignmentsSectionProps {
 }
 
 /** GOAP-999 COL-01: minimal per-book creator assignment UI on the grants page. */
-export function CreatorAssignmentsSection({ bookId, token, executeWithStepUp }: CreatorAssignmentsSectionProps): React.JSX.Element | null {
+export function CreatorAssignmentsSection({
+  bookId,
+  token,
+  executeWithStepUp,
+}: CreatorAssignmentsSectionProps): React.JSX.Element | null {
   const { t } = useTranslation();
   const [assignments, setAssignments] = useState<CreatorAssignment[]>([]);
   const [email, setEmail] = useState('');
@@ -76,8 +80,13 @@ export function CreatorAssignmentsSection({ bookId, token, executeWithStepUp }: 
   };
 
   return (
-    <section aria-label={t('creator.assigned')} className="mt-6 rounded-lg border border-[var(--color-rule)] p-4">
-      <h2 className="text-sm font-semibold uppercase tracking-wide text-foreground-muted">{t('creator.assigned')}</h2>
+    <section
+      aria-label={t('creator.assigned')}
+      className="mt-6 rounded-lg border border-[var(--color-rule)] p-4"
+    >
+      <h2 className="text-sm font-semibold uppercase tracking-wide text-foreground-muted">
+        {t('creator.assigned')}
+      </h2>
 
       {assignments.length > 0 && (
         <ul className="mt-2 space-y-1">
@@ -116,7 +125,11 @@ export function CreatorAssignmentsSection({ bookId, token, executeWithStepUp }: 
         </button>
       </div>
 
-      {error && <p role="alert" className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
+      {error && (
+        <p role="alert" className="mt-2 text-sm text-red-600 dark:text-red-400">
+          {error}
+        </p>
+      )}
     </section>
   );
 }

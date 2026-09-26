@@ -80,7 +80,7 @@ for (const [name, currentBench] of currentBenchs) {
     current: currentBench.hz,
     baseline: baselineBench.hz,
     change,
-    isRegression
+    isRegression,
   });
 }
 
@@ -91,9 +91,10 @@ markdown += '| :--- | :--- | :--- | :--- | :--- |\n';
 
 for (const res of results) {
   // Treat 0 as a valid baseline value; only null means "no baseline available".
-  const baselineStr = res.baseline !== null && res.baseline !== undefined
-    ? res.baseline.toLocaleString(undefined, { maximumFractionDigits: 2 })
-    : 'N/A';
+  const baselineStr =
+    res.baseline !== null && res.baseline !== undefined
+      ? res.baseline.toLocaleString(undefined, { maximumFractionDigits: 2 })
+      : 'N/A';
   const currentStr = res.current.toLocaleString(undefined, { maximumFractionDigits: 2 });
   let changeStr;
   if (res.change === null) {

@@ -1,19 +1,8 @@
 import { apiRequest } from './core';
 
 export type FeedbackKind = 'comment' | 'suggestion';
-export type FeedbackCategory =
-  | 'general'
-  | 'grammar'
-  | 'spelling'
-  | 'story'
-  | 'logic'
-  | 'style';
-export type FeedbackStatus =
-  | 'open'
-  | 'accepted'
-  | 'declined'
-  | 'resolved'
-  | 'withdrawn';
+export type FeedbackCategory = 'general' | 'grammar' | 'spelling' | 'story' | 'logic' | 'style';
+export type FeedbackStatus = 'open' | 'accepted' | 'declined' | 'resolved' | 'withdrawn';
 export type FeedbackDelivery = 'draft' | 'pending' | 'sent' | 'failed' | 'blocked';
 
 /** Read-time provenance the server derives; never sent by a client. */

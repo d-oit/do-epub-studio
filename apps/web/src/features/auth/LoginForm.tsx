@@ -12,21 +12,44 @@ export interface LoginFormRefs {
   passwordRef: React.RefObject<HTMLInputElement | null>;
 }
 
-function SubmitButton({ children, loadingLabel, disabled }: { children: React.ReactNode; loadingLabel: string; disabled?: boolean }) {
+function SubmitButton({
+  children,
+  loadingLabel,
+  disabled,
+}: {
+  children: React.ReactNode;
+  loadingLabel: string;
+  disabled?: boolean;
+}) {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" className="w-full" disabled={disabled} isLoading={pending} loadingLabel={loadingLabel}>
+    <Button
+      type="submit"
+      className="w-full"
+      disabled={disabled}
+      isLoading={pending}
+      loadingLabel={loadingLabel}
+    >
       {children}
     </Button>
   );
 }
 
-export function LoginForm({ action, onRecovery, emailRef, passwordRef, noBookContext }: { action: FormAction; onRecovery: () => void; noBookContext?: boolean } & LoginFormRefs) {
+export function LoginForm({
+  action,
+  onRecovery,
+  emailRef,
+  passwordRef,
+  noBookContext,
+}: { action: FormAction; onRecovery: () => void; noBookContext?: boolean } & LoginFormRefs) {
   const { t } = useTranslation();
   return (
     <form action={action} noValidate>
       {noBookContext && (
-        <p role="status" className="mb-4 p-3 bg-background-tertiary border border-border rounded-lg text-sm text-foreground-muted">
+        <p
+          role="status"
+          className="mb-4 p-3 bg-background-tertiary border border-border rounded-lg text-sm text-foreground-muted"
+        >
           {t('login.noBookContext')}
         </p>
       )}
@@ -77,9 +100,7 @@ export function RecoveryForm({ action, onBack }: { action: FormAction; onBack: (
   return (
     <form action={action}>
       <div className="space-y-4">
-        <p className="text-sm text-foreground-muted mb-4">
-          {t('login.recoveryInstructions')}
-        </p>
+        <p className="text-sm text-foreground-muted mb-4">{t('login.recoveryInstructions')}</p>
         <Input
           id="email"
           label={t('login.emailLabel')}
@@ -89,17 +110,10 @@ export function RecoveryForm({ action, onBack }: { action: FormAction; onBack: (
           autoComplete="email"
         />
 
-        <SubmitButton loadingLabel={t('login.signingIn')}>
-          {t('login.sendMagicLink')}
-        </SubmitButton>
+        <SubmitButton loadingLabel={t('login.signingIn')}>{t('login.sendMagicLink')}</SubmitButton>
 
         <div className="text-center mt-4">
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={onBack}
-          >
+          <Button type="button" variant="ghost" size="sm" onClick={onBack}>
             {t('login.backToLogin')}
           </Button>
         </div>

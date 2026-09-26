@@ -6,7 +6,10 @@ import { logAudit } from '../../audit';
 import { adminAuth } from '../../middleware/auth';
 import { AuditQuerySchema } from '@do-epub-studio/shared';
 
-export const auditRouter = new Hono<{ Bindings: Env; Variables: { adminUser: { email: string; id: string; role: string } } }>();
+export const auditRouter = new Hono<{
+  Bindings: Env;
+  Variables: { adminUser: { email: string; id: string; role: string } };
+}>();
 
 const MAX_AUDIT_OFFSET = 100_000;
 
@@ -14,11 +17,15 @@ auditRouter.get('/audit', adminAuth, zValidator('query', AuditQuerySchema), asyn
   const { entityType, entityId, action, limit, from, to } = c.req.valid('query');
   const offset = Math.min(c.req.valid('query').offset, MAX_AUDIT_OFFSET);
 
-  await logAudit(c.env, {
-    entityType: entityType ?? 'user', // default to user for query logging if undefined
-    entityId: entityId ?? '',
-    action: 'query',
-  }, c.executionCtx);
+  await logAudit(
+    c.env,
+    {
+      entityType: entityType ?? 'user', // default to user for query logging if undefined
+      entityId: entityId ?? '',
+      action: 'query',
+    },
+    c.executionCtx,
+  );
 
   const conditions: string[] = [];
   const args: (string | number)[] = [];
@@ -68,7 +75,9 @@ auditRouter.get('/audit', adminAuth, zValidator('query', AuditQuerySchema), asyn
         entityType: row.entity_type,
         entityId: row.entity_id,
         action: row.action,
-        payload: row.payload_json ? (JSON.parse(row.payload_json as string) as Record<string, unknown>) : null,
+        payload: row.payload_json
+          ? (JSON.parse(row.payload_json as string) as Record<string, unknown>)
+          : null,
         createdAt: row.created_at,
       })),
       total,

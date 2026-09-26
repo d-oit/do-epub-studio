@@ -31,7 +31,12 @@ export type MfaFactorOutcome =
   | {
       ok: true;
       stored: { raw_challenge: string };
-      credential: { credential_id: string; public_key: string; counter: number; transports: string | null };
+      credential: {
+        credential_id: string;
+        public_key: string;
+        counter: number;
+        transports: string | null;
+      };
       newCounter: number;
     }
   | { ok: false; status: number; code: string; message: string };
@@ -56,11 +61,17 @@ export type PasskeyVerifyFailureReason =
 export interface PasskeyVerifyOk {
   ok: true;
   stored: { raw_challenge: string };
-  credential: { credential_id: string; public_key: string; counter: number; transports: string | null };
+  credential: {
+    credential_id: string;
+    public_key: string;
+    counter: number;
+    transports: string | null;
+  };
   newCounter: number;
 }
 
-export type PasskeyVerifyResult = PasskeyVerifyOk | { ok: false; reason: PasskeyVerifyFailureReason };
+export type PasskeyVerifyResult =
+  PasskeyVerifyOk | { ok: false; reason: PasskeyVerifyFailureReason };
 
 /**
  * Shared WebAuthn authentication-verify core: decode + consume the single-use
@@ -137,13 +148,17 @@ export async function logMfaFailure(
   user: { id: string; email: string },
   reason: string,
 ): Promise<void> {
-  await logAudit(c.env, {
-    entityType: 'user',
-    entityId: user.id,
-    action: 'mfa_auth_failure',
-    actorEmail: user.email,
-    payload: { reason },
-  }, c.executionCtx);
+  await logAudit(
+    c.env,
+    {
+      entityType: 'user',
+      entityId: user.id,
+      action: 'mfa_auth_failure',
+      actorEmail: user.email,
+      payload: { reason },
+    },
+    c.executionCtx,
+  );
 }
 
 /** Emit a login-ticket replay risk event (ADR-234 item 7). */
@@ -167,13 +182,28 @@ export async function verifyPasskeyFactor(
 ): Promise<MfaFactorOutcome> {
   const result = await verifyPasskeyAuthentication(c.env, response, user.id);
   if (result.ok) {
-    return { ok: true, stored: result.stored, credential: result.credential, newCounter: result.newCounter };
+    return {
+      ok: true,
+      stored: result.stored,
+      credential: result.credential,
+      newCounter: result.newCounter,
+    };
   }
   if (result.reason === 'missing_challenge') {
-    return { ok: false, status: 400, code: 'INVALID_CHALLENGE', message: 'Invalid or missing WebAuthn challenge' };
+    return {
+      ok: false,
+      status: 400,
+      code: 'INVALID_CHALLENGE',
+      message: 'Invalid or missing WebAuthn challenge',
+    };
   }
   if (result.reason === 'invalid_challenge') {
-    return { ok: false, status: 400, code: 'INVALID_CHALLENGE', message: 'Invalid, used, or expired challenge' };
+    return {
+      ok: false,
+      status: 400,
+      code: 'INVALID_CHALLENGE',
+      message: 'Invalid, used, or expired challenge',
+    };
   }
   await logMfaFailure(c, user, result.reason);
   return MFA_FAILURE_OUTCOME;

@@ -31,9 +31,7 @@ export function NotFoundPage() {
         <h2 className="text-xl font-semibold text-foreground-muted mb-4">
           {t('errors.notFound.title')}
         </h2>
-        <p className="text-foreground-muted mb-8">
-          {t('errors.notFound.description')}
-        </p>
+        <p className="text-foreground-muted mb-8">{t('errors.notFound.description')}</p>
 
         <Link
           to="/"

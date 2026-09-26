@@ -27,7 +27,11 @@ describe('sanitizeAuditPayload', () => {
     const result = sanitizeAuditPayload(nested);
     let depth = 0;
     let current = result;
-    while (current.nested && typeof current.nested === 'object' && !('truncated' in current.nested)) {
+    while (
+      current.nested &&
+      typeof current.nested === 'object' &&
+      !('truncated' in current.nested)
+    ) {
       current = current.nested as Record<string, unknown>;
       depth++;
     }

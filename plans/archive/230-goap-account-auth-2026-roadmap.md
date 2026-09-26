@@ -12,26 +12,26 @@ This plan intentionally updates only `plans/` and does not implement code.
 
 ## Current Implementation Evidence
 
-| Area | Evidence | Current state |
-| --- | --- | --- |
-| Reader grant password auth | `apps/worker/src/auth/password.ts`, `apps/worker/src/routes/access.ts` | Argon2id grant passwords, rate limit, lockout, bearer reader sessions. |
-| Reader recovery | `apps/worker/src/routes/access.ts`, `apps/web/src/features/auth/LoginPage.tsx` | Magic-link session issuance; no password reset or single-use reset-token table. |
-| Admin password auth | `packages/schema/migrations/0002-admin-auth.sql`, `apps/worker/src/auth/admin-middleware.ts` | Admin user password hash, 8-hour bearer admin sessions. |
-| Admin recovery | `apps/worker/src/routes/admin/auth.ts`, `apps/web/src/features/admin/AdminRecoverPage.tsx` | Recovery link creates a session; frontend sends `newPassword`, but backend schema accepts only `token`. Response shape also differs. |
-| Demo accounts | `scripts/`, `packages/schema/migrations/`, E2E fixtures | No production-safe seed path; demo-like accounts exist only in tests/fixtures. |
-| Session posture | `docs/security-posture.md`, `apps/web/src/stores/auth.ts` | localStorage bearer token accepted with CSP/sanitizer/lockout compensating controls. |
+| Area                       | Evidence                                                                                     | Current state                                                                                                                        |
+| -------------------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| Reader grant password auth | `apps/worker/src/auth/password.ts`, `apps/worker/src/routes/access.ts`                       | Argon2id grant passwords, rate limit, lockout, bearer reader sessions.                                                               |
+| Reader recovery            | `apps/worker/src/routes/access.ts`, `apps/web/src/features/auth/LoginPage.tsx`               | Magic-link session issuance; no password reset or single-use reset-token table.                                                      |
+| Admin password auth        | `packages/schema/migrations/0002-admin-auth.sql`, `apps/worker/src/auth/admin-middleware.ts` | Admin user password hash, 8-hour bearer admin sessions.                                                                              |
+| Admin recovery             | `apps/worker/src/routes/admin/auth.ts`, `apps/web/src/features/admin/AdminRecoverPage.tsx`   | Recovery link creates a session; frontend sends `newPassword`, but backend schema accepts only `token`. Response shape also differs. |
+| Demo accounts              | `scripts/`, `packages/schema/migrations/`, E2E fixtures                                      | No production-safe seed path; demo-like accounts exist only in tests/fixtures.                                                       |
+| Session posture            | `docs/security-posture.md`, `apps/web/src/stores/auth.ts`                                    | localStorage bearer token accepted with CSP/sanitizer/lockout compensating controls.                                                 |
 
 ## Missing Implementation
 
-| ID | Priority | Recommendation | ADR |
-| --- | --- | --- | --- |
-| A1 | P0 | Fix admin recovery contract and replace magic-link login with real password reset semantics. | ADR-232 |
-| A2 | P0 | Add persistent, hashed, single-use reset-token records with expiry, attempt limits, audit events, and session revocation. | ADR-232 |
-| A3 | P1 | Make `users` the canonical account identity for reader/admin auth while preserving grant-email compatibility during migration. | ADR-231 |
-| A4 | P1 | Add account lifecycle endpoints for reader/admin password set/change, email verification, disabled state, and compromised-password recovery. | ADR-231 |
-| A5 | P1 | Harden admin auth with step-up controls, WebAuthn-ready MFA policy, session rotation, and sensitive-action reauthentication. | ADR-234 |
-| A6 | P2 | Add safe demo reader/admin accounts through an explicit non-production seed workflow, never migrations or tracked credentials. | ADR-233 |
-| A7 | P2 | Add auth observability that logs reset/session/account events without token, password, or reset-code disclosure. | ADR-231, ADR-232, ADR-234 |
+| ID  | Priority | Recommendation                                                                                                                               | ADR                       |
+| --- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
+| A1  | P0       | Fix admin recovery contract and replace magic-link login with real password reset semantics.                                                 | ADR-232                   |
+| A2  | P0       | Add persistent, hashed, single-use reset-token records with expiry, attempt limits, audit events, and session revocation.                    | ADR-232                   |
+| A3  | P1       | Make `users` the canonical account identity for reader/admin auth while preserving grant-email compatibility during migration.               | ADR-231                   |
+| A4  | P1       | Add account lifecycle endpoints for reader/admin password set/change, email verification, disabled state, and compromised-password recovery. | ADR-231                   |
+| A5  | P1       | Harden admin auth with step-up controls, WebAuthn-ready MFA policy, session rotation, and sensitive-action reauthentication.                 | ADR-234                   |
+| A6  | P2       | Add safe demo reader/admin accounts through an explicit non-production seed workflow, never migrations or tracked credentials.               | ADR-233                   |
+| A7  | P2       | Add auth observability that logs reset/session/account events without token, password, or reset-code disclosure.                             | ADR-231, ADR-232, ADR-234 |
 
 ## TRIZ Contradictions
 
@@ -76,14 +76,14 @@ keeps ordinary admin reads within the existing session model.
 
 ## Decomposition
 
-| Phase | Tasks | Dependencies | Gate |
-| --- | --- | --- | --- |
-| 1. Contract repair | Align admin recovery schema, response DTO, UI store update, and tests. | None | Unit tests prove no shape mismatch. |
-| 2. Reset foundation | Add reset-token table, schemas, route handlers, email templates, and audit events. | Phase 1 | Tokens are hashed, single-use, expiring, and attempt-limited. |
-| 3. Account lifecycle | Add user identity migration, account status fields, password set/change endpoints, and reader account linking. | Phase 2 | Existing grant login remains compatible. |
-| 4. Admin hardening | Add sensitive-action reauth, MFA-ready metadata, session rotation rules, and audit coverage. | Phase 3 | Admin mutations require current assurance. |
-| 5. Demo seed | Add non-production seed command and tests for reader/admin demo users. | Phase 3 | Production deploys cannot enable demo credentials. |
-| 6. Verification | Add worker route tests, web flow tests, E2E happy paths, Codacy check, and quality gate. | All phases | `./scripts/quality_gate.sh` passes. |
+| Phase                | Tasks                                                                                                          | Dependencies | Gate                                                          |
+| -------------------- | -------------------------------------------------------------------------------------------------------------- | ------------ | ------------------------------------------------------------- |
+| 1. Contract repair   | Align admin recovery schema, response DTO, UI store update, and tests.                                         | None         | Unit tests prove no shape mismatch.                           |
+| 2. Reset foundation  | Add reset-token table, schemas, route handlers, email templates, and audit events.                             | Phase 1      | Tokens are hashed, single-use, expiring, and attempt-limited. |
+| 3. Account lifecycle | Add user identity migration, account status fields, password set/change endpoints, and reader account linking. | Phase 2      | Existing grant login remains compatible.                      |
+| 4. Admin hardening   | Add sensitive-action reauth, MFA-ready metadata, session rotation rules, and audit coverage.                   | Phase 3      | Admin mutations require current assurance.                    |
+| 5. Demo seed         | Add non-production seed command and tests for reader/admin demo users.                                         | Phase 3      | Production deploys cannot enable demo credentials.            |
+| 6. Verification      | Add worker route tests, web flow tests, E2E happy paths, Codacy check, and quality gate.                       | All phases   | `./scripts/quality_gate.sh` passes.                           |
 
 ## Quality Gates
 

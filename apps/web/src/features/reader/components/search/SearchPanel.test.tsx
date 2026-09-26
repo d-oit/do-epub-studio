@@ -6,27 +6,29 @@ import type { Book } from '@intity/epub-js';
 
 vi.mock('../../hooks/useReaderSearch', () => ({
   useReaderSearch: vi.fn(),
-  highlightRanges: vi.fn(
-    (excerpt: string, query: string) =>
-      excerpt.includes(query)
-        ? [
-            { text: excerpt.slice(0, excerpt.indexOf(query)), hit: false },
-            { text: query, hit: true },
-            { text: excerpt.slice(excerpt.indexOf(query) + query.length), hit: false },
-          ]
-        : [{ text: excerpt, hit: false }],
+  highlightRanges: vi.fn((excerpt: string, query: string) =>
+    excerpt.includes(query)
+      ? [
+          { text: excerpt.slice(0, excerpt.indexOf(query)), hit: false },
+          { text: query, hit: true },
+          { text: excerpt.slice(excerpt.indexOf(query) + query.length), hit: false },
+        ]
+      : [{ text: excerpt, hit: false }],
   ),
 }));
 
-const mockUseReaderSearch = useReaderSearchHook.useReaderSearch as unknown as ReturnType<typeof vi.fn>;
+const mockUseReaderSearch = useReaderSearchHook.useReaderSearch as unknown as ReturnType<
+  typeof vi.fn
+>;
 
 describe('SearchPanel', () => {
   const mockOnClose = vi.fn();
   const mockOnNavigate = vi.fn();
   const mockT = vi.fn((key: string, params?: Record<string, unknown>) => {
-      if (key === 'reader.searchResultLabel') return `Search result ${params?.index}: ${params?.chapter}`;
-      return key;
-    });
+    if (key === 'reader.searchResultLabel')
+      return `Search result ${params?.index}: ${params?.chapter}`;
+    return key;
+  });
   const mockBook = {} as Book;
 
   beforeEach(() => {
@@ -43,7 +45,7 @@ describe('SearchPanel', () => {
         onClose={mockOnClose}
         onNavigate={mockOnNavigate}
         t={mockT}
-      />
+      />,
     );
 
     expect(screen.getByRole('searchbox')).toBeInTheDocument();
@@ -52,7 +54,12 @@ describe('SearchPanel', () => {
 
   it('shows results after typing and waiting for debounce', () => {
     const mockResults = [
-      { cfi: 'epubcfi(/1/2)', cfiRange: 'epubcfi(/1/2)', excerpt: 'the quick brown fox', chapterTitle: 'Chapter 1' },
+      {
+        cfi: 'epubcfi(/1/2)',
+        cfiRange: 'epubcfi(/1/2)',
+        excerpt: 'the quick brown fox',
+        chapterTitle: 'Chapter 1',
+      },
     ];
     mockUseReaderSearch.mockReturnValue({ results: mockResults, isSearching: false, error: null });
 
@@ -63,7 +70,7 @@ describe('SearchPanel', () => {
         onClose={mockOnClose}
         onNavigate={mockOnNavigate}
         t={mockT}
-      />
+      />,
     );
 
     const input = screen.getByRole('searchbox');
@@ -76,7 +83,12 @@ describe('SearchPanel', () => {
 
   it('invokes navigation callback on result click', () => {
     const mockResults = [
-      { cfi: 'epubcfi(/1/2)', cfiRange: 'epubcfi(/1/2)', excerpt: 'the quick brown fox', chapterTitle: 'Chapter 1' },
+      {
+        cfi: 'epubcfi(/1/2)',
+        cfiRange: 'epubcfi(/1/2)',
+        excerpt: 'the quick brown fox',
+        chapterTitle: 'Chapter 1',
+      },
     ];
     mockUseReaderSearch.mockReturnValue({ results: mockResults, isSearching: false, error: null });
 
@@ -87,7 +99,7 @@ describe('SearchPanel', () => {
         onClose={mockOnClose}
         onNavigate={mockOnNavigate}
         t={mockT}
-      />
+      />,
     );
 
     const input = screen.getByRole('searchbox');
@@ -101,8 +113,18 @@ describe('SearchPanel', () => {
 
   it('labels each result button with an accessible search-result label', () => {
     const mockResults = [
-      { cfi: 'epubcfi(/1/2)', cfiRange: 'epubcfi(/1/2)', excerpt: 'the quick brown fox', chapterTitle: 'Chapter 1' },
-      { cfi: 'epubcfi(/1/3)', cfiRange: 'epubcfi(/1/3)', excerpt: 'lazy dog', chapterTitle: 'Chapter 2' },
+      {
+        cfi: 'epubcfi(/1/2)',
+        cfiRange: 'epubcfi(/1/2)',
+        excerpt: 'the quick brown fox',
+        chapterTitle: 'Chapter 1',
+      },
+      {
+        cfi: 'epubcfi(/1/3)',
+        cfiRange: 'epubcfi(/1/3)',
+        excerpt: 'lazy dog',
+        chapterTitle: 'Chapter 2',
+      },
     ];
     mockUseReaderSearch.mockReturnValue({ results: mockResults, isSearching: false, error: null });
 
@@ -113,7 +135,7 @@ describe('SearchPanel', () => {
         onClose={mockOnClose}
         onNavigate={mockOnNavigate}
         t={mockT}
-      />
+      />,
     );
 
     const input = screen.getByRole('searchbox');
@@ -133,7 +155,7 @@ describe('SearchPanel', () => {
         onClose={mockOnClose}
         onNavigate={mockOnNavigate}
         t={mockT}
-      />
+      />,
     );
 
     const input = screen.getByRole('searchbox');
@@ -151,7 +173,7 @@ describe('SearchPanel', () => {
         onClose={mockOnClose}
         onNavigate={mockOnNavigate}
         t={mockT}
-      />
+      />,
     );
     expect(screen.getByRole('alert')).toHaveTextContent('Boom');
   });
@@ -165,7 +187,7 @@ describe('SearchPanel', () => {
         onClose={mockOnClose}
         onNavigate={mockOnNavigate}
         t={mockT}
-      />
+      />,
     );
     fireEvent.click(screen.getByRole('button', { name: 'a11y.close' }));
     expect(mockOnClose).toHaveBeenCalled();
@@ -180,7 +202,7 @@ describe('SearchPanel', () => {
         onClose={mockOnClose}
         onNavigate={mockOnNavigate}
         t={mockT}
-      />
+      />,
     );
     fireEvent.keyDown(window, { key: 'Escape' });
     expect(mockOnClose).toHaveBeenCalledTimes(1);
@@ -195,7 +217,7 @@ describe('SearchPanel', () => {
         onClose={mockOnClose}
         onNavigate={mockOnNavigate}
         t={mockT}
-      />
+      />,
     );
     expect(screen.queryByRole('search')).not.toBeInTheDocument();
   });
@@ -214,7 +236,11 @@ describe('SearchPanel', () => {
         excerpt: `result ${i} excerpt`,
         chapterTitle: `Chapter ${i}`,
       }));
-      mockUseReaderSearch.mockReturnValue({ results: mockResults, isSearching: false, error: null });
+      mockUseReaderSearch.mockReturnValue({
+        results: mockResults,
+        isSearching: false,
+        error: null,
+      });
 
       const { container } = render(
         <SearchPanel
@@ -223,7 +249,7 @@ describe('SearchPanel', () => {
           onClose={mockOnClose}
           onNavigate={mockOnNavigate}
           t={mockT}
-        />
+        />,
       );
 
       typeQuery(container);
@@ -241,7 +267,11 @@ describe('SearchPanel', () => {
         excerpt: `result ${i} excerpt`,
         chapterTitle: `Chapter ${i}`,
       }));
-      mockUseReaderSearch.mockReturnValue({ results: mockResults, isSearching: false, error: null });
+      mockUseReaderSearch.mockReturnValue({
+        results: mockResults,
+        isSearching: false,
+        error: null,
+      });
 
       const { container } = render(
         <SearchPanel
@@ -250,7 +280,7 @@ describe('SearchPanel', () => {
           onClose={mockOnClose}
           onNavigate={mockOnNavigate}
           t={mockT}
-        />
+        />,
       );
 
       typeQuery(container);
@@ -270,7 +300,11 @@ describe('SearchPanel', () => {
         excerpt: `result ${i} excerpt`,
         chapterTitle: `Chapter ${i}`,
       }));
-      mockUseReaderSearch.mockReturnValue({ results: mockResults, isSearching: false, error: null });
+      mockUseReaderSearch.mockReturnValue({
+        results: mockResults,
+        isSearching: false,
+        error: null,
+      });
 
       const { container } = render(
         <SearchPanel
@@ -279,7 +313,7 @@ describe('SearchPanel', () => {
           onClose={mockOnClose}
           onNavigate={mockOnNavigate}
           t={mockT}
-        />
+        />,
       );
 
       typeQuery(container);

@@ -19,55 +19,55 @@ user flows that are absent.
 
 ### A. Backend: Stub/Incomplete Routes
 
-| Route | File | Status | Gap |
-|-------|------|--------|-----|
-| `POST /api/admin/auth/recovery` | `routes/admin/auth.ts` | Partial | Magic-link email transport not wired (ADR-081a) |
-| `DELETE /api/books/:id` | `routes/books.ts` | Exists | No cascade delete for R2 files + annotations |
-| `GET /api/catalog` | `routes/catalog.ts` | Minimal | No pagination, no filtering, no search |
-| `POST /api/files/upload` | `routes/files.ts` | Exists | No progress reporting, no chunk upload for large EPUBs |
+| Route                           | File                   | Status  | Gap                                                    |
+| ------------------------------- | ---------------------- | ------- | ------------------------------------------------------ |
+| `POST /api/admin/auth/recovery` | `routes/admin/auth.ts` | Partial | Magic-link email transport not wired (ADR-081a)        |
+| `DELETE /api/books/:id`         | `routes/books.ts`      | Exists  | No cascade delete for R2 files + annotations           |
+| `GET /api/catalog`              | `routes/catalog.ts`    | Minimal | No pagination, no filtering, no search                 |
+| `POST /api/files/upload`        | `routes/files.ts`      | Exists  | No progress reporting, no chunk upload for large EPUBs |
 
 ### B. Backend: Missing Endpoints
 
-| Endpoint | Purpose | Priority |
-|----------|---------|----------|
-| `GET /api/books/:id/export-notes` | Export annotations/highlights as markdown/JSON | P1 |
-| `POST /api/books/:id/search` | Server-side full-text search for large EPUBs | P2 |
-| `GET /api/admin/stats` | Dashboard statistics (total books, active users, storage) | P2 |
-| `PATCH /api/admin/books/:id` | Edit book metadata (title, author, cover) | P1 |
-| `GET /api/reader/:bookId/reading-insights` | Reading speed, time-per-chapter, streaks | P2 (client has `reading-insights.ts`) |
+| Endpoint                                   | Purpose                                                   | Priority                              |
+| ------------------------------------------ | --------------------------------------------------------- | ------------------------------------- |
+| `GET /api/books/:id/export-notes`          | Export annotations/highlights as markdown/JSON            | P1                                    |
+| `POST /api/books/:id/search`               | Server-side full-text search for large EPUBs              | P2                                    |
+| `GET /api/admin/stats`                     | Dashboard statistics (total books, active users, storage) | P2                                    |
+| `PATCH /api/admin/books/:id`               | Edit book metadata (title, author, cover)                 | P1                                    |
+| `GET /api/reader/:bookId/reading-insights` | Reading speed, time-per-chapter, streaks                  | P2 (client has `reading-insights.ts`) |
 
 ### C. Frontend: Missing User Flows
 
-| Flow | Components Exist? | Gap |
-|------|-------------------|-----|
-| **Export annotations** | No | No UI to export highlights/notes to file |
-| **Book delete with confirmation** | BooksPage has list | No delete confirmation dialog |
-| **Catalog search/filter** | CatalogPage is minimal | No search input, no genre/author filter |
-| **User settings page** | ReaderSettingsPanel exists | No persistent user profile/preferences page |
-| **Reading insights dashboard** | `reading-insights.ts` in lib | No UI component to display insights |
-| **Multi-book progress overview** | Reader store tracks per-book | No "My Library" view with progress bars |
+| Flow                              | Components Exist?            | Gap                                         |
+| --------------------------------- | ---------------------------- | ------------------------------------------- |
+| **Export annotations**            | No                           | No UI to export highlights/notes to file    |
+| **Book delete with confirmation** | BooksPage has list           | No delete confirmation dialog               |
+| **Catalog search/filter**         | CatalogPage is minimal       | No search input, no genre/author filter     |
+| **User settings page**            | ReaderSettingsPanel exists   | No persistent user profile/preferences page |
+| **Reading insights dashboard**    | `reading-insights.ts` in lib | No UI component to display insights         |
+| **Multi-book progress overview**  | Reader store tracks per-book | No "My Library" view with progress bars     |
 
 ### D. Packages: Missing Functionality
 
-| Package | Gap | Impact |
-|---------|-----|--------|
-| `reader-core` | No text extraction API for full-text search | Search relies on client-side spine iteration |
-| `reader-core` | No EPUB export/packager | Cannot re-export annotated EPUBs |
-| `shared` | No pagination DTO/schema | Catalog and audit endpoints lack standard pagination |
-| `schema` | No `reading_sessions` table schema | Reading insights has no persistence layer |
-| `ui` | No `Pagination` component | Admin pages and catalog need it |
-| `ui` | No `ConfirmDialog` component | Delete operations need confirmation |
-| `ui` | No `SearchInput` component | Catalog, admin, reader all need search UI |
-| `ui` | No `ProgressBar` component | Library view, upload progress |
-| `ui` | No `Tabs` component | Admin pages, reader side-panel switching |
+| Package       | Gap                                         | Impact                                               |
+| ------------- | ------------------------------------------- | ---------------------------------------------------- |
+| `reader-core` | No text extraction API for full-text search | Search relies on client-side spine iteration         |
+| `reader-core` | No EPUB export/packager                     | Cannot re-export annotated EPUBs                     |
+| `shared`      | No pagination DTO/schema                    | Catalog and audit endpoints lack standard pagination |
+| `schema`      | No `reading_sessions` table schema          | Reading insights has no persistence layer            |
+| `ui`          | No `Pagination` component                   | Admin pages and catalog need it                      |
+| `ui`          | No `ConfirmDialog` component                | Delete operations need confirmation                  |
+| `ui`          | No `SearchInput` component                  | Catalog, admin, reader all need search UI            |
+| `ui`          | No `ProgressBar` component                  | Library view, upload progress                        |
+| `ui`          | No `Tabs` component                         | Admin pages, reader side-panel switching             |
 
 ### E. Offline/PWA Gaps
 
-| Gap | Impact |
-|-----|--------|
-| No background sync for annotation queue | Annotations created offline may not sync reliably |
-| No cache invalidation strategy for book content | Stale chapters after re-upload |
-| No storage quota management UI | User can't see/manage offline storage |
+| Gap                                             | Impact                                            |
+| ----------------------------------------------- | ------------------------------------------------- |
+| No background sync for annotation queue         | Annotations created offline may not sync reliably |
+| No cache invalidation strategy for book content | Stale chapters after re-upload                    |
+| No storage quota management UI                  | User can't see/manage offline storage             |
 
 ## Decomposed Tasks (Priority Order)
 

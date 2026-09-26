@@ -16,12 +16,19 @@ export function AppShell() {
   const { t } = useTranslation();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const pendingSyncCount = useReaderStore((s) => s.pendingSyncCount);
-  const toggleDrawer = useCallback(() => { setDrawerOpen((prev) => !prev); }, []);
+  const toggleDrawer = useCallback(() => {
+    setDrawerOpen((prev) => !prev);
+  }, []);
 
   return (
     <div className="flex h-dvh overflow-hidden bg-background">
       <Sidebar />
-      <Drawer isOpen={drawerOpen} onClose={() => { setDrawerOpen(false); }} />
+      <Drawer
+        isOpen={drawerOpen}
+        onClose={() => {
+          setDrawerOpen(false);
+        }}
+      />
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         {/* Mobile top bar */}
         <header className="flex items-center justify-between px-4 h-14 bg-background-secondary border-b border-border lg:hidden shrink-0">
@@ -32,13 +39,28 @@ export function AppShell() {
               className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-foreground-muted hover:text-foreground hover:bg-background-tertiary transition-colors"
               aria-label={t('a11y.menu_open')}
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
               </svg>
             </button>
             <AppLogo size={24} className="text-accent" />
-            <span className="min-w-0 truncate font-semibold text-foreground text-sm">{APP_NAME}</span>
-            <span className="hidden text-[0.68rem] text-foreground-muted sm:inline">{APP_VERSION_LABEL}</span>
+            <span className="min-w-0 truncate font-semibold text-foreground text-sm">
+              {APP_NAME}
+            </span>
+            <span className="hidden text-[0.68rem] text-foreground-muted sm:inline">
+              {APP_VERSION_LABEL}
+            </span>
           </div>
         </header>
         {/* Main scrollable area */}

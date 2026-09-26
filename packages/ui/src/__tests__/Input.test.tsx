@@ -64,7 +64,15 @@ describe('Input', () => {
     });
 
     it('renders icon + text toggle when labels are provided', () => {
-      render(<Input id="pw" label="Password" type="password" showPasswordLabel="Show password" hidePasswordLabel="Hide password" />);
+      render(
+        <Input
+          id="pw"
+          label="Password"
+          type="password"
+          showPasswordLabel="Show password"
+          hidePasswordLabel="Hide password"
+        />,
+      );
       const toggle = screen.getByRole('button', { name: 'Show password' });
       expect(toggle).toBeInTheDocument();
       // Decorative eye icon is present but hidden from assistive tech.
@@ -73,7 +81,15 @@ describe('Input', () => {
     });
 
     it('anchors the toggle to the trailing edge with matching input padding', () => {
-      render(<Input id="pw" label="Password" type="password" showPasswordLabel="Show password" hidePasswordLabel="Hide password" />);
+      render(
+        <Input
+          id="pw"
+          label="Password"
+          type="password"
+          showPasswordLabel="Show password"
+          hidePasswordLabel="Hide password"
+        />,
+      );
       const field = screen.getByLabelText('Password').closest('.pw-field');
       const toggle = screen.getByRole('button', { name: 'Show password' });
 
@@ -87,7 +103,15 @@ describe('Input', () => {
     });
 
     it('toggles input type and label on click', () => {
-      render(<Input id="pw" label="Password" type="password" showPasswordLabel="Show password" hidePasswordLabel="Hide password" />);
+      render(
+        <Input
+          id="pw"
+          label="Password"
+          type="password"
+          showPasswordLabel="Show password"
+          hidePasswordLabel="Hide password"
+        />,
+      );
       const input = screen.getByLabelText('Password');
       const toggle = screen.getByRole('button', { name: 'Show password' });
 
@@ -105,7 +129,15 @@ describe('Input', () => {
     });
 
     it('links the toggle to the input via aria-controls', () => {
-      render(<Input id="pw" label="Password" type="password" showPasswordLabel="Show password" hidePasswordLabel="Hide password" />);
+      render(
+        <Input
+          id="pw"
+          label="Password"
+          type="password"
+          showPasswordLabel="Show password"
+          hidePasswordLabel="Hide password"
+        />,
+      );
       const toggle = screen.getByRole('button', { name: 'Show password' });
       expect(toggle).toHaveAttribute('aria-controls', 'pw');
       expect(screen.getByLabelText('Password')).toHaveAttribute('id', 'pw');
@@ -115,7 +147,15 @@ describe('Input', () => {
       // The label renders inside a Tailwind `hidden sm:inline` span (icon-only
       // below sm for long-locale overflow), so the button's accessible name
       // must come from aria-label instead of text content.
-      render(<Input id="pw" label="Password" type="password" showPasswordLabel="Show password" hidePasswordLabel="Hide password" />);
+      render(
+        <Input
+          id="pw"
+          label="Password"
+          type="password"
+          showPasswordLabel="Show password"
+          hidePasswordLabel="Hide password"
+        />,
+      );
       const toggle = screen.getByRole('button', { name: 'Show password' });
       expect(toggle).toHaveAttribute('aria-label', 'Show password');
 

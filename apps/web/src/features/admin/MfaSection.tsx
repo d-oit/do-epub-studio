@@ -99,7 +99,9 @@ export function MfaSection() {
     setInfo(null);
     try {
       if (passwordAction === 'enroll') {
-        const result = await stepUp.execute((_tok) => performPasskeyEnroll(password, displayName || undefined));
+        const result = await stepUp.execute((_tok) =>
+          performPasskeyEnroll(password, displayName || undefined),
+        );
         await load();
         if (result.recoveryCodes && result.recoveryCodes.length > 0) {
           setRecoveryCodes(result.recoveryCodes);
@@ -147,18 +149,27 @@ export function MfaSection() {
       <p className="mb-4 text-sm text-foreground-muted">{t('security.mfa.description')}</p>
 
       {loadError && (
-        <p role="alert" className="mb-4 rounded bg-accent-error/10 border border-accent-error/20 p-3 text-sm text-accent-error">
+        <p
+          role="alert"
+          className="mb-4 rounded bg-accent-error/10 border border-accent-error/20 p-3 text-sm text-accent-error"
+        >
           {loadError}
         </p>
       )}
 
       {info && (
-        <p role="status" className="mb-4 rounded bg-accent/10 border border-accent/20 p-3 text-sm text-accent">
+        <p
+          role="status"
+          className="mb-4 rounded bg-accent/10 border border-accent/20 p-3 text-sm text-accent"
+        >
           {info}
         </p>
       )}
       {error && (
-        <p role="alert" className="mb-4 rounded bg-accent-error/10 border border-accent-error/20 p-3 text-sm text-accent-error">
+        <p
+          role="alert"
+          className="mb-4 rounded bg-accent-error/10 border border-accent-error/20 p-3 text-sm text-accent-error"
+        >
           {error}
         </p>
       )}
@@ -166,7 +177,9 @@ export function MfaSection() {
       <div className="mb-6 space-y-3">
         <h3 className="text-sm font-semibold text-foreground">{t('security.mfa.passkeys')}</h3>
         {status === null && !loadError && (
-          <p role="status" className="text-sm text-foreground-muted">{t('security.mfa.loading')}</p>
+          <p role="status" className="text-sm text-foreground-muted">
+            {t('security.mfa.loading')}
+          </p>
         )}
         {status && status.passkeys.length === 0 && (
           <p className="text-sm text-foreground-muted">{t('security.mfa.noEnrolled')}</p>
@@ -175,14 +188,19 @@ export function MfaSection() {
           {status?.passkeys.map((passkey) => {
             const name = passkey.displayName || passkey.id.slice(0, 8);
             return (
-              <li key={passkey.id} className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface p-3 text-sm">
+              <li
+                key={passkey.id}
+                className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface p-3 text-sm"
+              >
                 <span className="text-foreground">{name}</span>
                 <Button
                   variant="danger"
                   size="sm"
                   disabled={isBusy}
                   aria-label={`${t('security.mfa.remove')} ${name}`}
-                  onClick={() => { setRemovePending({ id: passkey.id, name }); }}
+                  onClick={() => {
+                    setRemovePending({ id: passkey.id, name });
+                  }}
                 >
                   {t('security.mfa.remove')}
                 </Button>
@@ -194,21 +212,47 @@ export function MfaSection() {
 
       <div className="flex flex-wrap gap-3">
         {!enrolled ? (
-          <Button onClick={() => { openPassword('enroll'); }} disabled={isBusy}>
+          <Button
+            onClick={() => {
+              openPassword('enroll');
+            }}
+            disabled={isBusy}
+          >
             {t('security.mfa.enroll')}
           </Button>
         ) : (
-          <Button variant="secondary" onClick={() => { openPassword('enroll'); }} disabled={isBusy}>
+          <Button
+            variant="secondary"
+            onClick={() => {
+              openPassword('enroll');
+            }}
+            disabled={isBusy}
+          >
             {t('security.mfa.addAnother')}
           </Button>
         )}
         {enrolled && (
-          <Button variant="secondary" onClick={() => { void handleAuthenticate(); }} isLoading={isBusy} loadingLabel={t('security.mfa.authenticating')}>
+          <Button
+            variant="secondary"
+            onClick={() => {
+              void handleAuthenticate();
+            }}
+            isLoading={isBusy}
+            loadingLabel={t('security.mfa.authenticating')}
+          >
             {t('security.mfa.authenticate')}
           </Button>
         )}
         {enrolled && (
-          <Button variant="secondary" onClick={() => { openPassword('regenerate'); }} disabled={isBusy} isLoading={isBusy} loadingLabel={t('security.mfa.regenerating')}>
+          <Button
+            variant="secondary"
+            onClick={() => {
+              openPassword('regenerate');
+            }}
+            disabled={isBusy}
+            isLoading={isBusy}
+            loadingLabel={t('security.mfa.regenerating')}
+          >
             {t('security.mfa.regenerate')}
           </Button>
         )}
@@ -220,10 +264,20 @@ export function MfaSection() {
       {recoveryCodes && recoveryCodes.length > 0 && (
         <div className="mt-6 rounded-lg border border-border bg-surface p-4">
           <div className="mb-2 flex items-center justify-between gap-3">
-            <h3 className="text-sm font-semibold text-foreground">{t('security.recovery.recoveryCodes')}</h3>
+            <h3 className="text-sm font-semibold text-foreground">
+              {t('security.recovery.recoveryCodes')}
+            </h3>
             <div className="flex gap-2">
-              {copiedAll && <span className="text-xs text-accent">{t('security.recovery.copied')}</span>}
-              <Button variant="ghost" size="sm" onClick={() => { void copyAll(); }}>
+              {copiedAll && (
+                <span className="text-xs text-accent">{t('security.recovery.copied')}</span>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  void copyAll();
+                }}
+              >
                 {t('security.recovery.copyAll')}
               </Button>
               <Button variant="ghost" size="sm" onClick={() => setRecoveryCodes(null)}>
@@ -231,20 +285,32 @@ export function MfaSection() {
               </Button>
             </div>
           </div>
-          <p role="alert" className="mb-3 rounded bg-accent-error/10 border border-accent-error/20 p-3 text-sm text-accent-error">
+          <p
+            role="alert"
+            className="mb-3 rounded bg-accent-error/10 border border-accent-error/20 p-3 text-sm text-accent-error"
+          >
             {t('security.recovery.recoveryCodesWarning')}
           </p>
-          <p className="mb-3 text-xs text-foreground-muted">{t('security.recovery.codesShownOnce')}</p>
+          <p className="mb-3 text-xs text-foreground-muted">
+            {t('security.recovery.codesShownOnce')}
+          </p>
           <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             {recoveryCodes.map((code) => (
-              <li key={code} className="flex items-center justify-between rounded border border-border bg-background px-3 py-2 font-mono text-sm">
+              <li
+                key={code}
+                className="flex items-center justify-between rounded border border-border bg-background px-3 py-2 font-mono text-sm"
+              >
                 <span>{code}</span>
                 <button
                   type="button"
                   className="text-xs text-accent hover:underline"
-                  onClick={() => { void copy(code, code); }}
+                  onClick={() => {
+                    void copy(code, code);
+                  }}
                 >
-                  {copiedKey === code ? t('security.recovery.codeCopied') : t('security.recovery.copy')}
+                  {copiedKey === code
+                    ? t('security.recovery.codeCopied')
+                    : t('security.recovery.copy')}
                 </button>
               </li>
             ))}
@@ -262,25 +328,38 @@ export function MfaSection() {
             <Button variant="secondary" onClick={closePassword} disabled={isBusy}>
               {t('admin.stepUp.cancel')}
             </Button>
-            <Button onClick={() => { void handlePasswordConfirm(); }} isLoading={isBusy} loadingLabel={t('admin.stepUp.submitting')}>
+            <Button
+              onClick={() => {
+                void handlePasswordConfirm();
+              }}
+              isLoading={isBusy}
+              loadingLabel={t('admin.stepUp.submitting')}
+            >
               {t('admin.stepUp.confirm')}
             </Button>
           </div>
         }
       >
         <form
-          onSubmit={(e) => { e.preventDefault(); void handlePasswordConfirm(); }}
+          onSubmit={(e) => {
+            e.preventDefault();
+            void handlePasswordConfirm();
+          }}
           className="space-y-4"
         >
           {error && (
-            <p role="alert" className="text-sm text-destructive">{error}</p>
+            <p role="alert" className="text-sm text-destructive">
+              {error}
+            </p>
           )}
           <Input
             id="mfa-password"
             type="password"
             label={t('admin.stepUp.currentPassword')}
             value={password}
-            onChange={(e) => { setPassword(e.target.value); }}
+            onChange={(e) => {
+              setPassword(e.target.value);
+            }}
             autoComplete="current-password"
             required
           />
@@ -290,7 +369,9 @@ export function MfaSection() {
               type="text"
               label={t('security.mfa.passkeyName')}
               value={displayName}
-              onChange={(e) => { setDisplayName(e.target.value); }}
+              onChange={(e) => {
+                setDisplayName(e.target.value);
+              }}
               autoComplete="off"
             />
           )}
@@ -300,7 +381,11 @@ export function MfaSection() {
       <ConfirmDialog
         isOpen={removePending !== null}
         title={t('security.mfa.removeConfirmTitle')}
-        description={removePending ? t('security.mfa.removeConfirmMessage', { name: removePending.name }) : undefined}
+        description={
+          removePending
+            ? t('security.mfa.removeConfirmMessage', { name: removePending.name })
+            : undefined
+        }
         variant="danger"
         confirmLabel={t('security.mfa.remove')}
         cancelLabel={t('admin.stepUp.cancel')}

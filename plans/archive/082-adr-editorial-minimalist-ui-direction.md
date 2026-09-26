@@ -32,12 +32,12 @@ If the interface works in warm monochrome with good typography, it has a spine.
 
 ### 3. Glassmorphism Deprecation
 
-| Component | Before | After |
-|-----------|--------|-------|
-| Error boundary | `glass-panel` | Solid card + `--shadow-md` |
-| Catalog cards | `glass-card backdrop-blur` | Flat card + 1px border |
-| Loading states | Glass container | Simple surface + skeleton |
-| Login card | `bg-surface/40 backdrop-blur` | `bg-surface` solid |
+| Component      | Before                        | After                      |
+| -------------- | ----------------------------- | -------------------------- |
+| Error boundary | `glass-panel`                 | Solid card + `--shadow-md` |
+| Catalog cards  | `glass-card backdrop-blur`    | Flat card + 1px border     |
+| Loading states | Glass container               | Simple surface + skeleton  |
+| Login card     | `bg-surface/40 backdrop-blur` | `bg-surface` solid         |
 
 ### 4. Color Palette Shift
 
@@ -49,12 +49,12 @@ If the interface works in warm monochrome with good typography, it has a spine.
 
 ### 5. Typography: Branded Stack
 
-| Role | Font | Usage |
-|------|------|-------|
-| Display | Cabinet Grotesk | Headings ≥ var(--text-xl) |
-| Body/UI | Satoshi | All interface text, buttons, labels |
-| Reader | Source Serif 4 | EPUB content rendering only |
-| Mono | JetBrains Mono | Code, trace IDs, technical data |
+| Role    | Font            | Usage                               |
+| ------- | --------------- | ----------------------------------- |
+| Display | Cabinet Grotesk | Headings ≥ var(--text-xl)           |
+| Body/UI | Satoshi         | All interface text, buttons, labels |
+| Reader  | Source Serif 4  | EPUB content rendering only         |
+| Mono    | JetBrains Mono  | Code, trace IDs, technical data     |
 
 - **Drop:** Inter as sole font (generic, AI-default)
 - **Fluid:** All sizes via `clamp()` — no fixed px/rem
@@ -69,16 +69,16 @@ If the interface works in warm monochrome with good typography, it has a spine.
 
 ### 7. Feature Priority for Next Sprint
 
-| Priority | Feature | Rationale |
-|----------|---------|-----------|
-| P0 | Library/Bookshelf page | Core UX — nowhere to go post-login |
-| P0 | Toast system integration | Error/success feedback completely missing |
-| P1 | Search (⌘K) | No discoverability path for content |
-| P1 | Offline download UI | Infrastructure exists, no trigger |
-| P2 | Empty states | No guidance for zero-data screens |
-| P2 | Keyboard shortcuts overlay | Undiscoverable shortcuts |
-| P3 | User profile/settings | Non-critical but expected |
-| P3 | Reading statistics | Nice-to-have |
+| Priority | Feature                    | Rationale                                 |
+| -------- | -------------------------- | ----------------------------------------- |
+| P0       | Library/Bookshelf page     | Core UX — nowhere to go post-login        |
+| P0       | Toast system integration   | Error/success feedback completely missing |
+| P1       | Search (⌘K)                | No discoverability path for content       |
+| P1       | Offline download UI        | Infrastructure exists, no trigger         |
+| P2       | Empty states               | No guidance for zero-data screens         |
+| P2       | Keyboard shortcuts overlay | Undiscoverable shortcuts                  |
+| P3       | User profile/settings      | Non-critical but expected                 |
+| P3       | Reading statistics         | Nice-to-have                              |
 
 ### 8. Container Queries Adoption
 

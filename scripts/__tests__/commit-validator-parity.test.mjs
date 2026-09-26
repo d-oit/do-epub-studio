@@ -29,10 +29,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, '../..');
 const require = createRequire(import.meta.url);
 
-const shellSource = readFileSync(
-  resolve(repoRoot, 'scripts/lib/commit-types.sh'),
-  'utf8',
-);
+const shellSource = readFileSync(resolve(repoRoot, 'scripts/lib/commit-types.sh'), 'utf8');
 const commitlintConfig = require('../../commitlint.config.cjs');
 
 /** Parse a `NAME=(\n "a"\n "b"\n)` bash array out of commit-types.sh. */
@@ -46,8 +43,7 @@ const typesFromShell = shellArray(shellSource, 'COMMIT_TYPES');
 
 /** Effective commitlint rules: config-conventional merged with local overrides. */
 const conventionalModule = require('@commitlint/config-conventional');
-const conventionalRules = (conventionalModule.default ?? conventionalModule)
-  .rules;
+const conventionalRules = (conventionalModule.default ?? conventionalModule).rules;
 const effectiveRules = { ...conventionalRules, ...commitlintConfig.rules };
 
 /**
@@ -88,11 +84,7 @@ describe('commitlint.config.cjs mirrors scripts/lib/commit-types.sh (ADR-279)', 
   });
 
   it('caps the header at 72, the hook subject limit', () => {
-    expect(commitlintConfig.rules['header-max-length']).toEqual([
-      2,
-      'always',
-      72,
-    ]);
+    expect(commitlintConfig.rules['header-max-length']).toEqual([2, 'always', 72]);
   });
 
   it('explicitly disables every config-conventional rule the hook does not enforce', () => {
@@ -109,9 +101,7 @@ describe('commitlint.config.cjs mirrors scripts/lib/commit-types.sh (ADR-279)', 
     const offenders = Object.entries(effectiveRules)
       .filter(
         ([rule, value]) =>
-          Array.isArray(value) &&
-          value[0] >= 2 &&
-          !HOOK_PARITY_ERROR_RULES.has(rule),
+          Array.isArray(value) && value[0] >= 2 && !HOOK_PARITY_ERROR_RULES.has(rule),
       )
       .map(([rule]) => rule);
     expect(
@@ -130,15 +120,11 @@ describe('scripts/hooks/commit-msg contract used by CI (ADR-279)', () => {
     const file = join(dir, 'commit-msg');
     writeFileSync(file, message);
     try {
-      const result = spawnSync(
-        'bash',
-        [hookPath, ...flagArgs, file],
-        {
-          encoding: 'utf8',
-          cwd: repoRoot,
-          timeout: 10_000,
-        },
-      );
+      const result = spawnSync('bash', [hookPath, ...flagArgs, file], {
+        encoding: 'utf8',
+        cwd: repoRoot,
+        timeout: 10_000,
+      });
       return result.status;
     } finally {
       rmSync(dir, { recursive: true, force: true });
@@ -150,8 +136,7 @@ describe('scripts/hooks/commit-msg contract used by CI (ADR-279)', () => {
   });
 
   it('--subject-only still rejects a >72-char PR title', () => {
-    const long =
-      'chore: bump the production-dependencies group across 1 directory with 4 updates';
+    const long = 'chore: bump the production-dependencies group across 1 directory with 4 updates';
     expect(long.length).toBeGreaterThan(72);
     expect(runHook(['--subject-only'], `${long}\n`)).toBe(1);
   });
@@ -168,10 +153,7 @@ describe('scripts/hooks/commit-msg contract used by CI (ADR-279)', () => {
 
 describe('bash commit-validator parity suite is enforced', () => {
   it('scripts/__tests__/commit-validator-parity.sh passes', () => {
-    const suite = resolve(
-      repoRoot,
-      'scripts/__tests__/commit-validator-parity.sh',
-    );
+    const suite = resolve(repoRoot, 'scripts/__tests__/commit-validator-parity.sh');
     const result = spawnSync('bash', [suite], {
       encoding: 'utf8',
       cwd: repoRoot,

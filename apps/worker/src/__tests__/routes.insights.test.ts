@@ -22,7 +22,15 @@ const mockAuthContext: AuthContext = {
   email: 'user@example.com',
   bookId: '123e4567-e89b-12d3-a456-426614174000',
   sessionId: 'session-1',
-  capabilities: { canRead: true, canComment: true, canHighlight: true, canBookmark: true, canDownloadOffline: true, canExportNotes: true, canManageAccess: false },
+  capabilities: {
+    canRead: true,
+    canComment: true,
+    canHighlight: true,
+    canBookmark: true,
+    canDownloadOffline: true,
+    canExportNotes: true,
+    canManageAccess: false,
+  },
 };
 
 describe('insightsRouter', () => {
@@ -39,7 +47,7 @@ describe('insightsRouter', () => {
 
     const res = await app.fetch(
       new Request('http://localhost/api/books/123e4567-e89b-12d3-a456-426614174000/insights', {
-        headers: { 'Authorization': 'Bearer valid' },
+        headers: { Authorization: 'Bearer valid' },
       }),
       env,
       makePassThroughContext(),
@@ -47,7 +55,10 @@ describe('insightsRouter', () => {
 
     expect(res.status).toBe(200);
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion -- Hono Response.json() returns unknown
-    const body = (await res.json()) as { ok: boolean; data: { totalActiveMinutes: number; totalActivePages: number } };
+    const body = (await res.json()) as {
+      ok: boolean;
+      data: { totalActiveMinutes: number; totalActivePages: number };
+    };
     expect(body.ok).toBe(true);
     expect(body.data.totalActiveMinutes).toBe(0);
     expect(body.data.totalActivePages).toBe(0);
@@ -60,7 +71,7 @@ describe('insightsRouter', () => {
     const res = await app.fetch(
       new Request('http://localhost/api/books/123e4567-e89b-12d3-a456-426614174000/insights/sync', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer valid' },
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer valid' },
         body: JSON.stringify({
           bookId: '123e4567-e89b-12d3-a456-426614174000',
           buckets: [{ date: '2026-06-19', activeMinutes: 15, activePages: 10 }],

@@ -92,7 +92,16 @@ describe('useReaderStore', () => {
 
     it('sets highlights', () => {
       const highlights = [
-        { id: '1', chapterRef: 'ch1', cfiRange: null, selectedText: 'a', note: null, color: '#ff0000', createdAt: '', updatedAt: '' },
+        {
+          id: '1',
+          chapterRef: 'ch1',
+          cfiRange: null,
+          selectedText: 'a',
+          note: null,
+          color: '#ff0000',
+          createdAt: '',
+          updatedAt: '',
+        },
       ];
       useReaderStore.getState().setHighlights(highlights);
       expect(useReaderStore.getState().highlights).toHaveLength(1);
@@ -196,7 +205,21 @@ describe('useReaderStore', () => {
 
     it('sets comments', () => {
       const comments = [
-        { id: '1', displayName: 'a', isOwn: false, chapterRef: null, cfiRange: null, selectedText: null, body: 'Hi', status: 'open' as const, visibility: 'shared' as const, parentCommentId: null, createdAt: '', updatedAt: '', resolvedAt: null },
+        {
+          id: '1',
+          displayName: 'a',
+          isOwn: false,
+          chapterRef: null,
+          cfiRange: null,
+          selectedText: null,
+          body: 'Hi',
+          status: 'open' as const,
+          visibility: 'shared' as const,
+          parentCommentId: null,
+          createdAt: '',
+          updatedAt: '',
+          resolvedAt: null,
+        },
       ];
       useReaderStore.getState().setComments(comments);
       expect(useReaderStore.getState().comments).toHaveLength(1);

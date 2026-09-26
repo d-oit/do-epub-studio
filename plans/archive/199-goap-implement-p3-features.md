@@ -14,47 +14,47 @@ Each feature is independently shippable and addresses a specific gap in the plat
 
 ## Audit Results
 
-| Plan | Feature | Status Before | Action |
-|------|---------|---------------|--------|
-| LC1 | API Rate Limiting | ✅ ALREADY IMPLEMENTED | Plan status updated to COMPLETED |
-| F3 | Cross-Isolate Cache | PROPOSED | ✅ KV-backed cache version implemented |
-| N3 | Server-Side Search | PROPOSED | ✅ FTS5 full-text search implemented |
-| N6 | EPUB Re-Export | PROPOSED | ✅ Markdown/HTML export implemented |
-| N7 | Reply Notifications | PROPOSED | ✅ Notification system implemented |
+| Plan | Feature             | Status Before          | Action                                 |
+| ---- | ------------------- | ---------------------- | -------------------------------------- |
+| LC1  | API Rate Limiting   | ✅ ALREADY IMPLEMENTED | Plan status updated to COMPLETED       |
+| F3   | Cross-Isolate Cache | PROPOSED               | ✅ KV-backed cache version implemented |
+| N3   | Server-Side Search  | PROPOSED               | ✅ FTS5 full-text search implemented   |
+| N6   | EPUB Re-Export      | PROPOSED               | ✅ Markdown/HTML export implemented    |
+| N7   | Reply Notifications | PROPOSED               | ✅ Notification system implemented     |
 
 ## Task Completion Evidence
 
-| Task | Status | Evidence |
-|------|--------|----------|
-| T1 (LC1) | ✅ | Rate limiting fully implemented: DO-based, per-route limits, Retry-After headers |
-| T2 (F3) | ✅ | `edge-cache.ts` — KV-backed `getCacheVersion()`/`bumpCacheVersion()` with local fallback |
-| T3 (N7) | ✅ | `notifications.ts` route + `NotificationBadge`/`NotificationPanel` + D1 migration 0006 |
-| T4 (N3) | ✅ | `search.ts` route + FTS5 migration 0007 + `indexBookContent()` helper |
-| T5 (N6) | ✅ | `export.ts` route — Markdown + HTML export with highlights, comments, bookmarks |
+| Task     | Status | Evidence                                                                                 |
+| -------- | ------ | ---------------------------------------------------------------------------------------- |
+| T1 (LC1) | ✅     | Rate limiting fully implemented: DO-based, per-route limits, Retry-After headers         |
+| T2 (F3)  | ✅     | `edge-cache.ts` — KV-backed `getCacheVersion()`/`bumpCacheVersion()` with local fallback |
+| T3 (N7)  | ✅     | `notifications.ts` route + `NotificationBadge`/`NotificationPanel` + D1 migration 0006   |
+| T4 (N3)  | ✅     | `search.ts` route + FTS5 migration 0007 + `indexBookContent()` helper                    |
+| T5 (N6)  | ✅     | `export.ts` route — Markdown + HTML export with highlights, comments, bookmarks          |
 
 ## Files Created/Modified
 
-| File | Change |
-|------|--------|
-| `packages/schema/migrations/0006-notifications.sql` | D1 migration: notifications table |
-| `packages/schema/migrations/0007-fts-search.sql` | D1 migration: FTS5 virtual table + search index |
-| `apps/worker/src/routes/notifications.ts` | Notification CRUD endpoints + createReplyNotification helper |
-| `apps/worker/src/routes/search.ts` | Full-text search endpoint + indexBookContent helper |
-| `apps/worker/src/routes/export.ts` | Markdown/HTML annotation export endpoint |
-| `apps/worker/src/routes/index.ts` | Export new routers |
-| `apps/worker/src/routes/comments.ts` | Trigger notification on reply |
-| `apps/worker/src/lib/edge-cache.ts` | KV-backed cache version for cross-isolate invalidation |
-| `apps/worker/src/app.ts` | Mount new routes |
-| `apps/worker/wrangler.jsonc` | Add CACHE_KV binding |
-| `apps/worker/src/worker-configuration.d.ts` | Add CACHE_KV type |
-| `apps/web/src/features/reader/components/notifications/NotificationBadge.tsx` | Bell icon with unread count |
-| `apps/web/src/features/reader/components/notifications/NotificationPanel.tsx` | Notification list with mark-as-read |
-| `apps/web/src/i18n/en.ts` + 12 locales | i18n keys for notifications, search, export |
-| `apps/worker/src/__tests__/fixtures.ts` | Add CACHE_KV to test env |
-| `apps/worker/src/__tests__/edge-cache.test.ts` | Await async buildCacheKey |
-| `apps/worker/src/__tests__/middleware.test.ts` | Add CACHE_KV to inline makeEnv |
-| `apps/worker/src/__tests__/password-coverage.test.ts` | Add CACHE_KV to inline env |
-| `apps/worker/src/__tests__/rate-limit-client.test.ts` | Add CACHE_KV to inline makeEnv |
+| File                                                                          | Change                                                       |
+| ----------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| `packages/schema/migrations/0006-notifications.sql`                           | D1 migration: notifications table                            |
+| `packages/schema/migrations/0007-fts-search.sql`                              | D1 migration: FTS5 virtual table + search index              |
+| `apps/worker/src/routes/notifications.ts`                                     | Notification CRUD endpoints + createReplyNotification helper |
+| `apps/worker/src/routes/search.ts`                                            | Full-text search endpoint + indexBookContent helper          |
+| `apps/worker/src/routes/export.ts`                                            | Markdown/HTML annotation export endpoint                     |
+| `apps/worker/src/routes/index.ts`                                             | Export new routers                                           |
+| `apps/worker/src/routes/comments.ts`                                          | Trigger notification on reply                                |
+| `apps/worker/src/lib/edge-cache.ts`                                           | KV-backed cache version for cross-isolate invalidation       |
+| `apps/worker/src/app.ts`                                                      | Mount new routes                                             |
+| `apps/worker/wrangler.jsonc`                                                  | Add CACHE_KV binding                                         |
+| `apps/worker/src/worker-configuration.d.ts`                                   | Add CACHE_KV type                                            |
+| `apps/web/src/features/reader/components/notifications/NotificationBadge.tsx` | Bell icon with unread count                                  |
+| `apps/web/src/features/reader/components/notifications/NotificationPanel.tsx` | Notification list with mark-as-read                          |
+| `apps/web/src/i18n/en.ts` + 12 locales                                        | i18n keys for notifications, search, export                  |
+| `apps/worker/src/__tests__/fixtures.ts`                                       | Add CACHE_KV to test env                                     |
+| `apps/worker/src/__tests__/edge-cache.test.ts`                                | Await async buildCacheKey                                    |
+| `apps/worker/src/__tests__/middleware.test.ts`                                | Add CACHE_KV to inline makeEnv                               |
+| `apps/worker/src/__tests__/password-coverage.test.ts`                         | Add CACHE_KV to inline env                                   |
+| `apps/worker/src/__tests__/rate-limit-client.test.ts`                         | Add CACHE_KV to inline makeEnv                               |
 
 ## Acceptance Criteria
 
@@ -72,18 +72,18 @@ Each feature is independently shippable and addresses a specific gap in the plat
 
 **Swarm** — all 5 tasks are independent and executed in parallel.
 
-| Task | Agent Type | Dependencies |
-|------|-----------|-------------|
-| T1 (LC1) | goap-agent | None |
-| T2 (F3) | cloudflare-worker-api | None |
-| T3 (N7) | cloudflare-worker-api + reader-ui-ux | None |
-| T4 (N3) | cloudflare-worker-api + reader-ui-ux | None |
-| T5 (N6) | cloudflare-worker-api + reader-ui-ux | None |
+| Task     | Agent Type                           | Dependencies |
+| -------- | ------------------------------------ | ------------ |
+| T1 (LC1) | goap-agent                           | None         |
+| T2 (F3)  | cloudflare-worker-api                | None         |
+| T3 (N7)  | cloudflare-worker-api + reader-ui-ux | None         |
+| T4 (N3)  | cloudflare-worker-api + reader-ui-ux | None         |
+| T5 (N6)  | cloudflare-worker-api + reader-ui-ux | None         |
 
 ## Risk Register
 
-| Risk | Likelihood | Impact | Mitigation |
-|------|-----------|--------|------------|
-| FTS5 not available in local D1 | Low | Medium | Use LIKE fallback for local dev |
-| EPUB re-export complexity | Medium | High | Start with Markdown export, add EPUB later |
-| Notification volume | Low | Low | Pagination + mark-as-read |
+| Risk                           | Likelihood | Impact | Mitigation                                 |
+| ------------------------------ | ---------- | ------ | ------------------------------------------ |
+| FTS5 not available in local D1 | Low        | Medium | Use LIKE fallback for local dev            |
+| EPUB re-export complexity      | Medium     | High   | Start with Markdown export, add EPUB later |
+| Notification volume            | Low        | Low    | Pagination + mark-as-read                  |

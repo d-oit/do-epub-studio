@@ -11,7 +11,11 @@ vi.mock('../hooks/useTranslation', () => ({
 vi.mock('@do-epub-studio/ui', () => ({
   Spinner: () => <div data-testid="spinner" />,
   Button: ({ children, onClick, variant }: Record<string, unknown>) => (
-    <button type="button" data-variant={variant} onClick={onClick as React.MouseEventHandler<HTMLButtonElement>}>
+    <button
+      type="button"
+      data-variant={variant}
+      onClick={onClick as React.MouseEventHandler<HTMLButtonElement>}
+    >
       {children as React.ReactNode}
     </button>
   ),
@@ -143,9 +147,7 @@ describe('GrantList', () => {
     fireEvent.click(screen.getByText('grants.actions.revoke'));
     // Find the danger button inside modal
     const dangerButtons = screen.getAllByText('grants.actions.revoke');
-    const confirmBtn = dangerButtons.find(
-      (btn) => btn.closest('[data-variant="danger"]') !== null,
-    );
+    const confirmBtn = dangerButtons.find((btn) => btn.closest('[data-variant="danger"]') !== null);
     if (confirmBtn) fireEvent.click(confirmBtn);
     expect(onRevoke).toHaveBeenCalledWith(grants[0]);
   });

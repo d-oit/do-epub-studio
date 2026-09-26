@@ -8,7 +8,7 @@ describe('sanitizeAuditPayload Redaction', () => {
       password: 'super-secret-password',
       token: 'abc-123-def',
       apiKey: 'key_12345',
-      regularKey: 'regularValue'
+      regularKey: 'regularValue',
     };
 
     const sanitized = sanitizeAuditPayload(payload);
@@ -25,12 +25,12 @@ describe('sanitizeAuditPayload Redaction', () => {
       user: {
         id: '123',
         auth: {
-          sessionToken: 'xyz-987'
-        }
+          sessionToken: 'xyz-987',
+        },
       },
       metadata: {
-        magicLink: 'https://example.com/login?token=sensitive'
-      }
+        magicLink: 'https://example.com/login?token=sensitive',
+      },
     };
 
     const sanitized = sanitizeAuditPayload(payload);
@@ -47,8 +47,8 @@ describe('sanitizeAuditPayload Redaction', () => {
     const payload = {
       credentials: [
         { type: 'password', value: 'secret' },
-        { type: 'token', secret: 'abc' }
-      ]
+        { type: 'token', secret: 'abc' },
+      ],
     };
 
     const sanitized = sanitizeAuditPayload(payload);
@@ -62,9 +62,9 @@ describe('sanitizeAuditPayload Redaction', () => {
 
   it('should handle case insensitivity and special characters in keys', () => {
     const payload = {
-      'PASSWORD': '123',
+      PASSWORD: '123',
       'Session-Token': '456',
-      'magic_link': '789'
+      magic_link: '789',
     };
 
     const sanitized = sanitizeAuditPayload(payload);

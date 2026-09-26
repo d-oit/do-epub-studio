@@ -42,9 +42,7 @@ export default {
 async function deleteEventsOlderThan(env: Env, days: number): Promise<void> {
   if (!env.DB) return;
   const cutoff = new Date(Date.now() - days * 86_400_000).toISOString();
-  await env.DB.prepare(
-    `DELETE FROM telemetry_events WHERE received_at < ?`,
-  ).bind(cutoff).run();
+  await env.DB.prepare(`DELETE FROM telemetry_events WHERE received_at < ?`).bind(cutoff).run();
 }
 ```
 

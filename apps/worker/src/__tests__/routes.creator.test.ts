@@ -30,12 +30,23 @@ function seedAssignment(hasRow = true) {
 }
 
 const FEEDBACK_ROW = {
-  id: 'fb-1', book_id: 'book-1', kind: 'suggestion', category: 'grammar',
-  body: 'Consider a comma.', proposed_text: 'Consider, a comma.',
-  book_file_id: 'file-1', source_sha256: 'sha256:abc', chapter_ref: 'ch1',
-  cfi: 'epubcfi(/6/4)', selected_text: 'Consider a comma.', prefix: 'Hi. ', suffix: ' Bye.',
-  submitter_email: 'reader@example.com', status: 'open',
-  created_at: 'now', updated_at: 'now',
+  id: 'fb-1',
+  book_id: 'book-1',
+  kind: 'suggestion',
+  category: 'grammar',
+  body: 'Consider a comma.',
+  proposed_text: 'Consider, a comma.',
+  book_file_id: 'file-1',
+  source_sha256: 'sha256:abc',
+  chapter_ref: 'ch1',
+  cfi: 'epubcfi(/6/4)',
+  selected_text: 'Consider a comma.',
+  prefix: 'Hi. ',
+  suffix: ' Bye.',
+  submitter_email: 'reader@example.com',
+  status: 'open',
+  created_at: 'now',
+  updated_at: 'now',
 };
 
 describe('Creator Review Routes', () => {
@@ -48,13 +59,15 @@ describe('Creator Review Routes', () => {
 
   it('lists only assigned books for a creator', async () => {
     mockRequireAuth.mockResolvedValue(CREATOR_AUTH());
-    mockQueryAll.mockResolvedValueOnce([
-      { id: 'book-1', slug: 'book-a', title: 'Book A' },
-    ]);
+    mockQueryAll.mockResolvedValueOnce([{ id: 'book-1', slug: 'book-a', title: 'Book A' }]);
 
-    const res = await app.fetch(new Request('http://localhost/api/creator/books', {
-      headers: { Authorization: 'Bearer valid' },
-    }), env, makePassThroughContext());
+    const res = await app.fetch(
+      new Request('http://localhost/api/creator/books', {
+        headers: { Authorization: 'Bearer valid' },
+      }),
+      env,
+      makePassThroughContext(),
+    );
     expect(res.status).toBe(200);
     const payload: { data: { id: string }[] } = await res.json();
     expect(payload.data).toHaveLength(1);
@@ -65,9 +78,13 @@ describe('Creator Review Routes', () => {
     mockRequireAuth.mockResolvedValue(CREATOR_AUTH());
     mockQueryAll.mockResolvedValueOnce([]);
 
-    const res = await app.fetch(new Request('http://localhost/api/creator/books', {
-      headers: { Authorization: 'Bearer valid' },
-    }), env, makePassThroughContext());
+    const res = await app.fetch(
+      new Request('http://localhost/api/creator/books', {
+        headers: { Authorization: 'Bearer valid' },
+      }),
+      env,
+      makePassThroughContext(),
+    );
     expect(res.status).toBe(200);
     const payload: { data: unknown[] } = await res.json();
     expect(payload.data).toEqual([]);
@@ -77,9 +94,13 @@ describe('Creator Review Routes', () => {
     mockRequireAuth.mockResolvedValue(CREATOR_AUTH());
     seedAssignment(false);
 
-    const res = await app.fetch(new Request('http://localhost/api/creator/books/book-1/feedback', {
-      headers: { Authorization: 'Bearer valid' },
-    }), env, makePassThroughContext());
+    const res = await app.fetch(
+      new Request('http://localhost/api/creator/books/book-1/feedback', {
+        headers: { Authorization: 'Bearer valid' },
+      }),
+      env,
+      makePassThroughContext(),
+    );
     expect(res.status).toBe(403);
   });
 
@@ -89,9 +110,13 @@ describe('Creator Review Routes', () => {
     mockQueryAll.mockResolvedValueOnce([{ ...FEEDBACK_ROW }]);
     mockQueryFirst.mockResolvedValueOnce({ n: 2 });
 
-    const res = await app.fetch(new Request('http://localhost/api/creator/books/book-1/feedback', {
-      headers: { Authorization: 'Bearer valid' },
-    }), env, makePassThroughContext());
+    const res = await app.fetch(
+      new Request('http://localhost/api/creator/books/book-1/feedback', {
+        headers: { Authorization: 'Bearer valid' },
+      }),
+      env,
+      makePassThroughContext(),
+    );
     expect(res.status).toBe(200);
     const payload: { data: Record<string, unknown>[] } = await res.json();
     expect(payload.data).toHaveLength(1);
@@ -109,16 +134,21 @@ describe('Creator Review Routes', () => {
     seedAssignment(true);
     mockQueryFirst.mockResolvedValueOnce({ ...FEEDBACK_ROW }); // current row
     mockQueryAll.mockResolvedValueOnce([]); // replies
-    mockQueryAll.mockResolvedValueOnce([ // events
+    mockQueryAll.mockResolvedValueOnce([
+      // events
       { actor_email: 'creator@example.com', event: 'accepted', created_at: 'now' },
     ]);
     mockQueryFirst.mockResolvedValueOnce({ ...FEEDBACK_ROW, status: 'accepted' }); // re-read
 
-    const res = await app.fetch(new Request('http://localhost/api/creator/books/book-1/feedback/fb-1/disposition', {
-      method: 'POST',
-      body: JSON.stringify({ disposition: 'accepted' }),
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer valid' },
-    }), env, makePassThroughContext());
+    const res = await app.fetch(
+      new Request('http://localhost/api/creator/books/book-1/feedback/fb-1/disposition', {
+        method: 'POST',
+        body: JSON.stringify({ disposition: 'accepted' }),
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer valid' },
+      }),
+      env,
+      makePassThroughContext(),
+    );
     expect(res.status).toBe(200);
     const payload: { data: { status: string } } = await res.json();
     expect(payload.data.status).toBe('accepted');
@@ -133,11 +163,15 @@ describe('Creator Review Routes', () => {
     seedAssignment(true);
     mockQueryFirst.mockResolvedValueOnce({ ...FEEDBACK_ROW, kind: 'comment' });
 
-    const res = await app.fetch(new Request('http://localhost/api/creator/books/book-1/feedback/fb-1/disposition', {
-      method: 'POST',
-      body: JSON.stringify({ disposition: 'accepted' }),
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer valid' },
-    }), env, makePassThroughContext());
+    const res = await app.fetch(
+      new Request('http://localhost/api/creator/books/book-1/feedback/fb-1/disposition', {
+        method: 'POST',
+        body: JSON.stringify({ disposition: 'accepted' }),
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer valid' },
+      }),
+      env,
+      makePassThroughContext(),
+    );
     expect(res.status).toBe(422);
   });
 
@@ -146,11 +180,15 @@ describe('Creator Review Routes', () => {
     seedAssignment(true);
     mockQueryFirst.mockResolvedValueOnce({ ...FEEDBACK_ROW, status: 'withdrawn' });
 
-    const res = await app.fetch(new Request('http://localhost/api/creator/books/book-1/feedback/fb-1/disposition', {
-      method: 'POST',
-      body: JSON.stringify({ disposition: 'open' }),
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer valid' },
-    }), env, makePassThroughContext());
+    const res = await app.fetch(
+      new Request('http://localhost/api/creator/books/book-1/feedback/fb-1/disposition', {
+        method: 'POST',
+        body: JSON.stringify({ disposition: 'open' }),
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer valid' },
+      }),
+      env,
+      makePassThroughContext(),
+    );
     expect(res.status).toBe(422);
   });
 
@@ -164,11 +202,15 @@ describe('Creator Review Routes', () => {
     ]);
     mockQueryFirst.mockResolvedValueOnce({ ...FEEDBACK_ROW, kind: 'comment', status: 'open' });
 
-    const res = await app.fetch(new Request('http://localhost/api/creator/books/book-1/feedback/fb-1/disposition', {
-      method: 'POST',
-      body: JSON.stringify({ disposition: 'open' }),
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer valid' },
-    }), env, makePassThroughContext());
+    const res = await app.fetch(
+      new Request('http://localhost/api/creator/books/book-1/feedback/fb-1/disposition', {
+        method: 'POST',
+        body: JSON.stringify({ disposition: 'open' }),
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer valid' },
+      }),
+      env,
+      makePassThroughContext(),
+    );
     expect(res.status).toBe(200);
     const payload: { data: { status: string } } = await res.json();
     expect(payload.data.status).toBe('open');
@@ -178,21 +220,31 @@ describe('Creator Review Routes', () => {
     mockRequireAuth.mockResolvedValue(CREATOR_AUTH());
     seedAssignment(true);
     mockQueryFirst.mockResolvedValueOnce({ ...FEEDBACK_ROW });
-    mockQueryAll.mockResolvedValueOnce([{
-      id: 'r-1', author_email: 'creator@example.com', author_role: 'creator',
-      body: 'Good catch.', created_at: 'now',
-    }]);
+    mockQueryAll.mockResolvedValueOnce([
+      {
+        id: 'r-1',
+        author_email: 'creator@example.com',
+        author_role: 'creator',
+        body: 'Good catch.',
+        created_at: 'now',
+      },
+    ]);
     mockQueryAll.mockResolvedValueOnce([]);
     mockQueryFirst.mockResolvedValueOnce({ ...FEEDBACK_ROW });
 
-    const res = await app.fetch(new Request('http://localhost/api/creator/books/book-1/feedback/fb-1/replies', {
-      method: 'POST',
-      body: JSON.stringify({ body: 'Good catch.' }),
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer valid' },
-    }), env, makePassThroughContext());
+    const res = await app.fetch(
+      new Request('http://localhost/api/creator/books/book-1/feedback/fb-1/replies', {
+        method: 'POST',
+        body: JSON.stringify({ body: 'Good catch.' }),
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer valid' },
+      }),
+      env,
+      makePassThroughContext(),
+    );
     expect(res.status).toBe(201);
     const insert = mockExecute.mock.calls.find((args) =>
-      String(args[1]).includes('INSERT INTO feedback_replies'));
+      String(args[1]).includes('INSERT INTO feedback_replies'),
+    );
     expect(String(insert?.[1])).toMatch(/'creator'/);
     const payload: { data: { replies: { authorRole: string }[] } } = await res.json();
     expect(payload.data.replies[0].authorRole).toBe('creator');
@@ -205,11 +257,15 @@ describe('Creator Review Routes', () => {
     mockQueryAll.mockResolvedValueOnce([]);
     mockQueryAll.mockResolvedValueOnce([]);
 
-    const res = await app.fetch(new Request('http://localhost/api/creator/books/book-1/export', {
-      method: 'POST',
-      body: JSON.stringify({ ids: ['33333333-3333-4333-8333-333333333333'] }),
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer valid' },
-    }), env, makePassThroughContext());
+    const res = await app.fetch(
+      new Request('http://localhost/api/creator/books/book-1/export', {
+        method: 'POST',
+        body: JSON.stringify({ ids: ['33333333-3333-4333-8333-333333333333'] }),
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer valid' },
+      }),
+      env,
+      makePassThroughContext(),
+    );
     expect(res.status).toBe(200);
     const payload: { data: { items: Record<string, unknown>[] } } = await res.json();
     expect(payload.data.items).toHaveLength(1);
@@ -221,11 +277,15 @@ describe('Creator Review Routes', () => {
     mockRequireAuth.mockResolvedValue(CREATOR_AUTH());
     seedAssignment(false);
 
-    const res = await app.fetch(new Request('http://localhost/api/creator/books/book-1/export', {
-      method: 'POST',
-      body: JSON.stringify({ ids: ['33333333-3333-4333-8333-333333333333'] }),
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer valid' },
-    }), env, makePassThroughContext());
+    const res = await app.fetch(
+      new Request('http://localhost/api/creator/books/book-1/export', {
+        method: 'POST',
+        body: JSON.stringify({ ids: ['33333333-3333-4333-8333-333333333333'] }),
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer valid' },
+      }),
+      env,
+      makePassThroughContext(),
+    );
     expect(res.status).toBe(403);
   });
 });
@@ -248,14 +308,19 @@ describe('Admin Creator Assignment Routes', () => {
     mockQueryFirst.mockResolvedValueOnce({ id: 'user-9' }); // user
     mockQueryFirst.mockResolvedValueOnce(null); // no existing assignment
 
-    const res = await app.fetch(new Request('http://localhost/api/admin/books/book-1/creators', {
-      method: 'POST',
-      body: JSON.stringify({ email: 'creator@example.com' }),
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer admin-token' },
-    }), env, makePassThroughContext());
+    const res = await app.fetch(
+      new Request('http://localhost/api/admin/books/book-1/creators', {
+        method: 'POST',
+        body: JSON.stringify({ email: 'creator@example.com' }),
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer admin-token' },
+      }),
+      env,
+      makePassThroughContext(),
+    );
     expect(res.status).toBe(201);
     const insert = mockExecute.mock.calls.find((args) =>
-      String(args[1]).includes('INSERT INTO book_creators'));
+      String(args[1]).includes('INSERT INTO book_creators'),
+    );
     expect(insert?.[2]).toContain('user-9');
   });
 
@@ -264,11 +329,15 @@ describe('Admin Creator Assignment Routes', () => {
     mockQueryFirst.mockResolvedValueOnce({ id: 'book-1' }); // book
     mockQueryFirst.mockResolvedValueOnce(null); // no user
 
-    const res = await app.fetch(new Request('http://localhost/api/admin/books/book-1/creators', {
-      method: 'POST',
-      body: JSON.stringify({ email: 'ghost@example.com' }),
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer admin-token' },
-    }), env, makePassThroughContext());
+    const res = await app.fetch(
+      new Request('http://localhost/api/admin/books/book-1/creators', {
+        method: 'POST',
+        body: JSON.stringify({ email: 'ghost@example.com' }),
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer admin-token' },
+      }),
+      env,
+      makePassThroughContext(),
+    );
     expect(res.status).toBe(404);
     expect(mockExecute).not.toHaveBeenCalled();
   });
@@ -277,14 +346,19 @@ describe('Admin Creator Assignment Routes', () => {
     mockStepUpAssured();
     mockQueryFirst.mockResolvedValueOnce({ id: 'user-9' }); // user
 
-    const res = await app.fetch(new Request('http://localhost/api/admin/books/book-1/creators', {
-      method: 'DELETE',
-      body: JSON.stringify({ email: 'creator@example.com' }),
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer admin-token' },
-    }), env, makePassThroughContext());
+    const res = await app.fetch(
+      new Request('http://localhost/api/admin/books/book-1/creators', {
+        method: 'DELETE',
+        body: JSON.stringify({ email: 'creator@example.com' }),
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer admin-token' },
+      }),
+      env,
+      makePassThroughContext(),
+    );
     expect(res.status).toBe(200);
     const del = mockExecute.mock.calls.find((args) =>
-      String(args[1]).includes('DELETE FROM book_creators'));
+      String(args[1]).includes('DELETE FROM book_creators'),
+    );
     expect(del?.[2]).toEqual(['book-1', 'user-9']);
   });
 });

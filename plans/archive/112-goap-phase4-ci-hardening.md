@@ -19,12 +19,12 @@ Close three CI hardening gaps in one change set:
 
 ## Analysis — Current State
 
-| Sub-task | Pre-state | Gap |
-|----------|-----------|-----|
-| 1. Impeccable wiring | `scripts/quality_gate.sh` invokes `run-impeccable.sh`. The script itself emits `::warning::` for findings and `::error::` only when `IMPECCABLE_REQUIRED=1`. | The gate did not forward the `IMPECCABLE_REQUIRED` env var; the block was also missing the ADR-111 §2 inline comment. |
-| 2. Bundle budget | `scripts/check-bundle-size.mjs` exists; reads `.performance-budgets.json` with raw byte thresholds. `ci.yml` runs it inside `build`. The `apps/web/package.json` has `test:bundle`. | Thresholds are raw bytes, not gzipped KB per ADR-107 §3. No standalone `bundle:budget` script. No dedicated workflow gated on web/ui paths. |
-| 3. markdownlint + zizmor in default gate | `scripts/quality_gate.sh` invokes `validate-workflows.sh` which already runs `zizmor --min-severity medium`. `markdownlint` runs in the markdown section. | Inline comments documenting the "default" status were missing; risk of future env-gating regressions. |
-| 4. KNOWN-ISSUES.md | File already contains monitor-tier entries (Windows symlinks, Playwright browser install, Lighthouse thresholds). | None — verified. No contradictory state. |
+| Sub-task                                 | Pre-state                                                                                                                                                                           | Gap                                                                                                                                         |
+| ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1. Impeccable wiring                     | `scripts/quality_gate.sh` invokes `run-impeccable.sh`. The script itself emits `::warning::` for findings and `::error::` only when `IMPECCABLE_REQUIRED=1`.                        | The gate did not forward the `IMPECCABLE_REQUIRED` env var; the block was also missing the ADR-111 §2 inline comment.                       |
+| 2. Bundle budget                         | `scripts/check-bundle-size.mjs` exists; reads `.performance-budgets.json` with raw byte thresholds. `ci.yml` runs it inside `build`. The `apps/web/package.json` has `test:bundle`. | Thresholds are raw bytes, not gzipped KB per ADR-107 §3. No standalone `bundle:budget` script. No dedicated workflow gated on web/ui paths. |
+| 3. markdownlint + zizmor in default gate | `scripts/quality_gate.sh` invokes `validate-workflows.sh` which already runs `zizmor --min-severity medium`. `markdownlint` runs in the markdown section.                           | Inline comments documenting the "default" status were missing; risk of future env-gating regressions.                                       |
+| 4. KNOWN-ISSUES.md                       | File already contains monitor-tier entries (Windows symlinks, Playwright browser install, Lighthouse thresholds).                                                                   | None — verified. No contradictory state.                                                                                                    |
 
 ## Decomposed Tasks
 

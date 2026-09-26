@@ -91,11 +91,11 @@ Key settings:
 
 ### Environment Variables
 
-| Variable | Purpose |
-|----------|---------|
-| `TURSO_DATABASE_URL` | Turso database connection URL |
-| `TURSO_AUTH_TOKEN` | Turso authentication token |
-| `SESSION_SECRET` | Session token signing secret (min32 chars) |
+| Variable             | Purpose                                    |
+| -------------------- | ------------------------------------------ |
+| `TURSO_DATABASE_URL` | Turso database connection URL              |
+| `TURSO_AUTH_TOKEN`   | Turso authentication token                 |
+| `SESSION_SECRET`     | Session token signing secret (min32 chars) |
 
 ### Secrets Management
 

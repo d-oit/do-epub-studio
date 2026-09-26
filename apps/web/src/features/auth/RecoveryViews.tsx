@@ -9,10 +9,7 @@ export function RecoverySuccessView({ onBack }: { onBack: () => void }) {
       <div className="mb-6 p-4 bg-accent-success/10 border border-accent-success/20 rounded text-sm text-accent-success">
         {t('login.recoverySuccess')}
       </div>
-      <Button
-        variant="ghost"
-        onClick={onBack}
-      >
+      <Button variant="ghost" onClick={onBack}>
         {t('login.backToLogin')}
       </Button>
     </div>
@@ -36,7 +33,9 @@ export function TokenErrorView({ error }: { error: string }) {
   return (
     <div className="min-h-dvh bg-background flex flex-col items-center justify-center px-4">
       <div className="max-w-md w-full bg-background-secondary rounded-xl shadow-lg p-8 text-center space-y-4">
-        <p className="text-accent-error" role="alert">{error}</p>
+        <p className="text-accent-error" role="alert">
+          {error}
+        </p>
         <Button
           onClick={() => {
             // eslint-disable-next-line i18next/no-literal-string -- route path

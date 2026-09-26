@@ -10,19 +10,20 @@ Comprehensive test coverage improvement across all packages in the monorepo.
 
 ## Coverage Results
 
-| Package | Before | After | Change |
-|---------|--------|-------|--------|
-| shared | 48.93% | 90.42% | **+41.49%** |
-| schema | 44.06% | 98.3% | **+54.24%** |
-| ui | 32.28% | 90.71% | **+58.43%** |
-| web | 63.83% | 76.58% | **+12.75%** |
-| worker | 70.15% | 70.15% | - |
-| reader-core | 77.7% | 77.7% | - |
-| testkit | 97.64% | 97.64% | - |
+| Package     | Before | After  | Change      |
+| ----------- | ------ | ------ | ----------- |
+| shared      | 48.93% | 90.42% | **+41.49%** |
+| schema      | 44.06% | 98.3%  | **+54.24%** |
+| ui          | 32.28% | 90.71% | **+58.43%** |
+| web         | 63.83% | 76.58% | **+12.75%** |
+| worker      | 70.15% | 70.15% | -           |
+| reader-core | 77.7%  | 77.7%  | -           |
+| testkit     | 97.64% | 97.64% | -           |
 
 ## Tests Added
 
 ### Phase 1 (PR #586 - Merged)
+
 - `packages/shared/src/__tests__/epub-validator.test.ts` - 11 tests
 - `packages/schema/src/__tests__/schemas.test.ts` - 78 tests
 - `packages/ui/src/__tests__/components.test.tsx` - 39 tests
@@ -35,6 +36,7 @@ Comprehensive test coverage improvement across all packages in the monorepo.
 - `apps/web/src/__tests__/reader-store.test.ts` - 29 tests
 
 ### Phase 2 (Current)
+
 - `apps/web/src/__tests__/reader-hooks.test.ts` - 30 tests
 - `apps/web/src/__tests__/info-panel.test.tsx` - 10 tests
 - `apps/web/src/__tests__/login-page.test.tsx` - 8 tests
@@ -68,6 +70,7 @@ Comprehensive test coverage improvement across all packages in the monorepo.
 ## Remaining Gaps
 
 ### Web Package (76.58%)
+
 - `BooksPage.tsx` - 28.57% (complex admin page with many dependencies)
 - `CommentItem.tsx` - 30.43%
 - `HighlightItem.tsx` - 40%

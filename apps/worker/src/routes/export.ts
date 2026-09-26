@@ -58,7 +58,13 @@ exportRouter.get(
     const { format } = c.req.valid('query');
     const auth = c.get('auth');
 
-    const mismatch = await assertBookAccess(c.env, auth, bookId, c.executionCtx, getRequestTraceId(c));
+    const mismatch = await assertBookAccess(
+      c.env,
+      auth,
+      bookId,
+      c.executionCtx,
+      getRequestTraceId(c),
+    );
     if (mismatch) return mismatch.response;
 
     // The three queries are independent (separate tables, each with its own
@@ -100,9 +106,19 @@ exportRouter.get(
     const data = prepareExport(highlights, comments, bookmarks);
 
     if (format === 'html') {
-      return c.json({ ok: true, data: { format: 'html', title: bookTitle, content: generateHtmlExport(bookTitle, data) } });
+      return c.json({
+        ok: true,
+        data: { format: 'html', title: bookTitle, content: generateHtmlExport(bookTitle, data) },
+      });
     }
-    return c.json({ ok: true, data: { format: 'markdown', title: bookTitle, content: generateMarkdownExport(bookTitle, data) } });
+    return c.json({
+      ok: true,
+      data: {
+        format: 'markdown',
+        title: bookTitle,
+        content: generateMarkdownExport(bookTitle, data),
+      },
+    });
   },
 );
 

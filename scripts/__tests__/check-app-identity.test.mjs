@@ -13,28 +13,20 @@ function runScript() {
 }
 
 describe('check-app-identity.mjs (ADR-104)', () => {
-  it(
-    'passes on the current working tree',
-    () => {
-      const result = runScript();
-      if (result.status !== 0) {
-        console.error('STDOUT:', result.stdout);
-        console.error('STDERR:', result.stderr);
-      }
-      expect(result.status).toBe(0);
-    },
-    120_000,
-  );
+  it('passes on the current working tree', () => {
+    const result = runScript();
+    if (result.status !== 0) {
+      console.error('STDOUT:', result.stdout);
+      console.error('STDERR:', result.stderr);
+    }
+    expect(result.status).toBe(0);
+  }, 120_000);
 
-  it(
-    'reports canonical name + version on success',
-    () => {
-      const result = runScript();
-      expect(result.stdout).toMatch(/d\.o\.EPUB Studio/);
-      expect(result.stdout).toMatch(/VERSION:\s+[\d.]+/);
-    },
-    120_000,
-  );
+  it('reports canonical name + version on success', () => {
+    const result = runScript();
+    expect(result.stdout).toMatch(/d\.o\.EPUB Studio/);
+    expect(result.stdout).toMatch(/VERSION:\s+[\d.]+/);
+  }, 120_000);
 });
 
 describe('VERSION ↔ package.json parity (ADR-104)', () => {
@@ -42,16 +34,12 @@ describe('VERSION ↔ package.json parity (ADR-104)', () => {
   const versionFile = readFileSync(resolve(repoRoot, 'VERSION'), 'utf8').trim();
 
   it('root package.json matches VERSION', () => {
-    const rootPkg = JSON.parse(
-      readFileSync(resolve(repoRoot, 'package.json'), 'utf8'),
-    );
+    const rootPkg = JSON.parse(readFileSync(resolve(repoRoot, 'package.json'), 'utf8'));
     expect(rootPkg.version).toBe(versionFile);
   });
 
   it('every per-package package.json matches VERSION', () => {
-    const appsPkg = JSON.parse(
-      readFileSync(resolve(repoRoot, 'apps/web/package.json'), 'utf8'),
-    );
+    const appsPkg = JSON.parse(readFileSync(resolve(repoRoot, 'apps/web/package.json'), 'utf8'));
     const workerPkg = JSON.parse(
       readFileSync(resolve(repoRoot, 'apps/worker/package.json'), 'utf8'),
     );

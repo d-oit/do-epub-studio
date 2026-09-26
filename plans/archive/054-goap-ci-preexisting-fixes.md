@@ -11,21 +11,21 @@ Fix all pre-existing CI failures identified in Plan 053 that were blocking PR me
 
 ## Execution
 
-| # | Issue | Fix | Status |
-|---|-------|-----|--------|
-| CI-1 | SBOM: `cyclonedx-npm` dependency tree error | Added `--ignore-npm-errors` flag to ci.yml and release.yml | ✅ Merged |
+| #    | Issue                                                 | Fix                                                                   | Status    |
+| ---- | ----------------------------------------------------- | --------------------------------------------------------------------- | --------- |
+| CI-1 | SBOM: `cyclonedx-npm` dependency tree error           | Added `--ignore-npm-errors` flag to ci.yml and release.yml            | ✅ Merged |
 | CI-2 | Chromatic: missing `preview-stats.json` for TurboSnap | Added `--stats-json` flag to storybook build in visual-regression.yml | ✅ Merged |
-| CI-3 | Scorecard: annotated tag SHA instead of commit SHA | Updated to commit SHA `f49aabe` and updated `validate-shas.sh` | ✅ Merged |
+| CI-3 | Scorecard: annotated tag SHA instead of commit SHA    | Updated to commit SHA `f49aabe` and updated `validate-shas.sh`        | ✅ Merged |
 
 ## Files Changed
 
-| File | Change |
-|------|--------|
-| `.github/workflows/ci.yml` | Added `--ignore-npm-errors` to SBOM generation |
-| `.github/workflows/release.yml` | Added `--ignore-npm-errors` to SBOM generation |
-| `.github/workflows/visual-regression.yml` | Added `--stats-json` to storybook build |
-| `.github/workflows/scorecard.yml` | Updated SHA to commit (not tag object) |
-| `scripts/validate-shas.sh` | Updated allowed SHA for `ossf/scorecard-action` |
+| File                                      | Change                                          |
+| ----------------------------------------- | ----------------------------------------------- |
+| `.github/workflows/ci.yml`                | Added `--ignore-npm-errors` to SBOM generation  |
+| `.github/workflows/release.yml`           | Added `--ignore-npm-errors` to SBOM generation  |
+| `.github/workflows/visual-regression.yml` | Added `--stats-json` to storybook build         |
+| `.github/workflows/scorecard.yml`         | Updated SHA to commit (not tag object)          |
+| `scripts/validate-shas.sh`                | Updated allowed SHA for `ossf/scorecard-action` |
 
 ## Quality Gates
 
