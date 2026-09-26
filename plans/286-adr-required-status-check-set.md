@@ -44,7 +44,7 @@ completed/skipped`.
 
 So the obvious-looking set — lint, typecheck, tests, build — is a permanent
 deadlock. `strict: true` additionally means the branch must be up to date with
-`main`, so a permanently-unsatisfiable context blocks *every* PR, including
+`main`, so a permanently-unsatisfiable context blocks _every_ PR, including
 ones that fix the repo.
 
 A second, independent deadlock sits in the review settings. GitHub forbids
@@ -63,7 +63,7 @@ always invalidates the only possible approval, with no exit.
    every PR).
 3. **Lint, typecheck and unit tests are not required as separate contexts.** On a
    PR they are covered by `Full Quality Gate` and `Fast Check (Changed
-   Packages)`, which run `pnpm lint` / `pnpm typecheck` over the affected
+Packages)`, which run `pnpm lint` / `pnpm typecheck` over the affected
    packages. The push-only originals remain the enforcement path for `main`
    itself, and `strict: true` forces a re-run after every `main` advance.
 4. **`require_last_push_approval` is off; `dismiss_stale_reviews` is on.**
@@ -107,7 +107,7 @@ conversation-resolution enforcement, which is where most of the value is.
 Because the failure mode is silent and total. A context that never runs looks
 exactly like a context that passed, right up until it blocks a PR nobody can
 unblock. The rule is asymmetric on purpose: an absent required context costs
-availability, and a wrongly-added one costs correctness *silently*. Requiring
+availability, and a wrongly-added one costs correctness _silently_. Requiring
 only what has been observed is the conservative direction.
 
 The same "prove it ran" discipline GOAP-277 applied to job-level skips

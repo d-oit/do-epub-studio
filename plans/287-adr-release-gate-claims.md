@@ -16,11 +16,11 @@ GOAP-283 split the problem in two, and this ADR decides both halves.
 
 **Three were naming drift** — the guard existed under a different `name:`:
 
-| Manifest claim | Actually enforced by |
-| --- | --- |
+| Manifest claim          | Actually enforced by                   |
+| ----------------------- | -------------------------------------- |
 | `Tag/Version Agreement` | step `Verify tag matches VERSION file` |
-| `Main Ancestry` | step `Verify tag is on main branch` |
-| `Required PR Checks` | step `Verify CI checks passed` |
+| `Main Ancestry`         | step `Verify tag is on main branch`    |
+| `Required PR Checks`    | step `Verify CI checks passed`         |
 
 **Three were genuinely absent** — no coverage gate, no cross-browser E2E, no
 security check anywhere in `release.yml`. The only cross-browser run in CI is
@@ -34,7 +34,7 @@ mention. `Verify CI checks passed` — the step that stands in for
 - it warned and `exit 0` when a commit had no check runs at all;
 - it only treated `conclusion == "failure"` as red, so `cancelled`, `timed_out`,
   `action_required` and `stale` all released silently;
-- it ignored commit *statuses* entirely, which is where third-party reporters
+- it ignored commit _statuses_ entirely, which is where third-party reporters
   (Codecov) publish.
 
 So the one claim that did resolve to a real step was the weakest step in the
@@ -43,14 +43,14 @@ workflow.
 ## Decision
 
 1. **Implement the three absent gates.** A claim may be retired only if the
-   assurance genuinely lives elsewhere *and* something enforces it there.
+   assurance genuinely lives elsewhere _and_ something enforces it there.
    "The coverage/e2e/security work happens in ci.yml" is not sufficient, because
    ci.yml is push- and schedule-triggered and says nothing about the tagged
    commit.
 2. **Rename the three drifted claims** to the real `name:` values.
 3. **`Verify CI checks passed` becomes fail-closed and context-driven**: it
    checks the same required contexts that protect `main` (ADR-286), and treats a
-   *missing* context as an error rather than a warning. `skipped` is not green.
+   _missing_ context as an error rather than a warning. `skipped` is not green.
 4. **An unmet release claim fails the validator** (exit 1) instead of printing
    `⚠` and exiting 0.
 
@@ -87,7 +87,7 @@ identically and matched as whole phrases with `grep -qF`.
   read its input must not report success.
 - `Verify CI checks passed` now hard-codes the required-context list. It is
   commented as such, and the drift direction is safe: a context added to branch
-  protection but not here fails *closed* (the release blocks), not open. It
+  protection but not here fails _closed_ (the release blocks), not open. It
   should eventually be read from the branch-protection API, which is noted as
   follow-up rather than done here because the release job's token is scoped
   `contents: read` + `checks: read` and widening it is a separate decision.

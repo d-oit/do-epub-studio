@@ -4,7 +4,7 @@
 **Date:** 2026-09-26
 **ADR:** `plans/287-adr-release-gate-claims.md`
 **Closes:** #1207
-**Supersedes:** GOAP-283 (`plans/283-goap-release-gate-manifest-truth.md`) — that plan proposed *renaming or retiring* the three unmet claims; this one implements them instead, per ADR-287.
+**Supersedes:** GOAP-283 (`plans/283-goap-release-gate-manifest-truth.md`) — that plan proposed _renaming or retiring_ the three unmet claims; this one implements them instead, per ADR-287.
 
 ## Goal
 
@@ -28,11 +28,11 @@ Renamed to the real `name:` values so `grep` resolves them:
 Per ADR-287 the claims are **implemented, not retired**; retiring them would
 have silenced the sensor without adding an assurance.
 
-| Claim | Job | What it does |
-| --- | --- | --- |
-| `Coverage Gate` | `coverage-gate` | `scripts/validate-coverage-parity.sh` — the same validator the local gate runs, so threshold drift across `coverage-thresholds.json` / `vitest.config.ts` / `codecov.yml` blocks a release |
-| `Security Checks` | `security-gate` | CodeQL init/analyze/upload against the tagged commit, then `Fail on open security alerts` reads the alert count and blocks on any open alert |
-| `Cross-Browser E2E` | `cross-browser-gate` | `playwright test --project=chromium --project=firefox --project=webkit` against the mocked lanes, so the claim is performed at release time rather than only on the nightly schedule |
+| Claim               | Job                  | What it does                                                                                                                                                                               |
+| ------------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `Coverage Gate`     | `coverage-gate`      | `scripts/validate-coverage-parity.sh` — the same validator the local gate runs, so threshold drift across `coverage-thresholds.json` / `vitest.config.ts` / `codecov.yml` blocks a release |
+| `Security Checks`   | `security-gate`      | CodeQL init/analyze/upload against the tagged commit, then `Fail on open security alerts` reads the alert count and blocks on any open alert                                               |
+| `Cross-Browser E2E` | `cross-browser-gate` | `playwright test --project=chromium --project=firefox --project=webkit` against the mocked lanes, so the claim is performed at release time rather than only on the nightly schedule       |
 
 All three are added to the `release` job's `needs`, so they actually gate.
 
@@ -70,7 +70,7 @@ reported as a missing check.
 
 **2. A check that both succeeded and failed passed.** The verdict was a joined
 string, and the test was `grep -qvE '(success|neutral)(,|$)'` over the whole
-string — which only proves that *one* element matched.
+string — which only proves that _one_ element matched.
 `completed/success,completed/cancelled` contains `success,` and therefore
 **passed**, letting a required check through on the strength of a superseded
 cancelled run. Re-runs are exactly what a tagged commit accumulates, so this was

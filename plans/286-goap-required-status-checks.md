@@ -11,7 +11,7 @@
 ADR-279 added `.github/workflows/validate-commit-title.yml` with the `pr-title`
 and `commit-range` jobs. They pass, but they were advisory only, so any PR could
 merge red on them. Because the repo squash-merges with
-`squash_merge_commit_title = COMMIT_OR_PR_TITLE`, the PR title *is* the commit
+`squash_merge_commit_title = COMMIT_OR_PR_TITLE`, the PR title _is_ the commit
 subject that lands on `main` — and the local `commit-msg` hook never sees a PR
 title at all. ADR-279's history hole was therefore still open in practice.
 
@@ -38,21 +38,21 @@ statements were wrong, and the 404 was the reason.
 `GET /repos/d-oit/do-epub-studio/rulesets` returns an **active** ruleset on the
 default branch:
 
-| | |
-| --- | --- |
-| id / name | `15669639` / `main` |
-| enforcement | `active` |
-| conditions | `ref_name` includes `~DEFAULT_BRANCH` |
-| required status checks | `Codacy Static Code Analysis` (integration 56611), `strict: true` |
-| code scanning | CodeQL, `errors` / `high_or_higher` |
-| pull request | `required_review_thread_resolution: true`, `required_approving_review_count: 0` |
-| other | `deletion` blocked, `require_extra_approval_for_unattributed_changes: true` |
+|                        |                                                                                 |
+| ---------------------- | ------------------------------------------------------------------------------- |
+| id / name              | `15669639` / `main`                                                             |
+| enforcement            | `active`                                                                        |
+| conditions             | `ref_name` includes `~DEFAULT_BRANCH`                                           |
+| required status checks | `Codacy Static Code Analysis` (integration 56611), `strict: true`               |
+| code scanning          | CodeQL, `errors` / `high_or_higher`                                             |
+| pull request           | `required_review_thread_resolution: true`, `required_approving_review_count: 0` |
+| other                  | `deletion` blocked, `require_extra_approval_for_unattributed_changes: true`     |
 
 This is exactly what `agents-docs/LEARNINGS.md` already recorded ("The `main`
 ruleset requires only Codacy (strict, up-to-date) as a hard status check …
 plus CodeQL alerts and PR-thread resolution"). The lesson was in the repo and was
 not consulted, because a `404` on the protection endpoint was read as "no
-enforcement" rather than "not *this* kind of enforcement".
+enforcement" rather than "not _this_ kind of enforcement".
 
 Two GitHub mechanisms coexist and both apply, so the effective requirement is
 their **union**:
@@ -78,30 +78,30 @@ diagnosis is the reason this correction was needed.
 ## Decomposition
 
 - **A — enumerate existing enforcement before adding any.** Classic protection
-  was absent *and* a ruleset was active; only the first is visible on the
+  was absent _and_ a ruleset was active; only the first is visible on the
   endpoint #1206 used.
 - **B — register `pr-title` + `commit-range`** (the #1206 ask).
 - **C — pick the rest of the required set from jobs that actually run on a PR.**
   This is where #1206's framing was incomplete, and the reason is recorded in
   ADR-286: three jobs that look like the obvious candidates are push-only.
 - **D — audit for a self-approval deadlock.** This repo is single-maintainer
-  (`@d-oit` is the author of every open PR *and* the authenticated identity),
+  (`@d-oit` is the author of every open PR _and_ the authenticated identity),
   and every `CODEOWNERS` entry resolves to `@d-oit`.
 
 ## What was applied
 
 `required_status_checks.contexts` (strict: true):
 
-| Context | Runs on PR? | Why required |
-| --- | --- | --- |
-| `pr-title` | yes | ADR-279; title becomes the squash-merge subject |
-| `commit-range` | yes | ADR-279; every commit held to `commit-msg` |
-| `Pre-commit Hooks` | yes | the framework hooks (ADR-285) |
-| `Full Quality Gate` | yes (non-draft) | lint + typecheck + tests + design, the repo's aggregate gate |
-| `Fast Check (Changed Packages)` | yes | the only per-package test run on PRs |
-| `Gate Visibility Sensor` | yes (`always()`) | GOAP-277; catches silently-skipped gates |
-| `Setup & Diagnostics` | yes | every downstream job `needs:` it, so its failure is already blocking |
-| `CodeQL Alert Check` | yes | blocks on open CodeQL alerts |
+| Context                         | Runs on PR?      | Why required                                                         |
+| ------------------------------- | ---------------- | -------------------------------------------------------------------- |
+| `pr-title`                      | yes              | ADR-279; title becomes the squash-merge subject                      |
+| `commit-range`                  | yes              | ADR-279; every commit held to `commit-msg`                           |
+| `Pre-commit Hooks`              | yes              | the framework hooks (ADR-285)                                        |
+| `Full Quality Gate`             | yes (non-draft)  | lint + typecheck + tests + design, the repo's aggregate gate         |
+| `Fast Check (Changed Packages)` | yes              | the only per-package test run on PRs                                 |
+| `Gate Visibility Sensor`        | yes (`always()`) | GOAP-277; catches silently-skipped gates                             |
+| `Setup & Diagnostics`           | yes              | every downstream job `needs:` it, so its failure is already blocking |
+| `CodeQL Alert Check`            | yes              | blocks on open CodeQL alerts                                         |
 
 Also set: `enforce_admins: true`, `allow_force_pushes: false`,
 `allow_deletions: false`, `required_conversation_resolution: true`,
@@ -145,7 +145,7 @@ approvals, so an approval can never be carried across unreviewed changes.
 - `GET /branches/main/protection` → `200`, with the context list above.
 - `GET /repos/d-oit/do-epub-studio/rulesets` → the pre-existing `main`
   ruleset (`15669639`) is `active` and untouched; its `Codacy Static Code
-  Analysis` requirement is satisfied on all four open PRs
+Analysis` requirement is satisfied on all four open PRs
   (`completed/success`), so the union of both mechanisms is green.
 - `UI Tests` (Chromatic, 70 unaccepted baselines on #1218) is **not** in either
   required set, so it does not block. It is a Chromatic GitHub App check rather

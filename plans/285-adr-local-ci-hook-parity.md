@@ -36,10 +36,10 @@ Three parts, each load-bearing:
 
 1. **Run, on staged files only.** `--files "${staged[@]}"`, not `--all-files`.
    CI is the only layer that may scan the whole tree; the local hook's job is to
-   make *this commit* CI-ready, and scoping to the index keeps a commit hook
+   make _this commit_ CI-ready, and scoping to the index keeps a commit hook
    proportional to the change rather than to the repository.
 2. **Re-stage whatever the hooks rewrote.** `trailing-whitespace` and
-   `end-of-file-fixer` are fixers, not linters: they return non-zero *and*
+   `end-of-file-fixer` are fixers, not linters: they return non-zero _and_
    modify the worktree. Without `git add -u` on the touched paths the commit
    records pre-fix bytes while the hook reported success — the hook would pass
    on a tree that CI then rejects, which is the exact failure this ADR exists
@@ -51,7 +51,7 @@ is a way to reach the remote for a fix, not a way to merge broken work.
 
 ## Why fail-closed, not #1213's proposed warn-and-continue
 
-Warn-and-continue is indistinguishable from *no hook at all* with respect to the
+Warn-and-continue is indistinguishable from _no hook at all_ with respect to the
 one thing the hook exists to prevent: a commit that is green locally and red in
 CI. The signal still arrives, but at the worst possible moment — after the push,
 on `main`, where the fix is a follow-up PR. That is the failure #1212 recorded
@@ -71,7 +71,7 @@ at all, which is worse than a missing hook: it fails every commit with a
 
 So availability gates execution, not policy. When `pre-commit` is absent the
 hook warns once, names the install command, and proceeds — the same graceful
-shape #1213 proposed, now confined to the *missing-tool* case where the
+shape #1213 proposed, now confined to the _missing-tool_ case where the
 alternative is total breakage. When the tool is present, a failure is a failure.
 
 ## Alternative considered: keep CI as the only authority
