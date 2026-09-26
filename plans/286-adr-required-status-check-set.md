@@ -64,6 +64,34 @@ always invalidates the only possible approval, with no exit.
    drafts, so a draft cannot satisfy its own required context. Recorded in
    GOAP-286 so it is a known state, not a future mystery.
 
+## Operational consequence: a human approval is now required
+
+`required_approving_review_count: 1` + `require_code_owner_reviews: true` cannot
+be satisfied by the repository's only account. GitHub rejects self-approval
+outright:
+
+```
+gh pr review 1220 --approve
+failed to create review: GraphQL: Review Can not approve your own pull request
+```
+
+This is a property of the organisation, not a misconfiguration: `gh api user` is
+`d-oit`, both open PRs are authored by `d-oit`, and all `CODEOWNERS` entries
+resolve to `@d-oit`. **Enabling this ruleset therefore requires a second GitHub
+account to merge any PR.** That trade was made knowingly — the alternative is no
+enforced protection at all — but it must be written down at the moment it is
+decided, because the first "why can't I merge" report will be exactly this.
+
+Verified as of 2026-09-26: PR #1220 satisfies all eight required contexts
+(`pr-title`, `commit-range`, `Pre-commit Hooks`, `Full Quality Gate`,
+`Fast Check (Changed Packages)`, `Gate Visibility Sensor`, `Setup & Diagnostics`,
+`CodeQL Alert Check` — all `completed/success`) and is blocked solely on
+`REVIEW_REQUIRED`.
+
+If a second maintainer account is not available, the rollback is to lower
+`required_approving_review_count` to 0 while keeping the status-check and
+conversation-resolution enforcement, which is where most of the value is.
+
 ## Why not just require everything that looks important
 
 Because the failure mode is silent and total. A context that never runs looks

@@ -38,11 +38,11 @@
   "release": {
     "description": "Required release readiness checks (release.yml)",
     "checks": [
-      "Release Readiness",
-      "Tag/Version Agreement",
-      "Main Ancestry",
+      "Release Readiness Gate",
+      "Verify tag matches VERSION file",
+      "Verify tag is on main branch",
       "Coverage Gate",
-      "Required PR Checks",
+      "Verify CI checks passed",
       "Cross-Browser E2E",
       "Performance Budgets",
       "Security Checks"
