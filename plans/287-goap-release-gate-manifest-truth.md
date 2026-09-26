@@ -81,6 +81,34 @@ Both were invisible to every existing check, which is why the plan's own
 verification standard for this step is "execute it against real data", not
 "the name resolves in the file".
 
+### B4 — post-merge: the required-context list was unreachable for a release
+
+Found by running the merged step against the real, fully-green `main` commit
+(`2bb90e8e`) — the first execution against a push, rather than a PR.
+
+`REQUIRED` was copied verbatim from the branch-protection list, but three of
+those contexts are **pull_request-only**:
+
+| Context                         | On a push to `main`                                                 |
+| ------------------------------- | ------------------------------------------------------------------- |
+| `pr-title`                      | **absent** (`validate-commit-title.yml` triggers on `pull_request`) |
+| `commit-range`                  | **absent** (same workflow)                                          |
+| `Fast Check (Changed Packages)` | `completed/skipped` (`if: github.event_name == 'pull_request'`)     |
+
+So a release tag on a `main` commit could never satisfy the gate — it would
+fail on two missing contexts and one skipped one, forever. The guarantee is not
+lost: a release can only be tagged from a merged PR, and ADR-279 already gates
+the title and every commit at PR time. `REQUIRED` now lists the five contexts
+that actually run on a push, each verified present and `success` on `main`.
+
+This is the ADR-286 rule applied one level too late: the same
+"`pull_request`-only job must not be required elsewhere" finding, but for the
+release gate instead of branch protection. The general form is that a required
+list is only valid for the event it is evaluated at.
+
+`skipped` remains non-green, so a genuinely-skipped push-time context still
+blocks rather than passing quietly.
+
 ### C — the validator now fails instead of warning
 
 `validate-gate-parity.sh` sets `FAILED=1` on any unmet release claim, and the
