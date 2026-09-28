@@ -37,7 +37,19 @@ if [[ ! -f "$CI_FILE" ]]; then
   exit 1
 fi
 
-CI_JOBS=$(grep -E '^\s{2}[a-z_-]+:' "$CI_FILE" | sed 's/://;s/^ *//' | grep -v 'name:' || true)
+# Job names come from EVERY workflow under .github/workflows, and the `name:`
+# value is preferred over the job id, because the manifest names what GitHub
+# reports as a check context and those usually differ (job `budget` reports as
+# "Gzipped bundle budget"). Previously only job ids from ci.yml were read, so a
+# claim living in an auxiliary workflow could never resolve.
+CI_JOBS=$(grep -hE '^[[:space:]]{2,}name:[[:space:]]' "$REPO_ROOT"/.github/workflows/*.yml 2>/dev/null \
+  | sed -E 's/^[[:space:]]+name:[[:space:]]*//' || true)
+
+# Checks published by external GitHub Apps rather than by a workflow. These
+# report real check runs (verified live: `Codacy Static Code Analysis`, app
+# `codacy-production`), and Codacy is a required check on main via the
+# repository ruleset -- so it is a merge gate that simply has no file to grep.
+EXTERNAL_CHECKS="Codacy Static Code Analysis"
 
 printf '%s═════════════════════════════════════════════════════════════════%s\n' "$BLUE" "$NC"
 printf '%s  Gate Parity Validation%s\n' "$BOLD" "$NC"
@@ -56,27 +68,39 @@ while IFS= read -r check; do
   fi
 done <<< "$LOCAL_CHECKS"
 
-# Check PR checks against workflow jobs
+# Check PR checks against workflow job names.
 printf '\n%s▸ PR CI checks:%s\n' "$BLUE" "$NC"
+PR_FAILURES=0
 while IFS= read -r check; do
   [[ -z "$check" ]] && continue
-  # Normalize for fuzzy matching (lowercase, strip special chars)
-  NORMALIZED=$(echo "$check" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9 ]//g')
+  # Normalise the claim and the candidates the SAME way: lowercase, and every
+  # run of non-alphanumerics collapsed to a single space. The previous version
+  # deleted hyphens outright, so a hyphenated claim could never match its own
+  # job name — the identical bug ADR-287 fixed on the release side.
+  NORMALIZED=$(echo "$check" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]\+/ /g; s/^ *//; s/ *$//')
   FOUND=0
   while IFS= read -r job; do
     [[ -z "$job" ]] && continue
-    JOB_NORMALIZED=$(echo "$job" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9 ]//g')
-    if [[ "$JOB_NORMALIZED" == *"$NORMALIZED"* ]] || [[ "$NORMALIZED" == *"$JOB_NORMALIZED"* ]]; then
+    JOB_NORMALIZED=$(echo "$job" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]\+/ /g; s/^ *//; s/ *$//')
+    if [[ -n "$JOB_NORMALIZED" && "$JOB_NORMALIZED" == *"$NORMALIZED"* ]]; then
       FOUND=1
       break
     fi
-  done <<< "$CI_JOBS"
+  done <<< "$(printf '%s\n%s\n' "$CI_JOBS" "$EXTERNAL_CHECKS")"
   if [[ $FOUND -eq 1 ]]; then
     printf '  %s✓%s %s\n' "$GREEN" "$NC" "$check"
   else
-    printf '  %s⚠%s %s (not matched in ci.yml jobs — may be in auxiliary workflow)\n' "$YELLOW" "$NC" "$check"
+    printf '  %s✗%s %s (no workflow job or external check reports this name)\n' "$RED" "$NC" "$check"
+    PR_FAILURES=1
   fi
 done <<< "$PR_CHECKS"
+
+# ADR-287 / #1207 applied to the PR side: these claims printed a permanent ⚠
+# while the script still exited 0, which is a warning nobody ever resolves. The
+# release set already fails; the PR set now does too.
+if [[ $PR_FAILURES -ne 0 ]]; then
+  FAILED=1
+fi
 
 # Check release manifest entries
 RELEASE_CHECKS=$(jq -r '.release.checks[]' "$MANIFEST" 2>/dev/null)

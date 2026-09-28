@@ -16,23 +16,24 @@
     ]
   },
   "pr": {
-    "description": "Required GitHub PR checks (ci.yml + auxiliary workflows)",
+    "description": "PR-gating checks (ci.yml + auxiliary workflows + external apps). Names are the exact `name:` values GitHub reports as check contexts, or the check name published by an external app (Codacy).",
     "checks": [
-      "Lint & Typecheck",
-      "Test (web)",
-      "Test (worker)",
-      "Test (reader-core)",
-      "Test (shared)",
-      "Test (schema)",
-      "Test (testkit)",
-      "Build",
-      "Worker Build",
-      "E2E Tests",
-      "Bundle Size",
-      "CodeQL",
+      "PR Gate (all paths)",
+      "Full Quality Gate",
+      "Pre-commit Hooks",
+      "Fast Check (Changed Packages)",
+      "Lint (Node ${{ matrix.node-version }})",
+      "Typecheck (Node ${{ matrix.node-version }})",
+      "Unit Tests (Node ${{ matrix.node-version }})",
+      "Build (Node ${{ matrix.node-version }})",
+      "Gate Visibility Sensor",
+      "Setup & Diagnostics",
+      "CodeQL Alert Check",
+      "E2E Smoke Tests",
+      "Gzipped bundle budget (ADR-107 §3)",
       "Lighthouse audit",
-      "Codacy Static Code Analysis",
-      "Quality Gate"
+      "Worker Build Validation",
+      "Codacy Static Code Analysis"
     ]
   },
   "release": {

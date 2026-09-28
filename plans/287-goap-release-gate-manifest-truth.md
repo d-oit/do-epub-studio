@@ -157,11 +157,61 @@ identically and matched as whole phrases.
 - The `Security Checks` gate uses `fail-on: none` for the analysis step and
   gates on the API alert count instead, so a transient CodeQL action failure
   cannot masquerade as "alerts found".
-- The four pre-existing `⚠` PR-side lines (`Bundle Size`, `Lighthouse audit`,
-  `Codacy Static Code Analysis`, `Quality Gate`) are **not** addressed here. They
-  are a separate, honest signal: those gates live in auxiliary workflows
-  (`bundle-size.yml`, `lighthouse.yml`) or are named differently than the
-  manifest's prose (`Quality Gate` vs the real `Full Quality Gate`). Making the
-  PR section fail-closed is the natural next step, but it is a distinct claim
-  set from the release one this issue is about, and it is left visible rather
-  than quietly folded in.
+- ~~The four pre-existing `⚠` PR-side lines~~ — **done**, see below.
+
+## The PR side, completed (follow-up)
+
+The release half of this manifest was fixed first. The PR half had the same
+three defects and was left as four permanent `⚠` lines. All three are now fixed
+too.
+
+### What the manifest was actually claiming
+
+Turning the PR section fail-closed immediately showed the warnings were not
+naming drift — **the claims were aspirational**. `Lint & Typecheck` and all six
+per-package `Test (web|worker|reader-core|shared|schema|testkit)` entries match
+**no job in any workflow**; those jobs were replaced by matrix jobs long ago.
+`E2E Tests` is a paraphrase of `E2E Smoke Tests`. The manifest described a CI
+design that no longer exists, which is why the validator could never resolve it
+and why the section had to stay a warning.
+
+So the fix was to rewrite the claims to the **exact `name:` values GitHub
+reports**, not to rename the four that happened to warn:
+
+| Was                                        | Now                                                            |
+| ------------------------------------------ | -------------------------------------------------------------- |
+| `Lint & Typecheck`                         | `Lint (Node ${{ matrix.node-version }})`                       |
+| `Test (web)` … `Test (testkit)` (6 claims) | `Unit Tests (Node ${{ matrix.node-version }})`                 |
+| `E2E Tests`                                | `E2E Smoke Tests`                                              |
+| `Bundle Size`                              | `Gzipped bundle budget (ADR-107 §3)`                           |
+| `Quality Gate`                             | `Full Quality Gate`                                            |
+| _(absent)_                                 | `PR Gate (all paths)` — the path-independent gate from ADR-286 |
+
+### Two validator defects, same class as the release side
+
+1. **It only read `ci.yml`, and only job _ids_.** `Bundle Size` lives in
+   `bundle-size.yml` (job `budget` reports as `Gzipped bundle budget`), and
+   `Lighthouse audit` in `lighthouse.yml` — neither could ever resolve. It now
+   collects the `name:` value from **every** workflow, because that is what
+   GitHub reports as a check context.
+2. **Same broken hyphen normalisation** ADR-287 fixed for `release`: the claim
+   was normalised with a rule deleting hyphens while the candidates kept them.
+   Both sides are now normalised identically and matched as substrings.
+
+### External checks are real gates with no file to grep
+
+`Codacy Static Code Analysis` is published by the **codacy-production GitHub
+App**, not by any workflow — verified live on a PR head
+(`app=codacy-production`, `conclusion=success`) — and it is a required check on
+`main` via the repository ruleset. It is a genuine merge gate with nothing to
+grep, so it is declared explicitly as an external check rather than left to
+time out.
+
+### Verification
+
+- `bash scripts/validate-gate-parity.sh` → exit 0, **16/16 PR claims ✓, 8/8
+  release ✓, zero warnings**.
+- Fail-closed proven by injection: adding `Nonexistent Gate XYZ` to
+  `pr.checks` makes the validator exit 1; removing it returns exit 0.
+- `shellcheck --severity=warning` clean; `validate-coverage-parity.sh` exit 0;
+  `pnpm format:check` clean; full quality gate passes.
