@@ -41,9 +41,18 @@ const numbers = new Map();
 // referenced plan says it is finished. That is the drift which misleads an
 // audit. The reverse — a stale plan header under a correct index — is a
 // warning, because correcting the plan is its author's call, not a gate's.
-const INDEX_OPEN = ['in progress'];
-const PLAN_FINISHED = ['done', 'accepted', 'complete', 'completed', 'closed'];
+// Open = the row claims work is not finished. `proposed` is included because a
+// plan whose phases are all closed can still sit at PROPOSED in the index —
+// which is exactly what GOAP-276 did, and what the first version of this check
+// (IN PROGRESS only) failed to catch.
 const leading = (s) => s.split(/[(—–]/)[0].trim().toLowerCase();
+
+// Exposed as predicates, not arrays: `str.startsWith(SOME_ARRAY)` coerces the
+// array to `"in progress,proposed"`, which never matches — a silent no-op that
+// looks like a working gate. (`some` is the only correct form.)
+const isIndexOpen = (s) => ['in progress', 'proposed'].some((p) => leading(s).startsWith(p));
+const isPlanFinished = (s) =>
+  ['done', 'accepted', 'complete', 'completed', 'closed'].some((p) => leading(s).startsWith(p));
 
 function readPlanStatus(path) {
   try {
@@ -117,21 +126,19 @@ for (const section of sections) {
       .map((p) => [p, readPlanStatus(join(repoRoot, p))])
       .filter(([, s]) => s !== null);
 
-    if (statuses.length > 0 && leading(statusCell).startsWith(INDEX_OPEN)) {
+    if (statuses.length > 0 && isIndexOpen(statusCell)) {
       // Fails only when EVERY referenced plan agrees the work is finished: a
       // row whose ADR is accepted while its sibling GOAP still runs is correct
       // and must not be flagged.
-      const allDone = statuses.every(([, s]) =>
-        PLAN_FINISHED.some((p) => leading(s).startsWith(p)),
-      );
+      const allDone = statuses.every(([, s]) => isPlanFinished(s));
       if (allDone) {
         errors.push(
           `Stale status for ${numStr}: index says IN PROGRESS but ${statuses.map(([p, s]) => `${p} ("${s}")`).join(', ')}. Update the row.`,
         );
       }
     } else if (statuses.length > 0) {
-      const allOpen = statuses.every(([, s]) => leading(s).startsWith(INDEX_OPEN));
-      if (allOpen && PLAN_FINISHED.some((p) => leading(statusCell).startsWith(p))) {
+      const allOpen = statuses.every(([, s]) => isIndexOpen(s));
+      if (allOpen && isPlanFinished(statusCell)) {
         warnings.push(
           `${numStr}: plan header says ${statuses.map(([, s]) => `"${s}"`).join(', ')} while the index row says finished — check ${statuses.map(([p]) => p).join(', ')}`,
         );
