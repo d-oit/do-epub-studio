@@ -140,36 +140,63 @@ not sufficient.
 ## Current required set
 
 ```json
-["pr-title", "commit-range"]
+["pr-title", "commit-range", "PR Gate (all paths)"]
 ```
 
-Both are produced by `validate-commit-title.yml`, which has **no path filter**,
-so they appear on every PR regardless of which files changed. Everything else
-that was registered came from `ci.yml` and was removed.
+`pr-title` and `commit-range` come from `validate-commit-title.yml`, which has
+**no path filter**. The third is `pr-gate.yml` — added in the follow-up below,
+also with no path filter, reporting one stable context.
 
-This is a real reduction in enforcement, and it is stated plainly rather than
-papered over: `Full Quality Gate`, `Pre-commit Hooks`, `Fast Check`,
-`Gate Visibility Sensor`, `Setup & Diagnostics` and `CodeQL Alert Check` are no
-longer merge-blocking. They still run and still gate `main` pushes.
+### The path-independent gate (implemented)
 
-**The fix that restores the enforcement** is to add a path-filter-free workflow
-that runs the aggregate gate on every PR — e.g. a `pull_request` (no
-`paths-ignore`) job in a small `pr-gate.yml` that shells out to
-`scripts/minimal_quality_gate.sh` and reports as a single stable context. That
-is the correct shape, because one path-independent context satisfies
-ADR-286's rule for every PR shape instead of special-casing each one. It is
-recorded as follow-up work rather than done here, because it changes CI
-topology and deserves its own review.
+`.github/workflows/pr-gate.yml` triggers on `pull_request` (and `merge_group`)
+with **no `paths-ignore`**, and runs `scripts/minimal_quality_gate.sh` plus the
+validators a path-filtered PR would otherwise skip: agent-adapter sync, gate
+parity, `validate-workflows.sh` (actionlint + zizmor) and markdownlint when
+available. It is complementary to `ci.yml`'s `Full Quality Gate` rather than
+duplicate: a markdown-only PR is a docs change, and the checks that can break it
+are exactly the workflow/docs validators and the shell linters.
+
+`cancel-in-progress: false` is deliberate — cancelling mid-gate would leave the
+required context missing, which is the failure mode this whole ADR is about.
+
+**Verified on the exact shape that was unsatisfiable** (canary #1234, one
+changed file, closed unmerged):
+
+|                            |                                              |
+| -------------------------- | -------------------------------------------- |
+| `ci.yml` runs on that head | **0** — skipped by `paths-ignore: ['**.md']` |
+| `pr-title`                 | success                                      |
+| `commit-range`             | success                                      |
+| `PR Gate (all paths)`      | success                                      |
+
+### Registering it nearly repeated the same mistake
+
+The context was first registered as `PR Gate` — the **workflow** name, read off
+the `name:` key at the top of the file. The check GitHub records is the **job**
+name, `PR Gate (all paths)`. The wrong string would have been a fourth deadlock:
+an absent required context, indistinguishable from a passing one. Caught by
+reading the run's job list (`GET /actions/runs/<id>/jobs`) instead of trusting
+the workflow file, which is the same "read the artifact, not the intent"
+discipline the rest of this ADR applies.
 
 ## Consequences
 
-- `main` rejects merges that are red on `pr-title` or `commit-range`, and
-  requires the branch to be up to date with `main` (`strict: true`).
-- Every Tier-1 "never merge a PR with failing CI" rule that depends on a status
-  check is therefore **not** enforced for path-filtered PRs. The rules remain in
-  `AGENTS.md` as process, not as control.
-- Adding a required context is evidence-gated: confirm it runs for **all** PR
-  shapes first, then register it.
+- `main` rejects merges that are red on `pr-title`, `commit-range` or
+  `PR Gate (all paths)`, and requires the branch to be up to date with `main`
+  (`strict: true`).
+- Every PR now runs lint, typecheck, shellcheck, the gitignore guard, the
+  workflow validators, the gate-parity manifest and the agent-adapter check —
+  **for every PR shape**, including documentation-only changes. That is the
+  Tier-1 "never merge a PR with failing CI" rule restored as an actual control
+  rather than left as process.
+- Full-gate coverage (tests, build, bundle budget, dead code, design) is still
+  provided by `ci.yml` for non-filtered PRs and for every `main` push. A
+  markdown-only PR does not run tests — correctly, since it changes no
+  executable code.
+- Adding a required context is evidence-gated: confirm the **job** name via
+  `GET /actions/runs/<id>/jobs`, confirm it runs for **all** PR shapes, then
+  register it. The workflow `name:` is not the context.
 - If someone later removes `if: github.event_name != 'pull_request'` from the
   matrix jobs so they do run on PRs, the correct follow-up is to register the
   **interpolated** names (`Lint (Node 22)`, `Lint (Node 24)`, …) — not the
