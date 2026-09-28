@@ -1,6 +1,6 @@
 # GOAP-276: Benchmark adoption — github-template-ai-agents + do-harness
 
-**Status:** PROPOSED — Phase 0 complete 2026-09-24, Phases 1–2 open
+**Status:** DONE (all 7 phases closed 2026-09-24 via #1197, #1203, #1204, #1205, #1208; re-verified 2026-09-28 against artifacts — `scripts/release/sync-changelog.sh` absent, `release:cut` consumed by no workflow and no release-drafter file, `do-harness.toml` carries 13 sensors, `loc-baseline.json` + `coverage-thresholds.json` + `validate-commit-title.yml` + `check-agent-sync.mjs` all present)
 **Date:** 2026-09-23
 
 Benchmark analysis of `d-o-hub/github-template-ai-agents` (template) and
