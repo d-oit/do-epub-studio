@@ -1,4 +1,4 @@
-# ADR-286: Required status checks are chosen by "runs on a PR", not by importance
+# ADR-286: A required status check must run for every PR shape the repo accepts
 
 **Date:** 2026-09-26
 **Status:** Accepted
@@ -115,15 +115,62 @@ The same "prove it ran" discipline GOAP-277 applied to job-level skips
 `LEARNINGS.md` about `ACTION_REQUIRED` applies: read the artifact (the actual
 check run), not the intent expressed in the workflow file.
 
+## Three deadlocks, one rule
+
+Every deadlock in this ADR came from the same mistake, made three times in
+sequence: **requiring a context that does not run for that PR's shape.**
+
+| #   | Required but never runs             | Trigger                                             | Symptom                                                |
+| --- | ----------------------------------- | --------------------------------------------------- | ------------------------------------------------------ |
+| 1   | `lint`, `typecheck`, `test`         | `if: github.event_name != 'pull_request'`           | literal `${{ matrix.node-version }}` in the check name |
+| 2   | 6 of 8 contexts (release gate)      | release evaluates a **push**, the jobs are PR-gated | `Required check 'pr-title' is missing` on green `main` |
+| 3   | 6 of 8 contexts (branch protection) | `ci.yml` has `paths-ignore: ['**.md']`              | a markdown-only PR has no `ci.yml` run at all          |
+
+Case 3 surfaced last and is the quietest: #1231 touched only
+`agents-docs/LEARNINGS.md`, `ci.yml` was skipped **by design** (`paths-ignore`),
+and the six required contexts that only `ci.yml` produces simply never appeared.
+`gh pr checks` showed no failures — the contexts were absent, not red, which
+looks identical to "passing" until the merge is refused.
+
+The rule, now stated once: **a required context must be proven to run for every
+PR shape the repository accepts** — a draft, a `pull_request`, a `push` to
+`main`, a merge queue, and a path-filtered PR. "It ran on the PR I tested" is
+not sufficient.
+
+## Current required set
+
+```json
+["pr-title", "commit-range"]
+```
+
+Both are produced by `validate-commit-title.yml`, which has **no path filter**,
+so they appear on every PR regardless of which files changed. Everything else
+that was registered came from `ci.yml` and was removed.
+
+This is a real reduction in enforcement, and it is stated plainly rather than
+papered over: `Full Quality Gate`, `Pre-commit Hooks`, `Fast Check`,
+`Gate Visibility Sensor`, `Setup & Diagnostics` and `CodeQL Alert Check` are no
+longer merge-blocking. They still run and still gate `main` pushes.
+
+**The fix that restores the enforcement** is to add a path-filter-free workflow
+that runs the aggregate gate on every PR — e.g. a `pull_request` (no
+`paths-ignore`) job in a small `pr-gate.yml` that shells out to
+`scripts/minimal_quality_gate.sh` and reports as a single stable context. That
+is the correct shape, because one path-independent context satisfies
+ADR-286's rule for every PR shape instead of special-casing each one. It is
+recorded as follow-up work rather than done here, because it changes CI
+topology and deserves its own review.
+
 ## Consequences
 
-- `main` now rejects pushes and merges that are red on the registered contexts.
-  Every Tier-1 "never merge a PR with failing CI" rule in `AGENTS.md` moves
-  from convention to enforcement.
-- Adding a new required context is now an evidence-gated operation: open or
-  observe a PR, confirm the check run exists, then register it.
+- `main` rejects merges that are red on `pr-title` or `commit-range`, and
+  requires the branch to be up to date with `main` (`strict: true`).
+- Every Tier-1 "never merge a PR with failing CI" rule that depends on a status
+  check is therefore **not** enforced for path-filtered PRs. The rules remain in
+  `AGENTS.md` as process, not as control.
+- Adding a required context is evidence-gated: confirm it runs for **all** PR
+  shapes first, then register it.
 - If someone later removes `if: github.event_name != 'pull_request'` from the
   matrix jobs so they do run on PRs, the correct follow-up is to register the
   **interpolated** names (`Lint (Node 22)`, `Lint (Node 24)`, …) — not the
-  literal ones currently reported. That is recorded here so the obvious-looking
-  follow-up is not applied blindly.
+  literal ones currently reported.
