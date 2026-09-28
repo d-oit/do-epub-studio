@@ -1,6 +1,6 @@
 # GOAP-275: React `act(...)` warning inventory (web test suite)
 
-**Status:** PHASE 3 COMPLETE — all 11 inventoried files drained, `KNOWN_WARNING_FILES` is now empty (2026-09-25). Phase 4 synthesis still open; issue #1185 stays open until it is recorded.
+**Status:** DONE (Phase 3 complete 2026-09-25 — all 11 inventoried files drained, `KNOWN_WARNING_FILES` is empty; Phase 4 synthesis closed with issue #1185)
 **Date:** 2026-09-23
 **ADR:** `plans/275-adr-react-act-warning-policy.md`
 **Issue:** #1185 (tracking) — discovered while fixing #1175
