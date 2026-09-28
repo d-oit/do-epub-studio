@@ -642,3 +642,8 @@
 Temporary probe: this PR touches only markdown, so `ci.yml` must skip it
 entirely while `PR Gate (all paths)` must still report. That combination is
 the proof ADR-286's rule is satisfied. Closes via #1233.
+
+## Full Quality Gate markdown canary (2026-09-28)
+
+Temporary probe: with ci.yml's `paths-ignore` removed, a markdown-only PR must now get a
+`Full Quality Gate` run. Closing unmerged after verification.
