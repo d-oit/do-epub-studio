@@ -1,6 +1,6 @@
 # GOAP-280: `.agents/AGENTS.md` Thin Pointer + Real Adapter Enforcement
 
-**Status:** IN PROGRESS (implementation complete in this change set; gate + commit + PR by parent session)
+**Status:** DONE (GOAP-276 Phase 0 item #7: nested AGENTS.md reduced to a thin pointer, `ADAPTERS` is the enforced loop, and `check-agent-sync.mjs` is wired as a `quality_gate.sh` phase plus the `check:agent-sync` script)
 **Date:** 2026-09-24
 **Parent:** GOAP-276 Phase 0 item 7 (`plans/276-goap-external-harness-benchmark-adoption.md`)
 **ADR:** `plans/280-adr-nested-agents-thin-adapter.md`
