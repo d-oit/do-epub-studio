@@ -1,0 +1,375 @@
+// audit.test.mjs — headless unit tests (node --test) for the pure logic of
+// the viewport text audit. Browser-dependent behavior (getComputedStyle,
+// elementsFromPoint) is covered by the optional browser suite in audit.browser
+// .test.mjs, which SKIPs when Playwright browsers are unavailable — mirroring
+// do-harness's sensor SKIP policy so CI without browsers stays honest.
+
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {
+  rectsIntersect,
+  intersectionArea,
+  rectContains,
+  isOutOfFlow,
+  classifyPair,
+  collectOverlaps,
+  horizontalOverflowPx,
+} from './lib/geometry.mjs';
+import {
+  relativeLuminance,
+  compositeOver,
+  compositeLayers,
+  parseColor,
+  contrastRatio,
+  minimumRatio,
+} from './lib/contrast.mjs';
+import { normalizeViewport, normalizeMatrix, DEFAULT_VIEWPORT_MATRIX } from './lib/audit.mjs';
+import { classifyConsoleMessage } from './lib/console-audit.mjs';
+import {
+  expectedDirection,
+  buildLocaleUrl,
+  keyFinding,
+  diffLocaleFindings,
+} from './lib/i18n-audit.mjs';
+import { DEFAULT_BUDGETS, parseBudgets, evaluateBudgets } from './lib/perf-audit.mjs';
+import { cellKey, classifyBaseline, digestOf } from './lib/visual-audit.mjs';
+import { findingLabel, annotationsForFindings, MAX_ANNOTATIONS } from './lib/annotate.mjs';
+
+const rect = (x, y, w, h) => ({ x, y, width: w, height: h });
+
+test('rectsIntersect: positive-area overlap only', () => {
+  assert.equal(rectsIntersect(rect(0, 0, 10, 10), rect(5, 5, 10, 10)), true);
+  assert.equal(rectsIntersect(rect(0, 0, 10, 10), rect(10, 0, 10, 10)), false); // touching edge
+  assert.equal(rectsIntersect(rect(0, 0, 10, 10), rect(20, 20, 5, 5)), false);
+});
+
+test('intersectionArea: zero for touching edges', () => {
+  assert.equal(intersectionArea(rect(0, 0, 10, 10), rect(5, 5, 10, 10)), 25);
+  assert.equal(intersectionArea(rect(0, 0, 10, 10), rect(10, 0, 10, 10)), 0);
+});
+
+test('classifyPair: contained pairs never overlap', () => {
+  assert.equal(classifyPair(rect(0, 0, 100, 20), rect(10, 5, 10, 10)), 'contained');
+  assert.equal(classifyPair(rect(10, 5, 10, 10), rect(0, 0, 100, 20)), 'contained');
+});
+
+test('classifyPair: same-line inline siblings are not overlap', () => {
+  assert.equal(classifyPair(rect(0, 0, 40, 20), rect(41, 0, 40, 20)), 'none');
+  // vertically adjacent rows intersecting horizontally => not same-line
+  assert.equal(classifyPair(rect(0, 0, 50, 20), rect(10, 21, 50, 20)), 'none');
+});
+
+test('classifyPair: genuine cross-line overlap is flagged', () => {
+  // deliberately absolutely-positioned label over a heading, overlapping by
+  // only half the line height: NOT same-line
+  assert.equal(classifyPair(rect(0, 0, 60, 24), rect(10, 12, 60, 24)), 'overlap');
+  // same-line pair (full vertical overlap, slight horizontal nudge)
+  assert.equal(classifyPair(rect(0, 0, 40, 20), rect(39, 0, 40, 20)), 'same-line');
+});
+
+test('classifyPair: out-of-flow pairs keep no same-line exemption', () => {
+  const sameBaseline = [rect(8, 8, 168, 23), rect(90, 8, 190, 23)];
+  // in-flow pair on one baseline: exempt
+  assert.equal(classifyPair(...sameBaseline), 'same-line');
+  // either side absolutely/fixed-positioned: genuine overlap
+  assert.equal(classifyPair(...sameBaseline, { positionedA: true }), 'overlap');
+  assert.equal(classifyPair(...sameBaseline, { positionedB: true }), 'overlap');
+  assert.equal(classifyPair(...sameBaseline, { positionedA: true, positionedB: true }), 'overlap');
+  // relative/sticky/static lay out in flow: no positioned hint to pass
+  assert.equal(isOutOfFlow('absolute'), true);
+  assert.equal(isOutOfFlow('fixed'), true);
+  assert.equal(isOutOfFlow('relative'), false);
+  assert.equal(isOutOfFlow('sticky'), false);
+  assert.equal(isOutOfFlow('static'), false);
+  assert.equal(isOutOfFlow(''), false);
+});
+
+test('collectOverlaps: positioned leaves are flagged on a shared baseline', () => {
+  const leaves = [
+    { rect: rect(8, 8, 168, 23), path: 'promo-a', text: 'sale' },
+    { rect: rect(90, 8, 190, 23), path: 'promo-b', text: 'go', positioned: true },
+  ];
+  const found = collectOverlaps(leaves);
+  assert.equal(found.length, 1);
+  assert.equal(found[0].a, 'promo-a');
+  assert.equal(found[0].b, 'promo-b');
+});
+
+test('classifyPair: containment exempts only DOM-related in-flow leaves', () => {
+  const outer = rect(0, 0, 300, 40);
+  const inner = rect(4, 4, 60, 24); // fully inside `outer`
+  // wrapping text (a heading and its own inline run): exempt
+  assert.equal(classifyPair(outer, inner, { domRelated: true }), 'contained');
+  // rect proxy still applies when the caller cannot know the DOM
+  assert.equal(classifyPair(outer, inner), 'contained');
+  // a positioned descendant overrides its own container: an overlay
+  assert.equal(classifyPair(outer, inner, { domRelated: true, positionedB: true }), 'overlap');
+  // sibling leaves in flow still share a line box: same-line exemption holds
+  assert.equal(classifyPair(outer, inner, { domRelated: false }), 'same-line');
+  // …but the same unrelated pair crossing a line boundary is an overlap
+  assert.equal(classifyPair(outer, rect(4, 30, 60, 24), { domRelated: false }), 'overlap');
+});
+
+test("collectOverlaps: overlay inside another leaf's box is flagged", () => {
+  const heading = { rect: rect(0, 0, 300, 40), path: 'h1', text: 'Quarterly report' };
+  const badge = { rect: rect(4, 4, 60, 24), path: 'span.badge', text: 'new', positioned: true };
+  const unrelated = () => false;
+  const found = collectOverlaps([heading, badge], { isDomRelated: unrelated });
+  assert.equal(found.length, 1);
+  assert.equal(found[0].a, 'h1');
+  assert.equal(found[0].b, 'span.badge');
+  // wrapping text (related, in flow) stays exempt
+  const wrapping = [
+    { rect: rect(0, 0, 300, 40), path: 'h1-wrap', text: 'Quarterly report' },
+    { rect: rect(4, 4, 290, 30), path: 'h1-inner', text: 'Quarterly report' },
+  ];
+  assert.equal(collectOverlaps(wrapping, { isDomRelated: () => true }).length, 0);
+});
+
+test('collectOverlaps: skips contained pairs, flags overlaps, caps output', () => {
+  const leaves = [
+    { rect: rect(0, 0, 50, 20), path: 'h1', text: 'title' },
+    { rect: rect(0, 0, 50, 20), path: 'h1-wrap', text: 'title' }, // contained
+    { rect: rect(10, 12, 60, 24), path: 'label', text: 'badge' },
+  ];
+  const found = collectOverlaps(leaves);
+  // h1-wrap and h1 are contained (skipped); label genuinely overlaps BOTH
+  // the wrap and the inner heading at the same coordinates => 2 findings.
+  assert.equal(found.length, 2);
+  assert.ok(found.every((f) => f.b === 'label'));
+  // Even leaves sit on one line, odd leaves half-overlap the next line, and
+  // every even-odd pair intersects horizontally: 900 candidate pairs, capped.
+  const many = Array.from({ length: 60 }, (_, i) => ({
+    rect: rect(i * 10, (i % 2) * 10, 50, 20),
+    path: `p${i}`,
+    text: 'x',
+  }));
+  assert.equal(collectOverlaps(many, { maxFindings: 5 }).length, 5);
+});
+
+test('horizontalOverflowPx: only counts past the viewport edge', () => {
+  assert.equal(horizontalOverflowPx(rect(300, 0, 100, 10), { width: 320 }), 80);
+  assert.equal(horizontalOverflowPx(rect(0, 0, 320, 10), { width: 320 }), 0);
+});
+
+test('contrast: WCAG luminance and ratios', () => {
+  assert.equal(parseColor('#fff').length, 4);
+  assert.deepEqual(parseColor('rgb(255, 255, 255)'), [255, 255, 255, 1]);
+  assert.deepEqual(parseColor('rgba(0, 0, 0, 0.5)'), [0, 0, 0, 0.5]);
+  // black on white is 21:1
+  assert.ok(Math.abs(contrastRatio([0, 0, 0], [255, 255, 255]) - 21) < 0.01);
+  // gray #767676 on white is exactly the 4.5:1 boundary region
+  assert.ok(contrastRatio([118, 118, 118], [255, 255, 255]) < 4.6);
+  // 50% black over white = gray, not black
+  assert.deepEqual(compositeOver([0, 0, 0, 0.5], [255, 255, 255]), [128, 128, 128]);
+  assert.equal(relativeLuminance([255, 255, 255]), 1);
+});
+
+test('contrast: minimum ratio follows the large-text rule', () => {
+  assert.equal(minimumRatio({ fontSizePx: 16, bold: false }), 4.5);
+  assert.equal(minimumRatio({ fontSizePx: 24, bold: false }), 3);
+  assert.equal(minimumRatio({ fontSizePx: 19, bold: true }), 3);
+  assert.equal(minimumRatio({ fontSizePx: 19, bold: false }), 4.5);
+});
+
+test('compositeLayers: text resolves against its own surface, then ancestors', () => {
+  // badge: white text on the element's own opaque brand red — 8.3:1, clean
+  assert.ok(contrastRatio([255, 255, 255], compositeLayers([[176, 0, 32, 1]])) >= 4.5);
+  // 60% black veil over the white canvas is grey, not white
+  assert.deepEqual(compositeLayers([[0, 0, 0, 0.6]]), [102, 102, 102]);
+  // the leaf's own translucent surface composites over the ancestor below it
+  assert.deepEqual(
+    compositeLayers([
+      [0, 0, 0, 0.5],
+      [255, 0, 0, 1],
+    ]),
+    [128, 0, 0],
+  );
+  // no background anywhere up the tree: the white canvas assumption
+  assert.deepEqual(compositeLayers([]), [255, 255, 255]);
+});
+
+test('i18n: direction map and locale URL building', () => {
+  assert.equal(expectedDirection('ar'), 'rtl');
+  assert.equal(expectedDirection('he-IL'), 'rtl');
+  assert.equal(expectedDirection('fa'), 'rtl');
+  assert.equal(expectedDirection('de'), 'ltr');
+  assert.equal(expectedDirection('pt-BR'), 'ltr');
+  assert.equal(expectedDirection('zh-Hans-CN'), 'ltr');
+  assert.equal(
+    buildLocaleUrl('http://app.test/catalog?sort=asc', 'lang', 'de'),
+    'http://app.test/catalog?sort=asc&lang=de',
+  );
+});
+
+test('i18n: locale diff isolates locale-only regressions', () => {
+  const baseline = [
+    { stage: 'contrast', selector: 'p', reason: 'contrast 3.0:1 < 4.5:1' },
+    { stage: 'target-size', selector: 'button', reason: 'target is 20x20px' },
+  ];
+  const german = [
+    ...baseline,
+    {
+      stage: 'reflow-overflow',
+      selector: 'html',
+      reason: 'document is 340px wide at a 320px viewport',
+    },
+  ];
+  assert.deepEqual(
+    diffLocaleFindings(baseline, german).map((f) => f.stage),
+    ['reflow-overflow'], // expansion defect only, shared defects excluded
+  );
+  const arabic = [
+    ...german,
+    { stage: 'text-overlap', selector: 'nav', reason: 'overlaps another text leaf' },
+  ];
+  assert.equal(diffLocaleFindings(baseline, arabic).length, 2);
+  // identical sets produce no delta
+  assert.equal(diffLocaleFindings(baseline, [...baseline]).length, 0);
+  // keys are stable and collision-free across stages
+  assert.notEqual(keyFinding(baseline[0]), keyFinding(baseline[1]));
+});
+
+test('visual: cell keys are deterministic, slugged, and collision-safe', () => {
+  const vp = { label: 'mobile-md', width: 360, height: 800 };
+  assert.equal(cellKey('/login', vp), cellKey('/login', vp));
+  const keyA = cellKey('/books?id=1', vp);
+  const keyB = cellKey('/books?id=2', vp);
+  assert.notEqual(keyA, keyB); // query strings must not collide
+  assert.match(keyA, /^mobile-md-[0-9a-f]{12}$/);
+  assert.equal(
+    cellKey('/x', { label: 'weird label!!', width: 1, height: 1 }).startsWith('weird-label-'),
+    true,
+  );
+});
+
+test('visual: baseline classification covers all three states', () => {
+  const digest = digestOf(Buffer.from('png-bytes'));
+  assert.equal(classifyBaseline({ hasBaseline: false }), 'new');
+  assert.equal(
+    classifyBaseline({ hasBaseline: true, baselineDigest: digest, currentDigest: digest }),
+    'unchanged',
+  );
+  assert.equal(
+    classifyBaseline({ hasBaseline: true, baselineDigest: 'sha256:other', currentDigest: digest }),
+    'changed',
+  );
+});
+
+test('annotations: labels include stage, selector, partner, and bounded text', () => {
+  assert.equal(findingLabel({ stage: 'contrast', selector: 'main > p' }), 'contrast · main > p');
+  assert.equal(
+    findingLabel({
+      stage: 'text-overlap',
+      selector: 'main > span',
+      overlapsWith: 'main > h1',
+    }),
+    'text-overlap · main > span · ↔ main > h1',
+  );
+  const label = findingLabel({ stage: 'contrast', selector: 'x'.repeat(200) });
+  assert.equal(label.length, 72);
+  assert.ok(label.endsWith('…'));
+});
+
+test('annotations: rect-bearing findings are filtered and capped', () => {
+  assert.deepEqual(annotationsForFindings([]), []);
+  assert.deepEqual(annotationsForFindings([{ stage: 'reflow-overflow', selector: 'html' }]), []);
+  assert.deepEqual(
+    annotationsForFindings([{ rect: { x: Infinity, y: 0, width: 10, height: 10 } }]),
+    [],
+  );
+  assert.deepEqual(annotationsForFindings([{ rect: rect(0, 0, 10, 10) }], { max: 0 }), []);
+  const many = Array.from({ length: MAX_ANNOTATIONS + 5 }, (_, i) => ({
+    stage: 'text-overlap',
+    selector: `#n${i}`,
+    rect: rect(0, 0, 10, 10),
+  }));
+  const annotations = annotationsForFindings(many);
+  assert.equal(annotations.length, MAX_ANNOTATIONS);
+  assert.equal(annotations[0].label, 'text-overlap · #n0');
+});
+
+test('viewport matrix: normalizes, validates, and rejects garbage', () => {
+  const m = normalizeMatrix([{ width: 320, height: 568 }]);
+  assert.deepEqual(m, [{ label: '320x568', width: 320, height: 568 }]);
+  assert.throws(() => normalizeViewport({ width: 10, height: 500 }), RangeError);
+  assert.throws(() => normalizeMatrix([]), RangeError);
+  assert.ok(DEFAULT_VIEWPORT_MATRIX.some((v) => v.width === 320)); // reflow floor
+  assert.ok(DEFAULT_VIEWPORT_MATRIX.some((v) => v.width === 360)); // Android majority
+});
+
+test('perf: budgets parse strictly and merge over defaults', () => {
+  assert.deepEqual(parseBudgets('{}'), DEFAULT_BUDGETS);
+  assert.deepEqual(parseBudgets('{"lcpMs": 1800}'), { ...DEFAULT_BUDGETS, lcpMs: 1800 });
+  assert.throws(() => parseBudgets('{bad json'), TypeError);
+  assert.throws(() => parseBudgets('{"unknown": 1}'), TypeError);
+  assert.throws(() => parseBudgets('{"cls": -0.1}'), TypeError);
+  assert.throws(() => parseBudgets('{"cls": "0.1"}'), TypeError);
+});
+
+test('perf: budget evaluation flags exactly the breached metrics', () => {
+  const clean = evaluateBudgets(
+    { performanceScore: 0.95, lcpMs: 2000, cls: 0.05, tbtMs: 300 },
+    DEFAULT_BUDGETS,
+  );
+  assert.equal(clean.length, 0);
+  const breached = evaluateBudgets(
+    { performanceScore: 0.7, lcpMs: 4100, cls: 0.3, tbtMs: 700 },
+    DEFAULT_BUDGETS,
+  );
+  assert.deepEqual(
+    breached.map((f) => f.rule),
+    ['performanceScore', 'lcpMs', 'cls', 'tbtMs'],
+  );
+  // boundaries: exactly-at-budget is not a breach
+  const boundary = evaluateBudgets(
+    { performanceScore: 0.9, lcpMs: 2500, cls: 0.1, tbtMs: 600 },
+    DEFAULT_BUDGETS,
+  );
+  assert.equal(boundary.length, 0);
+  // missing/null metrics are not reported (lighthouse returns null for N/A)
+  assert.equal(evaluateBudgets({ performanceScore: null }, DEFAULT_BUDGETS).length, 0);
+});
+
+test('console classification: errors vs discounted noise', () => {
+  const error = (over = {}) =>
+    classifyConsoleMessage({ kind: 'console', type: 'error', text: 'boom', ...over });
+  assert.equal(error(), 'error');
+  assert.equal(classifyConsoleMessage({ kind: 'pageerror', text: 'TypeError: x' }), 'error');
+  // HTTP errors that are user-facing defects
+  assert.equal(
+    classifyConsoleMessage({ kind: 'response-error', status: 500, url: '/api/books' }),
+    'error',
+  );
+  // dev-mode warnings and framework chatter are noise
+  assert.equal(classifyConsoleMessage({ kind: 'console', type: 'warning', text: 'x' }), 'noise');
+  assert.equal(error({ text: '[vite] hmr update' }), 'noise');
+  // favicon/sourcemap 404s are noise
+  assert.equal(
+    classifyConsoleMessage({ kind: 'response-error', status: 404, url: '/favicon.ico' }),
+    'noise',
+  );
+  // auth/backend-availability statuses are noise
+  assert.equal(
+    classifyConsoleMessage({ kind: 'response-error', status: 401, url: '/api/me' }),
+    'noise',
+  );
+  // a real 404 route is an error
+  assert.equal(
+    classifyConsoleMessage({ kind: 'response-error', status: 404, url: '/api/books/missing' }),
+    'error',
+  );
+  // aborted api fetches are noise; failed static assets are errors
+  assert.equal(
+    classifyConsoleMessage({
+      kind: 'response-failed',
+      text: 'net::ERR_FAILED',
+      url: '/api/health',
+    }),
+    'noise',
+  );
+  assert.equal(
+    classifyConsoleMessage({ kind: 'response-failed', text: 'net::ERR_FAILED', url: '/app.js' }),
+    'error',
+  );
+});
