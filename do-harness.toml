@@ -15,6 +15,24 @@ pre-push = []
 feedback = ["verify-fast"]
 verification = ["typecheck", "lint", "test-unit", "skills", "loc"]
 
+# GOAP-269 Phase 4: the upstream `web-ui` pack (d-o-hub/do-harness#75,
+# shipped in v0.1.1). Added ADDITIVELY rather than via `init --language web`,
+# which rewrites `do-harness.toml`, `AGENTS.md` and `plans/invariants.json` and
+# would discard the six generic sensors above — including `loc`, whose baseline
+# encodes ADR-278.
+#
+# These runners are the same code the web pack ships, so local evidence and CI
+# run identical logic (ADR-246 §Decision 1). They print "SKIP:" and exit 0 when
+# Playwright is absent or `WEB_AUDIT_ROUTES` is unset — verify reports WARN,
+# and `--strict` promotes it — so a developer without a browser is never
+# blocked. Findings exceed the cap and exit 1 with the JSON report on stderr.
+#
+# Not wired into the `verification` signal set: the viewport/a11y sensors need a
+# running dev server (`WEB_AUDIT_BASE_URL`), which a push hook cannot assume.
+# They are opt-in via `WEB_AUDIT_ROUTES`, so registering them here advertises
+# the capability without making the default set unrunnable.
+web-ui = ["viewport-ux", "a11y", "console", "perf", "visual", "i18n"]
+
 [[sensors]]
 name = "verify-fast"
 argv = ["pnpm", "verify:fast"]
@@ -88,4 +106,82 @@ when-changed = [
   "**/*.sh",
   "scripts/loc-baseline.json",
   "scripts/check-loc.mjs",
+]
+
+# --- GOAP-269 Phase 4: web-ui sensors (upstream d-o-hub/do-harness#75) -----
+#
+# `when-changed` mirrors what each runner can actually observe. The viewport and
+# a11y sensors read rendered text and geometry, so they are scoped to UI sources;
+# the console/perf sensors read runtime signals from the same routes. i18n needs
+# WEB_AUDIT_LOCALES as well, and blesses no baselines.
+#
+# None of these are in the default `verification` set — see the note on the
+# `web-ui` signal set above.
+
+[[sensors]]
+name = "viewport-ux"
+argv = ["node", "scripts/viewport-audit.mjs"]
+when-changed = [
+  "apps/web/src/**/*.tsx",
+  "packages/ui/src/**/*.tsx",
+  "apps/web/src/**/*.css",
+]
+
+[[sensors]]
+name = "a11y"
+argv = ["node", "scripts/a11y-audit.mjs"]
+when-changed = [
+  "apps/web/src/**/*.tsx",
+  "packages/ui/src/**/*.tsx",
+  "apps/web/src/**/*.css",
+]
+
+[[sensors]]
+name = "console"
+argv = ["node", "scripts/console-audit.mjs"]
+when-changed = [
+  "apps/web/src/**/*.ts",
+  "apps/web/src/**/*.tsx",
+  "packages/ui/src/**/*.ts",
+  "packages/ui/src/**/*.tsx",
+]
+
+[[sensors]]
+name = "perf"
+argv = ["node", "scripts/perf-audit.mjs"]
+when-changed = [
+  "apps/web/src/**/*.ts",
+  "apps/web/src/**/*.tsx",
+  "apps/web/vite.config.*",
+  "apps/web/package.json",
+]
+
+[[sensors]]
+name = "visual"
+argv = ["node", "scripts/visual-audit.mjs"]
+when-changed = [
+  "apps/web/src/**/*.tsx",
+  "packages/ui/src/**/*.tsx",
+  "apps/web/src/**/*.css",
+  "packages/ui/tailwind.config.*",
+]
+
+[[sensors]]
+name = "i18n"
+argv = ["node", "scripts/i18n-audit.mjs"]
+when-changed = [
+  "apps/web/src/i18n/**",
+  "apps/web/src/**/*.tsx",
+]
+
+# The audit library's own suite. Browser-independent (the `.browser` variant is
+# included by this path and self-skips without Playwright), so unlike the six
+# sensors above it runs anywhere — which makes it the one piece of the web pack
+# that belongs in the default `verification` set.
+[[sensors]]
+name = "web-ui-tests"
+argv = ["node", "--test", "scripts/web-ui/audit.test.mjs", "scripts/web-ui/audit.browser.test.mjs"]
+when-changed = [
+  "scripts/web-ui/**",
+  "scripts/*-audit.mjs",
 ]
