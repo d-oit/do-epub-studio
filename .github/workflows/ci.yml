@@ -7,10 +7,21 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
-    paths-ignore:
-      - 'docs/**'
-      - '**.md'
-      - '**.mdx'
+    # No `paths-ignore` here, deliberately (ADR-286 follow-up). The previous
+    # filter ('docs/**', '**.md', '**.mdx') used ANY-match semantics: a single
+    # documentation file anywhere in a PR suppressed the ENTIRE workflow, so a
+    # change that also touched source could ship with no `Full Quality Gate`,
+    # no `Pre-commit Hooks` and no `CodeQL Alert Check` at all. Because those
+    # jobs are only reachable through this workflow, and because branch
+    # protection matched required contexts by name, a markdown-only PR ended
+    # up permanently unmergeable ("6 of 8 required status checks are expected")
+    # while `gh pr checks` showed no failures -- an absent context is
+    # indistinguishable from a passing one.
+    #
+    # The cost of dropping it is CI minutes on documentation PRs. The repo has
+    # 534 tracked markdown files, 75 of which contain fenced shell blocks, so
+    # those checks are worth running on a docs change rather than skipping.
+    # `pr-gate.yml` remains the cheap, always-on path-independent context.
   merge_group:
   schedule:
     - cron: '0 2 * * *'
