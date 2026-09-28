@@ -1,0 +1,78 @@
+name: PR Gate
+
+# Path-independent aggregate gate for pull requests (ADR-286 follow-up).
+#
+# Why this file exists: `ci.yml` carries `paths-ignore: ['**.md', 'docs/**']`,
+# so a markdown-only PR gets no `ci.yml` run at all. When the required-context
+# list was populated from `ci.yml`'s job names, six of the eight contexts could
+# therefore never appear on a path-filtered PR — the merge was refused with
+# "6 of 8 required status checks are expected" while `gh pr checks` showed no
+# failures, because an absent context is indistinguishable from a passing one.
+#
+# ADR-286's rule is that a required context must run for *every* PR shape the
+# repository accepts. This workflow is the deliberate answer: ONE workflow with
+# NO path filter at all, reporting a single stable context name. Registering it
+# satisfies the rule by construction rather than by auditing each shape.
+#
+# It runs `minimal_quality_gate.sh` (lint + typecheck + shellcheck + gitignore
+# guard) rather than the full `quality_gate.sh`. Full-gate coverage on PRs is
+# provided by `ci.yml`'s `Full Quality Gate` for non-filtered PRs, and this job
+# exists specifically to cover the PRs `ci.yml` skips. The two are
+# complementary, not duplicate: a markdown-only PR is a docs change, and the
+# checks that can break it are the workflow/docs validators and the shell
+# linters — all of which run here.
+
+on:
+  pull_request:
+    branches: [main]
+  merge_group:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  TURBO_TELEMETRY_DISABLED: 1
+
+# Never cancel a run that has already reported the gate: cancelling mid-gate
+# would leave the required context missing, which ADR-286 shows is worse than
+# waiting — an absent context blocks the merge.
+concurrency:
+  group: pr-gate-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  pr-gate:
+    name: PR Gate (all paths)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          submodules: recursive
+
+      - uses: ./.github/actions/setup-pnpm
+
+      # These are the checks a path-filtered PR would otherwise skip entirely,
+      # and each one has already caught a real defect in this repository.
+      - name: Validate agent-adapter sync
+        run: node scripts/check-agent-sync.mjs
+
+      - name: Validate gate parity manifest
+        run: bash scripts/validate-gate-parity.sh
+
+      - name: Validate workflows (actionlint + zizmor)
+        run: bash scripts/validate-workflows.sh
+
+      - name: Validate markdown and links
+        run: |
+          if command -v markdownlint >/dev/null 2>&1; then
+            find . -path ./node_modules -prune -o -path ./.git -prune -o \
+                 -name '*.md' -print0 | xargs -0 -r markdownlint
+          else
+            echo "markdownlint not installed; markdown validation runs via pre-commit"
+          fi
+
+      - name: Lint, typecheck and shell lint
+        run: bash scripts/minimal_quality_gate.sh
