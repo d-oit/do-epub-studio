@@ -100,6 +100,14 @@ ALLOWED_SHAS=(
 # Appended 2026-09-26 by scripts/allowlist-dependabot-shas.sh — verified against upstream annotated tags (ADR-247)
     "cloudflare/wrangler-action@25853364521e0d392ece9b0c1e97a4b37b638087"
     "chromaui/action@6b3c2820222d23bad770d57a4ad5e2d1c91f92e9"
+# Appended 2026-09-28 by scripts/allowlist-dependabot-shas.sh — verified against upstream annotated tags (ADR-247)
+    "github/codeql-action/init@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2"
+    "github/codeql-action/analyze@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2"
+    "cloudflare/wrangler-action@953926a2e2182532811c01a25e53647d93bf07c0"
+    "github/codeql-action/init@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2"
+    "github/codeql-action/analyze@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2"
+    "github/codeql-action/upload-sarif@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2"
+    "github/codeql-action/upload-sarif@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2"
 )
 
 # Function to check if an action@sha is allowed
