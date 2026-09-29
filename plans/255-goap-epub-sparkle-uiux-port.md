@@ -1,6 +1,6 @@
 # GOAP-255: epub-sparkle UI/UX Port — Editorial Alignment
 
-**Status:** IN PROGRESS — W1 present in source; remaining UX and verification tracked by GOAP-999
+**Status:** DONE (W1 shipped; the remaining UX and verification work was tracked in GOAP-999, which closed 2026-09-28 with all 16 slices DONE)
 **Date:** 2026-08-23 (reconciled 2026-09-10; provider/branch/reference-check notes below are historical, not current execution instructions)
 **Strategy:** [Historical 2026-08-23 swarm note.] Future implementation follows GOAP-999 waves; see `plans/999-goap-codebase-improvements-uiux-e2e-audit.md` §7–§8
 **Orchestrates:** GOAP-254 W3 (editorial-minimalist consistency pass), now anchored to a live reference

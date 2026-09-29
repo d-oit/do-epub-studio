@@ -1,6 +1,6 @@
 # GOAP-284: Production account and invitation onboarding
 
-**Status:** IN PROGRESS — Phases 0–4 implemented; live verification pending
+**Status:** DONE (Phases 0–4 implemented; Phase 5 verified 2026-09-28 against the live stack, 13/13, via wrangler's simulated send_email binding; Phase 6 reconciled into `plans/999` and learnings recorded)
 **Date:** 2026-09-24
 **Strategy:** Sequential contract → backend → UI → live verification
 **ADR:** `plans/284-adr-invitation-account-lifecycle.md`
