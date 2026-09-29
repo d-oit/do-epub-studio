@@ -141,6 +141,20 @@ export default tseslint.config(
     },
   },
   {
+    // GOAP-289. Scoped to the Playwright suite alone, NOT to every test file:
+    // the browser specs narrow with `await expect(box).not.toBeNull()` then
+    // read `box!.width`. `expect` is a runtime assertion, not a type guard, so
+    // TypeScript cannot see the narrowing and the non-null assertion is the
+    // honest spelling rather than a skipped check. Widening this to
+    // `**/*.test.ts` instead stranded five now-redundant
+    // `eslint-disable-next-line` directives in reader-core, which --max-warnings
+    // treats as failures, so the rule stays on for unit tests and src.
+    files: ['apps/tests/**/*.ts'],
+    rules: {
+      '@typescript-eslint/no-non-null-assertion': 'off',
+    },
+  },
+  {
     files: ['apps/web/src/features/**/*.tsx', 'apps/web/src/components/**/*.tsx'],
     ignores: [
       '**/*.test.tsx',

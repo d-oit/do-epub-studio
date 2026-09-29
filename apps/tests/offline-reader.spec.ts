@@ -375,15 +375,21 @@ test.describe('Offline reader', () => {
       ];
 
       await new Promise<void>((resolve, reject) => {
+        // `req.error` and `tx.error` are `DOMException | null`, so rejecting with
+        // them directly can settle the promise with a non-Error. Normalise, or a
+        // real IndexedDB failure surfaces as an unhelpful `null` rejection.
+        const fail = (error: DOMException | null) =>
+          reject(error ?? new Error('IndexedDB transaction failed with no error'));
+
         const req = indexedDB.open(DB_NAME);
-        req.onerror = () => reject(req.error);
+        req.onerror = () => fail(req.error);
         req.onsuccess = () => {
           const db = req.result;
           const tx = db.transaction(STORE_NAME, 'readwrite');
           const store = tx.objectStore(STORE_NAME);
           for (const item of items) store.put(item);
           tx.oncomplete = () => resolve();
-          tx.onerror = () => reject(tx.error);
+          tx.onerror = () => fail(tx.error);
         };
       });
     });

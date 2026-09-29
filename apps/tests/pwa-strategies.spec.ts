@@ -61,10 +61,11 @@ test.describe('PWA Caching Strategies', () => {
   }) => {
     // 1. Fetch sensitive route while online (this would normally succeed or return 401/403)
     // For the test, we don't care about the result, just that it happened.
+    // The outcome genuinely does not matter here, but a bare `catch {}` is
+    // indistinguishable from a swallowed programming error, so the discard is
+    // stated rather than left implicit.
     await page.evaluate(async () => {
-      try {
-        await fetch('/api/access/validate?bookId=test');
-      } catch {}
+      await fetch('/api/access/validate?bookId=test').catch(() => undefined);
     });
 
     // 2. Go offline
@@ -75,7 +76,7 @@ test.describe('PWA Caching Strategies', () => {
       try {
         await fetch('/api/access/validate?bookId=test');
         return false; // Should not reach here
-      } catch (e) {
+      } catch {
         return true; // Expected failure
       }
     });
@@ -119,7 +120,7 @@ test.describe('PWA Caching Strategies', () => {
     // Fetch while offline - it should succeed from cache
     const data = await page.evaluate(async () => {
       const res = await fetch('/api/books/test-list');
-      return (await res.json()) as { ok: boolean; data: { title: string }[] };
+      return await res.json();
     });
 
     expect(data.ok).toBe(true);
