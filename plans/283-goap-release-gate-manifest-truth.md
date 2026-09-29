@@ -1,6 +1,6 @@
 # GOAP-283: Make `gate-manifest.json` release checks tell the truth
 
-**Status:** PROPOSED
+**Status:** SUPERSEDED by ADR-287 / GOAP-287 (2026-09-26: the three absent claims became real release jobs rather than being retired, and `validate-gate-parity.sh` now exits 1 on an unmet claim. The supersession was recorded only in `ADR-INDEX.md` until now, so this plan still read PROPOSED)
 **Date:** 2026-09-24
 **ADR:** `plans/283-adr-release-gate-manifest-truth.md`
 **Surfaced by:** GOAP-276 Phase 0 #5 (`scripts/validate-gate-parity.sh` warning observed while gating PR for P0 #5)

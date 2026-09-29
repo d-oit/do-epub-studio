@@ -108,9 +108,9 @@
 
 ## Proposed
 
-| Number | Title                             | File                                                 | Status                                                                                                     |
-| ------ | --------------------------------- | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| 999    | Reader–Creator Editorial Contract | `plans/999-adr-reader-creator-editorial-contract.md` | Proposed — user-directed product contract; implementation pending (tracked by GOAP-999, closed 2026-09-28) |
+| Number | Title                             | File                                                 | Status                                                                                                                                                                                                                              |
+| ------ | --------------------------------- | ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 999    | Reader–Creator Editorial Contract | `plans/999-adr-reader-creator-editorial-contract.md` | Accepted (2026-09-29) — normative contract D1–D6 implemented under GOAP-999, which closed 2026-09-28 with all 16 slices DONE. The row previously read 'Proposed' while its companion GOAP was complete: status drift, not open work |
 
 ## Cross-referenced (archived GOAP execution records)
 
