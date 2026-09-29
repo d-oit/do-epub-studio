@@ -21,7 +21,6 @@ import { ADMIN_LOGIN_RESPONSE, ADMIN_USER, loginAsAdmin } from './fixtures';
 const BOOK_ID = 'book-invite-1';
 const BOOK_SLUG = 'invite-test-book';
 const READER_EMAIL = 'invitee@example.test';
-const CREATOR_EMAIL = 'invitee.creator@example.test';
 const NEW_PASSWORD = 'Correct-Horse-9';
 
 const BOOK_LIST = {
