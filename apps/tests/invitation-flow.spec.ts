@@ -57,9 +57,25 @@ function invitation(overrides: Record<string, unknown> = {}) {
   };
 }
 
-/** Mocks every admin/books endpoint the panel touches, and records the created invitations. */
-async function mockAdminBooks(page: Page) {
+/** How a single create attempt is answered. */
+interface PostAnswer {
+  status?: number;
+  json?: unknown;
+}
+
+/**
+ * Mocks every admin/books endpoint the panel touches, recording the created
+ * invitations and the number of create attempts.
+ *
+ * The onPost callback decides how each attempt is answered, which is what lets
+ * the step-up test return 428 once and then let the retry succeed, from the
+ * SAME route registration. Registering a second invitations handler instead is
+ * a trap: Playwright runs the LAST matching handler first, so the second one
+ * silently shadows the first and any counter in it stops being the real signal.
+ */
+async function mockAdminBooks(page: Page, onPost?: (attempt: number) => PostAnswer | undefined) {
   const created: Array<Record<string, unknown>> = [];
+  let attempts = 0;
 
   await page.route('**/api/admin/books', async (route: Route) => {
     await route.fulfill({ json: BOOK_LIST });
@@ -69,16 +85,22 @@ async function mockAdminBooks(page: Page) {
     if (route.request().method() === 'POST') {
       const body = route.request().postDataJSON() as Record<string, unknown>;
       created.push(body);
-      await route.fulfill({
-        json: {
-          ok: true,
-          data: {
-            invitation: invitation({ email: body.email, role: body.role }),
-            delivery: 'sent',
-            copyUrl: null,
-          },
-        },
-      });
+      attempts += 1;
+      const answer = onPost?.(attempts);
+      await route.fulfill(
+        answer?.status
+          ? { status: answer.status, json: answer.json }
+          : {
+              json: {
+                ok: true,
+                data: {
+                  invitation: invitation({ email: body.email, role: body.role }),
+                  delivery: 'sent',
+                  copyUrl: null,
+                },
+              },
+            },
+      );
       return;
     }
     await route.fulfill({ json: { ok: true, data: [invitation()] } });
@@ -88,7 +110,7 @@ async function mockAdminBooks(page: Page) {
     await route.fulfill({ json: { ok: true, data: invitation({ status: 'revoked' }) } });
   });
 
-  return created;
+  return { created, attempts: () => attempts };
 }
 
 /** Minimal mock for the accept-invite call; `state` drives the assertions. */
@@ -145,7 +167,7 @@ test.describe('book invitation flow (browser)', () => {
   });
 
   test('an administrator creates a reader invitation from the panel', async ({ page }) => {
-    const created = await mockAdminBooks(page);
+    const { created } = await mockAdminBooks(page);
     await openBookAdmin(page);
 
     await page.getByRole('button', { name: 'Invite person' }).click();
@@ -173,32 +195,13 @@ test.describe('book invitation flow (browser)', () => {
       });
     });
 
-    // Only the books LIST is mocked here, not `mockAdminBooks`: that helper
-    // also registers `**/invitations`, and Playwright runs the LAST matching
-    // handler first, so it would shadow the POST counter below — the
-    // assertions would pass while checking nothing.
-    await page.route('**/api/admin/books', async (route: Route) => {
-      await route.fulfill({ json: BOOK_LIST });
-    });
-    let posts = 0;
-    await page.route(`**/api/admin/books/${BOOK_ID}/invitations`, async (route: Route) => {
-      if (route.request().method() === 'POST') {
-        posts += 1;
-        if (posts === 1) {
-          // First attempt: step-up demanded.
-          await route.fulfill({
-            status: 428,
-            json: { ok: false, error: { code: 'STEP_UP_REQUIRED' } },
-          });
-          return;
-        }
-        await route.fulfill({
-          json: { ok: true, data: { invitation: invitation(), delivery: 'sent', copyUrl: null } },
-        });
-        return;
-      }
-      await route.fulfill({ json: { ok: true, data: [invitation()] } });
-    });
+    // The same route registration answers the create; `onPost` turns the first
+    // attempt into a step-up demand and lets the retry succeed.
+    const books = await mockAdminBooks(page, (attempt) =>
+      attempt === 1
+        ? { status: 428, json: { ok: false, error: { code: 'STEP_UP_REQUIRED' } } }
+        : undefined,
+    );
     await openBookAdmin(page);
 
     await page.getByRole('button', { name: 'Invite person' }).click();
@@ -212,7 +215,7 @@ test.describe('book invitation flow (browser)', () => {
     await modal.getByLabel('Current Password', { exact: true }).fill(ADMIN_USER.password);
     await modal.getByRole('button', { name: 'Confirm', exact: true }).click();
 
-    await expect.poll(() => posts, { timeout: 20000 }).toBe(2);
+    await expect.poll(() => books.attempts(), { timeout: 20000 }).toBe(2);
     expect(stepUpCalls).toBeGreaterThanOrEqual(1);
   });
 
