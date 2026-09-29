@@ -15,6 +15,18 @@
  * unrelated), and this host has no WebGPU — browser WebGPU stays the product
  * default with WASM fallback, and B2 evidence records the device actually
  * measured here.
+ *
+ * Item 6 is expected to FAIL, not pass, on roughly 2 runs in 7 (measured
+ * 2026-09-29, host below). With the B2 lever (b) prompt rule the corpus went
+ * from 0/4 to 5/7, and every failure is `unavailable:timeout` at 300 s rather
+ * than a contract breach: a draw costs ~60-68 s on this CPU-bound host, so six
+ * draws cannot fit the product deadline. What item 6 protects — the injected
+ * imperative never surfacing as an instruction — holds in every sampled run.
+ *
+ * Read a failure as "the deadline is tight for a 0.5B model", not "the
+ * injection escaped". Confirm with more samples rather than one: a four-run
+ * sample read as deterministic when the true rate is 71%. Measure on a host
+ * with the margin to spare before treating a red run as a regression.
  */
 
 import { describe, expect, it } from 'vitest';
