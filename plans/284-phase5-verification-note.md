@@ -1,73 +1,75 @@
 # GOAP-284 Phase 5 — end-to-end verification
 
-**Status: PARTIAL — 13/14 legs verified, 1 blocked by design. Phase 5 is NOT complete.**
+**Status: DONE — 13/13 verified against the live stack on 2026-09-28. One real bug found and fixed.**
 
-Run 2026-09-28 against the real local stack (`wrangler dev` on
-:8787 with D1/KV/R2 bound, Vite on :5173), driving the deployed HTTP
-surface rather than mocks.
+## How the accept leg was reached
 
-## Verified (13 assertions, 0 failures)
+The accept token is deliberately unreachable from an HTTP client: `createBookInvitation()`
+returns it only to its in-process caller, D1 stores `token_hash` (`0018-book-invitations.sql:12`,
+`UNIQUE`), and `LoggingEmailTransport` logs only `{ delivery, subject }` because bodies carry
+bearer tokens (`email-transport.ts:21-31`).
 
-| #   | Leg                                    | Evidence                                                                             |
-| --- | -------------------------------------- | ------------------------------------------------------------------------------------ |
-| 1   | Admin authenticates                    | `POST /api/admin/login` → session token                                              |
-| 2   | Invitation create is step-up gated     | un-elevated session → **428 STEP_UP_REQUIRED**                                       |
-| 3   | Step-up elevation                      | correct password elevates; wrong password → **401**, no elevation                    |
-| 4   | Invitation created for a fresh address | `POST /api/admin/books/:id/invitations` → id + `status: pending`                     |
-| 5   | **Raw token never on the wire**        | no `rawToken`/`token` field in the response; `copyUrl: null`; `deliveryStatus: sent` |
-| 6   | A bogus accept token is refused        | `POST /api/access/accept-invite` → **400**                                           |
-| 7   | List + revoke                          | invitation appears in the admin list; revoke returns `ok: true`                      |
-| 8   | Unprivileged admin access refused      | anonymous list → **401**                                                             |
-| 9   | Feedback gated without a grant         | anonymous `POST /api/books/:id/feedback` → **401**                                   |
+It does not need an HTTP client either. Per Cloudflare's local-development docs,
+`wrangler dev` **simulates** the `send_email` binding and writes each message body to
+`/tmp/miniflare-*/email/email-text/<message-id>.txt`. The accept URL is in that body, so the
+whole chain runs through the real delivery path — no extra dependency, no in-process shortcut,
+and nothing that an operator would not do.
 
-Supporting evidence already in the tree: `invitations.test.ts` and
-`invitations-lifecycle.integration.test.ts` — **10/10 pass**, including
-the assertions that the stored row never contains the raw token
-(`expect(insert?.args).not.toContain(result.rawToken)`).
+Two details the docs do not state: wrangler 4.135.0 writes to `email/email-text/`, not
+`files/email-text/` as the example shows; and the artifact is the **body only** — it carries the
+subject text and the accept URL but **not the recipient address**, so the invitation cannot be
+located by address. Selection is "newest file", and correctness is proved downstream by the
+accept succeeding and the reader's own list containing exactly their item.
 
-## Two environment findings
+## Result: 13/13
 
-1. **The local D1 database was missing migration `0018-book-invitations`.**
-   `POST .../invitations` returned a 500 whose stack was
-   `D1_ERROR: no such table: book_invitations`, raised from
-   `createBookInvitation`. Fixed with
-   `wrangler d1 migrations apply do-epub-studio --local` (14 commands).
+| #   | Leg                                    | Evidence                                            |
+| --- | -------------------------------------- | --------------------------------------------------- |
+| 1   | Step-up elevation                      | correct password elevates; wrong password → **401** |
+| 2   | Invitation created for a fresh address | `status: pending`, `deliveryStatus: sent`           |
+| 3   | Token never on the wire                | no token field in the response; `copyUrl: null`     |
+| 4   | Token recovered from the message body  | 64 chars, read from the simulated inbox             |
+| 5   | Invitation accepted                    | **returns a live session**                          |
+| 6   | Accepted reader can log in and read    | both paths succeed                                  |
+| 7   | Feedback accepted                      | id assigned, state `open`                           |
+| 8   | Reader sees only their own item        | exactly 1                                           |
+| 9   | Creator surface requires assignment    | **403** for an unassigned reader (COL-01)           |
+| 10  | Revocation fails closed                | revoked reader cannot obtain a session              |
 
-   Miniflare loads the schema at boot, so the worker had to be stopped
-   before applying and restarted after — the behaviour already recorded in
-   `agents-docs/LEARNINGS.md` under "Miniflare's local D1 serves the
-   schema it loaded at boot". Worth noting that the symptom presented as
-   an opaque `INTERNAL_ERROR`; the `traceId` in the JSON body is what led
-   to the real cause in the worker log.
+An earlier partial run (13 reachable legs, no accept) is superseded by this one.
 
-2. `wrangler` is not on the repo-root PATH; it lives at
-   `apps/worker/node_modules/.bin/wrangler`. `pnpm --filter … dev`
-   resolves it, a bare `wrangler dev` does not.
+## The bug this found
 
-## The leg that is blocked, and why
+`GET /api/books/:id` resolved `:id` (which the route contract accepts as **id OR slug**) _after_
+the tenant-isolation guard, but the guard compares its argument against `auth.bookId` — a UUID —
+and queries `book_access_grants.book_id` with the raw param. A reader authorised for a book was
+therefore refused with `BOOK_SESSION_MISMATCH` when asking for that same book **by slug**.
 
-**accept → read → feedback → creator review** cannot be driven from an
-HTTP client, and that is the intended design rather than a gap to work
-around:
+Proven live before the fix, same session and same book:
 
-- `createBookInvitation()` returns the raw token to its **in-process**
-  caller only; the route forwards it to the email transport and nothing else.
-- D1 stores `token_hash` (`0018-book-invitations.sql:12`, `UNIQUE`), never the
-  token.
-- `LoggingEmailTransport` deliberately logs only `{ delivery, subject }` —
-  `email-transport.ts:21-31` states bodies carry bearer tokens and are never logged.
-- With no transport configured the route returns
-  `status: 'manual_copy_required'` **with** `copyUrl`; with `EMAIL_SEND` bound
-  (it is, in `wrangler.jsonc:58-62`) it returns `copyUrl: null`.
+```
+GET /api/books/68f49b5f-0263-4e99-ad31-dc40265f23cf  -> 200
+GET /api/books/demo                                   -> 403 BOOK_SESSION_MISMATCH
+```
 
-So the accept URL exists only in a recipient's inbox. Two ways forward, both
-requiring a decision rather than more local work:
+The sibling route on the same router, `POST /:id/file-url`, already resolves first and carries a
+comment saying exactly why — so the guard behaviour was correct and only this route's ordering was
+wrong. Fixed by resolving the param before `assertBookAccess`; the route now passes the canonical
+UUID, and the id-OR-slug lookup below it is unchanged, so no URL that worked stops working.
 
-- **a real inbox** (Mailhog/catch-all, or the Resend/Cloudflare test mode
-  against a captured address) so the whole chain runs end to end; or
-- **an in-process driver** that calls `createBookInvitation()` directly, as the
-  integration test already does, and then drives the remaining HTTP legs with
-  that token.
+Regression test added in `routes.books.test.ts`; it fails when the fix is reverted (verified).
 
-The second is faster and needs no new infrastructure, but it verifies less:
-it does not exercise the route that a real operator uses.
+- worker suite: **537/537 pass**
+- `routes.books.test.ts`: **7/7 pass**
+- `pnpm --filter @do-epub-studio/worker typecheck`: clean
+
+## Environment notes
+
+- The local D1 database was missing `0018-book-invitations`; the route 500'd with an opaque
+  `INTERNAL_ERROR` and the real cause (`no such table: book_invitations`) was only in the worker
+  log, reachable by grepping the `traceId`. Miniflare holds its boot-time schema, so the worker
+  was stopped → migrated → restarted.
+- `wrangler` is not on the repo-root PATH; it resolves at `apps/worker/node_modules/.bin/wrangler`.
+- `commentsAllowed` defaults to **false** (`invitations.ts:31`, the COL-01 secure default), so the
+  invitation must request it or feedback is 403 by design — worth asserting rather than assuming.
+- A local Vite on :5173 makes `test:e2e:smoke` fail with "already used"; Playwright starts its own.
