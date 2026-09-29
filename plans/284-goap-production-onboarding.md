@@ -1,6 +1,6 @@
 # GOAP-284: Production account and invitation onboarding
 
-**Status:** DONE (Phases 0–4 implemented; Phase 5 verified 2026-09-28 against the live stack, 13/13, via wrangler's simulated send_email binding; Phase 6 reconciled into `plans/999` and learnings recorded)
+**Status:** IN PROGRESS — implementation and API-level live verification complete (Phases 0-5; Phase 5 drove the real Worker end to end, 13/13, and found a tenant-guard ordering bug in `GET /api/books/:id`). One acceptance criterion remains open: **browser verification of the invite/acceptance UI** has component tests but no Playwright spec. Phase 6 synthesis done. Ticking that box is the only outstanding work.
 **Date:** 2026-09-24
 **Strategy:** Sequential contract → backend → UI → live verification
 **ADR:** `plans/284-adr-invitation-account-lifecycle.md`
@@ -138,7 +138,15 @@ frozen schemas after Phase 2. Phase 5 is integration-only and runs serially.
       remain backward compatible.
 - [x] New copy exists in English and all 13 locale catalogs.
 - [ ] Unit, route, component, live-stack, accessibility, workflow, and quality
-      gates pass (local quality gate passes; live browser verification remains).
+      gates pass. **Partially met, and deliberately not ticked.** Unit, route,
+      component, accessibility and workflow gates pass (local quality gate
+      green; web 1410/1410; worker 537/537). The live-stack leg is met at the
+      API level only: Phase 5 drove the real Worker on :8787 end to end
+      (invite -> accept -> read -> feedback -> creator review, 13/13) and found
+      a real tenant-guard bug. What is **not** met is _browser_ verification of
+      the invite and acceptance UI: `InvitationsPanel` and `AcceptInvitePage`
+      have component tests, but no Playwright spec drives that flow. Marking
+      this box would claim a lane nobody ran.
 
 ## Risks and mitigations
 
