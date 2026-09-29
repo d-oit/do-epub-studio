@@ -3,7 +3,7 @@
 **Status:** DONE (all 16 slices closed 2026-09-28; 15 verified directly, OPS-01 verified via GOAP-284 Phase 5 — invite → accept → read → feedback → creator review, 13/13 on the live stack)
 **Date:** 2026-09-10
 **Type:** GOAP audit backlog (reconciled execution reference; implementation is tracked in the linked follow-up plans)
-**Companion contract:** `plans/999-adr-reader-creator-editorial-contract.md` (ADR-999, Proposed)
+**Companion contract:** `plans/999-adr-reader-creator-editorial-contract.md` (ADR-999, Accepted 2026-09-29 — D1–D6 implemented by this plan)
 **Related:** PRODUCT.md, DESIGN.md, ADR-004 (auth/access), ADR-005 (offline sync), ADR-006 (EPUB rendering/CFI), ADR-075 (tenant isolation), ADR-262 (local-only AI policy — proposed amendment), GOAP-254, GOAP-255, `analysis/goap-254-audit-evidence.md`
 **Current product slice:** GOAP-284 (`plans/284-goap-production-onboarding.md`) adds production account/invitation onboarding; its implementation does not alter the frozen collaboration contract.
 

@@ -1,6 +1,6 @@
 # ADR-999: Reader–Creator Editorial Contract
 
-**Status:** Proposed — user-directed product contract; implementation pending
+**Status:** Accepted (2026-09-29) — normative contract D1–D6 implemented under GOAP-999, which closed 2026-09-28 with all 16 slices DONE; §3 verification describes that work. The label previously read "Proposed" while its companion GOAP was complete, so it was status drift rather than open work. §1 below is the original pre-implementation context and is kept as written.
 **Date:** 2026-09-10
 **Companion backlog:** `plans/999-goap-codebase-improvements-uiux-e2e-audit.md` (GOAP-999)
 **Amends:** GOAP-262 categorical prohibition on book-text network processing (scoped cloud opt-in only; local-first/default-off remains)
