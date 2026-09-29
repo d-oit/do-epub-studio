@@ -173,7 +173,13 @@ test.describe('book invitation flow (browser)', () => {
       });
     });
 
-    const created = await mockAdminBooks(page);
+    // Only the books LIST is mocked here, not `mockAdminBooks`: that helper
+    // also registers `**/invitations`, and Playwright runs the LAST matching
+    // handler first, so it would shadow the POST counter below — the
+    // assertions would pass while checking nothing.
+    await page.route('**/api/admin/books', async (route: Route) => {
+      await route.fulfill({ json: BOOK_LIST });
+    });
     let posts = 0;
     await page.route(`**/api/admin/books/${BOOK_ID}/invitations`, async (route: Route) => {
       if (route.request().method() === 'POST') {
@@ -208,12 +214,10 @@ test.describe('book invitation flow (browser)', () => {
 
     await expect.poll(() => posts, { timeout: 20000 }).toBe(2);
     expect(stepUpCalls).toBeGreaterThanOrEqual(1);
-    expect(created).toHaveLength(0);
   });
 
   test('an invitee accepts the invitation and is signed in', async ({ page }) => {
     await mockAcceptInvite(page, 'ok');
-
     await page.goto('/accept-invite#token=VALID_TOKEN_32_CHARS_MINIMUM_000');
     await page.getByLabel('Password', { exact: true }).fill(NEW_PASSWORD);
     await page.getByLabel('Confirm password', { exact: true }).fill(NEW_PASSWORD);
