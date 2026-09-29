@@ -1,6 +1,6 @@
 # GOAP-284: Production account and invitation onboarding
 
-**Status:** IN PROGRESS — implementation and API-level live verification complete (Phases 0-5; Phase 5 drove the real Worker end to end, 13/13, and found a tenant-guard ordering bug in `GET /api/books/:id`). One acceptance criterion remains open: **browser verification of the invite/acceptance UI** has component tests but no Playwright spec. Phase 6 synthesis done. Ticking that box is the only outstanding work.
+**Status:** DONE (2026-09-29 — all acceptance criteria met. Phases 0-5 implemented; Phase 5 drove the real Worker end to end, 13/13, and found a tenant-guard ordering bug in `GET /api/books/:id`, now fixed. The final criterion, browser verification of the invite/acceptance UI, was met by `apps/tests/invitation-flow.spec.ts` in PR #1256: 12 tests across chromium, firefox and webkit, which surfaced a real StrictMode bug in `AcceptInvitePage` that the unit and API lanes had both missed.)
 **Date:** 2026-09-24
 **Strategy:** Sequential contract → backend → UI → live verification
 **ADR:** `plans/284-adr-invitation-account-lifecycle.md`
@@ -137,16 +137,20 @@ frozen schemas after Phase 2. Phase 5 is integration-only and runs serially.
 - [x] Existing grants, reader sessions, offline queues, and creator permissions
       remain backward compatible.
 - [x] New copy exists in English and all 13 locale catalogs.
-- [ ] Unit, route, component, live-stack, accessibility, workflow, and quality
-      gates pass. **Partially met, and deliberately not ticked.** Unit, route,
-      component, accessibility and workflow gates pass (local quality gate
-      green; web 1410/1410; worker 537/537). The live-stack leg is met at the
-      API level only: Phase 5 drove the real Worker on :8787 end to end
-      (invite -> accept -> read -> feedback -> creator review, 13/13) and found
-      a real tenant-guard bug. What is **not** met is _browser_ verification of
-      the invite and acceptance UI: `InvitationsPanel` and `AcceptInvitePage`
-      have component tests, but no Playwright spec drives that flow. Marking
-      this box would claim a lane nobody ran.
+- [x] Unit, route, component, live-stack, accessibility, workflow, and quality
+      gates pass. **Met.** Unit, route, component, accessibility and workflow
+      gates pass (local quality gate green; web 1410/1410; worker 537/537). The
+      live-stack leg is met at the API level: Phase 5 drove the real Worker on
+      :8787 end to end (invite -> accept -> read -> feedback -> creator review,
+      13/13) and found a real tenant-guard bug in `GET /api/books/:id`, now
+      fixed. The **browser** leg is met by `apps/tests/invitation-flow.spec.ts`
+      (12 tests across chromium, firefox and webkit), added in PR #1256. Writing
+      that spec surfaced a real product bug that the unit and API lanes had both
+      missed: `AcceptInvitePage` read the invite token inside a mount effect and
+      then scrubbed the fragment, so React 18 StrictMode's double-invoked effect
+      lost the token on its second pass and every invitee in dev saw
+      "Invitation unavailable" with no console error. Fixed by reading the token
+      once per component instance via a ref.
 
 ## Risks and mitigations
 
