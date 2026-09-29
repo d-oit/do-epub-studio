@@ -77,5 +77,3 @@ export const I18N_E2E_STRINGS = {
     localeAriaLabel: /Selecteer taal/,
   },
 } as const;
-
-export type E2ELocale = keyof typeof I18N_E2E_STRINGS;

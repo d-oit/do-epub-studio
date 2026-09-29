@@ -37,7 +37,9 @@ const LIVE_DEMO_ENABLED = process.env.E2E_LIVE_DEMO === '1';
 test.describe('Demo login against live Worker stack (GOAP-256)', () => {
   test.skip(!LIVE_DEMO_ENABLED, 'live demo stack not requested (E2E_LIVE_DEMO != 1)');
 
-  test.beforeEach(async ({ page }) => {
+  // Not async: suppressWorkboxErrors registers a listener and returns void,
+  // so an async hook would return a promise resolving to undefined for nothing.
+  test.beforeEach(({ page }) => {
     suppressWorkboxErrors(page);
   });
   // Serial: all tests share the live Worker's per-email rate limiter

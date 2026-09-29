@@ -1,0 +1,14 @@
+{
+  "name": "@do-epub-studio/e2e",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Playwright end-to-end suite for d.o.EPUB Studio (GOAP-289)",
+  "scripts": {
+    "lint": "eslint . --ext .ts --max-warnings 0"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "typescript": "^6.0.3"
+  }
+}

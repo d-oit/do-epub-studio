@@ -23,7 +23,9 @@ const DEMO_E2E_ENABLED = process.env.E2E_DEMO_LOGIN === '1';
 test.describe('Demo login entry points (ADR-244)', () => {
   test.skip(!DEMO_E2E_ENABLED, 'demo login not built into this preview (E2E_DEMO_LOGIN != 1)');
 
-  test.beforeEach(async ({ page }) => {
+  // Not async: suppressWorkboxErrors registers a listener and returns void,
+  // so an async hook would return a promise resolving to undefined for nothing.
+  test.beforeEach(({ page }) => {
     suppressWorkboxErrors(page);
   });
 
