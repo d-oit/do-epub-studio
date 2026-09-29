@@ -1,7 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { AcceptInvitePage } from './AcceptInvitePage';
+// The component captures the token ONCE at module scope, so the hash must be
+// in place before the import. React 18 StrictMode double-invokes effects, which
+// is why the read moved out of the effect (see AcceptInvitePage.tsx).
+window.location.hash = `#token=${'a'.repeat(64)}`;
+const { AcceptInvitePage } = await import('./AcceptInvitePage');
 import { acceptBookInvitation } from '../../lib/api/invitations';
 
 const mockNavigate = vi.fn();

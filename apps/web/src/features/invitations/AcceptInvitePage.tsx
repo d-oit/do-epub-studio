@@ -1,7 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppLogo, Button, Input } from '../../components/ui';
-import { Spinner } from '@do-epub-studio/ui';
 import { useTranslation } from '../../hooks/useTranslation';
 import { useAuthStore } from '../../stores/auth';
 import { acceptBookInvitation } from '../../lib/api/invitations';
@@ -10,6 +9,19 @@ import { APP_NAME } from '../../config/app-identity';
 const LOGIN_ROUTE = '/login';
 const MAX_INVITATION_TOKEN_LENGTH = 256;
 
+/**
+ * Read the token, then scrub the fragment so the bearer token does not linger
+ * in history, referrers or a shared screen.
+ *
+ * The scrub is why this is not a plain read inside the effect: React 18
+ * StrictMode double-invokes effects in development, so an effect-scoped read
+ * took the token on the first pass, wiped the hash, and then read `null` on
+ * the second. The page rendered "Invitation unavailable" for every invitee in
+ * dev. Reading exactly once — as a lazy `useState` initialiser, so it happens
+ * on the first render and never again — makes the value immune to a
+ * double-invoked effect while still allowing the component to be re-rendered
+ * with a fresh location in tests.
+ */
 function readTokenFromFragment(): string | null {
   const raw = window.location.hash.startsWith('#') ? window.location.hash.slice(1) : '';
   const token = new URLSearchParams(raw).get('token');
@@ -21,17 +33,25 @@ export function AcceptInvitePage(): React.JSX.Element {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const setAuth = useAuthStore((state) => state.setAuth);
-  const [token, setToken] = useState<string | null>(null);
-  const [isChecking, setIsChecking] = useState(true);
+  // Read and scrub exactly once, on first render. This must NOT be an effect:
+  // React 18 StrictMode double-invokes effects, so an effect-scoped read took
+  // the token on the first pass, wiped the hash, and read null on the second --
+  // the page rendered "Invitation unavailable" for every invitee in dev.
+  //
+  // A `useState` lazy initialiser is not safe here either: React may invoke an
+  // initialiser twice, and this one has a side effect. A ref is initialised
+  // exactly once per component instance, so the read-and-scrub is genuinely
+  // once-only while a fresh mount still re-reads the fragment (which the
+  // component tests rely on).
+  const tokenRef = useRef<string | null | undefined>(undefined);
+  if (tokenRef.current === undefined) {
+    tokenRef.current = readTokenFromFragment();
+  }
+  const token = tokenRef.current;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
-
-  useEffect(() => {
-    setToken(readTokenFromFragment());
-    setIsChecking(false);
-  }, []);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -71,16 +91,7 @@ export function AcceptInvitePage(): React.JSX.Element {
           <AppLogo size={32} className="text-accent" />
           <span className="font-medium">{APP_NAME}</span>
         </div>
-
-        {isChecking ? (
-          <div
-            className="flex justify-center py-12"
-            role="status"
-            aria-label={t('a11y.loading_page')}
-          >
-            <Spinner label={t('a11y.loading_page')} />
-          </div>
-        ) : !token ? (
+        {!token ? (
           <section
             className="rounded-sm border border-border bg-surface p-6 shadow-page"
             aria-labelledby="invite-invalid-title"
