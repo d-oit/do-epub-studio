@@ -103,6 +103,42 @@ describe('Books Routes', () => {
         await res.json();
       expect(body.data.id).toBe('1');
     });
+
+    // Regression: the route resolves `:id` (id OR slug) to the canonical book
+    // id BEFORE assertBookAccess. Without that, a reader authorised for a book
+    // was refused with BOOK_SESSION_MISMATCH when requesting it by slug,
+    // because the guard compares the raw param against the session's UUID --
+    // while POST /:id/file-url, on the same router, accepted the identical URL
+    // shape. Verified live before the fix: same session, same book, UUID ok,
+    // slug 403.
+    it('passes the canonical book id, not the raw slug, to the guard', async () => {
+      mockRequireAuth.mockResolvedValue({ email: 'user@example.com' });
+
+      // First call resolves the param; second fetches the book row.
+      mockQueryFirst.mockResolvedValueOnce({ id: 'canonical-uuid' }).mockResolvedValueOnce({
+        id: 'canonical-uuid',
+        slug: 'book-1',
+        title: 'Book 1',
+        visibility: 'public',
+      });
+
+      const res = await app.fetch(
+        new Request('http://localhost/api/books/book-1', {
+          headers: { Authorization: 'Bearer valid' },
+        }),
+        env,
+        makePassThroughContext(),
+      );
+
+      expect(res.status).toBe(200);
+      expect(mockAssertBookAccess).toHaveBeenCalledWith(
+        env,
+        expect.objectContaining({ email: 'user@example.com' }),
+        'canonical-uuid',
+        expect.anything(),
+        expect.anything(),
+      );
+    });
   });
 
   describe('POST /api/books/:id/file-url', () => {

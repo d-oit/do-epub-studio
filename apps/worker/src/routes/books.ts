@@ -73,7 +73,31 @@ booksRouter.get('/:id', readerAuth, async (c) => {
   const id = c.req.param('id');
   const auth = c.get('auth');
 
-  const mismatch = await assertBookAccess(c.env, auth, id, c.executionCtx, getRequestTraceId(c));
+  // Resolve the URL param (id OR slug) to the canonical book id BEFORE the
+  // tenant-isolation guard, for the reason spelled out at `/:id/file-url`
+  // below: assertBookAccess compares against the session's UUID
+  // (auth.bookId) and queries book_access_grants.book_id with the raw param,
+  // so a slug could never match and an authorised reader was refused with
+  // BOOK_SESSION_MISMATCH for the very book their session grants. The route
+  // contract already accepted both shapes — the id-OR-slug lookup below did —
+  // so resolving first changes no URL that worked, and makes this route agree
+  // with its sibling.
+  const resolved = await queryFirst<{ id: string }>(
+    c.env,
+    `SELECT id FROM books WHERE (id = ? OR slug = ?) AND archived_at IS NULL LIMIT 1`,
+    [id, id],
+  );
+  if (!resolved) {
+    throw new NotFoundError('Book');
+  }
+
+  const mismatch = await assertBookAccess(
+    c.env,
+    auth,
+    resolved.id,
+    c.executionCtx,
+    getRequestTraceId(c),
+  );
   if (mismatch) return mismatch.response;
 
   const book = await queryFirst(
