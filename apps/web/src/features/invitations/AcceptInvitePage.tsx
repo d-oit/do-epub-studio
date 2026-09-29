@@ -1,7 +1,6 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppLogo, Button, Input } from '../../components/ui';
-import { Spinner } from '@do-epub-studio/ui';
 import { useTranslation } from '../../hooks/useTranslation';
 import { useAuthStore } from '../../stores/auth';
 import { acceptBookInvitation } from '../../lib/api/invitations';
@@ -34,11 +33,21 @@ export function AcceptInvitePage(): React.JSX.Element {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const setAuth = useAuthStore((state) => state.setAuth);
-  // Read once, on first render: StrictMode double-invokes effects, and a
-  // scrub-then-read would lose the token on the second pass.
-  const [token] = useState<string | null>(readTokenFromFragment);
-  // The token is read synchronously, so no async check phase remains.
-  const [isChecking] = useState(false);
+  // Read and scrub exactly once, on first render. This must NOT be an effect:
+  // React 18 StrictMode double-invokes effects, so an effect-scoped read took
+  // the token on the first pass, wiped the hash, and read null on the second --
+  // the page rendered "Invitation unavailable" for every invitee in dev.
+  //
+  // A `useState` lazy initialiser is not safe here either: React may invoke an
+  // initialiser twice, and this one has a side effect. A ref is initialised
+  // exactly once per component instance, so the read-and-scrub is genuinely
+  // once-only while a fresh mount still re-reads the fragment (which the
+  // component tests rely on).
+  const tokenRef = useRef<string | null | undefined>(undefined);
+  if (tokenRef.current === undefined) {
+    tokenRef.current = readTokenFromFragment();
+  }
+  const token = tokenRef.current;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [password, setPassword] = useState('');
@@ -82,16 +91,7 @@ export function AcceptInvitePage(): React.JSX.Element {
           <AppLogo size={32} className="text-accent" />
           <span className="font-medium">{APP_NAME}</span>
         </div>
-
-        {isChecking ? (
-          <div
-            className="flex justify-center py-12"
-            role="status"
-            aria-label={t('a11y.loading_page')}
-          >
-            <Spinner label={t('a11y.loading_page')} />
-          </div>
-        ) : !token ? (
+        {!token ? (
           <section
             className="rounded-sm border border-border bg-surface p-6 shadow-page"
             aria-labelledby="invite-invalid-title"
