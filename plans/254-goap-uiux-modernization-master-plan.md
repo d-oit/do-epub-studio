@@ -1,6 +1,6 @@
 # GOAP-254: UI/UX & Concept Modernization Master Plan
 
-**Status:** IN PROGRESS — implementation present; remaining verification and follow-ups tracked by GOAP-999
+**Status:** DONE (implementation present; all remaining verification and follow-up slices were tracked in GOAP-999, which closed 2026-09-28 with all 16 slices DONE)
 **Date:** 2026-08-23 (reconciled 2026-09-10; dated history below preserved as historical)
 **Strategy:** Independent read-only audit slices converge into the GOAP-999 backlog; future implementation follows GOAP-999 waves (see `plans/999-goap-codebase-improvements-uiux-e2e-audit.md` §7–§8)
 **Related:** ADR-082b (editorial minimalist), ADR-105a (2026 UI platform), ADR-063a (OKLCH tokens), ADR-104 (product identity), DESIGN.md, PRODUCT.md
