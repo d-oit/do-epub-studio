@@ -170,6 +170,27 @@ async function openBookAdmin(page: Page) {
   await expect(page.getByRole('heading', { name: 'Book invitations' })).toBeVisible();
 }
 
+/**
+ * Navigates to the acceptance form. The token must be at least 32 characters or
+ * the page renders "Invitation unavailable"; a syntactically valid but rejected
+ * token still reaches the form, which is what the rejection test needs.
+ */
+const VALID_TOKEN = 'VALID_TOKEN_32_CHARS_MINIMUM_000';
+const REJECTED_TOKEN = 'INVALID_TOKEN_32_CHARS_LONG_ENOUGH_X';
+
+async function gotoAcceptanceForm(page: Page, token = VALID_TOKEN) {
+  await page.goto(`/accept-invite#token=${token}`);
+  await expect(page.getByLabel('Password', { exact: true })).toBeVisible();
+}
+
+/** Fills the acceptance form with matching passwords and submits it. */
+async function fillAcceptanceForm(page: Page) {
+  await gotoAcceptanceForm(page);
+  await page.getByLabel('Password', { exact: true }).fill(NEW_PASSWORD);
+  await page.getByLabel('Confirm password', { exact: true }).fill(NEW_PASSWORD);
+  await page.getByRole('button', { name: 'Accept invitation' }).click();
+}
+
 test.describe('book invitation flow (browser)', () => {
   test.beforeEach(async ({ page }) => {
     await page.route('**/api/admin/login', async (route: Route) => {
@@ -188,11 +209,11 @@ test.describe('book invitation flow (browser)', () => {
     const { created } = await mockAdminBooks(page);
     await openBookAdmin(page);
 
+    // The role is chosen before the shared submit helper drives the rest of
+    // the form, so the helper stays a single, honest interaction path.
     await page.getByRole('button', { name: 'Invite person' }).click();
-    await page.getByLabel('Email address').fill(READER_EMAIL);
     await page.getByLabel('Invitation role').selectOption('reader');
-    // The submit control is "Send invitation". The other button in view is the
-    // "Invite person" form toggle, which would merely collapse the form.
+    await page.getByLabel('Email address').fill(READER_EMAIL);
     await page.getByRole('button', { name: 'Send invitation' }).click();
 
     // The panel re-fetches after create; the new row must reach the screen.
@@ -216,6 +237,8 @@ test.describe('book invitation flow (browser)', () => {
     );
     await openBookAdmin(page);
 
+    // The submit control is "Send invitation"; the other button in view is the
+    // "Invite person" form toggle, which would merely collapse the form.
     await page.getByRole('button', { name: 'Invite person' }).click();
     await page.getByLabel('Email address').fill(READER_EMAIL);
     await page.getByRole('button', { name: 'Send invitation' }).click();
@@ -233,10 +256,7 @@ test.describe('book invitation flow (browser)', () => {
 
   test('an invitee accepts the invitation and is signed in', async ({ page }) => {
     await mockAcceptInvite(page, 'ok');
-    await page.goto('/accept-invite#token=VALID_TOKEN_32_CHARS_MINIMUM_000');
-    await page.getByLabel('Password', { exact: true }).fill(NEW_PASSWORD);
-    await page.getByLabel('Confirm password', { exact: true }).fill(NEW_PASSWORD);
-    await page.getByRole('button', { name: 'Accept invitation' }).click();
+    await fillAcceptanceForm(page);
 
     // Success navigates away from the acceptance form.
     await expect(page).not.toHaveURL(/#token=/, { timeout: 15000 });
@@ -249,7 +269,7 @@ test.describe('book invitation flow (browser)', () => {
     // see the navigation; asserting calls === 0 is what proves it refused.
     const accept = await mockAcceptInvite(page);
 
-    await page.goto('/accept-invite#token=VALID_TOKEN_32_CHARS_MINIMUM_000');
+    await gotoAcceptanceForm(page);
     await page.getByLabel('Password', { exact: true }).fill(NEW_PASSWORD);
     await page.getByLabel('Confirm password', { exact: true }).fill('Different-Password-9');
     await page.getByRole('button', { name: 'Accept invitation' }).click();
@@ -261,7 +281,7 @@ test.describe('book invitation flow (browser)', () => {
   test('a rejected acceptance shows an error and no session', async ({ page }) => {
     await mockAcceptInvite(page, 'error');
 
-    await page.goto('/accept-invite#token=INVALID_TOKEN_32_CHARS_LONG_ENOUGH_X');
+    await gotoAcceptanceForm(page, REJECTED_TOKEN);
     await page.getByLabel('Password', { exact: true }).fill(NEW_PASSWORD);
     await page.getByLabel('Confirm password', { exact: true }).fill(NEW_PASSWORD);
     await page.getByRole('button', { name: 'Accept invitation' }).click();
@@ -282,8 +302,7 @@ test.describe('book invitation flow (browser)', () => {
     expect(box?.height ?? 0).toBeGreaterThanOrEqual(32);
 
     await mockAcceptInvite(page, 'ok');
-    await page.goto('/accept-invite#token=VALID_TOKEN_32_CHARS_MINIMUM_000');
-    await expect(page.getByLabel('Password', { exact: true })).toBeVisible();
+    await gotoAcceptanceForm(page);
     await expect(page.getByLabel('Confirm password', { exact: true })).toBeVisible();
   });
 });
