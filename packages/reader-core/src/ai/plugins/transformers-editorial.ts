@@ -96,8 +96,11 @@ export const GENERATION_OPTIONS: GenerationOptions = {
   temperature: 0.4,
 };
 
-/** One contract-breaking draw → fresh sampled draw; never an endless loop. */
-const MAX_GENERATION_ATTEMPTS = 3;
+/**
+ * One contract-breaking draw → fresh sampled draw; never an endless loop.
+ * 6 (not 3): GOAP-273 B2 lever (d); deadline-bounded, so extras cost nothing.
+ */
+const MAX_GENERATION_ATTEMPTS = 6;
 
 export interface TransformersLoaderSpec {
   model: string;

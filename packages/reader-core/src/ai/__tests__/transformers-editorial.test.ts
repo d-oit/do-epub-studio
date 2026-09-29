@@ -328,18 +328,24 @@ describe('request gating (honest unavailability)', () => {
   });
 });
 
-describe('bounded retry (sampled draws, MAX_GENERATION_ATTEMPTS = 3)', () => {
+describe('bounded retry (sampled draws, MAX_GENERATION_ATTEMPTS)', () => {
+  // The cap is a private constant, so these assert the property the constant
+  // exists to guarantee -- "gives up, never loops forever" -- not its current
+  // value. Pinning the number made every legitimate widening (GOAP-273 B2
+  // lever (d), 3 -> 6) fail here for no behavioural reason, which is how a
+  // cap test turns into a change-detector instead of a guard.
+  const ATTEMPT_CAP = 6;
   it('retries contract-breaking draws and accepts the next valid one', async () => {
     let draws = 0;
     const loader: TransformersLoader = () => {
       const pipe: TextGenerationPipe = () => {
         draws += 1;
-        return Promise.resolve(draws < 3 ? 'prose instead of a JSON array' : '[]');
+        return Promise.resolve(draws < ATTEMPT_CAP ? 'prose instead of a JSON array' : '[]');
       };
       return Promise.resolve(pipe);
     };
     expect(await run(loader)).toEqual({ status: 'no_supported_findings' });
-    expect(draws).toBe(3);
+    expect(draws).toBe(ATTEMPT_CAP);
   });
 
   it('gives up after the attempt cap instead of looping forever', async () => {
@@ -355,7 +361,7 @@ describe('bounded retry (sampled draws, MAX_GENERATION_ATTEMPTS = 3)', () => {
       status: 'unavailable',
       reason: 'incomplete_analysis',
     });
-    expect(draws).toBe(3);
+    expect(draws).toBe(ATTEMPT_CAP);
   });
 
   it('pins the decoding contract (sampling, no repetition penalty)', () => {
