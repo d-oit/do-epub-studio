@@ -113,9 +113,14 @@ async function mockAdminBooks(page: Page, onPost?: (attempt: number) => PostAnsw
   return { created, attempts: () => attempts };
 }
 
-/** Minimal mock for the accept-invite call; `state` drives the assertions. */
+/**
+ * Mocks the accept-invite call. `state` drives the response, and the returned
+ * `calls` counter lets a test assert the API was never called at all.
+ */
 async function mockAcceptInvite(page: Page, state: 'ok' | 'error' = 'ok') {
+  const counter = { calls: 0 };
   await page.route('**/api/access/accept-invite', async (route: Route) => {
+    counter.calls += 1;
     if (state === 'error') {
       await route.fulfill({
         status: 400,
@@ -137,6 +142,23 @@ async function mockAcceptInvite(page: Page, state: 'ok' | 'error' = 'ok') {
       },
     });
   });
+  return counter;
+}
+
+/**
+ * Mocks the admin step-up endpoint, counting how many times it was called so a
+ * test can assert the retry path. The token it returns is echoed in the reply
+ * so the assertion can show the retry used the rotated one.
+ */
+async function mockStepUp(page: Page, token = 'step-up-token') {
+  const state = { calls: 0 };
+  await page.route('**/api/admin/account/step-up', async (route: Route) => {
+    state.calls += 1;
+    await route.fulfill({
+      json: { ok: true, data: { token, expiresAt: '2099-01-01T00:00:00.000Z' } },
+    });
+  });
+  return state;
 }
 
 /** Opens the admin book page, which is where the invitations panel lives. */
@@ -153,11 +175,7 @@ test.describe('book invitation flow (browser)', () => {
     await page.route('**/api/admin/login', async (route: Route) => {
       await route.fulfill({ json: ADMIN_LOGIN_RESPONSE });
     });
-    await page.route('**/api/admin/account/step-up', async (route: Route) => {
-      await route.fulfill({
-        json: { ok: true, data: { token: 'step-up-token', expiresAt: '2099-01-01T00:00:00.000Z' } },
-      });
-    });
+    await mockStepUp(page);
     await page.route('**/api/admin/books/*/creators', async (route: Route) => {
       await route.fulfill({ json: { ok: true, data: [] } });
     });
@@ -187,13 +205,7 @@ test.describe('book invitation flow (browser)', () => {
     // A guarded mutation that answers 428 must surface the step-up modal, then
     // retry once with the rotated token (useAdminStepUp). Asserting an inline
     // alert here would be wrong: the panel never renders one for a step-up.
-    let stepUpCalls = 0;
-    await page.route('**/api/admin/account/step-up', async (route: Route) => {
-      stepUpCalls += 1;
-      await route.fulfill({
-        json: { ok: true, data: { token: 'rotated-token', expiresAt: '2099-01-01T00:00:00.000Z' } },
-      });
-    });
+    const stepUp = await mockStepUp(page, 'rotated-token');
 
     // The same route registration answers the create; `onPost` turns the first
     // attempt into a step-up demand and lets the retry succeed.
@@ -216,7 +228,7 @@ test.describe('book invitation flow (browser)', () => {
     await modal.getByRole('button', { name: 'Confirm', exact: true }).click();
 
     await expect.poll(() => books.attempts(), { timeout: 20000 }).toBe(2);
-    expect(stepUpCalls).toBeGreaterThanOrEqual(1);
+    expect(stepUp.calls).toBeGreaterThanOrEqual(1);
   });
 
   test('an invitee accepts the invitation and is signed in', async ({ page }) => {
@@ -233,23 +245,9 @@ test.describe('book invitation flow (browser)', () => {
   test('the acceptance form refuses mismatched passwords before calling the API', async ({
     page,
   }) => {
-    let called = false;
-    await page.route('**/api/access/accept-invite', async (route: Route) => {
-      called = true;
-      await route.fulfill({
-        json: {
-          ok: true,
-          data: {
-            sessionToken: 't',
-            expiresAt: 'x',
-            email: READER_EMAIL,
-            role: 'reader',
-            book: { id: BOOK_ID, slug: BOOK_SLUG, title: 'B' },
-            capabilities: {},
-          },
-        },
-      });
-    });
+    // A successful response is available, so if the form did submit we would
+    // see the navigation; asserting calls === 0 is what proves it refused.
+    const accept = await mockAcceptInvite(page);
 
     await page.goto('/accept-invite#token=VALID_TOKEN_32_CHARS_MINIMUM_000');
     await page.getByLabel('Password', { exact: true }).fill(NEW_PASSWORD);
@@ -257,7 +255,7 @@ test.describe('book invitation flow (browser)', () => {
     await page.getByRole('button', { name: 'Accept invitation' }).click();
 
     await expect(page.getByText('Passwords do not match')).toBeVisible({ timeout: 10000 });
-    expect(called).toBe(false);
+    expect(accept.calls).toBe(0);
   });
 
   test('a rejected acceptance shows an error and no session', async ({ page }) => {
