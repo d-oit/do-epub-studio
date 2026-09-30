@@ -643,26 +643,32 @@ function shouldStripHref(val: string, policy: ExternalUrlPolicy): boolean {
  * the scheme allowlist for non-`use`/`image` linkable elements).
  */
 function sanitizeElementAttributes(el: Element, policy: ExternalUrlPolicy): void {
-  const localName = el.localName;
-  // SVG local names preserve case (feImage) in both HTML and XHTML/XML parse
-  // modes, so compare case-insensitively rather than relying on one casing.
-  // The comparison is allocation-free: this runs for every element with
-  // attributes in the traversal.
-  const isLinkable =
-    localName === 'use' || localName === 'image' || equalsIgnoreCase(localName, 'feimage');
   const attrs = el.attributes;
+  let isLinkable: boolean | undefined;
 
   for (let i = attrs.length - 1; i >= 0; i--) {
     const attr = attrs.item(i);
     if (!attr) continue;
     const name = attr.name;
-    if (name.startsWith('on')) {
+    // Fast allocation-free event handler check for attributes starting with 'on'/'ON'
+    // (111 = 'o'/'O', 110 = 'n'/'N' after ASCII case-lowercasing via `| 32`).
+    if (
+      name.length >= 2 &&
+      (name.charCodeAt(0) | 32) === 111 &&
+      (name.charCodeAt(1) | 32) === 110
+    ) {
       el.removeAttribute(name);
       continue;
     }
-    if (isLinkable && (name === 'href' || name === 'xlink:href')) {
-      const val = attr.value;
-      if (val && shouldStripHref(val, policy)) {
+    if (name === 'href' || name === 'xlink:href') {
+      if (isLinkable === undefined) {
+        const localName = el.localName;
+        // SVG local names preserve case (feImage) in both HTML and XHTML/XML parse
+        // modes, so compare case-insensitively rather than relying on one casing.
+        isLinkable =
+          localName === 'use' || localName === 'image' || equalsIgnoreCase(localName, 'feimage');
+      }
+      if (isLinkable && attr.value && shouldStripHref(attr.value, policy)) {
         el.removeAttribute(name);
       }
     }

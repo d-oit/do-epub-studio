@@ -5,5 +5,5 @@
   "apps/worker/src/auth/admin-middleware.ts": 516,
   "apps/worker/src/routes/access.ts": 506,
   "apps/worker/src/routes/creator.ts": 1061,
-  "packages/reader-core/src/sanitizer.ts": 980
+  "packages/reader-core/src/sanitizer.ts": 986
 }
