@@ -79,7 +79,9 @@ and are not treated as open findings again.
   `pwa-chromium` lane, the scheduled cross-browser lane and the manual
   live-Cloudflare lane (which intentionally requires deployment secrets and is
   not a required PR check). Existing ZIP/CFI fixes from GOAP-297 are present.
-  Remaining weak assertions that cannot fail are A4; the body-only offline
+  Remaining weak assertions that cannot fail are A4 (**closed 2026-10-02,
+  GOAP-303**: the three constant-true checks are replaced with behavioural
+  assertions); the body-only offline
   reload is A5; RTL/locale proof concentration on login is A11.
 - **Security** — source-reviewed current controls: bearer sessions hashed at
   rest and atomic grant+session revocation (`auth/session.ts`,
@@ -122,7 +124,7 @@ results remain attributed to GOAP-291–297 and are not re-claimed here.
 | F6  | Missing metrics can look clean             | **Closed** (GOAP-291): `missingMetrics` exists. Fresh probe: `{}` → four missing keys; complete metrics → none; slow metrics → four budget findings.                                                                                                                                                                                                                               |
 | F7  | Viewport matrices diverged                 | **Closed** (GOAP-291): both matrices now cover the same 13 sizes (320×568 … 812×375); labels stay lane-local.                                                                                                                                                                                                                                                                      |
 | F8  | Progress/qualification claims drift        | **Partially closed**; remaining documentation drift is re-filed as **A2**. AI-03 remains `PARTIAL` (human creator style review, `plans/999…:87`), not a failed engine implementation.                                                                                                                                                                                              |
-| F9  | Vacuous insights assertion                 | **Closed** (GOAP-296): the `insightsVisible \|\| true` check is gone; the remaining constant-true assertions are in different specs and are A4.                                                                                                                                                                                                                                    |
+| F9  | Vacuous insights assertion                 | **Closed** (GOAP-296): the `insightsVisible \|\| true` check is gone; the remaining constant-true assertions were in different specs and are **also closed** — A4 → GOAP-303 (2026-10-02).                                                                                                                                                                                         |
 | F10 | Deployed CSP/model-origin acceptance       | **Open as an acceptance gap**, re-filed as **A12** (inference/pending proof; no CSP change was made by GOAP-296, and none is authorized here).                                                                                                                                                                                                                                     |
 
 ## Current findings
@@ -297,8 +299,9 @@ open finding.
 ## Optional feature opportunities
 
 Recommendations only — no UI, API, schema, retention or permission policy is
-selected or changed. **Prioritize corrective A1/A3/A4/A5/A6/A7/A8 before
-expanding either surface.**
+selected or changed. **Prioritize the open corrective items — A3, A8 and A2** —
+before expanding either surface; A1, A4, A5 (GOAP-302/303/300) and A6, A7
+(GOAP-299) are closed.
 
 1. **Cross-device reading-insights display.** `apps/worker/src/routes/reader/insights.ts:26-67` already serves history; the current reader panel computes local history (`InfoPanel.tsx:52-65`) and targeted searches found no app consumer of the GET surface. Success: a fresh authenticated device shows the server history.
 2. **Authorized admin aggregate display.** `apps/worker/src/routes/admin/insights.ts:32-65` serves book-level aggregates with no web consumer. Success: an authorized admin sees the server aggregate for the authorized scope without individual reader timelines.
@@ -386,11 +389,15 @@ Highest-priority corrective items first (each needs its own executable spec and
 authorization; this audit authorizes none of them):
 
 1. **A1** — ordinary annotation creation offline-first (product promise).
+   **Closed 2026-10-02 (GOAP-302).**
 2. **A3** — locale sensor that can actually select and verify this app's locale.
 3. **A4** — remove the three remaining non-failing E2E assertions.
+   **Closed 2026-10-02 (GOAP-303).**
 4. **A5** — offline reload must prove offline reading, not body presence.
-5. **A6** — preserve real trace IDs at the log boundary.
+   **Closed 2026-10-02 (GOAP-300).**
+5. **A6** — preserve real trace IDs at the log boundary. **Closed (GOAP-299).**
 6. **A7** — bounded client-side log sanitizer; fix sensitive-key normalization.
+   **Closed (GOAP-299).**
 7. **A8** — deliverable telemetry retention owner for the deployed D1.
 8. **A2**, **A9**, **A10**, **A11**, **A12**, **A13** — P2 drift/failure-path/
    formatting/coverage/CSP-acceptance/toolchain items, in that order.
