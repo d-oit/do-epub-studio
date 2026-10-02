@@ -48,11 +48,12 @@ const EPUB_BUFFER = createMinimalEpub(
 const EPUB_URL = 'http://127.0.0.1:0/test/offline-test.epub';
 
 /** Visible text of the rendered epub.js chapter iframe (null before rendition). */
-const getChapterText = (page: Page) =>
-  page.evaluate(() => {
+async function getChapterText(page: Page): Promise<string | null> {
+  return page.evaluate(() => {
     const iframe = document.querySelector('iframe');
     return iframe?.contentDocument?.body?.textContent ?? null;
   });
+}
 
 // ---------------------------------------------------------------------------
 // Offline reader test suite

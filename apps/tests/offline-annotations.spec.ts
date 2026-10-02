@@ -314,8 +314,8 @@ test.describe('Offline Annotations A1 (@pwa)', () => {
     // Login and acquire service worker
     await loginAsReader(page, TEST_USER.bookSlug);
 
-    const getChapterText = async () =>
-      page.evaluate(() => {
+    async function getChapterText(): Promise<string> {
+      return page.evaluate(() => {
         const iframes = Array.from(document.querySelectorAll('iframe'));
         const texts = iframes.map(
           (f) =>
@@ -328,6 +328,7 @@ test.describe('Offline Annotations A1 (@pwa)', () => {
           (document.querySelector('div[data-reader-viewer="true"]')?.textContent ?? '')
         );
       });
+    }
 
     await expect.poll(getChapterText, { timeout: 30000 }).toContain('OFFLINE ANNOTATION PASSAGE');
 

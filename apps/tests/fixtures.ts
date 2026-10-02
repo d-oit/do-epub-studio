@@ -630,23 +630,25 @@ export async function selectReaderPassage(page: Page, text: string): Promise<voi
       if (!paragraph) continue;
 
       const walker = doc.createTreeWalker(paragraph, NodeFilter.SHOW_TEXT);
-      let node: Node | null;
-      while ((node = walker.nextNode())) {
+      let node: Node | null = walker.nextNode();
+      while (node) {
         const content = node.textContent ?? '';
         const index = content.indexOf(targetText);
-        if (index === -1) continue;
-
-        const range = doc.createRange();
-        range.setStart(node, index);
-        range.setEnd(node, index + targetText.length);
-        const selection = win.getSelection();
-        if (!selection) continue;
-        selection.removeAllRanges();
-        selection.addRange(range);
-        win.dispatchEvent(
-          new (win as Window & typeof globalThis).MouseEvent('mouseup', { bubbles: true }),
-        );
-        return true;
+        if (index !== -1) {
+          const range = doc.createRange();
+          range.setStart(node, index);
+          range.setEnd(node, index + targetText.length);
+          const selection = win.getSelection();
+          if (selection) {
+            selection.removeAllRanges();
+            selection.addRange(range);
+            win.dispatchEvent(
+              new (win as Window & typeof globalThis).MouseEvent('mouseup', { bubbles: true }),
+            );
+            return true;
+          }
+        }
+        node = walker.nextNode();
       }
     }
     return false;
