@@ -5,13 +5,15 @@ import {
   saveProgress,
   getProgress,
   getUnsyncedProgress,
-  saveAnnotation,
-  getAnnotations,
-  getUnsyncedAnnotations,
   setTokenOverride,
   type ProgressEntry,
   type AnnotationEntry,
 } from '../lib/offline/db';
+import {
+  saveAnnotation,
+  getAnnotations,
+  getUnsyncedAnnotations,
+} from '../lib/offline/annotation-mutations';
 
 const TEST_TOKEN = 'test-session-token-for-offline-db';
 const TEST_TOKEN_2 = 'different-session-token-for-offline-db';

@@ -30,7 +30,7 @@ Read these files in order before making any changes:
 
 - **TypeScript 6 strict** everywhere — `tsconfig.base.json` enforces `strict: true`
 - **React 19 + Vite 8** frontend (`apps/web`) hosted on Cloudflare Pages
-- **Hono on Cloudflare Workers** API backend (`apps/worker`) with Turso/libSQL + R2
+- **Hono on Cloudflare Workers** API backend (`apps/worker`) with D1 + R2
 - **Zustand 5** for client state; Zod 4 for boundary validation
 - **Vitest 4** (unit + integration) + **Playwright 1.60** (E2E); pnpm + Turborepo monorepo
 

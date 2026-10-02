@@ -76,6 +76,7 @@ vi.mock('../../lib/offline', () => ({
   getSyncQueue: vi.fn(() => Promise.resolve([])),
   getProgress: vi.fn(() => Promise.resolve(null)),
   getAnnotations: vi.fn(() => Promise.resolve([])),
+  subscribeAnnotationChanges: vi.fn(() => () => {}),
 }));
 
 vi.mock('../../lib/offline/permissions', () => ({
@@ -192,7 +193,7 @@ describe('ReaderPage Panels', () => {
       synced: true,
       mutationId: 'm-1',
     });
-    vi.mocked(getAnnotations).mockResolvedValueOnce([
+    vi.mocked(getAnnotations).mockResolvedValue([
       {
         id: 'h-1',
         bookId: 'test-book-id',

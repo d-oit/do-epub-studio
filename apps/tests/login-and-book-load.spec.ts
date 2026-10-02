@@ -24,6 +24,13 @@ async function login(page: Page) {
   await page.getByRole('button', { name: 'Sign In', exact: true }).click();
 }
 
+/** Visible text of the rendered epub.js chapter iframe (null before rendition). */
+const getChapterText = (page: Page) =>
+  page.evaluate(() => {
+    const iframe = document.querySelector('iframe');
+    return iframe?.contentDocument?.body?.textContent ?? null;
+  });
+
 // ---------------------------------------------------------------------------
 // Test suite – Desktop (Chromium)
 // ---------------------------------------------------------------------------
@@ -123,7 +130,9 @@ test.describe('Login and book load (desktop)', () => {
     }
   });
 
-  test('@mobile shows loading spinner while book URL is being fetched', async ({ page }) => {
+  test('@mobile shows loading state while book URL is pending, then renders the chapter', async ({
+    page,
+  }) => {
     let resolveFileUrl: (value: unknown) => void;
     const fileUrlPromise = new Promise((resolve) => {
       resolveFileUrl = resolve;
@@ -139,23 +148,20 @@ test.describe('Login and book load (desktop)', () => {
     });
 
     await login(page);
-
     await expect(page).toHaveURL(/\/read\/my-test-book$/);
-    await page.waitForTimeout(500);
 
-    const spinnerVisible = await page
-      .locator('[class*="animate-spin"], [class*="spinner"]')
-      .isVisible()
-      .catch(() => false);
-    const loadingVisible = await page
-      .getByText(/loading/i)
-      .isVisible()
-      .catch(() => false);
+    // Held file-url response: the reader must show its visible loading state.
+    // The old check OR-ed in `true`, so an absent spinner passed the test.
+    await expect(page.locator('#main-content').getByRole('status')).toBeVisible({
+      timeout: 15_000,
+    });
 
     resolveFileUrl!(undefined);
-    await page.waitForLoadState('networkidle').catch(() => undefined);
 
-    expect(spinnerVisible || loadingVisible || true).toBe(true);
+    // Released response: the fixture chapter renders in the reader frame.
+    await expect
+      .poll(() => getChapterText(page), { timeout: 30_000 })
+      .toContain('CHAPTER ONE CONTENT');
   });
 
   test('@mobile opens the table of contents sidebar', async ({ page }) => {

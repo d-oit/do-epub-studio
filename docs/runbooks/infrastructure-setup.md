@@ -61,7 +61,7 @@ pnpm exec wrangler d1 create do-epub-studio
 # → note the returned database_id
 
 # Apply all migrations
-pnpm exec wrangler d1 migrations apply do-epub-studio --remote
+pnpm --filter @do-epub-studio/worker exec wrangler d1 migrations apply do-epub-studio --remote
 ```
 
 ### Bind to the Pages project
@@ -78,13 +78,14 @@ Redeploy the project for the binding to take effect.
 
 ```bash
 pnpm exec wrangler d1 execute do-epub-studio --remote --command="SELECT COUNT(*) FROM books"
-pnpm exec wrangler d1 migrations list do-epub-studio
+pnpm --filter @do-epub-studio/worker exec wrangler d1 migrations list do-epub-studio
 ```
 
-> **Note:** Turso (`TURSO_DATABASE_URL` / `@libsql/client`) is only used by
-> the standalone demo-account seed script and the demo-login fail-closed
-> detection — it is NOT the API's runtime DB. Production demo login is
-> disabled regardless (fail-closed, ADR-233/244).
+> **Note:** `TURSO_DATABASE_URL` / `@libsql/client` is only used by the
+> standalone demo-account seed script (locally pointed at the D1 sqlite file —
+> see `docs/setup-local.md` §4) and the demo-login fail-closed detection. The
+> Turso service is not used; the API's runtime DB is D1. Production demo login
+> is disabled regardless (fail-closed, ADR-233/244).
 
 ---
 
@@ -182,7 +183,7 @@ After all infrastructure is configured, run through this checklist:
 ### Database
 
 - [ ] `wrangler d1 execute do-epub-studio --remote --command="SELECT COUNT(*) FROM books"` returns successfully
-- [ ] All 18 migrations applied (`wrangler d1 migrations list do-epub-studio`)
+- [ ] All 18 migrations applied (`pnpm --filter @do-epub-studio/worker exec wrangler d1 migrations list do-epub-studio`)
 - [ ] Admin login works (validates Argon2id password hash)
 - [ ] A reader or creator invitation can be created; manual copy-link delivery works when `EMAIL_SEND` is absent
 
@@ -203,6 +204,17 @@ After all infrastructure is configured, run through this checklist:
 - [ ] All API responses include CSP, HSTS, and X-Content-Type-Options headers
 - [ ] CSP does not contain `unsafe-inline` for scripts
 - [ ] traceId is present in all error responses
+
+### Assistance assets under the enforced CSP (F10, GOAP-290/296)
+
+The enforced CSP restricts `connect-src` to `'self'` and Cloudflare
+(`apps/web/public/_headers`). On-device assistance fetches the quantized model
+on demand and ORT's `wasmPaths` from public CDNs, so verify on the deployed
+origin in a real browser:
+
+- [ ] "Prepare story and logic engine" on the creator workspace completes: the labelled model download and the ORT wasm fetch succeed under the enforced CSP
+- [ ] When an origin is blocked, the panel reports the failure honestly and fabricates no finding
+- [ ] Any admitted asset origin is an explicit, reviewed change to `connect-src` — never loosened ad hoc and never replaced by self-hosting multi-gigabyte assets without its own decision
 
 ### Telemetry
 
@@ -225,5 +237,5 @@ pnpm exec wrangler d1 execute do-epub-studio --remote --command="SELECT * FROM a
 pnpm exec wrangler r2 object list do-epub-studio-books
 
 # Apply D1 migrations
-pnpm exec wrangler d1 migrations apply do-epub-studio --remote
+pnpm --filter @do-epub-studio/worker exec wrangler d1 migrations apply do-epub-studio --remote
 ```

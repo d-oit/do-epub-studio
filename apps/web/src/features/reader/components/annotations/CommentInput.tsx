@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from '../../../../hooks/useTranslation';
 
 interface CommentInputProps {
-  onSubmit: (text: string) => void;
+  onSubmit: (text: string) => void | Promise<void>;
   onCancel?: () => void;
   placeholder?: string;
   autoFocus?: boolean;
@@ -22,27 +22,37 @@ export function CommentInput({
 }: CommentInputProps) {
   const { t } = useTranslation();
   const [text, setText] = useState(initialText);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const resolvedPlaceholder = placeholder ?? t('comment.input.placeholder');
   const resolvedSubmitLabel = submitLabel ?? t('comment.input.submitLabel');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-
   useEffect(() => {
     if (autoFocus && textareaRef.current) {
       textareaRef.current.focus();
     }
   }, [autoFocus]);
 
-  const handleSubmit = () => {
-    if (text.trim()) {
-      onSubmit(text.trim());
+  const handleSubmit = async () => {
+    const trimmed = text.trim();
+    if (!trimmed || isSubmitting) return;
+    setIsSubmitting(true);
+    setErrorMessage(null);
+    try {
+      await onSubmit(trimmed);
       setText('');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : t('common.error.generic');
+      setErrorMessage(msg);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
       e.preventDefault();
-      handleSubmit();
+      void handleSubmit();
     }
     if (e.key === 'Escape' && onCancel) {
       onCancel();
@@ -54,12 +64,21 @@ export function CommentInput({
       <textarea
         ref={textareaRef}
         value={text}
-        onChange={(e) => setText(e.target.value)}
+        onChange={(e) => {
+          setText(e.target.value);
+          if (errorMessage) setErrorMessage(null);
+        }}
         onKeyDown={handleKeyDown}
         placeholder={resolvedPlaceholder}
-        className="w-full p-3 text-sm border border-border rounded-lg bg-background resize-none focus:ring-2 focus:ring-accent focus:border-transparent"
+        disabled={isSubmitting}
+        className="w-full p-3 text-sm border border-border rounded-lg bg-background resize-none focus:ring-2 focus:ring-accent focus:border-transparent disabled:opacity-50"
         rows={3}
       />
+      {errorMessage && (
+        <div role="alert" className="text-xs text-accent-error">
+          {errorMessage}
+        </div>
+      )}
       <div className="flex justify-end gap-2">
         {onCancel && (
           <button
@@ -70,8 +89,10 @@ export function CommentInput({
           </button>
         )}
         <button
-          onClick={handleSubmit}
-          disabled={!text.trim()}
+          onClick={() => {
+            void handleSubmit();
+          }}
+          disabled={!text.trim() || isSubmitting}
           className="px-3 py-1.5 text-sm bg-accent text-white rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {resolvedSubmitLabel}

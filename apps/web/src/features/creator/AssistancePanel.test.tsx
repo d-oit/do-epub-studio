@@ -3,7 +3,12 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import type * as ReaderCore from '@do-epub-studio/reader-core';
 import { AssistancePanel } from './AssistancePanel';
-import { fetchAssistanceConsent, setAssistanceConsent } from '../../lib/api/creator';
+import {
+  fetchAssistanceConsent,
+  fetchReferences,
+  fetchStyleProfile,
+  setAssistanceConsent,
+} from '../../lib/api/creator';
 
 vi.mock('../../hooks/useTranslation', () => ({
   useTranslation: () => ({ t: (k: string) => k, locale: 'en' }),
@@ -17,6 +22,23 @@ vi.mock('../../stores/auth', () => ({
 vi.mock('../../lib/api/creator', () => ({
   fetchAssistanceConsent: vi.fn(),
   setAssistanceConsent: vi.fn(),
+  fetchReferences: vi.fn(),
+  fetchStyleProfile: vi.fn(),
+}));
+
+/**
+ * The book loader is stubbed so tests never parse a real EPUB; the grounding
+ * path (file-url → chapters → extraction) is exercised at the hook/panel
+ * boundary here and in book-chapters.test.ts.
+ */
+const chaptersStub = vi.hoisted(() => ({
+  fetchBookFileUrl: vi.fn(),
+  loadCreatorBook: vi.fn(),
+}));
+
+vi.mock('./lib/book-chapters', () => ({
+  fetchBookFileUrl: chaptersStub.fetchBookFileUrl,
+  loadCreatorBook: chaptersStub.loadCreatorBook,
 }));
 
 /**
@@ -56,6 +78,11 @@ describe('AssistancePanel (Wave 4, synthetic fixtures for consent/UI paths)', ()
   beforeEach(() => {
     transformersStub.hasEngine.mockReturnValue(false);
     transformersStub.load.mockReset();
+    transformersStub.review.mockReset();
+    chaptersStub.fetchBookFileUrl.mockReset();
+    chaptersStub.loadCreatorBook.mockReset();
+    vi.mocked(fetchReferences).mockReset().mockResolvedValue([]);
+    vi.mocked(fetchStyleProfile).mockReset().mockResolvedValue(null);
   });
 
   it('lists all four categories as unavailable while no engine is qualified', async () => {
@@ -173,5 +200,146 @@ describe('AssistancePanel (Wave 4, synthetic fixtures for consent/UI paths)', ()
     });
     expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
     expect(transformersStub.load).toHaveBeenCalledTimes(1);
+  });
+
+  it('loads chapters through read access, then dispatches a grounded request', async () => {
+    vi.mocked(fetchAssistanceConsent).mockResolvedValue({ allowed: false, cloudQualified: false });
+    const destroy = vi.fn();
+    const extract = vi.fn(() =>
+      Promise.resolve({
+        chapterText: { 'c1.xhtml': 'Once upon a time.' },
+        chapterSha256: { 'c1.xhtml': 'sha256:x' },
+      }),
+    );
+    chaptersStub.fetchBookFileUrl.mockResolvedValue({ url: 'signed-url', fileId: 'file-1' });
+    chaptersStub.loadCreatorBook.mockResolvedValue({
+      chapters: [
+        { ref: 'c1.xhtml', title: 'One', index: 0 },
+        { ref: 'c2.xhtml', title: 'Two', index: 1 },
+      ],
+      language: 'en',
+      extract,
+      destroy,
+    });
+    vi.mocked(fetchReferences).mockResolvedValue([
+      {
+        id: 'ref-1',
+        kind: 'glossary_term',
+        title: 'Mariselleth',
+        content: 'A coinage.',
+        attribution: null,
+        sourceUrl: null,
+        origin: 'creator',
+        verified: true,
+        revision: 2,
+        createdBy: 'user-1',
+        createdAt: '2026-09-01T00:00:00.000Z',
+        updatedAt: '2026-09-01T00:00:00.000Z',
+      },
+    ]);
+    vi.mocked(fetchStyleProfile).mockResolvedValue({
+      language: 'English (British)',
+      narrativePerson: null,
+      tense: null,
+      dialogueConventions: null,
+      dialectNotes: null,
+      terminology: 'Mariselleth',
+      intentionalExceptions: '',
+      status: 'approved',
+      approvedBy: 'user-1',
+      approvedAt: '2026-09-01T00:00:00.000Z',
+      revision: 4,
+    });
+    transformersStub.hasEngine.mockReturnValue(true);
+    transformersStub.review.mockResolvedValue({ status: 'no_supported_findings' });
+
+    const { unmount } = render(
+      <MemoryRouter>
+        <AssistancePanel bookId="book-1" />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'asst.loadChapters' }));
+    await screen.findByText('One');
+    expect(screen.getByText('Two')).toBeInTheDocument();
+    expect(extract).not.toHaveBeenCalled();
+    expect(chaptersStub.fetchBookFileUrl).toHaveBeenCalledWith('book-1', 'token');
+
+    fireEvent.click(screen.getByRole('button', { name: 'asst.runLabel' }));
+    await waitFor(() => {
+      expect(transformersStub.review).toHaveBeenCalledTimes(1);
+    });
+    expect(extract).toHaveBeenCalledWith(['c1.xhtml']);
+    expect(transformersStub.review.mock.calls[0][0]).toMatchObject({
+      categories: ['story', 'logic'],
+      chapterText: { 'c1.xhtml': 'Once upon a time.' },
+      chapterSha256: { 'c1.xhtml': 'sha256:x' },
+      references: { 'ref-1': { revision: 2, content: 'A coinage.' } },
+      styleRevision: 4,
+      language: 'en',
+      approvedTerms: ['Mariselleth'],
+    });
+    expect(await screen.findByText('asst.noFindings')).toBeInTheDocument();
+
+    unmount();
+    expect(destroy).toHaveBeenCalledTimes(1);
+  });
+
+  it('reports missing read access honestly instead of extracting', async () => {
+    vi.mocked(fetchAssistanceConsent).mockResolvedValue({ allowed: false, cloudQualified: false });
+    chaptersStub.fetchBookFileUrl.mockRejectedValue(
+      Object.assign(new Error('Book not found'), { status: 404 }),
+    );
+
+    render(
+      <MemoryRouter>
+        <AssistancePanel bookId="book-1" />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'asst.loadChapters' }));
+    expect(await screen.findByText('asst.noReadAccess')).toBeInTheDocument();
+    expect(chaptersStub.loadCreatorBook).not.toHaveBeenCalled();
+  });
+
+  it('offers a retry when loading the book text fails, and recovers', async () => {
+    vi.mocked(fetchAssistanceConsent).mockResolvedValue({ allowed: false, cloudQualified: false });
+    chaptersStub.fetchBookFileUrl.mockRejectedValueOnce(
+      Object.assign(new Error('boom'), { status: 500 }),
+    );
+    chaptersStub.fetchBookFileUrl.mockResolvedValueOnce({ url: 'signed-url', fileId: 'file-1' });
+    chaptersStub.loadCreatorBook.mockResolvedValue({
+      chapters: [{ ref: 'c1.xhtml', title: 'One', index: 0 }],
+      language: null,
+      extract: vi.fn(() => Promise.resolve({ chapterText: {}, chapterSha256: {} })),
+      destroy: vi.fn(),
+    });
+
+    render(
+      <MemoryRouter>
+        <AssistancePanel bookId="book-1" />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'asst.loadChapters' }));
+    expect(await screen.findByText('asst.loadFailed')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'asst.loadChapters' }));
+    expect(await screen.findByText('One')).toBeInTheDocument();
+    expect(chaptersStub.fetchBookFileUrl).toHaveBeenCalledTimes(2);
+  });
+
+  it('tells the reviewer to load text when an engine is present but nothing is grounded', async () => {
+    vi.mocked(fetchAssistanceConsent).mockResolvedValue({ allowed: false, cloudQualified: false });
+    transformersStub.hasEngine.mockReturnValue(true);
+
+    render(
+      <MemoryRouter>
+        <AssistancePanel bookId="book-1" />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'asst.runLabel' }));
+    expect(await screen.findByText('asst.textRequired')).toBeInTheDocument();
+    expect(transformersStub.review).not.toHaveBeenCalled();
   });
 });

@@ -6,12 +6,12 @@
 do-epub-studio/
 ├── apps/
 │   ├── web/          # React SPA (Vite, Tailwind CSS, PWA)
-│   ├── worker/       # Cloudflare Workers API (Turso/libSQL)
+│   ├── worker/       # Cloudflare Workers API (D1)
 │   └── tests/        # E2E test suite (Playwright)
 ├── packages/
 │   ├── reader-core/  # EPUB rendering engine (adapter over @intity/epub-js)
 │   ├── shared/       # DTOs, schemas (Zod), errors, telemetry
-│   ├── schema/       # Turso DB schema + migrations
+│   ├── schema/       # D1 schema + migrations
 │   ├── testkit/      # Test data builders + fixtures
 │   └── ui/           # Shared React components + design system
 └── docs/
@@ -43,7 +43,7 @@ Cloudflare Worker (apps/worker)
   │   • books, progress, bookmarks, highlights, comments
   │   • admin CRUD, audit logs
   │
-  ├─ libSQL/Turso DB (apps/worker/src/db/)
+  ├─ D1 DB (apps/worker/src/db/)
   │   • reader_sessions, book_access_grants, books
   │   • reader_progress, bookmarks, highlights, comments
   │   • audit_log
@@ -68,7 +68,7 @@ Cloudflare Worker (apps/worker)
 | Build tool         | Vite 8                                                |
 | Styling            | Tailwind CSS 4.3                                      |
 | API runtime        | Cloudflare Workers (Wrangler 4)                       |
-| Database           | Turso/libSQL (embedded replicas)                      |
+| Database           | Cloudflare D1 (SQLite)                                |
 | EPUB rendering     | @intity/epub-js (adapted via reader-core)             |
 | Schema validation  | Zod 4                                                 |
 | Unit testing       | Vitest 4.1 + @vitest/coverage-v8                      |
@@ -140,10 +140,10 @@ editorial comments and threaded discussion, audit logging and permission managem
 | Store                     | What lives there                                                                              |
 | ------------------------- | --------------------------------------------------------------------------------------------- |
 | Cloudflare R2             | EPUB file bytes, covers, derived file assets                                                  |
-| Turso/libSQL              | users, book metadata, grants, sessions, progress, bookmarks, highlights, comments, audit logs |
+| Cloudflare D1             | users, book metadata, grants, sessions, progress, bookmarks, highlights, comments, audit logs |
 | IndexedDB + Cache Storage | offline reading state, sync queue, reader preferences                                         |
 
-Do not treat Turso as the primary EPUB file store; do not use R2 as the
+Do not treat D1 as the primary EPUB file store; do not use R2 as the
 application's authorisation system. All file access goes through the Worker gate
 with short-lived signed URLs.
 
@@ -181,7 +181,7 @@ and short-lived signed URLs — not R2 visibility alone.
 | `packages/reader-core` | EPUB abstractions, locator mapping, selection anchors, preference logic |
 | `packages/ui`          | reusable UI components, layout primitives, forms, modals, panels        |
 | `apps/web`             | routes, reader UI, admin UI, local persistence, sync orchestration      |
-| `apps/worker`          | API routes, session/auth logic, Turso access, R2 signing, audit logging |
+| `apps/worker`          | API routes, session/auth logic, D1 access, R2 signing, audit logging    |
 
 ---
 

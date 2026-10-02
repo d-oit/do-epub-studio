@@ -25,12 +25,14 @@ export interface AnnotationEntry {
   createdAt: number;
   synced: boolean;
   mutationId: string;
+  updatedAt?: number;
+  displayName?: string;
+  syncError?: string;
   /** Comment status — persisted for offline resolve/unresolve (Plan 998). */
   status?: 'open' | 'resolved';
   /** Comment visibility — persisted for offline mutations (Plan 998). */
   visibility?: 'shared' | 'internal' | 'resolved';
 }
-
 export interface SyncQueueItem {
   id: string;
   type: 'progress' | 'annotation' | 'reading-insight' | 'feedback';
@@ -61,6 +63,18 @@ export interface PermissionCache {
   canDownloadOffline: boolean;
   cachedAt: number;
   expiresAt: number;
+}
+
+/**
+ * Last successfully resolved signed book-file URL (A5, GOAP-300). The URL is a
+ * time-limited capability, so it is encrypted at rest like the other sensitive
+ * offline payloads; the reader falls back to it only while offline.
+ */
+export interface BookFileEntry {
+  bookId: string;
+  url: string;
+  fileId: string | null;
+  cachedAt: number;
 }
 
 /**
@@ -98,7 +112,7 @@ export interface ConflictRecord {
 }
 
 const DB_NAME = 'do-epub-studio';
-const DB_VERSION = 4;
+const DB_VERSION = 5;
 
 let dbInstance: IDBPDatabase | null = null;
 let tokenOverride: string | null = null;
@@ -163,10 +177,11 @@ export async function decryptEntry<T>(
 }
 
 const PROGRESS_PLAINTEXT = ['id', 'bookId', 'synced'] as const;
-const ANNOTATION_PLAINTEXT = ['id', 'bookId', 'synced'] as const;
-const SYNC_QUEUE_PLAINTEXT = ['id', 'createdAt'] as const;
+export const ANNOTATION_PLAINTEXT = ['id', 'bookId', 'synced'] as const;
+export const SYNC_QUEUE_PLAINTEXT = ['id', 'createdAt'] as const;
 const READING_INSIGHT_PLAINTEXT = ['bookId', 'date'] as const;
 const PERMISSION_PLAINTEXT = ['bookId'] as const;
+const BOOK_FILE_PLAINTEXT = ['bookId', 'cachedAt'] as const;
 const CONFLICT_PLAINTEXT = [
   'id',
   'bookId',
@@ -245,6 +260,14 @@ export async function getDB(): Promise<IDBPDatabase> {
           draftsStore.createIndex('ownerBook', ['ownerEmail', 'bookId']);
         }
       }
+
+      // v4→v5: cached signed book-file URL enabling offline reading (A5,
+      // GOAP-300). Keyed by bookId; the URL is encrypted at rest.
+      if (oldVersion < 5) {
+        if (!db.objectStoreNames.contains('bookFiles')) {
+          db.createObjectStore('bookFiles', { keyPath: 'bookId' });
+        }
+      }
     },
   });
 
@@ -279,36 +302,6 @@ export async function getUnsyncedProgress(): Promise<ProgressEntry[]> {
   );
   return decrypted.filter(
     (entry): entry is ProgressEntry => entry !== null && entry.synced === false,
-  );
-}
-
-export async function saveAnnotation(entry: AnnotationEntry): Promise<void> {
-  const db = await getDB();
-  const stored = await encryptEntry(entry, ANNOTATION_PLAINTEXT);
-  await db.put('annotations', stored);
-}
-
-export async function getAnnotations(bookId: string): Promise<AnnotationEntry[]> {
-  const db = await getDB();
-  const all = await db.getAllFromIndex('annotations', 'bookId', bookId);
-  const decrypted = await Promise.all(
-    (all as Record<string, unknown>[]).map((e) =>
-      decryptEntry<AnnotationEntry>(e, ANNOTATION_PLAINTEXT),
-    ),
-  );
-  return decrypted.filter((e): e is AnnotationEntry => e !== null);
-}
-
-export async function getUnsyncedAnnotations(): Promise<AnnotationEntry[]> {
-  const db = await getDB();
-  const all = await db.getAll('annotations');
-  const decrypted = await Promise.all(
-    (all as Record<string, unknown>[]).map((e) =>
-      decryptEntry<AnnotationEntry>(e, ANNOTATION_PLAINTEXT),
-    ),
-  );
-  return decrypted.filter(
-    (entry): entry is AnnotationEntry => entry !== null && entry.synced === false,
   );
 }
 
@@ -380,6 +373,25 @@ export async function clearAllPermissionCache(): Promise<void> {
   await tx.done;
 }
 
+/**
+ * Cache the last resolved signed book-file URL for offline reading (A5,
+ * GOAP-300). The URL is a time-limited capability, so it is encrypted at rest;
+ * the reader falls back to it only when the network is unavailable.
+ */
+export async function saveBookFile(entry: BookFileEntry): Promise<void> {
+  const db = await getDB();
+  const stored = await encryptEntry(entry, BOOK_FILE_PLAINTEXT);
+  await db.put('bookFiles', stored);
+}
+
+export async function getBookFile(bookId: string): Promise<BookFileEntry | undefined> {
+  const db = await getDB();
+  const stored = (await db.get('bookFiles', bookId)) as Record<string, unknown> | undefined;
+  if (!stored) return undefined;
+  const entry = await decryptEntry<BookFileEntry>(stored, BOOK_FILE_PLAINTEXT);
+  return entry ?? undefined;
+}
+
 export async function clearAllEncryptedData(): Promise<void> {
   const db = await getDB();
   const stores = [
@@ -389,6 +401,7 @@ export async function clearAllEncryptedData(): Promise<void> {
     'permissions',
     'readingInsights',
     'conflicts',
+    'bookFiles',
   ];
   const tx = db.transaction(stores, 'readwrite');
   await Promise.all(stores.map((name) => tx.objectStore(name).clear()));

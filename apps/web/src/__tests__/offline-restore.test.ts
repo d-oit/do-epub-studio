@@ -35,7 +35,7 @@ describe('Offline restore — annotations (M4 from Plan 118)', () => {
   });
 
   it('saves and retrieves highlights, comments, and bookmarks for a book', async () => {
-    const { saveAnnotation, getAnnotations } = await import('../lib/offline/db');
+    const { saveAnnotation, getAnnotations } = await import('../lib/offline/annotation-mutations');
 
     const bookId = 'test-book-restore';
 
@@ -172,7 +172,7 @@ describe('Offline restore — annotations (M4 from Plan 118)', () => {
   });
 
   it('persists comment status mutations for offline resolve (Plan 998)', async () => {
-    const { saveAnnotation, getAnnotations } = await import('../lib/offline/db');
+    const { saveAnnotation, getAnnotations } = await import('../lib/offline/annotation-mutations');
 
     const bookId = 'plan998-book';
 
@@ -215,8 +215,6 @@ describe('Offline restore — annotations (M4 from Plan 118)', () => {
 
   it('full round-trip: all annotation types + progress + insights survive offline', async () => {
     const {
-      saveAnnotation,
-      getAnnotations,
       saveProgress,
       getProgress,
       saveReadingInsight,
@@ -224,6 +222,7 @@ describe('Offline restore — annotations (M4 from Plan 118)', () => {
       addToSyncQueue,
       getSyncQueue,
     } = await import('../lib/offline/db');
+    const { saveAnnotation, getAnnotations } = await import('../lib/offline/annotation-mutations');
 
     const bookId = 'full-roundtrip-book';
 

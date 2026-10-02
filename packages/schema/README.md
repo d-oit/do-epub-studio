@@ -1,6 +1,6 @@
 # @do-epub-studio/schema
 
-Database schema types and locator utilities. Defines the canonical TypeScript types for all entities stored in Turso/D1.
+Database schema types and locator utilities. Defines the canonical TypeScript types for all entities stored in Cloudflare D1.
 
 ## Modules
 
@@ -11,13 +11,16 @@ Database schema types and locator utilities. Defines the canonical TypeScript ty
 
 ## Migrations
 
-Database migrations are managed via Drizzle Kit (Turso/SQLite). Run from the root:
+SQL migrations live in `migrations/` and are applied with Wrangler D1 (see
+`docs/setup-local.md` §4). Run from the root:
 
-| Command                 | Description                    |
-| ----------------------- | ------------------------------ |
-| `pnpm db:migrate:local` | Apply migrations to local DB   |
-| `pnpm db:migrate:prod`  | Apply migrations to production |
-| `pnpm db:check`         | Validate migration state       |
+| Command                 | Description                            |
+| ----------------------- | -------------------------------------- |
+| `pnpm db:migrate:local` | Apply migrations to the local D1 state |
+| `pnpm db:check`         | List applied/pending local migrations  |
+
+Production migrations are an operator action documented in
+`docs/runbooks/infrastructure-setup.md`.
 
 ## Scripts
 

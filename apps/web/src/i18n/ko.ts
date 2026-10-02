@@ -430,6 +430,12 @@ export const ko: Record<TranslationKeys, TranslationValue> = {
   'asst.enginePrepare': '스토리·논리 엔진 준비',
   'asst.engineDownloading': '엔진 준비 중: {percent}%',
   'asst.engineReady': '스토리·논리 엔진 준비 완료',
+  'asst.loadChapters': '책 본문 불러오기',
+  'asst.loadingBook': '책 불러오는 중…',
+  'asst.loadFailed': '책 본문을 불러오지 못했습니다.',
+  'asst.noReadAccess': '이 계정에는 이 책의 읽기 권한이 없어 본문을 검토할 수 없습니다.',
+  'asst.textRequired': '검사를 실행하기 전에 책 본문을 불러오고 장을 하나 이상 선택하세요.',
+  'asst.chaptersLabel': '검토할 장',
   'asst.engineNote':
     '약 500MB를 한 번 내려받습니다. 모델은 이 기기에서 실행되며 원고는 업로드되지 않습니다.',
 

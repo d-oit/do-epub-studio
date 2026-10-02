@@ -80,7 +80,19 @@ describe('useBookmarkHandlers', () => {
 describe('useAnnotationHandlers', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    useAuthStore.setState({ sessionToken: 'token-123', bookId: 'book-1' });
+    useAuthStore.setState({
+      sessionToken: 'token-123',
+      bookId: 'book-1',
+      capabilities: {
+        canRead: true,
+        canHighlight: true,
+        canComment: true,
+        canBookmark: true,
+        canDownloadOffline: true,
+        canExportNotes: true,
+        canManageAccess: false,
+      },
+    });
     useReaderStore.setState({
       highlights: [],
       comments: [],

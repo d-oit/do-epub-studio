@@ -56,8 +56,23 @@ function backoff(attempt: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, delay));
 }
 
-function handleUnauthorized() {
+/** Bearer token of the request that was rejected, or null when it sent none. */
+function requestToken(headers: HeadersInit | undefined): string | null {
+  if (!headers) return null;
+  const merged = new Headers(headers);
+  const authorization = merged.get('Authorization');
+  if (!authorization?.startsWith('Bearer ')) return null;
+  return authorization.slice('Bearer '.length);
+}
+
+/**
+ * Logs out only when the rejection belongs to the session that is still
+ * current. A 401 for a token the store has since replaced (an in-flight
+ * request from a previous session) must not sign out the newer session.
+ */
+function handleUnauthorized(rejectedToken: string | null) {
   const state = useAuthStore.getState();
+  if (rejectedToken && state.sessionToken && rejectedToken !== state.sessionToken) return;
   state.logout('expired');
 }
 
@@ -98,6 +113,8 @@ export async function apiRequest<T>(endpoint: string, options: ApiRequestOptions
       ...requestInit.headers,
     };
 
+    const sentToken = requestToken(headers);
+
     let responseStatus: number | undefined;
     try {
       // nosemgrep: node/ssrf — endpoint is always an internal path literal, never user-supplied
@@ -113,8 +130,10 @@ export async function apiRequest<T>(endpoint: string, options: ApiRequestOptions
         !endpoint.includes('/api/access/request') &&
         !endpoint.includes('/api/admin/login')
       ) {
-        handleUnauthorized();
-        throw new Error('Session expired');
+        handleUnauthorized(sentToken);
+        const err = new Error('Session expired');
+        (err as Error & { status?: number }).status = 401;
+        throw err;
       }
       if (response.status >= 500 && attempt < MAX_RETRIES) {
         logClientEvent({
@@ -241,12 +260,13 @@ async function apiRaw(
     body: data ? JSON.stringify(data) : undefined,
     ...options,
   });
+  const sentToken = requestToken(options?.headers);
   if (
     res.status === 401 &&
     !endpoint.includes('/api/access/request') &&
     !endpoint.includes('/api/admin/login')
   ) {
-    handleUnauthorized();
+    handleUnauthorized(sentToken);
   }
   logClientEvent({
     level: res.ok ? 'info' : 'error',

@@ -1,8 +1,10 @@
 export { useReaderUI } from './useReaderUi';
 export { useReaderEpub } from './useReaderEpub';
 export { useAnnotationHandlers } from './useAnnotationHandlers';
+export { useCommentHandlers } from './useCommentHandlers';
 export { useBookmarkHandlers } from './useBookmarkHandlers';
 export { useExportNotes } from './useExportNotes';
 export { useReadingTimer } from './useReadingTimer';
 export { useReaderDataLoader } from './useReaderDataLoader';
+export { useBookFileUrl } from './useBookFileUrl';
 export { useOptimisticAnnotationStore } from './useOptimisticAnnotations';

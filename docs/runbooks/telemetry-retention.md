@@ -54,7 +54,7 @@ Add the `scheduled` handler to the existing Worker entry before deploy.
 DELETE FROM telemetry_events WHERE received_at < datetime('now', '-90 days');
 ```
 
-Run via the Turso/local D1 CLI against the target database.
+Run via the D1 CLI (`wrangler d1 execute`, `--local` or `--remote`) against the target database.
 
 ## Verification
 

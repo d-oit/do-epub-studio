@@ -6,7 +6,7 @@ import { useKeyboardShortcut } from '../../../../hooks/useKeyboardShortcut';
 interface CommentInputModalProps {
   isOpen: boolean;
   selection: { text: string } | null;
-  onSubmit: (text: string) => void;
+  onSubmit: (text: string) => void | Promise<void>;
   onCancel: () => void;
   placeholder: string;
   submitLabel: string;
