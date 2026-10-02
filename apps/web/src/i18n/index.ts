@@ -60,7 +60,7 @@ export function translate(
   params?: Record<string, string | number>,
 ): string {
   const catalog = loadedDictionaries[locale] ?? loadedDictionaries.en;
-  const value = catalog[key] ?? loadedDictionaries.en[key] ?? key;
+  const value = catalog?.[key] ?? loadedDictionaries.en?.[key] ?? key;
   let template: string;
   if (typeof value === 'string') {
     template = value;

@@ -77,7 +77,7 @@ describe('dispatchEditorialReview (GOAP-293)', () => {
     expect(result.enginesRun).toBe(2);
     expect(languageTool.review).toHaveBeenCalledTimes(1);
     expect(transformers.review).toHaveBeenCalledTimes(1);
-    expect(languageTool.review.mock.calls[0][0]).toMatchObject({
+    expect(languageTool.review.mock.calls[0]?.[0]).toMatchObject({
       categories: ['spelling', 'grammar'],
       chapterText: { 'c1.xhtml': 'Once upon a time, Mariselleth waited.' },
       chapterSha256: { 'c1.xhtml': 'sha256:x' },
@@ -85,7 +85,9 @@ describe('dispatchEditorialReview (GOAP-293)', () => {
       styleRevision: 4,
       language: 'en',
     });
-    expect(transformers.review.mock.calls[0][0]).toMatchObject({ categories: ['story', 'logic'] });
+    expect(transformers.review.mock.calls[0]?.[0]).toMatchObject({
+      categories: ['story', 'logic'],
+    });
   });
 
   it('merges findings, prefers a failure over a clean run, and reports engine_missing only when uncovered', async () => {

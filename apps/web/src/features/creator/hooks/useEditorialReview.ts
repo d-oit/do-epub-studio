@@ -116,7 +116,8 @@ export function useEditorialReview(bookId: string, token: string): UseEditorialR
       bookRef.current?.destroy();
       bookRef.current = book;
       setChapters(book.chapters);
-      setSelected(book.chapters.length > 0 ? [book.chapters[0].ref] : []);
+      const [firstChapter] = book.chapters;
+      setSelected(firstChapter ? [firstChapter.ref] : []);
       setBookState('ready');
     } catch (err) {
       setBookState(accessErrorState(err));

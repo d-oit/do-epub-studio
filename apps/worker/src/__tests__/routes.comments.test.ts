@@ -12,6 +12,7 @@ import {
 } from './fixtures';
 import { app } from '../app';
 import { assertBookAccess } from '../lib/tenant-isolation';
+import { defined } from './helpers';
 
 vi.mock('../lib/tenant-isolation', () => ({
   parseLocatorRow: vi.fn(),
@@ -68,7 +69,7 @@ describe('Comments Routes', () => {
       // B1 (GOAP-224 W1.3): shared-comment payload must mask author email —
       // displayName is a truncated identifier and no userEmail key leaks.
       const data = body.data as Array<Record<string, unknown>>;
-      const comment = data[0];
+      const comment = defined(data[0]);
       expect(comment?.displayName).toBe('ot***');
       expect(comment.isOwn).toBe(false);
       expect('userEmail' in comment).toBe(false);

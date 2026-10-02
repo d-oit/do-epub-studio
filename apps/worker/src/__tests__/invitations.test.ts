@@ -101,7 +101,7 @@ describe('book invitation service', () => {
     );
 
     expect(result.invitation.email).toBe('reader@example.com');
-    const statements = mocks.transaction.mock.calls[0][1] as Array<{
+    const statements = mocks.transaction.mock.calls[0]?.[1] as Array<{
       sql: string;
       args: unknown[];
     }>;
@@ -127,7 +127,7 @@ describe('book invitation service', () => {
     });
 
     expect(result.role).toBe('creator');
-    const statements = mocks.transaction.mock.calls[0][1] as Array<{
+    const statements = mocks.transaction.mock.calls[0]?.[1] as Array<{
       sql: string;
       args: unknown[];
     }>;
@@ -242,7 +242,7 @@ describe('book invitation service', () => {
       }),
     );
     await revokeBookInvitation(makeEnv(), BOOK_ID, 'invite-1');
-    const statements = mocks.transaction.mock.calls[0][1] as Array<{ sql: string }>;
+    const statements = mocks.transaction.mock.calls[0]?.[1] as Array<{ sql: string }>;
     expect(
       statements.some((statement) => statement.sql.includes('DELETE FROM book_creators')),
     ).toBe(true);

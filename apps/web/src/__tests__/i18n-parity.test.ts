@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { ensureLocale, type LocaleKey } from '../i18n';
 import { en } from '../i18n/en';
 import type { TranslationValue } from '../i18n/en';
+import { defined } from './helpers';
 
 const localeModules: Record<
   string,
@@ -27,8 +28,8 @@ async function loadAllLocales(): Promise<Record<string, Record<string, Translati
   const result: Record<string, Record<string, TranslationValue>> = { en };
   for (const name of localeNames) {
     await ensureLocale(name);
-    const mod = await localeModules[name]();
-    result[name] = mod[name];
+    const mod = await defined(localeModules[name])();
+    result[name] = defined(mod[name]);
   }
   return result;
 }
@@ -47,10 +48,10 @@ describe('i18n parity', () => {
   });
 
   it('has the same keys across all locales', () => {
-    const enKeys = new Set(Object.keys(dictionaries.en));
+    const enKeys = new Set(Object.keys(defined(dictionaries.en)));
 
     for (const locale of localeNames) {
-      const localeKeys = new Set(Object.keys(dictionaries[locale]));
+      const localeKeys = new Set(Object.keys(defined(dictionaries[locale])));
       const missingKeys = [...enKeys].filter((k) => !localeKeys.has(k));
       const extraKeys = [...localeKeys].filter((k) => !enKeys.has(k));
 
@@ -61,7 +62,7 @@ describe('i18n parity', () => {
 
   it('has no empty or placeholder translations', () => {
     for (const locale of localeNames) {
-      const dict = dictionaries[locale];
+      const dict = defined(dictionaries[locale]);
       const emptyKeys = Object.entries(dict).filter(([, value]) => {
         if (typeof value === 'string') {
           return !value || value.trim() === '' || value === 'TODO';
@@ -76,7 +77,7 @@ describe('i18n parity', () => {
 
   it('has no untranslated keys (value equals key name)', () => {
     for (const locale of localeNames) {
-      const dict = dictionaries[locale];
+      const dict = defined(dictionaries[locale]);
       const untranslatedKeys = Object.entries(dict).filter(
         ([key, value]) => typeof value === 'string' && key === value,
       );
@@ -87,9 +88,9 @@ describe('i18n parity', () => {
 
   it('has matching value shapes across locales (string vs plural object) and `other` always present (GOAP-227)', () => {
     for (const locale of localeNames) {
-      const dict = dictionaries[locale];
-      for (const key of Object.keys(dictionaries.en)) {
-        const enValue = dictionaries.en[key];
+      const dict = defined(dictionaries[locale]);
+      for (const key of Object.keys(defined(dictionaries.en))) {
+        const enValue = defined(dictionaries.en)[key];
         const localeValue = dict[key];
         expect(
           typeof localeValue,
@@ -116,7 +117,7 @@ describe('i18n parity', () => {
       'relativeTime.daysAgo',
     ];
     for (const locale of localeNames) {
-      const dict = dictionaries[locale];
+      const dict = defined(dictionaries[locale]);
       for (const [key, value] of Object.entries(dict)) {
         if (typeof value !== 'string') continue;
         if (!value.includes('{count}')) continue;

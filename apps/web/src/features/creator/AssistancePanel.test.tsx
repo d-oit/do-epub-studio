@@ -270,7 +270,7 @@ describe('AssistancePanel (Wave 4, synthetic fixtures for consent/UI paths)', ()
       expect(transformersStub.review).toHaveBeenCalledTimes(1);
     });
     expect(extract).toHaveBeenCalledWith(['c1.xhtml']);
-    expect(transformersStub.review.mock.calls[0][0]).toMatchObject({
+    expect(transformersStub.review.mock.calls[0]?.[0]).toMatchObject({
       categories: ['story', 'logic'],
       chapterText: { 'c1.xhtml': 'Once upon a time.' },
       chapterSha256: { 'c1.xhtml': 'sha256:x' },

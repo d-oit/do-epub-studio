@@ -39,7 +39,7 @@ describe('collectSpineSections (GOAP-295)', () => {
     expect(
       collectSpineSections<Section>({
         sections: new Map([['k.xhtml', section('k.xhtml')]]),
-      })[0].href,
+      })?.[0]?.href,
     ).toBe('k.xhtml');
   });
 

@@ -141,7 +141,7 @@ export function measurePerformance(
   try {
     performance.measure(name, startMark, endMark);
     const entries = performance.getEntriesByName(name);
-    return entries.length > 0 ? entries[entries.length - 1].duration : undefined;
+    return entries[entries.length - 1]?.duration;
   } catch {
     return undefined;
   }
