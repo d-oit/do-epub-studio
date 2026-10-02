@@ -47,13 +47,21 @@ describe('ThemeToggle', () => {
   it('renders dark mode button when theme is light', () => {
     usePreferencesStore.getState().setTheme('light');
     render(<ThemeToggle />);
-    expect(screen.getByLabelText('Switch to dark mode')).toBeInTheDocument();
+    const button = screen.getByLabelText('Switch to dark mode');
+    expect(button).toBeInTheDocument();
+    expect(button).toHaveAttribute('title', 'Switch to dark mode');
+    const svg = button.querySelector('svg');
+    expect(svg).toHaveAttribute('aria-hidden', 'true');
   });
 
   it('renders light mode button when theme is dark', () => {
     usePreferencesStore.getState().setTheme('dark');
     render(<ThemeToggle />);
-    expect(screen.getByLabelText('Switch to light mode')).toBeInTheDocument();
+    const button = screen.getByLabelText('Switch to light mode');
+    expect(button).toBeInTheDocument();
+    expect(button).toHaveAttribute('title', 'Switch to light mode');
+    const svg = button.querySelector('svg');
+    expect(svg).toHaveAttribute('aria-hidden', 'true');
   });
 
   it('toggles theme on click', () => {
