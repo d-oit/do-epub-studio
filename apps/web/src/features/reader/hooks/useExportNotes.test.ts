@@ -78,9 +78,9 @@ describe('useExportNotes — buildNotesExport', () => {
     });
 
     expect(result.annotations).toHaveLength(3);
-    expect(result.annotations[0].type).toBe('highlight');
-    expect(result.annotations[1].type).toBe('comment');
-    expect(result.annotations[2].type).toBe('bookmark');
+    expect(result.annotations[0]?.type).toBe('highlight');
+    expect(result.annotations[1]?.type).toBe('comment');
+    expect(result.annotations[2]?.type).toBe('bookmark');
   });
 
   it('filters out deleted comments', () => {
@@ -124,7 +124,7 @@ describe('useExportNotes — buildNotesExport', () => {
     });
 
     expect(result.annotations).toHaveLength(1);
-    expect(result.annotations[0].type).toBe('comment');
+    expect(result.annotations[0]?.type).toBe('comment');
   });
 });
 
@@ -195,7 +195,7 @@ describe('useExportNotes — importNotesFromMarkdown', () => {
 
     expect(result.ok).toBe(true);
     expect(result.highlights).toHaveLength(1);
-    expect(result.highlights[0].selectedText).toMatch(/^important text/);
+    expect(result.highlights[0]?.selectedText).toMatch(/^important text/);
   });
 
   it('imports bookmarks from markdown', () => {
@@ -211,7 +211,7 @@ describe('useExportNotes — importNotesFromMarkdown', () => {
 
     expect(result.ok).toBe(true);
     expect(result.bookmarks).toHaveLength(1);
-    expect(result.bookmarks[0].label).toBe('my label');
+    expect(result.bookmarks[0]?.label).toBe('my label');
   });
 
   it('imports comments from markdown', () => {
@@ -227,7 +227,7 @@ describe('useExportNotes — importNotesFromMarkdown', () => {
 
     expect(result.ok).toBe(true);
     expect(result.comments).toHaveLength(1);
-    expect(result.comments[0].body).toBe('This is my comment');
+    expect(result.comments[0]?.body).toBe('This is my comment');
   });
 });
 

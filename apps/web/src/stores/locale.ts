@@ -26,7 +26,7 @@ function detectLocale(): SupportedLocale {
   // Match on the primary language subtag (e.g. 'zh' from 'zh-Hans-CN') against
   // the full set of supported catalogs, falling back to English.
   const [preferred] = navigator.language.split('-');
-  return isSupportedLocale(preferred) ? preferred : 'en';
+  return preferred && isSupportedLocale(preferred) ? preferred : 'en';
 }
 
 export const useLocaleStore = create<LocaleState>()(

@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test';
 import { Buffer } from 'node:buffer';
 import fs from 'node:fs';
 import path from 'node:path';
+import { defined } from './helpers';
 
 interface StartupMetrics {
   startupTime: {
@@ -231,7 +232,7 @@ test.describe('Performance', () => {
         navEntries: { domInteractive: number; loadEventEnd: number }[],
       ) => {
         const fcp = paintEntries.find((entry) => entry.name === 'first-contentful-paint');
-        const navigation = navEntries[0];
+        const navigation = defined(navEntries[0]);
         return {
           fcp: fcp ? fcp.startTime : null,
           domInteractive: navigation.domInteractive,

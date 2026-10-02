@@ -52,11 +52,11 @@ describe('Admin Routes — GET /api/admin/insights', () => {
     } = await res.json();
     expect(body.ok).toBe(true);
     expect(body.data).toHaveLength(2);
-    expect(body.data[0].bookId).toBe('book-1');
-    expect(body.data[0].totalActiveMinutes).toBe(120);
-    expect(body.data[0].readerCount).toBe(3);
+    expect(body.data[0]?.bookId).toBe('book-1');
+    expect(body.data[0]?.totalActiveMinutes).toBe(120);
+    expect(body.data[0]?.readerCount).toBe(3);
     // No user_email in response
-    expect('userEmail' in body.data[0]).toBe(false);
+    expect('userEmail' in (body.data[0] ?? {})).toBe(false);
     expect(body.pagination.limit).toBe(20);
     expect(body.pagination.offset).toBe(0);
   });

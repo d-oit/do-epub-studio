@@ -241,14 +241,14 @@ describe('ReaderPage Panels', () => {
     // Verify offline data was restored to the store
     const storeState = useReaderStore.getState();
     expect(storeState.highlights).toHaveLength(1);
-    expect(storeState.highlights[0].id).toBe('h-1');
-    expect(storeState.highlights[0].selectedText).toBe('saved passage');
+    expect(storeState.highlights[0]?.id).toBe('h-1');
+    expect(storeState.highlights[0]?.selectedText).toBe('saved passage');
     expect(storeState.comments).toHaveLength(1);
-    expect(storeState.comments[0].id).toBe('c-1');
-    expect(storeState.comments[0].body).toBe('offline comment');
+    expect(storeState.comments[0]?.id).toBe('c-1');
+    expect(storeState.comments[0]?.body).toBe('offline comment');
     expect(storeState.bookmarks).toHaveLength(1);
-    expect(storeState.bookmarks[0].id).toBe('b-1');
-    expect(storeState.bookmarks[0].label).toBe('Chapter 1');
+    expect(storeState.bookmarks[0]?.id).toBe('b-1');
+    expect(storeState.bookmarks[0]?.label).toBe('Chapter 1');
   });
 });
 
