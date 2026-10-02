@@ -1,5 +1,5 @@
 /**
- * AI plugin architecture (issue #318, GOAP-318).
+ * AI plugin architecture (issue #318, plan 262).
  *
  * Public surface: plugin types + errors, the plugin registry (reader
  * pipeline extension point), the opt-in consent gate, and the local

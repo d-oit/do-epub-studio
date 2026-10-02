@@ -434,6 +434,14 @@ export const pt: Record<TranslationKeys, TranslationValue> = {
   'asst.enginePrepare': 'Preparar motor de história e lógica',
   'asst.engineDownloading': 'Preparando o motor: {percent} %',
   'asst.engineReady': 'Motor de história e lógica pronto',
+  'asst.loadChapters': 'Carregar o texto do livro',
+  'asst.loadingBook': 'Carregando o livro…',
+  'asst.loadFailed': 'Não foi possível carregar o texto do livro.',
+  'asst.noReadAccess':
+    'Esta conta não tem acesso de leitura a este livro, pelo que o texto não pode ser revisto.',
+  'asst.textRequired':
+    'Carregue o texto do livro e selecione pelo menos um capítulo antes de executar a verificação.',
+  'asst.chaptersLabel': 'Capítulos a rever',
   'asst.engineNote':
     'Download único de cerca de 500 MB. O modelo roda neste dispositivo: o seu manuscrito nunca é enviado.',
 

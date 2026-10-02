@@ -11,6 +11,7 @@ export async function fetchHighlights(bookId: string, token: string): Promise<Hi
 export async function createHighlight(
   bookId: string,
   data: {
+    mutationId?: string;
     locator: {
       chapterRef: string;
       cfi: string;
@@ -62,6 +63,7 @@ export async function fetchComments(bookId: string, token: string): Promise<Comm
 export async function createComment(
   bookId: string,
   data: {
+    mutationId?: string;
     locator?: {
       chapterRef: string;
       cfi: string;

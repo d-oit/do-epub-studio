@@ -17,6 +17,7 @@ import {
   useReadingTimer,
   useOptimisticAnnotationStore,
   useReaderDataLoader,
+  useBookFileUrl,
 } from './hooks';
 import { useFeedbackComposer } from './hooks/useFeedbackComposer';
 import {
@@ -35,7 +36,7 @@ import { ConflictResolutionPanel } from './components/conflicts/ConflictResoluti
 import { useAuthStore, useReaderStore, usePreferencesStore } from '../../stores';
 import { initAiPlugins } from '../../lib/ai-plugins';
 
-// Reader route owns AI features (GOAP-318): registering here keeps the
+// Reader route owns AI features (issue #318, plan 262): registering here keeps the
 // reader-core extension point out of the shared entry graph, honoring the
 // ADR-107 route boundary rules (catalog/admin/auth must not import
 // reader-core). Idempotent.
@@ -124,12 +125,20 @@ export function ReaderPage() {
 
   const rootRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<HTMLDivElement>(null);
-  const bookFileIdRef = useRef<string | null>(null);
 
-  const [epubUrl, setEpubUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [highlightError, setHighlightError] = useState<string | null>(null);
 
-  // Ref to the navigation callback so it can be passed to useReaderEpub
+  const { epubUrl, bookFileIdRef } = useBookFileUrl({
+    sessionToken,
+    bookSlug,
+    bookId,
+    unavailableMessage: t('reader.notAvailable'),
+    onResolved: markInsightsLoaded,
+    onLoadingChange: setIsLoading,
+    onError: setError,
+  });
+
   // (declared below) without a temporal-dead-zone error. The callback is
   // updated on every render to read the latest renditionRef.
   const handleNavigateToAnnotationRef = useRef<
@@ -257,7 +266,16 @@ export function ReaderPage() {
         frame.contentDocument?.removeEventListener('mouseup', onMouseUp);
       }
     };
-  }, [epubUrl, isCommentMode, setSelection, currentChapterRef, renditionRef, rootRef, viewerRef]);
+  }, [
+    epubUrl,
+    isCommentMode,
+    setSelection,
+    currentChapterRef,
+    renditionRef,
+    rootRef,
+    viewerRef,
+    bookFileIdRef,
+  ]);
 
   useEffect(() => {
     if (!bookId) return;
@@ -270,47 +288,6 @@ export function ReaderPage() {
       setPermissionStatus('invalid');
     }
   }, [revokedBooks, bookId, setError, setPermissionStatus, t]);
-
-  useEffect(() => {
-    if (!sessionToken || !bookSlug) {
-      void navigate('/login');
-      return;
-    }
-    const controller = new AbortController();
-    let aborted = false;
-    setIsLoading(true);
-    const fetch = async () => {
-      try {
-        // Sessions are bound to the book UUID; assertBookAccess compares the
-        // URL param against auth.bookId with no slug fallback, so file-url
-        // must be addressed by id like every other reader API call.
-        const data = await apiRequest<{ url: string; fileId?: string }>(
-          `/api/books/${bookId}/file-url`,
-          {
-            method: 'POST',
-            token: sessionToken,
-            body: JSON.stringify({}),
-            signal: controller.signal,
-          },
-        );
-        bookFileIdRef.current = data.fileId ?? null;
-        setEpubUrl(data.url);
-        markInsightsLoaded();
-      } catch (err) {
-        if (!controller.signal.aborted)
-          setError((err as Error).message || t('reader.notAvailable'));
-      } finally {
-        if (!aborted) {
-          setIsLoading(false);
-        }
-      }
-    };
-    void fetch();
-    return () => {
-      aborted = true;
-      controller.abort();
-    };
-  }, [sessionToken, bookSlug, bookId, navigate, setError, t, markInsightsLoaded]);
 
   useEffect(() => {
     return () => {
@@ -453,34 +430,53 @@ export function ReaderPage() {
         />
       )}
       {selection && capabilities?.canHighlight && (
-        <AnnotationToolbar
-          selection={selection}
-          onHighlight={(color) => {
-            void handleCreateHighlight(color, selection);
-            setSelection(null);
-          }}
-          onComment={() => {
-            setShowCommentInput(true);
-            setIsCommentMode(true);
-          }}
-          onFeedback={(kind) => {
-            feedback.openComposer(kind, selection);
-          }}
-          onClose={() => {
-            setSelection(null);
-            setShowCommentInput(false);
-            setIsCommentMode(false);
-          }}
-          locale={locale}
-          canHighlight={capabilities?.canHighlight ?? false}
-          canComment={capabilities?.canComment ?? false}
-        />
+        <div className="relative">
+          <AnnotationToolbar
+            selection={selection}
+            onHighlight={(color) => {
+              void (async () => {
+                try {
+                  setHighlightError(null);
+                  await handleCreateHighlight(color, selection);
+                  setSelection(null);
+                } catch (err) {
+                  const msg = err instanceof Error ? err.message : t('common.error.generic');
+                  setHighlightError(msg);
+                }
+              })();
+            }}
+            onComment={() => {
+              setShowCommentInput(true);
+              setIsCommentMode(true);
+            }}
+            onFeedback={(kind) => {
+              feedback.openComposer(kind, selection);
+            }}
+            onClose={() => {
+              setSelection(null);
+              setShowCommentInput(false);
+              setIsCommentMode(false);
+              setHighlightError(null);
+            }}
+            locale={locale}
+            canHighlight={capabilities?.canHighlight ?? false}
+            canComment={capabilities?.canComment ?? false}
+          />
+          {highlightError && (
+            <div
+              role="alert"
+              className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-accent-error text-white text-xs rounded shadow-lg"
+            >
+              {highlightError}
+            </div>
+          )}
+        </div>
       )}
       <CommentInputModal
         isOpen={showCommentInput && !!selection}
         selection={selection}
-        onSubmit={(text) => {
-          void handleCreateComment(text, selection);
+        onSubmit={async (text) => {
+          await handleCreateComment(text, selection);
           setSelection(null);
           setShowCommentInput(false);
           setIsCommentMode(false);

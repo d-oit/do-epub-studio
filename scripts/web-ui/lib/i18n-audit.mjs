@@ -99,8 +99,11 @@ export async function auditLocales(page, options) {
   const baseline = await runProbe(baselineLocale);
   for (const locale of locales) {
     if (locale === baselineLocale) continue;
+    const localeResult = await runProbe(locale);
     // Direction contract: a rendered RTL locale must carry dir="rtl" (WCAG
-    // 3.1.1/3.1.2) — check the document element, not the probe.
+    // 3.1.1/3.1.2) — check the document element, not the probe. This check
+    // runs AFTER runProbe(locale) navigated: judging before navigation reads
+    // the previous locale's document (F5, GOAP-290).
     const dir = await page.evaluate(() => ({
       dir: document.documentElement.getAttribute('dir'),
       lang: document.documentElement.getAttribute('lang'),
@@ -114,7 +117,6 @@ export async function auditLocales(page, options) {
         reason: `document dir is '${dir.dir ?? 'unset'}' but locale ${locale} expects '${expectedDirection(locale)}' (WCAG 3.1.2)`,
       });
     }
-    const localeResult = await runProbe(locale);
     for (const delta of diffLocaleFindings(baseline.findings, localeResult.findings)) {
       findings.push({ ...delta, route: options.route, locale });
     }

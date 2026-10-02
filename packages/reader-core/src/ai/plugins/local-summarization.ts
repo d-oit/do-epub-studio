@@ -1,6 +1,6 @@
 /**
  * Proof-of-concept AI plugin: local (on-device) text summarization
- * (issue #318, GOAP-318).
+ * (issue #318, plan 262).
  *
  * Local-first contract: inference runs on-device; book text never leaves the
  * device. The inference engine is injected (dependency inversion) so
@@ -48,7 +48,7 @@ export function createLocalSummarizationPlugin(
       }
       if (!engine) {
         throw new AiProviderUnavailableError(
-          'no on-device inference engine registered (Transformers.js provider is a follow-up, see GOAP-318 ADR)',
+          'no on-device inference engine registered (Transformers.js provider is a follow-up, see plans/archive/262-goap-issue-318.md)',
         );
       }
       const source = input.trim();

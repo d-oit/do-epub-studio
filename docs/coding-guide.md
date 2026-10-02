@@ -18,7 +18,6 @@ Detailed topics live in focused sub-documents linked in the table below.
 | Accessibility requirements                                  | [`docs/accessibility.md`](./accessibility.md)       |
 | Local dev setup                                             | [`docs/setup-local.md`](./setup-local.md)           |
 | Cloudflare setup                                            | [`docs/setup-cloudflare.md`](./setup-cloudflare.md) |
-| Turso setup                                                 | [`docs/setup-turso.md`](./setup-turso.md)           |
 | ADR index                                                   | [`plans/ADR-INDEX.md`](../plans/ADR-INDEX.md)       |
 | Agent rules, quality gates, compliance self-check           | [`AGENTS.md`](../AGENTS.md)                         |
 
@@ -32,7 +31,7 @@ Detailed topics live in focused sub-documents linked in the table below.
 
 See [`docs/architecture.md`](./architecture.md) for the technology table, data flow, auth flow, and adapter pattern.
 
-**Stack:** TypeScript + Vite + React 19 | Cloudflare Workers + Hono | Turso/libSQL | Cloudflare R2 | IndexedDB + Cache Storage | Zustand 5 | Zod 4 | Vitest 4 + Playwright | Tailwind CSS 4.
+**Stack:** TypeScript + Vite + React 19 | Cloudflare Workers + Hono | Cloudflare D1 | Cloudflare R2 | IndexedDB + Cache Storage | Zustand 5 | Zod 4 | Vitest 4 + Playwright | Tailwind CSS 4.
 
 ## 3. Core capability model
 
@@ -64,7 +63,7 @@ All Hono route definitions: [`docs/api.md`](./api.md). Route groups: `/api/acces
 do-epub-studio/
 ├─ AGENTS.md / CLAUDE.md / plans/ / docs/ / .agents/skills/
 ├─ apps/web/          # React SPA (Vite, Tailwind, PWA)
-├─ apps/worker/       # Cloudflare Workers API (Hono, Turso, R2)
+├─ apps/worker/       # Cloudflare Workers API (Hono, D1, R2)
 ├─ apps/tests/        # Playwright E2E suite
 └─ packages/schema/ shared/ ui/ reader-core/ testkit/
 ```
@@ -77,23 +76,23 @@ Package content rules: [`docs/architecture.md` — Package Boundaries](./archite
 
 Do not use a single root `.env`. Split:
 
-| Config kind             | Location                                           |
-| ----------------------- | -------------------------------------------------- |
-| Worker runtime          | `apps/worker/wrangler.jsonc`                       |
-| Worker deployed secrets | `wrangler secret put <KEY>`                        |
-| Worker local dev        | `apps/worker/.dev.vars` (gitignored)               |
-| Frontend public config  | `apps/web/.env.local` (VITE_ prefixed, gitignored) |
-| DB provisioning         | Turso CLI                                          |
+| Config kind             | Location                                              |
+| ----------------------- | ----------------------------------------------------- |
+| Worker runtime          | `apps/worker/wrangler.jsonc`                          |
+| Worker deployed secrets | `wrangler secret put <KEY>`                           |
+| Worker local dev        | `apps/worker/.dev.vars` (gitignored)                  |
+| Frontend public config  | `apps/web/.env.local` (VITE_ prefixed, gitignored)    |
+| DB provisioning         | Wrangler D1 (local emulation; runbook for production) |
 
-Secrets: `TURSO_AUTH_TOKEN`, `SESSION_SIGNING_SECRET`, `INVITE_TOKEN_SECRET`. Full setup: [`docs/setup-cloudflare.md`](./setup-cloudflare.md) + [`docs/setup-turso.md`](./setup-turso.md).
+Secrets: `SESSION_SIGNING_SECRET`, `INVITE_TOKEN_SECRET`. Full setup: [`docs/setup-cloudflare.md`](./setup-cloudflare.md) (production) + [`docs/setup-local.md`](./setup-local.md) (local).
 
 ## 10. Wrangler configuration
 
-Use `apps/worker/wrangler.jsonc`. Wire `APP_BASE_URL` + `TURSO_DATABASE_URL` as `vars`; use R2 binding `BOOKS_BUCKET`; never put raw storage credentials in env. See [`docs/setup-cloudflare.md`](./setup-cloudflare.md).
+Use `apps/worker/wrangler.jsonc`. Wire `APP_BASE_URL` as a `var`; the D1 binding `DB` (`migrations_dir` → `packages/schema/migrations`) and R2 binding `BOOKS_BUCKET` come from the same file; never put raw storage credentials in env. See [`docs/setup-cloudflare.md`](./setup-cloudflare.md).
 
 ## 11. Secrets handling
 
-Worker-only (`TURSO_AUTH_TOKEN`, `SESSION_SIGNING_SECRET`, `INVITE_TOKEN_SECRET`) — provision with `wrangler secret put <KEY>`. Never expose to browser.
+Worker-only secrets (`SESSION_SIGNING_SECRET`, `INVITE_TOKEN_SECRET`) — provision with `wrangler secret put <KEY>`. Never expose to browser.
 
 ## 12. Local development config
 
@@ -179,6 +178,6 @@ Anchor drift, offline conflict, grant leakage, auth complexity, storage mistakes
 
 ## 32. Final recommendation
 
-Private GitHub repo, pnpm + turbo monorepo, `apps/web` + `apps/worker` + `packages/*`, Cloudflare Workers + R2 + Turso, `wrangler.jsonc`, Wrangler secrets, `.dev.vars` local dev, `.env.local` browser-safe, EPUB.js MVP, IndexedDB + Cache Storage offline, `AGENTS.md` + `plans/` for AI execution.
+Private GitHub repo, pnpm + turbo monorepo, `apps/web` + `apps/worker` + `packages/*`, Cloudflare Workers + R2 + D1, `wrangler.jsonc`, Wrangler secrets, `.dev.vars` local dev, `.env.local` browser-safe, EPUB.js MVP, IndexedDB + Cache Storage offline, `AGENTS.md` + `plans/` for AI execution.
 
 **Best first milestone:** one private EPUB, one approved reader grant, one authenticated reading session, one offline-capable resume flow.

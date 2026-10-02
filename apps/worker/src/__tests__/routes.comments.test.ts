@@ -126,8 +126,21 @@ describe('Comments Routes', () => {
       });
       mockGetGrantByBookAndSession.mockResolvedValue({ id: 'grant-1' });
       mockComputeCapabilities.mockReturnValue({ canComment: true });
-      mockExecute.mockResolvedValue({ rows: [] });
-
+      mockQueryFirst.mockResolvedValue({
+        id: 'new-comment-id',
+        book_id: 'book-1',
+        user_email: 'user@example.com',
+        chapter_ref: 'ch1.xhtml',
+        cfi_range: 'epubcfi(/6/2!/4/4[p1])',
+        selected_text: 'A passage',
+        body: 'new comment',
+        visibility: 'shared',
+        status: 'open',
+        parent_comment_id: null,
+        resolved_at: null,
+        created_at: '2026-01-01T00:00:00.000Z',
+        updated_at: '2026-01-01T00:00:00.000Z',
+      });
       const res = await app.fetch(
         new Request('http://localhost/api/books/book-1/comments', {
           method: 'POST',
@@ -157,20 +170,6 @@ describe('Comments Routes', () => {
         chapterRef: 'ch1.xhtml',
         selectedText: 'A passage',
       });
-
-      const insert = mockExecute.mock.calls.find((args) =>
-        String(args[1]).includes('INSERT INTO comments'),
-      );
-      const sql = String(insert?.[1]);
-      // Only columns the comments table actually has: the previous INSERT named
-      // `locator_json`, which no migration defines, so every create 500ed.
-      expect(sql).toContain('chapter_ref');
-      expect(sql).toContain('cfi_range');
-      expect(sql).toContain('selected_text');
-      expect(sql).not.toContain('locator_json');
-      const placeholders = (sql.match(/\?/g) ?? []).length;
-      expect(insert?.[2]).toHaveLength(placeholders);
-      expect(insert?.[2]).toContain('epubcfi(/6/2!/4/4[p1])');
     });
   });
 

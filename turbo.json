@@ -67,7 +67,6 @@
         "src/test-setup.ts",
         "vitest.setup.ts",
         "vitest.config.ts",
-        "vitest.workspace.ts",
         "tsconfig.json",
         "tsconfig*.json",
         "package.json"
@@ -92,7 +91,6 @@
         "src/test-setup.ts",
         "vitest.setup.ts",
         "vitest.config.ts",
-        "vitest.workspace.ts",
         "tsconfig.json",
         "tsconfig*.json",
         "package.json"

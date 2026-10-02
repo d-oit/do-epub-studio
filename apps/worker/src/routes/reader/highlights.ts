@@ -17,6 +17,7 @@ interface HighlightRow {
   id: string;
   book_id: string;
   user_email: string;
+  mutation_id?: string | null;
   chapter_ref: string | null;
   cfi_range: string | null;
   selected_text: string;
@@ -26,6 +27,18 @@ interface HighlightRow {
   updated_at: string;
 }
 
+function toHighlightDTO(row: HighlightRow) {
+  return {
+    id: row.id,
+    chapterRef: row.chapter_ref ?? null,
+    cfiRange: row.cfi_range ?? null,
+    selectedText: row.selected_text,
+    note: row.note ?? null,
+    color: row.color,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
 highlightsRouter.get('/:bookId/highlights', readerAuth, async (c) => {
   const bookId = c.req.param('bookId');
   const auth = c.get('auth');
@@ -47,16 +60,7 @@ highlightsRouter.get('/:bookId/highlights', readerAuth, async (c) => {
 
   return c.json({
     ok: true,
-    data: highlights.map((hl) => ({
-      id: hl.id,
-      chapterRef: hl.chapter_ref,
-      cfiRange: hl.cfi_range,
-      selectedText: hl.selected_text,
-      note: hl.note,
-      color: hl.color,
-      createdAt: hl.created_at,
-      updatedAt: hl.updated_at,
-    })),
+    data: highlights.map(toHighlightDTO),
   });
 });
 
@@ -82,18 +86,22 @@ highlightsRouter.post(
       throw new ForbiddenError('Access denied');
     }
 
-    const id = crypto.randomUUID();
-    const now = new Date().toISOString();
     const { locator } = body;
+    const mutationId = body.mutationId ?? null;
+    const now = new Date().toISOString();
+    const id = crypto.randomUUID();
 
-    await execute(
+    const inserted = await queryFirst<HighlightRow>(
       c.env,
-      `INSERT INTO highlights (id, book_id, user_email, chapter_ref, cfi_range, selected_text, note, color, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO highlights (id, book_id, user_email, mutation_id, chapter_ref, cfi_range, selected_text, note, color, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT(mutation_id) WHERE mutation_id IS NOT NULL DO NOTHING
+       RETURNING *`,
       [
         id,
         bookId,
         auth.email,
+        mutationId,
         locator.chapterRef,
         locator.cfi,
         locator.selectedText,
@@ -104,37 +112,55 @@ highlightsRouter.post(
       ],
     );
 
-    await logAudit(
+    if (inserted) {
+      await logAudit(
+        c.env,
+        {
+          entityType: 'highlight',
+          entityId: inserted.id,
+          action: 'create',
+          actorEmail: auth.email,
+          payload: { bookId, chapterRef: locator.chapterRef, color: body.color },
+        },
+        c.executionCtx,
+      );
+
+      return c.json(
+        {
+          ok: true,
+          data: toHighlightDTO(inserted),
+        },
+        201,
+      );
+    }
+
+    if (!mutationId) {
+      throw new Error('Failed to insert highlight');
+    }
+
+    const existing = await queryFirst<HighlightRow>(
       c.env,
-      {
-        entityType: 'highlight',
-        entityId: id,
-        action: 'create',
-        actorEmail: auth.email,
-        payload: { bookId, chapterRef: locator.chapterRef, color: body.color },
-      },
-      c.executionCtx,
+      `SELECT * FROM highlights WHERE mutation_id = ?`,
+      [mutationId],
     );
+
+    if (!existing) {
+      throw new Error('Failed to find conflicting highlight');
+    }
+
+    if (existing.book_id !== bookId || existing.user_email !== auth.email) {
+      throw new ForbiddenError('Access denied');
+    }
 
     return c.json(
       {
         ok: true,
-        data: {
-          id,
-          chapterRef: locator.chapterRef,
-          cfiRange: locator.cfi,
-          selectedText: locator.selectedText,
-          note: body.note,
-          color: body.color ?? '#ffff00',
-          createdAt: now,
-          updatedAt: now,
-        },
+        data: toHighlightDTO(existing),
       },
-      201,
+      200,
     );
   },
 );
-
 highlightsRouter.delete('/:bookId/highlights/:highlightId', readerAuth, async (c) => {
   const { bookId, highlightId } = c.req.param();
   const auth = c.get('auth');

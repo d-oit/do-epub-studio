@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import type { Book, NavItem } from '@intity/epub-js';
-import type { EpubBookInternals } from '../lib/epub-internals';
 import { createTraceId } from '@do-epub-studio/shared';
 import { logClientEvent } from '../../../lib/client-logger';
+import { collectSpineSections } from '../../../lib/epub-sections';
 
 export interface SearchResult {
   cfi: string;
@@ -55,18 +55,15 @@ export function useReaderSearch(book: Book | null, query: string) {
     const timeoutId = setTimeout(() => {
       if (cancelledRef.current || mySeq !== seqRef.current) return;
       const startedAt = Date.now();
-      // epub.js populates `book.spine` only after the book has loaded, which is
-      // guaranteed at this point (the hook awaits `book.ready` before starting).
-      const spine = (book as EpubBookInternals<SpineSection>).spine;
+      // The loaded book exposes its sections as `book.sections` in the ESM
+      // build Vite serves; `book.spine` exists only in the bundled dist build.
+      // Reading a single field silently disabled search (GOAP-295), so use the
+      // shared normalizer.
+      const items = collectSpineSections<SpineSection>(book);
       const toc = (book.navigation?.toc as NavItem[] | undefined) ?? [];
-      if (!spine) return;
+      if (items.length === 0) return;
       void (async (): Promise<void> => {
         try {
-          const items: SpineSection[] = [];
-          spine.each((item) => {
-            items.push(item);
-          });
-
           const collected: Array<{ cfi: string; excerpt: string; href: string }> = [];
           let index = 0;
           const isStale = (): boolean => cancelledRef.current || mySeq !== seqRef.current;

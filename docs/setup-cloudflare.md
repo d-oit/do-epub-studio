@@ -29,13 +29,17 @@ cd apps/worker
 pnpm dev
 ```
 
-Create `.dev.vars` in the project root for local secrets:
+Create `apps/worker/.dev.vars` for local secrets (copy
+`apps/worker/.dev.vars.example`):
 
 ```env
-TURSO_DATABASE_URL=libsql://your-db.turso.io
-TURSO_AUTH_TOKEN=your-token
-SESSION_SECRET=local-dev-secret-min-32-chars
+SESSION_SIGNING_SECRET=local-dev-secret-min-32-chars
+INVITE_TOKEN_SECRET=local-dev-invite-secret-min-32-chars
 ```
+
+The worker's runtime database is D1 — no database credentials are needed
+locally; apply migrations with `pnpm db:migrate:local` (see
+[`docs/setup-local.md`](./setup-local.md)).
 
 ### Web App
 
@@ -91,11 +95,11 @@ Key settings:
 
 ### Environment Variables
 
-| Variable             | Purpose                                    |
-| -------------------- | ------------------------------------------ |
-| `TURSO_DATABASE_URL` | Turso database connection URL              |
-| `TURSO_AUTH_TOKEN`   | Turso authentication token                 |
-| `SESSION_SECRET`     | Session token signing secret (min32 chars) |
+| Variable                 | Purpose                                    |
+| ------------------------ | ------------------------------------------ |
+| `APP_BASE_URL`           | Public base URL of the web app             |
+| `SESSION_SIGNING_SECRET` | Session token signing secret (min32 chars) |
+| `INVITE_TOKEN_SECRET`    | Invite token signing secret                |
 
 ### Secrets Management
 

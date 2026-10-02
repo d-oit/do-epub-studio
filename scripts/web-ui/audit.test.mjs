@@ -30,8 +30,16 @@ import {
   buildLocaleUrl,
   keyFinding,
   diffLocaleFindings,
+  auditLocales,
 } from './lib/i18n-audit.mjs';
-import { DEFAULT_BUDGETS, parseBudgets, evaluateBudgets } from './lib/perf-audit.mjs';
+import { pageProbe } from './lib/page-probe.mjs';
+import {
+  DEFAULT_BUDGETS,
+  parseBudgets,
+  evaluateBudgets,
+  missingMetrics,
+} from './lib/perf-audit.mjs';
+import { loadChromium } from './lib/playwright.mjs';
 import { cellKey, classifyBaseline, digestOf } from './lib/visual-audit.mjs';
 import { findingLabel, annotationsForFindings, MAX_ANNOTATIONS } from './lib/annotate.mjs';
 
@@ -230,6 +238,41 @@ test('i18n: locale diff isolates locale-only regressions', () => {
   assert.notEqual(keyFinding(baseline[0]), keyFinding(baseline[1]));
 });
 
+test('i18n: direction is judged after the locale navigates (F5 regression)', async () => {
+  // `he` renders the wrong direction on purpose; `ar` renders correctly.
+  const directions = { en: 'ltr', ar: 'rtl', he: 'ltr' };
+  let current = 'en';
+  const page = {
+    async goto(url) {
+      current = new URL(url).searchParams.get('lang') ?? 'en';
+    },
+    viewportSize: () => ({ width: 1280, height: 720 }),
+    async evaluate(fn) {
+      if (fn === pageProbe) return { findings: [] };
+      return { dir: directions[current], lang: current };
+    },
+  };
+  const audit = (locales) =>
+    auditLocales(page, {
+      route: 'http://fixture.test/catalog',
+      locales,
+      switchVia: { param: 'lang' },
+    });
+  // Before the fix, the check ran before navigation, so `ar` inherited the
+  // baseline document and was reported as a false RTL violation.
+  const first = await audit(['en', 'ar', 'he']);
+  assert.deepEqual(
+    first.findings.map((f) => [f.locale, f.stage]),
+    [['he', 'i18n-direction']],
+  );
+  // Arabic last in the list must be judged on its own rendered document.
+  const last = await audit(['en', 'he', 'ar']);
+  assert.deepEqual(
+    last.findings.map((f) => [f.locale, f.stage]),
+    [['he', 'i18n-direction']],
+  );
+});
+
 test('visual: cell keys are deterministic, slugged, and collision-safe', () => {
   const vp = { label: 'mobile-md', width: 360, height: 800 };
   assert.equal(cellKey('/login', vp), cellKey('/login', vp));
@@ -296,6 +339,19 @@ test('viewport matrix: normalizes, validates, and rejects garbage', () => {
   assert.throws(() => normalizeMatrix([]), RangeError);
   assert.ok(DEFAULT_VIEWPORT_MATRIX.some((v) => v.width === 320)); // reflow floor
   assert.ok(DEFAULT_VIEWPORT_MATRIX.some((v) => v.width === 360)); // Android majority
+  assert.ok(DEFAULT_VIEWPORT_MATRIX.some((v) => v.width === 375 && v.height === 812)); // iPhone
+  // F7 (GOAP-290): the same size set as apps/tests/viewport-matrix.ts.
+  for (const [width, height] of [
+    [360, 800],
+    [412, 915],
+    [820, 1180],
+    [1280, 720],
+  ]) {
+    assert.ok(
+      DEFAULT_VIEWPORT_MATRIX.some((v) => v.width === width && v.height === height),
+      `matrix covers ${width}x${height}`,
+    );
+  }
 });
 
 test('perf: budgets parse strictly and merge over defaults', () => {
@@ -329,6 +385,26 @@ test('perf: budget evaluation flags exactly the breached metrics', () => {
   assert.equal(boundary.length, 0);
   // missing/null metrics are not reported (lighthouse returns null for N/A)
   assert.equal(evaluateBudgets({ performanceScore: null }, DEFAULT_BUDGETS).length, 0);
+});
+
+test('perf: missingMetrics names every unmeasured budget key (F6 regression)', () => {
+  assert.deepEqual(missingMetrics({}), ['performanceScore', 'lcpMs', 'cls', 'tbtMs']);
+  assert.deepEqual(
+    missingMetrics({ performanceScore: 0.95, lcpMs: 2000, cls: 0.05, tbtMs: 300 }),
+    [],
+  );
+  assert.deepEqual(
+    missingMetrics({ performanceScore: null, lcpMs: 2000, cls: Number.NaN, tbtMs: 300 }),
+    ['performanceScore', 'cls'],
+  );
+  // A real zero is a measurement, not an absence.
+  assert.deepEqual(missingMetrics({ performanceScore: 0, lcpMs: 0, cls: 0, tbtMs: 0 }), []);
+});
+
+test('playwright resolver: finds the workspace Chromium without the bare package (F2 regression)', async () => {
+  // This workspace declares @playwright/test (root devDependency); the bare
+  // `playwright` package is absent. The runner SKIP text must not trigger here.
+  assert.ok(await loadChromium(), 'expected @playwright/test to resolve a chromium driver');
 });
 
 test('console classification: errors vs discounted noise', () => {

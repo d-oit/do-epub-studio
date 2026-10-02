@@ -9,6 +9,8 @@ interface ImportMetaEnv {
   readonly VITE_DEMO_BOOK_SLUG?: string;
   readonly VITE_DEMO_READER_PASSWORD?: string;
   readonly VITE_DEMO_ADMIN_PASSWORD?: string;
+  /** Optional deployment-local LanguageTool base URL (ADR-274) for spelling/grammar review. */
+  readonly VITE_LANGUAGETOOL_URL?: string;
   readonly VITE_HELP_URL?: string;
 }
 interface ImportMeta {

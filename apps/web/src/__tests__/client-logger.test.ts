@@ -77,6 +77,58 @@ describe('logClientEvent', () => {
     const payload = JSON.parse(await sentBlob.text());
     expect(payload.logs.length).toBeLessThanOrEqual(100);
   });
+
+  it('sanitizes secrets before every sink while keeping correlation ids (A7)', async () => {
+    vi.stubEnv('VITE_TELEMETRY_ENDPOINT', 'https://example.com/telemetry');
+    const sendBeaconSpy = vi.fn().mockReturnValue(true);
+    Object.defineProperty(navigator, 'sendBeacon', {
+      value: sendBeaconSpy,
+      writable: true,
+      configurable: true,
+    });
+
+    // Deterministic flush: drive the 1000 ms flush timer with fake timers
+    // instead of sleeping through the real one.
+    vi.useFakeTimers();
+    try {
+      const traceId = '550e8400-e29b-41d4-a716-446655440000';
+      logClientEvent({
+        level: 'error',
+        traceId,
+        event: 'annotation.create-highlight.failed',
+        metadata: {
+          password: 'hunter2',
+          email: 'reader@example.test',
+          note: 'c'.repeat(40),
+          'Set-Cookie': 'do_session=SYNTHETIC',
+        },
+        error: { name: 'TypeError', message: 'Failed for reader@example.test' },
+      });
+
+      // Console sink: correlation survives, synthetic secrets do not.
+      const consoleLine = String(vi.mocked(console.error).mock.calls.at(-1)?.[0] ?? '');
+      expect(consoleLine).toContain(traceId);
+      expect(consoleLine).toContain('[REDACTED]');
+      expect(consoleLine).not.toContain('hunter2');
+      expect(consoleLine).not.toContain('reader@example.test');
+      expect(consoleLine).not.toContain('do_session=SYNTHETIC');
+
+      // Flushed endpoint sink: same contract.
+      await vi.advanceTimersByTimeAsync(1000);
+
+      expect(sendBeaconSpy).toHaveBeenCalledTimes(1);
+      const sentBlob = sendBeaconSpy.mock.calls[0][1] as Blob;
+      const payload = JSON.parse(await sentBlob.text());
+      expect(payload.logs[0].traceId).toBe(traceId);
+      const serialized = JSON.stringify(payload);
+      expect(serialized).not.toContain('hunter2');
+      expect(serialized).not.toContain('reader@example.test');
+      expect(serialized).not.toContain('do_session=SYNTHETIC');
+      expect(serialized).not.toContain('c'.repeat(40));
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
 
 describe('createPerformanceMark', () => {

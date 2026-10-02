@@ -1,5 +1,5 @@
 /**
- * AI plugin registry (issue #318, GOAP-318).
+ * AI plugin registry (issue #318, plan 262).
  *
  * Extension point for AI-assisted features: apps register plugins at
  * startup and the reader pipeline looks them up by id. The registry is a

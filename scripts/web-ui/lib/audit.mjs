@@ -15,10 +15,14 @@ import { cellKey } from './visual-audit.mjs';
  * Default 2026 viewport matrix: WCAG 1.4.10 reflow floor (320) through large
  * desktop, with the Android-majority 360 and Pixel 412 columns and the
  * Tailwind `sm` breakpoint boundary (640) that flips header layouts.
+ *
+ * The size set converges with `apps/tests/viewport-matrix.ts` (both cover the
+ * same 13 sizes); labels stay local to each matrix (F7, GOAP-290).
  */
 export const DEFAULT_VIEWPORT_MATRIX = [
   { label: 'mobile-sm', width: 320, height: 568 },
   { label: 'mobile-md', width: 360, height: 800 },
+  { label: 'mobile-md-plus', width: 375, height: 812 },
   { label: 'mobile-lg', width: 390, height: 844 },
   { label: 'mobile-xl', width: 412, height: 915 },
   { label: 'tablet-sm', width: 640, height: 960 },

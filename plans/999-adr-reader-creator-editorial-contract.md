@@ -4,7 +4,7 @@
 **Date:** 2026-09-10
 **Companion backlog:** `plans/999-goap-codebase-improvements-uiux-e2e-audit.md` (GOAP-999)
 **Amends:** GOAP-262 categorical prohibition on book-text network processing (scoped cloud opt-in only; local-first/default-off remains)
-**Cites:** ADR-004 (auth/access), ADR-005 (offline sync), ADR-006 (annotation model/multi-signal locators), ADR-075 (tenant isolation), ADR-262 (local-only AI policy)
+**Cites:** ADR-004 (auth/access), ADR-005 (offline sync), ADR-006 (annotation model/multi-signal locators), ADR-075 (tenant isolation), the AI-plugin ADR section in `plans/archive/262-goap-issue-318.md` (local-only AI policy)
 
 ## 1. Context
 

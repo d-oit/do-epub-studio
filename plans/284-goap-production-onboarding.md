@@ -17,7 +17,7 @@ The first release preserves the existing book-grant reader authentication model.
 It adds canonical user linking where required for book-scoped creator assignment,
 without migrating all existing reader sessions, progress, or annotations.
 
-## Current evidence
+## Pre-implementation evidence (historical)
 
 - `apps/worker/src/routes/admin/creators.ts` rejects an email when no
   `users` row exists; there is no ordinary account-provisioning route.
@@ -32,6 +32,16 @@ without migrating all existing reader sessions, progress, or annotations.
   expose the Email Sending binding, so a copy-link fallback is required.
 - The reader → private feedback → creator review path is already implemented
   and live-verified under GOAP-999; this plan does not rebuild that channel.
+
+> **Post-audit note (GOAP-290, 2026-09-30):** `analysis/feature-docs-harness-audit.md`
+> F4 records a _local setup_ documentation gap — README and `docs/setup-local.md`
+> describe Turso / `pnpm db:migrate:local` as D1 initialization, and
+> `db:check` / `db:migrate:prod` target absent scripts, while the runtime uses
+> the D1 binding (`apps/worker/wrangler.jsonc:26-35`). This is an onboarding-docs
+> gap, **not** a reopening of the invitation implementation recorded above.
+> **Fixed in GOAP-292 (same day):** the commands now run Wrangler D1 against the
+> local state, the Turso-service tooling was deleted, and the docs were aligned.
+> This plan's own migration (`0018`) and acceptance record are unchanged.
 
 ## Product contract
 
@@ -102,7 +112,7 @@ without migrating all existing reader sessions, progress, or annotations.
 Phases 1–3 are sequential around the token contract. Phase 4 can begin against
 frozen schemas after Phase 2. Phase 5 is integration-only and runs serially.
 
-### Implementation checkpoint
+### Pre-verification checkpoint (historical)
 
 - Migration `0018` adds invitation lifecycle, audit parity, and the Pages D1
   rate-limit bucket.
@@ -117,8 +127,12 @@ frozen schemas after Phase 2. Phase 5 is integration-only and runs serially.
   creator provisioning, token replay rejection, Argon2id-shaped grant creation,
   and revocation of creator/session access.
 - The full local quality gate passes with the documented
-  `QUALITY_GATE_NO_SMOKE=1` Debian 11/ADR-281 path; a controlled live-stack
-  invite journey remains before this plan can be marked complete.
+  `QUALITY_GATE_NO_SMOKE=1` Debian 11/ADR-281 path. _Superseded:_ the
+  "controlled live-stack invite journey remains before this plan can be marked
+  complete" sentence in this checkpoint was satisfied after it was written —
+  Phase 5 drove the real Worker end to end (13/13) and PR #1256 met the
+  browser criterion (12 tests across chromium, firefox and webkit). See the
+  Status header.
 
 ## Acceptance criteria
 

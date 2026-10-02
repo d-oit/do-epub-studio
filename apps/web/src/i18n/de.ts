@@ -436,6 +436,14 @@ export const de: Record<TranslationKeys, TranslationValue> = {
   'asst.enginePrepare': 'Story- und Logik-Engine vorbereiten',
   'asst.engineDownloading': 'Engine wird vorbereitet: {percent} %',
   'asst.engineReady': 'Story- und Logik-Engine bereit',
+  'asst.loadChapters': 'Buchtext laden',
+  'asst.loadingBook': 'Buch wird geladen …',
+  'asst.loadFailed': 'Der Buchtext konnte nicht geladen werden.',
+  'asst.noReadAccess':
+    'Dieses Konto hat keinen Lesezugriff auf dieses Buch; der Text kann nicht geprüft werden.',
+  'asst.textRequired':
+    'Laden Sie den Buchtext und wählen Sie mindestens ein Kapitel aus, bevor Sie eine Prüfung starten.',
+  'asst.chaptersLabel': 'Zu prüfende Kapitel',
   'asst.engineNote':
     'Einmaliger Download von etwa 500 MB. Das Modell läuft auf diesem Gerät – Ihr Manuskript wird nie hochgeladen.',
 
