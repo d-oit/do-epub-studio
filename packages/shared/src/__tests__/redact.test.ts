@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import fc from 'fast-check';
 import { scrub, isSensitiveKey, scrubLogEntry } from '../redact';
 
 const TRACE_ID = '550e8400-e29b-41d4-a716-446655440000';
@@ -173,6 +174,57 @@ describe('Log Redaction', () => {
         error: { name: 'Error', message: 'boom', traceId: TRACE_ID },
       });
       expect((entry.error as Record<string, unknown>).traceId).toBe('[REDACTED]');
+    });
+  });
+
+  // ADR-034 layer 1 + 3 for the redaction patterns: the email scan was
+  // quadratic on a value full of '%'/'.' with no '@' (CodeQL
+  // js/polynomial-redos #14). Every pattern must finish well inside the 25 ms
+  // budget for adversarial input, and a real address must still be redacted at
+  // any offset inside it.
+  describe('ReDoS hardening (ADR-034)', () => {
+    // 8 000 chars keeps a *linear* scan at ~2 ms (well inside the budget even
+    // under coverage instrumentation, where the suite runs ~3x slower) while
+    // the quadratic predecessor already needed ~53 ms — so the bound still
+    // fails loudly on a regression to the old pattern.
+    const ADVERSARIAL: Array<[string, string]> = [
+      ['percent run', '%'.repeat(8_000)],
+      ['dot run', '.'.repeat(8_000)],
+      ['at + percent run', 'a@' + '%'.repeat(8_000)],
+      ['at + dot run', 'a@' + '.'.repeat(8_000)],
+      ['local part then dots', 'user@' + 'a.'.repeat(4_000)],
+      ['single long token', 'a'.repeat(8_000)],
+      ['at signs', '@'.repeat(8_000)],
+      ['email-ish alternation', 'a.@.a'.repeat(2_000)],
+    ];
+
+    it.each(ADVERSARIAL)('scrubs %s within the time budget', (_label, value) => {
+      const started = performance.now();
+      scrub({ message: value });
+      expect(performance.now() - started).toBeLessThan(25);
+    });
+
+    it('still redacts an address buried in adversarial padding', () => {
+      const value = '%'.repeat(5_000) + ' user@example.com ' + '.'.repeat(5_000);
+      const result = scrub({ message: value }) as Record<string, string>;
+      expect(result.message).not.toContain('user@example.com');
+      expect(result.message).toContain('[REDACTED]');
+    });
+
+    it('scrubs every generated email-shaped value inside the budget', () => {
+      const local = fc.stringMatching(/^[a-zA-Z0-9._%+-]{1,64}$/);
+      const label = fc.stringMatching(/^[a-zA-Z0-9-]{1,63}$/);
+      const tld = fc.stringMatching(/^[a-zA-Z]{2,63}$/);
+      fc.assert(
+        fc.property(local, label, tld, (l, d, t) => {
+          const value = `${l}@${d}.${t}`;
+          const started = performance.now();
+          const result = scrub({ message: value }) as Record<string, string>;
+          expect(performance.now() - started).toBeLessThan(25);
+          expect(result.message).not.toContain('@');
+        }),
+        { numRuns: 200 },
+      );
     });
   });
 });

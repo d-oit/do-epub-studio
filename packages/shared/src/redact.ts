@@ -46,7 +46,20 @@ const SENSITIVE_KEYS = new Set(
   ].map(normalizeKey),
 );
 
-const EMAIL_PATTERN = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+/**
+ * Email scan — bounded per ADR-034 (fixes CodeQL `js/polynomial-redos` #14).
+ *
+ * The naive `[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}` backtracks polynomially on
+ * a value full of `%`/`.` with no `@`: from every start position the local-part
+ * class consumes the whole run before failing, so a scrub of untrusted log text
+ * is quadratic. Here every repetition is bounded (RFC 5321: local part 64, label
+ * 63) and no character can be consumed by two adjacent repetitions — the label
+ * class excludes `.`, which is only matched by the literal in its group — so a
+ * failing scan costs at most 64 steps per start. The value itself is not capped:
+ * rejecting a long string would leave a secret in the log (AGENTS.md Tier 1),
+ * and the token/bearer passes below still scrub it.
+ */
+const EMAIL_PATTERN = /[a-zA-Z0-9._%+-]{1,64}@(?:[a-zA-Z0-9-]{1,63}\.)+[a-zA-Z]{2,63}/g;
 const BEARER_PATTERN = /Bearer\s+[A-Za-z0-9\-._~+/]+=*/gi;
 const LONG_TOKEN_PATTERN = /(?:^|[^A-Za-z0-9_-])([A-Za-z0-9_-]{32,})(?:$|[^A-Za-z0-9_-])/g;
 const BEARER_CHECK = /bearer/i;
