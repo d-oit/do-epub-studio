@@ -10,6 +10,7 @@ import {
 } from './fixtures';
 import { app } from '../app';
 import { assertBookAccess } from '../lib/tenant-isolation';
+import { defined } from './helpers';
 
 vi.mock('../lib/tenant-isolation', () => ({ parseLocatorRow: vi.fn(), assertBookAccess: vi.fn() }));
 const mockAssertBookAccess = assertBookAccess as ReturnType<typeof vi.fn>;
@@ -262,9 +263,9 @@ describe('Export Routes', () => {
     // All three queryAll calls must be issued before any response is produced.
     await vi.waitFor(() => expect(mockQueryAll).toHaveBeenCalledTimes(3));
 
-    resolvers[0]([makeHighlightData({ selected_text: 'Concurrent' })]);
-    resolvers[1]([]);
-    resolvers[2]([]);
+    defined(resolvers[0])([makeHighlightData({ selected_text: 'Concurrent' })]);
+    defined(resolvers[1])([]);
+    defined(resolvers[2])([]);
 
     const res = await reqPromise;
     expect(res.status).toBe(200);

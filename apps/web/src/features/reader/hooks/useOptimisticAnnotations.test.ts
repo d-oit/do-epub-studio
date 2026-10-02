@@ -65,7 +65,7 @@ describe('useOptimisticAnnotationStore', () => {
 
     const { result } = renderHook(() => useOptimisticAnnotationStore());
     expect(result.current.state.highlights).toHaveLength(1);
-    expect(result.current.state.highlights[0].id).toBe('h-1');
+    expect(result.current.state.highlights[0]?.id).toBe('h-1');
   });
 
   it('addOptimisticHighlight shows the placeholder during an in-flight transition', async () => {

@@ -5,6 +5,7 @@ import {
   applySecurityHeaders,
   applyMinimalSecurityHeaders,
 } from '../lib/security-headers';
+import { defined } from './helpers';
 
 describe('security headers', () => {
   it('defines full security headers', () => {
@@ -62,7 +63,7 @@ describe('security headers', () => {
 
   // SE2 — ADR-123 / Plan 122
   it('main CSP has no unsafe-inline anywhere (style-src or script-src)', () => {
-    const csp = securityHeaders['Content-Security-Policy'];
+    const csp = defined(securityHeaders['Content-Security-Policy']);
     expect(csp).not.toContain("'unsafe-inline'");
     expect(csp).not.toContain("'unsafe-eval'");
 

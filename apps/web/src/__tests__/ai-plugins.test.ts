@@ -35,7 +35,7 @@ describe('initAiPlugins', () => {
     initAiPlugins();
     initAiPlugins(); // idempotent: second call is a no-op
     expect(mocks.registerAiPlugin).toHaveBeenCalledTimes(1);
-    expect(mocks.registerAiPlugin.mock.calls[0][0]).toMatchObject({
+    expect(mocks.registerAiPlugin.mock.calls[0]?.[0]).toMatchObject({
       id: 'local-summarization',
     });
     expect(mocks.configureAiConsentStorage).toHaveBeenCalledTimes(1);

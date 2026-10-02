@@ -64,8 +64,8 @@ describe('References & style (Wave 3, COL-03)', () => {
     expect(res.status).toBe(200);
     const payload: { data: Record<string, unknown>[] } = await res.json();
     expect(payload.data).toHaveLength(1);
-    expect(payload.data[0].verified).toBe(false);
-    expect(payload.data[0].sourceUrl).toBe('https://example.com/source');
+    expect(payload.data[0]?.verified).toBe(false);
+    expect(payload.data[0]?.sourceUrl).toBe('https://example.com/source');
   });
 
   it('rejects reference list for unassigned creator (403)', async () => {

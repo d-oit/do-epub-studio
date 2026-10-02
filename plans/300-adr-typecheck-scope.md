@@ -56,11 +56,17 @@ test lane used it.
    the workspace-file mechanism; per-package `vitest.config.ts` files are the
    source of truth, and the root only ever runs the `scripts/__tests__` lane.
    Turbo's `test:unit`/`test:coverage` inputs no longer list it.
-4. **Strictness parity is an explicit, open gap.** `tsconfig.base.json` enables
-   `noUncheckedIndexedAccess`, but `apps/web` and `apps/worker` do not inherit
-   the base. This is recorded, not silently accepted: GOAP-301 evaluates
-   adopting base strictness (or documents the opt-out in this ADR) and fixes
-   the ~260 latent findings in those two packages.
+4. **Strictness parity is adopted, with package-local overrides (GOAP-301,
+   DONE).** `tsconfig.base.json` enables `noUncheckedIndexedAccess`;
+   `apps/web` and `apps/worker` do not inherit the base (they need their own
+   `lib`, `jsx`, `types` and JSX settings), so they now set the flag directly:
+   `"noUncheckedIndexedAccess": true` in `apps/web/tsconfig.json` and
+   `apps/worker/tsconfig.json`. Enabling it surfaced 247 findings (20 in
+   package source, 227 in tests — `arr[0]` / `record[key]` reads typed
+   `T | undefined`), all fixed in that slice; the test fixes use optional
+   chaining on assertions and a `defined(value, name?)` helper
+   (`src/__tests__/helpers.ts` in both packages) where a missing element should
+   fail the test loudly rather than travel as `undefined`.
 
 ## Consequences
 
@@ -69,11 +75,12 @@ test lane used it.
   34 in `scripts/__tests__`).
 - Editors opening a file under `apps/web/**` or `apps/worker/**` use the
   package tsconfig (nearest config wins), so DX is unchanged.
-- The packages keep their current strictness until GOAP-301 lands; the gap is
-  visible in this ADR and in the index rather than hidden by a
-  never-executed sweep.
+- Both app packages now enforce `noUncheckedIndexedAccess` (GOAP-301), so the
+  strictness the base config intended applies to every package that compiles
+  application source; the parity gap this ADR recorded at filing time is closed.
 - The config itself carries no inline comments: the pre-commit `check-json`
   hook requires strict JSON, so this ADR is the place for the rationale.
 - No CI lane is added here: `scripts/__tests__` already runs in ci.yml, and
-  adding a root typecheck job is GOAP-301's call (it decides the strictness
-  it would enforce).
+  GOAP-301 chose to enforce parity through the existing per-package typecheck
+  jobs rather than a new root job — a root sweep would re-create the conflicting
+  options this ADR removed.

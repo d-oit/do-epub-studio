@@ -7,7 +7,7 @@ export const DEFAULT_EXPIRY_DAYS = 30;
 export function defaultExpiryDate(): string {
   const d = new Date();
   d.setDate(d.getDate() + DEFAULT_EXPIRY_DAYS);
-  return d.toISOString().split('T')[0];
+  return d.toISOString().slice(0, 10);
 }
 
 export interface Book {

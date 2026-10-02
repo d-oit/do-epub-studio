@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { GrantForm } from './GrantForm';
 import type { Grant } from './types';
+import { defined } from '../../../__tests__/helpers';
 
 vi.mock('../../../hooks/useTranslation', () => ({
   useTranslation: () => ({ t: (k: string) => k }),
@@ -110,21 +111,21 @@ describe('GrantForm', () => {
   it('calls onChange when comments toggle changes', () => {
     render(<GrantForm {...defaultProps} />);
     const checkboxes = screen.getAllByRole('checkbox');
-    fireEvent.click(checkboxes[0]);
+    fireEvent.click(defined(checkboxes[0]));
     expect(defaultProps.onChange).toHaveBeenCalled();
   });
 
   it('calls onChange when offline toggle changes', () => {
     render(<GrantForm {...defaultProps} />);
     const checkboxes = screen.getAllByRole('checkbox');
-    fireEvent.click(checkboxes[1]);
+    fireEvent.click(defined(checkboxes[1]));
     expect(defaultProps.onChange).toHaveBeenCalled();
   });
 
   it('calls onChange when expiry date changes', () => {
     render(<GrantForm {...defaultProps} />);
     const dateInput = screen.getAllByRole('textbox')[0];
-    fireEvent.change(dateInput, { target: { value: '2025-12-31' } });
+    fireEvent.change(defined(dateInput), { target: { value: '2025-12-31' } });
     expect(defaultProps.onChange).toHaveBeenCalled();
   });
 

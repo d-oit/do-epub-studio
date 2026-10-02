@@ -73,7 +73,7 @@ describe('logClientEvent', () => {
 
     // sendBeacon was called with a Blob containing at most 100 log entries
     expect(sendBeaconSpy).toHaveBeenCalledTimes(1);
-    const sentBlob = sendBeaconSpy.mock.calls[0][1] as Blob;
+    const sentBlob = sendBeaconSpy.mock.calls[0]?.[1] as Blob;
     const payload = JSON.parse(await sentBlob.text());
     expect(payload.logs.length).toBeLessThanOrEqual(100);
   });
@@ -117,7 +117,7 @@ describe('logClientEvent', () => {
       await vi.advanceTimersByTimeAsync(1000);
 
       expect(sendBeaconSpy).toHaveBeenCalledTimes(1);
-      const sentBlob = sendBeaconSpy.mock.calls[0][1] as Blob;
+      const sentBlob = sendBeaconSpy.mock.calls[0]?.[1] as Blob;
       const payload = JSON.parse(await sentBlob.text());
       expect(payload.logs[0].traceId).toBe(traceId);
       const serialized = JSON.stringify(payload);
