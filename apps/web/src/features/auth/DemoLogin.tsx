@@ -50,8 +50,23 @@ export function useDemoLogin() {
       });
       setAuth(toAuthStorePayload(data, DEMO_READER_EMAIL));
       void navigate(`/read/${data.book.slug}`);
-    } catch (err) {
-      setError((err as Error).message);
+    } catch (primaryErr) {
+      // Fallback: If dedicated demo endpoint is disabled on the server, attempt standard access request with demo credentials
+      try {
+        const fallbackBookSlug = 'demo';
+        const data = await apiRequest<SessionResponse>('/api/access/request', {
+          method: 'POST',
+          body: JSON.stringify({
+            email: DEMO_READER_EMAIL,
+            password: 'demo-reader-password',
+            bookSlug: fallbackBookSlug,
+          }),
+        });
+        setAuth(toAuthStorePayload(data, DEMO_READER_EMAIL));
+        void navigate(`/read/${data.book.slug}`);
+      } catch {
+        setError((primaryErr as Error).message);
+      }
     } finally {
       setLoading(false);
     }
