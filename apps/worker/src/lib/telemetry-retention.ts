@@ -65,7 +65,10 @@ export async function deleteEventsOlderThan(
 
   let deleted = 0;
   let batches = 0;
-  let exhausted = false;
+  // The loop stops early when a pass removes fewer rows than a full batch —
+  // that, not a counter comparison, is what distinguishes "drained" from
+  // "hit the safety valve".
+  let drained = false;
 
   for (let pass = 0; pass < TELEMETRY_RETENTION_MAX_BATCHES; pass += 1) {
     const result = await env.DB.prepare(
@@ -82,11 +85,13 @@ export async function deleteEventsOlderThan(
     batches += 1;
     const removed = Number(result.meta?.changes ?? 0);
     deleted += removed;
-    if (removed < TELEMETRY_RETENTION_BATCH_SIZE) break;
-    if (pass === TELEMETRY_RETENTION_MAX_BATCHES - 1) exhausted = true;
+    if (removed < TELEMETRY_RETENTION_BATCH_SIZE) {
+      drained = true;
+      break;
+    }
   }
 
-  return { deleted, batches, cutoff, exhausted };
+  return { deleted, batches, cutoff, exhausted: !drained };
 }
 
 /**
