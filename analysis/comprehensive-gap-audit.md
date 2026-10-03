@@ -233,6 +233,8 @@ open finding.
 
 ### A9 — P2: locale chunk rejection has no handled load-error state
 
+> _**Closed**_ (GOAP-306, 2026-10-03): a failed chunk is an explicit state — `ensureLocale` reports `false` (logged once per locale, no unhandled rejection), `html[lang]`/`dir` and `useTranslation().locale` describe what is rendered, and reselecting the language reloads because a rejected dynamic import stays rejected for the document's lifetime.
+
 - **Priority / domain:** P2 · i18n
 - **Classification:** unhandled failure path (source-only)
 - **Anchors:** `apps/web/src/i18n/index.ts:16-22` (`ensureLocale` propagates dynamic-import rejection), `:23-50` (per-locale dynamic imports); `apps/web/src/hooks/useTranslation.ts:21-35` (`.then` without rejection handler; `loadedLocale` stays null), `:37-41` (English fallback for the mounted locale); `apps/web/src/hooks/useDocumentLocale.ts:17-22` (advertises the selected language/direction independently of load success)
@@ -430,6 +432,7 @@ authorization; this audit authorizes none of them):
    bounded-batch deletion; docs match.
 8. **A2**, **A9**, **A10**, **A11**, **A12**, **A13** — P2 drift/failure-path/
    formatting/coverage/CSP-acceptance/toolchain items, in that order.
+   _A9 **Closed** (GOAP-306, 2026-10-03); the rest remain._
 9. **Optional opportunities** — cross-device insights display and admin
    aggregate display, only after the corrective set above.
 
