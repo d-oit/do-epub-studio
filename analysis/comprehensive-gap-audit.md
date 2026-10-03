@@ -79,10 +79,12 @@ and are not treated as open findings again.
   `pwa-chromium` lane, the scheduled cross-browser lane and the manual
   live-Cloudflare lane (which intentionally requires deployment secrets and is
   not a required PR check). Existing ZIP/CFI fixes from GOAP-297 are present.
-  Remaining weak assertions that cannot fail are A4 (**closed 2026-10-02,
-  GOAP-303**: the three constant-true checks are replaced with behavioural
-  assertions); the body-only offline
+  Remaining weak assertions that cannot fail are A4; the body-only offline
   reload is A5; RTL/locale proof concentration on login is A11.
+  _Reconciled 2026-10-03 — A4_ _**Closed**_ _(GOAP-303): the three
+  constant-true checks are replaced with behavioural assertions. A5_
+  _**Closed**_ _(GOAP-300): the offline reload proves a rendered chapter,
+  working controls and reconnect. A11 stays open._
 - **Security** — source-reviewed current controls: bearer sessions hashed at
   rest and atomic grant+session revocation (`auth/session.ts`,
   `routes/admin/grants.ts`), fresh per-request grant/capability resolution
@@ -137,6 +139,8 @@ open finding.
 
 ### A1 — P1: ordinary annotation creation is not offline-first
 
+> _**Closed**_ (GOAP-302, 2026-10-02): durable offline creation of highlights and shared comments with idempotent replay and authenticated settlement.
+
 - **Priority / domains:** P1 · implementation, features
 - **Classification:** incomplete product integration (source-only)
 - **Anchors:** `PRODUCT.md:5,21,24`; `apps/web/src/features/reader/hooks/useAnnotationHandlers.ts:36-79` (highlight create), `:144-190` (comment create), `:193-207` (resolve is the only offline-persisted path); `apps/web/src/lib/api/annotations.ts:11-28,62-80`; `apps/web/src/lib/offline/annotation-sync.ts:18-71`
@@ -167,6 +171,8 @@ open finding.
 
 ### A4 — P1: E2E checks still pass when their claimed behavior is absent
 
+> _**Closed**_ (GOAP-303, 2026-10-02): the three constant-true assertions are replaced with behavioural ones (empty state, loading state, 401 redirect).
+
 - **Priority / domain:** P1 · E2E
 - **Classification:** vacuous assertion (source-only)
 - **Anchors:** `apps/tests/in-book-search.spec.ts:68-82` (`expect(hasNoResults || true).toBe(true)`); `apps/tests/login-and-book-load.spec.ts:126-158` (`expect(spinnerVisible || loadingVisible || true).toBe(true)`); `apps/tests/reader-annotations-and-admin.spec.ts:137-158` (expired session accepts login **or** reader route)
@@ -176,6 +182,8 @@ open finding.
 - **Observable acceptance:** absent search-empty state fails; a held file-URL response visibly shows the loading state and the released response renders fixture content; a server 401 causes a login/logout transition rather than accepting the stale reader route. Do not replace the tautologies with class-name or source-text tests.
 
 ### A5 — P1: the offline reload test does not prove offline reading
+
+> _**Closed**_ (GOAP-300, 2026-10-02): the offline reload asserts a rendered chapter, working controls and reconnect over an encrypted cached signed-URL fallback.
 
 - **Priority / domain:** P1 · E2E
 - **Classification:** insufficient proof (source-only)
@@ -187,6 +195,8 @@ open finding.
 
 ### A6 — P1: redaction destroys request-log correlation
 
+> _**Closed**_ (GOAP-299): shared correlation-preserving log scrubber at `packages/shared/src/redact.ts`.
+
 - **Priority / domain:** P1 · logging
 - **Classification:** privacy-control gap — observed at the scrub boundary; no credential exposure demonstrated
 - **Anchors:** `packages/shared/src/telemetry.ts:42-45` (UUID trace IDs); `apps/worker/src/lib/observability.ts:87-97` (`JSON.stringify(scrub(payload))`); `apps/worker/src/lib/redact.ts:34,59-65` (`LONG_TOKEN_PATTERN` erases 32+ char identifier-shaped runs); `apps/worker/src/__tests__/observability.test.ts:86-105` (pins the erased correlation with short-ID fixtures)
@@ -196,6 +206,8 @@ open finding.
 - **Observable acceptance:** a real-format request trace ID equals the response header and the request/error log IDs; synthetic secret fields remain redacted, including when secret strings resemble identifiers. General secret redaction must not be removed.
 
 ### A7 — P1: client telemetry has no privacy scrub boundary
+
+> _**Closed**_ (GOAP-299): client sanitizer before console/buffer/endpoint; sensitive-key normalization fixed.
 
 - **Priority / domains:** P1 · security, logging
 - **Classification:** privacy-control gap (observed at the synthetic console boundary; external-collector consequence is source-only — no exfiltration demonstrated)
@@ -299,9 +311,13 @@ open finding.
 ## Optional feature opportunities
 
 Recommendations only — no UI, API, schema, retention or permission policy is
-selected or changed. **Prioritize the open corrective items — A3, A8 and A2** —
-before expanding either surface; A1, A4, A5 (GOAP-302/303/300) and A6, A7
-(GOAP-299) are closed.
+selected or changed. **Prioritize corrective A1/A3/A4/A5/A6/A7/A8 before
+expanding either surface.**
+
+_Reconciled 2026-10-03 — A1_ _**Closed**_ _(GOAP-302), A4_ _**Closed**_
+_(GOAP-303), A5_ _**Closed**_ _(GOAP-300), A6 and A7_ _**Closed**_
+_(GOAP-299). The open corrective set is A3 and A8 first, then the P2 group
+A2, A9–A13._
 
 1. **Cross-device reading-insights display.** `apps/worker/src/routes/reader/insights.ts:26-67` already serves history; the current reader panel computes local history (`InfoPanel.tsx:52-65`) and targeted searches found no app consumer of the GET surface. Success: a fresh authenticated device shows the server history.
 2. **Authorized admin aggregate display.** `apps/worker/src/routes/admin/insights.ts:32-65` serves book-level aggregates with no web consumer. Success: an authorized admin sees the server aggregate for the authorized scope without individual reader timelines.
@@ -389,15 +405,20 @@ Highest-priority corrective items first (each needs its own executable spec and
 authorization; this audit authorizes none of them):
 
 1. **A1** — ordinary annotation creation offline-first (product promise).
-   **Closed 2026-10-02 (GOAP-302).**
+   _**Closed**_ **(GOAP-302, 2026-10-02)**: durable offline creation, idempotent
+   replay, authenticated settlement.
 2. **A3** — locale sensor that can actually select and verify this app's locale.
 3. **A4** — remove the three remaining non-failing E2E assertions.
-   **Closed 2026-10-02 (GOAP-303).**
+   _**Closed**_ **(GOAP-303, 2026-10-02)**: behavioural replacements for the
+   empty-state, loading-state and 401 anchors.
 4. **A5** — offline reload must prove offline reading, not body presence.
-   **Closed 2026-10-02 (GOAP-300).**
-5. **A6** — preserve real trace IDs at the log boundary. **Closed (GOAP-299).**
+   _**Closed**_ **(GOAP-300, 2026-10-02)**: the offline reload asserts a
+   rendered chapter, working controls and reconnect, over an encrypted cached
+   signed-URL fallback.
+5. **A6** — preserve real trace IDs at the log boundary.
+   _**Closed**_ **(GOAP-299)**: shared correlation-preserving log scrubber.
 6. **A7** — bounded client-side log sanitizer; fix sensitive-key normalization.
-   **Closed (GOAP-299).**
+   _**Closed**_ **(GOAP-299)**: client sanitizer before console/buffer/endpoint.
 7. **A8** — deliverable telemetry retention owner for the deployed D1.
 8. **A2**, **A9**, **A10**, **A11**, **A12**, **A13** — P2 drift/failure-path/
    formatting/coverage/CSP-acceptance/toolchain items, in that order.
