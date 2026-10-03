@@ -29,12 +29,11 @@
  *    (`review_needed` / `insufficient_context`) — story/logic assistance may
  *    ask the author, never rewrite the plot or attest a fact (ADR-999 D4).
  *
- * Scope notes:
- *  - `approvedTerms` (ADR-274 D6) is deliberately NOT applied here: that
+ * Scope notes: `approvedTerms` (ADR-274 D6) is deliberately NOT applied here: that
  *    mechanism suppresses spelling/grammar standardization of glossary names
  *    and dialect. Story/logic findings only cite passages — a question *about*
  *    an invented term must survive.
- *  - Prompt building, sentence numbering and model-output parsing live in
+ *    Prompt building, sentence numbering and model-output parsing live in
  *    `transformers-editorial-format.ts` (500-line cap; no regex anywhere over
  *    untrusted input, ADR-034).
  */
