@@ -57,10 +57,13 @@ each event to `console.log/warn/error` for observability in `wrangler tail`.
 - You accept the telemetry retention policy (see below).
 
 **Retention:** Telemetry events in the `telemetry_events` table are kept
-for 90 days by default. See the
+for 90 days, **enforced** by the Worker's `scheduled` handler
+(`apps/worker/src/lib/telemetry-retention.ts`, declared in
+`wrangler.jsonc` → `triggers.crons`, weekly Sun 03:00 UTC). The handler
+deletes in bounded batches and logs `telemetry.retention.completed` /
+`telemetry.retention.failed`; see the
 [telemetry retention runbook](./runbooks/telemetry-retention.md) for the
-cleanup job (Worker cron), manual cleanup SQL, verification, and
-ownership.
+policy, manual cleanup SQL, and verification.
 
 ## What NOT to send
 

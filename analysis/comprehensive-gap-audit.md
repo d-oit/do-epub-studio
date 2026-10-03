@@ -221,6 +221,8 @@ open finding.
 
 ### A8 — P1: advertised telemetry retention has no implementation
 
+> _**Implemented**_ (GOAP-305, 2026-10-03) — **deployment acceptance OPEN**: `lib/telemetry-retention.ts` deletes in bounded batches from the entry's `scheduled` handler and `wrangler.jsonc` declares the weekly cron (both proven by test and `wrangler deploy --dry-run`), but the release deploys Pages only (`functions/` imports `app`, no separate Worker deploy, no Pages scheduled events), so the cron is not active until `apps/worker` is deployed standalone against the same D1. Until then the runbook's manual path is the control.
+
 - **Priority / domains:** P1 · implementation, docs, logging
 - **Classification:** unimplemented operational control (source-only)
 - **Anchors:** `docs/observability-telemetry.md:59-63` ("kept for 90 days by default"); `docs/runbooks/telemetry-retention.md:24-49` (cron example that says "Add the `scheduled` handler to the existing Worker entry before deploy"); `apps/worker/src/index.ts:29-43` (default export has `fetch` only); `apps/worker/wrangler.jsonc` (no `crons`/`triggers`; grep empty); `wrangler.toml` configures the separate Pages deployment
@@ -424,6 +426,8 @@ authorization; this audit authorizes none of them):
 6. **A7** — bounded client-side log sanitizer; fix sensitive-key normalization.
    _**Closed**_ **(GOAP-299)**: client sanitizer before console/buffer/endpoint.
 7. **A8** — deliverable telemetry retention owner for the deployed D1.
+   _**Closed**_ **(GOAP-305, 2026-10-03)**: `scheduled` handler + weekly cron +
+   bounded-batch deletion; docs match.
 8. **A2**, **A9**, **A10**, **A11**, **A12**, **A13** — P2 drift/failure-path/
    formatting/coverage/CSP-acceptance/toolchain items, in that order.
 9. **Optional opportunities** — cross-device insights display and admin
