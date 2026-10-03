@@ -21,7 +21,7 @@ delivered state without claiming AI-03's human review is complete.
   book → read"_; ordinary login has been book-scoped **email + password** since
   ADR-232. The flow now reads _"Login (book-scoped email + password) → open book
   → read"_, and a short paragraph names the two supporting flows that _are_
-  link-based — account recovery (`/api/access/recovery-request` →
+  link-based — reader account recovery (`/api/access/recovery-request` →
   `/api/access/verify-recovery`) and book invitations (one-time accept link,
   ADR-284) — so "magic link" stops being the description of ordinary login
   without disappearing where it is true.
@@ -49,6 +49,25 @@ delivered state without claiming AI-03's human review is complete.
 
 `check-plan-references` and the ADR index validate; prettier clean. No code
 changed.
+
+## Review follow-up (2026-10-03): recovery is not a password reset
+
+The first version of the `PRODUCT.md` paragraph said recovery meant "set a new
+password via the token link" — an inaccuracy that would have repeated the very
+class of contradiction A2 removes. The handler does something else:
+`routes/access.ts:158` verifies the token with purpose `reader_magic_link`,
+requires a live ALLOWED grant (never a denied or revoked one) and issues a
+**reader session**; `LoginPage.tsx:99-105` then navigates straight to the book.
+No password is written anywhere on that path. Admin accounts have a separate
+password-reset flow (`routes/admin/auth/recovery.ts`, purpose `admin_reset`),
+which ADR-232 names explicitly ("preserving reader magic-link access only where
+a book grant is intentionally passwordless").
+
+The paragraph now describes restoring book access with a single-use link, says
+that no password is set, and points at the admin flow for the reset case. The
+lesson is recorded in `agents-docs/LEARNINGS.md`: read the handler, not the
+endpoint name ("recovery" suggested a reset; the purpose constant and the
+client's navigation settled it).
 
 ## Out of scope
 

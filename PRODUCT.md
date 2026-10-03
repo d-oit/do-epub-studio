@@ -27,11 +27,14 @@ Ordinary login is the email + password form on `/login` (posting to
 `/api/access/request` with the book slug), not a magic-link flow. Two
 supporting flows are separate from the core ones above:
 
-- **Account recovery** — request a reset link (`/api/access/recovery-request`),
-  then set a new password via the token link (`/api/access/verify-recovery`).
+- **Account recovery** — a reader restores access to a granted book with a
+  single-use link (`/api/access/recovery-request` → `/api/access/verify-recovery`).
+  The link mints a reader session bound to a live grant and sends the reader to
+  the book; it sets **no password**. Admin accounts have a separate
+  password-reset flow.
 - **Book invitations** — an admin invites a reader or creator to one book and
-  the invitee accepts a one-time link (ADR-284); those invitation/recovery
-  links are the only magic-link surfaces.
+  the invitee accepts a one-time link (ADR-284); those invitation and
+  reader-recovery links are the only magic-link surfaces.
 
 ## Anti-References
 
