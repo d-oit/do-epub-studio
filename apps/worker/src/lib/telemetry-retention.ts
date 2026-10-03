@@ -45,11 +45,13 @@ export function retentionCutoff(days = TELEMETRY_RETENTION_DAYS, now = Date.now(
 /**
  * Delete telemetry rows received before the retention cutoff.
  *
- * `received_at` is stored by SQLite's `datetime('now')` default — `YYYY-MM-DD
- * HH:MM:SS` — while the cutoff is ISO-8601 with a `T` and a `Z`. Both sort
- * lexicographically in the same order once the separator is normalised, so the
- * comparison uses `datetime(received_at) < datetime(?)` (`datetime()` accepts
- * both shapes) instead of a raw string compare.
+ * Timestamp shapes do not compare as strings: the ingest route stores
+ * `new Date().toISOString()` (`2026-07-04T12:00:00.000Z`) while the column
+ * default and the cutoff are space-separated (`2026-07-04 12:00:00`), and `'T'`
+ * sorts after `' '` — a raw `<` therefore *retains* expired rows whose date
+ * equals the cutoff date. `datetime()` normalises both shapes, so the comparison
+ * is `datetime(received_at) < datetime(?)` ("manual" equivalents: the runbook's
+ * cleanup SQL and the index on `received_at` are unaffected).
  */
 export async function deleteEventsOlderThan(
   env: Env,

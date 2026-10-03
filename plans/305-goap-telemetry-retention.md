@@ -27,9 +27,12 @@ Policy (90 days) and cadence (weekly) are unchanged.
   logs `telemetry.retention.completed` (with `deleted`, `batches`, `cutoff`,
   `exhausted`) or `telemetry.retention.failed`, matching the runbook's promise
   that a failed cleanup affects only the logs.
-  The comparison uses `datetime(received_at) < datetime(?)`: the table default
-  stores `YYYY-MM-DD HH:MM:SS` while the cutoff is ISO-8601, and `datetime()`
-  normalizes both (a raw string compare would be correct today and fragile).
+  The comparison uses `datetime(received_at) < datetime(?)` because the two
+  shapes are not string-comparable: the ingest route stores
+  `new Date().toISOString()` (`…T…Z`) while the cutoff is space-separated, and
+  `'T'` sorts after `' '` — a raw `<` retains expired rows on the cutoff date
+  (measured: raw matched 0 rows, normalized matched the expired one). The
+  runbook's manual SQL carries the same form.
 - **`apps/worker/src/index.ts`**: the default export gains a `scheduled`
   handler that dispatches `runTelemetryRetention` under `ctx.waitUntil` — the
   Worker is the deployed owner (the Pages function path has no cron).

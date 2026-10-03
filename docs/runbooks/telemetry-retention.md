@@ -65,7 +65,12 @@ scheduled events.
 ## Manual cleanup (one-off)
 
 ```sql
-DELETE FROM telemetry_events WHERE received_at < datetime('now', '-90 days');
+-- `datetime()` on both sides: ingest writes ISO-8601 (`2026-07-04T12:00:00.000Z`)
+-- while `datetime()` produces `2026-07-04 12:00:00`, and 'T' sorts after ' ' —
+-- a raw string comparison therefore retains expired rows whose date equals the
+-- cutoff date. Measured on an isolated table: raw comparison matched 0 rows,
+-- the normalized form matched the expired one.
+DELETE FROM telemetry_events WHERE datetime(received_at) < datetime('now', '-90 days');
 ```
 
 Run via the D1 CLI (`wrangler d1 execute`, `--local` or `--remote`) against the target database.
