@@ -245,6 +245,8 @@ open finding.
 
 ### A10 — P2: dates and byte numbers ignore the selected UI locale
 
+> _**Closed**_ (GOAP-307, 2026-10-03): `formatBytes` formats through `Intl.NumberFormat` on the active UI locale (binary ladder unchanged) and the admin session table uses the store-aware `formatDateTime`; no `toLocaleString()` call site remains under `apps/web/src`.
+
 - **Priority / domain:** P2 · i18n
 - **Classification:** formatting-locale omission (source-only dates; observed bytes)
 - **Anchors:** `apps/web/src/features/admin/AccountSettingsPage.tsx:24-28` (browser-default `date.toLocaleString()`); `apps/web/src/lib/i18n-format.ts:13-23` (store-aware `formatDate`/`formatDateTime` exist and are unused here); `apps/web/src/lib/formatBytes.ts:4-8` (`toFixed`)
