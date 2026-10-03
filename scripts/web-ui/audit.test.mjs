@@ -350,7 +350,39 @@ test('i18n: expectedLanguage reduces to the primary subtag', () => {
   assert.equal(expectedLanguage('en'), 'en');
   assert.equal(expectedLanguage('pt-BR'), 'pt');
   assert.equal(expectedLanguage('zh-Hans-CN'), 'zh');
+});
+
+test('i18n: persisted activation writes the catalog key, never a raw regional tag', () => {
   assert.equal(persistedLocalePayload('de'), '{"state":{"locale":"de"},"version":0}');
+  // Writing 'de-DE' verbatim would make the app declare a language whose
+  // lookups fall back to English — the false-OK class A3 removes.
+  assert.equal(persistedLocalePayload('de-DE'), '{"state":{"locale":"de"},"version":0}');
+  assert.equal(persistedLocalePayload('pt-BR'), '{"state":{"locale":"pt"},"version":0}');
+  assert.equal(persistedLocalePayload('ZH-Hans-CN'), '{"state":{"locale":"zh"},"version":0}');
+});
+
+test('i18n: a regional probe activates its catalog and reports no finding', async () => {
+  let catalogKey = 'en';
+  const page = {
+    async goto() {},
+    viewportSize: () => ({ width: 1280, height: 720 }),
+    async evaluate(fn, arg) {
+      if (fn === pageProbe) return { findings: [] };
+      if (Array.isArray(arg)) {
+        catalogKey = JSON.parse(arg[1]).state.locale;
+        return undefined;
+      }
+      // A hardened app renders the catalog it hydrated: lang is the catalog key.
+      return { dir: catalogKey === 'ar' ? 'rtl' : 'ltr', lang: catalogKey };
+    },
+  };
+  const result = await auditLocales(page, {
+    route: 'http://fixture.test/login',
+    locales: ['en', 'de-DE'],
+    switchVia: { storageKey: 'do-epub-locale' },
+  });
+  assert.deepEqual(result.findings, []);
+  assert.equal(catalogKey, 'de');
 });
 
 test('visual: cell keys are deterministic, slugged, and collision-safe', () => {

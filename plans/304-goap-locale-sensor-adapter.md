@@ -31,6 +31,18 @@ requested language did not render.
   included — must render a `html[lang]` whose primary subtag matches the
   requested locale. A probe that renders the wrong language produced no usable
   delta, so it is a finding rather than an OK.
+- **Catalog-key normalization** (review follow-up): the persisted value is the
+  _supported catalog key_, not the raw request tag — `de-DE` persists as `de`,
+  because that is the key `availableLocales()` ships and the store renders.
+  Writing `de-DE` verbatim would put it into `html[lang]` while every lookup fell
+  back to English, and a primary-subtag comparison would have called that OK.
+- **Store hardening** (`apps/web/src/stores/locale.ts`, surfaced by that review):
+  `persist` now validates the hydrated value against the supported set and falls
+  back to the detected locale instead of accepting it. Measured before/after:
+  raw `{"locale":"de-DE"}` in `localStorage` used to declare `lang=de-DE` with
+  English text; it now renders `lang=en` with English text, so the sensor's
+  language contract fails loudly instead of passing on a false declaration.
+  (Regression tests in `apps/web/src/__tests__/stores.test.ts`.)
 - **CLI**: `WEB_AUDIT_LOCALE_STORAGE_KEY` selects the persisted-state
   activation (precedence: storage key → cookie → `WEB_AUDIT_LOCALE_PARAM`),
   documented in `scripts/i18n-audit.mjs`'s header alongside the new contract.
@@ -68,7 +80,17 @@ for `de` and `ar`, plus `i18n-direction` for `ar`. That is the audit's required
 "an intentionally English document during the de probe reports a
 locale-activation/language failure instead of OK".
 
-Unit suite: `node --test scripts/web-ui/audit.test.mjs` → 30 tests, 30 pass.
+**Regional probe** — `WEB_AUDIT_LOCALES=en,de,de-DE,ar` on `/login` → `OK: no
+locale-specific regressions`, with the activation value inspected directly:
+
+| persisted value                                 | rendered document                                 |
+| :---------------------------------------------- | :------------------------------------------------ |
+| `{"locale":"de"}` (what a `de-DE` probe writes) | `lang=de`, “E-Mail-Adresse”                       |
+| raw `{"locale":"de-DE"}`                        | `lang=en`, “Email Address” — the store rejects it |
+| raw `{"locale":"xx"}`                           | `lang=en` — rejected                              |
+
+Unit suites: `node --test scripts/web-ui/audit.test.mjs` → 32 tests, 32 pass;
+`pnpm --filter @do-epub-studio/web test:unit` → 144 files / 1444 tests.
 
 ## Out of scope
 

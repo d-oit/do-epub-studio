@@ -63,9 +63,17 @@ export function expectedLanguage(locale) {
  * writes the same envelope so the store hydrates into the requested locale
  * before the route renders — a query parameter or cookie would be a second
  * precedence convention the product does not implement.
+ *
+ * The tag is reduced to its primary subtag because that is the key the catalogs
+ * use (`availableLocales()`: `en`, `de`, `ar`, …). Writing a regional tag
+ * verbatim would put `de-DE` into `html[lang]` while every lookup fell back to
+ * English — the app would *declare* a language it cannot render, and a
+ * primary-subtag comparison would call that OK. That is the false-OK class A3
+ * exists to eliminate, so normalization happens at the source (the store also
+ * rejects values outside the catalog set — see `stores/locale.ts`).
  */
 export function persistedLocalePayload(locale) {
-  return JSON.stringify({ state: { locale: String(locale) }, version: 0 });
+  return JSON.stringify({ state: { locale: expectedLanguage(locale) }, version: 0 });
 }
 
 /** Stable key for cross-locale finding comparison. */
