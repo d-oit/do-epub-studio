@@ -14,8 +14,8 @@ traceability)
 > delivered.** A1 _**Closed**_ (GOAP-302), A3 _**Closed**_ (GOAP-304), A4
 > _**Closed**_ (GOAP-303), A5 _**Closed**_ (GOAP-300), A6 and A7
 > _**Closed**_ (GOAP-299), A8 _**implemented, deployment acceptance open**_
-> (GOAP-305), A9 _**Closed**_ (GOAP-306), A10 _**Closed**_ (GOAP-307). Still
-> open: A2, A11–A13.
+> (GOAP-305), A9 _**Closed**_ (GOAP-306), A10 _**Closed**_ (GOAP-307), A2
+> _**Closed**_ (GOAP-308). Still open: A11–A13.
 > The finding inventory below is left as filed (a dated evidence record);
 > per-finding status lives in `analysis/comprehensive-gap-audit.md`.
 

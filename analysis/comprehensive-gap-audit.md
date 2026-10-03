@@ -151,6 +151,8 @@ open finding.
 
 ### A2 — P2: documentation still contradicts shipped behavior
 
+> _**Closed**_ (GOAP-308, 2026-10-03): `PRODUCT.md`'s core flow reads book-scoped email + password with recovery/invitation named as the link-based flows, and GOAP-999's acceptance paragraph 5 carries a dated supersession note for the F1 statement GOAP-293 closed (AI-03 untouched, still PARTIAL). The AI-01 row needed no edit.
+
 - **Priority / domains:** P2 · docs
 - **Classification:** documentation drift (source-only)
 - **Anchors:** `PRODUCT.md:20`; `apps/web/src/features/auth/LoginPage.tsx:51-83` (posts email/password/bookSlug to `/api/access/request`; separate `/api/access/recovery-request` and `/api/access/verify-recovery` flows); `plans/999-goap-codebase-improvements-uiux-e2e-audit.md:85` (AI-01 DONE) and `:282` (acceptance paragraph 5 still asserts, in the current tense, that the panel "still dispatches only the engine-less plugin with empty input"); current sources `apps/web/src/features/creator/AssistancePanel.tsx:57-78,124-125`, `apps/web/src/features/creator/lib/editorial-dispatch.ts:40-90`, `apps/web/src/features/creator/lib/book-chapters.ts:96-145`
