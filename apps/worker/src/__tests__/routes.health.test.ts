@@ -18,4 +18,19 @@ describe('Health Route', () => {
     expect(body.ok).toBe(true);
     expect(body.service).toBe('do-epub-studio-worker');
   });
+
+  it('unmatched routes return 404 JSON envelope (never plain text or HTML)', async () => {
+    const res = await app.fetch(
+      new Request('http://localhost/api/nonexistent-route'),
+      env,
+      makePassThroughContext(),
+    );
+
+    expect(res.status).toBe(404);
+    expect(res.headers.get('content-type')).toContain('application/json');
+    const body: { ok: boolean; error: { code: string; message: string } } = await res.json();
+    expect(body.ok).toBe(false);
+    expect(body.error.code).toBe('NOT_FOUND');
+    expect(body.error.message).toBe('Endpoint not found');
+  });
 });

@@ -516,7 +516,7 @@ describe('LoginPage', () => {
 
     it('shows error on demo login failure', async () => {
       mockIsDemoLoginEnabled.mockReturnValue(true);
-      vi.mocked(apiRequest).mockRejectedValueOnce(new Error('Demo disabled'));
+      vi.mocked(apiRequest).mockRejectedValue(new Error('Demo disabled'));
 
       render(
         <MemoryRouter>
