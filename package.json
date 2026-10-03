@@ -63,5 +63,13 @@
     "typescript-eslint": "^8.70.1",
     "vitest": "4.1.11",
     "wrangler": "^4.137.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "fast-uri": "^3.1.8",
+      "serialize-javascript": "^7.1.2",
+      "undici": "^7.29.1",
+      "sharp": "^0.35.4"
+    }
   }
 }
