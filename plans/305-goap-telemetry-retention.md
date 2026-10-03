@@ -1,6 +1,6 @@
 # GOAP-305: Telemetry retention that actually runs (A8)
 
-**Status:** DONE
+**Status:** DONE (implementation) — **deployment acceptance OPEN** (see below)
 **Date:** 2026-10-03
 **Type:** Corrective implementation slice (authorized from the GOAP-298 audit,
 finding A8)
@@ -60,10 +60,29 @@ Policy (90 days) and cadence (weekly) are unchanged.
 `wrangler deploy --dry-run` parses the config (exit 0); worker unit suite green
 (see the PR for the run).
 
-## Note on deployed execution evidence
+## Deployment acceptance — OPEN (release review, 2026-10-03)
 
-The audit's acceptance also asks for "scheduled configuration and execution
-evidence for the deployed owner". The configuration is in the diff and asserted
-by test; a real cron firing is observable only after a deploy
-(`wrangler deployments`/tail), which this slice does not perform — recorded here
-rather than claimed.
+**The cron this slice adds is not active in the current deployment path.** The
+normal release is Pages-only: `release.yml`'s post-deploy step states that "the
+frontend AND the API are deployed together by the Cloudflare Pages Git
+integration (the API rides the same Pages deployment via `functions/` — no
+separate Worker deploy, no credentials)", and `apps/web/functions/api/[[path]].ts`
+imports `app` — not `apps/worker/src/index.ts`. Pages Functions have no scheduled
+events, and no workflow runs `wrangler deploy` for the Worker (grep over
+`.github/workflows/*.yml`). So the `scheduled` handler and the `triggers.crons`
+entry only take effect once the standalone Worker is deployed against the same
+D1 database.
+
+What that means for the claims:
+
+- **Implemented and proven**: the cleanup owner, its batching, its failure
+  semantics and the cron _configuration_ (tests above; `wrangler deploy
+--dry-run` parses).
+- **NOT yet true**: "retention is enforced in production". Until the Worker is
+  deployed, the operational control is the runbook's manual path
+  (`wrangler d1 execute … --remote`), and A8's deployment acceptance stays open.
+
+Activation (documented in `docs/runbooks/telemetry-retention.md`): deploy
+`apps/worker` standalone with the D1 binding pointed at the Pages project's
+database, then confirm one firing (`wrangler tail` / `wrangler deployments`) and
+the row counts. A scheduled Pages-side alternative does not exist.

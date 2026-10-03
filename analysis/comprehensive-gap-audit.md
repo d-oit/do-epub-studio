@@ -221,7 +221,7 @@ open finding.
 
 ### A8 — P1: advertised telemetry retention has no implementation
 
-> _**Closed**_ (GOAP-305, 2026-10-03): the Worker owns the 90-day window — `lib/telemetry-retention.ts` deletes in bounded batches from the entry's `scheduled` handler, `wrangler.jsonc` declares the weekly cron, and both documents now describe installed enforcement. A deployed cron firing is still post-deploy evidence (recorded in the plan, not claimed).
+> _**Implemented**_ (GOAP-305, 2026-10-03) — **deployment acceptance OPEN**: `lib/telemetry-retention.ts` deletes in bounded batches from the entry's `scheduled` handler and `wrangler.jsonc` declares the weekly cron (both proven by test and `wrangler deploy --dry-run`), but the release deploys Pages only (`functions/` imports `app`, no separate Worker deploy, no Pages scheduled events), so the cron is not active until `apps/worker` is deployed standalone against the same D1. Until then the runbook's manual path is the control.
 
 - **Priority / domains:** P1 · implementation, docs, logging
 - **Classification:** unimplemented operational control (source-only)

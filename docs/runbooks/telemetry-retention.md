@@ -23,6 +23,14 @@ admin audit views.
 
 ## Cleanup job
 
+> **Activation status (2026-10-03): the cron is configured but not yet active.**
+> The standard release deploys Pages only (`release.yml`: "the API rides the
+> same Pages deployment via `functions/` — no separate Worker deploy"), and
+> Pages Functions have no scheduled events, so this cleanup runs only after
+> `apps/worker` is deployed standalone against the same D1 database. Until then
+> the manual path below is the operational control, and A8's deployment
+> acceptance remains open.
+
 D1 has no built-in TTL, so the Worker owns the cleanup:
 
 - **Implementation:** `apps/worker/src/lib/telemetry-retention.ts` —
@@ -40,6 +48,19 @@ A failed cleanup never fails the scheduled event — it logs
 `telemetry.retention.failed` with the reason and leaves the rows for the next
 run (`telemetry.retention.completed` carries `deleted`, `batches`, `cutoff` and
 `exhausted`).
+
+### Activating the cron owner
+
+1. Deploy the Worker standalone with its D1 binding pointed at the Pages
+   project's database: `pnpm --filter @do-epub-studio/worker exec wrangler deploy`
+   (the `database_id` in `apps/worker/wrangler.jsonc` must match that database).
+2. Confirm the trigger is registered: `wrangler deployments` / the dashboard's
+   Cron Triggers tab.
+3. Confirm one firing: `wrangler tail` for `telemetry.retention.completed`, then
+   check the row watermark (below).
+
+A Pages-side scheduled alternative does not exist — Pages Functions have no
+scheduled events.
 
 ## Manual cleanup (one-off)
 
