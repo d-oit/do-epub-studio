@@ -32,12 +32,6 @@ export function useTranslation(): {
     // lifetime (measured: reselecting issues no second request), so re-importing
     // cannot succeed. Reload instead — the choice is persisted, so the fresh
     // document boots straight into the requested locale (A9/GOAP-306).
-    // Read once per attempt, not as a dependency: the failure this attempt
-    // produces must not re-enter the effect and reload in a loop.
-    if (useLocaleStore.getState().failedLocale === locale) {
-      window.location.reload();
-      return;
-    }
     // Reset so the component shows fallback text while loading.
     setLoadedLocale(null);
     let cancelled = false;
@@ -53,7 +47,8 @@ export function useTranslation(): {
       cancelled = true;
     };
     // `localeAttempt` makes a reselection of the same locale re-run this effect,
-    // which is what turns it into the reload retry above.
+    // so a retry really re-attempts the import in the (unlikely) case the module
+    // registry allows it; the reload owner handles the poisoned-registry case.
   }, [locale, localeAttempt, reportLocaleLoad]);
 
   // What the UI actually renders. While a dictionary is loading — or after it

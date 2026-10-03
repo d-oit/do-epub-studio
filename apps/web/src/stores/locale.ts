@@ -35,6 +35,13 @@ interface LocaleState {
    * document; this is what tells the retry path apart from a first attempt.
    */
   failedLocale: SupportedLocale | null;
+  /**
+   * Set when the user reselects the locale that just failed in this document.
+   * A rejected dynamic import is cached for the document's lifetime, so the only
+   * working retry is a fresh load — and exactly one mounted owner performs it
+   * (`useLocaleReload`), never the per-consumer translation hook (A9/GOAP-306).
+   */
+  reloadRequested: boolean;
   setLocale: (locale: SupportedLocale) => void;
   /** Publish the outcome of loading `locale`'s dictionary. */
   reportLocaleLoad: (locale: SupportedLocale, loaded: boolean) => void;
@@ -64,8 +71,12 @@ export const useLocaleStore = create<LocaleState>()(
           locale,
           localeStatus: locale === 'en' ? 'ready' : 'loading',
           localeAttempt: state.localeAttempt + 1,
+          // Reselecting the locale that just failed is the retry: the module
+          // registry keeps the rejection, so a reload is the recovery.
+          reloadRequested: state.locale === locale && state.localeStatus === 'failed',
         })),
       failedLocale: null,
+      reloadRequested: false,
       reportLocaleLoad: (locale, loaded) =>
         set({
           localeStatus: loaded ? 'ready' : 'failed',

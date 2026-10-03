@@ -115,11 +115,11 @@ describe('useTranslation', () => {
     expect(result.current.t('app.title')).toBe('d.o.EPUB Studio');
   });
 
-  it('reloads when the same locale is selected again after a failure', async () => {
-    // A failed dynamic import stays rejected for the document's lifetime
-    // (measured in the browser: the second selection issues no request), so the
-    // only working retry is a fresh document — the persisted locale then loads.
-    vi.mocked(i18n.ensureLocale).mockResolvedValueOnce(false);
+  it('mounts late or again after a failure without reloading', async () => {
+    // The reload must belong to an explicit retry, not to mounting: a consumer
+    // that appears after the failure (lazy route, late panel) used to see
+    // `failedLocale === locale` and reload on its own (A9/GOAP-306 review).
+    vi.mocked(i18n.ensureLocale).mockResolvedValue(false);
     const reload = vi.fn();
     const originalLocation = window.location;
     Object.defineProperty(window, 'location', {
@@ -128,23 +128,21 @@ describe('useTranslation', () => {
     });
 
     try {
-      const { result } = renderHook(() => useTranslation());
+      const first = renderHook(() => useTranslation());
       await act(async () => {
-        result.current.setLocale('ar');
+        first.result.current.setLocale('ar');
         await Promise.resolve();
         await Promise.resolve();
       });
       expect(useLocaleStore.getState().localeStatus).toBe('failed');
-      expect(reload).not.toHaveBeenCalled();
 
+      // A second consumer mounted after the failure: still no reload.
+      const second = renderHook(() => useTranslation());
       await act(async () => {
-        result.current.setLocale('ar');
         await Promise.resolve();
       });
-
-      expect(reload).toHaveBeenCalledTimes(1);
-      // The retry is the reload itself; no second import is attempted in-place.
-      expect(i18n.ensureLocale).toHaveBeenCalledTimes(1);
+      expect(reload).not.toHaveBeenCalled();
+      expect(second.result.current.locale).toBe('en');
     } finally {
       Object.defineProperty(window, 'location', { configurable: true, value: originalLocation });
     }
