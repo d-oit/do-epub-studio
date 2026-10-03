@@ -13,7 +13,8 @@ traceability)
 > **Reconciled 2026-10-03 — corrective slices have since been authorized and
 > delivered.** A1 _**Closed**_ (GOAP-302), A3 _**Closed**_ (GOAP-304), A4
 > _**Closed**_ (GOAP-303), A5 _**Closed**_ (GOAP-300), A6 and A7
-> _**Closed**_ (GOAP-299). Still open: A8 first, then the P2 group A2, A9–A13.
+> _**Closed**_ (GOAP-299), A8 _**Closed**_ (GOAP-305). Still open: the P2
+> group A2, A9–A13.
 > The finding inventory below is left as filed (a dated evidence record);
 > per-finding status lives in `analysis/comprehensive-gap-audit.md`.
 
