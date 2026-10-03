@@ -35,7 +35,21 @@ export const useLocaleStore = create<LocaleState>()(
       locale: detectLocale(),
       setLocale: (locale) => set({ locale }),
     }),
-    { name: 'do-epub-locale' },
+    {
+      name: 'do-epub-locale',
+      // A persisted value this build cannot render must never become the active
+      // locale: `useDocumentLocale` writes it into `html[lang]`, so a stale or
+      // regional tag (`de-DE`) would declare a language whose every lookup falls
+      // back to English — the app asserting something untrue about its content
+      // (A3/GOAP-304). Unsupported values fall back to the detected locale.
+      merge: (persisted, current) => {
+        const stored = (persisted as { locale?: unknown } | undefined)?.locale;
+        return {
+          ...current,
+          locale: typeof stored === 'string' && isSupportedLocale(stored) ? stored : current.locale,
+        };
+      },
+    },
   ),
 );
 

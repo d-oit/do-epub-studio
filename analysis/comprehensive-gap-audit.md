@@ -161,6 +161,8 @@ open finding.
 
 ### A3 — P1: locale sensor cannot select or verify this app's locale
 
+> _**Closed**_ (GOAP-304, 2026-10-03): the sensor activates the app's persisted locale (`localStorage['do-epub-locale']`) before loading the route and fails with `i18n-locale-not-applied` when `html[lang]` does not match the requested locale; en/de/ar acceptance and a wrong-key negative control are recorded in the plan.
+
 - **Priority / domains:** P1 · harness, i18n
 - **Classification:** harness integration mismatch (source-only) plus observed function-level blind spot
 - **Anchors:** `scripts/i18n-audit.mjs:27-30` (`WEB_AUDIT_LOCALE_COOKIE` or `?lang=` param); `scripts/web-ui/lib/i18n-audit.mjs:80-95` (only those switch mechanisms), `:105-120` (reads `lang` but validates only `dir`); `apps/web/src/stores/locale.ts:22-38` (navigator language + persisted `do-epub-locale`, no query/cookie consumer found in `apps/web/src`)
@@ -408,6 +410,8 @@ authorization; this audit authorizes none of them):
    _**Closed**_ **(GOAP-302, 2026-10-02)**: durable offline creation, idempotent
    replay, authenticated settlement.
 2. **A3** — locale sensor that can actually select and verify this app's locale.
+   _**Closed**_ **(GOAP-304, 2026-10-03)**: activation through the app's own
+   persisted locale plus a declared-language contract.
 3. **A4** — remove the three remaining non-failing E2E assertions.
    _**Closed**_ **(GOAP-303, 2026-10-02)**: behavioural replacements for the
    empty-state, loading-state and 401 anchors.
