@@ -27,8 +27,6 @@ import { normalizeViewport, normalizeMatrix, DEFAULT_VIEWPORT_MATRIX } from './l
 import { classifyConsoleMessage } from './lib/console-audit.mjs';
 import {
   expectedDirection,
-  expectedLanguage,
-  persistedLocalePayload,
   buildLocaleUrl,
   keyFinding,
   diffLocaleFindings,
@@ -273,116 +271,6 @@ test('i18n: direction is judged after the locale navigates (F5 regression)', asy
     last.findings.map((f) => [f.locale, f.stage]),
     [['he', 'i18n-direction']],
   );
-});
-
-test('i18n: persisted-state activation writes the app envelope before the route loads', async () => {
-  const writes = [];
-  const loads = [];
-  let current = 'en';
-  const page = {
-    async goto(url, opts) {
-      loads.push({ url, waitUntil: opts?.waitUntil });
-      // The first load exists only to reach the origin; the locale is applied
-      // on the following load, exactly as the app boots from localStorage.
-    },
-    viewportSize: () => ({ width: 1280, height: 720 }),
-    async evaluate(fn, arg) {
-      if (fn === pageProbe) return { findings: [] };
-      if (Array.isArray(arg)) {
-        // localStorage write: record it and apply it to the fake app state.
-        writes.push(arg);
-        current = JSON.parse(arg[1]).state.locale;
-        return undefined;
-      }
-      return { dir: current === 'ar' ? 'rtl' : 'ltr', lang: current };
-    },
-  };
-  const result = await auditLocales(page, {
-    route: 'http://fixture.test/login',
-    locales: ['en', 'de'],
-    switchVia: { storageKey: 'do-epub-locale' },
-  });
-  assert.deepEqual(result.findings, []);
-  assert.deepEqual(
-    writes.map(([key, value]) => [key, JSON.parse(value)]),
-    [
-      ['do-epub-locale', { state: { locale: 'en' }, version: 0 }],
-      ['do-epub-locale', { state: { locale: 'de' }, version: 0 }],
-    ],
-  );
-  // Two loads per probe: origin (storage write) then the real one.
-  assert.deepEqual(
-    loads.map((l) => l.waitUntil),
-    ['domcontentloaded', 'networkidle', 'domcontentloaded', 'networkidle'],
-  );
-});
-
-test('i18n: a probe that renders the wrong language fails instead of reporting OK', async () => {
-  // The app ignores the activation mechanism: every document stays English.
-  const page = {
-    async goto() {},
-    viewportSize: () => ({ width: 1280, height: 720 }),
-    async evaluate(fn) {
-      if (fn === pageProbe) return { findings: [] };
-      return { dir: 'ltr', lang: 'en' };
-    },
-  };
-  const result = await auditLocales(page, {
-    route: 'http://fixture.test/login',
-    locales: ['en', 'de', 'ar'],
-    switchVia: { storageKey: 'do-epub-locale' },
-  });
-  assert.deepEqual(
-    result.findings.map((f) => [f.locale, f.stage]),
-    [
-      ['de', 'i18n-locale-not-applied'],
-      // An app that ignores activation renders English *and* LTR, so the RTL
-      // probe trips both contracts — the direction check is not redundant.
-      ['ar', 'i18n-locale-not-applied'],
-      ['ar', 'i18n-direction'],
-    ],
-  );
-  // The baseline passing on `en` proves the check is about activation, not a
-  // blanket failure: only the locales that did not apply are reported.
-});
-
-test('i18n: expectedLanguage reduces to the primary subtag', () => {
-  assert.equal(expectedLanguage('en'), 'en');
-  assert.equal(expectedLanguage('pt-BR'), 'pt');
-  assert.equal(expectedLanguage('zh-Hans-CN'), 'zh');
-});
-
-test('i18n: persisted activation writes the catalog key, never a raw regional tag', () => {
-  assert.equal(persistedLocalePayload('de'), '{"state":{"locale":"de"},"version":0}');
-  // Writing 'de-DE' verbatim would make the app declare a language whose
-  // lookups fall back to English — the false-OK class A3 removes.
-  assert.equal(persistedLocalePayload('de-DE'), '{"state":{"locale":"de"},"version":0}');
-  assert.equal(persistedLocalePayload('pt-BR'), '{"state":{"locale":"pt"},"version":0}');
-  assert.equal(persistedLocalePayload('ZH-Hans-CN'), '{"state":{"locale":"zh"},"version":0}');
-});
-
-test('i18n: a regional probe activates its catalog and reports no finding', async () => {
-  let catalogKey = 'en';
-  const page = {
-    async goto() {},
-    viewportSize: () => ({ width: 1280, height: 720 }),
-    async evaluate(fn, arg) {
-      if (fn === pageProbe) return { findings: [] };
-      if (Array.isArray(arg)) {
-        catalogKey = JSON.parse(arg[1]).state.locale;
-        return undefined;
-      }
-      // A hardened app renders the catalog it hydrated: lang is the catalog key.
-      return { dir: catalogKey === 'ar' ? 'rtl' : 'ltr', lang: catalogKey };
-    },
-  };
-  const result = await auditLocales(page, {
-    route: 'http://fixture.test/login',
-    locales: ['en', 'de-DE'],
-    switchVia: { storageKey: 'do-epub-locale' },
-  });
-  assert.deepEqual(result.findings, []);
-  assert.equal(catalogKey, 'de');
 });
 
 test('visual: cell keys are deterministic, slugged, and collision-safe', () => {

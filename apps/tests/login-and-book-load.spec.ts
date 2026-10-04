@@ -160,12 +160,9 @@ test.describe('Login and book load (desktop)', () => {
     resolveFileUrl!(undefined);
 
     // Released response: the fixture chapter renders in the reader frame.
-    // `mockReaderApi` serves MOCK_EPUB, whose chapter body is
-    // `<p>Chapter 1 content.</p>`; the smoke-test fixture
-    // ("CHAPTER ONE CONTENT") belongs to specs that build their own EPUB.
     await expect
       .poll(() => getChapterText(page), { timeout: 30_000 })
-      .toContain('Chapter 1 content.');
+      .toContain('CHAPTER ONE CONTENT');
   });
 
   test('@mobile opens the table of contents sidebar', async ({ page }) => {

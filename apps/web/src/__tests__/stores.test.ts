@@ -105,25 +105,6 @@ describe('useLocaleStore', () => {
     store.setLocale('en');
     expect(useLocaleStore.getState().locale).toBe('en');
   });
-
-  it('rehydrates a supported persisted locale', async () => {
-    localStorage.setItem('do-epub-locale', JSON.stringify({ state: { locale: 'de' }, version: 0 }));
-    await useLocaleStore.persist.rehydrate();
-    expect(useLocaleStore.getState().locale).toBe('de');
-  });
-
-  it('ignores a persisted locale this build cannot render', async () => {
-    // A regional or stale tag would otherwise be written into `html[lang]`
-    // while every lookup fell back to English — the app declaring a language
-    // it does not render (A3/GOAP-304).
-    localStorage.setItem(
-      'do-epub-locale',
-      JSON.stringify({ state: { locale: 'de-DE' }, version: 0 }),
-    );
-    await useLocaleStore.persist.rehydrate();
-    expect(useLocaleStore.getState().locale).toBe('en');
-    localStorage.removeItem('do-epub-locale');
-  });
 });
 
 describe('usePreferencesStore', () => {

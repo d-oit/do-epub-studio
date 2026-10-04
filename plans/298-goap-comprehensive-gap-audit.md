@@ -2,22 +2,12 @@
 
 **Status:** DONE (analysis only; corrective implementation not started)
 **Date:** 2026-09-30
-
 **Type:** Read-only eight-domain audit (documentation only)
 **ADRs referenced:** ADR-214 (audit recommendation governance — classify before
 implementing, evidence before claims), ADR-246 (do-harness completion contract)
 **Canonical report:** `analysis/comprehensive-gap-audit.md` (finding inventory
 A1–A13; A14 was rejected during revalidation and is retained in the report for
 traceability)
-
-> **Reconciled 2026-10-03 — corrective slices have since been authorized and
-> delivered.** A1 _**Closed**_ (GOAP-302), A3 _**Closed**_ (GOAP-304), A4
-> _**Closed**_ (GOAP-303), A5 _**Closed**_ (GOAP-300), A6 and A7
-> _**Closed**_ (GOAP-299), A8 _**implemented, deployment acceptance open**_
-> (GOAP-305), A9 _**Closed**_ (GOAP-306), A10 _**Closed**_ (GOAP-307), A2
-> _**Closed**_ (GOAP-308). Still open: A11–A13.
-> The finding inventory below is left as filed (a dated evidence record);
-> per-finding status lives in `analysis/comprehensive-gap-audit.md`.
 
 ## Purpose
 
