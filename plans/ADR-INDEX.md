@@ -181,6 +181,8 @@
 
 | 289 | The Playwright suite is inside the lint gate, and a directory cannot be both Codacy-excluded and unlinted (GOAP-289) | `plans/289-goap-e2e-suite-lint-coverage.md` | DONE (2026-09-29: `apps/tests` had no `package.json`, so `turbo run lint` never reached it while `.codacy.yml` excluded `**/tests/**` — the suite had no static analysis at all. Added a `lint` task, fixed 8 real errors at source, and scoped `no-non-null-assertion` off to `apps/tests/**` only, since widening it stranded 5 redundant disables in reader-core) |
 
+| 309    | Production demo must not be a dead end; smoke coverage must hit a DB-backed endpoint (GOAP) | `plans/309-goap-production-demo-outage.md` | IN PROGRESS (2026-10-04, evidence measured on pages.dev: catalog 500, demo fail-closed; tracking issue #1278) |
+
 ## Pending
 
 None. The next ADR number is chosen by the next plan author; see ADR-083 for the rule.
