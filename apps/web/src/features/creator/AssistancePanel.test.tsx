@@ -132,8 +132,11 @@ describe('AssistancePanel (Wave 4, synthetic fixtures for consent/UI paths)', ()
 
     const toggle = await screen.findByRole('checkbox');
     expect(toggle).not.toBeChecked();
-    expect(screen.getByText('asst.cloudConsentOff')).toBeInTheDocument();
-    expect(screen.getByText('asst.cloudNotQualified')).toBeInTheDocument();
+    // The consent labels render from a second state update (the fetch result
+    // lands after the checkbox exists), so they must be awaited too — a sync
+    // getByText here raced that update and flaked under CI load.
+    expect(await screen.findByText('asst.cloudConsentOff')).toBeInTheDocument();
+    expect(await screen.findByText('asst.cloudNotQualified')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'asst.dispatch' })).not.toBeInTheDocument();
   });
 
@@ -270,7 +273,7 @@ describe('AssistancePanel (Wave 4, synthetic fixtures for consent/UI paths)', ()
       expect(transformersStub.review).toHaveBeenCalledTimes(1);
     });
     expect(extract).toHaveBeenCalledWith(['c1.xhtml']);
-    expect(transformersStub.review.mock.calls[0][0]).toMatchObject({
+    expect(transformersStub.review.mock.calls[0]?.[0]).toMatchObject({
       categories: ['story', 'logic'],
       chapterText: { 'c1.xhtml': 'Once upon a time.' },
       chapterSha256: { 'c1.xhtml': 'sha256:x' },

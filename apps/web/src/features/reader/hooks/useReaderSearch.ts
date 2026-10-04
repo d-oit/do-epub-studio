@@ -73,6 +73,7 @@ export function useReaderSearch(book: Book | null, query: string) {
             while (index < items.length && collected.length < MAX_RESULTS) {
               if (isStale()) return;
               const item = items[index++];
+              if (!item) break;
               const loader = book.load.bind(book);
               try {
                 await item.load(loader);

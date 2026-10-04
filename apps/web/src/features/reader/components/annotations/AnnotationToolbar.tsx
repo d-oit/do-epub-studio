@@ -315,7 +315,7 @@ export function extractSelectionData(iframe: HTMLIFrameElement): SelectionData |
   }
 
   const rects = range.getClientRects();
-  const rect = rects.length > 0 ? rects[0] : range.getBoundingClientRect();
+  const rect = rects[0] ?? range.getBoundingClientRect();
 
   const iframeRect = iframe.getBoundingClientRect();
   // The toolbar is position: fixed in the reader document, so report the

@@ -48,7 +48,7 @@ describe('Offline Database — Sync Queue & Permissions', () => {
       const queue = await getSyncQueue();
 
       expect(queue).toHaveLength(1);
-      expect(queue[0].id).toBe('item-1');
+      expect(queue[0]?.id).toBe('item-1');
     });
 
     it('should remove queue items', async () => {
@@ -90,8 +90,8 @@ describe('Offline Database — Sync Queue & Permissions', () => {
       await updateSyncQueueItem(updated);
 
       const queue = await getSyncQueue();
-      expect(queue[0].attempts).toBe(2);
-      expect(queue[0].error).toBe('Network error');
+      expect(queue[0]?.attempts).toBe(2);
+      expect(queue[0]?.error).toBe('Network error');
     });
 
     it('should encrypt queue payload when token is set', async () => {
@@ -115,7 +115,7 @@ describe('Offline Database — Sync Queue & Permissions', () => {
 
       const queue = await getSyncQueue();
       expect(queue).toHaveLength(1);
-      expect((queue[0].payload as Record<string, unknown>).sensitive).toBe('private-data');
+      expect((queue[0]?.payload as Record<string, unknown>).sensitive).toBe('private-data');
     });
   });
 

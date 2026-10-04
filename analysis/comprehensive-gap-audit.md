@@ -81,6 +81,10 @@ and are not treated as open findings again.
   not a required PR check). Existing ZIP/CFI fixes from GOAP-297 are present.
   Remaining weak assertions that cannot fail are A4; the body-only offline
   reload is A5; RTL/locale proof concentration on login is A11.
+  _Reconciled 2026-10-03 — A4_ _**Closed**_ _(GOAP-303): the three
+  constant-true checks are replaced with behavioural assertions. A5_
+  _**Closed**_ _(GOAP-300): the offline reload proves a rendered chapter,
+  working controls and reconnect. A11 stays open._
 - **Security** — source-reviewed current controls: bearer sessions hashed at
   rest and atomic grant+session revocation (`auth/session.ts`,
   `routes/admin/grants.ts`), fresh per-request grant/capability resolution
@@ -122,7 +126,7 @@ results remain attributed to GOAP-291–297 and are not re-claimed here.
 | F6  | Missing metrics can look clean             | **Closed** (GOAP-291): `missingMetrics` exists. Fresh probe: `{}` → four missing keys; complete metrics → none; slow metrics → four budget findings.                                                                                                                                                                                                                               |
 | F7  | Viewport matrices diverged                 | **Closed** (GOAP-291): both matrices now cover the same 13 sizes (320×568 … 812×375); labels stay lane-local.                                                                                                                                                                                                                                                                      |
 | F8  | Progress/qualification claims drift        | **Partially closed**; remaining documentation drift is re-filed as **A2**. AI-03 remains `PARTIAL` (human creator style review, `plans/999…:87`), not a failed engine implementation.                                                                                                                                                                                              |
-| F9  | Vacuous insights assertion                 | **Closed** (GOAP-296): the `insightsVisible \|\| true` check is gone; the remaining constant-true assertions are in different specs and are A4.                                                                                                                                                                                                                                    |
+| F9  | Vacuous insights assertion                 | **Closed** (GOAP-296): the `insightsVisible \|\| true` check is gone; the remaining constant-true assertions were in different specs and are **also closed** — A4 → GOAP-303 (2026-10-02).                                                                                                                                                                                         |
 | F10 | Deployed CSP/model-origin acceptance       | **Open as an acceptance gap**, re-filed as **A12** (inference/pending proof; no CSP change was made by GOAP-296, and none is authorized here).                                                                                                                                                                                                                                     |
 
 ## Current findings
@@ -135,6 +139,8 @@ open finding.
 
 ### A1 — P1: ordinary annotation creation is not offline-first
 
+> _**Closed**_ (GOAP-302, 2026-10-02): durable offline creation of highlights and shared comments with idempotent replay and authenticated settlement.
+
 - **Priority / domains:** P1 · implementation, features
 - **Classification:** incomplete product integration (source-only)
 - **Anchors:** `PRODUCT.md:5,21,24`; `apps/web/src/features/reader/hooks/useAnnotationHandlers.ts:36-79` (highlight create), `:144-190` (comment create), `:193-207` (resolve is the only offline-persisted path); `apps/web/src/lib/api/annotations.ts:11-28,62-80`; `apps/web/src/lib/offline/annotation-sync.ts:18-71`
@@ -144,6 +150,8 @@ open finding.
 - **Observable acceptance:** authorized reader offline creates a highlight and a shared comment from a fixture passage → reload preserves both and their chapter/CFI/text anchors → reconnect produces the server items and settles pending local state. A rejected write stays an intelligible error, never a claimed successful annotation.
 
 ### A2 — P2: documentation still contradicts shipped behavior
+
+> _**Closed**_ (GOAP-308, 2026-10-03): `PRODUCT.md`'s core flow reads book-scoped email + password with recovery/invitation named as the link-based flows, and GOAP-999's acceptance paragraph 5 carries a dated supersession note for the F1 statement GOAP-293 closed (AI-03 untouched, still PARTIAL). The AI-01 row needed no edit.
 
 - **Priority / domains:** P2 · docs
 - **Classification:** documentation drift (source-only)
@@ -155,6 +163,8 @@ open finding.
 
 ### A3 — P1: locale sensor cannot select or verify this app's locale
 
+> _**Closed**_ (GOAP-304, 2026-10-03): the sensor activates the app's persisted locale (`localStorage['do-epub-locale']`) before loading the route and fails with `i18n-locale-not-applied` when `html[lang]` does not match the requested locale; en/de/ar acceptance and a wrong-key negative control are recorded in the plan.
+
 - **Priority / domains:** P1 · harness, i18n
 - **Classification:** harness integration mismatch (source-only) plus observed function-level blind spot
 - **Anchors:** `scripts/i18n-audit.mjs:27-30` (`WEB_AUDIT_LOCALE_COOKIE` or `?lang=` param); `scripts/web-ui/lib/i18n-audit.mjs:80-95` (only those switch mechanisms), `:105-120` (reads `lang` but validates only `dir`); `apps/web/src/stores/locale.ts:22-38` (navigator language + persisted `do-epub-locale`, no query/cookie consumer found in `apps/web/src`)
@@ -164,6 +174,8 @@ open finding.
 - **Observable acceptance:** configured `/login` audit for en/de/ar observes en/ltr, de/ltr, ar/rtl and translated text; an intentionally English document during the de probe reports a locale-activation/language failure instead of OK.
 
 ### A4 — P1: E2E checks still pass when their claimed behavior is absent
+
+> _**Closed**_ (GOAP-303, 2026-10-02): the three constant-true assertions are replaced with behavioural ones (empty state, loading state, 401 redirect).
 
 - **Priority / domain:** P1 · E2E
 - **Classification:** vacuous assertion (source-only)
@@ -175,6 +187,8 @@ open finding.
 
 ### A5 — P1: the offline reload test does not prove offline reading
 
+> _**Closed**_ (GOAP-300, 2026-10-02): the offline reload asserts a rendered chapter, working controls and reconnect over an encrypted cached signed-URL fallback.
+
 - **Priority / domain:** P1 · E2E
 - **Classification:** insufficient proof (source-only)
 - **Anchors:** `apps/tests/offline-reader.spec.ts:70-100`; `playwright.config.ts:116-123` (`pwa-chromium` with `serviceWorkers: 'allow'`); `.github/workflows/ci.yml:557-558` (invokes the PWA lane)
@@ -184,6 +198,8 @@ open finding.
 - **Observable acceptance:** online load of the fixture → SW/cache ready → offline reload → `OFFLINE TEST CONTENT` remains readable, reader controls work, and reconnect does not lose state. A body-only error document fails.
 
 ### A6 — P1: redaction destroys request-log correlation
+
+> _**Closed**_ (GOAP-299): shared correlation-preserving log scrubber at `packages/shared/src/redact.ts`.
 
 - **Priority / domain:** P1 · logging
 - **Classification:** privacy-control gap — observed at the scrub boundary; no credential exposure demonstrated
@@ -195,6 +211,8 @@ open finding.
 
 ### A7 — P1: client telemetry has no privacy scrub boundary
 
+> _**Closed**_ (GOAP-299): client sanitizer before console/buffer/endpoint; sensitive-key normalization fixed.
+
 - **Priority / domains:** P1 · security, logging
 - **Classification:** privacy-control gap (observed at the synthetic console boundary; external-collector consequence is source-only — no exfiltration demonstrated)
 - **Anchors:** `apps/web/src/lib/client-logger.ts:37-61` (raw buffer posted to `VITE_TELEMETRY_ENDPOINT`), `:82-102` (entry serialized unchanged to console and buffer); `docs/observability-telemetry.md:24-34,65-78` (external collectors permitted; secrets/PII/manuscript content prohibited); `apps/worker/src/routes/telemetry.ts:55-67,117-118` (Worker-side scrub cannot protect data already sent to a different collector); `apps/worker/src/lib/redact.ts:72-89` (key normalization strips `[-_]` while the sensitive set contains the hyphenated `set-cookie` entry, so `isSensitiveKey('Set-Cookie')` is false — observed)
@@ -204,6 +222,8 @@ open finding.
 - **Observable acceptance:** synthetic secret and personal-data markers are absent/redacted in captured console, queued payload and external-endpoint request, while trace/event/error classification stays usable. No real credentials or external service are needed. Any later-discovered genuine vulnerability follows private `SECURITY.md` disclosure before publication.
 
 ### A8 — P1: advertised telemetry retention has no implementation
+
+> _**Implemented**_ (GOAP-305, 2026-10-03) — **deployment acceptance OPEN**: `lib/telemetry-retention.ts` deletes in bounded batches from the entry's `scheduled` handler and `wrangler.jsonc` declares the weekly cron (both proven by test and `wrangler deploy --dry-run`), but the release deploys Pages only (`functions/` imports `app`, no separate Worker deploy, no Pages scheduled events), so the cron is not active until `apps/worker` is deployed standalone against the same D1. Until then the runbook's manual path is the control.
 
 - **Priority / domains:** P1 · implementation, docs, logging
 - **Classification:** unimplemented operational control (source-only)
@@ -215,6 +235,8 @@ open finding.
 
 ### A9 — P2: locale chunk rejection has no handled load-error state
 
+> _**Closed**_ (GOAP-306, 2026-10-03): a failed chunk is an explicit state — `ensureLocale` reports `false` (logged once per locale, no unhandled rejection), `html[lang]`/`dir` and `useTranslation().locale` describe what is rendered, and reselecting the language reloads because a rejected dynamic import stays rejected for the document's lifetime.
+
 - **Priority / domain:** P2 · i18n
 - **Classification:** unhandled failure path (source-only)
 - **Anchors:** `apps/web/src/i18n/index.ts:16-22` (`ensureLocale` propagates dynamic-import rejection), `:23-50` (per-locale dynamic imports); `apps/web/src/hooks/useTranslation.ts:21-35` (`.then` without rejection handler; `loadedLocale` stays null), `:37-41` (English fallback for the mounted locale); `apps/web/src/hooks/useDocumentLocale.ts:17-22` (advertises the selected language/direction independently of load success)
@@ -224,6 +246,8 @@ open finding.
 - **Observable acceptance:** abort the selected Arabic chunk during navigation → no unhandled rejection and no silent claim of fully Arabic content → after an explicit user retry/reselection succeeds, translated controls and document language/direction agree.
 
 ### A10 — P2: dates and byte numbers ignore the selected UI locale
+
+> _**Closed**_ (GOAP-307, 2026-10-03): `formatBytes` formats through `Intl.NumberFormat` on the active UI locale (binary ladder unchanged) and the admin session table uses the store-aware `formatDateTime`; no `toLocaleString()` call site remains under `apps/web/src`.
 
 - **Priority / domain:** P2 · i18n
 - **Classification:** formatting-locale omission (source-only dates; observed bytes)
@@ -299,6 +323,11 @@ open finding.
 Recommendations only — no UI, API, schema, retention or permission policy is
 selected or changed. **Prioritize corrective A1/A3/A4/A5/A6/A7/A8 before
 expanding either surface.**
+
+_Reconciled 2026-10-03 — A1_ _**Closed**_ _(GOAP-302), A4_ _**Closed**_
+_(GOAP-303), A5_ _**Closed**_ _(GOAP-300), A6 and A7_ _**Closed**_
+_(GOAP-299). The open corrective set is A3 and A8 first, then the P2 group
+A2, A9–A13._
 
 1. **Cross-device reading-insights display.** `apps/worker/src/routes/reader/insights.ts:26-67` already serves history; the current reader panel computes local history (`InfoPanel.tsx:52-65`) and targeted searches found no app consumer of the GET surface. Success: a fresh authenticated device shows the server history.
 2. **Authorized admin aggregate display.** `apps/worker/src/routes/admin/insights.ts:32-65` serves book-level aggregates with no web consumer. Success: an authorized admin sees the server aggregate for the authorized scope without individual reader timelines.
@@ -386,14 +415,28 @@ Highest-priority corrective items first (each needs its own executable spec and
 authorization; this audit authorizes none of them):
 
 1. **A1** — ordinary annotation creation offline-first (product promise).
+   _**Closed**_ **(GOAP-302, 2026-10-02)**: durable offline creation, idempotent
+   replay, authenticated settlement.
 2. **A3** — locale sensor that can actually select and verify this app's locale.
+   _**Closed**_ **(GOAP-304, 2026-10-03)**: activation through the app's own
+   persisted locale plus a declared-language contract.
 3. **A4** — remove the three remaining non-failing E2E assertions.
+   _**Closed**_ **(GOAP-303, 2026-10-02)**: behavioural replacements for the
+   empty-state, loading-state and 401 anchors.
 4. **A5** — offline reload must prove offline reading, not body presence.
+   _**Closed**_ **(GOAP-300, 2026-10-02)**: the offline reload asserts a
+   rendered chapter, working controls and reconnect, over an encrypted cached
+   signed-URL fallback.
 5. **A6** — preserve real trace IDs at the log boundary.
+   _**Closed**_ **(GOAP-299)**: shared correlation-preserving log scrubber.
 6. **A7** — bounded client-side log sanitizer; fix sensitive-key normalization.
+   _**Closed**_ **(GOAP-299)**: client sanitizer before console/buffer/endpoint.
 7. **A8** — deliverable telemetry retention owner for the deployed D1.
+   _**Closed**_ **(GOAP-305, 2026-10-03)**: `scheduled` handler + weekly cron +
+   bounded-batch deletion; docs match.
 8. **A2**, **A9**, **A10**, **A11**, **A12**, **A13** — P2 drift/failure-path/
    formatting/coverage/CSP-acceptance/toolchain items, in that order.
+   _A9 **Closed** (GOAP-306, 2026-10-03); the rest remain._
 9. **Optional opportunities** — cross-device insights display and admin
    aggregate display, only after the corrective set above.
 

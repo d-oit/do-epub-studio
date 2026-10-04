@@ -1,6 +1,6 @@
 # GOAP-301: Strictness parity for `apps/web` and `apps/worker`
 
-**Status:** PROPOSED
+**Status:** DONE
 **Date:** 2026-10-02
 **Type:** Follow-up corrective plan (authorized by ADR-300)
 **ADRs referenced:** ADR-300 (typecheck scope + strictness parity), ADR-024
@@ -12,6 +12,31 @@ single ad-hoc root `tsc` run measured ~260 latent findings in those two
 packages (≈190 in `apps/web`, ≈70 in `apps/worker`), invisible to every gate
 because their own tsconfigs are authoritative and a root sweep no longer
 re-checks them (ADR-300).
+
+## Outcome (2026-10-02)
+
+Option (b) from phase 1 was chosen: the two app packages adopt the flag while
+keeping their own `lib`/`jsx`/`types` overrides. Enabling it surfaced **247**
+findings — 20 in package source, 227 in tests (the estimate in this plan was
+~260, so the split matched: `apps/web` 182, `apps/worker` 65). All are fixed;
+both packages typecheck clean with the flag on.
+
+- **Source (20)**: guards and defaults where the index read is genuinely
+  fallible (`useReaderSearch`'s worker cursor, `stores/reader`'s reply stack,
+  `rate-limiter-do`'s path captures), `?.`/`??` where a value can legitimately
+  be absent (`i18n.translate` catalogs, `InsightsSection`, `client-logger`'s
+  last entry), and `slice(0, 10)` instead of `split('T')[0]` for ISO dates.
+- **Tests (227)**: `arr[0]?.prop` in assertions (the convention
+  `packages/reader-core` tests already use) and a `defined(value, name?)`
+  helper (`apps/**/src/__tests__/helpers.ts`) for element lookups where a
+  missing value must fail the test loudly — including the `fireEvent.*` call
+  sites that previously passed `HTMLElement | undefined` into the DOM.
+- Removed one now-stale `eslint-disable ... no-unnecessary-type-assertion`
+  directive that `--max-warnings 0` rejects once the directive stops matching.
+
+Evidence: `pnpm turbo run typecheck --force` 7/7, web 144 files / 1442 tests,
+worker 70 / 534, `pnpm lint` clean, knip/madge clean, `pnpm format:check`
+clean.
 
 ## Goal
 
@@ -53,8 +78,8 @@ repository-wide typing decision and make the diff unreviewable.
 
 ## Acceptance
 
-- The chosen policy is written in ADR-300, and the two package tsconfigs match
-  it — no package is left in an undocumented middle state.
+- [x] The chosen policy is written in ADR-300, and the two package tsconfigs
+      match it — no package is left in an undocumented middle state.
 - If the flag is adopted: zero `noUncheckedIndexedAccess` findings under both
   packages, all unit suites green, no behavioural change in app source.
 - If the opt-out is chosen: the ADR states why, and a comment in each package

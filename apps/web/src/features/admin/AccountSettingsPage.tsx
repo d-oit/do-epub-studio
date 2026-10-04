@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '../../hooks/useTranslation';
+import { formatDateTime as formatDateTimeForLocale } from '../../lib/i18n-format';
 import { apiRequest } from '../../lib/api';
 import { useAuthStore } from '../../stores/auth';
 import { Button, Input } from '../../components/ui';
@@ -21,10 +22,16 @@ interface SessionsResponse {
   sessions: AdminSession[];
 }
 
+/**
+ * The stored value may be absent or unparseable (the API's raw string is then
+ * shown as-is); everything that parses goes through the store-aware helper so
+ * session dates follow the selected UI locale, not the browser default
+ * (A10/GOAP-307).
+ */
 function formatDateTime(value: string | null | undefined): string {
   if (!value) return '—';
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
+  return Number.isNaN(date.getTime()) ? value : formatDateTimeForLocale(date);
 }
 
 /** Admin route paths (constants avoid i18next/no-literal-string in JSX). */

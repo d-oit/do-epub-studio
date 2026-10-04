@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { FeedbackComposerModal } from './FeedbackComposerModal';
+import { defined } from '../../../../__tests__/helpers';
 
 vi.mock('../../../../hooks/useTranslation', () => ({
   useTranslation: () => ({ t: (k: string) => k }),
@@ -26,7 +27,7 @@ describe('FeedbackComposerModal', () => {
   it('keeps typed text when the parent passes an equivalent new selection object', () => {
     const { rerender } = render(<FeedbackComposerModal {...baseProps} selection={selection} />);
     const explanation = screen.getAllByRole('textbox')[0];
-    fireEvent.change(explanation, { target: { value: 'Tense slips here.' } });
+    fireEvent.change(defined(explanation), { target: { value: 'Tense slips here.' } });
     expect(explanation).toHaveValue('Tense slips here.');
 
     // Opening/kind changes hand the modal a fresh selection object; an equal
@@ -38,7 +39,9 @@ describe('FeedbackComposerModal', () => {
 
   it('starts a fresh draft when the kind changes', () => {
     const { rerender } = render(<FeedbackComposerModal {...baseProps} selection={selection} />);
-    fireEvent.change(screen.getAllByRole('textbox')[0], { target: { value: 'Tense slips here.' } });
+    fireEvent.change(defined(screen.getAllByRole('textbox')[0]), {
+      target: { value: 'Tense slips here.' },
+    });
 
     rerender(<FeedbackComposerModal {...baseProps} kind="comment" selection={selection} />);
 

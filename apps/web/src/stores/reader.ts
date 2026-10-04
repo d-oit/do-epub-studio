@@ -134,7 +134,8 @@ function rebuildTree(
     flat.push(c);
     if (c.replies) {
       for (let i = c.replies.length - 1; i >= 0; i--) {
-        stack.push(c.replies[i]);
+        const reply = c.replies[i];
+        if (reply) stack.push(reply);
       }
     }
   }

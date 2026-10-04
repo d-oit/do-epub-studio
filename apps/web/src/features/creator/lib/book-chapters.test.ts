@@ -85,10 +85,10 @@ describe('loadCreatorBook (GOAP-293 grounding source)', () => {
     expect(chapterText).toEqual({ 'c2.xhtml': 'Second chapter.' });
     expect(chapterSha256['c2.xhtml']).toMatch(/^sha256:[0-9a-f]{64}$/);
 
-    expect(sections[0].load).not.toHaveBeenCalled();
-    expect(sections[0].unload).not.toHaveBeenCalled();
-    expect(sections[1].load).toHaveBeenCalledTimes(1);
-    expect(sections[1].unload).toHaveBeenCalledTimes(1);
+    expect(sections[0]?.load).not.toHaveBeenCalled();
+    expect(sections[0]?.unload).not.toHaveBeenCalled();
+    expect(sections[1]?.load).toHaveBeenCalledTimes(1);
+    expect(sections[1]?.unload).toHaveBeenCalledTimes(1);
   });
 
   it('produces identical hashes for identical text and hashes the full text', async () => {

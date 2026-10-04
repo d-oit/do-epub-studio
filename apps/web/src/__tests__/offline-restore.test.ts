@@ -163,7 +163,7 @@ describe('Offline restore — annotations (M4 from Plan 118)', () => {
 
     const queue = await getSyncQueue();
     expect(queue).toHaveLength(1);
-    expect(queue[0].type).toBe('reading-insight');
+    expect(queue[0]?.type).toBe('reading-insight');
 
     // Simulate successful sync: remove from queue
     await removeSyncQueueItem('sq-ri-1');
@@ -328,8 +328,8 @@ describe('Offline restore — annotations (M4 from Plan 118)', () => {
     // Verify reading insights restored
     const insights = await getReadingInsightsForBook(bookId);
     expect(insights).toHaveLength(1);
-    expect(insights[0].activeMinutes).toBe(20);
-    expect(insights[0].activePages).toBe(5);
+    expect(insights[0]?.activeMinutes).toBe(20);
+    expect(insights[0]?.activePages).toBe(5);
 
     // Verify sync queue has all 4 types
     const queue = await getSyncQueue();
