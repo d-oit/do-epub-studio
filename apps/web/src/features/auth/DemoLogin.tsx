@@ -4,7 +4,7 @@ import { useTranslation } from '../../hooks/useTranslation';
 import { apiRequest } from '../../lib/api';
 import { useAuthStore } from '../../stores/auth';
 import { Button } from '../../components/ui';
-import { DEMO_READER_EMAIL } from '../../config/demo-config';
+import { DEMO_BOOK_SLUG, DEMO_READER_EMAIL, DEMO_READER_PASSWORD } from '../../config/demo-config';
 
 export interface SessionCapabilities {
   canRead: boolean;
@@ -50,8 +50,22 @@ export function useDemoLogin() {
       });
       setAuth(toAuthStorePayload(data, DEMO_READER_EMAIL));
       void navigate(`/read/${data.book.slug}`);
-    } catch (err) {
-      setError((err as Error).message);
+    } catch (primaryErr) {
+      // Fallback: If dedicated demo endpoint is disabled on the server, attempt standard access request with demo credentials
+      try {
+        const data = await apiRequest<SessionResponse>('/api/access/request', {
+          method: 'POST',
+          body: JSON.stringify({
+            email: DEMO_READER_EMAIL,
+            password: DEMO_READER_PASSWORD,
+            bookSlug: DEMO_BOOK_SLUG,
+          }),
+        });
+        setAuth(toAuthStorePayload(data, DEMO_READER_EMAIL));
+        void navigate(`/read/${data.book.slug}`);
+      } catch {
+        setError((primaryErr as Error).message);
+      }
     } finally {
       setLoading(false);
     }
