@@ -434,14 +434,6 @@ export const nl: Record<TranslationKeys, TranslationValue> = {
   'asst.enginePrepare': 'Verhaal- en logica-engine voorbereiden',
   'asst.engineDownloading': 'Engine wordt voorbereid: {percent} %',
   'asst.engineReady': 'Verhaal- en logica-engine gereed',
-  'asst.loadChapters': 'Boektekst laden',
-  'asst.loadingBook': 'Boek wordt geladen…',
-  'asst.loadFailed': 'De boektekst kon niet worden geladen.',
-  'asst.noReadAccess':
-    'Dit account heeft geen leestoegang tot dit boek, dus de tekst kan niet worden beoordeeld.',
-  'asst.textRequired':
-    'Laad de boektekst en selecteer minstens één hoofdstuk voordat u een controle start.',
-  'asst.chaptersLabel': 'Te beoordelen hoofdstukken',
   'asst.engineNote':
     'Eenmalige download van ongeveer 500 MB. Het model draait op dit apparaat — uw manuscript wordt nooit geüpload.',
 

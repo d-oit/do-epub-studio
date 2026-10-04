@@ -122,7 +122,7 @@ test.describe('Edge Cases & Error Handling', () => {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            locator: { cfi: 'epubcfi(/6/4!/4)' },
+            locator: { cfi: 'epubcfi(/6/4)' },
             color: '#ffff00',
             text: 'Test highlight',
           }),
@@ -176,7 +176,7 @@ test.describe('Edge Cases & Error Handling', () => {
         const res = await fetch('/api/books/my-test-book/progress', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ locator: { cfi: 'epubcfi(/6/4!/4)' }, progressPercent: 0.5 }),
+          body: JSON.stringify({ locator: { cfi: 'epubcfi(/6/4)' }, progressPercent: 0.5 }),
         });
         outcomes.push({ action: 'progress', ok: res.ok });
       } catch {
@@ -189,7 +189,7 @@ test.describe('Edge Cases & Error Handling', () => {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            locator: { cfi: 'epubcfi(/6/4!/4)' },
+            locator: { cfi: 'epubcfi(/6/4)' },
             color: '#ffff00',
             text: 'note',
           }),
@@ -204,7 +204,7 @@ test.describe('Edge Cases & Error Handling', () => {
         const res = await fetch('/api/books/my-test-book/bookmarks', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ locator: { cfi: 'epubcfi(/6/4!/4)' }, label: 'bookmark' }),
+          body: JSON.stringify({ locator: { cfi: 'epubcfi(/6/4)' }, label: 'bookmark' }),
         });
         outcomes.push({ action: 'bookmark', ok: res.ok });
       } catch {

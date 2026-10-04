@@ -3,7 +3,6 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { AdminBookResponsesPage } from './BooksPage';
 import { MemoryRouter } from 'react-router-dom';
 import { apiRequest } from '../../lib/api';
-import { defined } from '../../__tests__/helpers';
 
 vi.mock('../../hooks/useTranslation', () => ({
   useTranslation: () => ({ t: (k: string) => k }),
@@ -149,7 +148,7 @@ describe('AdminBookResponsesPage — rendering & navigation', () => {
     });
     const manageButtons = screen.getAllByText(/manageAccess/);
     if (manageButtons.length > 0) {
-      fireEvent.click(defined(manageButtons[0]));
+      fireEvent.click(manageButtons[0]);
     }
   });
 
@@ -165,7 +164,7 @@ describe('AdminBookResponsesPage — rendering & navigation', () => {
     });
     const backButtons = screen.getAllByText(/backToReader/);
     if (backButtons.length > 0) {
-      fireEvent.click(defined(backButtons[0]));
+      fireEvent.click(backButtons[0]);
     }
   });
 

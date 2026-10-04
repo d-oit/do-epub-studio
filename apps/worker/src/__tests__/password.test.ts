@@ -13,7 +13,6 @@
  *     correct/incorrect passwords produce true/false correctly.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { defined } from './helpers';
 
 vi.mock('argon2-wasm-edge', () => ({
   /**
@@ -84,7 +83,7 @@ describe('hashPassword', () => {
     await hashPassword(process.env.TEST_PASSWORD || 'test-password');
 
     expect(mockArgon2id).toHaveBeenCalledOnce();
-    const callArg = defined(mockArgon2id.mock.calls[0]?.[0]);
+    const callArg = mockArgon2id.mock.calls[0][0];
 
     expect(callArg).toMatchObject({
       password: process.env.TEST_PASSWORD || 'test-password',

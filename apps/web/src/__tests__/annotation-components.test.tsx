@@ -3,7 +3,6 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { CommentItem } from '../features/reader/components/annotations/CommentItem';
 import { HighlightItem } from '../features/reader/components/annotations/HighlightItem';
 import { formatDate } from '../features/reader/components/annotations/formatDate';
-import { defined } from './helpers';
 
 vi.mock('../hooks/useTranslation', () => ({
   useTranslation: () => ({
@@ -263,7 +262,7 @@ describe('CommentItem', () => {
     };
     render(<CommentItem {...props} />);
     const replyButtons = screen.getAllByText('comment.reply');
-    fireEvent.click(defined(replyButtons[0]));
+    fireEvent.click(replyButtons[0]);
     expect(baseProps.handleReply).toHaveBeenCalledWith('c1');
   });
 

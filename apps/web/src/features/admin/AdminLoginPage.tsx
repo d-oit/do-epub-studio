@@ -54,8 +54,25 @@ function useAdminDemoLogin() {
       }
       setAdminAuth({ sessionToken: data.token, email: data.user.email });
       void navigate('/admin/books');
-    } catch (err) {
-      setError((err as Error).message || t('admin.login.invalidCredentials'));
+    } catch (primaryErr) {
+      // Fallback: If dedicated admin demo endpoint is disabled on the server, attempt standard admin login with demo credentials
+      try {
+        const data = await apiRequest<AdminLoginResponse>('/api/admin/login', {
+          method: 'POST',
+          body: JSON.stringify({
+            email: DEMO_ADMIN_EMAIL,
+            password: DEMO_ADMIN_PASSWORD,
+          }),
+        });
+        if (data.token) {
+          setAdminAuth({ sessionToken: data.token, email: data.user.email });
+          void navigate('/admin/books');
+          return;
+        }
+      } catch {
+        // preserve primary error
+      }
+      setError((primaryErr as Error).message || t('admin.login.invalidCredentials'));
     } finally {
       setLoading(false);
     }

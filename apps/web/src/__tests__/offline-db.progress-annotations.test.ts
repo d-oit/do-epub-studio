@@ -5,15 +5,13 @@ import {
   saveProgress,
   getProgress,
   getUnsyncedProgress,
+  saveAnnotation,
+  getAnnotations,
+  getUnsyncedAnnotations,
   setTokenOverride,
   type ProgressEntry,
   type AnnotationEntry,
 } from '../lib/offline/db';
-import {
-  saveAnnotation,
-  getAnnotations,
-  getUnsyncedAnnotations,
-} from '../lib/offline/annotation-mutations';
 
 const TEST_TOKEN = 'test-session-token-for-offline-db';
 const TEST_TOKEN_2 = 'different-session-token-for-offline-db';
@@ -136,7 +134,7 @@ describe('Offline Database — Progress & Annotations', () => {
 
       const unsyncedList = await getUnsyncedProgress();
       expect(unsyncedList).toHaveLength(1);
-      expect(unsyncedList[0]?.id).toBe('unsynced-1');
+      expect(unsyncedList[0].id).toBe('unsynced-1');
     });
 
     it('should gracefully handle key rotation: old encrypted entry is skipped with new token', async () => {
@@ -200,8 +198,8 @@ describe('Offline Database — Progress & Annotations', () => {
 
       const annotations = await getAnnotations('book-1');
       expect(annotations).toHaveLength(1);
-      expect(annotations[0]?.id).toBe('annotation-1');
-      expect(annotations[0]?.text).toBe('Test highlight');
+      expect(annotations[0].id).toBe('annotation-1');
+      expect(annotations[0].text).toBe('Test highlight');
     });
 
     it('should return unsynced annotations', async () => {
@@ -232,7 +230,7 @@ describe('Offline Database — Progress & Annotations', () => {
 
       const unsyncedList = await getUnsyncedAnnotations();
       expect(unsyncedList).toHaveLength(1);
-      expect(unsyncedList[0]?.id).toBe('unsynced-ann');
+      expect(unsyncedList[0].id).toBe('unsynced-ann');
     });
   });
 

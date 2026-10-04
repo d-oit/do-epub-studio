@@ -134,7 +134,7 @@ function generateMarkdownExport(title: string, data: ExportData): string {
 
 /** Today's date as `YYYY-MM-DD`, shared by both export formats. */
 function today(): string {
-  return new Date().toISOString().slice(0, 10);
+  return new Date().toISOString().split('T')[0];
 }
 
 /**

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { createSpanId, createTraceId } from '@do-epub-studio/shared';
 import { apiRequest, fetchHighlights, fetchComments, fetchProgress } from '../../../lib/api/index';
 import {
@@ -6,7 +6,7 @@ import {
   createPerformanceMark,
   measurePerformance,
 } from '../../../lib/client-logger';
-import { getProgress, getAnnotations, subscribeAnnotationChanges } from '../../../lib/offline';
+import { getProgress, getAnnotations } from '../../../lib/offline';
 import type { Highlight, Comment, Bookmark, ReadingProgress } from '../../../stores';
 import { mapOfflineHighlight, mapOfflineComment, mapOfflineBookmark } from './mapOfflineAnnotation';
 
@@ -27,144 +27,26 @@ export function useReaderDataLoader({
   setBookmarks,
   setProgress,
 }: UseReaderDataLoaderOptions): void {
-  const generationRef = useRef(0);
-
   useEffect(() => {
     if (!sessionToken || !bookId) return;
 
-    // Narrowed once: the effect already returned without a session/book, and
-    // TS cannot carry that guard into the nested async function.
-    const currentBookId: string = bookId;
-    const currentSessionToken: string = sessionToken;
-
-    let isCancelled = false;
-
-    async function loadData() {
-      const currentGen = ++generationRef.current;
+    void (async () => {
       let source: 'server' | 'offline' | 'default' = 'default';
 
-      if (!navigator.onLine) {
-        createPerformanceMark('rehydrate-offline-start');
-        try {
-          const [progressResult, annotationsResult] = await Promise.allSettled([
-            getProgress(currentBookId),
-            getAnnotations(currentBookId),
-          ]);
-          if (isCancelled || currentGen !== generationRef.current) return;
-
-          const cachedProgress =
-            progressResult.status === 'fulfilled' ? progressResult.value : null;
-          const offlineAnnotations =
-            annotationsResult.status === 'fulfilled' ? annotationsResult.value : [];
-
-          if (cachedProgress) {
-            setProgress({
-              locator: { cfi: cachedProgress.cfi },
-              progressPercent: cachedProgress.percentage,
-              updatedAt: new Date(cachedProgress.lastRead).toISOString(),
-            });
-            source = 'offline';
-          }
-
-          const offlineHighlights = offlineAnnotations
-            .filter((a) => a.type === 'highlight')
-            .map(mapOfflineHighlight);
-          const offlineComments = offlineAnnotations
-            .filter((a) => a.type === 'comment')
-            .map(mapOfflineComment);
-          const offlineBookmarks = offlineAnnotations
-            .filter((a) => a.type === 'bookmark')
-            .map(mapOfflineBookmark);
-
-          setHighlights(offlineHighlights);
-          setComments(offlineComments);
-          setBookmarks(offlineBookmarks);
-          source = 'offline';
-        } finally {
-          createPerformanceMark('rehydrate-offline-end');
-          const rehydrateMs = measurePerformance(
-            'rehydrate-offline',
-            'rehydrate-offline-start',
-            'rehydrate-offline-end',
-          );
-          if (rehydrateMs !== undefined) {
-            logClientEvent({
-              level: 'info',
-              traceId: createTraceId(),
-              spanId: createSpanId(),
-              event: 'rehydrate-offline',
-              metadata: { durationMs: Math.round(rehydrateMs), bookId },
-            });
-          }
-        }
-        return;
-      }
-
-      // Online: read local annotations to merge pending/failed records
-      const localAnnotationsPromise = getAnnotations(currentBookId);
-
       try {
-        const [hl, cm, bm, pg, localAnnotations] = await Promise.all([
-          fetchHighlights(currentBookId, currentSessionToken),
-          fetchComments(currentBookId, currentSessionToken),
-          apiRequest<Bookmark[]>(`/api/books/${currentBookId}/bookmarks`, {
-            token: currentSessionToken,
-          }),
-          fetchProgress(currentBookId, currentSessionToken),
-          localAnnotationsPromise.catch(() => []),
+        const [hl, cm, bm, pg] = await Promise.all([
+          fetchHighlights(bookId, sessionToken),
+          fetchComments(bookId, sessionToken),
+          apiRequest<Bookmark[]>(`/api/books/${bookId}/bookmarks`, { token: sessionToken }),
+          fetchProgress(bookId, sessionToken),
         ]);
-
-        if (isCancelled || currentGen !== generationRef.current) return;
-
-        // Unsynced/failed local highlights merged into server highlights
-        const unsyncedLocalHighlights = localAnnotations
-          .filter((a) => a.type === 'highlight' && !a.synced)
-          .map(mapOfflineHighlight);
-
-        // Server wins matching IDs; append unsynced/failed
-        const mergedHighlights = [
-          ...hl,
-          ...unsyncedLocalHighlights.filter(
-            (local) => !hl.some((server) => server.id === local.id),
-          ),
-        ];
-
-        // Unsynced/failed local comments merged into server comments
-        // If an unsynced local comment has a resolve mutation on an existing ID, keep local status
-        const unsyncedLocalComments = localAnnotations
-          .filter((a) => a.type === 'comment' && !a.synced)
-          .map(mapOfflineComment);
-
-        const mergedComments = cm.map((serverCm) => {
-          const localMatch = unsyncedLocalComments.find((l) => l.id === serverCm.id);
-          if (localMatch && localMatch.status) {
-            return {
-              ...serverCm,
-              status: localMatch.status,
-              resolvedAt: localMatch.resolvedAt ?? serverCm.resolvedAt,
-              syncState: localMatch.syncState,
-              syncError: localMatch.syncError,
-            };
-          }
-          return serverCm;
-        });
-
-        // Add remaining local-only unsynced comments
-        for (const localCm of unsyncedLocalComments) {
-          if (!mergedComments.some((c) => c.id === localCm.id)) {
-            mergedComments.push(localCm);
-          }
-        }
-
-        setHighlights(mergedHighlights);
-        setComments(mergedComments);
+        setHighlights(hl);
+        setComments(cm);
         setBookmarks(bm);
         setProgress(pg);
         source = 'server';
       } catch (err) {
         const error = err instanceof Error ? err : new Error(String(err));
-        const status = (error as { status?: number }).status;
-
         logClientEvent({
           level: 'warn',
           event: 'reader.load_failed',
@@ -174,19 +56,13 @@ export function useReaderDataLoader({
           metadata: { bookId },
         });
 
-        // On server 401/403 do not fall back to annotations as if access were valid
-        if (status === 401 || status === 403) {
-          return;
-        }
-
+        // Fallback to offline cache if server fetch fails (A6)
         createPerformanceMark('rehydrate-offline-start');
         try {
           const [progressResult, annotationsResult] = await Promise.allSettled([
-            getProgress(currentBookId),
-            getAnnotations(currentBookId),
+            getProgress(bookId),
+            getAnnotations(bookId),
           ]);
-          if (isCancelled || currentGen !== generationRef.current) return;
-
           const cachedProgress =
             progressResult.status === 'fulfilled' ? progressResult.value : null;
           const offlineAnnotations =
@@ -212,9 +88,9 @@ export function useReaderDataLoader({
               .filter((a) => a.type === 'bookmark')
               .map(mapOfflineBookmark);
 
-            setHighlights(offlineHighlights);
-            setComments(offlineComments);
-            setBookmarks(offlineBookmarks);
+            if (offlineHighlights.length > 0) setHighlights(offlineHighlights);
+            if (offlineComments.length > 0) setComments(offlineComments);
+            if (offlineBookmarks.length > 0) setBookmarks(offlineBookmarks);
             if (source === 'default') source = 'offline';
 
             logClientEvent({
@@ -223,13 +99,14 @@ export function useReaderDataLoader({
               traceId: createTraceId(),
               spanId: createSpanId(),
               metadata: {
-                bookId: currentBookId,
+                bookId,
                 highlights: offlineHighlights.length,
                 comments: offlineComments.length,
                 bookmarks: offlineBookmarks.length,
               },
             });
           }
+          createPerformanceMark('rehydrate-offline-end');
           const rehydrateMs = measurePerformance(
             'rehydrate-offline',
             'rehydrate-offline-start',
@@ -245,6 +122,7 @@ export function useReaderDataLoader({
             });
           }
         } catch (cacheErr) {
+          // Log cache errors at debug level — non-fatal, server data already failed
           logClientEvent({
             level: 'debug',
             event: 'reader.offline_cache_error',
@@ -266,19 +144,6 @@ export function useReaderDataLoader({
           metadata: { bookId, source },
         });
       }
-    }
-
-    void loadData();
-
-    const unsubscribe = subscribeAnnotationChanges((changedBookId) => {
-      if (changedBookId === bookId && !isCancelled) {
-        void loadData();
-      }
-    });
-
-    return () => {
-      isCancelled = true;
-      unsubscribe();
-    };
+    })();
   }, [sessionToken, bookId, setHighlights, setComments, setBookmarks, setProgress]);
 }

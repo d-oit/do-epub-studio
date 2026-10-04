@@ -8,7 +8,7 @@ describe('Security Posture (Worker)', () => {
     const csp = securityHeaders['Content-Security-Policy'];
     const scriptSrcMatch = csp?.match(/script-src ([^;]+)/);
     if (scriptSrcMatch) {
-      const tokens = scriptSrcMatch[1]?.split(' ');
+      const tokens = scriptSrcMatch[1].split(' ');
       expect(tokens).not.toContain("'unsafe-eval'");
     }
     expect(csp).toContain('report-uri /api/csp-report');
@@ -16,7 +16,7 @@ describe('Security Posture (Worker)', () => {
     const minimalCsp = minimalSecurityHeaders['Content-Security-Policy'];
     const minimalScriptSrcMatch = minimalCsp?.match(/script-src ([^;]+)/);
     if (minimalScriptSrcMatch) {
-      const tokens = minimalScriptSrcMatch[1]?.split(' ');
+      const tokens = minimalScriptSrcMatch[1].split(' ');
       expect(tokens).not.toContain("'unsafe-eval'");
     }
     expect(minimalCsp).toContain('report-uri /api/csp-report');

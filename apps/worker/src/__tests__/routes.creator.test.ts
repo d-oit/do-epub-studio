@@ -12,7 +12,6 @@ import {
 import { makeAuthContext } from './fixtures';
 import { app } from '../app';
 import { assertBookAccess } from '../lib/tenant-isolation';
-import { defined } from './helpers';
 
 vi.mock('../lib/tenant-isolation', () => ({
   parseLocatorRow: vi.fn(),
@@ -72,7 +71,7 @@ describe('Creator Review Routes', () => {
     expect(res.status).toBe(200);
     const payload: { data: { id: string }[] } = await res.json();
     expect(payload.data).toHaveLength(1);
-    expect(payload.data[0]?.id).toBe('book-1');
+    expect(payload.data[0].id).toBe('book-1');
   });
 
   it('returns an empty list (not a redirect) for unassigned sessions', async () => {
@@ -121,7 +120,7 @@ describe('Creator Review Routes', () => {
     expect(res.status).toBe(200);
     const payload: { data: Record<string, unknown>[] } = await res.json();
     expect(payload.data).toHaveLength(1);
-    const item = defined(payload.data[0]);
+    const item = payload.data[0];
     expect(item.submitterEmail).toBe('reader@example.com');
     expect(item.proposedText).toBe('Consider, a comma.');
     const anchor = item.anchor as Record<string, unknown>;
@@ -248,7 +247,7 @@ describe('Creator Review Routes', () => {
     );
     expect(String(insert?.[1])).toMatch(/'creator'/);
     const payload: { data: { replies: { authorRole: string }[] } } = await res.json();
-    expect(payload.data.replies[0]?.authorRole).toBe('creator');
+    expect(payload.data.replies[0].authorRole).toBe('creator');
   });
 
   it('exports selected items with exact text and provenance', async () => {
@@ -270,8 +269,8 @@ describe('Creator Review Routes', () => {
     expect(res.status).toBe(200);
     const payload: { data: { items: Record<string, unknown>[] } } = await res.json();
     expect(payload.data.items).toHaveLength(1);
-    expect(payload.data.items[0]?.body).toBe('Consider a comma.');
-    expect(payload.data.items[0]?.proposedText).toBe('Consider, a comma.');
+    expect(payload.data.items[0].body).toBe('Consider a comma.');
+    expect(payload.data.items[0].proposedText).toBe('Consider, a comma.');
   });
 
   it('denies export to unassigned sessions (403)', async () => {

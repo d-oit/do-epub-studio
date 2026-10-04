@@ -1,5 +1,5 @@
 /**
- * AI plugin architecture — type definitions (issue #318, plan 262).
+ * AI plugin architecture — type definitions (issue #318, GOAP-318).
  *
  * AI-assisted features are client-side plugins registered against the
  * reader pipeline. Every capability invocation is gated by explicit user
@@ -70,7 +70,7 @@ export interface AiSummarizationResult {
 
 /**
  * Text-processing capability (summarization; translation will extend this
- * interface as the architecture matures — see plans/archive/262-goap-issue-318.md).
+ * interface as the architecture matures — see GOAP-318 ADR).
  */
 export interface TextProcessingCapability {
   readonly kind: 'text';

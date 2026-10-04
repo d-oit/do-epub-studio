@@ -441,13 +441,6 @@ export const en = {
   'asst.enginePrepare': 'Prepare story and logic engine',
   'asst.engineDownloading': 'Preparing engine: {percent}%',
   'asst.engineReady': 'Story and logic engine ready',
-  'asst.loadChapters': 'Load book text',
-  'asst.loadingBook': 'Loading book…',
-  'asst.loadFailed': 'Could not load the book text.',
-  'asst.noReadAccess':
-    'This account has no read access to this book, so its text cannot be reviewed.',
-  'asst.textRequired': 'Load the book text and select at least one chapter before running a check.',
-  'asst.chaptersLabel': 'Chapters to review',
   'asst.engineNote':
     'One-time download of about 500 MB. The model runs on this device — your manuscript is never uploaded.',
   'highlight.colors.yellow': 'Yellow',

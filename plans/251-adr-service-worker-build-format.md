@@ -3,7 +3,7 @@
 **Date:** 2026-08-20
 **Status:** Accepted
 **Deciders:** Project maintainer
-**Related:** ADR-005, GOAP-251 (`plans/archive/251-goap-service-worker-registration-fix.md`)
+**Related:** ADR-005, ADR-124, GOAP-251
 
 ## Context
 
@@ -17,9 +17,7 @@ Vite 8/Rolldown's `__vitePreload` helper because `sw.ts` has a dynamic
 module bundle as a classic script and throws
 `Cannot use 'import.meta' outside a module`.
 
-The offline/PWA layer (ADR-005) never activated in production — the
-registration failure is recorded in
-`plans/archive/251-goap-service-worker-registration-fix.md`.
+The offline/PWA layer (ADR-005, ADR-124) never activated in production.
 
 ## Decision
 

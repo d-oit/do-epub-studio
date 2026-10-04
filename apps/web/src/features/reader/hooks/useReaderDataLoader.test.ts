@@ -20,7 +20,6 @@ vi.mock('../../../lib/client-logger', () => ({
 vi.mock('../../../lib/offline', () => ({
   getProgress: vi.fn(),
   getAnnotations: vi.fn(),
-  subscribeAnnotationChanges: vi.fn(() => () => {}),
 }));
 
 import { apiRequest, fetchHighlights, fetchComments, fetchProgress } from '../../../lib/api/index';
@@ -77,7 +76,6 @@ function createMockSetters() {
 describe('useReaderDataLoader', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(getAnnotations).mockResolvedValue([]);
   });
 
   it('does nothing when sessionToken is null', () => {

@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest';
 import { sanitizeAuditPayload } from '../audit';
-import { defined } from './helpers';
 
 describe('sanitizeAuditPayload', () => {
   it('truncates long strings over 10000 chars', () => {
@@ -88,7 +87,7 @@ describe('sanitizeAuditPayload', () => {
     };
     const result = sanitizeAuditPayload(payload);
     expect((result.comments as unknown[]).length).toBe(100);
-    const first = defined((result.comments as Record<string, unknown>[])[0]);
+    const first = (result.comments as Record<string, unknown>[])[0];
     expect(first.nested).toEqual({ inner: 'deep' });
   });
 });

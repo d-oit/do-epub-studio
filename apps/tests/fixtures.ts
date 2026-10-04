@@ -1,5 +1,5 @@
-import { expect, type BrowserContext, type Page, type Route } from '@playwright/test';
-import { deflateRawSync } from 'zlib';
+import { expect, type Page, type Route } from '@playwright/test';
+import { deflateSync } from 'zlib';
 
 // ---------------------------------------------------------------------------
 // CRC32 (standalone, no external deps)
@@ -16,8 +16,7 @@ function crc32(buf: Buffer): number {
     table[i] = c;
   }
   for (let i = 0; i < buf.length; i++) {
-    const byte = buf[i] ?? 0;
-    crc = (table[(crc ^ byte) & 0xff] ?? 0) ^ (crc >>> 8);
+    crc = table[(crc ^ buf[i]) & 0xff] ^ (crc >>> 8);
   }
   return (crc ^ 0xffffffff) >>> 0;
 }
@@ -106,7 +105,7 @@ export function createMinimalEpub(
   for (const file of files) {
     const nameB = Buffer.from(file.name);
     const raw = file.data;
-    const compressed = file.method === 0 ? raw : deflateRawSync(raw);
+    const compressed = file.method === 0 ? raw : deflateSync(raw);
     const crc = crc32(raw);
 
     const lh = Buffer.alloc(30);
@@ -203,7 +202,7 @@ export const LOGIN_RESPONSE = {
 
 export const PROGRESS_RESPONSE = {
   ok: true,
-  data: { locator: { cfi: 'epubcfi(/6/2!/4/2/1:0)' }, progressPercent: 0.1 },
+  data: { locator: { cfi: 'epubcfi(/6/4)' }, progressPercent: 0.1 },
 };
 
 export const ADMIN_USER = {
@@ -273,21 +272,17 @@ export interface MockRouteOptions {
   loginResponse?: typeof LOGIN_RESPONSE;
   demoLoginResponse?: typeof DEMO_READER_RESPONSE;
   includeBookmarks?: boolean;
-  includeFeedback?: boolean;
   includeLogout?: boolean;
   includeInsights?: boolean;
 }
 
-export async function mockReaderApi(
-  pageOrContext: Page | BrowserContext,
-  opts: MockRouteOptions = {},
-) {
+export async function mockReaderApi(page: Page, opts: MockRouteOptions = {}) {
   const bookSlug = opts.bookSlug ?? TEST_USER.bookSlug;
   const hasCustomEpubUrl = opts.epubUrl !== undefined;
   const epubUrl = opts.epubUrl ?? `https://example.com/${bookSlug}.epub`;
   const loginResp = opts.loginResponse ?? LOGIN_RESPONSE;
 
-  await pageOrContext.route('**/api/access/request', async (route: Route) => {
+  await page.route('**/api/access/request', async (route: Route) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -297,7 +292,7 @@ export async function mockReaderApi(
 
   // ADR-244: demo reader session entry point. Same DTO shape as /api/access/request.
   if (opts.demoLoginResponse) {
-    await pageOrContext.route('**/api/demo/reader-login', async (route: Route) => {
+    await page.route('**/api/demo/reader-login', async (route: Route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -306,7 +301,7 @@ export async function mockReaderApi(
     });
   }
 
-  await pageOrContext.route('**/api/books/*/file-url', async (route: Route) => {
+  await page.route('**/api/books/*/file-url', async (route: Route) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -321,12 +316,8 @@ export async function mockReaderApi(
   // the nightly scheduled E2E lane (issue #957). Tests that pass an explicit
   // epubUrl WITHOUT epubBuffer opt out here and exercise real-network behavior.
   if (opts.epubBuffer || !hasCustomEpubUrl) {
-    const epubPattern = hasCustomEpubUrl
-      ? epubUrl.startsWith('http')
-        ? `**${new URL(epubUrl).pathname}`
-        : `**${epubUrl}`
-      : `**/${bookSlug}.epub`;
-    await pageOrContext.route(epubPattern, async (route: Route) => {
+    const epubPattern = epubUrl.startsWith('http') ? `**/${bookSlug}.epub` : `**${epubUrl}`;
+    await page.route(epubPattern, async (route: Route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/epub+zip',
@@ -335,7 +326,7 @@ export async function mockReaderApi(
     });
   }
 
-  await pageOrContext.route('**/api/books/*/progress', async (route: Route) => {
+  await page.route('**/api/books/*/progress', async (route: Route) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -343,7 +334,7 @@ export async function mockReaderApi(
     });
   });
 
-  await pageOrContext.route('**/api/books/*/highlights', async (route: Route) => {
+  await page.route('**/api/books/*/highlights', async (route: Route) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -351,7 +342,7 @@ export async function mockReaderApi(
     });
   });
 
-  await pageOrContext.route('**/api/books/*/comments', async (route: Route) => {
+  await page.route('**/api/books/*/comments', async (route: Route) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -360,7 +351,7 @@ export async function mockReaderApi(
   });
 
   if (opts.includeBookmarks !== false) {
-    await pageOrContext.route('**/api/books/*/bookmarks', async (route: Route) => {
+    await page.route('**/api/books/*/bookmarks', async (route: Route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -368,17 +359,9 @@ export async function mockReaderApi(
       });
     });
   }
-  if (opts.includeFeedback !== false) {
-    await pageOrContext.route('**/api/books/*/feedback', async (route: Route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ ok: true, data: [] }),
-      });
-    });
-  }
+
   if (opts.includeInsights) {
-    await pageOrContext.route('**/api/books/*/insights', async (route: Route) => {
+    await page.route('**/api/books/*/insights', async (route: Route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -388,7 +371,7 @@ export async function mockReaderApi(
   }
 
   if (opts.includeLogout !== false) {
-    await pageOrContext.route('**/api/access/logout', async (route: Route) => {
+    await page.route('**/api/access/logout', async (route: Route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -416,7 +399,10 @@ export async function mockDemoAdminApi(page: Page) {
 export async function mockAdminApi(
   page: Page,
   opts: {
-    adminLoginResponse?: typeof ADMIN_LOGIN_RESPONSE | typeof DEMO_ADMIN_RESPONSE;
+    adminLoginResponse?: {
+      ok: true;
+      data: { token: string; user: { id: string; email: string; role: string } };
+    };
   } = {},
 ) {
   await page.route('**/api/admin/login', async (route: Route) => {
@@ -605,56 +591,4 @@ export async function loginAsAdmin(page: Page) {
   // Wait for the admin books page to mount instead of networkidle — background
   // fetches keep the network busy under parallel load (issue #957 flakiness).
   await expect(page.locator('main#main-content')).toBeVisible({ timeout: 20000 });
-}
-
-export async function selectReaderPassage(page: Page, text: string): Promise<void> {
-  const iframeLocator = page
-    .locator('div[data-reader-viewer="true"] iframe, div.epub-view iframe, iframe')
-    .first();
-  await iframeLocator.waitFor({ state: 'attached', timeout: 15000 });
-
-  const selected = await page.evaluate((targetText) => {
-    const iframes = Array.from(
-      document.querySelectorAll<HTMLIFrameElement>(
-        'div[data-reader-viewer="true"] iframe, div.epub-view iframe, iframe',
-      ),
-    );
-    for (const iframe of iframes) {
-      const doc = iframe.contentDocument;
-      const win = iframe.contentWindow;
-      if (!doc || !win) continue;
-
-      const paragraph = Array.from(doc.querySelectorAll('p')).find((item) =>
-        item.textContent?.includes(targetText),
-      );
-      if (!paragraph) continue;
-
-      const walker = doc.createTreeWalker(paragraph, NodeFilter.SHOW_TEXT);
-      let node: Node | null = walker.nextNode();
-      while (node) {
-        const content = node.textContent ?? '';
-        const index = content.indexOf(targetText);
-        if (index !== -1) {
-          const range = doc.createRange();
-          range.setStart(node, index);
-          range.setEnd(node, index + targetText.length);
-          const selection = win.getSelection();
-          if (selection) {
-            selection.removeAllRanges();
-            selection.addRange(range);
-            win.dispatchEvent(
-              new (win as Window & typeof globalThis).MouseEvent('mouseup', { bubbles: true }),
-            );
-            return true;
-          }
-        }
-        node = walker.nextNode();
-      }
-    }
-    return false;
-  }, text);
-
-  if (!selected) {
-    throw new Error(`Target text "${text}" not found in iframe to select`);
-  }
 }

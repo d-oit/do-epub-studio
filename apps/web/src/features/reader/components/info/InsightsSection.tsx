@@ -57,7 +57,7 @@ export function InsightsSection({ insights, t }: { insights: InsightSummary; t: 
             <dt className="text-xs text-foreground-muted">{t('reader.chapterTime')}</dt>
             <dd className="text-sm text-foreground">
               {t('reader.chapterTimeValue', {
-                minutes: insights.chapterDurations[0]?.activeMinutes ?? 0,
+                minutes: insights.chapterDurations[0].activeMinutes,
               })}
             </dd>
           </div>

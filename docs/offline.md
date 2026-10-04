@@ -26,18 +26,16 @@
 
 ## IndexedDB Stores
 
-Database: `do-epub-studio` (version 5)
+Database: `do-epub-studio` (version 3)
 
-| Store             | Key Path         | Indexes            | Purpose                                                                                 |
-| ----------------- | ---------------- | ------------------ | --------------------------------------------------------------------------------------- |
-| `progress`        | `id`             | `bookId`, `synced` | Reading position per book                                                               |
-| `annotations`     | `id`             | `bookId`, `synced` | Highlights, comments, bookmarks                                                         |
-| `syncQueue`       | `id`             | `createdAt`        | Outbound sync mutation queue                                                            |
-| `permissions`     | `bookId`         | —                  | Cached grant info for offline access                                                    |
-| `readingInsights` | `[bookId, date]` | `bookId`           | Aggregated reading-insight buckets (active minutes/pages)                               |
-| `conflicts`       | `id`             | —                  | Durable pending-conflict records (Plan 228)                                             |
-| `feedbackDrafts`  | `id`             | `ownerBook`        | Durable private-feedback drafts (owner-scoped, GOAP-999)                                |
-| `bookFiles`       | `bookId`         | —                  | Last resolved signed book-file URL for offline reading (encrypted at rest; A5/GOAP-300) |
+| Store             | Key Path         | Indexes            | Purpose                                                   |
+| ----------------- | ---------------- | ------------------ | --------------------------------------------------------- |
+| `progress`        | `id`             | `bookId`, `synced` | Reading position per book                                 |
+| `annotations`     | `id`             | `bookId`, `synced` | Highlights, comments, bookmarks                           |
+| `syncQueue`       | `id`             | `createdAt`        | Outbound sync mutation queue                              |
+| `permissions`     | `bookId`         | —                  | Cached grant info for offline access                      |
+| `readingInsights` | `[bookId, date]` | `bookId`           | Aggregated reading-insight buckets (active minutes/pages) |
+| `conflicts`       | `id`             | —                  | Durable pending-conflict records (Plan 228)               |
 
 Schema defined in `apps/web/src/lib/offline/db.ts`:
 
@@ -63,18 +61,15 @@ interface AnnotationEntry {
   color?: string;
   chapter?: string;
   createdAt: number;
-  updatedAt?: number;
-  displayName?: string;
   synced: boolean;
   mutationId: string;
-  syncError?: string;
   status?: 'open' | 'resolved';
   visibility?: 'shared' | 'internal' | 'resolved';
 }
 
 interface SyncQueueItem {
   id: string;
-  type: 'progress' | 'annotation' | 'reading-insight' | 'feedback';
+  type: 'progress' | 'annotation' | 'reading-insight';
   payload: unknown;
   mutationId: string;
   createdAt: number;
@@ -93,62 +88,27 @@ interface PermissionCache {
 }
 ```
 
-### Offline highlight/comment creation (A1, GOAP-302)
-
-When an ordinary highlight or shared comment is created offline, the reader
-encrypts the annotation and its matching `syncQueue` item, then writes both in
-one IndexedDB transaction. The queue item has `type: 'annotation'`, an
-`action: 'create'` payload, and the same `mutationId` as the local record. Only
-`id`, `bookId`, and `synced` stay plaintext in the annotation store; the
-locator, selected text, comment body, mutation ID, and sync error remain in
-`encryptedPayload`.
-
-On reconnect, the queue replays an authenticated highlight or comment POST with
-the original mutation ID. The Worker stores a unique `mutation_id` on each
-resource type and returns the existing row for duplicate creates, so a retry
-does not create duplicate annotations. Successful replay replaces the local
-record with the canonical server record and removes the queue item.
-
-Authoritative create failures (400, 403, 409, 413, or 422) remove the queue
-item but retain the encrypted local annotation with `syncError`; the reader
-shows the failed state instead of retrying it. Transient failures remain queued
-for the retry policy below. An online comment POST rejected with 403 remains in
-the composer with its draft text intact.
-
-### Offline reading flow (A5, GOAP-300)
-
-When the reader resolves a book's signed file URL online, the URL is stored in
-the encrypted `bookFiles` store. On an offline reload:
-
-1. The `POST /api/books/:id/file-url` call cannot succeed; the reader falls
-   back to the cached URL **only when `navigator.onLine` is false** — a failed
-   online request still surfaces as an error, so an expired or revoked
-   capability is never masked by a stale read.
-2. The app shell comes from the Workbox precache.
-3. The EPUB bytes come from Cache Storage: `/api/files/*` responses are cached
-   by the service worker's `book-content` route in production; the
-   `external-assets` route serves any cross-origin book URL it has cached.
-
 ## Sync Queue & Protocol
 
 ### Mutation Flow
 
 ```
-Reader mutation
-  ├→ progress: saveProgress(...) and queueSync('progress', ...)
-  └→ offline highlight/comment create: persistAnnotationCreation(...)
-       ├→ encrypt and store annotation + syncQueue item atomically
-       └→ attemptSync() when online/reconnected
+Client write
+  ↓
+saveProgress/saveAnnotation (local IndexedDB, optimistic)
+  ↓
+queueSync(type, payload, mutationId)
+  └→ addToSyncQueue(item)
+  └→ attemptSync() (if online)
 ```
 
 ### Sync Protocol
 
 1. Queue is FIFO (sorted by `createdAt`)
-2. POST/PUT to the Worker API with the queued mutation ID where supported
-3. Annotation creates carry `mutationId` to the Worker; unique partial indexes
-   on `highlights.mutation_id` and `comments.mutation_id` make duplicate POSTs
-   return the existing annotation. Progress upserts and reading-insight merges
-   retain their resource-specific idempotency behavior.
+2. POST/PUT to Worker API with `mutationId` in body (client-side correlation only)
+3. Server idempotency is per-resource, not per-mutationId: progress UPSERTs on
+   `(book_id, user_email)` and reading-insight buckets merge with `MAX()`; the
+   `mutationId` itself is not read by any worker route
 4. On success: remove from syncQueue, mark local entry as `synced: true`
 5. On failure: increment `attempts`, schedule retry with exponential backoff
 

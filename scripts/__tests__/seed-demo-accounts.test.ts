@@ -15,16 +15,7 @@ const ADMIN_SECRET = 'TEST-ONLY-admin-fixture-pass';
 const READER_SECRET = 'TEST-ONLY-reader-fixture-pass';
 const MOCK_HASH = 'argon2id$MOCK$hash';
 
-/** Env source shape `seedDemoAccounts` accepts (process.env subset). */
-type SeedEnv = Record<string, string | undefined>;
-
-/** SQL transport shape the script's JSDoc contract declares. */
-type SeedSqlRunner = (
-  sql: string,
-  args?: Array<string | number | null>,
-) => Promise<{ rows: unknown[] }>;
-
-function env(overrides: SeedEnv = {}): SeedEnv {
+function env(overrides = {}) {
   return {
     DEMO_ACCOUNTS_ENABLED: '1',
     ENVIRONMENT: 'local',
@@ -34,13 +25,10 @@ function env(overrides: SeedEnv = {}): SeedEnv {
   };
 }
 
-function makeDb(): {
-  db: SeedSqlRunner;
-  calls: Array<{ sql: string; args?: Array<string | number | null> }>;
-} {
-  const calls: Array<{ sql: string; args?: Array<string | number | null> }> = [];
+function makeDb() {
+  const calls = [];
   let bookExists = false;
-  const db: SeedSqlRunner = async (sql, args = []) => {
+  const db = async (sql, args = []) => {
     calls.push({ sql, args });
     if (sql.includes('INSERT INTO books')) bookExists = true;
     if (sql.includes('FROM books')) return { rows: bookExists ? [{ id: 'book-1' }] : [] };
@@ -53,7 +41,7 @@ function makeDb(): {
 const mockHash = async () => MOCK_HASH;
 
 describe('seed-demo-accounts.mjs (ADR-233)', () => {
-  let prevExitCode: typeof process.exitCode;
+  let prevExitCode;
   beforeEach(() => {
     prevExitCode = process.exitCode;
   });
@@ -244,8 +232,8 @@ describe('seed-demo-accounts.mjs (ADR-233)', () => {
       await seedDemoAccounts({ db, hasPassword: mockHash, env: env() });
       const grant = calls.find(({ sql }) => sql.includes('INSERT INTO book_access_grants'));
       expect(grant).toBeTruthy();
-      expect(grant?.sql).toContain('book_id');
-      expect(grant?.sql).toContain('mode');
+      expect(grant.sql).toContain('book_id');
+      expect(grant.sql).toContain('mode');
     });
 
     it('provisions a missing demo book so the reader grant is never skipped', async () => {
@@ -256,12 +244,12 @@ describe('seed-demo-accounts.mjs (ADR-233)', () => {
       // the demo reader can always sign in (GOAP-244).
       const bookInsert = calls.find(({ sql }) => sql.includes('INSERT INTO books'));
       expect(bookInsert).toBeTruthy();
-      expect(bookInsert?.sql).toContain('slug');
-      expect(bookInsert?.args).toContain('demo');
+      expect(bookInsert.sql).toContain('slug');
+      expect(bookInsert.args).toContain('demo');
 
       const grant = calls.find(({ sql }) => sql.includes('INSERT INTO book_access_grants'));
       expect(grant).toBeTruthy();
-      expect(grant?.args).toContain('book-1'); // provisioned book id backs the grant
+      expect(grant.args).toContain('book-1'); // provisioned book id backs the grant
     });
 
     it('disables the demo admin by default in non-local environments', async () => {
@@ -272,12 +260,11 @@ describe('seed-demo-accounts.mjs (ADR-233)', () => {
         env: env({ ENVIRONMENT: 'staging' }),
       });
       const adminWrite = calls.find(
-        ({ sql, args }) =>
-          sql.includes('INSERT INTO users') && (args?.includes(RESERVED.admin.email) ?? false),
+        ({ sql, args }) => sql.includes('INSERT INTO users') && args.includes(RESERVED.admin.email),
       );
       // disabled_at is passed as a real timestamp for the admin in non-local.
-      expect(typeof adminWrite?.args?.[5]).toBe('string');
-      expect(adminWrite?.args?.[5]).not.toBeNull();
+      expect(typeof adminWrite.args[5]).toBe('string');
+      expect(adminWrite.args[5]).not.toBeNull();
     });
   });
 
@@ -290,12 +277,12 @@ describe('seed-demo-accounts.mjs (ADR-233)', () => {
       const readerRevoke = calls.find(({ sql }) => sql.includes('UPDATE reader_sessions'));
 
       expect(adminRevoke).toBeTruthy();
-      expect(adminRevoke?.sql).toContain('revoked_at');
-      expect(adminRevoke?.sql).toContain('user_id = ?');
+      expect(adminRevoke.sql).toContain('revoked_at');
+      expect(adminRevoke.sql).toContain('user_id = ?');
 
       expect(readerRevoke).toBeTruthy();
-      expect(readerRevoke?.sql).toContain('revoked_at');
-      expect(readerRevoke?.sql).toContain('email = ?');
+      expect(readerRevoke.sql).toContain('revoked_at');
+      expect(readerRevoke.sql).toContain('email = ?');
     });
 
     it('is safe to re-run (second run still succeeds)', async () => {

@@ -60,10 +60,10 @@ Source hooks live in `scripts/hooks/`. Install them with:
 
 ## Database Scripts
 
-Local D1 migrations run through the worker package via the root scripts
-(`pnpm db:migrate:local`, `pnpm db:check`); see `docs/setup-local.md` §4. The
-former standalone Turso scripts (`bootstrap.mjs`, `db-migrate-local.mjs`) were
-deleted in GOAP-292 — the app runtime is D1 and the Turso service is not used.
+| Script                 | Purpose                                         | Dependencies |
+| ---------------------- | ----------------------------------------------- | ------------ |
+| `bootstrap.mjs`        | Create local Turso DB + auth token (idempotent) | turso CLI    |
+| `db-migrate-local.mjs` | Apply SQL migrations to local DB (idempotent)   | turso CLI    |
 
 ## Utility Scripts
 

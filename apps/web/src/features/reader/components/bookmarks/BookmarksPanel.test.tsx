@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { BookmarksPanel } from './BookmarksPanel';
 import type { Bookmark } from '../../../../stores';
-import { defined } from '../../../../__tests__/helpers';
 
 vi.mock('../../../../hooks/useTranslation', () => ({
   useTranslation: () => ({ t: (k: string) => k }),
@@ -63,7 +62,7 @@ describe('BookmarksPanel', () => {
   it('calls onDeleteBookmark when delete clicked', () => {
     render(<BookmarksPanel {...defaultProps} />);
     const deleteButtons = screen.getAllByLabelText('a11y.delete_bookmark');
-    fireEvent.click(defined(deleteButtons[0]));
+    fireEvent.click(deleteButtons[0]);
     expect(defaultProps.onDeleteBookmark).toHaveBeenCalledWith('bm-1');
   });
 

@@ -94,6 +94,21 @@ app.route('/api', searchRouter);
 app.route('/api/demo', demoRouter);
 app.route('/api', exportRouter);
 
+app.notFound((c) => {
+  const ctx = c.get('requestContext');
+  return c.json(
+    {
+      ok: false,
+      error: {
+        code: 'NOT_FOUND',
+        message: 'Endpoint not found',
+        traceId: ctx?.traceId,
+      },
+    },
+    404,
+  );
+});
+
 app.onError((err, c) => {
   const ctx = c.get('requestContext');
   const apiError = toApiError(err, ctx.traceId);

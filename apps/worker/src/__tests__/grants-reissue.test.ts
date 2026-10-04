@@ -86,10 +86,10 @@ describe('createGrant re-issue', () => {
     const rows = grantRows();
     expect(rows).toHaveLength(1);
     expect(reissuedId).toBe(originalId);
-    expect(rows[0]?.revoked_at).toBeNull();
-    expect(rows[0]?.allowed).toBe(1);
-    expect(rows[0]?.comments_allowed).toBe(0);
-    expect(rows[0]?.password_hash).toBe('argon2id:second-password');
+    expect(rows[0].revoked_at).toBeNull();
+    expect(rows[0].allowed).toBe(1);
+    expect(rows[0].comments_allowed).toBe(0);
+    expect(rows[0].password_hash).toBe('argon2id:second-password');
   });
 
   it('rejects a second active grant for the same email as a conflict', async () => {
@@ -102,7 +102,7 @@ describe('createGrant re-issue', () => {
 
     const rows = grantRows(email);
     expect(rows).toHaveLength(1);
-    expect(rows[0]?.revoked_at).toBeNull();
-    expect(rows[0]?.password_hash).toBe('argon2id:kept-password');
+    expect(rows[0].revoked_at).toBeNull();
+    expect(rows[0].password_hash).toBe('argon2id:kept-password');
   });
 });

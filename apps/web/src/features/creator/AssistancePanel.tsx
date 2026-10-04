@@ -1,22 +1,21 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from '../../hooks/useTranslation';
 import type { TranslationKeys } from '../../i18n/en';
 import { useAuthStore } from '../../stores/auth';
 import {
+  createLocalEditorialPlugin,
   createTransformersEditorialPlugin,
   EDITORIAL_PLUGIN_CATEGORIES,
   effectiveCategoryAvailability,
-  LANGUAGE_TOOL_EDITORIAL_CATEGORIES,
   milestone,
   QUALIFICATION_MILESTONES,
   TRANSFORMERS_EDITORIAL_CATEGORIES,
   type EditorialCategory,
+  type EditorialReviewOutcome,
   type ModelLoadProgress,
   type ModelLoadState,
 } from '@do-epub-studio/reader-core';
 import { fetchAssistanceConsent, setAssistanceConsent } from '../../lib/api/creator';
-import { useEditorialReview } from './hooks/useEditorialReview';
-import type { EditorialEngine } from './lib/editorial-dispatch';
 
 const CATEGORY_LABELS: Record<EditorialCategory, TranslationKeys> = {
   spelling: 'asst.catSpelling',
@@ -26,15 +25,23 @@ const CATEGORY_LABELS: Record<EditorialCategory, TranslationKeys> = {
 };
 
 /**
- * Adapters are probed per category (GOAP-273): the quantized Transformers.js
- * engine answers story/logic once it has been explicitly prepared below; the
- * LanguageTool adapter (A2) is registered by useEditorialReview only when
- * VITE_LANGUAGETOOL_URL is configured (ADR-274: deployment-local service).
- * The engine-less local plugin is no longer dispatched — a category without a
- * present engine reports `engine_missing` instead of pretending a run
- * happened. Presence is always read from the capability, never inferred.
+ * Two plugins, probed per category (GOAP-273 B1): the engine-less plugin
+ * answers spelling/grammar, the quantized Transformers.js engine answers
+ * story/logic — and only once it has been explicitly prepared below. The
+ * LanguageTool adapter (A2) is exported from reader-core but not registered
+ * here. Presence is always read from the capability, never inferred: a
+ * qualification milestone records that a category was *measured* to work, and
+ * only a present engine can act on that.
  */
+const editorialPlugin = createLocalEditorialPlugin();
 const transformersPlugin = createTransformersEditorialPlugin();
+
+function enginePresent(category: EditorialCategory): boolean {
+  const plugin = TRANSFORMERS_EDITORIAL_CATEGORIES.includes(category)
+    ? transformersPlugin
+    : editorialPlugin;
+  return plugin.capabilities.editorial?.hasEngine() ?? false;
+}
 
 interface AssistancePanelProps {
   bookId: string;
@@ -54,35 +61,16 @@ export function AssistancePanel({ bookId }: AssistancePanelProps): React.JSX.Ele
   const sessionToken = useAuthStore((s) => s.sessionToken);
   const token = sessionToken ?? '';
 
-  const review = useEditorialReview(bookId, token);
   const [consent, setConsent] = useState<{ allowed: boolean; cloudQualified: boolean } | null>(
     null,
   );
+  const [outcome, setOutcome] = useState<EditorialReviewOutcome | null>(null);
+  const [running, setRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [engineLoad, setEngineLoad] = useState<ModelLoadState | null>(null);
   const [engineProgress, setEngineProgress] = useState<ModelLoadProgress | null>(null);
   const [preparing, setPreparing] = useState(false);
-
-  const engines = useMemo<EditorialEngine[]>(() => {
-    const list: EditorialEngine[] = [
-      { categories: TRANSFORMERS_EDITORIAL_CATEGORIES, plugin: transformersPlugin },
-    ];
-    if (review.languageToolPlugin) {
-      list.push({
-        categories: LANGUAGE_TOOL_EDITORIAL_CATEGORIES,
-        plugin: review.languageToolPlugin,
-      });
-    }
-    return list;
-  }, [review.languageToolPlugin]);
-
-  const enginePresent = (category: EditorialCategory): boolean => {
-    if (TRANSFORMERS_EDITORIAL_CATEGORIES.includes(category)) {
-      return transformersPlugin.capabilities.editorial?.hasEngine() ?? false;
-    }
-    return review.languageToolAvailable;
-  };
 
   // Stable identity: the plugin's progress-listener Set dedupes by reference,
   // so a re-render must not register a second listener.
@@ -121,8 +109,32 @@ export function AssistancePanel({ bookId }: AssistancePanelProps): React.JSX.Ele
     void load();
   }, [load]);
 
-  const runCheck = (): void => {
-    void review.run(engines, EDITORIAL_PLUGIN_CATEGORIES);
+  const runCheck = async () => {
+    setRunning(true);
+    setError(null);
+    try {
+      const capability = editorialPlugin.capabilities.editorial;
+      if (!capability) {
+        setOutcome({ status: 'unavailable', reason: 'engine_missing' });
+        return;
+      }
+      setOutcome(
+        await capability.review({
+          categories: EDITORIAL_PLUGIN_CATEGORIES,
+          // No text is gathered while no engine exists; sending the manuscript
+          // to an absent engine would be pointless and would widen exposure.
+          chapterText: {},
+          chapterSha256: {},
+          references: {},
+          styleRevision: null,
+          language: null,
+        }),
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setRunning(false);
+    }
   };
 
   const toggleConsent = async () => {
@@ -168,65 +180,6 @@ export function AssistancePanel({ bookId }: AssistancePanelProps): React.JSX.Ele
         })}
       </ul>
 
-      {/* Grounded input: the manuscript text is loaded on demand through the
-          creator's own read access (ADR-999 D1); nothing is extracted or
-          hashed before this explicit action. */}
-      <div className="mt-3 flex flex-col gap-2 rounded-lg border border-border p-3">
-        {review.bookState === 'idle' && (
-          <button
-            type="button"
-            onClick={() => void review.loadBook()}
-            className="self-start rounded-lg border border-border px-3 py-1.5 text-sm hover:bg-background-secondary"
-          >
-            {t('asst.loadChapters')}
-          </button>
-        )}
-        {review.bookState === 'loading' && (
-          <span role="status" className="text-sm">
-            {t('asst.loadingBook')}
-          </span>
-        )}
-        {review.bookState === 'no_read_access' && (
-          <p role="status" className="text-sm text-foreground-muted">
-            {t('asst.noReadAccess')}
-          </p>
-        )}
-        {review.bookState === 'error' && (
-          <>
-            <p role="alert" className="text-sm text-red-600 dark:text-red-400">
-              {t('asst.loadFailed')}
-            </p>
-            <button
-              type="button"
-              onClick={() => void review.loadBook()}
-              className="self-start rounded-lg border border-border px-3 py-1.5 text-sm hover:bg-background-secondary"
-            >
-              {t('asst.loadChapters')}
-            </button>
-          </>
-        )}
-        {review.bookState === 'ready' && (
-          <>
-            <span className="text-sm font-medium">{t('asst.chaptersLabel')}</span>
-            <ul className="max-h-40 space-y-1 overflow-y-auto text-sm">
-              {review.chapters.map((chapter) => (
-                <li key={chapter.ref}>
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={review.selected.includes(chapter.ref)}
-                      onChange={() => review.toggleChapter(chapter.ref)}
-                    />
-                    {/* Untrusted title: rendered as a text node, never HTML. */}
-                    <span>{chapter.title}</span>
-                  </label>
-                </li>
-              ))}
-            </ul>
-          </>
-        )}
-      </div>
-
       {/* Story/logic engine: a labelled, user-initiated download with visible
           progress; review never triggers it (no implicit ~500 MB fetch). */}
       <div className="mt-3 flex flex-col gap-2 rounded-lg border border-border p-3">
@@ -271,37 +224,25 @@ export function AssistancePanel({ bookId }: AssistancePanelProps): React.JSX.Ele
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <button
           type="button"
-          disabled={review.running}
+          disabled={running}
           onClick={() => void runCheck()}
           className="rounded-lg border border-border px-3 py-1.5 text-sm hover:bg-background-secondary disabled:opacity-50"
         >
           {t('asst.runLabel')}
         </button>
-        {review.textRequired && (
+        {outcome?.status === 'unavailable' && (
           <span role="status" className="text-sm text-foreground-muted">
-            {t('asst.textRequired')}
+            {outcome.reason === 'engine_missing' ? t('asst.unavailable') : t('asst.engineMissing')}
           </span>
         )}
-        {review.error && review.bookState !== 'error' && (
-          <span role="alert" className="text-sm text-red-600 dark:text-red-400">
-            {t('asst.loadFailed')}
-          </span>
-        )}
-        {review.outcome?.status === 'unavailable' && (
-          <span role="status" className="text-sm text-foreground-muted">
-            {review.outcome.reason === 'engine_missing'
-              ? t('asst.unavailable')
-              : t('asst.engineMissing')}
-          </span>
-        )}
-        {review.outcome?.status === 'no_supported_findings' && (
+        {outcome?.status === 'no_supported_findings' && (
           <span role="status" className="text-sm text-foreground-muted">
             {t('asst.noFindings')}
           </span>
         )}
-        {review.outcome?.status === 'ok' && (
+        {outcome?.status === 'ok' && (
           <ul className="w-full space-y-2">
-            {review.outcome.findings.map((finding, index) => (
+            {outcome.findings.map((finding, index) => (
               <li
                 key={`${finding.category}-${index}`}
                 className="rounded-lg border border-border p-3 text-sm"

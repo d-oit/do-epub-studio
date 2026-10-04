@@ -436,14 +436,6 @@ export const fr: Record<TranslationKeys, TranslationValue> = {
   'asst.enginePrepare': 'Préparer le moteur d’intrigue et de logique',
   'asst.engineDownloading': 'Préparation du moteur : {percent} %',
   'asst.engineReady': 'Moteur d’intrigue et de logique prêt',
-  'asst.loadChapters': 'Charger le texte du livre',
-  'asst.loadingBook': 'Chargement du livre…',
-  'asst.loadFailed': 'Impossible de charger le texte du livre.',
-  'asst.noReadAccess':
-    "Ce compte n'a pas d'accès en lecture à ce livre ; son texte ne peut pas être analysé.",
-  'asst.textRequired':
-    'Chargez le texte du livre et sélectionnez au moins un chapitre avant de lancer une analyse.',
-  'asst.chaptersLabel': 'Chapitres à analyser',
   'asst.engineNote':
     'Téléchargement unique d’environ 500 Mo. Le modèle s’exécute sur cet appareil : votre manuscrit n’est jamais envoyé.',
 

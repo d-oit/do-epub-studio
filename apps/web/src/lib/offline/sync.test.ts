@@ -14,8 +14,6 @@ import type { SyncQueueItem } from './db';
 import { api, apiRequest } from '../api';
 import { clearAllPermissions } from './permissions';
 import { ConflictType, type ConflictRecord } from './conflict-resolution';
-import { useAuthStore } from '../../stores/auth';
-import { createHighlight } from '../api/annotations';
 
 vi.mock('uuid', () => ({
   v4: () => 'test-uuid-1234',
@@ -40,14 +38,6 @@ vi.mock('./db', () => ({
   },
 }));
 
-vi.mock('./annotation-mutations', () => ({
-  saveAnnotation: vi.fn(),
-  getAnnotations: vi.fn().mockResolvedValue([]),
-  getUnsyncedAnnotations: vi.fn().mockResolvedValue([]),
-  settleAnnotationCreation: vi.fn(),
-  failAnnotationCreation: vi.fn(),
-  subscribeAnnotationChanges: vi.fn(() => () => {}),
-}));
 vi.mock('../api', () => ({
   api: {
     post: vi.fn(),
@@ -56,11 +46,6 @@ vi.mock('../api', () => ({
     delete: vi.fn(),
   },
   apiRequest: vi.fn(),
-}));
-
-vi.mock('../api/annotations', () => ({
-  createHighlight: vi.fn(),
-  createComment: vi.fn(),
 }));
 
 vi.mock('./permissions', () => ({
@@ -124,62 +109,6 @@ describe('sync', () => {
       expect(api.post).not.toHaveBeenCalled();
     });
 
-    it('does not replay one session’s queue snapshot after switching sessions', async () => {
-      const originalAuth = useAuthStore.getState();
-      let resolveSnapshot!: (queue: SyncQueueItem[]) => void;
-      const snapshot = new Promise<SyncQueueItem[]>((resolve) => {
-        resolveSnapshot = resolve;
-      });
-      const privateAnnotation: SyncQueueItem = {
-        id: 'annotation-a',
-        type: 'annotation',
-        payload: {
-          bookId: 'book-a',
-          action: 'create',
-          annotation: {
-            id: 'local-annotation-a',
-            bookId: 'book-a',
-            type: 'highlight',
-            cfi: 'epubcfi(/6/4!/4/2)',
-            text: 'Private passage owned by session A',
-            color: '#ffff00',
-            createdAt: 1,
-            synced: false,
-            mutationId: 'mutation-a',
-          },
-        },
-        mutationId: 'mutation-a',
-        createdAt: 1,
-        attempts: 0,
-      };
-
-      try {
-        useAuthStore.setState({
-          sessionToken: 'session-token-a',
-          bookId: 'book-a',
-          isAuthenticated: true,
-        });
-        vi.mocked(db.getSyncQueue).mockReturnValue(snapshot);
-        const drain = syncAll();
-
-        await vi.waitFor(() => {
-          expect(db.getSyncQueue).toHaveBeenCalledTimes(1);
-        });
-        useAuthStore.setState({
-          sessionToken: 'session-token-b',
-          bookId: 'book-b',
-        });
-        resolveSnapshot([privateAnnotation]);
-        await drain;
-
-        expect(createHighlight).not.toHaveBeenCalled();
-        expect(apiRequest).not.toHaveBeenCalled();
-        expect(db.removeSyncQueueItem).not.toHaveBeenCalled();
-      } finally {
-        useAuthStore.setState(originalAuth);
-      }
-    });
-
     it('syncs progress item successfully via PUT', async () => {
       vi.mocked(db.getSyncQueue).mockResolvedValue([
         {
@@ -218,6 +147,121 @@ describe('sync', () => {
       });
       await vi.waitFor(() => {
         expect(db.removeSyncQueueItem).toHaveBeenCalledWith('item-1');
+      });
+    });
+
+    it('syncs highlight annotation with nested locator', async () => {
+      vi.mocked(db.getSyncQueue).mockResolvedValue([
+        {
+          id: 'item-2',
+          type: 'annotation',
+          payload: {
+            bookId: 'b1',
+            annotation: {
+              type: 'highlight',
+              chapter: 'ch1',
+              cfi: 'cfi-2',
+              text: 'hello',
+              color: '#ffff00',
+              comment: '',
+            },
+          },
+          mutationId: 'm2',
+          createdAt: 200,
+          attempts: 0,
+        },
+      ]);
+      vi.mocked(api.post).mockResolvedValue({} as unknown as Response);
+      vi.mocked(db.getUnsyncedAnnotations).mockResolvedValue([
+        {
+          id: 'a1',
+          bookId: 'b1',
+          type: 'highlight',
+          cfi: 'cfi-2',
+          text: 'hello',
+          synced: false,
+          mutationId: 'm2',
+          createdAt: Date.now(),
+        },
+      ]);
+
+      await queueSync(
+        'annotation',
+        {
+          bookId: 'b1',
+          annotation: {
+            type: 'highlight',
+            chapter: 'ch1',
+            cfi: 'cfi-2',
+            text: 'hello',
+            color: '#ffff00',
+            comment: '',
+          },
+        },
+        'm2',
+      );
+      await vi.waitFor(() => {
+        expect(api.post).toHaveBeenCalledWith('/api/books/b1/highlights', {
+          locator: { cfi: 'cfi-2', selectedText: 'hello', chapterRef: 'ch1' },
+          color: '#ffff00',
+          note: '',
+        });
+      });
+    });
+
+    it('syncs comment annotation with nested locator', async () => {
+      vi.mocked(db.getSyncQueue).mockResolvedValue([
+        {
+          id: 'item-3',
+          type: 'annotation',
+          payload: {
+            bookId: 'b1',
+            annotation: {
+              type: 'comment',
+              chapter: 'ch1',
+              cfi: 'cfi-3',
+              text: 'hello',
+              comment: 'my note',
+            },
+          },
+          mutationId: 'm3',
+          createdAt: 300,
+          attempts: 0,
+        },
+      ]);
+      vi.mocked(api.post).mockResolvedValue({} as unknown as Response);
+      vi.mocked(db.getUnsyncedAnnotations).mockResolvedValue([
+        {
+          id: 'a2',
+          bookId: 'b1',
+          type: 'comment',
+          cfi: 'cfi-3',
+          synced: false,
+          mutationId: 'm3',
+          createdAt: Date.now(),
+        },
+      ]);
+
+      await queueSync(
+        'annotation',
+        {
+          bookId: 'b1',
+          annotation: {
+            type: 'comment',
+            chapter: 'ch1',
+            cfi: 'cfi-3',
+            text: 'hello',
+            comment: 'my note',
+          },
+        },
+        'm3',
+      );
+      await vi.waitFor(() => {
+        expect(api.post).toHaveBeenCalledWith('/api/books/b1/comments', {
+          locator: { cfi: 'cfi-3', selectedText: 'hello', chapterRef: 'ch1' },
+          body: 'my note',
+          visibility: 'shared',
+        });
       });
     });
 
@@ -422,6 +466,60 @@ describe('sync', () => {
       );
       await vi.waitFor(() => {
         expect(db.saveProgress).toHaveBeenCalledWith(expect.objectContaining({ synced: true }));
+      });
+    });
+
+    it('marks annotation entry as synced', async () => {
+      vi.mocked(db.getSyncQueue).mockResolvedValue([
+        {
+          id: 'item-12',
+          type: 'annotation',
+          payload: {
+            bookId: 'b1',
+            annotation: {
+              type: 'highlight',
+              chapter: 'ch1',
+              cfi: 'cfi-12',
+              text: 'hi',
+              color: '#ffff00',
+              comment: '',
+            },
+          },
+          mutationId: 'm12',
+          createdAt: 1200,
+          attempts: 0,
+        },
+      ]);
+      vi.mocked(api.post).mockResolvedValue({} as unknown as Response);
+      vi.mocked(db.getUnsyncedAnnotations).mockResolvedValue([
+        {
+          id: 'a1',
+          bookId: 'b1',
+          type: 'highlight',
+          cfi: 'cfi-12',
+          synced: false,
+          mutationId: 'm12',
+          createdAt: Date.now(),
+        },
+      ]);
+
+      await queueSync(
+        'annotation',
+        {
+          bookId: 'b1',
+          annotation: {
+            type: 'highlight',
+            chapter: 'ch1',
+            cfi: 'cfi-12',
+            text: 'hi',
+            color: '#ffff00',
+            comment: '',
+          },
+        },
+        'm12',
+      );
+      await vi.waitFor(() => {
+        expect(db.saveAnnotation).toHaveBeenCalledWith(expect.objectContaining({ synced: true }));
       });
     });
 

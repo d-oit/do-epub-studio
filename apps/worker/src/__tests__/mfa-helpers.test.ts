@@ -8,7 +8,6 @@ import {
   storeChallenge,
 } from '../auth/mfa';
 import type { Env } from '../lib/env';
-import { defined } from './helpers';
 
 // ---------------------------------------------------------------------------
 // Unit coverage for the real auth/mfa helpers (ADR-234 items 5+6 invariant:
@@ -66,7 +65,7 @@ describe('recovery codes (real helpers)', () => {
       recovery_codes_hash_json: JSON.stringify(hashes),
     });
 
-    const ok = await verifyRecoveryCode(env(), 'user-1', defined(codes[0]));
+    const ok = await verifyRecoveryCode(env(), 'user-1', codes[0]);
     expect(ok).toBe(true);
 
     // The remaining hashes written back must NOT include code[0]'s hash.
@@ -75,9 +74,9 @@ describe('recovery codes (real helpers)', () => {
     );
     expect(writeCall).toBeDefined();
     if (!writeCall) throw new Error('expected write call');
-    const remainingRaw = defined((writeCall[2] as string[])[0]);
+    const remainingRaw = (writeCall[2] as string[])[0];
     const remaining = JSON.parse(remainingRaw) as string[];
-    const usedHash = await hashRecoveryCode(defined(codes[0]));
+    const usedHash = await hashRecoveryCode(codes[0]);
     expect(remaining).not.toContain(usedHash);
     expect(remaining).toHaveLength(9);
   });
@@ -122,9 +121,9 @@ describe('storeChallenge (real helper — opportunistic prune of webauthn_challe
     const calls = (execute as ReturnType<typeof vi.fn>).mock.calls;
     expect(calls).toHaveLength(2);
 
-    expect(calls[0]?.[1]).toContain('INSERT INTO webauthn_challenges');
+    expect(calls[0][1]).toContain('INSERT INTO webauthn_challenges');
 
-    const pruneCall = calls[1]?.[1] as string;
+    const pruneCall = calls[1][1] as string;
     expect(pruneCall).toContain('DELETE FROM webauthn_challenges');
     expect(pruneCall).toContain('used_at IS NOT NULL');
   });

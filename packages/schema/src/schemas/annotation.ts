@@ -24,7 +24,6 @@ export const BookmarkCreateSchema = z.object({
 export type BookmarkCreate = z.infer<typeof BookmarkCreateSchema>;
 
 export const HighlightCreateSchema = z.object({
-  mutationId: z.string().uuid().optional(),
   locator: MultiSignalLocatorSchema,
   note: z.string().max(5000).optional(),
   color: z
@@ -43,7 +42,6 @@ export const HighlightUpdateSchema = HighlightCreateSchema.pick({
 export type HighlightUpdate = z.infer<typeof HighlightUpdateSchema>;
 
 export const CommentCreateSchema = z.object({
-  mutationId: z.string().uuid().optional(),
   locator: MultiSignalLocatorSchema.optional(),
   body: z.string().min(1).max(10000),
   visibility: CommentVisibilitySchema.default('shared'),

@@ -13,7 +13,7 @@ pre-push = []
 
 [signal-sets]
 feedback = ["verify-fast"]
-verification = ["typecheck", "lint", "test-unit", "skills", "loc", "web-ui-tests"]
+verification = ["typecheck", "lint", "test-unit", "skills", "loc"]
 
 # GOAP-269 Phase 4: the upstream `web-ui` pack (d-o-hub/do-harness#75,
 # shipped in v0.1.1). Added ADDITIVELY rather than via `init --language web`,

@@ -4,31 +4,56 @@ import {
   getSyncQueue,
   removeSyncQueueItem,
   updateSyncQueueItem,
+  getUnsyncedProgress,
+  getUnsyncedAnnotations,
+  saveProgress,
+  saveAnnotation,
   type SyncQueueItem,
-  type AnnotationEntry,
 } from './db';
-import { settleAnnotationCreation, failAnnotationCreation } from './annotation-mutations';
-import { syncItem, markAsSynced, type FeedbackSyncPayload } from './sync-item';
+import { api } from '../api';
 import { useAuthStore } from '../../stores/auth';
-import { useReaderStore } from '../../stores/reader';
-import { markFeedbackDraft } from './feedback-drafts';
+import { createFeedback } from '../api/feedback';
+import type { FeedbackAnchor, FeedbackCategory, FeedbackKind } from '../api/feedback';
+import { deleteFeedbackDraftByMutation, markFeedbackDraft } from './feedback-drafts';
 import { clearAllPermissions } from './permissions';
 import { createTraceId, createSpanId } from '@do-epub-studio/shared';
 import { logClientEvent } from '../client-logger';
-import { ConflictType, clearResolvedConflicts, type ConflictRecord } from './conflict-resolution';
-import type { ProgressSyncPayload } from './progress-conflict';
+import {
+  ConflictType,
+  getPendingConflicts,
+  clearResolvedConflicts,
+  type ConflictRecord,
+} from './conflict-resolution';
+import { syncAnnotation } from './annotation-sync';
+import {
+  handleProgressConflict,
+  syncProgress,
+  type SyncResult,
+  type ProgressSyncPayload,
+} from './progress-conflict';
 
 const MAX_RETRY_ATTEMPTS = 5;
 const BASE_DELAY_MS = 1000;
 const MAX_DELAY_MS = 30000;
+
+// Callback for permission revocation
 let onPermissionRevoked: ((bookId: string) => void) | null = null;
+
+/**
+ * Tracks the pending retry timeout so it can be cancelled on cleanup.
+ * A module-level handle is sufficient since only one retry chain runs at
+ * a time (queue is processed item-by-item).
+ */
 let retryTimeoutId: ReturnType<typeof setTimeout> | null = null;
+
+/** Single-flight drain guard: only one attemptSync loop runs at a time. */
 let drainPromise: Promise<void> | null = null;
 
 export function setPermissionRevokedCallback(callback: (bookId: string) => void): void {
   onPermissionRevoked = callback;
 }
 
+/** Cancel any pending retry timer. Call this on component/app unmount. */
 export function cancelPendingRetry(): void {
   if (retryTimeoutId !== null) {
     clearTimeout(retryTimeoutId);
@@ -36,6 +61,7 @@ export function cancelPendingRetry(): void {
   }
 }
 
+/** Reset the single-flight drain guard. Exported for test teardown only. */
 export function resetDrainPromise(): void {
   drainPromise = null;
 }
@@ -66,10 +92,6 @@ export async function queueSync(
   void ensureDrain();
 }
 
-export async function queueFeedbackSubmission(payload: FeedbackSyncPayload): Promise<void> {
-  await queueSync('feedback', payload, payload.mutationId);
-}
-
 function ensureDrain(): Promise<void> {
   if (drainPromise) return drainPromise;
   drainPromise = attemptSync().finally(() => {
@@ -78,148 +100,64 @@ function ensureDrain(): Promise<void> {
   return drainPromise;
 }
 
-export async function syncAll(): Promise<void> {
-  await ensureDrain();
-}
-
-function isCurrentSyncSession(sessionToken: string | null, bookId: string | null): boolean {
-  const current = useAuthStore.getState();
-  return current.sessionToken === sessionToken && current.bookId === bookId;
-}
-
 async function attemptSync(): Promise<void> {
   if (!navigator.onLine) return;
 
-  const { sessionToken: capturedToken, bookId: capturedBookId } = useAuthStore.getState();
   const snapshot = await getSyncQueue();
-  if (!isCurrentSyncSession(capturedToken, capturedBookId)) return;
   if (!snapshot || snapshot.length === 0) return;
 
+  // Sort once by creation time; drain FIFO.
   const sorted = [...snapshot].sort((a, b) => a.createdAt - b.createdAt);
   const processed = new Set<string>();
 
   for (const item of sorted) {
     if (!navigator.onLine) return;
-    if (!isCurrentSyncSession(capturedToken, capturedBookId)) return;
     if (processed.has(item.id)) continue;
 
-    const isAnnotationCreation =
-      item.type === 'annotation' &&
-      item.payload &&
-      typeof item.payload === 'object' &&
-      (('action' in item.payload && (item.payload as { action?: string }).action === 'create') ||
-        !('action' in item.payload));
+    const traceId = createTraceId();
+    const spanId = createSpanId();
 
     if (item.attempts >= MAX_RETRY_ATTEMPTS) {
-      if (isAnnotationCreation && capturedToken) {
-        if (capturedToken === useAuthStore.getState().sessionToken) {
-          await failAnnotationCreation(item, item.error ?? 'Sync failed', capturedToken);
-          processed.add(item.id);
-          const readerState = useReaderStore.getState();
-          if (capturedBookId && readerState.currentChapter !== null) {
-            const localId = `local-annotation-${item.mutationId}`;
-            readerState.updateHighlight(localId, {
-              syncState: 'failed',
-              syncError: item.error ?? 'Sync failed',
-            });
-            readerState.updateComment(localId, {
-              syncState: 'failed',
-              syncError: item.error ?? 'Sync failed',
-            });
-          }
-        }
-      } else {
-        await removeSyncQueueItem(item.id);
-        processed.add(item.id);
-      }
+      await removeSyncQueueItem(item.id);
+      processed.add(item.id);
       logClientEvent({
         level: 'warn',
-        traceId: createTraceId(),
-        spanId: createSpanId(),
+        traceId,
+        spanId,
         event: 'sync.item.exceeded_max_retries',
         metadata: { itemId: item.id, type: item.type, attempts: item.attempts },
       });
       continue;
     }
 
-    const traceId = createTraceId();
-    const spanId = createSpanId();
-
     const result = await syncItem(item, traceId, spanId);
-    if (!isCurrentSyncSession(capturedToken, capturedBookId)) return;
 
     if (result.success) {
-      if (isAnnotationCreation && result.annotation && capturedToken) {
-        if (capturedToken !== useAuthStore.getState().sessionToken) {
-          return;
-        }
-
-        const res = result.annotation;
-        let canonicalEntry: AnnotationEntry;
-        if (res.type === 'highlight') {
-          const hl = res.item;
-          canonicalEntry = {
-            id: hl.id,
-            bookId: capturedBookId ?? '',
-            type: 'highlight',
-            cfi: hl.cfiRange ?? '',
-            text: hl.selectedText,
-            chapter: hl.chapterRef ?? undefined,
-            color: hl.color,
-            createdAt: new Date(hl.createdAt).getTime(),
-            updatedAt: new Date(hl.updatedAt).getTime(),
-            synced: true,
-            mutationId: item.mutationId,
-          };
-        } else {
-          const cm = res.item;
-          canonicalEntry = {
-            id: cm.id,
-            bookId: capturedBookId ?? '',
-            type: 'comment',
-            cfi: cm.cfiRange ?? '',
-            text: cm.selectedText ?? undefined,
-            comment: cm.body,
-            chapter: cm.chapterRef ?? undefined,
-            displayName: cm.displayName,
-            status: cm.status === 'deleted' ? 'open' : cm.status,
-            visibility: cm.visibility,
-            createdAt: new Date(cm.createdAt).getTime(),
-            updatedAt: new Date(cm.updatedAt).getTime(),
-            synced: true,
-            mutationId: item.mutationId,
-          };
-        }
-
-        await settleAnnotationCreation(item, canonicalEntry, capturedToken);
-        processed.add(item.id);
-
-        if (
-          capturedToken === useAuthStore.getState().sessionToken &&
-          capturedBookId === useAuthStore.getState().bookId
-        ) {
-          const reader = useReaderStore.getState();
-          const localId = `local-annotation-${item.mutationId}`;
-          if (res.type === 'highlight') {
-            reader.removeHighlight(localId);
-            reader.addHighlight(res.item);
-          } else {
-            reader.updateComment(localId, { ...res.item });
-          }
-        }
-      } else {
-        await removeSyncQueueItem(item.id);
-        processed.add(item.id);
-        await markAsSynced(item.type, item.mutationId);
-      }
-
+      await removeSyncQueueItem(item.id);
+      processed.add(item.id);
+      await markAsSynced(item.type, item.mutationId);
+      // Clear any pending conflicts for this entity after successful sync
       if (item.type === 'progress') {
         const payload = item.payload as { bookId?: string };
         if (payload?.bookId) {
+          const pendingBefore = getPendingConflicts(payload.bookId).length;
           clearResolvedConflicts(payload.bookId);
+          const pendingAfter = getPendingConflicts(payload.bookId).length;
+          if (pendingBefore !== pendingAfter) {
+            logClientEvent({
+              level: 'info',
+              traceId,
+              spanId,
+              event: 'sync.conflicts_cleared',
+              metadata: {
+                itemId: item.id,
+                bookId: payload.bookId,
+                cleared: pendingBefore - pendingAfter,
+              },
+            });
+          }
         }
       }
-
       logClientEvent({
         level: 'info',
         traceId,
@@ -227,36 +165,11 @@ async function attemptSync(): Promise<void> {
         event: 'sync.item.success',
         metadata: { itemId: item.id, type: item.type },
       });
-    } else if (result.error === 'annotation_blocked') {
-      if (capturedToken) {
-        if (capturedToken !== useAuthStore.getState().sessionToken) {
-          return;
-        }
-        const errorDetail = result.detail ?? 'Access denied';
-        await failAnnotationCreation(item, errorDetail, capturedToken);
-        processed.add(item.id);
-
-        if (
-          capturedToken === useAuthStore.getState().sessionToken &&
-          capturedBookId === useAuthStore.getState().bookId
-        ) {
-          const reader = useReaderStore.getState();
-          const localId = `local-annotation-${item.mutationId}`;
-          reader.updateHighlight(localId, { syncState: 'failed', syncError: errorDetail });
-          reader.updateComment(localId, { syncState: 'failed', syncError: errorDetail });
-        }
-      } else {
-        await removeSyncQueueItem(item.id);
-        processed.add(item.id);
-      }
-      logClientEvent({
-        level: 'warn',
-        traceId,
-        spanId,
-        event: 'sync.annotation_blocked',
-        metadata: { itemId: item.id, type: item.type },
-      });
     } else if (result.error === 'feedback_blocked') {
+      // Server-decided rejection (lost contribution rights or invalid
+      // payload): the write will never succeed by retrying. Keep the
+      // human draft with a visible blocked state — do NOT clear session
+      // permissions (the session itself may be perfectly valid for reading).
       const payload = item.payload as { draftId?: string; bookId?: string };
       if (payload?.draftId) {
         await markFeedbackDraft(payload.draftId, 'blocked', result.detail);
@@ -289,8 +202,11 @@ async function attemptSync(): Promise<void> {
 
       await removeSyncQueueItem(item.id);
       processed.add(item.id);
-      return;
     } else if (result.error === 'conflict_remote_unavailable') {
+      // Remote fetch unavailable: retain pending state — do NOT fabricate a
+      // conflict, do NOT count toward the retry cap, do NOT remove the queue
+      // item. The item is retried on the next natural sync trigger (online
+      // event, next queueSync, SW sync request).
       logClientEvent({
         level: 'warn',
         traceId,
@@ -300,6 +216,7 @@ async function attemptSync(): Promise<void> {
       });
       processed.add(item.id);
     } else if (result.error === 'conflict_requires_manual_resolution') {
+      // Conflict cannot be auto-resolved — remove from queue to prevent infinite retries
       logClientEvent({
         level: 'warn',
         traceId,
@@ -310,10 +227,6 @@ async function attemptSync(): Promise<void> {
       await removeSyncQueueItem(item.id);
       processed.add(item.id);
     } else {
-      if (capturedToken && capturedToken !== useAuthStore.getState().sessionToken) {
-        return;
-      }
-
       item.attempts++;
       item.lastAttempt = Date.now();
       item.error = result.error;
@@ -342,6 +255,173 @@ async function attemptSync(): Promise<void> {
     }
   }
 }
+
+/** Reading-insight payload synced from the offline queue. */
+interface ReadingInsightSyncPayload {
+  bookId: string;
+  buckets: { date: string; activeMinutes: number; activePages: number }[];
+  mutationId: string;
+}
+
+async function syncReadingInsight(item: SyncQueueItem): Promise<void> {
+  const payload = item.payload as ReadingInsightSyncPayload;
+  await api.post(`/api/books/${payload.bookId}/insights/sync`, {
+    bookId: payload.bookId,
+    buckets: payload.buckets,
+    mutationId: payload.mutationId,
+  });
+}
+
+/** Private editorial-feedback payload synced from the offline queue. */
+export interface FeedbackSyncPayload {
+  bookId: string;
+  draftId: string;
+  kind: FeedbackKind;
+  category: FeedbackCategory;
+  body: string;
+  proposedText?: string;
+  anchor: FeedbackAnchor;
+  mutationId: string;
+}
+
+async function syncFeedback(item: SyncQueueItem): Promise<void> {
+  const payload = item.payload as FeedbackSyncPayload;
+  const token = useAuthStore.getState().sessionToken ?? '';
+  await createFeedback(
+    payload.bookId,
+    {
+      kind: payload.kind,
+      category: payload.category,
+      body: payload.body,
+      proposedText: payload.proposedText,
+      anchor: payload.anchor,
+      mutationId: payload.mutationId,
+    },
+    token,
+  );
+}
+
+/** Queue a private-feedback submission for replay (REL-02). */
+export async function queueFeedbackSubmission(payload: FeedbackSyncPayload): Promise<void> {
+  await queueSync('feedback', payload, payload.mutationId);
+}
+
+async function syncItem(item: SyncQueueItem, traceId: string, spanId: string): Promise<SyncResult> {
+  try {
+    if (item.type === 'progress') {
+      await syncProgress(item);
+    } else if (item.type === 'annotation') {
+      await syncAnnotation(item);
+    } else if (item.type === 'reading-insight') {
+      await syncReadingInsight(item);
+    } else if (item.type === 'feedback') {
+      await syncFeedback(item);
+    } else {
+      const raw: unknown = item;
+      const label =
+        typeof raw === 'object' && raw !== null && 'type' in raw && typeof raw.type === 'string'
+          ? raw.type
+          : 'unknown';
+      throw new Error(`Unrecognized sync queue item type: ${label}`);
+    }
+    return { success: true };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown sync error';
+    const status = (error as { status?: number }).status;
+
+    // Feedback writes rejected by the server (lost contribution rights or
+    // invalid payload) will never succeed by retrying — and the session
+    // itself may still be valid for reading, so this must NOT take the
+    // permission_revoked path (no permission-cache clear, no revoked
+    // callback). 401 (dead session) keeps the generic revoked handling.
+    if (item.type === 'feedback' && (status === 403 || status === 422 || status === 400)) {
+      logClientEvent({
+        level: 'warn',
+        traceId,
+        spanId,
+        event: 'sync.item.feedback_rejected',
+        metadata: { itemId: item.id, type: item.type, status },
+        error: { name: 'FeedbackRejected', message },
+      });
+      return { success: false, error: 'feedback_blocked', detail: message };
+    }
+
+    // Check for permission revocation (401/403)
+    if (status === 401 || status === 403) {
+      logClientEvent({
+        level: 'error',
+        traceId,
+        spanId,
+        event: 'sync.item.auth_error',
+        metadata: { itemId: item.id, type: item.type, status },
+        error: { name: 'AuthError', message },
+      });
+      return { success: false, error: 'permission_revoked' };
+    }
+
+    // Check for specific error messages (fallback when status is unavailable).
+    // Server revocations always return 401/403 — handled above — so do NOT treat a
+    // generic "permission" substring as revocation (would spuriously clear the
+    // local permission cache). Only an explicit revoked mention maps to the
+    // permission_revoked outcome.
+    if (message.includes('revoked')) {
+      return { success: false, error: 'permission_revoked' };
+    }
+
+    // Check for conflict (409) — only for progress type. The real-remote
+    // fetch, resolver call and outcome mapping live in progress-conflict.ts.
+    if (status === 409 && item.type === 'progress') {
+      return handleProgressConflict(item, traceId, spanId);
+    }
+
+    logClientEvent({
+      level: 'error',
+      traceId,
+      spanId,
+      event: 'sync.item.failed',
+      metadata: { itemId: item.id, type: item.type },
+      error: { name: error instanceof Error ? error.name : 'Error', message },
+    });
+
+    return { success: false, error: message };
+  }
+}
+
+async function markAsSynced(
+  type: 'progress' | 'annotation' | 'reading-insight' | 'feedback',
+  mutationId: string,
+): Promise<void> {
+  if (type === 'progress') {
+    const unsynced = await getUnsyncedProgress();
+    const entry = unsynced.find((e) => e.mutationId === mutationId);
+    if (entry) {
+      await saveProgress({ ...entry, synced: true });
+    }
+  } else if (type === 'annotation') {
+    const unsynced = await getUnsyncedAnnotations();
+    const entry = unsynced.find((e) => e.mutationId === mutationId);
+    if (entry) {
+      await saveAnnotation({ ...entry, synced: true });
+    }
+  } else if (type === 'feedback') {
+    // Successful replay removes the local draft: the server row (deduplicated
+    // by mutationId) is now the source of truth for this submission.
+    await deleteFeedbackDraftByMutation(mutationId);
+  }
+  // 'reading-insight' items are server-side only; the local IndexedDB
+  // store is the source of truth and the server sync is append-only (UPSERT).
+  // No local mark-as-synced is needed — the queue item itself is removed
+  // on success, and the local insight entry persists for the InfoPanel.
+}
+
+/**
+ * Re-queue the local progress version after a manual "keep local" conflict
+ * resolution (REL-03): the losing write was removed from the sync queue when
+ * the conflict was recorded, so choosing local must explicitly re-send it or
+ * the server never learns of the chosen position. The original mutationId is
+ * reused — the resend is the same logical write retried after resolution,
+ * which also lets markAsSynced settle the original local progress entry.
+ */
 export async function resendProgressFromConflict(conflict: ConflictRecord): Promise<void> {
   if (conflict.type !== ConflictType.ProgressUpdate) return;
 
@@ -364,16 +444,25 @@ export async function resendProgressFromConflict(conflict: ConflictRecord): Prom
     return;
   }
 
-  await queueSync(
-    'progress',
-    {
-      bookId: local.bookId,
-      cfi: local.cfi,
-      percentage: local.percentage,
-      mutationId,
-    },
+  const payload: ProgressSyncPayload = {
+    bookId: local.bookId,
+    cfi: local.cfi,
+    percentage: local.percentage,
     mutationId,
-  );
+  };
+  logClientEvent({
+    level: 'info',
+    traceId: createTraceId(),
+    spanId: createSpanId(),
+    event: 'sync.conflict_resend.queued',
+    metadata: { conflictId: conflict.id, bookId: payload.bookId },
+  });
+  await queueSync('progress', payload, mutationId);
+}
+
+export async function syncAll(): Promise<void> {
+  if (!navigator.onLine) return;
+  await ensureDrain();
 }
 
 export function setupOnlineListener(): () => void {
@@ -414,6 +503,7 @@ export function setupOnlineListener(): () => void {
     if (sw && typeof sw.removeEventListener === 'function') {
       sw.removeEventListener('message', swMessageHandler);
     }
+    // Also cancel any pending retry to avoid leaks when the listener is torn down
     cancelPendingRetry();
   };
 }

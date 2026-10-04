@@ -435,14 +435,6 @@ export const it: Record<TranslationKeys, TranslationValue> = {
   'asst.enginePrepare': 'Prepara motore di trama e logica',
   'asst.engineDownloading': 'Preparazione del motore: {percent} %',
   'asst.engineReady': 'Motore di trama e logica pronto',
-  'asst.loadChapters': 'Carica il testo del libro',
-  'asst.loadingBook': 'Caricamento del libro…',
-  'asst.loadFailed': 'Impossibile caricare il testo del libro.',
-  'asst.noReadAccess':
-    'Questo account non ha accesso in lettura a questo libro, quindi il testo non può essere analizzato.',
-  'asst.textRequired':
-    'Carica il testo del libro e seleziona almeno un capitolo prima di avviare un controllo.',
-  'asst.chaptersLabel': 'Capitoli da analizzare',
   'asst.engineNote':
     'Download unico di circa 500 MB. Il modello gira su questo dispositivo: il manoscritto non viene mai caricato.',
 

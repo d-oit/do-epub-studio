@@ -21,7 +21,12 @@ function makeMockBook(overrides?: {
     href: 'chapter1.xhtml',
   };
   return {
-    sections: new Map([[section.href, section]]),
+    spine: {
+      each: vi.fn((cb: (item: MockSection) => void) => {
+        cb(section);
+      }),
+      get: vi.fn(() => section),
+    },
     load: vi.fn(),
     navigation: {
       toc: [{ label: 'Chapter 1', href: 'chapter1.xhtml' }],
@@ -65,17 +70,17 @@ describe('useReaderSearch', () => {
   it('handles section load failure without crashing', async () => {
     vi.useFakeTimers();
     const mockBook = {
-      sections: new Map([
-        [
-          'broken.xhtml',
-          {
+      spine: {
+        each: vi.fn((cb: (item: MockSection) => void) => {
+          cb({
             load: vi.fn().mockRejectedValue(new Error('network')),
             find: vi.fn(),
             unload: vi.fn(),
             href: 'broken.xhtml',
-          },
-        ],
-      ]),
+          });
+        }),
+        get: vi.fn(() => undefined),
+      },
       load: vi.fn(),
       navigation: { toc: [] },
     } as unknown as Book;
@@ -86,30 +91,6 @@ describe('useReaderSearch', () => {
     vi.useRealTimers();
     await waitFor(() => expect(result.current.isSearching).toBe(false), { timeout: 5000 });
     expect(result.current.results).toEqual([]);
-  });
-
-  it('also searches the dist build shape (`.each` spine) — GOAP-295 fallback', async () => {
-    vi.useFakeTimers();
-    const section: MockSection = {
-      load: vi.fn().mockResolvedValue(undefined),
-      find: (q) => (q === 'fox' ? [{ cfi: 'cfi9', excerpt: 'the fox' }] : []),
-      unload: vi.fn(),
-      href: 'chapter1.xhtml',
-    };
-    const mockBook = {
-      spine: {
-        each: (callback: (item: MockSection) => void) => callback(section),
-      },
-      load: vi.fn(),
-      navigation: { toc: [] },
-    } as unknown as Book;
-    const { result } = renderHook(() => useReaderSearch(mockBook, 'fox'));
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(300);
-    });
-    vi.useRealTimers();
-    await waitFor(() => expect(result.current.results.length).toBe(1), { timeout: 5000 });
-    expect(result.current.results[0]).toMatchObject({ cfi: 'cfi9', excerpt: 'the fox' });
   });
 });
 
@@ -136,7 +117,12 @@ describe('bounded concurrency', () => {
     }));
 
     const book = {
-      sections: new Map(sections.map((item) => [item.href, item])),
+      spine: {
+        each: vi.fn((cb: (item: MockSection) => void) => {
+          sections.forEach(cb);
+        }),
+        get: vi.fn(),
+      },
       load: vi.fn(),
       navigation: { toc: [] },
     } as unknown as Book;
@@ -169,7 +155,12 @@ describe('bounded concurrency', () => {
     }));
 
     const book = {
-      sections: new Map(sections.map((item) => [item.href, item])),
+      spine: {
+        each: vi.fn((cb: (item: MockSection) => void) => {
+          sections.forEach(cb);
+        }),
+        get: vi.fn(),
+      },
       load: vi.fn(),
       navigation: { toc: [] },
     } as unknown as Book;
@@ -200,7 +191,12 @@ describe('bounded concurrency', () => {
     }));
 
     const book = {
-      sections: new Map(sections.map((item) => [item.href, item])),
+      spine: {
+        each: vi.fn((cb: (item: MockSection) => void) => {
+          sections.forEach(cb);
+        }),
+        get: vi.fn(),
+      },
       load: vi.fn(),
       navigation: { toc: [] },
     } as unknown as Book;
@@ -246,7 +242,12 @@ describe('bounded concurrency', () => {
     }));
 
     const book = {
-      sections: new Map(sections.map((item) => [item.href, item])),
+      spine: {
+        each: vi.fn((cb: (item: MockSection) => void) => {
+          sections.forEach(cb);
+        }),
+        get: vi.fn(),
+      },
       load: vi.fn(),
       navigation: { toc: [] },
     } as unknown as Book;

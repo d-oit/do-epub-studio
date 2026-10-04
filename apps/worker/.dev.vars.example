@@ -1,6 +1,3 @@
-# Demo-account seed only (ADR-233, scripts/seed-demo-accounts.mjs): the seed's
-# libsql client is pointed at the local D1 sqlite file — see
-# docs/setup-local.md §Demo accounts. The API runtime database is D1 (`env.DB`).
 TURSO_DATABASE_URL=
 TURSO_AUTH_TOKEN=
 SESSION_SIGNING_SECRET=

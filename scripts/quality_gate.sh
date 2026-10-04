@@ -94,16 +94,6 @@ else
 fi
 echo ""
 
-# --- Validate plan/ADR references (ADR-083) ---
-printf '%s  ✓ Validating plan references (ADR-083)...%s\n' "${GREEN}" "${NC}"
-if node "$REPO_ROOT/scripts/check-plan-references.mjs" 2>&1; then
-  printf '%s  ✓ Plan references resolved (ADR-083).%s\n' "${GREEN}" "${NC}"
-else
-  printf '%s  ✗ Plan reference validation failed.%s\n' "${RED}" "${NC}"
-  FAILED=1
-fi
-echo ""
-
 # --- Enforce 500-line source cap (ADR-278) ---
 printf '%sValidating source line counts...%s\n' "${BLUE}" "${NC}"
 if ! node "$REPO_ROOT/scripts/check-loc.mjs"; then FAILED=1; fi

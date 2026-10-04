@@ -189,7 +189,7 @@ describe('Admin Routes', () => {
           publishedAt: null,
         },
       ]);
-      expect(mockQueryAll.mock.calls[0]?.[1] as string).toContain('archived_at IS NULL');
+      expect(mockQueryAll.mock.calls[0][1] as string).toContain('archived_at IS NULL');
     });
 
     it('requires an admin session', async () => {
@@ -329,7 +329,7 @@ describe('Admin Routes', () => {
       // B2 (GOAP-224 W1.4): grants SELECT must be an explicit column list —
       // no `SELECT *`, and the Argon2id `password_hash` must never be fetched
       // into the Worker heap.
-      const sql = mockQueryAll.mock.calls[0]?.[1] as string;
+      const sql = mockQueryAll.mock.calls[0][1] as string;
       expect(sql).toMatch(/FROM book_access_grants/);
       expect(sql).not.toMatch(/SELECT\s+\*/i);
       expect(sql).not.toContain('password_hash');
@@ -674,8 +674,8 @@ describe('Admin Routes', () => {
       expect(body.data.storageBytes).toBe(10485760);
       const recentActivity = body.data.recentActivity as Array<{ action: string; count: number }>;
       expect(recentActivity).toHaveLength(2);
-      expect(recentActivity[0]?.action).toBe('created');
-      expect(recentActivity[0]?.count).toBe(4);
+      expect(recentActivity[0].action).toBe('created');
+      expect(recentActivity[0].count).toBe(4);
     });
   });
 

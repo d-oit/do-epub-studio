@@ -440,14 +440,6 @@ export const ru: Record<TranslationKeys, TranslationValue> = {
   'asst.enginePrepare': 'Подготовить движок сюжета и логики',
   'asst.engineDownloading': 'Подготовка движка: {percent} %',
   'asst.engineReady': 'Движок сюжета и логики готов',
-  'asst.loadChapters': 'Загрузить текст книги',
-  'asst.loadingBook': 'Загрузка книги…',
-  'asst.loadFailed': 'Не удалось загрузить текст книги.',
-  'asst.noReadAccess':
-    'У этой учётной записи нет доступа на чтение этой книги, поэтому её текст нельзя проверить.',
-  'asst.textRequired':
-    'Загрузите текст книги и выберите хотя бы одну главу перед запуском проверки.',
-  'asst.chaptersLabel': 'Главы для проверки',
   'asst.engineNote':
     'Единоразовая загрузка около 500 МБ. Модель работает на этом устройстве — рукопись никогда не отправляется.',
 

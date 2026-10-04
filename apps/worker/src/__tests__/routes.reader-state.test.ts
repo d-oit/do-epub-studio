@@ -200,18 +200,8 @@ describe('Reader State Routes', () => {
         email: 'user@example.com',
         capabilities: { canHighlight: true },
       });
-      mockQueryFirst.mockResolvedValue({
-        id: 'new-highlight-id',
-        book_id: 'book-1',
-        user_email: 'user@example.com',
-        chapter_ref: 'chap1',
-        cfi_range: 'cfi',
-        selected_text: 'text',
-        note: 'nice',
-        color: '#ff0000',
-        created_at: '2026-01-01T00:00:00.000Z',
-        updated_at: '2026-01-01T00:00:00.000Z',
-      });
+      mockExecute.mockResolvedValue({ rows: [] });
+
       const res = await app.fetch(
         new Request('http://localhost/api/books/book-1/highlights', {
           method: 'POST',

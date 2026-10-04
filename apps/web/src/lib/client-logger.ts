@@ -1,5 +1,3 @@
-import { scrubLogEntry } from '@do-epub-studio/shared';
-
 export interface ClientLogEntry {
   level: 'debug' | 'info' | 'warn' | 'error';
   traceId: string;
@@ -85,25 +83,21 @@ export function logClientEvent(entry: ClientLogEntry): void {
   const minLevel = getMinLevel();
   if (LOG_LEVELS[entry.level] < minLevel) return;
 
-  // A7 (GOAP-298): sanitize once, before every sink — console, buffer and the
-  // optional external endpoint. Correlation ids survive via the shared
-  // scrubLogEntry contract; secrets/PII are redacted.
-  const safeEntry = scrubLogEntry(entry);
-  const payload = JSON.stringify(safeEntry);
-  if (safeEntry.level === 'error') {
+  const payload = JSON.stringify(entry);
+  if (entry.level === 'error') {
     console.error(payload);
-  } else if (safeEntry.level === 'warn') {
+  } else if (entry.level === 'warn') {
     console.warn(payload);
   } else {
     console.log(payload);
   }
 
-  if (safeEntry.level === 'warn' || safeEntry.level === 'error') {
+  if (entry.level === 'warn' || entry.level === 'error') {
     if (_buffer.length >= MAX_BUFFER_SIZE) {
       _buffer.shift();
       _dropCount++;
     }
-    _buffer.push(safeEntry);
+    _buffer.push(entry);
     scheduleFlush();
   }
 }
@@ -141,7 +135,7 @@ export function measurePerformance(
   try {
     performance.measure(name, startMark, endMark);
     const entries = performance.getEntriesByName(name);
-    return entries[entries.length - 1]?.duration;
+    return entries.length > 0 ? entries[entries.length - 1].duration : undefined;
   } catch {
     return undefined;
   }

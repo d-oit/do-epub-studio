@@ -54,7 +54,7 @@ describe('sw-logger – swLogEvent', () => {
   it('emits a redacted JSON line to the injected sink', () => {
     const sink = { log: vi.fn(), warn: vi.fn(), error: vi.fn() };
     swLogEvent('error', 'sw.sync.failed', { token: 'topsecret' }, { sink });
-    const line = sink.error.mock.calls[0]?.[0] as string;
+    const line = sink.error.mock.calls[0][0] as string;
     const parsed = JSON.parse(line);
     expect(parsed.event).toBe('sw.sync.failed');
     expect(parsed.level).toBe('error');
@@ -76,7 +76,7 @@ describe('sw-logger – swLogEvent', () => {
       headers: { get: (name: string) => (name === TRACEPARENT_HEADER ? '00-abc-01' : null) },
     };
     swLogEvent('info', 'sw.sync.start', {}, { request, sink });
-    const parsed = JSON.parse(sink.log.mock.calls[0]?.[0] as string);
+    const parsed = JSON.parse(sink.log.mock.calls[0][0] as string);
     expect(parsed.traceHeader).toBe('00-abc-01');
   });
 
@@ -86,14 +86,14 @@ describe('sw-logger – swLogEvent', () => {
       headers: { get: (name: string) => (name === TRACE_ID_HEADER ? 'trace-42' : null) },
     };
     swLogEvent('info', 'sw.sync.complete', {}, { request, sink });
-    const parsed = JSON.parse(sink.log.mock.calls[0]?.[0] as string);
+    const parsed = JSON.parse(sink.log.mock.calls[0][0] as string);
     expect(parsed.traceHeader).toBe('trace-42');
   });
 
   it('omits the trace field when no request headers are in scope', () => {
     const sink = { log: vi.fn(), warn: vi.fn(), error: vi.fn() };
     swLogEvent('info', 'sw.sync.start', {}, { sink });
-    const parsed = JSON.parse(sink.log.mock.calls[0]?.[0] as string);
+    const parsed = JSON.parse(sink.log.mock.calls[0][0] as string);
     expect(parsed).not.toHaveProperty('traceHeader');
   });
 });

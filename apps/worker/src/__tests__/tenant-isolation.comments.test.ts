@@ -3,8 +3,8 @@ import {
   makeEnv,
   makePassThroughContext,
   mockRequireAuth,
-  mockQueryFirst,
   mockQueryAll,
+  mockExecute,
   mockGetGrantByBookAndSession,
   mockComputeCapabilities,
 } from './fixtures';
@@ -115,21 +115,8 @@ describe('Tenant Isolation: Comments', () => {
         canComment: true,
       });
 
-      mockQueryFirst.mockResolvedValue({
-        id: 'legit-comment-id',
-        book_id: 'book-A',
-        user_email: 'user@example.com',
-        chapter_ref: null,
-        cfi_range: null,
-        selected_text: null,
-        body: 'legit comment',
-        visibility: 'shared',
-        status: 'open',
-        parent_comment_id: null,
-        resolved_at: null,
-        created_at: '2026-01-01T00:00:00.000Z',
-        updated_at: '2026-01-01T00:00:00.000Z',
-      });
+      mockExecute.mockResolvedValue({});
+
       const res = await app.fetch(
         new Request('http://localhost/api/books/book-A/comments', {
           method: 'POST',

@@ -242,8 +242,28 @@ test.describe('Cloudflare deployment checks', () => {
   test('health endpoint is reachable', async ({ page }) => {
     const response = await page.request.get(`${BASE_URL}/api/health`);
     expect(response.ok()).toBeTruthy();
+    expect(response.headers()['content-type']).toContain('application/json');
     const body = await response.json();
     expect(body.ok).toBe(true);
     expect(body.service).toBe('do-epub-studio-worker');
+  });
+
+  test('access request endpoint is not swallowed by SPA fallback', async ({ page }) => {
+    const response = await page.request.post(`${BASE_URL}/api/access/request`, {
+      data: {},
+    });
+    // Should return JSON (e.g. 400 MISSING_BOOK), NEVER 200 HTML SPA index document
+    expect(response.headers()['content-type']).toContain('application/json');
+    const bodyText = await response.text();
+    expect(bodyText).not.toContain('<!DOCTYPE html');
+    const body = JSON.parse(bodyText);
+    expect(body).toHaveProperty('ok');
+  });
+
+  test('catalog endpoint returns JSON', async ({ page }) => {
+    const response = await page.request.get(`${BASE_URL}/api/catalog?limit=1`);
+    expect(response.headers()['content-type']).toContain('application/json');
+    const bodyText = await response.text();
+    expect(bodyText).not.toContain('<!DOCTYPE html');
   });
 });

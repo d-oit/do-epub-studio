@@ -1,6 +1,6 @@
 # GOAP-269: do-harness adoption + web-ui sensor pack
 
-**Status:** IN PROGRESS (upstream pack and local registration delivered; F2/F3/F5/F6/F7 fixed in GOAP-291/294 on 2026-09-30 — all six runners reach browser work, `web-ui-tests` is in the verification set and runs in CI; remaining: promote the CI context to a required check if desired — ADR-286 decision)
+**Status:** DONE (Phases 1–4 complete; web-ui pack scaffolded additively into `do-harness.toml`, 13 sensors, library suite 24/24)
 **Date:** 2026-09-13
 **ADR:** ADR-246 (`plans/246-adr-do-harness-completion-contract.md`)
 
@@ -31,12 +31,12 @@ green` via workspace/policy fingerprints), signal sets mapping to
 
 ## Phases
 
-| #   | Phase                                                                                                                                                                                      | Exit criteria                                                                                                           | Status                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
-| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 1   | CLI analysis (hands-on)                                                                                                                                                                    | findings recorded (this plan + ADR-246)                                                                                 | DONE                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
-| 2   | Upstream fixes: POSIX installer + `sh -s` pipeline test in `test-install.sh` + template newline                                                                                            | PR merged to d-o-hub/do-harness; `sh < install.sh` installs v0.1.0 under dash                                           | DONE (merged upstream as 371b4ba via d-o-hub/do-harness#64)                                                                                                                                                                                                                                                                                                                                                                                                                    |
-| 3   | Adopt generic pack here: `do-harness init --language generic`, sensor toml wrapping the same scripts as `quality_gate.sh`, hooks beside atomic-commit, AGENTS.md loop note                 | `do-harness verify --set verification --changed --strict` green pre-push; `status` consulted before claiming completion | DONE (PR #1120; sensors wrap `pnpm verify:fast`/`typecheck`/`lint`/`test:unit`/`validate-skills.sh`; hooks intentionally not installed — `scripts/hooks/` stays authoritative; upstream-scaffolded python fixed for pyflakes + pre-commit EOF)                                                                                                                                                                                                                                 |
-| 4   | Upstream `web-ui` pack (ADR-246 §3–4): audit library (visibility → occlusion → overlap → overflow → focus/target-size), `init --language web`, evidence matrix manifest, ratchet + strikes | dogfood on this repo's Playwright lanes; ratchet baseline = zero new findings on main                                   | DELIVERED UPSTREAM / SCAFFOLDED LOCALLY (not operationally complete — F2/F3/F7 in Current audit follow-up; library merged upstream as 530d8d8 via d-o-hub/do-harness#75; 10 headless tests. Dogfooded on the live dev stack — first run 42 findings, triaged to 2 real WCAG 2.5.8 target-size defects fixed here plus 2 false-positive classes fixed in the library; second run: zero findings. Scaffold completed 2026-09-28 in `do-harness.toml` **additively** — see below) |
+| #   | Phase                                                                                                                                                                                      | Exit criteria                                                                                                           | Status                                                                                                                                                                                                                                                                                                                                                                    |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | CLI analysis (hands-on)                                                                                                                                                                    | findings recorded (this plan + ADR-246)                                                                                 | DONE                                                                                                                                                                                                                                                                                                                                                                      |
+| 2   | Upstream fixes: POSIX installer + `sh -s` pipeline test in `test-install.sh` + template newline                                                                                            | PR merged to d-o-hub/do-harness; `sh < install.sh` installs v0.1.0 under dash                                           | DONE (merged upstream as 371b4ba via d-o-hub/do-harness#64)                                                                                                                                                                                                                                                                                                               |
+| 3   | Adopt generic pack here: `do-harness init --language generic`, sensor toml wrapping the same scripts as `quality_gate.sh`, hooks beside atomic-commit, AGENTS.md loop note                 | `do-harness verify --set verification --changed --strict` green pre-push; `status` consulted before claiming completion | DONE (PR #1120; sensors wrap `pnpm verify:fast`/`typecheck`/`lint`/`test:unit`/`validate-skills.sh`; hooks intentionally not installed — `scripts/hooks/` stays authoritative; upstream-scaffolded python fixed for pyflakes + pre-commit EOF)                                                                                                                            |
+| 4   | Upstream `web-ui` pack (ADR-246 §3–4): audit library (visibility → occlusion → overlap → overflow → focus/target-size), `init --language web`, evidence matrix manifest, ratchet + strikes | dogfood on this repo's Playwright lanes; ratchet baseline = zero new findings on main                                   | DONE (library merged upstream as 530d8d8 via d-o-hub/do-harness#75; 10 headless tests. Dogfooded on the live dev stack — first run 42 findings, triaged to 2 real WCAG 2.5.8 target-size defects fixed here plus 2 false-positive classes fixed in the library; second run: zero findings. Scaffold completed 2026-09-28 in `do-harness.toml` **additively** — see below) |
 
 ## Verification
 
@@ -78,56 +78,8 @@ available without making the default set unrunnable — the runners print
 `--strict` promotes, so a developer without a browser is never blocked.
 
 `web-ui-tests` (the library's own suite) _is_ browser-independent and therefore
-safe for the default set: its command covers the pure Node tests plus an
-optional browser suite that self-skips without Playwright
-(`node --test scripts/web-ui/audit.test.mjs scripts/web-ui/audit.browser.test.mjs`).
-It is registered with a `when-changed` list scoped to `scripts/web-ui/**` and
-`scripts/*-audit.mjs` and — since GOAP-291 (2026-09-30) — is a member of the
-`verification` signal set, matching `do-harness.toml`'s comment calling it "the
-one piece of the web pack that belongs in the default `verification` set".
-`do-harness explain --set verification` now selects it. The originally audited
-state (registered but in no set, F3) is recorded in the follow-up below.
-
-## Current audit follow-up
-
-`analysis/feature-docs-harness-audit.md` (GOAP-290, 2026-09-30) re-probed the
-committed pack read-only; GOAP-291 (`plans/291-goap-web-ui-pack-corrective.md`)
-then implemented the items that needed no further decision. Dispositions:
-
-- **F2 — configured runners cannot reach browser work. FIXED (GOAP-291).**
-  Every `scripts/{viewport,a11y,console,perf,visual,i18n}-audit.mjs` now
-  resolves Chromium through `scripts/web-ui/lib/playwright.mjs`
-  (`@playwright/test` first, then `playwright`). Verified: configured runs
-  against a served fixture all reach browser work (`viewport` audited 13
-  cells), and the pure suite pins the resolver.
-- **F2 fallout — hidden a11y defect, fixed in the same slice.**
-  `scripts/a11y-audit.mjs` created its page with `browser.newPage()`, which
-  axe-core/playwright 4.13 rejects ("Please use browser.newContext()"); the
-  F2 fix unmasked it. Now uses an explicit context and reports `OK: a11y
-clean on 1 route(s)`.
-- **F3 — `web-ui-tests` was selected by no set. FIXED (GOAP-291 + GOAP-294).**
-  It is in the `verification` set (`do-harness explain --set verification`
-  selects it) and CI now runs the identical command in the `Web UI Audit
-Suite` job with Chromium installed (28/28 locally, 15/15 workflows
-  validated). Promoting that context to a required check stays an ADR-286
-  maintainer decision — not claimed here.
-- **F5 — i18n direction judged before navigation. FIXED (GOAP-291).**
-  `auditLocales` checks `dir`/`lang` after `runProbe(locale)`. Regression
-  test proven to fail on the pre-fix revision (false `ar` finding, missed
-  wrong-dir `he`) and pass after.
-- **F6 — absent measurements read as clean. FIXED (GOAP-291).**
-  `missingMetrics()` + the runner's SKIP line: a stubbed-Lighthouse run with
-  null metrics prints `SKIP: no usable performance measurements … budgets not
-evaluated` instead of the OK line; real metrics still print OK and slow
-  metrics still exit 1 with four breaches.
-- **F7 — viewport matrices diverged. FIXED (GOAP-291).** Both
-  `apps/tests/viewport-matrix.ts` and `scripts/web-ui/lib/audit.mjs` now cover
-  the same 13 sizes (the four ADR-246 sizes were added to the former; 375×812
-  to the latter), and the browser lane audit prints 13 cells.
-
-Not a gap, intentionally unchanged: the six route-dependent sensors stay
-opt-in in the `web-ui` set, and the 24/24 library-suite result above remains
-historical evidence from this plan, not a fresh pass.
+safe for the default set; it is registered with a `when-changed` list scoped to
+`scripts/web-ui/**` so it only runs when the pack itself changes.
 
 ## Risks
 

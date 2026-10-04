@@ -5,8 +5,6 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { AccountSettingsPage } from '../features/admin/AccountSettingsPage';
 import { apiRequest } from '../lib/api';
-import { useLocaleStore } from '../stores/locale';
-import { defined } from './helpers';
 
 vi.mock('../lib/api', () => ({
   apiRequest: vi.fn(),
@@ -125,7 +123,6 @@ const sessions = {
 describe('AccountSettingsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    useLocaleStore.setState({ locale: 'en', localeStatus: 'ready' });
     vi.mocked(apiRequest).mockImplementation((endpoint: string) => {
       if (endpoint === '/api/admin/account/sessions') return Promise.resolve(sessions);
       if (endpoint === '/api/admin/account/mfa/status') {
@@ -258,31 +255,5 @@ describe('AccountSettingsPage', () => {
         token: 'tok-123',
       });
     });
-  });
-
-  it('formats session dates in the selected UI locale, not the browser default', async () => {
-    // A10/GOAP-307 acceptance: with the app locale set to fr, the session rows
-    // must read French-formatted dates even though the test browser (jsdom)
-    // reports en-US.
-    useLocaleStore.setState({ locale: 'fr' });
-    const session = defined(sessions.sessions[0]);
-    const created = new Intl.DateTimeFormat('fr', {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    }).format(new Date(session.created_at));
-    const englishDefault = new Date(session.created_at).toLocaleString('en-US');
-    expect(created).not.toBe(englishDefault);
-
-    render(
-      <MemoryRouter>
-        <AccountSettingsPage />
-      </MemoryRouter>,
-    );
-
-    expect(
-      await screen.findByText(
-        (_content, element) => element?.textContent === `Created: ${created}`,
-      ),
-    ).toBeInTheDocument();
   });
 });

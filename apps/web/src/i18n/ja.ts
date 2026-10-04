@@ -434,12 +434,6 @@ export const ja: Record<TranslationKeys, TranslationValue> = {
   'asst.enginePrepare': 'ストーリー・論理エンジンの準備',
   'asst.engineDownloading': 'エンジンを準備中: {percent}%',
   'asst.engineReady': 'ストーリー・論理エンジンの準備完了',
-  'asst.loadChapters': '本文を読み込む',
-  'asst.loadingBook': '書籍を読み込み中…',
-  'asst.loadFailed': '本文を読み込めませんでした。',
-  'asst.noReadAccess': 'このアカウントにはこの本の閲覧権限がないため、本文を確認できません。',
-  'asst.textRequired': '検査を実行する前に、本文を読み込み、少なくとも1つの章を選択してください。',
-  'asst.chaptersLabel': '確認する章',
   'asst.engineNote':
     '約500MBを一度だけダウンロードします。モデルはこの端末で動作し、原稿がアップロードされることはありません。',
 

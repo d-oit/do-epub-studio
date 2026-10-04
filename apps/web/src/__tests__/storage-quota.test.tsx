@@ -2,7 +2,6 @@ import type React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { StorageQuota } from '../components/StorageQuota';
-import { defined } from './helpers';
 
 // A fresh `t` per render would change `refresh`'s identity every render, so
 // `useEffect([refresh])` would re-trigger the estimate fetch in a loop and
@@ -208,7 +207,7 @@ describe('StorageQuota', () => {
     // Click confirm button inside dialog (second button in the dialog)
     const dialog = screen.getByRole('dialog');
     const confirmBtn = dialog.querySelectorAll('button')[1];
-    fireEvent.click(defined(confirmBtn));
+    fireEvent.click(confirmBtn);
 
     await waitFor(() => {
       expect(mockCacheKeys).toHaveBeenCalled();
@@ -235,7 +234,7 @@ describe('StorageQuota', () => {
 
     const dialog = screen.getByRole('dialog');
     const confirmBtn = dialog.querySelectorAll('button')[1];
-    fireEvent.click(defined(confirmBtn));
+    fireEvent.click(confirmBtn);
 
     await waitFor(() => {
       expect(screen.getByText('storage.cleared')).toBeInTheDocument();
@@ -262,7 +261,7 @@ describe('StorageQuota', () => {
 
       const dialog = screen.getByRole('dialog');
       const confirmBtn = dialog.querySelectorAll('button')[1];
-      fireEvent.click(defined(confirmBtn));
+      fireEvent.click(confirmBtn);
       // Let the clear flow's continuations land inside act() (cleared message +
       // auto-dismiss timer + post-clear refresh); they otherwise resolve after
       // the click's act scope.
@@ -317,7 +316,7 @@ describe('StorageQuota', () => {
 
     const dialog = screen.getByRole('dialog');
     const confirmBtn = dialog.querySelectorAll('button')[1];
-    fireEvent.click(defined(confirmBtn));
+    fireEvent.click(confirmBtn);
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'storage.clearing' })).toBeInTheDocument();
@@ -349,7 +348,7 @@ describe('StorageQuota', () => {
 
     const dialog = screen.getByRole('dialog');
     const confirmBtn = dialog.querySelectorAll('button')[1];
-    fireEvent.click(defined(confirmBtn));
+    fireEvent.click(confirmBtn);
 
     await waitFor(() => {
       expect(screen.getByText('storage.clearError')).toBeInTheDocument();
@@ -394,7 +393,7 @@ describe('StorageQuota', () => {
 
     const dialog = screen.getByRole('dialog');
     const confirmBtn = dialog.querySelectorAll('button')[1];
-    fireEvent.click(defined(confirmBtn));
+    fireEvent.click(confirmBtn);
 
     await waitFor(() => {
       expect(mockDatabases).toHaveBeenCalled();
@@ -429,7 +428,7 @@ describe('StorageQuota', () => {
 
     const dialog = screen.getByRole('dialog');
     const confirmBtn = dialog.querySelectorAll('button')[1];
-    fireEvent.click(defined(confirmBtn));
+    fireEvent.click(confirmBtn);
 
     await waitFor(() => {
       expect(screen.getByText('10.0 MB')).toBeInTheDocument();
@@ -453,7 +452,7 @@ describe('StorageQuota', () => {
 
     const dialog = screen.getByRole('dialog');
     const cancelBtn = dialog.querySelectorAll('button')[0];
-    fireEvent.click(defined(cancelBtn));
+    fireEvent.click(cancelBtn);
 
     await waitFor(() => {
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();

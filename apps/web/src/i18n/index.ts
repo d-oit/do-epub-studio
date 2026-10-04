@@ -1,7 +1,5 @@
 import { en, type TranslationKeys, type TranslationValue } from './en';
 import { pluralize } from '../lib/i18n-plural';
-import { logClientEvent } from '../lib/client-logger';
-import { createSpanId, createTraceId } from '@do-epub-studio/shared';
 
 /** Locale key type — union of all supported locale codes. */
 export type LocaleKey =
@@ -11,47 +9,15 @@ export type LocaleKey =
 const loadedDictionaries: Record<string, Record<string, TranslationValue>> = { en };
 
 /**
- * Locales whose load failure has already been reported in this document. One
- * event per locale is enough signal, and every mounted `useTranslation` calls
- * `ensureLocale`, so an unreported path would emit a dozen identical warnings.
- */
-const reportedLoadFailures = new Set<string>();
-
-/**
  * Ensure the given locale dictionary is loaded into memory. Safe to call
  * multiple times — each locale is only fetched once. English is always
  * available synchronously and this is a no-op for `'en'`.
- *
- * A rejected dynamic import (a chunk that fails to fetch) is reported as
- * `false` instead of propagating: the caller can then keep rendering the
- * English fallback *without* the document claiming a language it did not load
- * (A9/GOAP-306), and a later call retries — the module registry may have been
- * the transient problem.
  */
-export async function ensureLocale(locale: LocaleKey): Promise<boolean> {
-  if (locale === 'en') return true;
-  if (loadedDictionaries[locale]) return true;
-  try {
-    const mod = await loadLocaleModule(locale);
-    if (!mod) return false;
-    loadedDictionaries[locale] = mod;
-    return true;
-  } catch (error) {
-    if (reportedLoadFailures.has(locale)) return false;
-    reportedLoadFailures.add(locale);
-    logClientEvent({
-      level: 'warn',
-      event: 'i18n.locale_load_failed',
-      traceId: createTraceId(),
-      spanId: createSpanId(),
-      metadata: { locale },
-      error:
-        error instanceof Error
-          ? { name: error.name, message: error.message }
-          : { name: 'Error', message: String(error) },
-    });
-    return false;
-  }
+export async function ensureLocale(locale: LocaleKey): Promise<void> {
+  if (locale === 'en') return;
+  if (loadedDictionaries[locale]) return;
+  const mod = await loadLocaleModule(locale);
+  if (mod) loadedDictionaries[locale] = mod;
 }
 
 async function loadLocaleModule(
@@ -94,7 +60,7 @@ export function translate(
   params?: Record<string, string | number>,
 ): string {
   const catalog = loadedDictionaries[locale] ?? loadedDictionaries.en;
-  const value = catalog?.[key] ?? loadedDictionaries.en?.[key] ?? key;
+  const value = catalog[key] ?? loadedDictionaries.en[key] ?? key;
   let template: string;
   if (typeof value === 'string') {
     template = value;

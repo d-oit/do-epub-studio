@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { parseNotesMarkdown } from '../features/reader/lib/export-notes-markdown';
 import { NOTES_FORMAT_VERSION } from '../features/reader/lib/notes-types';
-import { defined } from './helpers';
 
 function header(title = 'My Book') {
   return [
@@ -58,7 +57,7 @@ describe('parseNotesMarkdown', () => {
         throw new Error('expected defined');
       })();
     expect(r.annotations).toHaveLength(1);
-    const h = defined(r.annotations[0]);
+    const h = r.annotations[0];
     expect(h.type).toBe('highlight');
     if (h.type === 'highlight') {
       expect(h.selectedText).toBe('highlighted text');
@@ -89,7 +88,7 @@ describe('parseNotesMarkdown', () => {
       (() => {
         throw new Error('expected defined');
       })();
-    const h = defined(r.annotations[0]);
+    const h = r.annotations[0];
     if (h.type === 'highlight') {
       expect(h.selectedText).toBe('Some text');
       expect(h.color).toBe('#00ff00');
@@ -112,7 +111,7 @@ describe('parseNotesMarkdown', () => {
       (() => {
         throw new Error('expected defined');
       })();
-    const h = defined(r.annotations[0]);
+    const h = r.annotations[0];
     if (h.type === 'highlight') {
       expect(h.locator).not.toBeNull();
       const loc =
@@ -141,7 +140,7 @@ describe('parseNotesMarkdown', () => {
         throw new Error('expected defined');
       })();
     expect(r.annotations).toHaveLength(1);
-    const b = defined(r.annotations[0]);
+    const b = r.annotations[0];
     expect(b.type).toBe('bookmark');
     if (b.type === 'bookmark') {
       expect(b.locator.selectedText).toBe('Bookmarked text');
@@ -160,7 +159,7 @@ describe('parseNotesMarkdown', () => {
       (() => {
         throw new Error('expected defined');
       })();
-    const b = defined(r.annotations[0]);
+    const b = r.annotations[0];
     if (b.type === 'bookmark') {
       expect(b.locator.selectedText).toBe('Some bookmark text');
       expect(b.label).toBeNull();
@@ -183,7 +182,7 @@ describe('parseNotesMarkdown', () => {
         throw new Error('expected defined');
       })();
     expect(r.annotations).toHaveLength(1);
-    const c = defined(r.annotations[0]);
+    const c = r.annotations[0];
     expect(c.type).toBe('comment');
     if (c.type === 'comment') {
       expect(c.body).toBe('Great point!');
@@ -209,7 +208,7 @@ describe('parseNotesMarkdown', () => {
       (() => {
         throw new Error('expected defined');
       })();
-    const c = defined(r.annotations[0]);
+    const c = r.annotations[0];
     if (c.type === 'comment') {
       expect(c.body).toBe('Just a comment body');
       expect(c.selectedText).toBeNull();
@@ -297,7 +296,7 @@ describe('parseNotesMarkdown', () => {
       (() => {
         throw new Error('expected defined');
       })();
-    const h = defined(r.annotations[0]);
+    const h = r.annotations[0];
     if (h.type === 'highlight') {
       expect(h.color).toBe('#ffeb3b');
     }

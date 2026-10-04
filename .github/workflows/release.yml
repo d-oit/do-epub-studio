@@ -481,21 +481,37 @@ jobs:
           # Cloudflare Pages Git integration (the API rides the same Pages
           # deployment via functions/ — no separate Worker deploy, no
           # credentials). Assert the Pages-hosted API answers JSON at
-          # /api/health — a static SPA with no Functions returns HTML/redirects
+          # /api/health, /api/catalog?limit=1, and /api/access/request.
+          # A static SPA fallback with no Functions returns HTML/200 index.html
           # instead. Fail closed (ADR-187: Unavailable must block readiness).
           PAGES_URL="${PAGES_URL:-https://do-epub-studio.pages.dev}"
           HEALTH_URL="$PAGES_URL/api/health"
+          CATALOG_URL="$PAGES_URL/api/catalog?limit=1"
+          LOGIN_URL="$PAGES_URL/api/access/request"
+
           echo "Waiting for Pages API to serve JSON (up to 60s): $HEALTH_URL"
           for i in $(seq 1 12); do
-            RESPONSE=$(curl -s -w "\n%{http_code}" "$HEALTH_URL" --connect-timeout 5 --max-time 10 || true)
-            HTTP_STATUS=$(printf '%s' "$RESPONSE" | tail -n 1)
-            BODY=$(printf '%s' "$RESPONSE" | sed '$d')
-            if [ "$HTTP_STATUS" = "200" ] && printf '%s' "$BODY" | grep -q '"ok":true'; then
-              echo "Pages API healthy: HTTP $HTTP_STATUS (attempt $i)"
-              exit 0
+            HEALTH_RESP=$(curl -s -w "\n%{http_code}" "$HEALTH_URL" --connect-timeout 5 --max-time 10 || true)
+            HEALTH_STATUS=$(printf '%s' "$HEALTH_RESP" | tail -n 1)
+            HEALTH_BODY=$(printf '%s' "$HEALTH_RESP" | sed '$d')
+
+            if [ "$HEALTH_STATUS" = "200" ] && printf '%s' "$HEALTH_BODY" | grep -q '"ok":true' && ! printf '%s' "$HEALTH_BODY" | grep -qi '<!DOCTYPE html'; then
+              # Additional contract verification: catalog & access request must return JSON, not SPA HTML
+              CATALOG_RESP=$(curl -s -w "\n%{http_code}" "$CATALOG_URL" --connect-timeout 5 --max-time 10 || true)
+              CATALOG_BODY=$(printf '%s' "$CATALOG_RESP" | sed '$d')
+
+              LOGIN_RESP=$(curl -s -w "\n%{http_code}" -X POST "$LOGIN_URL" -H "Content-Type: application/json" -d '{}' --connect-timeout 5 --max-time 10 || true)
+              LOGIN_BODY=$(printf '%s' "$LOGIN_RESP" | sed '$d')
+
+              if ! printf '%s' "$CATALOG_BODY" | grep -qi '<!DOCTYPE html' && ! printf '%s' "$LOGIN_BODY" | grep -qi '<!DOCTYPE html'; then
+                echo "Pages API healthy: HTTP $HEALTH_STATUS (attempt $i)"
+                exit 0
+              else
+                echo "Attempt $i: /api/* endpoints returned HTML SPA fallback — retrying in 5s..."
+              fi
             fi
-            echo "Attempt $i: HTTP ${HTTP_STATUS:-000} — retrying in 5s..."
+            echo "Attempt $i: HTTP ${HEALTH_STATUS:-000} — retrying in 5s..."
             sleep 5
           done
-          echo "::error::Pages API not healthy after 60s (HTTP ${HTTP_STATUS:-000}). Check that functions/ is deployed and the Pages project bindings (D1/KV/R2) are configured."
+          echo "::error::Pages API not healthy after 60s (HTTP ${HEALTH_STATUS:-000}). Check that functions/ is deployed and the Pages project bindings (D1/KV/R2) are configured."
           exit 1
