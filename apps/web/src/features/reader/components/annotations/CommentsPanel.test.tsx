@@ -3,7 +3,6 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { CommentsPanel } from './CommentsPanel';
 import type { Comment, Highlight } from '../../../../stores';
-import { defined } from '../../../../__tests__/helpers';
 
 // Mock useTranslation hook
 vi.mock('../../../../hooks/useTranslation', () => ({
@@ -302,7 +301,7 @@ describe('CommentsPanel', () => {
       fireEvent.mouseEnter(commentEl);
 
       const replyBtns = screen.getAllByText('comment.reply');
-      fireEvent.click(defined(replyBtns[0]));
+      fireEvent.click(replyBtns[0]);
 
       const textarea = screen.getByPlaceholderText('comment.reply');
       fireEvent.change(textarea, { target: { value: 'My reply text' } });

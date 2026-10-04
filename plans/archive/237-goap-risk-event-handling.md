@@ -3,7 +3,7 @@
 **Date:** 2026-08-14
 **Status:** ✅ COMPLETED (merged as PR #977, commit 3bd190d)
 **Baseline:** `main` @ `a3827d5` (post GOAP-236, PR #975)
-**Related:** ADR-212, ADR-214, ADR-231, ADR-234; Plan 230, 236; audit/risk infra map
+**Related:** ADR-212, ADR-214, ADR-230, ADR-231, ADR-234; Plans 230, 236; audit/risk infra map
 
 ## Goal
 

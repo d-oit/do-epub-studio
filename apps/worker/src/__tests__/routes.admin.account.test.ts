@@ -15,7 +15,6 @@ import {
   parseBody,
 } from './fixtures';
 import { app } from '../app';
-import { defined } from './helpers';
 
 const STRONG = 'Str0ng!Passphrase#2026';
 
@@ -64,7 +63,7 @@ describe('Admin Account Lifecycle + Session Hardening (ADR-231/234)', () => {
     );
 
     expect(res.status).toBe(200);
-    const body = defined(await parseBody(res));
+    const body = await parseBody(res);
     expect(body.ok).toBe(true);
     expect(mockChangePassword).toHaveBeenCalledWith(expect.anything(), 'admin-1', STRONG);
     // Keeps current session, revokes all others (ADR-234 rotation).
@@ -100,7 +99,7 @@ describe('Admin Account Lifecycle + Session Hardening (ADR-231/234)', () => {
     );
 
     expect(res.status).toBe(401);
-    const body = defined(await parseBody(res));
+    const body = await parseBody(res);
     expect(body.error?.code).toBe('INVALID_CREDENTIALS');
     expect(mockChangePassword).not.toHaveBeenCalled();
   });
@@ -127,9 +126,9 @@ describe('Admin Account Lifecycle + Session Hardening (ADR-231/234)', () => {
     );
 
     expect(res.status).toBe(200);
-    const body = defined(await parseBody(res));
+    const body = await parseBody(res);
     expect(body.ok).toBe(true);
-    expect((body.data.sessions as Array<{ assurance_level: string }>)[0]?.assurance_level).toBe(
+    expect((body.data.sessions as Array<{ assurance_level: string }>)[0].assurance_level).toBe(
       'password',
     );
     expect(JSON.stringify(body.data.sessions)).not.toContain('token_hash');
@@ -151,7 +150,7 @@ describe('Admin Account Lifecycle + Session Hardening (ADR-231/234)', () => {
     );
 
     expect(res.status).toBe(200);
-    const body = defined(await parseBody(res));
+    const body = await parseBody(res);
     expect(body.ok).toBe(true);
     expect(mockRevokeAllAdminSessionsForUser).toHaveBeenCalledWith(expect.anything(), 'admin-1', {
       exceptTokenHash: 'current-hash',
@@ -172,7 +171,7 @@ describe('Admin Account Lifecycle + Session Hardening (ADR-231/234)', () => {
     );
 
     expect(res.status).toBe(200);
-    const body = defined(await parseBody(res));
+    const body = await parseBody(res);
     expect(body.ok).toBe(true);
     expect(body.data.token as string).toBe('rotated-token');
     expect(mockRaiseAdminAssurance).toHaveBeenCalledWith(

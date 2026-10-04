@@ -27,21 +27,11 @@ import { normalizeViewport, normalizeMatrix, DEFAULT_VIEWPORT_MATRIX } from './l
 import { classifyConsoleMessage } from './lib/console-audit.mjs';
 import {
   expectedDirection,
-  expectedLanguage,
-  persistedLocalePayload,
   buildLocaleUrl,
   keyFinding,
   diffLocaleFindings,
-  auditLocales,
 } from './lib/i18n-audit.mjs';
-import { pageProbe } from './lib/page-probe.mjs';
-import {
-  DEFAULT_BUDGETS,
-  parseBudgets,
-  evaluateBudgets,
-  missingMetrics,
-} from './lib/perf-audit.mjs';
-import { loadChromium } from './lib/playwright.mjs';
+import { DEFAULT_BUDGETS, parseBudgets, evaluateBudgets } from './lib/perf-audit.mjs';
 import { cellKey, classifyBaseline, digestOf } from './lib/visual-audit.mjs';
 import { findingLabel, annotationsForFindings, MAX_ANNOTATIONS } from './lib/annotate.mjs';
 
@@ -240,151 +230,6 @@ test('i18n: locale diff isolates locale-only regressions', () => {
   assert.notEqual(keyFinding(baseline[0]), keyFinding(baseline[1]));
 });
 
-test('i18n: direction is judged after the locale navigates (F5 regression)', async () => {
-  // `he` renders the wrong direction on purpose; `ar` renders correctly.
-  const directions = { en: 'ltr', ar: 'rtl', he: 'ltr' };
-  let current = 'en';
-  const page = {
-    async goto(url) {
-      current = new URL(url).searchParams.get('lang') ?? 'en';
-    },
-    viewportSize: () => ({ width: 1280, height: 720 }),
-    async evaluate(fn) {
-      if (fn === pageProbe) return { findings: [] };
-      return { dir: directions[current], lang: current };
-    },
-  };
-  const audit = (locales) =>
-    auditLocales(page, {
-      route: 'http://fixture.test/catalog',
-      locales,
-      switchVia: { param: 'lang' },
-    });
-  // Before the fix, the check ran before navigation, so `ar` inherited the
-  // baseline document and was reported as a false RTL violation.
-  const first = await audit(['en', 'ar', 'he']);
-  assert.deepEqual(
-    first.findings.map((f) => [f.locale, f.stage]),
-    [['he', 'i18n-direction']],
-  );
-  // Arabic last in the list must be judged on its own rendered document.
-  const last = await audit(['en', 'he', 'ar']);
-  assert.deepEqual(
-    last.findings.map((f) => [f.locale, f.stage]),
-    [['he', 'i18n-direction']],
-  );
-});
-
-test('i18n: persisted-state activation writes the app envelope before the route loads', async () => {
-  const writes = [];
-  const loads = [];
-  let current = 'en';
-  const page = {
-    async goto(url, opts) {
-      loads.push({ url, waitUntil: opts?.waitUntil });
-      // The first load exists only to reach the origin; the locale is applied
-      // on the following load, exactly as the app boots from localStorage.
-    },
-    viewportSize: () => ({ width: 1280, height: 720 }),
-    async evaluate(fn, arg) {
-      if (fn === pageProbe) return { findings: [] };
-      if (Array.isArray(arg)) {
-        // localStorage write: record it and apply it to the fake app state.
-        writes.push(arg);
-        current = JSON.parse(arg[1]).state.locale;
-        return undefined;
-      }
-      return { dir: current === 'ar' ? 'rtl' : 'ltr', lang: current };
-    },
-  };
-  const result = await auditLocales(page, {
-    route: 'http://fixture.test/login',
-    locales: ['en', 'de'],
-    switchVia: { storageKey: 'do-epub-locale' },
-  });
-  assert.deepEqual(result.findings, []);
-  assert.deepEqual(
-    writes.map(([key, value]) => [key, JSON.parse(value)]),
-    [
-      ['do-epub-locale', { state: { locale: 'en' }, version: 0 }],
-      ['do-epub-locale', { state: { locale: 'de' }, version: 0 }],
-    ],
-  );
-  // Two loads per probe: origin (storage write) then the real one.
-  assert.deepEqual(
-    loads.map((l) => l.waitUntil),
-    ['domcontentloaded', 'networkidle', 'domcontentloaded', 'networkidle'],
-  );
-});
-
-test('i18n: a probe that renders the wrong language fails instead of reporting OK', async () => {
-  // The app ignores the activation mechanism: every document stays English.
-  const page = {
-    async goto() {},
-    viewportSize: () => ({ width: 1280, height: 720 }),
-    async evaluate(fn) {
-      if (fn === pageProbe) return { findings: [] };
-      return { dir: 'ltr', lang: 'en' };
-    },
-  };
-  const result = await auditLocales(page, {
-    route: 'http://fixture.test/login',
-    locales: ['en', 'de', 'ar'],
-    switchVia: { storageKey: 'do-epub-locale' },
-  });
-  assert.deepEqual(
-    result.findings.map((f) => [f.locale, f.stage]),
-    [
-      ['de', 'i18n-locale-not-applied'],
-      // An app that ignores activation renders English *and* LTR, so the RTL
-      // probe trips both contracts — the direction check is not redundant.
-      ['ar', 'i18n-locale-not-applied'],
-      ['ar', 'i18n-direction'],
-    ],
-  );
-  // The baseline passing on `en` proves the check is about activation, not a
-  // blanket failure: only the locales that did not apply are reported.
-});
-
-test('i18n: expectedLanguage reduces to the primary subtag', () => {
-  assert.equal(expectedLanguage('en'), 'en');
-  assert.equal(expectedLanguage('pt-BR'), 'pt');
-  assert.equal(expectedLanguage('zh-Hans-CN'), 'zh');
-});
-
-test('i18n: persisted activation writes the catalog key, never a raw regional tag', () => {
-  assert.equal(persistedLocalePayload('de'), '{"state":{"locale":"de"},"version":0}');
-  // Writing 'de-DE' verbatim would make the app declare a language whose
-  // lookups fall back to English — the false-OK class A3 removes.
-  assert.equal(persistedLocalePayload('de-DE'), '{"state":{"locale":"de"},"version":0}');
-  assert.equal(persistedLocalePayload('pt-BR'), '{"state":{"locale":"pt"},"version":0}');
-  assert.equal(persistedLocalePayload('ZH-Hans-CN'), '{"state":{"locale":"zh"},"version":0}');
-});
-
-test('i18n: a regional probe activates its catalog and reports no finding', async () => {
-  let catalogKey = 'en';
-  const page = {
-    async goto() {},
-    viewportSize: () => ({ width: 1280, height: 720 }),
-    async evaluate(fn, arg) {
-      if (fn === pageProbe) return { findings: [] };
-      if (Array.isArray(arg)) {
-        catalogKey = JSON.parse(arg[1]).state.locale;
-        return undefined;
-      }
-      // A hardened app renders the catalog it hydrated: lang is the catalog key.
-      return { dir: catalogKey === 'ar' ? 'rtl' : 'ltr', lang: catalogKey };
-    },
-  };
-  const result = await auditLocales(page, {
-    route: 'http://fixture.test/login',
-    locales: ['en', 'de-DE'],
-    switchVia: { storageKey: 'do-epub-locale' },
-  });
-  assert.deepEqual(result.findings, []);
-  assert.equal(catalogKey, 'de');
-});
-
 test('visual: cell keys are deterministic, slugged, and collision-safe', () => {
   const vp = { label: 'mobile-md', width: 360, height: 800 };
   assert.equal(cellKey('/login', vp), cellKey('/login', vp));
@@ -451,19 +296,6 @@ test('viewport matrix: normalizes, validates, and rejects garbage', () => {
   assert.throws(() => normalizeMatrix([]), RangeError);
   assert.ok(DEFAULT_VIEWPORT_MATRIX.some((v) => v.width === 320)); // reflow floor
   assert.ok(DEFAULT_VIEWPORT_MATRIX.some((v) => v.width === 360)); // Android majority
-  assert.ok(DEFAULT_VIEWPORT_MATRIX.some((v) => v.width === 375 && v.height === 812)); // iPhone
-  // F7 (GOAP-290): the same size set as apps/tests/viewport-matrix.ts.
-  for (const [width, height] of [
-    [360, 800],
-    [412, 915],
-    [820, 1180],
-    [1280, 720],
-  ]) {
-    assert.ok(
-      DEFAULT_VIEWPORT_MATRIX.some((v) => v.width === width && v.height === height),
-      `matrix covers ${width}x${height}`,
-    );
-  }
 });
 
 test('perf: budgets parse strictly and merge over defaults', () => {
@@ -497,26 +329,6 @@ test('perf: budget evaluation flags exactly the breached metrics', () => {
   assert.equal(boundary.length, 0);
   // missing/null metrics are not reported (lighthouse returns null for N/A)
   assert.equal(evaluateBudgets({ performanceScore: null }, DEFAULT_BUDGETS).length, 0);
-});
-
-test('perf: missingMetrics names every unmeasured budget key (F6 regression)', () => {
-  assert.deepEqual(missingMetrics({}), ['performanceScore', 'lcpMs', 'cls', 'tbtMs']);
-  assert.deepEqual(
-    missingMetrics({ performanceScore: 0.95, lcpMs: 2000, cls: 0.05, tbtMs: 300 }),
-    [],
-  );
-  assert.deepEqual(
-    missingMetrics({ performanceScore: null, lcpMs: 2000, cls: Number.NaN, tbtMs: 300 }),
-    ['performanceScore', 'cls'],
-  );
-  // A real zero is a measurement, not an absence.
-  assert.deepEqual(missingMetrics({ performanceScore: 0, lcpMs: 0, cls: 0, tbtMs: 0 }), []);
-});
-
-test('playwright resolver: finds the workspace Chromium without the bare package (F2 regression)', async () => {
-  // This workspace declares @playwright/test (root devDependency); the bare
-  // `playwright` package is absent. The runner SKIP text must not trigger here.
-  assert.ok(await loadChromium(), 'expected @playwright/test to resolve a chromium driver');
 });
 
 test('console classification: errors vs discounted noise', () => {

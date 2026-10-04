@@ -84,9 +84,9 @@ describe('Bookmark Routes', () => {
       const body: { data: { id: string; locator: { cfi: string }; label: string }[] } =
         await res.json();
       expect(body.data).toHaveLength(1);
-      expect(body.data[0]?.id).toBe('bm-1');
-      expect(body.data[0]?.locator.cfi).toBe('epubcfi(/6/4)');
-      expect(body.data[0]?.label).toBe('Chapter 1');
+      expect(body.data[0].id).toBe('bm-1');
+      expect(body.data[0].locator.cfi).toBe('epubcfi(/6/4)');
+      expect(body.data[0].label).toBe('Chapter 1');
     });
   });
 

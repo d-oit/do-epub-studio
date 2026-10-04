@@ -433,13 +433,6 @@ export const hi: Record<TranslationKeys, TranslationValue> = {
   'asst.enginePrepare': 'कहानी और तर्क इंजन तैयार करें',
   'asst.engineDownloading': 'इंजन तैयार हो रहा है: {percent}%',
   'asst.engineReady': 'कहानी और तर्क इंजन तैयार है',
-  'asst.loadChapters': 'पुस्तक का पाठ लोड करें',
-  'asst.loadingBook': 'पुस्तक लोड हो रही है…',
-  'asst.loadFailed': 'पुस्तक का पाठ लोड नहीं हो सका।',
-  'asst.noReadAccess':
-    'इस खाते के पास इस पुस्तक का पढ़ने का अधिकार नहीं है, इसलिए इसका पाठ समीक्षा के लिए उपलब्ध नहीं है।',
-  'asst.textRequired': 'जाँच चलाने से पहले पुस्तक का पाठ लोड करें और कम से कम एक अध्याय चुनें।',
-  'asst.chaptersLabel': 'समीक्षा के लिए अध्याय',
   'asst.engineNote':
     'लगभग 500 MB का एक बार का डाउनलोड। मॉडल इसी डिवाइस पर चलता है — आपका मसौदा कभी अपलोड नहीं होता।',
 

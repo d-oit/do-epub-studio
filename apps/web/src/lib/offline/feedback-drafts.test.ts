@@ -52,10 +52,10 @@ describe('feedback drafts (REL-02 durable layer)', () => {
 
     const drafts = await loadFeedbackDrafts('book-1', 'reader@example.com');
     expect(drafts).toHaveLength(1);
-    expect(drafts[0]?.body).toBe('Consider a comma here.');
-    expect(drafts[0]?.proposedText).toBe('Consider, a comma here.');
-    expect(drafts[0]?.anchor.selectedText).toBe('Consider a comma here.');
-    expect(drafts[0]?.mutationId).toBe('11111111-1111-4111-8111-111111111111');
+    expect(drafts[0].body).toBe('Consider a comma here.');
+    expect(drafts[0].proposedText).toBe('Consider, a comma here.');
+    expect(drafts[0].anchor.selectedText).toBe('Consider a comma here.');
+    expect(drafts[0].mutationId).toBe('11111111-1111-4111-8111-111111111111');
   });
 
   it('isolates drafts by owner: another account loads nothing', async () => {
@@ -73,9 +73,9 @@ describe('feedback drafts (REL-02 durable layer)', () => {
 
     const drafts = await loadFeedbackDrafts('book-1', 'reader@example.com');
     expect(drafts).toHaveLength(1);
-    expect(drafts[0]?.delivery).toBe('blocked');
-    expect(drafts[0]?.error).toBe('Contribution rights revoked');
-    expect(drafts[0]?.body).toBe('Consider a comma here.');
+    expect(drafts[0].delivery).toBe('blocked');
+    expect(drafts[0].error).toBe('Contribution rights revoked');
+    expect(drafts[0].body).toBe('Consider a comma here.');
   });
 
   it('deletes a draft by mutation id on successful replay', async () => {

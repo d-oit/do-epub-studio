@@ -96,20 +96,8 @@ export const HighlightItem = memo(function HighlightItem({
             <span className="text-xs text-foreground-muted">
               {formatDate(highlight.createdAt, t)}
             </span>
-            {highlight.syncState === 'pending' && (
-              <span role="status" className="text-xs text-accent">
-                {t('annotation.syncPending')}
-              </span>
-            )}
-            {highlight.syncState === 'failed' && (
-              <span role="alert" className="text-xs text-accent-error">
-                {highlight.syncError
-                  ? `${t('annotation.syncError')}: ${highlight.syncError}`
-                  : t('annotation.syncError')}
-              </span>
-            )}
           </div>
-          {showActions && !highlight.syncState && (
+          {showActions && (
             <div className="mt-2 flex gap-2">
               <button
                 type="button"

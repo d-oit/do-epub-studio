@@ -115,7 +115,7 @@ describe('data-cache — audit logs', () => {
     };
     await fetchAuditLogs(filters, null);
 
-    const url = mockApiRequest.mock.calls[0]?.[0] as string;
+    const url = mockApiRequest.mock.calls[0][0] as string;
     expect(url).not.toContain('entityType=');
     expect(url).not.toContain('entityId=');
     expect(url).not.toContain('from=');

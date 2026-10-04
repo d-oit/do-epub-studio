@@ -106,19 +106,7 @@ export const CommentItem = memo(function CommentItem({
             <span className="text-xs text-foreground-muted">
               {comment.displayName} · {formatDate(comment.createdAt, t)}
             </span>
-            {comment.syncState === 'pending' && (
-              <span role="status" className="text-xs text-accent">
-                {t('annotation.syncPending')}
-              </span>
-            )}
-            {comment.syncState === 'failed' && (
-              <span role="alert" className="text-xs text-accent-error">
-                {comment.syncError
-                  ? `${t('annotation.syncError')}: ${comment.syncError}`
-                  : t('annotation.syncError')}
-              </span>
-            )}
-            {comment.status === 'resolved' && !comment.syncState && (
+            {comment.status === 'resolved' && (
               <span className="text-xs text-accent-success">{t('comment.resolved')}</span>
             )}
           </div>
@@ -166,7 +154,7 @@ export const CommentItem = memo(function CommentItem({
         </div>
       ) : null}
 
-      {showActions && !isEditing && !comment.syncState && (
+      {showActions && !isEditing && (
         <div className="mt-2 flex gap-2">
           <button
             onClick={() => {

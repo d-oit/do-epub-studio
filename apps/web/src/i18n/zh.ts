@@ -419,12 +419,6 @@ export const zh: Record<TranslationKeys, TranslationValue> = {
   'asst.enginePrepare': '准备故事与逻辑引擎',
   'asst.engineDownloading': '正在准备引擎：{percent}%',
   'asst.engineReady': '故事与逻辑引擎已就绪',
-  'asst.loadChapters': '加载书籍文本',
-  'asst.loadingBook': '正在加载书籍…',
-  'asst.loadFailed': '无法加载书籍文本。',
-  'asst.noReadAccess': '此账户没有该书的阅读权限，无法审阅其文本。',
-  'asst.textRequired': '请先加载书籍文本并至少选择一个章节，再运行检查。',
-  'asst.chaptersLabel': '要审阅的章节',
   'asst.engineNote': '一次性下载约500 MB。模型在本设备上运行，您的稿件绝不会被上传。',
 
   'highlight.colors.yellow': '黄色',

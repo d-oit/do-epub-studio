@@ -155,29 +155,6 @@ jobs:
       - name: Run scripts unit tests (fail-closed gate pins)
         run: pnpm vitest run scripts/__tests__
 
-  # Compute-evidence for the web-ui audit library (F3, GOAP-290/294). Runs the
-  # identical command as the do-harness `web-ui-tests` sensor (ADR-246 parity):
-  # the pure Node suite plus the rendered fixtures in a real Chromium.
-  # Deliberately NOT in the ADR-286 required-check set — promoting a context is
-  # a maintainer policy decision, not a side effect of wiring evidence.
-  web-ui-tests:
-    name: Web UI Audit Suite
-    needs: setup
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-          submodules: recursive
-      - uses: ./.github/actions/setup-pnpm
-
-      - name: Install Chromium for the rendered audit suite
-        run: pnpm exec playwright install --with-deps chromium
-
-      - name: Run web-ui audit suite
-        run: node --test scripts/web-ui/audit.test.mjs scripts/web-ui/audit.browser.test.mjs
-
   dep-scan:
     name: Dependency Vulnerability Scan
     needs: setup

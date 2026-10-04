@@ -2,7 +2,8 @@ import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import type { Env } from '../lib/env';
 import type { RequestContext } from '../lib/observability';
-import { TelemetryPayloadSchema, scrub } from '@do-epub-studio/shared';
+import { TelemetryPayloadSchema } from '@do-epub-studio/shared';
+import { scrub } from '../lib/redact';
 import { logAppError, logAppInfo, logAppWarn } from '../lib/observability';
 import { apiError } from '../lib/api-error';
 

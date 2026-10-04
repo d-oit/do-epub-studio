@@ -12,7 +12,6 @@ import {
 } from './fixtures';
 import { app } from '../app';
 import { assertBookAccess } from '../lib/tenant-isolation';
-import { defined } from './helpers';
 
 vi.mock('../lib/tenant-isolation', () => ({
   parseLocatorRow: vi.fn(),
@@ -69,7 +68,7 @@ describe('Comments Routes', () => {
       // B1 (GOAP-224 W1.3): shared-comment payload must mask author email —
       // displayName is a truncated identifier and no userEmail key leaks.
       const data = body.data as Array<Record<string, unknown>>;
-      const comment = defined(data[0]);
+      const comment = data[0];
       expect(comment?.displayName).toBe('ot***');
       expect(comment.isOwn).toBe(false);
       expect('userEmail' in comment).toBe(false);
@@ -127,21 +126,8 @@ describe('Comments Routes', () => {
       });
       mockGetGrantByBookAndSession.mockResolvedValue({ id: 'grant-1' });
       mockComputeCapabilities.mockReturnValue({ canComment: true });
-      mockQueryFirst.mockResolvedValue({
-        id: 'new-comment-id',
-        book_id: 'book-1',
-        user_email: 'user@example.com',
-        chapter_ref: 'ch1.xhtml',
-        cfi_range: 'epubcfi(/6/2!/4/4[p1])',
-        selected_text: 'A passage',
-        body: 'new comment',
-        visibility: 'shared',
-        status: 'open',
-        parent_comment_id: null,
-        resolved_at: null,
-        created_at: '2026-01-01T00:00:00.000Z',
-        updated_at: '2026-01-01T00:00:00.000Z',
-      });
+      mockExecute.mockResolvedValue({ rows: [] });
+
       const res = await app.fetch(
         new Request('http://localhost/api/books/book-1/comments', {
           method: 'POST',
@@ -171,6 +157,20 @@ describe('Comments Routes', () => {
         chapterRef: 'ch1.xhtml',
         selectedText: 'A passage',
       });
+
+      const insert = mockExecute.mock.calls.find((args) =>
+        String(args[1]).includes('INSERT INTO comments'),
+      );
+      const sql = String(insert?.[1]);
+      // Only columns the comments table actually has: the previous INSERT named
+      // `locator_json`, which no migration defines, so every create 500ed.
+      expect(sql).toContain('chapter_ref');
+      expect(sql).toContain('cfi_range');
+      expect(sql).toContain('selected_text');
+      expect(sql).not.toContain('locator_json');
+      const placeholders = (sql.match(/\?/g) ?? []).length;
+      expect(insert?.[2]).toHaveLength(placeholders);
+      expect(insert?.[2]).toContain('epubcfi(/6/2!/4/4[p1])');
     });
   });
 

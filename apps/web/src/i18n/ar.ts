@@ -435,12 +435,6 @@ export const ar: Record<TranslationKeys, TranslationValue> = {
   'asst.enginePrepare': 'تجهيز محرك القصة والمنطق',
   'asst.engineDownloading': 'جارٍ تجهيز المحرك: {percent}٪',
   'asst.engineReady': 'محرك القصة والمنطق جاهز',
-  'asst.loadChapters': 'تحميل نص الكتاب',
-  'asst.loadingBook': 'جارٍ تحميل الكتاب…',
-  'asst.loadFailed': 'تعذّر تحميل نص الكتاب.',
-  'asst.noReadAccess': 'لا يملك هذا الحساب صلاحية قراءة لهذا الكتاب، لذا لا يمكن مراجعة نصه.',
-  'asst.textRequired': 'حمّل نص الكتاب واختر فصلًا واحدًا على الأقل قبل بدء الفحص.',
-  'asst.chaptersLabel': 'الفصول المطلوب مراجعتها',
   'asst.engineNote':
     'تنزيل واحد بحجم حوالي 500 ميغابايت. يعمل النموذج على هذا الجهاز — لا تُرفع مخطوطتك أبدًا.',
 

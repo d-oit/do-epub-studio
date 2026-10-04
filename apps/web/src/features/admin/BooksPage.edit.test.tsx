@@ -3,7 +3,6 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { AdminBookResponsesPage } from './BooksPage';
 import { MemoryRouter } from 'react-router-dom';
 import { apiRequest } from '../../lib/api';
-import { defined } from '../../__tests__/helpers';
 
 vi.mock('../../hooks/useTranslation', () => ({
   useTranslation: () => ({ t: (k: string) => k }),
@@ -74,7 +73,7 @@ describe('AdminBookResponsesPage — edit modal', () => {
     expect(screen.getByText('admin.books.editTitle')).toBeInTheDocument();
     const closeButtons = screen.getAllByText('admin.createBookModal.close');
     if (closeButtons.length > 0) {
-      fireEvent.click(defined(closeButtons[0]));
+      fireEvent.click(closeButtons[0]);
     }
   });
 
@@ -108,7 +107,7 @@ describe('AdminBookResponsesPage — edit modal', () => {
     });
     fireEvent.click(screen.getByText('admin.books.edit'));
     const authorInput = screen.getAllByRole('textbox')[1];
-    fireEvent.change(defined(authorInput), { target: { value: '' } });
+    fireEvent.change(authorInput, { target: { value: '' } });
     expect(authorInput).toHaveValue('');
   });
 
@@ -124,7 +123,7 @@ describe('AdminBookResponsesPage — edit modal', () => {
     });
     fireEvent.click(screen.getByText('admin.books.edit'));
     const descInput = screen.getAllByRole('textbox')[2];
-    fireEvent.change(defined(descInput), { target: { value: '' } });
+    fireEvent.change(descInput, { target: { value: '' } });
     expect(descInput).toHaveValue('');
   });
 
@@ -140,7 +139,7 @@ describe('AdminBookResponsesPage — edit modal', () => {
     });
     fireEvent.click(screen.getByText('admin.books.edit'));
     const titleInput = screen.getAllByRole('textbox')[0];
-    fireEvent.change(defined(titleInput), { target: { value: 'Updated Title' } });
+    fireEvent.change(titleInput, { target: { value: 'Updated Title' } });
     expect(titleInput).toHaveValue('Updated Title');
   });
 
@@ -156,7 +155,7 @@ describe('AdminBookResponsesPage — edit modal', () => {
     });
     fireEvent.click(screen.getByText('admin.books.edit'));
     const authorInput = screen.getAllByRole('textbox')[1];
-    fireEvent.change(defined(authorInput), { target: { value: 'New Author' } });
+    fireEvent.change(authorInput, { target: { value: 'New Author' } });
     expect(authorInput).toHaveValue('New Author');
   });
 
@@ -172,7 +171,7 @@ describe('AdminBookResponsesPage — edit modal', () => {
     });
     fireEvent.click(screen.getByText('admin.books.edit'));
     const descInput = screen.getAllByRole('textbox')[2];
-    fireEvent.change(defined(descInput), { target: { value: 'New Description' } });
+    fireEvent.change(descInput, { target: { value: 'New Description' } });
     expect(descInput).toHaveValue('New Description');
   });
 
@@ -188,7 +187,7 @@ describe('AdminBookResponsesPage — edit modal', () => {
     });
     fireEvent.click(screen.getByText('admin.books.edit'));
     const select = screen.getAllByRole('combobox')[0];
-    fireEvent.change(defined(select), { target: { value: 'private' } });
+    fireEvent.change(select, { target: { value: 'private' } });
     expect(select).toHaveValue('private');
   });
 

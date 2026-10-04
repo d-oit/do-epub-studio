@@ -19,8 +19,8 @@ interface CommentRow {
   id: string;
   book_id: string;
   user_email: string;
-  mutation_id?: string | null;
   chapter_ref: string | null;
+  cfi_range: string | null;
   selected_text: string | null;
   body: string;
   visibility: string;
@@ -133,21 +133,17 @@ commentsRouter.post(
       }
     }
 
-    const mutationId = body.mutationId ?? null;
     const id = crypto.randomUUID();
     const now = new Date().toISOString();
 
-    const inserted = await queryFirst<CommentRow>(
+    await execute(
       c.env,
-      `INSERT INTO comments (id, book_id, user_email, mutation_id, chapter_ref, cfi_range, selected_text, body, visibility, status, parent_comment_id, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'open', ?, ?, ?)
-       ON CONFLICT(mutation_id) WHERE mutation_id IS NOT NULL DO NOTHING
-       RETURNING *`,
+      `INSERT INTO comments (id, book_id, user_email, chapter_ref, cfi_range, selected_text, body, visibility, status, parent_comment_id, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'open', ?, ?, ?)`,
       [
         id,
         bookId,
         auth.email,
-        mutationId,
         body.locator?.chapterRef ?? null,
         body.locator?.cfi ?? null,
         body.locator?.selectedText ?? null,
@@ -159,64 +155,53 @@ commentsRouter.post(
       ],
     );
 
-    if (inserted) {
-      await logAudit(
-        c.env,
-        {
-          entityType: 'comment',
-          entityId: inserted.id,
-          action: 'create',
-          actorEmail: auth.email,
-          payload: { bookId, visibility: body.visibility },
-        },
-        c.executionCtx,
-      );
-
-      // Trigger notification for reply comments
-      if (body.parentCommentId) {
-        c.executionCtx.waitUntil(
-          createReplyNotification(c.env, {
-            bookId,
-            commentId: inserted.id,
-            parentCommentId: body.parentCommentId,
-            replierEmail: auth.email,
-          }),
-        );
-      }
-
-      return c.json(
-        {
-          ok: true,
-          data: toCommentDTO(inserted, auth.email),
-        },
-        201,
-      );
-    }
-
-    if (!mutationId) {
-      throw new Error('Failed to insert comment');
-    }
-
-    const existing = await queryFirst<CommentRow>(
+    await logAudit(
       c.env,
-      `SELECT * FROM comments WHERE mutation_id = ?`,
-      [mutationId],
+      {
+        entityType: 'comment',
+        entityId: id,
+        action: 'create',
+        actorEmail: auth.email,
+        payload: { bookId, visibility: body.visibility },
+      },
+      c.executionCtx,
     );
 
-    if (!existing) {
-      throw new Error('Failed to find conflicting comment');
-    }
-
-    if (existing.book_id !== bookId || existing.user_email !== auth.email) {
-      throw new ForbiddenError('Access denied');
+    // Trigger notification for reply comments
+    if (body.parentCommentId) {
+      c.executionCtx.waitUntil(
+        createReplyNotification(c.env, {
+          bookId,
+          commentId: id,
+          parentCommentId: body.parentCommentId,
+          replierEmail: auth.email,
+        }),
+      );
     }
 
     return c.json(
       {
         ok: true,
-        data: toCommentDTO(existing, auth.email),
+        data: toCommentDTO(
+          {
+            id,
+            book_id: bookId,
+            user_email: auth.email,
+            chapter_ref: body.locator?.chapterRef ?? null,
+            cfi_range: body.locator?.cfi ?? null,
+            selected_text: body.locator?.selectedText ?? null,
+            body: body.body,
+            visibility: body.visibility ?? 'shared',
+            status: 'open',
+            parent_comment_id: body.parentCommentId ?? null,
+            resolved_at: null,
+            created_at: now,
+            updated_at: now,
+          },
+          auth.email,
+        ),
       },
-      200,
+      201,
     );
   },
 );

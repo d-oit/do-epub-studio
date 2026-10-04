@@ -40,7 +40,7 @@ The worker provides a built-in `POST /api/telemetry` endpoint that:
 1. Requires **no authentication** (telemetry does not carry
    sensitive data per the sanitization rules below).
 2. Validates the payload with `TelemetryPayloadSchema` (Zod).
-3. Persists events to the `telemetry_events` table in D1
+3. Persists events to the `telemetry_events` table in Turso
    using `waitUntil` for non-blocking writes (does not delay the
    response).
 4. Returns `202 Accepted` with `{ ok: true }`.
@@ -57,13 +57,10 @@ each event to `console.log/warn/error` for observability in `wrangler tail`.
 - You accept the telemetry retention policy (see below).
 
 **Retention:** Telemetry events in the `telemetry_events` table are kept
-for 90 days, **enforced** by the Worker's `scheduled` handler
-(`apps/worker/src/lib/telemetry-retention.ts`, declared in
-`wrangler.jsonc` → `triggers.crons`, weekly Sun 03:00 UTC). The handler
-deletes in bounded batches and logs `telemetry.retention.completed` /
-`telemetry.retention.failed`; see the
+for 90 days by default. See the
 [telemetry retention runbook](./runbooks/telemetry-retention.md) for the
-policy, manual cleanup SQL, and verification.
+cleanup job (Worker cron), manual cleanup SQL, verification, and
+ownership.
 
 ## What NOT to send
 
@@ -76,16 +73,6 @@ Per AGENTS.md Tier 1 and ADR-092:
 - No personal data beyond `metadata` keys the developer explicitly
   opts into (e.g. `bookId` for error correlation is fine;
   `email` is not).
-
-These rules are enforced at the client boundary (A7, GOAP-298):
-`logClientEvent` sanitizes each entry with the shared log scrubber
-(`packages/shared/src/redact.ts`) before writing to the console, the
-in-memory buffer and the `VITE_TELEMETRY_ENDPOINT` payload. Sensitive
-keys (including hyphenated header names such as `Set-Cookie`), emails,
-Bearer tokens and 32+ character identifier-shaped values are replaced
-with `[REDACTED]`; validated trace/span correlation ids (`traceId`,
-`spanId` and their `client*`/`ingest*` siblings) are preserved so
-client–server correlation keeps working.
 
 The `ClientLogEntry.error` field is bounded to
 `{ name, message, stack? }`. Do not put the request body in there.

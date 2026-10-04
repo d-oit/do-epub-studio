@@ -51,9 +51,8 @@ function restoreStandardBackdropFilter(): PluginOption {
  * weight at runtime, because transformers.js sets
  * `env.backends.onnx.wasm.wasmPaths` to ORT's version-pinned jsdelivr CDN at
  * module init (browser, only when wasmPaths is unset), so the engine never
- * fetches the local copy (the AI-plugin ADR section in
- * `plans/archive/262-goap-issue-318.md` holds: a static GET for a public
- * binary is fine, same class as the on-demand model download). Dropping
+ * fetches the local copy (ADR-262's local-first contract holds: a static GET
+ * for a public binary, same class as the on-demand model download). Dropping
  * oversize assets here fails fast at build time instead of at deploy;
  * scripts/check-bundle-budget.mjs enforces the same cap from
  * .performance-budgets.json as the sensor of record.

@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { defined } from './helpers';
 
 vi.mock('../db/client', () => ({
   queryFirst: vi.fn(),
@@ -50,7 +49,7 @@ describe('reset token governance (ADR-232)', () => {
       traceId: 't',
     });
     expect(token).toMatch(/^[0-9a-f]{64}$/);
-    const [, sql, args] = defined(mockExecute.mock.calls[0]);
+    const [, sql, args] = mockExecute.mock.calls[0];
     expect(sql).toContain('INSERT INTO password_reset_tokens');
     // The raw token must never be persisted — only its hash.
     expect(args).not.toContain(token);

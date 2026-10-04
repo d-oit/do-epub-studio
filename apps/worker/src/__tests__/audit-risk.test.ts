@@ -43,7 +43,7 @@ describe('audit/risk', () => {
       });
 
       expect(mockLogAudit).toHaveBeenCalledTimes(1);
-      const entry = mockLogAudit.mock.calls[0]?.[1];
+      const entry = mockLogAudit.mock.calls[0][1];
       expect(entry.action).toBe('risk_token_replay');
       expect(entry.entityType).toBe('user');
       expect(entry.entityId).toBe('user-1');
@@ -61,7 +61,7 @@ describe('audit/risk', () => {
         entityId: 'acct',
         payload: { account: 'a@example.com' },
       });
-      const entry = mockLogAudit.mock.calls[0]?.[1];
+      const entry = mockLogAudit.mock.calls[0][1];
       expect(entry.entityType).toBe('user');
       expect(entry.action).toBe('risk_login_locked');
     });

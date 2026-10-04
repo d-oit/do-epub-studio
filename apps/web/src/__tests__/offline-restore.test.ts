@@ -35,7 +35,7 @@ describe('Offline restore — annotations (M4 from Plan 118)', () => {
   });
 
   it('saves and retrieves highlights, comments, and bookmarks for a book', async () => {
-    const { saveAnnotation, getAnnotations } = await import('../lib/offline/annotation-mutations');
+    const { saveAnnotation, getAnnotations } = await import('../lib/offline/db');
 
     const bookId = 'test-book-restore';
 
@@ -163,7 +163,7 @@ describe('Offline restore — annotations (M4 from Plan 118)', () => {
 
     const queue = await getSyncQueue();
     expect(queue).toHaveLength(1);
-    expect(queue[0]?.type).toBe('reading-insight');
+    expect(queue[0].type).toBe('reading-insight');
 
     // Simulate successful sync: remove from queue
     await removeSyncQueueItem('sq-ri-1');
@@ -172,7 +172,7 @@ describe('Offline restore — annotations (M4 from Plan 118)', () => {
   });
 
   it('persists comment status mutations for offline resolve (Plan 998)', async () => {
-    const { saveAnnotation, getAnnotations } = await import('../lib/offline/annotation-mutations');
+    const { saveAnnotation, getAnnotations } = await import('../lib/offline/db');
 
     const bookId = 'plan998-book';
 
@@ -215,6 +215,8 @@ describe('Offline restore — annotations (M4 from Plan 118)', () => {
 
   it('full round-trip: all annotation types + progress + insights survive offline', async () => {
     const {
+      saveAnnotation,
+      getAnnotations,
       saveProgress,
       getProgress,
       saveReadingInsight,
@@ -222,7 +224,6 @@ describe('Offline restore — annotations (M4 from Plan 118)', () => {
       addToSyncQueue,
       getSyncQueue,
     } = await import('../lib/offline/db');
-    const { saveAnnotation, getAnnotations } = await import('../lib/offline/annotation-mutations');
 
     const bookId = 'full-roundtrip-book';
 
@@ -328,8 +329,8 @@ describe('Offline restore — annotations (M4 from Plan 118)', () => {
     // Verify reading insights restored
     const insights = await getReadingInsightsForBook(bookId);
     expect(insights).toHaveLength(1);
-    expect(insights[0]?.activeMinutes).toBe(20);
-    expect(insights[0]?.activePages).toBe(5);
+    expect(insights[0].activeMinutes).toBe(20);
+    expect(insights[0].activePages).toBe(5);
 
     // Verify sync queue has all 4 types
     const queue = await getSyncQueue();

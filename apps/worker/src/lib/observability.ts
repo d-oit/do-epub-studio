@@ -7,8 +7,8 @@ import {
   serializeError,
   buildTraceparent,
   testBounded,
-  scrubLogEntry,
 } from '@do-epub-studio/shared';
+import { scrub } from './redact';
 
 interface LogPayload {
   level: 'info' | 'warn' | 'error';
@@ -85,7 +85,7 @@ export function createRequestContext(request: Request): RequestContext {
 }
 
 function log(payload: LogPayload): void {
-  const entry = JSON.stringify(scrubLogEntry(payload));
+  const entry = JSON.stringify(scrub(payload));
   if (payload.level === 'error') {
     console.error(entry);
     return;
