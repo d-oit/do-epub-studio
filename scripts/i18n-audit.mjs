@@ -2,9 +2,13 @@
 // scripts/i18n-audit.mjs — do-harness "i18n" sensor runner (locale regression).
 //
 // Runs the text probe per locale and reports only locale-specific deltas
-// (expansion overflow, RTL direction mismatch) via WEB_AUDIT_LOCALES
-// (comma-separated BCP-47 tags, baseline locale first). Locale switching
-// uses WEB_AUDIT_LOCALE_PARAM (default "lang") or WEB_AUDIT_LOCALE_COOKIE.
+// (expansion overflow, RTL direction mismatch, wrong declared language) via
+// WEB_AUDIT_LOCALES (comma-separated BCP-47 tags, baseline locale first).
+// Activation: WEB_AUDIT_LOCALE_STORAGE_KEY (the app's persisted zustand
+// locale — this app: `do-epub-locale`), else WEB_AUDIT_LOCALE_COOKIE, else
+// WEB_AUDIT_LOCALE_PARAM (default "lang"). Every probe additionally asserts
+// that the rendered document declares the requested language, so an app that
+// ignores the activation mechanism fails instead of reporting OK.
 // Findings exit 1 with the JSON report on stderr; missing routes, fewer
 // than two locales, or a missing Playwright prints "SKIP:" and exits 0.
 
@@ -25,9 +29,16 @@ if (locales.length < 2) {
   process.exit(0);
 }
 const base = process.env.WEB_AUDIT_BASE_URL ?? 'http://127.0.0.1:3000';
-const switchVia = process.env.WEB_AUDIT_LOCALE_COOKIE
-  ? { cookie: process.env.WEB_AUDIT_LOCALE_COOKIE }
-  : { param: process.env.WEB_AUDIT_LOCALE_PARAM ?? 'lang' };
+// Activation order: the app's own persisted state (this app hydrates its UI
+// locale from `localStorage['do-epub-locale']`) beats a cookie, which beats a
+// query parameter — the two generic mechanisms only work for apps that read
+// them, and a probe that silently falls back to English produces no signal
+// (A3/GOAP-304: the language assertion now fails loudly instead).
+const switchVia = process.env.WEB_AUDIT_LOCALE_STORAGE_KEY
+  ? { storageKey: process.env.WEB_AUDIT_LOCALE_STORAGE_KEY }
+  : process.env.WEB_AUDIT_LOCALE_COOKIE
+    ? { cookie: process.env.WEB_AUDIT_LOCALE_COOKIE }
+    : { param: process.env.WEB_AUDIT_LOCALE_PARAM ?? 'lang' };
 
 const { loadChromium } = await import('./web-ui/lib/playwright.mjs');
 const chromium = await loadChromium();

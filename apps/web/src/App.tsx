@@ -6,6 +6,7 @@ import { useThemeSync } from './hooks/useThemeSync';
 import { useSessionExpiry } from './hooks/useSessionExpiry';
 import { useTranslation } from './hooks/useTranslation';
 import { useDocumentLocale } from './hooks/useDocumentLocale';
+import { useLocaleReload } from './hooks/useLocaleReload';
 import { useSyncStatus } from './hooks/useSyncStatus';
 import { AppShell } from './components/AppShell';
 import { SwUpdateNotification } from './components/SwUpdateNotification';
@@ -145,6 +146,9 @@ export function App() {
   useThemeSync();
   useSessionExpiry();
   useDocumentLocale();
+  // Single owner of the locale-retry reload — see the hook for why it is not in
+  // the per-consumer translation hook (A9/GOAP-306).
+  useLocaleReload();
   useSyncStatus();
   return (
     <Suspense fallback={null}>
