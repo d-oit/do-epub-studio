@@ -35,6 +35,8 @@ export const ar: Record<TranslationKeys, TranslationValue> = {
   'login.demoFillCredentials': 'تعبئة بيانات الدخول التجريبية',
   'login.demoOr': 'أو',
   'login.demoSigningIn': 'دخول التجربة...',
+  'login.demoUnavailable':
+    'العرض التجريبي غير متاح في هذا النشر. سجّل الدخول ببياناتك الخاصة أو اطلب الوصول من مالك الكتاب.',
   'login.helpLink': 'المساعدة / كيفية الاستخدام',
   'login.hero.feature.reading': 'قراءة EPUB متكيفة',
   'login.hero.feature.annotations': 'تظليلات وملاحظات وإشارات مرجعية',

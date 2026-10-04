@@ -1,18 +1,18 @@
 # GOAP-309: Production demo login and catalog outage on do-epub-studio.pages.dev
 
-**Status:** OPEN (tracked from the PR roast sweep, 2026-10-04)
+**Status:** IN PROGRESS — W3+W5 shipped (2026-10-04); W1 (ops config) and W2 (catalog 500 root cause) still require Cloudflare access (#1278)
 **ADR:** this file carries the ADR (policy in §4) until promoted.
 
 ## 1. Analyze — measured production evidence (2026-10-04, headless Chrome against https://do-epub-studio.pages.dev)
 
-| Probe | Result |
-|---|---|
-| `GET /api/health` | 200 `application/json` `{"ok":true}` — Functions routing works |
-| `GET /api/catalog?limit=3` | **500 `INTERNAL_ERROR`** (traceId `6ae83aac-…`) — catalog DB path is down |
-| `POST /api/demo/reader-login` | 403 `DEMO_DISABLED` — fail-closed gates (expected without config) |
-| `POST /api/access/request` (demo.reader creds, `bookSlug: demo`) | **500 `INTERNAL_ERROR`** (traceId `5e13c439-…`) |
-| UI "Try the demo" button | Alert "Demo login is not available." — dead end for end users |
-| UI `/login?book=demo` + "Fill demo credentials" + Sign In | Alert "An unexpected error occurred" (the 500 surfaces raw) |
+| Probe                                                            | Result                                                                    |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| `GET /api/health`                                                | 200 `application/json` `{"ok":true}` — Functions routing works            |
+| `GET /api/catalog?limit=3`                                       | **500 `INTERNAL_ERROR`** (traceId `6ae83aac-…`) — catalog DB path is down |
+| `POST /api/demo/reader-login`                                    | 403 `DEMO_DISABLED` — fail-closed gates (expected without config)         |
+| `POST /api/access/request` (demo.reader creds, `bookSlug: demo`) | **500 `INTERNAL_ERROR`** (traceId `5e13c439-…`)                           |
+| UI "Try the demo" button                                         | Alert "Demo login is not available." — dead end for end users             |
+| UI `/login?book=demo` + "Fill demo credentials" + Sign In        | Alert "An unexpected error occurred" (the 500 surfaces raw)               |
 
 ## 2. Goal
 

@@ -36,6 +36,8 @@ export const nl: Record<TranslationKeys, TranslationValue> = {
   'login.demoFillCredentials': 'Demo-inloggegevens invullen',
   'login.demoOr': 'of',
   'login.demoSigningIn': 'Demo starten...',
+  'login.demoUnavailable':
+    'De demo is niet beschikbaar op deze omgeving. Log in met je eigen gegevens of vraag toegang bij de boekeigenaar.',
   'login.helpLink': 'Hulp / Hoe te gebruiken',
   'login.hero.feature.reading': 'Adaptief EPUB-lezen',
   'login.hero.feature.annotations': 'Markeringen, notities & bladwijzers',

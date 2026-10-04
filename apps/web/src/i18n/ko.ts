@@ -36,6 +36,8 @@ export const ko: Record<TranslationKeys, TranslationValue> = {
   'login.demoFillCredentials': '데모 자격 증명 채우기',
   'login.demoOr': '또는',
   'login.demoSigningIn': '데모 로그인 중...',
+  'login.demoUnavailable':
+    '이 배포에서는 데모를 사용할 수 없습니다. 본인의 자격 증명으로 로그인하거나 책 소유자에게 액세스를 요청하세요.',
   'login.helpLink': '도움말 / 사용 방법',
   'login.hero.feature.reading': '반응형 EPUB 읽기',
   'login.hero.feature.annotations': '하이라이트, 주석 및 북마크',
