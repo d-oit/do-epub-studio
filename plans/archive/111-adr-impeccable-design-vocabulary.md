@@ -1,9 +1,14 @@
 # ADR-111: Impeccable Design Vocabulary Adoption
 
 **Date:** 2026-06-24
-**Status:** Proposed
+**Status:** Accepted
 **Deciders:** Project maintainer
 **Related:** ADR-082b (Editorial Minimalist UI Direction), ADR-063a (Accessibility Design Tokens), ADR-105 (2026 UI Platform Modernization)
+
+> _Status header corrected 2026-10-04._ The authoritative ADR index already
+> recorded ADR-111 as Accepted while this header still read `Proposed`. Only the
+> header changed; the policy body is untouched and no adoption date is invented.
+> See `plans/ADR-INDEX.md`.
 
 ## Context
 

@@ -274,6 +274,7 @@ export interface MockRouteOptions {
   includeBookmarks?: boolean;
   includeLogout?: boolean;
   includeInsights?: boolean;
+  comments?: unknown[];
 }
 
 export async function mockReaderApi(page: Page, opts: MockRouteOptions = {}) {
@@ -346,12 +347,78 @@ export async function mockReaderApi(page: Page, opts: MockRouteOptions = {}) {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify({ ok: true, data: [] }),
+      body: JSON.stringify({ ok: true, data: opts.comments ?? [] }),
     });
   });
 
+  const bookmarks: Array<{ id: string; locator: unknown; label?: string; createdAt: string }> = [];
+
   if (opts.includeBookmarks !== false) {
-    await page.route('**/api/books/*/bookmarks', async (route: Route) => {
+    await page.route('**/api/books/*/bookmarks**', async (route: Route) => {
+      const method = route.request().method();
+      if (method === 'POST') {
+        const body = (route.request().postDataJSON() || {}) as {
+          locator?: unknown;
+          label?: string;
+        };
+        const newBookmark = {
+          id: `bookmark-${Date.now()}`,
+          locator: body?.locator ?? { cfi: 'epubcfi(/6/4)' },
+          label: body?.label || 'Chapter 1',
+          createdAt: new Date().toISOString(),
+        };
+        bookmarks.push(newBookmark);
+        await route.fulfill({
+          status: 201,
+          contentType: 'application/json',
+          body: JSON.stringify({ ok: true, data: newBookmark }),
+        });
+      } else if (method === 'DELETE') {
+        const url = route.request().url();
+        const id = url.split('/bookmarks/')[1];
+        const idx = bookmarks.findIndex((b) => b.id === id);
+        if (idx !== -1) bookmarks.splice(idx, 1);
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ ok: true }),
+        });
+      } else {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ ok: true, data: bookmarks.map((b) => ({ ...b })) }),
+        });
+      }
+    });
+  }
+
+  await page.route('**/api/notifications**', async (route: Route) => {
+    const origin = route.request().headers()['origin'] || '*';
+    if (route.request().method() === 'OPTIONS') {
+      await route.fulfill({
+        status: 204,
+        headers: {
+          'Access-Control-Allow-Origin': origin,
+          'Access-Control-Allow-Methods': 'GET,POST,PUT,PATCH,DELETE,OPTIONS',
+          'Access-Control-Allow-Headers': '*',
+          'Access-Control-Allow-Credentials': 'true',
+        },
+      });
+      return;
+    }
+    await route.fulfill({
+      status: 200,
+      headers: {
+        'Access-Control-Allow-Origin': origin,
+        'Access-Control-Allow-Credentials': 'true',
+      },
+      contentType: 'application/json',
+      body: JSON.stringify({ ok: true, data: { count: 0, notifications: [], total: 0 } }),
+    });
+  });
+  if (opts.includeFeedback !== false) {
+    await page.route('**/api/books/*/feedback', async (route: Route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -433,29 +500,48 @@ export async function mockAdminApi(
     });
   });
 
+  const grants = [
+    {
+      id: 'grant-1',
+      bookId: 'book-1',
+      email: 'reader@example.com',
+      mode: 'reading',
+      allowed: 1,
+      commentsAllowed: true,
+      offlineAllowed: true,
+      expiresAt: null,
+      createdAt: '2025-01-01T00:00:00Z',
+    },
+  ];
+
   await page.route('**/api/admin/books/*/grants', async (route: Route) => {
     if (route.request().method() === 'POST') {
       const body = route.request().postDataJSON();
+      const newGrant = {
+        id: `grant-${Date.now()}`,
+        bookId: 'book-1',
+        email: body?.email ?? 'user@example.com',
+        mode: body?.mode ?? 'reading',
+        allowed: 1,
+        commentsAllowed: true,
+        offlineAllowed: true,
+        expiresAt: null,
+        createdAt: new Date().toISOString(),
+      };
+      grants.push(newGrant);
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
           ok: true,
-          data: {
-            id: 'grant-1',
-            bookId: 'book-1',
-            email: body?.email ?? 'user@example.com',
-            status: 'active',
-            expiresAt: null,
-            createdAt: new Date().toISOString(),
-          },
+          data: newGrant,
         }),
       });
     } else {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ ok: true, data: [] }),
+        body: JSON.stringify({ ok: true, data: grants.map((g) => ({ ...g })) }),
       });
     }
   });
@@ -469,6 +555,13 @@ export async function mockAdminApi(
   });
 
   await page.route('**/api/admin/grants/*/revoke', async (route: Route) => {
+    const url = route.request().url();
+    const grantId = url.split('/grants/')[1]?.split('/')[0];
+    const g = grants.find((item) => item.id === grantId);
+    if (g) {
+      g.allowed = 0;
+      g.revokedAt = new Date().toISOString();
+    }
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -476,15 +569,40 @@ export async function mockAdminApi(
     });
   });
 
+  const allAuditEntries = Array.from({ length: 100 }, (_, i) => ({
+    id: `audit-${i + 1}`,
+    entityType: i % 2 === 0 ? 'grant' : 'book',
+    entityId: i % 2 === 0 ? `grant-${i + 1}` : `book-${i + 1}`,
+    action: i % 2 === 0 ? 'grant_created' : 'book_created',
+    actorEmail: 'admin@example.com',
+    createdAt: new Date(Date.now() - i * 60000).toISOString(),
+    payload: { index: i + 1 },
+  }));
+
   await page.route('**/api/admin/audit**', async (route: Route) => {
+    const url = new URL(route.request().url());
+    const entityType = url.searchParams.get('entityType');
+    const limit = parseInt(
+      url.searchParams.get('pageSize') || url.searchParams.get('limit') || '50',
+      10,
+    );
+    const offset = parseInt(url.searchParams.get('offset') || '0', 10);
+
+    const filtered = entityType
+      ? allAuditEntries.filter((e) => e.entityType === entityType)
+      : allAuditEntries;
+    const paginated = filtered.slice(offset, offset + limit);
+
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify({ ok: true, data: [] }),
+      body: JSON.stringify({
+        ok: true,
+        data: { entries: paginated, total: filtered.length },
+      }),
     });
   });
 }
-
 // ---------------------------------------------------------------------------
 // Login helpers
 // ---------------------------------------------------------------------------

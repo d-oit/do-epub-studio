@@ -9,7 +9,7 @@ import {
   subscribeFeedbackDrafts,
   type FeedbackDraft,
 } from './feedback-drafts';
-import { closeDb } from './db';
+import { closeDb, setTokenOverride } from './db';
 
 function makeDraft(overrides: Partial<FeedbackDraft> = {}): FeedbackDraft {
   return {
@@ -31,8 +31,8 @@ function makeDraft(overrides: Partial<FeedbackDraft> = {}): FeedbackDraft {
 
 describe('feedback drafts (REL-02 durable layer)', () => {
   beforeEach(async () => {
+    setTokenOverride('test-feedback-session-token');
     closeDb();
-    // Fresh database per test: delete all known databases.
     const dbs = (await indexedDB.databases?.()) ?? [];
     await Promise.all(
       dbs.map((db) => {
@@ -44,6 +44,16 @@ describe('feedback drafts (REL-02 durable layer)', () => {
           req.onerror = () => reject(new Error(`Failed to delete database ${db.name}`));
         });
       }),
+    );
+  });
+  afterEach(() => {
+    setTokenOverride(null);
+  });
+
+  it('fails when unauthenticated: writes no draft and reports error', async () => {
+    setTokenOverride(null);
+    await expect(saveFeedbackDraft(makeDraft())).rejects.toThrow(
+      'Authentication required for sensitive offline storage',
     );
   });
 

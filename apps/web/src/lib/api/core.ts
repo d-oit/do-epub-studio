@@ -59,6 +59,17 @@ function backoff(attempt: number): Promise<void> {
 function handleUnauthorized() {
   const state = useAuthStore.getState();
   state.logout('expired');
+  // S1 (GOAP-1002): device-data teardown on auth loss. The dynamic import
+  // keeps the IndexedDB layer + `idb` out of the shell bundle (ADR-107 §3);
+  // the teardown only runs on auth loss, never at startup.
+  void import('../offline/db')
+    .then(({ clearAllEncryptedData }) => clearAllEncryptedData())
+    .catch((err) => {
+      console.error('Device data teardown failed on auth loss', err);
+    });
+  if (typeof window !== 'undefined' && 'caches' in window) {
+    void window.caches.delete('book-content').catch(() => {});
+  }
 }
 
 /** Core API request: observability, timeout, retry w/ backoff, error handling. */

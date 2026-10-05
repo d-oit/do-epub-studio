@@ -1,8 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { NotificationPanel } from '../features/reader/components/notifications/NotificationPanel';
-
+import { useAuthStore } from '../stores/auth';
 const mockFetch = vi.fn();
 vi.stubGlobal('fetch', mockFetch);
 
@@ -40,6 +40,7 @@ const mockNotifications = [
 describe('NotificationPanel', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    useAuthStore.setState({ sessionToken: 'test-panel-token', bookId: 'b1' });
     mockFetch.mockImplementation((url: string) => {
       if (url.includes('/api/notifications?limit=20')) {
         return Promise.resolve({
@@ -54,22 +55,23 @@ describe('NotificationPanel', () => {
       return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
     });
   });
+  afterEach(() => {
+    act(() => {
+      useAuthStore.setState({ sessionToken: null, bookId: null });
+    });
+  });
 
   it('renders dialog with accessible label', async () => {
-    // The panel fetches notifications on mount; drain that load inside act()
-    // so its state update doesn't land after the test body. The explicit flush
-    // keeps the callback async (require-await) and inside the act scope.
-    await act(async () => {
-      render(
-        <NotificationPanel t={t} onNavigateToComment={onNavigateToComment} onClose={onClose} />,
-      );
-      await Promise.resolve();
+    render(<NotificationPanel t={t} onNavigateToComment={onNavigateToComment} onClose={onClose} />);
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { name: 'notifications.title' })).toBeInTheDocument();
+      expect(screen.getByText('Alice replied to your comment')).toBeInTheDocument();
     });
-    expect(screen.getByRole('dialog', { name: 'notifications.title' })).toBeInTheDocument();
   });
 
   it('shows loading state initially', () => {
-    mockFetch.mockImplementation(() => new Promise(() => {}));
+    // Uses Promise constructor because apps/web compiles against the ES2022 lib (LEARNINGS.md).
+    mockFetch.mockImplementation(() => new Promise<Response>(() => {}));
     render(<NotificationPanel t={t} onNavigateToComment={onNavigateToComment} onClose={onClose} />);
     expect(screen.getByText('common.loading')).toBeInTheDocument();
   });
@@ -112,6 +114,9 @@ describe('NotificationPanel', () => {
   it('calls onClose when close button clicked', async () => {
     const user = userEvent.setup();
     render(<NotificationPanel t={t} onNavigateToComment={onNavigateToComment} onClose={onClose} />);
+    await waitFor(() => {
+      expect(screen.getByText('Alice replied to your comment')).toBeInTheDocument();
+    });
     await user.click(screen.getByRole('button', { name: 'common.close' }));
     expect(onClose).toHaveBeenCalledOnce();
   });

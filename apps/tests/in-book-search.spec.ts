@@ -59,10 +59,9 @@ test.describe('In-book search', () => {
     await expect(page.getByRole('search')).toBeVisible();
 
     const closeButton = page.getByRole('button', { name: /Close|Dismiss/i });
-    if (await closeButton.isVisible()) {
-      await closeButton.click();
-      await expect(page.getByRole('search')).not.toBeVisible();
-    }
+    await expect(closeButton).toBeVisible();
+    await closeButton.click();
+    await expect(page.getByRole('search')).not.toBeVisible();
   });
 
   test('@mobile search panel shows empty state for no results', async ({ page }) => {

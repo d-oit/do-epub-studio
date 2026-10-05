@@ -77,6 +77,15 @@ export const SignedUrlSchema = z.object({
   signature: z.string().min(1).max(255),
 });
 
+export const BookIndexSchema = z.object({
+  chapters: z.array(
+    z.object({
+      chapterRef: z.string().min(1).max(500),
+      content: z.string(),
+    }),
+  ),
+});
+
 export const UploadCompleteSchema = z.object({
   storageKey: z.string().min(1).max(1024),
   originalFilename: z.string().min(1).max(500),
@@ -91,5 +100,13 @@ export const UploadCompleteSchema = z.object({
       warnings: z.array(z.string().max(1000)),
       epubVersion: z.string().max(10).optional(),
     })
+    .optional(),
+  chapters: z
+    .array(
+      z.object({
+        chapterRef: z.string().min(1).max(500),
+        content: z.string(),
+      }),
+    )
     .optional(),
 });

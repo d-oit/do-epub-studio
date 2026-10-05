@@ -117,7 +117,7 @@ export async function encryptEntry<T extends object>(
   plaintextKeys: readonly (keyof T)[],
 ): Promise<Record<string, unknown>> {
   const t = token();
-  if (!t) return entry as Record<string, unknown>;
+  if (!t) throw new Error('Authentication required for sensitive offline storage');
 
   const plaintext: Record<string, unknown> = {};
   const sensitive: Record<string, unknown> = {};
@@ -157,6 +157,14 @@ export async function decryptEntry<T>(
       return null;
     }
   }
+
+  // No encrypted payload: only a record consisting solely of plaintext keys is
+  // safe to surface. Any extra field means sensitive data was persisted in the
+  // clear (legacy/corrupt row), so refuse the fail-open plaintext fallback.
+  const sensitiveKeysPresent = Object.keys(stored).some(
+    (key) => key !== 'encryptedPayload' && !(plaintextKeys as readonly string[]).includes(key),
+  );
+  if (sensitiveKeysPresent) return null;
 
   const { encryptedPayload: _, ...rest } = stored;
   return rest as unknown as T;
@@ -389,6 +397,7 @@ export async function clearAllEncryptedData(): Promise<void> {
     'permissions',
     'readingInsights',
     'conflicts',
+    'feedbackDrafts',
   ];
   const tx = db.transaction(stores, 'readwrite');
   await Promise.all(stores.map((name) => tx.objectStore(name).clear()));

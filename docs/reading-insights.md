@@ -135,8 +135,11 @@ Retrieves the user's reading insights for a book.
 - `apps/worker/src/__tests__/routes.insights.test.ts` — Worker route tests
 - `apps/web/src/lib/offline/reading-insights.test.ts` — Client timer tests
 - `apps/web/src/features/reader/components/info/InfoPanel.test.tsx` — InfoPanel integration tests
+- `apps/web/src/__tests__/info-panel.test.tsx` — synced-history labelling and JSON export
 
 ## Future Work
 
 - Reader-facing time-of-day insights
-- Export insights as CSV/JSON
+- Export insights as CSV (JSON export of the selected book's device-local
+  summary is delivered in the reader Info panel; it stays device-local and
+  offline-capable)

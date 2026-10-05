@@ -338,7 +338,7 @@ export function AdminBookResponsesPage() {
             &larr; {t('admin.books.backToReader')}
           </button>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-4">
           <Button onClick={() => setIsCreateModalOpen(true)}>{t('admin.createBook')}</Button>
           <button
             onClick={handleAuditNav}

@@ -19,7 +19,7 @@ const TEST_TOKEN = 'test-session-token-for-offline-db';
 
 describe('Offline Database — Sync Queue & Permissions', () => {
   beforeEach(async () => {
-    setTokenOverride(null);
+    setTokenOverride(TEST_TOKEN);
     const db = await getDB();
     const tx = db.transaction(['progress', 'annotations', 'syncQueue', 'permissions'], 'readwrite');
     await tx.objectStore('progress').clear();
@@ -31,6 +31,21 @@ describe('Offline Database — Sync Queue & Permissions', () => {
 
   afterEach(() => {
     setTokenOverride(null);
+  });
+
+  it('fails when unauthenticated: refuses writing syncQueue item', async () => {
+    setTokenOverride(null);
+    const item: SyncQueueItem = {
+      id: 'item-unauth',
+      type: 'progress',
+      payload: { bookId: 'book-1' },
+      mutationId: 'm-unauth',
+      createdAt: Date.now(),
+      attempts: 0,
+    };
+    await expect(addToSyncQueue(item)).rejects.toThrow(
+      'Authentication required for sensitive offline storage',
+    );
   });
 
   describe('Sync Queue', () => {

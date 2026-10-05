@@ -298,7 +298,7 @@ export function AdminAuditPage() {
             &larr; {t('admin.audit.backToBooks')}
           </button>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-4">
           <button
             onClick={handleExportCSV}
             className="px-4 py-2 bg-background border border-border rounded-md text-sm font-medium text-foreground-muted hover:bg-background-secondary"

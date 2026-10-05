@@ -58,6 +58,41 @@ describe('reset token governance (ADR-232)', () => {
     expect(storedHash as string).not.toBe(token);
   });
 
+  it('createResetToken persists a book binding and verifyResetToken returns it', async () => {
+    await createResetToken(env, {
+      purpose: 'reader_magic_link',
+      email: 'a@b.com',
+      bookId: 'book-1',
+    });
+    const [, insertSql, args] = mockExecute.mock.calls[0];
+    expect(insertSql).toContain('book_id');
+    // book_id is the last bound column after request_trace_id.
+    expect(args?.[8]).toBe('book-1');
+
+    mockQueryFirst.mockResolvedValue({
+      id: 'rt-1',
+      email: 'a@b.com',
+      user_id: null,
+      purpose: 'reader_magic_link',
+      expires_at: '2099-01-01T00:00:00Z',
+      used_at: null,
+      attempt_count: 0,
+      book_id: 'book-1',
+    });
+    await expect(verifyResetToken(env, 'x', 'reader_magic_link')).resolves.toEqual({
+      ok: true,
+      record: {
+        id: 'rt-1',
+        email: 'a@b.com',
+        userId: undefined,
+        purpose: 'reader_magic_link',
+        bookId: 'book-1',
+      },
+    });
+    const [, selectSql] = mockQueryFirst.mock.calls[0];
+    expect(selectSql).toContain('book_id');
+  });
+
   it('verifyResetToken returns invalid for an unknown token', async () => {
     mockQueryFirst.mockResolvedValue(null);
     await expect(verifyResetToken(env, 'x', 'admin_reset')).resolves.toEqual({

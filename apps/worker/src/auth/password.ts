@@ -3,7 +3,7 @@ import { queryFirst, execute } from '../db/client';
 import { AppError } from '../lib/http-errors';
 import { argon2id, argon2Verify } from 'argon2-wasm-edge';
 
-interface GrantRow extends JsonRow {
+export interface GrantRow extends JsonRow {
   id: string;
   book_id: string;
   email: string;

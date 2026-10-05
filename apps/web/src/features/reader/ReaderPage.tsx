@@ -1,10 +1,8 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { useParams, useNavigate } from 'react-router-dom';
-import { createSpanId, createTraceId } from '@do-epub-studio/shared';
 import { useTranslation } from '../../hooks/useTranslation';
 import { apiRequest } from '../../lib/api/index';
-import { logClientEvent } from '../../lib/client-logger';
 import { setupZombieDetection } from '../../lib/offline/permissions';
 import { AnnotationToolbar, extractSelectionData, CommentsPanel } from './components/annotations';
 import { FeedbackComposerModal } from './components/annotations/FeedbackComposerModal';
@@ -17,6 +15,7 @@ import {
   useReadingTimer,
   useOptimisticAnnotationStore,
   useReaderDataLoader,
+  useReaderLogout,
 } from './hooks';
 import { useFeedbackComposer } from './hooks/useFeedbackComposer';
 import {
@@ -32,6 +31,7 @@ import {
   ScrollProgressBar,
 } from './components';
 import { ConflictResolutionPanel } from './components/conflicts/ConflictResolutionPanel';
+import { NotificationPanel } from './components/notifications/NotificationPanel';
 import { useAuthStore, useReaderStore, usePreferencesStore } from '../../stores';
 import { initAiPlugins } from '../../lib/ai-plugins';
 
@@ -49,7 +49,6 @@ export function ReaderPage() {
   const bookId = useAuthStore((s) => s.bookId);
   const bookTitle = useAuthStore((s) => s.bookTitle);
   const capabilities = useAuthStore(useShallow((s) => s.capabilities));
-  const logout = useAuthStore((s) => s.logout);
 
   const {
     activePanel,
@@ -319,23 +318,7 @@ export function ReaderPage() {
     };
   }, [flushInsights, syncInsightsToServer]);
 
-  const handleLogout = async () => {
-    try {
-      await apiRequest('/api/access/logout', { method: 'POST', token: sessionToken ?? undefined });
-    } catch (err) {
-      const error = err instanceof Error ? err : new Error(String(err));
-      logClientEvent({
-        level: 'error',
-        event: 'reader.logout_failed',
-        traceId: createTraceId(),
-        spanId: createSpanId(),
-        error: { name: error.name, message: error.message, stack: error.stack },
-      });
-    } finally {
-      logout();
-      void navigate('/login');
-    }
-  };
+  const handleLogout = useReaderLogout();
 
   const navigateToChapter = async (href: string) => {
     if (renditionRef.current) {
@@ -370,6 +353,7 @@ export function ReaderPage() {
         onToggleBookmarks={() => togglePanel('bookmarks')}
         onToggleSettings={() => togglePanel('settings')}
         onToggleInfo={() => togglePanel('info')}
+        onToggleNotifications={() => togglePanel('notifications')}
         onExportNotes={() => handleExportNotes(bookTitle)}
         onLogout={() => void handleLogout()}
         t={tFn}
@@ -549,6 +533,16 @@ export function ReaderPage() {
           onEditHighlight={(id, note) => void handleEditHighlight(id, note)}
           onDeleteHighlight={(id) => void handleDeleteHighlight(id)}
           onNavigateToAnnotation={(ref, cfi) => void handleNavigateToAnnotation(ref, cfi)}
+        />
+      )}
+      {activePanel === 'notifications' && (
+        <NotificationPanel
+          onNavigateToComment={(_bookId, _commentId) => {
+            setActivePanel('comments');
+          }}
+          t={tFn}
+          onClose={() => setActivePanel(null)}
+          token={sessionToken}
         />
       )}
     </div>

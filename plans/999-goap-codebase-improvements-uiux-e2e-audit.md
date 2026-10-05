@@ -6,6 +6,13 @@
 **Companion contract:** `plans/999-adr-reader-creator-editorial-contract.md` (ADR-999, Accepted 2026-09-29 — D1–D6 implemented by this plan)
 **Related:** PRODUCT.md, DESIGN.md, ADR-004 (auth/access), ADR-005 (offline sync), ADR-006 (EPUB rendering/CFI), ADR-075 (tenant isolation), ADR-262 (local-only AI policy — proposed amendment), GOAP-254, GOAP-255, `analysis/goap-254-audit-evidence.md`
 **Current product slice:** GOAP-284 (`plans/284-goap-production-onboarding.md`) adds production account/invitation onboarding; its implementation does not alter the frozen collaboration contract.
+**Successor 2026-10-04:** `plans/1000-goap-implementation-security-e2e-feature-audit.md`
+(GOAP-1000, analysis-only DONE) plus its four owned follow-ups GOAP-1001
+(M1–M3), GOAP-1002 (S1–S4), GOAP-1003 (E1–E4) and GOAP-1004 (N1–N3). GOAP-1003
+specifies creator-workspace browser coverage (its E3). This audit's statuses are
+unchanged: AI-01 and AI-02 stay DONE, and AI-03 stays **DONE for the automated
+corpus with the human creator style review explicitly outstanding**, which no
+automated result replaces.
 
 ## 1. Context and plan critique
 

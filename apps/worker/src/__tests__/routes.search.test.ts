@@ -82,4 +82,37 @@ describe('Search Routes', () => {
     const body = await parseBody(res);
     expect(body.data.results).toHaveLength(0);
   });
+
+  it('M3: unindexed book explicitly reports indexed: false with guidance message', async () => {
+    mockRequireAuth.mockResolvedValue(makeAuthContext());
+    mockQueryFirst.mockResolvedValueOnce(null); // No book_search_index row
+    const res = await app.fetch(
+      new Request('http://localhost/api/books/unindexed-book/search?q=phrase', {
+        headers: { Authorization: 'Bearer valid' },
+      }),
+      env,
+      makePassThroughContext(),
+    );
+    expect(res.status).toBe(200);
+    const body = await parseBody(res);
+    expect(body.data.indexed).toBe(false);
+    expect(body.data.message).toContain('not yet indexed');
+  });
+
+  it('M3: wrong-book access is refused', async () => {
+    mockRequireAuth.mockResolvedValue(makeAuthContext());
+    mockAssertBookAccess.mockResolvedValueOnce({
+      response: new Response(JSON.stringify({ ok: false, error: { code: 'FORBIDDEN' } }), {
+        status: 403,
+      }),
+    });
+    const res = await app.fetch(
+      new Request('http://localhost/api/books/wrong-book/search?q=phrase', {
+        headers: { Authorization: 'Bearer valid' },
+      }),
+      env,
+      makePassThroughContext(),
+    );
+    expect(res.status).toBe(403);
+  });
 });

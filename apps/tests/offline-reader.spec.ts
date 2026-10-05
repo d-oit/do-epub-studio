@@ -320,11 +320,59 @@ test.describe('Offline reader', () => {
     await context.setOffline(true);
     await page.waitForTimeout(300);
 
-    // Add items to the IndexedDB sync queue (not raw fetch) so attemptSync()
-    // processes them on reconnection.  Uses the same queueSync path the app uses.
+    // Seed the IndexedDB sync queue so attemptSync() processes it on
+    // reconnection. The rows are sealed exactly like `queueSync` writes them
+    // (`crypto.ts` format: base64(salt(16)||iv(12)||AES-GCM)) because the
+    // reader refuses to read plaintext rows (S2/GOAP-1002) — a raw plaintext
+    // row would be invisible to the flush path and prove nothing.
     await page.evaluate(async () => {
       const DB_NAME = 'do-epub-studio';
       const STORE_NAME = 'syncQueue';
+      const authRaw = globalThis.localStorage.getItem('do-epub-auth');
+      const sessionToken: string | undefined = authRaw
+        ? (JSON.parse(authRaw) as { state?: { sessionToken?: string } }).state?.sessionToken
+        : undefined;
+      if (!sessionToken) throw new Error('Seeding needs the persisted session token');
+
+      const toBase64 = (bytes: Uint8Array): string => {
+        let binary = '';
+        for (const byte of bytes) binary += String.fromCharCode(byte);
+        return btoa(binary);
+      };
+
+      /** Mirror of `lib/offline/crypto.ts` so the seeded rows are readable. */
+      const encryptJSON = async (value: unknown, token: string): Promise<string> => {
+        const subtle = globalThis.crypto.subtle;
+        const salt = globalThis.crypto.getRandomValues(new Uint8Array(16));
+        const iv = globalThis.crypto.getRandomValues(new Uint8Array(12));
+        const keyMaterial = await subtle.importKey(
+          'raw',
+          new TextEncoder().encode(token),
+          { name: 'PBKDF2' },
+          false,
+          ['deriveKey'],
+        );
+        const key = await subtle.deriveKey(
+          { name: 'PBKDF2', salt, iterations: 100_000, hash: 'SHA-256' },
+          keyMaterial,
+          { name: 'AES-GCM', length: 256 },
+          false,
+          ['encrypt'],
+        );
+        const sealed = new Uint8Array(
+          await subtle.encrypt(
+            { name: 'AES-GCM', iv },
+            key,
+            new TextEncoder().encode(JSON.stringify(value)),
+          ),
+        );
+        const combined = new Uint8Array(16 + 12 + sealed.length);
+        combined.set(salt, 0);
+        combined.set(iv, 16);
+        combined.set(sealed, 28);
+        return toBase64(combined);
+      };
+
       const items = [
         {
           id: crypto.randomUUID(),
@@ -374,6 +422,15 @@ test.describe('Offline reader', () => {
         },
       ];
 
+      // `id` and `createdAt` stay plaintext; everything else is sealed.
+      const sealedItems = await Promise.all(
+        items.map(async ({ id, createdAt, ...rest }) => ({
+          id,
+          createdAt,
+          encryptedPayload: await encryptJSON(rest, sessionToken),
+        })),
+      );
+
       await new Promise<void>((resolve, reject) => {
         // `req.error` and `tx.error` are `DOMException | null`, so rejecting with
         // them directly can settle the promise with a non-Error. Normalise, or a
@@ -384,7 +441,7 @@ test.describe('Offline reader', () => {
           const db = req.result;
           const tx = db.transaction(STORE_NAME, 'readwrite');
           const store = tx.objectStore(STORE_NAME);
-          for (const item of items) store.put(item);
+          for (const item of sealedItems) store.put(item);
           tx.oncomplete = () => resolve();
           tx.onerror = () =>
             reject(tx.error ?? new Error('IndexedDB transaction failed with no error'));

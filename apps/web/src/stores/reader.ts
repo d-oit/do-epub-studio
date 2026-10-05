@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { useAuthStore } from './auth';
 import type {
   ConflictRecord,
   ConflictResolutionResult,
@@ -10,7 +11,15 @@ import type { FeedbackItem } from '../lib/api/feedback';
 export type PageDirection = 'ltr' | 'rtl' | 'default';
 export type WritingMode = 'horizontal-tb' | 'vertical-rl' | 'vertical-lr';
 export type ReaderPanel =
-  'toc' | 'settings' | 'comments' | 'bookmarks' | 'info' | 'search' | 'fl-controls' | null;
+  | 'toc'
+  | 'settings'
+  | 'comments'
+  | 'bookmarks'
+  | 'info'
+  | 'search'
+  | 'fl-controls'
+  | 'notifications'
+  | null;
 export type ReaderSpread = 'auto' | 'none' | 'both';
 /** Discrete zoom steps for fixed-layout EPUBs. 1.0 = 100%. */
 export type ReaderZoom = 0.5 | 0.75 | 1.0 | 1.25 | 1.5 | 2.0;
@@ -109,7 +118,29 @@ interface ReaderState {
   setReaderZoom: (zoom: ReaderZoom) => void;
   setActivePanel: (panel: ReaderPanel) => void;
   togglePanel: (panel: ReaderPanel) => void;
+  reset: () => void;
 }
+
+const initialReaderState = {
+  progress: { locator: null, progressPercent: 0, updatedAt: null },
+  bookmarks: [],
+  highlights: [],
+  comments: [],
+  feedbackItems: [],
+  currentChapter: null,
+  isLoading: false,
+  error: null,
+  isOffline: typeof navigator !== 'undefined' ? !navigator.onLine : false,
+  pendingSyncCount: 0,
+  permissionStatus: 'checking' as const,
+  bookDirection: 'default' as const,
+  bookWritingMode: 'horizontal-tb' as const,
+  isFixedLayout: false,
+  activePanel: null,
+  readerSpread: 'auto' as const,
+  readerZoom: 1.0 as const,
+  conflicts: [],
+};
 
 /**
  * O(n) single-pass tree rebuild using a Map. Flattens the nested tree via
@@ -165,25 +196,21 @@ function rebuildTree(
   return roots;
 }
 
+/**
+ * Sensitive reader state must not outlive the session (S1/GOAP-1002). The
+ * subscription lives here, not in the auth store, so the dependency edge stays
+ * one-way (`reader → auth`) and no import cycle is introduced through the API
+ * client graph.
+ */
+useAuthStore.subscribe((state, previousState) => {
+  if (previousState.isAuthenticated && !state.isAuthenticated) {
+    useReaderStore.getState().reset();
+  }
+});
+
 export const useReaderStore = create<ReaderState>((set) => ({
-  progress: { locator: null, progressPercent: 0, updatedAt: null },
-  bookmarks: [],
-  highlights: [],
-  comments: [],
-  feedbackItems: [],
-  currentChapter: null,
-  isLoading: false,
-  error: null,
-  isOffline: typeof navigator !== 'undefined' ? !navigator.onLine : false,
-  pendingSyncCount: 0,
-  permissionStatus: 'checking',
-  bookDirection: 'default',
-  bookWritingMode: 'horizontal-tb',
-  isFixedLayout: false,
-  activePanel: null,
-  readerSpread: 'auto',
-  readerZoom: 1.0,
-  conflicts: [],
+  ...initialReaderState,
+  reset: () => set(initialReaderState),
   setConflicts: (conflicts) => set({ conflicts }),
   addConflict: (conflict) =>
     set((state) => ({

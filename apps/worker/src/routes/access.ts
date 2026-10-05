@@ -8,6 +8,7 @@ import {
   getGrantByBookAndSession,
   getGrantsBySession,
 } from '../auth/password';
+import { resolveRecoveryGrant } from '../auth/recovery-grant';
 import { createSession, validateSession, revokeSession } from '../auth/session';
 import {
   createResetToken,
@@ -98,6 +99,7 @@ accessRouter.post('/recovery-request', zValidator('json', RecoveryRequestSchema)
         email: emailKey,
         ipHash,
         traceId,
+        bookId: book.id,
       });
       const recoveryUrl = `${c.env.APP_BASE_URL}/login?book=${bookSlug}&token=${token}`;
 
@@ -188,28 +190,23 @@ accessRouter.post('/verify-recovery', zValidator('json', RecoveryVerifySchema), 
     return apiError(c, 401, 'INVALID_TOKEN', 'Invalid or expired recovery link');
   }
 
-  // Reader magic-link tokens carry the grant email. Bind the session to a live,
-  // ALLOWED grant (never an `allowed=0` denied grant) chosen deterministically
-  // so the recovered access is real (ADR-232 persisted flow).
-  const grants = await getGrantsBySession(c.env, grantedEmail);
-  const activeGrant = grants.find(
-    (g) =>
-      g.allowed === 1 && !g.revoked_at && (!g.expires_at || new Date(g.expires_at) > new Date()),
-  );
-
-  if (!activeGrant) {
+  // Reader magic links bind to a specific book; the resolution helper owns the
+  // lookup so the route only maps its outcome to an audit entry and a response.
+  const recovery = await resolveRecoveryGrant(c.env, grantedEmail, verify.record.bookId);
+  if (!recovery.ok) {
     await logAudit(
       c.env,
       {
         entityType: 'session',
-        entityId: grantedEmail,
+        entityId: recovery.entityId,
         action: 'recovery_denied',
-        payload: { reason: 'no_grant', traceId },
+        payload: { reason: recovery.reason, traceId },
       },
       c.executionCtx,
     );
     return apiError(c, 401, 'ACCESS_DENIED', 'Access denied');
   }
+  const { grant: activeGrant, targetBookId } = recovery.resolution;
 
   // Single-use: claim the token BEFORE issuing a session so concurrent requests
   // with the same captured link cannot mint multiple sessions (CWE-362).
@@ -245,7 +242,7 @@ accessRouter.post('/verify-recovery', zValidator('json', RecoveryVerifySchema), 
   }>(
     c.env,
     `SELECT id, slug, title, author_name, visibility, cover_image_url FROM books WHERE id = ?`,
-    [activeGrant.book_id],
+    [targetBookId],
   );
 
   if (!book) {

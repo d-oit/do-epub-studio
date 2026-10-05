@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { test, expect, type Page, type Route } from '@playwright/test';
 import { ADMIN_LOGIN_RESPONSE, loginAsAdmin } from './fixtures';
 
@@ -95,59 +96,15 @@ const GRANT_UPDATE_RESPONSE = {
   },
 };
 
-const AUDIT_LOG_RESPONSE = {
-  ok: true,
-  data: {
-    entries: [
-      {
-        id: 'audit-1',
-        actorEmail: 'admin@example.com',
-        entityType: 'grant',
-        entityId: 'grant-1',
-        action: 'create',
-        createdAt: '2025-01-01T00:00:00Z',
-        payload: { email: 'reader@example.com' },
-      },
-      {
-        id: 'audit-2',
-        actorEmail: 'admin@example.com',
-        entityType: 'book',
-        entityId: 'book-1',
-        action: 'update',
-        createdAt: '2025-01-02T00:00:00Z',
-        payload: { title: 'My Test Book' },
-      },
-      {
-        id: 'audit-3',
-        actorEmail: 'admin@example.com',
-        entityType: 'grant',
-        entityId: 'grant-2',
-        action: 'revoke',
-        createdAt: '2025-01-03T00:00:00Z',
-        payload: { email: 'reader2@example.com' },
-      },
-    ],
-    total: 3,
-  },
-};
-
-const AUDIT_LOG_FILTERED_RESPONSE = {
-  ok: true,
-  data: {
-    entries: [
-      {
-        id: 'audit-1',
-        actorEmail: 'admin@example.com',
-        entityType: 'grant',
-        entityId: 'grant-1',
-        action: 'create',
-        createdAt: '2025-01-01T00:00:00Z',
-        payload: { email: 'reader@example.com' },
-      },
-    ],
-    total: 1,
-  },
-};
+const AUDIT_ENTRIES_ALL = Array.from({ length: 75 }, (_, i) => ({
+  id: `audit-${i + 1}`,
+  actorEmail: 'admin@example.com',
+  entityType: i % 2 === 0 ? 'grant' : 'book',
+  entityId: i % 2 === 0 ? `grant-${i + 1}` : `book-${i + 1}`,
+  action: i % 2 === 0 ? 'create' : 'update',
+  createdAt: new Date(1735689600000 + i * 60000).toISOString(),
+  payload: { email: `reader${i + 1}@example.com` },
+}));
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -266,19 +223,22 @@ async function mockAdminApi(page: Page) {
   await page.route('**/api/admin/audit*', async (route: Route) => {
     const url = new URL(route.request().url());
     const entityType = url.searchParams.get('entityType');
-    if (entityType) {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify(AUDIT_LOG_FILTERED_RESPONSE),
-      });
-    } else {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify(AUDIT_LOG_RESPONSE),
-      });
-    }
+    const offset = parseInt(url.searchParams.get('offset') || '0', 10);
+    const limit = parseInt(url.searchParams.get('limit') || '50', 10);
+
+    const filtered = entityType
+      ? AUDIT_ENTRIES_ALL.filter((e) => e.entityType === entityType)
+      : AUDIT_ENTRIES_ALL;
+    const paginated = filtered.slice(offset, offset + limit);
+
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        ok: true,
+        data: { entries: paginated, total: filtered.length },
+      }),
+    });
   });
 }
 
@@ -399,12 +359,13 @@ test.describe('Admin grants management', () => {
     await expect(page).toHaveURL(/\/admin\/books\/book-1\/grants/);
 
     const revokeButton = page.getByRole('button', { name: /Revoke/i }).first();
-    if (await revokeButton.isVisible()) {
-      await revokeButton.click();
-      await page.waitForTimeout(500);
-    }
+    await expect(revokeButton).toBeVisible();
+    await revokeButton.click();
+    const confirmButton = page.getByRole('dialog').getByRole('button', { name: /Revoke/i });
+    await expect(confirmButton).toBeVisible();
+    await confirmButton.click();
+    await expect(revokeButton).not.toBeVisible();
   });
-
   test('@smoke @mobile can create an invitation with manual delivery', async ({ page }) => {
     await loginAsAdmin(page);
     await page
@@ -461,11 +422,17 @@ test.describe('Admin audit log viewing and filtering', () => {
     await page.getByRole('button', { name: 'Audit Log' }).click();
     await expect(page).toHaveURL(/\/admin\/audit/);
 
+    // Initial unfiltered state displays mixed entity types
+    await expect(page.getByText('grant: grant-1', { exact: true })).toBeVisible();
+    await expect(page.getByText('book: book-2', { exact: true })).toBeVisible();
+
     const entitySelect = page.getByLabel(/Entity Type/i);
-    if (await entitySelect.isVisible()) {
-      await entitySelect.selectOption('grant');
-      await page.waitForTimeout(500);
-    }
+    await expect(entitySelect).toBeVisible();
+    await entitySelect.selectOption('grant');
+
+    // Filtered state changes rows: grant rows stay visible, book rows are removed
+    await expect(page.getByText('grant: grant-1', { exact: true })).toBeVisible();
+    await expect(page.getByText('book: book-2', { exact: true })).not.toBeVisible();
   });
 
   test('@mobile can export audit log as CSV', async ({ page }) => {
@@ -475,11 +442,19 @@ test.describe('Admin audit log viewing and filtering', () => {
     await expect(page).toHaveURL(/\/admin\/audit/);
 
     const exportButton = page.getByRole('button', { name: /Export CSV/i });
-    if (await exportButton.isVisible()) {
-      await expect(exportButton).toBeVisible();
-    }
-  });
+    await expect(exportButton).toBeVisible();
+    const downloadPromise = page.waitForEvent('download');
+    await exportButton.click();
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toContain('.csv');
 
+    const downloadPath = await download.path();
+    expect(downloadPath).not.toBeNull();
+    const csvContent = readFileSync(downloadPath, 'utf8');
+    expect(csvContent).toContain('ID,Timestamp,Actor Email,Entity Type,Entity ID,Action,Payload');
+    expect(csvContent).toContain('"grant-1"');
+    expect(csvContent).toContain('admin@example.com');
+  });
   test('@mobile audit log pagination controls are visible', async ({ page }) => {
     await loginAsAdmin(page);
 
@@ -489,9 +464,14 @@ test.describe('Admin audit log viewing and filtering', () => {
     const prevButton = page.getByRole('button', { name: /Previous/i });
     const nextButton = page.getByRole('button', { name: /Next/i });
 
-    if (await prevButton.isVisible()) {
-      await expect(prevButton).toBeVisible();
-      await expect(nextButton).toBeVisible();
-    }
+    await expect(prevButton).toBeVisible();
+    await expect(nextButton).toBeVisible();
+    await expect(prevButton).toBeDisabled();
+    await expect(nextButton).toBeEnabled();
+
+    await nextButton.click();
+    await expect(prevButton).toBeEnabled();
+    await expect(nextButton).toBeDisabled();
+    await expect(page.getByText('grant: grant-51')).toBeVisible();
   });
 });
