@@ -139,7 +139,9 @@ Delete a bookmark.
 
 ### GET `/api/books/:bookId/insights`
 
-Get reading insights for a book (active reading time, pages/day, streak, ETA).
+Get the caller's synchronized reading history for a book: totals over at most the
+30 stored daily buckets plus the last seven returned activity buckets. Device-local
+ETA, chapter durations and reading speed are not part of this response.
 
 ### GET `/api/books/:bookId/search`
 
@@ -249,7 +251,16 @@ Upload EPUB file for a book (step-up required).
 
 ### POST `/api/admin/books/:id/upload-complete`
 
-Mark book upload as complete (step-up required).
+Mark book upload as complete (step-up required). A replacement upload clears the
+book's full-text search index; passing a `chapters` array (chapter ref + text)
+rebuilds it in the same call and records the completed-index state.
+
+### POST `/api/admin/books/:id/index`
+
+Rebuild the book's server-side full-text search index from extracted chapters
+(step-up required). Body: `{ chapters: [{ chapterRef, content }] }`. Until a book
+has a completed index, `GET /api/books/:id/search` reports `indexed: false`
+rather than "no matches".
 
 ### DELETE `/api/admin/books/:id`
 

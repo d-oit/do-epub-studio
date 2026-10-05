@@ -38,7 +38,7 @@ export function BookmarksPanel({
       aria-modal="true"
       aria-labelledby="bookmarks-title"
       data-container-name="bookmarks-panel"
-      className="cq cq--bookmarks-panel fixed inset-y-0 right-0 w-80 bg-background border-l border-border z-40 flex flex-col shadow-xl"
+      className="cq cq--bookmarks-panel fixed inset-y-0 right-0 w-80 bg-background border-l border-border z-50 flex flex-col shadow-xl"
     >
       <div className="p-4 border-b border-border flex justify-between items-center">
         <h2 id="bookmarks-title" className="font-semibold">

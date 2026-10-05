@@ -766,6 +766,27 @@ export const en = {
   'reader.conflicts.type.bookmark_change': 'Bookmark Change',
   'reader.conflicts.type.comment_update': 'Comment Update',
   'reader.conflicts.noConflicts': 'No pending conflicts',
+  'reader.deviceLocal': 'Device-local',
+  'reader.syncedHistory': 'Synced Reading History (Last 30 Days)',
+  'reader.syncedActiveTime': 'Synced Active Time',
+  'reader.syncedPagesRead': 'Synced Pages Read',
+  'reader.loadingSynced': 'Loading synchronized history…',
+  'reader.syncedUnavailable': 'Synced reading history unavailable',
+  'reader.noLocalActivity': 'No local reading activity recorded on this device yet.',
+  'reader.noSyncedHistory': 'No synchronized reading history for this book.',
+  'reader.exportInsights': 'Export Reading Insights (JSON)',
+  'reader.exportInsightsNote':
+    'Device-local metrics only. No personal data, email, or credentials are included.',
+  'admin.insights.title': 'Book Reading Insights',
+  'admin.insights.loadFailed': 'Failed to load reading insights',
+  'admin.insights.empty': 'No aggregate reading activity recorded yet.',
+  'admin.insights.book': 'Book',
+  'admin.insights.activeTime': 'Active Time',
+  'admin.insights.pages': 'Pages',
+  'admin.insights.readers': 'Readers',
+  'admin.insights.lastActivity': 'Last Activity',
+  'admin.insights.previous': 'Previous',
+  'admin.insights.next': 'Next',
 } as const;
 
 export type TranslationKeys = keyof typeof en;

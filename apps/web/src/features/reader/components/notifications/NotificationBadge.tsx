@@ -1,48 +1,74 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { apiRequest } from '../../../../lib/api';
+import { useAuthStore } from '../../../../stores/auth';
 import { logThrottled } from '../../../../lib/client-logger';
 import { createTraceId, createSpanId } from '@do-epub-studio/shared';
 
 interface NotificationBadgeProps {
   t: (key: string) => string;
   onClick: () => void;
+  token?: string | null;
 }
 
-export function NotificationBadge({ t, onClick }: NotificationBadgeProps) {
+export function NotificationBadge({ t, onClick, token: propToken }: NotificationBadgeProps) {
   const [count, setCount] = useState(0);
-
-  const fetchCount = useCallback(async () => {
-    try {
-      const data = await apiRequest<{ count: number }>('/api/notifications/unread-count');
-      if (typeof data.count === 'number') {
-        setCount(data.count);
-      }
-    } catch (err) {
-      // Surface poll failures (O5) without changing the badge UX: the badge
-      // stays at 0, but the failure is observable at most once per minute.
-      logThrottled('notifications.poll_failed', {
-        level: 'warn',
-        traceId: createTraceId(),
-        spanId: createSpanId(),
-        event: 'notifications.poll_failed',
-        error: {
-          name: 'PollError',
-          message: err instanceof Error ? err.message : String(err),
-        },
-      });
-    }
-  }, []);
-
+  const [loaded, setLoaded] = useState(false);
+  const storeToken = useAuthStore((state) => state.sessionToken);
+  const sessionToken = propToken !== undefined ? propToken : storeToken;
   useEffect(() => {
-    void fetchCount();
-    // Poll every 30 seconds
-    const interval = setInterval(() => {
-      fetchCount().catch(() => undefined);
-    }, 30_000);
-    return () => {
-      clearInterval(interval);
+    let mounted = true;
+    const load = async () => {
+      if (!sessionToken) return;
+      try {
+        const data = await apiRequest<{ count: number }>('/api/notifications/unread-count', {
+          token: sessionToken,
+        });
+        if (mounted && typeof data.count === 'number') {
+          setCount(data.count);
+        }
+      } catch (err) {
+        logThrottled('notifications.poll_failed', {
+          level: 'warn',
+          traceId: createTraceId(),
+          spanId: createSpanId(),
+          event: 'notifications.poll_failed',
+          error: {
+            name: 'PollError',
+            message: err instanceof Error ? err.message : String(err),
+          },
+        });
+      } finally {
+        if (mounted) {
+          setLoaded(true);
+        }
+      }
     };
-  }, [fetchCount]);
+
+    void load();
+    if (!sessionToken) {
+      return () => {
+        mounted = false;
+      };
+    }
+    const handleNotificationChange = () => {
+      void load();
+    };
+    if (typeof window !== 'undefined') {
+      window.addEventListener('do-epub-notification-change', handleNotificationChange);
+    }
+
+    const interval = setInterval(() => {
+      void load();
+    }, 30_000);
+
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('do-epub-notification-change', handleNotificationChange);
+      }
+    };
+  }, [sessionToken]);
 
   return (
     <button
@@ -50,6 +76,7 @@ export function NotificationBadge({ t, onClick }: NotificationBadgeProps) {
       onClick={onClick}
       className="relative touch-target"
       aria-label={t('notifications.title')}
+      data-loaded={loaded ? 'true' : 'false'}
     >
       {/* Bell icon */}
       <svg

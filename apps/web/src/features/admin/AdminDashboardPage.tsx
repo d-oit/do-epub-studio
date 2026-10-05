@@ -6,6 +6,7 @@ import { useAuthStore } from '../../stores/auth';
 import { Spinner } from '@do-epub-studio/ui';
 import { LocaleSwitcher } from '../../components/LocaleSwitcher';
 import { formatBytes } from '../../lib/formatBytes';
+import { formatDate } from '../../lib/i18n-format';
 import type { TranslationKeys } from '../../i18n';
 
 interface AdminStats {
@@ -15,6 +16,23 @@ interface AdminStats {
   activeSessions: number;
   storageBytes: number;
   recentActivity: { action: string; count: number }[];
+}
+
+interface BookInsightAggregate {
+  bookId: string;
+  totalActiveMinutes: number;
+  totalActivePages: number;
+  readerCount: number;
+  lastActivity: string | null;
+}
+
+const INSIGHTS_PAGE_SIZE = 20;
+
+function formatMinutes(minutes: number): string {
+  if (minutes < 60) return `${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
 }
 
 function StatCard({ label, value, icon }: { label: string; value: string | number; icon: string }) {
@@ -56,6 +74,10 @@ export function AdminDashboardPage() {
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [insightRows, setInsightRows] = useState<BookInsightAggregate[]>([]);
+  const [insightsLoading, setInsightsLoading] = useState(true);
+  const [insightsError, setInsightsError] = useState<string | null>(null);
+  const [insightsOffset, setInsightsOffset] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -78,6 +100,31 @@ export function AdminDashboardPage() {
       cancelled = true;
     };
   }, [sessionToken]);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadInsights() {
+      setInsightsLoading(true);
+      setInsightsError(null);
+      try {
+        const data = await apiRequest<BookInsightAggregate[]>(
+          `/api/admin/insights?limit=${INSIGHTS_PAGE_SIZE}&offset=${insightsOffset}`,
+          { token: sessionToken ?? undefined },
+        );
+        if (!cancelled) setInsightRows(data);
+      } catch (err) {
+        if (!cancelled) {
+          setInsightsError(err instanceof Error ? err.message : 'Failed to load insights');
+        }
+      } finally {
+        if (!cancelled) setInsightsLoading(false);
+      }
+    }
+    void loadInsights();
+    return () => {
+      cancelled = true;
+    };
+  }, [sessionToken, insightsOffset]);
 
   // biome-ignore lint/correctness/useQwikValidLexicalScope: React app, not Qwik
   const handleBooksNav = () => {
@@ -196,6 +243,81 @@ export function AdminDashboardPage() {
               </ul>
             </section>
           )}
+
+          {/* N2: Book-only aggregate reading insights — never individual identity/timelines */}
+          <section className="mt-8 rounded-sm border border-border bg-surface p-6 shadow-page">
+            <h2 className="mb-4 font-display text-lg leading-snug text-foreground">
+              {t('admin.insights.title')}
+            </h2>
+            {insightsLoading ? (
+              <div className="flex justify-center py-6">
+                <Spinner />
+              </div>
+            ) : insightsError ? (
+              <p className="text-sm text-semantic-error">{t('admin.insights.loadFailed')}</p>
+            ) : insightRows.length === 0 ? (
+              <p className="text-sm text-foreground-muted">{t('admin.insights.empty')}</p>
+            ) : (
+              <>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-border text-left text-foreground-muted">
+                        <th scope="col" className="py-2 pr-4 font-medium">
+                          {t('admin.insights.book')}
+                        </th>
+                        <th scope="col" className="py-2 pr-4 font-medium">
+                          {t('admin.insights.activeTime')}
+                        </th>
+                        <th scope="col" className="py-2 pr-4 font-medium">
+                          {t('admin.insights.pages')}
+                        </th>
+                        <th scope="col" className="py-2 pr-4 font-medium">
+                          {t('admin.insights.readers')}
+                        </th>
+                        <th scope="col" className="py-2 font-medium">
+                          {t('admin.insights.lastActivity')}
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {insightRows.map((row) => (
+                        <tr key={row.bookId} className="border-b border-border/50">
+                          <td className="py-2 pr-4 font-mono text-xs">{row.bookId}</td>
+                          <td className="py-2 pr-4">{formatMinutes(row.totalActiveMinutes)}</td>
+                          <td className="py-2 pr-4">{row.totalActivePages}</td>
+                          <td className="py-2 pr-4">{row.readerCount}</td>
+                          <td className="py-2">
+                            {row.lastActivity ? formatDate(new Date(row.lastActivity)) : '—'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="mt-4 flex items-center justify-between">
+                  <button
+                    type="button"
+                    disabled={insightsOffset === 0}
+                    onClick={() =>
+                      setInsightsOffset(Math.max(0, insightsOffset - INSIGHTS_PAGE_SIZE))
+                    }
+                    className="text-sm text-accent disabled:opacity-40"
+                  >
+                    {t('admin.insights.previous')}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={insightRows.length < INSIGHTS_PAGE_SIZE}
+                    onClick={() => setInsightsOffset(insightsOffset + INSIGHTS_PAGE_SIZE)}
+                    className="text-sm text-accent disabled:opacity-40"
+                  >
+                    {t('admin.insights.next')}
+                  </button>
+                </div>
+              </>
+            )}
+          </section>
         </>
       ) : null}
     </main>

@@ -230,5 +230,103 @@ describe('Access Recovery Routes', () => {
       // The token must be consumed in the same operation that issues the session.
       expect(mockClaimResetToken).toHaveBeenCalledWith(expect.anything(), 'rt-1');
     });
+
+    it('S4: binds recovery session strictly to bound book A and denies if grant on A is missing', async () => {
+      mockVerifyResetToken.mockResolvedValue({
+        ok: true,
+        record: {
+          id: 'rt-s4',
+          email: 'multi@example.com',
+          purpose: 'reader_magic_link',
+          bookId: 'book-A',
+        },
+      });
+      // Grant on book-A is revoked / not found
+      mockGetGrantByBookAndSession.mockResolvedValue(null);
+
+      const res = await app.fetch(
+        new Request('http://localhost/api/access/verify-recovery', {
+          method: 'POST',
+          body: JSON.stringify({ token: 'bound-token-A' }),
+          headers: { 'Content-Type': 'application/json' },
+        }),
+        env,
+        makePassThroughContext(),
+      );
+
+      expect(res.status).toBe(401);
+      const body: { ok: boolean; error: { code: string } } = await res.json();
+      expect(body.error.code).toBe('ACCESS_DENIED');
+      expect(mockGetGrantByBookAndSession).toHaveBeenCalledWith(
+        expect.anything(),
+        'book-A',
+        'multi@example.com',
+      );
+      expect(mockCreateSession).not.toHaveBeenCalled();
+    });
+
+    it('S4: binds recovery session strictly to bound book A when grant exists', async () => {
+      mockVerifyResetToken.mockResolvedValue({
+        ok: true,
+        record: {
+          id: 'rt-s4-ok',
+          email: 'multi@example.com',
+          purpose: 'reader_magic_link',
+          bookId: 'book-A',
+        },
+      });
+      mockGetGrantByBookAndSession.mockResolvedValue({
+        id: 'grant-A',
+        book_id: 'book-A',
+        email: 'multi@example.com',
+        allowed: 1,
+        comments_allowed: 1,
+        offline_allowed: 0,
+        revoked_at: null,
+        expires_at: null,
+      });
+      mockQueryFirst.mockResolvedValue({
+        id: 'book-A',
+        slug: 'book-a-slug',
+        title: 'Book A',
+        author_name: null,
+        visibility: 'private',
+        cover_image_url: null,
+      });
+      mockComputeCapabilities.mockReturnValue({
+        canRead: true,
+        canComment: true,
+        canHighlight: true,
+        canBookmark: true,
+        canDownloadOffline: false,
+        canExportNotes: false,
+        canManageAccess: false,
+      });
+      mockCreateSession.mockResolvedValue({
+        token: 'session-book-a',
+        expiresAt: '2030-01-01T00:00:00.000Z',
+      });
+      mockClaimResetToken.mockResolvedValue(true);
+
+      const res = await app.fetch(
+        new Request('http://localhost/api/access/verify-recovery', {
+          method: 'POST',
+          body: JSON.stringify({ token: 'bound-token-A' }),
+          headers: { 'Content-Type': 'application/json' },
+        }),
+        env,
+        makePassThroughContext(),
+      );
+
+      expect(res.status).toBe(200);
+      const body: { ok: boolean; data: Record<string, unknown> } = await res.json();
+      expect(body.ok).toBe(true);
+      expect(body.data.sessionToken).toBe('session-book-a');
+      expect(mockCreateSession).toHaveBeenCalledWith(
+        expect.anything(),
+        'book-A',
+        'multi@example.com',
+      );
+    });
   });
 });

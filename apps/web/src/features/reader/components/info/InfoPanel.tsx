@@ -1,11 +1,42 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { useKeyboardShortcut } from '../../../../hooks/useKeyboardShortcut';
 import { IconButton } from '../../../../components/ui';
 import { useFocusTrap } from '@do-epub-studio/ui';
 import type { AccessibilityMetadata } from '@do-epub-studio/reader-core';
 import { computeInsightSummary } from '../../../../lib/offline/reading-insights';
+import { apiRequest } from '../../../../lib/api';
+import { useAuthStore } from '../../../../stores/auth';
 import { AccessibilitySection } from './AccessibilitySection';
-import { InsightsSection } from './InsightsSection';
+import { InsightsSection, type SyncedInsights } from './InsightsSection';
+
+/**
+ * Boundary guard for `GET /api/books/:id/insights`. The panel renders on every
+ * reader page, so a malformed or partial payload must degrade to the
+ * "unavailable" state rather than crash the render. Dependency-free on purpose:
+ * this module is in the reader route chunk, which cannot afford the `zod`
+ * runtime (ADR-107 §3).
+ */
+function isSyncedInsights(value: unknown): value is SyncedInsights {
+  if (!value || typeof value !== 'object') return false;
+  const v = value as Record<string, unknown>;
+  if (
+    typeof v.totalActiveMinutes !== 'number' ||
+    typeof v.totalActivePages !== 'number' ||
+    typeof v.currentStreakDays !== 'number' ||
+    !Array.isArray(v.recentActivity)
+  ) {
+    return false;
+  }
+  return v.recentActivity.every((entry) => {
+    if (!entry || typeof entry !== 'object') return false;
+    const a = entry as Record<string, unknown>;
+    return (
+      typeof a.date === 'string' &&
+      typeof a.activeMinutes === 'number' &&
+      typeof a.activePages === 'number'
+    );
+  });
+}
 
 interface BookInfo {
   title: string;
@@ -44,7 +75,11 @@ export function InfoPanel({
   t,
 }: InfoPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null);
+  const sessionToken = useAuthStore((state) => state.sessionToken);
   const [insights, setInsights] = useState<InsightSummary | null>(null);
+  const [syncedInsights, setSyncedInsights] = useState<SyncedInsights | null>(null);
+  const [syncedLoading, setSyncedLoading] = useState(false);
+  const [syncedError, setSyncedError] = useState<string | null>(null);
 
   useKeyboardShortcut('Escape', onClose, { enabled: isOpen });
   useFocusTrap(isOpen, panelRef);
@@ -64,11 +99,70 @@ export function InfoPanel({
     };
   }, [isOpen, bookId, progressPercent]);
 
+  useEffect(() => {
+    if (!isOpen || !bookId || !sessionToken) {
+      setSyncedInsights(null);
+      return;
+    }
+    let cancelled = false;
+    setSyncedLoading(true);
+    setSyncedError(null);
+    void apiRequest<unknown>(`/api/books/${bookId}/insights`, { token: sessionToken })
+      .then((data) => {
+        if (cancelled) return;
+        if (isSyncedInsights(data)) {
+          setSyncedInsights(data);
+        } else {
+          setSyncedInsights(null);
+          setSyncedError('Unexpected insights payload');
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setSyncedError(err instanceof Error ? err.message : 'Unavailable');
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setSyncedLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, bookId, sessionToken]);
+
+  const handleExportInsights = useCallback(() => {
+    if (!insights || !bookId) return;
+    const exportData = {
+      bookId,
+      exportedAt: new Date().toISOString(),
+      insights: {
+        totalActiveMinutes: insights.totalActiveMinutes,
+        totalActivePages: insights.totalActivePages,
+        estimatedMinutesRemaining: insights.estimatedMinutesRemaining,
+        currentStreakDays: insights.currentStreakDays,
+        recentActivity: insights.recentActivity,
+        chapterDurations: insights.chapterDurations,
+        readingSpeedWpm: insights.readingSpeedWpm,
+      },
+    };
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], {
+      type: 'application/json',
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `book-${bookId}-insights.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, [insights, bookId]);
+
   if (!isOpen) return null;
 
   const a11y = metadata?.accessibility;
   const hasA11y = a11y && (a11y.summary || a11y.features.length > 0 || a11y.hazards.length > 0);
-  const hasInsights =
+  const hasLocalInsights =
     insights && (insights.totalActiveMinutes > 0 || insights.totalActivePages > 0);
 
   return (
@@ -146,9 +240,36 @@ export function InfoPanel({
             )}
 
             {hasA11y && <AccessibilitySection a11y={a11y} t={t} />}
-            {hasInsights && <InsightsSection insights={insights} t={t} />}
           </>
         )}
+
+        {/* Reading insights do not depend on book metadata: they stay available
+            (and keep their device-local/synced split) even when the EPUB's
+            metadata could not be read. */}
+        <div className="pt-2">
+          <InsightsSection
+            insights={insights}
+            syncedInsights={syncedInsights}
+            syncedError={syncedError}
+            syncedLoading={syncedLoading}
+            t={t}
+          />
+
+          {/* N3: Offline download of local insight summary as JSON */}
+          <div className="mt-4 pt-3 border-t border-border">
+            <button
+              type="button"
+              onClick={handleExportInsights}
+              disabled={!hasLocalInsights}
+              className="w-full text-xs font-medium py-2 px-3 rounded border border-border hover:bg-background-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-foreground"
+            >
+              {t('reader.exportInsights')}
+            </button>
+            <p className="mt-1.5 text-[11px] text-foreground-muted leading-tight">
+              {t('reader.exportInsightsNote')}
+            </p>
+          </div>
+        </div>
       </div>
     </aside>
   );

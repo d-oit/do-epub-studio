@@ -1,9 +1,14 @@
 # ADR-063: Comprehensive Audit Policy
 
-**Status:** Proposed
+**Status:** Accepted
 **Date:** 2026-05-30
 **Companion to:** `plans/063-goap-comprehensive-audit-2026-05-30.md`
 **Related:** ADR-052 (Gap Closure Policy), ADR-039 (Issue & PR Triage Policy), AGENTS.md Tier 2 rule 8
+
+> _Status header corrected 2026-10-04._ The authoritative ADR index already
+> recorded this ADR (collision 063b, "Accepted") long before this header still
+> read `Proposed`. Only the header changed; the policy body is untouched and no
+> adoption date is invented. See `plans/ADR-INDEX.md`.
 
 ---
 

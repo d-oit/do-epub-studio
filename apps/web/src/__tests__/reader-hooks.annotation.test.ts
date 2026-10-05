@@ -5,7 +5,9 @@ import { useAnnotationHandlers } from '../features/reader/hooks/useAnnotationHan
 import { useReaderStore } from '../stores';
 import { useAuthStore } from '../stores/auth';
 import type { Comment } from '../stores/reader';
-
+vi.mock('../lib/api', () => ({
+  apiRequest: vi.fn().mockResolvedValue({ id: 'bookmark-server-1' }),
+}));
 vi.mock('../lib/api/annotations', () => ({
   createHighlight: vi.fn().mockResolvedValue({ id: 'h1', color: '#ff0000', selectedText: 'test' }),
   createComment: vi.fn().mockResolvedValue({ id: 'c1', body: 'test', status: 'open' }),

@@ -1,76 +1,140 @@
 import { useState, useEffect, useCallback } from 'react';
-import { z } from 'zod';
 import { useReducedMotion } from '../../../../hooks/useReducedMotion';
 import { formatDate } from '../../../../lib/i18n-format';
-import { api } from '../../../../lib/api';
+import { apiRequest } from '../../../../lib/api';
+import { useAuthStore } from '../../../../stores/auth';
 
-const NotificationSchema = z.object({
-  id: z.string(),
-  bookId: z.string(),
-  commentId: z.string(),
-  parentCommentId: z.string().nullable(),
-  type: z.string(),
-  message: z.string(),
-  readAt: z.string().nullable(),
-  createdAt: z.string(),
-});
+interface NotificationRecord {
+  id: string;
+  bookId: string;
+  commentId: string;
+  parentCommentId: string | null;
+  type: string;
+  message: string;
+  readAt: string | null;
+  createdAt: string;
+}
+
+function isNotificationRecord(value: unknown): value is NotificationRecord {
+  if (!value || typeof value !== 'object') return false;
+  const v = value as Record<string, unknown>;
+  return (
+    typeof v.id === 'string' &&
+    typeof v.bookId === 'string' &&
+    typeof v.commentId === 'string' &&
+    typeof v.type === 'string' &&
+    typeof v.message === 'string' &&
+    typeof v.createdAt === 'string' &&
+    (v.readAt === null || typeof v.readAt === 'string') &&
+    (v.parentCommentId === null || typeof v.parentCommentId === 'string')
+  );
+}
+
+/**
+ * Boundary guard for `GET /api/notifications`. Kept handler-local and
+ * dependency-free: this module is part of the reader route chunk, whose total
+ * budget does not fit the ~12 KB `zod` runtime (ADR-107 §3).
+ */
+function parseNotificationList(
+  value: unknown,
+): { notifications: NotificationRecord[]; total: number } | null {
+  if (!value || typeof value !== 'object') return null;
+  const v = value as Record<string, unknown>;
+  if (!Array.isArray(v.notifications) || typeof v.total !== 'number') return null;
+  if (!v.notifications.every(isNotificationRecord)) return null;
+  return { notifications: v.notifications, total: v.total };
+}
 
 interface NotificationPanelProps {
   onNavigateToComment: (bookId: string, commentId: string) => void;
   t: (key: string) => string;
   onClose: () => void;
+  token?: string | null;
 }
 
-const NotificationResponseSchema = z.object({
-  ok: z.boolean(),
-  data: z.object({
-    notifications: z.array(NotificationSchema),
-    total: z.number(),
-    limit: z.number(),
-    offset: z.number(),
-  }),
-});
-
-export function NotificationPanel({ onNavigateToComment, t, onClose }: NotificationPanelProps) {
-  const [notifications, setNotifications] = useState<z.infer<typeof NotificationSchema>[]>([]);
+export function NotificationPanel({
+  onNavigateToComment,
+  t,
+  onClose,
+  token: propToken,
+}: NotificationPanelProps) {
+  const [notifications, setNotifications] = useState<NotificationRecord[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const prefersReduced = useReducedMotion();
-
-  const fetchNotifications = useCallback(async () => {
-    try {
-      const res = await api.get('/api/notifications?limit=20');
-      if (res.ok) {
-        const data = NotificationResponseSchema.parse(await res.json());
-        setNotifications(data.data.notifications);
-        setTotal(data.data.total);
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const storeToken = useAuthStore((state) => state.sessionToken);
+  const sessionToken = propToken !== undefined ? propToken : storeToken;
 
   useEffect(() => {
-    void fetchNotifications();
-  }, [fetchNotifications]);
+    let mounted = true;
+    const load = async () => {
+      if (!sessionToken) {
+        if (mounted) setLoading(false);
+        return;
+      }
+      try {
+        const data = await apiRequest<unknown>('/api/notifications?limit=20', {
+          token: sessionToken,
+        });
+        const parsed = parseNotificationList(data);
+        if (!parsed) throw new Error('Unexpected notifications payload');
+        if (mounted) {
+          setNotifications(parsed.notifications);
+          setTotal(parsed.total);
+        }
+      } catch (err) {
+        console.error('Failed to load notifications', err);
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
 
-  const handleMarkAsRead = useCallback(async (id: string) => {
-    const res = await api.post(`/api/notifications/${id}/read`);
-    if (res.ok) {
-      setNotifications((prev) =>
-        prev.map((n) => (n.id === id ? { ...n, readAt: new Date().toISOString() } : n)),
-      );
-    }
-  }, []);
+    void load();
+    return () => {
+      mounted = false;
+    };
+  }, [sessionToken]);
+
+  const handleMarkAsRead = useCallback(
+    async (id: string) => {
+      if (!sessionToken) return;
+      try {
+        await apiRequest(`/api/notifications/${id}/read`, {
+          method: 'POST',
+          token: sessionToken,
+        });
+        setNotifications((prev) =>
+          prev.map((n) => (n.id === id ? { ...n, readAt: new Date().toISOString() } : n)),
+        );
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('do-epub-notification-change'));
+        }
+      } catch (err) {
+        console.error('Failed to mark notification as read', err);
+      }
+    },
+    [sessionToken],
+  );
 
   const handleMarkAllAsRead = useCallback(async () => {
-    const res = await api.post('/api/notifications/read-all');
-    if (res.ok) {
+    if (!sessionToken) return;
+    try {
+      await apiRequest('/api/notifications/read-all', {
+        method: 'POST',
+        token: sessionToken,
+      });
       setNotifications((prev) =>
         prev.map((n) => (n.readAt ? n : { ...n, readAt: new Date().toISOString() })),
       );
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('do-epub-notification-change'));
+      }
+    } catch (err) {
+      console.error('Failed to mark all notifications as read', err);
     }
-  }, []);
+  }, [sessionToken]);
 
   const unreadCount = notifications.filter((n) => !n.readAt).length;
 

@@ -6,6 +6,10 @@ vi.mock('../lib/offline/reading-insights', () => ({
   computeInsightSummary: vi.fn().mockResolvedValue(null),
 }));
 
+vi.mock('../lib/api', () => ({
+  apiRequest: vi.fn(),
+}));
+
 const mockT = (key: string) => {
   const translations: Record<string, string> = {
     'reader.aboutBook': 'About Book',
@@ -31,6 +35,13 @@ const mockT = (key: string) => {
     'reader.readingStreak': 'Reading Streak',
     'reader.recentActivity': 'Recent Activity',
     'reader.days': 'days',
+    'reader.deviceLocal': 'Device-local',
+    'reader.syncedHistory': 'Synced Reading History (Last 30 Days)',
+    'reader.syncedActiveTime': 'Synced Active Time',
+    'reader.syncedPagesRead': 'Synced Pages Read',
+    'reader.noLocalActivity': 'No local reading activity recorded on this device yet.',
+    'reader.noSyncedHistory': 'No synchronized reading history for this book.',
+    'reader.exportInsights': 'Export Reading Insights (JSON)',
   };
   return translations[key] ?? key;
 };
@@ -234,5 +245,116 @@ describe('InfoPanel', () => {
       />,
     );
     expect(screen.getByText('Book')).toBeInTheDocument();
+  });
+
+  // N1: synced reading history is separately labelled and never summed with local
+  it('renders synced history separately from device-local metrics', async () => {
+    const { apiRequest } = await import('../lib/api');
+    const { useAuthStore } = await import('../stores/auth');
+    const { computeInsightSummary } = await import('../lib/offline/reading-insights');
+    useAuthStore.setState({ sessionToken: 'tok-n1' });
+    vi.mocked(computeInsightSummary).mockResolvedValue({
+      totalActiveMinutes: 15,
+      totalActivePages: 7,
+      estimatedMinutesRemaining: 20,
+      currentStreakDays: 1,
+      recentActivity: [{ date: '2026-10-04', activeMinutes: 15, activePages: 7 }],
+      chapterDurations: [],
+      readingSpeedWpm: null,
+    });
+    vi.mocked(apiRequest).mockResolvedValue({
+      totalActiveMinutes: 120,
+      totalActivePages: 60,
+      currentStreakDays: 3,
+      recentActivity: [
+        { date: '2026-10-04', activeMinutes: 90, activePages: 45 },
+        { date: '2026-10-03', activeMinutes: 30, activePages: 15 },
+      ],
+    });
+
+    render(
+      <InfoPanel
+        isOpen={true}
+        onClose={onClose}
+        metadata={{ title: 'Book' }}
+        bookId={mockBookId}
+        progressPercent={mockProgressPercent}
+        t={mockT}
+      />,
+    );
+
+    // Synced section and its values render.
+    expect(await screen.findByText('Synced Reading History (Last 30 Days)')).toBeInTheDocument();
+    expect(await screen.findByText('2h')).toBeInTheDocument();
+    expect(screen.getByText('60')).toBeInTheDocument();
+    expect(screen.getByText('Synced Active Time')).toBeInTheDocument();
+    // Local section is labelled separately and not merged into one total.
+    expect(screen.getByRole('heading', { name: /Device-local/ })).toBeInTheDocument();
+    expect(screen.getByText('15 min')).toBeInTheDocument();
+    // Never a summed figure (15 + 120 = 135 -> "2h 15m" must not appear).
+    expect(screen.queryByText('2h 15m')).not.toBeInTheDocument();
+  });
+
+  // N3: offline JSON export of the selected book's local insight summary
+  it('exports a parseable JSON summary of the selected book only', async () => {
+    const { computeInsightSummary } = await import('../lib/offline/reading-insights');
+    vi.mocked(computeInsightSummary).mockResolvedValue({
+      totalActiveMinutes: 25,
+      totalActivePages: 12,
+      estimatedMinutesRemaining: 25,
+      currentStreakDays: 2,
+      recentActivity: [{ date: '2026-10-04', activeMinutes: 25, activePages: 12 }],
+      chapterDurations: [],
+      readingSpeedWpm: null,
+    });
+
+    const capture: { blob: Blob | null } = { blob: null };
+    const createObjectUrlSpy = vi
+      .spyOn(URL, 'createObjectURL')
+      .mockImplementation((blob: Blob | MediaSource) => {
+        capture.blob = blob as Blob;
+        return 'blob:mock-insights';
+      });
+    const revokeObjectUrlSpy = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+
+    render(
+      <InfoPanel
+        isOpen={true}
+        onClose={onClose}
+        metadata={{ title: 'Book' }}
+        bookId={mockBookId}
+        progressPercent={mockProgressPercent}
+        t={mockT}
+      />,
+    );
+
+    const exportButton = await screen.findByRole('button', {
+      name: 'Export Reading Insights (JSON)',
+    });
+    expect(exportButton).toBeEnabled();
+    fireEvent.click(exportButton);
+
+    expect(clickSpy).toHaveBeenCalledTimes(1);
+    if (!capture.blob) throw new Error('export did not create a Blob');
+    const parsed = JSON.parse(await capture.blob.text()) as {
+      bookId: string;
+      insights: {
+        totalActiveMinutes: number;
+        totalActivePages: number;
+        estimatedMinutesRemaining: number;
+      };
+    };
+    expect(parsed.bookId).toBe(mockBookId);
+    expect(parsed.insights.totalActiveMinutes).toBe(25);
+    expect(parsed.insights.totalActivePages).toBe(12);
+    expect(parsed.insights.estimatedMinutesRemaining).toBe(25);
+    // No credential, email, token or URL fields in the exported payload.
+    const text = JSON.stringify(parsed);
+    expect(text).not.toMatch(/token|email|@|https?:/i);
+
+    clickSpy.mockRestore();
+    createObjectUrlSpy.mockRestore();
+    revokeObjectUrlSpy.mockRestore();
   });
 });

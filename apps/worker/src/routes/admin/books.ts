@@ -5,11 +5,12 @@ import { validateEpub } from '@do-epub-studio/shared/src/epub-validator';
 import type { Env, JsonRow } from '../../lib/env';
 import { execute, queryFirst, queryAll, transaction } from '../../db/client';
 import { logAudit } from '../../audit';
-import { UploadCompleteSchema } from '@do-epub-studio/schema';
+import { UploadCompleteSchema, BookIndexSchema } from '@do-epub-studio/schema';
 import { adminAuth } from '../../middleware/auth';
 import { requireStepUp } from '../../middleware/step-up';
 import { withByteCap, MaxBodySizeError, DEFAULT_MAX_BODY_BYTES } from '../../lib/stream-body';
 import { bumpCacheVersion } from '../../lib/edge-cache';
+import { clearBookSearchIndex, replaceBookSearchIndex } from '../../lib/book-search-index';
 import { NotFoundError, ValidationError, AppError } from '../../lib/http-errors';
 import { createRequestContext, logRequestError } from '../../lib/observability';
 
@@ -322,6 +323,12 @@ booksRouter.post(
         now,
       ],
     );
+    // A replacement upload invalidates the old index; chapters in the same payload rebuild it.
+    if (body.chapters && body.chapters.length > 0) {
+      await replaceBookSearchIndex(c.env, bookId, body.chapters);
+    } else {
+      await clearBookSearchIndex(c.env, bookId);
+    }
 
     // Invalidate edge cache so readers get the fresh EPUB content
     await bumpCacheVersion(c.env);
@@ -338,6 +345,20 @@ booksRouter.post(
     );
 
     return c.json({ ok: true, data: { id: fileId, storageKey: body.storageKey } }, 201);
+  },
+);
+
+booksRouter.post(
+  '/:id/index',
+  adminAuth,
+  requireStepUp,
+  zValidator('json', BookIndexSchema),
+  async (c) => {
+    const { chapters } = c.req.valid('json');
+    const bookId = c.req.param('id');
+    const { indexedAt, chapterCount } = await replaceBookSearchIndex(c.env, bookId, chapters);
+
+    return c.json({ ok: true, data: { bookId, chapterCount, indexedAt } });
   },
 );
 

@@ -68,6 +68,26 @@ Each feature is independently shippable and addresses a specific gap in the plat
 - [x] `pnpm test:unit` passes (862 web + all worker/reader-core/shared)
 - [x] `pnpm build` passes
 
+## Reconciliation 2026-10-04 (status unchanged — COMPLETED)
+
+This record stays COMPLETED. A later audit,
+`plans/1000-goap-implementation-security-e2e-feature-audit.md` (GOAP-1000),
+records present-day ownership gaps that do not invalidate the delivered work
+above:
+
+- **N3** delivered its schema and query, but the FTS indexer has no current
+  production writer — GOAP-1001's M3 owns a bounded indexing owner and a
+  completed-index state.
+- **N7** delivered the producer, API and components, but the notification badge
+  and panel still have only test consumers, so the reader has no reachable
+  affordance — GOAP-1001's M2 owns it.
+- **N6** server export exists separately from the delivered local Markdown
+  export. The absence of a server web consumer is not a defect and does not
+  invalidate the local export surface.
+
+See `plans/1001-goap-reader-integration-gaps.md` and
+`plans/1003-goap-e2e-behavior-proof-gaps.md`.
+
 ## Execution Strategy
 
 **Swarm** — all 5 tasks are independent and executed in parallel.
