@@ -422,6 +422,24 @@ describe('AdminLoginPage', () => {
         expect(screen.getByText('Demo disabled')).toBeInTheDocument();
       });
     });
+
+    it('shows an honest state on DEMO_DISABLED without hitting the fallback', async () => {
+      mockIsDemoLoginEnabled.mockReturnValue(true);
+      const demoDisabled = Object.assign(new Error('Demo login is not available.'), {
+        code: 'DEMO_DISABLED',
+      });
+      vi.mocked(apiRequest).mockRejectedValue(demoDisabled);
+
+      renderLoginPage();
+      fireEvent.click(screen.getByText('admin.login.demoTry'));
+
+      await waitFor(() => {
+        expect(screen.getByText('login.demoUnavailable')).toBeInTheDocument();
+      });
+      // ADR-309 D1: a policy refusal must not spam the standard-login fallback.
+      expect(vi.mocked(apiRequest).mock.calls).toHaveLength(1);
+      expect(vi.mocked(apiRequest).mock.calls[0]?.[0]).toBe('/api/demo/admin-login');
+    });
   });
 
   describe('hero and app info', () => {

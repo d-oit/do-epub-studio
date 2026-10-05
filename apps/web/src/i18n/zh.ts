@@ -32,6 +32,7 @@ export const zh: Record<TranslationKeys, TranslationValue> = {
   'login.demoFillCredentials': '填入演示账号',
   'login.demoOr': '或',
   'login.demoSigningIn': '进入演示...',
+  'login.demoUnavailable': '此部署不提供演示。请使用您自己的凭据登录，或向书籍所有者请求访问权限。',
   'login.helpLink': '帮助 / 如何使用',
   'login.hero.feature.reading': '自适应 EPUB 阅读',
   'login.hero.feature.annotations': '高亮、批注与书签',

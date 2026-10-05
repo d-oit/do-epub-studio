@@ -36,6 +36,8 @@ export const pt: Record<TranslationKeys, TranslationValue> = {
   'login.demoFillCredentials': 'Preencher credenciais de demo',
   'login.demoOr': 'ou',
   'login.demoSigningIn': 'Entrando no demo...',
+  'login.demoUnavailable':
+    'A demonstração não está disponível nesta instância. Inicie sessão com as suas próprias credenciais ou peça acesso ao proprietário do livro.',
   'login.helpLink': 'Ajuda / Como usar',
   'login.hero.feature.reading': 'Leitura EPUB responsiva',
   'login.hero.feature.annotations': 'Destaques, anotações e marcadores',

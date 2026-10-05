@@ -36,6 +36,8 @@ export const hi: Record<TranslationKeys, TranslationValue> = {
   'login.demoFillCredentials': 'डेमो क्रेडेंशियल भरें',
   'login.demoOr': 'या',
   'login.demoSigningIn': 'डेमो में प्रवेश...',
+  'login.demoUnavailable':
+    'इस डिप्लॉयमेंट पर डेमो उपलब्ध नहीं है। अपने क्रेडेंशियल से साइन इन करें या पुस्तक के मालिक से एक्सेस माँगें।',
   'login.helpLink': 'सहायता / उपयोग कैसे करें',
   'login.hero.feature.reading': 'रिस्पॉन्सिव EPUB पठन',
   'login.hero.feature.annotations': 'हाइलाइट, टिप्पणियाँ और बुकमार्क',

@@ -36,6 +36,8 @@ export const ja: Record<TranslationKeys, TranslationValue> = {
   'login.demoFillCredentials': 'デモのログイン情報を入力',
   'login.demoOr': 'または',
   'login.demoSigningIn': 'デモにログイン中...',
+  'login.demoUnavailable':
+    'このデプロイメントではデモを利用できません。ご自身の認証情報でサインインするか、書籍の所有者にアクセスをリクエストしてください。',
   'login.helpLink': 'ヘルプ / 使い方',
   'login.hero.feature.reading': 'レスポンシブなEPUB閲覧',
   'login.hero.feature.annotations': 'ハイライト・注釈・しおり',

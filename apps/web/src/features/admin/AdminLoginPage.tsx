@@ -55,6 +55,13 @@ function useAdminDemoLogin() {
       setAdminAuth({ sessionToken: data.token, email: data.user.email });
       void navigate('/admin/books');
     } catch (primaryErr) {
+      // ADR-309 D1: a structured DEMO_DISABLED means the server fail-closed
+      // the demo on this deployment — show an honest state instead of
+      // spamming the standard-login fallback with guaranteed failures.
+      if ((primaryErr as { code?: string }).code === 'DEMO_DISABLED') {
+        setError(t('login.demoUnavailable'));
+        return;
+      }
       // Fallback: If dedicated admin demo endpoint is disabled on the server, attempt standard admin login with demo credentials
       try {
         const data = await apiRequest<AdminLoginResponse>('/api/admin/login', {

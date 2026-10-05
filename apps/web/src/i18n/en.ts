@@ -42,6 +42,8 @@ export const en = {
   'login.demoFillCredentials': 'Fill demo credentials',
   'login.demoOr': 'or',
   'login.demoSigningIn': 'Entering demo...',
+  'login.demoUnavailable':
+    'The demo is not available on this deployment. Sign in with your own credentials or request access from the book owner.',
   'login.helpLink': 'Help / How to use',
   'login.hero.feature.reading': 'Responsive EPUB reading',
   'login.hero.feature.annotations': 'Highlights, annotations & bookmarks',

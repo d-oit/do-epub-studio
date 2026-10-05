@@ -529,6 +529,28 @@ describe('LoginPage', () => {
         expect(screen.getByText('Demo disabled')).toBeInTheDocument();
       });
     });
+
+    it('shows an honest state on DEMO_DISABLED without hitting the fallback', async () => {
+      mockIsDemoLoginEnabled.mockReturnValue(true);
+      const demoDisabled = Object.assign(new Error('Demo login is not available.'), {
+        code: 'DEMO_DISABLED',
+      });
+      vi.mocked(apiRequest).mockRejectedValue(demoDisabled);
+
+      render(
+        <MemoryRouter>
+          <LoginPage />
+        </MemoryRouter>,
+      );
+      fireEvent.click(screen.getByText('login.demoTry'));
+
+      await waitFor(() => {
+        expect(screen.getByText('login.demoUnavailable')).toBeInTheDocument();
+      });
+      // ADR-309 D1: a policy refusal must not spam the access-request fallback.
+      expect(vi.mocked(apiRequest).mock.calls).toHaveLength(1);
+      expect(vi.mocked(apiRequest).mock.calls[0]?.[0]).toBe('/api/demo/reader-login');
+    });
   });
 
   describe('hero and app info', () => {

@@ -36,6 +36,8 @@ export const ru: Record<TranslationKeys, TranslationValue> = {
   'login.demoFillCredentials': 'Заполнить демо-данные',
   'login.demoOr': 'или',
   'login.demoSigningIn': 'Вход в демо...',
+  'login.demoUnavailable':
+    'Демо недоступно в этом развёртывании. Войдите со своими учётными данными или запросите доступ у владельца книги.',
   'login.helpLink': 'Справка / Как использовать',
   'login.hero.feature.reading': 'Адаптивное чтение EPUB',
   'login.hero.feature.annotations': 'Выделения, заметки и закладки',
