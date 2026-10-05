@@ -108,6 +108,8 @@ ALLOWED_SHAS=(
     "github/codeql-action/analyze@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2"
     "github/codeql-action/upload-sarif@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2"
     "github/codeql-action/upload-sarif@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2"
+# Appended 2026-10-05 by scripts/allowlist-dependabot-shas.sh — verified against upstream annotated tags (ADR-247)
+    "chromaui/action@a18e9f57b71eb05f941848c0b927aab2ee644e3e"
 )
 
 # Function to check if an action@sha is allowed
