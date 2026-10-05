@@ -1,6 +1,6 @@
 # GOAP-309: Production demo login and catalog outage on do-epub-studio.pages.dev
 
-**Status:** IN PROGRESS — W3+W5 shipped (2026-10-04); W1 (ops config) and W2 (catalog 500 root cause) still require Cloudflare access (#1278)
+**Status:** IN PROGRESS — W3+W5 shipped AND live-verified (2026-10-05, #1279): "Try the demo" on production now makes exactly one `/api/demo/reader-login` call and renders the localized honest state (browser-verified, no more 4x 500 fallback spam). W1 (ops config) and W2 (catalog 500 root cause) still require Cloudflare access (#1278)
 **ADR:** this file carries the ADR (policy in §4) until promoted.
 
 ## 1. Analyze — measured production evidence (2026-10-04, headless Chrome against https://do-epub-studio.pages.dev)
