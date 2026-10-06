@@ -21,21 +21,21 @@
     "@hono/zod-validator": "^0.9.1",
     "@libsql/client": "^0.18.0",
     "@sentry/cloudflare": "^11.0.0",
-    "@simplewebauthn/server": "^14.0.2",
+    "@simplewebauthn/server": "^14.0.3",
     "argon2-wasm-edge": "^1.0.23",
-    "hono": "^4.13.8",
+    "hono": "^4.13.12",
     "zod": "^4.6.5"
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.22.0",
-    "@cloudflare/workers-types": "^5.20260923.1",
+    "@cloudflare/workers-types": "^5.20261003.1",
     "@do-epub-studio/testkit": "workspace:*",
     "@types/node": "^26",
     "@vitest/coverage-v8": "4.1.11",
-    "eslint": "^10.11.0",
+    "eslint": "^10.12.0",
     "jszip": "^3.10.2",
     "typescript": "^6.0.3",
     "vitest": "4.1.11",
-    "wrangler": "^4.137.0"
+    "wrangler": "^4.147.0"
   }
 }
