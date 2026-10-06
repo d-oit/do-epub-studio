@@ -41,6 +41,7 @@ export interface CreateResetTokenParams {
   userId?: string;
   ipHash?: string;
   traceId?: string;
+  bookId?: string;
 }
 
 export interface ResetTokenRecord {
@@ -48,6 +49,7 @@ export interface ResetTokenRecord {
   email?: string;
   userId?: string;
   purpose: ResetPurpose;
+  bookId?: string;
 }
 
 /**
@@ -65,8 +67,8 @@ export async function createResetToken(env: Env, params: CreateResetTokenParams)
   await execute(
     env,
     `INSERT INTO password_reset_tokens
-     (id, email, user_id, token_hash, purpose, expires_at, requested_ip_hash, request_trace_id)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+     (id, email, user_id, token_hash, purpose, expires_at, requested_ip_hash, request_trace_id, book_id)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       id,
       params.email ?? null,
@@ -76,6 +78,7 @@ export async function createResetToken(env: Env, params: CreateResetTokenParams)
       new Date(now + ttl).toISOString(),
       params.ipHash ?? null,
       params.traceId ?? null,
+      params.bookId ?? null,
     ],
   );
 
@@ -103,9 +106,10 @@ export async function verifyResetToken(
     expires_at: string;
     used_at: string | null;
     attempt_count: number;
+    book_id: string | null;
   }>(
     env,
-    `SELECT id, email, user_id, purpose, expires_at, used_at, attempt_count
+    `SELECT id, email, user_id, purpose, expires_at, used_at, attempt_count, book_id
      FROM password_reset_tokens
      WHERE token_hash = ?`,
     [tokenHash],
@@ -128,6 +132,7 @@ export async function verifyResetToken(
       email: row.email ?? undefined,
       userId: row.user_id ?? undefined,
       purpose: row.purpose,
+      bookId: row.book_id ?? undefined,
     },
   };
 }

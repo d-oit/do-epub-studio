@@ -94,6 +94,26 @@ export default defineConfig({
           .replaceAll('%APP_DESCRIPTION%', appIdentity.description)
           .replaceAll('%APP_VERSION%', appVersion);
       },
+      configureServer(server) {
+        server.middlewares.use((req, res, next) => {
+          if (req.url === '/manifest.webmanifest') {
+            res.setHeader('Content-Type', 'application/manifest+json');
+            res.end(
+              JSON.stringify({
+                name: appIdentity.name,
+                short_name: appIdentity.shortName,
+                description: appIdentity.description,
+                version: appVersion,
+                theme_color: '#ffffff',
+                background_color: '#ffffff',
+                display: 'standalone',
+              }),
+            );
+            return;
+          }
+          next();
+        });
+      },
     },
     react(),
     tailwindcss(),

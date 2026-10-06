@@ -143,12 +143,9 @@ test.describe('Edge Cases & Error Handling', () => {
       .catch(() => false);
     expect(bodyVisible).toBe(true);
 
-    // Verify the reader toolbar is still accessible (may need time to recover)
-    const toolbarVisible = await page
-      .getByRole('button', { name: 'Contents' })
-      .isVisible({ timeout: 10000 })
-      .catch(() => false);
-    expect(toolbarVisible || bodyVisible).toBe(true);
+    // Verify the reader toolbar remains accessible and operable after failed save (plan 1003)
+    await clickToolbarButton(page, /Settings/i);
+    await expect(page.getByRole('dialog', { name: /Settings/i })).toBeVisible();
   });
 
   test('@mobile handles mid-read network failure gracefully — reader stays usable', async ({

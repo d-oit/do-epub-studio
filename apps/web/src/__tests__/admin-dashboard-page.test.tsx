@@ -45,6 +45,30 @@ const mockStats = {
   ],
 };
 
+const mockInsights = [
+  {
+    bookId: 'book-1',
+    totalActiveMinutes: 120,
+    totalActivePages: 60,
+    readerCount: 3,
+    lastActivity: '2026-10-04T10:00:00Z',
+  },
+  {
+    bookId: 'book-2',
+    totalActiveMinutes: 45,
+    totalActivePages: 20,
+    readerCount: 1,
+    lastActivity: '2026-10-03T10:00:00Z',
+  },
+];
+
+/** Route both admin endpoints: stats and aggregate insights. */
+function mockApi(stats: unknown = mockStats, insights: unknown = mockInsights) {
+  mockApiRequest.mockImplementation((url: string) =>
+    Promise.resolve(url.startsWith('/api/admin/insights') ? insights : stats),
+  );
+}
+
 function renderDashboard() {
   return render(
     <MemoryRouter>
@@ -66,7 +90,7 @@ describe('AdminDashboardPage', () => {
   });
 
   it('renders stats after loading', async () => {
-    mockApiRequest.mockResolvedValue(mockStats);
+    mockApi(mockStats);
     renderDashboard();
     await waitFor(() => {
       expect(screen.getByText('12')).toBeInTheDocument();
@@ -84,7 +108,7 @@ describe('AdminDashboardPage', () => {
   });
 
   it('renders dashboard title', async () => {
-    mockApiRequest.mockResolvedValue(mockStats);
+    mockApi(mockStats);
     renderDashboard();
     await waitFor(() => {
       expect(screen.getByText('admin.dashboardTitle')).toBeInTheDocument();
@@ -92,7 +116,7 @@ describe('AdminDashboardPage', () => {
   });
 
   it('renders stat card labels', async () => {
-    mockApiRequest.mockResolvedValue(mockStats);
+    mockApi(mockStats);
     renderDashboard();
     await waitFor(() => {
       expect(screen.getByText('admin.stats.totalBooks')).toBeInTheDocument();
@@ -103,7 +127,7 @@ describe('AdminDashboardPage', () => {
   });
 
   it('formats storage bytes via formatBytes', async () => {
-    mockApiRequest.mockResolvedValue(mockStats);
+    mockApi(mockStats);
     renderDashboard();
     await waitFor(() => {
       expect(screen.getByText('1048576 bytes')).toBeInTheDocument();
@@ -111,7 +135,7 @@ describe('AdminDashboardPage', () => {
   });
 
   it('renders recent activity section', async () => {
-    mockApiRequest.mockResolvedValue(mockStats);
+    mockApi(mockStats);
     renderDashboard();
     await waitFor(() => {
       expect(screen.getByText('admin.stats.recentActivity')).toBeInTheDocument();
@@ -121,7 +145,7 @@ describe('AdminDashboardPage', () => {
   });
 
   it('hides recent activity when empty', async () => {
-    mockApiRequest.mockResolvedValue({ ...mockStats, recentActivity: [] });
+    mockApi({ ...mockStats, recentActivity: [] });
     renderDashboard();
     await waitFor(() => {
       expect(screen.queryByText('admin.stats.recentActivity')).not.toBeInTheDocument();
@@ -129,7 +153,7 @@ describe('AdminDashboardPage', () => {
   });
 
   it('navigates to books page on button click', async () => {
-    mockApiRequest.mockResolvedValue(mockStats);
+    mockApi(mockStats);
     renderDashboard();
     await waitFor(() => {
       expect(screen.getByText(/admin\.books\.title/)).toBeInTheDocument();
@@ -138,7 +162,7 @@ describe('AdminDashboardPage', () => {
   });
 
   it('navigates to grants page on button click', async () => {
-    mockApiRequest.mockResolvedValue(mockStats);
+    mockApi(mockStats);
     renderDashboard();
     await waitFor(() => {
       expect(screen.getByText(/admin\.grants\.title/)).toBeInTheDocument();
@@ -147,7 +171,7 @@ describe('AdminDashboardPage', () => {
   });
 
   it('navigates to audit page on button click', async () => {
-    mockApiRequest.mockResolvedValue(mockStats);
+    mockApi(mockStats);
     renderDashboard();
     await waitFor(() => {
       expect(screen.getByText(/admin\.audit\.title/)).toBeInTheDocument();
@@ -156,7 +180,7 @@ describe('AdminDashboardPage', () => {
   });
 
   it('calls apiRequest with session token', async () => {
-    mockApiRequest.mockResolvedValue(mockStats);
+    mockApi(mockStats);
     renderDashboard();
     await waitFor(() => {
       expect(mockApiRequest).toHaveBeenCalledWith('/api/admin/stats', { token: 'tok-123' });
@@ -164,7 +188,7 @@ describe('AdminDashboardPage', () => {
   });
 
   it('renders breadcrumb', async () => {
-    mockApiRequest.mockResolvedValue(mockStats);
+    mockApi(mockStats);
     renderDashboard();
     await waitFor(() => {
       expect(screen.getByTestId('breadcrumb')).toHaveTextContent('admin.breadcrumb.home');
@@ -172,10 +196,83 @@ describe('AdminDashboardPage', () => {
   });
 
   it('renders locale switcher', async () => {
-    mockApiRequest.mockResolvedValue(mockStats);
+    mockApi(mockStats);
     renderDashboard();
     await waitFor(() => {
       expect(screen.getByTestId('locale-switcher')).toBeInTheDocument();
+    });
+  });
+
+  // N2: book-only aggregate insights
+  it('renders aggregate insights for seeded books with no reader identity', async () => {
+    mockApi(mockStats);
+    renderDashboard();
+    await waitFor(() => {
+      expect(screen.getByText('book-1')).toBeInTheDocument();
+      expect(screen.getByText('book-2')).toBeInTheDocument();
+      // 120 minutes formats as "2h"; 60 pages is the aggregate page total.
+      expect(screen.getByText('2h')).toBeInTheDocument();
+      expect(screen.getByText('60')).toBeInTheDocument();
+    });
+    // No reader email or per-reader timeline is rendered anywhere.
+    expect(screen.queryByText(/@example\.com/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/timeline/i)).not.toBeInTheDocument();
+  });
+
+  it('requests the insights endpoint with limit/offset pagination', async () => {
+    mockApi(mockStats);
+    renderDashboard();
+    await waitFor(() => {
+      expect(mockApiRequest).toHaveBeenCalledWith('/api/admin/insights?limit=20&offset=0', {
+        token: 'tok-123',
+      });
+    });
+  });
+
+  it('next page requests a different offset and renders the different fixture set', async () => {
+    const fullFirstPage = [
+      ...mockInsights,
+      ...Array.from({ length: 18 }, (_, i) => ({
+        bookId: `book-fill-${i + 1}`,
+        totalActiveMinutes: 10,
+        totalActivePages: 5,
+        readerCount: 1,
+        lastActivity: '2026-10-02T10:00:00Z',
+      })),
+    ];
+    mockApiRequest.mockImplementation((url: string) => {
+      if (url.startsWith('/api/admin/insights')) {
+        if (url.includes('offset=20')) {
+          return Promise.resolve([
+            {
+              bookId: 'book-3',
+              totalActiveMinutes: 10,
+              totalActivePages: 5,
+              readerCount: 1,
+              lastActivity: '2026-10-02T10:00:00Z',
+            },
+          ]);
+        }
+        return Promise.resolve(fullFirstPage);
+      }
+      return Promise.resolve(mockStats);
+    });
+    renderDashboard();
+    await waitFor(() => {
+      expect(screen.getByText('book-1')).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'admin.insights.next' }));
+    await waitFor(() => {
+      expect(screen.getByText('book-3')).toBeInTheDocument();
+      expect(screen.queryByText('book-1')).not.toBeInTheDocument();
+    });
+  });
+
+  it('renders a distinct empty state when no aggregate activity exists', async () => {
+    mockApi(mockStats, []);
+    renderDashboard();
+    await waitFor(() => {
+      expect(screen.getByText('admin.insights.empty')).toBeInTheDocument();
     });
   });
 });

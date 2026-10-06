@@ -1,6 +1,8 @@
+import { readFileSync } from 'node:fs';
 import { test, expect, type Route } from '@playwright/test';
 import {
   TEST_USER,
+  MOCK_EPUB,
   mockReaderApi,
   mockAdminApi,
   loginAsReader,
@@ -27,33 +29,69 @@ test.describe('Reader annotations', () => {
     await expect(page.getByRole('heading', { name: /Comments/i })).toBeVisible();
   });
 
-  test('@mobile can open bookmarks panel and sees empty state', async ({ page }) => {
+  test('@mobile bookmark creation and deletion persists across reload', async ({ page }) => {
     suppressWorkboxErrors(page);
     await loginAsReader(page);
 
+    // Open bookmarks panel and verify initial empty state
     await clickToolbarButton(page, /Bookmarks/i);
     await expect(page.getByRole('heading', { name: /Bookmarks/i })).toBeVisible();
     await expect(page.getByText(/No bookmarks yet/i)).toBeVisible();
+
+    // Scope bookmark assertions to the panel: the reader header also renders a
+    // bookmark count. The label is deliberately not asserted — this fixture's
+    // TOC cannot resolve the chapter, so the honest label is "Unknown Chapter".
+    const bookmarksPanel = page.locator('[data-container-name="bookmarks-panel"]');
+    const bookmarkRow = bookmarksPanel.locator('.cq-bookmark-row');
+
+    // Create a bookmark
+    await page.getByRole('button', { name: /Add bookmark/i }).click();
+    await expect(bookmarkRow).toHaveCount(1);
+    await expect(bookmarksPanel.getByRole('button', { name: /Delete bookmark/i })).toBeVisible();
+
+    // Reload page and verify bookmark survived reload
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await clickToolbarButton(page, /Bookmarks/i);
+    await expect(bookmarkRow).toHaveCount(1);
+
+    // Delete the bookmark
+    await page.getByRole('button', { name: /Delete bookmark/i }).click();
+    await expect(page.getByText(/No bookmarks yet/i)).toBeVisible();
+
+    // Reload page and verify bookmark is not resurrected
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await clickToolbarButton(page, /Bookmarks/i);
+    await expect(page.getByText(/No bookmarks yet/i)).toBeVisible();
   });
 
-  test('@mobile can export notes when panel is available', async ({ page }) => {
+  test('@mobile can export notes and verifies downloaded markdown content', async ({ page }) => {
     suppressWorkboxErrors(page);
+    await mockReaderApi(page, {
+      comments: [
+        {
+          id: 'comment-1',
+          bookId: 'my-test-book',
+          locator: { cfi: 'epubcfi(/6/4)' },
+          body: 'Note from my test book',
+          createdAt: '2025-01-01T00:00:00Z',
+          status: 'open',
+        },
+      ],
+    });
     await loginAsReader(page);
 
-    // On mobile, Export Notes is in the overflow menu (role="menuitem" after GOAP-224 B8)
-    const width = page.viewportSize()?.width ?? 1280;
-    if (width < 640) {
-      const moreBtn = page.getByRole('button', { name: /More [Oo]ptions/i });
-      if (await moreBtn.isVisible().catch(() => false)) {
-        await moreBtn.click();
-        await page.waitForTimeout(200);
-      }
-      const exportButton = page.getByRole('menuitem', { name: 'Export Notes', exact: true });
-      await expect(exportButton).toBeVisible();
-    } else {
-      const exportButton = page.getByRole('button', { name: 'Export Notes', exact: true });
-      await expect(exportButton).toBeVisible();
-    }
+    // Trigger export notes and observe download event
+    const downloadPromise = page.waitForEvent('download');
+    await clickToolbarButton(page, 'Export Notes');
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toContain('.md');
+
+    // Parse downloaded Markdown: selected book note included, other book note absent
+    const filePath = await download.path();
+    expect(filePath).not.toBeNull();
+    const content = readFileSync(filePath, 'utf8');
+    expect(content).toContain('Note from my test book');
+    expect(content).not.toContain('Other book note');
   });
 
   test('@mobile renders reader page with mocked book and displays content', async ({ page }) => {
@@ -74,6 +112,9 @@ test.describe('Reader annotations', () => {
   });
 
   test('@mobile displays reading insights in info panel', async ({ page }) => {
+    // Metadata comes from the parsed EPUB, so the fixture must serve one;
+    // without it the panel honestly reports "Book metadata not available".
+    await mockReaderApi(page, { epubBuffer: MOCK_EPUB });
     await page.route('**/api/books/*/insights', async (route: Route) => {
       if (route.request().method() === 'GET') {
         await route.fulfill({
@@ -82,7 +123,10 @@ test.describe('Reader annotations', () => {
           body: JSON.stringify({
             ok: true,
             data: {
-              buckets: [{ bucketDate: '2026-07-01', activeMinutes: 25, activePages: 12 }],
+              totalActiveMinutes: 120,
+              totalActivePages: 60,
+              currentStreakDays: 3,
+              recentActivity: [{ date: '2026-07-01', activeMinutes: 120, activePages: 60 }],
             },
           }),
         });
@@ -93,20 +137,13 @@ test.describe('Reader annotations', () => {
     await loginAsReader(page);
     await expect(page).toHaveURL(/\/read\/my-test-book$/);
 
-    const contentsBtn = page.getByRole('button', { name: 'Contents' });
-    await contentsBtn.click({ timeout: 10000 }).catch(() => undefined);
-    await page.waitForTimeout(1000);
+    await clickToolbarButton(page, /About This Book|Info/i);
 
-    const infoButton = page.getByRole('button', { name: /Info|About/i });
-    if (await infoButton.isVisible().catch(() => false)) {
-      await infoButton.click();
-      await page.waitForTimeout(1000);
-      const insightsVisible = await page
-        .getByText(/Reading Insights|Total Active Time|Pages Read/i)
-        .isVisible()
-        .catch(() => false);
-      expect(insightsVisible || true).toBe(true);
-    }
+    // The panel always renders the labelled insight sections (N1); the synced
+    // totals come from the mocked endpoint and must appear verbatim.
+    await expect(page.getByRole('heading', { name: /Reading Insights/i })).toBeVisible();
+    await expect(page.getByText('2h', { exact: true })).toBeVisible();
+    await expect(page.getByText(/Synced Reading History/i)).toBeVisible();
   });
 });
 
@@ -170,23 +207,38 @@ test.describe('Admin console', () => {
     await loginAsReader(page);
     await expect(page).toHaveURL(/\/read\/my-test-book$/);
 
-    await page.route('**/api/**', async (route: Route) => {
-      await route.fulfill({
-        status: 401,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          ok: false,
-          error: { code: 'SESSION_EXPIRED', message: 'Session expired' },
-        }),
-      });
-    });
+    await page.route(
+      (url) => url.pathname.startsWith('/api/'),
+      async (route: Route) => {
+        const origin = route.request().headers()['origin'] || 'http://127.0.0.1:5173';
+        const corsHeaders = {
+          'Access-Control-Allow-Origin': origin,
+          'Access-Control-Allow-Methods': 'GET,POST,PUT,PATCH,DELETE,OPTIONS',
+          'Access-Control-Allow-Headers':
+            'Content-Type, Authorization, X-Trace-Id, X-Span-Id, Accept-Language',
+        };
+        if (route.request().method() === 'OPTIONS') {
+          await route.fulfill({
+            status: 204,
+            headers: corsHeaders,
+          });
+          return;
+        }
+        await route.fulfill({
+          status: 401,
+          headers: corsHeaders,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            ok: false,
+            error: { code: 'SESSION_EXPIRED', message: 'Session expired' },
+          }),
+        });
+      },
+    );
 
     await page.reload();
-    await page.waitForTimeout(5000);
 
-    const currentUrl = page.url();
-    const onLoginOrReader = /\/login/.test(currentUrl) || /\/read\//.test(currentUrl);
-    expect(onLoginOrReader).toBe(true);
+    await expect(page).toHaveURL(/\/login/, { timeout: 20_000 });
   });
 });
 

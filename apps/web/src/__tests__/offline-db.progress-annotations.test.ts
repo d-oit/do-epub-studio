@@ -1,5 +1,6 @@
 import 'fake-indexeddb/auto';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { useAuthStore } from '../stores/auth';
 import {
   getDB,
   saveProgress,
@@ -18,7 +19,8 @@ const TEST_TOKEN_2 = 'different-session-token-for-offline-db';
 
 describe('Offline Database — Progress & Annotations', () => {
   beforeEach(async () => {
-    setTokenOverride(null);
+    setTokenOverride(TEST_TOKEN);
+    useAuthStore.setState({ sessionToken: TEST_TOKEN });
     const db = await getDB();
     const tx = db.transaction(['progress', 'annotations', 'syncQueue', 'permissions'], 'readwrite');
     await tx.objectStore('progress').clear();
@@ -30,10 +32,13 @@ describe('Offline Database — Progress & Annotations', () => {
 
   afterEach(() => {
     setTokenOverride(null);
+    useAuthStore.setState({ sessionToken: null });
   });
 
   describe('Progress', () => {
-    it('should save and retrieve progress without encryption', async () => {
+    it('fails when unauthenticated: refuses saving progress without session', async () => {
+      setTokenOverride(null);
+      useAuthStore.setState({ sessionToken: null });
       const entry: ProgressEntry = {
         id: 'test-progress-1',
         bookId: 'book-1',
@@ -44,12 +49,9 @@ describe('Offline Database — Progress & Annotations', () => {
         mutationId: 'mutation-1',
       };
 
-      await saveProgress(entry);
-      const retrieved = await getProgress('book-1');
-
-      expect(retrieved).toBeDefined();
-      expect(retrieved?.id).toBe('test-progress-1');
-      expect(retrieved?.percentage).toBe(45);
+      await expect(saveProgress(entry)).rejects.toThrow(
+        'Authentication required for sensitive offline storage',
+      );
     });
 
     it('should save and retrieve progress with encryption', async () => {
@@ -308,6 +310,24 @@ describe('Offline Database — Progress & Annotations', () => {
 
       expect(found).toBeDefined();
       expect(found?.status).toBe('resolved');
+    });
+
+    it('S2: refuses legacy unencrypted row stored with sensitive fields in the clear', async () => {
+      const db = await getDB();
+      await db.put('annotations', {
+        id: 'legacy-plaintext-ann',
+        bookId: 'book-1',
+        type: 'comment',
+        cfi: '/6/4',
+        comment: 'Sensitive unencrypted comment',
+        createdAt: Date.now(),
+        synced: true,
+        mutationId: 'm-legacy',
+      });
+
+      const annotations = await getAnnotations('book-1');
+      const found = annotations.find((a) => a.id === 'legacy-plaintext-ann');
+      expect(found).toBeUndefined();
     });
   });
 });
